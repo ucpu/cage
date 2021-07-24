@@ -1,8 +1,5 @@
-#include <cage-engine/renderObject.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/model.h>
-#include <cage-engine/font.h>
-#include <cage-engine/provisionalHandles.h>
+#ifndef header_guard_graphics_h_o46tgfs52d4ftg1zh8t5
+#define header_guard_graphics_h_o46tgfs52d4ftg1zh8t5
 
 #include "../engine.h"
 
@@ -10,115 +7,69 @@
 
 namespace cage
 {
-	struct ShaderConfig
+	struct EmitTransform : private Noncopyable
 	{
-		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
-
-		void set(uint32 name, uint32 value);
+		TransformComponent current, history;
+		void *entityPointer = nullptr;
 	};
 
-	struct Mat3x4
+	struct EmitRender : public EmitTransform
 	{
-		vec4 data[3];
-
-		Mat3x4();
-		explicit Mat3x4(const mat3 &in);
-		explicit Mat3x4(const mat4 &in);
+		RenderComponent render;
+		Holder<SkeletalAnimationComponent> skeletalAnimation;
+		Holder<TextureAnimationComponent> textureAnimation;
 	};
 
-	struct Objects
+	struct EmitText : public EmitTransform
 	{
-		ShaderConfig shaderConfig;
-		struct UniModel
-		{
-			mat4 mvpMat;
-			mat4 mvpPrevMat;
-			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
-			Mat3x4 mMat;
-			vec4 color; // color rgb is linear, and NOT alpha-premultiplied
-			vec4 aniTexFrames;
-		};
-		std::vector<UniModel> uniModels;
-		std::vector<Mat3x4> uniArmatures;
-		Holder<Texture> textures[MaxTexturesCountPerMaterial];
-		const Holder<Model> model;
-
-		Objects(Holder<Model> model, uint32 max);
+		TextComponent text;
 	};
 
-	struct Lights
+	struct EmitLight : public EmitTransform
 	{
-		ShaderConfig shaderConfig;
-		struct UniLight
-		{
-			mat4 shadowMat;
-			mat4 mvpMat;
-			vec4 color; // + spotAngle
-			vec4 position;
-			vec4 direction; // + normalOffsetScale
-			vec4 attenuation; // + spotExponent
-		};
-		std::vector<UniLight> uniLights;
-		const sint32 shadowmap;
-		const LightTypeEnum lightType;
-
-		Lights(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
+		LightComponent light;
+		Holder<ShadowmapComponent> shadowmap;
 	};
 
-	struct Translucent
+	struct EmitCamera : public EmitTransform
 	{
-		Objects object;
-		std::vector<Holder<Lights>> lights;
-
-		Translucent(Holder<Model> model);
+		CameraComponent camera;
 	};
 
-	struct Texts
+	struct EmitBuffer : private Immovable
 	{
-		struct Render
-		{
-			std::vector<uint32> glyphs;
-			FontFormat format;
-			mat4 transform;
-			vec3 color;
-		};
-		std::vector<Holder<Render>> renders;
-		const Holder<Font> font;
-
-		Texts(Holder<Font> font);
+		std::vector<EmitRender> renders;
+		std::vector<EmitText> texts;
+		std::vector<EmitLight> lights;
+		std::vector<EmitCamera> cameras;
+		uint64 time = 0;
 	};
 
-	struct RenderPass : public CameraEffects
+	class Graphics : private Immovable
 	{
-		struct UniViewport
-		{
-			mat4 vpInv;
-			vec4 eyePos;
-			vec4 eyeDir;
-			vec4 viewport;
-			vec4 ambientLight;
-			vec4 ambientDirectionalLight;
-		} uniViewport;
-		std::vector<Holder<Objects>> opaques;
-		std::vector<Holder<Lights>> lights;
-		std::vector<Holder<Translucent>> translucents;
-		std::vector<Holder<Texts>> texts;
-		TextureHandle targetTexture;
-		mat4 view;
-		mat4 proj;
-		mat4 viewProj;
-		ivec2 resolution;
-		uintPtr entityId = 0;
-		sint32 targetShadowmap = 0; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
-		uint32 shadowmapResolution = 0;
-		uint32 clearFlags = 0;
+	public:
+		explicit Graphics(const EngineCreateConfig &config);
+		~Graphics();
+		void initialize(); // opengl thread
+		void finalize(); // opengl thread
+		void emit(uint64 time); // control thread
+		void prepare(uint64 time); // prepare thread
+		void dispatch(); // opengl thread
+		void swap(); // opengl thread
+
+		Holder<RenderQueue> renderQueue;
+		Holder<ProvisionalGraphics> provisionalData;
+
+		Holder<MemoryArena> emitBuffersMemory;
+		Holder<SwapBufferGuard> emitBuffersGuard;
+		EmitBuffer emitBuffers[3];
+		InterpolationTimingCorrector itc;
+
+		uint32 outputDrawCalls = 0;
+		uint32 outputDrawPrimitives = 0;
 	};
 
-	struct GraphicsDispatch
-	{
-		std::vector<Holder<RenderPass>> renderPasses;
-		ivec2 windowResolution;
-	};
-
-	extern GraphicsDispatch *graphicsDispatch;
+	extern Graphics *graphics;
 }
+
+#endif

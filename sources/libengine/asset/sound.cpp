@@ -73,10 +73,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeSound(uint32 threadIndex)
+	AssetScheme genAssetSchemeSound()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
 		s.typeIndex = detail::typeIndex<Sound>();

@@ -12,6 +12,7 @@
 #include <cage-core/macros.h>
 #include <cage-core/logger.h>
 #include <cage-core/assetContext.h>
+#include <cage-core/hashString.h>
 
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/texture.h>
@@ -32,26 +33,15 @@
 #include <atomic>
 #include <exception>
 
-//#define CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-
 namespace cage
 {
 	namespace
 	{
 		ConfigBool confAutoAssetListen("cage/assets/listen", false);
 
-		struct EngineGraphicsUploadThread
-		{
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			static constexpr uint32 threadIndex = 2;
-#else
-			static constexpr uint32 threadIndex = EngineGraphicsDispatchThread::threadIndex;
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-		};
-
 		struct ScopedSemaphores : private Immovable
 		{
-			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(unlock.get())
+			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(+unlock)
 			{
 				OPTICK_EVENT("waiting");
 				lock->lock();
@@ -124,9 +114,6 @@ namespace cage
 
 			Holder<AssetManager> assets;
 			Holder<Window> window;
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			Holder<Window> windowUpload;
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Speaker> speaker;
 			Holder<VoicesMixer> masterBus;
 			Holder<VoicesMixer> effectsBus;
@@ -142,9 +129,6 @@ namespace cage
 			Holder<Barrier> threadsStateBarier;
 			Holder<Thread> graphicsDispatchThreadHolder;
 			Holder<Thread> graphicsPrepareThreadHolder;
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			Holder<Thread> graphicsUploadThreadHolder;
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Thread> soundThreadHolder;
 
 			std::atomic<uint32> engineStarted = 0;
@@ -179,13 +163,14 @@ namespace cage
 						graphicsPrepareThread().prepare.dispatch();
 					}
 					{
-						OPTICK_EVENT("tick");
-						graphicsPrepareTick(applicationTime());
+						OPTICK_EVENT("prepare");
+						uint32 drawCalls = 0, drawPrimitives = 0;
+						graphicsPrepare(applicationTime(), drawCalls, drawPrimitives);
+						profilingBufferDrawCalls.add(drawCalls);
+						profilingBufferDrawPrimitives.add(drawPrimitives);
+						OPTICK_TAG("draw calls", drawCalls);
+						OPTICK_TAG("draw primitives", drawPrimitives);
 					}
-				}
-				{
-					OPTICK_EVENT("assets");
-					assets->processCustomThread(graphicsPrepareThread().threadIndex);
 				}
 			}
 
@@ -201,10 +186,7 @@ namespace cage
 			}
 
 			void graphicsPrepareFinalizeStage()
-			{
-				graphicsPrepareFinalize();
-				assets->unloadCustomThread(graphicsPrepareThread().threadIndex);
-			}
+			{}
 
 			//////////////////////////////////////
 			// graphics DISPATCH
@@ -213,7 +195,7 @@ namespace cage
 			void graphicsDispatchInitializeStage()
 			{
 				window->makeCurrent();
-				graphicsDispatchInitialize();
+				graphicsInitialize();
 			}
 
 			void graphicsDispatchStep()
@@ -228,13 +210,8 @@ namespace cage
 						graphicsDispatchThread().dispatch.dispatch();
 					}
 					{
-						OPTICK_EVENT("tick");
-						uint32 drawCalls = 0, drawPrimitives = 0;
-						graphicsDispatchTick(drawCalls, drawPrimitives);
-						profilingBufferDrawCalls.add(drawCalls);
-						profilingBufferDrawPrimitives.add(drawPrimitives);
-						OPTICK_TAG("draw calls", drawCalls);
-						OPTICK_TAG("draw primitives", drawPrimitives);
+						OPTICK_EVENT("dispatch");
+						graphicsDispatch();
 					}
 				}
 				{
@@ -254,7 +231,7 @@ namespace cage
 				}
 				{
 					OPTICK_EVENT("swap");
-					graphicsDispatchSwap();
+					graphicsSwap();
 				}
 			}
 
@@ -271,7 +248,7 @@ namespace cage
 
 			void graphicsDispatchFinalizeStage()
 			{
-				graphicsDispatchFinalize();
+				graphicsFinalize();
 				assets->unloadCustomThread(graphicsDispatchThread().threadIndex);
 			}
 
@@ -300,10 +277,6 @@ namespace cage
 					OPTICK_EVENT("tick");
 					soundTick(soundUpdateSchedule->time());
 				}
-				{
-					OPTICK_EVENT("assets");
-					assets->processCustomThread(EngineSoundThread::threadIndex);
-				}
 			}
 
 			void soundGameloopStage()
@@ -319,7 +292,6 @@ namespace cage
 			void soundFinalizeStage()
 			{
 				soundFinalize();
-				assets->unloadCustomThread(soundThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -378,7 +350,7 @@ namespace cage
 				}
 				{
 					OPTICK_EVENT("graphics emit");
-					graphicsPrepareEmit(controlTime);
+					graphicsEmit(controlTime);
 				}
 				OPTICK_TAG("entities count", entities->group()->count());
 				profilingBufferEntities.add(entities->group()->count());
@@ -496,9 +468,6 @@ namespace cage
 				{ // create threads
 					graphicsDispatchThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsDispatchEntry>(this), "engine graphics dispatch");
 					graphicsPrepareThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsPrepareEntry>(this), "engine graphics prepare");
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					graphicsUploadThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsUploadEntry>(this), "engine graphics upload");
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					soundThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::soundEntry>(this), "engine sound");
 				}
 
@@ -511,12 +480,12 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
 					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
 					// engine assets
-					assets->defineScheme<AssetSchemeIndexShaderProgram, ShaderProgram>(genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexShaderProgram, ShaderProgram>(genAssetSchemeShaderProgram(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(EngineGraphicsDispatchThread::threadIndex));
 					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
 					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
-					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound(EngineSoundThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound());
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
 				}
@@ -667,8 +636,7 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
 
-			graphicsDispatchCreate(config);
-			graphicsPrepareCreate(config);
+			graphicsCreate(config);
 			soundCreate(config);
 
 			controlScheduler = newScheduler({});
@@ -706,8 +674,7 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "destroying engine");
 			soundDestroy();
-			graphicsPrepareDestroy();
-			graphicsDispatchDestroy();
+			graphicsDestroy();
 			CAGE_LOG(SeverityEnum::Info, "engine", "engine destroyed");
 		}
 	}

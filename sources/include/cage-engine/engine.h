@@ -200,7 +200,6 @@ namespace cage
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> prepare;
-		static constexpr uint32 threadIndex = 3;
 	};
 	CAGE_ENGINE_API EngineGraphicsPrepareThread &graphicsPrepareThread();
 
@@ -212,7 +211,6 @@ namespace cage
 		Scheduler *scheduler();
 		uint64 updatePeriod() const;
 		void updatePeriod(uint64 p);
-		static constexpr uint32 threadIndex = 4;
 	};
 	CAGE_ENGINE_API EngineSoundThread &soundThread();
 

@@ -1,4 +1,5 @@
 #include <cage-core/flatSet.h>
+#include <cage-core/swapBufferGuard.h>
 
 #include <cage-engine/sound.h>
 #include <cage-engine/voices.h>
@@ -25,6 +26,21 @@ namespace cage
 					it = map.erase(it);
 			}
 		}
+
+		struct ClearOnScopeExit : private Immovable
+		{
+			template<class T>
+			explicit ClearOnScopeExit(T *&ptr) : ptr((void *&)ptr)
+			{}
+
+			~ClearOnScopeExit()
+			{
+				ptr = nullptr;
+			}
+
+		private:
+			void *&ptr;
+		};
 
 		struct EmitSound
 		{

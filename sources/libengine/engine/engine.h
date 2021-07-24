@@ -3,8 +3,6 @@
 
 #include <cage-core/entities.h>
 #include <cage-core/assetManager.h>
-#include <cage-core/swapBufferGuard.h>
-#include <cage-core/hashString.h>
 #include <cage-core/variableSmoothingBuffer.h>
 
 #include <cage-engine/engine.h>
@@ -13,18 +11,14 @@
 
 namespace cage
 {
-	void graphicsPrepareCreate(const EngineCreateConfig &config);
-	void graphicsPrepareDestroy();
-	void graphicsPrepareFinalize();
-	void graphicsPrepareEmit(uint64 time);
-	void graphicsPrepareTick(uint64 time);
-
-	void graphicsDispatchCreate(const EngineCreateConfig &config);
-	void graphicsDispatchDestroy();
-	void graphicsDispatchInitialize();
-	void graphicsDispatchFinalize();
-	void graphicsDispatchTick(uint32 &drawCalls, uint32 &drawPrimitives);
-	void graphicsDispatchSwap();
+	void graphicsCreate(const EngineCreateConfig &config);
+	void graphicsDestroy();
+	void graphicsInitialize(); // opengl thread
+	void graphicsFinalize(); // opengl thread
+	void graphicsEmit(uint64 time); // control thread
+	void graphicsPrepare(uint64 time, uint32 &drawCalls, uint32 &drawPrimitives); // prepare thread
+	void graphicsDispatch(); // opengl thread
+	void graphicsSwap(); // opengl thread
 
 	void soundCreate(const EngineCreateConfig &config);
 	void soundDestroy();
@@ -43,21 +37,6 @@ namespace cage
 		}
 
 		VariableSmoothingBuffer<sint64, 100> corrections;
-	};
-
-	struct ClearOnScopeExit : private Immovable
-	{
-		template<class T>
-		explicit ClearOnScopeExit(T *&ptr) : ptr((void*&)ptr)
-		{}
-
-		~ClearOnScopeExit()
-		{
-			ptr = nullptr;
-		}
-
-	private:
-		void *&ptr;
 	};
 
 	extern EntityComponent *transformHistoryComponent;
