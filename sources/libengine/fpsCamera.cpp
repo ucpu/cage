@@ -123,14 +123,14 @@ namespace cage
 				return false;
 			}
 
-			bool keyPress(uint32 a, uint32, ModifiersFlags)
+			bool keyPress(uint32 key, ModifiersFlags)
 			{
-				return setKey(a, true);
+				return setKey(key, true);
 			}
 
-			bool keyRelease(uint32 a, uint32, ModifiersFlags)
+			bool keyRelease(uint32 key, ModifiersFlags)
 			{
-				return setKey(a, false);
+				return setKey(key, false);
 			}
 
 			void update()

@@ -59,6 +59,8 @@ namespace cage
 	private:
 		void *&ptr;
 	};
+
+	extern EntityComponent *transformHistoryComponent;
 }
 
 #endif

@@ -97,29 +97,29 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit listeners
-				for (Entity *e : ListenerComponent::component->entities())
+				for (Entity *e : engineEntities()->component<ListenerComponent>()->entities())
 				{
 					EmitListener c;
-					c.transform = e->value<TransformComponent>(TransformComponent::component);
-					if (e->has(TransformComponent::componentHistory))
-						c.transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
+					c.transform = e->value<TransformComponent>();
+					if (e->has(transformHistoryComponent))
+						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
 					else
 						c.transformHistory = c.transform;
-					c.listener = e->value<ListenerComponent>(ListenerComponent::component);
+					c.listener = e->value<ListenerComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->listeners.push_back(c);
 				}
 
 				// emit voices
-				for (Entity *e : SoundComponent::component->entities())
+				for (Entity *e : engineEntities()->component<SoundComponent>()->entities())
 				{
 					EmitSound c;
-					c.transform = e->value<TransformComponent>(TransformComponent::component);
-					if (e->has(TransformComponent::componentHistory))
-						c.transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
+					c.transform = e->value<TransformComponent>();
+					if (e->has(transformHistoryComponent))
+						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
 					else
 						c.transformHistory = c.transform;
-					c.sound = e->value<SoundComponent>(SoundComponent::component);
+					c.sound = e->value<SoundComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->sounds.push_back(c);
 				}
