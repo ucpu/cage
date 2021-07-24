@@ -7,10 +7,10 @@
 
 namespace cage
 {
-	struct EmitTransform : private Noncopyable
+	struct EmitTransform
 	{
 		TransformComponent current, history;
-		void *entityPointer = nullptr;
+		uintPtr entityId = 0;
 	};
 
 	struct EmitRender : public EmitTransform
@@ -67,6 +67,7 @@ namespace cage
 
 		uint32 outputDrawCalls = 0;
 		uint32 outputDrawPrimitives = 0;
+		uint32 frameIndex = 0;
 	};
 
 	extern Graphics *graphics;

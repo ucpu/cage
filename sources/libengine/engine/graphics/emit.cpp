@@ -14,7 +14,7 @@ namespace cage
 				ee.history = e->value<TransformComponent>(transformHistoryComponent);
 			else
 				ee.history = tr;
-			ee.entityPointer = e;
+			ee.entityId = (uintPtr)e;
 		}
 
 		void emittor(EmitBuffer &eb)
