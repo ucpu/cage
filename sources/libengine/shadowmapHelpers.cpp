@@ -46,8 +46,8 @@ namespace cage
 
 	Aabb getBoxForEntity(Entity *e)
 	{
-		CAGE_ASSERT(e->has(TransformComponent::component));
-		CAGE_ASSERT(e->has(RenderComponent::component));
+		CAGE_ASSERT(e->has<TransformComponent>());
+		CAGE_ASSERT(e->has<RenderComponent>());
 		CAGE_COMPONENT_ENGINE(Transform, t, e);
 		CAGE_COMPONENT_ENGINE(Render, r, e);
 		Aabb b = getBoxForAsset(r.object);
@@ -57,7 +57,7 @@ namespace cage
 	Aabb getBoxForScene(uint32 sceneMask)
 	{
 		Aabb res;
-		for (Entity *e : RenderComponent::component->entities())
+		for (Entity *e : engineEntities()->component<RenderComponent>()->entities())
 		{
 			CAGE_COMPONENT_ENGINE(Render, r, e);
 			if (r.sceneMask & sceneMask)
@@ -70,7 +70,7 @@ namespace cage
 	{
 		bool isEntityDirectionalLightWithShadowmap(Entity *light)
 		{
-			if (!light->has(TransformComponent::component) || !light->has(LightComponent::component) || !light->has(ShadowmapComponent::component))
+			if (!light->has<TransformComponent>() || !light->has<LightComponent>() || !light->has<ShadowmapComponent>())
 				return false;
 			CAGE_COMPONENT_ENGINE(Light, l, light);
 			return l.lightType == LightTypeEnum::Directional;
@@ -78,7 +78,7 @@ namespace cage
 
 		bool isEntityCamera(Entity *camera)
 		{
-			return camera->has(TransformComponent::component) && camera->has(CameraComponent::component);
+			return camera->has<TransformComponent>() && camera->has<CameraComponent>();
 		}
 	}
 

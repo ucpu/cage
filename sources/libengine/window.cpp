@@ -111,11 +111,7 @@ namespace cage
 						sint8 wheel;
 					};
 				} mouse;
-				struct
-				{
-					uint32 key;
-					uint32 scancode;
-				} key;
+				uint32 key;
 				ivec2 point;
 				uint32 codepoint;
 			};
@@ -149,7 +145,7 @@ namespace cage
 		public:
 			uint64 lastMouseButtonPressTimes[5] = { 0,0,0,0,0 }; // unused, left, right, unused, middle
 			ConcurrentQueue<Event> eventsQueue;
-			FlatSet<uint32> stateKeys, stateCodes;
+			FlatSet<uint32> stateKeys;
 			ivec2 stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
@@ -160,7 +156,7 @@ namespace cage
 #ifdef GCHL_WINDOWS_THREAD
 			Holder<Thread> windowThread;
 			Holder<Semaphore> windowSemaphore;
-			std::atomic<bool> stopping;
+			std::atomic<bool> stopping = false;
 			ivec2 mouseOffsetApi;
 			ConcurrentQueue<ivec2> mouseOffsetsThr;
 
@@ -210,7 +206,6 @@ namespace cage
 				ScopeLock l(windowsMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
-				stopping = false;
 				windowSemaphore = newSemaphore(0, 1);
 				static uint32 threadIndex = 0;
 				windowThread = newThread(Delegate<void()>().bind<WindowImpl, &WindowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
@@ -318,7 +313,7 @@ namespace cage
 			impl->eventsQueue.push(e);
 		}
 
-		void windowKeyCallback(GLFWwindow *w, int key, int scancode, int action, int mods)
+		void windowKeyCallback(GLFWwindow *w, int key, int, int action, int mods)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
@@ -337,8 +332,7 @@ namespace cage
 				CAGE_THROW_CRITICAL(Exception, "invalid key action");
 			}
 			e.modifiers = getKeyModifiers(mods);
-			e.key.key = key;
-			e.key.scancode = scancode;
+			e.key = key;
 			impl->eventsQueue.push(e);
 		}
 
@@ -653,12 +647,6 @@ namespace cage
 		return impl->stateKeys.count(key);
 	}
 
-	bool Window::keyboardScanCode(uint32 code) const
-	{
-		WindowImpl *impl = (WindowImpl *)this;
-		return impl->stateCodes.count(code);
-	}
-
 	void Window::processEvents()
 	{
 		WindowImpl *impl = (WindowImpl *)this;
@@ -678,18 +666,16 @@ namespace cage
 				impl->events.windowClose.dispatch();
 				break;
 			case Event::TypeEnum::KeyPress:
-				impl->stateKeys.insert(e.key.key);
-				impl->stateCodes.insert(e.key.scancode);
-				impl->events.keyPress.dispatch(e.key.key, e.key.scancode, e.modifiers);
-				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.modifiers);
+				impl->stateKeys.insert(e.key);
+				impl->events.keyPress.dispatch(e.key, e.modifiers);
+				impl->events.keyRepeat.dispatch(e.key, e.modifiers);
 				break;
 			case Event::TypeEnum::KeyRepeat:
-				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.modifiers);
+				impl->events.keyRepeat.dispatch(e.key, e.modifiers);
 				break;
 			case Event::TypeEnum::KeyRelease:
-				impl->events.keyRelease.dispatch(e.key.key, e.key.scancode, e.modifiers);
-				impl->stateKeys.erase(e.key.key);
-				impl->stateCodes.erase(e.key.scancode);
+				impl->events.keyRelease.dispatch(e.key, e.modifiers);
+				impl->stateKeys.erase(e.key);
 				break;
 			case Event::TypeEnum::KeyChar:
 				impl->events.keyChar.dispatch(e.codepoint);

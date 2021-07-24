@@ -4,17 +4,7 @@
 
 namespace cage
 {
-	EntityComponent *TransformComponent::component;
-	EntityComponent *TransformComponent::componentHistory;
-	EntityComponent *RenderComponent::component;
-	EntityComponent *SkeletalAnimationComponent::component;
-	EntityComponent *TextureAnimationComponent::component;
-	EntityComponent *LightComponent::component;
-	EntityComponent *ShadowmapComponent::component;
-	EntityComponent *TextComponent::component;
-	EntityComponent *CameraComponent::component;
-	EntityComponent *SoundComponent::component;
-	EntityComponent *ListenerComponent::component;
+	EntityComponent *transformHistoryComponent;
 
 	EngineControlThread &controlThread()
 	{

@@ -53,15 +53,12 @@ namespace cage
 
 	struct CAGE_ENGINE_API TransformComponent : public transform
 	{
-		static EntityComponent *component;
-		static EntityComponent *componentHistory;
 		using transform::transform;
 		using transform::operator =;
 	};
 
 	struct CAGE_ENGINE_API RenderComponent
 	{
-		static EntityComponent *component;
 		vec3 color = vec3::Nan();
 		real intensity = real::Nan();
 		real opacity = real::Nan();
@@ -71,7 +68,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API TextureAnimationComponent
 	{
-		static EntityComponent *component;
 		uint64 startTime = 0;
 		real speed = real::Nan();
 		real offset = real::Nan();
@@ -79,7 +75,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
-		static EntityComponent *component;
 		uint64 startTime = 0;
 		uint32 name = 0;
 		real speed = real::Nan();
@@ -95,7 +90,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API LightComponent
 	{
-		static EntityComponent *component;
 		vec3 attenuation = vec3(0, 0, 1); // constant, linear, quadratic
 		vec3 color = vec3(1);
 		real intensity = 1;
@@ -107,7 +101,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API ShadowmapComponent
 	{
-		static EntityComponent *component;
 		// directional: width, height, depth
 		// spot: near, far, unused
 		vec3 worldSize = vec3();
@@ -117,7 +110,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API TextComponent
 	{
-		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		vec3 color = vec3(1);
 		real intensity = 1;
@@ -144,7 +136,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraComponent : public CameraEffects
 	{
-		static EntityComponent *component;
 		vec3 ambientColor = vec3();
 		vec3 ambientDirectionalColor = vec3(); // fake forward light affected by ssao
 		union CameraUnion
@@ -167,7 +158,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundComponent
 	{
-		static EntityComponent *component;
 		uint64 startTime = 0;
 		uint32 name = 0;
 		uint32 sceneMask = 1;
@@ -176,7 +166,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
-		static EntityComponent *component;
 		uint32 sceneMask = 1;
 		real rolloffFactor = 1; // distance multiplier
 		real gain = 1; // linear amplitude multiplier
@@ -250,7 +239,10 @@ namespace cage
 	CAGE_ENGINE_API uint64 engineControlTime();
 }
 
-#define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::T##Component &C = (E)->value<::cage::T##Component>(::cage::T##Component::component);
+// deprecated
+#define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::T##Component &C = (E)->value<::cage::T##Component>();
+
+// deprecated
 #define CAGE_COMPONENT_GUI(T,C,E) ::cage::Gui##T##Component &C = (E)->value<::cage::Gui##T##Component>();
 
 #endif // guard_engine_h_73772AB49E6A4E6DB7F99E0D0151468D

@@ -623,9 +623,9 @@ namespace cage
 
 			void emitTransform(EmitTransforms *c, Entity *e)
 			{
-				c->current = e->value<TransformComponent>(TransformComponent::component);
-				if (e->has(TransformComponent::componentHistory))
-					c->history = e->value<TransformComponent>(TransformComponent::componentHistory);
+				c->current = e->value<TransformComponent>();
+				if (e->has(transformHistoryComponent))
+					c->history = e->value<TransformComponent>(transformHistoryComponent);
 				else
 					c->history = c->current;
 			}
@@ -649,36 +649,36 @@ namespace cage
 				emitWrite->fresh = true;
 
 				// emit renderable objects
-				for (Entity *e : RenderComponent::component->entities())
+				for (Entity *e : engineEntities()->component<RenderComponent>()->entities())
 				{
 					EmitObject c;
 					emitTransform(&c, e);
-					c.object = e->value<RenderComponent>(RenderComponent::component);
-					if (e->has(TextureAnimationComponent::component))
-						c.animatedTexture = systemMemory().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(TextureAnimationComponent::component));
-					if (e->has(SkeletalAnimationComponent::component))
-						c.animatedSkeleton = systemMemory().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>(SkeletalAnimationComponent::component));
+					c.object = e->value<RenderComponent>();
+					if (e->has<TextureAnimationComponent>())
+						c.animatedTexture = systemMemory().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>());
+					if (e->has<SkeletalAnimationComponent>())
+						c.animatedSkeleton = systemMemory().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>());
 					emitWrite->objects.push_back(std::move(c));
 				}
 
 				// emit renderable texts
-				for (Entity *e : TextComponent::component->entities())
+				for (Entity *e : engineEntities()->component<TextComponent>()->entities())
 				{
 					EmitText c;
 					emitTransform(&c, e);
-					c.text = e->value<TextComponent>(TextComponent::component);
+					c.text = e->value<TextComponent>();
 					emitWrite->texts.push_back(std::move(c));
 				}
 
 				// emit lights
-				for (Entity *e : LightComponent::component->entities())
+				for (Entity *e : engineEntities()->component<LightComponent>()->entities())
 				{
 					EmitLight c;
 					emitTransform(&c, e);
 					c.history.scale = c.current.scale = 1;
-					c.light = e->value<LightComponent>(LightComponent::component);
-					if (e->has(ShadowmapComponent::component))
-						c.shadowmap = systemMemory().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
+					c.light = e->value<LightComponent>();
+					if (e->has<ShadowmapComponent>())
+						c.shadowmap = systemMemory().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>());
 					emitWrite->lights.push_back(std::move(c));
 				}
 
@@ -690,12 +690,12 @@ namespace cage
 					effectsMask &= ~CameraEffectsFlags::Bloom;
 				if (confNoMotionBlur)
 					effectsMask &= ~CameraEffectsFlags::MotionBlur;
-				for (Entity *e : CameraComponent::component->entities())
+				for (Entity *e : engineEntities()->component<CameraComponent>()->entities())
 				{
 					EmitCamera c;
 					emitTransform(&c, e);
 					c.history.scale = c.current.scale = 1;
-					c.camera = e->value<CameraComponent>(CameraComponent::component);
+					c.camera = e->value<CameraComponent>();
 					c.camera.effects &= effectsMask;
 					c.entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(std::move(c));

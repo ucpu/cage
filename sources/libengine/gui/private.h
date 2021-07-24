@@ -93,9 +93,9 @@ namespace cage
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
 		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) = 0;
-		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
+		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) = 0;
+		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) = 0;
+		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyChar(uint32 key) = 0;
 	};
 
@@ -120,9 +120,9 @@ namespace cage
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
 	};
 
@@ -138,9 +138,9 @@ namespace cage
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
 	};
 

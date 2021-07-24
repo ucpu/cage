@@ -19,7 +19,7 @@ namespace cage
 		class EngineProfilingImpl : public EngineProfiling
 		{
 		public:
-			EventListener<bool(uint32, uint32, ModifiersFlags)> keyPressListener;
+			EventListener<bool(uint32, ModifiersFlags)> keyPressListener;
 			EventListener<bool()> updateListener;
 
 			uint32 panelIndex;
@@ -231,7 +231,7 @@ namespace cage
 				}
 			}
 
-			bool keyPress(uint32 key, uint32, ModifiersFlags mods)
+			bool keyPress(uint32 key, ModifiersFlags mods)
 			{
 				if (mods == keyModifiers)
 				{

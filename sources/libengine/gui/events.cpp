@@ -65,8 +65,8 @@ namespace cage
 			return false;
 		}
 
-		template<bool (WidgetItem::*F)(uint32, uint32, ModifiersFlags)>
-		bool passKeyEvent(GuiImpl *impl, uint32 a, uint32 b, ModifiersFlags m)
+		template<bool (WidgetItem::*F)(uint32, ModifiersFlags)>
+		bool passKeyEvent(GuiImpl *impl, uint32 key, ModifiersFlags m)
 		{
 			vec2 dummy;
 			if (!impl->eventPoint(impl->inputMouse, dummy))
@@ -74,7 +74,7 @@ namespace cage
 			bool res = false;
 			for (auto f : focused(impl))
 			{
-				if (f->widgetState.disabled || (f->*F)(a, b, m))
+				if (f->widgetState.disabled || (f->*F)(key, m))
 					res = true;
 			}
 			return res;
@@ -146,22 +146,22 @@ namespace cage
 		return false;
 	}
 
-	bool Gui::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool Gui::keyPress(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyPress>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&WidgetItem::keyPress>(impl, key, modifiers);
 	}
 
-	bool Gui::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool Gui::keyRepeat(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyRepeat>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&WidgetItem::keyRepeat>(impl, key, modifiers);
 	}
 
-	bool Gui::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool Gui::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyRelease>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&WidgetItem::keyRelease>(impl, key, modifiers);
 	}
 
 	bool Gui::keyChar(uint32 key)

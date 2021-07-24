@@ -301,7 +301,7 @@ namespace cage
 				return true;
 			}
 
-			virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override
+			virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override
 			{
 				uint32 &cursor = data.cursor;
 				uint32 len = utf32Length(data.value);

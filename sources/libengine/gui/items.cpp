@@ -205,17 +205,17 @@ namespace cage
 		return true;
 	}
 
-	bool WidgetItem::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyPress(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool WidgetItem::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRepeat(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool WidgetItem::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
@@ -253,17 +253,17 @@ namespace cage
 		return false;
 	}
 
-	bool LayoutItem::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyPress(uint32 key, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool LayoutItem::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyRepeat(uint32 key, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool LayoutItem::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		return false;
 	}
