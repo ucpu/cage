@@ -454,9 +454,9 @@ namespace cage
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
 				if (any(m->flags & ModelRenderFlags::VelocityWrite))
-					sm->mvpMatPrev = mvpPrev;
+					sm->mvpPrevMat = mvpPrev;
 				else
-					sm->mvpMatPrev = mvp;
+					sm->mvpPrevMat = mvp;
 				sm->normalMat = Mat3x4(inverse(mat3(model)));
 				sm->normalMat.data[2][3] = any(m->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)

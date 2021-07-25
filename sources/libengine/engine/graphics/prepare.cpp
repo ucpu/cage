@@ -146,6 +146,7 @@ namespace cage
 		struct PrepCamera : public PrepTransform
 		{
 			const EmitCamera *emit = nullptr;
+			CameraComponent camera;
 			Holder<Texture> target;
 
 			PrepCamera(const EmitCamera *e) : emit(e)
@@ -157,6 +158,8 @@ namespace cage
 			std::vector<UniModel> data;
 			std::vector<PointerRange<const Mat3x4>> armatures;
 			Holder<Model> model;
+			Holder<Texture> textures[MaxTexturesCountPerMaterial];
+			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
 		};
 
 		struct RendersCollection : private Noncopyable
@@ -200,7 +203,7 @@ namespace cage
 		struct LightsCollection : private Noncopyable
 		{
 			std::vector<ShadowedLight> shadowed;
-			std::vector<UniLight> unshadowed;
+			std::vector<UniLight> directional, spot, point;
 		};
 
 		struct TranslucentsInstances : private Noncopyable
@@ -239,6 +242,7 @@ namespace cage
 			const PrepLight *light = nullptr;
 			RendersCollection shadowers;
 			mat4 shadowMat;
+			TextureHandle depthTexture;
 		};
 
 		struct CameraPass : public CommonRenderPass
@@ -249,11 +253,27 @@ namespace cage
 			LightsCollection lights;
 			TranslucentsCollection translucents;
 			TextsCollection texts;
+
+			FrameBufferHandle renderTarget;
+			FrameBufferHandle gBufferTarget;
+			TextureHandle albedoTexture;
+			TextureHandle specialTexture;
+			TextureHandle normalTexture;
+			TextureHandle depthTexture;
+			TextureHandle colorTexture;
+			TextureHandle intermediateTexture;
+			TextureHandle velocityTexture;
+			TextureHandle ambientOcclusionTexture;
+			TextureHandle texSource;
+			TextureHandle texTarget;
 		};
 
 		struct Preparator
 		{
 			const EmitBuffer &emit;
+			const Holder<RenderQueue> &renderQueue = graphics->renderQueue;
+			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
+			const uint32 frameIndex = graphics->frameIndex;
 
 			uint64 prepareTime = 0;
 			real interFactor;
@@ -280,6 +300,7 @@ namespace cage
 			{
 				prepareTime = graphics->itc(emit.time, time, controlThread().updatePeriod());
 				interFactor = saturate(real(prepareTime - emit.time) / controlThread().updatePeriod());
+				windowResolution = engineWindow()->resolution();
 			}
 
 			bool loadGeneralAssets()
@@ -492,11 +513,25 @@ namespace cage
 				pt.modelPrev *= tr;
 			}
 
+			void updateCommonValues(PrepCamera &pc)
+			{
+				pc.camera = pc.emit->camera;
+
+				if (cnfNoAmbientOcclusion)
+					pc.camera.effects &= ~CameraEffectsFlags::AmbientOcclusion;
+				if (cnfNoMotionBlur)
+					pc.camera.effects &= ~CameraEffectsFlags::MotionBlur;
+				if (cnfNoBloom)
+					pc.camera.effects &= ~CameraEffectsFlags::Bloom;
+			}
+
 			void updateCommonValues()
 			{
 				for (auto &it : renders)
 					updateCommonValues(it);
 				for (auto &it : texts)
+					updateCommonValues(it);
+				for (auto &it : cameras)
 					updateCommonValues(it);
 			}
 
@@ -519,13 +554,83 @@ namespace cage
 					}
 				}
 				instances.data.push_back(sm);
+
 				if (pr.skeletalAnimation)
 				{
 					instances.armatures.push_back(pr.skeletalAnimation->armature);
 					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
 				}
-				CAGE_ASSERT(!instances.model || +instances.model == +mo);
-				instances.model = std::move(mo);
+
+				if (!instances.model)
+				{
+					instances.model = mo.share();
+
+					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
+					{
+						const uint32 n = instances.model->textureName(i);
+						if (!n)
+							continue;
+						instances.textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
+					}
+
+					instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = pr.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
+
+					if (instances.textures[CAGE_SHADER_TEXTURE_ALBEDO])
+					{
+						switch (instances.textures[CAGE_SHADER_TEXTURE_ALBEDO]->target())
+						{
+						case GL_TEXTURE_2D_ARRAY:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY;
+							break;
+						case GL_TEXTURE_CUBE_MAP:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE;
+							break;
+						default:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D;
+							break;
+						}
+					}
+					else
+						instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+
+					if (instances.textures[CAGE_SHADER_TEXTURE_SPECIAL])
+					{
+						switch (instances.textures[CAGE_SHADER_TEXTURE_SPECIAL]->target())
+						{
+						case GL_TEXTURE_2D_ARRAY:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY;
+							break;
+						case GL_TEXTURE_CUBE_MAP:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE;
+							break;
+						default:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D;
+							break;
+						}
+					}
+					else
+						instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+
+					if (instances.textures[CAGE_SHADER_TEXTURE_NORMAL])
+					{
+						switch (instances.textures[CAGE_SHADER_TEXTURE_NORMAL]->target())
+						{
+						case GL_TEXTURE_2D_ARRAY:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY;
+							break;
+						case GL_TEXTURE_CUBE_MAP:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE;
+							break;
+						default:
+							instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D;
+							break;
+						}
+					}
+					else
+						instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+				}
+
+				CAGE_ASSERT(+instances.model == +mo);
 			}
 
 			template<bool ShadowCastersOnly>
@@ -580,7 +685,7 @@ namespace cage
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
 			{
 				CAGE_ASSERT(pass.lodSelection.screenSize > 0);
-				if ((pr.render.sceneMask & pass.camera->emit->camera.sceneMask) == 0 || pr.render.object == 0)
+				if ((pr.render.sceneMask & pass.camera->camera.sceneMask) == 0 || pr.render.object == 0)
 					return;
 
 				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
@@ -634,7 +739,7 @@ namespace cage
 
 			static void initializeLodSelectionAndFrustum(CommonRenderPass &pass)
 			{
-				const auto &c = pass.camera->emit->camera;
+				const auto &c = pass.camera->camera;
 				switch (c.cameraType)
 				{
 				case CameraTypeEnum::Orthographic:
@@ -692,8 +797,8 @@ namespace cage
 
 			void generateCameraPass(CameraPass &pass)
 			{
-				const CameraComponent &cc = pass.camera->emit->camera;
-				
+				const CameraComponent &cc = pass.camera->camera;
+
 				pass.resolution = pass.camera->target ? pass.camera->target->resolution() : windowResolution;
 				pass.view = inverse(pass.camera->model);
 				pass.viewPrev = inverse(pass.camera->modelPrev);
@@ -727,30 +832,344 @@ namespace cage
 
 				// todo add renderable texts
 				// todo add lights
+
 				// todo generate shadowmaps passes
-				// todo prepare render targets
 			}
 
-			void generateCameraPasses()
+			TextureHandle prepareGTexture(const char *name, uint32 internalFormat, const ivec2 &resolution, bool enabled = true)
 			{
+				if (!enabled)
+					return {};
+				TextureHandle t = provisionalData->texture(name);
+				renderQueue->bind(t, 0);
+				renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				renderQueue->image2d(resolution, internalFormat);
+				return t;
+			}
+
+			void renderInstances(const RendersInstances &instances)
+			{
+				renderQueue->bind(instances.model);
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, instances.shaderRoutines);
+				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
+				{
+					const Holder<Texture> &t = instances.textures[i];
+					if (!t)
+						continue;
+					switch (t->target())
+					{
+					case GL_TEXTURE_2D_ARRAY:
+						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
+						break;
+					default:
+						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO + i);
+						break;
+					}
+				}
+				{
+					const ModelRenderFlags flags = instances.model->flags;
+					renderQueue->culling(!any(flags & ModelRenderFlags::TwoSided));
+					renderQueue->depthTest(any(flags & ModelRenderFlags::DepthTest));
+					renderQueue->depthWrite(any(flags & ModelRenderFlags::DepthWrite));
+				}
+				renderQueue->universalUniformArray<UniModel>(instances.data, CAGE_SHADER_UNIBLOCK_MESHES);
+				renderQueue->draw(numeric_cast<uint32>(instances.data.size()));
+				renderQueue->checkGlErrorDebug();
+			}
+
+			void renderEffect(CameraPass &pass)
+			{
+				renderQueue->colorTexture(0, pass.texTarget);
+#ifdef CAGE_DEBUG
+				renderQueue->checkFrameBuffer();
+#endif // CAGE_DEBUG
+				renderQueue->bind(pass.texSource);
+				//renderQueue->bind(modelSquare);
+				renderQueue->draw();
+				renderQueue->checkGlErrorDebug();
+				std::swap(pass.texSource, pass.texTarget);
+			}
+
+			void renderCameraPass(CameraPass &pass)
+			{
+				const auto graphicsDebugScope = renderQueue->namedScope("camera pass");
+
+				ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
+				gfCommonConfig.assets = engineAssets();
+				gfCommonConfig.provisionals = +provisionalData;
+				gfCommonConfig.queue = +renderQueue;
+				gfCommonConfig.resolution = pass.resolution;
+
+				renderQueue->universalUniformStruct(pass.viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
+				renderQueue->viewport(ivec2(), pass.resolution);
+
+				{ // deferred
+					const auto graphicsDebugScope = renderQueue->namedScope("deferred");
+
+					{ // prepare gBuffer
+						const auto graphicsDebugScope = renderQueue->namedScope("prepare gBuffer target");
+						pass.albedoTexture = prepareGTexture("albedoTexture", GL_RGB8, pass.resolution);
+						pass.specialTexture = prepareGTexture("specialTexture", GL_RG8, pass.resolution);
+						pass.normalTexture = prepareGTexture("normalTexture", GL_RGB16F, pass.resolution);
+						pass.colorTexture = prepareGTexture("colorTexture", GL_RGB16F, pass.resolution);
+						pass.velocityTexture = prepareGTexture("velocityTexture", GL_RG16F, pass.resolution, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur));
+						pass.depthTexture = prepareGTexture("depthTexture", GL_DEPTH_COMPONENT32, pass.resolution);
+						pass.intermediateTexture = prepareGTexture("intermediateTexture", GL_RGB16F, pass.resolution);
+						pass.ambientOcclusionTexture = prepareGTexture("ambientOcclusionTexture", GL_R8, max(pass.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u), any(pass.camera->camera.effects & CameraEffectsFlags::AmbientOcclusion));
+						renderQueue->checkGlErrorDebug();
+						pass.gBufferTarget = provisionalData->frameBufferDraw("gBuffer");
+						renderQueue->bind(pass.gBufferTarget);
+						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, pass.albedoTexture);
+						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, pass.specialTexture);
+						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, pass.normalTexture);
+						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, pass.colorTexture);
+						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur) ? pass.velocityTexture : TextureHandle());
+						renderQueue->depthTexture(pass.depthTexture);
+						renderQueue->activeAttachments(31);
+						renderQueue->checkFrameBuffer();
+						renderQueue->checkGlErrorDebug();
+
+						// clear
+						const auto cf = pass.camera->camera.clear;
+						if (any(cf))
+							renderQueue->clear(any(cf & CameraClearFlags::Color), any(cf & CameraClearFlags::Depth), any(cf & CameraClearFlags::Stencil));
+					}
+
+					{ // opaque objects
+						renderQueue->culling(true);
+						const auto graphicsDebugScope = renderQueue->namedScope("opaque objects");
+						renderQueue->bind(shaderGBuffer);
+						for (const auto &it : pass.opaque.data)
+							renderInstances(it.second);
+						renderQueue->resetAllState();
+						renderQueue->checkGlErrorDebug();
+					}
+
+					{ // render target
+						const auto graphicsDebugScope = renderQueue->namedScope("prepare render target");
+						pass.renderTarget = provisionalData->frameBufferDraw("renderTarget");
+						renderQueue->bind(pass.renderTarget);
+						renderQueue->clearFrameBuffer();
+						renderQueue->colorTexture(0, pass.colorTexture);
+						renderQueue->activeAttachments(1);
+						renderQueue->checkFrameBuffer();
+						renderQueue->checkGlErrorDebug();
+					}
+
+					{ // bind gBuffer textures for sampling
+						const auto graphicsDebugScope = renderQueue->namedScope("bind gBuffer textures");
+						renderQueue->bind(pass.albedoTexture, CAGE_SHADER_TEXTURE_ALBEDO);
+						renderQueue->bind(pass.specialTexture, CAGE_SHADER_TEXTURE_SPECIAL);
+						renderQueue->bind(pass.normalTexture, CAGE_SHADER_TEXTURE_NORMAL);
+						renderQueue->bind(pass.depthTexture, CAGE_SHADER_TEXTURE_DEPTH);
+						renderQueue->bind(pass.colorTexture, CAGE_SHADER_TEXTURE_COLOR);
+						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+						renderQueue->checkGlErrorDebug();
+					}
+
+					{ // lights
+						const auto graphicsDebugScope = renderQueue->namedScope("lighting");
+						const auto &bindLightType = [&](LightTypeEnum type, bool shadows)
+						{
+							uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
+							switch (type)
+							{
+							case LightTypeEnum::Directional:
+								shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+								renderQueue->bind(modelSquare);
+								renderQueue->cullFace(false);
+								break;
+							case LightTypeEnum::Spot:
+								shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+								renderQueue->bind(modelCone);
+								renderQueue->cullFace(true);
+								break;
+							case LightTypeEnum::Point:
+								shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+								renderQueue->bind(modelSphere);
+								renderQueue->cullFace(true);
+								break;
+							default:
+								CAGE_THROW_CRITICAL(Exception, "invalid light type");
+							}
+							renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+						};
+						renderQueue->blending(true);
+						renderQueue->blendFuncAdditive();
+						renderQueue->bind(shaderLighting);
+						for (const auto &l : pass.lights.shadowed)
+						{
+							bindLightType(l.light->emit->light.lightType, true);
+							renderQueue->bind(l.shadowmap->depthTexture, l.light->emit->light.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+							renderQueue->universalUniformStruct<UniLight>(l.data, CAGE_SHADER_UNIBLOCK_LIGHTS);
+							renderQueue->draw();
+						}
+						const std::pair<std::vector<UniLight> &, LightTypeEnum> types[] =
+						{
+							{ pass.lights.directional, LightTypeEnum::Directional },
+							{ pass.lights.spot, LightTypeEnum::Spot },
+							{ pass.lights.point, LightTypeEnum::Point },
+						};
+						for (const auto &t : types)
+						{
+							if (t.first.empty())
+								continue;
+							bindLightType(t.second, false);
+							renderQueue->universalUniformArray<UniLight>(t.first, CAGE_SHADER_UNIBLOCK_LIGHTS);
+							renderQueue->draw(numeric_cast<uint32>(t.first.size()));
+						}
+						renderQueue->resetAllState();
+						renderQueue->checkGlErrorDebug();
+					}
+				}
+
+				{ // opaque effects
+					const auto graphicsDebugScope2 = renderQueue->namedScope("opaque effects");
+					renderQueue->bind(pass.renderTarget);
+					renderQueue->clearFrameBuffer();
+					renderQueue->activeAttachments(1);
+					pass.texSource = pass.colorTexture;
+					pass.texTarget = pass.intermediateTexture;
+
+					const CameraEffectsFlags effects = pass.camera->camera.effects;
+					const auto &params = pass.camera->camera;
+
+					// ssao
+					if (any(effects & CameraEffectsFlags::AmbientOcclusion))
+					{
+						ScreenSpaceAmbientOcclusionConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceAmbientOcclusion &)cfg = params.ssao;
+						cfg.frameIndex = frameIndex;
+						cfg.inDepth = pass.depthTexture;
+						cfg.inNormal = pass.normalTexture;
+						cfg.outAo = pass.ambientOcclusionTexture;
+						cfg.viewProj = pass.viewProj;
+						screenSpaceAmbientOcclusion(cfg);
+					}
+
+					// ambient light
+					if ((pass.viewport.ambientLight + pass.viewport.ambientDirectionalLight) != vec4())
+					{
+						const auto graphicsDebugScope = renderQueue->namedScope("ambient light");
+						renderQueue->viewport(ivec2(), pass.resolution);
+						renderQueue->bind(shaderAmbient);
+						renderQueue->bind(modelSquare);
+						if (any(effects & CameraEffectsFlags::AmbientOcclusion))
+						{
+							renderQueue->bind(pass.ambientOcclusionTexture, CAGE_SHADER_TEXTURE_EFFECTS);
+							renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+							renderQueue->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 1);
+						}
+						else
+							renderQueue->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 0);
+						renderEffect(pass);
+					}
+
+					// depth of field
+					if (any(effects & CameraEffectsFlags::DepthOfField))
+					{
+						ScreenSpaceDepthOfFieldConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceDepthOfField &)cfg = params.depthOfField;
+						cfg.proj = pass.proj;
+						cfg.inDepth = pass.depthTexture;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						screenSpaceDepthOfField(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					// motion blur
+					if (any(effects & CameraEffectsFlags::MotionBlur))
+					{
+						ScreenSpaceMotionBlurConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceMotionBlur &)cfg = params.motionBlur;
+						cfg.inVelocity = pass.velocityTexture;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						screenSpaceMotionBlur(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					// eye adaptation
+					if (any(effects & CameraEffectsFlags::EyeAdaptation))
+					{
+						ScreenSpaceEyeAdaptationConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
+						cfg.cameraId = stringizer() + pass.camera->emit->entityId;
+						cfg.inColor = pass.texSource;
+						screenSpaceEyeAdaptationPrepare(cfg);
+					}
+
+					renderQueue->resetAllState();
+					renderQueue->viewport(ivec2(), pass.resolution);
+					renderQueue->bind(pass.renderTarget);
+					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
+				}
+
+				//renderCameraEffectsOpaque(pass);
+				//renderCameraTransparencies(pass);
+				//renderCameraEffectsFinal(pass);
+
+				{ // blit to destination
+					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
+					renderQueue->resetFrameBuffer();
+					renderQueue->bind(pass.texSource, 0);
+					renderQueue->depthTest(false);
+					renderQueue->depthWrite(false);
+					if (pass.camera->target)
+					{ // blit to target texture
+						renderQueue->colorTexture(0, pass.camera->target);
+						renderQueue->viewport(ivec2(), pass.resolution);
+						renderQueue->bind(shaderBlit);
+					}
+					else
+					{ // blit to window
+						renderQueue->viewport(ivec2(), windowResolution);
+						renderQueue->bind(shaderVisualizeColor);
+						renderQueue->uniform(0, 1.0 / vec2(windowResolution));
+					}
+					renderQueue->bind(modelSquare);
+					renderQueue->draw();
+					renderQueue->resetAllState();
+					renderQueue->resetAllTextures();
+					renderQueue->resetFrameBuffer();
+					renderQueue->checkGlErrorDebug();
+				}
+			}
+
+			void run()
+			{
+				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
+					return;
+				if (!loadGeneralAssets())
+					return;
+
+				copyEmitToPrep();
+				updateCommonValues();
+
+				// sort cameras
+				std::sort(cameras.begin(), cameras.end(), [](const PrepCamera &aa, const PrepCamera &bb) {
+					const auto a = aa.camera.cameraOrder;
+					const auto b = bb.camera.cameraOrder;
+					CAGE_ASSERT(a != b);
+					return a < b;
+				});
+
 				for (const auto &it : cameras)
 				{
 					CameraPass cam;
 					cam.camera = &it;
 					generateCameraPass(cam);
+					renderCameraPass(cam);
 				}
-			}
-
-			void prepare()
-			{
-				windowResolution = engineWindow()->resolution();
-				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
-					return;
-				if (!loadGeneralAssets())
-					return;
-				copyEmitToPrep();
-				updateCommonValues();
-				generateCameraPasses();
 			}
 		};
 	}
@@ -758,13 +1177,18 @@ namespace cage
 	void Graphics::prepare(uint64 time)
 	{
 		renderQueue->resetQueue();
-		outputDrawCalls = 0;
-		outputDrawPrimitives = 0;
 
 		if (auto lock = emitBuffersGuard->read())
 		{
 			Preparator prep(emitBuffers[lock.index()], time);
-			prep.prepare();
+			prep.run();
 		}
+
+		renderQueue->resetFrameBuffer();
+		renderQueue->resetAllTextures();
+		renderQueue->resetAllState();
+
+		outputDrawCalls = renderQueue->drawsCount();
+		outputDrawPrimitives = renderQueue->primitivesCount();
 	}
 }
