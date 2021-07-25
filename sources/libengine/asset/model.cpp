@@ -35,7 +35,6 @@ namespace cage
 			msh->flags = data.renderFlags;
 			msh->skeletonName = data.skeletonName;
 			msh->skeletonBones = data.skeletonBones;
-			msh->instancesLimitHint = data.instancesLimitHint;
 
 			context->assetHolder = std::move(msh).cast<void>();
 		}

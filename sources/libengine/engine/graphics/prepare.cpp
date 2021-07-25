@@ -2,6 +2,8 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/hashString.h>
+#include <cage-core/geometry.h>
+#include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/color.h>
 
@@ -21,6 +23,8 @@
 
 #include "graphics.h"
 
+#include <robin_hood.h>
+
 namespace cage
 {
 	// implemented in gui
@@ -31,8 +35,8 @@ namespace cage
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
-		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
+		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
 		struct Mat3x4
 		{
@@ -60,7 +64,7 @@ namespace cage
 		struct UniModel
 		{
 			mat4 mvpMat;
-			mat4 mvpPrevMat;
+			mat4 mvpMatPrev;
 			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
 			Mat3x4 mMat;
 			vec4 color; // color rgb is linear, and NOT alpha-premultiplied
@@ -82,7 +86,7 @@ namespace cage
 			mat4 vpInv;
 			vec4 eyePos;
 			vec4 eyeDir;
-			vec4 viewport;
+			vec4 viewport; // x, y, w, h
 			vec4 ambientLight;
 			vec4 ambientDirectionalLight;
 		};
@@ -93,7 +97,7 @@ namespace cage
 			mat4 modelPrev;
 		};
 
-		struct PrepSkeleton : private Noncopyable
+		struct PrepSkeleton : private Immovable
 		{
 			Holder<const SkeletonRig> rig;
 			Holder<const SkeletalAnimation> animation;
@@ -142,9 +146,109 @@ namespace cage
 		struct PrepCamera : public PrepTransform
 		{
 			const EmitCamera *emit = nullptr;
+			Holder<Texture> target;
 
 			PrepCamera(const EmitCamera *e) : emit(e)
 			{}
+		};
+
+		struct RendersInstances : private Noncopyable
+		{
+			std::vector<UniModel> data;
+			std::vector<PointerRange<const Mat3x4>> armatures;
+			Holder<Model> model;
+		};
+
+		struct RendersCollection : private Noncopyable
+		{
+			struct Key
+			{
+				Model *mo = nullptr;
+				bool skeleton = false;
+			};
+			struct Hasher
+			{
+				auto operator () (const Key &k) const
+				{
+					return std::hash<Model *>()(k.mo) + k.skeleton;
+				}
+				bool operator () (const Key &a, const Key &b) const
+				{
+					return a.mo == b.mo && a.skeleton == b.skeleton;
+				}
+			};
+			robin_hood::unordered_map<Key, RendersInstances, Hasher, Hasher> data;
+		};
+
+		struct TextsInstances : private Noncopyable
+		{
+			std::vector<PrepText *> data;
+		};
+
+		struct TextsCollection : private Noncopyable
+		{
+			robin_hood::unordered_map<Font *, TextsInstances> data;
+		};
+
+		struct ShadowedLight : private Noncopyable
+		{
+			PrepLight *light = nullptr;
+			UniLight data;
+			struct ShadowmapPass *shadowmap = nullptr;
+		};
+
+		struct LightsCollection : private Noncopyable
+		{
+			std::vector<ShadowedLight> shadowed;
+			std::vector<UniLight> unshadowed;
+		};
+
+		struct TranslucentsInstances : private Noncopyable
+		{
+			RendersInstances renders;
+			LightsCollection lights;
+			Aabb box; // world-space box for the renders - used for culling lights
+		};
+
+		struct TranslucentsCollection : private Noncopyable
+		{
+			std::vector<TranslucentsInstances> data;
+		};
+
+		struct CommonRenderPass : private Noncopyable
+		{
+			const PrepCamera *camera = nullptr;
+			Frustum frustum; // world-space frustum of the camera/shadow
+			mat4 view;
+			mat4 viewPrev;
+			mat4 proj;
+			mat4 viewProj;
+			mat4 viewProjPrev;
+			ivec2 resolution;
+
+			struct LodSelection
+			{
+				vec3 center; // center of camera (NOT light)
+				real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
+				bool orthographic = false;
+			} lodSelection;
+		};
+
+		struct ShadowmapPass : public CommonRenderPass
+		{
+			const PrepLight *light = nullptr;
+			RendersCollection shadowers;
+			mat4 shadowMat;
+		};
+
+		struct CameraPass : public CommonRenderPass
+		{
+			UniViewport viewport;
+			std::vector<ShadowmapPass> shadowmapPasses;
+			RendersCollection opaque;
+			LightsCollection lights;
+			TranslucentsCollection translucents;
+			TextsCollection texts;
 		};
 
 		struct Preparator
@@ -155,9 +259,15 @@ namespace cage
 			real interFactor;
 			ivec2 windowResolution;
 
+			bool cnfRenderMissingModels = confRenderMissingModels;
+			bool cnfRenderSkeletonBones = confRenderSkeletonBones;
+			bool cnfNoAmbientOcclusion = confNoAmbientOcclusion;
+			bool cnfNoMotionBlur = confNoMotionBlur;
+			bool cnfNoBloom = confNoBloom;
+
 			Holder<PointerRange<mat4>> tmpArmature = []() { PointerRangeHolder<mat4> prh; prh.resize(CAGE_SHADER_MAX_BONES); return prh; }();
 
-			Holder<Model> modelSquare, modelSphere, modelCone;
+			Holder<Model> modelSquare, modelSphere, modelCone, modelBone;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderFont;
 
@@ -181,6 +291,7 @@ namespace cage
 				modelSquare = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelSphere = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/sphere.obj"));
 				modelCone = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/cone.obj"));
+				modelBone = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
 				shaderAmbient = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
 				shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
 				shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
@@ -248,7 +359,7 @@ namespace cage
 				pr.object = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(pr.render.object);
 				if (!pr.object && !engineAssets()->tryGet<AssetSchemeIndexModel, Model>(pr.render.object))
 				{
-					if (!confRenderMissingModels)
+					if (!cnfRenderMissingModels)
 					{
 						pr.render.object = 0; // disable rendering further in the pipeline
 						return;
@@ -341,6 +452,7 @@ namespace cage
 				if (ps)
 				{
 					const uint32 bonesCount = ps->rig->bonesCount();
+					CAGE_ASSERT(bonesCount > 0);
 					CAGE_ASSERT(ps->animation->bonesCount() == bonesCount);
 					const real c = detail::evalCoefficientForSkeletalAnimation(+ps->animation, prepareTime, ps->params.startTime, ps->params.speed, ps->params.offset);
 					animateSkin(+ps->rig, +ps->animation, c, tmpArmature);
@@ -388,6 +500,247 @@ namespace cage
 					updateCommonValues(it);
 			}
 
+			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersInstances &instances)
+			{
+				UniModel sm;
+				sm.color = vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
+				sm.mMat = Mat3x4(pr.model);
+				sm.mvpMat = pass.viewProj * pr.model;
+				sm.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : sm.mvpMat;
+				sm.normalMat = Mat3x4(inverse(mat3(pr.model)));
+				sm.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				if (pr.textureAnimation)
+				{
+					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
+					if (t)
+					{
+						const auto &p = pr.textureAnimation->params;
+						sm.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
+					}
+				}
+				instances.data.push_back(sm);
+				if (pr.skeletalAnimation)
+				{
+					instances.armatures.push_back(pr.skeletalAnimation->armature);
+					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
+				}
+				CAGE_ASSERT(!instances.model || +instances.model == +mo);
+				instances.model = std::move(mo);
+			}
+
+			template<bool ShadowCastersOnly>
+			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersCollection &opaque, TranslucentsCollection &translucents)
+			{
+				if constexpr (ShadowCastersOnly)
+				{
+					if (none(mo->flags & ModelRenderFlags::ShadowCast))
+						return;
+				}
+
+				const Aabb box = mo->boundingBox() * pr.model;
+				if (!intersects(box, pass.frustum))
+					return;
+
+				if constexpr (!ShadowCastersOnly)
+				{
+					if (any(mo->flags & ModelRenderFlags::Translucent) || pr.render.opacity < 1)
+					{
+						translucents.data.emplace_back();
+						translucents.data.back().box = box;
+						addModels(pass, pr, std::move(mo), translucents.data.back().renders);
+						return;
+					}
+				}
+
+				addModels(pass, pr, std::move(mo), opaque.data[{ +mo, !!pr.skeletalAnimation }]);
+			}
+
+			template<bool ShadowCastersOnly>
+			void addModelsSkeleton(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
+			{
+				const auto &s = pr.skeletalAnimation->rig;
+				const auto &a = pr.skeletalAnimation->animation;
+				const auto &p = pr.skeletalAnimation->params;
+				const uint32 bonesCount = s->bonesCount();
+				const real c = detail::evalCoefficientForSkeletalAnimation(+a, prepareTime, p.startTime, p.speed, p.offset);
+				animateSkeleton(+s, +a, c, tmpArmature);
+				for (uint32 i = 0; i < bonesCount; i++)
+				{
+					PrepRender r(pr.emit);
+					r.model = pr.model * tmpArmature[i];
+					r.modelPrev = pr.modelPrev * tmpArmature[i];
+					r.render = pr.render;
+					r.render.color = colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
+					r.render.object = 0;
+					addModels<ShadowCastersOnly>(pass, r, modelBone.share(), opaque, translucents);
+				}
+			}
+
+			template<bool ShadowCastersOnly>
+			void addModels(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
+			{
+				CAGE_ASSERT(pass.lodSelection.screenSize > 0);
+				if ((pr.render.sceneMask & pass.camera->emit->camera.sceneMask) == 0 || pr.render.object == 0)
+					return;
+
+				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
+				{
+					addModelsSkeleton<ShadowCastersOnly>(pass, pr, opaque, translucents);
+					return;
+				}
+
+				if (pr.object)
+				{
+					CAGE_ASSERT(pr.object->lodsCount() > 0);
+					uint32 lod = 0;
+					if (pr.object->lodsCount() > 1)
+					{
+						real d = 1;
+						if (!pass.lodSelection.orthographic)
+						{
+							const vec4 ep4 = pr.model * vec4(0, 0, 0, 1);
+							CAGE_ASSERT(abs(ep4[3] - 1) < 1e-4);
+							d = distance(vec3(ep4), pass.lodSelection.center);
+						}
+						const real f = pass.lodSelection.screenSize * pr.object->worldSize / (d * pr.object->pixelsSize);
+						lod = pr.object->lodSelect(f);
+					}
+					for (uint32 msh : pr.object->models(lod))
+					{
+						Holder<Model> mo = engineAssets()->get<AssetSchemeIndexModel, Model>(msh);
+						if (mo)
+							addModels<ShadowCastersOnly>(pass, pr, std::move(mo), opaque, translucents);
+					}
+				}
+				else
+				{
+					Holder<Model> mo = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(pr.render.object);
+					if (mo)
+						addModels<ShadowCastersOnly>(pass, pr, std::move(mo), opaque, translucents);
+				}
+			}
+
+			void addModels(CameraPass &pass, const PrepRender &pr)
+			{
+				addModels<false>(pass, pr, pass.opaque, pass.translucents);
+			}
+
+			void addModels(ShadowmapPass &pass, const PrepRender &pr)
+			{
+				TranslucentsCollection trans;
+				addModels<true>(pass, pr, pass.shadowers, trans);
+				CAGE_ASSERT(trans.data.empty());
+			}
+
+			static void initializeLodSelectionAndFrustum(CommonRenderPass &pass)
+			{
+				const auto &c = pass.camera->emit->camera;
+				switch (c.cameraType)
+				{
+				case CameraTypeEnum::Orthographic:
+				{
+					pass.lodSelection.screenSize = c.camera.orthographicSize[1] * pass.resolution[1];
+					pass.lodSelection.orthographic = true;
+				} break;
+				case CameraTypeEnum::Perspective:
+					pass.lodSelection.screenSize = tan(c.camera.perspectiveFov * 0.5) * 2 * pass.resolution[1];
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
+				}
+				pass.lodSelection.center = vec3(pass.camera->model * vec4(0, 0, 0, 1));
+				pass.frustum = Frustum(pass.viewProj);
+			}
+
+			void generateShadowmapPass(ShadowmapPass &pass)
+			{
+				const LightComponent &lc = pass.light->emit->light;
+				const ShadowmapComponent &sc = *pass.light->emit->shadowmap;
+
+				pass.resolution = ivec2(sc.resolution);
+				pass.view = pass.viewPrev = inverse(pass.light->model);
+				switch (lc.lightType)
+				{
+				case LightTypeEnum::Directional:
+					pass.proj = orthographicProjection(-sc.worldSize[0], sc.worldSize[0], -sc.worldSize[1], sc.worldSize[1], -sc.worldSize[2], sc.worldSize[2]);
+					break;
+				case LightTypeEnum::Spot:
+					pass.proj = perspectiveProjection(lc.spotAngle, 1, sc.worldSize[0], sc.worldSize[1]);
+					break;
+				case LightTypeEnum::Point:
+					pass.proj = perspectiveProjection(degs(90), 1, sc.worldSize[0], sc.worldSize[1]);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid light type");
+				}
+				pass.viewProj = pass.viewProjPrev = pass.proj * pass.view;
+
+				constexpr mat4 bias = mat4(
+					0.5, 0.0, 0.0, 0.0,
+					0.0, 0.5, 0.0, 0.0,
+					0.0, 0.0, 0.5, 0.0,
+					0.5, 0.5, 0.5, 1.0);
+				pass.shadowMat = bias * pass.viewProj;
+
+				initializeLodSelectionAndFrustum(pass);
+
+				for (const PrepRender &pr : renders)
+					addModels(pass, pr);
+
+				// todo prepare render target
+			}
+
+			void generateCameraPass(CameraPass &pass)
+			{
+				const CameraComponent &cc = pass.camera->emit->camera;
+				
+				pass.resolution = pass.camera->target ? pass.camera->target->resolution() : windowResolution;
+				pass.view = inverse(pass.camera->model);
+				pass.viewPrev = inverse(pass.camera->modelPrev);
+				switch (cc.cameraType)
+				{
+				case CameraTypeEnum::Orthographic:
+				{
+					const vec2 &os = cc.camera.orthographicSize;
+					pass.proj = orthographicProjection(-os[0], os[0], -os[1], os[1], cc.near, cc.far);
+				} break;
+				case CameraTypeEnum::Perspective:
+					pass.proj = perspectiveProjection(cc.camera.perspectiveFov, real(pass.resolution[0]) / real(pass.resolution[1]), cc.near, cc.far);
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
+				}
+				pass.viewProj = pass.proj * pass.view;
+				pass.viewProjPrev = pass.proj * pass.viewPrev;
+
+				pass.viewport.vpInv = inverse(pass.viewProj);
+				pass.viewport.eyePos = pass.camera->model * vec4(0, 0, 0, 1);
+				pass.viewport.eyeDir = pass.camera->model * vec4(0, 0, -1, 0);
+				pass.viewport.ambientLight = vec4(colorGammaToLinear(cc.ambientColor) * cc.ambientIntensity, 0);
+				pass.viewport.ambientDirectionalLight = vec4(colorGammaToLinear(cc.ambientDirectionalColor) * cc.ambientDirectionalIntensity, 0);
+				pass.viewport.viewport = vec4(vec2(), vec2(pass.resolution));
+
+				initializeLodSelectionAndFrustum(pass);
+
+				for (const PrepRender &pr : renders)
+					addModels(pass, pr);
+
+				// todo add renderable texts
+				// todo add lights
+				// todo generate shadowmaps passes
+				// todo prepare render targets
+			}
+
+			void generateCameraPasses()
+			{
+				for (const auto &it : cameras)
+				{
+					CameraPass cam;
+					cam.camera = &it;
+					generateCameraPass(cam);
+				}
+			}
+
 			void prepare()
 			{
 				windowResolution = engineWindow()->resolution();
@@ -397,8 +750,7 @@ namespace cage
 					return;
 				copyEmitToPrep();
 				updateCommonValues();
-
-				// todo
+				generateCameraPasses();
 			}
 		};
 	}
@@ -406,6 +758,8 @@ namespace cage
 	void Graphics::prepare(uint64 time)
 	{
 		renderQueue->resetQueue();
+		outputDrawCalls = 0;
+		outputDrawPrimitives = 0;
 
 		if (auto lock = emitBuffersGuard->read())
 		{

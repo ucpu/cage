@@ -39,7 +39,6 @@ namespace cage
 		ModelRenderFlags flags = ModelRenderFlags::None;
 		uint32 skeletonName = 0;
 		uint32 skeletonBones = 0;
-		uint32 instancesLimitHint = 1;
 	};
 
 	CAGE_ENGINE_API Holder<Model> newModel();

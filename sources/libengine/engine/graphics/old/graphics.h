@@ -32,7 +32,7 @@ namespace cage
 		struct UniModel
 		{
 			mat4 mvpMat;
-			mat4 mvpPrevMat;
+			mat4 mvpMatPrev;
 			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
 			Mat3x4 mMat;
 			vec4 color; // color rgb is linear, and NOT alpha-premultiplied
