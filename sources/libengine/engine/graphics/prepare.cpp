@@ -38,6 +38,12 @@ namespace cage
 		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
 		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
+		template<class T>
+		PointerRange<T> subRange(PointerRange<T> base, uint32 off, uint32 num)
+		{
+			return { base.begin() + off, base.begin() + off + num };
+		}
+
 		struct Mat3x4
 		{
 			vec4 data[3];
@@ -166,18 +172,18 @@ namespace cage
 		{
 			struct Key
 			{
-				Model *mo = nullptr;
-				bool skeleton = false;
+				Model *model = nullptr;
+				bool skeletalAnimation = false;
 			};
 			struct Hasher
 			{
 				auto operator () (const Key &k) const
 				{
-					return std::hash<Model *>()(k.mo) + k.skeleton;
+					return std::hash<Model *>()(k.model) + k.skeletalAnimation;
 				}
 				bool operator () (const Key &a, const Key &b) const
 				{
-					return a.mo == b.mo && a.skeleton == b.skeleton;
+					return a.model == b.model && a.skeletalAnimation == b.skeletalAnimation;
 				}
 			};
 			robin_hood::unordered_map<Key, RendersInstances, Hasher, Hasher> data;
@@ -657,7 +663,7 @@ namespace cage
 					}
 				}
 
-				addModels(pass, pr, std::move(mo), opaque.data[{ +mo, !!pr.skeletalAnimation }]);
+				addModels(pass, pr, mo.share(), opaque.data[{ +mo, !!pr.skeletalAnimation }]);
 			}
 
 			template<bool ShadowCastersOnly>
@@ -848,6 +854,30 @@ namespace cage
 				return t;
 			}
 
+			void renderInstancesSkeletons(const RendersInstances &instances)
+			{
+				CAGE_ASSERT(instances.armatures.size() == instances.data.size());
+				const uint32 bones = instances.model->skeletonBones;
+				const uint32 drawLimit = min((uint32)CAGE_SHADER_MAX_INSTANCES, CAGE_SHADER_MAX_BONES / bones);
+				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, bones);
+				Mat3x4 tmpArmature[CAGE_SHADER_MAX_BONES];
+				uint32 off = 0;
+				while (off < instances.data.size())
+				{
+					const uint32 n = min(numeric_cast<uint32>(instances.data.size() - off), drawLimit);
+					for (uint32 i = 0; i < n; i++)
+					{
+						CAGE_ASSERT(instances.armatures[off + i].size() == bones);
+						detail::memcpy(tmpArmature + i * bones, instances.armatures[off + i].begin(), bones * sizeof(Mat3x4));
+					}
+					renderQueue->universalUniformArray(subRange<const Mat3x4>(tmpArmature, 0, n * bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
+					renderQueue->universalUniformArray(subRange<const UniModel>(instances.data, off, n), CAGE_SHADER_UNIBLOCK_MESHES);
+					renderQueue->draw(n);
+					off += n;
+				}
+				CAGE_ASSERT(off == instances.data.size());
+			}
+
 			void renderInstances(const RendersInstances &instances)
 			{
 				renderQueue->bind(instances.model);
@@ -876,8 +906,20 @@ namespace cage
 					renderQueue->depthTest(any(flags & ModelRenderFlags::DepthTest));
 					renderQueue->depthWrite(any(flags & ModelRenderFlags::DepthWrite));
 				}
-				renderQueue->universalUniformArray<UniModel>(instances.data, CAGE_SHADER_UNIBLOCK_MESHES);
-				renderQueue->draw(numeric_cast<uint32>(instances.data.size()));
+				if (instances.armatures.empty())
+				{
+					uint32 off = 0;
+					while (off < instances.data.size())
+					{
+						const uint32 n = min(numeric_cast<uint32>(instances.data.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
+						renderQueue->universalUniformArray(subRange<const UniModel>(instances.data, off, n), CAGE_SHADER_UNIBLOCK_MESHES);
+						renderQueue->draw(n);
+						off += n;
+					}
+					CAGE_ASSERT(off == instances.data.size());
+				}
+				else
+					renderInstancesSkeletons(instances);
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -1114,7 +1156,6 @@ namespace cage
 					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
 				}
 
-				//renderCameraEffectsOpaque(pass);
 				//renderCameraTransparencies(pass);
 				//renderCameraEffectsFinal(pass);
 
