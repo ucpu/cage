@@ -212,6 +212,7 @@ namespace cage
 				if (uubStaging.size() > 0)
 				{
 					uub = newUniformBuffer();
+					uub->setDebugName("universal uniform buffer");
 					uub->writeWhole(uubStaging);
 				}
 				uubObject = +uub;

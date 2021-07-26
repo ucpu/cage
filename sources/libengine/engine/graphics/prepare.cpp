@@ -132,7 +132,7 @@ namespace cage
 		{
 			const EmitText *emit = nullptr;
 			TextComponent text;
-			Holder<Font> font;
+			Holder<const Font> font;
 			std::vector<uint32> glyphs;
 			FontFormat format;
 			vec3 color;
@@ -144,6 +144,9 @@ namespace cage
 		struct PrepLight : public PrepTransform
 		{
 			const EmitLight *emit = nullptr;
+			LightComponent light;
+			mat4 mMat; // light model matrix
+			Sphere sphere; // world-space sphere of influence - used for culling
 
 			PrepLight(const EmitLight *e) : emit(e)
 			{}
@@ -172,14 +175,14 @@ namespace cage
 		{
 			struct Key
 			{
-				Model *model = nullptr;
+				const Model *model = nullptr;
 				bool skeletalAnimation = false;
 			};
 			struct Hasher
 			{
 				auto operator () (const Key &k) const
 				{
-					return std::hash<Model *>()(k.model) + k.skeletalAnimation;
+					return std::hash<const Model *>()(k.model) + k.skeletalAnimation;
 				}
 				bool operator () (const Key &a, const Key &b) const
 				{
@@ -191,19 +194,19 @@ namespace cage
 
 		struct TextsInstances : private Noncopyable
 		{
-			std::vector<PrepText *> data;
+			std::vector<const PrepText *> data;
 		};
 
 		struct TextsCollection : private Noncopyable
 		{
-			robin_hood::unordered_map<Font *, TextsInstances> data;
+			robin_hood::unordered_map<const Font *, TextsInstances> data;
 		};
 
-		struct ShadowedLight : private Noncopyable
+		struct ShadowedLight
 		{
-			PrepLight *light = nullptr;
+			const PrepLight *light = nullptr;
 			UniLight data;
-			struct ShadowmapPass *shadowmap = nullptr;
+			const struct ShadowmapPass *shadowmap = nullptr;
 		};
 
 		struct LightsCollection : private Noncopyable
@@ -254,7 +257,7 @@ namespace cage
 		struct CameraPass : public CommonRenderPass
 		{
 			UniViewport viewport;
-			std::vector<ShadowmapPass> shadowmapPasses;
+			std::vector<Holder<ShadowmapPass>> shadowmapPasses;
 			RendersCollection opaque;
 			LightsCollection lights;
 			TranslucentsCollection translucents;
@@ -519,6 +522,52 @@ namespace cage
 				pt.modelPrev *= tr;
 			}
 
+			static real lightRange(const vec3 &color, const vec3 &attenuation)
+			{
+				real c = max(color[0], max(color[1], color[2]));
+				if (c <= 1e-5)
+					return 0;
+				real e = c * 100;
+				real x = attenuation[0], y = attenuation[1], z = attenuation[2];
+				if (z < 1e-5)
+				{
+					CAGE_ASSERT(y > 1e-5);
+					return (e - x) / y;
+				}
+				return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
+			}
+
+			static mat4 spotConeModelMatrix(real range, rads angle)
+			{
+				real xy = tan(angle * 0.5);
+				vec3 scale = vec3(xy, xy, 1) * range;
+				return mat4(vec3(), quat(), scale);
+			}
+
+			void updateCommonValues(PrepLight &pl)
+			{
+				pl.light = pl.emit->light;
+
+				switch (pl.light.lightType)
+				{
+				case LightTypeEnum::Directional:
+					pl.mMat = mat4(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1); // full screen quad
+					pl.sphere = Sphere(vec3(), real::Infinity());
+					break;
+				case LightTypeEnum::Spot:
+					pl.mMat = pl.model * spotConeModelMatrix(lightRange(pl.light.color, pl.light.attenuation), pl.light.spotAngle);
+					pl.sphere = Sphere(vec3(), real::Infinity()); // todo fit sphere on the cone
+					break;
+				case LightTypeEnum::Point:
+					pl.mMat = pl.model * mat4::scale(lightRange(pl.light.color, pl.light.attenuation));
+					pl.sphere = Sphere(vec3(), 1) * pl.mMat;
+					pl.sphere = Sphere(vec3(), real::Infinity()); // todo temporary hack
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid light type");
+				}
+			}
+
 			void updateCommonValues(PrepCamera &pc)
 			{
 				pc.camera = pc.emit->camera;
@@ -537,29 +586,31 @@ namespace cage
 					updateCommonValues(it);
 				for (auto &it : texts)
 					updateCommonValues(it);
+				for (auto &it : lights)
+					updateCommonValues(it);
 				for (auto &it : cameras)
 					updateCommonValues(it);
 			}
 
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersInstances &instances)
 			{
-				UniModel sm;
-				sm.color = vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
-				sm.mMat = Mat3x4(pr.model);
-				sm.mvpMat = pass.viewProj * pr.model;
-				sm.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : sm.mvpMat;
-				sm.normalMat = Mat3x4(inverse(mat3(pr.model)));
-				sm.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				UniModel um;
+				um.color = vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
+				um.mMat = Mat3x4(pr.model);
+				um.mvpMat = pass.viewProj * pr.model;
+				um.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
+				um.normalMat = Mat3x4(inverse(mat3(pr.model)));
+				um.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (pr.textureAnimation)
 				{
 					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
 					if (t)
 					{
 						const auto &p = pr.textureAnimation->params;
-						sm.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
+						um.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
 					}
 				}
-				instances.data.push_back(sm);
+				instances.data.push_back(um);
 
 				if (pr.skeletalAnimation)
 				{
@@ -691,7 +742,7 @@ namespace cage
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
 			{
 				CAGE_ASSERT(pass.lodSelection.screenSize > 0);
-				if ((pr.render.sceneMask & pass.camera->camera.sceneMask) == 0 || pr.render.object == 0)
+				if (pr.render.object == 0)
 					return;
 
 				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
@@ -743,6 +794,56 @@ namespace cage
 				CAGE_ASSERT(trans.data.empty());
 			}
 
+			void addLight(const PrepLight &pl, const mat4 &viewProj, const ShadowmapPass *shadowmap, LightsCollection &outputs)
+			{
+				UniLight ul;
+				if (pl.light.lightType == LightTypeEnum::Directional)
+					ul.mvpMat = pl.mMat;
+				else
+					ul.mvpMat = viewProj * pl.mMat;
+				ul.color = vec4(colorGammaToLinear(pl.light.color) * pl.light.intensity, cos(pl.light.spotAngle * 0.5));
+				ul.attenuation = vec4(pl.light.attenuation, pl.light.spotExponent);
+				ul.direction = vec4(normalize(vec3(pl.model * vec4(0, 0, -1, 0))), shadowmap ? pl.emit->shadowmap->normalOffsetScale : 0);
+				ul.position = pl.model * vec4(0, 0, 0, 1);
+
+				if (shadowmap)
+				{
+					ul.shadowMat = shadowmap->shadowMat;
+					ShadowedLight sl;
+					sl.data = ul;
+					sl.shadowmap = shadowmap;
+					sl.light = &pl;
+					outputs.shadowed.push_back(sl);
+				}
+				else
+				{
+					switch (pl.light.lightType)
+					{
+					case LightTypeEnum::Directional:
+						outputs.directional.push_back(ul);
+						break;
+					case LightTypeEnum::Spot:
+						outputs.spot.push_back(ul);
+						break;
+					case LightTypeEnum::Point:
+						outputs.point.push_back(ul);
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid light type");
+					}
+				}
+			}
+
+			void addLight(CameraPass &pass, const PrepLight &pl, const ShadowmapPass *shadowmap)
+			{
+				addLight(pl, pass.viewProj, shadowmap, pass.lights);
+			}
+
+			void addLight(TranslucentsInstances &translucents, const PrepLight &pl, const mat4 &viewProj, const ShadowmapPass *shadowmap)
+			{
+				addLight(pl, viewProj, shadowmap, translucents.lights);
+			}
+
 			static void initializeLodSelectionAndFrustum(CommonRenderPass &pass)
 			{
 				const auto &c = pass.camera->camera;
@@ -763,9 +864,9 @@ namespace cage
 				pass.frustum = Frustum(pass.viewProj);
 			}
 
-			void generateShadowmapPass(ShadowmapPass &pass)
+			void initializeShadowmapPass(ShadowmapPass &pass)
 			{
-				const LightComponent &lc = pass.light->emit->light;
+				const LightComponent &lc = pass.light->light;
 				const ShadowmapComponent &sc = *pass.light->emit->shadowmap;
 
 				pass.resolution = ivec2(sc.resolution);
@@ -794,11 +895,12 @@ namespace cage
 				pass.shadowMat = bias * pass.viewProj;
 
 				initializeLodSelectionAndFrustum(pass);
+			}
 
+			void generateShadowmapPass(ShadowmapPass &pass)
+			{
 				for (const PrepRender &pr : renders)
 					addModels(pass, pr);
-
-				// todo prepare render target
 			}
 
 			void generateCameraPass(CameraPass &pass)
@@ -834,12 +936,43 @@ namespace cage
 				initializeLodSelectionAndFrustum(pass);
 
 				for (const PrepRender &pr : renders)
+				{
+					if ((pr.render.sceneMask & cc.sceneMask) == 0)
+						continue;
 					addModels(pass, pr);
+				}
 
 				// todo add renderable texts
-				// todo add lights
 
-				// todo generate shadowmaps passes
+				for (const PrepLight &pl : lights)
+				{
+					if ((pl.light.sceneMask & cc.sceneMask) == 0)
+						continue;
+					if (!intersects(pl.sphere, pass.frustum))
+						continue;
+
+					ShadowmapPass *shadowmap = nullptr;
+					if (pl.emit->shadowmap)
+					{
+						Holder<ShadowmapPass> sp = systemMemory().createHolder<ShadowmapPass>();
+						sp->light = &pl;
+						sp->camera = pass.camera;
+						initializeShadowmapPass(*sp);
+						shadowmap = +sp;
+						pass.shadowmapPasses.push_back(std::move(sp));
+					}
+
+					addLight(pass, pl, shadowmap);
+					for (TranslucentsInstances &ti : pass.translucents.data)
+					{
+						if (!intersects(pl.sphere, ti.box))
+							continue;
+						addLight(ti, pl, pass.viewProj, shadowmap);
+					}
+				}
+
+				for (const auto &it : pass.shadowmapPasses)
+					generateShadowmapPass(*it);
 			}
 
 			TextureHandle prepareGTexture(const char *name, uint32 internalFormat, const ivec2 &resolution, bool enabled = true)
@@ -947,7 +1080,6 @@ namespace cage
 				gfCommonConfig.resolution = pass.resolution;
 
 				renderQueue->universalUniformStruct(pass.viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
-				renderQueue->viewport(ivec2(), pass.resolution);
 
 				{ // deferred
 					const auto graphicsDebugScope = renderQueue->namedScope("deferred");
@@ -976,6 +1108,7 @@ namespace cage
 						renderQueue->checkGlErrorDebug();
 
 						// clear
+						renderQueue->viewport(ivec2(), pass.resolution);
 						const auto cf = pass.camera->camera.clear;
 						if (any(cf))
 							renderQueue->clear(any(cf & CameraClearFlags::Color), any(cf & CameraClearFlags::Depth), any(cf & CameraClearFlags::Stencil));
@@ -1040,6 +1173,8 @@ namespace cage
 							}
 							renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						};
+						renderQueue->viewport(ivec2(), pass.resolution);
+						renderQueue->culling(true);
 						renderQueue->blending(true);
 						renderQueue->blendFuncAdditive();
 						renderQueue->bind(shaderLighting);
@@ -1061,8 +1196,15 @@ namespace cage
 							if (t.first.empty())
 								continue;
 							bindLightType(t.second, false);
-							renderQueue->universalUniformArray<UniLight>(t.first, CAGE_SHADER_UNIBLOCK_LIGHTS);
-							renderQueue->draw(numeric_cast<uint32>(t.first.size()));
+							uint32 off = 0;
+							while (off < t.first.size())
+							{
+								const uint32 n = min(numeric_cast<uint32>(t.first.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
+								renderQueue->universalUniformArray(subRange<const UniLight>(t.first, off, n), CAGE_SHADER_UNIBLOCK_LIGHTS);
+								renderQueue->draw(n);
+								off += n;
+							}
+							CAGE_ASSERT(off == t.first.size());
 						}
 						renderQueue->resetAllState();
 						renderQueue->checkGlErrorDebug();
@@ -1151,12 +1293,15 @@ namespace cage
 					}
 
 					renderQueue->resetAllState();
+				}
+
+				{
 					renderQueue->viewport(ivec2(), pass.resolution);
 					renderQueue->bind(pass.renderTarget);
 					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
-				}
 
-				//renderCameraTransparencies(pass);
+					//renderCameraTransparencies(pass);
+				}
 
 				{ // final effects
 					const auto graphicsDebugScope2 = renderQueue->namedScope("final effects");
@@ -1215,9 +1360,6 @@ namespace cage
 					}
 
 					renderQueue->resetAllState();
-					renderQueue->viewport(ivec2(), pass.resolution);
-					renderQueue->bind(pass.renderTarget);
-					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
 				}
 
 				{ // blit to destination
