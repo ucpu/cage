@@ -1157,7 +1157,68 @@ namespace cage
 				}
 
 				//renderCameraTransparencies(pass);
-				//renderCameraEffectsFinal(pass);
+
+				{ // final effects
+					const auto graphicsDebugScope2 = renderQueue->namedScope("final effects");
+
+					const CameraEffectsFlags effects = pass.camera->camera.effects;
+					const auto &params = pass.camera->camera;
+
+					// bloom
+					if (any(effects & CameraEffectsFlags::Bloom))
+					{
+						ScreenSpaceBloomConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceBloom &)cfg = params.bloom;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						screenSpaceBloom(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					// eye adaptation
+					if (any(effects & CameraEffectsFlags::EyeAdaptation))
+					{
+						ScreenSpaceEyeAdaptationConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
+						cfg.cameraId = stringizer() + pass.camera->emit->entityId;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						screenSpaceEyeAdaptationApply(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					// final screen effects
+					if (any(effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+					{
+						ScreenSpaceTonemapConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						(ScreenSpaceTonemap &)cfg = params.tonemap;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						cfg.tonemapEnabled = any(effects & CameraEffectsFlags::ToneMapping);
+						cfg.gamma = any(effects & CameraEffectsFlags::GammaCorrection) ? params.gamma : 1;
+						screenSpaceTonemap(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					// fxaa
+					if (any(effects & CameraEffectsFlags::AntiAliasing))
+					{
+						ScreenSpaceFastApproximateAntiAliasingConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+						cfg.inColor = pass.texSource;
+						cfg.outColor = pass.texTarget;
+						screenSpaceFastApproximateAntiAliasing(cfg);
+						std::swap(pass.texSource, pass.texTarget);
+					}
+
+					renderQueue->resetAllState();
+					renderQueue->viewport(ivec2(), pass.resolution);
+					renderQueue->bind(pass.renderTarget);
+					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
+				}
 
 				{ // blit to destination
 					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
