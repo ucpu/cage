@@ -24,6 +24,7 @@
 #include "graphics.h"
 
 #include <robin_hood.h>
+#include <algorithm>
 
 namespace cage
 {
@@ -123,6 +124,7 @@ namespace cage
 			Holder<const RenderObject> object;
 			Holder<PrepSkeleton> skeletalAnimation;
 			Holder<PrepTexture> textureAnimation;
+			vec3 center;
 
 			PrepRender(const EmitRender *e) : emit(e)
 			{}
@@ -157,6 +159,7 @@ namespace cage
 			const EmitCamera *emit = nullptr;
 			CameraComponent camera;
 			Holder<Texture> target;
+			vec3 center;
 
 			PrepCamera(const EmitCamera *e) : emit(e)
 			{}
@@ -220,6 +223,7 @@ namespace cage
 			RendersInstances renders;
 			LightsCollection lights;
 			Aabb box; // world-space box for the renders - used for culling lights
+			real distToCam2; // used for sorting back-to-front
 		};
 
 		struct TranslucentsCollection : private Noncopyable
@@ -230,7 +234,6 @@ namespace cage
 		struct CommonRenderPass : private Noncopyable
 		{
 			const PrepCamera *camera = nullptr;
-			Frustum frustum; // world-space frustum of the camera/shadow
 			mat4 view;
 			mat4 viewPrev;
 			mat4 proj;
@@ -329,8 +332,10 @@ namespace cage
 					ps.emplace_back(&it);
 				for (auto &it : ps)
 				{
-					it.model = mat4(interpolate(it.emit->history, it.emit->current, interFactor));
-					it.modelPrev = mat4(interpolate(it.emit->history, it.emit->current, interFactor - 0.2));
+					const transform &a = it.emit->history;
+					const transform &b = it.emit->current;
+					it.model = mat4(interpolate(a, b, interFactor));
+					it.modelPrev = mat4(interpolate(a, b, interFactor - 0.2));
 				}
 			}
 
@@ -383,6 +388,8 @@ namespace cage
 					}
 					pr.render.object = HashString("cage/model/fake.obj");
 				}
+
+				pr.center = vec3(pr.model * vec4(0, 0, 0, 1));
 
 				Holder<PrepTexture> &pt = pr.textureAnimation;
 				if (pr.emit->textureAnimation)
@@ -559,6 +566,7 @@ namespace cage
 			void updateCommonValues(PrepCamera &pc)
 			{
 				pc.camera = pc.emit->camera;
+				pc.center = vec3(pc.model * vec4(0, 0, 0, 1));
 
 				if (cnfNoAmbientOcclusion)
 					pc.camera.effects &= ~CameraEffectsFlags::AmbientOcclusion;
@@ -687,8 +695,7 @@ namespace cage
 						return;
 				}
 
-				const Aabb box = mo->boundingBox() * pr.model;
-				if (!intersects(box, pass.frustum))
+				if (!intersects(mo->boundingBox(), Frustum(pass.viewProj * pr.model)))
 					return;
 
 				if constexpr (!ShadowCastersOnly)
@@ -696,7 +703,8 @@ namespace cage
 					if (any(mo->flags & ModelRenderFlags::Translucent) || pr.render.opacity < 1)
 					{
 						translucents.data.emplace_back();
-						translucents.data.back().box = box;
+						translucents.data.back().box = mo->boundingBox() * pr.model;
+						translucents.data.back().distToCam2 = distanceSquared(pass.camera->center, pr.center);
 						addModels(pass, pr, std::move(mo), translucents.data.back().renders);
 						return;
 					}
@@ -849,7 +857,6 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "invalid camera type");
 				}
 				pass.lodSelection.center = vec3(pass.camera->model * vec4(0, 0, 0, 1));
-				pass.frustum = Frustum(pass.viewProj);
 			}
 
 			void initializeShadowmapPass(ShadowmapPass &pass)
@@ -930,13 +937,15 @@ namespace cage
 					addModels(pass, pr);
 				}
 
+				std::sort(pass.translucents.data.begin(), pass.translucents.data.end(), [](const TranslucentsInstances &a, const TranslucentsInstances &b) { return a.distToCam2 > b.distToCam2; });
+
 				// todo add renderable texts
 
 				for (const PrepLight &pl : lights)
 				{
 					if ((pl.light.sceneMask & cc.sceneMask) == 0)
 						continue;
-					if (!intersects(pl.shape, pass.frustum))
+					if (!intersects(pl.shape, Frustum(pass.viewProj)))
 						continue;
 
 					ShadowmapPass *shadowmap = nullptr;
@@ -1087,6 +1096,40 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
+			template<class Binder>
+			void renderLightsCollection(const LightsCollection &lights, const Binder &bindLightType)
+			{
+				for (const auto &l : lights.shadowed)
+				{
+					bindLightType(l.light->light.lightType, true);
+					renderQueue->bind(l.shadowmap->shadowTexture, l.light->light.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+					renderQueue->universalUniformStruct<UniLight>(l.data, CAGE_SHADER_UNIBLOCK_LIGHTS);
+					renderQueue->draw();
+				}
+
+				const std::pair<const std::vector<UniLight> &, LightTypeEnum> types[] =
+				{
+					{ lights.directional, LightTypeEnum::Directional },
+					{ lights.spot, LightTypeEnum::Spot },
+					{ lights.point, LightTypeEnum::Point },
+				};
+				for (const auto &t : types)
+				{
+					if (t.first.empty())
+						continue;
+					bindLightType(t.second, false);
+					uint32 off = 0;
+					while (off < t.first.size())
+					{
+						const uint32 n = min(numeric_cast<uint32>(t.first.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
+						renderQueue->universalUniformArray(subRange<const UniLight>(t.first, off, n), CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->draw(n);
+						off += n;
+					}
+					CAGE_ASSERT(off == t.first.size());
+				}
+			}
+
 			void renderCameraPass(CameraPass &pass)
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("camera pass");
@@ -1142,7 +1185,7 @@ namespace cage
 				gfCommonConfig.resolution = pass.resolution;
 
 				{ // deferred
-					const auto graphicsDebugScope = renderQueue->namedScope("deferred");
+					const auto graphicsDebugScope = renderQueue->namedScope("deferred pass");
 
 					renderQueue->universalUniformStruct(pass.viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 
@@ -1178,6 +1221,7 @@ namespace cage
 
 					{ // lights
 						const auto graphicsDebugScope = renderQueue->namedScope("lighting");
+
 						const auto &bindLightType = [&](LightTypeEnum type, bool shadows)
 						{
 							uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
@@ -1203,39 +1247,15 @@ namespace cage
 							}
 							renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						};
+
 						renderQueue->viewport(ivec2(), pass.resolution);
 						renderQueue->culling(true);
 						renderQueue->blending(true);
 						renderQueue->blendFuncAdditive();
 						renderQueue->bind(shaderLighting);
-						for (const auto &l : pass.lights.shadowed)
-						{
-							bindLightType(l.light->light.lightType, true);
-							renderQueue->bind(l.shadowmap->shadowTexture, l.light->light.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-							renderQueue->universalUniformStruct<UniLight>(l.data, CAGE_SHADER_UNIBLOCK_LIGHTS);
-							renderQueue->draw();
-						}
-						const std::pair<std::vector<UniLight> &, LightTypeEnum> types[] =
-						{
-							{ pass.lights.directional, LightTypeEnum::Directional },
-							{ pass.lights.spot, LightTypeEnum::Spot },
-							{ pass.lights.point, LightTypeEnum::Point },
-						};
-						for (const auto &t : types)
-						{
-							if (t.first.empty())
-								continue;
-							bindLightType(t.second, false);
-							uint32 off = 0;
-							while (off < t.first.size())
-							{
-								const uint32 n = min(numeric_cast<uint32>(t.first.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
-								renderQueue->universalUniformArray(subRange<const UniLight>(t.first, off, n), CAGE_SHADER_UNIBLOCK_LIGHTS);
-								renderQueue->draw(n);
-								off += n;
-							}
-							CAGE_ASSERT(off == t.first.size());
-						}
+
+						renderLightsCollection(pass.lights, bindLightType);
+
 						renderQueue->resetAllState();
 						renderQueue->checkGlErrorDebug();
 					}
@@ -1323,15 +1343,107 @@ namespace cage
 						screenSpaceEyeAdaptationPrepare(cfg);
 					}
 
+					if (texSource != colorTexture)
+					{
+						renderQueue->colorTexture(0, texTarget);
+						renderQueue->bind(shaderBlit);
+						renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
+						renderQueue->draw();
+						renderQueue->checkGlErrorDebug();
+						std::swap(texSource, texTarget);
+					}
+					CAGE_ASSERT(texSource == colorTexture);
+					CAGE_ASSERT(texTarget == intermediateTexture);
+
 					renderQueue->resetAllState();
 				}
 
 				{
-					renderQueue->viewport(ivec2(), pass.resolution);
-					renderQueue->bind(renderTarget);
-					renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
+					const auto graphicsDebugScope = renderQueue->namedScope("forward pass");
 
-					//renderCameraTransparencies(pass);
+					renderQueue->bind(renderTarget);
+					renderQueue->clearFrameBuffer();
+					renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
+					renderQueue->activeAttachments(1);
+					renderQueue->viewport(ivec2(), pass.resolution);
+
+					renderQueue->colorTexture(0, colorTexture);
+					renderQueue->depthTexture(depthTexture);
+					renderQueue->activeAttachments(1);
+					renderQueue->checkFrameBuffer();
+					renderQueue->checkGlErrorDebug();
+
+					renderQueue->depthTest(true);
+					renderQueue->depthWrite(true);
+					renderQueue->blending(true);
+					renderQueue->checkGlErrorDebug();
+
+					{
+						const auto graphicsDebugScope = renderQueue->namedScope("transparencies");
+						renderQueue->bind(shaderTranslucent);
+						for (TranslucentsInstances &t : pass.translucents.data)
+						{
+							CAGE_ASSERT(t.renders.data.size() == 1);
+
+							{ // render ambient object
+								renderQueue->blendFuncPremultipliedTransparency();
+								uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
+								uint32 &orig = t.renders.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE];
+								std::swap(tmp, orig);
+								renderInstances(t.renders);
+								std::swap(tmp, orig);
+							}
+
+							{ // render lights on the object
+								renderQueue->blendFuncAdditive();
+
+								const auto &bindLightType = [&](LightTypeEnum type, bool shadows)
+								{
+									uint32 (&shaderRoutines)[CAGE_SHADER_MAX_ROUTINES] = t.renders.shaderRoutines;
+									switch (type)
+									{
+									case LightTypeEnum::Directional:
+										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+										break;
+									case LightTypeEnum::Spot:
+										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+										break;
+									case LightTypeEnum::Point:
+										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+										break;
+									default:
+										CAGE_THROW_CRITICAL(Exception, "invalid light type");
+									}
+									renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+								};
+
+								renderLightsCollection(t.lights, bindLightType);
+							}
+						}
+						renderQueue->checkGlErrorDebug();
+					}
+
+					renderQueue->depthTest(true);
+					renderQueue->depthWrite(false);
+					renderQueue->culling(false);
+					renderQueue->blendFuncAlphaTransparency();
+					renderQueue->checkGlErrorDebug();
+
+					{
+						const auto graphicsDebugScope = renderQueue->namedScope("texts");
+						// todo
+					}
+
+					renderQueue->depthTest(false);
+					renderQueue->depthWrite(false);
+					renderQueue->culling(true);
+					renderQueue->blending(false);
+					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+					renderQueue->checkGlErrorDebug();
+
+					renderQueue->resetAllState();
+					renderQueue->resetFrameBuffer();
+					renderQueue->checkGlErrorDebug();
 				}
 
 				{ // final effects
@@ -1397,8 +1509,6 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
 					renderQueue->resetFrameBuffer();
 					renderQueue->bind(texSource, 0);
-					renderQueue->depthTest(false);
-					renderQueue->depthWrite(false);
 					if (pass.camera->target)
 					{ // blit to target texture
 						renderQueue->colorTexture(0, pass.camera->target);
