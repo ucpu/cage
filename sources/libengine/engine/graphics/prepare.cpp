@@ -741,8 +741,7 @@ namespace cage
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
 			{
 				CAGE_ASSERT(pass.lodSelection.screenSize > 0);
-				if (pr.render.object == 0)
-					return;
+				CAGE_ASSERT(pr.render.object);
 
 				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
 				{
@@ -897,8 +896,13 @@ namespace cage
 
 			void generateShadowmapPass(ShadowmapPass &pass)
 			{
+				const uint32 sceneMask = pass.camera->camera.sceneMask;
 				for (const PrepRender &pr : renders)
+				{
+					if ((pr.render.sceneMask & sceneMask) == 0 || !pr.render.object)
+						continue;
 					addModels(pass, pr);
+				}
 			}
 
 			void generateCameraPass(CameraPass &pass)
@@ -935,14 +939,22 @@ namespace cage
 
 				for (const PrepRender &pr : renders)
 				{
-					if ((pr.render.sceneMask & cc.sceneMask) == 0)
+					if ((pr.render.sceneMask & cc.sceneMask) == 0 || !pr.render.object)
 						continue;
 					addModels(pass, pr);
 				}
 
 				std::sort(pass.translucents.data.begin(), pass.translucents.data.end(), [](const TranslucentsInstances &a, const TranslucentsInstances &b) { return a.distToCam2 > b.distToCam2; });
 
-				// todo add renderable texts
+				for (const PrepText &pt : texts)
+				{
+					if ((pt.text.sceneMask & cc.sceneMask) == 0 || !pt.font)
+						continue;
+
+					// todo frustum culling
+
+					pass.texts.data[+pt.font].data.push_back(&pt);
+				}
 
 				for (const PrepLight &pl : lights)
 				{
@@ -1361,91 +1373,87 @@ namespace cage
 					renderQueue->resetAllState();
 				}
 
-				{
-					const auto graphicsDebugScope = renderQueue->namedScope("forward pass");
+				{ // transparencies
+					const auto graphicsDebugScope = renderQueue->namedScope("transparencies");
 
 					renderQueue->bind(renderTarget);
 					renderQueue->clearFrameBuffer();
-					renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
-					renderQueue->activeAttachments(1);
-					renderQueue->viewport(ivec2(), pass.resolution);
-
 					renderQueue->colorTexture(0, colorTexture);
 					renderQueue->depthTexture(depthTexture);
 					renderQueue->activeAttachments(1);
 					renderQueue->checkFrameBuffer();
-					renderQueue->checkGlErrorDebug();
 
+					renderQueue->viewport(ivec2(), pass.resolution);
 					renderQueue->depthTest(true);
-					renderQueue->depthWrite(true);
 					renderQueue->blending(true);
-					renderQueue->checkGlErrorDebug();
+					renderQueue->bind(shaderTranslucent);
 
+					for (TranslucentsInstances &t : pass.translucents.data)
 					{
-						const auto graphicsDebugScope = renderQueue->namedScope("transparencies");
-						renderQueue->bind(shaderTranslucent);
-						for (TranslucentsInstances &t : pass.translucents.data)
-						{
-							CAGE_ASSERT(t.renders.data.size() == 1);
+						CAGE_ASSERT(t.renders.data.size() == 1);
 
-							{ // render ambient object
-								renderQueue->blendFuncPremultipliedTransparency();
-								uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
-								uint32 &orig = t.renders.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE];
-								std::swap(tmp, orig);
-								renderInstances(t.renders);
-								std::swap(tmp, orig);
-							}
-
-							{ // render lights on the object
-								renderQueue->blendFuncAdditive();
-
-								const auto &bindLightType = [&](LightTypeEnum type, bool shadows)
-								{
-									uint32 (&shaderRoutines)[CAGE_SHADER_MAX_ROUTINES] = t.renders.shaderRoutines;
-									switch (type)
-									{
-									case LightTypeEnum::Directional:
-										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-										break;
-									case LightTypeEnum::Spot:
-										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-										break;
-									case LightTypeEnum::Point:
-										shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
-										break;
-									default:
-										CAGE_THROW_CRITICAL(Exception, "invalid light type");
-									}
-									renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-								};
-
-								renderLightsCollection(t.lights, bindLightType);
-							}
+						{ // render ambient object
+							renderQueue->blendFuncPremultipliedTransparency();
+							uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
+							uint32 &orig = t.renders.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE];
+							std::swap(tmp, orig);
+							renderInstances(t.renders);
+							std::swap(tmp, orig);
 						}
-						renderQueue->checkGlErrorDebug();
+
+						{ // render lights on the object
+							renderQueue->blendFuncAdditive();
+
+							const auto &bindLightType = [&](LightTypeEnum type, bool shadows)
+							{
+								uint32 (&shaderRoutines)[CAGE_SHADER_MAX_ROUTINES] = t.renders.shaderRoutines;
+								switch (type)
+								{
+								case LightTypeEnum::Directional:
+									shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+									break;
+								case LightTypeEnum::Spot:
+									shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+									break;
+								case LightTypeEnum::Point:
+									shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+									break;
+								default:
+									CAGE_THROW_CRITICAL(Exception, "invalid light type");
+								}
+								renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+							};
+
+							renderLightsCollection(t.lights, bindLightType);
+						}
 					}
-
-					renderQueue->depthTest(true);
-					renderQueue->depthWrite(false);
-					renderQueue->culling(false);
-					renderQueue->blendFuncAlphaTransparency();
-					renderQueue->checkGlErrorDebug();
-
-					{
-						const auto graphicsDebugScope = renderQueue->namedScope("texts");
-						// todo
-					}
-
-					renderQueue->depthTest(false);
-					renderQueue->depthWrite(false);
-					renderQueue->culling(true);
-					renderQueue->blending(false);
-					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-					renderQueue->checkGlErrorDebug();
 
 					renderQueue->resetAllState();
-					renderQueue->resetFrameBuffer();
+					renderQueue->checkGlErrorDebug();
+				}
+
+				{ // texts
+					const auto graphicsDebugScope = renderQueue->namedScope("texts");
+
+					renderQueue->viewport(ivec2(), pass.resolution);
+					renderQueue->depthTest(true);
+					renderQueue->depthWrite(false);
+					renderQueue->culling(true);
+					renderQueue->blending(true);
+					renderQueue->blendFuncAlphaTransparency();
+
+					for (const auto &t : pass.texts.data)
+					{
+						t.first->bind(+renderQueue, modelSquare, shaderFont);
+						for (const PrepText *r : t.second.data)
+						{
+							renderQueue->uniform(0, pass.viewProj * r->model);
+							renderQueue->uniform(4, r->color);
+							t.first->render(+renderQueue, r->glyphs, r->format);
+						}
+					}
+
+					renderQueue->resetAllState();
 					renderQueue->checkGlErrorDebug();
 				}
 
