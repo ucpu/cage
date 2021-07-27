@@ -146,7 +146,7 @@ namespace cage
 			const EmitLight *emit = nullptr;
 			LightComponent light;
 			mat4 mMat; // light model matrix
-			Sphere sphere; // world-space sphere of influence - used for culling
+			Aabb shape; // world-space area of influence - used for culling
 
 			PrepLight(const EmitLight *e) : emit(e)
 			{}
@@ -552,16 +552,17 @@ namespace cage
 				{
 				case LightTypeEnum::Directional:
 					pl.mMat = mat4(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1); // full screen quad
-					pl.sphere = Sphere(vec3(), real::Infinity());
+					pl.shape = Aabb::Universe();
 					break;
 				case LightTypeEnum::Spot:
-					pl.mMat = pl.model * spotConeModelMatrix(lightRange(pl.light.color, pl.light.attenuation), pl.light.spotAngle);
-					pl.sphere = Sphere(vec3(), real::Infinity()); // todo fit sphere on the cone
-					break;
+				{
+					const real range = lightRange(pl.light.color, pl.light.attenuation);
+					pl.mMat = pl.model * spotConeModelMatrix(range, pl.light.spotAngle);
+					pl.shape = Aabb(Cone(vec3(pl.model * vec4(0, 0, 0, 1)), normalize(vec3(pl.model * vec4(0, 0, -1, 0))), range, pl.light.spotAngle));
+				} break;
 				case LightTypeEnum::Point:
 					pl.mMat = pl.model * mat4::scale(lightRange(pl.light.color, pl.light.attenuation));
-					pl.sphere = Sphere(vec3(), 1) * pl.mMat;
-					pl.sphere = Sphere(vec3(), real::Infinity()); // todo temporary hack
+					pl.shape = Aabb(vec3(-1), vec3(1)) * pl.mMat;
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid light type");
@@ -948,7 +949,7 @@ namespace cage
 				{
 					if ((pl.light.sceneMask & cc.sceneMask) == 0)
 						continue;
-					if (!intersects(pl.sphere, pass.frustum))
+					if (!intersects(pl.shape, pass.frustum))
 						continue;
 
 					ShadowmapPass *shadowmap = nullptr;
@@ -965,7 +966,7 @@ namespace cage
 					addLight(pass, pl, shadowmap);
 					for (TranslucentsInstances &ti : pass.translucents.data)
 					{
-						if (!intersects(pl.sphere, ti.box))
+						if (!intersects(pl.shape, ti.box))
 							continue;
 						addLight(ti, pl, pass.viewProj, shadowmap);
 					}

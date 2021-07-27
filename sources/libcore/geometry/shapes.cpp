@@ -266,10 +266,9 @@ namespace cage
 		}
 	}
 
-	Aabb::Aabb(const Cone &other)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
+	// todo optimize
+	Aabb::Aabb(const Cone &other) : Aabb(Sphere(other))
+	{}
 
 	Aabb::Aabb(const Frustum &other)
 	{
