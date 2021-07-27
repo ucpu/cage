@@ -251,7 +251,7 @@ namespace cage
 			const PrepLight *light = nullptr;
 			RendersCollection shadowers;
 			mat4 shadowMat;
-			TextureHandle depthTexture;
+			TextureHandle shadowTexture;
 		};
 
 		struct CameraPass : public CommonRenderPass
@@ -262,19 +262,6 @@ namespace cage
 			LightsCollection lights;
 			TranslucentsCollection translucents;
 			TextsCollection texts;
-
-			FrameBufferHandle renderTarget;
-			FrameBufferHandle gBufferTarget;
-			TextureHandle albedoTexture;
-			TextureHandle specialTexture;
-			TextureHandle normalTexture;
-			TextureHandle depthTexture;
-			TextureHandle colorTexture;
-			TextureHandle intermediateTexture;
-			TextureHandle velocityTexture;
-			TextureHandle ambientOcclusionTexture;
-			TextureHandle texSource;
-			TextureHandle texTarget;
 		};
 
 		struct Preparator
@@ -1057,22 +1044,96 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			void renderEffect(CameraPass &pass)
+			void renderShadowmapPass(ShadowmapPass &pass)
 			{
-				renderQueue->colorTexture(0, pass.texTarget);
-#ifdef CAGE_DEBUG
-				renderQueue->checkFrameBuffer();
-#endif // CAGE_DEBUG
-				renderQueue->bind(pass.texSource);
-				//renderQueue->bind(modelSquare);
-				renderQueue->draw();
+				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap pass");
+
+				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+
+				const string texName = stringizer() + "shadowmap " + pass.light->emit->entityId;
+				if (pass.light->light.lightType == LightTypeEnum::Point)
+				{
+					pass.shadowTexture = provisionalData->textureCube(texName);
+					renderQueue->bind(pass.shadowTexture);
+					renderQueue->imageCube(pass.resolution, GL_DEPTH_COMPONENT16);
+				}
+				else
+				{
+					pass.shadowTexture = provisionalData->texture(texName);
+					renderQueue->bind(pass.shadowTexture);
+					renderQueue->image2d(pass.resolution, GL_DEPTH_COMPONENT24);
+				}
+				renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
+				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				renderQueue->checkGlErrorDebug();
-				std::swap(pass.texSource, pass.texTarget);
+
+				renderQueue->bind(renderTarget);
+				renderQueue->clearFrameBuffer();
+				renderQueue->depthTexture(pass.shadowTexture);
+				renderQueue->activeAttachments(0);
+				renderQueue->checkFrameBuffer();
+				renderQueue->viewport(ivec2(), pass.resolution);
+				renderQueue->colorWrite(false);
+				renderQueue->clear(false, true);
+				renderQueue->bind(shaderDepth);
+				renderQueue->checkGlErrorDebug();
+
+				for (const auto &it: pass.shadowers.data)
+					renderInstances(it.second);
+
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
+				renderQueue->resetFrameBuffer();
+				renderQueue->checkGlErrorDebug();
 			}
 
 			void renderCameraPass(CameraPass &pass)
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("camera pass");
+
+				FrameBufferHandle gBufferTarget = provisionalData->frameBufferDraw("gBuffer");
+				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+
+				TextureHandle albedoTexture;
+				TextureHandle specialTexture;
+				TextureHandle normalTexture;
+				TextureHandle depthTexture;
+				TextureHandle colorTexture;
+				TextureHandle intermediateTexture;
+				TextureHandle velocityTexture;
+				TextureHandle ambientOcclusionTexture;
+
+				{ // prepare gBuffer
+					const auto graphicsDebugScope = renderQueue->namedScope("prepare gBuffer target");
+					albedoTexture = prepareGTexture("albedoTexture", GL_RGB8, pass.resolution);
+					specialTexture = prepareGTexture("specialTexture", GL_RG8, pass.resolution);
+					normalTexture = prepareGTexture("normalTexture", GL_RGB16F, pass.resolution);
+					colorTexture = prepareGTexture("colorTexture", GL_RGB16F, pass.resolution);
+					velocityTexture = prepareGTexture("velocityTexture", GL_RG16F, pass.resolution, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur));
+					depthTexture = prepareGTexture("depthTexture", GL_DEPTH_COMPONENT32, pass.resolution);
+					intermediateTexture = prepareGTexture("intermediateTexture", GL_RGB16F, pass.resolution);
+					ambientOcclusionTexture = prepareGTexture("ambientOcclusionTexture", GL_R8, max(pass.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u), any(pass.camera->camera.effects & CameraEffectsFlags::AmbientOcclusion));
+					renderQueue->checkGlErrorDebug();
+					renderQueue->bind(gBufferTarget);
+					renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture);
+					renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture);
+					renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture);
+					renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture);
+					renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur) ? velocityTexture : TextureHandle());
+					renderQueue->depthTexture(depthTexture);
+					renderQueue->activeAttachments(31);
+					renderQueue->checkFrameBuffer();
+					renderQueue->checkGlErrorDebug();
+
+					// clear
+					renderQueue->viewport(ivec2(), pass.resolution);
+					const auto cf = pass.camera->camera.clear;
+					if (any(cf))
+						renderQueue->clear(any(cf & CameraClearFlags::Color), any(cf & CameraClearFlags::Depth), any(cf & CameraClearFlags::Stencil));
+				}
+
+				TextureHandle texSource = colorTexture;
+				TextureHandle texTarget = intermediateTexture;
 
 				ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
 				gfCommonConfig.assets = engineAssets();
@@ -1080,43 +1141,12 @@ namespace cage
 				gfCommonConfig.queue = +renderQueue;
 				gfCommonConfig.resolution = pass.resolution;
 
-				renderQueue->universalUniformStruct(pass.viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
-
 				{ // deferred
 					const auto graphicsDebugScope = renderQueue->namedScope("deferred");
 
-					{ // prepare gBuffer
-						const auto graphicsDebugScope = renderQueue->namedScope("prepare gBuffer target");
-						pass.albedoTexture = prepareGTexture("albedoTexture", GL_RGB8, pass.resolution);
-						pass.specialTexture = prepareGTexture("specialTexture", GL_RG8, pass.resolution);
-						pass.normalTexture = prepareGTexture("normalTexture", GL_RGB16F, pass.resolution);
-						pass.colorTexture = prepareGTexture("colorTexture", GL_RGB16F, pass.resolution);
-						pass.velocityTexture = prepareGTexture("velocityTexture", GL_RG16F, pass.resolution, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur));
-						pass.depthTexture = prepareGTexture("depthTexture", GL_DEPTH_COMPONENT32, pass.resolution);
-						pass.intermediateTexture = prepareGTexture("intermediateTexture", GL_RGB16F, pass.resolution);
-						pass.ambientOcclusionTexture = prepareGTexture("ambientOcclusionTexture", GL_R8, max(pass.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u), any(pass.camera->camera.effects & CameraEffectsFlags::AmbientOcclusion));
-						renderQueue->checkGlErrorDebug();
-						pass.gBufferTarget = provisionalData->frameBufferDraw("gBuffer");
-						renderQueue->bind(pass.gBufferTarget);
-						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, pass.albedoTexture);
-						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, pass.specialTexture);
-						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, pass.normalTexture);
-						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, pass.colorTexture);
-						renderQueue->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(pass.camera->camera.effects & CameraEffectsFlags::MotionBlur) ? pass.velocityTexture : TextureHandle());
-						renderQueue->depthTexture(pass.depthTexture);
-						renderQueue->activeAttachments(31);
-						renderQueue->checkFrameBuffer();
-						renderQueue->checkGlErrorDebug();
-
-						// clear
-						renderQueue->viewport(ivec2(), pass.resolution);
-						const auto cf = pass.camera->camera.clear;
-						if (any(cf))
-							renderQueue->clear(any(cf & CameraClearFlags::Color), any(cf & CameraClearFlags::Depth), any(cf & CameraClearFlags::Stencil));
-					}
+					renderQueue->universalUniformStruct(pass.viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 
 					{ // opaque objects
-						renderQueue->culling(true);
 						const auto graphicsDebugScope = renderQueue->namedScope("opaque objects");
 						renderQueue->bind(shaderGBuffer);
 						for (const auto &it : pass.opaque.data)
@@ -1127,10 +1157,9 @@ namespace cage
 
 					{ // render target
 						const auto graphicsDebugScope = renderQueue->namedScope("prepare render target");
-						pass.renderTarget = provisionalData->frameBufferDraw("renderTarget");
-						renderQueue->bind(pass.renderTarget);
+						renderQueue->bind(renderTarget);
 						renderQueue->clearFrameBuffer();
-						renderQueue->colorTexture(0, pass.colorTexture);
+						renderQueue->colorTexture(0, colorTexture);
 						renderQueue->activeAttachments(1);
 						renderQueue->checkFrameBuffer();
 						renderQueue->checkGlErrorDebug();
@@ -1138,11 +1167,11 @@ namespace cage
 
 					{ // bind gBuffer textures for sampling
 						const auto graphicsDebugScope = renderQueue->namedScope("bind gBuffer textures");
-						renderQueue->bind(pass.albedoTexture, CAGE_SHADER_TEXTURE_ALBEDO);
-						renderQueue->bind(pass.specialTexture, CAGE_SHADER_TEXTURE_SPECIAL);
-						renderQueue->bind(pass.normalTexture, CAGE_SHADER_TEXTURE_NORMAL);
-						renderQueue->bind(pass.depthTexture, CAGE_SHADER_TEXTURE_DEPTH);
-						renderQueue->bind(pass.colorTexture, CAGE_SHADER_TEXTURE_COLOR);
+						renderQueue->bind(albedoTexture, CAGE_SHADER_TEXTURE_ALBEDO);
+						renderQueue->bind(specialTexture, CAGE_SHADER_TEXTURE_SPECIAL);
+						renderQueue->bind(normalTexture, CAGE_SHADER_TEXTURE_NORMAL);
+						renderQueue->bind(depthTexture, CAGE_SHADER_TEXTURE_DEPTH);
+						renderQueue->bind(colorTexture, CAGE_SHADER_TEXTURE_COLOR);
 						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						renderQueue->checkGlErrorDebug();
 					}
@@ -1181,8 +1210,8 @@ namespace cage
 						renderQueue->bind(shaderLighting);
 						for (const auto &l : pass.lights.shadowed)
 						{
-							bindLightType(l.light->emit->light.lightType, true);
-							renderQueue->bind(l.shadowmap->depthTexture, l.light->emit->light.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+							bindLightType(l.light->light.lightType, true);
+							renderQueue->bind(l.shadowmap->shadowTexture, l.light->light.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
 							renderQueue->universalUniformStruct<UniLight>(l.data, CAGE_SHADER_UNIBLOCK_LIGHTS);
 							renderQueue->draw();
 						}
@@ -1214,11 +1243,9 @@ namespace cage
 
 				{ // opaque effects
 					const auto graphicsDebugScope2 = renderQueue->namedScope("opaque effects");
-					renderQueue->bind(pass.renderTarget);
+					renderQueue->bind(renderTarget);
 					renderQueue->clearFrameBuffer();
 					renderQueue->activeAttachments(1);
-					pass.texSource = pass.colorTexture;
-					pass.texTarget = pass.intermediateTexture;
 
 					const CameraEffectsFlags effects = pass.camera->camera.effects;
 					const auto &params = pass.camera->camera;
@@ -1230,9 +1257,9 @@ namespace cage
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceAmbientOcclusion &)cfg = params.ssao;
 						cfg.frameIndex = frameIndex;
-						cfg.inDepth = pass.depthTexture;
-						cfg.inNormal = pass.normalTexture;
-						cfg.outAo = pass.ambientOcclusionTexture;
+						cfg.inDepth = depthTexture;
+						cfg.inNormal = normalTexture;
+						cfg.outAo = ambientOcclusionTexture;
 						cfg.viewProj = pass.viewProj;
 						screenSpaceAmbientOcclusion(cfg);
 					}
@@ -1242,17 +1269,20 @@ namespace cage
 					{
 						const auto graphicsDebugScope = renderQueue->namedScope("ambient light");
 						renderQueue->viewport(ivec2(), pass.resolution);
+						renderQueue->colorTexture(0, texTarget);
 						renderQueue->bind(shaderAmbient);
-						renderQueue->bind(modelSquare);
 						if (any(effects & CameraEffectsFlags::AmbientOcclusion))
 						{
-							renderQueue->bind(pass.ambientOcclusionTexture, CAGE_SHADER_TEXTURE_EFFECTS);
-							renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+							renderQueue->bind(ambientOcclusionTexture, CAGE_SHADER_TEXTURE_EFFECTS);
 							renderQueue->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 1);
 						}
 						else
 							renderQueue->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 0);
-						renderEffect(pass);
+						renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
+						renderQueue->bind(modelSquare);
+						renderQueue->draw();
+						renderQueue->checkGlErrorDebug();
+						std::swap(texSource, texTarget);
 					}
 
 					// depth of field
@@ -1262,11 +1292,11 @@ namespace cage
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceDepthOfField &)cfg = params.depthOfField;
 						cfg.proj = pass.proj;
-						cfg.inDepth = pass.depthTexture;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inDepth = depthTexture;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						screenSpaceDepthOfField(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					// motion blur
@@ -1275,11 +1305,11 @@ namespace cage
 						ScreenSpaceMotionBlurConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceMotionBlur &)cfg = params.motionBlur;
-						cfg.inVelocity = pass.velocityTexture;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inVelocity = velocityTexture;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						screenSpaceMotionBlur(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					// eye adaptation
@@ -1289,7 +1319,7 @@ namespace cage
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
 						cfg.cameraId = stringizer() + pass.camera->emit->entityId;
-						cfg.inColor = pass.texSource;
+						cfg.inColor = texSource;
 						screenSpaceEyeAdaptationPrepare(cfg);
 					}
 
@@ -1298,8 +1328,8 @@ namespace cage
 
 				{
 					renderQueue->viewport(ivec2(), pass.resolution);
-					renderQueue->bind(pass.renderTarget);
-					renderQueue->bind(pass.texSource, CAGE_SHADER_TEXTURE_COLOR);
+					renderQueue->bind(renderTarget);
+					renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 
 					//renderCameraTransparencies(pass);
 				}
@@ -1316,10 +1346,10 @@ namespace cage
 						ScreenSpaceBloomConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceBloom &)cfg = params.bloom;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						screenSpaceBloom(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					// eye adaptation
@@ -1329,10 +1359,10 @@ namespace cage
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
 						cfg.cameraId = stringizer() + pass.camera->emit->entityId;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						screenSpaceEyeAdaptationApply(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					// final screen effects
@@ -1341,12 +1371,12 @@ namespace cage
 						ScreenSpaceTonemapConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceTonemap &)cfg = params.tonemap;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						cfg.tonemapEnabled = any(effects & CameraEffectsFlags::ToneMapping);
 						cfg.gamma = any(effects & CameraEffectsFlags::GammaCorrection) ? params.gamma : 1;
 						screenSpaceTonemap(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					// fxaa
@@ -1354,10 +1384,10 @@ namespace cage
 					{
 						ScreenSpaceFastApproximateAntiAliasingConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
-						cfg.inColor = pass.texSource;
-						cfg.outColor = pass.texTarget;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
 						screenSpaceFastApproximateAntiAliasing(cfg);
-						std::swap(pass.texSource, pass.texTarget);
+						std::swap(texSource, texTarget);
 					}
 
 					renderQueue->resetAllState();
@@ -1366,7 +1396,7 @@ namespace cage
 				{ // blit to destination
 					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
 					renderQueue->resetFrameBuffer();
-					renderQueue->bind(pass.texSource, 0);
+					renderQueue->bind(texSource, 0);
 					renderQueue->depthTest(false);
 					renderQueue->depthWrite(false);
 					if (pass.camera->target)
@@ -1413,6 +1443,8 @@ namespace cage
 					CameraPass cam;
 					cam.camera = &it;
 					generateCameraPass(cam);
+					for (auto &it : cam.shadowmapPasses)
+						renderShadowmapPass(*it);
 					renderCameraPass(cam);
 				}
 			}

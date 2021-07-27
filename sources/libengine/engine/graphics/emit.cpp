@@ -51,8 +51,8 @@ namespace cage
 				EmitLight ee;
 				copyTransform(ee, e, tr);
 				ee.light = li;
-				//if (e->has(shadowmapComponent))
-				//	ee.shadowmap = mem->createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(shadowmapComponent));
+				if (e->has(shadowmapComponent))
+					ee.shadowmap = mem->createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(shadowmapComponent));
 				eb.lights.push_back(std::move(ee));
 			});
 
