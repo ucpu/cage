@@ -574,6 +574,9 @@ namespace cage
 					pc.camera.effects &= ~CameraEffectsFlags::MotionBlur;
 				if (cnfNoBloom)
 					pc.camera.effects &= ~CameraEffectsFlags::Bloom;
+
+				if (pc.camera.target)
+					pc.target = Holder<Texture>(pc.camera.target, nullptr);
 			}
 
 			void updateCommonValues()
@@ -1507,16 +1510,18 @@ namespace cage
 
 				{ // blit to destination
 					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
-					renderQueue->resetFrameBuffer();
 					renderQueue->bind(texSource, 0);
 					if (pass.camera->target)
 					{ // blit to target texture
+						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(0, pass.camera->target);
+						renderQueue->activeAttachments(1);
 						renderQueue->viewport(ivec2(), pass.resolution);
 						renderQueue->bind(shaderBlit);
 					}
 					else
 					{ // blit to window
+						renderQueue->resetFrameBuffer();
 						renderQueue->viewport(ivec2(), windowResolution);
 						renderQueue->bind(shaderVisualizeColor);
 						renderQueue->uniform(0, 1.0 / vec2(windowResolution));
