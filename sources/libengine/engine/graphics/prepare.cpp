@@ -6,6 +6,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/color.h>
+#include <cage-core/tasks.h>
 
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/provisionalHandles.h>
@@ -25,6 +26,7 @@
 
 #include <robin_hood.h>
 #include <algorithm>
+#include <atomic>
 
 namespace cage
 {
@@ -110,6 +112,21 @@ namespace cage
 			Holder<const SkeletalAnimation> animation;
 			SkeletalAnimationComponent params;
 			std::vector<Mat3x4> armature;
+			std::atomic_flag started = ATOMIC_FLAG_INIT;
+			Holder<detail::AsyncTask> task;
+			real coefficient = real::Nan();
+
+			void operator () (uint32)
+			{
+				mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
+				const uint32 bonesCount = rig->bonesCount();
+				CAGE_ASSERT(bonesCount > 0);
+				CAGE_ASSERT(animation->bonesCount() == bonesCount);
+				animateSkin(+rig, +animation, coefficient, tmpArmature);
+				armature.reserve(bonesCount);
+				for (uint32 i = 0; i < bonesCount; i++)
+					armature.emplace_back(tmpArmature[i]);
+			}
 		};
 
 		struct PrepTexture : private Immovable
@@ -168,7 +185,7 @@ namespace cage
 		struct RendersInstances : private Noncopyable
 		{
 			std::vector<UniModel> data;
-			std::vector<PointerRange<const Mat3x4>> armatures;
+			std::vector<PrepSkeleton *> armatures;
 			Holder<Model> model;
 			Holder<Texture> textures[MaxTexturesCountPerMaterial];
 			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
@@ -283,8 +300,6 @@ namespace cage
 			bool cnfNoAmbientOcclusion = confNoAmbientOcclusion;
 			bool cnfNoMotionBlur = confNoMotionBlur;
 			bool cnfNoBloom = confNoBloom;
-
-			Holder<PointerRange<mat4>> tmpArmature = []() { PointerRangeHolder<mat4> prh; prh.resize(CAGE_SHADER_MAX_BONES); return prh; }();
 
 			Holder<Model> modelSquare, modelSphere, modelCone, modelBone;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
@@ -469,20 +484,10 @@ namespace cage
 				{
 					ps->animation = engineAssets()->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->params.name);
 					ps->rig = engineAssets()->tryGet<AssetSchemeIndexSkeletonRig, SkeletonRig>(findSkeletonRigName(pr)); // todo use rig name from the animation
-					if (!ps->animation || !ps->rig)
+					if (ps->animation && ps->rig)
+						ps->coefficient = detail::evalCoefficientForSkeletalAnimation(+ps->animation, prepareTime, ps->params.startTime, ps->params.speed, ps->params.offset);
+					else
 						ps.clear();
-				}
-
-				if (ps)
-				{
-					const uint32 bonesCount = ps->rig->bonesCount();
-					CAGE_ASSERT(bonesCount > 0);
-					CAGE_ASSERT(ps->animation->bonesCount() == bonesCount);
-					const real c = detail::evalCoefficientForSkeletalAnimation(+ps->animation, prepareTime, ps->params.startTime, ps->params.speed, ps->params.offset);
-					animateSkin(+ps->rig, +ps->animation, c, tmpArmature);
-					ps->armature.reserve(bonesCount);
-					for (uint32 i = 0; i < bonesCount; i++)
-						ps->armature.emplace_back(tmpArmature[i]);
 				}
 			}
 
@@ -613,7 +618,9 @@ namespace cage
 
 				if (pr.skeletalAnimation)
 				{
-					instances.armatures.push_back(pr.skeletalAnimation->armature);
+					if (!pr.skeletalAnimation->started.test_and_set())
+						pr.skeletalAnimation->task = tasksRunAsync(pr.skeletalAnimation.share());
+					instances.armatures.push_back(+pr.skeletalAnimation);
 					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
 				}
 
@@ -719,12 +726,12 @@ namespace cage
 			template<bool ShadowCastersOnly>
 			void addModelsSkeleton(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
 			{
+				mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
 				const auto &s = pr.skeletalAnimation->rig;
 				const auto &a = pr.skeletalAnimation->animation;
 				const auto &p = pr.skeletalAnimation->params;
 				const uint32 bonesCount = s->bonesCount();
-				const real c = detail::evalCoefficientForSkeletalAnimation(+a, prepareTime, p.startTime, p.speed, p.offset);
-				animateSkeleton(+s, +a, c, tmpArmature);
+				animateSkeleton(+s, +a, pr.skeletalAnimation->coefficient, tmpArmature);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					PrepRender r(pr.emit);
@@ -1012,8 +1019,10 @@ namespace cage
 					const uint32 n = min(numeric_cast<uint32>(instances.data.size() - off), drawLimit);
 					for (uint32 i = 0; i < n; i++)
 					{
-						CAGE_ASSERT(instances.armatures[off + i].size() == bones);
-						detail::memcpy(tmpArmature + i * bones, instances.armatures[off + i].begin(), bones * sizeof(Mat3x4));
+						const PrepSkeleton *sk = instances.armatures[off + i];
+						sk->task->wait();
+						CAGE_ASSERT(sk->armature.size() == bones);
+						detail::memcpy(tmpArmature + i * bones, sk->armature.data(), bones * sizeof(Mat3x4));
 					}
 					renderQueue->universalUniformArray(subRange<const Mat3x4>(tmpArmature, 0, n * bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
 					renderQueue->universalUniformArray(subRange<const UniModel>(instances.data, off, n), CAGE_SHADER_UNIBLOCK_MESHES);

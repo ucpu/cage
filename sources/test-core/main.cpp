@@ -21,6 +21,7 @@ void testEvents();
 void testMath();
 void testMathGlm();
 void testGeometry();
+void testMemoryArena();
 void testMemoryBuffers();
 void testMemoryAllocators();
 void testSerialization();
@@ -87,6 +88,7 @@ int main()
 	testMath();
 	testMathGlm();
 	testGeometry();
+	testMemoryArena();
 	testMemoryBuffers();
 	testMemoryAllocators();
 	testSerialization();

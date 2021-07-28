@@ -28,13 +28,6 @@ namespace cage
 			virtual void dispatch(RenderQueueImpl *impl) const = 0;
 		};
 
-		// stores memory pointer that needs to be deallocated
-		struct MemBlock
-		{
-			MemBlock *next = nullptr;
-			void *ptr = nullptr;
-		};
-
 		enum CemKeys
 		{
 			CEM_VIEWPORT_X,
@@ -132,8 +125,10 @@ namespace cage
 		// available during setting up - reset by explicit call
 		struct RenderQueueContent
 		{
+			std::vector<CmdBase *> cmdsAllocs;
+			std::vector<void *> memAllocs;
+
 			CmdBase *head = nullptr, *tail = nullptr;
-			MemBlock *memHead = nullptr, *memTail = nullptr;
 
 			uint32 commandsCount = 0;
 			uint32 drawsCount = 0;
@@ -176,24 +171,15 @@ namespace cage
 					{}
 				};
 				head = tail = arena->createObject<Cmd>();
-				memHead = memTail = arena->createObject<MemBlock>();
+				cmdsAllocs.push_back(head);
 			}
 
 			void resetQueue()
 			{
-				for (CmdBase *cmd = head; cmd; )
-				{
-					CmdBase *next = cmd->next;
-					arena->destroy<CmdBase>(cmd);
-					cmd = next;
-				}
-				for (MemBlock *mem = memHead; mem; )
-				{
-					MemBlock *next = mem->next;
-					arena->destroy<MemBlock>(mem);
-					mem = next;
-				}
-
+				for (CmdBase *it : cmdsAllocs)
+					arena->destroy<CmdBase>(it);
+				for (void *it : memAllocs)
+					arena->deallocate(it);
 				*(RenderQueueContent *)this = RenderQueueContent();
 				uubStaging.resize(0);
 				initHeads();
@@ -231,6 +217,7 @@ namespace cage
 			{
 				commandsCount++;
 				T *cmd = arena->createObject<T>();
+				cmdsAllocs.push_back(cmd);
 				tail->next = cmd;
 				tail = cmd;
 				return *cmd;
@@ -242,12 +229,10 @@ namespace cage
 				static_assert(std::is_trivially_copyable_v<T>);
 				static_assert(std::is_trivially_destructible_v<T>);
 				static_assert(!std::is_pointer_v<T>);
-				MemBlock *blck = arena->createObject<MemBlock>();
-				memTail->next = blck;
-				memTail = blck;
-				blck->ptr = arena->allocate(values.size() * sizeof(T), alignof(T));
-				detail::memcpy(blck->ptr, values.data(), values.size() * sizeof(T));
-				return { (T *)blck->ptr, ((T *)blck->ptr) + values.size() };
+				void *blck = arena->allocate(values.size() * sizeof(T), alignof(T));
+				memAllocs.push_back(blck);
+				detail::memcpy(blck, values.data(), values.size() * sizeof(T));
+				return { (T *)blck, ((T *)blck) + values.size() };
 			}
 
 			UubRange universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
