@@ -172,7 +172,7 @@ namespace cage
 				CAGE_ASSERT(r == n);
 				if (r == data.frames)
 					return;
-				CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer underflow");
+				//CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer underflow");
 				float *buff = data.buffer.data() + r * channels;
 				while (r < data.frames)
 				{

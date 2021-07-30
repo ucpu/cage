@@ -251,6 +251,7 @@ namespace cage
 	class BufferOStream;
 	class SwapBufferGuard;
 	struct SwapBufferGuardCreateConfig;
+	struct AsyncTask;
 	class TextPack;
 	class ThreadPool;
 	class Timer;

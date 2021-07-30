@@ -112,9 +112,9 @@ namespace cage
 			Holder<const SkeletalAnimation> animation;
 			SkeletalAnimationComponent params;
 			std::vector<Mat3x4> armature;
-			std::atomic_flag started = ATOMIC_FLAG_INIT;
-			Holder<detail::AsyncTask> task;
 			real coefficient = real::Nan();
+			std::atomic_flag started = ATOMIC_FLAG_INIT;
+			Holder<AsyncTask> task;
 
 			void operator () (uint32)
 			{
@@ -123,6 +123,7 @@ namespace cage
 				CAGE_ASSERT(bonesCount > 0);
 				CAGE_ASSERT(animation->bonesCount() == bonesCount);
 				animateSkin(+rig, +animation, coefficient, tmpArmature);
+				CAGE_ASSERT(armature.empty());
 				armature.reserve(bonesCount);
 				for (uint32 i = 0; i < bonesCount; i++)
 					armature.emplace_back(tmpArmature[i]);
@@ -605,6 +606,7 @@ namespace cage
 				um.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
 				um.normalMat = Mat3x4(inverse(mat3(pr.model)));
 				um.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+
 				if (pr.textureAnimation)
 				{
 					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
@@ -614,12 +616,13 @@ namespace cage
 						um.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
 					}
 				}
+
 				instances.data.push_back(um);
 
 				if (pr.skeletalAnimation)
 				{
 					if (!pr.skeletalAnimation->started.test_and_set())
-						pr.skeletalAnimation->task = tasksRunAsync(pr.skeletalAnimation.share());
+						pr.skeletalAnimation->task = tasksRunAsync(Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
 					instances.armatures.push_back(+pr.skeletalAnimation);
 					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
 				}

@@ -5,6 +5,7 @@
 #include <exception>
 #include <vector>
 #include <queue>
+#include <atomic>
 
 namespace cage
 {
@@ -18,7 +19,7 @@ namespace cage
 		class ConcurrentPriorityQueue : private Immovable
 		{
 		public:
-			using Value = Holder<struct AsyncTaskImpl>;
+			using Value = Holder<struct TaskImpl>;
 
 			void push(Value &&value, sint32 priority)
 			{
@@ -98,8 +99,11 @@ namespace cage
 		{
 			ConcurrentPriorityQueue tasks;
 			std::vector<Holder<Thread>> threads;
+			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
+			Holder<Mutex> mut = newMutex();
 
-			bool runOne(bool allowWait);
+			template<bool AllowWait>
+			bool runOne();
 
 			void threadEntry()
 			{
@@ -107,7 +111,7 @@ namespace cage
 				try
 				{
 					while (true)
-						runOne(true);
+						runOne<true>();
 				}
 				catch (const ConcurrentPriorityQueueTerminated &)
 				{
@@ -136,41 +140,29 @@ namespace cage
 			return exec;
 		}
 
-		struct AsyncTaskImpl : public detail::AsyncTask
+		// owned by the proxy AND by the executor queue
+		struct TaskImpl : public privat::TaskCreateConfig, private Immovable
 		{
-			const privat::AsyncTask task;
-			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
-			Holder<Mutex> mut = newMutex();
 			std::exception_ptr exptr;
-			uint32 started = 0;
-			uint32 finished = 0;
-			bool done = false;
+			std::atomic<uint32> started = 0;
+			std::atomic<uint32> finished = 0;
+			bool done_ = false;
 
-			explicit AsyncTaskImpl(privat::AsyncTask &&task_) : task(std::move(task_))
+			explicit TaskImpl(privat::TaskCreateConfig &&task_) : privat::TaskCreateConfig(std::move(task_))
 			{
-				if (task.count == 0)
-					done = true;
+				if (count == 0)
+					done_ = true;
 			}
 
-			~AsyncTaskImpl()
+			~TaskImpl()
 			{
-				try
-				{
-					wait();
-				}
-				catch (...)
-				{
-					CAGE_LOG(SeverityEnum::Critical, "tasks", stringizer() + "exception thrown in a task was not propagated to the caller (missing call to wait), terminating now");
-					detail::logCurrentCaughtException();
-					detail::terminate();
-				}
+				CAGE_ASSERT(done_);
 			}
 
 			std::pair<uint32, bool> pickNext()
 			{
-				ScopeLock lck(mut);
 				const uint32 idx = started++;
-				const bool more = started < task.count;
+				const bool more = idx + 1 < count;
 				return { idx, more };
 			}
 
@@ -178,26 +170,30 @@ namespace cage
 			{
 				try
 				{
-					CAGE_ASSERT(idx < task.count);
-					task.runner(task, idx);
+					CAGE_ASSERT(idx < count);
+					runner(*this, idx);
 				}
 				catch (...)
 				{
 					{
-						ScopeLock lck(mut);
+						ScopeLock lck(executor().mut);
 						if (!exptr)
 							exptr = std::current_exception();
 					}
 					CAGE_LOG(SeverityEnum::Warning, "tasks", stringizer() + "unhandled exception in a task");
 					detail::logCurrentCaughtException();
 				}
+				if (++finished == count)
 				{
-					ScopeLock lck(mut);
-					finished++;
-					if (finished == task.count)
-						done = true;
+					ScopeLock lck(executor().mut);
+					done_ = true;
 				}
-				cond->broadcast();
+			}
+
+			bool done() const
+			{
+				ScopeLock lck(executor().mut);
+				return done_;
 			}
 
 			void wait()
@@ -207,8 +203,8 @@ namespace cage
 				while (true)
 				{
 					{
-						ScopeLock lck(mut);
-						if (done)
+						ScopeLock lck(executor().mut);
+						if (done_)
 						{
 							if (exptr)
 							{
@@ -220,15 +216,15 @@ namespace cage
 						}
 						if (!threadData.taskExecutor)
 						{
-							cond->wait(lck);
+							exec.cond->wait(lck);
 							continue;
 						}
 					}
-					if (exec.runOne(false))
+					if (exec.runOne<false>())
 						continue;
 					{
-						ScopeLock lck(mut);
-						if (done)
+						ScopeLock lck(executor().mut);
+						if (done_)
 						{
 							if (exptr)
 							{
@@ -238,92 +234,119 @@ namespace cage
 							}
 							return;
 						}
-						cond->wait(lck);
+						exec.cond->wait(lck);
 					}
 				}
+
+				CAGE_ASSERT(false);
 			}
 		};
 
-		bool Executor::runOne(bool allowWait)
+		template<bool AllowWait>
+		bool Executor::runOne()
 		{
-			Holder<AsyncTaskImpl> task;
-			if (allowWait)
-				tasks.pop(task);
-			else if (!tasks.tryPop(task))
-				return false;
-			const auto pick = task->pickNext();
-			if (pick.second)
-				tasks.push(task.share(), task->task.priority);
-			task->runOne(pick.first);
+			{
+				Holder<TaskImpl> task;
+				if constexpr (AllowWait)
+					tasks.pop(task);
+				else if (!tasks.tryPop(task))
+					return false;
+				const auto pick = task->pickNext();
+				if (pick.second)
+					tasks.push(task.share(), task->priority);
+				task->runOne(pick.first);
+			}
+			cond->broadcast();
 			return true;
 		}
+
+		// owned by the api caller -> it ensures that the wait is always called
+		struct TaskProxy : public AsyncTask
+		{
+			Holder<TaskImpl> impl;
+
+			TaskProxy(Holder<TaskImpl> &&impl) : impl(std::move(impl))
+			{}
+
+			~TaskProxy()
+			{
+				try
+				{
+					impl->wait();
+				}
+				catch (...)
+				{
+					CAGE_LOG(SeverityEnum::Critical, "tasks", stringizer() + "exception thrown in a task was not propagated to the caller (missing call to wait), terminating now");
+					detail::logCurrentCaughtException();
+					detail::terminate();
+				}
+			}
+		};
+	}
+
+	bool AsyncTask::done() const
+	{
+		const TaskImpl *impl = +((const TaskProxy *)this)->impl;
+		return impl->done();
+	}
+
+	void AsyncTask::wait()
+	{
+		TaskImpl *impl = +((TaskProxy *)this)->impl;
+		impl->wait();
 	}
 
 	namespace privat
 	{
-		void waitTaskRunner(const WaitTask *task, uint32 idx)
+		void tasksRunBlocking(TaskCreateConfig &&task)
 		{
-			task->runner(*task, idx);
+			if (task.count == 0)
+				return;
+			TaskImpl impl(std::move(task));
+			executor().tasks.push(Holder<TaskImpl>(&impl, nullptr), impl.priority);
+			impl.wait();
 		}
 
-		void tasksRun(const WaitTask &task)
+		Holder<AsyncTask> tasksRunAsync(TaskCreateConfig &&task)
 		{
-			Delegate<void(uint32)> fnc;
-			fnc.bind<const WaitTask *, &waitTaskRunner>(&task);
-			cage::tasksRunAsync(fnc, task.count, task.priority)->wait();
-		}
-
-		Holder<detail::AsyncTask> tasksRun(AsyncTask &&task)
-		{
-			Holder<AsyncTaskImpl> impl = systemMemory().createHolder<AsyncTaskImpl>(std::move(task));
-			if (impl->task.count > 0)
-				executor().tasks.push(impl.share(), impl->task.priority);
-			return std::move(impl).cast<detail::AsyncTask>();
+			Holder<TaskProxy> prox = systemMemory().createHolder<TaskProxy>(systemMemory().createHolder<TaskImpl>(std::move(task)));
+			if (prox->impl->count > 0)
+				executor().tasks.push(prox->impl.share(), prox->impl->priority);
+			return std::move(prox).cast<AsyncTask>();
 		}
 	}
 
-	namespace detail
+	void tasksRunBlocking(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
-		bool AsyncTask::done() const
-		{
-			const AsyncTaskImpl *impl = (const AsyncTaskImpl *)this;
-			ScopeLock lock(impl->mut);
-			return impl->done;
-		}
-
-		void AsyncTask::wait()
-		{
-			AsyncTaskImpl *impl = (AsyncTaskImpl *)this;
-			impl->wait();
-		}
+		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
+		privat::TaskCreateConfig tsk;
+		tsk.function = *(Delegate<void()> *) & function;
+		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
+			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *) & task.function;
+			function(idx);
+		};
+		tsk.count = invocations;
+		tsk.priority = priority;
+		privat::tasksRunBlocking(std::move(tsk));
 	}
 
-	void tasksRun(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	Holder<AsyncTask> tasksRunAsync(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
-		static_assert(sizeof(privat::WaitTask::function) == sizeof(function));
-		privat::WaitTask tsk;
+		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
+		privat::TaskCreateConfig tsk;
 		tsk.function = *(Delegate<void()> *)&function;
-		tsk.runner = +[](const privat::WaitTask &task, uint32 idx) {
+		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
 			function(idx);
 		};
 		tsk.count = invocations;
 		tsk.priority = priority;
-		privat::tasksRun(tsk);
+		return privat::tasksRunAsync(std::move(tsk));
 	}
 
-	Holder<detail::AsyncTask> tasksRunAsync(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	void tasksYield()
 	{
-		static_assert(sizeof(privat::AsyncTask::function) == sizeof(function));
-		privat::AsyncTask tsk;
-		tsk.function = *(Delegate<void()> *)&function;
-		tsk.runner = +[](const privat::AsyncTask &task, uint32 idx) {
-			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
-			function(idx);
-		};
-		tsk.count = invocations;
-		tsk.priority = priority;
-		return privat::tasksRun(std::move(tsk));
+		// todo
 	}
 
 	std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount)
