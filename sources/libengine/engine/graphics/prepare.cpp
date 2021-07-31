@@ -265,6 +265,8 @@ namespace cage
 				real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
 				bool orthographic = false;
 			} lodSelection;
+
+			Holder<AsyncTask> task;
 		};
 
 		struct ShadowmapPass : public CommonRenderPass
@@ -275,10 +277,17 @@ namespace cage
 			TextureHandle shadowTexture;
 		};
 
+		struct FilteredLight
+		{
+			const PrepLight *light = nullptr;
+			ShadowmapPass *shadowmap = nullptr;
+		};
+
 		struct CameraPass : public CommonRenderPass
 		{
 			UniViewport viewport;
 			std::vector<Holder<ShadowmapPass>> shadowmapPasses;
+			std::vector<FilteredLight> filteredLights;
 			RendersCollection opaque;
 			LightsCollection lights;
 			TranslucentsCollection translucents;
@@ -310,6 +319,8 @@ namespace cage
 			std::vector<PrepText> texts;
 			std::vector<PrepLight> lights;
 			std::vector<PrepCamera> cameras;
+
+			std::vector<CameraPass> cameraPasses;
 
 			Preparator(const EmitBuffer &emit, uint64 time) : emit(emit)
 			{
@@ -904,7 +915,7 @@ namespace cage
 				initializeLodSelectionAndFrustum(pass);
 			}
 
-			void generateShadowmapPass(ShadowmapPass &pass)
+			void generateShadowmapPass(ShadowmapPass &pass, uint32)
 			{
 				const uint32 sceneMask = pass.camera->camera.sceneMask;
 				for (const PrepRender &pr : renders)
@@ -915,7 +926,7 @@ namespace cage
 				}
 			}
 
-			void generateCameraPass(CameraPass &pass)
+			void initializeCameraPass(CameraPass &pass, uint32)
 			{
 				const CameraComponent &cc = pass.camera->camera;
 
@@ -947,6 +958,32 @@ namespace cage
 
 				initializeLodSelectionAndFrustum(pass);
 
+				for (const PrepLight &pl : lights)
+				{
+					if ((pl.light.sceneMask & cc.sceneMask) == 0)
+						continue;
+					if (!intersects(pl.shape, Frustum(pass.viewProj)))
+						continue;
+
+					ShadowmapPass *shadowmap = nullptr;
+					if (pl.emit->shadowmap)
+					{
+						Holder<ShadowmapPass> sp = systemMemory().createHolder<ShadowmapPass>();
+						sp->light = &pl;
+						sp->camera = pass.camera;
+						initializeShadowmapPass(*sp);
+						shadowmap = +sp;
+						pass.shadowmapPasses.push_back(std::move(sp));
+					}
+
+					pass.filteredLights.push_back(FilteredLight{ &pl, shadowmap });
+				}
+			}
+
+			void generateCameraPass(CameraPass &pass, uint32)
+			{
+				const CameraComponent &cc = pass.camera->camera;
+
 				for (const PrepRender &pr : renders)
 				{
 					if ((pr.render.sceneMask & cc.sceneMask) == 0 || !pr.render.object)
@@ -966,35 +1003,16 @@ namespace cage
 					pass.texts.data[+pt.font].data.push_back(&pt);
 				}
 
-				for (const PrepLight &pl : lights)
+				for (const auto &pl : pass.filteredLights)
 				{
-					if ((pl.light.sceneMask & cc.sceneMask) == 0)
-						continue;
-					if (!intersects(pl.shape, Frustum(pass.viewProj)))
-						continue;
-
-					ShadowmapPass *shadowmap = nullptr;
-					if (pl.emit->shadowmap)
-					{
-						Holder<ShadowmapPass> sp = systemMemory().createHolder<ShadowmapPass>();
-						sp->light = &pl;
-						sp->camera = pass.camera;
-						initializeShadowmapPass(*sp);
-						shadowmap = +sp;
-						pass.shadowmapPasses.push_back(std::move(sp));
-					}
-
-					addLight(pass, pl, shadowmap);
+					addLight(pass, *pl.light, pl.shadowmap);
 					for (TranslucentsInstances &ti : pass.translucents.data)
 					{
-						if (!intersects(pl.shape, ti.box))
+						if (!intersects(pl.light->shape, ti.box))
 							continue;
-						addLight(ti, pl, pass.viewProj, shadowmap);
+						addLight(ti, *pl.light, pass.viewProj, pl.shadowmap);
 					}
 				}
-
-				for (const auto &it : pass.shadowmapPasses)
-					generateShadowmapPass(*it);
 			}
 
 			TextureHandle prepareGTexture(const char *name, uint32 internalFormat, const ivec2 &resolution, bool enabled = true)
@@ -1573,14 +1591,35 @@ namespace cage
 					return a < b;
 				});
 
+				// initialize passes
+				cameraPasses.reserve(cameras.size());
 				for (const auto &it : cameras)
 				{
-					CameraPass cam;
-					cam.camera = &it;
-					generateCameraPass(cam);
-					for (auto &it : cam.shadowmapPasses)
-						renderShadowmapPass(*it);
-					renderCameraPass(cam);
+					cameraPasses.push_back({});
+					CameraPass &c = cameraPasses.back();
+					c.camera = &it;
+					c.task = tasksRunAsync(Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::initializeCameraPass>(this), Holder<CameraPass>(&c, nullptr));
+				}
+
+				// generate passes
+				for (auto &c : cameraPasses)
+				{
+					c.task->wait();
+					for (auto &s : c.shadowmapPasses)
+						s->task = tasksRunAsync(Delegate<void(ShadowmapPass &, uint32)>().bind<Preparator, &Preparator::generateShadowmapPass>(this), Holder<ShadowmapPass>(+s, nullptr));
+					c.task = tasksRunAsync(Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::generateCameraPass>(this), Holder<CameraPass>(&c, nullptr));
+				}
+
+				// render passes
+				for (auto &c : cameraPasses)
+				{
+					for (auto &s : c.shadowmapPasses)
+					{
+						s->task->wait();
+						renderShadowmapPass(*s);
+					}
+					c.task->wait();
+					renderCameraPass(c);
 				}
 			}
 		};
