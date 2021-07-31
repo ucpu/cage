@@ -23,6 +23,7 @@
 #include <cage-engine/font.h>
 
 #include "graphics.h"
+#include "../../blockCollection.h"
 
 #include <robin_hood.h>
 #include <algorithm>
@@ -185,8 +186,8 @@ namespace cage
 
 		struct RendersInstances : private Noncopyable
 		{
-			std::vector<UniModel> data;
-			std::vector<PrepSkeleton *> armatures;
+			BlockCollection<UniModel> data;
+			BlockCollection<PrepSkeleton *> armatures;
 			Holder<Model> model;
 			Holder<Texture> textures[MaxTexturesCountPerMaterial];
 			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
@@ -233,7 +234,10 @@ namespace cage
 		struct LightsCollection : private Noncopyable
 		{
 			std::vector<ShadowedLight> shadowed;
-			std::vector<UniLight> directional, spot, point;
+			BlockCollection<UniLight> directional, spot, point;
+
+			LightsCollection() : directional(CAGE_SHADER_MAX_INSTANCES), spot(CAGE_SHADER_MAX_INSTANCES), point(CAGE_SHADER_MAX_INSTANCES)
+			{}
 		};
 
 		struct TranslucentsInstances : private Noncopyable
@@ -610,36 +614,22 @@ namespace cage
 
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersInstances &instances)
 			{
-				UniModel um;
-				um.color = vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
-				um.mMat = Mat3x4(pr.model);
-				um.mvpMat = pass.viewProj * pr.model;
-				um.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
-				um.normalMat = Mat3x4(inverse(mat3(pr.model)));
-				um.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
-
-				if (pr.textureAnimation)
-				{
-					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
-					if (t)
-					{
-						const auto &p = pr.textureAnimation->params;
-						um.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
-					}
-				}
-
-				instances.data.push_back(um);
-
-				if (pr.skeletalAnimation)
-				{
-					if (!pr.skeletalAnimation->started.test_and_set())
-						pr.skeletalAnimation->task = tasksRunAsync(Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
-					instances.armatures.push_back(+pr.skeletalAnimation);
-					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
-				}
-
 				if (!instances.model)
 				{
+					CAGE_ASSERT(instances.data.empty());
+					CAGE_ASSERT(instances.armatures.empty());
+					if (pr.skeletalAnimation)
+					{
+						const uint32 drawLimit = min((uint32)CAGE_SHADER_MAX_INSTANCES, CAGE_SHADER_MAX_BONES / mo->skeletonBones);
+						instances.data = BlockCollection<UniModel>(drawLimit);
+						instances.armatures = BlockCollection<PrepSkeleton *>(drawLimit);
+					}
+					else
+					{
+						instances.data = BlockCollection<UniModel>(CAGE_SHADER_MAX_INSTANCES);
+						instances.armatures = BlockCollection<PrepSkeleton *>(0); // disabled
+					}
+
 					instances.model = mo.share();
 
 					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -706,8 +696,35 @@ namespace cage
 					else
 						instances.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
 				}
-
 				CAGE_ASSERT(+instances.model == +mo);
+
+				UniModel um;
+				um.color = vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
+				um.mMat = Mat3x4(pr.model);
+				um.mvpMat = pass.viewProj * pr.model;
+				um.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
+				um.normalMat = Mat3x4(inverse(mat3(pr.model)));
+				um.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+
+				if (pr.textureAnimation)
+				{
+					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
+					if (t)
+					{
+						const auto &p = pr.textureAnimation->params;
+						um.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
+					}
+				}
+
+				instances.data.push_back(um);
+
+				if (pr.skeletalAnimation)
+				{
+					if (!pr.skeletalAnimation->started.test_and_set())
+						pr.skeletalAnimation->task = tasksRunAsync(Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
+					instances.armatures.push_back(+pr.skeletalAnimation);
+					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
+				}
 			}
 
 			template<bool ShadowCastersOnly>
@@ -958,6 +975,7 @@ namespace cage
 
 				initializeLodSelectionAndFrustum(pass);
 
+				pass.filteredLights.reserve(lights.size());
 				for (const PrepLight &pl : lights)
 				{
 					if ((pl.light.sceneMask & cc.sceneMask) == 0)
@@ -1034,23 +1052,23 @@ namespace cage
 				const uint32 drawLimit = min((uint32)CAGE_SHADER_MAX_INSTANCES, CAGE_SHADER_MAX_BONES / bones);
 				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, bones);
 				Mat3x4 tmpArmature[CAGE_SHADER_MAX_BONES];
-				uint32 off = 0;
-				while (off < instances.data.size())
+				auto ait = instances.armatures.begin();
+				for (const auto &it : instances.data)
 				{
-					const uint32 n = min(numeric_cast<uint32>(instances.data.size() - off), drawLimit);
+					const uint32 n = it.size();
+					CAGE_ASSERT(n <= drawLimit);
 					for (uint32 i = 0; i < n; i++)
 					{
-						const PrepSkeleton *sk = instances.armatures[off + i];
+						const PrepSkeleton *sk = (*ait)[i];
 						sk->task->wait();
 						CAGE_ASSERT(sk->armature.size() == bones);
 						detail::memcpy(tmpArmature + i * bones, sk->armature.data(), bones * sizeof(Mat3x4));
 					}
 					renderQueue->universalUniformArray(subRange<const Mat3x4>(tmpArmature, 0, n * bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
-					renderQueue->universalUniformArray(subRange<const UniModel>(instances.data, off, n), CAGE_SHADER_UNIBLOCK_MESHES);
+					renderQueue->universalUniformArray<UniModel>(it, CAGE_SHADER_UNIBLOCK_MESHES);
 					renderQueue->draw(n);
-					off += n;
+					ait++;
 				}
-				CAGE_ASSERT(off == instances.data.size());
 			}
 
 			void renderInstances(const RendersInstances &instances)
@@ -1083,15 +1101,11 @@ namespace cage
 				}
 				if (instances.armatures.empty())
 				{
-					uint32 off = 0;
-					while (off < instances.data.size())
+					for (const auto &it : instances.data)
 					{
-						const uint32 n = min(numeric_cast<uint32>(instances.data.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
-						renderQueue->universalUniformArray(subRange<const UniModel>(instances.data, off, n), CAGE_SHADER_UNIBLOCK_MESHES);
-						renderQueue->draw(n);
-						off += n;
+						renderQueue->universalUniformArray<UniModel>(it, CAGE_SHADER_UNIBLOCK_MESHES);
+						renderQueue->draw(it.size());
 					}
-					CAGE_ASSERT(off == instances.data.size());
 				}
 				else
 					renderInstancesSkeletons(instances);
@@ -1152,7 +1166,7 @@ namespace cage
 					renderQueue->draw();
 				}
 
-				const std::pair<const std::vector<UniLight> &, LightTypeEnum> types[] =
+				const std::pair<const BlockCollection<UniLight> &, LightTypeEnum> types[] =
 				{
 					{ lights.directional, LightTypeEnum::Directional },
 					{ lights.spot, LightTypeEnum::Spot },
@@ -1163,15 +1177,11 @@ namespace cage
 					if (t.first.empty())
 						continue;
 					bindLightType(t.second, false);
-					uint32 off = 0;
-					while (off < t.first.size())
+					for (const auto &it : t.first)
 					{
-						const uint32 n = min(numeric_cast<uint32>(t.first.size() - off), (uint32)CAGE_SHADER_MAX_INSTANCES);
-						renderQueue->universalUniformArray(subRange<const UniLight>(t.first, off, n), CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->draw(n);
-						off += n;
+						renderQueue->universalUniformArray<UniLight>(it, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->draw(it.size());
 					}
-					CAGE_ASSERT(off == t.first.size());
 				}
 			}
 

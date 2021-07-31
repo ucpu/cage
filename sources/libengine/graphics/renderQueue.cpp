@@ -12,6 +12,8 @@
 #include <cage-engine/provisionalGraphics.h>
 #include "private.h"
 
+#include "../blockCollection.h"
+
 #include <vector> // namesStack
 #include <array>
 
@@ -125,8 +127,8 @@ namespace cage
 		// available during setting up - reset by explicit call
 		struct RenderQueueContent
 		{
-			std::vector<CmdBase *> cmdsAllocs;
-			std::vector<void *> memAllocs;
+			BlockCollection<CmdBase *> cmdsAllocs;
+			BlockCollection<void *> memAllocs;
 
 			CmdBase *head = nullptr, *tail = nullptr;
 
@@ -176,10 +178,12 @@ namespace cage
 
 			void resetQueue()
 			{
-				for (CmdBase *it : cmdsAllocs)
-					arena->destroy<CmdBase>(it);
-				for (void *it : memAllocs)
-					arena->deallocate(it);
+				for (const auto &it1 : cmdsAllocs)
+					for (CmdBase *it2 : it1)
+						arena->destroy<CmdBase>(it2);
+				for (const auto &it1 : memAllocs)
+					for (void *it2 : it1)
+						arena->deallocate(it2);
 				*(RenderQueueContent *)this = RenderQueueContent();
 				uubStaging.resize(0);
 				initHeads();
