@@ -30,18 +30,18 @@ namespace
 		c->value<vec3>() = vec3(5);
 		c->value<uint32>() = 5;
 
-		entitiesVisitor(+man, [](vec3 &v, const real &r) { v[0] *= r; });
-		entitiesVisitor(+man, [](vec3 &v, const uint32 &u) { v[1] *= u; });
-		entitiesVisitor(+man, [](vec3 &v, const real &r, const uint32 &u) { v[2] = 0; });
-		entitiesVisitor(+man, [](uint32 &u) { u = 0; });
+		entitiesVisitor([](vec3 &v, const real &r) { v[0] *= r; }, +man, false);
+		entitiesVisitor([](vec3 &v, const uint32 &u) { v[1] *= u; }, +man, false);
+		entitiesVisitor([](vec3 &v, const real &r, const uint32 &u) { v[2] = 0; }, +man, false);
+		entitiesVisitor([](uint32 &u) { u = 0; }, +man, false);
 
 		CAGE_TEST(a->value<vec3>() == vec3(9, 9, 0));
 		CAGE_TEST(b->value<vec3>() == vec3(16, 4, 4));
 		CAGE_TEST(c->value<vec3>() == vec3(5, 25, 5));
 		CAGE_TEST(a->value<uint32>() == 0);
 
-		CAGE_TEST_THROWN(entitiesVisitor(+man, [](quat &) {}));
-		CAGE_TEST_THROWN(entitiesVisitor(+man, [](Entity *, quat &, real &) {}));
+		CAGE_TEST_THROWN(entitiesVisitor([](quat &) {}, +man, false));
+		CAGE_TEST_THROWN(entitiesVisitor([](Entity *, quat &, real &) {}, +man, false));
 	}
 
 	void visitorWithEntity()
@@ -62,15 +62,15 @@ namespace
 		b->value<real>() = 4;
 		c->value<uint32>() = 5;
 
-		entitiesVisitor(+man, [](Entity *e, uint32 &u) { u = e->name(); });
+		entitiesVisitor([](Entity *e, uint32 &u) { u = e->name(); }, +man, false);
 
 		CAGE_TEST(a->value<uint32>() == a->name());
 		CAGE_TEST(c->value<uint32>() == c->name());
 
-		entitiesVisitor(+man, [](Entity *e, uint32 &u, real &r) { r = e->name() - u; });
+		entitiesVisitor([](Entity *e, uint32 &u, real &r) { r = e->name() - u; }, +man, false);
 
 		uint32 cnt = 0;
-		entitiesVisitor(+man, [&](Entity *) { cnt++; });
+		entitiesVisitor([&](Entity *) { cnt++; }, +man, false);
 		CAGE_TEST(cnt == man->count());
 	}
 
@@ -97,14 +97,14 @@ namespace
 		CAGE_TEST(man->count() == 3);
 
 		uint32 cnt = 0;
-		entitiesVisitor(+man, [&](Entity *e, const uint32 &v) {
+		entitiesVisitor([&](Entity *e, const uint32 &v) {
 			cnt++;
 			switch (v)
 			{
 			case 3: man->createUnique()->value<real>(); break;
 			case 5: e->destroy(); break;
 			}
-		}, true);
+		}, +man, true);
 
 		CAGE_TEST(cnt == 2);
 		CAGE_TEST(man->component<real>()->count() == 3);
@@ -145,9 +145,9 @@ namespace
 
 		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
-			entitiesVisitor(+man, [](vec3 &v, const real &r) { v[1] += r; });
-			entitiesVisitor(+man, [](vec3 &v, const real &r, uint32 &u) { v[0] += r; u++; });
-			entitiesVisitor(+man, [](uint32 &u) { u++; });
+			entitiesVisitor([](vec3 &v, const real &r) { v[1] += r; }, +man, false);
+			entitiesVisitor([](vec3 &v, const real &r, uint32 &u) { v[0] += r; u++; }, +man, false);
+			entitiesVisitor([](uint32 &u) { u++; }, +man, false);
 		}
 
 		CAGE_LOG(SeverityEnum::Info, "visitor performance", stringizer() + "visitor avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");

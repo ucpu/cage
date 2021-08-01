@@ -38,7 +38,7 @@ namespace cage
 		using offset_sequence_t = typename offset_sequence<Off, Seq>::type;
 
 		template<class Types, std::size_t I>
-		CAGE_FORCE_INLINE void fillComponentsArray(EntityManager *ents, EntityComponent *components[])
+		CAGE_FORCE_INLINE void fillComponentsArray(const EntityManager *ents, EntityComponent *components[])
 		{
 			using T = std::tuple_element_t<I, Types>;
 			using D = std::decay_t<T>;
@@ -48,7 +48,7 @@ namespace cage
 				CAGE_THROW_CRITICAL(Exception, "undefined entities component for type");
 		}
 		template<class Types, std::size_t... I>
-		CAGE_FORCE_INLINE void fillComponentsArray(EntityManager *ents, EntityComponent *components[], std::index_sequence<I...>)
+		CAGE_FORCE_INLINE void fillComponentsArray(const EntityManager *ents, EntityComponent *components[], std::index_sequence<I...>)
 		{
 			((fillComponentsArray<Types, I>(ents, components)), ...);
 		}
@@ -61,61 +61,77 @@ namespace cage
 			else
 				visitor(((e->value<std::decay_t<std::tuple_element_t<I, Types>>>(components[I])))...);
 		}
+
+		template<bool ArrayCopy> struct VectorOrNothing {};
+		template<> struct VectorOrNothing<true> { typedef std::vector<Entity *> vec; };
+		template<> struct VectorOrNothing<false> { typedef char vec; };
 	}
 
-	// safeForModification == true makes copy of the array to iterate over thus allowing to add/destroy entities or components
-	template<class Visitor>
-	void entitiesVisitor(EntityManager *ents, const Visitor &visitor, bool safeForModification = false)
+	namespace detail
 	{
-		using Types = typename privat::LambdaParamsPack<Visitor>::Params;
-		constexpr uint32 typesCount = std::tuple_size_v<Types>;
-		static_assert(typesCount > 0);
-		constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
-		std::vector<Entity *> copy;
-
-		if constexpr (useEnt && typesCount == 1)
+		template<bool ArrayCopy, class Visitor>
+		void entitiesVisitor(const Visitor &visitor, const EntityManager *ents)
 		{
-			PointerRange<Entity *const> range = ents->entities();
-			if (safeForModification)
+			using Types = typename privat::LambdaParamsPack<Visitor>::Params;
+			constexpr uint32 typesCount = std::tuple_size_v<Types>;
+			static_assert(typesCount > 0);
+			constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
+			typename privat::VectorOrNothing<ArrayCopy>::vec copy;
+
+			if constexpr (useEnt && typesCount == 1)
 			{
-				copy = std::vector<Entity *>(range.begin(), range.end());
-				range = copy;
+				PointerRange<Entity *const> range = ents->entities();
+				if constexpr (ArrayCopy)
+				{
+					copy = std::vector<Entity *>(range.begin(), range.end());
+					range = copy;
+				}
+				for (Entity *e : range)
+					visitor(e);
 			}
-			for (Entity *e : range)
-				visitor(e);
+			else
+			{
+				constexpr std::size_t offset = useEnt ? 1 : 0;
+				using Sequence = privat::offset_sequence_t<offset, std::make_index_sequence<typesCount - offset>>;
+
+				EntityComponent *components[typesCount] = {};
+				privat::fillComponentsArray<Types>(ents, components, Sequence());
+
+				EntityComponent *cmps[typesCount - offset] = {};
+				for (uint32 i = 0; i < typesCount - offset; i++)
+					cmps[i] = components[i + offset];
+				std::sort(std::begin(cmps), std::end(cmps), [](EntityComponent *a, EntityComponent *b) { return a->count() < b->count(); });
+
+				PointerRange<EntityComponent *> conds = { std::begin(cmps) + 1, std::end(cmps) };
+
+				PointerRange<Entity *const> range = cmps[0]->entities();
+				if constexpr (ArrayCopy)
+				{
+					copy = std::vector<Entity *>(range.begin(), range.end());
+					range = copy;
+				}
+
+				for (Entity *e : range)
+				{
+					bool ok = true;
+					for (EntityComponent *c : conds)
+						ok = ok && e->has(c);
+					if (!ok)
+						continue;
+					privat::invokeVisitor<useEnt, Visitor, Types>(visitor, components, e, Sequence());
+				}
+			}
 		}
+	}
+
+	// arrayCopy == true makes copy of the array to iterate over thus allowing to add/destroy entities or components
+	template<class Visitor>
+	CAGE_FORCE_INLINE void entitiesVisitor(const Visitor &visitor, const EntityManager *ents, bool arrayCopy)
+	{
+		if (arrayCopy)
+			detail::entitiesVisitor<true>(visitor, ents);
 		else
-		{
-			constexpr std::size_t offset = useEnt ? 1 : 0;
-			using Sequence = privat::offset_sequence_t<offset, std::make_index_sequence<typesCount - offset>>;
-
-			EntityComponent *components[typesCount] = {};
-			privat::fillComponentsArray<Types>(ents, components, Sequence());
-
-			EntityComponent *cmps[typesCount - offset] = {};
-			for (uint32 i = 0; i < typesCount - offset; i++)
-				cmps[i] = components[i + offset];
-			std::sort(std::begin(cmps), std::end(cmps), [](EntityComponent *a, EntityComponent *b) { return a->count() < b->count(); });
-
-			PointerRange<EntityComponent *> conds = { std::begin(cmps) + 1, std::end(cmps) };
-
-			PointerRange<Entity *const> range = cmps[0]->entities();
-			if (safeForModification)
-			{
-				copy = std::vector<Entity *>(range.begin(), range.end());
-				range = copy;
-			}
-
-			for (Entity *e : range)
-			{
-				bool ok = true;
-				for (EntityComponent *c : conds)
-					ok = ok && e->has(c);
-				if (!ok)
-					continue;
-				privat::invokeVisitor<useEnt, Visitor, Types>(visitor, components, e, Sequence());
-			}
-		}
+			detail::entitiesVisitor<false>(visitor, ents);
 	}
 }
 
