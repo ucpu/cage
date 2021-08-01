@@ -18,8 +18,6 @@
 #include <dispatch/dispatch.h>
 #endif
 
-#include <optick.h>
-
 #include <thread>
 #include <atomic>
 #include <exception>
@@ -665,7 +663,6 @@ namespace cage
 		{
 			ThreadImpl *impl = (ThreadImpl *)params;
 			currentThreadName(impl->threadName);
-			OPTICK_THREAD(impl->threadName.c_str());
 			try
 			{
 				impl->function();

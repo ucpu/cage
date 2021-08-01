@@ -13,9 +13,6 @@
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
 
-//#include <robin_hood.h>
-#include <optick.h>
-
 #include <unordered_map>
 #include <vector>
 #include <atomic>
@@ -454,7 +451,6 @@ namespace cage
 					while (!stopping)
 					{
 						threadSleep(listenerPeriod);
-						OPTICK_EVENT("assets network notifications");
 						string line;
 						while (listener->readLine(line))
 						{
@@ -601,8 +597,6 @@ namespace cage
 
 		void Loading::diskLoad(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("loading disk load");
-			OPTICK_TAG("realName", asset->realName);
 			ASS_LOG(2, asset, "loading disk load");
 
 			CAGE_ASSERT(asset);
@@ -628,7 +622,6 @@ namespace cage
 				if (h.textName[sizeof(h.textName) - 1] != 0)
 					CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
 				asset->textName = h.textName;
-				OPTICK_TAG("textName", asset->textName.c_str());
 				if (h.scheme >= impl->schemes.size())
 					CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 				asset->scheme = h.scheme;
@@ -670,11 +663,7 @@ namespace cage
 			if (asset->failed)
 				return;
 
-			OPTICK_EVENT("loading decompress");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
 			ASS_LOG(2, asset, "loading decompress");
-
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
@@ -695,11 +684,7 @@ namespace cage
 			if (asset->failed)
 				return;
 
-			OPTICK_EVENT("loading process");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
 			ASS_LOG(2, asset, "loading processing");
-
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
 			try
@@ -717,9 +702,6 @@ namespace cage
 
 		void Loading::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("loading maintain");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
 			ASS_LOG(2, asset, "loading maintain");
 
 			if (!asset->dependencies.empty())
@@ -754,9 +736,6 @@ namespace cage
 
 		void Unloading::process(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("unloading process");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
 			ASS_LOG(2, asset, "unloading process");
 			
 			asset->assetHolder.clear();
@@ -766,7 +745,6 @@ namespace cage
 
 		void Unloading::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("unloading maintain");
 			if (ptr)
 			{
 				auto &c = impl->privateIndex[((Asset *)ptr)->realName];
@@ -779,8 +757,6 @@ namespace cage
 			}
 			else
 			{
-				OPTICK_TAG("realName", asset->realName);
-				OPTICK_TAG("textName", asset->textName.c_str());
 				ASS_LOG(2, asset, "unloading maintain");
 
 				auto &c = impl->privateIndex[asset->realName];
@@ -799,10 +775,6 @@ namespace cage
 
 		void Command::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("command");
-			OPTICK_TAG("realName", realName);
-			OPTICK_TAG("type", (uint32)type);
-
 			switch (type)
 			{
 			case CommandEnum::Add:
@@ -848,10 +820,6 @@ namespace cage
 
 		void FabricateCommand::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("command");
-			OPTICK_TAG("realName", realName);
-			OPTICK_TAG("type", (uint32)type);
-
 			switch (type)
 			{
 			case CommandEnum::Fabricate:

@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <atomic>
 
-#include <optick.h>
-
 namespace cage
 {
 	void ScheduleStatistics::add(uint64 delay, uint64 duration)
@@ -160,7 +158,6 @@ namespace cage
 
 			void goSleep()
 			{
-				OPTICK_EVENT("scheduler sleep");
 				activateAllEmpty();
 				uint64 s = minimalScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
@@ -264,7 +261,6 @@ namespace cage
 	void Schedule::run()
 	{
 		ScheduleImpl *impl = (ScheduleImpl *)this;
-		OPTICK_EVENT_DYNAMIC(impl->conf.name.c_str());
 		if (!impl->conf.action)
 			return;
 		try

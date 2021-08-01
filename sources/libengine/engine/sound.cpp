@@ -193,8 +193,6 @@ namespace cage
 
 			void prepare()
 			{
-				OPTICK_EVENT("prepare");
-
 				{ // remove obsolete
 					FlatSet<uintPtr> used;
 					used.reserve(emitRead->listeners.size());
@@ -226,7 +224,6 @@ namespace cage
 				}
 
 				{
-					OPTICK_EVENT("speaker");
 					engineSpeaker()->process(dispatchTime);
 				}
 			}

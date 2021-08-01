@@ -7,8 +7,6 @@
 
 #include <cage-engine/engine.h>
 
-#include <optick.h>
-
 namespace cage
 {
 	void graphicsCreate(const EngineCreateConfig &config);

@@ -10,8 +10,6 @@
 
 #include "private.h"
 
-#include <optick.h>
-
 namespace cage
 {
 	void SkinData::bind(RenderQueue *queue) const
@@ -193,8 +191,6 @@ namespace cage
 
 	Holder<RenderQueue> GuiImpl::emit()
 	{
-		OPTICK_EVENT("render gui");
-
 		if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
 			return {};
 

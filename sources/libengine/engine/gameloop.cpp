@@ -43,7 +43,6 @@ namespace cage
 		{
 			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(+unlock)
 			{
-				OPTICK_EVENT("waiting");
 				lock->lock();
 			}
 
@@ -154,22 +153,17 @@ namespace cage
 
 			void graphicsPrepareStep()
 			{
-				OPTICK_EVENT("prepare");
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
 					ScopedTimer timing(profilingBufferGraphicsPrepare);
 					{
-						OPTICK_EVENT("prepare callback");
 						graphicsPrepareThread().prepare.dispatch();
 					}
 					{
-						OPTICK_EVENT("prepare");
 						uint32 drawCalls = 0, drawPrimitives = 0;
 						graphicsPrepare(applicationTime(), drawCalls, drawPrimitives);
 						profilingBufferDrawCalls.add(drawCalls);
 						profilingBufferDrawPrimitives.add(drawPrimitives);
-						OPTICK_TAG("draw calls", drawCalls);
-						OPTICK_TAG("draw primitives", drawPrimitives);
 					}
 				}
 			}
@@ -200,37 +194,30 @@ namespace cage
 
 			void graphicsDispatchStep()
 			{
-				OPTICK_FRAME("engine graphics dispatch");
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
 					ScopedTimer timing(profilingBufferGraphicsDispatch);
 					{
-						OPTICK_EVENT("dispatch callback");
 						graphicsDispatchThread().dispatch.dispatch();
 					}
 					{
-						OPTICK_EVENT("dispatch");
 						graphicsDispatch();
 					}
 				}
 				{
-					OPTICK_EVENT("gui render");
 					Holder<RenderQueue> grq = guiRenderQueue.get();
 					if (grq)
 						grq->dispatch();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				{
-					OPTICK_EVENT("assets");
 					assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex);
 				}
 				{
-					OPTICK_EVENT("swap callback");
 					graphicsDispatchThread().swap.dispatch();
 				}
 				{
-					OPTICK_EVENT("swap");
 					graphicsSwap();
 				}
 			}
@@ -263,18 +250,15 @@ namespace cage
 
 			void soundUpdate()
 			{
-				OPTICK_EVENT("update");
 				if (stopping)
 				{
 					soundScheduler->stop();
 					return;
 				}
 				{
-					OPTICK_EVENT("sound callback");
 					soundThread().sound.dispatch();
 				}
 				{
-					OPTICK_EVENT("tick");
 					soundTick(soundUpdateSchedule->time());
 				}
 			}
@@ -310,26 +294,21 @@ namespace cage
 
 			void controlInputs()
 			{
-				OPTICK_EVENT("inputs");
 				{
-					OPTICK_EVENT("gui prepare");
 					gui->outputResolution(window->resolution());
 					gui->outputRetina(window->contentScaling());
 					gui->prepare();
 				}
 				{
-					OPTICK_EVENT("window events");
 					window->processEvents();
 				}
 				{
-					OPTICK_EVENT("gui finish");
 					guiRenderQueue.assign(gui->finish());
 				}
 			}
 
 			void controlUpdate()
 			{
-				OPTICK_EVENT("update");
 				if (stopping)
 				{
 					controlScheduler->stop();
@@ -337,22 +316,17 @@ namespace cage
 				}
 				controlTime = controlUpdateSchedule->time();
 				{
-					OPTICK_EVENT("update history components");
 					updateHistoryComponents();
 				}
 				{
-					OPTICK_EVENT("update callback");
 					controlThread().update.dispatch();
 				}
 				{
-					OPTICK_EVENT("sound emit");
 					soundEmit(controlTime);
 				}
 				{
-					OPTICK_EVENT("graphics emit");
 					graphicsEmit(controlTime);
 				}
-				OPTICK_TAG("entities count", entities->group()->count());
 				profilingBufferEntities.add(entities->group()->count());
 			}
 
@@ -522,7 +496,6 @@ namespace cage
 
 			void start()
 			{
-				OPTICK_THREAD("engine control");
 				CAGE_ASSERT(engineStarted == 2);
 				engineStarted = 3;
 

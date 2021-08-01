@@ -46,9 +46,6 @@
 [submodule "externals/fastnoise/fastnoise"]
 	path = externals/fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
-[submodule "externals/optick/optick"]
-	path = externals/optick/optick
-	url = https://github.com/bombomby/optick.git
 [submodule "externals/robin-hood-hashing/robin-hood-hashing"]
 	path = externals/robin-hood-hashing/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
