@@ -29,7 +29,7 @@ namespace cage
 			EntityComponent *textureAnimationComponent = engineEntities()->component<TextureAnimationComponent>();
 			EntityComponent *shadowmapComponent = engineEntities()->component<ShadowmapComponent>();
 
-			entitiesVisitor(engineEntities(), [&](Entity *e, const TransformComponent &tr, const RenderComponent &re) {
+			entitiesVisitor([&](Entity *e, const TransformComponent &tr, const RenderComponent &re) {
 				EmitRender ee;
 				copyTransform(ee, e, tr);
 				ee.render = re;
@@ -38,30 +38,30 @@ namespace cage
 				if (e->has(textureAnimationComponent))
 					ee.textureAnimation = mem->createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(textureAnimationComponent));
 				eb.renders.push_back(std::move(ee));
-			});
+			}, engineEntities(), false);
 
-			entitiesVisitor(engineEntities(), [&](Entity *e, const TransformComponent &tr, const TextComponent &te) {
+			entitiesVisitor([&](Entity *e, const TransformComponent &tr, const TextComponent &te) {
 				EmitText ee;
 				copyTransform(ee, e, tr);
 				ee.text = te;
 				eb.texts.push_back(std::move(ee));
-			});
+			}, engineEntities(), false);
 
-			entitiesVisitor(engineEntities(), [&](Entity *e, const TransformComponent &tr, const LightComponent &li) {
+			entitiesVisitor([&](Entity *e, const TransformComponent &tr, const LightComponent &li) {
 				EmitLight ee;
 				copyTransform(ee, e, tr);
 				ee.light = li;
 				if (e->has(shadowmapComponent))
 					ee.shadowmap = mem->createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(shadowmapComponent));
 				eb.lights.push_back(std::move(ee));
-			});
+			}, engineEntities(), false);
 
-			entitiesVisitor(engineEntities(), [&](Entity *e, const TransformComponent &tr, const CameraComponent &cam) {
+			entitiesVisitor([&](Entity *e, const TransformComponent &tr, const CameraComponent &cam) {
 				EmitCamera ee;
 				copyTransform(ee, e, tr);
 				ee.camera = cam;
 				eb.cameras.push_back(std::move(ee));
-			});
+			}, engineEntities(), false);
 		}
 	}
 
