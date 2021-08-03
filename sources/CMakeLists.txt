@@ -22,6 +22,11 @@ endif()
 cage_ide_category(cage-core cage/libs)
 cage_ide_sort_files(cage-core)
 
+option(cage_profiling_enabled "enable compiling-in instructions for profiling" ON)
+if(cage_profiling_enabled)
+	target_compile_definitions(cage-core PUBLIC CAGE_PROFILING_ENABLED)
+endif()
+
 file(GLOB_RECURSE cage-engine-sources "libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
 target_include_directories(cage-engine PUBLIC include)

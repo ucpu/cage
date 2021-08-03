@@ -1,6 +1,7 @@
 #include <cage-core/tasks.h>
 #include <cage-core/debug.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/profiling.h>
 
 #include <exception>
 #include <vector>
@@ -171,6 +172,7 @@ namespace cage
 				try
 				{
 					CAGE_ASSERT(idx < count);
+					ProfilingScope prof(stringizer() + name + " (" + idx + ")", "tasks");
 					runner(*this, idx);
 				}
 				catch (...)
@@ -316,10 +318,11 @@ namespace cage
 		}
 	}
 
-	void tasksRunBlocking(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *) & function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *) & task.function;
@@ -330,10 +333,11 @@ namespace cage
 		privat::tasksRunBlocking(std::move(tsk));
 	}
 
-	Holder<AsyncTask> tasksRunAsync(Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *)&function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;

@@ -1,6 +1,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/profiling.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/uniformBuffer.h>
@@ -154,6 +155,9 @@ namespace cage
 #ifdef CAGE_DEBUG
 			std::vector<StringLiteral> namesStack;
 #endif // CAGE_DEBUG
+#ifdef CAGE_PROFILING_ENABLED
+			std::vector<ProfilingEvent> profilingStack;
+#endif // CAGE_PROFILING_ENABLED
 
 			RenderQueueImpl()
 			{
@@ -178,6 +182,7 @@ namespace cage
 
 			void resetQueue()
 			{
+				ProfilingScope profiling("queue reset", "render queue");
 				for (const auto &it1 : cmdsAllocs)
 					for (CmdBase *it2 : it1)
 						arena->destroy<CmdBase>(it2);
@@ -194,6 +199,9 @@ namespace cage
 #ifdef CAGE_DEBUG
 				namesStack.clear();
 #endif // CAGE_DEBUG
+#ifdef CAGE_PROFILING_ENABLED
+				profilingStack.clear();
+#endif // CAGE_PROFILING_ENABLED
 
 				RenderQueueDispatchBindings localBindings; // make sure the bindings are destroyed on the opengl thread
 				bindings = &localBindings;
@@ -201,6 +209,7 @@ namespace cage
 				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
 				if (uubStaging.size() > 0)
 				{
+					ProfilingScope profiling("UUB upload", "render queue");
 					uub = newUniformBuffer();
 					uub->setDebugName("universal uniform buffer");
 					uub->writeWhole(uubStaging);
@@ -311,6 +320,10 @@ namespace cage
 
 			void pushNamedScope(StringLiteral name)
 			{
+#ifdef CAGE_PROFILING_ENABLED
+				profilingStack.push_back(profilingEventBegin(string(name), "render queue"));
+#endif // CAGE_PROFILING_ENABLED
+
 				struct Cmd : public CmdBase
 				{
 					StringLiteral name;
@@ -319,6 +332,9 @@ namespace cage
 #ifdef CAGE_DEBUG
 						impl->namesStack.push_back(name);
 #endif // CAGE_DEBUG
+#ifdef CAGE_PROFILING_ENABLED
+						impl->profilingStack.push_back(profilingEventBegin(string(name), "render queue"));
+#endif // CAGE_PROFILING_ENABLED
 						glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 					}
 				};
@@ -329,6 +345,11 @@ namespace cage
 
 			void popNamedScope()
 			{
+#ifdef CAGE_PROFILING_ENABLED
+				profilingEventEnd(profilingStack.back());
+				profilingStack.pop_back();
+#endif // CAGE_PROFILING_ENABLED
+
 				struct Cmd : public CmdBase
 				{
 					void dispatch(RenderQueueImpl *impl) const override
@@ -337,6 +358,10 @@ namespace cage
 						CAGE_ASSERT(!impl->namesStack.empty());
 						impl->namesStack.pop_back();
 #endif // CAGE_DEBUG
+#ifdef CAGE_PROFILING_ENABLED
+						profilingEventEnd(impl->profilingStack.back());
+						impl->profilingStack.pop_back();
+#endif // CAGE_PROFILING_ENABLED
 						glPopDebugGroup();
 					}
 				};

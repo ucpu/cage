@@ -16,12 +16,10 @@
 #if defined(_MSC_VER)
 #define CAGE_API_EXPORT __declspec(dllexport)
 #define CAGE_API_IMPORT __declspec(dllimport)
-#define CAGE_API_PRIVATE
 #define CAGE_FORCE_INLINE __forceinline
 #else
 #define CAGE_API_EXPORT [[gnu::visibility("default")]]
 #define CAGE_API_IMPORT [[gnu::visibility("default")]]
-#define CAGE_API_PRIVATE [[gnu::visibility("hidden")]]
 #define CAGE_FORCE_INLINE __attribute__((always_inline)) inline
 #endif
 

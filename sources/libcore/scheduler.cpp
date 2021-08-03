@@ -3,6 +3,7 @@
 #include <cage-core/math.h> // max
 #include <cage-core/concurrent.h> // threadSleep
 #include <cage-core/variableSmoothingBuffer.h>
+#include <cage-core/profiling.h>
 
 #include <vector>
 #include <algorithm>
@@ -158,6 +159,7 @@ namespace cage
 
 			void goSleep()
 			{
+				ProfilingScope profiling("sleep", "scheduler");
 				activateAllEmpty();
 				uint64 s = minimalScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
@@ -261,6 +263,7 @@ namespace cage
 	void Schedule::run()
 	{
 		ScheduleImpl *impl = (ScheduleImpl *)this;
+		ProfilingScope profiling(impl->conf.name, "scheduler");
 		if (!impl->conf.action)
 			return;
 		try

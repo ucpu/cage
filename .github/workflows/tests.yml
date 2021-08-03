@@ -50,7 +50,7 @@ jobs:
 
 
   Ubuntu:
-    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
+    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}-${{ matrix.profiling-enabled }}
     runs-on: ubuntu-${{ matrix.os-version }}.04
     env:
       CC: ${{ matrix.compiler.cc }}
@@ -81,6 +81,7 @@ jobs:
             cxx: clang++,
             install: clang
           }
+        profiling-enabled: [ON, OFF]
 
     steps:
     - name: Install packages
@@ -102,7 +103,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_profiling_enabled=${{ matrix.profiling-enabled }} ..
 
     - name: Build
       run: |

@@ -2,6 +2,7 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/hashString.h>
+#include <cage-core/profiling.h>
 #include <cage-core/geometry.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
@@ -372,6 +373,7 @@ namespace cage
 
 			void copyEmitToPrep()
 			{
+				ProfilingScope profiling("copy emit to prep", "graphics");
 				copyEmitToPrep(emit.renders, renders);
 				copyEmitToPrep(emit.texts, texts);
 				copyEmitToPrep(emit.lights, lights);
@@ -602,6 +604,7 @@ namespace cage
 
 			void updateCommonValues()
 			{
+				ProfilingScope profiling("update common values", "graphics");
 				for (auto &it : renders)
 					updateCommonValues(it);
 				for (auto &it : texts)
@@ -721,7 +724,7 @@ namespace cage
 				if (pr.skeletalAnimation)
 				{
 					if (!pr.skeletalAnimation->started.test_and_set())
-						pr.skeletalAnimation->task = tasksRunAsync(Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
+						pr.skeletalAnimation->task = tasksRunAsync("skeletal-animation", Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
 					instances.armatures.push_back(+pr.skeletalAnimation);
 					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
 				}
@@ -901,6 +904,8 @@ namespace cage
 
 			void initializeShadowmapPass(ShadowmapPass &pass)
 			{
+				ProfilingScope profiling("initialize shadowmap pass", "graphics");
+
 				const LightComponent &lc = pass.light->light;
 				const ShadowmapComponent &sc = *pass.light->emit->shadowmap;
 
@@ -934,6 +939,8 @@ namespace cage
 
 			void generateShadowmapPass(ShadowmapPass &pass, uint32)
 			{
+				ProfilingScope profiling("generate shadowmap pass", "graphics");
+
 				const uint32 sceneMask = pass.camera->camera.sceneMask;
 				for (const PrepRender &pr : renders)
 				{
@@ -945,6 +952,8 @@ namespace cage
 
 			void initializeCameraPass(CameraPass &pass, uint32)
 			{
+				ProfilingScope profiling("initialize camera pass", "graphics");
+
 				const CameraComponent &cc = pass.camera->camera;
 
 				pass.resolution = pass.camera->target ? pass.camera->target->resolution() : windowResolution;
@@ -1000,6 +1009,8 @@ namespace cage
 
 			void generateCameraPass(CameraPass &pass, uint32)
 			{
+				ProfilingScope profiling("generate camera pass", "graphics");
+
 				const CameraComponent &cc = pass.camera->camera;
 
 				for (const PrepRender &pr : renders)
@@ -1608,7 +1619,7 @@ namespace cage
 					cameraPasses.push_back({});
 					CameraPass &c = cameraPasses.back();
 					c.camera = &it;
-					c.task = tasksRunAsync(Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::initializeCameraPass>(this), Holder<CameraPass>(&c, nullptr));
+					c.task = tasksRunAsync("initialize camera", Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::initializeCameraPass>(this), Holder<CameraPass>(&c, nullptr));
 				}
 
 				// generate passes
@@ -1616,8 +1627,8 @@ namespace cage
 				{
 					c.task->wait();
 					for (auto &s : c.shadowmapPasses)
-						s->task = tasksRunAsync(Delegate<void(ShadowmapPass &, uint32)>().bind<Preparator, &Preparator::generateShadowmapPass>(this), Holder<ShadowmapPass>(+s, nullptr));
-					c.task = tasksRunAsync(Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::generateCameraPass>(this), Holder<CameraPass>(&c, nullptr));
+						s->task = tasksRunAsync("generate shadowmap", Delegate<void(ShadowmapPass &, uint32)>().bind<Preparator, &Preparator::generateShadowmapPass>(this), Holder<ShadowmapPass>(+s, nullptr));
+					c.task = tasksRunAsync("generate camera", Delegate<void(CameraPass &, uint32)>().bind<Preparator, &Preparator::generateCameraPass>(this), Holder<CameraPass>(&c, nullptr));
 				}
 
 				// render passes

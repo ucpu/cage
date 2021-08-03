@@ -8,6 +8,13 @@
 
 namespace
 {
+	void someMeaninglessWork()
+	{
+		volatile int v = 0;
+		for (uint32 i = 0; i < 1000; i++)
+			v += i;
+	}
+
 	struct TaskTester : private Noncopyable
 	{
 		std::atomic<sint32> runCounter = 0;
@@ -28,11 +35,13 @@ namespace
 
 		void operator() ()
 		{
+			someMeaninglessWork();
 			runCounter++;
 		}
 
 		void operator() (uint32 idx)
 		{
+			someMeaninglessWork();
 			runCounter++;
 			invocationsSum += idx;
 		}
@@ -40,17 +49,20 @@ namespace
 
 	void testerRun(TaskTester &tester)
 	{
+		someMeaninglessWork();
 		tester.runCounter++;
 	}
 
 	void testerRun(TaskTester &tester, uint32 idx)
 	{
+		someMeaninglessWork();
 		tester.runCounter++;
 		tester.invocationsSum += idx;
 	}
 
 	void throwingTasks(uint32 idx)
 	{
+		someMeaninglessWork();
 		if (idx == 13 || idx == 42)
 		{
 			detail::OverrideBreakpoint ob;
@@ -65,7 +77,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, function");
 			TaskTester arr[20];
-			tasksRunBlocking<TaskTester>(Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr);
+			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr);
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -76,7 +88,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, operator()");
 			TaskTester arr[20];
-			tasksRunBlocking<TaskTester>(arr);
+			tasksRunBlocking<TaskTester>("blocking", arr);
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -87,7 +99,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, function");
 			TaskTester data;
-			tasksRunBlocking<TaskTester>(Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data, 5);
+			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data, 5);
 			CAGE_TEST(data.runCounter == 5);
 			CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -95,7 +107,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, operator()");
 			TaskTester data;
-			tasksRunBlocking<TaskTester>(data, 5);
+			tasksRunBlocking<TaskTester>("blocking", data, 5);
 			CAGE_TEST(data.runCounter == 5);
 			CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -103,7 +115,7 @@ namespace
 		{
 			CAGE_TESTCASE("just delegate");
 			TaskTester data;
-			tasksRunBlocking(Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 5);
+			tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 5);
 			CAGE_TEST(data.runCounter == 5);
 			CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -111,15 +123,15 @@ namespace
 		{
 			CAGE_TESTCASE("zero invocations");
 			TaskTester data;
-			tasksRunBlocking(Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 0);
+			tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 0);
 			CAGE_TEST(data.runCounter == 0);
 			CAGE_TEST(data.invocationsSum == 0);
 		}
 
 		{
 			CAGE_TESTCASE("exception");
-			CAGE_TEST_THROWN(tasksRunBlocking(Delegate<void(uint32)>().bind<&throwingTasks>(), 30)); // one exception
-			CAGE_TEST_THROWN(tasksRunBlocking(Delegate<void(uint32)>().bind<&throwingTasks>(), 60)); // two exceptions
+			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 30)); // one exception
+			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 60)); // two exceptions
 		}
 	}
 
@@ -137,7 +149,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, function");
 			Holder<PointerRange<TaskTester>> arr = newTaskTesterArray(20);
-			tasksRunAsync<TaskTester>(Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr.share())->wait();
+			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr.share())->wait();
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -148,7 +160,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, operator()");
 			Holder<PointerRange<TaskTester>> arr = newTaskTesterArray(20);
-			tasksRunAsync<TaskTester>(arr.share())->wait();
+			tasksRunAsync<TaskTester>("async", arr.share())->wait();
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -159,7 +171,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, function");
 			Holder<TaskTester> data = systemMemory().createHolder<TaskTester>();
-			tasksRunAsync<TaskTester>(Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data.share(), 5)->wait();
+			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data.share(), 5)->wait();
 			CAGE_TEST(data->runCounter == 5);
 			CAGE_TEST(data->invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -167,7 +179,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, operator()");
 			Holder<TaskTester> data = systemMemory().createHolder<TaskTester>();
-			tasksRunAsync<TaskTester>(data.share(), 5)->wait();
+			tasksRunAsync<TaskTester>("async", data.share(), 5)->wait();
 			CAGE_TEST(data->runCounter == 5);
 			CAGE_TEST(data->invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -175,7 +187,7 @@ namespace
 		{
 			CAGE_TESTCASE("just delegate");
 			TaskTester data;
-			tasksRunAsync(Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 5)->wait();
+			tasksRunAsync("async", Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 5)->wait();
 			CAGE_TEST(data.runCounter == 5);
 			CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -183,7 +195,7 @@ namespace
 		{
 			CAGE_TESTCASE("zero invocations");
 			TaskTester data;
-			tasksRunAsync(Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 0)->wait();
+			tasksRunAsync("async", Delegate<void(uint32)>().bind<TaskTester, &TaskTester::operator()>(&data), 0)->wait();
 			CAGE_TEST(data.runCounter == 0);
 			CAGE_TEST(data.invocationsSum == 0);
 		}
@@ -191,11 +203,11 @@ namespace
 		{
 			CAGE_TESTCASE("exception");
 			{
-				Holder<AsyncTask> ref = tasksRunAsync(Delegate<void(uint32)>().bind<&throwingTasks>(), 30); // one exception
+				Holder<AsyncTask> ref = tasksRunAsync("async", Delegate<void(uint32)>().bind<&throwingTasks>(), 30); // one exception
 				CAGE_TEST_THROWN(ref->wait());
 			}
 			{
-				Holder<AsyncTask> ref = tasksRunAsync(Delegate<void(uint32)>().bind<&throwingTasks>(), 60); // two exceptions
+				Holder<AsyncTask> ref = tasksRunAsync("async", Delegate<void(uint32)>().bind<&throwingTasks>(), 60); // two exceptions
 				CAGE_TEST_THROWN(ref->wait());
 			}
 		}
@@ -220,11 +232,12 @@ namespace
 
 		void operator()(uint32 = 0)
 		{
+			someMeaninglessWork();
 			runCounter++;
 			if (depth < 5)
 			{
 				RecursiveTester insts[2] = { { depth + 1 }, { depth + 1 } };
-				tasksRunBlocking<RecursiveTester>(insts);
+				tasksRunBlocking<RecursiveTester>("recursive", insts);
 			}
 		}
 	};
@@ -237,7 +250,7 @@ namespace
 		RecursiveTester tester(0);
 		CAGE_TEST(RecursiveTester::instances == 1);
 		CAGE_TEST(RecursiveTester::runCounter == 0);
-		tasksRunBlocking<RecursiveTester>(tester, 1);
+		tasksRunBlocking<RecursiveTester>("recursive", tester, 1);
 		CAGE_TEST(RecursiveTester::instances == 1);
 		CAGE_TEST(RecursiveTester::runCounter == 1 + 2 + 4 + 8 + 16 + 32);
 	}
@@ -261,6 +274,7 @@ namespace
 
 		void operator()(uint32)
 		{
+			someMeaninglessWork();
 			// note that using thread synchronization inside tasks is BAD practice
 			// implementation is specifically designed for running tasks inside tasks, but other blocking operations may deadlock all runners
 			ScopeLock lock(bar);
@@ -275,7 +289,7 @@ namespace
 		{
 			CAGE_TESTCASE("blocking");
 			ParallelTester tester;
-			tasksRunBlocking<ParallelTester>(tester, processorsCount() * 3);
+			tasksRunBlocking<ParallelTester>("parallel", tester, processorsCount() * 3);
 			CAGE_TEST(tester.runs == processorsCount() * 3);
 		}
 		CAGE_TEST(ParallelTester::counter == 0);
@@ -285,7 +299,7 @@ namespace
 			std::vector<Holder<AsyncTask>> tasks;
 			tasks.resize(processorsCount() * 3);
 			for (auto &it : tasks)
-				it = tasksRunAsync(tester.share());
+				it = tasksRunAsync("parallel", tester.share());
 			for (auto &it : tasks)
 				it->wait();
 			CAGE_TEST(tester->runs == processorsCount() * 3);
@@ -497,6 +511,7 @@ namespace
 
 		void operator()(uint32)
 		{
+			someMeaninglessWork();
 			runs++;
 		}
 	};
@@ -510,7 +525,7 @@ namespace
 			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
 			CAGE_TEST(TaskHolderTester::counter == 1);
 			CAGE_TEST(t->runs == 0);
-			Holder<AsyncTask> a = tasksRunAsync(t.share(), 13);
+			Holder<AsyncTask> a = tasksRunAsync("holders", t.share(), 13);
 			CAGE_TEST(TaskHolderTester::counter == 1);
 			a->wait();
 			CAGE_TEST(t->runs == 13);
@@ -521,7 +536,7 @@ namespace
 			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
 			CAGE_TEST(TaskHolderTester::counter == 1);
 			CAGE_TEST(t->runs == 0);
-			Holder<AsyncTask> a = tasksRunAsync(t.share(), 13);
+			Holder<AsyncTask> a = tasksRunAsync("holders", t.share(), 13);
 			CAGE_TEST(TaskHolderTester::counter == 1);
 		}
 		CAGE_TEST(TaskHolderTester::counter == 0);
@@ -530,7 +545,7 @@ namespace
 			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
 			CAGE_TEST(TaskHolderTester::counter == 1);
 			CAGE_TEST(t->runs == 0);
-			Holder<AsyncTask> a = tasksRunAsync(t.share(), 13);
+			Holder<AsyncTask> a = tasksRunAsync("holders", t.share(), 13);
 			CAGE_TEST(TaskHolderTester::counter == 1);
 			a->wait();
 			CAGE_TEST(t->runs == 13);
@@ -548,7 +563,7 @@ namespace
 			for (uint32 i = 0; i < 10; i++)
 			{
 				Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
-				Holder<AsyncTask> a = tasksRunAsync(t.share(), randomRange(0, 42));
+				Holder<AsyncTask> a = tasksRunAsync("holders", t.share(), randomRange(0, 42));
 				testers.push_back(std::move(t));
 				tasks.push_back(std::move(a));
 			}

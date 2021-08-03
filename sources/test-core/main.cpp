@@ -27,6 +27,7 @@ void testMemoryAllocators();
 void testSerialization();
 void testConcurrent();
 void testConcurrentQueue();
+void testProfiling();
 void testTasks();
 void testLruCache();
 void testFlatSet();
@@ -94,6 +95,7 @@ int main()
 	testSerialization();
 	testConcurrent();
 	testConcurrentQueue();
+	testProfiling();
 	testTasks();
 	testLruCache();
 	testFlatSet();

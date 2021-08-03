@@ -17,6 +17,7 @@ namespace cage
 
 		struct CAGE_CORE_API TaskCreateConfig : private Noncopyable
 		{
+			StringLiteral name;
 			Holder<void> data;
 			Delegate<void()> function;
 			TaskRunner runner = nullptr;
@@ -30,10 +31,11 @@ namespace cage
 
 	// invoke the function once for each element of the range
 	template<class T>
-	void tasksRunBlocking(Delegate<void(T &)> function, PointerRange<T> data, sint32 priority = 0)
+	void tasksRunBlocking(StringLiteral name, Delegate<void(T &)> function, PointerRange<T> data, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *)&function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &)> function = *(Delegate<void(T &)> *)&task.function;
@@ -48,9 +50,10 @@ namespace cage
 
 	// invoke operator()() once for each element of the range
 	template<class T>
-	void tasksRunBlocking(PointerRange<T> data, sint32 priority = 0)
+	void tasksRunBlocking(StringLiteral name, PointerRange<T> data, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
 			data[idx]();
@@ -63,10 +66,11 @@ namespace cage
 
 	// invoke the function invocations time, each time with the same data
 	template<class T>
-	void tasksRunBlocking(Delegate<void(T &, uint32)> function, T &data, uint32 invocations, sint32 priority = 0)
+	void tasksRunBlocking(StringLiteral name, Delegate<void(T &, uint32)> function, T &data, uint32 invocations, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *)&function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &, uint32)> function = *(Delegate<void(T &, uint32)> *)&task.function;
@@ -81,9 +85,10 @@ namespace cage
 
 	// invoke operator()(uint32) invocations time, each time with the same data
 	template<class T>
-	void tasksRunBlocking(T &data, uint32 invocations, sint32 priority = 0)
+	void tasksRunBlocking(StringLiteral name, T &data, uint32 invocations, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<T> data = task.data.share().cast<T>();
 			(*data)(idx);
@@ -95,14 +100,15 @@ namespace cage
 	}
 
 	// invoke the function invocations time
-	CAGE_CORE_API void tasksRunBlocking(Delegate<void(uint32)> function, uint32 invocations, sint32 priority = 0);
+	CAGE_CORE_API void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority = 0);
 
 	// invoke the function once for each element of the range
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = 0)
+	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *) & function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &)> function = *(Delegate<void(T &)> *)&task.function;
@@ -117,9 +123,10 @@ namespace cage
 
 	// invoke operator()() once for each element of the range
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(Holder<PointerRange<T>> data, sint32 priority = 0)
+	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
 			data[idx]();
@@ -132,10 +139,11 @@ namespace cage
 
 	// invoke the function invocations time, each time with the same data
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
+	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.function = *(Delegate<void()> *) & function;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &, uint32)> function = *(Delegate<void(T &, uint32)> *)&task.function;
@@ -150,9 +158,10 @@ namespace cage
 
 	// invoke operator()(uint32) invocations time, each time with the same data
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
+	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
+		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<T> data = task.data.share().cast<T>();
 			(*data)(idx);
@@ -164,7 +173,7 @@ namespace cage
 	}
 
 	// invoke the function invocations time
-	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = 0);
+	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = 0);
 
 	// allows running higher priority tasks from inside long running task
 	CAGE_CORE_API void tasksYield();
