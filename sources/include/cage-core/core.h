@@ -20,7 +20,7 @@
 #else
 #define CAGE_API_EXPORT [[gnu::visibility("default")]]
 #define CAGE_API_IMPORT [[gnu::visibility("default")]]
-#define CAGE_FORCE_INLINE __attribute__((always_inline)) inline
+#define CAGE_FORCE_INLINE [[gnu::always_inline]] inline
 #endif
 
 #ifdef CAGE_CORE_EXPORT
