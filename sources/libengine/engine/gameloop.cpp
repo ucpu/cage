@@ -26,7 +26,7 @@
 #include <cage-engine/speaker.h>
 #include <cage-engine/voices.h>
 #include <cage-engine/gui.h>
-#include <cage-engine/engineProfiling.h>
+#include <cage-engine/engineStatistics.h>
 #include <cage-engine/renderQueue.h>
 
 #include "engine.h"
@@ -789,7 +789,7 @@ namespace cage
 		return engineData->controlTime;
 	}
 
-	uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode)
+	uint64 engineStatisticsValues(EngineStatisticsFlags flags, EngineStatisticsModeEnum mode)
 	{
 		uint64 result = 0;
 
@@ -797,20 +797,20 @@ namespace cage
 		{
 			switch (mode)
 			{
-			case EngineProfilingModeEnum::Average: result += buffer.smooth(); break;
-			case EngineProfilingModeEnum::Maximum: result += buffer.max(); break;
-			case EngineProfilingModeEnum::Last: result += buffer.current(); break;
+			case EngineStatisticsModeEnum::Average: result += buffer.smooth(); break;
+			case EngineStatisticsModeEnum::Maximum: result += buffer.max(); break;
+			case EngineStatisticsModeEnum::Last: result += buffer.current(); break;
 			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
 			}
 		};
 
-		if (any(flags & EngineProfilingStatsFlags::Control))
+		if (any(flags & EngineStatisticsFlags::Control))
 			add(engineData->controlUpdateSchedule->statistics().durations);
-		if (any(flags & EngineProfilingStatsFlags::Sound))
+		if (any(flags & EngineStatisticsFlags::Sound))
 			add(engineData->soundUpdateSchedule->statistics().durations);
 
 #define GCHL_GENERATE(NAME) \
-		if (any(flags & EngineProfilingStatsFlags::NAME)) \
+		if (any(flags & EngineStatisticsFlags::NAME)) \
 		{ \
 			auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
 			add(buffer); \

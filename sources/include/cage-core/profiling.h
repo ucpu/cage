@@ -55,6 +55,7 @@ namespace cage
 	};
 
 	GCHL_PROFILING_API void profilingThreadName(const string &name) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingThreadOrder(sint32 order) noexcept GCHL_PROFILING_BODY(;);
 }
 
 #undef GCHL_PROFILING_API

@@ -3,10 +3,10 @@
 #include <cage-core/entities.h>
 #include <cage-core/debug.h>
 
+#include <cage-engine/engineStatistics.h>
 #include <cage-engine/gui.h>
 #include <cage-engine/engine.h>
 #include <cage-engine/window.h>
-#include <cage-engine/engineProfiling.h>
 
 namespace cage
 {
@@ -15,8 +15,9 @@ namespace cage
 		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
+		ConfigBool confProfilingEnabled("cage/profiling/enabled");
 
-		class EngineProfilingImpl : public EngineProfiling
+		class EngineStatisticsImpl : public EngineStatistics
 		{
 		public:
 			EventListener<bool(uint32, ModifiersFlags)> keyPressListener;
@@ -25,17 +26,17 @@ namespace cage
 			uint32 panelIndex;
 			uint32 layoutIndex;
 			uint32 labelIndices[40];
-			const EngineProfilingStatsFlags *labelFlags;
+			const EngineStatisticsFlags *labelFlags;
 			const char *const *labelNames;
 			uint32 labelsCount;
-			EngineProfilingScopeEnum profilingModeOld;
+			EngineStatisticsScopeEnum profilingModeOld;
 
-			EngineProfilingImpl() : profilingModeOld(EngineProfilingScopeEnum::Full)
+			EngineStatisticsImpl() : profilingModeOld(EngineStatisticsScopeEnum::Full)
 			{
 				nullData();
 
-				keyPressListener.bind<EngineProfilingImpl, &EngineProfilingImpl::keyPress>(this);
-				updateListener.bind<EngineProfilingImpl, &EngineProfilingImpl::update>(this);
+				keyPressListener.bind<EngineStatisticsImpl, &EngineStatisticsImpl::keyPress>(this);
+				updateListener.bind<EngineStatisticsImpl, &EngineStatisticsImpl::update>(this);
 
 				engineWindow()->events.keyPress.attach(keyPressListener);
 				controlThread().update.attach(updateListener);
@@ -54,15 +55,15 @@ namespace cage
 
 			void generateEntities()
 			{
-				static constexpr EngineProfilingStatsFlags flagsFull[] = {
-					EngineProfilingStatsFlags::Control,
-					EngineProfilingStatsFlags::Sound,
-					EngineProfilingStatsFlags::GraphicsPrepare,
-					EngineProfilingStatsFlags::GraphicsDispatch,
-					EngineProfilingStatsFlags::FrameTime,
-					EngineProfilingStatsFlags::DrawCalls,
-					EngineProfilingStatsFlags::DrawPrimitives,
-					EngineProfilingStatsFlags::Entities,
+				static constexpr EngineStatisticsFlags flagsFull[] = {
+					EngineStatisticsFlags::Control,
+					EngineStatisticsFlags::Sound,
+					EngineStatisticsFlags::GraphicsPrepare,
+					EngineStatisticsFlags::GraphicsDispatch,
+					EngineStatisticsFlags::FrameTime,
+					EngineStatisticsFlags::DrawCalls,
+					EngineStatisticsFlags::DrawPrimitives,
+					EngineStatisticsFlags::Entities,
 				};
 				static constexpr const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
 					"Control: ",
@@ -75,11 +76,11 @@ namespace cage
 					"Entities: ",
 				};
 
-				static constexpr EngineProfilingStatsFlags flagsShort[] = {
-					EngineProfilingStatsFlags::Control,
-					EngineProfilingStatsFlags::Sound,
-					EngineProfilingStatsFlags::GraphicsPrepare,
-					EngineProfilingStatsFlags::FrameTime,
+				static constexpr EngineStatisticsFlags flagsShort[] = {
+					EngineStatisticsFlags::Control,
+					EngineStatisticsFlags::Sound,
+					EngineStatisticsFlags::GraphicsPrepare,
+					EngineStatisticsFlags::FrameTime,
 				};
 				static constexpr const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control: ",
@@ -88,15 +89,15 @@ namespace cage
 					"Frame: ",
 				};
 
-				static constexpr EngineProfilingStatsFlags flagsFps[] = {
-					EngineProfilingStatsFlags::FrameTime,
+				static constexpr EngineStatisticsFlags flagsFps[] = {
+					EngineStatisticsFlags::FrameTime,
 				};
 				static constexpr const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
 					"Frame Time: ",
 				};
 
 				clearEntities();
-				profilingModeOld = profilingScope;
+				profilingModeOld = statisticsScope;
 				EntityManager *g = engineGui()->entities();
 				Entity *panel = g->createUnique();
 				{
@@ -118,7 +119,7 @@ namespace cage
 					sizeof(flagsShort) / sizeof(flagsShort[0]),
 					sizeof(flagsFps) / sizeof(flagsFps[0]),
 					0 };
-				labelsCount = labelsPerMode[(uint32)profilingScope];
+				labelsCount = labelsPerMode[(uint32)statisticsScope];
 				for (uint32 i = 0; i < labelsCount * 2; i++)
 				{
 					Entity *e = g->createUnique();
@@ -134,21 +135,21 @@ namespace cage
 					}
 				}
 
-				switch (profilingScope)
+				switch (statisticsScope)
 				{
-				case EngineProfilingScopeEnum::None:
+				case EngineStatisticsScopeEnum::None:
 					labelFlags = nullptr;
 					labelNames = nullptr;
 					break;
-				case EngineProfilingScopeEnum::Fps:
+				case EngineStatisticsScopeEnum::Fps:
 					labelFlags = flagsFps;
 					labelNames = namesFps;
 					break;
-				case EngineProfilingScopeEnum::Short:
+				case EngineStatisticsScopeEnum::Short:
 					labelFlags = flagsShort;
 					labelNames = namesShort;
 					break;
-				case EngineProfilingScopeEnum::Full:
+				case EngineStatisticsScopeEnum::Full:
 					labelFlags = flagsFull;
 					labelNames = namesFull;
 					break;
@@ -178,8 +179,8 @@ namespace cage
 			{
 				EntityManager *g = engineGui()->entities();
 				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
-				bool visible = profilingScope != EngineProfilingScopeEnum::None;
-				if (panelPresent != visible || profilingModeOld != profilingScope)
+				bool visible = statisticsScope != EngineStatisticsScopeEnum::None;
+				if (panelPresent != visible || profilingModeOld != statisticsScope)
 				{ // change needed
 					clearEntities();
 					if (visible)
@@ -203,10 +204,10 @@ namespace cage
 				for (uint32 i = 0; i < labelsCount; i++)
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
-					if (labelFlags[i] <= EngineProfilingStatsFlags::FrameTime)
-						setTextLabel(i * 2 + 1, stringizer() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
+					if (labelFlags[i] <= EngineStatisticsFlags::FrameTime)
+						setTextLabel(i * 2 + 1, stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode) / 1000) + " ms");
 					else
-						setTextLabel(i * 2 + 1, stringizer() + (engineProfilingValues(labelFlags[i], profilingMode)));
+						setTextLabel(i * 2 + 1, stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode)));
 				}
 				return false;
 			}
@@ -235,27 +236,32 @@ namespace cage
 			{
 				if (mods == keyModifiers)
 				{
-					if (key == keyToggleProfilingScope)
+					if (key == keyToggleStatisticsScope)
 					{
-						switch (profilingScope)
+						switch (statisticsScope)
 						{
-						case EngineProfilingScopeEnum::Full: profilingScope = EngineProfilingScopeEnum::Short; break;
-						case EngineProfilingScopeEnum::Short: profilingScope = EngineProfilingScopeEnum::Fps; break;
-						case EngineProfilingScopeEnum::Fps: profilingScope = EngineProfilingScopeEnum::None; break;
-						case EngineProfilingScopeEnum::None: profilingScope = EngineProfilingScopeEnum::Full; break;
+						case EngineStatisticsScopeEnum::Full: statisticsScope = EngineStatisticsScopeEnum::Short; break;
+						case EngineStatisticsScopeEnum::Short: statisticsScope = EngineStatisticsScopeEnum::Fps; break;
+						case EngineStatisticsScopeEnum::Fps: statisticsScope = EngineStatisticsScopeEnum::None; break;
+						case EngineStatisticsScopeEnum::None: statisticsScope = EngineStatisticsScopeEnum::Full; break;
 						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling scope enum");
 						}
 						return true;
 					}
-					if (key == keyToggleProfilingMode)
+					if (key == keyToggleStatisticsMode)
 					{
-						switch (profilingMode)
+						switch (statisticsMode)
 						{
-						case EngineProfilingModeEnum::Average: profilingMode = EngineProfilingModeEnum::Maximum; break;
-						case EngineProfilingModeEnum::Maximum: profilingMode = EngineProfilingModeEnum::Last; break;
-						case EngineProfilingModeEnum::Last: profilingMode = EngineProfilingModeEnum::Average; break;
+						case EngineStatisticsModeEnum::Average: statisticsMode = EngineStatisticsModeEnum::Maximum; break;
+						case EngineStatisticsModeEnum::Maximum: statisticsMode = EngineStatisticsModeEnum::Last; break;
+						case EngineStatisticsModeEnum::Last: statisticsMode = EngineStatisticsModeEnum::Average; break;
 						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling mode enum");
 						}
+						return true;
+					}
+					if (key == keyToggleProfilingEnabled)
+					{
+						confProfilingEnabled = !confProfilingEnabled;
 						return true;
 					}
 					if (key == keyVisualizeBufferPrev)
@@ -284,8 +290,8 @@ namespace cage
 		};
 	}
 
-	Holder<EngineProfiling> newEngineProfiling()
+	Holder<EngineStatistics> newEngineStatistics()
 	{
-		return systemMemory().createImpl<EngineProfiling, EngineProfilingImpl>();
+		return systemMemory().createImpl<EngineStatistics, EngineStatisticsImpl>();
 	}
 }

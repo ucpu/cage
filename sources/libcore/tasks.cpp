@@ -108,6 +108,7 @@ namespace cage
 
 			void threadEntry()
 			{
+				profilingThreadOrder(1000);
 				threadData.taskExecutor = true;
 				try
 				{

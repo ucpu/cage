@@ -112,10 +112,6 @@ namespace cage
 	enum class SoundFlags : uint32;
 	struct SoundSourceHeader;
 
-	enum class EngineProfilingStatsFlags;
-	enum class EngineProfilingModeEnum;
-	enum class EngineProfilingScopeEnum;
-	class EngineProfiling;
 	class FpsCamera;
 	class FullscreenSwitcher;
 	struct FullscreenSwitcherCreateConfig;
@@ -180,7 +176,6 @@ namespace cage
 	GCHL_ENUM_BITS(TextureFlags);
 	GCHL_ENUM_BITS(FontFlags);
 	GCHL_ENUM_BITS(SoundFlags);
-	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
 	GCHL_ENUM_BITS(WindowFlags);
 	GCHL_ENUM_BITS(ModelRenderFlags);
 	GCHL_ENUM_BITS(ModifiersFlags);

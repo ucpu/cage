@@ -201,8 +201,6 @@ namespace cage
 			return;
 		try
 		{
-			if (!cnfEnabled)
-				return;
 			stringizer s;
 			s + keyval("name", ev.name);
 			s + keyval("cat", ev.category);
@@ -304,6 +302,23 @@ namespace cage
 			s + keyval("ph", StringLiteral("M"));
 			s + keyval("tid", currentThreadId());
 			s + args(stringizer() + "\"name\": \"" + name + "\"");
+			enqueueEvent(s); // insert into the queue without initializing the profiling threads
+		}
+		catch (...)
+		{
+			// nothing
+		}
+	}
+
+	void profilingThreadOrder(sint32 order) noexcept
+	{
+		try
+		{
+			stringizer s;
+			s + keyval("name", StringLiteral("thread_sort_index"));
+			s + keyval("ph", StringLiteral("M"));
+			s + keyval("tid", currentThreadId());
+			s + args(stringizer() + "\"sort_index\": " + order);
 			enqueueEvent(s); // insert into the queue without initializing the profiling threads
 		}
 		catch (...)
