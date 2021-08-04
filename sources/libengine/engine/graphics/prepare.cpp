@@ -356,30 +356,6 @@ namespace cage
 				return true;
 			}
 
-			template<class E, class P>
-			void copyEmitToPrep(const std::vector<E> &es, std::vector<P> &ps)
-			{
-				ps.reserve(es.size());
-				for (const auto &it : es)
-					ps.emplace_back(&it);
-				for (auto &it : ps)
-				{
-					const transform &a = it.emit->history;
-					const transform &b = it.emit->current;
-					it.model = mat4(interpolate(a, b, interFactor));
-					it.modelPrev = mat4(interpolate(a, b, interFactor - 0.2));
-				}
-			}
-
-			void copyEmitToPrep()
-			{
-				ProfilingScope profiling("copy emit to prep", "graphics");
-				copyEmitToPrep(emit.renders, renders);
-				copyEmitToPrep(emit.texts, texts);
-				copyEmitToPrep(emit.lights, lights);
-				copyEmitToPrep(emit.cameras, cameras);
-			}
-
 			[[deprecated]] // skeleton rig should be referenced from animations instead of models
 			uint32 findSkeletonRigName(PrepRender &pr)
 			{
@@ -602,17 +578,29 @@ namespace cage
 					pc.target = Holder<Texture>(pc.camera.target, nullptr);
 			}
 
-			void updateCommonValues()
+			template<class E, class P>
+			void copyEmitToPrep(const std::vector<E> &es, std::vector<P> &ps)
 			{
-				ProfilingScope profiling("update common values", "graphics");
-				for (auto &it : renders)
+				ps.reserve(es.size());
+				for (const auto &it_ : es)
+				{
+					ps.emplace_back(&it_);
+					auto &it = ps.back();
+					const transform &a = it.emit->history;
+					const transform &b = it.emit->current;
+					it.model = mat4(interpolate(a, b, interFactor));
+					it.modelPrev = mat4(interpolate(a, b, interFactor - 0.2));
 					updateCommonValues(it);
-				for (auto &it : texts)
-					updateCommonValues(it);
-				for (auto &it : lights)
-					updateCommonValues(it);
-				for (auto &it : cameras)
-					updateCommonValues(it);
+				}
+			}
+
+			void copyEmitToPrep()
+			{
+				ProfilingScope profiling("copy emit to prep", "graphics");
+				copyEmitToPrep(emit.renders, renders);
+				copyEmitToPrep(emit.texts, texts);
+				copyEmitToPrep(emit.lights, lights);
+				copyEmitToPrep(emit.cameras, cameras);
 			}
 
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersInstances &instances)
@@ -1602,7 +1590,6 @@ namespace cage
 					return;
 
 				copyEmitToPrep();
-				updateCommonValues();
 
 				// sort cameras
 				std::sort(cameras.begin(), cameras.end(), [](const PrepCamera &aa, const PrepCamera &bb) {
