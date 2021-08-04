@@ -1,5 +1,6 @@
 #include <cage-core/flatSet.h>
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/profiling.h>
 
 #include <cage-engine/sound.h>
 #include <cage-engine/voices.h>
@@ -215,6 +216,7 @@ namespace cage
 				}
 
 				{
+					ProfilingScope profiling("prepare", "sound");
 					emitRead = &emitBuffers[lock.index()];
 					ClearOnScopeExit resetEmitRead(emitRead);
 					emitTime = emitRead->time;
@@ -224,6 +226,7 @@ namespace cage
 				}
 
 				{
+					ProfilingScope profiling("speaker", "sound");
 					engineSpeaker()->process(dispatchTime);
 				}
 			}

@@ -12,6 +12,7 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
+#include <cage-core/profiling.h>
 
 #include <unordered_map>
 #include <vector>
@@ -451,6 +452,7 @@ namespace cage
 					while (!stopping)
 					{
 						threadSleep(listenerPeriod);
+						ProfilingScope profiling("network notifications", "assets manager");
 						string line;
 						while (listener->readLine(line))
 						{
@@ -597,6 +599,7 @@ namespace cage
 
 		void Loading::diskLoad(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("loading disk load", "assets manager");
 			ASS_LOG(2, asset, "loading disk load");
 
 			CAGE_ASSERT(asset);
@@ -663,6 +666,7 @@ namespace cage
 			if (asset->failed)
 				return;
 
+			ProfilingScope profiling("loading decompress", "assets manager");
 			ASS_LOG(2, asset, "loading decompress");
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
@@ -684,6 +688,7 @@ namespace cage
 			if (asset->failed)
 				return;
 
+			ProfilingScope profiling("loading processing", "assets manager");
 			ASS_LOG(2, asset, "loading processing");
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
@@ -702,6 +707,7 @@ namespace cage
 
 		void Loading::maintain(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("loading maintain", "assets manager");
 			ASS_LOG(2, asset, "loading maintain");
 
 			if (!asset->dependencies.empty())
@@ -736,6 +742,7 @@ namespace cage
 
 		void Unloading::process(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("unloading process", "assets manager");
 			ASS_LOG(2, asset, "unloading process");
 			
 			asset->assetHolder.clear();
@@ -745,6 +752,7 @@ namespace cage
 
 		void Unloading::maintain(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("unloading maintain", "assets manager");
 			if (ptr)
 			{
 				auto &c = impl->privateIndex[((Asset *)ptr)->realName];
@@ -775,6 +783,7 @@ namespace cage
 
 		void Command::maintain(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("command", "assets manager");
 			switch (type)
 			{
 			case CommandEnum::Add:
@@ -820,6 +829,7 @@ namespace cage
 
 		void FabricateCommand::maintain(AssetManagerImpl *impl)
 		{
+			ProfilingScope profiling("command", "assets manager");
 			switch (type)
 			{
 			case CommandEnum::Fabricate:
