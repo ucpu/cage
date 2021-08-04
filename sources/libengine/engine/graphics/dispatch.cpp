@@ -22,7 +22,7 @@ namespace cage
 
 	void Graphics::dispatch()
 	{
-		renderQueue->dispatch();
+		renderQueue->dispatch(+provisionalData);
 		provisionalData->reset();
 
 		{ // check gl errors (even in release, but do not halt the game)

@@ -121,7 +121,7 @@ namespace cage
 
 		void resetQueue(); // erase all stored commands
 
-		void dispatch(); // requires opengl context bound in current thread
+		void dispatch(ProvisionalGraphics *provisionalGraphics = nullptr); // requires opengl context bound in current thread
 
 		uint32 commandsCount() const;
 		uint32 drawsCount() const;

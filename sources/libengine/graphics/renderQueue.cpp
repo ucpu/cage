@@ -194,7 +194,7 @@ namespace cage
 				initHeads();
 			}
 
-			void dispatch()
+			void dispatch(ProvisionalGraphics *provisionalGraphics)
 			{
 #ifdef CAGE_DEBUG
 				namesStack.clear();
@@ -210,9 +210,21 @@ namespace cage
 				if (uubStaging.size() > 0)
 				{
 					ProfilingScope profiling("UUB upload", "render queue");
-					uub = newUniformBuffer();
-					uub->setDebugName("universal uniform buffer");
-					uub->writeWhole(uubStaging);
+					if (provisionalGraphics)
+					{
+						uub = provisionalGraphics->uniformBuffer(stringizer() + "universal uniform buffer " + this)->resolve();
+						uub->bind();
+						if (uub->size() >= uubStaging.size())
+							uub->writeRange(uubStaging, 0);
+						else
+							uub->writeWhole(uubStaging);
+					}
+					else
+					{
+						uub = newUniformBuffer();
+						uub->setDebugName("universal uniform buffer");
+						uub->writeWhole(uubStaging);
+					}
 				}
 				uubObject = +uub;
 
@@ -1288,10 +1300,10 @@ namespace cage
 		impl->resetQueue();
 	}
 
-	void RenderQueue::dispatch()
+	void RenderQueue::dispatch(ProvisionalGraphics *provisionalGraphics)
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->dispatch();
+		impl->dispatch(provisionalGraphics);
 	}
 
 	uint32 RenderQueue::commandsCount() const
