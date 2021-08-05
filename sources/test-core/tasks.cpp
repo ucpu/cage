@@ -581,6 +581,59 @@ namespace
 		}
 		CAGE_TEST(TaskHolderTester::counter == 0);
 	}
+
+	void testTasksAggregation()
+	{
+		CAGE_TESTCASE("aggregation");
+
+		/*
+		{
+			CAGE_TESTCASE("counters 1");
+			for (uint32 a = 2; a < 7; a++)
+			{
+				CAGE_TESTCASE(a);
+				TaskTester data;
+				tasksRunBlocking<TaskTester>("blocking", data, 5, { 0, a });
+				CAGE_TEST(data.runCounter == 5);
+				CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
+			}
+		}
+
+		{
+			CAGE_TESTCASE("counters 2");
+			for (uint32 a : { 3, 10, 15, 20, 30, 40, 50, 100 })
+			{
+				CAGE_TESTCASE(a);
+				TaskTester data;
+				tasksRunBlocking<TaskTester>("blocking", data, 42, { 0, a });
+				CAGE_TEST(data.runCounter == 42);
+				CAGE_TEST(data.invocationsSum == 861);
+			}
+		}
+		*/
+
+		{
+			CAGE_TESTCASE("blocking array");
+			TaskTester arr[20];
+			tasksRunBlocking<TaskTester, 3>("blocking", arr);
+			for (TaskTester &t : arr)
+			{
+				CAGE_TEST(t.runCounter == 1);
+				CAGE_TEST(t.invocationsSum == 0);
+			}
+		}
+
+		{
+			CAGE_TESTCASE("async array");
+			Holder<PointerRange<TaskTester>> arr = newTaskTesterArray(20);
+			tasksRunAsync<TaskTester, 3>("async", arr.share())->wait();
+			for (TaskTester &t : arr)
+			{
+				CAGE_TEST(t.runCounter == 1);
+				CAGE_TEST(t.invocationsSum == 0);
+			}
+		}
+	}
 }
 
 void testTasks()
@@ -592,4 +645,5 @@ void testTasks()
 	testTasksAreParallel();
 	testTasksSplit();
 	testTasksHolders();
+	testTasksAggregation();
 }

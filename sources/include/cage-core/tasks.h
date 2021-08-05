@@ -21,16 +21,34 @@ namespace cage
 			Holder<void> data;
 			Delegate<void()> function;
 			TaskRunner runner = nullptr;
-			uint32 count = 0;
+			uint32 count = 0; // number of invocations
+			uint32 size = 0; // number of elements
 			sint32 priority = 0;
 		};
 
 		CAGE_CORE_API void tasksRunBlocking(TaskCreateConfig &&task);
 		CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(TaskCreateConfig &&task);
+
+		template<uint32 Aggregation>
+		CAGE_FORCE_INLINE std::pair<uint32, uint32> aggRange(uint32 idx, uint32 size)
+		{
+			const uint32 b = idx * Aggregation;
+			CAGE_ASSERT(b < size);
+			uint32 e = b + Aggregation;
+			if (e > size)
+				e = size;
+			return { b, e };
+		}
+
+		template<uint32 Aggregation>
+		CAGE_FORCE_INLINE uint32 aggCount(uint32 size)
+		{
+			return size / Aggregation + !!(size % Aggregation);
+		}
 	}
 
 	// invoke the function once for each element of the range
-	template<class T>
+	template<class T, uint32 Aggregation = 1>
 	void tasksRunBlocking(StringLiteral name, Delegate<void(T &)> function, PointerRange<T> data, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
@@ -40,26 +58,32 @@ namespace cage
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &)> function = *(Delegate<void(T &)> *)&task.function;
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
-			function(data[idx]);
+			const auto range = privat::aggRange<Aggregation>(idx, task.size);
+			for (uint32 i = range.first; i < range.second; i++)
+				function(data[i]);
 		};
 		tsk.data = Holder<PointerRange<T>>(&data, nullptr).template cast<void>();
-		tsk.count = numeric_cast<uint32>(data.size());
+		tsk.size = numeric_cast<uint32>(data.size());
+		tsk.count = privat::aggCount<Aggregation>(tsk.size);
 		tsk.priority = priority;
 		privat::tasksRunBlocking(std::move(tsk));
 	}
 
 	// invoke operator()() once for each element of the range
-	template<class T>
+	template<class T, uint32 Aggregation = 1>
 	void tasksRunBlocking(StringLiteral name, PointerRange<T> data, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
-			data[idx]();
+			const auto range = privat::aggRange<Aggregation>(idx, task.size);
+			for (uint32 i = range.first; i < range.second; i++)
+				data[i]();
 		};
 		tsk.data = Holder<PointerRange<T>>(&data, nullptr).template cast<void>();
-		tsk.count = numeric_cast<uint32>(data.size());
+		tsk.size = numeric_cast<uint32>(data.size());
+		tsk.count = privat::aggCount<Aggregation>(tsk.size);
 		tsk.priority = priority;
 		privat::tasksRunBlocking(std::move(tsk));
 	}
@@ -103,7 +127,7 @@ namespace cage
 	CAGE_CORE_API void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority = 0);
 
 	// invoke the function once for each element of the range
-	template<class T>
+	template<class T, uint32 Aggregation = 1>
 	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
@@ -113,25 +137,31 @@ namespace cage
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Delegate<void(T &)> function = *(Delegate<void(T &)> *)&task.function;
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
-			function(data[idx]);
+			const auto range = privat::aggRange<Aggregation>(idx, task.size);
+			for (uint32 i = range.first; i < range.second; i++)
+				function(data[i]);
 		};
-		tsk.count = numeric_cast<uint32>(data.size());
+		tsk.size = numeric_cast<uint32>(data.size());
+		tsk.count = privat::aggCount<Aggregation>(tsk.size);
 		tsk.priority = priority;
 		tsk.data = std::move(data).template cast<void>();
 		return privat::tasksRunAsync(std::move(tsk));
 	}
 
 	// invoke operator()() once for each element of the range
-	template<class T>
+	template<class T, uint32 Aggregation = 1>
 	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
 		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
 			Holder<PointerRange<T>> data = task.data.share().cast<PointerRange<T>>();
-			data[idx]();
+			const auto range = privat::aggRange<Aggregation>(idx, task.size);
+			for (uint32 i = range.first; i < range.second; i++)
+				data[i]();
 		};
-		tsk.count = numeric_cast<uint32>(data.size());
+		tsk.size = numeric_cast<uint32>(data.size());
+		tsk.count = privat::aggCount<Aggregation>(tsk.size);
 		tsk.priority = priority;
 		tsk.data = std::move(data).template cast<void>();
 		return privat::tasksRunAsync(std::move(tsk));
