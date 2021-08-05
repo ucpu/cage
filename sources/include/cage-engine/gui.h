@@ -47,7 +47,7 @@ namespace cage
 		uint32 font = 0;
 		real size = real::Nan();
 		real lineSpacing = real::Nan();
-		TextAlignEnum align = (TextAlignEnum)-1;
+		TextAlignEnum align = (TextAlignEnum)m;
 	};
 
 	struct CAGE_ENGINE_API GuiSelectionComponent
