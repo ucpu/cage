@@ -37,6 +37,7 @@ namespace cage
 
 	namespace
 	{
+		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
@@ -305,20 +306,17 @@ namespace cage
 			const Holder<RenderQueue> &renderQueue = graphics->renderQueue;
 			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
 			const uint32 frameIndex = graphics->frameIndex;
+			const bool cnfRenderMissingModels = confRenderMissingModels;
+			const bool cnfRenderSkeletonBones = confRenderSkeletonBones;
 
 			uint64 prepareTime = 0;
 			real interFactor;
 			ivec2 windowResolution;
 
-			bool cnfRenderMissingModels = confRenderMissingModels;
-			bool cnfRenderSkeletonBones = confRenderSkeletonBones;
-			bool cnfNoAmbientOcclusion = confNoAmbientOcclusion;
-			bool cnfNoMotionBlur = confNoMotionBlur;
-			bool cnfNoBloom = confNoBloom;
-
 			Holder<Model> modelSquare, modelSphere, modelCone, modelBone;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderVisualizeColor, shaderFont;
+			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
+			Holder<ShaderProgram> shaderFont;
 
 			std::vector<PrepRender> renders;
 			std::vector<PrepText> texts;
@@ -351,6 +349,9 @@ namespace cage
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
 				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
+				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
+				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
+				shaderVisualizeVelocity = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				CAGE_ASSERT(shaderBlit);
 				return true;
@@ -567,11 +568,11 @@ namespace cage
 				pc.camera = pc.emit->camera;
 				pc.center = vec3(pc.model * vec4(0, 0, 0, 1));
 
-				if (cnfNoAmbientOcclusion)
+				if (confNoAmbientOcclusion)
 					pc.camera.effects &= ~CameraEffectsFlags::AmbientOcclusion;
-				if (cnfNoMotionBlur)
+				if (confNoMotionBlur)
 					pc.camera.effects &= ~CameraEffectsFlags::MotionBlur;
-				if (cnfNoBloom)
+				if (confNoBloom)
 					pc.camera.effects &= ~CameraEffectsFlags::Bloom;
 
 				if (pc.camera.target)
@@ -871,7 +872,7 @@ namespace cage
 				addLight(pl, viewProj, shadowmap, translucents.lights);
 			}
 
-			static void initializeLodSelectionAndFrustum(CommonRenderPass &pass)
+			static void initializeLodSelection(CommonRenderPass &pass)
 			{
 				const auto &c = pass.camera->camera;
 				switch (c.cameraType)
@@ -922,7 +923,7 @@ namespace cage
 					0.5, 0.5, 0.5, 1.0);
 				pass.shadowMat = bias * pass.viewProj;
 
-				initializeLodSelectionAndFrustum(pass);
+				initializeLodSelection(pass);
 			}
 
 			void generateShadowmapPass(ShadowmapPass &pass, uint32)
@@ -970,7 +971,7 @@ namespace cage
 				pass.viewport.ambientDirectionalLight = vec4(colorGammaToLinear(cc.ambientDirectionalColor) * cc.ambientDirectionalIntensity, 0);
 				pass.viewport.viewport = vec4(vec2(), vec2(pass.resolution));
 
-				initializeLodSelectionAndFrustum(pass);
+				initializeLodSelection(pass);
 
 				pass.filteredLights.reserve(lights.size());
 				for (const PrepLight &pl : lights)
@@ -1036,7 +1037,7 @@ namespace cage
 			{
 				if (!enabled)
 					return {};
-				TextureHandle t = provisionalData->texture(name);
+				TextureHandle t = provisionalData->texture(stringizer() + name + "_" + resolution[0] + "_" + resolution[1]);
 				renderQueue->bind(t, 0);
 				renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -1555,31 +1556,62 @@ namespace cage
 					renderQueue->resetAllState();
 				}
 
-				{ // blit to destination
+				// blit to destination
+				if (pass.camera->target || texSource != colorTexture)
+				{
 					const auto graphicsDebugScope = renderQueue->namedScope("blit to destination");
 					renderQueue->bind(texSource, 0);
+					renderQueue->bind(renderTarget);
 					if (pass.camera->target)
-					{ // blit to target texture
-						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(0, pass.camera->target);
-						renderQueue->activeAttachments(1);
-						renderQueue->viewport(ivec2(), pass.resolution);
-						renderQueue->bind(shaderBlit);
-					}
 					else
-					{ // blit to window
-						renderQueue->resetFrameBuffer();
-						renderQueue->viewport(ivec2(), windowResolution);
-						renderQueue->bind(shaderVisualizeColor);
-						renderQueue->uniform(0, 1.0 / vec2(windowResolution));
-					}
+						renderQueue->colorTexture(0, colorTexture);
+					renderQueue->activeAttachments(1);
+					renderQueue->viewport(ivec2(), pass.resolution);
+					renderQueue->bind(shaderBlit);
 					renderQueue->bind(modelSquare);
 					renderQueue->draw();
 					renderQueue->resetAllState();
-					renderQueue->resetAllTextures();
-					renderQueue->resetFrameBuffer();
-					renderQueue->checkGlErrorDebug();
 				}
+
+				renderQueue->resetAllTextures();
+				renderQueue->resetFrameBuffer();
+				renderQueue->checkGlErrorDebug();
+			}
+
+			void blitToWindow()
+			{
+				const string suffix = stringizer() + "_" + cameraPasses.back().resolution[0] + "_" + cameraPasses.back().resolution[1];
+				std::vector<std::pair<TextureHandle, Holder<ShaderProgram>>> sources;
+				sources.reserve(10);
+				sources.emplace_back(provisionalData->texture(stringizer() + "colorTexture" + suffix), shaderVisualizeColor.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "albedoTexture" + suffix), shaderVisualizeColor.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "specialTexture" + suffix), shaderVisualizeColor.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "normalTexture" + suffix), shaderVisualizeColor.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "velocityTexture" + suffix), shaderVisualizeVelocity.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "depthTexture" + suffix), shaderVisualizeDepth.share());
+				sources.emplace_back(provisionalData->texture(stringizer() + "ambientOcclusionTexture" + suffix), shaderVisualizeMonochromatic.share());
+				for (const auto &cp : cameraPasses)
+					if (cp.camera->target)
+						sources.emplace_back(cp.camera->target, shaderVisualizeColor.share());
+
+				const uint32 mod = numeric_cast<uint32>(sources.size());
+				sint32 idx = confVisualizeBuffer;
+				idx = ((idx % mod) + mod) % mod;
+				CAGE_ASSERT(idx >= 0 && idx < mod);
+
+				const auto graphicsDebugScope = renderQueue->namedScope("blit to window");
+				renderQueue->bind(sources[idx].first, 0);
+				renderQueue->resetFrameBuffer();
+				renderQueue->viewport(ivec2(), windowResolution);
+				renderQueue->bind(sources[idx].second);
+				renderQueue->uniform(0, 1.0 / vec2(windowResolution));
+				renderQueue->bind(modelSquare);
+				renderQueue->draw();
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
+				renderQueue->resetFrameBuffer();
+				renderQueue->checkGlErrorDebug();
 			}
 
 			void run()
@@ -1590,11 +1622,13 @@ namespace cage
 					return;
 
 				copyEmitToPrep();
+				if (cameras.empty())
+					return;
 
 				// sort cameras
 				std::sort(cameras.begin(), cameras.end(), [](const PrepCamera &aa, const PrepCamera &bb) {
-					const auto a = aa.camera.cameraOrder;
-					const auto b = bb.camera.cameraOrder;
+					const std::pair<bool, sint32> a = { !aa.target, aa.camera.cameraOrder };
+					const std::pair<bool, sint32> b = { !bb.target, bb.camera.cameraOrder };
 					CAGE_ASSERT(a != b);
 					return a < b;
 				});
@@ -1629,6 +1663,7 @@ namespace cage
 					c.task->wait();
 					renderCameraPass(c);
 				}
+				blitToWindow();
 			}
 		};
 	}

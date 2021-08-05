@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
+		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer");
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 		ConfigBool confProfilingEnabled("cage/profiling/enabled");
@@ -266,12 +266,12 @@ namespace cage
 					}
 					if (key == keyVisualizeBufferPrev)
 					{
-						visualizeBuffer = visualizeBuffer - 1;
+						confVisualizeBuffer = confVisualizeBuffer - 1;
 						return true;
 					}
 					if (key == keyVisualizeBufferNext)
 					{
-						visualizeBuffer = visualizeBuffer + 1;
+						confVisualizeBuffer = confVisualizeBuffer + 1;
 						return true;
 					}
 					if (key == keyToggleRenderMissingModels)
