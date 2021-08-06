@@ -102,15 +102,15 @@ namespace cage
 				Entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
-					CAGE_COMPONENT_GUI(Scrollbars, sc, panel);
+					GuiScrollbarsComponent &sc = panel->value<GuiScrollbarsComponent>();
 					sc.alignment = screenPosition;
 				}
 				Entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
-					CAGE_COMPONENT_GUI(Panel, c, layout);
-					CAGE_COMPONENT_GUI(LayoutTable, l, layout);
-					CAGE_COMPONENT_GUI(Parent, child, layout);
+					GuiPanelComponent &c = layout->value<GuiPanelComponent>();
+					GuiLayoutTableComponent &l = layout->value<GuiLayoutTableComponent>();
+					GuiParentComponent &child = layout->value<GuiParentComponent>();
 					child.parent = panel->name();
 				}
 
@@ -124,13 +124,13 @@ namespace cage
 				{
 					Entity *e = g->createUnique();
 					labelIndices[i] = e->name();
-					CAGE_COMPONENT_GUI(Label, c, e);
-					CAGE_COMPONENT_GUI(Parent, child, e);
+					GuiLabelComponent &c = e->value<GuiLabelComponent>();
+					GuiParentComponent &child = e->value<GuiParentComponent>();
 					child.parent = layout->name();
 					child.order = i;
 					if (i % 2 == 1)
 					{
-						CAGE_COMPONENT_GUI(TextFormat, tf, e);
+						GuiTextFormatComponent &tf = e->value<GuiTextFormatComponent>();
 						tf.align = TextAlignEnum::Right;
 					}
 				}
@@ -194,7 +194,7 @@ namespace cage
 				if (labelIndices[index] == 0 || !engineGui()->entities()->has(labelIndices[index]))
 					return;
 				Entity *timing = engineGui()->entities()->get(labelIndices[index]);
-				CAGE_COMPONENT_GUI(Text, t, timing);
+				GuiTextComponent &t = timing->value<GuiTextComponent>();
 				t.value = value;
 			}
 

@@ -300,7 +300,7 @@ namespace cage
 			{
 				for (Entity *e : engineEntities()->component<TransformComponent>()->entities())
 				{
-					CAGE_COMPONENT_ENGINE(Transform, ts, e);
+					TransformComponent &ts = e->value<TransformComponent>();
 					TransformComponent &hs = e->value<TransformComponent>(transformHistoryComponent);
 					hs = ts;
 				}

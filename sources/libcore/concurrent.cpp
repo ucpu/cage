@@ -399,7 +399,7 @@ namespace cage
 	void Barrier::lock()
 	{
 		BarrierImpl *impl = (BarrierImpl*)this;
-		impl->lock();;
+		impl->lock();
 	}
 
 	Holder<Barrier> newBarrier(uint32 value)

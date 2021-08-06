@@ -136,7 +136,7 @@ namespace cage
 			{
 				if (!ent)
 					return;
-				CAGE_COMPONENT_ENGINE(Transform, t, ent);
+				TransformComponent &t = ent->value<TransformComponent>();
 
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);

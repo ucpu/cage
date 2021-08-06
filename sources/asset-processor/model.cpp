@@ -461,7 +461,7 @@ void processModel()
 	}
 
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying vertex positions");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying vertex positions");
 		std::vector<vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -476,7 +476,7 @@ void processModel()
 
 	if (any(flags & ModelDataFlags::Normals))
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying normals");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying normals");
 		std::vector<vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -489,7 +489,7 @@ void processModel()
 
 	if (any(flags & ModelDataFlags::Tangents))
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying tangents");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying tangents");
 		std::vector<vec3> ts, bs;
 		ts.reserve(verticesCount);
 		bs.reserve(verticesCount);
@@ -509,7 +509,7 @@ void processModel()
 
 	if (any(flags & ModelDataFlags::Bones))
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying bones");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying bones");
 		CAGE_ASSERT(am->mNumBones > 0);
 		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
@@ -572,7 +572,7 @@ void processModel()
 
 	if (any(flags & ModelDataFlags::Uvs3))
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying 3D uvs");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying 3D uvs");
 		std::vector<vec3> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -582,7 +582,7 @@ void processModel()
 
 	if (any(flags & ModelDataFlags::Uvs2))
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying uvs");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying uvs");
 		std::vector<vec2> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -591,7 +591,7 @@ void processModel()
 	}
 
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying indices");;
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying indices");
 		std::vector<uint32> inds;
 		inds.reserve(indicesCount);
 		for (uint32 i = 0; i < am->mNumFaces; i++)
@@ -622,7 +622,7 @@ void processModel()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");;
+	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
 	AssetHeader h = initializeAssetHeader();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;

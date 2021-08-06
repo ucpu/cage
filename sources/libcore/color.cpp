@@ -274,7 +274,7 @@ namespace cage
 		real h = interpolateWrap(h1, h2, factor);
 		real s = interpolate(s1, s2, factor);
 		real l = interpolate(l1, l2, factor);
-		vec3 hsluv = vec3(h, s, l);;
+		vec3 hsluv = vec3(h, s, l);
 		vec3 rgb = colorHsluvToRgb(hsluv);
 		return rgb;
 	}

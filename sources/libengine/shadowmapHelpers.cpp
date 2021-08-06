@@ -48,8 +48,8 @@ namespace cage
 	{
 		CAGE_ASSERT(e->has<TransformComponent>());
 		CAGE_ASSERT(e->has<RenderComponent>());
-		CAGE_COMPONENT_ENGINE(Transform, t, e);
-		CAGE_COMPONENT_ENGINE(Render, r, e);
+		TransformComponent &t = e->value<TransformComponent>();
+		RenderComponent &r = e->value<RenderComponent>();
 		Aabb b = getBoxForAsset(r.object);
 		return b * t;
 	}
@@ -59,7 +59,7 @@ namespace cage
 		Aabb res;
 		for (Entity *e : engineEntities()->component<RenderComponent>()->entities())
 		{
-			CAGE_COMPONENT_ENGINE(Render, r, e);
+			RenderComponent &r = e->value<RenderComponent>();
 			if (r.sceneMask & sceneMask)
 				res += getBoxForEntity(e);
 		}
@@ -72,7 +72,7 @@ namespace cage
 		{
 			if (!light->has<TransformComponent>() || !light->has<LightComponent>() || !light->has<ShadowmapComponent>())
 				return false;
-			CAGE_COMPONENT_ENGINE(Light, l, light);
+			LightComponent &l = light->value<LightComponent>();
 			return l.lightType == LightTypeEnum::Directional;
 		}
 
@@ -85,8 +85,8 @@ namespace cage
 	void fitShadowmapForDirectionalLight(Entity *light, const Aabb &box)
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
-		CAGE_COMPONENT_ENGINE(Transform, t, light);
-		CAGE_COMPONENT_ENGINE(Shadowmap, s, light);
+		TransformComponent &t = light->value<TransformComponent>();
+		ShadowmapComponent &s = light->value<ShadowmapComponent>();
 		if (box.empty())
 			s.worldSize = vec3(1);
 		else
@@ -105,7 +105,7 @@ namespace cage
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
 		CAGE_ASSERT(isEntityCamera(camera));
-		CAGE_COMPONENT_ENGINE(Camera, c, camera);
+		CameraComponent &c = camera->value<CameraComponent>();
 		// todo utilize the camera frustum to make the shadowmap tighter
 		return fitShadowmapForDirectionalLight(light, c.sceneMask);
 	}
