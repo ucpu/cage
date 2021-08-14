@@ -108,6 +108,8 @@ void processSound()
 			h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
 			h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
 			break;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 		}
 		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));

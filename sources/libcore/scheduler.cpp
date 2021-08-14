@@ -208,6 +208,10 @@ namespace cage
 				case ScheduleTypeEnum::FreePeriodic:
 					s->sched = end + s->conf.period;
 					break;
+				case ScheduleTypeEnum::External:
+				case ScheduleTypeEnum::Empty:
+					// nothing
+					break;
 				}
 			}
 

@@ -219,6 +219,9 @@ namespace cage
 				case 4: return image2d(res, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 				}
 			} break;
+			default:
+				// pass
+				break;
 			}
 		}
 		else
@@ -255,6 +258,9 @@ namespace cage
 				case 4: return image2d(res, GL_RGBA32F, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
 				}
 			} break;
+			default:
+				// pass
+				break;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");
