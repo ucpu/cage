@@ -453,7 +453,8 @@ namespace cage
 				if (ps)
 				{
 					ps->animation = engineAssets()->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->params.name);
-					ps->rig = engineAssets()->tryGet<AssetSchemeIndexSkeletonRig, SkeletonRig>(ps->animation->skeletonName());
+					if (ps->animation)
+						ps->rig = engineAssets()->tryGet<AssetSchemeIndexSkeletonRig, SkeletonRig>(ps->animation->skeletonName());
 					if (ps->animation && ps->rig)
 						ps->coefficient = detail::evalCoefficientForSkeletalAnimation(+ps->animation, prepareTime, ps->params.startTime, ps->params.speed, ps->params.offset);
 					else
