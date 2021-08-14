@@ -27,6 +27,7 @@ namespace cage
 			std::vector<std::vector<vec3>> scaleValues;
 
 			uint64 duration = 0;
+			uint32 skeletonName = 0;
 
 			static uint16 findFrameIndex(real coef, const std::vector<real> &times)
 			{
@@ -150,6 +151,7 @@ namespace cage
 			ser << impl->scaleTimes;
 			ser << impl->scaleValues;
 			ser << impl->duration;
+			ser << impl->skeletonName;
 		}
 	}
 
@@ -236,6 +238,18 @@ namespace cage
 	{
 		const SkeletalAnimationImpl *impl = (const SkeletalAnimationImpl *)this;
 		return impl->duration;
+	}
+
+	void SkeletalAnimation::skeletonName(uint32 name)
+	{
+		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
+		impl->skeletonName = name;
+	}
+
+	uint32 SkeletalAnimation::skeletonName() const
+	{
+		const SkeletalAnimationImpl *impl = (const SkeletalAnimationImpl *)this;
+		return impl->skeletonName;
 	}
 
 	Holder<SkeletalAnimation> newSkeletalAnimation()
@@ -415,7 +429,9 @@ namespace cage
 				return 0;
 			double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value + (double)animationOffset.value) / (double)duration;
 			// assume that the animation should loop
-			return real(sample - sint64(sample));
+			real result = real(sample - sint64(sample));
+			CAGE_ASSERT(result >= 0 && result <= 1);
+			return result;
 		}
 	}
 }

@@ -37,11 +37,6 @@ display = export bones
 type = bool
 default = false
 
-[skeleton]
-display = path to skeleton
-hint = leave empty to automatically deduce the name from the name of this file
-type = string
-
 [material]
 display = path to cpm material
 hint = leave empty to use the material loaded with the mesh

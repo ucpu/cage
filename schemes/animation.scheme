@@ -6,3 +6,8 @@ index = 6
 display = bake model
 type = bool
 default = false
+
+[skeleton]
+display = path to skeleton
+hint = leave empty to automatically deduce the name from the name of this file
+type = string

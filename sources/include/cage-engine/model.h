@@ -37,7 +37,6 @@ namespace cage
 		void dispatch(uint32 instances) const;
 
 		ModelRenderFlags flags = ModelRenderFlags::None;
-		uint32 skeletonName = 0;
 		uint32 skeletonBones = 0;
 	};
 

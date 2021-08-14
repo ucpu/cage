@@ -357,31 +357,6 @@ namespace cage
 				return true;
 			}
 
-			[[deprecated]] // skeleton rig should be referenced from animations instead of models
-			uint32 findSkeletonRigName(PrepRender &pr)
-			{
-				if (pr.object)
-				{
-					for (uint32 l = 0; l < pr.object->lodsCount(); l++)
-					{
-						for (uint32 i : pr.object->models(l))
-						{
-							Holder<Model> mo = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(i);
-							if (mo && mo->skeletonName)
-								return mo->skeletonName;
-						}
-					}
-					return 0;
-				}
-				else
-				{
-					Holder<Model> mo = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(pr.render.object);
-					if (mo && mo->skeletonName)
-						return mo->skeletonName;
-					return 0;
-				}
-			}
-
 			void updateCommonValues(PrepRender &pr)
 			{
 				pr.render = pr.emit->render;
@@ -478,7 +453,7 @@ namespace cage
 				if (ps)
 				{
 					ps->animation = engineAssets()->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->params.name);
-					ps->rig = engineAssets()->tryGet<AssetSchemeIndexSkeletonRig, SkeletonRig>(findSkeletonRigName(pr)); // todo use rig name from the animation
+					ps->rig = engineAssets()->tryGet<AssetSchemeIndexSkeletonRig, SkeletonRig>(ps->animation->skeletonName());
 					if (ps->animation && ps->rig)
 						ps->coefficient = detail::evalCoefficientForSkeletalAnimation(+ps->animation, prepareTime, ps->params.startTime, ps->params.speed, ps->params.offset);
 					else

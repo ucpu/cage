@@ -54,9 +54,8 @@ namespace cage
 	{
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
-		uint32 skeletonName;
-		uint32 skeletonBones;
 		uint32 materialSize;
+		uint32 skeletonBones;
 		ModelRenderFlags renderFlags;
 
 		struct CAGE_ENGINE_API MaterialData

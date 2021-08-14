@@ -24,6 +24,9 @@ namespace cage
 
 		void duration(uint64 duration);
 		uint64 duration() const;
+
+		void skeletonName(uint32 name);
+		uint32 skeletonName() const;
 	};
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();

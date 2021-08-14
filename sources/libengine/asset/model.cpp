@@ -33,7 +33,6 @@ namespace cage
 			msh->setTextureNames(data.textureNames);
 
 			msh->flags = data.renderFlags;
-			msh->skeletonName = data.skeletonName;
 			msh->skeletonBones = data.skeletonBones;
 
 			context->assetHolder = std::move(msh).cast<void>();

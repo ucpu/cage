@@ -320,24 +320,6 @@ namespace
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
 
-	void loadSkeletonName(ModelHeader &dsm, const ModelDataFlags flags)
-	{
-		string n = properties("skeleton");
-		if (none(flags & ModelDataFlags::Bones))
-		{
-			if (!n.empty())
-				CAGE_THROW_ERROR(Exception, "cannot override skeleton for a model that has no bones");
-			return;
-		}
-		if (n.empty())
-			n = inputFile + ";skeleton";
-		else
-			n = pathJoin(pathExtractDirectory(inputName), n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using skeleton name: '" + n + "'");
-		dsm.skeletonName = HashString(n.c_str());
-		writeLine(string("ref = ") + n);
-	}
-
 	vec3 fixUnitVector(vec3 n, StringLiteral name)
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
@@ -437,8 +419,6 @@ void processModel()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 2D uvs");
 	if (any(flags & ModelDataFlags::Uvs3))
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 3D uvs");
-
-	loadSkeletonName(dsm, flags);
 
 	ModelHeader::MaterialData mat;
 	loadMaterial(scene, am, dsm, mat);
@@ -622,8 +602,6 @@ void processModel()
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
 	AssetHeader h = initializeAssetHeader();
-	if (dsm.skeletonName)
-		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
@@ -639,8 +617,6 @@ void processModel()
 
 	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
-	if (dsm.skeletonName)
-		f->write(bufferView(dsm.skeletonName));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			f->write(bufferView(dsm.textureNames[i]));

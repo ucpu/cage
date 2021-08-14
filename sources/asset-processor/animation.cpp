@@ -1,4 +1,5 @@
 #include <cage-core/skeletalAnimation.h>
+#include <cage-core/hashString.h>
 
 #include "utility/assimp.h"
 
@@ -31,7 +32,19 @@ void processAnimation()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
+	const uint32 skeletonName = []() {
+		string n = properties("skeleton");
+		if (n.empty())
+			n = inputFile + ";skeleton";
+		else
+			n = pathJoin(pathExtractDirectory(inputName), n);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using skeleton name: '" + n + "'");
+		writeLine(string("ref = ") + n);
+		return HashString(n);
+	}();
+
 	Holder<SkeletalAnimation> anim = context->animation(chosenAnimationIndex);
+	anim->skeletonName(skeletonName);
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
@@ -40,8 +53,10 @@ void processAnimation()
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
+	h.dependenciesCount = 1;
 	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
+	f->write(bufferView(skeletonName));
 	f->write(comp);
 	f->close();
 }
