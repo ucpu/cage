@@ -1060,6 +1060,7 @@ namespace cage
 					for (uint32 i = 0; i < n; i++)
 					{
 						const PrepSkeleton *sk = (*ait)[i];
+						CAGE_ASSERT(sk && sk->task);
 						sk->task->wait();
 						CAGE_ASSERT(sk->armature.size() == bones);
 						detail::memcpy(tmpArmature + i * bones, sk->armature.data(), bones * sizeof(Mat3x4));

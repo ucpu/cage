@@ -289,14 +289,16 @@ namespace cage
 
 	bool AsyncTask::done() const
 	{
-		const TaskImpl *impl = +((const TaskProxy *)this)->impl;
-		return impl->done();
+		const TaskProxy *prox = (const TaskProxy *)this;
+		CAGE_ASSERT(prox && prox->impl);
+		return prox->impl->done();
 	}
 
 	void AsyncTask::wait()
 	{
-		TaskImpl *impl = +((TaskProxy *)this)->impl;
-		impl->wait();
+		TaskProxy *prox = (TaskProxy *)this;
+		CAGE_ASSERT(prox && prox->impl);
+		prox->impl->wait();
 	}
 
 	namespace privat

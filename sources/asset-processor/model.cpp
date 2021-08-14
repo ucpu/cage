@@ -440,8 +440,6 @@ void processModel()
 
 	loadSkeletonName(dsm, flags);
 
-	dsm.instancesLimitHint = toUint32(properties("instancesLimit"));
-
 	ModelHeader::MaterialData mat;
 	loadMaterial(scene, am, dsm, mat);
 	printMaterial(dsm, mat);

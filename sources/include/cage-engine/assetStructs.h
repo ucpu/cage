@@ -56,7 +56,6 @@ namespace cage
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 skeletonName;
 		uint32 skeletonBones;
-		[[deprecated]] uint32 instancesLimitHint;
 		uint32 materialSize;
 		ModelRenderFlags renderFlags;
 
