@@ -699,12 +699,6 @@ namespace cage
 		impl->addCmd<Cmd>();
 	}
 
-	void RenderQueue::activeTexture(uint32 bindingPoint)
-	{
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->activeTexture(bindingPoint);
-	}
-
 	void RenderQueue::bind(TextureHandle texture, uint32 bindingPoint)
 	{
 		struct Cmd : public CmdBase
@@ -720,8 +714,6 @@ namespace cage
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(texture);
-		if (bindingPoint == m)
-			bindingPoint = impl->setting.activeTextureIndex == m ? 0 : impl->setting.activeTextureIndex;
 		impl->activeTexture(bindingPoint);
 		if (impl->setting.texture() == texture.pointer())
 			return;

@@ -67,8 +67,7 @@ namespace cage
 		void checkFrameBuffer(); // check the frame buffer for completeness
 		void resetFrameBuffer(); // bind default (0) frame buffer
 
-		[[deprecated]] void activeTexture(uint32 bindingPoint);
-		void bind(TextureHandle texture, uint32 bindingPoint = m);
+		void bind(TextureHandle texture, uint32 bindingPoint);
 		void image2d(ivec2 resolution, uint32 internalFormat);
 		void imageCube(ivec2 resolution, uint32 internalFormat);
 		void image3d(ivec3 resolution, uint32 internalFormat);

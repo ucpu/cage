@@ -242,7 +242,7 @@ namespace cage
 
 		// collection
 		TextureHandle texCollect = provTex(config.provisionals, config.queue, "luminanceCollection", res, GL_R16F);
-		q->bind(texCollect);
+		q->bind(texCollect, CAGE_SHADER_TEXTURE_COLOR);
 		q->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0); // is linear necessary?
 		q->colorTexture(0, texCollect);
 		q->checkFrameBuffer();
@@ -252,7 +252,7 @@ namespace cage
 		q->draw();
 
 		// downscale
-		q->bind(texCollect);
+		q->bind(texCollect, CAGE_SHADER_TEXTURE_COLOR);
 		q->generateMipmaps();
 
 		// accumulation / copy
@@ -289,7 +289,7 @@ namespace cage
 		q->draw();
 
 		// prepare mipmaps
-		q->bind(tex);
+		q->bind(tex, CAGE_SHADER_TEXTURE_COLOR);
 		q->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
 		q->generateMipmaps();
 

@@ -1098,13 +1098,13 @@ namespace cage
 				if (pass.light->light.lightType == LightTypeEnum::Point)
 				{
 					pass.shadowTexture = provisionalData->textureCube(texName);
-					renderQueue->bind(pass.shadowTexture);
+					renderQueue->bind(pass.shadowTexture, CAGE_SHADER_TEXTURE_DEPTH);
 					renderQueue->imageCube(pass.resolution, GL_DEPTH_COMPONENT16);
 				}
 				else
 				{
 					pass.shadowTexture = provisionalData->texture(texName);
-					renderQueue->bind(pass.shadowTexture);
+					renderQueue->bind(pass.shadowTexture, CAGE_SHADER_TEXTURE_DEPTH);
 					renderQueue->image2d(pass.resolution, GL_DEPTH_COMPONENT24);
 				}
 				renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
@@ -1246,7 +1246,6 @@ namespace cage
 						renderQueue->bind(normalTexture, CAGE_SHADER_TEXTURE_NORMAL);
 						renderQueue->bind(depthTexture, CAGE_SHADER_TEXTURE_DEPTH);
 						renderQueue->bind(colorTexture, CAGE_SHADER_TEXTURE_COLOR);
-						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						renderQueue->checkGlErrorDebug();
 					}
 
