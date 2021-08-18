@@ -171,6 +171,15 @@ namespace
 			string d = a + b + c;
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
+		{
+			CAGE_TESTCASE("string containing zero");
+			string s = "abcdef";
+			s[2] = 0;
+			CAGE_TEST(s.length() == 6); // string contains literal zero
+			s[2] = 'c';
+			s.rawData()[6] = 't';
+			CAGE_TEST(s.length() == 6); // string is missing terminal zero
+		}
 	}
 
 	void testFunctions()
