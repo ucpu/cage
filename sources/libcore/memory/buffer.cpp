@@ -10,12 +10,9 @@ namespace cage
 
 	MemoryBuffer::MemoryBuffer(MemoryBuffer &&other) noexcept
 	{
-		data_ = other.data_;
-		size_ = other.size_;
-		capacity_ = other.capacity_;
-		other.data_ = nullptr;
-		other.size_ = 0;
-		other.capacity_ = 0;
+		std::swap(data_, other.data_);
+		std::swap(size_, other.size_);
+		std::swap(capacity_, other.capacity_);
 	}
 
 	MemoryBuffer &MemoryBuffer::operator = (MemoryBuffer &&other) noexcept
@@ -23,12 +20,9 @@ namespace cage
 		if (&other == this)
 			return *this;
 		free();
-		data_ = other.data_;
-		size_ = other.size_;
-		capacity_ = other.capacity_;
-		other.data_ = nullptr;
-		other.size_ = 0;
-		other.capacity_ = 0;
+		std::swap(data_, other.data_);
+		std::swap(size_, other.size_);
+		std::swap(capacity_, other.capacity_);
 		return *this;
 	}
 
@@ -51,7 +45,7 @@ namespace cage
 			return;
 		if (size > cap)
 			cap = size;
-		data_ = (char*)systemMemory().allocate(cap, sizeof(uintPtr));
+		data_ = (char *)systemMemory().allocate(cap, sizeof(uintPtr));
 		capacity_ = cap;
 		size_ = size;
 	}

@@ -131,7 +131,7 @@ namespace cage
 			Data(Data &&other) = default;
 			Data(const Data &other) : data(other.data.share()) {}
 			Data &operator = (Data &&other) = default;
-			Data &operator = (const Data &other) { if (&other != this) { data = other.data.share(); } return *this; }
+			Data &operator = (const Data &other) { data = other.data.share(); return *this; }
 		};
 
 		LruCache<Key, Data, Hasher> cache;

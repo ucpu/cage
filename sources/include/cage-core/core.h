@@ -855,14 +855,10 @@ namespace cage
 
 			HolderBase &operator = (HolderBase &&other) noexcept
 			{
-				if (this == &other)
-					return *this;
-				if (control_)
-					control_->dec();
-				data_ = other.data_;
-				control_ = other.control_;
-				other.data_ = nullptr;
-				other.control_ = nullptr;
+				HolderBase tmp(other.share());
+				clear();
+				std::swap(data_, tmp.data_);
+				std::swap(control_, tmp.control_);
 				return *this;
 			}
 

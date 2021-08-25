@@ -290,6 +290,21 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 	}
 
+	{
+		CAGE_TESTCASE("circular self assignment");
+		struct S : public HolderTester
+		{
+			Holder<S> s;
+		};
+		Holder<S> a = systemMemory().createHolder<S>();
+		a->s = systemMemory().createHolder<S>();
+		a->s->s = systemMemory().createHolder<S>();
+		a->s->s->s = systemMemory().createHolder<S>();
+		CAGE_TEST(gCount == 4);
+		a = std::move(a->s);
+		CAGE_TEST(gCount == 3);
+	}
+
 	CAGE_TEST(gCount == 0);
 	CAGE_TEST(dCount == 0);
 }

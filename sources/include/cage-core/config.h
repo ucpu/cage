@@ -40,7 +40,7 @@ namespace cage
 		explicit Config##T(const string &name, t default_); \
 		operator t() const; \
 		Config##T &operator = (t value); \
-		private: void *data; \
+		private: void *data = nullptr; \
 	}; \
 	CAGE_CORE_API void configSet##T(const string &name, t value); \
 	CAGE_CORE_API t configGet##T(const string &name, t default_ = 0);
@@ -60,7 +60,7 @@ namespace cage
 		operator string() const;
 		ConfigString &operator = (const string &value);
 	private:
-		void *data;
+		void *data = nullptr;
 	};
 	CAGE_CORE_API void configSetString(const string &name, const string &value);
 	CAGE_CORE_API string configGetString(const string &name, const string &default_ = "");
