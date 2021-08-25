@@ -1,6 +1,7 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
 #include <cage-core/geometry.h>
@@ -28,7 +29,6 @@
 
 #include <robin_hood.h>
 #include <algorithm>
-#include <atomic>
 
 namespace cage
 {
@@ -116,7 +116,6 @@ namespace cage
 			SkeletalAnimationComponent params;
 			std::vector<Mat3x4> armature;
 			real coefficient = real::Nan();
-			std::atomic_flag started = ATOMIC_FLAG_INIT;
 			Holder<AsyncTask> task;
 
 			void operator () (uint32)
@@ -308,6 +307,8 @@ namespace cage
 			const uint32 frameIndex = graphics->frameIndex;
 			const bool cnfRenderMissingModels = confRenderMissingModels;
 			const bool cnfRenderSkeletonBones = confRenderSkeletonBones;
+
+			Holder<Mutex> skeletonTaskInitMutex = newMutex();
 
 			uint64 prepareTime = 0;
 			real interFactor;
@@ -688,8 +689,11 @@ namespace cage
 
 				if (pr.skeletalAnimation)
 				{
-					if (!pr.skeletalAnimation->started.test_and_set())
-						pr.skeletalAnimation->task = tasksRunAsync("skeletal-animation", Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
+					{
+						ScopeLock lock(skeletonTaskInitMutex);
+						if (!pr.skeletalAnimation->task)
+							pr.skeletalAnimation->task = tasksRunAsync("skeletal-animation", Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
+					}
 					instances.armatures.push_back(+pr.skeletalAnimation);
 					CAGE_ASSERT(instances.armatures.size() == instances.data.size());
 				}
