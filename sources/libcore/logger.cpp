@@ -15,7 +15,7 @@
 
 namespace cage
 {
-	Holder<File> realNewFile(const string &path, const FileMode &mode);
+	Holder<File> realNewFile(const String &path, const FileMode &mode);
 	void realTryFlushFile(File *f);
 
 	namespace
@@ -108,7 +108,7 @@ namespace cage
 			GlobalLoggerInitializer()
 			{
 				{
-					string version = "cage version: ";
+					String version = "cage version: ";
 
 #ifdef CAGE_DEBUG
 					version += "debug";
@@ -139,31 +139,31 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "log", version);
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "process id: " + currentProcessId());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "process id: " + currentProcessId());
 
 				{
 					const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 					char buffer[50];
 					std::strftime(buffer, 50, "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "current time: " + buffer);
+					CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "current time: " + buffer);
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "executable path: " + detail::executableFullPath());
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "working directory: " + pathWorkingDir());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::executableFullPath());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
 				{
 					CAGE_LOG(SeverityEnum::Info, "systemInfo", "system information:");
 					try
 					{
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "system name: '" + systemName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "user name: '" + userName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "host name: '" + hostName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processors count: " + processorsCount());
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processor name: '" + processorName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "system name: '" + systemName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "user name: '" + userName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processors count: " + processorsCount());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor name: '" + processorName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
 					}
 					catch (Exception &)
 					{
@@ -186,30 +186,30 @@ namespace cage
 				duration /= 60;
 				uint32 hours = numeric_cast<uint32>(duration % 24);
 				duration /= 24;
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
 		} globalLoggerInitializerInstance;
 
-		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const string &)> output, bool longer)
+		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const String &)> output, bool longer)
 		{
 			if (info.continuous)
 			{
-				output(stringizer() + "\t" + info.message);
+				output(Stringizer() + "\t" + info.message);
 			}
 			else
 			{
-				string res;
-				res += fill(string(stringizer() + info.time), 12) + " ";
-				res += fill(string(info.currentThreadName), 26) + " ";
+				String res;
+				res += fill(String(Stringizer() + info.time), 12) + " ";
+				res += fill(String(info.currentThreadName), 26) + " ";
 				res += detail::severityToString(info.severity) + " ";
-				res += fill(string(info.component), 20) + " ";
+				res += fill(String(info.component), 20) + " ";
 				res += info.message;
 				if (longer && info.file)
 				{
-					string flf = stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
-					if (res.length() + flf.length() + 10 < string::MaxLength)
+					String flf = Stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
+					if (res.length() + flf.length() + 10 < String::MaxLength)
 					{
-						res += fill(string(), string::MaxLength - flf.length() - res.length() - 5);
+						res += fill(String(), String::MaxLength - flf.length() - res.length() - 5);
 						res += flf;
 					}
 				}
@@ -220,7 +220,7 @@ namespace cage
 		class LoggerOutputFileImpl : public LoggerOutputFile
 		{
 		public:
-			LoggerOutputFileImpl(const string &path, bool append, bool realFilesystemOnly)
+			LoggerOutputFileImpl(const String &path, bool append, bool realFilesystemOnly)
 			{
 				FileMode fm(false, true);
 				fm.textual = true;
@@ -253,7 +253,7 @@ namespace cage
 			return +appLoggerInstance->loggerFile;
 		}
 
-		string severityToString(SeverityEnum severity)
+		String severityToString(SeverityEnum severity)
 		{
 			switch (severity)
 			{
@@ -275,19 +275,19 @@ namespace cage
 			}
 			catch (const cage::Exception &e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message);
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "cage exception: " + e.message);
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "std exception: " + e.what());
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "std exception: " + e.what());
 			}
 			catch (const char *e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "c string exception: " + e);
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "c string exception: " + e);
 			}
 			catch (int e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "int exception: " + e);
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "int exception: " + e);
 			}
 			catch (...)
 			{
@@ -298,7 +298,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 
@@ -351,46 +351,46 @@ namespace cage
 		}
 	}
 
-	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
 	{
 		output(info.message);
 	}
 
-	void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
 	{
 		logFormatFileImpl(info, output, false);
 	}
 
-	void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
 	{
 		logFormatFileImpl(info, output, true);
 	}
 
-	void logOutputDebug(const string &message)
+	void logOutputDebug(const String &message)
 	{
 		detail::debugOutput(message.c_str());
 	}
 
-	void logOutputStdOut(const string &message)
+	void logOutputStdOut(const String &message)
 	{
 		fprintf(stdout, "%s\n", message.c_str());
 		fflush(stdout);
 	}
 
-	void logOutputStdErr(const string &message)
+	void logOutputStdErr(const String &message)
 	{
 		fprintf(stderr, "%s\n", message.c_str());
 		fflush(stderr);
 	}
 
-	void LoggerOutputFile::output(const string &message) const
+	void LoggerOutputFile::output(const String &message) const
 	{
 		const LoggerOutputFileImpl *impl = (const LoggerOutputFileImpl *)this;
 		impl->f->writeLine(message);
 		realTryFlushFile(+impl->f);
 	}
 
-	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly)
+	Holder<LoggerOutputFile> newLoggerOutputFile(const String &path, bool append, bool realFilesystemOnly)
 	{
 		return systemMemory().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
 	}

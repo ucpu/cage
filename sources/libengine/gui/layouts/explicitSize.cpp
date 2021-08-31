@@ -16,7 +16,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2();
+				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
 				{
 					c->findRequestedSize();

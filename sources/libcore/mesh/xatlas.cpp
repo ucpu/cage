@@ -28,7 +28,7 @@ namespace cage
 			}
 		} initializer;
 
-		const string xAtlasCategoriesNames[] = {
+		const String xAtlasCategoriesNames[] = {
 			"AddModel",
 			"ComputeCharts",
 			"PackCharts",
@@ -37,7 +37,7 @@ namespace cage
 
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
-			CAGE_LOG(SeverityEnum::Info, "xatlas", stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
+			CAGE_LOG(SeverityEnum::Info, "xatlas", Stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
 			return true; // continue processing
 		}
 
@@ -80,11 +80,11 @@ namespace cage
 			xatlas::MeshDecl decl;
 			decl.vertexCount = poly->verticesCount();
 			decl.vertexPositionData = poly->positions().data();
-			decl.vertexPositionStride = sizeof(vec3);
+			decl.vertexPositionStride = sizeof(Vec3);
 			if (useNormals)
 			{
 				decl.vertexNormalData = poly->normals().data();
-				decl.vertexNormalStride = sizeof(vec3);
+				decl.vertexNormalStride = sizeof(Vec3);
 			}
 			if (poly->indicesCount())
 			{
@@ -123,22 +123,22 @@ namespace cage
 
 		{
 			const xatlas::Mesh *m = atlas->meshes;
-			std::vector<vec3> vs;
-			std::vector<vec3> ns;
-			std::vector<vec2> us;
+			std::vector<Vec3> vs;
+			std::vector<Vec3> ns;
+			std::vector<Vec2> us;
 			// todo copy all other attributes too
 			vs.reserve(m->vertexCount);
 			if (useNormals)
 				ns.reserve(m->vertexCount);
 			us.reserve(m->vertexCount);
-			const vec2 whInv = 1 / vec2(atlas->width, atlas->height);
+			const Vec2 whInv = 1 / Vec2(atlas->width, atlas->height);
 			for (uint32 i = 0; i < m->vertexCount; i++)
 			{
 				const xatlas::Vertex &a = m->vertexArray[i];
 				vs.push_back(poly->position(a.xref));
 				if (useNormals)
 					ns.push_back(poly->normal(a.xref));
-				us.push_back(vec2(a.uv[0], a.uv[1]) * whInv);
+				us.push_back(Vec2(a.uv[0], a.uv[1]) * whInv);
 			}
 
 			poly->clear();

@@ -12,8 +12,8 @@ namespace cage
 
 	struct CAGE_CORE_API ProcessCreateConfig
 	{
-		string command;
-		string workingDirectory;
+		String command;
+		String workingDirectory;
 		
 		bool discardStdIn = false;
 		bool discardStdOut = false;
@@ -21,7 +21,7 @@ namespace cage
 
 		// todo option to modify environment
 
-		ProcessCreateConfig(const string &command, const string &workingDirectory = "");
+		ProcessCreateConfig(const String &command, const String &workingDirectory = "");
 	};
 
 	class CAGE_CORE_API Process : public File

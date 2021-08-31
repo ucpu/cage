@@ -8,10 +8,10 @@ namespace cage
 	class CAGE_ENGINE_API SpeakerDevice
 	{
 	public:
-		string id;
-		string name;
-		string group;
-		string vendor;
+		String id;
+		String name;
+		String group;
+		String vendor;
 
 		uint32 channels = 0;
 		uint32 minSamplerate = 0;

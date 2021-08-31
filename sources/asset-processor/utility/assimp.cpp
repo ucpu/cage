@@ -16,18 +16,18 @@ namespace
 {
 	void printHierarchy(AssimpSkeleton *skeleton, aiNode *n, uint32 offset)
 	{
-		string detail;
+		String detail;
 		if (n->mName.length)
 		{
 			if (!detail.empty())
 				detail += ", ";
-			detail += string() + "'" + n->mName.data + "'";
+			detail += String() + "'" + n->mName.data + "'";
 		}
-		if (conv(n->mTransformation) != mat4())
+		if (conv(n->mTransformation) != Mat4())
 		{
 			if (!detail.empty())
 				detail += ", ";
-			detail += string() + "has transform matrix";
+			detail += String() + "has transform matrix";
 		}
 		if (skeleton->index(n) != m)
 		{
@@ -35,11 +35,11 @@ namespace
 				detail += ", ";
 			aiBone *b = skeleton->bone(n);
 			if (b)
-				detail += stringizer() + "weights: " + b->mNumWeights;
+				detail += Stringizer() + "weights: " + b->mNumWeights;
 			else
-				detail += string("no bone");
+				detail += String("no bone");
 		}
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, fill(string(), offset, '\t') + detail);
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, fill(String(), offset, '\t') + detail);
 		for (uint32 i = 0; i < n->mNumChildren; i++)
 			printHierarchy(skeleton, n->mChildren[i], offset + 1);
 	}
@@ -137,8 +137,8 @@ namespace
 			{
 				if (names.count(n->mName))
 				{ // make the name unique
-					n->mName = string(stringizer() + n->mName.C_Str() + "_" + n).c_str();
-					CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
+					n->mName = String(Stringizer() + n->mName.C_Str() + "_" + n).c_str();
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, Stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
 				}
 				names[n->mName] = n;
 			}
@@ -241,9 +241,9 @@ namespace
 
 		Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb") override
 		{
-			if (::cage::string(pMode) != "rb")
+			if (::cage::String(pMode) != "rb")
 				CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
-			writeLine(cage::string("use = ") + pathJoin(pathExtractDirectory(inputFile), pFile));
+			writeLine(cage::String("use = ") + pathJoin(pathExtractDirectory(inputFile), pFile));
 			return new CageIoStream(newFile(pathJoin(currentDir, pFile), FileMode(true, false)));
 		}
 
@@ -258,7 +258,7 @@ namespace
 		}
 
 	private:
-		string currentDir;
+		String currentDir;
 	};
 
 	class CageLogStream : public Assimp::LogStream
@@ -271,7 +271,7 @@ namespace
 
 		void write(const char* message) override
 		{
-			string m = message;
+			String m = message;
 			if (isPattern(m, "", "", "\n"))
 				m = subString(m, 0, m.length() - 1);
 			CAGE_LOG(severity, "assimp", m);
@@ -322,7 +322,7 @@ namespace
 			try
 			{
 				uint32 flags = assimpDefaultLoadFlags;
-				if (string(logComponentName) != "analyze")
+				if (String(logComponentName) != "analyze")
 				{
 					if (toBool(properties("bakeModel")))
 					{
@@ -332,9 +332,9 @@ namespace
 				}
 				flags |= addFlags;
 				flags &= ~removeFlags;
-				CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
+				CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "assimp loading flags: " + flags);
 
-				if (string(logComponentName) == "model")
+				if (String(logComponentName) == "model")
 				{
 					if (toBool(properties("trianglesOnly")))
 					{
@@ -346,7 +346,7 @@ namespace
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))
 				{
-					CAGE_LOG_THROW(cage::string(imp.GetErrorString()));
+					CAGE_LOG_THROW(cage::String(imp.GetErrorString()));
 					CAGE_THROW_ERROR(Exception, "assimp loading failed");
 				}
 				imp.SetIOHandler(nullptr);
@@ -366,15 +366,15 @@ namespace
 				CAGE_THROW_ERROR(Exception, "the scene is incomplete");
 
 			// print models
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " models");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "found " + scene->mNumMeshes + " models");
 			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
-				const string objname = convStrTruncate(am->mName);
+				const String objname = convStrTruncate(am->mName);
 				aiString aiMatName;
 				scene->mMaterials[am->mMaterialIndex]->Get(AI_MATKEY_NAME, aiMatName);
-				const string matname = aiMatName.C_Str();
-				string contains;
+				const String matname = aiMatName.C_Str();
+				String contains;
 				if (am->mPrimitiveTypes & aiPrimitiveType_POINT)
 					contains += "points ";
 				if (am->mPrimitiveTypes & aiPrimitiveType_LINE)
@@ -393,15 +393,15 @@ namespace
 					contains += "tangents ";
 				if (am->HasVertexColors(0))
 					contains += "colors ";
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, logComponentName, stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, logComponentName, Stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
 			}
 
 			// print animations
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumAnimations + " animations");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "found " + scene->mNumAnimations + " animations");
 			for (uint32 i = 0; i < scene->mNumAnimations; i++)
 			{
 				const aiAnimation *ani = scene->mAnimations[i];
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, Stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
 			}
 		};
 
@@ -415,7 +415,7 @@ namespace
 		CageLogStream logDebug, logInfo, logWarn, logError;
 		Assimp::Importer imp;
 
-		static string convStrTruncate(const aiString &str, uint32 maxLen = cage::string::MaxLength / 2)
+		static String convStrTruncate(const aiString &str, uint32 maxLen = cage::String::MaxLength / 2)
 		{
 			std::string s = str.C_Str();
 			s = s.substr(0, maxLen);
@@ -518,7 +518,7 @@ uint32 AssimpContext::selectModel() const
 		uint32 n = toUint32(inputSpec);
 		if (n < scene->mNumMeshes)
 		{
-			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "using model index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "using model index " + n + ", because the input specifier is numeric");
 			return n;
 		}
 		else
@@ -532,21 +532,21 @@ uint32 AssimpContext::selectModel() const
 			continue;
 		aiString aiMatName;
 		scene->mMaterials[am->mMaterialIndex]->Get(AI_MATKEY_NAME, aiMatName);
-		if (cage::string(am->mName.C_Str()) == inputSpec)
+		if (cage::String(am->mName.C_Str()) == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
 		}
-		if (cage::string(aiMatName.C_Str()) == inputSpec)
+		if (cage::String(aiMatName.C_Str()) == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the material name matches");
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the material name matches");
 		}
-		string comb = cage::string(am->mName.C_Str()) + "_" + cage::string(aiMatName.C_Str());
+		String comb = cage::String(am->mName.C_Str()) + "_" + cage::String(aiMatName.C_Str());
 		if (comb == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
 		}
 	}
 	switch (candidates.size())
@@ -554,7 +554,7 @@ uint32 AssimpContext::selectModel() const
 	case 0:
 		CAGE_THROW_ERROR(Exception, "file does not contain requested model");
 	case 1:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using model at index " + *candidates.begin());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using model at index " + *candidates.begin());
 		return *candidates.begin();
 	default:
 		CAGE_THROW_ERROR(Exception, "requested name is not unique");
@@ -570,15 +570,15 @@ Holder<SkeletonRig> AssimpContext::skeletonRig() const
 {
 	Holder<AssimpSkeleton> skeleton = this->skeleton();
 
-	const mat4 axesScale = mat4(axesScaleMatrix());
-	const mat4 axesScaleInv = inverse(axesScale);
+	const Mat4 axesScale = Mat4(axesScaleMatrix());
+	const Mat4 axesScaleInv = inverse(axesScale);
 
-	const mat4 globalInverse = inverse(conv(getScene()->mRootNode->mTransformation)) * axesScale;
+	const Mat4 globalInverse = inverse(conv(getScene()->mRootNode->mTransformation)) * axesScale;
 	const uint32 bonesCount = skeleton->bonesCount();
 
 	std::vector<uint16> ps;
-	std::vector<mat4> bs;
-	std::vector<mat4> is;
+	std::vector<Mat4> bs;
+	std::vector<Mat4> is;
 	ps.reserve(bonesCount);
 	bs.reserve(bonesCount);
 	is.reserve(bonesCount);
@@ -592,8 +592,8 @@ Holder<SkeletonRig> AssimpContext::skeletonRig() const
 	{
 		const aiNode *n = skeleton->node(i);
 		const aiBone *b = skeleton->bone(i);
-		const mat4 t = conv(n->mTransformation);
-		const mat4 o = (b ? conv(b->mOffsetMatrix) : mat4()) * axesScaleInv;
+		const Mat4 t = conv(n->mTransformation);
+		const Mat4 o = (b ? conv(b->mOffsetMatrix) : Mat4()) * axesScaleInv;
 		CAGE_ASSERT(t.valid() && o.valid());
 		ps.push_back(skeleton->parent(i));
 		bs.push_back(t);
@@ -609,20 +609,20 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 {
 	struct Bone
 	{
-		std::vector<real> posTimes;
-		std::vector<vec3> posVals;
-		std::vector<real> rotTimes;
-		std::vector<quat> rotVals;
-		std::vector<real> sclTimes;
-		std::vector<vec3> sclVals;
+		std::vector<Real> posTimes;
+		std::vector<Vec3> posVals;
+		std::vector<Real> rotTimes;
+		std::vector<Quat> rotVals;
+		std::vector<Real> sclTimes;
+		std::vector<Vec3> sclVals;
 	};
 
 	const aiAnimation *ani = getScene()->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
 		CAGE_THROW_ERROR(Exception, "the animation has unsupported type");
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "duration: " + ani->mDuration + " ticks");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
 	Holder<AssimpSkeleton> skeleton = this->skeleton();
 
@@ -640,7 +640,7 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 		uint16 idx = skeleton->index(n->mNodeName);
 		if (idx == m)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
 			continue;
 		}
 		boneIndices.push_back(idx);
@@ -678,8 +678,8 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 		totalKeys += n->mNumScalingKeys;
 	}
 	const uint32 animationBonesCount = numeric_cast<uint32>(bones.size());
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "animated bones: " + animationBonesCount);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "animated bones: " + animationBonesCount);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "total keys: " + totalKeys);
 
 	Holder<SkeletalAnimation> anim = newSkeletalAnimation();
 	anim->duration(duration);
@@ -694,10 +694,10 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 		anim->channelsMapping(skeletonBonesCount, animationBonesCount, mapping);
 	}
 	{
-		std::vector<PointerRange<const real>> times;
+		std::vector<PointerRange<const Real>> times;
 		times.reserve(animationBonesCount);
 		{
-			std::vector<PointerRange<const vec3>> positions;
+			std::vector<PointerRange<const Vec3>> positions;
 			positions.reserve(animationBonesCount);
 			for (const Bone &b : bones)
 			{
@@ -708,7 +708,7 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 			times.clear();
 		}
 		{
-			std::vector<PointerRange<const quat>> rotations;
+			std::vector<PointerRange<const Quat>> rotations;
 			rotations.reserve(animationBonesCount);
 			for (const Bone &b : bones)
 			{
@@ -719,7 +719,7 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 			times.clear();
 		}
 		{
-			std::vector<PointerRange<const vec3>> scales;
+			std::vector<PointerRange<const Vec3>> scales;
 			scales.reserve(animationBonesCount);
 			for (const Bone &b : bones)
 			{
@@ -751,7 +751,7 @@ void analyzeAssimp()
 			if (scene->mNumMeshes == 1)
 			{
 				writeLine("scheme=model");
-				writeLine(stringizer() + "asset=" + inputFile);
+				writeLine(Stringizer() + "asset=" + inputFile);
 			}
 			else for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
@@ -759,7 +759,7 @@ void analyzeAssimp()
 				aiString matName;
 				m->Get(AI_MATKEY_NAME, matName);
 				writeLine("scheme=model");
-				writeLine(stringizer() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
+				writeLine(Stringizer() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
 			}
 			// skeletons
 			{
@@ -775,7 +775,7 @@ void analyzeAssimp()
 				if (found)
 				{
 					writeLine("scheme=skeleton");
-					writeLine(stringizer() + "asset=" + inputFile + ";skeleton");
+					writeLine(Stringizer() + "asset=" + inputFile + ";skeleton");
 				}
 			}
 			// animations
@@ -785,10 +785,10 @@ void analyzeAssimp()
 				if (a->mNumChannels == 0)
 					continue; // only support skeletal animations
 				writeLine("scheme=animation");
-				string n = a->mName.C_Str();
+				String n = a->mName.C_Str();
 				if (n.empty())
-					n = stringizer() + i;
-				writeLine(stringizer() + "asset=" + inputFile + "?" + n);
+					n = Stringizer() + i;
+				writeLine(Stringizer() + "asset=" + inputFile + "?" + n);
 			}
 		}
 		catch (...)
@@ -801,35 +801,35 @@ void analyzeAssimp()
 	}
 }
 
-vec3 conv(const aiVector3D &v)
+Vec3 conv(const aiVector3D &v)
 {
-	static_assert(sizeof(aiVector3D) == sizeof(cage::vec3), "assimp vector3D is not interchangeable with vec3");
-	return *(vec3*)&v;
+	static_assert(sizeof(aiVector3D) == sizeof(cage::Vec3), "assimp vector3D is not interchangeable with vec3");
+	return *(Vec3*)&v;
 }
 
-vec3 conv(const aiColor3D &v)
+Vec3 conv(const aiColor3D &v)
 {
-	static_assert(sizeof(aiColor3D) == sizeof(cage::vec3), "assimp color3D is not interchangeable with vec3");
-	return *(vec3*)&v;
+	static_assert(sizeof(aiColor3D) == sizeof(cage::Vec3), "assimp color3D is not interchangeable with vec3");
+	return *(Vec3*)&v;
 }
 
-vec4 conv(const aiColor4D &v)
+Vec4 conv(const aiColor4D &v)
 {
-	static_assert(sizeof(aiColor4D) == sizeof(cage::vec4), "assimp color4D is not interchangeable with vec4");
-	return *(vec4*)&v;
+	static_assert(sizeof(aiColor4D) == sizeof(cage::Vec4), "assimp color4D is not interchangeable with vec4");
+	return *(Vec4*)&v;
 }
 
-mat4 conv(const aiMatrix4x4 &m)
+Mat4 conv(const aiMatrix4x4 &m)
 {
-	static_assert(sizeof(aiMatrix4x4) == sizeof(cage::mat4), "assimp matrix4x4 is not interchangeable with mat4");
-	mat4 r;
-	detail::memcpy(&r, &m, sizeof(mat4));
+	static_assert(sizeof(aiMatrix4x4) == sizeof(cage::Mat4), "assimp matrix4x4 is not interchangeable with mat4");
+	Mat4 r;
+	detail::memcpy(&r, &m, sizeof(Mat4));
 	return transpose(r);
 }
 
-quat conv(const aiQuaternion &q)
+Quat conv(const aiQuaternion &q)
 {
-	quat r;
+	Quat r;
 	r.data[0] = q.x;
 	r.data[1] = q.y;
 	r.data[2] = q.z;
@@ -837,14 +837,14 @@ quat conv(const aiQuaternion &q)
 	return r;
 }
 
-mat3 axesMatrix()
+Mat3 axesMatrix()
 {
-	string axes = toLower(properties("axes"));
+	String axes = toLower(properties("axes"));
 	if (axes.empty() || axes == "+x+y+z")
-		return mat3();
+		return Mat3();
 	if (axes.length() != 6)
 		CAGE_THROW_ERROR(Exception, "wrong axes definition: length (must be in format +x+y+z)");
-	mat3 result(0, 0, 0, 0, 00, 0, 0, 0, 0);
+	Mat3 result(0, 0, 0, 0, 00, 0, 0, 0, 0);
 	int sign = 0;
 	uint32 axesUsedCounts[3] = { 0, 0, 0 };
 	for (uint32 i = 0; i < 6; i++)
@@ -880,16 +880,16 @@ mat3 axesMatrix()
 			default:
 				CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
 			}
-			result[in * 3 + out] = real(sign);
+			result[in * 3 + out] = Real(sign);
 		}
 	}
 	if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
 		CAGE_THROW_ERROR(Exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using axes conversion matrix: " + result);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using axes conversion matrix: " + result);
 	return result;
 }
 
-mat3 axesScaleMatrix()
+Mat3 axesScaleMatrix()
 {
 	return axesMatrix() * toFloat(properties("scale"));
 }

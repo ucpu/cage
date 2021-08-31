@@ -17,19 +17,19 @@ namespace cage
 		public:
 			std::vector<uint16> channelsMapping; // channelsMapping[bone] = channel
 
-			std::vector<std::vector<real>> positionTimes;
-			std::vector<std::vector<vec3>> positionValues;
+			std::vector<std::vector<Real>> positionTimes;
+			std::vector<std::vector<Vec3>> positionValues;
 
-			std::vector<std::vector<real>> rotationTimes;
-			std::vector<std::vector<quat>> rotationValues;
+			std::vector<std::vector<Real>> rotationTimes;
+			std::vector<std::vector<Quat>> rotationValues;
 
-			std::vector<std::vector<real>> scaleTimes;
-			std::vector<std::vector<vec3>> scaleValues;
+			std::vector<std::vector<Real>> scaleTimes;
+			std::vector<std::vector<Vec3>> scaleValues;
 
 			uint64 duration = 0;
 			uint32 skeletonName = 0;
 
-			static uint16 findFrameIndex(real coef, const std::vector<real> &times)
+			static uint16 findFrameIndex(Real coef, const std::vector<Real> &times)
 			{
 				CAGE_ASSERT(coef >= 0 && coef <= 1);
 				CAGE_ASSERT(!times.empty());
@@ -41,20 +41,20 @@ namespace cage
 				return numeric_cast<uint16>(it - times.begin() - 1);
 			}
 
-			static real amount(real a, real b, real c)
+			static Real amount(Real a, Real b, Real c)
 			{
 				CAGE_ASSERT(a <= b);
 				if (c < a)
 					return 0;
 				if (c > b)
 					return 1;
-				const real res = (c - a) / (b - a);
+				const Real res = (c - a) / (b - a);
 				CAGE_ASSERT(res >= 0 && res <= 1);
 				return res;
 			}
 
 			template<class Type>
-			static Type evaluateMatrix(real coef, const std::vector<real> &times, const std::vector<Type> &values)
+			static Type evaluateMatrix(Real coef, const std::vector<Real> &times, const std::vector<Type> &values)
 			{
 				const uint32 frames = numeric_cast<uint32>(times.size());
 				switch (frames)
@@ -68,23 +68,23 @@ namespace cage
 						return values[frameIndex];
 					else
 					{
-						real a = amount(times[frameIndex], times[frameIndex + 1], coef);
+						Real a = amount(times[frameIndex], times[frameIndex + 1], coef);
 						return interpolate(values[frameIndex], values[frameIndex + 1], a);
 					}
 				}
 				}
 			}
 
-			mat4 evaluateBone(uint16 bone, real coef, const mat4 &fallback) const
+			Mat4 evaluateBone(uint16 bone, Real coef, const Mat4 &fallback) const
 			{
 				CAGE_ASSERT(coef >= 0 && coef <= 1);
 				CAGE_ASSERT(bone < channelsMapping.size());
 				const uint16 ch = channelsMapping[bone];
 				if (ch == m)
 					return fallback; // this bone is not animated
-				const mat4 S = mat4::scale(evaluateMatrix(coef, scaleTimes[ch], scaleValues[ch]));
-				const mat4 R = mat4(evaluateMatrix(coef, rotationTimes[ch], rotationValues[ch]));
-				const mat4 T = mat4(evaluateMatrix(coef, positionTimes[ch], positionValues[ch]));
+				const Mat4 S = Mat4::scale(evaluateMatrix(coef, scaleTimes[ch], scaleValues[ch]));
+				const Mat4 R = Mat4(evaluateMatrix(coef, rotationTimes[ch], rotationValues[ch]));
+				const Mat4 T = Mat4(evaluateMatrix(coef, positionTimes[ch], positionValues[ch]));
 				return T * R * S;
 			}
 		};
@@ -192,28 +192,28 @@ namespace cage
 		}
 	}
 
-	void SkeletalAnimation::positionsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values)
+	void SkeletalAnimation::positionsData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Vec3>> values)
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		CAGE_ASSERT(times.size() == values.size());
-		assign<real>(impl->positionTimes, times);
-		assign<vec3>(impl->positionValues, values);
+		assign<Real>(impl->positionTimes, times);
+		assign<Vec3>(impl->positionValues, values);
 	}
 
-	void SkeletalAnimation::rotationsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const quat>> values)
+	void SkeletalAnimation::rotationsData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Quat>> values)
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		CAGE_ASSERT(times.size() == values.size());
-		assign<real>(impl->rotationTimes, times);
-		assign<quat>(impl->rotationValues, values);
+		assign<Real>(impl->rotationTimes, times);
+		assign<Quat>(impl->rotationValues, values);
 	}
 
-	void SkeletalAnimation::scaleData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values)
+	void SkeletalAnimation::scaleData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Vec3>> values)
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		CAGE_ASSERT(times.size() == values.size());
-		assign<real>(impl->scaleTimes, times);
-		assign<vec3>(impl->scaleValues, values);
+		assign<Real>(impl->scaleTimes, times);
+		assign<Vec3>(impl->scaleValues, values);
 	}
 
 	uint32 SkeletalAnimation::bonesCount() const
@@ -262,10 +262,10 @@ namespace cage
 		class SkeletonRigImpl : public SkeletonRig
 		{
 		public:
-			mat4 globalInverse;
+			Mat4 globalInverse;
 			std::vector<uint16> boneParents;
-			std::vector<mat4> baseMatrices;
-			std::vector<mat4> invRestMatrices;
+			std::vector<Mat4> baseMatrices;
+			std::vector<Mat4> invRestMatrices;
 		};
 	}
 
@@ -316,7 +316,7 @@ namespace cage
 		CAGE_ASSERT(des.available() == 0);
 	}
 
-	void SkeletonRig::skeletonData(const mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const mat4> bases, PointerRange<const mat4> invRests)
+	void SkeletonRig::skeletonData(const Mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests)
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
 		impl->clear();
@@ -341,7 +341,7 @@ namespace cage
 
 	namespace
 	{
-		void animateTemporary(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> temporary)
+		void animateTemporary(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> temporary)
 		{
 			CAGE_ASSERT(coef >= 0 && coef <= 1);
 			const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
@@ -351,7 +351,7 @@ namespace cage
 			{
 				const uint16 p = impl->boneParents[i];
 				if (p == m)
-					temporary[i] = mat4();
+					temporary[i] = Mat4();
 				else
 				{
 					CAGE_ASSERT(p < i);
@@ -363,7 +363,7 @@ namespace cage
 		}
 	}
 
-	void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output)
+	void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output)
 	{
 		CAGE_ASSERT(coef >= 0 && coef <= 1);
 		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
@@ -376,43 +376,43 @@ namespace cage
 		}
 	}
 
-	void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output)
+	void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output)
 	{
 		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
 		const uint32 totalBones = skeleton->bonesCount();
-		std::vector<mat4> tmp;
+		std::vector<Mat4> tmp;
 		tmp.resize(totalBones);
 		animateTemporary(skeleton, animation, coef, tmp);
 		for (uint32 i = 0; i < totalBones; i++)
 		{
 			const uint16 p = impl->boneParents[i];
 			if (p == m)
-				output[i] = mat4::scale(0); // degenerate
+				output[i] = Mat4::scale(0); // degenerate
 			else
 			{
-				const vec3 a = vec3(tmp[p] * vec4(0, 0, 0, 1));
-				const vec3 b = vec3(tmp[i] * vec4(0, 0, 0, 1));
-				transform tr;
+				const Vec3 a = Vec3(tmp[p] * Vec4(0, 0, 0, 1));
+				const Vec3 b = Vec3(tmp[i] * Vec4(0, 0, 0, 1));
+				Transform tr;
 				tr.position = a;
 				tr.scale = distance(a, b);
 				if (tr.scale > 0)
 				{
-					vec3 q = abs(dominantAxis(b - a));
-					if (distanceSquared(q, vec3(0, 1, 0)) < 0.8)
-						q = vec3(1, 0, 0);
+					Vec3 q = abs(dominantAxis(b - a));
+					if (distanceSquared(q, Vec3(0, 1, 0)) < 0.8)
+						q = Vec3(1, 0, 0);
 					else
-						q = vec3(0, 1, 0);
-					tr.orientation = quat(b - a, q);
+						q = Vec3(0, 1, 0);
+					tr.orientation = Quat(b - a, q);
 				}
-				output[i] = impl->globalInverse * mat4(tr);
+				output[i] = impl->globalInverse * Mat4(tr);
 				CAGE_ASSERT(output[i].valid());
 			}
 		}
 	}
 
-	void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, Mesh *mesh)
+	void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, Mesh *mesh)
 	{
-		std::vector<mat4> tmp;
+		std::vector<Mat4> tmp;
 		tmp.resize(skeleton->bonesCount());
 		animateSkin(skeleton, animation, coef, tmp);
 		meshApplyAnimation(mesh, tmp);
@@ -420,7 +420,7 @@ namespace cage
 
 	namespace detail
 	{
-		real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, real animationSpeed, real animationOffset)
+		Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
 		{
 			if (!animation)
 				return 0;
@@ -429,7 +429,7 @@ namespace cage
 				return 0;
 			double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value + (double)animationOffset.value) / (double)duration;
 			// assume that the animation should loop
-			real result = real(sample - sint64(sample));
+			Real result = Real(sample - sint64(sample));
 			CAGE_ASSERT(result >= 0 && result <= 1);
 			return result;
 		}

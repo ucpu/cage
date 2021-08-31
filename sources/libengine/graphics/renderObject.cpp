@@ -17,19 +17,19 @@ namespace cage
 		};
 	}
 
-	void RenderObject::setDebugName(const string &name)
+	void RenderObject::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void RenderObject::setLods(PointerRange<const real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)
+	void RenderObject::setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)
 	{
 		CAGE_ASSERT(modelIndices[0] == 0);
 		CAGE_ASSERT(modelIndices.size() == thresholds.size() + 1);
 		CAGE_ASSERT(modelIndices[thresholds.size()] == modelNames.size());
-		CAGE_ASSERT(std::is_sorted(thresholds.begin(), thresholds.end(), [](real a, real b) {
+		CAGE_ASSERT(std::is_sorted(thresholds.begin(), thresholds.end(), [](Real a, Real b) {
 			return b < a;
 		}));
 		CAGE_ASSERT(std::is_sorted(modelIndices.begin(), modelIndices.end()));
@@ -48,7 +48,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
-	uint32 RenderObject::lodSelect(real threshold) const
+	uint32 RenderObject::lodSelect(Real threshold) const
 	{
 		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		// todo rewrite to binary search

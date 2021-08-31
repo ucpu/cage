@@ -11,17 +11,17 @@ namespace cage
 {
 	namespace graphicsPrivat
 	{
-		string getMonitorId(GLFWmonitor *monitor)
+		String getMonitorId(GLFWmonitor *monitor)
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			return glfwGetWin32Monitor(monitor);
 #endif // CAGE_SYSTEM_WINDOWS
 
 			// this fallback solution will work for as long as the monitor is valid
-			return stringizer() + monitor;
+			return Stringizer() + monitor;
 		}
 
-		GLFWmonitor *getMonitorById(const string &id)
+		GLFWmonitor *getMonitorById(const String &id)
 		{
 			int cnt = 0;
 			GLFWmonitor **ms = glfwGetMonitors(&cnt);

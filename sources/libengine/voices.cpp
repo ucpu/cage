@@ -52,15 +52,15 @@ namespace cage
 				return Holder<Voice>(h->v, std::move(h));
 			}
 
-			real attenuation(const vec3 &position, real referenceDistance, real rolloffFactor) const
+			Real attenuation(const Vec3 &position, Real referenceDistance, Real rolloffFactor) const
 			{
-				const real dist = max(distance(position, listener.position), referenceDistance);
+				const Real dist = max(distance(position, listener.position), referenceDistance);
 				return referenceDistance / (referenceDistance + rolloffFactor * listener.rolloffFactor * (dist - referenceDistance));
 			}
 
-			real voiceGain(const VoiceImpl &v) const
+			Real voiceGain(const VoiceImpl &v) const
 			{
-				real gain = listener.gain * v.gain;
+				Real gain = listener.gain * v.gain;
 				if (v.position.valid())
 				{
 					if (v.sound)
@@ -73,7 +73,7 @@ namespace cage
 
 			void processVoice(VoiceImpl &v, const SoundCallbackData &data)
 			{
-				const real gain = voiceGain(v);
+				const Real gain = voiceGain(v);
 				if (gain < 1e-6)
 					return;
 

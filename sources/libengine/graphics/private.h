@@ -54,8 +54,8 @@ namespace cage
 
 #endif
 
-		string getMonitorId(GLFWmonitor *monitor);
-		GLFWmonitor *getMonitorById(const string &id);
+		String getMonitorId(GLFWmonitor *monitor);
+		GLFWmonitor *getMonitorById(const String &id);
 	}
 
 	using namespace graphicsPrivat;

@@ -10,8 +10,8 @@ namespace cage
 
 		struct ColorPickerRenderable : public RenderableBase
 		{
-			vec4 pos;
-			vec3 rgb;
+			Vec4 pos;
+			Vec3 rgb;
 			uint32 mode = m; // 0 = flat, 1 = hue, 2 = saturation & value
 
 			ColorPickerRenderable(const ColorPickerImpl *item);
@@ -42,10 +42,10 @@ namespace cage
 			GuiColorPickerComponent &data;
 			ColorPickerImpl *small = nullptr, *large = nullptr;
 
-			vec3 color;
-			vec2 sliderPos, sliderSize;
-			vec2 resultPos, resultSize;
-			vec2 rectPos, rectSize;
+			Vec3 color;
+			Vec2 sliderPos, sliderSize;
+			Vec2 resultPos, resultSize;
+			Vec2 rectPos, rectSize;
 
 			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small)
 			{}
@@ -112,8 +112,8 @@ namespace cage
 				}
 				if (this == large)
 				{
-					vec2 p = hierarchy->renderPos;
-					vec2 s = hierarchy->renderSize;
+					Vec2 p = hierarchy->renderPos;
+					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.colorPicker.margin - skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
@@ -130,7 +130,7 @@ namespace cage
 				}
 			}
 
-			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin)
+			void emitColor(Vec2 pos, Vec2 size, uint32 mode, const Vec4 &margin)
 			{
 				ColorPickerRenderable t(this);
 				offset(pos, size, -margin);
@@ -142,8 +142,8 @@ namespace cage
 
 			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
@@ -163,7 +163,7 @@ namespace cage
 				}
 			}
 
-			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point, bool move)
+			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point, bool move)
 			{
 				if (!move)
 					makeFocused();
@@ -182,16 +182,16 @@ namespace cage
 					}
 					if (hasFocus(2))
 					{
-						vec3 hsv = colorRgbToHsv(data.color);
-						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
+						Vec3 hsv = colorRgbToHsv(data.color);
+						Vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = colorHsvToRgb(hsv);
 						hierarchy->fireWidgetEvent();
 					}
 					else if (hasFocus(4))
 					{
-						vec3 hsv = colorRgbToHsv(data.color);
-						vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
+						Vec3 hsv = colorRgbToHsv(data.color);
+						Vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = colorHsvToRgb(hsv);
@@ -201,12 +201,12 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}

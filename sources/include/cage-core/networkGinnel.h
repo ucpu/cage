@@ -63,7 +63,7 @@ namespace cage
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
 	// zero timeout will return immediately and the connection will be established progressively as you use it
-	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const string &address, uint16 port, uint64 timeout);
+	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout);
 
 	class CAGE_CORE_API GinnelServer : private Immovable
 	{

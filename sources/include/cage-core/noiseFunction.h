@@ -45,19 +45,19 @@ namespace cage
 	class CAGE_CORE_API NoiseFunction : private Immovable
 	{
 	public:
-		real evaluate(real position);
-		real evaluate(vec2 position);
-		real evaluate(vec3 position);
-		real evaluate(vec4 position);
+		Real evaluate(Real position);
+		Real evaluate(Vec2 position);
+		Real evaluate(Vec3 position);
+		Real evaluate(Vec4 position);
 
-		void evaluate(PointerRange<const real> x, PointerRange<real> results);
-		void evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<real> results);
-		void evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<const real> z, PointerRange<real> results);
-		void evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<const real> z, PointerRange<const real> w, PointerRange<real> results);
+		void evaluate(PointerRange<const Real> x, PointerRange<Real> results);
+		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<Real> results);
+		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<const Real> z, PointerRange<Real> results);
+		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<const Real> z, PointerRange<const Real> w, PointerRange<Real> results);
 
-		[[deprecated]] void evaluate(PointerRange<const vec2> positions, PointerRange<real> results);
-		[[deprecated]] void evaluate(PointerRange<const vec3> positions, PointerRange<real> results);
-		[[deprecated]] void evaluate(PointerRange<const vec4> positions, PointerRange<real> results);
+		[[deprecated]] void evaluate(PointerRange<const Vec2> positions, PointerRange<Real> results);
+		[[deprecated]] void evaluate(PointerRange<const Vec3> positions, PointerRange<Real> results);
+		[[deprecated]] void evaluate(PointerRange<const Vec4> positions, PointerRange<Real> results);
 	};
 
 	struct CAGE_CORE_API NoiseFunctionCreateConfig
@@ -68,9 +68,9 @@ namespace cage
 		NoiseOperationEnum operation = NoiseOperationEnum::Cell;
 		uint32 seed = 0;
 		uint32 octaves = 3;
-		real lacunarity = 2;
-		real gain = 0.5;
-		real frequency = 1;
+		Real lacunarity = 2;
+		Real gain = 0.5;
+		Real frequency = 1;
 
 		NoiseFunctionCreateConfig(uint32 seed = 1337);
 	};

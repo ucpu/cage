@@ -68,7 +68,7 @@ namespace cage
 		}
 	}
 
-	void Image::importFile(const string &filename, uint32 channels, ImageFormatEnum format)
+	void Image::importFile(const String &filename, uint32 channels, ImageFormatEnum format)
 	{
 		Holder<File> f = readFile(filename);
 		Holder<PointerRange<char>> buffer = f->readAll();
@@ -76,10 +76,10 @@ namespace cage
 		importBuffer(buffer, channels, format);
 	}
 
-	Holder<PointerRange<char>> Image::exportBuffer(const string &format) const
+	Holder<PointerRange<char>> Image::exportBuffer(const String &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
-		const string ext = toLower(pathExtractExtension(format));
+		const String ext = toLower(pathExtractExtension(format));
 		if (ext == ".png")
 			return pngEncode((const ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")
@@ -97,7 +97,7 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 
-	void Image::exportFile(const string &filename) const
+	void Image::exportFile(const String &filename) const
 	{
 		Holder<PointerRange<char>> buf = exportBuffer(filename);
 		writeFile(filename)->write(buf);

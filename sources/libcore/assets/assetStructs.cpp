@@ -75,7 +75,7 @@ namespace cage
 			for (uint32 i = 0; i < cnt; i++)
 			{
 				uint32 name;
-				string val;
+				String val;
 				des >> name >> val;
 				texts->set(name, val);
 			}

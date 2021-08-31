@@ -212,7 +212,7 @@ namespace cage
 					ProfilingScope profiling("UUB upload", "render queue");
 					if (provisionalGraphics)
 					{
-						uub = provisionalGraphics->uniformBuffer(stringizer() + "universal uniform buffer " + this)->resolve();
+						uub = provisionalGraphics->uniformBuffer(Stringizer() + "universal uniform buffer " + this)->resolve();
 						uub->bind();
 						if (uub->size() >= uubStaging.size())
 							uub->writeRange(uubStaging, 0);
@@ -333,7 +333,7 @@ namespace cage
 			void pushNamedScope(StringLiteral name)
 			{
 #ifdef CAGE_PROFILING_ENABLED
-				profilingStack.push_back(profilingEventBegin(string(name), "render queue"));
+				profilingStack.push_back(profilingEventBegin(String(name), "render queue"));
 #endif // CAGE_PROFILING_ENABLED
 
 				struct Cmd : public CmdBase
@@ -345,7 +345,7 @@ namespace cage
 						impl->namesStack.push_back(name);
 #endif // CAGE_DEBUG
 #ifdef CAGE_PROFILING_ENABLED
-						impl->profilingStack.push_back(profilingEventBegin(string(name), "render queue"));
+						impl->profilingStack.push_back(profilingEventBegin(String(name), "render queue"));
 #endif // CAGE_PROFILING_ENABLED
 						glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 					}
@@ -389,7 +389,7 @@ namespace cage
 			return a || b;
 		}
 
-		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const ivec4 &value)
+		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const Vec4i &value)
 		{
 			return or_(or_(
 				cem.update(key + 0, value[0]),
@@ -400,9 +400,9 @@ namespace cage
 			));
 		}
 
-		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const ivec2 &a, const ivec2 &b)
+		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const Vec2i &a, const Vec2i &b)
 		{
-			return cemUpdate(cem, key, ivec4(a, b));
+			return cemUpdate(cem, key, Vec4i(a, b));
 		}
 	}
 
@@ -564,16 +564,16 @@ namespace cage
 	}
 	GCHL_GENERATE(sint32);
 	GCHL_GENERATE(uint32);
-	GCHL_GENERATE(ivec2);
-	GCHL_GENERATE(ivec3);
-	GCHL_GENERATE(ivec4);
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
-	GCHL_GENERATE(quat);
-	GCHL_GENERATE(mat3);
-	GCHL_GENERATE(mat4);
+	GCHL_GENERATE(Vec2i);
+	GCHL_GENERATE(Vec3i);
+	GCHL_GENERATE(Vec4i);
+	GCHL_GENERATE(Real);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
+	GCHL_GENERATE(Quat);
+	GCHL_GENERATE(Mat3);
+	GCHL_GENERATE(Mat4);
 #undef GCHL_GENERATE
 
 	void RenderQueue::bind(FrameBufferHandle frameBuffer)
@@ -722,11 +722,11 @@ namespace cage
 		cmd.texture = std::move(texture);
 	}
 
-	void RenderQueue::image2d(ivec2 resolution, uint32 internalFormat)
+	void RenderQueue::image2d(Vec2i resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			ivec2 resolution;
+			Vec2i resolution;
 			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
@@ -741,11 +741,11 @@ namespace cage
 		cmd.internalFormat = internalFormat;
 	}
 
-	void RenderQueue::imageCube(ivec2 resolution, uint32 internalFormat)
+	void RenderQueue::imageCube(Vec2i resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			ivec2 resolution;
+			Vec2i resolution;
 			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
@@ -760,11 +760,11 @@ namespace cage
 		cmd.internalFormat = internalFormat;
 	}
 
-	void RenderQueue::image3d(ivec3 resolution, uint32 internalFormat)
+	void RenderQueue::image3d(Vec3i resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			ivec3 resolution;
+			Vec3i resolution;
 			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
@@ -921,12 +921,12 @@ namespace cage
 		cmd.instances = instances;
 	}
 
-	void RenderQueue::viewport(ivec2 origin, ivec2 size)
+	void RenderQueue::viewport(Vec2i origin, Vec2i size)
 	{
 		struct Cmd : public CmdBase
 		{
-			ivec2 origin;
-			ivec2 size;
+			Vec2i origin;
+			Vec2i size;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
 				glViewport(origin[0], origin[1], size[0], size[1]);
@@ -942,12 +942,12 @@ namespace cage
 		cmd.size = size;
 	}
 
-	void RenderQueue::scissors(ivec2 origin, ivec2 size)
+	void RenderQueue::scissors(Vec2i origin, Vec2i size)
 	{
 		struct Cmd : public CmdBase
 		{
-			ivec2 origin;
-			ivec2 size;
+			Vec2i origin;
+			Vec2i size;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
 				glScissor(origin[0], origin[1], size[0], size[1]);
@@ -1108,11 +1108,11 @@ namespace cage
 		genericEnable(GL_BLEND, enable);
 	}
 
-	void RenderQueue::clearColor(const vec4 &rgba)
+	void RenderQueue::clearColor(const Vec4 &rgba)
 	{
 		struct Cmd : public CmdBase
 		{
-			vec4 rgba;
+			Vec4 rgba;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
 				glClearColor(rgba[0].value, rgba[1].value, rgba[2].value, rgba[3].value);
@@ -1184,7 +1184,7 @@ namespace cage
 	void RenderQueue::resetAllState()
 	{
 		const auto scopedName = namedScope("default all state");
-		viewport(ivec2(), ivec2());
+		viewport(Vec2i(), Vec2i());
 		scissors(false);
 		cullFace(false);
 		culling(false);
@@ -1194,7 +1194,7 @@ namespace cage
 		colorWrite(true);
 		blendFuncNone();
 		blending(false);
-		clearColor(vec4());
+		clearColor(Vec4());
 	}
 
 	RenderQueueNamedScope RenderQueue::namedScope(StringLiteral name)
@@ -1262,7 +1262,7 @@ namespace cage
 				}
 				catch (const GraphicsError &)
 				{
-					CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "uncaught opengl error");
+					CAGE_LOG(SeverityEnum::Error, "exception", Stringizer() + "uncaught opengl error");
 				}
 			}
 		};

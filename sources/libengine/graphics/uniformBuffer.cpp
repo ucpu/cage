@@ -57,7 +57,7 @@ namespace cage
 		};
 	}
 
-	void UniformBuffer::setDebugName(const string &name)
+	void UniformBuffer::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;

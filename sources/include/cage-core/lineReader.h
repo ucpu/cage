@@ -13,14 +13,14 @@ namespace cage
 		// set streaming to true if you may expand the buffer with more data later
 		// returns number of bytes read
 		CAGE_CORE_API uintPtr readLine(PointerRange<const char> &output, PointerRange<const char> buffer, bool streaming);
-		CAGE_CORE_API uintPtr readLine(string &output, PointerRange<const char> buffer, bool streaming);
+		CAGE_CORE_API uintPtr readLine(String &output, PointerRange<const char> buffer, bool streaming);
 	}
 
 	class CAGE_CORE_API LineReader : private Immovable
 	{
 	public:
 		bool readLine(PointerRange<const char> &line);
-		bool readLine(string &line);
+		bool readLine(String &line);
 
 		uintPtr remaining() const; // bytes
 	};

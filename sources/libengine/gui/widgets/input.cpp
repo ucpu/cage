@@ -16,9 +16,9 @@ namespace cage
 			GuiSelectionComponent &selection;
 			bool showArrows = false;
 
-			vec2 leftPos, rightPos;
-			vec2 mainPos, mainSize;
-			vec2 textPos, textSize;
+			Vec2 leftPos, rightPos;
+			Vec2 mainPos, mainSize;
+			Vec2 textPos, textSize;
 
 			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection))
 			{}
@@ -100,11 +100,11 @@ namespace cage
 					{
 					case InputTypeEnum::Integer:
 						if (isInteger(data.value))
-							data.value = stringizer() + consolidate<sint32>(toSint32(data.value), data.min.i, data.max.i, data.step.i);
+							data.value = Stringizer() + consolidate<sint32>(toSint32(data.value), data.min.i, data.max.i, data.step.i);
 						break;
 					case InputTypeEnum::Real:
 						if (isReal(data.value))
-							data.value = stringizer() + consolidate<real>(toFloat(data.value), data.min.f, data.max.f, data.step.f);
+							data.value = Stringizer() + consolidate<Real>(toFloat(data.value), data.min.f, data.max.f, data.step.f);
 						break;
 					default:
 						break;
@@ -142,8 +142,8 @@ namespace cage
 					{
 						if (isReal(data.value))
 						{
-							real v = toFloat(data.value);
-							real r = consolidate<real>(v, data.min.f, data.max.f, data.step.f);
+							Real v = toFloat(data.value);
+							Real r = consolidate<Real>(v, data.min.f, data.max.f, data.step.f);
 							data.valid = abs(v - r) < 1e-7;
 						}
 						else
@@ -182,10 +182,10 @@ namespace cage
 				if (showArrows)
 				{
 					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
-					real mw = mainSize[0];
-					real bw = s.buttonsSize;
-					real off = s.buttonsOffset;
-					real bwo = bw + off;
+					Real mw = mainSize[0];
+					Real bw = s.buttonsSize;
+					Real off = s.buttonsOffset;
+					Real bwo = bw + off;
 					switch (s.buttonsMode)
 					{
 					case InputButtonsPlacementModeEnum::Left:
@@ -215,7 +215,7 @@ namespace cage
 				emitElement(GuiElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (showArrows)
 				{
-					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
+					Vec2 ss = Vec2(s.buttonsSize, mainSize[1]);
 					uint32 m = mode(leftPos, ss);
 					emitElement(GuiElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
 					m = mode(rightPos, ss);
@@ -224,9 +224,9 @@ namespace cage
 				hierarchy->text->emit(textPos, textSize);
 			}
 
-			bool insideButton(vec2 pos, vec2 point)
+			bool insideButton(Vec2 pos, Vec2 point)
 			{
-				return pointInside(pos, vec2(skin->defaults.inputBox.buttonsSize, mainSize[1]), point);
+				return pointInside(pos, Vec2(skin->defaults.inputBox.buttonsSize, mainSize[1]), point);
 			}
 
 			void increment(int sign)
@@ -241,15 +241,15 @@ namespace cage
 					detail::OverrideBreakpoint ob;
 					if (data.type == InputTypeEnum::Real)
 					{
-						real v = toFloat(data.value);
+						Real v = toFloat(data.value);
 						v += data.step.f * sign;
-						data.value = stringizer() + v.value;
+						data.value = Stringizer() + v.value;
 					}
 					if (data.type == InputTypeEnum::Integer)
 					{
 						sint32 v = toSint32(data.value);
 						v += data.step.i * sign;
-						data.value = stringizer() + v;
+						data.value = Stringizer() + v;
 					}
 					consolidate(); // apply min/max
 				}
@@ -270,7 +270,7 @@ namespace cage
 					cur = len;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (!hasFocus())
 					gainFocus();
@@ -348,7 +348,7 @@ namespace cage
 
 			virtual bool keyChar(uint32 key) override
 			{
-				if (data.value.length() + 1 >= string::MaxLength)
+				if (data.value.length() + 1 >= String::MaxLength)
 					return true;
 				uint32 &cursor = data.cursor;
 				uint32 len = utf32Length(data.value);

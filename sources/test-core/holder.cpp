@@ -243,10 +243,10 @@ void testHolder()
 			vec[i] = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
-		std::vector<Holder<HolderTester>> vec2 = std::move(vec);
+		std::vector<Holder<HolderTester>> Vec2 = std::move(vec);
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec.empty());
-		vec2.clear();
+		Vec2.clear();
 		CAGE_TEST(gCount == 0);
 	}
 

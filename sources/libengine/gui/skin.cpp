@@ -10,7 +10,7 @@ namespace cage
 		GuiTextFormatComponent textFormatComponentInit()
 		{
 			GuiTextFormatComponent text;
-			text.color = vec3(1);
+			text.color = Vec3(1);
 			text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 0;
@@ -34,13 +34,13 @@ namespace cage
 	{
 		struct Packer
 		{
-			vec2 size; // including border
-			real frame; // spacing around element
-			real border; // border inside element
+			Vec2 size; // including border
+			Real frame; // spacing around element
+			Real border; // border inside element
 
 			GuiSkinElementLayout::TextureUvOi next(bool allowBorder)
 			{
-				vec2 s = size + frame * 2;
+				Vec2 s = size + frame * 2;
 				CAGE_ASSERT(s[0] < 1);
 				if (p[0] + s[0] > 1)
 					newLine();
@@ -70,8 +70,8 @@ namespace cage
 			}
 
 		private:
-			vec2 p;
-			real my;
+			Vec2 p;
+			Real my;
 		};
 	}
 
@@ -180,7 +180,7 @@ namespace cage
 			packer.border = 4.f / 1024;
 
 			// large
-			packer.size = vec2(5, 5) * 24.f / 1024;
+			packer.size = Vec2(5, 5) * 24.f / 1024;
 			for (auto it : largeElements)
 			{
 				if (it == GuiElementTypeEnum::InvalidElement)
@@ -207,9 +207,9 @@ namespace cage
 					continue;
 				}
 				if (wideElements.count(it))
-					packer.size = vec2(5, 1) * 24.f / 1024;
+					packer.size = Vec2(5, 1) * 24.f / 1024;
 				else
-					packer.size = vec2(1, 1) * 24.f / 1024;
+					packer.size = Vec2(1, 1) * 24.f / 1024;
 				bool border = noBorder.count(it) == 0;
 				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
 				if (noFocus.count(it) == 0)
@@ -223,7 +223,7 @@ namespace cage
 
 		{ // no border
 			for (auto it : noBorder)
-				layouts[(uint32)it].border = vec4();
+				layouts[(uint32)it].border = Vec4();
 		}
 
 		{ // overlaps
@@ -244,8 +244,8 @@ namespace cage
 
 	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit)
 	{
-		textInvalidFormat.color = vec3(1,0,0);
-		placeholderFormat.color = vec3(0.5,0.5,0.5);
+		textInvalidFormat.color = Vec3(1,0,0);
+		placeholderFormat.color = Vec3(0.5,0.5,0.5);
 	}
 
 	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit)
@@ -259,7 +259,7 @@ namespace cage
 
 	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit)
 	{
-		placeholderFormat.color = vec3(0.5, 0.5, 0.5);
+		placeholderFormat.color = Vec3(0.5, 0.5, 0.5);
 		placeholderFormat.align = TextAlignEnum::Center;
 		itemsFormat.align = TextAlignEnum::Center;
 		selectedFormat.align = TextAlignEnum::Center;
@@ -272,14 +272,14 @@ namespace cage
 	{
 		fillingImage.animationStart = 0;
 		fillingImage.textureName = HashString("todo"); // todo
-		fillingImage.textureUvOffset = vec2();
-		fillingImage.textureUvSize = vec2(1);
+		fillingImage.textureUvOffset = Vec2();
+		fillingImage.textureUvSize = Vec2(1);
 	}
 
 	GuiSkinWidgetDefaults::SliderBar::SliderBar()
 	{
-		horizontal.size = vec2(150, 28);
-		vertical.size = vec2(28, 150);
+		horizontal.size = Vec2(150, 28);
+		vertical.size = Vec2(28, 150);
 	}
 
 	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(textInit), imageFormat(imageInit)

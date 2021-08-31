@@ -25,7 +25,7 @@ namespace cage
 				if (hierarchy->text)
 				{
 					hierarchy->requestedSize[1] += skin->defaults.panel.captionHeight;
-					vec2 cs = hierarchy->text->findRequestedSize();
+					Vec2 cs = hierarchy->text->findRequestedSize();
 					offsetSize(cs, skin->defaults.panel.captionPadding);
 					hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0]);
 					// it is important to compare (text size + text padding) with (children size + children padding)
@@ -51,13 +51,13 @@ namespace cage
 
 			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.panel.baseMargin);
 				emitElement(GuiElementTypeEnum::PanelBase, mode(false, 0), p, s);
 				if (hierarchy->text)
 				{
-					s = vec2(s[0], skin->defaults.panel.captionHeight);
+					s = Vec2(s[0], skin->defaults.panel.captionHeight);
 					emitElement(GuiElementTypeEnum::PanelCaption, mode(false, 0), p, s);
 					offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::PanelCaption].border);
 					offset(p, s, -skin->defaults.panel.captionPadding);

@@ -8,7 +8,7 @@
 
 namespace
 {
-	void approxEqual(const vec3 &a, const vec3 &b)
+	void approxEqual(const Vec3 &a, const Vec3 &b)
 	{
 		CAGE_TEST(distance(a, b) < 1);
 	}
@@ -33,11 +33,11 @@ namespace
 			cfg.distanceThreshold = 1e-3;
 			meshMergeCloseVertices(+p, cfg);
 		}
-		for (vec3 &v : p->positions())
+		for (Vec3 &v : p->positions())
 		{
-			real &x = v[0];
+			Real &x = v[0];
 			if (x > 2 && x < 4)
-				x = real::Nan();
+				x = Real::Nan();
 		}
 		meshDiscardInvalid(+p);
 		return p;
@@ -49,10 +49,10 @@ namespace
 		Image *img = nullptr;
 	};
 
-	void genTex(MeshImage *data, const ivec2 &xy, const ivec3 &ids, const vec3 &weights)
+	void genTex(MeshImage *data, const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)
 	{
-		const vec3 position = data->msh->positionAt(ids, weights);
-		const vec3 normal = data->msh->normalAt(ids, weights);
+		const Vec3 position = data->msh->positionAt(ids, weights);
+		const Vec3 normal = data->msh->normalAt(ids, weights);
 		data->img->set(xy, abs(normal));
 	}
 }
@@ -74,25 +74,25 @@ void testMesh()
 
 	{
 		CAGE_TESTCASE("bounding box");
-		approxEqual(poly->boundingBox(), Aabb(vec3(-10), vec3(10)));
+		approxEqual(poly->boundingBox(), Aabb(Vec3(-10), Vec3(10)));
 	}
 
 	{
 		CAGE_TESTCASE("bounding sphere");
-		approxEqual(poly->boundingSphere(), Sphere(vec3(), 10));
+		approxEqual(poly->boundingSphere(), Sphere(Vec3(), 10));
 	}
 
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
-		meshApplyTransform(+p, transform(vec3(0, 5, 0)));
-		approxEqual(p->boundingBox(), Aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
+		meshApplyTransform(+p, Transform(Vec3(0, 5, 0)));
+		approxEqual(p->boundingBox(), Aabb(Vec3(-10, -5, -10), Vec3(10, 15, 10)));
 	}
 
 	{
 		CAGE_TESTCASE("discard invalid");
 		auto p = poly->copy();
-		p->position(42, vec3::Nan()); // intentionally corrupt one vertex
+		p->position(42, Vec3::Nan()); // intentionally corrupt one vertex
 		meshDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
@@ -142,8 +142,8 @@ void testMesh()
 		CAGE_TESTCASE("chunking");
 		auto p = poly->copy();
 		MeshChunkingConfig cfg;
-		constexpr real initialAreaImplicit = 4 * real::Pi() * sqr(10);
-		constexpr real targetChunks = 10;
+		constexpr Real initialAreaImplicit = 4 * Real::Pi() * sqr(10);
+		constexpr Real targetChunks = 10;
 		cfg.maxSurfaceArea = initialAreaImplicit / targetChunks;
 		const auto res = meshChunking(+p, cfg);
 		CAGE_TEST(res.size() > targetChunks / 2 && res.size() < targetChunks * 2);
@@ -168,7 +168,7 @@ void testMesh()
 		{
 			CAGE_TESTCASE("texturing");
 			Holder<Image> img = newImage();
-			img->initialize(ivec2(res), 3);
+			img->initialize(Vec2i(res), 3);
 			MeshImage data;
 			data.msh = +p;
 			data.img = +img;
@@ -183,7 +183,7 @@ void testMesh()
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
-		meshClip(+p, Aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
+		meshClip(+p, Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10)));
 		p->exportObjFile({}, "meshes/clip.obj");
 	}
 

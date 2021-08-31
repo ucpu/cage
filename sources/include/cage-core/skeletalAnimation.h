@@ -15,9 +15,9 @@ namespace cage
 		Holder<PointerRange<char>> exportBuffer() const;
 
 		void channelsMapping(uint16 bones, uint16 channels, PointerRange<const uint16> mapping);
-		void positionsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values);
-		void rotationsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const quat>> values);
-		void scaleData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values);
+		void positionsData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Vec3>> values);
+		void rotationsData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Quat>> values);
+		void scaleData(PointerRange<const PointerRange<const Real>> times, PointerRange<const PointerRange<const Vec3>> values);
 
 		uint32 bonesCount() const;
 		uint32 channelsCount() const;
@@ -43,7 +43,7 @@ namespace cage
 		void importBuffer(PointerRange<const char> buffer);
 		Holder<PointerRange<char>> exportBuffer() const;
 
-		void skeletonData(const mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const mat4> bases, PointerRange<const mat4> invRests);
+		void skeletonData(const Mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests);
 
 		uint32 bonesCount() const;
 
@@ -55,13 +55,13 @@ namespace cage
 	CAGE_CORE_API AssetScheme genAssetSchemeSkeletonRig();
 	constexpr uint32 AssetSchemeIndexSkeletonRig = 5;
 
-	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output); // provides transformation matrices for skinning meshes
-	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output); // provides transformation matrices for individual bones for debug visualization
-	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, Mesh *mesh);
+	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes
+	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for individual bones for debug visualization
+	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, Mesh *mesh);
 
 	namespace detail
 	{
-		CAGE_CORE_API real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, real animationSpeed, real animationOffset);
+		CAGE_CORE_API Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
 	}
 }
 

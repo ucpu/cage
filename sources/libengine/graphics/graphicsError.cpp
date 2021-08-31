@@ -101,9 +101,9 @@ namespace cage
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
 			Holder<LineReader> lrb = newLineReader({ message, message + std::strlen(message) });
-			for (string line; lrb->readLine(line);)
+			for (String line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
-			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
+			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", Stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is being recompiled based on opengl state
@@ -122,18 +122,18 @@ namespace cage
 			vendor = glGetString(GL_VENDOR);
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			CAGE_LOG(SeverityEnum::Info, "graphics", stringizer() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", stringizer() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", stringizer() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
-				CAGE_LOG(SeverityEnum::Info, "graphics", stringizer() + "opengl extensions: ");
+				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl extensions: ");
 				GLint num = 0;
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", stringizer() + "extension: '" + (char*)ext + "'");
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "extension: '" + (char*)ext + "'");
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}

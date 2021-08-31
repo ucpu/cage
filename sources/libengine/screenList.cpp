@@ -39,8 +39,8 @@ namespace cage
 				}
 			}
 
-			const string name_;
-			const string id_;
+			const String name_;
+			const String id_;
 			std::vector<ScreenMode> modes;
 			uint32 current_;
 		};
@@ -80,13 +80,13 @@ namespace cage
 		return impl->modes;
 	}
 
-	string ScreenDevice::name() const
+	String ScreenDevice::name() const
 	{
 		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
 		return impl->name_;
 	}
 
-	string ScreenDevice::id() const
+	String ScreenDevice::id() const
 	{
 		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
 		return impl->id_;

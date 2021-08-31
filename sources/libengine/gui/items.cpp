@@ -33,7 +33,7 @@ namespace cage
 			requestedSize = image->findRequestedSize();
 		else
 		{
-			requestedSize = vec2();
+			requestedSize = Vec2();
 			for (const auto &c : children)
 			{
 				c->findRequestedSize();
@@ -101,7 +101,7 @@ namespace cage
 		{
 			if (!enabled[i])
 				continue;
-			real offset = 0;
+			Real offset = 0;
 			if (renderPos[i] + renderSize[i] > impl->outputSize[i])
 				offset = (impl->outputSize[i] - renderSize[i]) - renderPos[i];
 			else if (renderPos[i] < 0)
@@ -139,7 +139,7 @@ namespace cage
 		return 0;
 	}
 
-	uint32 WidgetItem::mode(const vec2 &pos, const vec2 &size, uint32 focusParts) const
+	uint32 WidgetItem::mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts) const
 	{
 		return mode(pointInside(pos, size, hierarchy->impl->outputMouse), focusParts);
 	}
@@ -174,33 +174,33 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
-	RenderableElement WidgetItem::emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size)
+	RenderableElement WidgetItem::emitElement(GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size)
 	{
 		return RenderableElement(this, element, mode, pos, size);
 	}
 
-	bool WidgetItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		makeFocused();
 		return true;
 	}
 
-	bool WidgetItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
 	}
 
-	bool WidgetItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
 	}
 
-	bool WidgetItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
 	}
 
-	bool WidgetItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
 	}
@@ -228,27 +228,27 @@ namespace cage
 	LayoutItem::LayoutItem(HierarchyItem *hierarchy) : BaseItem(hierarchy)
 	{}
 
-	bool LayoutItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}
 
-	bool LayoutItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}
 
-	bool LayoutItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}
 
-	bool LayoutItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}
 
-	bool LayoutItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}
@@ -293,14 +293,14 @@ namespace cage
 	{}
 
 	// this is also used in engine
-	string loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, string params)
+	String loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, String params)
 	{
 		if (asset == 0 || text == 0)
 			return params;
 		auto a = assets->tryGet<AssetSchemeIndexTextPack, TextPack>(asset);
 		if (a)
 		{
-			std::vector<string> ps;
+			std::vector<String> ps;
 			while (!params.empty())
 				ps.push_back(split(params, "|"));
 			return a->format(text, ps);
@@ -338,11 +338,11 @@ namespace cage
 	void TextItem::transcript()
 	{
 		GUI_COMPONENT(Text, t, hierarchy->ent);
-		string value = loadInternationalizedText(hierarchy->impl->assetMgr, t.assetName, t.textName, t.value);
+		String value = loadInternationalizedText(hierarchy->impl->assetMgr, t.assetName, t.textName, t.value);
 		transcript(value);
 	}
 
-	void TextItem::transcript(const string &value)
+	void TextItem::transcript(const String &value)
 	{
 		if (font)
 			glyphs = font->transcript(value);
@@ -354,19 +354,19 @@ namespace cage
 			glyphs = font->transcript(value);
 	}
 
-	vec2 TextItem::findRequestedSize()
+	Vec2 TextItem::findRequestedSize()
 	{
 		if (font)
 			return font->size(glyphs, format);
-		return vec2();
+		return Vec2();
 	}
 
-	RenderableText TextItem::emit(vec2 position, vec2 size)
+	RenderableText TextItem::emit(Vec2 position, Vec2 size)
 	{
 		return RenderableText(this, position, size);
 	}
 
-	void TextItem::updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor)
+	void TextItem::updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor)
 	{
 		if (!font)
 			return;
@@ -417,14 +417,14 @@ namespace cage
 		// todo inherit only
 	}
 
-	vec2 ImageItem::findRequestedSize()
+	Vec2 ImageItem::findRequestedSize()
 	{
 		if (texture)
-			return vec2(texture->resolution());
-		return vec2();
+			return Vec2(texture->resolution());
+		return Vec2();
 	}
 
-	RenderableImage ImageItem::emit(vec2 position, vec2 size)
+	RenderableImage ImageItem::emit(Vec2 position, Vec2 size)
 	{
 		return RenderableImage(this, position, size);
 	}

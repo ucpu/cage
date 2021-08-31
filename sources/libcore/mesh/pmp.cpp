@@ -16,7 +16,7 @@ namespace cage
 			CAGE_ASSERT(model->type() == MeshTypeEnum::Triangles);
 			Holder<pmp::SurfaceMesh> res = systemMemory().createHolder<pmp::SurfaceMesh>();
 			{ // vertices
-				for (const vec3 &p : model->positions())
+				for (const Vec3 &p : model->positions())
 					res->add_vertex(pmp::Point(p[0].value, p[1].value, p[2].value));
 				if (!model->normals().empty())
 				{
@@ -47,14 +47,14 @@ namespace cage
 			model->clear();
 			{ // vertices
 				{
-					static_assert(sizeof(pmp::Point) == sizeof(vec3), "pmp point size mismatch");
+					static_assert(sizeof(pmp::Point) == sizeof(Vec3), "pmp point size mismatch");
 					const auto &vs = pm->positions();
-					model->positions({ (vec3*)vs.data(), (vec3*)vs.data() + vs.size() });
+					model->positions({ (Vec3*)vs.data(), (Vec3*)vs.data() + vs.size() });
 				}
 				if (pm->has_vertex_property("v:normal"))
 				{
 					const auto &ns = pm->get_vertex_property<pmp::Point>("v:normal").vector();
-					model->normals({ (vec3*)ns.data(), (vec3*)ns.data() + ns.size() });
+					model->normals({ (Vec3*)ns.data(), (Vec3*)ns.data() + ns.size() });
 				}
 			}
 			// indices

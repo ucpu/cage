@@ -8,9 +8,9 @@
 
 namespace cage
 {
-	uint16 pack565(const vec3 &v)
+	uint16 pack565(const Vec3 &v)
 	{
-		const vec3 v3 = vec3(v * vec3(31, 63, 31));
+		const Vec3 v3 = Vec3(v * Vec3(31, 63, 31));
 		uint16 result = 0;
 		result |= (numeric_cast<uint8>(round(v3[0])) & 31u) << 0;
 		result |= (numeric_cast<uint8>(round(v3[1])) & 63u) << 5;
@@ -18,12 +18,12 @@ namespace cage
 		return result;
 	}
 
-	vec3 unpack565(uint16 v)
+	Vec3 unpack565(uint16 v)
 	{
 		uint8 x = (v >> 0) & 31u;
 		uint8 y = (v >> 5) & 63u;
 		uint8 z = (v >> 11) & 31u;
-		return vec3(x, y, z) * vec3(1.0 / 31, 1.0 / 63, 1.0 / 31);
+		return Vec3(x, y, z) * Vec3(1.0 / 31, 1.0 / 63, 1.0 / 31);
 	}
 
 #ifdef CAGE_DEBUG
@@ -44,10 +44,10 @@ namespace cage
 
 	TexelBlock dxtDecompress(const Dxt1Block &block)
 	{
-		vec4 color[4];
-		color[0] = vec4(unpack565(block.color0), 1.0f);
+		Vec4 color[4];
+		color[0] = Vec4(unpack565(block.color0), 1.0f);
 		std::swap(color[0][0], color[0][2]);
-		color[1] = vec4(unpack565(block.color1), 1.0f);
+		color[1] = Vec4(unpack565(block.color1), 1.0f);
 		std::swap(color[1][0], color[1][2]);
 
 		if (block.color0 > block.color1)
@@ -58,7 +58,7 @@ namespace cage
 		else
 		{
 			color[2] = (color[0] + color[1]) / 2.0f;
-			color[3] = vec4(0.0f);
+			color[3] = Vec4(0.0f);
 		}
 
 		TexelBlock texelBlock;
@@ -76,10 +76,10 @@ namespace cage
 
 	TexelBlock dxtDecompress(const Dxt3Block &block)
 	{
-		vec3 color[4];
-		color[0] = vec3(unpack565(block.color0));
+		Vec3 color[4];
+		color[0] = Vec3(unpack565(block.color0));
 		std::swap(color[0][0], color[0][2]);
-		color[1] = vec3(unpack565(block.color1));
+		color[1] = Vec3(unpack565(block.color1));
 		std::swap(color[1][0], color[1][2]);
 		color[2] = (2.0f / 3.0f) * color[0] + (1.0f / 3.0f) * color[1];
 		color[3] = (1.0f / 3.0f) * color[0] + (2.0f / 3.0f) * color[1];
@@ -90,8 +90,8 @@ namespace cage
 			for (uint8 col = 0; col < 4; col++)
 			{
 				uint8 colorIndex = (block.row[row] >> (col * 2)) & 0x3;
-				real alpha = ((block.alphaRow[row] >> (col * 4)) & 0xF) / 15.0f;
-				texelBlock.texel[row][col] = vec4(color[colorIndex], alpha);
+				Real alpha = ((block.alphaRow[row] >> (col * 4)) & 0xF) / 15.0f;
+				texelBlock.texel[row][col] = Vec4(color[colorIndex], alpha);
 			}
 		}
 
@@ -100,15 +100,15 @@ namespace cage
 
 	TexelBlock dxtDecompress(const Dxt5Block &block)
 	{
-		vec3 color[4];
-		color[0] = vec3(unpack565(block.color0));
+		Vec3 color[4];
+		color[0] = Vec3(unpack565(block.color0));
 		std::swap(color[0][0], color[0][2]);
-		color[1] = vec3(unpack565(block.color1));
+		color[1] = Vec3(unpack565(block.color1));
 		std::swap(color[1][0], color[1][2]);
 		color[2] = (2.0f / 3.0f) * color[0] + (1.0f / 3.0f) * color[1];
 		color[3] = (1.0f / 3.0f) * color[0] + (2.0f / 3.0f) * color[1];
 
-		real alpha[8];
+		Real alpha[8];
 		alpha[0] = block.alpha[0] / 255.0f;
 		alpha[1] = block.alpha[1] / 255.0f;
 
@@ -141,7 +141,7 @@ namespace cage
 			{
 				uint8 colorIndex = (block.row[row] >> (col * 2)) & 0x3;
 				uint8 alphaIndex = (bitmap >> ((row * 4 + col) * 3)) & 0x7;
-				texelBlock.texel[row][col] = vec4(color[colorIndex], alpha[alphaIndex]);
+				texelBlock.texel[row][col] = Vec4(color[colorIndex], alpha[alphaIndex]);
 			}
 		}
 
@@ -154,7 +154,7 @@ namespace cage
 		uint8 src[16 * 4];
 		for (uint32 i = 0; i < 16; i++)
 		{
-			vec4 v = block.texel[i / 4][i % 4] * 255;
+			Vec4 v = block.texel[i / 4][i % 4] * 255;
 			for (uint32 j = 0; j < 4; j++)
 				src[i * 4 + j] = numeric_cast<uint8>(v[j]);
 		}

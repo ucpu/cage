@@ -88,7 +88,7 @@ void testConcurrent()
 		}
 		catch (const cage::Exception &e)
 		{
-			ok = string(e.message) == "intentionally thrown exception";
+			ok = String(e.message) == "intentionally thrown exception";
 		}
 		CAGE_TEST(ok);
 	}
@@ -112,7 +112,7 @@ void testConcurrent()
 		CAGE_TESTCASE("barrier");
 		Holder<Thread> thrs[4];
 		for (uint32 i = 0; i < 4; i++)
-			thrs[i] = newThread(Delegate<void()>().bind<&threadTest>(), stringizer() + "worker_" + i);
+			thrs[i] = newThread(Delegate<void()>().bind<&threadTest>(), Stringizer() + "worker_" + i);
 		for (uint32 i = 0; i < 4; i++)
 			thrs[i]->wait();
 	}

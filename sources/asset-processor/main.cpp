@@ -8,29 +8,29 @@
 #include <cstring> // strlen
 
 // passed names
-string inputDirectory; // c:/asset
-string inputName; // path/file?specifier;identifier
-string outputDirectory; // c:/data
-string outputName; // 123456789
+String inputDirectory; // c:/asset
+String inputName; // path/file?specifier;identifier
+String outputDirectory; // c:/data
+String outputName; // 123456789
 uint32 schemeIndex;
 
 // derived names
-string inputFileName; // c:/asset/path/file
-string outputFileName; // c:/data/123456789
-string inputFile; // path/file
-string inputSpec; // specifier
-string inputIdentifier; // identifier
+String inputFileName; // c:/asset/path/file
+String outputFileName; // c:/data/123456789
+String inputFile; // path/file
+String inputSpec; // specifier
+String inputIdentifier; // identifier
 
 StringLiteral logComponentName = "assetProcessor";
 
 AssetHeader initializeAssetHeader()
 {
 	AssetHeader h(inputName, numeric_cast<uint16>(schemeIndex));
-	string intr = properties("alias");
+	String intr = properties("alias");
 	if (!intr.empty())
 	{
 		intr = pathJoin(pathExtractDirectory(inputName), intr);
-		writeLine(stringizer() + "alias = " + intr);
+		writeLine(Stringizer() + "alias = " + intr);
 		h.aliasName = HashString(intr);
 	}
 	return h;
@@ -38,14 +38,14 @@ AssetHeader initializeAssetHeader()
 
 namespace
 {
-	std::map<string, string> props;
+	std::map<String, String> props;
 
-	string readLine()
+	String readLine()
 	{
-		char buf[string::MaxLength];
-		if (std::fgets(buf, string::MaxLength, stdin) == nullptr)
+		char buf[String::MaxLength];
+		if (std::fgets(buf, String::MaxLength, stdin) == nullptr)
 			CAGE_THROW_ERROR(SystemError, "fgets", std::ferror(stdin));
-		return trim(string(buf));
+		return trim(String(buf));
 	}
 
 	void derivedProperties()
@@ -70,15 +70,15 @@ namespace
 	{
 		while (true)
 		{
-			string value = readLine();
+			String value = readLine();
 			if (value == "cage-end")
 				break;
 			if (find(value, '=') == m)
 			{
-				CAGE_LOG_THROW(stringizer() + "line: " + value);
+				CAGE_LOG_THROW(Stringizer() + "line: " + value);
 				CAGE_THROW_ERROR(Exception, "missing '=' in property line");
 			}
-			string name = split(value, "=");
+			String name = split(value, "=");
 			props[name] = value;
 		}
 
@@ -90,7 +90,7 @@ namespace
 		derivedProperties();
 	}
 
-	void initializeSecondaryLog(const string &path)
+	void initializeSecondaryLog(const String &path)
 	{
 		static Holder<LoggerOutputFile> *secondaryLogFile = new Holder<LoggerOutputFile>(); // intentional leak
 		static Holder<Logger> *secondaryLog = new Holder<Logger>(); // intentional leak - this will allow to log to the very end of the application
@@ -100,9 +100,9 @@ namespace
 		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 
-	string convertGenericPath(const string &input_, const string &relativeTo_)
+	String convertGenericPath(const String &input_, const String &relativeTo_)
 	{
-		string input = input_;
+		String input = input_;
 		if (input.empty())
 			CAGE_THROW_ERROR(Exception, "input cannot be empty");
 		if (pathIsAbs(input))
@@ -114,7 +114,7 @@ namespace
 		}
 		else
 		{
-			const string relativeTo = relativeTo_.empty() ? pathExtractDirectory(inputFile) : relativeTo_;
+			const String relativeTo = relativeTo_.empty() ? pathExtractDirectory(inputFile) : relativeTo_;
 			input = pathJoin(relativeTo, input);
 		}
 		if (input.empty())
@@ -123,10 +123,10 @@ namespace
 	}
 }
 
-string convertAssetPath(const string &input, const string &relativeTo, bool markAsReferenced)
+String convertAssetPath(const String &input, const String &relativeTo, bool markAsReferenced)
 {
-	string detail;
-	string p = input;
+	String detail;
+	String p = input;
 	{
 		const uint32 sep = min(find(p, '?'), find(p, ';'));
 		detail = subString(p, sep, m);
@@ -134,38 +134,38 @@ string convertAssetPath(const string &input, const string &relativeTo, bool mark
 	}
 	p = convertGenericPath(p, relativeTo) + detail;
 	if (markAsReferenced)
-		writeLine(string("ref=") + p);
+		writeLine(String("ref=") + p);
 	return p;
 }
 
-string convertFilePath(const string &input, const string &relativeTo, bool markAsUsed)
+String convertFilePath(const String &input, const String &relativeTo, bool markAsUsed)
 {
-	string p = convertGenericPath(input, relativeTo);
+	String p = convertGenericPath(input, relativeTo);
 	if (markAsUsed)
-		writeLine(string("use=") + p);
+		writeLine(String("use=") + p);
 	return p;
 }
 
-void writeLine(const string &other)
+void writeLine(const String &other)
 {
-	CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "writing: '" + other + "'");
+	CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "writing: '" + other + "'");
 	{
-		string b = other;
+		String b = other;
 		if (trim(split(b, "=")) == "ref")
-			CAGE_LOG(SeverityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)HashString(trim(b).c_str()) + "'");
+			CAGE_LOG(SeverityEnum::Note, "asset-processor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b).c_str()) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));
 }
 
-string properties(const string &name)
+String properties(const String &name)
 {
 	auto it = props.find(name);
 	if (it != props.end())
 		return it->second;
 	else
 	{
-		CAGE_LOG_THROW(stringizer() + "property name: '" + name + "'");
+		CAGE_LOG_THROW(Stringizer() + "property name: '" + name + "'");
 		CAGE_THROW_ERROR(Exception, "property not found");
 	}
 }
@@ -174,11 +174,11 @@ int main(int argc, const char *args[])
 {
 	try
 	{
-		if (argc == 3 && string(args[1]) == "analyze")
+		if (argc == 3 && String(args[1]) == "analyze")
 		{
 			logComponentName = "analyze";
 			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "analyzing input '" + args[2] + "'");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "analyzing input '" + args[2] + "'");
 			inputDirectory = pathExtractDirectory(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
@@ -192,9 +192,9 @@ int main(int argc, const char *args[])
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
 		for (const auto &it : props)
-			CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
+			CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "property '" + it.first + "': '" + it.second + "'");
 
-#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "input " #N ": '" + N + "'");
+#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "input " #N ": '" + N + "'");
 		GCHL_GENERATE(inputFileName);
 		GCHL_GENERATE(outputFileName);
 		GCHL_GENERATE(inputFile);
@@ -203,7 +203,7 @@ int main(int argc, const char *args[])
 #undef GCHL_GENERATE
 
 		Delegate<void()> func;
-		string component = string(args[1]);
+		String component = String(args[1]);
 		if (component == "texture")
 			func.bind<&processTexture>();
 		else if (component == "shader")

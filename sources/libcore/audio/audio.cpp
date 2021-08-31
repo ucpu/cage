@@ -151,10 +151,10 @@ namespace cage
 		switch (impl->format)
 		{
 		case AudioFormatEnum::S16:
-			((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(clamp(real(v), -1, 1) * 32767.f);
+			((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(clamp(Real(v), -1, 1) * 32767.f);
 			break;
 		case AudioFormatEnum::S32:
-			((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(clamp(real(v), -1, 1) * 2147483647.f);
+			((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(clamp(Real(v), -1, 1) * 2147483647.f);
 			break;
 		case AudioFormatEnum::Float:
 			((float *)impl->mem.data())[offset] = v;
@@ -166,7 +166,7 @@ namespace cage
 		}
 	}
 
-	void Audio::value(uintPtr f, uint32 c, const real &v)
+	void Audio::value(uintPtr f, uint32 c, const Real &v)
 	{
 		value(f, c, v.value);
 	}

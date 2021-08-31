@@ -6,27 +6,27 @@
 
 #include <initializer_list>
 
-void test(real, real);
-void test(const vec2 &, const vec2 &);
-void test(const vec3 &, const vec3 &);
-void test(const vec4 &, const vec4 &);
+void test(Real, Real);
+void test(const Vec2 &, const Vec2 &);
+void test(const Vec3 &, const Vec3 &);
+void test(const Vec4 &, const Vec4 &);
 
 namespace
 {
 	void drawCircle(Image *img)
 	{
 		uint32 w = img->width(), h = img->height();
-		vec2 center = vec2(w, h) * 0.5;
-		real radiusMax = min(w, h) * 0.5;
+		Vec2 center = Vec2(w, h) * 0.5;
+		Real radiusMax = min(w, h) * 0.5;
 		for (uint32 y = 0; y < h; y++)
 		{
 			for (uint32 x = 0; x < w; x++)
 			{
-				real xx = (real(x) - w / 2) / radiusMax;
-				real yy = (real(y) - h / 2) / radiusMax;
-				real h = real(wrap(atan2(xx, yy)) / rads::Full());
-				real s = length(vec2(xx, yy));
-				vec4 color = s <= 1 ? vec4(colorHsvToRgb(vec3(h, s, 1)), 1) : vec4();
+				Real xx = (Real(x) - w / 2) / radiusMax;
+				Real yy = (Real(y) - h / 2) / radiusMax;
+				Real h = Real(wrap(atan2(xx, yy)) / Rads::Full());
+				Real s = length(Vec2(xx, yy));
+				Vec4 color = s <= 1 ? Vec4(colorHsvToRgb(Vec3(h, s, 1)), 1) : Vec4();
 				img->set(x, y, color);
 			}
 		}
@@ -61,7 +61,7 @@ void testImage()
 			test(img->value(0, 0, 0), 0.2);
 			img->value(0, 0, 0, 1.55f);
 			test(img->value(0, 0, 0), 1.0);
-			img->value(0, 0, 0, real::Nan());
+			img->value(0, 0, 0, Real::Nan());
 			test(img->value(0, 0, 0), 0.0);
 		}
 		{
@@ -72,7 +72,7 @@ void testImage()
 			test(img->value(0, 0, 0), 0.2);
 			img->value(0, 0, 0, 1.55f);
 			test(img->value(0, 0, 0), 1.0);
-			img->value(0, 0, 0, real::Nan());
+			img->value(0, 0, 0, Real::Nan());
 			test(img->value(0, 0, 0), 0.0);
 		}
 		{
@@ -83,7 +83,7 @@ void testImage()
 			test(img->value(0, 0, 0), 0.2);
 			img->value(0, 0, 0, 1.55f);
 			test(img->value(0, 0, 0), 1.55);
-			img->value(0, 0, 0, real::Nan());
+			img->value(0, 0, 0, Real::Nan());
 			CAGE_TEST(!valid(img->value(0, 0, 0)));
 		}
 	}
@@ -95,16 +95,16 @@ void testImage()
 		imageFill(+img, 0.4);
 		test(img->get1(42, 13), 0.4);
 		img->initialize(150, 40, 2);
-		imageFill(+img, vec2(0.1, 0.2));
-		test(img->get2(42, 13) / 100, vec2(0.1, 0.2) / 100);
+		imageFill(+img, Vec2(0.1, 0.2));
+		test(img->get2(42, 13) / 100, Vec2(0.1, 0.2) / 100);
 		img->initialize(150, 40, 3);
-		imageFill(+img, vec3(0.1, 0.2, 0.3));
-		test(img->get3(42, 13) / 100, vec3(0.1, 0.2, 0.3) / 100);
+		imageFill(+img, Vec3(0.1, 0.2, 0.3));
+		test(img->get3(42, 13) / 100, Vec3(0.1, 0.2, 0.3) / 100);
 		img->initialize(150, 40, 4);
-		imageFill(+img, vec4(0.1, 0.2, 0.3, 0.4));
-		test(img->get4(42, 13) / 100, vec4(0.1, 0.2, 0.3, 0.4) / 100);
+		imageFill(+img, Vec4(0.1, 0.2, 0.3, 0.4));
+		test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.3, 0.4) / 100);
 		imageFill(+img, 2, 0.5);
-		test(img->get4(42, 13) / 100, vec4(0.1, 0.2, 0.5, 0.4) / 100);
+		test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.5, 0.4) / 100);
 	}
 
 	{
@@ -274,16 +274,16 @@ void testImage()
 		drawCircle(+img);
 		for (uint32 ch : { 4, 3, 2, 1 })
 		{
-			CAGE_TESTCASE(stringizer() + ch);
+			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const string &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
+			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
 			{
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
 				if (ch == 2 && fmt == ".tga")
 					continue; // unsupported
 				CAGE_TESTCASE(fmt);
-				const string name = stringizer() + "images/channels/" + ch + fmt;
+				const String name = Stringizer() + "images/channels/" + ch + fmt;
 				img->exportFile(name);
 				Holder<Image> tg = newImage();
 				tg->importFile(name);
@@ -381,7 +381,7 @@ void testImage()
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
+			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
 		}
 		img->exportFile("images/dilation/3_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
@@ -405,7 +405,7 @@ void testImage()
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
+			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
 		}
 		img->exportFile("images/dilation/4_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
@@ -422,11 +422,11 @@ void testImage()
 		for (uint32 y = 0; y < 300; y++)
 			for (uint32 x = 0; x < 400; x++)
 				if (randomChance() < 0.3)
-					img->set(x, y, vec4::Nan());
+					img->set(x, y, Vec4::Nan());
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 1, true);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
+			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
 		}
 		imageConvert(+img, ImageFormatEnum::U8);
 		img->exportFile("images/dilation/nan.png");

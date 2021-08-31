@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	string systemName()
+	String systemName()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		static_assert(sizeof(DWORD) == sizeof(uint32));
@@ -27,10 +27,10 @@ namespace cage
 				return 0;
 			return res;
 		};
-		const auto &readString = [](StringLiteral name) -> string
+		const auto &readString = [](StringLiteral name) -> String
 		{
-			string res;
-			DWORD sz = string::MaxLength;
+			String res;
+			DWORD sz = String::MaxLength;
 			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name, RRF_RT_REG_SZ, nullptr, res.rawData(), &sz);
 			if (ret != ERROR_SUCCESS)
 				res.rawLength() = 0;
@@ -38,62 +38,62 @@ namespace cage
 				res.rawLength() = sz - 1;
 			return res;
 		};
-		return stringizer() + readString("ProductName") + " " + readString("DisplayVersion") + " (" + readString("CurrentVersion") + ", " + readUint("CurrentMajorVersionNumber") + "." + readUint("CurrentMinorVersionNumber") + ", " + readString("CurrentBuildNumber") + ", " + readString("EditionID") + ", " + readString("InstallationType") + ")";
+		return Stringizer() + readString("ProductName") + " " + readString("DisplayVersion") + " (" + readString("CurrentVersion") + ", " + readUint("CurrentMajorVersionNumber") + "." + readUint("CurrentMinorVersionNumber") + ", " + readString("CurrentBuildNumber") + ", " + readString("EditionID") + ", " + readString("InstallationType") + ")";
 #else
-		Holder<Process> prg = newProcess(string("lsb_release -d"));
-		string newName = prg->readLine();
+		Holder<Process> prg = newProcess(String("lsb_release -d"));
+		String newName = prg->readLine();
 		if (!isPattern(newName, "Description", "", ""))
 		{
 			// lsb_release is not installed, let's at least return full uname
-			prg = newProcess(string("uname -a"));
+			prg = newProcess(String("uname -a"));
 			return prg->readLine();
 		}
 
-		newName = remove(newName, 0, string("Description:").length());
-		string systemName = trim(newName);
+		newName = remove(newName, 0, String("Description:").length());
+		String systemName = trim(newName);
 
-		prg = newProcess(string("lsb_release -r"));
-		newName = remove(prg->readLine(), 0, string("Release:").length());
+		prg = newProcess(String("lsb_release -r"));
+		newName = remove(prg->readLine(), 0, String("Release:").length());
 		systemName = systemName + " " + trim(newName);
 
-		prg = newProcess(string("uname -r"));
+		prg = newProcess(String("uname -r"));
 		systemName = systemName + ", kernel " + prg->readLine();
 
 		return systemName;
 #endif
 	}
 
-	string userName()
+	String userName()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		char buf[string::MaxLength];
+		char buf[String::MaxLength];
 		buf[0] = 0;
-		DWORD siz = string::MaxLength - 1;
+		DWORD siz = String::MaxLength - 1;
 		if (!GetUserName(buf, &siz))
 			CAGE_THROW_ERROR(SystemError, "GetUserName", GetLastError());
 		return buf;
 #else
-		Holder<Process> prg = newProcess(string("whoami"));
+		Holder<Process> prg = newProcess(String("whoami"));
 		return prg->readLine();
 #endif
 	}
 
-	string hostName()
+	String hostName()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		char buf[string::MaxLength];
+		char buf[String::MaxLength];
 		buf[0] = 0;
-		DWORD siz = string::MaxLength - 1;
+		DWORD siz = String::MaxLength - 1;
 		if (!GetComputerName(buf, &siz))
 			CAGE_THROW_ERROR(SystemError, "GetComputerName", GetLastError());
 		return buf;
 #else
-		Holder<Process> prg = newProcess(string("hostname"));
+		Holder<Process> prg = newProcess(String("hostname"));
 		return prg->readLine();
 #endif
 	}
 
-	string processorName()
+	String processorName()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		// https://vcpptips.wordpress.com/2012/12/30/how-to-get-the-cpu-name/
@@ -111,7 +111,7 @@ namespace cage
 		}
 		return CPUBrandString;
 #else
-		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
+		Holder<Process> prg = newProcess(String("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
 		return trim(prg->readLine());
 #endif
 	}
@@ -137,7 +137,7 @@ namespace cage
 #else
 		try
 		{
-			Holder<Process> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
+			Holder<Process> prg = newProcess(String("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
 			return toUint32(prg->readLine()) * 1000;
 		}
 		catch(const cage::Exception &)
@@ -145,7 +145,7 @@ namespace cage
 			// When the cpufreq driver is not loaded (file above does not exist), the CPU should be running on full speed
 		}
 
-		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
+		Holder<Process> prg = newProcess(String("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
 		return numeric_cast<uint64>(toDouble(trim(prg->readLine())) * 1e6);
 #endif
 	}
@@ -159,7 +159,7 @@ namespace cage
 			CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullTotalPhys;
 #else
-		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
+		Holder<Process> prg = newProcess(String("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
 		return toUint64(prg->readLine()) * 1024;
 #endif
 	}
@@ -175,7 +175,7 @@ namespace cage
 #else
 		try
 		{
-			Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
+			Holder<Process> prg = newProcess(String("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
 			return toUint64(prg->readLine()) * 1024;
 		}
 		catch (const cage::Exception &)
@@ -183,7 +183,7 @@ namespace cage
 			// On some systems the "MemAvailable" is not present, in which case continue to look for "MemFree"
 		}
 
-		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
+		Holder<Process> prg = newProcess(String("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
 		return toUint64(prg->readLine()) * 1024;
 #endif
 	}

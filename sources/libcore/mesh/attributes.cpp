@@ -4,13 +4,13 @@
 namespace cage
 {
 	template<class T>
-	T attrAt(const MeshAttribute<T> &attribute, const ivec3 &ids, const vec3 &weights)
+	T attrAt(const MeshAttribute<T> &attribute, const Vec3i &ids, const Vec3 &weights)
 	{
 		return attribute.at(ids[0]) * weights[0] + attribute.at(ids[1]) * weights[1] + attribute.at(ids[2]) * weights[2];
 	}
 
 	template<>
-	ivec4 attrAt<ivec4>(const MeshAttribute<ivec4> &attribute, const ivec3 &ids, const vec3 &weights)
+	Vec4i attrAt<Vec4i>(const MeshAttribute<Vec4i> &attribute, const Vec3i &ids, const Vec3 &weights)
 	{
 		CAGE_THROW_ERROR(Exception, "cannot interpolate integer attributes");
 	}
@@ -22,7 +22,7 @@ namespace cage
 	}
 
 	template<>
-	vec3 attrNormalize<vec3, true>(const vec3 &v)
+	Vec3 attrNormalize<Vec3, true>(const Vec3 &v)
 	{
 		return normalize(v);
 	}
@@ -54,19 +54,19 @@ namespace cage
 		MeshImpl *impl = (MeshImpl *)this; \
 		impl->PLURAL[idx] = value; \
 	} \
-	TYPE Mesh::CAGE_JOIN(SINGULAR, At)(const ivec3 &ids, const vec3 &weights) const \
+	TYPE Mesh::CAGE_JOIN(SINGULAR, At)(const Vec3i &ids, const Vec3 &weights) const \
 	{ \
 		const MeshImpl *impl = (const MeshImpl *)this; \
 		return attrNormalize<TYPE, NORMALIZED>(attrAt<TYPE>(impl->PLURAL, ids, weights)); \
 	}
 
-	GCHL_GENERATE(false, vec3, position, positions);
-	GCHL_GENERATE(true, vec3, normal, normals);
-	GCHL_GENERATE(true, vec3, tangent, tangents);
-	GCHL_GENERATE(true, vec3, bitangent, bitangents);
-	GCHL_GENERATE(false, vec2, uv, uvs);
-	GCHL_GENERATE(false, vec3, uv3, uvs3);
-	GCHL_GENERATE(false, ivec4, boneIndices, boneIndices);
-	GCHL_GENERATE(false, vec4, boneWeights, boneWeights);
+	GCHL_GENERATE(false, Vec3, position, positions);
+	GCHL_GENERATE(true, Vec3, normal, normals);
+	GCHL_GENERATE(true, Vec3, tangent, tangents);
+	GCHL_GENERATE(true, Vec3, bitangent, bitangents);
+	GCHL_GENERATE(false, Vec2, uv, uvs);
+	GCHL_GENERATE(false, Vec3, uv3, uvs3);
+	GCHL_GENERATE(false, Vec4i, boneIndices, boneIndices);
+	GCHL_GENERATE(false, Vec4, boneWeights, boneWeights);
 #undef GCHL_GENERATE
 }

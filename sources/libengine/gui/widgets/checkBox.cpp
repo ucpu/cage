@@ -26,7 +26,7 @@ namespace cage
 				hierarchy->requestedSize = skin->defaults.checkBox.size;
 				if (hierarchy->text)
 				{
-					vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.checkBox.labelOffset;
+					Vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.checkBox.labelOffset;
 					hierarchy->requestedSize[0] += txtSize[0];
 					hierarchy->requestedSize[1] = max(hierarchy->requestedSize[1], txtSize[1]);
 				}
@@ -35,18 +35,18 @@ namespace cage
 
 			virtual void emit() override
 			{
-				vec2 sd = skin->defaults.checkBox.size;
+				Vec2 sd = skin->defaults.checkBox.size;
 				{
-					vec2 p = hierarchy->renderPos;
+					Vec2 p = hierarchy->renderPos;
 					offsetPosition(p, -skin->defaults.checkBox.margin);
 					emitElement(element, mode(), p, sd);
 				}
 				if (hierarchy->text)
 				{
-					vec2 p = hierarchy->renderPos;
-					vec2 s = hierarchy->renderSize;
+					Vec2 p = hierarchy->renderPos;
+					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.checkBox.margin);
-					vec2 o = sd * vec2(1, 0) + skin->defaults.checkBox.labelOffset;
+					Vec2 o = sd * Vec2(1, 0) + skin->defaults.checkBox.labelOffset;
 					p += o;
 					s -= o;
 					hierarchy->text->emit(p, s);
@@ -62,7 +62,7 @@ namespace cage
 				hierarchy->fireWidgetEvent();
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)

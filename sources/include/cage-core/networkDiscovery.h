@@ -7,8 +7,8 @@ namespace cage
 {
 	struct CAGE_CORE_API DiscoveryPeer
 	{
-		string message;
-		string address;
+		String message;
+		String address;
 		uint16 port = 0;
 	};
 
@@ -16,7 +16,7 @@ namespace cage
 	{
 	public:
 		void update();
-		void addServer(const string &address, uint16 port);
+		void addServer(const String &address, uint16 port);
 		Holder<PointerRange<DiscoveryPeer>> peers() const;
 	};
 
@@ -25,7 +25,7 @@ namespace cage
 	class CAGE_CORE_API DiscoveryServer : private Immovable
 	{
 	public:
-		string message;
+		String message;
 
 		void update();
 	};

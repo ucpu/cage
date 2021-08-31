@@ -4,58 +4,58 @@ namespace cage
 {
 	namespace
 	{
-		const vec3 DefaultSpeakerDirections[8][8] = {
+		const Vec3 DefaultSpeakerDirections[8][8] = {
 			{ // mono
-				normalize(vec3(+0, 0, -1)), // C
+				normalize(Vec3(+0, 0, -1)), // C
 			},
 			{ // stereo
-				normalize(vec3(-1, 0, -1)), // L
-				normalize(vec3(+1, 0, -1)), // R
+				normalize(Vec3(-1, 0, -1)), // L
+				normalize(Vec3(+1, 0, -1)), // R
 			},
 			{ // 3
-				normalize(vec3(-1, 0, -1)), // L
-				normalize(vec3(+0, 0, -1)), // C
-				normalize(vec3(+1, 0, -1)), // R
+				normalize(Vec3(-1, 0, -1)), // L
+				normalize(Vec3(+0, 0, -1)), // C
+				normalize(Vec3(+1, 0, -1)), // R
 			},
 			{ // 4
-				normalize(vec3(-1, 0, -1)), // FL
-				normalize(vec3(+1, 0, -1)), // FR
-				normalize(vec3(-1, 0, +1)), // RL
-				normalize(vec3(+1, 0, +1)), // RR
+				normalize(Vec3(-1, 0, -1)), // FL
+				normalize(Vec3(+1, 0, -1)), // FR
+				normalize(Vec3(-1, 0, +1)), // RL
+				normalize(Vec3(+1, 0, +1)), // RR
 			},
 			{ // 5
-				normalize(vec3(-1, 0, -1)), // FL
-				normalize(vec3(+0, 0, -1)), // C
-				normalize(vec3(+1, 0, -1)), // FR
-				normalize(vec3(-1, 0, +1)), // RL
-				normalize(vec3(+1, 0, +1)), // RR
+				normalize(Vec3(-1, 0, -1)), // FL
+				normalize(Vec3(+0, 0, -1)), // C
+				normalize(Vec3(+1, 0, -1)), // FR
+				normalize(Vec3(-1, 0, +1)), // RL
+				normalize(Vec3(+1, 0, +1)), // RR
 			},
 			{ // 5.1
-				normalize(vec3(-1, 0, -1)), // FL
-				normalize(vec3(+0, 0, -1)), // C
-				normalize(vec3(+1, 0, -1)), // FR
-				normalize(vec3(-1, 0, +1)), // RL
-				normalize(vec3(+1, 0, +1)), // RR
-				vec3(0, 0, 0), // LFE
+				normalize(Vec3(-1, 0, -1)), // FL
+				normalize(Vec3(+0, 0, -1)), // C
+				normalize(Vec3(+1, 0, -1)), // FR
+				normalize(Vec3(-1, 0, +1)), // RL
+				normalize(Vec3(+1, 0, +1)), // RR
+				Vec3(0, 0, 0), // LFE
 			},
 			{ // 6.1
-				normalize(vec3(-1, 0, -1)), // FL
-				normalize(vec3(+0, 0, -1)), // C
-				normalize(vec3(+1, 0, -1)), // FR
-				normalize(vec3(-1, 0, +0)), // SL
-				normalize(vec3(+1, 0, +0)), // SR
-				normalize(vec3(+0, 0, +1)), // RC
-				vec3(0, 0, 0), // LFE
+				normalize(Vec3(-1, 0, -1)), // FL
+				normalize(Vec3(+0, 0, -1)), // C
+				normalize(Vec3(+1, 0, -1)), // FR
+				normalize(Vec3(-1, 0, +0)), // SL
+				normalize(Vec3(+1, 0, +0)), // SR
+				normalize(Vec3(+0, 0, +1)), // RC
+				Vec3(0, 0, 0), // LFE
 			},
 			{ // 7.1
-				normalize(vec3(-1, 0, -1)), // FL
-				normalize(vec3(+0, 0, -1)), // C
-				normalize(vec3(+1, 0, -1)), // FR
-				normalize(vec3(-1, 0, +0)), // SL
-				normalize(vec3(+1, 0, +0)), // SR
-				normalize(vec3(-1, 0, +1)), // RL
-				normalize(vec3(+1, 0, +1)), // RR
-				vec3(0, 0, 0), // LFE
+				normalize(Vec3(-1, 0, -1)), // FL
+				normalize(Vec3(+0, 0, -1)), // C
+				normalize(Vec3(+1, 0, -1)), // FR
+				normalize(Vec3(-1, 0, +0)), // SL
+				normalize(Vec3(+1, 0, +0)), // SR
+				normalize(Vec3(-1, 0, +1)), // RL
+				normalize(Vec3(+1, 0, +1)), // RR
+				Vec3(0, 0, 0), // LFE
 			},
 		};
 
@@ -74,10 +74,10 @@ namespace cage
 				CAGE_ASSERT((dstPoly.size() % config.channels) == 0);
 				CAGE_ASSERT(srcMono.size() * config.channels == dstPoly.size());
 
-				real factors[8];
+				Real factors[8];
 				{
-					const vec3 direction = normalize(conjugate(data.listenerOrientation) * (data.sourcePosition - data.listenerPosition));
-					const real mono = 0.3;
+					const Vec3 direction = normalize(conjugate(data.listenerOrientation) * (data.sourcePosition - data.listenerPosition));
+					const Real mono = 0.3;
 					for (uint32 ch = 0; ch < config.channels; ch++)
 					{
 						factors[ch] = dot(direction, DefaultSpeakerDirections[config.channels][ch]) * 0.5 + 0.5;

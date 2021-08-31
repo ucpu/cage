@@ -10,7 +10,7 @@ namespace cage
 	public:
 		PointerRange<uint32> result() const;
 
-		bool intersection(const vec3 &shape);
+		bool intersection(const Vec3 &shape);
 		bool intersection(const Line &shape);
 		bool intersection(const Triangle &shape);
 		bool intersection(const Plane &shape);
@@ -23,7 +23,7 @@ namespace cage
 	class CAGE_CORE_API SpatialStructure : private Immovable
 	{
 	public:
-		void update(uint32 name, const vec3 &other);
+		void update(uint32 name, const Vec3 &other);
 		void update(uint32 name, const Line &other);
 		void update(uint32 name, const Triangle &other);
 		void update(uint32 name, const Sphere &other);

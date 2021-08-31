@@ -18,7 +18,7 @@ namespace
 			tmp = FNC();
 		const uint64 duration = timer->duration();
 		CAGE_TEST(tmp != 0);
-		CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + name + ": " + duration);
+		CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + name + ": " + duration);
 	}
 }
 

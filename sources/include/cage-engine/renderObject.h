@@ -12,27 +12,27 @@ namespace cage
 #endif // CAGE_DEBUG
 
 	public:
-		void setDebugName(const string &name);
+		void setDebugName(const String &name);
 
 		// lod selection properties
 
-		real worldSize;
-		real pixelsSize;
-		void setLods(PointerRange<const real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames);
+		Real worldSize;
+		Real pixelsSize;
+		void setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames);
 		uint32 lodsCount() const;
-		uint32 lodSelect(real threshold) const;
+		uint32 lodSelect(Real threshold) const;
 		PointerRange<const uint32> models(uint32 lod) const;
 
 		// default values for rendering
 
-		vec3 color = vec3::Nan();
-		real intensity = real::Nan();
-		real opacity = real::Nan();
-		real texAnimSpeed = real::Nan();
-		real texAnimOffset = real::Nan();
+		Vec3 color = Vec3::Nan();
+		Real intensity = Real::Nan();
+		Real opacity = Real::Nan();
+		Real texAnimSpeed = Real::Nan();
+		Real texAnimOffset = Real::Nan();
 		uint32 skelAnimName = 0;
-		real skelAnimSpeed = real::Nan();
-		real skelAnimOffset = real::Nan();
+		Real skelAnimSpeed = Real::Nan();
+		Real skelAnimOffset = Real::Nan();
 	};
 
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();

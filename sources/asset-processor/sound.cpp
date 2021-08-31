@@ -7,7 +7,7 @@
 
 void processSound()
 {
-	writeLine(string("use=") + inputFile);
+	writeLine(String("use=") + inputFile);
 
 	Holder<Audio> audio = newAudio();
 	audio->importFile(inputFileName);
@@ -16,7 +16,7 @@ void processSound()
 		const bool mono = toBool(properties("mono"));
 		if (mono && audio->channels() != 1)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting channels from " + audio->channels() + " to mono");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converting channels from " + audio->channels() + " to mono");
 			audioConvertFormat(+audio, AudioFormatEnum::Float);
 			Holder<Audio> tmp = newAudio();
 			tmp->initialize(audio->frames(), 1, audio->sampleRate());
@@ -30,7 +30,7 @@ void processSound()
 		const uint32 sr = toUint32(properties("sampleRate"));
 		if (sr != 0 && audio->sampleRate() != sr)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
 			audioConvertSampleRate(+audio, sr);
 		}
 	}
@@ -55,11 +55,11 @@ void processSound()
 	else
 		sds.soundType = SoundTypeEnum::CompressedRaw;
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "raw size: " + rawSize + " bytes");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "sample rate: " + sds.sampleRate);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "flags: " + (uint32)sds.flags);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "frames: " + sds.frames);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "channels: " + sds.channels);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "raw size: " + rawSize + " bytes");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "sample rate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
@@ -95,8 +95,8 @@ void processSound()
 	{
 		Holder<PointerRange<char>> buff = audio->exportBuffer(".ogg");
 		const uint64 oggSize = buff.size();
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compressed size: " + oggSize + " bytes");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
 		AssetHeader h = initializeAssetHeader();
 		switch (sds.soundType)
 		{
@@ -124,7 +124,7 @@ void processSound()
 	// preview sound
 	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		const string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		const String dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
 		audio->exportFile(dbgName);
 	}
 }
@@ -137,7 +137,7 @@ void analyzeSound()
 		audio->importFile(inputFileName);
 		writeLine("cage-begin");
 		writeLine("scheme=sound");
-		writeLine(string() + "asset=" + inputFile);
+		writeLine(String() + "asset=" + inputFile);
 		writeLine("cage-end");
 	}
 	catch (...)

@@ -16,7 +16,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
+				hierarchy->requestedSize = Vec2(); // todo this is a temporary hack
 			}
 
 			virtual void emit() override

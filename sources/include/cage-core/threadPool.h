@@ -16,7 +16,7 @@ namespace cage
 
 	// threadsCount == 0 -> run in calling thread
 	// threadsCount == m -> as many threads as there is processors
-	CAGE_CORE_API Holder<ThreadPool> newThreadPool(const string &threadNames = "worker_", uint32 threadsCount = m);
+	CAGE_CORE_API Holder<ThreadPool> newThreadPool(const String &threadNames = "worker_", uint32 threadsCount = m);
 
 	CAGE_CORE_API std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount);
 }

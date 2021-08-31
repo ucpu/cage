@@ -18,7 +18,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2();
+				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
 				{
 					c->findRequestedSize();
@@ -32,7 +32,7 @@ namespace cage
 			{
 				HierarchyItem *a = +hierarchy->children[0], *b = +hierarchy->children[1];
 				const uint32 axis = data.vertical ? 1 : 0;
-				const real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
+				const Real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
 				FinalPosition u(update);
 				u.renderPos[axis] += 0;
 				u.renderSize[axis] = split;

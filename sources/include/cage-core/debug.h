@@ -9,7 +9,7 @@ namespace cage
 	{
 		CAGE_CORE_API void terminate();
 		CAGE_CORE_API bool isDebugging();
-		CAGE_CORE_API void debugOutput(const string &msg);
+		CAGE_CORE_API void debugOutput(const String &msg);
 		CAGE_CORE_API void debugBreakpoint();
 
 		// makes all debugBreakpoint calls (in this thread) be ignored

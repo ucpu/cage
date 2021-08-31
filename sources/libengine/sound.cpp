@@ -115,7 +115,7 @@ namespace cage
 		};
 	}
 
-	void Sound::setDebugName(const string &name)
+	void Sound::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;

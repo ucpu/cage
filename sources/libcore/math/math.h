@@ -5,7 +5,7 @@ namespace cage
 {
 	namespace privat
 	{
-		inline string tryRemoveParentheses(const string &str)
+		inline String tryRemoveParentheses(const String &str)
 		{
 			if (str.empty())
 				return str;
@@ -14,9 +14,9 @@ namespace cage
 			return str;
 		}
 
-		inline string mathSplit(string &s)
+		inline String mathSplit(String &s)
 		{
-			string res = trim(split(s, "\t ,"), true, true, "\t ");
+			String res = trim(split(s, "\t ,"), true, true, "\t ");
 			s = trim(s, true, true, "\t ");
 			return res;
 		}

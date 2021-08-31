@@ -48,7 +48,7 @@ namespace cage
 		{
 			Addr();
 
-			void translate(string &address, uint16 &port, bool domain = false) const;
+			void translate(String &address, uint16 &port, bool domain = false) const;
 
 			bool operator < (const Addr &other) const // fast (binary) comparison
 			{
@@ -121,7 +121,7 @@ namespace cage
 
 		struct AddrList : private Immovable
 		{
-			AddrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
+			AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags);
 			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
 			~AddrList();
 

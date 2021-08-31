@@ -14,9 +14,9 @@ namespace
 	constexpr sint32 resolution = 1024;
 #endif // CAGE_DEBUG
 
-	void generateImage(const string &fileName, const Holder<NoiseFunction> &noise)
+	void generateImage(const String &fileName, const Holder<NoiseFunction> &noise)
 	{
-		std::vector<real> posx, posy, results;
+		std::vector<Real> posx, posy, results;
 		posx.reserve(resolution * resolution);
 		posy.reserve(resolution * resolution);
 		results.resize(resolution * resolution);
@@ -24,19 +24,19 @@ namespace
 		{
 			for (sint32 x = 0; x < resolution; x++)
 			{
-				posx.push_back(real(x - resolution / 2) * 0.01);
-				posy.push_back(real(y - resolution / 2) * 0.01);
+				posx.push_back(Real(x - resolution / 2) * 0.01);
+				posy.push_back(Real(y - resolution / 2) * 0.01);
 			}
 		}
 		noise->evaluate(posx, posy, results);
-		real a = real::Infinity(), b = -real::Infinity();
-		for (const real v : results)
+		Real a = Real::Infinity(), b = -Real::Infinity();
+		for (const Real v : results)
 		{
 			a = min(a, v);
 			b = max(b, v);
 		}
-		CAGE_LOG(SeverityEnum::Info, "noise fnc", stringizer() + "min: " + a + ", max: " + b);
-		for (real &v : results)
+		CAGE_LOG(SeverityEnum::Info, "noise fnc", Stringizer() + "min: " + a + ", max: " + b);
+		for (Real &v : results)
 			v = (v - a) / (b - a); // normalize into 0 .. 1 range
 		Holder<Image> png = newImage();
 		png->initialize(resolution, resolution, 1);
@@ -62,7 +62,7 @@ void testNoise()
 			config.fractalType = NoiseFractalTypeEnum::Fbm;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/value_" + oct + ".png", noise);
+			generateImage(Stringizer() + "images/noises/value_" + oct + ".png", noise);
 		}
 	}
 
@@ -75,7 +75,7 @@ void testNoise()
 			config.fractalType = NoiseFractalTypeEnum::Fbm;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/perlin_" + oct + ".png", noise);
+			generateImage(Stringizer() + "images/noises/perlin_" + oct + ".png", noise);
 		}
 	}
 
@@ -88,7 +88,7 @@ void testNoise()
 			config.fractalType = NoiseFractalTypeEnum::Fbm;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/simplex_" + oct + ".png", noise);
+			generateImage(Stringizer() + "images/noises/simplex_" + oct + ".png", noise);
 		}
 	}
 
@@ -99,21 +99,21 @@ void testNoise()
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::Cell;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/cellular_cell.png", noise);
+			generateImage(Stringizer() + "images/noises/cellular_cell.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::Distance;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/cellular_distance.png", noise);
+			generateImage(Stringizer() + "images/noises/cellular_distance.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::Divide;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/noises/cellular_divide.png", noise);
+			generateImage(Stringizer() + "images/noises/cellular_divide.png", noise);
 		}
 	}
 }

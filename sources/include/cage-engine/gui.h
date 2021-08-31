@@ -16,8 +16,8 @@ namespace cage
 	struct CAGE_ENGINE_API GuiImageComponent
 	{
 		uint64 animationStart = m; // -1 will be replaced by current time
-		vec2 textureUvOffset;
-		vec2 textureUvSize = vec2(1);
+		Vec2 textureUvOffset;
+		Vec2 textureUvSize = Vec2(1);
 		uint32 textureName = 0;
 	};
 
@@ -29,24 +29,24 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiImageFormatComponent
 	{
-		real animationSpeed = 1;
-		real animationOffset;
+		Real animationSpeed = 1;
+		Real animationOffset;
 		ImageModeEnum mode = ImageModeEnum::Stretch;
 	};
 
 	struct CAGE_ENGINE_API GuiTextComponent
 	{
-		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
+		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		uint32 assetName = 0;
 		uint32 textName = 0;
 	};
 
 	struct CAGE_ENGINE_API GuiTextFormatComponent
 	{
-		vec3 color = vec3::Nan();
+		Vec3 color = Vec3::Nan();
 		uint32 font = 0;
-		real size = real::Nan();
-		real lineSpacing = real::Nan();
+		Real size = Real::Nan();
+		Real lineSpacing = Real::Nan();
 		TextAlignEnum align = (TextAlignEnum)m;
 	};
 
@@ -58,7 +58,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{
-		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
+		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		uint32 assetName = 0;
 		uint32 textName = 0;
 	};
@@ -82,14 +82,14 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiScrollbarsComponent
 	{
-		vec2 alignment; // 0.5 is center
-		vec2 scroll;
+		Vec2 alignment; // 0.5 is center
+		Vec2 scroll;
 		OverflowModeEnum overflow[2] = { OverflowModeEnum::Auto, OverflowModeEnum::Auto };
 	};
 
 	struct CAGE_ENGINE_API GuiExplicitSizeComponent
 	{
-		vec2 size = vec2::Nan();
+		Vec2 size = Vec2::Nan();
 	};
 
 	struct CAGE_ENGINE_API GuiEventComponent
@@ -152,10 +152,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiInputComponent
 	{
-		string value; // utf8 encoded string (size is in bytes)
+		String value; // utf8 encoded string (size is in bytes)
 		union CAGE_ENGINE_API Union
 		{
-			real f;
+			Real f;
 			sint32 i = 0;
 			Union() {};
 		} min, max, step;
@@ -216,21 +216,21 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiProgressBarComponent
 	{
-		real progress; // 0 .. 1
+		Real progress; // 0 .. 1
 		bool showValue = false; // overrides the text with the value (may use internationalization for formatting)
 		// GuiTextComponent defines text shown over the bar
 	};
 
 	struct CAGE_ENGINE_API GuiSliderBarComponent
 	{
-		real value;
-		real min = 0, max = 1;
+		Real value;
+		Real min = 0, max = 1;
 		bool vertical = false;
 	};
 
 	struct CAGE_ENGINE_API GuiColorPickerComponent
 	{
-		vec3 color = vec3(1, 0, 0);
+		Vec3 color = Vec3(1, 0, 0);
 		bool collapsible = false;
 	};
 
@@ -251,12 +251,12 @@ namespace cage
 	class CAGE_ENGINE_API Gui : private Immovable
 	{
 	public:
-		void outputResolution(const ivec2 &resolution); // pixels
-		ivec2 outputResolution() const;
-		void outputRetina(real retina); // pixels per point (1D)
-		real outputRetina() const;
-		void zoom(real zoom); // pixels per point (1D)
-		real zoom() const;
+		void outputResolution(const Vec2i &resolution); // pixels
+		Vec2i outputResolution() const;
+		void outputRetina(Real retina); // pixels per point (1D)
+		Real outputRetina() const;
+		void zoom(Real zoom); // pixels per point (1D)
+		Real zoom() const;
 		void focus(uint32 widget);
 		uint32 focus() const;
 
@@ -264,12 +264,12 @@ namespace cage
 		Holder<RenderQueue> finish(); // finish handling events, generate rendering commands, and release resources
 		void cleanUp();
 
-		bool windowResize(const ivec2 &);
-		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
-		bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
-		bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
-		bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
-		bool mouseWheel(sint32 wheel, ModifiersFlags modifiers, const ivec2 &point);
+		bool windowResize(const Vec2i &);
+		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
+		bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
+		bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
+		bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
+		bool mouseWheel(sint32 wheel, ModifiersFlags modifiers, const Vec2i &point);
 		bool keyPress(uint32 key, ModifiersFlags modifiers);
 		bool keyRepeat(uint32 key, ModifiersFlags modifiers);
 		bool keyRelease(uint32 key, ModifiersFlags modifiers);
@@ -277,8 +277,8 @@ namespace cage
 
 		void handleWindowEvents(Window *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
-		ivec2 inputResolution() const;
-		Delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		Vec2i inputResolution() const;
+		Delegate<bool(const Vec2i&, Vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
 		EventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
 		GuiSkinConfig &skin(uint32 index = 0);

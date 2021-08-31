@@ -20,9 +20,9 @@ namespace cage
 		struct
 		{
 			EventDispatcher<bool()> windowClose, windowShow, windowHide;
-			EventDispatcher<bool(const ivec2 &)> windowMove, windowResize;
-			EventDispatcher<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-			EventDispatcher<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
+			EventDispatcher<bool(const Vec2i &)> windowMove, windowResize;
+			EventDispatcher<bool(MouseButtonsFlags, ModifiersFlags, const Vec2i &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+			EventDispatcher<bool(sint32, ModifiersFlags, const Vec2i &)> mouseWheel;
 			EventDispatcher<bool()> focusGain, focusLose;
 			EventDispatcher<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 			EventDispatcher<bool(uint32)> keyChar;
@@ -31,7 +31,7 @@ namespace cage
 		void processEvents();
 
 		//string title() const;
-		void title(const string &value);
+		void title(const String &value);
 
 		bool isFocused() const;
 		bool isFullscreen() const;
@@ -41,7 +41,7 @@ namespace cage
 		bool isHidden() const;
 		bool isVisible() const; // not hidden and not minimized
 
-		void setFullscreen(const ivec2 &resolution, uint32 frequency = 0, const string &screenId = "");
+		void setFullscreen(const Vec2i &resolution, uint32 frequency = 0, const String &screenId = "");
 		void setMaximized();
 		void setWindowed(WindowFlags flags = WindowFlags::Border | WindowFlags::Resizeable);
 		void setMinimized();
@@ -50,21 +50,21 @@ namespace cage
 		bool mouseVisible() const;
 		void mouseVisible(bool value);
 
-		ivec2 mousePosition() const;
-		void mousePosition(const ivec2 &);
+		Vec2i mousePosition() const;
+		void mousePosition(const Vec2i &);
 		MouseButtonsFlags mouseButtons() const;
 
 		ModifiersFlags keyboardModifiers() const;
 		bool keyboardKey(uint32 key) const;
 
-		ivec2 resolution() const;
-		real contentScaling() const;
-		string screenId() const;
+		Vec2i resolution() const;
+		Real contentScaling() const;
+		String screenId() const;
 
-		ivec2 windowedSize() const;
-		void windowedSize(const ivec2 &);
-		ivec2 windowedPosition() const;
-		void windowedPosition(const ivec2 &);
+		Vec2i windowedSize() const;
+		void windowedSize(const Vec2i &);
+		Vec2i windowedPosition() const;
+		void windowedPosition(const Vec2i &);
 
 		void makeCurrent();
 		void makeNotCurrent();
@@ -78,9 +78,9 @@ namespace cage
 	struct CAGE_ENGINE_API WindowEventListeners
 	{
 		EventListener<bool()> windowClose, windowShow, windowHide;
-		EventListener<bool(const ivec2 &)> windowMove, windowResize;
-		EventListener<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-		EventListener<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
+		EventListener<bool(const Vec2i &)> windowMove, windowResize;
+		EventListener<bool(MouseButtonsFlags, ModifiersFlags, const Vec2i &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+		EventListener<bool(sint32, ModifiersFlags, const Vec2i &)> mouseWheel;
 		EventListener<bool()> focusGain, focusLose;
 		EventListener<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 		EventListener<bool(uint32)> keyChar;

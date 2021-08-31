@@ -14,9 +14,9 @@ namespace cage
 
 	struct CAGE_CORE_API MeshExportObjConfig
 	{
-		string materialLibraryName;
-		string materialName;
-		string objectName;
+		String materialLibraryName;
+		String materialName;
+		String objectName;
 	};
 
 	class CAGE_CORE_API Mesh : private Immovable
@@ -30,70 +30,70 @@ namespace cage
 
 		Holder<PointerRange<char>> exportBuffer() const;
 		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config) const;
-		void exportObjFile(const MeshExportObjConfig &config, const string &filename) const;
+		void exportObjFile(const MeshExportObjConfig &config, const String &filename) const;
 
 		uint32 verticesCount() const;
 
-		PointerRange<const vec3> positions() const;
-		PointerRange<vec3> positions();
-		void positions(const PointerRange<const vec3> &values);
-		vec3 position(uint32 idx) const;
-		void position(uint32 idx, const vec3 &value);
-		vec3 positionAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec3> positions() const;
+		PointerRange<Vec3> positions();
+		void positions(const PointerRange<const Vec3> &values);
+		Vec3 position(uint32 idx) const;
+		void position(uint32 idx, const Vec3 &value);
+		Vec3 positionAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec3> normals() const;
-		PointerRange<vec3> normals();
-		void normals(const PointerRange<const vec3> &values);
-		vec3 normal(uint32 idx) const;
-		void normal(uint32 idx, const vec3 &value);
-		vec3 normalAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec3> normals() const;
+		PointerRange<Vec3> normals();
+		void normals(const PointerRange<const Vec3> &values);
+		Vec3 normal(uint32 idx) const;
+		void normal(uint32 idx, const Vec3 &value);
+		Vec3 normalAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec3> tangents() const;
-		PointerRange<vec3> tangents();
-		void tangents(const PointerRange<const vec3> &values);
-		vec3 tangent(uint32 idx) const;
-		void tangent(uint32 idx, const vec3 &value);
-		vec3 tangentAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec3> tangents() const;
+		PointerRange<Vec3> tangents();
+		void tangents(const PointerRange<const Vec3> &values);
+		Vec3 tangent(uint32 idx) const;
+		void tangent(uint32 idx, const Vec3 &value);
+		Vec3 tangentAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec3> bitangents() const;
-		PointerRange<vec3> bitangents();
-		void bitangents(const PointerRange<const vec3> &values);
-		vec3 bitangent(uint32 idx) const;
-		void bitangent(uint32 idx, const vec3 &value);
-		vec3 bitangentAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec3> bitangents() const;
+		PointerRange<Vec3> bitangents();
+		void bitangents(const PointerRange<const Vec3> &values);
+		Vec3 bitangent(uint32 idx) const;
+		void bitangent(uint32 idx, const Vec3 &value);
+		Vec3 bitangentAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec2> uvs() const;
-		PointerRange<vec2> uvs();
-		void uvs(const PointerRange<const vec2> &values);
-		vec2 uv(uint32 idx) const;
-		void uv(uint32 idx, const vec2 &value);
-		vec2 uvAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec2> uvs() const;
+		PointerRange<Vec2> uvs();
+		void uvs(const PointerRange<const Vec2> &values);
+		Vec2 uv(uint32 idx) const;
+		void uv(uint32 idx, const Vec2 &value);
+		Vec2 uvAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec3> uvs3() const;
-		PointerRange<vec3> uvs3();
-		void uvs3(const PointerRange<const vec3> &values);
-		vec3 uv3(uint32 idx) const;
-		void uv3(uint32 idx, const vec3 &value);
-		vec3 uv3At(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec3> uvs3() const;
+		PointerRange<Vec3> uvs3();
+		void uvs3(const PointerRange<const Vec3> &values);
+		Vec3 uv3(uint32 idx) const;
+		void uv3(uint32 idx, const Vec3 &value);
+		Vec3 uv3At(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const ivec4> boneIndices() const;
-		PointerRange<ivec4> boneIndices();
-		void boneIndices(const PointerRange<const ivec4> &values);
-		ivec4 boneIndices(uint32 idx) const;
-		void boneIndices(uint32 idx, const ivec4 &value);
-		ivec4 boneIndicesAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec4i> boneIndices() const;
+		PointerRange<Vec4i> boneIndices();
+		void boneIndices(const PointerRange<const Vec4i> &values);
+		Vec4i boneIndices(uint32 idx) const;
+		void boneIndices(uint32 idx, const Vec4i &value);
+		Vec4i boneIndicesAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const vec4> boneWeights() const;
-		PointerRange<vec4> boneWeights();
-		void boneWeights(const PointerRange<const vec4> &values);
-		vec4 boneWeights(uint32 idx) const;
-		void boneWeights(uint32 idx, const vec4 &value);
-		vec4 boneWeightsAt(const ivec3 &ids, const vec3 &weights) const;
+		PointerRange<const Vec4> boneWeights() const;
+		PointerRange<Vec4> boneWeights();
+		void boneWeights(const PointerRange<const Vec4> &values);
+		Vec4 boneWeights(uint32 idx) const;
+		void boneWeights(uint32 idx, const Vec4 &value);
+		Vec4 boneWeightsAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		void addVertex(const vec3 &position);
-		void addVertex(const vec3 &position, const vec3 &normal);
-		void addVertex(const vec3 &position, const vec2 &uv);
-		void addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv);
+		void addVertex(const Vec3 &position);
+		void addVertex(const Vec3 &position, const Vec3 &normal);
+		void addVertex(const Vec3 &position, const Vec2 &uv);
+		void addVertex(const Vec3 &position, const Vec3 &normal, const Vec2 &uv);
 
 		Aabb boundingBox() const;
 		Sphere boundingSphere() const;
@@ -111,7 +111,7 @@ namespace cage
 		void type(MeshTypeEnum t);
 
 		void addPoint(uint32 a);
-		void addPoint(const vec3 &p);
+		void addPoint(const Vec3 &p);
 		void addLine(uint32 a, uint32 b);
 		void addLine(const Line &l);
 		void addTriangle(uint32 a, uint32 b, uint32 c);
@@ -123,10 +123,10 @@ namespace cage
 	CAGE_CORE_API void meshConvertToIndexed(Mesh *msh);
 	CAGE_CORE_API void meshConvertToExpanded(Mesh *msh);
 
-	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const transform &t);
-	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const mat4 &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const Transform &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const Mat4 &t);
 
-	CAGE_CORE_API void meshApplyAnimation(Mesh *msh, PointerRange<const mat4> skinTransformation);
+	CAGE_CORE_API void meshApplyAnimation(Mesh *msh, PointerRange<const Mat4> skinTransformation);
 
 	CAGE_CORE_API void meshFlipNormals(Mesh *msh);
 
@@ -140,7 +140,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{
-		real distanceThreshold;
+		Real distanceThreshold;
 		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
 	};
 
@@ -148,9 +148,9 @@ namespace cage
 
 	struct CAGE_CORE_API MeshSimplifyConfig
 	{
-		real minEdgeLength = 0.1;
-		real maxEdgeLength = 10;
-		real approximateError = 0.05;
+		Real minEdgeLength = 0.1;
+		Real maxEdgeLength = 10;
+		Real approximateError = 0.05;
 		uint32 iterations = 10;
 		bool useProjection = true;
 	};
@@ -159,7 +159,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshRegularizeConfig
 	{
-		real targetEdgeLength = 1;
+		Real targetEdgeLength = 1;
 		uint32 iterations = 10;
 		bool useProjection = true;
 	};
@@ -168,7 +168,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshChunkingConfig
 	{
-		real maxSurfaceArea;
+		Real maxSurfaceArea;
 	};
 
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshChunking(const Mesh *msh, const MeshChunkingConfig &config);
@@ -177,19 +177,19 @@ namespace cage
 	{
 		// charting determines which triangles will form islands
 		uint32 maxChartIterations = 1;
-		real maxChartArea = 0;
-		real maxChartBoundaryLength = 0;
-		real chartNormalDeviation = 2.0;
-		real chartRoundness = 0.01;
-		real chartStraightness = 6.0;
-		real chartNormalSeam = 4.0;
-		real chartTextureSeam = 0.5;
-		real chartGrowThreshold = 2.0;
+		Real maxChartArea = 0;
+		Real maxChartBoundaryLength = 0;
+		Real chartNormalDeviation = 2.0;
+		Real chartRoundness = 0.01;
+		Real chartStraightness = 6.0;
+		Real chartNormalSeam = 4.0;
+		Real chartTextureSeam = 0.5;
+		Real chartGrowThreshold = 2.0;
 
 		// islands packing
 		uint32 padding = 2;
 		uint32 targetResolution = 0;
-		real texelsPerUnit = 0;
+		Real texelsPerUnit = 0;
 
 		bool logProgress = false;
 	};
@@ -198,7 +198,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshGenerateTextureConfig
 	{
-		Delegate<void(const ivec2 &xy, const ivec3 &ids, const vec3 &weights)> generator;
+		Delegate<void(const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)> generator;
 		uint32 width = 0;
 		uint32 height = 0;
 	};

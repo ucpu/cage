@@ -47,16 +47,16 @@ namespace cage
 		void uniform(uint32 name, PointerRange<const TYPE> values);
 		GCHL_GENERATE(sint32);
 		GCHL_GENERATE(uint32);
-		GCHL_GENERATE(ivec2);
-		GCHL_GENERATE(ivec3);
-		GCHL_GENERATE(ivec4);
-		GCHL_GENERATE(real);
-		GCHL_GENERATE(vec2);
-		GCHL_GENERATE(vec3);
-		GCHL_GENERATE(vec4);
-		GCHL_GENERATE(quat);
-		GCHL_GENERATE(mat3);
-		GCHL_GENERATE(mat4);
+		GCHL_GENERATE(Vec2i);
+		GCHL_GENERATE(Vec3i);
+		GCHL_GENERATE(Vec4i);
+		GCHL_GENERATE(Real);
+		GCHL_GENERATE(Vec2);
+		GCHL_GENERATE(Vec3);
+		GCHL_GENERATE(Vec4);
+		GCHL_GENERATE(Quat);
+		GCHL_GENERATE(Mat3);
+		GCHL_GENERATE(Mat4);
 #undef GCHL_GENERATE
 
 		void bind(FrameBufferHandle frameBuffer);
@@ -68,9 +68,9 @@ namespace cage
 		void resetFrameBuffer(); // bind default (0) frame buffer
 
 		void bind(TextureHandle texture, uint32 bindingPoint);
-		void image2d(ivec2 resolution, uint32 internalFormat);
-		void imageCube(ivec2 resolution, uint32 internalFormat);
-		void image3d(ivec3 resolution, uint32 internalFormat);
+		void image2d(Vec2i resolution, uint32 internalFormat);
+		void imageCube(Vec2i resolution, uint32 internalFormat);
+		void image3d(Vec3i resolution, uint32 internalFormat);
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);
@@ -80,8 +80,8 @@ namespace cage
 		void bind(const Holder<Model> &model);
 		void draw(uint32 instances = 1);
 
-		void viewport(ivec2 origin, ivec2 size);
-		void scissors(ivec2 origin, ivec2 size);
+		void viewport(Vec2i origin, Vec2i size);
+		void scissors(Vec2i origin, Vec2i size);
 		void scissors(bool enable);
 		void cullFace(bool front);
 		void culling(bool enable);
@@ -98,7 +98,7 @@ namespace cage
 		void blendFuncPremultipliedTransparency(); // ONE, ONE_MINUS_SRC_ALPHA
 		void blendFuncAlphaTransparency(); // SRC_ALPHA, ONE_MINUS_SRC_ALPHA
 		void blending(bool enable);
-		void clearColor(const vec4 &rgba);
+		void clearColor(const Vec4 &rgba);
 		void clear(bool color, bool depth, bool stencil = false);
 		void genericEnable(uint32 key, bool enable);
 		void resetAllState(); // set viewport, scissors, culling, depth, blend etc all to default values

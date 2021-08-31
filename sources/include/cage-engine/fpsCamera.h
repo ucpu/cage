@@ -8,11 +8,11 @@ namespace cage
 	class CAGE_ENGINE_API FpsCamera : private Immovable
 	{
 	public:
-		vec2 turningSpeed = vec2(0.008);
-		real rollSpeed = 10;
-		real movementSpeed = 1;
-		rads pitchLimitUp = degs(80);
-		rads pitchLimitDown = degs(-80);
+		Vec2 turningSpeed = Vec2(0.008);
+		Real rollSpeed = 10;
+		Real movementSpeed = 1;
+		Rads pitchLimitUp = Degs(80);
+		Rads pitchLimitDown = Degs(-80);
 		MouseButtonsFlags mouseButton = MouseButtonsFlags::None; // -1 for disabled, 0 for always
 		bool keysEqEnabled = true;
 		bool keysWsadEnabled = true;

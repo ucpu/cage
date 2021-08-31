@@ -29,14 +29,14 @@ namespace cage
 	{
 		if (clipSize[0] >= 1 && clipSize[1] >= 1)
 		{
-			const ivec2 pos = ivec2(vec2(clipPos[0], impl->outputResolution[1] - clipPos[1] - clipSize[1]));
-			impl->activeQueue->scissors(pos, ivec2(clipSize));
+			const Vec2i pos = Vec2i(Vec2(clipPos[0], impl->outputResolution[1] - clipPos[1] - clipSize[1]));
+			impl->activeQueue->scissors(pos, Vec2i(clipSize));
 			return true;
 		}
 		return false;
 	}
 
-	RenderableElement::RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableElement::RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
 		CAGE_ASSERT(element < GuiElementTypeEnum::TotalElements);
 		CAGE_ASSERT(mode < 4);
@@ -47,7 +47,7 @@ namespace cage
 		data.element = (uint32)element;
 		data.mode = mode;
 		data.outer = item->hierarchy->impl->pointsToNdc(pos, size);
-		const vec4 &border = item->skin->layouts[(uint32)element].border;
+		const Vec4 &border = item->skin->layouts[(uint32)element].border;
 		offset(pos, size, -border);
 		data.inner = item->hierarchy->impl->pointsToNdc(pos, size);
 		skin = item->skin;
@@ -68,13 +68,13 @@ namespace cage
 		q->draw();
 	}
 
-	RenderableText::RenderableText(TextItem *item, vec2 position, vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableText::RenderableText(TextItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
 		CAGE_ASSERT(item->color.valid());
 		if (!item->font)
 			return;
 		setClip(item->hierarchy);
-		data.transform = item->transform;
+		data.Transform = item->Transform;
 		data.format = item->format;
 		data.font = item->font.share();
 		item->glyphs = std::move(item->glyphs);
@@ -82,9 +82,9 @@ namespace cage
 		data.color = item->color;
 		data.cursor = item->cursor;
 		data.format.size *= item->hierarchy->impl->pointsScale;
-		const ivec2 &orr = item->hierarchy->impl->outputResolution;
+		const Vec2i &orr = item->hierarchy->impl->outputResolution;
 		position *= item->hierarchy->impl->pointsScale;
-		data.transform = transpose(mat4(
+		data.Transform = transpose(Mat4(
 			2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0,
 			0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1],
 			0, 0, 1, 0,
@@ -102,20 +102,20 @@ namespace cage
 			return;
 		RenderQueue *q = impl->activeQueue;
 		q->bind(impl->graphicsData.fontShader);
-		q->uniform(0, data.transform);
+		q->uniform(0, data.Transform);
 		q->uniform(4, data.color);
 		data.font->bind(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader);
 		data.font->render(q, data.glyphs, data.format, data.cursor);
 	}
 
-	RenderableImage::RenderableImage(ImageItem *item, vec2 position, vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
 		if (!item->texture)
 			return;
 		setClip(item->hierarchy);
 		data.texture = item->texture.share();
 		data.ndcPos = item->hierarchy->impl->pointsToNdc(position, size);
-		data.uvClip = vec4(item->image.textureUvOffset, item->image.textureUvOffset + item->image.textureUvSize);
+		data.uvClip = Vec4(item->image.textureUvOffset, item->image.textureUvOffset + item->image.textureUvSize);
 		// todo format mode
 		data.aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, item->format.animationSpeed, item->format.animationOffset);
 	}
@@ -152,7 +152,7 @@ namespace cage
 
 	namespace
 	{
-		void copyTextureUv(const vec4 &source, vec4 &target)
+		void copyTextureUv(const Vec4 &source, Vec4 &target)
 		{
 			target[0] = source[0];
 			target[2] = source[2];
@@ -227,7 +227,7 @@ namespace cage
 		q->blending(true);
 		q->blendFuncAlphaTransparency();
 		q->depthTest(false);
-		q->viewport(ivec2(), outputResolution);
+		q->viewport(Vec2i(), outputResolution);
 		root->childrenEmit();
 		q->blending(false);
 		q->scissors(false);

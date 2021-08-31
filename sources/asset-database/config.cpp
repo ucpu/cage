@@ -38,12 +38,12 @@ void configParseCmd(int argc, const char *args[])
 	Holder<ConfigList> list = newConfigList();
 	while (list->valid())
 	{
-		string n = list->name();
+		String n = list->name();
 		if (isPattern(n, "cage-asset-database.ignoreExtensions.", "", ""))
 			configIgnoreExtensions.insert(list->getString());
 		else if (isPattern(n, "cage-asset-database.ignorePaths.", "", ""))
 			configIgnorePaths.insert(pathSimplify(list->getString()));
-		CAGE_LOG(SeverityEnum::Info, "config", stringizer() + n + ": " + list->getString());
+		CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + n + ": " + list->getString());
 		list->next();
 	}
 

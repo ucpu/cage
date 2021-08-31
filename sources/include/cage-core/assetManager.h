@@ -23,7 +23,7 @@ namespace cage
 		uint32 generateUniqueName();
 
 		template<uint32 Scheme, class T>
-		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
+		void fabricate(uint32 assetName, Holder<T> &&value, const String &textName = "<fabricated>")
 		{
 			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
 			fabricate_(Scheme, assetName, textName, std::move(value).template cast<void>());
@@ -55,20 +55,20 @@ namespace cage
 		bool processing() const;
 		bool unloaded() const;
 
-		void listen(const string &address = "localhost", uint16 port = 65042);
+		void listen(const String &address = "localhost", uint16 port = 65042);
 
 		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 
 	private:
 		void defineScheme_(uint32 typeId, uint32 scheme, const AssetScheme &value);
-		void fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
+		void fabricate_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
 		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
 		uint32 schemeTypeId_(uint32 scheme) const;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig
 	{
-		string assetsFolderName = "assets.zip";
+		String assetsFolderName = "assets.zip";
 		uint64 listenerPeriod = 100000;
 		uint32 threadsMaxCount = 5;
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game

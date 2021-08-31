@@ -29,7 +29,7 @@ namespace cage
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 
-			PointerRange<const real> thresholds = bufferCast<const real>(des.read(h.lodsCount * sizeof(real)));
+			PointerRange<const Real> thresholds = bufferCast<const Real>(des.read(h.lodsCount * sizeof(Real)));
 			PointerRange<const uint32> indices = bufferCast<const uint32>(des.read((h.lodsCount + 1) * sizeof(uint32)));
 			PointerRange<const uint32> names = bufferCast<const uint32>(des.read(h.modelesCount * sizeof(uint32)));
 			obj->setLods(thresholds, indices, names);

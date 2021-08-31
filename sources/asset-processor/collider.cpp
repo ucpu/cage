@@ -14,14 +14,14 @@ void processCollider()
 	default: CAGE_THROW_ERROR(Exception, "collider works with triangles only");
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded triangles: " + am->mNumFaces);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded triangles: " + am->mNumFaces);
 
 	Holder<Collider> collider = newCollider();
-	mat3 axesScale = axesScaleMatrix();
+	Mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
 		Triangle tri;
-		tri = Triangle(vec3(), vec3(), vec3());
+		tri = Triangle(Vec3(), Vec3(), Vec3());
 		for (uint32 j = 0; j < 3; j++)
 		{
 			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
@@ -35,18 +35,18 @@ void processCollider()
 		uint32 deg = numeric_cast<uint32>(am->mNumFaces - collider->triangles().size());
 		if (deg)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "degenerated triangles: " + deg);
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "degenerated triangles: " + deg);
 		}
 	}
 
 	collider->rebuild();
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "aabb: " + collider->box());
 
 	Holder<PointerRange<char>> buff = collider->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

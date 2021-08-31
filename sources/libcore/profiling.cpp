@@ -10,7 +10,7 @@
 
 namespace cage
 {
-	Holder<File> realNewFile(const string &path, const FileMode &mode);
+	Holder<File> realNewFile(const String &path, const FileMode &mode);
 	void realTryFlushFile(File *f);
 
 	namespace
@@ -18,7 +18,7 @@ namespace cage
 		ConfigBool cnfEnabled("cage/profiling/enabled", false);
 		std::atomic<uint64> nextEventId = 1;
 
-		using EventsQueue = ConcurrentQueue<string>;
+		using EventsQueue = ConcurrentQueue<String>;
 		EventsQueue &eventsQueue()
 		{
 			static EventsQueue *q = new EventsQueue(); // intentional leek
@@ -33,7 +33,7 @@ namespace cage
 				{
 					while (!stopping)
 					{
-						string evt;
+						String evt;
 						eventsQueue().pop(evt);
 						if (evt.empty())
 						{
@@ -43,8 +43,8 @@ namespace cage
 						{
 							if (!file)
 							{
-								const string exe = detail::executableFullPathNoExe();
-								const string filename = stringizer() + pathExtractDirectory(exe) + "/profiling/" + pathExtractFilename(exe) + "_" + currentProcessId() + ".json";
+								const String exe = detail::executableFullPathNoExe();
+								const String filename = Stringizer() + pathExtractDirectory(exe) + "/profiling/" + pathExtractFilename(exe) + "_" + currentProcessId() + ".json";
 								file = realNewFile(filename, FileMode(false, true));
 								file->writeLine("[");
 							}
@@ -92,42 +92,42 @@ namespace cage
 			Holder<Thread> thrTicker;
 		};
 
-		void enqueueEvent(const string &data)
+		void enqueueEvent(const String &data)
 		{
-			eventsQueue().push(stringizer() + "{" + data + "\"pid\":0},");
+			eventsQueue().push(Stringizer() + "{" + data + "\"pid\":0},");
 		}
 
-		void addEvent(const string &data)
+		void addEvent(const String &data)
 		{
 			enqueueEvent(data);
 			static Profiling profiling; // initialize threads
 		}
 
-		CAGE_FORCE_INLINE string quote(StringLiteral s)
+		CAGE_FORCE_INLINE String quote(StringLiteral s)
 		{
-			return stringizer() + "\"" + (s ? string(s) : string()) + "\"";
+			return Stringizer() + "\"" + (s ? String(s) : String()) + "\"";
 		}
-		CAGE_FORCE_INLINE string quote(const string &s)
+		CAGE_FORCE_INLINE String quote(const String &s)
 		{
-			return stringizer() + "\"" + s + "\"";
+			return Stringizer() + "\"" + s + "\"";
 		}
-		CAGE_FORCE_INLINE string keyval(StringLiteral k, StringLiteral v)
+		CAGE_FORCE_INLINE String keyval(StringLiteral k, StringLiteral v)
 		{
-			return stringizer() + quote(k) + ":" + quote(v) + ", ";
+			return Stringizer() + quote(k) + ":" + quote(v) + ", ";
 		}
-		CAGE_FORCE_INLINE string keyval(StringLiteral k, const string &v)
+		CAGE_FORCE_INLINE String keyval(StringLiteral k, const String &v)
 		{
-			return stringizer() + quote(k) + ":" + quote(v) + ", ";
+			return Stringizer() + quote(k) + ":" + quote(v) + ", ";
 		}
-		CAGE_FORCE_INLINE string keyval(StringLiteral k, uint64 v)
+		CAGE_FORCE_INLINE String keyval(StringLiteral k, uint64 v)
 		{
-			return stringizer() + quote(k) + ":" + v + ", ";
+			return Stringizer() + quote(k) + ":" + v + ", ";
 		}
-		CAGE_FORCE_INLINE string args(const string &json)
+		CAGE_FORCE_INLINE String args(const String &json)
 		{
 			if (json.empty())
 				return {};
-			return stringizer() + quote(StringLiteral("args")) + ": {" + json + "}, ";
+			return Stringizer() + quote(StringLiteral("args")) + ": {" + json + "}, ";
 		}
 
 		uint64 timestamp()
@@ -140,7 +140,7 @@ namespace cage
 		}
 	}
 
-	ProfilingEvent profilingEventBegin(const string &name, StringLiteral category, ProfilingTypeEnum type) noexcept
+	ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, ProfilingTypeEnum type) noexcept
 	{
 		if (type == ProfilingTypeEnum::Invalid)
 			return {};
@@ -153,7 +153,7 @@ namespace cage
 			ev.category = category;
 			ev.eventId = nextEventId++;
 			ev.type = type;
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", name);
 			s + keyval("cat", category);
 			constexpr StringLiteral phs[] = { "", "B", "b", "s", "N" };
@@ -170,7 +170,7 @@ namespace cage
 		}
 	}
 
-	void profilingEventSnapshot(const ProfilingEvent &ev, const string &jsonParams) noexcept
+	void profilingEventSnapshot(const ProfilingEvent &ev, const String &jsonParams) noexcept
 	{
 		if (ev.type == ProfilingTypeEnum::Invalid)
 			return;
@@ -178,7 +178,7 @@ namespace cage
 		{
 			if (!cnfEnabled)
 				return;
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", ev.name);
 			s + keyval("cat", ev.category);
 			constexpr StringLiteral phs[] = { "", "i", "n", "t", "O" };
@@ -195,13 +195,13 @@ namespace cage
 		}
 	}
 
-	void profilingEventEnd(const ProfilingEvent &ev, const string &jsonParams) noexcept
+	void profilingEventEnd(const ProfilingEvent &ev, const String &jsonParams) noexcept
 	{
 		if (ev.type == ProfilingTypeEnum::Invalid)
 			return;
 		try
 		{
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", ev.name);
 			s + keyval("cat", ev.category);
 			constexpr StringLiteral phs[] = { "", "E", "e", "f", "D" };
@@ -218,13 +218,13 @@ namespace cage
 		}
 	}
 
-	void profilingMarker(const string &name, StringLiteral category, bool global) noexcept
+	void profilingMarker(const String &name, StringLiteral category, bool global) noexcept
 	{
 		try
 		{
 			if (!cnfEnabled)
 				return;
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", name);
 			s + keyval("cat", category);
 			s + keyval("ph", StringLiteral("i"));
@@ -240,13 +240,13 @@ namespace cage
 		}
 	}
 
-	void profilingEvent(uint64 duration, const string &name, StringLiteral category, const string &jsonParams) noexcept
+	void profilingEvent(uint64 duration, const String &name, StringLiteral category, const String &jsonParams) noexcept
 	{
 		try
 		{
 			if (!cnfEnabled)
 				return;
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", name);
 			s + keyval("cat", category);
 			s + keyval("ph", StringLiteral("X"));
@@ -265,7 +265,7 @@ namespace cage
 	ProfilingScope::ProfilingScope() noexcept
 	{}
 
-	ProfilingScope::ProfilingScope(const string &name, StringLiteral category, ProfilingTypeEnum type) noexcept
+	ProfilingScope::ProfilingScope(const String &name, StringLiteral category, ProfilingTypeEnum type) noexcept
 	{
 		event = profilingEventBegin(name, category, type);
 	}
@@ -288,20 +288,20 @@ namespace cage
 		profilingEventEnd(event);
 	}
 
-	void ProfilingScope::snapshot(const string &jsonParams) noexcept
+	void ProfilingScope::snapshot(const String &jsonParams) noexcept
 	{
 		profilingEventSnapshot(event, jsonParams);
 	}
 
-	void profilingThreadName(const string &name) noexcept
+	void profilingThreadName(const String &name) noexcept
 	{
 		try
 		{
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", StringLiteral("thread_name"));
 			s + keyval("ph", StringLiteral("M"));
 			s + keyval("tid", currentThreadId());
-			s + args(stringizer() + "\"name\": \"" + name + "\"");
+			s + args(Stringizer() + "\"name\": \"" + name + "\"");
 			enqueueEvent(s); // insert into the queue without initializing the profiling threads
 		}
 		catch (...)
@@ -314,11 +314,11 @@ namespace cage
 	{
 		try
 		{
-			stringizer s;
+			Stringizer s;
 			s + keyval("name", StringLiteral("thread_sort_index"));
 			s + keyval("ph", StringLiteral("M"));
 			s + keyval("tid", currentThreadId());
-			s + args(stringizer() + "\"sort_index\": " + order);
+			s + args(Stringizer() + "\"sort_index\": " + order);
 			enqueueEvent(s); // insert into the queue without initializing the profiling threads
 		}
 		catch (...)

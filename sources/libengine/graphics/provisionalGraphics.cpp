@@ -18,38 +18,38 @@ namespace cage
 		class ProvisionalUniformBufferImpl : public ProvisionalUniformBuffer
 		{
 		public:
-			const string name;
+			const String name;
 			Holder<UniformBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			bool used = true;
 
-			ProvisionalUniformBufferImpl(const string &name) : name(name)
+			ProvisionalUniformBufferImpl(const String &name) : name(name)
 			{}
 		};
 
 		class ProvisionalFrameBufferHandleImpl : public ProvisionalFrameBuffer
 		{
 		public:
-			const string name;
+			const String name;
 			Holder<FrameBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
 
-			ProvisionalFrameBufferHandleImpl(const string &name) : name(name)
+			ProvisionalFrameBufferHandleImpl(const String &name) : name(name)
 			{}
 		};
 
 		class ProvisionalTextureHandleImpl : public ProvisionalTexture
 		{
 		public:
-			const string name;
+			const String name;
 			Holder<Texture> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 target = m;
 			bool used = true;
 
-			ProvisionalTextureHandleImpl(const string &name) : name(name)
+			ProvisionalTextureHandleImpl(const String &name) : name(name)
 			{}
 		};
 
@@ -59,7 +59,7 @@ namespace cage
 			template<class T>
 			struct Container
 			{
-				Holder<T> acquire(const string &name)
+				Holder<T> acquire(const String &name)
 				{
 					ScopeLock lock(mutex);
 					auto it = data.find(name);
@@ -113,12 +113,12 @@ namespace cage
 						return StringComparatorFast()(a->name, b->name);
 					}
 
-					bool operator() (const Holder<T> &a, const string &b) const
+					bool operator() (const Holder<T> &a, const String &b) const
 					{
 						return StringComparatorFast()(a->name, b);
 					}
 
-					bool operator() (const string &a, const Holder<T> &b) const
+					bool operator() (const String &a, const Holder<T> &b) const
 					{
 						return StringComparatorFast()(a, b->name);
 					}
@@ -131,13 +131,13 @@ namespace cage
 			Container<ProvisionalFrameBufferHandleImpl> frameBuffers;
 			Container<ProvisionalTextureHandleImpl> textures;
 
-			Holder<ProvisionalUniformBuffer> uniformBuffer(const string &name)
+			Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name)
 			{
 				auto ub = uniformBuffers.acquire(name);
 				return std::move(ub).cast<ProvisionalUniformBuffer>();
 			}
 
-			Holder<ProvisionalFrameBuffer> frameBuffer(const string &name, uint32 type)
+			Holder<ProvisionalFrameBuffer> frameBuffer(const String &name, uint32 type)
 			{
 				auto fb = frameBuffers.acquire(name);
 				CAGE_ASSERT(fb->type == m || fb->type == type);
@@ -145,7 +145,7 @@ namespace cage
 				return std::move(fb).cast<ProvisionalFrameBuffer>();
 			}
 
-			Holder<ProvisionalTexture> texture(const string &name, uint32 target)
+			Holder<ProvisionalTexture> texture(const String &name, uint32 target)
 			{
 				auto t = textures.acquire(name);
 				CAGE_ASSERT(t->target == m || t->target == target);
@@ -229,51 +229,51 @@ namespace cage
 		return !!impl->result;
 	}
 
-	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const string &name)
+	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const String &name)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->uniformBuffer(name);
 	}
 
-	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferDraw(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferDraw(const String &name)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->frameBuffer(name, 1);
 	}
 
-	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferRead(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferRead(const String &name)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->frameBuffer(name, 2);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name)
 	{
 		return texture(name, GL_TEXTURE_2D);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const string &name, uint32 target)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name, uint32 target)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->texture(name, target);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture2dArray(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture2dArray(const String &name)
 	{
 		return texture(name, GL_TEXTURE_2D_ARRAY);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::textureRectangle(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::textureRectangle(const String &name)
 	{
 		return texture(name, GL_TEXTURE_RECTANGLE);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture3d(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture3d(const String &name)
 	{
 		return texture(name, GL_TEXTURE_3D);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::textureCube(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::textureCube(const String &name)
 	{
 		return texture(name, GL_TEXTURE_CUBE_MAP);
 	}

@@ -33,13 +33,13 @@ namespace cage
 			detail::memset(&storage, 0, sizeof(storage));
 		}
 
-		void Addr::translate(string &address, uint16 &port, bool domain) const
+		void Addr::translate(String &address, uint16 &port, bool domain) const
 		{
-			char nameBuf[string::MaxLength], portBuf[7];
-			if (getnameinfo((sockaddr*)&storage, addrlen, nameBuf, string::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
+			char nameBuf[String::MaxLength], portBuf[7];
+			if (getnameinfo((sockaddr*)&storage, addrlen, nameBuf, String::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
 				CAGE_THROW_ERROR(SystemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
-			address = string(nameBuf);
-			port = numeric_cast<uint16>(toUint32(string(portBuf)));
+			address = String(nameBuf);
+			port = numeric_cast<uint16>(toUint32(String(portBuf)));
 		}
 
 		Sock::Sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1), connected(false)
@@ -264,7 +264,7 @@ namespace cage
 			return rtn;
 		}
 
-		AddrList::AddrList(const string &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags)
+		AddrList::AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags)
 		{}
 
 		AddrList::AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
@@ -276,7 +276,7 @@ namespace cage
 			hints.ai_socktype = type;
 			hints.ai_protocol = protocol;
 			hints.ai_flags = flags;
-			if (getaddrinfo(address, string(stringizer() + port).c_str(), &hints, &start) != 0)
+			if (getaddrinfo(address, String(Stringizer() + port).c_str(), &hints, &start) != 0)
 				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", WSAGetLastError());
 			current = start;
 		}

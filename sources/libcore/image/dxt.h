@@ -28,7 +28,7 @@ namespace cage
 
 	struct TexelBlock
 	{
-		vec4 texel[4][4];
+		Vec4 texel[4][4];
 	};
 
 	TexelBlock dxtDecompress(const Dxt1Block &block);

@@ -21,10 +21,10 @@ namespace cage
 			xsimd::batch<float, 4> v4;
 			struct
 			{
-				vec3 v3;
+				Vec3 v3;
 				union
 				{
-					real f;
+					Real f;
 					sint32 i;
 				};
 			} s;
@@ -41,8 +41,8 @@ namespace cage
 			// initialize to negative box
 			FastBox()
 			{
-				low.v4 = xsimd::batch<float, 4>(real::Infinity().value, real::Infinity().value, real::Infinity().value, 0.0f);
-				high.v4 = xsimd::batch<float, 4>(-real::Infinity().value, -real::Infinity().value, -real::Infinity().value, 0.0f);
+				low.v4 = xsimd::batch<float, 4>(Real::Infinity().value, Real::Infinity().value, Real::Infinity().value, 0.0f);
+				high.v4 = xsimd::batch<float, 4>(-Real::Infinity().value, -Real::Infinity().value, -Real::Infinity().value, 0.0f);
 			}
 
 			explicit FastBox(const Aabb &b)
@@ -64,7 +64,7 @@ namespace cage
 				return *this = *this + other;
 			}
 
-			real surface() const
+			Real surface() const
 			{
 				if (empty())
 					return 0;
@@ -73,7 +73,7 @@ namespace cage
 
 			bool empty() const
 			{
-				return low.v4[0] == real::Infinity();
+				return low.v4[0] == Real::Infinity();
 			}
 
 			explicit operator Aabb () const
@@ -99,7 +99,7 @@ namespace cage
 		struct ItemBase
 		{
 			FastBox box;
-			vec3 center;
+			Vec3 center;
 			const uint32 name;
 			
 			virtual Aabb getBox() const = 0;
@@ -208,7 +208,7 @@ namespace cage
 				clear();
 			}
 
-			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
+			void rebuild(uint32 nodeIndex, uint32 nodeDepth, Real parentSah)
 			{
 				Node &node = nodes[nodeIndex];
 				CAGE_ASSERT(node.a() >= 0 && node.b() >= 0); // is leaf now
@@ -217,7 +217,7 @@ namespace cage
 				uint32 bestAxis = m;
 				uint32 bestSplit = m;
 				uint32 bestItemsCount = 0;
-				real bestSah = real::Infinity();
+				Real bestSah = Real::Infinity();
 				FastBox bestBoxLeft;
 				FastBox bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
@@ -228,8 +228,8 @@ namespace cage
 						b = FastBox();
 					for (uint32 &c : leftBinCounts)
 						c = 0;
-					real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
-					real planeOffset = node.box.low.v4[axis];
+					Real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
+					Real planeOffset = node.box.low.v4[axis];
 					for (sint32 i = node.a(), et = node.a() + node.b(); i != et; i++)
 					{
 						ItemBase *item = indices[i];
@@ -253,9 +253,9 @@ namespace cage
 					// compute sah
 					for (uint32 i = 0; i < binsCount - 1; i++)
 					{
-						real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
-						real sahR = rightBinBoxes[i + 1].surface() * (node.b() - leftBinCounts[i]);
-						real sah = sahL + sahR;
+						Real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
+						Real sahR = rightBinBoxes[i + 1].surface() * (node.b() - leftBinCounts[i]);
+						Real sah = sahL + sahR;
 						if (sah < bestSah)
 						{
 							bestAxis = axis;
@@ -276,8 +276,8 @@ namespace cage
 				CAGE_ASSERT(bestSplit + 1 < binsCount); // splits count is one less than bins count
 				CAGE_ASSERT(bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
-					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
-					real planeOffset = node.box.low.v4[bestAxis];
+					Real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
+					Real planeOffset = node.box.low.v4[bestAxis];
 					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](const ItemBase *item) {
 						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
 						return binIndex < bestSplit + 1;
@@ -338,7 +338,7 @@ namespace cage
 					worldBox += it.second->box;
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable.size()));
-				rebuild(0, 0, real::Infinity());
+				rebuild(0, 0, Real::Infinity());
 				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(Node) == 0);
 #ifdef CAGE_ASSERT_ENABLED
 				validate(0);
@@ -422,7 +422,7 @@ namespace cage
 		return impl->resultNames;
 	}
 
-	bool SpatialQuery::intersection(const vec3 &shape)
+	bool SpatialQuery::intersection(const Vec3 &shape)
 	{
 		return intersection(Aabb(shape, shape));
 	}
@@ -469,7 +469,7 @@ namespace cage
 		return impl->intersection(shape);
 	}
 
-	void SpatialStructure::update(uint32 name, const vec3 &other)
+	void SpatialStructure::update(uint32 name, const Vec3 &other)
 	{
 		update(name, Aabb(other, other));
 	}
@@ -486,7 +486,7 @@ namespace cage
 	void SpatialStructure::update(uint32 name, const Triangle &other)
 	{
 		CAGE_ASSERT(other.valid());
-		CAGE_ASSERT(other.area() < real::Infinity());
+		CAGE_ASSERT(other.area() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Triangle>>(name, other);
@@ -495,7 +495,7 @@ namespace cage
 	void SpatialStructure::update(uint32 name, const Sphere &other)
 	{
 		CAGE_ASSERT(other.valid());
-		CAGE_ASSERT(other.volume() < real::Infinity());
+		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Sphere>>(name, other);
@@ -504,7 +504,7 @@ namespace cage
 	void SpatialStructure::update(uint32 name, const Aabb &other)
 	{
 		CAGE_ASSERT(other.valid());
-		CAGE_ASSERT(other.volume() < real::Infinity());
+		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Aabb>>(name, other);

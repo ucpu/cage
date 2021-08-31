@@ -29,26 +29,26 @@ void processAnimation()
 	const aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
 		CAGE_THROW_ERROR(Exception, "the animation has unsupported type");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "duration: " + ani->mDuration + " ticks");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
 	const uint32 skeletonName = []() {
-		string n = properties("skeleton");
+		String n = properties("skeleton");
 		if (n.empty())
 			n = inputFile + ";skeleton";
 		else
 			n = pathJoin(pathExtractDirectory(inputName), n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using skeleton name: '" + n + "'");
-		writeLine(string("ref = ") + n);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using skeleton name: '" + n + "'");
+		writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();
 
 	Holder<SkeletalAnimation> anim = context->animation(chosenAnimationIndex);
 	anim->skeletonName(skeletonName);
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

@@ -10,14 +10,14 @@
 
 namespace
 {
-	const string directories[2] = {
+	const String directories[2] = {
 		"testdir/files",
 		"testdir/archive.zip"
 	};
 
-	void testWriteFile(const string &name, PointerRange<const char> data)
+	void testWriteFile(const String &name, PointerRange<const char> data)
 	{
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<File> f = writeFile(pathJoin(dir, name));
 			f->write(data);
@@ -25,11 +25,11 @@ namespace
 		}
 	}
 
-	void testReadFile2(const string &name, Holder<PointerRange<char>> &a, Holder<PointerRange<char>> &b)
+	void testReadFile2(const String &name, Holder<PointerRange<char>> &a, Holder<PointerRange<char>> &b)
 	{
 		Holder<PointerRange<char>> *p[2] = { &a, &b };
 		uint32 i = 0;
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<File> f = readFile(pathJoin(dir, name));
 			*p[i++] = f->readAll();
@@ -43,7 +43,7 @@ namespace
 		CAGE_TEST(detail::memcmp(a.data(), b.data(), a.size()) == 0);
 	}
 
-	Holder<PointerRange<char>> testReadFile(const string &name)
+	Holder<PointerRange<char>> testReadFile(const String &name)
 	{
 		Holder<PointerRange<char>> a, b;
 		testReadFile2(name, a, b);
@@ -51,31 +51,31 @@ namespace
 		return a;
 	}
 
-	void testCreateDirectories(const string &name)
+	void testCreateDirectories(const String &name)
 	{
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 			pathCreateDirectories(pathJoin(dir, name));
 	}
 
-	typedef std::set<std::pair<string, bool>> Listing;
+	typedef std::set<std::pair<String, bool>> Listing;
 
-	void testListDirectory2(const string &name, Listing &a, Listing &b)
+	void testListDirectory2(const String &name, Listing &a, Listing &b)
 	{
 		Listing *p[2] = { &a, &b };
 		uint32 i = 0;
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<DirectoryList> f = newDirectoryList(pathJoin(dir, name));
 			while (f->valid())
 			{
-				p[i]->insert(std::make_pair<string, bool>(f->name(), f->isDirectory()));
+				p[i]->insert(std::make_pair<String, bool>(f->name(), f->isDirectory()));
 				f->next();
 			}
 			i++;
 		}
 	}
 
-	PathTypeFlags testPathType(const string &name)
+	PathTypeFlags testPathType(const String &name)
 	{
 		const PathTypeFlags a = pathType(pathJoin(directories[0], name));
 		const PathTypeFlags b = pathType(pathJoin(directories[1], name));
@@ -84,7 +84,7 @@ namespace
 		return b;
 	}
 
-	Listing testListDirectory(const string &name)
+	Listing testListDirectory(const String &name)
 	{
 		Listing a, b;
 		testListDirectory2(name, a, b);
@@ -95,14 +95,14 @@ namespace
 		return a;
 	}
 
-	void testListRecursive(const string &name = "")
+	void testListRecursive(const String &name = "")
 	{
 		Listing l = testListDirectory(name);
 		for (const auto &i : l)
 		{
 			if (i.second)
 			{
-				string p = pathJoin(name, i.first);
+				String p = pathJoin(name, i.first);
 				testListRecursive(p);
 			}
 		}
@@ -134,7 +134,7 @@ namespace
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }
-				const string name = stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const String name = Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
@@ -226,10 +226,10 @@ void testArchives()
 		CAGE_TESTCASE("randomized files in random folders");
 		for (uint32 i = 0; i < 3; i++)
 		{
-			string name = "rng";
+			String name = "rng";
 			for (uint32 j = 0; j < 10; j++)
 			{
-				name += stringizer() + randomRange(0, 9);
+				name += Stringizer() + randomRange(0, 9);
 				if (randomChance() < 0.1)
 					name += "/";
 			}
@@ -282,7 +282,7 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("file seek & tell");
-		const string path = pathJoin(directories[1], "multi/1");
+		const String path = pathJoin(directories[1], "multi/1");
 		const PathTypeFlags type = pathType(path);
 		CAGE_TEST(any(type & PathTypeFlags::File));
 		CAGE_TEST(none(type & PathTypeFlags::Directory));
@@ -308,7 +308,7 @@ void testArchives()
 	{
 		CAGE_TESTCASE("read-write file");
 		// first create the file
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<File> f = writeFile(pathJoin(dir, "rw.bin"));
 			f->write(data1);
@@ -319,7 +319,7 @@ void testArchives()
 		testReadFile("rw.bin");
 		testReadFile("rw.bin"); // ensure that reading a file does not change it
 		// first modification of the file
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<File> f = newFile(pathJoin(dir, "rw.bin"), FileMode(true, true));
 			CAGE_TEST(f->size() == data1.size());
@@ -334,7 +334,7 @@ void testArchives()
 		testListDirectory("");
 		testReadFile("rw.bin");
 		// second modification of the file (including seek)
-		for (const string &dir : directories)
+		for (const String &dir : directories)
 		{
 			Holder<File> f = newFile(pathJoin(dir, "rw.bin"), FileMode(true, true));
 			f->seek(data2.size());
@@ -350,7 +350,7 @@ void testArchives()
 		CAGE_TESTCASE("remove a file");
 		{
 			Holder<DirectoryList> list = newDirectoryList(directories[1]); // keep the archive open
-			for (const string &dir : directories)
+			for (const String &dir : directories)
 				pathRemove(pathJoin(dir, "multi/2"));
 			testListRecursive(); // listing must work even while the changes to the archive are not yet written out
 			CAGE_TEST(any(pathType(pathJoin(directories[1], "multi/2")) & PathTypeFlags::NotFound));
@@ -362,13 +362,13 @@ void testArchives()
 		CAGE_TESTCASE("move a file");
 		{
 			CAGE_TESTCASE("inside same archive");
-			for (const string &dir : directories)
+			for (const String &dir : directories)
 				pathMove(pathJoin(dir, "multi/3"), pathJoin(dir, "multi/4"));
 			testListRecursive();
 		}
 		{
 			CAGE_TESTCASE("from real filesystem to the archive");
-			for (const string &dir : directories)
+			for (const String &dir : directories)
 			{
 				{
 					Holder<File> f = writeFile("testdir/tmp");
@@ -381,7 +381,7 @@ void testArchives()
 		}
 		{
 			CAGE_TESTCASE("from the archive to real filesystem");
-			for (const string &dir : directories)
+			for (const String &dir : directories)
 				pathMove(pathJoin(dir, "multi/1"), "testdir/moved_up");
 			testListRecursive();
 		}
@@ -389,7 +389,7 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("opening an archive as regular file");
-		const string arch = directories[1];
+		const String arch = directories[1];
 		{
 			CAGE_TESTCASE("with open archive");
 			Holder<DirectoryList> list = newDirectoryList(arch); // ensure the archive is open
@@ -443,7 +443,7 @@ void testArchives()
 		ConcurrentTester tester;
 		for (uint32 i = 0; i < 10; i++)
 		{
-			CAGE_TESTCASE(stringizer() + "iteration: " + i);
+			CAGE_TESTCASE(Stringizer() + "iteration: " + i);
 			tester.run();
 		}
 	}

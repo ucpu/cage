@@ -10,7 +10,7 @@ namespace
 	{
 		man->defineComponent<float>(0);
 		man->defineComponent<int>(0);
-		man->defineComponent(vec3());
+		man->defineComponent(Vec3());
 	}
 
 	void generateEntity(Entity *e)
@@ -23,7 +23,7 @@ namespace
 		if (b)
 			e->value<int>(e->manager()->componentByDefinition(1)) = randomRange(-100, 100);
 		if (c)
-			e->value<vec3>(e->manager()->componentByDefinition(2)) = randomDirection3();
+			e->value<Vec3>(e->manager()->componentByDefinition(2)) = randomDirection3();
 	}
 
 	void changeEntities(EntityManager *man)

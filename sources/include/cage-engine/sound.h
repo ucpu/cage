@@ -12,11 +12,11 @@ namespace cage
 #endif // CAGE_DEBUG
 
 	public:
-		void setDebugName(const string &name);
+		void setDebugName(const String &name);
 
-		real referenceDistance = 1; // minimum distance to apply attenuation
-		real rolloffFactor = 1; // distance multiplier
-		real gain = 1; // linear amplitude multiplier
+		Real referenceDistance = 1; // minimum distance to apply attenuation
+		Real rolloffFactor = 1; // distance multiplier
+		Real gain = 1; // linear amplitude multiplier
 
 		bool loopBeforeStart = false;
 		bool loopAfterEnd = false;

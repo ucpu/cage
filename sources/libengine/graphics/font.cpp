@@ -21,10 +21,10 @@ namespace cage
 	{
 		struct Instance
 		{
-			vec4 wrld;
-			vec4 text;
+			Vec4 wrld;
+			Vec4 text;
 
-			Instance(real x, real y, const FontHeader::GlyphData &g)
+			Instance(Real x, Real y, const FontHeader::GlyphData &g)
 			{
 				text = g.texUv;
 				wrld[0] = x + g.bearing[0];
@@ -38,8 +38,8 @@ namespace cage
 		{
 			std::vector<Instance> instances;
 			PointerRange<const uint32> glyphs;
-			vec2 mousePosition = vec2::Nan();
-			vec2 outSize;
+			Vec2 mousePosition = Vec2::Nan();
+			Vec2 outSize;
 			RenderQueue *renderQueue = nullptr;
 			const FontFormat *format = nullptr;
 			uint32 outCursor = 0;
@@ -50,25 +50,25 @@ namespace cage
 		{
 		public:
 			std::vector<FontHeader::GlyphData> glyphsArray;
-			std::vector<real> kerning;
+			std::vector<Real> kerning;
 			std::vector<uint32> charmapChars;
 			std::vector<uint32> charmapGlyphs;
 
 			Holder<Texture> tex;
 
-			ivec2 resolution;
+			Vec2i resolution;
 			uint32 spaceGlyph = 0;
 			uint32 returnGlyph = 0;
 			uint32 cursorGlyph = m;
-			real lineHeight = 0;
-			real firstLineOffset = 0;
+			Real lineHeight = 0;
+			Real firstLineOffset = 0;
 
 			FontImpl()
 			{
 				tex = newTexture();
 			}
 
-			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size) const
+			FontHeader::GlyphData getGlyph(uint32 glyphIndex, Real size) const
 			{
 				FontHeader::GlyphData r = glyphsArray[glyphIndex];
 				r.advance *= size;
@@ -77,7 +77,7 @@ namespace cage
 				return r;
 			}
 
-			real findKerning(uint32 L, uint32 R, real size) const
+			Real findKerning(uint32 L, uint32 R, Real size) const
 			{
 				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size());
 				if (kerning.empty() || glyphsArray.empty())
@@ -95,7 +95,7 @@ namespace cage
 				return charmapGlyphs[it - charmapChars.begin()];
 			}
 
-			void processCursor(ProcessData &data, const uint32 *begin, real x, real lineY) const
+			void processCursor(ProcessData &data, const uint32 *begin, Real x, Real lineY) const
 			{
 				if (data.renderQueue && begin == data.glyphs.data() + data.cursor)
 				{
@@ -104,9 +104,9 @@ namespace cage
 				}
 			}
 
-			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY) const
+			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, Real lineWidth, Real lineY) const
 			{
-				real x;
+				Real x;
 				switch (data.format->align)
 				{
 				case TextAlignEnum::Left: break;
@@ -115,7 +115,7 @@ namespace cage
 				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
-				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight * data.format->size);
+				Vec2 mousePos = data.mousePosition + Vec2(-x, lineY + lineHeight * data.format->size);
 				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
 				if (!data.renderQueue && !mouseInLine)
 					return;
@@ -132,7 +132,7 @@ namespace cage
 				{
 					processCursor(data, begin, x, lineY);
 					FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
-					real k = findKerning(prev, *begin, data.format->size);
+					Real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
 					if (data.renderQueue)
 						data.instances.emplace_back(x + k, lineY, g);
@@ -151,8 +151,8 @@ namespace cage
 				data.instances.reserve(data.glyphs.size() + 1);
 				const uint32 *const totalEnd = data.glyphs.end();
 				const uint32 *it = data.glyphs.begin();
-				const real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
-				real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
+				const Real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
+				Real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
 
 				if (data.glyphs.empty())
 				{ // process cursor
@@ -163,8 +163,8 @@ namespace cage
 				{
 					const uint32 *const lineStart = it;
 					const uint32 *lineEnd = it;
-					real lineWidth = 0;
-					real itWidth = 0;
+					Real lineWidth = 0;
+					Real itWidth = 0;
 
 					while (true)
 					{
@@ -181,7 +181,7 @@ namespace cage
 							it++;
 							break;
 						}
-						real w = getGlyph(*it, data.format->size).advance;
+						Real w = getGlyph(*it, data.format->size).advance;
 						w += findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
 						if (it != lineStart && itWidth + w > data.format->wrapWidth + data.format->size * 1e-6)
 						{ // at this point, the line needs to be wrapped somewhere
@@ -235,7 +235,7 @@ namespace cage
 		};
 	}
 
-	void Font::setDebugName(const string &name)
+	void Font::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -244,14 +244,14 @@ namespace cage
 		impl->tex->setDebugName(name);
 	}
 
-	void Font::setLine(real lineHeight, real firstLineOffset)
+	void Font::setLine(Real lineHeight, Real firstLineOffset)
 	{
 		FontImpl *impl = (FontImpl *)this;
 		impl->lineHeight = lineHeight;
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void Font::setImage(ivec2 resolution, PointerRange<const char> buffer)
+	void Font::setImage(Vec2i resolution, PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl *)this;
 		impl->resolution = resolution;
@@ -286,7 +286,7 @@ namespace cage
 		//impl->tex->generateMipmaps();
 	}
 
-	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const real> kerning)
+	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const Real> kerning)
 	{
 		FontImpl *impl = (FontImpl *)this;
 		const uint32 count = numeric_cast<uint32>(buffer.size() / sizeof(FontHeader::GlyphData));
@@ -297,7 +297,7 @@ namespace cage
 		{
 			CAGE_ASSERT(kerning.size() == count * count);
 			impl->kerning.resize(count * count);
-			detail::memcpy(impl->kerning.data(), kerning.data(), kerning.size() * sizeof(real));
+			detail::memcpy(impl->kerning.data(), kerning.data(), kerning.size() * sizeof(Real));
 		}
 		else
 			impl->kerning.clear();
@@ -316,7 +316,7 @@ namespace cage
 		impl->spaceGlyph = impl->findGlyphIndex(' ');
 	}
 
-	uint32 Font::glyphsCount(const string &text) const
+	uint32 Font::glyphsCount(const String &text) const
 	{
 		return utf32Length(text);
 	}
@@ -331,7 +331,7 @@ namespace cage
 		return utf32Length(text);
 	}
 
-	void Font::transcript(const string &text, PointerRange<uint32> glyphs) const
+	void Font::transcript(const String &text, PointerRange<uint32> glyphs) const
 	{
 		transcript({ text.begin(), text.end() }, glyphs);
 	}
@@ -350,7 +350,7 @@ namespace cage
 			i = impl->findGlyphIndex(i);
 	}
 
-	Holder<PointerRange<uint32>> Font::transcript(const string &text) const
+	Holder<PointerRange<uint32>> Font::transcript(const String &text) const
 	{
 		return transcript({ text.begin(), text.end() });
 	}
@@ -370,14 +370,14 @@ namespace cage
 		return glyphs;
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format) const
+	Vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format) const
 	{
-		vec2 mp;
+		Vec2 mp;
 		uint32 c;
 		return this->size(glyphs, format, mp, c);
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format, const vec2 &mousePosition, uint32 &cursor) const
+	Vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format, const Vec2 &mousePosition, uint32 &cursor) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;

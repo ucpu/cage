@@ -9,8 +9,8 @@ namespace cage
 	{
 		struct CAGE_CORE_API LoggerInfo
 		{
-			string message;
-			string currentThreadName;
+			String message;
+			String currentThreadName;
 			StringLiteral component = "";
 			StringLiteral file = "";
 			StringLiteral function = "";
@@ -28,33 +28,33 @@ namespace cage
 	{
 	public:
 		Delegate<bool(const detail::LoggerInfo &)> filter;
-		Delegate<void(const detail::LoggerInfo &, Delegate<void(const string &)>)> format;
-		Delegate<void(const string &)> output;
+		Delegate<void(const detail::LoggerInfo &, Delegate<void(const String &)>)> format;
+		Delegate<void(const String &)> output;
 	};
 
 	CAGE_CORE_API Holder<Logger> newLogger();
 
-	CAGE_CORE_API void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const string &)> output);
-	CAGE_CORE_API void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const string &)> output);
-	CAGE_CORE_API void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const string &)> output);
+	CAGE_CORE_API void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
+	CAGE_CORE_API void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
+	CAGE_CORE_API void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
 
-	CAGE_CORE_API void logOutputDebug(const string &message);
-	CAGE_CORE_API void logOutputStdOut(const string &message);
-	CAGE_CORE_API void logOutputStdErr(const string &message);
+	CAGE_CORE_API void logOutputDebug(const String &message);
+	CAGE_CORE_API void logOutputStdOut(const String &message);
+	CAGE_CORE_API void logOutputStdErr(const String &message);
 
 	class CAGE_CORE_API LoggerOutputFile : private Immovable
 	{
 	public:
-		void output(const string &message) const;
+		void output(const String &message) const;
 	};
 
-	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly = true);
+	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const String &path, bool append, bool realFilesystemOnly = true);
 	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(Holder<File> file);
 
 	namespace detail
 	{
 		CAGE_CORE_API Logger *globalLogger();
-		CAGE_CORE_API string severityToString(const SeverityEnum severity);
+		CAGE_CORE_API String severityToString(const SeverityEnum severity);
 	}
 }
 

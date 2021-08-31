@@ -21,7 +21,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2();
+				hierarchy->requestedSize = Vec2();
 				if (hierarchy->text)
 					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->text->findRequestedSize());
 				else if (hierarchy->image)
@@ -35,8 +35,8 @@ namespace cage
 
 			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.label.margin);
 				if (hierarchy->image)
 					hierarchy->image->emit(p, s);
@@ -44,27 +44,27 @@ namespace cage
 					hierarchy->text->emit(p, s);
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}

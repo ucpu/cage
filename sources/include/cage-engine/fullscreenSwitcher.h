@@ -16,7 +16,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API FullscreenSwitcherCreateConfig
 	{
-		string configPrefix;
+		String configPrefix;
 		Window *window = nullptr;
 		bool defaultFullscreen = true;
 

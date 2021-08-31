@@ -88,11 +88,11 @@ namespace cage
 		TransformComponent &t = light->value<TransformComponent>();
 		ShadowmapComponent &s = light->value<ShadowmapComponent>();
 		if (box.empty())
-			s.worldSize = vec3(1);
+			s.worldSize = Vec3(1);
 		else
 		{
 			t.position = box.center();
-			s.worldSize = vec3(box.diagonal() * 0.5);
+			s.worldSize = Vec3(box.diagonal() * 0.5);
 		}
 	}
 

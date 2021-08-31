@@ -27,11 +27,11 @@ namespace cage
 
 		// sound decode
 		void importBuffer(PointerRange<const char> buffer, AudioFormatEnum requestedFormat = AudioFormatEnum::Default);
-		void importFile(const string &filename, AudioFormatEnum requestedFormat = AudioFormatEnum::Default);
+		void importFile(const String &filename, AudioFormatEnum requestedFormat = AudioFormatEnum::Default);
 
 		// sound encode
-		Holder<PointerRange<char>> exportBuffer(const string &format = ".wav") const;
-		void exportFile(const string &filename) const;
+		Holder<PointerRange<char>> exportBuffer(const String &format = ".wav") const;
+		void exportFile(const String &filename) const;
 
 		// the format must match
 		// the audio must outlive the view
@@ -48,7 +48,7 @@ namespace cage
 
 		float value(uintPtr f, uint32 c) const;
 		void value(uintPtr f, uint32 c, float v);
-		void value(uintPtr f, uint32 c, const real &v);
+		void value(uintPtr f, uint32 c, const Real &v);
 
 		void decode(uintPtr startFrame, PointerRange<float> buffer) const;
 	};

@@ -39,7 +39,7 @@ namespace cage
 	class CAGE_ENGINE_API EngineStatistics : private Immovable
 	{
 	public:
-		vec2 screenPosition = vec2(1, 0);
+		Vec2 screenPosition = Vec2(1, 0);
 		uint32 keyToggleStatisticsScope = 290; // f1
 		uint32 keyToggleStatisticsMode = 291; // f2
 		uint32 keyToggleProfilingEnabled = 292; // f3

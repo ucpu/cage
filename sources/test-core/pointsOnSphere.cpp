@@ -5,10 +5,10 @@
 
 namespace
 {
-	string generatePoint()
+	String generatePoint()
 	{
-		vec3 p = randomDirection3();
-		return stringizer() + "vec3(" + p[0] + ", " + p[1] + ", " + p[2] + ")";
+		Vec3 p = randomDirection3();
+		return Stringizer() + "vec3(" + p[0] + ", " + p[1] + ", " + p[2] + ")";
 	}
 }
 

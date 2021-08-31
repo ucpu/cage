@@ -29,9 +29,9 @@ namespace cage
 			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 				tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
 			else if (data.target == GL_TEXTURE_CUBE_MAP)
-				tex->imageCube(ivec2(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
+				tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
 			else
-				tex->image2d(ivec2(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
+				tex->image2d(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
 			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
 			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);
 			if (any(data.flags & TextureFlags::GenerateMipmaps))

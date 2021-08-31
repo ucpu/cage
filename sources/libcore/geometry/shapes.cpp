@@ -2,18 +2,18 @@
 
 namespace cage
 {
-	Line Line::operator * (const mat4 &other) const
+	Line Line::operator * (const Mat4 &other) const
 	{
 		CAGE_ASSERT(normalized());
 
-		const auto &tr = [&](const vec3 &p)
+		const auto &tr = [&](const Vec3 &p)
 		{
-			vec4 t = other * vec4(p, 1);
-			return vec3(t) / t[3];
+			Vec4 t = other * Vec4(p, 1);
+			return Vec3(t) / t[3];
 		};
 
 		if (isPoint())
-			return Line(tr(a()), vec3(1, 0, 0), 0, 0);
+			return Line(tr(a()), Vec3(1, 0, 0), 0, 0);
 		if (isLine())
 			return makeLine(tr(origin), tr(origin + direction));
 		if (isRay())
@@ -29,17 +29,17 @@ namespace cage
 		{
 			if (minimum != 0)
 				return false;
-			if (direction != vec3(1, 0, 0))
+			if (direction != Vec3(1, 0, 0))
 				return false;
 		}
 		else if (isLine())
 		{
-			if (minimum != -real::Infinity() || maximum != real::Infinity())
+			if (minimum != -Real::Infinity() || maximum != Real::Infinity())
 				return false;
 		}
 		else if (isRay())
 		{
-			if (minimum != 0 || maximum != real::Infinity())
+			if (minimum != 0 || maximum != Real::Infinity())
 				return false;
 		}
 		else if (isSegment())
@@ -58,7 +58,7 @@ namespace cage
 		if (r.isPoint() || lengthSquared(r.direction) < 1e-5)
 		{
 			r.origin = r.a();
-			r.direction = vec3(1, 0, 0);
+			r.direction = Vec3(1, 0, 0);
 			r.minimum = r.maximum = 0;
 		}
 		else
@@ -66,7 +66,7 @@ namespace cage
 			if (r.minimum > r.maximum)
 				std::swap(r.minimum, r.maximum);
 			r.direction = cage::normalize(r.direction);
-			real l = length(direction);
+			Real l = length(direction);
 			r.minimum *= l;
 			r.maximum *= l;
 			if (r.minimum.finite())
@@ -79,7 +79,7 @@ namespace cage
 				}
 			}
 			else if (r.maximum.finite())
-				r = Line(r.b(), -r.direction, 0, real::Infinity());
+				r = Line(r.b(), -r.direction, 0, Real::Infinity());
 			if (r.isLine())
 			{
 				//real d = distance(vec3(), r);
@@ -90,28 +90,28 @@ namespace cage
 		return r;
 	}
 
-	Line makeSegment(const vec3 &a, const vec3 &b)
+	Line makeSegment(const Vec3 &a, const Vec3 &b)
 	{
 		return Line(a, b - a, 0, 1).normalize();
 	}
 
-	Line makeRay(const vec3 &a, const vec3 &b)
+	Line makeRay(const Vec3 &a, const Vec3 &b)
 	{
-		return Line(a, b - a, 0, real::Infinity()).normalize();
+		return Line(a, b - a, 0, Real::Infinity()).normalize();
 	}
 
-	Line makeLine(const vec3 &a, const vec3 &b)
+	Line makeLine(const Vec3 &a, const Vec3 &b)
 	{
-		return Line(a, b - a, -real::Infinity(), real::Infinity()).normalize();
+		return Line(a, b - a, -Real::Infinity(), Real::Infinity()).normalize();
 	}
 
-	Triangle Triangle::operator * (const mat4 &other) const
+	Triangle Triangle::operator * (const Mat4 &other) const
 	{
 		Triangle r = *this;
 		for (uint32 i = 0; i < 3; i++)
 		{
-			vec4 t = other * vec4(r[i], 1);
-			r[i] = vec3(t) / t[3];
+			Vec4 t = other * Vec4(r[i], 1);
+			r[i] = Vec3(t) / t[3];
 		}
 		return r;
 	}
@@ -128,24 +128,24 @@ namespace cage
 		return r;
 	}
 
-	Plane::Plane(const vec3 &point, const vec3 &normal) : normal(normal), d(-dot(point, normal))
+	Plane::Plane(const Vec3 &point, const Vec3 &normal) : normal(normal), d(-dot(point, normal))
 	{}
 
-	Plane::Plane(const vec3 &a, const vec3 &b, const vec3 &c) : Plane(Triangle(a, b, c))
+	Plane::Plane(const Vec3 &a, const Vec3 &b, const Vec3 &c) : Plane(Triangle(a, b, c))
 	{}
 
 	Plane::Plane(const Triangle &other) : Plane(other[0], other.normal())
 	{}
 
-	Plane::Plane(const Line &a, const vec3 &b) : Plane(a.origin, a.origin + a.direction, b)
+	Plane::Plane(const Line &a, const Vec3 &b) : Plane(a.origin, a.origin + a.direction, b)
 	{}
 
-	Plane Plane::operator * (const mat4 &other) const
+	Plane Plane::operator * (const Mat4 &other) const
 	{
-		vec3 p3 = normal * d;
-		vec4 p4 = vec4(p3, 1) * other;
-		p3 = vec3(p4) / p4[3];
-		return Plane(p3, normal * mat3(other));
+		Vec3 p3 = normal * d;
+		Vec4 p4 = Vec4(p3, 1) * other;
+		p3 = Vec3(p4) / p4[3];
+		return Plane(p3, normal * Mat3(other));
 	}
 
 	bool Plane::normalized() const
@@ -155,7 +155,7 @@ namespace cage
 
 	Plane Plane::normalize() const
 	{
-		const real l = length(normal);
+		const Real l = length(normal);
 		return Plane(normal / l, d * l); // d times or divided by l ?
 	}
 
@@ -167,24 +167,24 @@ namespace cage
 			*this = Sphere(other.a(), 0);
 		else if (other.isSegment())
 		{
-			const vec3 a = other.a();
-			const vec3 b = other.b();
+			const Vec3 a = other.a();
+			const Vec3 b = other.b();
 			*this = Sphere((a + b) * 0.5, distance(a, b) * 0.5);
 		}
 		else
-			*this = Sphere(vec3(), real::Infinity());
+			*this = Sphere(Vec3(), Real::Infinity());
 	}
 
 	Sphere::Sphere(const Triangle &other)
 	{
-		vec3 a = other[0];
-		vec3 b = other[1];
-		vec3 c = other[2];
-		real dotABAB = dot(b - a, b - a);
-		real dotABAC = dot(b - a, c - a);
-		real dotACAC = dot(c - a, c - a);
-		real d = 2.0f*(dotABAB*dotACAC - dotABAC*dotABAC);
-		vec3 referencePt = a;
+		Vec3 a = other[0];
+		Vec3 b = other[1];
+		Vec3 c = other[2];
+		Real dotABAB = dot(b - a, b - a);
+		Real dotABAC = dot(b - a, c - a);
+		Real dotACAC = dot(c - a, c - a);
+		Real d = 2.0f*(dotABAB*dotACAC - dotABAC*dotABAC);
+		Vec3 referencePt = a;
 		if (abs(d) <= 1e-5)
 		{
 			Aabb bbox = Aabb(other);
@@ -193,8 +193,8 @@ namespace cage
 		}
 		else
 		{
-			real s = (dotABAB*dotACAC - dotACAC*dotABAC) / d;
-			real t = (dotACAC*dotABAB - dotABAB*dotABAC) / d;
+			Real s = (dotABAB*dotACAC - dotACAC*dotABAC) / d;
+			Real t = (dotACAC*dotABAB - dotABAB*dotABAC) / d;
 			if (s <= 0.0f)
 				center = 0.5f * (a + c);
 			else if (t <= 0.0f)
@@ -213,7 +213,7 @@ namespace cage
 	Sphere::Sphere(const Cone &other)
 	{
 		// https://bartwronski.com/2017/04/13/cull-that-cone/ modified
-		if (other.halfAngle > rads(real::Pi() / 4))
+		if (other.halfAngle > Rads(Real::Pi() / 4))
 		{
 			*this = Sphere(
 				other.origin + cos(other.halfAngle) * other.length * other.direction,
@@ -222,7 +222,7 @@ namespace cage
 		}
 		else
 		{
-			const real ca2 = 1 / (2 * cos(other.halfAngle));
+			const Real ca2 = 1 / (2 * cos(other.halfAngle));
 			*this = Sphere(
 				other.origin + other.length * ca2 * other.direction,
 				other.length * ca2
@@ -230,14 +230,14 @@ namespace cage
 		}
 	}
 
-	Sphere Sphere::operator * (const mat4 &other) const
+	Sphere Sphere::operator * (const Mat4 &other) const
 	{
-		real sx2 = lengthSquared(vec3(other[0], other[1], other[2]));
-		real sy2 = lengthSquared(vec3(other[4], other[5], other[6]));
-		real sz2 = lengthSquared(vec3(other[8], other[9], other[10]));
-		real s = sqrt(max(max(sx2, sy2), sz2));
-		vec4 p4 = vec4(center, 1) * other;
-		return Sphere(vec3(p4) / p4[3], radius * s);
+		Real sx2 = lengthSquared(Vec3(other[0], other[1], other[2]));
+		Real sy2 = lengthSquared(Vec3(other[4], other[5], other[6]));
+		Real sz2 = lengthSquared(Vec3(other[8], other[9], other[10]));
+		Real s = sqrt(max(max(sx2, sy2), sz2));
+		Vec4 p4 = Vec4(center, 1) * other;
+		return Sphere(Vec3(p4) / p4[3], radius * s);
 	}
 
 	Aabb::Aabb(const Line &other)
@@ -246,8 +246,8 @@ namespace cage
 			*this = Aabb();
 		else if (other.isSegment() || other.isPoint())
 		{
-			vec3 a = other.a();
-			vec3 b = other.b();
+			Vec3 a = other.a();
+			Vec3 b = other.b();
 			*this = Aabb(a, b);
 		}
 		else
@@ -258,7 +258,7 @@ namespace cage
 	{
 		CAGE_ASSERT(other.normalized());
 		*this = Aabb::Universe();
-		const vec3 o = other.origin();
+		const Vec3 o = other.origin();
 		for (uint32 a = 0; a < 3; a++)
 		{
 			if (abs(abs(other.normal[a]) - 1) < 1e-5)
@@ -274,7 +274,7 @@ namespace cage
 	{
 		Aabb box;
 		Frustum::Corners corners = other.corners();
-		for (const vec3 &v : corners.data)
+		for (const Vec3 &v : corners.data)
 			box += Aabb(v);
 		*this = box;
 	}
@@ -288,57 +288,57 @@ namespace cage
 		return Aabb(min(a, other.a), max(b, other.b));
 	}
 
-	Aabb Aabb::operator * (const mat4 &other) const
+	Aabb Aabb::operator * (const Mat4 &other) const
 	{
-		vec3 tmp[8];
-		tmp[0] = vec3(b.data[0], a.data[1], a.data[2]);
-		tmp[1] = vec3(a.data[0], b.data[1], a.data[2]);
-		tmp[2] = vec3(a.data[0], a.data[1], b.data[2]);
-		tmp[3] = vec3(a.data[0], b.data[1], b.data[2]);
-		tmp[4] = vec3(b.data[0], a.data[1], b.data[2]);
-		tmp[5] = vec3(b.data[0], b.data[1], a.data[2]);
+		Vec3 tmp[8];
+		tmp[0] = Vec3(b.data[0], a.data[1], a.data[2]);
+		tmp[1] = Vec3(a.data[0], b.data[1], a.data[2]);
+		tmp[2] = Vec3(a.data[0], a.data[1], b.data[2]);
+		tmp[3] = Vec3(a.data[0], b.data[1], b.data[2]);
+		tmp[4] = Vec3(b.data[0], a.data[1], b.data[2]);
+		tmp[5] = Vec3(b.data[0], b.data[1], a.data[2]);
 		tmp[6] = a;
 		tmp[7] = b;
 		Aabb res;
 		for (uint32 i = 0; i < 8; i++)
 		{
-			vec4 r = other * vec4(tmp[i], 1);
-			res += Aabb(vec3(r) * (1.0 / r.data[3]));
+			Vec4 r = other * Vec4(tmp[i], 1);
+			res += Aabb(Vec3(r) * (1.0 / r.data[3]));
 		}
 		return res;
 	}
 
-	real Aabb::volume() const
+	Real Aabb::volume() const
 	{
 		return empty() ? 0 : (b.data[0] - a.data[0]) * (b.data[1] - a.data[1]) * (b.data[2] - a.data[2]);
 	}
 
-	real Aabb::surface() const
+	Real Aabb::surface() const
 	{
-		real wx = b[0] - a[0];
-		real wy = b[1] - a[1];
-		real wz = b[2] - a[2];
+		Real wx = b[0] - a[0];
+		Real wy = b[1] - a[1];
+		Real wz = b[2] - a[2];
 		return (wx*wy + wx*wz + wy*wz) * 2;
 	}
 
-	Cone Cone::operator * (const mat4 &other) const
+	Cone Cone::operator * (const Mat4 &other) const
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
-	Frustum::Frustum(const transform &camera, const mat4 &proj) : Frustum(proj * mat4(inverse(camera)))
+	Frustum::Frustum(const Transform &camera, const Mat4 &proj) : Frustum(proj * Mat4(inverse(camera)))
 	{}
 
-	Frustum::Frustum(const mat4 &viewProj) : viewProj(viewProj)
+	Frustum::Frustum(const Mat4 &viewProj) : viewProj(viewProj)
 	{
 		const auto &column = [&](uint32 index)
 		{
-			return vec4(viewProj[index], viewProj[index + 4], viewProj[index + 8], viewProj[index + 12]);
+			return Vec4(viewProj[index], viewProj[index + 4], viewProj[index + 8], viewProj[index + 12]);
 		};
-		const vec4 c0 = column(0);
-		const vec4 c1 = column(1);
-		const vec4 c2 = column(2);
-		const vec4 c3 = column(3);
+		const Vec4 c0 = column(0);
+		const Vec4 c1 = column(1);
+		const Vec4 c2 = column(2);
+		const Vec4 c3 = column(3);
 		planes[0] = c3 + c0;
 		planes[1] = c3 - c0;
 		planes[2] = c3 + c1;
@@ -347,30 +347,30 @@ namespace cage
 		planes[5] = c3 - c2;
 	}
 
-	Frustum Frustum::operator * (const mat4 &other) const
+	Frustum Frustum::operator * (const Mat4 &other) const
 	{
 		return Frustum(viewProj * other);
 	}
 
 	Frustum::Corners Frustum::corners() const
 	{
-		const mat4 invVP = inverse(viewProj);
-		constexpr const vec3 clipCorners[8] = {
-			vec3(-1, -1, -1),
-			vec3(-1, -1, +1),
-			vec3(-1, +1, -1),
-			vec3(-1, +1, +1),
-			vec3(+1, -1, -1),
-			vec3(+1, -1, +1),
-			vec3(+1, +1, -1),
-			vec3(+1, +1, +1),
+		const Mat4 invVP = inverse(viewProj);
+		constexpr const Vec3 clipCorners[8] = {
+			Vec3(-1, -1, -1),
+			Vec3(-1, -1, +1),
+			Vec3(-1, +1, -1),
+			Vec3(-1, +1, +1),
+			Vec3(+1, -1, -1),
+			Vec3(+1, -1, +1),
+			Vec3(+1, +1, -1),
+			Vec3(+1, +1, +1),
 		};
 		Frustum::Corners res;
 		int i = 0;
-		for (const vec3 &v : clipCorners)
+		for (const Vec3 &v : clipCorners)
 		{
-			const vec4 p = invVP * vec4(v, 1);
-			res.data[i++] = vec3(p) / p[3];
+			const Vec4 p = invVP * Vec4(v, 1);
+			res.data[i++] = Vec3(p) / p[3];
 		}
 		return res;
 	}

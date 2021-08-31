@@ -25,14 +25,14 @@ namespace cage
 			virtual void emit() override
 			{
 				{
-					vec2 p = hierarchy->renderPos;
-					vec2 s = hierarchy->renderSize;
+					Vec2 p = hierarchy->renderPos;
+					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.button.margin);
 					emitElement(GuiElementTypeEnum::Button, mode(), p, s);
 				}
 				{
-					vec2 p = hierarchy->renderPos;
-					vec2 s = hierarchy->renderSize;
+					Vec2 p = hierarchy->renderPos;
+					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.button.margin - skin->layouts[(uint32)GuiElementTypeEnum::Button].border - skin->defaults.button.padding);
 					if (hierarchy->image)
 						hierarchy->image->emit(p, s);
@@ -41,7 +41,7 @@ namespace cage
 				}
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)

@@ -31,7 +31,7 @@ namespace cage
 		ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
 		ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
 
-#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "ginnel", stringizer() + MSG); } }
+#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); } }
 
 		struct MemView
 		{
@@ -278,7 +278,7 @@ namespace cage
 		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			GinnelConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
+			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
@@ -911,10 +911,10 @@ namespace cage
 					{
 						if (logLevel >= 2)
 						{
-							string a;
+							String a;
 							uint16 p;
 							sockReceiver->address.translate(a, p, true);
-							CAGE_LOG(SeverityEnum::Info, "udp", stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
+							CAGE_LOG(SeverityEnum::Info, "udp", Stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
 						}
 						established = true;
 					}
@@ -1343,7 +1343,7 @@ namespace cage
 		return impl->accept();
 	}
 
-	Holder<GinnelConnection> newGinnelConnection(const string &address, uint16 port, uint64 timeout)
+	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout)
 	{
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
 	}

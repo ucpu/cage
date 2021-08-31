@@ -9,11 +9,11 @@ namespace cage
 	class CAGE_CORE_API TcpConnection : public File
 	{
 	public:
-		string address() const; // remote address
+		String address() const; // remote address
 		uint16 port() const; // remote port
 	};
 
-	CAGE_CORE_API Holder<TcpConnection> newTcpConnection(const string &address, uint16 port); // blocking
+	CAGE_CORE_API Holder<TcpConnection> newTcpConnection(const String &address, uint16 port); // blocking
 
 	class CAGE_CORE_API TcpServer : private Immovable
 	{

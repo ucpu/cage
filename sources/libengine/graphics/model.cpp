@@ -78,7 +78,7 @@ namespace cage
 		};
 	}
 
-	void Model::setDebugName(const string &name)
+	void Model::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -129,7 +129,7 @@ namespace cage
 
 		if (!poly->positions().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec3);
+			constexpr uint32 attrSize = sizeof(Vec3);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->positions().data(), bufSize);
@@ -140,7 +140,7 @@ namespace cage
 
 		if (!poly->normals().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec3);
+			constexpr uint32 attrSize = sizeof(Vec3);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->normals().data(), bufSize);
@@ -151,7 +151,7 @@ namespace cage
 
 		if (!poly->uvs().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec2);
+			constexpr uint32 attrSize = sizeof(Vec2);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->uvs().data(), bufSize);
@@ -162,7 +162,7 @@ namespace cage
 
 		if (!poly->uvs3().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec3);
+			constexpr uint32 attrSize = sizeof(Vec3);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->uvs3().data(), bufSize);
@@ -173,7 +173,7 @@ namespace cage
 
 		if (!poly->tangents().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec3);
+			constexpr uint32 attrSize = sizeof(Vec3);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->tangents().data(), bufSize);
@@ -184,7 +184,7 @@ namespace cage
 
 		if (!poly->bitangents().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec3);
+			constexpr uint32 attrSize = sizeof(Vec3);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->bitangents().data(), bufSize);
@@ -195,7 +195,7 @@ namespace cage
 
 		if (!poly->boneIndices().empty())
 		{
-			constexpr uint32 attrSize = sizeof(ivec4);
+			constexpr uint32 attrSize = sizeof(Vec4i);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->boneIndices().data(), bufSize);
@@ -206,7 +206,7 @@ namespace cage
 
 		if (!poly->boneWeights().empty())
 		{
-			constexpr uint32 attrSize = sizeof(vec4);
+			constexpr uint32 attrSize = sizeof(Vec4);
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->boneWeights().data(), bufSize);

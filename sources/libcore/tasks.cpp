@@ -126,7 +126,7 @@ namespace cage
 				threads.resize(processorsCount());
 				uint32 index = 0;
 				for (auto &t : threads)
-					t = newThread(Delegate<void()>().bind<Executor, &Executor::threadEntry>(this), stringizer() + "tasks exec " + index++);
+					t = newThread(Delegate<void()>().bind<Executor, &Executor::threadEntry>(this), Stringizer() + "tasks exec " + index++);
 			}
 
 			~Executor()
@@ -173,7 +173,7 @@ namespace cage
 				try
 				{
 					CAGE_ASSERT(idx < count);
-					ProfilingScope prof(stringizer() + name + " (" + idx + ")", "tasks");
+					ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
 					runner(*this, idx);
 				}
 				catch (...)
@@ -183,7 +183,7 @@ namespace cage
 						if (!exptr)
 							exptr = std::current_exception();
 					}
-					CAGE_LOG(SeverityEnum::Warning, "tasks", stringizer() + "unhandled exception in a task");
+					CAGE_LOG(SeverityEnum::Warning, "tasks", Stringizer() + "unhandled exception in a task");
 					detail::logCurrentCaughtException();
 				}
 				if (++finished == count)
@@ -279,7 +279,7 @@ namespace cage
 				}
 				catch (...)
 				{
-					CAGE_LOG(SeverityEnum::Critical, "tasks", stringizer() + "exception thrown in a task was not propagated to the caller (missing call to wait), terminating now");
+					CAGE_LOG(SeverityEnum::Critical, "tasks", Stringizer() + "exception thrown in a task was not propagated to the caller (missing call to wait), terminating now");
 					detail::logCurrentCaughtException();
 					detail::terminate();
 				}

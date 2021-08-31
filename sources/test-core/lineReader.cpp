@@ -14,24 +14,24 @@ void testLineReader()
 		Holder<LineReader> lr = newLineReader(data);
 		PointerRange<const char> l;
 		CAGE_TEST(lr->readLine(l));
-		CAGE_TEST(string(l) == "abc");
+		CAGE_TEST(String(l) == "abc");
 		CAGE_TEST(lr->readLine(l));
-		CAGE_TEST(string(l) == "def");
+		CAGE_TEST(String(l) == "def");
 		CAGE_TEST(l.begin() == data.begin() + 4);
 		CAGE_TEST(l.end() == data.begin() + 7);
 		CAGE_TEST(lr->readLine(l));
-		CAGE_TEST(string(l) == "ghi");
+		CAGE_TEST(String(l) == "ghi");
 		CAGE_TEST(lr->readLine(l));
-		CAGE_TEST(string(l) == "");
+		CAGE_TEST(String(l) == "");
 		CAGE_TEST(lr->readLine(l));
-		CAGE_TEST(string(l) == "last");
+		CAGE_TEST(String(l) == "last");
 		CAGE_TEST(!lr->readLine(l));
 	}
 
 	{
 		CAGE_TESTCASE("line reader from memory (strings)");
 		Holder<LineReader> lr = newLineReader(data);
-		string l;
+		String l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
 		CAGE_TEST(lr->readLine(l));
@@ -53,7 +53,7 @@ void testLineReader()
 	{
 		CAGE_TESTCASE("line reading from file");
 		Holder<File> lr = readFile("testdir/lineReaderTest");
-		string l;
+		String l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
 		CAGE_TEST(lr->readLine(l));

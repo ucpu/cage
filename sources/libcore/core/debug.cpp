@@ -73,12 +73,12 @@ namespace cage
 			std::terminate();
 		}
 
-		void debugOutput(const string &msg)
+		void debugOutput(const String &msg)
 		{
 			if (!isDebugging())
 				return;
 #ifdef CAGE_SYSTEM_WINDOWS
-			string value = msg + "\n";
+			String value = msg + "\n";
 			OutputDebugString(value.c_str());
 #else
 			// todo
@@ -186,11 +186,11 @@ namespace cage
 		static_assert(sizeof(sintPtr) == sizeof(void*));
 		static_assert(sizeof(bool) == 1);
 
-		static_assert(std::is_trivially_copy_constructible_v<string>);
-		static_assert(std::is_trivially_move_constructible_v<string>);
-		static_assert(std::is_trivially_copy_assignable_v<string>);
-		static_assert(std::is_trivially_move_assignable_v<string>);
-		static_assert(std::is_trivially_copyable_v<string>);
-		static_assert(std::is_trivially_destructible_v<string>);
+		static_assert(std::is_trivially_copy_constructible_v<String>);
+		static_assert(std::is_trivially_move_constructible_v<String>);
+		static_assert(std::is_trivially_copy_assignable_v<String>);
+		static_assert(std::is_trivially_move_assignable_v<String>);
+		static_assert(std::is_trivially_copyable_v<String>);
+		static_assert(std::is_trivially_destructible_v<String>);
 	}
 }

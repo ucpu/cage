@@ -11,12 +11,12 @@ namespace cage
 		RenderQueue *queue = nullptr;
 		AssetManager *assets = nullptr;
 		ProvisionalGraphics *provisionals = nullptr;
-		ivec2 resolution;
+		Vec2i resolution;
 	};
 
 	struct CAGE_ENGINE_API ScreenSpaceAmbientOcclusionConfig : public ScreenSpaceCommonConfig, public ScreenSpaceAmbientOcclusion
 	{
-		mat4 viewProj;
+		Mat4 viewProj;
 		TextureHandle inDepth;
 		TextureHandle inNormal;
 		TextureHandle outAo;
@@ -25,7 +25,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ScreenSpaceDepthOfFieldConfig : public ScreenSpaceCommonConfig, public ScreenSpaceDepthOfField
 	{
-		mat4 proj;
+		Mat4 proj;
 		TextureHandle inDepth;
 		TextureHandle inColor;
 		TextureHandle outColor;
@@ -55,7 +55,7 @@ namespace cage
 	{
 		TextureHandle inColor;
 		TextureHandle outColor;
-		real gamma = 2.2;
+		Real gamma = 2.2;
 		bool tonemapEnabled = true;
 	};
 

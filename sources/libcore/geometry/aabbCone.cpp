@@ -41,7 +41,7 @@ namespace cage
 
 			bool operator()(Aabb const &box, Cone const &cone)
 			{
-				real boxMinHeight(0), boxMaxHeight(0);
+				Real boxMinHeight(0), boxMaxHeight(0);
 				ComputeBoxHeightInterval(box, cone, boxMinHeight, boxMaxHeight);
 				if (boxMinHeight >= cone.length)
 					return false;
@@ -57,18 +57,18 @@ namespace cage
 
 			std::array<std::array<uint16, 2>, MAX_CANDIDATE_EDGES> mCandidateEdges;
 			std::array<std::array<uint16, MAX_VERTICES>, MAX_VERTICES> mAdjacencyMatrix;
-			std::array<vec3, MAX_VERTICES> mVertices;
-			std::array<real, NUM_BOX_VERTICES> mProjectionMin, mProjectionMax;
+			std::array<Vec3, MAX_VERTICES> mVertices;
+			std::array<Real, NUM_BOX_VERTICES> mProjectionMin, mProjectionMax;
 			uint16 mNumCandidateEdges = 0;
 
-			static void ComputeBoxHeightInterval(Aabb const &box, Cone const &cone, real &boxMinHeight, real &boxMaxHeight)
+			static void ComputeBoxHeightInterval(Aabb const &box, Cone const &cone, Real &boxMinHeight, Real &boxMaxHeight)
 			{
-				vec3 C = box.center(), e = box.size() / 2;
-				vec3 const &V = cone.origin;
-				vec3 const &U = cone.direction;
-				vec3 CmV = C - V;
-				real DdCmV = dot(U, CmV);
-				real radius = e[0] * abs(U[0]) + e[1] * abs(U[1]) + e[2] * abs(U[2]);
+				Vec3 C = box.center(), e = box.size() / 2;
+				Vec3 const &V = cone.origin;
+				Vec3 const &U = cone.direction;
+				Vec3 CmV = C - V;
+				Real DdCmV = dot(U, CmV);
+				Real radius = e[0] * abs(U[0]) + e[1] * abs(U[1]) + e[2] * abs(U[2]);
 				boxMinHeight = DdCmV - radius;
 				boxMaxHeight = DdCmV + radius;
 			}
@@ -78,45 +78,45 @@ namespace cage
 				return intersects(box, makeSegment(cone.origin, cone.origin + cone.direction * cone.length));
 			}
 
-			static bool HasPointInsideCone(vec3 const &P0, vec3 const &P1, Cone const &cone)
+			static bool HasPointInsideCone(Vec3 const &P0, Vec3 const &P1, Cone const &cone)
 			{
-				const real coneCosAngle = cos(cone.halfAngle);
-				vec3 const &U = cone.direction;
-				real g = dot(U, P0) - coneCosAngle * length(P0);
-				if (g > (real)0)
+				const Real coneCosAngle = cos(cone.halfAngle);
+				Vec3 const &U = cone.direction;
+				Real g = dot(U, P0) - coneCosAngle * length(P0);
+				if (g > (Real)0)
 					return true;
 				g = dot(U, P1) - coneCosAngle * length(P1);
-				if (g > (real)0)
+				if (g > (Real)0)
 					return true;
-				vec3 E = P1 - P0;
-				vec3 crossP0U = cross(P0, U);
-				vec3 crossP0E = cross(P0, E);
-				real dphi0 = dot(crossP0E, crossP0U);
-				if (dphi0 > (real)0)
+				Vec3 E = P1 - P0;
+				Vec3 crossP0U = cross(P0, U);
+				Vec3 crossP0E = cross(P0, E);
+				Real dphi0 = dot(crossP0E, crossP0U);
+				if (dphi0 > (Real)0)
 				{
-					vec3 crossP1U = cross(P1, U);
-					real dphi1 = dot(crossP0E, crossP1U);
-					if (dphi1 < (real)0)
+					Vec3 crossP1U = cross(P1, U);
+					Real dphi1 = dot(crossP0E, crossP1U);
+					if (dphi1 < (Real)0)
 					{
-						real t = dphi0 / (dphi0 - dphi1);
-						vec3 PMax = P0 + t * E;
+						Real t = dphi0 / (dphi0 - dphi1);
+						Vec3 PMax = P0 + t * E;
 						g = dot(U, PMax) - coneCosAngle * length(PMax);
-						if (g > (real)0)
+						if (g > (Real)0)
 							return true;
 					}
 				}
 				return false;
 			}
 
-			bool BoxFullyInConeSlab(Aabb const &box, real boxMinHeight, real boxMaxHeight, Cone const &cone);
+			bool BoxFullyInConeSlab(Aabb const &box, Real boxMinHeight, Real boxMaxHeight, Cone const &cone);
 
 			bool CandidatesHavePointInsideCone(Cone const &cone) const
 			{
 				for (uint16 i = 0; i < mNumCandidateEdges; ++i)
 				{
 					auto const &edge = mCandidateEdges[i];
-					vec3 const &P0 = mVertices[edge[0]];
-					vec3 const &P1 = mVertices[edge[1]];
+					Vec3 const &P0 = mVertices[edge[0]];
+					Vec3 const &P1 = mVertices[edge[1]];
 					if (HasPointInsideCone(P0, P1, cone))
 						return true;
 				}
@@ -572,19 +572,19 @@ namespace cage
 		}
 		constexpr const std::array<Face, NUM_BOX_FACES> mFaces = initFaces();
 
-		bool TIQuery::BoxFullyInConeSlab(Aabb const &box, real boxMinHeight, real boxMaxHeight, Cone const &cone)
+		bool TIQuery::BoxFullyInConeSlab(Aabb const &box, Real boxMinHeight, Real boxMaxHeight, Cone const &cone)
 		{
-			mVertices[0] = vec3(box.a[0], box.a[1], box.a[2]);
-			mVertices[1] = vec3(box.b[0], box.a[1], box.a[2]);
-			mVertices[2] = vec3(box.a[0], box.b[1], box.a[2]);
-			mVertices[3] = vec3(box.b[0], box.b[1], box.a[2]);
-			mVertices[4] = vec3(box.a[0], box.a[1], box.b[2]);
-			mVertices[5] = vec3(box.b[0], box.a[1], box.b[2]);
-			mVertices[6] = vec3(box.a[0], box.b[1], box.b[2]);
-			mVertices[7] = vec3(box.b[0], box.b[1], box.b[2]);
+			mVertices[0] = Vec3(box.a[0], box.a[1], box.a[2]);
+			mVertices[1] = Vec3(box.b[0], box.a[1], box.a[2]);
+			mVertices[2] = Vec3(box.a[0], box.b[1], box.a[2]);
+			mVertices[3] = Vec3(box.b[0], box.b[1], box.a[2]);
+			mVertices[4] = Vec3(box.a[0], box.a[1], box.b[2]);
+			mVertices[5] = Vec3(box.b[0], box.a[1], box.b[2]);
+			mVertices[6] = Vec3(box.a[0], box.b[1], box.b[2]);
+			mVertices[7] = Vec3(box.b[0], box.b[1], box.b[2]);
 			for (int i = 0; i < NUM_BOX_VERTICES; ++i)
 				mVertices[i] -= cone.origin;
-			real coneMaxHeight = cone.length;
+			Real coneMaxHeight = cone.length;
 			if (0 <= boxMinHeight && boxMaxHeight <= coneMaxHeight)
 			{
 				std::copy(mEdges.begin(), mEdges.end(), mCandidateEdges.begin());
@@ -598,8 +598,8 @@ namespace cage
 		{
 			for (uint16 i = 0; i < NUM_BOX_VERTICES; ++i)
 			{
-				real h = dot(cone.direction, mVertices[i]);
-				real coneMaxHeight = cone.length;
+				Real h = dot(cone.direction, mVertices[i]);
+				Real coneMaxHeight = cone.length;
 				mProjectionMin[i] = -h;
 				mProjectionMax[i] = h - coneMaxHeight;
 			}
@@ -607,40 +607,40 @@ namespace cage
 			for (uint16 i = 0; i < NUM_BOX_EDGES; ++i, ++v0, ++v1)
 			{
 				auto const &edge = mEdges[i];
-				real p0Min = mProjectionMin[edge[0]];
-				real p1Min = mProjectionMin[edge[1]];
-				bool clipMin = (p0Min < (real)0 && p1Min >(real)0) || (p0Min > (real)0 && p1Min < (real)0);
+				Real p0Min = mProjectionMin[edge[0]];
+				Real p1Min = mProjectionMin[edge[1]];
+				bool clipMin = (p0Min < (Real)0 && p1Min >(Real)0) || (p0Min > (Real)0 && p1Min < (Real)0);
 				if (clipMin)
 					mVertices[v0] = (p1Min * mVertices[edge[0]] - p0Min * mVertices[edge[1]]) / (p1Min - p0Min);
-				real p0Max = mProjectionMax[edge[0]];
-				real p1Max = mProjectionMax[edge[1]];
-				bool clipMax = (p0Max < (real)0 && p1Max >(real)0) || (p0Max > (real)0 && p1Max < (real)0);
+				Real p0Max = mProjectionMax[edge[0]];
+				Real p1Max = mProjectionMax[edge[1]];
+				bool clipMax = (p0Max < (Real)0 && p1Max >(Real)0) || (p0Max > (Real)0 && p1Max < (Real)0);
 				if (clipMax)
 					mVertices[v1] = (p1Max * mVertices[edge[0]] - p0Max * mVertices[edge[1]]) / (p1Max - p0Max);
 				if (clipMin)
 				{
 					if (clipMax)
 						InsertEdge(v0, v1);
-					else if (p0Min < (real)0)
+					else if (p0Min < (Real)0)
 						InsertEdge(edge[0], v0);
 					else
 						InsertEdge(edge[1], v0);
 				}
 				else if (clipMax)
 				{
-					if (p0Max < (real)0)
+					if (p0Max < (Real)0)
 						InsertEdge(edge[0], v1);
 					else
 						InsertEdge(edge[1], v1);
 				}
-				else if (p0Min <= (real)0 && p1Min <= (real)0 && p0Max <= (real)0 && p1Max <= (real)0)
+				else if (p0Min <= (Real)0 && p1Min <= (Real)0 && p0Max <= (Real)0 && p1Max <= (Real)0)
 					InsertEdge(edge[0], edge[1]);
 			}
 		}
 
 		void TIQuery::ComputeCandidatesOnBoxFaces()
 		{
-			real p0, p1, p2, p3;
+			Real p0, p1, p2, p3;
 			uint16 b0, b1, b2, b3, index;
 			for (uint16 i = 0; i < NUM_BOX_FACES; ++i)
 			{
@@ -651,10 +651,10 @@ namespace cage
 				p1 = mProjectionMin[face.v[1]];
 				p2 = mProjectionMin[face.v[2]];
 				p3 = mProjectionMin[face.v[3]];
-				b0 = (p0 < (real)0 ? 0 : (p0 > (real)0 ? 2 : 1));
-				b1 = (p1 < (real)0 ? 0 : (p1 > (real)0 ? 2 : 1));
-				b2 = (p2 < (real)0 ? 0 : (p2 > (real)0 ? 2 : 1));
-				b3 = (p3 < (real)0 ? 0 : (p3 > (real)0 ? 2 : 1));
+				b0 = (p0 < (Real)0 ? 0 : (p0 > (Real)0 ? 2 : 1));
+				b1 = (p1 < (Real)0 ? 0 : (p1 > (Real)0 ? 2 : 1));
+				b2 = (p2 < (Real)0 ? 0 : (p2 > (Real)0 ? 2 : 1));
+				b3 = (p3 < (Real)0 ? 0 : (p3 > (Real)0 ? 2 : 1));
 				index = b3 + 3 * (b2 + 3 * (b1 + 3 * b0));
 				(this->*mConfiguration[index])(VERTEX_MIN_BASE, face);
 
@@ -663,10 +663,10 @@ namespace cage
 				p1 = mProjectionMax[face.v[1]];
 				p2 = mProjectionMax[face.v[2]];
 				p3 = mProjectionMax[face.v[3]];
-				b0 = (p0 < (real)0 ? 0 : (p0 > (real)0 ? 2 : 1));
-				b1 = (p1 < (real)0 ? 0 : (p1 > (real)0 ? 2 : 1));
-				b2 = (p2 < (real)0 ? 0 : (p2 > (real)0 ? 2 : 1));
-				b3 = (p3 < (real)0 ? 0 : (p3 > (real)0 ? 2 : 1));
+				b0 = (p0 < (Real)0 ? 0 : (p0 > (Real)0 ? 2 : 1));
+				b1 = (p1 < (Real)0 ? 0 : (p1 > (Real)0 ? 2 : 1));
+				b2 = (p2 < (Real)0 ? 0 : (p2 > (Real)0 ? 2 : 1));
+				b3 = (p3 < (Real)0 ? 0 : (p3 > (Real)0 ? 2 : 1));
 				index = b3 + 3 * (b2 + 3 * (b1 + 3 * b0));
 				(this->*mConfiguration[index])(VERTEX_MAX_BASE, face);
 			}

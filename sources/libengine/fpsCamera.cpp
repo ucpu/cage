@@ -14,11 +14,11 @@ namespace cage
 		public:
 			WindowEventListeners listeners;
 			EventListener<void()> updateListener;
-			VariableSmoothingBuffer<vec2, 1> mouseSmoother;
-			VariableSmoothingBuffer<vec3, 3> moveSmoother;
-			VariableSmoothingBuffer<real, 2> wheelSmoother;
-			vec2 mouseMoveAccum;
-			real wheelAccum;
+			VariableSmoothingBuffer<Vec2, 1> mouseSmoother;
+			VariableSmoothingBuffer<Vec3, 3> moveSmoother;
+			VariableSmoothingBuffer<Real, 2> wheelSmoother;
+			Vec2 mouseMoveAccum;
+			Real wheelAccum;
 
 			Entity *ent = nullptr;
 			bool keysPressedArrows[6] = {false, false, false, false, false, false}; // wsadeq
@@ -35,10 +35,10 @@ namespace cage
 				controlThread().update.attach(updateListener);
 			}
 
-			const ivec2 centerMouse()
+			const Vec2i centerMouse()
 			{
 				auto w = engineWindow();
-				ivec2 pt2 = w->resolution();
+				Vec2i pt2 = w->resolution();
 				pt2[0] /= 2;
 				pt2[1] /= 2;
 				w->mousePosition(pt2);
@@ -50,23 +50,23 @@ namespace cage
 				return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags, const ivec2 &)
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags, const Vec2i &)
 			{
 				if (mouseEnabled(buttons))
 					centerMouse();
 				return false;
 			}
 
-			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags, const ivec2 &pt)
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags, const Vec2i &pt)
 			{
 				if (!mouseEnabled(buttons))
 					return false;
-				ivec2 pt2 = centerMouse();
-				mouseMoveAccum += vec2(pt2 - pt);
+				Vec2i pt2 = centerMouse();
+				mouseMoveAccum += Vec2(pt2 - pt);
 				return false;
 			}
 
-			bool mouseWheel(sint32 wheel, ModifiersFlags, const ivec2 &)
+			bool mouseWheel(sint32 wheel, ModifiersFlags, const Vec2i &)
 			{
 				if (!ent)
 					return false;
@@ -140,28 +140,28 @@ namespace cage
 
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);
-				mouseMoveAccum = vec2();
+				mouseMoveAccum = Vec2();
 				wheelSmoother.add(wheelAccum);
 				wheelAccum = 0;
-				vec2 r = mouseSmoother.smooth() * turningSpeed;
+				Vec2 r = mouseSmoother.smooth() * turningSpeed;
 				if (freeMove)
 				{
-					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs(wheelSmoother.smooth() * rollSpeed));
+					t.orientation = t.orientation * Quat(Rads(r[1]), Rads(r[0]), Degs(wheelSmoother.smooth() * rollSpeed));
 				}
 				else
 				{ // limit pitch
-					vec3 f = t.orientation * vec3(0, 0, -1);
-					rads pitch = asin(f[1]);
+					Vec3 f = t.orientation * Vec3(0, 0, -1);
+					Rads pitch = asin(f[1]);
 					f[1] = 0; f = normalize(f);
-					rads yaw = atan2(-f[0], f[2]) + degs(90) + rads(r[0]);
-					pitch = clamp(pitch + rads(r[1]), pitchLimitDown, pitchLimitUp);
-					t.orientation = quat(pitch, yaw, degs());
+					Rads yaw = atan2(-f[0], f[2]) + Degs(90) + Rads(r[0]);
+					pitch = clamp(pitch + Rads(r[1]), pitchLimitDown, pitchLimitUp);
+					t.orientation = Quat(pitch, yaw, Degs());
 				}
 
 				// movement
-				vec3 f = t.orientation * vec3(0, 0, -1);
-				vec3 l = t.orientation * vec3(-1, 0, 0);
-				vec3 u = vec3(0, 1, 0);
+				Vec3 f = t.orientation * Vec3(0, 0, -1);
+				Vec3 l = t.orientation * Vec3(-1, 0, 0);
+				Vec3 u = Vec3(0, 1, 0);
 				if (freeMove)
 					u = t.orientation * u;
 				else
@@ -169,17 +169,17 @@ namespace cage
 					f[1] = 0; f = normalize(f);
 					l[1] = 0; l = normalize(l);
 				}
-				vec3 movement = vec3();
+				Vec3 movement = Vec3();
 				if (keysPressedArrows[0]) movement += f;
 				if (keysPressedArrows[1]) movement -= f;
 				if (keysPressedArrows[2]) movement += l;
 				if (keysPressedArrows[3]) movement -= l;
 				if (keysPressedArrows[4]) movement += u;
 				if (keysPressedArrows[5]) movement -= u;
-				if (movement != vec3())
+				if (movement != Vec3())
 					moveSmoother.add(normalize(movement) * movementSpeed);
 				else
-					moveSmoother.add(vec3());
+					moveSmoother.add(Vec3());
 				t.position += moveSmoother.smooth();
 			}
 		};

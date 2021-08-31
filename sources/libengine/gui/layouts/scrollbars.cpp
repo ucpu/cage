@@ -10,16 +10,16 @@ namespace cage
 
 			struct Scrollbar
 			{
-				vec2 position = vec2::Nan();
-				vec2 size = vec2::Nan();
-				real dotSize = real::Nan();
-				real &value;
+				Vec2 position = Vec2::Nan();
+				Vec2 size = Vec2::Nan();
+				Real dotSize = Real::Nan();
+				Real &value;
 
-				Scrollbar(real &value) : value(value)
+				Scrollbar(Real &value) : value(value)
 				{}
 			} scrollbars[2];
 
-			real wheelFactor;
+			Real wheelFactor;
 
 			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
 			{
@@ -40,7 +40,7 @@ namespace cage
 
 			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				const real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
+				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
 				FinalPosition u(update);
 				u.renderSize = hierarchy->requestedSize;
@@ -58,7 +58,7 @@ namespace cage
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
 						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a] + scw) * scrollbars[a].value;
 						u.clipSize[1 - a] -= scw;
-						real minSize = min(s.size[0], s.size[1]);
+						Real minSize = min(s.size[0], s.size[1]);
 						s.dotSize = max(minSize, sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
 					}
 					else
@@ -79,10 +79,10 @@ namespace cage
 					if (s.position.valid())
 					{
 						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
-						vec2 ds;
+						Vec2 ds;
 						ds[a] = s.dotSize;
 						ds[1 - a] = s.size[1 - a];
-						vec2 dp = s.position;
+						Vec2 dp = s.position;
 						dp[a] += (s.size[a] - ds[a]) * s.value;
 						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalDot : GuiElementTypeEnum::ScrollbarVerticalDot, mode(s.position, s.size, 1 << (30 + a)), dp, ds);
 					}
@@ -116,7 +116,7 @@ namespace cage
 				}
 			}
 
-			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point, bool move)
+			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point, bool move)
 			{
 				if (buttons != MouseButtonsFlags::Left)
 					return true;
@@ -140,18 +140,18 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}
 
-			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (modifiers != ModifiersFlags::None)
 					return false;

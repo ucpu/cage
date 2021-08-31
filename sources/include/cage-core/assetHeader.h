@@ -20,7 +20,7 @@ namespace cage
 		uint16 dependenciesCount = 0;
 
 		AssetHeader() = default;
-		explicit AssetHeader(const string &name, uint16 schemeIndex);
+		explicit AssetHeader(const String &name, uint16 schemeIndex);
 
 		// follows:
 		// array of dependency names, each uint32

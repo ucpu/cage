@@ -8,15 +8,15 @@ namespace cage
 	struct CAGE_ENGINE_API ScreenMode
 	{
 	public:
-		ivec2 resolution;
+		Vec2i resolution;
 		uint32 frequency = 0;
 	};
 
 	class CAGE_ENGINE_API ScreenDevice : private Immovable
 	{
 	public:
-		string id() const;
-		string name() const;
+		String id() const;
+		String name() const;
 
 		uint32 currentMode() const;
 		PointerRange<const ScreenMode> modes() const;

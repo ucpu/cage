@@ -2,10 +2,10 @@
 
 namespace cage
 {
-	vec2 vec2::parse(const string &str)
+	Vec2 Vec2::parse(const String &str)
 	{
-		vec2 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec2 data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 2; i++)
 			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
@@ -13,10 +13,10 @@ namespace cage
 		return data;
 	}
 
-	vec3 vec3::parse(const string &str)
+	Vec3 Vec3::parse(const String &str)
 	{
-		vec3 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec3 data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 3; i++)
 			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
@@ -24,10 +24,10 @@ namespace cage
 		return data;
 	}
 
-	vec4 vec4::parse(const string &str)
+	Vec4 Vec4::parse(const String &str)
 	{
-		vec4 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec4 data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
@@ -35,10 +35,10 @@ namespace cage
 		return data;
 	}
 
-	ivec2 ivec2::parse(const string &str)
+	Vec2i Vec2i::parse(const String &str)
 	{
-		ivec2 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec2i data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 2; i++)
 			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
@@ -46,10 +46,10 @@ namespace cage
 		return data;
 	}
 
-	ivec3 ivec3::parse(const string &str)
+	Vec3i Vec3i::parse(const String &str)
 	{
-		ivec3 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec3i data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 3; i++)
 			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
@@ -57,10 +57,10 @@ namespace cage
 		return data;
 	}
 
-	ivec4 ivec4::parse(const string &str)
+	Vec4i Vec4i::parse(const String &str)
 	{
-		ivec4 data;
-		string s = privat::tryRemoveParentheses(str);
+		Vec4i data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
@@ -68,10 +68,10 @@ namespace cage
 		return data;
 	}
 
-	quat quat::parse(const string &str)
+	Quat Quat::parse(const String &str)
 	{
-		quat data;
-		string s = privat::tryRemoveParentheses(str);
+		Quat data;
+		String s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
@@ -79,15 +79,15 @@ namespace cage
 		return data;
 	}
 
-	quat::quat(rads pitch, rads yaw, rads roll)
+	Quat::Quat(Rads pitch, Rads yaw, Rads roll)
 	{
-		vec3 eulerAngle = vec3(real(pitch), real(yaw), real(roll)) * 0.5;
-		vec3 c;
-		vec3 s;
+		Vec3 eulerAngle = Vec3(Real(pitch), Real(yaw), Real(roll)) * 0.5;
+		Vec3 c;
+		Vec3 s;
 		for (uint32 i = 0; i < 3; i++)
 		{
-			c[i] = cos(rads(eulerAngle[i]));
-			s[i] = sin(rads(eulerAngle[i]));
+			c[i] = cos(Rads(eulerAngle[i]));
+			s[i] = sin(Rads(eulerAngle[i]));
 		}
 		data[0] = s[0] * c[1] * c[2] - c[0] * s[1] * s[2];
 		data[1] = c[0] * s[1] * c[2] + s[0] * c[1] * s[2];
@@ -96,23 +96,23 @@ namespace cage
 		*this = normalize(*this);
 	}
 
-	quat::quat(const vec3 &axis, rads angle)
+	Quat::Quat(const Vec3 &axis, Rads angle)
 	{
-		vec3 vn = normalize(axis);
-		real sinAngle = sin(angle * 0.5);
+		Vec3 vn = normalize(axis);
+		Real sinAngle = sin(angle * 0.5);
 		data[0] = vn.data[0] * sinAngle;
 		data[1] = vn.data[1] * sinAngle;
 		data[2] = vn.data[2] * sinAngle;
 		data[3] = cos(angle * 0.5);
 	}
 
-	quat::quat(const mat3 & rot)
+	Quat::Quat(const Mat3 & rot)
 	{
 #define a(x,y) rot[y*3+x]
-		real trace = a(0, 0) + a(1, 1) + a(2, 2);
+		Real trace = a(0, 0) + a(1, 1) + a(2, 2);
 		if (trace > 0)
 		{
-			real s = 0.5 / sqrt(trace + 1);
+			Real s = 0.5 / sqrt(trace + 1);
 			data[3] = 0.25 / s;
 			data[0] = (a(2, 1) - a(1, 2)) * s;
 			data[1] = (a(0, 2) - a(2, 0)) * s;
@@ -120,7 +120,7 @@ namespace cage
 		}
 		else if (a(0, 0) > a(1, 1) && a(0, 0) > a(2, 2))
 		{
-			real s = 2 * sqrt(1 + a(0, 0) - a(1, 1) - a(2, 2));
+			Real s = 2 * sqrt(1 + a(0, 0) - a(1, 1) - a(2, 2));
 			data[3] = (a(2, 1) - a(1, 2)) / s;
 			data[0] = 0.25 * s;
 			data[1] = (a(0, 1) + a(1, 0)) / s;
@@ -128,7 +128,7 @@ namespace cage
 		}
 		else if (a(1, 1) > a(2, 2))
 		{
-			real s = 2.0 * sqrt(1.0f + a(1, 1) - a(0, 0) - a(2, 2));
+			Real s = 2.0 * sqrt(1.0f + a(1, 1) - a(0, 0) - a(2, 2));
 			data[3] = (a(0, 2) - a(2, 0)) / s;
 			data[0] = (a(0, 1) + a(1, 0)) / s;
 			data[1] = 0.25 * s;
@@ -136,7 +136,7 @@ namespace cage
 		}
 		else
 		{
-			real s = 2.0 * sqrt(1.0f + a(2, 2) - a(0, 0) - a(1, 1));
+			Real s = 2.0 * sqrt(1.0f + a(2, 2) - a(0, 0) - a(1, 1));
 			data[3] = (a(1, 0) - a(0, 1)) / s;
 			data[0] = (a(0, 2) + a(2, 0)) / s;
 			data[1] = (a(1, 2) + a(2, 1)) / s;
@@ -145,31 +145,31 @@ namespace cage
 #undef a
 	}
 
-	quat::quat(const vec3 &forward, const vec3 &up, bool keepUp)
+	Quat::Quat(const Vec3 &forward, const Vec3 &up, bool keepUp)
 	{
-		*this = quat(mat3(forward, up, keepUp));
+		*this = Quat(Mat3(forward, up, keepUp));
 	}
 
-	vec3 operator * (const quat &l, const vec3 &r) noexcept
+	Vec3 operator * (const Quat &l, const Vec3 &r) noexcept
 	{
-		vec3 t = cross(vec3(l[0], l[1], l[2]), r) * 2;
-		return r + t * l[3] + cross(vec3(l[0], l[1], l[2]), t);
+		Vec3 t = cross(Vec3(l[0], l[1], l[2]), r) * 2;
+		return r + t * l[3] + cross(Vec3(l[0], l[1], l[2]), t);
 	}
 
-	vec3 operator * (const vec3 &l, const quat &r) noexcept
+	Vec3 operator * (const Vec3 &l, const Quat &r) noexcept
 	{
 		return r * l;
 	}
 
-	quat lerp(const quat &a, const quat &b, real f)
+	Quat lerp(const Quat &a, const Quat &b, Real f)
 	{
 		return normalize(a * (1 - f) + b * f);
 	}
 
-	quat slerpPrecise(const quat &a, const quat &b, real f)
+	Quat slerpPrecise(const Quat &a, const Quat &b, Real f)
 	{
-		real dt = dot(a, b);
-		quat c;
+		Real dt = dot(a, b);
+		Quat c;
 		if (dt < 0)
 		{
 			dt = -dt;
@@ -179,77 +179,77 @@ namespace cage
 			c = b;
 		if (dt < 1 - 1e-7)
 		{
-			rads angle = acos(dt);
+			Rads angle = acos(dt);
 			return normalize((a * sin(angle * (1 - f)) + c * sin(angle * f)) * (1 / sin(angle)));
 		}
 		else
 			return lerp(a, c, f);
 	}
 
-	quat slerp(const quat &l, const quat &r, real t)
+	Quat slerp(const Quat &l, const Quat &r, Real t)
 	{
 		// https://zeux.io/2016/05/05/optimizing-slerp/
-		real ca = dot(l, r);
-		real d = abs(ca);
-		real A = 1.0904f + d * (-3.2452f + d * (3.55645f - d * 1.43519f));
-		real B = 0.848013f + d * (-1.06021f + d * 0.215638f);
-		real k = A * (t - 0.5f) * (t - 0.5f) + B;
-		real ot = t + t * (t - 0.5f) * (t - 1) * k;
+		Real ca = dot(l, r);
+		Real d = abs(ca);
+		Real A = 1.0904f + d * (-3.2452f + d * (3.55645f - d * 1.43519f));
+		Real B = 0.848013f + d * (-1.06021f + d * 0.215638f);
+		Real k = A * (t - 0.5f) * (t - 0.5f) + B;
+		Real ot = t + t * (t - 0.5f) * (t - 1) * k;
 		return normalize(l * (1 - ot) + r * (ca > 0 ? ot : -ot));
 	}
 
-	quat rotate(const quat &from, const quat &toward, rads maxTurn)
+	Quat rotate(const Quat &from, const Quat &toward, Rads maxTurn)
 	{
-		CAGE_ASSERT(maxTurn >= degs(0));
-		CAGE_ASSERT(maxTurn <= degs(180));
-		real dt = abs(dot(from, toward));
-		rads angle = acos(dt);
+		CAGE_ASSERT(maxTurn >= Degs(0));
+		CAGE_ASSERT(maxTurn <= Degs(180));
+		Real dt = abs(dot(from, toward));
+		Rads angle = acos(dt);
 		if (angle > maxTurn)
-			return slerp(from, toward, real(maxTurn / angle));
+			return slerp(from, toward, Real(maxTurn / angle));
 		else
 			return toward;
 	}
 
-	rads angle(const quat &a, const quat &b)
+	Rads angle(const Quat &a, const Quat &b)
 	{
-		quat q = conjugate(a) * b;
-		vec3 v = vec3(q.data[0], q.data[1], q.data[2]);
+		Quat q = conjugate(a) * b;
+		Vec3 v = Vec3(q.data[0], q.data[1], q.data[2]);
 		return 2 * atan2(q.data[3], length(v));
 	}
 
-	rads pitch(const quat &q)
+	Rads pitch(const Quat &q)
 	{
-		const real qx = q[0];
-		const real qy = q[1];
-		const real qz = q[2];
-		const real qw = q[3];
+		const Real qx = q[0];
+		const Real qy = q[1];
+		const Real qz = q[2];
+		const Real qw = q[3];
 		return atan2(sqr(qw) - sqr(qx) - sqr(qy) + sqr(qz), 2 * (qy * qz + qw * qx));
 	}
 
-	rads yaw(const quat &q)
+	Rads yaw(const Quat &q)
 	{
-		const real qx = q[0];
-		const real qy = q[1];
-		const real qz = q[2];
-		const real qw = q[3];
+		const Real qx = q[0];
+		const Real qy = q[1];
+		const Real qz = q[2];
+		const Real qw = q[3];
 		return asin(-2 * (qx * qz - qw * qy));
 	}
 
-	rads roll(const quat &q)
+	Rads roll(const Quat &q)
 	{
-		const real qx = q[0];
-		const real qy = q[1];
-		const real qz = q[2];
-		const real qw = q[3];
+		const Real qx = q[0];
+		const Real qy = q[1];
+		const Real qz = q[2];
+		const Real qw = q[3];
 		return atan2(sqr(qw) + sqr(qx) - sqr(qy) - sqr(qz), 2 * (qx * qy + qw * qz));
 	}
 
-	void toAxisAngle(const quat &x, vec3 &axis, rads &angle)
+	void toAxisAngle(const Quat &x, Vec3 &axis, Rads &angle)
 	{
 		angle = acos(x[3]) * 2;
-		real s = sqrt(1 - x[3] * x[3]);
+		Real s = sqrt(1 - x[3] * x[3]);
 		if (s < 0.001)
-			axis = vec3(1, 0, 0);
+			axis = Vec3(1, 0, 0);
 		else
 		{
 			s = 1 / s;
@@ -259,12 +259,12 @@ namespace cage
 		}
 	}
 
-	vec3 dominantAxis(const vec3 &x)
+	Vec3 dominantAxis(const Vec3 &x)
 	{
 		if (abs(x[0]) > abs(x[1]) && abs(x[0]) > abs(x[2]))
-			return vec3(sign(x[0]), 0, 0);
+			return Vec3(sign(x[0]), 0, 0);
 		if (abs(x[1]) > abs(x[2]))
-			return vec3(0, sign(x[1]), 0);
-		return vec3(0, 0, sign(x[2]));
+			return Vec3(0, sign(x[1]), 0);
+		return Vec3(0, 0, sign(x[2]));
 	}
 }

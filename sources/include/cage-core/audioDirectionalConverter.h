@@ -7,9 +7,9 @@ namespace cage
 {
 	struct CAGE_CORE_API AudioDirectionalProcessConfig
 	{
-		quat listenerOrientation;
-		vec3 listenerPosition;
-		vec3 sourcePosition;
+		Quat listenerOrientation;
+		Vec3 listenerPosition;
+		Vec3 sourcePosition;
 	};
 
 	class CAGE_CORE_API AudioDirectionalConverter : private Immovable

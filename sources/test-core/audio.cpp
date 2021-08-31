@@ -7,7 +7,7 @@
 #include <initializer_list>
 #include <vector>
 
-void test(real, real);
+void test(Real, Real);
 
 namespace
 {
@@ -16,33 +16,33 @@ namespace
 	void generateMono(Audio *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
 		const double step = twoPi * pitch / (double)sampleRate;
-		std::vector<real> samples;
+		std::vector<Real> samples;
 		samples.reserve(frames);
 		for (uint32 index = 0; index < frames; index++)
 		{
 			double angle = index * step;
-			real sample = sin(rads(angle));
+			Real sample = sin(Rads(angle));
 			samples.push_back(sample);
 		}
-		snd->importRaw(bufferCast<const char, real>(samples), frames, 1, sampleRate, AudioFormatEnum::Float);
+		snd->importRaw(bufferCast<const char, Real>(samples), frames, 1, sampleRate, AudioFormatEnum::Float);
 	}
 
 	void generateStereo(Audio *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
 		const double stepTone = twoPi * pitch / (double)sampleRate;
 		const double stepDir = twoPi * 0.5 / (double)sampleRate;
-		std::vector<real> samples;
+		std::vector<Real> samples;
 		samples.reserve(frames * 2);
 		for (uint32 index = 0; index < frames; index++)
 		{
-			real sample = sin(rads(index * stepTone));
-			real pan = sin(rads(index * stepDir)) * 0.5 + 0.5;
-			real left = sample * pan;
-			real right = sample * (1 - pan);
+			Real sample = sin(Rads(index * stepTone));
+			Real pan = sin(Rads(index * stepDir)) * 0.5 + 0.5;
+			Real left = sample * pan;
+			Real right = sample * (1 - pan);
 			samples.push_back(left);
 			samples.push_back(right);
 		}
-		snd->importRaw(bufferCast<const char, real>(samples), frames, 2, sampleRate, AudioFormatEnum::Float);
+		snd->importRaw(bufferCast<const char, Real>(samples), frames, 2, sampleRate, AudioFormatEnum::Float);
 	}
 }
 
@@ -174,16 +174,16 @@ void testAudio()
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
 		// no encoding to mp3 or flac for now
-		for (const string &format : { ".ogg", ".wav" })
-			snd->exportFile(stringizer() + "sounds/formats/sample" + format);
+		for (const String &format : { ".ogg", ".wav" })
+			snd->exportFile(Stringizer() + "sounds/formats/sample" + format);
 	}
 
 	{
 		CAGE_TESTCASE("import formats");
 		Holder<Audio> snd = newAudio();
-		for (const string &format : { ".ogg", ".wav" })
+		for (const String &format : { ".ogg", ".wav" })
 		{
-			snd->importFile(stringizer() + "sounds/formats/sample" + format);
+			snd->importFile(Stringizer() + "sounds/formats/sample" + format);
 			CAGE_TEST(snd->frames() == 480000);
 			CAGE_TEST(snd->channels() == 2);
 			CAGE_TEST(snd->sampleRate() == 48000);

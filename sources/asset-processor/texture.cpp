@@ -8,15 +8,15 @@
 #include <vector>
 #include <set>
 
-vec2 convertSpecularToSpecial(const vec3 &spec)
+Vec2 convertSpecularToSpecial(const Vec3 &spec)
 {
-	vec3 hsv = colorRgbToHsv(spec);
-	return vec2(hsv[2], hsv[1]);
+	Vec3 hsv = colorRgbToHsv(spec);
+	return Vec2(hsv[2], hsv[1]);
 }
 
 namespace
 {
-	uint32 convertFilter(const string &f)
+	uint32 convertFilter(const String &f)
 	{
 		if (f == "nearestMipmapNearest")
 			return GL_NEAREST_MIPMAP_NEAREST;
@@ -47,7 +47,7 @@ namespace
 		}
 	}
 
-	uint32 convertWrap(const string &f)
+	uint32 convertWrap(const String &f)
 	{
 		if (f == "clampToEdge")
 			return GL_CLAMP_TO_EDGE;
@@ -60,7 +60,7 @@ namespace
 		return 0;
 	}
 
-	uint32 convertTarget(const string &f)
+	uint32 convertTarget(const String &f)
 	{
 		if (f == "2d")
 			return GL_TEXTURE_2D;
@@ -88,17 +88,17 @@ namespace
 			{
 				for (sint32 x = 0; (uint32)x < w; x++)
 				{
-					const real tl = convertToNormalIntensity(x - 1, y - 1);
-					const real tc = convertToNormalIntensity(x + 0, y - 1);
-					const real tr = convertToNormalIntensity(x + 1, y - 1);
-					const real rc = convertToNormalIntensity(x + 1, y + 0);
-					const real br = convertToNormalIntensity(x + 1, y + 1);
-					const real bc = convertToNormalIntensity(x + 0, y + 1);
-					const real bl = convertToNormalIntensity(x - 1, y + 1);
-					const real lc = convertToNormalIntensity(x - 1, y + 0);
-					const real dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
-					const real dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
-					vec3 v(-dX, -dY, strength);
+					const Real tl = convertToNormalIntensity(x - 1, y - 1);
+					const Real tc = convertToNormalIntensity(x + 0, y - 1);
+					const Real tr = convertToNormalIntensity(x + 1, y - 1);
+					const Real rc = convertToNormalIntensity(x + 1, y + 0);
+					const Real br = convertToNormalIntensity(x + 1, y + 1);
+					const Real bc = convertToNormalIntensity(x + 0, y + 1);
+					const Real bl = convertToNormalIntensity(x - 1, y + 1);
+					const Real lc = convertToNormalIntensity(x - 1, y + 0);
+					const Real dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
+					const Real dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
+					Vec3 v(-dX, -dY, strength);
 					v = normalize(v);
 					v += 1;
 					v *= 0.5;
@@ -120,8 +120,8 @@ namespace
 				{
 					for (uint32 x = 0; x < w; x++)
 					{
-						vec3 color = vec3(data->get1(x, y));
-						vec2 special = ::convertSpecularToSpecial(color);
+						Vec3 color = Vec3(data->get1(x, y));
+						Vec2 special = ::convertSpecularToSpecial(color);
 						CAGE_ASSERT(special[1] < 1e-7);
 						data->set(x, y, special[0]);
 					}
@@ -135,8 +135,8 @@ namespace
 				{
 					for (uint32 x = 0; x < w; x++)
 					{
-						vec3 color = data->get3(x, y);
-						vec2 special = ::convertSpecularToSpecial(color);
+						Vec3 color = data->get3(x, y);
+						Vec2 special = ::convertSpecularToSpecial(color);
 						res->set(x, y, special);
 					}
 				}
@@ -179,11 +179,11 @@ namespace
 		}
 
 	private:
-		real convertToNormalIntensity(sint32 x, sint32 y)
+		Real convertToNormalIntensity(sint32 x, sint32 y)
 		{
 			x = min((sint32)data->width() - 1, max(0, x));
 			y = min((sint32)data->height() - 1, max(0, y));
-			real sum = 0;
+			Real sum = 0;
 			switch (data->channels())
 			{
 			case 3: sum += data->value(x, y, 2);
@@ -199,11 +199,11 @@ namespace
 
 	std::vector<ImageLayer> images;
 
-	void loadFile(const string &filename)
+	void loadFile(const String &filename)
 	{
-		writeLine(string("use=") + filename);
-		string wholeFilename = pathJoin(inputDirectory, filename);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file '" + wholeFilename + "'");
+		writeLine(String("use=") + filename);
+		String wholeFilename = pathJoin(inputDirectory, filename);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file '" + wholeFilename + "'");
 		ImageLayer l;
 		l.data = newImage();
 		l.data->importFile(wholeFilename);
@@ -214,12 +214,12 @@ namespace
 	{
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling whole image (3D)");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling whole image (3D)");
 			CAGE_THROW_ERROR(NotImplemented, "3D texture downscale");
 		}
 		else
 		{ // downscale each image separately
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling each slice separately");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling each slice separately");
 			for (auto &it : images)
 				imageResize(it.data.get(), max(it.data->width() / downscale, 1u), max(it.data->height() / downscale, 1u));
 		}
@@ -326,7 +326,7 @@ namespace
 		data.flags =
 			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
 			(toBool(properties("animationLoop")) ? TextureFlags::AnimationLoop : TextureFlags::None);
-		data.resolution = ivec3(images[0].data->width(), images[0].data->height(), numeric_cast<uint32>(images.size()));
+		data.resolution = Vec3i(images[0].data->width(), images[0].data->height(), numeric_cast<uint32>(images.size()));
 		data.channels = images[0].data->channels();
 
 		// todo
@@ -391,7 +391,7 @@ namespace
 
 		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
@@ -423,8 +423,8 @@ void processTexture()
 		else
 		{
 			images.reserve(100);
-			string prefix = subString(inputFile, 0, firstDollar);
-			string suffix = subString(inputFile, firstDollar, m);
+			String prefix = subString(inputFile, 0, firstDollar);
+			String suffix = subString(inputFile, firstDollar, m);
 			uint32 dollarsCount = 0;
 			while (!suffix.empty() && suffix[0] == '$')
 			{
@@ -434,19 +434,19 @@ void processTexture()
 			uint32 index = 0;
 			while (true)
 			{
-				string name = prefix + reverse(fill(reverse(string(stringizer() + index)), dollarsCount, '0')) + suffix;
+				String name = prefix + reverse(fill(reverse(String(Stringizer() + index)), dollarsCount, '0')) + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
-				CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file: '" + name + "'");
+				CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file: '" + name + "'");
 				loadFile(name);
 				index++;
 			}
 		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading done");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input channels: " + images[0].data->channels());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images[0].data->channels());
 
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
@@ -454,7 +454,7 @@ void processTexture()
 			float strength = toFloat(properties("normalStrength"));
 			for (auto &it : images)
 				it.convertHeightToNormal(strength);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converted from height map to normal map with strength of " + strength);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
 
@@ -463,7 +463,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.convertSpecularToSpecial();
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converted specular colors to material special");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
 		}
 	}
 
@@ -471,7 +471,7 @@ void processTexture()
 		if (properties("convert") == "skyboxToCube")
 		{
 			performSkyboxToCube();
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converted skybox to cube map");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted skybox to cube map");
 		}
 	}
 
@@ -483,7 +483,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.premultiplyAlpha();
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "premultiplied alpha");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "premultiplied alpha");
 		}
 	}
 
@@ -492,7 +492,7 @@ void processTexture()
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaled: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
 		}
 	}
 
@@ -501,7 +501,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				imageVerticalFlip(+it.data);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "image vertically flipped (flip was false)");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped (flip was false)");
 		}
 	}
 
@@ -510,30 +510,30 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.invert(0);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "red channel inverted");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "red channel inverted");
 		}
 		if (toBool(properties("invertGreen")))
 		{
 			for (auto &it : images)
 				it.invert(1);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "green channel inverted");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "green channel inverted");
 		}
 		if (toBool(properties("invertBlue")))
 		{
 			for (auto &it : images)
 				it.invert(2);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "blue channel inverted");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "blue channel inverted");
 		}
 		if (toBool(properties("invertAlpha")))
 		{
 			for (auto &it : images)
 				it.invert(3);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "alpha channel inverted");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alpha channel inverted");
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output channels: " + images[0].data->channels());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output channels: " + images[0].data->channels());
 
 	exportTexture(target);
 
@@ -542,7 +542,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
+			String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			imageVerticalFlip(+it.data); // this is after the export, so this operation does not affect the textures
 			it.data->exportFile(dbgName);
 		}
@@ -556,7 +556,7 @@ void analyzeTexture()
 		loadFile(inputFile);
 		writeLine("cage-begin");
 		writeLine("scheme=texture");
-		writeLine(string() + "asset=" + inputFile);
+		writeLine(String() + "asset=" + inputFile);
 		writeLine("cage-end");
 		images.clear();
 	}

@@ -57,12 +57,12 @@ namespace cage
 
 	namespace
 	{
-		string sanitizeName(const string &name)
+		String sanitizeName(const String &name)
 		{
 			return replace(name, ":", "_");
 		}
 
-		string defaultName()
+		String defaultName()
 		{
 			return sanitizeName(pathExtractFilename(detail::executableFullPathNoExe()));
 		}
@@ -92,16 +92,16 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 #endif // CAGE_SYSTEM_WINDOWS
-				const string name = defaultName();
-				CAGE_LOG(SeverityEnum::Info, "cubeb", stringizer() + "creating cubeb context, name: '" + name + "'");
+				const String name = defaultName();
+				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "creating cubeb context, name: '" + name + "'");
 				cageCheckCubebError(cubeb_init(&c, name.c_str(), nullptr));
 				CAGE_ASSERT(c);
-				CAGE_LOG(SeverityEnum::Info, "cubeb", stringizer() + "using cubeb backend: '" + cubeb_get_backend_id(c) + "'");
+				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "using cubeb backend: '" + cubeb_get_backend_id(c) + "'");
 			}
 
 			~CageCubebInitializer()
 			{
-				CAGE_LOG(SeverityEnum::Info, "cubeb", stringizer() + "destroying cubeb context");
+				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "destroying cubeb context");
 				cubeb_destroy(c);
 #ifdef CAGE_SYSTEM_WINDOWS
 				CoUninitialize();
@@ -213,14 +213,14 @@ namespace cage
 
 			SpeakerImpl(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback) : channels(config.channels), sampleRate(config.sampleRate)
 			{
-				const string name = config.name.empty() ? defaultName() : sanitizeName(config.name);
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
+				const String name = config.name.empty() ? defaultName() : sanitizeName(config.name);
+				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "creating speaker, name: '" + name + "'");
 				cubeb *context = cageCubebInitializeFunc();
 
 				cubeb_devid devid = nullptr;
 				if (config.deviceId.empty())
 				{
-					CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "requesting default device");
+					CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "requesting default device");
 					if (!channels)
 						cageCheckCubebError(cubeb_get_max_channel_count(context, &channels));
 					if (!sampleRate)
@@ -235,7 +235,7 @@ namespace cage
 				}
 				else
 				{
-					CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "requesting device id: '" + config.deviceId + "'");
+					CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "requesting device id: '" + config.deviceId + "'");
 					DevicesCollection collection;
 					const cubeb_device_info *info = nullptr;
 					for (uint32 index = 0; index < collection.count; index++)
@@ -264,7 +264,7 @@ namespace cage
 				else
 					this->callback = callback;
 
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "initializing sound stream with " + channels + " channels, " + sampleRate + " Hz sample rate and " + latency + " frames latency");
+				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "initializing sound stream with " + channels + " channels, " + sampleRate + " Hz sample rate and " + latency + " frames latency");
 
 				{
 					cubeb_stream_params params = {};

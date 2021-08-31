@@ -54,13 +54,13 @@ namespace cage
 			uint32 val;
 		};
 
-		bool colorInRange(const vec3 &color)
+		bool colorInRange(const Vec3 &color)
 		{
 			return clamp(color, 0, 1) == color;
 		}
 	}
 
-	uint32 colorRgbToRgbe(const vec3 &color)
+	uint32 colorRgbToRgbe(const Vec3 &color)
 	{
 		CAGE_ASSERT(colorInRange(color));
 		CharToInt hlp;
@@ -68,25 +68,25 @@ namespace cage
 		return hlp.val;
 	}
 
-	vec3 colorRgbeToRgb(uint32 color)
+	Vec3 colorRgbeToRgb(uint32 color)
 	{
 		CharToInt hlp;
 		hlp.val = color;
-		vec3 res;
+		Vec3 res;
 		rgbe2float(res.data[0].value, res.data[1].value, res.data[2].value, hlp.rgbe);
 		return res;
 	}
 
-	vec3 colorRgbToHsv(const vec3 &inColor)
+	Vec3 colorRgbToHsv(const Vec3 &inColor)
 	{
 		CAGE_ASSERT(colorInRange(inColor));
-		vec3 outColor;
-		real minColor = inColor[0] < inColor[1] ? inColor[0] : inColor[1];
+		Vec3 outColor;
+		Real minColor = inColor[0] < inColor[1] ? inColor[0] : inColor[1];
 		minColor = minColor < inColor[2] ? minColor : inColor[2];
-		real maxColor = inColor[0] > inColor[1] ? inColor[0] : inColor[1];
+		Real maxColor = inColor[0] > inColor[1] ? inColor[0] : inColor[1];
 		maxColor = maxColor > inColor[2] ? maxColor : inColor[2];
 		outColor[2] = maxColor;
-		real delta = maxColor - minColor;
+		Real delta = maxColor - minColor;
 		if (delta < 0.00001)
 			return outColor;
 		if (maxColor > 0)
@@ -106,10 +106,10 @@ namespace cage
 		return outColor;
 	}
 
-	vec3 colorHsvToRgb(const vec3 &inColor)
+	Vec3 colorHsvToRgb(const Vec3 &inColor)
 	{
 		CAGE_ASSERT(colorInRange(inColor));
-		vec3 outColor;
+		Vec3 outColor;
 		if (inColor[1] <= 0)
 		{
 			outColor[0] = inColor[2];
@@ -117,15 +117,15 @@ namespace cage
 			outColor[2] = inColor[2];
 			return outColor;
 		}
-		real hh = inColor[0];
+		Real hh = inColor[0];
 		if (hh >= 1)
 			hh = 0;
 		hh /= 60.f / 360.f;
 		uint32 i = numeric_cast<uint32>(hh);
-		real ff = hh - i;
-		real p = inColor[2] * (1 - inColor[1]);
-		real q = inColor[2] * (1 - (inColor[1] * ff));
-		real t = inColor[2] * (1 - (inColor[1] * (1 - ff)));
+		Real ff = hh - i;
+		Real p = inColor[2] * (1 - inColor[1]);
+		Real q = inColor[2] * (1 - (inColor[1] * ff));
+		Real t = inColor[2] * (1 - (inColor[1] * (1 - ff)));
 		switch (i)
 		{
 		case 0:
@@ -163,31 +163,31 @@ namespace cage
 		return outColor;
 	}
 
-	vec3 colorRgbToHsluv(const vec3 &rgb)
+	Vec3 colorRgbToHsluv(const Vec3 &rgb)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
 		double h, s, l;
 		double r = rgb[0].value, g = rgb[1].value, b = rgb[2].value;
 		rgb2hsluv(r, g, b, &h, &s, &l);
-		return vec3(h / 360, s / 100, l / 100);
+		return Vec3(h / 360, s / 100, l / 100);
 	}
 
-	vec3 colorHsluvToRgb(const vec3 &hsluv)
+	Vec3 colorHsluvToRgb(const Vec3 &hsluv)
 	{
 		CAGE_ASSERT(colorInRange(hsluv));
 		double h = hsluv[0].value * 360, s = hsluv[1].value * 100, l = hsluv[2].value * 100;
 		double r, g, b;
 		hsluv2rgb(h, s, l, &r, &g, &b);
-		return vec3(r, g, b);
+		return Vec3(r, g, b);
 	}
 
-	vec3 colorValueToHeatmapRgb(real inValue)
+	Vec3 colorValueToHeatmapRgb(Real inValue)
 	{
-		real value = 4.0f * (1.0f - inValue);
+		Real value = 4.0f * (1.0f - inValue);
 		value = clamp(value, 0, 4);
 		int band = int(value.value);
 		value -= band;
-		vec3 result;
+		Vec3 result;
 		switch (band)
 		{
 		case 0:
@@ -219,63 +219,63 @@ namespace cage
 		return result;
 	}
 
-	vec3 colorGammaToLinear(const vec3 &rgb)
+	Vec3 colorGammaToLinear(const Vec3 &rgb)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
-		vec3 c2 = rgb * rgb;
-		vec3 c3 = c2 * rgb;
+		Vec3 c2 = rgb * rgb;
+		Vec3 c3 = c2 * rgb;
 		return 0.755 * c2 + 0.245 * c3;
 	}
 
-	vec3 colorGammaToLinear(const vec3 &rgb, real gamma)
+	Vec3 colorGammaToLinear(const Vec3 &rgb, Real gamma)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
 		CAGE_ASSERT(gamma > 0);
-		return vec3(pow(rgb[0], gamma), pow(rgb[1], gamma), pow(rgb[2], gamma));
+		return Vec3(pow(rgb[0], gamma), pow(rgb[1], gamma), pow(rgb[2], gamma));
 	}
 
-	vec3 colorLinearToGamma(const vec3 &rgb, real gamma)
+	Vec3 colorLinearToGamma(const Vec3 &rgb, Real gamma)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
 		CAGE_ASSERT(gamma > 0);
 		return colorGammaToLinear(rgb, 1 / gamma);
 	}
 
-	real distanceColor(const vec3 &rgb1, const vec3 &rgb2)
+	Real distanceColor(const Vec3 &rgb1, const Vec3 &rgb2)
 	{
 		CAGE_ASSERT(colorInRange(rgb1));
 		CAGE_ASSERT(colorInRange(rgb2));
-		vec3 hsluv1 = colorRgbToHsluv(rgb1);
-		vec3 hsluv2 = colorRgbToHsluv(rgb2);
-		real h1 = hsluv1[0];
-		real h2 = hsluv2[0];
-		real s1 = hsluv1[1];
-		real s2 = hsluv2[1];
-		real l1 = hsluv1[2];
-		real l2 = hsluv2[2];
-		real h = distanceWrap(h1, h2);
-		real s = abs(s1 - s2);
-		real l = abs(l1 - l2);
-		return length(vec3(h, s, l));
+		Vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		Vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		Real h1 = hsluv1[0];
+		Real h2 = hsluv2[0];
+		Real s1 = hsluv1[1];
+		Real s2 = hsluv2[1];
+		Real l1 = hsluv1[2];
+		Real l2 = hsluv2[2];
+		Real h = distanceWrap(h1, h2);
+		Real s = abs(s1 - s2);
+		Real l = abs(l1 - l2);
+		return length(Vec3(h, s, l));
 	}
 
-	vec3 interpolateColor(const vec3 &rgb1, const vec3 &rgb2, real factor)
+	Vec3 interpolateColor(const Vec3 &rgb1, const Vec3 &rgb2, Real factor)
 	{
 		CAGE_ASSERT(colorInRange(rgb1));
 		CAGE_ASSERT(colorInRange(rgb2));
-		vec3 hsluv1 = colorRgbToHsluv(rgb1);
-		vec3 hsluv2 = colorRgbToHsluv(rgb2);
-		real h1 = hsluv1[0];
-		real h2 = hsluv2[0];
-		real s1 = hsluv1[1];
-		real s2 = hsluv2[1];
-		real l1 = hsluv1[2];
-		real l2 = hsluv2[2];
-		real h = interpolateWrap(h1, h2, factor);
-		real s = interpolate(s1, s2, factor);
-		real l = interpolate(l1, l2, factor);
-		vec3 hsluv = vec3(h, s, l);
-		vec3 rgb = colorHsluvToRgb(hsluv);
+		Vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		Vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		Real h1 = hsluv1[0];
+		Real h2 = hsluv2[0];
+		Real s1 = hsluv1[1];
+		Real s2 = hsluv2[1];
+		Real l1 = hsluv1[2];
+		Real l2 = hsluv2[2];
+		Real h = interpolateWrap(h1, h2, factor);
+		Real s = interpolate(s1, s2, factor);
+		Real l = interpolate(l1, l2, factor);
+		Vec3 hsluv = Vec3(h, s, l);
+		Vec3 rgb = colorHsluvToRgb(hsluv);
 		return rgb;
 	}
 }

@@ -142,7 +142,7 @@ namespace cage
 
 		struct CDFileHeaderEx : public CDFileHeader
 		{
-			string name;
+			String name;
 			MemoryBuffer newContent;
 			bool locked = false;
 			bool modified = false;
@@ -159,7 +159,7 @@ namespace cage
 			return StringComparatorFast()(a.name, b.name);
 		}
 
-		bool operator < (const CDFileHeaderEx &a, const string &b)
+		bool operator < (const CDFileHeaderEx &a, const String &b)
 		{
 			return StringComparatorFast()(a.name, b);
 		}
@@ -194,7 +194,7 @@ namespace cage
 			return l;
 		}
 
-		bool isPathSafe(const string &path)
+		bool isPathSafe(const String &path)
 		{
 			if (pathIsAbs(path))
 				return false;
@@ -203,7 +203,7 @@ namespace cage
 			return true;
 		}
 
-		bool isPathValid(const string &path)
+		bool isPathValid(const String &path)
 		{
 			if (path != pathSimplify(path))
 				return false;
@@ -221,7 +221,7 @@ namespace cage
 			bool modified = false;
 
 			// create a new empty archive
-			ArchiveZip(const string &path, const string &options) : ArchiveAbstract(path)
+			ArchiveZip(const String &path, const String &options) : ArchiveAbstract(path)
 			{
 				src = writeFile(path);
 				modified = true;
@@ -258,7 +258,7 @@ namespace cage
 						// we assume that we found an actual ZIP archive now
 						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
 							CAGE_THROW_ERROR(NotImplemented, "cannot read zip archives that span multiple disks");
 						}
 						totalFiles = e.totalNumberOfCDFRecords;
@@ -269,7 +269,7 @@ namespace cage
 					}
 					if (totalFiles == m)
 					{
-						CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+						CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
 						CAGE_THROW_ERROR(Exception, "file is not a zip archive");
 					}
 				}
@@ -286,50 +286,50 @@ namespace cage
 						constexpr uint32 Signature = CDFileHeader().signature;
 						if (e.signature != Signature)
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(stringizer() + "position in archive: " + src->tell());
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record has invalid signature");
 						}
-						if (e.nameLength >= string::MaxLength)
+						if (e.nameLength >= String::MaxLength)
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(stringizer() + "position in archive: " + src->tell());
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record name length is too large");
 						}
 						e.name.rawLength() = e.nameLength;
 						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
 						if (e.diskNumberWhereFileStarts != 0)
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
 							CAGE_THROW_ERROR(Exception, "zip file record uses a different disk");
 						}
 						if (e.uncompressedSize == m || e.compressedSize == m)
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
 							CAGE_THROW_ERROR(NotImplemented, "cannot read file, zip64 not yet supported");
 						}
 						e.name = pathSimplify(e.name);
 						e.nameLength = e.name.length();
 						if (!isPathSafe(e.name))
 						{
-							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
 							CAGE_THROW_ERROR(Exception, "zip file record name is dangerous");
 						}
 						if (e.extraFieldLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
 							d.read(e.extraFieldLength);
 							e.extraFieldLength = 0;
 						}
 						if (e.commentLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
 							d.read(e.commentLength);
 							e.commentLength = 0;
@@ -341,9 +341,9 @@ namespace cage
 							e.externalFileAttributes = 0x80; // make it FILE_ATTRIBUTE_NORMAL
 						if (e.externalFileAttributes != 0x80 && e.externalFileAttributes != 0x10)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: '" + e.name + "'");
-							CAGE_LOG(SeverityEnum::Warning, "zip", stringizer() + "skipping zip file record with unknown external file attributes: " + e.externalFileAttributes);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG(SeverityEnum::Warning, "zip", Stringizer() + "skipping zip file record with unknown external file attributes: " + e.externalFileAttributes);
 							continue;
 						}
 
@@ -439,7 +439,7 @@ namespace cage
 				((FileAbstract *)+src)->reopenForModification();
 			}
 
-			uint32 createRecord(const string &path)
+			uint32 createRecord(const String &path)
 			{
 				CAGE_ASSERT(isPathValid(path));
 				auto it = std::lower_bound(files.begin(), files.end(), path);
@@ -451,7 +451,7 @@ namespace cage
 				return numeric_cast<uint32>(it - files.begin());
 			}
 
-			uint32 findRecordIndex(const string &path) const
+			uint32 findRecordIndex(const String &path) const
 			{
 				CAGE_ASSERT(isPathValid(path));
 				const auto it = std::lower_bound(files.begin(), files.end(), path);
@@ -466,7 +466,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "file is in use");
 			}
 
-			void testFileNotLocked(const string &path) const
+			void testFileNotLocked(const String &path) const
 			{
 				const uint32 index = findRecordIndex(path);
 				testFileNotLocked(index);
@@ -482,20 +482,20 @@ namespace cage
 				return PathTypeFlags::File;
 			}
 
-			PathTypeFlags typeNoLock(const string &path) const
+			PathTypeFlags typeNoLock(const String &path) const
 			{
 				const uint32 index = findRecordIndex(path);
 				return typeNoLock(index);
 			}
 
-			PathTypeFlags type(const string &path) const override
+			PathTypeFlags type(const String &path) const override
 			{
 				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(mutex);
 				return typeNoLock(path);
 			}
 
-			void createDirectoriesNoLock(const string &path)
+			void createDirectoriesNoLock(const String &path)
 			{
 				if (path.empty())
 					return;
@@ -509,14 +509,14 @@ namespace cage
 						break; // ok
 					default:
 					{
-						CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
-						CAGE_LOG_THROW(stringizer() + "name: '" + path + "'");
+						CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+						CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
 						CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
 					}
 					}
 				}
 				{ // create all parents
-					const string p = pathJoin(path, "..");
+					const String p = pathJoin(path, "..");
 					createDirectoriesNoLock(p);
 				}
 				{ // create this directory
@@ -526,7 +526,7 @@ namespace cage
 				}
 			}
 
-			void createDirectories(const string &path) override
+			void createDirectories(const String &path) override
 			{
 				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(mutex);
@@ -534,7 +534,7 @@ namespace cage
 				createDirectoriesNoLock(path);
 			}
 
-			void move(const string &from, const string &to) override
+			void move(const String &from, const String &to) override
 			{
 				CAGE_ASSERT(!from.empty());
 				CAGE_ASSERT(!to.empty());
@@ -550,7 +550,7 @@ namespace cage
 				remove(from);
 			}
 
-			void removeNoLock(const string &path)
+			void removeNoLock(const String &path)
 			{
 				const uint32 index = findRecordIndex(path);
 				if (index == m)
@@ -560,7 +560,7 @@ namespace cage
 				modified = true;
 			}
 
-			void remove(const string &path) override
+			void remove(const String &path) override
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
@@ -569,27 +569,27 @@ namespace cage
 				removeNoLock(path);
 			}
 
-			uint64 lastChange(const string &path) const override
+			uint64 lastChange(const String &path) const override
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
 				CAGE_THROW_CRITICAL(NotImplemented, "reading last modification time of a file inside zip archive is not yet supported");
 			}
 
-			Holder<File> openFile(const string &path, const FileMode &mode) override;
-			Holder<DirectoryList> listDirectory(const string &path) const override;
+			Holder<File> openFile(const String &path, const FileMode &mode) override;
+			Holder<DirectoryList> listDirectory(const String &path) const override;
 		};
 
 		// file contained within the zip archive
 		struct FileZip : public FileAbstract
 		{
 			const std::shared_ptr<ArchiveZip> a;
-			const string myName; // name inside the archive
+			const String myName; // name inside the archive
 			MemoryBuffer buff;
 			Holder<File> src;
 			bool modified = false;
 
-			FileZip(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
+			FileZip(const std::shared_ptr<ArchiveZip> &archive, const String &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
 			{
 				CAGE_ASSERT(!name.empty());
 				CAGE_ASSERT(isPathValid(name));
@@ -776,20 +776,20 @@ namespace cage
 		struct DirectoryListZip : public DirectoryListAbstract
 		{
 			const std::shared_ptr<const ArchiveZip> a;
-			std::vector<string> names;
+			std::vector<String> names;
 			uint32 index = 0;
 
-			DirectoryListZip(const std::shared_ptr<const ArchiveZip> &archive, const string &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive)
+			DirectoryListZip(const std::shared_ptr<const ArchiveZip> &archive, const String &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive)
 			{
 				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(a->mutex);
 				names.reserve(a->files.size());
 				for (const auto &it : a->files)
 				{
-					const string par = pathJoin(it.name, "..");
+					const String par = pathJoin(it.name, "..");
 					if (par == path)
 					{
-						const string name = pathExtractFilename(it.name);
+						const String name = pathExtractFilename(it.name);
 						names.push_back(name);
 					}
 				}
@@ -800,7 +800,7 @@ namespace cage
 				return index < names.size();
 			}
 
-			string name() const override
+			String name() const override
 			{
 				CAGE_ASSERT(valid());
 				return names[index];
@@ -813,18 +813,18 @@ namespace cage
 			}
 		};
 
-		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
+		Holder<File> ArchiveZip::openFile(const String &path, const FileMode &mode)
 		{
 			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
-		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path) const
+		Holder<DirectoryList> ArchiveZip::listDirectory(const String &path) const
 		{
 			return systemMemory().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
 		}
 	}
 
-	void archiveCreateZip(const string &path, const string &options)
+	void archiveCreateZip(const String &path, const String &options)
 	{
 		ArchiveZip z(path, options);
 	}

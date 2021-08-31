@@ -12,7 +12,7 @@ namespace
 			detail::OverrideBreakpoint ob;
 			while (true)
 			{
-				string line = prg->readLine();
+				String line = prg->readLine();
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "dir list", line);
 				lines++;
 			}
@@ -31,17 +31,17 @@ void testProcess()
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	// on windows, echo is built-in command of cmd
-	const string cmdEcho = "cmd /C echo hi there";
-	const string cmdLs = "cmd /C dir /Q";
+	const String cmdEcho = "cmd /C echo hi there";
+	const String cmdLs = "cmd /C dir /Q";
 #else
-	const string cmdEcho = "echo hi there";
-	const string cmdLs = "ls -la";
+	const String cmdEcho = "echo hi there";
+	const String cmdLs = "ls -la";
 #endif // CAGE_SYSTEM_WINDOWS
 
 	{
 		CAGE_TESTCASE("echo");
 		Holder<Process> prg = newProcess(cmdEcho);
-		string line = prg->readLine();
+		String line = prg->readLine();
 		CAGE_TEST(line == "hi there");
 		CAGE_TEST(prg->wait() == 0);
 	}

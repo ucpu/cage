@@ -12,7 +12,7 @@
 
 namespace cage
 {
-	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), myMode(mode)
+	FileAbstract::FileAbstract(const String &path, const FileMode &mode) : myPath(path), myMode(mode)
 	{}
 
 	void FileAbstract::reopenForModification()
@@ -30,20 +30,20 @@ namespace cage
 		return myMode;
 	}
 
-	ArchiveAbstract::ArchiveAbstract(const string & path) : myPath(path)
+	ArchiveAbstract::ArchiveAbstract(const String & path) : myPath(path)
 	{
 		CAGE_ASSERT(path == pathSimplify(path));
 	}
 
-	DirectoryListAbstract::DirectoryListAbstract(const string &path) : myPath(path)
+	DirectoryListAbstract::DirectoryListAbstract(const String &path) : myPath(path)
 	{}
 
-	string DirectoryListAbstract::fullPath() const
+	String DirectoryListAbstract::fullPath() const
 	{
 		return pathJoin(myPath, name());
 	}
 
-	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt)
+	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const String &pf, std::shared_ptr<ArchiveAbstract> &at, const String &pt)
 	{
 		{
 			Holder<File> f = af->openFile(pf, FileMode(true, false));
@@ -67,7 +67,7 @@ namespace cage
 
 		struct ArchivesCache : private Immovable
 		{
-			ArchiveWithExisting getOrCreate(const string &path, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)> ctor)
+			ArchiveWithExisting getOrCreate(const String &path, Delegate<std::shared_ptr<ArchiveAbstract>(const String &)> ctor)
 			{
 				CAGE_ASSERT(path == pathSimplify(path));
 				CAGE_ASSERT(path == pathToAbs(path));
@@ -109,7 +109,7 @@ namespace cage
 			}
 
 		private:
-			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
+			std::map<String, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
 			Holder<Mutex> mutex = newMutex(); // access to map must be serialized because the _erase_ method can be called on any thread and outside the archiveFindTowardsRootMutex
 		};
 
@@ -119,15 +119,15 @@ namespace cage
 			return *cache;
 		}
 
-		std::shared_ptr<ArchiveAbstract> archiveCtorReal(const string &path)
+		std::shared_ptr<ArchiveAbstract> archiveCtorReal(const String &path)
 		{
 			return archiveOpenReal(path);
 		}
 
-		std::shared_ptr<ArchiveAbstract> archiveCtorArchive(ArchiveAbstract *parent, const string &fullPath)
+		std::shared_ptr<ArchiveAbstract> archiveCtorArchive(ArchiveAbstract *parent, const String &fullPath)
 		{
 			CAGE_ASSERT(parent);
-			const string inPath = pathToRel(fullPath, parent->myPath);
+			const String inPath = pathToRel(fullPath, parent->myPath);
 			try
 			{
 				detail::OverrideException oe;
@@ -139,16 +139,16 @@ namespace cage
 			}
 		}
 
-		void walkLeft(string &p, string &i)
+		void walkLeft(String &p, String &i)
 		{
-			const string s = pathJoin(p, "..");
+			const String s = pathJoin(p, "..");
 			i = pathJoin(subString(p, s.length() + 1, m), i);
 			p = s;
 		}
 
-		void walkRight(string &p, string &i)
+		void walkRight(String &p, String &i)
 		{
-			const string k = split(i, "/");
+			const String k = split(i, "/");
 			p = pathJoin(p, k);
 		}
 
@@ -159,15 +159,15 @@ namespace cage
 			WalkTester()
 			{
 				{
-					string l = "/abc/def/ghi";
-					string r = "jkl/mno/pqr";
+					String l = "/abc/def/ghi";
+					String r = "jkl/mno/pqr";
 					walkLeft(l, r);
 					CAGE_ASSERT(l == "/abc/def");
 					CAGE_ASSERT(r == "ghi/jkl/mno/pqr");
 				}
 				{
-					string l = "/abc/def/ghi";
-					string r = "jkl/mno/pqr";
+					String l = "/abc/def/ghi";
+					String r = "jkl/mno/pqr";
 					walkRight(l, r);
 					CAGE_ASSERT(l == "/abc/def/ghi/jkl");
 					CAGE_ASSERT(r == "mno/pqr");
@@ -176,10 +176,10 @@ namespace cage
 		} walkTesterInstance;
 #endif // CAGE_DEBUG
 
-		ArchiveWithPath archiveFindIterate(std::shared_ptr<ArchiveAbstract> parent, const string &path, ArchiveFindModeEnum mode)
+		ArchiveWithPath archiveFindIterate(std::shared_ptr<ArchiveAbstract> parent, const String &path, ArchiveFindModeEnum mode)
 		{
 			CAGE_ASSERT(parent);
-			string p, i = path;
+			String p, i = path;
 			while (true)
 			{
 				if (i.empty())
@@ -187,8 +187,8 @@ namespace cage
 				walkRight(p, i);
 				if (any(parent->type(p) & PathTypeFlags::File))
 				{
-					const string fp = pathJoin(parent->myPath, p);
-					ArchiveWithExisting b = archivesCache().getOrCreate(fp, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)>().bind<ArchiveAbstract *, &archiveCtorArchive>(parent.get()));
+					const String fp = pathJoin(parent->myPath, p);
+					ArchiveWithExisting b = archivesCache().getOrCreate(fp, Delegate<std::shared_ptr<ArchiveAbstract>(const String &)>().bind<ArchiveAbstract *, &archiveCtorArchive>(parent.get()));
 					if (b.archive)
 					{
 						if (i.empty())
@@ -198,14 +198,14 @@ namespace cage
 							case ArchiveFindModeEnum::FileExclusiveThrow:
 								if (b.existing)
 								{
-									CAGE_LOG_THROW(stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
 									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 								}
 								return { parent, path };
 							case ArchiveFindModeEnum::ArchiveExclusiveThrow:
 								if (b.existing)
 								{
-									CAGE_LOG_THROW(stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
 									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 								}
 								return { b.archive };
@@ -231,18 +231,18 @@ namespace cage
 		}
 	}
 
-	ArchiveWithPath archiveFindTowardsRoot(const string &path_, ArchiveFindModeEnum mode)
+	ArchiveWithPath archiveFindTowardsRoot(const String &path_, ArchiveFindModeEnum mode)
 	{
 		if (!pathIsValid(path_))
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + path_ + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path_ + "'");
 			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
 
-		const string path = pathToAbs(path_);
+		const String path = pathToAbs(path_);
 		CAGE_ASSERT(pathSimplify(path) == path);
 
-		string rootPath, inside;
+		String rootPath, inside;
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			inside = path;
@@ -259,7 +259,7 @@ namespace cage
 
 		ScopeLock lock(archiveFindTowardsRootMutex());
 
-		std::shared_ptr<ArchiveAbstract> root = archivesCache().getOrCreate(rootPath, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)>().bind<&archiveCtorReal>()).archive;
+		std::shared_ptr<ArchiveAbstract> root = archivesCache().getOrCreate(rootPath, Delegate<std::shared_ptr<ArchiveAbstract>(const String &)>().bind<&archiveCtorReal>()).archive;
 
 		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
 		switch (mode)

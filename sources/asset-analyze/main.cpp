@@ -13,7 +13,7 @@ using namespace cage;
 
 namespace
 {
-	typedef std::map<string, std::set<string>> AssetsLists; // scheme -> assets
+	typedef std::map<String, std::set<String>> AssetsLists; // scheme -> assets
 	
 	void mergeLists(AssetsLists &out, const AssetsLists &in)
 	{
@@ -28,24 +28,24 @@ namespace
 	bool generateObjects = false;
 	bool generatePacks = false;
 
-	AssetsLists analyzeFile(const string &path)
+	AssetsLists analyzeFile(const String &path)
 	{
-		CAGE_LOG(SeverityEnum::Info, "analyze", string() + "analyzing file '" + path + "'");
+		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing file '" + path + "'");
 		try
 		{
-			Holder<Process> prg = newProcess(string() + "cage-asset-processor analyze " + path);
+			Holder<Process> prg = newProcess(String() + "cage-asset-processor analyze " + path);
 
 			AssetsLists assets;
 			bool ignore = true;
-			string scheme;
+			String scheme;
 			while (true)
 			{
-				string line;
+				String line;
 				{
 					detail::OverrideBreakpoint ob;
 					line = prg->readLine();
 				}
-				CAGE_LOG_DEBUG(SeverityEnum::Info, "process", stringizer() + "message '" + line + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Info, "process", Stringizer() + "message '" + line + "'");
 				if (line == "cage-stop")
 					break;
 				else if (line == "cage-begin")
@@ -54,8 +54,8 @@ namespace
 					ignore = true;
 				else if (!ignore)
 				{
-					string a = trim(split(line, "="));
-					string b = trim(line);
+					String a = trim(split(line, "="));
+					String b = trim(line);
 					if (a == "scheme")
 						scheme = b;
 					else if (a == "asset")
@@ -67,7 +67,7 @@ namespace
 
 			if (generateObjects && assets.count("model") > 0)
 			{
-				string name = pathExtractFilenameNoExtension(path) + ".object";
+				String name = pathExtractFilenameNoExtension(path) + ".object";
 				Holder<File> f = newFile(pathJoin(pathExtractDirectory(path), name), FileMode(false, true));
 				f->writeLine("[]");
 				for (const auto &a : assets["model"])
@@ -80,20 +80,20 @@ namespace
 		}
 		catch (...)
 		{
-			CAGE_LOG(SeverityEnum::Warning, "analyze", string() + "an error occurred while analyzing file '" + path + "'");
+			CAGE_LOG(SeverityEnum::Warning, "analyze", String() + "an error occurred while analyzing file '" + path + "'");
 		}
 		return {};
 	}
 
-	void analyzeFolder(const string &path)
+	void analyzeFolder(const String &path)
 	{
-		CAGE_LOG(SeverityEnum::Info, "analyze", string() + "analyzing directory '" + path + "'");
+		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing directory '" + path + "'");
 
-		std::set<string> files, directories;
+		std::set<String> files, directories;
 		Holder<DirectoryList> dl = newDirectoryList(path);
 		while (dl->valid())
 		{
-			string p = dl->name();
+			String p = dl->name();
 			if (dl->isDirectory())
 				directories.insert(p);
 			else
@@ -134,7 +134,7 @@ namespace
 			for (const auto &a : assets)
 			{
 				f->writeLine("[]");
-				f->writeLine(string() + "scheme = " + a.first);
+				f->writeLine(String() + "scheme = " + a.first);
 				for (const auto &b : a.second)
 					f->writeLine(b);
 			}
@@ -160,17 +160,17 @@ int main(int argc, const char *args[])
 		if (cmd->cmdBool('?', "help", false))
 		{
 			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " path1 path2 path3");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --recursive path");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --objects path");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --packs path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " path1 path2 path3");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --recursive path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --objects path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --packs path");
 			return 0;
 		}
 		cmd->checkUnusedWithHelp();
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no input");
-		for (const string &path : paths)
+		for (const String &path : paths)
 			analyzeFolder(pathToAbs(path));
 		CAGE_LOG(SeverityEnum::Info, "analyze", "done");
 		return 0;

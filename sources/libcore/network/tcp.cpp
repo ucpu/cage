@@ -18,7 +18,7 @@ namespace cage
 			Sock sock;
 			std::vector<char> staging;
 
-			TcpConnectionImpl(const string &address, uint16 port)
+			TcpConnectionImpl(const String &address, uint16 port)
 			{
 				AddrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
 				while (l.valid())
@@ -118,12 +118,12 @@ namespace cage
 				return staging.size();
 			}
 
-			string readLine() override
+			String readLine() override
 			{
 				detail::OverrideBreakpoint brk;
 				updateCheck();
 				const uintPtr sz = staging.size();
-				string line;
+				String line;
 				const uintPtr rd = detail::readLine(line, staging, true);
 				if (rd)
 				{
@@ -134,7 +134,7 @@ namespace cage
 				return readLine(); // try again
 			}
 
-			bool readLine(string &line) override
+			bool readLine(String &line) override
 			{
 				detail::OverrideBreakpoint brk;
 				updateCheck();
@@ -180,10 +180,10 @@ namespace cage
 		};
 	}
 
-	string TcpConnection::address() const
+	String TcpConnection::address() const
 	{
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		string a;
+		String a;
 		uint16 p;
 		impl->sock.getRemoteAddress().translate(a, p);
 		return a;
@@ -192,7 +192,7 @@ namespace cage
 	uint16 TcpConnection::port() const
 	{
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		string a;
+		String a;
 		uint16 p;
 		impl->sock.getRemoteAddress().translate(a, p);
 		return p;
@@ -201,7 +201,7 @@ namespace cage
 	uint16 TcpServer::port() const
 	{
 		const TcpServerImpl *impl = (const TcpServerImpl *)this;
-		string a;
+		String a;
 		uint16 p;
 		impl->socks[0].getLocalAddress().translate(a, p);
 		return p;
@@ -228,7 +228,7 @@ namespace cage
 		return Holder<TcpConnection>();
 	}
 
-	Holder<TcpConnection> newTcpConnection(const string &address, uint16 port)
+	Holder<TcpConnection> newTcpConnection(const String &address, uint16 port)
 	{
 		return systemMemory().createImpl<TcpConnection, TcpConnectionImpl>(address, port);
 	}

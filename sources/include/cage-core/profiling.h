@@ -25,28 +25,28 @@ namespace cage
 	struct ProfilingEvent
 	{
 #ifdef CAGE_PROFILING_ENABLED
-		string name;
+		String name;
 		StringLiteral category;
 		uint64 eventId = m;
 		ProfilingTypeEnum type = ProfilingTypeEnum::Invalid;
 #endif
 	};
 
-	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(const string &name, StringLiteral category, ProfilingTypeEnum type = ProfilingTypeEnum::Event) noexcept GCHL_PROFILING_BODY(return {};);
-	GCHL_PROFILING_API void profilingEventSnapshot(const ProfilingEvent &ev, const string &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
-	GCHL_PROFILING_API void profilingEventEnd(const ProfilingEvent &ev, const string &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, ProfilingTypeEnum type = ProfilingTypeEnum::Event) noexcept GCHL_PROFILING_BODY(return {};);
+	GCHL_PROFILING_API void profilingEventSnapshot(const ProfilingEvent &ev, const String &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingEventEnd(const ProfilingEvent &ev, const String &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
 
-	GCHL_PROFILING_API void profilingEvent(uint64 duration, const string &name, StringLiteral category, const string &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
-	GCHL_PROFILING_API void profilingMarker(const string &name, StringLiteral category, bool global = false) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingEvent(uint64 duration, const String &name, StringLiteral category, const String &jsonParams = {}) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingMarker(const String &name, StringLiteral category, bool global = false) noexcept GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{
 		[[nodiscard]] GCHL_PROFILING_API ProfilingScope() noexcept GCHL_PROFILING_BODY(;); // empty/invalid scope
-		[[nodiscard]] GCHL_PROFILING_API ProfilingScope(const string &name, StringLiteral category, ProfilingTypeEnum type = ProfilingTypeEnum::Event) noexcept GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API ProfilingScope(const String &name, StringLiteral category, ProfilingTypeEnum type = ProfilingTypeEnum::Event) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope &operator = (ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
 		GCHL_PROFILING_API ~ProfilingScope() noexcept GCHL_PROFILING_BODY(;);
-		GCHL_PROFILING_API void snapshot(const string &jsonParams) noexcept GCHL_PROFILING_BODY(;);
+		GCHL_PROFILING_API void snapshot(const String &jsonParams) noexcept GCHL_PROFILING_BODY(;);
 
 	private:
 #ifdef CAGE_PROFILING_ENABLED
@@ -54,7 +54,7 @@ namespace cage
 #endif
 	};
 
-	GCHL_PROFILING_API void profilingThreadName(const string &name) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingThreadName(const String &name) noexcept GCHL_PROFILING_BODY(;);
 	GCHL_PROFILING_API void profilingThreadOrder(sint32 order) noexcept GCHL_PROFILING_BODY(;);
 }
 

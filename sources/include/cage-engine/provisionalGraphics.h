@@ -31,17 +31,17 @@ namespace cage
 	public:
 		// section: thread-safe, does not require opengl context
 
-		Holder<ProvisionalUniformBuffer> uniformBuffer(const string &name);
+		Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name);
 
-		Holder<ProvisionalFrameBuffer> frameBufferDraw(const string &name);
-		Holder<ProvisionalFrameBuffer> frameBufferRead(const string &name);
+		Holder<ProvisionalFrameBuffer> frameBufferDraw(const String &name);
+		Holder<ProvisionalFrameBuffer> frameBufferRead(const String &name);
 
-		Holder<ProvisionalTexture> texture(const string &name);
-		Holder<ProvisionalTexture> texture(const string &name, uint32 target);
-		Holder<ProvisionalTexture> texture2dArray(const string &name);
-		Holder<ProvisionalTexture> textureRectangle(const string &name);
-		Holder<ProvisionalTexture> texture3d(const string &name);
-		Holder<ProvisionalTexture> textureCube(const string &name);
+		Holder<ProvisionalTexture> texture(const String &name);
+		Holder<ProvisionalTexture> texture(const String &name, uint32 target);
+		Holder<ProvisionalTexture> texture2dArray(const String &name);
+		Holder<ProvisionalTexture> textureRectangle(const String &name);
+		Holder<ProvisionalTexture> texture3d(const String &name);
+		Holder<ProvisionalTexture> textureCube(const String &name);
 
 		// section: thread-safe, requires opengl context
 

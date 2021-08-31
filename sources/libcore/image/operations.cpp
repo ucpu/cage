@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	void imageFill(Image *img, const real &value)
+	void imageFill(Image *img, const Real &value)
 	{
 		ImageImpl *impl = (ImageImpl*)img;
 		for (uint32 y = 0; y < impl->height; y++)
@@ -12,7 +12,7 @@ namespace cage
 				impl->set(x, y, value);
 	}
 
-	void imageFill(Image *img, const vec2 &value)
+	void imageFill(Image *img, const Vec2 &value)
 	{
 		ImageImpl *impl = (ImageImpl*)img;
 		for (uint32 y = 0; y < impl->height; y++)
@@ -20,7 +20,7 @@ namespace cage
 				impl->set(x, y, value);
 	}
 
-	void imageFill(Image *img, const vec3 &value)
+	void imageFill(Image *img, const Vec3 &value)
 	{
 		ImageImpl *impl = (ImageImpl*)img;
 		for (uint32 y = 0; y < impl->height; y++)
@@ -28,7 +28,7 @@ namespace cage
 				impl->set(x, y, value);
 	}
 
-	void imageFill(Image *img, const vec4 &value)
+	void imageFill(Image *img, const Vec4 &value)
 	{
 		ImageImpl *impl = (ImageImpl*)img;
 		for (uint32 y = 0; y < impl->height; y++)
@@ -44,7 +44,7 @@ namespace cage
 				impl->value(x, y, ch, val);
 	}
 
-	void imageFill(Image *img, uint32 ch, const real &val)
+	void imageFill(Image *img, uint32 ch, const Real &val)
 	{
 		ImageImpl *impl = (ImageImpl*)img;
 		for (uint32 y = 0; y < impl->height; y++)
@@ -113,7 +113,7 @@ namespace cage
 		ImageImpl *impl = (ImageImpl*)img;
 		if (gammaSpace == impl->colorConfig.gammaSpace || impl->colorConfig.colorChannelsCount == 0)
 			return; // no op
-		real p;
+		Real p;
 		if (gammaSpace == GammaSpaceEnum::Gamma && impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear)
 			p = 1.0 / 2.2;
 		else if (gammaSpace == GammaSpaceEnum::Linear && impl->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
@@ -148,7 +148,7 @@ namespace cage
 			{
 				for (uint32 x = 0; x < impl->width; x++)
 				{
-					real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
+					Real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
 					if (abs(a) < 1e-7)
 					{
 						for (uint32 c = 0; c < apply; c++)
@@ -169,7 +169,7 @@ namespace cage
 			{
 				for (uint32 x = 0; x < impl->width; x++)
 				{
-					real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
+					Real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
 					for (uint32 c = 0; c < apply; c++)
 						impl->value(x, y, c, impl->value(x, y, c) * a);
 				}
@@ -212,7 +212,7 @@ namespace cage
 		imageConvert(impl, originalFormat);
 	}
 
-	void imageResize(Image *img, const ivec2 &r, bool useColorConfig)
+	void imageResize(Image *img, const Vec2i &r, bool useColorConfig)
 	{
 		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
 		imageResize(img, r[0], r[1], useColorConfig);
@@ -386,10 +386,10 @@ namespace cage
 		imageConvert(img, ImageFormatEnum::Float);
 		switch (img->channels())
 		{
-		case 1: dilationProcess<real>(img, rounds, useNan); break;
-		case 2: dilationProcess<vec2>(img, rounds, useNan); break;
-		case 3: dilationProcess<vec3>(img, rounds, useNan); break;
-		case 4: dilationProcess<vec4>(img, rounds, useNan); break;
+		case 1: dilationProcess<Real>(img, rounds, useNan); break;
+		case 2: dilationProcess<Vec2>(img, rounds, useNan); break;
+		case 3: dilationProcess<Vec3>(img, rounds, useNan); break;
+		case 4: dilationProcess<Vec4>(img, rounds, useNan); break;
 		default: CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
 		}
 		imageConvert(img, originalFormat);
@@ -478,7 +478,7 @@ namespace cage
 		}
 	}
 
-	void imageBlit(const Image *source, Image *target, const ivec2 &sourceOffset, const ivec2 &targetOffset, const ivec2 &resolution)
+	void imageBlit(const Image *source, Image *target, const Vec2i &sourceOffset, const Vec2i &targetOffset, const Vec2i &resolution)
 	{
 		imageBlit(source, target, sourceOffset[0], sourceOffset[1], targetOffset[0], targetOffset[1], resolution[0], resolution[1]);
 	}

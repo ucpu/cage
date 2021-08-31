@@ -5,80 +5,80 @@
 
 #include <cmath>
 
-void test(real a, real b)
+void test(Real a, Real b)
 {
-	real d = abs(a - b);
+	Real d = abs(a - b);
 	CAGE_TEST(d < 1e-4);
 }
 void test(sint32 a, sint32 b)
 {
 	CAGE_TEST(a == b);
 }
-void test(const mat4 &a, const mat4 &b)
+void test(const Mat4 &a, const Mat4 &b)
 {
 	for (uint32 i = 0; i < 16; i++)
 		test(a[i], b[i]);
 }
-void test(const mat3 &a, const mat3 &b)
+void test(const Mat3 &a, const Mat3 &b)
 {
 	for (uint32 i = 0; i < 9; i++)
 		test(a[i], b[i]);
 }
-void test(const vec4 &a, const vec4 &b)
+void test(const Vec4 &a, const Vec4 &b)
 {
 	for (uint32 i = 0; i < 4; i++)
 		test(a[i], b[i]);
 }
-void test(const vec3 &a, const vec3 &b)
+void test(const Vec3 &a, const Vec3 &b)
 {
 	for (uint32 i = 0; i < 3; i++)
 		test(a[i], b[i]);
 }
-void test(const vec2 &a, const vec2 &b)
+void test(const Vec2 &a, const Vec2 &b)
 {
 	for (uint32 i = 0; i < 2; i++)
 		test(a[i], b[i]);
 }
-void test(const ivec4 &a, const ivec4 &b)
+void test(const Vec4i &a, const Vec4i &b)
 {
 	for (uint32 i = 0; i < 4; i++)
 		test(a[i], b[i]);
 }
-void test(const ivec3 &a, const ivec3 &b)
+void test(const Vec3i &a, const Vec3i &b)
 {
 	for (uint32 i = 0; i < 3; i++)
 		test(a[i], b[i]);
 }
-void test(const ivec2 &a, const ivec2 &b)
+void test(const Vec2i &a, const Vec2i &b)
 {
 	for (uint32 i = 0; i < 2; i++)
 		test(a[i], b[i]);
 }
-void test(const quat &a, const quat &b)
+void test(const Quat &a, const Quat &b)
 {
 	test(abs(dot(a, b)), 1);
-	test(a * vec3(0, 0, 0.1), b * vec3(0, 0, 0.1));
-	test(a * vec3(0, 0.1, 0), b * vec3(0, 0.1, 0));
-	test(a * vec3(0.1, 0, 0), b * vec3(0.1, 0, 0));
+	test(a * Vec3(0, 0, 0.1), b * Vec3(0, 0, 0.1));
+	test(a * Vec3(0, 0.1, 0), b * Vec3(0, 0.1, 0));
+	test(a * Vec3(0.1, 0, 0), b * Vec3(0.1, 0, 0));
 }
-void test(rads a, rads b)
+void test(Rads a, Rads b)
 {
-	if (a < rads(0))
-		a += rads::Full();
-	if (b < rads(0))
-		b += rads::Full();
-	test(real(a), real(b));
+	if (a < Rads(0))
+		a += Rads::Full();
+	if (b < Rads(0))
+		b += Rads::Full();
+	test(Real(a), Real(b));
 }
 
 namespace
 {
 	template<class T> struct MakeNotReal {};
-	template<> struct MakeNotReal<vec2> { using type = ivec2; };
-	template<> struct MakeNotReal<vec3> { using type = ivec3; };
-	template<> struct MakeNotReal<vec4> { using type = ivec4; };
-	template<> struct MakeNotReal<ivec2> { using type = vec2; };
-	template<> struct MakeNotReal<ivec3> { using type = vec3; };
-	template<> struct MakeNotReal<ivec4> { using type = vec4; };
+	template<> struct MakeNotReal<Vec2> { using type = Vec2i; };
+	template<> struct MakeNotReal<Vec3> { using type = Vec3i; };
+	template<> struct MakeNotReal<Vec4> { using type = Vec4i; };
+	template<> struct MakeNotReal<Vec2i> { using type = Vec2; };
+	template<> struct MakeNotReal<Vec3i> { using type = Vec3; };
+	template<> struct MakeNotReal<Vec4i> { using type = Vec4; };
 
 	template<class T, uint32 N>
 	void checkVectorsCommon()
@@ -110,14 +110,14 @@ namespace
 
 		{ // stringizer as r-Value
 			T a;
-			string s = stringizer() + a;
+			String s = Stringizer() + a;
 			T b = T::parse(s);
 			CAGE_TEST(a == b);
 		}
 
 		{ // stringizer as l-Value
 			T a;
-			stringizer s;
+			Stringizer s;
 			s + a;
 			T b = T::parse(s);
 			CAGE_TEST(a == b);
@@ -179,12 +179,12 @@ namespace
 			constexpr T k5 = clamp(a, 0.1, 0.9);
 			constexpr T k6 = saturate(a);
 			length(a);
-			constexpr real k7 = lengthSquared(a);
-			constexpr real k8 = dot(a, b);
+			constexpr Real k7 = lengthSquared(a);
+			constexpr Real k8 = dot(a, b);
 			valid(a);
 			constexpr T k9 = interpolate(a, b, 0.5);
 			distance(a, b);
-			constexpr real k10 = distanceSquared(a, b);
+			constexpr Real k10 = distanceSquared(a, b);
 		}
 
 		T t(3.5);
@@ -193,23 +193,23 @@ namespace
 	void testMathCompiles()
 	{
 		CAGE_TESTCASE("compile tests");
-		checkVectorsCommon<vec2, 2>();
-		checkVectorsCommon<vec3, 3>();
-		checkVectorsCommon<vec4, 4>();
-		checkVectorsCommon<ivec2, 2>();
-		checkVectorsCommon<ivec3, 3>();
-		checkVectorsCommon<ivec4, 4>();
-		checkVectorsReal<vec2, 2>();
-		checkVectorsReal<vec3, 3>();
-		checkVectorsReal<vec4, 4>();
+		checkVectorsCommon<Vec2, 2>();
+		checkVectorsCommon<Vec3, 3>();
+		checkVectorsCommon<Vec4, 4>();
+		checkVectorsCommon<Vec2i, 2>();
+		checkVectorsCommon<Vec3i, 3>();
+		checkVectorsCommon<Vec4i, 4>();
+		checkVectorsReal<Vec2, 2>();
+		checkVectorsReal<Vec3, 3>();
+		checkVectorsReal<Vec4, 4>();
 
 		{
-			constexpr vec2 a = vec2(vec3(42));
-			constexpr vec2 b = vec2(vec4(42));
-			constexpr vec3 c = vec3(vec4(42));
-			constexpr ivec2 d = ivec2(ivec3(42));
-			constexpr ivec2 e = ivec2(ivec4(42));
-			constexpr ivec3 f = ivec3(ivec4(42));
+			constexpr Vec2 a = Vec2(Vec3(42));
+			constexpr Vec2 b = Vec2(Vec4(42));
+			constexpr Vec3 c = Vec3(Vec4(42));
+			constexpr Vec2i d = Vec2i(Vec3i(42));
+			constexpr Vec2i e = Vec2i(Vec4i(42));
+			constexpr Vec3i f = Vec3i(Vec4i(42));
 		}
 	}
 
@@ -219,17 +219,17 @@ namespace
 
 		{
 			CAGE_TESTCASE("basics");
-			CAGE_TEST(real::Pi() > 3.1 && real::Pi() < 3.2);
-			CAGE_TEST(real::E() > 2.7 && real::E() < 2.8);
-			CAGE_TEST(real(real::Infinity()).valid());
-			CAGE_TEST(!real(real::Nan()).valid());
-			CAGE_TEST(!real(real::Infinity()).finite());
-			CAGE_TEST(!real(real::Nan()).finite());
-			CAGE_TEST(real(real::Pi()).finite());
-			CAGE_TEST(real(0).finite());
-			CAGE_TEST(real(42).finite());
-			CAGE_TEST(real(42).valid());
-			constexpr real a = 3;
+			CAGE_TEST(Real::Pi() > 3.1 && Real::Pi() < 3.2);
+			CAGE_TEST(Real::E() > 2.7 && Real::E() < 2.8);
+			CAGE_TEST(Real(Real::Infinity()).valid());
+			CAGE_TEST(!Real(Real::Nan()).valid());
+			CAGE_TEST(!Real(Real::Infinity()).finite());
+			CAGE_TEST(!Real(Real::Nan()).finite());
+			CAGE_TEST(Real(Real::Pi()).finite());
+			CAGE_TEST(Real(0).finite());
+			CAGE_TEST(Real(42).finite());
+			CAGE_TEST(Real(42).valid());
+			constexpr Real a = 3;
 			test(a + 2, 5);
 			test(2 + a, 5);
 			test(a - 2, 1);
@@ -244,23 +244,23 @@ namespace
 
 		{
 			CAGE_TESTCASE("modulo");
-			test(real(+15) % real(+12), +15 % +12); // +3
-			test(real(+15) % real(-12), +15 % -12); // +3
-			test(real(-15) % real(-12), -15 % -12); // -3
-			test(real(-15) % real(+12), -15 % +12); // -3
-			test(real(+150) % real(+13), +150 % +13); // 7
-			test(real(+150) % real(-13), +150 % -13); // 7
-			test(real(-150) % real(-13), -150 % -13); // -7
-			test(real(-150) % real(+13), -150 % +13); // -7
-			test(real(+5) % real(+1.8), +1.4);
-			test(real(+5) % real(-1.8), +1.4);
-			test(real(-5) % real(-1.8), -1.4);
-			test(real(-5) % real(+1.8), -1.4);
+			test(Real(+15) % Real(+12), +15 % +12); // +3
+			test(Real(+15) % Real(-12), +15 % -12); // +3
+			test(Real(-15) % Real(-12), -15 % -12); // -3
+			test(Real(-15) % Real(+12), -15 % +12); // -3
+			test(Real(+150) % Real(+13), +150 % +13); // 7
+			test(Real(+150) % Real(-13), +150 % -13); // 7
+			test(Real(-150) % Real(-13), -150 % -13); // -7
+			test(Real(-150) % Real(+13), -150 % +13); // -7
+			test(Real(+5) % Real(+1.8), +1.4);
+			test(Real(+5) % Real(-1.8), +1.4);
+			test(Real(-5) % Real(-1.8), -1.4);
+			test(Real(-5) % Real(+1.8), -1.4);
 		}
 
 		{
 			CAGE_TESTCASE("wrap");
-			test(wrap(0.9 * 15), real(0.9 * 15) % 1);
+			test(wrap(0.9 * 15), Real(0.9 * 15) % 1);
 			test(wrap(0), 0);
 			test(wrap(-0.75), 0.25);
 			test(wrap(-0.5), 0.5);
@@ -291,10 +291,10 @@ namespace
 
 		{
 			CAGE_TESTCASE("interpolate");
-			test(interpolate(real(5), real(15), 0.5), 10);
-			test(interpolate(real(5), real(15), 0), 5);
-			test(interpolate(real(5), real(15), 1), 15);
-			test(interpolate(real(5), real(15), 0.2), 7);
+			test(interpolate(Real(5), Real(15), 0.5), 10);
+			test(interpolate(Real(5), Real(15), 0), 5);
+			test(interpolate(Real(5), Real(15), 1), 15);
+			test(interpolate(Real(5), Real(15), 0.2), 7);
 		}
 
 		{
@@ -333,51 +333,51 @@ namespace
 
 		{
 			CAGE_TESTCASE("saturate");
-			test(saturate(4.5), (real)1.0);
-			test(saturate(1.5), (real)1.0);
-			test(saturate(0.65), (real)0.65);
-			test(saturate(0.25), (real)0.25);
-			test(saturate(-0.55), (real)0.0);
-			test(saturate(-3.55), (real)0.0);
+			test(saturate(4.5), (Real)1.0);
+			test(saturate(1.5), (Real)1.0);
+			test(saturate(0.65), (Real)0.65);
+			test(saturate(0.25), (Real)0.25);
+			test(saturate(-0.55), (Real)0.0);
+			test(saturate(-3.55), (Real)0.0);
 		}
 
 		{
 			CAGE_TESTCASE("rounding");
-			CAGE_TEST(round(real(5.2)) == 5);
-			CAGE_TEST(round(real(4.8)) == 5);
-			CAGE_TEST(floor(real(5.2)) == 5);
-			CAGE_TEST(floor(real(4.8)) == 4);
-			CAGE_TEST(ceil(real(5.2)) == 6);
-			CAGE_TEST(ceil(real(4.8)) == 5);
-			CAGE_TEST(round(real(-5.2)) == -5);
-			CAGE_TEST(round(real(-4.8)) == -5);
-			CAGE_TEST(floor(real(-5.2)) == -6);
-			CAGE_TEST(floor(real(-4.8)) == -5);
-			CAGE_TEST(ceil(real(-5.2)) == -5);
-			CAGE_TEST(ceil(real(-4.8)) == -4);
+			CAGE_TEST(round(Real(5.2)) == 5);
+			CAGE_TEST(round(Real(4.8)) == 5);
+			CAGE_TEST(floor(Real(5.2)) == 5);
+			CAGE_TEST(floor(Real(4.8)) == 4);
+			CAGE_TEST(ceil(Real(5.2)) == 6);
+			CAGE_TEST(ceil(Real(4.8)) == 5);
+			CAGE_TEST(round(Real(-5.2)) == -5);
+			CAGE_TEST(round(Real(-4.8)) == -5);
+			CAGE_TEST(floor(Real(-5.2)) == -6);
+			CAGE_TEST(floor(Real(-4.8)) == -5);
+			CAGE_TEST(ceil(Real(-5.2)) == -5);
+			CAGE_TEST(ceil(Real(-4.8)) == -4);
 		}
 	}
 
 	void testMathAngles()
 	{
 		CAGE_TESTCASE("degs & rads");
-		test(rads(degs(0)), rads(0));
-		test(rads(degs(90)), rads(real::Pi() / 2));
-		test(rads(degs(180)), rads(real::Pi()));
-		test(rads(wrap(degs(90 * 15))), degs((90 * 15) % 360));
-		test(rads(wrap(degs(0))), degs(0));
-		test(rads(wrap(degs(-270))), degs(90));
-		test(rads(wrap(degs(-180))), degs(180));
-		test(rads(wrap(degs(-90))), degs(270));
-		test(rads(wrap(degs(360))), degs(0));
-		test(rads(wrap(degs(90))), degs(90));
-		test(rads(wrap(degs(180))), degs(180));
-		test(rads(wrap(degs(270))), degs(270));
+		test(Rads(Degs(0)), Rads(0));
+		test(Rads(Degs(90)), Rads(Real::Pi() / 2));
+		test(Rads(Degs(180)), Rads(Real::Pi()));
+		test(Rads(wrap(Degs(90 * 15))), Degs((90 * 15) % 360));
+		test(Rads(wrap(Degs(0))), Degs(0));
+		test(Rads(wrap(Degs(-270))), Degs(90));
+		test(Rads(wrap(Degs(-180))), Degs(180));
+		test(Rads(wrap(Degs(-90))), Degs(270));
+		test(Rads(wrap(Degs(360))), Degs(0));
+		test(Rads(wrap(Degs(90))), Degs(90));
+		test(Rads(wrap(Degs(180))), Degs(180));
+		test(Rads(wrap(Degs(270))), Degs(270));
 
 		{
 			CAGE_TESTCASE("operators");
-			rads angle;
-			real scalar;
+			Rads angle;
+			Real scalar;
 			angle = angle + angle;
 			angle = angle - angle;
 			angle = angle * scalar;
@@ -390,22 +390,22 @@ namespace
 			CAGE_TESTCASE("atan2");
 			for (uint32 i = 0; i < 10; i++)
 			{
-				rads a = wrap(randomAngle());
-				real d = randomRange(0.1, 10.0);
-				real x = cos(a) * d;
-				real y = sin(a) * d;
-				rads r = wrap(atan2(x, y));
+				Rads a = wrap(randomAngle());
+				Real d = randomRange(0.1, 10.0);
+				Real x = cos(a) * d;
+				Real y = sin(a) * d;
+				Rads r = wrap(atan2(x, y));
 				test(a, r);
 			}
 
 			for (uint32 i = 0; i < 10; i++)
 			{
-				rads a = randomAngle();
-				real d = randomRange(0.1, 10.0);
-				real x = cos(a) * d;
-				real y = sin(a) * d;
-				rads c = atan2(x, y);
-				rads s = rads(std::atan2(y.value, x.value));
+				Rads a = randomAngle();
+				Real d = randomRange(0.1, 10.0);
+				Real x = cos(a) * d;
+				Real y = sin(a) * d;
+				Rads c = atan2(x, y);
+				Rads s = Rads(std::atan2(y.value, x.value));
 				test(c, s);
 			}
 		}
@@ -414,168 +414,168 @@ namespace
 	void testMathVec2()
 	{
 		CAGE_TESTCASE("vec2");
-		constexpr vec2 a(3, 5);
+		constexpr Vec2 a(3, 5);
 		test(a[0], 3);
 		test(a[1], 5);
-		constexpr vec2 b(2, 1);
-		constexpr vec2 c(5, 2);
-		test(a, vec2(3, 5));
+		constexpr Vec2 b(2, 1);
+		constexpr Vec2 c(5, 2);
+		test(a, Vec2(3, 5));
 		CAGE_TEST(a != b);
-		test(a + b, vec2(5, 6));
-		test(a * b, vec2(6, 5));
+		test(a + b, Vec2(5, 6));
+		test(a * b, Vec2(6, 5));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(max(a, c), vec2(5, 5));
-		test(min(a, c), vec2(3, 2));
-		constexpr vec2 d = a + c;
-		test(d, vec2(8, 7));
+		test(max(a, c), Vec2(5, 5));
+		test(min(a, c), Vec2(3, 2));
+		constexpr Vec2 d = a + c;
+		test(d, Vec2(8, 7));
 
-		test(vec2(1, 5), vec2(1, 5));
-		CAGE_TEST(!(vec2(1, 5) != vec2(1, 5)));
-		CAGE_TEST(vec2(3, 5) != vec2(1, 5));
+		test(Vec2(1, 5), Vec2(1, 5));
+		CAGE_TEST(!(Vec2(1, 5) != Vec2(1, 5)));
+		CAGE_TEST(Vec2(3, 5) != Vec2(1, 5));
 	}
 
 	void testMathVec3()
 	{
 		CAGE_TESTCASE("vec3");
-		constexpr vec3 a(3, 5, 1);
-		constexpr vec3 b(1, 1, 4);
+		constexpr Vec3 a(3, 5, 1);
+		constexpr Vec3 b(1, 1, 4);
 		test(a[0], 3);
 		test(a[1], 5);
 		test(a[2], 1);
-		test(a, vec3(3, 5, 1));
-		test(vec3(1, 1, 4), b);
+		test(a, Vec3(3, 5, 1));
+		test(Vec3(1, 1, 4), b);
 		CAGE_TEST(a != b);
 		test(a, a);
-		test(a + b, vec3(4, 6, 5));
-		test(a * b, vec3(3, 5, 4));
+		test(a + b, Vec3(4, 6, 5));
+		test(a * b, Vec3(3, 5, 4));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(max(a, b), vec3(3, 5, 4));
-		test(min(a, b), vec3(1, 1, 1));
-		constexpr vec3 c = a + b;
-		test(c, vec3(4, 6, 5));
-		test(cross(a, b), vec3(19, -11, -2));
+		test(max(a, b), Vec3(3, 5, 4));
+		test(min(a, b), Vec3(1, 1, 1));
+		constexpr Vec3 c = a + b;
+		test(c, Vec3(4, 6, 5));
+		test(cross(a, b), Vec3(19, -11, -2));
 		test(dot(a, b), 12);
-		test(a / b, vec3(3, 5, 1.f / 4));
-		test(8 / b, vec3(8, 8, 2));
-		test(a / (1.f / 3), vec3(9, 15, 3));
+		test(a / b, Vec3(3, 5, 1.f / 4));
+		test(8 / b, Vec3(8, 8, 2));
+		test(a / (1.f / 3), Vec3(9, 15, 3));
 
-		test(vec3(1, 5, 4), vec3(1, 5, 4));
-		CAGE_TEST(!(vec3(1, 5, 4) != vec3(1, 5, 4)));
-		CAGE_TEST(vec3(3, 5, 4) != vec3(1, 5, 4));
+		test(Vec3(1, 5, 4), Vec3(1, 5, 4));
+		CAGE_TEST(!(Vec3(1, 5, 4) != Vec3(1, 5, 4)));
+		CAGE_TEST(Vec3(3, 5, 4) != Vec3(1, 5, 4));
 
-		CAGE_TEST(clamp(vec3(1, 3, 5), vec3(2), vec3(4)) == vec3(2, 3, 4));
-		CAGE_TEST(clamp(vec3(1, 3, 5), 2, 4) == vec3(2, 3, 4));
+		CAGE_TEST(clamp(Vec3(1, 3, 5), Vec3(2), Vec3(4)) == Vec3(2, 3, 4));
+		CAGE_TEST(clamp(Vec3(1, 3, 5), 2, 4) == Vec3(2, 3, 4));
 
-		CAGE_TEST(abs(vec3(1, 3, 5)) == vec3(1, 3, 5));
-		CAGE_TEST(abs(vec3(1, -3, 5)) == vec3(1, 3, 5));
-		CAGE_TEST(abs(vec3(-1, 3, -5)) == vec3(1, 3, 5));
-		CAGE_TEST(abs(vec3(-1, -3, -5)) == vec3(1, 3, 5));
+		CAGE_TEST(abs(Vec3(1, 3, 5)) == Vec3(1, 3, 5));
+		CAGE_TEST(abs(Vec3(1, -3, 5)) == Vec3(1, 3, 5));
+		CAGE_TEST(abs(Vec3(-1, 3, -5)) == Vec3(1, 3, 5));
+		CAGE_TEST(abs(Vec3(-1, -3, -5)) == Vec3(1, 3, 5));
 
-		test(dominantAxis(vec3(13, -4, 1)), vec3(1, 0, 0));
-		test(dominantAxis(vec3(-3, -15, 4)), vec3(0, -1, 0));
+		test(dominantAxis(Vec3(13, -4, 1)), Vec3(1, 0, 0));
+		test(dominantAxis(Vec3(-3, -15, 4)), Vec3(0, -1, 0));
 
 		// right = forward x up (in this order)
-		test(cross(vec3(0, 0, -1), vec3(0, 1, 0)), vec3(1, 0, 0));
+		test(cross(Vec3(0, 0, -1), Vec3(0, 1, 0)), Vec3(1, 0, 0));
 	}
 
 	void testMathVec4()
 	{
 		CAGE_TESTCASE("vec4");
-		constexpr vec4 a(1, 2, 3, 4);
+		constexpr Vec4 a(1, 2, 3, 4);
 		test(a[0], 1);
 		test(a[1], 2);
 		test(a[2], 3);
 		test(a[3], 4);
-		constexpr vec4 b(3, 2, 4, 1);
-		test(a, vec4(1, 2, 3, 4));
-		test(vec4(3, 2, 4, 1), b);
+		constexpr Vec4 b(3, 2, 4, 1);
+		test(a, Vec4(1, 2, 3, 4));
+		test(Vec4(3, 2, 4, 1), b);
 		CAGE_TEST(a != b);
-		constexpr vec4 c = a + b;
-		test(a + b, vec4(4, 4, 7, 5));
+		constexpr Vec4 c = a + b;
+		test(a + b, Vec4(4, 4, 7, 5));
 		test(a + b, c);
-		test(a * b, vec4(3, 4, 12, 4));
+		test(a * b, Vec4(3, 4, 12, 4));
 	}
 
 	void testMathIVec2()
 	{
 		CAGE_TESTCASE("ivec2");
-		constexpr ivec2 a(3, 5);
+		constexpr Vec2i a(3, 5);
 		test(a[0], 3);
 		test(a[1], 5);
-		constexpr ivec2 b(2, 1);
-		constexpr ivec2 c(5, 2);
-		test(a, ivec2(3, 5));
+		constexpr Vec2i b(2, 1);
+		constexpr Vec2i c(5, 2);
+		test(a, Vec2i(3, 5));
 		CAGE_TEST(a != b);
-		test(a + b, ivec2(5, 6));
-		test(a * b, ivec2(6, 5));
+		test(a + b, Vec2i(5, 6));
+		test(a * b, Vec2i(6, 5));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(max(a, c), ivec2(5, 5));
-		test(min(a, c), ivec2(3, 2));
-		constexpr ivec2 d = a + c;
-		test(d, ivec2(8, 7));
+		test(max(a, c), Vec2i(5, 5));
+		test(min(a, c), Vec2i(3, 2));
+		constexpr Vec2i d = a + c;
+		test(d, Vec2i(8, 7));
 
-		test(ivec2(1, 5), ivec2(1, 5));
-		CAGE_TEST(!(ivec2(1, 5) != ivec2(1, 5)));
-		CAGE_TEST(ivec2(3, 5) != ivec2(1, 5));
+		test(Vec2i(1, 5), Vec2i(1, 5));
+		CAGE_TEST(!(Vec2i(1, 5) != Vec2i(1, 5)));
+		CAGE_TEST(Vec2i(3, 5) != Vec2i(1, 5));
 	}
 
 	void testMathIVec3()
 	{
 		CAGE_TESTCASE("ivec3");
-		constexpr ivec3 a(3, 5, 1);
-		constexpr ivec3 b(1, 1, 4);
+		constexpr Vec3i a(3, 5, 1);
+		constexpr Vec3i b(1, 1, 4);
 		test(a[0], 3);
 		test(a[1], 5);
 		test(a[2], 1);
-		test(a, ivec3(3, 5, 1));
-		test(ivec3(1, 1, 4), b);
+		test(a, Vec3i(3, 5, 1));
+		test(Vec3i(1, 1, 4), b);
 		CAGE_TEST(a != b);
 		test(a, a);
-		test(a + b, ivec3(4, 6, 5));
-		test(a * b, ivec3(3, 5, 4));
+		test(a + b, Vec3i(4, 6, 5));
+		test(a * b, Vec3i(3, 5, 4));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(max(a, b), ivec3(3, 5, 4));
-		test(min(a, b), ivec3(1, 1, 1));
-		constexpr ivec3 c = a + b;
-		test(c, ivec3(4, 6, 5));
-		test(a / b, ivec3(3, 5, 0));
-		test(8 / b, ivec3(8, 8, 2));
-		test(a / 2, ivec3(1, 2, 0));
+		test(max(a, b), Vec3i(3, 5, 4));
+		test(min(a, b), Vec3i(1, 1, 1));
+		constexpr Vec3i c = a + b;
+		test(c, Vec3i(4, 6, 5));
+		test(a / b, Vec3i(3, 5, 0));
+		test(8 / b, Vec3i(8, 8, 2));
+		test(a / 2, Vec3i(1, 2, 0));
 
-		test(ivec3(1, 5, 4), ivec3(1, 5, 4));
-		CAGE_TEST(!(ivec3(1, 5, 4) != ivec3(1, 5, 4)));
-		CAGE_TEST(ivec3(3, 5, 4) != ivec3(1, 5, 4));
+		test(Vec3i(1, 5, 4), Vec3i(1, 5, 4));
+		CAGE_TEST(!(Vec3i(1, 5, 4) != Vec3i(1, 5, 4)));
+		CAGE_TEST(Vec3i(3, 5, 4) != Vec3i(1, 5, 4));
 
-		CAGE_TEST(clamp(ivec3(1, 3, 5), ivec3(2), ivec3(4)) == ivec3(2, 3, 4));
-		CAGE_TEST(clamp(ivec3(1, 3, 5), 2, 4) == ivec3(2, 3, 4));
+		CAGE_TEST(clamp(Vec3i(1, 3, 5), Vec3i(2), Vec3i(4)) == Vec3i(2, 3, 4));
+		CAGE_TEST(clamp(Vec3i(1, 3, 5), 2, 4) == Vec3i(2, 3, 4));
 
-		CAGE_TEST(abs(ivec3(1, 3, 5)) == ivec3(1, 3, 5));
-		CAGE_TEST(abs(ivec3(1, -3, 5)) == ivec3(1, 3, 5));
-		CAGE_TEST(abs(ivec3(-1, 3, -5)) == ivec3(1, 3, 5));
-		CAGE_TEST(abs(ivec3(-1, -3, -5)) == ivec3(1, 3, 5));
+		CAGE_TEST(abs(Vec3i(1, 3, 5)) == Vec3i(1, 3, 5));
+		CAGE_TEST(abs(Vec3i(1, -3, 5)) == Vec3i(1, 3, 5));
+		CAGE_TEST(abs(Vec3i(-1, 3, -5)) == Vec3i(1, 3, 5));
+		CAGE_TEST(abs(Vec3i(-1, -3, -5)) == Vec3i(1, 3, 5));
 
 	}
 
 	void testMathIVec4()
 	{
 		CAGE_TESTCASE("ivec4");
-		constexpr ivec4 a(1, 2, 3, 4);
+		constexpr Vec4i a(1, 2, 3, 4);
 		test(a[0], 1);
 		test(a[1], 2);
 		test(a[2], 3);
 		test(a[3], 4);
-		constexpr ivec4 b(3, 2, 4, 1);
-		test(a, ivec4(1, 2, 3, 4));
-		test(ivec4(3, 2, 4, 1), b);
+		constexpr Vec4i b(3, 2, 4, 1);
+		test(a, Vec4i(1, 2, 3, 4));
+		test(Vec4i(3, 2, 4, 1), b);
 		CAGE_TEST(a != b);
-		constexpr ivec4 c = a + b;
-		test(a + b, ivec4(4, 4, 7, 5));
+		constexpr Vec4i c = a + b;
+		test(a + b, Vec4i(4, 4, 7, 5));
 		test(a + b, c);
-		test(a * b, ivec4(3, 4, 12, 4));
+		test(a * b, Vec4i(3, 4, 12, 4));
 	}
 
 	void testMathQuat()
@@ -584,7 +584,7 @@ namespace
 
 		{
 			CAGE_TESTCASE("basic constructor");
-			constexpr quat q(1, 2, 3, 4);
+			constexpr Quat q(1, 2, 3, 4);
 			test(q[0], 1);
 			test(q[1], 2);
 			test(q[2], 3);
@@ -593,13 +593,13 @@ namespace
 
 		{
 			CAGE_TESTCASE("constructor from euler angles");
-			test(quat(degs(), degs(), degs()), quat(0, 0, 0, 1));
-			test(quat(degs(90), degs(), degs()), quat(0.7071067811865475, 0, 0, 0.7071067811865476));
-			test(quat(degs(-90), degs(), degs()), quat(-0.7071067811865475, 0, 0, 0.7071067811865476));
-			test(quat(degs(), degs(90), degs()), quat(0, 0.7071067811865475, 0, 0.7071067811865476));
-			test(quat(degs(), degs(-90), degs()), quat(0, -0.7071067811865475, 0, 0.7071067811865476));
-			test(quat(degs(), degs(), degs(90)), quat(0, 0, 0.7071067811865475, 0.7071067811865476));
-			test(quat(degs(), degs(), degs(-90)), quat(0, 0, -0.7071067811865475, 0.7071067811865476));
+			test(Quat(Degs(), Degs(), Degs()), Quat(0, 0, 0, 1));
+			test(Quat(Degs(90), Degs(), Degs()), Quat(0.7071067811865475, 0, 0, 0.7071067811865476));
+			test(Quat(Degs(-90), Degs(), Degs()), Quat(-0.7071067811865475, 0, 0, 0.7071067811865476));
+			test(Quat(Degs(), Degs(90), Degs()), Quat(0, 0.7071067811865475, 0, 0.7071067811865476));
+			test(Quat(Degs(), Degs(-90), Degs()), Quat(0, -0.7071067811865475, 0, 0.7071067811865476));
+			test(Quat(Degs(), Degs(), Degs(90)), Quat(0, 0, 0.7071067811865475, 0.7071067811865476));
+			test(Quat(Degs(), Degs(), Degs(-90)), Quat(0, 0, -0.7071067811865475, 0.7071067811865476));
 		}
 
 		{
@@ -607,100 +607,100 @@ namespace
 
 			{
 				CAGE_TESTCASE("multiplying by identity");
-				test(quat(0, 0, 0, 1) * quat(0, 0, 0, 1), quat(0, 0, 0, 1));
-				test(quat(0, 0, 1, 0) * quat(0, 0, 0, 1), quat(0, 0, 1, 0));
-				test(quat(0, 1, 0, 0) * quat(0, 0, 0, 1), quat(0, 1, 0, 0));
-				test(quat(1, 0, 0, 0) * quat(0, 0, 0, 1), quat(1, 0, 0, 0));
+				test(Quat(0, 0, 0, 1) * Quat(0, 0, 0, 1), Quat(0, 0, 0, 1));
+				test(Quat(0, 0, 1, 0) * Quat(0, 0, 0, 1), Quat(0, 0, 1, 0));
+				test(Quat(0, 1, 0, 0) * Quat(0, 0, 0, 1), Quat(0, 1, 0, 0));
+				test(Quat(1, 0, 0, 0) * Quat(0, 0, 0, 1), Quat(1, 0, 0, 0));
 			}
 
 			{
 				CAGE_TESTCASE("x times x, ...");
-				test(quat(1, 0, 0, 0) * quat(1, 0, 0, 0), quat(0, 0, 0, -1));
-				test(quat(0, 1, 0, 0) * quat(0, 1, 0, 0), quat(0, 0, 0, -1));
-				test(quat(0, 0, 1, 0) * quat(0, 0, 1, 0), quat(0, 0, 0, -1));
+				test(Quat(1, 0, 0, 0) * Quat(1, 0, 0, 0), Quat(0, 0, 0, -1));
+				test(Quat(0, 1, 0, 0) * Quat(0, 1, 0, 0), Quat(0, 0, 0, -1));
+				test(Quat(0, 0, 1, 0) * Quat(0, 0, 1, 0), Quat(0, 0, 0, -1));
 			}
 
 			{
 				CAGE_TESTCASE("x times y, ...");
-				test(quat(1, 0, 0, 0) * quat(0, 1, 0, 0), quat(0, 0, 1, 0));
-				test(quat(0, 1, 0, 0) * quat(0, 0, 1, 0), quat(1, 0, 0, 0));
-				test(quat(0, 0, 1, 0) * quat(1, 0, 0, 0), quat(0, 1, 0, 0));
+				test(Quat(1, 0, 0, 0) * Quat(0, 1, 0, 0), Quat(0, 0, 1, 0));
+				test(Quat(0, 1, 0, 0) * Quat(0, 0, 1, 0), Quat(1, 0, 0, 0));
+				test(Quat(0, 0, 1, 0) * Quat(1, 0, 0, 0), Quat(0, 1, 0, 0));
 			}
 
 			{
 				CAGE_TESTCASE("reverse rotations");
-				test(quat(degs(15), degs(), degs()) * quat(degs(-15), degs(), degs()), quat());
-				test(quat(degs(), degs(15), degs()) * quat(degs(), degs(-15), degs()), quat());
-				test(quat(degs(), degs(), degs(15)) * quat(degs(), degs(), degs(-15)), quat());
-				test(quat(degs(30), degs(), degs()) * quat(degs(-30), degs(), degs()), quat());
-				test(quat(degs(), degs(30), degs()) * quat(degs(), degs(-30), degs()), quat());
-				test(quat(degs(), degs(), degs(30)) * quat(degs(), degs(), degs(-30)), quat());
-				test(quat(degs(60), degs(), degs()) * quat(degs(-60), degs(), degs()), quat());
-				test(quat(degs(), degs(60), degs()) * quat(degs(), degs(-60), degs()), quat());
-				test(quat(degs(), degs(), degs(60)) * quat(degs(), degs(), degs(-60)), quat());
-				test(quat(degs(90), degs(), degs()) * quat(degs(-90), degs(), degs()), quat());
-				test(quat(degs(), degs(90), degs()) * quat(degs(), degs(-90), degs()), quat());
-				test(quat(degs(), degs(), degs(90)) * quat(degs(), degs(), degs(-90)), quat());
+				test(Quat(Degs(15), Degs(), Degs()) * Quat(Degs(-15), Degs(), Degs()), Quat());
+				test(Quat(Degs(), Degs(15), Degs()) * Quat(Degs(), Degs(-15), Degs()), Quat());
+				test(Quat(Degs(), Degs(), Degs(15)) * Quat(Degs(), Degs(), Degs(-15)), Quat());
+				test(Quat(Degs(30), Degs(), Degs()) * Quat(Degs(-30), Degs(), Degs()), Quat());
+				test(Quat(Degs(), Degs(30), Degs()) * Quat(Degs(), Degs(-30), Degs()), Quat());
+				test(Quat(Degs(), Degs(), Degs(30)) * Quat(Degs(), Degs(), Degs(-30)), Quat());
+				test(Quat(Degs(60), Degs(), Degs()) * Quat(Degs(-60), Degs(), Degs()), Quat());
+				test(Quat(Degs(), Degs(60), Degs()) * Quat(Degs(), Degs(-60), Degs()), Quat());
+				test(Quat(Degs(), Degs(), Degs(60)) * Quat(Degs(), Degs(), Degs(-60)), Quat());
+				test(Quat(Degs(90), Degs(), Degs()) * Quat(Degs(-90), Degs(), Degs()), Quat());
+				test(Quat(Degs(), Degs(90), Degs()) * Quat(Degs(), Degs(-90), Degs()), Quat());
+				test(Quat(Degs(), Degs(), Degs(90)) * Quat(Degs(), Degs(), Degs(-90)), Quat());
 			}
 
 			{
 				CAGE_TESTCASE("generic rotations");
-				test(quat(degs(), degs(30), degs()) * quat(degs(), degs(), degs(20)), quat(0.044943455527547777, 0.25488700224417876, 0.16773125949652062, 0.9512512425641977));
+				test(Quat(Degs(), Degs(30), Degs()) * Quat(Degs(), Degs(), Degs(20)), Quat(0.044943455527547777, 0.25488700224417876, 0.16773125949652062, 0.9512512425641977));
 			}
 		}
 
 		{
 			CAGE_TESTCASE("rotating vector");
 
-			constexpr vec3 vforward(0, 0, -10), vleft(-10, 0, 0), vright(10, 0, 0), vup(0, 10, 0), vdown(0, -10, 0), vback(0, 0, 10);
+			constexpr Vec3 vforward(0, 0, -10), vleft(-10, 0, 0), vright(10, 0, 0), vup(0, 10, 0), vdown(0, -10, 0), vback(0, 0, 10);
 
 			{
 				CAGE_TESTCASE("pitch");
-				test(quat(degs(90), degs(0), degs(0)) * vforward, vup);
-				test(quat(degs(90), degs(0), degs(0)) * vup, vback);
-				test(quat(degs(90), degs(0), degs(0)) * vback, vdown);
-				test(quat(degs(90), degs(0), degs(0)) * vdown, vforward);
-				test(quat(degs(90), degs(0), degs(0)) * vleft, vleft);
-				test(quat(degs(90), degs(0), degs(0)) * vright, vright);
-				test(quat(degs(-90), degs(0), degs(0)) * vforward, vdown);
-				test(quat(degs(-90), degs(0), degs(0)) * vback, vup);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vforward, vup);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vup, vback);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vback, vdown);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vdown, vforward);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vleft, vleft);
+				test(Quat(Degs(90), Degs(0), Degs(0)) * vright, vright);
+				test(Quat(Degs(-90), Degs(0), Degs(0)) * vforward, vdown);
+				test(Quat(Degs(-90), Degs(0), Degs(0)) * vback, vup);
 			}
 
 			{
 				CAGE_TESTCASE("yaw");
-				test(quat(degs(0), degs(90), degs(0)) * vleft, vback);
-				test(quat(degs(0), degs(90), degs(0)) * vback, vright);
-				test(quat(degs(0), degs(90), degs(0)) * vright, vforward);
-				test(quat(degs(0), degs(90), degs(0)) * vup, vup);
-				test(quat(degs(0), degs(90), degs(0)) * vdown, vdown);
-				test(quat(degs(0), degs(-90), degs(0)) * vforward, vright);
-				test(quat(degs(0), degs(-90), degs(0)) * vback, vleft);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vleft, vback);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vback, vright);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vright, vforward);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vup, vup);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vdown, vdown);
+				test(Quat(Degs(0), Degs(-90), Degs(0)) * vforward, vright);
+				test(Quat(Degs(0), Degs(-90), Degs(0)) * vback, vleft);
 			}
 
 			{
 				CAGE_TESTCASE("roll");
-				test(quat(degs(0), degs(0), degs(90)) * vforward, vforward);
+				test(Quat(Degs(0), Degs(0), Degs(90)) * vforward, vforward);
 			}
 			{
 				CAGE_TESTCASE("commutativity");
-				test(quat(degs(0), degs(90), degs(0)) * vforward, vleft);
-				test(vforward * quat(degs(0), degs(90), degs(0)), vleft);
+				test(Quat(Degs(0), Degs(90), Degs(0)) * vforward, vleft);
+				test(vforward * Quat(Degs(0), Degs(90), Degs(0)), vleft);
 			}
 		}
 
 		{
 			CAGE_TESTCASE("compare quaternions with lookAt");
 
-			mat4 q1 = mat4(quat());
-			mat4 m1 = lookAt(vec3(), vec3(0, 0, -1), vec3(0, 1, 0));
+			Mat4 q1 = Mat4(Quat());
+			Mat4 m1 = lookAt(Vec3(), Vec3(0, 0, -1), Vec3(0, 1, 0));
 			test(q1, m1);
 
-			mat4 q2 = mat4(quat(degs(), degs(-45), degs()));
-			mat4 m2 = lookAt(vec3(), normalize(vec3(-1, 0, -1)), vec3(0, 1, 0));
+			Mat4 q2 = Mat4(Quat(Degs(), Degs(-45), Degs()));
+			Mat4 m2 = lookAt(Vec3(), normalize(Vec3(-1, 0, -1)), Vec3(0, 1, 0));
 			test(q2, m2);
 
-			mat4 q3 = mat4(quat(degs(-45), degs(), degs()));
-			mat4 m3 = lookAt(vec3(), normalize(vec3(0, 1, -1)), vec3(0, 1, 0));
+			Mat4 q3 = Mat4(Quat(Degs(-45), Degs(), Degs()));
+			Mat4 m3 = lookAt(Vec3(), normalize(Vec3(0, 1, -1)), Vec3(0, 1, 0));
 			test(q3, m3);
 		}
 
@@ -708,108 +708,108 @@ namespace
 			CAGE_TESTCASE("quaternion from forward and up");
 
 			{ // no rotation, keep forward
-				quat q(vec3(0, 0, -1), vec3(0, 1, 0), false);
-				test(q * vec3(0, 0, -1), vec3(0, 0, -1));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(1, 0, 0));
+				Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
 			}
 
 			{ // no rotation, keep up
-				quat q(vec3(0, 0, -1), vec3(0, 1, 0), true);
-				test(q * vec3(0, 0, -1), vec3(0, 0, -1));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(1, 0, 0));
+				Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
 			}
 
 			{ // rotation left, keep forward
-				quat q(vec3(-1, 0, 0), vec3(0, 1, 0), false);
-				test(q * vec3(0, 0, -1), vec3(-1, 0, 0));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, -1));
+				Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
 			}
 
 			{ // rotation left, keep up
-				quat q(vec3(-1, 0, 0), vec3(0, 1, 0), true);
-				test(q * vec3(0, 0, -1), vec3(-1, 0, 0));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, -1));
+				Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
 			}
 
 			{ // rotation right, keep forward
-				quat q(vec3(1, 0, 0), vec3(0, 1, 0), false);
-				test(q * vec3(0, 0, -1), vec3(1, 0, 0));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, 1));
+				Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
 			}
 
 			{ // rotation right, keep up
-				quat q(vec3(1, 0, 0), vec3(0, 1, 0), true);
-				test(q * vec3(0, 0, -1), vec3(1, 0, 0));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, 1));
+				Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
 			}
 
 			{ // rotation 180, keep forward
-				quat q(vec3(0, 0, 1), vec3(0, 1, 0), false);
-				test(q * vec3(0, 0, -1), vec3(0, 0, 1));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(-1, 0, 0));
+				Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
 			}
 
 			{ // rotation 180, keep up
-				quat q(vec3(0, 0, 1), vec3(0, 1, 0), true);
-				test(q * vec3(0, 0, -1), vec3(0, 0, 1));
-				test(q * vec3(0, 1, 0), vec3(0, 1, 0));
-				test(q * vec3(1, 0, 0), vec3(-1, 0, 0));
+				Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
+				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+				test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
 			}
 
 			{ // up is left, keep forward
-				quat q(vec3(0, 0, -1), vec3(-1, 0, 0), false);
-				test(q * vec3(0, 0, -1), vec3(0, 0, -1));
-				test(q * vec3(0, 1, 0), vec3(-1, 0, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 1, 0));
+				Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
 			}
 
 			{ // up is left, keep up
-				quat q(vec3(0, 0, -1), vec3(-1, 0, 0), true);
-				test(q * vec3(0, 0, -1), vec3(0, 0, -1));
-				test(q * vec3(0, 1, 0), vec3(-1, 0, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 1, 0));
+				Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
 			}
 
 			{ // uhh, keep forward
-				quat q(vec3(0, 1, 0), vec3(-1, 0, 0), false);
-				test(q * vec3(0, 0, -1), vec3(0, 1, 0));
-				test(q * vec3(0, 1, 0), vec3(-1, 0, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, 1));
+				Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), false);
+				test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
+				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
 			}
 
 			{ // uhh, keep up
-				quat q(vec3(0, 1, 0), vec3(-1, 0, 0), true);
-				test(q * vec3(0, 0, -1), vec3(0, 1, 0));
-				test(q * vec3(0, 1, 0), vec3(-1, 0, 0));
-				test(q * vec3(1, 0, 0), vec3(0, 0, 1));
+				Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), true);
+				test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
+				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
 			}
 
 			// random
 			for (uint32 i = 0; i < 10; i++)
 			{
-				const vec3 f = randomDirection3();
-				const vec3 u = randomDirection3();
-				const vec3 r = normalize(cross(f, u));
+				const Vec3 f = randomDirection3();
+				const Vec3 u = randomDirection3();
+				const Vec3 r = normalize(cross(f, u));
 				test(f, normalize(f));
 				test(u, normalize(u));
 				{ // keep forward
-					quat q(f, u, false);
-					test(q * vec3(0, 0, -1), f);
-					test(q * vec3(0, 1, 0), normalize(cross(r, f)));
-					test(q * vec3(1, 0, 0), r);
+					Quat q(f, u, false);
+					test(q * Vec3(0, 0, -1), f);
+					test(q * Vec3(0, 1, 0), normalize(cross(r, f)));
+					test(q * Vec3(1, 0, 0), r);
 				}
 				{ // keep up
-					quat q(f, u, true);
-					test(q * vec3(0, 0, -1), normalize(cross(u, r)));
-					test(q * vec3(0, 1, 0), u);
-					test(q * vec3(1, 0, 0), r);
+					Quat q(f, u, true);
+					test(q * Vec3(0, 0, -1), normalize(cross(u, r)));
+					test(q * Vec3(0, 1, 0), u);
+					test(q * Vec3(1, 0, 0), r);
 				}
 			}
 		}
@@ -818,12 +818,12 @@ namespace
 			CAGE_TESTCASE("slerpPrecise");
 			for (uint32 i = 0; i < 10; i++)
 			{
-				quat q1 = randomDirectionQuat();
-				quat q2 = randomDirectionQuat();
-				for (real t = 0.1; t < 0.9; t += 0.1)
+				Quat q1 = randomDirectionQuat();
+				Quat q2 = randomDirectionQuat();
+				for (Real t = 0.1; t < 0.9; t += 0.1)
 				{
-					quat qs = slerpPrecise(q1, q2, t);
-					quat qf = slerp(q1, q2, t);
+					Quat qs = slerpPrecise(q1, q2, t);
+					Quat qf = slerp(q1, q2, t);
 					test(qs, qf);
 				}
 			}
@@ -832,28 +832,28 @@ namespace
 		{
 			CAGE_TESTCASE("angle");
 			{
-				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
-				const quat q2 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
-				const rads a = angle(q1, q2);
-				test(a, degs(0));
+				const Quat q1 = Quat(Vec3(0, 0, -1), Vec3(0, 1, 0));
+				const Quat q2 = Quat(Vec3(0, 0, -1), Vec3(0, 1, 0));
+				const Rads a = angle(q1, q2);
+				test(a, Degs(0));
 			}
 			{
-				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
-				const quat q2 = quat(vec3(0, 0, -1), vec3(1, 0, 0));
-				const rads a = angle(q1, q2);
-				test(a, degs(90));
+				const Quat q1 = Quat(Vec3(0, 0, -1), Vec3(0, 1, 0));
+				const Quat q2 = Quat(Vec3(0, 0, -1), Vec3(1, 0, 0));
+				const Rads a = angle(q1, q2);
+				test(a, Degs(90));
 			}
 			{
-				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
-				const quat q2 = quat(vec3(1, 0, 0), vec3(0, 1, 0));
-				const rads a = angle(q1, q2);
-				test(a, degs(90));
+				const Quat q1 = Quat(Vec3(0, 0, -1), Vec3(0, 1, 0));
+				const Quat q2 = Quat(Vec3(1, 0, 0), Vec3(0, 1, 0));
+				const Rads a = angle(q1, q2);
+				test(a, Degs(90));
 			}
 			{
-				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
-				const quat q2 = quat(vec3(0, 0, 1), vec3(0, 1, 0));
-				const rads a = angle(q1, q2);
-				test(a, degs(180));
+				const Quat q1 = Quat(Vec3(0, 0, -1), Vec3(0, 1, 0));
+				const Quat q2 = Quat(Vec3(0, 0, 1), Vec3(0, 1, 0));
+				const Rads a = angle(q1, q2);
+				test(a, Degs(180));
 			}
 		}
 
@@ -862,11 +862,11 @@ namespace
 
 			for (uint32 i = 0; i < 100; i++)
 			{
-				const quat a = randomDirectionQuat();
-				const rads p = pitch(a);
-				const rads y = yaw(a);
-				const rads r = roll(a);
-				const quat b = quat(p, y, r);
+				const Quat a = randomDirectionQuat();
+				const Rads p = pitch(a);
+				const Rads y = yaw(a);
+				const Rads r = roll(a);
+				const Quat b = Quat(p, y, r);
 				test(a, b);
 			}
 		}
@@ -880,13 +880,13 @@ namespace
 			CAGE_TESTCASE("constructor from basis vectors");
 
 			{ // identity
-				test(mat3(vec3(0, 0, -1), vec3(0, 1, 0)), mat3());
+				test(Mat3(Vec3(0, 0, -1), Vec3(0, 1, 0)), Mat3());
 			}
 
 			{ // turn left
-				mat3 m(vec3(-1, 0, 0), vec3(0, 1, 0));
-				test(m * vec3(0, 0, -1), vec3(-1, 0, 0));
-				test(m * vec3(0, 1, 0), vec3(0, 1, 0));
+				Mat3 m(Vec3(-1, 0, 0), Vec3(0, 1, 0));
+				test(m * Vec3(0, 0, -1), Vec3(-1, 0, 0));
+				test(m * Vec3(0, 1, 0), Vec3(0, 1, 0));
 			}
 		}
 	}
@@ -898,10 +898,10 @@ namespace
 		{
 			CAGE_TESTCASE("multiplication");
 
-			constexpr mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
-			constexpr mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
-			constexpr mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
-			mat4 d = b * a;
+			constexpr Mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
+			constexpr Mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
+			constexpr Mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
+			Mat4 d = b * a;
 			test(d, c);
 		}
 
@@ -909,32 +909,32 @@ namespace
 			CAGE_TESTCASE("compose mat4 from position, rotation and scale");
 
 			{
-				constexpr vec3 pos(5, 4, 3);
-				quat rot(degs(), degs(90), degs());
-				constexpr vec3 scale(1, 1, 1);
-				mat4 m(pos, rot, scale);
-				test(m * vec4(0, 0, 0, 1), vec4(5, 4, 3, 1));
-				test(m * vec4(2, 0, 0, 1), vec4(5, 4, 1, 1));
-				test(m * vec4(0, 0, -1, 0), vec4(-1, 0, 0, 0));
+				constexpr Vec3 pos(5, 4, 3);
+				Quat rot(Degs(), Degs(90), Degs());
+				constexpr Vec3 scale(1, 1, 1);
+				Mat4 m(pos, rot, scale);
+				test(m * Vec4(0, 0, 0, 1), Vec4(5, 4, 3, 1));
+				test(m * Vec4(2, 0, 0, 1), Vec4(5, 4, 1, 1));
+				test(m * Vec4(0, 0, -1, 0), Vec4(-1, 0, 0, 0));
 			}
 
 			{
-				constexpr vec3 pos(5, 4, 3);
-				quat rot(degs(), degs(90), degs());
-				constexpr vec3 scale(2, 2, 2);
-				mat4 m(pos, rot, scale);
-				test(m * vec4(0, 0, 0, 1), vec4(5, 4, 3, 1));
-				test(m * vec4(2, 0, 0, 1), vec4(5, 4, -1, 1));
-				test(m * vec4(0, 0, -1, 0), vec4(-2, 0, 0, 0));
+				constexpr Vec3 pos(5, 4, 3);
+				Quat rot(Degs(), Degs(90), Degs());
+				constexpr Vec3 scale(2, 2, 2);
+				Mat4 m(pos, rot, scale);
+				test(m * Vec4(0, 0, 0, 1), Vec4(5, 4, 3, 1));
+				test(m * Vec4(2, 0, 0, 1), Vec4(5, 4, -1, 1));
+				test(m * Vec4(0, 0, -1, 0), Vec4(-2, 0, 0, 0));
 			}
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 pos = randomDirection3() * randomRange(real(0.1), 10);
-				quat rot = randomDirectionQuat();
-				vec3 scl = randomRange3(real(0.1), 10);
-				mat4 m1 = mat4(pos) * mat4(rot) * mat4::scale(scl);
-				mat4 m2 = mat4(pos, rot, scl);
+				Vec3 pos = randomDirection3() * randomRange(Real(0.1), 10);
+				Quat rot = randomDirectionQuat();
+				Vec3 scl = randomRange3(Real(0.1), 10);
+				Mat4 m1 = Mat4(pos) * Mat4(rot) * Mat4::scale(scl);
+				Mat4 m2 = Mat4(pos, rot, scl);
 				test(m1, m2);
 			}
 		}
@@ -942,9 +942,9 @@ namespace
 		{
 			CAGE_TESTCASE("inverse");
 
-			constexpr mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, -20, 9, 1);
-			mat4 b = inverse(a);
-			constexpr mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
+			constexpr Mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, -20, 9, 1);
+			Mat4 b = inverse(a);
+			constexpr Mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
 			test(b, c);
 		}
 	}
@@ -956,11 +956,11 @@ namespace
 		{
 			CAGE_TESTCASE("basics");
 
-			transform t;
-			real r;
-			vec3 v;
-			quat q;
-			mat4 m;
+			Transform t;
+			Real r;
+			Vec3 v;
+			Quat q;
+			Mat4 m;
 
 			// todo check actual values
 
@@ -982,14 +982,14 @@ namespace
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 p = randomDirection3() * randomRange(-5, 20);
-				quat o = randomDirectionQuat();
-				real s = randomRange(real(0.1), 10);
-				transform t(p, o, s);
-				mat4 m(t);
-				vec3 v = randomDirection3() * 10;
-				vec3 tv = t * v;
-				vec3 mv = vec3(m * vec4(v, 1));
+				Vec3 p = randomDirection3() * randomRange(-5, 20);
+				Quat o = randomDirectionQuat();
+				Real s = randomRange(Real(0.1), 10);
+				Transform t(p, o, s);
+				Mat4 m(t);
+				Vec3 v = randomDirection3() * 10;
+				Vec3 tv = t * v;
+				Vec3 mv = Vec3(m * Vec4(v, 1));
 				test(tv, mv);
 			}
 		}
@@ -999,14 +999,14 @@ namespace
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 pa = randomDirection3() * randomRange(-5, 20);
-				vec3 pb = randomDirection3() * randomRange(-5, 20);
-				quat oa = randomDirectionQuat();
-				quat ob = randomDirectionQuat();
-				real sa = randomRange(real(0.1), 10);
-				real sb = randomRange(real(0.1), 10);
-				transform ta(pa, oa, sa), tb(pb, ob, sb);
-				test(mat4(ta * tb), mat4(ta) * mat4(tb));
+				Vec3 pa = randomDirection3() * randomRange(-5, 20);
+				Vec3 pb = randomDirection3() * randomRange(-5, 20);
+				Quat oa = randomDirectionQuat();
+				Quat ob = randomDirectionQuat();
+				Real sa = randomRange(Real(0.1), 10);
+				Real sb = randomRange(Real(0.1), 10);
+				Transform ta(pa, oa, sa), tb(pb, ob, sb);
+				test(Mat4(ta * tb), Mat4(ta) * Mat4(tb));
 				interpolate(ta, tb, 0.42);
 			}
 		}
@@ -1016,12 +1016,12 @@ namespace
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 p = randomDirection3() * randomRange(-5, 20);
-				quat o = randomDirectionQuat();
-				real s = randomRange(real(0.1), 10);
-				transform t(p, o, s);
-				mat4 m1 = inverse(mat4(t));
-				mat4 m2 = mat4(inverse(t));
+				Vec3 p = randomDirection3() * randomRange(-5, 20);
+				Quat o = randomDirectionQuat();
+				Real s = randomRange(Real(0.1), 10);
+				Transform t(p, o, s);
+				Mat4 m1 = inverse(Mat4(t));
+				Mat4 m2 = Mat4(inverse(t));
 				test(m1, m2);
 				round = round;
 			}
@@ -1034,21 +1034,21 @@ namespace
 
 		{
 			CAGE_TESTCASE("sin");
-			test(sin(rads(0)), 0);
-			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi().value / 6));
-			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi().value / 4));
-			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi().value / 2));
-			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi().value * 1));
-			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi().value * 2));
+			test(sin(Rads(0)), 0);
+			test(sin(Rads(Real::Pi() / 6)), ::sin(Real::Pi().value / 6));
+			test(sin(Rads(Real::Pi() / 4)), ::sin(Real::Pi().value / 4));
+			test(sin(Rads(Real::Pi() / 2)), ::sin(Real::Pi().value / 2));
+			test(sin(Rads(Real::Pi() * 1)), ::sin(Real::Pi().value * 1));
+			test(sin(Rads(Real::Pi() * 2)), ::sin(Real::Pi().value * 2));
 		}
 
 		{
 			CAGE_TESTCASE("atan2");
 			for (uint32 i = 0; i < 360; i++)
 			{
-				rads ang = degs(i);
-				real x = cos(ang), y = sin(ang);
-				rads ang2 = -atan2(x, -y); // this is insane
+				Rads ang = Degs(i);
+				Real x = cos(ang), y = sin(ang);
+				Rads ang2 = -atan2(x, -y); // this is insane
 				test(ang2, ang);
 			}
 		}
@@ -1057,7 +1057,7 @@ namespace
 			CAGE_TESTCASE("random");
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				real r = randomChance();
+				Real r = randomChance();
 				CAGE_TEST(r >= 0 && r < 1, r);
 			}
 			for (uint32 i = 0; i < 1000; i++)
@@ -1081,9 +1081,9 @@ namespace
 				CAGE_TESTCASE("real");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					real v = randomRange(-1e5, 1e5);
-					string s = stringizer() + v;
-					real r = real::parse(s);
+					Real v = randomRange(-1e5, 1e5);
+					String s = Stringizer() + v;
+					Real r = Real::parse(s);
 					test(v, r);
 				}
 			}
@@ -1091,9 +1091,9 @@ namespace
 				CAGE_TESTCASE("rads");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					rads v = rads(randomRange(-1e5, 1e5));
-					string s = stringizer() + v;
-					rads r = rads::parse(s);
+					Rads v = Rads(randomRange(-1e5, 1e5));
+					String s = Stringizer() + v;
+					Rads r = Rads::parse(s);
 					test(v, r);
 				}
 			}
@@ -1101,9 +1101,9 @@ namespace
 				CAGE_TESTCASE("degs");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					degs v = degs(randomRange(-1e5, 1e5));
-					string s = stringizer() + v;
-					degs r = degs::parse(s);
+					Degs v = Degs(randomRange(-1e5, 1e5));
+					String s = Stringizer() + v;
+					Degs r = Degs::parse(s);
 					test(v, r);
 				}
 			}
@@ -1111,9 +1111,9 @@ namespace
 				CAGE_TESTCASE("vec2");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec2 v = randomRange2(-1e5, 1e5);
-					string s = stringizer() + v;
-					vec2 r = vec2::parse(s);
+					Vec2 v = randomRange2(-1e5, 1e5);
+					String s = Stringizer() + v;
+					Vec2 r = Vec2::parse(s);
 					test(v, r);
 				}
 			}
@@ -1121,9 +1121,9 @@ namespace
 				CAGE_TESTCASE("vec3");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec3 v = randomRange3(-1e5, 1e5);
-					string s = stringizer() + v;
-					vec3 r = vec3::parse(s);
+					Vec3 v = randomRange3(-1e5, 1e5);
+					String s = Stringizer() + v;
+					Vec3 r = Vec3::parse(s);
 					test(v, r);
 				}
 			}
@@ -1131,9 +1131,9 @@ namespace
 				CAGE_TESTCASE("vec4");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec4 v = randomRange4(-1e5, 1e5);
-					string s = stringizer() + v;
-					vec4 r = vec4::parse(s);
+					Vec4 v = randomRange4(-1e5, 1e5);
+					String s = Stringizer() + v;
+					Vec4 r = Vec4::parse(s);
 					test(v, r);
 				}
 			}
@@ -1141,9 +1141,9 @@ namespace
 				CAGE_TESTCASE("ivec2");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec2 v = randomRange2i(-100000, 100000);
-					string s = stringizer() + v;
-					ivec2 r = ivec2::parse(s);
+					Vec2i v = randomRange2i(-100000, 100000);
+					String s = Stringizer() + v;
+					Vec2i r = Vec2i::parse(s);
 					test(v, r);
 				}
 			}
@@ -1151,9 +1151,9 @@ namespace
 				CAGE_TESTCASE("ivec3");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec3 v = randomRange3i(-100000, 100000);
-					string s = stringizer() + v;
-					ivec3 r = ivec3::parse(s);
+					Vec3i v = randomRange3i(-100000, 100000);
+					String s = Stringizer() + v;
+					Vec3i r = Vec3i::parse(s);
 					test(v, r);
 				}
 			}
@@ -1161,9 +1161,9 @@ namespace
 				CAGE_TESTCASE("ivec4");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec4 v = randomRange4i(-100000, 100000);
-					string s = stringizer() + v;
-					ivec4 r = ivec4::parse(s);
+					Vec4i v = randomRange4i(-100000, 100000);
+					String s = Stringizer() + v;
+					Vec4i r = Vec4i::parse(s);
 					test(v, r);
 				}
 			}
@@ -1171,9 +1171,9 @@ namespace
 				CAGE_TESTCASE("quat");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					quat v = randomDirectionQuat();
-					string s = stringizer() + v;
-					quat r = quat::parse(s);
+					Quat v = randomDirectionQuat();
+					String s = Stringizer() + v;
+					Quat r = Quat::parse(s);
 					test(v, r);
 				}
 			}
@@ -1181,9 +1181,9 @@ namespace
 				CAGE_TESTCASE("mat3");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					mat3 v = mat3(randomDirectionQuat());
-					string s = stringizer() + v;
-					mat3 r = mat3::parse(s);
+					Mat3 v = Mat3(randomDirectionQuat());
+					String s = Stringizer() + v;
+					Mat3 r = Mat3::parse(s);
 					test(v, r);
 				}
 			}
@@ -1191,9 +1191,9 @@ namespace
 				CAGE_TESTCASE("mat4");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					mat4 v = mat4(randomDirection3() * 100, randomDirectionQuat(), randomDirection3() * 2);
-					string s = stringizer() + v;
-					mat4 r = mat4::parse(s);
+					Mat4 v = Mat4(randomDirection3() * 100, randomDirectionQuat(), randomDirection3() * 2);
+					String s = Stringizer() + v;
+					Mat4 r = Mat4::parse(s);
 					test(v, r);
 				}
 			}
@@ -1201,8 +1201,8 @@ namespace
 				CAGE_TESTCASE("transform");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() * 2);
-					string s = stringizer() + v;
+					Transform v = Transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() * 2);
+					String s = Stringizer() + v;
 					// not yet implemented
 					// transform r = transform::parse(s);
 					// test((mat4)v, (mat4)r);
@@ -1210,55 +1210,55 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("negative tests");
-				CAGE_TEST_THROWN(real::parse("bla"));
-				CAGE_TEST_THROWN(real::parse("(bla)"));
-				CAGE_TEST_THROWN(real::parse(""));
-				CAGE_TEST_THROWN(real::parse("  "));
-				CAGE_TEST_THROWN(real::parse("()"));
-				CAGE_TEST_THROWN(real::parse("-"));
-				CAGE_TEST_THROWN(real::parse("+"));
-				CAGE_TEST_THROWN(real::parse("(3"));
-				CAGE_TEST_THROWN(real::parse("3)"));
-				CAGE_TEST_THROWN(real::parse("1.0,"));
-				CAGE_TEST_THROWN(real::parse(",5"));
-				CAGE_TEST_THROWN(vec3::parse("bla"));
-				CAGE_TEST_THROWN(vec3::parse("(bla)"));
-				CAGE_TEST_THROWN(vec3::parse(""));
-				CAGE_TEST_THROWN(vec3::parse("()"));
-				CAGE_TEST_THROWN(vec3::parse("-"));
-				CAGE_TEST_THROWN(vec3::parse("+"));
-				CAGE_TEST_THROWN(vec3::parse("(3"));
-				CAGE_TEST_THROWN(vec3::parse("3)"));
-				CAGE_TEST_THROWN(vec3::parse("3,5"));
-				CAGE_TEST_THROWN(vec3::parse("3,"));
-				CAGE_TEST_THROWN(vec3::parse(",3"));
-				CAGE_TEST_THROWN(vec3::parse(",3,3"));
-				CAGE_TEST_THROWN(vec3::parse("3,3,"));
-				CAGE_TEST_THROWN(vec3::parse("3,3, "));
-				CAGE_TEST_THROWN(vec3::parse(" ,3, 4"));
-				CAGE_TEST_THROWN(vec3::parse("4 ,, 4"));
-				CAGE_TEST_THROWN(vec3::parse("4 , , 4"));
-				CAGE_TEST_THROWN(vec3::parse("4, ,5"));
-				CAGE_TEST_THROWN(vec3::parse("(4, ,5)"));
-				CAGE_TEST_THROWN(ivec3::parse("bla"));
-				CAGE_TEST_THROWN(ivec3::parse("(bla)"));
-				CAGE_TEST_THROWN(ivec3::parse(""));
-				CAGE_TEST_THROWN(ivec3::parse("()"));
-				CAGE_TEST_THROWN(ivec3::parse("-"));
-				CAGE_TEST_THROWN(ivec3::parse("+"));
-				CAGE_TEST_THROWN(ivec3::parse("(3"));
-				CAGE_TEST_THROWN(ivec3::parse("3)"));
-				CAGE_TEST_THROWN(ivec3::parse("3,5"));
-				CAGE_TEST_THROWN(ivec3::parse("3,"));
-				CAGE_TEST_THROWN(ivec3::parse(",3"));
-				CAGE_TEST_THROWN(ivec3::parse(",3,3"));
-				CAGE_TEST_THROWN(ivec3::parse("3,3,"));
-				CAGE_TEST_THROWN(ivec3::parse("3,3, "));
-				CAGE_TEST_THROWN(ivec3::parse(" ,3, 4"));
-				CAGE_TEST_THROWN(ivec3::parse("4 ,, 4"));
-				CAGE_TEST_THROWN(ivec3::parse("4 , , 4"));
-				CAGE_TEST_THROWN(ivec3::parse("4, ,5"));
-				CAGE_TEST_THROWN(ivec3::parse("(4, ,5)"));
+				CAGE_TEST_THROWN(Real::parse("bla"));
+				CAGE_TEST_THROWN(Real::parse("(bla)"));
+				CAGE_TEST_THROWN(Real::parse(""));
+				CAGE_TEST_THROWN(Real::parse("  "));
+				CAGE_TEST_THROWN(Real::parse("()"));
+				CAGE_TEST_THROWN(Real::parse("-"));
+				CAGE_TEST_THROWN(Real::parse("+"));
+				CAGE_TEST_THROWN(Real::parse("(3"));
+				CAGE_TEST_THROWN(Real::parse("3)"));
+				CAGE_TEST_THROWN(Real::parse("1.0,"));
+				CAGE_TEST_THROWN(Real::parse(",5"));
+				CAGE_TEST_THROWN(Vec3::parse("bla"));
+				CAGE_TEST_THROWN(Vec3::parse("(bla)"));
+				CAGE_TEST_THROWN(Vec3::parse(""));
+				CAGE_TEST_THROWN(Vec3::parse("()"));
+				CAGE_TEST_THROWN(Vec3::parse("-"));
+				CAGE_TEST_THROWN(Vec3::parse("+"));
+				CAGE_TEST_THROWN(Vec3::parse("(3"));
+				CAGE_TEST_THROWN(Vec3::parse("3)"));
+				CAGE_TEST_THROWN(Vec3::parse("3,5"));
+				CAGE_TEST_THROWN(Vec3::parse("3,"));
+				CAGE_TEST_THROWN(Vec3::parse(",3"));
+				CAGE_TEST_THROWN(Vec3::parse(",3,3"));
+				CAGE_TEST_THROWN(Vec3::parse("3,3,"));
+				CAGE_TEST_THROWN(Vec3::parse("3,3, "));
+				CAGE_TEST_THROWN(Vec3::parse(" ,3, 4"));
+				CAGE_TEST_THROWN(Vec3::parse("4 ,, 4"));
+				CAGE_TEST_THROWN(Vec3::parse("4 , , 4"));
+				CAGE_TEST_THROWN(Vec3::parse("4, ,5"));
+				CAGE_TEST_THROWN(Vec3::parse("(4, ,5)"));
+				CAGE_TEST_THROWN(Vec3i::parse("bla"));
+				CAGE_TEST_THROWN(Vec3i::parse("(bla)"));
+				CAGE_TEST_THROWN(Vec3i::parse(""));
+				CAGE_TEST_THROWN(Vec3i::parse("()"));
+				CAGE_TEST_THROWN(Vec3i::parse("-"));
+				CAGE_TEST_THROWN(Vec3i::parse("+"));
+				CAGE_TEST_THROWN(Vec3i::parse("(3"));
+				CAGE_TEST_THROWN(Vec3i::parse("3)"));
+				CAGE_TEST_THROWN(Vec3i::parse("3,5"));
+				CAGE_TEST_THROWN(Vec3i::parse("3,"));
+				CAGE_TEST_THROWN(Vec3i::parse(",3"));
+				CAGE_TEST_THROWN(Vec3i::parse(",3,3"));
+				CAGE_TEST_THROWN(Vec3i::parse("3,3,"));
+				CAGE_TEST_THROWN(Vec3i::parse("3,3, "));
+				CAGE_TEST_THROWN(Vec3i::parse(" ,3, 4"));
+				CAGE_TEST_THROWN(Vec3i::parse("4 ,, 4"));
+				CAGE_TEST_THROWN(Vec3i::parse("4 , , 4"));
+				CAGE_TEST_THROWN(Vec3i::parse("4, ,5"));
+				CAGE_TEST_THROWN(Vec3i::parse("(4, ,5)"));
 			}
 		}
 	}
@@ -1273,7 +1273,7 @@ namespace
 		constexpr uint32 matricesCount = 10000;
 #endif
 
-		mat4 matrices[matricesCount];
+		Mat4 matrices[matricesCount];
 		for (uint32 i = 0; i < matricesCount; i++)
 		{
 			for (uint8 j = 0; j < 16; j++)
@@ -1281,12 +1281,12 @@ namespace
 		}
 
 		{
-			CAGE_LOG(SeverityEnum::Info, "test", stringizer() + "matrices count: " + matricesCount);
-			mat4 res;
+			CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "matrices count: " + matricesCount);
+			Mat4 res;
 			Holder<Timer> tmr = newTimer();
 			for (uint32 i = 0; i < matricesCount; i++)
 				res *= matrices[i];
-			CAGE_LOG(SeverityEnum::Note, "test", stringizer() + "duration: " + tmr->duration());
+			CAGE_LOG(SeverityEnum::Note, "test", Stringizer() + "duration: " + tmr->duration());
 		}
 	}
 }

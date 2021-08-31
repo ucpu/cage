@@ -41,57 +41,57 @@ namespace cage
 	void GuiImpl::scaling()
 	{
 		pointsScale = zoom * retina;
-		outputSize = vec2(outputResolution[0], outputResolution[1]) / pointsScale;
-		outputMouse = vec2(inputMouse[0], inputMouse[1]) / pointsScale;
+		outputSize = Vec2(outputResolution[0], outputResolution[1]) / pointsScale;
+		outputMouse = Vec2(inputMouse[0], inputMouse[1]) / pointsScale;
 	}
 
-	vec4 GuiImpl::pointsToNdc(vec2 position, vec2 size) const
+	Vec4 GuiImpl::pointsToNdc(Vec2 position, Vec2 size) const
 	{
 		CAGE_ASSERT(size[0] >= 0 && size[1] >= 0);
 		position *= pointsScale;
 		size *= pointsScale;
-		vec2 os = outputSize * pointsScale;
-		vec2 invScreenSize = 2 / os;
-		vec2 resPos = (position - os * 0.5) * invScreenSize;
-		vec2 resSiz = size * invScreenSize;
+		Vec2 os = outputSize * pointsScale;
+		Vec2 invScreenSize = 2 / os;
+		Vec2 resPos = (position - os * 0.5) * invScreenSize;
+		Vec2 resSiz = size * invScreenSize;
 		resPos[1] = -resPos[1] - resSiz[1];
-		return vec4(resPos, resPos + resSiz);
+		return Vec4(resPos, resPos + resSiz);
 	}
 
-	void Gui::outputResolution(const ivec2 &resolution)
+	void Gui::outputResolution(const Vec2i &resolution)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->outputResolution = resolution;
 		impl->scaling();
 	}
 
-	ivec2 Gui::outputResolution() const
+	Vec2i Gui::outputResolution() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->outputResolution;
 	}
 
-	void Gui::outputRetina(real retina)
+	void Gui::outputRetina(Real retina)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->retina = retina;
 		impl->scaling();
 	}
 
-	real Gui::outputRetina() const
+	Real Gui::outputRetina() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->retina;
 	}
 
-	void Gui::zoom(real zoom)
+	void Gui::zoom(Real zoom)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->zoom = zoom;
 		impl->scaling();
 	}
 
-	real Gui::zoom() const
+	Real Gui::zoom() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->zoom;
@@ -122,7 +122,7 @@ namespace cage
 		impl->eventsEnabled = false;
 	}
 
-	ivec2 Gui::inputResolution() const
+	Vec2i Gui::inputResolution() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->inputResolution;
@@ -334,7 +334,7 @@ namespace cage
 		{ // layouting
 			impl->root->findRequestedSize();
 			FinalPosition u;
-			u.renderPos = u.clipPos = vec2();
+			u.renderPos = u.clipPos = Vec2();
 			u.renderSize = u.clipSize = impl->outputSize;
 			impl->root->findFinalPosition(u);
 		}
@@ -381,26 +381,26 @@ namespace cage
 		return result;
 	}
 
-	void offsetPosition(vec2 &position, const vec4 &offset)
+	void offsetPosition(Vec2 &position, const Vec4 &offset)
 	{
 		CAGE_ASSERT(position.valid() && offset.valid());
-		position -= vec2(offset);
+		position -= Vec2(offset);
 	}
 
-	void offsetSize(vec2 &size, const vec4 &offset)
+	void offsetSize(Vec2 &size, const Vec4 &offset)
 	{
 		CAGE_ASSERT(size.valid() && offset.valid());
-		size += vec2(offset) + vec2(offset[2], offset[3]);
-		size = max(size, vec2());
+		size += Vec2(offset) + Vec2(offset[2], offset[3]);
+		size = max(size, Vec2());
 	}
 
-	void offset(vec2 &position, vec2 &size, const vec4 &offset)
+	void offset(Vec2 &position, Vec2 &size, const Vec4 &offset)
 	{
 		offsetPosition(position, offset);
 		offsetSize(size, offset);
 	}
 
-	bool pointInside(vec2 pos, vec2 size, vec2 point)
+	bool pointInside(Vec2 pos, Vec2 size, Vec2 point)
 	{
 		CAGE_ASSERT(pos.valid() && size.valid() && point.valid());
 		if (point[0] < pos[0] || point[1] < pos[1])
@@ -411,15 +411,15 @@ namespace cage
 		return true;
 	}
 
-	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize)
+	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize)
 	{
 		CAGE_ASSERT(clipPos.valid());
 		CAGE_ASSERT(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid() && size[0] >= 0 && size[1] >= 0);
-		vec2 e = min(pos + size, clipPos + clipSize);
+		Vec2 e = min(pos + size, clipPos + clipSize);
 		pos = max(pos, clipPos);
-		size = max(e - pos, vec2());
+		size = max(e - pos, Vec2());
 		return size[0] > 0 && size[1] > 0;
 	}
 

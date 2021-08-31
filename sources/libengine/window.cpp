@@ -39,7 +39,7 @@ namespace cage
 		public:
 			CageGlfwInitializer()
 			{
-				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "initializing glfw");
+				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "initializing glfw");
 				glfwSetErrorCallback(&handleGlfwError);
 				if (!glfwInit())
 					CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
@@ -47,7 +47,7 @@ namespace cage
 
 			~CageGlfwInitializer()
 			{
-				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "terminating glfw");
+				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "terminating glfw");
 				glfwTerminate();
 			}
 		};
@@ -104,7 +104,7 @@ namespace cage
 			{
 				struct
 				{
-					ivec2 point;
+					Vec2i point;
 					union
 					{
 						MouseButtonsFlags buttons;
@@ -112,7 +112,7 @@ namespace cage
 					};
 				} mouse;
 				uint32 key;
-				ivec2 point;
+				Vec2i point;
 				uint32 codepoint;
 			};
 		};
@@ -146,7 +146,7 @@ namespace cage
 			uint64 lastMouseButtonPressTimes[5] = { 0,0,0,0,0 }; // unused, left, right, unused, middle
 			ConcurrentQueue<Event> eventsQueue;
 			FlatSet<uint32> stateKeys;
-			ivec2 stateMousePosition;
+			Vec2i stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
 			Window *shareContext = nullptr;
@@ -157,8 +157,8 @@ namespace cage
 			Holder<Thread> windowThread;
 			Holder<Semaphore> windowSemaphore;
 			std::atomic<bool> stopping = false;
-			ivec2 mouseOffsetApi;
-			ConcurrentQueue<ivec2> mouseOffsetsThr;
+			Vec2i mouseOffsetApi;
+			ConcurrentQueue<Vec2i> mouseOffsetsThr;
 
 			void threadEntry()
 			{
@@ -178,7 +178,7 @@ namespace cage
 						glfwPollEvents();
 					}
 
-					ivec2 d;
+					Vec2i d;
 					while (mouseOffsetsThr.tryPop(d))
 					{
 						double x, y;
@@ -208,7 +208,7 @@ namespace cage
 #ifdef GCHL_WINDOWS_THREAD
 				windowSemaphore = newSemaphore(0, 1);
 				static uint32 threadIndex = 0;
-				windowThread = newThread(Delegate<void()>().bind<WindowImpl, &WindowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
+				windowThread = newThread(Delegate<void()>().bind<WindowImpl, &WindowImpl::threadEntry>(this), Stringizer() + "window " + (threadIndex++));
 				windowSemaphore->lock();
 				windowSemaphore.clear();
 				if (stopping)
@@ -294,7 +294,7 @@ namespace cage
 				}
 			}
 
-			ivec2 offsetMousePositionApi(ivec2 p)
+			Vec2i offsetMousePositionApi(Vec2i p)
 			{
 				stateMousePosition = p;
 #ifdef GCHL_WINDOWS_THREAD
@@ -491,7 +491,7 @@ namespace cage
 		}
 	}
 
-	void Window::title(const string &value)
+	void Window::title(const String &value)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowTitle(impl->window, value.c_str());
@@ -556,7 +556,7 @@ namespace cage
 		}
 	}
 
-	void Window::setFullscreen(const ivec2 &resolution, uint32 frequency, const string &deviceId)
+	void Window::setFullscreen(const Vec2i &resolution, uint32 frequency, const String &deviceId)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None);
@@ -610,17 +610,17 @@ namespace cage
 			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	}
 
-	ivec2 Window::mousePosition() const
+	Vec2i Window::mousePosition() const
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateMousePosition;
 	}
 
-	void Window::mousePosition(const ivec2 &p)
+	void Window::mousePosition(const Vec2i &p)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
-		ivec2 d = p - impl->stateMousePosition;
+		Vec2i d = p - impl->stateMousePosition;
 		impl->stateMousePosition = p;
 		impl->mouseOffsetApi += d;
 		impl->mouseOffsetsThr.push(d);
@@ -728,15 +728,15 @@ namespace cage
 		}
 	}
 
-	ivec2 Window::resolution() const
+	Vec2i Window::resolution() const
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		int w = 0, h = 0;
 		glfwGetFramebufferSize(impl->window, &w, &h);
-		return ivec2(w, h);
+		return Vec2i(w, h);
 	}
 
-	real Window::contentScaling() const
+	Real Window::contentScaling() const
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		float x = 1, y = 1;
@@ -744,7 +744,7 @@ namespace cage
 		return max(x, y);
 	}
 
-	string Window::screenId() const
+	String Window::screenId() const
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		{
@@ -752,17 +752,17 @@ namespace cage
 			if (m)
 				return getMonitorId(m);
 		}
-		const vec2 center = vec2(windowedPosition() + windowedSize() / 2);
+		const Vec2 center = Vec2(windowedPosition() + windowedSize() / 2);
 		int cnt = 0;
 		GLFWmonitor **ms = glfwGetMonitors(&cnt);
 		// todo first filter out monitors that do not overlap with the center of the window
 		uint32 bestIndex = m;
-		real bestDist = real::Infinity();
+		Real bestDist = Real::Infinity();
 		for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
 		{
 			int x, y, w, h;
 			glfwGetMonitorWorkarea(ms[i], &x, &y, &w, &h);
-			const real dist = distance(center, vec2(x, y) + vec2(w, h) / 2);
+			const Real dist = distance(center, Vec2(x, y) + Vec2(w, h) / 2);
 			if (dist < bestDist)
 			{
 				bestDist = dist;
@@ -773,29 +773,29 @@ namespace cage
 		return getMonitorId(ms[bestIndex]);
 	}
 
-	ivec2 Window::windowedSize() const
+	Vec2i Window::windowedSize() const
 	{
 		WindowImpl *impl = (WindowImpl*)this;
 		int w = 0, h = 0;
 		glfwGetWindowSize(impl->window, &w, &h);
-		return ivec2(w, h);
+		return Vec2i(w, h);
 	}
 
-	void Window::windowedSize(const ivec2 &tmp)
+	void Window::windowedSize(const Vec2i &tmp)
 	{
 		WindowImpl *impl = (WindowImpl*)this;
 		glfwSetWindowSize(impl->window, tmp[0], tmp[1]);
 	}
 
-	ivec2 Window::windowedPosition() const
+	Vec2i Window::windowedPosition() const
 	{
 		WindowImpl *impl = (WindowImpl*)this;
 		int x = 0, y = 0;
 		glfwGetWindowPos(impl->window, &x, &y);
-		return ivec2(x, y);
+		return Vec2i(x, y);
 	}
 
-	void Window::windowedPosition(const ivec2 &tmp)
+	void Window::windowedPosition(const Vec2i &tmp)
 	{
 		WindowImpl *impl = (WindowImpl*)this;
 		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);

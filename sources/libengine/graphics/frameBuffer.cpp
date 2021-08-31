@@ -60,7 +60,7 @@ namespace cage
 		};
 	}
 
-	void FrameBuffer::setDebugName(const string &name)
+	void FrameBuffer::setDebugName(const String &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;

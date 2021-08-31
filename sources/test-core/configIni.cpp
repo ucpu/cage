@@ -7,7 +7,7 @@
 
 namespace
 {
-	void testVectors(std::vector<string> a, std::vector<string> b)
+	void testVectors(std::vector<String> a, std::vector<String> b)
 	{
 		CAGE_TEST(a.size() == b.size());
 		std::sort(a.begin(), a.end());
@@ -16,9 +16,9 @@ namespace
 			CAGE_TEST(a[i] == b[i]);
 	}
 
-	std::vector<string> vectorize(const Holder<PointerRange<string>> &r)
+	std::vector<String> vectorize(const Holder<PointerRange<String>> &r)
 	{
-		return std::vector<string>(r->begin(), r->end());
+		return std::vector<String>(r->begin(), r->end());
 	}
 }
 
@@ -50,7 +50,7 @@ void testConfigIni()
 		Holder<Ini> ini = newIni();
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
-				ini->set(stringizer() + s, stringizer() + i, stringizer() + s + i);
+				ini->set(Stringizer() + s, Stringizer() + i, Stringizer() + s + i);
 		ini->exportFile("testdir/test.ini");
 		CAGE_TEST(pathIsFile("testdir/test.ini"));
 	}
@@ -61,7 +61,7 @@ void testConfigIni()
 		ini->importFile("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
-				CAGE_TEST(ini->get(stringizer() + s, stringizer() + i) == stringizer() + s + i);
+				CAGE_TEST(ini->get(Stringizer() + s, Stringizer() + i) == Stringizer() + s + i);
 		CAGE_TEST(ini->get("section", "item") == "");
 	}
 
@@ -114,7 +114,7 @@ void testConfigIni()
 		CAGE_TEST(!ini->isUsed("a", "2"));
 		CAGE_TEST(!ini->isUsed("b", "1"));
 		{
-			string s, t;
+			String s, t;
 			CAGE_TEST(ini->anyUnused(s, t));
 			CAGE_TEST(s == "a" || s == "b");
 			CAGE_TEST(t == "1" || t == "2");
@@ -125,7 +125,7 @@ void testConfigIni()
 		CAGE_TEST(ini->isUsed("a", "2"));
 		CAGE_TEST(!ini->isUsed("b", "1"));
 		{
-			string s, t;
+			String s, t;
 			CAGE_TEST(ini->anyUnused(s, t));
 			CAGE_TEST(s == "b" && t == "1");
 		}
@@ -134,7 +134,7 @@ void testConfigIni()
 		CAGE_TEST(ini->isUsed("a", "2"));
 		CAGE_TEST(ini->isUsed("b", "1"));
 		{
-			string s, t;
+			String s, t;
 			CAGE_TEST(!ini->anyUnused(s, t));
 		}
 	}
@@ -163,7 +163,7 @@ void testConfigIni()
 		CAGE_TEST(ini->cmdBool('a', ""));
 		CAGE_TEST(ini->cmdBool('a', "", false));
 		{
-			string s, i;
+			String s, i;
 			CAGE_TEST(ini->anyUnused(s, i));
 		}
 		testVectors(vectorize(ini->cmdArray('a', "aaa")), { "true" });
@@ -182,7 +182,7 @@ void testConfigIni()
 		CAGE_TEST_THROWN(ini->cmdBool('c', "ccc")); // contains multiple values
 		CAGE_TEST_THROWN(ini->cmdBool('d', "ddd")); // missing required option
 		{
-			string s, i;
+			String s, i;
 			CAGE_TEST(!ini->anyUnused(s, i));
 		}
 	}

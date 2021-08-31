@@ -6,7 +6,7 @@ namespace cage
 
 	namespace
 	{
-		void findMinMax(real x0, real x1, real x2, real &min, real &max)
+		void findMinMax(Real x0, Real x1, Real x2, Real &min, Real &max)
 		{
 			min = max = x0;
 			if (x1 < min)
@@ -19,10 +19,10 @@ namespace cage
 				max = x2;
 		}
 
-		bool planeBoxOverlap(vec3 normal, vec3 vert, vec3 maxbox)
+		bool planeBoxOverlap(Vec3 normal, Vec3 vert, Vec3 maxbox)
 		{
-			vec3 vmin, vmax;
-			real v;
+			Vec3 vmin, vmax;
+			Real v;
 			for (uint32 q = 0; q < 3; q++)
 			{
 				v = vert[q];
@@ -45,7 +45,7 @@ namespace cage
 			return false;
 		}
 
-		bool axisTestX01(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p2)
+		bool axisTestX01(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
 		{
 			p0 = a * v0[1] - b * v0[2];
 			p2 = a * v2[1] - b * v2[2];
@@ -65,7 +65,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestX2(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		bool axisTestX2(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = a * v0[1] - b * v0[2];
 			p1 = a * v1[1] - b * v1[2];
@@ -85,7 +85,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestY02(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p2)
+		bool axisTestY02(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
 		{
 			p0 = -a * v0[0] + b * v0[2];
 			p2 = -a * v2[0] + b * v2[2];
@@ -105,7 +105,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestY1(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		bool axisTestY1(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = -a * v0[0] + b * v0[2];
 			p1 = -a * v1[0] + b * v1[2];
@@ -125,7 +125,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestZ12(real a, real b, real fa, real fb, const vec3 &v1, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p1, real &p2)
+		bool axisTestZ12(Real a, Real b, Real fa, Real fb, const Vec3 &v1, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p1, Real &p2)
 		{
 			p1 = a * v1[0] - b * v1[1];
 			p2 = a * v2[0] - b * v2[1];
@@ -145,7 +145,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestZ0(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		bool axisTestZ0(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = a * v0[0] - b * v0[1];
 			p1 = a * v1[0] - b * v1[1];
@@ -165,11 +165,11 @@ namespace cage
 			return true;
 		}
 
-		bool triBoxOverlap(const vec3 &boxcenter, const vec3 &boxhalfsize, const vec3 &tv0, const vec3 &tv1, const vec3 &tv2)
+		bool triBoxOverlap(const Vec3 &boxcenter, const Vec3 &boxhalfsize, const Vec3 &tv0, const Vec3 &tv1, const Vec3 &tv2)
 		{
-			vec3 v0, v1, v2;
-			real min, max, p0, p1, p2, rad, fex, fey, fez;
-			vec3 normal, e0, e1, e2;
+			Vec3 v0, v1, v2;
+			Real min, max, p0, p1, p2, rad, fex, fey, fez;
+			Vec3 normal, e0, e1, e2;
 			v0 = tv0 - boxcenter;
 			v1 = tv1 - boxcenter;
 			v2 = tv2 - boxcenter;

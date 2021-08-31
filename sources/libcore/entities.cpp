@@ -311,7 +311,7 @@ namespace cage
 		}
 		catch (const std::out_of_range &)
 		{
-			CAGE_LOG_THROW(stringizer() + "name: " + entityName);
+			CAGE_LOG_THROW(Stringizer() + "name: " + entityName);
 			CAGE_THROW_ERROR(Exception, "entity not found");
 		}
 	}

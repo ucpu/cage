@@ -26,7 +26,7 @@ namespace cage
 		}TRY_END
 	}
 
-	bool utfValid(const string &str)
+	bool utfValid(const String &str)
 	{
 		return utfValid({ str.c_str(), str.c_str() + str.length() });
 	}
@@ -43,7 +43,7 @@ namespace cage
 		}TRY_END
 	}
 
-	uint32 utf32Length(const string &str)
+	uint32 utf32Length(const String &str)
 	{
 		return utf32Length({ str.c_str(), str.c_str() + str.length() });
 	}
@@ -81,7 +81,7 @@ namespace cage
 		}TRY_END
 	}
 
-	Holder<PointerRange<uint32>> utf8to32(const string &str)
+	Holder<PointerRange<uint32>> utf8to32(const String &str)
 	{
 		return utf8to32({ str.c_str(), str.c_str() + str.length() });
 	}
@@ -100,7 +100,7 @@ namespace cage
 		}TRY_END
 	}
 
-	void utf8to32(PointerRange<uint32> &outBuffer, const string &str)
+	void utf8to32(PointerRange<uint32> &outBuffer, const String &str)
 	{
 		utf8to32(outBuffer, { str.c_str(), str.c_str() + str.length() });
 	}
@@ -130,13 +130,13 @@ namespace cage
 		}TRY_END
 	}
 
-	string utf32to8string(PointerRange<const uint32> inBuffer)
+	String utf32to8string(PointerRange<const uint32> inBuffer)
 	{
-		if (utf8Length(inBuffer) > string::MaxLength)
+		if (utf8Length(inBuffer) > String::MaxLength)
 			CAGE_THROW_ERROR(Exception, "utf string too long");
-		char buff[string::MaxLength];
-		PointerRange<char> pr = { buff, buff + string::MaxLength - 1 };
+		char buff[String::MaxLength];
+		PointerRange<char> pr = { buff, buff + String::MaxLength - 1 };
 		utf32to8(pr, inBuffer);
-		return string(pr);
+		return String(pr);
 	}
 }

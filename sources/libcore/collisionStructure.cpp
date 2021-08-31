@@ -15,9 +15,9 @@ namespace cage
 		struct Item
 		{
 			Holder<const Collider> c;
-			const transform t;
+			const Transform t;
 
-			Item(Holder<const Collider> c, const transform &t) : c(std::move(c)), t(t)
+			Item(Holder<const Collider> c, const Transform &t) : c(std::move(c)), t(t)
 			{}
 		};
 
@@ -44,8 +44,8 @@ namespace cage
 			const Holder<const CollisionDataImpl> data;
 			Holder<SpatialQuery> spatial;
 			uint32 resultName = m;
-			real resultFractionBefore = real::Nan();
-			real resultFractionContact = real::Nan();
+			Real resultFractionBefore = Real::Nan();
+			Real resultFractionContact = Real::Nan();
 			Holder<PointerRange<CollisionPair>> resultPairs;
 
 			CollisionQueryImpl(Holder<const CollisionDataImpl> data) : data(std::move(data))
@@ -56,11 +56,11 @@ namespace cage
 			void clear()
 			{
 				resultName = m;
-				resultFractionBefore = resultFractionContact = real::Nan();
+				resultFractionBefore = resultFractionContact = Real::Nan();
 				resultPairs.clear();
 			}
 
-			bool query(const Collider *collider, const transform &t)
+			bool query(const Collider *collider, const Transform &t)
 			{
 				clear();
 				spatial->intersection(collider->box() * t); // broad phase
@@ -80,10 +80,10 @@ namespace cage
 				return !resultPairs.empty();
 			}
 
-			bool query(const Collider *collider, const transform &t1, const transform &t2)
+			bool query(const Collider *collider, const Transform &t1, const Transform &t2)
 			{
 				clear();
-				real best = real::Infinity();
+				Real best = Real::Infinity();
 				spatial->intersection(collider->box() * t1 + collider->box() * t2); // broad phase
 				for (uint32 nameIt : spatial->result())
 				{
@@ -161,15 +161,15 @@ namespace cage
 			CAGE_ASSERT(shape.normalized());
 			clear();
 			spatial->intersection(Aabb(shape)); // broad phase
-			real best = real::Infinity();
+			Real best = Real::Infinity();
 			for (uint32 nameIt : spatial->result())
 			{
 				const Item &item = data->allItems.at(nameIt);
-				vec3 p = intersection(shape, +item.c, item.t); // exact phase
+				Vec3 p = intersection(shape, +item.c, item.t); // exact phase
 				//CAGE_ASSERT(intersects(shape, item.c, item.t) == p.valid());
 				if (!p.valid())
 					continue;
-				real d = dot(p - shape.origin, shape.direction);
+				Real d = dot(p - shape.origin, shape.direction);
 				if (d < best)
 				{
 					best = d;
@@ -192,14 +192,14 @@ namespace cage
 		return impl->resultName;
 	}
 
-	real CollisionQuery::fractionBefore() const
+	Real CollisionQuery::fractionBefore() const
 	{
 		const CollisionQueryImpl *impl = (const CollisionQueryImpl *)this;
 		CAGE_ASSERT(!impl->resultPairs.empty());
 		return impl->resultFractionBefore;
 	}
 
-	real CollisionQuery::fractionContact() const
+	Real CollisionQuery::fractionContact() const
 	{
 		const CollisionQueryImpl *impl = (const CollisionQueryImpl *)this;
 		CAGE_ASSERT(!impl->resultPairs.empty());
@@ -212,7 +212,7 @@ namespace cage
 		return impl->resultPairs;
 	}
 
-	void CollisionQuery::collider(Holder<const Collider> &c, transform &t) const
+	void CollisionQuery::collider(Holder<const Collider> &c, Transform &t) const
 	{
 		const CollisionQueryImpl *impl = (const CollisionQueryImpl *)this;
 		CAGE_ASSERT(!impl->resultPairs.empty());
@@ -221,13 +221,13 @@ namespace cage
 		t = r.t;
 	}
 
-	bool CollisionQuery::query(const Collider *collider, const transform &t)
+	bool CollisionQuery::query(const Collider *collider, const Transform &t)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(collider, t);
 	}
 
-	bool CollisionQuery::query(const Collider *collider, const transform &t1, const transform &t2)
+	bool CollisionQuery::query(const Collider *collider, const Transform &t1, const Transform &t2)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(collider, t1, t2);
@@ -275,7 +275,7 @@ namespace cage
 		return impl->query(shape);
 	}
 
-	void CollisionStructure::update(uint32 name, Holder<const Collider> collider, const transform &t)
+	void CollisionStructure::update(uint32 name, Holder<const Collider> collider, const Transform &t)
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl *)this;
 		remove(name);

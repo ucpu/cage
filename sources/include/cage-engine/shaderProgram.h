@@ -12,7 +12,7 @@ namespace cage
 #endif // CAGE_DEBUG
 
 	public:
-		void setDebugName(const string &name);
+		void setDebugName(const String &name);
 
 		uint32 id() const;
 		void bind() const;
@@ -26,16 +26,16 @@ namespace cage
 		void uniform(uint32 name, PointerRange<const TYPE> values);
 		GCHL_GENERATE(sint32);
 		GCHL_GENERATE(uint32);
-		GCHL_GENERATE(ivec2);
-		GCHL_GENERATE(ivec3);
-		GCHL_GENERATE(ivec4);
-		GCHL_GENERATE(real);
-		GCHL_GENERATE(vec2);
-		GCHL_GENERATE(vec3);
-		GCHL_GENERATE(vec4);
-		GCHL_GENERATE(quat);
-		GCHL_GENERATE(mat3);
-		GCHL_GENERATE(mat4);
+		GCHL_GENERATE(Vec2i);
+		GCHL_GENERATE(Vec3i);
+		GCHL_GENERATE(Vec4i);
+		GCHL_GENERATE(Real);
+		GCHL_GENERATE(Vec2);
+		GCHL_GENERATE(Vec3);
+		GCHL_GENERATE(Vec4);
+		GCHL_GENERATE(Quat);
+		GCHL_GENERATE(Mat3);
+		GCHL_GENERATE(Mat4);
 #undef GCHL_GENERATE
 	};
 

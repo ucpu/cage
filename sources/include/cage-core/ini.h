@@ -40,39 +40,39 @@ namespace cage
 		void merge(const Ini *source); // items in this are overridden by items in source
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
 		void importBuffer(PointerRange<const char> buffer); // clears this before loading
-		void importFile(const string &filename); // clears this before loading
+		void importFile(const String &filename); // clears this before loading
 		Holder<PointerRange<char>> exportBuffer() const;
-		void exportFile(const string &filename) const;
+		void exportFile(const String &filename) const;
 
 		uint32 sectionsCount() const;
-		string section(uint32 section) const;
-		bool sectionExists(const string &section) const;
-		Holder<PointerRange<string>> sections() const;
-		void sectionRemove(const string &section);
-		uint32 itemsCount(const string &section) const;
-		string item(const string &section, uint32 item) const;
-		bool itemExists(const string &section, const string &item) const;
-		Holder<PointerRange<string>> items(const string &section) const;
-		Holder<PointerRange<string>> values(const string &section) const;
-		void itemRemove(const string &section, const string &item);
+		String section(uint32 section) const;
+		bool sectionExists(const String &section) const;
+		Holder<PointerRange<String>> sections() const;
+		void sectionRemove(const String &section);
+		uint32 itemsCount(const String &section) const;
+		String item(const String &section, uint32 item) const;
+		bool itemExists(const String &section, const String &item) const;
+		Holder<PointerRange<String>> items(const String &section) const;
+		Holder<PointerRange<String>> values(const String &section) const;
+		void itemRemove(const String &section, const String &item);
 
-		string get(const string &section, const string &item) const;
-		void set(const string &section, const string &item, const string &value);
+		String get(const String &section, const String &item) const;
+		void set(const String &section, const String &item, const String &value);
 
-		void markUsed(const string &section, const string &item);
-		void markUnused(const string &section, const string &item);
-		bool isUsed(const string &section, const string &item) const;
-		bool anyUnused(string &section, string &item) const;
-		bool anyUnused(string &section, string &item, string &value) const;
+		void markUsed(const String &section, const String &item);
+		void markUnused(const String &section, const String &item);
+		bool isUsed(const String &section, const String &item) const;
+		bool anyUnused(String &section, String &item) const;
+		bool anyUnused(String &section, String &item, String &value) const;
 		void checkUnused() const;
 		void logHelp() const; // log help based on all cmd* methods so far
 		void checkUnusedWithHelp() const; // logs help and rethrows the exception, if any
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
-		void set##NAME (const string &section, const string &item, const TYPE &value); \
-		TYPE get##NAME (const string &section, const string &item, const TYPE &defaul = DEF) const; \
-		TYPE cmd##NAME (char shortName, const string &longName, const TYPE &defaul) const; \
-		TYPE cmd##NAME (char shortName, const string &longName) const;
+		void set##NAME (const String &section, const String &item, const TYPE &value); \
+		TYPE get##NAME (const String &section, const String &item, const TYPE &defaul = DEF) const; \
+		TYPE cmd##NAME (char shortName, const String &longName, const TYPE &defaul) const; \
+		TYPE cmd##NAME (char shortName, const String &longName) const;
 		GCHL_GENERATE(bool, Bool, false);
 		GCHL_GENERATE(sint32, Sint32, 0);
 		GCHL_GENERATE(uint32, Uint32, 0);
@@ -80,10 +80,10 @@ namespace cage
 		GCHL_GENERATE(uint64, Uint64, 0);
 		GCHL_GENERATE(float, Float, 0);
 		GCHL_GENERATE(double, Double, 0);
-		GCHL_GENERATE(string, String, "");
+		GCHL_GENERATE(String, String, "");
 #undef GCHL_GENERATE
 
-		Holder<PointerRange<string>> cmdArray(char shortName, const string &longName) const;
+		Holder<PointerRange<String>> cmdArray(char shortName, const String &longName) const;
 	};
 
 	CAGE_CORE_API Holder<Ini> newIni();

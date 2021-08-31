@@ -45,14 +45,14 @@ namespace cage
 
 		struct EmitSound
 		{
-			TransformComponent transform, transformHistory;
+			TransformComponent Transform, transformHistory;
 			SoundComponent sound = {};
 			uintPtr id = 0;
 		};
 
 		struct EmitListener
 		{
-			TransformComponent transform, transformHistory;
+			TransformComponent Transform, transformHistory;
 			ListenerComponent listener = {};
 			uintPtr id = 0;
 		};
@@ -82,7 +82,7 @@ namespace cage
 			InterpolationTimingCorrector itc;
 			uint64 emitTime = 0;
 			uint64 dispatchTime = 0;
-			real interFactor;
+			Real interFactor;
 
 			robin_hood::unordered_map<uintPtr, PrepareListener> listenersMapping;
 
@@ -117,11 +117,11 @@ namespace cage
 				for (Entity *e : engineEntities()->component<ListenerComponent>()->entities())
 				{
 					EmitListener c;
-					c.transform = e->value<TransformComponent>();
+					c.Transform = e->value<TransformComponent>();
 					if (e->has(transformHistoryComponent))
 						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
 					else
-						c.transformHistory = c.transform;
+						c.transformHistory = c.Transform;
 					c.listener = e->value<ListenerComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->listeners.push_back(c);
@@ -131,11 +131,11 @@ namespace cage
 				for (Entity *e : engineEntities()->component<SoundComponent>()->entities())
 				{
 					EmitSound c;
-					c.transform = e->value<TransformComponent>();
+					c.Transform = e->value<TransformComponent>();
 					if (e->has(transformHistoryComponent))
 						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
 					else
-						c.transformHistory = c.transform;
+						c.transformHistory = c.Transform;
 					c.sound = e->value<SoundComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->sounds.push_back(c);
@@ -155,7 +155,7 @@ namespace cage
 					v = l.mixer->newVoice();
 
 				v->sound = s.share();
-				const transform t = interpolate(e.transformHistory, e.transform, interFactor);
+				const Transform t = interpolate(e.transformHistory, e.Transform, interFactor);
 				v->position = t.position;
 				v->startTime = e.sound.startTime;
 				v->gain = e.sound.gain;
@@ -171,7 +171,7 @@ namespace cage
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
 					Listener &p = l.mixer->listener();
-					const transform t = interpolate(e.transformHistory, e.transform, interFactor);
+					const Transform t = interpolate(e.transformHistory, e.Transform, interFactor);
 					p.position = t.position;
 					p.orientation = t.orientation;
 					p.rolloffFactor = e.listener.rolloffFactor;
@@ -221,7 +221,7 @@ namespace cage
 					ClearOnScopeExit resetEmitRead(emitRead);
 					emitTime = emitRead->time;
 					dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
-					interFactor = saturate(real(dispatchTime - emitTime) / controlThread().updatePeriod());
+					interFactor = saturate(Real(dispatchTime - emitTime) / controlThread().updatePeriod());
 					prepare();
 				}
 

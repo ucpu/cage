@@ -4,9 +4,9 @@
 #include <cage-core/guid.h>
 #include <cage-core/random.h>
 
-void test(const vec2 &a, const vec2 &b);
-void test(const vec3 &a, const vec3 &b);
-void test(const vec4 &a, const vec4 &b);
+void test(const Vec2 &a, const Vec2 &b);
+void test(const Vec3 &a, const Vec3 &b);
+void test(const Vec4 &a, const Vec4 &b);
 
 void testRandom()
 {
@@ -16,8 +16,8 @@ void testRandom()
 		CAGE_TESTCASE("random chances (0 - 1)");
 		for (uint32 i = 0; i < 5; i++)
 		{
-			const real r = randomChance();
-			CAGE_LOG(SeverityEnum::Info, "test", stringizer() + r);
+			const Real r = randomChance();
+			CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + r);
 			CAGE_TEST(r >= 0 && r < 1);
 		}
 	}
@@ -27,9 +27,9 @@ void testRandom()
 		for (uint32 i = 0; i < 2; i++)
 		{
 			RandomGenerator g;
-			CAGE_LOG(SeverityEnum::Info, "generator seed", stringizer() + g.s[0] + " " + g.s[1]);
+			CAGE_LOG(SeverityEnum::Info, "generator seed", Stringizer() + g.s[0] + " " + g.s[1]);
 			for (uint32 i = 0; i < 3; i++)
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "random sequence", stringizer() + g.next());
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "random sequence", Stringizer() + g.next());
 		}
 	}
 
@@ -47,33 +47,33 @@ void testRandom()
 		CAGE_TESTCASE("verify that all compilers produce vector values in the same order");
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const ivec2 v = g.randomRange2i(10, 1000);
-			CAGE_TEST(v == ivec2(721, 670));
+			const Vec2i v = g.randomRange2i(10, 1000);
+			CAGE_TEST(v == Vec2i(721, 670));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const ivec3 v = g.randomRange3i(10, 1000);
-			CAGE_TEST(v == ivec3(721, 670, 70));
+			const Vec3i v = g.randomRange3i(10, 1000);
+			CAGE_TEST(v == Vec3i(721, 670, 70));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const ivec4 v = g.randomRange4i(10, 1000);
-			CAGE_TEST(v == ivec4(721, 670, 70, 385));
+			const Vec4i v = g.randomRange4i(10, 1000);
+			CAGE_TEST(v == Vec4i(721, 670, 70, 385));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const vec2 v = g.randomRange2(10, 1000);
-			test(v, vec2(616.199036, 286.644745));
+			const Vec2 v = g.randomRange2(10, 1000);
+			test(v, Vec2(616.199036, 286.644745));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const vec3 v = g.randomRange3(10, 1000);
-			test(v, vec3(616.199036, 286.644745, 843.249634));
+			const Vec3 v = g.randomRange3(10, 1000);
+			test(v, Vec3(616.199036, 286.644745, 843.249634));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
-			const vec4 v = g.randomRange4(10, 1000);
-			test(v, vec4(616.199036, 286.644745, 843.249634, 29.7623386));
+			const Vec4 v = g.randomRange4(10, 1000);
+			test(v, Vec4(616.199036, 286.644745, 843.249634, 29.7623386));
 		}
 	}
 

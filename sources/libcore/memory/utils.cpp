@@ -13,14 +13,14 @@
 namespace cage
 {
 	static_assert(sizeof(Holder<uint32>) == 2 * sizeof(uintPtr));
-	static_assert(sizeof(Holder<string>) == 2 * sizeof(uintPtr));
+	static_assert(sizeof(Holder<String>) == 2 * sizeof(uintPtr));
 
 	OutOfMemory::OutOfMemory(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(function, file, line, severity, message), memory(memory)
 	{};
 
 	void OutOfMemory::log()
 	{
-		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", stringizer() + "memory requested: " + +memory, false, false);
+		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", Stringizer() + "memory requested: " + +memory, false, false);
 		::cage::privat::makeLog(function, file, line, severity, "exception", +message, false, false);
 	};
 

@@ -62,7 +62,7 @@ namespace cage
 				uint32 axis = m;
 				uint32 split = m;
 				{
-					real bestSah = real::Infinity();
+					Real bestSah = Real::Infinity();
 					uint32 siz = numeric_cast<uint32>(ts.size());
 					for (uint32 ax = 0; ax < 3; ax++)
 					{
@@ -73,12 +73,12 @@ namespace cage
 						uint32 counts[planesCount + 1];
 						for (uint32 i = 0; i < planesCount + 1; i++)
 							counts[i] = 0;
-						real k1 = -b.a[ax];
-						real k2 = (planesCount + 1) / (b.b[ax] - b.a[ax]);
+						Real k1 = -b.a[ax];
+						Real k2 = (planesCount + 1) / (b.b[ax] - b.a[ax]);
 						for (uint32 i = 0; i < siz; i++)
 						{
-							real c = ts[i].center()[ax];
-							real d = (c + k1) * k2;
+							Real c = ts[i].center()[ax];
+							Real d = (c + k1) * k2;
 							d = clamp(d, 0, planesCount);
 							uint32 j = numeric_cast<uint32>(d);
 							CAGE_ASSERT(j < planesCount + 1);
@@ -107,7 +107,7 @@ namespace cage
 
 						for (uint32 i = 0; i < planesCount; i++)
 						{
-							real sah = bl[i].surface() * cl[i] + br[i].surface() * cr[i];
+							Real sah = bl[i].surface() * cl[i] + br[i].surface() * cr[i];
 							if (sah < bestSah)
 							{
 								bestSah = sah;
@@ -284,7 +284,7 @@ namespace cage
 		{
 			CAGE_ASSERT(poly->positions().size() % 3 == 0);
 			const uint32 cnt = poly->verticesCount() / 3;
-			CAGE_ASSERT(sizeof(Triangle) == 3 * sizeof(vec3));
+			CAGE_ASSERT(sizeof(Triangle) == 3 * sizeof(Vec3));
 			addTriangles(bufferCast<const Triangle>(poly->positions()));
 		}
 		else
@@ -351,10 +351,10 @@ namespace cage
 		public:
 			std::vector<T> data;
 			std::vector<bool> flags;
-			const transform m;
+			const Transform m;
 			const T *const original;
 
-			LazyData(const T *original, uint32 count, const transform &m) : m(m), original(original)
+			LazyData(const T *original, uint32 count, const Transform &m) : m(m), original(original)
 			{
 				data.resize(count);
 				flags.resize(count, false);
@@ -378,9 +378,9 @@ namespace cage
 		public:
 			const T *const original;
 
-			LazyData(const T *original, uint32 count, const transform &m) : original(original)
+			LazyData(const T *original, uint32 count, const Transform &m) : original(original)
 			{
-				CAGE_ASSERT(m == transform());
+				CAGE_ASSERT(m == Transform());
 			}
 
 			const T &operator[] (uint32 idx) const
@@ -403,7 +403,7 @@ namespace cage
 			Holder<PointerRange<CollisionPair>> &outputBuffer;
 			PointerRangeHolder<CollisionPair> collisions;
 
-			CollisionDetector(const ColliderImpl *ao, const ColliderImpl *bo, const transform &am, const transform &bm, Holder<PointerRange<CollisionPair>> &outputBuffer) :
+			CollisionDetector(const ColliderImpl *ao, const ColliderImpl *bo, const Transform &am, const Transform &bm, Holder<PointerRange<CollisionPair>> &outputBuffer) :
 				ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm),
 				abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm),
 				ao(ao), bo(bo), outputBuffer(outputBuffer)
@@ -469,7 +469,7 @@ namespace cage
 			}
 		};
 
-		real timeOfContact(const Collider *ao, const Collider *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
+		Real timeOfContact(const Collider *ao, const Collider *bo, const Transform &at1, const Transform &bt1, const Transform &at2, const Transform &bt2)
 		{
 			return 0;
 			/*
@@ -487,13 +487,13 @@ namespace cage
 			*/
 		}
 
-		real minSizeObject(const Collider *o, real scale)
+		Real minSizeObject(const Collider *o, Real scale)
 		{
-			vec3 s = o->box().size() * scale;
+			Vec3 s = o->box().size() * scale;
 			return min(min(s[0], s[1]), s[2]);
 		}
 
-		real dist(const Line &l, const vec3 &p)
+		Real dist(const Line &l, const Vec3 &p)
 		{
 			CAGE_ASSERT(l.normalized());
 			return dot(p - l.origin, l.direction);
@@ -503,24 +503,24 @@ namespace cage
 		{
 		public:
 			const ColliderImpl *const col;
-			const transform m;
+			const Transform m;
 
-			IntersectionDetector(const ColliderImpl *collider, const transform &m) : col(collider), m(m)
+			IntersectionDetector(const ColliderImpl *collider, const Transform &m) : col(collider), m(m)
 			{
 				CAGE_ASSERT(!collider->dirty);
 			}
 
 			template<class T>
-			real distance(const T &l, uint32 nodeIdx)
+			Real distance(const T &l, uint32 nodeIdx)
 			{
 				Aabb b = col->boxes[nodeIdx];
 				if (!cage::intersects(l, b))
-					return real::Nan();
+					return Real::Nan();
 				const auto &n = col->nodes[nodeIdx];
 				if (n.left == cage::m)
 				{ // node
-					real c1 = distance(l, nodeIdx + 1);
-					real c2 = distance(l, n.right);
+					Real c1 = distance(l, nodeIdx + 1);
+					Real c2 = distance(l, n.right);
 					if (c1.valid())
 					{
 						if (c2.valid())
@@ -531,20 +531,20 @@ namespace cage
 				}
 				else
 				{ // leaf
-					real d = real::Infinity();
+					Real d = Real::Infinity();
 					for (uint32 ti = n.left; ti != n.right; ti++)
 					{
 						const Triangle &t = col->tris[ti];
-						real p = cage::distance(l, t);
+						Real p = cage::distance(l, t);
 						if (p.valid() && p < d)
 							d = p;
 					}
-					return d == real::Infinity() ? real::Nan() : d;
+					return d == Real::Infinity() ? Real::Nan() : d;
 				}
 			}
 
 			template<class T>
-			real distance(const T &shape)
+			Real distance(const T &shape)
 			{
 				return distance(shape * inverse(m), 0);
 			}
@@ -578,7 +578,7 @@ namespace cage
 				return intersects(shape * inverse(m), 0);
 			}
 
-			bool intersection(const Line &l, uint32 nodeIdx, vec3 &point, uint32 &triangleIndex)
+			bool intersection(const Line &l, uint32 nodeIdx, Vec3 &point, uint32 &triangleIndex)
 			{
 				const Aabb b = col->boxes[nodeIdx];
 				if (!cage::intersects(l, b))
@@ -586,7 +586,7 @@ namespace cage
 				const auto &n = col->nodes[nodeIdx];
 				if (n.left == cage::m)
 				{ // node
-					vec3 c1, c2;
+					Vec3 c1, c2;
 					uint32 t1 = 0, t2 = 0;
 					const bool r1 = intersection(l, nodeIdx + 1, c1, t1);
 					const bool r2 = intersection(l, n.right, c2, t2);
@@ -624,15 +624,15 @@ namespace cage
 				}
 				else
 				{ // leaf
-					real d = real::Infinity();
+					Real d = Real::Infinity();
 					bool res = false;
 					for (uint32 ti = n.left; ti != n.right; ti++)
 					{
 						const Triangle &t = col->tris[ti];
-						const vec3 p = cage::intersection(l, t);
+						const Vec3 p = cage::intersection(l, t);
 						if (p.valid())
 						{
-							const real d1 = dist(l, p);
+							const Real d1 = dist(l, p);
 							if (d1 < d)
 							{
 								point = p;
@@ -646,14 +646,14 @@ namespace cage
 				}
 			}
 
-			bool intersection(const Line &l, vec3 &point, uint32 &triangleIndex)
+			bool intersection(const Line &l, Vec3 &point, uint32 &triangleIndex)
 			{
-				vec3 pt;
+				Vec3 pt;
 				uint32 ti = 0;
 				if (intersection(l * inverse(m), 0, pt, ti))
 				{
-					const vec4 r4 = vec4(pt, 1) * mat4(m);
-					point = vec3(r4) / r4[3];
+					const Vec4 r4 = Vec4(pt, 1) * Mat4(m);
+					point = Vec3(r4) / r4[3];
 					triangleIndex = ti;
 					return true;
 				}
@@ -668,12 +668,12 @@ namespace cage
 	{
 		const ColliderImpl *const ao = (const ColliderImpl *)params.ao;
 		const ColliderImpl *const bo = (const ColliderImpl *)params.bo;
-		const transform &at1 = params.at1;
-		const transform &bt1 = params.bt1;
-		const transform &at2 = params.at2;
-		const transform &bt2 = params.bt2;
-		real &fractionBefore = params.fractionBefore;
-		real &fractionContact = params.fractionContact;
+		const Transform &at1 = params.at1;
+		const Transform &bt1 = params.bt1;
+		const Transform &at2 = params.at2;
+		const Transform &bt2 = params.bt2;
+		Real &fractionBefore = params.fractionBefore;
+		Real &fractionContact = params.fractionContact;
 		Holder<PointerRange<CollisionPair>> &outputBuffer = params.collisionPairs;
 
 		CAGE_ASSERT(!ao->needsRebuild());
@@ -685,13 +685,13 @@ namespace cage
 			fractionContact = 0;
 			if (ao->triangles().size() > bo->triangles().size())
 			{
-				CollisionDetector<false> d(ao, bo, transform(), transform(inverse(at1) * bt1), outputBuffer);
+				CollisionDetector<false> d(ao, bo, Transform(), Transform(inverse(at1) * bt1), outputBuffer);
 				d.process();
 				return !outputBuffer.empty();
 			}
 			else
 			{
-				CollisionDetector<true> d(ao, bo, transform(inverse(bt1) * at1), transform(), outputBuffer);
+				CollisionDetector<true> d(ao, bo, Transform(inverse(bt1) * at1), Transform(), outputBuffer);
 				d.process();
 				return !outputBuffer.empty();
 			}
@@ -702,20 +702,20 @@ namespace cage
 			CAGE_ASSERT(bt1.scale == bt2.scale);
 
 			// find approximate time range of contact
-			real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
+			Real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
 			if (!time1.valid())
 				return false;
 			CAGE_ASSERT(time1 >= 0 && time1 <= 1);
-			real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
+			Real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
 			CAGE_ASSERT(time2.valid());
 			CAGE_ASSERT(time2 >= 0 && time2 <= 1);
 			CAGE_ASSERT(time2 >= time1);
 
 			// find first contact
-			const real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
-			const real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
+			const Real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
+			const Real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
 				distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
-			real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
+			Real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
 			CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1);
 			maxDiff = min(maxDiff, (time2 - time1) * 0.2);
 			while (time1 <= time2)
@@ -738,7 +738,7 @@ namespace cage
 			fractionContact = time2;
 			for (uint32 i = 0; i < 6; i++)
 			{
-				const real time = (time1 + time2) * 0.5;
+				const Real time = (time1 + time2) * 0.5;
 				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, time), interpolate(bt1, bt2, time));
 				if (collisionDetection(p))
 				{
@@ -776,117 +776,117 @@ namespace cage
 
 
 
-	real distance(const Line &shape, const Collider *collider, const transform &t)
+	Real distance(const Line &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Triangle &shape, const Collider *collider, const transform &t)
+	Real distance(const Triangle &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Plane &shape, const Collider *collider, const transform &t)
+	Real distance(const Plane &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Sphere &shape, const Collider *collider, const transform &t)
+	Real distance(const Sphere &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Aabb &shape, const Collider *collider, const transform &t)
+	Real distance(const Aabb &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Cone &shape, const Collider *collider, const transform &t)
+	Real distance(const Cone &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Frustum &shape, const Collider *collider, const transform &t)
+	Real distance(const Frustum &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
+	Real distance(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "collider-collider distance");
 	}
 
 
 
-	bool intersects(const Line &shape, const Collider *collider, const transform &t)
+	bool intersects(const Line &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Triangle &shape, const Collider *collider, const transform &t)
+	bool intersects(const Triangle &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Plane &shape, const Collider *collider, const transform &t)
+	bool intersects(const Plane &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Sphere &shape, const Collider *collider, const transform &t)
+	bool intersects(const Sphere &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Aabb &shape, const Collider *collider, const transform &t)
+	bool intersects(const Aabb &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Cone &shape, const Collider *collider, const transform &t)
+	bool intersects(const Cone &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Frustum &shape, const Collider *collider, const transform &t)
+	bool intersects(const Frustum &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
+	bool intersects(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt)
 	{
 		CollisionDetectionParams p(ao, bo, at, bt);
 		return collisionDetection(p);
 	}
 
 
-	vec3 intersection(const Line &shape, const Collider *collider, const transform &t)
+	Vec3 intersection(const Line &shape, const Collider *collider, const Transform &t)
 	{
 		uint32 triangleIndex = m;
 		return intersection(shape, collider, t, triangleIndex);
 	}
 
-	vec3 intersection(const Line &shape, const Collider *collider, const transform &t, uint32 &triangleIndex)
+	Vec3 intersection(const Line &shape, const Collider *collider, const Transform &t, uint32 &triangleIndex)
 	{
 		// todo
 		IntersectionDetector d((const ColliderImpl *)collider, t);
-		vec3 p;
+		Vec3 p;
 		if (d.intersection(shape, p, triangleIndex))
 			return p;
-		return vec3::Nan();
+		return Vec3::Nan();
 	}
 }

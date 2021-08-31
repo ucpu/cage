@@ -45,11 +45,11 @@ public:
 
 Holder<AssimpContext> newAssimpContext(uint32 addFlags, uint32 removeFlags);
 
-vec3 conv(const aiVector3D &v);
-vec3 conv(const aiColor3D &v);
-vec4 conv(const aiColor4D &v);
-mat4 conv(const aiMatrix4x4 &v);
-quat conv(const aiQuaternion &q);
+Vec3 conv(const aiVector3D &v);
+Vec3 conv(const aiColor3D &v);
+Vec4 conv(const aiColor4D &v);
+Mat4 conv(const aiMatrix4x4 &v);
+Quat conv(const aiQuaternion &q);
 
-mat3 axesMatrix();
-mat3 axesScaleMatrix();
+Mat3 axesMatrix();
+Mat3 axesScaleMatrix();

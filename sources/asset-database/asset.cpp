@@ -12,7 +12,7 @@ void Asset::load(File *f)
 	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
-		string t1, t2;
+		String t1, t2;
 		read(f, t1);
 		read(f, t2);
 		fields[t1] = t2;
@@ -20,14 +20,14 @@ void Asset::load(File *f)
 	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
-		string t;
+		String t;
 		read(f, t);
 		files.insert(t);
 	}
 	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
-		string t;
+		String t;
 		read(f, t);
 		references.insert(t);
 	}
@@ -49,21 +49,21 @@ void Asset::save(File *f) const
 	}
 	m = numeric_cast<uint32>(files.size());
 	f->write(bufferView(m));
-	for (const string &it : files)
+	for (const String &it : files)
 		write(f, it);
 	m = numeric_cast<uint32>(references.size());
 	f->write(bufferView(m));
-	for (const string &it : references)
+	for (const String &it : references)
 		write(f, it);
 	f->write(bufferView(corrupted));
 }
 
-string Asset::outputPath() const
+String Asset::outputPath() const
 {
-	return stringizer() + HashString(name);
+	return Stringizer() + HashString(name);
 }
 
-string Asset::aliasPath() const
+String Asset::aliasPath() const
 {
-	return stringizer() + HashString(aliasName);
+	return Stringizer() + HashString(aliasName);
 }

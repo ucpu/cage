@@ -102,22 +102,22 @@ namespace cage
 		template<uint32 N> struct StringBase;
 		template<uint32 N> struct StringizerBase;
 	}
-	using string = detail::StringBase<995>;
-	using stringizer = detail::StringizerBase<995>;
+	using String = detail::StringBase<995>;
+	using Stringizer = detail::StringizerBase<995>;
 
-	struct real;
-	struct rads;
-	struct degs;
-	struct vec2;
-	struct ivec2;
-	struct vec3;
-	struct ivec3;
-	struct vec4;
-	struct ivec4;
-	struct quat;
-	struct mat3;
-	struct mat4;
-	struct transform;
+	struct Real;
+	struct Rads;
+	struct Degs;
+	struct Vec2;
+	struct Vec2i;
+	struct Vec3;
+	struct Vec3i;
+	struct Vec4;
+	struct Vec4i;
+	struct Quat;
+	struct Mat3;
+	struct Mat4;
+	struct Transform;
 
 	struct Line;
 	struct Triangle;
@@ -303,8 +303,8 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
+		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const String &message) noexcept;
 		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 

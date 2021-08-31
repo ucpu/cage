@@ -29,11 +29,11 @@ namespace cage
 			return len + (len < size); // plus the new line
 		}
 
-		uintPtr readLine(string &output, PointerRange<const char> input, bool streaming)
+		uintPtr readLine(String &output, PointerRange<const char> input, bool streaming)
 		{
 			PointerRange<const char> tmp;
 			uintPtr res = readLine(tmp, input, streaming);
-			output = string(tmp); // may throw
+			output = String(tmp); // may throw
 			return res;
 		}
 	}
@@ -64,7 +64,7 @@ namespace cage
 		return !!l;
 	}
 
-	bool LineReader::readLine(string &line)
+	bool LineReader::readLine(String &line)
 	{
 		LineReaderImpl *impl = (LineReaderImpl *)this;
 		uintPtr l = detail::readLine(line, { impl->buffer, impl->buffer + impl->size }, false);

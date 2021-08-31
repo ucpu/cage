@@ -19,7 +19,7 @@ namespace
 
 void processObject()
 {
-	writeLine(string("use=") + inputFile);
+	writeLine(String("use=") + inputFile);
 
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
@@ -27,16 +27,16 @@ void processObject()
 	std::vector<Lod> lods;
 	std::set<uint32> deps;
 	uint32 totalModeles = 0;
-	for (const string &section : ini->sections())
+	for (const String &section : ini->sections())
 	{
 		if (!isDigitsOnly(section))
 			continue;
 		Lod ls;
 		ls.index = toUint32(section);
-		ls.threshold = ini->getFloat(section, "threshold", real::Nan().value);
-		for (const string &n : ini->items(section))
+		ls.threshold = ini->getFloat(section, "threshold", Real::Nan().value);
+		for (const String &n : ini->items(section))
 		{
-			string v = ini->getString(section, n);
+			String v = ini->getString(section, n);
 			if (!isDigitsOnly(n))
 				continue;
 			v = convertAssetPath(v);
@@ -50,7 +50,7 @@ void processObject()
 
 	for (Lod &ls : lods)
 	{
-		if (!real(ls.threshold).valid())
+		if (!Real(ls.threshold).valid())
 			ls.threshold = float(lods.size() - ls.index) / lods.size();
 	}
 
@@ -61,35 +61,35 @@ void processObject()
 	RenderObjectHeader o;
 	{
 		detail::memset(&o, 0, sizeof(o));
-		string c = ini->getString("render", "color");
+		String c = ini->getString("render", "color");
 		if (!c.empty())
-			o.color = vec3::parse(c);
+			o.color = Vec3::parse(c);
 		else
-			o.color = vec3::Nan();
-		o.intensity = ini->getFloat("render", "intensity", real::Nan().value);
-		o.opacity = ini->getFloat("render", "opacity", real::Nan().value);
-		string s = ini->getString("skeletalAnimation", "name");
+			o.color = Vec3::Nan();
+		o.intensity = ini->getFloat("render", "intensity", Real::Nan().value);
+		o.opacity = ini->getFloat("render", "opacity", Real::Nan().value);
+		String s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
 			s = convertAssetPath(s);
 			o.skelAnimName = HashString(s);
 			deps.insert(o.skelAnimName);
 		}
-		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", real::Nan().value);
-		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", real::Nan().value);
-		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", real::Nan().value);
-		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", real::Nan().value);
+		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", Real::Nan().value);
+		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", Real::Nan().value);
+		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", Real::Nan().value);
+		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", Real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}
 
 	{
-		string s, t, v;
+		String s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG_THROW(stringizer() + "section: " + s);
-			CAGE_LOG_THROW(stringizer() + "item: " + t);
-			CAGE_LOG_THROW(stringizer() + "value: " + v);
+			CAGE_LOG_THROW(Stringizer() + "section: " + s);
+			CAGE_LOG_THROW(Stringizer() + "item: " + t);
+			CAGE_LOG_THROW(Stringizer() + "value: " + v);
 			CAGE_THROW_ERROR(Exception, "unused value");
 		}
 	}

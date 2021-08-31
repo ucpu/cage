@@ -66,7 +66,7 @@ namespace cage
 		}
 	}
 
-	void Audio::importFile(const string &filename, AudioFormatEnum requestedFormat)
+	void Audio::importFile(const String &filename, AudioFormatEnum requestedFormat)
 	{
 		Holder<File> f = readFile(filename);
 		Holder<PointerRange<char>> buffer = f->readAll();
@@ -74,10 +74,10 @@ namespace cage
 		importBuffer(buffer, requestedFormat);
 	}
 
-	Holder<PointerRange<char>> Audio::exportBuffer(const string &format) const
+	Holder<PointerRange<char>> Audio::exportBuffer(const String &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
-		const string ext = toLower(pathExtractExtension(format));
+		const String ext = toLower(pathExtractExtension(format));
 		if (ext == ".wav")
 			return wavEncode((const AudioImpl *)this);
 		if (ext == ".flac")
@@ -89,7 +89,7 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for sound encoding");
 	}
 
-	void Audio::exportFile(const string &filename) const
+	void Audio::exportFile(const String &filename) const
 	{
 		Holder<PointerRange<char>> buf = exportBuffer(filename);
 		writeFile(filename)->write(buf);

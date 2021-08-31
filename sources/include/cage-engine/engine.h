@@ -47,21 +47,21 @@ namespace cage
 		CameraEyeAdaptation eyeAdaptation;
 		CameraTonemap tonemap;
 		CameraDepthOfField depthOfField;
-		real gamma = 2.2;
+		Real gamma = 2.2;
 		CameraEffectsFlags effects = CameraEffectsFlags::None;
 	};
 
-	struct CAGE_ENGINE_API TransformComponent : public transform
+	struct CAGE_ENGINE_API TransformComponent : public Transform
 	{
-		using transform::transform;
-		using transform::operator =;
+		using Transform::Transform;
+		using Transform::operator =;
 	};
 
 	struct CAGE_ENGINE_API RenderComponent
 	{
-		vec3 color = vec3::Nan();
-		real intensity = real::Nan();
-		real opacity = real::Nan();
+		Vec3 color = Vec3::Nan();
+		Real intensity = Real::Nan();
+		Real opacity = Real::Nan();
 		uint32 object = 0;
 		uint32 sceneMask = 1;
 	};
@@ -69,16 +69,16 @@ namespace cage
 	struct CAGE_ENGINE_API TextureAnimationComponent
 	{
 		uint64 startTime = 0;
-		real speed = real::Nan();
-		real offset = real::Nan();
+		Real speed = Real::Nan();
+		Real offset = Real::Nan();
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
 		uint64 startTime = 0;
 		uint32 name = 0;
-		real speed = real::Nan();
-		real offset = real::Nan();
+		Real speed = Real::Nan();
+		Real offset = Real::Nan();
 	};
 
 	enum class LightTypeEnum : uint32
@@ -90,11 +90,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API LightComponent
 	{
-		vec3 attenuation = vec3(0, 0, 1); // constant, linear, quadratic
-		vec3 color = vec3(1);
-		real intensity = 1;
-		rads spotAngle = degs(40);
-		real spotExponent = 80;
+		Vec3 attenuation = Vec3(0, 0, 1); // constant, linear, quadratic
+		Vec3 color = Vec3(1);
+		Real intensity = 1;
+		Rads spotAngle = Degs(40);
+		Real spotExponent = 80;
 		uint32 sceneMask = 1;
 		LightTypeEnum lightType = LightTypeEnum::Point;
 	};
@@ -103,16 +103,16 @@ namespace cage
 	{
 		// directional: width, height, depth
 		// spot: near, far, unused
-		vec3 worldSize = vec3();
-		real normalOffsetScale = 0.2;
+		Vec3 worldSize = Vec3();
+		Real normalOffsetScale = 0.2;
 		uint32 resolution = 256;
 	};
 
 	struct CAGE_ENGINE_API TextComponent
 	{
-		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		vec3 color = vec3(1);
-		real intensity = 1;
+		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
+		Vec3 color = Vec3(1);
+		Real intensity = 1;
 		// real opacity; // todo
 		uint32 assetName = 0;
 		uint32 textName = 0;
@@ -136,20 +136,20 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraComponent : public CameraEffects
 	{
-		vec3 ambientColor = vec3();
-		vec3 ambientDirectionalColor = vec3(); // fake forward light affected by ssao
+		Vec3 ambientColor = Vec3();
+		Vec3 ambientDirectionalColor = Vec3(); // fake forward light affected by ssao
 		union CameraUnion
 		{
-			vec2 orthographicSize;
-			rads perspectiveFov = degs(60);
+			Vec2 orthographicSize;
+			Rads perspectiveFov = Degs(60);
 			CameraUnion() {}
 		} camera;
 		Texture *target = nullptr;
-		real ambientIntensity = 1;
-		real ambientDirectionalIntensity = 1;
-		real near = 1, far = 100;
-		real zeroParallaxDistance = 10;
-		real eyeSeparation = 0.3;
+		Real ambientIntensity = 1;
+		Real ambientDirectionalIntensity = 1;
+		Real near = 1, far = 100;
+		Real zeroParallaxDistance = 10;
+		Real eyeSeparation = 0.3;
 		sint32 cameraOrder = 0;
 		uint32 sceneMask = 1;
 		CameraClearFlags clear = CameraClearFlags::Depth | CameraClearFlags::Color;
@@ -161,14 +161,14 @@ namespace cage
 		uint64 startTime = 0;
 		uint32 name = 0;
 		uint32 sceneMask = 1;
-		real gain = 1; // linear amplitude multiplier
+		Real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		uint32 sceneMask = 1;
-		real rolloffFactor = 1; // distance multiplier
-		real gain = 1; // linear amplitude multiplier
+		Real rolloffFactor = 1; // distance multiplier
+		Real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API EngineControlThread

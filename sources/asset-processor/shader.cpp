@@ -11,9 +11,9 @@
 
 namespace
 {
-	std::map<string, std::string> codes;
-	std::map<string, string> defines;
-	std::set<string, StringComparatorFast> onces;
+	std::map<String, std::string> codes;
+	std::map<String, String> defines;
+	std::set<String, StringComparatorFast> onces;
 
 	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
 
@@ -30,7 +30,7 @@ namespace
 		return false;
 	}
 
-	bool validDefine(const string &s)
+	bool validDefine(const String &s)
 	{
 		if (s.empty())
 			return false;
@@ -42,9 +42,9 @@ namespace
 		return true;
 	}
 
-	string outputTokenization(string input)
+	String outputTokenization(String input)
 	{
-		string result;
+		String result;
 		while (!input.empty())
 		{
 			uint32 v = 0;
@@ -53,7 +53,7 @@ namespace
 					break;
 			if (v > 0)
 			{
-				string token = subString(input, 0, v);
+				String token = subString(input, 0, v);
 				input = remove(input, 0, v);
 				if (toUpper(token) == token)
 				{
@@ -64,14 +64,14 @@ namespace
 			}
 			else
 			{
-				result += string({ &input[0], &input[0] + 1 });
+				result += String({ &input[0], &input[0] + 1 });
 				input = remove(input, 0, 1);
 			}
 		}
 		return result;
 	}
 
-	bool evalExpToBool(const string &l)
+	bool evalExpToBool(const String &l)
 	{
 		if (isReal(l))
 			return toFloat(l) != 0;
@@ -79,75 +79,75 @@ namespace
 			return toBool(l);
 		else
 		{
-			CAGE_LOG_THROW(string("expression: ") + l);
+			CAGE_LOG_THROW(String("expression: ") + l);
 			CAGE_THROW_ERROR(Exception, "expression cannot be converted to bool");
 		}
 	}
 
-	string eval(const string &input);
+	String eval(const String &input);
 
-	string evalExp(const string &l)
+	String evalExp(const String &l)
 	{
 		if (l.empty())
 			CAGE_THROW_ERROR(Exception, "unexpected end of line");
 		uint32 p = find(l, '|');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
-			return stringizer() + (evalExpToBool(left) || evalExpToBool(right));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
+			return Stringizer() + (evalExpToBool(left) || evalExpToBool(right));
 		}
 		p = find(l, '&');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
-			return stringizer() + (evalExpToBool(left) && evalExpToBool(right));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
+			return Stringizer() + (evalExpToBool(left) && evalExpToBool(right));
 		}
 		p = find(l, '<');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
 			if (isReal(left) && isReal(right))
-				return stringizer() + (toFloat(left) < toFloat(right));
+				return Stringizer() + (toFloat(left) < toFloat(right));
 			else
-				return stringizer() + (left < right);
+				return Stringizer() + (left < right);
 		}
 		p = find(l, '>');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
 			if (isReal(left) && isReal(right))
-				return stringizer() + (toFloat(left) > toFloat(right));
+				return Stringizer() + (toFloat(left) > toFloat(right));
 			else
-				return stringizer() + (left > right);
+				return Stringizer() + (left > right);
 		}
 		p = find(l, '=');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
 			if (isInteger(left) && isInteger(right))
-				return stringizer() + (toSint32(left) == toSint32(right));
+				return Stringizer() + (toSint32(left) == toSint32(right));
 			else
-				return stringizer() + (left == right);
+				return Stringizer() + (left == right);
 		}
 		p = find(l, '-');
 		if (p != m)
 		{
 			sint32 left = toSint32(evalExp(subString(l, 0, p)));
 			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
-			return stringizer() + (left - right);
+			return Stringizer() + (left - right);
 		}
 		p = find(l, '+');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
 			if (isInteger(left) && isInteger(right))
-				return stringizer() + (toSint32(left) + toSint32(right));
+				return Stringizer() + (toSint32(left) + toSint32(right));
 			else
 				return left + right;
 		}
@@ -156,43 +156,43 @@ namespace
 		{
 			sint32 left = toSint32(evalExp(subString(l, 0, p)));
 			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
-			return stringizer() + (left % right);
+			return Stringizer() + (left % right);
 		}
 		p = find(l, '/');
 		if (p != m)
 		{
 			sint32 left = toSint32(evalExp(subString(l, 0, p)));
 			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
-			return stringizer() + (left / right);
+			return Stringizer() + (left / right);
 		}
 		p = find(l, '*');
 		if (p != m)
 		{
 			sint32 left = toSint32(evalExp(subString(l, 0, p)));
 			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
-			return stringizer() + (left * right);
+			return Stringizer() + (left * right);
 		}
 		p = find(l, '^');
 		if (p != m)
 		{
-			string left = evalExp(subString(l, 0, p));
-			string right = evalExp(subString(l, p + 1, m));
+			String left = evalExp(subString(l, 0, p));
+			String right = evalExp(subString(l, p + 1, m));
 			if (isDigitsOnly(right) && !right.empty())
 			{
 				uint32 index = toUint32(right);
 				if (index < left.length())
-					return string({ &left[index], &left[index] + 1 });
+					return String({ &left[index], &left[index] + 1 });
 			}
 			{
-				CAGE_LOG_THROW(stringizer() + "expression: '" + l + "'");
-				CAGE_LOG_THROW(stringizer() + "string: '" + left + "'");
-				CAGE_LOG_THROW(stringizer() + "index: '" + right + "'");
+				CAGE_LOG_THROW(Stringizer() + "expression: '" + l + "'");
+				CAGE_LOG_THROW(Stringizer() + "string: '" + left + "'");
+				CAGE_LOG_THROW(Stringizer() + "index: '" + right + "'");
 				CAGE_THROW_ERROR(Exception, "non integer index or out of bounds");
 			}
 		}
 		if (l[0] == '!')
 		{
-			return stringizer() + !evalExpToBool(evalExp(subString(l, 1, m)));
+			return Stringizer() + !evalExpToBool(evalExp(subString(l, 1, m)));
 		}
 		if (defines.count(l))
 		{
@@ -201,9 +201,9 @@ namespace
 		return l;
 	}
 
-	string eval(const string &input)
+	String eval(const String &input)
 	{
-		string l = input;
+		String l = input;
 		l = replace(replace(replace(l, " ", ""), "\t", ""), "\n", "");
 		while (true)
 		{
@@ -213,33 +213,33 @@ namespace
 			uint32 o = find(reverse(subString(l, 0, z)), '(');
 			if (o == m)
 			{
-				CAGE_LOG_THROW(stringizer() + "expression: '" + input + "'");
+				CAGE_LOG_THROW(Stringizer() + "expression: '" + input + "'");
 				CAGE_THROW_ERROR(Exception, "unmatched ')'");
 			}
 			l = replace(l, z - o - 1, o + 2, evalExp(subString(l, z - o, o)));
 		}
 		if (find(l, '(') != m)
 		{
-			CAGE_LOG_THROW(stringizer() + "expression: '" + input + "'");
+			CAGE_LOG_THROW(Stringizer() + "expression: '" + input + "'");
 			CAGE_THROW_ERROR(Exception, "unmatched '('");
 		}
 		return evalExp(l);
 	}
 
-	void output(const string &s)
+	void output(const String &s)
 	{
 		if (defines["shader"].empty())
 		{
 			if (!s.empty())
 			{
-				CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, stringizer() + "output to unspecified shader: '" + s + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, Stringizer() + "output to unspecified shader: '" + s + "'");
 			}
 			return;
 		}
 		codes[defines["shader"]] += std::string(s.c_str(), s.length()) + "\n";
 	}
 
-	uint32 shaderType(const string &name)
+	uint32 shaderType(const String &name)
 	{
 		if (name == "vertex")
 			return GL_VERTEX_SHADER;
@@ -271,14 +271,14 @@ namespace
 		return toBool(defines["allowParsingHash"]);
 	}
 
-	void parse(const string &filename)
+	void parse(const String &filename)
 	{
 		Holder<File> file = newFile(filename, FileMode(true, false));
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
-		for (string line; file->readLine(line);)
+		for (String line; file->readLine(line);)
 		{
-			const string originalLine = line;
+			const String originalLine = line;
 			lineNumber++;
 			try
 			{
@@ -291,7 +291,7 @@ namespace
 				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
 				{
 					line = trim(subString(line, 1, m));
-					string cmd = split(line);
+					String cmd = split(line);
 					line = trim(line);
 					if (cmd == "if")
 					{
@@ -303,7 +303,7 @@ namespace
 					{
 						if (!line.empty())
 							CAGE_THROW_ERROR(Exception, "'$once' cannot have parameters");
-						string name = stringizer() + filename + ":" + lineNumber;
+						String name = Stringizer() + filename + ":" + lineNumber;
 						stack.push_back(onces.find(name) == onces.end() ? 1 : 0);
 						onces.insert(name);
 					}
@@ -335,24 +335,24 @@ namespace
 					{
 						if (!line.empty())
 							CAGE_THROW_ERROR(Exception, "'$stack' cannot have parameters");
-						string s("// CAGE: stack:");
+						String s("// CAGE: stack:");
 						for (const auto &it : stack)
-							s += stringizer() + " " + it;
+							s += Stringizer() + " " + it;
 						output(s);
 					}
 					else if (stackIsOk(stack))
 					{
 						if (cmd == "define" || cmd == "set")
 						{
-							string name = split(line);
+							String name = split(line);
 							if (name.empty() || line.empty())
 							{
-								CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
+								CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
 								CAGE_THROW_ERROR(Exception, "'$define/set' expects two parameters");
 							}
 							if (!validDefine(name))
 							{
-								CAGE_LOG_THROW(stringizer() + "name: '" + name + "', value: '" + line + "'");
+								CAGE_LOG_THROW(Stringizer() + "name: '" + name + "', value: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$define/set' with invalid name");
 							}
 							if (cmd == "set")
@@ -365,7 +365,7 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$undef' with invalid name");
 							}
 							defines.erase(line);
@@ -374,12 +374,12 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$print' with invalid name");
 							}
 							if (defines.find(line) == defines.end())
 							{
-								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$print' with unknown name");
 							}
 							output(defines[line]);
@@ -393,29 +393,29 @@ namespace
 							if (!line.empty())
 								CAGE_THROW_ERROR(Exception, "'$variables' expects no parameters");
 							for (const auto &it : defines)
-								output(string() + "// CAGE: variable: '" + it.first + "' = '" + it.second + "'");
+								output(String() + "// CAGE: variable: '" + it.first + "' = '" + it.second + "'");
 						}
 						else if (cmd == "include")
 						{
 							if (line.empty())
 								CAGE_THROW_ERROR(Exception, "'$include' expects one parameter");
 							line = pathJoin(pathExtractDirectory(pathToRel(filename, inputDirectory)), line);
-							writeLine(stringizer() + "use=" + line);
-							string fn = pathJoin(inputDirectory, line);
+							writeLine(Stringizer() + "use=" + line);
+							String fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
-								CAGE_LOG_THROW(stringizer() + "requested file '" + line + "'");
+								CAGE_LOG_THROW(Stringizer() + "requested file '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$include' file not found");
 							}
 							if (configShaderPrint)
-								output(stringizer() + "// CAGE: include file: '" + line + "'");
+								output(Stringizer() + "// CAGE: include file: '" + line + "'");
 							parse(fn);
 							if (configShaderPrint)
-								output(stringizer() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
+								output(Stringizer() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
 						}
 						else
 						{
-							CAGE_LOG_THROW(stringizer() + "command: '" + cmd + "', params: '" + line + "'");
+							CAGE_LOG_THROW(Stringizer() + "command: '" + cmd + "', params: '" + line + "'");
 							CAGE_THROW_ERROR(Exception, "unknown '$' command");
 						}
 					}
@@ -425,15 +425,15 @@ namespace
 			}
 			catch (...)
 			{
-				CAGE_LOG_THROW(stringizer() + "in file: '" + filename + "':" + lineNumber);
-				CAGE_LOG_THROW(stringizer() + "original line: '" + originalLine + "'");
+				CAGE_LOG_THROW(Stringizer() + "in file: '" + filename + "':" + lineNumber);
+				CAGE_LOG_THROW(Stringizer() + "original line: '" + originalLine + "'");
 				throw;
 			}
 		}
 
 		if (!stack.empty())
 		{
-			CAGE_LOG_THROW(stringizer() + "in file: '" + filename + "':" + lineNumber);
+			CAGE_LOG_THROW(Stringizer() + "in file: '" + filename + "':" + lineNumber);
 			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting '$end'");
 		}
 	}
@@ -441,7 +441,7 @@ namespace
 
 void processShader()
 {
-	writeLine(string("use=") + inputFile);
+	writeLine(String("use=") + inputFile);
 
 	defines["cageShaderProcessor"] = "1";
 	defines["inputSpec"] = inputSpec;
@@ -449,10 +449,10 @@ void processShader()
 	parse(inputFileName);
 
 	{
-		string prepend;
+		String prepend;
 		if (!properties("version").empty())
-			prepend += string("#version ") + properties("version") + "\n";
-		prepend += string() + "// " + inputName + "\n";
+			prepend += String("#version ") + properties("version") + "\n";
+		prepend += String() + "// " + inputName + "\n";
 		for (auto &it : codes)
 			it.second = std::string(prepend.c_str(), prepend.length()) + it.second;
 	}
@@ -467,12 +467,12 @@ void processShader()
 			ser << numeric_cast<uint32>(it.second.length());
 			ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
 			//ser.write(it.second);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
 		Holder<PointerRange<char>> comp = compress(buff);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
 
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = buff.size();
@@ -487,7 +487,7 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			string name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);

@@ -12,7 +12,7 @@ namespace cage
 #endif // CAGE_DEBUG
 
 	public:
-		void setDebugName(const string &name);
+		void setDebugName(const String &name);
 
 		uint32 id() const;
 		void bind() const;

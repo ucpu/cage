@@ -39,10 +39,10 @@ struct Thr
 
 void runServer()
 {
-	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "running in server mode");
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "running in server mode");
 
 	ConfigUint32 port("port");
-	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "port: " + (uint32)port);
 
 	Holder<GinnelServer> server = newGinnelServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;

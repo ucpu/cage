@@ -17,7 +17,7 @@ namespace cage
 			virtual void findRequestedSize() override;
 			virtual void findFinalPosition(const FinalPosition &update) override;
 			virtual void emit() override;
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		};
 
 		struct ComboBoxImpl : public WidgetItem
@@ -67,8 +67,8 @@ namespace cage
 
 			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.comboBox.baseMargin);
 				emitElement(GuiElementTypeEnum::ComboBoxBase, mode(), p, s);
 				offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
@@ -130,9 +130,9 @@ namespace cage
 
 		void ComboListImpl::findRequestedSize()
 		{
-			hierarchy->requestedSize = vec2();
+			hierarchy->requestedSize = Vec2();
 			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
-			const vec4 os = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
+			const Vec4 os = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
 			for (const auto &c : combo->hierarchy->children)
 			{
 				// todo limit text wrap width to the combo box item
@@ -141,25 +141,25 @@ namespace cage
 				hierarchy->requestedSize[1] += c->requestedSize[1];
 			}
 			hierarchy->requestedSize[1] += skin->defaults.comboBox.itemSpacing * (max(combo->count, 1u) - 1);
-			const vec4 margin = skin->defaults.comboBox.baseMargin;
+			const Vec4 margin = skin->defaults.comboBox.baseMargin;
 			hierarchy->requestedSize[0] = combo->hierarchy->requestedSize[0] - margin[0] - margin[2];
 		}
 
 		void ComboListImpl::findFinalPosition(const FinalPosition &update)
 		{
-			const vec4 margin = skin->defaults.comboBox.baseMargin;
-			const real spacing = skin->defaults.comboBox.itemSpacing;
+			const Vec4 margin = skin->defaults.comboBox.baseMargin;
+			const Real spacing = skin->defaults.comboBox.itemSpacing;
 			hierarchy->renderSize = hierarchy->requestedSize;
 			hierarchy->renderPos = combo->hierarchy->renderPos;
 			hierarchy->renderPos[0] += margin[0];
 			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - margin[3];
-			vec2 p = hierarchy->renderPos;
-			vec2 s = hierarchy->renderSize;
-			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
+			Vec2 p = hierarchy->renderPos;
+			Vec2 s = hierarchy->renderSize;
+			offset(p, s, -skin->defaults.comboBox.baseMargin * Vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
 			for (const auto &c : combo->hierarchy->children)
 			{
 				c->renderPos = p;
-				c->renderSize = vec2(s[0], c->requestedSize[1]);
+				c->renderSize = Vec2(s[0], c->requestedSize[1]);
 				p[1] += c->renderSize[1] + spacing;
 			}
 		}
@@ -167,13 +167,13 @@ namespace cage
 		void ComboListImpl::emit()
 		{
 			emitElement(GuiElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
-			const vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
+			const Vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
 			uint32 idx = 0;
 			bool allowHover = true;
 			for (const auto &c : combo->hierarchy->children)
 			{
-				vec2 p = c->renderPos;
-				vec2 s = c->renderSize;
+				Vec2 p = c->renderPos;
+				Vec2 s = c->renderSize;
 				const uint32 md = allowHover ? mode(p, s, 0) : 0;
 				allowHover &= !md; // items may have small overlap, this will ensure that only one item has hover
 				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, md, p, s);
@@ -183,7 +183,7 @@ namespace cage
 			}
 		}
 
-		bool ComboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+		bool ComboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 		{
 			makeFocused();
 			if (buttons != MouseButtonsFlags::Left)

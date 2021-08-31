@@ -12,14 +12,14 @@ void testNetworkDiscovery()
 	uint32 round = 0;
 	while (clt->peers().empty() && round++ < 50)
 	{
-		srv->message = stringizer() + "Hi " + round;
+		srv->message = Stringizer() + "Hi " + round;
 		srv->update();
 		clt->update();
 		threadSleep(1000 * 10);
 	}
 
 	const auto peers = clt->peers();
-	CAGE_LOG(SeverityEnum::Info, "test", stringizer() + "got " + peers->size() + " responses");
+	CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "got " + peers->size() + " responses");
 	if (peers.empty())
 	{
 		CAGE_LOG(SeverityEnum::Error, "test", "udp discovery failed!");
@@ -30,7 +30,7 @@ void testNetworkDiscovery()
 	{
 		for (const auto &r : peers)
 		{
-			CAGE_LOG(SeverityEnum::Info, "test", stringizer() + "address: " + r.address + ", message: " + r.message);
+			CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "address: " + r.address + ", message: " + r.message);
 			CAGE_TEST(r.port == 1342);
 		}
 	}

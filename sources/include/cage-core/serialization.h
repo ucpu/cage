@@ -12,7 +12,7 @@ namespace cage
 		
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		void write(PointerRange<const char> buffer);
-		void writeLine(const string &line);
+		void writeLine(const String &line);
 		Serializer reserve(uintPtr s);
 
 	private:
@@ -33,7 +33,7 @@ namespace cage
 		void read(PointerRange<char> buffer);
 		PointerRange<const char> read(uintPtr size);
 		bool readLine(PointerRange<const char> &line);
-		bool readLine(string &line);
+		bool readLine(String &line);
 		Deserializer subview(uintPtr s);
 		Deserializer copy() const;
 

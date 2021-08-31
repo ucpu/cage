@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const string &name) : order(std::numeric_limits<sint32>::min()), name(name)
+		EventLinker::EventLinker(const String &name) : order(std::numeric_limits<sint32>::min()), name(name)
 		{}
 
 		EventLinker::~EventLinker()
@@ -53,7 +53,7 @@ namespace cage
 				l = l->p;
 			while (l)
 			{
-				CAGE_LOG(SeverityEnum::Info, "event-listener", stringizer() + l->name + " (" + l->order + ")");
+				CAGE_LOG(SeverityEnum::Info, "event-listener", Stringizer() + l->name + " (" + l->order + ")");
 				l = l->n;
 			}
 		}

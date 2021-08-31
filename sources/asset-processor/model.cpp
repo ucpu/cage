@@ -9,7 +9,7 @@
 
 #include <vector>
 
-vec2 convertSpecularToSpecial(const vec3 &spec);
+Vec2 convertSpecularToSpecial(const Vec3 &spec);
 
 namespace
 {
@@ -36,25 +36,25 @@ namespace
 		bool requested = toBool(properties(name));
 		if (requested && !available)
 		{
-			CAGE_LOG_THROW(cage::string("requested feature: ") + name);
+			CAGE_LOG_THROW(cage::String("requested feature: ") + name);
 			CAGE_THROW_ERROR(Exception, "requested feature not available");
 		}
 		if (requested)
 		{
 			flags |= idx;
-			CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "feature requested: " + name);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "feature requested: " + name);
 		}
 	}
 
-	void loadTextureCage(const string &pathBase, ModelHeader &dsm, Ini *ini, const string &type, uint32 usage)
+	void loadTextureCage(const String &pathBase, ModelHeader &dsm, Ini *ini, const String &type, uint32 usage)
 	{
 		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial);
-		string n = ini->getString("textures", type);
+		String n = ini->getString("textures", type);
 		if (n.empty())
 			return;
 		n = convertAssetPath(n, pathBase);
 		dsm.textureNames[usage] = HashString(n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
 	}
 
 	bool loadTextureAssimp(aiMaterial *m, ModelHeader &dsm, aiTextureType tt, uint32 usage)
@@ -64,80 +64,80 @@ namespace
 		if (texCount == 0)
 			return false;
 		if (texCount > 1)
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
-		string n = texAsName.C_Str();
+		String n = texAsName.C_Str();
 		if (isPattern(n, "//", "", ""))
-			n = string() + "./" + subString(n, 2, cage::m);
+			n = String() + "./" + subString(n, 2, cage::m);
 		n = convertAssetPath(n);
 		dsm.textureNames[usage] = HashString(n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
 		return true;
 	}
 
 	void printMaterial(const ModelHeader &dsm, const ModelHeader::MaterialData &mat)
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoBase: " + mat.albedoBase);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoMult: " + mat.albedoMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialBase: " + mat.specialBase);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "translucent: " + any(dsm.renderFlags & ModelRenderFlags::Translucent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "lighting: " + any(dsm.renderFlags & ModelRenderFlags::Lighting));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "two sides: " + any(dsm.renderFlags & ModelRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth test: " + any(dsm.renderFlags & ModelRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth write: " + any(dsm.renderFlags & ModelRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "velocity write: " + any(dsm.renderFlags & ModelRenderFlags::VelocityWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "shadow cast: " + any(dsm.renderFlags & ModelRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoBase: " + mat.albedoBase);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & ModelRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & ModelRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & ModelRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & ModelRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & ModelRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & ModelRenderFlags::VelocityWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & ModelRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
 				continue;
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
 		}
 	}
 
-	void loadMaterialCage(ModelHeader &dsm, ModelHeader::MaterialData &mat, const string &path)
+	void loadMaterialCage(ModelHeader &dsm, ModelHeader::MaterialData &mat, const String &path)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using cage (.cpm) material");
 
-		writeLine(string("use = ") + path);
+		writeLine(String("use = ") + path);
 
 		Holder<Ini> ini = newIni();
 		ini->importFile(pathJoin(inputDirectory, path));
 
-		mat.albedoBase = vec4(
-			colorGammaToLinear(vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
+		mat.albedoBase = Vec4(
+			colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
 			0 // ini->getFloat("base", "opacity", 0) // todo temporarily disabled to detect incompatibility
 		);
 
-		mat.specialBase = vec4(
+		mat.specialBase = Vec4(
 			ini->getFloat("base", "roughness", 0),
 			ini->getFloat("base", "metallic", 0),
 			ini->getFloat("base", "emission", 0),
 			0 // ini->getFloat("base", "mask", 0) // todo temporarily disabled to detect incompatibility
 		);
 
-		mat.albedoMult = vec4(
-			colorGammaToLinear(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
+		mat.albedoMult = Vec4(
+			colorGammaToLinear(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
 			ini->getFloat("mult", "opacity", 1)
 		);
 
-		mat.specialMult = vec4(
+		mat.specialMult = Vec4(
 			ini->getFloat("mult", "roughness", 1),
 			ini->getFloat("mult", "metallic", 1),
 			ini->getFloat("mult", "emission", 1),
 			ini->getFloat("mult", "mask", 1)
 		);
 
-		const string pathBase = pathExtractDirectory(path);
+		const String pathBase = pathExtractDirectory(path);
 		loadTextureCage(pathBase, dsm, +ini, "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
 		loadTextureCage(pathBase, dsm, +ini, "special", CAGE_SHADER_TEXTURE_SPECIAL);
 		loadTextureCage(pathBase, dsm, +ini, "normal", CAGE_SHADER_TEXTURE_NORMAL);
 
-		for (const string &n : ini->items("flags"))
+		for (const String &n : ini->items("flags"))
 		{
-			string v = ini->getString("flags", n);
+			String v = ini->getString("flags", n);
 			if (v == "twoSided")
 			{
 				dsm.renderFlags |= ModelRenderFlags::TwoSided;
@@ -173,7 +173,7 @@ namespace
 				dsm.renderFlags &= ~ModelRenderFlags::ShadowCast;
 				continue;
 			}
-			CAGE_LOG_THROW(stringizer() + "specified flag: '" + v + "'");
+			CAGE_LOG_THROW(Stringizer() + "specified flag: '" + v + "'");
 			CAGE_THROW_ERROR(Exception, "unknown material flag");
 		}
 
@@ -192,12 +192,12 @@ namespace
 		aiString matName;
 		m->Get(AI_MATKEY_NAME, matName);
 		if (matName.length > 0)
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "material name: '" + matName.C_Str() + "'");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "material name: '" + matName.C_Str() + "'");
 
 		// opacity
-		real opacity = 1;
+		Real opacity = 1;
 		m->Get(AI_MATKEY_OPACITY, opacity.value);
-		CAGE_LOG(SeverityEnum::Info, "material", stringizer() + "assimp loaded opacity: " + opacity);
+		CAGE_LOG(SeverityEnum::Info, "material", Stringizer() + "assimp loaded opacity: " + opacity);
 		if (opacity > 0 && opacity < 1)
 		{
 			CAGE_LOG(SeverityEnum::Info, "material", "enabling translucent flag due to opacity");
@@ -219,7 +219,7 @@ namespace
 		{
 			aiColor3D color = aiColor3D(1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			mat.albedoBase = vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
+			mat.albedoBase = Vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
 		}
 
 		if (opacity > 0)
@@ -230,9 +230,9 @@ namespace
 		{
 			aiColor3D spec = aiColor3D(0);
 			m->Get(AI_MATKEY_COLOR_SPECULAR, spec);
-			if (conv(spec) != vec3(0))
+			if (conv(spec) != Vec3(0))
 			{ // convert specular color to special material
-				vec2 s = convertSpecularToSpecial(conv(spec));
+				Vec2 s = convertSpecularToSpecial(conv(spec));
 				mat.specialBase[0] = s[0];
 				mat.specialBase[1] = s[1];
 			}
@@ -260,7 +260,7 @@ namespace
 
 	void loadMaterial(const aiScene *scene, const aiMesh *am, ModelHeader &dsm, ModelHeader::MaterialData &mat)
 	{
-		string path = properties("material");
+		String path = properties("material");
 		if (!path.empty())
 		{
 			path = pathJoin(pathExtractDirectory(inputFile), path);
@@ -277,18 +277,18 @@ namespace
 			aiString matName;
 			m->Get(AI_MATKEY_NAME, matName);
 			if (matName.length)
-				path += string() + "_" + matName.C_Str();
+				path += String() + "_" + matName.C_Str();
 			else if (!inputSpec.empty())
-				path += string() + "_" + inputSpec;
+				path += String() + "_" + inputSpec;
 		}
 		else
 		{
 			if (!inputSpec.empty())
-				path += string() + "_" + inputSpec;
+				path += String() + "_" + inputSpec;
 		}
 		path += ".cpm";
 
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "looking for implicit material at '" + path + "'");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "looking for implicit material at '" + path + "'");
 
 		if (pathIsFile(pathJoin(inputDirectory, path)))
 		{
@@ -320,11 +320,11 @@ namespace
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
 
-	vec3 fixUnitVector(vec3 n, StringLiteral name)
+	Vec3 fixUnitVector(Vec3 n, StringLiteral name)
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "fixing denormalized " + name + ": " + n);
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "fixing denormalized " + name + ": " + n);
 			n = normalize(n);
 		}
 		if (!n.valid())
@@ -332,8 +332,8 @@ namespace
 			static bool passInvalid = toBool(properties("passInvalidNormals"));
 			if (passInvalid)
 			{
-				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "pass invalid " + name + ": " + n);
-				n = vec3();
+				CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "pass invalid " + name + ": " + n);
+				n = Vec3();
 			}
 			else
 				CAGE_THROW_ERROR(Exception, name);
@@ -365,10 +365,10 @@ namespace
 
 	Aabb enlarge(const Aabb &box)
 	{
-		vec3 c = box.center();
-		vec3 a = box.a - c;
-		vec3 b = box.b - c;
-		real s = 1.1;
+		Vec3 c = box.center();
+		Vec3 a = box.a - c;
+		Vec3 b = box.b - c;
+		Real s = 1.1;
 		return Aabb(a * s + c, b * s + c);
 	}
 }
@@ -400,9 +400,9 @@ void processModel()
 	const uint32 verticesCount = am->mNumVertices;
 	const uint32 indicesCount = am->mNumFaces * indicesPerPrimitive;
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "indices per primitive: " + indicesPerPrimitive);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "vertices count: " + verticesCount);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "indices count: " + indicesCount);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "indices per primitive: " + indicesPerPrimitive);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "vertices count: " + verticesCount);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "indices count: " + indicesCount);
 
 	setFlags(flags, ModelDataFlags::Uvs2, am->GetNumUVChannels() > 0, "uvs");
 	setFlags(flags, ModelDataFlags::Normals, am->HasNormals(), "normals");
@@ -426,8 +426,8 @@ void processModel()
 	validateFlags(dsm, flags, mat);
 
 	dsm.box = Aabb();
-	const mat3 axes = axesMatrix();
-	const mat3 axesScale = axesScaleMatrix();
+	const Mat3 axes = axesMatrix();
+	const Mat3 axesScale = axesScaleMatrix();
 
 	Holder<Mesh> poly = newMesh();
 	switch (indicesPerPrimitive)
@@ -440,26 +440,26 @@ void processModel()
 
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying vertex positions");
-		std::vector<vec3> ps;
+		std::vector<Vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			vec3 p = axesScale * conv(am->mVertices[i]);
+			Vec3 p = axesScale * conv(am->mVertices[i]);
 			dsm.box += Aabb(p);
 			ps.push_back(p);
 		}
 		poly->positions(ps);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "bounding box: " + dsm.box);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "bounding box: " + dsm.box);
 	}
 
 	if (any(flags & ModelDataFlags::Normals))
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying normals");
-		std::vector<vec3> ps;
+		std::vector<Vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			vec3 n = axes * conv(am->mNormals[i]);
+			Vec3 n = axes * conv(am->mNormals[i]);
 			ps.push_back(fixUnitVector(n, "normal"));
 		}
 		poly->normals(ps);
@@ -468,17 +468,17 @@ void processModel()
 	if (any(flags & ModelDataFlags::Tangents))
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying tangents");
-		std::vector<vec3> ts, bs;
+		std::vector<Vec3> ts, bs;
 		ts.reserve(verticesCount);
 		bs.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			vec3 n = axes * conv(am->mTangents[i]);
+			Vec3 n = axes * conv(am->mTangents[i]);
 			ts.push_back(fixUnitVector(n, "tangent"));
 		}
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			vec3 n = axes * conv(am->mBitangents[i]);
+			Vec3 n = axes * conv(am->mBitangents[i]);
 			bs.push_back(fixUnitVector(n, "bitangent"));
 		}
 		poly->tangents(ts);
@@ -491,9 +491,9 @@ void processModel()
 		CAGE_ASSERT(am->mNumBones > 0);
 		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
-		std::vector<ivec4> boneIndices;
-		boneIndices.resize(verticesCount, ivec4((sint32)m));
-		std::vector<vec4> boneWeights;
+		std::vector<Vec4i> boneIndices;
+		boneIndices.resize(verticesCount, Vec4i((sint32)m));
+		std::vector<Vec4> boneWeights;
 		boneWeights.resize(verticesCount);
 		// copy the values from assimp
 		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
@@ -523,7 +523,7 @@ void processModel()
 		uint32 maxBoneId = 0;
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			real sum = 0;
+			Real sum = 0;
 			for (uint32 j = 0; j < 4; j++)
 			{
 				if (boneIndices[i][j] == m)
@@ -537,8 +537,8 @@ void processModel()
 			// renormalize weights
 			if (cage::abs(sum - 1) > 1e-3 && sum > 1e-3)
 			{
-				const real f = 1 / sum;
-				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
+				const Real f = 1 / sum;
+				CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
 				for (uint32 j = 0; j < 4; j++)
 					boneWeights[i][j] *= f;
 			}
@@ -551,7 +551,7 @@ void processModel()
 	if (any(flags & ModelDataFlags::Uvs3))
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying 3D uvs");
-		std::vector<vec3> ts;
+		std::vector<Vec3> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
 			ts.push_back(conv(am->mTextureCoords[0][i]));
@@ -561,10 +561,10 @@ void processModel()
 	if (any(flags & ModelDataFlags::Uvs2))
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying uvs");
-		std::vector<vec2> ts;
+		std::vector<Vec2> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
-			ts.push_back(vec2(conv(am->mTextureCoords[0][i])));
+			ts.push_back(Vec2(conv(am->mTextureCoords[0][i])));
 		poly->uvs(ts);
 	}
 
@@ -587,7 +587,7 @@ void processModel()
 		for (uint32 i = 0; i < scene->mNumAnimations; i++)
 		{
 			Holder<SkeletalAnimation> ani = context->animation(i);
-			for (real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+			for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
 			{
 				Holder<Mesh> tmp = poly->copy();
 				animateMesh(+rig, +ani, t, +tmp);
@@ -597,7 +597,7 @@ void processModel()
 				dsm.box += box;
 			}
 		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "enlarged bounding box: " + dsm.box);
 	}
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");

@@ -37,16 +37,16 @@ namespace cage
 
 	struct FinalPosition
 	{
-		vec2 renderPos = vec2::Nan(), renderSize = vec2::Nan();
-		vec2 clipPos = vec2::Nan(), clipSize = vec2::Nan();
+		Vec2 renderPos = Vec2::Nan(), renderSize = Vec2::Nan();
+		Vec2 clipPos = Vec2::Nan(), clipSize = Vec2::Nan();
 	};
 
 	struct HierarchyItem : private Immovable
 	{
 		// size (points) as seen by parent
-		vec2 requestedSize = vec2::Nan();
-		vec2 renderPos = vec2::Nan(), renderSize = vec2::Nan();
-		vec2 clipPos = vec2::Nan(), clipSize = vec2::Nan(); // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
+		Vec2 requestedSize = Vec2::Nan();
+		Vec2 renderPos = Vec2::Nan(), renderSize = Vec2::Nan();
+		Vec2 clipPos = Vec2::Nan(), clipSize = Vec2::Nan(); // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
 		GuiImpl *const impl = nullptr;
 		Entity *const ent = nullptr;
@@ -88,11 +88,11 @@ namespace cage
 		virtual void emit() = 0;
 		virtual void generateEventReceivers() = 0;
 
-		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) = 0;
@@ -107,19 +107,19 @@ namespace cage
 		WidgetItem(HierarchyItem *hierarchy);
 
 		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
-		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
+		uint32 mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		RenderableElement emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size);
+		RenderableElement emitElement(GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
 
-		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
@@ -133,11 +133,11 @@ namespace cage
 		virtual void emit() override;
 		virtual void generateEventReceivers() override;
 
-		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
@@ -146,11 +146,11 @@ namespace cage
 
 	struct CommonTextData
 	{
-		mat4 transform;
+		Mat4 Transform;
 		FontFormat format;
 		Holder<Font> font;
 		Holder<PointerRange<uint32>> glyphs;
-		vec3 color = vec3::Nan();
+		Vec3 color = Vec3::Nan();
 		uint32 cursor = m;
 	};
 
@@ -166,14 +166,14 @@ namespace cage
 		void apply(const GuiTextFormatComponent &f);
 
 		void transcript();
-		void transcript(const string &value);
+		void transcript(const String &value);
 		void transcript(const char *value);
 
-		vec2 findRequestedSize();
+		Vec2 findRequestedSize();
 
-		RenderableText emit(vec2 position, vec2 size);
+		RenderableText emit(Vec2 position, Vec2 size);
 
-		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
+		void updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor);
 	};
 
 	struct ImageItem : private Immovable
@@ -193,15 +193,15 @@ namespace cage
 		void assign(const GuiImageComponent &value);
 		void apply(const GuiImageFormatComponent &f);
 
-		vec2 findRequestedSize();
+		Vec2 findRequestedSize();
 
-		RenderableImage emit(vec2 position, vec2 size);
+		RenderableImage emit(Vec2 position, Vec2 size);
 	};
 
 	struct RenderableBase : private Immovable
 	{
 		GuiImpl *impl = nullptr;
-		vec2 clipPos, clipSize;
+		Vec2 clipPos, clipSize;
 
 		RenderableBase(GuiImpl *impl) : impl(impl)
 		{}
@@ -216,15 +216,15 @@ namespace cage
 	{
 		struct Element
 		{
-			vec4 outer;
-			vec4 inner;
+			Vec4 outer;
+			Vec4 inner;
 			uint32 element = m;
 			uint32 mode = m;
 		} data;
 
 		const SkinData *skin = nullptr;
 
-		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size);
+		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
 
 		virtual ~RenderableElement() override;
 	};
@@ -233,7 +233,7 @@ namespace cage
 	{
 		CommonTextData data;
 
-		RenderableText(TextItem *text, vec2 position, vec2 size);
+		RenderableText(TextItem *text, Vec2 position, Vec2 size);
 
 		virtual ~RenderableText() override;
 	};
@@ -242,26 +242,26 @@ namespace cage
 	{
 		struct Image
 		{
-			vec4 ndcPos;
-			vec4 uvClip;
-			vec4 aniTexFrames;
+			Vec4 ndcPos;
+			Vec4 uvClip;
+			Vec4 aniTexFrames;
 			Holder<Texture> texture;
 		} data;
 
-		RenderableImage(ImageItem *item, vec2 position, vec2 size);
+		RenderableImage(ImageItem *item, Vec2 position, Vec2 size);
 
 		virtual ~RenderableImage() override;
 	};
 
 	struct EventReceiver
 	{
-		vec2 pos, size;
+		Vec2 pos, size;
 		WidgetItem *widget;
 		uint32 mask; // bitmask for event classes
 
 		EventReceiver();
 
-		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
+		bool pointInside(Vec2 point, uint32 maskRequests = 1) const;
 	};
 
 	class GuiImpl : public Gui
@@ -272,12 +272,12 @@ namespace cage
 		Holder<EntityManager> entityMgr = newEntityManager();
 		AssetManager *assetMgr = nullptr;
 
-		ivec2 inputResolution; // last window resolution (pixels)
-		ivec2 inputMouse; // last position of mouse (pixels)
-		ivec2 outputResolution; // resolution of output texture or screen (pixels)
-		vec2 outputSize; // (points)
-		vec2 outputMouse; // (points)
-		real zoom = 1, retina = 1, pointsScale = 1; // how many pixels per point (1D)
+		Vec2i inputResolution; // last window resolution (pixels)
+		Vec2i inputMouse; // last position of mouse (pixels)
+		Vec2i outputResolution; // resolution of output texture or screen (pixels)
+		Vec2 outputSize; // (points)
+		Vec2 outputMouse; // (points)
+		Real zoom = 1, retina = 1, pointsScale = 1; // how many pixels per point (1D)
 		uint32 focusName = 0; // focused entity name
 		uint32 focusParts = 0; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		WidgetItem *hover = nullptr;
@@ -307,18 +307,18 @@ namespace cage
 		explicit GuiImpl(const GuiCreateConfig &config);
 		~GuiImpl();
 		void scaling();
-		vec4 pointsToNdc(vec2 position, vec2 size) const;
-		bool eventPoint(const ivec2 &ptIn, vec2 &ptOut);
+		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;
+		bool eventPoint(const Vec2i &ptIn, Vec2 &ptOut);
 		Holder<RenderQueue> emit();
 	};
 
 	uint32 entityWidgetsCount(Entity *e);
 	uint32 entityLayoutsCount(Entity *e);
-	void offsetPosition(vec2 &position, const vec4 &offset);
-	void offsetSize(vec2 &size, const vec4 &offset);
-	void offset(vec2 &position, vec2 &size, const vec4 &offset);
-	bool pointInside(vec2 pos, vec2 size, vec2 point);
-	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize); // return whether the clipped rect has positive area
+	void offsetPosition(Vec2 &position, const Vec4 &offset);
+	void offsetSize(Vec2 &size, const Vec4 &offset);
+	void offset(Vec2 &position, Vec2 &size, const Vec4 &offset);
+	bool pointInside(Vec2 pos, Vec2 size, Vec2 point);
+	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // return whether the clipped rect has positive area
 	HierarchyItem *subsideItem(HierarchyItem *item);
 	void ensureItemHasLayout(HierarchyItem *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }

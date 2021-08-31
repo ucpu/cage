@@ -38,7 +38,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->positions.size());
 	}
 
-	void Mesh::addVertex(const vec3 &position)
+	void Mesh::addVertex(const Vec3 &position)
 	{
 		verticesCount(); // validate vertices
 		MeshImpl *impl = (MeshImpl *)this;
@@ -55,7 +55,7 @@ namespace cage
 		}
 	}
 
-	void Mesh::addVertex(const vec3 &position, const vec3 &normal)
+	void Mesh::addVertex(const Vec3 &position, const Vec3 &normal)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
@@ -70,7 +70,7 @@ namespace cage
 		}
 	}
 
-	void Mesh::addVertex(const vec3 &position, const vec2 &uv)
+	void Mesh::addVertex(const Vec3 &position, const Vec2 &uv)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
@@ -85,7 +85,7 @@ namespace cage
 		}
 	}
 
-	void Mesh::addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv)
+	void Mesh::addVertex(const Vec3 &position, const Vec3 &normal, const Vec2 &uv)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
@@ -105,7 +105,7 @@ namespace cage
 	Aabb Mesh::boundingBox() const
 	{
 		Aabb result;
-		for (const vec3 &it : positions())
+		for (const Vec3 &it : positions())
 			result += Aabb(it);
 		return result;
 	}
@@ -190,7 +190,7 @@ namespace cage
 		impl->indices.push_back(a);
 	}
 
-	void Mesh::addPoint(const vec3 &p)
+	void Mesh::addPoint(const Vec3 &p)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		CAGE_ASSERT(type() == MeshTypeEnum::Points);
@@ -238,7 +238,7 @@ namespace cage
 		if (!impl->normals.empty())
 		{
 			const uint32 start = numeric_cast<uint32>(impl->normals.size()) - 3;
-			const vec3 n = t.normal();
+			const Vec3 n = t.normal();
 			impl->normals[start + 0] = n;
 			impl->normals[start + 1] = n;
 			impl->normals[start + 2] = n;
@@ -262,8 +262,8 @@ namespace cage
 	void Mesh::importCollider(const Collider *collider)
 	{
 		clear();
-		CAGE_ASSERT(sizeof(Triangle) == sizeof(vec3) * 3);
-		positions(bufferCast<const vec3>(collider->triangles()));
+		CAGE_ASSERT(sizeof(Triangle) == sizeof(Vec3) * 3);
+		positions(bufferCast<const Vec3>(collider->triangles()));
 	}
 
 	Holder<Mesh> newMesh()

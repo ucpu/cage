@@ -69,7 +69,7 @@ void testDelegates()
 		auto s1 = sizeof(Delegate<void()>);
 		auto s2 = sizeof(Delegate<int(int, int)>);
 		CAGE_TEST(s1 == s2);
-		CAGE_LOG(SeverityEnum::Info, "test", stringizer() + "sizeof(delegate): " + s1);
+		CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "sizeof(delegate): " + s1);
 	}
 
 	{

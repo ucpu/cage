@@ -8,22 +8,22 @@ namespace cage
 	struct CAGE_CORE_API Line
 	{
 		// data
-		vec3 origin = vec3::Nan();
-		vec3 direction = vec3::Nan();
-		real minimum = real::Nan();
-		real maximum = real::Nan();
+		Vec3 origin = Vec3::Nan();
+		Vec3 direction = Vec3::Nan();
+		Real minimum = Real::Nan();
+		Real maximum = Real::Nan();
 
 		// constructors
 		constexpr Line() noexcept {}
-		explicit constexpr Line(vec3 origin, vec3 direction, real minimum, real maximum) noexcept : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {}
+		explicit constexpr Line(Vec3 origin, Vec3 direction, Real minimum, Real maximum) noexcept : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {}
 
 		// compound operators
-		Line &operator *= (const mat4 &other) { return *this = *this * other; }
-		Line &operator *= (const transform &other) { return *this = *this * other; }
+		Line &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Line &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Line operator * (const mat4 &other) const;
-		Line operator * (const transform &other) const { return *this * mat4(other); }
+		Line operator * (const Mat4 &other) const;
+		Line operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// comparison operators
 		constexpr bool operator == (const Line &other) const noexcept { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
@@ -37,31 +37,31 @@ namespace cage
 		bool isSegment() const noexcept { return valid() && minimum.finite() && maximum.finite(); }
 		bool normalized() const;
 		Line normalize() const;
-		vec3 a() const { CAGE_ASSERT(minimum.finite()); return origin + direction * minimum; }
-		vec3 b() const { CAGE_ASSERT(maximum.finite()); return origin + direction * maximum; }
+		Vec3 a() const { CAGE_ASSERT(minimum.finite()); return origin + direction * minimum; }
+		Vec3 b() const { CAGE_ASSERT(maximum.finite()); return origin + direction * maximum; }
 	};
 
 	struct CAGE_CORE_API Triangle
 	{
 		// data
-		vec3 vertices[3] { vec3::Nan(), vec3::Nan(), vec3::Nan() };
+		Vec3 vertices[3] { Vec3::Nan(), Vec3::Nan(), Vec3::Nan() };
 
 		// constructors
 		constexpr Triangle() noexcept {}
-		explicit constexpr Triangle(const vec3 vertices[3]) noexcept : vertices{ vertices[0], vertices[1], vertices[2] } {}
-		explicit constexpr Triangle(const vec3 &a, const vec3 &b, const vec3 &c) noexcept : vertices{ a, b, c } {}
-		explicit constexpr Triangle(const real coords[9]) noexcept : vertices{ vec3(coords[0], coords[1], coords[2]), vec3(coords[3], coords[4], coords[5]), vec3(coords[6], coords[7], coords[8]) } {}
+		explicit constexpr Triangle(const Vec3 vertices[3]) noexcept : vertices{ vertices[0], vertices[1], vertices[2] } {}
+		explicit constexpr Triangle(const Vec3 &a, const Vec3 &b, const Vec3 &c) noexcept : vertices{ a, b, c } {}
+		explicit constexpr Triangle(const Real coords[9]) noexcept : vertices{ Vec3(coords[0], coords[1], coords[2]), Vec3(coords[3], coords[4], coords[5]), Vec3(coords[6], coords[7], coords[8]) } {}
 
 		// compound operators
-		Triangle &operator *= (const mat4 &other) { return *this = *this * other; }
-		Triangle &operator *= (const transform &other) { return *this = *this * other; }
+		Triangle &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Triangle &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Triangle operator * (const mat4 &other) const;
-		Triangle operator * (const transform &other) const { return *this * mat4(other); }
+		Triangle operator * (const Mat4 &other) const;
+		Triangle operator * (const Transform &other) const { return *this * Mat4(other); }
 
-		constexpr vec3 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return vertices[idx]; }
-		constexpr vec3 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return vertices[idx]; }
+		constexpr Vec3 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return vertices[idx]; }
+		constexpr Vec3 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return vertices[idx]; }
 
 		// comparison operators
 		constexpr bool operator == (const Triangle &other) const noexcept { for (uint8 i = 0; i < 3; i++) if (vertices[i] != other.vertices[i]) return false; return true; }
@@ -70,33 +70,33 @@ namespace cage
 		// methods
 		bool valid() const noexcept { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
 		bool degenerated() const;
-		vec3 normal() const { return normalize(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))); }
-		vec3 center() const noexcept { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
-		real area() const noexcept { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
+		Vec3 normal() const { return normalize(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))); }
+		Vec3 center() const noexcept { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
+		Real area() const noexcept { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
 		Triangle flip() const;
 	};
 
 	struct CAGE_CORE_API Plane
 	{
 		// data
-		vec3 normal = vec3::Nan();
-		real d = real::Nan();
+		Vec3 normal = Vec3::Nan();
+		Real d = Real::Nan();
 
 		// constructors
 		constexpr Plane() noexcept {}
-		explicit constexpr Plane(const vec3 &normal, real d) noexcept : normal(normal), d(d) {}
-		explicit Plane(const vec3 &point, const vec3 &normal);
-		explicit Plane(const vec3 &a, const vec3 &b, const vec3 &c);
+		explicit constexpr Plane(const Vec3 &normal, Real d) noexcept : normal(normal), d(d) {}
+		explicit Plane(const Vec3 &point, const Vec3 &normal);
+		explicit Plane(const Vec3 &a, const Vec3 &b, const Vec3 &c);
 		explicit Plane(const Triangle &other);
-		explicit Plane(const Line &a, const vec3 &b);
+		explicit Plane(const Line &a, const Vec3 &b);
 
 		// compound operators
-		Plane &operator *= (const mat4 &other) { return *this = *this * other; }
-		Plane &operator *= (const transform &other) { return *this = *this * other; }
+		Plane &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Plane &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Plane operator * (const mat4 &other) const;
-		Plane operator * (const transform &other) const { return *this * mat4(other); }
+		Plane operator * (const Mat4 &other) const;
+		Plane operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// comparison operators
 		constexpr bool operator == (const Plane &other) const noexcept { return d == other.d && normal == other.normal; }
@@ -106,18 +106,18 @@ namespace cage
 		bool valid() const noexcept { return d.valid() && normal.valid(); }
 		bool normalized() const;
 		Plane normalize() const;
-		vec3 origin() const noexcept { return normal * -d; }
+		Vec3 origin() const noexcept { return normal * -d; }
 	};
 
 	struct CAGE_CORE_API Sphere
 	{
 		// data
-		vec3 center = vec3::Nan();
-		real radius = real::Nan();
+		Vec3 center = Vec3::Nan();
+		Real radius = Real::Nan();
 
 		// constructors
 		constexpr Sphere() noexcept {}
-		explicit constexpr Sphere(const vec3 &center, real radius) noexcept : center(center), radius(radius) {}
+		explicit constexpr Sphere(const Vec3 &center, Real radius) noexcept : center(center), radius(radius) {}
 		explicit Sphere(const Line &other);
 		explicit Sphere(const Triangle &other);
 		explicit Sphere(const Aabb &other);
@@ -125,12 +125,12 @@ namespace cage
 		explicit Sphere(const Frustum &other);
 
 		// compound operators
-		Sphere &operator *= (const mat4 &other) { return *this = *this * other; }
-		Sphere &operator *= (const transform &other) { return *this = *this * other; }
+		Sphere &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Sphere &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Sphere operator * (const mat4 &other) const;
-		Sphere operator * (const transform &other) const { return *this * mat4(other); }
+		Sphere operator * (const Mat4 &other) const;
+		Sphere operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// comparison operators
 		bool operator == (const Sphere &other) const noexcept { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
@@ -139,19 +139,19 @@ namespace cage
 		// methods
 		bool valid() const noexcept { return center.valid() && radius >= 0; }
 		bool empty() const noexcept { return !valid(); }
-		real volume() const noexcept { return empty() ? 0 : 4 * real::Pi() * radius * radius * radius / 3; }
-		real surface() const noexcept { return empty() ? 0 : 4 * real::Pi() * radius * radius; }
+		Real volume() const noexcept { return empty() ? 0 : 4 * Real::Pi() * radius * radius * radius / 3; }
+		Real surface() const noexcept { return empty() ? 0 : 4 * Real::Pi() * radius * radius; }
 	};
 
 	struct CAGE_CORE_API Aabb
 	{
 		// data
-		vec3 a = vec3::Nan(), b = vec3::Nan();
+		Vec3 a = Vec3::Nan(), b = Vec3::Nan();
 
 		// constructor
 		constexpr Aabb() noexcept {}
-		explicit constexpr Aabb(const vec3 &point) noexcept : a(point), b(point) {}
-		explicit constexpr Aabb(const vec3 &a, const vec3 &b) noexcept  : a(min(a, b)), b(max(a, b)) {}
+		explicit constexpr Aabb(const Vec3 &point) noexcept : a(point), b(point) {}
+		explicit constexpr Aabb(const Vec3 &a, const Vec3 &b) noexcept  : a(min(a, b)), b(max(a, b)) {}
 		explicit constexpr Aabb(const Triangle &other) noexcept : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {}
 		explicit constexpr Aabb(const Sphere &other) noexcept : a(other.center - other.radius), b(other.center + other.radius) {}
 		explicit Aabb(const Line &other);
@@ -161,13 +161,13 @@ namespace cage
 
 		// compound operators
 		Aabb &operator += (const Aabb &other) { return *this = *this + other; }
-		Aabb &operator *= (const mat4 &other) { return *this = *this * other; }
-		Aabb &operator *= (const transform &other) { return *this = *this * other; }
+		Aabb &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Aabb &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
 		Aabb operator + (const Aabb &other) const;
-		Aabb operator * (const mat4 &other) const;
-		Aabb operator * (const transform &other) const { return *this * mat4(other); }
+		Aabb operator * (const Mat4 &other) const;
+		Aabb operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// comparison operators
 		bool operator == (const Aabb &other) const noexcept { return (empty() == other.empty()) && (empty() || (a == other.a && b == other.b)); }
@@ -176,35 +176,35 @@ namespace cage
 		// methods
 		bool valid() const noexcept { return a.valid() && b.valid(); }
 		bool empty() const noexcept { return !valid(); }
-		real volume() const;
-		real surface() const;
-		vec3 center() const noexcept { return empty() ? vec3() : (a + b) * 0.5; }
-		vec3 size() const noexcept { return empty() ? vec3() : b - a; }
-		real diagonal() const { return empty() ? 0 : distance(a, b); }
+		Real volume() const;
+		Real surface() const;
+		Vec3 center() const noexcept { return empty() ? Vec3() : (a + b) * 0.5; }
+		Vec3 size() const noexcept { return empty() ? Vec3() : b - a; }
+		Real diagonal() const { return empty() ? 0 : distance(a, b); }
 
 		// constants
-		static constexpr Aabb Universe() { return Aabb(vec3(-real::Infinity()), vec3(real::Infinity())); }
+		static constexpr Aabb Universe() { return Aabb(Vec3(-Real::Infinity()), Vec3(Real::Infinity())); }
 	};
 
 	struct CAGE_CORE_API Cone
 	{
 		// data
-		vec3 origin = vec3::Nan();
-		vec3 direction = vec3::Nan();
-		real length = real::Nan();
-		rads halfAngle = rads::Nan();
+		Vec3 origin = Vec3::Nan();
+		Vec3 direction = Vec3::Nan();
+		Real length = Real::Nan();
+		Rads halfAngle = Rads::Nan();
 
 		// constructor
 		constexpr Cone() noexcept {}
-		explicit constexpr Cone(const vec3 &origin, const vec3 &direction, real length, rads halfAngle) noexcept : origin(origin), direction(direction), length(length), halfAngle(halfAngle) {}
+		explicit constexpr Cone(const Vec3 &origin, const Vec3 &direction, Real length, Rads halfAngle) noexcept : origin(origin), direction(direction), length(length), halfAngle(halfAngle) {}
 
 		// compound operators
-		Cone &operator *= (const mat4 &other) { return *this = *this * other; }
-		Cone &operator *= (const transform &other) { return *this = *this * other; }
+		Cone &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Cone &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Cone operator * (const mat4 &other) const;
-		Cone operator * (const transform &other) const { return *this * mat4(other); }
+		Cone operator * (const Mat4 &other) const;
+		Cone operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// comparison operators
 		bool operator == (const Cone &other) const noexcept { return origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle; }
@@ -219,24 +219,24 @@ namespace cage
 	struct CAGE_CORE_API Frustum
 	{
 		// data
-		mat4 viewProj;
-		vec4 planes[6];
+		Mat4 viewProj;
+		Vec4 planes[6];
 
 		// constructor
 		constexpr Frustum() noexcept {}
-		explicit Frustum(const transform &camera, const mat4 &proj);
-		explicit Frustum(const mat4 &viewProj);
+		explicit Frustum(const Transform &camera, const Mat4 &proj);
+		explicit Frustum(const Mat4 &viewProj);
 
 		// compound operators
-		Frustum &operator *= (const mat4 &other) { return *this = *this * other; }
-		Frustum &operator *= (const transform &other) { return *this = *this * other; }
+		Frustum &operator *= (const Mat4 &other) { return *this = *this * other; }
+		Frustum &operator *= (const Transform &other) { return *this = *this * other; }
 
 		// binary operators
-		Frustum operator * (const mat4 &other) const;
-		Frustum operator * (const transform &other) const { return *this * mat4(other); }
+		Frustum operator * (const Mat4 &other) const;
+		Frustum operator * (const Transform &other) const { return *this * Mat4(other); }
 
 		// methods
-		struct Corners { vec3 data[8]; };
+		struct Corners { Vec3 data[8]; };
 		Corners corners() const;
 	};
 
@@ -251,65 +251,65 @@ namespace cage
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Frustum &other) { return str + other.viewProj; }
 	}
 
-	CAGE_CORE_API Line makeSegment(const vec3 &a, const vec3 &b);
-	CAGE_CORE_API Line makeRay(const vec3 &a, const vec3 &b);
-	CAGE_CORE_API Line makeLine(const vec3 &a, const vec3 &b);
+	CAGE_CORE_API Line makeSegment(const Vec3 &a, const Vec3 &b);
+	CAGE_CORE_API Line makeRay(const Vec3 &a, const Vec3 &b);
+	CAGE_CORE_API Line makeLine(const Vec3 &a, const Vec3 &b);
 
 	inline Sphere::Sphere(const Aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
 
-	CAGE_CORE_API Sphere makeSphere(PointerRange<const vec3> points); // minimum bounding sphere
+	CAGE_CORE_API Sphere makeSphere(PointerRange<const Vec3> points); // minimum bounding sphere
 
-	CAGE_CORE_API rads angle(const Line &a, const Line &b);
-	CAGE_CORE_API rads angle(const Line &a, const Triangle &b);
-	CAGE_CORE_API rads angle(const Line &a, const Plane &b);
-	CAGE_CORE_API rads angle(const Triangle &a, const Triangle &b);
-	CAGE_CORE_API rads angle(const Triangle &a, const Plane &b);
-	CAGE_CORE_API rads angle(const Plane &a, const Plane &b);
+	CAGE_CORE_API Rads angle(const Line &a, const Line &b);
+	CAGE_CORE_API Rads angle(const Line &a, const Triangle &b);
+	CAGE_CORE_API Rads angle(const Line &a, const Plane &b);
+	CAGE_CORE_API Rads angle(const Triangle &a, const Triangle &b);
+	CAGE_CORE_API Rads angle(const Triangle &a, const Plane &b);
+	CAGE_CORE_API Rads angle(const Plane &a, const Plane &b);
 
-	CAGE_CORE_API real distance(const vec3 &a, const Line &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Triangle &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Plane &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Sphere &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Aabb &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Cone &b);
-	CAGE_CORE_API real distance(const vec3 &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Line &a, const Line &b);
-	CAGE_CORE_API real distance(const Line &a, const Triangle &b);
-	CAGE_CORE_API real distance(const Line &a, const Plane &b);
-	CAGE_CORE_API real distance(const Line &a, const Sphere &b);
-	CAGE_CORE_API real distance(const Line &a, const Aabb &b);
-	CAGE_CORE_API real distance(const Line &a, const Cone &b);
-	CAGE_CORE_API real distance(const Line &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Triangle &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Plane &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Sphere &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Aabb &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Cone &b);
-	CAGE_CORE_API real distance(const Triangle &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Plane &a, const Plane &b);
-	CAGE_CORE_API real distance(const Plane &a, const Sphere &b);
-	CAGE_CORE_API real distance(const Plane &a, const Aabb &b);
-	CAGE_CORE_API real distance(const Plane &a, const Cone &b);
-	CAGE_CORE_API real distance(const Plane &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Sphere &a, const Sphere &b);
-	CAGE_CORE_API real distance(const Sphere &a, const Aabb &b);
-	CAGE_CORE_API real distance(const Sphere &a, const Cone &b);
-	CAGE_CORE_API real distance(const Sphere &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Aabb &a, const Aabb &b);
-	CAGE_CORE_API real distance(const Aabb &a, const Cone &b);
-	CAGE_CORE_API real distance(const Aabb &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Cone &a, const Cone &b);
-	CAGE_CORE_API real distance(const Cone &a, const Frustum &b);
-	CAGE_CORE_API real distance(const Frustum &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Line &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Triangle &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Plane &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Sphere &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Vec3 &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Line &a, const Line &b);
+	CAGE_CORE_API Real distance(const Line &a, const Triangle &b);
+	CAGE_CORE_API Real distance(const Line &a, const Plane &b);
+	CAGE_CORE_API Real distance(const Line &a, const Sphere &b);
+	CAGE_CORE_API Real distance(const Line &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Line &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Line &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Triangle &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Plane &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Sphere &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Triangle &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Plane &a, const Plane &b);
+	CAGE_CORE_API Real distance(const Plane &a, const Sphere &b);
+	CAGE_CORE_API Real distance(const Plane &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Plane &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Plane &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Sphere &a, const Sphere &b);
+	CAGE_CORE_API Real distance(const Sphere &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Sphere &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Sphere &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Aabb &a, const Aabb &b);
+	CAGE_CORE_API Real distance(const Aabb &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Aabb &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Cone &a, const Cone &b);
+	CAGE_CORE_API Real distance(const Cone &a, const Frustum &b);
+	CAGE_CORE_API Real distance(const Frustum &a, const Frustum &b);
 
-	CAGE_CORE_API bool intersects(const vec3 &a, const vec3 &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Line &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Triangle &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Plane &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Sphere &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Aabb &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Cone &b);
-	CAGE_CORE_API bool intersects(const vec3 &a, const Frustum &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Vec3 &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Line &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Triangle &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Plane &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Sphere &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Cone &b);
+	CAGE_CORE_API bool intersects(const Vec3 &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Line &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Triangle &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Plane &b);
@@ -338,26 +338,26 @@ namespace cage
 	CAGE_CORE_API bool intersects(const Cone &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Cone &a, const Frustum &b);
 
-	CAGE_CORE_API vec3 intersection(const Line &a, const Triangle &b);
-	CAGE_CORE_API vec3 intersection(const Line &a, const Plane &b);
+	CAGE_CORE_API Vec3 intersection(const Line &a, const Triangle &b);
+	CAGE_CORE_API Vec3 intersection(const Line &a, const Plane &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Sphere &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Aabb &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Cone &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Frustum &b);
 	CAGE_CORE_API Aabb intersection(const Aabb &a, const Aabb &b);
 
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Line &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Triangle &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Plane &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Sphere &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Aabb &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Cone &b);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Frustum &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Line &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Triangle &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Plane &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Sphere &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Aabb &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Cone &b);
+	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Frustum &b);
 
 	namespace privat
 	{
 		template<class T> struct GeometryOrder {};
-		template<> struct GeometryOrder<vec3> { static constexpr int order = 1; };
+		template<> struct GeometryOrder<Vec3> { static constexpr int order = 1; };
 		template<> struct GeometryOrder<Line> { static constexpr int order = 2; };
 		template<> struct GeometryOrder<Triangle> { static constexpr int order = 3; };
 		template<> struct GeometryOrder<Plane> { static constexpr int order = 4; };

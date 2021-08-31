@@ -188,7 +188,7 @@ namespace cage
 				}
 			}
 
-			void setTextLabel(uint32 index, const string &value)
+			void setTextLabel(uint32 index, const String &value)
 			{
 				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]));
 				if (labelIndices[index] == 0 || !engineGui()->entities()->has(labelIndices[index]))
@@ -205,9 +205,9 @@ namespace cage
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
 					if (labelFlags[i] <= EngineStatisticsFlags::FrameTime)
-						setTextLabel(i * 2 + 1, stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode) / 1000) + " ms");
+						setTextLabel(i * 2 + 1, Stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode) / 1000) + " ms");
 					else
-						setTextLabel(i * 2 + 1, stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode)));
+						setTextLabel(i * 2 + 1, Stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode)));
 				}
 				return false;
 			}
@@ -219,7 +219,7 @@ namespace cage
 					try
 					{
 						detail::OverrideBreakpoint ob;
-						engineWindow()->setFullscreen(ivec2(0, 0));
+						engineWindow()->setFullscreen(Vec2i(0, 0));
 					}
 					catch (...)
 					{
