@@ -3,12 +3,6 @@
 
 #include <cage-core/math.h>
 
-#ifdef CAGE_ENGINE_EXPORT
-#define CAGE_ENGINE_API CAGE_API_EXPORT
-#else
-#define CAGE_ENGINE_API CAGE_API_IMPORT
-#endif
-
 namespace cage
 {
 	// forward declarations

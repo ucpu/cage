@@ -6,50 +6,6 @@
 #include <utility>
 #include <type_traits>
 
-#if !defined(CAGE_DEBUG) && !defined(NDEBUG)
-#define CAGE_DEBUG
-#endif
-#if defined(CAGE_DEBUG) && defined(NDEBUG)
-#error CAGE_DEBUG and NDEBUG are incompatible
-#endif
-
-#if defined(_MSC_VER)
-#define CAGE_API_EXPORT __declspec(dllexport)
-#define CAGE_API_IMPORT __declspec(dllimport)
-#define CAGE_FORCE_INLINE __forceinline
-#else
-#define CAGE_API_EXPORT [[gnu::visibility("default")]]
-#define CAGE_API_IMPORT [[gnu::visibility("default")]]
-#define CAGE_FORCE_INLINE [[gnu::always_inline]] inline
-#endif
-
-#ifdef CAGE_CORE_EXPORT
-#define CAGE_CORE_API CAGE_API_EXPORT
-#else
-#define CAGE_CORE_API CAGE_API_IMPORT
-#endif
-
-#if defined(_WIN32) || defined(__WIN32__)
-#define CAGE_SYSTEM_WINDOWS
-#elif defined(linux) || defined(__linux) || defined(__linux__)
-#define CAGE_SYSTEM_LINUX
-#elif defined(__APPLE__)
-#define CAGE_SYSTEM_MAC
-#else
-#error This operating system is not supported
-#endif
-
-#if defined(_WIN64) || defined(__x86_64__) || defined(__ppc64__)
-#define CAGE_ARCHITECTURE_64
-#else
-#define CAGE_ARCHITECTURE_32
-#endif
-
-#ifdef CAGE_DEBUG
-#ifndef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT_ENABLED
-#endif
-#endif
 #ifdef CAGE_ASSERT_ENABLED
 #define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; } }
 #else
@@ -84,14 +40,8 @@ namespace cage
 	using sint16 = std::int16_t;
 	using sint32 = std::int32_t;
 	using sint64 = std::int64_t;
-
-#ifdef CAGE_ARCHITECTURE_64
-	using uintPtr = uint64;
-	using sintPtr = sint64;
-#else
-	using uintPtr = uint32;
-	using sintPtr = sint32;
-#endif
+	using uintPtr = std::conditional_t<sizeof(void *) == 8, std::uint64_t, std::uint32_t>;
+	using sintPtr = std::conditional_t<sizeof(void *) == 8, std::int64_t, std::int32_t>;
 
 	// forward declarations
 
@@ -102,8 +52,8 @@ namespace cage
 		template<uint32 N> struct StringBase;
 		template<uint32 N> struct StringizerBase;
 	}
-	using String = detail::StringBase<995>;
-	using Stringizer = detail::StringizerBase<995>;
+	using String = detail::StringBase<1019>;
+	using Stringizer = detail::StringizerBase<1019>;
 
 	struct Real;
 	struct Rads;
@@ -519,7 +469,7 @@ namespace cage
 		struct StringizerBase;
 
 		template<uint32 N>
-		struct StringBase : templates::Comparable<StringBase<N>>
+		struct alignas(64) StringBase : templates::Comparable<StringBase<N>>
 		{
 			// constructors
 			StringBase() noexcept = default;
@@ -657,7 +607,7 @@ namespace cage
 		}
 
 		template<uint32 N>
-		struct StringizerBase
+		struct  alignas(64) StringizerBase
 		{
 			StringBase<N> value;
 

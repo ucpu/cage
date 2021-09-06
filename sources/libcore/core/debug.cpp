@@ -1,3 +1,18 @@
+#include <cage-core/core.h>
+
+#if !defined(CAGE_CORE_API)
+#error CAGE_CORE_API must be defined
+#endif
+#if defined(CAGE_ARCHITECTURE_64) == defined(CAGE_ARCHITECTURE_32)
+#error exactly one of CAGE_ARCHITECTURE_64 and CAGE_ARCHITECTURE_32 must be defined
+#endif
+#if defined(CAGE_DEBUG) == defined(NDEBUG)
+#error exactly one of CAGE_DEBUG and NDEBUG must be defined
+#endif
+#if defined(CAGE_DEBUG) && !defined(CAGE_ASSERT_ENABLED)
+#error CAGE_ASSERT_ENABLED must be defined for debug builds
+#endif
+
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
 
@@ -192,5 +207,7 @@ namespace cage
 		static_assert(std::is_trivially_move_assignable_v<String>);
 		static_assert(std::is_trivially_copyable_v<String>);
 		static_assert(std::is_trivially_destructible_v<String>);
+
+		static_assert(sizeof(String) == 1024);
 	}
 }
