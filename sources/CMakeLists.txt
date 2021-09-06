@@ -36,6 +36,13 @@ target_link_libraries(cage-engine PUBLIC cage-core glad)
 cage_ide_category(cage-engine cage/libs)
 cage_ide_sort_files(cage-engine)
 
+file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
+add_library(cage-simple STATIC ${cage-simple-sources})
+target_include_directories(cage-simple PUBLIC include)
+target_link_libraries(cage-simple PUBLIC cage-engine)
+cage_ide_category(cage-simple cage/libs)
+cage_ide_sort_files(cage-simple)
+
 ########
 # TESTS
 ########

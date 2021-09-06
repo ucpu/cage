@@ -27,6 +27,8 @@ namespace cage
 
 	CAGE_CORE_API AssetScheme genAssetSchemeTextPack();
 	constexpr uint32 AssetSchemeIndexTextPack = 2;
+
+	CAGE_CORE_API String loadFormattedString(AssetManager *assets, uint32 asset, uint32 text, String params);
 }
 
 #endif // guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1

@@ -5,7 +5,7 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/variableSmoothingBuffer.h>
 
-#include <cage-engine/engine.h>
+#include <cage-simple/engine.h>
 
 namespace cage
 {

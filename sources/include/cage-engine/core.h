@@ -33,11 +33,6 @@ namespace cage
 	struct CameraEyeAdaptation;
 	struct CameraTonemap;
 	struct CameraEffects;
-	struct EngineControlThread;
-	struct EngineGraphicsDispatchThread;
-	struct EngineGraphicsPrepareThread;
-	struct EngineSoundThread;
-	struct EngineCreateConfig;
 
 	struct FontFormat;
 	class Font;
@@ -65,8 +60,8 @@ namespace cage
 	struct GuiExplicitSizeComponent;
 	struct GuiEventComponent;
 	struct GuiSkinConfig;
-	class Gui;
-	struct GuiCreateConfig;
+	class GuiManager;
+	struct GuiManagerCreateConfig;
 	struct GuiLayoutLineComponent;
 	struct GuiLayoutTableComponent;
 	struct GuiLayoutSplitterComponent;
@@ -112,9 +107,6 @@ namespace cage
 	enum class SoundFlags : uint32;
 	struct SoundSourceHeader;
 
-	class FpsCamera;
-	class FullscreenSwitcher;
-	struct FullscreenSwitcherCreateConfig;
 	struct ScreenMode;
 	class ScreenDevice;
 	class ScreenList;

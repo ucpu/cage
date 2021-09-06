@@ -3,7 +3,8 @@
 
 #include <cage-core/entities.h>
 
-#include <cage-engine/gui.h>
+#include <cage-engine/guiComponents.h>
+#include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
 #include <cage-engine/font.h> // FontFormat
 #include <cage-engine/window.h> // WindowEventListeners
@@ -264,7 +265,7 @@ namespace cage
 		bool pointInside(Vec2 point, uint32 maskRequests = 1) const;
 	};
 
-	class GuiImpl : public Gui
+	class GuiImpl : public GuiManager
 	{
 	public:
 		Holder<MemoryArena> memory; // must be last to destroy
@@ -304,7 +305,7 @@ namespace cage
 
 		std::vector<SkinData> skins;
 
-		explicit GuiImpl(const GuiCreateConfig &config);
+		explicit GuiImpl(const GuiManagerCreateConfig &config);
 		~GuiImpl();
 		void scaling();
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;

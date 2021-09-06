@@ -1,3 +1,4 @@
+#include <cage-core/blockCollection.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
@@ -12,8 +13,6 @@
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/provisionalGraphics.h>
 #include "private.h"
-
-#include "../blockCollection.h"
 
 #include <vector> // namesStack
 #include <array>

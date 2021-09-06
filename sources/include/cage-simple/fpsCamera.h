@@ -1,11 +1,11 @@
 #ifndef guard_fps_camera_h_E21CB47685994BD39846DDB714AF034A
 #define guard_fps_camera_h_E21CB47685994BD39846DDB714AF034A
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {
-	class CAGE_ENGINE_API FpsCamera : private Immovable
+	class FpsCamera : private Immovable
 	{
 	public:
 		Vec2 turningSpeed = Vec2(0.008);
@@ -22,7 +22,7 @@ namespace cage
 		void setEntity(Entity *ent = nullptr);
 	};
 
-	CAGE_ENGINE_API Holder<FpsCamera> newFpsCamera(Entity *ent = nullptr);
+	Holder<FpsCamera> newFpsCamera(Entity *ent = nullptr);
 }
 
 #endif // guard_fps_camera_h_E21CB47685994BD39846DDB714AF034A

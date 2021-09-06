@@ -5,6 +5,7 @@
 #include <cage-engine/sound.h>
 #include <cage-engine/voices.h>
 #include <cage-engine/speaker.h>
+#include <cage-engine/scene.h>
 
 #include "engine.h"
 

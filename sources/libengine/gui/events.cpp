@@ -97,39 +97,39 @@ namespace cage
 		return true;
 	}
 
-	bool Gui::windowResize(const Vec2i &res)
+	bool GuiManager::windowResize(const Vec2i &res)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		impl->inputResolution = res;
 		return false;
 	}
 
-	bool Gui::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiManager::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		impl->focusName = 0;
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mousePress>(impl, buttons, modifiers, point);
 	}
 
-	bool Gui::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiManager::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(impl, buttons, modifiers, point);
 	}
 
-	bool Gui::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiManager::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseRelease>(impl, buttons, modifiers, point);
 	}
 
-	bool Gui::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiManager::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(impl, buttons, modifiers, point);
 	}
 
-	bool Gui::mouseWheel(sint32 wheel, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiManager::mouseWheel(sint32 wheel, ModifiersFlags modifiers, const Vec2i &point)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		Vec2 pt;
@@ -146,25 +146,25 @@ namespace cage
 		return false;
 	}
 
-	bool Gui::keyPress(uint32 key, ModifiersFlags modifiers)
+	bool GuiManager::keyPress(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passKeyEvent<&WidgetItem::keyPress>(impl, key, modifiers);
 	}
 
-	bool Gui::keyRepeat(uint32 key, ModifiersFlags modifiers)
+	bool GuiManager::keyRepeat(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passKeyEvent<&WidgetItem::keyRepeat>(impl, key, modifiers);
 	}
 
-	bool Gui::keyRelease(uint32 key, ModifiersFlags modifiers)
+	bool GuiManager::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		return passKeyEvent<&WidgetItem::keyRelease>(impl, key, modifiers);
 	}
 
-	bool Gui::keyChar(uint32 key)
+	bool GuiManager::keyChar(uint32 key)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
 		Vec2 dummy;

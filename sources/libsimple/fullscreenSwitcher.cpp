@@ -3,10 +3,10 @@
 #include <cage-core/files.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-
-#include <cage-engine/engine.h>
 #include <cage-engine/window.h>
-#include <cage-engine/fullscreenSwitcher.h>
+
+#include <cage-simple/engine.h>
+#include <cage-simple/fullscreenSwitcher.h>
 
 #include <cstdlib>
 

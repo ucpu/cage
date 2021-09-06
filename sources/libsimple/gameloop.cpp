@@ -25,9 +25,11 @@
 #include <cage-engine/sound.h>
 #include <cage-engine/speaker.h>
 #include <cage-engine/voices.h>
-#include <cage-engine/gui.h>
-#include <cage-engine/engineStatistics.h>
+#include <cage-engine/guiManager.h>
 #include <cage-engine/renderQueue.h>
+#include <cage-engine/scene.h>
+
+#include <cage-simple/statisticsGui.h>
 
 #include "engine.h"
 
@@ -121,7 +123,7 @@ namespace cage
 			Holder<VoicesMixer> guiBus;
 			Holder<Voice> effectsVoice;
 			Holder<Voice> guiVoice;
-			Holder<Gui> gui;
+			Holder<GuiManager> gui;
 			ExclusiveHolder<RenderQueue> guiRenderQueue;
 			Holder<EntityManager> entities;
 
@@ -444,11 +446,11 @@ namespace cage
 				}
 
 				{ // create gui
-					GuiCreateConfig c;
+					GuiManagerCreateConfig c;
 					if (config.gui)
 						c = *config.gui;
 					c.assetMgr = +assets;
-					gui = newGui(c);
+					gui = newGuiManager(c);
 					gui->handleWindowEvents(+window);
 				}
 
@@ -759,7 +761,12 @@ namespace cage
 		return engineData->window.get();
 	}
 
-	Gui *engineGui()
+	EntityManager *engineGuiEntities()
+	{
+		return engineData->gui->entities();
+	}
+
+	GuiManager *engineGuiManager()
 	{
 		return engineData->gui.get();
 	}
@@ -789,7 +796,7 @@ namespace cage
 		return engineData->controlTime;
 	}
 
-	uint64 engineStatisticsValues(EngineStatisticsFlags flags, EngineStatisticsModeEnum mode)
+	uint64 engineStatisticsValues(StatisticsGuiFlags flags, StatisticsGuiModeEnum mode)
 	{
 		uint64 result = 0;
 
@@ -797,20 +804,20 @@ namespace cage
 		{
 			switch (mode)
 			{
-			case EngineStatisticsModeEnum::Average: result += buffer.smooth(); break;
-			case EngineStatisticsModeEnum::Maximum: result += buffer.max(); break;
-			case EngineStatisticsModeEnum::Last: result += buffer.current(); break;
+			case StatisticsGuiModeEnum::Average: result += buffer.smooth(); break;
+			case StatisticsGuiModeEnum::Maximum: result += buffer.max(); break;
+			case StatisticsGuiModeEnum::Last: result += buffer.current(); break;
 			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
 			}
 		};
 
-		if (any(flags & EngineStatisticsFlags::Control))
+		if (any(flags & StatisticsGuiFlags::Control))
 			add(engineData->controlUpdateSchedule->statistics().durations);
-		if (any(flags & EngineStatisticsFlags::Sound))
+		if (any(flags & StatisticsGuiFlags::Sound))
 			add(engineData->soundUpdateSchedule->statistics().durations);
 
 #define GCHL_GENERATE(NAME) \
-		if (any(flags & EngineStatisticsFlags::NAME)) \
+		if (any(flags & StatisticsGuiFlags::NAME)) \
 		{ \
 			auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
 			add(buffer); \

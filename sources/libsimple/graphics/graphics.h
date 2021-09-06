@@ -1,6 +1,8 @@
 #ifndef header_guard_graphics_h_o46tgfs52d4ftg1zh8t5
 #define header_guard_graphics_h_o46tgfs52d4ftg1zh8t5
 
+#include <cage-engine/scene.h>
+
 #include "../engine.h"
 
 #include <vector>

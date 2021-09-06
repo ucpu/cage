@@ -10,22 +10,22 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiCreateConfig &config) : assetMgr(config.assetMgr)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetMgr(config.assetMgr)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 
-		listeners.windowResize.bind<Gui, &Gui::windowResize>(this);
-		listeners.mousePress.bind<Gui, &Gui::mousePress>(this);
-		listeners.mouseDouble.bind<Gui, &Gui::mouseDouble>(this);
-		listeners.mouseRelease.bind<Gui, &Gui::mouseRelease>(this);
-		listeners.mouseMove.bind<Gui, &Gui::mouseMove>(this);
-		listeners.mouseWheel.bind<Gui, &Gui::mouseWheel>(this);
-		listeners.keyPress.bind<Gui, &Gui::keyPress>(this);
-		listeners.keyRepeat.bind<Gui, &Gui::keyRepeat>(this);
-		listeners.keyRelease.bind<Gui, &Gui::keyRelease>(this);
-		listeners.keyChar.bind<Gui, &Gui::keyChar>(this);
+		listeners.windowResize.bind<GuiManager, &GuiManager::windowResize>(this);
+		listeners.mousePress.bind<GuiManager, &GuiManager::mousePress>(this);
+		listeners.mouseDouble.bind<GuiManager, &GuiManager::mouseDouble>(this);
+		listeners.mouseRelease.bind<GuiManager, &GuiManager::mouseRelease>(this);
+		listeners.mouseMove.bind<GuiManager, &GuiManager::mouseMove>(this);
+		listeners.mouseWheel.bind<GuiManager, &GuiManager::mouseWheel>(this);
+		listeners.keyPress.bind<GuiManager, &GuiManager::keyPress>(this);
+		listeners.keyRepeat.bind<GuiManager, &GuiManager::keyRepeat>(this);
+		listeners.keyRelease.bind<GuiManager, &GuiManager::keyRelease>(this);
+		listeners.keyChar.bind<GuiManager, &GuiManager::keyChar>(this);
 
 		skins.resize(config.skinsCount);
 
@@ -58,89 +58,89 @@ namespace cage
 		return Vec4(resPos, resPos + resSiz);
 	}
 
-	void Gui::outputResolution(const Vec2i &resolution)
+	void GuiManager::outputResolution(const Vec2i &resolution)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->outputResolution = resolution;
 		impl->scaling();
 	}
 
-	Vec2i Gui::outputResolution() const
+	Vec2i GuiManager::outputResolution() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->outputResolution;
 	}
 
-	void Gui::outputRetina(Real retina)
+	void GuiManager::outputRetina(Real retina)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->retina = retina;
 		impl->scaling();
 	}
 
-	Real Gui::outputRetina() const
+	Real GuiManager::outputRetina() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->retina;
 	}
 
-	void Gui::zoom(Real zoom)
+	void GuiManager::zoom(Real zoom)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->zoom = zoom;
 		impl->scaling();
 	}
 
-	Real Gui::zoom() const
+	Real GuiManager::zoom() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->zoom;
 	}
 
-	void Gui::focus(uint32 widget)
+	void GuiManager::focus(uint32 widget)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->focusName = widget;
 		impl->focusParts = 1;
 	}
 
-	uint32 Gui::focus() const
+	uint32 GuiManager::focus() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->focusName;
 	}
 
-	void Gui::handleWindowEvents(Window *window, sint32 order)
+	void GuiManager::handleWindowEvents(Window *window, sint32 order)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->listeners.attachAll(window, order);
 	}
 
-	void Gui::skipAllEventsUntilNextUpdate()
+	void GuiManager::skipAllEventsUntilNextUpdate()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = false;
 	}
 
-	Vec2i Gui::inputResolution() const
+	Vec2i GuiManager::inputResolution() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->inputResolution;
 	}
 
-	GuiSkinConfig &Gui::skin(uint32 index)
+	GuiSkinConfig &GuiManager::skin(uint32 index)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		return impl->skins[index];
 	}
 
-	const GuiSkinConfig &Gui::skin(uint32 index) const
+	const GuiSkinConfig &GuiManager::skin(uint32 index) const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->skins[index];
 	}
 
-	EntityManager *Gui::entities()
+	EntityManager *GuiManager::entities()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		return impl->entityMgr.get();
@@ -306,7 +306,7 @@ namespace cage
 		}
 	}
 
-	void Gui::prepare()
+	void GuiManager::prepare()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 
@@ -344,7 +344,7 @@ namespace cage
 		findHover(impl);
 	}
 
-	Holder<RenderQueue> Gui::finish()
+	Holder<RenderQueue> GuiManager::finish()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		Holder<RenderQueue> q = impl->emit();
@@ -352,15 +352,15 @@ namespace cage
 		return q;
 	}
 
-	void Gui::cleanUp()
+	void GuiManager::cleanUp()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->root.clear();
 	}
 
-	Holder<Gui> newGui(const GuiCreateConfig &config)
+	Holder<GuiManager> newGuiManager(const GuiManagerCreateConfig &config)
 	{
-		return systemMemory().createImpl<Gui, GuiImpl>(config);
+		return systemMemory().createImpl<GuiManager, GuiImpl>(config);
 	}
 
 	uint32 entityWidgetsCount(Entity *e)

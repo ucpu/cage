@@ -1,11 +1,12 @@
 #include <cage-core/geometry.h>
 #include <cage-core/entities.h>
 #include <cage-core/assetManager.h>
-
 #include <cage-engine/model.h>
 #include <cage-engine/renderObject.h>
-#include <cage-engine/engine.h>
-#include <cage-engine/shadowmapHelpers.h>
+#include <cage-engine/scene.h>
+
+#include <cage-simple/engine.h>
+#include <cage-simple/shadowmapHelpers.h>
 
 namespace cage
 {

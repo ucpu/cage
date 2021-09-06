@@ -1,6 +1,4 @@
-#include <cage-core/camera.h>
-
-#include <cage-engine/engine.h>
+#include <cage-simple/engine.h>
 
 namespace cage
 {

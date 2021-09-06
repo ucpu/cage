@@ -237,6 +237,11 @@ namespace cage
 
 	namespace detail
 	{
+		void initializeOpengl()
+		{
+			gladLoadGL();
+		}
+
 		void purgeGlShaderCache()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS

@@ -82,19 +82,19 @@ namespace cage
 			return size_;
 		}
 
-		void push_back(const T &val)
+		CAGE_FORCE_INLINE void push_back(const T &val)
 		{
 			inserting().push_back(val);
 			size_++;
 		}
 
-		void push_back(T &&val)
+		CAGE_FORCE_INLINE void push_back(T &&val)
 		{
 			inserting().push_back(std::move(val));
 			size_++;
 		}
 
-		void clear()
+		CAGE_FORCE_INLINE void clear()
 		{
 			blocks.clear();
 			size_ = 0;
@@ -105,12 +105,12 @@ namespace cage
 		uint32 size_ = 0;
 		uint32 blockSize = 200;
 
-		std::vector<T> &inserting()
+		CAGE_FORCE_INLINE std::vector<T> &inserting()
 		{
 			if ((size_ % blockSize) == 0)
 			{
 				blocks.push_back({});
-				if (size_ >= blockSize)
+				if (size_)
 					blocks.back().reserve(blockSize);
 			}
 			return blocks.back();

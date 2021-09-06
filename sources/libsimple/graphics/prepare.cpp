@@ -1,10 +1,12 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/blockCollection.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
 #include <cage-core/geometry.h>
+#include <cage-core/textPack.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/color.h>
@@ -25,16 +27,12 @@
 #include <cage-engine/font.h>
 
 #include "graphics.h"
-#include "../../blockCollection.h"
 
 #include <robin_hood.h>
 #include <algorithm>
 
 namespace cage
 {
-	// implemented in gui
-	String loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, String params);
-
 	namespace
 	{
 		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
@@ -475,7 +473,7 @@ namespace cage
 
 				// todo default color, intensity & opacity
 
-				const String str = loadInternationalizedText(engineAssets(), pt.text.assetName, pt.text.textName, pt.text.value);
+				const String str = loadFormattedString(engineAssets(), pt.text.assetName, pt.text.textName, pt.text.value);
 				const uint32 count = pt.font->glyphsCount(str);
 				if (count == 0)
 				{
