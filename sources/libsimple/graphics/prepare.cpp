@@ -1,7 +1,7 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/swapBufferGuard.h>
-#include <cage-core/blockCollection.h>
+#include <cage-core/blockContainer.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
@@ -185,8 +185,8 @@ namespace cage
 
 		struct RendersInstances : private Noncopyable
 		{
-			BlockCollection<UniModel> data;
-			BlockCollection<PrepSkeleton *> armatures;
+			BlockContainer<UniModel> data;
+			BlockContainer<PrepSkeleton *> armatures;
 			Holder<Model> model;
 			Holder<Texture> textures[MaxTexturesCountPerMaterial];
 			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
@@ -233,7 +233,7 @@ namespace cage
 		struct LightsCollection : private Noncopyable
 		{
 			std::vector<ShadowedLight> shadowed;
-			BlockCollection<UniLight> directional, spot, point;
+			BlockContainer<UniLight> directional, spot, point;
 
 			LightsCollection() : directional(CAGE_SHADER_MAX_INSTANCES), spot(CAGE_SHADER_MAX_INSTANCES), point(CAGE_SHADER_MAX_INSTANCES)
 			{}
@@ -588,13 +588,13 @@ namespace cage
 					if (pr.skeletalAnimation)
 					{
 						const uint32 drawLimit = min((uint32)CAGE_SHADER_MAX_INSTANCES, CAGE_SHADER_MAX_BONES / mo->skeletonBones);
-						instances.data = BlockCollection<UniModel>(drawLimit);
-						instances.armatures = BlockCollection<PrepSkeleton *>(drawLimit);
+						instances.data = BlockContainer<UniModel>(drawLimit);
+						instances.armatures = BlockContainer<PrepSkeleton *>(drawLimit);
 					}
 					else
 					{
-						instances.data = BlockCollection<UniModel>(CAGE_SHADER_MAX_INSTANCES);
-						instances.armatures = BlockCollection<PrepSkeleton *>(0); // disabled
+						instances.data = BlockContainer<UniModel>(CAGE_SHADER_MAX_INSTANCES);
+						instances.armatures = BlockContainer<PrepSkeleton *>(0); // disabled
 					}
 
 					instances.model = mo.share();
@@ -1145,7 +1145,7 @@ namespace cage
 					renderQueue->draw();
 				}
 
-				const std::pair<const BlockCollection<UniLight> &, LightTypeEnum> types[] =
+				const std::pair<const BlockContainer<UniLight> &, LightTypeEnum> types[] =
 				{
 					{ lights.directional, LightTypeEnum::Directional },
 					{ lights.spot, LightTypeEnum::Spot },

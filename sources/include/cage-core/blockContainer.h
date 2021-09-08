@@ -8,18 +8,18 @@
 namespace cage
 {
 	template<class T>
-	struct BlockCollection : private Noncopyable
+	struct BlockContainer : private Noncopyable
 	{
-		BlockCollection() = default;
+		BlockContainer() = default;
 
-		CAGE_FORCE_INLINE explicit BlockCollection(uint32 maxBlockSize) : blockSize(maxBlockSize)
+		CAGE_FORCE_INLINE explicit BlockContainer(uint32 maxBlockSize) : blockSize(maxBlockSize)
 		{}
 
 		struct Iterator
 		{
 			Iterator() = default;
 
-			CAGE_FORCE_INLINE explicit Iterator(const BlockCollection *collection, uint32 index) noexcept : collection(collection), index(index)
+			CAGE_FORCE_INLINE explicit Iterator(const BlockContainer *collection, uint32 index) noexcept : collection(collection), index(index)
 			{}
 
 			CAGE_FORCE_INLINE Iterator &operator++() noexcept
@@ -49,16 +49,16 @@ namespace cage
 
 			CAGE_FORCE_INLINE PointerRange<T> operator -> () const
 			{
-				return const_cast<BlockCollection *>(collection)->blocks.at(index);
+				return const_cast<BlockContainer *>(collection)->blocks.at(index);
 			}
 
 			CAGE_FORCE_INLINE PointerRange<T> operator * () const
 			{
-				return const_cast<BlockCollection*>(collection)->blocks.at(index);
+				return const_cast<BlockContainer*>(collection)->blocks.at(index);
 			}
 
 		private:
-			const BlockCollection *collection = nullptr;
+			const BlockContainer *collection = nullptr;
 			uint32 index = m;
 		};
 

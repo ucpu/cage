@@ -1,4 +1,4 @@
-#include <cage-core/blockCollection.h>
+#include <cage-core/blockContainer.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
@@ -127,8 +127,8 @@ namespace cage
 		// available during setting up - reset by explicit call
 		struct RenderQueueContent
 		{
-			BlockCollection<CmdBase *> cmdsAllocs;
-			BlockCollection<void *> memAllocs;
+			BlockContainer<CmdBase *> cmdsAllocs;
+			BlockContainer<void *> memAllocs;
 
 			CmdBase *head = nullptr, *tail = nullptr;
 

@@ -1,9 +1,11 @@
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/ini.h>
-#include <cage-core/process.h>
 #include <cage-core/threadPool.h>
+#include <cage-core/process.h>
+#include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
+#include <cage-core/ini.h>
 
 #include "database.h"
 
@@ -15,7 +17,7 @@
 namespace
 {
 	const String databaseBegin = "cage-asset-database-begin";
-	const String databaseVersion = "9";
+	const String databaseVersion = "10";
 	const String databaseEnd = "cage-asset-database-end";
 
 	bool verdictValue = false;
@@ -23,19 +25,6 @@ namespace
 	struct Databank
 	{
 		String name;
-
-		explicit Databank(const String &s = "") : name(s)
-		{};
-
-		void load(File *f)
-		{
-			read(f, name);
-		}
-
-		void save(File *f) const
-		{
-			write(f, name);
-		}
 
 		bool operator < (const Databank &other) const
 		{
@@ -321,21 +310,24 @@ namespace
 		if (!pathIsFile(configPathDatabase))
 			return;
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading database cache: '" + (String)configPathDatabase + "'");
-		Holder<File> f = newFile(configPathDatabase, FileMode(true, false));
+		const auto buf = readFile(configPathDatabase)->readAll();
+		Deserializer des(buf);
 		String b;
-		if (!f->readLine(b) || b != databaseBegin)
+		des >> b;
+		if (b != databaseBegin)
 			CAGE_THROW_ERROR(Exception, "invalid file format");
-		if (!f->readLine(b) || b != databaseVersion)
+		des >> b;
+		if (b != databaseVersion)
 		{
 			CAGE_LOG(SeverityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
-		f->read(bufferView<char>(timestamp));
-		corruptedDatabanks.load(f.get());
-		assets.load(f.get());
-		if (!f->readLine(b) || b != databaseEnd)
+		des >> timestamp;
+		des >> corruptedDatabanks;
+		des >> assets;
+		des >> b;
+		if (b != databaseEnd)
 			CAGE_THROW_ERROR(Exception, "wrong file end");
-		f->close();
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loaded " + assets.size() + " asset entries");
 	}
 
@@ -345,14 +337,15 @@ namespace
 		if (!((String)configPathDatabase).empty())
 		{
 			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saving database cache: '" + (String)configPathDatabase + "'");
-			Holder<File> f = newFile(configPathDatabase, FileMode(false, true));
-			f->writeLine(databaseBegin);
-			f->writeLine(databaseVersion);
-			f->write(bufferView(timestamp));
-			corruptedDatabanks.save(f.get());
-			assets.save(f.get());
-			f->writeLine(databaseEnd);
-			f->close();
+			MemoryBuffer buf;
+			Serializer ser(buf);
+			ser << databaseBegin;
+			ser << databaseVersion;
+			ser << timestamp;
+			ser << corruptedDatabanks;
+			ser << assets;
+			ser << databaseEnd;
+			writeFile(configPathDatabase)->write(buf);
 			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saved " + assets.size() + " asset entries");
 		}
 
@@ -423,7 +416,7 @@ namespace
 		return false;
 	}
 
-	typedef std::map<String, uint64, StringComparatorFast> FilesMap;
+	using FilesMap = std::map<String, uint64, StringComparatorFast>;
 	FilesMap files;
 
 	void findFiles(const String &path)
@@ -523,7 +516,7 @@ namespace
 		}
 	}
 
-	static struct ThreadsInitializer
+	struct ThreadsInitializer
 	{
 	public:
 		ThreadsInitializer()
@@ -582,7 +575,7 @@ namespace
 				{
 					bool corrupted = !parseDatabank(f.first);
 					if (corrupted)
-						corruptedDatabanks.insert(Databank(f.first));
+						corruptedDatabanks.insert(Databank{ f.first });
 					countBadDatabanks += corrupted;
 				}
 			}
