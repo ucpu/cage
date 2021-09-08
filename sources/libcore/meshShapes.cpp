@@ -121,7 +121,7 @@ namespace cage
 				std::size_t operator () (const std::pair<uint32, uint32> &p) const
 				{
 					const auto h = std::hash<uint32>();
-					return h(p.first) ^ p.second + h(p.second);
+					return h(h(p.first) ^ p.second);
 				}
 			};
 			std::unordered_map<std::pair<uint32, uint32>, uint32, Hasher> mapping;

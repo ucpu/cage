@@ -1,6 +1,7 @@
 #include "main.h"
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/containerSerialization.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/stdHash.h>
 
 #include <vector>
 #include <list>
@@ -8,17 +9,6 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
-
-namespace
-{
-	struct Hasher
-	{
-		auto operator () (const String &s) const
-		{
-			return std::hash<std::string>()({ s.begin(), s.end() });
-		}
-	};
-}
 
 void testContainerSerialization()
 {
@@ -74,7 +64,7 @@ void testContainerSerialization()
 
 	{
 		CAGE_TESTCASE("unordered_map");
-		std::unordered_map<String, String, Hasher> cont;
+		std::unordered_map<String, String> cont;
 		cont["abc"] = "def";
 		cont["ghi"] = "jkl";
 		MemoryBuffer buf;
@@ -106,7 +96,7 @@ void testContainerSerialization()
 
 	{
 		CAGE_TESTCASE("unordered_set");
-		std::unordered_set<String, Hasher> cont;
+		std::unordered_set<String> cont;
 		cont.insert("hello");
 		cont.insert("world");
 		MemoryBuffer buf;

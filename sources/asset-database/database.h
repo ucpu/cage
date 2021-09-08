@@ -17,42 +17,48 @@ struct HolderSet
 {
 	struct ComparatorStruct
 	{
-		bool operator() (const Holder<T> &a, const Holder<T> &b) const
+		bool operator() (const Holder<T> &a, const Holder<T> &b) const noexcept
 		{
 			return *a < *b;
 		}
 	};
 
-	using Type = std::set<Holder<T>, ComparatorStruct>;
-	using Iterator = typename Type::iterator;
+	using Data = std::set<Holder<T>, ComparatorStruct>;
 
-	Iterator find(const String &name) const
+	auto find(const String &name) const
 	{
 		T tmp;
 		tmp.name = name;
 		Holder<T> tmh(&tmp, nullptr);
-		return const_cast<HolderSet *>(this)->data.find(tmh);
+		return data.find(tmh);
+	}
+
+	auto count(const String &name) const
+	{
+		return find(name) == end() ? 0 : 1;
 	}
 
 	T *retrieve(const String &name)
 	{
-		Iterator it = find(name);
+		auto it = find(name);
 		if (it == end())
 			return nullptr;
-		return const_cast<T *>(it->get());
+		return const_cast<T *>(+*it);
 	}
 
 	T *insert(T &&value)
 	{
-		return const_cast<T *>(data.insert(systemMemory().createHolder<T>(std::move(value))).first->get());
+		auto h = systemMemory().createHolder<T>(std::move(value));
+		data.insert(h.share());
+		return +h;
 	}
 
-	Iterator erase(const Iterator &what)
+	auto erase(const typename Data::const_iterator &what)
 	{
 		return data.erase(what);
 	}
 
-	Iterator erase(const String &name)
+	auto erase(const String &name)
 	{
 		return erase(find(name));
 	}
@@ -62,19 +68,29 @@ struct HolderSet
 		data.clear();
 	}
 
-	Iterator begin()
+	auto begin()
 	{
 		return data.begin();
 	}
 
-	Iterator end()
+	auto end()
+	{
+		return data.end();
+	}
+
+	auto begin() const
+	{
+		return data.begin();
+	}
+
+	auto end() const
 	{
 		return data.end();
 	}
 
 	bool exists(const String &name) const
 	{
-		return find(name) != data.end();
+		return find(name) != end();
 	}
 
 	uint32 size() const
@@ -105,7 +121,7 @@ struct HolderSet
 	}
 
 private:
-	Type data;
+	Data data;
 };
 
 struct SchemeField
@@ -122,7 +138,7 @@ struct SchemeField
 	bool valid() const;
 	bool applyToAssetField(String &val, const String &assetName) const;
 
-	bool operator < (const SchemeField &other) const
+	bool operator < (const SchemeField &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}
@@ -141,7 +157,7 @@ struct Scheme
 	void parse(Ini *ini);
 	bool applyOnAsset(struct Asset &ass);
 
-	bool operator < (const Scheme &other) const
+	bool operator < (const Scheme &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}
@@ -165,7 +181,7 @@ struct Asset
 	String outputPath() const;
 	String aliasPath() const;
 
-	bool operator < (const Asset &other) const
+	bool operator < (const Asset &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}

@@ -24,6 +24,7 @@ void testGeometry();
 void testMemoryArena();
 void testMemoryBuffers();
 void testMemoryAllocators();
+void testStdHash();
 void testBlockContainer();
 void testSerialization();
 void testContainerSerialization();
@@ -94,6 +95,7 @@ int main()
 	testMemoryArena();
 	testMemoryBuffers();
 	testMemoryAllocators();
+	testStdHash();
 	testBlockContainer();
 	testSerialization();
 	testContainerSerialization();

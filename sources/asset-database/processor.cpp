@@ -196,7 +196,6 @@ namespace
 
 	void processAsset(Asset &ass)
 	{
-		detail::OverrideBreakpoint overrideBreakpoint;
 		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
 		ass.corrupted = true;
 		ass.needNotify = true;
@@ -205,6 +204,7 @@ namespace
 		ass.aliasName = "";
 		Scheme *scheme = schemes.retrieve(ass.scheme);
 		CAGE_ASSERT(scheme);
+		detail::OverrideBreakpoint overrideBreakpoint;
 		try
 		{
 			if (!scheme->applyOnAsset(ass))
@@ -481,7 +481,7 @@ namespace
 		}
 	}
 
-	HolderSet<Asset>::Iterator itg;
+	HolderSet<Asset>::Data::const_iterator itg;
 	Holder<Mutex> mut;
 	Holder<ThreadPool> threads;
 
@@ -547,16 +547,16 @@ namespace
 			Asset &ass = **asIt;
 
 			// check for deleted, modified or corrupted databank
-			if (files.find(ass.databank) == files.end() || corruptedDbsCopy.find(ass.databank) != corruptedDbsCopy.end() || files[ass.databank] > timestamp)
+			if (files.count(ass.databank) == 0 || corruptedDbsCopy.count(ass.databank) != 0 || files[ass.databank] > timestamp)
 			{
-				asIt = assets.erase(ass.name);
+				asIt = assets.erase(asIt);
 				continue;
 			}
 
 			// check for deleted or modified files
 			for (const String &f : ass.files)
 			{
-				if (files.find(f) == files.end() || files[f] > timestamp)
+				if (files.count(f) == 0 || files[f] > timestamp)
 					ass.corrupted = true;
 			}
 
@@ -570,10 +570,10 @@ namespace
 			newestFile = std::max(newestFile, f.second);
 			if (isNameDatabank(f.first))
 			{
-				bool wasCorrupted = corruptedDbsCopy.find(f.first) != corruptedDbsCopy.end();
+				const bool wasCorrupted = corruptedDbsCopy.find(f.first) != corruptedDbsCopy.end();
 				if (f.second > timestamp || wasCorrupted)
 				{
-					bool corrupted = !parseDatabank(f.first);
+					const bool corrupted = !parseDatabank(f.first);
 					if (corrupted)
 						corruptedDatabanks.insert(Databank{ f.first });
 					countBadDatabanks += corrupted;
