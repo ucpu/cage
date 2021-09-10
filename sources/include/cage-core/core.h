@@ -77,6 +77,11 @@ namespace cage
 	struct Cone;
 	struct Frustum;
 
+	namespace detail
+	{
+		template<uint32 MaxSize> struct AnyBase;
+	}
+	using Any = detail::AnyBase<1024>;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
 	struct AssetContext;

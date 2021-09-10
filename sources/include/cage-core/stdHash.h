@@ -12,7 +12,7 @@ namespace cage
 		CAGE_CORE_API uint32 hashBuffer(PointerRange<const char> buffer) noexcept;
 	}
 
-	template <class T>
+	template<class T>
 	bool operator == (const cage::Holder<T> &a, const cage::Holder<T> &b) noexcept
 	{
 		return +a == +b;
@@ -39,7 +39,7 @@ namespace std
 		}
 
 	private:
-		template <class M>
+		template<class M>
 		auto impl(const cage::Holder<M> &v, int) const noexcept -> decltype(std::hash<M>()(*v), std::size_t())
 		{
 			if (v)
@@ -47,7 +47,7 @@ namespace std
 			return 0;
 		}
 
-		template <class M>
+		template<class M>
 		auto impl(const cage::Holder<M> &v, float) const noexcept -> std::size_t
 		{
 			return std::hash<M *>()(+v);

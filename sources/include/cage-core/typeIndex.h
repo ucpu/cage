@@ -7,10 +7,8 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_CORE_API uint32 typeIndexInit(const char *name, uintPtr size, uintPtr alignment);
-
 		template<class T>
-		constexpr const char *typeIndexTypeName()
+		constexpr StringLiteral typeIndexTypeName() noexcept
 		{
 			static_assert(std::is_same_v<std::decay_t<T>, T>);
 #ifdef _MSC_VER
@@ -19,6 +17,20 @@ namespace cage
 			return __PRETTY_FUNCTION__;
 #endif // _MSC_VER
 		}
+
+		CAGE_CORE_API uint32 typeIndexInitImpl(StringLiteral name, uintPtr size, uintPtr alignment) noexcept;
+
+		template<class T>
+		CAGE_FORCE_INLINE uint32 typeIndexInit() noexcept
+		{
+			return typeIndexInitImpl(privat::typeIndexTypeName<T>(), sizeof(T), alignof(T));
+		};
+
+		template<>
+		CAGE_FORCE_INLINE uint32 typeIndexInit<void>() noexcept
+		{
+			return typeIndexInitImpl(privat::typeIndexTypeName<void>(), 0, 0);
+		};
 	}
 
 	namespace detail
@@ -28,34 +40,14 @@ namespace cage
 		// the indices may differ between different runs of a program!
 
 		template<class T>
-		CAGE_FORCE_INLINE uint32 typeIndex()
+		CAGE_FORCE_INLINE uint32 typeIndex() noexcept
 		{
-			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<T>(), sizeof(T), alignof(T));
+			static const uint32 id = privat::typeIndexInit<T>();
 			return id;
 		};
 
-		template<>
-		CAGE_FORCE_INLINE uint32 typeIndex<void>()
-		{
-			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<void>(), 0, 0);
-			return id;
-		};
-
-		CAGE_CORE_API uintPtr typeSize(uint32 index);
-
-		template<class T>
-		CAGE_FORCE_INLINE uintPtr typeSize()
-		{
-			return typeSize(typeIndex<T>());
-		}
-
-		CAGE_CORE_API uintPtr typeAlignment(uint32 index);
-
-		template<class T>
-		CAGE_FORCE_INLINE uintPtr typeAlignment()
-		{
-			return typeAlignment(typeIndex<T>());
-		}
+		CAGE_CORE_API uintPtr typeSize(uint32 index) noexcept;
+		CAGE_CORE_API uintPtr typeAlignment(uint32 index) noexcept;
 	}
 }
 

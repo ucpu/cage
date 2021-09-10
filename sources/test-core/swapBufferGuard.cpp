@@ -6,7 +6,7 @@
 
 namespace
 {
-	template <uint32 BuffersCount>
+	template<uint32 BuffersCount>
 	class SwapBufferTester
 	{
 	public:

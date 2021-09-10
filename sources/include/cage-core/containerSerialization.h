@@ -7,17 +7,17 @@ namespace cage
 {
 	namespace privat
 	{
-		template <class C, class N>
+		template<class C, class N>
 		auto reserveIfPossibleImpl(C &c, N n, int) -> decltype(c.reserve(n), void())
 		{
 			c.reserve(n);
 		};
 
-		template <class C, class N>
+		template<class C, class N>
 		auto reserveIfPossibleImpl(C &c, N n, float) -> void
 		{};
 
-		template <class C, class N>
+		template<class C, class N>
 		void reserveIfPossible(C &c, N n)
 		{
 			reserveIfPossibleImpl(c, n, 0);

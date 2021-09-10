@@ -94,15 +94,15 @@ namespace cage
 	/*
 	namespace privat
 	{
-		template <class T>
+		template<class T>
 		auto isDeserializableImpl(Deserializer &s, T &v, int) -> decltype(s >> v, int())
 		{};
 
-		template <class T>
+		template<class T>
 		auto isDeserializableImpl(Deserializer &s, T &v, float) -> void
 		{};
 
-		template <class T>
+		template<class T>
 		auto isDeserializableImpl()
 		{
 			Deserializer s({});
@@ -110,7 +110,7 @@ namespace cage
 			return isDeserializableImpl<T>(s, v, 0);
 		};
 
-		template <class T>
+		template<class T>
 		struct isDeserializable
 		{
 			constexpr static bool value = std::is_same_v<decltype(isDeserializableImpl<T>()), int>;

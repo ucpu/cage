@@ -16,6 +16,7 @@ void testDelegates();
 void testHolder();
 void testClasses();
 void testPointerRange();
+void testAny();
 void testEnumerate();
 void testEvents();
 void testMath();
@@ -87,6 +88,7 @@ int main()
 	testHolder();
 	testClasses();
 	testPointerRange();
+	testAny();
 	testEnumerate();
 	testEvents();
 	testMath();

@@ -20,6 +20,18 @@ namespace
 		CAGE_TEST(tmp != 0);
 		CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + name + ": " + duration);
 	}
+
+	template<class T>
+	uintPtr typeSize()
+	{
+		return detail::typeSize(detail::typeIndex<T>());
+	}
+
+	template<class T>
+	uintPtr typeAlignment()
+	{
+		return detail::typeAlignment(detail::typeIndex<T>());
+	}
 }
 
 void testTypeIndex()
@@ -35,7 +47,7 @@ void testTypeIndex()
 		CAGE_TEST(val != typeIndex<uint64>());
 		CAGE_TEST(typeIndex<float>() != typeIndex<double>());
 		CAGE_TEST(typeIndex<uint16>() != typeIndex<uintPtr>());
-		CAGE_TEST(typeIndex<void*>() != typeIndex<uintPtr>());
+		CAGE_TEST(typeIndex<void *>() != typeIndex<uintPtr>());
 		CAGE_TEST(typeIndex<uint32>() != typeIndex<uint64>());
 #ifdef CAGE_ARCHITECTURE_64
 		CAGE_TEST(typeIndex<uint64>() == typeIndex<uintPtr>());
@@ -46,6 +58,11 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("size and alignment of types");
+		const uint32 val = typeIndex<uint16>();
+		CAGE_TEST(typeSize(val) == sizeof(uint16));
+		CAGE_TEST(typeAlignment(val) == alignof(uint16));
+		CAGE_TEST(typeSize<String>() == sizeof(String));
+		CAGE_TEST(typeAlignment<String>() == alignof(String));
 		CAGE_TEST(typeSize<uintPtr>() == sizeof(uintPtr));
 		CAGE_TEST(typeAlignment<uintPtr>() == alignof(uintPtr));
 		CAGE_TEST(typeSize<char>() == sizeof(char));
