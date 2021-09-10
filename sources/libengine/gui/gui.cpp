@@ -16,16 +16,17 @@ namespace cage
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 
-		listeners.windowResize.bind<GuiManager, &GuiManager::windowResize>(this);
-		listeners.mousePress.bind<GuiManager, &GuiManager::mousePress>(this);
-		listeners.mouseDouble.bind<GuiManager, &GuiManager::mouseDouble>(this);
-		listeners.mouseRelease.bind<GuiManager, &GuiManager::mouseRelease>(this);
-		listeners.mouseMove.bind<GuiManager, &GuiManager::mouseMove>(this);
-		listeners.mouseWheel.bind<GuiManager, &GuiManager::mouseWheel>(this);
-		listeners.keyPress.bind<GuiManager, &GuiManager::keyPress>(this);
-		listeners.keyRepeat.bind<GuiManager, &GuiManager::keyRepeat>(this);
-		listeners.keyRelease.bind<GuiManager, &GuiManager::keyRelease>(this);
-		listeners.keyChar.bind<GuiManager, &GuiManager::keyChar>(this);
+		inputsListeners.attach(&inputsDispatchers);
+		inputsListeners.windowResize.bind<GuiImpl, &GuiImpl::windowResize>(this);
+		inputsListeners.mousePress.bind<GuiImpl, &GuiImpl::mousePress>(this);
+		inputsListeners.mouseDoublePress.bind<GuiImpl, &GuiImpl::mouseDoublePress>(this);
+		inputsListeners.mouseRelease.bind<GuiImpl, &GuiImpl::mouseRelease>(this);
+		inputsListeners.mouseMove.bind<GuiImpl, &GuiImpl::mouseMove>(this);
+		inputsListeners.mouseWheel.bind<GuiImpl, &GuiImpl::mouseWheel>(this);
+		inputsListeners.keyPress.bind<GuiImpl, &GuiImpl::keyPress>(this);
+		inputsListeners.keyRepeat.bind<GuiImpl, &GuiImpl::keyRepeat>(this);
+		inputsListeners.keyRelease.bind<GuiImpl, &GuiImpl::keyRelease>(this);
+		inputsListeners.keyChar.bind<GuiImpl, &GuiImpl::keyChar>(this);
 
 		skins.resize(config.skinsCount);
 
@@ -110,13 +111,7 @@ namespace cage
 		return impl->focusName;
 	}
 
-	void GuiManager::handleWindowEvents(Window *window, sint32 order)
-	{
-		GuiImpl *impl = (GuiImpl *)this;
-		impl->listeners.attachAll(window, order);
-	}
-
-	void GuiManager::skipAllEventsUntilNextUpdate()
+	void GuiManager::invalidateInputs()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = false;

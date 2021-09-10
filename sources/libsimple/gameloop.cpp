@@ -144,6 +144,8 @@ namespace cage
 			Holder<Scheduler> soundScheduler;
 			Holder<Schedule> soundUpdateSchedule;
 
+			EventListener<bool(const GenericInput &)> listener;
+
 			EngineData(const EngineCreateConfig &config);
 
 			~EngineData();
@@ -451,7 +453,8 @@ namespace cage
 						c = *config.gui;
 					c.assetMgr = +assets;
 					gui = newGuiManager(c);
-					gui->handleWindowEvents(+window);
+					listener.attach(window->events);
+					listener.bind<GuiManager, &GuiManager::handleInput>(+gui);
 				}
 
 				{ // create entities

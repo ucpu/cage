@@ -13,7 +13,9 @@ namespace cage
 		class FpsCameraImpl : public FpsCamera
 		{
 		public:
-			WindowEventListeners listeners;
+			InputsDispatchers dispatchers;
+			InputsListeners listeners;
+			EventListener<bool(const GenericInput &)> windowListener;
 			EventListener<void()> updateListener;
 			VariableSmoothingBuffer<Vec2, 1> mouseSmoother;
 			VariableSmoothingBuffer<Vec3, 3> moveSmoother;
@@ -22,18 +24,20 @@ namespace cage
 			Real wheelAccum;
 
 			Entity *ent = nullptr;
-			bool keysPressedArrows[6] = {false, false, false, false, false, false}; // wsadeq
+			bool keysPressedArrows[6] = {}; // wsadeq
 
 			FpsCameraImpl(Entity *ent) : ent(ent)
 			{
+				listeners.attach(&dispatchers);
 				listeners.mousePress.bind<FpsCameraImpl, &FpsCameraImpl::mousePress>(this);
 				listeners.mouseMove.bind<FpsCameraImpl, &FpsCameraImpl::mouseMove>(this);
 				listeners.mouseWheel.bind<FpsCameraImpl, &FpsCameraImpl::mouseWheel>(this);
 				listeners.keyPress.bind<FpsCameraImpl, &FpsCameraImpl::keyPress>(this);
 				listeners.keyRelease.bind<FpsCameraImpl, &FpsCameraImpl::keyRelease>(this);
-				listeners.attachAll(engineWindow());
+				windowListener.bind<InputsDispatchers, &InputsDispatchers::dispatch>(&dispatchers);
+				windowListener.attach(engineWindow()->events);
 				updateListener.bind<FpsCameraImpl, &FpsCameraImpl::update>(this);
-				controlThread().update.attach(updateListener);
+				updateListener.attach(controlThread().update);
 			}
 
 			const Vec2i centerMouse()
@@ -51,27 +55,27 @@ namespace cage
 				return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags, const Vec2i &)
+			bool mousePress(InputMouse in)
 			{
-				if (mouseEnabled(buttons))
+				if (mouseEnabled(in.buttons))
 					centerMouse();
 				return false;
 			}
 
-			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags, const Vec2i &pt)
+			bool mouseMove(InputMouse in)
 			{
-				if (!mouseEnabled(buttons))
+				if (!mouseEnabled(in.buttons))
 					return false;
 				Vec2i pt2 = centerMouse();
-				mouseMoveAccum += Vec2(pt2 - pt);
+				mouseMoveAccum += Vec2(pt2 - in.position);
 				return false;
 			}
 
-			bool mouseWheel(sint32 wheel, ModifiersFlags, const Vec2i &)
+			bool mouseWheel(InputMouseWheel in)
 			{
 				if (!ent)
 					return false;
-				wheelAccum += wheel;
+				wheelAccum += in.wheel;
 				return false;
 			}
 
@@ -123,14 +127,14 @@ namespace cage
 				return false;
 			}
 
-			bool keyPress(uint32 key, ModifiersFlags)
+			bool keyPress(InputKey in)
 			{
-				return setKey(key, true);
+				return setKey(in.key, true);
 			}
 
-			bool keyRelease(uint32 key, ModifiersFlags)
+			bool keyRelease(InputKey in)
 			{
-				return setKey(key, false);
+				return setKey(in.key, false);
 			}
 
 			void update()

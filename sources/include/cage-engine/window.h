@@ -1,9 +1,7 @@
 #ifndef guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 #define guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 
-#include <cage-core/events.h>
-
-#include "core.h"
+#include <cage-engine/inputs.h>
 
 namespace cage
 {
@@ -17,20 +15,12 @@ namespace cage
 	class CAGE_ENGINE_API Window : private Immovable
 	{
 	public:
-		struct
-		{
-			EventDispatcher<bool()> windowClose, windowShow, windowHide;
-			EventDispatcher<bool(const Vec2i &)> windowMove, windowResize;
-			EventDispatcher<bool(MouseButtonsFlags, ModifiersFlags, const Vec2i &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-			EventDispatcher<bool(sint32, ModifiersFlags, const Vec2i &)> mouseWheel;
-			EventDispatcher<bool()> focusGain, focusLose;
-			EventDispatcher<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
-			EventDispatcher<bool(uint32)> keyChar;
-		} events;
+		EventDispatcher<bool(const GenericInput &)> events;
+		Delegate<void(uint32, uint32, uint32, uint32, const char *)> debugOpenglErrorCallback;
 
 		void processEvents();
 
-		//string title() const;
+		// String title() const;
 		void title(const String &value);
 
 		bool isFocused() const;
@@ -69,24 +59,9 @@ namespace cage
 		void makeCurrent();
 		void makeNotCurrent();
 		void swapBuffers();
-
-		Delegate<void(uint32, uint32, uint32, uint32, const char*)> debugOpenglErrorCallback;
 	};
 
 	CAGE_ENGINE_API Holder<Window> newWindow(Window *shareContext = nullptr);
-
-	struct CAGE_ENGINE_API WindowEventListeners
-	{
-		EventListener<bool()> windowClose, windowShow, windowHide;
-		EventListener<bool(const Vec2i &)> windowMove, windowResize;
-		EventListener<bool(MouseButtonsFlags, ModifiersFlags, const Vec2i &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-		EventListener<bool(sint32, ModifiersFlags, const Vec2i &)> mouseWheel;
-		EventListener<bool()> focusGain, focusLose;
-		EventListener<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
-		EventListener<bool(uint32)> keyChar;
-
-		void attachAll(Window *window, sint32 order = 0);
-	};
 }
 
 #endif

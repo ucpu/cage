@@ -20,26 +20,23 @@ namespace cage
 		class StatisticsGuiImpl : public StatisticsGui
 		{
 		public:
-			EventListener<bool(uint32, ModifiersFlags)> keyPressListener;
+			InputListener<InputClassEnum::KeyPress, InputKey, bool> keyPressListener;
 			EventListener<bool()> updateListener;
 
-			uint32 panelIndex;
-			uint32 layoutIndex;
-			uint32 labelIndices[40];
-			const StatisticsGuiFlags *labelFlags;
-			const char *const *labelNames;
-			uint32 labelsCount;
-			StatisticsGuiScopeEnum profilingModeOld;
+			uint32 panelIndex = 0;
+			uint32 layoutIndex = 0;
+			uint32 labelIndices[40] = {};
+			const StatisticsGuiFlags *labelFlags = nullptr;
+			const char *const *labelNames = nullptr;
+			uint32 labelsCount = 0;
+			StatisticsGuiScopeEnum profilingModeOld = StatisticsGuiScopeEnum::Full;
 
-			StatisticsGuiImpl() : profilingModeOld(StatisticsGuiScopeEnum::Full)
+			StatisticsGuiImpl()
 			{
-				nullData();
-
 				keyPressListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::keyPress>(this);
+				keyPressListener.attach(engineWindow()->events);
 				updateListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::update>(this);
-
-				engineWindow()->events.keyPress.attach(keyPressListener);
-				controlThread().update.attach(updateListener);
+				updateListener.attach(controlThread().update);
 			}
 
 			void nullData()
@@ -178,8 +175,8 @@ namespace cage
 			void checkEntities()
 			{
 				EntityManager *g = engineGuiEntities();
-				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
-				bool visible = statisticsScope != StatisticsGuiScopeEnum::None;
+				const bool panelPresent = panelIndex != 0 && g->has(panelIndex);
+				const bool visible = statisticsScope != StatisticsGuiScopeEnum::None;
 				if (panelPresent != visible || profilingModeOld != statisticsScope)
 				{ // change needed
 					clearEntities();
@@ -212,31 +209,11 @@ namespace cage
 				return false;
 			}
 
-			void setWindowFullscreen(bool fullscreen)
+			bool keyPress(InputKey in)
 			{
-				if (fullscreen)
+				if (in.mods == keyModifiers)
 				{
-					try
-					{
-						detail::OverrideBreakpoint ob;
-						engineWindow()->setFullscreen(Vec2i(0, 0));
-					}
-					catch (...)
-					{
-						setWindowFullscreen(false);
-					}
-				}
-				else
-				{
-					engineWindow()->setWindowed(WindowFlags::Resizeable | WindowFlags::Border);
-				}
-			}
-
-			bool keyPress(uint32 key, ModifiersFlags mods)
-			{
-				if (mods == keyModifiers)
-				{
-					if (key == keyToggleStatisticsScope)
+					if (in.key == keyToggleStatisticsScope)
 					{
 						switch (statisticsScope)
 						{
@@ -248,7 +225,7 @@ namespace cage
 						}
 						return true;
 					}
-					if (key == keyToggleStatisticsMode)
+					if (in.key == keyToggleStatisticsMode)
 					{
 						switch (statisticsMode)
 						{
@@ -259,27 +236,27 @@ namespace cage
 						}
 						return true;
 					}
-					if (key == keyToggleProfilingEnabled)
+					if (in.key == keyToggleProfilingEnabled)
 					{
 						confProfilingEnabled = !confProfilingEnabled;
 						return true;
 					}
-					if (key == keyVisualizeBufferPrev)
+					if (in.key == keyVisualizeBufferPrev)
 					{
 						confVisualizeBuffer = confVisualizeBuffer - 1;
 						return true;
 					}
-					if (key == keyVisualizeBufferNext)
+					if (in.key == keyVisualizeBufferNext)
 					{
 						confVisualizeBuffer = confVisualizeBuffer + 1;
 						return true;
 					}
-					if (key == keyToggleRenderMissingModels)
+					if (in.key == keyToggleRenderMissingModels)
 					{
 						confRenderMissingModels = !confRenderMissingModels;
 						return true;
 					}
-					if (key == keyToggleRenderSkeletonBones)
+					if (in.key == keyToggleRenderSkeletonBones)
 					{
 						confRenderSkeletonBones = !confRenderSkeletonBones;
 						return true;

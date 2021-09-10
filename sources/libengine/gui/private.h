@@ -299,7 +299,20 @@ namespace cage
 		} graphicsData;
 		RenderQueue *activeQueue = nullptr;
 
-		WindowEventListeners listeners;
+		bool windowResize(InputWindowValue);
+		bool mouseMove(InputMouse);
+		bool mousePress(InputMouse);
+		bool mouseDoublePress(InputMouse);
+		bool mouseRelease(InputMouse);
+		bool mouseWheel(InputMouseWheel);
+		bool keyPress(InputKey);
+		bool keyRelease(InputKey);
+		bool keyRepeat(InputKey);
+		bool keyChar(InputKey);
+
+		InputsDispatchers inputsDispatchers;
+		InputsListeners inputsListeners;
+
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;
 

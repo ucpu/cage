@@ -1,7 +1,7 @@
 #include <cage-core/pointerRangeHolder.h>
 
 #include <cage-engine/screenList.h>
-#include "graphics/private.h" // getMonitorId
+#include "private.h" // getMonitorId
 
 #include <GLFW/glfw3.h>
 

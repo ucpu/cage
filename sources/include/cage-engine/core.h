@@ -101,6 +101,18 @@ namespace cage
 	enum class SoundFlags : uint32;
 	struct SoundSourceHeader;
 
+	enum class InputClassEnum : uint32;
+	struct InputWindow;
+	struct InputWindowValue;
+	struct InputMouse;
+	struct InputMouseWheel;
+	struct InputKey;
+	struct InputGuiWidget;
+	struct GenericInput;
+	struct InputsDispatchers;
+	struct InputsGeneralizer;
+	struct InputsListeners;
+
 	struct ScreenMode;
 	class ScreenDevice;
 	class ScreenList;
@@ -110,7 +122,6 @@ namespace cage
 	class SpeakerList;
 	enum class WindowFlags : uint32;
 	class Window;
-	struct WindowEventListeners;
 
 	struct UubRange;
 	class RenderQueue;

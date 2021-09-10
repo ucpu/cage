@@ -1,9 +1,7 @@
 #ifndef guard_guiManager_xf1g9ret213sdr45zh
 #define guard_guiManager_xf1g9ret213sdr45zh
 
-#include <cage-core/events.h>
-
-#include "core.h"
+#include <cage-engine/inputs.h>
 
 namespace cage
 {
@@ -23,22 +21,11 @@ namespace cage
 		Holder<RenderQueue> finish(); // finish handling events, generate rendering commands, and release resources
 		void cleanUp();
 
-		bool windowResize(const Vec2i &);
-		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
-		bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
-		bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
-		bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point);
-		bool mouseWheel(sint32 wheel, ModifiersFlags modifiers, const Vec2i &point);
-		bool keyPress(uint32 key, ModifiersFlags modifiers);
-		bool keyRepeat(uint32 key, ModifiersFlags modifiers);
-		bool keyRelease(uint32 key, ModifiersFlags modifiers);
-		bool keyChar(uint32 key);
-
-		void handleWindowEvents(Window *window, sint32 order = 0);
-		void skipAllEventsUntilNextUpdate();
+		bool handleInput(const GenericInput &);
+		void invalidateInputs(); // skip all remaining inputs until next prepare
 		Vec2i inputResolution() const;
-		Delegate<bool(const Vec2i&, Vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
-		EventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
+		Delegate<bool(const Vec2i&, Vec2&)> eventCoordinatesTransformer; // called from prepare or handleInput, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from prepare or handleInput
 
 		GuiSkinConfig &skin(uint32 index = 0);
 		const GuiSkinConfig &skin(uint32 index = 0) const;

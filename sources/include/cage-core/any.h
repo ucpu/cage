@@ -8,7 +8,7 @@ namespace cage
 	namespace detail
 	{
 		template<uint32 MaxSize>
-		struct alignas(64) AnyBase
+		struct alignas(16) AnyBase
 		{
 			AnyBase() = default;
 			AnyBase(const AnyBase &) = default;
