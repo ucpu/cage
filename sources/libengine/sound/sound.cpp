@@ -148,7 +148,6 @@ namespace cage
 
 	uint64 Sound::duration() const
 	{
-		const SoundImpl *impl = (const SoundImpl *)this;
 		return 1000000 * frames() / sampleRate();
 	}
 

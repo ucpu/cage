@@ -846,7 +846,7 @@ namespace cage
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.texture());
-		Cmd &cmd = impl->addCmd<Cmd>();
+		impl->addCmd<Cmd>();
 	}
 
 	void RenderQueue::resetAllTextures()

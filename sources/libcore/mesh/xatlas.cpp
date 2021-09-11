@@ -35,6 +35,7 @@ namespace cage
 			"BuildOutputModeles"
 		};
 
+		/*
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
 			CAGE_LOG(SeverityEnum::Info, "xatlas", Stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
@@ -43,8 +44,9 @@ namespace cage
 
 		void destroyAtlas(void *ptr)
 		{
-			xatlas::Destroy((xatlas::Atlas*)ptr);
+			xatlas::Destroy((xatlas::Atlas *)ptr);
 		}
+		*/
 
 		Holder<xatlas::Atlas> newAtlas(bool reportProgress)
 		{

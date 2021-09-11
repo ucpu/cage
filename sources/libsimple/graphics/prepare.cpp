@@ -728,11 +728,8 @@ namespace cage
 			void addModelsSkeleton(const CommonRenderPass &pass, const PrepRender &pr, RendersCollection &opaque, TranslucentsCollection &translucents)
 			{
 				Mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
-				const auto &s = pr.skeletalAnimation->rig;
-				const auto &a = pr.skeletalAnimation->animation;
-				const auto &p = pr.skeletalAnimation->params;
-				const uint32 bonesCount = s->bonesCount();
-				animateSkeleton(+s, +a, pr.skeletalAnimation->coefficient, tmpArmature);
+				const uint32 bonesCount = pr.skeletalAnimation->rig->bonesCount();
+				animateSkeleton(+pr.skeletalAnimation->rig, +pr.skeletalAnimation->animation, pr.skeletalAnimation->coefficient, tmpArmature);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					PrepRender r(pr.emit);

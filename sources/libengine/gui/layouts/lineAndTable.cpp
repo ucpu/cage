@@ -15,7 +15,6 @@ namespace cage
 
 			LayoutTableImpl(HierarchyItem *hierarchy, bool justLine) : LayoutItem(hierarchy)
 			{
-				auto impl = hierarchy->impl;
 				if (justLine)
 				{
 					GUI_COMPONENT(LayoutLine, l, hierarchy->ent);

@@ -168,7 +168,6 @@ namespace cage
 
 	void Mesh::exportObjFile(const MeshExportObjConfig &config, const String &filename) const
 	{
-		MeshImpl *impl = (MeshImpl *)this;
 		Holder<PointerRange<char>> buff = exportObjBuffer(config);
 		writeFile(filename)->write(buff);
 	}

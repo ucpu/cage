@@ -355,7 +355,6 @@ namespace cage
 		FontFormat f = format;
 		f.wrapWidth = size[0];
 		font->size(glyphs, f, point - position, cursor);
-		cursor = cursor;
 	}
 
 	void imageCreate(HierarchyItem *item)
@@ -382,7 +381,6 @@ namespace cage
 
 	void ImageItem::assign()
 	{
-		auto *impl = hierarchy->impl;
 		GUI_COMPONENT(Image, i, hierarchy->ent);
 		assign(i);
 	}

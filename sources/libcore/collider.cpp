@@ -283,7 +283,6 @@ namespace cage
 		if (poly->indices().empty())
 		{
 			CAGE_ASSERT(poly->positions().size() % 3 == 0);
-			const uint32 cnt = poly->verticesCount() / 3;
 			CAGE_ASSERT(sizeof(Triangle) == 3 * sizeof(Vec3));
 			addTriangles(bufferCast<const Triangle>(poly->positions()));
 		}

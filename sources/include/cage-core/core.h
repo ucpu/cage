@@ -7,7 +7,7 @@
 #include <type_traits>
 
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; } }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; (void)i_; } }
 #else
 #define CAGE_ASSERT(EXPR) {}
 #endif
