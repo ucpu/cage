@@ -1,8 +1,7 @@
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/threadPool.h>
 #include <cage-core/process.h>
 #include <cage-core/config.h>
+#include <cage-core/tasks.h>
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
 #include <cage-core/ini.h>
@@ -481,51 +480,22 @@ namespace
 		}
 	}
 
-	HolderSet<Asset>::Data::const_iterator itg;
-	Holder<Mutex> mut;
-	Holder<ThreadPool> threads;
-
-	void threadEntry(uint32, uint32)
+	void dispatchAssetProcessing(Asset *const &ass)
 	{
-		while (true)
+		try
 		{
-			Asset *ass = nullptr;
-			{
-				ScopeLock m(mut);
-				if (itg != assets.end())
-					ass = const_cast<Asset*>(itg++->get());
-			}
-			if (!ass)
-				break;
-			if (ass->corrupted)
-			{
-				try
-				{
-					processAsset(*ass);
-				}
-				catch (const cage::Exception &)
-				{
-					// do nothing
-				}
-				catch (...)
-				{
-					detail::logCurrentCaughtException();
-					CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
-				}
-			}
+			processAsset(*ass);
+		}
+		catch (const cage::Exception &)
+		{
+			// do nothing
+		}
+		catch (...)
+		{
+			detail::logCurrentCaughtException();
+			CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 		}
 	}
-
-	struct ThreadsInitializer
-	{
-	public:
-		ThreadsInitializer()
-		{
-			mut = newMutex();
-			threads = newThreadPool();
-			threads->function.bind<&threadEntry>();
-		}
-	} threadsInitializerInstance;
 
 	void checkAssets()
 	{
@@ -586,9 +556,12 @@ namespace
 			outputHashes.insert(it->outputPath());
 
 		{ // reprocess assets
-			itg = assets.begin();
-			threads->run();
-			CAGE_ASSERT(itg == assets.end());
+			std::vector<Asset *> asses;
+			asses.reserve(assets.size());
+			for (const auto &it : assets)
+				if (it->corrupted)
+					asses.push_back(+it);
+			tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<&dispatchAssetProcessing>(), asses);
 		}
 
 		for (const auto &it : assets)
