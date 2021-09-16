@@ -107,6 +107,9 @@ namespace cage
 	struct InputMouse;
 	struct InputMouseWheel;
 	struct InputKey;
+	struct InputGamepadState;
+	struct InputGamepadKey;
+	struct InputGamepadAxis;
 	struct InputGuiWidget;
 	struct GenericInput;
 	struct InputsDispatchers;
@@ -122,6 +125,7 @@ namespace cage
 	class SpeakerList;
 	enum class WindowFlags : uint32;
 	class Window;
+	class Gamepad;
 
 	struct UubRange;
 	class RenderQueue;

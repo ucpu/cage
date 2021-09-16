@@ -2,12 +2,10 @@
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/config.h>
 #include <cage-core/flatSet.h>
-
 #include <cage-engine/window.h>
 #include <cage-engine/opengl.h>
 #include "private.h"
-
-#include <GLFW/glfw3.h>
+#include "../graphics/private.h"
 
 #include <atomic>
 #include <vector>
@@ -18,6 +16,11 @@
 
 namespace cage
 {
+	namespace graphicsPrivat
+	{
+		void openglContextInitializeGeneral(Window *w);
+	}
+
 	namespace
 	{
 		ConfigBool confDebugContext("cage/graphics/debugContext",
@@ -28,43 +31,6 @@ namespace cage
 #endif // CAGE_DEBUG
 		);
 		ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
-
-		void handleGlfwError(int, const char *message)
-		{
-			CAGE_LOG(SeverityEnum::Error, "glfw", message);
-		}
-
-		class CageGlfwInitializer
-		{
-		public:
-			CageGlfwInitializer()
-			{
-				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "initializing glfw");
-				glfwSetErrorCallback(&handleGlfwError);
-				if (!glfwInit())
-					CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
-			}
-
-			~CageGlfwInitializer()
-			{
-				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "terminating glfw");
-				glfwTerminate();
-			}
-		};
-	}
-
-	void cageGlfwInitializeFunc()
-	{
-		static CageGlfwInitializer *m = new CageGlfwInitializer(); // intentional leak
-	}
-
-	namespace
-	{
-		Mutex *windowsMutex()
-		{
-			static Holder<Mutex> *m = new Holder<Mutex>(newMutex()); // intentional leak
-			return +*m;
-		}
 
 		ModifiersFlags getKeyModifiers(int mods)
 		{
@@ -97,7 +63,7 @@ namespace cage
 		class WindowImpl : public Window
 		{
 		public:
-			uint64 lastMouseButtonPressTimes[5] = { 0,0,0,0,0 }; // unused, left, right, unused, middle
+			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
 			Vec2i stateMousePosition;
@@ -128,7 +94,7 @@ namespace cage
 				while (!stopping)
 				{
 					{
-						ScopeLock l(windowsMutex());
+						ScopeLock l(cageGlfwMutex());
 						glfwPollEvents();
 					}
 
@@ -156,9 +122,7 @@ namespace cage
 
 			explicit WindowImpl(Window *shareContext) : shareContext(shareContext)
 			{
-				cageGlfwInitializeFunc();
-
-				ScopeLock l(windowsMutex());
+				ScopeLock l(cageGlfwMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
 				windowSemaphore = newSemaphore(0, 1);
@@ -223,7 +187,7 @@ namespace cage
 
 			void finalizeWindow()
 			{
-				ScopeLock lock(windowsMutex());
+				ScopeLock lock(cageGlfwMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -609,7 +573,7 @@ namespace cage
 		WindowImpl *impl = (WindowImpl *)this;
 #ifndef GCHL_WINDOWS_THREAD
 		{
-			ScopeLock l(windowsMutex());
+			ScopeLock l(cageGlfwMutex());
 			glfwPollEvents();
 		}
 #endif
@@ -770,6 +734,7 @@ namespace cage
 
 	Holder<Window> newWindow(Window *shareContext)
 	{
+		cageGlfwInitializeFunc();
 		return systemMemory().createImpl<Window, WindowImpl>(shareContext);
 	}
 }

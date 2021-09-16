@@ -88,6 +88,31 @@ namespace cage
 		GENERALIZER(KeyChar);
 	}
 
+	bool InputsGeneralizer::gamepadConnected(InputGamepadState in)
+	{
+		GENERALIZER(GamepadConnected);
+	}
+
+	bool InputsGeneralizer::gamepadDisconnected(InputGamepadState in)
+	{
+		GENERALIZER(GamepadDisconnected);
+	}
+
+	bool InputsGeneralizer::gamepadPress(InputGamepadKey in)
+	{
+		GENERALIZER(GamepadPress);
+	}
+
+	bool InputsGeneralizer::gamepadRelease(InputGamepadKey in)
+	{
+		GENERALIZER(GamepadRelease);
+	}
+
+	bool InputsGeneralizer::gamepadAxis(InputGamepadAxis in)
+	{
+		GENERALIZER(GamepadAxis);
+	}
+
 	bool InputsGeneralizer::guiWidget(InputGuiWidget in)
 	{
 		GENERALIZER(GuiWidget);
@@ -127,6 +152,11 @@ namespace cage
 		EVENT(KeyRelease, keyRelease, InputKey);
 		EVENT(KeyRepeat, keyRepeat, InputKey);
 		EVENT(KeyChar, keyChar, InputKey);
+		EVENT(GamepadConnected, gamepadConnected, InputGamepadState);
+		EVENT(GamepadDisconnected, gamepadDisconnected, InputGamepadState);
+		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
+		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
+		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 #undef EVENT
 
@@ -160,6 +190,11 @@ namespace cage
 		EVENT(KeyRelease, keyRelease, InputKey);
 		EVENT(KeyRepeat, keyRepeat, InputKey);
 		EVENT(KeyChar, keyChar, InputKey);
+		EVENT(GamepadConnected, gamepadConnected, InputGamepadState);
+		EVENT(GamepadDisconnected, gamepadDisconnected, InputGamepadState);
+		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
+		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
+		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 
 		EVENT(Custom, custom, const GenericInput::Any &);
@@ -191,6 +226,11 @@ namespace cage
 		EVENT(KeyRelease, keyRelease, InputKey);
 		EVENT(KeyRepeat, keyRepeat, InputKey);
 		EVENT(KeyChar, keyChar, InputKey);
+		EVENT(GamepadConnected, gamepadConnected, InputGamepadState);
+		EVENT(GamepadDisconnected, gamepadDisconnected, InputGamepadState);
+		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
+		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
+		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 
 		EVENT(Custom, custom, const GenericInput::Any &);

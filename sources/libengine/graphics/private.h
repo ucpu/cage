@@ -1,3 +1,4 @@
+#include <cage-core/typeIndex.h>
 #include <cage-engine/graphicsError.h>
 
 #ifdef CAGE_ASSERT_ENABLED
@@ -10,18 +11,7 @@ namespace cage
 {
 	namespace graphicsPrivat
 	{
-		void openglContextInitializeGeneral(Window *w);
-
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
-
-		uint32 contextTypeIndexInitializer();
-
-		template<class T>
-		uint32 contextTypeIndex()
-		{
-			static const uint32 index = contextTypeIndexInitializer();
-			return index;
-		}
 
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id);
 		uint32 contextGetCurrentObjectType(uint32 typeIndex);
@@ -29,13 +19,13 @@ namespace cage
 		template<class T>
 		void setCurrentObject(uint32 id)
 		{
-			contextSetCurrentObjectType(contextTypeIndex<T>(), id);
+			contextSetCurrentObjectType(detail::typeIndex<T>(), id);
 		}
 
 		template<class T>
 		uint32 getCurrentObject()
 		{
-			return contextGetCurrentObjectType(contextTypeIndex<T>());
+			return contextGetCurrentObjectType(detail::typeIndex<T>());
 		}
 
 		void setCurrentContext(Window *context);
@@ -53,9 +43,6 @@ namespace cage
 		inline Window *getCurrentContext() { return nullptr; }
 
 #endif
-
-		String getMonitorId(GLFWmonitor *monitor);
-		GLFWmonitor *getMonitorById(const String &id);
 	}
 
 	using namespace graphicsPrivat;

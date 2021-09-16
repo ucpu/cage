@@ -91,40 +91,6 @@ namespace cage
 
 	// r-value deserializer
 
-	/*
-	namespace privat
-	{
-		template<class T>
-		auto isDeserializableImpl(Deserializer &s, T &v, int) -> decltype(s >> v, int())
-		{};
-
-		template<class T>
-		auto isDeserializableImpl(Deserializer &s, T &v, float) -> void
-		{};
-
-		template<class T>
-		auto isDeserializableImpl()
-		{
-			Deserializer s({});
-			T v;
-			return isDeserializableImpl<T>(s, v, 0);
-		};
-
-		template<class T>
-		struct isDeserializable
-		{
-			constexpr static bool value = std::is_same_v<decltype(isDeserializableImpl<T>()), int>;
-		};
-	}
-
-	template<class T, typename std::enable_if_t<privat::isDeserializable<T>::value, bool> = true>
-	Deserializer &&operator >> (Deserializer &&s, T &v)
-	{
-		s >> v;
-		return std::move(s);
-	}
-	*/
-
 	template<class T>
 	Deserializer &&operator >> (Deserializer &&s, T &v)
 	{

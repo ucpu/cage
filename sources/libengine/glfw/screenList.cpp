@@ -1,16 +1,11 @@
 #include <cage-core/pointerRangeHolder.h>
-
 #include <cage-engine/screenList.h>
-#include "private.h" // getMonitorId
-
-#include <GLFW/glfw3.h>
+#include "private.h"
 
 #include <vector>
 
 namespace cage
 {
-	void cageGlfwInitializeFunc();
-
 	namespace
 	{
 		bool operator == (const GLFWvidmode &a, const GLFWvidmode &b)
@@ -50,7 +45,6 @@ namespace cage
 		public:
 			ScreenListImpl() : primary(m)
 			{
-				cageGlfwInitializeFunc();
 				int cnt = 0;
 				GLFWmonitor **ms = glfwGetMonitors(&cnt);
 				devices.reserve(cnt);
@@ -110,6 +104,7 @@ namespace cage
 
 	Holder<ScreenList> newScreenList()
 	{
+		cageGlfwInitializeFunc();
 		return systemMemory().createImpl<ScreenList, ScreenListImpl>();
 	}
 }

@@ -3,6 +3,7 @@
 #include <cage-core/memoryUtils.h> // addToAlign
 
 #include <cage-engine/shaderConventions.h>
+#include <cage-engine/uniformBuffer.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/model.h>

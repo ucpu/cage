@@ -16,7 +16,9 @@ namespace cage
 		MouseMove, MousePress, MouseDoublePress, MouseRelease, // InputMouse
 		MouseWheel, // InputMouseWheel
 		KeyPress, KeyRelease, KeyRepeat, KeyChar, // InputKey
-		// todo gamepads/controllers
+		GamepadConnected, GamepadDisconnected, // InputGamepadState
+		GamepadPress, GamepadRelease, // InputGamepadKey
+		GamepadAxis, // InputGamepadAxis
 		GuiWidget, // InputGuiWidget
 		Custom = 1000,
 	};
@@ -55,6 +57,24 @@ namespace cage
 		ModifiersFlags mods = ModifiersFlags::None;
 	};
 
+	struct InputGamepadState
+	{
+		Gamepad *gamepad = nullptr;
+	};
+
+	struct InputGamepadKey
+	{
+		Gamepad *gamepad = nullptr;
+		uint32 key = 0;
+	};
+
+	struct InputGamepadAxis
+	{
+		Gamepad *gamepad = nullptr;
+		uint32 axis = 0;
+		Real value;
+	};
+
 	struct InputGuiWidget
 	{
 		GuiManager *manager = nullptr;
@@ -86,6 +106,11 @@ namespace cage
 		bool keyRelease(InputKey);
 		bool keyRepeat(InputKey);
 		bool keyChar(InputKey);
+		bool gamepadConnected(InputGamepadState);
+		bool gamepadDisconnected(InputGamepadState);
+		bool gamepadPress(InputGamepadKey);
+		bool gamepadRelease(InputGamepadKey);
+		bool gamepadAxis(InputGamepadAxis);
 		bool guiWidget(InputGuiWidget);
 		bool custom(const GenericInput::Any &);
 		bool unknown(const GenericInput &);
@@ -100,6 +125,9 @@ namespace cage
 		EventDispatcher<bool(InputMouse)> mouseMove, mousePress, mouseDoublePress, mouseRelease;
 		EventDispatcher<bool(InputMouseWheel)> mouseWheel;
 		EventDispatcher<bool(InputKey)> keyPress, keyRelease, keyRepeat, keyChar;
+		EventDispatcher<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
+		EventDispatcher<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
+		EventDispatcher<bool(InputGamepadAxis)> gamepadAxis;
 		EventDispatcher<bool(InputGuiWidget)> guiWidget;
 		EventDispatcher<bool(const GenericInput::Any &)> custom;
 		EventDispatcher<bool(const GenericInput &)> unknown;
@@ -114,6 +142,9 @@ namespace cage
 		EventListener<bool(InputMouse)> mouseMove, mousePress, mouseDoublePress, mouseRelease;
 		EventListener<bool(InputMouseWheel)> mouseWheel;
 		EventListener<bool(InputKey)> keyPress, keyRelease, keyRepeat, keyChar;
+		EventListener<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
+		EventListener<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
+		EventListener<bool(InputGamepadAxis)> gamepadAxis;
 		EventListener<bool(InputGuiWidget)> guiWidget;
 		EventListener<bool(const GenericInput::Any &)> custom;
 		EventListener<bool(const GenericInput &)> unknown;
