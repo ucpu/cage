@@ -127,6 +127,8 @@ namespace cage
 	class EntityComponent;
 	class Entity;
 	class EntityGroup;
+	template<class> struct EventListener;
+	template<class> struct EventDispatcher;
 	struct FileMode;
 	class File;
 	enum class PathTypeFlags : uint32;
