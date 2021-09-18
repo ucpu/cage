@@ -54,24 +54,24 @@
     </Expand>
   </Type>
 
-  <Type Name="cage::real">
+  <Type Name="cage::Real">
     <DisplayString>{value}</DisplayString>
   </Type>
 
-  <Type Name="cage::degs">
+  <Type Name="cage::Degs">
     <DisplayString>{value} degs</DisplayString>
     <Expand>
       <Item Name="radians">value.value * 3.141592653589793 / 180</Item>
     </Expand>
   </Type>
-  <Type Name="cage::rads">
+  <Type Name="cage::Rads">
     <DisplayString>{value} rads</DisplayString>
     <Expand>
       <Item Name="degrees">value.value * 180 / 3.141592653589793</Item>
     </Expand>
   </Type>
 
-  <Type Name="cage::vec2">
+  <Type Name="cage::Vec2">
     <Expand>
       <ArrayItems>
         <Size>2</Size>
@@ -79,7 +79,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="cage::vec3">
+  <Type Name="cage::Vec3">
     <Expand>
       <ArrayItems>
         <Size>3</Size>
@@ -87,7 +87,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="cage::vec4">
+  <Type Name="cage::Vec4">
     <Expand>
       <ArrayItems>
         <Size>4</Size>
@@ -96,7 +96,7 @@
     </Expand>
   </Type>
 
-  <Type Name="cage::ivec2">
+  <Type Name="cage::Vec2i">
     <Expand>
       <ArrayItems>
         <Size>2</Size>
@@ -104,7 +104,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="cage::ivec3">
+  <Type Name="cage::Vec3i">
     <Expand>
       <ArrayItems>
         <Size>3</Size>
@@ -112,7 +112,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="cage::ivec4">
+  <Type Name="cage::Vec4i">
     <Expand>
       <ArrayItems>
         <Size>4</Size>
@@ -121,7 +121,7 @@
     </Expand>
   </Type>
   
-  <Type Name="cage::quat">
+  <Type Name="cage::Quat">
     <Expand>
       <ArrayItems>
         <Size>4</Size>
@@ -130,7 +130,7 @@
     </Expand>
   </Type>
 
-  <Type Name="cage::mat3">
+  <Type Name="cage::Mat3">
     <Expand>
       <ArrayItems>
         <Size>9</Size>
@@ -138,7 +138,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="cage::mat4">
+  <Type Name="cage::Mat4">
     <Expand>
       <ArrayItems>
         <Size>16</Size>
@@ -147,7 +147,7 @@
     </Expand>
   </Type>
   
-  <Type Name="cage::transform">
+  <Type Name="cage::Transform">
     <DisplayString>{position}, {orientation}, {scale}</DisplayString>
     <Expand>
       <Item Name="position">position</Item>

@@ -140,7 +140,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{
-		Real distanceThreshold;
+		Real distanceThreshold = 1e-5;
 		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
 	};
 
