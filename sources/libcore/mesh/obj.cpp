@@ -166,7 +166,7 @@ namespace cage
 		return std::move(buffer);
 	}
 
-	void Mesh::exportObjFile(const MeshExportObjConfig &config, const String &filename) const
+	void Mesh::exportObjFile(const String &filename, const MeshExportObjConfig &config) const
 	{
 		Holder<PointerRange<char>> buff = exportObjBuffer(config);
 		writeFile(filename)->write(buff);

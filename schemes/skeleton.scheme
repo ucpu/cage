@@ -16,14 +16,3 @@ default = +x+y+z
 display = scale
 type = real
 default = 1
-
-#[boneNames]
-#display = export bone names
-#type = bool
-#default = true
-
-#[dependencies]
-#display = animations dependencies
-#hint = load animations from this file as dependencies
-#type = bool
-#default = true

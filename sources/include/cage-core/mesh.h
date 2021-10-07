@@ -29,8 +29,8 @@ namespace cage
 		void importCollider(const Collider *collider);
 
 		Holder<PointerRange<char>> exportBuffer() const;
-		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config) const;
-		void exportObjFile(const MeshExportObjConfig &config, const String &filename) const;
+		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config = {}) const;
+		void exportObjFile(const String &filename, const MeshExportObjConfig &config = {}) const;
 
 		uint32 verticesCount() const;
 

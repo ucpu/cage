@@ -22,6 +22,8 @@ namespace cage
 
 	CAGE_CORE_API Real distanceColor(const Vec3 &rgb1, const Vec3 &rgb2);
 	CAGE_CORE_API Vec3 interpolateColor(const Vec3 &rgb1, const Vec3 &rgb2, Real factor);
+
+	CAGE_CORE_API Vec2 colorSpecularToRoughnessMetallic(const Vec3 &specular);
 }
 
 #endif // guard_colors_h_FE9390CFCE3E4DF2B955C7AF40FD8978

@@ -278,4 +278,10 @@ namespace cage
 		Vec3 rgb = colorHsluvToRgb(hsluv);
 		return rgb;
 	}
+
+	Vec2 colorSpecularToRoughnessMetallic(const Vec3 &specular)
+	{
+		Vec3 hsv = colorRgbToHsv(specular);
+		return Vec2(hsv[2], hsv[1]);
+	}
 }
