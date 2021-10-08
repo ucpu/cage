@@ -669,9 +669,9 @@ namespace cage
 				um.color = Vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
 				um.mMat = Mat3x4(pr.model);
 				um.mvpMat = pass.viewProj * pr.model;
-				um.mvpMatPrev = any(mo->flags & ModelRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
+				um.mvpMatPrev = any(mo->flags & MeshRenderFlags::VelocityWrite) ? pass.viewProjPrev * pr.modelPrev : um.mvpMat;
 				um.normalMat = Mat3x4(inverse(Mat3(pr.model)));
-				um.normalMat.data[2][3] = any(mo->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				um.normalMat.data[2][3] = any(mo->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
 				if (pr.textureAnimation)
 				{
@@ -702,7 +702,7 @@ namespace cage
 			{
 				if constexpr (ShadowCastersOnly)
 				{
-					if (none(mo->flags & ModelRenderFlags::ShadowCast))
+					if (none(mo->flags & MeshRenderFlags::ShadowCast))
 						return;
 				}
 
@@ -711,7 +711,7 @@ namespace cage
 
 				if constexpr (!ShadowCastersOnly)
 				{
-					if (any(mo->flags & ModelRenderFlags::Translucent) || pr.render.opacity < 1)
+					if (any(mo->flags & MeshRenderFlags::Translucent) || pr.render.opacity < 1)
 					{
 						translucents.data.emplace_back();
 						translucents.data.back().box = mo->boundingBox() * pr.model;
@@ -1070,10 +1070,10 @@ namespace cage
 					}
 				}
 				{
-					const ModelRenderFlags flags = instances.model->flags;
-					renderQueue->culling(!any(flags & ModelRenderFlags::TwoSided));
-					renderQueue->depthTest(any(flags & ModelRenderFlags::DepthTest));
-					renderQueue->depthWrite(any(flags & ModelRenderFlags::DepthWrite));
+					const MeshRenderFlags flags = instances.model->flags;
+					renderQueue->culling(!any(flags & MeshRenderFlags::TwoSided));
+					renderQueue->depthTest(any(flags & MeshRenderFlags::DepthTest));
+					renderQueue->depthWrite(any(flags & MeshRenderFlags::DepthWrite));
 				}
 				if (instances.armatures.empty())
 				{

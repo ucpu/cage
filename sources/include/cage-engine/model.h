@@ -1,6 +1,8 @@
 #ifndef guard_model_h_sdx54gfgh24jksd5f4
 #define guard_model_h_sdx54gfgh24jksd5f4
 
+#include <cage-core/meshMaterial.h>
+
 #include "core.h"
 
 namespace cage
@@ -36,7 +38,7 @@ namespace cage
 		void dispatch() const;
 		void dispatch(uint32 instances) const;
 
-		ModelRenderFlags flags = ModelRenderFlags::None;
+		MeshRenderFlags flags = MeshRenderFlags::None;
 		uint32 skeletonBones = 0;
 	};
 

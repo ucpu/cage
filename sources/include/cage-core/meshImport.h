@@ -3,43 +3,14 @@
 
 #include "math.h"
 #include "geometry.h"
+#include "meshMaterial.h"
 
 namespace cage
 {
-	struct CAGE_CORE_API MeshImportMaterial
-	{
-		// albedo rgb is linear, and NOT alpha-premultiplied
-		Vec4 albedoBase = Vec4(0);
-		Vec4 specialBase = Vec4(0);
-		Vec4 albedoMult = Vec4(1);
-		Vec4 specialMult = Vec4(1);
-	};
-
-	enum class MeshImportRenderFlags : uint32
-	{
-		None = 0,
-		Translucent = 1 << 1,
-		TwoSided = 1 << 2,
-		DepthTest = 1 << 3,
-		DepthWrite = 1 << 4,
-		VelocityWrite = 1 << 5,
-		ShadowCast = 1 << 6,
-		Lighting = 1 << 7,
-	};
-	GCHL_ENUM_BITS(MeshImportRenderFlags);
-
-	enum class MeshImportTextureType : uint32
-	{
-		None = 0,
-		Albedo,
-		Special,
-		Normal,
-	};
-
 	struct CAGE_CORE_API MeshImportTexture
 	{
 		String name;
-		MeshImportTextureType type = MeshImportTextureType::None;
+		MeshTextureType type = MeshTextureType::None;
 		//Holder<Image> image;
 	};
 
@@ -47,9 +18,9 @@ namespace cage
 	{
 		String objectName;
 		String materialName;
-		MeshImportMaterial material;
+		MeshMaterial material;
 		Aabb boundingBox;
-		MeshImportRenderFlags renderFlags = MeshImportRenderFlags::None;
+		MeshRenderFlags renderFlags = MeshRenderFlags::None;
 		Holder<Mesh> mesh;
 		Holder<PointerRange<MeshImportTexture>> textures;
 	};

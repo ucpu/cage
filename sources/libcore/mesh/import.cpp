@@ -978,7 +978,7 @@ namespace cage
 
 			using Textures = PointerRangeHolder<MeshImportTexture>;
 
-			template<MeshImportTextureType Type>
+			template<MeshTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
 			{
 				constexpr const char *names[] = {
@@ -1003,7 +1003,7 @@ namespace cage
 				textures.push_back(std::move(t));
 			}
 
-			template<aiTextureType AssimpType, MeshImportTextureType CageType>
+			template<aiTextureType AssimpType, MeshTextureType CageType>
 			bool loadTextureAssimp(aiMaterial *mat, Textures &textures)
 			{
 				const uint32 texCount = mat->GetTextureCount(AssimpType);
@@ -1062,9 +1062,9 @@ namespace cage
 
 				Textures textures;
 				const String pathBase = pathExtractDirectory(path);
-				loadTextureCage<MeshImportTextureType::Albedo>(pathBase, +ini, textures);
-				loadTextureCage<MeshImportTextureType::Special>(pathBase, +ini, textures);
-				loadTextureCage<MeshImportTextureType::Normal>(pathBase, +ini, textures);
+				loadTextureCage<MeshTextureType::Albedo>(pathBase, +ini, textures);
+				loadTextureCage<MeshTextureType::Special>(pathBase, +ini, textures);
+				loadTextureCage<MeshTextureType::Normal>(pathBase, +ini, textures);
 				part.textures = std::move(textures);
 
 				for (const String &n : ini->items("flags"))
@@ -1072,37 +1072,37 @@ namespace cage
 					const String v = ini->getString("flags", n);
 					if (v == "twoSided")
 					{
-						part.renderFlags |= MeshImportRenderFlags::TwoSided;
+						part.renderFlags |= MeshRenderFlags::TwoSided;
 						continue;
 					}
 					if (v == "translucent")
 					{
-						part.renderFlags |= MeshImportRenderFlags::Translucent;
+						part.renderFlags |= MeshRenderFlags::Translucent;
 						continue;
 					}
 					if (v == "noDepthTest")
 					{
-						part.renderFlags &= ~MeshImportRenderFlags::DepthTest;
+						part.renderFlags &= ~MeshRenderFlags::DepthTest;
 						continue;
 					}
 					if (v == "noDepthWrite")
 					{
-						part.renderFlags &= ~MeshImportRenderFlags::DepthWrite;
+						part.renderFlags &= ~MeshRenderFlags::DepthWrite;
 						continue;
 					}
 					if (v == "noVelocityWrite")
 					{
-						part.renderFlags &= ~MeshImportRenderFlags::VelocityWrite;
+						part.renderFlags &= ~MeshRenderFlags::VelocityWrite;
 						continue;
 					}
 					if (v == "noLighting")
 					{
-						part.renderFlags &= ~MeshImportRenderFlags::Lighting;
+						part.renderFlags &= ~MeshRenderFlags::Lighting;
 						continue;
 					}
 					if (v == "noShadowCast")
 					{
-						part.renderFlags &= ~MeshImportRenderFlags::ShadowCast;
+						part.renderFlags &= ~MeshRenderFlags::ShadowCast;
 						continue;
 					}
 					CAGE_LOG_THROW(Stringizer() + "specified flag: '" + v + "'");
@@ -1134,11 +1134,11 @@ namespace cage
 				{
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to opacity");
-					part.renderFlags |= MeshImportRenderFlags::Translucent;
+					part.renderFlags |= MeshRenderFlags::Translucent;
 				}
 
 				// albedo
-				if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshImportTextureType::Albedo>(mat, textures))
+				if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
 				{
 					int flg = 0;
 					mat->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
@@ -1146,7 +1146,7 @@ namespace cage
 					{
 						if (config.verbose)
 							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to texture flag");
-						part.renderFlags |= MeshImportRenderFlags::Translucent;
+						part.renderFlags |= MeshRenderFlags::Translucent;
 					}
 				}
 				else
@@ -1160,7 +1160,7 @@ namespace cage
 					part.material.albedoMult[3] = opacity;
 
 				// special
-				if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshImportTextureType::Special>(mat, textures))
+				if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
 				{
 					aiColor3D spec = aiColor3D(0);
 					mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
@@ -1180,15 +1180,15 @@ namespace cage
 				}
 
 				// normal map
-				loadTextureAssimp<aiTextureType_HEIGHT, MeshImportTextureType::Normal>(mat, textures);
-				loadTextureAssimp<aiTextureType_NORMALS, MeshImportTextureType::Normal>(mat, textures);
+				loadTextureAssimp<aiTextureType_HEIGHT, MeshTextureType::Normal>(mat, textures);
+				loadTextureAssimp<aiTextureType_NORMALS, MeshTextureType::Normal>(mat, textures);
 
 				// two sided
 				{
 					int twosided = false;
 					mat->Get(AI_MATKEY_TWOSIDED, twosided);
 					if (twosided)
-						part.renderFlags |= MeshImportRenderFlags::TwoSided;
+						part.renderFlags |= MeshRenderFlags::TwoSided;
 				}
 
 				part.textures = std::move(textures);
@@ -1274,7 +1274,7 @@ namespace cage
 					p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
 					p.mesh = context.mesh(i);
 					p.boundingBox = p.mesh->boundingBox();
-					p.renderFlags = MeshImportRenderFlags::DepthTest | MeshImportRenderFlags::DepthWrite | MeshImportRenderFlags::VelocityWrite | MeshImportRenderFlags::Lighting | MeshImportRenderFlags::ShadowCast;
+					p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 					context.loadMaterial(msh->mMaterialIndex, p);
 					parts.push_back(std::move(p));
 				}

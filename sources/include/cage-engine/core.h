@@ -136,17 +136,6 @@ namespace cage
 
 	// enum declarations
 
-	enum class ModelRenderFlags : uint32
-	{
-		None = 0,
-		Translucent = 1 << 1,
-		TwoSided = 1 << 2,
-		DepthTest = 1 << 3,
-		DepthWrite = 1 << 4,
-		VelocityWrite = 1 << 5,
-		ShadowCast = 1 << 6,
-		Lighting = 1 << 7,
-	};
 	enum class TextAlignEnum : uint32
 	{
 		Left,
@@ -178,7 +167,6 @@ namespace cage
 	GCHL_ENUM_BITS(FontFlags);
 	GCHL_ENUM_BITS(SoundFlags);
 	GCHL_ENUM_BITS(WindowFlags);
-	GCHL_ENUM_BITS(ModelRenderFlags);
 	GCHL_ENUM_BITS(ModifiersFlags);
 	GCHL_ENUM_BITS(MouseButtonsFlags);
 

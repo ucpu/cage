@@ -118,19 +118,19 @@ namespace
 		}
 	}
 
-	void printMaterial(const ModelHeader &dsm, const ModelHeader::MaterialData &mat)
+	void printMaterial(const ModelHeader &dsm, const MeshMaterial &mat)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoBase: " + mat.albedoBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & ModelRenderFlags::Translucent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & ModelRenderFlags::Lighting));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & ModelRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & ModelRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & ModelRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & ModelRenderFlags::VelocityWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & ModelRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & MeshRenderFlags::VelocityWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
@@ -139,7 +139,7 @@ namespace
 		}
 	}
 
-	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const ModelHeader::MaterialData &mat)
+	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshMaterial &mat)
 	{
 		{
 			uint32 texCount = 0;
@@ -211,8 +211,8 @@ void processModel()
 
 	ModelHeader dsm;
 	detail::memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(ModelHeader::MaterialData);
-	dsm.renderFlags = (ModelRenderFlags)part.renderFlags;
+	dsm.materialSize = sizeof(MeshMaterial);
+	dsm.renderFlags = part.renderFlags;
 	dsm.box = part.boundingBox;
 	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
 
@@ -223,21 +223,19 @@ void processModel()
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{
-		case MeshImportTextureType::Albedo:
+		case MeshTextureType::Albedo:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
 			break;
-		case MeshImportTextureType::Special:
+		case MeshTextureType::Special:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
 			break;
-		case MeshImportTextureType::Normal:
+		case MeshTextureType::Normal:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
 			break;
 		}
 	}
 
-	ModelHeader::MaterialData mat;
-	static_assert(sizeof(mat) == sizeof(MeshImportMaterial));
-	detail::memcpy(&mat, &part.material, sizeof(mat));
+	const MeshMaterial &mat = part.material;
 	printMaterial(dsm, mat);
 	validateFlags(dsm, flags, mat);
 

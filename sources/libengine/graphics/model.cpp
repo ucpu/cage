@@ -17,7 +17,7 @@ namespace cage
 	{
 		class ModelImpl : public Model
 		{
-			static constexpr ModelRenderFlags defaultFlags = ModelRenderFlags::DepthTest | ModelRenderFlags::DepthWrite | ModelRenderFlags::VelocityWrite | ModelRenderFlags::Lighting | ModelRenderFlags::ShadowCast;
+			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
 		public:
 			Aabb box = Aabb::Universe();
