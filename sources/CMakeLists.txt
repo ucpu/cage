@@ -63,6 +63,11 @@ cage_target_api_macro(cage-engine CAGE_ENGINE_API)
 cage_ide_category(cage-engine cage/libs)
 cage_ide_sort_files(cage-engine)
 
+file(GLOB_RECURSE cage-data-sources "../data/cage/*")
+add_library(cage-data INTERFACE ${cage-data-sources})
+cage_ide_category(cage-data cage/libs)
+cage_ide_sort_files(cage-data "${CMAKE_CURRENT_LIST_DIR}/../data/cage")
+
 file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
 add_library(cage-simple STATIC ${cage-simple-sources})
 target_include_directories(cage-simple PUBLIC include)
