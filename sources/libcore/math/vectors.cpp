@@ -232,7 +232,7 @@ namespace cage
 		const Real qy = q[1];
 		const Real qz = q[2];
 		const Real qw = q[3];
-		return asin(-2 * (qx * qz - qw * qy));
+		return asin(clamp(-2 * (qx * qz - qw * qy), -1, 1));
 	}
 
 	Rads roll(const Quat &q)
