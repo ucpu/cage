@@ -15,14 +15,17 @@ namespace cage
 			static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
 			return defineComponent_(detail::typeIndex<T>(), &prototype);
 		}
+		EntityComponent *defineComponent(EntityComponent *source);
 
-		EntityComponent *componentByDefinition(uint32 index) const;
-		EntityComponent *componentByType(uint32 index) const;
+		EntityComponent *componentByDefinition(uint32 definitionIndex) const;
+		EntityComponent *componentByType(uint32 typeIndex) const;
+		Holder<PointerRange<EntityComponent *>> componentsByType(uint32 typeIndex) const;
 		template<class T> EntityComponent *component() const { return componentByType(detail::typeIndex<T>()); }
+		Holder<PointerRange<EntityComponent *>> components() const;
 		uint32 componentsCount() const;
 
 		EntityGroup *defineGroup();
-		EntityGroup *groupByDefinition(uint32 index) const;
+		EntityGroup *groupByDefinition(uint32 definitionIndex) const;
 		uint32 groupsCount() const;
 		const EntityGroup *group() const; // all entities in this manager
 

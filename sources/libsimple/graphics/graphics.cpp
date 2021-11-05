@@ -8,7 +8,8 @@ namespace cage
 	Graphics::Graphics(const EngineCreateConfig &config)
 	{
 		{
-			SwapBufferGuardCreateConfig cfg(3);
+			SwapBufferGuardCreateConfig cfg;
+			cfg.buffersCount = 3;
 			cfg.repeatedReads = true;
 			emitBuffersGuard = newSwapBufferGuard(cfg);
 		}

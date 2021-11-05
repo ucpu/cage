@@ -89,7 +89,8 @@ namespace cage
 
 			explicit SoundPrepareImpl(const EngineCreateConfig &config)
 			{
-				SwapBufferGuardCreateConfig cfg(3);
+				SwapBufferGuardCreateConfig cfg;
+				cfg.buffersCount = 3;
 				cfg.repeatedReads = true;
 				swapController = newSwapBufferGuard(cfg);
 			}

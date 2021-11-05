@@ -82,7 +82,8 @@ namespace
 		{
 			CAGE_TESTCASE(Stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
-			SwapBufferGuardCreateConfig cfg(BuffersCount);
+			SwapBufferGuardCreateConfig cfg;
+			cfg.buffersCount = BuffersCount;
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);

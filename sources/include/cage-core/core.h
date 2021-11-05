@@ -127,6 +127,7 @@ namespace cage
 	class EntityComponent;
 	class Entity;
 	class EntityGroup;
+	struct EntitiesCopyConfig;
 	template<class> struct EventListener;
 	template<class> struct EventDispatcher;
 	struct FileMode;

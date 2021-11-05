@@ -56,6 +56,7 @@ void testCollisionStructure();
 void testEntities();
 void testEntitiesSerialization();
 void testEntitiesVisitor();
+void testEntitiesCopy();
 void testVariableInterpolatingBuffer();
 void testVariableSmoothingBuffer();
 void testCopyAndMove();
@@ -128,6 +129,7 @@ int main()
 	testEntities();
 	testEntitiesSerialization();
 	testEntitiesVisitor();
+	testEntitiesCopy();
 	testVariableInterpolatingBuffer();
 	testVariableSmoothingBuffer();
 	testCopyAndMove();
