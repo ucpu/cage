@@ -1,5 +1,6 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
+#include <cage-core/entitiesVisitor.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/blockContainer.h>
 #include <cage-core/concurrent.h>
@@ -137,49 +138,49 @@ namespace cage
 
 		struct PrepRender : public PrepTransform
 		{
-			const EmitRender *emit = nullptr;
+			Entity *ent = nullptr;
 			RenderComponent render;
 			Holder<const RenderObject> object;
 			Holder<PrepSkeleton> skeletalAnimation;
 			Holder<PrepTexture> textureAnimation;
 			Vec3 center;
 
-			PrepRender(const EmitRender *e) : emit(e)
+			PrepRender(Entity *ent) : ent(ent)
 			{}
 		};
 
 		struct PrepText : public PrepTransform
 		{
-			const EmitText *emit = nullptr;
+			Entity *ent = nullptr;
 			TextComponent text;
 			Holder<const Font> font;
 			std::vector<uint32> glyphs;
 			FontFormat format;
 			Vec3 color;
 
-			PrepText(const EmitText *e) : emit(e)
+			PrepText(Entity *ent) : ent(ent)
 			{}
 		};
 
 		struct PrepLight : public PrepTransform
 		{
-			const EmitLight *emit = nullptr;
+			Entity *ent = nullptr;
 			LightComponent light;
 			Mat4 mMat; // light model matrix
 			Aabb shape; // world-space area of influence - used for culling
 
-			PrepLight(const EmitLight *e) : emit(e)
+			PrepLight(Entity *ent) : ent(ent)
 			{}
 		};
 
 		struct PrepCamera : public PrepTransform
 		{
-			const EmitCamera *emit = nullptr;
+			Entity *ent = nullptr;
 			CameraComponent camera;
 			Holder<Texture> target;
 			Vec3 center;
 
-			PrepCamera(const EmitCamera *e) : emit(e)
+			PrepCamera(Entity *ent) : ent(ent)
 			{}
 		};
 
@@ -358,7 +359,7 @@ namespace cage
 
 			void updateCommonValues(PrepRender &pr)
 			{
-				pr.render = pr.emit->render;
+				pr.render = pr.ent->value<RenderComponent>();
 				if (!pr.render.object)
 					return;
 
@@ -376,17 +377,17 @@ namespace cage
 				pr.center = Vec3(pr.model * Vec4(0, 0, 0, 1));
 
 				Holder<PrepTexture> &pt = pr.textureAnimation;
-				if (pr.emit->textureAnimation)
+				if (pr.ent->has<TextureAnimationComponent>())
 				{
 					pt = systemMemory().createHolder<PrepTexture>();
-					pt->params = *pr.emit->textureAnimation;
+					pt->params = pr.ent->value<TextureAnimationComponent>();
 				}
 
 				Holder<PrepSkeleton> &ps = pr.skeletalAnimation;
-				if (pr.emit->skeletalAnimation)
+				if (pr.ent->has<SkeletalAnimationComponent>())
 				{
 					ps = systemMemory().createHolder<PrepSkeleton>();
-					ps->params = *pr.emit->skeletalAnimation;
+					ps->params = pr.ent->value<SkeletalAnimationComponent>();
 				}
 
 				if (pr.object)
@@ -463,7 +464,7 @@ namespace cage
 
 			void updateCommonValues(PrepText &pt)
 			{
-				pt.text = pt.emit->text;
+				pt.text = pt.ent->value<TextComponent>();
 
 				if (!pt.text.font)
 					pt.text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
@@ -515,7 +516,7 @@ namespace cage
 
 			void updateCommonValues(PrepLight &pl)
 			{
-				pl.light = pl.emit->light;
+				pl.light = pl.ent->value<LightComponent>();
 
 				switch (pl.light.lightType)
 				{
@@ -540,7 +541,7 @@ namespace cage
 
 			void updateCommonValues(PrepCamera &pc)
 			{
-				pc.camera = pc.emit->camera;
+				pc.camera = pc.ent->value<CameraComponent>();
 				pc.center = Vec3(pc.model * Vec4(0, 0, 0, 1));
 
 				if (confNoAmbientOcclusion)
@@ -554,18 +555,22 @@ namespace cage
 					pc.target = Holder<Texture>(pc.camera.target, nullptr);
 			}
 
-			template<class E, class P>
-			void copyEmitToPrep(const std::vector<E> &es, std::vector<P> &ps)
+			template<class P>
+			void copyEmitToPrep(std::vector<P> &ps)
 			{
-				ps.reserve(es.size());
-				for (const auto &it_ : es)
+				EntityComponent *hc = emit.scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
+				EntityComponent *cc = emit.scene->componentsByType(detail::typeIndex<TransformComponent>())[0];
+				for (auto &it : ps)
 				{
-					ps.emplace_back(&it_);
-					auto &it = ps.back();
-					const Transform &a = it.emit->history;
-					const Transform &b = it.emit->current;
-					it.model = Mat4(interpolate(a, b, interFactor));
-					it.modelPrev = Mat4(interpolate(a, b, interFactor - 0.2));
+					const Transform &b = it.ent->template value<TransformComponent>(cc);
+					if (it.ent->has(hc))
+					{
+						const Transform &a = it.ent->template value<TransformComponent>(hc);
+						it.model = Mat4(interpolate(a, b, interFactor));
+						it.modelPrev = Mat4(interpolate(a, b, interFactor - 0.2));
+					}
+					else
+						it.model = it.modelPrev = Mat4(b);
 					updateCommonValues(it);
 				}
 			}
@@ -573,10 +578,26 @@ namespace cage
 			void copyEmitToPrep()
 			{
 				ProfilingScope profiling("copy emit to prep", "graphics");
-				copyEmitToPrep(emit.renders, renders);
-				copyEmitToPrep(emit.texts, texts);
-				copyEmitToPrep(emit.lights, lights);
-				copyEmitToPrep(emit.cameras, cameras);
+
+				entitiesVisitor([&](Entity *e, const TransformComponent &tr, const RenderComponent &re) {
+					renders.push_back(e);
+				}, +emit.scene, false);
+				copyEmitToPrep(renders);
+
+				entitiesVisitor([&](Entity *e, const TransformComponent &tr, const TextComponent &te) {
+					texts.push_back(e);
+				}, +emit.scene, false);
+				copyEmitToPrep(texts);
+				
+				entitiesVisitor([&](Entity *e, const TransformComponent &tr, const LightComponent &li) {
+					lights.push_back(e);
+				}, +emit.scene, false);
+				copyEmitToPrep(lights);
+				
+				entitiesVisitor([&](Entity *e, const TransformComponent &tr, const CameraComponent &cam) {
+					cameras.push_back(e);
+				}, +emit.scene, false);
+				copyEmitToPrep(cameras);
 			}
 
 			void addModels(const CommonRenderPass &pass, const PrepRender &pr, Holder<Model> mo, RendersInstances &instances)
@@ -732,7 +753,7 @@ namespace cage
 				animateSkeleton(+pr.skeletalAnimation->rig, +pr.skeletalAnimation->animation, pr.skeletalAnimation->coefficient, tmpArmature);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
-					PrepRender r(pr.emit);
+					PrepRender r(pr.ent);
 					r.model = pr.model * tmpArmature[i];
 					r.modelPrev = pr.modelPrev * tmpArmature[i];
 					r.render = pr.render;
@@ -806,7 +827,7 @@ namespace cage
 					ul.mvpMat = viewProj * pl.mMat;
 				ul.color = Vec4(colorGammaToLinear(pl.light.color) * pl.light.intensity, cos(pl.light.spotAngle * 0.5));
 				ul.attenuation = Vec4(pl.light.attenuation, pl.light.spotExponent);
-				ul.direction = Vec4(normalize(Vec3(pl.model * Vec4(0, 0, -1, 0))), shadowmap ? pl.emit->shadowmap->normalOffsetScale : 0);
+				ul.direction = Vec4(normalize(Vec3(pl.model * Vec4(0, 0, -1, 0))), shadowmap ? pl.ent->value<ShadowmapComponent>().normalOffsetScale : 0);
 				ul.position = pl.model * Vec4(0, 0, 0, 1);
 
 				if (shadowmap)
@@ -871,7 +892,7 @@ namespace cage
 				ProfilingScope profiling("initialize shadowmap pass", "graphics");
 
 				const LightComponent &lc = pass.light->light;
-				const ShadowmapComponent &sc = *pass.light->emit->shadowmap;
+				const ShadowmapComponent &sc = pass.light->ent->value<ShadowmapComponent>();
 
 				pass.resolution = Vec2i(sc.resolution);
 				pass.view = pass.viewPrev = inverse(pass.light->model);
@@ -957,7 +978,7 @@ namespace cage
 						continue;
 
 					ShadowmapPass *shadowmap = nullptr;
-					if (pl.emit->shadowmap)
+					if (pl.ent->has<ShadowmapComponent>())
 					{
 						Holder<ShadowmapPass> sp = systemMemory().createHolder<ShadowmapPass>();
 						sp->light = &pl;
@@ -1094,7 +1115,7 @@ namespace cage
 
 				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
 
-				const String texName = Stringizer() + "shadowmap " + pass.light->emit->entityId;
+				const String texName = Stringizer() + "shadowmap " + pass.light->ent->name(); // should use stable pointer instead
 				if (pass.light->light.lightType == LightTypeEnum::Point)
 				{
 					pass.shadowTexture = provisionalData->textureCube(texName);
@@ -1368,7 +1389,7 @@ namespace cage
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
-						cfg.cameraId = Stringizer() + pass.camera->emit->entityId;
+						cfg.cameraId = Stringizer() + pass.camera->ent->name(); // should use stable pointer instead
 						cfg.inColor = texSource;
 						screenSpaceEyeAdaptationPrepare(cfg);
 					}
@@ -1496,7 +1517,7 @@ namespace cage
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = params.eyeAdaptation;
-						cfg.cameraId = Stringizer() + pass.camera->emit->entityId;
+						cfg.cameraId = Stringizer() + pass.camera->ent->name(); // should use stable pointer instead
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
 						screenSpaceEyeAdaptationApply(cfg);

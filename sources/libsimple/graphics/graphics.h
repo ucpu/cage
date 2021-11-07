@@ -9,41 +9,9 @@
 
 namespace cage
 {
-	struct EmitTransform
-	{
-		TransformComponent current, history;
-		uintPtr entityId = 0;
-	};
-
-	struct EmitRender : public EmitTransform
-	{
-		RenderComponent render;
-		Holder<SkeletalAnimationComponent> skeletalAnimation;
-		Holder<TextureAnimationComponent> textureAnimation;
-	};
-
-	struct EmitText : public EmitTransform
-	{
-		TextComponent text;
-	};
-
-	struct EmitLight : public EmitTransform
-	{
-		LightComponent light;
-		Holder<ShadowmapComponent> shadowmap;
-	};
-
-	struct EmitCamera : public EmitTransform
-	{
-		CameraComponent camera;
-	};
-
 	struct EmitBuffer : private Immovable
 	{
-		std::vector<EmitRender> renders;
-		std::vector<EmitText> texts;
-		std::vector<EmitLight> lights;
-		std::vector<EmitCamera> cameras;
+		Holder<EntityManager> scene = newEntityManager();
 		uint64 time = 0;
 	};
 
