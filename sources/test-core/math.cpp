@@ -870,6 +870,13 @@ namespace
 				test(a, b);
 			}
 		}
+
+		{
+			CAGE_TESTCASE("vec3 *= quat");
+			Vec3 a = Vec3(3, 4, 5);
+			a *= Quat();
+			CAGE_TEST(a == Vec3(3, 4, 5));
+		}
 	}
 
 	void testMathMat3()
@@ -888,6 +895,13 @@ namespace
 				test(m * Vec3(0, 0, -1), Vec3(-1, 0, 0));
 				test(m * Vec3(0, 1, 0), Vec3(0, 1, 0));
 			}
+		}
+
+		{
+			CAGE_TESTCASE("vec3 *= mat3");
+			Vec3 a = Vec3(3, 4, 5);
+			a *= Mat3(2, 0, 0, 0, 2, 0, 0, 0, 2);
+			CAGE_TEST(a == Vec3(6, 8, 10));
 		}
 	}
 
@@ -946,6 +960,13 @@ namespace
 			Mat4 b = inverse(a);
 			constexpr Mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
 			test(b, c);
+		}
+
+		{
+			CAGE_TESTCASE("vec4 *= mat4");
+			Vec4 a = Vec4(2, 3, 4, 5);
+			a *= Mat4(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2);
+			CAGE_TEST(a == Vec4(4, 6, 8, 10));
 		}
 	}
 
@@ -1023,7 +1044,6 @@ namespace
 				Mat4 m1 = inverse(Mat4(t));
 				Mat4 m2 = Mat4(inverse(t));
 				test(m1, m2);
-				round = round;
 			}
 		}
 	}

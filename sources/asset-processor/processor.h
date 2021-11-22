@@ -45,7 +45,6 @@ void processRaw();
 
 int processAnalyze();
 void analyzeTexture();
-void analyzeAssimp();
 void analyzeFont();
 void analyzeSound();
 

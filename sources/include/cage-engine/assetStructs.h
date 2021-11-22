@@ -2,6 +2,7 @@
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
 #include <cage-core/geometry.h>
+#include <cage-core/meshMaterial.h>
 
 #include "core.h"
 
@@ -54,21 +55,12 @@ namespace cage
 	{
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
-		uint32 materialSize;
+		uint32 materialSize; // bytes
 		uint32 skeletonBones;
-		ModelRenderFlags renderFlags;
-
-		struct CAGE_ENGINE_API MaterialData
-		{
-			// albedo rgb is linear, and NOT alpha-premultiplied
-			Vec4 albedoBase = Vec4(0);
-			Vec4 specialBase = Vec4(0);
-			Vec4 albedoMult = Vec4(1);
-			Vec4 specialMult = Vec4(1);
-		};
+		MeshRenderFlags renderFlags;
 
 		// follows:
-		// material (may or may not be the MaterialData)
+		// material (may or may not be the MeshMaterial)
 		// serialized mesh
 	};
 
@@ -87,7 +79,7 @@ namespace cage
 		Real worldSize;
 		Real pixelsSize;
 		uint32 lodsCount;
-		uint32 modelesCount;
+		uint32 modelsCount;
 
 		// follows:
 		// array of thresholds, each float

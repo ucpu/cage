@@ -35,7 +35,7 @@ namespace
 		mc->updateByPosition(function);
 		
 		Holder<Mesh> msh = mc->makeMesh();
-		msh->exportObjFile({}, Stringizer() + "meshes/sdf/" + name + ".obj");
+		msh->exportObjFile(Stringizer() + "meshes/sdf/" + name + ".obj");
 	}
 }
 

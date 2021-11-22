@@ -7,8 +7,8 @@ namespace cage
 {
 	namespace
 	{
-		class DrawMark;
-		class ReadMark;
+		class DrawMark {};
+		class ReadMark {};
 
 		class FrameBufferImpl : public FrameBuffer
 		{

@@ -1,9 +1,10 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/ini.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/process.h>
-#include <cage-core/threadPool.h>
+#include <cage-core/config.h>
+#include <cage-core/tasks.h>
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
+#include <cage-core/ini.h>
 
 #include "database.h"
 
@@ -15,7 +16,7 @@
 namespace
 {
 	const String databaseBegin = "cage-asset-database-begin";
-	const String databaseVersion = "9";
+	const String databaseVersion = "10";
 	const String databaseEnd = "cage-asset-database-end";
 
 	bool verdictValue = false;
@@ -23,19 +24,6 @@ namespace
 	struct Databank
 	{
 		String name;
-
-		explicit Databank(const String &s = "") : name(s)
-		{};
-
-		void load(File *f)
-		{
-			read(f, name);
-		}
-
-		void save(File *f) const
-		{
-			write(f, name);
-		}
 
 		bool operator < (const Databank &other) const
 		{
@@ -207,7 +195,6 @@ namespace
 
 	void processAsset(Asset &ass)
 	{
-		detail::OverrideBreakpoint overrideBreakpoint;
 		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
 		ass.corrupted = true;
 		ass.needNotify = true;
@@ -216,6 +203,7 @@ namespace
 		ass.aliasName = "";
 		Scheme *scheme = schemes.retrieve(ass.scheme);
 		CAGE_ASSERT(scheme);
+		detail::OverrideBreakpoint overrideBreakpoint;
 		try
 		{
 			if (!scheme->applyOnAsset(ass))
@@ -321,21 +309,24 @@ namespace
 		if (!pathIsFile(configPathDatabase))
 			return;
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading database cache: '" + (String)configPathDatabase + "'");
-		Holder<File> f = newFile(configPathDatabase, FileMode(true, false));
+		const auto buf = readFile(configPathDatabase)->readAll();
+		Deserializer des(buf);
 		String b;
-		if (!f->readLine(b) || b != databaseBegin)
+		des >> b;
+		if (b != databaseBegin)
 			CAGE_THROW_ERROR(Exception, "invalid file format");
-		if (!f->readLine(b) || b != databaseVersion)
+		des >> b;
+		if (b != databaseVersion)
 		{
 			CAGE_LOG(SeverityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
-		f->read(bufferView<char>(timestamp));
-		corruptedDatabanks.load(f.get());
-		assets.load(f.get());
-		if (!f->readLine(b) || b != databaseEnd)
+		des >> timestamp;
+		des >> corruptedDatabanks;
+		des >> assets;
+		des >> b;
+		if (b != databaseEnd)
 			CAGE_THROW_ERROR(Exception, "wrong file end");
-		f->close();
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loaded " + assets.size() + " asset entries");
 	}
 
@@ -345,14 +336,15 @@ namespace
 		if (!((String)configPathDatabase).empty())
 		{
 			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saving database cache: '" + (String)configPathDatabase + "'");
-			Holder<File> f = newFile(configPathDatabase, FileMode(false, true));
-			f->writeLine(databaseBegin);
-			f->writeLine(databaseVersion);
-			f->write(bufferView(timestamp));
-			corruptedDatabanks.save(f.get());
-			assets.save(f.get());
-			f->writeLine(databaseEnd);
-			f->close();
+			MemoryBuffer buf;
+			Serializer ser(buf);
+			ser << databaseBegin;
+			ser << databaseVersion;
+			ser << timestamp;
+			ser << corruptedDatabanks;
+			ser << assets;
+			ser << databaseEnd;
+			writeFile(configPathDatabase)->write(buf);
 			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saved " + assets.size() + " asset entries");
 		}
 
@@ -423,7 +415,7 @@ namespace
 		return false;
 	}
 
-	typedef std::map<String, uint64, StringComparatorFast> FilesMap;
+	using FilesMap = std::map<String, uint64, StringComparatorFast>;
 	FilesMap files;
 
 	void findFiles(const String &path)
@@ -488,51 +480,22 @@ namespace
 		}
 	}
 
-	HolderSet<Asset>::Iterator itg;
-	Holder<Mutex> mut;
-	Holder<ThreadPool> threads;
-
-	void threadEntry(uint32, uint32)
+	void dispatchAssetProcessing(Asset *const &ass)
 	{
-		while (true)
+		try
 		{
-			Asset *ass = nullptr;
-			{
-				ScopeLock m(mut);
-				if (itg != assets.end())
-					ass = const_cast<Asset*>(itg++->get());
-			}
-			if (!ass)
-				break;
-			if (ass->corrupted)
-			{
-				try
-				{
-					processAsset(*ass);
-				}
-				catch (const cage::Exception &)
-				{
-					// do nothing
-				}
-				catch (...)
-				{
-					detail::logCurrentCaughtException();
-					CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
-				}
-			}
+			processAsset(*ass);
+		}
+		catch (const cage::Exception &)
+		{
+			// do nothing
+		}
+		catch (...)
+		{
+			detail::logCurrentCaughtException();
+			CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 		}
 	}
-
-	static struct ThreadsInitializer
-	{
-	public:
-		ThreadsInitializer()
-		{
-			mut = newMutex();
-			threads = newThreadPool();
-			threads->function.bind<&threadEntry>();
-		}
-	} threadsInitializerInstance;
 
 	void checkAssets()
 	{
@@ -554,16 +517,16 @@ namespace
 			Asset &ass = **asIt;
 
 			// check for deleted, modified or corrupted databank
-			if (files.find(ass.databank) == files.end() || corruptedDbsCopy.find(ass.databank) != corruptedDbsCopy.end() || files[ass.databank] > timestamp)
+			if (files.count(ass.databank) == 0 || corruptedDbsCopy.count(ass.databank) != 0 || files[ass.databank] > timestamp)
 			{
-				asIt = assets.erase(ass.name);
+				asIt = assets.erase(asIt);
 				continue;
 			}
 
 			// check for deleted or modified files
 			for (const String &f : ass.files)
 			{
-				if (files.find(f) == files.end() || files[f] > timestamp)
+				if (files.count(f) == 0 || files[f] > timestamp)
 					ass.corrupted = true;
 			}
 
@@ -577,12 +540,12 @@ namespace
 			newestFile = std::max(newestFile, f.second);
 			if (isNameDatabank(f.first))
 			{
-				bool wasCorrupted = corruptedDbsCopy.find(f.first) != corruptedDbsCopy.end();
+				const bool wasCorrupted = corruptedDbsCopy.find(f.first) != corruptedDbsCopy.end();
 				if (f.second > timestamp || wasCorrupted)
 				{
-					bool corrupted = !parseDatabank(f.first);
+					const bool corrupted = !parseDatabank(f.first);
 					if (corrupted)
-						corruptedDatabanks.insert(Databank(f.first));
+						corruptedDatabanks.insert(Databank{ f.first });
 					countBadDatabanks += corrupted;
 				}
 			}
@@ -593,9 +556,12 @@ namespace
 			outputHashes.insert(it->outputPath());
 
 		{ // reprocess assets
-			itg = assets.begin();
-			threads->run();
-			CAGE_ASSERT(itg == assets.end());
+			std::vector<Asset *> asses;
+			asses.reserve(assets.size());
+			for (const auto &it : assets)
+				if (it->corrupted)
+					asses.push_back(+it);
+			tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<&dispatchAssetProcessing>(), asses);
 		}
 
 		for (const auto &it : assets)

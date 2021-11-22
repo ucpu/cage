@@ -66,7 +66,7 @@ namespace cage
 		uint32 buffersCount = 0;
 		bool repeatedReads = false; // allow to read last buffer again (instead of failing) if the producer cannot keep up - this can lead to duplicated data, but it may safe some unnecessary copies
 		bool repeatedWrites = false; // allow to override last write buffer (instead of failing) if the consumer cannot keep up - this allows to lose some data, but the consumer will get the most up-to-date data
-		SwapBufferGuardCreateConfig(uint32 buffersCount);
+		//SwapBufferGuardCreateConfig(uint32 buffersCount);
 	};
 
 	CAGE_CORE_API Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config);

@@ -207,13 +207,6 @@ namespace cage
 			return it->second;
 		}
 
-		uint32 contextTypeIndexInitializer()
-		{
-			ScopeLock lock(assertContext().mutex);
-			static uint32 index = 0;
-			return index++;
-		}
-
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
@@ -237,6 +230,11 @@ namespace cage
 
 	namespace detail
 	{
+		void initializeOpengl()
+		{
+			gladLoadGL();
+		}
+
 		void purgeGlShaderCache()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS

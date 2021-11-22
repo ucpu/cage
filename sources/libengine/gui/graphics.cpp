@@ -232,6 +232,6 @@ namespace cage
 		q->blending(false);
 		q->scissors(false);
 
-		return std::move(q);
+		return q;
 	}
 }

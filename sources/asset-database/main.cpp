@@ -1,4 +1,5 @@
 #include <cage-core/logger.h>
+#include <cage-core/config.h>
 
 #include "database.h"
 

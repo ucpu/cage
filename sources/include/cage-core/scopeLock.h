@@ -26,22 +26,26 @@ namespace cage
 
 		[[nodiscard]] explicit ScopeLock(T *ptr, TryLockTag) : ptr(ptr)
 		{
+			CAGE_ASSERT(ptr);
 			if (!ptr->tryLock())
 				this->ptr = nullptr;
 		}
 
 		[[nodiscard]] explicit ScopeLock(T *ptr, ReadLockTag) : ptr(ptr)
 		{
+			CAGE_ASSERT(ptr);
 			ptr->readLock();
 		}
 
 		[[nodiscard]] explicit ScopeLock(T *ptr, WriteLockTag) : ptr(ptr)
 		{
+			CAGE_ASSERT(ptr);
 			ptr->writeLock();
 		}
 
 		[[nodiscard]] explicit ScopeLock(T *ptr) : ptr(ptr)
 		{
+			CAGE_ASSERT(ptr);
 			ptr->lock();
 		}
 

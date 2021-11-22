@@ -3,6 +3,7 @@
 #include <cage-core/memoryUtils.h> // addToAlign
 
 #include <cage-engine/shaderConventions.h>
+#include <cage-engine/uniformBuffer.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/model.h>
@@ -16,7 +17,7 @@ namespace cage
 	{
 		class ModelImpl : public Model
 		{
-			static constexpr ModelRenderFlags defaultFlags = ModelRenderFlags::DepthTest | ModelRenderFlags::DepthWrite | ModelRenderFlags::VelocityWrite | ModelRenderFlags::Lighting | ModelRenderFlags::ShadowCast;
+			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
 		public:
 			Aabb box = Aabb::Universe();

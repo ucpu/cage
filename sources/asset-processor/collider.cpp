@@ -1,46 +1,28 @@
+#include <cage-core/mesh.h>
 #include <cage-core/collider.h>
+#include <cage-core/meshImport.h>
 
-#include "utility/assimp.h"
+#include "processor.h"
+
+MeshImportConfig meshImportConfig(bool allowAxes);
+void meshImportNotifyUsedFiles(const MeshImportResult &result);
+uint32 meshImportSelectIndex(const MeshImportResult &result);
 
 void processCollider()
 {
-	Holder<AssimpContext> context = newAssimpContext(0, 0);
-	const aiScene *scene = context->getScene();
-	const aiMesh *am = scene->mMeshes[context->selectModel()];
+	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig(true));
+	meshImportNotifyUsedFiles(result);
+	const uint32 partIndex = meshImportSelectIndex(result);
+	const MeshImportPart &part = result.parts[partIndex];
 
-	switch (am->mPrimitiveTypes)
-	{
-	case aiPrimitiveType_TRIANGLE: break;
-	default: CAGE_THROW_ERROR(Exception, "collider works with triangles only");
-	}
-
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded triangles: " + am->mNumFaces);
+	if (part.mesh->type() != MeshTypeEnum::Triangles)
+		CAGE_THROW_ERROR(Exception, "collider works with triangles only");
 
 	Holder<Collider> collider = newCollider();
-	Mat3 axesScale = axesScaleMatrix();
-	for (uint32 i = 0; i < am->mNumFaces; i++)
-	{
-		Triangle tri;
-		tri = Triangle(Vec3(), Vec3(), Vec3());
-		for (uint32 j = 0; j < 3; j++)
-		{
-			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
-			tri[j] = axesScale * conv(am->mVertices[idx]);
-		}
-		if (!tri.degenerated())
-			collider->addTriangle(tri);
-	}
-
-	{ // count degenerated
-		uint32 deg = numeric_cast<uint32>(am->mNumFaces - collider->triangles().size());
-		if (deg)
-		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "degenerated triangles: " + deg);
-		}
-	}
-
+	collider->importMesh(+part.mesh);
 	collider->rebuild();
 
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "triangles: " + collider->triangles().size());
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "aabb: " + collider->box());
 
 	Holder<PointerRange<char>> buff = collider->exportBuffer();

@@ -1,15 +1,87 @@
-#include <cage-core/hashString.h>
-#include <cage-core/ini.h>
-#include <cage-core/color.h>
 #include <cage-core/mesh.h>
+#include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
+#include <cage-core/hashString.h>
 #include <cage-engine/shaderConventions.h>
 
-#include "utility/assimp.h"
+#include "processor.h"
 
-#include <vector>
+#include <set>
 
-Vec2 convertSpecularToSpecial(const Vec3 &spec);
+MeshImportConfig meshImportConfig(bool allowAxes)
+{
+	MeshImportConfig config;
+	config.rootPath = inputDirectory;
+	if (allowAxes)
+	{
+		config.axesSwizzle = toLower(properties("axes"));
+		config.scale = toFloat(properties("scale"));
+	}
+	config.bakeModel = toBool(properties("bakeModel"));
+	config.verbose = true;
+	return config;
+}
+
+void meshImportNotifyUsedFiles(const MeshImportResult &result)
+{
+	for (const String &p : result.paths)
+		writeLine(cage::String("use = ") + pathToRel(p, inputDirectory));
+}
+
+uint32 meshImportSelectIndex(const MeshImportResult &result)
+{
+	if (result.parts.size() == 1 && inputSpec.empty())
+	{
+		CAGE_LOG(SeverityEnum::Note, "selectModel", "using the first model, because it is the only model available");
+		return 0;
+	}
+
+	if (isDigitsOnly(inputSpec) && !inputSpec.empty())
+	{
+		const uint32 n = toUint32(inputSpec);
+		if (n < result.parts.size())
+		{
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "using model index " + n + ", because the input specifier is numeric");
+			return n;
+		}
+		else
+			CAGE_THROW_ERROR(Exception, "the input specifier is numeric, but the index is out of range");
+	}
+
+	std::set<uint32> candidates;
+	for (uint32 modelIndex = 0; modelIndex < result.parts.size(); modelIndex++)
+	{
+		const String objName = result.parts[modelIndex].objectName;
+		if (objName == inputSpec)
+		{
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
+		}
+		const String matName = result.parts[modelIndex].materialName;
+		if (matName == inputSpec)
+		{
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the material name matches");
+		}
+		const String comb = objName + "_" + matName;
+		if (comb == inputSpec)
+		{
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
+		}
+	}
+
+	switch (candidates.size())
+	{
+	case 0:
+		CAGE_THROW_ERROR(Exception, "file does not contain requested model");
+	case 1:
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using model at index " + *candidates.begin());
+		return *candidates.begin();
+	default:
+		CAGE_THROW_ERROR(Exception, "requested name is not unique");
+	}
+}
 
 namespace
 {
@@ -46,49 +118,19 @@ namespace
 		}
 	}
 
-	void loadTextureCage(const String &pathBase, ModelHeader &dsm, Ini *ini, const String &type, uint32 usage)
-	{
-		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial);
-		String n = ini->getString("textures", type);
-		if (n.empty())
-			return;
-		n = convertAssetPath(n, pathBase);
-		dsm.textureNames[usage] = HashString(n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
-	}
-
-	bool loadTextureAssimp(aiMaterial *m, ModelHeader &dsm, aiTextureType tt, uint32 usage)
-	{
-		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial);
-		uint32 texCount = m->GetTextureCount(tt);
-		if (texCount == 0)
-			return false;
-		if (texCount > 1)
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
-		aiString texAsName;
-		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
-		String n = texAsName.C_Str();
-		if (isPattern(n, "//", "", ""))
-			n = String() + "./" + subString(n, 2, cage::m);
-		n = convertAssetPath(n);
-		dsm.textureNames[usage] = HashString(n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
-		return true;
-	}
-
-	void printMaterial(const ModelHeader &dsm, const ModelHeader::MaterialData &mat)
+	void printMaterial(const ModelHeader &dsm, const MeshMaterial &mat)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoBase: " + mat.albedoBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & ModelRenderFlags::Translucent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & ModelRenderFlags::Lighting));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & ModelRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & ModelRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & ModelRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & ModelRenderFlags::VelocityWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & ModelRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & MeshRenderFlags::VelocityWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
@@ -97,209 +139,7 @@ namespace
 		}
 	}
 
-	void loadMaterialCage(ModelHeader &dsm, ModelHeader::MaterialData &mat, const String &path)
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using cage (.cpm) material");
-
-		writeLine(String("use = ") + path);
-
-		Holder<Ini> ini = newIni();
-		ini->importFile(pathJoin(inputDirectory, path));
-
-		mat.albedoBase = Vec4(
-			colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
-			0 // ini->getFloat("base", "opacity", 0) // todo temporarily disabled to detect incompatibility
-		);
-
-		mat.specialBase = Vec4(
-			ini->getFloat("base", "roughness", 0),
-			ini->getFloat("base", "metallic", 0),
-			ini->getFloat("base", "emission", 0),
-			0 // ini->getFloat("base", "mask", 0) // todo temporarily disabled to detect incompatibility
-		);
-
-		mat.albedoMult = Vec4(
-			colorGammaToLinear(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
-			ini->getFloat("mult", "opacity", 1)
-		);
-
-		mat.specialMult = Vec4(
-			ini->getFloat("mult", "roughness", 1),
-			ini->getFloat("mult", "metallic", 1),
-			ini->getFloat("mult", "emission", 1),
-			ini->getFloat("mult", "mask", 1)
-		);
-
-		const String pathBase = pathExtractDirectory(path);
-		loadTextureCage(pathBase, dsm, +ini, "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
-		loadTextureCage(pathBase, dsm, +ini, "special", CAGE_SHADER_TEXTURE_SPECIAL);
-		loadTextureCage(pathBase, dsm, +ini, "normal", CAGE_SHADER_TEXTURE_NORMAL);
-
-		for (const String &n : ini->items("flags"))
-		{
-			String v = ini->getString("flags", n);
-			if (v == "twoSided")
-			{
-				dsm.renderFlags |= ModelRenderFlags::TwoSided;
-				continue;
-			}
-			if (v == "translucent")
-			{
-				dsm.renderFlags |= ModelRenderFlags::Translucent;
-				continue;
-			}
-			if (v == "noDepthTest")
-			{
-				dsm.renderFlags &= ~ModelRenderFlags::DepthTest;
-				continue;
-			}
-			if (v == "noDepthWrite")
-			{
-				dsm.renderFlags &= ~ModelRenderFlags::DepthWrite;
-				continue;
-			}
-			if (v == "noVelocityWrite")
-			{
-				dsm.renderFlags &= ~ModelRenderFlags::VelocityWrite;
-				continue;
-			}
-			if (v == "noLighting")
-			{
-				dsm.renderFlags &= ~ModelRenderFlags::Lighting;
-				continue;
-			}
-			if (v == "noShadowCast")
-			{
-				dsm.renderFlags &= ~ModelRenderFlags::ShadowCast;
-				continue;
-			}
-			CAGE_LOG_THROW(Stringizer() + "specified flag: '" + v + "'");
-			CAGE_THROW_ERROR(Exception, "unknown material flag");
-		}
-
-		ini->checkUnused();
-	}
-
-	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, ModelHeader &dsm, ModelHeader::MaterialData &mat)
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "converting assimp material");
-
-		CAGE_ASSERT(am->mMaterialIndex < scene->mNumMaterials);
-		aiMaterial *m = scene->mMaterials[am->mMaterialIndex];
-		if (!m)
-			CAGE_THROW_ERROR(Exception, "material is null");
-
-		aiString matName;
-		m->Get(AI_MATKEY_NAME, matName);
-		if (matName.length > 0)
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "material name: '" + matName.C_Str() + "'");
-
-		// opacity
-		Real opacity = 1;
-		m->Get(AI_MATKEY_OPACITY, opacity.value);
-		CAGE_LOG(SeverityEnum::Info, "material", Stringizer() + "assimp loaded opacity: " + opacity);
-		if (opacity > 0 && opacity < 1)
-		{
-			CAGE_LOG(SeverityEnum::Info, "material", "enabling translucent flag due to opacity");
-			dsm.renderFlags |= ModelRenderFlags::Translucent;
-		}
-
-		// albedo
-		if (loadTextureAssimp(m, dsm, aiTextureType_DIFFUSE, CAGE_SHADER_TEXTURE_ALBEDO))
-		{
-			int flg = 0;
-			m->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
-			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
-			{
-				CAGE_LOG(SeverityEnum::Info, "material", "enabling translucent flag due to texture flag");
-				dsm.renderFlags |= ModelRenderFlags::Translucent;
-			}
-		}
-		else
-		{
-			aiColor3D color = aiColor3D(1);
-			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			mat.albedoBase = Vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
-		}
-
-		if (opacity > 0)
-			mat.albedoMult[3] = opacity;
-
-		// special
-		if (!loadTextureAssimp(m, dsm, aiTextureType_SPECULAR, CAGE_SHADER_TEXTURE_SPECIAL))
-		{
-			aiColor3D spec = aiColor3D(0);
-			m->Get(AI_MATKEY_COLOR_SPECULAR, spec);
-			if (conv(spec) != Vec3(0))
-			{ // convert specular color to special material
-				Vec2 s = convertSpecularToSpecial(conv(spec));
-				mat.specialBase[0] = s[0];
-				mat.specialBase[1] = s[1];
-			}
-			else
-			{ // convert shininess to roughness
-				float shininess = -1;
-				m->Get(AI_MATKEY_SHININESS, shininess);
-				if (shininess >= 0)
-					mat.specialBase[0] = sqrt(2 / (2 + shininess));
-			}
-		}
-
-		// normal map
-		loadTextureAssimp(m, dsm, aiTextureType_HEIGHT, CAGE_SHADER_TEXTURE_NORMAL);
-		loadTextureAssimp(m, dsm, aiTextureType_NORMALS, CAGE_SHADER_TEXTURE_NORMAL);
-
-		// two sided
-		{
-			int twosided = false;
-			m->Get(AI_MATKEY_TWOSIDED, twosided);
-			if (twosided)
-				dsm.renderFlags |= ModelRenderFlags::TwoSided;
-		}
-	}
-
-	void loadMaterial(const aiScene *scene, const aiMesh *am, ModelHeader &dsm, ModelHeader::MaterialData &mat)
-	{
-		String path = properties("material");
-		if (!path.empty())
-		{
-			path = pathJoin(pathExtractDirectory(inputFile), path);
-			if (!pathIsFile(pathJoin(inputDirectory, path)))
-				CAGE_THROW_ERROR(Exception, "explicitly given material path does not exist");
-			loadMaterialCage(dsm, mat, path);
-			return;
-		}
-
-		path = inputFile;
-		aiMaterial *m = scene->mMaterials[am->mMaterialIndex];
-		if (m)
-		{
-			aiString matName;
-			m->Get(AI_MATKEY_NAME, matName);
-			if (matName.length)
-				path += String() + "_" + matName.C_Str();
-			else if (!inputSpec.empty())
-				path += String() + "_" + inputSpec;
-		}
-		else
-		{
-			if (!inputSpec.empty())
-				path += String() + "_" + inputSpec;
-		}
-		path += ".cpm";
-
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "looking for implicit material at '" + path + "'");
-
-		if (pathIsFile(pathJoin(inputDirectory, path)))
-		{
-			loadMaterialCage(dsm, mat, path);
-			return;
-		}
-
-		loadMaterialAssimp(scene, am, dsm, mat);
-	}
-
-	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const ModelHeader::MaterialData &mat)
+	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshMaterial &mat)
 	{
 		{
 			uint32 texCount = 0;
@@ -319,286 +159,85 @@ namespace
 		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Tangents))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
-
-	Vec3 fixUnitVector(Vec3 n, StringLiteral name)
-	{
-		if (abs(lengthSquared(n) - 1) > 1e-3)
-		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "fixing denormalized " + name + ": " + n);
-			n = normalize(n);
-		}
-		if (!n.valid())
-		{
-			static bool passInvalid = toBool(properties("passInvalidNormals"));
-			if (passInvalid)
-			{
-				CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "pass invalid " + name + ": " + n);
-				n = Vec3();
-			}
-			else
-				CAGE_THROW_ERROR(Exception, name);
-		}
-		return n;
-	}
-
-	uint32 convertPrimitiveType(int primitiveTypes)
-	{
-		switch (primitiveTypes)
-		{
-		case aiPrimitiveType_POINT: return 1;
-		case aiPrimitiveType_LINE: return 2;
-		case aiPrimitiveType_TRIANGLE: return 3;
-		default: CAGE_THROW_ERROR(Exception, "model has invalid primitive type");
-		}
-	}
-
-	uint32 computeVertexSize(ModelDataFlags flags)
-	{
-		uint32 p = sizeof(float) * 3;
-		uint32 u2 = sizeof(float) * (int)any(flags & ModelDataFlags::Uvs2) * 2;
-		uint32 u3 = sizeof(float) * (int)any(flags & ModelDataFlags::Uvs3) * 3;
-		uint32 n = sizeof(float) * (int)any(flags & ModelDataFlags::Normals) * 3;
-		uint32 t = sizeof(float) * (int)any(flags & ModelDataFlags::Tangents) * 6;
-		uint32 b = (int)any(flags & ModelDataFlags::Bones) * (sizeof(uint16) + sizeof(float)) * 4;
-		return p + u2 + u3 + n + t + b;
-	}
-
-	Aabb enlarge(const Aabb &box)
-	{
-		Vec3 c = box.center();
-		Vec3 a = box.a - c;
-		Vec3 b = box.b - c;
-		Real s = 1.1;
-		return Aabb(a * s + c, b * s + c);
-	}
 }
 
 void processModel()
 {
-	Holder<AssimpContext> context;
-	{
-		uint32 addFlags = 0;
-		if (toBool(properties("normals")))
-			addFlags |= aiProcess_GenSmoothNormals;
-		if (toBool(properties("tangents")))
-			addFlags |= aiProcess_CalcTangentSpace;
-		context = newAssimpContext(addFlags, 0);
-	}
-	const aiScene *scene = context->getScene();
-	const aiMesh *am = scene->mMeshes[context->selectModel()];
+	MeshImportConfig config = meshImportConfig(true);
+	config.materialPathOverride = properties("material");
+	config.materialPathAlternative = inputSpec;
+	config.generateNormals = toBool(properties("normals"));
+	config.generateTangents = toBool(properties("tangents"));
+	config.trianglesOnly = toBool(properties("trianglesOnly"));
+	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
+	const MeshImportResult result = meshImportFiles(inputFileName, config);
+	meshImportNotifyUsedFiles(result);
+	const uint32 partIndex = meshImportSelectIndex(result);
+	const MeshImportPart &part = result.parts[partIndex];
 
-	if (am->GetNumUVChannels() > 1)
-		CAGE_LOG(SeverityEnum::Warning, logComponentName, "multiple uv channels are not supported - using only the first");
-
-	ModelHeader dsm;
 	ModelDataFlags flags = ModelDataFlags::None;
-	memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(ModelHeader::MaterialData);
-	dsm.renderFlags = ModelRenderFlags::DepthTest | ModelRenderFlags::DepthWrite | ModelRenderFlags::VelocityWrite | ModelRenderFlags::Lighting | ModelRenderFlags::ShadowCast;
+	setFlags(flags, ModelDataFlags::Uvs2, !part.mesh->uvs().empty() || !part.mesh->uvs3().empty(), "uvs");
+	setFlags(flags, ModelDataFlags::Normals, !part.mesh->normals().empty(), "normals");
+	setFlags(flags, ModelDataFlags::Tangents, !part.mesh->tangents().empty(), "tangents");
+	setFlags(flags, ModelDataFlags::Bones, !part.mesh->boneIndices().empty(), "bones");
 
-	const uint32 indicesPerPrimitive = convertPrimitiveType(am->mPrimitiveTypes);
-	const uint32 verticesCount = am->mNumVertices;
-	const uint32 indicesCount = am->mNumFaces * indicesPerPrimitive;
-
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "indices per primitive: " + indicesPerPrimitive);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "vertices count: " + verticesCount);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "indices count: " + indicesCount);
-
-	setFlags(flags, ModelDataFlags::Uvs2, am->GetNumUVChannels() > 0, "uvs");
-	setFlags(flags, ModelDataFlags::Normals, am->HasNormals(), "normals");
-	setFlags(flags, ModelDataFlags::Tangents, am->HasTangentsAndBitangents(), "tangents");
-	setFlags(flags, ModelDataFlags::Bones, am->HasBones(), "bones");
-
-	if (am->mNumUVComponents[0] == 3)
+	if (!part.mesh->uvs3().empty())
 	{
+		CAGE_ASSERT(part.mesh->uvs().empty());
 		flags &= ~ModelDataFlags::Uvs2;
 		flags |= ModelDataFlags::Uvs3;
 	}
-
 	if (any(flags & ModelDataFlags::Uvs2))
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 2D uvs");
 	if (any(flags & ModelDataFlags::Uvs3))
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 3D uvs");
 
-	ModelHeader::MaterialData mat;
-	loadMaterial(scene, am, dsm, mat);
+	if (none(flags & ModelDataFlags::Uvs2))
+		part.mesh->uvs({});
+	if (none(flags & ModelDataFlags::Uvs3))
+		part.mesh->uvs3({});
+	if (none(flags & ModelDataFlags::Normals))
+		part.mesh->normals({});
+	if (none(flags & ModelDataFlags::Tangents))
+	{
+		part.mesh->tangents({});
+		part.mesh->bitangents({});
+	}
+	if (none(flags & ModelDataFlags::Bones))
+	{
+		part.mesh->boneIndices(PointerRange<Vec4i>());
+		part.mesh->boneWeights(PointerRange<Vec4>());
+	}
+
+	ModelHeader dsm;
+	detail::memset(&dsm, 0, sizeof(dsm));
+	dsm.materialSize = sizeof(MeshMaterial);
+	dsm.renderFlags = part.renderFlags;
+	dsm.box = part.boundingBox;
+	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
+
+	for (const auto &t : part.textures)
+	{
+		const String p = pathToRel(t.name, inputDirectory);
+		writeLine(String("ref=") + p);
+		const uint32 n = HashString(p);
+		switch (t.type)
+		{
+		case MeshTextureType::Albedo:
+			dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
+			break;
+		case MeshTextureType::Special:
+			dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
+			break;
+		case MeshTextureType::Normal:
+			dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
+			break;
+		}
+	}
+
+	const MeshMaterial &mat = part.material;
 	printMaterial(dsm, mat);
 	validateFlags(dsm, flags, mat);
-
-	dsm.box = Aabb();
-	const Mat3 axes = axesMatrix();
-	const Mat3 axesScale = axesScaleMatrix();
-
-	Holder<Mesh> poly = newMesh();
-	switch (indicesPerPrimitive)
-	{
-	case 1: poly->type(MeshTypeEnum::Points); break;
-	case 2: poly->type(MeshTypeEnum::Lines); break;
-	case 3: poly->type(MeshTypeEnum::Triangles); break;
-	default: CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
-	}
-
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying vertex positions");
-		std::vector<Vec3> ps;
-		ps.reserve(verticesCount);
-		for (uint32 i = 0; i < verticesCount; i++)
-		{
-			Vec3 p = axesScale * conv(am->mVertices[i]);
-			dsm.box += Aabb(p);
-			ps.push_back(p);
-		}
-		poly->positions(ps);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "bounding box: " + dsm.box);
-	}
-
-	if (any(flags & ModelDataFlags::Normals))
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying normals");
-		std::vector<Vec3> ps;
-		ps.reserve(verticesCount);
-		for (uint32 i = 0; i < verticesCount; i++)
-		{
-			Vec3 n = axes * conv(am->mNormals[i]);
-			ps.push_back(fixUnitVector(n, "normal"));
-		}
-		poly->normals(ps);
-	}
-
-	if (any(flags & ModelDataFlags::Tangents))
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying tangents");
-		std::vector<Vec3> ts, bs;
-		ts.reserve(verticesCount);
-		bs.reserve(verticesCount);
-		for (uint32 i = 0; i < verticesCount; i++)
-		{
-			Vec3 n = axes * conv(am->mTangents[i]);
-			ts.push_back(fixUnitVector(n, "tangent"));
-		}
-		for (uint32 i = 0; i < verticesCount; i++)
-		{
-			Vec3 n = axes * conv(am->mBitangents[i]);
-			bs.push_back(fixUnitVector(n, "bitangent"));
-		}
-		poly->tangents(ts);
-		poly->bitangents(bs);
-	}
-
-	if (any(flags & ModelDataFlags::Bones))
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying bones");
-		CAGE_ASSERT(am->mNumBones > 0);
-		Holder<AssimpSkeleton> skeleton = context->skeleton();
-		dsm.skeletonBones = skeleton->bonesCount();
-		std::vector<Vec4i> boneIndices;
-		boneIndices.resize(verticesCount, Vec4i((sint32)m));
-		std::vector<Vec4> boneWeights;
-		boneWeights.resize(verticesCount);
-		// copy the values from assimp
-		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
-		{
-			aiBone *bone = am->mBones[boneIndex];
-			CAGE_ASSERT(bone);
-			uint16 boneId = skeleton->index(bone);
-			CAGE_ASSERT(boneId != m);
-			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
-			{
-				aiVertexWeight *w = bone->mWeights + weightIndex;
-				bool ok = false;
-				for (uint32 i = 0; i < 4; i++)
-				{
-					if (boneIndices[w->mVertexId][i] == m)
-					{
-						boneIndices[w->mVertexId][i] = boneId;
-						boneWeights[w->mVertexId][i] = w->mWeight;
-						ok = true;
-						break;
-					}
-				}
-				CAGE_ASSERT(ok);
-			}
-		}
-		// validate
-		uint32 maxBoneId = 0;
-		for (uint32 i = 0; i < verticesCount; i++)
-		{
-			Real sum = 0;
-			for (uint32 j = 0; j < 4; j++)
-			{
-				if (boneIndices[i][j] == m)
-				{
-					CAGE_ASSERT(boneWeights[i][j] == 0);
-					boneIndices[i][j] = 0; // prevent shader from accessing invalid memory
-				}
-				sum += boneWeights[i][j];
-				maxBoneId = max(maxBoneId, boneIndices[i][j] + 1u);
-			}
-			// renormalize weights
-			if (cage::abs(sum - 1) > 1e-3 && sum > 1e-3)
-			{
-				const Real f = 1 / sum;
-				CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
-				for (uint32 j = 0; j < 4; j++)
-					boneWeights[i][j] *= f;
-			}
-		}
-		CAGE_ASSERT(maxBoneId <= dsm.skeletonBones);
-		poly->boneIndices(boneIndices);
-		poly->boneWeights(boneWeights);
-	}
-
-	if (any(flags & ModelDataFlags::Uvs3))
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying 3D uvs");
-		std::vector<Vec3> ts;
-		ts.reserve(verticesCount);
-		for (uint32 i = 0; i < verticesCount; i++)
-			ts.push_back(conv(am->mTextureCoords[0][i]));
-		poly->uvs3(ts);
-	}
-
-	if (any(flags & ModelDataFlags::Uvs2))
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying uvs");
-		std::vector<Vec2> ts;
-		ts.reserve(verticesCount);
-		for (uint32 i = 0; i < verticesCount; i++)
-			ts.push_back(Vec2(conv(am->mTextureCoords[0][i])));
-		poly->uvs(ts);
-	}
-
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying indices");
-		std::vector<uint32> inds;
-		inds.reserve(indicesCount);
-		for (uint32 i = 0; i < am->mNumFaces; i++)
-		{
-			for (uint32 j = 0; j < indicesPerPrimitive; j++)
-				inds.push_back(numeric_cast<uint32>(am->mFaces[i].mIndices[j]));
-		}
-		poly->indices(inds);
-	}
-
-	if (any(flags & ModelDataFlags::Bones))
-	{
-		// replay all animations and enlarge the bounding box to contain them
-		Holder<SkeletonRig> rig = context->skeletonRig();
-		for (uint32 i = 0; i < scene->mNumAnimations; i++)
-		{
-			Holder<SkeletalAnimation> ani = context->animation(i);
-			for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
-			{
-				Holder<Mesh> tmp = poly->copy();
-				animateMesh(+rig, +ani, t, +tmp);
-				//tmp->exportObjFile({}, pathReplaceInvalidCharacters(stringizer() + "skellies/" + i + "/" + t + "/" + inputName + ".obj", "_", true));
-				Aabb box = tmp->boundingBox();
-				box = enlarge(box);
-				dsm.box += box;
-			}
-		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "enlarged bounding box: " + dsm.box);
-	}
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
 	AssetHeader h = initializeAssetHeader();
@@ -610,7 +249,7 @@ void processModel()
 	Serializer ser(buffer);
 	ser << dsm;
 	ser << mat;
-	ser.write(poly->exportBuffer());
+	ser.write(part.mesh->exportBuffer());
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = compress(buffer);
 	h.compressedSize = compressed.size();

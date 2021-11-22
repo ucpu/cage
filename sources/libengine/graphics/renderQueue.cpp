@@ -1,3 +1,4 @@
+#include <cage-core/blockContainer.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
@@ -12,8 +13,6 @@
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/provisionalGraphics.h>
 #include "private.h"
-
-#include "../blockCollection.h"
 
 #include <vector> // namesStack
 #include <array>
@@ -128,8 +127,8 @@ namespace cage
 		// available during setting up - reset by explicit call
 		struct RenderQueueContent
 		{
-			BlockCollection<CmdBase *> cmdsAllocs;
-			BlockCollection<void *> memAllocs;
+			BlockContainer<CmdBase *> cmdsAllocs;
+			BlockContainer<void *> memAllocs;
 
 			CmdBase *head = nullptr, *tail = nullptr;
 
@@ -847,7 +846,7 @@ namespace cage
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.texture());
-		Cmd &cmd = impl->addCmd<Cmd>();
+		impl->addCmd<Cmd>();
 	}
 
 	void RenderQueue::resetAllTextures()

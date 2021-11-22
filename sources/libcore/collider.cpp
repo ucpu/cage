@@ -19,22 +19,19 @@ namespace cage
 			{
 				// for leaf - index of first triangle in this node
 				// for node - -1
-				uint32 left;
+				uint32 left = m;
 
 				// for leaf - index of one-after-last triangle in this node
 				// for node - index of right child node
-				uint32 right;
-
-				Node() : left(m), right(m)
-				{}
+				uint32 right = m;
 			};
 
 			std::vector<Triangle> tris;
 			std::vector<Aabb> boxes;
 			std::vector<Node> nodes;
-			bool dirty;
+			bool dirty = true;
 
-			ColliderImpl() : dirty(true)
+			ColliderImpl()
 			{
 				((Collider *)this)->rebuild();
 			}
@@ -283,7 +280,6 @@ namespace cage
 		if (poly->indices().empty())
 		{
 			CAGE_ASSERT(poly->positions().size() % 3 == 0);
-			const uint32 cnt = poly->verticesCount() / 3;
 			CAGE_ASSERT(sizeof(Triangle) == 3 * sizeof(Vec3));
 			addTriangles(bufferCast<const Triangle>(poly->positions()));
 		}

@@ -13,7 +13,7 @@ namespace cage
 		namespace
 		{
 			template<uint32 N>
-			class NumberedTexture;
+			class NumberedTexture {};
 
 			sint32 activeTexture()
 			{

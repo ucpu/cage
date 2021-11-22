@@ -107,7 +107,7 @@ void processObject()
 	for (uint32 it : deps)
 		ser << it;
 	o.lodsCount = numeric_cast<uint32>(lods.size());
-	o.modelesCount = totalModeles;
+	o.modelsCount = totalModeles;
 	ser << o;
 	for (const auto &ls : lods)
 		ser << ls.threshold;

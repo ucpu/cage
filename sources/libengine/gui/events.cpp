@@ -97,83 +97,79 @@ namespace cage
 		return true;
 	}
 
-	bool Gui::windowResize(const Vec2i &res)
+	bool GuiManager::handleInput(const GenericInput &in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		impl->inputResolution = res;
+		GuiImpl *impl = (GuiImpl *)this;
+		return impl->inputsDispatchers.dispatch(in);
+	}
+
+	bool GuiImpl::windowResize(InputWindowValue in)
+	{
+		inputResolution = in.value;
 		return false;
 	}
 
-	bool Gui::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiImpl::mousePress(InputMouse in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		impl->focusName = 0;
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mousePress>(impl, buttons, modifiers, point);
+		focusName = 0;
+		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool Gui::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiImpl::mouseDoublePress(InputMouse in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(impl, buttons, modifiers, point);
+		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool Gui::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiImpl::mouseRelease(InputMouse in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseRelease>(impl, buttons, modifiers, point);
+		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseRelease>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool Gui::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiImpl::mouseMove(InputMouse in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(impl, buttons, modifiers, point);
+		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool Gui::mouseWheel(sint32 wheel, ModifiersFlags modifiers, const Vec2i &point)
+	bool GuiImpl::mouseWheel(InputMouseWheel in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
 		Vec2 pt;
-		if (!impl->eventPoint(point, pt))
+		if (!eventPoint(in.position, pt))
 			return false;
-		for (const auto &it : impl->mouseEventReceivers)
+		for (const auto &it : mouseEventReceivers)
 		{
 			if (it.pointInside(pt, 1 | (1 << 31))) // also accept wheel events
 			{
-				if (it.widget->widgetState.disabled || it.widget->mouseWheel(wheel, modifiers, pt))
+				if (it.widget->widgetState.disabled || it.widget->mouseWheel(in.wheel, in.mods, pt))
 					return true;
 			}
 		}
 		return false;
 	}
 
-	bool Gui::keyPress(uint32 key, ModifiersFlags modifiers)
+	bool GuiImpl::keyPress(InputKey in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyPress>(impl, key, modifiers);
+		return passKeyEvent<&WidgetItem::keyPress>(this, in.key, in.mods);
 	}
 
-	bool Gui::keyRepeat(uint32 key, ModifiersFlags modifiers)
+	bool GuiImpl::keyRepeat(InputKey in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyRepeat>(impl, key, modifiers);
+		return passKeyEvent<&WidgetItem::keyRepeat>(this, in.key, in.mods);
 	}
 
-	bool Gui::keyRelease(uint32 key, ModifiersFlags modifiers)
+	bool GuiImpl::keyRelease(InputKey in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
-		return passKeyEvent<&WidgetItem::keyRelease>(impl, key, modifiers);
+		return passKeyEvent<&WidgetItem::keyRelease>(this, in.key, in.mods);
 	}
 
-	bool Gui::keyChar(uint32 key)
+	bool GuiImpl::keyChar(InputKey in)
 	{
-		GuiImpl *impl = (GuiImpl*)this;
 		Vec2 dummy;
-		if (!impl->eventPoint(impl->inputMouse, dummy))
+		if (!eventPoint(inputMouse, dummy))
 			return false;
 		bool res = false;
-		for (auto f : focused(impl))
+		for (auto f : focused(this))
 		{
-			if (f->widgetState.disabled || f->keyChar(key))
+			if (f->widgetState.disabled || f->keyChar(in.key))
 				res = true;
 		}
 		return res;
@@ -190,6 +186,9 @@ namespace cage
 					return;
 			}
 		}
-		impl->widgetEvent.dispatch(ent->name());
+		InputGuiWidget e;
+		e.manager = impl;
+		e.widget = ent->name();
+		impl->widgetEvent.dispatch({ e, InputClassEnum::GuiWidget });
 	}
 }

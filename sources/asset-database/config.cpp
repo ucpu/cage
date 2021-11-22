@@ -1,3 +1,5 @@
+#include <cage-core/files.h> // pathSimplify
+#include <cage-core/config.h>
 #include <cage-core/ini.h>
 
 #include "database.h"

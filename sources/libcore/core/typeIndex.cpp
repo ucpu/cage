@@ -1,8 +1,9 @@
 #include <cage-core/typeIndex.h>
-#include <cage-core/enumerate.h>
+#include <cage-core/concurrent.h>
 
-#include <vector>
+#include <array>
 #include <cstring>
+#include <exception> // std::terminate
 
 namespace cage
 {
@@ -10,27 +11,31 @@ namespace cage
 	{
 		struct Type
 		{
-			const char *name = nullptr;
+			StringLiteral name;
 			uintPtr size = 0;
 			uintPtr alignment = 0;
 		};
 
 		struct Data
 		{
-			std::vector<Type> values;
+			Holder<Mutex> mut = newMutex();
+			std::array<Type, 1000> values = {};
+			uint32 cnt = 0;
 
-			Data()
+			uint32 index(StringLiteral name, uintPtr size, uintPtr alignment)
 			{
-				values.reserve(100);
-			}
-
-			uint32 index(const char *name, uintPtr size, uintPtr alignment)
-			{
-				for (auto it : cage::enumerate(values))
-					if (strcmp(it->name, name) == 0)
-						return numeric_cast<uint32>(it.index);
-				values.push_back({ name, size, alignment });
-				return numeric_cast<uint32>(values.size() - 1);
+				ScopeLock lock(mut);
+				for (uint32 i = 0; i < cnt; i++)
+					if (strcmp(values[i].name, name) == 0)
+						return i;
+				if (cnt == values.size())
+					CAGE_THROW_CRITICAL(Exception, "too many types in typeIndex");
+				Type t;
+				t.name = name;
+				t.size = size;
+				t.alignment = alignment;
+				values[cnt] = t;
+				return cnt++;
 			}
 		};
 
@@ -43,7 +48,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint32 typeIndexInit(const char *name, uintPtr size, uintPtr alignment)
+		uint32 typeIndexInitImpl(StringLiteral name, uintPtr size, uintPtr alignment) noexcept
 		{
 			return data().index(name, size, alignment);
 		}
@@ -51,12 +56,12 @@ namespace cage
 
 	namespace detail
 	{
-		uintPtr typeSize(uint32 index)
+		uintPtr typeSize(uint32 index) noexcept
 		{
 			return data().values[index].size;
 		}
 
-		uintPtr typeAlignment(uint32 index)
+		uintPtr typeAlignment(uint32 index) noexcept
 		{
 			return data().values[index].alignment;
 		}

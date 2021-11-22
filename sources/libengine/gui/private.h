@@ -3,7 +3,8 @@
 
 #include <cage-core/entities.h>
 
-#include <cage-engine/gui.h>
+#include <cage-engine/guiComponents.h>
+#include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
 #include <cage-engine/font.h> // FontFormat
 #include <cage-engine/window.h> // WindowEventListeners
@@ -264,7 +265,7 @@ namespace cage
 		bool pointInside(Vec2 point, uint32 maskRequests = 1) const;
 	};
 
-	class GuiImpl : public Gui
+	class GuiImpl : public GuiManager
 	{
 	public:
 		Holder<MemoryArena> memory; // must be last to destroy
@@ -298,13 +299,26 @@ namespace cage
 		} graphicsData;
 		RenderQueue *activeQueue = nullptr;
 
-		WindowEventListeners listeners;
+		bool windowResize(InputWindowValue);
+		bool mouseMove(InputMouse);
+		bool mousePress(InputMouse);
+		bool mouseDoublePress(InputMouse);
+		bool mouseRelease(InputMouse);
+		bool mouseWheel(InputMouseWheel);
+		bool keyPress(InputKey);
+		bool keyRelease(InputKey);
+		bool keyRepeat(InputKey);
+		bool keyChar(InputKey);
+
+		InputsDispatchers inputsDispatchers;
+		InputsListeners inputsListeners;
+
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;
 
 		std::vector<SkinData> skins;
 
-		explicit GuiImpl(const GuiCreateConfig &config);
+		explicit GuiImpl(const GuiManagerCreateConfig &config);
 		~GuiImpl();
 		void scaling();
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;

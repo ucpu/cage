@@ -76,11 +76,13 @@ namespace cage
 
 			explicit WorkingAsset(std::atomic<sint32> *workingCounter) : workingCounter(workingCounter)
 			{
+				CAGE_ASSERT(workingCounter);
 				(*workingCounter)++;
 			}
 
 			virtual ~WorkingAsset()
 			{
+				CAGE_ASSERT(workingCounter);
 				(*workingCounter)--;
 			}
 

@@ -7,6 +7,9 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
+#include <cage-core/string.h>
+
+#include <vector>
 
 namespace cage
 {
@@ -89,6 +92,22 @@ namespace cage
 		s.load.bind<&processTextPackLoad>();
 		s.typeIndex = detail::typeIndex<TextPack>();
 		return s;
+	}
+
+	String loadFormattedString(AssetManager *assets, uint32 asset, uint32 text, String params)
+	{
+		if (asset == 0 || text == 0)
+			return params;
+		auto a = assets->tryGet<AssetSchemeIndexTextPack, TextPack>(asset);
+		if (a)
+		{
+			std::vector<String> ps;
+			while (!params.empty())
+				ps.push_back(split(params, "|"));
+			return a->format(text, ps);
+		}
+		else
+			return "";
 	}
 
 	namespace

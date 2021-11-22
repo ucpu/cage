@@ -8,12 +8,6 @@
 #include <vector>
 #include <set>
 
-Vec2 convertSpecularToSpecial(const Vec3 &spec)
-{
-	Vec3 hsv = colorRgbToHsv(spec);
-	return Vec2(hsv[2], hsv[1]);
-}
-
 namespace
 {
 	uint32 convertFilter(const String &f)
@@ -121,7 +115,7 @@ namespace
 					for (uint32 x = 0; x < w; x++)
 					{
 						Vec3 color = Vec3(data->get1(x, y));
-						Vec2 special = ::convertSpecularToSpecial(color);
+						Vec2 special = colorSpecularToRoughnessMetallic(color);
 						CAGE_ASSERT(special[1] < 1e-7);
 						data->set(x, y, special[0]);
 					}
@@ -136,7 +130,7 @@ namespace
 					for (uint32 x = 0; x < w; x++)
 					{
 						Vec3 color = data->get3(x, y);
-						Vec2 special = ::convertSpecularToSpecial(color);
+						Vec2 special = colorSpecularToRoughnessMetallic(color);
 						res->set(x, y, special);
 					}
 				}

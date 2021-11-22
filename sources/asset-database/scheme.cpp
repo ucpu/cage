@@ -1,5 +1,6 @@
 #include <cage-core/ini.h>
 #include <cage-core/macros.h>
+#include <cage-core/containerSerialization.h>
 
 #include "database.h"
 
@@ -61,43 +62,40 @@ void Scheme::parse(Ini *ini)
 	}
 }
 
-void Scheme::load(File *f)
+Serializer &operator << (Serializer &ser, const SchemeField &s)
 {
-	read(f, name);
-	read(f, processor);
-	f->read(bufferView<char>(schemeIndex));
-	uint32 m = 0;
-	f->read(bufferView<char>(m));
-	for (uint32 j = 0; j < m; j++)
-	{
-		SchemeField c;
-		read(f, c.name);
-		read(f, c.type);
-		read(f, c.min);
-		read(f, c.max);
-		read(f, c.defaul);
-		read(f, c.values);
-		schemeFields.insert(std::move(c));
-	}
+	ser << s.name;
+	ser << s.type;
+	ser << s.min;
+	ser << s.max;
+	ser << s.defaul;
+	ser << s.values;
+	return ser;
 }
 
-void Scheme::save(File *f)
+Deserializer &operator >> (Deserializer &des, SchemeField &s)
 {
-	write(f, name);
-	write(f, processor);
-	f->write(bufferView(schemeIndex));
-	uint32 m = schemeFields.size();
-	f->write(bufferView(m));
-	for (const auto &it : schemeFields)
-	{
-		const SchemeField &c = *it;
-		write(f, c.name);
-		write(f, c.type);
-		write(f, c.min);
-		write(f, c.max);
-		write(f, c.defaul);
-		write(f, c.values);
-	}
+	des >> s.name;
+	des >> s.type;
+	des >> s.min;
+	des >> s.max;
+	des >> s.defaul;
+	des >> s.values;
+	return des;
+}
+
+Serializer &operator << (Serializer &ser, const Scheme &s)
+{
+	ser << s.name << s.processor << s.schemeIndex;
+	ser << s.schemeFields;
+	return ser;
+}
+
+Deserializer &operator >> (Deserializer &des, Scheme &s)
+{
+	des >> s.name >> s.processor >> s.schemeIndex;
+	des >> s.schemeFields;
+	return des;
 }
 
 bool Scheme::applyOnAsset(Asset &ass)
@@ -110,8 +108,9 @@ bool Scheme::applyOnAsset(Asset &ass)
 
 namespace
 {
-	const bool valuesContainsValue(String values, const String &value)
+	bool valuesContainsValue(const String &values_, const String &value)
 	{
+		String values = values_;
 		while (!values.empty())
 		{
 			if (trim(split(values, ",")) == value)

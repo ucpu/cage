@@ -1,6 +1,5 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/textPack.h>
-#include <cage-core/string.h>
 
 #include <cage-engine/texture.h>
 
@@ -292,23 +291,6 @@ namespace cage
 	TextItem::TextItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
 	{}
 
-	// this is also used in engine
-	String loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, String params)
-	{
-		if (asset == 0 || text == 0)
-			return params;
-		auto a = assets->tryGet<AssetSchemeIndexTextPack, TextPack>(asset);
-		if (a)
-		{
-			std::vector<String> ps;
-			while (!params.empty())
-				ps.push_back(split(params, "|"));
-			return a->format(text, ps);
-		}
-		else
-			return "";
-	}
-
 	void TextItem::initialize()
 	{
 		if (skipInitialize)
@@ -338,7 +320,7 @@ namespace cage
 	void TextItem::transcript()
 	{
 		GUI_COMPONENT(Text, t, hierarchy->ent);
-		String value = loadInternationalizedText(hierarchy->impl->assetMgr, t.assetName, t.textName, t.value);
+		String value = loadFormattedString(hierarchy->impl->assetMgr, t.assetName, t.textName, t.value);
 		transcript(value);
 	}
 
@@ -373,7 +355,6 @@ namespace cage
 		FontFormat f = format;
 		f.wrapWidth = size[0];
 		font->size(glyphs, f, point - position, cursor);
-		cursor = cursor;
 	}
 
 	void imageCreate(HierarchyItem *item)
@@ -400,7 +381,6 @@ namespace cage
 
 	void ImageItem::assign()
 	{
-		auto *impl = hierarchy->impl;
 		GUI_COMPONENT(Image, i, hierarchy->ent);
 		assign(i);
 	}

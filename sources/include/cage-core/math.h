@@ -436,10 +436,10 @@ namespace cage
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Mat3 &r) noexcept { return l = l *= r; }
-	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Quat &r) noexcept { return l = l *= r; }
+	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Mat3 &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Quat &r) noexcept { return l = l * r; }
 	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Transform &r) noexcept { return l = l * r; }
-	CAGE_FORCE_INLINE Vec4 &operator *= (Vec4 &l, const Mat4 &r) noexcept { return l = l *= r; }
+	CAGE_FORCE_INLINE Vec4 &operator *= (Vec4 &l, const Mat4 &r) noexcept { return l = l * r; }
 	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Transform &r) noexcept { return l = l * r; }
 	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Quat &r) noexcept { return l = l * r; }
 	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Real &r) noexcept { return l = l * r; }

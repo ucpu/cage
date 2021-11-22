@@ -54,7 +54,7 @@ namespace cage
 	{
 		static_assert(std::is_trivially_copyable_v<Dst>);
 		static_assert(std::is_trivially_copyable_v<Src>);
-		return { reinterpret_cast<Dst*>(src.begin()), reinterpret_cast<Dst*>(src.end()) };
+		return { reinterpret_cast<Dst *>(src.begin()), reinterpret_cast<Dst *>(src.end()) };
 	}
 
 	// make range of a single object
@@ -73,7 +73,7 @@ namespace cage
 
 	// general serialization
 
-	template<class T>
+	template<class T, typename std::enable_if_t<std::is_trivially_copyable_v<T>, bool> = true>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
 		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
@@ -81,13 +81,15 @@ namespace cage
 		return s;
 	}
 
-	template<class T>
+	template<class T, typename std::enable_if_t<std::is_trivially_copyable_v<T>, bool> = true>
 	Deserializer &operator >> (Deserializer &s, T &v)
 	{
 		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
 		s.read(bufferView<char>(v));
 		return s;
 	}
+
+	// r-value deserializer
 
 	template<class T>
 	Deserializer &&operator >> (Deserializer &&s, T &v)
@@ -96,7 +98,7 @@ namespace cage
 		return std::move(s);
 	}
 
-	// c array serialization
+	// overloads for c array
 
 	template<class T, uintPtr N>
 	Serializer &operator << (Serializer &s, const T (&v)[N])
@@ -114,14 +116,13 @@ namespace cage
 		return s;
 	}
 
-	// specialization for strings
+	// overloads for strings
 
 	template<uint32 N>
 	Serializer &operator << (Serializer &s, const detail::StringBase<N> &v)
 	{
-		Serializer ss = s.reserve(sizeof(uint32) + v.length()); // write all or nothing
-		ss << v.length();
-		ss.write(v);
+		s << v.length();
+		s.write(v);
 		return s;
 	}
 
