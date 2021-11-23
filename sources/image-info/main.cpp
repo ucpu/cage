@@ -45,7 +45,10 @@ int main(int argc, const char *args[])
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)
+		{
 			info(path);
+			CAGE_LOG(SeverityEnum::Info, "image", "");
+		}
 		CAGE_LOG(SeverityEnum::Info, "image", "done");
 		return 0;
 	}

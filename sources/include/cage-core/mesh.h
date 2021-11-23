@@ -218,6 +218,11 @@ namespace cage
 	};
 
 	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config);
+
+	namespace detail
+	{
+		CAGE_CORE_API StringLiteral meshTypeToString(MeshTypeEnum type);
+	}
 }
 
 #endif // guard_mesh_h_CA052442302D4C3BAA9293200603C20A

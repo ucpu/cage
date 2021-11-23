@@ -1,6 +1,7 @@
 #include "image.h"
 
 #include <cage-core/math.h>
+#include <cage-core/color.h>
 
 namespace cage
 {
@@ -71,7 +72,7 @@ namespace cage
 	{
 		void slice(const ImageImpl *source, ImageImpl *target)
 		{
-			uint32 copyChannels = min(source->channels, target->channels);
+			const uint32 copyChannels = min(source->channels, target->channels);
 			for (uint32 y = 0; y < source->height; y++)
 				for (uint32 x = 0; x < source->width; x++)
 					for (uint32 c = 0; c < copyChannels; c++)
@@ -178,6 +179,88 @@ namespace cage
 		else
 			CAGE_THROW_ERROR(Exception, "invalid image alpha conversion");
 		impl->colorConfig.alphaMode = alphaMode;
+	}
+
+	namespace
+	{
+		Real convertToNormalIntensity(const Image *img, sint32 x, sint32 y)
+		{
+			x = min((sint32)img->width() - 1, max(0, x));
+			y = min((sint32)img->height() - 1, max(0, y));
+			Real sum = 0;
+			const uint32 c = img->channels();
+			for (uint32 i = 0; i < c; i++)
+				sum += img->value(x, y, i);
+			return sum / img->channels();
+		}
+	}
+
+	void imageConvertHeigthToNormal(Image *img, const Real &strength_)
+	{
+		const Real strength = 1.f / strength_;
+		const uint32 w = img->width();
+		const uint32 h = img->height();
+		Holder<Image> src = img->copy();
+		img->initialize(w, h, 3, src->format());
+		for (sint32 y = 0; (uint32)y < h; y++)
+		{
+			for (sint32 x = 0; (uint32)x < w; x++)
+			{
+				const Real tl = convertToNormalIntensity(+src, x - 1, y - 1);
+				const Real tc = convertToNormalIntensity(+src, x + 0, y - 1);
+				const Real tr = convertToNormalIntensity(+src, x + 1, y - 1);
+				const Real rc = convertToNormalIntensity(+src, x + 1, y + 0);
+				const Real br = convertToNormalIntensity(+src, x + 1, y + 1);
+				const Real bc = convertToNormalIntensity(+src, x + 0, y + 1);
+				const Real bl = convertToNormalIntensity(+src, x - 1, y + 1);
+				const Real lc = convertToNormalIntensity(+src, x - 1, y + 0);
+				const Real dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
+				const Real dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
+				Vec3 v(-dX, -dY, strength);
+				v = normalize(v);
+				v += 1;
+				v *= 0.5;
+				img->set(x, y, v);
+			}
+		}
+	}
+
+	void imageConvertSpecularToSpecial(Image *img)
+	{
+		const uint32 w = img->width();
+		const uint32 h = img->height();
+		switch (img->channels())
+		{
+		case 1:
+		{
+			for (uint32 y = 0; y < h; y++)
+			{
+				for (uint32 x = 0; x < w; x++)
+				{
+					const Vec3 color = Vec3(img->get1(x, y));
+					const Vec2 special = colorSpecularToRoughnessMetallic(color);
+					CAGE_ASSERT(special[1] < 1e-7);
+					img->set(x, y, special[0]);
+				}
+			}
+		} break;
+		case 3:
+		{
+			Holder<Image> src = img->copy();
+			img->initialize(w, h, 2, src->format());
+			for (uint32 y = 0; y < h; y++)
+			{
+				for (uint32 x = 0; x < w; x++)
+				{
+					Vec3 color = src->get3(x, y);
+					Vec2 special = colorSpecularToRoughnessMetallic(color);
+					img->set(x, y, special);
+				}
+			}
+		} break;
+		default:
+			CAGE_THROW_ERROR(Exception, "exactly 1 or 3 channels are required for conversion of specular color to special material");
+		}
 	}
 
 	void imageResize(Image *img, uint32 w, uint32 h, bool useColorConfig)
@@ -393,6 +476,30 @@ namespace cage
 		default: CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
 		}
 		imageConvert(img, originalFormat);
+	}
+
+	void imageInvertColors(Image *img, bool useColorConfig)
+	{
+		const uint32 w = img->width();
+		const uint32 h = img->height();
+		const uint32 c = useColorConfig ? img->colorConfig.colorChannelsCount : img->channels();
+		for (uint32 y = 0; y < h; y++)
+			for (uint32 x = 0; x < w; x++)
+				for (uint32 i = 0; i < c; i++)
+					img->value(x, y, i, 1 - img->value(x, y, i));
+	}
+
+	void imageInvertChannel(Image *img, uint32 channelIndex)
+	{
+		if (channelIndex >= img->channels())
+			CAGE_THROW_ERROR(Exception, "image does not have selected channel");
+		const uint32 w = img->width();
+		const uint32 h = img->height();
+		for (uint32 y = 0; y < h; y++)
+		{
+			for (uint32 x = 0; x < w; x++)
+				img->value(x, y, channelIndex, 1 - img->value(x, y, channelIndex));
+		}
 	}
 
 	namespace

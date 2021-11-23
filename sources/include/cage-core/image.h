@@ -117,6 +117,9 @@ namespace cage
 	CAGE_CORE_API void imageConvert(Image *img, GammaSpaceEnum gammaSpace);
 	CAGE_CORE_API void imageConvert(Image *img, AlphaModeEnum alphaMode);
 
+	CAGE_CORE_API void imageConvertHeigthToNormal(Image *img, const Real &strength);
+	CAGE_CORE_API void imageConvertSpecularToSpecial(Image *img);
+
 	// setting a value must match the number of channels
 	CAGE_CORE_API void imageFill(Image *img, const Real &value);
 	CAGE_CORE_API void imageFill(Image *img, const Vec2 &value);
@@ -131,6 +134,8 @@ namespace cage
 	CAGE_CORE_API void imageResize(Image *img, const Vec2i &resolution, bool useColorConfig = true);
 	CAGE_CORE_API void imageBoxBlur(Image *img, uint32 radius, uint32 rounds = 1, bool useColorConfig = true);
 	CAGE_CORE_API void imageDilation(Image *img, uint32 rounds, bool useNan = false);
+	CAGE_CORE_API void imageInvertColors(Image *img, bool useColorConfig = true);
+	CAGE_CORE_API void imageInvertChannel(Image *img, uint32 channelIndex);
 
 	// copies parts of an image into another image
 	// if the target and source images are the same instance, the source area and target area cannot overlap

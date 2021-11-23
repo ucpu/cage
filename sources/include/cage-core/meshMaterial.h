@@ -34,6 +34,11 @@ namespace cage
 		Special,
 		Normal,
 	};
+
+	namespace detail
+	{
+		CAGE_CORE_API StringLiteral meshTextureTypeToString(MeshTextureType type);
+	}
 }
 
 #endif // guard_meshMaterial_h_dgf54ik1g8r

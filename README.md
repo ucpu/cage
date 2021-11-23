@@ -99,6 +99,7 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Image info - print information about an image
 - Image resize - batch resizing of images
 - Image untile - slices a single image with tiled sections into a sequence of individual images
+- Mesh info - print information about a mesh
 
 # Building
 

@@ -114,6 +114,7 @@ cage_define_tool(cage-image-channels "image-channels/*")
 cage_define_tool(cage-image-info "image-info/*")
 cage_define_tool(cage-image-resize "image-resize/*")
 cage_define_tool(cage-image-untile "image-untile/*")
+cage_define_tool(cage-mesh-info "mesh-info/*")
 
 target_link_libraries(cage-asset-processor cage-engine freetype lib_msdfgen)
 
