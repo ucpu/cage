@@ -17,7 +17,7 @@ void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, c
 	out->exportFile(name);
 }
 
-void doAtlas(const String &input, const String &output, uint32 x, uint32 y, uint32 w, uint32 h)
+void untile(const String &input, const String &output, uint32 x, uint32 y, uint32 w, uint32 h)
 {
 	if (w == 0 || h == 0)
 		CAGE_THROW_ERROR(Exception, "width and height may not be zero");
@@ -27,7 +27,7 @@ void doAtlas(const String &input, const String &output, uint32 x, uint32 y, uint
 	in->importFile(input);
 	uint32 inw = in->width();
 	uint32 inh = in->height();
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "image resolution: " + inw + "x" + inh + ", channels: " + in->channels());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + inw + "x" + inh + ", channels: " + in->channels());
 
 	if (x >= inw || y >= inh)
 		CAGE_THROW_ERROR(Exception, "x or y offsets are outside the image");
@@ -100,7 +100,7 @@ int main(int argc, const char *args[])
 		}
 		cmd->checkUnusedWithHelp();
 
-		doAtlas(input, output, x, y, w, h);
+		untile(input, output, x, y, w, h);
 		return 0;
 	}
 	catch (...)

@@ -24,7 +24,7 @@ void doSplit(const String names[4], const String &input)
 		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
 	const uint32 width = in->width();
 	const uint32 height = in->height();
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + width + "x" + height + ", channels: " + in->channels());
 
 	Holder<Image> out = newImage();
 	for (uint32 ch = 0; ch < in->channels(); ch++)
@@ -56,7 +56,7 @@ void doJoin(const String names[4], const String &output, const bool mono)
 			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 			Holder<Image> p = newImage();
 			p->importFile(name);
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 			if (width == 0)
 			{
 				width = p->width();

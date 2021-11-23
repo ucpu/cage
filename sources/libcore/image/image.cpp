@@ -474,4 +474,42 @@ namespace cage
 	{
 		return systemMemory().createImpl<Image, ImageImpl>();
 	}
+
+	namespace detail
+	{
+		StringLiteral imageFormatToString(ImageFormatEnum format)
+		{
+			switch (format)
+			{
+			case ImageFormatEnum::U8: return "u8";
+			case ImageFormatEnum::U16: return "u16";
+			case ImageFormatEnum::Rgbe: return "rgbe";
+			case ImageFormatEnum::Float: return "float";
+			case ImageFormatEnum::Default: return "default";
+			default: return "unknown";
+			}
+		}
+
+		StringLiteral imageGammaSpaceToString(GammaSpaceEnum space)
+		{
+			switch (space)
+			{
+			case GammaSpaceEnum::None: return "none";
+			case GammaSpaceEnum::Gamma: return "gamma";
+			case GammaSpaceEnum::Linear: return "linear";
+			default: return "unknown";
+			}
+		}
+
+		StringLiteral imageAlphaModeToString(AlphaModeEnum mode)
+		{
+			switch (mode)
+			{
+			case AlphaModeEnum::None: return "none";
+			case AlphaModeEnum::Opacity: return "opacity";
+			case AlphaModeEnum::PremultipliedOpacity: return "premultiplied opacity";
+			default: return "unknown";
+			}
+		}
+	}
 }

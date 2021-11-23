@@ -106,13 +106,14 @@ macro(cage_define_tool target sourcePattern)
 	cage_ide_working_dir_in_place(${target})
 endmacro()
 
-cage_define_tool(cage-asset-processor "asset-processor/*")
-cage_define_tool(cage-asset-database "asset-database/*")
 cage_define_tool(cage-asset-analyze "asset-analyze/*")
-cage_define_tool(cage-image-channels "image-channels/*")
-cage_define_tool(cage-image-atlas "image-atlas/*")
+cage_define_tool(cage-asset-database "asset-database/*")
+cage_define_tool(cage-asset-processor "asset-processor/*")
 cage_define_tool(cage-image-convert "image-convert/*")
+cage_define_tool(cage-image-channels "image-channels/*")
+cage_define_tool(cage-image-info "image-info/*")
 cage_define_tool(cage-image-resize "image-resize/*")
+cage_define_tool(cage-image-untile "image-untile/*")
 
 target_link_libraries(cage-asset-processor cage-engine freetype lib_msdfgen)
 

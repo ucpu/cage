@@ -7,14 +7,13 @@
 
 using namespace cage;
 
-void convert(String name, const Vec2i resolution)
+void resize(String name, const Vec2i resolution)
 {
 	name = pathSimplify(name);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resizing file: " + name);
 	Holder<Image> img = newImage();
 	img->importFile(name);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "original width: " + img->width());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "original height: " + img->height());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "original resolution: " + img->width() + "x" + img->height() + ", channels: " + img->channels());
 	imageResize(+img, resolution);
 	img->exportFile(name);
 }
@@ -44,7 +43,7 @@ int main(int argc, const char *args[])
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)
-			convert(path, resolution);
+			resize(path, resolution);
 		CAGE_LOG(SeverityEnum::Info, "image", "done");
 		return 0;
 	}

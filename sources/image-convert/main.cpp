@@ -21,10 +21,7 @@ void convert(String src, const String &format, bool preserveOriginal)
 	}
 	Holder<Image> img = newImage();
 	img->importFile(src);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "width: " + img->width());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "height: " + img->height());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "channels: " + img->channels());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "format: " + (uint32)img->format());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + img->width() + "x" + img->height() + ", channels: " + img->channels());
 	img->exportFile(dst);
 	if (!preserveOriginal)
 		pathRemove(src);
