@@ -173,7 +173,7 @@ namespace cage
 
 			void deallocate(void *ptr)
 			{
-				colony.erase(colony.get_iterator_from_pointer((ItemAlloc *)ptr));
+				colony.erase(colony.get_iterator((ItemAlloc *)ptr));
 			}
 
 			void flush()

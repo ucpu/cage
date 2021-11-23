@@ -93,7 +93,7 @@ namespace cage
 
 			void desEnt(EntityImpl *e)
 			{
-				ents.erase(ents.get_iterator_from_pointer(e));
+				ents.erase(ents.get_iterator(e));
 			}
 		};
 
@@ -123,7 +123,7 @@ namespace cage
 
 			void desVal(void *val) override
 			{
-				data.erase(data.get_iterator_from_pointer((Value *)val));
+				data.erase(data.get_iterator((Value *)val));
 			}
 		};
 

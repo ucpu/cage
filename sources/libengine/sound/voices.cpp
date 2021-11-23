@@ -31,7 +31,7 @@ namespace cage
 
 			void removeVoice(void *p)
 			{
-				voices.erase(voices.get_iterator_from_pointer((VoiceImpl *)p));
+				voices.erase(voices.get_iterator((VoiceImpl *)p));
 			}
 
 			Holder<Voice> createVoice()
@@ -42,7 +42,7 @@ namespace cage
 					VoicesMixerImpl *m = nullptr;
 					~VoiceReference()
 					{
-						m->voices.erase(m->voices.get_iterator_from_pointer(v));
+						m->voices.erase(m->voices.get_iterator(v));
 					}
 				};
 				Holder<VoiceReference> h = systemMemory().createHolder<VoiceReference>();
