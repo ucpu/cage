@@ -2,6 +2,7 @@
 #include <cage-core/color.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>
+#include <cage-core/image.h>
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
@@ -1014,16 +1015,46 @@ namespace cage
 				aiString texAsName;
 				mat->GetTexture(AssimpType, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
 				String n = texAsName.C_Str();
-				if (isPattern(n, "//", "", ""))
-					n = String() + "./" + subString(n, 2, cage::m);
-				n = pathJoin(pathExtractDirectory(inputFile), n);
-				n = ioSystem.makePath(n);
-				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
-				MeshImportTexture t;
-				t.name = n;
-				t.type = CageType;
-				textures.push_back(std::move(t));
+				if (isPattern(n, "*", "", ""))
+				{ // embedded texture
+					n = subString(n, 1, cage::m);
+					const uint32 idx = toUint32(n);
+					CAGE_ASSERT(idx < imp.GetScene()->mNumTextures);
+					const aiTexture *tx = imp.GetScene()->mTextures[idx];
+					MeshImportTexture t;
+					t.name = tx->mFilename.C_Str();
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using embedded texture with original name: " + t.name);
+					t.name = inputFile + "?" + pathReplaceInvalidCharacters(t.name);
+					t.type = CageType;
+					Holder<Image> img = newImage();
+					t.image = img.share();
+					if (tx->mHeight == 0)
+					{ // compressed buffer
+						const PointerRange<const char> buff = { (const char *)tx->pcData, (const char *)tx->pcData + tx->mWidth };
+						img->importBuffer(buff);
+					}
+					else
+					{ // raw data
+						const uint32 bytes = tx->mWidth * tx->mHeight * 4;
+						const PointerRange<const char> buff = { (const char *)tx->pcData, (const char *)tx->pcData + bytes };
+						img->importRaw(buff, Vec2i(tx->mWidth, tx->mHeight), 4, ImageFormatEnum::U8);
+					}
+					textures.push_back(std::move(t));
+				}
+				else
+				{ // external texture
+					if (isPattern(n, "//", "", ""))
+						n = String() + "./" + subString(n, 2, cage::m);
+					n = pathJoin(pathExtractDirectory(inputFile), n);
+					n = ioSystem.makePath(n);
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
+					MeshImportTexture t;
+					t.name = n;
+					t.type = CageType;
+					textures.push_back(std::move(t));
+				}
 				return true;
 			}
 

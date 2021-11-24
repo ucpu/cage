@@ -11,7 +11,7 @@ namespace cage
 	{
 		String name;
 		MeshTextureType type = MeshTextureType::None;
-		//Holder<Image> image;
+		Holder<Image> image;
 	};
 
 	struct CAGE_CORE_API MeshImportPart

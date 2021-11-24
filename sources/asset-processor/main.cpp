@@ -29,7 +29,7 @@ AssetHeader initializeAssetHeader()
 	String intr = properties("alias");
 	if (!intr.empty())
 	{
-		intr = pathJoin(pathExtractDirectory(inputName), intr);
+		intr = pathJoin(pathExtractDirectory(inputFile), intr);
 		writeLine(Stringizer() + "alias = " + intr);
 		h.aliasName = HashString(intr);
 	}

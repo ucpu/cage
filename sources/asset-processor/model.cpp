@@ -159,6 +159,20 @@ namespace
 		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Tangents))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
+
+	String convertTexturePath(const String &input)
+	{
+		String detail;
+		String p = input;
+		{
+			const uint32 sep = min(find(p, '?'), find(p, ';'));
+			detail = subString(p, sep, m);
+			p = subString(p, 0, sep);
+		}
+		p = pathToRel(p, inputDirectory) + detail;
+		writeLine(cage::String("ref = ") + p);
+		return p;
+	}
 }
 
 void processModel()
@@ -218,8 +232,7 @@ void processModel()
 
 	for (const auto &t : part.textures)
 	{
-		const String p = pathToRel(t.name, inputDirectory);
-		writeLine(String("ref=") + p);
+		const String p = convertTexturePath(t.name);
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{

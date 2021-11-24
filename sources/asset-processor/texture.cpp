@@ -1,11 +1,14 @@
 #include <cage-core/image.h>
 #include <cage-core/enumerate.h>
+#include <cage-core/meshImport.h>
 #include <cage-engine/opengl.h>
 
 #include "processor.h"
 
 #include <vector>
 #include <set>
+
+void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
@@ -68,14 +71,89 @@ namespace
 
 	std::vector<Holder<Image>> images;
 
-	void loadFile(const String &filename)
+	const MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res, const String &spec)
 	{
-		writeLine(String("use=") + filename);
-		String wholeFilename = pathJoin(inputDirectory, filename);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file '" + wholeFilename + "'");
-		Holder<Image> l = newImage();
-		l->importFile(wholeFilename);
-		images.push_back(std::move(l));
+		for (const auto &itp : res.parts)
+		{
+			for (const auto &itt : itp.textures)
+			{
+				if (isPattern(itt.name, "", "", spec))
+					return &itt;
+			}
+		}
+		return nullptr;
+	}
+
+	bool loadEmbeddedTexture(const MeshImportResult &res, const String &spec, bool required)
+	{
+		const MeshImportTexture *tx = findEmbeddedTexture(res, spec);
+		if (!tx)
+		{
+			if (required)
+			{
+				CAGE_LOG_THROW(Stringizer() + "embedded texture name: '" + spec + "'");
+				CAGE_THROW_ERROR(Exception, "embedded texture not found");
+			}
+			return false;
+		}
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded embedded texture '" + spec + "'");
+		images.push_back(tx->image.share());
+		return true;
+	}
+
+	std::pair<bool, String> resolveDollars(const String &input, uint32 index)
+	{
+		const uint32 firstDollar = find(input, '$');
+		if (firstDollar == m)
+			return { false, input };
+
+		String prefix = subString(input, 0, firstDollar);
+		String suffix = subString(input, firstDollar, m);
+		uint32 dollarsCount = 0;
+		while (!suffix.empty() && suffix[0] == '$')
+		{
+			dollarsCount++;
+			suffix = subString(suffix, 1, m);
+		}
+		const String name = prefix + reverse(fill(reverse(String(Stringizer() + index)), dollarsCount, '0')) + suffix;
+		return { true, name };
+	}
+
+	void loadAllFiles()
+	{
+		for (uint32 ifi = 0;; ifi++)
+		{
+			const auto ifn = resolveDollars(inputFile, ifi);
+			const String wholeFilename = pathJoin(inputDirectory, ifn.second);
+			if (ifi > 0 && !pathIsFile(wholeFilename))
+				break;
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file '" + wholeFilename + "'");
+			if (inputSpec.empty())
+			{
+				writeLine(String("use=") + ifn.second);
+				Holder<Image> l = newImage();
+				l->importFile(wholeFilename);
+				images.push_back(std::move(l));
+			}
+			else
+			{
+				MeshImportConfig cfg;
+				cfg.rootPath = inputDirectory;
+				MeshImportResult res = meshImportFiles(wholeFilename, cfg);
+				meshImportNotifyUsedFiles(res);
+				for (uint32 isi = 0;; isi++)
+				{
+					const auto isn = resolveDollars(inputSpec, isi);
+					if (!loadEmbeddedTexture(res, isn.second, isi == 0))
+						break;
+					if (!isn.first)
+						break;
+				}
+			}
+			if (!ifn.first)
+				break;
+		}
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 
 	void performDownscale(uint32 downscale, uint32 target)
@@ -284,34 +362,7 @@ void processTexture()
 			CAGE_THROW_ERROR(Exception, "convert skyboxToCube requires target to be cubeMap");
 	}
 
-	{ // load all files
-		const uint32 firstDollar = find(inputFile, '$');
-		if (firstDollar == m)
-			loadFile(inputFile);
-		else
-		{
-			images.reserve(100);
-			String prefix = subString(inputFile, 0, firstDollar);
-			String suffix = subString(inputFile, firstDollar, m);
-			uint32 dollarsCount = 0;
-			while (!suffix.empty() && suffix[0] == '$')
-			{
-				dollarsCount++;
-				suffix = subString(suffix, 1, m);
-			}
-			uint32 index = 0;
-			while (true)
-			{
-				String name = prefix + reverse(fill(reverse(String(Stringizer() + index)), dollarsCount, '0')) + suffix;
-				if (!pathIsFile(pathJoin(inputDirectory, name)))
-					break;
-				CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file: '" + name + "'");
-				loadFile(name);
-				index++;
-			}
-		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
-	}
+	loadAllFiles();
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images[0]->width() + "*" + images[0]->height() + "*" + numeric_cast<uint32>(images.size()));
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images[0]->channels());
@@ -436,12 +487,12 @@ void analyzeTexture()
 {
 	try
 	{
-		loadFile(inputFile);
+		Holder<Image> l = newImage();
+		l->importFile(pathJoin(inputDirectory, inputFile));
 		writeLine("cage-begin");
 		writeLine("scheme=texture");
 		writeLine(String() + "asset=" + inputFile);
 		writeLine("cage-end");
-		images.clear();
 	}
 	catch (...)
 	{
