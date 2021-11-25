@@ -3,6 +3,7 @@
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
+#include "../image-info/imageInfo.h"
 
 using namespace cage;
 
@@ -52,6 +53,8 @@ void info(const String &src)
 		{
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture name: " + tx.name);
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + detail::meshTextureTypeToString(tx.type));
+			if (tx.image)
+				imageInfo(+tx.image);
 		}
 	}
 	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "overall bounding box: " + overallBox);

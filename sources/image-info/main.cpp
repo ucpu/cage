@@ -5,6 +5,7 @@
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/string.h>
+#include "imageInfo.h"
 
 using namespace cage;
 
@@ -20,14 +21,7 @@ void info(const String &src)
 	{
 		return;
 	}
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + img->width() + "x" + img->height());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "total channels: " + img->channels());
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "color channels: " + img->colorConfig.colorChannelsCount);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "gamma space: " + detail::imageGammaSpaceToString(img->colorConfig.gammaSpace));
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha mode: " + detail::imageAlphaModeToString(img->colorConfig.alphaMode));
-	if (img->colorConfig.alphaChannelIndex != m)
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha channel index: " + img->colorConfig.alphaChannelIndex);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "format: " + detail::imageFormatToString(img->format()));
+	imageInfo(+img);
 }
 
 int main(int argc, const char *args[])
