@@ -16,7 +16,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
+				hierarchy->requestedSize = Vec2(); // todo this is a temporary hack
 			}
 
 			virtual void findFinalPosition(const FinalPosition &update) override
@@ -24,7 +24,7 @@ namespace cage
 
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 
 			}
@@ -34,6 +34,6 @@ namespace cage
 	void ListBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ListBoxImpl>(item);
+		item->item = item->impl->memory->createHolder<ListBoxImpl>(item).cast<BaseItem>();
 	}
 }

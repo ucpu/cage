@@ -4,74 +4,74 @@
 
 namespace cage
 {
-	real real::parse(const string &str)
+	Real Real::parse(const String &str)
 	{
 		return toFloat(privat::tryRemoveParentheses(str));
 	}
 
-	degs degs::parse(const string &str)
+	Degs Degs::parse(const String &str)
 	{
-		string s = privat::tryRemoveParentheses(str);
+		String s = privat::tryRemoveParentheses(str);
 		if (isPattern(s, "", "", "degs"))
 			s = subString(s, 0, s.length() - 4);
 		else if (isPattern(s, "", "", "deg"))
 			s = subString(s, 0, s.length() - 3);
 		s = trim(s, true, true, "\t ");
-		return degs(toFloat(s));
+		return Degs(toFloat(s));
 	}
 
-	rads rads::parse(const string &str)
+	Rads Rads::parse(const String &str)
 	{
-		string s = privat::tryRemoveParentheses(str);
+		String s = privat::tryRemoveParentheses(str);
 		if (isPattern(s, "", "", "rads"))
 			s = subString(s, 0, s.length() - 4);
 		else if (isPattern(s, "", "", "rad"))
 			s = subString(s, 0, s.length() - 3);
 		s = trim(s, true, true, "\t ");
-		return rads(toFloat(s));
+		return Rads(toFloat(s));
 	}
 
-	real sin(rads value)
+	Real sin(Rads value)
 	{
-		return std::sin(real(value).value);
+		return std::sin(Real(value).value);
 	}
 
-	real cos(rads value)
+	Real cos(Rads value)
 	{
-		return std::cos(real(value).value);
+		return std::cos(Real(value).value);
 	}
 
-	real tan(rads value)
+	Real tan(Rads value)
 	{
-		return std::tan(real(value).value);
+		return std::tan(Real(value).value);
 	}
 
-	rads asin(real value)
+	Rads asin(Real value)
 	{
-		return (rads)std::asin(value.value);
+		return (Rads)std::asin(value.value);
 	}
 
-	rads acos(real value)
+	Rads acos(Real value)
 	{
-		return (rads)std::acos(value.value);
+		return (Rads)std::acos(value.value);
 	}
 
-	rads atan(real value)
+	Rads atan(Real value)
 	{
-		return (rads)std::atan(value.value);
+		return (Rads)std::atan(value.value);
 	}
 
-	rads atan2(real x, real y)
+	Rads atan2(Real x, Real y)
 	{
-		return (rads)std::atan2(y.value, x.value);
+		return (Rads)std::atan2(y.value, x.value);
 	}
 
-	bool real::valid() const noexcept
+	bool Real::valid() const noexcept
 	{
 		return !std::isnan(value);
 	}
 
-	bool real::finite() const noexcept
+	bool Real::finite() const noexcept
 	{
 		return std::isfinite(value);
 	}
@@ -86,62 +86,62 @@ namespace cage
 		return !std::isnan(a);
 	}
 
-	real sqrt(real x)
+	Real sqrt(Real x)
 	{
 		return std::sqrt(x.value);
 	}
 
-	real pow(real base, real exponent)
+	Real pow(Real base, Real exponent)
 	{
 		return std::pow(base.value, exponent.value);
 	}
 
-	real powE(real x)
+	Real powE(Real x)
 	{
 		return std::exp(x.value);
 	}
 
-	real pow2(real x)
+	Real pow2(Real x)
 	{
 		return std::exp2(x.value);
 	}
 
-	real pow10(real x)
+	Real pow10(Real x)
 	{
 		return std::pow(10, x.value);
 	}
 
-	real log(real x)
+	Real log(Real x)
 	{
 		return std::log(x.value);
 	}
 
-	real log2(real x)
+	Real log2(Real x)
 	{
 		return std::log2(x.value);
 	}
 
-	real log10(real x)
+	Real log10(Real x)
 	{
 		return std::log10(x.value);
 	}
 
-	real round(real x)
+	Real round(Real x)
 	{
 		return std::round(x.value);
 	}
 
-	real floor(real x)
+	Real floor(Real x)
 	{
 		return std::floor(x.value);
 	}
 
-	real ceil(real x)
+	Real ceil(Real x)
 	{
 		return std::ceil(x.value);
 	}
 
-	real distanceWrap(real a, real b)
+	Real distanceWrap(Real a, Real b)
 	{
 		a = wrap(a);
 		b = wrap(b);
@@ -154,7 +154,7 @@ namespace cage
 		return wrap(abs(a - b));
 	}
 
-	real interpolateWrap(real a, real b, real f)
+	Real interpolateWrap(Real a, Real b, Real f)
 	{
 		a = wrap(a);
 		b = wrap(b);

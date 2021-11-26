@@ -3,8 +3,6 @@
 
 #include "main.h"
 
-uint32 CageTestCase::counter = 0;
-
 void testMacros();
 void testEnums();
 void testExceptions();
@@ -16,16 +14,22 @@ void testDelegates();
 void testHolder();
 void testClasses();
 void testPointerRange();
+void testAny();
 void testEnumerate();
 void testEvents();
 void testMath();
 void testMathGlm();
 void testGeometry();
+void testMemoryArena();
 void testMemoryBuffers();
 void testMemoryAllocators();
+void testStdHash();
+void testBlockContainer();
 void testSerialization();
+void testContainerSerialization();
 void testConcurrent();
 void testConcurrentQueue();
+void testProfiling();
 void testTasks();
 void testLruCache();
 void testFlatSet();
@@ -50,6 +54,7 @@ void testCollisionStructure();
 void testEntities();
 void testEntitiesSerialization();
 void testEntitiesVisitor();
+void testEntitiesCopy();
 void testVariableInterpolatingBuffer();
 void testVariableSmoothingBuffer();
 void testCopyAndMove();
@@ -82,16 +87,22 @@ int main()
 	testHolder();
 	testClasses();
 	testPointerRange();
+	testAny();
 	testEnumerate();
 	testEvents();
 	testMath();
 	testMathGlm();
 	testGeometry();
+	testMemoryArena();
 	testMemoryBuffers();
 	testMemoryAllocators();
+	testStdHash();
+	testBlockContainer();
 	testSerialization();
+	testContainerSerialization();
 	testConcurrent();
 	testConcurrentQueue();
+	testProfiling();
 	testTasks();
 	testLruCache();
 	testFlatSet();
@@ -116,6 +127,7 @@ int main()
 	testEntities();
 	testEntitiesSerialization();
 	testEntitiesVisitor();
+	testEntitiesCopy();
 	testVariableInterpolatingBuffer();
 	testVariableSmoothingBuffer();
 	testCopyAndMove();

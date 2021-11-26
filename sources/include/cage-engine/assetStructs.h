@@ -1,8 +1,10 @@
 #ifndef guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
-#include "core.h"
 #include <cage-core/geometry.h>
+#include <cage-core/meshMaterial.h>
+
+#include "core.h"
 
 namespace cage
 {
@@ -32,9 +34,7 @@ namespace cage
 		uint64 animationDuration;
 		TextureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
-		uint32 dimX;
-		uint32 dimY;
-		uint32 dimZ;
+		Vec3i resolution;
 		uint32 channels;
 		uint32 stride; // only used for GL_TEXTURE_CUBE_MAP, otherwise 0
 		uint32 internalFormat;
@@ -55,42 +55,31 @@ namespace cage
 	{
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
-		uint32 skeletonName;
+		uint32 materialSize; // bytes
 		uint32 skeletonBones;
-		uint32 instancesLimitHint;
-		uint32 materialSize;
-		ModelRenderFlags renderFlags;
-
-		struct CAGE_ENGINE_API MaterialData
-		{
-			// albedo rgb is linear, and NOT alpha-premultiplied
-			vec4 albedoBase = vec4(0);
-			vec4 specialBase = vec4(0);
-			vec4 albedoMult = vec4(1);
-			vec4 specialMult = vec4(1);
-		};
+		MeshRenderFlags renderFlags;
 
 		// follows:
-		// material (may or may not be the MaterialData)
+		// material (may or may not be the MeshMaterial)
 		// serialized mesh
 	};
 
 	struct CAGE_ENGINE_API RenderObjectHeader
 	{
-		vec3 color;
-		real intensity;
-		real opacity;
+		Vec3 color;
+		Real intensity;
+		Real opacity;
 		
-		real texAnimSpeed;
-		real texAnimOffset;
+		Real texAnimSpeed;
+		Real texAnimOffset;
 		uint32 skelAnimName;
-		real skelAnimSpeed;
-		real skelAnimOffset;
+		Real skelAnimSpeed;
+		Real skelAnimOffset;
 
-		real worldSize;
-		real pixelsSize;
+		Real worldSize;
+		Real pixelsSize;
 		uint32 lodsCount;
-		uint32 modelesCount;
+		uint32 modelsCount;
 
 		// follows:
 		// array of thresholds, each float
@@ -107,20 +96,20 @@ namespace cage
 	struct CAGE_ENGINE_API FontHeader
 	{
 		FontFlags flags;
-		vec2 glyphMaxSize; // linear units
-		real lineHeight; // linear units
-		real firstLineOffset; // linear units
+		Vec2 glyphMaxSize; // linear units
+		Real lineHeight; // linear units
+		Real firstLineOffset; // linear units
 		uint32 texSize; // bytes
-		uint32 texWidth, texHeight; // texels
+		Vec2i texResolution;
 		uint32 glyphCount;
 		uint32 charCount;
 
 		struct CAGE_ENGINE_API GlyphData
 		{
-			vec4 texUv;
-			vec2 size; // linear units
-			vec2 bearing; // linear units
-			real advance; // linear units
+			Vec4 texUv;
+			Vec2 size; // linear units
+			Vec2 bearing; // linear units
+			Real advance; // linear units
 		};
 
 		// follows:
@@ -154,9 +143,9 @@ namespace cage
 		uint64 frames;
 		uint32 channels;
 		uint32 sampleRate;
-		real referenceDistance;
-		real rolloffFactor;
-		real gain;
+		Real referenceDistance;
+		Real rolloffFactor;
+		Real gain;
 		SoundTypeEnum soundType;
 		SoundFlags flags;
 

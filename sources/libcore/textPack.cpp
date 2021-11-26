@@ -13,19 +13,19 @@ namespace cage
 		class TextPackImpl : public TextPack
 		{
 		public:
-			robin_hood::unordered_map<uint32, string> texts;
+			robin_hood::unordered_map<uint32, String> texts;
 		};
 	}
 
-	string TextPack::format(const string &format, PointerRange<const string> params)
+	String TextPack::format(const String &format, PointerRange<const String> params)
 	{
-		string res = format;
+		String res = format;
 		while (true)
 		{
-			string prev = split(res, "{");
+			String prev = split(res, "{");
 			if (res == "")
 				return prev + res;
-			string mid = split(res, "}");
+			String mid = split(res, "}");
 			if (isDigitsOnly(mid))
 			{
 				uint32 idx = toUint32(mid);
@@ -75,14 +75,14 @@ namespace cage
 		for (uint32 i = 0; i < cnt; i++)
 		{
 			uint32 n = 0;
-			string s;
+			String s;
 			des >> n >> s;
 			set(n, s);
 		}
 		CAGE_ASSERT(des.available() == 0);
 	}
 
-	void TextPack::set(uint32 name, const string &text)
+	void TextPack::set(uint32 name, const String &text)
 	{
 		CAGE_ASSERT(name != 0);
 		TextPackImpl *impl = (TextPackImpl *)this;
@@ -96,7 +96,7 @@ namespace cage
 		impl->texts.erase(name);
 	}
 
-	string TextPack::get(uint32 name) const
+	String TextPack::get(uint32 name) const
 	{
 		CAGE_ASSERT(name != 0);
 		const TextPackImpl *impl = (const TextPackImpl *)this;
@@ -106,7 +106,7 @@ namespace cage
 		return it->second;
 	}
 
-	string TextPack::format(uint32 name, PointerRange<const string> params) const
+	String TextPack::format(uint32 name, PointerRange<const String> params) const
 	{
 		CAGE_ASSERT(name != 0);
 		return format(get(name), params);

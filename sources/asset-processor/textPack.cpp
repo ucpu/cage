@@ -8,32 +8,32 @@
 
 void processTextpack()
 {
-	writeLine(string("use=") + inputFile);
+	writeLine(String("use=") + inputFile);
 
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
 
-	std::map<string, string> texts;
-	for (const string &section : ini->sections())
+	std::map<String, String> texts;
+	for (const String &section : ini->sections())
 	{
-		for (string n : ini->items(section))
+		for (String n : ini->items(section))
 		{
-			string v = ini->get(section, n);
+			String v = ini->get(section, n);
 			if (!isDigitsOnly(section))
 				n = section + "/" + n;
 			texts[n] = v;
 		}
 	}
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded " + texts.size() + " texts");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded " + texts.size() + " texts");
 
 	if (configGetBool("cage-asset-processor/textpack/preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
+		String dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);
 		for (const auto &it : texts)
-			f->writeLine(fill(string(stringizer() + HashString(it.first)), 10) + " " + it.first + " = " + it.second);
+			f->writeLine(fill(String(Stringizer() + HashString(it.first)), 10) + " " + it.first + " = " + it.second);
 	}
 
 	Holder<TextPack> pack = newTextPack();
@@ -41,9 +41,9 @@ void processTextpack()
 		pack->set(HashString(it.first), it.second);
 
 	Holder<PointerRange<char>> buff = pack->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

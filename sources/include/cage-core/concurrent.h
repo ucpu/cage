@@ -89,10 +89,10 @@ namespace cage
 		void wait();
 	};
 
-	CAGE_CORE_API Holder<Thread> newThread(Delegate<void()> func, const string &threadName);
+	CAGE_CORE_API Holder<Thread> newThread(Delegate<void()> func, const String &threadName);
 
-	CAGE_CORE_API void currentThreadName(const string &name);
-	CAGE_CORE_API string currentThreadName();
+	CAGE_CORE_API void currentThreadName(const String &name);
+	CAGE_CORE_API String currentThreadName();
 	CAGE_CORE_API uint64 currentThreadId();
 	CAGE_CORE_API uint64 currentProcessId();
 	CAGE_CORE_API uint32 processorsCount(); // return number of threads that can physically run simultaneously

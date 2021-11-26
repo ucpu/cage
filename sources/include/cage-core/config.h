@@ -29,21 +29,21 @@ namespace cage
 		String,
 	};
 
-	CAGE_CORE_API string configTypeToString(const ConfigTypeEnum type);
-	CAGE_CORE_API void configSetDynamic(const string &name, const string &value); // changes the type of the config variable to the one best suited for the value
-	CAGE_CORE_API ConfigTypeEnum configGetType(const string &name);
+	CAGE_CORE_API String configTypeToString(const ConfigTypeEnum type);
+	CAGE_CORE_API void configSetDynamic(const String &name, const String &value); // changes the type of the config variable to the one best suited for the value
+	CAGE_CORE_API ConfigTypeEnum configGetType(const String &name);
 
 #define GCHL_CONFIG(T, t) \
 	struct CAGE_CORE_API Config##T \
 	{ \
-		explicit Config##T(const string &name); \
-		explicit Config##T(const string &name, t default_); \
+		explicit Config##T(const String &name); \
+		explicit Config##T(const String &name, t default_); \
 		operator t() const; \
 		Config##T &operator = (t value); \
-		private: void *data; \
+		private: void *data = nullptr; \
 	}; \
-	CAGE_CORE_API void configSet##T(const string &name, t value); \
-	CAGE_CORE_API t configGet##T(const string &name, t default_ = 0);
+	CAGE_CORE_API void configSet##T(const String &name, t value); \
+	CAGE_CORE_API t configGet##T(const String &name, t default_ = 0);
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -55,23 +55,23 @@ namespace cage
 
 	struct CAGE_CORE_API ConfigString
 	{
-		explicit ConfigString(const string &name);
-		explicit ConfigString(const string &name, const string &default_);
-		operator string() const;
-		ConfigString &operator = (const string &value);
+		explicit ConfigString(const String &name);
+		explicit ConfigString(const String &name, const String &default_);
+		operator String() const;
+		ConfigString &operator = (const String &value);
 	private:
-		void *data;
+		void *data = nullptr;
 	};
-	CAGE_CORE_API void configSetString(const string &name, const string &value);
-	CAGE_CORE_API string configGetString(const string &name, const string &default_ = "");
+	CAGE_CORE_API void configSetString(const String &name, const String &value);
+	CAGE_CORE_API String configGetString(const String &name, const String &default_ = "");
 
 	class CAGE_CORE_API ConfigList : private Immovable
 	{
 	public:
 		bool valid() const;
-		string name() const;
+		String name() const;
 		ConfigTypeEnum type() const;
-		string typeName() const;
+		String typeName() const;
 		bool getBool() const;
 		sint32 getSint32() const;
 		uint32 getUint32() const;
@@ -79,7 +79,7 @@ namespace cage
 		uint64 getUint64() const;
 		float getFloat() const;
 		double getDouble() const;
-		string getString() const;
+		String getString() const;
 		void next();
 	};
 
@@ -87,14 +87,14 @@ namespace cage
 
 	// ini values are mapped to config variables as 'prefix/section/item' = 'value'
 
-	CAGE_CORE_API void configApplyIni(const Ini *ini, const string &prefix);
-	CAGE_CORE_API Holder<Ini> configGenerateIni(const string &prefix);
-	CAGE_CORE_API void configImportIni(const string &filename, const string &prefix);
-	CAGE_CORE_API void configExportIni(const string &filename, const string &prefix);
+	CAGE_CORE_API void configApplyIni(const Ini *ini, const String &prefix);
+	CAGE_CORE_API Holder<Ini> configGenerateIni(const String &prefix);
+	CAGE_CORE_API void configImportIni(const String &filename, const String &prefix);
+	CAGE_CORE_API void configExportIni(const String &filename, const String &prefix);
 
 	namespace detail
 	{
-		CAGE_CORE_API string globalConfigPrefix();
+		CAGE_CORE_API String globalConfigPrefix();
 	}
 }
 

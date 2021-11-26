@@ -20,7 +20,6 @@ normals = false
 sphere.obj
 cone.obj
 guiElement.obj
-guiWire.obj
 
 []
 scheme = pack

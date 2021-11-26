@@ -72,8 +72,8 @@ void testClasses()
 		CAGE_TESTCASE("class_cast");
 		Holder<Base> ah = systemMemory().createHolder<Base>();
 		Holder<Base> bh = systemMemory().createImpl<Base, Derived>();
-		Base *a = ah.get();
-		Base *b = bh.get();
+		Base *a = +ah;
+		Base *b = +bh;
 		CAGE_TEST(class_cast<Base*>(a));
 		CAGE_TEST(class_cast<Base*>(b));
 		CAGE_TEST(class_cast<Derived*>(b));

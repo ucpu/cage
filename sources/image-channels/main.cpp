@@ -6,7 +6,7 @@
 
 using namespace cage;
 
-void doSplit(const string names[4], const string &input)
+void doSplit(const String names[4], const String &input)
 {
 	{
 		uint32 outputs = 0;
@@ -17,14 +17,14 @@ void doSplit(const string names[4], const string &input)
 			CAGE_THROW_ERROR(Exception, "no outputs specified");
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
 	in->importFile(input);
 	if (in->format() == ImageFormatEnum::Rgbe)
 		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
 	const uint32 width = in->width();
 	const uint32 height = in->height();
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + width + "x" + height + ", channels: " + in->channels());
 
 	Holder<Image> out = newImage();
 	for (uint32 ch = 0; ch < in->channels(); ch++)
@@ -37,26 +37,26 @@ void doSplit(const string names[4], const string &input)
 			for (uint32 x = 0; x < width; x++)
 				out->value(x, y, 0, in->value(x, y, ch));
 		}
-		CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "saving image: '" + names[ch] + "'");
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + names[ch] + "'");
 		out->exportFile(names[ch]);
 	}
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
 
-void doJoin(const string names[4], const string &output, const bool mono)
+void doJoin(const String names[4], const String &output, const bool mono)
 {
 	Holder<Image> pngs[4];
 	uint32 width = 0, height = 0;
 	uint32 channels = 0;
 	for (uint32 index = 0; index < 4; index++)
 	{
-		const string name = names[index];
+		const String name = names[index];
 		if (!name.empty())
 		{
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 			Holder<Image> p = newImage();
 			p->importFile(name);
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 			if (width == 0)
 			{
 				width = p->width();
@@ -71,7 +71,7 @@ void doJoin(const string names[4], const string &output, const bool mono)
 			{
 				if (!mono)
 					CAGE_THROW_ERROR(Exception, "the image has to be mono channel");
-				CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "monochromatizing");
+				CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "monochromatizing");
 				Holder<Image> m = newImage();
 				m->initialize(width, height, 1);
 				uint32 ch = p->channels();
@@ -94,7 +94,7 @@ void doJoin(const string names[4], const string &output, const bool mono)
 	if (channels == 0)
 		CAGE_THROW_ERROR(Exception, "no inputs specified");
 
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "joining image");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining image");
 	Holder<Image> res = newImage();
 	res->initialize(width, height, channels);
 	for (uint32 i = 0; i < channels; i++)
@@ -109,7 +109,7 @@ void doJoin(const string names[4], const string &output, const bool mono)
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "saving image: '" + output + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + output + "'");
 	res->exportFile(output);
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
@@ -130,10 +130,10 @@ int main(int argc, const char *args[])
 
 		if (split && !join)
 		{
-			string names[4] = { "", "", "", "" };
+			String names[4] = { "", "", "", "" };
 			for (uint32 i = 0; i < 4; i++)
-				names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
-			string input = cmd->cmdString('i', "input", "input.png");
+				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
+			String input = cmd->cmdString('i', "input", "input.png");
 
 			if (!help)
 			{
@@ -144,10 +144,10 @@ int main(int argc, const char *args[])
 
 		if (join && !split)
 		{
-			string names[4] = { "", "", "", "" };
+			String names[4] = { "", "", "", "" };
 			for (uint32 i = 0; i < 4; i++)
-				names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
-			const string output = cmd->cmdString('o', "output", "output.png");
+				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
+			const String output = cmd->cmdString('o', "output", "output.png");
 			const bool mono = cmd->cmdBool('m', "mono", false);
 
 			if (!help)
@@ -160,9 +160,9 @@ int main(int argc, const char *args[])
 		if (help)
 		{
 			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
 			return 0;
 		}
 

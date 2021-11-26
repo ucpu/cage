@@ -30,13 +30,13 @@ namespace
 
 		void threadEntry(uint32 thrId, uint32)
 		{
-			pathCreateArchive(stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
+			pathCreateArchive(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }
-				const string name = Mode == 0
-					? stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin"
-					: stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const String name = Mode == 0
+					? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin"
+					: Stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
@@ -75,10 +75,10 @@ void testArchivesRecursion()
 
 	{
 		CAGE_TESTCASE("create archive inside archive inside archive ...");
-		string p = "testdir";
+		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, stringizer() + i + ".zip");
+			p = pathJoin(p, Stringizer() + i + ".zip");
 			pathCreateArchive(p);
 		}
 		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::Archive));
@@ -93,10 +93,10 @@ void testArchivesRecursion()
 
 	{
 		CAGE_TESTCASE("create file inside each archive");
-		string p = "testdir";
+		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, stringizer() + i + ".zip");
+			p = pathJoin(p, Stringizer() + i + ".zip");
 			Holder<File> f = writeFile(pathJoin(p, "welcome"));
 			f->writeLine("hello");
 			f->close();
@@ -108,12 +108,12 @@ void testArchivesRecursion()
 
 	{
 		CAGE_TESTCASE("read file inside each archive");
-		string p = "testdir";
+		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, stringizer() + i + ".zip");
+			p = pathJoin(p, Stringizer() + i + ".zip");
 			Holder<File> f = readFile(pathJoin(p, "welcome"));
-			string l;
+			String l;
 			CAGE_TEST(f->readLine(l));
 			CAGE_TEST(l == "hello");
 			f->close();
@@ -127,10 +127,10 @@ void testArchivesRecursion()
 		CAGE_TESTCASE("opening an archive (inside archive) as regular file");
 		{
 			CAGE_TESTCASE("with open archive");
-			string p = "testdir";
+			String p = "testdir";
 			for (uint32 i = 0; i < 5; i++)
 			{
-				p = pathJoin(p, stringizer() + i + ".zip");
+				p = pathJoin(p, Stringizer() + i + ".zip");
 				Holder<DirectoryList> list = newDirectoryList(p); // ensure the archive is open
 				CAGE_TEST(list->valid()); // sanity check that there is at least one file in the archive
 				CAGE_TEST_THROWN(readFile(p));
@@ -138,10 +138,10 @@ void testArchivesRecursion()
 		}
 		{
 			CAGE_TESTCASE("with closed archive");
-			string p = "testdir";
+			String p = "testdir";
 			for (uint32 i = 0; i < 5; i++)
 			{
-				p = pathJoin(p, stringizer() + i + ".zip");
+				p = pathJoin(p, Stringizer() + i + ".zip");
 				CAGE_TEST(readFile(p));
 			}
 		}
@@ -153,7 +153,7 @@ void testArchivesRecursion()
 			ConcurrentTester<0> tester;
 			for (uint32 i = 0; i < 10; i++)
 			{
-				CAGE_TESTCASE(stringizer() + "iteration: " + i);
+				CAGE_TESTCASE(Stringizer() + "iteration: " + i);
 				tester.run();
 			}
 		}
@@ -161,7 +161,7 @@ void testArchivesRecursion()
 			ConcurrentTester<1> tester;
 			for (uint32 i = 0; i < 10; i++)
 			{
-				CAGE_TESTCASE(stringizer() + "iteration: " + i);
+				CAGE_TESTCASE(Stringizer() + "iteration: " + i);
 				tester.run();
 			}
 		}

@@ -47,18 +47,18 @@ namespace cage
 			unlink();
 		}
 
-		stringizer &operator + (stringizer &s, const std::source_location &l)
+		Stringizer &operator + (Stringizer &s, const std::source_location &l)
 		{
-			string n = l.file_name();
+			String n = l.file_name();
 #ifdef CAGE_SYSTEM_WINDOWS
 			n = replace(n, "\\", "/");
 #endif // CAGE_SYSTEM_WINDOWS
 
 			// extract just one folder and file name
 			n = reverse(n);
-			string a = split(n, "/");
+			String a = split(n, "/");
 			if (!n.empty())
-				a += string() + "/" + split(n, "/");
+				a += String() + "/" + split(n, "/");
 			a = reverse(a);
 
 			return s + a + ":" + l.line();
@@ -70,11 +70,11 @@ namespace cage
 			while (l->p)
 				l = l->p;
 			CAGE_ASSERT(l);
-			CAGE_LOG(SeverityEnum::Info, "event-listener", stringizer() + "(event): " + l->location);
+			CAGE_LOG(SeverityEnum::Info, "event-listener", Stringizer() + "(event): " + l->location);
 			l = l->n;
 			while (l)
 			{
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "event-listener", stringizer() + "(" + l->order + "): " + l->location);
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "event-listener", Stringizer() + "(" + l->order + "): " + l->location);
 				l = l->n;
 			}
 		}

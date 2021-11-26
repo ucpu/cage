@@ -99,7 +99,7 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(SeverityEnum::Info, "udp-stats", stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
+				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
 			}
 			connectionsLeft--;
 		}
@@ -112,7 +112,7 @@ namespace
 				MemoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
-				CAGE_LOG(SeverityEnum::Info, "udp-test", stringizer() + "progress: " + ri + " / " + sends.size());
+				CAGE_LOG(SeverityEnum::Info, "udp-test", Stringizer() + "progress: " + ri + " / " + sends.size());
 			}
 			if (si < ri + 2 && si < sends.size())
 			{
@@ -144,7 +144,7 @@ void testNetworkGinnel()
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)
-		c = newThread(Delegate<void()>().bind<&ClientImpl::entry>(), stringizer() + "client " + (index++));
+		c = newThread(Delegate<void()>().bind<&ClientImpl::entry>(), Stringizer() + "client " + (index++));
 	server->wait();
 	for (auto &c : clients)
 		c->wait();

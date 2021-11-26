@@ -46,7 +46,7 @@ namespace
 		uint8 arr[Size];
 	};
 
-	template <uint32 Size, uintPtr Alignment>
+	template<uint32 Size, uintPtr Alignment>
 	struct alignas(Alignment) AlignedTest : public Test<Size>
 	{};
 

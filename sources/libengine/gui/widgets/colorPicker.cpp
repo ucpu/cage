@@ -6,50 +6,55 @@ namespace cage
 {
 	namespace
 	{
-		struct ColorPickerRenderable : RenderableBase
-		{
-			vec4 pos;
-			vec3 rgb;
-			uint32 mode; // 0 = flat, 1 = hue, 2 = saturation & value
+		struct ColorPickerImpl;
 
-			virtual void render(GuiImpl *impl) override
+		struct ColorPickerRenderable : public RenderableBase
+		{
+			Vec4 pos;
+			Vec3 rgb;
+			uint32 mode = m; // 0 = flat, 1 = hue, 2 = saturation & value
+
+			ColorPickerRenderable(const ColorPickerImpl *item);
+
+			virtual ~ColorPickerRenderable() override
 			{
-				ShaderProgram *shr = impl->graphicsData.colorPickerShader[mode];
-				shr->bind();
-				shr->uniform(0, pos);
+				if (!prepare())
+					return;
+				RenderQueue *q = impl->activeQueue;
+				q->bind(impl->graphicsData.colorPickerShader[mode].share());
+				q->uniform(0, pos);
 				switch (mode)
 				{
 				case 0:
-					shr->uniform(1, rgb);
+					q->uniform(1, rgb);
 					break;
 				case 2:
-					shr->uniform(1, colorRgbToHsv(rgb)[0]);
+					q->uniform(1, colorRgbToHsv(rgb)[0]);
 					break;
 				}
-				Model *model = impl->graphicsData.imageModel;
-				model->bind();
-				model->dispatch();
+				q->bind(impl->graphicsData.imageModel.share());
+				q->draw();
 			}
 		};
 
 		struct ColorPickerImpl : public WidgetItem
 		{
 			GuiColorPickerComponent &data;
-			ColorPickerImpl *small, *large;
+			ColorPickerImpl *small = nullptr, *large = nullptr;
 
-			vec3 color;
-			vec2 sliderPos, sliderSize;
-			vec2 resultPos, resultSize;
-			vec2 rectPos, rectSize;
+			Vec3 color;
+			Vec2 sliderPos, sliderSize;
+			Vec2 resultPos, resultSize;
+			Vec2 rectPos, rectSize;
 
-			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small), large(nullptr)
+			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small)
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->text);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(!hierarchy->image);
 
 				if (data.collapsible)
 				{
@@ -62,12 +67,13 @@ namespace cage
 					{ // this is the small base
 						if (hasFocus(1 | 2 | 4))
 						{ // create popup
-							HierarchyItem *item = hierarchy->impl->itemsMemory.createObject<HierarchyItem>(hierarchy->impl, hierarchy->ent);
-							item->attachParent(hierarchy->impl->root);
-							item->item = large = hierarchy->impl->itemsMemory.createObject<ColorPickerImpl>(item, this);
+							Holder<HierarchyItem> item = hierarchy->impl->memory->createHolder<HierarchyItem>(hierarchy->impl, hierarchy->ent);
+							item->item = hierarchy->impl->memory->createHolder<ColorPickerImpl>(+item, this).cast<BaseItem>();
+							large = class_cast<ColorPickerImpl *>(+item->item);
 							large->widgetState = widgetState;
 							large->skin = skin;
 							small = this;
+							hierarchy->impl->root->children.push_back(std::move(item));
 						}
 						else
 						{ // no popup
@@ -106,8 +112,8 @@ namespace cage
 				}
 				if (this == large)
 				{
-					vec2 p = hierarchy->renderPos;
-					vec2 s = hierarchy->renderSize;
+					Vec2 p = hierarchy->renderPos;
+					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.colorPicker.margin - skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
@@ -124,23 +130,20 @@ namespace cage
 				}
 			}
 
-			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin) const
+			void emitColor(Vec2 pos, Vec2 size, uint32 mode, const Vec4 &margin)
 			{
-				auto *e = hierarchy->impl->emitControl;
-				auto *t = e->memory.createObject<ColorPickerRenderable>();
+				ColorPickerRenderable t(this);
 				offset(pos, size, -margin);
-				t->setClip(hierarchy);
-				t->pos = hierarchy->impl->pointsToNdc(pos, size);
-				t->mode = mode;
-				t->rgb = color;
-				e->last->next = t;
-				e->last = t;
+				t.setClip(hierarchy);
+				t.pos = hierarchy->impl->pointsToNdc(pos, size);
+				t.mode = mode;
+				t.rgb = color;
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
@@ -160,7 +163,7 @@ namespace cage
 				}
 			}
 
-			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point, bool move)
+			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point, bool move)
 			{
 				if (!move)
 					makeFocused();
@@ -179,16 +182,16 @@ namespace cage
 					}
 					if (hasFocus(2))
 					{
-						vec3 hsv = colorRgbToHsv(data.color);
-						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
+						Vec3 hsv = colorRgbToHsv(data.color);
+						Vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = colorHsvToRgb(hsv);
 						hierarchy->fireWidgetEvent();
 					}
 					else if (hasFocus(4))
 					{
-						vec3 hsv = colorRgbToHsv(data.color);
-						vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
+						Vec3 hsv = colorRgbToHsv(data.color);
+						Vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = colorHsvToRgb(hsv);
@@ -198,21 +201,24 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}
 		};
+
+		ColorPickerRenderable::ColorPickerRenderable(const ColorPickerImpl *item) : RenderableBase(item->hierarchy->impl)
+		{}
 	}
 
 	void ColorPickerCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ColorPickerImpl>(item);
+		item->item = item->impl->memory->createHolder<ColorPickerImpl>(item).cast<BaseItem>();
 	}
 }

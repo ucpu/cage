@@ -69,14 +69,14 @@ void testFiles()
 	{
 		CAGE_TESTCASE("create several files");
 		for (uint32 i = 2; i <= 32; i++)
-			writeFile(pathJoin("testdir/files", stringizer() + i));
+			writeFile(pathJoin("testdir/files", Stringizer() + i));
 	}
 
 	{
 		CAGE_TESTCASE("list directory");
 		Holder<DirectoryList> fs = newDirectoryList("testdir/files");
 		CAGE_TEST(fs);
-		std::set<string> mp;
+		std::set<String> mp;
 		while (fs->valid())
 		{
 			mp.insert(fs->name());
@@ -84,7 +84,7 @@ void testFiles()
 		}
 		CAGE_TEST(mp.size() == 32);
 		for (uint32 i = 1; i <= 32; i++)
-			CAGE_TEST(mp.count(stringizer() + i));
+			CAGE_TEST(mp.count(Stringizer() + i));
 	}
 
 	{
@@ -127,20 +127,20 @@ void testFiles()
 		CAGE_TESTCASE("create files in subsequent folders");
 		for (char a = 'a'; a < 'e'; a++)
 		{
-			string sa({ &a, &a + 1 });
+			String sa({ &a, &a + 1 });
 			for (char b = 'a'; b < 'e'; b++)
 			{
-				string sb({ &b, &b + 1 });
+				String sb({ &b, &b + 1 });
 				for (char c = 'a'; c < a; c++)
 				{
-					string sc({ &c, &c + 1 });
+					String sc({ &c, &c + 1 });
 					writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)));
 				}
 				writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")));
 			}
 			for (char b = 'e'; b < 'h'; b++)
 			{
-				string sb({ &b, &b + 1 });
+				String sb({ &b, &b + 1 });
 				writeFile(pathJoin(pathJoin("testdir/files", sa), sb));
 			}
 		}
@@ -166,11 +166,11 @@ void testFiles()
 	{
 		CAGE_TESTCASE("lines");
 
-		const string data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+		const String data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
 			Holder<File> f = writeFile("testdir/files/lines");
-			string s = data;
+			String s = data;
 			while (!s.empty())
 				f->writeLine(split(s, "/"));
 			f->close();
@@ -178,9 +178,9 @@ void testFiles()
 
 		{
 			Holder<File> f = readFile("testdir/files/lines");
-			string s;
+			String s;
 			uint32 cnt = 0;
-			for (string line; f->readLine(line);)
+			for (String line; f->readLine(line);)
 			{
 				s += line + "/";
 				cnt++;
@@ -195,8 +195,8 @@ void testFiles()
 
 		{
 			CAGE_TESTCASE("simple move");
-			const string source = "testdir/files/1";
-			const string dest = "testdir/moved/1";
+			const String source = "testdir/files/1";
+			const String dest = "testdir/moved/1";
 			CAGE_TEST(pathIsFile(source));
 			CAGE_TEST(!pathIsFile(dest));
 			pathMove(source, dest);
@@ -237,7 +237,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("invalid file paths");
-		string invalidPath = "invalid-path";
+		String invalidPath = "invalid-path";
 		invalidPath[3] = 0;
 		CAGE_TEST(pathType(invalidPath) == PathTypeFlags::Invalid);
 		CAGE_TEST(!pathIsFile(invalidPath));
@@ -255,10 +255,10 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("sanitize file path");
-		const string d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def.bin";
+		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def.bin";
 		CAGE_TEST_THROWN(writeFile(d));
-		const string s = pathReplaceInvalidCharacters(d, "_", true);
-		CAGE_LOG(SeverityEnum::Info, "tests", stringizer() + "sanitized path: '" + s + "'");
+		const String s = pathReplaceInvalidCharacters(d, "_", true);
+		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: '" + s + "'");
 		CAGE_TEST(writeFile(s));
 	}
 

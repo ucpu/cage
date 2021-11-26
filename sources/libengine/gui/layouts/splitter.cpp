@@ -6,43 +6,34 @@ namespace cage
 	{
 		struct LayoutSplitterImpl : public LayoutItem
 		{
-			GuiLayoutSplitterComponent &data;
+			const GuiLayoutSplitterComponent &data;
 
 			LayoutSplitterImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
 			{}
 
 			virtual void initialize() override
 			{
-				uint32 chc = 0;
-				HierarchyItem *c = hierarchy->firstChild;
-				while (c)
-				{
-					chc++;
-					c = c->nextSibling;
-				}
-				CAGE_ASSERT(chc == 2);
+				CAGE_ASSERT(hierarchy->children.size() == 2);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				HierarchyItem *c = hierarchy->firstChild;
-				hierarchy->requestedSize = vec2();
-				while (c)
+				hierarchy->requestedSize = Vec2();
+				for (const auto &c : hierarchy->children)
 				{
 					c->findRequestedSize();
 					hierarchy->requestedSize[data.vertical] += c->requestedSize[data.vertical];
 					hierarchy->requestedSize[!data.vertical] = max(hierarchy->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
-					c = c->nextSibling;
 				}
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				HierarchyItem *a = hierarchy->firstChild, *b = hierarchy->firstChild->nextSibling;
-				uint32 axis = data.vertical ? 1 : 0;
+				HierarchyItem *a = +hierarchy->children[0], *b = +hierarchy->children[1];
+				const uint32 axis = data.vertical ? 1 : 0;
+				const Real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
 				FinalPosition u(update);
-				real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
 				u.renderPos[axis] += 0;
 				u.renderSize[axis] = split;
 				a->findFinalPosition(u);
@@ -56,6 +47,6 @@ namespace cage
 	void LayoutSplitterCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<LayoutSplitterImpl>(item);
+		item->item = item->impl->memory->createHolder<LayoutSplitterImpl>(item).cast<BaseItem>();
 	}
 }

@@ -16,10 +16,10 @@ namespace
 	struct Run : private Immovable
 	{
 		Holder<Thread> thr;
-		string name;
-		string cmd;
+		String name;
+		String cmd;
 
-		explicit Run(const string &name, const string &cmd) : name(name), cmd(cmd)
+		explicit Run(const String &name, const String &cmd) : name(name), cmd(cmd)
 		{
 			thr = newThread(Delegate<void()>().bind<Run, &Run::thrEntry>(this), name);
 		}
@@ -30,7 +30,7 @@ namespace
 			{
 				while (true)
 				{
-					string s;
+					String s;
 					try
 					{
 						detail::OverrideBreakpoint ob;
@@ -45,7 +45,7 @@ namespace
 			}
 			int res = prg->wait();
 			if (res != 0)
-				CAGE_LOG(SeverityEnum::Info, "manager", stringizer() + name + ": process ended with code: " + res);
+				CAGE_LOG(SeverityEnum::Info, "manager", Stringizer() + name + ": process ended with code: " + res);
 		}
 	};
 
@@ -57,7 +57,7 @@ namespace
 		Run runnerClient3("L", "cage-test-ginnel -n ginnel-test-L -c -x 0.02");
 	}
 
-	void initializeSecondaryLog(const string &path)
+	void initializeSecondaryLog(const String &path)
 	{
 		static Holder<LoggerOutputFile> *secondaryLogFile = new Holder<LoggerOutputFile>(); // intentional leak
 		static Holder<Logger> *secondaryLog = new Holder<Logger>(); // intentional leak - this will allow to log to the very end of the application
@@ -97,7 +97,7 @@ int main(int argc, const char *args[])
 		ConfigUint64 maxBytesPerSecond("maxBytesPerSecond");
 		const bool modeServer = cmd->cmdBool('s', "server", false);
 		const bool modeClient = cmd->cmdBool('c', "client", false);
-		const string name = cmd->cmdString('n', "name", "");
+		const String name = cmd->cmdString('n', "name", "");
 		address = cmd->cmdString('a', "address", address);
 		port = cmd->cmdUint32('p', "port", port);
 		if (port <= 1024 || port >= 65536)
@@ -114,7 +114,7 @@ int main(int argc, const char *args[])
 
 		if (!name.empty())
 			initializeSecondaryLog(name + ".log");
-		CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "packet loss: " + (float)packetLoss);
+		CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "packet loss: " + (float)packetLoss);
 
 		if (modeServer)
 			runServer();

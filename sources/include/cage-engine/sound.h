@@ -7,10 +7,16 @@ namespace cage
 {
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
+#ifdef CAGE_DEBUG
+		detail::StringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
-		real referenceDistance = 1; // minimum distance to apply attenuation
-		real rolloffFactor = 1; // distance multiplier
-		real gain = 1; // linear amplitude multiplier
+		void setDebugName(const String &name);
+
+		Real referenceDistance = 1; // minimum distance to apply attenuation
+		Real rolloffFactor = 1; // distance multiplier
+		Real gain = 1; // linear amplitude multiplier
 
 		bool loopBeforeStart = false;
 		bool loopAfterEnd = false;
@@ -32,7 +38,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Sound> newSound();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeSound(uint32 threadIndex);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeSound();
 	constexpr uint32 AssetSchemeIndexSound = 20;
 }
 

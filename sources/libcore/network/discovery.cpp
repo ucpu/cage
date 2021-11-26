@@ -70,7 +70,7 @@ namespace cage
 				}
 			}
 
-			void addServer(const string &address, uint16 port)
+			void addServer(const String &address, uint16 port)
 			{
 				AddrList l(address.c_str(), port, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (l.valid())
@@ -136,7 +136,7 @@ namespace cage
 							d >> gid >> id >> p.port;
 							auto av = numeric_cast<uint32>(d.available());
 							auto ap = d.read(av).data();
-							p.message = string({ ap, ap + av });
+							p.message = String({ ap, ap + av });
 							auto pit = peers.find(id);
 							if (pit == peers.end())
 							{
@@ -282,7 +282,7 @@ namespace cage
 		impl->update();
 	}
 
-	void DiscoveryClient::addServer(const string &address, uint16 port)
+	void DiscoveryClient::addServer(const String &address, uint16 port)
 	{
 		DiscoveryClientImpl *impl = (DiscoveryClientImpl *)this;
 		impl->addServer(address, port);

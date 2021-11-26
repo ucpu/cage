@@ -6,9 +6,7 @@ namespace cage
 	{
 		struct PanelImpl : public WidgetItem
 		{
-			GuiPanelComponent &data;
-
-			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Panel))
+			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -16,18 +14,18 @@ namespace cage
 			virtual void initialize() override
 			{
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.panel.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.panel.textFormat);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->firstChild->findRequestedSize();
-				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
+				hierarchy->children[0]->findRequestedSize();
+				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.contentPadding);
 				if (hierarchy->text)
 				{
 					hierarchy->requestedSize[1] += skin->defaults.panel.captionHeight;
-					vec2 cs = hierarchy->text->findRequestedSize();
+					Vec2 cs = hierarchy->text->findRequestedSize();
 					offsetSize(cs, skin->defaults.panel.captionPadding);
 					hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0]);
 					// it is important to compare (text size + text padding) with (children size + children padding)
@@ -48,18 +46,18 @@ namespace cage
 					u.renderSize[1] -= skin->defaults.panel.captionHeight;
 				}
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.contentPadding);
-				hierarchy->firstChild->findFinalPosition(u);
+				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.panel.baseMargin);
 				emitElement(GuiElementTypeEnum::PanelBase, mode(false, 0), p, s);
 				if (hierarchy->text)
 				{
-					s = vec2(s[0], skin->defaults.panel.captionHeight);
+					s = Vec2(s[0], skin->defaults.panel.captionHeight);
 					emitElement(GuiElementTypeEnum::PanelCaption, mode(false, 0), p, s);
 					offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::PanelCaption].border);
 					offset(p, s, -skin->defaults.panel.captionPadding);
@@ -73,6 +71,6 @@ namespace cage
 	void PanelCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<PanelImpl>(item);
+		item->item = item->impl->memory->createHolder<PanelImpl>(item).cast<BaseItem>();
 	}
 }

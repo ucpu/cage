@@ -21,8 +21,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API SpeakerCreateConfig
 	{
-		string name;
-		string deviceId;
+		String name;
+		String deviceId;
 		uint32 channels = 0;
 		uint32 sampleRate = 0;
 

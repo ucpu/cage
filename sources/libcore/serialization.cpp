@@ -25,7 +25,7 @@ namespace cage
 		detail::memcpy(dst.data(), buffer.data(), buffer.size());
 	}
 
-	void Serializer::writeLine(const string &line)
+	void Serializer::writeLine(const String &line)
 	{
 		write(line);
 		write("\n");
@@ -92,7 +92,7 @@ namespace cage
 		return false;
 	}
 
-	bool Deserializer::readLine(string &line)
+	bool Deserializer::readLine(String &line)
 	{
 		const uintPtr a = available();
 		PointerRange<const char> pr = { data + offset, data + offset + a };

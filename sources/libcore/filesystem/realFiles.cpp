@@ -28,9 +28,9 @@
 
 namespace cage
 {
-	Holder<DirectoryList> realNewDirectoryList(const string &path);
+	Holder<DirectoryList> realNewDirectoryList(const String &path);
 
-	PathTypeFlags realType(const string &path)
+	PathTypeFlags realType(const String &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -56,9 +56,9 @@ namespace cage
 #endif
 	}
 
-	void realCreateDirectories(const string &path)
+	void realCreateDirectories(const String &path)
 	{
-		string pth = path + "/";
+		String pth = path + "/";
 		uint32 off = 0;
 		while (true)
 		{
@@ -69,7 +69,7 @@ namespace cage
 			off = pos + 1;
 			if (pos)
 			{
-				const string p = subString(pth, 0, pos);
+				const String p = subString(pth, 0, pos);
 				if (any(realType(p) & PathTypeFlags::Directory))
 					continue;
 
@@ -79,7 +79,7 @@ namespace cage
 					const auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
 					{
-						CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+						CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 						CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
 					}
 				}
@@ -87,7 +87,7 @@ namespace cage
 				constexpr mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
-					CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 					CAGE_THROW_ERROR(Exception, "mkdir");
 				}
 #endif
@@ -95,7 +95,7 @@ namespace cage
 		}
 	}
 
-	void realMove(const string &from, const string &to)
+	void realMove(const String &from, const String &to)
 	{
 		pathCreateDirectories(pathExtractDirectory(to));
 
@@ -104,7 +104,7 @@ namespace cage
 		auto res = MoveFile(from.c_str(), to.c_str());
 		if (res == 0)
 		{
-			CAGE_LOG_THROW(stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
 		}
 
@@ -113,14 +113,14 @@ namespace cage
 		auto res = rename(from.c_str(), to.c_str());
 		if (res != 0)
 		{
-			CAGE_LOG_THROW(stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(SystemError, "pathMove", errno);
 		}
 
 #endif
 	}
 
-	void realRemove(const string &path)
+	void realRemove(const String &path)
 	{
 		const PathTypeFlags t = realType(path);
 		if (any(t & PathTypeFlags::Directory))
@@ -154,20 +154,20 @@ namespace cage
 		}
 	}
 
-	uint64 realLastChange(const string &path)
+	uint64 realLastChange(const String &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
 		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		FILETIME ftWrite;
 		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		ULARGE_INTEGER l;
@@ -181,7 +181,7 @@ namespace cage
 		struct stat st;
 		if (stat(pathToAbs(path).c_str(), &st) == 0)
 			return st.st_mtime;
-		CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+		CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 		CAGE_THROW_ERROR(SystemError, "stat", errno);
 
 #endif
@@ -189,22 +189,22 @@ namespace cage
 
 	namespace
 	{
-		string pathWorkingDirImpl()
+		String pathWorkingDirImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			char buffer[string::MaxLength];
-			uint32 len = GetCurrentDirectory(string::MaxLength - 1, buffer);
+			char buffer[String::MaxLength];
+			uint32 len = GetCurrentDirectory(String::MaxLength - 1, buffer);
 			if (len <= 0)
 				CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
-			if (len >= string::MaxLength)
+			if (len >= String::MaxLength)
 				CAGE_THROW_ERROR(Exception, "path too long");
-			return pathSimplify(string({ buffer, buffer + len }));
+			return pathSimplify(String({ buffer, buffer + len }));
 
 #else
 
-			char buffer[string::MaxLength];
-			if (getcwd(buffer, string::MaxLength - 1) != nullptr)
+			char buffer[String::MaxLength];
+			if (getcwd(buffer, String::MaxLength - 1) != nullptr)
 				return pathSimplify(buffer);
 			CAGE_THROW_ERROR(Exception, "getcwd");
 
@@ -212,30 +212,30 @@ namespace cage
 		}
 	}
 
-	string pathWorkingDir()
+	String pathWorkingDir()
 	{
-		static const string dir = pathWorkingDirImpl();
+		static const String dir = pathWorkingDirImpl();
 		CAGE_ASSERT(dir == pathWorkingDirImpl());
 		return dir;
 	}
 
 	namespace
 	{
-		string executableFullPathImpl()
+		String executableFullPathImpl()
 		{
-			char buffer[string::MaxLength];
+			char buffer[String::MaxLength];
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			uint32 len = GetModuleFileName(nullptr, (char *)&buffer, string::MaxLength);
+			uint32 len = GetModuleFileName(nullptr, (char *)&buffer, String::MaxLength);
 			if (len == 0)
 				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
 
 #elif defined(CAGE_SYSTEM_LINUX)
 
-			char id[string::MaxLength];
+			char id[String::MaxLength];
 			sprintf(id, "/proc/%d/exe", getpid());
-			sint32 len = readlink(id, buffer, string::MaxLength);
+			sint32 len = readlink(id, buffer, String::MaxLength);
 			if (len == -1)
 				CAGE_THROW_ERROR(SystemError, "readlink", errno);
 
@@ -252,22 +252,22 @@ namespace cage
 
 #endif
 
-			return pathSimplify(string({ buffer, buffer + len }));
+			return pathSimplify(String({ buffer, buffer + len }));
 		}
 	}
 
 	namespace detail
 	{
-		string executableFullPath()
+		String executableFullPath()
 		{
-			static const string pth = executableFullPathImpl();
+			static const String pth = executableFullPathImpl();
 			return pth;
 		}
 
-		string executableFullPathNoExe()
+		String executableFullPathNoExe()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			string p = executableFullPath();
+			String p = executableFullPath();
 			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
 			return subString(p, 0, p.length() - 4);
 #else
@@ -283,7 +283,7 @@ namespace cage
 		public:
 			FILE *f = nullptr;
 
-			FileReal(const string &path, const FileMode &mode) : FileAbstract(path, mode)
+			FileReal(const String &path, const FileMode &mode) : FileAbstract(path, mode)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.write)
@@ -291,8 +291,8 @@ namespace cage
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
 				{
-					CAGE_LOG_THROW(stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
-					CAGE_LOG_THROW(stringizer() + "path: " + path);
+					CAGE_LOG_THROW(Stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
+					CAGE_LOG_THROW(Stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(SystemError, "fopen", errno);
 				}
 			}
@@ -320,7 +320,7 @@ namespace cage
 				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
 				if (!f)
 				{
-					CAGE_LOG_THROW(stringizer() + "path: " + myPath);
+					CAGE_LOG_THROW(Stringizer() + "path: " + myPath);
 					CAGE_THROW_ERROR(SystemError, "freopen", errno);
 				}
 			}
@@ -400,7 +400,7 @@ namespace cage
 		};
 	}
 
-	Holder<File> realNewFile(const string &path, const FileMode &mode)
+	Holder<File> realNewFile(const String &path, const FileMode &mode)
 	{
 		return systemMemory().createImpl<File, FileReal>(path, mode);
 	}
@@ -427,7 +427,7 @@ namespace cage
 			struct dirent *pent = nullptr;
 #endif
 
-			DirectoryListReal(const string &path) : DirectoryListAbstract(path)
+			DirectoryListReal(const String &path) : DirectoryListAbstract(path)
 			{
 				realCreateDirectories(path);
 
@@ -462,7 +462,7 @@ namespace cage
 				return valid_;
 			}
 
-			string name() const override
+			String name() const override
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				return ffd.cFileName;
@@ -500,7 +500,7 @@ namespace cage
 		};
 	}
 
-	Holder<DirectoryList> realNewDirectoryList(const string &path)
+	Holder<DirectoryList> realNewDirectoryList(const String &path)
 	{
 		return systemMemory().createImpl<DirectoryList, DirectoryListReal>(path);
 	}
@@ -510,47 +510,47 @@ namespace cage
 		class ArchiveReal : public ArchiveAbstract
 		{
 		public:
-			ArchiveReal(const string &path) : ArchiveAbstract(path)
+			ArchiveReal(const String &path) : ArchiveAbstract(path)
 			{}
 
-			PathTypeFlags type(const string &path) const
+			PathTypeFlags type(const String &path) const
 			{
 				return realType(pathJoin(myPath, path));
 			}
 
-			void createDirectories(const string &path)
+			void createDirectories(const String &path)
 			{
 				return realCreateDirectories(pathJoin(myPath, path));
 			}
 
-			void move(const string &from, const string &to)
+			void move(const String &from, const String &to)
 			{
 				realMove(pathJoin(myPath, from), pathJoin(myPath, to));
 			}
 
-			void remove(const string &path)
+			void remove(const String &path)
 			{
 				realRemove(pathJoin(myPath, path));
 			}
 
-			uint64 lastChange(const string &path) const
+			uint64 lastChange(const String &path) const
 			{
 				return realLastChange(pathJoin(myPath, path));
 			}
 
-			Holder<File> openFile(const string &path, const FileMode &mode)
+			Holder<File> openFile(const String &path, const FileMode &mode)
 			{
 				return realNewFile(pathJoin(myPath, path), mode);
 			}
 
-			Holder<DirectoryList> listDirectory(const string &path) const
+			Holder<DirectoryList> listDirectory(const String &path) const
 			{
 				return realNewDirectoryList(pathJoin(myPath, path));
 			}
 		};
 	}
 
-	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const string &path)
+	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path)
 	{
 		auto a = std::make_shared<ArchiveReal>(path);
 		return a;
@@ -561,7 +561,7 @@ namespace cage
 		class FilesystemWatcherImpl : public FilesystemWatcher, private FW::FileWatchListener
 		{
 		public:
-			FlatSet<string, StringComparatorFast> files;
+			FlatSet<String, StringComparatorFast> files;
 			Holder<FW::FileWatcher> fw;
 			Holder<Timer> clock;
 
@@ -571,7 +571,7 @@ namespace cage
 				clock = newTimer();
 			}
 
-			string waitForChange(uint64 time)
+			String waitForChange(uint64 time)
 			{
 				clock->reset();
 				while (files.empty())
@@ -582,7 +582,7 @@ namespace cage
 					else
 						threadSleep(1000 * 100);
 				}
-				const string res = *files.begin();
+				const String res = *files.begin();
 				files.erase(files.begin());
 				return res;
 			}
@@ -592,13 +592,13 @@ namespace cage
 				files.insert(pathJoin(dir.c_str(), filename.c_str()));
 			}
 
-			void registerPath(const string &path)
+			void registerPath(const String &path)
 			{
 				fw->addWatch(path.c_str(), this);
 				Holder<DirectoryList> dl = newDirectoryList(path);
 				while (dl->valid())
 				{
-					const string p = dl->fullPath();
+					const String p = dl->fullPath();
 					const PathTypeFlags type = realType(p);
 					if (any(type & PathTypeFlags::Directory))
 						registerPath(p);
@@ -608,20 +608,20 @@ namespace cage
 		};
 	}
 
-	void FilesystemWatcher::registerPath(const string &path_)
+	void FilesystemWatcher::registerPath(const String &path_)
 	{
 		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
-		const string path = pathToAbs(path_);
+		const String path = pathToAbs(path_);
 		const PathTypeFlags type = realType(path); // FilesystemWatcher works with real filesystem only!
 		if (none(type & PathTypeFlags::Directory))
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "path must be existing folder");
 		}
 		impl->registerPath(path);
 	}
 
-	string FilesystemWatcher::waitForChange(uint64 time)
+	String FilesystemWatcher::waitForChange(uint64 time)
 	{
 		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
 		return impl->waitForChange(time);

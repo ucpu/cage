@@ -7,7 +7,7 @@ namespace
 	int gCount = 0;
 	int dCount = 0;
 
-	struct HolderTester : Immovable
+	struct HolderTester : private Immovable
 	{
 		HolderTester()
 		{
@@ -243,10 +243,10 @@ void testHolder()
 			vec[i] = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
-		std::vector<Holder<HolderTester>> vec2 = std::move(vec);
+		std::vector<Holder<HolderTester>> Vec2 = std::move(vec);
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec.empty());
-		vec2.clear();
+		Vec2.clear();
 		CAGE_TEST(gCount == 0);
 	}
 
@@ -288,6 +288,21 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 		s = std::move(s);
 		CAGE_TEST(gCount == 1);
+	}
+
+	{
+		CAGE_TESTCASE("circular self assignment");
+		struct S : public HolderTester
+		{
+			Holder<S> s;
+		};
+		Holder<S> a = systemMemory().createHolder<S>();
+		a->s = systemMemory().createHolder<S>();
+		a->s->s = systemMemory().createHolder<S>();
+		a->s->s->s = systemMemory().createHolder<S>();
+		CAGE_TEST(gCount == 4);
+		a = std::move(a->s);
+		CAGE_TEST(gCount == 3);
 	}
 
 	CAGE_TEST(gCount == 0);

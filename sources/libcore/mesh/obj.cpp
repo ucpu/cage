@@ -11,19 +11,19 @@ namespace cage
 {
 	namespace
 	{
-		void writeLine(Serializer &ser, const string &s)
+		void writeLine(Serializer &ser, const String &s)
 		{
 			ser.writeLine(s);
 		}
 
-		stringizer writeAttr(const vec3 &v)
+		Stringizer writeAttr(const Vec3 &v)
 		{
-			return stringizer() + v[0] + " " + v[1] + " " + v[2];
+			return Stringizer() + v[0] + " " + v[1] + " " + v[2];
 		}
 
-		stringizer writeAttr(const vec2 &v)
+		Stringizer writeAttr(const Vec2 &v)
 		{
-			return stringizer() + v[0] + " " + v[1];
+			return Stringizer() + v[0] + " " + v[1];
 		}
 
 		template<class T>
@@ -57,10 +57,10 @@ namespace cage
 				vec = std::vector<T>(set.begin(), set.end());
 			}
 
-			void writeOut(Serializer &ser, const string &prefix) const
+			void writeOut(Serializer &ser, const String &prefix) const
 			{
 				for (const T &v : vec)
-					writeLine(ser, stringizer() + prefix + " " + writeAttr(v));
+					writeLine(ser, Stringizer() + prefix + " " + writeAttr(v));
 			}
 
 			void remap(std::vector<uint32> &indices) const
@@ -70,9 +70,9 @@ namespace cage
 			}
 		};
 
-		stringizer str(const std::vector<uint32> &pi, const std::vector<uint32> &ni, const std::vector<uint32> &ti, uint32 index)
+		Stringizer str(const std::vector<uint32> &pi, const std::vector<uint32> &ni, const std::vector<uint32> &ti, uint32 index)
 		{
-			stringizer ss;
+			Stringizer ss;
 			ss + pi[index];
 			if (!ti.empty() || !ni.empty())
 				ss + "/";
@@ -86,26 +86,26 @@ namespace cage
 
 	Holder<PointerRange<char>> Mesh::exportObjBuffer(const MeshExportObjConfig &config) const
 	{
-		MeshImpl *impl = (MeshImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
 
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
 		writeLine(ser, "# mesh exported by Cage");
 		if (!config.materialLibraryName.empty())
-			writeLine(ser, stringizer() + "mtllib " + config.materialLibraryName);
+			writeLine(ser, Stringizer() + "mtllib " + config.materialLibraryName);
 		if (!config.objectName.empty())
-			writeLine(ser, stringizer() + "o " + config.objectName);
+			writeLine(ser, Stringizer() + "o " + config.objectName);
 		if (!config.materialName.empty())
-			writeLine(ser, stringizer() + "usemtl " + config.materialName);
+			writeLine(ser, Stringizer() + "usemtl " + config.materialName);
 
-		Attribute<vec3> pos(impl->positions);
+		Attribute<Vec3> pos(impl->positions);
 		pos.writeOut(ser, "v");
-		Attribute<vec3> norms(impl->normals);
+		Attribute<Vec3> norms(impl->normals);
 		norms.writeOut(ser, "vn");
-		Attribute<vec2> uvs(impl->uvs);
+		Attribute<Vec2> uvs(impl->uvs);
 		uvs.writeOut(ser, "vt");
-		Attribute<vec3> uvs3(impl->uvs3);
+		Attribute<Vec3> uvs3(impl->uvs3);
 		uvs3.writeOut(ser, "vt");
 
 		std::vector<uint32> origIndices;
@@ -145,19 +145,19 @@ namespace cage
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size());
 			for (uint32 f = 0; f < faces; f++)
-				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f));
+				writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f));
 		} break;
 		case MeshTypeEnum::Lines:
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size()) / 2;
 			for (uint32 f = 0; f < faces; f++)
-				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f * 2 + 0) + " " + str(pi, ni, ti, f * 2 + 1));
+				writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f * 2 + 0) + " " + str(pi, ni, ti, f * 2 + 1));
 		} break;
 		case MeshTypeEnum::Triangles:
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size()) / 3;
 			for (uint32 f = 0; f < faces; f++)
-				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f * 3 + 0) + " " + str(pi, ni, ti, f * 3 + 1) + " " + str(pi, ni, ti, f * 3 + 2));
+				writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f * 3 + 0) + " " + str(pi, ni, ti, f * 3 + 1) + " " + str(pi, ni, ti, f * 3 + 2));
 		} break;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
@@ -166,9 +166,8 @@ namespace cage
 		return std::move(buffer);
 	}
 
-	void Mesh::exportObjFile(const MeshExportObjConfig &config, const string &filename) const
+	void Mesh::exportObjFile(const String &filename, const MeshExportObjConfig &config) const
 	{
-		MeshImpl *impl = (MeshImpl *)this;
 		Holder<PointerRange<char>> buff = exportObjBuffer(config);
 		writeFile(filename)->write(buff);
 	}

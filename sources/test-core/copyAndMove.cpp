@@ -10,10 +10,10 @@ void testCopyAndMove()
 
 	{
 		CAGE_TESTCASE("vector of strings");
-		std::vector<string> vec;
+		std::vector<String> vec;
 		vec.emplace_back("hi");
 		vec.push_back("hello");
-		std::vector<string> vec2 = std::move(vec);
+		std::vector<String> Vec2 = std::move(vec);
 	}
 
 	{
@@ -21,6 +21,6 @@ void testCopyAndMove()
 		std::vector<MemoryBuffer> vec;
 		vec.emplace_back(MemoryBuffer());
 		vec.push_back(MemoryBuffer());
-		std::vector<MemoryBuffer> vec2 = std::move(vec);
+		std::vector<MemoryBuffer> Vec2 = std::move(vec);
 	}
 }

@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace
 	{
-		real distanceLines(const vec3 a1, const vec3 &a2, const vec3 &b1, const vec3 &b2)
+		Real distanceLines(const Vec3 a1, const Vec3 &a2, const Vec3 &b1, const Vec3 &b2)
 		{
 			// algorithm taken from http://geomalgorithms.com/a07-_distance.html and modified
 
@@ -15,16 +15,16 @@ namespace cage
 			// liable for any real or imagined damage resulting from its use.
 			// Users of this code must verify correctness for their application.
 
-			vec3 u = a2 - a1;
-			vec3 v = b2 - b1;
-			vec3 w = a1 - b1;
-			real a = dot(u, u);
-			real b = dot(u, v);
-			real c = dot(v, v);
-			real d = dot(u, w);
-			real e = dot(v, w);
-			real D = a * c - b * b;
-			real sc, tc;
+			Vec3 u = a2 - a1;
+			Vec3 v = b2 - b1;
+			Vec3 w = a1 - b1;
+			Real a = dot(u, u);
+			Real b = dot(u, v);
+			Real c = dot(v, v);
+			Real d = dot(u, w);
+			Real e = dot(v, w);
+			Real D = a * c - b * b;
+			Real sc, tc;
 			if (D < 1e-5)
 			{
 				sc = 0.0;
@@ -35,11 +35,11 @@ namespace cage
 				sc = (b * e - c * d) / D;
 				tc = (a * e - b * d) / D;
 			}
-			vec3 dP = w + (sc * u) - (tc * v);
+			Vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
 
-		real distanceSegments(const vec3 a1, const vec3 &a2, const vec3 &b1, const vec3 &b2)
+		Real distanceSegments(const Vec3 a1, const Vec3 &a2, const Vec3 &b1, const Vec3 &b2)
 		{
 			// algorithm taken from http://geomalgorithms.com/a07-_distance.html and modified
 
@@ -50,17 +50,17 @@ namespace cage
 			// liable for any real or imagined damage resulting from its use.
 			// Users of this code must verify correctness for their application.
 
-			vec3 u = a2 - a1;
-			vec3 v = b2 - b1;
-			vec3 w = a1 - b1;
-			real a = dot(u, u);
-			real b = dot(u, v);
-			real c = dot(v, v);
-			real d = dot(u, w);
-			real e = dot(v, w);
-			real D = a * c - b * b;
-			real sc, sN, sD = D;
-			real tc, tN, tD = D;
+			Vec3 u = a2 - a1;
+			Vec3 v = b2 - b1;
+			Vec3 w = a1 - b1;
+			Real a = dot(u, u);
+			Real b = dot(u, v);
+			Real c = dot(v, v);
+			Real d = dot(u, w);
+			Real e = dot(v, w);
+			Real D = a * c - b * b;
+			Real sc, sN, sD = D;
+			Real tc, tN, tD = D;
 			if (D < 1e-5)
 			{
 				sN = 0.0;
@@ -111,12 +111,12 @@ namespace cage
 			}
 			sc = (abs(sN) < 1e-5 ? 0.0 : sN / sD);
 			tc = (abs(tN) < 1e-5 ? 0.0 : tN / tD);
-			vec3 dP = w + (sc * u) - (tc * v);
+			Vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
 	}
 
-	real distance(const Line &a, const Line &b)
+	Real distance(const Line &a, const Line &b)
 	{
 		if (a.isLine() && b.isLine())
 			return distanceLines(a.origin, a.origin + a.direction, b.origin, b.origin + b.direction);

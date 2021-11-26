@@ -5,16 +5,16 @@
 
 namespace cage
 {
-	CAGE_CORE_API real sdfPlane(const vec3 &pos, const Plane &plane);
-	CAGE_CORE_API real sdfSphere(const vec3 &pos, real radius);
-	CAGE_CORE_API real sdfCapsule(const vec3 &pos, real prolong, real radius);
-	CAGE_CORE_API real sdfCylinder(const vec3 &pos, real halfHeight, real radius);
-	CAGE_CORE_API real sdfBox(const vec3 &pos, const vec3 &radius);
-	CAGE_CORE_API real sdfTetrahedron(const vec3 &pos, real radius);
-	CAGE_CORE_API real sdfOctahedron(const vec3 &pos, real radius);
-	CAGE_CORE_API real sdfHexagonalPrism(const vec3 &pos, real halfHeight, real radius);
-	CAGE_CORE_API real sdfTorus(const vec3 &pos, real major, real minor);
-	CAGE_CORE_API real sdfKnot(const vec3 &pos, real scale, real k);
+	CAGE_CORE_API Real sdfPlane(const Vec3 &pos, const Plane &plane);
+	CAGE_CORE_API Real sdfSphere(const Vec3 &pos, Real radius);
+	CAGE_CORE_API Real sdfCapsule(const Vec3 &pos, Real prolong, Real radius);
+	CAGE_CORE_API Real sdfCylinder(const Vec3 &pos, Real halfHeight, Real radius);
+	CAGE_CORE_API Real sdfBox(const Vec3 &pos, const Vec3 &radius);
+	CAGE_CORE_API Real sdfTetrahedron(const Vec3 &pos, Real radius);
+	CAGE_CORE_API Real sdfOctahedron(const Vec3 &pos, Real radius);
+	CAGE_CORE_API Real sdfHexagonalPrism(const Vec3 &pos, Real halfHeight, Real radius);
+	CAGE_CORE_API Real sdfTorus(const Vec3 &pos, Real major, Real minor);
+	CAGE_CORE_API Real sdfKnot(const Vec3 &pos, Real scale, Real k);
 }
 
 #endif // guard_signedDistanceFunction_h_sdfgr1esd56r

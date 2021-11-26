@@ -37,7 +37,7 @@ namespace cage
 					{
 						for (uint32 a = 0; a < 4; a++)
 						{
-							vec4 tex = texels.texel[b][a] * 255;
+							Vec4 tex = texels.texel[b][a] * 255;
 							for (uint32 i = 0; i < 4; i++)
 								*(lineSer[b]) << numeric_cast<uint8>(tex[i]);
 						}
@@ -65,7 +65,7 @@ namespace cage
 						for (uint32 a = 0; a < 4; a++)
 						{
 							const uint8 *t = (const uint8 *)(line + a);
-							texels.texel[b][a] = vec4(t[0], t[1], t[2], t[3]) / 255;
+							texels.texel[b][a] = Vec4(t[0], t[1], t[2], t[3]) / 255;
 						}
 					}
 					ser << dxtCompress(texels);

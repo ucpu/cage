@@ -8,9 +8,9 @@
 
 namespace
 {
-	std::vector<string> genStrings()
+	std::vector<String> genStrings()
 	{
-		std::vector<string> res;
+		std::vector<String> res;
 		res.push_back("ar");
 		res.push_back("ma");
 		res.push_back("ge");
@@ -18,25 +18,25 @@ namespace
 		return res;
 	}
 
-	Holder<PointerRange<const string>> genRange()
+	Holder<PointerRange<const String>> genRange()
 	{
-		return PointerRangeHolder<const string>(genStrings());
+		return PointerRangeHolder<const String>(genStrings());
 	}
 
-	std::vector<Holder<string>> genHolders()
+	std::vector<Holder<String>> genHolders()
 	{
-		std::vector<Holder<string>> res;
-		res.push_back(systemMemory().createHolder<string>("ar"));
-		res.push_back(systemMemory().createHolder<string>("ma"));
+		std::vector<Holder<String>> res;
+		res.push_back(systemMemory().createHolder<String>("ar"));
+		res.push_back(systemMemory().createHolder<String>("ma"));
 		res.push_back({});
-		res.push_back(systemMemory().createHolder<string>("ge"));
-		res.push_back(systemMemory().createHolder<string>("don"));
+		res.push_back(systemMemory().createHolder<String>("ge"));
+		res.push_back(systemMemory().createHolder<String>("don"));
 		return res;
 	}
 
-	Holder<PointerRange<Holder<PointerRange<const string>>>> genRangeOfRanges()
+	Holder<PointerRange<Holder<PointerRange<const String>>>> genRangeOfRanges()
 	{
-		PointerRangeHolder<Holder<PointerRange<const string>>> vec;
+		PointerRangeHolder<Holder<PointerRange<const String>>> vec;
 		vec.push_back(genRange());
 		vec.push_back(genRange());
 		vec.push_back(genRange());
@@ -67,7 +67,7 @@ void testEnumerate()
 {
 	CAGE_TESTCASE("enumerate");
 
-	std::vector<string> names;
+	std::vector<String> names;
 	names.push_back("Emma");
 	names.push_back("Olivia");
 	names.push_back("Ava");
@@ -127,7 +127,7 @@ void testEnumerate()
 
 	{
 		CAGE_TESTCASE("const vector");
-		const std::vector<string> cns(names);
+		const std::vector<String> cns(names);
 		uint32 i = 0;
 		for (const auto &it : enumerate(cns))
 		{
@@ -152,7 +152,7 @@ void testEnumerate()
 	{
 		CAGE_TESTCASE("pointer range");
 		uint32 i = 0;
-		for (const auto &it : enumerate(PointerRange<const string>(names)))
+		for (const auto &it : enumerate(PointerRange<const String>(names)))
 		{
 			CAGE_TEST(it.index == i++);
 			CAGE_TEST(*it == names[it.index]);
@@ -208,12 +208,12 @@ void testEnumerate()
 
 	{
 		CAGE_TESTCASE("map");
-		std::map<string, string> orig;
+		std::map<String, String> orig;
 		orig["a"] = "a";
 		orig["b"] = "b";
 		orig["hello"] = "world";
 		orig["duck"] = "quack";
-		std::map<string, string> test;
+		std::map<String, String> test;
 		uint32 i = 0;
 		for (const auto &it : enumerate(orig))
 		{

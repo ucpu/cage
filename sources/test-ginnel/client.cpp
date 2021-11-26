@@ -10,12 +10,12 @@ using namespace cage;
 
 void runClient()
 {
-	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "running in client mode");
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "running in client mode");
 
 	ConfigString address("address");
 	ConfigUint32 port("port");
-	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "address: '" + (string)address + "'");
-	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "address: '" + (String)address + "'");
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "port: " + (uint32)port);
 
 	Holder<Conn> client = newConn(newGinnelConnection(address, port, 0));
 	Runner runner;

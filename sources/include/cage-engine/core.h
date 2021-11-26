@@ -3,12 +3,6 @@
 
 #include <cage-core/math.h>
 
-#ifdef CAGE_ENGINE_EXPORT
-#define CAGE_ENGINE_API CAGE_API_EXPORT
-#else
-#define CAGE_ENGINE_API CAGE_API_IMPORT
-#endif
-
 namespace cage
 {
 	// forward declarations
@@ -33,12 +27,8 @@ namespace cage
 	struct CameraEyeAdaptation;
 	struct CameraTonemap;
 	struct CameraEffects;
-	struct EngineControlThread;
-	struct EngineGraphicsDispatchThread;
-	struct EngineGraphicsPrepareThread;
-	struct EngineSoundThread;
-	struct EngineCreateConfig;
 
+	struct FontFormat;
 	class Font;
 	class FrameBuffer;
 	struct GraphicsError;
@@ -64,8 +54,8 @@ namespace cage
 	struct GuiExplicitSizeComponent;
 	struct GuiEventComponent;
 	struct GuiSkinConfig;
-	class Gui;
-	struct GuiCreateConfig;
+	class GuiManager;
+	struct GuiManagerCreateConfig;
 	struct GuiLayoutLineComponent;
 	struct GuiLayoutTableComponent;
 	struct GuiLayoutSplitterComponent;
@@ -111,13 +101,21 @@ namespace cage
 	enum class SoundFlags : uint32;
 	struct SoundSourceHeader;
 
-	enum class EngineProfilingStatsFlags;
-	enum class EngineProfilingModeEnum;
-	enum class EngineProfilingScopeEnum;
-	class EngineProfiling;
-	class FpsCamera;
-	class FullscreenSwitcher;
-	struct FullscreenSwitcherCreateConfig;
+	enum class InputClassEnum : uint32;
+	struct InputWindow;
+	struct InputWindowValue;
+	struct InputMouse;
+	struct InputMouseWheel;
+	struct InputKey;
+	struct InputGamepadState;
+	struct InputGamepadKey;
+	struct InputGamepadAxis;
+	struct InputGuiWidget;
+	struct GenericInput;
+	struct InputsDispatchers;
+	struct InputsGeneralizer;
+	struct InputsListeners;
+
 	struct ScreenMode;
 	class ScreenDevice;
 	class ScreenList;
@@ -127,21 +125,17 @@ namespace cage
 	class SpeakerList;
 	enum class WindowFlags : uint32;
 	class Window;
-	struct WindowEventListeners;
+	class Gamepad;
+
+	struct UubRange;
+	class RenderQueue;
+	class ProvisionalUniformBuffer;
+	class ProvisionalFrameBuffer;
+	class ProvisionalTexture;
+	class ProvisionalGraphics;
 
 	// enum declarations
 
-	enum class ModelRenderFlags : uint32
-	{
-		None = 0,
-		Translucent = 1 << 1,
-		TwoSided = 1 << 2,
-		DepthTest = 1 << 3,
-		DepthWrite = 1 << 4,
-		VelocityWrite = 1 << 5,
-		ShadowCast = 1 << 6,
-		Lighting = 1 << 7,
-	};
 	enum class TextAlignEnum : uint32
 	{
 		Left,
@@ -172,9 +166,7 @@ namespace cage
 	GCHL_ENUM_BITS(TextureFlags);
 	GCHL_ENUM_BITS(FontFlags);
 	GCHL_ENUM_BITS(SoundFlags);
-	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
 	GCHL_ENUM_BITS(WindowFlags);
-	GCHL_ENUM_BITS(ModelRenderFlags);
 	GCHL_ENUM_BITS(ModifiersFlags);
 	GCHL_ENUM_BITS(MouseButtonsFlags);
 

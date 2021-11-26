@@ -10,21 +10,21 @@ void testVariableInterpolatingBuffer()
 	{
 		CAGE_TESTCASE("compilations");
 
-		VariableInterpolatingBuffer<real> iReal;
-		VariableInterpolatingBuffer<degs> iDegs;
-		VariableInterpolatingBuffer<rads> iRads;
-		VariableInterpolatingBuffer<vec2> iVec2;
-		VariableInterpolatingBuffer<vec3> iVec3;
-		VariableInterpolatingBuffer<vec4> iVec4;
-		VariableInterpolatingBuffer<quat> iQuat;
-		VariableInterpolatingBuffer<mat3> iMat3;
-		VariableInterpolatingBuffer<mat4> iMat4;
+		VariableInterpolatingBuffer<Real> iReal;
+		VariableInterpolatingBuffer<Degs> iDegs;
+		VariableInterpolatingBuffer<Rads> iRads;
+		VariableInterpolatingBuffer<Vec2> iVec2;
+		VariableInterpolatingBuffer<Vec3> iVec3;
+		VariableInterpolatingBuffer<Vec4> iVec4;
+		VariableInterpolatingBuffer<Quat> iQuat;
+		VariableInterpolatingBuffer<Mat3> iMat3;
+		VariableInterpolatingBuffer<Mat4> iMat4;
 	}
 
 	{
 		CAGE_TESTCASE("simple interpolations on real");
 
-		VariableInterpolatingBuffer<real> v;
+		VariableInterpolatingBuffer<Real> v;
 		v.set(100, 100, 50);
 		CAGE_TEST(v(50) == 100);
 		CAGE_TEST(v(150) == 100);
@@ -57,7 +57,7 @@ void testVariableInterpolatingBuffer()
 	{
 		CAGE_TESTCASE("advanced interpolations on real");
 
-		VariableInterpolatingBuffer<real> v;
+		VariableInterpolatingBuffer<Real> v;
 		v.set(100, 100, 100);
 		v.set(200, 200, 100);
 		v.set(300, 300, 100);

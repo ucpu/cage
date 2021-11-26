@@ -1,4 +1,5 @@
 #include <cage-core/concurrent.h>
+#include <cage-core/profiling.h>
 #include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -17,8 +18,6 @@
 #ifdef CAGE_SYSTEM_MAC
 #include <dispatch/dispatch.h>
 #endif
-
-#include <optick.h>
 
 #include <thread>
 #include <atomic>
@@ -400,7 +399,7 @@ namespace cage
 	void Barrier::lock()
 	{
 		BarrierImpl *impl = (BarrierImpl*)this;
-		impl->lock();;
+		impl->lock();
 	}
 
 	Holder<Barrier> newBarrier(uint32 value)
@@ -539,7 +538,7 @@ namespace cage
 		class ThreadImpl : public Thread
 		{
 		public:
-			const string threadName;
+			const String threadName;
 			const Delegate<void()> function;
 			std::exception_ptr exptr;
 			uint64 myid;
@@ -550,7 +549,7 @@ namespace cage
 			pthread_t handle;
 #endif
 
-			ThreadImpl(Delegate<void()> function, const string &threadName) : threadName(threadName), function(function), myid(m)
+			ThreadImpl(Delegate<void()> function, const String &threadName) : threadName(threadName), function(function), myid(m)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -580,7 +579,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 					CloseHandle(handle);
 #endif
-					CAGE_LOG(SeverityEnum::Critical, "thread", stringizer() + "exception thrown in thread '" + threadName + "' was not propagated to the caller thread (missing call to wait), terminating now");
+					CAGE_LOG(SeverityEnum::Critical, "thread", Stringizer() + "exception thrown in thread '" + threadName + "' was not propagated to the caller thread (missing call to wait), terminating now");
 					detail::logCurrentCaughtException();
 					detail::terminate();
 				}
@@ -650,7 +649,7 @@ namespace cage
 		}
 	}
 
-	Holder<Thread> newThread(Delegate<void()> func, const string &threadName)
+	Holder<Thread> newThread(Delegate<void()> func, const String &threadName)
 	{
 		return systemMemory().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
@@ -665,7 +664,6 @@ namespace cage
 		{
 			ThreadImpl *impl = (ThreadImpl *)params;
 			currentThreadName(impl->threadName);
-			OPTICK_THREAD(impl->threadName.c_str());
 			try
 			{
 				impl->function();
@@ -673,10 +671,10 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(SeverityEnum::Warning, "thread", stringizer() + "unhandled exception in thread '" + currentThreadName() + "'");
+				CAGE_LOG(SeverityEnum::Warning, "thread", Stringizer() + "unhandled exception in thread '" + currentThreadName() + "'");
 				detail::logCurrentCaughtException();
 			}
-			CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "thread '" + currentThreadName() + "' ended");
+			CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "thread '" + currentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else
@@ -684,18 +682,19 @@ namespace cage
 #endif
 		}
 
-		string &currentThreadName_()
+		String &currentThreadName_()
 		{
-			static thread_local string name;
+			static thread_local String name;
 			return name;
 		}
 	}
 
-	void currentThreadName(const string &name)
+	void currentThreadName(const String &name)
 	{
-		string oldName = currentThreadName_();
+		const String oldName = currentThreadName_();
 		currentThreadName_() = name;
-		CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? stringizer() : stringizer() + " was '" + oldName + "'"));
+		profilingThreadName(name);
+		CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{
@@ -731,11 +730,11 @@ namespace cage
 		}
 	}
 
-	string currentThreadName()
+	String currentThreadName()
 	{
-		string n = currentThreadName_();
+		String n = currentThreadName_();
 		if (n.empty())
-			return stringizer() + currentThreadId();
+			return Stringizer() + currentThreadId();
 		else
 			return n;
 	}

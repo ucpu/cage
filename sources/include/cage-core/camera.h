@@ -5,13 +5,13 @@
 
 namespace cage
 {
-	CAGE_CORE_API mat4 lookAt(const vec3 &eye, const vec3 &target, const vec3 &up);
+	CAGE_CORE_API Mat4 lookAt(const Vec3 &eye, const Vec3 &target, const Vec3 &up);
 
 	// fov is along vertical axis
-	CAGE_CORE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far);
-	CAGE_CORE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation); // use negative eyeSeparation for left eye
-	CAGE_CORE_API mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far);
-	CAGE_CORE_API mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far);
+	CAGE_CORE_API Mat4 perspectiveProjection(Rads fov, Real aspectRatio, Real near, Real far);
+	CAGE_CORE_API Mat4 perspectiveProjection(Rads fov, Real aspectRatio, Real near, Real far, Real zeroParallaxDistance, Real eyeSeparation); // use negative eyeSeparation for left eye
+	CAGE_CORE_API Mat4 perspectiveProjection(Real left, Real right, Real bottom, Real top, Real near, Real far);
+	CAGE_CORE_API Mat4 orthographicProjection(Real left, Real right, Real bottom, Real top, Real near, Real far);
 
 	enum class StereoModeEnum : uint32
 	{
@@ -28,29 +28,29 @@ namespace cage
 		Right,
 	};
 
-	struct CAGE_CORE_API StereoCameraInput : public transform
+	struct CAGE_CORE_API StereoCameraInput : public Transform
 	{
-		vec2 viewportOrigin; // 0 .. 1
-		vec2 viewportSize = vec2(1); // 0 .. 1
-		real aspectRatio;
-		rads fov;
-		real near;
-		real far;
-		real zeroParallaxDistance;
-		real eyeSeparation;
+		Vec2 viewportOrigin; // 0 .. 1
+		Vec2 viewportSize = Vec2(1); // 0 .. 1
+		Real aspectRatio;
+		Rads fov;
+		Real near;
+		Real far;
+		Real zeroParallaxDistance;
+		Real eyeSeparation;
 		bool orthographic = false;
 	};
 
 	struct CAGE_CORE_API StereoCameraOutput
 	{
-		mat4 view;
-		mat4 projection;
-		vec2 viewportOrigin; // 0 .. 1
-		vec2 viewportSize; // 0 .. 1
+		Mat4 view;
+		Mat4 projection;
+		Vec2 viewportOrigin; // 0 .. 1
+		Vec2 viewportSize; // 0 .. 1
 	};
 
-	CAGE_CORE_API StereoModeEnum stringToStereoMode(const string &mode);
-	CAGE_CORE_API string stereoModeToString(StereoModeEnum mode);
+	CAGE_CORE_API StereoModeEnum stringToStereoMode(const String &mode);
+	CAGE_CORE_API String stereoModeToString(StereoModeEnum mode);
 	CAGE_CORE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye);
 }
 

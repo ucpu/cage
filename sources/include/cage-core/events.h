@@ -7,11 +7,6 @@
 
 namespace cage
 {
-	template<class>
-	struct EventListener;
-	template<class>
-	struct EventDispatcher;
-
 	namespace privat
 	{
 		struct CAGE_CORE_API EventLinker : private Immovable
@@ -97,7 +92,7 @@ namespace cage
 			const privat::EventLinker *l = this->n;
 			while (l)
 			{
-				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(std::forward<Ts>(vs)...))
+				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(vs...))
 					return true;
 				l = l->n;
 			}

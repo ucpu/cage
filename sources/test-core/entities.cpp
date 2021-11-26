@@ -18,9 +18,9 @@ namespace
 
 		Holder<EntityManager> manager = newEntityManager();
 
-		EntityComponent *position = manager->defineComponent(vec3());
-		EntityComponent *velocity = manager->defineComponent(vec3(0, -1, 0));
-		EntityComponent *orientation = manager->defineComponent(quat());
+		EntityComponent *position = manager->defineComponent(Vec3());
+		EntityComponent *velocity = manager->defineComponent(Vec3(0, -1, 0));
+		EntityComponent *orientation = manager->defineComponent(Quat());
 
 		EntityGroup *movement = manager->defineGroup();
 
@@ -31,18 +31,18 @@ namespace
 		player->add(orientation);
 		player->add(movement);
 		Entity *tank = manager->createAnonymous();
-		tank->add(position, vec3(100, 0, 50));
+		tank->add(position, Vec3(100, 0, 50));
 		tank->add(orientation);
 
-		CAGE_TEST(player->value<vec3>(position) == vec3());
-		CAGE_TEST(player->value<vec3>(velocity) == vec3(0, -1, 0));
+		CAGE_TEST(player->value<Vec3>(position) == Vec3());
+		CAGE_TEST(player->value<Vec3>(velocity) == Vec3(0, -1, 0));
 
-		player->value<vec3>(position)[0] = 20;
-		player->value<vec3>(position)[1] = 10;
-		CAGE_TEST(player->value<vec3>(position) == vec3(20, 10, 0));
+		player->value<Vec3>(position)[0] = 20;
+		player->value<Vec3>(position)[1] = 10;
+		CAGE_TEST(player->value<Vec3>(position) == Vec3(20, 10, 0));
 
-		tank->value<vec3>(position)[2] = 100;
-		CAGE_TEST(tank->value<vec3>(position) == vec3(100, 0, 100));
+		tank->value<Vec3>(position)[2] = 100;
+		CAGE_TEST(tank->value<Vec3>(position) == Vec3(100, 0, 100));
 
 		CAGE_TEST(player->has(movement));
 		CAGE_TEST(!tank->has(movement));
@@ -60,7 +60,7 @@ namespace
 
 		Holder<EntityManager> manager = newEntityManager();
 		for (uint32 i = 0; i < 3; i++)
-			manager->defineComponent(vec3());
+			manager->defineComponent(Vec3());
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineGroup();
 
@@ -91,21 +91,21 @@ namespace
 
 		Holder<EntityManager> man1 = newEntityManager();
 		Holder<EntityManager> man2 = newEntityManager();
-		EntityComponent *com1 = man1->defineComponent(vec3());
-		EntityComponent *com2 = man2->defineComponent(vec3());
+		EntityComponent *com1 = man1->defineComponent(Vec3());
+		EntityComponent *com2 = man2->defineComponent(Vec3());
 		Entity *ent1 = man1->createAnonymous();
 		Entity *ent2 = man2->createAnonymous();
 		{
-			vec3 &a = ent1->value<vec3>(com1);
-			a = vec3(1, 2, 3);
+			Vec3 &a = ent1->value<Vec3>(com1);
+			a = Vec3(1, 2, 3);
 		}
 		{
-			vec3 &b = ent2->value<vec3>(com2);
-			b = vec3(4, 5, 6);
+			Vec3 &b = ent2->value<Vec3>(com2);
+			b = Vec3(4, 5, 6);
 		}
 		{
-			CAGE_TEST_ASSERTED(ent1->value<vec3>(com2));
-			CAGE_TEST_ASSERTED(ent1->value<vec2>(com1));
+			CAGE_TEST_ASSERTED(ent1->value<Vec3>(com2));
+			CAGE_TEST_ASSERTED(ent1->value<Vec2>(com1));
 		}
 	}
 
@@ -117,7 +117,7 @@ namespace
 
 		struct alignas(32) S
 		{
-			vec3 data;
+			Vec3 data;
 		};
 
 		EntityComponent *c = manager->defineComponent(S());
@@ -134,32 +134,32 @@ namespace
 	{
 		Holder<EntityManager> man = newEntityManager();
 
-		EntityComponent *ca = man->defineComponent(vec3(13));
-		EntityComponent *cb = man->defineComponent(vec3(42));
+		EntityComponent *ca = man->defineComponent(Vec3(13));
+		EntityComponent *cb = man->defineComponent(Vec3(42));
 		CAGE_TEST(ca != cb);
 		CAGE_TEST(ca->typeIndex() == cb->typeIndex());
 		CAGE_TEST(ca->definitionIndex() == 0);
 		CAGE_TEST(cb->definitionIndex() == 1);
 
 		Entity *e = man->createAnonymous();
-		e->add(ca, vec3(1));
-		e->add(cb, vec3(2));
+		e->add(ca, Vec3(1));
+		e->add(cb, Vec3(2));
 
-		CAGE_TEST(e->value<vec3>() == vec3(1));
-		CAGE_TEST(e->value<vec3>(ca) == vec3(1));
-		CAGE_TEST(e->value<vec3>(cb) == vec3(2));
+		CAGE_TEST(e->value<Vec3>() == Vec3(1));
+		CAGE_TEST(e->value<Vec3>(ca) == Vec3(1));
+		CAGE_TEST(e->value<Vec3>(cb) == Vec3(2));
 
 		CAGE_TEST(e->has(ca));
 		CAGE_TEST(e->has(cb));
-		CAGE_TEST(e->has<vec3>());
+		CAGE_TEST(e->has<Vec3>());
 
-		e->remove<vec3>();
+		e->remove<Vec3>();
 
 		CAGE_TEST(!e->has(ca));
 		CAGE_TEST(e->has(cb));
-		CAGE_TEST(!e->has<vec3>()); // component by type still refers to ca, not cb
+		CAGE_TEST(!e->has<Vec3>()); // component by type still refers to ca, not cb
 
-		CAGE_TEST(e->value<vec3>() == vec3(13)); // adding component ca again has default value
+		CAGE_TEST(e->value<Vec3>() == Vec3(13)); // adding component ca again has default value
 	}
 
 	void callbacks()
@@ -195,11 +195,11 @@ namespace
 		man->group()->entityAdded.attach(manCbs.addListener);
 		man->group()->entityRemoved.attach(manCbs.removeListener);
 
-		EntityComponent *pos = man->defineComponent(vec3());
+		EntityComponent *pos = man->defineComponent(Vec3());
 		pos->group()->entityAdded.attach(posCbs.addListener);
 		pos->group()->entityRemoved.attach(posCbs.removeListener);
 
-		EntityComponent *ori = man->defineComponent(quat());
+		EntityComponent *ori = man->defineComponent(Quat());
 		ori->group()->entityAdded.attach(oriCbs.addListener);
 		ori->group()->entityRemoved.attach(oriCbs.removeListener);
 
@@ -246,7 +246,7 @@ namespace
 		Holder<EntityManager> manager = newEntityManager();
 
 		for (uint32 i = 0; i < TotalComponents; i++)
-			manager->defineComponent(vec3());
+			manager->defineComponent(Vec3());
 
 		typedef std::map<uint32, std::set<uint32>> Reference;
 		Reference reference;
@@ -369,19 +369,19 @@ namespace
 		Holder<EntityManager> man = newEntityManager();
 
 		EntityComponent *comps[3] = {};
-		comps[0] = man->defineComponent(vec3());
+		comps[0] = man->defineComponent(Vec3());
 		comps[1] = man->defineComponent(uint32());
-		comps[2] = man->defineComponent(real());
+		comps[2] = man->defineComponent(Real());
 
 		for (uint32 i = 0; i < 10000; i++)
 		{
 			Entity *e = man->createUnique();
 			if ((i % 2) == 1)
-				e->value<vec3>();
+				e->value<Vec3>();
 			if ((i % 3) > 0)
 				e->value<uint32>();
 			if ((i % 7) < 4)
-				e->value<real>();
+				e->value<Real>();
 		}
 
 		for (uint32 round = 0; round < 3; round++)
@@ -389,13 +389,13 @@ namespace
 			Holder<Timer> tmr = newTimer();
 
 			for (Entity *e : comps[0]->entities())
-				e->value<vec3>() += 1;
+				e->value<Vec3>() += 1;
 			for (Entity *e : comps[1]->entities())
 				e->value<uint32>() += 1;
 			for (Entity *e : comps[2]->entities())
-				e->value<real>() += 1;
+				e->value<Real>() += 1;
 
-			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with type: " + (tmr->duration()) + " us");
+			CAGE_LOG(SeverityEnum::Info, "entities performance", Stringizer() + "time for access with type: " + (tmr->duration()) + " us");
 		}
 
 		for (uint32 round = 0; round < 3; round++)
@@ -403,13 +403,13 @@ namespace
 			Holder<Timer> tmr = newTimer();
 
 			for (Entity *e : comps[0]->entities())
-				e->value<vec3>(comps[0]) += 1;
+				e->value<Vec3>(comps[0]) += 1;
 			for (Entity *e : comps[1]->entities())
 				e->value<uint32>(comps[1]) += 1;
 			for (Entity *e : comps[2]->entities())
-				e->value<real>(comps[2]) += 1;
+				e->value<Real>(comps[2]) += 1;
 
-			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with component: " + (tmr->duration()) + " us");
+			CAGE_LOG(SeverityEnum::Info, "entities performance", Stringizer() + "time for access with component: " + (tmr->duration()) + " us");
 		}
 	}
 
@@ -438,7 +438,7 @@ namespace
 		EntityGroup *groups[TotalGroups];
 
 		for (uint32 i = 0; i < TotalComponents; i++)
-			components[i] = manager->defineComponent(vec3());
+			components[i] = manager->defineComponent(Vec3());
 
 		for (uint32 i = 0; i < TotalGroups; i++)
 			groups[i] = manager->defineGroup();
@@ -502,7 +502,7 @@ namespace
 						const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
 						for (uint32 j = n % TotalComponents; j < je; j++)
 						{
-							vec3 &a = e->value<vec3>(components[j]);
+							Vec3 &a = e->value<Vec3>(components[j]);
 							if (w)
 								a[0] += a[1] += a[2] += 1;
 						}
@@ -511,7 +511,7 @@ namespace
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "simulation avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "entities performance", Stringizer() + "simulation avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
 	}
 }
 

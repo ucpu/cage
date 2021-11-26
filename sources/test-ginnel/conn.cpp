@@ -32,7 +32,7 @@ namespace
 			timeStats = timeStart + 500000;
 			lastProcessTime = timeStart;
 			maxBytesPerSecond = configGetUint64("maxBytesPerSecond");
-			CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
+			CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
 		}
 
 		~ConnImpl()
@@ -41,9 +41,9 @@ namespace
 		}
 
 		template<class T>
-		static string leftFill(const T &value, uint32 n = 6)
+		static String leftFill(const T &value, uint32 n = 6)
 		{
-			string s = stringizer() + value;
+			String s = Stringizer() + value;
 			s = subString(s, 0, n);
 			s = reverse(fill(reverse(s), n));
 			return s;
@@ -54,7 +54,7 @@ namespace
 			const uint64 throughput1 = 1000000 * recvBytes / (t - timeStart);
 			const double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
 			const double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
-			CAGE_LOG(SeverityEnum::Info, "conn", stringizer() + "received: " + leftFill(recvBytes / 1024) + " KB, messages: " + leftFill(recvCnt) + ", lost: " + leftFill(lost) + ", overhead: " + leftFill(overhead) + ", rate: " + leftFill(throughput1 / 1024) + " KB/s, send rate: " + leftFill(smoothThroughput.smooth() / 1024) + " KB/s, estimated bandwidth: " + leftFill(udp->bandwidth() / 1024) + " KB/s, rtt: " + leftFill(smoothRtt.smooth() / 1000) + " ms");
+			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "received: " + leftFill(recvBytes / 1024) + " KB, messages: " + leftFill(recvCnt) + ", lost: " + leftFill(lost) + ", overhead: " + leftFill(overhead) + ", rate: " + leftFill(throughput1 / 1024) + " KB/s, send rate: " + leftFill(smoothThroughput.smooth() / 1024) + " KB/s, estimated bandwidth: " + leftFill(udp->bandwidth() / 1024) + " KB/s, rtt: " + leftFill(smoothRtt.smooth() / 1000) + " ms");
 		}
 
 		bool process()

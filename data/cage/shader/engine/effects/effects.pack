@@ -4,11 +4,12 @@ bloomApply.glsl
 bloomGenerate.glsl
 dofApply.glsl
 dofCollect.glsl
-finalScreen.glsl
 fxaa.glsl
 gaussianBlur.glsl
+luminanceApply.glsl
 luminanceCollection.glsl
 luminanceCopy.glsl
 motionBlur.glsl
 ssaoApply.glsl
 ssaoGenerate.glsl
+tonemap.glsl

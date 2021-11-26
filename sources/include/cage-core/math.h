@@ -7,14 +7,14 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API real
+	struct CAGE_CORE_API Real
 	{
 		using value_type = float;
 
 		value_type value = 0;
 
-		CAGE_FORCE_INLINE constexpr real() noexcept {}
-#define GCHL_GENERATE(TYPE) CAGE_FORCE_INLINE constexpr real (TYPE other) noexcept : value((value_type)other) {}
+		CAGE_FORCE_INLINE constexpr Real() noexcept {}
+#define GCHL_GENERATE(TYPE) CAGE_FORCE_INLINE constexpr Real (TYPE other) noexcept : value((value_type)other) {}
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -26,388 +26,327 @@ namespace cage
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
 #undef GCHL_GENERATE
-		explicit constexpr real(rads other) noexcept;
-		explicit constexpr real(degs other) noexcept;
+		explicit constexpr Real(Rads other) noexcept;
+		explicit constexpr Real(Degs other) noexcept;
 
-		auto operator <=> (const real &) const noexcept = default;
-		bool operator == (const real &) const noexcept = default;
+		auto operator <=> (const Real &) const noexcept = default;
+		bool operator == (const Real &) const noexcept = default;
 
-		static real parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
+		static Real parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
 		bool valid() const noexcept;
 		bool finite() const noexcept;
-		static constexpr real Pi() noexcept { return (real)3.141592653589793238; }
-		static constexpr real E() noexcept { return (real)2.718281828459045235; }
-		static constexpr real Log2() noexcept { return (real)0.693147180559945309; }
-		static constexpr real Log10() noexcept { return (real)2.302585092994045684; }
-		static constexpr real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); }
-		static constexpr real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); }
+		static constexpr Real Pi() noexcept { return (Real)3.141592653589793238; }
+		static constexpr Real E() noexcept { return (Real)2.718281828459045235; }
+		static constexpr Real Log2() noexcept { return (Real)0.693147180559945309; }
+		static constexpr Real Log10() noexcept { return (Real)2.302585092994045684; }
+		static constexpr Real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); }
+		static constexpr Real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); }
 	};
 }
 
 namespace std
 {
 	template<>
-	struct numeric_limits<cage::real> : public std::numeric_limits<cage::real::value_type>
+	struct numeric_limits<cage::Real> : public std::numeric_limits<cage::Real::value_type>
 	{};
 }
 
 namespace cage
 {
 	template<class To>
-	CAGE_FORCE_INLINE constexpr To numeric_cast(real from)
+	CAGE_FORCE_INLINE constexpr To numeric_cast(Real from)
 	{
 		return numeric_cast<To>(from.value);
 	}
 
-	struct CAGE_CORE_API rads
+	struct CAGE_CORE_API Rads
 	{
-		real value;
+		Real value;
 
-		CAGE_FORCE_INLINE constexpr rads() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr rads(real value) noexcept : value(value) {}
-		constexpr rads(degs other) noexcept;
+		CAGE_FORCE_INLINE constexpr Rads() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Rads(Real value) noexcept : value(value) {}
+		constexpr Rads(Degs other) noexcept;
 
-		auto operator <=> (const rads &) const noexcept = default;
-		bool operator == (const rads &) const noexcept = default;
+		auto operator <=> (const Rads &) const noexcept = default;
+		bool operator == (const Rads &) const noexcept = default;
 
-		static rads parse(const string &str);
+		static Rads parse(const String &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return value.valid(); }
-		CAGE_FORCE_INLINE static constexpr rads Full() noexcept { return rads(real::Pi().value * 2); }
-		CAGE_FORCE_INLINE static constexpr rads Nan() noexcept { return rads(real::Nan()); }
-		friend struct real;
-		friend struct degs;
+		CAGE_FORCE_INLINE static constexpr Rads Full() noexcept { return Rads(Real::Pi().value * 2); }
+		CAGE_FORCE_INLINE static constexpr Rads Nan() noexcept { return Rads(Real::Nan()); }
+		friend struct Real;
+		friend struct Degs;
 	};
 
-	struct CAGE_CORE_API degs
+	struct CAGE_CORE_API Degs
 	{
-		real value;
+		Real value;
 
-		CAGE_FORCE_INLINE constexpr degs() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr degs(real value) noexcept : value(value) {}
-		constexpr degs(rads other) noexcept;
+		CAGE_FORCE_INLINE constexpr Degs() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Degs(Real value) noexcept : value(value) {}
+		constexpr Degs(Rads other) noexcept;
 
-		auto operator <=> (const degs &) const noexcept = default;
-		bool operator == (const degs &) const noexcept = default;
+		auto operator <=> (const Degs &) const noexcept = default;
+		bool operator == (const Degs &) const noexcept = default;
 
-		static degs parse(const string &str);
+		static Degs parse(const String &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return value.valid(); }
-		CAGE_FORCE_INLINE static constexpr degs Full() noexcept { return degs(360); }
-		CAGE_FORCE_INLINE static constexpr degs Nan() noexcept { return degs(real::Nan()); }
-		friend struct real;
-		friend struct rads;
+		CAGE_FORCE_INLINE static constexpr Degs Full() noexcept { return Degs(360); }
+		CAGE_FORCE_INLINE static constexpr Degs Nan() noexcept { return Degs(Real::Nan()); }
+		friend struct Real;
+		friend struct Rads;
 	};
 
-	struct CAGE_CORE_API vec2
+	struct CAGE_CORE_API Vec2
 	{
-		real data[2];
+		Real data[2];
 
-		CAGE_FORCE_INLINE constexpr vec2() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr vec2(real value) noexcept : data{ value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr vec2(real x, real y) noexcept : data{ x, y } {}
-		CAGE_FORCE_INLINE explicit constexpr vec2(const vec3 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr vec2(const vec4 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr vec2(const ivec2 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec2() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2(Real value) noexcept : data{ value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2(Real x, Real y) noexcept : data{ x, y } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2(const Vec3 &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec2(const Vec4 &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec2(const Vec2i &v) noexcept;
 
-		bool operator == (const vec2 &) const noexcept = default;
+		bool operator == (const Vec2 &) const noexcept = default;
 
-		static vec2 parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr vec2 Nan() noexcept { return vec2(real::Nan()); }
+		static Vec2 parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Vec2 Nan() noexcept { return Vec2(Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API ivec2
+	struct CAGE_CORE_API Vec2i
 	{
 		sint32 data[2] = {};
 
-		CAGE_FORCE_INLINE constexpr ivec2() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr ivec2(sint32 value) noexcept : data{ value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec2(sint32 x, sint32 y) noexcept : data{ x, y } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec2(const ivec3 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr ivec2(const ivec4 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr ivec2(const vec2 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec2i() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2i(sint32 value) noexcept : data{ value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2i(sint32 x, sint32 y) noexcept : data{ x, y } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec2i(const Vec3i &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec2i(const Vec4i &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec2i(const Vec2 &v) noexcept;
 
-		bool operator == (const ivec2 &) const noexcept = default;
+		bool operator == (const Vec2i &) const noexcept = default;
 
-		static ivec2 parse(const string &str);
+		static Vec2i parse(const String &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
 	};
 
-	struct CAGE_CORE_API vec3
+	struct CAGE_CORE_API Vec3
 	{
-		real data[3];
+		Real data[3];
 
-		CAGE_FORCE_INLINE constexpr vec3() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr vec3(real value) noexcept : data{ value, value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr vec3(real x, real y, real z) noexcept : data{ x, y, z } {}
-		CAGE_FORCE_INLINE explicit constexpr vec3(const vec2 &v, real z) noexcept : data{ v[0], v[1], z } {}
-		CAGE_FORCE_INLINE explicit constexpr vec3(const vec4 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr vec3(const ivec3 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec3() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3(Real value) noexcept : data{ value, value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3(Real x, Real y, Real z) noexcept : data{ x, y, z } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3(const Vec2 &v, Real z) noexcept : data{ v[0], v[1], z } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3(const Vec4 &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec3(const Vec3i &v) noexcept;
 
-		bool operator == (const vec3 &) const noexcept = default;
+		bool operator == (const Vec3 &) const noexcept = default;
 
-		static vec3 parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr vec3 Nan() noexcept { return vec3(real::Nan()); }
+		static Vec3 parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Vec3 Nan() noexcept { return Vec3(Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API ivec3
+	struct CAGE_CORE_API Vec3i
 	{
 		sint32 data[3] = {};
 
-		CAGE_FORCE_INLINE constexpr ivec3() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr ivec3(sint32 value) noexcept : data{ value, value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec3(sint32 x, sint32 y, sint32 z) noexcept : data{ x, y, z } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec3(const ivec2 &v, sint32 z) noexcept : data{ v[0], v[1], z } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec3(const ivec4 &v) noexcept;
-		CAGE_FORCE_INLINE explicit constexpr ivec3(const vec3 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec3i() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3i(sint32 value) noexcept : data{ value, value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3i(sint32 x, sint32 y, sint32 z) noexcept : data{ x, y, z } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3i(const Vec2i &v, sint32 z) noexcept : data{ v[0], v[1], z } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec3i(const Vec4i &v) noexcept;
+		CAGE_FORCE_INLINE explicit constexpr Vec3i(const Vec3 &v) noexcept;
 
-		bool operator == (const ivec3 &) const noexcept = default;
+		bool operator == (const Vec3i &) const noexcept = default;
 
-		static ivec3 parse(const string &str);
+		static Vec3i parse(const String &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
 	};
 
-	struct CAGE_CORE_API vec4
+	struct CAGE_CORE_API Vec4
 	{
-		real data[4];
+		Real data[4];
 
-		CAGE_FORCE_INLINE constexpr vec4() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(real value) noexcept : data{ value, value, value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(real x, real y, real z, real w) noexcept : data{ x, y, z, w } {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(const vec2 &v, real z, real w) noexcept : data{ v[0], v[1], z, w } {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(const vec2 &v, const vec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(const vec3 &v, real w) noexcept : data{ v[0], v[1], v[2], w } {}
-		CAGE_FORCE_INLINE explicit constexpr vec4(const ivec4 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec4() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(Real value) noexcept : data{ value, value, value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(Real x, Real y, Real z, Real w) noexcept : data{ x, y, z, w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(const Vec2 &v, Real z, Real w) noexcept : data{ v[0], v[1], z, w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(const Vec2 &v, const Vec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(const Vec3 &v, Real w) noexcept : data{ v[0], v[1], v[2], w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4(const Vec4i &v) noexcept;
 
-		bool operator == (const vec4 &) const noexcept = default;
+		bool operator == (const Vec4 &) const noexcept = default;
 
-		static vec4 parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr vec4 Nan() noexcept { return vec4(real::Nan()); }
+		static Vec4 parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Vec4 Nan() noexcept { return Vec4(Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API ivec4
+	struct CAGE_CORE_API Vec4i
 	{
 		sint32 data[4] = {};
 
-		CAGE_FORCE_INLINE constexpr ivec4() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(sint32 value) noexcept : data{ value, value, value, value } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(sint32 x, sint32 y, sint32 z, sint32 w) noexcept : data{ x, y, z, w } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(const ivec2 &v, sint32 z, sint32 w) noexcept : data{ v[0], v[1], z, w } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(const ivec2 &v, const ivec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(const ivec3 &v, sint32 w) noexcept : data{ v[0], v[1], v[2], w } {}
-		CAGE_FORCE_INLINE explicit constexpr ivec4(const vec4 &v) noexcept;
+		CAGE_FORCE_INLINE constexpr Vec4i() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(sint32 value) noexcept : data{ value, value, value, value } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(sint32 x, sint32 y, sint32 z, sint32 w) noexcept : data{ x, y, z, w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(const Vec2i &v, sint32 z, sint32 w) noexcept : data{ v[0], v[1], z, w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(const Vec2i &v, const Vec2i &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(const Vec3i &v, sint32 w) noexcept : data{ v[0], v[1], v[2], w } {}
+		CAGE_FORCE_INLINE explicit constexpr Vec4i(const Vec4 &v) noexcept;
 
-		bool operator == (const ivec4 &) const noexcept = default;
+		bool operator == (const Vec4i &) const noexcept = default;
 
-		static ivec4 parse(const string &str);
+		static Vec4i parse(const String &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 	};
 
-	struct CAGE_CORE_API quat
+	struct CAGE_CORE_API Quat
 	{
-		real data[4] = { 0, 0, 0, 1 }; // x, y, z, w
+		Real data[4] = { 0, 0, 0, 1 }; // x, y, z, w
 
-		CAGE_FORCE_INLINE constexpr quat() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr quat(real x, real y, real z, real w) noexcept : data{ x, y, z, w } {}
-		explicit quat(rads pitch, rads yaw, rads roll);
-		explicit quat(const vec3 &axis, rads angle);
-		explicit quat(const mat3 &rot);
-		explicit quat(const vec3 &forward, const vec3 &up, bool keepUp = false);
+		CAGE_FORCE_INLINE constexpr Quat() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Quat(Real x, Real y, Real z, Real w) noexcept : data{ x, y, z, w } {}
+		explicit Quat(Rads pitch, Rads yaw, Rads roll);
+		explicit Quat(const Vec3 &axis, Rads angle);
+		explicit Quat(const Mat3 &rot);
+		explicit Quat(const Vec3 &forward, const Vec3 &up, bool keepUp = false);
 
-		bool operator == (const quat &) const noexcept = default;
+		bool operator == (const Quat &) const noexcept = default;
 
-		static quat parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr quat Nan() noexcept { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		static Quat parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Quat Nan() noexcept { return Quat(Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API mat3
+	struct CAGE_CORE_API Mat3
 	{
-		real data[9] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+		Real data[9] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 
-		CAGE_FORCE_INLINE constexpr mat3() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i) noexcept : data{ a, b, c, d, e, f, g, h, i } {}
-		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
-		explicit mat3(const quat &other) noexcept;
-		explicit constexpr mat3(const mat4 &other) noexcept;
+		CAGE_FORCE_INLINE constexpr Mat3() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Mat3(Real a, Real b, Real c, Real d, Real e, Real f, Real g, Real h, Real i) noexcept : data{ a, b, c, d, e, f, g, h, i } {}
+		explicit Mat3(const Vec3 &forward, const Vec3 &up, bool keepUp = false);
+		explicit Mat3(const Quat &other) noexcept;
+		explicit constexpr Mat3(const Mat4 &other) noexcept;
 
-		bool operator == (const mat3 &) const noexcept = default;
+		bool operator == (const Mat3 &) const noexcept = default;
 
-		static mat3 parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr mat3 Zero() noexcept { return mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
-		CAGE_FORCE_INLINE static constexpr mat3 Nan() noexcept { return mat3(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		static Mat3 parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Mat3 Zero() noexcept { return Mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
+		CAGE_FORCE_INLINE static constexpr Mat3 Nan() noexcept { return Mat3(Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API mat4
+	struct CAGE_CORE_API Mat4
 	{
-		real data[16]  = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }; // SRR0 RSR0 RRS0 TTT1
+		Real data[16]  = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }; // SRR0 RSR0 RRS0 TTT1
 
-		CAGE_FORCE_INLINE constexpr mat4() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p) noexcept : data{ a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p } {}
-		CAGE_FORCE_INLINE explicit constexpr mat4(const mat3 &other) noexcept : data{ other[0], other[1], other[2], 0, other[3], other[4], other[5], 0, other[6], other[7], other[8], 0, 0, 0, 0, 1 } {}
-		CAGE_FORCE_INLINE explicit constexpr mat4(const vec3 &position) noexcept : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position[0], position[1], position[2], 1 } {}
-		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1)) noexcept;
-		CAGE_FORCE_INLINE explicit mat4(const quat &orientation) noexcept : mat4(mat3(orientation)) {}
-		explicit mat4(const transform &other) noexcept;
+		CAGE_FORCE_INLINE constexpr Mat4() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Mat4(Real a, Real b, Real c, Real d, Real e, Real f, Real g, Real h, Real i, Real j, Real k, Real l, Real m, Real n, Real o, Real p) noexcept : data{ a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p } {}
+		CAGE_FORCE_INLINE explicit constexpr Mat4(const Mat3 &other) noexcept : data{ other[0], other[1], other[2], 0, other[3], other[4], other[5], 0, other[6], other[7], other[8], 0, 0, 0, 0, 1 } {}
+		CAGE_FORCE_INLINE explicit constexpr Mat4(const Vec3 &position) noexcept : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position[0], position[1], position[2], 1 } {}
+		explicit Mat4(const Vec3 &position, const Quat &orientation, const Vec3 &scale = Vec3(1)) noexcept;
+		CAGE_FORCE_INLINE explicit Mat4(const Quat &orientation) noexcept : Mat4(Mat3(orientation)) {}
+		explicit Mat4(const Transform &other) noexcept;
 
-		bool operator == (const mat4 &) const noexcept = default;
+		bool operator == (const Mat4 &) const noexcept = default;
 
-		CAGE_FORCE_INLINE static constexpr mat4 scale(real scl) noexcept { return scale(vec3(scl)); }
-		CAGE_FORCE_INLINE static constexpr mat4 scale(const vec3 &scl) noexcept { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
-		static mat4 parse(const string &str);
-		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
-		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16); return data[idx]; }
-		CAGE_FORCE_INLINE bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
-		CAGE_FORCE_INLINE static constexpr mat4 Zero() noexcept { return mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
-		CAGE_FORCE_INLINE static constexpr mat4 Nan() noexcept { return mat4(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		CAGE_FORCE_INLINE static constexpr Mat4 scale(Real scl) noexcept { return scale(Vec3(scl)); }
+		CAGE_FORCE_INLINE static constexpr Mat4 scale(const Vec3 &scl) noexcept { return Mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
+		static Mat4 parse(const String &str);
+		CAGE_FORCE_INLINE constexpr Real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
+		CAGE_FORCE_INLINE constexpr Real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16); return data[idx]; }
+		CAGE_FORCE_INLINE bool valid() const noexcept { for (Real d : data) if (!d.valid()) return false; return true; }
+		CAGE_FORCE_INLINE static constexpr Mat4 Zero() noexcept { return Mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
+		CAGE_FORCE_INLINE static constexpr Mat4 Nan() noexcept { return Mat4(Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan(), Real::Nan()); }
 	};
 
-	struct CAGE_CORE_API transform
+	struct CAGE_CORE_API Transform
 	{
-		quat orientation;
-		vec3 position;
-		real scale = 1;
+		Quat orientation;
+		Vec3 position;
+		Real scale = 1;
 
-		CAGE_FORCE_INLINE constexpr transform() noexcept {}
-		CAGE_FORCE_INLINE explicit constexpr transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) noexcept : orientation(orientation), position(position), scale(scale) {}
+		CAGE_FORCE_INLINE constexpr Transform() noexcept {}
+		CAGE_FORCE_INLINE explicit constexpr Transform(const Vec3 &position, const Quat &orientation = Quat(), Real scale = 1) noexcept : orientation(orientation), position(position), scale(scale) {}
 
-		bool operator == (const transform &) const noexcept = default;
+		bool operator == (const Transform &) const noexcept = default;
 
-		static transform parse(const string &str);
+		static Transform parse(const String &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return orientation.valid() && position.valid() && scale.valid(); }
 	};
 
-	CAGE_FORCE_INLINE constexpr auto operator <=> (const rads &l, const degs &r) noexcept { return l <=> rads(r); };
-	CAGE_FORCE_INLINE constexpr auto operator <=> (const degs &l, const rads &r) noexcept { return rads(l) <=> r; };
+	CAGE_FORCE_INLINE constexpr auto operator <=> (const Rads &l, const Degs &r) noexcept { return l <=> Rads(r); };
+	CAGE_FORCE_INLINE constexpr auto operator <=> (const Degs &l, const Rads &r) noexcept { return Rads(l) <=> r; };
 
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr real operator OPERATOR (const real &r) noexcept { return OPERATOR r.value; } \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const rads &r) noexcept { return rads(OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr degs operator OPERATOR (const degs &r) noexcept { return degs(OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr vec2 operator OPERATOR (const vec2 &r) noexcept { return vec2(OPERATOR r[0], OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr vec3 operator OPERATOR (const vec3 &r) noexcept { return vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr vec4 operator OPERATOR (const vec4 &r) noexcept { return vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr quat operator OPERATOR (const quat &r) noexcept { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr ivec2 operator OPERATOR (const ivec2 &r) noexcept { return ivec2(OPERATOR r[0], OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr ivec3 operator OPERATOR (const ivec3 &r) noexcept { return ivec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr ivec4 operator OPERATOR (const ivec4 &r) noexcept { return ivec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
+	CAGE_FORCE_INLINE constexpr Real operator OPERATOR (const Real &r) noexcept { return OPERATOR r.value; } \
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Rads &r) noexcept { return Rads(OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Degs operator OPERATOR (const Degs &r) noexcept { return Degs(OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Vec2 operator OPERATOR (const Vec2 &r) noexcept { return Vec2(OPERATOR r[0], OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec3 operator OPERATOR (const Vec3 &r) noexcept { return Vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec4 operator OPERATOR (const Vec4 &r) noexcept { return Vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Quat operator OPERATOR (const Quat &r) noexcept { return Quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Vec2i operator OPERATOR (const Vec2i &r) noexcept { return Vec2i(OPERATOR r[0], OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec3i operator OPERATOR (const Vec3i &r) noexcept { return Vec3i(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec4i operator OPERATOR (const Vec4i &r) noexcept { return Vec4i(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr real operator OPERATOR (const real &l, const real &r) noexcept { return l.value OPERATOR r.value; }
+	CAGE_FORCE_INLINE constexpr Real operator OPERATOR (const Real &l, const Real &r) noexcept { return l.value OPERATOR r.value; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE constexpr real operator % (const real &l, const real &r) noexcept { CAGE_ASSERT(r.value != 0); return l - (r * (sint32)(l / r).value); }
+	CAGE_FORCE_INLINE constexpr Real operator % (const Real &l, const Real &r) noexcept { CAGE_ASSERT(r.value != 0); return l - (r * (sint32)(l / r).value); }
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const rads &l, const rads &r) noexcept { return rads(l.value OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const rads &l, const real &r) noexcept { return rads(l.value OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const real &l, const rads &r) noexcept { return rads(l OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr degs operator OPERATOR (const degs &l, const degs &r) noexcept { return degs(l.value OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr degs operator OPERATOR (const degs &l, const real &r) noexcept { return degs(l.value OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr degs operator OPERATOR (const real &l, const degs &r) noexcept { return degs(l OPERATOR r.value); } \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const rads &l, const degs &r) noexcept { return l OPERATOR rads(r); } \
-	CAGE_FORCE_INLINE constexpr rads operator OPERATOR (const degs &l, const rads &r) noexcept { return rads(l) OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec2 operator OPERATOR (const vec2 &l, const vec2 &r) noexcept { return vec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr vec2 operator OPERATOR (const vec2 &l, const real &r) noexcept { return vec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr vec2 operator OPERATOR (const real &l, const vec2 &r) noexcept { return vec2(l OPERATOR r[0], l OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr vec3 operator OPERATOR (const vec3 &l, const vec3 &r) noexcept { return vec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr vec3 operator OPERATOR (const vec3 &l, const real &r) noexcept { return vec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr vec3 operator OPERATOR (const real &l, const vec3 &r) noexcept { return vec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr vec4 operator OPERATOR (const vec4 &l, const vec4 &r) noexcept { return vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr vec4 operator OPERATOR (const vec4 &l, const real &r) noexcept { return vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr vec4 operator OPERATOR (const real &l, const vec4 &r) noexcept { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) noexcept { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) noexcept { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr ivec2 operator OPERATOR (const sint32 &l, const ivec2 &r) noexcept { return ivec2(l OPERATOR r[0], l OPERATOR r[1]); } \
-	CAGE_FORCE_INLINE constexpr ivec3 operator OPERATOR (const ivec3 &l, const ivec3 &r) noexcept { return ivec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr ivec3 operator OPERATOR (const ivec3 &l, const sint32 &r) noexcept { return ivec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr ivec3 operator OPERATOR (const sint32 &l, const ivec3 &r) noexcept { return ivec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
-	CAGE_FORCE_INLINE constexpr ivec4 operator OPERATOR (const ivec4 &l, const ivec4 &r) noexcept { return ivec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr ivec4 operator OPERATOR (const ivec4 &l, const sint32 &r) noexcept { return ivec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
-	CAGE_FORCE_INLINE constexpr ivec4 operator OPERATOR (const sint32 &l, const ivec4 &r) noexcept { return ivec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(-);
-	GCHL_GENERATE(*);
-	GCHL_GENERATE(/);
-	GCHL_GENERATE(%);
-#undef GCHL_GENERATE
-#define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr quat operator OPERATOR (const quat &l, const quat &r) noexcept { return quat(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr quat operator OPERATOR (const real &l, const quat &r) noexcept { return quat(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
-	CAGE_FORCE_INLINE constexpr quat operator OPERATOR (const quat &l, const real &r) noexcept { return quat(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(-);
-	GCHL_GENERATE(/);
-#undef GCHL_GENERATE
-	CAGE_FORCE_INLINE constexpr quat operator * (const quat &l, const quat &r) noexcept { return quat(l[3] * r[0] + l[0] * r[3] + l[1] * r[2] - l[2] * r[1], l[3] * r[1] + l[1] * r[3] + l[2] * r[0] - l[0] * r[2], l[3] * r[2] + l[2] * r[3] + l[0] * r[1] - l[1] * r[0], l[3] * r[3] - l[0] * r[0] - l[1] * r[1] - l[2] * r[2]); }
-	CAGE_FORCE_INLINE constexpr quat operator * (const real &l, const quat &r) noexcept { return quat(l * r[0], l * r[1], l * r[2], l * r[3]); }
-	CAGE_FORCE_INLINE constexpr quat operator * (const quat &l, const real &r) noexcept { return quat(l[0] * r, l[1] * r, l[2] * r, l[3] * r); }
-#define GCHL_GENERATE(OPERATOR) \
-	CAGE_CORE_API mat3 operator OPERATOR (const mat3 &l, const mat3 &r) noexcept; \
-	CAGE_FORCE_INLINE constexpr mat3 operator OPERATOR (const mat3 &l, const real &r) noexcept { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l[i] OPERATOR r; return res; } \
-	CAGE_FORCE_INLINE constexpr mat3 operator OPERATOR (const real &l, const mat3 &r) noexcept { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l OPERATOR r[i]; return res; } \
-	CAGE_CORE_API mat4 operator OPERATOR (const mat4 &l, const mat4 &r) noexcept; \
-	CAGE_FORCE_INLINE constexpr mat4 operator OPERATOR (const mat4 &l, const real &r) noexcept { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l[i] OPERATOR r; return res; } \
-	CAGE_FORCE_INLINE constexpr mat4 operator OPERATOR (const real &l, const mat4 &r) noexcept { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l OPERATOR r[i]; return res; }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(*);
-#undef GCHL_GENERATE
-	CAGE_CORE_API vec3 operator * (const transform &l, const vec3 &r) noexcept;
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const transform &r) noexcept;
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const quat &r) noexcept;
-	CAGE_CORE_API vec3 operator * (const quat &l, const vec3 &r) noexcept;
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const mat3 &r) noexcept;
-	CAGE_CORE_API vec3 operator * (const mat3 &l, const vec3 &r) noexcept;
-	CAGE_CORE_API vec4 operator * (const vec4 &l, const mat4 &r) noexcept;
-	CAGE_CORE_API vec4 operator * (const mat4 &l, const vec4 &r) noexcept;
-	CAGE_CORE_API transform operator * (const transform &l, const transform &r) noexcept;
-	CAGE_CORE_API transform operator * (const transform &l, const quat &r) noexcept;
-	CAGE_CORE_API transform operator * (const quat &l, const transform &r) noexcept;
-	CAGE_CORE_API transform operator * (const transform &l, const real &r) noexcept;
-	CAGE_CORE_API transform operator * (const real &l, const transform &r) noexcept;
-	CAGE_CORE_API transform operator + (const transform &l, const vec3 &r) noexcept;
-	CAGE_CORE_API transform operator + (const vec3 &l, const transform &r) noexcept;
-
-#define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr real &operator OPERATOR##= (real &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr rads &operator OPERATOR##= (rads &l, const rads &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr rads &operator OPERATOR##= (rads &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr degs &operator OPERATOR##= (degs &l, const degs &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr degs &operator OPERATOR##= (degs &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec2 &operator OPERATOR##= (vec2 &l, const vec2 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec2 &operator OPERATOR##= (vec2 &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec3 &operator OPERATOR##= (vec3 &l, const vec3 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec3 &operator OPERATOR##= (vec3 &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr vec4 &operator OPERATOR##= (vec4 &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec3 &operator OPERATOR##= (ivec3 &l, const ivec3 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec3 &operator OPERATOR##= (ivec3 &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec4 &operator OPERATOR##= (ivec4 &l, const ivec4 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr ivec4 &operator OPERATOR##= (ivec4 &l, const sint32 &r) noexcept { return l = l OPERATOR r; }
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Rads &l, const Rads &r) noexcept { return Rads(l.value OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Rads &l, const Real &r) noexcept { return Rads(l.value OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Real &l, const Rads &r) noexcept { return Rads(l OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Degs operator OPERATOR (const Degs &l, const Degs &r) noexcept { return Degs(l.value OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Degs operator OPERATOR (const Degs &l, const Real &r) noexcept { return Degs(l.value OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Degs operator OPERATOR (const Real &l, const Degs &r) noexcept { return Degs(l OPERATOR r.value); } \
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Rads &l, const Degs &r) noexcept { return l OPERATOR Rads(r); } \
+	CAGE_FORCE_INLINE constexpr Rads operator OPERATOR (const Degs &l, const Rads &r) noexcept { return Rads(l) OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec2 operator OPERATOR (const Vec2 &l, const Vec2 &r) noexcept { return Vec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec2 operator OPERATOR (const Vec2 &l, const Real &r) noexcept { return Vec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec2 operator OPERATOR (const Real &l, const Vec2 &r) noexcept { return Vec2(l OPERATOR r[0], l OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec3 operator OPERATOR (const Vec3 &l, const Vec3 &r) noexcept { return Vec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec3 operator OPERATOR (const Vec3 &l, const Real &r) noexcept { return Vec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec3 operator OPERATOR (const Real &l, const Vec3 &r) noexcept { return Vec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec4 operator OPERATOR (const Vec4 &l, const Vec4 &r) noexcept { return Vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Vec4 operator OPERATOR (const Vec4 &l, const Real &r) noexcept { return Vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec4 operator OPERATOR (const Real &l, const Vec4 &r) noexcept { return Vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Vec2i operator OPERATOR (const Vec2i &l, const Vec2i &r) noexcept { return Vec2i(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec2i operator OPERATOR (const Vec2i &l, const sint32 &r) noexcept { return Vec2i(l[0] OPERATOR r, l[1] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec2i operator OPERATOR (const sint32 &l, const Vec2i &r) noexcept { return Vec2i(l OPERATOR r[0], l OPERATOR r[1]); } \
+	CAGE_FORCE_INLINE constexpr Vec3i operator OPERATOR (const Vec3i &l, const Vec3i &r) noexcept { return Vec3i(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec3i operator OPERATOR (const Vec3i &l, const sint32 &r) noexcept { return Vec3i(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec3i operator OPERATOR (const sint32 &l, const Vec3i &r) noexcept { return Vec3i(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
+	CAGE_FORCE_INLINE constexpr Vec4i operator OPERATOR (const Vec4i &l, const Vec4i &r) noexcept { return Vec4i(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Vec4i operator OPERATOR (const Vec4i &l, const sint32 &r) noexcept { return Vec4i(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
+	CAGE_FORCE_INLINE constexpr Vec4i operator OPERATOR (const sint32 &l, const Vec4i &r) noexcept { return Vec4i(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
@@ -415,78 +354,139 @@ namespace cage
 	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr quat &operator OPERATOR##= (quat &l, const quat &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr quat &operator OPERATOR##= (quat &l, const real &r) noexcept { return l = l OPERATOR r; }
+	CAGE_FORCE_INLINE constexpr Quat operator OPERATOR (const Quat &l, const Quat &r) noexcept { return Quat(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Quat operator OPERATOR (const Real &l, const Quat &r) noexcept { return Quat(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
+	CAGE_FORCE_INLINE constexpr Quat operator OPERATOR (const Quat &l, const Real &r) noexcept { return Quat(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); }
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(/);
+#undef GCHL_GENERATE
+	CAGE_FORCE_INLINE constexpr Quat operator * (const Quat &l, const Quat &r) noexcept { return Quat(l[3] * r[0] + l[0] * r[3] + l[1] * r[2] - l[2] * r[1], l[3] * r[1] + l[1] * r[3] + l[2] * r[0] - l[0] * r[2], l[3] * r[2] + l[2] * r[3] + l[0] * r[1] - l[1] * r[0], l[3] * r[3] - l[0] * r[0] - l[1] * r[1] - l[2] * r[2]); }
+	CAGE_FORCE_INLINE constexpr Quat operator * (const Real &l, const Quat &r) noexcept { return Quat(l * r[0], l * r[1], l * r[2], l * r[3]); }
+	CAGE_FORCE_INLINE constexpr Quat operator * (const Quat &l, const Real &r) noexcept { return Quat(l[0] * r, l[1] * r, l[2] * r, l[3] * r); }
+#define GCHL_GENERATE(OPERATOR) \
+	CAGE_CORE_API Mat3 operator OPERATOR (const Mat3 &l, const Mat3 &r) noexcept; \
+	CAGE_FORCE_INLINE constexpr Mat3 operator OPERATOR (const Mat3 &l, const Real &r) noexcept { Mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l[i] OPERATOR r; return res; } \
+	CAGE_FORCE_INLINE constexpr Mat3 operator OPERATOR (const Real &l, const Mat3 &r) noexcept { Mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l OPERATOR r[i]; return res; } \
+	CAGE_CORE_API Mat4 operator OPERATOR (const Mat4 &l, const Mat4 &r) noexcept; \
+	CAGE_FORCE_INLINE constexpr Mat4 operator OPERATOR (const Mat4 &l, const Real &r) noexcept { Mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l[i] OPERATOR r; return res; } \
+	CAGE_FORCE_INLINE constexpr Mat4 operator OPERATOR (const Real &l, const Mat4 &r) noexcept { Mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l OPERATOR r[i]; return res; }
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(*);
+#undef GCHL_GENERATE
+	CAGE_CORE_API Vec3 operator * (const Transform &l, const Vec3 &r) noexcept;
+	CAGE_CORE_API Vec3 operator * (const Vec3 &l, const Transform &r) noexcept;
+	CAGE_CORE_API Vec3 operator * (const Vec3 &l, const Quat &r) noexcept;
+	CAGE_CORE_API Vec3 operator * (const Quat &l, const Vec3 &r) noexcept;
+	CAGE_CORE_API Vec3 operator * (const Vec3 &l, const Mat3 &r) noexcept;
+	CAGE_CORE_API Vec3 operator * (const Mat3 &l, const Vec3 &r) noexcept;
+	CAGE_CORE_API Vec4 operator * (const Vec4 &l, const Mat4 &r) noexcept;
+	CAGE_CORE_API Vec4 operator * (const Mat4 &l, const Vec4 &r) noexcept;
+	CAGE_CORE_API Transform operator * (const Transform &l, const Transform &r) noexcept;
+	CAGE_CORE_API Transform operator * (const Transform &l, const Quat &r) noexcept;
+	CAGE_CORE_API Transform operator * (const Quat &l, const Transform &r) noexcept;
+	CAGE_CORE_API Transform operator * (const Transform &l, const Real &r) noexcept;
+	CAGE_CORE_API Transform operator * (const Real &l, const Transform &r) noexcept;
+	CAGE_CORE_API Transform operator + (const Transform &l, const Vec3 &r) noexcept;
+	CAGE_CORE_API Transform operator + (const Vec3 &l, const Transform &r) noexcept;
+
+#define GCHL_GENERATE(OPERATOR) \
+	CAGE_FORCE_INLINE constexpr Real &operator OPERATOR##= (Real &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##= (Rads &l, const Rads &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##= (Rads &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##= (Degs &l, const Degs &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##= (Degs &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##= (Vec2 &l, const Vec2 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##= (Vec2 &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##= (Vec3 &l, const Vec3 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##= (Vec3 &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##= (Vec4 &l, const Vec4 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##= (Vec4 &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##= (Vec2i &l, const Vec2i &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##= (Vec2i &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##= (Vec3i &l, const Vec3i &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##= (Vec3i &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##= (Vec4i &l, const Vec4i &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##= (Vec4i &l, const sint32 &r) noexcept { return l = l OPERATOR r; }
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
+	GCHL_GENERATE(%);
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(OPERATOR) \
+	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##= (Quat &l, const Quat &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##= (Quat &l, const Real &r) noexcept { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE mat3 &operator OPERATOR##= (mat3 &l, const mat3 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE mat4 &operator OPERATOR##= (mat4 &l, const mat4 &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr mat3 &operator OPERATOR##= (mat3 &l, const real &r) noexcept { return l = l OPERATOR r; } \
-	CAGE_FORCE_INLINE constexpr mat4 &operator OPERATOR##= (mat4 &l, const real &r) noexcept { return l = l OPERATOR r; }
+	CAGE_FORCE_INLINE Mat3 &operator OPERATOR##= (Mat3 &l, const Mat3 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE Mat4 &operator OPERATOR##= (Mat4 &l, const Mat4 &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Mat3 &operator OPERATOR##= (Mat3 &l, const Real &r) noexcept { return l = l OPERATOR r; } \
+	CAGE_FORCE_INLINE constexpr Mat4 &operator OPERATOR##= (Mat4 &l, const Real &r) noexcept { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE vec3 &operator *= (vec3 &l, const mat3 &r) noexcept { return l = l *= r; }
-	CAGE_FORCE_INLINE vec3 &operator *= (vec3 &l, const quat &r) noexcept { return l = l *= r; }
-	CAGE_FORCE_INLINE vec3 &operator *= (vec3 &l, const transform &r) noexcept { return l = l * r; }
-	CAGE_FORCE_INLINE vec4 &operator *= (vec4 &l, const mat4 &r) noexcept { return l = l *= r; }
-	CAGE_FORCE_INLINE transform &operator *= (transform &l, const transform &r) noexcept { return l = l * r; }
-	CAGE_FORCE_INLINE transform &operator *= (transform &l, const quat &r) noexcept { return l = l * r; }
-	CAGE_FORCE_INLINE transform &operator *= (transform &l, const real &r) noexcept { return l = l * r; }
-	CAGE_FORCE_INLINE transform &operator += (transform &l, const vec3 &r) noexcept { return l = l + r; }
+	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Mat3 &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Quat &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Vec3 &operator *= (Vec3 &l, const Transform &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Vec4 &operator *= (Vec4 &l, const Mat4 &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Transform &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Quat &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Transform &operator *= (Transform &l, const Real &r) noexcept { return l = l * r; }
+	CAGE_FORCE_INLINE Transform &operator += (Transform &l, const Vec3 &r) noexcept { return l = l + r; }
 
-	CAGE_FORCE_INLINE constexpr real::real(rads other) noexcept : value(other.value.value) {}
-	CAGE_FORCE_INLINE constexpr real::real(degs other) noexcept : value(other.value.value) {}
-	CAGE_FORCE_INLINE constexpr rads::rads(degs other) noexcept : value(other.value * real::Pi() / 180) {}
-	CAGE_FORCE_INLINE constexpr degs::degs(rads other) noexcept : value(other.value * 180 / real::Pi()) {}
-	CAGE_FORCE_INLINE constexpr vec2::vec2(const vec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
-	CAGE_FORCE_INLINE constexpr vec2::vec2(const vec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
-	CAGE_FORCE_INLINE constexpr vec2::vec2(const ivec2 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]) } {}
-	CAGE_FORCE_INLINE constexpr ivec2::ivec2(const ivec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
-	CAGE_FORCE_INLINE constexpr ivec2::ivec2(const ivec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
-	CAGE_FORCE_INLINE constexpr ivec2::ivec2(const vec2 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]) } {}
-	CAGE_FORCE_INLINE constexpr vec3::vec3(const vec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
-	CAGE_FORCE_INLINE constexpr vec3::vec3(const ivec3 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]) } {}
-	CAGE_FORCE_INLINE constexpr ivec3::ivec3(const ivec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
-	CAGE_FORCE_INLINE constexpr ivec3::ivec3(const vec3 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]) } {}
-	CAGE_FORCE_INLINE constexpr vec4::vec4(const ivec4 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]), numeric_cast<real>(other.data[3]) } {}
-	CAGE_FORCE_INLINE constexpr ivec4::ivec4(const vec4 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]), numeric_cast<sint32>(other.data[3]) } {}
-	CAGE_FORCE_INLINE constexpr mat3::mat3(const mat4 &other) noexcept : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
-	inline mat4::mat4(const transform &other) noexcept : mat4(other.position, other.orientation, vec3(other.scale)) {} // gcc has trouble with force inlining this function
+	CAGE_FORCE_INLINE constexpr Real::Real(Rads other) noexcept : value(other.value.value) {}
+	CAGE_FORCE_INLINE constexpr Real::Real(Degs other) noexcept : value(other.value.value) {}
+	CAGE_FORCE_INLINE constexpr Rads::Rads(Degs other) noexcept : value(other.value * Real::Pi() / 180) {}
+	CAGE_FORCE_INLINE constexpr Degs::Degs(Rads other) noexcept : value(other.value * 180 / Real::Pi()) {}
+	CAGE_FORCE_INLINE constexpr Vec2::Vec2(const Vec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	CAGE_FORCE_INLINE constexpr Vec2::Vec2(const Vec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	CAGE_FORCE_INLINE constexpr Vec2::Vec2(const Vec2i &other) noexcept : data{ numeric_cast<Real>(other.data[0]), numeric_cast<Real>(other.data[1]) } {}
+	CAGE_FORCE_INLINE constexpr Vec2i::Vec2i(const Vec3i &other) noexcept : data{ other.data[0], other.data[1] } {}
+	CAGE_FORCE_INLINE constexpr Vec2i::Vec2i(const Vec4i &other) noexcept : data{ other.data[0], other.data[1] } {}
+	CAGE_FORCE_INLINE constexpr Vec2i::Vec2i(const Vec2 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]) } {}
+	CAGE_FORCE_INLINE constexpr Vec3::Vec3(const Vec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
+	CAGE_FORCE_INLINE constexpr Vec3::Vec3(const Vec3i &other) noexcept : data{ numeric_cast<Real>(other.data[0]), numeric_cast<Real>(other.data[1]), numeric_cast<Real>(other.data[2]) } {}
+	CAGE_FORCE_INLINE constexpr Vec3i::Vec3i(const Vec4i &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
+	CAGE_FORCE_INLINE constexpr Vec3i::Vec3i(const Vec3 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]) } {}
+	CAGE_FORCE_INLINE constexpr Vec4::Vec4(const Vec4i &other) noexcept : data{ numeric_cast<Real>(other.data[0]), numeric_cast<Real>(other.data[1]), numeric_cast<Real>(other.data[2]), numeric_cast<Real>(other.data[3]) } {}
+	CAGE_FORCE_INLINE constexpr Vec4i::Vec4i(const Vec4 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]), numeric_cast<sint32>(other.data[3]) } {}
+	CAGE_FORCE_INLINE constexpr Mat3::Mat3(const Mat4 &other) noexcept : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
+	inline Mat4::Mat4(const Transform &other) noexcept : Mat4(other.position, other.orientation, Vec3(other.scale)) {} // gcc has trouble with force inlining this function
 
-	CAGE_FORCE_INLINE constexpr real smoothstep(real x) noexcept { return x * x * (3 - 2 * x); }
-	CAGE_FORCE_INLINE constexpr real smootherstep(real x) noexcept { return x * x * x * (x * (x * 6 - 15) + 10); }
-	CAGE_FORCE_INLINE constexpr sint32 sign(real x) noexcept { return x < 0 ? -1 : x > 0 ? 1 : 0; }
-	CAGE_FORCE_INLINE constexpr real wrap(real x) noexcept { if (x < 0) return 1 - -x % 1; else return x % 1; }
-	CAGE_FORCE_INLINE constexpr rads wrap(rads x) noexcept { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
-	CAGE_FORCE_INLINE constexpr degs wrap(degs x) noexcept { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
-	CAGE_FORCE_INLINE constexpr sint32 sign(rads x) noexcept { return sign(x.value); }
-	CAGE_FORCE_INLINE constexpr sint32 sign(degs x) noexcept { return sign(x.value); }
-	CAGE_FORCE_INLINE constexpr real sqr(real x) noexcept { return x * x; }
-	CAGE_CORE_API real sqrt(real x);
-	CAGE_CORE_API real pow(real base, real exponent); // base ^ exponent
-	CAGE_CORE_API real powE(real x); // e ^ x
-	CAGE_CORE_API real pow2(real x); // 2 ^ x
-	CAGE_CORE_API real pow10(real x); // 10 ^ x
-	CAGE_CORE_API real log(real x);
-	CAGE_CORE_API real log2(real x);
-	CAGE_CORE_API real log10(real x);
-	CAGE_CORE_API real round(real x);
-	CAGE_CORE_API real floor(real x);
-	CAGE_CORE_API real ceil(real x);
-	CAGE_CORE_API real sin(rads value);
-	CAGE_CORE_API real cos(rads value);
-	CAGE_CORE_API real tan(rads value);
-	CAGE_CORE_API rads asin(real value);
-	CAGE_CORE_API rads acos(real value);
-	CAGE_CORE_API rads atan(real value);
-	CAGE_CORE_API rads atan2(real x, real y);
-	CAGE_CORE_API real distanceWrap(real a, real b);
-	CAGE_FORCE_INLINE rads distanceAngle(rads a, rads b) { return distanceWrap((a / rads::Full()).value, (b / rads::Full()).value) * rads::Full(); }
+	CAGE_FORCE_INLINE constexpr Real smoothstep(Real x) noexcept { return x * x * (3 - 2 * x); }
+	CAGE_FORCE_INLINE constexpr Real smootherstep(Real x) noexcept { return x * x * x * (x * (x * 6 - 15) + 10); }
+	CAGE_FORCE_INLINE constexpr sint32 sign(Real x) noexcept { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+	CAGE_FORCE_INLINE constexpr Real wrap(Real x) noexcept { if (x < 0) return 1 - -x % 1; else return x % 1; }
+	CAGE_FORCE_INLINE constexpr Rads wrap(Rads x) noexcept { if (x < Rads()) return Rads::Full() - -x % Rads::Full(); else return x % Rads::Full(); }
+	CAGE_FORCE_INLINE constexpr Degs wrap(Degs x) noexcept { if (x < Degs()) return Degs::Full() - -x % Degs::Full(); else return x % Degs::Full(); }
+	CAGE_FORCE_INLINE constexpr sint32 sign(Rads x) noexcept { return sign(x.value); }
+	CAGE_FORCE_INLINE constexpr sint32 sign(Degs x) noexcept { return sign(x.value); }
+	CAGE_FORCE_INLINE constexpr Real sqr(Real x) noexcept { return x * x; }
+	CAGE_CORE_API Real sqrt(Real x);
+	CAGE_CORE_API Real pow(Real base, Real exponent); // base ^ exponent
+	CAGE_CORE_API Real powE(Real x); // e ^ x
+	CAGE_CORE_API Real pow2(Real x); // 2 ^ x
+	CAGE_CORE_API Real pow10(Real x); // 10 ^ x
+	CAGE_CORE_API Real log(Real x);
+	CAGE_CORE_API Real log2(Real x);
+	CAGE_CORE_API Real log10(Real x);
+	CAGE_CORE_API Real round(Real x);
+	CAGE_CORE_API Real floor(Real x);
+	CAGE_CORE_API Real ceil(Real x);
+	CAGE_CORE_API Real sin(Rads value);
+	CAGE_CORE_API Real cos(Rads value);
+	CAGE_CORE_API Real tan(Rads value);
+	CAGE_CORE_API Rads asin(Real value);
+	CAGE_CORE_API Rads acos(Real value);
+	CAGE_CORE_API Rads atan(Real value);
+	CAGE_CORE_API Rads atan2(Real x, Real y);
+	CAGE_CORE_API Real distanceWrap(Real a, Real b);
+	CAGE_FORCE_INLINE Rads distanceAngle(Rads a, Rads b) { return distanceWrap((a / Rads::Full()).value, (b / Rads::Full()).value) * Rads::Full(); }
 
 #define GCHL_GENERATE(TYPE) CAGE_FORCE_INLINE constexpr TYPE abs(TYPE a) noexcept { return a < 0 ? -a : a; }
 	GCHL_GENERATE(sint8);
@@ -495,7 +495,7 @@ namespace cage
 	GCHL_GENERATE(sint64);
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
-	GCHL_GENERATE(real);
+	GCHL_GENERATE(Real);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) CAGE_FORCE_INLINE constexpr TYPE abs(TYPE a) noexcept { return a; }
 	GCHL_GENERATE(uint8);
@@ -503,61 +503,61 @@ namespace cage
 	GCHL_GENERATE(uint32);
 	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE constexpr rads abs(rads x) noexcept { return rads(abs(x.value)); }
-	CAGE_FORCE_INLINE constexpr degs abs(degs x) noexcept { return degs(abs(x.value)); }
+	CAGE_FORCE_INLINE constexpr Rads abs(Rads x) noexcept { return Rads(abs(x.value)); }
+	CAGE_FORCE_INLINE constexpr Degs abs(Degs x) noexcept { return Degs(abs(x.value)); }
 
 #define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr real dot(const TYPE &l, const TYPE &r) noexcept { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
-	CAGE_FORCE_INLINE constexpr real lengthSquared(const TYPE &x) noexcept { return dot(x, x); } \
-	CAGE_FORCE_INLINE real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
-	CAGE_FORCE_INLINE constexpr real distanceSquared(const TYPE &l, const TYPE &r) noexcept { return lengthSquared(l - r); } \
-	CAGE_FORCE_INLINE real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
+	CAGE_FORCE_INLINE constexpr Real dot(const TYPE &l, const TYPE &r) noexcept { TYPE m = l * r; Real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
+	CAGE_FORCE_INLINE constexpr Real lengthSquared(const TYPE &x) noexcept { return dot(x, x); } \
+	CAGE_FORCE_INLINE Real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
+	CAGE_FORCE_INLINE constexpr Real distanceSquared(const TYPE &l, const TYPE &r) noexcept { return lengthSquared(l - r); } \
+	CAGE_FORCE_INLINE Real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
 	CAGE_FORCE_INLINE TYPE normalize(const TYPE &x) { return x / length(x); }
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE constexpr real dot(const quat &l, const quat &r) noexcept { real sum = 0; for (uint32 i = 0; i < 4; i++) sum += l[i] * r[i]; return sum; }
-	CAGE_FORCE_INLINE constexpr real lengthSquared(const quat &x) noexcept { return dot(x, x); }
-	CAGE_FORCE_INLINE real length(const quat &x) noexcept { return sqrt(lengthSquared(x)); }
-	CAGE_FORCE_INLINE quat normalize(const quat &x) noexcept { return x / length(x); }
-	CAGE_FORCE_INLINE constexpr quat conjugate(const quat &x) noexcept { return quat(-x[0], -x[1], -x[2], x[3]); }
-	CAGE_FORCE_INLINE constexpr real cross(const vec2 &l, const vec2 &r) noexcept { return l[0] * r[1] - l[1] * r[0]; }
-	CAGE_FORCE_INLINE constexpr vec3 cross(const vec3 &l, const vec3 &r) noexcept { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
-	CAGE_CORE_API vec3 dominantAxis(const vec3 &x);
-	CAGE_CORE_API void toAxisAngle(const quat &x, vec3 &axis, rads &angle);
-	CAGE_CORE_API quat lerp(const quat &a, const quat &b, real f);
-	CAGE_CORE_API quat slerp(const quat &a, const quat &b, real f);
-	CAGE_CORE_API quat slerpPrecise(const quat &a, const quat &b, real f);
-	CAGE_CORE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
-	CAGE_CORE_API rads angle(const quat &a, const quat &b);
-	CAGE_CORE_API rads pitch(const quat &q);
-	CAGE_CORE_API rads yaw(const quat &q);
-	CAGE_CORE_API rads roll(const quat &q);
+	CAGE_FORCE_INLINE constexpr Real dot(const Quat &l, const Quat &r) noexcept { Real sum = 0; for (uint32 i = 0; i < 4; i++) sum += l[i] * r[i]; return sum; }
+	CAGE_FORCE_INLINE constexpr Real lengthSquared(const Quat &x) noexcept { return dot(x, x); }
+	CAGE_FORCE_INLINE Real length(const Quat &x) noexcept { return sqrt(lengthSquared(x)); }
+	CAGE_FORCE_INLINE Quat normalize(const Quat &x) noexcept { return x / length(x); }
+	CAGE_FORCE_INLINE constexpr Quat conjugate(const Quat &x) noexcept { return Quat(-x[0], -x[1], -x[2], x[3]); }
+	CAGE_FORCE_INLINE constexpr Real cross(const Vec2 &l, const Vec2 &r) noexcept { return l[0] * r[1] - l[1] * r[0]; }
+	CAGE_FORCE_INLINE constexpr Vec3 cross(const Vec3 &l, const Vec3 &r) noexcept { return Vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
+	CAGE_CORE_API Vec3 dominantAxis(const Vec3 &x);
+	CAGE_CORE_API void toAxisAngle(const Quat &x, Vec3 &axis, Rads &angle);
+	CAGE_CORE_API Quat lerp(const Quat &a, const Quat &b, Real f);
+	CAGE_CORE_API Quat slerp(const Quat &a, const Quat &b, Real f);
+	CAGE_CORE_API Quat slerpPrecise(const Quat &a, const Quat &b, Real f);
+	CAGE_CORE_API Quat rotate(const Quat &from, const Quat &toward, Rads maxTurn);
+	CAGE_CORE_API Rads angle(const Quat &a, const Quat &b);
+	CAGE_CORE_API Rads pitch(const Quat &q);
+	CAGE_CORE_API Rads yaw(const Quat &q);
+	CAGE_CORE_API Rads roll(const Quat &q);
 
-	CAGE_CORE_API mat3 inverse(const mat3 &x);
-	CAGE_CORE_API mat3 transpose(const mat3 &x) noexcept;
-	CAGE_CORE_API mat3 normalize(const mat3 &x);
-	CAGE_CORE_API real determinant(const mat3 &x);
-	CAGE_CORE_API mat4 inverse(const mat4 &x);
-	CAGE_CORE_API mat4 transpose(const mat4 &x) noexcept;
-	CAGE_CORE_API mat4 normalize(const mat4 &x);
-	CAGE_CORE_API real determinant(const mat4 &x);
-	CAGE_CORE_API transform inverse(const transform &x);
+	CAGE_CORE_API Mat3 inverse(const Mat3 &x);
+	CAGE_CORE_API Mat3 transpose(const Mat3 &x) noexcept;
+	CAGE_CORE_API Mat3 normalize(const Mat3 &x);
+	CAGE_CORE_API Real determinant(const Mat3 &x);
+	CAGE_CORE_API Mat4 inverse(const Mat4 &x);
+	CAGE_CORE_API Mat4 transpose(const Mat4 &x) noexcept;
+	CAGE_CORE_API Mat4 normalize(const Mat4 &x);
+	CAGE_CORE_API Real determinant(const Mat4 &x);
+	CAGE_CORE_API Transform inverse(const Transform &x);
 
 	CAGE_CORE_API bool valid(float a) noexcept;
 	CAGE_CORE_API bool valid(double a) noexcept;
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE bool valid(const TYPE &a) noexcept { return a.valid(); }
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
-	GCHL_GENERATE(quat);
-	GCHL_GENERATE(mat3);
-	GCHL_GENERATE(mat4);
+	GCHL_GENERATE(Real);
+	GCHL_GENERATE(Rads);
+	GCHL_GENERATE(Degs);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
+	GCHL_GENERATE(Quat);
+	GCHL_GENERATE(Mat3);
+	GCHL_GENERATE(Mat4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
@@ -574,21 +574,21 @@ namespace cage
 	GCHL_GENERATE(uint64);
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
+	GCHL_GENERATE(Real);
+	GCHL_GENERATE(Rads);
+	GCHL_GENERATE(Degs);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE constexpr TYPE saturate(TYPE v) noexcept { return clamp(v, TYPE(0), TYPE(1)); }
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
-	GCHL_GENERATE(real);
+	GCHL_GENERATE(Real);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE constexpr TYPE saturate(TYPE v) noexcept { return clamp(v, TYPE(0), TYPE::Full()); }
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
+	GCHL_GENERATE(Rads);
+	GCHL_GENERATE(Degs);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
@@ -596,23 +596,23 @@ namespace cage
 	CAGE_FORCE_INLINE constexpr TYPE min(const TYPE &l, const TYPE &r) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
 	CAGE_FORCE_INLINE constexpr TYPE max(const TYPE &l, const TYPE &r) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
 	CAGE_FORCE_INLINE constexpr TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; }
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
-	GCHL_GENERATE(ivec2);
-	GCHL_GENERATE(ivec3);
-	GCHL_GENERATE(ivec4);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
+	GCHL_GENERATE(Vec2i);
+	GCHL_GENERATE(Vec3i);
+	GCHL_GENERATE(Vec4i);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr TYPE min(const TYPE &l, real r) noexcept { return min(l, TYPE(r)); } \
-	CAGE_FORCE_INLINE constexpr TYPE max(const TYPE &l, real r) noexcept { return max(l, TYPE(r)); } \
-	CAGE_FORCE_INLINE constexpr TYPE min(real l, const TYPE &r) noexcept { return min(TYPE(l), r); } \
-	CAGE_FORCE_INLINE constexpr TYPE max(real l, const TYPE &r) noexcept { return max(TYPE(l), r); } \
-	CAGE_FORCE_INLINE constexpr TYPE clamp(const TYPE &v, real a, real b) noexcept { return clamp(v, TYPE(a), TYPE(b)); } \
+	CAGE_FORCE_INLINE constexpr TYPE min(const TYPE &l, Real r) noexcept { return min(l, TYPE(r)); } \
+	CAGE_FORCE_INLINE constexpr TYPE max(const TYPE &l, Real r) noexcept { return max(l, TYPE(r)); } \
+	CAGE_FORCE_INLINE constexpr TYPE min(Real l, const TYPE &r) noexcept { return min(TYPE(l), r); } \
+	CAGE_FORCE_INLINE constexpr TYPE max(Real l, const TYPE &r) noexcept { return max(TYPE(l), r); } \
+	CAGE_FORCE_INLINE constexpr TYPE clamp(const TYPE &v, Real a, Real b) noexcept { return clamp(v, TYPE(a), TYPE(b)); } \
 	CAGE_FORCE_INLINE constexpr TYPE saturate(const TYPE &v) noexcept { return clamp(v, 0, 1); }
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE constexpr TYPE min(const TYPE &l, sint32 r) noexcept { return min(l, TYPE(r)); } \
@@ -620,13 +620,13 @@ namespace cage
 	CAGE_FORCE_INLINE constexpr TYPE min(sint32 l, const TYPE &r) noexcept { return min(TYPE(l), r); } \
 	CAGE_FORCE_INLINE constexpr TYPE max(sint32 l, const TYPE &r) noexcept { return max(TYPE(l), r); } \
 	CAGE_FORCE_INLINE constexpr TYPE clamp(const TYPE &v, sint32 a, sint32 b) noexcept { return clamp(v, TYPE(a), TYPE(b)); }
-	GCHL_GENERATE(ivec2);
-	GCHL_GENERATE(ivec3);
-	GCHL_GENERATE(ivec4);
+	GCHL_GENERATE(Vec2i);
+	GCHL_GENERATE(Vec3i);
+	GCHL_GENERATE(Vec4i);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, real f) noexcept { return (TYPE)(a * (1 - f.value) + b * f.value); }
+	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, Real f) noexcept { return (TYPE)(a * (1 - f.value) + b * f.value); }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
@@ -637,22 +637,22 @@ namespace cage
 	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, real f) noexcept { return (TYPE)(a + (b - a) * f.value); }
+	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, Real f) noexcept { return (TYPE)(a + (b - a) * f.value); }
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(Real);
+	GCHL_GENERATE(Rads);
+	GCHL_GENERATE(Degs);
+	GCHL_GENERATE(Vec2);
+	GCHL_GENERATE(Vec3);
+	GCHL_GENERATE(Vec4);
 #undef GCHL_GENERATE
-	CAGE_FORCE_INLINE quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
-	CAGE_FORCE_INLINE transform interpolate(const transform &a, const transform &b, real f) noexcept { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
-	CAGE_CORE_API real interpolateWrap(real a, real b, real f);
-	CAGE_FORCE_INLINE rads interpolateAngle(rads a, rads b, real f) { return interpolateWrap((a / rads::Full()).value, (b / rads::Full()).value, f) * rads::Full(); }
+	CAGE_FORCE_INLINE Quat interpolate(const Quat &a, const Quat &b, Real f) { return slerp(a, b, f); }
+	CAGE_FORCE_INLINE Transform interpolate(const Transform &a, const Transform &b, Real f) noexcept { return Transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
+	CAGE_CORE_API Real interpolateWrap(Real a, Real b, Real f);
+	CAGE_FORCE_INLINE Rads interpolateAngle(Rads a, Rads b, Real f) { return interpolateWrap((a / Rads::Full()).value, (b / Rads::Full()).value, f) * Rads::Full(); }
 
-	CAGE_CORE_API real randomChance(); // 0 to 1; including 0, excluding 1
+	CAGE_CORE_API Real randomChance(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) \
 	CAGE_CORE_API TYPE randomRange(TYPE min, TYPE max);
 	GCHL_GENERATE(sint8);
@@ -665,23 +665,23 @@ namespace cage
 	GCHL_GENERATE(uint64);
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
+	GCHL_GENERATE(Real);
+	GCHL_GENERATE(Rads);
+	GCHL_GENERATE(Degs);
 #undef GCHL_GENERATE
-	CAGE_CORE_API rads randomAngle();
-	CAGE_CORE_API vec2 randomChance2();
-	CAGE_CORE_API vec2 randomRange2(real a, real b);
-	CAGE_CORE_API vec2 randomDirection2();
-	CAGE_CORE_API ivec2 randomRange2i(sint32 a, sint32 b);
-	CAGE_CORE_API vec3 randomChance3();
-	CAGE_CORE_API vec3 randomRange3(real a, real b);
-	CAGE_CORE_API vec3 randomDirection3();
-	CAGE_CORE_API ivec3 randomRange3i(sint32 a, sint32 b);
-	CAGE_CORE_API vec4 randomChance4();
-	CAGE_CORE_API vec4 randomRange4(real a, real b);
-	CAGE_CORE_API quat randomDirectionQuat();
-	CAGE_CORE_API ivec4 randomRange4i(sint32 a, sint32 b);
+	CAGE_CORE_API Rads randomAngle();
+	CAGE_CORE_API Vec2 randomChance2();
+	CAGE_CORE_API Vec2 randomRange2(Real a, Real b);
+	CAGE_CORE_API Vec2 randomDirection2();
+	CAGE_CORE_API Vec2i randomRange2i(sint32 a, sint32 b);
+	CAGE_CORE_API Vec3 randomChance3();
+	CAGE_CORE_API Vec3 randomRange3(Real a, Real b);
+	CAGE_CORE_API Vec3 randomDirection3();
+	CAGE_CORE_API Vec3i randomRange3i(sint32 a, sint32 b);
+	CAGE_CORE_API Vec4 randomChance4();
+	CAGE_CORE_API Vec4 randomRange4(Real a, Real b);
+	CAGE_CORE_API Quat randomDirectionQuat();
+	CAGE_CORE_API Vec4i randomRange4i(sint32 a, sint32 b);
 
 	CAGE_FORCE_INLINE constexpr uint32 hash(uint32 key) noexcept
 	{ // integer finalizer hash function
@@ -695,19 +695,19 @@ namespace cage
 
 	namespace detail
 	{
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const real &other) { return str + other.value; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const degs &other) { return str + other.value.value + "deg"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const rads &other) { return str + other.value.value + "rad"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const vec2 &other) { return str + "(" + other[0].value + "," + other[1].value + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const vec3 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const vec4 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const quat &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const mat3 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) str + "," + other[i].value; return str + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const mat4 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) str + "," + other[i].value; return str + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const transform &other) { return str + "(" + other.position + "," + other.orientation + "," + other.scale + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec2 &other) { return str + "(" + other[0] + "," + other[1] + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec3 &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + ")"; }
-		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec4 &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + "," + other[3] + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Real &other) { return str + other.value; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Degs &other) { return str + other.value.value + "deg"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Rads &other) { return str + other.value.value + "rad"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec2 &other) { return str + "(" + other[0].value + "," + other[1].value + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec3 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec4 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Quat &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Mat3 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) str + "," + other[i].value; return str + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Mat4 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) str + "," + other[i].value; return str + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Transform &other) { return str + "(" + other.position + "," + other.orientation + "," + other.scale + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec2i &other) { return str + "(" + other[0] + "," + other[1] + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec3i &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + ")"; }
+		template<uint32 N> CAGE_FORCE_INLINE StringizerBase<N> &operator + (StringizerBase<N> &str, const Vec4i &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + "," + other[3] + ")"; }
 	}
 }
 

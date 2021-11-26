@@ -1,60 +1,64 @@
 #ifndef guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 #define guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 
-#include <cage-core/files.h>
+#include <cage-core/string.h> // StringComparatorFast
 #include <cage-core/serialization.h>
-#include <cage-core/config.h>
-#include <cage-core/string.h>
 
 #include <set>
 #include <map>
 
 using namespace cage;
 
-typedef std::set<string, StringComparatorFast> StringSet;
-typedef std::map<string, string, StringComparatorFast> StringMap;
+using StringSet = std::set<String, StringComparatorFast>;
+using StringMap = std::map<String, String, StringComparatorFast>;
 
 template<class T>
 struct HolderSet
 {
 	struct ComparatorStruct
 	{
-		bool operator() (const Holder<T> &a, const Holder<T> &b) const
+		bool operator() (const Holder<T> &a, const Holder<T> &b) const noexcept
 		{
 			return *a < *b;
 		}
 	};
 
-	typedef std::set<Holder<T>, ComparatorStruct> Type;
-	typedef typename Type::iterator Iterator;
+	using Data = std::set<Holder<T>, ComparatorStruct>;
 
-	Iterator find(const string &name) const
+	auto find(const String &name) const
 	{
 		T tmp;
 		tmp.name = name;
 		Holder<T> tmh(&tmp, nullptr);
-		return const_cast<HolderSet*>(this)->data.find(tmh);
+		return data.find(tmh);
 	}
 
-	T *retrieve(const string &name)
+	auto count(const String &name) const
 	{
-		Iterator it = find(name);
+		return find(name) == end() ? 0 : 1;
+	}
+
+	T *retrieve(const String &name)
+	{
+		auto it = find(name);
 		if (it == end())
 			return nullptr;
-		return const_cast<T*>(it->get());
+		return const_cast<T *>(+*it);
 	}
 
 	T *insert(T &&value)
 	{
-		return const_cast<T*>(data.insert(systemMemory().createHolder<T>(std::move(value))).first->get());
+		auto h = systemMemory().createHolder<T>(std::move(value));
+		data.insert(h.share());
+		return +h;
 	}
 
-	Iterator erase(const Iterator &what)
+	auto erase(const typename Data::const_iterator &what)
 	{
 		return data.erase(what);
 	}
 
-	Iterator erase(const string &name)
+	auto erase(const String &name)
 	{
 		return erase(find(name));
 	}
@@ -64,19 +68,29 @@ struct HolderSet
 		data.clear();
 	}
 
-	Iterator begin()
+	auto begin()
 	{
 		return data.begin();
 	}
 
-	Iterator end()
+	auto end()
 	{
 		return data.end();
 	}
 
-	bool exists(const string &name) const
+	auto begin() const
 	{
-		return find(name) != data.end();
+		return data.begin();
+	}
+
+	auto end() const
+	{
+		return data.end();
+	}
+
+	bool exists(const String &name) const
+	{
+		return find(name) != end();
 	}
 
 	uint32 size() const
@@ -84,87 +98,96 @@ struct HolderSet
 		return numeric_cast<uint32>(data.size());
 	}
 
-	void load(File *f)
+	friend Serializer &operator << (Serializer &ser, const HolderSet &s)
 	{
-		CAGE_ASSERT(size() == 0);
-		uint32 s = 0;
-		f->read(bufferView<char>(s));
-		for (uint32 i = 0; i < s; i++)
-		{
-			T tmp;
-			tmp.load(f);
-			insert(std::move(tmp));
-		}
+		ser << s.size();
+		for (const auto &it : s.data)
+			ser << *it;
+		return ser;
 	}
 
-	void save(File *f)
+	friend Deserializer &operator >> (Deserializer &des, HolderSet &s)
 	{
-		uint32 s = size();
-		f->write(bufferView(s));
-		for (auto &it : data)
-			it->save(f);
+		CAGE_ASSERT(s.size() == 0);
+		uint32 cnt = 0;
+		des >> cnt;
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			T tmp;
+			des >> tmp;
+			s.insert(std::move(tmp));
+		}
+		return des;
 	}
 
 private:
-	Type data;
+	Data data;
 };
 
 struct SchemeField
 {
-	string name;
-	string display;
-	string hint;
-	string type;
-	string min;
-	string max;
-	string defaul;
-	string values;
+	String name;
+	String display;
+	String hint;
+	String type;
+	String min;
+	String max;
+	String defaul;
+	String values;
 
 	bool valid() const;
-	bool applyToAssetField(string &val, const string &assetName) const;
-	inline bool operator < (const SchemeField &other) const
+	bool applyToAssetField(String &val, const String &assetName) const;
+
+	bool operator < (const SchemeField &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}
+
+	friend Serializer &operator << (Serializer &ser, const SchemeField &s);
+	friend Deserializer &operator >> (Deserializer &des, SchemeField &s);
 };
 
 struct Scheme
 {
-	string name;
-	string processor;
+	String name;
+	String processor;
 	uint32 schemeIndex;
 	HolderSet<SchemeField> schemeFields;
 
 	void parse(Ini *ini);
-	void load(File *file);
-	void save(File *file);
 	bool applyOnAsset(struct Asset &ass);
-	inline bool operator < (const Scheme &other) const
+
+	bool operator < (const Scheme &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}
+
+	friend Serializer &operator << (Serializer &ser, const Scheme &s);
+	friend Deserializer &operator >> (Deserializer &des, Scheme &s);
 };
 
 struct Asset
 {
-	string name;
-	string aliasName;
-	string scheme;
-	string databank;
+	String name;
+	String aliasName;
+	String scheme;
+	String databank;
 	StringMap fields;
 	StringSet files;
 	StringSet references;
 	bool corrupted = true;
 	bool needNotify = false;
 
-	void load(File *file);
-	void save(File *file) const;
-	string outputPath() const;
-	string aliasPath() const;
-	bool operator < (const Asset &other) const
+	String outputPath() const;
+	String aliasPath() const;
+
+	bool operator < (const Asset &other) const noexcept
 	{
 		return StringComparatorFast()(name, other.name);
 	}
+
+	friend Serializer &operator << (Serializer &ser, const Asset &s);
+	friend Deserializer &operator >> (Deserializer &des, Asset &s);
 };
 
 extern ConfigString configPathInput;
@@ -186,28 +209,10 @@ void configParseCmd(int argc, const char *args[]);
 
 void notifierInitialize(const uint16 port);
 void notifierAccept();
-void notifierNotify(const string &str);
+void notifierNotify(const String &str);
 
 void start();
 void listen();
 bool verdict();
-
-inline void read(File *f, string &s)
-{
-	uint32 l = 0;
-	f->read(bufferView<char>(l));
-	if (l >= string::MaxLength)
-		CAGE_THROW_ERROR(Exception, "string too long");
-	char buffer[string::MaxLength];
-	f->read({ buffer, buffer + l });
-	s = string({ buffer, buffer + l });
-}
-
-inline void write(File *f, const string &s)
-{
-	uint32 l = s.length();
-	f->write(bufferView(l));
-	f->write({ s.c_str(), s.c_str() + l });
-}
 
 #endif // guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_

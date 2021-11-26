@@ -6,7 +6,7 @@
 
 namespace
 {
-	template <uint32 BuffersCount>
+	template<uint32 BuffersCount>
 	class SwapBufferTester
 	{
 	public:
@@ -80,9 +80,10 @@ namespace
 
 		void run(bool repeatedReads, bool repeatedWrites)
 		{
-			CAGE_TESTCASE(stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
+			CAGE_TESTCASE(Stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
-			SwapBufferGuardCreateConfig cfg(BuffersCount);
+			SwapBufferGuardCreateConfig cfg;
+			cfg.buffersCount = BuffersCount;
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
@@ -93,8 +94,8 @@ namespace
 			running = false;
 			t1->wait();
 			t2->wait();
-			CAGE_LOG(SeverityEnum::Info, "swapBufferController", stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
-			CAGE_LOG(SeverityEnum::Info, "swapBufferController", stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
+			CAGE_LOG(SeverityEnum::Info, "swapBufferController", Stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
+			CAGE_LOG(SeverityEnum::Info, "swapBufferController", Stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
 		}
 	};
 }

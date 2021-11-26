@@ -9,7 +9,7 @@ using namespace cage;
 Runner::Runner() : last(applicationTime())
 {
 	const uint32 freq = randomRange(10, 100);
-	CAGE_LOG(SeverityEnum::Info, "runner", stringizer() + "frequency: " + freq + " updates per second");
+	CAGE_LOG(SeverityEnum::Info, "runner", Stringizer() + "frequency: " + freq + " updates per second");
 	period = 1000000 / freq;
 }
 

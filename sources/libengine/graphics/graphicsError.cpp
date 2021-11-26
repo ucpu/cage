@@ -4,6 +4,7 @@
 #include <cage-core/debug.h>
 
 #include <cage-engine/opengl.h>
+#include <cage-engine/uniformBuffer.h>
 #include <cage-engine/window.h>
 #include "private.h"
 
@@ -34,7 +35,7 @@ namespace cage
 		}
 	}
 
-	GraphicsDebugScope::GraphicsDebugScope(const char *name)
+	GraphicsDebugScope::GraphicsDebugScope(StringLiteral name)
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 	}
@@ -54,7 +55,7 @@ namespace cage
 			if (id == 131185 && severity == GL_DEBUG_SEVERITY_NOTIFICATION && type == GL_DEBUG_TYPE_OTHER && source == GL_DEBUG_SOURCE_API)
 				return; // ignore messages like: Buffer detailed info: Buffer object 3 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, GL_ARRAY_BUFFER_ARB, and GL_UNIFORM_BUFFER_EXT, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
 
-			Window *ctx = (Window*)userParam;
+			Window *ctx = (Window *)userParam;
 			CAGE_ASSERT(ctx);
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
@@ -100,9 +101,9 @@ namespace cage
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
 			Holder<LineReader> lrb = newLineReader({ message, message + std::strlen(message) });
-			for (string line; lrb->readLine(line);)
+			for (String line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
-			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
+			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", Stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is being recompiled based on opengl state
@@ -121,18 +122,18 @@ namespace cage
 			vendor = glGetString(GL_VENDOR);
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			CAGE_LOG(SeverityEnum::Info, "systemInfo", stringizer() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
-				CAGE_LOG(SeverityEnum::Info, "systemInfo", stringizer() + "opengl extensions: ");
+				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl extensions: ");
 				GLint num = 0;
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "extension: '" + (char*)ext + "'");
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "extension: '" + (char*)ext + "'");
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -161,6 +162,10 @@ namespace cage
 			}
 
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+			UniformBuffer::alignmentRequirement(); // make sure that the value is retrieved in thread with bound opengl context
+
+			checkGlError();
 		}
 
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
@@ -202,13 +207,6 @@ namespace cage
 			return it->second;
 		}
 
-		uint32 contextTypeIndexInitializer()
-		{
-			ScopeLock lock(assertContext().mutex);
-			static uint32 index = 0;
-			return index++;
-		}
-
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
@@ -232,6 +230,11 @@ namespace cage
 
 	namespace detail
 	{
+		void initializeOpengl()
+		{
+			gladLoadGL();
+		}
+
 		void purgeGlShaderCache()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS

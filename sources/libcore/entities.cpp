@@ -1,10 +1,10 @@
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
-#include <cage-core/macros.h>
 
 #include <robin_hood.h>
 #include <plf_colony.h>
@@ -93,7 +93,7 @@ namespace cage
 
 			void desEnt(EntityImpl *e)
 			{
-				ents.erase(ents.get_iterator_from_pointer(e));
+				ents.erase(ents.get_iterator(e));
 			}
 		};
 
@@ -123,7 +123,7 @@ namespace cage
 
 			void desVal(void *val) override
 			{
-				data.erase(data.get_iterator_from_pointer((Value *)val));
+				data.erase(data.get_iterator((Value *)val));
 			}
 		};
 
@@ -154,7 +154,12 @@ namespace cage
 				return systemMemory().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
 #define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemMemory().createHolder<ValuesImpl<SIZE>>().cast<Values>();
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 16, 32, 64, 128));
+			GCHL_GENERATE(4);
+			GCHL_GENERATE(8);
+			GCHL_GENERATE(16);
+			GCHL_GENERATE(32);
+			GCHL_GENERATE(64);
+			GCHL_GENERATE(128);
 #undef GCHL_GENERATE
 
 			CAGE_THROW_CRITICAL(NotImplemented, "impossible entity component size or alignment");
@@ -222,19 +227,42 @@ namespace cage
 		}
 	}
 
-	EntityComponent *EntityManager::componentByDefinition(uint32 index) const
+	EntityComponent *EntityManager::componentByDefinition(uint32 definitionIndex) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		CAGE_ASSERT(index < impl->components.size());
-		return +impl->components[index];
+		CAGE_ASSERT(definitionIndex < impl->components.size());
+		return +impl->components[definitionIndex];
 	}
 
-	EntityComponent *EntityManager::componentByType(uint32 index) const
+	EntityComponent *EntityManager::componentByType(uint32 typeIndex) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		if (index < impl->componentsByTypes.size())
-			return impl->componentsByTypes[index];
+		if (typeIndex < impl->componentsByTypes.size())
+			return impl->componentsByTypes[typeIndex];
 		return nullptr;
+	}
+
+	Holder<PointerRange<EntityComponent *>> EntityManager::componentsByType(uint32 typeIndex) const
+	{
+		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
+		PointerRangeHolder<EntityComponent *> res;
+		res.reserve(impl->components.size());
+		for (const auto &c : impl->components)
+		{
+			if (c->typeIndex == typeIndex)
+				res.push_back(+c);
+		}
+		return res;
+	}
+
+	Holder<PointerRange<EntityComponent *>> EntityManager::components() const
+	{
+		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
+		PointerRangeHolder<EntityComponent *> res;
+		res.reserve(impl->components.size());
+		for (const auto &c : impl->components)
+			res.push_back(+c);
+		return res;
 	}
 
 	uint32 EntityManager::componentsCount() const
@@ -252,11 +280,11 @@ namespace cage
 		return g;
 	}
 
-	EntityGroup *EntityManager::groupByDefinition(uint32 index) const
+	EntityGroup *EntityManager::groupByDefinition(uint32 definitionIndex) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		CAGE_ASSERT(index < impl->groups.size());
-		return +impl->groups[index];
+		CAGE_ASSERT(definitionIndex < impl->groups.size());
+		return +impl->groups[definitionIndex];
 	}
 
 	uint32 EntityManager::groupsCount() const
@@ -311,7 +339,7 @@ namespace cage
 		}
 		catch (const std::out_of_range &)
 		{
-			CAGE_LOG_THROW(stringizer() + "name: " + entityName);
+			CAGE_LOG_THROW(Stringizer() + "name: " + entityName);
 			CAGE_THROW_ERROR(Exception, "entity not found");
 		}
 	}
@@ -354,6 +382,11 @@ namespace cage
 		ComponentImpl *c = +h;
 		impl->components.push_back(std::move(h));
 		return c;
+	}
+
+	EntityComponent *EntityManager::defineComponent(EntityComponent *source)
+	{
+		return defineComponent_(source->typeIndex(), ((ComponentImpl *)source)->prototype);
 	}
 
 	Holder<EntityManager> newEntityManager()

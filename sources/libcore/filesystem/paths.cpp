@@ -38,7 +38,7 @@ namespace cage
 #endif
 		}
 
-		bool validateCharacters(const string &name, bool allowSlash)
+		bool validateCharacters(const String &name, bool allowSlash)
 		{
 			for (const char c : name)
 				if (!validateCharacter(c, allowSlash))
@@ -46,12 +46,12 @@ namespace cage
 			return true;
 		}
 
-		string normalize(const string &path)
+		String normalize(const String &path)
 		{
 			return replace(path, "\\", "/");
 		}
 
-		string joinDrive(const string &d, const string &p)
+		String joinDrive(const String &d, const String &p)
 		{
 			if (d.empty())
 				return p;
@@ -61,13 +61,13 @@ namespace cage
 			return d + ":" + p;
 		}
 
-		bool simplifyImplNoThrow(string &s)
+		bool simplifyImplNoThrow(String &s)
 		{
 			const bool absolute = !s.empty() && s[0] == '/';
-			std::vector<string> parts;
+			std::vector<String> parts;
 			while (!s.empty())
 			{
-				const string p = split(s, "/");
+				const String p = split(s, "/");
 				if (p == "" || p == ".")
 					continue;
 				if (p == "..")
@@ -83,21 +83,21 @@ namespace cage
 				parts.push_back(p);
 			}
 			CAGE_ASSERT(s.empty());
-			for (const string &p : parts)
+			for (const String &p : parts)
 				s = pathJoinUnchecked(s, p);
 			if (absolute)
-				s = string() + "/" + s;
+				s = String() + "/" + s;
 			return true;
 		}
 
-		bool decomposeImplNoThrow(const string &input, string &drive, string &directory, string &file, string &extension)
+		bool decomposeImplNoThrow(const String &input, String &drive, String &directory, String &file, String &extension)
 		{
 			CAGE_ASSERT(drive.empty());
 			CAGE_ASSERT(directory.empty());
 			CAGE_ASSERT(file.empty());
 			CAGE_ASSERT(extension.empty());
 
-			string s = normalize(input);
+			String s = normalize(input);
 
 			{ // separate drive
 				const uint32 colon = find(s, ":/");
@@ -147,31 +147,31 @@ namespace cage
 		}
 	}
 
-	bool pathIsValid(const string &path)
+	bool pathIsValid(const String &path)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		return decomposeImplNoThrow(path, d, p, f, e);
 	}
 
-	bool pathIsAbs(const string &path)
+	bool pathIsAbs(const String &path)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(path, d, p, f, e);
 		return !p.empty() && p[0] == '/';
 	}
 
-	string pathToRel(const string &path, const string &ref)
+	String pathToRel(const String &path, const String &ref)
 	{
 		if (!pathIsAbs(path))
 			return pathSimplify(path);
-		string r = pathToAbs(ref);
-		string p = pathSimplify(path);
+		String r = pathToAbs(ref);
+		String p = pathSimplify(path);
 		while (!r.empty() || !p.empty())
 		{
-			string r2 = r;
-			string p2 = p;
-			string r1 = split(r, "/");
-			string p1 = split(p, "/");
+			String r2 = r;
+			String p2 = p;
+			String r1 = split(r, "/");
+			String p1 = split(p, "/");
 			if (r1 == p1)
 				continue;
 			r = r2;
@@ -183,14 +183,14 @@ namespace cage
 		while (!r.empty())
 		{
 			split(r, "/");
-			p = string("../") + p;
+			p = String("../") + p;
 		}
 		return pathSimplify(p);
 	}
 
-	string pathToAbs(const string &path)
+	String pathToAbs(const String &path)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(path, d, p, f, e);
 		if (d + p + f + e == "")
 			return pathWorkingDir();
@@ -212,7 +212,7 @@ namespace cage
 			if (d != pathExtractDrive(pathWorkingDir()))
 #endif // CAGE_SYSTEM_WINDOWS
 			{
-				CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+				CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 				CAGE_THROW_ERROR(Exception, "path with protocol cannot be made absolute");
 			}
 		}
@@ -220,33 +220,33 @@ namespace cage
 		return pathJoin(pathWorkingDir(), path);
 	}
 
-	string pathJoin(const string &a, const string &b)
+	String pathJoin(const String &a, const String &b)
 	{
-		string bd, bp, bf, be;
+		String bd, bp, bf, be;
 		pathDecompose(b, bd, bp, bf, be);
 		if (!bd.empty() || (!bp.empty() && bp[0] == '/'))
 		{
-			CAGE_LOG_THROW(stringizer() + "first path: '" + a + "'");
-			CAGE_LOG_THROW(stringizer() + "second path: '" + b + "'");
+			CAGE_LOG_THROW(Stringizer() + "first path: '" + a + "'");
+			CAGE_LOG_THROW(Stringizer() + "second path: '" + b + "'");
 			CAGE_THROW_ERROR(Exception, "cannot join with absolute path");
 		}
 		bp = pathJoinUnchecked(bp, bf + be);
-		string ad, ap, af, ae;
+		String ad, ap, af, ae;
 		pathDecompose(a, ad, ap, af, ae);
 		ap = pathJoinUnchecked(ap, af + ae);
-		string r = pathJoinUnchecked(ap, bp);
+		String r = pathJoinUnchecked(ap, bp);
 		if (!simplifyImplNoThrow(r))
 		{
-			CAGE_LOG_THROW(stringizer() + "first path: '" + a + "'");
-			CAGE_LOG_THROW(stringizer() + "second path: '" + b + "'");
+			CAGE_LOG_THROW(Stringizer() + "first path: '" + a + "'");
+			CAGE_LOG_THROW(Stringizer() + "second path: '" + b + "'");
 			CAGE_THROW_ERROR(Exception, "cannot join paths that would go beyond root");
 		}
 		if (ad.empty() && find(r, ":/") < find(r, '/'))
-			r = string() + "./" + r;
+			r = String() + "./" + r;
 		return joinDrive(ad, r);
 	}
 
-	string pathJoinUnchecked(const string &a, const string &b)
+	String pathJoinUnchecked(const String &a, const String &b)
 	{
 		if (a.empty())
 			return b;
@@ -257,74 +257,74 @@ namespace cage
 		return a + "/" + b;
 	}
 
-	string pathSimplify(const string &path)
+	String pathSimplify(const String &path)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(path, d, p, f, e);
 		return joinDrive(d, pathJoinUnchecked(p, f + e));
 	}
 
-	string pathReplaceInvalidCharacters(const string &path, const string &replacement, bool allowDirectories)
+	String pathReplaceInvalidCharacters(const String &path, const String &replacement, bool allowDirectories)
 	{
 		CAGE_ASSERT(validateCharacters(replacement, false));
-		string res;
+		String res;
 		for (char c : normalize(path))
 		{
 			if (validateCharacter(c, allowDirectories))
-				res += string(c);
+				res += String(c);
 			else
 				res += replacement;
 		}
 		return res;
 	}
 
-	void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension)
+	void pathDecompose(const String &input, String &drive, String &directory, String &file, String &extension)
 	{
 		if (!decomposeImplNoThrow(input, drive, directory, file, extension))
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + input + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + input + "'");
 			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
 	}
 
-	string pathExtractDrive(const string &input)
+	String pathExtractDrive(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return d;
 	}
 
-	string pathExtractDirectory(const string &input)
+	String pathExtractDirectory(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return joinDrive(d, p);
 	}
 
-	string pathExtractDirectoryNoDrive(const string &input)
+	String pathExtractDirectoryNoDrive(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return p;
 	}
 
-	string pathExtractFilename(const string &input)
+	String pathExtractFilename(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return f + e;
 	}
 
-	string pathExtractFilenameNoExtension(const string &input)
+	String pathExtractFilenameNoExtension(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return f;
 	}
 
-	string pathExtractExtension(const string &input)
+	String pathExtractExtension(const String &input)
 	{
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return e;
 	}

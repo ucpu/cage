@@ -3,7 +3,7 @@
 
 namespace
 {
-	void testPathSimple(const string &input, const string &simple, const bool absolute, const bool valid = true)
+	void testPathSimple(const String &input, const String &simple, const bool absolute, const bool valid = true)
 	{
 		CAGE_TESTCASE(input);
 		CAGE_TEST(pathIsValid(input) == valid);
@@ -41,12 +41,12 @@ namespace
 		}
 	}
 
-	void testPathDecompositionCommon(const string &input, const string &drive, const string &path, const string &file, const string &extension, const bool absolute)
+	void testPathDecompositionCommon(const String &input, const String &drive, const String &path, const String &file, const String &extension, const bool absolute)
 	{
 		CAGE_TESTCASE(input);
 		CAGE_TEST(pathIsValid(input)); // sanity check
 		CAGE_TEST(drive.empty() || absolute); // sanity check
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		CAGE_TEST(d == drive);
 		CAGE_TEST(p == path);
@@ -56,23 +56,23 @@ namespace
 		CAGE_TEST(pathIsAbs(path) == absolute); // sanity check
 		CAGE_TEST(pathIsAbs(p) == absolute);
 		CAGE_TEST(pathExtractDrive(input) == drive);
-		CAGE_TEST(pathExtractDirectory(input) == (drive.empty() ? path : string() + drive + ":" + path));
+		CAGE_TEST(pathExtractDirectory(input) == (drive.empty() ? path : String() + drive + ":" + path));
 		CAGE_TEST(pathExtractDirectoryNoDrive(input) == path);
 		CAGE_TEST(pathExtractFilename(input) == file + extension);
 		CAGE_TEST(pathExtractFilenameNoExtension(input) == file);
 		CAGE_TEST(pathExtractExtension(input) == extension);
 	}
 
-	void testPathDecomposition(const string &input, const string &drive, const string &path, const string &file, const string &extension, const bool absolute)
+	void testPathDecomposition(const String &input, const String &drive, const String &path, const String &file, const String &extension, const bool absolute)
 	{
 		testPathDecompositionCommon(input, drive, path, file, extension, absolute);
 
-		string d, p, f, e;
+		String d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		CAGE_TEST(pathSimplify(p) == p);
-		const string simple = pathSimplify(input);
+		const String simple = pathSimplify(input);
 		{
-			const string s = string() + (drive.empty() ? "" : drive + ":") + pathJoin(path, file + extension);
+			const String s = String() + (drive.empty() ? "" : drive + ":") + pathJoin(path, file + extension);
 			CAGE_TEST(s == simple);
 		}
 		if (absolute)
@@ -98,7 +98,7 @@ void testPaths()
 		//   but the functions cannot possibly know where is the path going to be used
 		CAGE_TESTCASE("pathReplaceInvalidCharacters");
 		constexpr const char *input = "dir/abc'\"^°`_-:?!%;#~(){}[]<>def\7ghi.bin";
-		const string replaced = pathReplaceInvalidCharacters(input);
+		const String replaced = pathReplaceInvalidCharacters(input);
 #ifdef CAGE_SYSTEM_WINDOWS
 		CAGE_TEST(replaced == "dir_abc'_^__`_-__!%;#~(){}[]__def_ghi.bin");
 #else
@@ -346,7 +346,7 @@ void testPaths()
 		CAGE_TEST(pathToAbs("lol:/abc") == "lol:/abc");
 		CAGE_TEST(pathToAbs("abc") == pathJoin(pathWorkingDir(), "abc"));
 		{
-			const string root = [&]() -> string
+			const String root = [&]() -> String
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				return pathExtractDrive(pathWorkingDir()) + ":/";

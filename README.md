@@ -1,4 +1,4 @@
-Cage is game engine/framework designed for programmers with focus on strategy games.
+Cage is game engine/framework designed for programmers with focus on dynamic games and procedural content generation.
 
 It started as a hobby/learning project, but has become fairly feature rich and mature over the years.
 
@@ -14,15 +14,15 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 
 - Cage is programming framework that creates a consistent basis for engine, tools and game development.
 - It encourages readable, maintainable and safe code while also allowing for quick prototyping.
-- Performance optimizations are generally added as needed only, usually hidden from the application.
+- Performance optimizations are added as necessary, preferably without changing api.
 
 ## Portable
 
 - Cage runs on Windows and Linux.
 - It is mostly self-contained.
   - Most dependencies are accessed as git submodules and compiled in.
-  - There are just few packages required on linux.
-- The Core library has no dependencies on graphics or sound and is suitable to run on headless servers.
+  - There are just few packages required on linux, none on windows.
+- The Core library has no dependencies on graphics or sound and is suitable for running on headless servers.
 
 ## Friendly licensing
 
@@ -58,46 +58,48 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Framework stuff (strings, logging, configuration, events)
 - Operating system abstraction (memory, filesystems, threading, networks)
 - GLSL-like math and geometry primitives
-- Image, polygonal meshes and sounds en/decoding and manipulation
-- Entity / components systems
+- Image, triangle meshes and sounds en/decoding and algorithms
+- Entity + components framework
 - Assets management
 - Extensive tests
 
 ## Engine library
 
-### Low-level API
-
+- Provides low-level/generic engine functionality
+- Scene description with entities
 - Window and input management
+- Gameloop and timing
 - Objective layer on top of OpenGL
   - Long term plan is to switch to Vulkan only
 - Sound processing
 - Gui
-
-### High-level API
-
-- Game scene provided with entities
-- Pipeline-like processing using multiple threads
-  - *50 000 objects* at 30 fps (cpu-bound)
-  - All objects goes through automatic instancing
-- Rich graphics effects:
+- Graphics effects:
   - hdr, bloom, tonemapping, gamma correction
   - depth of field
   - motion blur (per object)
   - ssao
   - fxaa
+
+## Simple library
+
+- Provides simpler interface for typical games
 - Roughness/metallic workflow
+- Pipeline-like processing using multiple threads
+  - *50 000 objects* at 30 fps (cpu-bound)
+  - All objects goes through automatic instancing
 - Automatic shadowmaps
-- Stereoscopic rendering
 
 ## Tools
 
-- Asset processor - converts assets from wide variety of interchange formats to Cage specific formats
-- Asset database - manages asset configuration and automatic processing
 - Asset analyze - generates initial asset configuration for most files
-- Image resize - simple batch resizing of images
-- Image convert - simple batch image format conversion
+- Asset database - manages asset configuration and automatic processing
+- Asset processor - converts assets from wide variety of interchange formats to Cage specific formats
+- Image convert - batch format conversion for images
 - Image channels - split or join multiple channels to/from single image
-- Image atlas - slices a single image atlas grid into a sequence of individual images
+- Image info - print information about an image
+- Image resize - batch resizing of images
+- Image untile - slices a single image with tiled sections into a sequence of individual images
+- Mesh info - print information about a mesh
 
 # Building
 

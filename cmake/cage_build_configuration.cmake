@@ -64,6 +64,9 @@ macro(cage_build_configuration)
 		# disable warnings about attributes
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+
+		# no warnings about changes in ABI
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-abi")
 	endif()
 endmacro(cage_build_configuration)
 

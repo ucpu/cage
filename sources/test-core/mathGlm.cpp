@@ -7,33 +7,33 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-void test(real a, real b);
-void test(rads a, rads b);
-void test(const quat &a, const quat &b);
-void test(const vec3 &a, const vec3 &b);
-void test(const vec4 &a, const vec4 &b);
-void test(const mat3 &a, const mat3 &b);
-void test(const mat4 &a, const mat4 &b);
+void test(Real a, Real b);
+void test(Rads a, Rads b);
+void test(const Quat &a, const Quat &b);
+void test(const Vec3 &a, const Vec3 &b);
+void test(const Vec4 &a, const Vec4 &b);
+void test(const Mat3 &a, const Mat3 &b);
+void test(const Mat4 &a, const Mat4 &b);
 
 namespace
 {
-	const glm::vec3 c2g(const vec3 v)
+	const glm::vec3 c2g(const Vec3 v)
 	{
 		return glm::vec3(v.data[0].value, v.data[1].value, v.data[2].value);
 	}
-	const vec3 g2c(const glm::vec3 v)
+	const Vec3 g2c(const glm::vec3 v)
 	{
-		return vec3(v.x, v.y, v.z);
+		return Vec3(v.x, v.y, v.z);
 	}
-	const glm::quat c2g(const quat v)
+	const glm::quat c2g(const Quat v)
 	{
 		return glm::quat(v.data[3].value, v.data[0].value, v.data[1].value, v.data[2].value);
 	}
-	const quat g2c(const glm::quat v)
+	const Quat g2c(const glm::quat v)
 	{
-		return quat(v.x, v.y, v.z, v.w);
+		return Quat(v.x, v.y, v.z, v.w);
 	}
-	const glm::mat3 c2g(const mat3 &v)
+	const glm::mat3 c2g(const Mat3 &v)
 	{
 		return glm::mat3(
 			v[0].value, v[1].value, v[2].value,
@@ -41,15 +41,15 @@ namespace
 			v[6].value, v[7].value, v[8].value
 		);
 	}
-	const mat3 g2c(const glm::mat3 &v)
+	const Mat3 g2c(const glm::mat3 &v)
 	{
-		mat3 r;
+		Mat3 r;
 		for (int y = 0; y < 3; y++)
 			for (int x = 0; x < 3; x++)
 				r[y * 3 + x] = v[y][x];
 		return r;
 	}
-	const glm::mat4 c2g(const mat4 &v)
+	const glm::mat4 c2g(const Mat4 &v)
 	{
 		return glm::mat4(
 			v[0].value, v[1].value, v[2].value, v[3].value,
@@ -58,9 +58,9 @@ namespace
 			v[12].value, v[13].value, v[14].value, v[15].value
 		);
 	}
-	const mat4 g2c(const glm::mat4 &v)
+	const Mat4 g2c(const glm::mat4 &v)
 	{
-		mat4 r;
+		Mat4 r;
 		for (int y = 0; y < 4; y++)
 			for (int x = 0; x < 4; x++)
 				r[y * 4 + x] = v[y][x];
@@ -75,7 +75,7 @@ void testMathGlm()
 		CAGE_TESTCASE("matrix glm casts");
 		for (uint32 round = 0; round < 10; round++)
 		{
-			mat3 m;
+			Mat3 m;
 			for (uint32 i = 0; i < 9; i++)
 				m[i] = randomChance();
 			glm::mat3 mg = c2g(m);
@@ -84,7 +84,7 @@ void testMathGlm()
 		}
 		for (uint32 round = 0; round < 10; round++)
 		{
-			mat4 m;
+			Mat4 m;
 			for (uint32 i = 0; i < 16; i++)
 				m[i] = randomChance();
 			glm::mat4 mg = c2g(m);
@@ -94,16 +94,16 @@ void testMathGlm()
 	}
 	{
 		CAGE_TESTCASE("trigonometric functions");
-		for (rads a = degs(0); a < rads(degs(360)); a += degs(1))
+		for (Rads a = Degs(0); a < Rads(Degs(360)); a += Degs(1))
 		{
-			test(sin(a), glm::sin(real(a).value));
-			test(cos(a), glm::cos(real(a).value));
+			test(sin(a), glm::sin(Real(a).value));
+			test(cos(a), glm::cos(Real(a).value));
 		}
-		for (real x = -10; x < 10; x += 0.1)
+		for (Real x = -10; x < 10; x += 0.1)
 		{
-			for (real y = -10; y < 10; y += 0.1)
+			for (Real y = -10; y < 10; y += 0.1)
 				if (x != 0 || y != 0)
-					test(atan2(x, y), rads(glm::atan(y.value, x.value)));
+					test(atan2(x, y), Rads(glm::atan(y.value, x.value)));
 		}
 	}
 	{
@@ -112,10 +112,10 @@ void testMathGlm()
 			CAGE_TESTCASE("from angle axis");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads a = randomAngle();
-				vec3 v = randomDirection3();
-				quat q = quat(v, a);
-				glm::quat g = glm::angleAxis(real(a).value, c2g(v));
+				Rads a = randomAngle();
+				Vec3 v = randomDirection3();
+				Quat q = Quat(v, a);
+				glm::quat g = glm::angleAxis(Real(a).value, c2g(v));
 				test(q, g2c(g));
 			}
 		}
@@ -123,11 +123,11 @@ void testMathGlm()
 			CAGE_TESTCASE("from euler");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads pitch = randomAngle();
-				rads yaw = randomAngle();
-				rads roll = randomAngle();
-				quat q = quat(pitch, yaw, roll);
-				glm::quat g = glm::quat(c2g(vec3(real(pitch), real(yaw), real(roll))));
+				Rads pitch = randomAngle();
+				Rads yaw = randomAngle();
+				Rads roll = randomAngle();
+				Quat q = Quat(pitch, yaw, roll);
+				glm::quat g = glm::quat(c2g(Vec3(Real(pitch), Real(yaw), Real(roll))));
 				test(q, g2c(g));
 			}
 		}
@@ -135,11 +135,11 @@ void testMathGlm()
 			CAGE_TESTCASE("multiplication");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				quat q;
+				Quat q;
 				glm::quat g = { 1, 0, 0, 0 };
 				for (int i = 0; i < 10; i++)
 				{
-					quat q2 = randomDirectionQuat();
+					Quat q2 = randomDirectionQuat();
 					glm::quat g2 = c2g(q2);
 					q = normalize(q * q2);
 					g = normalize(g * g2);
@@ -151,8 +151,8 @@ void testMathGlm()
 			CAGE_TESTCASE("rotating vector");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				quat q = randomDirectionQuat();
-				vec3 v = randomDirection3() * randomRange(real(0), 100);
+				Quat q = randomDirectionQuat();
+				Vec3 v = randomDirection3() * randomRange(Real(0), 100);
 				test(q * v, g2c(c2g(q) * c2g(v)));
 			}
 		}
@@ -160,9 +160,9 @@ void testMathGlm()
 			CAGE_TESTCASE("slerp");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				quat q1 = randomDirectionQuat();
-				quat q2 = randomDirectionQuat();
-				real f = randomChance();
+				Quat q1 = randomDirectionQuat();
+				Quat q2 = randomDirectionQuat();
+				Real f = randomChance();
 				test(slerp(q1, q2, f), g2c(glm::slerp(c2g(q1), c2g(q2), f.value)));
 			}
 		}
@@ -170,8 +170,8 @@ void testMathGlm()
 			CAGE_TESTCASE("dot");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				quat q1 = randomDirectionQuat();
-				quat q2 = randomDirectionQuat();
+				Quat q1 = randomDirectionQuat();
+				Quat q2 = randomDirectionQuat();
 				test(dot(q1, q2), glm::dot(c2g(q1), c2g(q2)));
 			}
 		}
@@ -179,12 +179,12 @@ void testMathGlm()
 			CAGE_TESTCASE("matrix casts");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				quat q = randomDirectionQuat();
+				Quat q = randomDirectionQuat();
 				glm::quat g = c2g(q);
-				mat3 qm = mat3(q);
+				Mat3 qm = Mat3(q);
 				glm::mat3 gm = mat3_cast(g);
 				test(qm, g2c(gm));
-				test(q, quat(mat3(q)));
+				test(q, Quat(Mat3(q)));
 			}
 		}
 	}
@@ -194,11 +194,11 @@ void testMathGlm()
 			CAGE_TESTCASE("multiplication");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat3 q;
+				Mat3 q;
 				glm::mat3 g = {1,0,0,0,1,0,0,0,1};
 				for (int i = 0; i < 10; i++)
 				{
-					mat3 q2;
+					Mat3 q2;
 					for (uint32 i = 0; i < 9; i++)
 						q2[i] = randomChance();
 					glm::mat3 g2 = c2g(q2);
@@ -209,11 +209,11 @@ void testMathGlm()
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat4 q;
+				Mat4 q;
 				glm::mat4 g = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
 				for (int i = 0; i < 10; i++)
 				{
-					mat4 q2;
+					Mat4 q2;
 					for (uint32 i = 0; i < 16; i++)
 						q2[i] = randomChance();
 					glm::mat4 g2 = c2g(q2);
@@ -227,37 +227,37 @@ void testMathGlm()
 			CAGE_TESTCASE("determinant");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat3 m;
+				Mat3 m;
 				for (uint32 i = 0; i < 9; i++)
 					m[i] = randomChance();
-				real mi = determinant(m);
+				Real mi = determinant(m);
 				float gi = determinant(c2g(m));
-				test(mi, real(gi));
+				test(mi, Real(gi));
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat4 m;
+				Mat4 m;
 				for (uint32 i = 0; i < 16; i++)
 					m[i] = randomChance();
-				real mi = determinant(m);
+				Real mi = determinant(m);
 				float gi = determinant(c2g(m));
-				test(mi, real(gi));
+				test(mi, Real(gi));
 			}
 		}
 		{
 			CAGE_TESTCASE("inverse");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat3 m = mat3(randomDirectionQuat());
-				mat3 mi = inverse(m);
-				mat3 gi = g2c(inverse(c2g(m)));
+				Mat3 m = Mat3(randomDirectionQuat());
+				Mat3 mi = inverse(m);
+				Mat3 gi = g2c(inverse(c2g(m)));
 				test(mi, gi);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat4 m = mat4(randomChance3() * 2 - 1, randomDirectionQuat(), randomChance3() + 0.5);
-				mat4 mi = inverse(m);
-				mat4 gi = g2c(inverse(c2g(m)));
+				Mat4 m = Mat4(randomChance3() * 2 - 1, randomDirectionQuat(), randomChance3() + 0.5);
+				Mat4 mi = inverse(m);
+				Mat4 gi = g2c(inverse(c2g(m)));
 				test(mi, gi);
 			}
 		}
@@ -265,13 +265,13 @@ void testMathGlm()
 			CAGE_TESTCASE("look at");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 eye = randomDirection3() * randomRange(real(1), 100);
-				vec3 dir = randomDirection3();
-				vec3 up = randomDirection3();
+				Vec3 eye = randomDirection3() * randomRange(Real(1), 100);
+				Vec3 dir = randomDirection3();
+				Vec3 up = randomDirection3();
 				while (abs(dot(dir, up)) > 0.999)
 					up = randomDirection3(); // testing for correctness here, not for edge cases
-				mat4 c = lookAt(eye, eye + dir, up);
-				mat4 g = g2c(glm::lookAt(c2g(eye), c2g(eye + dir), c2g(up)));
+				Mat4 c = lookAt(eye, eye + dir, up);
+				Mat4 g = g2c(glm::lookAt(c2g(eye), c2g(eye + dir), c2g(up)));
 				test(c, g);
 			}
 		}
@@ -279,36 +279,36 @@ void testMathGlm()
 			CAGE_TESTCASE("projections");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				real l = -randomRange(real(1), 100);
-				real r = randomRange(real(1), 100);
-				real b = -randomRange(real(1), 100);
-				real t = randomRange(real(1), 100);
-				real n = randomRange(real(1), 100);
-				real f = n + randomRange(real(1), 100);
-				mat4 c = perspectiveProjection(l, r, b, t, n, f);
-				mat4 g = g2c(glm::frustum(l.value, r.value, b.value, t.value, n.value, f.value));
+				Real l = -randomRange(Real(1), 100);
+				Real r = randomRange(Real(1), 100);
+				Real b = -randomRange(Real(1), 100);
+				Real t = randomRange(Real(1), 100);
+				Real n = randomRange(Real(1), 100);
+				Real f = n + randomRange(Real(1), 100);
+				Mat4 c = perspectiveProjection(l, r, b, t, n, f);
+				Mat4 g = g2c(glm::frustum(l.value, r.value, b.value, t.value, n.value, f.value));
 				test(c, g);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads fov = randomRange(degs(20), degs(120));
-				real aspect = randomChance() * 2 + 0.1;
-				real n = randomRange(real(1), 100);
-				real f = n + randomRange(real(1), 100);
-				mat4 c = perspectiveProjection(fov, aspect, n, f);
-				mat4 g = g2c(glm::perspective(real(fov).value, aspect.value, n.value, f.value));
+				Rads fov = randomRange(Degs(20), Degs(120));
+				Real aspect = randomChance() * 2 + 0.1;
+				Real n = randomRange(Real(1), 100);
+				Real f = n + randomRange(Real(1), 100);
+				Mat4 c = perspectiveProjection(fov, aspect, n, f);
+				Mat4 g = g2c(glm::perspective(Real(fov).value, aspect.value, n.value, f.value));
 				test(c, g);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				real l = -randomRange(real(1), 100);
-				real r = randomRange(real(1), 100);
-				real b = -randomRange(real(1), 100);
-				real t = randomRange(real(1), 100);
-				real n = randomRange(real(1), 100);
-				real f = n + randomRange(real(1), 100);
-				mat4 c = orthographicProjection(l, r, b, t, n, f);
-				mat4 g = g2c(glm::ortho(l.value, r.value, b.value, t.value, n.value, f.value));
+				Real l = -randomRange(Real(1), 100);
+				Real r = randomRange(Real(1), 100);
+				Real b = -randomRange(Real(1), 100);
+				Real t = randomRange(Real(1), 100);
+				Real n = randomRange(Real(1), 100);
+				Real f = n + randomRange(Real(1), 100);
+				Mat4 c = orthographicProjection(l, r, b, t, n, f);
+				Mat4 g = g2c(glm::ortho(l.value, r.value, b.value, t.value, n.value, f.value));
 				test(c, g);
 			}
 		}
@@ -316,10 +316,10 @@ void testMathGlm()
 			CAGE_TESTCASE("matrix rotation");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads rot = randomAngle();
-				mat4 m1 = mat4(quat(rot, degs(), degs()));
-				glm::mat4 m2 = c2g(mat4());
-				m2 = glm::rotate(m2, real(rot).value, glm::vec3(1,0,0));
+				Rads rot = randomAngle();
+				Mat4 m1 = Mat4(Quat(rot, Degs(), Degs()));
+				glm::mat4 m2 = c2g(Mat4());
+				m2 = glm::rotate(m2, Real(rot).value, glm::vec3(1,0,0));
 				test(m1, g2c(m2));
 			}
 		}
@@ -327,16 +327,16 @@ void testMathGlm()
 			CAGE_TESTCASE("compose matrix");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 position = randomRange3(-50, 50);
-				rads rot = randomAngle();
-				vec3 scale = randomRange3(0.1, 10);
-				mat4 c = mat4(position, quat(rot, degs(), degs()), scale);
-				glm::mat4 m = c2g(mat4());
+				Vec3 position = randomRange3(-50, 50);
+				Rads rot = randomAngle();
+				Vec3 scale = randomRange3(0.1, 10);
+				Mat4 c = Mat4(position, Quat(rot, Degs(), Degs()), scale);
+				glm::mat4 m = c2g(Mat4());
 				m = glm::translate(m, c2g(position));
 				if (round % 2)
-					m = glm::rotate(m, real(rot).value, glm::vec3(1, 0, 0));
+					m = glm::rotate(m, Real(rot).value, glm::vec3(1, 0, 0));
 				else
-					m = m * c2g(mat4(quat(rot, degs(), degs())));
+					m = m * c2g(Mat4(Quat(rot, Degs(), Degs())));
 				m = glm::scale(m, c2g(scale));
 				test(c, g2c(m));
 			}

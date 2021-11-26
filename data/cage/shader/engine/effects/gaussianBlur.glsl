@@ -20,10 +20,11 @@ void main()
 {
 	vec2 texelSize = 1.0 / textureSize(texInput, uniLodLevel).xy;
 	vec2 center = gl_FragCoord.xy;
-	outOutput = textureLod(texInput, center * texelSize, uniLodLevel) * weights[0];
+	vec4 val = textureLod(texInput, center * texelSize, uniLodLevel) * weights[0];
 	for(int i = 1; i < 3; i++)
 	{
-		outOutput += textureLod(texInput, (center - uniDirection * offsets[i]) * texelSize, uniLodLevel) * weights[i];
-		outOutput += textureLod(texInput, (center + uniDirection * offsets[i]) * texelSize, uniLodLevel) * weights[i];
+		val += textureLod(texInput, (center - uniDirection * offsets[i]) * texelSize, uniLodLevel) * weights[i];
+		val += textureLod(texInput, (center + uniDirection * offsets[i]) * texelSize, uniLodLevel) * weights[i];
 	}
+	outOutput = val;
 }

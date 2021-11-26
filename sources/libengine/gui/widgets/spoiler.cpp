@@ -7,9 +7,9 @@ namespace cage
 		struct SpoilerImpl : public WidgetItem
 		{
 			GuiSpoilerComponent &data;
-			bool collapsed;
+			bool collapsed = false;
 
-			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler)), collapsed(false)
+			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler))
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -18,23 +18,23 @@ namespace cage
 			{
 				collapsed = data.collapsed;
 				if (collapsed)
-					hierarchy->detachChildren();
+					hierarchy->children.clear();
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.spoiler.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.spoiler.textFormat);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				if (hierarchy->firstChild)
+				if (!hierarchy->children.empty())
 				{
-					hierarchy->firstChild->findRequestedSize();
-					hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
+					hierarchy->children[0]->findRequestedSize();
+					hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				}
 				else
-					hierarchy->requestedSize = vec2();
+					hierarchy->requestedSize = Vec2();
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
 				hierarchy->requestedSize[1] += skin->defaults.spoiler.captionHeight;
-				vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : vec2();
+				Vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : Vec2();
 				offsetSize(cs, skin->defaults.spoiler.captionPadding);
 				hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0] + skin->defaults.spoiler.captionHeight);
 				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
@@ -43,27 +43,27 @@ namespace cage
 
 			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				if (!hierarchy->firstChild)
+				if (hierarchy->children.empty())
 					return;
 				FinalPosition u(update);
 				u.renderPos[1] += skin->defaults.spoiler.captionHeight;
 				u.renderSize[1] -= skin->defaults.spoiler.captionHeight;
 				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
 				offset(u.renderPos, u.renderSize, -skin->defaults.spoiler.baseMargin - skin->defaults.spoiler.contentPadding);
-				hierarchy->firstChild->findFinalPosition(u);
+				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
-				vec2 p = hierarchy->renderPos;
-				vec2 s = hierarchy->renderSize;
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.spoiler.baseMargin);
 				emitElement(GuiElementTypeEnum::SpoilerBase, mode(false), p, s);
-				s = vec2(s[0], skin->defaults.spoiler.captionHeight);
+				s = Vec2(s[0], skin->defaults.spoiler.captionHeight);
 				emitElement(GuiElementTypeEnum::SpoilerCaption, mode(p, s), p, s);
 				offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::SpoilerCaption].border - skin->defaults.spoiler.captionPadding);
-				vec2 is = vec2(s[1], s[1]);
-				vec2 ip = vec2(p[0] + s[0] - is[0], p[1]);
+				Vec2 is = Vec2(s[1], s[1]);
+				Vec2 ip = Vec2(p[0] + s[0] - is[0], p[1]);
 				emitElement(collapsed ? GuiElementTypeEnum::SpoilerIconCollapsed : GuiElementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
 				if (hierarchy->text)
 				{
@@ -76,38 +76,31 @@ namespace cage
 
 			void collapse(HierarchyItem *item)
 			{
-				SpoilerImpl *b = dynamic_cast<SpoilerImpl*>(item->item);
-				if (!b)
-					return;
-				b->data.collapsed = true;
+				if (SpoilerImpl *b = dynamic_cast<SpoilerImpl *>(+item->item))
+					b->data.collapsed = true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				hierarchy->impl->focusName = 0;
 				if (buttons != MouseButtonsFlags::Left)
 					return true;
 				if (modifiers != ModifiersFlags::None)
 					return true;
-				vec2 p = hierarchy->renderPos;
-				vec2 s = vec2(hierarchy->renderSize[0], skin->defaults.spoiler.captionHeight);
-				offset(p, s, -skin->defaults.spoiler.baseMargin * vec4(1, 1, 1, 0));
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = Vec2(hierarchy->renderSize[0], skin->defaults.spoiler.captionHeight);
+				offset(p, s, -skin->defaults.spoiler.baseMargin * Vec4(1, 1, 1, 0));
 				if (pointInside(p, s, point))
 				{
 					data.collapsed = !data.collapsed;
 					if (data.collapsesSiblings)
 					{
-						HierarchyItem *i = hierarchy->prevSibling;
-						while (i)
+						HierarchyItem *parent = hierarchy->impl->root->findParentOf(hierarchy);
+						for (const auto &it : parent->children)
 						{
-							collapse(i);
-							i = i->prevSibling;
-						}
-						i = hierarchy->nextSibling;
-						while (i)
-						{
-							collapse(i);
-							i = i->nextSibling;
+							if (+it == hierarchy)
+								continue;
+							collapse(+it);
 						}
 					}
 				}
@@ -119,6 +112,6 @@ namespace cage
 	void SpoilerCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<SpoilerImpl>(item);
+		item->item = item->impl->memory->createHolder<SpoilerImpl>(item).cast<BaseItem>();
 	}
 }

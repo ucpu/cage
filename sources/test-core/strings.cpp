@@ -7,7 +7,7 @@
 #include <cmath> // std::abs
 #include <map>
 
-void test(real a, real b);
+void test(Real a, Real b);
 
 namespace
 {
@@ -35,68 +35,68 @@ namespace
 
 	void testStringLiterals()
 	{
-		CAGE_TESTCASE("string literals");
+		CAGE_TESTCASE("String literals");
 		constexpr StringLiteral one = pickName(1);
-		CAGE_TEST(string(one) == "one");
+		CAGE_TEST(String(one) == "one");
 	}
 
 	void testConstructors()
 	{
 		CAGE_TESTCASE("constructors and operator +");
-		CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
+		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
 		bool b = true;
-		CAGE_TEST(string(stringizer() + b) == "true");
+		CAGE_TEST(String(Stringizer() + b) == "true");
 		b = false;
-		CAGE_TEST(string(stringizer() + b) == "false");
+		CAGE_TEST(String(Stringizer() + b) == "false");
 		int i1 = -123;
-		CAGE_TEST(string(stringizer() + i1) == "-123");
+		CAGE_TEST(String(Stringizer() + i1) == "-123");
 		unsigned int i2 = 123;
-		CAGE_TEST(string(stringizer() + i2) == "123");
+		CAGE_TEST(String(Stringizer() + i2) == "123");
 		sint8 i3 = 123;
-		CAGE_TEST(string(stringizer() + i3) == "123");
+		CAGE_TEST(String(Stringizer() + i3) == "123");
 		sint16 i4 = 123;
-		CAGE_TEST(string(stringizer() + i4) == "123");
+		CAGE_TEST(String(Stringizer() + i4) == "123");
 		sint32 i5 = 123;
-		CAGE_TEST(string(stringizer() + i5) == "123");
+		CAGE_TEST(String(Stringizer() + i5) == "123");
 		sint64 i6 = 123;
-		CAGE_TEST(string(stringizer() + i6) == "123");
+		CAGE_TEST(String(Stringizer() + i6) == "123");
 		uint8 i7 = 123;
-		CAGE_TEST(string(stringizer() + i7) == "123");
+		CAGE_TEST(String(Stringizer() + i7) == "123");
 		uint16 i8 = 123;
-		CAGE_TEST(string(stringizer() + i8) == "123");
+		CAGE_TEST(String(Stringizer() + i8) == "123");
 		uint32 i9 = 123;
-		CAGE_TEST(string(stringizer() + i9) == "123");
+		CAGE_TEST(String(Stringizer() + i9) == "123");
 		uint64 i10 = 123;
-		CAGE_TEST(string(stringizer() + i10) == "123");
+		CAGE_TEST(String(Stringizer() + i10) == "123");
 		{
 			float f = 5;
-			string fs = stringizer() + f;
+			String fs = Stringizer() + f;
 			CAGE_TEST(fs == "5" || fs == "5.000000");
 			double d = 5;
-			string ds = stringizer() + d;
+			String ds = Stringizer() + d;
 			CAGE_TEST(ds == "5" || ds == "5.000000");
 		}
 		{
 			float f = 5.5;
-			string fs = stringizer() + f;
+			String fs = Stringizer() + f;
 			CAGE_TEST(fs == "5.5" || fs == "5.500000");
 			double d = 5.5;
-			string ds = stringizer() + d;
+			String ds = Stringizer() + d;
 			CAGE_TEST(ds == "5.5" || ds == "5.500000");
 		}
 		{
 			CAGE_TESTCASE("array");
 			const char arr[] = "array";
-			CAGE_TEST(string(arr) == "array");
+			CAGE_TEST(String(arr) == "array");
 			char arr2[] = "array";
-			CAGE_TEST(string(arr2) == "array");
+			CAGE_TEST(String(arr2) == "array");
 		}
 		{
 			CAGE_TESTCASE("different baseString<N>");
 			detail::StringBase<128> a = "ahoj";
-			string b = "nazdar";
+			String b = "nazdar";
 			detail::StringBase<1024> c = "cau";
-			string d = a + b + c;
+			String d = a + b + c;
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
 	}
@@ -105,30 +105,30 @@ namespace
 	{
 		{
 			CAGE_TESTCASE("comparisons == and != and length");
-			CAGE_TEST(string("") == string(""));
-			string a = "ahoj";
+			CAGE_TEST(String("") == String(""));
+			String a = "ahoj";
 			CAGE_TEST(a == "ahoj");
-			string b = "nazdar";
+			String b = "nazdar";
 			CAGE_TEST(b == "nazdar");
 			CAGE_TEST(a != b);
 			CAGE_TEST(a.length() == 4);
 			CAGE_TEST(b.length() == 6);
-			string c = a + b;
+			String c = a + b;
 			CAGE_TEST(c.length() == 10);
 			CAGE_TEST(c == "ahojnazdar");
 		}
 		{
 			CAGE_TESTCASE("comparisons < and <= and > and >=");
-			CAGE_TEST(string("") < string("bbb"));
-			CAGE_TEST(string("cedr") > string("bedr"));
-			CAGE_TEST(string("cedr") > string("ceda"));
-			CAGE_TEST(string("cedr") < string("dedr"));
-			CAGE_TEST(string("cedr") < string("cedz"));
-			CAGE_TEST(string("cedr") <= string("cedr"));
-			CAGE_TEST(string("cedr") >= string("cedr"));
-			CAGE_TEST(!(string("cedr") >= string("kapr")));
-			CAGE_TEST(string("romeo") > string("rom"));
-			CAGE_TEST(string("rom") < string("romeo"));
+			CAGE_TEST(String("") < String("bbb"));
+			CAGE_TEST(String("cedr") > String("bedr"));
+			CAGE_TEST(String("cedr") > String("ceda"));
+			CAGE_TEST(String("cedr") < String("dedr"));
+			CAGE_TEST(String("cedr") < String("cedz"));
+			CAGE_TEST(String("cedr") <= String("cedr"));
+			CAGE_TEST(String("cedr") >= String("cedr"));
+			CAGE_TEST(!(String("cedr") >= String("kapr")));
+			CAGE_TEST(String("romeo") > String("rom"));
+			CAGE_TEST(String("rom") < String("romeo"));
 		}
 	}
 
@@ -142,22 +142,22 @@ namespace
 		}
 		{
 			PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
-			const string s = string(r);
+			const String s = String(r);
 			CAGE_TEST(s.size() == 5);
 			CAGE_TEST(s[0] == 'k');
 		}
 		{
-			string s = "kokos";
+			String s = "kokos";
 			CAGE_TEST(s.size() == 5);
 			CAGE_TEST(s[0] == 'k');
 		}
 		{
-			string s = string("kokos");
+			String s = String("kokos");
 			CAGE_TEST(s.size() == 5);
 			CAGE_TEST(s[0] == 'k');
 		}
 		{
-			const string str = "lorem ipsum";
+			const String str = "lorem ipsum";
 			PointerRange<const char> rs = str;
 			CAGE_TEST(rs.size() == str.size());
 			CAGE_TEST(rs.begin() == str.begin());
@@ -168,18 +168,27 @@ namespace
 	{
 		{
 			CAGE_TESTCASE("operator []");
-			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			const String a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			CAGE_TEST(a[0] == 'r');
 			CAGE_TEST(a[6] == ':');
 			CAGE_TEST(a[a.length() - 1] == 'n');
 		}
 		{
 			CAGE_TESTCASE("c_str");
-			CAGE_TEST(string().c_str() != nullptr);
-			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			CAGE_TEST(String().c_str() != nullptr);
+			const String a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			const char *tmp = a.c_str();
 			for (uint32 i = 0; i < a.length(); i++)
 				CAGE_TEST(a[i] == tmp[i]);
+		}
+		{
+			CAGE_TESTCASE("string containing zero");
+			String s = "abcdef";
+			s[2] = 0;
+			CAGE_TEST(s.length() == 6); // String contains literal zero
+			s[2] = 'c';
+			s.rawData()[6] = 't';
+			CAGE_TEST(s.length() == 6); // String is missing terminal zero
 		}
 	}
 
@@ -187,48 +196,48 @@ namespace
 	{
 		{
 			CAGE_TESTCASE("reverse");
-			CAGE_TEST(reverse(string()) == "");
-			CAGE_TEST(reverse(string("ahoj")) == "joha");
-			CAGE_TEST(reverse(string("nazdar")) == "radzan");
-			CAGE_TEST(reverse(string("omega")) == "agemo");
+			CAGE_TEST(reverse(String()) == "");
+			CAGE_TEST(reverse(String("ahoj")) == "joha");
+			CAGE_TEST(reverse(String("nazdar")) == "radzan");
+			CAGE_TEST(reverse(String("omega")) == "agemo");
 		}
 		{
 			CAGE_TESTCASE("tolower, toupper");
-			CAGE_TEST(toLower(string("AlMachNa")) == "almachna");
-			CAGE_TEST(toUpper(string("AlMachNa")) == "ALMACHNA");
+			CAGE_TEST(toLower(String("AlMachNa")) == "almachna");
+			CAGE_TEST(toUpper(String("AlMachNa")) == "ALMACHNA");
 		}
 		{
 			CAGE_TESTCASE("substring, remove, insert");
-			CAGE_TEST(subString(string("almachna"), 2, 4) == "mach");
-			CAGE_TEST(subString(string("almachna"), 0, 3) == "alm");
-			CAGE_TEST(subString(string("almachna"), 5, 3) == "hna");
-			CAGE_TEST(subString(string("almachna"), 0, 8) == "almachna");
-			CAGE_TEST(subString(string("almachna"), 5, 5) == "hna");
-			CAGE_TEST(subString(string("almachna"), 0, 10) == "almachna");
-			CAGE_TEST(subString(string("almachna"), 5, m) == "hna");
-			CAGE_TEST(subString(string("almachna"), 10, 3) == "");
-			CAGE_TEST(remove(string("almachna"), 2, 4) == "alna");
-			CAGE_TEST(insert(string("almachna"), 2, "orangutan") == "alorangutanmachna");
-			CAGE_TEST(trim(string(" al ma\nch\tn a\n \t  ")) == "al ma\nch\tn a");
+			CAGE_TEST(subString(String("almachna"), 2, 4) == "mach");
+			CAGE_TEST(subString(String("almachna"), 0, 3) == "alm");
+			CAGE_TEST(subString(String("almachna"), 5, 3) == "hna");
+			CAGE_TEST(subString(String("almachna"), 0, 8) == "almachna");
+			CAGE_TEST(subString(String("almachna"), 5, 5) == "hna");
+			CAGE_TEST(subString(String("almachna"), 0, 10) == "almachna");
+			CAGE_TEST(subString(String("almachna"), 5, m) == "hna");
+			CAGE_TEST(subString(String("almachna"), 10, 3) == "");
+			CAGE_TEST(remove(String("almachna"), 2, 4) == "alna");
+			CAGE_TEST(insert(String("almachna"), 2, "orangutan") == "alorangutanmachna");
+			CAGE_TEST(trim(String(" al ma\nch\tn a\n \t  ")) == "al ma\nch\tn a");
 		}
 		{
 			CAGE_TESTCASE("replace");
-			const string c = "ahojnazdar";
-			string d = replace(c, 2, 3, "");
+			const String c = "ahojnazdar";
+			String d = replace(c, 2, 3, "");
 			CAGE_TEST(d == "ahazdar");
 			CAGE_TEST(d.length() == 7);
-			string e = replace(c, 1, 8, "ka");
+			String e = replace(c, 1, 8, "ka");
 			CAGE_TEST(e == "akar");
 			CAGE_TEST(e.length() == 4);
 			CAGE_TEST(replace(c, "ahoj", "nazdar") == "nazdarnazdar");
 			CAGE_TEST(replace(c, "a", "zu") == "zuhojnzuzdzur");
 			CAGE_TEST(replace(c, "nazdar", "ahoj") == "ahojahoj");
-			CAGE_TEST(replace(string("rakokokokodek"), "ko", "") == "radek");
-			CAGE_TEST(replace(string("rakokokokodek"), "o", "oo") == "rakookookookoodek");
+			CAGE_TEST(replace(String("rakokokokodek"), "ko", "") == "radek");
+			CAGE_TEST(replace(String("rakokokokodek"), "o", "oo") == "rakookookookoodek");
 		}
 		{
 			CAGE_TESTCASE("split");
-			string f = "ab\ne\n\nced\na\n";
+			String f = "ab\ne\n\nced\na\n";
 			CAGE_TEST(split(f) == "ab");
 			CAGE_TEST(f == "e\n\nced\na\n");
 			CAGE_TEST(split(f) == "e");
@@ -249,7 +258,7 @@ namespace
 			CAGE_TESTCASE("find");
 			{
 				CAGE_TESTCASE("ratata://omega.alt.com/blah/keee/jojo.armagedon");
-				const string s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+				const String s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 				CAGE_TEST(find(s, 'r', 0) == 0);
 				CAGE_TEST(find(s, 'a', 1) == 1);
 				CAGE_TEST(find(s, 'a', 2) == 3);
@@ -265,7 +274,7 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("0123456789");
-				const string s = "0123456789";
+				const String s = "0123456789";
 				CAGE_TEST(find(s, "35", 0) == m);
 				CAGE_TEST(find(s, "45", 0) == 4);
 				CAGE_TEST(find(s, "34", 0) == 3);
@@ -276,7 +285,7 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("finding char only");
-				const string s = "0123456789";
+				const String s = "0123456789";
 				CAGE_TEST(find(s, 'j', 0) == m);
 				CAGE_TEST(find(s, '4', 0) == 4);
 				CAGE_TEST(find(s, '3', 0) == 3);
@@ -287,51 +296,51 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("corner cases");
-				const string s = "0123456789";
+				const String s = "0123456789";
 				CAGE_TEST(find(s, 'a', 100) == m);
 				CAGE_TEST(find(s, "a", 100) == m);
 				CAGE_TEST(find(s, "abcdefghijklmnopq", 0) == m);
 				CAGE_TEST(find(s, "") == m);
-				CAGE_TEST(find(s, string(s)) == 0);
-				CAGE_TEST(find(string("h"), 'h') == 0);
+				CAGE_TEST(find(s, String(s)) == 0);
+				CAGE_TEST(find(String("h"), 'h') == 0);
 			}
 		}
 		{
 			CAGE_TESTCASE("trim");
-			CAGE_TEST(trim(string("   ori  ")) == "ori");
-			CAGE_TEST(trim(string("   ori  "), false, true) == "   ori");
-			CAGE_TEST(trim(string("   ori  "), true, false) == "ori  ");
-			CAGE_TEST(trim(string("   ori  "), false, false) == "   ori  ");
-			CAGE_TEST(trim(string("   ori  "), true, true, " i") == "or");
-			CAGE_TEST(trim(string("magma"), true, true, string("am")) == "g");
-			CAGE_TEST_ASSERTED(trim(string("magma"), true, true, "za"));
-			CAGE_TEST(trim(string("magma"), true, true, "") == "magma");
+			CAGE_TEST(trim(String("   ori  ")) == "ori");
+			CAGE_TEST(trim(String("   ori  "), false, true) == "   ori");
+			CAGE_TEST(trim(String("   ori  "), true, false) == "ori  ");
+			CAGE_TEST(trim(String("   ori  "), false, false) == "   ori  ");
+			CAGE_TEST(trim(String("   ori  "), true, true, " i") == "or");
+			CAGE_TEST(trim(String("magma"), true, true, String("am")) == "g");
+			CAGE_TEST_ASSERTED(trim(String("magma"), true, true, "za"));
+			CAGE_TEST(trim(String("magma"), true, true, "") == "magma");
 		}
 		{
 			CAGE_TESTCASE("pattern");
-			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "://", ""));
-			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "alt", "don"));
-			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "://", "armagedon"));
-			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "jojo.", "armagedon"));
-			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", ":///", ""));
-			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "http", "", ""));
-			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "", ".cz"));
-			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "tata", ""));
-			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "armag", "gedon"));
+			CAGE_TEST(isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "://", ""));
+			CAGE_TEST(isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "alt", "don"));
+			CAGE_TEST(isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "://", "armagedon"));
+			CAGE_TEST(isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "jojo.", "armagedon"));
+			CAGE_TEST(!isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", ":///", ""));
+			CAGE_TEST(!isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "http", "", ""));
+			CAGE_TEST(!isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "", ".cz"));
+			CAGE_TEST(!isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "tata", ""));
+			CAGE_TEST(!isPattern(String("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "armag", "gedon"));
 		}
 		{
 			CAGE_TESTCASE("url encode and decode");
-			CAGE_TEST(encodeUrl(string("for (uint i = 0; i < sts.size (); i++)")) == "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)");
+			CAGE_TEST(encodeUrl(String("for (uint i = 0; i < sts.size (); i++)")) == "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)");
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				string s;
+				String s;
 				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
 				{
 					char c = randomRange(0, 255);
-					s += string(c);
+					s += String(c);
 				}
-				string sen = encodeUrl(s);
-				string sde = decodeUrl(sen);
+				String sen = encodeUrl(s);
+				String sde = decodeUrl(sen);
 				CAGE_TEST(sde == s);
 			}
 		}
@@ -341,9 +350,9 @@ namespace
 	{
 		{
 			CAGE_TESTCASE("std::map");
-			string a = "ahoj";
-			string b = "pole";
-			std::map<string, uint32> m;
+			String a = "ahoj";
+			String b = "pole";
+			std::map<String, uint32> m;
 			m[a] = 5;
 			m[b] = 10;
 			m["ahoj"] = 15;
@@ -352,15 +361,15 @@ namespace
 			CAGE_TEST(m[b] == 10);
 		}
 		{
-			CAGE_TESTCASE("hashed string");
+			CAGE_TESTCASE("hashed String");
 			HashString("");
 			HashString("1");
 			HashString("12");
 			HashString("123");
-			string a = "hel";
-			string b = "lo";
+			String a = "hel";
+			String b = "lo";
 			constexpr uint32 compile_time = HashString("hello");
-			string c = a + b;
+			String c = a + b;
 			uint32 run_time = HashString(c.c_str());
 			CAGE_TEST(compile_time == run_time);
 			constexpr uint32 different = HashString("different");
@@ -371,122 +380,122 @@ namespace
 	void testConversions()
 	{
 		CAGE_TESTCASE("conversions");
-		test(toFloat(string("0.5")), 0.5f);
-		test(toFloat(string("-45.123")), -45.123f);
-		test(toFloat(string("-3.8e9")), -3.8e9f);
-		test(toDouble(string("0.5")), 0.5);
-		test(toDouble(string("-45.123")), -45.123);
-		test(toDouble(string("-3.8e9")), -3.8e9);
-		test(toDouble(string("-10995.11627776")), -10995.11627776);
-		test(toDouble(string("1152.9215046068")), 1152.9215046068);
-		test(toDouble(string("21504606846.976")), 21504606846.976);
-		test(toDouble(string("-3.8e9")), -3.8e9);
-		CAGE_TEST(toUint32(string("157")) == 157);
-		CAGE_TEST(toSint32(string("157")) == 157);
-		CAGE_TEST(toSint32(string("-157")) == -157);
-		CAGE_TEST(toUint64(string("157")) == 157);
-		CAGE_TEST(toUint64(string("50000000000")) == 50000000000);
-		CAGE_TEST(toSint64(string("-50000000000")) == -50000000000);
-		CAGE_TEST(toSint64(string("157")) == 157);
-		CAGE_TEST(toSint64(string("-157")) == -157);
-		CAGE_TEST(toBool(string("yES")));
-		CAGE_TEST(toBool(string("T")));
-		CAGE_TEST(!toBool(string("FALse")));
-		CAGE_TEST(isBool(string("yES")));
-		CAGE_TEST(isBool(string("T")));
-		CAGE_TEST(isBool(string("FALse")));
-		CAGE_TEST(!isBool(string("kk")));
-		CAGE_TEST(isDigitsOnly(string()));
-		CAGE_TEST(isDigitsOnly(string("157")));
-		CAGE_TEST(!isDigitsOnly(string("hola")));
-		CAGE_TEST_THROWN(toBool(string("")));
-		CAGE_TEST_THROWN(toFloat(string("")));
-		CAGE_TEST_THROWN(toSint32(string("")));
-		CAGE_TEST_THROWN(toSint64(string("")));
-		CAGE_TEST_THROWN(toUint32(string("")));
-		CAGE_TEST_THROWN(toUint64(string("")));
-		CAGE_TEST_THROWN(toBool(string("hola")));
-		CAGE_TEST_THROWN(toFloat(string("hola")));
-		CAGE_TEST_THROWN(toSint32(string("hola")));
-		CAGE_TEST_THROWN(toSint64(string("hola")));
-		CAGE_TEST_THROWN(toUint32(string("hola")));
-		CAGE_TEST_THROWN(toUint64(string("hola")));
-		CAGE_TEST_THROWN(toSint32(string("157hola")));
-		CAGE_TEST_THROWN(toSint64(string("157hola")));
-		CAGE_TEST_THROWN(toUint32(string("157hola")));
-		CAGE_TEST_THROWN(toUint64(string("157hola")));
-		CAGE_TEST_THROWN(toSint32(string("15.7")));
-		CAGE_TEST_THROWN(toSint64(string("15.7")));
-		CAGE_TEST_THROWN(toUint32(string("15.7")));
-		CAGE_TEST_THROWN(toUint64(string("15.7")));
-		CAGE_TEST_THROWN(toUint32(string("-157")));
-		CAGE_TEST_THROWN(toUint64(string("-157")));
-		CAGE_TEST_THROWN(toFloat(string("-3.8ha")));
-		CAGE_TEST_THROWN(toFloat(string("-3.8e-4ha")));
-		CAGE_TEST_THROWN(toSint32(string("0x157")));
-		CAGE_TEST_THROWN(toSint64(string("0x157")));
-		CAGE_TEST_THROWN(toUint32(string("0x157")));
-		CAGE_TEST_THROWN(toUint64(string("0x157")));
-		CAGE_TEST_THROWN(toSint32(string(" 157")));
-		CAGE_TEST_THROWN(toSint64(string(" 157")));
-		CAGE_TEST_THROWN(toUint32(string(" 157")));
-		CAGE_TEST_THROWN(toUint64(string(" 157")));
-		CAGE_TEST_THROWN(toFloat(string(" 157")));
-		CAGE_TEST_THROWN(toSint32(string("157 ")));
-		CAGE_TEST_THROWN(toSint64(string("157 ")));
-		CAGE_TEST_THROWN(toUint32(string("157 ")));
-		CAGE_TEST_THROWN(toUint64(string("157 ")));
-		CAGE_TEST_THROWN(toFloat(string("157 ")));
-		CAGE_TEST_THROWN(toBool(string(" true")));
-		CAGE_TEST_THROWN(toBool(string("true ")));
-		CAGE_TEST_THROWN(toBool(string("tee")));
-		CAGE_TEST_THROWN(toSint32(string("50000000000")));
-		CAGE_TEST_THROWN(toUint32(string("50000000000")));
+		test(toFloat(String("0.5")), 0.5f);
+		test(toFloat(String("-45.123")), -45.123f);
+		test(toFloat(String("-3.8e9")), -3.8e9f);
+		test(toDouble(String("0.5")), 0.5);
+		test(toDouble(String("-45.123")), -45.123);
+		test(toDouble(String("-3.8e9")), -3.8e9);
+		test(toDouble(String("-10995.11627776")), -10995.11627776);
+		test(toDouble(String("1152.9215046068")), 1152.9215046068);
+		test(toDouble(String("21504606846.976")), 21504606846.976);
+		test(toDouble(String("-3.8e9")), -3.8e9);
+		CAGE_TEST(toUint32(String("157")) == 157);
+		CAGE_TEST(toSint32(String("157")) == 157);
+		CAGE_TEST(toSint32(String("-157")) == -157);
+		CAGE_TEST(toUint64(String("157")) == 157);
+		CAGE_TEST(toUint64(String("50000000000")) == 50000000000);
+		CAGE_TEST(toSint64(String("-50000000000")) == -50000000000);
+		CAGE_TEST(toSint64(String("157")) == 157);
+		CAGE_TEST(toSint64(String("-157")) == -157);
+		CAGE_TEST(toBool(String("yES")));
+		CAGE_TEST(toBool(String("T")));
+		CAGE_TEST(!toBool(String("FALse")));
+		CAGE_TEST(isBool(String("yES")));
+		CAGE_TEST(isBool(String("T")));
+		CAGE_TEST(isBool(String("FALse")));
+		CAGE_TEST(!isBool(String("kk")));
+		CAGE_TEST(isDigitsOnly(String()));
+		CAGE_TEST(isDigitsOnly(String("157")));
+		CAGE_TEST(!isDigitsOnly(String("hola")));
+		CAGE_TEST_THROWN(toBool(String("")));
+		CAGE_TEST_THROWN(toFloat(String("")));
+		CAGE_TEST_THROWN(toSint32(String("")));
+		CAGE_TEST_THROWN(toSint64(String("")));
+		CAGE_TEST_THROWN(toUint32(String("")));
+		CAGE_TEST_THROWN(toUint64(String("")));
+		CAGE_TEST_THROWN(toBool(String("hola")));
+		CAGE_TEST_THROWN(toFloat(String("hola")));
+		CAGE_TEST_THROWN(toSint32(String("hola")));
+		CAGE_TEST_THROWN(toSint64(String("hola")));
+		CAGE_TEST_THROWN(toUint32(String("hola")));
+		CAGE_TEST_THROWN(toUint64(String("hola")));
+		CAGE_TEST_THROWN(toSint32(String("157hola")));
+		CAGE_TEST_THROWN(toSint64(String("157hola")));
+		CAGE_TEST_THROWN(toUint32(String("157hola")));
+		CAGE_TEST_THROWN(toUint64(String("157hola")));
+		CAGE_TEST_THROWN(toSint32(String("15.7")));
+		CAGE_TEST_THROWN(toSint64(String("15.7")));
+		CAGE_TEST_THROWN(toUint32(String("15.7")));
+		CAGE_TEST_THROWN(toUint64(String("15.7")));
+		CAGE_TEST_THROWN(toUint32(String("-157")));
+		CAGE_TEST_THROWN(toUint64(String("-157")));
+		CAGE_TEST_THROWN(toFloat(String("-3.8ha")));
+		CAGE_TEST_THROWN(toFloat(String("-3.8e-4ha")));
+		CAGE_TEST_THROWN(toSint32(String("0x157")));
+		CAGE_TEST_THROWN(toSint64(String("0x157")));
+		CAGE_TEST_THROWN(toUint32(String("0x157")));
+		CAGE_TEST_THROWN(toUint64(String("0x157")));
+		CAGE_TEST_THROWN(toSint32(String(" 157")));
+		CAGE_TEST_THROWN(toSint64(String(" 157")));
+		CAGE_TEST_THROWN(toUint32(String(" 157")));
+		CAGE_TEST_THROWN(toUint64(String(" 157")));
+		CAGE_TEST_THROWN(toFloat(String(" 157")));
+		CAGE_TEST_THROWN(toSint32(String("157 ")));
+		CAGE_TEST_THROWN(toSint64(String("157 ")));
+		CAGE_TEST_THROWN(toUint32(String("157 ")));
+		CAGE_TEST_THROWN(toUint64(String("157 ")));
+		CAGE_TEST_THROWN(toFloat(String("157 ")));
+		CAGE_TEST_THROWN(toBool(String(" true")));
+		CAGE_TEST_THROWN(toBool(String("true ")));
+		CAGE_TEST_THROWN(toBool(String("tee")));
+		CAGE_TEST_THROWN(toSint32(String("50000000000")));
+		CAGE_TEST_THROWN(toUint32(String("50000000000")));
 
 		{
 			CAGE_TESTCASE("long long numbers and toSint64()");
-			CAGE_TEST(toSint64(string("-1099511627776")) == -1099511627776);
-			CAGE_TEST_THROWN(toUint64(string("-1099511627776")));
-			CAGE_TEST(toSint64(string("1152921504606846976")) == 1152921504606846976);
-			CAGE_TEST(toUint64(string("1152921504606846976")) == 1152921504606846976);
+			CAGE_TEST(toSint64(String("-1099511627776")) == -1099511627776);
+			CAGE_TEST_THROWN(toUint64(String("-1099511627776")));
+			CAGE_TEST(toSint64(String("1152921504606846976")) == 1152921504606846976);
+			CAGE_TEST(toUint64(String("1152921504606846976")) == 1152921504606846976);
 		}
 		{
 			CAGE_TESTCASE("isInteger");
-			CAGE_TEST(isDigitsOnly(string("")));
-			CAGE_TEST(isInteger(string("5")));
-			CAGE_TEST(isDigitsOnly(string("5")));
-			CAGE_TEST(isInteger(string("123")));
-			CAGE_TEST(isInteger(string("-123")));
-			CAGE_TEST(!isInteger(string("")));
-			CAGE_TEST(!isInteger(string("pet")));
-			CAGE_TEST(!isInteger(string("13.42")));
-			CAGE_TEST(!isInteger(string("13k")));
-			CAGE_TEST(!isInteger(string("k13")));
-			CAGE_TEST(!isInteger(string("1k3")));
-			CAGE_TEST(!isInteger(string("-")));
-			CAGE_TEST(!isInteger(string("+")));
-			CAGE_TEST(!isDigitsOnly(string("-123")));
-			CAGE_TEST(!isInteger(string("+123")));
+			CAGE_TEST(isDigitsOnly(String("")));
+			CAGE_TEST(isInteger(String("5")));
+			CAGE_TEST(isDigitsOnly(String("5")));
+			CAGE_TEST(isInteger(String("123")));
+			CAGE_TEST(isInteger(String("-123")));
+			CAGE_TEST(!isInteger(String("")));
+			CAGE_TEST(!isInteger(String("pet")));
+			CAGE_TEST(!isInteger(String("13.42")));
+			CAGE_TEST(!isInteger(String("13k")));
+			CAGE_TEST(!isInteger(String("k13")));
+			CAGE_TEST(!isInteger(String("1k3")));
+			CAGE_TEST(!isInteger(String("-")));
+			CAGE_TEST(!isInteger(String("+")));
+			CAGE_TEST(!isDigitsOnly(String("-123")));
+			CAGE_TEST(!isInteger(String("+123")));
 		}
 		{
 			CAGE_TESTCASE("isReal");
-			CAGE_TEST(isReal(string("5")));
-			CAGE_TEST(isReal(string("13.42")));
-			CAGE_TEST(isReal(string("-13.42")));
-			CAGE_TEST(!isReal(string("")));
-			CAGE_TEST(!isReal(string("pet")));
-			CAGE_TEST(!isReal(string("13,42")));
-			CAGE_TEST(!isReal(string("13.42k")));
-			CAGE_TEST(!isReal(string("+13.42")));
-			CAGE_TEST(!isReal(string("13.k42")));
-			CAGE_TEST(!isReal(string("13k.42")));
-			CAGE_TEST_THROWN(toSint32(string("ha")));
+			CAGE_TEST(isReal(String("5")));
+			CAGE_TEST(isReal(String("13.42")));
+			CAGE_TEST(isReal(String("-13.42")));
+			CAGE_TEST(!isReal(String("")));
+			CAGE_TEST(!isReal(String("pet")));
+			CAGE_TEST(!isReal(String("13,42")));
+			CAGE_TEST(!isReal(String("13.42k")));
+			CAGE_TEST(!isReal(String("+13.42")));
+			CAGE_TEST(!isReal(String("13.k42")));
+			CAGE_TEST(!isReal(String("13k.42")));
+			CAGE_TEST_THROWN(toSint32(String("ha")));
 		}
 		{
 			CAGE_TESTCASE("float -> string -> float");
 			for (float a : { 123.456f, 1056454.4f, 0.000045678974f, -45544.f, 0.18541e-10f })
 			{
-				const string s = stringizer() + a;
+				const String s = Stringizer() + a;
 				float b = toFloat(s);
 				test(a, b);
 			}
@@ -495,7 +504,7 @@ namespace
 			CAGE_TESTCASE("double -> string -> double");
 			for (double a : { 123.456789, 1056454.42189, 0.0000456789741248145, -45524144.0254, 0.141158541e-10 })
 			{
-				const string s = stringizer() + a;
+				const String s = Stringizer() + a;
 				double b = toDouble(s);
 				test(a, b);
 			}
@@ -505,13 +514,13 @@ namespace
 	constexpr void testCopies1()
 	{
 		CAGE_TESTCASE("copies and changes 1 - just operators");
-		string a = "ahoj";
-		string b = "nazdar";
-		string c = "pokus";
-		string d = "omega";
-		string e = a + b;
-		string f = b + c + d;
-		string g = a;
+		String a = "ahoj";
+		String b = "nazdar";
+		String c = "pokus";
+		String d = "omega";
+		String e = a + b;
+		String f = b + c + d;
+		String g = a;
 		a = "opice";
 		b = "lapis";
 		c = "";
@@ -534,8 +543,8 @@ namespace
 	void testCopies2()
 	{
 		CAGE_TESTCASE("copies and changes 2 - with methods");
-		string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-		string d, p, f, e;
+		String a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+		String d, p, f, e;
 		pathDecompose(a, d, p, f, e);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		reverse(a);
@@ -547,7 +556,7 @@ namespace
 
 		{
 			CAGE_TESTCASE("substring");
-			string sub = subString(a, 5, 7);
+			String sub = subString(a, 5, 7);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			sub = subString(a, 2, 15);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
@@ -562,7 +571,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("remove");
-			string rem = remove(a, 5, 7);
+			String rem = remove(a, 5, 7);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			rem = remove(a, 2, 15);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
@@ -577,7 +586,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("insert");
-			string ins = insert(a, 5, "pomeranc");
+			String ins = insert(a, 5, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			ins = insert(a, 2, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
@@ -592,7 +601,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("replace");
-			string rep = replace(a, 5, 12, "pomeranc");
+			String rep = replace(a, 5, 12, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			rep = replace(a, 2, 5, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
@@ -607,15 +616,15 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("replace is non-recursive");
-			string s = "abacab";
-			string r = replace(s, "a", "aa");
+			String s = "abacab";
+			String r = replace(s, "a", "aa");
 			CAGE_TEST(r == "aabaacaab");
-			string k = replace(r, "aa", "a");
+			String k = replace(r, "aa", "a");
 			CAGE_TEST(k == s);
 		}
 		{
 			CAGE_TESTCASE("split");
-			string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			String a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			CAGE_TEST(split(a, "/") == "ratata:");
 			CAGE_TEST(a == "/omega.alt.com/blah/keee/jojo.armagedon");
 			CAGE_TEST(split(a, "/") == "");
@@ -644,12 +653,12 @@ namespace
 		return str + other.value;
 	}
 
-	void functionTakingString(const string &str)
+	void functionTakingString(const String &str)
 	{}
 
 	void testStringizer()
 	{
-		CAGE_TESTCASE("stringizer");
+		CAGE_TESTCASE("Stringizer");
 		{
 			CAGE_TESTCASE("conversions");
 			uint8  ui8 = 1;
@@ -662,60 +671,60 @@ namespace
 			sint64 si64 = 8;
 			bool bt = true;
 			bool bf = false;
-			CAGE_TEST(string(stringizer() + "begin" + ui8 + ui16 + ui32 + ui64 + "s" + si8 + si16 + si32 + si64 + "b" + bt + bf + "end") == "begin1234s5678btruefalseend");
+			CAGE_TEST(String(Stringizer() + "begin" + ui8 + ui16 + ui32 + ui64 + "s" + si8 + si16 + si32 + si64 + "b" + bt + bf + "end") == "begin1234s5678btruefalseend");
 		}
 		{
-			CAGE_TESTCASE("r-value stringizer");
+			CAGE_TESTCASE("r-value Stringizer");
 			{
-				string str = stringizer() + 123 + "abc" + 456;
+				String str = Stringizer() + 123 + "abc" + 456;
 			}
 			{
 				Custom custom(42);
-				string str = stringizer() + custom;
+				String str = Stringizer() + custom;
 			}
 			{
-				functionTakingString(stringizer() + 123);
+				functionTakingString(Stringizer() + 123);
 			}
 		}
 		{
-			CAGE_TESTCASE("l-value stringizer");
+			CAGE_TESTCASE("l-value Stringizer");
 			{
-				stringizer s;
-				string str = s + 123 + "abc" + 456;
+				Stringizer s;
+				String str = s + 123 + "abc" + 456;
 			}
 			{
 				Custom custom(42);
-				stringizer s;
-				string str = s + custom;
+				Stringizer s;
+				String str = s + custom;
 			}
 			{
-				stringizer s;
+				Stringizer s;
 				functionTakingString(s + 123);
 			}
 		}
 		{
 			CAGE_TESTCASE("pointers");
-			CAGE_TEST(string(stringizer() + "hi") == "hi");
+			CAGE_TEST(String(Stringizer() + "hi") == "hi");
 			int obj = 42;
 			int *ptr = &obj;
-			CAGE_TEST(toUint64(string(stringizer() + ptr)) == (uint64)ptr);
+			CAGE_TEST(toUint64(String(Stringizer() + ptr)) == (uint64)ptr);
 		}
 	}
 
 	constexpr int testConstexprString()
 	{
-		CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
+		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
 		{
 			const char arr[] = "array";
-			CAGE_TEST(string(arr) == "array");
+			CAGE_TEST(String(arr) == "array");
 			char arr2[] = "array";
-			CAGE_TEST(string(arr2) == "array");
+			CAGE_TEST(String(arr2) == "array");
 		}
 		{
 			detail::StringBase<128> a = "ahoj";
-			string b = "nazdar";
+			String b = "nazdar";
 			detail::StringBase<1024> c = "cau";
-			string d = a + b + c;
+			String d = a + b + c;
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
 		//testComparisons(); // todo this should work
@@ -723,7 +732,7 @@ namespace
 		testMethods();
 		testCopies1();
 		{
-			string s = stringizer() + "hello" + " " + "world";
+			String s = Stringizer() + "hello" + " " + "world";
 			CAGE_TEST(s == "hello world");
 		}
 		return 0;

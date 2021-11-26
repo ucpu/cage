@@ -18,7 +18,7 @@ namespace
 	constexpr uint32 limit = 20000;
 #endif
 
-	vec3 generateRandomPoint()
+	Vec3 generateRandomPoint()
 	{
 		return randomRange3(-120, 120);
 	}
@@ -30,11 +30,11 @@ namespace
 
 	Aabb generateNonuniformBox()
 	{
-		real x = randomRange(-120, 120);
-		real z = randomRange(-120, 120);
-		real y = 4 * sin(rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * powE(1 + cos(rads(x / 20 + (z - 40) / 30)));
-		vec3 o = vec3(x, y, z);
-		vec3 s = generateRandomPoint() * 0.05;
+		Real x = randomRange(-120, 120);
+		Real z = randomRange(-120, 120);
+		Real y = 4 * sin(Rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * powE(1 + cos(Rads(x / 20 + (z - 40) / 30)));
+		Vec3 o = Vec3(x, y, z);
+		Vec3 s = generateRandomPoint() * 0.05;
 		return Aabb(o + s, o - s);
 	}
 
@@ -160,30 +160,30 @@ void testSpatialStructure()
 			data->update(i, Aabb(generateRandomPoint()));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.share());
-		query->intersection(Sphere(vec3(50, 0, 0), 100));
+		query->intersection(Sphere(Vec3(50, 0, 0), 100));
 	}
 
 	{
 		CAGE_TESTCASE("multiple points on same location");
-		constexpr const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
+		constexpr const Vec3 pts[3] = { Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, Aabb(pts[i % 3]));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.share());
-		query->intersection(Sphere(vec3(0, 0, 0), 5));
+		query->intersection(Sphere(Vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 100);
 	}
 
 	{
 		CAGE_TESTCASE("spheres");
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
-		data->update(0, Sphere(vec3(), 100));
+		data->update(0, Sphere(Vec3(), 100));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.share());
-		query->intersection(Sphere(vec3(50, 0, 0), 100));
+		query->intersection(Sphere(Vec3(50, 0, 0), 100));
 		CAGE_TEST(query->result().size() == 1);
-		query->intersection(Sphere(vec3(250, 0, 0), 100));
+		query->intersection(Sphere(Vec3(250, 0, 0), 100));
 		CAGE_TEST(query->result().size() == 0);
 
 		// test aabb-sphere intersection
@@ -192,13 +192,13 @@ void testSpatialStructure()
 
 	{
 		CAGE_TESTCASE("multiple spheres on same position");
-		constexpr const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
+		constexpr const Vec3 pts[3] = { Vec3(3, 0, 0), Vec3(0, 7, 0), Vec3(0, 0, 13) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, Sphere(pts[i % 3], 1));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.share());
-		query->intersection(Sphere(vec3(0, 0, 0), 5));
+		query->intersection(Sphere(Vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 34);
 	}
 
@@ -221,6 +221,6 @@ void testSpatialStructure()
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "spatial performance", stringizer() + "total time: " + tmr->duration() + " us");
+		CAGE_LOG(SeverityEnum::Info, "spatial performance", Stringizer() + "total time: " + tmr->duration() + " us");
 	}
 }

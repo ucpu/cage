@@ -9,21 +9,21 @@ namespace cage
 	{
 		Holder<Sound> sound; // use exactly one of sound or callback
 		Delegate<void(const SoundCallbackData &)> callback;
-		vec3 position = vec3::Nan();
+		Vec3 position = Vec3::Nan();
 		sint64 startTime = 0;
-		real gain = 1; // linear amplitude multiplier
+		Real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API Listener
 	{
-		quat orientation;
-		vec3 position;
-		real rolloffFactor = 1; // distance multiplier
-		real gain = 1; // linear amplitude multiplier
+		Quat orientation;
+		Vec3 position;
+		Real rolloffFactor = 1; // distance multiplier
+		Real gain = 1; // linear amplitude multiplier
 		uint32 maxActiveVoices = 100;
 	};
 
-	class CAGE_ENGINE_API VoicesMixer : Immovable
+	class CAGE_ENGINE_API VoicesMixer : private Immovable
 	{
 	public:
 		Holder<Voice> newVoice();

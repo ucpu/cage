@@ -12,9 +12,7 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-
-//#include <robin_hood.h>
-#include <optick.h>
+#include <cage-core/profiling.h>
 
 #include <unordered_map>
 #include <vector>
@@ -30,11 +28,11 @@ namespace cage
 		{ \
 			if (logLevel > 1) \
 			{ \
-				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + ") [" + (ASS)->guid + "]: " + MSG); \
+				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + ") [" + (ASS)->guid + "]: " + MSG); \
 			} \
 			else \
 			{ \
-				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "': " + MSG); \
+				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "asset '" + (ASS)->textName + "': " + MSG); \
 			} \
 		} \
 	}
@@ -78,11 +76,13 @@ namespace cage
 
 			explicit WorkingAsset(std::atomic<sint32> *workingCounter) : workingCounter(workingCounter)
 			{
+				CAGE_ASSERT(workingCounter);
 				(*workingCounter)++;
 			}
 
 			virtual ~WorkingAsset()
 			{
+				CAGE_ASSERT(workingCounter);
 				(*workingCounter)--;
 			}
 
@@ -153,7 +153,7 @@ namespace cage
 			typedef ConcurrentQueue<Holder<WorkingAsset>> Queue;
 
 			std::vector<AssetScheme> schemes;
-			const string path;
+			const String path;
 			const uint64 listenerPeriod;
 			uint32 generateName = 0;
 			uint32 assetGuid = 1;
@@ -175,7 +175,7 @@ namespace cage
 			std::vector<Holder<Queue>> customProcessingQueues;
 
 			Holder<TcpConnection> listener;
-			string listenerAddress;
+			String listenerAddress;
 			uint16 listenerPort = 0;
 
 			// threads have to be declared at the very end to ensure that they are first to destroy
@@ -185,7 +185,7 @@ namespace cage
 			Holder<Thread> defaultProcessingThread;
 			Holder<Thread> listenerThread;
 
-			static string findAssetsFolderPath(const AssetManagerCreateConfig &config)
+			static String findAssetsFolderPath(const AssetManagerCreateConfig &config)
 			{
 				try
 				{
@@ -213,7 +213,7 @@ namespace cage
 
 			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config)), listenerPeriod(config.listenerPeriod)
 			{
-				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
+				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using asset path: '" + path + "'");
 				privateMutex = newMutex();
 				publicMutex = newRwMutex();
 				customProcessingQueues.resize(config.threadsMaxCount);
@@ -454,12 +454,12 @@ namespace cage
 					while (!stopping)
 					{
 						threadSleep(listenerPeriod);
-						OPTICK_EVENT("assets network notifications");
-						string line;
+						ProfilingScope profiling("network notifications", "assets manager");
+						String line;
 						while (listener->readLine(line))
 						{
 							const uint32 name = HashString(line.c_str());
-							CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
+							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
 							reload(name);
 						}
 					}
@@ -524,7 +524,7 @@ namespace cage
 				return generateName++;
 			}
 
-			void fabricate(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
+			void fabricate(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value)
 			{
 				CAGE_ASSERT(scheme < schemes.size());
 				Holder<FabricateCommand> cmd = systemMemory().createHolder<FabricateCommand>(&workingCounter);
@@ -547,7 +547,7 @@ namespace cage
 				const auto &a = it->second;
 				if (a->failed)
 				{
-					CAGE_LOG_THROW(stringizer() + "asset real name: " + assetName);
+					CAGE_LOG_THROW(Stringizer() + "asset real name: " + assetName);
 					CAGE_THROW_ERROR(Exception, "asset failed to load");
 				}
 				CAGE_ASSERT(a->ref);
@@ -555,8 +555,8 @@ namespace cage
 				{
 					if (throwOnInvalidScheme)
 					{
-						CAGE_LOG_THROW(stringizer() + "asset real name: " + assetName);
-						CAGE_LOG_THROW(stringizer() + "asset loaded scheme: " + a->scheme + ", accessing with: " + scheme);
+						CAGE_LOG_THROW(Stringizer() + "asset real name: " + assetName);
+						CAGE_LOG_THROW(Stringizer() + "asset loaded scheme: " + a->scheme + ", accessing with: " + scheme);
 						CAGE_THROW_ERROR(Exception, "accessing asset with different scheme");
 					}
 					return {}; // invalid scheme
@@ -578,7 +578,7 @@ namespace cage
 				return false;
 			}
 
-			void listen(const string &address, uint16 port)
+			void listen(const String &address, uint16 port)
 			{
 				CAGE_ASSERT(!listenerThread);
 				listenerAddress = address;
@@ -587,7 +587,7 @@ namespace cage
 			}
 		};
 
-		Asset::Asset(uint32 realName_, AssetManagerImpl *impl) : textName(stringizer() + "<" + realName_ + ">"), impl(impl), guid(impl->assetGuid++), realName(realName_)
+		Asset::Asset(uint32 realName_, AssetManagerImpl *impl) : textName(Stringizer() + "<" + realName_ + ">"), impl(impl), guid(impl->assetGuid++), realName(realName_)
 		{
 			ASS_LOG(3, this, "constructed");
 			impl->existsCounter++;
@@ -601,8 +601,7 @@ namespace cage
 
 		void Loading::diskLoad(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("loading disk load");
-			OPTICK_TAG("realName", asset->realName);
+			ProfilingScope profiling("loading disk load", "assets manager");
 			ASS_LOG(2, asset, "loading disk load");
 
 			CAGE_ASSERT(asset);
@@ -616,7 +615,7 @@ namespace cage
 
 				Holder<File> file;
 				if (!impl->findAsset.dispatch(asset->realName, file))
-					file = readFile(pathJoin(impl->path, stringizer() + asset->realName));
+					file = readFile(pathJoin(impl->path, Stringizer() + asset->realName));
 				CAGE_ASSERT(file);
 
 				AssetHeader h;
@@ -628,7 +627,6 @@ namespace cage
 				if (h.textName[sizeof(h.textName) - 1] != 0)
 					CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
 				asset->textName = h.textName;
-				OPTICK_TAG("textName", asset->textName.c_str());
 				if (h.scheme >= impl->schemes.size())
 					CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 				asset->scheme = h.scheme;
@@ -670,11 +668,8 @@ namespace cage
 			if (asset->failed)
 				return;
 
-			OPTICK_EVENT("loading decompress");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
+			ProfilingScope profiling("loading decompress", "assets manager");
 			ASS_LOG(2, asset, "loading decompress");
-
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
@@ -695,11 +690,8 @@ namespace cage
 			if (asset->failed)
 				return;
 
-			OPTICK_EVENT("loading process");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
+			ProfilingScope profiling("loading processing", "assets manager");
 			ASS_LOG(2, asset, "loading processing");
-
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
 			try
@@ -717,9 +709,7 @@ namespace cage
 
 		void Loading::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("loading maintain");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
+			ProfilingScope profiling("loading maintain", "assets manager");
 			ASS_LOG(2, asset, "loading maintain");
 
 			if (!asset->dependencies.empty())
@@ -754,9 +744,7 @@ namespace cage
 
 		void Unloading::process(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("unloading process");
-			OPTICK_TAG("realName", asset->realName);
-			OPTICK_TAG("textName", asset->textName.c_str());
+			ProfilingScope profiling("unloading process", "assets manager");
 			ASS_LOG(2, asset, "unloading process");
 			
 			asset->assetHolder.clear();
@@ -766,7 +754,7 @@ namespace cage
 
 		void Unloading::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("unloading maintain");
+			ProfilingScope profiling("unloading maintain", "assets manager");
 			if (ptr)
 			{
 				auto &c = impl->privateIndex[((Asset *)ptr)->realName];
@@ -779,8 +767,6 @@ namespace cage
 			}
 			else
 			{
-				OPTICK_TAG("realName", asset->realName);
-				OPTICK_TAG("textName", asset->textName.c_str());
 				ASS_LOG(2, asset, "unloading maintain");
 
 				auto &c = impl->privateIndex[asset->realName];
@@ -799,10 +785,7 @@ namespace cage
 
 		void Command::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("command");
-			OPTICK_TAG("realName", realName);
-			OPTICK_TAG("type", (uint32)type);
-
+			ProfilingScope profiling("command", "assets manager");
 			switch (type)
 			{
 			case CommandEnum::Add:
@@ -833,7 +816,7 @@ namespace cage
 				auto &c = impl->privateIndex[realName];
 				if (c.fabricated)
 				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "cannot reload asset " + realName + ", it is fabricated");
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", Stringizer() + "cannot reload asset " + realName + ", it is fabricated");
 					return; // if an existing asset was replaced with a fabricated one, it may not be reloaded with an asset from disk
 				}
 				auto l = systemMemory().createHolder<Loading>(&impl->workingCounter);
@@ -848,10 +831,7 @@ namespace cage
 
 		void FabricateCommand::maintain(AssetManagerImpl *impl)
 		{
-			OPTICK_EVENT("command");
-			OPTICK_TAG("realName", realName);
-			OPTICK_TAG("type", (uint32)type);
-
+			ProfilingScope profiling("command", "assets manager");
 			switch (type)
 			{
 			case CommandEnum::Fabricate:
@@ -903,7 +883,7 @@ namespace cage
 		return impl->generateUniqueName();
 	}
 
-	void AssetManager::fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
+	void AssetManager::fabricate_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		impl->fabricate(scheme, assetName, textName, std::move(value));
@@ -957,7 +937,7 @@ namespace cage
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetManager::listen(const string &address, uint16 port)
+	void AssetManager::listen(const String &address, uint16 port)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		impl->listen(address, port);
@@ -968,13 +948,13 @@ namespace cage
 		return systemMemory().createImpl<AssetManager, AssetManagerImpl>(config);
 	}
 
-	AssetHeader::AssetHeader(const string &name_, uint16 schemeIndex)
+	AssetHeader::AssetHeader(const String &name_, uint16 schemeIndex)
 	{
 		version = CurrentAssetVersion;
-		string name = name_;
+		String name = name_;
 		constexpr uint32 MaxTexName = sizeof(textName) - 1;
 		if (name.length() > MaxTexName)
-			name = string() + ".." + subString(name, name.length() - MaxTexName + 2, m);
+			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);
 		detail::memcpy(textName, name.c_str(), name.length());
 		scheme = schemeIndex;

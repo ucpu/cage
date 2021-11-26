@@ -8,14 +8,14 @@ namespace cage
 	class CAGE_CORE_API MarchingCubes : private Immovable
 	{
 	public:
-		PointerRange<real> densities();
-		PointerRange<const real> densities() const;
-		void densities(const PointerRange<const real> &values);
-		real density(uint32 x, uint32 y, uint32 z) const;
-		void density(uint32 x, uint32 y, uint32 z, real value);
+		PointerRange<Real> densities();
+		PointerRange<const Real> densities() const;
+		void densities(const PointerRange<const Real> &values);
+		Real density(uint32 x, uint32 y, uint32 z) const;
+		void density(uint32 x, uint32 y, uint32 z, Real value);
 
-		void updateByCoordinates(const Delegate<real(uint32, uint32, uint32)> &generator);
-		void updateByPosition(const Delegate<real(const vec3 &)> &generator);
+		void updateByCoordinates(const Delegate<Real(uint32, uint32, uint32)> &generator);
+		void updateByPosition(const Delegate<Real(const Vec3 &)> &generator);
 
 		Holder<Collider> makeCollider() const;
 		Holder<Mesh> makeMesh() const;
@@ -23,11 +23,11 @@ namespace cage
 
 	struct CAGE_CORE_API MarchingCubesCreateConfig
 	{
-		Aabb box = Aabb(vec3(-1), vec3(1));
-		ivec3 resolution = ivec3(20);
+		Aabb box = Aabb(Vec3(-1), Vec3(1));
+		Vec3i resolution = Vec3i(20);
 		bool clip = true;
 
-		vec3 position(uint32 x, uint32 y, uint32 z) const;
+		Vec3 position(uint32 x, uint32 y, uint32 z) const;
 		uint32 index(uint32 x, uint32 y, uint32 z) const;
 	};
 

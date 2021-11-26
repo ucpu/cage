@@ -11,14 +11,14 @@ namespace cage
 	class MeshImpl : public Mesh
 	{
 	public:
-		MeshAttribute<vec3> positions;
-		MeshAttribute<vec3> normals;
-		MeshAttribute<vec2> uvs;
-		MeshAttribute<vec3> uvs3;
-		MeshAttribute<vec3> tangents;
-		MeshAttribute<vec3> bitangents;
-		MeshAttribute<ivec4> boneIndices;
-		MeshAttribute<vec4> boneWeights;
+		MeshAttribute<Vec3> positions;
+		MeshAttribute<Vec3> normals;
+		MeshAttribute<Vec2> uvs;
+		MeshAttribute<Vec3> uvs3;
+		MeshAttribute<Vec3> tangents;
+		MeshAttribute<Vec3> bitangents;
+		MeshAttribute<Vec4i> boneIndices;
+		MeshAttribute<Vec4> boneWeights;
 
 		std::vector<uint32> indices;
 

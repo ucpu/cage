@@ -4,21 +4,21 @@
 
 namespace cage
 {
-	Holder<Mesh> newMeshSphereUv(real radius, uint32 segments, uint32 rings)
+	Holder<Mesh> newMeshSphereUv(Real radius, uint32 segments, uint32 rings)
 	{
 		Holder<Mesh> mesh = newMesh();
 
-		const vec2 uvScale = 1 / vec2(segments - 1, rings - 1);
+		const Vec2 uvScale = 1 / Vec2(segments - 1, rings - 1);
 		for (uint32 r = 0; r < rings; r++)
 		{
-			const rads b = degs(180 * real(r) / (rings - 1) - 90);
+			const Rads b = Degs(180 * Real(r) / (rings - 1) - 90);
 			for (uint32 s = 0; s < segments; s++)
 			{
-				const rads a = degs(360 * real(s) / (segments - 1));
-				const real cosb = cos(b);
-				const vec3 pos = vec3(cos(a) * cosb, sin(a) * cosb, sin(b));
+				const Rads a = Degs(360 * Real(s) / (segments - 1));
+				const Real cosb = cos(b);
+				const Vec3 pos = Vec3(cos(a) * cosb, sin(a) * cosb, sin(b));
 				CAGE_ASSERT(abs(distance(pos, normalize(pos))) < 1e-4);
-				mesh->addVertex(pos * radius, pos, vec2(s, r) * uvScale);
+				mesh->addVertex(pos * radius, pos, Vec2(s, r) * uvScale);
 			}
 		}
 
@@ -42,22 +42,22 @@ namespace cage
 
 			// https://www.danielsieger.com/blog/2021/01/03/generating-platonic-solids.html
 
-			const real phi = (1.0f + sqrt(5.0f)) * 0.5f; // golden ratio
-			const real a = 1.0f;
-			const real b = 1.0f / phi;
+			const Real phi = (1.0f + sqrt(5.0f)) * 0.5f; // golden ratio
+			const Real a = 1.0f;
+			const Real b = 1.0f / phi;
 
-			mesh->addVertex(normalize(vec3(0, +b, -a)));
-			mesh->addVertex(normalize(vec3(+b, +a, 0)));
-			mesh->addVertex(normalize(vec3(-b, +a, 0)));
-			mesh->addVertex(normalize(vec3(0, +b, +a)));
-			mesh->addVertex(normalize(vec3(0, -b, +a)));
-			mesh->addVertex(normalize(vec3(-a, 0, +b)));
-			mesh->addVertex(normalize(vec3(0, -b, -a)));
-			mesh->addVertex(normalize(vec3(+a, 0, -b)));
-			mesh->addVertex(normalize(vec3(+a, 0, +b)));
-			mesh->addVertex(normalize(vec3(-a, 0, -b)));
-			mesh->addVertex(normalize(vec3(+b, -a, 0)));
-			mesh->addVertex(normalize(vec3(-b, -a, 0)));
+			mesh->addVertex(normalize(Vec3(0, +b, -a)));
+			mesh->addVertex(normalize(Vec3(+b, +a, 0)));
+			mesh->addVertex(normalize(Vec3(-b, +a, 0)));
+			mesh->addVertex(normalize(Vec3(0, +b, +a)));
+			mesh->addVertex(normalize(Vec3(0, -b, +a)));
+			mesh->addVertex(normalize(Vec3(-a, 0, +b)));
+			mesh->addVertex(normalize(Vec3(0, -b, -a)));
+			mesh->addVertex(normalize(Vec3(+a, 0, -b)));
+			mesh->addVertex(normalize(Vec3(+a, 0, +b)));
+			mesh->addVertex(normalize(Vec3(-a, 0, -b)));
+			mesh->addVertex(normalize(Vec3(+b, -a, 0)));
+			mesh->addVertex(normalize(Vec3(-b, -a, 0)));
 
 			mesh->addTriangle(2, 1, 0);
 			mesh->addTriangle(1, 2, 3);
@@ -83,9 +83,9 @@ namespace cage
 			return mesh;
 		}
 
-		real averageEdgesLength(const Mesh *mesh)
+		Real averageEdgesLength(const Mesh *mesh)
 		{
-			real sum = 0;
+			Real sum = 0;
 			uint32 cnt = 0;
 			const uint32 facesCount = mesh->facesCount();
 			const auto indices = mesh->indices();
@@ -104,7 +104,7 @@ namespace cage
 		}
 	}
 
-	Holder<Mesh> newMeshSphereRegular(real radius, real edgeLength)
+	Holder<Mesh> newMeshSphereRegular(Real radius, Real edgeLength)
 	{
 		Holder<Mesh> mesh = newMeshIcosahedronRaw();
 
@@ -121,7 +121,7 @@ namespace cage
 				std::size_t operator () (const std::pair<uint32, uint32> &p) const
 				{
 					const auto h = std::hash<uint32>();
-					return h(p.first) ^ p.second + h(p.second);
+					return h(h(p.first) ^ p.second);
 				}
 			};
 			std::unordered_map<std::pair<uint32, uint32>, uint32, Hasher> mapping;
@@ -157,13 +157,13 @@ namespace cage
 		mesh->normals(mesh->positions());
 
 		// scale positions by radius
-		for (vec3 &p : mesh->positions())
+		for (Vec3 &p : mesh->positions())
 			p *= radius;
 
 		return mesh;
 	}
 
-	Holder<Mesh> newMeshIcosahedron(real radius)
+	Holder<Mesh> newMeshIcosahedron(Real radius)
 	{
 		Holder<Mesh> mesh = newMeshIcosahedronRaw();
 
@@ -171,7 +171,7 @@ namespace cage
 		mesh->normals(mesh->positions());
 
 		// scale positions by radius
-		for (vec3 &p : mesh->positions())
+		for (Vec3 &p : mesh->positions())
 			p *= radius;
 
 		return mesh;

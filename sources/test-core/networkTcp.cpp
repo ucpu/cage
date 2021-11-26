@@ -38,15 +38,15 @@ namespace
 			send(conn, "amet");
 		}
 
-		void recv(Holder<TcpConnection> &conn, const string &msg)
+		void recv(Holder<TcpConnection> &conn, const String &msg)
 		{
 			while (randomChance() < 0.2)
 				threadYield();
-			string line = conn->readLine();
+			String line = conn->readLine();
 			CAGE_TEST(line == msg);
 		}
 
-		void send(Holder<TcpConnection> &conn, const string &msg)
+		void send(Holder<TcpConnection> &conn, const String &msg)
 		{
 			while (randomChance() < 0.2)
 				threadYield();

@@ -18,7 +18,7 @@ namespace cage
 			s[1] = confDefault2;
 			if (s[0] == 0 && s[1] == 0)
 				privat::generateRandomData((uint8*)s, sizeof(s));
-			CAGE_LOG(SeverityEnum::Info, "random", stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
+			CAGE_LOG(SeverityEnum::Info, "random", Stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
 			return RandomGenerator(s[0], s[1]);
 		}
 	}
@@ -41,10 +41,10 @@ namespace cage
 		return s[1] + y;
 	}
 
-	real RandomGenerator::randomChance()
+	Real RandomGenerator::randomChance()
 	{
 		const uint64 r = next();
-		real res = (real)r / (real)std::numeric_limits<uint64>::max();
+		Real res = (Real)r / (Real)std::numeric_limits<uint64>::max();
 		if (res >= 1.0)
 			res = 0;
 		CAGE_ASSERT(res >= 0.f && res < 1.f);
@@ -68,11 +68,11 @@ namespace cage
 #define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		CAGE_ASSERT(min <= max); \
-		const real c = randomChance(); \
+		const Real c = randomChance(); \
 		const TYPE res = interpolate(min, max, c); \
 		return res; \
 	}
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, float));
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, Real, Rads, Degs, float));
 #undef GCHL_GENERATE
 
 	double RandomGenerator::randomRange(double min, double max)
@@ -87,103 +87,103 @@ namespace cage
 		return res;
 	}
 
-	rads RandomGenerator::randomAngle()
+	Rads RandomGenerator::randomAngle()
 	{
-		return rads(randomChance() * real::Pi() * 2);
+		return Rads(randomChance() * Real::Pi() * 2);
 	}
 
-	vec2 RandomGenerator::randomChance2()
+	Vec2 RandomGenerator::randomChance2()
 	{
-		const real r1 = randomChance();
-		const real r2 = randomChance();
-		return vec2(r1, r2);
+		const Real r1 = randomChance();
+		const Real r2 = randomChance();
+		return Vec2(r1, r2);
 	}
 
-	vec2 RandomGenerator::randomRange2(real a, real b)
+	Vec2 RandomGenerator::randomRange2(Real a, Real b)
 	{
-		const real r1 = randomRange(a, b);
-		const real r2 = randomRange(a, b);
-		return vec2(r1, r2);
+		const Real r1 = randomRange(a, b);
+		const Real r2 = randomRange(a, b);
+		return Vec2(r1, r2);
 	}
 
-	vec2 RandomGenerator::randomDirection2()
+	Vec2 RandomGenerator::randomDirection2()
 	{
-		const rads ang = randomAngle();
-		return vec2(sin(ang), cos(ang));
+		const Rads ang = randomAngle();
+		return Vec2(sin(ang), cos(ang));
 	}
 
-	ivec2 RandomGenerator::randomRange2i(sint32 a, sint32 b)
+	Vec2i RandomGenerator::randomRange2i(sint32 a, sint32 b)
 	{
 		const sint32 r1 = randomRange(a, b);
 		const sint32 r2 = randomRange(a, b);
-		return ivec2(r1, r2);
+		return Vec2i(r1, r2);
 	}
 
-	vec3 RandomGenerator::randomChance3()
+	Vec3 RandomGenerator::randomChance3()
 	{
-		const real r1 = randomChance();
-		const real r2 = randomChance();
-		const real r3 = randomChance();
-		return vec3(r1, r2, r3);
+		const Real r1 = randomChance();
+		const Real r2 = randomChance();
+		const Real r3 = randomChance();
+		return Vec3(r1, r2, r3);
 	}
 
-	vec3 RandomGenerator::randomRange3(real a, real b)
+	Vec3 RandomGenerator::randomRange3(Real a, Real b)
 	{
-		const real r1 = randomRange(a, b);
-		const real r2 = randomRange(a, b);
-		const real r3 = randomRange(a, b);
-		return vec3(r1, r2, r3);
+		const Real r1 = randomRange(a, b);
+		const Real r2 = randomRange(a, b);
+		const Real r3 = randomRange(a, b);
+		return Vec3(r1, r2, r3);
 	}
 
-	vec3 RandomGenerator::randomDirection3()
+	Vec3 RandomGenerator::randomDirection3()
 	{
-		const real z = randomRange(-1.f, 1.f);
-		const vec2 p = randomDirection2() * sqrt(1 - sqr(z));
-		const vec3 r = vec3(p, z);
+		const Real z = randomRange(-1.f, 1.f);
+		const Vec2 p = randomDirection2() * sqrt(1 - sqr(z));
+		const Vec3 r = Vec3(p, z);
 		CAGE_ASSERT(abs(lengthSquared(r) - 1) < 1e-5);
 		return r;
 	}
 
-	ivec3 RandomGenerator::randomRange3i(sint32 a, sint32 b)
+	Vec3i RandomGenerator::randomRange3i(sint32 a, sint32 b)
 	{
 		const sint32 r1 = randomRange(a, b);
 		const sint32 r2 = randomRange(a, b);
 		const sint32 r3 = randomRange(a, b);
-		return ivec3(r1, r2, r3);
+		return Vec3i(r1, r2, r3);
 	}
 
-	vec4 RandomGenerator::randomChance4()
+	Vec4 RandomGenerator::randomChance4()
 	{
-		const real r1 = randomChance();
-		const real r2 = randomChance();
-		const real r3 = randomChance();
-		const real r4 = randomChance();
-		return vec4(r1, r2, r3, r4);
+		const Real r1 = randomChance();
+		const Real r2 = randomChance();
+		const Real r3 = randomChance();
+		const Real r4 = randomChance();
+		return Vec4(r1, r2, r3, r4);
 	}
 
-	vec4 RandomGenerator::randomRange4(real a, real b)
+	Vec4 RandomGenerator::randomRange4(Real a, Real b)
 	{
-		const real r1 = randomRange(a, b);
-		const real r2 = randomRange(a, b);
-		const real r3 = randomRange(a, b);
-		const real r4 = randomRange(a, b);
-		return vec4(r1, r2, r3, r4);
+		const Real r1 = randomRange(a, b);
+		const Real r2 = randomRange(a, b);
+		const Real r3 = randomRange(a, b);
+		const Real r4 = randomRange(a, b);
+		return Vec4(r1, r2, r3, r4);
 	}
 
-	quat RandomGenerator::randomDirectionQuat()
+	Quat RandomGenerator::randomDirectionQuat()
 	{
-		const vec3 d = randomDirection3();
-		const rads a = randomAngle();
-		return normalize(quat(d, a));
+		const Vec3 d = randomDirection3();
+		const Rads a = randomAngle();
+		return normalize(Quat(d, a));
 	}
 
-	ivec4 RandomGenerator::randomRange4i(sint32 a, sint32 b)
+	Vec4i RandomGenerator::randomRange4i(sint32 a, sint32 b)
 	{
 		const sint32 r1 = randomRange(a, b);
 		const sint32 r2 = randomRange(a, b);
 		const sint32 r3 = randomRange(a, b);
 		const sint32 r4 = randomRange(a, b);
-		return ivec4(r1, r2, r3, r4);
+		return Vec4i(r1, r2, r3, r4);
 	}
 
 	namespace detail
@@ -195,76 +195,76 @@ namespace cage
 		}
 	}
 
-	real randomChance()
+	Real randomChance()
 	{
 		return detail::globalRandomGenerator().randomChance();
 	}
 
 #define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return detail::globalRandomGenerator().randomRange(min, max); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, degs, float, double));
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, Real, Rads, Degs, float, double));
 #undef GCHL_GENERATE
 
-	rads randomAngle()
+	Rads randomAngle()
 	{
 		return detail::globalRandomGenerator().randomAngle();
 	}
 
-	vec2 randomChance2()
+	Vec2 randomChance2()
 	{
 		return detail::globalRandomGenerator().randomChance2();
 	}
 
-	vec2 randomRange2(real a, real b)
+	Vec2 randomRange2(Real a, Real b)
 	{
 		return detail::globalRandomGenerator().randomRange2(a, b);
 	}
 
-	vec2 randomDirection2()
+	Vec2 randomDirection2()
 	{
 		return detail::globalRandomGenerator().randomDirection2();
 	}
 
-	ivec2 randomRange2i(sint32 a, sint32 b)
+	Vec2i randomRange2i(sint32 a, sint32 b)
 	{
 		return detail::globalRandomGenerator().randomRange2i(a, b);
 	}
 
-	vec3 randomChance3()
+	Vec3 randomChance3()
 	{
 		return detail::globalRandomGenerator().randomChance3();
 	}
 
-	vec3 randomRange3(real a, real b)
+	Vec3 randomRange3(Real a, Real b)
 	{
 		return detail::globalRandomGenerator().randomRange3(a, b);
 	}
 
-	vec3 randomDirection3()
+	Vec3 randomDirection3()
 	{
 		return detail::globalRandomGenerator().randomDirection3();
 	}
 
-	ivec3 randomRange3i(sint32 a, sint32 b)
+	Vec3i randomRange3i(sint32 a, sint32 b)
 	{
 		return detail::globalRandomGenerator().randomRange3i(a, b);
 	}
 
-	vec4 randomChance4()
+	Vec4 randomChance4()
 	{
 		return detail::globalRandomGenerator().randomChance4();
 	}
 
-	vec4 randomRange4(real a, real b)
+	Vec4 randomRange4(Real a, Real b)
 	{
 		return detail::globalRandomGenerator().randomRange4(a, b);
 	}
 
-	quat randomDirectionQuat()
+	Quat randomDirectionQuat()
 	{
 		return detail::globalRandomGenerator().randomDirectionQuat();
 	}
 
-	ivec4 randomRange4i(sint32 a, sint32 b)
+	Vec4i randomRange4i(sint32 a, sint32 b)
 	{
 		return detail::globalRandomGenerator().randomRange4i(a, b);
 	}

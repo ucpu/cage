@@ -8,7 +8,7 @@ namespace cage
 	namespace privat
 	{
 		CAGE_CORE_API void generateRandomData(uint8 *target, uint32 size);
-		CAGE_CORE_API string guidToString(const uint8 *data, uint32 size);
+		CAGE_CORE_API String guidToString(const uint8 *data, uint32 size);
 	}
 
 	template<uint32 N>
@@ -24,7 +24,7 @@ namespace cage
 
 		uint8 data[N];
 
-		operator string() const
+		operator String() const
 		{
 			return privat::guidToString(data, N);
 		}

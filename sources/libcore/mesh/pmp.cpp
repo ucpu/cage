@@ -16,13 +16,14 @@ namespace cage
 			CAGE_ASSERT(model->type() == MeshTypeEnum::Triangles);
 			Holder<pmp::SurfaceMesh> res = systemMemory().createHolder<pmp::SurfaceMesh>();
 			{ // vertices
-				for (const vec3 &p : model->positions())
+				for (const Vec3 &p : model->positions())
 					res->add_vertex(pmp::Point(p[0].value, p[1].value, p[2].value));
 				if (!model->normals().empty())
 				{
-					pmp::VertexProperty<pmp::Point> normals = res->add_vertex_property<pmp::Point>("v:normal");
+					pmp::VertexProperty<pmp::Normal> normals = res->add_vertex_property<pmp::Normal>("v:normal");
+					normals.vector().clear();
 					for (const auto &p : model->normals())
-						normals.vector().push_back(pmp::Point(p[0].value, p[1].value, p[2].value));
+						normals.vector().push_back(pmp::Normal(p[0].value, p[1].value, p[2].value));
 				}
 			}
 			if (model->indicesCount() > 0)
@@ -47,14 +48,15 @@ namespace cage
 			model->clear();
 			{ // vertices
 				{
-					static_assert(sizeof(pmp::Point) == sizeof(vec3), "pmp point size mismatch");
+					static_assert(sizeof(pmp::Point) == sizeof(Vec3), "pmp point size mismatch");
 					const auto &vs = pm->positions();
-					model->positions({ (vec3*)vs.data(), (vec3*)vs.data() + vs.size() });
+					model->positions({ (Vec3 *)vs.data(), (Vec3 *)vs.data() + vs.size() });
 				}
 				if (pm->has_vertex_property("v:normal"))
 				{
-					const auto &ns = pm->get_vertex_property<pmp::Point>("v:normal").vector();
-					model->normals({ (vec3*)ns.data(), (vec3*)ns.data() + ns.size() });
+					static_assert(sizeof(pmp::Normal) == sizeof(Vec3), "pmp normal size mismatch");
+					const auto &ns = pm->get_vertex_property<pmp::Normal>("v:normal").vector();
+					model->normals({ (Vec3 *)ns.data(), (Vec3 *)ns.data() + ns.size() });
 				}
 			}
 			// indices
@@ -71,7 +73,7 @@ namespace cage
 		}
 	}
 
-	void meshSimplify(Mesh *poly,  const MeshSimplifyConfig &config)
+	void meshSimplify(Mesh *poly, const MeshSimplifyConfig &config)
 	{
 		try
 		{

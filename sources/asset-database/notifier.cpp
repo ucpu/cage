@@ -25,7 +25,7 @@ namespace
 				connections.push_back(std::move(tmp));
 		}
 
-		void notify(const string &str)
+		void notify(const String &str)
 		{
 			detail::OverrideBreakpoint OverrideBreakpoint;
 			ScopeLock lck(mut);
@@ -64,7 +64,7 @@ void notifierAccept()
 		notifierInstance->accept();
 }
 
-void notifierNotify(const string &str)
+void notifierNotify(const String &str)
 {
 	if (notifierInstance)
 		notifierInstance->notify(str);

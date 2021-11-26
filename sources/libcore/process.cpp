@@ -20,7 +20,7 @@
 
 namespace cage
 {
-	ProcessCreateConfig::ProcessCreateConfig(const string &command, const string &workingDirectory) : command(command), workingDirectory(workingDirectory)
+	ProcessCreateConfig::ProcessCreateConfig(const String &command, const String &workingDirectory) : command(command), workingDirectory(workingDirectory)
 	{}
 
 	namespace
@@ -54,10 +54,10 @@ namespace cage
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + config.command + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process '" + config.command + "'");
 
-				const string workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
+				const String workingDir = pathToAbs(config.workingDirectory);
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -83,8 +83,8 @@ namespace cage
 				siStartInfo.hStdInput = config.discardStdIn ? hFileNull.handle : hPipeInR.handle;
 				siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-				char cmd2[string::MaxLength];
-				detail::memset(cmd2, 0, string::MaxLength);
+				char cmd2[String::MaxLength];
+				detail::memset(cmd2, 0, String::MaxLength);
 				detail::memcpy(cmd2, config.command.c_str(), config.command.length());
 
 				if (!CreateProcess(
@@ -109,7 +109,7 @@ namespace cage
 				hPipeOutW.close();
 				hPipeInR.close();
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 			}
 
 			~ProcessImpl()
@@ -171,15 +171,15 @@ namespace cage
 				return sz;
 			}
 
-			string readLine() override
+			String readLine() override
 			{
-				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+				char buffer[String::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
 				uintPtr size = 0;
 				while (true)
 				{
 					read({ buffer + size, buffer + size + 1 });
 					size++;
-					string line;
+					String line;
 					if (detail::readLine(line, { buffer, buffer + size }, true))
 						return line;
 				}
@@ -258,10 +258,10 @@ namespace cage
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + config.command + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process '" + config.command + "'");
 
-				const string workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
+				const String workingDir = pathToAbs(config.workingDirectory);
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe.handles) < 0)
 					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);
@@ -298,7 +298,7 @@ namespace cage
 					alterEnvironment();
 
 					// run child process image
-					const string params = string() + "(cd '" + workingDir + "'; " + config.command + " )";
+					const String params = String() + "(cd '" + workingDir + "'; " + config.command + " )";
 					const int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
 
 					// if we get here, an error occurred, but we are in the child process, so just exit
@@ -318,7 +318,7 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fork failed", errno);
 				}
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + pid);
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
 			}
 
 			~ProcessImpl()
@@ -395,15 +395,15 @@ namespace cage
 				return s;
 			}
 
-			string readLine() override
+			String readLine() override
 			{
-				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+				char buffer[String::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
 				uintPtr size = 0;
 				while (true)
 				{
 					read({ buffer + size, buffer + size + 1 });
 					size++;
-					string line;
+					String line;
 					if (detail::readLine(line, { buffer, buffer + size }, true))
 						return line;
 				}

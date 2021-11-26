@@ -1,20 +1,23 @@
 #include <cage-core/skeletalAnimation.h>
+#include <cage-core/hashString.h>
+#include <cage-core/meshImport.h>
 
-#include "utility/assimp.h"
+#include "processor.h"
+
+MeshImportConfig meshImportConfig(bool allowAxes);
+void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processAnimation()
 {
-	Holder<AssimpContext> context = newAssimpContext(0, 0);
-	const aiScene *scene = context->getScene();
+	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig(false));
+	meshImportNotifyUsedFiles(result);
 
-	if (scene->mNumAnimations == 0)
-		CAGE_THROW_ERROR(Exception, "no animations available");
 	uint32 chosenAnimationIndex = m;
-	if (scene->mNumAnimations > 1 || !inputSpec.empty())
+	if (result.animations.size() > 1 || !inputSpec.empty())
 	{
-		for (uint32 i = 0; i < scene->mNumAnimations; i++)
+		for (uint32 i = 0; i < result.animations.size(); i++)
 		{
-			if (inputSpec == scene->mAnimations[i]->mName.data)
+			if (inputSpec == result.animations[i].name)
 			{
 				chosenAnimationIndex = i;
 				break;
@@ -25,23 +28,34 @@ void processAnimation()
 		chosenAnimationIndex = 0;
 	if (chosenAnimationIndex == m)
 		CAGE_THROW_ERROR(Exception, "no animation name matches the specifier");
-	const aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
-	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
-		CAGE_THROW_ERROR(Exception, "the animation has unsupported type");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
-	Holder<SkeletalAnimation> anim = context->animation(chosenAnimationIndex);
+	Holder<SkeletalAnimation> anim = result.animations[chosenAnimationIndex].animation.share();
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "duration: " + anim->duration() + " microseconds");
+
+	const uint32 skeletonName = []() {
+		String n = properties("skeleton");
+		if (n.empty())
+			n = inputFile + ";skeleton";
+		else
+			n = pathJoin(pathExtractDirectory(inputName), n);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using skeleton name: '" + n + "'");
+		writeLine(String("ref = ") + n);
+		return HashString(n);
+	}();
+	anim->skeletonName(skeletonName);
+
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
+	h.dependenciesCount = 1;
 	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
+	f->write(bufferView(skeletonName));
 	f->write(comp);
 	f->close();
 }

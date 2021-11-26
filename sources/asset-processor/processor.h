@@ -12,21 +12,21 @@
 
 using namespace cage;
 
-extern string inputDirectory;
-extern string inputName;
-extern string outputDirectory;
-extern string outputName;
+extern String inputDirectory;
+extern String inputName;
+extern String outputDirectory;
+extern String outputName;
 
-extern string inputFileName;
-extern string outputFileName;
-extern string inputFile;
-extern string inputSpec;
-extern string inputIdentifier;
+extern String inputFileName;
+extern String outputFileName;
+extern String inputFile;
+extern String inputSpec;
+extern String inputIdentifier;
 
 extern StringLiteral logComponentName;
 
-void writeLine(const string &other);
-string properties(const string &name);
+void writeLine(const String &other);
+String properties(const String &name);
 
 AssetHeader initializeAssetHeader();
 
@@ -45,13 +45,12 @@ void processRaw();
 
 int processAnalyze();
 void analyzeTexture();
-void analyzeAssimp();
 void analyzeFont();
 void analyzeSound();
 
 
 // relative path is interpreted relative to the input file (unless specified otherwise)
 // absolute path is interpreted as relative to input root path
-string convertAssetPath(const string &input, const string &relativeTo = "", bool markAsReferenced = true);
-string convertFilePath(const string &input, const string &relativeTo = "", bool markAsUsed = true);
+String convertAssetPath(const String &input, const String &relativeTo = "", bool markAsReferenced = true);
+String convertFilePath(const String &input, const String &relativeTo = "", bool markAsUsed = true);
 

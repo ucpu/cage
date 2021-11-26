@@ -18,7 +18,7 @@
 
 namespace
 {
-	const cage::string translateErrorCode(int code)
+	const cage::String translateErrorCode(int code)
 	{
 		switch (code)
 #undef __FTERRORS_H__
@@ -44,23 +44,23 @@ namespace
 	FontHeader data;
 
 	std::vector<Glyph> glyphs;
-	std::vector<real> kerning;
+	std::vector<Real> kerning;
 	std::vector<uint32> charsetChars;
 	std::vector<uint32> charsetGlyphs;
 	Holder<Image> texels;
 
-	vec3 to(const msdfgen::FloatRGB &rgb)
+	Vec3 to(const msdfgen::FloatRGB &rgb)
 	{
-		return vec3(rgb.r, rgb.g, rgb.b);
+		return Vec3(rgb.r, rgb.g, rgb.b);
 	}
 
-	msdfgen::Vector2 from(const vec2 &v)
+	msdfgen::Vector2 from(const Vec2 &v)
 	{
 		return msdfgen::Vector2(v[0].value, v[1].value);
 	}
 
-	real fontScale;
-	real maxOffTop, maxOffBottom;
+	Real fontScale;
+	Real maxOffTop, maxOffBottom;
 	static const uint32 border = 6;
 
 	void glyphImage(Glyph &g, msdfgen::Shape &shape)
@@ -69,22 +69,22 @@ namespace
 		msdfgen::edgeColoringSimple(shape, 3.0);
 		if (!shape.validate())
 			CAGE_THROW_ERROR(Exception, "shape validation failed");
-		double l = real::Infinity().value, b = real::Infinity().value, r = -real::Infinity().value, t = -real::Infinity().value;
+		double l = Real::Infinity().value, b = Real::Infinity().value, r = -Real::Infinity().value, t = -Real::Infinity().value;
 		shape.bounds(l, b, r, t);
 
 		// generate glyph image
 		g.png = newImage();
 		g.png->initialize(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3);
 		msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
-		msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-vec2(l, b) + border));
+		msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-Vec2(l, b) + border));
 		for (uint32 y = 0; y < g.png->height(); y++)
 			for (uint32 x = 0; x < g.png->width(); x++)
 				for (uint32 c = 0; c < 3; c++)
 					g.png->value(x, y, c, to(msdf(x, y))[c].value);
 
 		// glyph size compensation for the border
-		vec2 ps = vec2(g.png->width(), g.png->height()) - 2 * border;
-		vec2 br = border * g.data.size / ps;
+		Vec2 ps = Vec2(g.png->width(), g.png->height()) - 2 * border;
+		Vec2 br = border * g.data.size / ps;
 		g.data.size += 2 * br;
 		g.data.bearing -= br;
 	}
@@ -93,7 +93,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "load glyphs");
 		data.glyphCount = numeric_cast<uint32>(face->num_glyphs);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "font has " + data.glyphCount + " glyphs");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "font has " + data.glyphCount + " glyphs");
 		glyphs.reserve(data.glyphCount + 10);
 		glyphs.resize(data.glyphCount);
 		uint32 maxPngW = 0, maxPngH = 0;
@@ -131,13 +131,13 @@ namespace
 		}
 		data.firstLineOffset = maxOffTop;
 		data.lineHeight = ((face->height * fontScale / 64.0) + (maxOffTop + maxOffBottom)) / 2;
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "units per EM: " + face->units_per_EM);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "(unused) line height (top + bottom): " + (maxOffTop + maxOffBottom));
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "(unused) line height (from font): " + (face->height * fontScale / 64.0));
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "line height: " + data.lineHeight);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "first line offset: " + data.firstLineOffset);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "max glyph size: " + data.glyphMaxSize);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, stringizer() + "max glyph image size: " + maxPngW + "*" + maxPngH);
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "units per EM: " + face->units_per_EM);
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "(unused) line height (top + bottom): " + (maxOffTop + maxOffBottom));
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "(unused) line height (from font): " + (face->height * fontScale / 64.0));
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "line height: " + data.lineHeight);
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "first line offset: " + data.firstLineOffset);
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "max glyph size: " + data.glyphMaxSize);
+		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "max glyph image size: " + maxPngW + "*" + maxPngH);
 	}
 
 	void loadCharset()
@@ -155,7 +155,7 @@ namespace
 			charcode = FT_Get_Next_Char(face, charcode, &glyphIndex);
 		}
 		data.charCount = numeric_cast<uint32>(charsetChars.size());
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "font has " + data.charCount + " characters");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "font has " + data.charCount + " characters");
 	}
 
 	void loadKerning()
@@ -211,7 +211,7 @@ namespace
 		}
 		if (!foundReturn)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "artificially adding return");
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "artificially adding return");
 			uint32 idx = 0;
 			while (idx < charsetChars.size() && charsetChars[idx] < '\n')
 				idx++;
@@ -221,7 +221,7 @@ namespace
 		}
 
 		{ // add cursor
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "artificially adding cursor glyph");
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "artificially adding cursor glyph");
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
 			Glyph &g = glyphs[glyphs.size() - 1];
@@ -235,11 +235,11 @@ namespace
 
 			if (!kerning.empty())
 			{ // compensate kerning
-				std::vector<real> k;
+				std::vector<Real> k;
 				k.resize(data.glyphCount * data.glyphCount);
 				uint32 dgcm1 = data.glyphCount - 1;
 				for (uint32 i = 0; i < dgcm1; i++)
-					detail::memcpy(&k[i * data.glyphCount], &kerning[i * dgcm1], dgcm1 * sizeof(real));
+					detail::memcpy(&k[i * data.glyphCount], &kerning[i * dgcm1], dgcm1 * sizeof(Real));
 				std::swap(k, kerning);
 			}
 		}
@@ -266,7 +266,7 @@ namespace
 		while (res * res < area) res *= 2;
 		while (true)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "trying to pack into resolution " + res + "*" + res);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "trying to pack into resolution " + res + "*" + res);
 			RectPackingSolveConfig cfg;
 			cfg.margin = 2;
 			cfg.width = cfg.height = res;
@@ -283,20 +283,19 @@ namespace
 			CAGE_ASSERT(y < res);
 			g.pngX = x;
 			g.pngY = y;
-			vec2 to = vec2(g.pngX, g.pngY) / res;
-			vec2 ts = vec2(g.png->width(), g.png->height()) / res;
-			g.data.texUv = vec4(to, ts);
+			Vec2 to = Vec2(g.pngX, g.pngY) / res;
+			Vec2 ts = Vec2(g.png->width(), g.png->height()) / res;
+			g.data.texUv = Vec4(to, ts);
 		}
-		data.texWidth = res;
-		data.texHeight = res;
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture atlas resolution " + data.texWidth + "*" + data.texHeight);
+		data.texResolution = Vec2i(res);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture atlas resolution " + data.texResolution[0] + "*" + data.texResolution[1]);
 	}
 
 	void createAtlasPixels()
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas pixels");
 		texels = newImage();
-		texels->initialize(data.texWidth, data.texHeight, 3);
+		texels->initialize(data.texResolution[0], data.texResolution[1], 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			Glyph &g = glyphs[glyphIndex];
@@ -319,7 +318,7 @@ namespace
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data) + data.texSize +
 			data.glyphCount * sizeof(FontHeader::GlyphData) +
-			sizeof(real) * numeric_cast<uint32>(kerning.size()) +
+			sizeof(Real) * numeric_cast<uint32>(kerning.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());
 
@@ -335,7 +334,7 @@ namespace
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			sr << glyphs[glyphIndex].data;
 		if (kerning.size() > 0)
-			sr.write(bufferCast<char, real>(kerning));
+			sr.write(bufferCast<char, Real>(kerning));
 		if (charsetChars.size() > 0)
 		{
 			sr.write(bufferCast<char, uint32>(charsetChars));
@@ -343,9 +342,9 @@ namespace
 		}
 
 		CAGE_ASSERT(h.originalSize == buf.size());
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buf.size());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buf.size());
 		Holder<PointerRange<char>> buf2 = compress(buf);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + buf2.size());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + buf2.size());
 		h.compressedSize = buf2.size();
 
 		Holder<File> f = writeFile(outputFileName);
@@ -372,21 +371,21 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
 			f->writeLine(
-				fill(string("glyph"), 10) +
-				fill(string("tex coord"), 60) +
-				fill(string("size"), 30) +
-				fill(string("bearing"), 30) +
-				string("advance")
+				fill(String("glyph"), 10) +
+				fill(String("tex coord"), 60) +
+				fill(String("size"), 30) +
+				fill(String("bearing"), 30) +
+				String("advance")
 			);
 			for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			{
 				Glyph &g = glyphs[glyphIndex];
 				f->writeLine(
-					fill(string(stringizer() + glyphIndex), 10) +
-					fill(string(stringizer() + g.data.texUv), 60) +
-					fill(string(stringizer() + g.data.size), 30) +
-					fill(string(stringizer() + g.data.bearing), 30) +
-					string(stringizer() + g.data.advance.value)
+					fill(String(Stringizer() + glyphIndex), 10) +
+					fill(String(Stringizer() + g.data.texUv), 60) +
+					fill(String(Stringizer() + g.data.size), 30) +
+					fill(String(Stringizer() + g.data.bearing), 30) +
+					String(Stringizer() + g.data.advance.value)
 				);
 			}
 		}
@@ -397,17 +396,17 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
 			f->writeLine(
-				fill(string("code"), 10) +
-				fill(string("char"), 5) +
-				string("glyph")
+				fill(String("code"), 10) +
+				fill(String("char"), 5) +
+				String("glyph")
 			);
 			for (uint32 charIndex = 0; charIndex < data.charCount; charIndex++)
 			{
 				uint32 c = charsetChars[charIndex];
 				char C = c < 256 ? c : ' ';
-				f->writeLine(stringizer() +
-					fill(string(stringizer() + c), 10) +
-					fill(string({ &C, &C + 1 }), 5) +
+				f->writeLine(Stringizer() +
+					fill(String(Stringizer() + c), 10) +
+					fill(String({ &C, &C + 1 }), 5) +
 					charsetGlyphs[charIndex]
 				);
 			}
@@ -419,9 +418,9 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
 			f->writeLine(
-				fill(string("g1"), 5) +
-				fill(string("g2"), 5) +
-				string("kerning")
+				fill(String("g1"), 5) +
+				fill(String("g2"), 5) +
+				String("kerning")
 			);
 			if (kerning.empty())
 				f->writeLine("no data");
@@ -433,13 +432,13 @@ namespace
 				{
 					for (uint32 y = 0; y < m; y++)
 					{
-						real k = kerning[x * m + y];
+						Real k = kerning[x * m + y];
 						if (k == 0)
 							continue;
 						f->writeLine(
-							fill(string(stringizer() + x), 5) +
-							fill(string(stringizer() + y), 5) +
-							string(stringizer() + k)
+							fill(String(Stringizer() + x), 5) +
+							fill(String(Stringizer() + y), 5) +
+							String(Stringizer() + k)
 						);
 					}
 				}
@@ -459,7 +458,7 @@ namespace
 
 void processFont()
 {
-	writeLine(string("use=") + inputFile);
+	writeLine(String("use=") + inputFile);
 	if (!inputSpec.empty())
 		CAGE_THROW_ERROR(Exception, "input specification must be empty");
 	CALL(FT_Init_FreeType, &library);
@@ -491,7 +490,7 @@ void analyzeFont()
 		CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 		writeLine("cage-begin");
 		writeLine("scheme=font");
-		writeLine(string() + "asset=" + inputFile);
+		writeLine(String() + "asset=" + inputFile);
 		writeLine("cage-end");
 	}
 	catch (...)

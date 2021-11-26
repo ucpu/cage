@@ -1,3 +1,5 @@
+#include <cage-core/enumerate.h>
+
 #include "../private.h"
 
 namespace cage
@@ -7,23 +9,21 @@ namespace cage
 		struct LayoutTableImpl : public LayoutItem
 		{
 			GuiLayoutTableComponent data; // may not be reference
-			real *widths;
-			real *heights;
-			uint32 mws, mhs;
-			uint32 childs;
+			std::vector<Real> widths;
+			std::vector<Real> heights;
+			uint32 mws = 0, mhs = 0;
 
-			LayoutTableImpl(HierarchyItem *hierarchy, bool justLine) : LayoutItem(hierarchy), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
+			LayoutTableImpl(HierarchyItem *hierarchy, bool justLine) : LayoutItem(hierarchy)
 			{
-				auto impl = hierarchy->impl;
 				if (justLine)
 				{
-					CAGE_COMPONENT_GUI(LayoutLine, l, hierarchy->ent);
+					GUI_COMPONENT(LayoutLine, l, hierarchy->ent);
 					data.vertical = l.vertical;
 					data.sections = 1;
 				}
 				else
 				{
-					CAGE_COMPONENT_GUI(LayoutTable, t, hierarchy->ent);
+					GUI_COMPONENT(LayoutTable, t, hierarchy->ent);
 					data = t;
 				}
 			}
@@ -33,22 +33,15 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				auto impl = hierarchy->impl;
-				{ // count childs
-					childs = 0;
-					HierarchyItem *c = hierarchy->firstChild;
-					while (c)
-					{
-						childs++;
-						c = c->nextSibling;
-					}
-				}
+				const uint32 childs = numeric_cast<uint32>(hierarchy->children.size());
+
 				// update sections
 				if (data.sections == 0)
 				{
 					uint32 cnt = numeric_cast<uint32>(round(sqrt(childs)));
 					data.sections = max(cnt, 1u);
 				}
+
 				// mws & mhs
 				if (data.vertical)
 				{
@@ -65,30 +58,26 @@ namespace cage
 						mws++;
 				}
 				CAGE_ASSERT(mws * mhs >= childs);
+
 				// allocate widths & heights
-				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real), sizeof(uintPtr));
-				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real), sizeof(uintPtr));
-				detail::memset(widths, 0, mws * sizeof(real));
-				detail::memset(heights, 0, mhs * sizeof(real));
+				widths.resize(mws);
+				heights.resize(mhs);
+
 				// populate widths & heights
-				vec2 m;
+				Vec2 m;
+				for (const auto &it : enumerate(hierarchy->children))
 				{
-					HierarchyItem *c = hierarchy->firstChild;
-					uint32 idx = 0;
-					while (c)
-					{
-						c->findRequestedSize();
-						m = max(m, c->requestedSize);
-						uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
-						uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-						CAGE_ASSERT(wi < mws && hi < mhs);
-						real &w = widths[wi];
-						real &h = heights[hi];
-						w = max(w, c->requestedSize[0]);
-						h = max(h, c->requestedSize[1]);
-						c = c->nextSibling;
-						idx++;
-					}
+					HierarchyItem *c = +*it;
+					const uint32 idx = numeric_cast<uint32>(it.index);
+					c->findRequestedSize();
+					m = max(m, c->requestedSize);
+					const uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
+					const uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
+					CAGE_ASSERT(wi < mws && hi < mhs);
+					Real &w = widths[wi];
+					Real &h = heights[hi];
+					w = max(w, c->requestedSize[0]);
+					h = max(h, c->requestedSize[1]);
 				}
 				// grid fitting
 				if (data.grid)
@@ -97,11 +86,11 @@ namespace cage
 						widths[x] = m[0];
 					for (uint32 y = 0; y < mhs; y++)
 						heights[y] = m[1];
-					hierarchy->requestedSize = m * vec2(mws, mhs);
+					hierarchy->requestedSize = m * Vec2(mws, mhs);
 				}
 				else
 				{
-					hierarchy->requestedSize = vec2();
+					hierarchy->requestedSize = Vec2();
 					for (uint32 x = 0; x < mws; x++)
 						hierarchy->requestedSize[0] += widths[x];
 					for (uint32 y = 0; y < mhs; y++)
@@ -112,21 +101,20 @@ namespace cage
 
 			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				HierarchyItem *c = hierarchy->firstChild;
-				uint32 idx = 0;
-				vec2 spacing = (update.renderSize - hierarchy->requestedSize) / vec2(mws, mhs);
-				//spacing = max(spacing, vec2());
-				vec2 pos = update.renderPos;
-				while (c)
+				const Vec2 spacing = (update.renderSize - hierarchy->requestedSize) / Vec2(mws, mhs);
+				Vec2 pos = update.renderPos;
+				for (const auto &it : enumerate(hierarchy->children))
 				{
-					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
-					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
+					HierarchyItem *c = +*it;
+					const uint32 idx = numeric_cast<uint32>(it.index);
+					const uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
+					const uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
 					CAGE_ASSERT(wi < mws && hi < mhs);
-					vec2 s = vec2(widths[wi], heights[hi]);
+					const Vec2 s = Vec2(widths[wi], heights[hi]);
 
 					{
 						FinalPosition u(update);
-						u.renderPos = pos + vec2(wi, hi) * spacing;
+						u.renderPos = pos + Vec2(wi, hi) * spacing;
 						u.renderSize = max(s + spacing, 0);
 						c->findFinalPosition(u);
 					}
@@ -152,8 +140,6 @@ namespace cage
 						else
 							pos[1] += s[1];
 					}
-					c = c->nextSibling;
-					idx++;
 				}
 			}
 		};
@@ -162,12 +148,12 @@ namespace cage
 	void LayoutLineCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<LayoutTableImpl>(item, true);
+		item->item = item->impl->memory->createHolder<LayoutTableImpl>(item, true).cast<BaseItem>();
 	}
 
 	void LayoutTableCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<LayoutTableImpl>(item, false);
+		item->item = item->impl->memory->createHolder<LayoutTableImpl>(item, false).cast<BaseItem>();
 	}
 }

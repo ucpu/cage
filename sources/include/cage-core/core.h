@@ -7,54 +7,8 @@
 #include <type_traits>
 #include <compare>
 
-#if !defined(CAGE_DEBUG) && !defined(NDEBUG)
-#define CAGE_DEBUG
-#endif
-#if defined(CAGE_DEBUG) && defined(NDEBUG)
-#error CAGE_DEBUG and NDEBUG are incompatible
-#endif
-
-#if defined(_MSC_VER)
-#define CAGE_API_EXPORT __declspec(dllexport)
-#define CAGE_API_IMPORT __declspec(dllimport)
-#define CAGE_API_PRIVATE
-#define CAGE_FORCE_INLINE __forceinline
-#else
-#define CAGE_API_EXPORT [[gnu::visibility("default")]]
-#define CAGE_API_IMPORT [[gnu::visibility("default")]]
-#define CAGE_API_PRIVATE [[gnu::visibility("hidden")]]
-#define CAGE_FORCE_INLINE __attribute__((always_inline)) inline
-#endif
-
-#ifdef CAGE_CORE_EXPORT
-#define CAGE_CORE_API CAGE_API_EXPORT
-#else
-#define CAGE_CORE_API CAGE_API_IMPORT
-#endif
-
-#if defined(_WIN32) || defined(__WIN32__)
-#define CAGE_SYSTEM_WINDOWS
-#elif defined(linux) || defined(__linux) || defined(__linux__)
-#define CAGE_SYSTEM_LINUX
-#elif defined(__APPLE__)
-#define CAGE_SYSTEM_MAC
-#else
-#error This operating system is not supported
-#endif
-
-#if defined(_WIN64) || defined(__x86_64__) || defined(__ppc64__)
-#define CAGE_ARCHITECTURE_64
-#else
-#define CAGE_ARCHITECTURE_32
-#endif
-
-#ifdef CAGE_DEBUG
-#ifndef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT_ENABLED
-#endif
-#endif
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; } }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; (void)i_; } }
 #else
 #define CAGE_ASSERT(EXPR) {}
 #endif
@@ -87,14 +41,8 @@ namespace cage
 	using sint16 = std::int16_t;
 	using sint32 = std::int32_t;
 	using sint64 = std::int64_t;
-
-#ifdef CAGE_ARCHITECTURE_64
-	using uintPtr = uint64;
-	using sintPtr = sint64;
-#else
-	using uintPtr = uint32;
-	using sintPtr = sint32;
-#endif
+	using uintPtr = std::conditional_t<sizeof(void *) == 8, std::uint64_t, std::uint32_t>;
+	using sintPtr = std::conditional_t<sizeof(void *) == 8, std::int64_t, std::int32_t>;
 
 	// forward declarations
 
@@ -105,22 +53,22 @@ namespace cage
 		template<uint32 N> struct StringBase;
 		template<uint32 N> struct StringizerBase;
 	}
-	using string = detail::StringBase<995>;
-	using stringizer = detail::StringizerBase<995>;
+	using String = detail::StringBase<1019>;
+	using Stringizer = detail::StringizerBase<1019>;
 
-	struct real;
-	struct rads;
-	struct degs;
-	struct vec2;
-	struct ivec2;
-	struct vec3;
-	struct ivec3;
-	struct vec4;
-	struct ivec4;
-	struct quat;
-	struct mat3;
-	struct mat4;
-	struct transform;
+	struct Real;
+	struct Rads;
+	struct Degs;
+	struct Vec2;
+	struct Vec2i;
+	struct Vec3;
+	struct Vec3i;
+	struct Vec4;
+	struct Vec4i;
+	struct Quat;
+	struct Mat3;
+	struct Mat4;
+	struct Transform;
 
 	struct Line;
 	struct Triangle;
@@ -130,6 +78,11 @@ namespace cage
 	struct Cone;
 	struct Frustum;
 
+	namespace detail
+	{
+		template<uint32 MaxSize> struct AnyBase;
+	}
+	using Any = detail::AnyBase<1024>;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
 	struct AssetContext;
@@ -175,6 +128,9 @@ namespace cage
 	class EntityComponent;
 	class Entity;
 	class EntityGroup;
+	struct EntitiesCopyConfig;
+	template<class> struct EventListener;
+	template<class> struct EventDispatcher;
 	struct FileMode;
 	class File;
 	enum class PathTypeFlags : uint32;
@@ -252,6 +208,7 @@ namespace cage
 	class BufferOStream;
 	class SwapBufferGuard;
 	struct SwapBufferGuardCreateConfig;
+	struct AsyncTask;
 	class TextPack;
 	class ThreadPool;
 	class Timer;
@@ -305,8 +262,8 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
+		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const String &message) noexcept;
 		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 
@@ -595,7 +552,7 @@ namespace cage
 		struct StringizerBase;
 
 		template<uint32 N>
-		struct StringBase
+		struct alignas(64) StringBase
 		{
 			// constructors
 			StringBase() noexcept = default;
@@ -737,7 +694,7 @@ namespace cage
 		};
 
 		template<uint32 N>
-		struct StringizerBase
+		struct alignas(64) StringizerBase
 		{
 			StringBase<N> value;
 
@@ -927,14 +884,10 @@ namespace cage
 
 			HolderBase &operator = (HolderBase &&other) noexcept
 			{
-				if (this == &other)
-					return *this;
-				if (control_)
-					control_->dec();
-				data_ = other.data_;
-				control_ = other.control_;
-				other.data_ = nullptr;
-				other.control_ = nullptr;
+				HolderBase tmp(other.share());
+				clear();
+				std::swap(data_, tmp.data_);
+				std::swap(control_, tmp.control_);
 				return *this;
 			}
 

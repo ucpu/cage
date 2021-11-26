@@ -12,30 +12,30 @@ namespace cage
 {
 	namespace
 	{
-		vec2 barycoord(const vec2 &a, const vec2 &b, const vec2 &c, const vec2 &p)
+		Vec2 barycoord(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &p)
 		{
-			const vec2 v0 = b - a;
-			const vec2 v1 = c - a;
-			const vec2 v2 = p - a;
-			const real d00 = dot(v0, v0);
-			const real d01 = dot(v0, v1);
-			const real d11 = dot(v1, v1);
-			const real d20 = dot(v2, v0);
-			const real d21 = dot(v2, v1);
-			const real denom = d00 * d11 - d01 * d01;
+			const Vec2 v0 = b - a;
+			const Vec2 v1 = c - a;
+			const Vec2 v2 = p - a;
+			const Real d00 = dot(v0, v0);
+			const Real d01 = dot(v0, v1);
+			const Real d11 = dot(v1, v1);
+			const Real d20 = dot(v2, v0);
+			const Real d21 = dot(v2, v1);
+			const Real denom = d00 * d11 - d01 * d01;
 			if (abs(denom) < 1e-7)
-				return vec2(); // the triangle is too small or degenerated, just return anything valid
-			const real invDenom = 1.0 / denom;
-			const real v = (d11 * d20 - d01 * d21) * invDenom;
-			const real w = (d00 * d21 - d01 * d20) * invDenom;
-			const real u = 1 - v - w;
+				return Vec2(); // the triangle is too small or degenerated, just return anything valid
+			const Real invDenom = 1.0 / denom;
+			const Real v = (d11 * d20 - d01 * d21) * invDenom;
+			const Real w = (d00 * d21 - d01 * d20) * invDenom;
+			const Real u = 1 - v - w;
 			CAGE_ASSERT(u.valid() && v.valid());
-			return vec2(u, v);
+			return Vec2(u, v);
 		}
 
-		ivec2 operator * (const ivec2 &a, real b)
+		Vec2i operator * (const Vec2i &a, Real b)
 		{
-			return ivec2(sint32(a[0] * b.value), sint32(a[1] * b.value));
+			return Vec2i(sint32(a[0] * b.value), sint32(a[1] * b.value));
 		}
 
 		template<class T>
@@ -92,13 +92,13 @@ namespace cage
 			removeVertices(impl, verticesToRemove);
 		}
 
-		uint32 clipAddPoint(MeshImpl *impl, const uint32 ai, const uint32 bi, const uint32 axis, const real value)
+		uint32 clipAddPoint(MeshImpl *impl, const uint32 ai, const uint32 bi, const uint32 axis, const Real value)
 		{
-			const vec3 a = impl->positions[ai];
-			const vec3 b = impl->positions[bi];
+			const Vec3 a = impl->positions[ai];
+			const Vec3 b = impl->positions[bi];
 			if (abs(b[axis] - a[axis]) < 1e-5)
 				return ai; // the edge is very short or degenerated
-			const real pu = (value - a[axis]) / (b[axis] - a[axis]);
+			const Real pu = (value - a[axis]) / (b[axis] - a[axis]);
 			CAGE_ASSERT(pu >= 0 && pu <= 1);
 			if (pu < 1e-5)
 				return ai; // the cut is very close to the beginning of the line
@@ -121,7 +121,7 @@ namespace cage
 			std::swap(b, c); // bca
 		}
 
-		void clipTriangles(MeshImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const real value, const bool side)
+		void clipTriangles(MeshImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const Real value, const bool side)
 		{
 			CAGE_ASSERT((in.size() % 3) == 0);
 			CAGE_ASSERT(out.size() == 0);
@@ -129,9 +129,9 @@ namespace cage
 			for (uint32 tri = 0; tri < tris; tri++)
 			{
 				uint32 ids[3] = { in[tri * 3 + 0], in[tri * 3 + 1], in[tri * 3 + 2]};
-				vec3 a = impl->positions[ids[0]];
-				vec3 b = impl->positions[ids[1]];
-				vec3 c = impl->positions[ids[2]];
+				Vec3 a = impl->positions[ids[0]];
+				Vec3 b = impl->positions[ids[1]];
+				Vec3 c = impl->positions[ids[2]];
 				bool as = a[axis] > value;
 				bool bs = b[axis] > value;
 				bool cs = c[axis] > value;
@@ -261,7 +261,7 @@ namespace cage
 			verticesToRemove.resize(impl->positions.size(), false);
 			{
 				auto r = verticesToRemove.begin();
-				for (const vec3 &v : impl->positions)
+				for (const Vec3 &v : impl->positions)
 				{
 					*r = *r || !valid(v);
 					r++;
@@ -270,7 +270,7 @@ namespace cage
 			}
 			{
 				auto r = verticesToRemove.begin();
-				for (const vec2 &v : impl->uvs)
+				for (const Vec2 &v : impl->uvs)
 				{
 					*r = *r || !valid(v);
 					r++;
@@ -278,7 +278,7 @@ namespace cage
 			}
 			{
 				auto r = verticesToRemove.begin();
-				for (const vec3 &v : impl->uvs3)
+				for (const Vec3 &v : impl->uvs3)
 				{
 					*r = *r || !valid(v);
 					r++;
@@ -286,7 +286,7 @@ namespace cage
 			}
 			{
 				auto r = verticesToRemove.begin();
-				for (const vec3 &v : impl->normals)
+				for (const Vec3 &v : impl->normals)
 				{
 					*r = *r || !valid(v) || abs(lengthSquared(v) - 1) > 1e-3;
 					r++;
@@ -316,7 +316,7 @@ namespace cage
 		void discardInvalidTriangles(MeshImpl *impl)
 		{
 			const uint32 tris = impl->facesCount();
-			PointerRange<const vec3> ps = impl->positions;
+			PointerRange<const Vec3> ps = impl->positions;
 			if (impl->indices.empty())
 			{
 				std::vector<bool> verticesToRemove;
@@ -410,12 +410,12 @@ namespace cage
 			return result;
 		}
 
-		real meshSurfaceArea(const Mesh *mesh)
+		Real meshSurfaceArea(const Mesh *mesh)
 		{
 			const auto inds = mesh->indices();
 			const auto poss = mesh->positions();
 			const uint32 cnt = numeric_cast<uint32>(inds.size() / 3);
-			real result = 0;
+			Real result = 0;
 			for (uint32 ti = 0; ti < cnt; ti++)
 			{
 				const Triangle t = Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]);
@@ -426,8 +426,8 @@ namespace cage
 
 		uint32 boxLongestAxis(const Aabb &box)
 		{
-			const vec3 mySizes = box.size();
-			const vec3 a = abs(dominantAxis(mySizes));
+			const Vec3 mySizes = box.size();
+			const Vec3 a = abs(dominantAxis(mySizes));
 			if (a[0] == 1)
 				return 0;
 			if (a[1] == 1)
@@ -435,10 +435,10 @@ namespace cage
 			return 2;
 		}
 
-		Aabb clippingBox(const Aabb &box, uint32 axis, real pos, bool second = false)
+		Aabb clippingBox(const Aabb &box, uint32 axis, Real pos, bool second = false)
 		{
-			const vec3 c = box.center();
-			const vec3 hs = box.size() * 0.6; // slightly larger box to avoid clipping due to floating point imprecisions
+			const Vec3 c = box.center();
+			const Vec3 hs = box.size() * 0.6; // slightly larger box to avoid clipping due to floating point imprecisions
 			Aabb r = Aabb(c - hs, c + hs);
 			if (second)
 				r.a[axis] = pos;
@@ -449,26 +449,26 @@ namespace cage
 
 		std::vector<Holder<Mesh>> meshChunkingImpl(Holder<Mesh> mesh, const MeshChunkingConfig &config)
 		{
-			const real myArea = meshSurfaceArea(+mesh);
+			const Real myArea = meshSurfaceArea(+mesh);
 			if (myArea > config.maxSurfaceArea)
 			{
 				const Aabb myBox = mesh->boundingBox();
 				const uint32 a = boxLongestAxis(myBox);
-				real bestSplitPosition = 0.5;
-				real bestSplitScore = real::Infinity();
-				for (real position : { 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7 })
+				Real bestSplitPosition = 0.5;
+				Real bestSplitScore = Real::Infinity();
+				for (Real position : { 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7 })
 				{
 					Holder<Mesh> p = mesh->copy();
 					meshClip(+p, clippingBox(myBox, a, interpolate(myBox.a[a], myBox.b[a], position)));
-					const real area = meshSurfaceArea(+p);
-					const real score = abs(0.5 - area / myArea);
+					const Real area = meshSurfaceArea(+p);
+					const Real score = abs(0.5 - area / myArea);
 					if (score < bestSplitScore)
 					{
 						bestSplitScore = score;
 						bestSplitPosition = position;
 					}
 				}
-				const real split = interpolate(myBox.a[a], myBox.b[a], bestSplitPosition);
+				const Real split = interpolate(myBox.a[a], myBox.b[a], bestSplitPosition);
 				Holder<Mesh> m1 = mesh->copy();
 				Holder<Mesh> m2 = mesh->copy();
 				meshClip(+m1, clippingBox(myBox, a, split));
@@ -520,11 +520,11 @@ namespace cage
 		std::vector<uint32> remap; // remap[originalVertexIndex] = newVertexIndex
 		remap.resize(vc);
 		std::iota(remap.begin(), remap.end(), (uint32)0);
-		PointerRange<const vec3> ps = impl->positions;
+		PointerRange<const Vec3> ps = impl->positions;
 
 		// find which vertices can be remapped to other vertices
 		{
-			const real threashold = config.distanceThreshold * config.distanceThreshold;
+			const Real threashold = config.distanceThreshold * config.distanceThreshold;
 			Holder<SpatialStructure> ss = newSpatialStructure({});
 			for (uint32 i = 0; i < vc; i++)
 				ss->update(i, ps[i]);
@@ -552,7 +552,7 @@ namespace cage
 			{
 				if (!needsRecenter[i])
 					continue;
-				vec3 p;
+				Vec3 p;
 				uint32 c = 0;
 				for (uint32 j = i; j < vc; j++)
 				{
@@ -591,18 +591,18 @@ namespace cage
 		CAGE_ASSERT(!msh->uvs().empty());
 
 		const uint32 triCount = msh->facesCount();
-		const vec2 scale = vec2(config.width - 1, config.height - 1);
+		const Vec2 scale = Vec2(config.width - 1, config.height - 1);
 		for (uint32 triIdx = 0; triIdx < triCount; triIdx++)
 		{
-			ivec3 idx;
+			Vec3i idx;
 			if (msh->indices().empty())
-				idx = ivec3(triIdx * 3 + 0, triIdx * 3 + 1, triIdx * 3 + 2);
+				idx = Vec3i(triIdx * 3 + 0, triIdx * 3 + 1, triIdx * 3 + 2);
 			else
-				idx = ivec3(msh->index(triIdx * 3 + 0), msh->index(triIdx * 3 + 1), msh->index(triIdx * 3 + 2));
-			const vec2 vertUvs[3] = { msh->uv(idx[0]) * scale, msh->uv(idx[1]) * scale, msh->uv(idx[2]) * scale };
-			ivec2 t0 = ivec2(sint32(vertUvs[0][0].value), sint32(vertUvs[0][1].value));
-			ivec2 t1 = ivec2(sint32(vertUvs[1][0].value), sint32(vertUvs[1][1].value));
-			ivec2 t2 = ivec2(sint32(vertUvs[2][0].value), sint32(vertUvs[2][1].value));
+				idx = Vec3i(msh->index(triIdx * 3 + 0), msh->index(triIdx * 3 + 1), msh->index(triIdx * 3 + 2));
+			const Vec2 vertUvs[3] = { msh->uv(idx[0]) * scale, msh->uv(idx[1]) * scale, msh->uv(idx[2]) * scale };
+			Vec2i t0 = Vec2i(sint32(vertUvs[0][0].value), sint32(vertUvs[0][1].value));
+			Vec2i t1 = Vec2i(sint32(vertUvs[1][0].value), sint32(vertUvs[1][1].value));
+			Vec2i t2 = Vec2i(sint32(vertUvs[2][0].value), sint32(vertUvs[2][1].value));
 			// inspired by https://github.com/ssloy/tinyrenderer/wiki/Lesson-2:-Triangle-rasterization-and-back-face-culling
 			if (t0[1] > t1[1])
 				std::swap(t0, t1);
@@ -611,23 +611,23 @@ namespace cage
 			if (t1[1] > t2[1])
 				std::swap(t1, t2);
 			const sint32 totalHeight = t2[1] - t0[1];
-			const real totalHeightInv = 1.f / totalHeight;
+			const Real totalHeightInv = 1.f / totalHeight;
 			for (sint32 i = 0; i < totalHeight; i++)
 			{
 				const bool secondHalf = i > t1[1] - t0[1] || t1[1] == t0[1];
 				const uint32 segmentHeight = secondHalf ? t2[1] - t1[1] : t1[1] - t0[1];
-				const real alpha = i * totalHeightInv;
-				const real beta = real(i - (secondHalf ? t1[1] - t0[1] : 0)) / segmentHeight;
-				ivec2 A = t0 + (t2 - t0) * alpha;
-				ivec2 B = secondHalf ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
+				const Real alpha = i * totalHeightInv;
+				const Real beta = Real(i - (secondHalf ? t1[1] - t0[1] : 0)) / segmentHeight;
+				Vec2i A = t0 + (t2 - t0) * alpha;
+				Vec2i B = secondHalf ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
 				if (A[0] > B[0])
 					std::swap(A, B);
 				for (sint32 x = A[0]; x <= B[0]; x++)
 				{
 					const sint32 y = t0[1] + i;
-					const vec2 uv = vec2(x, y);
-					const vec2 b = barycoord(vertUvs[0], vertUvs[1], vertUvs[2], uv);
-					config.generator(ivec2(x, y), idx, vec3(b, 1 - b[0] - b[1]));
+					const Vec2 uv = Vec2(x, y);
+					const Vec2 b = barycoord(vertUvs[0], vertUvs[1], vertUvs[2], uv);
+					config.generator(Vec2i(x, y), idx, Vec3(b, 1 - b[0] - b[1]));
 				}
 			}
 		}
@@ -645,33 +645,33 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
 	}
 
-	void meshApplyTransform(Mesh *msh, const transform &t)
+	void meshApplyTransform(Mesh *msh, const Transform &t)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
-		for (vec3 &it : impl->positions)
+		for (Vec3 &it : impl->positions)
 			it = t * it;
-		for (vec3 &it : impl->normals)
+		for (Vec3 &it : impl->normals)
 			it = t.orientation * it;
-		for (vec3 &it : impl->tangents)
+		for (Vec3 &it : impl->tangents)
 			it = t.orientation * it;
-		for (vec3 &it : impl->bitangents)
+		for (Vec3 &it : impl->bitangents)
 			it = t.orientation * it;
 	}
 
-	void meshApplyTransform(Mesh *msh, const mat4 &t)
+	void meshApplyTransform(Mesh *msh, const Mat4 &t)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
-		for (vec3 &it : impl->positions)
-			it = vec3(t * vec4(it, 1));
-		for (vec3 &it : impl->normals)
-			it = vec3(t * vec4(it, 0));
-		for (vec3 &it : impl->tangents)
-			it = vec3(t * vec4(it, 0));
-		for (vec3 &it : impl->bitangents)
-			it = vec3(t * vec4(it, 0));
+		for (Vec3 &it : impl->positions)
+			it = Vec3(t * Vec4(it, 1));
+		for (Vec3 &it : impl->normals)
+			it = Vec3(t * Vec4(it, 0));
+		for (Vec3 &it : impl->tangents)
+			it = Vec3(t * Vec4(it, 0));
+		for (Vec3 &it : impl->bitangents)
+			it = Vec3(t * Vec4(it, 0));
 	}
 
-	void meshApplyAnimation(Mesh *msh, PointerRange<const mat4> skinTransformation)
+	void meshApplyAnimation(Mesh *msh, PointerRange<const Mat4> skinTransformation)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		const uint32 cnt = msh->verticesCount();
@@ -679,16 +679,16 @@ namespace cage
 		CAGE_ASSERT(impl->boneWeights.size() == cnt);
 		for (uint32 i = 0; i < cnt; i++)
 		{
-			mat4 tr = mat4::scale(0);
+			Mat4 tr = Mat4::scale(0);
 			for (uint32 j = 0; j < 4; j++)
 			{
 				const uint32 b = impl->boneIndices[i][j];
-				const real w = impl->boneWeights[i][j];
+				const Real w = impl->boneWeights[i][j];
 				tr += skinTransformation[b] * w;
 			}
 			CAGE_ASSERT(tr.valid());
-			impl->positions[i] = vec3(tr * vec4(impl->positions[i], 1));
-			mat3 tr3 = mat3(tr);
+			impl->positions[i] = Vec3(tr * Vec4(impl->positions[i], 1));
+			Mat3 tr3 = Mat3(tr);
 			if (!impl->normals.empty())
 				impl->normals[i] = tr3 * impl->normals[i];
 			if (!impl->tangents.empty())
@@ -712,7 +712,7 @@ namespace cage
 			for (uint32 i = 0; i < cnt; i += 3)
 				std::swap(impl->indices[i + 1], impl->indices[i + 2]);
 		}
-		for (vec3 &n : impl->normals)
+		for (Vec3 &n : impl->normals)
 			n *= -1;
 		// todo tangents & bitangents ?
 	}
@@ -726,7 +726,7 @@ namespace cage
 
 		meshConvertToIndexed(msh);
 		MeshImpl *impl = (MeshImpl *)msh;
-		const vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
+		const Vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
 		std::vector<uint32> sourceIndices;
 		sourceIndices.reserve(impl->indices.size());
 		sourceIndices.swap(impl->indices);
@@ -736,9 +736,9 @@ namespace cage
 		{
 			const uint32 *ids = sourceIndices.data() + tri * 3;
 			{
-				const vec3 &a = impl->positions[ids[0]];
-				const vec3 &b = impl->positions[ids[1]];
-				const vec3 &c = impl->positions[ids[2]];
+				const Vec3 &a = impl->positions[ids[0]];
+				const Vec3 &b = impl->positions[ids[1]];
+				const Vec3 &c = impl->positions[ids[2]];
 				if (intersects(a, clipBox) && intersects(b, clipBox) && intersects(c, clipBox))
 				{
 					// triangle fully inside the box
@@ -773,6 +773,7 @@ namespace cage
 		else
 			removeUnusedVertices(impl);
 		meshDiscardInvalid(impl);
+		meshMergeCloseVertices(impl, {});
 	}
 
 	void meshClip(Mesh *msh, const Plane &pln)

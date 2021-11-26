@@ -21,13 +21,13 @@ namespace cage
 			const uint32 threadsCount = 0;
 			bool ending = false;
 
-			explicit ThreadPoolImpl(const string &threadNames, uint32 threads) : threadsCount(threads == m ? processorsCount() : threads)
+			explicit ThreadPoolImpl(const String &threadNames, uint32 threads) : threadsCount(threads == m ? processorsCount() : threads)
 			{
 				barrier1 = newBarrier(threadsCount + 1);
 				barrier2 = newBarrier(threadsCount + 1);
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
-					thrs[i] = newThread(Delegate<void()>().bind<ThreadPoolImpl, &ThreadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
+					thrs[i] = newThread(Delegate<void()>().bind<ThreadPoolImpl, &ThreadPoolImpl::threadEntryLocal>(this), Stringizer() + threadNames + i);
 			}
 
 			~ThreadPoolImpl()
@@ -96,7 +96,7 @@ namespace cage
 		impl->run();
 	}
 
-	Holder<ThreadPool> newThreadPool(const string &threadNames, uint32 threadsCount)
+	Holder<ThreadPool> newThreadPool(const String &threadNames, uint32 threadsCount)
 	{
 		return systemMemory().createImpl<ThreadPool, ThreadPoolImpl>(threadNames, threadsCount);
 	}

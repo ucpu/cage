@@ -8,45 +8,45 @@ namespace cage
 
 	namespace
 	{
-		Sphere MbSphere(const vec3 &O)
+		Sphere MbSphere(const Vec3 &O)
 		{
 			return Sphere(O, 1e-5);
 		}
 
-		Sphere MbSphere(const vec3 &O, const vec3 &A)
+		Sphere MbSphere(const Vec3 &O, const Vec3 &A)
 		{
-			vec3 a = A - O;
-			vec3 o = a * 0.5;
+			Vec3 a = A - O;
+			Vec3 o = a * 0.5;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		Sphere MbSphere(const vec3 &O, const vec3 &A, const vec3 &B)
+		Sphere MbSphere(const Vec3 &O, const Vec3 &A, const Vec3 &B)
 		{
-			vec3 a = A - O;
-			vec3 b = B - O;
-			real denom = 2 * dot(cross(a, b), cross(a, b));
-			vec3 o = (dot(b, b) * cross(cross(a, b), a) + dot(a, a) * cross(b, cross(a, b))) / denom;
+			Vec3 a = A - O;
+			Vec3 b = B - O;
+			Real denom = 2 * dot(cross(a, b), cross(a, b));
+			Vec3 o = (dot(b, b) * cross(cross(a, b), a) + dot(a, a) * cross(b, cross(a, b))) / denom;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		Sphere MbSphere(const vec3 &O, const vec3 &A, const vec3 &B, const vec3 &C)
+		Sphere MbSphere(const Vec3 &O, const Vec3 &A, const Vec3 &B, const Vec3 &C)
 		{
-			vec3 a = A - O;
-			vec3 b = B - O;
-			vec3 c = C - O;
-			real denom = 2 * determinant(mat3(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]));
-			vec3 o = (dot(c, c) * cross(a, b) + dot(b, b) * cross(c, a) + dot(a, a) * cross(b, c)) / denom;
+			Vec3 a = A - O;
+			Vec3 b = B - O;
+			Vec3 c = C - O;
+			Real denom = 2 * determinant(Mat3(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]));
+			Vec3 o = (dot(c, c) * cross(a, b) + dot(b, b) * cross(c, a) + dot(a, a) * cross(b, c)) / denom;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		real d2(const Sphere &s, const vec3 &p)
+		Real d2(const Sphere &s, const Vec3 &p)
 		{
 			return distanceSquared(p, s.center) - sqr(s.radius);
 		}
 
-		Sphere recurseMini(const vec3 *P[], uint32 p, uint32 b)
+		Sphere recurseMini(const Vec3 *P[], uint32 p, uint32 b)
 		{
-			Sphere MB = Sphere(vec3(), -1);
+			Sphere MB = Sphere(Vec3(), -1);
 			switch (b)
 			{
 			case 1: MB = MbSphere(*P[-1]); break;
@@ -60,7 +60,7 @@ namespace cage
 				{
 					for (uint32 j = i; j > 0; j--)
 					{
-						const vec3 *T = P[j];
+						const Vec3 *T = P[j];
 						P[j] = P[j - 1];
 						P[j - 1] = T;
 					}
@@ -74,14 +74,14 @@ namespace cage
 	Sphere::Sphere(const Frustum &other)
 	{
 		const Frustum::Corners corners = other.corners();
-		const vec3 *L[8];
+		const Vec3 *L[8];
 		int i = 0;
-		for (const vec3 &v : corners.data)
+		for (const Vec3 &v : corners.data)
 			L[i++] = &v;
 		*this = recurseMini(L, 8, 0);
 	}
 
-	Sphere makeSphere(PointerRange<const vec3> points)
+	Sphere makeSphere(PointerRange<const Vec3> points)
 	{
 		switch (points.size())
 		{
@@ -90,10 +90,10 @@ namespace cage
 		case 2: return Sphere(makeSegment(points[0], points[1]));
 		case 3: return Sphere(Triangle(points[0], points[1], points[2]));
 		}
-		std::vector<const vec3 *> L;
+		std::vector<const Vec3 *> L;
 		L.resize(points.size());
 		int i = 0;
-		for (const vec3 &v : points)
+		for (const Vec3 &v : points)
 			L[i++] = &v;
 		return recurseMini(L.data(), numeric_cast<uint32>(points.size()), 0);
 	}

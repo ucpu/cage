@@ -11,11 +11,11 @@ void testCollisionStructure()
 
 	Holder<Collider> c1 = newCollider();
 	{ // tetrahedron 1
-		const vec3 a(0, -0.7, 1);
-		const vec3 b(+0.86603, -0.7, -0.5);
-		const vec3 c(-0.86603, -0.7, -0.5);
-		const vec3 d(0, 0.7, 0);
-		const transform off = transform(vec3(10, 0, 0));
+		const Vec3 a(0, -0.7, 1);
+		const Vec3 b(+0.86603, -0.7, -0.5);
+		const Vec3 c(-0.86603, -0.7, -0.5);
+		const Vec3 d(0, 0.7, 0);
+		const Transform off = Transform(Vec3(10, 0, 0));
 		c1->addTriangle(Triangle(c, b, a) * off);
 		c1->addTriangle(Triangle(a, b, d) * off);
 		c1->addTriangle(Triangle(b, c, d) * off);
@@ -24,11 +24,11 @@ void testCollisionStructure()
 	}
 	Holder<Collider> c2 = newCollider();
 	{ // tetrahedron 2
-		const vec3 a(0, -0.7, 1);
-		const vec3 b(+0.86603, -0.7, -0.5);
-		const vec3 c(-0.86603, -0.7, -0.5);
-		const vec3 d(0, 0.7, 0);
-		const transform off = transform(vec3(0, 10, 0));
+		const Vec3 a(0, -0.7, 1);
+		const Vec3 b(+0.86603, -0.7, -0.5);
+		const Vec3 c(-0.86603, -0.7, -0.5);
+		const Vec3 d(0, 0.7, 0);
+		const Transform off = Transform(Vec3(0, 10, 0));
 		c2->addTriangle(Triangle(c, b, a) * off);
 		c2->addTriangle(Triangle(a, b, d) * off);
 		c2->addTriangle(Triangle(b, c, d) * off);
@@ -37,10 +37,10 @@ void testCollisionStructure()
 	}
 	Holder<Collider> c3 = newCollider();
 	{ // tetrahedron 3
-		const vec3 a(0, -0.7, 1);
-		const vec3 b(+0.86603, -0.7, -0.5);
-		const vec3 c(-0.86603, -0.7, -0.5);
-		const vec3 d(0, 0.7, 0);
+		const Vec3 a(0, -0.7, 1);
+		const Vec3 b(+0.86603, -0.7, -0.5);
+		const Vec3 c(-0.86603, -0.7, -0.5);
+		const Vec3 d(0, 0.7, 0);
 		c3->addTriangle(Triangle(c, b, a));
 		c3->addTriangle(Triangle(a, b, d));
 		c3->addTriangle(Triangle(b, c, d));
@@ -52,35 +52,35 @@ void testCollisionStructure()
 		CAGE_TESTCASE("tetrahedrons without transformations");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
-		data->update(3, c3.share(), transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 
 		{
 			CAGE_TESTCASE("1");
-			CAGE_TEST(query->query(+c1, transform()));
+			CAGE_TEST(query->query(+c1, Transform()));
 			CAGE_TEST(query->name() == 1);
 		}
 		{
 			CAGE_TESTCASE("2");
-			CAGE_TEST(query->query(+c2, transform()));
+			CAGE_TEST(query->query(+c2, Transform()));
 			CAGE_TEST(query->name() == 2);
 		}
 		{
 			CAGE_TESTCASE("3");
-			CAGE_TEST(query->query(+c3, transform()));
+			CAGE_TEST(query->query(+c3, Transform()));
 			CAGE_TEST(query->name() == 3);
 		}
 		{
 			CAGE_TESTCASE("none");
-			CAGE_TEST(!query->query(+c3, transform(vec3(-10, 0, 0))));
+			CAGE_TEST(!query->query(+c3, Transform(Vec3(-10, 0, 0))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("31");
-			CAGE_TEST(query->query(+c3, transform(vec3(9.5, 0, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(9.5, 0, 0))));
 			CAGE_TEST(query->name() == 1);
 		}
 	}
@@ -89,35 +89,35 @@ void testCollisionStructure()
 		CAGE_TESTCASE("tetrahedrons with transformations in the structure");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c3.share(), transform(vec3(10, 0, 0)));
-		data->update(2, c3.share(), transform(vec3(0, 10, 0)));
-		data->update(3, c3.share(), transform());
+		data->update(1, c3.share(), Transform(Vec3(10, 0, 0)));
+		data->update(2, c3.share(), Transform(Vec3(0, 10, 0)));
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 
 		{
 			CAGE_TESTCASE("1");
-			CAGE_TEST(query->query(+c1, transform()));
+			CAGE_TEST(query->query(+c1, Transform()));
 			CAGE_TEST(query->name() == 1);
 		}
 		{
 			CAGE_TESTCASE("2");
-			CAGE_TEST(query->query(+c2, transform()));
+			CAGE_TEST(query->query(+c2, Transform()));
 			CAGE_TEST(query->name() == 2);
 		}
 		{
 			CAGE_TESTCASE("3");
-			CAGE_TEST(query->query(+c3, transform()));
+			CAGE_TEST(query->query(+c3, Transform()));
 			CAGE_TEST(query->name() == 3);
 		}
 		{
 			CAGE_TESTCASE("none");
-			CAGE_TEST(!query->query(+c3, transform(vec3(-10, 0, 0))));
+			CAGE_TEST(!query->query(+c3, Transform(Vec3(-10, 0, 0))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("31");
-			CAGE_TEST(query->query(+c3, transform(vec3(9.5, 0, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(9.5, 0, 0))));
 			CAGE_TEST(query->name() == 1);
 		}
 	}
@@ -126,20 +126,20 @@ void testCollisionStructure()
 		CAGE_TESTCASE("tetrahedrons with transformations in queries");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
-		data->update(3, c3.share(), transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 
 		{
 			CAGE_TESTCASE("1");
-			CAGE_TEST(query->query(+c3, transform(vec3(10, 0, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(10, 0, 0))));
 			CAGE_TEST(query->name() == 1);
 		}
 		{
 			CAGE_TESTCASE("2");
-			CAGE_TEST(query->query(+c3, transform(vec3(0, 10, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(0, 10, 0))));
 			CAGE_TEST(query->name() == 2);
 		}
 	}
@@ -148,25 +148,25 @@ void testCollisionStructure()
 		CAGE_TESTCASE("zero is valid name");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(0, c3.share(), transform());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
+		data->update(0, c3.share(), Transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 
 		{
 			CAGE_TESTCASE("0");
-			CAGE_TEST(query->query(+c3, transform()));
+			CAGE_TEST(query->query(+c3, Transform()));
 			CAGE_TEST(query->name() == 0);
 		}
 		{
 			CAGE_TESTCASE("1");
-			CAGE_TEST(query->query(+c1, transform()));
+			CAGE_TEST(query->query(+c1, Transform()));
 			CAGE_TEST(query->name() == 1);
 		}
 		{
 			CAGE_TESTCASE("2");
-			CAGE_TEST(query->query(+c2, transform()));
+			CAGE_TEST(query->query(+c2, Transform()));
 			CAGE_TEST(query->name() == 2);
 		}
 	}
@@ -175,81 +175,81 @@ void testCollisionStructure()
 		CAGE_TESTCASE("simple shape-to-collider");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
-		data->update(3, c3.share(), transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 		{
 			CAGE_TESTCASE("line 1");
-			CAGE_TEST(query->query(makeSegment(vec3(-10, 0, 0), vec3(10, 0, 0))));
+			CAGE_TEST(query->query(makeSegment(Vec3(-10, 0, 0), Vec3(10, 0, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("line 2");
-			CAGE_TEST(!query->query(makeSegment(vec3(-10, 0, 10), vec3(10, 0, 10))));
+			CAGE_TEST(!query->query(makeSegment(Vec3(-10, 0, 10), Vec3(10, 0, 10))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("line 3");
-			CAGE_TEST(query->query(makeLine(vec3(-1, 0, 0), vec3(1, 0, 0))));
+			CAGE_TEST(query->query(makeLine(Vec3(-1, 0, 0), Vec3(1, 0, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("line 4");
-			CAGE_TEST(!query->query(makeLine(vec3(-1, 0, 10), vec3(1, 0, 10))));
+			CAGE_TEST(!query->query(makeLine(Vec3(-1, 0, 10), Vec3(1, 0, 10))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("triangle 1");
-			CAGE_TEST(query->query(Triangle(vec3(10, -1, 1), vec3(10, 1, 1), vec3(10, 0, -2))));
+			CAGE_TEST(query->query(Triangle(Vec3(10, -1, 1), Vec3(10, 1, 1), Vec3(10, 0, -2))));
 			CAGE_TEST(query->name() == 1);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("triangle 2");
-			CAGE_TEST(query->query(Triangle(vec3(0, -1, 1), vec3(0, 1, 1), vec3(0, 0, -2))));
+			CAGE_TEST(query->query(Triangle(Vec3(0, -1, 1), Vec3(0, 1, 1), Vec3(0, 0, -2))));
 			CAGE_TEST(query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("triangle 3");
-			CAGE_TEST(!query->query(Triangle(vec3(10, -1, 11), vec3(10, 1, 11), vec3(10, 0, 8))));
+			CAGE_TEST(!query->query(Triangle(Vec3(10, -1, 11), Vec3(10, 1, 11), Vec3(10, 0, 8))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("plane 1");
-			CAGE_TEST(query->query(Plane(vec3(0,0,0), vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(Vec3(0,0,0), Vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("plane 2");
-			CAGE_TEST(!query->query(Plane(vec3(0,0,10), vec3(0, 0, 1))));
+			CAGE_TEST(!query->query(Plane(Vec3(0,0,10), Vec3(0, 0, 1))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("plane 3");
-			CAGE_TEST(query->query(Plane(vec3(123,0,456), vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(Vec3(123,0,456), Vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("sphere 1");
-			CAGE_TEST(query->query(Sphere(vec3(0, 10, 0), 2)));
+			CAGE_TEST(query->query(Sphere(Vec3(0, 10, 0), 2)));
 			CAGE_TEST(query->name() == 2);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("sphere 2");
-			CAGE_TEST(!query->query(Sphere(vec3(0, 10, 10), 2)));
+			CAGE_TEST(!query->query(Sphere(Vec3(0, 10, 10), 2)));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("aabb");
-			CAGE_TEST(query->query(Aabb(vec3(-1, 9, -1), vec3(1, 11, 1))));
+			CAGE_TEST(query->query(Aabb(Vec3(-1, 9, -1), Vec3(1, 11, 1))));
 			CAGE_TEST(query->name() == 2);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
@@ -259,9 +259,9 @@ void testCollisionStructure()
 		CAGE_TESTCASE("first along line");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
-		data->update(3, c3.share(), transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 		// 2
@@ -269,36 +269,36 @@ void testCollisionStructure()
 
 		{
 			CAGE_TESTCASE("none");
-			CAGE_TEST(!query->query(makeLine(vec3(1, -10, 0), vec3(0, -10, 0))));
+			CAGE_TEST(!query->query(makeLine(Vec3(1, -10, 0), Vec3(0, -10, 0))));
 		}
 		{
 			CAGE_TESTCASE("left 1");
-			CAGE_TEST(query->query(makeLine(vec3(1, 0, 0), vec3())));
+			CAGE_TEST(query->query(makeLine(Vec3(1, 0, 0), Vec3())));
 			CAGE_TEST(query->name() == 1);
 		}
 		{
 			CAGE_TESTCASE("left 2");
-			CAGE_TEST(query->query(makeLine(vec3(1, 10, 0), vec3(0, 10, 0))));
+			CAGE_TEST(query->query(makeLine(Vec3(1, 10, 0), Vec3(0, 10, 0))));
 			CAGE_TEST(query->name() == 2);
 		}
 		{
 			CAGE_TESTCASE("right");
-			CAGE_TEST(query->query(makeLine(vec3(-1, 0, 0), vec3())));
+			CAGE_TEST(query->query(makeLine(Vec3(-1, 0, 0), Vec3())));
 			CAGE_TEST(query->name() == 3);
 		}
 		{
 			CAGE_TESTCASE("down 1");
-			CAGE_TEST(query->query(makeLine(vec3(), vec3(0, -1, 0))));
+			CAGE_TEST(query->query(makeLine(Vec3(), Vec3(0, -1, 0))));
 			CAGE_TEST(query->name() == 2);
 		}
 		{
 			CAGE_TESTCASE("down 2");
-			CAGE_TEST(query->query(makeLine(vec3(0, 1, 0), vec3())));
+			CAGE_TEST(query->query(makeLine(Vec3(0, 1, 0), Vec3())));
 			CAGE_TEST(query->name() == 2);
 		}
 		{
 			CAGE_TESTCASE("up");
-			CAGE_TEST(query->query(makeLine(vec3(0, -1, 0), vec3())));
+			CAGE_TEST(query->query(makeLine(Vec3(0, -1, 0), Vec3())));
 			CAGE_TEST(query->name() == 3);
 		}
 	}
@@ -307,9 +307,9 @@ void testCollisionStructure()
 		CAGE_TESTCASE("first in time");
 
 		Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-		data->update(1, c1.share(), transform());
-		data->update(2, c2.share(), transform());
-		data->update(3, c3.share(), transform());
+		data->update(1, c1.share(), Transform());
+		data->update(2, c2.share(), Transform());
+		data->update(3, c3.share(), Transform());
 		data->rebuild();
 		Holder<CollisionQuery> query = newCollisionQuery(data.share());
 		// 2
@@ -317,13 +317,13 @@ void testCollisionStructure()
 
 		{
 			CAGE_TESTCASE("left");
-			CAGE_TEST(query->query(+c3, transform(vec3(100, 0, 0)), transform(vec3(-100, 0, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(100, 0, 0)), Transform(Vec3(-100, 0, 0))));
 			CAGE_TEST(query->name() == 1);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("right");
-			CAGE_TEST(query->query(+c3, transform(vec3(-100, 0, 0)), transform(vec3(100, 0, 0))));
+			CAGE_TEST(query->query(+c3, Transform(Vec3(-100, 0, 0)), Transform(Vec3(100, 0, 0))));
 			CAGE_TEST(query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
@@ -337,11 +337,11 @@ void testCollisionStructure()
 		{
 			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_LOG_THROW(stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_LOG_THROW(Stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
 				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
 
-			const transform t1 = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+			const Transform t1 = Transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
 
 			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
 			data->update(3, c3.share(), t1);
@@ -372,11 +372,11 @@ void testCollisionStructure()
 		{
 			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_LOG_THROW(stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_LOG_THROW(Stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
 				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
 
-			const transform t1 = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+			const Transform t1 = Transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
 
 			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
 			data->update(3, c3.share(), t1);
@@ -385,7 +385,7 @@ void testCollisionStructure()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				const transform t2 = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+				const Transform t2 = Transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
 				for (const Collider *c : { +c1, +c2, +c3 })
 				{
 					const bool res = intersects(+c3, c, t1, t2);

@@ -2,13 +2,15 @@
 #include <cage-core/geometry.h>
 #include <cage-core/mesh.h>
 #include <cage-core/meshShapes.h>
+#include <cage-core/meshImport.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/image.h>
+#include <cage-core/files.h>
 
 namespace
 {
-	void approxEqual(const vec3 &a, const vec3 &b)
+	void approxEqual(const Vec3 &a, const Vec3 &b)
 	{
 		CAGE_TEST(distance(a, b) < 1);
 	}
@@ -33,11 +35,11 @@ namespace
 			cfg.distanceThreshold = 1e-3;
 			meshMergeCloseVertices(+p, cfg);
 		}
-		for (vec3 &v : p->positions())
+		for (Vec3 &v : p->positions())
 		{
-			real &x = v[0];
+			Real &x = v[0];
 			if (x > 2 && x < 4)
-				x = real::Nan();
+				x = Real::Nan();
 		}
 		meshDiscardInvalid(+p);
 		return p;
@@ -49,10 +51,10 @@ namespace
 		Image *img = nullptr;
 	};
 
-	void genTex(MeshImage *data, const ivec2 &xy, const ivec3 &ids, const vec3 &weights)
+	void genTex(MeshImage *data, const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)
 	{
-		const vec3 position = data->msh->positionAt(ids, weights);
-		const vec3 normal = data->msh->normalAt(ids, weights);
+		const Vec3 position = data->msh->positionAt(ids, weights);
+		const Vec3 normal = data->msh->normalAt(ids, weights);
 		data->img->set(xy, abs(normal));
 	}
 }
@@ -67,36 +69,36 @@ void testMesh()
 	const Holder<const Mesh> poly = newMeshSphereUv(10, 32, 16);
 #endif // CAGE_DEBUG
 
-	poly->exportObjFile({}, "meshes/base.obj");
+	poly->exportObjFile("meshes/base.obj");
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
 	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
 
 	{
 		CAGE_TESTCASE("bounding box");
-		approxEqual(poly->boundingBox(), Aabb(vec3(-10), vec3(10)));
+		approxEqual(poly->boundingBox(), Aabb(Vec3(-10), Vec3(10)));
 	}
 
 	{
 		CAGE_TESTCASE("bounding sphere");
-		approxEqual(poly->boundingSphere(), Sphere(vec3(), 10));
+		approxEqual(poly->boundingSphere(), Sphere(Vec3(), 10));
 	}
 
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
-		meshApplyTransform(+p, transform(vec3(0, 5, 0)));
-		approxEqual(p->boundingBox(), Aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
+		meshApplyTransform(+p, Transform(Vec3(0, 5, 0)));
+		approxEqual(p->boundingBox(), Aabb(Vec3(-10, -5, -10), Vec3(10, 15, 10)));
 	}
 
 	{
 		CAGE_TESTCASE("discard invalid");
 		auto p = poly->copy();
-		p->position(42, vec3::Nan()); // intentionally corrupt one vertex
+		p->position(42, Vec3::Nan()); // intentionally corrupt one vertex
 		meshDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/discardInvalid.obj");
+		p->exportObjFile("meshes/discardInvalid.obj");
 	}
 
 	{
@@ -109,7 +111,7 @@ void testMesh()
 		}
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
+		p->exportObjFile("meshes/mergeCloseVertices.obj");
 	}
 
 	{
@@ -123,7 +125,7 @@ void testMesh()
 		cfg.approximateError = 0.5;
 #endif
 		meshSimplify(+p, cfg);
-		p->exportObjFile({}, "meshes/simplify.obj");
+		p->exportObjFile("meshes/simplify.obj");
 	}
 
 	{
@@ -135,15 +137,15 @@ void testMesh()
 		cfg.targetEdgeLength = 3;
 #endif
 		meshRegularize(+p, cfg);
-		p->exportObjFile({}, "meshes/regularize.obj");
+		p->exportObjFile("meshes/regularize.obj");
 	}
 
 	{
 		CAGE_TESTCASE("chunking");
 		auto p = poly->copy();
 		MeshChunkingConfig cfg;
-		constexpr real initialAreaImplicit = 4 * real::Pi() * sqr(10);
-		constexpr real targetChunks = 10;
+		constexpr Real initialAreaImplicit = 4 * Real::Pi() * sqr(10);
+		constexpr Real targetChunks = 10;
 		cfg.maxSurfaceArea = initialAreaImplicit / targetChunks;
 		const auto res = meshChunking(+p, cfg);
 		CAGE_TEST(res.size() > targetChunks / 2 && res.size() < targetChunks * 2);
@@ -163,12 +165,12 @@ void testMesh()
 			MeshUnwrapConfig cfg;
 			cfg.targetResolution = 256;
 			res = meshUnwrap(+p, cfg);
-			p->exportObjFile({}, "meshes/unwrap.obj");
+			p->exportObjFile("meshes/unwrap.obj");
 		}
 		{
 			CAGE_TESTCASE("texturing");
 			Holder<Image> img = newImage();
-			img->initialize(ivec2(res), 3);
+			img->initialize(Vec2i(res), 3);
 			MeshImage data;
 			data.msh = +p;
 			data.img = +img;
@@ -183,8 +185,8 @@ void testMesh()
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
-		meshClip(+p, Aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "meshes/clip.obj");
+		meshClip(+p, Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10)));
+		p->exportObjFile("meshes/clip.obj");
 	}
 
 	{
@@ -192,15 +194,15 @@ void testMesh()
 		auto p = splitSphereIntoTwo(+poly);
 		auto ps = meshSeparateDisconnected(+p);
 		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be 2 but is 3
-		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
-		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
+		ps[0]->exportObjFile("meshes/separateDisconnected_1.obj");
+		ps[1]->exportObjFile("meshes/separateDisconnected_2.obj");
 	}
 
 	{
 		CAGE_TESTCASE("discardDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
 		meshDiscardDisconnected(+p);
-		p->exportObjFile({}, "meshes/discardDisconnected.obj");
+		p->exportObjFile("meshes/discardDisconnected.obj");
 	}
 
 	{
@@ -232,8 +234,70 @@ void testMesh()
 
 	{
 		CAGE_TESTCASE("shapes");
-		newMeshSphereUv(10, 20, 30)->exportObjFile({}, "meshes/shapes/uv-sphere.obj");
-		newMeshIcosahedron(10)->exportObjFile({}, "meshes/shapes/icosahedron.obj");
-		newMeshSphereRegular(10, 1.5)->exportObjFile({}, "meshes/shapes/regular-sphere.obj");
+		newMeshSphereUv(10, 20, 30)->exportObjFile("meshes/shapes/uv-sphere.obj");
+		newMeshIcosahedron(10)->exportObjFile("meshes/shapes/icosahedron.obj");
+		newMeshSphereRegular(10, 1.5)->exportObjFile("meshes/shapes/regular-sphere.obj");
+	}
+
+	{
+		CAGE_TESTCASE("import");
+		Holder<Mesh> orig = newMeshIcosahedron(10);
+		{
+			MeshExportObjConfig cfg;
+			cfg.materialName = "aquamarine";
+			cfg.objectName = "icosahedron";
+			orig->exportObjFile("meshes/testImport.obj", cfg);
+		}
+
+		{
+			CAGE_TESTCASE("default config");
+			const MeshImportResult result = meshImportFiles("meshes/testImport.obj");
+			CAGE_TEST(result.parts.size() == 1);
+			CAGE_TEST(!result.skeleton);
+			CAGE_TEST(result.animations.empty());
+			const auto &part = result.parts[0];
+			CAGE_TEST(part.materialName == "aquamarine");
+			CAGE_TEST(part.objectName == "icosahedron");
+			CAGE_TEST(part.textures.empty());
+			Holder<Mesh> msh = part.mesh.share();
+			CAGE_TEST(msh->facesCount() == orig->facesCount());
+			approxEqual(part.boundingBox, orig->boundingBox());
+		}
+
+		{
+			CAGE_TESTCASE("absolute path");
+			const MeshImportResult result = meshImportFiles(pathToAbs("meshes/testImport.obj"));
+			CAGE_TEST(result.parts.size() == 1);
+		}
+
+		{
+			CAGE_TESTCASE("relative path with root path");
+			MeshImportConfig cfg;
+			cfg.rootPath = pathToAbs("meshes");
+			const MeshImportResult result = meshImportFiles("meshes/testImport.obj", cfg);
+			CAGE_TEST(result.parts.size() == 1);
+		}
+
+		{
+			CAGE_TESTCASE("absolute path with root path");
+			MeshImportConfig cfg;
+			cfg.rootPath = pathToAbs("meshes");
+			const MeshImportResult result = meshImportFiles(pathToAbs("meshes/testImport.obj"), cfg);
+			CAGE_TEST(result.parts.size() == 1);
+		}
+
+		{
+			CAGE_TESTCASE("relative path accessing invalid location");
+			MeshImportConfig cfg;
+			cfg.rootPath = pathToAbs("files");
+			CAGE_TEST_THROWN(meshImportFiles("meshes/testImport.obj", cfg));
+		}
+
+		{
+			CAGE_TESTCASE("absolute path accessing invalid location");
+			MeshImportConfig cfg;
+			cfg.rootPath = pathToAbs("files");
+			CAGE_TEST_THROWN(meshImportFiles(pathToAbs("meshes/testImport.obj"), cfg));
+		}
 	}
 }

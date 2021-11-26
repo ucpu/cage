@@ -8,12 +8,12 @@
 
 using namespace cage;
 
-void convert(string src, const string &format, bool preserveOriginal)
+void convert(String src, const String &format, bool preserveOriginal)
 {
 	src = pathSimplify(src);
-	string path = pathExtractDirectory(src);
-	string dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "converting '" + src + "' to '" + dst + "'");
+	String path = pathExtractDirectory(src);
+	String dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "converting '" + src + "' to '" + dst + "'");
 	if (src == dst)
 	{
 		CAGE_LOG(SeverityEnum::Info, "image", "no conversion required");
@@ -21,10 +21,7 @@ void convert(string src, const string &format, bool preserveOriginal)
 	}
 	Holder<Image> img = newImage();
 	img->importFile(src);
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "width: " + img->width());
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "height: " + img->height());
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "channels: " + img->channels());
-	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "format: " + (uint32)img->format());
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + img->width() + "x" + img->height() + ", channels: " + img->channels());
 	img->exportFile(dst);
 	if (!preserveOriginal)
 		pathRemove(src);
@@ -42,20 +39,20 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");
 		const bool preserveOriginal = cmd->cmdBool('p', "preserve", false);
-		const string format = cmd->cmdString('f', "format", ".png");
+		const String format = cmd->cmdString('f', "format", ".png");
 		if (cmd->cmdBool('?', "help", false))
 		{
 			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "example:");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --preserve --format .jpg -- a.png b.tiff");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "  to convert a.png to a.jpg and b.tiff to b.jpg");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "--preserve will keep original files too");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "example:");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --preserve --format .jpg -- a.png b.tiff");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "  to convert a.png to a.jpg and b.tiff to b.jpg");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--preserve will keep original files too");
 			return 0;
 		}
 		cmd->checkUnusedWithHelp();
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
-		for (const string &path : paths)
+		for (const String &path : paths)
 			convert(path, format, preserveOriginal);
 		CAGE_LOG(SeverityEnum::Info, "image", "done");
 		return 0;

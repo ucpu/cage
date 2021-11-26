@@ -2,71 +2,71 @@
 
 namespace cage
 {
-	transform transform::parse(const string &str)
+	Transform Transform::parse(const String &str)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "transform::parse");
 	}
 
-	transform operator * (const transform &l, const transform &r) noexcept
+	Transform operator * (const Transform &l, const Transform &r) noexcept
 	{
-		transform res;
+		Transform res;
 		res.orientation = l.orientation * r.orientation;
 		res.scale = l.scale * r.scale;
 		res.position = l.position + (r.position * l.orientation) * l.scale;
 		return res;
 	}
 
-	transform operator * (const transform &l, const quat &r) noexcept
+	Transform operator * (const Transform &l, const Quat &r) noexcept
 	{
-		transform res = l;
+		Transform res = l;
 		res.orientation = l.orientation * r; // not commutative
 		return res;
 	}
 
-	transform operator * (const quat &l, const transform &r) noexcept
+	Transform operator * (const Quat &l, const Transform &r) noexcept
 	{
-		transform res = r;
+		Transform res = r;
 		res.orientation = l * r.orientation; // not commutative
 		return res;
 	}
 
-	transform operator + (const transform &l, const vec3 &r) noexcept
+	Transform operator + (const Transform &l, const Vec3 &r) noexcept
 	{
-		transform res = l;
+		Transform res = l;
 		res.position += r;
 		return res;
 	}
 
-	transform operator + (const vec3 &l, const transform &r) noexcept
+	Transform operator + (const Vec3 &l, const Transform &r) noexcept
 	{
 		return r + l;
 	}
 
-	transform operator * (const transform &l, const real &r) noexcept
+	Transform operator * (const Transform &l, const Real &r) noexcept
 	{
-		transform res = l;
+		Transform res = l;
 		res.scale *= r;
 		return res;
 	}
 
-	transform operator * (const real &l, const transform &r) noexcept
+	Transform operator * (const Real &l, const Transform &r) noexcept
 	{
 		return r * l;
 	}
 
-	vec3 operator * (const transform &l, const vec3 &r) noexcept
+	Vec3 operator * (const Transform &l, const Vec3 &r) noexcept
 	{
 		return (l.orientation * r) * l.scale + l.position;
 	}
 
-	vec3 operator * (const vec3 &l, const transform &r) noexcept
+	Vec3 operator * (const Vec3 &l, const Transform &r) noexcept
 	{
 		return r * l;
 	}
 
-	transform inverse(const transform &x)
+	Transform inverse(const Transform &x)
 	{
-		transform res;
+		Transform res;
 		res.orientation = conjugate(x.orientation);
 		res.scale = 1 / x.scale;
 		res.position = -x.position * res.scale * res.orientation;

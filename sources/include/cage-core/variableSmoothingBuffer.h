@@ -61,27 +61,27 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API quat averageQuaternions(PointerRange<const quat> quaternions);
+		CAGE_CORE_API Quat averageQuaternions(PointerRange<const Quat> quaternions);
 	}
 
 	template<uint32 N>
-	struct VariableSmoothingBuffer<quat, N>
+	struct VariableSmoothingBuffer<Quat, N>
 	{
-		void seed(const quat &value)
+		void seed(const Quat &value)
 		{
 			for (uint32 i = 0; i < N; i++)
 				buffer[i] = value;
 			avg = value;
 		}
 
-		void add(const quat &value)
+		void add(const Quat &value)
 		{
 			index = (index + 1) % N;
 			buffer[index] = value;
 			dirty = true;
 		}
 
-		quat smooth() const
+		Quat smooth() const
 		{
 			if (dirty)
 			{
@@ -91,20 +91,20 @@ namespace cage
 			return avg;
 		}
 
-		quat current() const
+		Quat current() const
 		{
 			return buffer[index];
 		}
 
-		quat oldest() const
+		Quat oldest() const
 		{
 			return buffer[(index + 1) % N];
 		}
 
 	private:
 		uint32 index = 0;
-		quat buffer[N];
-		mutable quat avg;
+		Quat buffer[N];
+		mutable Quat avg;
 		mutable bool dirty = false;
 	};
 }

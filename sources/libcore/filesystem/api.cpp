@@ -20,10 +20,10 @@ namespace cage
 		return true;
 	}
 
-	string FileMode::mode() const
+	String FileMode::mode() const
 	{
 		CAGE_ASSERT(valid());
-		string md;
+		String md;
 		if (append)
 			md = "a";
 		else
@@ -61,15 +61,15 @@ namespace cage
 		return std::move(r);
 	}
 
-	string File::readLine()
+	String File::readLine()
 	{
-		string line;
+		String line;
 		if (readLine(line))
 			return line;
 		return "";
 	}
 
-	bool File::readLine(string &line)
+	bool File::readLine(String &line)
 	{
 		const uintPtr origPos = tell();
 		const uintPtr origSize = size();
@@ -77,12 +77,12 @@ namespace cage
 		if (origLeft == 0)
 			return false;
 
-		char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+		char buffer[String::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
 		PointerRange<char> pr = { buffer, buffer + min(origLeft, sizeof(buffer)) };
 		read(pr);
 		try
 		{
-			uintPtr l = detail::readLine(line, pr, origLeft >= string::MaxLength);
+			uintPtr l = detail::readLine(line, pr, origLeft >= String::MaxLength);
 			seek(origPos + l);
 			return l;
 		}
@@ -98,7 +98,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "writing to abstract (possibly read-only) file");
 	}
 
-	void File::writeLine(const string &line)
+	void File::writeLine(const String &line)
 	{
 		write(line);
 		write("\n");
@@ -129,18 +129,18 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "calling mode on an abstract file");
 	}
 
-	Holder<File> newFile(const string &path, const FileMode &mode)
+	Holder<File> newFile(const String &path, const FileMode &mode)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		return a->openFile(p, mode);
 	}
 
-	Holder<File> readFile(const string &path)
+	Holder<File> readFile(const String &path)
 	{
 		return newFile(path, FileMode(true, false));
 	}
 
-	Holder<File> writeFile(const string &path)
+	Holder<File> writeFile(const String &path)
 	{
 		return newFile(path, FileMode(false, true));
 	}
@@ -151,13 +151,13 @@ namespace cage
 		return impl->valid();
 	}
 
-	string DirectoryList::name() const
+	String DirectoryList::name() const
 	{
 		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
 		return impl->name();
 	}
 
-	string DirectoryList::fullPath() const
+	String DirectoryList::fullPath() const
 	{
 		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
 		return impl->fullPath();
@@ -201,7 +201,7 @@ namespace cage
 		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		if (!isDirectory())
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + impl->fullPath() + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + impl->fullPath() + "'");
 			CAGE_THROW_ERROR(Exception, "path is not directory");
 		}
 		return newDirectoryList(impl->fullPath());
@@ -213,13 +213,13 @@ namespace cage
 		impl->next();
 	}
 
-	Holder<DirectoryList> newDirectoryList(const string &path)
+	Holder<DirectoryList> newDirectoryList(const String &path)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		return a->listDirectory(p);
 	}
 
-	PathTypeFlags pathType(const string &path)
+	PathTypeFlags pathType(const String &path)
 	{
 		if (!pathIsValid(path))
 			return PathTypeFlags::Invalid;
@@ -229,28 +229,28 @@ namespace cage
 		return a->type(p);
 	}
 
-	bool pathIsFile(const string &path)
+	bool pathIsFile(const String &path)
 	{
 		return any(pathType(path) & PathTypeFlags::File);
 	}
 
-	void pathCreateDirectories(const string &path)
+	void pathCreateDirectories(const String &path)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		a->createDirectories(p);
 	}
 
-	void pathCreateArchive(const string &path, const string &options)
+	void pathCreateArchive(const String &path, const String &options)
 	{
 		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
 		{
-			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
 		}
 		archiveCreateZip(path, options);
 	}
 
-	void pathMove(const string &from, const string &to)
+	void pathMove(const String &from, const String &to)
 	{
 		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
 		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
@@ -259,39 +259,39 @@ namespace cage
 		mixedMove(af, pf, at, pt);
 	}
 
-	void pathRemove(const string &path)
+	void pathRemove(const String &path)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		a->remove(p);
 	}
 
-	uint64 pathLastChange(const string &path)
+	uint64 pathLastChange(const String &path)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusiveThrow);
 		return a->lastChange(p);
 	}
 
-	string pathSearchTowardsRoot(const string &name, PathTypeFlags type)
+	String pathSearchTowardsRoot(const String &name, PathTypeFlags type)
 	{
 		return pathSearchTowardsRoot(name, pathWorkingDir(), type);
 	}
 
-	string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type)
+	String pathSearchTowardsRoot(const String &name, const String &whereToStart, PathTypeFlags type)
 	{
 		CAGE_ASSERT(any(type & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
 		CAGE_ASSERT(none(type & ~(PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
 		if (name.empty() || !pathIsValid(name) || pathIsAbs(name))
 		{
-			CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
+			CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
 			CAGE_THROW_ERROR(Exception, "invalid name in pathSearchTowardsRoot");
 		}
 		try
 		{
 			detail::OverrideException oe;
-			string p = whereToStart;
+			String p = whereToStart;
 			while (true)
 			{
-				const string s = pathJoin(p, name);
+				const String s = pathJoin(p, name);
 				if (any(pathType(s) & type))
 					return s;
 				p = pathJoin(p, "..");
@@ -299,8 +299,8 @@ namespace cage
 		}
 		catch (const Exception &)
 		{
-			CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
-			CAGE_LOG_THROW(stringizer() + "whereToStart: '" + whereToStart + "'");
+			CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
+			CAGE_LOG_THROW(Stringizer() + "whereToStart: '" + whereToStart + "'");
 			CAGE_THROW_ERROR(Exception, "pathSearchTowardsRoot failed to find the name");
 		}
 	}

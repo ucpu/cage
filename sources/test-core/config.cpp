@@ -9,9 +9,9 @@ namespace
 		Holder<ConfigList> iter = newConfigList();
 		while (iter->valid())
 		{
-			string res = iter->name() + ": " + iter->typeName();
+			String res = iter->name() + ": " + iter->typeName();
 			if (iter->type() != ConfigTypeEnum::Undefined)
-				res += string(" = ") + iter->getString();
+				res += String(" = ") + iter->getString();
 			CAGE_LOG_CONTINUE(SeverityEnum::Note, "test", res);
 			iter->next();
 		}
