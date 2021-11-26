@@ -3,8 +3,6 @@
 
 #include "main.h"
 
-uint32 CageTestCase::counter = 0;
-
 void testMacros();
 void testEnums();
 void testExceptions();

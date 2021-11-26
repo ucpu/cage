@@ -1,10 +1,9 @@
 #include <cage-core/networkTcp.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
+#include <cage-core/config.h>
 
 #include "database.h"
-
-#include <list>
 
 namespace
 {
@@ -46,26 +45,34 @@ namespace
 
 	private:
 		Holder<TcpServer> server;
-		std::list<Holder<TcpConnection>> connections;
+		std::vector<Holder<TcpConnection>> connections;
 		Holder<Mutex> mut;
 	};
 
 	Holder<Notifier> notifierInstance;
 }
 
-void notifierInitialize(const uint16 port)
+void notifierInitialize()
 {
-	notifierInstance = systemMemory().createHolder<Notifier>(port);
+	notifierInstance = systemMemory().createHolder<Notifier>(configNotifierPort);
 }
 
-void notifierAccept()
+void notifierAcceptConnections()
 {
 	if (notifierInstance)
 		notifierInstance->accept();
 }
 
-void notifierNotify(const String &str)
+void notifierSendNotifications()
 {
-	if (notifierInstance)
-		notifierInstance->notify(str);
+	for (auto &it : assets)
+	{
+		if (it.second->needNotify)
+		{
+			CAGE_ASSERT(!it.second->corrupted);
+			if (notifierInstance)
+				notifierInstance->notify(it.first);
+			it.second->needNotify = false;
+		}
+	}
 }

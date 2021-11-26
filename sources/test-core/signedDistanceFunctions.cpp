@@ -21,7 +21,7 @@ namespace
 
 	void sdfTest(Delegate<Real(const Vec3 &)> function, StringLiteral name)
 	{
-		CAGE_TESTCASE(name);
+		CAGE_TESTCASE(String(name));
 
 		MarchingCubesCreateConfig cfg;
 		cfg.box = Aabb(Vec3(-10), Vec3(10));

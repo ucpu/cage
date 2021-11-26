@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
+#include <cage-core/string.h>
 
 #include <cstring>
 #include <cmath> // std::abs

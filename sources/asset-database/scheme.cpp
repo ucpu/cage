@@ -1,8 +1,12 @@
 #include <cage-core/ini.h>
 #include <cage-core/macros.h>
 #include <cage-core/containerSerialization.h>
+#include <cage-core/files.h>
+#include <cage-core/config.h>
 
 #include "database.h"
+
+std::map<String, Holder<Scheme>> schemes;
 
 void Scheme::parse(Ini *ini)
 {
@@ -26,7 +30,7 @@ void Scheme::parse(Ini *ini)
 		fld.hint = "common name to reference the asset in multipacks";
 		fld.type = "string";
 		CAGE_ASSERT(fld.valid());
-		schemeFields.insert(std::move(fld));
+		schemeFields.emplace(fld.name, std::move(fld));
 	}
 
 	for (const String &section : ini->sections())
@@ -40,7 +44,7 @@ void Scheme::parse(Ini *ini)
 #undef GCHL_GENERATE
 			fld.defaul = ini->getString(section, "default");
 		if (fld.valid())
-			schemeFields.insert(std::move(fld));
+			schemeFields.emplace(fld.name, std::move(fld));
 		else
 		{
 			CAGE_LOG_THROW(Stringizer() + "scheme: " + name);
@@ -102,7 +106,7 @@ bool Scheme::applyOnAsset(Asset &ass)
 {
 	bool ok = true;
 	for (const auto &it : schemeFields)
-		ok = it->applyToAssetField(ass.fields[it->name], ass.name) && ok;
+		ok = it.second.applyToAssetField(ass.fields[it.first], ass.name) && ok;
 	return ok;
 }
 
@@ -334,4 +338,40 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 		}
 	}
 	return true;
+}
+
+namespace
+{
+	void loadSchemes(const String &dir)
+	{
+		const String realpath = pathJoin(configPathSchemes, dir);
+		Holder<DirectoryList> lst = newDirectoryList(realpath);
+		for (; lst->valid(); lst->next())
+		{
+			const String name = pathJoin(dir, lst->name());
+			if (lst->isDirectory())
+			{
+				loadSchemes(name);
+				continue;
+			}
+			if (!isPattern(name, "", "", ".scheme"))
+				continue;
+			Holder<Scheme> s = systemMemory().createHolder<Scheme>();
+			s->name = subString(name, 0, name.length() - 7);
+			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading scheme '" + s->name + "'");
+			Holder<Ini> ini = newIni();
+			ini->importFile(pathJoin(configPathSchemes, name));
+			s->parse(+ini);
+			schemes.emplace(s->name, std::move(s));
+		}
+	}
+}
+
+void loadSchemes()
+{
+	schemes.clear();
+
+	loadSchemes("");
+
+	CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loaded " + schemes.size() + " schemes");
 }

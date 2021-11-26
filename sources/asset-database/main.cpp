@@ -37,7 +37,7 @@ int main(int argc, const char *args[])
 
 		CAGE_LOG(SeverityEnum::Info, "database", "end");
 
-		return verdict() ? 0 : -1;
+		return verdictValue ? 0 : -1;
 	}
 	catch (...)
 	{

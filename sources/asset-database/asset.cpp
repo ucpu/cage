@@ -3,6 +3,8 @@
 
 #include "database.h"
 
+std::map<String, Holder<Asset>> assets;
+
 Serializer &operator << (Serializer &ser, const Asset &s)
 {
 	ser << s.name << s.aliasName << s.scheme << s.databank;
@@ -19,12 +21,12 @@ Deserializer &operator >> (Deserializer &des, Asset &s)
 	return des;
 }
 
-String Asset::outputPath() const
+uint32 Asset::outputPath() const
 {
-	return Stringizer() + HashString(name);
+	return HashString(name);
 }
 
-String Asset::aliasPath() const
+uint32 Asset::aliasPath() const
 {
-	return Stringizer() + HashString(aliasName);
+	return HashString(aliasName);
 }

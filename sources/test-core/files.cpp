@@ -1,6 +1,7 @@
 #include "main.h"
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/string.h>
 
 #include <cstdlib>
 #include <set>

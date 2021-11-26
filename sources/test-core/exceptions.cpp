@@ -1,5 +1,6 @@
 #include "main.h"
 #include <cage-core/concurrent.h>
+#include <cage-core/string.h>
 
 #include <cstring> // strcmp
 
@@ -66,7 +67,7 @@ void testExceptions()
 		catch (const Exception &e)
 		{
 			CAGE_TEST(std::strcmp(e.file, __FILE__) == 0);
-			CAGE_TEST(e.line == 64); // marked line number
+			CAGE_TEST(e.line == 65); // marked line number
 			CAGE_TEST(isPattern(String(e.function), "", "testExceptions", ""));
 			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.severity == SeverityEnum::Error);
@@ -89,7 +90,7 @@ void testExceptions()
 			catch (const Exception &e)
 			{
 				CAGE_TEST(std::strcmp(e.file, __FILE__) == 0);
-				CAGE_TEST(e.line == 15); // marked line number
+				CAGE_TEST(e.line == 16); // marked line number
 				CAGE_TEST(isPattern(String(e.function), "", "assertFailureFunction", ""));
 				CAGE_TEST(e.severity == SeverityEnum::Critical);
 			}
