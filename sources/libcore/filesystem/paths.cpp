@@ -25,7 +25,7 @@ namespace cage
 			case '/':
 				return allowSlash;
 			default:
-				return c >= 32;
+				return (unsigned char)c >= 32;
 			}
 #else
 			switch (c)
@@ -33,7 +33,7 @@ namespace cage
 			case '/':
 				return allowSlash;
 			default:
-				return c >= 32;
+				return (unsigned char)c >= 32;
 			}
 #endif
 		}

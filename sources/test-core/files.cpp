@@ -256,11 +256,68 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("sanitize file path");
-		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def.bin";
+		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def\7gжяhi.bin";
 		CAGE_TEST_THROWN(writeFile(d));
 		const String s = pathReplaceInvalidCharacters(d, "_", true);
 		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: '" + s + "'");
 		CAGE_TEST(writeFile(s));
+	}
+
+	{
+		CAGE_TESTCASE("unicode names");
+
+		{
+			CAGE_TESTCASE("create files");
+			// http://www.madore.org/~david/misc/unitest/
+			writeFile("testdir/unicode/1-Пооживлённымберегам");
+			writeFile("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
+			writeFile("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्");
+			writeFile("testdir/unicode/4-子曰「學而時習之不亦說乎");
+			writeFile("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
+			writeFile("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
+			writeFile("testdir/unicode/7-По/оживлённым/берегам");
+		}
+
+		{
+			CAGE_TESTCASE("test files");
+			CAGE_TEST(pathType("testdir/unicode/1-Пооживлённымберегам") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/4-子曰「學而時習之不亦說乎") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым/берегам") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым") == PathTypeFlags::Directory);
+			CAGE_TEST(pathType("testdir/unicode/42-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::NotFound);
+		}
+
+		{
+			CAGE_TESTCASE("list files");
+			Holder<DirectoryList> fs = newDirectoryList("testdir/unicode");
+			CAGE_TEST(fs);
+			while (fs->valid())
+			{
+				CAGE_LOG(SeverityEnum::Info, "unicode-test", fs->name());
+				fs->next();
+			}
+		}
+
+		{
+			CAGE_TESTCASE("move files");
+			pathMove("testdir/unicode/1-Пооживлённымберегам", "testdir/unicode/1_Пооживлённымберегам");
+			pathMove("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ", "testdir/unicode/2_Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
+			pathMove("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्", "testdir/unicode/3_पशुपतिरपितान्यहानिकृच्छ्राद्");
+			pathMove("testdir/unicode/4-子曰「學而時習之不亦說乎", "testdir/unicode/4_子曰「學而時習之不亦說乎");
+			pathMove("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்", "testdir/unicode/5_ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
+			pathMove("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ", "testdir/unicode/6_بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
+			pathMove("testdir/unicode/7-По/оживлённым/берегам", "testdir/unicode/7_По/оживлённым/берегам");
+		}
+
+		{
+			CAGE_TESTCASE("remove files");
+			pathRemove("testdir/unicode/4_子曰「學而時習之不亦說乎");
+			pathRemove("testdir/unicode/7_По");
+		}
 	}
 
 	{

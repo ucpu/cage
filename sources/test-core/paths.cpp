@@ -97,12 +97,12 @@ void testPaths()
 		// for example, it would make sense to allow "windows forbidden characters" inside archives even on windows, since these limitations do not apply to archives
 		//   but the functions cannot possibly know where is the path going to be used
 		CAGE_TESTCASE("pathReplaceInvalidCharacters");
-		constexpr const char *input = "dir/abc'\"^°`_-:?!%;#~(){}[]<>def\7ghi.bin";
+		constexpr const char *input = "dir/abc'\"^°`_-:?!%;#~(){}[]<>def\7gжяhi.bin";
 		const String replaced = pathReplaceInvalidCharacters(input);
 #ifdef CAGE_SYSTEM_WINDOWS
-		CAGE_TEST(replaced == "dir_abc'_^__`_-__!%;#~(){}[]__def_ghi.bin");
+		CAGE_TEST(replaced == "dir_abc'_^°`_-__!%;#~(){}[]__def_gжяhi.bin");
 #else
-		CAGE_TEST(replaced == "dir_abc'\"^__`_-:?!%;#~(){}[]<>def_ghi.bin");
+		CAGE_TEST(replaced == "dir_abc'\"^°`_-:?!%;#~(){}[]<>def_gжяhi.bin");
 #endif // CAGE_SYSTEM_WINDOWS
 	}
 
