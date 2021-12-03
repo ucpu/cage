@@ -6,13 +6,6 @@ message(STATUS "----------------------------------------------------------------
 
 # base library
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_VISIBILITY_PRESET hidden)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-
 add_library(cubeb STATIC
 	cubeb/src/cubeb.c
 	cubeb/src/cubeb_mixer.cpp
