@@ -128,6 +128,7 @@ external_target_properties(plf)
 external_target_properties(tinyexr)
 external_target_properties(samplerate)
 external_target_properties(astcenc-avx2-static)
+external_target_properties(astcenc-sse2-static)
 
 # final overrides
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)
