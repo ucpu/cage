@@ -15,18 +15,18 @@ namespace
 {
 	void drawCircle(Image *img)
 	{
-		uint32 w = img->width(), h = img->height();
-		Vec2 center = Vec2(w, h) * 0.5;
-		Real radiusMax = min(w, h) * 0.5;
+		const uint32 w = img->width(), h = img->height();
+		const Vec2 center = Vec2(w, h) * 0.5;
+		const Real radiusMax = min(w, h) * 0.5;
 		for (uint32 y = 0; y < h; y++)
 		{
 			for (uint32 x = 0; x < w; x++)
 			{
-				Real xx = (Real(x) - w / 2) / radiusMax;
-				Real yy = (Real(y) - h / 2) / radiusMax;
-				Real h = Real(wrap(atan2(xx, yy)) / Rads::Full());
-				Real s = length(Vec2(xx, yy));
-				Vec4 color = s <= 1 ? Vec4(colorHsvToRgb(Vec3(h, s, 1)), 1) : Vec4();
+				const Real xx = (Real(x) - w / 2) / radiusMax;
+				const Real yy = (Real(y) - h / 2) / radiusMax;
+				const Real h = Real(wrap(atan2(xx, yy)) / Rads::Full());
+				const Real s = length(Vec2(xx, yy));
+				const Vec4 color = s <= 1 ? Vec4(colorHsvToRgb(Vec3(h, s, 1)), 1) : Vec4();
 				img->set(x, y, color);
 			}
 		}
@@ -163,7 +163,7 @@ void testImage()
 		CAGE_TEST(img->width() == 400);
 		CAGE_TEST(img->height() == 300);
 		Holder<Image> tg = newImage();
-		imageBlit(+img, tg.get(), 50, 0, 0, 0, 300, 300);
+		imageBlit(+img, +tg, 50, 0, 0, 0, 300, 300);
 		tg->exportFile("images/formats/circle300.png");
 	}
 
@@ -175,7 +175,7 @@ void testImage()
 		CAGE_TEST(img->height() == 300);
 		Holder<Image> tg = newImage();
 		tg->initialize(400, 400, 4);
-		imageBlit(+img, tg.get(), 50, 0, 50, 50, 300, 300);
+		imageBlit(+img, +tg, 50, 0, 50, 50, 300, 300);
 		tg->exportFile("images/formats/circle400.png");
 	}
 
@@ -276,7 +276,7 @@ void testImage()
 		{
 			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
+			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".astc" })
 			{
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
@@ -289,13 +289,18 @@ void testImage()
 				tg->importFile(name);
 				CAGE_TEST(tg->width() == img->width());
 				CAGE_TEST(tg->height() == img->height());
-				CAGE_TEST(tg->channels() == img->channels());
+				if (fmt == ".astc")
+					CAGE_TEST(tg->channels() == 4) // astc always loads 4 channels
+				else
+					CAGE_TEST(tg->channels() == img->channels());
 				CAGE_TEST(tg->format() == img->format());
-				if (fmt != ".jpeg") // jpegs are lossy
+				if (fmt != ".jpeg" && fmt != ".astc") // lossy formats
 				{
 					for (uint32 c = 0; c < ch; c++)
 						test(tg->value(120, 90, c), img->value(120, 90, c));
 				}
+				if (fmt == ".astc")
+					tg->exportFile(Stringizer() + "images/channels/" + ch + fmt + ".png"); // for verification
 			}
 		}
 	}
