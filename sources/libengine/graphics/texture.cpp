@@ -313,7 +313,7 @@ namespace cage
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
 		for (uint32 i = 0; i < 6; i++)
-			glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data() + i * stride);
+			glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, stride, buffer.data() + i * stride);
 		impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
