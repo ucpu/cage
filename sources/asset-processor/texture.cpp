@@ -1,4 +1,5 @@
 #include <cage-core/image.h>
+#include <cage-core/imageAstc.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
 #include <cage-engine/opengl.h>
@@ -12,6 +13,14 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
+#ifdef CAGE_DEBUG
+	constexpr sint32 DefaltAstcCompressionQuality = 10;
+#else
+	constexpr sint32 DefaltAstcCompressionQuality = 70;
+#endif // CAGE_DEBUG
+
+	ConfigSint32 configAstcCompressionQuality("cage-asset-processor/texture/astcCompressionQuality", DefaltAstcCompressionQuality);
+
 	uint32 convertFilter(const String &f)
 	{
 		if (f == "nearestMipmapNearest")
@@ -56,8 +65,9 @@ namespace
 		return 0;
 	}
 
-	uint32 convertTarget(const String &f)
+	uint32 convertTarget()
 	{
+		const String f = properties("target");
 		if (f == "2d")
 			return GL_TEXTURE_2D;
 		if (f == "2dArray")
@@ -67,6 +77,134 @@ namespace
 		if (f == "3d")
 			return GL_TEXTURE_3D;
 		return 0;
+	}
+
+	String resolveAutoTiling(const uint32 target, const uint32 channels)
+	{
+		const String f = properties("astcTiling");
+		if (f != "auto")
+			return f;
+		switch (target)
+		{
+		case GL_TEXTURE_2D:
+		case GL_TEXTURE_2D_ARRAY:
+		case GL_TEXTURE_CUBE_MAP:
+			if (toBool(properties("srgb")))
+			{
+				// approx 1 bit per pixel per channel
+				switch (channels)
+				{
+				case 1: return "12x10";
+				case 2: return "8x8";
+				case 3: return "8x5";
+				case 4: return "6x5";
+				default: return "none";
+				}
+			}
+			else
+			{
+				// approx 2 bits per pixel per channel
+				switch (channels)
+				{
+				case 1: return "8x8";
+				case 2: return "6x5";
+				case 3: return "5x4";
+				case 4: return "4x4";
+				default: return "none";
+				}
+			}
+		default:
+			return "none";
+		}
+	}
+
+	Vec2i convertTiling(const String &f)
+	{
+		String s = f;
+		const uint32 x = toUint32(split(s, "x"));
+		const uint32 y = toUint32(s);
+		return Vec2i(x, y);
+	}
+
+	uint32 findInternalFormatForAstc(const Vec2i &tiling)
+	{
+		const uint32 t = tiling[0] * 100 + tiling[1]; // 8x5 -> 805
+
+		if (toBool(properties("srgb")))
+		{
+			switch (t)
+			{
+			case 404: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
+			case 504: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR;
+			case 505: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR;
+			case 605: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR;
+			case 606: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR;
+			case 805: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR;
+			case 806: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR;
+			case 808: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR;
+			case 1005: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR;
+			case 1006: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR;
+			case 1008: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR;
+			case 1010: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR;
+			case 1210: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR;
+			case 1212: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR;
+			}
+		}
+		else
+		{
+			switch (t)
+			{
+			case 404: return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+			case 504: return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
+			case 505: return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+			case 605: return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
+			case 606: return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+			case 805: return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
+			case 806: return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
+			case 808: return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+			case 1005: return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
+			case 1006: return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
+			case 1008: return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
+			case 1010: return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+			case 1210: return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
+			case 1212: return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+			}
+		}
+
+		CAGE_THROW_ERROR(Exception, "cannot determine internal format for astc compressed texture");
+	}
+
+	void findSwizzlingForAstc(TextureSwizzleEnum swizzle[4], const uint32 channels)
+	{
+		if (toBool(properties("srgb")))
+			return; // no swizzling
+
+		switch (channels)
+		{
+		case 1:
+			swizzle[0] = TextureSwizzleEnum::R;
+			swizzle[1] = TextureSwizzleEnum::Zero;
+			swizzle[2] = TextureSwizzleEnum::Zero;
+			swizzle[3] = TextureSwizzleEnum::One;
+			return;
+		case 2:
+			swizzle[0] = TextureSwizzleEnum::R;
+			swizzle[1] = TextureSwizzleEnum::A;
+			swizzle[2] = TextureSwizzleEnum::Zero;
+			swizzle[3] = TextureSwizzleEnum::One;
+			return;
+		case 3:
+			swizzle[0] = TextureSwizzleEnum::R;
+			swizzle[1] = TextureSwizzleEnum::G;
+			swizzle[2] = TextureSwizzleEnum::B;
+			swizzle[3] = TextureSwizzleEnum::One;
+			return;
+		case 4:
+			// no swizzling
+			return;
+		}
+
+		CAGE_THROW_ERROR(Exception, "cannot determine swizzling for astc compressed texture");
 	}
 
 	std::vector<Holder<Image>> images;
@@ -156,7 +294,7 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 
-	void performDownscale(uint32 downscale, uint32 target)
+	void performDownscale(const uint32 downscale, const uint32 target)
 	{
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
@@ -228,7 +366,7 @@ namespace
 		}
 	}
 
-	void checkConsistency(uint32 target)
+	void checkConsistency(const uint32 target)
 	{
 		const uint32 frames = numeric_cast<uint32>(images.size());
 		if (frames == 0)
@@ -258,82 +396,124 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
 	}
 
-	void exportTexture(uint32 target)
+	void exportTexture(const uint32 target)
 	{
 		TextureHeader data;
 		detail::memset(&data, 0, sizeof(TextureHeader));
 		data.target = target;
+		data.resolution = Vec3i(images[0]->width(), images[0]->height(), numeric_cast<uint32>(images.size()));
+		data.channels = images[0]->channels();
 		data.filterMin = convertFilter(properties("filterMin"));
 		data.filterMag = convertFilter(properties("filterMag"));
 		data.filterAniso = toUint32(properties("filterAniso"));
 		data.wrapX = convertWrap(properties("wrapX"));
 		data.wrapY = convertWrap(properties("wrapY"));
 		data.wrapZ = convertWrap(properties("wrapZ"));
-		data.flags =
-			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
-			(toBool(properties("animationLoop")) ? TextureFlags::AnimationLoop : TextureFlags::None);
-		data.resolution = Vec3i(images[0]->width(), images[0]->height(), numeric_cast<uint32>(images.size()));
-		data.channels = images[0]->channels();
+		data.swizzle[0] = TextureSwizzleEnum::R;
+		data.swizzle[1] = TextureSwizzleEnum::G;
+		data.swizzle[2] = TextureSwizzleEnum::B;
+		data.swizzle[3] = TextureSwizzleEnum::A;
+		if (requireMipmaps(data.filterMin))
+			data.flags |= TextureFlags::GenerateMipmaps;
+		if (toBool(properties("animationLoop")))
+			data.flags |= TextureFlags::AnimationLoop;
+		data.animationDuration = toUint64(properties("animationDuration"));
+		data.copyType = GL_UNSIGNED_BYTE;
 
 		// todo
 		if (images[0]->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
 
-		if (toBool(properties("srgb")))
+		AssetHeader h = initializeAssetHeader();
+		h.originalSize = sizeof(data);
+
+		MemoryBuffer inputBuffer;
+		Serializer ser(inputBuffer);
+		ser << data; // reserve space, will be overridden later
+
+		const String astcTilingStr = resolveAutoTiling(target, data.channels);
+
+		if (astcTilingStr == "none")
 		{
-			switch (data.channels)
+			// raw encoding
+			CAGE_LOG(SeverityEnum::Info, logComponentName, "NO astc compression");
+
+			if (toBool(properties("srgb")))
 			{
-			case 3:
-				data.internalFormat = GL_SRGB8;
-				data.copyFormat = GL_RGB;
-				break;
-			case 4:
-				data.internalFormat = GL_SRGB8_ALPHA8;
-				data.copyFormat = GL_RGBA;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported bpp (with srgb)");
+				switch (data.channels)
+				{
+				case 3:
+					data.internalFormat = GL_SRGB8;
+					data.copyFormat = GL_RGB;
+					break;
+				case 4:
+					data.internalFormat = GL_SRGB8_ALPHA8;
+					data.copyFormat = GL_RGBA;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported bpp (with srgb)");
+				}
+			}
+			else
+			{
+				switch (data.channels)
+				{
+				case 1:
+					data.internalFormat = GL_R8;
+					data.copyFormat = GL_RED;
+					break;
+				case 2:
+					data.internalFormat = GL_RG8;
+					data.copyFormat = GL_RG;
+					break;
+				case 3:
+					data.internalFormat = GL_RGB8;
+					data.copyFormat = GL_RGB;
+					break;
+				case 4:
+					data.internalFormat = GL_RGBA8;
+					data.copyFormat = GL_RGBA;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported bpp");
+				}
+			}
+
+			data.stride = images[0]->rawViewU8().size();
+
+			for (const auto &it : images)
+			{
+				h.originalSize += it->rawViewU8().size();
+				ser.write(bufferCast(it->rawViewU8()));
 			}
 		}
 		else
 		{
-			switch (data.channels)
+			// astc encoding
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using astc compression: " + astcTilingStr);
+
+			ImageAstcCompressionConfig cfg;
+			cfg.tiling = convertTiling(astcTilingStr);
+			cfg.quality = configAstcCompressionQuality;
+			cfg.normals = properties("convert") == "heightToNormal";
+
+			data.flags |= TextureFlags::Compressed;
+			data.internalFormat = findInternalFormatForAstc(cfg.tiling);
+			findSwizzlingForAstc(data.swizzle, data.channels);
+
+			for (const auto &it : images)
 			{
-			case 1:
-				data.internalFormat = GL_R8;
-				data.copyFormat = GL_RED;
-				break;
-			case 2:
-				data.internalFormat = GL_RG8;
-				data.copyFormat = GL_RG;
-				break;
-			case 3:
-				data.internalFormat = GL_RGB8;
-				data.copyFormat = GL_RGB;
-				break;
-			case 4:
-				data.internalFormat = GL_RGBA8;
-				data.copyFormat = GL_RGBA;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported bpp");
+				auto astc = imageAstcCompress(+it, cfg);
+				data.stride = astc.size();
+				h.originalSize += astc.size();
+				ser.write(astc);
 			}
 		}
-		data.copyType = GL_UNSIGNED_BYTE;
-		data.stride = data.resolution[0] * data.resolution[1] * data.channels;
-		data.animationDuration = toUint64(properties("animationDuration"));
 
-		AssetHeader h = initializeAssetHeader();
-		h.originalSize = sizeof(data);
-		for (const auto &it : images)
-			h.originalSize += it->rawViewU8().size();
-
-		MemoryBuffer inputBuffer;
-		inputBuffer.reserve(numeric_cast<uintPtr>(h.originalSize));
-		Serializer ser(inputBuffer);
-		ser << data;
-		for (const auto &it : images)
-			ser.write(bufferCast(it->rawViewU8()));
+		{
+			Serializer ser(inputBuffer);
+			ser << data; // overwrite the initial header
+		}
 
 		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
@@ -394,7 +574,7 @@ void processTexture()
 		}
 	}
 
-	const uint32 target = convertTarget(properties("target"));
+	const uint32 target = convertTarget();
 	checkConsistency(target);
 
 	{ // premultiply alpha

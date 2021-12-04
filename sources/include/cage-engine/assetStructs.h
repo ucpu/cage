@@ -26,7 +26,13 @@ namespace cage
 		None = 0,
 		GenerateMipmaps = 1 << 0,
 		AnimationLoop = 1 << 1,
-		AllowDownscale = 1 << 2,
+		Compressed = 1 << 2,
+	};
+
+	enum class TextureSwizzleEnum : uint8
+	{
+		Zero, One,
+		R, G, B, A,
 	};
 
 	struct CAGE_ENGINE_API TextureHeader
@@ -46,6 +52,7 @@ namespace cage
 		uint32 wrapX;
 		uint32 wrapY;
 		uint32 wrapZ;
+		TextureSwizzleEnum swizzle[4];
 
 		// follows:
 		// array of texels

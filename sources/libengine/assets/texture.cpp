@@ -12,7 +12,19 @@ namespace cage
 {
 	namespace
 	{
-		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1); // todo
+		uint32 convertSwizzle(TextureSwizzleEnum s)
+		{
+			switch (s)
+			{
+			case TextureSwizzleEnum::Zero: return GL_ZERO;
+			case TextureSwizzleEnum::One: return GL_ONE;
+			case TextureSwizzleEnum::R: return GL_RED;
+			case TextureSwizzleEnum::G: return GL_GREEN;
+			case TextureSwizzleEnum::B: return GL_BLUE;
+			case TextureSwizzleEnum::A: return GL_ALPHA;
+			default: CAGE_THROW_ERROR(Exception, "invalid TextureSwizzleEnum value");
+			}
+		}
 
 		void processLoad(AssetContext *context)
 		{
@@ -23,17 +35,35 @@ namespace cage
 			Holder<Texture> tex = newTexture(data.target);
 			tex->setDebugName(context->textName);
 
-			const uint32 bytesSize = data.resolution[0] * data.resolution[1] * data.resolution[2] * data.channels;
-			PointerRange<const char> values = des.read(bytesSize);
+			PointerRange<const char> values = des.read(des.available());
 
-			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
-				tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
-			else if (data.target == GL_TEXTURE_CUBE_MAP)
-				tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
+			if (any(data.flags & TextureFlags::Compressed))
+			{
+				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
+					tex->image3dCompressed(data.resolution, data.internalFormat, values);
+				else if (data.target == GL_TEXTURE_CUBE_MAP)
+					tex->imageCubeCompressed(Vec2i(data.resolution), data.internalFormat, values, data.stride);
+				else
+					tex->image2dCompressed(Vec2i(data.resolution), data.internalFormat, values);
+			}
 			else
-				tex->image2d(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
+			{
+				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
+					tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
+				else if (data.target == GL_TEXTURE_CUBE_MAP)
+					tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
+				else
+					tex->image2d(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
+			}
+
 			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
 			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);
+			{
+				uint32 s[4] = {};
+				for (uint32 i = 0; i < 4; i++)
+					s[i] = convertSwizzle(data.swizzle[i]);
+				tex->swizzle(s);
+			}
 			if (any(data.flags & TextureFlags::GenerateMipmaps))
 				tex->generateMipmaps();
 
