@@ -6,9 +6,11 @@ macro(cage_build_configuration)
 
 	cmake_policy(SET CMP0063 NEW)
 
+	# language standard
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	set(CMAKE_C_STANDARD 11)
 	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 	# default visibility hidden
 	set(CMAKE_C_VISIBILITY_PRESET hidden)
@@ -22,8 +24,6 @@ macro(cage_build_configuration)
 
 		# conformance to standard
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
-		# enforce specific c++ standard
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++${CMAKE_CXX_STANDARD}")
 
 		# whole program optimizations
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /GL")
@@ -33,17 +33,8 @@ macro(cage_build_configuration)
 		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 
 		# disable compiler warnings:
-		# d4251: class A needs to have dll-interface to be used by clients of class B
-		# _CRT_SECURE_NO_WARNINGS: warnings that some c functions have more secure variants
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
-
-		# disable linker warnings:
-		# 4286: that symbol X defined in A is imported in B
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4286")
-		set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4286")
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4286")
 
 		# optionally improve runtime performance in debug builds
 		option(CAGE_FASTER_DEBUG "enable some optimizations to improve performance in debug builds" ON)
