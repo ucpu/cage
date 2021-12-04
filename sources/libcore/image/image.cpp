@@ -47,6 +47,16 @@ namespace cage
 		return c;
 	}
 
+	void swapAll(ImageImpl *a, ImageImpl *b)
+	{
+		std::swap(a->width, b->width);
+		std::swap(a->height, b->height);
+		std::swap(a->channels, b->channels);
+		std::swap(a->format, b->format);
+		std::swap(a->colorConfig, b->colorConfig);
+		std::swap(a->mem, b->mem);
+	}
+
 	void Image::clear()
 	{
 		ImageImpl *impl = (ImageImpl *)this;
@@ -77,7 +87,7 @@ namespace cage
 	void Image::initialize(const Vec2i &r, uint32 c, ImageFormatEnum f)
 	{
 		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
-		initialize(r[0], r[0], c, f);
+		initialize(r[0], r[1], c, f);
 	}
 
 	Holder<Image> Image::copy() const

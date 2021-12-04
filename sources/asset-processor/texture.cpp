@@ -476,7 +476,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images)
 		{
-			String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			imageVerticalFlip(+it); // this is after the export, so this operation does not affect the textures
 			it->exportFile(dbgName);
 		}
