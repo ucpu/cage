@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 message(STATUS "----------------------------------------------------------------")
-message(STATUS "astc")
+message(STATUS "astc-encoder")
 message(STATUS "----------------------------------------------------------------")
 
 try_run(avx2_runs avx2_compiles ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/testAvx2.c)
@@ -26,7 +26,7 @@ option(DIAGNOSTICS "Enable builds for diagnostic trace" OFF)
 option(UNITTEST "Enable builds for unit tests" OFF)
 option(CLI "Enable build of CLI" OFF)
 
-add_subdirectory(astc)
+add_subdirectory(astc-encoder)
 
 if(use_avx2)
 	add_library(astcenc ALIAS astcenc-avx2-static)

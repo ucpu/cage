@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 message(STATUS "----------------------------------------------------------------")
-message(STATUS "libpng")
+message(STATUS "png")
 message(STATUS "----------------------------------------------------------------")
 
 option(PNG_SHARED "Build shared lib" OFF)
@@ -12,9 +12,9 @@ set(SKIP_INSTALL_ALL ON)
 find_program(AWK NAMES gawk awk)
 set(AWK "")
 
-add_subdirectory(libpng)
+add_subdirectory(png)
 
-target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libpng")
-target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/libpng")
+target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/png")
+target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/png")
 
 cage_gen_module(PNG $<TARGET_LINKER_FILE:png_static> $<TARGET_PROPERTY:png_static,INTERFACE_INCLUDE_DIRECTORIES>)

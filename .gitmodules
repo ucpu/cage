@@ -5,10 +5,10 @@
 	path = externals/dr_libs/dr_libs
 	url = https://github.com/mackron/dr_libs.git
 [submodule "externals/libpng/libpng"]
-	path = externals/libpng/libpng
+	path = externals/png/png
 	url = https://github.com/glennrp/libpng.git
 [submodule "externals/libtiff/libtiff"]
-	path = externals/libtiff/libtiff
+	path = externals/tiff/tiff
 	url = https://gitlab.com/libtiff/libtiff.git
 [submodule "externals/freetype/freetype"]
 	path = externals/freetype/freetype
@@ -86,5 +86,8 @@
 	path = externals/samplerate/libsamplerate
 	url = https://github.com/libsndfile/libsamplerate.git
 [submodule "externals/astc/astc"]
-	path = externals/astc/astc
+	path = externals/astc-encoder/astc-encoder
 	url = https://github.com/ARM-software/astc-encoder.git
+[submodule "externals/basis_universal/basis_universal"]
+	path = externals/basis_universal/basis_universal
+	url = https://github.com/BinomialLLC/basis_universal.git

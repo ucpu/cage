@@ -69,15 +69,15 @@ namespace cage
 	void bcDecompress(const Bc1Block &in, U8Block &out);
 	void bcDecompress(const Bc2Block &in, U8Block &out);
 	void bcDecompress(const Bc3Block &in, U8Block &out);
-	void bcDecompress(const Bc4Block &in, U8Block &out);
-	void bcDecompress(const Bc5Block &in, U8Block &out);
-	void bcDecompress(const Bc6Block &in, F32Block &out);
-	void bcDecompress(const Bc7Block &in, U8Block &out);
-	void bcCompress(const U8Block &in, Bc1Block &out);
-	void bcCompress(const U8Block &in, Bc2Block &out);
+	//void bcDecompress(const Bc4Block &in, U8Block &out);
+	//void bcDecompress(const Bc5Block &in, U8Block &out);
+	//void bcDecompress(const Bc6Block &in, F32Block &out);
+	//void bcDecompress(const Bc7Block &in, U8Block &out);
+	//void bcCompress(const U8Block &in, Bc1Block &out);
+	//void bcCompress(const U8Block &in, Bc2Block &out);
 	void bcCompress(const U8Block &in, Bc3Block &out);
 	void bcCompress(const U8Block &in, Bc4Block &out);
 	void bcCompress(const U8Block &in, Bc5Block &out);
-	void bcCompress(const F32Block &in, Bc6Block &out);
-	void bcCompress(const U8Block &in, Bc7Block &out);
+	//void bcCompress(const F32Block &in, Bc6Block &out);
+	//void bcCompress(const U8Block &in, Bc7Block &out);
 }

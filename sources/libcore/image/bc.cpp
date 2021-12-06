@@ -196,6 +196,7 @@ namespace cage
 		stb_compress_bc5_block((unsigned char *)&out, tmp);
 	}
 
+	/*
 #ifdef CAGE_DEBUG
 	struct CompressTest
 	{
@@ -219,4 +220,5 @@ namespace cage
 		}
 	} compressTest;
 #endif // CAGE_DEBUG
+	*/
 }
