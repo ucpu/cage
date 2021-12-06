@@ -84,6 +84,7 @@ namespace
 		const String f = properties("astcTiling");
 		if (f != "auto")
 			return f;
+
 		switch (target)
 		{
 		case GL_TEXTURE_2D:
@@ -98,7 +99,6 @@ namespace
 				case 2: return "8x8";
 				case 3: return "8x5";
 				case 4: return "6x5";
-				default: return "none";
 				}
 			}
 			else
@@ -110,12 +110,11 @@ namespace
 				case 2: return "6x5";
 				case 3: return "5x4";
 				case 4: return "4x4";
-				default: return "none";
 				}
 			}
-		default:
-			return "none";
 		}
+
+		CAGE_THROW_ERROR(Exception, "could not automatically determine astc tiling");
 	}
 
 	Vec2i convertTiling(const String &f)
@@ -396,6 +395,84 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
 	}
 
+	void exportAstc(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using astc encoding");
+		const String astcTilingStr = resolveAutoTiling(data.target, data.channels);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "astc tiling: " + astcTilingStr);
+
+		ImageAstcCompressionConfig cfg;
+		cfg.tiling = convertTiling(astcTilingStr);
+		cfg.quality = configAstcCompressionQuality;
+		cfg.normals = properties("convert") == "heightToNormal";
+
+		data.flags |= TextureFlags::Compressed;
+		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
+		findSwizzlingForAstc(data.swizzle, data.channels);
+
+		for (const auto &it : images)
+		{
+			auto astc = imageAstcCompress(+it, cfg);
+			data.stride = astc.size();
+			asset.originalSize += astc.size();
+			ser.write(astc);
+		}
+	}
+
+	void exportRaw(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using raw encoding - no compression");
+
+		if (toBool(properties("srgb")))
+		{
+			switch (data.channels)
+			{
+			case 3:
+				data.internalFormat = GL_SRGB8;
+				data.copyFormat = GL_RGB;
+				break;
+			case 4:
+				data.internalFormat = GL_SRGB8_ALPHA8;
+				data.copyFormat = GL_RGBA;
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported bpp (with srgb)");
+			}
+		}
+		else
+		{
+			switch (data.channels)
+			{
+			case 1:
+				data.internalFormat = GL_R8;
+				data.copyFormat = GL_RED;
+				break;
+			case 2:
+				data.internalFormat = GL_RG8;
+				data.copyFormat = GL_RG;
+				break;
+			case 3:
+				data.internalFormat = GL_RGB8;
+				data.copyFormat = GL_RGB;
+				break;
+			case 4:
+				data.internalFormat = GL_RGBA8;
+				data.copyFormat = GL_RGBA;
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported bpp");
+			}
+		}
+
+		data.stride = images[0]->rawViewU8().size();
+
+		for (const auto &it : images)
+		{
+			asset.originalSize += it->rawViewU8().size();
+			ser.write(bufferCast(it->rawViewU8()));
+		}
+	}
+
 	void exportTexture(const uint32 target)
 	{
 		TextureHeader data;
@@ -431,84 +508,11 @@ namespace
 		Serializer ser(inputBuffer);
 		ser << data; // reserve space, will be overridden later
 
-		const String astcTilingStr = resolveAutoTiling(target, data.channels);
-
-		if (astcTilingStr == "none")
-		{
-			// raw encoding
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "NO astc compression");
-
-			if (toBool(properties("srgb")))
-			{
-				switch (data.channels)
-				{
-				case 3:
-					data.internalFormat = GL_SRGB8;
-					data.copyFormat = GL_RGB;
-					break;
-				case 4:
-					data.internalFormat = GL_SRGB8_ALPHA8;
-					data.copyFormat = GL_RGBA;
-					break;
-				default:
-					CAGE_THROW_ERROR(Exception, "unsupported bpp (with srgb)");
-				}
-			}
-			else
-			{
-				switch (data.channels)
-				{
-				case 1:
-					data.internalFormat = GL_R8;
-					data.copyFormat = GL_RED;
-					break;
-				case 2:
-					data.internalFormat = GL_RG8;
-					data.copyFormat = GL_RG;
-					break;
-				case 3:
-					data.internalFormat = GL_RGB8;
-					data.copyFormat = GL_RGB;
-					break;
-				case 4:
-					data.internalFormat = GL_RGBA8;
-					data.copyFormat = GL_RGBA;
-					break;
-				default:
-					CAGE_THROW_ERROR(Exception, "unsupported bpp");
-				}
-			}
-
-			data.stride = images[0]->rawViewU8().size();
-
-			for (const auto &it : images)
-			{
-				h.originalSize += it->rawViewU8().size();
-				ser.write(bufferCast(it->rawViewU8()));
-			}
-		}
+		const String compression = properties("compression");
+		if (compression == "astc")
+			exportAstc(data, h, ser);
 		else
-		{
-			// astc encoding
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using astc compression: " + astcTilingStr);
-
-			ImageAstcCompressionConfig cfg;
-			cfg.tiling = convertTiling(astcTilingStr);
-			cfg.quality = configAstcCompressionQuality;
-			cfg.normals = properties("convert") == "heightToNormal";
-
-			data.flags |= TextureFlags::Compressed;
-			data.internalFormat = findInternalFormatForAstc(cfg.tiling);
-			findSwizzlingForAstc(data.swizzle, data.channels);
-
-			for (const auto &it : images)
-			{
-				auto astc = imageAstcCompress(+it, cfg);
-				data.stride = astc.size();
-				h.originalSize += astc.size();
-				ser.write(astc);
-			}
-		}
+			exportRaw(data, h, ser);
 
 		{
 			Serializer ser(inputBuffer);

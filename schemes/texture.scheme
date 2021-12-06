@@ -64,10 +64,16 @@ hint = true for color images, false otherwise
 type = bool
 default = false
 
+[compression]
+display = compression method
+type = enum
+values = raw, astc
+default = raw
+
 [astcTiling]
 display = astc compression tiling
 type = enum
-values = none, auto, 4x4, 5x4, 5x5, 6x5, 6x6, 8x5, 8x6, 10x5, 10x6, 8x8, 10x8, 10x10, 12x10, 12x12 #, 3x3x3, 4x3x3, 4x4x3, 4x4x4, 5x4x4, 5x5x4, 5x5x5, 6x5x5, 6x6x5, 6x6x6
+values = auto, 4x4, 5x4, 5x5, 6x5, 6x6, 8x5, 8x6, 10x5, 10x6, 8x8, 10x8, 10x10, 12x10, 12x12 #, 3x3x3, 4x3x3, 4x4x3, 4x4x4, 5x4x4, 5x5x4, 5x5x5, 6x5x5, 6x6x5, 6x6x6
 default = auto
 
 [animationDuration]
