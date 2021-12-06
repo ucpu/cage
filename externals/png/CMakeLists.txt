@@ -12,6 +12,9 @@ set(SKIP_INSTALL_ALL ON)
 find_program(AWK NAMES gawk awk)
 set(AWK "")
 
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
+
 add_subdirectory(png)
 
 target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/png")
