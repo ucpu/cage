@@ -1,5 +1,5 @@
 #include "image.h"
-#include "dxt.h"
+#include "bc.h"
 #include <cage-core/serialization.h>
 
 // mipmaps, cubemaps, arrays, volumes are not supported
@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		const uint32 Magic = 0x20534444;
+		constexpr uint32 Magic = 0x20534444;
 
 		template<class Block>
 		void decompress(Deserializer &des, ImageImpl *impl)
@@ -32,14 +32,14 @@ namespace cage
 				{
 					Block block;
 					des >> block;
-					TexelBlock texels = dxtDecompress(block);
+					U8Block texels;
+					bcDecompress(block, texels);
 					for (uint32 b = 0; b < 4; b++)
 					{
 						for (uint32 a = 0; a < 4; a++)
 						{
-							Vec4 tex = texels.texel[b][a] * 255;
 							for (uint32 i = 0; i < 4; i++)
-								*(lineSer[b]) << numeric_cast<uint8>(tex[i]);
+								*(lineSer[b]) << texels.texel[b][a][i];
 						}
 					}
 				}
@@ -57,18 +57,21 @@ namespace cage
 				const uint32 *lineBase = imageBase + y * 4 * impl->width;
 				for (uint32 x = 0; x < cols; x++)
 				{
-					const uint32 *block = lineBase + x * 4;
-					TexelBlock texels;
+					const uint32 *tileBase = lineBase + x * 4;
+					U8Block texels;
 					for (uint32 b = 0; b < 4; b++)
 					{
-						const uint32 *line = block + b * impl->width;
+						const uint32 *line = tileBase + b * impl->width;
 						for (uint32 a = 0; a < 4; a++)
 						{
-							const uint8 *t = (const uint8 *)(line + a);
-							texels.texel[b][a] = Vec4(t[0], t[1], t[2], t[3]) / 255;
+							const uint8 *px = (const uint8 *)(line + a);
+							for (uint32 i = 0; i < 4; i++)
+								texels.texel[b][a][i] = px[i];
 						}
 					}
-					ser << dxtCompress(texels);
+					Bc3Block block;
+					bcCompress(texels, block);
+					ser << block;
 				}
 			}
 		}
@@ -129,15 +132,15 @@ namespace cage
 		{
 		case makeFourCC("DXT1"):
 		{
-			decompress<Dxt1Block>(des, impl);
+			decompress<Bc1Block>(des, impl);
 		} break;
 		case makeFourCC("DXT3"):
 		{
-			decompress<Dxt3Block>(des, impl);
+			decompress<Bc2Block>(des, impl);
 		} break;
 		case makeFourCC("DXT5"):
 		{
-			decompress<Dxt5Block>(des, impl);
+			decompress<Bc3Block>(des, impl);
 		} break;
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
@@ -154,6 +157,15 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "unsupported image channels count for dds encoding");
 		if ((impl->width % 4) != 0 || (impl->height % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for dds encoding");
+
+		if (impl->channels == 3)
+		{
+			Holder<Image> img = impl->copy();
+			imageConvert(+img, 4);
+			imageFill(+img, 3, 1);
+			img->colorConfig.alphaMode = AlphaModeEnum::None;
+			return ddsEncode((ImageImpl *)+img);
+		}
 
 		Header header;
 		detail::memset(&header, 0, sizeof(Header));

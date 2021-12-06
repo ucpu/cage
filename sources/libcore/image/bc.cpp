@@ -1,4 +1,4 @@
-#include "dxt.h"
+#include "bc.h"
 
 #include <stb_dxt.h>
 
@@ -42,15 +42,35 @@ namespace cage
 	} packTest;
 #endif // CAGE_DEBUG
 
-	TexelBlock dxtDecompress(const Dxt1Block &block)
+	U8Block F32ToU8Block(const F32Block &in)
+	{
+		U8Block res;
+		for (uint32 y = 0; y < 4; y++)
+			for (uint32 x = 0; x < 4; x++)
+				for (uint32 c = 0; c < 4; c++)
+					res.texel[y][x][c] = numeric_cast<uint8>(in.texel[y][x][c] * 255);
+		return res;
+	}
+
+	F32Block U8ToF32Block(const U8Block &in)
+	{
+		F32Block res;
+		for (uint32 y = 0; y < 4; y++)
+			for (uint32 x = 0; x < 4; x++)
+				for (uint32 c = 0; c < 4; c++)
+					res.texel[y][x][c] = in.texel[y][x][c] / 255.f;
+		return res;
+	}
+
+	void bcDecompress(const Bc1Block &in, U8Block &out)
 	{
 		Vec4 color[4];
-		color[0] = Vec4(unpack565(block.color0), 1.0f);
+		color[0] = Vec4(unpack565(in.color0), 1.0f);
 		std::swap(color[0][0], color[0][2]);
-		color[1] = Vec4(unpack565(block.color1), 1.0f);
+		color[1] = Vec4(unpack565(in.color1), 1.0f);
 		std::swap(color[1][0], color[1][2]);
 
-		if (block.color0 > block.color1)
+		if (in.color0 > in.color1)
 		{
 			color[2] = (2.0f / 3.0f) * color[0] + (1.0f / 3.0f) * color[1];
 			color[3] = (1.0f / 3.0f) * color[0] + (2.0f / 3.0f) * color[1];
@@ -61,56 +81,56 @@ namespace cage
 			color[3] = Vec4(0.0f);
 		}
 
-		TexelBlock texelBlock;
+		F32Block texelBlock;
 		for (uint8 row = 0; row < 4; row++)
 		{
 			for (uint8 col = 0; col < 4; col++)
 			{
-				uint8 ColorIndex = (block.row[row] >> (col * 2)) & 0x3;
+				uint8 ColorIndex = (in.row[row] >> (col * 2)) & 0x3;
 				texelBlock.texel[row][col] = color[ColorIndex];
 			}
 		}
 
-		return texelBlock;
+		out = F32ToU8Block(texelBlock);
 	}
 
-	TexelBlock dxtDecompress(const Dxt3Block &block)
+	void bcDecompress(const Bc2Block &in, U8Block &out)
 	{
 		Vec3 color[4];
-		color[0] = Vec3(unpack565(block.color0));
+		color[0] = Vec3(unpack565(in.color0));
 		std::swap(color[0][0], color[0][2]);
-		color[1] = Vec3(unpack565(block.color1));
+		color[1] = Vec3(unpack565(in.color1));
 		std::swap(color[1][0], color[1][2]);
 		color[2] = (2.0f / 3.0f) * color[0] + (1.0f / 3.0f) * color[1];
 		color[3] = (1.0f / 3.0f) * color[0] + (2.0f / 3.0f) * color[1];
 
-		TexelBlock texelBlock;
+		F32Block texelBlock;
 		for (uint8 row = 0; row < 4; row++)
 		{
 			for (uint8 col = 0; col < 4; col++)
 			{
-				uint8 colorIndex = (block.row[row] >> (col * 2)) & 0x3;
-				Real alpha = ((block.alphaRow[row] >> (col * 4)) & 0xF) / 15.0f;
+				uint8 colorIndex = (in.row[row] >> (col * 2)) & 0x3;
+				Real alpha = ((in.alphaRow[row] >> (col * 4)) & 0xF) / 15.0f;
 				texelBlock.texel[row][col] = Vec4(color[colorIndex], alpha);
 			}
 		}
 
-		return texelBlock;
+		out = F32ToU8Block(texelBlock);
 	}
 
-	TexelBlock dxtDecompress(const Dxt5Block &block)
+	void bcDecompress(const Bc3Block &in, U8Block &out)
 	{
 		Vec3 color[4];
-		color[0] = Vec3(unpack565(block.color0));
+		color[0] = Vec3(unpack565(in.color0));
 		std::swap(color[0][0], color[0][2]);
-		color[1] = Vec3(unpack565(block.color1));
+		color[1] = Vec3(unpack565(in.color1));
 		std::swap(color[1][0], color[1][2]);
 		color[2] = (2.0f / 3.0f) * color[0] + (1.0f / 3.0f) * color[1];
 		color[3] = (1.0f / 3.0f) * color[0] + (2.0f / 3.0f) * color[1];
 
 		Real alpha[8];
-		alpha[0] = block.alpha[0] / 255.0f;
-		alpha[1] = block.alpha[1] / 255.0f;
+		alpha[0] = in.alpha[0] / 255.0f;
+		alpha[1] = in.alpha[1] / 255.0f;
 
 		if (alpha[0] > alpha[1])
 		{
@@ -131,34 +151,72 @@ namespace cage
 			alpha[7] = 1.0f;
 		}
 
-		uint64 bitmap = block.alphaBitmap[0] | (block.alphaBitmap[1] << 8) | (block.alphaBitmap[2] << 16);
-		bitmap |= uint64(block.alphaBitmap[3] | (block.alphaBitmap[4] << 8) | (block.alphaBitmap[5] << 16)) << 24;
+		uint64 bitmap = in.alphaBitmap[0] | (in.alphaBitmap[1] << 8) | (in.alphaBitmap[2] << 16);
+		bitmap |= uint64(in.alphaBitmap[3] | (in.alphaBitmap[4] << 8) | (in.alphaBitmap[5] << 16)) << 24;
 
-		TexelBlock texelBlock;
+		F32Block texelBlock;
 		for (uint8 row = 0; row < 4; row++)
 		{
 			for (uint8 col = 0; col < 4; col++)
 			{
-				uint8 colorIndex = (block.row[row] >> (col * 2)) & 0x3;
+				uint8 colorIndex = (in.row[row] >> (col * 2)) & 0x3;
 				uint8 alphaIndex = (bitmap >> ((row * 4 + col) * 3)) & 0x7;
 				texelBlock.texel[row][col] = Vec4(color[colorIndex], alpha[alphaIndex]);
 			}
 		}
 
-		return texelBlock;
+		out = F32ToU8Block(texelBlock);
 	}
 
-	Dxt5Block dxtCompress(const TexelBlock &block)
+	void bcCompress(const U8Block &in, Bc3Block &out)
 	{
-		Dxt5Block result;
-		uint8 src[16 * 4];
-		for (uint32 i = 0; i < 16; i++)
-		{
-			Vec4 v = block.texel[i / 4][i % 4] * 255;
-			for (uint32 j = 0; j < 4; j++)
-				src[i * 4 + j] = numeric_cast<uint8>(v[j]);
-		}
-		stb_compress_dxt_block((unsigned char*)&result, src, 1, 2);
-		return result;
+		stb_compress_dxt_block((unsigned char *)&out, (unsigned char *)&in, 1, 2);
 	}
+
+	void bcCompress(const U8Block &in, Bc4Block &out)
+	{
+		uint8 tmp[16];
+		for (uint32 y = 0; y < 4; y++)
+			for (uint32 x = 0; x < 4; x++)
+				tmp[y * 4 + x] = in.texel[y][x][0];
+		stb_compress_bc4_block((unsigned char *)&out, tmp);
+	}
+
+	void bcCompress(const U8Block &in, Bc5Block &out)
+	{
+		uint8 tmp[32];
+		for (uint32 y = 0; y < 4; y++)
+		{
+			for (uint32 x = 0; x < 4; x++)
+			{
+				tmp[(y * 4 + x) * 2 + 0] = in.texel[y][x][0];
+				tmp[(y * 4 + x) * 2 + 1] = in.texel[y][x][1];
+			}
+		}
+		stb_compress_bc5_block((unsigned char *)&out, tmp);
+	}
+
+#ifdef CAGE_DEBUG
+	struct CompressTest
+	{
+		CompressTest()
+		{
+			U8Block a = {};
+			for (uint32 y = 0; y < 4; y++)
+				for (uint32 x = 0; x < 4; x++)
+					for (uint32 i = 0; i < 4; i++)
+						a.texel[y][x][i] = (y + x) * 20 + i * 30;
+			Bc3Block b;
+			bcCompress(a, b);
+			U8Block c;
+			bcDecompress(b, c);
+			uint32 sum = 0;
+			for (uint32 y = 0; y < 4; y++)
+				for (uint32 x = 0; x < 4; x++)
+					for (uint32 i = 0; i < 4; i++)
+						sum += abs(sint32(a.texel[y][x][i]) - sint32(c.texel[y][x][i]));
+			CAGE_ASSERT(sum < 1000);
+		}
+	} compressTest;
+#endif // CAGE_DEBUG
 }
