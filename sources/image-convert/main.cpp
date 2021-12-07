@@ -11,8 +11,8 @@ using namespace cage;
 void convert(String src, const String &format, bool preserveOriginal)
 {
 	src = pathSimplify(src);
-	String path = pathExtractDirectory(src);
-	String dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
+	const String path = pathExtractDirectory(src);
+	const String dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "converting '" + src + "' to '" + dst + "'");
 	if (src == dst)
 	{

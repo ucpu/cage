@@ -10,7 +10,7 @@ using namespace cage;
 void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, const String &name)
 {
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "cutting image at: " + x + ", " + y);
-	uint32 tc = in->channels();
+	const uint32 tc = in->channels();
 	Holder<Image> out = newImage();
 	imageBlit(in.get(), out.get(), x, y, 0, 0, w, h);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving to: '" + name + "'");
@@ -25,14 +25,14 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
 	in->importFile(input);
-	uint32 inw = in->width();
-	uint32 inh = in->height();
+	const uint32 inw = in->width();
+	const uint32 inh = in->height();
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + inw + "x" + inh + ", channels: " + in->channels());
 
 	if (x >= inw || y >= inh)
 		CAGE_THROW_ERROR(Exception, "x or y offsets are outside the image");
-	uint32 cx = (inw - x) / w;
-	uint32 cy = (inh - y) / h;
+	const uint32 cx = (inw - x) / w;
+	const uint32 cy = (inh - y) / h;
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "output counts: " + cx + "x" + cy);
 	if (cx == 0 || cy == 0)
 		CAGE_THROW_ERROR(Exception, "no output images");

@@ -116,7 +116,7 @@ void testImage()
 		{
 			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".astc", ".dds" })
+			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".astc", ".dds", ".ktx" })
 			{
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
@@ -131,17 +131,17 @@ void testImage()
 				tg->importFile(name);
 				CAGE_TEST(tg->width() == img->width());
 				CAGE_TEST(tg->height() == img->height());
-				if (fmt == ".astc" || fmt == ".dds")
+				if (fmt == ".astc" || fmt == ".dds" || fmt == ".ktx")
 					CAGE_TEST(tg->channels() == 4) // always loads 4 channels
 				else
 					CAGE_TEST(tg->channels() == img->channels());
 				CAGE_TEST(tg->format() == img->format());
-				if (fmt != ".jpeg" && fmt != ".astc" && fmt != ".dds") // lossy formats
+				if (fmt != ".jpeg" && fmt != ".astc" && fmt != ".dds" && fmt != ".ktx") // lossy formats
 				{
 					for (uint32 c = 0; c < ch; c++)
 						test(tg->value(120, 90, c), img->value(120, 90, c));
 				}
-				if (fmt == ".astc" || fmt == ".dds")
+				if (fmt != ".png")
 					tg->exportFile(Stringizer() + "images/channels/" + ch + fmt + ".png"); // for verification
 			}
 		}

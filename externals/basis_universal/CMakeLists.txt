@@ -5,6 +5,8 @@ message(STATUS "basis_universal")
 message(STATUS "----------------------------------------------------------------")
 
 add_library(basisu STATIC
+	basis_universal/encoder/apg_bmp.c
+	basis_universal/encoder/apg_bmp.h
 	basis_universal/encoder/basisu_astc_decomp.cpp
 	basis_universal/encoder/basisu_astc_decomp.h
 	basis_universal/encoder/basisu_backend.cpp
@@ -44,6 +46,10 @@ add_library(basisu STATIC
 	basis_universal/encoder/cppspmd_math_declares.h
 	basis_universal/encoder/cppspmd_sse.h
 	basis_universal/encoder/cppspmd_type_aliases.h
+	basis_universal/encoder/jpgd.cpp
+	basis_universal/encoder/jpgd.h
+	basis_universal/encoder/lodepng.cpp
+	basis_universal/encoder/lodepng.h
 
 	basis_universal/transcoder/basisu.h
 	basis_universal/transcoder/basisu_containers.h
@@ -57,15 +63,8 @@ add_library(basisu STATIC
 	basis_universal/transcoder/basisu_transcoder_uastc.h
 )
 
-target_compile_definitions(basisu PRIVATE BASISD_SUPPORT_KTX2_ZSTD=1 BASISU_NO_ITERATOR_DEBUG_LEVEL)
-
-try_run(sse4_runs sse4_compiles ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/testSse4.c)
-message(STATUS "sse4_compiles: ${sse4_compiles}")
-message(STATUS "sse4_runs: ${sse4_runs}")
-if(sse4_compiles AND NOT (sse4_runs STREQUAL "FAILED_TO_RUN"))
-	target_compile_definitions(basisu PRIVATE BASISU_SUPPORT_SSE=1)
-	if (NOT MSVC)
-		target_compile_options(basisu PRIVATE -msse4.1)
-	endif()
+target_include_directories(basisu INTERFACE ".")
+target_compile_definitions(basisu PRIVATE BASISU_SUPPORT_SSE=1 BASISD_SUPPORT_KTX2_ZSTD=1 BASISU_NO_ITERATOR_DEBUG_LEVEL)
+if (NOT MSVC)
+	target_compile_options(basisu PRIVATE -msse4.1)
 endif()
-

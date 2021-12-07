@@ -13,6 +13,7 @@ namespace cage
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void astcDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void ktxDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	MemoryBuffer pngEncode(const ImageImpl *impl);
 	MemoryBuffer jpegEncode(const ImageImpl *impl);
 	MemoryBuffer tiffEncode(const ImageImpl *impl);
@@ -21,6 +22,7 @@ namespace cage
 	MemoryBuffer ddsEncode(const ImageImpl *impl);
 	MemoryBuffer exrEncode(const ImageImpl *impl);
 	MemoryBuffer astcEncode(const ImageImpl *impl);
+	MemoryBuffer ktxEncode(const ImageImpl *impl);
 
 	void Image::importBuffer(PointerRange<const char> buffer, uint32 channels, ImageFormatEnum format)
 	{
@@ -38,6 +40,7 @@ namespace cage
 			constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
 			constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
 			constexpr const uint8 astcSignature[4] = { 0x13, 0xAB, 0xA1, 0x5C };
+			constexpr const uint8 ktxSignature[12] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
 			if (detail::memcmp(buffer.data(), pngSignature, sizeof(pngSignature)) == 0)
 				pngDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), jpegSignature, sizeof(jpegSignature)) == 0)
@@ -59,6 +62,8 @@ namespace cage
 			}
 			else if (detail::memcmp(buffer.data(), astcSignature, sizeof(astcSignature)) == 0)
 				astcDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), ktxSignature, sizeof(ktxSignature)) == 0)
+				ktxDecode(buffer, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
 			if (channels != m)
@@ -101,6 +106,8 @@ namespace cage
 			return exrEncode((const ImageImpl *)this);
 		if (ext == ".astc")
 			return astcEncode((const ImageImpl *)this);
+		if (ext == ".ktx")
+			return ktxEncode((const ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 
