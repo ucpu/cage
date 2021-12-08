@@ -26,7 +26,8 @@ namespace cage
 		None = 0,
 		GenerateMipmaps = 1 << 0,
 		AnimationLoop = 1 << 1,
-		Compressed = 1 << 2,
+		Astc = 1 << 2,
+		Ktx = 1 << 3,
 	};
 
 	enum class TextureSwizzleEnum : uint8

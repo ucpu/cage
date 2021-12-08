@@ -298,6 +298,7 @@ namespace cage
 
 	void Texture::imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride)
 	{
+		CAGE_ASSERT(buffer.size() >= 6 * stride);
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
@@ -309,6 +310,7 @@ namespace cage
 
 	void Texture::imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer, uintPtr stride)
 	{
+		CAGE_ASSERT(buffer.size() >= 6 * stride);
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);

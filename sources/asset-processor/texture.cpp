@@ -1,5 +1,6 @@
 #include <cage-core/image.h>
 #include <cage-core/imageAstc.h>
+#include <cage-core/imageKtx.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
 #include <cage-engine/opengl.h>
@@ -173,7 +174,14 @@ namespace
 		CAGE_THROW_ERROR(Exception, "cannot determine internal format for astc compressed texture");
 	}
 
-	void findSwizzlingForAstc(TextureSwizzleEnum swizzle[4], const uint32 channels)
+	uint32 findInternalFormatForKtx()
+	{
+		if (toBool(properties("srgb")))
+			return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+		return GL_COMPRESSED_RGBA_BPTC_UNORM;
+	}
+
+	void findSwizzling(TextureSwizzleEnum swizzle[4], const uint32 channels)
 	{
 		if (toBool(properties("srgb")))
 			return; // no swizzling
@@ -395,6 +403,27 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
 	}
 
+	void exportKtx(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using ktx encoding");
+
+		ImageKtxCompressionConfig cfg;
+		//cfg.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
+		cfg.normals = properties("convert") == "heightToNormal";
+
+		data.flags |= TextureFlags::Ktx;
+		data.internalFormat = findInternalFormatForKtx();
+		findSwizzling(data.swizzle, data.channels);
+
+		std::vector<const Image *> imgs;
+		imgs.reserve(images.size());
+		for (const auto &it : images)
+			imgs.push_back(+it);
+		auto ktx = imageKtxCompress(imgs, cfg);
+		asset.originalSize += ktx.size();
+		ser.write(ktx);
+	}
+
 	void exportAstc(TextureHeader &data, AssetHeader &asset, Serializer &ser)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using astc encoding");
@@ -406,9 +435,9 @@ namespace
 		cfg.quality = configAstcCompressionQuality;
 		cfg.normals = properties("convert") == "heightToNormal";
 
-		data.flags |= TextureFlags::Compressed;
+		data.flags |= TextureFlags::Astc;
 		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
-		findSwizzlingForAstc(data.swizzle, data.channels);
+		findSwizzling(data.swizzle, data.channels);
 
 		for (const auto &it : images)
 		{
@@ -509,7 +538,9 @@ namespace
 		ser << data; // reserve space, will be overridden later
 
 		const String compression = properties("compression");
-		if (compression == "astc")
+		if (compression == "ktx")
+			exportKtx(data, h, ser);
+		else if (compression == "astc")
 			exportAstc(data, h, ser);
 		else
 			exportRaw(data, h, ser);
