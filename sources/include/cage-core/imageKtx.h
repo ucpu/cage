@@ -17,6 +17,22 @@ namespace cage
 
 	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> imageKtxDecompressRaw(PointerRange<const char> buffer);
 
+	enum class ImageKtxBlocksFormatEnum
+	{
+		None = 0,
+		Bc1, // dxt1 rgb 0.16
+		Bc3, // dxt5 rgba 0.25
+		Bc4, // r 0.5
+		Bc5, // rg 0.5
+		Bc7, // rgba 0.25
+		Astc, // rgba 0.25
+	};
+
+	struct CAGE_CORE_API ImageKtxDecompressionConfig
+	{
+		ImageKtxBlocksFormatEnum format = ImageKtxBlocksFormatEnum::None;
+	};
+
 	struct CAGE_CORE_API ImageKtxDecompressionResult
 	{
 		Holder<PointerRange<char>> data;
@@ -24,7 +40,7 @@ namespace cage
 		Vec2i blocks;
 	};
 
-	CAGE_CORE_API Holder<PointerRange<ImageKtxDecompressionResult>> imageKtxDecompressBlocks(PointerRange<const char> buffer);
+	CAGE_CORE_API Holder<PointerRange<ImageKtxDecompressionResult>> imageKtxDecompressBlocks(PointerRange<const char> buffer, const ImageKtxDecompressionConfig &config);
 }
 
 #endif // guard_imageKtx_h_1se5r6h4dsdg

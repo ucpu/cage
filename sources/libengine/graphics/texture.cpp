@@ -285,7 +285,7 @@ namespace cage
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
+		CAGE_ASSERT(impl->target == GL_TEXTURE_2D);
 		glCompressedTexImage2D(impl->target, 0, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
 		impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();

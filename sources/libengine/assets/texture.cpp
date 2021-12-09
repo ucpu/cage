@@ -27,6 +27,41 @@ namespace cage
 			}
 		}
 
+		uint32 findInternalFormatForKtx(const TextureHeader &data)
+		{
+			if (any(data.flags & TextureFlags::Srgb))
+			{
+				switch (data.channels)
+				{
+				case 3: return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+				case 4: return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+				}
+			}
+			else
+			{
+				switch (data.channels)
+				{
+				case 1: return GL_COMPRESSED_RED_RGTC1;
+				case 2: return GL_COMPRESSED_RG_RGTC2;
+				case 3: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+				case 4: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+				}
+			}
+			CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+		}
+
+		ImageKtxBlocksFormatEnum findBlockFormatForKtx(const TextureHeader &data)
+		{
+			switch (data.channels)
+			{
+			case 1: return ImageKtxBlocksFormatEnum::Bc4;
+			case 2: return ImageKtxBlocksFormatEnum::Bc5;
+			case 3: return ImageKtxBlocksFormatEnum::Bc1;
+			case 4: return ImageKtxBlocksFormatEnum::Bc3;
+			}
+			CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+		}
+
 		void processLoad(AssetContext *context)
 		{
 			Deserializer des(context->originalData);
@@ -40,7 +75,10 @@ namespace cage
 
 			if (any(data.flags & TextureFlags::Ktx))
 			{
-				const auto res = imageKtxDecompressBlocks(values);
+				ImageKtxDecompressionConfig config;
+				config.format = findBlockFormatForKtx(data);
+				const uint32 internalFormat = findInternalFormatForKtx(data);
+				const auto res = imageKtxDecompressBlocks(values, config);
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 				{
 					const uint32 c = res.size();
@@ -52,7 +90,7 @@ namespace cage
 						CAGE_ASSERT(res[i].data.size() == s);
 						detail::memcpy(buff.data() + i * s, res[i].data.data(), s);
 					}
-					tex->image3dCompressed(data.resolution, data.internalFormat, buff);
+					tex->image3dCompressed(data.resolution, internalFormat, buff);
 				}
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
 				{
@@ -65,12 +103,12 @@ namespace cage
 						CAGE_ASSERT(res[f].data.size() == s);
 						detail::memcpy(buff.data() + s * f, res[f].data.data(), s);
 					}
-					tex->imageCubeCompressed(Vec2i(data.resolution), data.internalFormat, buff, data.stride);
+					tex->imageCubeCompressed(Vec2i(data.resolution), internalFormat, buff, s);
 				}
 				else
 				{
 					CAGE_ASSERT(res.size() == 1);
-					tex->image2dCompressed(Vec2i(data.resolution), data.internalFormat, res[0].data);
+					tex->image2dCompressed(Vec2i(data.resolution), internalFormat, res[0].data);
 				}
 			}
 			else if (any(data.flags & TextureFlags::Astc))

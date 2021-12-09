@@ -174,13 +174,6 @@ namespace
 		CAGE_THROW_ERROR(Exception, "cannot determine internal format for astc compressed texture");
 	}
 
-	uint32 findInternalFormatForKtx()
-	{
-		if (toBool(properties("srgb")))
-			return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-		return GL_COMPRESSED_RGBA_BPTC_UNORM;
-	}
-
 	void findSwizzling(TextureSwizzleEnum swizzle[4], const uint32 channels)
 	{
 		if (toBool(properties("srgb")))
@@ -412,7 +405,6 @@ namespace
 		cfg.normals = properties("convert") == "heightToNormal";
 
 		data.flags |= TextureFlags::Ktx;
-		data.internalFormat = findInternalFormatForKtx();
 		findSwizzling(data.swizzle, data.channels);
 
 		std::vector<const Image *> imgs;
@@ -523,6 +515,8 @@ namespace
 			data.flags |= TextureFlags::GenerateMipmaps;
 		if (toBool(properties("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
+		if (toBool(properties("srgb")))
+			data.flags |= TextureFlags::Srgb;
 		data.animationDuration = toUint64(properties("animationDuration"));
 		data.copyType = GL_UNSIGNED_BYTE;
 

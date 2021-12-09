@@ -15,6 +15,20 @@ namespace cage
 		{
 			static int dummy = [](){ basisu::basisu_encoder_init(); return 0; }();
 		}
+
+		basist::transcoder_texture_format convertFormat(ImageKtxBlocksFormatEnum format)
+		{
+			switch (format)
+			{
+			case ImageKtxBlocksFormatEnum::Bc1: return basist::transcoder_texture_format::cTFBC1_RGB;
+			case ImageKtxBlocksFormatEnum::Bc3: return basist::transcoder_texture_format::cTFBC3_RGBA;
+			case ImageKtxBlocksFormatEnum::Bc4: return basist::transcoder_texture_format::cTFBC4_R;
+			case ImageKtxBlocksFormatEnum::Bc5: return basist::transcoder_texture_format::cTFBC5_RG;
+			case ImageKtxBlocksFormatEnum::Bc7: return basist::transcoder_texture_format::cTFBC7_RGBA;
+			case ImageKtxBlocksFormatEnum::Astc: return basist::transcoder_texture_format::cTFASTC_4x4_RGBA;
+			}
+			CAGE_THROW_ERROR(Exception, "invalid ImageKtxBlocksFormatEnum");
+		}
 	}
 
 	Holder<PointerRange<char>> imageKtxCompress(PointerRange<const Image *> images, const ImageKtxCompressionConfig &config)
@@ -107,7 +121,7 @@ namespace cage
 		return images;
 	}
 
-	Holder<PointerRange<ImageKtxDecompressionResult>> imageKtxDecompressBlocks(PointerRange<const char> buffer)
+	Holder<PointerRange<ImageKtxDecompressionResult>> imageKtxDecompressBlocks(PointerRange<const char> buffer, const ImageKtxDecompressionConfig &config)
 	{
 		initBasisuOnce();
 
@@ -118,7 +132,7 @@ namespace cage
 		if (!trans.start_transcoding())
 			CAGE_THROW_ERROR(Exception, "failed loading ktx file data");
 
-		basist::transcoder_texture_format format = basist::transcoder_texture_format::cTFBC7_RGBA;
+		const basist::transcoder_texture_format format = convertFormat(config.format);
 		const uint32 bytesPerBlock = basis_get_bytes_per_block_or_pixel(format);
 
 		PointerRangeHolder<ImageKtxDecompressionResult> images;
