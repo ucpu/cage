@@ -208,7 +208,7 @@ namespace
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
-	void findSwizzling(TextureSwizzleEnum swizzle[4], const uint32 channels)
+	void findSwizzlingForAstc(TextureSwizzleEnum swizzle[4], const uint32 channels)
 	{
 		if (toBool(properties("srgb")))
 			return; // no swizzling
@@ -436,10 +436,9 @@ namespace
 
 		ImageKtxEncodeConfig cfg;
 		//cfg.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
-		cfg.normals = properties("convert") == "heightToNormal";
+		cfg.normals = toBool(properties("normal"));
 
 		data.flags |= TextureFlags::Ktx;
-		findSwizzling(data.swizzle, data.channels);
 
 		std::vector<const Image *> imgs;
 		imgs.reserve(images.size());
@@ -456,11 +455,10 @@ namespace
 
 		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForBcn(data);
-		findSwizzling(data.swizzle, data.channels);
 
 		ImageKtxEncodeConfig cfg1;
 		//cfg1.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
-		cfg1.normals = properties("convert") == "heightToNormal";
+		cfg1.normals = toBool(properties("normal"));
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = findBlockFormat(data);
 
@@ -486,11 +484,11 @@ namespace
 		ImageAstcEncodeConfig cfg;
 		cfg.tiling = convertTiling(astcTilingStr);
 		cfg.quality = configAstcCompressionQuality;
-		cfg.normals = properties("convert") == "heightToNormal";
+		cfg.normals = toBool(properties("normal"));
 
 		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
-		findSwizzling(data.swizzle, data.channels);
+		findSwizzlingForAstc(data.swizzle, data.channels);
 
 		for (const auto &it : images)
 		{
@@ -618,16 +616,21 @@ namespace
 void processTexture()
 {
 	{
-		const bool n = properties("convert") == "heightToNormal";
-		const bool s = properties("convert") == "specularToSpecial";
-		const bool c = properties("convert") == "skyboxToCube";
+		const bool cn = properties("convert") == "heightToNormal";
+		const bool cs = properties("convert") == "specularToSpecial";
+		const bool cc = properties("convert") == "skyboxToCube";
 		const bool a = toBool(properties("premultiplyAlpha"));
-		const bool g = toBool(properties("srgb"));
-		if ((n || s) && a)
-			CAGE_THROW_ERROR(Exception, "premultiplied alpha is only for colors");
-		if ((n || s) && g)
-			CAGE_THROW_ERROR(Exception, "srgb is only for colors");
-		if (c && properties("target") != "cubeMap")
+		const bool s = toBool(properties("srgb"));
+		const bool n = toBool(properties("normal"));
+		if ((cn || cs || n) && a)
+			CAGE_THROW_ERROR(Exception, "premultiplied alpha is for colors only");
+		if ((cn || cs || n) && s)
+			CAGE_THROW_ERROR(Exception, "srgb is for colors only");
+		if ((cs || a || s) && n)
+			CAGE_THROW_ERROR(Exception, "incompatible options for normal map");
+		if (cn && !n)
+			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
+		if (cc && properties("target") != "cubeMap")
 			CAGE_THROW_ERROR(Exception, "convert skyboxToCube requires target to be cubeMap");
 	}
 
@@ -675,8 +678,8 @@ void processTexture()
 					CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
 				if (toBool(properties("srgb")))
 				{
-					ImageFormatEnum origFormat = it->format();
-					GammaSpaceEnum origGamma = it->colorConfig.gammaSpace;
+					const ImageFormatEnum origFormat = it->format();
+					const GammaSpaceEnum origGamma = it->colorConfig.gammaSpace;
 					imageConvert(+it, ImageFormatEnum::Float);
 					imageConvert(+it, GammaSpaceEnum::Linear);
 					imageConvert(+it, AlphaModeEnum::PremultipliedOpacity);
@@ -696,6 +699,23 @@ void processTexture()
 		{
 			performDownscale(downscale, target);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images[0]->width() + "*" + images[0]->height() + "*" + numeric_cast<uint32>(images.size()));
+		}
+	}
+
+	{ // normal map
+		if (toBool(properties("normal")))
+		{
+			for (auto &it : images)
+			{
+				switch (it->channels())
+				{
+				case 2: continue;
+				case 3: break;
+				default: CAGE_THROW_ERROR(Exception, "normal map requires 2 or 3 channels");
+				}
+				imageConvert(+it, 2);
+			}
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
 		}
 	}
 
