@@ -1,5 +1,5 @@
 #include "image.h"
-#include "bc.h"
+#include "bcN.h"
 #include <cage-core/serialization.h>
 
 // mipmaps, cubemaps, arrays, volumes are not supported

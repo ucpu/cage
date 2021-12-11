@@ -1,6 +1,5 @@
 #include <cage-core/image.h>
-#include <cage-core/imageAstc.h>
-#include <cage-core/imageKtx.h>
+#include <cage-core/imageBlocksCompression.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
 #include <cage-engine/opengl.h>
@@ -172,6 +171,41 @@ namespace
 		}
 
 		CAGE_THROW_ERROR(Exception, "cannot determine internal format for astc compressed texture");
+	}
+
+	uint32 findInternalFormatForBcn(const TextureHeader &data)
+	{
+		if (any(data.flags & TextureFlags::Srgb))
+		{
+			switch (data.channels)
+			{
+			case 3: return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
+			case 4: return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+			}
+		}
+		else
+		{
+			switch (data.channels)
+			{
+			case 1: return GL_COMPRESSED_RED_RGTC1;
+			case 2: return GL_COMPRESSED_RG_RGTC2;
+			case 3: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			case 4: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			}
+		}
+		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+	}
+
+	ImageKtxTranscodeFormatEnum findBlockFormat(const TextureHeader &data)
+	{
+		switch (data.channels)
+		{
+		case 1: return ImageKtxTranscodeFormatEnum::Bc4;
+		case 2: return ImageKtxTranscodeFormatEnum::Bc5;
+		case 3: return ImageKtxTranscodeFormatEnum::Bc1;
+		case 4: return ImageKtxTranscodeFormatEnum::Bc3;
+		}
+		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
 	void findSwizzling(TextureSwizzleEnum swizzle[4], const uint32 channels)
@@ -416,6 +450,33 @@ namespace
 		ser.write(ktx);
 	}
 
+	void exportBcn(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using bcn encoding");
+
+		data.flags |= TextureFlags::Compressed;
+		data.internalFormat = findInternalFormatForBcn(data);
+		findSwizzling(data.swizzle, data.channels);
+
+		ImageKtxCompressionConfig cfg1;
+		//cfg1.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
+		cfg1.normals = properties("convert") == "heightToNormal";
+		ImageKtxTranscodeConfig cfg2;
+		cfg2.format = findBlockFormat(data);
+
+		std::vector<const Image *> imgs;
+		imgs.reserve(images.size());
+		for (const auto &it : images)
+			imgs.push_back(+it);
+		auto trs = imageKtxTranscode(imgs, cfg1, cfg2);
+
+		for (const auto &it : trs)
+		{
+			asset.originalSize += it.data.size();
+			ser.write(it.data);
+		}
+	}
+
 	void exportAstc(TextureHeader &data, AssetHeader &asset, Serializer &ser)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using astc encoding");
@@ -427,14 +488,13 @@ namespace
 		cfg.quality = configAstcCompressionQuality;
 		cfg.normals = properties("convert") == "heightToNormal";
 
-		data.flags |= TextureFlags::Astc;
+		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
 		findSwizzling(data.swizzle, data.channels);
 
 		for (const auto &it : images)
 		{
 			auto astc = imageAstcCompress(+it, cfg);
-			data.stride = astc.size();
 			asset.originalSize += astc.size();
 			ser.write(astc);
 		}
@@ -485,8 +545,6 @@ namespace
 			}
 		}
 
-		data.stride = images[0]->rawViewU8().size();
-
 		for (const auto &it : images)
 		{
 			asset.originalSize += it->rawViewU8().size();
@@ -532,7 +590,9 @@ namespace
 		ser << data; // reserve space, will be overridden later
 
 		const String compression = properties("compression");
-		if (compression == "ktx")
+		if (compression == "bcn")
+			exportBcn(data, h, ser);
+		else if (compression == "ktx")
 			exportKtx(data, h, ser);
 		else if (compression == "astc")
 			exportAstc(data, h, ser);

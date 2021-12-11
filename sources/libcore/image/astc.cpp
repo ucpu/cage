@@ -1,6 +1,6 @@
 #include "image.h"
 
-#include <cage-core/imageAstc.h>
+#include <cage-core/imageBlocksCompression.h>
 #include <cage-core/serialization.h>
 
 #include <astcenc.h>
@@ -211,6 +211,9 @@ namespace cage
 
 		ImageAstcCompressionConfig config;
 		config.tiling = Vec2i(4, 4);
+#ifdef CAGE_DEBUG
+		config.quality = 10;
+#endif // CAGE_DEBUG
 
 		{
 			astc_header header = {};

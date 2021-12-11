@@ -42,7 +42,7 @@ struct Scheme
 	friend Deserializer &operator >> (Deserializer &des, Scheme &s);
 };
 
-extern std::map<String, Holder<Scheme>> schemes;
+extern std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 
 void loadSchemes();
 
@@ -65,7 +65,7 @@ struct Asset
 	friend Deserializer &operator >> (Deserializer &des, Asset &s);
 };
 
-extern std::map<String, Holder<Asset>> assets;
+extern std::map<String, Holder<Asset>, StringComparatorFast> assets;
 
 extern uint64 lastModificationTime;
 extern std::set<String, StringComparatorFast> corruptedDatabanks;
@@ -97,7 +97,7 @@ void notifierSendNotifications();
 
 bool isNameDatabank(const String &name);
 bool isNameIgnored(const String &name);
-std::map<String, uint64> findFiles();
+std::map<String, uint64, StringComparatorFast> findFiles();
 void checkOutputDir();
 void moveIntermediateFiles();
 

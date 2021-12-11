@@ -67,8 +67,8 @@ default = false
 [compression]
 display = compression method
 type = enum
-values = raw, ktx, astc
-default = ktx
+values = raw, bcn, ktx, astc
+default = bcn
 
 [astcTiling]
 display = astc compression tiling

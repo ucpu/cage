@@ -3,7 +3,7 @@
 
 #include "database.h"
 
-std::map<String, Holder<Asset>> assets;
+std::map<String, Holder<Asset>, StringComparatorFast> assets;
 
 Serializer &operator << (Serializer &ser, const Asset &s)
 {

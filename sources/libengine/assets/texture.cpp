@@ -3,7 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>
 #include <cage-core/typeIndex.h>
-#include <cage-core/imageKtx.h>
+#include <cage-core/imageBlocksCompression.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
@@ -50,14 +50,14 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 		}
 
-		ImageKtxBlocksFormatEnum findBlockFormatForKtx(const TextureHeader &data)
+		ImageKtxTranscodeFormatEnum findBlockFormatForKtx(const TextureHeader &data)
 		{
 			switch (data.channels)
 			{
-			case 1: return ImageKtxBlocksFormatEnum::Bc4;
-			case 2: return ImageKtxBlocksFormatEnum::Bc5;
-			case 3: return ImageKtxBlocksFormatEnum::Bc1;
-			case 4: return ImageKtxBlocksFormatEnum::Bc3;
+			case 1: return ImageKtxTranscodeFormatEnum::Bc4;
+			case 2: return ImageKtxTranscodeFormatEnum::Bc5;
+			case 3: return ImageKtxTranscodeFormatEnum::Bc1;
+			case 4: return ImageKtxTranscodeFormatEnum::Bc3;
 			}
 			CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 		}
@@ -75,10 +75,10 @@ namespace cage
 
 			if (any(data.flags & TextureFlags::Ktx))
 			{
-				ImageKtxDecompressionConfig config;
+				ImageKtxTranscodeConfig config;
 				config.format = findBlockFormatForKtx(data);
 				const uint32 internalFormat = findInternalFormatForKtx(data);
-				const auto res = imageKtxDecompressBlocks(values, config);
+				const auto res = imageKtxTranscode(values, config);
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 				{
 					const uint32 c = res.size();
@@ -103,7 +103,7 @@ namespace cage
 						CAGE_ASSERT(res[f].data.size() == s);
 						detail::memcpy(buff.data() + s * f, res[f].data.data(), s);
 					}
-					tex->imageCubeCompressed(Vec2i(data.resolution), internalFormat, buff, s);
+					tex->imageCubeCompressed(Vec2i(data.resolution), internalFormat, buff);
 				}
 				else
 				{
@@ -111,12 +111,12 @@ namespace cage
 					tex->image2dCompressed(Vec2i(data.resolution), internalFormat, res[0].data);
 				}
 			}
-			else if (any(data.flags & TextureFlags::Astc))
+			else if (any(data.flags & TextureFlags::Compressed))
 			{
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 					tex->image3dCompressed(data.resolution, data.internalFormat, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
-					tex->imageCubeCompressed(Vec2i(data.resolution), data.internalFormat, values, data.stride);
+					tex->imageCubeCompressed(Vec2i(data.resolution), data.internalFormat, values);
 				else
 					tex->image2dCompressed(Vec2i(data.resolution), data.internalFormat, values);
 			}
@@ -125,7 +125,7 @@ namespace cage
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 					tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
-					tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
+					tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
 				else
 					tex->image2d(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
 			}

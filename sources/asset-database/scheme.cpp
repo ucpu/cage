@@ -6,7 +6,7 @@
 
 #include "database.h"
 
-std::map<String, Holder<Scheme>> schemes;
+std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 
 void Scheme::parse(Ini *ini)
 {

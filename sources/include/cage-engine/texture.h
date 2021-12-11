@@ -28,8 +28,8 @@ namespace cage
 		void image2d(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
 		void image2dCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
 		void imageCube(Vec2i resolution, uint32 internalFormat);
-		void imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride);
-		void imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer, uintPtr stride);
+		void imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
 		void image3d(Vec3i resolution, uint32 internalFormat);
 		void image3d(Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
 		void image3dCompressed(Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer);

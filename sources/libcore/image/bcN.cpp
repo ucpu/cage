@@ -1,4 +1,4 @@
-#include "bc.h"
+#include "bcN.h"
 
 #include <stb_dxt.h>
 

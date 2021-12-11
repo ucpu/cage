@@ -26,7 +26,7 @@ bool isNameIgnored(const String &name)
 
 namespace
 {
-	void findFiles(std::map<String, uint64> &files, const String &path)
+	void findFiles(std::map<String, uint64, StringComparatorFast> &files, const String &path)
 	{
 		const String pth = pathJoin(configPathInput, path);
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path '" + pth + "'");
@@ -49,9 +49,9 @@ namespace
 	}
 }
 
-std::map<String, uint64> findFiles()
+std::map<String, uint64, StringComparatorFast> findFiles()
 {
-	std::map<String, uint64> files;
+	std::map<String, uint64, StringComparatorFast> files;
 	findFiles(files, "");
 	return files;
 }

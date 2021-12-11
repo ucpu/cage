@@ -293,27 +293,27 @@ namespace cage
 
 	void Texture::imageCube(Vec2i resolution, uint32 internalFormat)
 	{
-		imageCube(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {}, 0);
+		imageCube(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride)
+	void Texture::imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
-		CAGE_ASSERT(buffer.size() >= 6 * stride);
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
+		const uintPtr stride = buffer.size() / 6;
 		for (uint32 i = 0; i < 6; i++)
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data() + i * stride);
 		impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer, uintPtr stride)
+	void Texture::imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
 	{
-		CAGE_ASSERT(buffer.size() >= 6 * stride);
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
+		const uintPtr stride = buffer.size() / 6;
 		for (uint32 i = 0; i < 6; i++)
 			glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, stride, buffer.data() + i * stride);
 		impl->resolution = Vec3i(resolution, 1);
