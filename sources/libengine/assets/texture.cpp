@@ -3,7 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>
 #include <cage-core/typeIndex.h>
-#include <cage-core/imageBlocksCompression.h>
+#include <cage-core/imageBlocks.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>

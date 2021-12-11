@@ -1,5 +1,5 @@
 #include <cage-core/image.h>
-#include <cage-core/imageBlocksCompression.h>
+#include <cage-core/imageBlocks.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
 #include <cage-engine/opengl.h>
@@ -434,7 +434,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using ktx encoding");
 
-		ImageKtxCompressionConfig cfg;
+		ImageKtxEncodeConfig cfg;
 		//cfg.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
 		cfg.normals = properties("convert") == "heightToNormal";
 
@@ -445,7 +445,7 @@ namespace
 		imgs.reserve(images.size());
 		for (const auto &it : images)
 			imgs.push_back(+it);
-		auto ktx = imageKtxCompress(imgs, cfg);
+		auto ktx = imageKtxEncode(imgs, cfg);
 		asset.originalSize += ktx.size();
 		ser.write(ktx);
 	}
@@ -458,7 +458,7 @@ namespace
 		data.internalFormat = findInternalFormatForBcn(data);
 		findSwizzling(data.swizzle, data.channels);
 
-		ImageKtxCompressionConfig cfg1;
+		ImageKtxEncodeConfig cfg1;
 		//cfg1.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
 		cfg1.normals = properties("convert") == "heightToNormal";
 		ImageKtxTranscodeConfig cfg2;
@@ -483,7 +483,7 @@ namespace
 		const String astcTilingStr = resolveAutoTiling(data.target, data.channels);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "astc tiling: " + astcTilingStr);
 
-		ImageAstcCompressionConfig cfg;
+		ImageAstcEncodeConfig cfg;
 		cfg.tiling = convertTiling(astcTilingStr);
 		cfg.quality = configAstcCompressionQuality;
 		cfg.normals = properties("convert") == "heightToNormal";
@@ -494,7 +494,7 @@ namespace
 
 		for (const auto &it : images)
 		{
-			auto astc = imageAstcCompress(+it, cfg);
+			auto astc = imageAstcEncode(+it, cfg);
 			asset.originalSize += astc.size();
 			ser.write(astc);
 		}

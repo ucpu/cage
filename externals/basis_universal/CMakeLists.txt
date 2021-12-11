@@ -64,7 +64,8 @@ add_library(basisu STATIC
 )
 
 target_include_directories(basisu INTERFACE ".")
-target_compile_definitions(basisu PRIVATE BASISU_SUPPORT_SSE=1 BASISD_SUPPORT_KTX2_ZSTD=1 BASISU_NO_ITERATOR_DEBUG_LEVEL)
+target_compile_definitions(basisu PRIVATE BASISU_SUPPORT_SSE=1 BASISD_SUPPORT_KTX2_ZSTD=1)
+target_compile_definitions(basisu PUBLIC BASISU_NO_ITERATOR_DEBUG_LEVEL)
 if (NOT MSVC)
 	target_compile_options(basisu PRIVATE -msse4.1)
 endif()

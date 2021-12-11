@@ -1,6 +1,6 @@
 #include "image.h"
 
-#include <cage-core/imageBlocksCompression.h>
+#include <cage-core/imageBlocks.h>
 #include <cage-core/serialization.h>
 
 #include <astcenc.h>
@@ -48,7 +48,7 @@ namespace cage
 		};
 	}
 
-	Holder<Image> imageAstcDecompress(PointerRange<const char> buffer, const ImageAstcDecompressionConfig &config_)
+	Holder<Image> imageAstcDecode(PointerRange<const char> buffer, const ImageAstcDecodeConfig &config_)
 	{
 		if (config_.resolution[0] <= 0 || config_.resolution[1] <= 0)
 			CAGE_THROW_ERROR(Exception, "invalid resolution for astc decoding");
@@ -94,7 +94,7 @@ namespace cage
 		return img;
 	}
 
-	Holder<PointerRange<char>> imageAstcCompress(const Image *image_, const ImageAstcCompressionConfig &config_)
+	Holder<PointerRange<char>> imageAstcEncode(const Image *image_, const ImageAstcEncodeConfig &config_)
 	{
 		const ImageImpl *impl = (const ImageImpl *)image_;
 
@@ -194,13 +194,13 @@ namespace cage
 		if ((header.dim_z[0] + (header.dim_z[1] << 8) + (header.dim_z[2] << 16)) != 1 || header.block_z != 1)
 			CAGE_THROW_ERROR(Exception, "non-2D astc files are not supported");
 
-		ImageAstcDecompressionConfig config;
+		ImageAstcDecodeConfig config;
 		config.resolution[0] = header.dim_x[0] + (header.dim_x[1] << 8) + (header.dim_x[2] << 16);
 		config.resolution[1] = header.dim_y[0] + (header.dim_y[1] << 8) + (header.dim_y[2] << 16);
 		config.tiling[0] = header.block_x;
 		config.tiling[1] = header.block_y;
 
-		Holder<Image> tmp = imageAstcDecompress(des.read(des.available()), config);
+		Holder<Image> tmp = imageAstcDecode(des.read(des.available()), config);
 		swapAll((ImageImpl *)+tmp, impl);
 	}
 
@@ -209,7 +209,7 @@ namespace cage
 		MemoryBuffer buff;
 		Serializer ser(buff);
 
-		ImageAstcCompressionConfig config;
+		ImageAstcEncodeConfig config;
 		config.tiling = Vec2i(4, 4);
 #ifdef CAGE_DEBUG
 		config.quality = 10;
@@ -234,7 +234,7 @@ namespace cage
 			ser << header;
 		}
 
-		Holder<PointerRange<char>> tmp = imageAstcCompress(impl, config);
+		Holder<PointerRange<char>> tmp = imageAstcEncode(impl, config);
 		ser.write(tmp);
 		return buff;
 	}

@@ -1,6 +1,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/image.h>
+#include <cage-core/imageBlocks.h>
 #include <cage-core/color.h>
 #include <cage-core/timer.h>
 
@@ -144,6 +145,74 @@ void testImage()
 				if (fmt != ".png")
 					tg->exportFile(Stringizer() + "images/channels/" + ch + fmt + ".png"); // for verification
 			}
+		}
+	}
+
+	{
+		CAGE_TESTCASE("bcN");
+
+		const auto &compare = [](const Image *a, const Image *b)
+		{
+			CAGE_TEST(a->resolution() == b->resolution());
+			CAGE_TEST(a->channels() == b->channels());
+		};
+
+		{
+			CAGE_TESTCASE("bc1");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 3);
+			const auto buff = imageBc1Encode(+img);
+			Holder<Image> res = imageBc1Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc1.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc3");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			const auto buff = imageBc3Encode(+img);
+			Holder<Image> res = imageBc3Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc3.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc4");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 1);
+			const auto buff = imageBc4Encode(+img);
+			Holder<Image> res = imageBc4Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc4.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc5");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 2);
+			const auto buff = imageBc5Encode(+img);
+			Holder<Image> res = imageBc5Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc5.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc7");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			const auto buff = imageBc7Encode(+img);
+			Holder<Image> res = imageBc7Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc7.png");
 		}
 	}
 

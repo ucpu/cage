@@ -1,9 +1,8 @@
 #include "image.h"
 
-#include <cage-core/imageBlocksCompression.h>
+#include <cage-core/imageBlocks.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#define BASISU_NO_ITERATOR_DEBUG_LEVEL
 #include <basis_universal/encoder/basisu_comp.h>
 #include <basis_universal/transcoder/basisu_transcoder.h>
 
@@ -76,7 +75,7 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> imageKtxCompress(PointerRange<const Image *> images, const ImageKtxCompressionConfig &config)
+	Holder<PointerRange<char>> imageKtxEncode(PointerRange<const Image *> images, const ImageKtxEncodeConfig &config)
 	{
 		initBasisuOnce();
 
@@ -100,7 +99,7 @@ namespace cage
 		return buff;
 	}
 
-	Holder<PointerRange<Holder<Image>>> imageKtxDecompress(PointerRange<const char> buffer)
+	Holder<PointerRange<Holder<Image>>> imageKtxDecode(PointerRange<const char> buffer)
 	{
 		initBasisuOnce();
 
@@ -179,7 +178,7 @@ namespace cage
 		return output;
 	}
 
-	Holder<PointerRange<ImageKtxTranscodeResult>> imageKtxTranscode(PointerRange<const Image *> images, const ImageKtxCompressionConfig &compression, const ImageKtxTranscodeConfig &transcode)
+	Holder<PointerRange<ImageKtxTranscodeResult>> imageKtxTranscode(PointerRange<const Image *> images, const ImageKtxEncodeConfig &compression, const ImageKtxTranscodeConfig &transcode)
 	{
 		initBasisuOnce();
 
@@ -233,14 +232,14 @@ namespace cage
 
 	void ktxDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		Holder<PointerRange<Holder<Image>>> res = imageKtxDecompress(inBuffer);
+		Holder<PointerRange<Holder<Image>>> res = imageKtxDecode(inBuffer);
 		swapAll(impl, (ImageImpl *)+res[0]);
 	}
 
 	MemoryBuffer ktxEncode(const ImageImpl *impl)
 	{
 		const Image *arr[1] = { impl };
-		auto res = imageKtxCompress(arr, {});
+		auto res = imageKtxEncode(arr, {});
 		MemoryBuffer buff;
 		buff.resize(res.size());
 		detail::memcpy(buff.data(), res.data(), buff.size());

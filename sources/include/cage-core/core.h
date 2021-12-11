@@ -143,6 +143,12 @@ namespace cage
 	enum class AlphaModeEnum : uint32;
 	struct ImageColorConfig;
 	class Image;
+	struct ImageAstcEncodeConfig;
+	struct ImageAstcDecodeConfig;
+	struct ImageKtxEncodeConfig;
+	enum class ImageKtxTranscodeFormatEnum : uint32;
+	struct ImageKtxTranscodeConfig;
+	struct ImageKtxTranscodeResult;
 	class Ini;
 	class LineReader;
 	class Logger;
