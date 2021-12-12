@@ -1331,15 +1331,18 @@ namespace cage
 				// extend bounding boxes to contain all animations
 				for (MeshImportPart &part : result.parts)
 				{
-					for (const MeshImportAnimation &ani : result.animations)
+					if (!part.mesh->boneIndices().empty())
 					{
-						for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+						for (const MeshImportAnimation &ani : result.animations)
 						{
-							Holder<Mesh> tmp = part.mesh->copy();
-							animateMesh(+result.skeleton, +ani.animation, t, +tmp);
-							Aabb box = tmp->boundingBox();
-							box = enlarge(box);
-							part.boundingBox += box;
+							for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+							{
+								Holder<Mesh> tmp = part.mesh->copy();
+								animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+								Aabb box = tmp->boundingBox();
+								box = enlarge(box);
+								part.boundingBox += box;
+							}
 						}
 					}
 				}
