@@ -18,9 +18,9 @@ namespace cage
 	OutOfMemory::OutOfMemory(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(function, file, line, severity, message), memory(memory)
 	{};
 
-	void OutOfMemory::log()
+	void OutOfMemory::log() const
 	{
-		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", Stringizer() + "memory requested: " + +memory, false, false);
+		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", Stringizer() + "memory requested: " + memory, false, false);
 		::cage::privat::makeLog(function, file, line, severity, "exception", +message, false, false);
 	};
 

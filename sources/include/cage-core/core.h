@@ -13,9 +13,9 @@
 #define CAGE_ASSERT(EXPR) {}
 #endif
 
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); throw e_; }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { try { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { try { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Critical, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
 
 #define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(__FUNCTION__, __FILE__, __LINE__, MESSAGE)
 
@@ -370,8 +370,8 @@ namespace cage
 		explicit Exception(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message) noexcept;
 		virtual ~Exception() noexcept;
 
-		void makeLog(); // check conditions and call log()
-		virtual void log();
+		void makeLog() const; // check conditions and call log()
+		virtual void log() const;
 
 		StringLiteral function;
 		StringLiteral file;
@@ -383,13 +383,13 @@ namespace cage
 	struct CAGE_CORE_API NotImplemented : public Exception
 	{
 		using Exception::Exception;
-		void log() override;
+		void log() const override;
 	};
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
 		explicit SystemError(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
-		void log() override;
+		void log() const override;
 		sint64 code = 0;
 	};
 

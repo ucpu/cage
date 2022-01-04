@@ -67,7 +67,7 @@ namespace cage
 	Exception::~Exception() noexcept
 	{}
 
-	void Exception::makeLog()
+	void Exception::makeLog() const
 	{
 		if (severity < getExceptionSilenceSeverity())
 			return;
@@ -75,14 +75,14 @@ namespace cage
 		::cage::detail::debugBreakpoint();
 	}
 
-	void Exception::log()
+	void Exception::log() const
 	{
 		::cage::privat::makeLog(function, file, line, severity, "exception", +message, false, false);
 	}
 
 	// NotImplemented
 
-	void NotImplemented::log()
+	void NotImplemented::log() const
 	{
 		::cage::privat::makeLog(function, file, line, severity, "exception", String() + "not implemented: '" + +message + "'", false, false);
 	}
@@ -92,7 +92,7 @@ namespace cage
 	SystemError::SystemError(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, sint64 code) noexcept : Exception(function, file, line, severity, message), code(code)
 	{}
 
-	void SystemError::log()
+	void SystemError::log() const
 	{
 		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", Stringizer() + "code: " + code, false, false);
 		::cage::privat::makeLog(function, file, line, severity, "exception", +message, false, false);
