@@ -16,8 +16,8 @@ ConfigUint64 configArchiveWriteThreshold("cage-asset-database/database/archiveWr
 ConfigBool configListening("cage-asset-database/database/listening", false);
 ConfigBool configFromScratch("cage-asset-database/database/fromScratch", false);
 ConfigBool configOutputArchive("cage-asset-database/database/outputArchive", false);
-StringSet configIgnoreExtensions;
-StringSet configIgnorePaths;
+std::set<String, StringComparatorFast> configIgnoreExtensions;
+std::set<String, StringComparatorFast> configIgnorePaths;
 
 void configParseCmd(int argc, const char *args[])
 {
@@ -40,7 +40,7 @@ void configParseCmd(int argc, const char *args[])
 	Holder<ConfigList> list = newConfigList();
 	while (list->valid())
 	{
-		String n = list->name();
+		const String n = list->name();
 		if (isPattern(n, "cage-asset-database.ignoreExtensions.", "", ""))
 			configIgnoreExtensions.insert(list->getString());
 		else if (isPattern(n, "cage-asset-database.ignorePaths.", "", ""))

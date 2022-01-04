@@ -11,7 +11,6 @@ namespace cage
 		U16 = 2, // 16 bit normalized (native endianness)
 		Rgbe = 3, // requires 3 channels exactly, each pixel encoded as one uint32
 		Float = 4,
-		// todo DXT/s3tc
 
 		Default = m, // used only for decoding an image, it will use original format from the file
 	};

@@ -1,6 +1,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/image.h>
+#include <cage-core/imageBlocks.h>
 #include <cage-core/color.h>
 #include <cage-core/timer.h>
 
@@ -15,18 +16,18 @@ namespace
 {
 	void drawCircle(Image *img)
 	{
-		uint32 w = img->width(), h = img->height();
-		Vec2 center = Vec2(w, h) * 0.5;
-		Real radiusMax = min(w, h) * 0.5;
+		const uint32 w = img->width(), h = img->height();
+		const Vec2 center = Vec2(w, h) * 0.5;
+		const Real radiusMax = min(w, h) * 0.5;
 		for (uint32 y = 0; y < h; y++)
 		{
 			for (uint32 x = 0; x < w; x++)
 			{
-				Real xx = (Real(x) - w / 2) / radiusMax;
-				Real yy = (Real(y) - h / 2) / radiusMax;
-				Real h = Real(wrap(atan2(xx, yy)) / Rads::Full());
-				Real s = length(Vec2(xx, yy));
-				Vec4 color = s <= 1 ? Vec4(colorHsvToRgb(Vec3(h, s, 1)), 1) : Vec4();
+				const Real xx = (Real(x) - w / 2) / radiusMax;
+				const Real yy = (Real(y) - h / 2) / radiusMax;
+				const Real h = Real(wrap(atan2(xx, yy)) / Rads::Full());
+				const Real s = length(Vec2(xx, yy));
+				const Vec4 color = s <= 1 ? Vec4(colorHsvToRgb(Vec3(h, s, 1)), 1) : Vec4();
 				img->set(x, y, color);
 			}
 		}
@@ -108,6 +109,114 @@ void testImage()
 	}
 
 	{
+		CAGE_TESTCASE("store different channels counts in different formats");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300, 4);
+		drawCircle(+img);
+		for (uint32 ch : { 4, 3, 2, 1 })
+		{
+			CAGE_TESTCASE(Stringizer() + ch);
+			imageConvert(+img, ch);
+			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".astc", ".dds", ".ktx" })
+			{
+				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
+					continue; // unsupported
+				if (ch == 2 && fmt == ".tga")
+					continue; // unsupported
+				if (ch < 3 && fmt == ".dds")
+					continue; // unsupported
+				CAGE_TESTCASE(fmt);
+				const String name = Stringizer() + "images/channels/" + ch + fmt;
+				img->exportFile(name);
+				Holder<Image> tg = newImage();
+				tg->importFile(name);
+				CAGE_TEST(tg->width() == img->width());
+				CAGE_TEST(tg->height() == img->height());
+				if (fmt == ".astc" || fmt == ".dds" || fmt == ".ktx")
+					CAGE_TEST(tg->channels() == 4) // always loads 4 channels
+				else
+					CAGE_TEST(tg->channels() == img->channels());
+				CAGE_TEST(tg->format() == img->format());
+				if (fmt != ".jpeg" && fmt != ".astc" && fmt != ".dds" && fmt != ".ktx") // lossy formats
+				{
+					for (uint32 c = 0; c < ch; c++)
+						test(tg->value(120, 90, c), img->value(120, 90, c));
+				}
+				if (fmt != ".png")
+					tg->exportFile(Stringizer() + "images/channels/" + ch + fmt + ".png"); // for verification
+			}
+		}
+	}
+
+	{
+		CAGE_TESTCASE("bcN");
+
+		const auto &compare = [](const Image *a, const Image *b)
+		{
+			CAGE_TEST(a->resolution() == b->resolution());
+			CAGE_TEST(a->channels() == b->channels());
+		};
+
+		{
+			CAGE_TESTCASE("bc1");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 3);
+			const auto buff = imageBc1Encode(+img);
+			Holder<Image> res = imageBc1Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc1.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc3");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			const auto buff = imageBc3Encode(+img);
+			Holder<Image> res = imageBc3Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc3.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc4");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 1);
+			const auto buff = imageBc4Encode(+img);
+			Holder<Image> res = imageBc4Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc4.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc5");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 2);
+			const auto buff = imageBc5Encode(+img);
+			Holder<Image> res = imageBc5Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc5.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc7");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			const auto buff = imageBc7Encode(+img);
+			Holder<Image> res = imageBc7Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc7.png");
+		}
+	}
+
+	{
 		CAGE_TESTCASE("circle png 8bit");
 		Holder<Image> img = newImage();
 		img->initialize(400, 300, 4);
@@ -138,166 +247,6 @@ void testImage()
 		CAGE_TEST(img->width() == 400);
 		CAGE_TEST(img->height() == 300);
 		img->exportFile("images/formats/circle16_2.png");
-	}
-
-	{
-		CAGE_TESTCASE("circle dds");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		img->exportFile("images/formats/circle.dds");
-		CAGE_TEST(img->width() == 400);
-		img = newImage();
-		CAGE_TEST(img->width() == 0);
-		img->importFile("images/formats/circle.dds");
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-	}
-
-	{
-		CAGE_TESTCASE("blit 1");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		Holder<Image> tg = newImage();
-		imageBlit(+img, tg.get(), 50, 0, 0, 0, 300, 300);
-		tg->exportFile("images/formats/circle300.png");
-	}
-
-	{
-		CAGE_TESTCASE("blit 2");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		Holder<Image> tg = newImage();
-		tg->initialize(400, 400, 4);
-		imageBlit(+img, tg.get(), 50, 0, 50, 50, 300, 300);
-		tg->exportFile("images/formats/circle400.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert 8 to 16 bit");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", m, ImageFormatEnum::U16);
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U16);
-		img->exportFile("images/formats/circle8_to_16.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert 16 to 8 bit");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle16.png", m, ImageFormatEnum::U8);
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/formats/circle16_to_8.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert to 1 channel");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", 1);
-		CAGE_TEST(img->channels() == 1);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/formats/circle_slice.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert to 3 channel");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", 3);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		CAGE_TEST(img->channels() == 3);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/formats/circle_rgb.png");
-	}
-
-	{
-		CAGE_TESTCASE("linearize (degamma) and back");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		imageConvert(+img, GammaSpaceEnum::Linear);
-		img->exportFile("images/formats/circle_linear.png");
-		imageConvert(+img, GammaSpaceEnum::Gamma);
-		img->exportFile("images/formats/circle_linear_2.png");
-	}
-
-	{
-		CAGE_TESTCASE("premultiply alpha and back");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
-		img->exportFile("images/formats/circle_premultiplied.png");
-		imageConvert(+img, AlphaModeEnum::Opacity);
-		img->exportFile("images/formats/circle_premultiplied_2.png");
-	}
-
-	{
-		CAGE_TESTCASE("upscale");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		imageResize(+img, 600, 450, true);
-		img->exportFile("images/formats/circle_upscaled_colorconfig.png");
-		img->importFile("images/formats/circle8.png");
-		imageResize(+img, 600, 450, false);
-		img->exportFile("images/formats/circle_upscaled_raw.png");
-	}
-
-	{
-		CAGE_TESTCASE("downscale");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		imageResize(+img, 200, 150, true);
-		img->exportFile("images/formats/circle_downscaled_colorconfig.png");
-		img->importFile("images/formats/circle8.png");
-		imageResize(+img, 200, 150, false);
-		img->exportFile("images/formats/circle_downscaled_raw.png");
-	}
-
-	{
-		CAGE_TESTCASE("stretch");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png");
-		imageResize(+img, 300, 500);
-		img->exportFile("images/formats/circle_stretched.png");
-	}
-
-	{
-		CAGE_TESTCASE("store different channels counts in different formats");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		for (uint32 ch : { 4, 3, 2, 1 })
-		{
-			CAGE_TESTCASE(Stringizer() + ch);
-			imageConvert(+img, ch);
-			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
-			{
-				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
-					continue; // unsupported
-				if (ch == 2 && fmt == ".tga")
-					continue; // unsupported
-				CAGE_TESTCASE(fmt);
-				const String name = Stringizer() + "images/channels/" + ch + fmt;
-				img->exportFile(name);
-				Holder<Image> tg = newImage();
-				tg->importFile(name);
-				CAGE_TEST(tg->width() == img->width());
-				CAGE_TEST(tg->height() == img->height());
-				CAGE_TEST(tg->channels() == img->channels());
-				CAGE_TEST(tg->format() == img->format());
-				if (fmt != ".jpeg") // jpegs are lossy
-				{
-					for (uint32 c = 0; c < ch; c++)
-						test(tg->value(120, 90, c), img->value(120, 90, c));
-				}
-			}
-		}
 	}
 
 	{
@@ -362,6 +311,124 @@ void testImage()
 		CAGE_TEST(img->width() == 400);
 		CAGE_TEST(img->height() == 300);
 		img->exportFile("images/formats/circleFloat_2.exr");
+	}
+
+	{
+		CAGE_TESTCASE("blit 1");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		Holder<Image> tg = newImage();
+		imageBlit(+img, +tg, 50, 0, 0, 0, 300, 300);
+		tg->exportFile("images/operations/blit1.png");
+	}
+
+	{
+		CAGE_TESTCASE("blit 2");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		Holder<Image> tg = newImage();
+		tg->initialize(400, 400, 4);
+		imageBlit(+img, +tg, 50, 0, 50, 50, 300, 300);
+		tg->exportFile("images/operations/blit2.png");
+	}
+
+	{
+		CAGE_TESTCASE("convert 8 to 16 bit");
+		Holder<Image> img = newImage();
+		img->importFile("images/formats/circle8.png", m, ImageFormatEnum::U16);
+		CAGE_TEST(img->channels() == 4);
+		CAGE_TEST(img->format() == ImageFormatEnum::U16);
+		img->exportFile("images/operations/8_to_16_bits.png");
+	}
+
+	{
+		CAGE_TESTCASE("convert 16 to 8 bit");
+		Holder<Image> img = newImage();
+		img->importFile("images/formats/circle16.png", m, ImageFormatEnum::U8);
+		CAGE_TEST(img->channels() == 4);
+		CAGE_TEST(img->format() == ImageFormatEnum::U8);
+		img->exportFile("images/operations/16_to_8_bits.png");
+	}
+
+	{
+		CAGE_TESTCASE("convert to 1 channel");
+		Holder<Image> img = newImage();
+		img->importFile("images/formats/circle8.png", 1);
+		CAGE_TEST(img->channels() == 1);
+		CAGE_TEST(img->format() == ImageFormatEnum::U8);
+		img->exportFile("images/operations/to_1_channel.png");
+	}
+
+	{
+		CAGE_TESTCASE("convert to 3 channel");
+		Holder<Image> img = newImage();
+		img->importFile("images/formats/circle8.png", 3);
+		CAGE_TEST(img->width() == 400);
+		CAGE_TEST(img->height() == 300);
+		CAGE_TEST(img->channels() == 3);
+		CAGE_TEST(img->format() == ImageFormatEnum::U8);
+		img->exportFile("images/operations/to_3_channels.png");
+	}
+
+	{
+		CAGE_TESTCASE("linearize (degamma) and back");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageConvert(+img, GammaSpaceEnum::Linear);
+		img->exportFile("images/operations/to_linear.png");
+		imageConvert(+img, GammaSpaceEnum::Gamma);
+		img->exportFile("images/operations/to_linear_to_gamma.png");
+	}
+
+	{
+		CAGE_TESTCASE("premultiply alpha and back");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
+		img->exportFile("images/operations/to_premultiplied.png");
+		imageConvert(+img, AlphaModeEnum::Opacity);
+		img->exportFile("images/operations/to_premultiplied_to_opacity.png");
+	}
+
+	{
+		CAGE_TESTCASE("upscale");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageResize(+img, 600, 450, true);
+		img->exportFile("images/operations/upscaled_colorconfig.png");
+		img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageResize(+img, 600, 450, false);
+		img->exportFile("images/operations/upscaled_raw.png");
+	}
+
+	{
+		CAGE_TESTCASE("downscale");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageResize(+img, 200, 150, true);
+		img->exportFile("images/operations/downscaled_colorconfig.png");
+		img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageResize(+img, 200, 150, false);
+		img->exportFile("images/operations/downscaled_raw.png");
+	}
+
+	{
+		CAGE_TESTCASE("stretch");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300);
+		drawCircle(+img);
+		imageResize(+img, 300, 500);
+		img->exportFile("images/operations/stretched.png");
 	}
 
 	{

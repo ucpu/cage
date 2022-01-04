@@ -1,5 +1,5 @@
 #include "image.h"
-#include "dxt.h"
+#include <cage-core/imageBlocks.h>
 #include <cage-core/serialization.h>
 
 // mipmaps, cubemaps, arrays, volumes are not supported
@@ -12,66 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		const uint32 Magic = 0x20534444;
-
-		template<class Block>
-		void decompress(Deserializer &des, ImageImpl *impl)
-		{
-			Serializer masterSer(impl->mem);
-			const uint32 cols = impl->width / 4; // blocks count
-			const uint32 rows = impl->height / 4; // blocks count
-			const uint32 lineSize = impl->width * 4; // bytes count
-			for (uint32 y = 0; y < rows; y++)
-			{
-				Serializer tmpSer0 = masterSer.reserve(lineSize);
-				Serializer tmpSer1 = masterSer.reserve(lineSize);
-				Serializer tmpSer2 = masterSer.reserve(lineSize);
-				Serializer tmpSer3 = masterSer.reserve(lineSize);
-				Serializer *lineSer[4] = { &tmpSer0, &tmpSer1, &tmpSer2, &tmpSer3 };
-				for (uint32 x = 0; x < cols; x++)
-				{
-					Block block;
-					des >> block;
-					TexelBlock texels = dxtDecompress(block);
-					for (uint32 b = 0; b < 4; b++)
-					{
-						for (uint32 a = 0; a < 4; a++)
-						{
-							Vec4 tex = texels.texel[b][a] * 255;
-							for (uint32 i = 0; i < 4; i++)
-								*(lineSer[b]) << numeric_cast<uint8>(tex[i]);
-						}
-					}
-				}
-			}
-			CAGE_ASSERT(masterSer.available() == 0);
-		}
-
-		void compress(Serializer &ser, const ImageImpl *impl)
-		{
-			const uint32 cols = impl->width / 4;
-			const uint32 rows = impl->height / 4;
-			const uint32 *imageBase = (const uint32 *)impl->mem.data();
-			for (uint32 y = 0; y < rows; y++)
-			{
-				const uint32 *lineBase = imageBase + y * 4 * impl->width;
-				for (uint32 x = 0; x < cols; x++)
-				{
-					const uint32 *block = lineBase + x * 4;
-					TexelBlock texels;
-					for (uint32 b = 0; b < 4; b++)
-					{
-						const uint32 *line = block + b * impl->width;
-						for (uint32 a = 0; a < 4; a++)
-						{
-							const uint8 *t = (const uint8 *)(line + a);
-							texels.texel[b][a] = Vec4(t[0], t[1], t[2], t[3]) / 255;
-						}
-					}
-					ser << dxtCompress(texels);
-				}
-			}
-		}
+		constexpr uint32 Magic = 0x20534444;
 
 		struct PixelFormat
 		{
@@ -129,15 +70,18 @@ namespace cage
 		{
 		case makeFourCC("DXT1"):
 		{
-			decompress<Dxt1Block>(des, impl);
+			auto res = imageBc1Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		case makeFourCC("DXT3"):
 		{
-			decompress<Dxt3Block>(des, impl);
+			auto res = imageBc2Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		case makeFourCC("DXT5"):
 		{
-			decompress<Dxt5Block>(des, impl);
+			auto res = imageBc3Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
@@ -155,6 +99,15 @@ namespace cage
 		if ((impl->width % 4) != 0 || (impl->height % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for dds encoding");
 
+		if (impl->channels == 3)
+		{
+			Holder<Image> img = impl->copy();
+			imageConvert(+img, 4);
+			imageFill(+img, 3, 1);
+			img->colorConfig.alphaMode = AlphaModeEnum::None;
+			return ddsEncode((ImageImpl *)+img);
+		}
+
 		Header header;
 		detail::memset(&header, 0, sizeof(Header));
 		header.magic = Magic;
@@ -167,12 +120,9 @@ namespace cage
 		header.format.fourCC = makeFourCC("DXT5");
 
 		MemoryBuffer buf;
-		buf.reserve(impl->width * impl->height * impl->channels + 128);
 		Serializer ser(buf);
-
 		ser << header;
-		compress(ser, impl);
-
+		ser.write(imageBc3Encode(impl));
 		return buf;
 	}
 }

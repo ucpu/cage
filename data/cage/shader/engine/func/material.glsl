@@ -56,19 +56,26 @@ vec4 materialMapSpecialCube()
 	return texture(texMaterialSpecialCube, uv);
 }
 
+vec4 restoreNormalMapZ(vec4 n)
+{
+	n.z = sqrt(1 - clamp(dot(n.xy, n.xy), 0, 1));
+	//n.xyz = normalize(n.xyz);
+	return n;
+}
+
 vec4 materialMapNormal2d()
 {
-	return texture(texMaterialNormal2d, uv.xy);
+	return restoreNormalMapZ(texture(texMaterialNormal2d, uv.xy));
 }
 
 vec4 materialMapNormalArray()
 {
-	return sampleTextureAnimation(texMaterialNormalArray, uv.xy, uniMeshes[meshIndex].aniTexFrames);
+	return restoreNormalMapZ(sampleTextureAnimation(texMaterialNormalArray, uv.xy, uniMeshes[meshIndex].aniTexFrames));
 }
 
 vec4 materialMapNormalCube()
 {
-	return texture(texMaterialNormalCube, uv);
+	return restoreNormalMapZ(texture(texMaterialNormalCube, uv));
 }
 
 vec4 matMapImpl(int index)

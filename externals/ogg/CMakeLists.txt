@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "ogg")
@@ -15,5 +15,3 @@ target_include_directories(ogg PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/ogg/include")
 target_include_directories(ogg INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/ogg/include")
 
 cage_gen_module(OGG $<TARGET_LINKER_FILE:ogg> $<TARGET_PROPERTY:ogg,INTERFACE_INCLUDE_DIRECTORIES>)
-
-add_library(Ogg::ogg ALIAS ogg)

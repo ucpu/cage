@@ -1,7 +1,7 @@
 #ifndef guard_signedDistanceFunction_h_sdfgr1esd56r
 #define guard_signedDistanceFunction_h_sdfgr1esd56r
 
-#include <cage-core/math.h>
+#include "math.h"
 
 namespace cage
 {

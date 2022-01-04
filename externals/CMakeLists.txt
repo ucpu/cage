@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
+
+# no language requirement
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_STANDARD)
 
 # make cmake find our own provided libraries
 # the libraries provided here have higher priority than system libraries
@@ -7,15 +11,6 @@ set(CAGE_EXTERNALS_MODULE_PATH "${CAGE_EXTERNALS_MODULE_PATH}" PARENT_SCOPE)
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cmake/cage_gen_module.cmake)
-
-# unset language standard
-unset(CMAKE_C_STANDARD)
-unset(CMAKE_CXX_STANDARD)
-
-# unset visibility preset
-unset(CMAKE_C_VISIBILITY_PRESET)
-unset(CMAKE_CXX_VISIBILITY_PRESET)
-unset(CMAKE_VISIBILITY_INLINES_HIDDEN)
 
 # ensure that all libraries are distinguishable from system libraries
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
@@ -34,10 +29,10 @@ if(MSVC)
 endif()
 
 add_subdirectory(zlib-ng)
-add_subdirectory(libpng)
+add_subdirectory(png)
 add_subdirectory(jpeg) # jpeg must go after libpng to ensure that asm compiler is detected and before zstd to ensure that no uninstall target is yet defined
 add_subdirectory(zstd)
-add_subdirectory(libtiff)
+add_subdirectory(tiff)
 add_subdirectory(freetype)
 add_subdirectory(assimp)
 add_subdirectory(glad)
@@ -61,6 +56,8 @@ add_subdirectory(dualmc)
 add_subdirectory(plf)
 add_subdirectory(tinyexr)
 add_subdirectory(samplerate)
+add_subdirectory(astc-encoder)
+add_subdirectory(basis_universal)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -126,6 +123,9 @@ external_target_properties(dualmc)
 external_target_properties(plf)
 external_target_properties(tinyexr)
 external_target_properties(samplerate)
+external_target_properties(astcenc-avx2-static)
+external_target_properties(astcenc-sse2-static)
+external_target_properties(basisu)
 
 # final overrides
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)

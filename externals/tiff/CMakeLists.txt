@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 message(STATUS "----------------------------------------------------------------")
-message(STATUS "libtiff")
+message(STATUS "tiff")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
@@ -17,7 +17,7 @@ option(jbig "use ISO JBIG compression (requires JBIT-KIT library)" OFF)
 option(lzma "use liblzma (required for LZMA2 compression)" OFF)
 option(webp "use libwebp (required for WEBP compression)" OFF)
 
-add_subdirectory(libtiff)
+add_subdirectory(tiff)
 
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libtiff/libtiff")
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/libtiff/libtiff")

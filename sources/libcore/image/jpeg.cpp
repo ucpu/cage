@@ -144,16 +144,12 @@ namespace cage
 	{
 		if (impl->channels != 1 && impl->channels != 3)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for jpeg encoding");
+		if (impl->format != ImageFormatEnum::U8)
+			CAGE_THROW_ERROR(Exception, "unsupported image format for tga encoding");
+
 		MemoryBuffer res;
-		res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
-		switch (impl->format)
-		{
-		case ImageFormatEnum::U8:
-			jpegEncode(impl->mem, res, impl->width, impl->height, impl->channels);
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported format for jpeg encoding");
-		}
+		res.reserve(impl->width * impl->height * impl->channels + 100);
+		jpegEncode(impl->mem, res, impl->width, impl->height, impl->channels);
 		return res;
 	}
 }

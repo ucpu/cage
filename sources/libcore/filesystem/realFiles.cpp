@@ -10,6 +10,7 @@
 #include <io.h> // _get_osfhandle
 #define fseek _fseeki64
 #define ftell _ftelli64
+#include <vector> // wide characters
 #else
 #define _FILE_OFFSET_BITS 64
 #include <unistd.h>
@@ -28,13 +29,50 @@
 
 namespace cage
 {
+	namespace
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+		struct Widen
+		{
+			Widen(const String &path)
+			{
+				auto len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), path.size(), nullptr, 0);
+				if (len <= 0)
+					CAGE_THROW_ERROR(cage::SystemError, "MultiByteToWideChar", GetLastError());
+				data.resize(len + 1);
+				auto ret = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path.data(), path.size(), data.data(), data.size());
+				CAGE_ASSERT(ret == len);
+				data[ret] = 0;
+			}
+
+			operator const wchar_t *() const
+			{
+				return data.data();
+			}
+
+			std::vector<wchar_t> data;
+		};
+
+		String narrow(PointerRange<const wchar_t> path)
+		{
+			String data;
+			auto res = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, path.data(), path.size(), data.rawData(), String::MaxLength - 1, nullptr, nullptr);
+			if (res == 0)
+				CAGE_THROW_ERROR(cage::SystemError, "WideCharToMultiByte", GetLastError());
+			data.rawData()[res] = 0;
+			data.rawLength() = res;
+			return data;
+		}
+#endif
+	}
+
 	Holder<DirectoryList> realNewDirectoryList(const String &path);
 
 	PathTypeFlags realType(const String &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		auto a = GetFileAttributes(path.c_str());
+		auto a = GetFileAttributesW(Widen(path));
 		if (a == INVALID_FILE_ATTRIBUTES)
 			return PathTypeFlags::NotFound;
 		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
@@ -74,7 +112,7 @@ namespace cage
 					continue;
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (CreateDirectory(p.c_str(), nullptr) == 0)
+				if (CreateDirectoryW(Widen(p), nullptr) == 0)
 				{
 					const auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
@@ -101,7 +139,7 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		auto res = MoveFile(from.c_str(), to.c_str());
+		auto res = MoveFileW(Widen(from), Widen(to));
 		if (res == 0)
 		{
 			CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
@@ -135,7 +173,7 @@ namespace cage
 			}
 
 #ifdef CAGE_SYSTEM_WINDOWS
-			if (RemoveDirectory(path.c_str()) == 0)
+			if (RemoveDirectoryW(Widen(path)) == 0)
 				CAGE_THROW_ERROR(SystemError, "RemoveDirectory", GetLastError());
 #else
 			if (rmdir(path.c_str()) != 0)
@@ -145,7 +183,7 @@ namespace cage
 		else if (none(t & PathTypeFlags::NotFound))
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			if (DeleteFile(path.c_str()) == 0)
+			if (DeleteFileW(Widen(path)) == 0)
 				CAGE_THROW_ERROR(SystemError, "DeleteFile", GetLastError());
 #else
 			if (unlink(path.c_str()) != 0)
@@ -158,17 +196,18 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+		HANDLE hFile = CreateFileW(Widen(path), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
 			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "path does not exist");
+			CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
 		}
 		FILETIME ftWrite;
 		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 		{
+			CloseHandle(hFile);
 			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "path does not exist");
+			CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
 		}
 		ULARGE_INTEGER l;
 		l.LowPart = ftWrite.dwLowDateTime;
@@ -193,18 +232,16 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			char buffer[String::MaxLength];
-			uint32 len = GetCurrentDirectory(String::MaxLength - 1, buffer);
+			wchar_t buffer[String::MaxLength + 1];
+			uint32 len = GetCurrentDirectoryW(String::MaxLength, buffer);
 			if (len <= 0)
 				CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
-			if (len >= String::MaxLength)
-				CAGE_THROW_ERROR(Exception, "path too long");
-			return pathSimplify(String({ buffer, buffer + len }));
+			return pathSimplify(narrow({ buffer, buffer + len }));
 
 #else
 
-			char buffer[String::MaxLength];
-			if (getcwd(buffer, String::MaxLength - 1) != nullptr)
+			char buffer[String::MaxLength + 1];
+			if (getcwd(buffer, String::MaxLength) != nullptr)
 				return pathSimplify(buffer);
 			CAGE_THROW_ERROR(Exception, "getcwd");
 
@@ -223,36 +260,38 @@ namespace cage
 	{
 		String executableFullPathImpl()
 		{
-			char buffer[String::MaxLength];
-
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			uint32 len = GetModuleFileName(nullptr, (char *)&buffer, String::MaxLength);
+			wchar_t buffer[String::MaxLength];
+			uint32 len = GetModuleFileNameW(nullptr, (wchar_t *)&buffer, String::MaxLength);
 			if (len == 0)
 				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
+			return pathSimplify(narrow({ buffer, buffer + len }));
 
 #elif defined(CAGE_SYSTEM_LINUX)
 
+			char buffer[String::MaxLength];
 			char id[String::MaxLength];
 			sprintf(id, "/proc/%d/exe", getpid());
 			sint32 len = readlink(id, buffer, String::MaxLength);
 			if (len == -1)
 				CAGE_THROW_ERROR(SystemError, "readlink", errno);
+			return pathSimplify(String({ buffer, buffer + len }));
 
 #elif defined(CAGE_SYSTEM_MAC)
 
+			char buffer[String::MaxLength];
 			uint32 len = sizeof(buffer);
 			if (_NSGetExecutablePath(buffer, &len) != 0)
 				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
 			len = detail::strlen(buffer);
+			return pathSimplify(String({ buffer, buffer + len }));
 
 #else
 
 #error This operating system is not supported
 
 #endif
-
-			return pathSimplify(String({ buffer, buffer + len }));
 		}
 	}
 
@@ -288,7 +327,11 @@ namespace cage
 				CAGE_ASSERT(mode.valid());
 				if (mode.write)
 					realCreateDirectories(pathJoin(path, ".."));
+#ifdef CAGE_SYSTEM_WINDOWS
+				f = _wfopen(Widen(path), Widen(mode.mode()));
+#else
 				f = fopen(path.c_str(), mode.mode().c_str());
+#endif
 				if (!f)
 				{
 					CAGE_LOG_THROW(Stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
@@ -317,7 +360,11 @@ namespace cage
 				CAGE_ASSERT(myMode.read && !myMode.write);
 				CAGE_ASSERT(f);
 				myMode.write = true;
+#ifdef CAGE_SYSTEM_WINDOWS
+				f = _wfreopen(Widen(myPath), Widen(myMode.mode()), f);
+#else
 				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
+#endif
 				if (!f)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path: " + myPath);
@@ -420,7 +467,7 @@ namespace cage
 			bool valid_ = false;
 
 #ifdef CAGE_SYSTEM_WINDOWS
-			WIN32_FIND_DATA ffd;
+			WIN32_FIND_DATAW ffd;
 			HANDLE list = nullptr;
 #else
 			DIR *pdir = nullptr;
@@ -433,7 +480,7 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 				CAGE_ASSERT(!myPath.empty());
-				list = FindFirstFile((myPath + "/*").c_str(), &ffd);
+				list = FindFirstFileW(Widen(myPath + "/*"), &ffd);
 				valid_ = list != INVALID_HANDLE_VALUE;
 				if (!valid_)
 					return;
@@ -465,7 +512,7 @@ namespace cage
 			String name() const override
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
-				return ffd.cFileName;
+				return narrow({ ffd.cFileName, ffd.cFileName + wcslen(ffd.cFileName) });
 #else
 				return pent->d_name;
 #endif
@@ -477,7 +524,7 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-				if (FindNextFile(list, &ffd) == 0)
+				if (FindNextFileW(list, &ffd) == 0)
 				{
 					valid_ = false;
 					return;

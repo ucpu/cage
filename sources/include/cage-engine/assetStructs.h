@@ -26,7 +26,15 @@ namespace cage
 		None = 0,
 		GenerateMipmaps = 1 << 0,
 		AnimationLoop = 1 << 1,
-		AllowDownscale = 1 << 2,
+		Srgb = 1 << 2,
+		Compressed = 1 << 3,
+		Ktx = 1 << 4,
+	};
+
+	enum class TextureSwizzleEnum : uint8
+	{
+		Zero, One,
+		R, G, B, A,
 	};
 
 	struct CAGE_ENGINE_API TextureHeader
@@ -36,7 +44,6 @@ namespace cage
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
 		uint32 channels;
-		uint32 stride; // only used for GL_TEXTURE_CUBE_MAP, otherwise 0
 		uint32 internalFormat;
 		uint32 copyFormat;
 		uint32 copyType;
@@ -46,6 +53,7 @@ namespace cage
 		uint32 wrapX;
 		uint32 wrapY;
 		uint32 wrapZ;
+		TextureSwizzleEnum swizzle[4];
 
 		// follows:
 		// array of texels

@@ -65,7 +65,7 @@ namespace cage
 
 			explicit Mat3x4(const Mat4 &in)
 			{
-				CAGE_ASSERT(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1);
+				CAGE_ASSERT(abs(in[3]) < 1e-5 && abs(in[7]) < 1e-5 && abs(in[11]) < 1e-5 && abs(in[15] - 1) < 1e-5);
 				for (uint32 a = 0; a < 4; a++)
 					for (uint32 b = 0; b < 3; b++)
 						data[b][a] = in[a * 4 + b];
