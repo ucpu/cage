@@ -45,7 +45,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 emitTime, uint64 animationStart, Real animationSpeed, Real animationOffset);
+		CAGE_ENGINE_API Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
 	}
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
