@@ -73,11 +73,13 @@ target_link_libraries(cage-simple PUBLIC cage-engine)
 cage_ide_category(cage-simple cage/libs)
 cage_ide_sort_files(cage-simple)
 
-file(GLOB_RECURSE cage-data-sources "../data/*")
-file(GLOB_RECURSE cage-schemes-sources "../schemes/*")
-add_library(cage-data INTERFACE ${cage-data-sources} ${cage-schemes-sources})
-cage_ide_category(cage-data cage/libs)
-cage_ide_sort_files(cage-data "${CMAKE_CURRENT_LIST_DIR}/..")
+if(MSVC)
+	file(GLOB_RECURSE cage-data-sources "../data/*")
+	file(GLOB_RECURSE cage-schemes-sources "../schemes/*")
+	add_library(cage-data INTERFACE ${cage-data-sources} ${cage-schemes-sources})
+	cage_ide_category(cage-data cage/libs)
+	cage_ide_sort_files(cage-data "${CMAKE_CURRENT_LIST_DIR}/..")
+endif()
 
 ########
 # TESTS

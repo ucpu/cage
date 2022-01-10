@@ -1,4 +1,4 @@
-#include <cage-core/core.h>
+#include <cage-core/debug.h>
 
 #if !defined(CAGE_CORE_API)
 #error CAGE_CORE_API must be defined
@@ -13,21 +13,16 @@
 #error CAGE_ASSERT_ENABLED must be defined for debug builds
 #endif
 
-#include <cage-core/debug.h>
-#include <cage-core/math.h>
-
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
 #include <intrin.h> // __debugbreak
-#else
-#include <sys/types.h>
-#include <sys/ptrace.h>
 #endif
 
-#include <limits>
-#include <exception>
 #include <atomic>
-#include <cstring>
+#include <exception> // std::terminate
+#include <cstring> // std::strcat
+#include <fstream> // std::ifstream
+#include <string> // std::getline
 
 namespace cage
 {
@@ -56,17 +51,6 @@ namespace cage
 			static std::atomic<bool> is = true;
 			return is;
 		}
-
-#ifndef CAGE_SYSTEM_WINDOWS
-		bool isDebuggingImpl()
-		{
-			// another attempt, another failure
-			//if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0)
-			//	return true;
-			// seriously, how can anyone use linux?
-			return false;
-		}
-#endif
 	}
 
 	namespace detail
@@ -76,7 +60,21 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			return IsDebuggerPresent();
 #else
-			static bool underDebugger = isDebuggingImpl();
+			static bool underDebugger = []() {
+				std::ifstream sf("/proc/self/status");
+				std::string s;
+				while (sf >> s)
+				{
+					if (s == "TracerPid:")
+					{
+						int pid = 0;
+						sf >> pid;
+						return pid != 0;
+					}
+					std::getline(sf, s);
+				}
+				return false;
+			}();
 			return underDebugger;
 #endif
 		}
@@ -111,7 +109,7 @@ namespace cage
 #elif defined(__clang__)
 			__builtin_debugtrap();
 #else
-			__builtin_trap();
+			__asm__ volatile("int $0x03");
 #endif
 		}
 
