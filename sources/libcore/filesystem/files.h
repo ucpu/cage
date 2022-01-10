@@ -70,6 +70,7 @@ namespace cage
 
 	void archiveCreateZip(const String &path, const String &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f);
+	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f);
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path);
 }

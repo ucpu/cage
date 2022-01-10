@@ -219,6 +219,7 @@ namespace cage
 			uint32 originalCDFilesPosition = 0;
 			uint32 originalEOCDPosition = 0;
 			bool modified = false;
+			bool isZip = false;
 
 			// create a new empty archive
 			ArchiveZip(const String &path, const String &options) : ArchiveAbstract(path)
@@ -228,7 +229,7 @@ namespace cage
 			}
 
 			// open existing archive
-			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(std::move(file))
+			ArchiveZip(Holder<File> &&file, bool throwing = true) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(std::move(file))
 			{
 				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
@@ -256,6 +257,7 @@ namespace cage
 						if (pos + sizeof(EndOfCentralDirectoryRecord) + e.commentLength != size)
 							continue; // incorrect comment size
 						// we assume that we found an actual ZIP archive now
+						isZip = true;
 						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
@@ -269,8 +271,13 @@ namespace cage
 					}
 					if (totalFiles == m)
 					{
-						CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-						CAGE_THROW_ERROR(Exception, "file is not a zip archive");
+						if (throwing)
+						{
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_THROW_ERROR(Exception, "file is not a zip archive");
+						}
+						else
+							return;
 					}
 				}
 
@@ -834,5 +841,10 @@ namespace cage
 		auto a = std::make_shared<ArchiveZip>(std::move(f));
 		return a;
 	}
-}
 
+	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f)
+	{
+		auto a = std::make_shared<ArchiveZip>(std::move(f), false);
+		return a->isZip ? a : std::shared_ptr<ArchiveAbstract>();
+	}
+}

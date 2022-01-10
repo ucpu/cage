@@ -128,15 +128,7 @@ namespace cage
 		{
 			CAGE_ASSERT(parent);
 			const String inPath = pathToRel(fullPath, parent->myPath);
-			try
-			{
-				detail::OverrideException oe;
-				return archiveOpenZip(parent->openFile(inPath, FileMode(true, false)));
-			}
-			catch (const Exception &)
-			{
-				return {};
-			}
+			return archiveOpenZipTry(parent->openFile(inPath, FileMode(true, false)));
 		}
 
 		void walkLeft(String &p, String &i)
