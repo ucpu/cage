@@ -7,7 +7,9 @@
 #include <type_traits>
 
 #if defined(_MSC_VER)
-#define CAGE_ASSUME_TRUE(EXPR) __assume(EXPR)
+#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
+#elif defined(__clang__)
+#define CAGE_ASSUME_TRUE(EXPR) __builtin_assume((bool)(EXPR))
 #else
 #define CAGE_ASSUME_TRUE(EXPR)
 #endif

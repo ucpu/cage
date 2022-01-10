@@ -106,8 +106,10 @@ namespace cage
 				return;
 			if (!isDebugging())
 				return;
-#ifdef CAGE_SYSTEM_WINDOWS
+#if defined(_MSC_VER)
 			__debugbreak();
+#elif defined(__clang__)
+			__builtin_debugtrap();
 #else
 			__builtin_trap();
 #endif

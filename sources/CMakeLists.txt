@@ -50,6 +50,9 @@ endif()
 if(MSVC)
 	set_source_files_properties(libcore/marchingCubes.cpp PROPERTIES COMPILE_FLAGS "/wd4244 /wd4267") # it includes file with weird extension which does not honor warnings disabled by pragma
 endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(cage-core PUBLIC "-Wno-assume") # __builtin_assume has side effects that are discarded
+endif()
 cage_target_api_macro(cage-core CAGE_CORE_API)
 cage_ide_category(cage-core cage/libs)
 cage_ide_sort_files(cage-core)
