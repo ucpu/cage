@@ -128,7 +128,7 @@ namespace cage
 
 	// invoke the function once for each element of the range
 	template<class T, uint32 Aggregation = 1>
-	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = 0)
+	[[nodiscard]] Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
@@ -150,7 +150,7 @@ namespace cage
 
 	// invoke operator()() once for each element of the range
 	template<class T, uint32 Aggregation = 1>
-	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority = 0)
+	[[nodiscard]] Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
@@ -169,7 +169,7 @@ namespace cage
 
 	// invoke the function invocations time, each time with the same data
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
+	[[nodiscard]] Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
 	{
 		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 		privat::TaskCreateConfig tsk;
@@ -188,7 +188,7 @@ namespace cage
 
 	// invoke operator()(uint32) invocations time, each time with the same data
 	template<class T>
-	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
+	[[nodiscard]] Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<T> data, uint32 invocations = 1, sint32 priority = 0)
 	{
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
@@ -203,7 +203,7 @@ namespace cage
 	}
 
 	// invoke the function invocations time
-	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = 0);
+	[[nodiscard]] CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = 0);
 
 	// allows running higher priority tasks from inside long running task
 	CAGE_CORE_API void tasksYield();
