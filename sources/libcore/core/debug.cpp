@@ -61,17 +61,17 @@ namespace cage
 			return IsDebuggerPresent();
 #else
 			static bool underDebugger = []() {
-				std::ifstream sf("/proc/self/status");
 				std::string s;
-				while (sf >> s)
+				std::ifstream f("/proc/self/status");
+				while (f.good() && (f >> s))
 				{
 					if (s == "TracerPid:")
 					{
 						int pid = 0;
-						sf >> pid;
+						f >> pid;
 						return pid != 0;
 					}
-					std::getline(sf, s);
+					std::getline(f, s);
 				}
 				return false;
 			}();

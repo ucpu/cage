@@ -1,0 +1,67 @@
+name: Sanitizers
+on: [push, pull_request]
+
+jobs:
+  Sanitizers:
+    name: ${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: ${{ matrix.sanitizer.flags }}
+      CXXFLAGS: ${{ matrix.sanitizer.flags }}
+      LDFLAGS: ${{ matrix.sanitizer.flags }}
+      CC: clang
+      CXX: clang++
+    strategy:
+      fail-fast: false
+      matrix:
+        build-config: [debug, release]
+        sanitizer:
+        - {
+            name: undefined,
+            flags: -fsanitize=undefined -fno-omit-frame-pointer
+          }
+        - {
+            name: address,
+            flags: -fsanitize=address -fno-omit-frame-pointer
+          }
+        - {
+            name: memory,
+            flags: -fsanitize=memory -fno-omit-frame-pointer
+          }
+        - {
+            name: thread,
+            flags: -fsanitize=thread -fno-omit-frame-pointer
+          }
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev nasm
+
+    - name: Versions
+      run: |
+        cmake --version
+        clang++ --version
+        git --version
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --target cage-test-core -- -j3
+
+    - name: Tests
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
+
