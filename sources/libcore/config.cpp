@@ -13,6 +13,9 @@
 
 namespace cage
 {
+	PathTypeFlags realType(const String &path);
+	Holder<File> realNewFile(const String &path, const FileMode &mode);
+
 	namespace
 	{
 		Mutex *mut()
@@ -98,10 +101,10 @@ namespace cage
 			return v;
 		}
 
-		void loadConfigFile(const String &filename, const String &prefix)
+		void loadGlobalConfigFile(const String &filename, const String &prefix)
 		{
 			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: '" + filename + "'");
-			if (pathIsFile(filename))
+			if (any(realType(filename) & PathTypeFlags::File))
 			{
 				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: '" + filename + "'");
 				String pref = prefix;
@@ -110,8 +113,10 @@ namespace cage
 				// the logic of function configLoadIni is replicated here, but we are inside the mutex already
 				try
 				{
+					Holder<File> file = realNewFile(filename, FileMode(true, false));
+					Holder<PointerRange<char>> buff = file->readAll();
 					Holder<Ini> ini = newIni();
-					ini->importFile(filename);
+					ini->importBuffer(buff);
 					for (const String &section : ini->sections())
 					{
 						for (const String &name : ini->items(section))
@@ -136,11 +141,11 @@ namespace cage
 			const String wp = pathWorkingDir();
 			const bool same = ep == wp;
 			if (!same)
-				loadConfigFile(pathJoin(ep, "cage.ini"), "");
-			loadConfigFile(pathJoin(wp, "cage.ini"), "");
+				loadGlobalConfigFile(pathJoin(ep, "cage.ini"), "");
+			loadGlobalConfigFile(pathJoin(wp, "cage.ini"), "");
 			if (!same)
-				loadConfigFile(pathJoin(ep, pr + ".ini"), pr);
-			loadConfigFile(pathJoin(wp, pr + ".ini"), pr);
+				loadGlobalConfigFile(pathJoin(ep, pr + ".ini"), pr);
+			loadGlobalConfigFile(pathJoin(wp, pr + ".ini"), pr);
 			return 0;
 		}
 
@@ -499,4 +504,3 @@ namespace cage
 		} autoSaveConfigInstance;
 	}
 }
-
