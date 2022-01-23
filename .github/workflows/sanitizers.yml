@@ -24,10 +24,10 @@ jobs:
             name: address,
             flags: -fsanitize=address -fno-omit-frame-pointer
           }
-        - {
-            name: memory,
-            flags: -fsanitize=memory -fno-omit-frame-pointer
-          }
+        #- {
+        #    name: memory,
+        #    flags: -fsanitize=memory -fno-omit-frame-pointer
+        #  }
         - {
             name: thread,
             flags: -fsanitize=thread -fno-omit-frame-pointer

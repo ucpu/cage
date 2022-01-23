@@ -1,6 +1,5 @@
 #include "main.h"
 #include <cage-core/scheduler.h>
-#include <cage-core/timer.h>
 #include <cage-core/math.h> // randomRange
 #include <cage-core/concurrent.h> // threadSleep
 
@@ -82,15 +81,9 @@ void testScheduler()
 		}
 		CAGE_TEST(periodicCount == 0);
 		CAGE_TEST(emptyCount == 0);
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
 		CAGE_TEST(emptyCount >= 1 && emptyCount <= 15);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -122,15 +115,9 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 >= 1 && cnt2 <= 3);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -166,16 +153,10 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		const uint32 sum = cnt1 + cnt2;
 		CAGE_TEST(sum >= 6 && sum <= 14);
 		CAGE_TEST(cnt2 > cnt1);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -207,15 +188,9 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
 		CAGE_TEST(cnt2 >= 2 && cnt2 <= 6);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -256,16 +231,10 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -290,12 +259,7 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 100000 && duration < 300000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(trig->statistics().runs == cnt1);
 		CAGE_TEST(trig->statistics().totalDuration > 15000 * (uint64)cnt1);
@@ -304,7 +268,6 @@ void testScheduler()
 		CAGE_TEST(trig->statistics().maxDuration < 50000);
 		CAGE_TEST(trig->statistics().maxDelay > 0);
 		CAGE_TEST(trig->statistics().maxDelay < 50000);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -329,14 +292,8 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration < 20000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -369,15 +326,9 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration < 20000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
 		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -410,15 +361,9 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 4 * 30000 && duration < 9 * 30000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
 		CAGE_TEST(cnt2 >= 4 && cnt2 <= 9);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -443,14 +388,8 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 200000 && duration < 800000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
-		CAGE_TEST(sch->latestTime() >= 200000 && sch->latestTime() <= 250000);
 	}
 
 	{
@@ -492,16 +431,10 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration < 20000);
-		}
+		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
-		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -526,14 +459,7 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration < 10000);
-		}
-		CAGE_TEST(sch->latestTime() >= 200000);
-		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+		sch->run();
 	}
 
 	{
@@ -567,14 +493,7 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 50000 && duration < 190000);
-		}
-		CAGE_TEST(sch->latestTime() >= 200000);
-		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+		sch->run();
 	}
 
 	{
@@ -608,14 +527,7 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 50000 && duration < 190000);
-		}
-		CAGE_TEST(sch->latestTime() >= 200000);
-		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+		sch->run();
 	}
 
 	{
@@ -660,14 +572,7 @@ void testScheduler()
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
-		{
-			Holder<Timer> tmr = newTimer();
-			sch->run();
-			const uint64 duration = tmr->duration();
-			CAGE_TEST(duration > 50000 && duration < 300000);
-		}
-		CAGE_TEST(sch->latestTime() >= 200000);
-		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+		sch->run();
 	}
 
 	{
