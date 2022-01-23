@@ -1,4 +1,5 @@
 #include <cage-core/string.h>
+#include <cage-core/stdHash.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/concurrent.h>
@@ -6,7 +7,8 @@
 
 #include "files.h"
 
-#include <map>
+#include <robin_hood.h>
+
 #include <vector>
 #include <atomic>
 
@@ -109,7 +111,7 @@ namespace cage
 			}
 
 		private:
-			std::map<String, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
+			robin_hood::unordered_map<String, std::weak_ptr<ArchiveAbstract>> map;
 			Holder<Mutex> mutex = newMutex(); // access to map must be serialized because the _erase_ method can be called on any thread and outside the archiveFindTowardsRootMutex
 		};
 

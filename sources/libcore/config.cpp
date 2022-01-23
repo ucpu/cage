@@ -1,4 +1,5 @@
 #include <cage-core/string.h>
+#include <cage-core/stdHash.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
@@ -8,7 +9,8 @@
 #include <cage-core/logger.h>
 #include <cage-core/macros.h>
 
-#include <map>
+#include <robin_hood.h>
+
 #include <vector>
 
 namespace cage
@@ -75,7 +77,7 @@ namespace cage
 			}
 		};
 
-		typedef std::map<String, Variable*, StringComparatorFast> VarsType;
+		typedef robin_hood::unordered_map<String, Variable *> VarsType;
 
 		VarsType &directVariables()
 		{
@@ -92,12 +94,9 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Note, "config", "new names use slashes instead of dots");
 				detail::debugBreakpoint();
 			}
-			Variable *v = directVariables()[name];
+			Variable *&v = directVariables()[name];
 			if (!v)
-			{
-				directVariables()[name] = systemMemory().createObject<Variable>();
-				v = directVariables()[name];
-			}
+				v = systemMemory().createObject<Variable>();
 			return v;
 		}
 

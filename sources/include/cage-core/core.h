@@ -629,7 +629,7 @@ namespace cage
 		}
 
 		template<uint32 N>
-		struct  alignas(64) StringizerBase
+		struct alignas(64) StringizerBase
 		{
 			StringBase<N> value;
 
