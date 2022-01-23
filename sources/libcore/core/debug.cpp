@@ -1,4 +1,5 @@
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #if !defined(CAGE_CORE_API)
 #error CAGE_CORE_API must be defined
@@ -61,19 +62,27 @@ namespace cage
 			return IsDebuggerPresent();
 #else
 			static bool underDebugger = []() {
-				std::string s;
-				std::ifstream f("/proc/self/status");
-				while (f.good() && (f >> s))
+				try
 				{
-					if (s == "TracerPid:")
+					FILE *f = std::fopen("/proc/self/status", "r");
+					if (!f)
+						return false;
+					struct Closer { FILE *f = nullptr; Closer(FILE *f) : f(f) {} ~Closer() { std::fclose(f); } } closer(f);
+					String s;
+					while (std::fgets(s.rawData(), s.MaxLength, f))
 					{
-						int pid = 0;
-						f >> pid;
-						return pid != 0;
+						s.rawLength() = std::strlen(s.rawData());
+						if (!isPattern(s, "TracerPid:", "", ""))
+							continue;
+						s = trim(remove(s, 0, 11));
+						return toSint64(s) != 0;
 					}
-					std::getline(f, s);
+					return false;
 				}
-				return false;
+				catch (...)
+				{
+					return false;
+				}
 			}();
 			return underDebugger;
 #endif
