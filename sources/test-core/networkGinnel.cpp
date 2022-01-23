@@ -2,9 +2,9 @@
 #include <cage-core/config.h>
 #include <cage-core/networkGinnel.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/math.h> // random
+#include <cage-core/math.h>
+#include <cage-core/random.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/guid.h> // generateRandomData
 
 #include <vector>
 #include <algorithm>
@@ -17,15 +17,10 @@ namespace
 	class ServerImpl
 	{
 	public:
-		Holder<GinnelServer> udp;
+		Holder<GinnelServer> udp = newGinnelServer(3210);
 		std::vector<Holder<GinnelConnection>> conns;
-		uint64 lastTime;
-		bool hadConnection;
-
-		ServerImpl() : lastTime(applicationTime()), hadConnection(false)
-		{
-			udp = newGinnelServer(3210);
-		}
+		uint64 lastTime = applicationTime();
+		bool hadConnection = false;
 
 		bool service()
 		{
@@ -76,22 +71,22 @@ namespace
 	{
 	public:
 		Holder<GinnelConnection> udp;
-
 		std::vector<MemoryBuffer> sends;
-		uint32 si, ri;
+		uint32 si = 0, ri = 0;
 
-		ClientImpl() : si(0), ri(0)
+		ClientImpl()
 		{
 			connectionsLeft++;
+			RandomGenerator rng;
 			for (uint32 i = 0; i < 20; i++)
 			{
-				uint32 cnt = randomRange(100, 10000);
+				uint32 cnt = rng.randomRange(100, 10000);
 				MemoryBuffer b(cnt);
 				for (uint32 i = 0; i < cnt; i++)
-					b.data()[i] = (char)randomRange(0u, 256u);
+					b.data()[i] = (char)rng.randomRange(0u, 256u);
 				sends.push_back(std::move(b));
 			}
-			udp = newGinnelConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
+			udp = newGinnelConnection("localhost", 3210, rng.randomChance() < 0.5 ? 10000000 : 0);
 		}
 
 		~ClientImpl()

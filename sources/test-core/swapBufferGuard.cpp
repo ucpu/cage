@@ -4,6 +4,8 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/threadPool.h>
 
+#include <atomic>
+
 namespace
 {
 	template<uint32 BuffersCount>
@@ -15,17 +17,15 @@ namespace
 		uint32 buffers[BuffersCount][ElementsCount] = {};
 		uint32 sums[BuffersCount] = {};
 		uint32 indices[BuffersCount] = {};
-		uint32 readIndex = 0, writeIndex = 0;
-		uint32 written = 0, read = 0, skipped = 0, reused = 0, generated = 0, tested = 0;
-		bool running = false;
+		std::atomic<uint32> readIndex = 0, writeIndex = 0;
+		std::atomic<uint32> written = 0, read = 0, skipped = 0, reused = 0, generated = 0, tested = 0;
+		std::atomic<bool> running = true;
 
 		void consumer()
 		{
 			uint32 tmpBuff[ElementsCount];
 			detail::memset(tmpBuff, 0, sizeof(tmpBuff));
 			uint32 tmpSum = 0;
-			//while (running && generated == 0)
-			//	threadSleep(1000);
 			while (running)
 			{
 				if (auto mark = controller->read())
@@ -39,7 +39,7 @@ namespace
 				}
 				else
 					reused++;
-				threadSleep(0);
+				threadYield();
 				{ // consume
 					uint32 sum = 0;
 					for (uint32 i = 0; i < ElementsCount; i++)
@@ -64,7 +64,7 @@ namespace
 					tmpSum = sum;
 					generated++;
 				}
-				threadSleep(0);
+				threadYield();
 				if (auto mark = controller->write())
 				{
 					for (uint32 i = 0; i < ElementsCount; i++)
@@ -81,19 +81,18 @@ namespace
 		void run(bool repeatedReads, bool repeatedWrites)
 		{
 			CAGE_TESTCASE(Stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
-			running = true;
 			SwapBufferGuardCreateConfig cfg;
 			cfg.buffersCount = BuffersCount;
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
-			Holder<Thread> t1 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::consumer>(this), "consumer");
-			Holder<Thread> t2 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::producer>(this), "producer");
-			while (read < 2000)
-				threadSleep(1000);
-			running = false;
-			t1->wait();
-			t2->wait();
+			{
+				Holder<Thread> t1 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::consumer>(this), "consumer");
+				Holder<Thread> t2 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::producer>(this), "producer");
+				while (read < 2000)
+					threadSleep(1000);
+				running = false;
+			}
 			CAGE_LOG(SeverityEnum::Info, "swapBufferController", Stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
 			CAGE_LOG(SeverityEnum::Info, "swapBufferController", Stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
 		}

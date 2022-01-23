@@ -29,7 +29,7 @@ namespace cage
 		{
 			CAGE_ASSERT(size > 0);
 			CAGE_ASSERT(detail::isPowerOf2(alignment));
-			uintPtr s = detail::roundUpTo(size, alignment);
+			const uintPtr s = detail::roundUpTo(size, alignment);
 #ifdef _MSC_VER
 			void *p = _aligned_malloc(s, alignment);
 #else

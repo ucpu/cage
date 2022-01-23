@@ -32,9 +32,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-				InterlockedIncrementNoFence(&counter);
+				InterlockedIncrement(&counter);
 #else
-				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_RELAXED);
+				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 		}
@@ -43,9 +43,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-				InterlockedDecrementNoFence(&counter);
+				InterlockedDecrement(&counter);
 #else
-				__atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_RELAXED);
+				__atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 

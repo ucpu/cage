@@ -7,10 +7,18 @@
 #include <type_traits>
 #include <compare>
 
-#ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; (void)i_; } }
+#if defined(_MSC_VER)
+#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
+#elif defined(__clang__)
+#define CAGE_ASSUME_TRUE(EXPR) __builtin_assume((bool)(EXPR))
 #else
-#define CAGE_ASSERT(EXPR) {}
+#define CAGE_ASSUME_TRUE(EXPR)
+#endif
+
+#ifdef CAGE_ASSERT_ENABLED
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; (void)i_; } CAGE_ASSUME_TRUE(EXPR); }
+#else
+#define CAGE_ASSERT(EXPR) { CAGE_ASSUME_TRUE(EXPR); }
 #endif
 
 #define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); }
@@ -270,7 +278,7 @@ namespace cage
 	{
 		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const String &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
+		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 
 	namespace detail

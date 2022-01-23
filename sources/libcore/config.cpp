@@ -1,4 +1,5 @@
 #include <cage-core/string.h>
+#include <cage-core/stdHash.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
@@ -8,11 +9,15 @@
 #include <cage-core/logger.h>
 #include <cage-core/macros.h>
 
-#include <map>
+#include <robin_hood.h>
+
 #include <vector>
 
 namespace cage
 {
+	PathTypeFlags realType(const String &path);
+	Holder<File> realNewFile(const String &path, const FileMode &mode);
+
 	namespace
 	{
 		Mutex *mut()
@@ -72,7 +77,7 @@ namespace cage
 			}
 		};
 
-		typedef std::map<String, Variable*, StringComparatorFast> VarsType;
+		typedef robin_hood::unordered_map<String, Variable *> VarsType;
 
 		VarsType &directVariables()
 		{
@@ -89,19 +94,16 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Note, "config", "new names use slashes instead of dots");
 				detail::debugBreakpoint();
 			}
-			Variable *v = directVariables()[name];
+			Variable *&v = directVariables()[name];
 			if (!v)
-			{
-				directVariables()[name] = systemMemory().createObject<Variable>();
-				v = directVariables()[name];
-			}
+				v = systemMemory().createObject<Variable>();
 			return v;
 		}
 
-		void loadConfigFile(const String &filename, const String &prefix)
+		void loadGlobalConfigFile(const String &filename, const String &prefix)
 		{
 			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: '" + filename + "'");
-			if (pathIsFile(filename))
+			if (any(realType(filename) & PathTypeFlags::File))
 			{
 				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: '" + filename + "'");
 				String pref = prefix;
@@ -110,8 +112,10 @@ namespace cage
 				// the logic of function configLoadIni is replicated here, but we are inside the mutex already
 				try
 				{
+					Holder<File> file = realNewFile(filename, FileMode(true, false));
+					Holder<PointerRange<char>> buff = file->readAll();
 					Holder<Ini> ini = newIni();
-					ini->importFile(filename);
+					ini->importBuffer(buff);
 					for (const String &section : ini->sections())
 					{
 						for (const String &name : ini->items(section))
@@ -136,11 +140,11 @@ namespace cage
 			const String wp = pathWorkingDir();
 			const bool same = ep == wp;
 			if (!same)
-				loadConfigFile(pathJoin(ep, "cage.ini"), "");
-			loadConfigFile(pathJoin(wp, "cage.ini"), "");
+				loadGlobalConfigFile(pathJoin(ep, "cage.ini"), "");
+			loadGlobalConfigFile(pathJoin(wp, "cage.ini"), "");
 			if (!same)
-				loadConfigFile(pathJoin(ep, pr + ".ini"), pr);
-			loadConfigFile(pathJoin(wp, pr + ".ini"), pr);
+				loadGlobalConfigFile(pathJoin(ep, pr + ".ini"), pr);
+			loadGlobalConfigFile(pathJoin(wp, pr + ".ini"), pr);
 			return 0;
 		}
 
@@ -499,4 +503,3 @@ namespace cage
 		} autoSaveConfigInstance;
 	}
 }
-

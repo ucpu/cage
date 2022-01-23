@@ -12,6 +12,8 @@ namespace cage
 {
 	namespace
 	{
+		struct TaskImpl;
+
 		struct ConcurrentPriorityQueueTerminated : public Exception
 		{
 			using Exception::Exception;
@@ -20,7 +22,7 @@ namespace cage
 		class ConcurrentPriorityQueue : private Immovable
 		{
 		public:
-			using Value = Holder<struct TaskImpl>;
+			using Value = Holder<TaskImpl>;
 
 			void push(Value &&value, sint32 priority)
 			{
@@ -89,38 +91,8 @@ namespace cage
 			bool stop = false;
 		};
 
-		struct ThreadData
-		{
-			bool taskExecutor = false;
-		};
-
-		thread_local ThreadData threadData;
-
 		struct Executor : private Immovable
 		{
-			ConcurrentPriorityQueue tasks;
-			std::vector<Holder<Thread>> threads;
-			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
-			Holder<Mutex> mut = newMutex();
-
-			template<bool AllowWait>
-			bool runOne();
-
-			void threadEntry()
-			{
-				profilingThreadOrder(1000);
-				threadData.taskExecutor = true;
-				try
-				{
-					while (true)
-						runOne<true>();
-				}
-				catch (const ConcurrentPriorityQueueTerminated &)
-				{
-					// nothing
-				}
-			}
-
 			Executor()
 			{
 				threads.resize(processorsCount());
@@ -131,9 +103,31 @@ namespace cage
 
 			~Executor()
 			{
-				tasks.terminate();
+				queue.terminate();
 				threads.clear();
 			}
+
+			void schedule(Holder<TaskImpl> &&tsk);
+			void tryRun();
+			void run();
+
+		private:
+			void threadEntry()
+			{
+				profilingThreadOrder(1000);
+				try
+				{
+					while (true)
+						run();
+				}
+				catch (const ConcurrentPriorityQueueTerminated &)
+				{
+					// nothing
+				}
+			}
+
+			ConcurrentPriorityQueue queue;
+			std::vector<Holder<Thread>> threads;
 		};
 
 		Executor &executor()
@@ -142,182 +136,132 @@ namespace cage
 			return exec;
 		}
 
-		// owned by the proxy AND by the executor queue
-		struct TaskImpl : public privat::TaskCreateConfig, private Immovable
+		Mutex *exceptionsMutex()
 		{
-			std::exception_ptr exptr;
-			std::atomic<uint32> started = 0;
-			std::atomic<uint32> finished = 0;
-			bool done_ = false;
+			static Holder<Mutex> mut = newMutex();
+			return +mut;
+		}
 
-			explicit TaskImpl(privat::TaskCreateConfig &&task_) : privat::TaskCreateConfig(std::move(task_))
+		struct TaskImpl : public AsyncTask
+		{
+			const privat::TaskRunnerConfig runnerConfig;
+			const privat::TaskRunner runner = nullptr;
+			const StringLiteral name;
+			const sint32 priority = 0;
+			const uint32 invocations = 0;
+			std::atomic<uint32> scheduled = 0;
+			std::atomic<uint32> executing = 0;
+			std::atomic<uint32> finished = 0;
+			std::atomic<bool> done = false;
+			std::exception_ptr exptr = nullptr;
+			Executor &exec = executor();
+
+			explicit TaskImpl(privat::TaskCreateConfig &&task) : runnerConfig(copy(std::move(task.data), task.function, task.elements)), runner(task.runner), name(task.name), priority(task.priority), invocations(task.invocations)
 			{
-				if (count == 0)
-					done_ = true;
+				if (invocations == 0)
+					done = true;
 			}
 
 			~TaskImpl()
 			{
-				CAGE_ASSERT(done_);
-			}
-
-			std::pair<uint32, bool> pickNext()
-			{
-				const uint32 idx = started++;
-				const bool more = idx + 1 < count;
-				return { idx, more };
-			}
-
-			void runOne(uint32 idx) noexcept
-			{
-				try
-				{
-					CAGE_ASSERT(idx < count);
-					ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
-					runner(*this, idx);
-				}
-				catch (...)
-				{
-					{
-						ScopeLock lck(executor().mut);
-						if (!exptr)
-							exptr = std::current_exception();
-					}
-					CAGE_LOG(SeverityEnum::Warning, "tasks", Stringizer() + "unhandled exception in a task");
-					detail::logCurrentCaughtException();
-				}
-				if (++finished == count)
-				{
-					ScopeLock lck(executor().mut);
-					done_ = true;
-				}
-			}
-
-			bool done() const
-			{
-				ScopeLock lck(executor().mut);
-				return done_;
+				CAGE_ASSERT(done);
 			}
 
 			void wait()
 			{
-				Executor &exec = executor();
-
-				while (true)
+				while (!done)
+					exec.tryRun();
+				if (exptr)
 				{
-					{
-						ScopeLock lck(executor().mut);
-						if (done_)
-						{
-							if (exptr)
-							{
-								std::exception_ptr tmp;
-								std::swap(tmp, exptr);
-								std::rethrow_exception(tmp);
-							}
-							return;
-						}
-						if (!threadData.taskExecutor)
-						{
-							exec.cond->wait(lck);
-							continue;
-						}
-					}
-					if (exec.runOne<false>())
-						continue;
-					{
-						ScopeLock lck(executor().mut);
-						if (done_)
-						{
-							if (exptr)
-							{
-								std::exception_ptr tmp;
-								std::swap(tmp, exptr);
-								std::rethrow_exception(tmp);
-							}
-							return;
-						}
-						exec.cond->wait(lck);
-					}
+					ScopeLock lock(exceptionsMutex());
+					std::exception_ptr tmp = nullptr;
+					std::swap(tmp, exptr);
+					std::rethrow_exception(tmp);
 				}
-
-				CAGE_ASSERT(false);
 			}
-		};
 
-		template<bool AllowWait>
-		bool Executor::runOne()
-		{
-			{
-				Holder<TaskImpl> task;
-				if constexpr (AllowWait)
-					tasks.pop(task);
-				else if (!tasks.tryPop(task))
-					return false;
-				const auto pick = task->pickNext();
-				if (pick.second)
-					tasks.push(task.share(), task->priority);
-				task->runOne(pick.first);
-			}
-			cond->broadcast();
-			return true;
-		}
-
-		// owned by the api caller -> it ensures that the wait is always called
-		struct TaskProxy : public AsyncTask
-		{
-			Holder<TaskImpl> impl;
-
-			TaskProxy(Holder<TaskImpl> &&impl) : impl(std::move(impl))
-			{}
-
-			~TaskProxy()
+			void execute() noexcept
 			{
 				try
 				{
-					impl->wait();
+					const uint32 idx = executing++;
+					ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
+					runner(runnerConfig, idx);
+					if (++finished == invocations)
+						done = true;
 				}
 				catch (...)
 				{
-					CAGE_LOG(SeverityEnum::Critical, "tasks", Stringizer() + "exception thrown in a task was not propagated to the caller (missing call to wait), terminating now");
-					detail::logCurrentCaughtException();
-					detail::terminate();
+					ScopeLock lock(exceptionsMutex());
+					exptr = std::current_exception();
+					done = true;
 				}
 			}
+
+		private:
+			static privat::TaskRunnerConfig copy(Holder<void> &&data, Delegate<void()> function, uint32 elements)
+			{
+				privat::TaskRunnerConfig res;
+				res.data = std::move(data);
+				res.function = function;
+				res.elements = elements;
+				return res;
+			}
 		};
+
+		void Executor::schedule(Holder<TaskImpl> &&tsk)
+		{
+			const auto prio = tsk->priority;
+			if (tsk->scheduled++ < tsk->invocations)
+				queue.push(std::move(tsk), prio);
+		}
+
+		void Executor::tryRun()
+		{
+			Holder<TaskImpl> tsk;
+			if (queue.tryPop(tsk))
+			{
+				schedule(tsk.share());
+				tsk->execute();
+			}
+			else
+				threadYield();
+		}
+
+		void Executor::run()
+		{
+			Holder<TaskImpl> tsk;
+			queue.pop(tsk);
+			schedule(tsk.share());
+			tsk->execute();
+		}
 	}
 
 	bool AsyncTask::done() const
 	{
-		const TaskProxy *prox = (const TaskProxy *)this;
-		CAGE_ASSERT(prox && prox->impl);
-		return prox->impl->done();
+		const TaskImpl *impl = (const TaskImpl *)this;
+		return impl->done;
 	}
 
 	void AsyncTask::wait()
 	{
-		TaskProxy *prox = (TaskProxy *)this;
-		CAGE_ASSERT(prox && prox->impl);
-		prox->impl->wait();
+		TaskImpl *impl = (TaskImpl *)this;
+		impl->wait();
 	}
 
 	namespace privat
 	{
 		void tasksRunBlocking(TaskCreateConfig &&task)
 		{
-			if (task.count == 0)
-				return;
-			TaskImpl impl(std::move(task));
-			executor().tasks.push(Holder<TaskImpl>(&impl, nullptr), impl.priority);
-			impl.wait();
+			tasksRunAsync(std::move(task))->wait();
 		}
 
 		Holder<AsyncTask> tasksRunAsync(TaskCreateConfig &&task)
 		{
-			Holder<TaskProxy> prox = systemMemory().createHolder<TaskProxy>(systemMemory().createHolder<TaskImpl>(std::move(task)));
-			if (prox->impl->count > 0)
-				executor().tasks.push(prox->impl.share(), prox->impl->priority);
-			return std::move(prox).cast<AsyncTask>();
+			Holder<TaskImpl> impl = systemMemory().createHolder<TaskImpl>(std::move(task));
+			if (!impl->done)
+				executor().schedule(impl.share());
+			return std::move(impl).cast<AsyncTask>();
 		}
 	}
 
@@ -327,11 +271,11 @@ namespace cage
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
 		tsk.function = *(Delegate<void()> *) & function;
-		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
-			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *) & task.function;
+		tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
+			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
 			function(idx);
 		};
-		tsk.count = invocations;
+		tsk.invocations = invocations;
 		tsk.priority = priority;
 		privat::tasksRunBlocking(std::move(tsk));
 	}
@@ -342,11 +286,11 @@ namespace cage
 		privat::TaskCreateConfig tsk;
 		tsk.name = name;
 		tsk.function = *(Delegate<void()> *)&function;
-		tsk.runner = +[](const privat::TaskCreateConfig &task, uint32 idx) {
+		tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
 			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
 			function(idx);
 		};
-		tsk.count = invocations;
+		tsk.invocations = invocations;
 		tsk.priority = priority;
 		return privat::tasksRunAsync(std::move(tsk));
 	}

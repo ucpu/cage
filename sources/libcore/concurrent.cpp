@@ -540,8 +540,8 @@ namespace cage
 		public:
 			const String threadName;
 			const Delegate<void()> function;
-			std::exception_ptr exptr;
-			uint64 myid;
+			std::exception_ptr exptr = nullptr;
+			uint64 myid = m;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 			HANDLE handle;
@@ -549,7 +549,7 @@ namespace cage
 			pthread_t handle;
 #endif
 
-			ThreadImpl(Delegate<void()> function, const String &threadName) : threadName(threadName), function(function), myid(m)
+			ThreadImpl(Delegate<void()> function, const String &threadName) : threadName(threadName), function(function)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -643,7 +643,7 @@ namespace cage
 
 		if (impl->exptr)
 		{
-			std::exception_ptr tmp;
+			std::exception_ptr tmp = nullptr;
 			std::swap(tmp, impl->exptr);
 			std::rethrow_exception(tmp);
 		}

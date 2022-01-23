@@ -3,7 +3,8 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/math.h> // randomChance
+#include <cage-core/math.h>
+#include <cage-core/random.h>
 
 namespace
 {
@@ -20,35 +21,37 @@ namespace
 				conn = server->accept();
 			}
 			server.clear(); // listen no more
-			recv(conn, "lorem");
-			send(conn, "ipsum");
-			recv(conn, "dolor");
-			send(conn, "sit");
-			recv(conn, "amet");
+			RandomGenerator rng;
+			recv(rng, conn, "lorem");
+			send(rng, conn, "ipsum");
+			recv(rng, conn, "dolor");
+			send(rng, conn, "sit");
+			recv(rng, conn, "amet");
 			CAGE_TEST_THROWN(conn->readLine()); // connection broken
 		}
 
 		void client()
 		{
 			Holder<TcpConnection> conn = newTcpConnection("localhost", 4241);
-			send(conn, "lorem");
-			recv(conn, "ipsum");
-			send(conn, "dolor");
-			recv(conn, "sit");
-			send(conn, "amet");
+			RandomGenerator rng;
+			send(rng, conn, "lorem");
+			recv(rng, conn, "ipsum");
+			send(rng, conn, "dolor");
+			recv(rng, conn, "sit");
+			send(rng, conn, "amet");
 		}
 
-		void recv(Holder<TcpConnection> &conn, const String &msg)
+		void recv(RandomGenerator &rng, Holder<TcpConnection> &conn, const String &msg)
 		{
-			while (randomChance() < 0.2)
+			while (rng.randomChance() < 0.2)
 				threadYield();
 			String line = conn->readLine();
 			CAGE_TEST(line == msg);
 		}
 
-		void send(Holder<TcpConnection> &conn, const String &msg)
+		void send(RandomGenerator &rng, Holder<TcpConnection> &conn, const String &msg)
 		{
-			while (randomChance() < 0.2)
+			while (rng.randomChance() < 0.2)
 				threadYield();
 			conn->writeLine(msg);
 		}
@@ -78,20 +81,21 @@ namespace
 			}
 		}
 
-		MemoryBuffer generateRandomBuffer()
+		MemoryBuffer generateRandomBuffer(RandomGenerator &rng)
 		{
-			const uintPtr sz = randomRange(100 * 1024, 5 * 1024 * 1024);
+			const uintPtr sz = rng.randomRange(100 * 1024, 5 * 1024 * 1024);
 			MemoryBuffer b;
 			Serializer ser(b);
 			for (uintPtr i = 0; i < sz; i++)
-				ser << randomRange(-100, 100);
+				ser << rng.randomRange(-100, 100);
 			return b;
 		}
 
 		void client()
 		{
+			RandomGenerator rng;
 			Holder<TcpConnection> conn = newTcpConnection("localhost", 4243);
-			MemoryBuffer out = generateRandomBuffer();
+			MemoryBuffer out = generateRandomBuffer(rng);
 			Deserializer des(out);
 			MemoryBuffer in;
 			Serializer ser(in);
@@ -105,7 +109,7 @@ namespace
 					const uintPtr a = des.available();
 					if (a)
 					{
-						const uintPtr s = a > 10 ? randomRange(uintPtr(5), min(a, uintPtr(1000))) : a;
+						const uintPtr s = a > 10 ? rng.randomRange(uintPtr(5), min(a, uintPtr(1000))) : a;
 						conn->write(des.read(s));
 					}
 				}
@@ -124,11 +128,6 @@ namespace
 			Echo(Holder<TcpConnection> conn) : conn(std::move(conn))
 			{
 				thr = newThread(Delegate<void()>().bind<Echo, &Echo::responder>(this), "tcp responder");
-			}
-
-			~Echo()
-			{
-				thr->wait();
 			}
 
 			void responder()
@@ -164,4 +163,3 @@ void testNetworkTcp()
 		EchoTest test;
 	}
 }
-

@@ -402,35 +402,23 @@ namespace cage
 
 	namespace detail
 	{
-		Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 emitTime, uint64 animationStart, Real animationSpeed, Real animationOffset)
+		Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
 		{
 			if (!texture)
 				return Vec4();
 			const uint32 frames = numeric_cast<uint32>(texture->resolution3()[2]);
 			if (frames <= 1)
 				return Vec4();
-			double sample = ((double)((sint64)emitTime - (sint64)animationStart) * (double)animationSpeed.value + (double)animationOffset.value) * (double)frames / (double)texture->animationDuration;
+			double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value + (double)animationOffset.value) * (double)frames / (double)texture->animationDuration;
 			if (!texture->animationLoop)
-				sample = sample < 0 ? 0 : sample > frames - 1 ? frames - 1 : sample;
+				sample = clamp(sample, 0.0, (double)(frames - 1));
 			else
-			{
-				if (sample < 0)
-				{
-					uint32 n = numeric_cast<uint32>(-sample / frames);
-					sample += (n + 1) * frames;
-				}
-				else if (sample >= frames)
-				{
-					uint32 n = numeric_cast<uint32>(sample / frames);
-					sample -= n * frames;
-				}
-			}
-			CAGE_ASSERT(sample >= 0 && sample < frames);
-			const Real s = (float)sample;
-			const Real f = floor(s);
-			if (s < frames - 1)
-				return Vec4(f, f + 1, s - f, 0);
-			return Vec4(frames - 1, 0, s - f, 0);
+				sample += (-(sint64)sample / frames + 1) * frames;
+			const uint32 i = (uint32)sample % frames;
+			const Real f = sample - (sint32)sample;
+			CAGE_ASSERT(i < frames);
+			CAGE_ASSERT(f >= 0 && f <= 1);
+			return Vec4(i, (i + 1) % frames, f, 0);
 		}
 	}
 }

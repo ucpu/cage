@@ -10,7 +10,7 @@ namespace
 {
 	void someMeaninglessWork()
 	{
-		volatile int v = 0;
+		std::atomic<sint32> v = 0;
 		for (uint32 i = 0; i < 1000; i++)
 			v += i;
 	}
@@ -282,17 +282,23 @@ namespace
 		}
 	};
 
+	void waitForNoParallelTesters()
+	{
+		while (ParallelTester::counter != 0)
+			threadYield();
+	}
+
 	void testTasksAreParallel()
 	{
 		CAGE_TESTCASE("parallel");
-		CAGE_TEST(ParallelTester::counter == 0);
+		waitForNoParallelTesters();
 		{
 			CAGE_TESTCASE("blocking");
 			ParallelTester tester;
 			tasksRunBlocking<ParallelTester>("parallel", tester, processorsCount() * 3);
 			CAGE_TEST(tester.runs == processorsCount() * 3);
 		}
-		CAGE_TEST(ParallelTester::counter == 0);
+		waitForNoParallelTesters();
 		{
 			CAGE_TESTCASE("async");
 			Holder<ParallelTester> tester = systemMemory().createHolder<ParallelTester>();
@@ -304,7 +310,7 @@ namespace
 				it->wait();
 			CAGE_TEST(tester->runs == processorsCount() * 3);
 		}
-		CAGE_TEST(ParallelTester::counter == 0);
+		waitForNoParallelTesters();
 	}
 
 	void testTasksSplit()
@@ -516,10 +522,16 @@ namespace
 		}
 	};
 
+	void waitForNoHolderTesters()
+	{
+		while (TaskHolderTester::counter != 0)
+			threadYield();
+	}
+
 	void testTasksHolders()
 	{
 		CAGE_TESTCASE("holders");
-		CAGE_TEST(TaskHolderTester::counter == 0);
+		waitForNoHolderTesters();
 		{
 			CAGE_TESTCASE("waiting");
 			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
@@ -530,16 +542,7 @@ namespace
 			a->wait();
 			CAGE_TEST(t->runs == 13);
 		}
-		CAGE_TEST(TaskHolderTester::counter == 0);
-		{
-			CAGE_TESTCASE("waitless");
-			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
-			CAGE_TEST(TaskHolderTester::counter == 1);
-			CAGE_TEST(t->runs == 0);
-			Holder<AsyncTask> a = tasksRunAsync("holders", t.share(), 13);
-			CAGE_TEST(TaskHolderTester::counter == 1);
-		}
-		CAGE_TEST(TaskHolderTester::counter == 0);
+		waitForNoHolderTesters();
 		{
 			CAGE_TESTCASE("repeated waits");
 			Holder<TaskHolderTester> t = systemMemory().createHolder<TaskHolderTester>();
@@ -555,7 +558,7 @@ namespace
 			CAGE_TEST(t->runs == 13);
 			CAGE_TEST(TaskHolderTester::counter == 1);
 		}
-		CAGE_TEST(TaskHolderTester::counter == 0);
+		waitForNoHolderTesters();
 		{
 			CAGE_TESTCASE("unordered");
 			std::vector<Holder<TaskHolderTester>> testers;
@@ -573,13 +576,22 @@ namespace
 					if (randomChance() < 0.3)
 						it.clear();
 				for (auto &it : tasks)
+				{
 					if (randomChance() < 0.3)
+					{
+						if (it)
+							it->wait();
 						it.clear();
+					}
+				}
 			}
+			for (auto &it : tasks)
+				if (it)
+					it->wait();
 			tasks.clear();
 			testers.clear();
 		}
-		CAGE_TEST(TaskHolderTester::counter == 0);
+		waitForNoHolderTesters();
 	}
 
 	void testTasksAggregation()
@@ -634,6 +646,29 @@ namespace
 			}
 		}
 	}
+
+	void testFireAndForget()
+	{
+		struct Tester
+		{
+			void operator()(uint32 idx)
+			{
+				if (idx == 42)
+				{
+					while (!goon)
+						threadYield();
+				}
+				counter++;
+			}
+
+			std::atomic<bool> goon = false;
+			std::atomic<sint32> counter = 0;
+		} tst;
+		tasksRunAsync<Tester>("fireAndForget", Holder<Tester>(&tst, nullptr), 100, 0);
+		tst.goon = true;
+		while (tst.counter < 100)
+			threadYield();
+	}
 }
 
 void testTasks()
@@ -646,4 +681,5 @@ void testTasks()
 	testTasksSplit();
 	testTasksHolders();
 	testTasksAggregation();
+	testFireAndForget();
 }
