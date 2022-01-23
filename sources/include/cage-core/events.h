@@ -3,7 +3,11 @@
 
 #include "core.h"
 
+#if __has_include(<source_location>)
 #include <source_location>
+#else
+#include "sourceLocationDummy.h"
+#endif
 
 namespace cage
 {
