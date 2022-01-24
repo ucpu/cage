@@ -3,19 +3,13 @@
 
 #include "core.h"
 
-#if __has_include(<source_location>)
-#include <source_location>
-#else
-#include "sourceLocationDummy.h"
-#endif
-
 namespace cage
 {
 	namespace privat
 	{
 		struct CAGE_CORE_API EventLinker : private Immovable
 		{
-			explicit EventLinker(const std::source_location location);
+			explicit EventLinker(const std::source_location &location);
 			~EventLinker();
 
 			void attach(EventLinker *d, sint32 order);
@@ -36,7 +30,7 @@ namespace cage
 	template<class... Ts>
 	struct EventListener<bool(Ts...)> : private privat::EventLinker, private Delegate<bool(Ts...)>
 	{
-		explicit EventListener(const std::source_location location = std::source_location::current()) : privat::EventLinker(location)
+		explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
 		{}
 
 		void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
@@ -64,7 +58,7 @@ namespace cage
 	template<class... Ts>
 	struct EventListener<void(Ts...)> : private EventListener<bool(Ts...)>, private Delegate<void(Ts...)>
 	{
-		explicit EventListener(const std::source_location location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
+		explicit EventListener(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
 		{
 			EventListener<bool(Ts...)>::template bind<EventListener, &EventListener::invoke>(this);
 		}
@@ -87,7 +81,7 @@ namespace cage
 	template<class... Ts>
 	struct EventDispatcher<bool(Ts...)> : private EventListener<bool(Ts...)>
 	{
-		explicit EventDispatcher(const std::source_location location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
+		explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
 		{}
 
 		bool dispatch(Ts... vs) const

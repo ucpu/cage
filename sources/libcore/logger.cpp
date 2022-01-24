@@ -200,13 +200,13 @@ namespace cage
 			{
 				String res;
 				res += fill(String(Stringizer() + info.time), 12) + " ";
-				res += fill(String(info.currentThreadName), 26) + " ";
+				res += fill(info.currentThreadName, 26) + " ";
 				res += detail::severityToString(info.severity) + " ";
 				res += fill(String(info.component), 20) + " ";
 				res += info.message;
-				if (longer && info.file)
+				if (longer && info.location.file_name())
 				{
-					String flf = Stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
+					String flf = Stringizer() + " " + info.location.file_name() + ":" + info.location.line() + " (" + info.location.function_name() + ")";
 					if (res.length() + flf.length() + 10 < String::MaxLength)
 					{
 						res += fill(String(), String::MaxLength - flf.length() - res.length() - 5);
@@ -298,13 +298,14 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 
 			try
 			{
 				detail::LoggerInfo info;
+				info.location = location;
 				info.message = message;
 				info.component = component;
 				info.severity = severity;
@@ -313,9 +314,6 @@ namespace cage
 				info.currentThreadId = currentThreadId();
 				info.currentThreadName = currentThreadName();
 				info.time = applicationTime();
-				info.file = file;
-				info.line = line;
-				info.function = function;
 
 				{
 					ScopeLock l(loggerMutex());

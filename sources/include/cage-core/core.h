@@ -7,6 +7,12 @@
 #include <type_traits>
 #include <compare>
 
+#if __has_include(<source_location>)
+#include <source_location>
+#else
+#include "sourceLocationDummy.h"
+#endif
+
 #if defined(_MSC_VER)
 #define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
 #elif defined(__clang__)
@@ -16,22 +22,22 @@
 #endif
 
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; (void)i_; } CAGE_ASSUME_TRUE(EXPR); }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(::std::source_location::current(), #EXPR); int i_ = 42; (void)i_; } CAGE_ASSUME_TRUE(EXPR); }
 #else
 #define CAGE_ASSERT(EXPR) { CAGE_ASSUME_TRUE(EXPR); }
 #endif
 
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { try { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { try { throw EXCEPTION(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Critical, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { try { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { try { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Critical, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
 
-#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(__FUNCTION__, __FILE__, __LINE__, MESSAGE)
+#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(::std::source_location::current(), MESSAGE)
 
-#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, false, false)
-#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, true, false)
+#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, false)
+#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, false)
 #ifdef CAGE_DEBUG
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, false, true)
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, true, true)
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, true)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, true)
 #else
 #define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
 #define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
@@ -276,9 +282,9 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const String &message) noexcept;
-		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
+		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(const std::source_location &location, const String &message) noexcept;
+		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(const std::source_location &location, StringLiteral expt);
 	}
 
 	namespace detail
@@ -375,16 +381,14 @@ namespace cage
 
 	struct CAGE_CORE_API Exception
 	{
-		explicit Exception(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message) noexcept;
+		explicit Exception(const std::source_location &location, SeverityEnum severity, StringLiteral message) noexcept;
 		virtual ~Exception() noexcept;
 
 		void makeLog() const; // check conditions and call log()
 		virtual void log() const;
 
-		StringLiteral function;
-		StringLiteral file;
+		std::source_location location;
 		StringLiteral message;
-		uint32 line = 0;
 		SeverityEnum severity = SeverityEnum::Critical;
 	};
 
@@ -396,7 +400,7 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
+		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
 		void log() const override;
 		sint64 code = 0;
 	};

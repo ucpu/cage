@@ -5,7 +5,7 @@ namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const std::source_location location) : location(location), order(std::numeric_limits<sint32>::min())
+		EventLinker::EventLinker(const std::source_location &location) : location(location), order(std::numeric_limits<sint32>::min())
 		{}
 
 		EventLinker::~EventLinker()

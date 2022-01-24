@@ -166,7 +166,7 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt)
+		void runtimeAssertFailure(const std::source_location &location, StringLiteral expt)
 		{
 			char buffer[2048];
 			buffer[0] = 0;
@@ -176,20 +176,20 @@ namespace cage
 			assertOutputLine(buffer, false);
 
 			buffer[0] = 0;
-			std::strcat(buffer, file);
+			std::strcat(buffer, location.file_name());
 			std::strcat(buffer, "(");
 			char linebuf[20];
-			toString(linebuf, 20, line);
+			toString(linebuf, 20, location.line());
 			std::strcat(buffer, linebuf);
 			std::strcat(buffer, ") - ");
-			std::strcat(buffer, function);
+			std::strcat(buffer, location.function_name());
 			assertOutputLine(buffer);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
 			{
-				auto e = Exception(function, file, line, ::cage::SeverityEnum::Critical, "assert failure");
+				auto e = Exception(location, ::cage::SeverityEnum::Critical, "assert failure");
 				e.makeLog();
 				throw e;
 			}

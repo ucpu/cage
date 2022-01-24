@@ -9,15 +9,13 @@ namespace cage
 	{
 		struct CAGE_CORE_API LoggerInfo
 		{
+			std::source_location location;
 			String message;
 			String currentThreadName;
 			StringLiteral component = "";
-			StringLiteral file = "";
-			StringLiteral function = "";
 			uint64 time = 0;
 			uint64 createThreadId = 0;
 			uint64 currentThreadId = 0;
-			uint32 line = 0;
 			SeverityEnum severity = SeverityEnum::Critical;
 			bool continuous = false;
 			bool debug = false;
