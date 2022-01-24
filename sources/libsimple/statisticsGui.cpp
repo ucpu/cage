@@ -105,8 +105,8 @@ namespace cage
 				Entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
-					GuiPanelComponent &c = layout->value<GuiPanelComponent>();
-					GuiLayoutTableComponent &l = layout->value<GuiLayoutTableComponent>();
+					layout->value<GuiPanelComponent>();
+					layout->value<GuiLayoutTableComponent>();
 					GuiParentComponent &child = layout->value<GuiParentComponent>();
 					child.parent = panel->name();
 				}
@@ -121,7 +121,7 @@ namespace cage
 				{
 					Entity *e = g->createUnique();
 					labelIndices[i] = e->name();
-					GuiLabelComponent &c = e->value<GuiLabelComponent>();
+					e->value<GuiLabelComponent>();
 					GuiParentComponent &child = e->value<GuiParentComponent>();
 					child.parent = layout->name();
 					child.order = i;

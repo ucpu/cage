@@ -316,7 +316,6 @@ namespace
 	void testTasksSplit()
 	{
 		CAGE_TESTCASE("tasksSplit");
-		uint32 b, e;
 		{
 			CAGE_TESTCASE("zero threads");
 			{
