@@ -12,6 +12,9 @@ jobs:
         build-config: [debug, release, relwithdebinfo]
         build-arch: [Win32, x64]
         build-tool: ["", "-T ClangCL"]
+        exclude:
+        - build-arch: Win32
+          build-tool: "-T ClangCL"
 
     steps:
     - name: Versions
