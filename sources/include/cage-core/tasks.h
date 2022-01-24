@@ -13,7 +13,7 @@ namespace cage
 
 	namespace privat
 	{
-		struct TaskRunnerConfig : private Noncopyable
+		struct CAGE_CORE_API TaskRunnerConfig : private Noncopyable
 		{
 			Holder<void> data;
 			Delegate<void()> function;
