@@ -104,7 +104,7 @@ namespace
 			{
 				CAGE_TEST(ae->has(it.first) == be->has(it.second));
 				if (ae->has(it.first))
-					CAGE_TEST(detail::memcmp(ae->unsafeValue(it.first), be->unsafeValue(it.second), detail::typeSize(it.first->typeIndex())) == 0);
+					CAGE_TEST(detail::memcmp(ae->unsafeValue(it.first), be->unsafeValue(it.second), detail::typeSizeByIndex(it.first->typeIndex())) == 0);
 			}
 
 			// compare values of specific types

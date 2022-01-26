@@ -18,8 +18,9 @@ namespace cage
 			{
 				static_assert(std::is_trivially_copyable_v<T>);
 				static_assert(sizeof(T) <= MaxSize);
+				detail::typeIndex<T>(); // detect hash collisions
 				detail::memcpy(data_, &v, sizeof(T));
-				type_ = detail::typeIndex<T>();
+				type_ = detail::typeHash<T>();
 			}
 
 			AnyBase &operator = (const AnyBase &) = default;
@@ -35,7 +36,7 @@ namespace cage
 				type_ = m;
 			}
 
-			CAGE_FORCE_INLINE uint32 type() const noexcept
+			CAGE_FORCE_INLINE uint32 typeHash() const noexcept
 			{
 				return type_;
 			}
@@ -50,7 +51,7 @@ namespace cage
 			{
 				static_assert(std::is_trivially_copyable_v<T>);
 				static_assert(sizeof(T) <= MaxSize);
-				CAGE_ASSERT(detail::typeIndex<T>() == type_);
+				CAGE_ASSERT(detail::typeHash<T>() == type_);
 				T tmp;
 				detail::memcpy(&tmp, data_, sizeof(T));
 				return tmp;

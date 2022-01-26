@@ -1,6 +1,8 @@
 #include <cage-core/typeIndex.h>
 #include <cage-core/concurrent.h>
 
+#include <robin_hood.h>
+
 #include <array>
 #include <cstring>
 #include <exception> // std::terminate
@@ -11,22 +13,24 @@ namespace cage
 	{
 		struct Type
 		{
-			StringLiteral name;
+			PointerRange<const char> name;
 			uintPtr size = 0;
 			uintPtr alignment = 0;
+			uint32 hash = 0;
 		};
 
 		struct Data
 		{
 			Holder<Mutex> mut = newMutex();
-			std::array<Type, 1000> values = {};
+			robin_hood::unordered_map<uint32, uint32> hashToIndex;
+			std::array<Type, 10000> values = {};
 			uint32 cnt = 0;
 
-			uint32 index(StringLiteral name, uintPtr size, uintPtr alignment)
+			uint32 index(PointerRange<const char> name, uintPtr size, uintPtr alignment)
 			{
 				ScopeLock lock(mut);
 				for (uint32 i = 0; i < cnt; i++)
-					if (strcmp(values[i].name, name) == 0)
+					if (strcmp(values[i].name.data(), name.data()) == 0)
 						return i;
 				if (cnt == values.size())
 					CAGE_THROW_CRITICAL(Exception, "too many types in typeIndex");
@@ -34,7 +38,11 @@ namespace cage
 				t.name = name;
 				t.size = size;
 				t.alignment = alignment;
+				t.hash = hashBuffer(name);
+				if (hashToIndex.count(t.hash))
+					CAGE_THROW_CRITICAL(Exception, "hash collision in typeHash");
 				values[cnt] = t;
+				hashToIndex[t.hash] = cnt;
 				return cnt++;
 			}
 		};
@@ -48,7 +56,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint32 typeIndexInitImpl(StringLiteral name, uintPtr size, uintPtr alignment) noexcept
+		uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment) noexcept
 		{
 			return data().index(name, size, alignment);
 		}
@@ -56,14 +64,30 @@ namespace cage
 
 	namespace detail
 	{
-		uintPtr typeSize(uint32 index) noexcept
+		uintPtr typeSizeByIndex(uint32 index) noexcept
 		{
 			return data().values[index].size;
 		}
 
-		uintPtr typeAlignment(uint32 index) noexcept
+		uintPtr typeAlignmentByIndex(uint32 index) noexcept
 		{
 			return data().values[index].alignment;
+		}
+
+		uint32 typeHashByIndex(uint32 index) noexcept
+		{
+			const uint32 res = data().values[index].hash;
+			CAGE_ASSERT(data().hashToIndex.find(res)->second == index);
+			return res;
+		}
+
+		uint32 typeIndexByHash(uint32 hash) noexcept
+		{
+			const auto it = data().hashToIndex.find(hash);
+			CAGE_ASSERT(it != data().hashToIndex.end());
+			const uint32 res = it->second;
+			CAGE_ASSERT(data().values[res].hash == hash);
+			return res;
 		}
 	}
 }

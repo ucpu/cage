@@ -20,7 +20,7 @@ namespace cage
 		EntityComponent *componentByDefinition(uint32 definitionIndex) const;
 		EntityComponent *componentByType(uint32 typeIndex) const;
 		Holder<PointerRange<EntityComponent *>> componentsByType(uint32 typeIndex) const;
-		template<class T> EntityComponent *component() const { return componentByType(detail::typeIndex<T>()); }
+		template<class T> CAGE_FORCE_INLINE EntityComponent *component() const { return componentByType(detail::typeIndex<T>()); }
 		Holder<PointerRange<EntityComponent *>> components() const;
 		uint32 componentsCount() const;
 
@@ -37,7 +37,7 @@ namespace cage
 		Entity *getOrCreate(uint32 entityName);
 		bool has(uint32 entityName) const;
 		PointerRange<Entity *const> entities() const;
-		uint32 count() const { return numeric_cast<uint32>(entities().size()); }
+		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities
 
@@ -56,7 +56,7 @@ namespace cage
 
 		const EntityGroup *group() const; // all entities with this component
 		PointerRange<Entity *const> entities() const;
-		uint32 count() const { return numeric_cast<uint32>(entities().size()); }
+		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities with this component
 	};
@@ -72,23 +72,23 @@ namespace cage
 		bool has(const EntityGroup *group) const;
 
 		void add(EntityComponent *component);
-		template<class T> void add(EntityComponent *component, const T &data) { value<T>(component) = data; }
-		template<class T> void add(const T &data) { add(component_<T>(), data); }
+		template<class T> CAGE_FORCE_INLINE void add(EntityComponent *component, const T &data) { value<T>(component) = data; }
+		template<class T> CAGE_FORCE_INLINE void add(const T &data) { add(component_<T>(), data); }
 
 		void remove(EntityComponent *component);
-		template<class T> void remove() { remove(component_<T>()); }
+		template<class T> CAGE_FORCE_INLINE void remove() { remove(component_<T>()); }
 
 		bool has(const EntityComponent *component) const;
-		template<class T> bool has() const { return has(component_<T>()); }
+		template<class T> CAGE_FORCE_INLINE bool has() const { return has(component_<T>()); }
 
-		template<class T> T &value(EntityComponent *component) { CAGE_ASSERT(component->manager() == manager()); CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>()); return *(T *)unsafeValue(component); }
-		template<class T> T &value() { return value<T>(component_<T>()); }
+		template<class T> CAGE_FORCE_INLINE T &value(EntityComponent *component) { CAGE_ASSERT(component->manager() == manager()); CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>()); return *(T *)unsafeValue(component); }
+		template<class T> CAGE_FORCE_INLINE T &value() { return value<T>(component_<T>()); }
 		void *unsafeValue(EntityComponent *component);
 
 		void destroy();
 
 	private:
-		template<class T> EntityComponent *component_() const { return manager()->component<T>(); }
+		template<class T> CAGE_FORCE_INLINE EntityComponent *component_() const { return manager()->component<T>(); }
 	};
 
 	class CAGE_CORE_API EntityGroup : private Immovable
@@ -98,12 +98,12 @@ namespace cage
 		uint32 definitionIndex() const;
 
 		PointerRange<Entity *const> entities() const;
-		uint32 count() const { return numeric_cast<uint32>(entities().size()); }
+		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
-		void add(Entity *ent) { ent->add(this); }
-		void remove(Entity *ent) { ent->remove(this); }
-		void add(uint32 entityName) { add(manager()->get(entityName)); }
-		void remove(uint32 entityName) { remove(manager()->get(entityName)); }
+		CAGE_FORCE_INLINE void add(Entity *ent) { ent->add(this); }
+		CAGE_FORCE_INLINE void remove(Entity *ent) { ent->remove(this); }
+		CAGE_FORCE_INLINE void add(uint32 entityName) { add(manager()->get(entityName)); }
+		CAGE_FORCE_INLINE void remove(uint32 entityName) { remove(manager()->get(entityName)); }
 
 		void merge(const EntityGroup *other); // add all entities from the other group into this group
 		void subtract(const EntityGroup *other); // remove all entities, which are present in the other group, from this group
@@ -116,8 +116,8 @@ namespace cage
 		mutable EventDispatcher<bool(Entity *)> entityRemoved;
 	};
 
-	inline PointerRange<Entity *const> EntityManager::entities() const { return group()->entities(); }
-	inline PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
+	CAGE_FORCE_INLINE PointerRange<Entity *const> EntityManager::entities() const { return group()->entities(); }
+	CAGE_FORCE_INLINE PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
 
 	CAGE_CORE_API Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component);
 	CAGE_CORE_API void entitiesImportBuffer(PointerRange<const char> buffer, EntityManager *manager);

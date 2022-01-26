@@ -45,7 +45,7 @@ namespace cage
 			{
 				if (!se->has(it.first))
 					continue;
-				detail::memcpy(de->unsafeValue(it.second), se->unsafeValue(it.first), detail::typeSize(it.first->typeIndex()));
+				detail::memcpy(de->unsafeValue(it.second), se->unsafeValue(it.first), detail::typeSizeByIndex(it.first->typeIndex()));
 			}
 		}
 	}

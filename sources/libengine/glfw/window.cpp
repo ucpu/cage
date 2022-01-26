@@ -580,11 +580,11 @@ namespace cage
 		GenericInput e;
 		while (impl->eventsQueue.tryPop(e))
 		{
-			if (e.data.type() == detail::typeIndex<InputMouse>())
+			if (e.data.typeHash() == detail::typeHash<InputMouse>())
 				impl->stateMods = e.data.get<InputMouse>().mods;
-			if (e.data.type() == detail::typeIndex<InputMouseWheel>())
+			if (e.data.typeHash() == detail::typeHash<InputMouseWheel>())
 				impl->stateMods = e.data.get<InputMouseWheel>().mods;
-			if (e.data.type() == detail::typeIndex<InputKey>())
+			if (e.data.typeHash() == detail::typeHash<InputKey>())
 				impl->stateMods = e.data.get<InputKey>().mods;
 
 			switch (e.type)

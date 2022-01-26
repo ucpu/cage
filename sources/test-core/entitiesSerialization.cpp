@@ -69,7 +69,7 @@ namespace
 				if (ea->has(a->componentByDefinition(i)))
 				{
 					CAGE_TEST(eb->has(b->componentByDefinition(i)));
-					CAGE_TEST(detail::memcmp(ea->unsafeValue(a->componentByDefinition(i)), eb->unsafeValue(b->componentByDefinition(i)), detail::typeSize(a->componentByDefinition(i)->typeIndex())) == 0);
+					CAGE_TEST(detail::memcmp(ea->unsafeValue(a->componentByDefinition(i)), eb->unsafeValue(b->componentByDefinition(i)), detail::typeSizeByIndex(a->componentByDefinition(i)->typeIndex())) == 0);
 				}
 			}
 		}
