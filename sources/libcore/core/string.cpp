@@ -274,15 +274,7 @@ namespace cage
 
 #else // GCHL_USE_CHARCONV
 
-#define GCHL_GENERATE(TYPE) \
-		uint32 toString(char *s, uint32 n, TYPE value) \
-		{ \
-			const auto [p, ec] = std::to_chars(s, s + n, value); \
-			if (ec != std::errc()) \
-				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
-			*p = 0; \
-			return numeric_cast<uint32>(p - s); \
-		} \
+#define GCHL_FROMSTRING(TYPE) \
 		void fromString(const char *s, uint32 n, TYPE &value) \
 		{ \
 			const auto [p, ec] = std::from_chars(s, s + n, value); \
@@ -292,6 +284,18 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "failed conversion of string to " CAGE_STRINGIZE(TYPE)); \
 			} \
 		}
+
+#define GCHL_GENERATE(TYPE) \
+		uint32 toString(char *s, uint32 n, TYPE value) \
+		{ \
+			const auto [p, ec] = std::to_chars(s, s + n, value); \
+			if (ec != std::errc()) \
+				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+			*p = 0; \
+			return numeric_cast<uint32>(p - s); \
+		} \
+		GCHL_FROMSTRING(TYPE)
+
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -300,6 +304,19 @@ namespace cage
 		GCHL_GENERATE(uint16);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(uint64);
+#undef GCHL_GENERATE
+
+#define GCHL_GENERATE(TYPE) \
+		uint32 toString(char *s, uint32 n, TYPE value) \
+		{ \
+			const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
+			if (ec != std::errc()) \
+				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+			*p = 0; \
+			return numeric_cast<uint32>(p - s); \
+		} \
+		GCHL_FROMSTRING(TYPE)
+
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
 #undef GCHL_GENERATE
