@@ -3,8 +3,11 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/math.h>
+#include <cage-core/timer.h>
 
 #include <atomic>
+#include <vector>
+#include <algorithm>
 
 namespace
 {
@@ -648,6 +651,7 @@ namespace
 
 	void testFireAndForget()
 	{
+		CAGE_TESTCASE("fire and forget");
 		struct Tester
 		{
 			void operator()(uint32 idx)
@@ -668,6 +672,82 @@ namespace
 		while (tst.counter < 100)
 			threadYield();
 	}
+
+	void testPerformance()
+	{
+		CAGE_TESTCASE("performance");
+
+		std::vector<uint32> input, output;
+		input.resize(10000);
+		output.resize(input.size());
+
+		struct Sorter
+		{
+			PointerRange<uint32> input, output;
+
+			static void merge(PointerRange<uint32> a_, PointerRange<uint32> b_, PointerRange<uint32> o_)
+			{
+				CAGE_ASSERT(a_.size() + b_.size() == o_.size());
+				uint32 *a = a_.begin();
+				uint32 *b = b_.begin();
+				uint32 *o = o_.begin();
+				while (o != o_.end())
+				{
+					if (a == a_.end())
+						*o++ = *b++;
+					else if (b == b_.end())
+						*o++ = *a++;
+					else if (*a <= *b)
+						*o++ = *a++;
+					else
+						*o++ = *b++;
+				}
+				CAGE_ASSERT(a == a_.end());
+				CAGE_ASSERT(b == b_.end());
+			}
+
+			void operator()()
+			{
+				CAGE_ASSERT(input.size() == output.size());
+				if (input.size() > 100)
+				{
+					uint32 *const midi = input.begin() + input.size() / 2;
+					uint32 *const mido = output.begin() + output.size() / 2;
+					Sorter s[2];
+					s[0].input = { input.begin(), midi };
+					s[0].output = { output.begin(), mido };
+					s[1].input = { midi, input.end() };
+					s[1].output = { mido, output.end() };
+					tasksRunBlocking<Sorter>("sorting", s);
+					merge(s[0].input, s[1].input, output);
+					std::copy(output.begin(), output.end(), input.begin());
+				}
+				else
+				{
+					std::sort(input.begin(), input.end());
+					std::copy(input.begin(), input.end(), output.begin());
+				}
+			}
+		};
+
+		Sorter s;
+		s.input = input;
+		s.output = output;
+		Holder<Timer> tmr = newTimer();
+		uint64 durations[11];
+		for (uint64 &duration : durations)
+		{
+			for (uint32 &it : input)
+				it = randomRange(0u, 1000000u);
+			tmr->reset();
+			s.operator()();
+			duration = tmr->duration();
+			CAGE_TEST(input.size() == output.size());
+			CAGE_TEST(std::is_sorted(output.begin(), output.end()));
+		}
+		std::sort(std::begin(durations), std::end(durations));
+		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[5] + " us"); // median
+	}
 }
 
 void testTasks()
@@ -681,4 +761,5 @@ void testTasks()
 	testTasksHolders();
 	testTasksAggregation();
 	testFireAndForget();
+	testPerformance();
 }
