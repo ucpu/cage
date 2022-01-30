@@ -458,7 +458,7 @@ namespace cage
 						String line;
 						while (listener->readLine(line))
 						{
-							const uint32 name = HashString(line.c_str());
+							const uint32 name = HashString(line);
 							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
 							reload(name);
 						}

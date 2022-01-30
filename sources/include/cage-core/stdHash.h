@@ -1,17 +1,12 @@
 #ifndef guard_stdHash_ik4j1hb8vsaerg
 #define guard_stdHash_ik4j1hb8vsaerg
 
-#include "core.h"
+#include "hashBuffer.h"
 
 #include <functional> // std::hash
 
 namespace cage
 {
-	namespace detail
-	{
-		CAGE_CORE_API uint32 hashBuffer(PointerRange<const char> buffer) noexcept;
-	}
-
 	template<class T>
 	bool operator == (const cage::Holder<T> &a, const cage::Holder<T> &b) noexcept
 	{
@@ -26,7 +21,7 @@ namespace std
 	{
 		std::size_t operator() (const cage::detail::StringBase<N> &s) const noexcept
 		{
-			return cage::detail::hashBuffer(s);
+			return cage::hashBuffer(s);
 		}
 	};
 

@@ -172,7 +172,7 @@ namespace cage
 		template<class G = R, typename = std::enable_if_t<std::is_same_v<G, bool>>>
 		bool run(const GenericInput &in)
 		{
-			if (in.type == C && in.data.type() == detail::typeIndex<T>())
+			if (in.type == C && in.data.typeHash() == detail::typeHash<T>())
 				return (*(Delegate<R(T)> *)this)(in.data.get<T>());
 			return false;
 		}
@@ -180,7 +180,7 @@ namespace cage
 		template<class G = R, typename = std::enable_if_t<std::is_same_v<G, void>>>
 		void run(const GenericInput &in)
 		{
-			if (in.type == C && in.data.type() == detail::typeIndex<T>())
+			if (in.type == C && in.data.typeHash() == detail::typeHash<T>())
 				(*(Delegate<R(T)> *)this)(in.data.get<T>());
 		}
 	};
