@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <atomic>
+#include <condition_variable>
 
 namespace cage
 {
@@ -91,6 +92,13 @@ namespace cage
 			bool stop = false;
 		};
 
+		struct ThrData
+		{
+			bool executorThread = false;
+		};
+
+		thread_local ThrData thrData;
+
 		struct Executor : private Immovable
 		{
 			Executor()
@@ -107,7 +115,7 @@ namespace cage
 				threads.clear();
 			}
 
-			void schedule(Holder<TaskImpl> &&tsk);
+			void schedule(const Holder<TaskImpl> &tsk);
 			void tryRun();
 			void run();
 
@@ -115,6 +123,7 @@ namespace cage
 			void threadEntry()
 			{
 				profilingThreadOrder(1000);
+				thrData.executorThread = true;
 				try
 				{
 					while (true)
@@ -136,12 +145,6 @@ namespace cage
 			return exec;
 		}
 
-		Mutex *exceptionsMutex()
-		{
-			static Holder<Mutex> mut = newMutex();
-			return +mut;
-		}
-
 		struct TaskImpl : public AsyncTask
 		{
 			const privat::TaskRunnerConfig runnerConfig;
@@ -153,6 +156,8 @@ namespace cage
 			std::atomic<uint32> executing = 0;
 			std::atomic<uint32> finished = 0;
 			std::atomic<bool> done = false;
+			std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
+			std::condition_variable cond = {};
 			std::exception_ptr exptr = nullptr;
 			Executor &exec = executor();
 
@@ -169,11 +174,21 @@ namespace cage
 
 			void wait()
 			{
-				while (!done)
-					exec.tryRun();
+				if (thrData.executorThread)
+				{
+					while (!done)
+						exec.tryRun();
+				}
+				else
+				{
+					std::unique_lock lock(mutex);
+					while (!done)
+						cond.wait(lock);
+				}
+
 				if (exptr)
 				{
-					ScopeLock lock(exceptionsMutex());
+					std::unique_lock lock(mutex);
 					std::exception_ptr tmp = nullptr;
 					std::swap(tmp, exptr);
 					std::rethrow_exception(tmp);
@@ -188,13 +203,22 @@ namespace cage
 					ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
 					runner(runnerConfig, idx);
 					if (++finished == invocations)
-						done = true;
+					{
+						{
+							std::unique_lock lck(mutex);
+							done = true;
+						}
+						cond.notify_all();
+					}
 				}
 				catch (...)
 				{
-					ScopeLock lock(exceptionsMutex());
-					exptr = std::current_exception();
-					done = true;
+					{
+						std::unique_lock lck(mutex);
+						exptr = std::current_exception();
+						done = true;
+					}
+					cond.notify_all();
 				}
 			}
 
@@ -209,11 +233,11 @@ namespace cage
 			}
 		};
 
-		void Executor::schedule(Holder<TaskImpl> &&tsk)
+		void Executor::schedule(const Holder<TaskImpl> &tsk)
 		{
 			const auto prio = tsk->priority;
 			if (tsk->scheduled++ < tsk->invocations)
-				queue.push(std::move(tsk), prio);
+				queue.push(tsk.share(), prio);
 		}
 
 		void Executor::tryRun()
@@ -221,7 +245,7 @@ namespace cage
 			Holder<TaskImpl> tsk;
 			if (queue.tryPop(tsk))
 			{
-				schedule(tsk.share());
+				schedule(tsk);
 				tsk->execute();
 			}
 			else
@@ -232,7 +256,7 @@ namespace cage
 		{
 			Holder<TaskImpl> tsk;
 			queue.pop(tsk);
-			schedule(tsk.share());
+			schedule(tsk);
 			tsk->execute();
 		}
 	}
