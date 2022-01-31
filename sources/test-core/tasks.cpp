@@ -709,7 +709,7 @@ namespace
 			void operator()()
 			{
 				CAGE_ASSERT(input.size() == output.size());
-				if (input.size() > 100)
+				if (input.size() > 20)
 				{
 					uint32 *const midi = input.begin() + input.size() / 2;
 					uint32 *const mido = output.begin() + output.size() / 2;
@@ -734,7 +734,7 @@ namespace
 		s.input = input;
 		s.output = output;
 		Holder<Timer> tmr = newTimer();
-		uint64 durations[11];
+		uint64 durations[31];
 		for (uint64 &duration : durations)
 		{
 			for (uint32 &it : input)
@@ -746,7 +746,7 @@ namespace
 			CAGE_TEST(std::is_sorted(output.begin(), output.end()));
 		}
 		std::sort(std::begin(durations), std::end(durations));
-		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[5] + " us"); // median
+		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[15] + " us"); // median
 	}
 }
 
