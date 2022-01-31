@@ -66,7 +66,7 @@ void testExceptions()
 		}
 		catch (const Exception &e)
 		{
-#if __has_include(<source_location>)
+#ifndef GCHL_DUMMY_SOURCE_LOCATION
 			CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
 			CAGE_TEST(e.location.line() == 65); // marked line number
 			CAGE_TEST(isPattern(String(e.location.function_name()), "", "testExceptions", ""));
@@ -91,7 +91,7 @@ void testExceptions()
 			}
 			catch (const Exception &e)
 			{
-#if __has_include(<source_location>)
+#ifndef GCHL_DUMMY_SOURCE_LOCATION
 				CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
 				CAGE_TEST(e.location.line() == 16); // marked line number
 				CAGE_TEST(isPattern(String(e.location.function_name()), "", "assertFailureFunction", ""));

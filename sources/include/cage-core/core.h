@@ -7,10 +7,10 @@
 #include <type_traits>
 #include <compare>
 
-#if __has_include(<source_location>)
-#include <source_location>
-#else
+#ifdef GCHL_DUMMY_SOURCE_LOCATION
 #include "sourceLocationDummy.h"
+#else
+#include <source_location>
 #endif
 
 #if defined(_MSC_VER)
