@@ -265,34 +265,33 @@ namespace cage
 		}
 	}
 
+	namespace
+	{
+		template<bool Async>
+		auto tasksRunImpl(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+		{
+			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
+			privat::TaskCreateConfig tsk;
+			tsk.name = name;
+			tsk.function = *(Delegate<void()> *) & function;
+			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
+				Delegate<void(uint32)> function = *(Delegate<void(uint32)> *) & task.function;
+				function(idx);
+			};
+			tsk.invocations = invocations;
+			tsk.priority = priority;
+			return privat::tasksRunImpl<Async>(std::move(tsk));
+		}
+	}
+
 	void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
-		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
-		privat::TaskCreateConfig tsk;
-		tsk.name = name;
-		tsk.function = *(Delegate<void()> *) & function;
-		tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
-			function(idx);
-		};
-		tsk.invocations = invocations;
-		tsk.priority = priority;
-		privat::tasksRunBlocking(std::move(tsk));
+		return tasksRunImpl<false>(name, function, invocations, priority);
 	}
 
 	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
-		static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
-		privat::TaskCreateConfig tsk;
-		tsk.name = name;
-		tsk.function = *(Delegate<void()> *)&function;
-		tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-			Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
-			function(idx);
-		};
-		tsk.invocations = invocations;
-		tsk.priority = priority;
-		return privat::tasksRunAsync(std::move(tsk));
+		return tasksRunImpl<true>(name, function, invocations, priority);
 	}
 
 	void tasksYield()
