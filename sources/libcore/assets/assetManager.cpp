@@ -13,6 +13,8 @@
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
 #include <cage-core/profiling.h>
+#include <cage-core/tasks.h>
+#include <cage-core/logger.h>
 
 #include <unordered_map>
 #include <vector>
@@ -44,7 +46,7 @@ namespace cage
 		constexpr uint32 CurrentAssetVersion = 1;
 
 		// one particular version of an asset
-		struct Asset
+		struct Asset : private Immovable
 		{
 			detail::StringBase<64> textName;
 			std::vector<uint32> dependencies;
@@ -147,6 +149,70 @@ namespace cage
 			void maintain(AssetManagerImpl *impl) override;
 		};
 
+		class AssetListenerImpl : private Immovable
+		{
+		public:
+			AssetManager *const man = nullptr;
+			String address;
+			uint16 port = 0;
+			uint64 period = 0;
+			std::atomic<bool> stopping = false;
+			Holder<TcpConnection> tcp;
+			Holder<Thread> thread;
+
+			AssetListenerImpl(AssetManager *man, const String &address, uint32 port, uint64 period) : man(man), address(address), port(port), period(period)
+			{
+				thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener");
+			}
+
+			~AssetListenerImpl()
+			{
+				stopping = true;
+				thread.clear();
+			}
+
+			void thrEntry()
+			{
+				try
+				{
+					detail::OverrideBreakpoint overrideBreakpoint;
+					detail::OverrideException overrideException;
+					tcp = newTcpConnection(address, port);
+				}
+				catch (...)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed to connect to the database");
+					tcp.clear();
+					return;
+				}
+				try
+				{
+					while (!stopping)
+					{
+						threadSleep(period);
+						String line;
+						while (tcp->readLine(line))
+						{
+							const uint32 name = HashString(line);
+							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
+							man->reload(name);
+						}
+					}
+				}
+				catch (const Disconnected &)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener disconnected");
+					tcp.clear();
+				}
+				catch (...)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed with exception:");
+					detail::logCurrentCaughtException();
+					tcp.clear();
+				}
+			}
+		};
+
 		class AssetManagerImpl : public AssetManager
 		{
 		public:
@@ -154,12 +220,11 @@ namespace cage
 
 			std::vector<AssetScheme> schemes;
 			const String path;
-			const uint64 listenerPeriod;
 			uint32 generateName = 0;
 			uint32 assetGuid = 1;
-			std::atomic<sint32> workingCounter{0};
-			std::atomic<sint32> existsCounter{0};
-			std::atomic<bool> stopping{false};
+			std::atomic<sint32> workingCounter = 0;
+			std::atomic<sint32> existsCounter = 0;
+			std::atomic<bool> stopping = false;
 
 			Holder<RwMutex> publicMutex; // protects publicIndex
 			Holder<Mutex> privateMutex; // protects privateIndex, waitingIndex, generateName, assetGuid
@@ -174,16 +239,13 @@ namespace cage
 			Queue defaultProcessingQueue;
 			std::vector<Holder<Queue>> customProcessingQueues;
 
-			Holder<TcpConnection> listener;
-			String listenerAddress;
-			uint16 listenerPort = 0;
-
 			// threads have to be declared at the very end to ensure that they are first to destroy
 			Holder<Thread> maintenanceThread;
 			Holder<Thread> diskLoadingThread;
 			Holder<Thread> decompressionThread;
 			Holder<Thread> defaultProcessingThread;
-			Holder<Thread> listenerThread;
+
+			Holder<AssetListenerImpl> listener;
 
 			static String findAssetsFolderPath(const AssetManagerCreateConfig &config)
 			{
@@ -211,7 +273,7 @@ namespace cage
 				}
 			}
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config)), listenerPeriod(config.listenerPeriod)
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
 			{
 				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using asset path: '" + path + "'");
 				privateMutex = newMutex();
@@ -435,47 +497,6 @@ namespace cage
 				}
 			}
 
-			void listenerEntry()
-			{
-				try
-				{
-					detail::OverrideBreakpoint overrideBreakpoint;
-					detail::OverrideException overrideException;
-					listener = newTcpConnection(listenerAddress, listenerPort);
-				}
-				catch (...)
-				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed to connect to the database");
-					listener.clear();
-					return;
-				}
-				try
-				{
-					while (!stopping)
-					{
-						threadSleep(listenerPeriod);
-						ProfilingScope profiling("network notifications", "assets manager");
-						String line;
-						while (listener->readLine(line))
-						{
-							const uint32 name = HashString(line);
-							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
-							reload(name);
-						}
-					}
-				}
-				catch (const Disconnected &)
-				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener disconnected");
-					listener.clear();
-				}
-				catch (...)
-				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed");
-					listener.clear();
-				}
-			}
-
 			// api methods
 
 			void defineScheme(uint32 typeId, uint32 scheme, const AssetScheme &value)
@@ -578,12 +599,10 @@ namespace cage
 				return false;
 			}
 
-			void listen(const String &address, uint16 port)
+			void listen(const String &address, uint16 port, uint64 listenerPeriod)
 			{
-				CAGE_ASSERT(!listenerThread);
-				listenerAddress = address;
-				listenerPort = port;
-				listenerThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::listenerEntry>(this), "assets listener");
+				CAGE_ASSERT(!listener);
+				listener = systemMemory().createHolder<AssetListenerImpl>(this, address, port, listenerPeriod);
 			}
 		};
 
@@ -937,10 +956,10 @@ namespace cage
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetManager::listen(const String &address, uint16 port)
+	void AssetManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->listen(address, port);
+		impl->listen(address, port, listenerPeriod);
 	}
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)

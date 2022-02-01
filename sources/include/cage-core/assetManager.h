@@ -55,7 +55,7 @@ namespace cage
 		bool processing() const;
 		bool unloaded() const;
 
-		void listen(const String &address = "localhost", uint16 port = 65042);
+		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
 
 		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 
@@ -69,7 +69,6 @@ namespace cage
 	struct CAGE_CORE_API AssetManagerCreateConfig
 	{
 		String assetsFolderName = "assets.zip";
-		uint64 listenerPeriod = 100000;
 		uint32 threadsMaxCount = 5;
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
 	};
