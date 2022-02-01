@@ -166,6 +166,7 @@ namespace cage
 
 	// allows running higher priority tasks from inside long running task
 	CAGE_CORE_API void tasksYield();
+	CAGE_CORE_API sint32 tasksCurrentPriority();
 
 	CAGE_CORE_API std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount);
 }

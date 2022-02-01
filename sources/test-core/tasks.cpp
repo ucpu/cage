@@ -4,6 +4,7 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
+#include <cage-core/concurrent.h>
 
 #include <atomic>
 #include <vector>
@@ -673,6 +674,53 @@ namespace
 			threadYield();
 	}
 
+	struct PriorityTester
+	{
+		static inline std::atomic<uint32> started[2] = { 0, 0 };
+		static inline std::atomic<uint32> finished[2] = { 0, 0 };
+		static inline std::atomic<bool> waiting = true;
+
+		bool slow = false;
+
+		void operator()()
+		{
+			started[slow]++;
+			someMeaninglessWork();
+			if (slow)
+			{
+				while (waiting)
+				{
+					someMeaninglessWork();
+					tasksYield();
+				}
+			}
+			finished[slow]++;
+		}
+	};
+
+	void testPriorities()
+	{
+		CAGE_TESTCASE("priorities");
+
+		const auto &gen = [](bool slow) -> Holder<PointerRange<PriorityTester>> {
+			PointerRangeHolder<PriorityTester> v;
+			v.resize(processorsCount() * 2);
+			for (auto &it : v)
+				it.slow = slow;
+			return v;
+		};
+
+		Holder<PointerRange<PriorityTester>> slow = gen(true);
+		Holder<PointerRange<PriorityTester>> fast = gen(false);
+
+		auto a = tasksRunAsync<PriorityTester>("slow", slow.share(), 5);
+		while (PriorityTester::started[true] < processorsCount())
+			threadYield();
+		tasksRunBlocking<PriorityTester>("fast", fast.share(), 10);
+		PriorityTester::waiting = false;
+		a->wait();
+	}
+
 	void testPerformance()
 	{
 		CAGE_TESTCASE("performance");
@@ -761,5 +809,6 @@ void testTasks()
 	testTasksHolders();
 	testTasksAggregation();
 	testFireAndForget();
+	testPriorities();
 	testPerformance();
 }

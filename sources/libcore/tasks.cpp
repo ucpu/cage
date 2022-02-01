@@ -25,16 +25,16 @@ namespace cage
 		public:
 			using Value = Holder<TaskImpl>;
 
-			void push(Value &&value, sint32 priority)
+			CAGE_FORCE_INLINE void push(Value &&value)
 			{
 				ScopeLock sl(mut);
 				if (stop)
 					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
-				items.emplace(std::move(value), priority);
+				items.emplace(std::move(value));
 				cond->signal();
 			}
 
-			void pop(Value &value)
+			CAGE_FORCE_INLINE void pop(Value &value)
 			{
 				ScopeLock sl(mut);
 				while (true)
@@ -45,21 +45,24 @@ namespace cage
 						cond->wait(sl);
 					else
 					{
-						value = std::move(const_cast<Item&>(items.top()).first);
+						value = std::move(const_cast<Value &>(items.top()));
 						items.pop();
 						return;
 					}
 				}
 			}
 
-			bool tryPop(Value &value)
+			CAGE_FORCE_INLINE bool tryPop(Value &value, const sint32 requiredPriority)
 			{
 				ScopeLock sl(mut);
 				if (stop)
 					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
 				if (!items.empty())
 				{
-					value = std::move(const_cast<Item &>(items.top()).first);
+					const Value &top = items.top();
+					if (!valid(top, requiredPriority))
+						return false;
+					value = std::move(const_cast<Value &>(top));
 					items.pop();
 					return true;
 				}
@@ -76,24 +79,22 @@ namespace cage
 			}
 
 		private:
-			using Item = std::pair<Value, sint32>;
-
 			struct Comparator
 			{
-				bool operator() (const Item &a, const Item &b) const noexcept
-				{
-					return a.second < b.second;
-				}
+				bool operator() (const Value &a, const Value &b) const noexcept;
 			};
+
+			bool valid(const Value &value, const sint32 requiredPriority) const noexcept;
 
 			Holder<Mutex> mut = newMutex();
 			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
-			std::priority_queue<Item, std::vector<Item>, Comparator> items;
+			std::priority_queue<Value, std::vector<Value>, Comparator> items;
 			bool stop = false;
 		};
 
 		struct ThrData
 		{
+			sint32 currentPriority = std::numeric_limits<sint32>().min();
 			bool executorThread = false;
 		};
 
@@ -116,7 +117,7 @@ namespace cage
 			}
 
 			void schedule(const Holder<TaskImpl> &tsk);
-			void tryRun();
+			bool tryRun(sint32 requiredPriority);
 			void run();
 
 		private:
@@ -145,6 +146,23 @@ namespace cage
 			return exec;
 		}
 
+		struct ThreadPriorityUpdater : private Immovable
+		{
+			sint32 &thrPrio = thrData.currentPriority;
+			sint32 tmpPrio = m;
+
+			CAGE_FORCE_INLINE ThreadPriorityUpdater(sint32 tskPrio) : tmpPrio(tskPrio)
+			{
+				CAGE_ASSERT(tskPrio >= thrPrio);
+				std::swap(tmpPrio, thrPrio);
+			}
+
+			CAGE_FORCE_INLINE ~ThreadPriorityUpdater()
+			{
+				thrPrio = tmpPrio;
+			}
+		};
+
 		struct TaskImpl : public AsyncTask
 		{
 			const privat::TaskRunnerConfig runnerConfig;
@@ -159,25 +177,29 @@ namespace cage
 			std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
 			std::condition_variable cond = {};
 			std::exception_ptr exptr = nullptr;
-			Executor &exec = executor();
 
-			explicit TaskImpl(privat::TaskCreateConfig &&task) : runnerConfig(copy(std::move(task.data), task.function, task.elements)), runner(task.runner), name(task.name), priority(task.priority), invocations(task.invocations)
+			CAGE_FORCE_INLINE explicit TaskImpl(privat::TaskCreateConfig &&task) : runnerConfig(copy(std::move(task.data), task.function, task.elements)), runner(task.runner), name(task.name), priority(task.priority), invocations(task.invocations)
 			{
 				if (invocations == 0)
 					done = true;
 			}
 
-			~TaskImpl()
+			CAGE_FORCE_INLINE ~TaskImpl()
 			{
 				CAGE_ASSERT(done);
 			}
 
-			void wait()
+			CAGE_FORCE_INLINE void wait()
 			{
 				if (thrData.executorThread)
 				{
+					auto &exec = executor();
 					while (!done)
-						exec.tryRun();
+					{
+						while (exec.tryRun(priority) && !done);
+						if (!done)
+							threadYield();
+					}
 				}
 				else
 				{
@@ -185,7 +207,12 @@ namespace cage
 					while (!done)
 						cond.wait(lock);
 				}
+				rethrow();
+			}
 
+			CAGE_FORCE_INLINE void rethrow()
+			{
+				CAGE_ASSERT(done);
 				if (exptr)
 				{
 					std::unique_lock lock(mutex);
@@ -195,13 +222,16 @@ namespace cage
 				}
 			}
 
-			void execute() noexcept
+			CAGE_FORCE_INLINE void execute() noexcept
 			{
 				try
 				{
 					const uint32 idx = executing++;
-					ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
-					runner(runnerConfig, idx);
+					{
+						ThreadPriorityUpdater prio(priority);
+						ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
+						runner(runnerConfig, idx);
+					}
 					if (++finished == invocations)
 					{
 						{
@@ -223,7 +253,7 @@ namespace cage
 			}
 
 		private:
-			static privat::TaskRunnerConfig copy(Holder<void> &&data, Delegate<void()> function, uint32 elements)
+			CAGE_FORCE_INLINE static privat::TaskRunnerConfig copy(Holder<void> &&data, Delegate<void()> function, uint32 elements)
 			{
 				privat::TaskRunnerConfig res;
 				res.data = std::move(data);
@@ -233,26 +263,35 @@ namespace cage
 			}
 		};
 
-		void Executor::schedule(const Holder<TaskImpl> &tsk)
+		CAGE_FORCE_INLINE bool ConcurrentPriorityQueue::Comparator::operator() (const Value &a, const Value &b) const noexcept
 		{
-			const auto prio = tsk->priority;
-			if (tsk->scheduled++ < tsk->invocations)
-				queue.push(tsk.share(), prio);
+			return a->priority < b->priority;
 		}
 
-		void Executor::tryRun()
+		CAGE_FORCE_INLINE bool ConcurrentPriorityQueue::valid(const Value &value, const sint32 requiredPriority) const noexcept
+		{
+			return value->priority >= requiredPriority;
+		}
+
+		CAGE_FORCE_INLINE void Executor::schedule(const Holder<TaskImpl> &tsk)
+		{
+			if (tsk->scheduled++ < tsk->invocations)
+				queue.push(tsk.share());
+		}
+
+		CAGE_FORCE_INLINE bool Executor::tryRun(sint32 requiredPriority)
 		{
 			Holder<TaskImpl> tsk;
-			if (queue.tryPop(tsk))
+			if (queue.tryPop(tsk, requiredPriority))
 			{
 				schedule(tsk);
 				tsk->execute();
+				return true;
 			}
-			else
-				threadYield();
+			return false;
 		}
 
-		void Executor::run()
+		CAGE_FORCE_INLINE void Executor::run()
 		{
 			Holder<TaskImpl> tsk;
 			queue.pop(tsk);
@@ -320,7 +359,14 @@ namespace cage
 
 	void tasksYield()
 	{
-		// todo
+		auto &exec = executor();
+		const sint32 reqPri = thrData.currentPriority + 1; // do not allow same-priority tasks
+		while (exec.tryRun(reqPri));
+	}
+
+	sint32 tasksCurrentPriority()
+	{
+		return thrData.currentPriority;
 	}
 
 	std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount)
