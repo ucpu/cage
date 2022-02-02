@@ -37,7 +37,7 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
-		s.typeIndex = detail::typeIndex<ShaderProgram>();
+		s.typeHash = detail::typeHash<ShaderProgram>();
 		return s;
 	}
 }

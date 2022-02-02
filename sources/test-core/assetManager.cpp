@@ -7,6 +7,7 @@
 #include <cage-core/assetHeader.h>
 #include <cage-core/assetContext.h>
 #include <cage-core/math.h>
+#include <cage-core/config.h>
 
 #include <atomic>
 
@@ -18,7 +19,7 @@ namespace
 
 	struct AssetCounter : private Immovable
 	{
-		static std::atomic<sint32> counter;
+		static inline std::atomic<sint32> counter = 0;
 
 		AssetCounter()
 		{
@@ -33,8 +34,6 @@ namespace
 		}
 	};
 
-	std::atomic<sint32> AssetCounter::counter{0};
-
 	void processAssetCounterLoad(AssetContext *context)
 	{
 		if (context->realName >= 5000)
@@ -47,7 +46,7 @@ namespace
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetCounterLoad>();
-		s.typeIndex = detail::typeIndex<AssetCounter>();
+		s.typeHash = detail::typeHash<AssetCounter>();
 		return s;
 	}
 
@@ -120,11 +119,11 @@ namespace
 		// nothing
 	}
 
-	AssetScheme genDummyScheme(uint32 typeIndex)
+	AssetScheme genDummyScheme(uint32 typeHash)
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetDummyLoad>();
-		s.typeIndex = typeIndex;
+		s.typeHash = typeHash;
 		return s;
 	}
 }
@@ -132,6 +131,8 @@ namespace
 void testAssetManager()
 {
 	CAGE_TESTCASE("asset manager");
+
+	//configSetUint32("cage/assets/logLevel", 2);
 
 	{
 		CAGE_TESTCASE("basics");
@@ -161,10 +162,10 @@ void testAssetManager()
 	{
 		CAGE_TESTCASE("type validation");
 		Holder<AssetManager> man = instantiate();
-		man->defineScheme<71, uint8>(genDummyScheme(detail::typeIndex<uint8>()));
-		man->defineScheme<72, uint16>(genDummyScheme(detail::typeIndex<uint16>()));
-		man->defineScheme<73, uint32>(genDummyScheme(detail::typeIndex<uint32>()));
-		man->defineScheme<74, uint64>(genDummyScheme(detail::typeIndex<uint64>()));
+		man->defineScheme<71, uint8>(genDummyScheme(detail::typeHash<uint8>()));
+		man->defineScheme<72, uint16>(genDummyScheme(detail::typeHash<uint16>()));
+		man->defineScheme<73, uint32>(genDummyScheme(detail::typeHash<uint32>()));
+		man->defineScheme<74, uint64>(genDummyScheme(detail::typeHash<uint64>()));
 		{ auto a = man->tryGet<71, uint8>(42); CAGE_TEST(!a); }
 		{ auto a = man->tryGet<72, uint16>(42); CAGE_TEST(!a); }
 		{ auto a = man->tryGet<73, uint32>(42); CAGE_TEST(!a); }
@@ -176,7 +177,7 @@ void testAssetManager()
 	}
 
 	{
-		CAGE_TESTCASE("multiply added same asset");
+		CAGE_TESTCASE("multiple times added same asset");
 		Holder<AssetManager> man = instantiate();
 		makeAssetCounter(10);
 		CAGE_TEST(AssetCounter::counter == 0);

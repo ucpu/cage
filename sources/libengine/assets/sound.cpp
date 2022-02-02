@@ -78,7 +78,7 @@ namespace cage
 		AssetScheme s;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
-		s.typeIndex = detail::typeIndex<Sound>();
+		s.typeHash = detail::typeHash<Sound>();
 		return s;
 	}
 }
