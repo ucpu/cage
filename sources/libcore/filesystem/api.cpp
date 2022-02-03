@@ -1,7 +1,9 @@
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include "files.h"
 
@@ -303,5 +305,31 @@ namespace cage
 			CAGE_LOG_THROW(Stringizer() + "whereToStart: '" + whereToStart + "'");
 			CAGE_THROW_ERROR(Exception, "pathSearchTowardsRoot failed to find the name");
 		}
+	}
+
+	Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute, uint32 limit)
+	{
+		const uint32 firstDollar = find(pattern, substitute);
+		if (firstDollar == m)
+			return {};
+		const uint32 dollarsCount = [&]() {
+			uint32 i = 0;
+			String s = subString(pattern, firstDollar, m);
+			while (i < s.length() && s[i] == substitute)
+				i++;
+			return i;
+		}();
+		const String prefix = subString(pattern, 0, firstDollar);
+		const String suffix = subString(pattern, firstDollar + dollarsCount, m);
+		PointerRangeHolder<String> result;
+		for (uint32 i = 0; i < limit; i++)
+		{
+			const String name = prefix + reverse(fill(reverse(String(Stringizer() + i)), dollarsCount, '0')) + suffix;
+			if (pathIsFile(name))
+				result.push_back(name);
+			else if (i > 0)
+				break;
+		}
+		return result;
 	}
 }
