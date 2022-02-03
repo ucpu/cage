@@ -3,8 +3,12 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/math.h>
+#include <cage-core/timer.h>
+#include <cage-core/concurrent.h>
 
 #include <atomic>
+#include <vector>
+#include <algorithm>
 
 namespace
 {
@@ -316,7 +320,6 @@ namespace
 	void testTasksSplit()
 	{
 		CAGE_TESTCASE("tasksSplit");
-		uint32 b, e;
 		{
 			CAGE_TESTCASE("zero threads");
 			{
@@ -649,6 +652,7 @@ namespace
 
 	void testFireAndForget()
 	{
+		CAGE_TESTCASE("fire and forget");
 		struct Tester
 		{
 			void operator()(uint32 idx)
@@ -669,6 +673,129 @@ namespace
 		while (tst.counter < 100)
 			threadYield();
 	}
+
+	struct PriorityTester
+	{
+		static inline std::atomic<uint32> started[2] = { 0, 0 };
+		static inline std::atomic<uint32> finished[2] = { 0, 0 };
+		static inline std::atomic<bool> waiting = true;
+
+		bool slow = false;
+
+		void operator()()
+		{
+			started[slow]++;
+			someMeaninglessWork();
+			if (slow)
+			{
+				while (waiting)
+				{
+					someMeaninglessWork();
+					tasksYield();
+				}
+			}
+			finished[slow]++;
+		}
+	};
+
+	void testPriorities()
+	{
+		CAGE_TESTCASE("priorities");
+
+		const auto &gen = [](bool slow) -> Holder<PointerRange<PriorityTester>> {
+			PointerRangeHolder<PriorityTester> v;
+			v.resize(processorsCount() * 2);
+			for (auto &it : v)
+				it.slow = slow;
+			return v;
+		};
+
+		Holder<PointerRange<PriorityTester>> slow = gen(true);
+		Holder<PointerRange<PriorityTester>> fast = gen(false);
+
+		auto a = tasksRunAsync<PriorityTester>("slow", slow.share(), 5);
+		while (PriorityTester::started[true] < processorsCount())
+			threadYield();
+		tasksRunBlocking<PriorityTester>("fast", fast.share(), 10);
+		PriorityTester::waiting = false;
+		a->wait();
+	}
+
+	void testPerformance()
+	{
+		CAGE_TESTCASE("performance");
+
+		std::vector<uint32> input, output;
+		input.resize(10000);
+		output.resize(input.size());
+
+		struct Sorter
+		{
+			PointerRange<uint32> input, output;
+
+			static void merge(PointerRange<uint32> a_, PointerRange<uint32> b_, PointerRange<uint32> o_)
+			{
+				CAGE_ASSERT(a_.size() + b_.size() == o_.size());
+				uint32 *a = a_.begin();
+				uint32 *b = b_.begin();
+				uint32 *o = o_.begin();
+				while (o != o_.end())
+				{
+					if (a == a_.end())
+						*o++ = *b++;
+					else if (b == b_.end())
+						*o++ = *a++;
+					else if (*a <= *b)
+						*o++ = *a++;
+					else
+						*o++ = *b++;
+				}
+				CAGE_ASSERT(a == a_.end());
+				CAGE_ASSERT(b == b_.end());
+			}
+
+			void operator()()
+			{
+				CAGE_ASSERT(input.size() == output.size());
+				if (input.size() > 20)
+				{
+					uint32 *const midi = input.begin() + input.size() / 2;
+					uint32 *const mido = output.begin() + output.size() / 2;
+					Sorter s[2];
+					s[0].input = { input.begin(), midi };
+					s[0].output = { output.begin(), mido };
+					s[1].input = { midi, input.end() };
+					s[1].output = { mido, output.end() };
+					tasksRunBlocking<Sorter>("sorting", s);
+					merge(s[0].input, s[1].input, output);
+					std::copy(output.begin(), output.end(), input.begin());
+				}
+				else
+				{
+					std::sort(input.begin(), input.end());
+					std::copy(input.begin(), input.end(), output.begin());
+				}
+			}
+		};
+
+		Sorter s;
+		s.input = input;
+		s.output = output;
+		Holder<Timer> tmr = newTimer();
+		uint64 durations[31];
+		for (uint64 &duration : durations)
+		{
+			for (uint32 &it : input)
+				it = randomRange(0u, 1000000u);
+			tmr->reset();
+			s.operator()();
+			duration = tmr->duration();
+			CAGE_TEST(input.size() == output.size());
+			CAGE_TEST(std::is_sorted(output.begin(), output.end()));
+		}
+		std::sort(std::begin(durations), std::end(durations));
+		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[15] + " us"); // median
+	}
 }
 
 void testTasks()
@@ -682,4 +809,6 @@ void testTasks()
 	testTasksHolders();
 	testTasksAggregation();
 	testFireAndForget();
+	testPriorities();
+	testPerformance();
 }

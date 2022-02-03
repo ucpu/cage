@@ -420,7 +420,7 @@ namespace cage
 					if (config.assets)
 						c = *config.assets;
 					c.schemesMaxCount = max(c.schemesMaxCount, 30u);
-					c.threadsMaxCount = max(c.threadsMaxCount, 5u);
+					c.customProcessingThreads = max(c.customProcessingThreads, 5u);
 					assets = newAssetManager(c);
 				}
 

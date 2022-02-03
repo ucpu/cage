@@ -133,7 +133,7 @@ namespace cage
 	bool InputsDispatchers::dispatch(const GenericInput &in)
 	{
 #define EVENT(CLASS, NAME, TYPE) \
-		if (in.type == InputClassEnum::CLASS && in.data.type() == detail::typeIndex<TYPE>()) \
+		if (in.type == InputClassEnum::CLASS && in.data.typeHash() == detail::typeHash<TYPE>()) \
 			return NAME.dispatch(in.data.get<TYPE>());
 
 		EVENT(FocusGain, focusGain, InputWindow);

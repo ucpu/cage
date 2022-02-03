@@ -42,7 +42,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processLoad>();
-		s.typeIndex = detail::typeIndex<RenderObject>();
+		s.typeHash = detail::typeHash<RenderObject>();
 		return s;
 	}
 }

@@ -18,7 +18,7 @@ namespace cage
 			s[1] = confDefault2;
 			if (s[0] == 0 && s[1] == 0)
 				privat::generateRandomData((uint8*)s, sizeof(s));
-			CAGE_LOG(SeverityEnum::Info, "random", Stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
+			CAGE_LOG(SeverityEnum::Info, "random", Stringizer() + "initialized thread-local random generator: " + s[0] + ", " + s[1]);
 			return RandomGenerator(s[0], s[1]);
 		}
 	}
@@ -190,7 +190,7 @@ namespace cage
 	{
 		RandomGenerator &globalRandomGenerator()
 		{
-			static RandomGenerator rnd = initializeDefaultGenerator();
+			thread_local RandomGenerator rnd = initializeDefaultGenerator();
 			return rnd;
 		}
 	}

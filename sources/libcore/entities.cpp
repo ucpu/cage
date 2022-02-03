@@ -173,14 +173,15 @@ namespace cage
 			EntityManagerImpl *const manager = nullptr;
 			void *prototype = nullptr;
 			const uint32 typeIndex = m;
+			const uint32 typeSize = m;
 			const uint32 definitionIndex = m;
 
-			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), definitionIndex(numeric_cast<uint32>(manager->components.size()))
+			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				componentEntities = systemMemory().createHolder<GroupImpl>(manager);
-				values = newValues(detail::typeSize(typeIndex), detail::typeAlignment(typeIndex));
+				values = newValues(typeSize, detail::typeAlignmentByIndex(typeIndex));
 				prototype = values->newVal();
-				detail::memcpy(prototype, prototype_, detail::typeSize(typeIndex));
+				detail::memcpy(prototype, prototype_, typeSize);
 			}
 
 			~ComponentImpl()
@@ -193,7 +194,7 @@ namespace cage
 			void *newVal()
 			{
 				void *v = values->newVal();
-				detail::memcpy(v, prototype, detail::typeSize(typeIndex));
+				detail::memcpy(v, prototype, typeSize);
 				return v;
 			}
 
@@ -586,7 +587,7 @@ namespace cage
 
 	Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component)
 	{
-		const uintPtr typeSize = detail::typeSize(component->typeIndex());
+		const uintPtr typeSize = detail::typeSizeByIndex(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
 		ser << component->definitionIndex();
@@ -623,7 +624,7 @@ namespace cage
 		EntityComponent *component = manager->componentByDefinition(componentIndex);
 		uint64 typeSize;
 		des >> typeSize;
-		if (detail::typeSize(component->typeIndex()) != typeSize)
+		if (detail::typeSizeByIndex(component->typeIndex()) != typeSize)
 			CAGE_THROW_ERROR(Exception, "incompatible component (different size)");
 		uint32 cnt;
 		des >> cnt;

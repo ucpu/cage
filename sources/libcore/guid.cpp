@@ -1,4 +1,5 @@
 #include <cage-core/guid.h>
+#include <cage-core/math.h>
 
 #include <random>
 
@@ -9,8 +10,14 @@ namespace cage
 		void generateRandomData(uint8 *target, uint32 size)
 		{
 			std::random_device rd;
-			while (size--)
-				*target++ = (uint8)rd();
+			while (size)
+			{
+				const std::random_device::result_type tmp = rd();
+				const uint32 n = min(numeric_cast<uint32>(sizeof(tmp)), size);
+				detail::memcpy(target, &tmp, n);
+				target += n;
+				size -= n;
+			}
 		}
 
 		String guidToString(const uint8 *data, uint32 size)

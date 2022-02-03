@@ -3,7 +3,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/math.h>
-#include <cage-core/random.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 
@@ -31,18 +30,17 @@ namespace
 
 		void threadEntry(uint32 thrId, uint32)
 		{
-			RandomGenerator rng;
 			pathCreateArchive(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }
 				const String name = Mode == 0
-					? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + rng.randomRange(0, 3) + ".bin"
-					: Stringizer() + "testdir/concurrent.zip/" + rng.randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+					? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin"
+					: Stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
-					if (rng.randomChance() < 0.2)
+					if (randomChance() < 0.2)
 						pathRemove(name);
 					else
 					{
@@ -50,10 +48,10 @@ namespace
 						f->readAll();
 					}
 				}
-				if (none(pf & PathTypeFlags::File) || rng.randomChance() < 0.3)
+				if (none(pf & PathTypeFlags::File) || randomChance() < 0.3)
 				{
 					Holder<File> f = writeFile(name);
-					f->seek(rng.randomRange((uintPtr)0, f->size()));
+					f->seek(randomRange((uintPtr)0, f->size()));
 					f->write(data);
 					f->close();
 				}

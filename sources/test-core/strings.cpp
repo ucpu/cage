@@ -362,7 +362,8 @@ namespace
 			CAGE_TEST(m[b] == 10);
 		}
 		{
-			CAGE_TESTCASE("hashed String");
+			CAGE_TESTCASE("hashed string");
+			CAGE_TEST(hashRawString("abc") == hashBuffer("abc"));
 			HashString("");
 			HashString("1");
 			HashString("12");
@@ -371,7 +372,7 @@ namespace
 			String b = "lo";
 			constexpr uint32 compile_time = HashString("hello");
 			String c = a + b;
-			uint32 run_time = HashString(c.c_str());
+			uint32 run_time = HashString(c);
 			CAGE_TEST(compile_time == run_time);
 			constexpr uint32 different = HashString("different");
 			CAGE_TEST(compile_time != different);

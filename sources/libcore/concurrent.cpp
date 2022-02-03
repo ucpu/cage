@@ -554,7 +554,8 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 
 				DWORD tid = -1;
-				handle = CreateThread(nullptr, 0, &threadFunctionImpl, this, 0, &tid);
+				// reserve 8 MB of memory for its stack to match linux default
+				handle = CreateThread(nullptr, 8 * 1024 * 1024, &threadFunctionImpl, this, 0, &tid);
 				if (!handle)
 					CAGE_THROW_ERROR(Exception, "CreateThread");
 				myid = uint64(tid);

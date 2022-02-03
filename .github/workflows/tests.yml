@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   Windows:
-    name: windows-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.build-arch }}
+    name: windows-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.build-arch }}${{ matrix.build-tool }}
     runs-on: windows-${{ matrix.os-version }}
     strategy:
       fail-fast: false
@@ -11,6 +11,10 @@ jobs:
         os-version: [2019]
         build-config: [debug, release, relwithdebinfo]
         build-arch: [Win32, x64]
+        build-tool: ["", "-T ClangCL"]
+        exclude:
+        - build-arch: Win32
+          build-tool: "-T ClangCL"
 
     steps:
     - name: Versions
@@ -28,7 +32,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -A${{ matrix.build-arch }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
 
     - name: Build
       shell: bash
@@ -50,7 +54,7 @@ jobs:
 
 
   Ubuntu:
-    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}-${{ matrix.profiling-enabled }}
+    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
     runs-on: ubuntu-${{ matrix.os-version }}.04
     env:
       CC: ${{ matrix.compiler.cc }}
@@ -71,7 +75,6 @@ jobs:
             cxx: clang++,
             install: clang
           }
-        profiling-enabled: [ON, OFF]
 
     steps:
     - name: Install packages
@@ -94,7 +97,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_profiling_enabled=${{ matrix.profiling-enabled }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
 
     - name: Build
       run: |
@@ -110,4 +113,68 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
+
+
+  Sanitizers:
+    name: sanitizer-${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: ${{ matrix.sanitizer.flags }}
+      CXXFLAGS: ${{ matrix.sanitizer.flags }}
+      LDFLAGS: ${{ matrix.sanitizer.flags }}
+      CC: clang
+      CXX: clang++
+    strategy:
+      fail-fast: false
+      matrix:
+        build-config: [debug, release]
+        sanitizer:
+        - {
+            name: undefined,
+            flags: -fsanitize=undefined -fno-omit-frame-pointer
+          }
+        - {
+            name: address,
+            flags: -fsanitize=address -fno-omit-frame-pointer
+          }
+        #- {
+        #    name: memory,
+        #    flags: -fsanitize=memory -fno-omit-frame-pointer
+        #  }
+        - {
+            name: thread,
+            flags: -fsanitize=thread -fno-omit-frame-pointer
+          }
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev nasm
+
+    - name: Versions
+      run: |
+        cmake --version
+        clang++ --version
+        git --version
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --target cage-test-core -- -j3
+
+    - name: Tests
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
 
