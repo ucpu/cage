@@ -394,6 +394,17 @@ void testFiles()
 			CAGE_TEST(res[0] == "testdir/sequence/0.txt");
 			CAGE_TEST(res[13] == "testdir/sequence/13.txt");
 		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/13.txt");
+			CAGE_TEST(res.size() == 1);
+			CAGE_TEST(res[0] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/42.txt");
+			CAGE_TEST(res.size() == 0);
+		}
 	}
 
 	{

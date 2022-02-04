@@ -53,8 +53,7 @@ void info(const String &src)
 		{
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture name: " + tx.name);
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + detail::meshTextureTypeToString(tx.type));
-			if (tx.image)
-				imageInfo(+tx.image);
+			imageInfo(tx.images);
 		}
 	}
 	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "overall bounding box: " + overallBox);

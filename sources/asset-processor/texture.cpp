@@ -1,7 +1,9 @@
 #include <cage-core/image.h>
 #include <cage-core/imageBlocks.h>
+#include <cage-core/imageImport.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-engine/opengl.h>
 
 #include "processor.h"
@@ -241,13 +243,13 @@ namespace
 		CAGE_THROW_ERROR(Exception, "cannot determine swizzling for astc compressed texture");
 	}
 
-	std::vector<Holder<Image>> images;
+	ImageImportResult images;
 
-	const MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res, const String &spec)
+	MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res, const String &spec)
 	{
 		for (const auto &itp : res.parts)
 		{
-			for (const auto &itt : itp.textures)
+			for (auto &itt : itp.textures)
 			{
 				if (isPattern(itt.name, "", "", spec))
 					return &itt;
@@ -256,75 +258,25 @@ namespace
 		return nullptr;
 	}
 
-	bool loadEmbeddedTexture(const MeshImportResult &res, const String &spec, bool required)
-	{
-		const MeshImportTexture *tx = findEmbeddedTexture(res, spec);
-		if (!tx)
-		{
-			if (required)
-			{
-				CAGE_LOG_THROW(Stringizer() + "embedded texture name: '" + spec + "'");
-				CAGE_THROW_ERROR(Exception, "embedded texture not found");
-			}
-			return false;
-		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded embedded texture '" + spec + "'");
-		images.push_back(tx->image.share());
-		return true;
-	}
-
-	std::pair<bool, String> resolveDollars(const String &input, uint32 index)
-	{
-		const uint32 firstDollar = find(input, '$');
-		if (firstDollar == m)
-			return { false, input };
-
-		String prefix = subString(input, 0, firstDollar);
-		String suffix = subString(input, firstDollar, m);
-		uint32 dollarsCount = 0;
-		while (!suffix.empty() && suffix[0] == '$')
-		{
-			dollarsCount++;
-			suffix = subString(suffix, 1, m);
-		}
-		const String name = prefix + reverse(fill(reverse(String(Stringizer() + index)), dollarsCount, '0')) + suffix;
-		return { true, name };
-	}
-
 	void loadAllFiles()
 	{
-		for (uint32 ifi = 0;; ifi++)
+		const String wholeFilename = pathJoin(inputDirectory, inputFile);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file: " + wholeFilename);
+		if (inputSpec.empty())
 		{
-			const auto ifn = resolveDollars(inputFile, ifi);
-			const String wholeFilename = pathJoin(inputDirectory, ifn.second);
-			if (ifi > 0 && !pathIsFile(wholeFilename))
-				break;
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file '" + wholeFilename + "'");
-			if (inputSpec.empty())
-			{
-				writeLine(String("use=") + ifn.second);
-				Holder<Image> l = newImage();
-				l->importFile(wholeFilename);
-				images.push_back(std::move(l));
-			}
-			else
-			{
-				MeshImportConfig cfg;
-				cfg.rootPath = inputDirectory;
-				MeshImportResult res = meshImportFiles(wholeFilename, cfg);
-				meshImportNotifyUsedFiles(res);
-				for (uint32 isi = 0;; isi++)
-				{
-					const auto isn = resolveDollars(inputSpec, isi);
-					if (!loadEmbeddedTexture(res, isn.second, isi == 0))
-						break;
-					if (!isn.first)
-						break;
-				}
-			}
-			if (!ifn.first)
-				break;
+			images = imageImportFiles(wholeFilename);
+			for (const auto &it : images.parts)
+				writeLine(String("use=") + pathToRel(it.fileName, inputDirectory));
 		}
+		else
+		{
+			MeshImportConfig cfg;
+			cfg.rootPath = inputDirectory;
+			MeshImportResult res = meshImportFiles(wholeFilename, cfg);
+			meshImportNotifyUsedFiles(res);
+			images = std::move(findEmbeddedTexture(res, inputSpec)->images);
+		}
+		imageImportConvertRawToImages(images);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 
@@ -338,25 +290,25 @@ namespace
 		else
 		{ // downscale each image separately
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling each slice separately");
-			for (auto &it : images)
-				imageResize(it.get(), max(it->width() / downscale, 1u), max(it->height() / downscale, 1u));
+			for (auto &it : images.parts)
+				imageResize(+it.image, max(it.image->width() / downscale, 1u), max(it.image->height() / downscale, 1u));
 		}
 	}
 
 	void performSkyboxToCube()
 	{
-		if (images.size() != 1)
+		if (images.parts.size() != 1)
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires one input image");
-		Holder<Image> src = std::move(images[0]);
-		images.clear();
-		images.resize(6);
+		Holder<Image> src = std::move(images.parts[0].image);
 		if (src->width() * 3 != src->height() * 4)
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires source image to be 4:3");
+		PointerRangeHolder<ImageImportPart> parts;
+		parts.resize(6);
 		uint32 sideIndex = 0;
-		for (auto &tgt : images)
+		for (auto &tgt : parts)
 		{
-			tgt = newImage();
-			tgt->initialize(src->width() / 4, src->height() / 3, src->channels(), src->format());
+			tgt.image = newImage();
+			tgt.image->initialize(src->width() / 4, src->height() / 3, src->channels(), src->format());
 			/*
 			     +---+
 			     | 2 |
@@ -394,15 +346,16 @@ namespace
 				yOffset = 1;
 				break;
 			}
-			xOffset *= tgt->width();
-			yOffset *= tgt->height();
-			imageBlit(+src, +tgt, xOffset, yOffset, 0, 0, tgt->width(), tgt->height());
+			xOffset *= tgt.image->width();
+			yOffset *= tgt.image->height();
+			imageBlit(+src, +tgt.image, xOffset, yOffset, 0, 0, tgt.image->width(), tgt.image->height());
 		}
+		images.parts = std::move(parts);
 	}
 
 	void checkConsistency(const uint32 target)
 	{
-		const uint32 frames = numeric_cast<uint32>(images.size());
+		const uint32 frames = numeric_cast<uint32>(images.parts.size());
 		if (frames == 0)
 			CAGE_THROW_ERROR(Exception, "no images were loaded");
 		if (target == GL_TEXTURE_2D && frames > 1)
@@ -414,16 +367,16 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires exactly 6 images");
 		if (target != GL_TEXTURE_2D && frames == 1)
 			CAGE_LOG(SeverityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to 2d");
-		const Holder<Image> &im0 = images[0];
+		const Holder<Image> &im0 = images.parts[0].image;
 		if (im0->width() == 0 || im0->height() == 0)
 			CAGE_THROW_ERROR(Exception, "image has zero resolution");
 		if (im0->channels() == 0 || im0->channels() > 4)
 			CAGE_THROW_ERROR(Exception, "image has invalid bpp");
-		for (auto &imi : images)
+		for (auto &imi : images.parts)
 		{
-			if (imi->width() != im0->width() || imi->height() != im0->height())
+			if (imi.image->width() != im0->width() || imi.image->height() != im0->height())
 				CAGE_THROW_ERROR(Exception, "frames has inconsistent resolutions");
-			if (imi->channels() != im0->channels())
+			if (imi.image->channels() != im0->channels())
 				CAGE_THROW_ERROR(Exception, "frames has inconsistent bpp");
 		}
 		if (target == GL_TEXTURE_CUBE_MAP && im0->width() != im0->height())
@@ -441,9 +394,9 @@ namespace
 		data.flags |= TextureFlags::Ktx;
 
 		std::vector<const Image *> imgs;
-		imgs.reserve(images.size());
-		for (const auto &it : images)
-			imgs.push_back(+it);
+		imgs.reserve(images.parts.size());
+		for (const auto &it : images.parts)
+			imgs.push_back(+it.image);
 		auto ktx = imageKtxEncode(imgs, cfg);
 		asset.originalSize += ktx.size();
 		ser.write(ktx);
@@ -463,9 +416,9 @@ namespace
 		cfg2.format = findBlockFormat(data);
 
 		std::vector<const Image *> imgs;
-		imgs.reserve(images.size());
-		for (const auto &it : images)
-			imgs.push_back(+it);
+		imgs.reserve(images.parts.size());
+		for (const auto &it : images.parts)
+			imgs.push_back(+it.image);
 		auto trs = imageKtxTranscode(imgs, cfg1, cfg2);
 
 		for (const auto &it : trs)
@@ -490,9 +443,9 @@ namespace
 		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
 		findSwizzlingForAstc(data.swizzle, data.channels);
 
-		for (const auto &it : images)
+		for (const auto &it : images.parts)
 		{
-			auto astc = imageAstcEncode(+it, cfg);
+			auto astc = imageAstcEncode(+it.image, cfg);
 			asset.originalSize += astc.size();
 			ser.write(astc);
 		}
@@ -543,10 +496,10 @@ namespace
 			}
 		}
 
-		for (const auto &it : images)
+		for (const auto &it : images.parts)
 		{
-			asset.originalSize += it->rawViewU8().size();
-			ser.write(bufferCast(it->rawViewU8()));
+			asset.originalSize += it.image->rawViewU8().size();
+			ser.write(bufferCast(it.image->rawViewU8()));
 		}
 	}
 
@@ -555,8 +508,8 @@ namespace
 		TextureHeader data;
 		detail::memset(&data, 0, sizeof(TextureHeader));
 		data.target = target;
-		data.resolution = Vec3i(images[0]->width(), images[0]->height(), numeric_cast<uint32>(images.size()));
-		data.channels = images[0]->channels();
+		data.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
+		data.channels = images.parts[0].image->channels();
 		data.filterMin = convertFilter(properties("filterMin"));
 		data.filterMag = convertFilter(properties("filterMag"));
 		data.filterAniso = toUint32(properties("filterAniso"));
@@ -577,7 +530,7 @@ namespace
 		data.copyType = GL_UNSIGNED_BYTE;
 
 		// todo
-		if (images[0]->format() != ImageFormatEnum::U8)
+		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
 
 		AssetHeader h = initializeAssetHeader();
@@ -636,15 +589,15 @@ void processTexture()
 
 	loadAllFiles();
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images[0]->width() + "*" + images[0]->height() + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images[0]->channels());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
 
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
 		{
 			const float strength = toFloat(properties("normalStrength"));
-			for (auto &it : images)
-				imageConvertHeigthToNormal(+it, strength);
+			for (auto &it : images.parts)
+				imageConvertHeigthToNormal(+it.image, strength);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
@@ -652,8 +605,8 @@ void processTexture()
 	{ // convert specular to special
 		if (properties("convert") == "specularToSpecial")
 		{
-			for (auto &it : images)
-				imageConvertSpecularToSpecial(+it);
+			for (auto &it : images.parts)
+				imageConvertSpecularToSpecial(+it.image);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
 		}
 	}
@@ -672,22 +625,22 @@ void processTexture()
 	{ // premultiply alpha
 		if (toBool(properties("premultiplyAlpha")))
 		{
-			for (auto &it : images)
+			for (auto &it : images.parts)
 			{
-				if (it->channels() != 4)
+				if (it.image->channels() != 4)
 					CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
 				if (toBool(properties("srgb")))
 				{
-					const ImageFormatEnum origFormat = it->format();
-					const GammaSpaceEnum origGamma = it->colorConfig.gammaSpace;
-					imageConvert(+it, ImageFormatEnum::Float);
-					imageConvert(+it, GammaSpaceEnum::Linear);
-					imageConvert(+it, AlphaModeEnum::PremultipliedOpacity);
-					imageConvert(+it, origGamma);
-					imageConvert(+it, origFormat);
+					const ImageFormatEnum origFormat = it.image->format();
+					const GammaSpaceEnum origGamma = it.image->colorConfig.gammaSpace;
+					imageConvert(+it.image, ImageFormatEnum::Float);
+					imageConvert(+it.image, GammaSpaceEnum::Linear);
+					imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
+					imageConvert(+it.image, origGamma);
+					imageConvert(+it.image, origFormat);
 				}
 				else
-					imageConvert(+it, AlphaModeEnum::PremultipliedOpacity);
+					imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
 			}
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "premultiplied alpha");
 		}
@@ -698,22 +651,22 @@ void processTexture()
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images[0]->width() + "*" + images[0]->height() + "*" + numeric_cast<uint32>(images.size()));
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 		}
 	}
 
 	{ // normal map
 		if (toBool(properties("normal")))
 		{
-			for (auto &it : images)
+			for (auto &it : images.parts)
 			{
-				switch (it->channels())
+				switch (it.image->channels())
 				{
 				case 2: continue;
 				case 3: break;
 				default: CAGE_THROW_ERROR(Exception, "normal map requires 2 or 3 channels");
 				}
-				imageConvert(+it, 2);
+				imageConvert(+it.image, 2);
 			}
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
 		}
@@ -722,8 +675,8 @@ void processTexture()
 	{ // vertical flip
 		if (!toBool(properties("flip")))
 		{
-			for (auto &it : images)
-				imageVerticalFlip(+it);
+			for (auto &it : images.parts)
+				imageVerticalFlip(+it.image);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped (flip was false)");
 		}
 	}
@@ -731,43 +684,44 @@ void processTexture()
 	{ // invert
 		if (toBool(properties("invertRed")))
 		{
-			for (auto &it : images)
-				imageInvertChannel(+it, 0);
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 0);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "red channel inverted");
 		}
 		if (toBool(properties("invertGreen")))
 		{
-			for (auto &it : images)
-				imageInvertChannel(+it, 1);
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 1);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "green channel inverted");
 		}
 		if (toBool(properties("invertBlue")))
 		{
-			for (auto &it : images)
-				imageInvertChannel(+it, 2);
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 2);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "blue channel inverted");
 		}
 		if (toBool(properties("invertAlpha")))
 		{
-			for (auto &it : images)
-				imageInvertChannel(+it, 3);
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 3);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alpha channel inverted");
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output resolution: " + images[0]->width() + "*" + images[0]->height() + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output channels: " + images[0]->channels());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output channels: " + images.parts[0].image->channels());
 
 	exportTexture(target);
 
 	if (configGetBool("cage-asset-processor/texture/preview"))
 	{ // preview images
+		// this is after the export, so this operation does not affect the textures
 		uint32 index = 0;
-		for (auto &it : images)
+		for (auto &it : images.parts)
 		{
 			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
-			imageVerticalFlip(+it); // this is after the export, so this operation does not affect the textures
-			it->exportFile(dbgName);
+			imageVerticalFlip(+it.image);
+			it.image->exportFile(dbgName);
 		}
 	}
 }
@@ -776,8 +730,9 @@ void analyzeTexture()
 {
 	try
 	{
-		Holder<Image> l = newImage();
-		l->importFile(pathJoin(inputDirectory, inputFile));
+		ImageImportResult res = imageImportFiles(pathJoin(inputDirectory, inputFile));
+		if (res.parts.empty())
+			CAGE_THROW_ERROR(Exception, "no images");
 		writeLine("cage-begin");
 		writeLine("scheme=texture");
 		writeLine(String() + "asset=" + inputFile);

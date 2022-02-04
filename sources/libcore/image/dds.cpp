@@ -113,12 +113,15 @@ namespace cage
 		{
 		case makeFourCC("DXT1"):
 			raw.format = "bc1";
+			raw.channels = 3;
 			break;
 		case makeFourCC("DXT3"):
 			raw.format = "bc2";
+			raw.channels = 4;
 			break;
 		case makeFourCC("DXT5"):
 			raw.format = "bc3";
+			raw.channels = 4;
 			break;
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
@@ -126,6 +129,7 @@ namespace cage
 
 		ImageImportPart part;
 		part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(raw));
+		part.raw->colorConfig = defaultConfig(raw.channels);
 		PointerRangeHolder<ImageImportPart> parts;
 		parts.push_back(std::move(part));
 		ImageImportResult result;

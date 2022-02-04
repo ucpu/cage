@@ -309,26 +309,32 @@ namespace cage
 
 	Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute, uint32 limit)
 	{
+		PointerRangeHolder<String> result;
 		const uint32 firstDollar = find(pattern, substitute);
 		if (firstDollar == m)
-			return {};
-		const uint32 dollarsCount = [&]() {
-			uint32 i = 0;
-			String s = subString(pattern, firstDollar, m);
-			while (i < s.length() && s[i] == substitute)
-				i++;
-			return i;
-		}();
-		const String prefix = subString(pattern, 0, firstDollar);
-		const String suffix = subString(pattern, firstDollar + dollarsCount, m);
-		PointerRangeHolder<String> result;
-		for (uint32 i = 0; i < limit; i++)
 		{
-			const String name = prefix + reverse(fill(reverse(String(Stringizer() + i)), dollarsCount, '0')) + suffix;
-			if (pathIsFile(name))
-				result.push_back(name);
-			else if (i > 0)
-				break;
+			if (pathIsFile(pattern))
+				result.push_back(pattern);
+		}
+		else
+		{
+			const uint32 dollarsCount = [&]() {
+				uint32 i = 0;
+				String s = subString(pattern, firstDollar, m);
+				while (i < s.length() && s[i] == substitute)
+					i++;
+				return i;
+			}();
+			const String prefix = subString(pattern, 0, firstDollar);
+			const String suffix = subString(pattern, firstDollar + dollarsCount, m);
+			for (uint32 i = 0; i < limit; i++)
+			{
+				const String name = prefix + reverse(fill(reverse(String(Stringizer() + i)), dollarsCount, '0')) + suffix;
+				if (pathIsFile(name))
+					result.push_back(name);
+				else if (i > 0)
+					break;
+			}
 		}
 		return result;
 	}

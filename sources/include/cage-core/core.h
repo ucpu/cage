@@ -157,6 +157,10 @@ namespace cage
 	enum class ImageKtxTranscodeFormatEnum : uint32;
 	struct ImageKtxTranscodeConfig;
 	struct ImageKtxTranscodeResult;
+	struct ImageImportRaw;
+	struct ImageImportPart;
+	struct ImageImportResult;
+	struct ImageImportConfig;
 	class Ini;
 	class LineReader;
 	class Logger;

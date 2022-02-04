@@ -2,6 +2,7 @@
 #define guard_imageImport_h_our98esyd23gh4
 
 #include "math.h"
+#include "image.h"
 
 namespace cage
 {
@@ -9,14 +10,14 @@ namespace cage
 	{
 		detail::StringBase<64> format;
 		Holder<PointerRange<char>> data;
+		ImageColorConfig colorConfig;
 		Vec2i resolution;
-		Vec2i blocks;
 		uint32 channels = 0;
-		bool normals = false;
 	};
 
 	struct CAGE_CORE_API ImageImportPart
 	{
+		String fileName;
 		String name;
 		Holder<Image> image;
 		Holder<ImageImportRaw> raw;
@@ -26,7 +27,6 @@ namespace cage
 		uint32 mipmapLevel = 0; // 0 = highest resolution
 		uint32 cubeFace = 0; // +X, -X, +Y, -Y, +Z, -Z
 		uint32 layer = 0; // index in an array or slice in 3D image
-		uint32 fileIndex = 0;
 	};
 
 	struct CAGE_CORE_API ImageImportResult
@@ -39,6 +39,9 @@ namespace cage
 
 	CAGE_CORE_API ImageImportResult imageImportBuffer(PointerRange<const char> buffer, const ImageImportConfig &config = {});
 	CAGE_CORE_API ImageImportResult imageImportFiles(const String &filesPattern, const ImageImportConfig &config = {});
+
+	CAGE_CORE_API void imageImportConvertRawToImages(ImageImportResult &result);
+	CAGE_CORE_API void imageImportConvertImagesToBcn(ImageImportResult &result);
 }
 
 #endif // guard_imageImport_h_our98esyd23gh4

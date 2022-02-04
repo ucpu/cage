@@ -1027,18 +1027,21 @@ namespace cage
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using embedded texture with original name: " + t.name);
 					t.name = inputFile + "?" + pathReplaceInvalidCharacters(t.name);
 					t.type = CageType;
-					Holder<Image> img = newImage();
-					t.image = img.share();
 					if (tx->mHeight == 0)
 					{ // compressed buffer
 						const PointerRange<const char> buff = { (const char *)tx->pcData, (const char *)tx->pcData + tx->mWidth };
-						img->importBuffer(buff);
+						t.images = imageImportBuffer(buff);
 					}
 					else
 					{ // raw data
 						const uint32 bytes = tx->mWidth * tx->mHeight * 4;
 						const PointerRange<const char> buff = { (const char *)tx->pcData, (const char *)tx->pcData + bytes };
-						img->importRaw(buff, Vec2i(tx->mWidth, tx->mHeight), 4, ImageFormatEnum::U8);
+						ImageImportPart part;
+						part.image = newImage();
+						part.image->importRaw(buff, Vec2i(tx->mWidth, tx->mHeight), 4, ImageFormatEnum::U8);
+						PointerRangeHolder<ImageImportPart> parts;
+						parts.push_back(std::move(part));
+						t.images.parts = std::move(parts);
 					}
 					textures.push_back(std::move(t));
 				}

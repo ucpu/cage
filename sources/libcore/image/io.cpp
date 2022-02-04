@@ -162,38 +162,4 @@ namespace cage
 			return ktxDecode(buffer, config);
 		return decodeSingle(buffer, config);
 	}
-
-	namespace
-	{
-		void merge(ImageImportResult &inout, ImageImportResult &in)
-		{
-			PointerRangeHolder<ImageImportPart> tmp;
-			tmp.reserve(inout.parts.size() + in.parts.size());
-			for (auto &it : inout.parts)
-				tmp.push_back(std::move(it));
-			for (auto &it : in.parts)
-				tmp.push_back(std::move(it));
-			Holder<PointerRange<ImageImportPart>> tmp2 = std::move(tmp);
-			std::swap(inout.parts, tmp2);
-		}
-	}
-
-	ImageImportResult imageImportFiles(const String &filesPattern, const ImageImportConfig &config)
-	{
-		ImageImportResult result;
-		const auto paths = pathSearchSequence(filesPattern);
-		uint32 fileIndex = 0;
-		for (const String &p : paths)
-		{
-			Holder<File> f = readFile(p);
-			Holder<PointerRange<char>> buffer = f->readAll();
-			f->close();
-			ImageImportResult tmp = imageImportBuffer(buffer, config);
-			for (auto &it : tmp.parts)
-				it.fileIndex = fileIndex;
-			merge(result, tmp);
-			fileIndex++;
-		}
-		return result;
-	}
 }

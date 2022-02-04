@@ -249,8 +249,8 @@ namespace cage
 			raw.format = "bc1"; // todo
 			raw.data = std::move(it.data);
 			raw.resolution = it.resolution;
-			raw.blocks = it.blocks;
-			raw.channels = 3;
+			raw.channels = 3; // todo
+			raw.colorConfig = defaultConfig(raw.channels);
 			ImageImportPart part;
 			part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(raw));
 			part.mipmapLevel = it.mipmapLevel;
