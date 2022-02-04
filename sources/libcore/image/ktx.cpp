@@ -1,6 +1,7 @@
 #include "image.h"
 
 #include <cage-core/imageBlocks.h>
+#include <cage-core/imageImport.h>
 #include <cage-core/pointerRangeHolder.h>
 
 #include <basis_universal/encoder/basisu_comp.h>
@@ -160,8 +161,8 @@ namespace cage
 					ImageKtxTranscodeResult img;
 					img.blocks = Vec2i(info.m_num_blocks_x, info.m_num_blocks_y);
 					img.resolution = Vec2i(trans.get_width(), trans.get_height());
-					img.mipmap = level;
-					img.face = face;
+					img.mipmapLevel = level;
+					img.cubeFace = face;
 					img.layer = layer;
 					PointerRangeHolder<char> buff;
 					buff.resize(info.m_total_blocks * bytesPerBlock);
@@ -214,7 +215,7 @@ namespace cage
 				ImageKtxTranscodeResult img;
 				img.blocks = Vec2i(info.m_num_blocks_x, info.m_num_blocks_y);
 				img.resolution = Vec2i(info.m_orig_width, info.m_orig_height);
-				img.mipmap = level;
+				img.mipmapLevel = level;
 				img.layer = layer;
 				PointerRangeHolder<char> buff;
 				buff.resize(info.m_total_blocks * bytesPerBlock);
@@ -234,6 +235,32 @@ namespace cage
 	{
 		Holder<PointerRange<Holder<Image>>> res = imageKtxDecode(inBuffer);
 		swapAll(impl, (ImageImpl *)+res[0]);
+	}
+
+	ImageImportResult ktxDecode(PointerRange<const char> inBuffer, const ImageImportConfig &config)
+	{
+		ImageKtxTranscodeConfig ktxConfig;
+		ktxConfig.format = ImageKtxTranscodeFormatEnum::Bc1; // todo choose depending on the file
+		Holder<PointerRange<ImageKtxTranscodeResult>> ktx = imageKtxTranscode(inBuffer, ktxConfig);
+		PointerRangeHolder<ImageImportPart> parts;
+		for (auto &it : ktx)
+		{
+			ImageImportRaw raw;
+			raw.format = "bc1"; // todo
+			raw.data = std::move(it.data);
+			raw.resolution = it.resolution;
+			raw.blocks = it.blocks;
+			raw.channels = 3;
+			ImageImportPart part;
+			part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(raw));
+			part.mipmapLevel = it.mipmapLevel;
+			part.cubeFace = it.cubeFace;
+			part.layer = it.layer;
+			parts.push_back(std::move(part));
+		}
+		ImageImportResult result;
+		result.parts = std::move(parts);
+		return result;
 	}
 
 	MemoryBuffer ktxEncode(const ImageImpl *impl)

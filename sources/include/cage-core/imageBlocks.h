@@ -57,8 +57,8 @@ namespace cage
 		Holder<PointerRange<char>> data;
 		Vec2i resolution;
 		Vec2i blocks;
-		uint32 mipmap = 0;
-		uint32 face = 0;
+		uint32 mipmapLevel = 0;
+		uint32 cubeFace = 0;
 		uint32 layer = 0;
 	};
 
