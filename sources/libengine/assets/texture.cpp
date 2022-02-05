@@ -95,15 +95,8 @@ namespace cage
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
 				{
 					CAGE_ASSERT(res.size() == 6);
-					const uint32 s = res[0].data.size();
-					MemoryBuffer buff;
-					buff.resize(s * 6);
 					for (uint32 f = 0; f < 6; f++)
-					{
-						CAGE_ASSERT(res[f].data.size() == s);
-						detail::memcpy(buff.data() + s * f, res[f].data.data(), s);
-					}
-					tex->imageCubeCompressed(Vec2i(data.resolution), internalFormat, buff);
+						tex->imageCubeCompressed(f, Vec2i(data.resolution), internalFormat, res[f].data);
 				}
 				else
 				{
@@ -116,7 +109,11 @@ namespace cage
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 					tex->image3dCompressed(data.resolution, data.internalFormat, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
-					tex->imageCubeCompressed(Vec2i(data.resolution), data.internalFormat, values);
+				{
+					const uint32 stride = values.size() / 6;
+					for (uint32 f = 0; f < 6; f++)
+						tex->imageCubeCompressed(f, Vec2i(data.resolution), data.internalFormat, { values.data() + f * stride, values.data() + (f + 1) * stride });
+				}
 				else
 					tex->image2dCompressed(Vec2i(data.resolution), data.internalFormat, values);
 			}
@@ -125,7 +122,11 @@ namespace cage
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 					tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
-					tex->imageCube(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
+				{
+					const uint32 stride = values.size() / 6;
+					for (uint32 f = 0; f < 6; f++)
+						tex->imageCube(f, Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, { values.data() + f * stride, values.data() + (f + 1) * stride });
+				}
 				else
 					tex->image2d(Vec2i(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
 			}
