@@ -224,7 +224,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("graphics assets", "gameloop");
-					assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex);
+					while (assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex));
 				}
 				{
 					ProfilingScope profiling("swap callback", "gameloop");
