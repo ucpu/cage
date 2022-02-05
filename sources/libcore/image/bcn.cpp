@@ -70,34 +70,33 @@ namespace cage
 			return block * 16 + pixelInBlock;
 		}
 
-		Holder<Image> finalize(PointerRange<const basisu::color_rgba> colors, const Vec2i &resolution, uint32 channels)
+		Holder<Image> finalize(PointerRange<const basisu::color_rgba> colors, const Vec2i &resolution_, uint32 channels)
 		{
+			const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
 			CAGE_ASSERT(colors.size() == resolution[0] * resolution[1]);
 			Holder<Image> img = newImage();
-			img->initialize(resolution, channels, ImageFormatEnum::U8);
-			for (uint32 y = 0; y < resolution[1]; y++)
-				for (uint32 x = 0; x < resolution[0]; x++)
+			img->initialize(resolution_, channels, ImageFormatEnum::U8);
+			for (uint32 y = 0; y < resolution_[1]; y++)
+				for (uint32 x = 0; x < resolution_[0]; x++)
 					for (uint32 c = 0; c < channels; c++)
 						img->value(x, y, c, colors[blockyIndex(x, y, resolution[0])][c] / 255.f);
 			return img;
 		}
 	}
 
-	Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
-		if ((resolution[0] % 4) != 0 || (resolution[1] % 4) != 0)
-			CAGE_THROW_ERROR(Exception, "invalid resolution for bcn decoding");
-		constexpr uint32 blockSize = 8;
+		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
+		constexpr uintPtr blockSize = 8;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		const uint32 blocksAvailable = buffer.size() / blockSize;
-		if (blocksRequired > blocksAvailable)
+		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
 		const uint32 pixelsCount = blocksRequired * 16;
 		std::vector<basisu::color_rgba> colors;
 		colors.resize(pixelsCount);
 		for (uint32 bi = 0; bi < blocksRequired; bi++)
 			basisu::unpack_bc1(buffer.data() + bi * blockSize, colors.data() + bi * 16, false);
-		return finalize(colors, resolution, 3);
+		return finalize(colors, resolution_, 3);
 	}
 
 	namespace
@@ -205,71 +204,63 @@ namespace cage
 		return img;
 	}
 
-	Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
-		if ((resolution[0] % 4) != 0 || (resolution[1] % 4) != 0)
-			CAGE_THROW_ERROR(Exception, "invalid resolution for bcn decoding");
-		constexpr uint32 blockSize = 16;
+		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
+		constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		const uint32 blocksAvailable = buffer.size() / blockSize;
-		if (blocksRequired > blocksAvailable)
+		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
 		const uint32 pixelsCount = blocksRequired * 16;
 		std::vector<basisu::color_rgba> colors;
 		colors.resize(pixelsCount);
 		for (uint32 bi = 0; bi < blocksRequired; bi++)
 			basisu::unpack_bc3(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution, 4);
+		return finalize(colors, resolution_, 4);
 	}
 
-	Holder<Image> imageBc4Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	Holder<Image> imageBc4Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
-		if ((resolution[0] % 4) != 0 || (resolution[1] % 4) != 0)
-			CAGE_THROW_ERROR(Exception, "invalid resolution for bcn decoding");
-		constexpr uint32 blockSize = 8;
+		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
+		constexpr uintPtr blockSize = 8;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		const uint32 blocksAvailable = buffer.size() / blockSize;
-		if (blocksRequired > blocksAvailable)
+		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
 		const uint32 pixelsCount = blocksRequired * 16;
 		std::vector<basisu::color_rgba> colors;
 		colors.resize(pixelsCount);
 		for (uint32 bi = 0; bi < blocksRequired; bi++)
 			basisu::unpack_bc4(buffer.data() + bi * blockSize, (uint8_t *)(colors.data() + bi * 16), 4);
-		return finalize(colors, resolution, 1);
+		return finalize(colors, resolution_, 1);
 	}
 
-	Holder<Image> imageBc5Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	Holder<Image> imageBc5Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
-		if ((resolution[0] % 4) != 0 || (resolution[1] % 4) != 0)
-			CAGE_THROW_ERROR(Exception, "invalid resolution for bcn decoding");
-		constexpr uint32 blockSize = 16;
+		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
+		constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		const uint32 blocksAvailable = buffer.size() / blockSize;
-		if (blocksRequired > blocksAvailable)
+		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
 		const uint32 pixelsCount = blocksRequired * 16;
 		std::vector<basisu::color_rgba> colors;
 		colors.resize(pixelsCount);
 		for (uint32 bi = 0; bi < blocksRequired; bi++)
 			basisu::unpack_bc5(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution, 2);
+		return finalize(colors, resolution_, 2);
 	}
 
-	Holder<Image> imageBc7Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	Holder<Image> imageBc7Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
-		if ((resolution[0] % 4) != 0 || (resolution[1] % 4) != 0)
-			CAGE_THROW_ERROR(Exception, "invalid resolution for bcn decoding");
-		constexpr uint32 blockSize = 16;
+		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
+		constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		const uint32 blocksAvailable = buffer.size() / blockSize;
-		if (blocksRequired > blocksAvailable)
+		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
 		const uint32 pixelsCount = blocksRequired * 16;
 		std::vector<basisu::color_rgba> colors;
 		colors.resize(pixelsCount);
 		for (uint32 bi = 0; bi < blocksRequired; bi++)
 			basisu::unpack_bc7(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution, 4);
+		return finalize(colors, resolution_, 4);
 	}
 }
