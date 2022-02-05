@@ -94,12 +94,12 @@ namespace cage
 					r.data = imageBc5Encode(+part.image, { normals });
 					break;
 				case 3:
-					r.format = "bc1";
-					r.data = imageBc1Encode(+part.image, { normals });
+					r.format = "bc7";
+					r.data = imageBc7Encode(+part.image, { normals });
 					break;
 				case 4:
-					r.format = "bc3";
-					r.data = imageBc3Encode(+part.image, { normals });
+					r.format = "bc7";
+					r.data = imageBc7Encode(+part.image, { normals });
 					break;
 				default:
 					CAGE_THROW_ERROR(Exception, "unsupported number of channels for image-to-bcn conversion");

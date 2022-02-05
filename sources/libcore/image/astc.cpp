@@ -171,7 +171,7 @@ namespace cage
 
 		if (config_.normals)
 			config.flags |= ASTCENC_FLG_MAP_NORMAL;
-		else if (image_->colorConfig.colorChannelsCount == 0)
+		else if (image_->colorConfig.alphaMode == AlphaModeEnum::None)
 			config.flags |= ASTCENC_FLG_MAP_MASK;
 
 		throwOnError(astcenc_config_init(config.profile, config.block_x, config.block_y, config.block_z, config_.quality, config.flags, &config), "astcenc_config_init");

@@ -50,7 +50,7 @@ namespace cage
 
 	Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
-		if (image->channels() != 4)
+		if (image->channels() != 3 && image->channels() != 4)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc7 encoding");
 		const Image *imgs[1] = { image };
 		ImageKtxTranscodeConfig cfg2;

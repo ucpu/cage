@@ -75,8 +75,8 @@ namespace
 		{
 			switch (data.channels)
 			{
-			case 3: return GL_COMPRESSED_SRGB_S3TC_DXT1_EXT;
-			case 4: return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
+			case 3: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+			case 4: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
 			}
 		}
 		else
@@ -85,8 +85,8 @@ namespace
 			{
 			case 1: return GL_COMPRESSED_RED_RGTC1;
 			case 2: return GL_COMPRESSED_RG_RGTC2;
-			case 3: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-			case 4: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			case 3: return GL_COMPRESSED_RGBA_BPTC_UNORM;
+			case 4: return GL_COMPRESSED_RGBA_BPTC_UNORM;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
@@ -173,6 +173,19 @@ namespace
 		}
 		imageImportConvertRawToImages(images);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
+	}
+
+	void overrideColorConfig(AlphaModeEnum alpha, GammaSpaceEnum gamma)
+	{
+		ImageColorConfig cfg;
+		cfg.alphaMode = alpha;
+		cfg.gammaSpace = gamma;
+		if (alpha == AlphaModeEnum::None)
+			cfg.alphaChannelIndex = m;
+		else
+			images.parts[0].image->channels() - 1;
+		for (const auto &it : images.parts)
+			it.image->colorConfig = cfg;
 	}
 
 	void performDownscale(const uint32 downscale, const uint32 target)
@@ -427,12 +440,40 @@ void processTexture()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
 
+	{ // invert
+		if (toBool(properties("invertRed")))
+		{
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 0);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "red channel inverted");
+		}
+		if (toBool(properties("invertGreen")))
+		{
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 1);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "green channel inverted");
+		}
+		if (toBool(properties("invertBlue")))
+		{
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 2);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "blue channel inverted");
+		}
+		if (toBool(properties("invertAlpha")))
+		{
+			for (auto &it : images.parts)
+				imageInvertChannel(+it.image, 3);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alpha channel inverted");
+		}
+	}
+
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
 		{
 			const float strength = toFloat(properties("normalStrength"));
 			for (auto &it : images.parts)
 				imageConvertHeigthToNormal(+it.image, strength);
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
@@ -442,6 +483,7 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvertSpecularToSpecial(+it.image);
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
 		}
 	}
@@ -451,6 +493,22 @@ void processTexture()
 		{
 			performSkyboxToCube();
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted skybox to cube map");
+		}
+	}
+
+	{ // convert to srgb
+		if (toBool(properties("srgb")))
+		{
+			for (auto &it : images.parts)
+				imageConvert(+it.image, GammaSpaceEnum::Gamma);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to gamma space");
+		}
+		else
+		{
+			for (auto &it : images.parts)
+				imageConvert(+it.image, GammaSpaceEnum::Linear);
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to linear space without alpha");
 		}
 	}
 
@@ -464,18 +522,7 @@ void processTexture()
 			{
 				if (it.image->channels() != 4)
 					CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
-				if (toBool(properties("srgb")))
-				{
-					const ImageFormatEnum origFormat = it.image->format();
-					const GammaSpaceEnum origGamma = it.image->colorConfig.gammaSpace;
-					imageConvert(+it.image, ImageFormatEnum::Float);
-					imageConvert(+it.image, GammaSpaceEnum::Linear);
-					imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
-					imageConvert(+it.image, origGamma);
-					imageConvert(+it.image, origFormat);
-				}
-				else
-					imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
+				imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
 			}
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "premultiplied alpha");
 		}
@@ -503,6 +550,7 @@ void processTexture()
 				}
 				imageConvert(+it.image, 2);
 			}
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
 		}
 	}
@@ -513,33 +561,6 @@ void processTexture()
 			for (auto &it : images.parts)
 				imageVerticalFlip(+it.image);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped (flip was false)");
-		}
-	}
-
-	{ // invert
-		if (toBool(properties("invertRed")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 0);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "red channel inverted");
-		}
-		if (toBool(properties("invertGreen")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 1);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "green channel inverted");
-		}
-		if (toBool(properties("invertBlue")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 2);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "blue channel inverted");
-		}
-		if (toBool(properties("invertAlpha")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 3);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alpha channel inverted");
 		}
 	}
 

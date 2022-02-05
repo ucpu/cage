@@ -147,8 +147,8 @@ namespace cage
 	template<uint32 N> struct Guid;
 	struct HashString;
 	enum class ImageFormatEnum : uint32;
-	enum class GammaSpaceEnum : uint32;
 	enum class AlphaModeEnum : uint32;
+	enum class GammaSpaceEnum : uint32;
 	struct ImageColorConfig;
 	class Image;
 	struct ImageAstcEncodeConfig;

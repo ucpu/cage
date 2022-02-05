@@ -8,11 +8,10 @@ namespace cage
 {
 	inline void imageInfo(const ImageColorConfig &config)
 	{
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "color channels: " + config.colorChannelsCount);
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "gamma space: " + detail::imageGammaSpaceToString(config.gammaSpace));
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha mode: " + detail::imageAlphaModeToString(config.alphaMode));
 		if (config.alphaChannelIndex != m)
 			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha channel index: " + config.alphaChannelIndex);
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha mode: " + detail::imageAlphaModeToString(config.alphaMode));
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "gamma space: " + detail::imageGammaSpaceToString(config.gammaSpace));
 	}
 
 	inline void imageInfo(const Image *img)

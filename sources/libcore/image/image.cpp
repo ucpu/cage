@@ -24,24 +24,20 @@ namespace cage
 		switch (channels)
 		{
 		case 1:
-			c.colorChannelsCount = 1;
 			c.gammaSpace = GammaSpaceEnum::Gamma;
 			break;
 		case 2:
-			c.colorChannelsCount = 1;
-			c.gammaSpace = GammaSpaceEnum::Gamma;
 			c.alphaChannelIndex = 1;
 			c.alphaMode = AlphaModeEnum::Opacity;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
 			break;
 		case 3:
-			c.colorChannelsCount = 3;
 			c.gammaSpace = GammaSpaceEnum::Gamma;
 			break;
 		case 4:
-			c.colorChannelsCount = 3;
-			c.gammaSpace = GammaSpaceEnum::Gamma;
 			c.alphaChannelIndex = 3;
 			c.alphaMode = AlphaModeEnum::Opacity;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
 			break;
 		}
 		return c;

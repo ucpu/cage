@@ -41,7 +41,7 @@ namespace cage
 		Bc3, // rgba 0.25 dxt5
 		Bc4, // r 0.5
 		Bc5, // rg 0.5
-		Bc7, // rgba 0.25
+		Bc7, // rgb/rgba 0.25
 		Astc, // rgba 0.25
 	};
 
