@@ -183,7 +183,7 @@ namespace
 		if (alpha == AlphaModeEnum::None)
 			cfg.alphaChannelIndex = m;
 		else
-			images.parts[0].image->channels() - 1;
+			cfg.alphaChannelIndex = images.parts[0].image->channels() - 1;
 		for (const auto &it : images.parts)
 			it.image->colorConfig = cfg;
 	}
