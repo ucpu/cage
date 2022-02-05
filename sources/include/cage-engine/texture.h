@@ -21,7 +21,7 @@ namespace cage
 		uint32 target() const;
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
-		uint32 mipmapLevels() const;
+		uint32 maxMipmapLevel() const;
 		void bind() const;
 
 		void importImage(const Image *img);
@@ -44,7 +44,7 @@ namespace cage
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void swizzle(const uint32 values[4]);
-		void mipmapLevels(uint32 levels);
+		void maxMipmapLevel(uint32 level);
 		void generateMipmaps();
 	};
 

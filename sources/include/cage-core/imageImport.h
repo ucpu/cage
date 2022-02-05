@@ -18,12 +18,12 @@ namespace cage
 	struct CAGE_CORE_API ImageImportPart
 	{
 		String fileName;
-		String name;
+		//String name;
 		Holder<Image> image;
 		Holder<ImageImportRaw> raw;
-		Vec2i tile;
-		double time = 0; // timestamp in an animation
-		uint32 frameIndex = 0; // index in an animation
+		//Vec2i tile;
+		//double time = 0; // timestamp in an animation
+		//uint32 frameIndex = 0; // index in an animation
 		uint32 mipmapLevel = 0; // 0 = highest resolution
 		uint32 cubeFace = 0; // +X, -X, +Y, -Y, +Z, -Z
 		uint32 layer = 0; // index in an array or slice in 3D image
@@ -41,7 +41,8 @@ namespace cage
 	CAGE_CORE_API ImageImportResult imageImportFiles(const String &filesPattern, const ImageImportConfig &config = {});
 
 	CAGE_CORE_API void imageImportConvertRawToImages(ImageImportResult &result);
-	CAGE_CORE_API void imageImportConvertImagesToBcn(ImageImportResult &result);
+	CAGE_CORE_API void imageImportConvertImagesToBcn(ImageImportResult &result, bool normals = false);
+	CAGE_CORE_API void imageImportGenerateMipmaps(ImageImportResult &result);
 }
 
 #endif // guard_imageImport_h_our98esyd23gh4

@@ -1,28 +1,16 @@
-#include <cage-core/image.h>
-#include <cage-core/imageBlocks.h>
 #include <cage-core/imageImport.h>
-#include <cage-core/enumerate.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-engine/opengl.h>
 
 #include "processor.h"
 
-#include <vector>
-#include <set>
+#include <map>
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
-#ifdef CAGE_DEBUG
-	constexpr sint32 DefaltAstcCompressionQuality = 10;
-#else
-	constexpr sint32 DefaltAstcCompressionQuality = 70;
-#endif // CAGE_DEBUG
-
-	ConfigSint32 configAstcCompressionQuality("cage-asset-processor/texture/astcCompressionQuality", DefaltAstcCompressionQuality);
-
 	uint32 convertFilter(const String &f)
 	{
 		if (f == "nearestMipmapNearest")
@@ -81,100 +69,6 @@ namespace
 		return 0;
 	}
 
-	String resolveAutoTiling(const uint32 target, const uint32 channels)
-	{
-		const String f = properties("astcTiling");
-		if (f != "auto")
-			return f;
-
-		switch (target)
-		{
-		case GL_TEXTURE_2D:
-		case GL_TEXTURE_2D_ARRAY:
-		case GL_TEXTURE_CUBE_MAP:
-			if (toBool(properties("srgb")))
-			{
-				// approx 1 bit per pixel per channel
-				switch (channels)
-				{
-				case 1: return "12x10";
-				case 2: return "8x8";
-				case 3: return "8x5";
-				case 4: return "6x5";
-				}
-			}
-			else
-			{
-				// approx 2 bits per pixel per channel
-				switch (channels)
-				{
-				case 1: return "8x8";
-				case 2: return "6x5";
-				case 3: return "5x4";
-				case 4: return "4x4";
-				}
-			}
-		}
-
-		CAGE_THROW_ERROR(Exception, "could not automatically determine astc tiling");
-	}
-
-	Vec2i convertTiling(const String &f)
-	{
-		String s = f;
-		const uint32 x = toUint32(split(s, "x"));
-		const uint32 y = toUint32(s);
-		return Vec2i(x, y);
-	}
-
-	uint32 findInternalFormatForAstc(const Vec2i &tiling)
-	{
-		const uint32 t = tiling[0] * 100 + tiling[1]; // 8x5 -> 805
-
-		if (toBool(properties("srgb")))
-		{
-			switch (t)
-			{
-			case 404: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR;
-			case 504: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR;
-			case 505: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR;
-			case 605: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR;
-			case 606: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR;
-			case 805: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR;
-			case 806: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR;
-			case 808: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR;
-			case 1005: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR;
-			case 1006: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR;
-			case 1008: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR;
-			case 1010: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR;
-			case 1210: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR;
-			case 1212: return GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR;
-			}
-		}
-		else
-		{
-			switch (t)
-			{
-			case 404: return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
-			case 504: return GL_COMPRESSED_RGBA_ASTC_5x4_KHR;
-			case 505: return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
-			case 605: return GL_COMPRESSED_RGBA_ASTC_6x5_KHR;
-			case 606: return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
-			case 805: return GL_COMPRESSED_RGBA_ASTC_8x5_KHR;
-			case 806: return GL_COMPRESSED_RGBA_ASTC_8x6_KHR;
-			case 808: return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
-			case 1005: return GL_COMPRESSED_RGBA_ASTC_10x5_KHR;
-			case 1006: return GL_COMPRESSED_RGBA_ASTC_10x6_KHR;
-			case 1008: return GL_COMPRESSED_RGBA_ASTC_10x8_KHR;
-			case 1010: return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
-			case 1210: return GL_COMPRESSED_RGBA_ASTC_12x10_KHR;
-			case 1212: return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
-			}
-		}
-
-		CAGE_THROW_ERROR(Exception, "cannot determine internal format for astc compressed texture");
-	}
-
 	uint32 findInternalFormatForBcn(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
@@ -198,49 +92,50 @@ namespace
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
-	ImageKtxTranscodeFormatEnum findBlockFormat(const TextureHeader &data)
+	uint32 findInternalFormatForRaw(const TextureHeader &data)
 	{
-		switch (data.channels)
+		if (toBool(properties("srgb")))
 		{
-		case 1: return ImageKtxTranscodeFormatEnum::Bc4;
-		case 2: return ImageKtxTranscodeFormatEnum::Bc5;
-		case 3: return ImageKtxTranscodeFormatEnum::Bc1;
-		case 4: return ImageKtxTranscodeFormatEnum::Bc3;
+			switch (data.channels)
+			{
+			case 3: return GL_SRGB8;
+			case 4: return GL_SRGB8_ALPHA8;
+			}
+		}
+		else
+		{
+			switch (data.channels)
+			{
+			case 1: return GL_R8;
+			case 2: return GL_RG8;
+			case 3: return GL_RGB8;
+			case 4: return GL_RGBA8;
+			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
-	void findSwizzlingForAstc(TextureSwizzleEnum swizzle[4], const uint32 channels)
+	uint32 findCopyFormatForRaw(const TextureHeader &data)
 	{
-		if (toBool(properties("srgb")))
-			return; // no swizzling
-
-		switch (channels)
+		switch (data.channels)
 		{
-		case 1:
-			swizzle[0] = TextureSwizzleEnum::R;
-			swizzle[1] = TextureSwizzleEnum::Zero;
-			swizzle[2] = TextureSwizzleEnum::Zero;
-			swizzle[3] = TextureSwizzleEnum::One;
-			return;
-		case 2:
-			swizzle[0] = TextureSwizzleEnum::R;
-			swizzle[1] = TextureSwizzleEnum::A;
-			swizzle[2] = TextureSwizzleEnum::Zero;
-			swizzle[3] = TextureSwizzleEnum::One;
-			return;
-		case 3:
-			swizzle[0] = TextureSwizzleEnum::R;
-			swizzle[1] = TextureSwizzleEnum::G;
-			swizzle[2] = TextureSwizzleEnum::B;
-			swizzle[3] = TextureSwizzleEnum::One;
-			return;
-		case 4:
-			// no swizzling
-			return;
+		case 1: return GL_RED;
+		case 2: return GL_RG;
+		case 3: return GL_RGB;
+		case 4: return GL_RGBA;
 		}
+		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+	}
 
-		CAGE_THROW_ERROR(Exception, "cannot determine swizzling for astc compressed texture");
+	uint32 findContainedMipmapLevels(Vec3i res)
+	{
+		uint32 lvl = 1;
+		while (res[0] > 1 || res[1] > 1 || res[2] > 1)
+		{
+			res /= 2;
+			lvl++;
+		}
+		return lvl;
 	}
 
 	ImageImportResult images;
@@ -307,6 +202,7 @@ namespace
 		uint32 sideIndex = 0;
 		for (auto &tgt : parts)
 		{
+			tgt.cubeFace = sideIndex;
 			tgt.image = newImage();
 			tgt.image->initialize(src->width() / 4, src->height() / 3, src->channels(), src->format());
 			/*
@@ -383,123 +279,61 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
 	}
 
-	void exportKtx(TextureHeader &data, AssetHeader &asset, Serializer &ser)
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using ktx encoding");
-
-		ImageKtxEncodeConfig cfg;
-		//cfg.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
-		cfg.normals = toBool(properties("normal"));
-
-		data.flags |= TextureFlags::Ktx;
-
-		std::vector<const Image *> imgs;
-		imgs.reserve(images.parts.size());
-		for (const auto &it : images.parts)
-			imgs.push_back(+it.image);
-		auto ktx = imageKtxEncode(imgs, cfg);
-		asset.originalSize += ktx.size();
-		ser.write(ktx);
-	}
-
-	void exportBcn(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	void exportBcn(TextureHeader &data, Serializer &ser)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using bcn encoding");
 
 		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForBcn(data);
 
-		ImageKtxEncodeConfig cfg1;
-		//cfg1.cubemap = data.target == GL_TEXTURE_CUBE_MAP;
-		cfg1.normals = toBool(properties("normal"));
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = findBlockFormat(data);
+		imageImportConvertImagesToBcn(images, toBool(properties("normal")));
 
-		std::vector<const Image *> imgs;
-		imgs.reserve(images.parts.size());
+		std::map<uint32, std::map<uint32, std::map<uint32, const ImageImportRaw *>>> levels;
 		for (const auto &it : images.parts)
-			imgs.push_back(+it.image);
-		auto trs = imageKtxTranscode(imgs, cfg1, cfg2);
+			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.raw;
+		CAGE_ASSERT(levels.size() >= data.containedLevels);
 
-		for (const auto &it : trs)
+		for (const auto &level : levels)
 		{
-			asset.originalSize += it.data.size();
-			ser.write(it.data);
+			uint32 size = 0;
+			for (const auto &face : level.second)
+				for (const auto &layer : face.second)
+					size += layer.second->data.size();
+
+			const uint32 layers = level.second.at(0).size();
+			ser << Vec3i(level.second.at(0).at(0)->resolution, layers);
+			ser << size;
+			for (const auto &face : level.second)
+				for (const auto &layer : face.second)
+					ser.write(layer.second->data);
 		}
 	}
 
-	void exportAstc(TextureHeader &data, AssetHeader &asset, Serializer &ser)
-	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using astc encoding");
-		const String astcTilingStr = resolveAutoTiling(data.target, data.channels);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "astc tiling: " + astcTilingStr);
-
-		ImageAstcEncodeConfig cfg;
-		cfg.tiling = convertTiling(astcTilingStr);
-		cfg.quality = configAstcCompressionQuality;
-		cfg.normals = toBool(properties("normal"));
-
-		data.flags |= TextureFlags::Compressed;
-		data.internalFormat = findInternalFormatForAstc(cfg.tiling);
-		findSwizzlingForAstc(data.swizzle, data.channels);
-
-		for (const auto &it : images.parts)
-		{
-			auto astc = imageAstcEncode(+it.image, cfg);
-			asset.originalSize += astc.size();
-			ser.write(astc);
-		}
-	}
-
-	void exportRaw(TextureHeader &data, AssetHeader &asset, Serializer &ser)
+	void exportRaw(TextureHeader &data, Serializer &ser)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using raw encoding - no compression");
 
-		if (toBool(properties("srgb")))
-		{
-			switch (data.channels)
-			{
-			case 3:
-				data.internalFormat = GL_SRGB8;
-				data.copyFormat = GL_RGB;
-				break;
-			case 4:
-				data.internalFormat = GL_SRGB8_ALPHA8;
-				data.copyFormat = GL_RGBA;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported bpp (with srgb)");
-			}
-		}
-		else
-		{
-			switch (data.channels)
-			{
-			case 1:
-				data.internalFormat = GL_R8;
-				data.copyFormat = GL_RED;
-				break;
-			case 2:
-				data.internalFormat = GL_RG8;
-				data.copyFormat = GL_RG;
-				break;
-			case 3:
-				data.internalFormat = GL_RGB8;
-				data.copyFormat = GL_RGB;
-				break;
-			case 4:
-				data.internalFormat = GL_RGBA8;
-				data.copyFormat = GL_RGBA;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported bpp");
-			}
-		}
+		data.internalFormat = findInternalFormatForRaw(data);
+		data.copyFormat = findCopyFormatForRaw(data);
 
+		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
 		for (const auto &it : images.parts)
+			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.image;
+		CAGE_ASSERT(levels.size() >= data.containedLevels);
+
+		for (const auto &level : levels)
 		{
-			asset.originalSize += it.image->rawViewU8().size();
-			ser.write(bufferCast(it.image->rawViewU8()));
+			uint32 size = 0;
+			for (const auto &face : level.second)
+				for (const auto &layer : face.second)
+					size += layer.second->rawViewU8().size();
+
+			const uint32 layers = level.second.at(0).size();
+			ser << Vec3i(level.second.at(0).at(0)->resolution(), layers);
+			ser << size;
+			for (const auto &face : level.second)
+				for (const auto &layer : face.second)
+					ser.write(bufferCast(layer.second->rawViewU8()));
 		}
 	}
 
@@ -520,8 +354,8 @@ namespace
 		data.swizzle[1] = TextureSwizzleEnum::G;
 		data.swizzle[2] = TextureSwizzleEnum::B;
 		data.swizzle[3] = TextureSwizzleEnum::A;
-		if (requireMipmaps(data.filterMin))
-			data.flags |= TextureFlags::GenerateMipmaps;
+		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution), 8u) : 1;
+		data.maxMipmapLevel = data.containedLevels - 1;
 		if (toBool(properties("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
 		if (toBool(properties("srgb")))
@@ -533,28 +367,29 @@ namespace
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
 
-		AssetHeader h = initializeAssetHeader();
-		h.originalSize = sizeof(data);
+		if (data.containedLevels > 1)
+			imageImportGenerateMipmaps(images);
 
 		MemoryBuffer inputBuffer;
-		Serializer ser(inputBuffer);
-		ser << data; // reserve space, will be overridden later
-
-		const String compression = properties("compression");
-		if (compression == "bcn")
-			exportBcn(data, h, ser);
-		else if (compression == "ktx")
-			exportKtx(data, h, ser);
-		else if (compression == "astc")
-			exportAstc(data, h, ser);
-		else
-			exportRaw(data, h, ser);
 
 		{
 			Serializer ser(inputBuffer);
-			ser << data; // overwrite the initial header
+			ser << data; // reserve space, will be overridden later
+
+			const String compression = properties("compression");
+			if (compression == "bcn")
+				exportBcn(data, ser);
+			else
+				exportRaw(data, ser);
 		}
 
+		{ // overwrite the initial header
+			Serializer ser(inputBuffer);
+			ser << data;
+		}
+
+		AssetHeader h = initializeAssetHeader();
+		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
@@ -715,11 +550,11 @@ void processTexture()
 
 	if (configGetBool("cage-asset-processor/texture/preview"))
 	{ // preview images
-		// this is after the export, so this operation does not affect the textures
+		imageImportConvertRawToImages(images); // this is after the export, so this operation does not affect the textures
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + it.mipmapLevel + "-" + it.cubeFace + "-" + it.layer + "_" + (index++) + ".png");
 			imageVerticalFlip(+it.image);
 			it.image->exportFile(dbgName);
 		}

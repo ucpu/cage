@@ -27,8 +27,6 @@ namespace cage
 
 	struct CAGE_CORE_API ImageKtxEncodeConfig
 	{
-		//bool cubemap = false; // every consecutive 6 images in the input are cube faces: +X, -X, +Y, -Y, +Z, -Z
-		//bool mipmaps = false; // generate and compress mipmap levels
 		bool normals = false; // treat inputs as normal map
 	};
 
@@ -66,11 +64,11 @@ namespace cage
 
 	CAGE_CORE_API Holder<PointerRange<ImageKtxTranscodeResult>> imageKtxTranscode(PointerRange<const Image *> images, const ImageKtxEncodeConfig &compression, const ImageKtxTranscodeConfig &transcode);
 
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc1Encode(const Image *image);
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc3Encode(const Image *image);
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc4Encode(const Image *image);
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc5Encode(const Image *image);
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc7Encode(const Image *image);
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
 	CAGE_CORE_API Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution);
 	CAGE_CORE_API Holder<Image> imageBc2Decode(PointerRange<const char> buffer, const Vec2i &resolution);
 	CAGE_CORE_API Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution);

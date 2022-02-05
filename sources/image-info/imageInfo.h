@@ -35,9 +35,9 @@ namespace cage
 	{
 		if (!part->fileName.empty())
 			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "file name: " + part->fileName);
-		if (!part->name.empty())
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "name: " + part->name);
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "frame index: " + part->frameIndex);
+		//if (!part->name.empty())
+		//	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "name: " + part->name);
+		//CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "frame index: " + part->frameIndex);
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "mipmap level: " + part->mipmapLevel);
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "cube face: " + part->cubeFace);
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "layer: " + part->layer);

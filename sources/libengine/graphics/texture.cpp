@@ -61,7 +61,7 @@ namespace cage
 		{
 		public:
 			Vec3i resolution;
-			uint32 levels = 1000;
+			uint32 maxMipmapLevel_ = 1000;
 			const uint32 target = 0;
 			uint32 id = 0;
 
@@ -192,10 +192,10 @@ namespace cage
 		return impl->resolution;
 	}
 
-	uint32 Texture::mipmapLevels() const
+	uint32 Texture::maxMipmapLevel() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->levels;
+		return impl->maxMipmapLevel_;
 	}
 
 	void Texture::bind() const
@@ -421,12 +421,12 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::mipmapLevels(uint32 levels)
+	void Texture::maxMipmapLevel(uint32 level)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		glTexParameteri(impl->target, GL_TEXTURE_MAX_LEVEL, levels);
-		impl->levels = levels;
+		glTexParameteri(impl->target, GL_TEXTURE_MAX_LEVEL, level);
+		impl->maxMipmapLevel_ = level;
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

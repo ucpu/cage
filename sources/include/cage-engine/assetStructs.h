@@ -13,11 +13,10 @@ namespace cage
 	{
 		// follows:
 		// number of stages, uint32
-		// stage name, uint32
-		// length, uint32
-		// stage code, array of chars
-		// stage name, uint32
-		// ...
+		// for each stage:
+		//   stage name, uint32
+		//   length, uint32
+		//   stage code, array of chars
 	};
 	*/
 
@@ -28,7 +27,6 @@ namespace cage
 		AnimationLoop = 1 << 1,
 		Srgb = 1 << 2,
 		Compressed = 1 << 3,
-		Ktx = 1 << 4,
 	};
 
 	enum class TextureSwizzleEnum : uint8
@@ -43,6 +41,8 @@ namespace cage
 		TextureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
+		uint32 maxMipmapLevel;
+		uint32 containedLevels;
 		uint32 channels;
 		uint32 internalFormat;
 		uint32 copyFormat;
@@ -56,7 +56,10 @@ namespace cage
 		TextureSwizzleEnum swizzle[4];
 
 		// follows:
-		// array of texels
+		// for each mipmap level:
+		//   resolution, Vec3i
+		//   size, uint32
+		//   array of texels
 	};
 
 	struct CAGE_ENGINE_API ModelHeader

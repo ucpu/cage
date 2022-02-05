@@ -8,59 +8,54 @@
 
 namespace cage
 {
-	Holder<PointerRange<char>> imageBc1Encode(const Image *image)
+	Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
 		if (image->channels() != 3)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc1 encoding");
 		const Image *imgs[1] = { image };
-		ImageKtxEncodeConfig cfg1;
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = ImageKtxTranscodeFormatEnum::Bc1;
-		return std::move(imageKtxTranscode(imgs, cfg1, cfg2)[0].data);
+		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
 	}
 
-	Holder<PointerRange<char>> imageBc3Encode(const Image *image)
+	Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
 		if (image->channels() != 4)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc3 encoding");
 		const Image *imgs[1] = { image };
-		ImageKtxEncodeConfig cfg1;
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = ImageKtxTranscodeFormatEnum::Bc3;
-		return std::move(imageKtxTranscode(imgs, cfg1, cfg2)[0].data);
+		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
 	}
 
-	Holder<PointerRange<char>> imageBc4Encode(const Image *image)
+	Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
 		if (image->channels() != 1)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc4 encoding");
 		const Image *imgs[1] = { image };
-		ImageKtxEncodeConfig cfg1;
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = ImageKtxTranscodeFormatEnum::Bc4;
-		return std::move(imageKtxTranscode(imgs, cfg1, cfg2)[0].data);
+		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
 	}
 
-	Holder<PointerRange<char>> imageBc5Encode(const Image *image)
+	Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
 		if (image->channels() != 2)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc5 encoding");
 		const Image *imgs[1] = { image };
-		ImageKtxEncodeConfig cfg1;
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = ImageKtxTranscodeFormatEnum::Bc5;
-		return std::move(imageKtxTranscode(imgs, cfg1, cfg2)[0].data);
+		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
 	}
 
-	Holder<PointerRange<char>> imageBc7Encode(const Image *image)
+	Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageKtxEncodeConfig &config)
 	{
 		if (image->channels() != 4)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc7 encoding");
 		const Image *imgs[1] = { image };
-		ImageKtxEncodeConfig cfg1;
 		ImageKtxTranscodeConfig cfg2;
 		cfg2.format = ImageKtxTranscodeFormatEnum::Bc7;
-		return std::move(imageKtxTranscode(imgs, cfg1, cfg2)[0].data);
+		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
 	}
 
 	namespace

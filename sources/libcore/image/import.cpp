@@ -24,6 +24,7 @@ namespace cage
 	{
 		ImageImportResult result;
 		const auto paths = pathSearchSequence(filesPattern);
+		uint32 layer = 0;
 		for (const String &p : paths)
 		{
 			Holder<File> f = readFile(p);
@@ -32,7 +33,11 @@ namespace cage
 			ImageImportResult tmp = imageImportBuffer(buffer, config);
 			for (auto &it : tmp.parts)
 				it.fileName = p;
+			if (paths.size() > 1)
+				for (auto &it : tmp.parts)
+					it.layer = layer;
 			merge(result, tmp);
+			layer++;
 		}
 		return result;
 	}
@@ -68,7 +73,7 @@ namespace cage
 		}
 	}
 
-	void imageImportConvertImagesToBcn(ImageImportResult &result)
+	void imageImportConvertImagesToBcn(ImageImportResult &result, bool normals)
 	{
 		for (ImageImportPart &part : result.parts)
 		{
@@ -82,19 +87,19 @@ namespace cage
 				{
 				case 1:
 					r.format = "bc4";
-					r.data = imageBc4Encode(+part.image);
+					r.data = imageBc4Encode(+part.image, { normals });
 					break;
 				case 2:
 					r.format = "bc5";
-					r.data = imageBc5Encode(+part.image);
+					r.data = imageBc5Encode(+part.image, { normals });
 					break;
 				case 3:
 					r.format = "bc1";
-					r.data = imageBc1Encode(+part.image);
+					r.data = imageBc1Encode(+part.image, { normals });
 					break;
 				case 4:
 					r.format = "bc3";
-					r.data = imageBc3Encode(+part.image);
+					r.data = imageBc3Encode(+part.image, { normals });
 					break;
 				default:
 					CAGE_THROW_ERROR(Exception, "unsupported number of channels for image-to-bcn conversion");
@@ -104,5 +109,49 @@ namespace cage
 				part.image.clear();
 			}
 		}
+	}
+
+	void imageImportGenerateMipmaps(ImageImportResult &result)
+	{
+		imageImportConvertRawToImages(result);
+
+		const auto &has = [&](uint32 level, uint32 face, uint32 layer) {
+			for (const auto &it : result.parts)
+				if (it.mipmapLevel == level && it.cubeFace == face && it.layer == layer)
+					return true;
+			return false;
+		};
+
+		PointerRangeHolder<ImageImportPart> parts;
+		for (const auto &src : result.parts)
+		{
+			Vec2i resolution = src.image->resolution();
+			Holder<Image> img = src.image.share();
+			for (uint32 level = 1; ; level++)
+			{
+				resolution /= 2;
+				resolution = max(resolution, 1);
+
+				if (has(level, src.cubeFace, src.layer))
+					continue;
+
+				ImageImportPart p;
+				p.fileName = src.fileName;
+				p.mipmapLevel = level;
+				p.cubeFace = src.cubeFace;
+				p.layer = src.layer;
+				p.image = img->copy();
+				imageResize(+p.image, resolution);
+				img = p.image.share();
+				parts.push_back(std::move(p));
+
+				if (resolution == Vec2i(1))
+					break;
+			}
+		}
+
+		for (auto &it : result.parts)
+			parts.push_back(std::move(it));
+		result.parts = std::move(parts);
 	}
 }
