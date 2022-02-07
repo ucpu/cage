@@ -122,11 +122,22 @@ namespace cage
 			return false;
 		};
 
-		PointerRangeHolder<ImageImportPart> parts;
-		for (const auto &src : result.parts)
+		PointerRangeHolder<ImageImportPart> allParts;
+
+		for (auto &src : result.parts)
 		{
-			Vec2i resolution = src.image->resolution();
+			PointerRangeHolder<ImageImportPart> mips;
+
 			Holder<Image> img = src.image.share();
+			const ImageFormatEnum originalFormat = img->format();
+			const ImageColorConfig originalColor = img->colorConfig;
+			imageConvert(+img, ImageFormatEnum::Float);
+			if (img->colorConfig.gammaSpace != GammaSpaceEnum::None)
+				imageConvert(+img, GammaSpaceEnum::Linear);
+			if (img->colorConfig.alphaMode != AlphaModeEnum::None)
+				imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
+
+			Vec2i resolution = img->resolution();
 			for (uint32 level = 1; ; level++)
 			{
 				resolution /= 2;
@@ -140,18 +151,25 @@ namespace cage
 				p.mipmapLevel = level;
 				p.cubeFace = src.cubeFace;
 				p.layer = src.layer;
-				p.image = img->copy();
-				imageResize(+p.image, resolution);
-				img = p.image.share();
-				parts.push_back(std::move(p));
+				img = img->copy();
+				imageResize(+img, resolution);
+				p.image = img.share();
+				mips.push_back(std::move(p));
 
 				if (resolution == Vec2i(1))
 					break;
 			}
+
+			mips.push_back(std::move(src));
+			for (auto &it : mips)
+			{
+				imageConvert(+it.image, originalColor.alphaMode);
+				imageConvert(+it.image, originalColor.gammaSpace);
+				imageConvert(+it.image, originalFormat);
+				allParts.push_back(std::move(it));
+			}
 		}
 
-		for (auto &it : result.parts)
-			parts.push_back(std::move(it));
-		result.parts = std::move(parts);
+		result.parts = std::move(allParts);
 	}
 }
