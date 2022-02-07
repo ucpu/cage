@@ -40,9 +40,6 @@
 [submodule "externals/msdfgen/msdfgen"]
 	path = externals/msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
-[submodule "externals/xsimd/xsimd"]
-	path = externals/xsimd/xsimd
-	url = https://github.com/QuantStack/xsimd.git
 [submodule "externals/fastnoise/fastnoise"]
 	path = externals/fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
