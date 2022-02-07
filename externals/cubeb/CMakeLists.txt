@@ -77,7 +77,7 @@ check_include_files(audioclient.h USE_WASAPI)
 if(USE_WASAPI)
 	target_sources(cubeb PRIVATE cubeb/src/cubeb_wasapi.cpp)
 	target_compile_definitions(cubeb PRIVATE USE_WASAPI)
-	target_link_libraries(cubeb PRIVATE avrt ole32)
+	target_link_libraries(cubeb PRIVATE avrt ole32 ksuser)
 endif()
 
 check_include_files("windows.h;mmsystem.h" USE_WINMM)

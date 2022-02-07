@@ -104,7 +104,7 @@ namespace cage
 	{
 		initBasisuOnce();
 
-		basist::ktx2_transcoder trans(nullptr);
+		basist::ktx2_transcoder trans;
 
 		if (!trans.init(buffer.data(), buffer.size()))
 			CAGE_THROW_ERROR(Exception, "failed parsing ktx file header");
@@ -138,7 +138,7 @@ namespace cage
 	{
 		initBasisuOnce();
 
-		basist::ktx2_transcoder trans(nullptr);
+		basist::ktx2_transcoder trans;
 
 		if (!trans.init(buffer.data(), buffer.size()))
 			CAGE_THROW_ERROR(Exception, "failed parsing ktx file header");
@@ -195,7 +195,7 @@ namespace cage
 		throwError(compressor.process());
 
 		const auto intermediate = compressor.get_output_basis_file();
-		basist::basisu_transcoder trans(nullptr);
+		basist::basisu_transcoder trans;
 		if (!trans.start_transcoding(intermediate.data(), intermediate.size()))
 			CAGE_THROW_ERROR(Exception, "failed loading basisu file data");
 
