@@ -321,6 +321,93 @@ void testFiles()
 	}
 
 	{
+		CAGE_TESTCASE("paths find sequence");
+
+		writeFile("testdir/sequence/001.txt");
+		writeFile("testdir/sequence/002.txt");
+		writeFile("testdir/sequence/003.txt");
+		writeFile("testdir/sequence/004.txt");
+		writeFile("testdir/sequence/005.txt");
+		writeFile("testdir/sequence/006.txt");
+		writeFile("testdir/sequence/007.txt");
+		writeFile("testdir/sequence/008.txt");
+		writeFile("testdir/sequence/009.txt");
+		writeFile("testdir/sequence/010.txt");
+		writeFile("testdir/sequence/011.txt");
+		writeFile("testdir/sequence/012.txt");
+		writeFile("testdir/sequence/013.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 13);
+			CAGE_TEST(res[0] == "testdir/sequence/001.txt");
+			CAGE_TEST(res[12] == "testdir/sequence/013.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+
+		writeFile("testdir/sequence/000.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 14);
+			CAGE_TEST(res[0] == "testdir/sequence/000.txt");
+			CAGE_TEST(res[13] == "testdir/sequence/013.txt");
+		}
+
+		pathRemove("testdir/sequence");
+
+		writeFile("testdir/sequence/1.txt");
+		writeFile("testdir/sequence/2.txt");
+		writeFile("testdir/sequence/3.txt");
+		writeFile("testdir/sequence/4.txt");
+		writeFile("testdir/sequence/5.txt");
+		writeFile("testdir/sequence/6.txt");
+		writeFile("testdir/sequence/7.txt");
+		writeFile("testdir/sequence/8.txt");
+		writeFile("testdir/sequence/9.txt");
+		writeFile("testdir/sequence/10.txt");
+		writeFile("testdir/sequence/11.txt");
+		writeFile("testdir/sequence/12.txt");
+		writeFile("testdir/sequence/13.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 13);
+			CAGE_TEST(res[0] == "testdir/sequence/1.txt");
+			CAGE_TEST(res[12] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+
+		writeFile("testdir/sequence/0.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 14);
+			CAGE_TEST(res[0] == "testdir/sequence/0.txt");
+			CAGE_TEST(res[13] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/13.txt");
+			CAGE_TEST(res.size() == 1);
+			CAGE_TEST(res[0] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/42.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+	}
+
+	{
 		CAGE_TESTCASE("filesystem watcher");
 		Holder<FilesystemWatcher> w = newFilesystemWatcher();
 		pathCreateDirectories("testdir/watch/dir");

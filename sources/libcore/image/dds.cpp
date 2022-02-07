@@ -1,7 +1,10 @@
 #include "image.h"
 #include <cage-core/imageBlocks.h>
 #include <cage-core/serialization.h>
+#include <cage-core/imageImport.h>
+#include <cage-core/pointerRangeHolder.h>
 
+// todo
 // mipmaps, cubemaps, arrays, volumes are not supported
 // only DXT1, DXT3 and DXT5 formats are supported
 
@@ -60,27 +63,21 @@ namespace cage
 		if ((header.width % 4) != 0 || (header.height % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "unsupported resolution in dds decoding");
 
-		impl->width = header.width;
-		impl->height = header.height;
-		impl->channels = 4;
-		impl->format = ImageFormatEnum::U8;
-		impl->mem.allocate(impl->width * impl->height * impl->channels);
-
 		switch (header.format.fourCC)
 		{
 		case makeFourCC("DXT1"):
 		{
-			auto res = imageBc1Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			auto res = imageBc1Decode(des.read(des.available()), Vec2i(header.width, header.height));
 			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		case makeFourCC("DXT3"):
 		{
-			auto res = imageBc2Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			auto res = imageBc2Decode(des.read(des.available()), Vec2i(header.width, header.height));
 			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		case makeFourCC("DXT5"):
 		{
-			auto res = imageBc3Decode(des.read(des.available()), Vec2i(impl->width, impl->height));
+			auto res = imageBc3Decode(des.read(des.available()), Vec2i(header.width, header.height));
 			swapAll(impl, (ImageImpl *)+res);
 		} break;
 		default:
@@ -88,6 +85,56 @@ namespace cage
 		}
 
 		impl->colorConfig = defaultConfig(impl->channels);
+	}
+
+	ImageImportResult ddsDecode(PointerRange<const char> inBuffer, const ImageImportConfig &config)
+	{
+		Deserializer des(inBuffer);
+
+		Header header;
+		des >> header;
+		CAGE_ASSERT(header.magic == Magic);
+
+		if ((header.width % 4) != 0 || (header.height % 4) != 0)
+			CAGE_THROW_ERROR(Exception, "unsupported resolution in dds decoding");
+
+		ImageImportRaw raw;
+		raw.resolution = Vec2i(header.width, header.height);
+		raw.channels = 4;
+		
+		{
+			PointerRangeHolder<char> data;
+			data.resize(des.available());
+			detail::memcpy(data.data(), des.read(data.size()).data(), data.size());
+			raw.data = std::move(data);
+		}
+
+		switch (header.format.fourCC)
+		{
+		case makeFourCC("DXT1"):
+			raw.format = "bc1";
+			raw.channels = 3;
+			break;
+		case makeFourCC("DXT3"):
+			raw.format = "bc2";
+			raw.channels = 4;
+			break;
+		case makeFourCC("DXT5"):
+			raw.format = "bc3";
+			raw.channels = 4;
+			break;
+		default:
+			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
+		}
+
+		ImageImportPart part;
+		part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(raw));
+		part.raw->colorConfig = defaultConfig(raw.channels);
+		PointerRangeHolder<ImageImportPart> parts;
+		parts.push_back(std::move(part));
+		ImageImportResult result;
+		result.parts = std::move(parts);
+		return result;
 	}
 
 	MemoryBuffer ddsEncode(const ImageImpl *impl)

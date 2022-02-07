@@ -149,7 +149,7 @@ void testImage()
 	}
 
 	{
-		CAGE_TESTCASE("bcN");
+		CAGE_TESTCASE("bcn");
 
 		const auto &compare = [](const Image *a, const Image *b)
 		{
@@ -170,6 +170,18 @@ void testImage()
 		}
 
 		{
+			CAGE_TESTCASE("bc1 - weird resolution");
+			Holder<Image> img = newImage();
+			img->initialize(403, 301, 4);
+			drawCircle(+img);
+			imageConvert(+img, 3);
+			const auto buff = imageBc1Encode(+img);
+			Holder<Image> res = imageBc1Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc1-403x301.png");
+		}
+
+		{
 			CAGE_TESTCASE("bc3");
 			Holder<Image> img = newImage();
 			img->initialize(400, 300, 4);
@@ -178,6 +190,17 @@ void testImage()
 			Holder<Image> res = imageBc3Decode(buff, img->resolution());
 			compare(+img, +res);
 			res->exportFile("images/formats/bc3.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc3 - weird resolution");
+			Holder<Image> img = newImage();
+			img->initialize(403, 301, 4);
+			drawCircle(+img);
+			const auto buff = imageBc3Encode(+img);
+			Holder<Image> res = imageBc3Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc3-403x301.png");
 		}
 
 		{
@@ -193,6 +216,18 @@ void testImage()
 		}
 
 		{
+			CAGE_TESTCASE("bc4 - weird resolution");
+			Holder<Image> img = newImage();
+			img->initialize(403, 301, 4);
+			drawCircle(+img);
+			imageConvert(+img, 1);
+			const auto buff = imageBc4Encode(+img);
+			Holder<Image> res = imageBc4Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc4-403x301.png");
+		}
+
+		{
 			CAGE_TESTCASE("bc5");
 			Holder<Image> img = newImage();
 			img->initialize(400, 300, 4);
@@ -205,6 +240,18 @@ void testImage()
 		}
 
 		{
+			CAGE_TESTCASE("bc5 - weird resolution");
+			Holder<Image> img = newImage();
+			img->initialize(403, 301, 4);
+			drawCircle(+img);
+			imageConvert(+img, 2);
+			const auto buff = imageBc5Encode(+img);
+			Holder<Image> res = imageBc5Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc5-403x301.png");
+		}
+
+		{
 			CAGE_TESTCASE("bc7");
 			Holder<Image> img = newImage();
 			img->initialize(400, 300, 4);
@@ -213,6 +260,17 @@ void testImage()
 			Holder<Image> res = imageBc7Decode(buff, img->resolution());
 			compare(+img, +res);
 			res->exportFile("images/formats/bc7.png");
+		}
+
+		{
+			CAGE_TESTCASE("bc7 - weird resolution");
+			Holder<Image> img = newImage();
+			img->initialize(403, 301, 4);
+			drawCircle(+img);
+			const auto buff = imageBc7Encode(+img);
+			Holder<Image> res = imageBc7Decode(buff, img->resolution());
+			compare(+img, +res);
+			res->exportFile("images/formats/bc7-403x301.png");
 		}
 	}
 

@@ -142,6 +142,13 @@ namespace cage
 	CAGE_CORE_API String pathSearchTowardsRoot(const String &name, PathTypeFlags type = PathTypeFlags::File);
 	CAGE_CORE_API String pathSearchTowardsRoot(const String &name, const String &whereToStart, PathTypeFlags type = PathTypeFlags::File);
 
+	// example, pattern = "/abc/def$$$.txt" will search for files:
+	// /abc/def000.txt (optional)
+	// /abc/def001.txt
+	// /abc/def002.txt etc.
+	// and stops searching on first path that does not exist (except all zeros)
+	CAGE_CORE_API Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute = '$', uint32 limit = 1000);
+
 	CAGE_CORE_API String pathWorkingDir();
 
 	namespace detail

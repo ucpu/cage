@@ -154,8 +154,8 @@ namespace cage
 	template<uint32 N> struct Guid;
 	struct HashString;
 	enum class ImageFormatEnum : uint32;
-	enum class GammaSpaceEnum : uint32;
 	enum class AlphaModeEnum : uint32;
+	enum class GammaSpaceEnum : uint32;
 	struct ImageColorConfig;
 	class Image;
 	struct ImageAstcEncodeConfig;
@@ -164,6 +164,10 @@ namespace cage
 	enum class ImageKtxTranscodeFormatEnum : uint32;
 	struct ImageKtxTranscodeConfig;
 	struct ImageKtxTranscodeResult;
+	struct ImageImportRaw;
+	struct ImageImportPart;
+	struct ImageImportResult;
+	struct ImageImportConfig;
 	class Ini;
 	class LineReader;
 	class Logger;

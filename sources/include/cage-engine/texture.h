@@ -21,22 +21,30 @@ namespace cage
 		uint32 target() const;
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
+		uint32 maxMipmapLevel() const;
 		void bind() const;
 
 		void importImage(const Image *img);
 		void image2d(Vec2i resolution, uint32 internalFormat);
 		void image2d(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void image2d(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
 		void image2dCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
+		void image2dCompressed(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
 		void imageCube(Vec2i resolution, uint32 internalFormat);
-		void imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
-		void imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
+		void imageCube(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void imageCube(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void imageCubeCompressed(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
+		void imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer);
 		void image3d(Vec3i resolution, uint32 internalFormat);
 		void image3d(Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void image3d(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
 		void image3dCompressed(Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer);
+		void image3dCompressed(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer);
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void swizzle(const uint32 values[4]);
+		void maxMipmapLevel(uint32 level);
 		void generateMipmaps();
 	};
 

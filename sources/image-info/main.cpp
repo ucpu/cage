@@ -1,6 +1,5 @@
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
-#include <cage-core/image.h>
 #include <cage-core/ini.h>
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
@@ -12,16 +11,16 @@ using namespace cage;
 void info(const String &src)
 {
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "opening image '" + src + "'");
-	Holder<Image> img = newImage();
+	ImageImportResult result;
 	try
 	{
-		img->importFile(src);
+		result = imageImportFiles(src);
 	}
 	catch (const Exception &)
 	{
 		return;
 	}
-	imageInfo(+img);
+	imageInfo(result);
 }
 
 int main(int argc, const char *args[])

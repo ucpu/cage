@@ -15,13 +15,6 @@ namespace cage
 		Default = m, // used only for decoding an image, it will use original format from the file
 	};
 
-	enum class GammaSpaceEnum : uint32
-	{
-		None = 0,
-		Gamma,
-		Linear,
-	};
-
 	enum class AlphaModeEnum : uint32
 	{
 		None = 0,
@@ -29,12 +22,18 @@ namespace cage
 		PremultipliedOpacity,
 	};
 
+	enum class GammaSpaceEnum : uint32
+	{
+		None = 0, // unknown
+		Gamma,
+		Linear,
+	};
+
 	struct CAGE_CORE_API ImageColorConfig
 	{
-		uint32 colorChannelsCount = 0; // number of channels affected by the gamma and/or alpha
-		uint32 alphaChannelIndex = m; // index of the channel to use as a source of opacity
-		GammaSpaceEnum gammaSpace = GammaSpaceEnum::None;
+		uint32 alphaChannelIndex = m; // index of the channel to use as a source of opacity (or first non-color channel)
 		AlphaModeEnum alphaMode = AlphaModeEnum::None;
+		GammaSpaceEnum gammaSpace = GammaSpaceEnum::None;
 	};
 
 	class CAGE_CORE_API Image : private Immovable

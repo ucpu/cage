@@ -61,6 +61,7 @@ namespace cage
 		{
 		public:
 			Vec3i resolution;
+			uint32 maxMipmapLevel_ = 1000;
 			const uint32 target = 0;
 			uint32 id = 0;
 
@@ -191,6 +192,12 @@ namespace cage
 		return impl->resolution;
 	}
 
+	uint32 Texture::maxMipmapLevel() const
+	{
+		const TextureImpl *impl = (const TextureImpl *)this;
+		return impl->maxMipmapLevel_;
+	}
+
 	void Texture::bind() const
 	{
 		CAGE_ASSERT(graphicsPrivat::getCurrentContext());
@@ -273,50 +280,71 @@ namespace cage
 
 	void Texture::image2d(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
+		image2d(0, resolution, internalFormat, format, type, buffer);
+	}
+
+	void Texture::image2d(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
-		glTexImage2D(impl->target, 0, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
-		impl->resolution = Vec3i(resolution, 1);
+		glTexImage2D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void Texture::image2dCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
 	{
+		image2dCompressed(0, resolution, internalFormat, buffer);
+	}
+
+	void Texture::image2dCompressed(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D);
-		glCompressedTexImage2D(impl->target, 0, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
-		impl->resolution = Vec3i(resolution, 1);
+		glCompressedTexImage2D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void Texture::imageCube(Vec2i resolution, uint32 internalFormat)
 	{
-		imageCube(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
+		for (uint32 f = 0; f < 6; f++)
+			imageCube(f, resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::imageCube(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::imageCube(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	{
+		imageCube(0, faceIndex, resolution, internalFormat, format, type, buffer);
+	}
+
+	void Texture::imageCube(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
-		const uintPtr stride = buffer.size() / 6;
-		for (uint32 i = 0; i < 6; i++)
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data() + i * stride);
-		impl->resolution = Vec3i(resolution, 1);
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCubeCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	void Texture::imageCubeCompressed(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	{
+		imageCubeCompressed(0, faceIndex, resolution, internalFormat, buffer);
+	}
+
+	void Texture::imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
-		const uintPtr stride = buffer.size() / 6;
-		for (uint32 i = 0; i < 6; i++)
-			glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, stride, buffer.data() + i * stride);
-		impl->resolution = Vec3i(resolution, 1);
+		glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = Vec3i(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -327,21 +355,33 @@ namespace cage
 
 	void Texture::image3d(Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
+		image3d(0, resolution, internalFormat, format, type, buffer);
+	}
+
+	void Texture::image3d(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glTexImage3D(impl->target, 0, internalFormat, resolution[0], resolution[1], resolution[2], 0, format, type, buffer.data());
-		impl->resolution = resolution;
+		glTexImage3D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], resolution[2], 0, format, type, buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = resolution;
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void Texture::image3dCompressed(Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer)
 	{
+		image3dCompressed(0, resolution, internalFormat, buffer);
+	}
+
+	void Texture::image3dCompressed(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glCompressedTexImage3D(impl->target, 0, internalFormat, resolution[0], resolution[1], resolution[2], 0, buffer.size(), buffer.data());
-		impl->resolution = resolution;
+		glCompressedTexImage3D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], resolution[2], 0, buffer.size(), buffer.data());
+		if (mipmapLevel == 0)
+			impl->resolution = resolution;
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -378,6 +418,15 @@ namespace cage
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		static_assert(sizeof(uint32) == sizeof(GLint));
 		glTexParameteriv(impl->target, GL_TEXTURE_SWIZZLE_RGBA, (const GLint *)values);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::maxMipmapLevel(uint32 level)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
+		glTexParameteri(impl->target, GL_TEXTURE_MAX_LEVEL, level);
+		impl->maxMipmapLevel_ = level;
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

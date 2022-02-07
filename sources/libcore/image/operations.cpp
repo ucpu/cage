@@ -7,7 +7,7 @@ namespace cage
 {
 	void imageFill(Image *img, const Real &value)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->set(x, y, value);
@@ -15,7 +15,7 @@ namespace cage
 
 	void imageFill(Image *img, const Vec2 &value)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->set(x, y, value);
@@ -23,7 +23,7 @@ namespace cage
 
 	void imageFill(Image *img, const Vec3 &value)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->set(x, y, value);
@@ -31,7 +31,7 @@ namespace cage
 
 	void imageFill(Image *img, const Vec4 &value)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->set(x, y, value);
@@ -39,7 +39,7 @@ namespace cage
 
 	void imageFill(Image *img, uint32 ch, float val)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->value(x, y, ch, val);
@@ -47,7 +47,7 @@ namespace cage
 
 	void imageFill(Image *img, uint32 ch, const Real &val)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		for (uint32 y = 0; y < impl->height; y++)
 			for (uint32 x = 0; x < impl->width; x++)
 				impl->value(x, y, ch, val);
@@ -55,7 +55,7 @@ namespace cage
 
 	void imageVerticalFlip(Image *img)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		uint32 lineSize = formatBytes(impl->format) * impl->channels * impl->width;
 		uint32 swapsCount = impl->height / 2;
 		MemoryBuffer tmp;
@@ -83,7 +83,7 @@ namespace cage
 	void imageConvert(Image *img, uint32 channels)
 	{
 		CAGE_ASSERT(channels > 0);
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		if (impl->channels == channels)
 			return; // no op
 		CAGE_ASSERT(impl->format != ImageFormatEnum::Rgbe);
@@ -98,7 +98,7 @@ namespace cage
 	void imageConvert(Image *img, ImageFormatEnum format)
 	{
 		CAGE_ASSERT(format != ImageFormatEnum::Default);
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		if (impl->format == format)
 			return; // no op
 		Holder<Image> tmp = newImage();
@@ -111,9 +111,15 @@ namespace cage
 
 	void imageConvert(Image *img, GammaSpaceEnum gammaSpace)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
-		if (gammaSpace == impl->colorConfig.gammaSpace || impl->colorConfig.colorChannelsCount == 0)
+		ImageImpl *impl = (ImageImpl *)img;
+		if (gammaSpace == impl->colorConfig.gammaSpace)
 			return; // no op
+		if (impl->colorConfig.gammaSpace == GammaSpaceEnum::None)
+		{
+			CAGE_LOG(SeverityEnum::Warning, "image", Stringizer() + "image had unknown gamma space, setting it to " + detail::imageGammaSpaceToString(gammaSpace) + ", without modifying any pixels");
+			impl->colorConfig.gammaSpace = gammaSpace;
+			return;
+		}
 		Real p;
 		if (gammaSpace == GammaSpaceEnum::Gamma && impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear)
 			p = 1.0 / 2.2;
@@ -121,7 +127,7 @@ namespace cage
 			p = 2.2;
 		else
 			CAGE_THROW_ERROR(Exception, "invalid image gamma conversion");
-		const uint32 apply = min(impl->channels, impl->colorConfig.colorChannelsCount);
+		const uint32 apply = min(impl->channels, impl->colorConfig.alphaChannelIndex);
 		for (uint32 y = 0; y < impl->height; y++)
 		{
 			for (uint32 x = 0; x < impl->width; x++)
@@ -135,16 +141,17 @@ namespace cage
 
 	void imageConvert(Image *img, AlphaModeEnum alphaMode)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
-		if (alphaMode == impl->colorConfig.alphaMode || impl->colorConfig.colorChannelsCount == 0)
+		ImageImpl *impl = (ImageImpl *)img;
+		if (alphaMode == impl->colorConfig.alphaMode)
 			return; // no op
 		if (impl->colorConfig.alphaChannelIndex >= impl->channels)
 			CAGE_THROW_ERROR(Exception, "invalid alpha source channel index");
-		if (impl->colorConfig.alphaChannelIndex < impl->colorConfig.colorChannelsCount)
-			CAGE_THROW_ERROR(Exception, "alpha channel cannot overlap with color channels");
-		const uint32 apply = impl->colorConfig.colorChannelsCount;
 		if (alphaMode == AlphaModeEnum::Opacity && impl->colorConfig.alphaMode == AlphaModeEnum::PremultipliedOpacity)
 		{
+			const ImageFormatEnum origFormat = img->format();
+			const GammaSpaceEnum origGamma = img->colorConfig.gammaSpace;
+			imageConvert(+img, ImageFormatEnum::Float);
+			imageConvert(+img, GammaSpaceEnum::Linear);
 			for (uint32 y = 0; y < impl->height; y++)
 			{
 				for (uint32 x = 0; x < impl->width; x++)
@@ -152,29 +159,37 @@ namespace cage
 					Real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
 					if (abs(a) < 1e-7)
 					{
-						for (uint32 c = 0; c < apply; c++)
+						for (uint32 c = 0; c < impl->colorConfig.alphaChannelIndex; c++)
 							impl->value(x, y, c, 0);
 					}
 					else
 					{
 						a = 1 / a;
-						for (uint32 c = 0; c < apply; c++)
+						for (uint32 c = 0; c < impl->colorConfig.alphaChannelIndex; c++)
 							impl->value(x, y, c, impl->value(x, y, c) * a);
 					}
 				}
 			}
+			imageConvert(+img, origGamma);
+			imageConvert(+img, origFormat);
 		}
 		else if (alphaMode == AlphaModeEnum::PremultipliedOpacity && impl->colorConfig.alphaMode == AlphaModeEnum::Opacity)
 		{
+			const ImageFormatEnum origFormat = img->format();
+			const GammaSpaceEnum origGamma = img->colorConfig.gammaSpace;
+			imageConvert(+img, ImageFormatEnum::Float);
+			imageConvert(+img, GammaSpaceEnum::Linear);
 			for (uint32 y = 0; y < impl->height; y++)
 			{
 				for (uint32 x = 0; x < impl->width; x++)
 				{
 					Real a = impl->value(x, y, impl->colorConfig.alphaChannelIndex);
-					for (uint32 c = 0; c < apply; c++)
+					for (uint32 c = 0; c < impl->colorConfig.alphaChannelIndex; c++)
 						impl->value(x, y, c, impl->value(x, y, c) * a);
 				}
 			}
+			imageConvert(+img, origGamma);
+			imageConvert(+img, origFormat);
 		}
 		else
 			CAGE_THROW_ERROR(Exception, "invalid image alpha conversion");
@@ -265,7 +280,7 @@ namespace cage
 
 	void imageResize(Image *img, uint32 w, uint32 h, bool useColorConfig)
 	{
-		ImageImpl *impl = (ImageImpl*)img;
+		ImageImpl *impl = (ImageImpl *)img;
 		if (w == impl->width && h == impl->height)
 			return; // no op
 
@@ -482,7 +497,7 @@ namespace cage
 	{
 		const uint32 w = img->width();
 		const uint32 h = img->height();
-		const uint32 c = useColorConfig ? img->colorConfig.colorChannelsCount : img->channels();
+		const uint32 c = useColorConfig ? img->colorConfig.alphaChannelIndex : img->channels();
 		for (uint32 y = 0; y < h; y++)
 			for (uint32 x = 0; x < w; x++)
 				for (uint32 i = 0; i < c; i++)

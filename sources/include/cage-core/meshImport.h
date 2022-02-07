@@ -4,6 +4,7 @@
 #include "math.h"
 #include "geometry.h"
 #include "meshMaterial.h"
+#include "imageImport.h"
 
 namespace cage
 {
@@ -11,7 +12,7 @@ namespace cage
 	{
 		String name;
 		MeshTextureType type = MeshTextureType::None;
-		Holder<Image> image;
+		ImageImportResult images;
 	};
 
 	struct CAGE_CORE_API MeshImportPart

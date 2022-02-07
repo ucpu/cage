@@ -73,14 +73,8 @@ default = false
 [compression]
 display = compression method
 type = enum
-values = raw, bcn, ktx, astc
+values = raw, bcn
 default = bcn
-
-[astcTiling]
-display = astc compression tiling
-type = enum
-values = auto, 4x4, 5x4, 5x5, 6x5, 6x6, 8x5, 8x6, 10x5, 10x6, 8x8, 10x8, 10x10, 12x10, 12x12
-default = auto
 
 [animationDuration]
 display = animation duration
