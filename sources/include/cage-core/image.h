@@ -147,6 +147,11 @@ namespace cage
 	namespace detail
 	{
 		CAGE_CORE_API void imageResize(
+			const uint8 *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
+			      uint8 *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
+			uint32 channels);
+
+		CAGE_CORE_API void imageResize(
 			const float *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
 			      float *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
 			uint32 channels);

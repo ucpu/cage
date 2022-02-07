@@ -91,3 +91,6 @@
 [submodule "externals/basis_universal/basis_universal"]
 	path = externals/basis_universal/basis_universal
 	url = https://github.com/BinomialLLC/basis_universal.git
+[submodule "externals/avir/avir"]
+	path = externals/avir/avir
+	url = https://github.com/avaneev/avir.git

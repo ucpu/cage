@@ -54,6 +54,7 @@ add_subdirectory(tinyexr)
 add_subdirectory(samplerate)
 add_subdirectory(astc-encoder)
 add_subdirectory(basis_universal)
+add_subdirectory(avir)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -122,6 +123,7 @@ external_target_properties(samplerate)
 external_target_properties(astcenc-avx2-static)
 external_target_properties(astcenc-sse2-static)
 external_target_properties(basisu)
+external_target_properties(avir)
 
 # final overrides
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)
