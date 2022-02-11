@@ -1,7 +1,5 @@
 #include "math.h"
 
-#include <xsimd/xsimd.hpp>
-
 namespace cage
 {
 	Mat3 Mat3::parse(const String &str)
@@ -177,19 +175,15 @@ namespace cage
 
 	Mat4 operator * (const Mat4 &l, const Mat4 &r) noexcept
 	{
-		Mat4 res = Mat4::Zero();
-		typedef xsimd::batch<float, 4> batch;
-		for (int i = 0; i < 16; i += 4)
+		Mat4 res;
+		for (uint8 x = 0; x < 4; x++)
 		{
-			batch s = xsimd::zero<batch>();
-			const float *rr_ = (float*)(r.data + i);
-			for (int j = 0; j < 4; j++)
+			for (uint8 y = 0; y < 4; y++)
 			{
-				batch ll = batch((float*)(l.data + j * 4));
-				batch rr = batch(rr_[j]);
-				s += ll * rr;
+				res.data[y * 4 + x] = 0;
+				for (uint8 z = 0; z < 4; z++)
+					res.data[y * 4 + x] += l[z * 4 + x] * r[y * 4 + z];
 			}
-			s.store_unaligned((float*)(res.data + i));
 		}
 		return res;
 	}

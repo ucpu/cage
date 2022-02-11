@@ -284,8 +284,8 @@ namespace cage
 		if (w == impl->width && h == impl->height)
 			return; // no op
 
-		ImageFormatEnum originalFormat = impl->format;
-		ImageColorConfig originalColor = impl->colorConfig;
+		const ImageFormatEnum originalFormat = impl->format;
+		const ImageColorConfig originalColor = impl->colorConfig;
 
 		imageConvert(impl, ImageFormatEnum::Float);
 		if (useColorConfig)

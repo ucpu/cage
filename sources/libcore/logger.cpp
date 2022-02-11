@@ -20,7 +20,7 @@ namespace cage
 
 	namespace
 	{
-		ConfigBool confDetailedInfo("cage/system/logVendorInfo", false);
+		ConfigBool confDetailedInfo("cage/log/systemInfo", false);
 
 		Mutex *loggerMutex()
 		{
@@ -69,175 +69,6 @@ namespace cage
 					loggerLast() = prev;
 			}
 		};
-
-		class GlobalLogger
-		{
-		public:
-			GlobalLogger()
-			{
-				if (detail::isDebugging())
-				{
-					loggerDebug = newLogger();
-					loggerDebug->format.bind<&logFormatConsole>();
-					loggerDebug->output.bind<&logOutputDebug>();
-				}
-
-				loggerFile = newLogger();
-				loggerFile->format.bind<&logFormatFileShort>();
-
-				try
-				{
-					detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
-					loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
-					loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
-				}
-				catch (const cage::SystemError &)
-				{
-					// do nothing
-				}
-			}
-
-			Holder<Logger> loggerDebug;
-			Holder<LoggerOutputFile> loggerOutputFile;
-			Holder<Logger> loggerFile;
-		};
-
-		class GlobalLoggerInitializer
-		{
-		public:
-			GlobalLoggerInitializer()
-			{
-				{
-					String version = "cage version: ";
-
-#ifdef CAGE_DEBUG
-					version += "debug";
-#else
-					version += "release";
-#endif // CAGE_DEBUG
-					version += ", ";
-
-#ifdef CAGE_SYSTEM_WINDOWS
-					version += "windows";
-#elif defined(CAGE_SYSTEM_LINUX)
-					version += "linux";
-#elif defined(CAGE_SYSTEM_MAC)
-					version += "mac";
-#else
-#error unknown platform
-#endif // CAGE_SYSTEM_WINDOWS
-					version += ", ";
-
-#ifdef CAGE_ARCHITECTURE_64
-					version += "64 bit";
-#else
-					version += "32 bit";
-#endif // CAGE_ARCHITECTURE_64
-					version += ", ";
-					version += "built at: " __DATE__ " " __TIME__;
-
-					CAGE_LOG(SeverityEnum::Info, "log", version);
-				}
-
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "process id: " + currentProcessId());
-
-				{
-					const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-					char buffer[50];
-					std::strftime(buffer, 50, "%Y-%m-%d %H:%M:%S", std::localtime(&now));
-					CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "current time: " + buffer);
-				}
-
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::executableFullPath());
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
-
-				if (confDetailedInfo)
-				{
-					CAGE_LOG(SeverityEnum::Info, "systemInfo", "system information:");
-					try
-					{
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "system name: '" + systemName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "user name: '" + userName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "host name: '" + hostName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processors count: " + processorsCount());
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor name: '" + processorName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
-					}
-					catch (Exception &)
-					{
-						// do nothing
-					}
-				}
-
-				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
-				profilingThreadOrder(-1000);
-			}
-
-			~GlobalLoggerInitializer()
-			{
-				uint64 duration = applicationTime();
-				uint32 micros = numeric_cast<uint32>(duration % 1000000);
-				duration /= 1000000;
-				uint32 secs = numeric_cast<uint32>(duration % 60);
-				duration /= 60;
-				uint32 mins = numeric_cast<uint32>(duration % 60);
-				duration /= 60;
-				uint32 hours = numeric_cast<uint32>(duration % 24);
-				duration /= 24;
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
-			}
-		} globalLoggerInitializerInstance;
-
-		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const String &)> output, bool longer)
-		{
-			if (info.continuous)
-			{
-				output(Stringizer() + "\t" + info.message);
-			}
-			else
-			{
-				String res;
-				res += fill(String(Stringizer() + info.time), 12) + " ";
-				res += fill(info.currentThreadName, 26) + " ";
-				res += detail::severityToString(info.severity) + " ";
-				res += fill(String(info.component), 20) + " ";
-				res += info.message;
-				if (longer && info.location.file_name())
-				{
-					String flf = Stringizer() + " " + info.location.file_name() + ":" + info.location.line() + " (" + info.location.function_name() + ")";
-					if (res.length() + flf.length() + 10 < String::MaxLength)
-					{
-						res += fill(String(), String::MaxLength - flf.length() - res.length() - 5);
-						res += flf;
-					}
-				}
-				output(res);
-			}
-		}
-
-		class LoggerOutputFileImpl : public LoggerOutputFile
-		{
-		public:
-			LoggerOutputFileImpl(const String &path, bool append, bool realFilesystemOnly)
-			{
-				FileMode fm(false, true);
-				fm.textual = true;
-				fm.append = append;
-				if (realFilesystemOnly)
-					f = realNewFile(path, fm);
-				else
-					f = newFile(path, fm);
-			}
-
-			LoggerOutputFileImpl(Holder<File> file) : f(std::move(file))
-			{
-				CAGE_ASSERT(f->mode().write);
-			}
-
-			Holder<File> f;
-		};
 	}
 
 	Holder<Logger> newLogger()
@@ -249,6 +80,38 @@ namespace cage
 	{
 		Logger *globalLogger()
 		{
+			class GlobalLogger : private Immovable
+			{
+			public:
+				GlobalLogger()
+				{
+					if (detail::isDebugging())
+					{
+						loggerDebug = newLogger();
+						loggerDebug->format.bind<&logFormatConsole>();
+						loggerDebug->output.bind<&logOutputDebug>();
+					}
+
+					loggerFile = newLogger();
+					loggerFile->format.bind<&logFormatFileShort>();
+
+					try
+					{
+						detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
+						loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
+						loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
+					}
+					catch (const cage::SystemError &)
+					{
+						// do nothing
+					}
+				}
+
+				Holder<Logger> loggerDebug;
+				Holder<LoggerOutputFile> loggerOutputFile;
+				Holder<Logger> loggerFile;
+			};
+
 			static GlobalLogger *appLoggerInstance = new GlobalLogger(); // this leak is intentional
 			return +appLoggerInstance->loggerFile;
 		}
@@ -344,6 +207,7 @@ namespace cage
 			catch (...)
 			{
 				detail::debugOutput("ignoring makeLog exception");
+				detail::debugBreakpoint();
 			}
 			return 0;
 		}
@@ -352,6 +216,36 @@ namespace cage
 	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
 	{
 		output(info.message);
+	}
+
+	namespace
+	{
+		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const String &)> output, bool longer)
+		{
+			if (info.continuous)
+			{
+				output(Stringizer() + "\t" + info.message);
+			}
+			else
+			{
+				String res;
+				res += fill(String(Stringizer() + info.time), 12) + " ";
+				res += fill(String(info.currentThreadName), 26) + " ";
+				res += detail::severityToString(info.severity) + " ";
+				res += fill(String(info.component), 20) + " ";
+				res += info.message;
+				if (longer && info.location.file_name())
+				{
+					String flf = Stringizer() + " " + info.location.file_name() + ":" + info.location.line() + " (" + info.location.function_name() + ")";
+					if (res.length() + flf.length() + 10 < String::MaxLength)
+					{
+						res += fill(String(), String::MaxLength - flf.length() - res.length() - 5);
+						res += flf;
+					}
+				}
+				output(res);
+			}
+		}
 	}
 
 	void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
@@ -381,6 +275,31 @@ namespace cage
 		fflush(stderr);
 	}
 
+	namespace
+	{
+		class LoggerOutputFileImpl : public LoggerOutputFile
+		{
+		public:
+			LoggerOutputFileImpl(const String &path, bool append, bool realFilesystemOnly)
+			{
+				FileMode fm(false, true);
+				fm.textual = true;
+				fm.append = append;
+				if (realFilesystemOnly)
+					f = realNewFile(path, fm);
+				else
+					f = newFile(path, fm);
+			}
+
+			LoggerOutputFileImpl(Holder<File> file) : f(std::move(file))
+			{
+				CAGE_ASSERT(f->mode().write);
+			}
+
+			Holder<File> f;
+		};
+	}
+
 	void LoggerOutputFile::output(const String &message) const
 	{
 		const LoggerOutputFileImpl *impl = (const LoggerOutputFileImpl *)this;
@@ -401,5 +320,96 @@ namespace cage
 	uint64 applicationTime()
 	{
 		return loggerTimer()->duration();
+	}
+
+	namespace
+	{
+		class InitialLog : private Immovable
+		{
+		public:
+			InitialLog()
+			{
+				{
+					String version = "cage version: ";
+
+#ifdef CAGE_DEBUG
+					version += "debug";
+#else
+					version += "release";
+#endif // CAGE_DEBUG
+					version += ", ";
+
+#ifdef CAGE_SYSTEM_WINDOWS
+					version += "windows";
+#elif defined(CAGE_SYSTEM_LINUX)
+					version += "linux";
+#elif defined(CAGE_SYSTEM_MAC)
+					version += "mac";
+#else
+#error unknown platform
+#endif // CAGE_SYSTEM_WINDOWS
+					version += ", ";
+
+#ifdef CAGE_ARCHITECTURE_64
+					version += "64 bit";
+#else
+					version += "32 bit";
+#endif // CAGE_ARCHITECTURE_64
+					version += ", ";
+					version += "built at: " __DATE__ " " __TIME__;
+
+					CAGE_LOG(SeverityEnum::Info, "log", version);
+				}
+
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "process id: " + currentProcessId());
+
+				{
+					const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					char buffer[100];
+					std::strftime(buffer, sizeof(buffer), "%F %T (%z)", std::localtime(&now));
+					CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "current time: " + buffer);
+				}
+
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::executableFullPath());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
+
+				if (confDetailedInfo)
+				{
+					CAGE_LOG(SeverityEnum::Info, "systemInfo", "system information:");
+					try
+					{
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "system name: '" + systemName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "user name: '" + userName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor name: " + processorName());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "threads count: " + processorsCount());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
+					}
+					catch (Exception &)
+					{
+						// do nothing
+					}
+				}
+
+				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
+				profilingThreadOrder(-1000);
+			}
+
+			~InitialLog()
+			{
+				uint64 duration = applicationTime();
+				uint32 micros = numeric_cast<uint32>(duration % 1000000);
+				duration /= 1000000;
+				uint32 secs = numeric_cast<uint32>(duration % 60);
+				duration /= 60;
+				uint32 mins = numeric_cast<uint32>(duration % 60);
+				duration /= 60;
+				uint32 hours = numeric_cast<uint32>(duration % 24);
+				duration /= 24;
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
+			}
+		} initialLogInstance;
 	}
 }

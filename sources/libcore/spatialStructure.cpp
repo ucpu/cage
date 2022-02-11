@@ -5,7 +5,6 @@
 
 #include <robin_hood.h>
 #include <plf_colony.h>
-#include <xsimd/xsimd.hpp>
 
 #include <vector>
 #include <algorithm>
@@ -18,7 +17,7 @@ namespace cage
 	{
 		union alignas(16) FastPoint
 		{
-			xsimd::batch<float, 4> v4;
+			Vec4 v4;
 			struct
 			{
 				Vec3 v3;
@@ -41,8 +40,8 @@ namespace cage
 			// initialize to negative box
 			FastBox()
 			{
-				low.v4 = xsimd::batch<float, 4>(Real::Infinity().value, Real::Infinity().value, Real::Infinity().value, 0.0f);
-				high.v4 = xsimd::batch<float, 4>(-Real::Infinity().value, -Real::Infinity().value, -Real::Infinity().value, 0.0f);
+				low.v4 = Vec4(Real::Infinity().value, Real::Infinity().value, Real::Infinity().value, 0.0f);
+				high.v4 = Vec4(-Real::Infinity().value, -Real::Infinity().value, -Real::Infinity().value, 0.0f);
 			}
 
 			explicit FastBox(const Aabb &b)
@@ -54,8 +53,8 @@ namespace cage
 			FastBox operator + (const FastBox &other) const
 			{
 				FastBox r;
-				r.low.v4 = xsimd::min(low.v4, other.low.v4);
-				r.high.v4 = xsimd::max(high.v4, other.high.v4);
+				r.low.v4 = min(low.v4, other.low.v4);
+				r.high.v4 = max(high.v4, other.high.v4);
 				return r;
 			}
 
@@ -88,10 +87,9 @@ namespace cage
 			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
-			const xsimd::batch<float, 4> mask = { 1,1,1,0 };
-			if (xsimd::any(a.high.v4 * mask < b.low.v4 * mask))
+			if (a.high.v4[0] < b.low.v4[0] || a.high.v4[1] < b.low.v4[1] || a.high.v4[2] < b.low.v4[2])
 				return false;
-			if (xsimd::any(a.low.v4 * mask > b.high.v4 * mask))
+			if (a.low.v4[0] > b.high.v4[0] || a.low.v4[1] > b.high.v4[1] || a.low.v4[2] > b.high.v4[2])
 				return false;
 			return true;
 		}
