@@ -160,14 +160,14 @@ namespace cage
 			void graphicsPrepareStep()
 			{
 				ProfilingScope profiling("graphics prepare", "gameloop");
-				ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-				ScopedTimer timing(profilingBufferGraphicsPrepare);
 				{
 					ProfilingScope profiling("graphics prepare callback", "gameloop");
 					graphicsPrepareThread().prepare.dispatch();
 				}
 				{
+					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
 					ProfilingScope profiling("graphics prepare run", "gameloop");
+					ScopedTimer timing(profilingBufferGraphicsPrepare);
 					uint32 drawCalls = 0, drawPrimitives = 0;
 					graphicsPrepare(applicationTime(), drawCalls, drawPrimitives);
 					profilingBufferDrawCalls.add(drawCalls);
@@ -204,16 +204,14 @@ namespace cage
 				ProfilingScope profiling("graphics dispatch", "gameloop");
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
+					ProfilingScope profiling("graphics dispatch callback", "gameloop");
+					graphicsDispatchThread().dispatch.dispatch();
+				}
+				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
+					ProfilingScope profiling("graphics dispatch run", "gameloop");
 					ScopedTimer timing(profilingBufferGraphicsDispatch);
-					{
-						ProfilingScope profiling("graphics dispatch callback", "gameloop");
-						graphicsDispatchThread().dispatch.dispatch();
-					}
-					{
-						ProfilingScope profiling("graphics dispatch run", "gameloop");
-						graphicsDispatch();
-					}
+					graphicsDispatch();
 				}
 				{
 					ProfilingScope profiling("render gui", "gameloop");

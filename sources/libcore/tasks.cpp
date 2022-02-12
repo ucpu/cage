@@ -229,7 +229,7 @@ namespace cage
 					const uint32 idx = executing++;
 					{
 						ThreadPriorityUpdater prio(priority);
-						ProfilingScope prof(Stringizer() + name + " (" + idx + ")", "tasks");
+						ProfilingScope prof(String(name), "tasks");
 						runner(runnerConfig, idx);
 					}
 					if (++finished == invocations)
