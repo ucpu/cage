@@ -240,13 +240,6 @@ namespace cage
 				}
 			};
 
-			static void alterEnvironment()
-			{
-				const std::string p = getenv("PATH");
-				const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::executableFullPath()).c_str();
-				setenv("PATH", n.c_str(), 1);
-			}
-
 		public:
 			AutoPipe aStdinPipe;
 			AutoPipe aStdoutPipe;
@@ -294,12 +287,20 @@ namespace cage
 					aStdinPipe.close();
 					aStdoutPipe.close();
 
-					// alter environment
-					alterEnvironment();
+					{ // alter environment PATH
+						const std::string p = getenv("PATH");
+						const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::executableFullPath()).c_str();
+						if (setenv("PATH", n.c_str(), 1) != 0)
+							CAGE_THROW_ERROR(SystemError, "failed to change environment PATH variable", errno);
+					}
+
+					// new working directory
+					if (chdir(workingDir.c_str()) != 0)
+						CAGE_THROW_ERROR(SystemError, "failed to change working directory", errno);
 
 					// run child process image
-					const String params = String() + "(cd '" + workingDir + "'; " + config.command + " )";
-					const int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
+					// using bin/sh to automatically split individual arguments
+					const int res = execlp("/bin/sh", "sh", "-c", config.command.c_str(), nullptr);
 
 					// if we get here, an error occurred, but we are in the child process, so just exit
 					exit(res);
