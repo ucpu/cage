@@ -235,12 +235,9 @@ namespace cage
 		class CageIoSystem : public Assimp::IOSystem
 		{
 		public:
-			explicit CageIoSystem(const String &rootDir) : currentDir(rootDir)
-			{}
-
 			bool Exists(const char *pFile) const override
 			{
-				return any(pathType(pathJoin(currentDir, pFile)) & PathTypeFlags::File);
+				return any(pathType(pathToAbs(pFile)) & PathTypeFlags::File);
 			}
 
 			char getOsSeparator() const override
@@ -252,9 +249,13 @@ namespace cage
 			{
 				if (::cage::String(pMode) != "rb")
 					CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
-				const String pth = makePath(pFile);
-				paths.insert(pth);
-				return new CageIoStream(readFile(pth));
+				if (!pathIsAbs(pFile) || pathSimplify(pFile) != String(pFile))
+				{
+					CAGE_LOG_THROW(Stringizer() + "path: " + pFile);
+					CAGE_THROW_ERROR(Exception, "assimp is accessing invalid path");
+				}
+				paths.insert(pFile);
+				return new CageIoStream(readFile(pFile));
 			}
 
 			void Close(Assimp::IOStream *pFile) override
@@ -267,27 +268,7 @@ namespace cage
 				CAGE_THROW_ERROR(NotImplemented, "cageIOsystem::ComparePaths");
 			}
 
-			String makePath(String path) const
-			{
-				if (currentDir.empty())
-					return pathToAbs(path);
-
-				if (!pathIsAbs(path))
-					return pathToAbs(pathJoin(currentDir, path));
-
-				path = pathToRel(path, currentDir);
-				if (path.empty() || pathIsAbs(path) || path[0] == '.')
-				{
-					CAGE_LOG_THROW(path);
-					CAGE_THROW_ERROR(Exception, "assimp is accessing invalid path");
-				}
-				return pathJoin(currentDir, path);
-			}
-
 			std::set<String> paths;
-
-		private:
-			const String currentDir;
 		};
 
 		struct CmpAiStr
@@ -540,7 +521,7 @@ namespace cage
 						imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
 
 					imp.SetIOHandler(&this->ioSystem);
-					if (!imp.ReadFile(pathToRel(inputFile, config.rootPath).c_str(), flags))
+					if (!imp.ReadFile(inputFile.c_str(), flags))
 					{
 						CAGE_LOG_THROW(cage::String(imp.GetErrorString()));
 						CAGE_THROW_ERROR(Exception, "assimp loading failed");
@@ -992,10 +973,10 @@ namespace cage
 				if (n.empty())
 					return;
 				if (n[0] == '/')
-					n = ioSystem.makePath(trim(n, true, false, "/"));
+					n = pathJoin(config.rootPath, trim(n, true, false, "/"));
 				else
 					n = pathJoinUnchecked(pathBase, n);
-				n = ioSystem.makePath(n);
+				n = pathToAbs(n);
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
 				MeshImportTexture t;
@@ -1023,6 +1004,8 @@ namespace cage
 					const aiTexture *tx = imp.GetScene()->mTextures[idx];
 					MeshImportTexture t;
 					t.name = tx->mFilename.C_Str();
+					if (t.name.empty())
+						t.name = n;
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using embedded texture with original name: " + t.name);
 					t.name = inputFile + "?" + pathReplaceInvalidCharacters(t.name);
@@ -1050,7 +1033,7 @@ namespace cage
 					if (isPattern(n, "//", "", ""))
 						n = String() + "./" + subString(n, 2, cage::m);
 					n = pathJoin(pathExtractDirectory(inputFile), n);
-					n = ioSystem.makePath(n);
+					n = pathToAbs(n);
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
 					MeshImportTexture t;
@@ -1247,7 +1230,7 @@ namespace cage
 						path += String() + "_" + config.materialPathAlternative;
 				}
 				path += ".cpm";
-				path = ioSystem.makePath(path);
+				path = pathToAbs(path);
 
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at '" + path + "'");
@@ -1265,7 +1248,7 @@ namespace cage
 			const MeshImportConfig config;
 			const Mat3 axes = axesMatrix(config.axesSwizzle);
 			const Mat3 axesScale = axes * config.scale;
-			CageIoSystem ioSystem = CageIoSystem(config.rootPath);
+			CageIoSystem ioSystem;
 			Assimp::Importer imp;
 			Holder<AssimpSkeleton> skeleton;
 
@@ -1290,84 +1273,79 @@ namespace cage
 				return n;
 			}
 		};
-
-		MeshImportResult meshImportFilesImpl(const String &filename, const MeshImportConfig &config)
-		{
-			AssimpContext context(filename, config);
-			const aiScene *scene = context.imp.GetScene();
-
-			MeshImportResult result;
-
-			{
-				PointerRangeHolder<MeshImportPart> parts;
-				for (uint32 i = 0; i < scene->mNumMeshes; i++)
-				{
-					const aiMesh *msh = scene->mMeshes[i];
-					MeshImportPart p;
-					p.objectName = convStrTruncate(msh->mName);
-					p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
-					p.mesh = context.mesh(i);
-					p.boundingBox = p.mesh->boundingBox();
-					p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
-					context.loadMaterial(msh->mMaterialIndex, p);
-					parts.push_back(std::move(p));
-				}
-				result.parts = std::move(parts);
-			}
-
-			if (context.skeleton)
-			{
-				result.skeleton = context.skeletonRig();
-				PointerRangeHolder<MeshImportAnimation> anims;
-				for (uint32 i = 0; i < scene->mNumAnimations; i++)
-				{
-					const aiAnimation *ani = scene->mAnimations[i];
-					if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
-						continue;
-					MeshImportAnimation a;
-					a.name = convStrTruncate(ani->mName);
-					a.animation = context.animation(i);
-					anims.push_back(std::move(a));
-				}
-				result.animations = std::move(anims);
-
-				// extend bounding boxes to contain all animations
-				for (MeshImportPart &part : result.parts)
-				{
-					if (!part.mesh->boneIndices().empty())
-					{
-						for (const MeshImportAnimation &ani : result.animations)
-						{
-							for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
-							{
-								Holder<Mesh> tmp = part.mesh->copy();
-								animateMesh(+result.skeleton, +ani.animation, t, +tmp);
-								Aabb box = tmp->boundingBox();
-								box = enlarge(box);
-								part.boundingBox += box;
-							}
-						}
-					}
-				}
-			}
-
-			{
-				PointerRangeHolder<String> pths;
-				for (const String &p : context.ioSystem.paths)
-					pths.push_back(p);
-				result.paths = std::move(pths);
-			}
-
-			return result;
-		}
 	}
 
 	MeshImportResult meshImportFiles(const String &filename, const MeshImportConfig &config)
 	{
-		MeshImportConfig cfg = config;
-		if (!cfg.rootPath.empty())
-			cfg.rootPath = pathToAbs(cfg.rootPath);
-		return meshImportFilesImpl(pathToAbs(filename), cfg);
+		AssimpContext context(pathToAbs(filename), config);
+		const aiScene *scene = context.imp.GetScene();
+
+		MeshImportResult result;
+
+		{
+			PointerRangeHolder<MeshImportPart> parts;
+			for (uint32 i = 0; i < scene->mNumMeshes; i++)
+			{
+				const aiMesh *msh = scene->mMeshes[i];
+				MeshImportPart p;
+				p.objectName = convStrTruncate(msh->mName);
+				p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
+				p.mesh = context.mesh(i);
+				p.boundingBox = p.mesh->boundingBox();
+				p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
+				context.loadMaterial(msh->mMaterialIndex, p);
+				parts.push_back(std::move(p));
+			}
+			result.parts = std::move(parts);
+		}
+
+		if (context.skeleton)
+		{
+			result.skeleton = context.skeletonRig();
+			PointerRangeHolder<MeshImportAnimation> anims;
+			for (uint32 i = 0; i < scene->mNumAnimations; i++)
+			{
+				const aiAnimation *ani = scene->mAnimations[i];
+				if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
+					continue;
+				MeshImportAnimation a;
+				a.name = convStrTruncate(ani->mName);
+				a.animation = context.animation(i);
+				anims.push_back(std::move(a));
+			}
+			result.animations = std::move(anims);
+
+			// extend bounding boxes to contain all animations
+			for (MeshImportPart &part : result.parts)
+			{
+				if (!part.mesh->boneIndices().empty())
+				{
+					for (const MeshImportAnimation &ani : result.animations)
+					{
+						for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+						{
+							Holder<Mesh> tmp = part.mesh->copy();
+							animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+							Aabb box = tmp->boundingBox();
+							box = enlarge(box);
+							part.boundingBox += box;
+						}
+					}
+				}
+			}
+		}
+
+		{
+			PointerRangeHolder<String> pths;
+			for (const String &p : context.ioSystem.paths)
+			{
+				CAGE_ASSERT(pathIsAbs(p));
+				pths.push_back(p);
+			}
+			result.paths = std::move(pths);
+		}
+
+		return result;
 	}
 }
 

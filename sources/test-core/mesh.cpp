@@ -269,35 +269,5 @@ void testMesh()
 			const MeshImportResult result = meshImportFiles(pathToAbs("meshes/testImport.obj"));
 			CAGE_TEST(result.parts.size() == 1);
 		}
-
-		{
-			CAGE_TESTCASE("relative path with root path");
-			MeshImportConfig cfg;
-			cfg.rootPath = pathToAbs("meshes");
-			const MeshImportResult result = meshImportFiles("meshes/testImport.obj", cfg);
-			CAGE_TEST(result.parts.size() == 1);
-		}
-
-		{
-			CAGE_TESTCASE("absolute path with root path");
-			MeshImportConfig cfg;
-			cfg.rootPath = pathToAbs("meshes");
-			const MeshImportResult result = meshImportFiles(pathToAbs("meshes/testImport.obj"), cfg);
-			CAGE_TEST(result.parts.size() == 1);
-		}
-
-		{
-			CAGE_TESTCASE("relative path accessing invalid location");
-			MeshImportConfig cfg;
-			cfg.rootPath = pathToAbs("files");
-			CAGE_TEST_THROWN(meshImportFiles("meshes/testImport.obj", cfg));
-		}
-
-		{
-			CAGE_TESTCASE("absolute path accessing invalid location");
-			MeshImportConfig cfg;
-			cfg.rootPath = pathToAbs("files");
-			CAGE_TEST_THROWN(meshImportFiles(pathToAbs("meshes/testImport.obj"), cfg));
-		}
 	}
 }

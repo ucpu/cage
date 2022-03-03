@@ -42,7 +42,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshImportConfig
 	{
-		String rootPath; // restrict file access to paths in this directory, leave empty to allow entire filesystem
+		String rootPath = "/";
 		String materialPathOverride;
 		String materialPathAlternative;
 		detail::StringBase<6> axesSwizzle = "+x+y+z";

@@ -162,9 +162,9 @@ int main(int argc, const char *args[])
 			cmd->logHelp();
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " path1 path2 path3");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --recursive path");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --objects path");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --packs path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --recursive -- path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --objects -- path");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --packs -- path");
 			return 0;
 		}
 		cmd->checkUnusedWithHelp();

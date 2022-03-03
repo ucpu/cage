@@ -155,19 +155,15 @@ namespace
 
 	void loadAllFiles()
 	{
-		const String wholeFilename = pathJoin(inputDirectory, inputFile);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file: " + wholeFilename);
 		if (inputSpec.empty())
 		{
-			images = imageImportFiles(wholeFilename);
+			images = imageImportFiles(inputFileName);
 			for (const auto &it : images.parts)
 				writeLine(String("use=") + pathToRel(it.fileName, inputDirectory));
 		}
 		else
 		{
-			MeshImportConfig cfg;
-			cfg.rootPath = inputDirectory;
-			MeshImportResult res = meshImportFiles(wholeFilename, cfg);
+			MeshImportResult res = meshImportFiles(inputFileName);
 			meshImportNotifyUsedFiles(res);
 			images = std::move(findEmbeddedTexture(res, inputSpec)->images);
 		}
