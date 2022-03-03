@@ -36,7 +36,7 @@ namespace
 
 	void testStringLiterals()
 	{
-		CAGE_TESTCASE("String literals");
+		CAGE_TESTCASE("string literals");
 		constexpr StringLiteral one = pickName(1);
 		CAGE_TEST(String(one) == "one");
 	}
@@ -186,10 +186,10 @@ namespace
 			CAGE_TESTCASE("string containing zero");
 			String s = "abcdef";
 			s[2] = 0;
-			CAGE_TEST(s.length() == 6); // String contains literal zero
+			CAGE_TEST(s.length() == 6); // string contains literal zero
 			s[2] = 'c';
 			s.rawData()[6] = 't';
-			CAGE_TEST(s.length() == 6); // String is missing terminal zero
+			CAGE_TEST(s.length() == 6); // string is missing terminal zero
 		}
 	}
 
@@ -660,7 +660,7 @@ namespace
 
 	void testStringizer()
 	{
-		CAGE_TESTCASE("Stringizer");
+		CAGE_TESTCASE("stringizer");
 		{
 			CAGE_TESTCASE("conversions");
 			uint8  ui8 = 1;
@@ -676,7 +676,7 @@ namespace
 			CAGE_TEST(String(Stringizer() + "begin" + ui8 + ui16 + ui32 + ui64 + "s" + si8 + si16 + si32 + si64 + "b" + bt + bf + "end") == "begin1234s5678btruefalseend");
 		}
 		{
-			CAGE_TESTCASE("r-value Stringizer");
+			CAGE_TESTCASE("r-value stringizer");
 			{
 				String str = Stringizer() + 123 + "abc" + 456;
 			}
@@ -689,7 +689,7 @@ namespace
 			}
 		}
 		{
-			CAGE_TESTCASE("l-value Stringizer");
+			CAGE_TESTCASE("l-value stringizer");
 			{
 				Stringizer s;
 				String str = s + 123 + "abc" + 456;

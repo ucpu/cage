@@ -158,7 +158,7 @@ namespace cage
 	{
 		static_assert(std::is_same_v<R, void> || std::is_same_v<R, bool>);
 
-		explicit InputListener(const std::source_location location = std::source_location::current()) : EventListener<R(const GenericInput &)>(location)
+		explicit InputListener(const std::source_location &location = std::source_location::current()) : EventListener<R(const GenericInput &)>(location)
 		{
 			EventListener<R(const GenericInput &)>::template bind<InputListener, &InputListener::run>(this);
 		}
