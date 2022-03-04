@@ -12,7 +12,6 @@ namespace cage
 		{
 		case ImageFormatEnum::U8: return sizeof(uint8);
 		case ImageFormatEnum::U16: return sizeof(uint16);
-		case ImageFormatEnum::Rgbe: return sizeof(uint32);
 		case ImageFormatEnum::Float: return sizeof(float);
 		default: CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
@@ -68,7 +67,6 @@ namespace cage
 	{
 		CAGE_ASSERT(f != ImageFormatEnum::Default);
 		CAGE_ASSERT(c > 0);
-		CAGE_ASSERT(c == 3 || f != ImageFormatEnum::Rgbe);
 		ImageImpl *impl = (ImageImpl *)this;
 		impl->width = w;
 		impl->height = h;
@@ -163,7 +161,6 @@ namespace cage
 	float Image::value(uint32 x, uint32 y, uint32 c) const
 	{
 		const ImageImpl *impl = (const ImageImpl *)this;
-		CAGE_ASSERT(impl->channels == 3 || impl->format != ImageFormatEnum::Rgbe);
 		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels);
 		uint32 offset = (y * impl->width + x) * impl->channels;
 		switch (impl->format)
@@ -172,8 +169,6 @@ namespace cage
 			return ((uint8 *)impl->mem.data())[offset + c] / 255.f;
 		case ImageFormatEnum::U16:
 			return ((uint16 *)impl->mem.data())[offset + c] / 65535.f;
-		case ImageFormatEnum::Rgbe:
-			return colorRgbeToRgb(((uint32 *)impl->mem.data())[offset])[c].value;
 		case ImageFormatEnum::Float:
 			return ((float *)impl->mem.data())[offset + c];
 		default:
@@ -190,7 +185,6 @@ namespace cage
 	void Image::value(uint32 x, uint32 y, uint32 c, float v)
 	{
 		ImageImpl *impl = (ImageImpl *)this;
-		CAGE_ASSERT(impl->channels == 3 || impl->format != ImageFormatEnum::Rgbe);
 		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels);
 		uint32 offset = (y * impl->width + x) * impl->channels;
 		switch (impl->format)
@@ -201,13 +195,6 @@ namespace cage
 		case ImageFormatEnum::U16:
 			((uint16 *)impl->mem.data())[offset + c] = numeric_cast<uint16>(saturate(v) * 65535.f);
 			break;
-		case ImageFormatEnum::Rgbe:
-		{
-			uint32 &p = ((uint32 *)impl->mem.data())[offset];
-			Vec3 s = colorRgbeToRgb(p);
-			s[c] = saturate(v);
-			p = colorRgbToRgbe(s);
-		} break;
 		case ImageFormatEnum::Float:
 			((float *)impl->mem.data())[offset + c] = v;
 			break;
@@ -284,11 +271,6 @@ namespace cage
 		{
 			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
 			return Vec3(p[0], p[1], p[2]) / 65535;
-		}
-		case ImageFormatEnum::Rgbe:
-		{
-			uint32 p = ((uint32 *)impl->mem.data())[offset];
-			return colorRgbeToRgb(p);
 		}
 		case ImageFormatEnum::Float:
 		{
@@ -403,11 +385,6 @@ namespace cage
 			for (int i = 0; i < 3; i++)
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;
-		case ImageFormatEnum::Rgbe:
-		{
-			uint32 &p = ((uint32 *)impl->mem.data())[offset];
-			p = colorRgbToRgbe(saturate(v));
-		} break;
 		case ImageFormatEnum::Float:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
@@ -489,7 +466,6 @@ namespace cage
 			{
 			case ImageFormatEnum::U8: return "u8";
 			case ImageFormatEnum::U16: return "u16";
-			case ImageFormatEnum::Rgbe: return "rgbe";
 			case ImageFormatEnum::Float: return "float";
 			case ImageFormatEnum::Default: return "default";
 			default: return "unknown";

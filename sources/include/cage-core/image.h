@@ -9,7 +9,6 @@ namespace cage
 	{
 		U8 = 1, // 8 bit normalized
 		U16 = 2, // 16 bit normalized (native endianness)
-		Rgbe = 3, // requires 3 channels exactly, each pixel encoded as one uint32
 		Float = 4,
 
 		Default = m, // used only for decoding an image, it will use original format from the file
@@ -134,6 +133,9 @@ namespace cage
 	CAGE_CORE_API void imageDilation(Image *img, uint32 rounds, bool useNan = false);
 	CAGE_CORE_API void imageInvertColors(Image *img, bool useColorConfig = true);
 	CAGE_CORE_API void imageInvertChannel(Image *img, uint32 channelIndex);
+
+	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> imageChannelsSplit(const Image *img);
+	CAGE_CORE_API Holder<Image> imageChannelsJoin(PointerRange<const Holder<Image>> channels);
 
 	// copies parts of an image into another image
 	// if the target and source images are the same instance, the source area and target area cannot overlap

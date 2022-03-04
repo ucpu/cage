@@ -6,111 +6,75 @@
 
 using namespace cage;
 
-void doSplit(const String names[4], const String &input)
-{
-	{
-		uint32 outputs = 0;
-		for (uint32 index = 0; index < 4; index++)
-			if (!names[index].empty())
-				outputs++;
-		if (outputs == 0)
-			CAGE_THROW_ERROR(Exception, "no outputs specified");
-	}
+constexpr uint32 MaxChannels = 8;
 
+void doSplit(const String names[MaxChannels], const String &input)
+{
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
 	in->importFile(input);
-	if (in->format() == ImageFormatEnum::Rgbe)
-		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
-	const uint32 width = in->width();
-	const uint32 height = in->height();
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + width + "x" + height + ", channels: " + in->channels());
-
-	Holder<Image> out = newImage();
-	for (uint32 ch = 0; ch < in->channels(); ch++)
+	CAGE_LOG(SeverityEnum::Info, "image", "splitting");
+	const auto images = imageChannelsSplit(+in);
+	uint32 outputs = 0;
+	for (uint32 index = 0; index < MaxChannels; index++)
 	{
-		if (names[ch].empty())
+		if (names[index].empty())
 			continue;
-		out->initialize(width, height, 1, in->format());
-		for (uint32 y = 0; y < height; y++)
+		if (index >= images.size())
 		{
-			for (uint32 x = 0; x < width; x++)
-				out->value(x, y, 0, in->value(x, y, ch));
+			CAGE_LOG_THROW(Stringizer() + "requested channel index: " + index);
+			CAGE_THROW_ERROR(Exception, "input image does not have specified channel");
 		}
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + names[ch] + "'");
-		out->exportFile(names[ch]);
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + names[index] + "'");
+		CAGE_ASSERT(images[index]->channels() == 1);
+		images[index]->exportBuffer(names[index]);
+		outputs++;
 	}
+	if (outputs == 0)
+		CAGE_THROW_ERROR(Exception, "no outputs specified");
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
 
-void doJoin(const String names[4], const String &output, const bool mono)
+Holder<Image> monochromatize(const Image *src)
 {
-	Holder<Image> pngs[4];
-	uint32 width = 0, height = 0;
-	uint32 channels = 0;
-	for (uint32 index = 0; index < 4; index++)
+	Holder<Image> dst = newImage();
+	dst->initialize(src->width(), src->height(), 1, src->format());
+	const uint32 ch = src->channels();
+	for (uint32 y = 0; y < src->height(); y++)
 	{
-		const String name = names[index];
-		if (!name.empty())
+		for (uint32 x = 0; x < src->width(); x++)
 		{
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
-			Holder<Image> p = newImage();
-			p->importFile(name);
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
-			if (width == 0)
-			{
-				width = p->width();
-				height = p->height();
-			}
-			else
-			{
-				if (p->width() != width || p->height() != height)
-					CAGE_THROW_ERROR(Exception, "image resolution does not match");
-			}
-			if (p->channels() != 1)
-			{
-				if (!mono)
-					CAGE_THROW_ERROR(Exception, "the image has to be mono channel");
-				CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "monochromatizing");
-				Holder<Image> m = newImage();
-				m->initialize(width, height, 1);
-				uint32 ch = p->channels();
-				for (uint32 y = 0; y < height; y++)
-				{
-					for (uint32 x = 0; x < width; x++)
-					{
-						float sum = 0;
-						for (uint32 c = 0; c < ch; c++)
-							sum += p->value(x, y, c);
-						m->value(x, y, 0, sum / ch);
-					}
-				}
-				p = std::move(m);
-			}
-			channels = max(channels, index + 1u);
-			pngs[index] = std::move(p);
+			float sum = 0;
+			for (uint32 c = 0; c < ch; c++)
+				sum += src->value(x, y, c);
+			dst->value(x, y, 0, sum / ch);
 		}
 	}
-	if (channels == 0)
-		CAGE_THROW_ERROR(Exception, "no inputs specified");
+	return dst;
+}
 
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining image");
-	Holder<Image> res = newImage();
-	res->initialize(width, height, channels);
-	for (uint32 i = 0; i < channels; i++)
+void doJoin(const String names[MaxChannels], const String &output, const bool mono)
+{
+	Holder<Image> inputs[MaxChannels];
+	for (uint32 index = 0; index < MaxChannels; index++)
 	{
-		Holder<Image> &src = pngs[i];
-		if (!src)
+		if (names[index].empty())
 			continue;
-		for (uint32 y = 0; y < height; y++)
+		inputs[index] = newImage();
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + names[index] + "' for " + (index + 1) + "th channel");
+		inputs[index]->importBuffer(names[index]);
+		if (inputs[index]->channels() != 1)
 		{
-			for (uint32 x = 0; x < width; x++)
-				res->value(x, y, i, src->value(x, y, 0));
+			if (!mono)
+				CAGE_THROW_ERROR(Exception, "the image has to be mono channel");
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "monochromatizing");
+			inputs[index] = monochromatize(+inputs[index]);
 		}
 	}
-
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining");
+	Holder<Image> image = imageChannelsJoin(inputs);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + output + "'");
-	res->exportFile(output);
+	image->exportFile(output);
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
 
@@ -128,10 +92,11 @@ int main(int argc, const char *args[])
 		const bool join = cmd->cmdBool('j', "join", false);
 		const bool help = cmd->cmdBool('?', "help", false);
 
+		String names[MaxChannels] = {};
+
 		if (split && !join)
 		{
-			String names[4] = { "", "", "", "" };
-			for (uint32 i = 0; i < 4; i++)
+			for (uint32 i = 0; i < MaxChannels; i++)
 				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
 			String input = cmd->cmdString('i', "input", "input.png");
 
@@ -144,8 +109,7 @@ int main(int argc, const char *args[])
 
 		if (join && !split)
 		{
-			String names[4] = { "", "", "", "" };
-			for (uint32 i = 0; i < 4; i++)
+			for (uint32 i = 0; i < MaxChannels; i++)
 				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
 			const String output = cmd->cmdString('o', "output", "output.png");
 			const bool mono = cmd->cmdBool('m', "mono", false);

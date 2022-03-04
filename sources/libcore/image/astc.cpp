@@ -114,8 +114,6 @@ namespace cage
 		{
 			implHld = impl->copy();
 			impl = (ImageImpl *)+implHld;
-			if (impl->format == ImageFormatEnum::Rgbe)
-				imageConvert(+implHld, ImageFormatEnum::Float);
 			imageConvert(+implHld, 4);
 		}
 
@@ -153,7 +151,6 @@ namespace cage
 		switch (image_->format())
 		{
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::Rgbe:
 		{
 			if (impl->colorConfig.alphaMode == AlphaModeEnum::Opacity)
 				config.profile = ASTCENC_PRF_HDR_RGB_LDR_A;

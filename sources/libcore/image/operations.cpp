@@ -2,6 +2,7 @@
 
 #include <cage-core/math.h>
 #include <cage-core/color.h>
+#include <cage-core/pointerRangeHolder.h>
 
 namespace cage
 {
@@ -86,7 +87,6 @@ namespace cage
 		ImageImpl *impl = (ImageImpl *)img;
 		if (impl->channels == channels)
 			return; // no op
-		CAGE_ASSERT(impl->format != ImageFormatEnum::Rgbe);
 		Holder<Image> tmp = newImage();
 		tmp->initialize(impl->width, impl->height, channels, impl->format);
 		ImageImpl *t = (ImageImpl *)tmp.get();
@@ -515,6 +515,50 @@ namespace cage
 			for (uint32 x = 0; x < w; x++)
 				img->value(x, y, channelIndex, 1 - img->value(x, y, channelIndex));
 		}
+	}
+
+	Holder<PointerRange<Holder<Image>>> imageChannelsSplit(const Image *src)
+	{
+		PointerRangeHolder<Holder<Image>> result;
+		result.reserve(src->channels());
+		for (uint32 ch = 0; ch < src->channels(); ch++)
+		{
+			Holder<Image> dst = newImage();
+			dst->initialize(src->resolution(), 1, src->format());
+			const uint32 w = src->width(), h = src->height();
+			for (uint32 y = 0; y < h; y++)
+				for (uint32 x = 0; x < w; x++)
+					dst->value(x, y, 0, src->value(x, y, ch));
+			dst->colorConfig.gammaSpace = src->colorConfig.gammaSpace;
+			result.push_back(std::move(dst));
+		}
+		return result;
+	}
+
+	Holder<Image> imageChannelsJoin(PointerRange<const Holder<Image>> channels)
+	{
+		const Image *first = [&]() -> Image * {
+			for (const auto &it : channels)
+				if (it)
+					return +it;
+			return nullptr;
+		}();
+		if (!first)
+			return newImage();
+		Holder<Image> result = newImage();
+		result->initialize(first->resolution(), channels.size(), first->format());
+		for (uint32 ch = 0; ch < result->channels(); ch++)
+		{
+			if (!channels[ch])
+				continue;
+			if (channels[ch]->resolution() != first->resolution() || channels[ch]->format() != first->format() || channels[ch]->channels() != 1)
+				CAGE_THROW_ERROR(Exception, "cannot join image channels with different resolution, format, or non mono-channel sources");
+			for (uint32 y = 0; y < first->resolution()[1]; y++)
+				for (uint32 x = 0; x < first->resolution()[0]; x++)
+					result->value(x, y, ch, channels[ch]->value(x, y, 0));
+		}
+		result->colorConfig.gammaSpace = first->colorConfig.gammaSpace;
+		return result;
 	}
 
 	namespace

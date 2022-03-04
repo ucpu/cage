@@ -959,6 +959,139 @@ namespace cage
 			}
 
 			using Textures = PointerRangeHolder<MeshImportTexture>;
+			static constexpr MeshTextureType RoughTex = (MeshTextureType)1001;
+			static constexpr MeshTextureType MetalTex = (MeshTextureType)1002;
+			static constexpr MeshTextureType RoughMetalBgTex = (MeshTextureType)1003;
+
+			static void pickChannel(MeshImportTexture &textures, uint32 channel)
+			{
+				for (auto &it : textures.images.parts)
+				{
+					auto vals = imageChannelsSplit(+it.image);
+					if (channel >= vals.size())
+						CAGE_THROW_ERROR(Exception, "channel index out of range");
+					it.image = std::move(vals[channel]);
+				}
+			}
+
+			static MeshImportTexture duplicateChannel(MeshImportTexture &textures, uint32 channel)
+			{
+				PointerRangeHolder<ImageImportPart> parts;
+				for (auto &it : textures.images.parts)
+				{
+					auto vals = imageChannelsSplit(+it.image);
+					if (channel >= vals.size())
+						CAGE_THROW_ERROR(Exception, "channel index out of range");
+					ImageImportPart p;
+					p.image = std::move(vals[channel]);
+					parts.push_back(std::move(p));
+				}
+				MeshImportTexture result;
+				result.images.parts = std::move(parts);
+				return result;
+			}
+
+			void convertSpecialTextures(Textures &input, Textures &output)
+			{
+				CAGE_ASSERT(!input.empty());
+
+				for (auto &it : input)
+					imageImportConvertRawToImages(it.images);
+
+				// pick correct channels for roughness or metallic textures
+				for (auto &it : input)
+				{
+					switch (it.type)
+					{
+					case RoughTex:
+					{
+						switch (it.images.parts[0].image->channels())
+						{
+						case 1: break;
+						case 4: pickChannel(it, 3); break;
+						default: CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+						}
+					} break;
+					case MetalTex:
+					{
+						switch (it.images.parts[0].image->channels())
+						{
+						case 1: break;
+							// todo find which channel contains metallic data
+						default: CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
+						}
+					} break;
+					case RoughMetalBgTex:
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid type of texture for combining into special texture");
+					}
+				}
+
+				// split roughness-metallic texture
+				if (input.size() == 1 && input[0].type == RoughMetalBgTex)
+				{
+					CAGE_ASSERT(input.size() == 1);
+					MeshImportTexture rt = duplicateChannel(input[0], 1);
+					MeshImportTexture mt = duplicateChannel(input[0], 2);
+					rt.name = input[0].name;
+					rt.type = RoughTex;
+					mt.name = input[0].name;
+					mt.type = MetalTex;
+					input.clear();
+					input.push_back(std::move(rt));
+					input.push_back(std::move(mt));
+				}
+
+				// early exit for roughness-only texture
+				if (input.size() == 1 && input[0].type == RoughTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					input[0].type = MeshTextureType::Special;
+					output.push_back(std::move(input[0]));
+					return;
+				}
+
+				// early exit for metallic-only texture
+				if (input.size() == 1 && input[0].type == MetalTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					Holder<Image> arr[2];
+					arr[1] = std::move(input[0].images.parts[0].image);
+					input[0].images.parts[0].image = imageChannelsJoin(arr);
+					input[0].type = MeshTextureType::Special;
+					output.push_back(std::move(input[0]));
+					return;
+				}
+
+				// combine special texture from both sources
+				if (input.size() == 2 && input[0].type == RoughTex && input[1].type == MetalTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[1].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					CAGE_ASSERT(input[1].images.parts[0].image->channels() == 1);
+					Holder<Image> arr[2];
+					arr[0] = std::move(input[0].images.parts[0].image);
+					arr[1] = std::move(input[1].images.parts[0].image);
+					ImageImportPart part;
+					part.image = imageChannelsJoin(arr);
+					PointerRangeHolder<ImageImportPart> parts;
+					parts.push_back(std::move(part));
+					MeshImportTexture res;
+					res.images.parts = std::move(parts);
+					const String base = split(input[0].name, "?");
+					split(input[1].name, "?");
+					res.name = Stringizer() + base + "?special_" + input[0].name + "_" + input[1].name;
+					res.type = MeshTextureType::Special;
+					output.push_back(std::move(res));
+					return;
+				}
+
+				CAGE_THROW_CRITICAL(Exception, "impossible combination of roughness metallic textures for combining into special texture");
+			}
 
 			template<MeshTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
@@ -986,15 +1119,15 @@ namespace cage
 			}
 
 			template<aiTextureType AssimpType, MeshTextureType CageType>
-			bool loadTextureAssimp(aiMaterial *mat, Textures &textures)
+			bool loadTextureAssimp(const aiMaterial *mat, Textures &textures)
 			{
 				const uint32 texCount = mat->GetTextureCount(AssimpType);
 				if (texCount == 0)
 					return false;
 				if (texCount > 1)
-					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "material has multiple (" + texCount + ") textures of same type");
+					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "material has multiple (" + texCount + ") textures of same type (" + AssimpType + ")");
 				aiString texAsName;
-				mat->GetTexture(AssimpType, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
+				mat->GetTexture(AssimpType, 0, &texAsName);
 				String n = texAsName.C_Str();
 				if (isPattern(n, "*", "", ""))
 				{ // embedded texture
@@ -1004,10 +1137,10 @@ namespace cage
 					const aiTexture *tx = imp.GetScene()->mTextures[idx];
 					MeshImportTexture t;
 					t.name = tx->mFilename.C_Str();
-					if (t.name.empty())
-						t.name = n;
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using embedded texture with original name: " + t.name);
+					if (t.name.empty())
+						t.name = n;
 					t.name = inputFile + "?" + pathReplaceInvalidCharacters(t.name);
 					t.type = CageType;
 					if (tx->mHeight == 0)
@@ -1136,7 +1269,7 @@ namespace cage
 
 				const aiScene *scene = imp.GetScene();
 				CAGE_ASSERT(materialIndex < scene->mNumMaterials);
-				aiMaterial *mat = scene->mMaterials[materialIndex];
+				const aiMaterial *mat = scene->mMaterials[materialIndex];
 				if (!mat)
 					CAGE_THROW_ERROR(Exception, "material is null");
 
@@ -1155,16 +1288,23 @@ namespace cage
 				}
 
 				// albedo
-				if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
-				{
+				const auto &albedoCheckAlpha = [&](aiTextureType type) {
 					int flg = 0;
-					mat->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
+					mat->Get(AI_MATKEY_TEXFLAGS(type, 0), flg);
 					if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
 					{
 						if (config.verbose)
-							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to texture flag");
+							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to albedo texture flag");
 						part.renderFlags |= MeshRenderFlags::Translucent;
 					}
+				};
+				if (loadTextureAssimp<aiTextureType_BASE_COLOR, MeshTextureType::Albedo>(mat, textures))
+				{
+					albedoCheckAlpha(aiTextureType_BASE_COLOR);
+				}
+				else if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
+				{
+					albedoCheckAlpha(aiTextureType_DIFFUSE);
 				}
 				else
 				{
@@ -1177,13 +1317,26 @@ namespace cage
 					part.material.albedoMult[3] = opacity;
 
 				// special
-				if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
+				if (mat->GetTextureCount(aiTextureType_UNKNOWN) > 0)
+				{
+					Textures texs; // temporary textures before merging
+					loadTextureAssimp<aiTextureType_UNKNOWN, RoughMetalBgTex>(mat, texs);
+					convertSpecialTextures(texs, textures);
+				}
+				else if (mat->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) + mat->GetTextureCount(aiTextureType_METALNESS) > 0)
+				{
+					Textures texs; // temporary textures before merging
+					loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, RoughTex>(mat, texs);
+					loadTextureAssimp<aiTextureType_METALNESS, MetalTex>(mat, texs);
+					convertSpecialTextures(texs, textures);
+				}
+				else if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
 				{
 					aiColor3D spec = aiColor3D(0);
 					mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
 					if (conv(spec) != Vec3(0))
 					{ // convert specular color to special material
-						Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
+						const Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
 						part.material.specialBase[0] = s[0];
 						part.material.specialBase[1] = s[1];
 					}
@@ -1348,4 +1501,3 @@ namespace cage
 		return result;
 	}
 }
-
