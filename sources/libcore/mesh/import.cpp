@@ -972,6 +972,7 @@ namespace cage
 						CAGE_THROW_ERROR(Exception, "channel index out of range");
 					it.image = std::move(vals[channel]);
 				}
+				textures.name += Stringizer() + "_ch" + channel;
 			}
 
 			static MeshImportTexture duplicateChannel(MeshImportTexture &textures, uint32 channel)
@@ -987,6 +988,7 @@ namespace cage
 					parts.push_back(std::move(p));
 				}
 				MeshImportTexture result;
+				result.name = Stringizer() + textures.name + "_ch" + channel;
 				result.images.parts = std::move(parts);
 				return result;
 			}
@@ -1034,9 +1036,7 @@ namespace cage
 					CAGE_ASSERT(input.size() == 1);
 					MeshImportTexture rt = duplicateChannel(input[0], 1);
 					MeshImportTexture mt = duplicateChannel(input[0], 2);
-					rt.name = input[0].name;
 					rt.type = RoughTex;
-					mt.name = input[0].name;
 					mt.type = MetalTex;
 					input.clear();
 					input.push_back(std::move(rt));
@@ -1255,7 +1255,7 @@ namespace cage
 						part.renderFlags &= ~MeshRenderFlags::ShadowCast;
 						continue;
 					}
-					CAGE_LOG_THROW(Stringizer() + "specified flag: '" + v + "'");
+					CAGE_LOG_THROW(Stringizer() + "provided flag: '" + v + "'");
 					CAGE_THROW_ERROR(Exception, "unknown material flag");
 				}
 
@@ -1280,6 +1280,15 @@ namespace cage
 				mat->Get(AI_MATKEY_OPACITY, opacity.value);
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded opacity: " + opacity);
+				if (opacity == 1)
+				{
+					Real transmission = 0;
+					mat->Get(AI_MATKEY_TRANSMISSION_FACTOR, transmission.value);
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded transmission: " + transmission);
+					if (transmission > 0)
+						opacity = 1 - transmission * 0.5;
+				}
 				if (opacity > 0 && opacity < 1)
 				{
 					if (config.verbose)
@@ -1317,11 +1326,19 @@ namespace cage
 					part.material.albedoMult[3] = opacity;
 
 				// special
+				const auto &specialCheckFactors = [&]() {
+					Real rf = 1, mf = 1;
+					mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, rf.value);
+					mat->Get(AI_MATKEY_METALLIC_FACTOR, mf.value);
+					part.material.specialMult[0] = rf;
+					part.material.specialMult[1] = mf;
+				};
 				if (mat->GetTextureCount(aiTextureType_UNKNOWN) > 0)
 				{
 					Textures texs; // temporary textures before merging
 					loadTextureAssimp<aiTextureType_UNKNOWN, RoughMetalBgTex>(mat, texs);
 					convertSpecialTextures(texs, textures);
+					specialCheckFactors();
 				}
 				else if (mat->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) + mat->GetTextureCount(aiTextureType_METALNESS) > 0)
 				{
@@ -1329,6 +1346,7 @@ namespace cage
 					loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, RoughTex>(mat, texs);
 					loadTextureAssimp<aiTextureType_METALNESS, MetalTex>(mat, texs);
 					convertSpecialTextures(texs, textures);
+					specialCheckFactors();
 				}
 				else if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
 				{

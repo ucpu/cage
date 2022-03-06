@@ -140,17 +140,17 @@ namespace
 
 	ImageImportResult images;
 
-	MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res, const String &spec)
+	MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res)
 	{
 		for (const auto &itp : res.parts)
 		{
 			for (auto &itt : itp.textures)
 			{
-				if (isPattern(itt.name, "", "", spec))
+				if (isPattern(itt.name, "", "", String(Stringizer() + "?" + inputSpec)))
 					return &itt;
 			}
 		}
-		return nullptr;
+		CAGE_THROW_ERROR(Exception, "requested embedded texture not found");
 	}
 
 	void loadAllFiles()
@@ -165,7 +165,7 @@ namespace
 		{
 			MeshImportResult res = meshImportFiles(inputFileName);
 			meshImportNotifyUsedFiles(res);
-			images = std::move(findEmbeddedTexture(res, inputSpec)->images);
+			images = std::move(findEmbeddedTexture(res)->images);
 		}
 		imageImportConvertRawToImages(images);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
