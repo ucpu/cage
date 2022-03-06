@@ -571,7 +571,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + it.mipmapLevel + "-" + it.cubeFace + "-" + it.layer + "_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
 			imageVerticalFlip(+it.image);
 			it.image->exportFile(dbgName);
 		}
