@@ -350,15 +350,17 @@ namespace cage
 
 	namespace privat
 	{
-		template<class T> struct GeometryOrder {};
-		template<> struct GeometryOrder<Vec3> { static constexpr int order = 1; };
-		template<> struct GeometryOrder<Line> { static constexpr int order = 2; };
-		template<> struct GeometryOrder<Triangle> { static constexpr int order = 3; };
-		template<> struct GeometryOrder<Plane> { static constexpr int order = 4; };
-		template<> struct GeometryOrder<Sphere> { static constexpr int order = 5; };
-		template<> struct GeometryOrder<Aabb> { static constexpr int order = 6; };
-		template<> struct GeometryOrder<Cone> { static constexpr int order = 7; };
-		template<> struct GeometryOrder<Frustum> { static constexpr int order = 8; };
+		template<class T> struct GeometryOrder;
+		template<> struct GeometryOrder<Vec2> { static constexpr int order = 1; };
+		template<> struct GeometryOrder<Vec3> { static constexpr int order = 2; };
+		template<> struct GeometryOrder<Vec4> { static constexpr int order = 3; };
+		template<> struct GeometryOrder<Line> { static constexpr int order = 4; };
+		template<> struct GeometryOrder<Triangle> { static constexpr int order = 5; };
+		template<> struct GeometryOrder<Plane> { static constexpr int order = 6; };
+		template<> struct GeometryOrder<Sphere> { static constexpr int order = 7; };
+		template<> struct GeometryOrder<Aabb> { static constexpr int order = 8; };
+		template<> struct GeometryOrder<Cone> { static constexpr int order = 9; };
+		template<> struct GeometryOrder<Frustum> { static constexpr int order = 10; };
 		template<class A, class B> constexpr bool geometrySwapParameters = GeometryOrder<A>::order > GeometryOrder<B>::order;
 	}
 

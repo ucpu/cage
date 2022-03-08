@@ -56,6 +56,8 @@ void testGeometry()
 
 		test(distance(Vec3(1, 2, 3), Vec3(1, 2, 3)), 0);
 		test(distance(Vec3(1, 2, 3), Vec3(3, 2, 1)), sqrt(8));
+
+		test(distance(Vec2(1, 2), Vec2(1, 2)), 0);
 	}
 
 	{
