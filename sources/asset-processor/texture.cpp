@@ -140,36 +140,32 @@ namespace
 
 	ImageImportResult images;
 
-	MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res, const String &spec)
+	MeshImportTexture *findEmbeddedTexture(const MeshImportResult &res)
 	{
 		for (const auto &itp : res.parts)
 		{
 			for (auto &itt : itp.textures)
 			{
-				if (isPattern(itt.name, "", "", spec))
+				if (isPattern(itt.name, "", "", String(Stringizer() + "?" + inputSpec)))
 					return &itt;
 			}
 		}
-		return nullptr;
+		CAGE_THROW_ERROR(Exception, "requested embedded texture not found");
 	}
 
 	void loadAllFiles()
 	{
-		const String wholeFilename = pathJoin(inputDirectory, inputFile);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading file: " + wholeFilename);
 		if (inputSpec.empty())
 		{
-			images = imageImportFiles(wholeFilename);
+			images = imageImportFiles(inputFileName);
 			for (const auto &it : images.parts)
 				writeLine(String("use=") + pathToRel(it.fileName, inputDirectory));
 		}
 		else
 		{
-			MeshImportConfig cfg;
-			cfg.rootPath = inputDirectory;
-			MeshImportResult res = meshImportFiles(wholeFilename, cfg);
+			MeshImportResult res = meshImportFiles(inputFileName);
 			meshImportNotifyUsedFiles(res);
-			images = std::move(findEmbeddedTexture(res, inputSpec)->images);
+			images = std::move(findEmbeddedTexture(res)->images);
 		}
 		imageImportConvertRawToImages(images);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
@@ -575,7 +571,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + it.mipmapLevel + "-" + it.cubeFace + "-" + it.layer + "_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
 			imageVerticalFlip(+it.image);
 			it.image->exportFile(dbgName);
 		}

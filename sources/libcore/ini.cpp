@@ -14,10 +14,7 @@ namespace cage
 	namespace
 	{
 		template<class Value>
-		struct ContainerMap : public std::map<String, Value, StringComparatorFast>
-		{
-			typedef typename ContainerMap::map Base;
-		};
+		using ContainerMap = std::map<String, Value, StringComparatorFast>;
 
 		struct IniValue
 		{
@@ -35,7 +32,7 @@ namespace cage
 		class IniImpl : public Ini
 		{
 		public:
-			ContainerMap<Holder<IniSection>> sections;
+			ContainerMap<IniSection> sections;
 			std::vector<String> helps;
 		};
 	}
@@ -88,7 +85,7 @@ namespace cage
 		if (!sectionExists(section))
 			return 0;
 		const IniImpl *impl = (const IniImpl *)this;
-		return numeric_cast<uint32>(impl->sections.at(section)->items.size());
+		return numeric_cast<uint32>(impl->sections.at(section).items.size());
 	}
 
 	String Ini::item(const String &section, uint32 item) const
@@ -96,7 +93,7 @@ namespace cage
 		if (!sectionExists(section))
 			return "";
 		const IniImpl *impl = (const IniImpl *)this;
-		auto i = impl->sections.at(section)->items.cbegin();
+		auto i = impl->sections.at(section).items.cbegin();
 		try
 		{
 			std::advance(i, item);
@@ -113,7 +110,7 @@ namespace cage
 		if (!sectionExists(section))
 			return false;
 		const IniImpl *impl = (const IniImpl *)this;
-		return impl->sections.at(section)->items.count(item);
+		return impl->sections.at(section).items.count(item);
 	}
 
 	Holder<PointerRange<String>> Ini::items(const String &section) const
@@ -122,7 +119,7 @@ namespace cage
 		PointerRangeHolder<String> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections.at(section)->items;
+		auto &cont = impl->sections.at(section).items;
 		tmp.reserve(cont.size());
 		for (const auto &it : cont)
 			tmp.push_back(it.first);
@@ -135,7 +132,7 @@ namespace cage
 		PointerRangeHolder<String> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections.at(section)->items;
+		auto &cont = impl->sections.at(section).items;
 		tmp.reserve(cont.size());
 		for (const auto &it : cont)
 			tmp.push_back(it.second.value);
@@ -146,7 +143,7 @@ namespace cage
 	{
 		IniImpl *impl = (IniImpl *)this;
 		if (sectionExists(section))
-			impl->sections[section]->items.erase(item);
+			impl->sections[section].items.erase(item);
 	}
 
 	String Ini::get(const String &section, const String &item) const
@@ -154,7 +151,7 @@ namespace cage
 		if (!itemExists(section, item))
 			return "";
 		const IniImpl *impl = (const IniImpl *)this;
-		return impl->sections.at(section)->items[item].value;
+		return impl->sections.at(section).items.at(item).value;
 	}
 
 	namespace
@@ -173,30 +170,28 @@ namespace cage
 		if (find(value, '#') != m)
 			CAGE_THROW_ERROR(Exception, "invalid value");
 		IniImpl *impl = (IniImpl *)this;
-		if (!sectionExists(section))
-			impl->sections[section] = systemMemory().createHolder<IniSection>();
-		impl->sections[section]->items[item] = value;
+		impl->sections[section].items[item] = value;
 	}
 
 	void Ini::markUsed(const String &section, const String &item)
 	{
 		CAGE_ASSERT(itemExists(section, item));
 		IniImpl *impl = (IniImpl *)this;
-		impl->sections[section]->items[item].used = true;
+		impl->sections[section].items[item].used = true;
 	}
 
 	void Ini::markUnused(const String &section, const String &item)
 	{
 		CAGE_ASSERT(itemExists(section, item));
 		IniImpl *impl = (IniImpl *)this;
-		impl->sections[section]->items[item].used = false;
+		impl->sections[section].items[item].used = false;
 	}
 
 	bool Ini::isUsed(const String &section, const String &item) const
 	{
 		CAGE_ASSERT(itemExists(section, item));
 		const IniImpl *impl = (const IniImpl *)this;
-		return impl->sections.at(section)->items[item].used;
+		return impl->sections.at(section).items.at(item).used;
 	}
 
 	bool Ini::anyUnused(String &section, String &item) const
@@ -210,7 +205,7 @@ namespace cage
 		const IniImpl *impl = (const IniImpl *)this;
 		for (const auto &s : impl->sections)
 		{
-			for (const auto &t : s.second->items)
+			for (const auto &t : s.second.items)
 			{
 				if (!t.second.used)
 				{
@@ -409,13 +404,22 @@ namespace cage
 	Holder<PointerRange<char>> Ini::exportBuffer() const
 	{
 		const IniImpl *impl = (const IniImpl *)this;
-		MemoryBuffer buff(0, 100000);
-		Serializer ser(buff);
+
+		std::map<String, std::map<String, String>> copy; // alphabetically ordered
 		for (const auto &i : impl->sections)
 		{
+			auto &s = copy[i.first];
+			for (const auto &j : i.second.items)
+				s[j.first] = j.second.value;
+		}
+
+		MemoryBuffer buff(0, 100000);
+		Serializer ser(buff);
+		for (const auto &i : copy)
+		{
 			ser.writeLine(String() + "[" + i.first + "]");
-			for (const auto &j : i.second->items)
-				ser.writeLine(String() + j.first + "=" + j.second.value);
+			for (const auto &j : i.second)
+				ser.writeLine(String() + j.first + " = " + j.second);
 		}
 		return std::move(buff);
 	}

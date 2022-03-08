@@ -25,6 +25,17 @@ namespace
 					writeLine(Stringizer() + "asset=" + inputFile + "?" + part.objectName + "_" + part.materialName);
 				}
 
+				// textures
+				for (const auto &part : result.parts)
+				{
+					for (const auto &tex : part.textures)
+					{
+						writeLine("scheme=texture");
+						CAGE_ASSERT(isPattern(tex.name, inputDirectory, "", ""));
+						writeLine(Stringizer() + "asset=" + subString(tex.name, inputDirectory.length() + 1, m));
+					}
+				}
+
 				// skeletons
 				if (result.skeleton)
 				{

@@ -235,12 +235,9 @@ namespace cage
 		class CageIoSystem : public Assimp::IOSystem
 		{
 		public:
-			explicit CageIoSystem(const String &rootDir) : currentDir(rootDir)
-			{}
-
 			bool Exists(const char *pFile) const override
 			{
-				return any(pathType(pathJoin(currentDir, pFile)) & PathTypeFlags::File);
+				return any(pathType(pathToAbs(pFile)) & PathTypeFlags::File);
 			}
 
 			char getOsSeparator() const override
@@ -252,9 +249,13 @@ namespace cage
 			{
 				if (::cage::String(pMode) != "rb")
 					CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
-				const String pth = makePath(pFile);
-				paths.insert(pth);
-				return new CageIoStream(readFile(pth));
+				if (!pathIsAbs(pFile) || pathSimplify(pFile) != String(pFile))
+				{
+					CAGE_LOG_THROW(Stringizer() + "path: " + pFile);
+					CAGE_THROW_ERROR(Exception, "assimp is accessing invalid path");
+				}
+				paths.insert(pFile);
+				return new CageIoStream(readFile(pFile));
 			}
 
 			void Close(Assimp::IOStream *pFile) override
@@ -267,27 +268,7 @@ namespace cage
 				CAGE_THROW_ERROR(NotImplemented, "cageIOsystem::ComparePaths");
 			}
 
-			String makePath(String path) const
-			{
-				if (currentDir.empty())
-					return pathToAbs(path);
-
-				if (!pathIsAbs(path))
-					return pathToAbs(pathJoin(currentDir, path));
-
-				path = pathToRel(path, currentDir);
-				if (path.empty() || pathIsAbs(path) || path[0] == '.')
-				{
-					CAGE_LOG_THROW(path);
-					CAGE_THROW_ERROR(Exception, "assimp is accessing invalid path");
-				}
-				return pathJoin(currentDir, path);
-			}
-
 			std::set<String> paths;
-
-		private:
-			const String currentDir;
 		};
 
 		struct CmpAiStr
@@ -540,7 +521,7 @@ namespace cage
 						imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
 
 					imp.SetIOHandler(&this->ioSystem);
-					if (!imp.ReadFile(pathToRel(inputFile, config.rootPath).c_str(), flags))
+					if (!imp.ReadFile(inputFile.c_str(), flags))
 					{
 						CAGE_LOG_THROW(cage::String(imp.GetErrorString()));
 						CAGE_THROW_ERROR(Exception, "assimp loading failed");
@@ -978,6 +959,139 @@ namespace cage
 			}
 
 			using Textures = PointerRangeHolder<MeshImportTexture>;
+			static constexpr MeshTextureType RoughTex = (MeshTextureType)1001;
+			static constexpr MeshTextureType MetalTex = (MeshTextureType)1002;
+			static constexpr MeshTextureType RoughMetalBgTex = (MeshTextureType)1003;
+
+			static void pickChannel(MeshImportTexture &textures, uint32 channel)
+			{
+				for (auto &it : textures.images.parts)
+				{
+					auto vals = imageChannelsSplit(+it.image);
+					if (channel >= vals.size())
+						CAGE_THROW_ERROR(Exception, "channel index out of range");
+					it.image = std::move(vals[channel]);
+				}
+				textures.name += Stringizer() + "_ch" + channel;
+			}
+
+			static MeshImportTexture duplicateChannel(MeshImportTexture &textures, uint32 channel)
+			{
+				PointerRangeHolder<ImageImportPart> parts;
+				for (auto &it : textures.images.parts)
+				{
+					auto vals = imageChannelsSplit(+it.image);
+					if (channel >= vals.size())
+						CAGE_THROW_ERROR(Exception, "channel index out of range");
+					ImageImportPart p;
+					p.image = std::move(vals[channel]);
+					parts.push_back(std::move(p));
+				}
+				MeshImportTexture result;
+				result.name = Stringizer() + textures.name + "_ch" + channel;
+				result.images.parts = std::move(parts);
+				return result;
+			}
+
+			void convertSpecialTextures(Textures &input, Textures &output)
+			{
+				CAGE_ASSERT(!input.empty());
+
+				for (auto &it : input)
+					imageImportConvertRawToImages(it.images);
+
+				// pick correct channels for roughness or metallic textures
+				for (auto &it : input)
+				{
+					switch (it.type)
+					{
+					case RoughTex:
+					{
+						switch (it.images.parts[0].image->channels())
+						{
+						case 1: break;
+						case 4: pickChannel(it, 3); break;
+						default: CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+						}
+					} break;
+					case MetalTex:
+					{
+						switch (it.images.parts[0].image->channels())
+						{
+						case 1: break;
+							// todo find which channel contains metallic data
+						default: CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
+						}
+					} break;
+					case RoughMetalBgTex:
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid type of texture for combining into special texture");
+					}
+				}
+
+				// split roughness-metallic texture
+				if (input.size() == 1 && input[0].type == RoughMetalBgTex)
+				{
+					CAGE_ASSERT(input.size() == 1);
+					MeshImportTexture rt = duplicateChannel(input[0], 1);
+					MeshImportTexture mt = duplicateChannel(input[0], 2);
+					rt.type = RoughTex;
+					mt.type = MetalTex;
+					input.clear();
+					input.push_back(std::move(rt));
+					input.push_back(std::move(mt));
+				}
+
+				// early exit for roughness-only texture
+				if (input.size() == 1 && input[0].type == RoughTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					input[0].type = MeshTextureType::Special;
+					output.push_back(std::move(input[0]));
+					return;
+				}
+
+				// early exit for metallic-only texture
+				if (input.size() == 1 && input[0].type == MetalTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					Holder<Image> arr[2];
+					arr[1] = std::move(input[0].images.parts[0].image);
+					input[0].images.parts[0].image = imageChannelsJoin(arr);
+					input[0].type = MeshTextureType::Special;
+					output.push_back(std::move(input[0]));
+					return;
+				}
+
+				// combine special texture from both sources
+				if (input.size() == 2 && input[0].type == RoughTex && input[1].type == MetalTex)
+				{
+					CAGE_ASSERT(input[0].images.parts.size() == 1);
+					CAGE_ASSERT(input[1].images.parts.size() == 1);
+					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
+					CAGE_ASSERT(input[1].images.parts[0].image->channels() == 1);
+					Holder<Image> arr[2];
+					arr[0] = std::move(input[0].images.parts[0].image);
+					arr[1] = std::move(input[1].images.parts[0].image);
+					ImageImportPart part;
+					part.image = imageChannelsJoin(arr);
+					PointerRangeHolder<ImageImportPart> parts;
+					parts.push_back(std::move(part));
+					MeshImportTexture res;
+					res.images.parts = std::move(parts);
+					const String base = split(input[0].name, "?");
+					split(input[1].name, "?");
+					res.name = Stringizer() + base + "?special_" + input[0].name + "_" + input[1].name;
+					res.type = MeshTextureType::Special;
+					output.push_back(std::move(res));
+					return;
+				}
+
+				CAGE_THROW_CRITICAL(Exception, "impossible combination of roughness metallic textures for combining into special texture");
+			}
 
 			template<MeshTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
@@ -992,10 +1106,10 @@ namespace cage
 				if (n.empty())
 					return;
 				if (n[0] == '/')
-					n = ioSystem.makePath(trim(n, true, false, "/"));
+					n = pathJoin(config.rootPath, trim(n, true, false, "/"));
 				else
 					n = pathJoinUnchecked(pathBase, n);
-				n = ioSystem.makePath(n);
+				n = pathToAbs(n);
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
 				MeshImportTexture t;
@@ -1005,15 +1119,15 @@ namespace cage
 			}
 
 			template<aiTextureType AssimpType, MeshTextureType CageType>
-			bool loadTextureAssimp(aiMaterial *mat, Textures &textures)
+			bool loadTextureAssimp(const aiMaterial *mat, Textures &textures)
 			{
 				const uint32 texCount = mat->GetTextureCount(AssimpType);
 				if (texCount == 0)
 					return false;
 				if (texCount > 1)
-					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "material has multiple (" + texCount + ") textures of same type");
+					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "material has multiple (" + texCount + ") textures of same type (" + AssimpType + ")");
 				aiString texAsName;
-				mat->GetTexture(AssimpType, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
+				mat->GetTexture(AssimpType, 0, &texAsName);
 				String n = texAsName.C_Str();
 				if (isPattern(n, "*", "", ""))
 				{ // embedded texture
@@ -1025,6 +1139,8 @@ namespace cage
 					t.name = tx->mFilename.C_Str();
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using embedded texture with original name: " + t.name);
+					if (t.name.empty())
+						t.name = n;
 					t.name = inputFile + "?" + pathReplaceInvalidCharacters(t.name);
 					t.type = CageType;
 					if (tx->mHeight == 0)
@@ -1050,7 +1166,7 @@ namespace cage
 					if (isPattern(n, "//", "", ""))
 						n = String() + "./" + subString(n, 2, cage::m);
 					n = pathJoin(pathExtractDirectory(inputFile), n);
-					n = ioSystem.makePath(n);
+					n = pathToAbs(n);
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
 					MeshImportTexture t;
@@ -1139,7 +1255,7 @@ namespace cage
 						part.renderFlags &= ~MeshRenderFlags::ShadowCast;
 						continue;
 					}
-					CAGE_LOG_THROW(Stringizer() + "specified flag: '" + v + "'");
+					CAGE_LOG_THROW(Stringizer() + "provided flag: '" + v + "'");
 					CAGE_THROW_ERROR(Exception, "unknown material flag");
 				}
 
@@ -1153,7 +1269,7 @@ namespace cage
 
 				const aiScene *scene = imp.GetScene();
 				CAGE_ASSERT(materialIndex < scene->mNumMaterials);
-				aiMaterial *mat = scene->mMaterials[materialIndex];
+				const aiMaterial *mat = scene->mMaterials[materialIndex];
 				if (!mat)
 					CAGE_THROW_ERROR(Exception, "material is null");
 
@@ -1164,6 +1280,15 @@ namespace cage
 				mat->Get(AI_MATKEY_OPACITY, opacity.value);
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded opacity: " + opacity);
+				if (opacity == 1)
+				{
+					Real transmission = 0;
+					mat->Get(AI_MATKEY_TRANSMISSION_FACTOR, transmission.value);
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded transmission: " + transmission);
+					if (transmission > 0)
+						opacity = 1 - transmission * 0.5;
+				}
 				if (opacity > 0 && opacity < 1)
 				{
 					if (config.verbose)
@@ -1172,16 +1297,23 @@ namespace cage
 				}
 
 				// albedo
-				if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
-				{
+				const auto &albedoCheckAlpha = [&](aiTextureType type) {
 					int flg = 0;
-					mat->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
+					mat->Get(AI_MATKEY_TEXFLAGS(type, 0), flg);
 					if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
 					{
 						if (config.verbose)
-							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to texture flag");
+							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to albedo texture flag");
 						part.renderFlags |= MeshRenderFlags::Translucent;
 					}
+				};
+				if (loadTextureAssimp<aiTextureType_BASE_COLOR, MeshTextureType::Albedo>(mat, textures))
+				{
+					albedoCheckAlpha(aiTextureType_BASE_COLOR);
+				}
+				else if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
+				{
+					albedoCheckAlpha(aiTextureType_DIFFUSE);
 				}
 				else
 				{
@@ -1194,13 +1326,35 @@ namespace cage
 					part.material.albedoMult[3] = opacity;
 
 				// special
-				if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
+				const auto &specialCheckFactors = [&]() {
+					Real rf = 1, mf = 1;
+					mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, rf.value);
+					mat->Get(AI_MATKEY_METALLIC_FACTOR, mf.value);
+					part.material.specialMult[0] = rf;
+					part.material.specialMult[1] = mf;
+				};
+				if (mat->GetTextureCount(aiTextureType_UNKNOWN) > 0)
+				{
+					Textures texs; // temporary textures before merging
+					loadTextureAssimp<aiTextureType_UNKNOWN, RoughMetalBgTex>(mat, texs);
+					convertSpecialTextures(texs, textures);
+					specialCheckFactors();
+				}
+				else if (mat->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS) + mat->GetTextureCount(aiTextureType_METALNESS) > 0)
+				{
+					Textures texs; // temporary textures before merging
+					loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, RoughTex>(mat, texs);
+					loadTextureAssimp<aiTextureType_METALNESS, MetalTex>(mat, texs);
+					convertSpecialTextures(texs, textures);
+					specialCheckFactors();
+				}
+				else if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
 				{
 					aiColor3D spec = aiColor3D(0);
 					mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
 					if (conv(spec) != Vec3(0))
 					{ // convert specular color to special material
-						Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
+						const Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
 						part.material.specialBase[0] = s[0];
 						part.material.specialBase[1] = s[1];
 					}
@@ -1247,7 +1401,7 @@ namespace cage
 						path += String() + "_" + config.materialPathAlternative;
 				}
 				path += ".cpm";
-				path = ioSystem.makePath(path);
+				path = pathToAbs(path);
 
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at '" + path + "'");
@@ -1265,7 +1419,7 @@ namespace cage
 			const MeshImportConfig config;
 			const Mat3 axes = axesMatrix(config.axesSwizzle);
 			const Mat3 axesScale = axes * config.scale;
-			CageIoSystem ioSystem = CageIoSystem(config.rootPath);
+			CageIoSystem ioSystem;
 			Assimp::Importer imp;
 			Holder<AssimpSkeleton> skeleton;
 
@@ -1290,84 +1444,78 @@ namespace cage
 				return n;
 			}
 		};
-
-		MeshImportResult meshImportFilesImpl(const String &filename, const MeshImportConfig &config)
-		{
-			AssimpContext context(filename, config);
-			const aiScene *scene = context.imp.GetScene();
-
-			MeshImportResult result;
-
-			{
-				PointerRangeHolder<MeshImportPart> parts;
-				for (uint32 i = 0; i < scene->mNumMeshes; i++)
-				{
-					const aiMesh *msh = scene->mMeshes[i];
-					MeshImportPart p;
-					p.objectName = convStrTruncate(msh->mName);
-					p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
-					p.mesh = context.mesh(i);
-					p.boundingBox = p.mesh->boundingBox();
-					p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
-					context.loadMaterial(msh->mMaterialIndex, p);
-					parts.push_back(std::move(p));
-				}
-				result.parts = std::move(parts);
-			}
-
-			if (context.skeleton)
-			{
-				result.skeleton = context.skeletonRig();
-				PointerRangeHolder<MeshImportAnimation> anims;
-				for (uint32 i = 0; i < scene->mNumAnimations; i++)
-				{
-					const aiAnimation *ani = scene->mAnimations[i];
-					if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
-						continue;
-					MeshImportAnimation a;
-					a.name = convStrTruncate(ani->mName);
-					a.animation = context.animation(i);
-					anims.push_back(std::move(a));
-				}
-				result.animations = std::move(anims);
-
-				// extend bounding boxes to contain all animations
-				for (MeshImportPart &part : result.parts)
-				{
-					if (!part.mesh->boneIndices().empty())
-					{
-						for (const MeshImportAnimation &ani : result.animations)
-						{
-							for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
-							{
-								Holder<Mesh> tmp = part.mesh->copy();
-								animateMesh(+result.skeleton, +ani.animation, t, +tmp);
-								Aabb box = tmp->boundingBox();
-								box = enlarge(box);
-								part.boundingBox += box;
-							}
-						}
-					}
-				}
-			}
-
-			{
-				PointerRangeHolder<String> pths;
-				for (const String &p : context.ioSystem.paths)
-					pths.push_back(p);
-				result.paths = std::move(pths);
-			}
-
-			return result;
-		}
 	}
 
 	MeshImportResult meshImportFiles(const String &filename, const MeshImportConfig &config)
 	{
-		MeshImportConfig cfg = config;
-		if (!cfg.rootPath.empty())
-			cfg.rootPath = pathToAbs(cfg.rootPath);
-		return meshImportFilesImpl(pathToAbs(filename), cfg);
+		AssimpContext context(pathToAbs(filename), config);
+		const aiScene *scene = context.imp.GetScene();
+
+		MeshImportResult result;
+
+		{
+			PointerRangeHolder<MeshImportPart> parts;
+			for (uint32 i = 0; i < scene->mNumMeshes; i++)
+			{
+				const aiMesh *msh = scene->mMeshes[i];
+				MeshImportPart p;
+				p.objectName = convStrTruncate(msh->mName);
+				p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
+				p.mesh = context.mesh(i);
+				p.boundingBox = p.mesh->boundingBox();
+				p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
+				context.loadMaterial(msh->mMaterialIndex, p);
+				parts.push_back(std::move(p));
+			}
+			result.parts = std::move(parts);
+		}
+
+		if (context.skeleton)
+		{
+			result.skeleton = context.skeletonRig();
+			PointerRangeHolder<MeshImportAnimation> anims;
+			for (uint32 i = 0; i < scene->mNumAnimations; i++)
+			{
+				const aiAnimation *ani = scene->mAnimations[i];
+				if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
+					continue;
+				MeshImportAnimation a;
+				a.name = convStrTruncate(ani->mName);
+				a.animation = context.animation(i);
+				anims.push_back(std::move(a));
+			}
+			result.animations = std::move(anims);
+
+			// extend bounding boxes to contain all animations
+			for (MeshImportPart &part : result.parts)
+			{
+				if (!part.mesh->boneIndices().empty())
+				{
+					for (const MeshImportAnimation &ani : result.animations)
+					{
+						for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+						{
+							Holder<Mesh> tmp = part.mesh->copy();
+							animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+							Aabb box = tmp->boundingBox();
+							box = enlarge(box);
+							part.boundingBox += box;
+						}
+					}
+				}
+			}
+		}
+
+		{
+			PointerRangeHolder<String> pths;
+			for (const String &p : context.ioSystem.paths)
+			{
+				CAGE_ASSERT(pathIsAbs(p));
+				pths.push_back(p);
+			}
+			result.paths = std::move(pths);
+		}
+
+		return result;
 	}
 }
-
