@@ -1,4 +1,5 @@
 #include "math.h"
+#include <cage-core/mat3x4.h>
 
 namespace cage
 {
@@ -246,5 +247,32 @@ namespace cage
 			len += sqr(x[i]);
 		len = sqrt(len);
 		return x * (1 / len);
+	}
+
+	Mat3x4::Mat3x4() : Mat3x4(Mat4())
+	{}
+
+	Mat3x4::Mat3x4(const Mat3 &in)
+	{
+		for (uint32 a = 0; a < 3; a++)
+			for (uint32 b = 0; b < 3; b++)
+				data[b][a] = in[a * 3 + b];
+	}
+
+	Mat3x4::Mat3x4(const Mat4 &in)
+	{
+		CAGE_ASSERT(abs(in[3]) < 1e-5 && abs(in[7]) < 1e-5 && abs(in[11]) < 1e-5 && abs(in[15] - 1) < 1e-5);
+		for (uint32 a = 0; a < 4; a++)
+			for (uint32 b = 0; b < 3; b++)
+				data[b][a] = in[a * 4 + b];
+	}
+
+	Mat3x4::operator Mat4() const
+	{
+		Mat4 r;
+		for (uint32 a = 0; a < 4; a++)
+			for (uint32 b = 0; b < 3; b++)
+				r[a * 4 + b] = data[b][a];
+		return r;
 	}
 }

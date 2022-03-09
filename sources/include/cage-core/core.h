@@ -83,6 +83,7 @@ namespace cage
 	struct Mat3;
 	struct Mat4;
 	struct Transform;
+	struct Mat3x4;
 
 	struct Line;
 	struct Triangle;
@@ -225,6 +226,8 @@ namespace cage
 	struct Deserializer;
 	class SkeletalAnimation;
 	class SkeletonRig;
+	class SkeletalAnimationPreparatorInstance;
+	class SkeletalAnimationPreparatorCollection;
 	class SpatialQuery;
 	class SpatialStructure;
 	struct SpatialStructureCreateConfig;

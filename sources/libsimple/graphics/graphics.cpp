@@ -1,5 +1,12 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/entitiesCopy.h>
+
+#include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/opengl.h>
+#include <cage-engine/window.h>
 
 #include "graphics.h"
 
@@ -18,6 +25,54 @@ namespace cage
 
 	Graphics::~Graphics()
 	{}
+
+	void Graphics::initialize()
+	{
+		renderQueue = newRenderQueue();
+		provisionalData = newProvisionalGraphics();
+	}
+
+	void Graphics::finalize()
+	{
+		renderQueue.clear();
+		provisionalData.clear();
+	}
+
+	void Graphics::emit(uint64 time)
+	{
+		if (auto lock = emitBuffersGuard->write())
+		{
+			EntitiesCopyConfig cfg;
+			cfg.source = engineEntities();
+			cfg.destination = +emitBuffers[lock.index()].scene;
+			entitiesCopy(cfg);
+			emitBuffers[lock.index()].time = time;
+		}
+	}
+
+	void Graphics::dispatch()
+	{
+		renderQueue->dispatch(+provisionalData);
+		provisionalData->reset();
+
+		{ // check gl errors (even in release, but do not halt the game)
+			try
+			{
+				checkGlError();
+			}
+			catch (const GraphicsError &)
+			{
+				// nothing
+			}
+		}
+	}
+
+	void Graphics::swap()
+	{
+		CAGE_CHECK_GL_ERROR_DEBUG();
+		engineWindow()->swapBuffers();
+		glFinish(); // this is where the engine should be waiting for the gpu
+	}
 
 	void graphicsCreate(const EngineCreateConfig &config)
 	{
