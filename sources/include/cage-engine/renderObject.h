@@ -18,10 +18,10 @@ namespace cage
 
 		Real worldSize;
 		Real pixelsSize;
-		void setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames);
+		void setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> itemIndices, PointerRange<const uint32> itemNames);
 		uint32 lodsCount() const;
 		uint32 lodSelect(Real threshold) const;
-		PointerRange<const uint32> models(uint32 lod) const;
+		PointerRange<const uint32> items(uint32 lod) const;
 
 		// default values for rendering
 

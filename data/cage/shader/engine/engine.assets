@@ -7,7 +7,4 @@ engine.pack
 scheme = shader
 blit.glsl
 depth.glsl
-ambient.glsl
-lighting.glsl
-gBuffer.glsl
-translucent.glsl
+standard.glsl

@@ -19,21 +19,28 @@ void main()
 
 $define shader fragment
 
-$if inputSpec ^ 0 = A
-	layout(location = 2) uniform vec4  aniTexFrames;
-	layout(binding = 0) uniform sampler2DArray texImg;
-	$include ../engine/func/sampleTextureAnimation.glsl
-$else
-	layout(binding = 0) uniform sampler2D texImg;
-$end
 in vec2 varUv;
 out vec4 outColor;
 
+$if inputSpec ^ 0 = A
+
+layout(location = 2) uniform vec4  aniTexFrames;
+layout(binding = 0) uniform sampler2DArray texImg;
+
 void main()
 {
-$if inputSpec ^ 0 = A
-	outColor = sampleTextureAnimation(texImg, varUv, aniTexFrames);
-$else
-	outColor = texture(texImg, varUv);
-$end
+	vec4 a = texture(texImg, vec3(varUv, aniTexFrames.x));
+	vec4 b = texture(texImg, vec3(varUv, aniTexFrames.y));
+	outColor = mix(a, b, aniTexFrames.z);
 }
+
+$else
+
+layout(binding = 0) uniform sampler2D texImg;
+
+void main()
+{
+	outColor = texture(texImg, varUv);
+}
+
+$end

@@ -24,7 +24,7 @@ namespace cage
 		if (!o)
 			return Aabb();
 		Aabb res;
-		for (uint32 it : o->models(0))
+		for (uint32 it : o->items(0))
 			res += getBoxForModel(it);
 		return res;
 	}
