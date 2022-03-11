@@ -96,7 +96,6 @@ vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHT) uniform Light
 {
 	mat4 shadowMat;
-	mat4 mvpMat;
 	vec4 color; // + spotAngle
 	vec4 position;
 	vec4 direction; // + normalOffsetScale

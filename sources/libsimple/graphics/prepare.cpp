@@ -32,6 +32,7 @@
 
 #include <robin_hood.h>
 #include <algorithm>
+#include <optional>
 
 namespace cage
 {
@@ -63,7 +64,6 @@ namespace cage
 		struct UniLight
 		{
 			Mat4 shadowMat;
-			Mat4 mvpMat;
 			Vec4 color; // + spotAngle
 			Vec4 position;
 			Vec4 direction; // + normalOffsetScale
@@ -87,6 +87,12 @@ namespace cage
 			Mat4 model, modelPrev;
 			Frustum frustum; // object-space camera frustum used for culling
 			Entity *e = nullptr;
+		};
+
+		struct RenderInfoEx : public RenderInfo
+		{
+			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
+			Holder<TextureAnimationComponent> textureAnimation;
 		};
 
 		// camera or light
@@ -213,6 +219,88 @@ namespace cage
 					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
 			}
 
+			void updateRenderInfo(RenderInfoEx &pr, const RenderObject *parent)
+			{
+				Holder<TextureAnimationComponent> &pt = pr.textureAnimation;
+				if (pr.e->has<TextureAnimationComponent>())
+					pt = systemMemory().createHolder<TextureAnimationComponent>(pr.e->value<TextureAnimationComponent>());
+
+				std::optional<SkeletalAnimationComponent> ps;
+				if (pr.e->has<SkeletalAnimationComponent>())
+					ps = pr.e->value<SkeletalAnimationComponent>();
+
+				if (parent)
+				{
+					if (!pr.render.color.valid())
+						pr.render.color = parent->color;
+					if (!pr.render.intensity.valid())
+						pr.render.intensity = parent->intensity;
+					if (!pr.render.opacity.valid())
+						pr.render.opacity = parent->opacity;
+
+					if (!pt && (parent->texAnimSpeed.valid() || parent->texAnimOffset.valid()))
+						pt = systemMemory().createHolder<TextureAnimationComponent>();
+					if (pt)
+					{
+						if (!pt->speed.valid())
+							pt->speed = parent->texAnimSpeed;
+						if (!pt->offset.valid())
+							pt->offset = parent->texAnimOffset;
+					}
+
+					if (!ps && parent->skelAnimName)
+						ps = SkeletalAnimationComponent();
+					if (ps)
+					{
+						if (!ps->name)
+							ps->name = parent->skelAnimName;
+						if (!ps->speed.valid())
+							ps->speed = parent->skelAnimSpeed;
+						if (!ps->offset.valid())
+							ps->offset = parent->skelAnimOffset;
+					}
+				}
+
+				if (!pr.render.color.valid())
+					pr.render.color = Vec3(0);
+				if (!pr.render.intensity.valid())
+					pr.render.intensity = 1;
+				if (!pr.render.opacity.valid())
+					pr.render.opacity = 1;
+				pr.uni.color = Vec4(colorGammaToLinear(pr.render.color) * pr.render.intensity, pr.render.opacity);
+
+				if (pt)
+				{
+					if (!pt->speed.valid())
+						pt->speed = 1;
+					if (!pt->offset.valid())
+						pt->offset = 0;
+				}
+
+				if (ps)
+				{
+					if (ps->name)
+					{
+						if (!ps->speed.valid())
+							ps->speed = 1;
+						if (!ps->offset.valid())
+							ps->offset = 0;
+					}
+					else
+						ps.reset();
+				}
+
+				if (ps)
+				{
+					Holder<SkeletalAnimation> anim = engineAssets()->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name);
+					if (anim)
+					{
+						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, prepareTime, ps->startTime, ps->speed, ps->offset);
+						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
+					}
+				}
+			}
+
 			template<bool DepthOnly>
 			void renderModel(const PassInfo &pass, const RenderInfo &render, Holder<Model> model, Holder<RenderObject> parent = {})
 			{
@@ -237,40 +325,24 @@ namespace cage
 				}
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
 
-				//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = render.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
+				RenderInfoEx ex;
+				(RenderInfo &)ex = render;
+				updateRenderInfo(ex, +parent);
 
-				UniInstance um = render.uni;
 				if (none(model->flags & MeshRenderFlags::VelocityWrite))
-					um.mvpMatPrev = um.mvpMat;
-				um.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+					ex.uni.mvpMatPrev = ex.uni.mvpMat;
+				ex.uni.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
-				/*
-				if (pr.textureAnimation)
+				if (ex.textureAnimation && textures[CAGE_SHADER_TEXTURE_ALBEDO])
 				{
-					Holder<Texture> t = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(mo->textureName(CAGE_SHADER_TEXTURE_ALBEDO));
-					if (t)
-					{
-						const auto &p = pr.textureAnimation->params;
-						um.aniTexFrames = detail::evalSamplesForTextureAnimation(+t, prepareTime, p.startTime, p.speed, p.offset);
-					}
+					const auto &p = *ex.textureAnimation;
+					ex.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, p.startTime, p.speed, p.offset);
 				}
 
-				if (pr.skeletalAnimation)
-				{
-					{
-						ScopeLock lock(skeletonTaskInitMutex);
-						if (!pr.skeletalAnimation->task)
-							pr.skeletalAnimation->task = tasksRunAsync("skeletal-animation", Holder<PrepSkeleton>(+pr.skeletalAnimation, nullptr)); // the task may not own the skeleton otherwise it would make a cyclic dependency
-					}
-					armatures.push_back(+pr.skeletalAnimation);
-					CAGE_ASSERT(armatures.size() == data.size());
-				}
-				*/
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
 
 				renderQueue->bind(model);
-				renderQueue->bind(shaderStandard);
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+				renderQueue->bind(DepthOnly ? shaderDepth : shaderStandard);
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const Holder<Texture> &t = textures[i];
@@ -289,13 +361,58 @@ namespace cage
 						break;
 					}
 				}
+				renderQueue->universalUniformArray<UniInstance>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
+				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
+				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
+				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
+				if constexpr (DepthOnly)
+					renderQueue->blending(false);
+				else
 				{
-					renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
-					renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
-					renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
+					renderQueue->blending(any(model->flags & MeshRenderFlags::Translucent));
+					renderQueue->blendFuncPremultipliedTransparency();
 				}
-				renderQueue->universalUniformArray<UniInstance>({ &um, &um + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 				renderQueue->draw();
+
+				if constexpr (!DepthOnly)
+				{
+					renderQueue->blending(true);
+					renderQueue->blendFuncAdditive();
+					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
+						if ((lc.sceneMask & pass.sceneMask) == 0)
+							return;
+						const auto model = modelTransforms(e);
+						UniLight uni;
+						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
+						uni.position = model.first * Vec4(0, 0, 0, 1);
+						uni.direction = model.first * Vec4(0, 0, -1, 0);
+						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
+						switch (lc.lightType)
+						{
+						case LightTypeEnum::Directional:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+							break;
+						case LightTypeEnum::Spot:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+							break;
+						case LightTypeEnum::Point:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+							break;
+						default:
+							CAGE_THROW_CRITICAL(Exception, "invalid light type");
+						}
+						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+						renderQueue->draw();
+					}, +emit.scene, false);
+					renderQueue->blending(false);
+				}
+
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -304,7 +421,6 @@ namespace cage
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
 				uint32 lod = 0;
-				/*
 				if (object->lodsCount() > 1)
 				{
 					Real d = 1;
@@ -317,7 +433,6 @@ namespace cage
 					const Real f = pass.lodSelection.screenSize * object->worldSize / (d * object->pixelsSize);
 					lod = object->lodSelect(f);
 				}
-				*/
 				for (uint32 it : object->items(lod))
 					renderObjectOrModel<DepthOnly>(pass, render, it, object.share());
 			}
@@ -337,6 +452,12 @@ namespace cage
 					renderModel<DepthOnly>(pass, render, std::move(md), std::move(parent));
 					return;
 				}
+				if (cnfRenderMissingModels)
+				{
+					Holder<Model> fake = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+					renderModel<DepthOnly>(pass, render, std::move(fake), std::move(parent));
+					return;
+				}
 			}
 
 			template<bool DepthOnly>
@@ -348,10 +469,9 @@ namespace cage
 					RenderInfo render;
 					render.e = e;
 					const auto model = modelTransforms(e);
-					render.model = Mat4(model.first);
-					render.modelPrev = Mat4(model.second);
+					render.model = model.first;
+					render.modelPrev = model.second;
 					render.render = rc;
-					render.uni.color = Vec4(colorGammaToLinear(render.render.color) * render.render.intensity, render.render.opacity);
 					render.uni.mMat = Mat3x4(render.model);
 					render.uni.mvpMat = pass.viewProj * render.model;
 					render.uni.mvpMatPrev = pass.viewProjPrev * render.modelPrev;
@@ -361,19 +481,37 @@ namespace cage
 				}, +emit.scene, false);
 			}
 
+			static void initializeLodSelection(PassInfo &pass, const CameraComponent &cam, const Mat4 &camModel)
+			{
+				switch (cam.cameraType)
+				{
+				case CameraTypeEnum::Orthographic:
+				{
+					pass.lodSelection.screenSize = cam.camera.orthographicSize[1] * pass.resolution[1];
+					pass.lodSelection.orthographic = true;
+				} break;
+				case CameraTypeEnum::Perspective:
+					pass.lodSelection.screenSize = tan(cam.camera.perspectiveFov * 0.5) * 2 * pass.resolution[1];
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
+				}
+				pass.lodSelection.center = Vec3(camModel * Vec4(0, 0, 0, 1));
+			}
+
 			// current and previous transformation matrices
-			std::pair<Transform, Transform> modelTransforms(Entity *e)
+			std::pair<Mat4, Mat4> modelTransforms(Entity *e)
 			{
 				CAGE_ASSERT(e->has(transformComponent));
 				if (e->has(prevTransformComponent))
 				{
 					const Transform c = e->value<TransformComponent>(transformComponent);
 					const Transform p = e->value<TransformComponent>(prevTransformComponent);
-					return { interpolate(p, c, interpolationFactor), interpolate(p, c, interpolationFactor - 1) };
+					return { Mat4(interpolate(p, c, interpolationFactor)), Mat4(interpolate(p, c, interpolationFactor - 1)) };
 				}
 				else
 				{
-					const Transform t = e->value<TransformComponent>(transformComponent);
+					const Mat4 t = Mat4(e->value<TransformComponent>(transformComponent));
 					return { t, t };
 				}
 			}
@@ -417,6 +555,7 @@ namespace cage
 					}();
 					pass.viewProj = pass.proj * pass.view;
 					pass.viewProjPrev = pass.proj * pass.viewPrev;
+					initializeLodSelection(pass, cam, pass.model);
 
 					renderQueue->viewport(Vec2i(), pass.resolution);
 					{
