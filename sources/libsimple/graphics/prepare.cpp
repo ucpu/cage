@@ -87,12 +87,16 @@ namespace cage
 			Mat4 model, modelPrev;
 			Frustum frustum; // object-space camera frustum used for culling
 			Entity *e = nullptr;
+
+			void initUniMatrices(const struct PassInfo &pass);
 		};
 
 		struct RenderInfoEx : public RenderInfo
 		{
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 			Holder<TextureAnimationComponent> textureAnimation;
+			Holder<Texture> textures[MaxTexturesCountPerMaterial];
+			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
 		};
 
 		// camera or light
@@ -114,15 +118,23 @@ namespace cage
 			} lodSelection;
 		};
 
+		void RenderInfo::initUniMatrices(const struct PassInfo &pass)
+		{
+			uni.mMat = Mat3x4(model);
+			uni.mvpMat = pass.viewProj * model;
+			uni.mvpMatPrev = pass.viewProjPrev * modelPrev;
+			uni.normalMat = Mat3x4(inverse(Mat3(model)));
+		}
+
 		struct Preparator
 		{
-			const Holder<RenderQueue> &renderQueue = graphics->renderQueue;
-			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
-			const Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(engineAssets(), confRenderSkeletonBones);
-			const Vec2i windowResolution = engineWindow()->resolution();
-			const uint32 frameIndex = graphics->frameIndex;
 			const bool cnfRenderMissingModels = confRenderMissingModels;
 			const bool cnfRenderSkeletonBones = confRenderSkeletonBones;
+			const Holder<RenderQueue> &renderQueue = graphics->renderQueue;
+			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
+			const Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(engineAssets(), cnfRenderSkeletonBones);
+			const Vec2i windowResolution = engineWindow()->resolution();
+			const uint32 frameIndex = graphics->frameIndex;
 			const EmitBuffer &emit;
 			const uint64 prepareTime;
 			const Real interpolationFactor;
@@ -160,6 +172,122 @@ namespace cage
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				CAGE_ASSERT(shaderBlit);
 				return true;
+			}
+
+			template<bool DepthOnly>
+			void renderModelImpl(const PassInfo &pass, RenderInfoEx &ex, Holder<Model> model)
+			{
+				renderQueue->bind(model);
+				renderQueue->bind(DepthOnly ? shaderDepth : shaderStandard);
+				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
+				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
+				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
+
+				if (none(model->flags & MeshRenderFlags::VelocityWrite))
+					ex.uni.mvpMatPrev = ex.uni.mvpMat;
+				ex.uni.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+
+				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
+				{
+					const uint32 n = model->textureName(i);
+					if (!n)
+						continue;
+					ex.textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
+					switch (ex.textures[i]->target())
+					{
+					case GL_TEXTURE_2D_ARRAY:
+						renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
+						break;
+					default:
+						renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i);
+						break;
+					}
+				}
+				if (ex.textureAnimation && ex.textures[CAGE_SHADER_TEXTURE_ALBEDO])
+				{
+					const auto &p = *ex.textureAnimation;
+					ex.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+ex.textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, p.startTime, p.speed, p.offset);
+				}
+				updateShaderRoutinesForTextures(ex.textures, ex.shaderRoutines);
+
+				ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
+				if (ex.skeletalAnimation)
+				{
+					const auto armature = ex.skeletalAnimation->armature();
+					CAGE_ASSERT(armature.size() == model->skeletonBones);
+					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, model->skeletonBones);
+					renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
+				}
+
+				renderQueue->universalUniformArray<UniInstance>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
+				if constexpr (DepthOnly)
+					renderQueue->blending(false);
+				else
+				{
+					ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
+					renderQueue->blending(any(model->flags & MeshRenderFlags::Translucent));
+					renderQueue->blendFuncPremultipliedTransparency();
+				}
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
+				renderQueue->draw();
+
+				if constexpr (!DepthOnly)
+				{
+					renderQueue->blending(true);
+					renderQueue->blendFuncAdditive();
+					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
+						if ((lc.sceneMask & pass.sceneMask) == 0)
+							return;
+						const auto model = modelTransforms(e);
+						UniLight uni;
+						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
+						uni.position = model.first * Vec4(0, 0, 0, 1);
+						uni.direction = model.first * Vec4(0, 0, -1, 0);
+						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
+						switch (lc.lightType)
+						{
+						case LightTypeEnum::Directional:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+							break;
+						case LightTypeEnum::Spot:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+							break;
+						case LightTypeEnum::Point:
+							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+							break;
+						default:
+							CAGE_THROW_CRITICAL(Exception, "invalid light type");
+						}
+						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
+						renderQueue->draw();
+						}, +emit.scene, false);
+				}
+
+				renderQueue->checkGlErrorDebug();
+			}
+
+			template<bool DepthOnly>
+			void renderModelBones(const PassInfo &pass, const RenderInfoEx &ex)
+			{
+				const auto armature = ex.skeletalAnimation->armature();
+				for (uint32 i = 0; i < armature.size(); i++)
+				{
+					const Mat4 am = Mat4(armature[i]);
+					RenderInfoEx r;
+					(RenderInfo &)r = (const RenderInfo &)ex;
+					r.model = ex.model * am;
+					r.modelPrev = ex.modelPrev * am;
+					r.initUniMatrices(pass);
+					r.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), r.render.opacity);
+					renderModelImpl<DepthOnly>(pass, r, modelBone.share());
+				}
 			}
 
 			static void updateShaderRoutinesForTextures(const Holder<Texture> textures[MaxTexturesCountPerMaterial], uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES])
@@ -313,107 +441,14 @@ namespace cage
 				if (!intersects(model->boundingBox(), render.frustum))
 					return;
 
-				Holder<Texture> textures[MaxTexturesCountPerMaterial];
-				uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
-
-				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-				{
-					const uint32 n = model->textureName(i);
-					if (!n)
-						continue;
-					textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
-				}
-				updateShaderRoutinesForTextures(textures, shaderRoutines);
-
 				RenderInfoEx ex;
 				(RenderInfo &)ex = render;
 				updateRenderInfo(ex, +parent);
 
-				if (none(model->flags & MeshRenderFlags::VelocityWrite))
-					ex.uni.mvpMatPrev = ex.uni.mvpMat;
-				ex.uni.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
-
-				if (ex.textureAnimation && textures[CAGE_SHADER_TEXTURE_ALBEDO])
-				{
-					const auto &p = *ex.textureAnimation;
-					ex.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, p.startTime, p.speed, p.offset);
-				}
-
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
-
-				renderQueue->bind(model);
-				renderQueue->bind(DepthOnly ? shaderDepth : shaderStandard);
-				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-				{
-					const Holder<Texture> &t = textures[i];
-					if (!t)
-						continue;
-					switch (t->target())
-					{
-					case GL_TEXTURE_2D_ARRAY:
-						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
-						break;
-					case GL_TEXTURE_CUBE_MAP:
-						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
-						break;
-					default:
-						renderQueue->bind(t, CAGE_SHADER_TEXTURE_ALBEDO + i);
-						break;
-					}
-				}
-				renderQueue->universalUniformArray<UniInstance>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
-				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
-				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
-				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
-				if constexpr (DepthOnly)
-					renderQueue->blending(false);
+				if (cnfRenderSkeletonBones && ex.skeletalAnimation)
+					renderModelBones<DepthOnly>(pass, ex);
 				else
-				{
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
-					renderQueue->blending(any(model->flags & MeshRenderFlags::Translucent));
-					renderQueue->blendFuncPremultipliedTransparency();
-				}
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-				renderQueue->draw();
-
-				if constexpr (!DepthOnly)
-				{
-					renderQueue->blending(true);
-					renderQueue->blendFuncAdditive();
-					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
-						if ((lc.sceneMask & pass.sceneMask) == 0)
-							return;
-						const auto model = modelTransforms(e);
-						UniLight uni;
-						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
-						uni.position = model.first * Vec4(0, 0, 0, 1);
-						uni.direction = model.first * Vec4(0, 0, -1, 0);
-						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
-						switch (lc.lightType)
-						{
-						case LightTypeEnum::Directional:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-							break;
-						case LightTypeEnum::Spot:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-							break;
-						case LightTypeEnum::Point:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
-							shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
-							break;
-						default:
-							CAGE_THROW_CRITICAL(Exception, "invalid light type");
-						}
-						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-						renderQueue->draw();
-					}, +emit.scene, false);
-					renderQueue->blending(false);
-				}
-
-				renderQueue->checkGlErrorDebug();
+					renderModelImpl<DepthOnly>(pass, ex, std::move(model));
 			}
 
 			template<bool DepthOnly>
@@ -472,10 +507,7 @@ namespace cage
 					render.model = model.first;
 					render.modelPrev = model.second;
 					render.render = rc;
-					render.uni.mMat = Mat3x4(render.model);
-					render.uni.mvpMat = pass.viewProj * render.model;
-					render.uni.mvpMatPrev = pass.viewProjPrev * render.modelPrev;
-					render.uni.normalMat = Mat3x4(inverse(Mat3(render.model)));
+					render.initUniMatrices(pass);
 					render.frustum = Frustum(render.uni.mvpMat);
 					renderObjectOrModel<DepthOnly>(pass, render, rc.object);
 				}, +emit.scene, false);
