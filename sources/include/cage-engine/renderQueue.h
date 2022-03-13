@@ -60,9 +60,9 @@ namespace cage
 #undef GCHL_GENERATE
 
 		void bind(FrameBufferHandle frameBuffer);
-		void depthTexture(TextureHandle texture);
-		void colorTexture(uint32 index, TextureHandle texture, uint32 mipmapLevel = 0);
-		void activeAttachments(uint32 mask);
+		void depthTexture(TextureHandle texture); // attach depth texture to current frame buffer
+		void colorTexture(uint32 index, TextureHandle texture, uint32 mipmapLevel = 0); // attach color texture to current frame buffer
+		void activeAttachments(uint32 mask); // bitmask of active color textures in current frame buffer
 		void clearFrameBuffer(); // detach all textures from the frame buffer
 		void checkFrameBuffer(); // check the frame buffer for completeness
 		void resetFrameBuffer(); // bind default (0) frame buffer

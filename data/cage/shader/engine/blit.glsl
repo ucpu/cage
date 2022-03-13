@@ -12,7 +12,7 @@ void main()
 
 $define shader fragment
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
+layout(binding = 0) uniform sampler2D texColor;
 out vec4 outColor;
 
 void main()

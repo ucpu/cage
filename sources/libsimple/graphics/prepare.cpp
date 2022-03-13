@@ -236,6 +236,7 @@ namespace cage
 
 				if constexpr (!DepthOnly)
 				{
+					renderQueue->depthFuncLessEqual();
 					renderQueue->blending(true);
 					renderQueue->blendFuncAdditive();
 					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
@@ -267,7 +268,8 @@ namespace cage
 						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
 						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
 						renderQueue->draw();
-						}, +emit.scene, false);
+					}, +emit.scene, false);
+					renderQueue->depthFuncLess();
 				}
 
 				renderQueue->checkGlErrorDebug();
@@ -498,6 +500,7 @@ namespace cage
 			template<bool DepthOnly>
 			void renderEntities(const PassInfo &pass)
 			{
+				const auto graphicsDebugScope = renderQueue->namedScope("render entities");
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
 					if ((rc.sceneMask & pass.sceneMask) == 0)
 						return;
@@ -548,6 +551,16 @@ namespace cage
 				}
 			}
 
+			TextureHandle prepareTargetTexture(const char *name, uint32 internalFormat, const Vec2i &resolution)
+			{
+				TextureHandle t = provisionalData->texture(Stringizer() + name + resolution[0]);
+				renderQueue->bind(t, 0);
+				renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				renderQueue->image2d(resolution, internalFormat);
+				return t;
+			}
+
 			void run()
 			{
 				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
@@ -557,11 +570,13 @@ namespace cage
 
 				// render shadow maps
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
+					const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 					// todo
 				}, +emit.scene, false);
 
 				// render cameras
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
+					const auto graphicsDebugScope = renderQueue->namedScope("camera");
 					PassInfo pass;
 					pass.e = e;
 					pass.sceneMask = cam.sceneMask;
@@ -589,6 +604,16 @@ namespace cage
 					pass.viewProjPrev = pass.proj * pass.viewPrev;
 					initializeLodSelection(pass, cam, pass.model);
 
+					TextureHandle colorTexture = prepareTargetTexture("colorTarget", GL_RGB16F, pass.resolution);
+					TextureHandle depthTexture = prepareTargetTexture("depthTarget", GL_DEPTH_COMPONENT32, pass.resolution);
+					FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+					renderQueue->bind(renderTarget);
+					renderQueue->colorTexture(0, colorTexture);
+					renderQueue->depthTexture(depthTexture);
+					renderQueue->activeAttachments(1);
+					renderQueue->checkFrameBuffer();
+					renderQueue->checkGlErrorDebug();
+
 					renderQueue->viewport(Vec2i(), pass.resolution);
 					{
 						UniViewport viewport;
@@ -604,6 +629,33 @@ namespace cage
 						renderQueue->clear(any(cam.clear & CameraClearFlags::Color), any(cam.clear & CameraClearFlags::Depth), any(cam.clear & CameraClearFlags::Stencil));
 
 					renderEntities<false>(pass);
+
+					{
+						const auto graphicsDebugScope = renderQueue->namedScope("final blit");
+						renderQueue->resetAllState();
+						if (cam.target)
+						{ // blit to texture
+							renderQueue->bind(shaderBlit);
+							renderQueue->bind(renderTarget);
+							renderQueue->colorTexture(0, Holder<Texture>(cam.target, nullptr));
+							renderQueue->depthTexture({});
+							renderQueue->activeAttachments(1);
+							renderQueue->checkFrameBuffer();
+						}
+						else
+						{ // blit to window
+							renderQueue->bind(shaderBlit);
+							renderQueue->resetFrameBuffer();
+						}
+						renderQueue->viewport(Vec2i(), pass.resolution);
+						renderQueue->bind(modelSquare);
+						renderQueue->bind(colorTexture, 0);
+						renderQueue->draw();
+						renderQueue->resetFrameBuffer();
+						renderQueue->resetAllTextures();
+						renderQueue->resetAllState();
+						renderQueue->checkGlErrorDebug();
+					}
 				}, +emit.scene, false);
 			}
 		};
