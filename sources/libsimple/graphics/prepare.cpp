@@ -33,6 +33,8 @@
 #include <robin_hood.h>
 #include <algorithm>
 #include <optional>
+#include <vector>
+#include <map>
 
 namespace cage
 {
@@ -107,7 +109,6 @@ namespace cage
 			Mat4 viewProj, viewProjPrev;
 			Mat4 proj;
 			Vec2i resolution;
-			Entity *e = nullptr;
 			uint32 sceneMask = 0;
 
 			struct LodSelection
@@ -116,6 +117,12 @@ namespace cage
 				Real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
 				bool orthographic = false;
 			} lodSelection;
+		};
+
+		struct ShadowmapInfo
+		{
+			Mat4 shadowMat;
+			Holder<ProvisionalTexture> shadowTexture;
 		};
 
 		void RenderInfo::initUniMatrices(const struct PassInfo &pass)
@@ -145,6 +152,8 @@ namespace cage
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderFont;
+
+			std::map<Entity *, ShadowmapInfo> shadowmaps;
 
 			Preparator(const EmitBuffer &emit, uint64 time)
 				: emit(emit),
@@ -242,28 +251,29 @@ namespace cage
 					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
 						if ((lc.sceneMask & pass.sceneMask) == 0)
 							return;
+						const bool shadows = e->has<ShadowmapComponent>();
 						const auto model = modelTransforms(e);
 						UniLight uni;
 						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
 						uni.position = model.first * Vec4(0, 0, 0, 1);
 						uni.direction = model.first * Vec4(0, 0, -1, 0);
+						if (shadows)
+							uni.direction[3] = e->value<ShadowmapComponent>().normalOffsetScale;
 						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
-						switch (lc.lightType)
+						ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = [&]() {
+							switch (lc.lightType)
+							{
+							case LightTypeEnum::Directional: return shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
+							case LightTypeEnum::Spot: return shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
+							case LightTypeEnum::Point: return shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+							default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
+							}
+						}();
+						if (shadows)
 						{
-						case LightTypeEnum::Directional:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-							break;
-						case LightTypeEnum::Spot:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-							break;
-						case LightTypeEnum::Point:
-							//shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
-							ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
-							break;
-						default:
-							CAGE_THROW_CRITICAL(Exception, "invalid light type");
+							const ShadowmapInfo &shadowmap = shadowmaps.at(e);
+							renderQueue->bind(shadowmap.shadowTexture, lc.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+							uni.shadowMat = shadowmap.shadowMat;
 						}
 						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
 						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
@@ -561,6 +571,156 @@ namespace cage
 				return t;
 			}
 
+			void renderShadowmap(Entity *ce, const CameraComponent &cam, Entity *le, const LightComponent &lc, const ShadowmapComponent &sc)
+			{
+				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
+
+				PassInfo pass;
+				pass.sceneMask = lc.sceneMask;
+				pass.resolution = Vec2i(sc.resolution);
+				pass.model = pass.modelPrev = modelTransforms(le).first;
+				pass.view = pass.viewPrev = inverse(pass.model);
+				pass.proj = [&]() {
+					switch (lc.lightType)
+					{
+					case LightTypeEnum::Directional: return orthographicProjection(-sc.worldSize[0], sc.worldSize[0], -sc.worldSize[1], sc.worldSize[1], -sc.worldSize[2], sc.worldSize[2]);
+					case LightTypeEnum::Spot: return perspectiveProjection(lc.spotAngle, 1, sc.worldSize[0], sc.worldSize[1]);
+					case LightTypeEnum::Point: return perspectiveProjection(Degs(90), 1, sc.worldSize[0], sc.worldSize[1]);
+					default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
+					}
+				}();
+				pass.viewProj = pass.viewProjPrev = pass.proj * pass.view;
+				initializeLodSelection(pass, cam, modelTransforms(ce).first);
+
+				ShadowmapInfo shadowmap;
+
+				constexpr Mat4 bias = Mat4(
+					0.5, 0.0, 0.0, 0.0,
+					0.0, 0.5, 0.0, 0.0,
+					0.0, 0.0, 0.5, 0.0,
+					0.5, 0.5, 0.5, 1.0);
+				shadowmap.shadowMat = bias * pass.viewProj;
+
+				const String texName = Stringizer() + "shadowmap " + le->name(); // should use stable pointer instead
+				if (lc.lightType == LightTypeEnum::Point)
+				{
+					shadowmap.shadowTexture = provisionalData->textureCube(texName);
+					renderQueue->bind(shadowmap.shadowTexture, CAGE_SHADER_TEXTURE_DEPTH);
+					renderQueue->imageCube(pass.resolution, GL_DEPTH_COMPONENT16);
+				}
+				else
+				{
+					shadowmap.shadowTexture = provisionalData->texture(texName);
+					renderQueue->bind(shadowmap.shadowTexture, CAGE_SHADER_TEXTURE_DEPTH);
+					renderQueue->image2d(pass.resolution, GL_DEPTH_COMPONENT24);
+				}
+				renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
+				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				renderQueue->checkGlErrorDebug();
+
+				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+				renderQueue->bind(renderTarget);
+				renderQueue->clearFrameBuffer();
+				renderQueue->depthTexture(shadowmap.shadowTexture);
+				renderQueue->activeAttachments(0);
+				renderQueue->checkFrameBuffer();
+				renderQueue->viewport(Vec2i(), pass.resolution);
+				renderQueue->colorWrite(false);
+				renderQueue->clear(false, true);
+				renderQueue->bind(shaderDepth);
+				renderQueue->checkGlErrorDebug();
+
+				renderEntities<true>(pass);
+
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
+				renderQueue->resetFrameBuffer();
+				renderQueue->checkGlErrorDebug();
+
+				shadowmaps[le] = std::move(shadowmap);
+			}
+
+			void renderCamera(Entity *e, const CameraComponent &cam)
+			{
+				const auto graphicsDebugScope = renderQueue->namedScope("camera");
+				PassInfo pass;
+				pass.sceneMask = cam.sceneMask;
+				pass.resolution = cam.target ? cam.target->resolution() : windowResolution;
+				const auto model = modelTransforms(e);
+				pass.model = Mat4(model.first);
+				pass.modelPrev = Mat4(model.second);
+				pass.view = inverse(pass.model);
+				pass.viewPrev = inverse(pass.modelPrev);
+				pass.proj = [&]() {
+					switch (cam.cameraType)
+					{
+					case CameraTypeEnum::Orthographic:
+					{
+						const Vec2 &os = cam.camera.orthographicSize;
+						return orthographicProjection(-os[0], os[0], -os[1], os[1], cam.near, cam.far);
+					}
+					case CameraTypeEnum::Perspective: return perspectiveProjection(cam.camera.perspectiveFov, Real(pass.resolution[0]) / Real(pass.resolution[1]), cam.near, cam.far);
+					default: CAGE_THROW_ERROR(Exception, "invalid camera type");
+					}
+				}();
+				pass.viewProj = pass.proj * pass.view;
+				pass.viewProjPrev = pass.proj * pass.viewPrev;
+				initializeLodSelection(pass, cam, pass.model);
+
+				TextureHandle colorTexture = prepareTargetTexture("colorTarget", GL_RGB16F, pass.resolution);
+				TextureHandle depthTexture = prepareTargetTexture("depthTarget", GL_DEPTH_COMPONENT32, pass.resolution);
+				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+				renderQueue->bind(renderTarget);
+				renderQueue->colorTexture(0, colorTexture);
+				renderQueue->depthTexture(depthTexture);
+				renderQueue->activeAttachments(1);
+				renderQueue->checkFrameBuffer();
+				renderQueue->checkGlErrorDebug();
+
+				renderQueue->viewport(Vec2i(), pass.resolution);
+				{
+					UniViewport viewport;
+					viewport.vpInv = inverse(pass.viewProj);
+					viewport.eyePos = pass.model * Vec4(0, 0, 0, 1);
+					viewport.eyeDir = pass.model * Vec4(0, 0, -1, 0);
+					viewport.ambientLight = Vec4(colorGammaToLinear(cam.ambientColor) * cam.ambientIntensity, 0);
+					viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(cam.ambientDirectionalColor) * cam.ambientDirectionalIntensity, 0);
+					viewport.viewport = Vec4(Vec2(), Vec2(pass.resolution));
+					renderQueue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
+				}
+				if (any(cam.clear))
+					renderQueue->clear(any(cam.clear & CameraClearFlags::Color), any(cam.clear & CameraClearFlags::Depth), any(cam.clear & CameraClearFlags::Stencil));
+
+				renderEntities<false>(pass);
+
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
+					renderQueue->resetAllState();
+					if (cam.target)
+					{ // blit to texture
+						renderQueue->bind(shaderBlit);
+						renderQueue->bind(renderTarget);
+						renderQueue->colorTexture(0, Holder<Texture>(cam.target, nullptr));
+						renderQueue->depthTexture({});
+						renderQueue->activeAttachments(1);
+						renderQueue->checkFrameBuffer();
+					}
+					else
+					{ // blit to window
+						renderQueue->bind(shaderBlit);
+						renderQueue->resetFrameBuffer();
+					}
+					renderQueue->viewport(Vec2i(), pass.resolution);
+					renderQueue->bind(modelSquare);
+					renderQueue->bind(colorTexture, 0);
+					renderQueue->draw();
+					renderQueue->resetFrameBuffer();
+					renderQueue->resetAllTextures();
+					renderQueue->resetAllState();
+					renderQueue->checkGlErrorDebug();
+				}
+			}
+
 			void run()
 			{
 				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
@@ -568,95 +728,21 @@ namespace cage
 				if (!loadGeneralAssets())
 					return;
 
-				// render shadow maps
-				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
-					const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
-					// todo
-				}, +emit.scene, false);
-
-				// render cameras
+				std::vector<std::pair<Entity *, const CameraComponent *>> cameras;
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
-					const auto graphicsDebugScope = renderQueue->namedScope("camera");
-					PassInfo pass;
-					pass.e = e;
-					pass.sceneMask = cam.sceneMask;
-					pass.resolution = cam.target ? cam.target->resolution() : windowResolution;
-					const auto model = modelTransforms(e);
-					pass.model = Mat4(model.first);
-					pass.modelPrev = Mat4(model.second);
-					pass.view = inverse(pass.model);
-					pass.viewPrev = inverse(pass.modelPrev);
-					pass.proj = [&]() {
-						switch (cam.cameraType)
-						{
-						case CameraTypeEnum::Orthographic:
-						{
-							const Vec2 &os = cam.camera.orthographicSize;
-							return orthographicProjection(-os[0], os[0], -os[1], os[1], cam.near, cam.far);
-						}
-						case CameraTypeEnum::Perspective:
-							return perspectiveProjection(cam.camera.perspectiveFov, Real(pass.resolution[0]) / Real(pass.resolution[1]), cam.near, cam.far);
-						default:
-							CAGE_THROW_ERROR(Exception, "invalid camera type");
-						}
-					}();
-					pass.viewProj = pass.proj * pass.view;
-					pass.viewProjPrev = pass.proj * pass.viewPrev;
-					initializeLodSelection(pass, cam, pass.model);
-
-					TextureHandle colorTexture = prepareTargetTexture("colorTarget", GL_RGB16F, pass.resolution);
-					TextureHandle depthTexture = prepareTargetTexture("depthTarget", GL_DEPTH_COMPONENT32, pass.resolution);
-					FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
-					renderQueue->bind(renderTarget);
-					renderQueue->colorTexture(0, colorTexture);
-					renderQueue->depthTexture(depthTexture);
-					renderQueue->activeAttachments(1);
-					renderQueue->checkFrameBuffer();
-					renderQueue->checkGlErrorDebug();
-
-					renderQueue->viewport(Vec2i(), pass.resolution);
-					{
-						UniViewport viewport;
-						viewport.vpInv = inverse(pass.viewProj);
-						viewport.eyePos = pass.model * Vec4(0, 0, 0, 1);
-						viewport.eyeDir = pass.model * Vec4(0, 0, -1, 0);
-						viewport.ambientLight = Vec4(colorGammaToLinear(cam.ambientColor) * cam.ambientIntensity, 0);
-						viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(cam.ambientDirectionalColor) * cam.ambientDirectionalIntensity, 0);
-						viewport.viewport = Vec4(Vec2(), Vec2(pass.resolution));
-						renderQueue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
-					}
-					if (any(cam.clear))
-						renderQueue->clear(any(cam.clear & CameraClearFlags::Color), any(cam.clear & CameraClearFlags::Depth), any(cam.clear & CameraClearFlags::Stencil));
-
-					renderEntities<false>(pass);
-
-					{
-						const auto graphicsDebugScope = renderQueue->namedScope("final blit");
-						renderQueue->resetAllState();
-						if (cam.target)
-						{ // blit to texture
-							renderQueue->bind(shaderBlit);
-							renderQueue->bind(renderTarget);
-							renderQueue->colorTexture(0, Holder<Texture>(cam.target, nullptr));
-							renderQueue->depthTexture({});
-							renderQueue->activeAttachments(1);
-							renderQueue->checkFrameBuffer();
-						}
-						else
-						{ // blit to window
-							renderQueue->bind(shaderBlit);
-							renderQueue->resetFrameBuffer();
-						}
-						renderQueue->viewport(Vec2i(), pass.resolution);
-						renderQueue->bind(modelSquare);
-						renderQueue->bind(colorTexture, 0);
-						renderQueue->draw();
-						renderQueue->resetFrameBuffer();
-						renderQueue->resetAllTextures();
-						renderQueue->resetAllState();
-						renderQueue->checkGlErrorDebug();
-					}
+					cameras.emplace_back(e, &cam);
 				}, +emit.scene, false);
+				std::sort(cameras.begin(), cameras.end(), [](const auto &a, const auto &b) {
+					return std::make_pair(!a.second->target, a.second->cameraOrder) < std::make_pair(!b.second->target, b.second->cameraOrder);
+				});
+				for (const auto &c : cameras)
+				{
+					shadowmaps.clear();
+					entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
+						renderShadowmap(c.first, *c.second, e, lc, sc);
+					}, +emit.scene, false);
+					renderCamera(c.first, *c.second);
+				}
 			}
 		};
 	}
