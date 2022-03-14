@@ -9,7 +9,6 @@ gaussianBlur.glsl
 luminanceApply.glsl
 luminanceCollection.glsl
 luminanceCopy.glsl
-motionBlur.glsl
 ssaoApply.glsl
 ssaoGenerate.glsl
 tonemap.glsl

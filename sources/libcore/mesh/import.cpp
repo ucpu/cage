@@ -1240,11 +1240,6 @@ namespace cage
 						part.renderFlags &= ~MeshRenderFlags::DepthWrite;
 						continue;
 					}
-					if (v == "noVelocityWrite")
-					{
-						part.renderFlags &= ~MeshRenderFlags::VelocityWrite;
-						continue;
-					}
 					if (v == "noLighting")
 					{
 						part.renderFlags &= ~MeshRenderFlags::Lighting;
@@ -1463,7 +1458,7 @@ namespace cage
 				p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
 				p.mesh = context.mesh(i);
 				p.boundingBox = p.mesh->boundingBox();
-				p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
+				p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 				context.loadMaterial(msh->mMaterialIndex, p);
 				parts.push_back(std::move(p));
 			}

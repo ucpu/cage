@@ -27,11 +27,6 @@ namespace cage
 		uint32 blurPasses = 3;
 	};
 
-	struct CAGE_ENGINE_API ScreenSpaceMotionBlur
-	{
-		// todo
-	};
-
 	struct CAGE_ENGINE_API ScreenSpaceEyeAdaptation
 	{
 		Real key = 0.15;

@@ -14,7 +14,6 @@ layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER
 struct InstanceStruct
 {
 	mat4 mvpMat;
-	mat4 mvpPrevMat;
 	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
 	mat3x4 mMat;
 	vec4 color; // color rgb is linear, and NOT alpha-premultiplied

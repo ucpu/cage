@@ -1,18 +1,13 @@
 #include <cage-core/skeletalAnimationPreparator.h>
-#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/swapBufferGuard.h>
-#include <cage-core/blockContainer.h>
-#include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
 #include <cage-core/geometry.h>
-#include <cage-core/textPack.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/color.h>
-#include <cage-core/tasks.h>
 
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/provisionalHandles.h>
@@ -30,7 +25,6 @@
 
 #include "graphics.h"
 
-#include <robin_hood.h>
 #include <algorithm>
 #include <optional>
 #include <vector>
@@ -44,19 +38,11 @@ namespace cage
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
-		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
 		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
-
-		template<class T>
-		PointerRange<T> subRange(PointerRange<T> base, uint32 off, uint32 num)
-		{
-			return { base.begin() + off, base.begin() + off + num };
-		}
 
 		struct UniInstance
 		{
 			Mat4 mvpMat;
-			Mat4 mvpMatPrev;
 			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
 			Mat3x4 mMat;
 			Vec4 color; // color rgb is linear, and NOT alpha-premultiplied
@@ -86,7 +72,7 @@ namespace cage
 		{
 			RenderComponent render;
 			UniInstance uni;
-			Mat4 model, modelPrev;
+			Mat4 model;
 			Frustum frustum; // object-space camera frustum used for culling
 			Entity *e = nullptr;
 
@@ -104,9 +90,9 @@ namespace cage
 		// camera or light
 		struct PassInfo
 		{
-			Mat4 model, modelPrev;
-			Mat4 view, viewPrev;
-			Mat4 viewProj, viewProjPrev;
+			Mat4 model;
+			Mat4 view;
+			Mat4 viewProj;
 			Mat4 proj;
 			Vec2i resolution;
 			uint32 sceneMask = 0;
@@ -135,7 +121,6 @@ namespace cage
 		{
 			uni.mMat = Mat3x4(model);
 			uni.mvpMat = pass.viewProj * model;
-			uni.mvpMatPrev = pass.viewProjPrev * modelPrev;
 			uni.normalMat = Mat3x4(inverse(Mat3(model)));
 		}
 
@@ -199,9 +184,6 @@ namespace cage
 				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
 				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
-
-				if (none(model->flags & MeshRenderFlags::VelocityWrite))
-					ex.uni.mvpMatPrev = ex.uni.mvpMat;
 				ex.uni.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -260,11 +242,11 @@ namespace cage
 						if ((lc.sceneMask & pass.sceneMask) == 0)
 							return;
 						const bool shadows = e->has<ShadowmapComponent>();
-						const auto model = modelTransforms(e);
 						UniLight uni;
 						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
-						uni.position = model.first * Vec4(0, 0, 0, 1);
-						uni.direction = model.first * Vec4(0, 0, -1, 0);
+						const auto model = modelTransform(e);
+						uni.position = model * Vec4(0, 0, 0, 1);
+						uni.direction = model * Vec4(0, 0, -1, 0);
 						if (shadows)
 							uni.direction[3] = e->value<ShadowmapComponent>().normalOffsetScale;
 						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
@@ -303,7 +285,6 @@ namespace cage
 					RenderInfoEx r;
 					(RenderInfo &)r = (const RenderInfo &)ex;
 					r.model = ex.model * am;
-					r.modelPrev = ex.modelPrev * am;
 					r.initUniMatrices(pass);
 					r.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), r.render.opacity);
 					renderModelImpl<DepthOnly>(pass, r, modelBone.share());
@@ -524,14 +505,15 @@ namespace cage
 						return;
 					RenderInfo render;
 					render.e = e;
-					const auto model = modelTransforms(e);
-					render.model = model.first;
-					render.modelPrev = model.second;
+					render.model = modelTransform(e);
 					render.render = rc;
 					render.initUniMatrices(pass);
 					render.frustum = Frustum(render.uni.mvpMat);
 					renderObjectOrModel<DepthOnly>(pass, render, rc.object);
 				}, +emit.scene, false);
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
+				renderQueue->checkGlErrorDebug();
 			}
 
 			static void initializeLodSelection(PassInfo &pass, const CameraComponent &cam, const Mat4 &camModel)
@@ -552,21 +534,17 @@ namespace cage
 				pass.lodSelection.center = Vec3(camModel * Vec4(0, 0, 0, 1));
 			}
 
-			// current and previous transformation matrices
-			std::pair<Mat4, Mat4> modelTransforms(Entity *e)
+			Mat4 modelTransform(Entity *e)
 			{
 				CAGE_ASSERT(e->has(transformComponent));
 				if (e->has(prevTransformComponent))
 				{
 					const Transform c = e->value<TransformComponent>(transformComponent);
 					const Transform p = e->value<TransformComponent>(prevTransformComponent);
-					return { Mat4(interpolate(p, c, interpolationFactor)), Mat4(interpolate(p, c, interpolationFactor - 1)) };
+					return Mat4(interpolate(p, c, interpolationFactor));
 				}
 				else
-				{
-					const Mat4 t = Mat4(e->value<TransformComponent>(transformComponent));
-					return { t, t };
-				}
+					return Mat4(e->value<TransformComponent>(transformComponent));
 			}
 
 			void renderShadowmap(Entity *ce, const CameraComponent &cam, Entity *le, const LightComponent &lc, const ShadowmapComponent &sc)
@@ -576,8 +554,8 @@ namespace cage
 				PassInfo pass;
 				pass.sceneMask = lc.sceneMask;
 				pass.resolution = Vec2i(sc.resolution);
-				pass.model = pass.modelPrev = modelTransforms(le).first;
-				pass.view = pass.viewPrev = inverse(pass.model);
+				pass.model = modelTransform(le);
+				pass.view = inverse(pass.model);
 				pass.proj = [&]() {
 					switch (lc.lightType)
 					{
@@ -587,8 +565,8 @@ namespace cage
 					default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 				}();
-				pass.viewProj = pass.viewProjPrev = pass.proj * pass.view;
-				initializeLodSelection(pass, cam, modelTransforms(ce).first);
+				pass.viewProj = pass.proj * pass.view;
+				initializeLodSelection(pass, cam, modelTransform(ce));
 
 				ShadowmapInfo shadowmap;
 
@@ -630,9 +608,9 @@ namespace cage
 
 				renderEntities<true>(pass);
 
+				renderQueue->resetFrameBuffer();
 				renderQueue->resetAllState();
 				renderQueue->resetAllTextures();
-				renderQueue->resetFrameBuffer();
 				renderQueue->checkGlErrorDebug();
 
 				DebugVisualizationInfo deb;
@@ -643,6 +621,120 @@ namespace cage
 				shadowmaps[le] = std::move(shadowmap);
 			}
 
+			void renderEffects(const TextureHandle texSource_, const TextureHandle depthTexture, const PassInfo &pass, const CameraComponent &cam, const uint32 cameraName)
+			{
+				const auto graphicsDebugScope = renderQueue->namedScope("effects");
+
+				TextureHandle texSource = texSource_;
+				TextureHandle texTarget = [&]() {
+					TextureHandle t = provisionalData->texture(Stringizer() + "intermediateTarget_" + pass.resolution);
+					renderQueue->bind(t, 0);
+					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					renderQueue->image2d(pass.resolution, GL_RGB16F);
+					return t;
+				}();
+
+				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
+				commonConfig.assets = engineAssets();
+				commonConfig.provisionals = +provisionalData;
+				commonConfig.queue = +renderQueue;
+				commonConfig.resolution = pass.resolution;
+
+				// depth of field
+				if (any(cam.effects & CameraEffectsFlags::DepthOfField))
+				{
+					ScreenSpaceDepthOfFieldConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceDepthOfField &)cfg = cam.depthOfField;
+					cfg.proj = pass.proj;
+					cfg.inDepth = depthTexture;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					screenSpaceDepthOfField(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				// eye adaptation
+				if (any(cam.effects & CameraEffectsFlags::EyeAdaptation))
+				{
+					ScreenSpaceEyeAdaptationConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceEyeAdaptation &)cfg = cam.eyeAdaptation;
+					cfg.cameraId = Stringizer() + cameraName;
+					cfg.inColor = texSource;
+					screenSpaceEyeAdaptationPrepare(cfg);
+				}
+
+				// bloom
+				if (any(cam.effects & CameraEffectsFlags::Bloom))
+				{
+					ScreenSpaceBloomConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceBloom &)cfg = cam.bloom;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					screenSpaceBloom(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				// eye adaptation
+				if (any(cam.effects & CameraEffectsFlags::EyeAdaptation))
+				{
+					ScreenSpaceEyeAdaptationConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceEyeAdaptation &)cfg = cam.eyeAdaptation;
+					cfg.cameraId = Stringizer() + cameraName;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					screenSpaceEyeAdaptationApply(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				// final screen effects
+				if (any(cam.effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+				{
+					ScreenSpaceTonemapConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceTonemap &)cfg = cam.tonemap;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					cfg.tonemapEnabled = any(cam.effects & CameraEffectsFlags::ToneMapping);
+					cfg.gamma = any(cam.effects & CameraEffectsFlags::GammaCorrection) ? cam.gamma : 1;
+					screenSpaceTonemap(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				// fxaa
+				if (any(cam.effects & CameraEffectsFlags::AntiAliasing))
+				{
+					ScreenSpaceFastApproximateAntiAliasingConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					screenSpaceFastApproximateAntiAliasing(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				// blit to destination
+				if (texSource != texSource_)
+				{
+					renderQueue->viewport(Vec2i(), pass.resolution);
+					renderQueue->bind(modelSquare);
+					renderQueue->bind(texSource, 0);
+					renderQueue->bind(shaderBlit);
+					renderQueue->bind(provisionalData->frameBufferDraw("renderTarget"));
+					renderQueue->colorTexture(0, texSource_);
+					renderQueue->activeAttachments(1);
+					renderQueue->draw();
+				}
+
+				renderQueue->resetFrameBuffer();
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
+				renderQueue->checkGlErrorDebug();
+			}
+
 			void renderCamera(Entity *e, const CameraComponent &cam)
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
@@ -650,11 +742,8 @@ namespace cage
 				PassInfo pass;
 				pass.sceneMask = cam.sceneMask;
 				pass.resolution = cam.target ? cam.target->resolution() : windowResolution;
-				const auto model = modelTransforms(e);
-				pass.model = Mat4(model.first);
-				pass.modelPrev = Mat4(model.second);
+				pass.model = modelTransform(e);
 				pass.view = inverse(pass.model);
-				pass.viewPrev = inverse(pass.modelPrev);
 				pass.proj = [&]() {
 					switch (cam.cameraType)
 					{
@@ -668,7 +757,6 @@ namespace cage
 					}
 				}();
 				pass.viewProj = pass.proj * pass.view;
-				pass.viewProjPrev = pass.proj * pass.viewPrev;
 				initializeLodSelection(pass, cam, pass.model);
 
 				const String texturesName = cam.target ? (Stringizer() + e->name()) : (Stringizer() + pass.resolution);
@@ -719,6 +807,7 @@ namespace cage
 					renderQueue->clear(any(cam.clear & CameraClearFlags::Color), any(cam.clear & CameraClearFlags::Depth), any(cam.clear & CameraClearFlags::Stencil));
 
 				renderEntities<false>(pass);
+				renderEffects(colorTexture, depthTexture, pass, cam, e->name());
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
@@ -729,6 +818,7 @@ namespace cage
 					renderQueue->bind(shaderBlit);
 					if (cam.target)
 					{ // blit to texture
+						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(0, Holder<Texture>(cam.target, nullptr));
 						renderQueue->depthTexture({});
 						renderQueue->activeAttachments(1);

@@ -23,8 +23,6 @@ out vec3 varNormal; // object space
 out vec3 varTangent; // object space
 out vec3 varBitangent; // object space
 out vec3 varPosition; // world space
-out vec4 varPosition4;
-out vec4 varPosition4Prev;
 flat out int varInstanceId;
 
 void skeletonNothing()
@@ -37,6 +35,7 @@ void skeletonAnimation()
 		sum += uniArmatures[varInstanceId * uniBonesPerInstance + inBoneIndex[i]] * inBoneWeight[i];
 	pos = transpose(mat4(sum)) * pos;
 	normal = transpose(mat3(sum)) * normal;
+	// todo tangent and bitangent?
 }
 
 void skeleton()
@@ -60,7 +59,5 @@ void main()
 	varTangent = inTangent;
 	varBitangent = inBitangent;
 	varPosition = transpose(uniInstances[varInstanceId].mMat) * pos;
-	varPosition4 = uniInstances[varInstanceId].mvpMat * pos;
-	varPosition4Prev = uniInstances[varInstanceId].mvpPrevMat * pos;
-	gl_Position = varPosition4;
+	gl_Position = uniInstances[varInstanceId].mvpMat * pos;
 }

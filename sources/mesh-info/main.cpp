@@ -45,7 +45,6 @@ void info(const String &src)
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "two sided: " + any(pt.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth test: " + any(pt.renderFlags & MeshRenderFlags::DepthTest));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth write: " + any(pt.renderFlags & MeshRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "velocity write: " + any(pt.renderFlags & MeshRenderFlags::VelocityWrite));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "shadow cast: " + any(pt.renderFlags & MeshRenderFlags::ShadowCast));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "lighting: " + any(pt.renderFlags & MeshRenderFlags::Lighting));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "uses " + pt.textures.size() + " textures");

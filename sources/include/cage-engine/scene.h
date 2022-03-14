@@ -79,19 +79,17 @@ namespace cage
 		None = 0,
 		AmbientOcclusion = 1 << 0,
 		DepthOfField = 1 << 1,
-		MotionBlur = 1 << 2,
 		Bloom = 1 << 3,
 		EyeAdaptation = 1 << 4,
 		ToneMapping = 1 << 5,
 		GammaCorrection = 1 << 6,
 		AntiAliasing = 1 << 7,
-		Default = AmbientOcclusion | MotionBlur | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
+		Default = AmbientOcclusion | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
 	};
 
 	struct CAGE_ENGINE_API CameraEffects
 	{
 		ScreenSpaceAmbientOcclusion ssao;
-		ScreenSpaceMotionBlur motionBlur;
 		ScreenSpaceBloom bloom;
 		ScreenSpaceEyeAdaptation eyeAdaptation;
 		ScreenSpaceTonemap tonemap;

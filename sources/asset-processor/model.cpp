@@ -129,7 +129,6 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "velocity write: " + any(dsm.renderFlags & MeshRenderFlags::VelocityWrite));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{

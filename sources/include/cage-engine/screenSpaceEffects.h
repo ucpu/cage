@@ -18,7 +18,7 @@ namespace cage
 	{
 		Mat4 viewProj;
 		TextureHandle inDepth;
-		TextureHandle inNormal;
+		TextureHandle inNormal; // optional
 		TextureHandle outAo;
 		uint32 frameIndex = 0;
 	};
@@ -27,13 +27,6 @@ namespace cage
 	{
 		Mat4 proj;
 		TextureHandle inDepth;
-		TextureHandle inColor;
-		TextureHandle outColor;
-	};
-
-	struct CAGE_ENGINE_API ScreenSpaceMotionBlurConfig : public ScreenSpaceCommonConfig, public ScreenSpaceMotionBlur
-	{
-		TextureHandle inVelocity;
 		TextureHandle inColor;
 		TextureHandle outColor;
 	};
@@ -67,7 +60,6 @@ namespace cage
 
 	CAGE_ENGINE_API void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config);
 	CAGE_ENGINE_API void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config);
-	CAGE_ENGINE_API void screenSpaceMotionBlur(const ScreenSpaceMotionBlurConfig &config);
 	CAGE_ENGINE_API void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config);
 
 	CAGE_ENGINE_API void screenSpaceBloom(const ScreenSpaceBloomConfig &config);
