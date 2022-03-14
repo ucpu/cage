@@ -125,6 +125,12 @@ namespace cage
 			Holder<ProvisionalTexture> shadowTexture;
 		};
 
+		struct DebugVisualizationInfo
+		{
+			TextureHandle texture;
+			Holder<ShaderProgram> shader;
+		};
+
 		void RenderInfo::initUniMatrices(const struct PassInfo &pass)
 		{
 			uni.mMat = Mat3x4(model);
@@ -137,6 +143,7 @@ namespace cage
 		{
 			const bool cnfRenderMissingModels = confRenderMissingModels;
 			const bool cnfRenderSkeletonBones = confRenderSkeletonBones;
+			const sint32 cnfVisualizeBuffer = confVisualizeBuffer;
 			const Holder<RenderQueue> &renderQueue = graphics->renderQueue;
 			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
 			const Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(engineAssets(), cnfRenderSkeletonBones);
@@ -154,6 +161,7 @@ namespace cage
 			Holder<ShaderProgram> shaderFont;
 
 			std::map<Entity *, ShadowmapInfo> shadowmaps;
+			std::vector<DebugVisualizationInfo> debugVisualizations;
 
 			Preparator(const EmitBuffer &emit, uint64 time)
 				: emit(emit),
@@ -561,16 +569,6 @@ namespace cage
 				}
 			}
 
-			TextureHandle prepareTargetTexture(const char *name, uint32 internalFormat, const Vec2i &resolution)
-			{
-				TextureHandle t = provisionalData->texture(Stringizer() + name + resolution[0]);
-				renderQueue->bind(t, 0);
-				renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
-				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				renderQueue->image2d(resolution, internalFormat);
-				return t;
-			}
-
 			void renderShadowmap(Entity *ce, const CameraComponent &cam, Entity *le, const LightComponent &lc, const ShadowmapComponent &sc)
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
@@ -601,7 +599,7 @@ namespace cage
 					0.5, 0.5, 0.5, 1.0);
 				shadowmap.shadowMat = bias * pass.viewProj;
 
-				const String texName = Stringizer() + "shadowmap " + le->name(); // should use stable pointer instead
+				const String texName = Stringizer() + "shadowmap_" + le->name() + "_" + ce->name(); // should use stable pointer instead
 				if (lc.lightType == LightTypeEnum::Point)
 				{
 					shadowmap.shadowTexture = provisionalData->textureCube(texName);
@@ -637,12 +635,18 @@ namespace cage
 				renderQueue->resetFrameBuffer();
 				renderQueue->checkGlErrorDebug();
 
+				DebugVisualizationInfo deb;
+				deb.texture = shadowmap.shadowTexture.share();
+				deb.shader = shaderVisualizeDepth.share();
+				debugVisualizations.push_back(std::move(deb));
+
 				shadowmaps[le] = std::move(shadowmap);
 			}
 
 			void renderCamera(Entity *e, const CameraComponent &cam)
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
+
 				PassInfo pass;
 				pass.sceneMask = cam.sceneMask;
 				pass.resolution = cam.target ? cam.target->resolution() : windowResolution;
@@ -667,8 +671,31 @@ namespace cage
 				pass.viewProjPrev = pass.proj * pass.viewPrev;
 				initializeLodSelection(pass, cam, pass.model);
 
-				TextureHandle colorTexture = prepareTargetTexture("colorTarget", GL_RGB16F, pass.resolution);
-				TextureHandle depthTexture = prepareTargetTexture("depthTarget", GL_DEPTH_COMPONENT32, pass.resolution);
+				const String texturesName = cam.target ? (Stringizer() + e->name()) : (Stringizer() + pass.resolution);
+				TextureHandle colorTexture = [&]() {
+					TextureHandle t = provisionalData->texture(Stringizer() + "colorTarget_" + texturesName);
+					renderQueue->bind(t, 0);
+					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					renderQueue->image2d(pass.resolution, GL_RGB16F);
+					DebugVisualizationInfo deb;
+					deb.texture = t;
+					deb.shader = shaderVisualizeColor.share();
+					debugVisualizations.push_back(std::move(deb));
+					return t;
+				}();
+				TextureHandle depthTexture = [&]() {
+					TextureHandle t = provisionalData->texture(Stringizer() + "depthTarget_" + texturesName);
+					renderQueue->bind(t, 0);
+					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					renderQueue->image2d(pass.resolution, GL_DEPTH_COMPONENT32);
+					DebugVisualizationInfo deb;
+					deb.texture = t;
+					deb.shader = shaderVisualizeDepth.share();
+					debugVisualizations.push_back(std::move(deb));
+					return t;
+				}();
 				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
 				renderQueue->colorTexture(0, colorTexture);
@@ -696,27 +723,26 @@ namespace cage
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
 					renderQueue->resetAllState();
+					renderQueue->viewport(Vec2i(), pass.resolution);
+					renderQueue->bind(modelSquare);
+					renderQueue->bind(colorTexture, 0);
+					renderQueue->bind(shaderBlit);
 					if (cam.target)
 					{ // blit to texture
-						renderQueue->bind(shaderBlit);
-						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(0, Holder<Texture>(cam.target, nullptr));
 						renderQueue->depthTexture({});
 						renderQueue->activeAttachments(1);
 						renderQueue->checkFrameBuffer();
+						renderQueue->draw();
+						renderQueue->resetFrameBuffer();
 					}
 					else
 					{ // blit to window
-						renderQueue->bind(shaderBlit);
 						renderQueue->resetFrameBuffer();
+						renderQueue->draw();
 					}
-					renderQueue->viewport(Vec2i(), pass.resolution);
-					renderQueue->bind(modelSquare);
-					renderQueue->bind(colorTexture, 0);
-					renderQueue->draw();
-					renderQueue->resetFrameBuffer();
-					renderQueue->resetAllTextures();
 					renderQueue->resetAllState();
+					renderQueue->resetAllTextures();
 					renderQueue->checkGlErrorDebug();
 				}
 			}
@@ -728,6 +754,7 @@ namespace cage
 				if (!loadGeneralAssets())
 					return;
 
+				debugVisualizations.clear();
 				std::vector<std::pair<Entity *, const CameraComponent *>> cameras;
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
 					cameras.emplace_back(e, &cam);
@@ -742,6 +769,23 @@ namespace cage
 						renderShadowmap(c.first, *c.second, e, lc, sc);
 					}, +emit.scene, false);
 					renderCamera(c.first, *c.second);
+				}
+
+				const uint32 cnt = numeric_cast<uint32>(debugVisualizations.size()) + 1;
+				const uint32 index = (cnfVisualizeBuffer % cnt + cnt) % cnt - 1;
+				if (index != m)
+				{
+					CAGE_ASSERT(index < debugVisualizations.size());
+					const auto graphicsDebugScope = renderQueue->namedScope("visualize buffer");
+					renderQueue->viewport(Vec2i(), windowResolution);
+					renderQueue->bind(modelSquare);
+					renderQueue->bind(debugVisualizations[index].texture, 0);
+					renderQueue->bind(debugVisualizations[index].shader);
+					renderQueue->uniform(0, 1.0 / Vec2(windowResolution));
+					renderQueue->draw();
+					renderQueue->resetAllState();
+					renderQueue->resetAllTextures();
+					renderQueue->checkGlErrorDebug();
 				}
 			}
 		};
