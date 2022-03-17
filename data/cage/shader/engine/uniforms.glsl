@@ -61,10 +61,10 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
 	UniLight uniLights[CAGE_SHADER_MAX_LIGHTS];
 };
 
-layout(location = CAGE_SHADER_UNI_SHADOWMATRIX) uniform mat4 uniShadowMatrix;
-layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
 layout(location = CAGE_SHADER_UNI_BONESPERINSTANCE) uniform uint uniBonesPerInstance;
 layout(location = CAGE_SHADER_UNI_LIGHTSCOUNT) uniform uint uniLightsCount;
+layout(location = CAGE_SHADER_UNI_SHADOWMATRIX) uniform mat4 uniShadowMatrix;
+layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
 
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texMaterialAlbedo2d;
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO_ARRAY) uniform sampler2DArray texMaterialAlbedoArray;

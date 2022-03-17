@@ -18,8 +18,10 @@ out vec3 varBitangent; // object space
 out vec3 varUv;
 flat out int varInstanceId;
 
-void skeletonAnimation()
+void skeletalAnimation()
 {
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] != CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION)
+		return;
 	mat3x4 sum = mat3x4(0);
 	for (int i = 0; i < 4; i++)
 		sum += uniArmatures[varInstanceId * uniBonesPerInstance + inBoneIndex[i]] * inBoneWeight[i];
@@ -30,7 +32,7 @@ void skeletonAnimation()
 	varBitangent = s * varBitangent;
 }
 
-void main()
+void updateVertex()
 {
 	varInstanceId = gl_InstanceID;
 	varPosition = inPosition;
@@ -38,8 +40,7 @@ void main()
 	varTangent = inTangent;
 	varBitangent = inBitangent;
 	varUv = inUv;
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] == CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION)
-		skeletonAnimation();
+	skeletalAnimation();
 	gl_Position = uniMeshes[varInstanceId].mvpMat * vec4(varPosition, 1);
 	varPosition = transpose(uniMeshes[varInstanceId].mMat) * vec4(varPosition, 1);
 }

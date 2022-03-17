@@ -407,6 +407,7 @@ namespace cage
 
 	UubRange RenderQueue::universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
 	{
+		CAGE_ASSERT(data.size() > 0);
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		return impl->universalUniformBuffer(data, bindingPoint);
 	}

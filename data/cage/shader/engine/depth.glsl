@@ -1,9 +1,14 @@
 
 $include ../shaderConventions.h
 
-$include vertexStage.glsl
+$include vertex.glsl
 
-$include fragmentCommon.glsl
+void main()
+{
+	updateVertex();
+}
+
+$include fragment.glsl
 
 void main()
 {

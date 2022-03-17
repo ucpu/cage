@@ -229,27 +229,14 @@ namespace cage
 					renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
 				}
 
-				if constexpr (RenderMode == RenderModeEnum::Standard)
-				{
-					renderQueue->depthFuncLessEqual();
-					renderQueue->blending(ex.blending);
-					renderQueue->blendFuncPremultipliedTransparency();
-					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(0));
-				}
-				else
-				{
-					renderQueue->depthFuncLess();
-					renderQueue->blending(false);
-				}
 				renderQueue->universalUniformArray<UniMesh>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
 				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
-				renderQueue->draw();
 
 				if constexpr (RenderMode == RenderModeEnum::Standard)
 				{
-					renderQueue->depthFuncEqual();
-					renderQueue->blending(true);
-					renderQueue->blendFuncAdditive();
+					std::vector<std::pair<UniLight, const ShadowmapInfo *>> shadowed;
+					std::vector<UniLight> lights;
+					lights.reserve(50);
 					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
 						if ((lc.sceneMask & pass.sceneMask) == 0)
 							return;
@@ -262,8 +249,7 @@ namespace cage
 						uni.attenuation = Vec4(lc.attenuation, 0);
 						uni.parameters[0] = cos(lc.spotAngle * 0.5);
 						uni.parameters[1] = lc.spotExponent;
-						if (shadows)
-							uni.parameters[2] = e->value<ShadowmapComponent>().normalOffsetScale;
+						uni.parameters[2] = shadows ? e->value<ShadowmapComponent>().normalOffsetScale : 0;
 						uni.parameters[3] = [&]() {
 							switch (lc.lightType)
 							{
@@ -274,15 +260,36 @@ namespace cage
 							}
 						}();
 						if (shadows)
-						{
-							const ShadowmapInfo &shadowmap = shadowmaps.at(e);
-							renderQueue->bind(shadowmap.shadowTexture, lc.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-							renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, shadowmap.shadowMat);
-						}
-						renderQueue->universalUniformArray<UniLight>({ &uni, &uni + 1 }, CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
-						renderQueue->draw();
+							shadowed.emplace_back(uni, &shadowmaps.at(e));
+						else
+							lights.push_back(uni);
 					}, +emit.scene, false);
+
+					renderQueue->depthFuncLessEqual();
+					renderQueue->blending(ex.blending);
+					renderQueue->blendFuncPremultipliedTransparency();
+					if (!lights.empty())
+						renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
+					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, numeric_cast<uint32>(lights.size()));
+					renderQueue->draw();
+
+					renderQueue->depthFuncLessEqual();
+					renderQueue->blending(true);
+					renderQueue->blendFuncAdditive();
+					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
+					for (const auto &it : shadowed)
+					{
+						renderQueue->bind(it.second->shadowTexture, it.first.parameters[3] == CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+						renderQueue->universalUniformArray<UniLight>({ &it.first, &it.first + 1 }, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, it.second->shadowMat);
+						renderQueue->draw();
+					}
+				}
+				else
+				{
+					renderQueue->depthFuncLess();
+					renderQueue->blending(false);
+					renderQueue->draw();
 				}
 
 				renderQueue->checkGlErrorDebug();
