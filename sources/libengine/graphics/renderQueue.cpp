@@ -1017,6 +1017,11 @@ namespace cage
 		depthFunc(GL_LEQUAL);
 	}
 
+	void RenderQueue::depthFuncEqual()
+	{
+		depthFunc(GL_EQUAL);
+	}
+
 	void RenderQueue::depthFuncAlways()
 	{
 		depthFunc(GL_ALWAYS);

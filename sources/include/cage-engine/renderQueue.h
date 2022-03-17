@@ -88,6 +88,7 @@ namespace cage
 		void depthFunc(uint32 func);
 		void depthFuncLess();
 		void depthFuncLessEqual();
+		void depthFuncEqual();
 		void depthFuncAlways();
 		void depthTest(bool enable);
 		void depthWrite(bool enable);

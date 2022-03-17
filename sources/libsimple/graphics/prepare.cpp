@@ -40,7 +40,7 @@ namespace cage
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
 		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
-		struct UniInstance
+		struct UniMesh
 		{
 			Mat4 mvpMat;
 			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
@@ -51,11 +51,11 @@ namespace cage
 
 		struct UniLight
 		{
-			Mat4 shadowMat;
-			Vec4 color; // + spotAngle
+			Vec4 color;
 			Vec4 position;
-			Vec4 direction; // + normalOffsetScale
-			Vec4 attenuation; // + spotExponent
+			Vec4 direction;
+			Vec4 attenuation;
+			Vec4 parameters; // spotAngle, spotExponent, normalOffsetScale, lightType
 		};
 
 		struct UniViewport
@@ -71,7 +71,7 @@ namespace cage
 		struct RenderInfo
 		{
 			RenderComponent render;
-			UniInstance uni;
+			UniMesh uni;
 			Mat4 model;
 			Frustum frustum; // object-space camera frustum used for culling
 			Entity *e = nullptr;
@@ -85,6 +85,7 @@ namespace cage
 			Holder<TextureAnimationComponent> textureAnimation;
 			Holder<Texture> textures[MaxTexturesCountPerMaterial];
 			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
+			bool blending = false;
 		};
 
 		// camera or light
@@ -123,6 +124,13 @@ namespace cage
 			uni.mvpMat = pass.viewProj * model;
 			uni.normalMat = Mat3x4(inverse(Mat3(model)));
 		}
+
+		enum class RenderModeEnum
+		{
+			Shadowmap,
+			DepthPrepass,
+			Standard,
+		};
 
 		struct Preparator
 		{
@@ -176,11 +184,11 @@ namespace cage
 				return true;
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderModelImpl(const PassInfo &pass, RenderInfoEx &ex, Holder<Model> model)
 			{
 				renderQueue->bind(model);
-				renderQueue->bind(DepthOnly ? shaderDepth : shaderStandard);
+				renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
 				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
 				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
@@ -212,7 +220,7 @@ namespace cage
 				}
 				updateShaderRoutinesForTextures(ex.textures, ex.shaderRoutines);
 
-				ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING;
+				ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
 				if (ex.skeletalAnimation)
 				{
 					const auto armature = ex.skeletalAnimation->armature();
@@ -221,21 +229,25 @@ namespace cage
 					renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
 				}
 
-				renderQueue->universalUniformArray<UniInstance>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
-				if constexpr (DepthOnly)
-					renderQueue->blending(false);
+				if constexpr (RenderMode == RenderModeEnum::Standard)
+				{
+					renderQueue->depthFuncLessEqual();
+					renderQueue->blending(ex.blending);
+					renderQueue->blendFuncPremultipliedTransparency();
+					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(0));
+				}
 				else
 				{
-					ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
-					renderQueue->blending(any(model->flags & MeshRenderFlags::Translucent));
-					renderQueue->blendFuncPremultipliedTransparency();
+					renderQueue->depthFuncLess();
+					renderQueue->blending(false);
 				}
+				renderQueue->universalUniformArray<UniMesh>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
 				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
 				renderQueue->draw();
 
-				if constexpr (!DepthOnly)
+				if constexpr (RenderMode == RenderModeEnum::Standard)
 				{
-					renderQueue->depthFuncLessEqual();
+					renderQueue->depthFuncEqual();
 					renderQueue->blending(true);
 					renderQueue->blendFuncAdditive();
 					entitiesVisitor([&](Entity *e, const LightComponent &lc) {
@@ -243,14 +255,16 @@ namespace cage
 							return;
 						const bool shadows = e->has<ShadowmapComponent>();
 						UniLight uni;
-						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, cos(lc.spotAngle * 0.5));
+						uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, 0);
 						const auto model = modelTransform(e);
 						uni.position = model * Vec4(0, 0, 0, 1);
 						uni.direction = model * Vec4(0, 0, -1, 0);
+						uni.attenuation = Vec4(lc.attenuation, 0);
+						uni.parameters[0] = cos(lc.spotAngle * 0.5);
+						uni.parameters[1] = lc.spotExponent;
 						if (shadows)
-							uni.direction[3] = e->value<ShadowmapComponent>().normalOffsetScale;
-						uni.attenuation = Vec4(lc.attenuation, lc.spotExponent);
-						ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] = [&]() {
+							uni.parameters[2] = e->value<ShadowmapComponent>().normalOffsetScale;
+						uni.parameters[3] = [&]() {
 							switch (lc.lightType)
 							{
 							case LightTypeEnum::Directional: return shadows ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
@@ -263,19 +277,18 @@ namespace cage
 						{
 							const ShadowmapInfo &shadowmap = shadowmaps.at(e);
 							renderQueue->bind(shadowmap.shadowTexture, lc.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-							uni.shadowMat = shadowmap.shadowMat;
+							renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, shadowmap.shadowMat);
 						}
-						renderQueue->universalUniformStruct<UniLight>(uni, CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
+						renderQueue->universalUniformArray<UniLight>({ &uni, &uni + 1 }, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
 						renderQueue->draw();
 					}, +emit.scene, false);
-					renderQueue->depthFuncLess();
 				}
 
 				renderQueue->checkGlErrorDebug();
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderModelBones(const PassInfo &pass, const RenderInfoEx &ex)
 			{
 				const auto armature = ex.skeletalAnimation->armature();
@@ -287,7 +300,7 @@ namespace cage
 					r.model = ex.model * am;
 					r.initUniMatrices(pass);
 					r.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), r.render.opacity);
-					renderModelImpl<DepthOnly>(pass, r, modelBone.share());
+					renderModelImpl<RenderMode>(pass, r, modelBone.share());
 				}
 			}
 
@@ -309,7 +322,7 @@ namespace cage
 					}
 				}
 				else
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = 0;
 
 				if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 				{
@@ -327,7 +340,7 @@ namespace cage
 					}
 				}
 				else
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = 0;
 
 				if (textures[CAGE_SHADER_TEXTURE_NORMAL])
 				{
@@ -345,7 +358,7 @@ namespace cage
 					}
 				}
 				else
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = 0;
 			}
 
 			void updateRenderInfo(RenderInfoEx &pr, const RenderObject *parent)
@@ -430,10 +443,10 @@ namespace cage
 				}
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderModel(const PassInfo &pass, const RenderInfo &render, Holder<Model> model, Holder<RenderObject> parent = {})
 			{
-				if constexpr (DepthOnly)
+				if constexpr (RenderMode == RenderModeEnum::Shadowmap)
 				{
 					if (none(model->flags & MeshRenderFlags::ShadowCast))
 						return;
@@ -446,13 +459,20 @@ namespace cage
 				(RenderInfo &)ex = render;
 				updateRenderInfo(ex, +parent);
 
+				ex.blending = any(model->flags & MeshRenderFlags::Translucent) || ex.render.opacity < 1;
+				if constexpr (RenderMode == RenderModeEnum::DepthPrepass)
+				{
+					if (ex.blending)
+						return;
+				}
+
 				if (cnfRenderSkeletonBones && ex.skeletalAnimation)
-					renderModelBones<DepthOnly>(pass, ex);
+					renderModelBones<RenderMode>(pass, ex);
 				else
-					renderModelImpl<DepthOnly>(pass, ex, std::move(model));
+					renderModelImpl<RenderMode>(pass, ex, std::move(model));
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderObject(const PassInfo &pass, const RenderInfo &render, Holder<RenderObject> object)
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
@@ -470,36 +490,35 @@ namespace cage
 					lod = object->lodSelect(f);
 				}
 				for (uint32 it : object->items(lod))
-					renderObjectOrModel<DepthOnly>(pass, render, it, object.share());
+					renderObjectOrModel<RenderMode>(pass, render, it, object.share());
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderObjectOrModel(const PassInfo &pass, const RenderInfo &render, const uint32 name, Holder<RenderObject> parent = {})
 			{
 				Holder<RenderObject> obj = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
 				if (obj)
 				{
-					renderObject<DepthOnly>(pass, render, std::move(obj));
+					renderObject<RenderMode>(pass, render, std::move(obj));
 					return;
 				}
 				Holder<Model> md = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(name);
 				if (md)
 				{
-					renderModel<DepthOnly>(pass, render, std::move(md), std::move(parent));
+					renderModel<RenderMode>(pass, render, std::move(md), std::move(parent));
 					return;
 				}
 				if (cnfRenderMissingModels)
 				{
 					Holder<Model> fake = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
-					renderModel<DepthOnly>(pass, render, std::move(fake), std::move(parent));
+					renderModel<RenderMode>(pass, render, std::move(fake), std::move(parent));
 					return;
 				}
 			}
 
-			template<bool DepthOnly>
+			template<RenderModeEnum RenderMode>
 			void renderEntities(const PassInfo &pass)
 			{
-				const auto graphicsDebugScope = renderQueue->namedScope("render entities");
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
 					if ((rc.sceneMask & pass.sceneMask) == 0)
 						return;
@@ -509,10 +528,8 @@ namespace cage
 					render.render = rc;
 					render.initUniMatrices(pass);
 					render.frustum = Frustum(render.uni.mvpMat);
-					renderObjectOrModel<DepthOnly>(pass, render, rc.object);
+					renderObjectOrModel<RenderMode>(pass, render, rc.object);
 				}, +emit.scene, false);
-				renderQueue->resetAllState();
-				renderQueue->resetAllTextures();
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -606,7 +623,7 @@ namespace cage
 				renderQueue->bind(shaderDepth);
 				renderQueue->checkGlErrorDebug();
 
-				renderEntities<true>(pass);
+				renderEntities<RenderModeEnum::Shadowmap>(pass);
 
 				renderQueue->resetFrameBuffer();
 				renderQueue->resetAllState();
@@ -806,7 +823,17 @@ namespace cage
 				if (any(cam.clear))
 					renderQueue->clear(any(cam.clear & CameraClearFlags::Color), any(cam.clear & CameraClearFlags::Depth), any(cam.clear & CameraClearFlags::Stencil));
 
-				renderEntities<false>(pass);
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("depth prepass");
+					renderEntities<RenderModeEnum::DepthPrepass>(pass);
+				}
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("standard");
+					renderEntities<RenderModeEnum::Standard>(pass);
+				}
+
+				renderQueue->resetAllState();
+				renderQueue->resetAllTextures();
 				renderEffects(colorTexture, depthTexture, pass, cam, e->name());
 
 				{

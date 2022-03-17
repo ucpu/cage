@@ -1,7 +1,7 @@
 
 $define shader vertex
 
-$include includes.glsl
+$include uniforms.glsl
 
 layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
 layout(location = CAGE_SHADER_ATTRIB_IN_NORMAL) in vec3 inNormal;
@@ -11,53 +11,35 @@ layout(location = CAGE_SHADER_ATTRIB_IN_BONEINDEX) in uvec4 inBoneIndex;
 layout(location = CAGE_SHADER_ATTRIB_IN_BONEWEIGHT) in vec4 inBoneWeight;
 layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec3 inUv;
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform Armatures
-{
-	mat3x4 uniArmatures[CAGE_SHADER_MAX_BONES];
-};
-
-layout(location = CAGE_SHADER_UNI_BONESPERINSTANCE) uniform uint uniBonesPerInstance;
-
-out vec3 varUv;
+out vec3 varPosition; // world space
 out vec3 varNormal; // object space
 out vec3 varTangent; // object space
 out vec3 varBitangent; // object space
-out vec3 varPosition; // world space
+out vec3 varUv;
 flat out int varInstanceId;
-
-void skeletonNothing()
-{}
 
 void skeletonAnimation()
 {
-	mat3x4 sum = mat3x4(0.0);
+	mat3x4 sum = mat3x4(0);
 	for (int i = 0; i < 4; i++)
 		sum += uniArmatures[varInstanceId * uniBonesPerInstance + inBoneIndex[i]] * inBoneWeight[i];
-	pos = transpose(mat4(sum)) * pos;
-	normal = transpose(mat3(sum)) * normal;
-	// todo tangent and bitangent?
-}
-
-void skeleton()
-{
-	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON])
-	{
-	default:
-	case CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING: skeletonNothing(); break;
-	case CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION: skeletonAnimation(); break;
-	}
+	varPosition = vec3(transpose(mat4(sum)) * vec4(varPosition, 1));
+	mat3 s = transpose(mat3(sum));
+	varNormal = s * varNormal;
+	varTangent = s * varTangent;
+	varBitangent = s * varBitangent;
 }
 
 void main()
 {
 	varInstanceId = gl_InstanceID;
-	pos = vec4(inPosition, 1.0);
-	normal = inNormal;
-	skeleton();
-	varUv = inUv;
-	varNormal = normal;
+	varPosition = inPosition;
+	varNormal = inNormal;
 	varTangent = inTangent;
 	varBitangent = inBitangent;
-	varPosition = transpose(uniInstances[varInstanceId].mMat) * pos;
-	gl_Position = uniInstances[varInstanceId].mvpMat * pos;
+	varUv = inUv;
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] == CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION)
+		skeletonAnimation();
+	gl_Position = uniMeshes[varInstanceId].mvpMat * vec4(varPosition, 1);
+	varPosition = transpose(uniMeshes[varInstanceId].mMat) * vec4(varPosition, 1);
 }
