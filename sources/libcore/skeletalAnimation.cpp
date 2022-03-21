@@ -424,10 +424,8 @@ namespace cage
 		{
 			if (!animation)
 				return 0;
-			const uint64 duration = animation->duration();
-			if (duration <= 1)
-				return 0;
-			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value + (double)animationOffset.value) / (double)duration;
+			const uint64 duration = max(animation->duration(), uint64(1));
+			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
 			// assume that the animation should loop
 			const Real result = saturate(Real(sample - sint64(sample)));
 			return result;

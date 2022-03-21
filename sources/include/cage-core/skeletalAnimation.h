@@ -61,6 +61,7 @@ namespace cage
 
 	namespace detail
 	{
+		// animationOffset = 0..1 normalized offset, independent of animation speed or duration
 		CAGE_CORE_API Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
 	}
 }

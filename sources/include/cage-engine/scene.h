@@ -24,7 +24,7 @@ namespace cage
 	{
 		uint64 startTime = 0;
 		Real speed = Real::Nan();
-		Real offset = Real::Nan();
+		Real offset = Real::Nan(); // normalized 0..1
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
@@ -32,7 +32,7 @@ namespace cage
 		uint64 startTime = 0;
 		uint32 name = 0;
 		Real speed = Real::Nan();
-		Real offset = Real::Nan();
+		Real offset = Real::Nan(); // normalized 0..1
 	};
 
 	enum class LightTypeEnum : uint32

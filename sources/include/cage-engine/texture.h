@@ -53,6 +53,7 @@ namespace cage
 
 	namespace detail
 	{
+		// animationOffset = 0..1 normalized offset, independent of animation speed or duration
 		CAGE_ENGINE_API Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
 	}
 

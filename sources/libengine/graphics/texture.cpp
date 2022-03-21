@@ -458,7 +458,7 @@ namespace cage
 			const uint32 frames = numeric_cast<uint32>(texture->resolution3()[2]);
 			if (frames <= 1)
 				return Vec4();
-			double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value + (double)animationOffset.value) * (double)frames / (double)texture->animationDuration;
+			double sample = (((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)texture->animationDuration + (double)animationOffset.value) * (double)frames;
 			if (!texture->animationLoop)
 				sample = clamp(sample, 0.0, (double)(frames - 1));
 			else
