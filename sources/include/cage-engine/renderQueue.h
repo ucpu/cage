@@ -108,7 +108,7 @@ namespace cage
 
 		// dispatch another queue as part of this queue
 		// stores a reference to the queue - do not modify it after it has been enqueued
-		void enqueue(const Holder<RenderQueue> &queue);
+		void enqueue(Holder<RenderQueue> queue);
 
 		void customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preservesGlState = false);
 

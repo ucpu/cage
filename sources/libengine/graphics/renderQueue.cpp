@@ -1207,7 +1207,7 @@ namespace cage
 		return RenderQueueNamedScope(this, name);
 	}
 
-	void RenderQueue::enqueue(const Holder<RenderQueue> &queue)
+	void RenderQueue::enqueue(Holder<RenderQueue> queue)
 	{
 		struct Cmd : public CmdBase
 		{
