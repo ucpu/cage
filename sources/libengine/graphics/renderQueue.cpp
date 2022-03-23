@@ -430,6 +430,7 @@ namespace cage
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(uubRange.size <= 16384);
 		CAGE_ASSERT(uubRange.offset + uubRange.size <= impl->uubStaging.size());
 		CAGE_ASSERT((uubRange.offset % UniformBuffer::alignmentRequirement()) == 0);
 		Cmd &cmd = impl->addCmd<Cmd>();

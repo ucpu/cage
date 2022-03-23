@@ -74,10 +74,11 @@ namespace cage
 		{
 			Holder<Model> mesh;
 			bool translucent = false;
+			bool skeletal = false;
 
 			bool operator < (const ModelShared &other) const
 			{
-				return std::tuple{ translucent, +mesh } < std::tuple{ other.translucent, +other.mesh };
+				return std::tuple{ translucent, +mesh, skeletal } < std::tuple{ other.translucent, +other.mesh, other.skeletal };
 			}
 		};
 
@@ -253,6 +254,13 @@ namespace cage
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = 0;
 		}
 
+		template<class T>
+		PointerRange<T> subRange(PointerRange<T> base, uint32 off, uint32 num)
+		{
+			CAGE_ASSERT(off + num <= base.size());
+			return { base.begin() + off, base.begin() + off + num };
+		}
+
 		enum class RenderModeEnum
 		{
 			Shadowmap,
@@ -350,19 +358,35 @@ namespace cage
 					}
 					updateShaderRoutinesForTextures(textures, shaderRoutines);
 					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
+					renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 
+					std::vector<UniMesh> uniMeshes;
+					uniMeshes.reserve(shit.second.size());
 					for (const ModelInstance &inst : shit.second)
+						uniMeshes.push_back(inst.uni);
+
+					std::vector<Mat3x4> uniArmatures;
+					if (sh.skeletal)
 					{
-						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = inst.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
-						if (inst.skeletalAnimation)
+						uniArmatures.reserve(shit.second.size() * sh.mesh->skeletonBones);
+						for (const ModelInstance &inst : shit.second)
 						{
+							CAGE_ASSERT(!!inst.skeletalAnimation == !!sh.skeletal);
 							const auto armature = inst.skeletalAnimation->armature();
 							CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
-							renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
+							for (const auto &it : armature)
+								uniArmatures.push_back(it);
 						}
+					}
 
-						renderQueue->universalUniformArray<UniMesh>({ &inst.uni, &inst.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+					const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
+					for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
+					{
+						const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
+						renderQueue->universalUniformArray<UniMesh>(subRange<UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
+						if (sh.skeletal)
+							renderQueue->universalUniformArray<Mat3x4>(subRange<Mat3x4>(uniArmatures, offset * sh.mesh->skeletonBones, count * sh.mesh->skeletonBones), CAGE_SHADER_UNIBLOCK_ARMATURES);
 
 						if constexpr (RenderMode == RenderModeEnum::Standard)
 						{
@@ -372,7 +396,7 @@ namespace cage
 							if (data.lightsCount > 0)
 								renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
 							renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-							renderQueue->draw();
+							renderQueue->draw(count);
 
 							renderQueue->depthFuncLessEqual();
 							renderQueue->blending(true);
@@ -384,18 +408,18 @@ namespace cage
 								renderQueue->bind(sm.shadowTexture, sm.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
 								renderQueue->bind(sm.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
 								renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sm.shadowMat);
-								renderQueue->draw();
+								renderQueue->draw(count);
 							}
 						}
 						else
 						{
 							renderQueue->depthFuncLess();
 							renderQueue->blending(false);
-							renderQueue->draw();
+							renderQueue->draw(count);
 						}
-
-						renderQueue->checkGlErrorDebug();
 					}
+
+					renderQueue->checkGlErrorDebug();
 				}
 			}
 
@@ -413,6 +437,7 @@ namespace cage
 				{
 					ModelPrepare pr = prepare.clone();
 					pr.skeletalAnimation.clear();
+					pr.skeletal = false;
 					pr.mesh = modelBone.share();
 					pr.model = prepare.model * Mat4(armature[i]);
 					pr.uni = initializeMeshUni(data, pr.model);
@@ -505,13 +530,15 @@ namespace cage
 						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, prepareTime, ps->startTime, ps->speed, ps->offset);
 						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
 						pr.skeletalAnimation->prepare();
+						pr.skeletal = true;
 					}
 				}
+				CAGE_ASSERT(!!pr.skeletal == !!pr.skeletalAnimation);
 
 				pr.translucent = any(pr.mesh->flags & MeshRenderFlags::Translucent) || pr.render.opacity < 1;
 				pr.uni.normalMat.data[2][3] = any(pr.mesh->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
-				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
+				if (pr.skeletal && cnfRenderSkeletonBones)
 					prepareModelBones(data, pr);
 				else
 					prepareModelImpl(data, pr);
