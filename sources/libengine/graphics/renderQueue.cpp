@@ -146,6 +146,7 @@ namespace cage
 			using RenderQueueContent::drawsCount;
 			using RenderQueueContent::primitivesCount;
 
+			const String queueName = Stringizer() + this;
 			Holder<MemoryArena> arena = newMemoryAllocatorStream({});
 			MemoryBuffer uubStaging;
 			UniformBuffer *uubObject = nullptr;
@@ -159,6 +160,11 @@ namespace cage
 #endif // CAGE_PROFILING_ENABLED
 
 			RenderQueueImpl()
+			{
+				initHeads();
+			}
+
+			RenderQueueImpl(const String &name): queueName(name)
 			{
 				initHeads();
 			}
@@ -211,7 +217,7 @@ namespace cage
 					ProfilingScope profiling("UUB upload", "render queue");
 					if (provisionalGraphics)
 					{
-						uub = provisionalGraphics->uniformBuffer(Stringizer() + "universal uniform buffer " + this)->resolve();
+						uub = provisionalGraphics->uniformBuffer(Stringizer() + "universal uniform buffer " + queueName)->resolve();
 						uub->bind();
 						if (uub->size() >= uubStaging.size())
 							uub->writeRange(uubStaging, 0);
@@ -1229,31 +1235,6 @@ namespace cage
 		cmd.queue = queue.share();
 	}
 
-	void RenderQueue::customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preservesGlState)
-	{
-		struct Cmd : public CmdBase
-		{
-			Delegate<void(void *)> fnc;
-			Holder<void> data;
-			bool preservesGlState = false;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				fnc(+data);
-				if (!preservesGlState)
-					*impl->bindings = RenderQueueDispatchBindings();
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(fnc);
-		if (!preservesGlState)
-			impl->setting = RenderQueueSettingBindings();
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.fnc = fnc;
-		cmd.data = data.share();
-		cmd.preservesGlState = preservesGlState;
-	}
-
 #ifdef CAGE_DEBUG
 	void RenderQueue::checkGlErrorDebug()
 	{
@@ -1324,6 +1305,11 @@ namespace cage
 	Holder<RenderQueue> newRenderQueue()
 	{
 		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>();
+	}
+
+	Holder<RenderQueue> newRenderQueue(const String &name)
+	{
+		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>(name);
 	}
 
 	RenderQueueNamedScope::RenderQueueNamedScope(RenderQueue *queue, StringLiteral name) : queue(queue)

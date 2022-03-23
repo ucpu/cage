@@ -30,6 +30,7 @@
 #include <optional>
 #include <vector>
 #include <map>
+#include <array>
 
 namespace cage
 {
@@ -69,39 +70,45 @@ namespace cage
 			Vec4 ambientDirectionalLight; // color rgb is linear, no alpha
 		};
 
-		struct RenderInfo
+		struct ModelShared
 		{
-			RenderComponent render;
+			Holder<Model> mesh;
+			bool translucent = false;
+
+			bool operator < (const ModelShared &other) const
+			{
+				return std::tuple{ translucent, +mesh } < std::tuple{ other.translucent, +other.mesh };
+			}
+		};
+
+		struct ModelInstance
+		{
 			UniMesh uni;
+			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
+		};
+
+		struct ModelPrepare : public ModelShared, public ModelInstance
+		{
 			Mat4 model;
 			Frustum frustum; // object-space camera frustum used for culling
+			RenderComponent render;
+			std::optional<TextureAnimationComponent> textureAnimation;
 			Entity *e = nullptr;
 
-			void initUniMatrices(const struct CommonData &data);
-		};
-
-		struct RenderInfoEx : public RenderInfo
-		{
-			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
-			Holder<TextureAnimationComponent> textureAnimation;
-			Holder<Texture> textures[MaxTexturesCountPerMaterial];
-			uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
-			bool blending = false;
-		};
-
-		struct OpaqueInstanceKey
-		{
-			Holder<ShaderProgram> shader;
-			Holder<Model> model;
-
-			bool operator < (const OpaqueInstanceKey &other) const = default;
-		};
-
-		struct Translucent
-		{
-			Holder<ShaderProgram> shader;
-			Holder<Model> model;
-			RenderInfoEx info;
+			ModelPrepare clone() const
+			{
+				ModelPrepare res;
+				res.mesh = mesh.share();
+				res.translucent = translucent;
+				res.uni = uni;
+				res.skeletalAnimation = skeletalAnimation.share();
+				res.model = model;
+				res.frustum = frustum;
+				res.render = render;
+				res.textureAnimation = textureAnimation;
+				res.e = e;
+				return res;
+			}
 		};
 
 		struct DebugVisualizationInfo
@@ -128,9 +135,13 @@ namespace cage
 				bool orthographic = false;
 			} lodSelection;
 
-			//std::map<OpaqueInstanceKey, std::vector<RenderInfoEx>> opaque;
+			std::map<ModelShared, std::vector<ModelInstance>> models;
 			std::vector<DebugVisualizationInfo> debugVisualizations;
-			Holder<RenderQueue> renderQueue = newRenderQueue();
+			Holder<RenderQueue> renderQueue;
+
+			std::map<Entity *, struct ShadowmapData> shadowmaps;
+			UubRange lighsBlock;
+			uint32 lightsCount = 0;
 		};
 
 		struct ShadowmapData : public CommonData
@@ -139,23 +150,32 @@ namespace cage
 			Holder<ProvisionalTexture> shadowTexture;
 			LightComponent lightComponent;
 			ShadowmapComponent shadowmapComponent;
-			UubRange lighsBlock;
 		};
 
 		struct CameraData : public CommonData
 		{
 			CameraComponent camera;
-			//std::vector<Translucent> translucent;
-			std::map<Entity *, ShadowmapData> shadowmaps;
-			UubRange lighsBlock;
-			uint32 lightsCount = 0;
 		};
 
-		void RenderInfo::initUniMatrices(const CommonData &data)
+		UniMesh initializeMeshUni(const CommonData &data, const Mat4 model)
 		{
+			UniMesh uni;
 			uni.mMat = Mat3x4(model);
 			uni.mvpMat = data.viewProj * model;
 			uni.normalMat = Mat3x4(inverse(Mat3(model)));
+			return uni;
+		}
+
+		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
+		{
+			UniLight uni;
+			uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, 0);
+			uni.position = model * Vec4(0, 0, 0, 1);
+			uni.direction = model * Vec4(0, 0, -1, 0);
+			uni.attenuation = Vec4(lc.attenuation, 0);
+			uni.parameters[0] = cos(lc.spotAngle * 0.5);
+			uni.parameters[1] = lc.spotExponent;
+			return uni;
 		}
 
 		void initializeLodSelection(CommonData &data, const CameraComponent &cam, const Mat4 &camModel)
@@ -176,19 +196,7 @@ namespace cage
 			data.lodSelection.center = Vec3(camModel * Vec4(0, 0, 0, 1));
 		}
 
-		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
-		{
-			UniLight uni;
-			uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, 0);
-			uni.position = model * Vec4(0, 0, 0, 1);
-			uni.direction = model * Vec4(0, 0, -1, 0);
-			uni.attenuation = Vec4(lc.attenuation, 0);
-			uni.parameters[0] = cos(lc.spotAngle * 0.5);
-			uni.parameters[1] = lc.spotExponent;
-			return uni;
-		}
-
-		void updateShaderRoutinesForTextures(const Holder<Texture> textures[MaxTexturesCountPerMaterial], uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES])
+		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<uint32, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
 		{
 			if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 			{
@@ -314,103 +322,113 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelImpl(const CommonData &data, RenderInfoEx &ex, Holder<Model> model)
+			void renderModels(const CommonData &data)
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
-				renderQueue->bind(model);
-				renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
-				renderQueue->culling(!any(model->flags & MeshRenderFlags::TwoSided));
-				renderQueue->depthTest(any(model->flags & MeshRenderFlags::DepthTest));
-				renderQueue->depthWrite(any(model->flags & MeshRenderFlags::DepthWrite));
-				ex.uni.normalMat.data[2][3] = any(model->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
-
-				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
+				for (const auto &shit : data.models)
 				{
-					const uint32 n = model->textureName(i);
-					if (!n)
-						continue;
-					ex.textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
-					switch (ex.textures[i]->target())
+					const ModelShared &sh = shit.first;
+					renderQueue->bind(sh.mesh);
+					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
+					renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
+					renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
+					renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
+					std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
+					std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
+					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					{
-					case GL_TEXTURE_2D_ARRAY: renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
-					case GL_TEXTURE_CUBE_MAP: renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);break;
-					default: renderQueue->bind(ex.textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+						const uint32 n = sh.mesh->textureName(i);
+						if (!n)
+							continue;
+						textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
+						switch (textures[i]->target())
+						{
+						case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
+						case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
+						default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+						}
+					}
+					updateShaderRoutinesForTextures(textures, shaderRoutines);
+					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
+
+					for (const ModelInstance &inst : shit.second)
+					{
+						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = inst.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
+						if (inst.skeletalAnimation)
+						{
+							const auto armature = inst.skeletalAnimation->armature();
+							CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
+							renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
+						}
+
+						renderQueue->universalUniformArray<UniMesh>({ &inst.uni, &inst.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+
+						if constexpr (RenderMode == RenderModeEnum::Standard)
+						{
+							renderQueue->depthFuncLessEqual();
+							renderQueue->blending(sh.translucent);
+							renderQueue->blendFuncPremultipliedTransparency();
+							if (data.lightsCount > 0)
+								renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
+							renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
+							renderQueue->draw();
+
+							renderQueue->depthFuncLessEqual();
+							renderQueue->blending(true);
+							renderQueue->blendFuncAdditive();
+							renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
+							for (const auto &smit : data.shadowmaps)
+							{
+								const ShadowmapData &sm = smit.second;
+								renderQueue->bind(sm.shadowTexture, sm.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+								renderQueue->bind(sm.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
+								renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sm.shadowMat);
+								renderQueue->draw();
+							}
+						}
+						else
+						{
+							renderQueue->depthFuncLess();
+							renderQueue->blending(false);
+							renderQueue->draw();
+						}
+
+						renderQueue->checkGlErrorDebug();
 					}
 				}
-				if (ex.textureAnimation && ex.textures[CAGE_SHADER_TEXTURE_ALBEDO])
-				{
-					const auto &p = *ex.textureAnimation;
-					ex.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+ex.textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, p.startTime, p.speed, p.offset);
-				}
-				updateShaderRoutinesForTextures(ex.textures, ex.shaderRoutines);
-
-				ex.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = ex.skeletalAnimation ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
-				if (ex.skeletalAnimation)
-				{
-					const auto armature = ex.skeletalAnimation->armature();
-					CAGE_ASSERT(armature.size() == model->skeletonBones);
-					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, model->skeletonBones);
-					renderQueue->universalUniformArray(armature, CAGE_SHADER_UNIBLOCK_ARMATURES);
-				}
-
-				renderQueue->universalUniformArray<UniMesh>({ &ex.uni, &ex.uni + 1 }, CAGE_SHADER_UNIBLOCK_MESHES);
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, ex.shaderRoutines);
-
-				if constexpr (RenderMode == RenderModeEnum::Standard)
-				{
-					const CameraData &cam = (const CameraData &)data;
-					renderQueue->depthFuncLessEqual();
-					renderQueue->blending(ex.blending);
-					renderQueue->blendFuncPremultipliedTransparency();
-					if (cam.lightsCount > 0)
-						renderQueue->bind(cam.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, cam.lightsCount);
-					renderQueue->draw();
-
-					renderQueue->depthFuncLessEqual();
-					renderQueue->blending(true);
-					renderQueue->blendFuncAdditive();
-					renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
-					for (const auto &it : cam.shadowmaps)
-					{
-						const ShadowmapData &sh = it.second;
-						renderQueue->bind(sh.shadowTexture, sh.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-						renderQueue->bind(sh.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sh.shadowMat);
-						renderQueue->draw();
-					}
-				}
-				else
-				{
-					renderQueue->depthFuncLess();
-					renderQueue->blending(false);
-					renderQueue->draw();
-				}
-
-				renderQueue->checkGlErrorDebug();
 			}
 
-			template<RenderModeEnum RenderMode>
-			void renderModelBones(const CommonData &data, const RenderInfoEx &ex)
+			void prepareModelImpl(CommonData &data, ModelPrepare &prepare)
 			{
-				const auto armature = ex.skeletalAnimation->armature();
+				ModelShared &sh = (ModelShared &)prepare;
+				ModelInstance &inst = (ModelInstance &)prepare;
+				data.models[std::move(sh)].push_back(std::move(inst));
+			}
+
+			void prepareModelBones(CommonData &data, const ModelPrepare &prepare)
+			{
+				const auto armature = prepare.skeletalAnimation->armature();
 				for (uint32 i = 0; i < armature.size(); i++)
 				{
-					const Mat4 am = Mat4(armature[i]);
-					RenderInfoEx r;
-					(RenderInfo &)r = (const RenderInfo &)ex;
-					r.model = ex.model * am;
-					r.initUniMatrices(data);
-					r.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), r.render.opacity);
-					renderModelImpl<RenderMode>(data, r, modelBone.share());
+					ModelPrepare pr = prepare.clone();
+					pr.skeletalAnimation.clear();
+					pr.mesh = modelBone.share();
+					pr.model = prepare.model * Mat4(armature[i]);
+					pr.uni = initializeMeshUni(data, pr.model);
+					pr.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
+					prepareModelImpl(data, pr);
 				}
 			}
 
-			void updateRenderInfo(RenderInfoEx &pr, const RenderObject *parent)
+			void prepareModel(CommonData &data, ModelPrepare &pr, Holder<RenderObject> parent = {})
 			{
-				Holder<TextureAnimationComponent> &pt = pr.textureAnimation;
+				if (!intersects(pr.mesh->boundingBox(), pr.frustum))
+					return;
+
+				std::optional<TextureAnimationComponent> &pt = pr.textureAnimation;
 				if (pr.e->has<TextureAnimationComponent>())
-					pt = systemMemory().createHolder<TextureAnimationComponent>(pr.e->value<TextureAnimationComponent>());
+					pt = pr.e->value<TextureAnimationComponent>();
 
 				std::optional<SkeletalAnimationComponent> ps;
 				if (pr.e->has<SkeletalAnimationComponent>())
@@ -426,7 +444,7 @@ namespace cage
 						pr.render.opacity = parent->opacity;
 
 					if (!pt && (parent->texAnimSpeed.valid() || parent->texAnimOffset.valid()))
-						pt = systemMemory().createHolder<TextureAnimationComponent>();
+						pt = TextureAnimationComponent();
 					if (pt)
 					{
 						if (!pt->speed.valid())
@@ -462,6 +480,8 @@ namespace cage
 						pt->speed = 1;
 					if (!pt->offset.valid())
 						pt->offset = 0;
+					if (Holder<Texture> tex = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureName(0)))
+						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, prepareTime, pt->startTime, pt->speed, pt->offset);
 				}
 
 				if (ps)
@@ -484,41 +504,20 @@ namespace cage
 					{
 						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, prepareTime, ps->startTime, ps->speed, ps->offset);
 						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
+						pr.skeletalAnimation->prepare();
 					}
 				}
-			}
 
-			template<RenderModeEnum RenderMode>
-			void renderModel(const CommonData &data, const RenderInfo &render, Holder<Model> model, Holder<RenderObject> parent = {})
-			{
-				if constexpr (RenderMode == RenderModeEnum::Shadowmap)
-				{
-					if (none(model->flags & MeshRenderFlags::ShadowCast))
-						return;
-				}
+				pr.translucent = any(pr.mesh->flags & MeshRenderFlags::Translucent) || pr.render.opacity < 1;
+				pr.uni.normalMat.data[2][3] = any(pr.mesh->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
-				if (!intersects(model->boundingBox(), render.frustum))
-					return;
-
-				RenderInfoEx ex;
-				(RenderInfo &)ex = render;
-				updateRenderInfo(ex, +parent);
-
-				ex.blending = any(model->flags & MeshRenderFlags::Translucent) || ex.render.opacity < 1;
-				if constexpr (RenderMode == RenderModeEnum::DepthPrepass)
-				{
-					if (ex.blending)
-						return;
-				}
-
-				if (cnfRenderSkeletonBones && ex.skeletalAnimation)
-					renderModelBones<RenderMode>(data, ex);
+				if (cnfRenderSkeletonBones && pr.skeletalAnimation)
+					prepareModelBones(data, pr);
 				else
-					renderModelImpl<RenderMode>(data, ex, std::move(model));
+					prepareModelImpl(data, pr);
 			}
 
-			template<RenderModeEnum RenderMode>
-			void renderObject(const CommonData &data, const RenderInfo &render, Holder<RenderObject> object)
+			void prepareObject(CommonData &data, const ModelPrepare &prepare, Holder<RenderObject> object)
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
 				uint32 lod = 0;
@@ -527,59 +526,55 @@ namespace cage
 					Real d = 1;
 					if (!data.lodSelection.orthographic)
 					{
-						const Vec4 ep4 = render.model * Vec4(0, 0, 0, 1);
+						const Vec4 ep4 = prepare.model * Vec4(0, 0, 0, 1);
 						CAGE_ASSERT(abs(ep4[3] - 1) < 1e-4);
 						d = distance(Vec3(ep4), data.lodSelection.center);
 					}
 					const Real f = data.lodSelection.screenSize * object->worldSize / (d * object->pixelsSize);
 					lod = object->lodSelect(f);
 				}
-				for (uint32 it : object->items(lod))
-					renderObjectOrModel<RenderMode>(data, render, it, object.share());
-			}
-
-			template<RenderModeEnum RenderMode>
-			void renderObjectOrModel(const CommonData &data, const RenderInfo &render, const uint32 name, Holder<RenderObject> parent = {})
-			{
-				Holder<RenderObject> obj = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
-				if (obj)
+				for (uint32 it : object->models(lod))
 				{
-					renderObject<RenderMode>(data, render, std::move(obj));
-					return;
-				}
-				Holder<Model> md = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(name);
-				if (md)
-				{
-					renderModel<RenderMode>(data, render, std::move(md), std::move(parent));
-					return;
-				}
-				if (cnfRenderMissingModels)
-				{
-					Holder<Model> fake = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
-					renderModel<RenderMode>(data, render, std::move(fake), std::move(parent));
-					return;
+					ModelPrepare pr = prepare.clone();
+					pr.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(it);
+					prepareModel(data, pr, object.share());
 				}
 			}
 
-			template<RenderModeEnum RenderMode>
-			void renderEntities(const CommonData &data)
+			void prepareEntities(CommonData &data)
 			{
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
 					if ((rc.sceneMask & data.sceneMask) == 0)
 						return;
-					RenderInfo render;
-					render.e = e;
-					render.model = modelTransform(e);
-					render.render = rc;
-					render.initUniMatrices(data);
-					render.frustum = Frustum(render.uni.mvpMat);
-					renderObjectOrModel<RenderMode>(data, render, rc.object);
+					ModelPrepare prepare;
+					prepare.e = e;
+					prepare.render = rc;
+					prepare.model = modelTransform(e);
+					prepare.uni = initializeMeshUni(data, prepare.model);
+					prepare.frustum = Frustum(prepare.uni.mvpMat);
+					if (Holder<RenderObject> obj = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
+					{
+						prepareObject(data, prepare, std::move(obj));
+						return;
+					}
+					if (Holder<Model> mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(rc.object))
+					{
+						prepare.mesh = std::move(mesh);
+						prepareModel(data, prepare);
+						return;
+					}
+					if (cnfRenderMissingModels)
+					{
+						prepare.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+						prepareModel(data, prepare);
+						return;
+					}
 				}, +emit.scene, false);
-				data.renderQueue->checkGlErrorDebug();
 			}
 
 			void renderShadowmap(ShadowmapData &data, uint32)
 			{
+				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
@@ -604,7 +599,8 @@ namespace cage
 				renderQueue->bind(shaderDepth);
 				renderQueue->checkGlErrorDebug();
 
-				renderEntities<RenderModeEnum::Shadowmap>(data);
+				prepareEntities(data);
+				renderModels<RenderModeEnum::Shadowmap>(data);
 
 				renderQueue->resetFrameBuffer();
 				renderQueue->resetAllState();
@@ -617,7 +613,7 @@ namespace cage
 				data.debugVisualizations.push_back(std::move(deb));
 			}
 
-			void renderCameraLights(CameraData &data)
+			void prepareCameraLights(CameraData &data)
 			{
 				std::vector<UniLight> lights;
 				lights.reserve(50);
@@ -782,8 +778,8 @@ namespace cage
 				}();
 				data.viewProj = data.proj * data.view;
 				initializeLodSelection(data, data.camera, data.model);
-
-				renderCameraLights(data);
+				prepareEntities(data);
+				prepareCameraLights(data);
 
 				const String texturesName = data.camera.target ? (Stringizer() + data.entity->name()) : (Stringizer() + data.resolution);
 				TextureHandle colorTexture = [&]() {
@@ -834,11 +830,11 @@ namespace cage
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("depth prepass");
-					renderEntities<RenderModeEnum::DepthPrepass>(data);
+					renderModels<RenderModeEnum::DepthPrepass>(data);
 				}
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("standard");
-					renderEntities<RenderModeEnum::Standard>(data);
+					renderModels<RenderModeEnum::Standard>(data);
 				}
 
 				renderQueue->resetAllState();
@@ -925,6 +921,7 @@ namespace cage
 
 			void prepareCamera(CameraData &data)
 			{
+				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
 					if ((lc.sceneMask & data.camera.sceneMask) == 0)

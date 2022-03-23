@@ -59,7 +59,7 @@ namespace cage
 		return lod;
 	}
 
-	PointerRange<const uint32> RenderObject::items(uint32 lod) const
+	PointerRange<const uint32> RenderObject::models(uint32 lod) const
 	{
 		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		CAGE_ASSERT(lod < lodsCount());

@@ -110,8 +110,6 @@ namespace cage
 		// stores a reference to the queue - do not modify it after it has been enqueued
 		void enqueue(Holder<RenderQueue> queue);
 
-		void customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preservesGlState = false);
-
 #ifdef CAGE_DEBUG
 		void checkGlErrorDebug();
 #else
@@ -129,6 +127,7 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue();
+	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue(const String &name);
 
 	struct CAGE_ENGINE_API RenderQueueNamedScope : private Immovable
 	{
