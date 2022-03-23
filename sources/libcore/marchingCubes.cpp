@@ -237,18 +237,12 @@ namespace cage
 		result->normals(normals);
 		result->indices(indices);
 
-		{ // merge vertices
-			const Vec3 cell = cfg.box.size() / Vec3(cfg.resolution);
-			const Real side = min(cell[0], min(cell[1], cell[2]));
-			MeshMergeCloseVerticesConfig cfg;
-			cfg.distanceThreshold = side * 0.1;
-			meshMergeCloseVertices(+result, cfg);
-		}
-
 		removeNonManifoldTriangles(+result);
 
 		if (cfg.clip)
 			meshClip(+result, cfg.box);
+		else
+			meshMergeCloseVertices(+result, {});
 
 		return result;
 	}
