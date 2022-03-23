@@ -28,7 +28,7 @@ namespace cage
 				};
 			} s;
 
-			FastPoint() : v4{ 0,0,0,0 }
+			CAGE_FORCE_INLINE FastPoint() : v4{ 0,0,0,0 }
 			{}
 		};
 
@@ -38,19 +38,19 @@ namespace cage
 			FastPoint high;
 
 			// initialize to negative box
-			FastBox()
+			CAGE_FORCE_INLINE FastBox()
 			{
-				low.v4 = Vec4(Real::Infinity().value, Real::Infinity().value, Real::Infinity().value, 0.0f);
-				high.v4 = Vec4(-Real::Infinity().value, -Real::Infinity().value, -Real::Infinity().value, 0.0f);
+				low.v4 = Vec4(Vec3(Real::Infinity()), 0.0f);
+				high.v4 = Vec4(Vec3(-Real::Infinity()), 0.0f);
 			}
 
-			explicit FastBox(const Aabb &b)
+			CAGE_FORCE_INLINE explicit FastBox(const Aabb &b)
 			{
 				low.s.v3 = b.a;
 				high.s.v3 = b.b;
 			}
 
-			FastBox operator + (const FastBox &other) const
+			CAGE_FORCE_INLINE FastBox operator + (const FastBox &other) const
 			{
 				FastBox r;
 				r.low.v4 = min(low.v4, other.low.v4);
@@ -58,40 +58,40 @@ namespace cage
 				return r;
 			}
 
-			FastBox &operator += (const FastBox &other)
+			CAGE_FORCE_INLINE FastBox &operator += (const FastBox &other)
 			{
 				return *this = *this + other;
 			}
 
-			Real surface() const
+			CAGE_FORCE_INLINE Real surface() const
 			{
 				if (empty())
 					return 0;
 				return Aabb(*this).surface();
 			}
 
-			bool empty() const
+			CAGE_FORCE_INLINE bool empty() const
 			{
 				return low.v4[0] == Real::Infinity();
 			}
 
-			explicit operator Aabb () const
+			CAGE_FORCE_INLINE explicit operator Aabb () const
 			{
-				return Aabb(low.s.v3, high.s.v3);
+				Aabb r; // using the constructor calls unnecessary min/max
+				r.a = low.s.v3;
+				r.b = high.s.v3;
+				return r;
 			}
 		};
 
-		bool intersects(const FastBox &a, const FastBox &b)
+		CAGE_FORCE_INLINE bool intersects(const FastBox &a, const FastBox &b)
 		{
 			CAGE_ASSERT(uintPtr(&a) % alignof(FastBox) == 0);
 			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
-			if (a.high.v4[0] < b.low.v4[0] || a.high.v4[1] < b.low.v4[1] || a.high.v4[2] < b.low.v4[2])
-				return false;
-			if (a.low.v4[0] > b.high.v4[0] || a.low.v4[1] > b.high.v4[1] || a.low.v4[2] > b.high.v4[2])
-				return false;
-			return true;
+			return !((a.high.v4[0] < b.low.v4[0]) | (a.high.v4[1] < b.low.v4[1]) | (a.high.v4[2] < b.low.v4[2])
+				| (a.low.v4[0] > b.high.v4[0]) | (a.low.v4[1] > b.high.v4[1]) | (a.low.v4[2] > b.high.v4[2]));
 		}
 
 		struct ItemBase
@@ -109,12 +109,12 @@ namespace cage
 			virtual bool intersects(const Cone &other) = 0;
 			virtual bool intersects(const Frustum &other) = 0;
 
-			ItemBase(uint32 name) : name(name)
+			CAGE_FORCE_INLINE ItemBase(uint32 name) : name(name)
 			{}
 
-			void update()
+			CAGE_FORCE_INLINE void update()
 			{
-				Aabb b = getBox();
+				const Aabb b = getBox();
 				box = FastBox(b);
 				center = b.center();
 			}
@@ -123,12 +123,12 @@ namespace cage
 		template<class T>
 		struct ItemShape : public ItemBase, public T
 		{
-			ItemShape(uint32 name, const T &other) : ItemBase(name), T(other)
+			CAGE_FORCE_INLINE ItemShape(uint32 name, const T &other) : ItemBase(name), T(other)
 			{
 				update();
 			}
 
-			virtual Aabb getBox() const { return Aabb(*(T*)(this)); }
+			virtual Aabb getBox() const { return Aabb(*(T *)this); }
 			virtual bool intersects(const Line &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Triangle &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Plane &other) { return cage::intersects(*(T *)this, other); };
@@ -142,23 +142,23 @@ namespace cage
 		{
 			FastBox box;
 			
-			Node(const FastBox &box, sint32 a, sint32 b) : box(box)
+			CAGE_FORCE_INLINE Node(const FastBox &box, sint32 a, sint32 b) : box(box)
 			{
 				this->a() = a;
 				this->b() = b;
 			}
 
-			sint32 &a() { return box.low.s.i; } // negative -> inner node, -a = index of left child; non-negative -> leaf node, a = offset into itemNames array
-			sint32 &b() { return box.high.s.i; } // negative -> inner node, -b = index of right child; non-negative -> leaf node, b = items count
-			sint32 a() const { return box.low.s.i; }
-			sint32 b() const { return box.high.s.i; }
+			CAGE_FORCE_INLINE sint32 &a() { return box.low.s.i; } // negative -> inner node, -a = index of left child; non-negative -> leaf node, a = offset into itemNames array
+			CAGE_FORCE_INLINE sint32 &b() { return box.high.s.i; } // negative -> inner node, -b = index of right child; non-negative -> leaf node, b = items count
+			CAGE_FORCE_INLINE sint32 a() const { return box.low.s.i; }
+			CAGE_FORCE_INLINE sint32 b() const { return box.high.s.i; }
 		};
 
 		struct ColonyAsAllocator
 		{
-			struct ItemAlloc
+			struct alignas(16) ItemAlloc
 			{
-				alignas(16) char reserved[128];
+				char reserved[128];
 			};
 
 			plf::colony<ItemAlloc, MemoryAllocatorStd<ItemAlloc>> colony;
@@ -210,7 +210,7 @@ namespace cage
 			{
 				Node &node = nodes[nodeIndex];
 				CAGE_ASSERT(node.a() >= 0 && node.b() >= 0); // is leaf now
-				if (node.b() < 16)
+				if (node.b() < 10)
 					return; // leaf node: too few primitives
 				uint32 bestAxis = m;
 				uint32 bestSplit = m;
@@ -222,12 +222,10 @@ namespace cage
 				{
 					if (node.box.high.v4[axis] - node.box.low.v4[axis] < 1e-7f)
 						continue; // the box is flat (along this axis)
-					for (FastBox &b : leftBinBoxes)
-						b = FastBox();
-					for (uint32 &c : leftBinCounts)
-						c = 0;
-					Real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
-					Real planeOffset = node.box.low.v4[axis];
+					leftBinBoxes = {};
+					leftBinCounts = {};
+					const Real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
+					const Real planeOffset = node.box.low.v4[axis];
 					for (sint32 i = node.a(), et = node.a() + node.b(); i != et; i++)
 					{
 						ItemBase *item = indices[i];
@@ -251,9 +249,9 @@ namespace cage
 					// compute sah
 					for (uint32 i = 0; i < binsCount - 1; i++)
 					{
-						Real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
-						Real sahR = rightBinBoxes[i + 1].surface() * (node.b() - leftBinCounts[i]);
-						Real sah = sahL + sahR;
+						const Real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
+						const Real sahR = rightBinBoxes[i + 1].surface() * (node.b() - leftBinCounts[i]);
+						const Real sah = sahL + sahR;
 						if (sah < bestSah)
 						{
 							bestAxis = axis;
@@ -274,24 +272,24 @@ namespace cage
 				CAGE_ASSERT(bestSplit + 1 < binsCount); // splits count is one less than bins count
 				CAGE_ASSERT(bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
-					Real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
-					Real planeOffset = node.box.low.v4[bestAxis];
+					const Real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
+					const Real planeOffset = node.box.low.v4[bestAxis];
 					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](const ItemBase *item) {
-						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
+						const uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
 						return binIndex < bestSplit + 1;
 					});
 				}
-				sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
+				const sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
 				nodes.emplace_back(bestBoxLeft, node.a(), bestItemsCount);
 				rebuild(leftNodeIndex, nodeDepth + 1, bestSah);
-				sint32 rightNodeIndex = numeric_cast<sint32>(nodes.size());
+				const sint32 rightNodeIndex = numeric_cast<sint32>(nodes.size());
 				nodes.emplace_back(bestBoxRight, node.a() + bestItemsCount, node.b() - bestItemsCount);
 				rebuild(rightNodeIndex, nodeDepth + 1, bestSah);
 				node.a() = -leftNodeIndex;
 				node.b() = -rightNodeIndex;
 			}
 
-			bool similar(const FastBox &a, const FastBox &b)
+			static bool similar(const FastBox &a, const FastBox &b)
 			{
 				return (length(a.low.s.v3 - b.low.s.v3) + length(a.high.s.v3 - b.high.s.v3)) < 1e-3;
 			}
@@ -332,7 +330,7 @@ namespace cage
 				FastBox worldBox;
 				for (const auto &it : itemsTable)
 				{
-					indices.push_back(it.second.get());
+					indices.push_back(+it.second);
 					worldBox += it.second->box;
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable.size()));
@@ -356,7 +354,7 @@ namespace cage
 				resultNames.reserve(100);
 			}
 
-			void clear()
+			CAGE_FORCE_INLINE void clear()
 			{
 				CAGE_ASSERT(!data->dirty);
 				resultNames.clear();
@@ -365,12 +363,13 @@ namespace cage
 			template<class T>
 			struct Intersector
 			{
+				static_assert(std::is_same_v<T, std::remove_const_t<T>>);
+				const FastBox otherBox;
+				const T other;
 				const SpatialDataImpl *const data;
 				std::vector<uint32> &resultNames;
-				const T &other;
-				const FastBox otherBox;
 
-				Intersector(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(Aabb(other))
+				CAGE_FORCE_INLINE Intersector(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(Aabb(other))
 				{
 					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 					CAGE_ASSERT((uintPtr(&otherBox) % alignof(FastBox)) == 0);
@@ -382,8 +381,12 @@ namespace cage
 					const Node &node = data->nodes[nodeIndex];
 					if (!intersects(otherBox, node.box))
 						return;
-					if (!intersects(other, Aabb(node.box)))
-						return;
+					if constexpr (!std::is_same_v<T, Aabb>)
+					{
+						// this would have same result for aabb as the test above
+						if (!intersects(other, Aabb(node.box)))
+							return;
+					}
 					if (node.a() < 0)
 					{ // internode
 						intersection(-node.a());
@@ -402,7 +405,7 @@ namespace cage
 			};
 
 			template<class T>
-			bool intersection(const T &other)
+			CAGE_FORCE_INLINE bool intersection(const T &other)
 			{
 				CAGE_ASSERT(!data->dirty);
 				clear();
