@@ -87,7 +87,7 @@ namespace cage
 	Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
 		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		constexpr uintPtr blockSize = 8;
+		static constexpr uintPtr blockSize = 8;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
@@ -207,7 +207,7 @@ namespace cage
 	Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
 		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		constexpr uintPtr blockSize = 16;
+		static constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
@@ -222,7 +222,7 @@ namespace cage
 	Holder<Image> imageBc4Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
 		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		constexpr uintPtr blockSize = 8;
+		static constexpr uintPtr blockSize = 8;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
@@ -237,7 +237,7 @@ namespace cage
 	Holder<Image> imageBc5Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
 		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		constexpr uintPtr blockSize = 16;
+		static constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
@@ -252,7 +252,7 @@ namespace cage
 	Holder<Image> imageBc7Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
 	{
 		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		constexpr uintPtr blockSize = 16;
+		static constexpr uintPtr blockSize = 16;
 		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 		if (blocksRequired * blockSize > buffer.size())
 			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");

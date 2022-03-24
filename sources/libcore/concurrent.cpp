@@ -700,7 +700,7 @@ namespace cage
 		if (!name.empty())
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
+			static constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push,8)
 			struct THREADNAME_INFO
 			{

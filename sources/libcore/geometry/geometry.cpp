@@ -183,7 +183,7 @@ namespace cage
 			Vec3(b.a[0], b.b[1], b.b[2]),
 			Vec3(b.b[0], b.b[1], b.b[2])
 		};
-		constexpr const uint32 ids[12 * 3] =  {
+		static constexpr const uint32 ids[12 * 3] =  {
 			0, 1, 2,
 			1, 2, 3,
 			4, 5, 6,

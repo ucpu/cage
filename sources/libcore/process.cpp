@@ -212,8 +212,8 @@ namespace cage
 
 		class ProcessImpl : public Process
 		{
-			constexpr static int PIPE_READ = 0;
-			constexpr static int PIPE_WRITE = 1;
+			static constexpr int PIPE_READ = 0;
+			static constexpr int PIPE_WRITE = 1;
 
 			struct AutoPipe : private cage::Immovable
 			{

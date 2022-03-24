@@ -73,9 +73,9 @@ namespace cage
 		void entitiesVisitor(const Visitor &visitor, const EntityManager *ents)
 		{
 			using Types = typename privat::LambdaParamsPack<Visitor>::Params;
-			constexpr uint32 typesCount = std::tuple_size_v<Types>;
+			static constexpr uint32 typesCount = std::tuple_size_v<Types>;
 			static_assert(typesCount > 0);
-			constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
+			static constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
 			typename privat::VectorOrNothing<ArrayCopy>::vec copy;
 
 			if constexpr (useEnt && typesCount == 1)
@@ -91,7 +91,7 @@ namespace cage
 			}
 			else
 			{
-				constexpr std::size_t offset = useEnt ? 1 : 0;
+				static constexpr std::size_t offset = useEnt ? 1 : 0;
 				using Sequence = privat::offset_sequence_t<offset, std::make_index_sequence<typesCount - offset>>;
 
 				EntityComponent *components[typesCount] = {};

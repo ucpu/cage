@@ -4,11 +4,6 @@
 
 namespace
 {
-	CAGE_FORCE_INLINE uint32 dummyRegistryId()
-	{
-		return 42;
-	}
-
 	template<uint32(*FNC)()>
 	void measurePerformance(const char *name)
 	{
@@ -31,6 +26,24 @@ namespace
 	uintPtr typeAlignment()
 	{
 		return detail::typeAlignmentByIndex(detail::typeIndex<T>());
+	}
+
+	template<class T>
+	uint32 dummyRegistryId()
+	{
+		return 42;
+	}
+
+	template<class T>
+	uint32 typeIndexWrapper()
+	{
+		return detail::typeIndex<T>();
+	}
+
+	template<class T>
+	uint32 typeHashWrapper()
+	{
+		return detail::typeHash<T>();
 	}
 }
 
@@ -98,8 +111,8 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("performance");
-		measurePerformance<&dummyRegistryId>("dummy implementation");
-		measurePerformance<&typeIndex<uint64>>("typeIndex");
-		measurePerformance<&typeHash<uint64>>("typeHash");
+		measurePerformance<&dummyRegistryId<uint64>>("dummy implementation");
+		measurePerformance<&typeIndexWrapper<uint64>>("typeIndex");
+		measurePerformance<&typeHashWrapper<uint64>>("typeHash");
 	}
 }

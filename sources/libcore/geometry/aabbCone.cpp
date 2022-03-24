@@ -452,7 +452,7 @@ namespace cage
 			}
 		};
 
-		constexpr std::array<ConfigurationFunction, NUM_CONFIGURATIONS> initConfiguration()
+		consteval std::array<ConfigurationFunction, NUM_CONFIGURATIONS> initConfiguration()
 		{
 			return {
 				&TIQuery::NNNN_0,
@@ -538,9 +538,9 @@ namespace cage
 				&TIQuery::NNNN_0,
 			};
 		}
-		constexpr const std::array<ConfigurationFunction, NUM_CONFIGURATIONS> mConfiguration = initConfiguration();
+		static constexpr const std::array<ConfigurationFunction, NUM_CONFIGURATIONS> mConfiguration = initConfiguration();
 
-		constexpr std::array<std::array<uint16, 2>, NUM_BOX_EDGES> initEdges()
+		consteval std::array<std::array<uint16, 2>, NUM_BOX_EDGES> initEdges()
 		{
 			return {
 				std::array<uint16, 2>{ 0, 1 },
@@ -557,9 +557,9 @@ namespace cage
 				std::array<uint16, 2>{ 2, 6 }
 			};
 		}
-		constexpr const std::array<std::array<uint16, 2>, NUM_BOX_EDGES> mEdges = initEdges();
+		static constexpr const std::array<std::array<uint16, 2>, NUM_BOX_EDGES> mEdges = initEdges();
 
-		constexpr std::array<Face, NUM_BOX_FACES> initFaces()
+		consteval std::array<Face, NUM_BOX_FACES> initFaces()
 		{
 			return {
 				Face{ { 0, 4, 6, 2 }, {  8,  7, 11,  3 } },
@@ -570,7 +570,7 @@ namespace cage
 				Face{ { 4, 5, 7, 6 }, {  4,  5,  6,  7 } },
 			};
 		}
-		constexpr const std::array<Face, NUM_BOX_FACES> mFaces = initFaces();
+		static constexpr const std::array<Face, NUM_BOX_FACES> mFaces = initFaces();
 
 		bool TIQuery::BoxFullyInConeSlab(Aabb const &box, Real boxMinHeight, Real boxMaxHeight, Cone const &cone)
 		{

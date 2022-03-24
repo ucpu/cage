@@ -58,7 +58,7 @@ namespace cage
 	}
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
-	constexpr uint32 AssetSchemeIndexTexture = 11;
+	static constexpr uint32 AssetSchemeIndexTexture = 11;
 }
 
 #endif // guard_texture_h_ds54ghlkj89s77e4g

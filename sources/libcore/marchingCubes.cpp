@@ -202,8 +202,8 @@ namespace cage
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
 			const bool which = distanceSquared(positions[is[0]], positions[is[2]]) < distanceSquared(positions[is[1]], positions[is[3]]); // split the quad by shorter diagonal
-			constexpr int first[6] = { 0,1,2, 0,2,3 };
-			constexpr int second[6] = { 1,2,3, 1,3,0 };
+			static constexpr int first[6] = { 0,1,2, 0,2,3 };
+			static constexpr int second[6] = { 1,2,3, 1,3,0 };
 			const int *const selected = (which ? first : second);
 			const auto &tri = [&](const int *inds)
 			{

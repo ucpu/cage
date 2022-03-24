@@ -5,7 +5,7 @@ namespace cage
 {
 	namespace
 	{
-		constexpr const float DefaultMixingMatrices[8][8][64] = {
+		static constexpr const float DefaultMixingMatrices[8][8][64] = {
 			{ // from 1
 				{ // to 1
 					1, 0, 0, 0, 0, 0, 0, 0,

@@ -65,7 +65,7 @@ namespace cage
 					{
 						if ((b.b[ax] - b.a[ax]) == 0)
 							continue;
-						constexpr uint32 planesCount = 12;
+						static constexpr uint32 planesCount = 12;
 						Aabb interPlanes[planesCount + 1];
 						uint32 counts[planesCount + 1];
 						for (uint32 i = 0; i < planesCount + 1; i++)
@@ -231,8 +231,8 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint16 currentVersion = 2;
-		constexpr char currentMagic[] = "colid";
+		static constexpr uint16 currentVersion = 2;
+		static constexpr char currentMagic[] = "colid";
 
 		struct CollisionModelHeader
 		{

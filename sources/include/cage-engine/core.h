@@ -172,7 +172,7 @@ namespace cage
 
 	// constants
 
-	constexpr uint32 MaxTexturesCountPerMaterial = 4;
+	static constexpr uint32 MaxTexturesCountPerMaterial = 4;
 }
 
 #endif // guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632

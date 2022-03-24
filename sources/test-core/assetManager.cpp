@@ -15,7 +15,7 @@ namespace
 {
 	const String AssetsPath = pathJoin(pathWorkingDir(), "testdir/assetManager/assets");
 
-	constexpr uint32 AssetSchemeIndexCounter = 13;
+	static constexpr uint32 AssetSchemeIndexCounter = 13;
 
 	struct AssetCounter : private Immovable
 	{

@@ -361,7 +361,7 @@ namespace cage
 		template<> struct GeometryOrder<Aabb> { static constexpr int order = 8; };
 		template<> struct GeometryOrder<Cone> { static constexpr int order = 9; };
 		template<> struct GeometryOrder<Frustum> { static constexpr int order = 10; };
-		template<class A, class B> constexpr bool geometrySwapParameters = GeometryOrder<A>::order > GeometryOrder<B>::order;
+		template<class A, class B> static constexpr bool geometrySwapParameters = GeometryOrder<A>::order > GeometryOrder<B>::order;
 	}
 
 	template<class A, class B>

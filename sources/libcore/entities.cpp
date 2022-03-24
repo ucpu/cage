@@ -77,8 +77,8 @@ namespace cage
 
 			uint32 generateUniqueName()
 			{
-				constexpr uint32 a = (uint32)1 << 28;
-				constexpr uint32 b = (uint32)1 << 30;
+				static constexpr uint32 a = (uint32)1 << 28;
+				static constexpr uint32 b = (uint32)1 << 30;
 				if (generateName < a || generateName > b)
 					generateName = a;
 				while (has(generateName))

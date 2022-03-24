@@ -343,7 +343,7 @@ namespace cage
 		struct MaxValue
 		{
 			template<class T>
-			CAGE_FORCE_INLINE constexpr operator T () const noexcept
+			CAGE_FORCE_INLINE consteval operator T () const noexcept
 			{
 				return std::numeric_limits<T>::max();
 			}
@@ -362,12 +362,12 @@ namespace cage
 		};
 	}
 
-	constexpr privat::MaxValue m = privat::MaxValue();
+	static constexpr privat::MaxValue m = {};
 
 	// enum class bit operators
 
 	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
-	template<class T> constexpr bool enable_bitmask_operators_v = enable_bitmask_operators<T>::enable;
+	template<class T> static constexpr bool enable_bitmask_operators_v = enable_bitmask_operators<T>::enable;
 	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator ~ (T lhs) noexcept { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs)); }
 	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator | (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs)); }
 	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator & (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs)); }

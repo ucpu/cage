@@ -37,12 +37,12 @@ namespace cage
 			impl->clear();
 			if (buffer.size() < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine sound format");
-			constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
-			constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
-			constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
-			constexpr const uint8 mp3Signatures[4][3] = { { 0x49, 0x44, 0x33 }, { 0xFF, 0xFB, 0 }, { 0xFF, 0xF3, 0 }, { 0xFF, 0xF2, 0 } };
-			constexpr const uint8 mp3SignaturesMasks[4][3] = { { 1,1,1 }, { 1,1,0 }, { 1,1,0 }, { 1,1,0 } };
-			constexpr const uint8 oggSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
+			static constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
+			static constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
+			static constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
+			static constexpr const uint8 mp3Signatures[4][3] = { { 0x49, 0x44, 0x33 }, { 0xFF, 0xFB, 0 }, { 0xFF, 0xF3, 0 }, { 0xFF, 0xF2, 0 } };
+			static constexpr const uint8 mp3SignaturesMasks[4][3] = { { 1,1,1 }, { 1,1,0 }, { 1,1,0 }, { 1,1,0 } };
+			static constexpr const uint8 oggSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
 			if (copmpareWithMask(buffer, wavSignature, wavSignatureMask) == 0)
 				wavDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), flacSignature, sizeof(flacSignature)) == 0)

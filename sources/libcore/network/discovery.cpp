@@ -17,10 +17,10 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint32 IdSize = 64;
+		static constexpr uint32 IdSize = 64;
 
 		// AF_INET = ipv4 only, AF_INET6 = ipv6 only, AF_UNSPEC = both
-		constexpr int ProtocolFamily = AF_UNSPEC;
+		static constexpr int ProtocolFamily = AF_UNSPEC;
 
 		struct PeerStruct : public DiscoveryPeer
 		{

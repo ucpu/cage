@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		constexpr uint32 Magic = 0x20534444;
+		static constexpr uint32 Magic = 0x20534444;
 
 		struct PixelFormat
 		{
@@ -46,7 +46,7 @@ namespace cage
 		static_assert(sizeof(PixelFormat) == 32, "dds pixel format struct size mismatch");
 		static_assert(sizeof(Header) == 128, "dds header struct size mismatch");
 
-		constexpr const uint32 makeFourCC(const char *value)
+		consteval const uint32 makeFourCC(const char *value)
 		{
 			return value[0] + (value[1] << 8) + (value[2] << 16) + (value[3] << 24);
 		}

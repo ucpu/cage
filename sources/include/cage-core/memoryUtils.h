@@ -14,27 +14,27 @@ namespace cage
 
 	namespace detail
 	{
-		inline constexpr bool isPowerOf2(uintPtr x)
+		CAGE_FORCE_INLINE constexpr bool isPowerOf2(uintPtr x)
 		{
 			return x && !(x & (x - 1));
 		}
 
-		inline constexpr uintPtr addToAlign(uintPtr ptr, uintPtr alignment)
+		CAGE_FORCE_INLINE constexpr uintPtr addToAlign(uintPtr ptr, uintPtr alignment)
 		{
 			return (alignment - (ptr % alignment)) % alignment;
 		}
 
-		inline constexpr uintPtr subtractToAlign(uintPtr ptr, uintPtr alignment)
+		CAGE_FORCE_INLINE constexpr uintPtr subtractToAlign(uintPtr ptr, uintPtr alignment)
 		{
 			return (alignment - addToAlign(ptr, alignment)) % alignment;
 		}
 
-		inline constexpr uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
+		CAGE_FORCE_INLINE constexpr uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
 		{
 			return (ptr / alignment) * alignment;
 		}
 
-		inline constexpr uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
+		CAGE_FORCE_INLINE constexpr uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
 		{
 			return roundDownTo(ptr + alignment - 1, alignment);
 		}

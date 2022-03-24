@@ -20,7 +20,7 @@ namespace cage
 		}
 
 		template<class T>
-		constexpr uint32 typeHashInit() noexcept
+		consteval uint32 typeHashInit() noexcept
 		{
 			return hashBuffer(typeName<T>());
 		};
@@ -61,10 +61,9 @@ namespace cage
 		// works well across DLL boundaries
 		// the hashes may differ between compilers!
 		template<class T>
-		constexpr uint32 typeHash() noexcept
+		consteval uint32 typeHash() noexcept
 		{
-			constexpr uint32 id = privat::typeHashInit<T>();
-			return id;
+			return privat::typeHashInit<T>();
 		};
 	}
 }

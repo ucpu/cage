@@ -368,6 +368,7 @@ namespace
 			HashString("1");
 			HashString("12");
 			HashString("123");
+			HashString(StringLiteral("123"));
 			String a = "hel";
 			String b = "lo";
 			constexpr uint32 compile_time = HashString("hello");
