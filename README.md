@@ -76,7 +76,6 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Graphics effects:
   - hdr, bloom, tonemapping, gamma correction
   - depth of field
-  - motion blur (per object)
   - ssao
   - fxaa
 

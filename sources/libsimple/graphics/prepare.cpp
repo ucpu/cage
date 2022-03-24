@@ -73,12 +73,11 @@ namespace cage
 		struct ModelShared
 		{
 			Holder<Model> mesh;
-			bool translucent = false;
 			bool skeletal = false;
 
 			bool operator < (const ModelShared &other) const
 			{
-				return std::tuple{ translucent, +mesh, skeletal } < std::tuple{ other.translucent, +other.mesh, other.skeletal };
+				return std::tuple{ +mesh, skeletal } < std::tuple{ +other.mesh, other.skeletal };
 			}
 		};
 
@@ -88,13 +87,19 @@ namespace cage
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 		};
 
-		struct ModelPrepare : public ModelShared, public ModelInstance
+		struct ModelTranslucent : public ModelShared, public ModelInstance
+		{
+			Real depth = Real::Nan(); // used to sort translucent back-to-front
+		};
+
+		struct ModelPrepare : public ModelTranslucent
 		{
 			Mat4 model;
 			Frustum frustum; // object-space camera frustum used for culling
 			RenderComponent render;
 			std::optional<TextureAnimationComponent> textureAnimation;
 			Entity *e = nullptr;
+			bool translucent = false;
 
 			ModelPrepare clone() const
 			{
@@ -136,7 +141,8 @@ namespace cage
 				bool orthographic = false;
 			} lodSelection;
 
-			std::map<ModelShared, std::vector<ModelInstance>> models;
+			std::map<ModelShared, std::vector<ModelInstance>> opaque;
+			std::vector<ModelTranslucent> translucent;
 			std::vector<DebugVisualizationInfo> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
@@ -330,104 +336,131 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModels(const CommonData &data)
+			void renderModelsImpl(const CommonData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent)
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
-				for (const auto &shit : data.models)
+				renderQueue->bind(sh.mesh);
+				renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
+				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
+				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
+				renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
+				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
+				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
+				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
-					const ModelShared &sh = shit.first;
-					renderQueue->bind(sh.mesh);
-					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
-					renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
-					renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
-					renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
-					std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
-					std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
-					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
+					const uint32 n = sh.mesh->textureName(i);
+					if (!n)
+						continue;
+					textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
+					switch (textures[i]->target())
 					{
-						const uint32 n = sh.mesh->textureName(i);
-						if (!n)
-							continue;
-						textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
-						switch (textures[i]->target())
+					case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
+					case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
+					default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+					}
+				}
+				updateShaderRoutinesForTextures(textures, shaderRoutines);
+				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_OPAQUE] = translucent ? 0 : 1;
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+
+				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
+				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
+				{
+					const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
+					renderQueue->universalUniformArray<const UniMesh>(subRange<const UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
+					if (sh.skeletal)
+						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->skeletonBones, count * sh.mesh->skeletonBones), CAGE_SHADER_UNIBLOCK_ARMATURES);
+
+					if constexpr (RenderMode == RenderModeEnum::Standard)
+					{
+						renderQueue->depthFuncLessEqual();
+						renderQueue->blending(translucent);
+						renderQueue->blendFuncPremultipliedTransparency();
+						if (data.lightsCount > 0)
+							renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
+						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
+						renderQueue->draw(count);
+
+						renderQueue->depthFuncLessEqual();
+						renderQueue->blending(true);
+						renderQueue->blendFuncAdditive();
+						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
+						for (const auto &smit : data.shadowmaps)
 						{
-						case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
-						case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
-						default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+							const ShadowmapData &sm = smit.second;
+							renderQueue->bind(sm.shadowTexture, sm.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
+							renderQueue->bind(sm.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
+							renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sm.shadowMat);
+							renderQueue->draw(count);
 						}
 					}
-					updateShaderRoutinesForTextures(textures, shaderRoutines);
-					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : 0;
-					renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+					else
+					{
+						renderQueue->depthFuncLess();
+						renderQueue->blending(false);
+						renderQueue->draw(count);
+					}
+				}
 
+				renderQueue->checkGlErrorDebug();
+			}
+
+			template<RenderModeEnum RenderMode>
+			void renderModels(const CommonData &data)
+			{
+				for (const auto &shit : data.opaque)
+				{
+					const ModelShared &sh = shit.first;
 					std::vector<UniMesh> uniMeshes;
 					uniMeshes.reserve(shit.second.size());
 					for (const ModelInstance &inst : shit.second)
 						uniMeshes.push_back(inst.uni);
-
 					std::vector<Mat3x4> uniArmatures;
 					if (sh.skeletal)
 					{
 						uniArmatures.reserve(shit.second.size() * sh.mesh->skeletonBones);
 						for (const ModelInstance &inst : shit.second)
 						{
-							CAGE_ASSERT(!!inst.skeletalAnimation == !!sh.skeletal);
 							const auto armature = inst.skeletalAnimation->armature();
 							CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
 							for (const auto &it : armature)
 								uniArmatures.push_back(it);
 						}
 					}
+					renderModelsImpl<RenderMode>(data, sh, uniMeshes, uniArmatures, false);
+				}
 
-					const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
-					for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
+				if constexpr (RenderMode != RenderModeEnum::DepthPrepass)
+				{
+					for (const auto &it : data.translucent)
 					{
-						const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
-						renderQueue->universalUniformArray<UniMesh>(subRange<UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
-						if (sh.skeletal)
-							renderQueue->universalUniformArray<Mat3x4>(subRange<Mat3x4>(uniArmatures, offset * sh.mesh->skeletonBones, count * sh.mesh->skeletonBones), CAGE_SHADER_UNIBLOCK_ARMATURES);
-
-						if constexpr (RenderMode == RenderModeEnum::Standard)
+						PointerRange<const UniMesh> uniMeshes = { &it.uni, &it.uni + 1 };
+						PointerRange<const Mat3x4> uniArmatures;
+						if (it.skeletal)
 						{
-							renderQueue->depthFuncLessEqual();
-							renderQueue->blending(sh.translucent);
-							renderQueue->blendFuncPremultipliedTransparency();
-							if (data.lightsCount > 0)
-								renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-							renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-							renderQueue->draw(count);
-
-							renderQueue->depthFuncLessEqual();
-							renderQueue->blending(true);
-							renderQueue->blendFuncAdditive();
-							renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
-							for (const auto &smit : data.shadowmaps)
-							{
-								const ShadowmapData &sm = smit.second;
-								renderQueue->bind(sm.shadowTexture, sm.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-								renderQueue->bind(sm.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-								renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sm.shadowMat);
-								renderQueue->draw(count);
-							}
+							uniArmatures = it.skeletalAnimation->armature();
+							CAGE_ASSERT(uniArmatures.size() == it.mesh->skeletonBones);
 						}
-						else
-						{
-							renderQueue->depthFuncLess();
-							renderQueue->blending(false);
-							renderQueue->draw(count);
-						}
+						renderModelsImpl<RenderMode>(data, it, uniMeshes, uniArmatures, true);
 					}
-
-					renderQueue->checkGlErrorDebug();
 				}
 			}
 
 			void prepareModelImpl(CommonData &data, ModelPrepare &prepare)
 			{
-				ModelShared &sh = (ModelShared &)prepare;
-				ModelInstance &inst = (ModelInstance &)prepare;
-				data.models[std::move(sh)].push_back(std::move(inst));
+				if (prepare.translucent)
+				{
+					ModelTranslucent &tr = (ModelTranslucent &)prepare;
+					data.translucent.push_back(std::move(tr));
+				}
+				else
+				{
+					ModelShared &sh = (ModelShared &)prepare;
+					ModelInstance &inst = (ModelInstance &)prepare;
+					data.opaque[std::move(sh)].push_back(std::move(inst));
+				}
 			}
 
 			void prepareModelBones(CommonData &data, const ModelPrepare &prepare)
@@ -538,6 +571,8 @@ namespace cage
 				pr.translucent = any(pr.mesh->flags & MeshRenderFlags::Translucent) || pr.render.opacity < 1;
 				pr.uni.normalMat.data[2][3] = any(pr.mesh->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 
+				pr.depth = (pr.uni.mvpMat * Vec4(0, 0, 0, 1))[2];
+
 				if (pr.skeletal && cnfRenderSkeletonBones)
 					prepareModelBones(data, pr);
 				else
@@ -597,6 +632,9 @@ namespace cage
 						return;
 					}
 				}, +emit.scene, false);
+
+				// sort back-to-front
+				std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
 			}
 
 			void renderShadowmap(ShadowmapData &data, uint32)

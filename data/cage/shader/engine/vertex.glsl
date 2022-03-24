@@ -20,7 +20,7 @@ flat out int varInstanceId;
 
 void skeletalAnimation()
 {
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] != CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION)
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] == 0)
 		return;
 	mat3x4 sum = mat3x4(0);
 	for (int i = 0; i < 4; i++)

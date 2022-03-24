@@ -202,7 +202,11 @@ Material loadMaterial()
 
 	material.albedo = mix(uniMeshes[varInstanceId].color.rgb, material.albedo, special4.a);
 	material.opacity *= uniMeshes[varInstanceId].color.a;
-	material.albedo *= material.opacity; // premultiplied alpha
+	
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_OPAQUE] == 0)
+		material.albedo *= material.opacity; // premultiplied alpha
+	else if (material.opacity < 0.5)
+		discard;
 
 	return material;
 }
