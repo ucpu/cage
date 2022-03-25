@@ -4,6 +4,7 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
+#include <cage-core/textPack.h>
 #include <cage-core/geometry.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
@@ -117,6 +118,15 @@ namespace cage
 			}
 		};
 
+		struct TextPrepare
+		{
+			Mat4 model;
+			Holder<const Font> font;
+			std::vector<uint32> glyphs;
+			FontFormat format;
+			Vec3 color;
+		};
+
 		struct DebugVisualizationInfo
 		{
 			TextureHandle texture;
@@ -143,6 +153,7 @@ namespace cage
 
 			std::map<ModelShared, std::vector<ModelInstance>> opaque;
 			std::vector<ModelTranslucent> translucent;
+			std::vector<TextPrepare> texts;
 			std::vector<DebugVisualizationInfo> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
@@ -336,7 +347,7 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CommonData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent)
+			void renderModelsImpl(const CommonData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
@@ -407,33 +418,50 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			template<RenderModeEnum RenderMode>
-			void renderModels(const CommonData &data)
+			void renderTextImpl(const CommonData &data, const TextPrepare &text) const
 			{
-				for (const auto &shit : data.opaque)
+				const Holder<RenderQueue> &renderQueue = data.renderQueue;
+				text.font->bind(+renderQueue, modelSquare, shaderFont);
+				renderQueue->uniform(0, data.viewProj * text.model);
+				renderQueue->uniform(4, text.color);
+				text.font->render(+renderQueue, text.glyphs, text.format);
+			}
+
+			template<RenderModeEnum RenderMode>
+			void renderModels(const CommonData &data) const
+			{
+				const Holder<RenderQueue> &renderQueue = data.renderQueue;
+
 				{
-					const ModelShared &sh = shit.first;
-					std::vector<UniMesh> uniMeshes;
-					uniMeshes.reserve(shit.second.size());
-					for (const ModelInstance &inst : shit.second)
-						uniMeshes.push_back(inst.uni);
-					std::vector<Mat3x4> uniArmatures;
-					if (sh.skeletal)
+					const auto graphicsDebugScope = renderQueue->namedScope("opaque");
+					for (const auto &shit : data.opaque)
 					{
-						uniArmatures.reserve(shit.second.size() * sh.mesh->skeletonBones);
+						const ModelShared &sh = shit.first;
+						std::vector<UniMesh> uniMeshes;
+						uniMeshes.reserve(shit.second.size());
 						for (const ModelInstance &inst : shit.second)
+							uniMeshes.push_back(inst.uni);
+						std::vector<Mat3x4> uniArmatures;
+						if (sh.skeletal)
 						{
-							const auto armature = inst.skeletalAnimation->armature();
-							CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
-							for (const auto &it : armature)
-								uniArmatures.push_back(it);
+							uniArmatures.reserve(shit.second.size() * sh.mesh->skeletonBones);
+							for (const ModelInstance &inst : shit.second)
+							{
+								const auto armature = inst.skeletalAnimation->armature();
+								CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
+								for (const auto &it : armature)
+									uniArmatures.push_back(it);
+							}
 						}
+						renderModelsImpl<RenderMode>(data, sh, uniMeshes, uniArmatures, false);
 					}
-					renderModelsImpl<RenderMode>(data, sh, uniMeshes, uniArmatures, false);
+					renderQueue->resetAllState();
+					renderQueue->viewport(Vec2i(), data.resolution);
 				}
 
 				if constexpr (RenderMode != RenderModeEnum::DepthPrepass)
 				{
+					const auto graphicsDebugScope = renderQueue->namedScope("translucent");
 					for (const auto &it : data.translucent)
 					{
 						PointerRange<const UniMesh> uniMeshes = { &it.uni, &it.uni + 1 };
@@ -445,10 +473,26 @@ namespace cage
 						}
 						renderModelsImpl<RenderMode>(data, it, uniMeshes, uniArmatures, true);
 					}
+					renderQueue->resetAllState();
+					renderQueue->viewport(Vec2i(), data.resolution);
+				}
+
+				if constexpr (RenderMode == RenderModeEnum::Standard)
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("texts");
+					renderQueue->depthTest(true);
+					renderQueue->depthWrite(false);
+					renderQueue->culling(true);
+					renderQueue->blending(true);
+					renderQueue->blendFuncAlphaTransparency();
+					for (const TextPrepare &text : data.texts)
+						renderTextImpl(data, text);
+					renderQueue->resetAllState();
+					renderQueue->viewport(Vec2i(), data.resolution);
 				}
 			}
 
-			void prepareModelImpl(CommonData &data, ModelPrepare &prepare)
+			void prepareModelImpl(CommonData &data, ModelPrepare &prepare) const
 			{
 				if (prepare.translucent)
 				{
@@ -463,7 +507,7 @@ namespace cage
 				}
 			}
 
-			void prepareModelBones(CommonData &data, const ModelPrepare &prepare)
+			void prepareModelBones(CommonData &data, const ModelPrepare &prepare) const
 			{
 				const auto armature = prepare.skeletalAnimation->armature();
 				for (uint32 i = 0; i < armature.size(); i++)
@@ -479,7 +523,7 @@ namespace cage
 				}
 			}
 
-			void prepareModel(CommonData &data, ModelPrepare &pr, Holder<RenderObject> parent = {})
+			void prepareModel(CommonData &data, ModelPrepare &pr, Holder<RenderObject> parent = {}) const
 			{
 				if (!intersects(pr.mesh->boundingBox(), pr.frustum))
 					return;
@@ -579,7 +623,7 @@ namespace cage
 					prepareModelImpl(data, pr);
 			}
 
-			void prepareObject(CommonData &data, const ModelPrepare &prepare, Holder<RenderObject> object)
+			void prepareObject(CommonData &data, const ModelPrepare &prepare, Holder<RenderObject> object) const
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
 				uint32 lod = 0;
@@ -603,7 +647,7 @@ namespace cage
 				}
 			}
 
-			void prepareEntities(CommonData &data)
+			void prepareEntities(CommonData &data) const
 			{
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
 					if ((rc.sceneMask & data.sceneMask) == 0)
@@ -633,11 +677,35 @@ namespace cage
 					}
 				}, +emit.scene, false);
 
-				// sort back-to-front
+				// sort translucent back-to-front
 				std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
+
+				entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
+					if ((tc_.sceneMask & data.sceneMask) == 0)
+						return;
+					TextComponent pt = tc_;
+					TextPrepare prepare;
+					if (!pt.font)
+						pt.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
+					prepare.font = engineAssets()->tryGet<AssetSchemeIndexFont, Font>(pt.font);
+					if (!prepare.font)
+						return;
+					const String str = loadFormattedString(engineAssets(), pt.assetName, pt.textName, pt.value);
+					const uint32 count = prepare.font->glyphsCount(str);
+					if (count == 0)
+						return;
+					prepare.glyphs.resize(count);
+					prepare.font->transcript(str, prepare.glyphs);
+					prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
+					prepare.format.size = 1;
+					const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
+					prepare.format.wrapWidth = size[0];
+					prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
+					data.texts.push_back(std::move(prepare));
+				}, +emit.scene, false);
 			}
 
-			void renderShadowmap(ShadowmapData &data, uint32)
+			void renderShadowmap(ShadowmapData &data, uint32) const
 			{
 				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
@@ -678,7 +746,7 @@ namespace cage
 				data.debugVisualizations.push_back(std::move(deb));
 			}
 
-			void prepareCameraLights(CameraData &data)
+			void prepareCameraLights(CameraData &data) const
 			{
 				std::vector<UniLight> lights;
 				lights.reserve(50);
@@ -704,7 +772,7 @@ namespace cage
 					data.lighsBlock = data.renderQueue->universalUniformArray<UniLight>(lights);
 			}
 
-			void renderCameraEffects(const TextureHandle texSource_, const TextureHandle depthTexture, CameraData &data)
+			void renderCameraEffects(const TextureHandle texSource_, const TextureHandle depthTexture, CameraData &data) const
 			{
 				const detail::StringBase<16> cameraName = Stringizer() + data.entity;
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
@@ -820,7 +888,7 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			void renderCamera(CameraData &data, uint32)
+			void renderCamera(CameraData &data, uint32) const
 			{
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
@@ -934,7 +1002,7 @@ namespace cage
 				}
 			}
 
-			Holder<AsyncTask> prepareShadowmap(CameraData &camera, ShadowmapData &data)
+			Holder<AsyncTask> prepareShadowmap(CameraData &camera, ShadowmapData &data) const
 			{
 				data.sceneMask = data.lightComponent.sceneMask;
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
@@ -984,7 +1052,7 @@ namespace cage
 				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<Preparator, &Preparator::renderShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
 			}
 
-			void prepareCamera(CameraData &data)
+			void prepareCamera(CameraData &data) const
 			{
 				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				std::vector<Holder<AsyncTask>> tasks;
