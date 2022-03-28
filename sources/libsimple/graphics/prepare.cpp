@@ -78,7 +78,8 @@ namespace cage
 
 			bool operator < (const ModelShared &other) const
 			{
-				return std::tuple{ +mesh, skeletal } < std::tuple{ +other.mesh, other.skeletal };
+				return std::tuple{ any(mesh->flags & MeshRenderFlags::AlphaClip), +mesh, skeletal }
+					< std::tuple{ any(other.mesh->flags & MeshRenderFlags::AlphaClip), +other.mesh, other.skeletal };
 			}
 		};
 
@@ -190,7 +191,7 @@ namespace cage
 			uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, 0);
 			uni.position = model * Vec4(0, 0, 0, 1);
 			uni.direction = model * Vec4(0, 0, -1, 0);
-			uni.attenuation = Vec4(lc.attenuation, 0);
+			uni.attenuation = lc.lightType == LightTypeEnum::Directional ? Vec4(1, 0, 0, 0) : Vec4(lc.attenuation, 0);
 			uni.parameters[0] = cos(lc.spotAngle * 0.5);
 			uni.parameters[1] = lc.spotExponent;
 			return uni;
@@ -285,6 +286,12 @@ namespace cage
 			Standard,
 		};
 
+		enum class PrepareModeEnum
+		{
+			Shadowmap,
+			Camera,
+		};
+
 		struct Preparator
 		{
 			const bool cnfRenderMissingModels = confRenderMissingModels;
@@ -301,7 +308,7 @@ namespace cage
 			EntityComponent *const prevTransformComponent = nullptr;
 
 			Holder<Model> modelSquare, modelBone;
-			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard;
+			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthAlphaClip, shaderStandardAlphaClip;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderFont;
 
@@ -324,6 +331,8 @@ namespace cage
 				shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
 				shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
 				shaderStandard = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
+				shaderDepthAlphaClip = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depthAlphaClip.glsl"));
+				shaderStandardAlphaClip = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standardAlphaClip.glsl"));
 				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/color.glsl"));
 				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/depth.glsl"));
 				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl"));
@@ -351,10 +360,16 @@ namespace cage
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
-				renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
+				if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandardAlphaClip : shaderDepthAlphaClip);
+				else
+					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
 				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
-				renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
+				if constexpr (RenderMode == RenderModeEnum::Standard)
+					renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
+				else
+					renderQueue->depthWrite(true);
 				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
 				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -373,8 +388,6 @@ namespace cage
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
 				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_OPAQUE] = translucent ? 0 : 1;
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -388,15 +401,20 @@ namespace cage
 					{
 						renderQueue->depthFuncLessEqual();
 						renderQueue->blending(translucent);
-						renderQueue->blendFuncPremultipliedTransparency();
+						if (translucent)
+							renderQueue->blendFuncPremultipliedTransparency();
 						if (data.lightsCount > 0)
 							renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
 						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
+						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] = 1;
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						renderQueue->draw(count);
 
 						renderQueue->depthFuncLessEqual();
 						renderQueue->blending(true);
 						renderQueue->blendFuncAdditive();
+						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] = 0;
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
 						for (const auto &smit : data.shadowmaps)
 						{
@@ -409,6 +427,7 @@ namespace cage
 					}
 					else
 					{
+						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						renderQueue->depthFuncLess();
 						renderQueue->blending(false);
 						renderQueue->draw(count);
@@ -437,6 +456,13 @@ namespace cage
 					for (const auto &shit : data.opaque)
 					{
 						const ModelShared &sh = shit.first;
+						if constexpr (RenderMode == RenderModeEnum::DepthPrepass)
+						{
+							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+								continue;
+							if (none(sh.mesh->flags & MeshRenderFlags::DepthWrite))
+								continue;
+						}
 						std::vector<UniMesh> uniMeshes;
 						uniMeshes.reserve(shit.second.size());
 						for (const ModelInstance &inst : shit.second)
@@ -459,7 +485,7 @@ namespace cage
 					renderQueue->viewport(Vec2i(), data.resolution);
 				}
 
-				if constexpr (RenderMode != RenderModeEnum::DepthPrepass)
+				if constexpr (RenderMode == RenderModeEnum::Standard)
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("translucent");
 					for (const auto &it : data.translucent)
@@ -492,9 +518,10 @@ namespace cage
 				}
 			}
 
+			template<PrepareModeEnum PrepareMode>
 			void prepareModelImpl(CommonData &data, ModelPrepare &prepare) const
 			{
-				if (prepare.translucent)
+				if (PrepareMode == PrepareModeEnum::Camera && prepare.translucent)
 				{
 					ModelTranslucent &tr = (ModelTranslucent &)prepare;
 					data.translucent.push_back(std::move(tr));
@@ -507,6 +534,7 @@ namespace cage
 				}
 			}
 
+			template<PrepareModeEnum PrepareMode>
 			void prepareModelBones(CommonData &data, const ModelPrepare &prepare) const
 			{
 				const auto armature = prepare.skeletalAnimation->armature();
@@ -519,12 +547,19 @@ namespace cage
 					pr.model = prepare.model * Mat4(armature[i]);
 					pr.uni = initializeMeshUni(data, pr.model);
 					pr.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
-					prepareModelImpl(data, pr);
+					prepareModelImpl<PrepareMode>(data, pr);
 				}
 			}
 
+			template<PrepareModeEnum PrepareMode>
 			void prepareModel(CommonData &data, ModelPrepare &pr, Holder<RenderObject> parent = {}) const
 			{
+				if constexpr (PrepareMode == PrepareModeEnum::Shadowmap)
+				{
+					if (none(pr.mesh->flags & MeshRenderFlags::ShadowCast))
+						return;
+				}
+
 				if (!intersects(pr.mesh->boundingBox(), pr.frustum))
 					return;
 
@@ -618,11 +653,12 @@ namespace cage
 				pr.depth = (pr.uni.mvpMat * Vec4(0, 0, 0, 1))[2];
 
 				if (pr.skeletal && cnfRenderSkeletonBones)
-					prepareModelBones(data, pr);
+					prepareModelBones<PrepareMode>(data, pr);
 				else
-					prepareModelImpl(data, pr);
+					prepareModelImpl<PrepareMode>(data, pr);
 			}
 
+			template<PrepareModeEnum PrepareMode>
 			void prepareObject(CommonData &data, const ModelPrepare &prepare, Holder<RenderObject> object) const
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
@@ -643,10 +679,11 @@ namespace cage
 				{
 					ModelPrepare pr = prepare.clone();
 					pr.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(it);
-					prepareModel(data, pr, object.share());
+					prepareModel<PrepareMode>(data, pr, object.share());
 				}
 			}
 
+			template<PrepareModeEnum PrepareMode>
 			void prepareEntities(CommonData &data) const
 			{
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
@@ -660,49 +697,52 @@ namespace cage
 					prepare.frustum = Frustum(prepare.uni.mvpMat);
 					if (Holder<RenderObject> obj = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
 					{
-						prepareObject(data, prepare, std::move(obj));
+						prepareObject<PrepareMode>(data, prepare, std::move(obj));
 						return;
 					}
 					if (Holder<Model> mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(rc.object))
 					{
 						prepare.mesh = std::move(mesh);
-						prepareModel(data, prepare);
+						prepareModel<PrepareMode>(data, prepare);
 						return;
 					}
 					if (cnfRenderMissingModels)
 					{
 						prepare.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
-						prepareModel(data, prepare);
+						prepareModel<PrepareMode>(data, prepare);
 						return;
 					}
 				}, +emit.scene, false);
 
-				// sort translucent back-to-front
-				std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
+				if constexpr (PrepareMode == PrepareModeEnum::Camera)
+				{
+					// sort translucent back-to-front
+					std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
 
-				entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
-					if ((tc_.sceneMask & data.sceneMask) == 0)
-						return;
-					TextComponent pt = tc_;
-					TextPrepare prepare;
-					if (!pt.font)
-						pt.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
-					prepare.font = engineAssets()->tryGet<AssetSchemeIndexFont, Font>(pt.font);
-					if (!prepare.font)
-						return;
-					const String str = loadFormattedString(engineAssets(), pt.assetName, pt.textName, pt.value);
-					const uint32 count = prepare.font->glyphsCount(str);
-					if (count == 0)
-						return;
-					prepare.glyphs.resize(count);
-					prepare.font->transcript(str, prepare.glyphs);
-					prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
-					prepare.format.size = 1;
-					const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
-					prepare.format.wrapWidth = size[0];
-					prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
-					data.texts.push_back(std::move(prepare));
-				}, +emit.scene, false);
+					entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
+						if ((tc_.sceneMask & data.sceneMask) == 0)
+							return;
+						TextComponent pt = tc_;
+						TextPrepare prepare;
+						if (!pt.font)
+							pt.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
+						prepare.font = engineAssets()->tryGet<AssetSchemeIndexFont, Font>(pt.font);
+						if (!prepare.font)
+							return;
+						const String str = loadFormattedString(engineAssets(), pt.assetName, pt.textName, pt.value);
+						const uint32 count = prepare.font->glyphsCount(str);
+						if (count == 0)
+							return;
+						prepare.glyphs.resize(count);
+						prepare.font->transcript(str, prepare.glyphs);
+						prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
+						prepare.format.size = 1;
+						const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
+						prepare.format.wrapWidth = size[0];
+						prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
+						data.texts.push_back(std::move(prepare));
+					}, +emit.scene, false);
+				}
 			}
 
 			void renderShadowmap(ShadowmapData &data, uint32) const
@@ -732,7 +772,7 @@ namespace cage
 				renderQueue->bind(shaderDepth);
 				renderQueue->checkGlErrorDebug();
 
-				prepareEntities(data);
+				prepareEntities<PrepareModeEnum::Shadowmap>(data);
 				renderModels<RenderModeEnum::Shadowmap>(data);
 
 				renderQueue->resetFrameBuffer();
@@ -893,7 +933,6 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
-				data.sceneMask = data.camera.sceneMask;
 				data.resolution = data.camera.target ? data.camera.target->resolution() : windowResolution;
 				data.model = modelTransform(data.entity);
 				data.view = inverse(data.model);
@@ -911,7 +950,7 @@ namespace cage
 				}();
 				data.viewProj = data.proj * data.view;
 				initializeLodSelection(data, data.camera, data.model);
-				prepareEntities(data);
+				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
 				const String texturesName = data.camera.target ? (Stringizer() + data.entity->name()) : (Stringizer() + data.resolution);
@@ -1002,9 +1041,9 @@ namespace cage
 				}
 			}
 
-			Holder<AsyncTask> prepareShadowmap(CameraData &camera, ShadowmapData &data) const
+			Holder<AsyncTask> prepareShadowmap(const CameraData &camera, ShadowmapData &data) const
 			{
-				data.sceneMask = data.lightComponent.sceneMask;
+				data.sceneMask = camera.sceneMask;
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
 				data.model = modelTransform(data.entity);
 				data.view = inverse(data.model);
@@ -1054,10 +1093,11 @@ namespace cage
 
 			void prepareCamera(CameraData &data) const
 			{
+				data.sceneMask = data.camera.sceneMask;
 				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
-					if ((lc.sceneMask & data.camera.sceneMask) == 0)
+					if ((lc.sceneMask & data.sceneMask) == 0)
 						return;
 					ShadowmapData &shd = data.shadowmaps[e];
 					shd.entity = e;

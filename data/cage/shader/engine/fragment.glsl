@@ -17,6 +17,8 @@ flat in int varInstanceId;
 
 vec3 normal; // world space
 
+const float confLightThreshold = 0.05;
+
 struct Material
 {
 	vec3 albedo; // linear
@@ -31,28 +33,26 @@ vec3 lightingBrdf(Material material, vec3 L, vec3 V)
 	return brdf(normal, L, V, material.albedo, material.roughness, material.metalness);
 }
 
-vec3 lightDirectionalImpl(Material material, UniLight light, float shadow)
+vec3 lightDirectionalImpl(Material material, UniLight light, float intensity)
 {
 	return lightingBrdf(
 		material,
 		-light.direction.xyz,
 		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * light.color.rgb * shadow;
+	) * light.color.rgb * intensity;
 }
 
-vec3 lightPointImpl(Material material, UniLight light, float shadow)
+vec3 lightPointImpl(Material material, UniLight light, float intensity)
 {
-	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
 	return lightingBrdf(
 		material,
 		normalize(light.position.xyz - varPosition),
 		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * light.color.rgb * att * shadow;
+	) * light.color.rgb * intensity;
 }
 
-vec3 lightSpotImpl(Material material, UniLight light, float shadow)
+vec3 lightSpotImpl(Material material, UniLight light, float intensity)
 {
-	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
 	vec3 lightSourceToFragmentDirection = normalize(light.position.xyz - varPosition);
 	float d = max(dot(-light.direction.xyz, lightSourceToFragmentDirection), 0);
 	float a = light.parameters[0]; // angle
@@ -64,7 +64,7 @@ vec3 lightSpotImpl(Material material, UniLight light, float shadow)
 		material,
 		lightSourceToFragmentDirection,
 		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * light.color.rgb * d * att * shadow;
+	) * light.color.rgb * d * intensity;
 }
 
 vec4 shadowSamplingPosition4(UniLight light)
@@ -77,44 +77,52 @@ vec4 shadowSamplingPosition4(UniLight light)
 vec3 lightDirectionalShadow(Material material, UniLight light)
 {
 	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
-	return lightDirectionalImpl(material, light, sampleShadowMap2d(texShadow2d, shadowPos));
+	float shadow = sampleShadowMap2d(texShadow2d, shadowPos);
+	return lightDirectionalImpl(material, light, shadow);
 }
 
-vec3 lightPointShadow(Material material, UniLight light)
+vec3 lightPointShadow(Material material, UniLight light, float att)
 {
 	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
-	return lightPointImpl(material, light, sampleShadowMapCube(texShadowCube, shadowPos));
+	float shadow = sampleShadowMapCube(texShadowCube, shadowPos);
+	return lightPointImpl(material, light, shadow * att);
 }
 
-vec3 lightSpotShadow(Material material, UniLight light)
+vec3 lightSpotShadow(Material material, UniLight light, float att)
 {
 	vec4 shadowPos4 = shadowSamplingPosition4(light);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
-	return lightSpotImpl(material, light, sampleShadowMap2d(texShadow2d, shadowPos));
+	float shadow = sampleShadowMap2d(texShadow2d, shadowPos);
+	return lightSpotImpl(material, light, shadow * att);
 }
 
 vec3 lightType(Material material, UniLight light)
 {
+	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
+	if (att < confLightThreshold)
+		return vec3(0);
 	switch (uint(light.parameters[3]))
 	{
 	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
 	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINT: return lightPointImpl(material, light, 1);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow(material, light);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOT: return lightSpotImpl(material, light, 1);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow(material, light);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINT: return lightPointImpl(material, light, att);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOT: return lightSpotImpl(material, light, att);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att);
 	default: return vec3(191, 85, 236) / 255;
 	}
 }
 
-vec3 lightAmbient(Material material, float shadow)
+vec3 lightAmbient(Material material, float intensity)
 {
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] == 0)
+		return vec3(0);
 	vec3 d = lightingBrdf(
 		material,
 		-uniViewport.eyeDir.xyz,
 		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * uniViewport.ambientDirectionalLight.rgb * shadow;
-	vec3 a = material.albedo * uniViewport.ambientLight.rgb * shadow;
+	) * uniViewport.ambientDirectionalLight.rgb * intensity;
+	vec3 a = material.albedo * uniViewport.ambientLight.rgb * intensity;
 	vec3 e = material.albedo * material.emissive;
 	return d + a + e;
 }
@@ -202,11 +210,7 @@ Material loadMaterial()
 
 	material.albedo = mix(uniMeshes[varInstanceId].color.rgb, material.albedo, special4.a);
 	material.opacity *= uniMeshes[varInstanceId].color.a;
-	
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_OPAQUE] == 0)
-		material.albedo *= material.opacity; // premultiplied alpha
-	else if (material.opacity < 0.5)
-		discard;
+	material.albedo *= material.opacity; // premultiplied alpha
 
 	return material;
 }

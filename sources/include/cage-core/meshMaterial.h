@@ -17,7 +17,8 @@ namespace cage
 	enum class MeshRenderFlags : uint32
 	{
 		None = 0,
-		Translucent = 1 << 1,
+		Translucent = 1 << 0,
+		AlphaClip = 1 << 1,
 		TwoSided = 1 << 2,
 		DepthTest = 1 << 3,
 		DepthWrite = 1 << 4,

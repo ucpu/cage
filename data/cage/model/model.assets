@@ -18,7 +18,6 @@ scheme = model
 uvs = false
 normals = false
 sphere.obj
-cone.obj
 guiElement.obj
 
 []

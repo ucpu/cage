@@ -78,6 +78,7 @@ namespace cage
 		debugName = name;
 #endif // CAGE_DEBUG
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
+		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_PROGRAM, impl->id, name.length(), name.c_str());
 	}
 

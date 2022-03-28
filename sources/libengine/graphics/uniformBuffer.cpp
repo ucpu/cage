@@ -63,6 +63,7 @@ namespace cage
 		debugName = name;
 #endif // CAGE_DEBUG
 		UniformBufferImpl *impl = (UniformBufferImpl *)this;
+		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 

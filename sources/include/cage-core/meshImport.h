@@ -43,17 +43,16 @@ namespace cage
 	struct CAGE_CORE_API MeshImportConfig
 	{
 		String rootPath = "/";
-		String materialPathOverride;
-		String materialPathAlternative;
+		String materialPathOverride; // enforce cage (cpm) material
+		String materialNameAlternative; // prefer cage (cpm) material with this name if it exists
 		detail::StringBase<6> axesSwizzle = "+x+y+z";
 		Real scale = 1;
-		bool bakeModel = false; // merge compatible parts to reduce draw calls (ignores material names)
+		bool mergeParts = false; // merge compatible parts to reduce draw calls (ignores material names)
 		bool generateNormals = false;
 		bool generateTangents = false;
 		bool renormalizeVectors = true;
 		bool passInvalidVectors = true;
 		bool trianglesOnly = false; // discard non-triangle faces
-		//bool loadExternalImages = false;
 		bool verbose = false;
 	};
 

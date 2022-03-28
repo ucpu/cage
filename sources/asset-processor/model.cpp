@@ -17,7 +17,7 @@ MeshImportConfig meshImportConfig(bool allowAxes)
 		config.axesSwizzle = toLower(properties("axes"));
 		config.scale = toFloat(properties("scale"));
 	}
-	config.bakeModel = toBool(properties("bakeModel"));
+	config.mergeParts = toBool(properties("bakeModel"));
 	config.verbose = true;
 	return config;
 }
@@ -125,20 +125,20 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alphaClip: " + any(dsm.renderFlags & MeshRenderFlags::AlphaClip));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			if (dsm.textureNames[i] == 0)
-				continue;
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
+			if (dsm.textureNames[i])
+				CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
 		}
 	}
 
-	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshMaterial &mat)
+	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshRenderFlags renderFlags, const MeshMaterial &mat)
 	{
 		{
 			uint32 texCount = 0;
@@ -147,6 +147,9 @@ namespace
 			if (texCount && none(flags & (ModelDataFlags::Uvs2 | ModelDataFlags::Uvs3)))
 				CAGE_THROW_ERROR(Exception, "material has a texture and no uvs");
 		}
+
+		if (any(renderFlags & MeshRenderFlags::Translucent) && any(renderFlags & MeshRenderFlags::AlphaClip))
+			CAGE_THROW_ERROR(Exception, "material has both translucent and alphaClip flags");
 
 		if (any(flags & ModelDataFlags::Tangents) && none(flags & ModelDataFlags::Uvs2))
 			CAGE_THROW_ERROR(Exception, "tangents are exported, but uvs are missing");
@@ -178,7 +181,7 @@ void processModel()
 {
 	MeshImportConfig config = meshImportConfig(true);
 	config.materialPathOverride = properties("material");
-	config.materialPathAlternative = inputSpec;
+	config.materialNameAlternative = inputSpec;
 	config.generateNormals = toBool(properties("normals"));
 	config.generateTangents = toBool(properties("tangents"));
 	config.trianglesOnly = toBool(properties("trianglesOnly"));
@@ -249,7 +252,7 @@ void processModel()
 
 	const MeshMaterial &mat = part.material;
 	printMaterial(dsm, mat);
-	validateFlags(dsm, flags, mat);
+	validateFlags(dsm, flags, part.renderFlags, mat);
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
 	AssetHeader h = initializeAssetHeader();

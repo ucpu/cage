@@ -511,7 +511,7 @@ namespace cage
 						0;
 
 					uint32 flags = AssimpDefaultLoadFlags;
-					if (config.bakeModel)
+					if (config.mergeParts)
 						flags |= AssimpBakeLoadFlags;
 					if (config.generateNormals)
 						flags |= aiProcess_GenSmoothNormals;
@@ -1188,14 +1188,14 @@ namespace cage
 
 				part.material.albedoBase = Vec4(
 					colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
-					0 // ini->getFloat("base", "opacity", 0) // todo temporarily disabled to detect incompatibility
+					ini->getFloat("base", "opacity", 0)
 				);
 
 				part.material.specialBase = Vec4(
 					ini->getFloat("base", "roughness", 0),
 					ini->getFloat("base", "metallic", 0),
 					ini->getFloat("base", "emission", 0),
-					0 // ini->getFloat("base", "mask", 0) // todo temporarily disabled to detect incompatibility
+					ini->getFloat("base", "mask", 0)
 				);
 
 				part.material.albedoMult = Vec4(
@@ -1220,14 +1220,19 @@ namespace cage
 				for (const String &n : ini->items("flags"))
 				{
 					const String v = ini->getString("flags", n);
-					if (v == "twoSided")
-					{
-						part.renderFlags |= MeshRenderFlags::TwoSided;
-						continue;
-					}
 					if (v == "translucent")
 					{
 						part.renderFlags |= MeshRenderFlags::Translucent;
+						continue;
+					}
+					if (v == "alphaClip")
+					{
+						part.renderFlags |= MeshRenderFlags::AlphaClip;
+						continue;
+					}
+					if (v == "twoSided")
+					{
+						part.renderFlags |= MeshRenderFlags::TwoSided;
 						continue;
 					}
 					if (v == "noDepthTest")
@@ -1392,8 +1397,8 @@ namespace cage
 					aiMaterial *m = imp.GetScene()->mMaterials[materialIndex];
 					if (m && m->GetName().length)
 						path += String() + "_" + m->GetName().C_Str();
-					else if (!config.materialPathAlternative.empty())
-						path += String() + "_" + config.materialPathAlternative;
+					else if (!config.materialNameAlternative.empty())
+						path += String() + "_" + config.materialNameAlternative;
 				}
 				path += ".cpm";
 				path = pathToAbs(path);

@@ -14,7 +14,6 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<Model> msh = newModel();
-			msh->setDebugName(context->textName);
 
 			Deserializer des(context->originalData);
 			ModelHeader data;
@@ -34,6 +33,8 @@ namespace cage
 
 			msh->flags = data.renderFlags;
 			msh->skeletonBones = data.skeletonBones;
+
+			msh->setDebugName(context->textName); // last command to apply it to all subresources
 
 			context->assetHolder = std::move(msh).cast<void>();
 		}

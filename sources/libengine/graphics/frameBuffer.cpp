@@ -66,6 +66,7 @@ namespace cage
 		debugName = name;
 #endif // CAGE_DEBUG
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
+		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_FRAMEBUFFER, impl->id, name.length(), name.c_str());
 	}
 

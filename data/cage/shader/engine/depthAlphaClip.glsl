@@ -8,9 +8,10 @@ void main()
 	updateVertex();
 }
 
-$define shader fragment
-
-layout(early_fragment_tests) in;
+$include fragment.glsl
 
 void main()
-{}
+{
+	if (loadMaterial().opacity < 0.5)
+		discard;
+}

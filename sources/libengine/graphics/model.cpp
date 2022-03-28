@@ -85,7 +85,10 @@ namespace cage
 		debugName = name;
 #endif // CAGE_DEBUG
 		ModelImpl *impl = (ModelImpl *)this;
+		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
+		if (impl->vbo)
+			glObjectLabel(GL_BUFFER, impl->vbo, name.length(), name.c_str());
 	}
 
 	uint32 Model::id() const
@@ -122,9 +125,6 @@ namespace cage
 			uint32 t;
 			uint32 s;
 			uint32 o;
-
-			Attr(uint32 i, uint32 c, uint32 t, uint32 s, uint32 o) : i(i), c(c), t(t), s(s), o(o)
-			{}
 		};
 		std::vector<Attr> attrs;
 
@@ -134,7 +134,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->positions().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_POSITION, 3, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_POSITION, 3, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -145,7 +145,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->normals().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_NORMAL, 3, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_NORMAL, 3, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -156,7 +156,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->uvs().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_UV, 2, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_UV, 2, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -167,7 +167,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->uvs3().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_UV, 3, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_UV, 3, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -178,7 +178,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->tangents().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_TANGENT, 3, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_TANGENT, 3, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -189,7 +189,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->bitangents().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BITANGENT, 3, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_BITANGENT, 3, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -200,7 +200,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->boneIndices().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BONEINDEX, 4, GL_UNSIGNED_INT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_BONEINDEX, 4, GL_UNSIGNED_INT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}
@@ -211,7 +211,7 @@ namespace cage
 			const uint32 bufSize = attrSize * verticesCount;
 			vts.resize(offset + bufSize);
 			detail::memcpy(vts.data() + offset, poly->boneWeights().data(), bufSize);
-			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BONEWEIGHT, 4, GL_FLOAT, attrSize, offset);
+			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_BONEWEIGHT, 4, GL_FLOAT, attrSize, offset });
 			vertexSize += attrSize;
 			offset += bufSize;
 		}

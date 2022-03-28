@@ -7,4 +7,6 @@ engine.pack
 scheme = shader
 blit.glsl
 depth.glsl
+depthAlphaClip.glsl
 standard.glsl
+standardAlphaClip.glsl
