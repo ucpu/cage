@@ -371,14 +371,15 @@ namespace cage
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const uint32 n = sh.mesh->textureName(i);
-					if (!n)
-						continue;
 					textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
-					switch (textures[i]->target())
+					if (textures[i])
 					{
-					case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
-					case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
-					default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+						switch (textures[i]->target())
+						{
+						case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
+						case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
+						default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+						}
 					}
 				}
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
@@ -555,6 +556,9 @@ namespace cage
 			template<PrepareModeEnum PrepareMode>
 			void prepareModel(CameraData &data, ModelPrepare &pr, Holder<RenderObject> parent = {}) const
 			{
+				if (!pr.mesh)
+					return;
+
 				if constexpr (PrepareMode == PrepareModeEnum::Shadowmap)
 				{
 					if (none(pr.mesh->flags & MeshRenderFlags::ShadowCast))
