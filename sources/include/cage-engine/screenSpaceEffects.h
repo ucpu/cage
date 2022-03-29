@@ -18,7 +18,6 @@ namespace cage
 	{
 		Mat4 viewProj;
 		TextureHandle inDepth;
-		TextureHandle inNormal; // optional
 		TextureHandle outAo;
 		uint32 frameIndex = 0;
 	};

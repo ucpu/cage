@@ -113,34 +113,50 @@ vec3 lightType(Material material, UniLight light)
 	}
 }
 
-vec3 lightAmbient(Material material, float intensity)
+vec3 lightAmbient(Material material)
 {
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] == 0)
-		return vec3(0);
 	vec3 d = lightingBrdf(
 		material,
 		-uniViewport.eyeDir.xyz,
 		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * uniViewport.ambientDirectionalLight.rgb * intensity;
-	vec3 a = material.albedo * uniViewport.ambientLight.rgb * intensity;
-	vec3 e = material.albedo * material.emissive;
-	return d + a + e;
+	) * uniViewport.ambientDirectionalLight.rgb;
+	vec3 a = material.albedo * uniViewport.ambientLight.rgb;
+	return d + a;
+}
+
+float lightAmbientOcclusion()
+{
+	return textureLod(texSsao, vec2(gl_FragCoord.xy) / uniViewport.viewport.zw, 0).x;
 }
 
 vec4 lighting(Material material)
 {
-	vec4 res;
-	if (dot(normal, normal) < 0.5)
+	vec4 res = vec4(0);
+	bool enabled = dot(normal, normal) > 0.5;
+
+	// ambient contributions
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] > 0)
 	{
-		// lighting is disabled
-		res.rgb = lightAmbient(material, 0); // emissive only
+		// emissive
+		res.rgb += material.albedo * material.emissive;
+
+		// ambient
+		if (enabled)
+		{
+			float ssao = 1;
+			if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] > 0)
+				ssao = lightAmbientOcclusion();
+			res.rgb += lightAmbient(material) * ssao;
+		}
 	}
-	else
+
+	// direct contributions
+	if (enabled)
 	{
-		res.rgb = lightAmbient(material, 1); // todo ambient occlusion
 		for (int i = 0; i < uniLightsCount; i++)
 			res.rgb += lightType(material, uniLights[i]);
 	}
+
 	res.a = material.opacity;
 	return res;
 }

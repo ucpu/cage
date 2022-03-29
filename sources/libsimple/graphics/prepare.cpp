@@ -107,14 +107,16 @@ namespace cage
 			{
 				ModelPrepare res;
 				res.mesh = mesh.share();
-				res.translucent = translucent;
+				res.skeletal = skeletal;
 				res.uni = uni;
 				res.skeletalAnimation = skeletalAnimation.share();
+				res.depth = depth;
 				res.model = model;
 				res.frustum = frustum;
 				res.render = render;
 				res.textureAnimation = textureAnimation;
 				res.e = e;
+				res.translucent = translucent;
 				return res;
 			}
 		};
@@ -135,14 +137,14 @@ namespace cage
 		};
 
 		// camera or light
-		struct CommonData
+		struct CameraData
 		{
+			CameraComponent camera;
 			Mat4 model;
 			Mat4 view;
 			Mat4 viewProj;
 			Mat4 proj;
 			Vec2i resolution;
-			uint32 sceneMask = 0;
 			Entity *entity = nullptr;
 
 			struct LodSelection
@@ -163,7 +165,7 @@ namespace cage
 			uint32 lightsCount = 0;
 		};
 
-		struct ShadowmapData : public CommonData
+		struct ShadowmapData : public CameraData
 		{
 			Mat4 shadowMat;
 			Holder<ProvisionalTexture> shadowTexture;
@@ -171,12 +173,7 @@ namespace cage
 			ShadowmapComponent shadowmapComponent;
 		};
 
-		struct CameraData : public CommonData
-		{
-			CameraComponent camera;
-		};
-
-		UniMesh initializeMeshUni(const CommonData &data, const Mat4 model)
+		UniMesh initializeMeshUni(const CameraData &data, const Mat4 model)
 		{
 			UniMesh uni;
 			uni.mMat = Mat3x4(model);
@@ -197,7 +194,7 @@ namespace cage
 			return uni;
 		}
 
-		void initializeLodSelection(CommonData &data, const CameraComponent &cam, const Mat4 &camModel)
+		void initializeLodSelection(CameraData &data, const CameraComponent &cam, const Mat4 &camModel)
 		{
 			switch (cam.cameraType)
 			{
@@ -300,7 +297,7 @@ namespace cage
 			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
 			const Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(engineAssets(), cnfRenderSkeletonBones);
 			const Vec2i windowResolution = engineWindow()->resolution();
-			const uint32 frameIndex = graphics->frameIndex;
+			const uint32 frameIndex = graphics->frameIndex++;
 			const EmitBuffer &emit;
 			const uint64 prepareTime;
 			const Real interpolationFactor;
@@ -309,7 +306,7 @@ namespace cage
 
 			Holder<Model> modelSquare, modelBone;
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthAlphaClip, shaderStandardAlphaClip;
-			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
+			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
 
 			Preparator(const EmitBuffer &emit, uint64 time)
@@ -336,7 +333,6 @@ namespace cage
 				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/color.glsl"));
 				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/depth.glsl"));
 				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl"));
-				shaderVisualizeVelocity = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/velocity.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				CAGE_ASSERT(shaderBlit);
 				return true;
@@ -356,7 +352,7 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CommonData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
+			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
@@ -388,6 +384,7 @@ namespace cage
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
 				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion) ? 1 : 0;
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -406,14 +403,14 @@ namespace cage
 						if (data.lightsCount > 0)
 							renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
 						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] = 1;
+						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] = 1;
 						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						renderQueue->draw(count);
 
 						renderQueue->depthFuncLessEqual();
 						renderQueue->blending(true);
 						renderQueue->blendFuncAdditive();
-						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENT] = 0;
+						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] = 0;
 						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
 						for (const auto &smit : data.shadowmaps)
@@ -437,7 +434,7 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			void renderTextImpl(const CommonData &data, const TextPrepare &text) const
+			void renderTextImpl(const CameraData &data, const TextPrepare &text) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				text.font->bind(+renderQueue, modelSquare, shaderFont);
@@ -447,7 +444,7 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModels(const CommonData &data) const
+			void renderModels(const CameraData &data) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
@@ -516,10 +513,12 @@ namespace cage
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
 				}
+
+				renderQueue->checkGlErrorDebug();
 			}
 
 			template<PrepareModeEnum PrepareMode>
-			void prepareModelImpl(CommonData &data, ModelPrepare &prepare) const
+			void prepareModelImpl(CameraData &data, ModelPrepare &prepare) const
 			{
 				if (PrepareMode == PrepareModeEnum::Camera && prepare.translucent)
 				{
@@ -535,7 +534,7 @@ namespace cage
 			}
 
 			template<PrepareModeEnum PrepareMode>
-			void prepareModelBones(CommonData &data, const ModelPrepare &prepare) const
+			void prepareModelBones(CameraData &data, const ModelPrepare &prepare) const
 			{
 				const auto armature = prepare.skeletalAnimation->armature();
 				for (uint32 i = 0; i < armature.size(); i++)
@@ -547,12 +546,14 @@ namespace cage
 					pr.model = prepare.model * Mat4(armature[i]);
 					pr.uni = initializeMeshUni(data, pr.model);
 					pr.uni.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
+					pr.uni.normalMat.data[2][3] = prepare.uni.normalMat.data[2][3];
+					pr.translucent = false;
 					prepareModelImpl<PrepareMode>(data, pr);
 				}
 			}
 
 			template<PrepareModeEnum PrepareMode>
-			void prepareModel(CommonData &data, ModelPrepare &pr, Holder<RenderObject> parent = {}) const
+			void prepareModel(CameraData &data, ModelPrepare &pr, Holder<RenderObject> parent = {}) const
 			{
 				if constexpr (PrepareMode == PrepareModeEnum::Shadowmap)
 				{
@@ -659,7 +660,7 @@ namespace cage
 			}
 
 			template<PrepareModeEnum PrepareMode>
-			void prepareObject(CommonData &data, const ModelPrepare &prepare, Holder<RenderObject> object) const
+			void prepareObject(CameraData &data, const ModelPrepare &prepare, Holder<RenderObject> object) const
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
 				uint32 lod = 0;
@@ -684,10 +685,10 @@ namespace cage
 			}
 
 			template<PrepareModeEnum PrepareMode>
-			void prepareEntities(CommonData &data) const
+			void prepareEntities(CameraData &data) const
 			{
 				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
-					if ((rc.sceneMask & data.sceneMask) == 0)
+					if ((rc.sceneMask & data.camera.sceneMask) == 0)
 						return;
 					ModelPrepare prepare;
 					prepare.e = e;
@@ -720,7 +721,7 @@ namespace cage
 					std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
 
 					entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
-						if ((tc_.sceneMask & data.sceneMask) == 0)
+						if ((tc_.sceneMask & data.camera.sceneMask) == 0)
 							return;
 						TextComponent pt = tc_;
 						TextPrepare prepare;
@@ -791,7 +792,7 @@ namespace cage
 				std::vector<UniLight> lights;
 				lights.reserve(50);
 				entitiesVisitor([&](Entity *e, const LightComponent &lc) {
-					if ((lc.sceneMask & data.sceneMask) == 0)
+					if ((lc.sceneMask & data.camera.sceneMask) == 0)
 						return;
 					if (e->has<ShadowmapComponent>())
 						return;
@@ -810,122 +811,6 @@ namespace cage
 				data.lightsCount = numeric_cast<uint32>(lights.size());
 				if (data.lightsCount > 0)
 					data.lighsBlock = data.renderQueue->universalUniformArray<UniLight>(lights);
-			}
-
-			void renderCameraEffects(const TextureHandle texSource_, const TextureHandle depthTexture, CameraData &data) const
-			{
-				const detail::StringBase<16> cameraName = Stringizer() + data.entity;
-				Holder<RenderQueue> &renderQueue = data.renderQueue;
-				const auto graphicsDebugScope = renderQueue->namedScope("effects");
-
-				TextureHandle texSource = texSource_;
-				TextureHandle texTarget = [&]() {
-					TextureHandle t = provisionalData->texture(Stringizer() + "intermediateTarget_" + data.resolution);
-					renderQueue->bind(t, 0);
-					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
-					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					renderQueue->image2d(data.resolution, GL_RGB16F);
-					return t;
-				}();
-
-				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
-				commonConfig.assets = engineAssets();
-				commonConfig.provisionals = +provisionalData;
-				commonConfig.queue = +renderQueue;
-				commonConfig.resolution = data.resolution;
-
-				// depth of field
-				if (any(data.camera.effects & CameraEffectsFlags::DepthOfField))
-				{
-					ScreenSpaceDepthOfFieldConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceDepthOfField &)cfg = data.camera.depthOfField;
-					cfg.proj = data.proj;
-					cfg.inDepth = depthTexture;
-					cfg.inColor = texSource;
-					cfg.outColor = texTarget;
-					screenSpaceDepthOfField(cfg);
-					std::swap(texSource, texTarget);
-				}
-
-				// eye adaptation
-				if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
-				{
-					ScreenSpaceEyeAdaptationConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
-					cfg.cameraId = cameraName;
-					cfg.inColor = texSource;
-					screenSpaceEyeAdaptationPrepare(cfg);
-				}
-
-				// bloom
-				if (any(data.camera.effects & CameraEffectsFlags::Bloom))
-				{
-					ScreenSpaceBloomConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceBloom &)cfg = data.camera.bloom;
-					cfg.inColor = texSource;
-					cfg.outColor = texTarget;
-					screenSpaceBloom(cfg);
-					std::swap(texSource, texTarget);
-				}
-
-				// eye adaptation
-				if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
-				{
-					ScreenSpaceEyeAdaptationConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
-					cfg.cameraId = cameraName;
-					cfg.inColor = texSource;
-					cfg.outColor = texTarget;
-					screenSpaceEyeAdaptationApply(cfg);
-					std::swap(texSource, texTarget);
-				}
-
-				// final screen effects
-				if (any(data.camera.effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
-				{
-					ScreenSpaceTonemapConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceTonemap &)cfg = data.camera.tonemap;
-					cfg.inColor = texSource;
-					cfg.outColor = texTarget;
-					cfg.tonemapEnabled = any(data.camera.effects & CameraEffectsFlags::ToneMapping);
-					cfg.gamma = any(data.camera.effects & CameraEffectsFlags::GammaCorrection) ? data.camera.gamma : 1;
-					screenSpaceTonemap(cfg);
-					std::swap(texSource, texTarget);
-				}
-
-				// fxaa
-				if (any(data.camera.effects & CameraEffectsFlags::AntiAliasing))
-				{
-					ScreenSpaceFastApproximateAntiAliasingConfig cfg;
-					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					cfg.inColor = texSource;
-					cfg.outColor = texTarget;
-					screenSpaceFastApproximateAntiAliasing(cfg);
-					std::swap(texSource, texTarget);
-				}
-
-				// blit to destination
-				if (texSource != texSource_)
-				{
-					renderQueue->viewport(Vec2i(), data.resolution);
-					renderQueue->bind(modelSquare);
-					renderQueue->bind(texSource, 0);
-					renderQueue->bind(shaderBlit);
-					renderQueue->bind(provisionalData->frameBufferDraw("renderTarget"));
-					renderQueue->colorTexture(0, texSource_);
-					renderQueue->activeAttachments(1);
-					renderQueue->draw();
-				}
-
-				renderQueue->resetFrameBuffer();
-				renderQueue->resetAllState();
-				renderQueue->resetAllTextures();
-				renderQueue->checkGlErrorDebug();
 			}
 
 			void renderCamera(CameraData &data, uint32) const
@@ -953,6 +838,7 @@ namespace cage
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
+				const detail::StringBase<16> cameraName = Stringizer() + data.entity->name();
 				const String texturesName = data.camera.target ? (Stringizer() + data.entity->name()) : (Stringizer() + data.resolution);
 				TextureHandle colorTexture = [&]() {
 					TextureHandle t = provisionalData->texture(Stringizer() + "colorTarget_" + texturesName);
@@ -1000,18 +886,153 @@ namespace cage
 				if (any(data.camera.clear))
 					renderQueue->clear(any(data.camera.clear & CameraClearFlags::Color), any(data.camera.clear & CameraClearFlags::Depth), any(data.camera.clear & CameraClearFlags::Stencil));
 
+				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
+				commonConfig.assets = engineAssets();
+				commonConfig.provisionals = +provisionalData;
+				commonConfig.queue = +renderQueue;
+				commonConfig.resolution = data.resolution;
+
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("depth prepass");
 					renderModels<RenderModeEnum::DepthPrepass>(data);
 				}
+
+				if (any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion))
+				{
+					TextureHandle ssaoTexture = [&]() {
+						TextureHandle t = provisionalData->texture(Stringizer() + "ssao_" + cameraName);
+						DebugVisualizationInfo deb;
+						deb.texture = t;
+						deb.shader = shaderVisualizeMonochromatic.share();
+						data.debugVisualizations.push_back(std::move(deb));
+						return t;
+					}();
+
+					ScreenSpaceAmbientOcclusionConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = commonConfig;
+					(ScreenSpaceAmbientOcclusion &)cfg = data.camera.ssao;
+					cfg.viewProj = data.viewProj;
+					cfg.inDepth = depthTexture;
+					cfg.outAo = ssaoTexture;
+					cfg.frameIndex = frameIndex;
+					screenSpaceAmbientOcclusion(cfg);
+
+					// bind the texture for sampling
+					renderQueue->bind(ssaoTexture, CAGE_SHADER_TEXTURE_SSAO);
+
+					// restore rendering state
+					renderQueue->bind(renderTarget);
+					renderQueue->viewport(Vec2i(), data.resolution);
+				}
+
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("standard");
 					renderModels<RenderModeEnum::Standard>(data);
 				}
 
-				renderQueue->resetAllState();
-				renderQueue->resetAllTextures();
-				renderCameraEffects(colorTexture, depthTexture, data);
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("effects");
+
+					TextureHandle texSource = colorTexture;
+					TextureHandle texTarget = [&]() {
+						TextureHandle t = provisionalData->texture(Stringizer() + "intermediateTarget_" + data.resolution);
+						renderQueue->bind(t, 0);
+						renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
+						renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						renderQueue->image2d(data.resolution, GL_RGB16F);
+						return t;
+					}();
+
+					// depth of field
+					if (any(data.camera.effects & CameraEffectsFlags::DepthOfField))
+					{
+						ScreenSpaceDepthOfFieldConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						(ScreenSpaceDepthOfField &)cfg = data.camera.depthOfField;
+						cfg.proj = data.proj;
+						cfg.inDepth = depthTexture;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						screenSpaceDepthOfField(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// eye adaptation
+					if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
+					{
+						ScreenSpaceEyeAdaptationConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
+						cfg.cameraId = cameraName;
+						cfg.inColor = texSource;
+						screenSpaceEyeAdaptationPrepare(cfg);
+					}
+
+					// bloom
+					if (any(data.camera.effects & CameraEffectsFlags::Bloom))
+					{
+						ScreenSpaceBloomConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						(ScreenSpaceBloom &)cfg = data.camera.bloom;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						screenSpaceBloom(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// eye adaptation
+					if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
+					{
+						ScreenSpaceEyeAdaptationConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
+						cfg.cameraId = cameraName;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						screenSpaceEyeAdaptationApply(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// final screen effects
+					if (any(data.camera.effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+					{
+						ScreenSpaceTonemapConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						(ScreenSpaceTonemap &)cfg = data.camera.tonemap;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						cfg.tonemapEnabled = any(data.camera.effects & CameraEffectsFlags::ToneMapping);
+						cfg.gamma = any(data.camera.effects & CameraEffectsFlags::GammaCorrection) ? data.camera.gamma : 1;
+						screenSpaceTonemap(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// fxaa
+					if (any(data.camera.effects & CameraEffectsFlags::AntiAliasing))
+					{
+						ScreenSpaceFastApproximateAntiAliasingConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						screenSpaceFastApproximateAntiAliasing(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// blit to destination
+					if (texSource != colorTexture)
+					{
+						renderQueue->viewport(Vec2i(), data.resolution);
+						renderQueue->bind(modelSquare);
+						renderQueue->bind(texSource, 0);
+						renderQueue->bind(shaderBlit);
+						renderQueue->bind(provisionalData->frameBufferDraw("renderTarget"));
+						renderQueue->colorTexture(0, colorTexture);
+						renderQueue->activeAttachments(1);
+						renderQueue->draw();
+					}
+
+					renderQueue->checkGlErrorDebug();
+				}
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
@@ -1043,7 +1064,6 @@ namespace cage
 
 			Holder<AsyncTask> prepareShadowmap(const CameraData &camera, ShadowmapData &data) const
 			{
-				data.sceneMask = camera.sceneMask;
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
 				data.model = modelTransform(data.entity);
 				data.view = inverse(data.model);
@@ -1093,11 +1113,10 @@ namespace cage
 
 			void prepareCamera(CameraData &data) const
 			{
-				data.sceneMask = data.camera.sceneMask;
 				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
-					if ((lc.sceneMask & data.sceneMask) == 0)
+					if ((lc.sceneMask & data.camera.sceneMask) == 0)
 						return;
 					ShadowmapData &shd = data.shadowmaps[e];
 					shd.entity = e;

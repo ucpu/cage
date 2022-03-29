@@ -106,13 +106,15 @@ namespace cage
 			Mat4 viewProj;
 			Mat4 viewProjInv;
 			Vec4 params; // strength, bias, power, radius
-			Vec4i iparams; // sampleCount, frameIndex
+			Vec4i iparams; // sampleCount, frameIndex, resolution x, resolution y
 		} s;
 		s.viewProj = config.viewProj;
 		s.viewProjInv = inverse(config.viewProj);
 		s.params = Vec4(config.strength, config.bias, config.power, config.worldRadius);
 		s.iparams[0] = config.samplesCount;
 		s.iparams[1] = config.frameIndex;
+		s.iparams[2] = config.resolution[0];
+		s.iparams[3] = config.resolution[1];
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
 		// generate
@@ -120,7 +122,6 @@ namespace cage
 		q->colorTexture(0, config.outAo);
 		q->checkFrameBuffer();
 		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
-		q->bind(config.inNormal, CAGE_SHADER_TEXTURE_NORMAL);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/ssaoGenerate.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
@@ -134,9 +135,9 @@ namespace cage
 		for (uint32 i = 0; i < config.blurPasses; i++)
 			gfGaussianBlur(gb);
 
-		// apply - update outAo inplace
+		// resolve - update outAo inplace
 		q->bind(config.outAo, CAGE_SHADER_TEXTURE_EFFECTS);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/ssaoApply.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/ssaoResolve.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
 	}
