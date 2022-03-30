@@ -9,8 +9,13 @@ unset(CMAKE_CXX_STANDARD)
 set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
 set(CAGE_EXTERNALS_MODULE_PATH "${CAGE_EXTERNALS_MODULE_PATH}" PARENT_SCOPE)
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-include(cmake/cage_gen_module.cmake)
+include(cage_gen_module.cmake)
+
+# disable some find_package
+set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_OpenGL TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_SndFile TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_FFTW3 TRUE)
 
 # ensure that all libraries are distinguishable from system libraries
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
