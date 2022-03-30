@@ -156,7 +156,7 @@ namespace cage
 			Stringizer s;
 			s + keyval("name", name);
 			s + keyval("cat", category);
-			constexpr StringLiteral phs[] = { "", "B", "b", "s", "N" };
+			static constexpr StringLiteral phs[] = { "", "B", "b", "s", "N" };
 			s + keyval("ph", phs[(int)ev.type]);
 			s + keyval("ts", timestamp());
 			s + keyval("tid", currentThreadId());
@@ -181,7 +181,7 @@ namespace cage
 			Stringizer s;
 			s + keyval("name", ev.name);
 			s + keyval("cat", ev.category);
-			constexpr StringLiteral phs[] = { "", "i", "n", "t", "O" };
+			static constexpr StringLiteral phs[] = { "", "i", "n", "t", "O" };
 			s + keyval("ph", phs[(int)ev.type]);
 			s + keyval("ts", timestamp());
 			s + keyval("tid", currentThreadId());
@@ -204,7 +204,7 @@ namespace cage
 			Stringizer s;
 			s + keyval("name", ev.name);
 			s + keyval("cat", ev.category);
-			constexpr StringLiteral phs[] = { "", "E", "e", "f", "D" };
+			static constexpr StringLiteral phs[] = { "", "E", "e", "f", "D" };
 			s + keyval("ph", phs[(int)ev.type]);
 			s + keyval("ts", timestamp());
 			s + keyval("tid", currentThreadId());

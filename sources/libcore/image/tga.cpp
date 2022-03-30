@@ -298,7 +298,7 @@ namespace cage
 
 		const uint32 dummy = 0;
 		ser << dummy << dummy;
-		constexpr const char signature[18] = "TRUEVISION-XFILE.";
+		static constexpr const char signature[18] = "TRUEVISION-XFILE.";
 		ser.write(signature);
 
 		return buf;

@@ -122,7 +122,7 @@ namespace cage
 					}
 				}
 #else
-				constexpr mode_t mode = 0755;
+				static constexpr mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");

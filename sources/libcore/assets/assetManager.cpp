@@ -44,7 +44,7 @@ namespace cage
 	{
 		class AssetManagerImpl;
 
-		constexpr uint32 CurrentAssetVersion = 1;
+		static constexpr uint32 CurrentAssetVersion = 1;
 
 		// one particular version of an asset
 		struct Asset : private Immovable
@@ -903,7 +903,7 @@ namespace cage
 	{
 		version = CurrentAssetVersion;
 		String name = name_;
-		constexpr uint32 MaxTexName = sizeof(textName) - 1;
+		static constexpr uint32 MaxTexName = sizeof(textName) - 1;
 		if (name.length() > MaxTexName)
 			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);

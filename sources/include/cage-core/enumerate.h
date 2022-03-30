@@ -18,41 +18,41 @@ namespace cage
 					It it;
 					Counter index;
 
-					constexpr Pair(const It &it, const Counter &index) : it(it), index(index)
+					CAGE_FORCE_INLINE constexpr Pair(const It &it, const Counter &index) : it(it), index(index)
 					{}
 
-					constexpr auto &get() const noexcept
+					CAGE_FORCE_INLINE constexpr auto &get() const noexcept
 					{
 						return *it;
 					}
 
-					constexpr auto &operator * () const noexcept
+					CAGE_FORCE_INLINE constexpr auto &operator * () const noexcept
 					{
 						return *it;
 					}
 
-					constexpr const auto &operator -> () const noexcept
+					CAGE_FORCE_INLINE constexpr const auto &operator -> () const noexcept
 					{
 						return it;
 					}
 				};
 
-				constexpr Iterator(const It &it, const Counter &index) : p(it, index)
+				CAGE_FORCE_INLINE constexpr Iterator(const It &it, const Counter &index) : p(it, index)
 				{}
 
 				template<class U>
-				constexpr bool operator == (const Iterator<U> &other) const
+				CAGE_FORCE_INLINE constexpr bool operator == (const Iterator<U> &other) const
 				{
 					return p.it == other.p.it;
 				}
 
 				template<class U>
-				constexpr bool operator != (const Iterator<U> &other) const
+				CAGE_FORCE_INLINE constexpr bool operator != (const Iterator<U> &other) const
 				{
 					return p.it != other.p.it;
 				}
 
-				constexpr Iterator operator ++ ()
+				CAGE_FORCE_INLINE constexpr Iterator operator ++ ()
 				{
 					auto r = *this;
 					p.it++;
@@ -60,14 +60,14 @@ namespace cage
 					return r;
 				}
 
-				constexpr Iterator &operator ++ (int)
+				CAGE_FORCE_INLINE constexpr Iterator &operator ++ (int)
 				{
 					++p.it;
 					++p.index;
 					return *this;
 				}
 
-				constexpr const Pair &operator * () const
+				CAGE_FORCE_INLINE constexpr const Pair &operator * () const
 				{
 					return p;
 				}
@@ -76,10 +76,10 @@ namespace cage
 				Pair p;
 			};
 
-			constexpr auto begin() const { return Iterator<It1>(it1, start); }
-			constexpr auto end() const { return Iterator<It2>(it2, start); }
+			CAGE_FORCE_INLINE constexpr auto begin() const { return Iterator<It1>(it1, start); }
+			CAGE_FORCE_INLINE constexpr auto end() const { return Iterator<It2>(it2, start); }
 
-			constexpr Enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range) : Range(std::move(range)), it1(it1), it2(it2), start(start)
+			CAGE_FORCE_INLINE constexpr Enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range) : Range(std::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
@@ -93,7 +93,7 @@ namespace cage
 
 		// generic
 		template<class It1, class It2, class Counter, class Range = EnumerateNone>
-		inline constexpr auto enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range = EnumerateNone())
+		CAGE_FORCE_INLINE constexpr auto enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range = EnumerateNone())
 		{
 			return Enumerate<It1, It2, Counter, Range>(it1, it2, start, std::move(range));
 		}
@@ -101,28 +101,28 @@ namespace cage
 
 	// two iterators
 	template<class It1, class It2, class Counter = uintPtr>
-	inline constexpr auto enumerate(It1 it1, It2 it2, Counter start = Counter())
+	CAGE_FORCE_INLINE constexpr auto enumerate(It1 it1, It2 it2, Counter start = Counter())
 	{
 		return privat::enumerate(it1, it2, start);
 	}
 
 	// l-value range
 	template<class Range, class Counter = typename Range::size_type>
-	inline constexpr auto enumerate(Range &range)
+	CAGE_FORCE_INLINE constexpr auto enumerate(Range &range)
 	{
 		return privat::enumerate(range.begin(), range.end(), Counter());
 	}
 
 	// const range
 	template<class Range, class Counter = typename Range::size_type>
-	inline constexpr auto enumerate(const Range &range)
+	CAGE_FORCE_INLINE constexpr auto enumerate(const Range &range)
 	{
 		return privat::enumerate(range.begin(), range.end(), Counter());
 	}
 
 	// r-value range
 	template<class Range, class Counter = typename Range::size_type>
-	inline constexpr auto enumerate(Range &&range)
+	CAGE_FORCE_INLINE constexpr auto enumerate(Range &&range)
 	{
 		auto b = range.begin();
 		auto e = range.end();
@@ -132,7 +132,7 @@ namespace cage
 
 	// c array
 	template<class T, uintPtr N, class Counter = uintPtr>
-	inline constexpr auto enumerate(T (&range)[N])
+	CAGE_FORCE_INLINE constexpr auto enumerate(T (&range)[N])
 	{
 		return privat::enumerate(range + 0, range + N, Counter());
 	}

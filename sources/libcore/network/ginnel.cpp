@@ -268,7 +268,7 @@ namespace cage
 			MtuDiscovery = 43, // todo
 		};
 
-		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
+		static constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
 
 		constexpr uint16 longCmdsCount(uint32 totalSize)
 		{
@@ -640,7 +640,7 @@ namespace cage
 
 			void composePackets()
 			{
-				constexpr uint32 mtu = 1450;
+				static constexpr uint32 mtu = 1450;
 				MemoryBuffer buff;
 				buff.reserve(mtu);
 				Serializer ser(buff);
@@ -662,7 +662,7 @@ namespace cage
 					// generate packet header
 					if (buff.size() == 0)
 					{
-						constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
+						static constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
 						ser << c << a << g << e << connId;
 						currentPacketSeqn = sending.packetSeqn++;
 						ser << currentPacketSeqn;

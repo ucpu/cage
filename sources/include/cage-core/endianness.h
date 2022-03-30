@@ -7,19 +7,19 @@ namespace cage
 {
 	namespace endianness
 	{
-		inline constexpr bool little() noexcept
+		CAGE_FORCE_INLINE consteval bool little() noexcept
 		{
 			const uint32 one = 1;
 			return (const uint8 &)one == 1;
 		}
 
-		inline constexpr bool big() noexcept // network
+		CAGE_FORCE_INLINE consteval bool big() noexcept // network
 		{
 			return !little();
 		}
 
 		template<class T>
-		inline constexpr T change(T val) noexcept
+		CAGE_FORCE_INLINE constexpr T change(T val) noexcept
 		{
 			union U
 			{

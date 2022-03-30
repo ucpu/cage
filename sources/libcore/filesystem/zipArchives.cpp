@@ -237,8 +237,8 @@ namespace cage
 				uint32 cdSize = 0;
 				{ // validate that file is a valid zip archive
 					const uintPtr totalSize = src->size();
-					constexpr uintPtr MaxCommentSize = 0;
-					constexpr uintPtr MaxSize = MaxCommentSize + sizeof(EndOfCentralDirectoryRecord);
+					static constexpr uintPtr MaxCommentSize = 0;
+					static constexpr uintPtr MaxSize = MaxCommentSize + sizeof(EndOfCentralDirectoryRecord);
 					const uintPtr off = totalSize > MaxSize ? totalSize - MaxSize : 0; // start of the buffer relative to the entire file
 					const uintPtr size = min(totalSize, MaxSize);
 					src->seek(off);
@@ -249,7 +249,7 @@ namespace cage
 						const uintPtr pos = size - i; // position relative to start of the buffer
 						const char *p = b.data() + pos;
 						const EndOfCentralDirectoryRecord &e = *(const EndOfCentralDirectoryRecord *)p;
-						constexpr uint32 Signature = EndOfCentralDirectoryRecord().signature;
+						static constexpr uint32 Signature = EndOfCentralDirectoryRecord().signature;
 						if (e.signature != Signature)
 							continue; // incorrect signature
 						if ((uintPtr)e.offsetOfCD + e.sizeOfCD != off + pos)
@@ -290,7 +290,7 @@ namespace cage
 					{
 						CDFileHeaderEx e;
 						d >> (CDFileHeader &)e;
-						constexpr uint32 Signature = CDFileHeader().signature;
+						static constexpr uint32 Signature = CDFileHeader().signature;
 						if (e.signature != Signature)
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");

@@ -32,7 +32,7 @@ namespace cage
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
 
 	CAGE_CORE_API AssetScheme genAssetSchemeSkeletalAnimation();
-	constexpr uint32 AssetSchemeIndexSkeletalAnimation = 6;
+	static constexpr uint32 AssetSchemeIndexSkeletalAnimation = 6;
 
 	class CAGE_CORE_API SkeletonRig : private Immovable
 	{
@@ -53,7 +53,7 @@ namespace cage
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();
 
 	CAGE_CORE_API AssetScheme genAssetSchemeSkeletonRig();
-	constexpr uint32 AssetSchemeIndexSkeletonRig = 5;
+	static constexpr uint32 AssetSchemeIndexSkeletonRig = 5;
 
 	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes
 	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for individual bones for debug visualization
@@ -61,6 +61,7 @@ namespace cage
 
 	namespace detail
 	{
+		// animationOffset = 0..1 normalized offset, independent of animation speed or duration
 		CAGE_CORE_API Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
 	}
 }

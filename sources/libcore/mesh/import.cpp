@@ -46,9 +46,9 @@ namespace cage
 		int initializeAssimpLogger()
 		{
 #ifdef CAGE_DEBUG
-			constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
+			static constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
 #else
-			constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;
+			static constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;
 #endif
 			Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_FILE);
 			Assimp::DefaultLogger::get()->attachStream(new CageLogStream(SeverityEnum::Note), Assimp::Logger::Debugging);
@@ -159,7 +159,7 @@ namespace cage
 			const Vec3 c = box.center();
 			const Vec3 a = box.a - c;
 			const Vec3 b = box.b - c;
-			constexpr Real s = 1.1;
+			static constexpr Real s = 1.1;
 			return Aabb(a * s + c, b * s + c);
 		}
 
@@ -487,7 +487,7 @@ namespace cage
 
 				try
 				{
-					constexpr uint32 AssimpDefaultLoadFlags =
+					static constexpr uint32 AssimpDefaultLoadFlags =
 						aiProcess_JoinIdenticalVertices |
 						aiProcess_Triangulate |
 						aiProcess_LimitBoneWeights |
@@ -503,7 +503,7 @@ namespace cage
 						//aiProcess_SplitLargeModeles |
 						0;
 
-					constexpr uint32 AssimpBakeLoadFlags =
+					static constexpr uint32 AssimpBakeLoadFlags =
 						aiProcess_RemoveRedundantMaterials |
 						//aiProcess_FindInstances |
 						aiProcess_OptimizeMeshes |
@@ -1096,7 +1096,7 @@ namespace cage
 			template<MeshTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
 			{
-				constexpr const char *names[] = {
+				static constexpr const char *names[] = {
 					"",
 					"albedo",
 					"special",

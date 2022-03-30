@@ -159,7 +159,7 @@ namespace cage
 
 			uint32 encodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				constexpr bool SAFE[256] =
+				static constexpr bool SAFE[256] =
 				{
 					/*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
 					/* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -182,7 +182,7 @@ namespace cage
 					/* E */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 					/* F */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 				};
-				constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
+				static constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
 				char * pEnd = pStart;
 				const char * const SRC_END = pSrc + length;
 				for (; pSrc < SRC_END; ++pSrc)
@@ -201,7 +201,7 @@ namespace cage
 
 			uint32 decodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				constexpr char HEX2DEC[256] =
+				static constexpr char HEX2DEC[256] =
 				{
 					/*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
 					/* 0 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,

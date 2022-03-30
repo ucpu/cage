@@ -152,7 +152,7 @@ void writeLine(const String &other)
 	{
 		String b = other;
 		if (trim(split(b, "=")) == "ref")
-			CAGE_LOG(SeverityEnum::Note, "asset-processor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b).c_str()) + "'");
+			CAGE_LOG(SeverityEnum::Note, "asset-processor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b)) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));

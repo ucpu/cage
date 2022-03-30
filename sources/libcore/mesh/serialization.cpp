@@ -29,8 +29,8 @@ namespace cage
 		return flags;
 	}
 
-	constexpr uint32 Magic = uint32('p') + (uint32('o') << 8) + (uint32('l') << 16) + (uint32('y') << 24);
-	constexpr uint32 Version = 1;
+	static constexpr uint32 Magic = uint32('p') + (uint32('o') << 8) + (uint32('l') << 16) + (uint32('y') << 24);
+	static constexpr uint32 Version = 1;
 
 	void Mesh::importBuffer(PointerRange<const char> buffer)
 	{

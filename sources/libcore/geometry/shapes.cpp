@@ -355,7 +355,7 @@ namespace cage
 	Frustum::Corners Frustum::corners() const
 	{
 		const Mat4 invVP = inverse(viewProj);
-		constexpr const Vec3 clipCorners[8] = {
+		static constexpr const Vec3 clipCorners[8] = {
 			Vec3(-1, -1, -1),
 			Vec3(-1, -1, +1),
 			Vec3(-1, +1, -1),

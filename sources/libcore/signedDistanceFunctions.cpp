@@ -39,8 +39,8 @@ namespace cage
 
 	Real sdfTetrahedron(const Vec3 &pos, Real radius)
 	{
-		constexpr const Vec3 corners[4] = { Vec3(1,1,1), Vec3(1,-1,-1), Vec3(-1,1,-1), Vec3(-1,-1,1) };
-		constexpr const Triangle tris[4] = {
+		static constexpr const Vec3 corners[4] = { Vec3(1,1,1), Vec3(1,-1,-1), Vec3(-1,1,-1), Vec3(-1,-1,1) };
+		static constexpr const Triangle tris[4] = {
 			Triangle(corners[1], corners[3], corners[2]),
 			Triangle(corners[0], corners[2], corners[3]),
 			Triangle(corners[0], corners[3], corners[1]),
@@ -78,7 +78,7 @@ namespace cage
 
 	Real sdfHexagonalPrism(const Vec3 &pos, Real halfHeight, Real radius)
 	{
-		constexpr Vec3 k = Vec3(-0.8660254, 0.5, 0.57735);
+		static constexpr Vec3 k = Vec3(-0.8660254, 0.5, 0.57735);
 		Vec3 p = abs(pos);
 		p -= Vec3(2.0 * min(dot(Vec2(k), Vec2(p)), 0.0) * Vec2(k), 0);
 		const Vec2 d = Vec2(length(Vec2(p) - Vec2(clamp(p[0], -k[2] * radius, k[2] * radius), radius)) * sign(p[1] - radius), p[2] - halfHeight);
@@ -93,8 +93,8 @@ namespace cage
 
 	Real sdfKnot(const Vec3 &pos, Real scale, Real k)
 	{
-		constexpr Real TAU = Real::Pi() * 2;
-		constexpr Real norm = 2 / 14.4;
+		static constexpr Real TAU = Real::Pi() * 2;
+		static constexpr Real norm = 2 / 14.4;
 		scale *= norm;
 		Vec3 p = pos / scale;
 		const Real r = length(Vec2(p));

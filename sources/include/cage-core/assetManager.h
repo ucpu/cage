@@ -79,10 +79,10 @@ namespace cage
 
 	struct CAGE_CORE_API AssetPack {};
 	CAGE_CORE_API AssetScheme genAssetSchemePack();
-	constexpr uint32 AssetSchemeIndexPack = 0;
+	static constexpr uint32 AssetSchemeIndexPack = 0;
 
 	CAGE_CORE_API AssetScheme genAssetSchemeRaw();
-	constexpr uint32 AssetSchemeIndexRaw = 1;
+	static constexpr uint32 AssetSchemeIndexRaw = 1;
 }
 
 #endif // guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
