@@ -70,7 +70,7 @@ namespace cage
 				Vec3i resolution;
 				uint32 size = 0;
 				des >> resolution >> size;
-				CAGE_ASSERT(mip > 0 || resolution == data.resolution);
+				CAGE_ASSERT(mip > 0 || Vec2i(resolution) == Vec2i(data.resolution));
 				PointerRange<const char> values = des.read(size);
 				textureLoadLevel(+tex, data, mip, resolution, values);
 			}
