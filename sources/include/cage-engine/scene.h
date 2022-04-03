@@ -1,7 +1,7 @@
 #ifndef guard_scene_qedf4gh8hj555j4k
 #define guard_scene_qedf4gh8hj555j4k
 
-#include "screenSpaceEffectsProperties.h"
+#include "camera.h"
 
 namespace cage
 {
@@ -74,64 +74,10 @@ namespace cage
 		uint32 sceneMask = 1;
 	};
 
-	enum class CameraEffectsFlags : uint32
+	struct CAGE_ENGINE_API CameraComponent : public CameraProperties
 	{
-		None = 0,
-		AmbientOcclusion = 1 << 0,
-		DepthOfField = 1 << 1,
-		Bloom = 1 << 3,
-		EyeAdaptation = 1 << 4,
-		ToneMapping = 1 << 5,
-		GammaCorrection = 1 << 6,
-		AntiAliasing = 1 << 7,
-		Default = AmbientOcclusion | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
-	};
-
-	struct CAGE_ENGINE_API CameraEffects
-	{
-		ScreenSpaceAmbientOcclusion ssao;
-		ScreenSpaceBloom bloom;
-		ScreenSpaceEyeAdaptation eyeAdaptation;
-		ScreenSpaceTonemap tonemap;
-		ScreenSpaceDepthOfField depthOfField;
-		Real gamma = 2.2;
-		CameraEffectsFlags effects = CameraEffectsFlags::None;
-	};
-
-	enum class CameraClearFlags : uint32
-	{
-		None = 0,
-		Depth = 1 << 0,
-		Color = 1 << 1,
-		Stencil = 1 << 2,
-	};
-
-	enum class CameraTypeEnum : uint32
-	{
-		Perspective,
-		Orthographic,
-	};
-
-	struct CAGE_ENGINE_API CameraComponent : public CameraEffects
-	{
-		Vec3 ambientColor = Vec3();
-		Vec3 ambientDirectionalColor = Vec3(); // fake forward light affected by ssao
-		union CameraUnion
-		{
-			Vec2 orthographicSize;
-			Rads perspectiveFov = Degs(60);
-			CameraUnion() {}
-		} camera;
 		Texture *target = nullptr;
-		Real ambientIntensity = 1;
-		Real ambientDirectionalIntensity = 1;
-		Real near = 1, far = 100;
-		Real zeroParallaxDistance = 10;
-		Real eyeSeparation = 0.3;
 		sint32 cameraOrder = 0;
-		uint32 sceneMask = 1;
-		CameraClearFlags clear = CameraClearFlags::Depth | CameraClearFlags::Color;
-		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
 	};
 
 	struct CAGE_ENGINE_API SoundComponent

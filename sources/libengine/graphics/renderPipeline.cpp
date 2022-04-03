@@ -1,4 +1,5 @@
 #include <cage-core/skeletalAnimationPreparator.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/assetManager.h>
@@ -36,7 +37,6 @@ namespace cage
 {
 	namespace
 	{
-		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
@@ -129,22 +129,13 @@ namespace cage
 			Vec3 color;
 		};
 
-		struct DebugVisualizationInfo
-		{
-			TextureHandle texture;
-			Holder<ShaderProgram> shader;
-		};
-
 		// camera or light
-		struct CameraData
+		struct CameraData : public RenderPipelineCamera
 		{
-			CameraComponent camera;
 			Mat4 model;
 			Mat4 view;
 			Mat4 viewProj;
 			Mat4 proj;
-			Vec2i resolution;
-			Entity *entity = nullptr;
 
 			struct LodSelection
 			{
@@ -156,7 +147,7 @@ namespace cage
 			std::map<ModelShared, std::vector<ModelInstance>> opaque;
 			std::vector<ModelTranslucent> translucent;
 			std::vector<TextPrepare> texts;
-			std::vector<DebugVisualizationInfo> debugVisualizations;
+			std::vector<RenderPipelineDebugVisualization> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
 			std::map<Entity *, struct ShadowmapData> shadowmaps;
@@ -193,22 +184,24 @@ namespace cage
 			return uni;
 		}
 
-		void initializeLodSelection(CameraData &data, const CameraComponent &cam, const Mat4 &camModel)
+		CameraData::LodSelection initializeLodSelection(const CameraProperties &cam, const Mat4 &camModel, const Vec2i resolution)
 		{
+			CameraData::LodSelection res;
 			switch (cam.cameraType)
 			{
 			case CameraTypeEnum::Orthographic:
 			{
-				data.lodSelection.screenSize = cam.camera.orthographicSize[1] * data.resolution[1];
-				data.lodSelection.orthographic = true;
+				res.screenSize = cam.camera.orthographicSize[1] * resolution[1];
+				res.orthographic = true;
 			} break;
 			case CameraTypeEnum::Perspective:
-				data.lodSelection.screenSize = tan(cam.camera.perspectiveFov * 0.5) * 2 * data.resolution[1];
+				res.screenSize = tan(cam.camera.perspectiveFov * 0.5) * 2 * resolution[1];
 				break;
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
-			data.lodSelection.center = Vec3(camModel * Vec4(0, 0, 0, 1));
+			res.center = Vec3(camModel * Vec4(0, 0, 0, 1));
+			return res;
 		}
 
 		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<uint32, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
@@ -296,7 +289,6 @@ namespace cage
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
-			Holder<RenderQueue> globalRenderQueue;
 			EntityComponent *transformComponent = nullptr;
 			EntityComponent *prevTransformComponent = nullptr;
 			bool cnfRenderMissingModels = false;
@@ -324,7 +316,6 @@ namespace cage
 				CAGE_ASSERT(shaderBlit);
 
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets, confRenderSkeletonBones);
-				globalRenderQueue = newRenderQueue(Stringizer() + "pipeline_" + this);
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
 				cnfRenderMissingModels = confRenderMissingModels;
@@ -745,9 +736,9 @@ namespace cage
 				}
 			}
 
-			void renderShadowmap(ShadowmapData &data, uint32) const
+			void taskShadowmap(ShadowmapData &data, uint32) const
 			{
-				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
+				data.renderQueue = newRenderQueue(data.name);
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
@@ -780,7 +771,7 @@ namespace cage
 				renderQueue->resetAllTextures();
 				renderQueue->checkGlErrorDebug();
 
-				DebugVisualizationInfo deb;
+				RenderPipelineDebugVisualization deb;
 				deb.texture = data.shadowTexture.share();
 				deb.shader = shaderVisualizeDepth.share();
 				data.debugVisualizations.push_back(std::move(deb));
@@ -812,13 +803,12 @@ namespace cage
 					data.lighsBlock = data.renderQueue->universalUniformArray<UniLight>(lights);
 			}
 
-			void renderCamera(CameraData &data, uint32) const
+			void taskCamera(CameraData &data, uint32) const
 			{
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
-				data.resolution = data.camera.target ? data.camera.target->resolution() : windowResolution;
-				data.model = modelTransform(data.entity);
+				data.model = Mat4(data.transform);
 				data.view = inverse(data.model);
 				data.proj = [&]() {
 					switch (data.camera.cameraType)
@@ -833,31 +823,29 @@ namespace cage
 					}
 				}();
 				data.viewProj = data.proj * data.view;
-				initializeLodSelection(data, data.camera, data.model);
+				initializeLodSelection(data.camera, data.model, data.resolution);
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
-				const detail::StringBase<16> cameraName = Stringizer() + data.entity->name();
-				const String texturesName = data.camera.target ? (Stringizer() + data.entity->name()) : (Stringizer() + data.resolution);
 				TextureHandle colorTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + texturesName);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name);
 					renderQueue->bind(t, 0);
 					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					renderQueue->image2d(data.resolution, GL_RGB16F);
-					DebugVisualizationInfo deb;
+					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeColor.share();
 					data.debugVisualizations.push_back(std::move(deb));
 					return t;
 				}();
 				TextureHandle depthTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + texturesName);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name);
 					renderQueue->bind(t, 0);
 					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					renderQueue->image2d(data.resolution, GL_DEPTH_COMPONENT32);
-					DebugVisualizationInfo deb;
+					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeDepth.share();
 					data.debugVisualizations.push_back(std::move(deb));
@@ -882,8 +870,7 @@ namespace cage
 					viewport.viewport = Vec4(Vec2(), Vec2(data.resolution));
 					renderQueue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 				}
-				if (any(data.camera.clear))
-					renderQueue->clear(any(data.camera.clear & CameraClearFlags::Color), any(data.camera.clear & CameraClearFlags::Depth), any(data.camera.clear & CameraClearFlags::Stencil));
+				renderQueue->clear(true, true);
 
 				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
 				commonConfig.assets = assets;
@@ -899,8 +886,8 @@ namespace cage
 				if (any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion))
 				{
 					TextureHandle ssaoTexture = [&]() {
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + cameraName);
-						DebugVisualizationInfo deb;
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + data.name);
+						RenderPipelineDebugVisualization deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeMonochromatic.share();
 						data.debugVisualizations.push_back(std::move(deb));
@@ -962,7 +949,7 @@ namespace cage
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
-						cfg.cameraId = cameraName;
+						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
 						screenSpaceEyeAdaptationPrepare(cfg);
 					}
@@ -985,7 +972,7 @@ namespace cage
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
 						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
-						cfg.cameraId = cameraName;
+						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
 						screenSpaceEyeAdaptationApply(cfg);
@@ -1040,10 +1027,10 @@ namespace cage
 					renderQueue->bind(modelSquare);
 					renderQueue->bind(colorTexture, 0);
 					renderQueue->bind(shaderBlit);
-					if (data.camera.target)
+					if (data.target)
 					{ // blit to texture
 						renderQueue->bind(renderTarget);
-						renderQueue->colorTexture(0, Holder<Texture>(data.camera.target, nullptr));
+						renderQueue->colorTexture(0, data.target);
 						renderQueue->depthTexture({});
 						renderQueue->activeAttachments(1);
 						renderQueue->checkFrameBuffer();
@@ -1061,10 +1048,14 @@ namespace cage
 				}
 			}
 
-			Holder<AsyncTask> prepareShadowmap(const CameraData &camera, ShadowmapData &data) const
+			Holder<AsyncTask> prepareShadowmap(CameraData &camera, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) const
 			{
+				ShadowmapData &data = camera.shadowmaps[e];
+				data.name = Stringizer() + camera.name + "_shadowmap_" + e->name();
+				data.lightComponent = lc;
+				data.shadowmapComponent = sc;
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
-				data.model = modelTransform(data.entity);
+				data.model = modelTransform(e);
 				data.view = inverse(data.model);
 				data.proj = [&]() {
 					const auto &sc = data.shadowmapComponent;
@@ -1077,23 +1068,22 @@ namespace cage
 					}
 				}();
 				data.viewProj = data.proj * data.view;
-				initializeLodSelection(data, camera.camera, modelTransform(camera.entity));
-				constexpr Mat4 bias = Mat4(
+				initializeLodSelection(camera.camera, Mat4(camera.transform), data.resolution);
+				static constexpr Mat4 bias = Mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
 					0.0, 0.0, 0.5, 0.0,
 					0.5, 0.5, 0.5, 1.0);
 				data.shadowMat = bias * data.viewProj;
 
-				const String texName = Stringizer() + "shadowmap_" + data.entity->name() + "_" + camera.entity->name(); // should use stable pointer instead
 				if (data.lightComponent.lightType == LightTypeEnum::Point)
-					data.shadowTexture = provisionalGraphics->textureCube(texName);
+					data.shadowTexture = provisionalGraphics->textureCube(data.name);
 				else
-					data.shadowTexture = provisionalGraphics->texture(texName);
+					data.shadowTexture = provisionalGraphics->texture(data.name);
 
 				{
 					UniLight uni = initializeLightUni(data.model, data.lightComponent);
-					uni.parameters[2] = data.entity->value<ShadowmapComponent>().normalOffsetScale;
+					uni.parameters[2] = e->value<ShadowmapComponent>().normalOffsetScale;
 					uni.parameters[3] = [&]() {
 						switch (data.lightComponent.lightType)
 						{
@@ -1107,86 +1097,49 @@ namespace cage
 					data.lighsBlock = camera.renderQueue->universalUniformStruct<UniLight>(uni);
 				}
 
-				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::renderShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
+				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
 			}
 
-			void prepareCamera(CameraData &data) const
+			RenderPipelineResult prepareCamera(const RenderPipelineCamera &camera) const
 			{
-				data.renderQueue = newRenderQueue(Stringizer() + data.entity);
+				CAGE_ASSERT(!camera.name.empty());
+				CameraData data;
+				(RenderPipelineCamera &)data = camera;
+				data.renderQueue = newRenderQueue(camera.name + "_pipeline");
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
 					if ((lc.sceneMask & data.camera.sceneMask) == 0)
 						return;
-					ShadowmapData &shd = data.shadowmaps[e];
-					shd.entity = e;
-					shd.lightComponent = lc;
-					shd.shadowmapComponent = sc;
-					tasks.push_back(prepareShadowmap(data, shd));
+					tasks.push_back(prepareShadowmap(data, e, lc, sc));
 				}, +scene, false);
-				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::renderCamera>(this), Holder<CameraData>(&data, nullptr)));
-				for (auto &it : tasks)
+				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr)));
+				for (const auto &it : tasks)
 					it->wait();
-			}
-
-			void run()
-			{
-				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
-					return;
-				if (!reinitialize())
-					return;
-
-				std::vector<CameraData> cameras;
-				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
-					CameraData data;
-					data.camera = cam;
-					data.entity = e;
-					cameras.push_back(std::move(data));
-				}, +scene, false);
-				std::sort(cameras.begin(), cameras.end(), [](const CameraData &a, const CameraData &b) {
-					return std::make_pair(!a.camera.target, a.camera.cameraOrder) < std::make_pair(!b.camera.target, b.camera.cameraOrder);
-				});
-				tasksRunBlocking<CameraData>("prepare camera task", Delegate<void(CameraData &)>().bind<RenderPipelineImpl, &RenderPipelineImpl::prepareCamera>(this), cameras);
-
-				const Holder<RenderQueue> &renderQueue = globalRenderQueue;
-				std::vector<DebugVisualizationInfo> debugVisualizations;
-				for (CameraData &cam : cameras)
+				PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
+				for (auto &shm : data.shadowmaps)
 				{
-					for (auto &shm : cam.shadowmaps)
-					{
-						renderQueue->enqueue(std::move(shm.second.renderQueue));
-						for (DebugVisualizationInfo &di : shm.second.debugVisualizations)
-							debugVisualizations.push_back(std::move(di));
-					}
-					renderQueue->enqueue(std::move(cam.renderQueue));
-					for (DebugVisualizationInfo &di : cam.debugVisualizations)
+					data.renderQueue->enqueue(std::move(shm.second.renderQueue));
+					for (RenderPipelineDebugVisualization &di : shm.second.debugVisualizations)
 						debugVisualizations.push_back(std::move(di));
 				}
-
-				const uint32 cnt = numeric_cast<uint32>(debugVisualizations.size()) + 1;
-				const uint32 index = (confVisualizeBuffer % cnt + cnt) % cnt - 1;
-				if (index != m)
-				{
-					CAGE_ASSERT(index < debugVisualizations.size());
-					const auto graphicsDebugScope = renderQueue->namedScope("visualize buffer");
-					renderQueue->viewport(Vec2i(), windowResolution);
-					renderQueue->bind(modelSquare);
-					renderQueue->bind(debugVisualizations[index].texture, 0);
-					renderQueue->bind(debugVisualizations[index].shader);
-					renderQueue->uniform(0, 1.0 / Vec2(windowResolution));
-					renderQueue->draw();
-					renderQueue->resetAllState();
-					renderQueue->resetAllTextures();
-					renderQueue->checkGlErrorDebug();
-				}
+				RenderPipelineResult result;
+				result.debugVisualizations = std::move(debugVisualizations);
+				result.renderQueue = std::move(data.renderQueue);
+				return result;
 			}
 		};
 	}
 
-	Holder<RenderQueue> RenderPipeline::render()
+	bool RenderPipeline::reinitialize()
 	{
 		RenderPipelineImpl *impl = (RenderPipelineImpl *)this;
-		impl->run();
-		return impl->globalRenderQueue ? std::move(impl->globalRenderQueue) : newRenderQueue();
+		return impl->reinitialize();
+	}
+
+	RenderPipelineResult RenderPipeline::render(const RenderPipelineCamera &camera)
+	{
+		RenderPipelineImpl *impl = (RenderPipelineImpl *)this;
+		return impl->prepareCamera(camera);
 	}
 
 	Holder<RenderPipeline> newRenderPipeline(const RenderPipelineCreateConfig &config)

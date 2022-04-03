@@ -32,7 +32,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ScreenSpaceEyeAdaptationConfig : public ScreenSpaceCommonConfig, public ScreenSpaceEyeAdaptation
 	{
-		detail::StringBase<16> cameraId; // for synchronizing data across frames
+		String cameraId; // for synchronizing data across frames
 		TextureHandle inColor; // used in both passes
 		TextureHandle outColor; // used in the apply pass only
 	};
@@ -60,7 +60,6 @@ namespace cage
 	CAGE_ENGINE_API void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config);
 	CAGE_ENGINE_API void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config);
 	CAGE_ENGINE_API void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config);
-
 	CAGE_ENGINE_API void screenSpaceBloom(const ScreenSpaceBloomConfig &config);
 	CAGE_ENGINE_API void screenSpaceEyeAdaptationApply(const ScreenSpaceEyeAdaptationConfig &config);
 	CAGE_ENGINE_API void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config);
