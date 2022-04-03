@@ -3,15 +3,44 @@
 
 #include "math.h"
 #include "geometry.h"
-#include "meshMaterial.h"
 #include "imageImport.h"
 
 namespace cage
 {
+	struct CAGE_CORE_API MeshImportMaterial
+	{
+		// albedo rgb is linear, and NOT alpha-premultiplied
+		Vec4 albedoBase = Vec4(0);
+		Vec4 specialBase = Vec4(0);
+		Vec4 albedoMult = Vec4(1);
+		Vec4 specialMult = Vec4(1);
+	};
+
+	enum class MeshRenderFlags : uint32
+	{
+		None = 0,
+		Translucent = 1 << 0,
+		AlphaClip = 1 << 1,
+		TwoSided = 1 << 2,
+		DepthTest = 1 << 3,
+		DepthWrite = 1 << 4,
+		ShadowCast = 1 << 5,
+		Lighting = 1 << 6,
+	};
+	GCHL_ENUM_BITS(MeshRenderFlags);
+
+	enum class MeshImportTextureType : uint32
+	{
+		None = 0,
+		Albedo,
+		Special,
+		Normal,
+	};
+
 	struct CAGE_CORE_API MeshImportTexture
 	{
 		String name;
-		MeshTextureType type = MeshTextureType::None;
+		MeshImportTextureType type = MeshImportTextureType::None;
 		ImageImportResult images;
 	};
 
@@ -19,7 +48,8 @@ namespace cage
 	{
 		String objectName;
 		String materialName;
-		MeshMaterial material;
+		String shaderDepthName, shaderColorName;
+		MeshImportMaterial material;
 		Aabb boundingBox;
 		MeshRenderFlags renderFlags = MeshRenderFlags::None;
 		Holder<Mesh> mesh;
@@ -57,6 +87,11 @@ namespace cage
 	};
 
 	CAGE_CORE_API MeshImportResult meshImportFiles(const String &filename, const MeshImportConfig &config = {});
+
+	namespace detail
+	{
+		CAGE_CORE_API StringLiteral meshImportTextureTypeToString(MeshImportTextureType type);
+	}
 }
 
 #endif // guard_meshImport_h_rtkusd4g4b78fd

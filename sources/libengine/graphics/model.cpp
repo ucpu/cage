@@ -1,4 +1,5 @@
 #include <cage-core/mesh.h>
+#include <cage-core/meshImport.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
 
@@ -21,7 +22,7 @@ namespace cage
 
 		public:
 			Aabb box = Aabb::Universe();
-			uint32 textures[MaxTexturesCountPerMaterial];
+			uint32 textures[MaxTexturesCountPerMaterial] = {};
 			uint32 id = 0;
 			uint32 vbo = 0;
 			uint32 verticesCount = 0;
@@ -35,8 +36,6 @@ namespace cage
 			ModelImpl()
 			{
 				flags = defaultFlags;
-				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-					textures[i] = 0;
 				glGenVertexArrays(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();

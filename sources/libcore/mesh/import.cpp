@@ -959,9 +959,9 @@ namespace cage
 			}
 
 			using Textures = PointerRangeHolder<MeshImportTexture>;
-			static constexpr MeshTextureType RoughTex = (MeshTextureType)1001;
-			static constexpr MeshTextureType MetalTex = (MeshTextureType)1002;
-			static constexpr MeshTextureType RoughMetalBgTex = (MeshTextureType)1003;
+			static constexpr MeshImportTextureType RoughTex = (MeshImportTextureType)1001;
+			static constexpr MeshImportTextureType MetalTex = (MeshImportTextureType)1002;
+			static constexpr MeshImportTextureType RoughMetalBgTex = (MeshImportTextureType)1003;
 
 			static void pickChannel(MeshImportTexture &textures, uint32 channel)
 			{
@@ -1048,7 +1048,7 @@ namespace cage
 				{
 					CAGE_ASSERT(input[0].images.parts.size() == 1);
 					CAGE_ASSERT(input[0].images.parts[0].image->channels() == 1);
-					input[0].type = MeshTextureType::Special;
+					input[0].type = MeshImportTextureType::Special;
 					output.push_back(std::move(input[0]));
 					return;
 				}
@@ -1061,7 +1061,7 @@ namespace cage
 					Holder<Image> arr[2];
 					arr[1] = std::move(input[0].images.parts[0].image);
 					input[0].images.parts[0].image = imageChannelsJoin(arr);
-					input[0].type = MeshTextureType::Special;
+					input[0].type = MeshImportTextureType::Special;
 					output.push_back(std::move(input[0]));
 					return;
 				}
@@ -1085,7 +1085,7 @@ namespace cage
 					const String base = split(input[0].name, "?");
 					split(input[1].name, "?");
 					res.name = Stringizer() + base + "?special_" + input[0].name + "_" + input[1].name;
-					res.type = MeshTextureType::Special;
+					res.type = MeshImportTextureType::Special;
 					output.push_back(std::move(res));
 					return;
 				}
@@ -1093,7 +1093,19 @@ namespace cage
 				CAGE_THROW_CRITICAL(Exception, "impossible combination of roughness metallic textures for combining into special texture");
 			}
 
-			template<MeshTextureType Type>
+			String convertPath(const String &pathBase, String n) const
+			{
+				if (n.empty())
+					return n;
+				if (n[0] == '/')
+					n = pathJoin(config.rootPath, trim(n, true, false, "/"));
+				else
+					n = pathJoinUnchecked(pathBase, n);
+				n = pathToAbs(n);
+				return n;
+			}
+
+			template<MeshImportTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
 			{
 				static constexpr const char *names[] = {
@@ -1103,13 +1115,9 @@ namespace cage
 					"normal",
 				};
 				String n = ini->getString("textures", names[(uint32)Type]);
+				n = convertPath(pathBase, n);
 				if (n.empty())
 					return;
-				if (n[0] == '/')
-					n = pathJoin(config.rootPath, trim(n, true, false, "/"));
-				else
-					n = pathJoinUnchecked(pathBase, n);
-				n = pathToAbs(n);
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
 				MeshImportTexture t;
@@ -1118,7 +1126,7 @@ namespace cage
 				textures.push_back(std::move(t));
 			}
 
-			template<aiTextureType AssimpType, MeshTextureType CageType>
+			template<aiTextureType AssimpType, MeshImportTextureType CageType>
 			bool loadTextureAssimp(const aiMaterial *mat, Textures &textures)
 			{
 				const uint32 texCount = mat->GetTextureCount(AssimpType);
@@ -1212,9 +1220,9 @@ namespace cage
 
 				Textures textures;
 				const String pathBase = pathExtractDirectory(path);
-				loadTextureCage<MeshTextureType::Albedo>(pathBase, +ini, textures);
-				loadTextureCage<MeshTextureType::Special>(pathBase, +ini, textures);
-				loadTextureCage<MeshTextureType::Normal>(pathBase, +ini, textures);
+				loadTextureCage<MeshImportTextureType::Albedo>(pathBase, +ini, textures);
+				loadTextureCage<MeshImportTextureType::Special>(pathBase, +ini, textures);
+				loadTextureCage<MeshImportTextureType::Normal>(pathBase, +ini, textures);
 				part.textures = std::move(textures);
 
 				for (const String &n : ini->items("flags"))
@@ -1255,9 +1263,21 @@ namespace cage
 						part.renderFlags &= ~MeshRenderFlags::ShadowCast;
 						continue;
 					}
+					if (v == "noCulling")
+					{
+						part.boundingBox = Aabb::Universe();
+						continue;
+					}
 					CAGE_LOG_THROW(Stringizer() + "provided flag: '" + v + "'");
 					CAGE_THROW_ERROR(Exception, "unknown material flag");
 				}
+
+				part.shaderDepthName = convertPath(pathBase, ini->getString("shaders", "depth"));
+				if (config.verbose && !part.shaderDepthName.empty())
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using depth shader: " + part.shaderDepthName);
+				part.shaderColorName = convertPath(pathBase, ini->getString("shaders", "color"));
+				if (config.verbose && !part.shaderColorName.empty())
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using color shader: " + part.shaderColorName);
 
 				ini->checkUnused();
 			}
@@ -1307,11 +1327,11 @@ namespace cage
 						part.renderFlags |= MeshRenderFlags::Translucent;
 					}
 				};
-				if (loadTextureAssimp<aiTextureType_BASE_COLOR, MeshTextureType::Albedo>(mat, textures))
+				if (loadTextureAssimp<aiTextureType_BASE_COLOR, MeshImportTextureType::Albedo>(mat, textures))
 				{
 					albedoCheckAlpha(aiTextureType_BASE_COLOR);
 				}
-				else if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshTextureType::Albedo>(mat, textures))
+				else if (loadTextureAssimp<aiTextureType_DIFFUSE, MeshImportTextureType::Albedo>(mat, textures))
 				{
 					albedoCheckAlpha(aiTextureType_DIFFUSE);
 				}
@@ -1348,7 +1368,7 @@ namespace cage
 					convertSpecialTextures(texs, textures);
 					specialCheckFactors();
 				}
-				else if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshTextureType::Special>(mat, textures))
+				else if (!loadTextureAssimp<aiTextureType_SPECULAR, MeshImportTextureType::Special>(mat, textures))
 				{
 					aiColor3D spec = aiColor3D(0);
 					mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
@@ -1368,8 +1388,8 @@ namespace cage
 				}
 
 				// normal map
-				loadTextureAssimp<aiTextureType_HEIGHT, MeshTextureType::Normal>(mat, textures);
-				loadTextureAssimp<aiTextureType_NORMALS, MeshTextureType::Normal>(mat, textures);
+				loadTextureAssimp<aiTextureType_HEIGHT, MeshImportTextureType::Normal>(mat, textures);
+				loadTextureAssimp<aiTextureType_NORMALS, MeshImportTextureType::Normal>(mat, textures);
 
 				// two sided
 				{
@@ -1517,5 +1537,20 @@ namespace cage
 		}
 
 		return result;
+	}
+
+	namespace detail
+	{
+		StringLiteral meshImportTextureTypeToString(MeshImportTextureType type)
+		{
+			switch (type)
+			{
+			case MeshImportTextureType::None: return "none";
+			case MeshImportTextureType::Albedo: return "albedo";
+			case MeshImportTextureType::Special: return "special";
+			case MeshImportTextureType::Normal: return "normal";
+			default: return "unknown";
+			}
+		}
 	}
 }

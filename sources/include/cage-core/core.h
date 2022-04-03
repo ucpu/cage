@@ -190,6 +190,14 @@ namespace cage
 	struct MeshGenerateTangentsConfig;
 	struct MeshExportObjConfig;
 	class Mesh;
+	struct MeshImportMaterial;
+	enum class MeshRenderFlags : uint32;
+	enum class MeshImportTextureType : uint32;
+	struct MeshImportTexture;
+	struct MeshImportPart;
+	struct MeshImportAnimation;
+	struct MeshImportResult;
+	struct MeshImportConfig;
 	struct DiscoveryPeer;
 	class DiscoveryClient;
 	class DiscoveryServer;

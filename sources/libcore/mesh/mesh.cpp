@@ -1,7 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
-#include <cage-core/meshMaterial.h>
 #include <cage-core/macros.h>
 #include "mesh.h"
 
@@ -281,18 +280,6 @@ namespace cage
 			case MeshTypeEnum::Points: return "points";
 			case MeshTypeEnum::Lines: return "lines";
 			case MeshTypeEnum::Triangles: return "triangles";
-			default: return "unknown";
-			}
-		}
-
-		StringLiteral meshTextureTypeToString(MeshTextureType type)
-		{
-			switch (type)
-			{
-			case MeshTextureType::None: return "none";
-			case MeshTextureType::Albedo: return "albedo";
-			case MeshTextureType::Special: return "special";
-			case MeshTextureType::Normal: return "normal";
 			default: return "unknown";
 			}
 		}

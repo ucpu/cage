@@ -32,6 +32,8 @@ namespace cage
 			msh->setTextureNames(data.textureNames);
 
 			msh->flags = data.renderFlags;
+			msh->shaderDepthName = data.shaderDepthName;
+			msh->shaderColorName = data.shaderColorName;
 			msh->skeletonBones = data.skeletonBones;
 
 			msh->setDebugName(context->textName); // last command to apply it to all subresources

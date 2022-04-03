@@ -2,7 +2,6 @@
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
 #include <cage-core/geometry.h>
-#include <cage-core/meshMaterial.h>
 
 #include "core.h"
 
@@ -66,12 +65,13 @@ namespace cage
 	{
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
+		uint32 shaderDepthName, shaderColorName;
 		uint32 materialSize; // bytes
 		uint32 skeletonBones;
 		MeshRenderFlags renderFlags;
 
 		// follows:
-		// material (may or may not be the MeshMaterial)
+		// material (may or may not be the MeshImportMaterial)
 		// serialized mesh
 	};
 

@@ -51,7 +51,7 @@ void info(const String &src)
 		for (const auto &tx : pt.textures)
 		{
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture name: " + tx.name);
-			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + detail::meshTextureTypeToString(tx.type));
+			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + detail::meshImportTextureTypeToString(tx.type));
 			imageInfo(tx.images);
 		}
 	}

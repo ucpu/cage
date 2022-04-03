@@ -1,7 +1,10 @@
 
 struct UniViewport
 {
-	mat4 vpInv; // viewProj inverse
+	mat4 vMat; // view matrix
+	mat4 pMat; // proj matrix
+	mat4 vpMat; // viewProj matrix
+	mat4 vpInv; // viewProj inverse matrix
 	vec4 eyePos;
 	vec4 eyeDir;
 	vec4 viewport; // x, y, w, h

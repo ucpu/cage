@@ -4,6 +4,7 @@
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
+#include <cage-core/meshImport.h>
 #include <cage-core/profiling.h>
 #include <cage-core/textPack.h>
 #include <cage-core/geometry.h>
@@ -62,7 +63,10 @@ namespace cage
 
 		struct UniViewport
 		{
-			Mat4 vpInv; // viewProj inverse
+			Mat4 vMat; // view matrix
+			Mat4 pMat; // proj matrix
+			Mat4 vpMat; // viewProj matrix
+			Mat4 vpInv; // viewProj inverse matrix
 			Vec4 eyePos;
 			Vec4 eyeDir;
 			Vec4 viewport; // x, y, w, h
@@ -342,10 +346,24 @@ namespace cage
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
-				if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandardAlphaClip : shaderDepthAlphaClip);
+				if constexpr (RenderMode == RenderModeEnum::Standard)
+				{ // color
+					if (sh.mesh->shaderColorName)
+						renderQueue->bind(assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderColorName));
+					else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+						renderQueue->bind(shaderStandardAlphaClip);
+					else
+						renderQueue->bind(shaderStandard);
+				}
 				else
-					renderQueue->bind(RenderMode == RenderModeEnum::Standard ? shaderStandard : shaderDepth);
+				{ // depth
+					if (sh.mesh->shaderDepthName)
+						renderQueue->bind(assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderDepthName));
+					else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+						renderQueue->bind(shaderDepthAlphaClip);
+					else
+						renderQueue->bind(shaderDepth);
+				}
 				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
 				if constexpr (RenderMode == RenderModeEnum::Standard)
@@ -862,6 +880,9 @@ namespace cage
 				renderQueue->viewport(Vec2i(), data.resolution);
 				{
 					UniViewport viewport;
+					viewport.vMat = data.view;
+					viewport.pMat = data.proj;
+					viewport.vpMat = data.viewProj;
 					viewport.vpInv = inverse(data.viewProj);
 					viewport.eyePos = data.model * Vec4(0, 0, 0, 1);
 					viewport.eyeDir = data.model * Vec4(0, 0, -1, 0);

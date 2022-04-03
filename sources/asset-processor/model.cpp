@@ -118,7 +118,7 @@ namespace
 		}
 	}
 
-	void printMaterial(const ModelHeader &dsm, const MeshMaterial &mat)
+	void printMaterial(const ModelHeader &dsm, const MeshImportMaterial &mat)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoBase: " + mat.albedoBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
@@ -138,7 +138,7 @@ namespace
 		}
 	}
 
-	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshRenderFlags renderFlags, const MeshMaterial &mat)
+	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshRenderFlags renderFlags, const MeshImportMaterial &mat)
 	{
 		{
 			uint32 texCount = 0;
@@ -162,7 +162,7 @@ namespace
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
 
-	String convertTexturePath(const String &input)
+	String convertReferencePath(const String &input)
 	{
 		String detail;
 		String p = input;
@@ -227,38 +227,47 @@ void processModel()
 
 	ModelHeader dsm;
 	detail::memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(MeshMaterial);
+	dsm.materialSize = sizeof(MeshImportMaterial);
 	dsm.renderFlags = part.renderFlags;
 	dsm.box = part.boundingBox;
 	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
 
 	for (const auto &t : part.textures)
 	{
-		const String p = convertTexturePath(t.name);
+		const String p = convertReferencePath(t.name);
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{
-		case MeshTextureType::Albedo:
+		case MeshImportTextureType::Albedo:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
 			break;
-		case MeshTextureType::Special:
+		case MeshImportTextureType::Special:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
 			break;
-		case MeshTextureType::Normal:
+		case MeshImportTextureType::Normal:
 			dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
 			break;
 		}
 	}
 
-	const MeshMaterial &mat = part.material;
+	if (!part.shaderDepthName.empty())
+		dsm.shaderDepthName = HashString(convertReferencePath(part.shaderDepthName));
+	if (!part.shaderColorName.empty())
+		dsm.shaderColorName = HashString(convertReferencePath(part.shaderColorName));
+
+	const MeshImportMaterial &mat = part.material;
 	printMaterial(dsm, mat);
 	validateFlags(dsm, flags, part.renderFlags, mat);
+
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "bounding box: " + part.boundingBox);
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
 	AssetHeader h = initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
+	h.dependenciesCount += !!dsm.shaderDepthName;
+	h.dependenciesCount += !!dsm.shaderColorName;
 
 	cage::MemoryBuffer buffer;
 	Serializer ser(buffer);
@@ -274,6 +283,10 @@ void processModel()
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			f->write(bufferView(dsm.textureNames[i]));
+	if (dsm.shaderDepthName)
+		f->write(bufferView(dsm.shaderDepthName));
+	if (dsm.shaderColorName)
+		f->write(bufferView(dsm.shaderColorName));
 	f->write(compressed);
 	f->close();
 }

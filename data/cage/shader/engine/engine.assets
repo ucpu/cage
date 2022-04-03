@@ -8,5 +8,6 @@ scheme = shader
 blit.glsl
 depth.glsl
 depthAlphaClip.glsl
+skybox.glsl
 standard.glsl
 standardAlphaClip.glsl
