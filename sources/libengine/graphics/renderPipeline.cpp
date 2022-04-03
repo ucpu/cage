@@ -1,7 +1,7 @@
 #include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/entitiesVisitor.h>
-#include <cage-core/swapBufferGuard.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
 #include <cage-core/textPack.h>
@@ -15,17 +15,16 @@
 #include <cage-engine/provisionalHandles.h>
 #include <cage-engine/screenSpaceEffects.h>
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/renderQueue.h>
-#include <cage-engine/window.h>
-#include <cage-engine/opengl.h> // all the constants
-
+#include <cage-engine/renderPipeline.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/renderObject.h>
+#include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
+#include <cage-engine/window.h>
+#include <cage-engine/opengl.h> // all the constants
 #include <cage-engine/model.h>
+#include <cage-engine/scene.h>
 #include <cage-engine/font.h>
-
-#include "graphics.h"
 
 #include <algorithm>
 #include <optional>
@@ -289,52 +288,48 @@ namespace cage
 			Camera,
 		};
 
-		struct Preparator
+		struct RenderPipelineImpl : public RenderPipeline, public RenderPipelineCreateConfig
 		{
-			const bool cnfRenderMissingModels = confRenderMissingModels;
-			const bool cnfRenderSkeletonBones = confRenderSkeletonBones;
-			const sint32 cnfVisualizeBuffer = confVisualizeBuffer;
-			const Holder<ProvisionalGraphics> &provisionalData = graphics->provisionalData;
-			const Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(engineAssets(), cnfRenderSkeletonBones);
-			const Vec2i windowResolution = engineWindow()->resolution();
-			const uint32 frameIndex = graphics->frameIndex++;
-			const EmitBuffer &emit;
-			const uint64 prepareTime;
-			const Real interpolationFactor;
-			EntityComponent *const transformComponent = nullptr;
-			EntityComponent *const prevTransformComponent = nullptr;
-
 			Holder<Model> modelSquare, modelBone;
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthAlphaClip, shaderStandardAlphaClip;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
 
-			Preparator(const EmitBuffer &emit, uint64 time)
-				: emit(emit),
-				prepareTime(graphics->itc(emit.time, time, controlThread().updatePeriod())),
-				interpolationFactor(saturate(Real(prepareTime - emit.time) / controlThread().updatePeriod())),
-				transformComponent(emit.scene->component<TransformComponent>()),
-				prevTransformComponent(emit.scene->componentsByType(detail::typeIndex<TransformComponent>())[1])
+			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
+			Holder<RenderQueue> globalRenderQueue;
+			EntityComponent *transformComponent = nullptr;
+			EntityComponent *prevTransformComponent = nullptr;
+			bool cnfRenderMissingModels = false;
+			bool cnfRenderSkeletonBones = false;
+
+			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
 			{}
 
-			bool loadGeneralAssets()
+			bool reinitialize()
 			{
-				const AssetManager *ass = engineAssets();
-				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
 					return false;
 
-				modelSquare = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-				modelBone = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
-				shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
-				shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
-				shaderStandard = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
-				shaderDepthAlphaClip = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depthAlphaClip.glsl"));
-				shaderStandardAlphaClip = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standardAlphaClip.glsl"));
-				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/color.glsl"));
-				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/depth.glsl"));
-				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl"));
-				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
+				shaderBlit = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
+				shaderDepth = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
+				shaderStandard = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
+				shaderDepthAlphaClip = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depthAlphaClip.glsl"));
+				shaderStandardAlphaClip = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standardAlphaClip.glsl"));
+				shaderVisualizeColor = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/color.glsl"));
+				shaderVisualizeDepth = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/depth.glsl"));
+				shaderVisualizeMonochromatic = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl"));
+				shaderFont = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				CAGE_ASSERT(shaderBlit);
+
+				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets, confRenderSkeletonBones);
+				globalRenderQueue = newRenderQueue(Stringizer() + "pipeline_" + this);
+				transformComponent = scene->component<TransformComponent>();
+				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
+				cnfRenderMissingModels = confRenderMissingModels;
+				cnfRenderSkeletonBones = confRenderSkeletonBones;
+
 				return true;
 			}
 
@@ -371,7 +366,7 @@ namespace cage
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const uint32 n = sh.mesh->textureName(i);
-					textures[i] = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(n);
+					textures[i] = assets->tryGet<AssetSchemeIndexTexture, Texture>(n);
 					if (textures[i])
 					{
 						switch (textures[i]->target())
@@ -622,8 +617,8 @@ namespace cage
 						pt->speed = 1;
 					if (!pt->offset.valid())
 						pt->offset = 0;
-					if (Holder<Texture> tex = engineAssets()->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureName(0)))
-						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, prepareTime, pt->startTime, pt->speed, pt->offset);
+					if (Holder<Texture> tex = assets->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureName(0)))
+						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, time, pt->startTime, pt->speed, pt->offset);
 				}
 
 				if (ps)
@@ -641,10 +636,10 @@ namespace cage
 
 				if (ps)
 				{
-					Holder<SkeletalAnimation> anim = engineAssets()->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name);
+					Holder<SkeletalAnimation> anim = assets->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name);
 					if (anim)
 					{
-						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, prepareTime, ps->startTime, ps->speed, ps->offset);
+						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, time, ps->startTime, ps->speed, ps->offset);
 						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
 						pr.skeletalAnimation->prepare();
 						pr.skeletal = true;
@@ -683,7 +678,7 @@ namespace cage
 				for (uint32 it : object->models(lod))
 				{
 					ModelPrepare pr = prepare.clone();
-					pr.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(it);
+					pr.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(it);
 					prepareModel<PrepareMode>(data, pr, object.share());
 				}
 			}
@@ -700,12 +695,12 @@ namespace cage
 					prepare.model = modelTransform(e);
 					prepare.uni = initializeMeshUni(data, prepare.model);
 					prepare.frustum = Frustum(prepare.uni.mvpMat);
-					if (Holder<RenderObject> obj = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
+					if (Holder<RenderObject> obj = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
 					{
 						prepareObject<PrepareMode>(data, prepare, std::move(obj));
 						return;
 					}
-					if (Holder<Model> mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(rc.object))
+					if (Holder<Model> mesh = assets->tryGet<AssetSchemeIndexModel, Model>(rc.object))
 					{
 						prepare.mesh = std::move(mesh);
 						prepareModel<PrepareMode>(data, prepare);
@@ -713,11 +708,11 @@ namespace cage
 					}
 					if (cnfRenderMissingModels)
 					{
-						prepare.mesh = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+						prepare.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
 						prepareModel<PrepareMode>(data, prepare);
 						return;
 					}
-				}, +emit.scene, false);
+				}, +scene, false);
 
 				if constexpr (PrepareMode == PrepareModeEnum::Camera)
 				{
@@ -731,10 +726,10 @@ namespace cage
 						TextPrepare prepare;
 						if (!pt.font)
 							pt.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
-						prepare.font = engineAssets()->tryGet<AssetSchemeIndexFont, Font>(pt.font);
+						prepare.font = assets->tryGet<AssetSchemeIndexFont, Font>(pt.font);
 						if (!prepare.font)
 							return;
-						const String str = loadFormattedString(engineAssets(), pt.assetName, pt.textName, pt.value);
+						const String str = loadFormattedString(assets, pt.assetName, pt.textName, pt.value);
 						const uint32 count = prepare.font->glyphsCount(str);
 						if (count == 0)
 							return;
@@ -746,7 +741,7 @@ namespace cage
 						prepare.format.wrapWidth = size[0];
 						prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
 						data.texts.push_back(std::move(prepare));
-					}, +emit.scene, false);
+					}, +scene, false);
 				}
 			}
 
@@ -765,7 +760,7 @@ namespace cage
 				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				renderQueue->checkGlErrorDebug();
 
-				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
 				renderQueue->clearFrameBuffer();
 				renderQueue->depthTexture(data.shadowTexture);
@@ -811,7 +806,7 @@ namespace cage
 						}
 					}();
 					lights.push_back(uni);
-				}, +emit.scene, false);
+				}, +scene, false);
 				data.lightsCount = numeric_cast<uint32>(lights.size());
 				if (data.lightsCount > 0)
 					data.lighsBlock = data.renderQueue->universalUniformArray<UniLight>(lights);
@@ -845,7 +840,7 @@ namespace cage
 				const detail::StringBase<16> cameraName = Stringizer() + data.entity->name();
 				const String texturesName = data.camera.target ? (Stringizer() + data.entity->name()) : (Stringizer() + data.resolution);
 				TextureHandle colorTexture = [&]() {
-					TextureHandle t = provisionalData->texture(Stringizer() + "colorTarget_" + texturesName);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + texturesName);
 					renderQueue->bind(t, 0);
 					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -857,7 +852,7 @@ namespace cage
 					return t;
 				}();
 				TextureHandle depthTexture = [&]() {
-					TextureHandle t = provisionalData->texture(Stringizer() + "depthTarget_" + texturesName);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + texturesName);
 					renderQueue->bind(t, 0);
 					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -868,7 +863,7 @@ namespace cage
 					data.debugVisualizations.push_back(std::move(deb));
 					return t;
 				}();
-				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("renderTarget");
+				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
 				renderQueue->colorTexture(0, colorTexture);
 				renderQueue->depthTexture(depthTexture);
@@ -891,8 +886,8 @@ namespace cage
 					renderQueue->clear(any(data.camera.clear & CameraClearFlags::Color), any(data.camera.clear & CameraClearFlags::Depth), any(data.camera.clear & CameraClearFlags::Stencil));
 
 				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
-				commonConfig.assets = engineAssets();
-				commonConfig.provisionals = +provisionalData;
+				commonConfig.assets = assets;
+				commonConfig.provisionals = +provisionalGraphics;
 				commonConfig.queue = +renderQueue;
 				commonConfig.resolution = data.resolution;
 
@@ -904,7 +899,7 @@ namespace cage
 				if (any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion))
 				{
 					TextureHandle ssaoTexture = [&]() {
-						TextureHandle t = provisionalData->texture(Stringizer() + "ssao_" + cameraName);
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + cameraName);
 						DebugVisualizationInfo deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeMonochromatic.share();
@@ -939,7 +934,7 @@ namespace cage
 
 					TextureHandle texSource = colorTexture;
 					TextureHandle texTarget = [&]() {
-						TextureHandle t = provisionalData->texture(Stringizer() + "intermediateTarget_" + data.resolution);
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution);
 						renderQueue->bind(t, 0);
 						renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
 						renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -1029,7 +1024,7 @@ namespace cage
 						renderQueue->bind(modelSquare);
 						renderQueue->bind(texSource, 0);
 						renderQueue->bind(shaderBlit);
-						renderQueue->bind(provisionalData->frameBufferDraw("renderTarget"));
+						renderQueue->bind(provisionalGraphics->frameBufferDraw("renderTarget"));
 						renderQueue->colorTexture(0, colorTexture);
 						renderQueue->activeAttachments(1);
 						renderQueue->draw();
@@ -1092,9 +1087,9 @@ namespace cage
 
 				const String texName = Stringizer() + "shadowmap_" + data.entity->name() + "_" + camera.entity->name(); // should use stable pointer instead
 				if (data.lightComponent.lightType == LightTypeEnum::Point)
-					data.shadowTexture = provisionalData->textureCube(texName);
+					data.shadowTexture = provisionalGraphics->textureCube(texName);
 				else
-					data.shadowTexture = provisionalData->texture(texName);
+					data.shadowTexture = provisionalGraphics->texture(texName);
 
 				{
 					UniLight uni = initializeLightUni(data.model, data.lightComponent);
@@ -1112,7 +1107,7 @@ namespace cage
 					data.lighsBlock = camera.renderQueue->universalUniformStruct<UniLight>(uni);
 				}
 
-				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<Preparator, &Preparator::renderShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
+				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::renderShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
 			}
 
 			void prepareCamera(CameraData &data) const
@@ -1127,8 +1122,8 @@ namespace cage
 					shd.lightComponent = lc;
 					shd.shadowmapComponent = sc;
 					tasks.push_back(prepareShadowmap(data, shd));
-				}, +emit.scene, false);
-				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<Preparator, &Preparator::renderCamera>(this), Holder<CameraData>(&data, nullptr)));
+				}, +scene, false);
+				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::renderCamera>(this), Holder<CameraData>(&data, nullptr)));
 				for (auto &it : tasks)
 					it->wait();
 			}
@@ -1137,7 +1132,7 @@ namespace cage
 			{
 				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
 					return;
-				if (!loadGeneralAssets())
+				if (!reinitialize())
 					return;
 
 				std::vector<CameraData> cameras;
@@ -1146,13 +1141,13 @@ namespace cage
 					data.camera = cam;
 					data.entity = e;
 					cameras.push_back(std::move(data));
-				}, +emit.scene, false);
+				}, +scene, false);
 				std::sort(cameras.begin(), cameras.end(), [](const CameraData &a, const CameraData &b) {
 					return std::make_pair(!a.camera.target, a.camera.cameraOrder) < std::make_pair(!b.camera.target, b.camera.cameraOrder);
 				});
-				tasksRunBlocking<CameraData>("prepare camera task", Delegate<void(CameraData &)>().bind<Preparator, &Preparator::prepareCamera>(this), cameras);
+				tasksRunBlocking<CameraData>("prepare camera task", Delegate<void(CameraData &)>().bind<RenderPipelineImpl, &RenderPipelineImpl::prepareCamera>(this), cameras);
 
-				Holder<RenderQueue> &renderQueue = graphics->renderQueue;
+				const Holder<RenderQueue> &renderQueue = globalRenderQueue;
 				std::vector<DebugVisualizationInfo> debugVisualizations;
 				for (CameraData &cam : cameras)
 				{
@@ -1168,7 +1163,7 @@ namespace cage
 				}
 
 				const uint32 cnt = numeric_cast<uint32>(debugVisualizations.size()) + 1;
-				const uint32 index = (cnfVisualizeBuffer % cnt + cnt) % cnt - 1;
+				const uint32 index = (confVisualizeBuffer % cnt + cnt) % cnt - 1;
 				if (index != m)
 				{
 					CAGE_ASSERT(index < debugVisualizations.size());
@@ -1187,21 +1182,15 @@ namespace cage
 		};
 	}
 
-	void Graphics::prepare(uint64 time)
+	Holder<RenderQueue> RenderPipeline::render()
 	{
-		renderQueue->resetQueue();
+		RenderPipelineImpl *impl = (RenderPipelineImpl *)this;
+		impl->run();
+		return impl->globalRenderQueue ? std::move(impl->globalRenderQueue) : newRenderQueue();
+	}
 
-		if (auto lock = emitBuffersGuard->read())
-		{
-			Preparator prep(emitBuffers[lock.index()], time);
-			prep.run();
-		}
-
-		renderQueue->resetFrameBuffer();
-		renderQueue->resetAllTextures();
-		renderQueue->resetAllState();
-
-		outputDrawCalls = renderQueue->drawsCount();
-		outputDrawPrimitives = renderQueue->primitivesCount();
+	Holder<RenderPipeline> newRenderPipeline(const RenderPipelineCreateConfig &config)
+	{
+		return systemMemory().createImpl<RenderPipeline, RenderPipelineImpl>(config);
 	}
 }

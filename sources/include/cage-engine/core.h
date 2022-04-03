@@ -34,6 +34,8 @@ namespace cage
 	struct GraphicsError;
 	class Model;
 	class RenderObject;
+	class RenderPipeline;
+	struct RenderPipelineCreateConfig;
 	class ShaderProgram;
 	class Texture;
 	class UniformBuffer;

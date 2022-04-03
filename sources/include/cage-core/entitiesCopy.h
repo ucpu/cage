@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API EntitiesCopyConfig
 	{
-		EntityManager *source = nullptr;
+		const EntityManager *source = nullptr;
 		EntityManager *destination = nullptr;
 	};
 

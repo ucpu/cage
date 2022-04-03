@@ -12,8 +12,10 @@
 #include <cage-core/macros.h>
 #include <cage-core/logger.h>
 #include <cage-core/assetContext.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
+#include <cage-core/entities.h>
 
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/texture.h>
