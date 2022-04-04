@@ -79,10 +79,15 @@ namespace cage
 			Holder<Model> mesh;
 			bool skeletal = false;
 
+			auto cmp() const
+			{
+				// reduce switching shaders, then depth test/writes and other states, then meshes
+				return std::tuple{ mesh->shaderColorName, mesh->flags, +mesh, skeletal };
+			}
+
 			bool operator < (const ModelShared &other) const
 			{
-				return std::tuple{ any(mesh->flags & MeshRenderFlags::AlphaClip), +mesh, skeletal }
-					< std::tuple{ any(other.mesh->flags & MeshRenderFlags::AlphaClip), +other.mesh, other.skeletal };
+				return cmp() < other.cmp();
 			}
 		};
 
@@ -1087,6 +1092,7 @@ namespace cage
 			{
 				ShadowmapData &data = camera.shadowmaps[e];
 				data.name = Stringizer() + camera.name + "_shadowmap_" + e->name();
+				data.camera.sceneMask = camera.camera.sceneMask;
 				data.lightComponent = lc;
 				data.shadowmapComponent = sc;
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
