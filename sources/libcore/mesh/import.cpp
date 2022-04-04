@@ -1279,6 +1279,10 @@ namespace cage
 				if (config.verbose && !part.shaderColorName.empty())
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using color shader: " + part.shaderColorName);
 
+				part.renderLayer = ini->getSint32("shaders", "layer", 0);
+				if (config.verbose && part.renderLayer != 0)
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "render layer: " + part.renderLayer);
+
 				ini->checkUnused();
 			}
 

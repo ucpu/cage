@@ -27,14 +27,15 @@ namespace cage
 			poly->importBuffer(des.read(des.available()));
 
 			msh->importMesh(+poly, mat);
-
 			msh->setBoundingBox(data.box);
-			msh->setTextureNames(data.textureNames);
 
-			msh->flags = data.renderFlags;
+			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
+				msh->textureNames[i] = data.textureNames[i];
 			msh->shaderDepthName = data.shaderDepthName;
 			msh->shaderColorName = data.shaderColorName;
-			msh->skeletonBones = data.skeletonBones;
+			msh->flags = data.renderFlags;
+			msh->layer = data.renderLayer;
+			msh->bones = data.skeletonBones;
 
 			msh->setDebugName(context->textName); // last command to apply it to all subresources
 

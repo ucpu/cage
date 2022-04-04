@@ -51,9 +51,10 @@ namespace cage
 		String shaderDepthName, shaderColorName;
 		MeshImportMaterial material;
 		Aabb boundingBox;
-		MeshRenderFlags renderFlags = MeshRenderFlags::None;
 		Holder<Mesh> mesh;
 		Holder<PointerRange<MeshImportTexture>> textures;
+		MeshRenderFlags renderFlags = MeshRenderFlags::None;
+		sint32 renderLayer = 0;
 	};
 
 	struct CAGE_CORE_API MeshImportAnimation

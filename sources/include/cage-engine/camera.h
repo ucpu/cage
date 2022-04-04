@@ -47,7 +47,7 @@ namespace cage
 		ScreenSpaceTonemap tonemap;
 		ScreenSpaceDepthOfField depthOfField;
 		Real gamma = 2.2;
-		CameraEffectsFlags effects = CameraEffectsFlags::None;
+		CameraEffectsFlags effects = CameraEffectsFlags::Default;
 	};
 }
 

@@ -41,7 +41,7 @@ namespace cage
 			Holder<RenderPipeline> pipeline;
 			RenderPipelineCamera inputs;
 			RenderPipelineResult outputs;
-			std::pair<bool, sint32> order;
+			bool order = false;
 
 			void operator() ()
 			{
@@ -133,7 +133,7 @@ namespace cage
 					data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
 					data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
 					data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
-					data.order = std::make_pair(!cam.target, cam.cameraOrder);
+					data.order = !cam.target;
 					cameras.push_back(std::move(data));
 					windowOutputs += cam.target ? 0 : 1;
 				}, +eb.scene, false);

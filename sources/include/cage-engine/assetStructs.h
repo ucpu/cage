@@ -66,9 +66,10 @@ namespace cage
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 shaderDepthName, shaderColorName;
-		uint32 materialSize; // bytes
-		uint32 skeletonBones;
 		MeshRenderFlags renderFlags;
+		sint32 renderLayer;
+		uint32 skeletonBones;
+		uint32 materialSize; // bytes
 
 		// follows:
 		// material (may or may not be the MeshImportMaterial)

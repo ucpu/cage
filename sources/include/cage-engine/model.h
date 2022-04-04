@@ -21,8 +21,6 @@ namespace cage
 
 		void setPrimitiveType(uint32 type);
 		void setBoundingBox(const Aabb &box);
-		void setTextureNames(PointerRange<const uint32> textureNames);
-		void setTextureName(uint32 index, uint32 name);
 		void setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer);
 		void setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset);
 
@@ -30,15 +28,15 @@ namespace cage
 		uint32 indicesCount() const;
 		uint32 primitivesCount() const;
 		Aabb boundingBox() const;
-		PointerRange<const uint32> textureNames() const;
-		uint32 textureName(uint32 index) const;
 
 		void dispatch() const;
 		void dispatch(uint32 instances) const;
 
-		MeshRenderFlags flags = {};
+		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
 		uint32 shaderDepthName = 0, shaderColorName = 0;
-		uint32 skeletonBones = 0;
+		MeshRenderFlags flags = {};
+		sint32 layer = 0;
+		uint32 bones = 0;
 	};
 
 	CAGE_ENGINE_API Holder<Model> newModel();

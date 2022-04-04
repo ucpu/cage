@@ -22,7 +22,6 @@ namespace cage
 
 		public:
 			Aabb box = Aabb::Universe();
-			uint32 textures[MaxTexturesCountPerMaterial] = {};
 			uint32 id = 0;
 			uint32 vbo = 0;
 			uint32 verticesCount = 0;
@@ -245,20 +244,6 @@ namespace cage
 		impl->box = box;
 	}
 
-	void Model::setTextureNames(PointerRange<const uint32> textureNames)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-			impl->textures[i] = textureNames[i];
-	}
-
-	void Model::setTextureName(uint32 texIdx, uint32 name)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
-		impl->textures[texIdx] = name;
-	}
-
 	void Model::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
@@ -366,19 +351,6 @@ namespace cage
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->box;
-	}
-
-	PointerRange<const uint32> Model::textureNames() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->textures;
-	}
-
-	uint32 Model::textureName(uint32 texIdx) const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
-		return impl->textures[texIdx];
 	}
 
 	void Model::dispatch() const

@@ -133,6 +133,13 @@ namespace cage
 			Vec3 color;
 		};
 
+		struct DataLayer
+		{
+			std::map<ModelShared, std::vector<ModelInstance>> opaque;
+			std::vector<ModelTranslucent> translucent;
+			std::vector<TextPrepare> texts;
+		};
+
 		// camera or light
 		struct CameraData : public RenderPipelineCamera
 		{
@@ -148,9 +155,7 @@ namespace cage
 				bool orthographic = false;
 			} lodSelection;
 
-			std::map<ModelShared, std::vector<ModelInstance>> opaque;
-			std::vector<ModelTranslucent> translucent;
-			std::vector<TextPrepare> texts;
+			std::map<sint32, DataLayer> layers;
 			std::vector<RenderPipelineDebugVisualization> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
@@ -374,7 +379,7 @@ namespace cage
 				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
-					const uint32 n = sh.mesh->textureName(i);
+					const uint32 n = sh.mesh->textureNames[i];
 					textures[i] = assets->tryGet<AssetSchemeIndexTexture, Texture>(n);
 					if (textures[i])
 					{
@@ -387,17 +392,17 @@ namespace cage
 					}
 				}
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
-				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->skeletonBones);
+				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion) ? 1 : 0;
 
-				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->skeletonBones) : CAGE_SHADER_MAX_MESHES;
+				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
 				{
 					const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
 					renderQueue->universalUniformArray<const UniMesh>(subRange<const UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
 					if (sh.skeletal)
-						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->skeletonBones, count * sh.mesh->skeletonBones), CAGE_SHADER_UNIBLOCK_ARMATURES);
+						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->bones, count * sh.mesh->bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
 
 					if constexpr (RenderMode == RenderModeEnum::Standard)
 					{
@@ -449,13 +454,13 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModels(const CameraData &data) const
+			void renderLayer(const CameraData &data, const DataLayer &layer) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("opaque");
-					for (const auto &shit : data.opaque)
+					for (const auto &shit : layer.opaque)
 					{
 						const ModelShared &sh = shit.first;
 						if constexpr (RenderMode == RenderModeEnum::DepthPrepass)
@@ -472,11 +477,11 @@ namespace cage
 						std::vector<Mat3x4> uniArmatures;
 						if (sh.skeletal)
 						{
-							uniArmatures.reserve(shit.second.size() * sh.mesh->skeletonBones);
+							uniArmatures.reserve(shit.second.size() * sh.mesh->bones);
 							for (const ModelInstance &inst : shit.second)
 							{
 								const auto armature = inst.skeletalAnimation->armature();
-								CAGE_ASSERT(armature.size() == sh.mesh->skeletonBones);
+								CAGE_ASSERT(armature.size() == sh.mesh->bones);
 								for (const auto &it : armature)
 									uniArmatures.push_back(it);
 							}
@@ -490,14 +495,14 @@ namespace cage
 				if constexpr (RenderMode == RenderModeEnum::Standard)
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("translucent");
-					for (const auto &it : data.translucent)
+					for (const auto &it : layer.translucent)
 					{
 						PointerRange<const UniMesh> uniMeshes = { &it.uni, &it.uni + 1 };
 						PointerRange<const Mat3x4> uniArmatures;
 						if (it.skeletal)
 						{
 							uniArmatures = it.skeletalAnimation->armature();
-							CAGE_ASSERT(uniArmatures.size() == it.mesh->skeletonBones);
+							CAGE_ASSERT(uniArmatures.size() == it.mesh->bones);
 						}
 						renderModelsImpl<RenderMode>(data, it, uniMeshes, uniArmatures, true);
 					}
@@ -513,7 +518,7 @@ namespace cage
 					renderQueue->culling(true);
 					renderQueue->blending(true);
 					renderQueue->blendFuncAlphaTransparency();
-					for (const TextPrepare &text : data.texts)
+					for (const TextPrepare &text : layer.texts)
 						renderTextImpl(data, text);
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
@@ -522,19 +527,27 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
+			template<RenderModeEnum RenderMode>
+			void renderModels(const CameraData &data) const
+			{
+				for (const auto &it : data.layers)
+					renderLayer<RenderMode>(data, it.second);
+			}
+
 			template<PrepareModeEnum PrepareMode>
 			void prepareModelImpl(CameraData &data, ModelPrepare &prepare) const
 			{
+				DataLayer &layer = data.layers[prepare.mesh->layer];
 				if (PrepareMode == PrepareModeEnum::Camera && prepare.translucent)
 				{
 					ModelTranslucent &tr = (ModelTranslucent &)prepare;
-					data.translucent.push_back(std::move(tr));
+					layer.translucent.push_back(std::move(tr));
 				}
 				else
 				{
 					ModelShared &sh = (ModelShared &)prepare;
 					ModelInstance &inst = (ModelInstance &)prepare;
-					data.opaque[std::move(sh)].push_back(std::move(inst));
+					layer.opaque[std::move(sh)].push_back(std::move(inst));
 				}
 			}
 
@@ -626,7 +639,7 @@ namespace cage
 						pt->speed = 1;
 					if (!pt->offset.valid())
 						pt->offset = 0;
-					if (Holder<Texture> tex = assets->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureName(0)))
+					if (Holder<Texture> tex = assets->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureNames[0]))
 						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, time, pt->startTime, pt->speed, pt->offset);
 				}
 
@@ -726,7 +739,8 @@ namespace cage
 				if constexpr (PrepareMode == PrepareModeEnum::Camera)
 				{
 					// sort translucent back-to-front
-					std::sort(data.translucent.begin(), data.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
+					for (auto &it : data.layers)
+						std::sort(it.second.translucent.begin(), it.second.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
 
 					entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
 						if ((tc_.sceneMask & data.camera.sceneMask) == 0)
@@ -749,7 +763,7 @@ namespace cage
 						const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
 						prepare.format.wrapWidth = size[0];
 						prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
-						data.texts.push_back(std::move(prepare));
+						data.layers[0].texts.push_back(std::move(prepare));
 					}, +scene, false);
 				}
 			}
@@ -1124,9 +1138,11 @@ namespace cage
 			RenderPipelineResult prepareCamera(const RenderPipelineCamera &camera) const
 			{
 				CAGE_ASSERT(!camera.name.empty());
+
 				CameraData data;
 				(RenderPipelineCamera &)data = camera;
-				data.renderQueue = newRenderQueue(camera.name + "_pipeline");
+				data.renderQueue = newRenderQueue(camera.name + "_camera");
+
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
 					if ((lc.sceneMask & data.camera.sceneMask) == 0)
@@ -1136,16 +1152,20 @@ namespace cage
 				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr)));
 				for (const auto &it : tasks)
 					it->wait();
+
+				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline");
 				PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
 				for (auto &shm : data.shadowmaps)
 				{
-					data.renderQueue->enqueue(std::move(shm.second.renderQueue));
+					queue->enqueue(std::move(shm.second.renderQueue));
 					for (RenderPipelineDebugVisualization &di : shm.second.debugVisualizations)
 						debugVisualizations.push_back(std::move(di));
 				}
+				queue->enqueue(std::move(data.renderQueue)); // ensure that shadowmaps are rendered before the camera
+
 				RenderPipelineResult result;
 				result.debugVisualizations = std::move(debugVisualizations);
-				result.renderQueue = std::move(data.renderQueue);
+				result.renderQueue = std::move(queue);
 				return result;
 			}
 		};

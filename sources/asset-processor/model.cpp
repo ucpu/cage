@@ -227,10 +227,7 @@ void processModel()
 
 	ModelHeader dsm;
 	detail::memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(MeshImportMaterial);
-	dsm.renderFlags = part.renderFlags;
 	dsm.box = part.boundingBox;
-	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
 
 	for (const auto &t : part.textures)
 	{
@@ -254,6 +251,11 @@ void processModel()
 		dsm.shaderDepthName = HashString(convertReferencePath(part.shaderDepthName));
 	if (!part.shaderColorName.empty())
 		dsm.shaderColorName = HashString(convertReferencePath(part.shaderColorName));
+
+	dsm.renderFlags = part.renderFlags;
+	dsm.renderLayer = part.renderLayer;
+	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
+	dsm.materialSize = sizeof(MeshImportMaterial);
 
 	const MeshImportMaterial &mat = part.material;
 	printMaterial(dsm, mat);

@@ -77,7 +77,6 @@ namespace cage
 	struct CAGE_ENGINE_API CameraComponent : public CameraProperties
 	{
 		Texture *target = nullptr;
-		sint32 cameraOrder = 0;
 	};
 
 	struct CAGE_ENGINE_API SoundComponent
