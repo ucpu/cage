@@ -55,12 +55,19 @@ namespace cage
 		void tangent(uint32 idx, const Vec3 &value);
 		Vec3 tangentAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const Vec3> bitangents() const;
-		PointerRange<Vec3> bitangents();
-		void bitangents(const PointerRange<const Vec3> &values);
-		Vec3 bitangent(uint32 idx) const;
-		void bitangent(uint32 idx, const Vec3 &value);
-		Vec3 bitangentAt(const Vec3i &ids, const Vec3 &weights) const;
+		PointerRange<const Vec4i> boneIndices() const;
+		PointerRange<Vec4i> boneIndices();
+		void boneIndices(const PointerRange<const Vec4i> &values);
+		Vec4i boneIndices(uint32 idx) const;
+		void boneIndices(uint32 idx, const Vec4i &value);
+		Vec4i boneIndicesAt(const Vec3i &ids, const Vec3 &weights) const;
+
+		PointerRange<const Vec4> boneWeights() const;
+		PointerRange<Vec4> boneWeights();
+		void boneWeights(const PointerRange<const Vec4> &values);
+		Vec4 boneWeights(uint32 idx) const;
+		void boneWeights(uint32 idx, const Vec4 &value);
+		Vec4 boneWeightsAt(const Vec3i &ids, const Vec3 &weights) const;
 
 		PointerRange<const Vec2> uvs() const;
 		PointerRange<Vec2> uvs();
@@ -75,20 +82,6 @@ namespace cage
 		Vec3 uv3(uint32 idx) const;
 		void uv3(uint32 idx, const Vec3 &value);
 		Vec3 uv3At(const Vec3i &ids, const Vec3 &weights) const;
-
-		PointerRange<const Vec4i> boneIndices() const;
-		PointerRange<Vec4i> boneIndices();
-		void boneIndices(const PointerRange<const Vec4i> &values);
-		Vec4i boneIndices(uint32 idx) const;
-		void boneIndices(uint32 idx, const Vec4i &value);
-		Vec4i boneIndicesAt(const Vec3i &ids, const Vec3 &weights) const;
-
-		PointerRange<const Vec4> boneWeights() const;
-		PointerRange<Vec4> boneWeights();
-		void boneWeights(const PointerRange<const Vec4> &values);
-		Vec4 boneWeights(uint32 idx) const;
-		void boneWeights(uint32 idx, const Vec4 &value);
-		Vec4 boneWeightsAt(const Vec3i &ids, const Vec3 &weights) const;
 
 		void addVertex(const Vec3 &position);
 		void addVertex(const Vec3 &position, const Vec3 &normal);

@@ -11,9 +11,10 @@ $include uniforms.glsl
 in vec3 varPosition; // world space
 in vec3 varNormal; // object space
 in vec3 varTangent; // object space
-in vec3 varBitangent; // object space
 in vec3 varUv;
 flat in int varInstanceId;
+
+layout(location = 0) out vec4 outColor;
 
 vec3 normal; // world space
 
@@ -192,7 +193,9 @@ void updateNormal()
 	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] != 0)
 	{
 		vec4 normalMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL);
-		normal = mat3(normalize(varTangent), normalize(varBitangent), normal) * (normalMap.xyz * 2 - 1);
+		vec3 tangent = normalize(varTangent);
+		vec3 bitangent = cross(normal, tangent); // todo orthonormalize
+		normal = mat3(tangent, bitangent, normal) * (normalMap.xyz * 2 - 1);
 	}
 
 	if (!gl_FrontFacing)

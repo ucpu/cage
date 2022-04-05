@@ -83,16 +83,7 @@ void processObject()
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}
 
-	{
-		String s, t, v;
-		if (ini->anyUnused(s, t, v))
-		{
-			CAGE_LOG_THROW(Stringizer() + "section: " + s);
-			CAGE_LOG_THROW(Stringizer() + "item: " + t);
-			CAGE_LOG_THROW(Stringizer() + "value: " + v);
-			CAGE_THROW_ERROR(Exception, "unused value");
-		}
-	}
+	ini->checkUnused();
 
 	AssetHeader h = initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());

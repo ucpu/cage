@@ -168,6 +168,8 @@ namespace
 			images = std::move(findEmbeddedTexture(res)->images);
 		}
 		imageImportConvertRawToImages(images);
+		if (images.parts.empty())
+			CAGE_THROW_ERROR(Exception, "no files were loaded");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 

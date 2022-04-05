@@ -72,6 +72,7 @@ namespace cage
 			Vec4 viewport; // x, y, w, h
 			Vec4 ambientLight; // color rgb is linear, no alpha
 			Vec4 ambientDirectionalLight; // color rgb is linear, no alpha
+			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 		};
 
 		struct ModelShared
@@ -198,23 +199,23 @@ namespace cage
 			return uni;
 		}
 
-		CameraData::LodSelection initializeLodSelection(const CameraProperties &cam, const Mat4 &camModel, const Vec2i resolution)
+		CameraData::LodSelection initializeLodSelection(const CameraData &data)
 		{
 			CameraData::LodSelection res;
-			switch (cam.cameraType)
+			switch (data.camera.cameraType)
 			{
 			case CameraTypeEnum::Orthographic:
 			{
-				res.screenSize = cam.camera.orthographicSize[1] * resolution[1];
+				res.screenSize = data.camera.camera.orthographicSize[1] * data.resolution[1];
 				res.orthographic = true;
 			} break;
 			case CameraTypeEnum::Perspective:
-				res.screenSize = tan(cam.camera.perspectiveFov * 0.5) * 2 * resolution[1];
+				res.screenSize = tan(data.camera.camera.perspectiveFov * 0.5) * 2 * data.resolution[1];
 				break;
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
-			res.center = Vec3(camModel * Vec4(0, 0, 0, 1));
+			res.center = Vec3(Mat4(data.transform) * Vec4(0, 0, 0, 1));
 			return res;
 		}
 
@@ -860,7 +861,7 @@ namespace cage
 					}
 				}();
 				data.viewProj = data.proj * data.view;
-				initializeLodSelection(data.camera, data.model, data.resolution);
+				data.lodSelection = initializeLodSelection(data);
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
@@ -897,19 +898,6 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 
 				renderQueue->viewport(Vec2i(), data.resolution);
-				{
-					UniViewport viewport;
-					viewport.vMat = data.view;
-					viewport.pMat = data.proj;
-					viewport.vpMat = data.viewProj;
-					viewport.vpInv = inverse(data.viewProj);
-					viewport.eyePos = data.model * Vec4(0, 0, 0, 1);
-					viewport.eyeDir = data.model * Vec4(0, 0, -1, 0);
-					viewport.ambientLight = Vec4(colorGammaToLinear(data.camera.ambientColor) * data.camera.ambientIntensity, 0);
-					viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(data.camera.ambientDirectionalColor) * data.camera.ambientDirectionalIntensity, 0);
-					viewport.viewport = Vec4(Vec2(), Vec2(data.resolution));
-					renderQueue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
-				}
 				renderQueue->clear(true, true);
 
 				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
@@ -1109,7 +1097,7 @@ namespace cage
 					}
 				}();
 				data.viewProj = data.proj * data.view;
-				initializeLodSelection(camera.camera, Mat4(camera.transform), data.resolution);
+				data.lodSelection = initializeLodSelection(camera);
 				static constexpr Mat4 bias = Mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
@@ -1160,6 +1148,21 @@ namespace cage
 					it->wait();
 
 				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline");
+				{
+					UniViewport viewport;
+					viewport.vMat = data.view;
+					viewport.pMat = data.proj;
+					viewport.vpMat = data.viewProj;
+					viewport.vpInv = inverse(data.viewProj);
+					viewport.eyePos = data.model * Vec4(0, 0, 0, 1);
+					viewport.eyeDir = data.model * Vec4(0, 0, -1, 0);
+					viewport.ambientLight = Vec4(colorGammaToLinear(data.camera.ambientColor) * data.camera.ambientIntensity, 0);
+					viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(data.camera.ambientDirectionalColor) * data.camera.ambientDirectionalIntensity, 0);
+					viewport.viewport = Vec4(Vec2(), Vec2(data.resolution));
+					viewport.time = Vec4(frameIndex % 10000, (time % uint64(1e6)) / 1e6, (time % uint64(1e9)) / 1e9, 0);
+					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
+				}
+
 				PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
 				for (auto &shm : data.shadowmaps)
 				{

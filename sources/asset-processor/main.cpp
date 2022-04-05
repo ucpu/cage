@@ -103,6 +103,8 @@ namespace
 	String convertGenericPath(const String &input_, const String &relativeTo_)
 	{
 		String input = input_;
+		if (isPattern(input, inputDirectory, "", ""))
+			input = subString(input, inputDirectory.length(), m);
 		if (input.empty())
 			CAGE_THROW_ERROR(Exception, "input cannot be empty");
 		if (pathIsAbs(input))
@@ -121,17 +123,20 @@ namespace
 			CAGE_THROW_ERROR(Exception, "input cannot be empty");
 		return input;
 	}
+
+	String separateDetail(String &p)
+	{
+		const uint32 sep = min(find(p, '?'), find(p, ';'));
+		const String detail = subString(p, sep, m);
+		p = subString(p, 0, sep);
+		return detail;
+	}
 }
 
 String convertAssetPath(const String &input, const String &relativeTo, bool markAsReferenced)
 {
-	String detail;
 	String p = input;
-	{
-		const uint32 sep = min(find(p, '?'), find(p, ';'));
-		detail = subString(p, sep, m);
-		p = subString(p, 0, sep);
-	}
+	const String detail = separateDetail(p);
 	p = convertGenericPath(p, relativeTo) + detail;
 	if (markAsReferenced)
 		writeLine(String("ref=") + p);
@@ -140,10 +145,12 @@ String convertAssetPath(const String &input, const String &relativeTo, bool mark
 
 String convertFilePath(const String &input, const String &relativeTo, bool markAsUsed)
 {
-	String p = convertGenericPath(input, relativeTo);
+	String p = input;
+	const String detail = separateDetail(p);
+	p = convertGenericPath(p, relativeTo);
 	if (markAsUsed)
 		writeLine(String("use=") + p);
-	return p;
+	return p + detail;
 }
 
 void writeLine(const String &other)

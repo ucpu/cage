@@ -5,6 +5,7 @@ engine.pack
 
 []
 scheme = shader
+billboard.glsl
 blit.glsl
 depth.glsl
 depthAlphaClip.glsl

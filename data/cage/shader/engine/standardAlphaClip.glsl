@@ -10,8 +10,6 @@ void main()
 
 $include fragment.glsl
 
-out vec4 outColor;
-
 void main()
 {
 	updateNormal();

@@ -16,7 +16,7 @@ namespace cage
 			return max(emit, dispatch + c + step / 2);
 		}
 
-		VariableSmoothingBuffer<sint64, 100> corrections;
+		VariableSmoothingBuffer<sint64, 60> corrections;
 	};
 }
 

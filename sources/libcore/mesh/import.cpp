@@ -832,23 +832,15 @@ namespace cage
 				{
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", "copying tangents");
-					std::vector<Vec3> ts, bs;
+					std::vector<Vec3> ts;
 					ts.reserve(verticesCount);
-					bs.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
 						Vec3 n = axes * conv(am->mTangents[i]);
 						static constexpr const char Name[] = "tangent";
 						ts.push_back(fixUnitVector<Name>(n));
 					}
-					for (uint32 i = 0; i < verticesCount; i++)
-					{
-						Vec3 n = axes * conv(am->mBitangents[i]);
-						static constexpr const char Name[] = "bitangent";
-						bs.push_back(fixUnitVector<Name>(n));
-					}
 					poly->tangents(ts);
-					poly->bitangents(bs);
 				}
 
 				if (am->HasBones())
@@ -1093,20 +1085,29 @@ namespace cage
 				CAGE_THROW_CRITICAL(Exception, "impossible combination of roughness metallic textures for combining into special texture");
 			}
 
+			static String separateDetail(String &p)
+			{
+				const uint32 sep = min(find(p, '?'), find(p, ';'));
+				const String detail = subString(p, sep, m);
+				p = subString(p, 0, sep);
+				return detail;
+			}
+
 			String convertPath(const String &pathBase, String n) const
 			{
+				String detail = separateDetail(n);
 				if (n.empty())
-					return n;
+					return n + detail;
 				if (n[0] == '/')
 					n = pathJoin(config.rootPath, trim(n, true, false, "/"));
 				else
-					n = pathJoinUnchecked(pathBase, n);
+					n = pathJoin(pathBase, n);
 				n = pathToAbs(n);
-				return n;
+				return n + detail;
 			}
 
 			template<MeshImportTextureType Type>
-			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures)
+			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures, PointerRange<MeshImportTexture> replacements)
 			{
 				static constexpr const char *names[] = {
 					"",
@@ -1120,6 +1121,17 @@ namespace cage
 					return;
 				if (config.verbose)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using texture: " + n);
+
+				for (auto &it : replacements)
+				{
+					if (it.name == n && it.type == Type)
+					{
+						CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "texture name matches embedded one - replacing it");
+						textures.push_back(std::move(it));
+						return;
+					}
+				}
+
 				MeshImportTexture t;
 				t.name = n;
 				t.type = Type;
@@ -1185,11 +1197,20 @@ namespace cage
 				return true;
 			}
 
+			static constexpr MeshRenderFlags DefaultRenderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
+
 			void loadMaterialCage(const String &path, MeshImportPart &part)
 			{
-				CAGE_LOG(SeverityEnum::Info, "meshImport", "using cage (.cpm) material");
+				CAGE_LOG(SeverityEnum::Info, "meshImport", "overriding material with cage (.cpm) file");
 				CAGE_ASSERT(pathIsAbs(path));
 				ioSystem.paths.insert(path);
+
+				{ // reset material to default
+					part.material = MeshImportMaterial();
+					part.renderFlags = DefaultRenderFlags;
+					part.renderLayer = 0;
+					part.shaderColorName = part.shaderDepthName = {};
+				}
 
 				Holder<Ini> ini = newIni();
 				ini->importFile(path);
@@ -1220,9 +1241,9 @@ namespace cage
 
 				Textures textures;
 				const String pathBase = pathExtractDirectory(path);
-				loadTextureCage<MeshImportTextureType::Albedo>(pathBase, +ini, textures);
-				loadTextureCage<MeshImportTextureType::Special>(pathBase, +ini, textures);
-				loadTextureCage<MeshImportTextureType::Normal>(pathBase, +ini, textures);
+				loadTextureCage<MeshImportTextureType::Albedo>(pathBase, +ini, textures, part.textures);
+				loadTextureCage<MeshImportTextureType::Special>(pathBase, +ini, textures, part.textures);
+				loadTextureCage<MeshImportTextureType::Normal>(pathBase, +ini, textures, part.textures);
 				part.textures = std::move(textures);
 
 				for (const String &n : ini->items("flags"))
@@ -1288,14 +1309,13 @@ namespace cage
 
 			void loadMaterialAssimp(const uint32 materialIndex, MeshImportPart &part)
 			{
-				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", "converting assimp material");
-
 				const aiScene *scene = imp.GetScene();
 				CAGE_ASSERT(materialIndex < scene->mNumMaterials);
 				const aiMaterial *mat = scene->mMaterials[materialIndex];
 				if (!mat)
 					CAGE_THROW_ERROR(Exception, "material is null");
+
+				part.renderFlags = DefaultRenderFlags;
 
 				Textures textures;
 
@@ -1408,6 +1428,8 @@ namespace cage
 
 			void loadMaterial(const uint32 materialIndex, MeshImportPart &part)
 			{
+				loadMaterialAssimp(materialIndex, part);
+
 				String path = config.materialPathOverride;
 				if (!path.empty())
 				{
@@ -1431,12 +1453,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at '" + path + "'");
 
 				if (pathIsFile(path))
-				{
 					loadMaterialCage(path, part);
-					return;
-				}
-
-				loadMaterialAssimp(materialIndex, part);
 			}
 
 			const String inputFile;
@@ -1487,7 +1504,6 @@ namespace cage
 				p.materialName = convStrTruncate(scene->mMaterials[msh->mMaterialIndex]->GetName());
 				p.mesh = context.mesh(i);
 				p.boundingBox = p.mesh->boundingBox();
-				p.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 				context.loadMaterial(msh->mMaterialIndex, p);
 				parts.push_back(std::move(p));
 			}

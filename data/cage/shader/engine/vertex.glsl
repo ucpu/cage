@@ -6,7 +6,6 @@ $include uniforms.glsl
 layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
 layout(location = CAGE_SHADER_ATTRIB_IN_NORMAL) in vec3 inNormal;
 layout(location = CAGE_SHADER_ATTRIB_IN_TANGENT) in vec3 inTangent;
-layout(location = CAGE_SHADER_ATTRIB_IN_BITANGENT) in vec3 inBitangent;
 layout(location = CAGE_SHADER_ATTRIB_IN_BONEINDEX) in uvec4 inBoneIndex;
 layout(location = CAGE_SHADER_ATTRIB_IN_BONEWEIGHT) in vec4 inBoneWeight;
 layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec3 inUv;
@@ -14,7 +13,6 @@ layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec3 inUv;
 out vec3 varPosition; // world space
 out vec3 varNormal; // object space
 out vec3 varTangent; // object space
-out vec3 varBitangent; // object space
 out vec3 varUv;
 flat out int varInstanceId;
 
@@ -29,7 +27,6 @@ void skeletalAnimation()
 	mat3 s = transpose(mat3(sum));
 	varNormal = s * varNormal;
 	varTangent = s * varTangent;
-	varBitangent = s * varBitangent;
 }
 
 void updateVertex()
@@ -38,7 +35,6 @@ void updateVertex()
 	varPosition = inPosition;
 	varNormal = inNormal;
 	varTangent = inTangent;
-	varBitangent = inBitangent;
 	varUv = inUv;
 	skeletalAnimation();
 	gl_Position = uniMeshes[varInstanceId].mvpMat * vec4(varPosition, 1);

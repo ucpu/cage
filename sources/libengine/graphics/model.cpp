@@ -181,17 +181,6 @@ namespace cage
 			offset += bufSize;
 		}
 
-		if (!poly->bitangents().empty())
-		{
-			static constexpr uint32 attrSize = sizeof(Vec3);
-			const uint32 bufSize = attrSize * verticesCount;
-			vts.resize(offset + bufSize);
-			detail::memcpy(vts.data() + offset, poly->bitangents().data(), bufSize);
-			attrs.push_back({ CAGE_SHADER_ATTRIB_IN_BITANGENT, 3, GL_FLOAT, attrSize, offset });
-			vertexSize += attrSize;
-			offset += bufSize;
-		}
-
 		if (!poly->boneIndices().empty())
 		{
 			static constexpr uint32 attrSize = sizeof(Vec4i);

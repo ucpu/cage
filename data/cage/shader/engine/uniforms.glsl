@@ -10,6 +10,7 @@ struct UniViewport
 	vec4 viewport; // x, y, w, h
 	vec4 ambientLight; // color rgb is linear, no alpha
 	vec4 ambientDirectionalLight; // color rgb is linear, no alpha
+	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform ViewportBlock

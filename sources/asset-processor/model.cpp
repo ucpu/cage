@@ -161,20 +161,6 @@ namespace
 		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Tangents))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
-
-	String convertReferencePath(const String &input)
-	{
-		String detail;
-		String p = input;
-		{
-			const uint32 sep = min(find(p, '?'), find(p, ';'));
-			detail = subString(p, sep, m);
-			p = subString(p, 0, sep);
-		}
-		p = pathToRel(p, inputDirectory) + detail;
-		writeLine(cage::String("ref = ") + p);
-		return p;
-	}
 }
 
 void processModel()
@@ -215,10 +201,7 @@ void processModel()
 	if (none(flags & ModelDataFlags::Normals))
 		part.mesh->normals({});
 	if (none(flags & ModelDataFlags::Tangents))
-	{
 		part.mesh->tangents({});
-		part.mesh->bitangents({});
-	}
 	if (none(flags & ModelDataFlags::Bones))
 	{
 		part.mesh->boneIndices(PointerRange<Vec4i>());
@@ -231,7 +214,7 @@ void processModel()
 
 	for (const auto &t : part.textures)
 	{
-		const String p = convertReferencePath(t.name);
+		const String p = convertAssetPath(t.name);
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{
@@ -248,9 +231,9 @@ void processModel()
 	}
 
 	if (!part.shaderDepthName.empty())
-		dsm.shaderDepthName = HashString(convertReferencePath(part.shaderDepthName));
+		dsm.shaderDepthName = HashString(convertAssetPath(part.shaderDepthName));
 	if (!part.shaderColorName.empty())
-		dsm.shaderColorName = HashString(convertReferencePath(part.shaderColorName));
+		dsm.shaderColorName = HashString(convertAssetPath(part.shaderColorName));
 
 	dsm.renderFlags = part.renderFlags;
 	dsm.renderLayer = part.renderLayer;

@@ -654,8 +654,6 @@ namespace cage
 			it = t.orientation * it;
 		for (Vec3 &it : impl->tangents)
 			it = t.orientation * it;
-		for (Vec3 &it : impl->bitangents)
-			it = t.orientation * it;
 	}
 
 	void meshApplyTransform(Mesh *msh, const Mat4 &t)
@@ -666,8 +664,6 @@ namespace cage
 		for (Vec3 &it : impl->normals)
 			it = Vec3(t * Vec4(it, 0));
 		for (Vec3 &it : impl->tangents)
-			it = Vec3(t * Vec4(it, 0));
-		for (Vec3 &it : impl->bitangents)
 			it = Vec3(t * Vec4(it, 0));
 	}
 
@@ -693,8 +689,6 @@ namespace cage
 				impl->normals[i] = tr3 * impl->normals[i];
 			if (!impl->tangents.empty())
 				impl->tangents[i] = tr3 * impl->tangents[i];
-			if (!impl->bitangents.empty())
-				impl->bitangents[i] = tr3 * impl->bitangents[i];
 		}
 		// erase bone attributes to prevent repeatedly applying animations
 		impl->boneIndices.clear();

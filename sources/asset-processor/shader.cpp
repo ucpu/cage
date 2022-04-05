@@ -273,7 +273,7 @@ namespace
 
 	void parse(const String &filename)
 	{
-		Holder<File> file = newFile(filename, FileMode(true, false));
+		Holder<File> file = readFile(filename);
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
 		for (String line; file->readLine(line);)
@@ -399,9 +399,8 @@ namespace
 						{
 							if (line.empty())
 								CAGE_THROW_ERROR(Exception, "'$include' expects one parameter");
-							line = pathJoin(pathExtractDirectory(pathToRel(filename, inputDirectory)), line);
-							writeLine(Stringizer() + "use=" + line);
-							String fn = pathJoin(inputDirectory, line);
+							line = convertFilePath(pathIsAbs(line) ? line : pathJoin(filename + "/..", line));
+							const String fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
 								CAGE_LOG_THROW(Stringizer() + "requested file '" + line + "'");
@@ -465,8 +464,8 @@ void processShader()
 		{
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
-			ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
-			//ser.write(it.second);
+			//ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
+			ser.write(it.second);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
@@ -491,7 +490,8 @@ void processShader()
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);
-			f->write({ it.second.c_str(), it.second.c_str() + it.second.length() });
+			//f->write({ it.second.c_str(), it.second.c_str() + it.second.length() });
+			f->write(it.second);
 			f->close();
 		}
 	}

@@ -15,8 +15,6 @@ $include fragment.glsl
 
 layout(early_fragment_tests) in;
 
-out vec4 outColor;
-
 void main()
 {
 	Material material = loadMaterial();
