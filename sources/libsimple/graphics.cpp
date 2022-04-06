@@ -137,7 +137,7 @@ namespace cage
 					cameras.push_back(std::move(data));
 					windowOutputs += cam.target ? 0 : 1;
 				}, +eb.scene, false);
-				CAGE_ASSERT(windowOutputs == 1);
+				CAGE_ASSERT(windowOutputs <= 1);
 				if (cameras.empty())
 					return;
 
