@@ -162,7 +162,7 @@ namespace cage
 			} lodSelection;
 
 			std::map<sint32, DataLayer> layers;
-			std::vector<RenderPipelineDebugVisualization> debugVisualizations;
+			PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
 			std::map<Entity *, struct ShadowmapData> shadowmaps;
@@ -287,7 +287,7 @@ namespace cage
 		{
 			Shadowmap,
 			DepthPrepass,
-			Standard,
+			Color,
 		};
 
 		enum class PrepareModeEnum
@@ -357,7 +357,7 @@ namespace cage
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
-				if constexpr (RenderMode == RenderModeEnum::Standard)
+				if constexpr (RenderMode == RenderModeEnum::Color)
 				{ // color
 					if (sh.mesh->shaderColorName)
 						renderQueue->bind(assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderColorName));
@@ -377,7 +377,7 @@ namespace cage
 				}
 				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
-				if constexpr (RenderMode == RenderModeEnum::Standard)
+				if constexpr (RenderMode == RenderModeEnum::Color)
 					renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
 				else
 					renderQueue->depthWrite(true);
@@ -400,7 +400,8 @@ namespace cage
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
 				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion) ? 1 : 0;
+				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -410,7 +411,7 @@ namespace cage
 					if (sh.skeletal)
 						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->bones, count * sh.mesh->bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
 
-					if constexpr (RenderMode == RenderModeEnum::Standard)
+					if constexpr (RenderMode == RenderModeEnum::Color)
 					{
 						renderQueue->depthFuncLessEqual();
 						renderQueue->blending(translucent);
@@ -471,8 +472,6 @@ namespace cage
 						const ModelShared &sh = shit.first;
 						if constexpr (RenderMode == RenderModeEnum::DepthPrepass)
 						{
-							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-								continue;
 							if (none(sh.mesh->flags & MeshRenderFlags::DepthWrite))
 								continue;
 						}
@@ -498,7 +497,7 @@ namespace cage
 					renderQueue->viewport(Vec2i(), data.resolution);
 				}
 
-				if constexpr (RenderMode == RenderModeEnum::Standard)
+				if constexpr (RenderMode == RenderModeEnum::Color)
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("translucent");
 					for (const auto &it : layer.translucent)
@@ -516,7 +515,7 @@ namespace cage
 					renderQueue->viewport(Vec2i(), data.resolution);
 				}
 
-				if constexpr (RenderMode == RenderModeEnum::Standard)
+				if constexpr (RenderMode == RenderModeEnum::Color)
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("texts");
 					renderQueue->depthTest(true);
@@ -846,6 +845,11 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
+				if (confNoAmbientOcclusion)
+					data.camera.effects &= ~CameraEffectsFlags::AmbientOcclusion;
+				if (confNoBloom)
+					data.camera.effects &= ~CameraEffectsFlags::Bloom;
+
 				data.model = Mat4(data.transform);
 				data.view = inverse(data.model);
 				data.proj = [&]() {
@@ -941,7 +945,7 @@ namespace cage
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("standard");
-					renderModels<RenderModeEnum::Standard>(data);
+					renderModels<RenderModeEnum::Color>(data);
 				}
 
 				{
@@ -1163,17 +1167,16 @@ namespace cage
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 				}
 
-				PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
 				for (auto &shm : data.shadowmaps)
 				{
 					queue->enqueue(std::move(shm.second.renderQueue));
 					for (RenderPipelineDebugVisualization &di : shm.second.debugVisualizations)
-						debugVisualizations.push_back(std::move(di));
+						data.debugVisualizations.push_back(std::move(di));
 				}
 				queue->enqueue(std::move(data.renderQueue)); // ensure that shadowmaps are rendered before the camera
 
 				RenderPipelineResult result;
-				result.debugVisualizations = std::move(debugVisualizations);
+				result.debugVisualizations = std::move(data.debugVisualizations);
 				result.renderQueue = std::move(queue);
 				return result;
 			}

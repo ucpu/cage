@@ -789,7 +789,7 @@ namespace cage
 						while (tcp->readLine(line))
 						{
 							const uint32 name = HashString(line);
-							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
+							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "reloading asset: " + line + " (" + name + ")");
 							man->reload(name);
 						}
 					}
