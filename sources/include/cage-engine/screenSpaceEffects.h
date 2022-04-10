@@ -16,7 +16,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ScreenSpaceAmbientOcclusionConfig : public ScreenSpaceCommonConfig, public ScreenSpaceAmbientOcclusion
 	{
-		Mat4 viewProj;
+		Mat4 proj;
 		TextureHandle inDepth;
 		TextureHandle outAo;
 		uint32 frameIndex = 0;

@@ -88,8 +88,7 @@ namespace cage
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("ssao");
 
-		const Vec2i res = max(config.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u);
-		q->viewport(Vec2i(), res);
+		q->viewport(Vec2i(), config.resolution);
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
 
@@ -103,22 +102,20 @@ namespace cage
 
 		struct Shader
 		{
-			Mat4 viewProj;
-			Mat4 viewProjInv;
+			Mat4 proj;
+			Mat4 projInv;
 			Vec4 params; // strength, bias, power, radius
-			Vec4i iparams; // sampleCount, frameIndex, resolution x, resolution y
+			Vec4i iparams; // sampleCount, hashSeed
 		} s;
-		s.viewProj = config.viewProj;
-		s.viewProjInv = inverse(config.viewProj);
+		s.proj = config.proj;
+		s.projInv = inverse(config.proj);
 		s.params = Vec4(config.strength, config.bias, config.power, config.worldRadius);
 		s.iparams[0] = config.samplesCount;
-		s.iparams[1] = config.frameIndex;
-		s.iparams[2] = config.resolution[0];
-		s.iparams[3] = config.resolution[1];
+		s.iparams[1] = hash(config.frameIndex);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
 		// generate
-		updateTexture(q, config.outAo, res, GL_R8);
+		updateTexture(q, config.outAo, config.resolution, GL_R8);
 		q->colorTexture(0, config.outAo);
 		q->checkFrameBuffer();
 		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
@@ -130,7 +127,6 @@ namespace cage
 		GfGaussianBlurConfig gb;
 		(ScreenSpaceCommonConfig &)gb = config;
 		gb.texture = config.outAo;
-		gb.resolution = res;
 		gb.internalFormat = GL_R8;
 		for (uint32 i = 0; i < config.blurPasses; i++)
 			gfGaussianBlur(gb);

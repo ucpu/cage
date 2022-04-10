@@ -917,6 +917,37 @@ namespace cage
 
 				if (any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion))
 				{
+					const Vec2i ssaoResolution = data.resolution / 3;
+
+					TextureHandle depthTextureLowRes = [&]() {
+						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name);
+						renderQueue->bind(t, 0);
+						renderQueue->filters(GL_NEAREST, GL_NEAREST, 0);
+						renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						renderQueue->image2d(ssaoResolution, GL_R32F);
+						RenderPipelineDebugVisualization deb;
+						deb.texture = t;
+						deb.shader = shaderVisualizeDepth.share();
+						data.debugVisualizations.push_back(std::move(deb));
+
+						FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw(Stringizer() + "depthTargetLowRes_" + data.name);
+						renderQueue->bind(renderTarget);
+						renderQueue->colorTexture(0, t);
+						renderQueue->depthTexture({});
+						renderQueue->activeAttachments(1);
+						renderQueue->checkFrameBuffer();
+						renderQueue->viewport(Vec2i(), ssaoResolution);
+						renderQueue->bind(shaderVisualizeColor);
+						renderQueue->uniform(0, 1 / Vec2(ssaoResolution));
+						renderQueue->bind(depthTexture, 0);
+						renderQueue->bind(modelSquare);
+						renderQueue->draw();
+						renderQueue->resetAllState();
+						renderQueue->resetFrameBuffer();
+						return t;
+					}();
+
 					TextureHandle ssaoTexture = [&]() {
 						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + data.name);
 						RenderPipelineDebugVisualization deb;
@@ -929,8 +960,9 @@ namespace cage
 					ScreenSpaceAmbientOcclusionConfig cfg;
 					(ScreenSpaceCommonConfig &)cfg = commonConfig;
 					(ScreenSpaceAmbientOcclusion &)cfg = data.camera.ssao;
-					cfg.viewProj = data.viewProj;
-					cfg.inDepth = depthTexture;
+					cfg.resolution = ssaoResolution;
+					cfg.proj = data.proj;
+					cfg.inDepth = depthTextureLowRes;
 					cfg.outAo = ssaoTexture;
 					cfg.frameIndex = frameIndex;
 					screenSpaceAmbientOcclusion(cfg);

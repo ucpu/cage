@@ -68,21 +68,21 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Provides low-level/generic engine functionality
 - Scene description with entities
 - Window and input management
-- Gameloop and timing
 - Objective layer on top of OpenGL
   - Long term plan is to switch to Vulkan only
-- Sound processing
-- Gui
+- Roughness/metallic workflow
 - Graphics effects:
   - hdr, bloom, tonemapping, gamma correction
   - depth of field
   - ssao
   - fxaa
+- Sound
+- Gui
 
 ## Simple library
 
 - Provides simpler interface for typical games
-- Roughness/metallic workflow
+- Gameloop and timing
 - Pipeline-like processing using multiple threads
   - *50 000 objects* at 30 fps (cpu-bound)
   - All objects goes through automatic instancing

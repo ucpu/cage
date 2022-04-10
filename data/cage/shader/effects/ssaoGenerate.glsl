@@ -23,8 +23,8 @@ vec3 reconstructNormal(vec3 position)
 
 vec3 s2w(vec2 p, float d)
 {
-	vec4 p4 = vec4(p, d, 1.0);
-	p4 = viewProjInv * p4;
+	vec4 p4 = vec4(p, d, 1);
+	p4 = projInv * p4;
 	return p4.xyz / p4.w;
 }
 
@@ -35,13 +35,19 @@ float sqr(float a)
 
 void main()
 {
-	vec2 myUv = gl_FragCoord.xy * float(CAGE_SHADER_SSAO_DOWNSCALE) / vec2(iparams.zw);
+	vec2 resolution = vec2(textureSize(texDepth, 0));
+	vec2 myUv = gl_FragCoord.xy / resolution;
 	float myDepth = textureLod(texDepth, myUv, 0).x * 2.0 - 1.0;
+	if (myDepth > 0.999)
+	{ // no occlusion on skybox
+		outAo = 0;
+		return;
+	}
 	vec3 myPos = s2w(myUv, myDepth);
 	vec3 myNormal = reconstructNormal(myPos);
 
 	// sampling
-	int n = hash(int(gl_FragCoord.x) ^ hash(int(gl_FragCoord.y) ^ hash(iparams[1])));
+	int n = hash(int(gl_FragCoord.x) ^ hash(int(gl_FragCoord.y) ^ iparams[1]));
 	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;
@@ -54,7 +60,7 @@ void main()
 		dir = sign(d) * dir; // move the direction into front hemisphere
 		float r = (sqr(pointsOnSphere[hash(n * 13 + i) % 256].w) * 0.9 + 0.1) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
-		vec4 s4 = viewProj * vec4(sw, 1.0);
+		vec4 s4 = proj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
 		float sampleDepth = textureLod(texDepth, ss.xy, 0).x * 2.0 - 1.0;
 		if (sampleDepth < ss.z)
