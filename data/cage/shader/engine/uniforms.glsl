@@ -64,10 +64,21 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
 {
 	UniLight uniLights[CAGE_SHADER_MAX_LIGHTS];
 };
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES) uniform ShadowsMatricesBlock
+{
+	mat4 uniShadowsMatrices[CAGE_SHADER_MAX_LIGHTS];
+};
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWS2D) uniform Shadows2dBlock
+{
+	uvec4 texShadows2d[CAGE_SHADER_MAX_LIGHTS];
+};
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSCUBE) uniform ShadowsCubeBlock
+{
+	uvec4 texShadowsCube[CAGE_SHADER_MAX_LIGHTS];
+};
 
 layout(location = CAGE_SHADER_UNI_BONESPERINSTANCE) uniform uint uniBonesPerInstance;
 layout(location = CAGE_SHADER_UNI_LIGHTSCOUNT) uniform uint uniLightsCount;
-layout(location = CAGE_SHADER_UNI_SHADOWMATRIX) uniform mat4 uniShadowMatrix;
 layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
 
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texMaterialAlbedo2d;
@@ -79,6 +90,5 @@ layout(binding = CAGE_SHADER_TEXTURE_SPECIAL_CUBE) uniform samplerCube texMateri
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texMaterialNormal2d;
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_ARRAY) uniform sampler2DArray texMaterialNormalArray;
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMaterialNormalCube;
-layout(binding = CAGE_SHADER_TEXTURE_SHADOW) uniform sampler2D texShadow2d;
-layout(binding = CAGE_SHADER_TEXTURE_SHADOW_CUBE) uniform samplerCube texShadowCube;
 layout(binding = CAGE_SHADER_TEXTURE_SSAO) uniform sampler2D texSsao;
+

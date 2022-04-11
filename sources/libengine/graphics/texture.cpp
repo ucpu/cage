@@ -2,8 +2,8 @@
 #include <cage-core/image.h>
 #include <cage-core/serialization.h>
 
-#include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>
+#include <cage-engine/opengl.h>
 #include "private.h"
 
 namespace cage
@@ -439,6 +439,14 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
+	BindlessHandle Texture::bindlessHandle()
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		BindlessHandle h;
+		h.handle = glGetTextureHandleARB(impl->id);
+		return h;
+	}
+
 	Holder<Texture> newTexture()
 	{
 		return newTexture(GL_TEXTURE_2D);
@@ -470,5 +478,13 @@ namespace cage
 			CAGE_ASSERT(f >= 0 && f <= 1);
 			return Vec4(i, (i + 1) % frames, f, 0);
 		}
+	}
+
+	void makeResident(BindlessHandle handle, bool resident)
+	{
+		if (resident)
+			glMakeTextureHandleResidentARB(handle.handle);
+		else
+			glMakeTextureHandleNonResidentARB(handle.handle);
 	}
 }

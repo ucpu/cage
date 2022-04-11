@@ -166,12 +166,12 @@ namespace cage
 			Holder<RenderQueue> renderQueue;
 
 			std::map<Entity *, struct ShadowmapData> shadowmaps;
-			UubRange lighsBlock;
 			uint32 lightsCount = 0;
 		};
 
 		struct ShadowmapData : public CameraData
 		{
+			UniLight shadowUni;
 			Mat4 shadowMat;
 			Holder<ProvisionalTexture> shadowTexture;
 			LightComponent lightComponent;
@@ -357,6 +357,7 @@ namespace cage
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->bind(sh.mesh);
+
 				if constexpr (RenderMode == RenderModeEnum::Color)
 				{ // color
 					if (sh.mesh->shaderColorName)
@@ -375,14 +376,32 @@ namespace cage
 					else
 						renderQueue->bind(shaderDepth);
 				}
+
 				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
 				if constexpr (RenderMode == RenderModeEnum::Color)
+				{
 					renderQueue->depthWrite(any(sh.mesh->flags & MeshRenderFlags::DepthWrite));
+					renderQueue->depthFuncLessEqual();
+					renderQueue->blending(translucent);
+					if (translucent)
+						renderQueue->blendFuncPremultipliedTransparency();
+				}
 				else
+				{
 					renderQueue->depthWrite(true);
-				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
+					renderQueue->depthFuncLess();
+					renderQueue->blending(false);
+				}
+
 				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
+				renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
+				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
+				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
+
+				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const uint32 n = sh.mesh->textureNames[i];
@@ -398,10 +417,8 @@ namespace cage
 					}
 				}
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
-				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
-				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
+
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -409,43 +426,11 @@ namespace cage
 					const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
 					renderQueue->universalUniformArray<const UniMesh>(subRange<const UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
 					if (sh.skeletal)
+					{
 						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->bones, count * sh.mesh->bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
-
-					if constexpr (RenderMode == RenderModeEnum::Color)
-					{
-						renderQueue->depthFuncLessEqual();
-						renderQueue->blending(translucent);
-						if (translucent)
-							renderQueue->blendFuncPremultipliedTransparency();
-						if (data.lightsCount > 0)
-							renderQueue->bind(data.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] = 1;
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-						renderQueue->draw(count);
-
-						renderQueue->depthFuncLessEqual();
-						renderQueue->blending(true);
-						renderQueue->blendFuncAdditive();
-						shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] = 0;
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-						renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, uint32(1));
-						for (const auto &smit : data.shadowmaps)
-						{
-							const ShadowmapData &sm = smit.second;
-							renderQueue->bind(sm.shadowTexture, sm.lightComponent.lightType == LightTypeEnum::Point ? CAGE_SHADER_TEXTURE_SHADOW_CUBE : CAGE_SHADER_TEXTURE_SHADOW);
-							renderQueue->bind(sm.lighsBlock, CAGE_SHADER_UNIBLOCK_LIGHTS);
-							renderQueue->uniform(CAGE_SHADER_UNI_SHADOWMATRIX, sm.shadowMat);
-							renderQueue->draw(count);
-						}
+						renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
 					}
-					else
-					{
-						renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
-						renderQueue->depthFuncLess();
-						renderQueue->blending(false);
-						renderQueue->draw(count);
-					}
+					renderQueue->draw(count);
 				}
 
 				renderQueue->checkGlErrorDebug();
@@ -779,14 +764,17 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
-				renderQueue->bind(data.shadowTexture, CAGE_SHADER_TEXTURE_DEPTH);
-				if (data.lightComponent.lightType == LightTypeEnum::Point)
-					renderQueue->imageCube(data.resolution, GL_DEPTH_COMPONENT16);
-				else
-					renderQueue->image2d(data.resolution, GL_DEPTH_COMPONENT24);
-				renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
-				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				renderQueue->checkGlErrorDebug();
+				if (!data.shadowTexture->ready())
+				{
+					renderQueue->bind(data.shadowTexture, 15);
+					if (data.lightComponent.lightType == LightTypeEnum::Point)
+						renderQueue->imageCube(data.resolution, GL_DEPTH_COMPONENT16);
+					else
+						renderQueue->image2d(data.resolution, GL_DEPTH_COMPONENT24);
+					renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
+					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					renderQueue->checkGlErrorDebug();
+				}
 
 				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
@@ -816,8 +804,31 @@ namespace cage
 
 			void prepareCameraLights(CameraData &data) const
 			{
+				const Holder<RenderQueue> &renderQueue = data.renderQueue;
+
 				std::vector<UniLight> lights;
 				lights.reserve(50);
+				std::vector<Mat4> shadows;
+				PointerRangeHolder<TextureHandle> tex2d, texCube;
+
+				// add shadowed lights
+				for (const auto &[e, sh] : data.shadowmaps)
+				{
+					lights.push_back(sh.shadowUni);
+					shadows.push_back(sh.shadowMat);
+					if (sh.lightComponent.lightType == LightTypeEnum::Spot)
+					{
+						tex2d.push_back({});
+						texCube.push_back(sh.shadowTexture);
+					}
+					else
+					{
+						tex2d.push_back(sh.shadowTexture);
+						texCube.push_back({});
+					}
+				}
+
+				// add unshadowed lights
 				entitiesVisitor([&](Entity *e, const LightComponent &lc) {
 					if ((lc.sceneMask & data.camera.sceneMask) == 0)
 						return;
@@ -835,13 +846,31 @@ namespace cage
 					}();
 					lights.push_back(uni);
 				}, +scene, false);
+
 				data.lightsCount = numeric_cast<uint32>(lights.size());
-				if (data.lightsCount > 0)
-					data.lighsBlock = data.renderQueue->universalUniformArray<UniLight>(lights);
+				if (!lights.empty())
+					renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
+				if (!shadows.empty())
+				{
+					renderQueue->universalUniformArray<Mat4>(shadows, CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES);
+					if (!tex2d.empty())
+						renderQueue->bindlessUniform(std::move(tex2d), CAGE_SHADER_UNIBLOCK_SHADOWS2D, true);
+					if (!texCube.empty())
+						renderQueue->bindlessUniform(std::move(texCube), CAGE_SHADER_UNIBLOCK_SHADOWSCUBE, true);
+				}
+			}
+
+			void finishCameraLights(CameraData &data) const
+			{
+				PointerRangeHolder<TextureHandle> texs;
+				for (const auto &[e, sh] : data.shadowmaps)
+					texs.push_back(sh.shadowTexture);
+				data.renderQueue->bindlessResident(std::move(texs), false);
 			}
 
 			void taskCamera(CameraData &data, uint32) const
 			{
+				data.renderQueue = newRenderQueue(data.name + "_camera");
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
@@ -979,6 +1008,8 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("standard");
 					renderModels<RenderModeEnum::Color>(data);
 				}
+
+				finishCameraLights(data);
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("effects");
@@ -1141,13 +1172,17 @@ namespace cage
 					0.5, 0.5, 0.5, 1.0);
 				data.shadowMat = bias * data.viewProj;
 
-				if (data.lightComponent.lightType == LightTypeEnum::Point)
-					data.shadowTexture = provisionalGraphics->textureCube(data.name);
-				else
-					data.shadowTexture = provisionalGraphics->texture(data.name);
+				{
+					const String name = Stringizer() + data.name + "_" + data.resolution;
+					if (data.lightComponent.lightType == LightTypeEnum::Point)
+						data.shadowTexture = provisionalGraphics->textureCube(name);
+					else
+						data.shadowTexture = provisionalGraphics->texture(name);
+				}
 
 				{
-					UniLight uni = initializeLightUni(data.model, data.lightComponent);
+					UniLight &uni = data.shadowUni;
+					uni = initializeLightUni(data.model, data.lightComponent);
 					uni.parameters[2] = e->value<ShadowmapComponent>().normalOffsetScale;
 					uni.parameters[3] = [&]() {
 						switch (data.lightComponent.lightType)
@@ -1158,8 +1193,6 @@ namespace cage
 						default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
 						}
 					}();
-					// the UubRange is used when rendering with the CAMERA render queue, even if it is stored in the shadowmap data
-					data.lighsBlock = camera.renderQueue->universalUniformStruct<UniLight>(uni);
 				}
 
 				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
@@ -1171,7 +1204,6 @@ namespace cage
 
 				CameraData data;
 				(RenderPipelineCamera &)data = camera;
-				data.renderQueue = newRenderQueue(camera.name + "_camera");
 
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
@@ -1184,7 +1216,9 @@ namespace cage
 					it->wait();
 
 				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline");
+
 				{
+					// viewport must be dispatched before shadowmaps
 					UniViewport viewport;
 					viewport.vMat = data.view;
 					viewport.pMat = data.proj;
@@ -1199,13 +1233,15 @@ namespace cage
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 				}
 
+				// ensure that shadowmaps are rendered before the camera
 				for (auto &shm : data.shadowmaps)
 				{
 					queue->enqueue(std::move(shm.second.renderQueue));
 					for (RenderPipelineDebugVisualization &di : shm.second.debugVisualizations)
 						data.debugVisualizations.push_back(std::move(di));
 				}
-				queue->enqueue(std::move(data.renderQueue)); // ensure that shadowmaps are rendered before the camera
+
+				queue->enqueue(std::move(data.renderQueue));
 
 				RenderPipelineResult result;
 				result.debugVisualizations = std::move(data.debugVisualizations);

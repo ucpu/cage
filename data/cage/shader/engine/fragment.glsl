@@ -68,36 +68,52 @@ vec3 lightSpotImpl(Material material, UniLight light, float intensity)
 	) * light.color.rgb * d * intensity;
 }
 
-vec4 shadowSamplingPosition4(UniLight light)
+vec4 shadowSamplingPosition4(UniLight light, uint shadowIndex)
 {
 	float normalOffsetScale = light.parameters[2];
 	vec3 p3 = varPosition + normal * normalOffsetScale;
-	return uniShadowMatrix * vec4(p3, 1);
+	return uniShadowsMatrices[shadowIndex] * vec4(p3, 1);
 }
 
-vec3 lightDirectionalShadow(Material material, UniLight light)
+sampler2D pickShadowSampler2d(uint shadowIndex)
 {
-	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
-	float shadow = sampleShadowMap2d(texShadow2d, shadowPos);
+	if ((shadowIndex % 2) == 0)
+		return sampler2D(texShadows2d[shadowIndex / 2].xy);
+	else
+		return sampler2D(texShadows2d[shadowIndex / 2].zw);
+}
+
+samplerCube pickShadowSamplerCube(uint shadowIndex)
+{
+	if ((shadowIndex % 2) == 0)
+		return samplerCube(texShadowsCube[shadowIndex / 2].xy);
+	else
+		return samplerCube(texShadowsCube[shadowIndex / 2].zw);
+}
+
+vec3 lightDirectionalShadow(Material material, UniLight light, uint shadowIndex)
+{
+	vec3 shadowPos = vec3(shadowSamplingPosition4(light, shadowIndex));
+	float shadow = sampleShadowMap2d(pickShadowSampler2d(shadowIndex), shadowPos);
 	return lightDirectionalImpl(material, light, shadow);
 }
 
-vec3 lightPointShadow(Material material, UniLight light, float att)
+vec3 lightPointShadow(Material material, UniLight light, float att, uint shadowIndex)
 {
-	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
-	float shadow = sampleShadowMapCube(texShadowCube, shadowPos);
+	vec3 shadowPos = vec3(shadowSamplingPosition4(light, shadowIndex));
+	float shadow = sampleShadowMapCube(pickShadowSamplerCube(shadowIndex), shadowPos);
 	return lightPointImpl(material, light, shadow * att);
 }
 
-vec3 lightSpotShadow(Material material, UniLight light, float att)
+vec3 lightSpotShadow(Material material, UniLight light, float att, uint shadowIndex)
 {
-	vec4 shadowPos4 = shadowSamplingPosition4(light);
+	vec4 shadowPos4 = shadowSamplingPosition4(light, shadowIndex);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
-	float shadow = sampleShadowMap2d(texShadow2d, shadowPos);
+	float shadow = sampleShadowMap2d(pickShadowSampler2d(shadowIndex), shadowPos);
 	return lightSpotImpl(material, light, shadow * att);
 }
 
-vec3 lightType(Material material, UniLight light)
+vec3 lightType(Material material, UniLight light, uint shadowIndex)
 {
 	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
 	if (att < confLightThreshold)
@@ -105,11 +121,11 @@ vec3 lightType(Material material, UniLight light)
 	switch (uint(light.parameters[3]))
 	{
 	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light, shadowIndex);
 	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINT: return lightPointImpl(material, light, att);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att, shadowIndex);
 	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOT: return lightSpotImpl(material, light, att);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att, shadowIndex);
 	default: return vec3(191, 85, 236) / 255;
 	}
 }
@@ -133,29 +149,23 @@ float lightAmbientOcclusion()
 vec4 lighting(Material material)
 {
 	vec4 res = vec4(0);
-	bool enabled = dot(normal, normal) > 0.5;
 
-	// ambient contributions
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTLIGHTING] > 0)
+	// emissive
+	res.rgb += material.albedo * material.emissive;
+
+	if (dot(normal, normal) > 0.5)
 	{
-		// emissive
-		res.rgb += material.albedo * material.emissive;
-
-		// ambient
-		if (enabled)
-		{
+		{ // ambient
 			float ssao = 1;
 			if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] > 0)
 				ssao = lightAmbientOcclusion();
 			res.rgb += lightAmbient(material) * ssao;
 		}
-	}
 
-	// direct contributions
-	if (enabled)
-	{
-		for (int i = 0; i < uniLightsCount; i++)
-			res.rgb += lightType(material, uniLights[i]);
+		{ // direct
+			for (int i = 0; i < uniLightsCount; i++)
+				res.rgb += lightType(material, uniLights[i], i);
+		}
 	}
 
 	res.a = material.opacity;

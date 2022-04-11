@@ -131,6 +131,7 @@ namespace cage
 	class SpeakerDevice;
 	class SpeakerList;
 	class Texture;
+	struct BindlessHandle;
 	class UniformBuffer;
 	struct UniformBufferCreateConfig;
 	struct Voice;

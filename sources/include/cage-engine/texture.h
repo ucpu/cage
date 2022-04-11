@@ -22,8 +22,8 @@ namespace cage
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
 		uint32 maxMipmapLevel() const;
-		void bind() const;
 
+		void bind() const;
 		void importImage(const Image *img);
 		void image2d(Vec2i resolution, uint32 internalFormat);
 		void image2d(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
@@ -46,6 +46,7 @@ namespace cage
 		void swizzle(const uint32 values[4]);
 		void maxMipmapLevel(uint32 level);
 		void generateMipmaps();
+		BindlessHandle bindlessHandle();
 	};
 
 	CAGE_ENGINE_API Holder<Texture> newTexture();
@@ -59,6 +60,13 @@ namespace cage
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexTexture = 11;
+
+	struct CAGE_ENGINE_API BindlessHandle
+	{
+		uint64 handle = 0;
+	};
+
+	CAGE_ENGINE_API void makeResident(BindlessHandle handle, bool resident);
 }
 
 #endif // guard_texture_h_ds54ghlkj89s77e4g

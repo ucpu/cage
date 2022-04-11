@@ -77,6 +77,9 @@ namespace cage
 		void generateMipmaps();
 		void resetAllTextures(); // bind default (0) texture in all texture units in all types
 
+		void bindlessUniform(Holder<PointerRange<TextureHandle>> bindlessHandles, uint32 bindingPoint, bool makeResident = false);
+		void bindlessResident(Holder<PointerRange<TextureHandle>> bindlessHandles, bool resident);
+
 		void bind(const Holder<Model> &model);
 		void draw(uint32 instances = 1);
 

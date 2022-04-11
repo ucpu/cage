@@ -448,12 +448,13 @@ void processShader()
 	parse(inputFileName);
 
 	{
-		String prepend;
-		if (!properties("version").empty())
-			prepend += String("#version ") + properties("version") + "\n";
-		prepend += String() + "// " + inputName + "\n";
+		std::string prepend = R"foo(
+#version 440 core
+#extension GL_ARB_bindless_texture : require
+)foo";
+		prepend += std::string() + "// " + inputName.c_str() + "\n";
 		for (auto &it : codes)
-			it.second = std::string(prepend.c_str(), prepend.length()) + it.second;
+			it.second = prepend + it.second;
 	}
 
 	{

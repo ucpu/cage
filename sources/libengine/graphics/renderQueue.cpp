@@ -3,6 +3,7 @@
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/profiling.h>
+#include <cage-core/memoryAlloca.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/uniformBuffer.h>
@@ -130,6 +131,7 @@ namespace cage
 			BlockContainer<CmdBase *> cmdsAllocs;
 			BlockContainer<void *> memAllocs;
 
+			CmdBase *setupHead = nullptr, *setupTail = nullptr;
 			CmdBase *head = nullptr, *tail = nullptr;
 
 			uint32 commandsCount = 0;
@@ -181,6 +183,8 @@ namespace cage
 					void dispatch(RenderQueueImpl *) const override
 					{}
 				};
+				setupHead = setupTail = arena->createObject<Cmd>();
+				cmdsAllocs.push_back(setupHead);
 				head = tail = arena->createObject<Cmd>();
 				cmdsAllocs.push_back(head);
 			}
@@ -208,6 +212,9 @@ namespace cage
 				profilingStack.clear();
 #endif // CAGE_PROFILING_ENABLED
 
+				for (const CmdBase *cmd = setupHead; cmd; cmd = cmd->next)
+					cmd->dispatch(this);
+				
 				RenderQueueDispatchBindings localBindings; // make sure the bindings are destroyed on the opengl thread
 				bindings = &localBindings;
 
@@ -240,6 +247,18 @@ namespace cage
 				uubObject = nullptr;
 
 				CAGE_CHECK_GL_ERROR_DEBUG();
+			}
+
+			// setup commands are run on opengl thread before the universal uniform buffer is dispatched
+			template<class T>
+			T &addSetup()
+			{
+				commandsCount++;
+				T *cmd = arena->createObject<T>();
+				cmdsAllocs.push_back(cmd);
+				setupTail->next = cmd;
+				setupTail = cmd;
+				return *cmd;
 			}
 
 			template<class T>
@@ -385,7 +404,6 @@ namespace cage
 
 				addCmd<Cmd>();
 			}
-
 		};
 
 		// logical or without short circuiting
@@ -434,7 +452,7 @@ namespace cage
 		CAGE_ASSERT(uubRange.offset + uubRange.size <= impl->uubStaging.size());
 		CAGE_ASSERT((uubRange.offset % UniformBuffer::alignmentRequirement()) == 0);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		(UubRange&)cmd = uubRange;
+		(UubRange &)cmd = uubRange;
 		cmd.bindingPoint = bindingPoint;
 	}
 
@@ -885,6 +903,88 @@ namespace cage
 		impl->setting.textures.fill(nullptr);
 		impl->setting.activeTextureIndex = 0;
 		impl->addCmd<Cmd>();
+	}
+
+	void RenderQueue::bindlessUniform(Holder<PointerRange<TextureHandle>> bindlessHandles, uint32 bindingPoint, bool makeResident)
+	{
+		struct CmdSetup : public CmdBase
+		{
+			Holder<PointerRange<TextureHandle>> bindlessHandles;
+			UubRange range;
+
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				uint64 *arr = (uint64 *)CAGE_ALLOCA(sizeof(uint64) * bindlessHandles.size());
+				uint64 *arrit = arr;
+				for (auto &it : bindlessHandles)
+				{
+					if (!it)
+					{
+						*arrit++ = 0;
+						continue;
+					}
+					Holder<Texture> tex = it.resolve();
+					BindlessHandle hnd = tex->bindlessHandle();
+					*arrit++ = hnd.handle;
+				}
+				const_cast<CmdSetup *>(this)->range = impl->universalUniformArray<uint64>(PointerRange<uint64>(arr, arr + bindlessHandles.size()));
+			}
+		};
+
+		struct CmdDispatch : public CmdBase
+		{
+			const CmdSetup *setup = nullptr;
+			uint32 bindingPoint = m;
+			bool makeResident = false;
+
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				if (makeResident)
+				{
+					for (auto &it : setup->bindlessHandles)
+					{
+						if (!it)
+							continue;
+						Holder<Texture> tex = it.resolve();
+						BindlessHandle hnd = tex->bindlessHandle();
+						cage::makeResident(hnd, true);
+					}
+				}
+
+				impl->uubObject->bind(bindingPoint, setup->range.offset, setup->range.size);
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CmdSetup &setup = impl->addSetup<CmdSetup>();
+		setup.bindlessHandles = std::move(bindlessHandles);
+		CmdDispatch &cmd = impl->addCmd<CmdDispatch>();
+		cmd.setup = &setup;
+		cmd.bindingPoint = bindingPoint;
+		cmd.makeResident = makeResident;
+	}
+
+	void RenderQueue::bindlessResident(Holder<PointerRange<TextureHandle>> bindlessHandles, bool resident)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<PointerRange<TextureHandle>> bindlessHandles;
+			bool resident = false;
+
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				for (auto &it : bindlessHandles)
+				{
+					Holder<Texture> tex = it.resolve();
+					makeResident(tex->bindlessHandle(), resident);
+				}
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.bindlessHandles = std::move(bindlessHandles);
+		cmd.resident = resident;
 	}
 
 	void RenderQueue::bind(const Holder<Model> &model)
