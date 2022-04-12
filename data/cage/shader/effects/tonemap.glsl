@@ -1,12 +1,11 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
+layout(binding = 0) uniform sampler2D texColor;
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform Tonemap
+layout(std140, binding = 2) uniform Tonemap
 {
 	vec4 tonemapFirst; // shoulderStrength, linearStrength, linearAngle, toeStrength
 	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, tonemapEnabled

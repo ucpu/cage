@@ -1,15 +1,14 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
 
 $include dofParams.glsl
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
-layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
-layout(binding = CAGE_SHADER_TEXTURE_EFFECTS + 0) uniform sampler2D texDofNear;
-layout(binding = CAGE_SHADER_TEXTURE_EFFECTS + 1) uniform sampler2D texDofFar;
+layout(binding = 0) uniform sampler2D texColor;
+layout(binding = 1) uniform sampler2D texDepth;
+layout(binding = 2) uniform sampler2D texDofNear;
+layout(binding = 3) uniform sampler2D texDofFar;
 
 out vec3 outColor;
 

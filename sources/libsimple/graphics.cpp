@@ -82,8 +82,8 @@ namespace cage
 
 			void initialize() // opengl thread
 			{
-				renderQueue = newRenderQueue();
 				provisionalData = newProvisionalGraphics();
+				renderQueue = newRenderQueue("engine", +provisionalData);
 				for (EmitBuffer &it : emitBuffers)
 				{
 					RenderPipelineCreateConfig cfg;
@@ -202,7 +202,7 @@ namespace cage
 
 			void dispatch() // opengl thread
 			{
-				renderQueue->dispatch(+provisionalData);
+				renderQueue->dispatch();
 				provisionalData->reset();
 
 				{ // check gl errors (even in release, but do not halt the game)

@@ -1,5 +1,4 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
@@ -9,7 +8,7 @@ $define shader fragment
 const float offsets[3] = { 0.0, 1.3846153846, 3.2307692308 };
 const float weights[3] = { 0.2270270270, 0.3162162162, 0.0702702703 };
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texInput;
+layout(binding = 0) uniform sampler2D texInput;
 
 out vec4 outOutput;
 

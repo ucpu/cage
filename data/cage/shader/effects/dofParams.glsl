@@ -1,5 +1,5 @@
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform Dof
+layout(std140, binding = 2) uniform Dof
 {
 	mat4 projInv;
 	vec4 dofNear; // near, far

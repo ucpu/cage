@@ -272,6 +272,7 @@ namespace cage
 
 		Holder<EntityManager> entityMgr = newEntityManager();
 		AssetManager *assetMgr = nullptr;
+		ProvisionalGraphics *provisionalGraphics = nullptr;
 
 		Vec2i inputResolution; // last window resolution (pixels)
 		Vec2i inputMouse; // last position of mouse (pixels)

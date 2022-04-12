@@ -1,5 +1,5 @@
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform Ssao
+layout(std140, binding = 2) uniform Ssao
 {
 	mat4 proj;
 	mat4 projInv;

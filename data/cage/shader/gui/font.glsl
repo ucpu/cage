@@ -10,7 +10,7 @@ struct InstanceStruct
 };
 layout(std140, binding = 1) uniform Instances
 {
-	InstanceStruct instances[CAGE_SHADER_MAX_CHARACTERS];
+	InstanceStruct instances[512];
 };
 
 layout(location = 0) uniform mat4 uniMvp;

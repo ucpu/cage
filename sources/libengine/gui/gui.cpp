@@ -10,7 +10,7 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetMgr(config.assetMgr)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetMgr(config.assetMgr), provisionalGraphics(config.provisionalGraphics)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));

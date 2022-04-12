@@ -760,7 +760,7 @@ namespace cage
 
 			void taskShadowmap(ShadowmapData &data, uint32) const
 			{
-				data.renderQueue = newRenderQueue(data.name);
+				data.renderQueue = newRenderQueue(data.name, provisionalGraphics);
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
@@ -870,7 +870,7 @@ namespace cage
 
 			void taskCamera(CameraData &data, uint32) const
 			{
-				data.renderQueue = newRenderQueue(data.name + "_camera");
+				data.renderQueue = newRenderQueue(data.name + "_camera", provisionalGraphics);
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
@@ -1215,7 +1215,7 @@ namespace cage
 				for (const auto &it : tasks)
 					it->wait();
 
-				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline");
+				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline", provisionalGraphics);
 
 				{
 					// viewport must be dispatched before shadowmaps

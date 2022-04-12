@@ -122,15 +122,14 @@ namespace cage
 
 		void resetQueue(); // erase all stored commands
 
-		void dispatch(ProvisionalGraphics *provisionalGraphics = nullptr); // requires opengl context bound in current thread
+		void dispatch(); // requires opengl context bound in current thread
 
 		uint32 commandsCount() const;
 		uint32 drawsCount() const;
 		uint32 primitivesCount() const;
 	};
 
-	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue();
-	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue(const String &name);
+	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue(const String &name, ProvisionalGraphics *provisionalGraphics);
 
 	struct CAGE_ENGINE_API RenderQueueNamedScope : private Immovable
 	{

@@ -208,7 +208,7 @@ namespace cage
 
 		graphicsData.load(assetMgr);
 
-		Holder<RenderQueue> q = newRenderQueue(Stringizer() + "gui_" + this);
+		Holder<RenderQueue> q = newRenderQueue(Stringizer() + "gui_" + this, provisionalGraphics);
 
 		activeQueue = +q;
 		auto namedScope = q->namedScope("gui");

@@ -1,12 +1,11 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
 
 $include ssaoParams.glsl
 
-layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texAo;
+layout(binding = 0) uniform sampler2D texAo;
 
 out float outAo;
 

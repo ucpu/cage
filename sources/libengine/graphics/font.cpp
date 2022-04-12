@@ -19,6 +19,8 @@ namespace cage
 {
 	namespace
 	{
+		const uint32 MaxCharacters = 512;
+
 		struct Instance
 		{
 			Vec4 wrld;
@@ -214,18 +216,18 @@ namespace cage
 				if (data.renderQueue)
 				{
 					const uint32 s = numeric_cast<uint32>(data.instances.size());
-					const uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
-					const uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
+					const uint32 a = s / MaxCharacters;
+					const uint32 b = s - a * MaxCharacters;
 					for (uint32 i = 0; i < a; i++)
 					{
-						const auto p = data.instances.data() + i * CAGE_SHADER_MAX_CHARACTERS;
-						PointerRange<Instance> r = { p, p + CAGE_SHADER_MAX_CHARACTERS };
+						const auto p = data.instances.data() + i * MaxCharacters;
+						PointerRange<Instance> r = { p, p + MaxCharacters };
 						data.renderQueue->universalUniformArray<Instance>(r, 1);
-						data.renderQueue->draw(CAGE_SHADER_MAX_CHARACTERS);
+						data.renderQueue->draw(MaxCharacters);
 					}
 					if (b)
 					{
-						const auto p = data.instances.data() + a * CAGE_SHADER_MAX_CHARACTERS;
+						const auto p = data.instances.data() + a * MaxCharacters;
 						PointerRange<Instance> r = { p, p + b };
 						data.renderQueue->universalUniformArray<Instance>(r, 1);
 						data.renderQueue->draw(b);

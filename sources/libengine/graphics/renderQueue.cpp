@@ -148,7 +148,8 @@ namespace cage
 			using RenderQueueContent::drawsCount;
 			using RenderQueueContent::primitivesCount;
 
-			const String queueName = Stringizer() + this;
+			const String queueName;
+			ProvisionalGraphics *const provisionalGraphics = nullptr;
 			Holder<MemoryArena> arena = newMemoryAllocatorStream({});
 			MemoryBuffer uubStaging;
 			UniformBuffer *uubObject = nullptr;
@@ -161,12 +162,7 @@ namespace cage
 			std::vector<ProfilingEvent> profilingStack;
 #endif // CAGE_PROFILING_ENABLED
 
-			RenderQueueImpl()
-			{
-				initHeads();
-			}
-
-			RenderQueueImpl(const String &name): queueName(name)
+			RenderQueueImpl(const String &name, ProvisionalGraphics *provisionalGraphics) : queueName(name), provisionalGraphics(provisionalGraphics)
 			{
 				initHeads();
 			}
@@ -203,7 +199,7 @@ namespace cage
 				initHeads();
 			}
 
-			void dispatch(ProvisionalGraphics *provisionalGraphics)
+			void dispatch()
 			{
 #ifdef CAGE_DEBUG
 				namesStack.clear();
@@ -224,7 +220,7 @@ namespace cage
 					ProfilingScope profiling("UUB upload", "render queue");
 					if (provisionalGraphics)
 					{
-						uub = provisionalGraphics->uniformBuffer(Stringizer() + "universal uniform buffer " + queueName)->resolve();
+						uub = provisionalGraphics->uniformBuffer(Stringizer() + "UUB_" + queueName)->resolve();
 						uub->bind();
 						if (uub->size() >= uubStaging.size())
 							uub->writeRange(uubStaging, 0);
@@ -234,7 +230,7 @@ namespace cage
 					else
 					{
 						uub = newUniformBuffer();
-						uub->setDebugName("universal uniform buffer");
+						uub->setDebugName("UUB");
 						uub->writeWhole(uubStaging);
 					}
 				}
@@ -1379,10 +1375,10 @@ namespace cage
 		impl->resetQueue();
 	}
 
-	void RenderQueue::dispatch(ProvisionalGraphics *provisionalGraphics)
+	void RenderQueue::dispatch()
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->dispatch(provisionalGraphics);
+		impl->dispatch();
 	}
 
 	uint32 RenderQueue::commandsCount() const
@@ -1403,14 +1399,9 @@ namespace cage
 		return impl->primitivesCount;
 	}
 
-	Holder<RenderQueue> newRenderQueue()
+	Holder<RenderQueue> newRenderQueue(const String &name, ProvisionalGraphics *provisionalGraphics)
 	{
-		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>();
-	}
-
-	Holder<RenderQueue> newRenderQueue(const String &name)
-	{
-		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>(name);
+		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>(name, provisionalGraphics);
 	}
 
 	RenderQueueNamedScope::RenderQueueNamedScope(RenderQueue *queue, StringLiteral name) : queue(queue)

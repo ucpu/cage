@@ -1,11 +1,10 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
 
-layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texLuminanceOld;
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texLuminanceNew;
+layout(binding = 0) uniform sampler2D texLuminanceNew;
+layout(binding = 1) uniform sampler2D texLuminanceOld;
 
 layout(location = 0) uniform vec2 uniAdaptationSpeed; // darker, lighter
 

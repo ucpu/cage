@@ -1,11 +1,10 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
-layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texBloom;
+layout(binding = 0) uniform sampler2D texColor;
+layout(binding = 1) uniform sampler2D texBloom;
 
 layout(location = 0) uniform int uniLodLevel;
 

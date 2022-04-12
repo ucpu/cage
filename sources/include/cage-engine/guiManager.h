@@ -36,6 +36,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiManagerCreateConfig
 	{
 		AssetManager *assetMgr = nullptr;
+		ProvisionalGraphics *provisionalGraphics = nullptr;
 		uint32 skinsCount = 1;
 	};
 

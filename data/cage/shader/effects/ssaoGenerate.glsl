@@ -1,5 +1,4 @@
 
-$include ../shaderConventions.h
 $include vertex.glsl
 
 $define shader fragment
@@ -7,12 +6,12 @@ $define shader fragment
 $include ../functions/hash.glsl
 $include ssaoParams.glsl
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_SSAO_POINTS) uniform SsaoPoints
+layout(std140, binding = 3) uniform SsaoPoints
 {
 	vec4 pointsOnSphere[256];
 };
 
-layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
+layout(binding = 0) uniform sampler2D texDepth;
 
 out float outAo;
 

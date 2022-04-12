@@ -1,7 +1,7 @@
 
 $define shader vertex
 
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
+layout(location = 0) in vec3 inPosition;
 
 void main()
 {
