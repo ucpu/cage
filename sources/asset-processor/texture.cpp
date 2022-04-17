@@ -366,7 +366,7 @@ namespace
 		data.swizzle[2] = TextureSwizzleEnum::B;
 		data.swizzle[3] = TextureSwizzleEnum::A;
 		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution), 8u) : 1;
-		data.maxMipmapLevel = data.containedLevels - 1;
+		data.mipmapLevels = data.containedLevels;
 		if (toBool(properties("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
 		if (toBool(properties("srgb")))

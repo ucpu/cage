@@ -59,13 +59,13 @@ namespace cage
 			return;
 		RenderQueue *q = impl->activeQueue;
 		skin->bind(q);
-		q->bind(impl->graphicsData.elementShader);
-		q->uniform(0, data.outer);
-		q->uniform(1, data.inner);
-		q->uniform(2, data.element);
-		q->uniform(3, data.mode);
-		q->bind(impl->graphicsData.elementModel);
-		q->draw();
+		Holder<ShaderProgram> shader = impl->graphicsData.elementShader.share();
+		q->bind(shader);
+		q->uniform(shader, 0, data.outer);
+		q->uniform(shader, 1, data.inner);
+		q->uniform(shader, 2, data.element);
+		q->uniform(shader, 3, data.mode);
+		q->draw(impl->graphicsData.elementModel);
 	}
 
 	RenderableText::RenderableText(TextItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
@@ -101,11 +101,11 @@ namespace cage
 		if (data.glyphs.empty() && data.cursor != 0)
 			return;
 		RenderQueue *q = impl->activeQueue;
-		q->bind(impl->graphicsData.fontShader);
-		q->uniform(0, data.Transform);
-		q->uniform(4, data.color);
-		data.font->bind(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader);
-		data.font->render(q, data.glyphs, data.format, data.cursor);
+		Holder<ShaderProgram> shader = impl->graphicsData.fontShader.share();
+		q->bind(shader);
+		q->uniform(shader, 0, data.Transform);
+		q->uniform(shader, 4, data.color);
+		data.font->render(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader, data.glyphs, data.format, data.cursor);
 	}
 
 	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
@@ -127,13 +127,13 @@ namespace cage
 		CAGE_ASSERT(data.texture);
 		RenderQueue *q = impl->activeQueue;
 		q->bind(data.texture, 0);
-		q->bind(data.texture->target() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader);
-		q->uniform(0, data.ndcPos);
-		q->uniform(1, data.uvClip);
+		Holder<ShaderProgram> shader = (data.texture->target() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader).share();
+		q->bind(shader);
+		q->uniform(shader, 0, data.ndcPos);
+		q->uniform(shader, 1, data.uvClip);
 		if (data.texture->target() == GL_TEXTURE_2D_ARRAY)
-			q->uniform(2, data.aniTexFrames);
-		q->bind(impl->graphicsData.imageModel);
-		q->draw();
+			q->uniform(shader, 2, data.aniTexFrames);
+		q->draw(impl->graphicsData.imageModel);
 	}
 
 	void GuiImpl::GraphicsData::load(AssetManager *assetMgr)

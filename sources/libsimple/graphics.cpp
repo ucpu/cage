@@ -170,11 +170,10 @@ namespace cage
 					CAGE_ASSERT(index < debugVisualizations.size());
 					const auto graphicsDebugScope = renderQueue->namedScope("visualize buffer");
 					renderQueue->viewport(Vec2i(), windowResolution);
-					renderQueue->bind(engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 					renderQueue->bind(debugVisualizations[index].texture, 0);
 					renderQueue->bind(debugVisualizations[index].shader);
-					renderQueue->uniform(0, 1.0 / Vec2(windowResolution));
-					renderQueue->draw();
+					renderQueue->uniform(debugVisualizations[index].shader, 0, 1.0 / Vec2(windowResolution));
+					renderQueue->draw(engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 					renderQueue->checkGlErrorDebug();
 				}
 			}

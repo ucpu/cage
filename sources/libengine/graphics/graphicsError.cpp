@@ -3,10 +3,10 @@
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
 
-#include <cage-engine/opengl.h>
 #include <cage-engine/uniformBuffer.h>
+#include <cage-engine/graphicsError.h>
 #include <cage-engine/window.h>
-#include "private.h"
+#include <cage-engine/opengl.h>
 
 #include <map>
 #include <cstdlib>
@@ -141,9 +141,15 @@ namespace cage
 		}
 	}
 
-	namespace graphicsPrivat
+	namespace detail
 	{
-		void openglContextInitializeGeneral(Window *w)
+		void initializeOpengl()
+		{
+			if (gladLoadGL() != 1)
+				CAGE_THROW_ERROR(Exception, "failed to initialize OpenGL loader");
+		}
+
+		void configureOpengl(Window *w)
 		{
 			// initialize debug messages
 			glDebugMessageCallback(&openglErrorCallbackImpl, w);
@@ -166,73 +172,6 @@ namespace cage
 			UniformBuffer::alignmentRequirement(); // make sure that the value is retrieved in thread with bound opengl context
 
 			checkGlError();
-		}
-
-#ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
-
-		struct AssertContext
-		{
-			Holder<Mutex> mutex;
-			std::map<Window*, std::map<uint32, uint32>> objects;
-			std::map<uint64, Window*> contexts;
-
-			AssertContext()
-			{
-				mutex = newMutex();
-			}
-		};
-
-		AssertContext &assertContext()
-		{
-			static AssertContext s;
-			return s;
-		}
-
-		void setCurrentContext(Window *ctx)
-		{
-			ScopeLock lock(assertContext().mutex);
-			if (ctx)
-				assertContext().contexts[currentThreadId()] = ctx;
-			else
-				assertContext().contexts.erase(currentThreadId());
-		}
-
-		Window *getCurrentContext()
-		{
-			ScopeLock lock(assertContext().mutex);
-			auto it = assertContext().contexts.find(currentThreadId());
-			if (it == assertContext().contexts.end())
-				return nullptr;
-			CAGE_ASSERT(it->second);
-			return it->second;
-		}
-
-		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
-		{
-			auto cc = getCurrentContext();
-			ScopeLock lock(assertContext().mutex);
-			assertContext().objects[cc][typeIndex] = id;
-		}
-
-		uint32 contextGetCurrentObjectType(uint32 typeIndex)
-		{
-			auto cc = getCurrentContext();
-			ScopeLock lock(assertContext().mutex);
-			std::map<uint32, uint32> &m = assertContext().objects[cc];
-			auto it = m.find(typeIndex);
-			if (it == m.end())
-				return cage::m;
-			return it->second;
-		}
-
-#endif
-	}
-
-	namespace detail
-	{
-		void initializeOpengl()
-		{
-			gladLoadGL();
 		}
 
 		void purgeGlShaderCache()

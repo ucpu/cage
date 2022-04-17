@@ -3,13 +3,13 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#include <cage-engine/shaderConventions.h>
-#include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/renderQueue.h>
+#include <cage-engine/assetStructs.h>
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
-#include "private.h"
 
 #include <vector>
 #include <cstring>
@@ -38,11 +38,13 @@ namespace cage
 
 		struct ProcessData
 		{
+			Holder<Model> model;
+			Holder<ShaderProgram> shader;
+			RenderQueue *renderQueue = nullptr;
 			std::vector<Instance> instances;
 			PointerRange<const uint32> glyphs;
 			Vec2 mousePosition = Vec2::Nan();
 			Vec2 outSize;
-			RenderQueue *renderQueue = nullptr;
 			const FontFormat *format = nullptr;
 			uint32 outCursor = 0;
 			uint32 cursor = m;
@@ -215,6 +217,8 @@ namespace cage
 
 				if (data.renderQueue)
 				{
+					data.renderQueue->bind(tex, 0);
+					data.renderQueue->bind(data.shader);
 					const uint32 s = numeric_cast<uint32>(data.instances.size());
 					const uint32 a = s / MaxCharacters;
 					const uint32 b = s - a * MaxCharacters;
@@ -222,15 +226,15 @@ namespace cage
 					{
 						const auto p = data.instances.data() + i * MaxCharacters;
 						PointerRange<Instance> r = { p, p + MaxCharacters };
-						data.renderQueue->universalUniformArray<Instance>(r, 1);
-						data.renderQueue->draw(MaxCharacters);
+						data.renderQueue->universalUniformArray<Instance>(r, 2);
+						data.renderQueue->draw(data.model, MaxCharacters);
 					}
 					if (b)
 					{
 						const auto p = data.instances.data() + a * MaxCharacters;
 						PointerRange<Instance> r = { p, p + b };
-						data.renderQueue->universalUniformArray<Instance>(r, 1);
-						data.renderQueue->draw(b);
+						data.renderQueue->universalUniformArray<Instance>(r, 2);
+						data.renderQueue->draw(data.model, b);
 					}
 				}
 			}
@@ -257,35 +261,39 @@ namespace cage
 	{
 		FontImpl *impl = (FontImpl *)this;
 		impl->resolution = resolution;
-		impl->tex->bind();
+		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
+		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (resolution[0] * resolution[1]));
 		CAGE_ASSERT(resolution[0] * resolution[1] * bpp == buffer.size());
 		switch (bpp)
 		{
 		case 1:
-			impl->tex->image2d(resolution, GL_R8, GL_RED, GL_UNSIGNED_BYTE, buffer);
+			impl->tex->initialize(resolution, 1, GL_R8);
+			impl->tex->image2d(0, GL_RED, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 2:
-			impl->tex->image2d(resolution, GL_R16, GL_RED, GL_UNSIGNED_SHORT, buffer);
+			impl->tex->initialize(resolution, 1, GL_R16);
+			impl->tex->image2d(0, GL_RED, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 3:
-			impl->tex->image2d(resolution, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+			impl->tex->initialize(resolution, 1, GL_RGB8);
+			impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 4:
-			impl->tex->image2d(resolution, GL_R32F, GL_RED, GL_FLOAT, buffer);
+			impl->tex->initialize(resolution, 1, GL_R32F);
+			impl->tex->image2d(0, GL_RED, GL_FLOAT, buffer);
 			break;
 		case 6:
-			impl->tex->image2d(resolution, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, buffer);
+			impl->tex->initialize(resolution, 1, GL_RGB16);
+			impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 12:
-			impl->tex->image2d(resolution, GL_RGB32F, GL_RGB, GL_FLOAT, buffer);
+			impl->tex->initialize(resolution, 1, GL_RGB32F);
+			impl->tex->image2d(0, GL_RGB, GL_FLOAT, buffer);
 			break;
 		default:
 			CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");
 		}
-		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
-		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-		//impl->tex->generateMipmaps();
 	}
 
 	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const Real> kerning)
@@ -392,18 +400,12 @@ namespace cage
 		return data.outSize;
 	}
 
-	void Font::bind(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader) const
-	{
-		const FontImpl *impl = (const FontImpl *)this;
-		queue->bind(impl->tex, 0);
-		queue->bind(model);
-		queue->bind(shader);
-	}
-
-	void Font::render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
+	void Font::render(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;
+		data.model = model.share();
+		data.shader = shader.share();
 		data.renderQueue = queue;
 		data.format = &format;
 		data.glyphs = glyphs;

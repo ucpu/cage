@@ -3,71 +3,26 @@
 #include <cage-core/serialization.h>
 
 #include <cage-engine/texture.h>
+#include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
-#include "private.h"
 
 namespace cage
 {
-	namespace privat
-	{
-		namespace
-		{
-			template<uint32 N>
-			class NumberedTexture {};
-
-			sint32 activeTexture()
-			{
-				sint32 i = -1;
-				glGetIntegerv(GL_ACTIVE_TEXTURE, &i);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-				i -= GL_TEXTURE0;
-				CAGE_ASSERT(i >= 0 && i < 32);
-				return i;
-			}
-
-			void setSpecificTexture(uint32 index, uint32 id)
-			{
-				switch (index)
-				{
-#define GCHL_GENERATE(I) case I: return setCurrentObject<NumberedTexture<I>>(id);
-					GCHL_GENERATE(0);
-					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
-#undef GCHL_GENERATE
-				}
-			}
-
-			void setCurrentTexture(uint32 id)
-			{
-				setSpecificTexture(activeTexture(), id);
-			}
-
-			uint32 getCurrentTexture()
-			{
-				switch (activeTexture())
-				{
-#define GCHL_GENERATE(I) case I: return getCurrentObject<NumberedTexture<I>>();
-					GCHL_GENERATE(0);
-					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
-#undef GCHL_GENERATE
-				default: CAGE_THROW_CRITICAL(Exception, "active texture index out of range");
-				}
-			}
-		}
-	}
-
 	namespace
 	{
 		class TextureImpl : public Texture
 		{
 		public:
-			Vec3i resolution;
-			uint32 maxMipmapLevel_ = 1000;
 			const uint32 target = 0;
 			uint32 id = 0;
 
+			Vec3i resolution;
+			uint32 mipmapLevels = 0;
+			uint32 internalFormat = 0;
+
 			TextureImpl(uint32 target) : target(target)
 			{
-				glGenTextures(1, &id);
+				glCreateTextures(target, 1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();
 			}
@@ -180,6 +135,11 @@ namespace cage
 		return ((TextureImpl *)this)->target;
 	}
 
+	uint32 Texture::internalFormat() const
+	{
+		return ((TextureImpl *)this)->internalFormat;
+	}
+
 	Vec2i Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
@@ -193,21 +153,88 @@ namespace cage
 		return impl->resolution;
 	}
 
-	uint32 Texture::maxMipmapLevel() const
+	uint32 Texture::mipmapLevels() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->maxMipmapLevel_;
+		return impl->mipmapLevels;
 	}
 
 	void Texture::bind() const
 	{
-		CAGE_ASSERT(graphicsPrivat::getCurrentContext());
 		const TextureImpl *impl = (const TextureImpl *)this;
 		glBindTexture(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-#ifdef CAGE_ASSERT_ENABLED
-		privat::setCurrentTexture(impl->id);
-#endif // CAGE_ASSERT_ENABLED
+	}
+
+	BindlessHandle Texture::bindlessHandle()
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		BindlessHandle h;
+		h.handle = glGetTextureHandleARB(impl->id);
+		return h;
+	}
+
+	void Texture::filters(uint32 mig, uint32 mag, uint32 aniso)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		glTextureParameteri(impl->id, GL_TEXTURE_MIN_FILTER, mig);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+		glTextureParameteri(impl->id, GL_TEXTURE_MAG_FILTER, mag);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+		glTextureParameterf(impl->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, float(max(aniso, 1u)));
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::wraps(uint32 s, uint32 t)
+	{
+		wraps(s, t, GL_REPEAT);
+	}
+
+	void Texture::wraps(uint32 s, uint32 t, uint32 r)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_S, s);
+		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_T, t);
+		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_R, r);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::swizzle(const uint32 values[4])
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		static_assert(sizeof(uint32) == sizeof(GLint));
+		glTextureParameteriv(impl->id, GL_TEXTURE_SWIZZLE_RGBA, (const GLint *)values);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::initialize(Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE || impl->target == GL_TEXTURE_CUBE_MAP);
+		CAGE_ASSERT(mipmapLevels > 0);
+		CAGE_ASSERT(internalFormat != 0);
+		CAGE_ASSERT(impl->internalFormat == 0); // cannot reinitialize
+		impl->resolution = Vec3i(resolution, 1);
+		impl->mipmapLevels = mipmapLevels;
+		impl->internalFormat = internalFormat;
+		glTextureStorage2D(impl->id, mipmapLevels, internalFormat, resolution[0], resolution[1]);
+		glTextureParameteri(impl->id, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::initialize(Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
+		CAGE_ASSERT(mipmapLevels > 0);
+		CAGE_ASSERT(internalFormat != 0);
+		CAGE_ASSERT(impl->internalFormat == 0); // cannot reinitialize
+		impl->resolution = resolution;
+		impl->mipmapLevels = mipmapLevels;
+		impl->internalFormat = internalFormat;
+		glTextureStorage3D(impl->id, mipmapLevels, internalFormat, resolution[0], resolution[1], resolution[2]);
+		glTextureParameteri(impl->id, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void Texture::importImage(const Image *img)
@@ -223,8 +250,8 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 3: return image2d(res, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 4: return image2d(res, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 3: initialize(res, 1, GL_SRGB8); image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+				case 4: initialize(res, 1, GL_SRGB8_ALPHA8); image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
 				}
 			} break;
 			default:
@@ -240,30 +267,30 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(res, GL_R8, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 2: return image2d(res, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 3: return image2d(res, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 4: return image2d(res, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 1: initialize(res, 1, GL_R8); image2d(0, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+				case 2: initialize(res, 1, GL_RG8); image2d(0, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+				case 3: initialize(res, 1, GL_RGB8); image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+				case 4: initialize(res, 1, GL_RGBA8); image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
 				}
 			} break;
 			case ImageFormatEnum::U16:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(res, GL_R16, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 2: return image2d(res, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 3: return image2d(res, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 4: return image2d(res, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 1: initialize(res, 1, GL_R16); image2d(0, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
+				case 2: initialize(res, 1, GL_RG16); image2d(0, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
+				case 3: initialize(res, 1, GL_RGB16); image2d(0, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
+				case 4: initialize(res, 1, GL_RGBA16); image2d(0, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
 				}
 			} break;
 			case ImageFormatEnum::Float:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(res, GL_R32F, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 2: return image2d(res, GL_RG32F, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 3: return image2d(res, GL_RGB32F, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 4: return image2d(res, GL_RGBA32F, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 1: initialize(res, 1, GL_R32F); image2d(0, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
+				case 2: initialize(res, 1, GL_RG32F); image2d(0, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
+				case 3: initialize(res, 1, GL_RGB32F); image2d(0, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
+				case 4: initialize(res, 1, GL_RGBA32F); image2d(0, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
 				}
 			} break;
 			default:
@@ -274,177 +301,79 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");
 	}
 
-	void Texture::image2d(Vec2i resolution, uint32 internalFormat)
-	{
-		image2d(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
-	}
-
-	void Texture::image2d(Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		image2d(0, resolution, internalFormat, format, type, buffer);
-	}
-
-	void Texture::image2d(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::image2d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
-		glTexImage2D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = Vec3i(resolution, 1);
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		glTextureSubImage2D(impl->id, mipmapLevel, 0, 0, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, format, type, buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::image2dCompressed(Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
-	{
-		image2dCompressed(0, resolution, internalFormat, buffer);
-	}
-
-	void Texture::image2dCompressed(uint32 mipmapLevel, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	void Texture::image2dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D);
-		glCompressedTexImage2D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = Vec3i(resolution, 1);
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		glCompressedTextureSubImage2D(impl->id, mipmapLevel, 0, 0, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, impl->internalFormat, buffer.size(), buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCube(Vec2i resolution, uint32 internalFormat)
-	{
-		for (uint32 f = 0; f < 6; f++)
-			imageCube(f, resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
-	}
-
-	void Texture::imageCube(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		imageCube(0, faceIndex, resolution, internalFormat, format, type, buffer);
-	}
-
-	void Texture::imageCube(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::imageCube(uint32 mipmapLevel, uint32 faceIndex, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = Vec3i(resolution, 1);
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, faceIndex, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, 1, format, type, buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCubeCompressed(uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
-	{
-		imageCubeCompressed(0, faceIndex, resolution, internalFormat, buffer);
-	}
-
-	void Texture::imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, Vec2i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	void Texture::imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
-		glCompressedTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex, mipmapLevel, internalFormat, resolution[0], resolution[1], 0, buffer.size(), buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = Vec3i(resolution, 1);
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, faceIndex, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, 1, impl->internalFormat, buffer.size(), buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::image3d(Vec3i resolution, uint32 internalFormat)
-	{
-		image3d(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
-	}
-
-	void Texture::image3d(Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		image3d(0, resolution, internalFormat, format, type, buffer);
-	}
-
-	void Texture::image3d(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::image3d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glTexImage3D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], resolution[2], 0, format, type, buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = resolution;
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		const uint32 depth = impl->resolution[2] >> (impl->target == GL_TEXTURE_2D_ARRAY ? 0 : mipmapLevel);
+		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, 0, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, depth, format, type, buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::image3dCompressed(Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer)
-	{
-		image3dCompressed(0, resolution, internalFormat, buffer);
-	}
-
-	void Texture::image3dCompressed(uint32 mipmapLevel, Vec3i resolution, uint32 internalFormat, PointerRange<const char> buffer)
+	void Texture::image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glCompressedTexImage3D(impl->target, mipmapLevel, internalFormat, resolution[0], resolution[1], resolution[2], 0, buffer.size(), buffer.data());
-		if (mipmapLevel == 0)
-			impl->resolution = resolution;
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::filters(uint32 mig, uint32 mag, uint32 aniso)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		glTexParameteri(impl->target, GL_TEXTURE_MIN_FILTER, mig);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		glTexParameteri(impl->target, GL_TEXTURE_MAG_FILTER, mag);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		glTexParameterf(impl->target, GL_TEXTURE_MAX_ANISOTROPY_EXT, float(max(aniso, 1u)));
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::wraps(uint32 s, uint32 t)
-	{
-		wraps(s, t, GL_REPEAT);
-	}
-
-	void Texture::wraps(uint32 s, uint32 t, uint32 r)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		glTexParameteri(impl->target, GL_TEXTURE_WRAP_S, s);
-		glTexParameteri(impl->target, GL_TEXTURE_WRAP_T, t);
-		glTexParameteri(impl->target, GL_TEXTURE_WRAP_R, r);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::swizzle(const uint32 values[4])
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		static_assert(sizeof(uint32) == sizeof(GLint));
-		glTexParameteriv(impl->target, GL_TEXTURE_SWIZZLE_RGBA, (const GLint *)values);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::maxMipmapLevel(uint32 level)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		glTexParameteri(impl->target, GL_TEXTURE_MAX_LEVEL, level);
-		impl->maxMipmapLevel_ = level;
+		CAGE_ASSERT(impl->internalFormat != 0);
+		CAGE_ASSERT(mipmapLevel < impl->mipmapLevels);
+		CAGE_ASSERT(!buffer.empty());
+		const uint32 depth = impl->resolution[2] >> (impl->target == GL_TEXTURE_2D_ARRAY ? 0 : mipmapLevel);
+		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, 0, impl->resolution[0] >> mipmapLevel, impl->resolution[1] >> mipmapLevel, depth, impl->internalFormat, buffer.size(), buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void Texture::generateMipmaps()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
-		glGenerateMipmap(impl->target);
+		glGenerateTextureMipmap(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	BindlessHandle Texture::bindlessHandle()
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		BindlessHandle h;
-		h.handle = glGetTextureHandleARB(impl->id);
-		return h;
 	}
 
 	Holder<Texture> newTexture()

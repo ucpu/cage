@@ -21,19 +21,19 @@ namespace cage
 				if (!prepare())
 					return;
 				RenderQueue *q = impl->activeQueue;
-				q->bind(impl->graphicsData.colorPickerShader[mode].share());
-				q->uniform(0, pos);
+				Holder<ShaderProgram> shader = impl->graphicsData.colorPickerShader[mode].share();
+				q->bind(shader);
+				q->uniform(shader, 0, pos);
 				switch (mode)
 				{
 				case 0:
-					q->uniform(1, rgb);
+					q->uniform(shader, 1, rgb);
 					break;
 				case 2:
-					q->uniform(1, colorRgbToHsv(rgb)[0]);
+					q->uniform(shader, 1, colorRgbToHsv(rgb)[0]);
 					break;
 				}
-				q->bind(impl->graphicsData.imageModel.share());
-				q->draw();
+				q->draw(impl->graphicsData.imageModel.share());
 			}
 		};
 

@@ -1,5 +1,5 @@
 #include <cage-engine/renderObject.h>
-#include "private.h"
+#include <cage-engine/graphicsError.h>
 
 #include <vector>
 #include <algorithm>

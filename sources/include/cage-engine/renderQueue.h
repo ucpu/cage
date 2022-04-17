@@ -35,16 +35,15 @@ namespace cage
 		}
 		void bind(UubRange uubRange, uint32 bindingPoint);
 
-		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
-		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
-		void bind(UniformBufferHandle uniformBuffer); // bind for writing into (on cpu)
-		void writeWhole(PointerRange<const char> data, uint32 usage = 0);
-		void writeRange(PointerRange<const char> data, uint32 offset = 0);
+		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint);
+		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size);
+		void writeWhole(UniformBufferHandle uniformBuffer, PointerRange<const char> data, uint32 usage = 0);
+		void writeRange(UniformBufferHandle uniformBuffer, PointerRange<const char> data, uint32 offset = 0);
 
 		void bind(const Holder<ShaderProgram> &shader);
 #define GCHL_GENERATE(TYPE) \
-		void uniform(uint32 name, const TYPE &value); \
-		void uniform(uint32 name, PointerRange<const TYPE> values);
+		void uniform(const Holder<ShaderProgram> &shader, uint32 name, const TYPE &value); \
+		void uniform(const Holder<ShaderProgram> &shader, uint32 name, PointerRange<const TYPE> values);
 		GCHL_GENERATE(sint32);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(Vec2i);
@@ -60,28 +59,26 @@ namespace cage
 #undef GCHL_GENERATE
 
 		void bind(FrameBufferHandle frameBuffer);
-		void depthTexture(TextureHandle texture); // attach depth texture to current frame buffer
-		void colorTexture(uint32 index, TextureHandle texture, uint32 mipmapLevel = 0); // attach color texture to current frame buffer
-		void activeAttachments(uint32 mask); // bitmask of active color textures in current frame buffer
-		void clearFrameBuffer(); // detach all textures from the frame buffer
-		void checkFrameBuffer(); // check the frame buffer for completeness
+		void depthTexture(FrameBufferHandle frameBuffer, TextureHandle texture); // attach depth texture
+		void colorTexture(FrameBufferHandle frameBuffer, uint32 index, TextureHandle texture, uint32 mipmapLevel = 0); // attach color texture
+		void activeAttachments(FrameBufferHandle frameBuffer, uint32 mask); // bitmask of active color textures
+		void clearFrameBuffer(FrameBufferHandle frameBuffer); // detach all textures from the frame buffer
+		void checkFrameBuffer(FrameBufferHandle frameBuffer); // check the frame buffer for completeness
 		void resetFrameBuffer(); // bind default (0) frame buffer
 
 		void bind(TextureHandle texture, uint32 bindingPoint);
-		void image2d(Vec2i resolution, uint32 internalFormat);
-		void imageCube(Vec2i resolution, uint32 internalFormat);
-		void image3d(Vec3i resolution, uint32 internalFormat);
-		void filters(uint32 mig, uint32 mag, uint32 aniso);
-		void wraps(uint32 s, uint32 t);
-		void wraps(uint32 s, uint32 t, uint32 r);
-		void generateMipmaps();
+		void image2d(TextureHandle texture, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat); // or cube
+		void image3d(TextureHandle texture, Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat);
+		void filters(TextureHandle texture, uint32 mig, uint32 mag, uint32 aniso);
+		void wraps(TextureHandle texture, uint32 s, uint32 t);
+		void wraps(TextureHandle texture, uint32 s, uint32 t, uint32 r);
+		void generateMipmaps(TextureHandle texture);
 		void resetAllTextures(); // bind default (0) texture in all texture units in all types
 
-		void bindlessUniform(Holder<PointerRange<TextureHandle>> bindlessHandles, uint32 bindingPoint, bool makeResident = false);
-		void bindlessResident(Holder<PointerRange<TextureHandle>> bindlessHandles, bool resident);
+		void bindlessUniform(Holder<PointerRange<TextureHandle>> textures, uint32 bindingPoint, bool makeResident = false);
+		void bindlessResident(Holder<PointerRange<TextureHandle>> textures, bool resident);
 
-		void bind(const Holder<Model> &model);
-		void draw(uint32 instances = 1);
+		void draw(const Holder<Model> &model, uint32 instances = 1);
 
 		void viewport(Vec2i origin, Vec2i size);
 		void scissors(Vec2i origin, Vec2i size);

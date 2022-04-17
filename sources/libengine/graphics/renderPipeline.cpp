@@ -356,26 +356,28 @@ namespace cage
 			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
-				renderQueue->bind(sh.mesh);
 
-				if constexpr (RenderMode == RenderModeEnum::Color)
-				{ // color
-					if (sh.mesh->shaderColorName)
-						renderQueue->bind(assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderColorName));
-					else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-						renderQueue->bind(shaderStandardAlphaClip);
+				Holder<ShaderProgram> shader = [&]() {
+					if constexpr (RenderMode == RenderModeEnum::Color)
+					{ // color
+						if (sh.mesh->shaderColorName)
+							return assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderColorName);
+						else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+							return shaderStandardAlphaClip.share();
+						else
+							return shaderStandard.share();
+					}
 					else
-						renderQueue->bind(shaderStandard);
-				}
-				else
-				{ // depth
-					if (sh.mesh->shaderDepthName)
-						renderQueue->bind(assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderDepthName));
-					else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-						renderQueue->bind(shaderDepthAlphaClip);
-					else
-						renderQueue->bind(shaderDepth);
-				}
+					{ // depth
+						if (sh.mesh->shaderDepthName)
+							return assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderDepthName);
+						else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+							return shaderDepthAlphaClip.share();
+						else
+							return shaderDepth.share();
+					}
+				}();
+				renderQueue->bind(shader);
 
 				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
@@ -395,8 +397,8 @@ namespace cage
 				}
 
 				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
-				renderQueue->uniform(CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-				renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
+				renderQueue->uniform(shader, CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
+				renderQueue->uniform(shader, CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
 				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
@@ -418,7 +420,7 @@ namespace cage
 				}
 				updateShaderRoutinesForTextures(textures, shaderRoutines);
 
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+				renderQueue->uniform(shader, CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -426,11 +428,8 @@ namespace cage
 					const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
 					renderQueue->universalUniformArray<const UniMesh>(subRange<const UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
 					if (sh.skeletal)
-					{
 						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->bones, count * sh.mesh->bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
-						renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
-					}
-					renderQueue->draw(count);
+					renderQueue->draw(sh.mesh, count);
 				}
 
 				renderQueue->checkGlErrorDebug();
@@ -439,10 +438,9 @@ namespace cage
 			void renderTextImpl(const CameraData &data, const TextPrepare &text) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
-				text.font->bind(+renderQueue, modelSquare, shaderFont);
-				renderQueue->uniform(0, data.viewProj * text.model);
-				renderQueue->uniform(4, text.color);
-				text.font->render(+renderQueue, text.glyphs, text.format);
+				renderQueue->uniform(shaderFont, 0, data.viewProj * text.model);
+				renderQueue->uniform(shaderFont, 4, text.color);
+				text.font->render(+renderQueue, modelSquare, shaderFont, text.glyphs, text.format);
 			}
 
 			template<RenderModeEnum RenderMode>
@@ -764,24 +762,23 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
-				if (!data.shadowTexture->ready())
+				if (data.shadowTexture->first())
 				{
-					renderQueue->bind(data.shadowTexture, 15);
 					if (data.lightComponent.lightType == LightTypeEnum::Point)
-						renderQueue->imageCube(data.resolution, GL_DEPTH_COMPONENT16);
+						renderQueue->image2d(data.shadowTexture, data.resolution, 1, GL_DEPTH_COMPONENT16);
 					else
-						renderQueue->image2d(data.resolution, GL_DEPTH_COMPONENT24);
-					renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
-					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						renderQueue->image2d(data.shadowTexture, data.resolution, 1, GL_DEPTH_COMPONENT24);
+					renderQueue->filters(data.shadowTexture, GL_LINEAR, GL_LINEAR, 16);
+					renderQueue->wraps(data.shadowTexture, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					renderQueue->checkGlErrorDebug();
 				}
 
 				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
-				renderQueue->clearFrameBuffer();
-				renderQueue->depthTexture(data.shadowTexture);
-				renderQueue->activeAttachments(0);
-				renderQueue->checkFrameBuffer();
+				renderQueue->clearFrameBuffer(renderTarget);
+				renderQueue->depthTexture(renderTarget, data.shadowTexture);
+				renderQueue->activeAttachments(renderTarget, 0);
+				renderQueue->checkFrameBuffer(renderTarget);
 				renderQueue->viewport(Vec2i(), data.resolution);
 				renderQueue->colorWrite(false);
 				renderQueue->clear(false, true);
@@ -900,10 +897,12 @@ namespace cage
 
 				TextureHandle colorTexture = [&]() {
 					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name);
-					renderQueue->bind(t, 0);
-					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
-					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					renderQueue->image2d(data.resolution, GL_RGB16F);
+					if (t.first())
+					{
+						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
+						renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						renderQueue->image2d(t, data.resolution, 1, GL_RGB16F);
+					}
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeColor.share();
@@ -912,10 +911,12 @@ namespace cage
 				}();
 				TextureHandle depthTexture = [&]() {
 					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name);
-					renderQueue->bind(t, 0);
-					renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
-					renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					renderQueue->image2d(data.resolution, GL_DEPTH_COMPONENT32);
+					if (t.first())
+					{
+						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
+						renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						renderQueue->image2d(t, data.resolution, 1, GL_DEPTH_COMPONENT32);
+					}
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeDepth.share();
@@ -924,10 +925,10 @@ namespace cage
 				}();
 				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
-				renderQueue->colorTexture(0, colorTexture);
-				renderQueue->depthTexture(depthTexture);
-				renderQueue->activeAttachments(1);
-				renderQueue->checkFrameBuffer();
+				renderQueue->depthTexture(renderTarget, depthTexture);
+				renderQueue->colorTexture(renderTarget, 0, colorTexture);
+				renderQueue->activeAttachments(renderTarget, 1);
+				renderQueue->checkFrameBuffer(renderTarget);
 				renderQueue->checkGlErrorDebug();
 
 				renderQueue->viewport(Vec2i(), data.resolution);
@@ -951,10 +952,12 @@ namespace cage
 					TextureHandle depthTextureLowRes = [&]() {
 						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
 						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name);
-						renderQueue->bind(t, 0);
-						renderQueue->filters(GL_NEAREST, GL_NEAREST, 0);
-						renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						renderQueue->image2d(ssaoResolution, GL_R32F);
+						if (t.first())
+						{
+							renderQueue->filters(t, GL_NEAREST, GL_NEAREST, 0);
+							renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+							renderQueue->image2d(t, ssaoResolution, 1, GL_R32F);
+						}
 						RenderPipelineDebugVisualization deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeDepth.share();
@@ -962,16 +965,15 @@ namespace cage
 
 						FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw(Stringizer() + "depthTargetLowRes_" + data.name);
 						renderQueue->bind(renderTarget);
-						renderQueue->colorTexture(0, t);
-						renderQueue->depthTexture({});
-						renderQueue->activeAttachments(1);
-						renderQueue->checkFrameBuffer();
+						renderQueue->colorTexture(renderTarget, 0, t);
+						renderQueue->depthTexture(renderTarget, {});
+						renderQueue->activeAttachments(renderTarget, 1);
+						renderQueue->checkFrameBuffer(renderTarget);
 						renderQueue->viewport(Vec2i(), ssaoResolution);
 						renderQueue->bind(shaderVisualizeColor);
-						renderQueue->uniform(0, 1 / Vec2(ssaoResolution));
+						renderQueue->uniform(shaderVisualizeColor, 0, 1 / Vec2(ssaoResolution));
 						renderQueue->bind(depthTexture, 0);
-						renderQueue->bind(modelSquare);
-						renderQueue->draw();
+						renderQueue->draw(modelSquare);
 						renderQueue->resetAllState();
 						renderQueue->resetFrameBuffer();
 						return t;
@@ -1017,10 +1019,12 @@ namespace cage
 					TextureHandle texSource = colorTexture;
 					TextureHandle texTarget = [&]() {
 						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution);
-						renderQueue->bind(t, 0);
-						renderQueue->filters(GL_LINEAR, GL_LINEAR, 0);
-						renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						renderQueue->image2d(data.resolution, GL_RGB16F);
+						if (t.first())
+						{
+							renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
+							renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+							renderQueue->image2d(t, data.resolution, 1, GL_RGB16F);
+						}
 						return t;
 					}();
 
@@ -1103,13 +1107,13 @@ namespace cage
 					if (texSource != colorTexture)
 					{
 						renderQueue->viewport(Vec2i(), data.resolution);
-						renderQueue->bind(modelSquare);
 						renderQueue->bind(texSource, 0);
 						renderQueue->bind(shaderBlit);
-						renderQueue->bind(provisionalGraphics->frameBufferDraw("renderTarget"));
-						renderQueue->colorTexture(0, colorTexture);
-						renderQueue->activeAttachments(1);
-						renderQueue->draw();
+						renderQueue->bind(renderTarget);
+						renderQueue->colorTexture(renderTarget, 0, colorTexture);
+						renderQueue->activeAttachments(renderTarget, 1);
+						renderQueue->checkFrameBuffer(renderTarget);
+						renderQueue->draw(modelSquare);
 					}
 
 					renderQueue->checkGlErrorDebug();
@@ -1119,23 +1123,22 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
-					renderQueue->bind(modelSquare);
 					renderQueue->bind(colorTexture, 0);
 					renderQueue->bind(shaderBlit);
 					if (data.target)
 					{ // blit to texture
 						renderQueue->bind(renderTarget);
-						renderQueue->colorTexture(0, data.target);
-						renderQueue->depthTexture({});
-						renderQueue->activeAttachments(1);
-						renderQueue->checkFrameBuffer();
-						renderQueue->draw();
+						renderQueue->colorTexture(renderTarget, 0, data.target);
+						renderQueue->depthTexture(renderTarget, {});
+						renderQueue->activeAttachments(renderTarget, 1);
+						renderQueue->checkFrameBuffer(renderTarget);
+						renderQueue->draw(modelSquare);
 						renderQueue->resetFrameBuffer();
 					}
 					else
 					{ // blit to window
 						renderQueue->resetFrameBuffer();
-						renderQueue->draw();
+						renderQueue->draw(modelSquare);
 					}
 					renderQueue->resetAllState();
 					renderQueue->resetAllTextures();

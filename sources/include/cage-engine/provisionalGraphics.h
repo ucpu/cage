@@ -10,6 +10,7 @@ namespace cage
 	public:
 		Holder<UniformBuffer> resolve(); // requires opengl context
 		bool ready() const;
+		bool first(); // return true the first time it is called on this provisional buffer
 	};
 
 	class CAGE_ENGINE_API ProvisionalFrameBuffer : private Immovable
@@ -17,6 +18,7 @@ namespace cage
 	public:
 		Holder<FrameBuffer> resolve(); // requires opengl context
 		bool ready() const;
+		bool first(); // return true the first time it is called on this provisional buffer
 	};
 
 	class CAGE_ENGINE_API ProvisionalTexture : private Immovable
@@ -24,6 +26,7 @@ namespace cage
 	public:
 		Holder<Texture> resolve(); // requires opengl context
 		bool ready() const;
+		bool first(); // return true the first time it is called on this provisional texture
 	};
 
 	class CAGE_ENGINE_API ProvisionalGraphics : private Immovable

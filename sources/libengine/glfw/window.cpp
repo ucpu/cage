@@ -2,10 +2,9 @@
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/config.h>
 #include <cage-core/flatSet.h>
+
 #include <cage-engine/window.h>
-#include <cage-engine/opengl.h>
 #include "private.h"
-#include "../graphics/private.h"
 
 #include <atomic>
 #include <vector>
@@ -16,9 +15,10 @@
 
 namespace cage
 {
-	namespace graphicsPrivat
+	namespace detail
 	{
-		void openglContextInitializeGeneral(Window *w);
+		void initializeOpengl();
+		void configureOpengl(Window *w);
 	}
 
 	namespace
@@ -138,9 +138,8 @@ namespace cage
 
 				// initialize opengl
 				makeCurrent();
-				if (!gladLoadGL())
-					CAGE_THROW_ERROR(Exception, "gladLoadGl");
-				openglContextInitializeGeneral(this);
+				detail::initializeOpengl();
+				detail::configureOpengl(this);
 			}
 
 			~WindowImpl()
@@ -164,11 +163,11 @@ namespace cage
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, confDebugContext ? GLFW_TRUE : GLFW_FALSE);
 				if (confDebugContext)
 					CAGE_LOG(SeverityEnum::Info, "graphics", "creating DEBUG opengl context");
-				bool noErr = confNoErrorContext && !confDebugContext;
+				const bool noErr = confNoErrorContext && !confDebugContext;
 				glfwWindowHint(GLFW_CONTEXT_NO_ERROR, noErr ? GLFW_TRUE : GLFW_FALSE);
 				if (noErr)
 					CAGE_LOG(SeverityEnum::Info, "graphics", "creating NO-ERROR opengl context");
@@ -181,7 +180,7 @@ namespace cage
 				if (!window)
 					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
-				glfwSetWindowSizeLimits(window, 160, 120, GLFW_DONT_CARE, GLFW_DONT_CARE);
+				glfwSetWindowSizeLimits(window, 320, 240, GLFW_DONT_CARE, GLFW_DONT_CARE);
 				initializeEvents();
 			}
 
@@ -717,13 +716,11 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl*)this;
 		glfwMakeContextCurrent(impl->window);
-		setCurrentContext(this);
 	}
 
 	void Window::makeNotCurrent()
 	{
 		glfwMakeContextCurrent(nullptr);
-		setCurrentContext(nullptr);
 	}
 
 	void Window::swapBuffers()

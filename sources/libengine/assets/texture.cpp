@@ -25,33 +25,33 @@ namespace cage
 			}
 		}
 
-		void textureLoadLevel(Texture *tex, const TextureHeader &data, uint32 mipmapLevel, const Vec3i resolution, PointerRange<const char> values)
+		void textureLoadLevel(Texture *tex, const TextureHeader &data, uint32 mipmapLevel, PointerRange<const char> values)
 		{
 			if (any(data.flags & TextureFlags::Compressed))
 			{
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
-					tex->image3dCompressed(mipmapLevel, resolution, data.internalFormat, values);
+					tex->image3dCompressed(mipmapLevel, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
 				{
 					const uint32 stride = values.size() / 6;
 					for (uint32 f = 0; f < 6; f++)
-						tex->imageCubeCompressed(mipmapLevel, f, Vec2i(resolution), data.internalFormat, { values.data() + f * stride, values.data() + (f + 1) * stride });
+						tex->imageCubeCompressed(mipmapLevel, f, { values.data() + f * stride, values.data() + (f + 1) * stride });
 				}
 				else
-					tex->image2dCompressed(mipmapLevel, Vec2i(resolution), data.internalFormat, values);
+					tex->image2dCompressed(mipmapLevel, values);
 			}
 			else
 			{
 				if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
-					tex->image3d(mipmapLevel, resolution, data.internalFormat, data.copyFormat, data.copyType, values);
+					tex->image3d(mipmapLevel, data.copyFormat, data.copyType, values);
 				else if (data.target == GL_TEXTURE_CUBE_MAP)
 				{
 					const uint32 stride = values.size() / 6;
 					for (uint32 f = 0; f < 6; f++)
-						tex->imageCube(mipmapLevel, f, Vec2i(resolution), data.internalFormat, data.copyFormat, data.copyType, { values.data() + f * stride, values.data() + (f + 1) * stride });
+						tex->imageCube(mipmapLevel, f, data.copyFormat, data.copyType, { values.data() + f * stride, values.data() + (f + 1) * stride });
 				}
 				else
-					tex->image2d(mipmapLevel, Vec2i(resolution), data.internalFormat, data.copyFormat, data.copyType, values);
+					tex->image2d(mipmapLevel, data.copyFormat, data.copyType, values);
 			}
 		}
 
@@ -64,17 +64,6 @@ namespace cage
 			Holder<Texture> tex = newTexture(data.target);
 			tex->setDebugName(context->textName);
 
-			CAGE_ASSERT(data.containedLevels > 0);
-			for (uint32 mip = 0; mip < data.containedLevels; mip++)
-			{
-				Vec3i resolution;
-				uint32 size = 0;
-				des >> resolution >> size;
-				CAGE_ASSERT(mip > 0 || Vec2i(resolution) == Vec2i(data.resolution));
-				PointerRange<const char> values = des.read(size);
-				textureLoadLevel(+tex, data, mip, resolution, values);
-			}
-
 			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
 			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);
 			{
@@ -83,16 +72,33 @@ namespace cage
 					s[i] = convertSwizzle(data.swizzle[i]);
 				tex->swizzle(s);
 			}
-			tex->maxMipmapLevel(data.maxMipmapLevel);
+
+			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
+				tex->initialize(data.resolution, data.mipmapLevels, data.internalFormat);
+			else
+				tex->initialize(Vec2i(data.resolution[0], data.resolution[1]), data.mipmapLevels, data.internalFormat);
+
+			CAGE_ASSERT(data.mipmapLevels >= data.containedLevels);
+			CAGE_ASSERT(data.containedLevels > 0);
+			for (uint32 mip = 0; mip < data.containedLevels; mip++)
+			{
+				Vec3i resolution;
+				uint32 size = 0;
+				des >> resolution >> size;
+				CAGE_ASSERT(mip > 0 || Vec2i(resolution) == Vec2i(data.resolution));
+				PointerRange<const char> values = des.read(size);
+				textureLoadLevel(+tex, data, mip, values);
+			}
+
 			if (any(data.flags & TextureFlags::GenerateMipmaps))
 			{
 				CAGE_ASSERT(data.containedLevels == 1);
-				CAGE_ASSERT(data.maxMipmapLevel > 0);
+				CAGE_ASSERT(data.mipmapLevels > 1);
 				tex->generateMipmaps();
 			}
 			else
 			{
-				CAGE_ASSERT(data.containedLevels == data.maxMipmapLevel + 1);
+				CAGE_ASSERT(data.containedLevels == data.mipmapLevels);
 			}
 
 			tex->animationDuration = data.animationDuration;

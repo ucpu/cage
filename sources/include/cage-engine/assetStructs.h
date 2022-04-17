@@ -40,8 +40,8 @@ namespace cage
 		TextureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
-		uint32 maxMipmapLevel;
-		uint32 containedLevels;
+		uint32 mipmapLevels; // number of levels that the texture will have
+		uint32 containedLevels; // number of levels that the asset contains
 		uint32 channels;
 		uint32 internalFormat;
 		uint32 copyFormat;

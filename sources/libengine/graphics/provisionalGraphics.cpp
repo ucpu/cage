@@ -22,6 +22,7 @@ namespace cage
 			Holder<UniformBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			bool used = true;
+			bool first = true;
 
 			ProvisionalUniformBufferImpl(const String &name) : name(name)
 			{}
@@ -35,6 +36,7 @@ namespace cage
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
+			bool first = true;
 
 			ProvisionalFrameBufferHandleImpl(const String &name) : name(name)
 			{}
@@ -48,6 +50,7 @@ namespace cage
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 target = m;
 			bool used = true;
+			bool first = true;
 
 			ProvisionalTextureHandleImpl(const String &name) : name(name)
 			{}
@@ -185,6 +188,14 @@ namespace cage
 		return !!impl->result;
 	}
 
+	bool ProvisionalUniformBuffer::first()
+	{
+		ProvisionalUniformBufferImpl *impl = (ProvisionalUniformBufferImpl *)this;
+		const bool res = impl->first;
+		impl->first = false;
+		return res;
+	}
+
 	Holder<FrameBuffer> ProvisionalFrameBuffer::resolve()
 	{
 		ProvisionalFrameBufferHandleImpl *impl = (ProvisionalFrameBufferHandleImpl *)this;
@@ -211,6 +222,14 @@ namespace cage
 		return !!impl->result;
 	}
 
+	bool ProvisionalFrameBuffer::first()
+	{
+		ProvisionalFrameBufferHandleImpl *impl = (ProvisionalFrameBufferHandleImpl *)this;
+		const bool res = impl->first;
+		impl->first = false;
+		return res;
+	}
+
 	Holder<Texture> ProvisionalTexture::resolve()
 	{
 		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
@@ -227,6 +246,14 @@ namespace cage
 	{
 		const ProvisionalTextureHandleImpl *impl = (const ProvisionalTextureHandleImpl *)this;
 		return !!impl->result;
+	}
+
+	bool ProvisionalTexture::first()
+	{
+		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
+		const bool res = impl->first;
+		impl->first = false;
+		return res;
 	}
 
 	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const String &name)

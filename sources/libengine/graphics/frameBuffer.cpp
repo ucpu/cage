@@ -1,22 +1,19 @@
-#include <cage-engine/opengl.h>
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/texture.h>
-#include "private.h"
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/opengl.h>
 
 namespace cage
 {
 	namespace
 	{
-		class DrawMark {};
-		class ReadMark {};
-
 		class FrameBufferImpl : public FrameBuffer
 		{
 		public:
-			uint32 id;
-			uint32 target;
+			uint32 id = 0;
+			uint32 target = 0;
 
-			FrameBufferImpl(uint32 target) : id(0), target(target)
+			FrameBufferImpl(uint32 target) : target(target)
 			{
 				glGenFramebuffers(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -26,36 +23,6 @@ namespace cage
 			~FrameBufferImpl()
 			{
 				glDeleteFramebuffers(1, &id);
-			}
-
-			void setBound() const
-			{
-				switch (target)
-				{
-				case GL_DRAW_FRAMEBUFFER:
-					setCurrentObject<DrawMark>(id);
-					break;
-				case GL_READ_FRAMEBUFFER:
-					setCurrentObject<ReadMark>(id);
-					break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
-				}
-			}
-
-			void checkBound() const
-			{
-				switch (target)
-				{
-				case GL_DRAW_FRAMEBUFFER:
-					CAGE_ASSERT(getCurrentObject<DrawMark>() == id);
-					break;
-				case GL_READ_FRAMEBUFFER:
-					CAGE_ASSERT(getCurrentObject<ReadMark>() == id);
-					break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
-				}
 			}
 		};
 	}
@@ -87,29 +54,26 @@ namespace cage
 		const FrameBufferImpl *impl = (const FrameBufferImpl *)this;
 		glBindFramebuffer(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		impl->setBound();
 	}
 
 	void FrameBuffer::depthTexture(Texture *tex)
 	{
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
-		impl->checkBound();
-		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->id() : 0, 0);
+		glNamedFramebufferTexture(impl->id, GL_DEPTH_ATTACHMENT, tex ? tex->id() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel)
 	{
+		CAGE_ASSERT(!tex || mipmapLevel < tex->mipmapLevels());
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
-		impl->checkBound();
-		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->id() : 0, mipmapLevel);
+		glNamedFramebufferTexture(impl->id, GL_COLOR_ATTACHMENT0 + index, tex ? tex->id() : 0, mipmapLevel);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void FrameBuffer::activeAttachments(uint32 mask)
 	{
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
-		impl->checkBound();
 		uint32 count = 0;
 		GLenum bufs[32];
 		for (uint32 i = 0; i < 32; i++)
@@ -120,11 +84,11 @@ namespace cage
 		switch (impl->target)
 		{
 		case GL_DRAW_FRAMEBUFFER:
-			glDrawBuffers(count, bufs);
+			glNamedFramebufferDrawBuffers(impl->id, count, bufs);
 			break;
 		case GL_READ_FRAMEBUFFER:
 			CAGE_ASSERT(count == 1);
-			glReadBuffer(*bufs);
+			glNamedFramebufferReadBuffer(impl->id, *bufs);
 			break;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
@@ -143,23 +107,15 @@ namespace cage
 	void FrameBuffer::checkStatus() const
 	{
 		const FrameBufferImpl *impl = (const FrameBufferImpl *)this;
-		impl->checkBound();
-		GLenum result = glCheckFramebufferStatus(impl->target);
+		GLenum result = glCheckNamedFramebufferStatus(impl->id, impl->target);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		switch (result)
 		{
-		case GL_FRAMEBUFFER_COMPLETE:
-			return;
-		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
-		//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: // this is defined for ES only
-		//	CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: dimensions", numeric_cast<uint32>(result));
-		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
-		case GL_FRAMEBUFFER_UNSUPPORTED:
-			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
-		default:
-			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
+		case GL_FRAMEBUFFER_COMPLETE: return;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
+		case GL_FRAMEBUFFER_UNSUPPORTED: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
+		default: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
 		}
 	}
 

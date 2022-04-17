@@ -8,7 +8,7 @@ struct InstanceStruct
 	vec4 wrld;
 	vec4 text;
 };
-layout(std140, binding = 1) uniform Instances
+layout(std140, binding = 2) uniform Instances
 {
 	InstanceStruct instances[512];
 };

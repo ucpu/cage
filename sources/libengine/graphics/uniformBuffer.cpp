@@ -1,6 +1,6 @@
-#include <cage-engine/opengl.h>
 #include <cage-engine/uniformBuffer.h>
-#include "private.h"
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/opengl.h>
 
 namespace cage
 {
@@ -19,9 +19,9 @@ namespace cage
 				CAGE_ASSERT(!config.explicitFlush || config.persistentMapped);
 				CAGE_ASSERT(!config.coherentMapped || config.persistentMapped);
 				CAGE_ASSERT(!config.persistentMapped || config.size > 0)
-				glGenBuffers(1, &id);
+				glCreateBuffers(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
-				bind();
+				bind(); // ensure that the buffer is made uniform buffer
 				if (config.size > 0)
 				{
 					{
@@ -30,7 +30,7 @@ namespace cage
 							storageFlags |= GL_MAP_PERSISTENT_BIT;
 						if (config.coherentMapped)
 							storageFlags |= GL_MAP_COHERENT_BIT;
-						glBufferStorage(GL_UNIFORM_BUFFER, config.size, nullptr, storageFlags);
+						glNamedBufferStorage(id, config.size, nullptr, storageFlags);
 					}
 					CAGE_CHECK_GL_ERROR_DEBUG();
 					size = config.size;
@@ -43,7 +43,7 @@ namespace cage
 							accessFlags |= GL_MAP_COHERENT_BIT;
 						if (config.explicitFlush)
 							accessFlags |= GL_MAP_FLUSH_EXPLICIT_BIT;
-						mapped = (char*)glMapBufferRange(GL_UNIFORM_BUFFER, 0, size, accessFlags);
+						mapped = (char*)glMapNamedBufferRange(id, 0, size, accessFlags);
 						CAGE_CHECK_GL_ERROR_DEBUG();
 						CAGE_ASSERT(mapped);
 					}
@@ -77,7 +77,6 @@ namespace cage
 		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		glBindBuffer(GL_UNIFORM_BUFFER, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		setCurrentObject<UniformBuffer>(impl->id);
 	}
 
 	void UniformBuffer::bind(uint32 bindingPoint) const
@@ -107,10 +106,9 @@ namespace cage
 		}
 		else
 		{
-			CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
 			if (usage == 0)
 				usage = GL_STATIC_DRAW;
-			glBufferData(GL_UNIFORM_BUFFER, buffer.size(), buffer.data(), usage);
+			glNamedBufferData(impl->id, buffer.size(), buffer.data(), usage);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			impl->size = numeric_cast<uint32>(buffer.size());
 		}
@@ -125,15 +123,13 @@ namespace cage
 			detail::memcpy(impl->mapped + offset, buffer.data(), buffer.size());
 			if (impl->config.explicitFlush)
 			{
-				CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
-				glFlushMappedBufferRange(GL_UNIFORM_BUFFER, offset, buffer.size());
+				glFlushMappedNamedBufferRange(impl->id, offset, buffer.size());
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 		}
 		else
 		{
-			CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
-			glBufferSubData(GL_UNIFORM_BUFFER, offset, buffer.size(), buffer.data());
+			glNamedBufferSubData(impl->id, offset, buffer.size(), buffer.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
 	}

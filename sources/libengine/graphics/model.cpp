@@ -3,12 +3,12 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
 
-#include <cage-engine/shaderConventions.h>
-#include <cage-engine/uniformBuffer.h>
-#include <cage-engine/assetStructs.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/model.h>
-#include "private.h"
+#include <cage-engine/assetStructs.h>
+#include <cage-engine/uniformBuffer.h>
+#include <cage-engine/shaderConventions.h>
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/opengl.h>
 
 #include <vector>
 
@@ -16,6 +16,10 @@ namespace cage
 {
 	namespace
 	{
+#ifdef CAGE_ASSERT_ENABLED
+		thread_local uint32 boundModel = 0;
+#endif // CAGE_ASSERT_ENABLED
+
 		class ModelImpl : public Model
 		{
 			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
@@ -104,8 +108,9 @@ namespace cage
 			glBindBufferRange(GL_UNIFORM_BUFFER, CAGE_SHADER_UNIBLOCK_MATERIAL, impl->vbo, impl->materialOffset, impl->materialSize);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
-		setCurrentObject<Model>(impl->id);
-		setCurrentObject<UniformBuffer>(impl->id);
+#ifdef CAGE_ASSERT_ENABLED
+		boundModel = impl->id;
+#endif // CAGE_ASSERT_ENABLED
 	}
 
 	void Model::importMesh(const Mesh *poly, PointerRange<const char> materialBuffer)
@@ -118,11 +123,11 @@ namespace cage
 
 		struct Attr
 		{
-			uint32 i;
-			uint32 c;
-			uint32 t;
-			uint32 s;
-			uint32 o;
+			uint32 index;
+			uint32 count;
+			uint32 type;
+			uint32 stride;
+			uint32 offset;
 		};
 		std::vector<Attr> attrs;
 
@@ -215,7 +220,7 @@ namespace cage
 		}
 
 		for (const Attr &a : attrs)
-			setAttribute(a.i, a.c, a.t, a.s, a.o);
+			setAttribute(a.index, a.count, a.type, a.stride, a.offset);
 
 		setBoundingBox(poly->boundingBox());
 	}
@@ -236,17 +241,13 @@ namespace cage
 	void Model::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		{
 			if (impl->vbo)
 			{
 				glDeleteBuffers(1, &impl->vbo);
 				impl->vbo = 0;
 			}
-			glGenBuffers(1, &impl->vbo);
-			glBindBuffer(GL_UNIFORM_BUFFER, impl->vbo);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, impl->vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, impl->vbo);
+			glCreateBuffers(1, &impl->vbo);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
 		impl->verticesCount = numeric_cast<uint32>(vertexData.size() / vertexSize);
@@ -254,35 +255,39 @@ namespace cage
 		impl->materialSize = numeric_cast<uint32>(materialBuffer.size());
 		CAGE_ASSERT(vertexData.size() == vertexSize * impl->verticesCount);
 
-		GLint bufferAlignment = 256;
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &bufferAlignment);
+		const GLint bufferAlignment = UniformBuffer::alignmentRequirement();
 
 		const uint32 bufferSize = numeric_cast<uint32>(
 			impl->verticesCount * vertexSize + detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment) +
 			impl->indicesCount * sizeof(uint32) + detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment) +
 			impl->materialSize + detail::addToAlign(materialBuffer.size(), bufferAlignment)
 			);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
+		glNamedBufferData(impl->vbo, bufferSize, nullptr, GL_STATIC_DRAW);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		uint32 offset = 0;
 
 		{ // vertices
-			glBufferSubData(GL_ARRAY_BUFFER, offset, impl->verticesCount * vertexSize, vertexData.data());
+			glNamedBufferSubData(impl->vbo, offset, impl->verticesCount * vertexSize, vertexData.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			offset += impl->verticesCount * vertexSize + numeric_cast<uint32>(detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment));
 		}
 
+		if (impl->indicesCount)
 		{ // indices
 			impl->indicesOffset = offset;
-			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, impl->indicesCount * sizeof(uint32), indexData.data());
+			glNamedBufferSubData(impl->vbo, offset, impl->indicesCount * sizeof(uint32), indexData.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			offset += impl->indicesCount * sizeof(uint32) + numeric_cast<uint32>(detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment));
+			glVertexArrayElementBuffer(impl->id, impl->vbo);
 		}
+		else
+			glVertexArrayElementBuffer(impl->id, 0);
 
+		if (impl->materialSize)
 		{ // material
 			impl->materialOffset = offset;
-			glBufferSubData(GL_UNIFORM_BUFFER, offset, materialBuffer.size(), materialBuffer.data());
+			glNamedBufferSubData(impl->vbo, offset, materialBuffer.size(), materialBuffer.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			offset += numeric_cast<uint32>(materialBuffer.size() + detail::addToAlign(materialBuffer.size(), bufferAlignment));
 		}
@@ -293,13 +298,13 @@ namespace cage
 	void Model::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		if (type == 0)
-			glDisableVertexAttribArray(index);
+			glDisableVertexArrayAttrib(impl->id, index);
 		else
 		{
-			glEnableVertexAttribArray(index);
-			void *data = (void*)(uintPtr)startOffset;
+			glEnableVertexArrayAttrib(impl->id, index);
+			glVertexArrayVertexBuffer(impl->id, index, impl->vbo, startOffset, stride);
+			glVertexArrayAttribBinding(impl->id, index, index);
 			switch (type)
 			{
 			case GL_BYTE:
@@ -308,16 +313,17 @@ namespace cage
 			case GL_UNSIGNED_SHORT:
 			case GL_INT:
 			case GL_UNSIGNED_INT:
-				glVertexAttribIPointer(index, size, type, stride, data);
+				glVertexArrayAttribIFormat(impl->id, index, size, type, 0);
 				break;
 			case GL_DOUBLE:
-				glVertexAttribLPointer(index, size, type, stride, data);
+				glVertexArrayAttribLFormat(impl->id, index, size, type, 0);
 				break;
 			default:
-				glVertexAttribPointer(index, size, type, GL_FALSE, stride, data);
+				glVertexArrayAttribFormat(impl->id, index, size, type, GL_FALSE, 0);
 			}
 		}
 	}
+
 	uint32 Model::verticesCount() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
@@ -345,7 +351,9 @@ namespace cage
 	void Model::dispatch() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
+#ifdef CAGE_ASSERT_ENABLED
+		CAGE_ASSERT(boundModel == impl->id);
+#endif
 		if (impl->indicesCount)
 			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
 		else
@@ -356,7 +364,9 @@ namespace cage
 	void Model::dispatch(uint32 instances) const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
+#ifdef CAGE_ASSERT_ENABLED
+		CAGE_ASSERT(boundModel == impl->id);
+#endif
 		if (impl->indicesCount)
 			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);
 		else

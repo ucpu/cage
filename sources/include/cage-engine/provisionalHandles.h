@@ -13,12 +13,9 @@ namespace cage
 		public:
 			ProvisionalHandle() = default;
 			ProvisionalHandle(ProvisionalHandle &&) = default;
-			ProvisionalHandle(const ProvisionalHandle &other) : data_(other.data_.share()), type_(other.type_)
-			{}
-			ProvisionalHandle(const Holder<A> &data) : data_(data.share().template cast<void>()), type_(1)
-			{}
-			ProvisionalHandle(const Holder<B> &data) : data_(data.share().template cast<void>()), type_(2)
-			{}
+			ProvisionalHandle(const ProvisionalHandle &other) : data_(other.data_.share()), type_(other.type_){}
+			ProvisionalHandle(const Holder<A> &data) : data_(data.share().template cast<void>()), type_(1) {}
+			ProvisionalHandle(const Holder<B> &data) : data_(data.share().template cast<void>()), type_(2) {}
 
 			ProvisionalHandle &operator = (ProvisionalHandle &&) = default;
 			ProvisionalHandle &operator = (const ProvisionalHandle &other)
@@ -62,36 +59,24 @@ namespace cage
 			{
 				switch (type_)
 				{
-				case 1:
-					return data_.share().template cast<A>();
-				case 2:
-					return data_.share().template cast<B>()->resolve();
-				default:
-					return Holder<A>();
-				}
-			}
-
-			Holder<A> tryResolve() const
-			{
-				switch (type_)
-				{
-				case 1:
-					return data_.share().template cast<A>();
-				case 2:
-				{
-					Holder<B> tmp = data_.share().template cast<B>();
-					if (tmp->ready())
-						return tmp->resolve();
-					return Holder<A>();
-				}
-				default:
-					return Holder<A>();
+				case 1: return data_.share().template cast<A>();
+				case 2: return data_.share().template cast<B>()->resolve();
+				default: return Holder<A>();
 				}
 			}
 
 			void *pointer() const
 			{
 				return +data_;
+			}
+
+			bool first()
+			{
+				switch (type_)
+				{
+				case 2: return data_.share().template cast<B>()->first();
+				default: return false;
+				}
 			}
 
 			explicit operator bool() const
