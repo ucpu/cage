@@ -896,7 +896,7 @@ namespace cage
 				prepareCameraLights(data);
 
 				TextureHandle colorTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution);
 					if (t.first())
 					{
 						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
@@ -910,7 +910,7 @@ namespace cage
 					return t;
 				}();
 				TextureHandle depthTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name);
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution);
 					if (t.first())
 					{
 						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
@@ -951,7 +951,7 @@ namespace cage
 
 					TextureHandle depthTextureLowRes = [&]() {
 						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name);
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name + "_" + data.resolution);
 						if (t.first())
 						{
 							renderQueue->filters(t, GL_NEAREST, GL_NEAREST, 0);
@@ -980,7 +980,7 @@ namespace cage
 					}();
 
 					TextureHandle ssaoTexture = [&]() {
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + data.name);
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + data.name + "_" + data.resolution);
 						RenderPipelineDebugVisualization deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeMonochromatic.share();
