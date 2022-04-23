@@ -127,16 +127,23 @@ namespace
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
-	uint32 findContainedMipmapLevels(Vec3i res)
+	constexpr uint32 findContainedMipmapLevels(Vec3i res, bool is3d)
 	{
 		uint32 lvl = 1;
-		while (res[0] > 1 || res[1] > 1 || res[2] > 1)
+		while (res[0] > 1 || res[1] > 1 || (res[2] > 1 && is3d))
 		{
 			res /= 2;
 			lvl++;
 		}
 		return lvl;
 	}
+
+	static_assert(findContainedMipmapLevels(Vec3i(), false) == 1);
+	static_assert(findContainedMipmapLevels(Vec3i(1), false) == 1);
+	static_assert(findContainedMipmapLevels(Vec3i(4, 1, 1), false) == 3);
+	static_assert(findContainedMipmapLevels(Vec3i(4, 16, 1), false) == 5);
+	static_assert(findContainedMipmapLevels(Vec3i(1, 1, 3), false) == 1);
+	static_assert(findContainedMipmapLevels(Vec3i(1, 1, 3), true) == 2);
 
 	ImageImportResult images;
 
@@ -365,7 +372,7 @@ namespace
 		data.swizzle[1] = TextureSwizzleEnum::G;
 		data.swizzle[2] = TextureSwizzleEnum::B;
 		data.swizzle[3] = TextureSwizzleEnum::A;
-		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution), 8u) : 1;
+		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution, target == GL_TEXTURE_3D), 8u) : 1;
 		data.mipmapLevels = data.containedLevels;
 		if (toBool(properties("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
