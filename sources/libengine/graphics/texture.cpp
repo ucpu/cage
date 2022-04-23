@@ -19,6 +19,7 @@ namespace cage
 			Vec3i resolution;
 			uint32 mipmapLevels = 0;
 			uint32 internalFormat = 0;
+			sint32 residentCounter = 0;
 
 			TextureImpl(uint32 target) : target(target)
 			{
@@ -29,6 +30,12 @@ namespace cage
 
 			~TextureImpl()
 			{
+				try
+				{
+					CAGE_ASSERT(residentCounter == 0);
+				}
+				catch (...)
+				{}
 				glDeleteTextures(1, &id);
 			}
 
@@ -174,14 +181,6 @@ namespace cage
 		const TextureImpl *impl = (const TextureImpl *)this;
 		glBindTexture(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	BindlessHandle Texture::bindlessHandle()
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		BindlessHandle h;
-		h.handle = glGetTextureHandleARB(impl->id);
-		return h;
 	}
 
 	void Texture::filters(uint32 mig, uint32 mag, uint32 aniso)
@@ -384,6 +383,31 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
+	BindlessHandle Texture::bindlessHandle()
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		BindlessHandle h;
+		h.handle = glGetTextureHandleARB(impl->id);
+		return h;
+	}
+
+	void Texture::makeResident(bool resident)
+	{
+		TextureImpl *impl = (TextureImpl *)this;
+		if (resident)
+		{
+			if (++impl->residentCounter == 1)
+				glMakeTextureHandleResidentARB(bindlessHandle().handle);
+		}
+		else
+		{
+			if (--impl->residentCounter == 0)
+				glMakeTextureHandleNonResidentARB(bindlessHandle().handle);
+		}
+		CAGE_ASSERT(impl->residentCounter >= 0); // detect overflows
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
 	Holder<Texture> newTexture()
 	{
 		return newTexture(GL_TEXTURE_2D);
@@ -415,13 +439,5 @@ namespace cage
 			CAGE_ASSERT(f >= 0 && f <= 1);
 			return Vec4(i, (i + 1) % frames, f, 0);
 		}
-	}
-
-	void makeResident(BindlessHandle handle, bool resident)
-	{
-		if (resident)
-			glMakeTextureHandleResidentARB(handle.handle);
-		else
-			glMakeTextureHandleNonResidentARB(handle.handle);
 	}
 }

@@ -794,8 +794,7 @@ namespace cage
 						if (!it)
 							continue;
 						Holder<Texture> tex = it.resolve();
-						BindlessHandle hnd = tex->bindlessHandle();
-						cage::makeResident(hnd, true);
+						tex->makeResident(true);
 					}
 				}
 
@@ -824,7 +823,7 @@ namespace cage
 				for (auto &it : bindlessHandles)
 				{
 					Holder<Texture> tex = it.resolve();
-					makeResident(tex->bindlessHandle(), resident);
+					tex->makeResident(resident);
 				}
 			}
 		};

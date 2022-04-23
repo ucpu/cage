@@ -25,7 +25,6 @@ namespace cage
 		uint32 mipmapLevels() const; // 1 is just base level
 
 		void bind() const;
-		BindlessHandle bindlessHandle();
 
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
@@ -44,6 +43,9 @@ namespace cage
 		void image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer);
 
 		void generateMipmaps();
+
+		BindlessHandle bindlessHandle();
+		void makeResident(bool resident);
 	};
 
 	CAGE_ENGINE_API Holder<Texture> newTexture();
@@ -62,8 +64,6 @@ namespace cage
 	{
 		uint64 handle = 0;
 	};
-
-	CAGE_ENGINE_API void makeResident(BindlessHandle handle, bool resident);
 }
 
 #endif // guard_texture_h_ds54ghlkj89s77e4g
