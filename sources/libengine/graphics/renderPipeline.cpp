@@ -83,7 +83,7 @@ namespace cage
 			auto cmp() const
 			{
 				// reduce switching shaders, then depth test/writes and other states, then meshes
-				return std::tuple{ mesh->shaderColorName, mesh->flags, +mesh, skeletal };
+				return std::tuple{ mesh->shaderName, mesh->flags, +mesh, skeletal };
 			}
 
 			bool operator < (const ModelShared &other) const
@@ -312,6 +312,13 @@ namespace cage
 			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
 			{}
 
+			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
+			{
+				if (multi)
+					return multi->get(variant);
+				return {};
+			}
+
 			bool reinitialize()
 			{
 				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
@@ -319,15 +326,16 @@ namespace cage
 
 				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
-				shaderBlit = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
-				shaderDepth = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
-				shaderStandard = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
-				shaderDepthAlphaClip = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depthAlphaClip.glsl"));
-				shaderStandardAlphaClip = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/standardAlphaClip.glsl"));
-				shaderVisualizeColor = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/color.glsl"));
-				shaderVisualizeDepth = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/depth.glsl"));
-				shaderVisualizeMonochromatic = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl"));
-				shaderFont = assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+				shaderBlit = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl")));
+				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
+				shaderStandard = defaultProgram(standard, 0);
+				shaderStandardAlphaClip = defaultProgram(standard, HashString("AlphaClip"));
+				shaderDepth = defaultProgram(standard, HashString("DepthOnly"));
+				shaderDepthAlphaClip = defaultProgram(standard, HashString("DepthOnly") + HashString("AlphaClip"));
+				shaderVisualizeColor = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl")));
+				shaderVisualizeDepth = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/depth.glsl")));
+				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
+				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
 				CAGE_ASSERT(shaderBlit);
 
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets, confRenderSkeletonBones);
@@ -358,23 +366,31 @@ namespace cage
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
 				Holder<ShaderProgram> shader = [&]() {
-					if constexpr (RenderMode == RenderModeEnum::Color)
-					{ // color
-						if (sh.mesh->shaderColorName)
-							return assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderColorName);
-						else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-							return shaderStandardAlphaClip.share();
-						else
-							return shaderStandard.share();
+					if (sh.mesh->shaderName)
+					{
+						uint32 variant = 0;
+						if constexpr (RenderMode != RenderModeEnum::Color)
+							variant += HashString("DepthOnly");
+						if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+							variant += HashString("AlphaClip");
+						return assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(sh.mesh->shaderName)->get(variant);
 					}
 					else
-					{ // depth
-						if (sh.mesh->shaderDepthName)
-							return assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(sh.mesh->shaderDepthName);
-						else if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-							return shaderDepthAlphaClip.share();
+					{
+						if constexpr (RenderMode == RenderModeEnum::Color)
+						{ // color
+							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+								return shaderStandardAlphaClip.share();
+							else
+								return shaderStandard.share();
+						}
 						else
-							return shaderDepth.share();
+						{ // depth
+							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
+								return shaderDepthAlphaClip.share();
+							else
+								return shaderDepth.share();
+						}
 					}
 				}();
 				renderQueue->bind(shader);

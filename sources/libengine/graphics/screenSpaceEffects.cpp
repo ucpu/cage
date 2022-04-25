@@ -56,7 +56,7 @@ namespace cage
 			q->viewport(Vec2i(), res);
 			FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 			q->bind(fb);
-			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/gaussianBlur.glsl"));
+			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/gaussianBlur.glsl"))->get(0);
 			q->bind(shader);
 			q->uniform(shader, 1, (int)config.mipmapLevel);
 			TextureHandle tex = provTex(config.provisionals, config.queue, "blur", config.resolution, config.mipmapsCount, config.internalFormat);
@@ -119,7 +119,7 @@ namespace cage
 		q->colorTexture(fb, 0, config.outAo);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inDepth, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/ssaoGenerate.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/ssaoGenerate.glsl"))->get(0));
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 		q->draw(model);
 
@@ -133,7 +133,7 @@ namespace cage
 
 		// resolve - update outAo inplace
 		q->bind(config.outAo, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/ssaoResolve.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/ssaoResolve.glsl"))->get(0));
 		q->draw(model);
 	}
 
@@ -168,7 +168,7 @@ namespace cage
 
 		q->bind(config.inColor, 0);
 		q->bind(config.inDepth, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/dofCollect.glsl"));
+		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofCollect.glsl"))->get(0);
 		q->bind(shader);
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 		{ // collect near
@@ -205,7 +205,7 @@ namespace cage
 		q->bind(config.inDepth, 1);
 		q->bind(texNear, 2);
 		q->bind(texFar, 3);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/dofApply.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofApply.glsl"))->get(0));
 		q->draw(model);
 	}
 
@@ -227,7 +227,7 @@ namespace cage
 		q->colorTexture(fb, 0, texCollect);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/luminanceCollection.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCollection.glsl"))->get(0));
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 		q->draw(model);
 
@@ -242,7 +242,7 @@ namespace cage
 		q->checkFrameBuffer(fb);
 		q->bind(texCollect, 0);
 		q->bind(texAccum, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/luminanceCopy.glsl"));
+		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCopy.glsl"))->get(0);
 		q->bind(shader);
 		q->uniform(shader, 0, Vec2(config.darkerSpeed, config.lighterSpeed));
 		q->draw(model);
@@ -266,7 +266,7 @@ namespace cage
 		q->colorTexture(fb, 0, tex);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		Holder<ShaderProgram> shaderGenerate = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/bloomGenerate.glsl"));
+		Holder<ShaderProgram> shaderGenerate = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/bloomGenerate.glsl"))->get(0);
 		q->bind(shaderGenerate);
 		q->uniform(shaderGenerate, 0, Vec4(config.threshold, 0, 0, 0));
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
@@ -298,7 +298,7 @@ namespace cage
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
 		q->bind(tex, 1);
-		Holder<ShaderProgram> shaderApply = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/bloomApply.glsl"));
+		Holder<ShaderProgram> shaderApply = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/bloomApply.glsl"))->get(0);
 		q->bind(shaderApply);
 		q->uniform(shaderApply, 0, (int)max(config.blurPasses, 1u));
 		q->draw(model);
@@ -319,7 +319,7 @@ namespace cage
 		q->bind(config.inColor, 0);
 		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R16F);
 		q->bind(texAccum, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"));
+		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"))->get(0);
 		q->bind(shader);
 		q->uniform(shader, 0, Vec2(config.key, config.strength));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
@@ -349,7 +349,7 @@ namespace cage
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/tonemap.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/tonemap.glsl"))->get(0));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 	}
 
@@ -366,7 +366,7 @@ namespace cage
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/effects/fxaa.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/fxaa.glsl"))->get(0));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 	}
 }

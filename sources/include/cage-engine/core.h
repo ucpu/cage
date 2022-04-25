@@ -124,6 +124,7 @@ namespace cage
 	struct ScreenSpaceBloom;
 	struct ScreenSpaceTonemap;
 	class ShaderProgram;
+	class MultiShaderProgram;
 	class Sound;
 	struct SoundCallbackData;
 	class Speaker;

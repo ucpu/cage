@@ -152,7 +152,7 @@ namespace cage
 					{
 						RenderPipelineDebugVisualization deb;
 						deb.texture = cam.inputs.target;
-						deb.shader = engineAssets()->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
+						deb.shader = engineAssets()->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
 						CAGE_ASSERT(deb.shader);
 						debugVisualizations.push_back(std::move(deb));
 					}

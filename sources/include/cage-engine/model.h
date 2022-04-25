@@ -33,7 +33,7 @@ namespace cage
 		void dispatch(uint32 instances) const;
 
 		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
-		uint32 shaderDepthName = 0, shaderColorName = 0;
+		uint32 shaderName = 0;
 		MeshRenderFlags flags = {};
 		sint32 layer = 0;
 		uint32 bones = 0;
@@ -42,7 +42,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Model> newModel();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeModel(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexModel = 12;
+	constexpr uint32 AssetSchemeIndexModel = 12;
 }
 
 #endif // guard_model_h_sdx54gfgh24jksd5f4

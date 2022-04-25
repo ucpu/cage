@@ -11,6 +11,8 @@ namespace cage
 	struct CAGE_ENGINE_API ShaderProgramHeader
 	{
 		// follows:
+		// number of keywords, uint32
+		// array of keywords, each StringBase<20>
 		// number of stages, uint32
 		// for each stage:
 		//   stage name, uint32
@@ -65,7 +67,7 @@ namespace cage
 	{
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
-		uint32 shaderDepthName, shaderColorName;
+		uint32 shaderName;
 		MeshRenderFlags renderFlags;
 		sint32 renderLayer;
 		uint32 skeletonBones;

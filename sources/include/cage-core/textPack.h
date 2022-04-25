@@ -26,7 +26,7 @@ namespace cage
 	CAGE_CORE_API Holder<TextPack> newTextPack();
 
 	CAGE_CORE_API AssetScheme genAssetSchemeTextPack();
-	static constexpr uint32 AssetSchemeIndexTextPack = 2;
+	constexpr uint32 AssetSchemeIndexTextPack = 2;
 
 	CAGE_CORE_API String loadFormattedString(AssetManager *assets, uint32 asset, uint32 text, String params);
 }

@@ -48,7 +48,7 @@ namespace cage
 	{
 		String objectName;
 		String materialName;
-		String shaderDepthName, shaderColorName;
+		String shaderName;
 		MeshImportMaterial material;
 		Aabb boundingBox;
 		Holder<Mesh> mesh;

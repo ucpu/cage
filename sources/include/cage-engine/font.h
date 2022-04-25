@@ -47,7 +47,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Font> newFont();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexFont = 14;
+	constexpr uint32 AssetSchemeIndexFont = 14;
 }
 
 #endif // guard_font_h_oiu56trd4svdf5

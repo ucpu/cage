@@ -2,13 +2,16 @@
 #include <cage-core/files.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/serialization.h>
+#include <cage-core/hashString.h>
+#include <cage-core/string.h>
 
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 
-#include <list>
 #include <vector>
+#include <string>
+#include <unordered_map>
 
 namespace cage
 {
@@ -64,6 +67,80 @@ namespace cage
 			~ShaderProgramImpl()
 			{
 				glDeleteProgram(id);
+			}
+		};
+
+		class MultiShaderProgramImpl : public MultiShaderProgram
+		{
+		public:
+			detail::StringBase<64> name;
+			std::vector<std::pair<detail::StringBase<20>, uint32>> keywords;
+			std::unordered_map<uint32, std::string> sources; // type -> code
+			std::unordered_map<uint32, Holder<ShaderProgram>> variants;
+
+			void compile()
+			{
+				variants.clear();
+				std::vector<bool> checked;
+				checked.resize(keywords.size());
+				compileVariants(checked, 0, 0);
+			}
+
+		private:
+			void compileVariants(std::vector<bool> &checked, uint32 depth, uint32 current)
+			{
+				if (depth == checked.size())
+				{
+					const std::string defines_ = defines(checked);
+					Holder<ShaderProgram> prg = newShaderProgram();
+					prg->setDebugName(name);
+					for (const auto &it : sources)
+					{
+						const std::string src = enhance(it.second, defines_);
+						prg->source(it.first, src);
+					}
+					prg->relink();
+					CAGE_ASSERT(variants.count(current) == 0);
+					variants[current] = prg.share();
+					return;
+				}
+
+				compileVariants(checked, depth + 1, current);
+				checked[depth] = true;
+				compileVariants(checked, depth + 1, current + keywords[depth].second);
+				checked[depth] = false;
+			}
+
+			std::string defines(const std::vector<bool> &checked) const
+			{
+				std::string res;
+				for (uint32 i = 0; i < keywords.size(); i++)
+				{
+					if (checked[i])
+						res += std::string("#define ") + std::string(keywords[i].first.data(), keywords[i].first.size()) + "\n";
+				}
+				return res;
+			}
+
+			static std::string enhance(const std::string &source, const std::string &defines)
+			{
+				std::string res;
+				res.reserve(source.size() + defines.size() + 5);
+				Holder<LineReader> lr = newLineReader(source);
+				String line;
+				while (lr->readLine(line))
+				{
+					if (isPattern(line, "#version", "", "") || isPattern(line, "#extension", "", ""))
+						res += std::string(line.data(), line.size()) + "\n";
+					else
+					{
+						res += defines + std::string(line.data(), line.size()) + "\n";
+						break;
+					}
+				}
+				while (lr->readLine(line))
+					res += std::string(line.data(), line.size()) + "\n";
+				return res;
 			}
 		};
 	}
@@ -613,8 +690,55 @@ namespace cage
 			CAGE_THROW_ERROR(GraphicsError, "shader validation failed", len);
 	}
 
+	void MultiShaderProgram::setDebugName(const String &name)
+	{
+		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		impl->name = name;
+	}
+
+	void MultiShaderProgram::setKeywords(PointerRange<detail::StringBase<20>> keywords)
+	{
+		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
+		impl->keywords.clear();
+		impl->keywords.reserve(keywords.size());
+		for (const auto &k : keywords)
+			impl->keywords.push_back({ k, HashString(k) });
+	}
+
+	void MultiShaderProgram::setSource(uint32 type, PointerRange<const char> buffer)
+	{
+		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
+		if (buffer.empty())
+			impl->sources.erase(type);
+		else
+			impl->sources[type] = std::string(buffer.data(), buffer.size());
+	}
+
+	void MultiShaderProgram::compile()
+	{
+		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
+		impl->compile();
+	}
+
+	Holder<ShaderProgram> MultiShaderProgram::get(uint32 variant)
+	{
+		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
+		const auto it = impl->variants.find(variant);
+		if (it != impl->variants.end())
+			return it->second.share();
+		CAGE_THROW_ERROR(Exception, "unknown shader variant");
+	}
+
 	Holder<ShaderProgram> newShaderProgram()
 	{
 		return systemMemory().createImpl<ShaderProgram, ShaderProgramImpl>();
+	}
+
+	Holder<MultiShaderProgram> newMultiShaderProgram()
+	{
+		return systemMemory().createImpl<MultiShaderProgram, MultiShaderProgramImpl>();
 	}
 }

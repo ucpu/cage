@@ -230,10 +230,8 @@ void processModel()
 		}
 	}
 
-	if (!part.shaderDepthName.empty())
-		dsm.shaderDepthName = HashString(convertAssetPath(part.shaderDepthName));
-	if (!part.shaderColorName.empty())
-		dsm.shaderColorName = HashString(convertAssetPath(part.shaderColorName));
+	if (!part.shaderName.empty())
+		dsm.shaderName = HashString(convertAssetPath(part.shaderName));
 
 	dsm.renderFlags = part.renderFlags;
 	dsm.renderLayer = part.renderLayer;
@@ -251,8 +249,7 @@ void processModel()
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
-	h.dependenciesCount += !!dsm.shaderDepthName;
-	h.dependenciesCount += !!dsm.shaderColorName;
+	h.dependenciesCount += !!dsm.shaderName;
 
 	cage::MemoryBuffer buffer;
 	Serializer ser(buffer);
@@ -268,10 +265,8 @@ void processModel()
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			f->write(bufferView(dsm.textureNames[i]));
-	if (dsm.shaderDepthName)
-		f->write(bufferView(dsm.shaderDepthName));
-	if (dsm.shaderColorName)
-		f->write(bufferView(dsm.shaderColorName));
+	if (dsm.shaderName)
+		f->write(bufferView(dsm.shaderName));
 	f->write(compressed);
 	f->close();
 }

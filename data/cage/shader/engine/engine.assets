@@ -7,8 +7,5 @@ engine.pack
 scheme = shader
 billboard.glsl
 blit.glsl
-depth.glsl
-depthAlphaClip.glsl
 skybox.glsl
 standard.glsl
-standardAlphaClip.glsl

@@ -136,15 +136,22 @@ namespace cage
 		q->draw(impl->graphicsData.imageModel);
 	}
 
+	Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi)
+	{
+		if (multi)
+			return multi->get(0);
+		return {};
+	}
+
 	void GuiImpl::GraphicsData::load(AssetManager *assetMgr)
 	{
-		elementShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/element.glsl"));
-		fontShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
-		imageAnimatedShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?A"));
-		imageStaticShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?a"));
-		colorPickerShader[0] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F"));
-		colorPickerShader[1] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H"));
-		colorPickerShader[2] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S"));
+		elementShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/element.glsl")));
+		fontShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
+		imageAnimatedShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl?A")));
+		imageStaticShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl?a")));
+		colorPickerShader[0] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F")));
+		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H")));
+		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S")));
 		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/guiElement.obj"));
 		fontModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 		imageModel = fontModel.share();

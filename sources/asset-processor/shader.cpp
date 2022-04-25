@@ -14,6 +14,7 @@ namespace
 	std::map<String, std::string> codes;
 	std::map<String, String> defines;
 	std::set<String, StringComparatorFast> onces;
+	std::set<detail::StringBase<20>> keywords;
 
 	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
 
@@ -420,7 +421,21 @@ namespace
 					}
 				}
 				else if (stackIsOk(stack))
+				{
+					if (line[0] == '#')
+					{
+						line = trim(subString(line, 1, m));
+						String cmd = split(line);
+						line = trim(line);
+						if (cmd == "ifdef" || cmd == "ifndef")
+						{
+							if (line.empty())
+								CAGE_THROW_ERROR(Exception, "'#ifdef' missing parameter");
+							keywords.insert(line);
+						}
+					}
 					output(outputTokenization(originalLine));
+				}
 			}
 			catch (...)
 			{
@@ -448,8 +463,7 @@ void processShader()
 	parse(inputFileName);
 
 	{
-		std::string prepend = R"foo(
-#version 440 core
+		std::string prepend = R"foo(#version 450 core
 #extension GL_ARB_bindless_texture : require
 )foo";
 		prepend += std::string() + "// " + inputName.c_str() + "\n";
@@ -460,12 +474,17 @@ void processShader()
 	{
 		MemoryBuffer buff;
 		Serializer ser(buff);
+		ser << numeric_cast<uint32>(keywords.size());
+		for (const auto &it : keywords)
+		{
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "keyword: " + it);
+			ser << it;
+		}
 		ser << numeric_cast<uint32>(codes.size());
 		for (const auto &it : codes)
 		{
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
-			//ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
 			ser.write(it.second);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
@@ -491,7 +510,6 @@ void processShader()
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);
-			//f->write({ it.second.c_str(), it.second.c_str() + it.second.length() });
 			f->write(it.second);
 			f->close();
 		}

@@ -39,7 +39,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Sound> newSound();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeSound();
-	static constexpr uint32 AssetSchemeIndexSound = 20;
+	constexpr uint32 AssetSchemeIndexSound = 20;
 }
 
 #endif // guard_sound_h_8EF0985E04CD4714B530EA7D605E92EC

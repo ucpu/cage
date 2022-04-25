@@ -31,8 +31,7 @@ namespace cage
 
 			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
 				msh->textureNames[i] = data.textureNames[i];
-			msh->shaderDepthName = data.shaderDepthName;
-			msh->shaderColorName = data.shaderColorName;
+			msh->shaderName = data.shaderName;
 			msh->flags = data.renderFlags;
 			msh->layer = data.renderLayer;
 			msh->bones = data.skeletonBones;

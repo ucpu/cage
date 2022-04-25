@@ -39,10 +39,27 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
+	class CAGE_ENGINE_API MultiShaderProgram : private Immovable
+	{
+#ifdef CAGE_DEBUG
+		detail::StringBase<64> debugName;
+#endif // CAGE_DEBUG
+
+	public:
+		void setDebugName(const String &name);
+
+		void setKeywords(PointerRange<detail::StringBase<20>> keywords);
+		void setSource(uint32 type, PointerRange<const char> buffer);
+		void compile();
+
+		Holder<ShaderProgram> get(uint32 variant); // sum of hashes of keywords
+	};
+
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();
+	CAGE_ENGINE_API Holder<MultiShaderProgram> newMultiShaderProgram();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexShaderProgram = 10;
+	constexpr uint32 AssetSchemeIndexShaderProgram = 10;
 }
 
 #endif // guard_shaderProgram_h_qdsxc187uijf8c7frg

@@ -1209,7 +1209,7 @@ namespace cage
 					part.material = MeshImportMaterial();
 					part.renderFlags = DefaultRenderFlags;
 					part.renderLayer = 0;
-					part.shaderColorName = part.shaderDepthName = {};
+					part.shaderName = {};
 				}
 
 				Holder<Ini> ini = newIni();
@@ -1293,14 +1293,11 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "unknown material flag");
 				}
 
-				part.shaderDepthName = convertPath(pathBase, ini->getString("shaders", "depth"));
-				if (config.verbose && !part.shaderDepthName.empty())
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using depth shader: " + part.shaderDepthName);
-				part.shaderColorName = convertPath(pathBase, ini->getString("shaders", "color"));
-				if (config.verbose && !part.shaderColorName.empty())
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using color shader: " + part.shaderColorName);
+				part.shaderName = convertPath(pathBase, ini->getString("render", "shader"));
+				if (config.verbose && !part.shaderName.empty())
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "using shader: " + part.shaderName);
 
-				part.renderLayer = ini->getSint32("shaders", "layer", 0);
+				part.renderLayer = ini->getSint32("render", "layer", 0);
 				if (config.verbose && part.renderLayer != 0)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "render layer: " + part.renderLayer);
 

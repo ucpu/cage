@@ -58,7 +58,7 @@ namespace cage
 	}
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexTexture = 11;
+	constexpr uint32 AssetSchemeIndexTexture = 11;
 
 	struct CAGE_ENGINE_API BindlessHandle
 	{
