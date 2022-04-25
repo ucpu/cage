@@ -646,4 +646,10 @@ void testGeometry()
 			+ Cone() + ", "
 			+ Frustum();
 	}
+
+	{
+		CAGE_TESTCASE("angle quat");
+		test(angle(Quat(), Quat()), Degs());
+		test(angle(Quat(), Quat(Vec3(1, 0, 0), Vec3(0, 1, 0))), Degs(90));
+	}
 }
