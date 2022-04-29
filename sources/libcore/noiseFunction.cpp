@@ -98,11 +98,6 @@ namespace cage
 				for (uint32 i = 0; i < count; i++)
 					results[i] = n.GetNoise(x[i].value, y[i].value, z[i].value);
 			}
-
-			void evaluate(uint32 count, const Real x[], const Real y[], const Real z[], const Real w[], Real results[])
-			{
-				CAGE_THROW_CRITICAL(NotImplemented, "4D noise functions are not implemented");
-			}
 		};
 	}
 
@@ -130,14 +125,6 @@ namespace cage
 		return result;
 	}
 
-	Real NoiseFunction::evaluate(Vec4 position)
-	{
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		Real result;
-		impl->evaluate(1, &position[0], &position[1], &position[2], &position[3], &result);
-		return result;
-	}
-
 	void NoiseFunction::evaluate(PointerRange<const Real> x, PointerRange<Real> results)
 	{
 		CAGE_ASSERT(x.size() == results.size());
@@ -162,16 +149,6 @@ namespace cage
 		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), y.data(), z.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<const Real> z, PointerRange<const Real> w, PointerRange<Real> results)
-	{
-		CAGE_ASSERT(x.size() == results.size());
-		CAGE_ASSERT(y.size() == results.size());
-		CAGE_ASSERT(z.size() == results.size());
-		CAGE_ASSERT(w.size() == results.size());
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
-		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), y.data(), z.data(), w.data(), results.data());
-	}
-
 	void NoiseFunction::evaluate(PointerRange<const Vec2> p, PointerRange<Real> results)
 	{
 		CAGE_ASSERT(p.size() == results.size());
@@ -193,7 +170,7 @@ namespace cage
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
 		std::vector<Real> v;
 		v.resize(p.size() * 3);
-		const uint32 cnt = numeric_cast<uint32>(v.size());
+		const uint32 cnt = numeric_cast<uint32>(p.size());
 		for (uint32 i = 0; i < cnt; i++)
 		{
 			v[0 * cnt + i] = p[i][0];
@@ -201,23 +178,6 @@ namespace cage
 			v[2 * cnt + i] = p[i][2];
 		}
 		impl->evaluate(cnt, v.data() + 0 * cnt, v.data() + 1 * cnt, v.data() + 2 * cnt, results.data());
-	}
-
-	void NoiseFunction::evaluate(PointerRange<const Vec4> p, PointerRange<Real> results)
-	{
-		CAGE_ASSERT(p.size() == results.size());
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
-		std::vector<Real> v;
-		v.resize(p.size() * 4);
-		const uint32 cnt = numeric_cast<uint32>(v.size());
-		for (uint32 i = 0; i < cnt; i++)
-		{
-			v[0 * cnt + i] = p[i][0];
-			v[1 * cnt + i] = p[i][1];
-			v[2 * cnt + i] = p[i][2];
-			v[3 * cnt + i] = p[i][3];
-		}
-		impl->evaluate(cnt, v.data() + 0 * cnt, v.data() + 1 * cnt, v.data() + 2 * cnt, v.data() + 3 * cnt, results.data());
 	}
 
 	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed)

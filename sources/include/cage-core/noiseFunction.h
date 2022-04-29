@@ -48,16 +48,12 @@ namespace cage
 		Real evaluate(Real position);
 		Real evaluate(Vec2 position);
 		Real evaluate(Vec3 position);
-		Real evaluate(Vec4 position);
 
 		void evaluate(PointerRange<const Real> x, PointerRange<Real> results);
 		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<Real> results);
 		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<const Real> z, PointerRange<Real> results);
-		void evaluate(PointerRange<const Real> x, PointerRange<const Real> y, PointerRange<const Real> z, PointerRange<const Real> w, PointerRange<Real> results);
-
-		[[deprecated]] void evaluate(PointerRange<const Vec2> positions, PointerRange<Real> results);
-		[[deprecated]] void evaluate(PointerRange<const Vec3> positions, PointerRange<Real> results);
-		[[deprecated]] void evaluate(PointerRange<const Vec4> positions, PointerRange<Real> results);
+		void evaluate(PointerRange<const Vec2> positions, PointerRange<Real> results);
+		void evaluate(PointerRange<const Vec3> positions, PointerRange<Real> results);
 	};
 
 	struct CAGE_CORE_API NoiseFunctionCreateConfig

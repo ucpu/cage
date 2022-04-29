@@ -116,4 +116,42 @@ void testNoise()
 			generateImage(Stringizer() + "images/noises/cellular_divide.png", noise);
 		}
 	}
+
+	{
+		CAGE_TESTCASE("vectorized");
+		Holder<NoiseFunction> noise = newNoiseFunction({});
+		{
+			CAGE_TESTCASE("1D");
+			const Real x[5] = { 1, 2, 3, 4, 5 };
+			Real r[5];
+			noise->evaluate(x, r);
+		}
+		{
+			CAGE_TESTCASE("2D");
+			const Real x[5] = { 1, 2, 3, 4, 5 };
+			const Real y[5] = { 2, 3, 4, 5, 6 };
+			Real r[5];
+			noise->evaluate(x, r);
+		}
+		{
+			CAGE_TESTCASE("3D");
+			const Real x[5] = { 1, 2, 3, 4, 5 };
+			const Real y[5] = { 2, 3, 4, 5, 6 };
+			const Real z[5] = { 3, 4, 5, 6, 7 };
+			Real r[5];
+			noise->evaluate(x, y, z, r);
+		}
+		{
+			CAGE_TESTCASE("vec2");
+			const Vec2 x[5] = { Vec2(1, 2), Vec2(3, 4), Vec2(5, 6), Vec2(7, 8), Vec2(9, 10) };
+			Real r[5];
+			noise->evaluate(x, r);
+		}
+		{
+			CAGE_TESTCASE("vec3");
+			const Vec3 x[5] = { Vec3(1, 2, 3), Vec3(4, 5, 6), Vec3(7, 8, 9), Vec3(10, 11, 12), Vec3(13, 14, 15) };
+			Real r[5];
+			noise->evaluate(x, r);
+		}
+	}
 }

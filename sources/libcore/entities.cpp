@@ -466,8 +466,8 @@ namespace cage
 
 	bool Entity::has(const EntityGroup *group) const
 	{
+		CAGE_ASSERT(group->manager() == this->manager());
 		const EntityImpl *impl = (const EntityImpl *)this;
-		CAGE_ASSERT(((GroupImpl*)group)->manager == impl->manager);
 		return impl->groups.count(const_cast<EntityGroup*>(group)) != 0;
 	}
 
@@ -498,9 +498,9 @@ namespace cage
 
 	bool Entity::has(const EntityComponent *component) const
 	{
+		CAGE_ASSERT(component->manager() == this->manager());
 		const EntityImpl *impl = (const EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		CAGE_ASSERT(ci->manager == impl->manager);
 		if (impl->components.size() > ci->definitionIndex)
 			return impl->components[ci->definitionIndex] != nullptr;
 		return false;
@@ -508,6 +508,7 @@ namespace cage
 
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
+		CAGE_ASSERT(component->manager() == this->manager());
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl*)component;
 		if (impl->components.size() > ci->definitionIndex)
@@ -548,6 +549,7 @@ namespace cage
 	void EntityGroup::merge(const EntityGroup *other)
 	{
 		CAGE_ASSERT(this != other);
+		CAGE_ASSERT(other->manager() == this->manager());
 		for (auto it : other->entities())
 			it->add(this);
 	}
@@ -555,6 +557,7 @@ namespace cage
 	void EntityGroup::subtract(const EntityGroup *other)
 	{
 		CAGE_ASSERT(this != other);
+		CAGE_ASSERT(other->manager() == this->manager());
 		for (auto it : other->entities())
 			it->remove(this);
 	}
@@ -562,6 +565,7 @@ namespace cage
 	void EntityGroup::intersect(const EntityGroup *other)
 	{
 		CAGE_ASSERT(this != other);
+		CAGE_ASSERT(other->manager() == this->manager());
 		std::vector<Entity *> r;
 		r.reserve(entities().size());
 		for (auto it : entities())
@@ -587,6 +591,7 @@ namespace cage
 
 	Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component)
 	{
+		CAGE_ASSERT(entities->manager() == component->manager());
 		const uintPtr typeSize = detail::typeSizeByIndex(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);

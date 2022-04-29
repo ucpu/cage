@@ -2,11 +2,13 @@
 #include <cage-core/profiling.h>
 #include <cage-core/config.h>
 
+#include <atomic>
+
 namespace
 {
 	void someMeaninglessWork()
 	{
-		volatile int v = 0;
+		std::atomic<int> v = 0;
 		for (uint32 i = 0; i < 1000; i++)
 			v += i;
 	}
