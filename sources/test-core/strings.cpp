@@ -7,6 +7,9 @@
 #include <cstring>
 #include <cmath> // std::abs
 #include <map>
+#include <vector>
+#include <algorithm>
+#include <random>
 
 void test(Real a, Real b);
 
@@ -740,6 +743,109 @@ namespace
 		}
 		return 0;
 	}
+
+	void testNaturalSort()
+	{
+		CAGE_TESTCASE("natural sort");
+		{
+			CAGE_TESTCASE("basic tests");
+			using namespace detail;
+			CAGE_TEST(naturalComparison("", "") == 0);
+			CAGE_TEST(naturalComparison("", "aa") < 0);
+			CAGE_TEST(naturalComparison("aa", "") > 0);
+			CAGE_TEST(naturalComparison("a", "b") < 0);
+			CAGE_TEST(naturalComparison("b", "a") > 0);
+			CAGE_TEST(naturalComparison("xxayy", "xxbyy") < 0);
+			CAGE_TEST(naturalComparison("xxbyy", "xxayy") > 0);
+			CAGE_TEST(naturalComparison("0", "1") < 0);
+			CAGE_TEST(naturalComparison("10", "200") < 0);
+			CAGE_TEST(naturalComparison("30", "200") < 0);
+			CAGE_TEST(naturalComparison("100", "200") < 0);
+			CAGE_TEST(naturalComparison("300", "200") > 0);
+			CAGE_TEST(naturalComparison("1000", "200") > 0);
+			CAGE_TEST(naturalComparison("30xx", "300xx") < 0);
+			CAGE_TEST(naturalComparison("xx30", "xx300") < 0);
+			CAGE_TEST(naturalComparison("30  ", "300  ") < 0);
+			CAGE_TEST(naturalComparison("  30", "  300") < 0);
+			CAGE_TEST(naturalComparison("test10xx", "test200xx") < 0);
+			CAGE_TEST(naturalComparison("test30xx", "test200xx") < 0);
+			CAGE_TEST(naturalComparison("test100xx", "test200xx") < 0);
+			CAGE_TEST(naturalComparison("test300xx", "test200xx") > 0);
+			CAGE_TEST(naturalComparison("test1000xx", "test200xx") > 0);
+			CAGE_TEST(naturalComparison("a100b30c", "a100b200c") < 0);
+			CAGE_TEST(naturalComparison("a30b100c", "a200b100c") < 0);
+			CAGE_TEST(naturalComparison("30 300", "300 300") < 0);
+			CAGE_TEST(naturalComparison("300 30", "300 300") < 0);
+			CAGE_TEST(naturalComparison("100 200 40 400 500", "100 200 300 400 500") < 0);
+			CAGE_TEST(naturalComparison("20 200 300 400 500", "100 200 300 400 500") < 0);
+			CAGE_TEST(naturalComparison("100 200 300 400 60", "100 200 300 400 500") < 0);
+		}
+		{
+			CAGE_TESTCASE("randomized test");
+			static constexpr const String original[] = {
+				"",
+				"  5",
+				"  30",
+				"  40 ",
+				"  100",
+				"  300",
+				" 5",
+				" 30",
+				" 40 ",
+				" 100",
+				" 300",
+				"1",
+				"10",
+				"10  ",
+				"30",
+				"30  ",
+				"100",
+				"100 ",
+				"200",
+				"200  ",
+				"300",
+				"300 ",
+				"1000",
+				"aaa",
+				"bb",
+				"bbbb",
+				"bbbb",
+				"ccc",
+				"kkk100ja200h",
+				"kkk100jj5h",
+				"kkk100jj30h",
+				"kkk100jj200h",
+				"kkk100jj1000h",
+				"kkk100jm200h",
+				"test10xx",
+				"test30xx",
+				"test100xx",
+				"test200xx",
+				"test300xx",
+				"test1000xx",
+				"z1",
+				"z10",
+				"z10  ",
+				"z30",
+				"z30  ",
+				"z100",
+				"z100 ",
+				"z200",
+				"z200  ",
+				"z300",
+				"z300 ",
+				"z1000",
+				"zzz1",
+			};
+			std::vector<String> vec(std::begin(original), std::end(original));
+			std::shuffle(vec.begin(), vec.end(), std::default_random_engine());
+			std::sort(vec.begin(), vec.end(), StringComparatorNatural());
+			//std::sort(vec.begin(), vec.end());
+			auto o = std::begin(original);
+			for (const auto &v : vec)
+				CAGE_TEST(*o++ == v);
+		}
+	}
 }
 
 void testStrings()
@@ -757,4 +863,5 @@ void testStrings()
 	testCopies2();
 	testStringizer();
 	{ constexpr int a = testConstexprString(); }
+	testNaturalSort();
 }

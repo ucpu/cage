@@ -236,9 +236,21 @@ namespace cage
 				return a.length() < b.length();
 			}
 		};
+
+		CAGE_CORE_API int naturalComparison(PointerRange<const char> a, PointerRange<const char> b);
+
+		template<uint32 N>
+		struct StringComparatorNaturalBase
+		{
+			bool operator () (const StringBase<N> &a, const StringBase<N> &b) const noexcept
+			{
+				return naturalComparison(a, b) < 0;
+			}
+		};
 	}
 
 	using StringComparatorFast = detail::StringComparatorFastBase<995>;
+	using StringComparatorNatural = detail::StringComparatorNaturalBase<995>;
 }
 
 #endif // guard_string_h_sdrgh4s6ert4gzh6r5t4sedg48s9

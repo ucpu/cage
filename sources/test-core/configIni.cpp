@@ -72,6 +72,13 @@ void testConfigIni()
 	}
 
 	{
+		CAGE_TESTCASE("load-save asset database config");
+		Holder<Ini> ini = newIni();
+		ini->importFile("cage-asset-database.ini");
+		ini->exportFile("testdir/asset-database.ini");
+	}
+
+	{
 		CAGE_TESTCASE("parse command line arguments (no positional arguments)");
 		Holder<Ini> ini = newIni();
 		const char *const cmd[] = {

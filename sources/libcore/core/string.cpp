@@ -553,4 +553,68 @@ namespace cage
 			return false;
 		}
 	}
+
+	namespace detail
+	{
+		namespace
+		{
+			constexpr bool digit(char c)
+			{
+				return c >= '0' && c <= '9';
+			}
+
+			constexpr uint64 tonum(PointerRange<const char> in, const char *&p)
+			{
+				CAGE_ASSERT(p >= in.begin() && p < in.end());
+				CAGE_ASSERT(digit(*p));
+				uint64 r = 0;
+				while (p != in.end() && digit(*p))
+				{
+					r *= 10;
+					r += *p++ - '0';
+				}
+				return r;
+			}
+
+			constexpr bool testtonum()
+			{
+				const char s[] = "abc123def";
+				const char *p = s + 3;
+				const uint64 n = tonum(s, p);
+				return n == 123 && p == s + 6;
+			}
+
+			static_assert(testtonum());
+		}
+
+		int naturalComparison(PointerRange<const char> a, PointerRange<const char> b)
+		{
+			const char *i = a.begin();
+			const char *j = b.begin();
+			while (true)
+			{
+				if (i == a.end() && j == b.end())
+					return 0;
+				if (i == a.end())
+					return -1;
+				if (j == b.end())
+					return 1;
+				if (digit(*i) && digit(*j))
+				{
+					const uint64 ax = tonum(a, i);
+					const uint64 bx = tonum(b, j);
+					if (ax < bx)
+						return -1;
+					if (ax > bx)
+						return 1;
+				}
+				if (*i < *j)
+					return -1;
+				if (*i > *j)
+					return 1;
+				i++;
+				j++;
+			}
+		}
+	}
 }

@@ -405,7 +405,7 @@ namespace cage
 	{
 		const IniImpl *impl = (const IniImpl *)this;
 
-		std::map<String, std::map<String, String>> copy; // alphabetically ordered
+		std::map<String, std::map<String, String, StringComparatorNatural>, StringComparatorNatural> copy;
 		for (const auto &i : impl->sections)
 		{
 			auto &s = copy[i.first];
@@ -420,6 +420,7 @@ namespace cage
 			ser.writeLine(String() + "[" + i.first + "]");
 			for (const auto &j : i.second)
 				ser.writeLine(String() + j.first + " = " + j.second);
+			ser.writeLine("");
 		}
 		return std::move(buff);
 	}
