@@ -6,23 +6,6 @@
 
 namespace cage
 {
-	namespace
-	{
-		ConfigUint64 confDefault1("cage/random/seed1", 0);
-		ConfigUint64 confDefault2("cage/random/seed2", 0);
-
-		RandomGenerator initializeDefaultGenerator()
-		{
-			uint64 s[2];
-			s[0] = confDefault1;
-			s[1] = confDefault2;
-			if (s[0] == 0 && s[1] == 0)
-				privat::generateRandomData((uint8*)s, sizeof(s));
-			CAGE_LOG(SeverityEnum::Info, "random", Stringizer() + "initialized thread-local random generator: " + s[0] + ", " + s[1]);
-			return RandomGenerator(s[0], s[1]);
-		}
-	}
-
 	RandomGenerator::RandomGenerator()
 	{
 		privat::generateRandomData((uint8*)s, sizeof(s));
@@ -188,84 +171,84 @@ namespace cage
 
 	namespace detail
 	{
-		RandomGenerator &globalRandomGenerator()
+		RandomGenerator &randomGenerator()
 		{
-			thread_local RandomGenerator rnd = initializeDefaultGenerator();
+			thread_local RandomGenerator rnd;
 			return rnd;
 		}
 	}
 
 	Real randomChance()
 	{
-		return detail::globalRandomGenerator().randomChance();
+		return detail::randomGenerator().randomChance();
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return detail::globalRandomGenerator().randomRange(min, max); }
+#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return detail::randomGenerator().randomRange(min, max); }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, Real, Rads, Degs, float, double));
 #undef GCHL_GENERATE
 
 	Rads randomAngle()
 	{
-		return detail::globalRandomGenerator().randomAngle();
+		return detail::randomGenerator().randomAngle();
 	}
 
 	Vec2 randomChance2()
 	{
-		return detail::globalRandomGenerator().randomChance2();
+		return detail::randomGenerator().randomChance2();
 	}
 
 	Vec2 randomRange2(Real a, Real b)
 	{
-		return detail::globalRandomGenerator().randomRange2(a, b);
+		return detail::randomGenerator().randomRange2(a, b);
 	}
 
 	Vec2 randomDirection2()
 	{
-		return detail::globalRandomGenerator().randomDirection2();
+		return detail::randomGenerator().randomDirection2();
 	}
 
 	Vec2i randomRange2i(sint32 a, sint32 b)
 	{
-		return detail::globalRandomGenerator().randomRange2i(a, b);
+		return detail::randomGenerator().randomRange2i(a, b);
 	}
 
 	Vec3 randomChance3()
 	{
-		return detail::globalRandomGenerator().randomChance3();
+		return detail::randomGenerator().randomChance3();
 	}
 
 	Vec3 randomRange3(Real a, Real b)
 	{
-		return detail::globalRandomGenerator().randomRange3(a, b);
+		return detail::randomGenerator().randomRange3(a, b);
 	}
 
 	Vec3 randomDirection3()
 	{
-		return detail::globalRandomGenerator().randomDirection3();
+		return detail::randomGenerator().randomDirection3();
 	}
 
 	Vec3i randomRange3i(sint32 a, sint32 b)
 	{
-		return detail::globalRandomGenerator().randomRange3i(a, b);
+		return detail::randomGenerator().randomRange3i(a, b);
 	}
 
 	Vec4 randomChance4()
 	{
-		return detail::globalRandomGenerator().randomChance4();
+		return detail::randomGenerator().randomChance4();
 	}
 
 	Vec4 randomRange4(Real a, Real b)
 	{
-		return detail::globalRandomGenerator().randomRange4(a, b);
+		return detail::randomGenerator().randomRange4(a, b);
 	}
 
 	Quat randomDirectionQuat()
 	{
-		return detail::globalRandomGenerator().randomDirectionQuat();
+		return detail::randomGenerator().randomDirectionQuat();
 	}
 
 	Vec4i randomRange4i(sint32 a, sint32 b)
 	{
-		return detail::globalRandomGenerator().randomRange4i(a, b);
+		return detail::randomGenerator().randomRange4i(a, b);
 	}
 }

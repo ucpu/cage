@@ -18,6 +18,11 @@ void main()
 	vec2 uv = gl_FragCoord.xy * texelSize;
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord), 0).rgb;
 	float depth = texelFetch(texDepth, ivec2(gl_FragCoord), 0).x;
+	if (depth > 1 - 1e-7)
+	{ // skybox
+		outColor = color;
+		return;
+	}
 	vec3 colorNear = textureLod(texDofNear, uv, 0).rgb;
 	vec3 colorFar = textureLod(texDofFar, uv, 0).rgb;
 	float near;

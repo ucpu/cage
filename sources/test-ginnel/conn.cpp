@@ -18,7 +18,7 @@ namespace
 	{
 	public:
 		Holder<GinnelConnection> udp;
-		const uint64 timeStart;
+		const uint64 timeStart = 0;
 		uint64 timeStats = 0;
 		uint64 lastProcessTime = 0;
 		uint64 sendSeqn = 0, recvSeqn = 0, recvCnt = 0, recvBytes = 0;
@@ -101,7 +101,7 @@ namespace
 						Serializer s(b);
 						s << ++sendSeqn;
 						while (b.size() < bytes)
-							s << detail::globalRandomGenerator().next();
+							s << detail::randomGenerator().next();
 						udp->write(b, randomRange(0, 20), randomChance() < 0.1);
 					}
 				}

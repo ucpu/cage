@@ -838,7 +838,7 @@ namespace
 				"zzz1",
 			};
 			std::vector<String> vec(std::begin(original), std::end(original));
-			std::shuffle(vec.begin(), vec.end(), std::default_random_engine());
+			std::shuffle(vec.begin(), vec.end(), std::mt19937(randomRange(uint32(0), uint32(m))));
 			std::sort(vec.begin(), vec.end(), StringComparatorNatural());
 			//std::sort(vec.begin(), vec.end());
 			auto o = std::begin(original);

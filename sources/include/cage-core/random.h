@@ -49,7 +49,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API RandomGenerator &globalRandomGenerator();
+		// thread-local random generator used by all the global random functions
+		CAGE_CORE_API RandomGenerator &randomGenerator();
 	}
 }
 
