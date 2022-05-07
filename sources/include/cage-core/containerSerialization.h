@@ -7,42 +7,38 @@ namespace cage
 {
 	namespace privat
 	{
-		template<class C, class N>
-		auto reserveIfPossibleImpl(C &c, N n, int) -> decltype(c.reserve(n), void())
-		{
-			c.reserve(n);
+		template<class C>
+		concept ContainerConcept = requires(C c) {
+			c.size();
+			c.begin();
+			c.end();
 		};
 
-		template<class C, class N>
-		auto reserveIfPossibleImpl(C &c, N n, float) -> void
-		{};
-
-		template<class C, class N>
-		void reserveIfPossible(C &c, N n)
-		{
-			reserveIfPossibleImpl(c, n, 0);
+		template<class C>
+		concept ReservableContainerConcept = ContainerConcept<C> && requires(C c) {
+			c.reserve();
 		};
 	}
 
-	template<class C, typename std::enable_if_t<!std::is_trivially_copyable_v<C>, bool> = true>
-	Serializer &operator << (Serializer &s, const C &c)
+	Serializer &operator << (Serializer &s, const privat::ContainerConcept auto &c)
 	{
-		s << c.size();
+		s << numeric_cast<uint64>(c.size());
 		for (const auto &it : c)
 			s << it;
 		return s;
 	}
 
-	template<class C, typename std::enable_if_t<!std::is_trivially_copyable_v<C>, bool> = true>
-	Deserializer &operator >> (Deserializer &s, C &c)
+	Deserializer &operator >> (Deserializer &s, privat::ContainerConcept auto &c)
 	{
 		CAGE_ASSERT(c.empty());
-		decltype(c.size()) size;
+		uint64 size = 0;
 		s >> size;
-		privat::reserveIfPossible(c, size);
+		if constexpr (privat::ReservableContainerConcept<decltype(c)>)
+			c.reserve(numeric_cast<decltype(c.size())>(size));
 		for (uint32 i = 0; i < size; i++)
 		{
-			typename C::value_type tmp;
+			using Tmp = std::remove_cv_t<std::remove_reference_t<decltype(*c.begin())>>;
+			Tmp tmp;
 			s >> tmp;
 			c.insert(c.end(), std::move(tmp));
 		}

@@ -60,6 +60,16 @@ namespace cage
 			return { data_.insert(it, std::move(value)), true };
 		}
 
+		const_iterator insert(const_iterator hint, const value_type &value)
+		{
+			return insert(value).first;
+		}
+
+		const_iterator insert(const_iterator hint, value_type &&value)
+		{
+			return insert(std::move(value)).first;
+		}
+
 		template<class InputIt>
 		void insert(InputIt first, InputIt last)
 		{

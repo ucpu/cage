@@ -2,6 +2,7 @@
 #include <cage-core/containerSerialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdHash.h>
+#include <cage-core/flatSet.h>
 
 #include <vector>
 #include <list>
@@ -28,6 +29,7 @@ void testContainerSerialization()
 		CAGE_TEST(cont.size() == 2);
 		CAGE_TEST(cont[0] == "hello");
 		CAGE_TEST(cont[1] == "world");
+		CAGE_TEST(buf.size() == 8 + 4 + 5 + 4 + 5); // make sure that the behavior is consistent for both 32 and 64 bit applications
 	}
 
 	{
@@ -173,5 +175,41 @@ void testContainerSerialization()
 		CAGE_TEST(cont.size() == 2);
 		CAGE_TEST(cont[0] == "hello");
 		CAGE_TEST(cont[1] == "world");
+	}
+
+	{
+		CAGE_TESTCASE("pointer range");
+		std::vector<String> cont;
+		cont.push_back("hello");
+		cont.push_back("world");
+		PointerRange<const String> range = cont;
+		MemoryBuffer buf;
+		Serializer ser(buf);
+		ser << range;
+		cont.clear();
+		Deserializer des(buf);
+		des >> cont;
+		CAGE_TEST(cont.size() == 2);
+		CAGE_TEST(cont[0] == "hello");
+		CAGE_TEST(cont[1] == "world");
+		CAGE_TEST(buf.size() == 8 + 4 + 5 + 4 + 5);
+	}
+
+	{
+		CAGE_TESTCASE("flat set");
+		FlatSet<uint32> cont;
+		cont.insert(42);
+		cont.insert(13);
+		cont.insert(20);
+		MemoryBuffer buf;
+		Serializer ser(buf);
+		ser << cont;
+		cont.clear();
+		Deserializer des(buf);
+		des >> cont;
+		CAGE_TEST(cont.size() == 3);
+		CAGE_TEST(cont.data()[0] == 13);
+		CAGE_TEST(cont.data()[1] == 20);
+		CAGE_TEST(cont.data()[2] == 42);
 	}
 }

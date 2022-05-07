@@ -49,11 +49,9 @@ namespace cage
 
 	// reinterpret types of range of elements
 	// preserves number of bytes, but may change number of elements
-	template<class Dst = const char, class Src>
+	template<class Dst = const char, class Src> requires(std::is_trivially_copyable_v<Dst> && std::is_trivially_copyable_v<Src>)
 	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
-		static_assert(std::is_trivially_copyable_v<Dst>);
-		static_assert(std::is_trivially_copyable_v<Src>);
 		return { reinterpret_cast<Dst *>(src.begin()), reinterpret_cast<Dst *>(src.end()) };
 	}
 
@@ -73,18 +71,24 @@ namespace cage
 
 	// general serialization
 
-	template<class T, typename std::enable_if_t<std::is_trivially_copyable_v<T>, bool> = true>
-	Serializer &operator << (Serializer &s, const T &v)
+	namespace privat
 	{
-		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
+		template<class>
+		struct IsPointerRangeConcept : std::false_type {};
+		template<class V>
+		struct IsPointerRangeConcept<PointerRange<V>> : std::true_type {};
+		template<class T>
+		concept SerializableConcept = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !IsPointerRangeConcept<T>::value;
+	}
+
+	Serializer &operator << (Serializer &s, const privat::SerializableConcept auto &v)
+	{
 		s.write(bufferView<const char>(v));
 		return s;
 	}
 
-	template<class T, typename std::enable_if_t<std::is_trivially_copyable_v<T>, bool> = true>
-	Deserializer &operator >> (Deserializer &s, T &v)
+	Deserializer &operator >> (Deserializer &s, privat::SerializableConcept auto &v)
 	{
-		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
 		s.read(bufferView<char>(v));
 		return s;
 	}
@@ -129,7 +133,7 @@ namespace cage
 	template<uint32 N>
 	Deserializer &operator >> (Deserializer &s, detail::StringBase<N> &v)
 	{
-		decltype(v.length()) size;
+		decltype(v.length()) size = 0;
 		s >> size;
 		v = detail::StringBase<N>(s.read(size));
 		return s;
