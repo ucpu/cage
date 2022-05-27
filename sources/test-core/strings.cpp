@@ -105,7 +105,7 @@ namespace
 		}
 	}
 
-	void testComparisons()
+	constexpr void testComparisons()
 	{
 		{
 			CAGE_TESTCASE("comparisons == and != and length");
@@ -123,7 +123,12 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("comparisons < and <= and > and >=");
+			CAGE_TEST(detail::memcmp("b", "b", 1) == 0);
+			CAGE_TEST(detail::memcmp("b", "c", 1) < 0);
+			CAGE_TEST(detail::memcmp("c", "b", 1) > 0);
 			CAGE_TEST(String("") < String("bbb"));
+			CAGE_TEST(String("b") < String("c"));
+			CAGE_TEST(String("c") > String("b"));
 			CAGE_TEST(String("cedr") > String("bedr"));
 			CAGE_TEST(String("cedr") > String("ceda"));
 			CAGE_TEST(String("cedr") < String("dedr"));
@@ -341,7 +346,7 @@ namespace
 				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
 				{
 					char c = randomRange(0, 255);
-					s += String(c);
+					s += Stringizer() + c;
 				}
 				String sen = encodeUrl(s);
 				String sde = decodeUrl(sen);
@@ -730,15 +735,15 @@ namespace
 			detail::StringBase<128> a = "ahoj";
 			String b = "nazdar";
 			detail::StringBase<1024> c = "cau";
-			String d = a + b + c;
+			String d = a + b + c; // causes compiler crash in visual studio 2022
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
-		//testComparisons(); // todo this should work
+		testComparisons();
 		testPointerRange();
 		testMethods();
 		testCopies1();
 		{
-			String s = Stringizer() + "hello" + " " + "world";
+			String s = Stringizer() + "hello" + " " + "world"; // causes compiler crash in visual studio 2022
 			CAGE_TEST(s == "hello world");
 		}
 		return 0;

@@ -626,7 +626,7 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, Real f) noexcept { return (TYPE)(a * (1 - f.value) + b * f.value); }
+	CAGE_FORCE_INLINE constexpr TYPE interpolate(const TYPE &a, const TYPE &b, Real f) noexcept { return numeric_cast<TYPE>(a * (1 - f.value) + b * f.value); }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
