@@ -722,33 +722,6 @@ namespace
 		}
 	}
 
-	constexpr int testConstexprString()
-	{
-		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
-		{
-			const char arr[] = "array";
-			CAGE_TEST(String(arr) == "array");
-			char arr2[] = "array";
-			CAGE_TEST(String(arr2) == "array");
-		}
-		{
-			detail::StringBase<128> a = "ahoj";
-			String b = "nazdar";
-			detail::StringBase<1024> c = "cau";
-			String d = a + b + c; // causes compiler crash in visual studio 2022
-			CAGE_TEST(d == "ahojnazdarcau");
-		}
-		testComparisons();
-		testPointerRange();
-		testMethods();
-		testCopies1();
-		{
-			String s = Stringizer() + "hello" + " " + "world"; // causes compiler crash in visual studio 2022
-			CAGE_TEST(s == "hello world");
-		}
-		return 0;
-	}
-
 	void testNaturalSort()
 	{
 		CAGE_TESTCASE("natural sort");
@@ -851,6 +824,33 @@ namespace
 				CAGE_TEST(*o++ == v);
 		}
 	}
+
+	constexpr int testConstexprString()
+	{
+		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
+		{
+			const char arr[] = "array";
+			CAGE_TEST(String(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(String(arr2) == "array");
+		}
+		{
+			detail::StringBase<128> a = "ahoj";
+			String b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			String d = a + b + c; // causes compiler crash in visual studio 2022
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+		testComparisons();
+		testPointerRange();
+		testMethods();
+		testCopies1();
+		{
+			String s = Stringizer() + "hello" + " " + "world"; // causes compiler crash in visual studio 2022
+			CAGE_TEST(s == "hello world");
+		}
+		return 0;
+	}
 }
 
 void testStrings()
@@ -867,6 +867,6 @@ void testStrings()
 	testCopies1();
 	testCopies2();
 	testStringizer();
-	{ constexpr int a = testConstexprString(); }
 	testNaturalSort();
+	{ constexpr int a = testConstexprString(); }
 }
