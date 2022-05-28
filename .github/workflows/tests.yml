@@ -62,7 +62,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [20]
+        os-version: [20, 22]
         build-config: [debug, release]
         compiler:
         - {
