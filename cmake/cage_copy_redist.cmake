@@ -8,7 +8,6 @@ endfunction(cage_copy_redist_license)
 
 function(cage_copy_redist)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/assimp/assimp/LICENSE" "assimp" COPYONLY)
-	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/astc-encoder/astc-encoder/LICENSE.txt" "astc-encoder" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/avir/avir/LICENSE" "avir" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/basis_universal/basis_universal/LICENSE" "basis_universal" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/cubeb/cubeb/LICENSE" "cubeb" COPYONLY)

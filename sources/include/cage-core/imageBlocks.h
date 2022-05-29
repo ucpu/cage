@@ -6,25 +6,6 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API ImageAstcEncodeConfig
-	{
-		Vec2i tiling;
-		sint32 quality = 98;
-		bool normals = false;
-	};
-
-	CAGE_CORE_API Holder<PointerRange<char>> imageAstcEncode(const Image *image, const ImageAstcEncodeConfig &config);
-
-	struct CAGE_CORE_API ImageAstcDecodeConfig
-	{
-		Vec2i tiling;
-		Vec2i resolution;
-		uint32 channels = 4;
-		ImageFormatEnum format = ImageFormatEnum::U8;
-	};
-
-	CAGE_CORE_API Holder<Image> imageAstcDecode(PointerRange<const char> buffer, const ImageAstcDecodeConfig &config);
-
 	struct CAGE_CORE_API ImageKtxEncodeConfig
 	{
 		bool normals = false; // treat inputs as normal map
@@ -42,7 +23,6 @@ namespace cage
 		Bc4, // r 0.5
 		Bc5, // rg 0.5
 		Bc7, // rgb/rgba 0.25
-		Astc, // rgba 0.25
 	};
 
 	struct CAGE_CORE_API ImageKtxTranscodeConfig

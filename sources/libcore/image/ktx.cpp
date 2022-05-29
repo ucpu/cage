@@ -25,7 +25,6 @@ namespace cage
 			case ImageKtxTranscodeFormatEnum::Bc4: return basist::transcoder_texture_format::cTFBC4_R;
 			case ImageKtxTranscodeFormatEnum::Bc5: return basist::transcoder_texture_format::cTFBC5_RG;
 			case ImageKtxTranscodeFormatEnum::Bc7: return basist::transcoder_texture_format::cTFBC7_RGBA;
-			case ImageKtxTranscodeFormatEnum::Astc: return basist::transcoder_texture_format::cTFASTC_4x4_RGBA;
 			}
 			CAGE_THROW_ERROR(Exception, "invalid ImageKtxBlocksFormatEnum");
 		}

@@ -159,8 +159,6 @@ namespace cage
 	enum class GammaSpaceEnum : uint32;
 	struct ImageColorConfig;
 	class Image;
-	struct ImageAstcEncodeConfig;
-	struct ImageAstcDecodeConfig;
 	struct ImageKtxEncodeConfig;
 	enum class ImageKtxTranscodeFormatEnum : uint32;
 	struct ImageKtxTranscodeConfig;
