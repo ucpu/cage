@@ -82,9 +82,6 @@
 [submodule "externals/samplerate/libsamplerate"]
 	path = externals/samplerate/libsamplerate
 	url = https://github.com/libsndfile/libsamplerate.git
-[submodule "externals/astc/astc"]
-	path = externals/astc-encoder/astc-encoder
-	url = https://github.com/ARM-software/astc-encoder.git
 [submodule "externals/basis_universal/basis_universal"]
 	path = externals/basis_universal/basis_universal
 	url = https://github.com/BinomialLLC/basis_universal.git

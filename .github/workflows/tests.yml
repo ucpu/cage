@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [2019]
+        os-version: [2019, 2022]
         build-config: [debug, release, relwithdebinfo]
         build-arch: [Win32, x64]
         build-tool: ["", "-T ClangCL"]

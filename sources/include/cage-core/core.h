@@ -159,8 +159,6 @@ namespace cage
 	enum class GammaSpaceEnum : uint32;
 	struct ImageColorConfig;
 	class Image;
-	struct ImageAstcEncodeConfig;
-	struct ImageAstcDecodeConfig;
 	struct ImageKtxEncodeConfig;
 	enum class ImageKtxTranscodeFormatEnum : uint32;
 	struct ImageKtxTranscodeConfig;
@@ -516,7 +514,7 @@ namespace cage
 			{
 				for (uintPtr i = 0; i < num; i++)
 				{
-					char d = *ptr2++ - *ptr1++;
+					const int d = int(*ptr1++) - int(*ptr2++);
 					if (d != 0)
 						return d;
 				}
@@ -770,6 +768,7 @@ namespace cage
 				tmp.rawLength() = privat::toString(tmp.rawData(), 30, other); \
 				return *this + tmp; \
 			}
+			GCHL_GENERATE(char);
 			GCHL_GENERATE(sint8);
 			GCHL_GENERATE(sint16);
 			GCHL_GENERATE(sint32);
