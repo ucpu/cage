@@ -7,8 +7,8 @@ namespace cage
 {
 	namespace detail
 	{
-		static constexpr uint32 HashOffset = 2166136261u;
-		static constexpr uint32 HashPrime = 16777619u;
+		constexpr uint32 HashOffset = 2166136261u;
+		constexpr uint32 HashPrime = 16777619u;
 	}
 
 	CAGE_FORCE_INLINE constexpr uint32 hashBuffer(PointerRange<const char> buffer) noexcept

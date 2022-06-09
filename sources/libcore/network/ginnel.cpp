@@ -268,7 +268,7 @@ namespace cage
 			MtuDiscovery = 43, // todo
 		};
 
-		static constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
+		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
 
 		constexpr uint16 longCmdsCount(uint32 totalSize)
 		{
@@ -733,9 +733,9 @@ namespace cage
 					auto et = sending.ackMap.end();
 					while (it != et)
 					{
-						it->second.erase(std::remove_if(it->second.begin(), it->second.end(), [](Sending::MsgAck &p){
+						std::erase_if(it->second, [](Sending::MsgAck &p){
 							return !p.msg.lock();
-						}), it->second.end());
+						});
 						if (it->second.empty())
 							it = sending.ackMap.erase(it);
 						else

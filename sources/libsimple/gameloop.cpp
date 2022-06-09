@@ -5,7 +5,6 @@
 #include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
 #include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
-#include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/debug.h>
@@ -476,7 +475,7 @@ namespace cage
 				{ // initialize asset schemes
 					// core assets
 					assets->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
-					assets->defineScheme<AssetSchemeIndexRaw, MemoryBuffer>(genAssetSchemeRaw());
+					assets->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());
 					assets->defineScheme<AssetSchemeIndexTextPack, TextPack>(genAssetSchemeTextPack());
 					assets->defineScheme<AssetSchemeIndexCollider, Collider>(genAssetSchemeCollider());
 					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());

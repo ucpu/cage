@@ -63,7 +63,7 @@ namespace cage
 			}
 		};
 
-		static constexpr uintPtr blockSize = 16384;
+		constexpr uintPtr blockSize = 16384;
 
 		void jpegInitDestination(j_compress_ptr cinfo)
 		{

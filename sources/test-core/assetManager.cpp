@@ -1,6 +1,5 @@
 #include "main.h"
 #include <cage-core/files.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/assetManager.h>
@@ -15,7 +14,7 @@ namespace
 {
 	const String AssetsPath = pathJoin(pathWorkingDir(), "testdir/assetManager/assets");
 
-	static constexpr uint32 AssetSchemeIndexCounter = 13;
+	constexpr uint32 AssetSchemeIndexCounter = 13;
 
 	struct AssetCounter : private Immovable
 	{
@@ -94,7 +93,7 @@ namespace
 		cfg.assetsFolderName = AssetsPath;
 		Holder<AssetManager> man = newAssetManager(cfg);
 		man->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
-		man->defineScheme<AssetSchemeIndexRaw, MemoryBuffer>(genAssetSchemeRaw());
+		man->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());
 		man->defineScheme<AssetSchemeIndexCounter, AssetCounter>(genAssetSchemeCounter());
 		return man;
 	}
@@ -108,7 +107,7 @@ namespace
 	template<uint32 Length>
 	void checkContents(Holder<AssetManager> &man, const uint32 name, const char (&content)[Length])
 	{
-		Holder<MemoryBuffer> a = man->get<AssetSchemeIndexRaw, MemoryBuffer>(10);
+		Holder<PointerRange<const char>> a = man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10);
 		CAGE_TEST(a);
 		CAGE_TEST(a->size() == Length - 1);
 		CAGE_TEST(detail::memcmp(a->data(), content, Length - 1) == 0);
@@ -265,7 +264,7 @@ void testAssetManager()
 	{
 		CAGE_TESTCASE("asset content");
 		Holder<AssetManager> man = instantiate();
-		constexpr const char Content[] = "hello world";
+		static constexpr const char Content[] = "hello world";
 		makeAssetRaw(10, Content);
 		man->add(10);
 		waitProcessing(man);
@@ -277,8 +276,8 @@ void testAssetManager()
 	{
 		CAGE_TESTCASE("reload asset");
 		Holder<AssetManager> man = instantiate();
-		constexpr const char Content1[] = "hello world";
-		constexpr const char Content2[] = "lorem ipsum dolor sit amet";
+		static constexpr const char Content1[] = "hello world";
+		static constexpr const char Content2[] = "lorem ipsum dolor sit amet";
 		makeAssetRaw(10, Content1);
 		man->add(10);
 		waitProcessing(man);
@@ -335,7 +334,7 @@ void testAssetManager()
 		AssetCounter *ptr = nullptr;
 		{
 			Holder<AssetCounter> f = systemMemory().createHolder<AssetCounter>();
-			ptr = f.get();
+			ptr = +f;
 			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, std::move(f));
 		}
 		waitProcessing(man);
@@ -398,13 +397,13 @@ void testAssetManager()
 	}
 
 	{
-		CAGE_TESTCASE("getting asset with wrong scheme and type");
+		CAGE_TESTCASE("getting asset with wrong type");
 		Holder<AssetManager> man = instantiate();
 		makeAssetCounter(10);
 		man->add(10);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 1);
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, MemoryBuffer>(10)));
+		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
 		man->remove(10);
 		man->unloadWait();
 		CAGE_TEST(AssetCounter::counter == 0);
@@ -414,7 +413,7 @@ void testAssetManager()
 		CAGE_TESTCASE("unknown scheme");
 		Holder<AssetManager> man = instantiate();
 		{
-			constexpr uint32 name = 10;
+			static constexpr uint32 name = 10;
 			AssetHeader hdr(Stringizer() + name, 42);
 			Holder<File> f = writeFile(pathJoin(AssetsPath, Stringizer() + name));
 			f->write(bufferView(hdr));
@@ -441,7 +440,7 @@ void testAssetManager()
 		CAGE_TESTCASE("corrupted header");
 		Holder<AssetManager> man = instantiate();
 		{
-			constexpr uint32 name = 10;
+			static constexpr uint32 name = 10;
 			AssetHeader hdr(Stringizer() + name, AssetSchemeIndexCounter);
 			Holder<File> f = writeFile(pathJoin(AssetsPath, Stringizer() + name));
 			const auto view1 = bufferView(hdr);
@@ -460,8 +459,8 @@ void testAssetManager()
 		CAGE_TESTCASE("fail decompression");
 		Holder<AssetManager> man = instantiate();
 		{
-			constexpr const char Content[] = "lorem ipsum dolor sit amet";
-			constexpr uint32 name = 10;
+			static constexpr const char Content[] = "lorem ipsum dolor sit amet";
+			static constexpr uint32 name = 10;
 			AssetHeader hdr(Stringizer() + name, AssetSchemeIndexRaw);
 			hdr.compressedSize = sizeof(Content);
 			hdr.originalSize = sizeof(Content) * 2;
@@ -476,7 +475,7 @@ void testAssetManager()
 			waitProcessing(man);
 			detail::globalBreakpointOverride(true);
 		}
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, MemoryBuffer>(10)));
+		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
 		man->remove(10);
 		man->unloadWait();
 	}

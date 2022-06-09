@@ -6,7 +6,6 @@
 #include <cage-core/assetHeader.h>
 #include <cage-core/config.h>
 #include <cage-core/hashString.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/assetManager.h>
@@ -44,7 +43,7 @@ namespace cage
 	{
 		class AssetManagerImpl;
 
-		static constexpr uint32 CurrentAssetVersion = 1;
+		constexpr uint32 CurrentAssetVersion = 1;
 
 		// one particular version of an asset
 		struct Asset : private Immovable
@@ -85,7 +84,7 @@ namespace cage
 
 		struct Loading : public CustomProcessing
 		{
-			MemoryBuffer origData, compData;
+			Holder<PointerRange<char>> origData, compData;
 
 			explicit Loading(Holder<Asset> &&asset);
 			~Loading();
@@ -492,14 +491,11 @@ namespace cage
 				file->read(bufferCast<char, uint32>(asset->dependencies));
 
 				if (h.compressedSize)
-					compData.allocate(numeric_cast<uintPtr>(h.compressedSize));
+					compData = systemMemory().createBuffer(h.compressedSize);
 				if (h.originalSize)
-					origData.allocate(numeric_cast<uintPtr>(h.originalSize));
+					origData = systemMemory().createBuffer(h.originalSize);
 				if (h.compressedSize || h.originalSize)
-				{
-					MemoryBuffer &t = h.compressedSize ? compData : origData;
-					file->read(t);
-				}
+					file->read(h.compressedSize ? compData : origData);
 
 				CAGE_ASSERT(file->tell() == file->size());
 			}
@@ -592,9 +588,9 @@ namespace cage
 
 					ScopeLock lock(impl->privateMutex);
 					auto &c = impl->privateIndex[asset->realName];
-					c.versions.erase(std::remove_if(c.versions.begin(), c.versions.end(), [&](const Holder<Asset> &it) {
+					std::erase_if(c.versions, [&](const Holder<Asset> &it) {
 						return +it == +asset;
-						}), c.versions.end());
+					});
 					if (c.versions.empty())
 						impl->privateIndex.erase(asset->realName);
 				}
