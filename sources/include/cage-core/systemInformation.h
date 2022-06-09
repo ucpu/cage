@@ -15,6 +15,7 @@ namespace cage
 
 	CAGE_CORE_API uint64 memoryCapacity(); // total memory in bytes for use by the operating system
 	CAGE_CORE_API uint64 memoryAvailable(); // estimated unused memory in bytes
+	CAGE_CORE_API uint64 memoryUsed(); // memory used by this process alone
 }
 
 #endif // guard_systemInformation_h_dsgdfhtdhsdirgrdht54fd54hj54jz

@@ -6,10 +6,12 @@
 #include <Windows.h>
 #include <intrin.h>
 #include <powerbase.h> // CallNtPowerInformation
+#include <Psapi.h> // GetProcessMemoryInfo
 #pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
 #pragma comment(lib, "Advapi32.lib") // RegGetValue
 #else
 #include <cage-core/process.h>
+#include <cage-core/concurrent.h>
 #endif
 
 namespace cage
@@ -184,6 +186,19 @@ namespace cage
 		}
 
 		Holder<Process> prg = newProcess(String("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
+		return toUint64(prg->readLine()) * 1024;
+#endif
+	}
+
+	uint64 memoryUsed()
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+		PROCESS_MEMORY_COUNTERS m;
+		if (GetProcessMemoryInfo(GetCurrentProcess(), &m, sizeof(m)) == 0)
+			CAGE_THROW_ERROR(SystemError, "GetProcessMemoryInfo", GetLastError());
+		return m.WorkingSetSize;
+#else
+		Holder<Process> prg = newProcess({ Stringizer() + "cat /proc/" + currentProcessId() + "/status | grep -m 1 'VmRSS' | awk '{print $2}'" });
 		return toUint64(prg->readLine()) * 1024;
 #endif
 	}
