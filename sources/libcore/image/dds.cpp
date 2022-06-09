@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		static constexpr uint32 Magic = 0x20534444;
+		constexpr uint32 Magic = 0x20534444;
 
 		struct PixelFormat
 		{

@@ -1,5 +1,4 @@
 #include <cage-core/math.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryCompression.h>
 #include <cage-core/serialization.h>
 #include <cage-core/textPack.h>
@@ -19,13 +18,11 @@ namespace cage
 		{
 			if (context->compressedData.size() == 0)
 				return;
-			PointerRange<char> orig = context->originalData;
-			decompress(context->compressedData, orig);
-			CAGE_ASSERT(orig.size() == context->originalData.size());
+			decompress(context->compressedData, context->originalData);
 		}
 	}
 
-	AssetContext::AssetContext(const detail::StringBase<64> &textName, MemoryBuffer &compressedData, MemoryBuffer &originalData, Holder<void> &assetHolder, uint32 realName) : textName(textName), compressedData(compressedData), originalData(originalData), assetHolder(assetHolder), realName(realName)
+	AssetContext::AssetContext(const detail::StringBase<64> &textName, PointerRange<char> compressedData, PointerRange<char> originalData, Holder<void> &assetHolder, uint32 realName) : textName(textName), compressedData(compressedData), originalData(originalData), assetHolder(assetHolder), realName(realName)
 	{}
 
 	AssetScheme::AssetScheme()
@@ -54,8 +51,9 @@ namespace cage
 	{
 		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = systemMemory().createHolder<MemoryBuffer>(std::move(context->originalData));
-			context->assetHolder = std::move(mem).cast<void>();
+			Holder<PointerRange<char>> h = systemMemory().createBuffer(context->originalData.size());
+			detail::memcpy(h.data(), context->originalData.data(), h.size());
+			context->assetHolder = std::move(h).cast<void>();
 		}
 	}
 
@@ -63,7 +61,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processRawLoad>();
-		s.typeHash = detail::typeHash<MemoryBuffer>();
+		s.typeHash = detail::typeHash<PointerRange<const char>>();
 		return s;
 	}
 

@@ -5,7 +5,7 @@
 
 #include "mesh.h"
 
-#include <algorithm> // std::remove_if
+#include <algorithm> // std::erase_if
 #include <numeric> // std::iota
 
 namespace cage
@@ -43,9 +43,9 @@ namespace cage
 		{
 			CAGE_ASSERT(v.size() == toRemove.size());
 			auto flagit = toRemove.begin();
-			v.erase(std::remove_if(v.begin(), v.end(), [&](T&) {
+			std::erase_if(v, [&](T&) {
 				return *flagit++;
-				}), v.end());
+			});
 			CAGE_ASSERT(flagit == toRemove.end());
 		}
 

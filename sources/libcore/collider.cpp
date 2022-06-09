@@ -231,8 +231,8 @@ namespace cage
 
 	namespace
 	{
-		static constexpr uint16 currentVersion = 2;
-		static constexpr char currentMagic[] = "colid";
+		constexpr uint16 currentVersion = 2;
+		constexpr char currentMagic[] = "colid";
 
 		struct CollisionModelHeader
 		{

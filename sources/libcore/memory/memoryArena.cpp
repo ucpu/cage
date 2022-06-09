@@ -23,6 +23,26 @@ namespace cage
 		stub->fls(inst);
 	}
 
+	Holder<PointerRange<char>> MemoryArena::createBuffer(uintPtr size, uintPtr alignment)
+	{
+		struct CharBuff : public privat::HolderControlBase
+		{
+			PointerRange<char> data;
+		};
+		char *base = (char *)allocate(sizeof(CharBuff) + size + alignment - 1, alignof(CharBuff));
+		CAGE_ASSERT(base);
+		CharBuff *cb = new(base, privat::OperatorNewTrait()) CharBuff();
+		CAGE_ASSERT(cb);
+		CAGE_ASSERT((void *)base == (void *)cb);
+		cb->deletee = cb;
+		cb->deleter.template bind<MemoryArena, &MemoryArena::destroy<CharBuff>>(this);
+		char *start = base + sizeof(CharBuff);
+		start += detail::addToAlign((uintPtr)start, alignment);
+		CAGE_ASSERT(((uintPtr)start % alignment) == 0);
+		cb->data = PointerRange<char>(start, start + size);
+		return Holder<PointerRange<char>>(&cb->data, cb);
+	}
+
 	namespace
 	{
 		void *malloca(uintPtr size, uintPtr alignment)
