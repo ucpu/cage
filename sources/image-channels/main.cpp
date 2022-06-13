@@ -27,7 +27,7 @@ void doSplit(const String names[MaxChannels], const String &input)
 		}
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + names[index] + "'");
 		CAGE_ASSERT(images[index]->channels() == 1);
-		images[index]->exportBuffer(names[index]);
+		images[index]->exportFile(names[index]);
 		outputs++;
 	}
 	if (outputs == 0)
@@ -56,13 +56,15 @@ Holder<Image> monochromatize(const Image *src)
 void doJoin(const String names[MaxChannels], const String &output, const bool mono)
 {
 	Holder<Image> inputs[MaxChannels];
+	uint32 highest = 0;
 	for (uint32 index = 0; index < MaxChannels; index++)
 	{
 		if (names[index].empty())
 			continue;
+		highest = index;
 		inputs[index] = newImage();
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + names[index] + "' for " + (index + 1) + "th channel");
-		inputs[index]->importBuffer(names[index]);
+		inputs[index]->importFile(names[index]);
 		if (inputs[index]->channels() != 1)
 		{
 			if (!mono)
@@ -73,6 +75,7 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 	}
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining");
 	Holder<Image> image = imageChannelsJoin(inputs);
+	imageConvert(+image, highest + 1);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + output + "'");
 	image->exportFile(output);
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
