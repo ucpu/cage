@@ -33,6 +33,7 @@ $define allowParsingHash true
 #define CAGE_SHADER_TEXTURE_NORMAL_CUBE 10
 #define CAGE_SHADER_TEXTURE_USER_CUBE 11
 #define CAGE_SHADER_TEXTURE_SSAO 12
+#define CAGE_SHADER_TEXTURE_DEPTH 13
 
 // uniform locations
 
