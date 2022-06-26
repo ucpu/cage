@@ -13,6 +13,10 @@
 #include <chrono>
 #include <ctime>
 
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "incWin.h" // SetConsoleCP
+#endif
+
 namespace cage
 {
 	Holder<File> realNewFile(const String &path, const FileMode &mode);
@@ -85,6 +89,11 @@ namespace cage
 			public:
 				GlobalLogger()
 				{
+#ifdef CAGE_SYSTEM_WINDOWS
+					SetConsoleCP(CP_UTF8);
+					SetConsoleOutputCP(CP_UTF8);
+#endif
+
 					if (detail::isDebugging())
 					{
 						loggerDebug = newLogger();
