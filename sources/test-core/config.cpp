@@ -9,9 +9,10 @@ namespace
 		Holder<ConfigList> iter = newConfigList();
 		while (iter->valid())
 		{
-			String res = iter->name() + ": " + iter->typeName();
+			String res = iter->name();
 			if (iter->type() != ConfigTypeEnum::Undefined)
 				res += String(" = ") + iter->getString();
+			res += String(" (") + iter->typeName() + ")";
 			CAGE_LOG_CONTINUE(SeverityEnum::Note, "test", res);
 			iter->next();
 		}
@@ -43,8 +44,12 @@ void testConfig()
 
 	ConfigBool b("test/b");
 	CAGE_TEST(b); // b is still set to 20
+	CAGE_TEST(configGetType("test/b") == ConfigTypeEnum::Sint32); // reading value does not change type
+	CAGE_TEST(s32 == 20);
 	b = false;
 	CAGE_TEST(!b);
+	CAGE_TEST(configGetType("test/b") == ConfigTypeEnum::Bool); // setting value changes type
+	CAGE_TEST(s32 == 0); // the underlying value has changed
 
 	ConfigBool b2_1("test2/b1");
 	ConfigBool b2_2("test2/b2");
@@ -70,6 +75,31 @@ void testConfig()
 	CAGE_TEST(configGetType("test/empty") == ConfigTypeEnum::Sint32);
 	configSetDynamic("test/empty", "");
 	CAGE_TEST(configGetType("test/empty") == ConfigTypeEnum::String);
+
+	configSetDynamic("test/dynamic", "42");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Uint32);
+	CAGE_TEST(configGetUint32("test/dynamic") == 42);
+	configSetDynamic("test/dynamic", "-42");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Sint32);
+	CAGE_TEST(configGetSint32("test/dynamic") == -42);
+	configSetDynamic("test/dynamic", "123456789000");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Uint64);
+	CAGE_TEST(configGetUint64("test/dynamic") == 123456789000);
+	configSetDynamic("test/dynamic", "-123456789000");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Sint64);
+	CAGE_TEST(configGetSint64("test/dynamic") == -123456789000);
+	configSetDynamic("test/dynamic", "trUE");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Bool);
+	CAGE_TEST(configGetBool("test/dynamic") == true);
+	configSetDynamic("test/dynamic", "False");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Bool);
+	CAGE_TEST(configGetBool("test/dynamic") == false);
+	configSetDynamic("test/dynamic", "3.5");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::Float || configGetType("test/dynamic") == ConfigTypeEnum::Double);
+	CAGE_TEST(configGetFloat("test/dynamic") == 3.5 && configGetDouble("test/dynamic") == 3.5);
+	configSetDynamic("test/dynamic", "Orangutan");
+	CAGE_TEST(configGetType("test/dynamic") == ConfigTypeEnum::String);
+	CAGE_TEST(configGetString("test/dynamic") == "Orangutan");
 
 	printVariables();
 }
