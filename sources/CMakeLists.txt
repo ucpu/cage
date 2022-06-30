@@ -46,6 +46,7 @@ endif()
 option(cage_profiling_enabled "enable compiling-in instructions for profiling" ON)
 if(cage_profiling_enabled)
 	target_compile_definitions(cage-core PUBLIC CAGE_PROFILING_ENABLED)
+	configure_file("libcore/profiling.htm" "${cage_build_destination_directory}" COPYONLY)
 endif()
 if(MSVC)
 	set_source_files_properties(libcore/marchingCubes.cpp PROPERTIES COMPILE_FLAGS "/wd4244 /wd4267") # it includes file with weird extension which does not honor warnings disabled by pragma

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Cage Profiling Client</title>
+	</head>
+	<body>
+		<div id="messages"></div>
+		<script>
+			const urlParams = new URLSearchParams(window.location.search);
+			const ws = new WebSocket("ws://localhost:" + urlParams.get("port"));
+			ws.addEventListener("open", event => {
+				console.log("connected");
+			});
+			ws.addEventListener("close", event => {
+				console.log("disconnected");
+			});
+			ws.onmessage = function(message) {
+				reader = new FileReader();
+				reader.onload = () => {
+					const div = document.createElement('div');
+					div.innerHTML = reader.result;
+					document.getElementById('messages').append(div);
+					setTimeout(() => div.remove(), 2000);
+				};
+				reader.readAsText(message.data);
+			}
+		</script>
+		<style>
+		</style>
+	</body>
+</html>

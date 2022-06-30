@@ -36,22 +36,6 @@ void testProfiling()
 	}
 
 	{
-		CAGE_TESTCASE("object");
-		struct Object
-		{
-			ProfilingScope profiling;
-
-			Object() : profiling("profiling-object-test", "test", ProfilingTypeEnum::Object)
-			{}
-		};
-
-		Object obj;
-		obj.profiling.snapshot("\"value\":0");
-		someMeaninglessWork();
-		obj.profiling.snapshot("\"value\":1, \"hello\":\"world\"");
-	}
-
-	{
 		CAGE_TESTCASE("markers");
 		profilingMarker("before", "test");
 		someMeaninglessWork();
@@ -59,34 +43,8 @@ void testProfiling()
 	}
 
 	{
-		CAGE_TESTCASE("duration event");
-		profilingEvent(42, "duration-event", "test");
-	}
-
-	{
 		CAGE_TESTCASE("separate event");
-		const auto evt = profilingEventBegin("separate-event", "test");
-		someMeaninglessWork();
-		profilingEventEnd(evt);
-	}
-
-	{
-		CAGE_TESTCASE("separate event with value");
-		const auto evt = profilingEventBegin("separate-event", "test");
-		someMeaninglessWork();
-		profilingEventEnd(evt, "\"value\":42");
-	}
-
-	{
-		CAGE_TESTCASE("async");
-		const auto evt = profilingEventBegin("async-event", "test", ProfilingTypeEnum::Async);
-		someMeaninglessWork();
-		profilingEventEnd(evt);
-	}
-
-	{
-		CAGE_TESTCASE("flow");
-		const auto evt = profilingEventBegin("flow-event", "test", ProfilingTypeEnum::Flow);
+		auto evt = profilingEventBegin("separate-event", "test");
 		someMeaninglessWork();
 		profilingEventEnd(evt);
 	}

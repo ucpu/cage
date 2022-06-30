@@ -1,5 +1,4 @@
 #include <cage-core/concurrent.h>
-#include <cage-core/profiling.h>
 #include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -689,6 +688,8 @@ namespace cage
 			return name;
 		}
 	}
+
+	void profilingThreadName(const String &name);
 
 	void currentThreadName(const String &name)
 	{

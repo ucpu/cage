@@ -233,7 +233,7 @@ namespace cage
 					ProfilingScope profiling("swap", "gameloop");
 					graphicsSwap();
 				}
-				profilingMarker("frame", "gameloop", true);
+				profilingMarker("frame", "gameloop");
 			}
 
 			void graphicsDispatchGameloopStage()
