@@ -12,6 +12,7 @@ namespace cage
 		
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		void write(PointerRange<const char> buffer);
+		PointerRange<char> write(uintPtr size); // use with care!
 		void writeLine(const String &line);
 		Serializer reserve(uintPtr s);
 
