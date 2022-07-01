@@ -684,19 +684,19 @@ namespace cage
 
 		String &currentThreadName_()
 		{
-			static thread_local String name;
+			thread_local String name;
 			return name;
 		}
 	}
 
-	void profilingThreadName(const String &name);
+#ifdef CAGE_PROFILING_ENABLED
+	void profilingThreadName() noexcept;
+#endif
 
 	void currentThreadName(const String &name)
 	{
 		const String oldName = currentThreadName_();
 		currentThreadName_() = name;
-		profilingThreadName(name);
-		CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{
@@ -730,6 +730,12 @@ namespace cage
 			prctl(PR_SET_NAME, name.c_str(), 0, 0, 0);
 #endif
 		}
+
+#ifdef CAGE_PROFILING_ENABLED
+		profilingThreadName();
+#endif
+
+		CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
 	}
 
 	String currentThreadName()

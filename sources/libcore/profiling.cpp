@@ -8,9 +8,13 @@
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/math.h>
+#include <cage-core/string.h>
+#include <cage-core/stdHash.h>
 
 #include <atomic>
+#include <vector>
 #include <string>
+#include <unordered_map>
 
 namespace cage
 {
@@ -59,6 +63,7 @@ namespace cage
 
 		struct Dispatcher
 		{
+			std::unordered_map<uint64, String> threadNames;
 			Holder<WebsocketServer> server;
 			Holder<WebsocketConnection> connection;
 			Holder<Process> client;
@@ -67,24 +72,98 @@ namespace cage
 			void eraseQueue()
 			{
 				QueueItem qi;
-				while (queue().tryPop(qi));
+				while (queue().tryPop(qi))
+				{
+					if (qi.startTime == m && qi.endTime == m)
+						threadNames[qi.threadId] = qi.name;
+				}
 			}
 
 			void updateEnabled()
 			{
 				if (connection)
 				{
-					std::string str;
-					str.reserve(queue().estimatedSize() * 200);
-					str += "{ \"data\": [\n";
+					struct NamesMap
+					{
+						std::unordered_map<String, uint32> data;
+						uint32 next = 0;
+
+						uint32 index(const String &name)
+						{
+							const auto it = data.find(name);
+							if (it != data.end()) [[likely]]
+								return it->second;
+							return data[name] = next++;
+						}
+
+						uint32 index(StringLiteral name)
+						{
+							return index(String(name));
+						}
+
+						std::string mapping() const
+						{
+							std::vector<const String *> v;
+							v.resize(data.size());
+							for (const auto &it : data)
+								v[it.second] = &it.first;
+
+							std::string str;
+							str.reserve(v.size() * 100);
+							for (const auto &n : v)
+								str += (Stringizer() + "\"" + *n + "\",\n ").value.c_str();
+							return str + "\"\"";
+						}
+
+						NamesMap()
+						{
+							data.reserve(200);
+						}
+					} names;
+
+					struct ThreadData
+					{
+						std::string events, markers;
+
+						ThreadData()
+						{
+							events.reserve(50000);
+						}
+					};
+
+					std::unordered_map<uint64, ThreadData> data;
 					QueueItem qi;
 					while (queue().tryPop(qi))
 					{
-						const String s = Stringizer() + "{ \"name\": \"" + qi.name + "\", \"category\": \"" + qi.category + "\", \"startTime\": " + qi.startTime + ", \"endTime\": " + qi.endTime + ", \"threadId\": " + qi.threadId + " },\n";
-						str += s.c_str();
+						if (qi.startTime == m && qi.endTime == m)
+							threadNames[qi.threadId] = qi.name;
+						else if (qi.startTime == qi.endTime)
+						{ // marker
+							const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "], ";
+							data[qi.threadId].markers += s.c_str();
+						}
+						else
+						{ // event
+							const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "," + (qi.endTime - qi.startTime) + "], ";
+							data[qi.threadId].events += s.c_str();
+						}
 					}
-					str += "{}\n"; // dummy element at end to satisfy commas
-					str += "] }\n";
+
+					std::string str = "{\"names\":[";
+					str += names.mapping();
+					str += "],\n\"threads\":[\n";
+					for (const auto &thr : data)
+					{
+						str += "{\"name\":\"";
+						str += threadNames[thr.first].c_str();
+						str += "\",\n\"events\":[";
+						str += thr.second.events;
+						str += "[]\n],\n\"markers\":[";
+						str += thr.second.markers;
+						str += "[]\n]},\n";
+					}
+					str += "{}\n]}";
+
 					connection->write(str);
 					server.clear();
 				}
@@ -169,9 +248,20 @@ namespace cage
 		} dispatcher;
 	}
 
-	void profilingThreadName(const String &name)
+	void profilingThreadName() noexcept
 	{
-		// todo
+		try
+		{
+			QueueItem qi;
+			qi.name = currentThreadName();
+			qi.threadId = currentThreadId();
+			qi.startTime = qi.endTime = m;
+			queue().push(qi);
+		}
+		catch (...)
+		{
+			// nothing
+		}
 	}
 
 	ProfilingEvent profilingEventBegin(const String &name, StringLiteral category) noexcept
