@@ -7,6 +7,8 @@ namespace
 {
 	struct LoremIpsumTest
 	{
+		static constexpr const char LongText[] = "abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz0123456789";
+
 		LoremIpsumTest()
 		{
 			Holder<WebsocketServer> server = newWebsocketServer(4541);
@@ -23,6 +25,13 @@ namespace
 			recv(conn, "dolor");
 			send(conn, "sit");
 			recv(conn, "amet");
+			for (uint32 i = 0; i < 100; i++)
+			{
+				send(conn, LongText);
+				recv(conn, LongText);
+			}
+			send(conn, "sit");
+			recv(conn, "amet");
 		}
 
 		void client()
@@ -31,6 +40,13 @@ namespace
 			send(conn, "lorem");
 			recv(conn, "ipsum");
 			send(conn, "dolor");
+			recv(conn, "sit");
+			send(conn, "amet");
+			for (uint32 i = 0; i < 100; i++)
+			{
+				recv(conn, LongText);
+				send(conn, LongText);
+			}
 			recv(conn, "sit");
 			send(conn, "amet");
 		}

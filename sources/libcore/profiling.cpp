@@ -10,6 +10,7 @@
 #include <cage-core/math.h>
 
 #include <atomic>
+#include <string>
 
 namespace cage
 {
@@ -22,6 +23,7 @@ namespace cage
 #endif // CAGE_SYSTEM_WINDOWS
 
 		ConfigBool confEnabled("cage/profiling/enabled", false);
+		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
 		const ConfigString confBrowser("cage/profiling/browser", DefaultBrowser);
 
 		uint64 timestamp()
@@ -72,18 +74,18 @@ namespace cage
 			{
 				if (connection)
 				{
-					try
+					std::string str;
+					str.reserve(queue().estimatedSize() * 200);
+					str += "{ \"data\": [\n";
+					QueueItem qi;
+					while (queue().tryPop(qi))
 					{
-						QueueItem qi;
-						while (queue().tryPop(qi))
-						{
-							connection->write(qi.name);
-						}
+						const String s = Stringizer() + "{ \"name\": \"" + qi.name + "\", \"category\": \"" + qi.category + "\", \"startTime\": " + qi.startTime + ", \"endTime\": " + qi.endTime + ", \"threadId\": " + qi.threadId + " },\n";
+						str += s.c_str();
 					}
-					catch (const Disconnected &)
-					{
-						connection.clear();
-					}
+					str += "{}\n"; // dummy element at end to satisfy commas
+					str += "] }\n";
+					connection->write(str);
 					server.clear();
 				}
 				else
@@ -92,24 +94,27 @@ namespace cage
 					{
 						connection = server->accept();
 						if (connection)
-							CAGE_LOG(SeverityEnum::Info, "profiling", "profiling client connected");
+							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + connection->address() + ":" + connection->port());
 					}
 					else
 					{
 						server = newWebsocketServer(randomRange(10000u, 65000u));
 						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port " + server->port());
 
-						try
+						if (confAutoStartClient)
 						{
-							const String baseUrl = pathSearchTowardsRoot("profiling.htm", pathExtractDirectory(detail::executableFullPath()));
-							const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
-							ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
-							cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
-							client = newProcess(cfg);
-						}
-						catch (const cage::Exception &)
-						{
-							CAGE_LOG(SeverityEnum::Warning, "profiling", "failed to automatically launch profiling client");
+							try
+							{
+								const String baseUrl = pathSearchTowardsRoot("profiling.htm", pathExtractDirectory(detail::executableFullPath()));
+								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
+								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
+								cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
+								client = newProcess(cfg);
+							}
+							catch (const cage::Exception &)
+							{
+								CAGE_LOG(SeverityEnum::Warning, "profiling", "failed to automatically launch profiling client");
+							}
 						}
 					}
 					eraseQueue();
@@ -136,6 +141,7 @@ namespace cage
 						}
 						catch (...)
 						{
+							connection.clear();
 							confEnabled = false;
 							CAGE_LOG(SeverityEnum::Warning, "profiling", "disabling profiling due to error");
 						}

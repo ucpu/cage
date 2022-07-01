@@ -18,9 +18,9 @@
 			ws.onmessage = function(message) {
 				reader = new FileReader();
 				reader.onload = () => {
-					const div = document.createElement('div');
+					const div = document.createElement("div");
 					div.innerHTML = reader.result;
-					document.getElementById('messages').append(div);
+					document.getElementById("messages").append(div);
 					setTimeout(() => div.remove(), 2000);
 				};
 				reader.readAsText(message.data);

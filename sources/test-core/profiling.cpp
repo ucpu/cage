@@ -26,6 +26,7 @@ void testProfiling()
 
 	{
 		CAGE_TESTCASE("enabling profiling in configuration");
+		configSetBool("cage/profiling/autoStartClient", false);
 		configSetBool("cage/profiling/enabled", true);
 	}
 

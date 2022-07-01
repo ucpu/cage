@@ -6,6 +6,7 @@
 #include <cage-core/string.h>
 #include <cage-core/hashes.h>
 #include <cage-core/lineReader.h>
+#include <cage-core/endianness.h>
 
 #include <vector>
 
@@ -111,7 +112,7 @@ namespace cage
 							return;
 						uint16 s = 0;
 						des >> s;
-						size = s;
+						size = endianness::change(s);
 					}
 					else
 					{
@@ -119,6 +120,7 @@ namespace cage
 						if (des.available() < 8)
 							return;
 						des >> size;
+						size = endianness::change(size);
 					}
 					if (des.available() < size)
 						return;
@@ -176,9 +178,9 @@ namespace cage
 					if (data.size() < 126)
 						ser << uint8(data.size() | mb);
 					else if (data.size() < 65536)
-						ser << uint8(126 | mb) << uint16(data.size());
+						ser << uint8(126 | mb) << endianness::change(uint16(data.size()));
 					else
-						ser << uint8(127 | mb) << uint64(data.size());
+						ser << uint8(127 | mb) << endianness::change(uint64(data.size()));
 				}
 				if (masking)
 				{
