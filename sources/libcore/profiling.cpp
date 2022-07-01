@@ -131,7 +131,7 @@ namespace cage
 
 			void threadEntry()
 			{
-				while (true)
+				while (!queue().stopped())
 				{
 					if (confEnabled)
 					{
@@ -160,6 +160,11 @@ namespace cage
 						threadSleep(200000);
 					}
 				}
+			}
+
+			~Dispatcher()
+			{
+				queue().terminate();
 			}
 		} dispatcher;
 	}
