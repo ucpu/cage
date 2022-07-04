@@ -3,30 +3,230 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>Cage Profiling Client</title>
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		<style>
+			html, body {
+				width: 100%;
+				height: 100%;
+				margin: 0px;
+				padding: 0px;
+			}
+
+			#tasks .threadName {
+				text-align: center;
+				padding: 0px;
+				margin-top: 5px;
+				margin-bottom: 1px;
+			}
+
+			#tasks .item {
+				border: 1px solid red;
+			}
+
+			#tasks .item rect {
+				width: 100%;
+				height: 100%;
+			}
+
+			#tasks .item:hover rect {
+				opacity: 40%;
+			}
+
+			#tasks .item text {
+				text-anchor: middle;
+				dominant-baseline: middle;
+			}
+		</style>
 	</head>
 	<body>
-		<div id="messages"></div>
+		<div id="tasks"></div>
 		<script>
-			const urlParams = new URLSearchParams(window.location.search);
-			const ws = new WebSocket("ws://localhost:" + urlParams.get("port"));
+			const zoom = d3.zoom()
+			const colors = {}
+			const data = { threads: [] }
+
+			function convertData(data) {
+				data.threads.pop()
+				data.threads.forEach(function (thr) {
+					thr.data = []
+					thr.events.pop()
+					thr.events.forEach(function (d) {
+						t = {}
+						t.name = data.names[d[0]]
+						t.category = data.names[d[1]]
+						t.startTime = d[2]
+						t.endTime = d[2] + d[3]
+						thr.data.push(t)
+					})
+					delete thr.events
+					thr.markers.pop()
+					thr.markers.forEach(function (d) {
+						t = {}
+						t.name = data.names[d[0]]
+						t.category = data.names[d[1]]
+						t.startTime = d[2]
+						t.endTime = d[2]
+						thr.data.push(t)
+					})
+					delete thr.markers
+				})
+				delete data.names
+			}
+
+			function mergeData(data, incoming) {
+				incoming.threads.forEach(function (thr) {
+					let i = data.threads.findIndex(t => t.name == thr.name)
+					if (i == -1) {
+						data.threads.push({
+							name: thr.name,
+							data: [],
+							stor: {}
+						})
+						i = data.threads.length - 1
+					}
+					const t = data.threads[i]
+					t.data = t.data.concat(t.data, thr.data)
+				})
+			}
+
+			function clearOldData(data) {
+				data.endTime = d3.max(data.threads, thr => d3.max(thr.data, d => d.endTime))
+				data.startTime = data.endTime - 100000;
+				data.threads.forEach(function (thr) {
+					thr.data = thr.data.filter(d => d.endTime > data.startTime)
+				})
+			}
+
+			function assignColors(data) {
+				regenerate = false
+				data.threads.forEach(function (thr) {
+					thr.data.forEach(function (d) {
+						const k = d.name + "/" + d.category
+						if (typeof colors[k] === "undefined") {
+							colors[k] = null
+							regenerate = true
+						}
+						else
+							d.color = colors[k]
+					})
+				})
+				if (regenerate) {
+					const step = 1.0 / Object.keys(colors).length
+					Object.keys(colors).forEach(function(key, index) {
+						colors[key] = d3.interpolateSinebow(index * step)
+					})
+					assignColors(data, colors)
+				}
+			}
+			
+			function makeHierarchy(data) {
+				data.forEach(function (a) {
+					a.parent = null
+					data.forEach(function (b) {
+						if (b.startTime < a.startTime && b.endTime > a.startTime) {
+							if (!a.parent || b.startTime > a.parent.startTime)
+								a.parent = b
+						}
+					})
+					a.children = []
+				})
+				data.forEach(function (a) {
+					if (a.parent)
+						a.parent.children.push(a)
+					a.depth = 0
+					b = a
+					while (b.parent) {
+						a.depth++
+						b = b.parent
+					}
+				})
+				data.depth = d3.max(data, d => d.depth) || 0
+			}
+
+			function redraw(thr, stor) {
+				function updateAxes() {
+					stor.x.domain([data.startTime, data.endTime]).range([0, stor.width])
+					stor.y.domain([-1, thr.data.depth]).range([0, stor.height])
+					stor.axis.call(d3.axisBottom().scale(stor.x))
+				}
+
+				if (typeof stor["div"] === "undefined") {
+					stor.div = d3.select("#tasks").append("div")
+					stor.p = stor.div.append("p").classed("threadName", true).text(thr.name)
+					stor.svg = stor.div.append("svg").attr("width", "100%")
+					stor.x = d3.scaleLinear()
+					stor.y = d3.scaleLinear()
+					stor.positions = function (selection) {
+						selection
+							.attr("x", d => stor.x(d.startTime))
+							.attr("y", d => stor.y(d.depth))
+							.attr("width", d => stor.x(d.endTime) - stor.x(d.startTime))
+							.attr("height", d => stor.y(d.depth + 1) - stor.y(d.depth))
+					}
+					stor.itemsGroup = stor.svg.append("g").classed("items", true)
+					stor.axis = stor.svg.append("g").classed("axis", true)
+					stor.zoomed = function () {
+						updateAxes()
+						stor.items.call(stor.positions)
+					}
+					stor.svg.call(zoom.on("zoom." + Object.keys(data.threads).length, stor.zoomed))
+				}
+
+				makeHierarchy(thr.data)
+				stor.width = d3.select("body").node().getBoundingClientRect().width
+				stor.height = (thr.data.depth + 1) * 20
+				stor.svg.attr("height", stor.height)
+				updateAxes()
+
+				stor.items = stor.itemsGroup
+					.selectAll(".item")
+					.data(thr.data, d => d.startTime)
+					.join("svg")
+					.classed("item", true)
+					.call(stor.positions)
+				stor.items
+					.append("rect")
+					.attr("fill", d => d.color)
+				stor.items
+					.append("text")
+					.attr("x", "50%")
+					.attr("y", "50%")
+					.text(d => d.category + " / " + d.name)
+				stor.items
+					.append("title")
+					.text(d => d.category + "\n" + d.name + "\n" + (d.endTime - d.startTime) + " us")
+
+				stor.svg.node()
+			}
+
+			function update(incoming) {
+				convertData(incoming)
+				mergeData(data, incoming)
+				clearOldData(data)
+				assignColors(data)
+				data.threads.forEach(function (thr) {
+					redraw(thr, thr.stor)
+				})
+			}
+
+			const urlParams = new URLSearchParams(window.location.search)
+			const ws = new WebSocket("ws://localhost:" + urlParams.get("port"))
 			ws.addEventListener("open", event => {
-				console.log("connected");
-			});
+				console.log("connected")
+			})
 			ws.addEventListener("close", event => {
-				console.log("disconnected");
-			});
+				console.log("disconnected")
+			})
 			ws.onmessage = function(message) {
-				reader = new FileReader();
+				reader = new FileReader()
 				reader.onload = () => {
-					const div = document.createElement("div");
-					div.innerHTML = reader.result;
-					document.getElementById("messages").append(div);
-					setTimeout(() => div.remove(), 2000);
-				};
-				reader.readAsText(message.data);
+					if (reader.result) {
+						const incoming = JSON.parse(reader.result)
+						update(incoming)
+					}
+				}
+				reader.readAsText(message.data)
 			}
 		</script>
-		<style>
-		</style>
 	</body>
 </html>
