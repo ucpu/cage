@@ -19,18 +19,17 @@ namespace cage
 		String name;
 		StringLiteral category;
 		uint64 startTime = m;
+		bool framing = false;
 #endif
 	};
 
-	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(const String &name, StringLiteral category) noexcept GCHL_PROFILING_BODY(return {};);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, bool framing = false) noexcept GCHL_PROFILING_BODY(return {};);
 	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) noexcept GCHL_PROFILING_BODY(;);
-
-	GCHL_PROFILING_API void profilingMarker(const String &name, StringLiteral category) noexcept GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{
 		[[nodiscard]] GCHL_PROFILING_API ProfilingScope() noexcept GCHL_PROFILING_BODY(;); // empty/invalid scope
-		[[nodiscard]] GCHL_PROFILING_API ProfilingScope(const String &name, StringLiteral category) noexcept GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API ProfilingScope(const String &name, StringLiteral category, bool framing = false) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope &operator = (ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
 		GCHL_PROFILING_API ~ProfilingScope() noexcept GCHL_PROFILING_BODY(;);

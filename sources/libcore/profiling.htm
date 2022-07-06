@@ -43,37 +43,10 @@
 		<script>
 			const zoom = d3.zoom()
 			const colors = {}
-			const data = { threads: [] }
-
-			function convertData(data) {
-				data.threads.pop()
-				data.threads.forEach(function (thr) {
-					thr.data = []
-					thr.events.pop()
-					thr.events.forEach(function (d) {
-						t = {}
-						t.name = data.names[d[0]]
-						t.category = data.names[d[1]]
-						t.startTime = d[2]
-						t.endTime = d[2] + d[3]
-						thr.data.push(t)
-					})
-					delete thr.events
-					thr.markers.pop()
-					thr.markers.forEach(function (d) {
-						t = {}
-						t.name = data.names[d[0]]
-						t.category = data.names[d[1]]
-						t.startTime = d[2]
-						t.endTime = d[2]
-						thr.data.push(t)
-					})
-					delete thr.markers
-				})
-				delete data.names
-			}
+			const data = { threads: [], frames: [] }
 
 			function mergeData(data, incoming) {
+				incoming.threads.pop()
 				incoming.threads.forEach(function (thr) {
 					let i = data.threads.findIndex(t => t.name == thr.name)
 					if (i == -1) {
@@ -84,8 +57,29 @@
 						})
 						i = data.threads.length - 1
 					}
-					const t = data.threads[i]
-					t.data = t.data.concat(t.data, thr.data)
+					const dst = data.threads[i]
+					thr.events.pop()
+					thr.events.forEach(function (d) {
+						t = {}
+						t.name = incoming.names[d[0]]
+						t.category = incoming.names[d[1]]
+						t.startTime = d[2]
+						t.endTime = d[2] + d[3]
+						dst.data.push(t)
+						if (d[4]) {
+							const fn = t.category + " / " + t.name
+							let j = data.frames.findIndex(t => t.name == fn)
+							if (j == -1) {
+								data.frames.push({
+									name: fn,
+									data: []
+								})
+								j = data.frames.length - 1
+							}
+							const dstf = data.frames[j]
+							dstf.data.push(t)
+						}
+					})
 				})
 			}
 
@@ -94,6 +88,9 @@
 				data.startTime = data.endTime - 100000;
 				data.threads.forEach(function (thr) {
 					thr.data = thr.data.filter(d => d.endTime > data.startTime)
+				})
+				data.frames.forEach(function (frm) {
+					frm.data = frm.data.filter(d => d.endTime > data.startTime)
 				})
 			}
 
@@ -200,7 +197,6 @@
 			}
 
 			function update(incoming) {
-				convertData(incoming)
 				mergeData(data, incoming)
 				clearOldData(data)
 				assignColors(data)

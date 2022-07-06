@@ -41,7 +41,7 @@ namespace cage
 {
 	namespace
 	{
-		ConfigBool confAutoAssetListen("cage/assets/listen", false);
+		const ConfigBool confAutoAssetListen("cage/assets/listen", false);
 
 		struct ScopedSemaphores : private Immovable
 		{
@@ -160,7 +160,7 @@ namespace cage
 
 			void graphicsPrepareStep()
 			{
-				ProfilingScope profiling("graphics prepare", "gameloop");
+				ProfilingScope profiling("graphics prepare", "gameloop", true);
 				{
 					ProfilingScope profiling("graphics prepare callback", "gameloop");
 					graphicsPrepareThread().prepare.dispatch();
@@ -202,7 +202,7 @@ namespace cage
 
 			void graphicsDispatchStep()
 			{
-				ProfilingScope profiling("graphics dispatch", "gameloop");
+				ProfilingScope profiling("graphics dispatch", "gameloop", true);
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
 					ProfilingScope profiling("graphics dispatch callback", "gameloop");
@@ -233,7 +233,6 @@ namespace cage
 					ProfilingScope profiling("swap", "gameloop");
 					graphicsSwap();
 				}
-				profilingMarker("frame", "gameloop");
 			}
 
 			void graphicsDispatchGameloopStage()
@@ -264,7 +263,7 @@ namespace cage
 
 			void soundUpdate()
 			{
-				ProfilingScope profiling("sound", "gameloop");
+				ProfilingScope profiling("sound", "gameloop", true);
 				if (stopping)
 				{
 					soundScheduler->stop();
@@ -330,7 +329,7 @@ namespace cage
 
 			void controlUpdate()
 			{
-				ProfilingScope profiling("control update", "gameloop");
+				ProfilingScope profiling("control update", "gameloop", true);
 				if (stopping)
 				{
 					controlScheduler->stop();

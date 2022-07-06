@@ -37,13 +37,6 @@ void testProfiling()
 	}
 
 	{
-		CAGE_TESTCASE("markers");
-		profilingMarker("before", "test");
-		someMeaninglessWork();
-		profilingMarker("after", "test");
-	}
-
-	{
 		CAGE_TESTCASE("separate event");
 		auto evt = profilingEventBegin("separate-event", "test");
 		someMeaninglessWork();
