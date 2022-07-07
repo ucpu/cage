@@ -16,6 +16,8 @@
 #include <string>
 #include <unordered_map>
 
+cage::PointerRange<const cage::uint8> profiling_htm();
+
 namespace cage
 {
 	namespace
@@ -179,7 +181,8 @@ namespace cage
 					{
 						try
 						{
-							const String baseUrl = pathSearchTowardsRoot("profiling.htm", pathExtractDirectory(detail::executableFullPath()));
+							writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
+							const String baseUrl = pathWorkingDir() + "/profiling.htm";
 							const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
 							ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
 							cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
