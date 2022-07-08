@@ -5,11 +5,16 @@
 		<title>Cage Profiling Client</title>
 		<script src="https://d3js.org/d3.v7.min.js"></script>
 		<style>
-			html, body {
-				width: 100%;
-				height: 100%;
-				margin: 0px;
-				padding: 0px;
+			#status {
+				float: left;
+			}
+
+			#menu {
+				float: right;
+			}
+
+			#header hr {
+				clear: both;
 			}
 
 			#tasks .threadName {
@@ -39,11 +44,24 @@
 		</style>
 	</head>
 	<body>
+		<div id="header">
+			<span id="status"></span>
+			<span id="menu">
+				<button id="pauseButton">Pause</button>
+			</span>
+			<hr>
+		</div>
+		<div id="frames"></div>
 		<div id="tasks"></div>
 		<script>
-			const zoom = d3.zoom()
-			const colors = {}
 			const data = { threads: [], frames: [] }
+			const colors = {}
+			const zoom = d3.zoom()
+			let zoomTrans = null
+			let paused = false
+			let uniqueCounter = 1
+
+			d3.select("#pauseButton").on("click", d => paused = !paused )
 
 			function mergeData(data, incoming) {
 				incoming.threads.pop()
@@ -60,7 +78,7 @@
 					const dst = data.threads[i]
 					thr.events.pop()
 					thr.events.forEach(function (d) {
-						t = {}
+						let t = {}
 						t.name = incoming.names[d[0]]
 						t.category = incoming.names[d[1]]
 						t.startTime = d[2]
@@ -95,7 +113,7 @@
 			}
 
 			function assignColors(data) {
-				regenerate = false
+				let regenerate = false
 				data.threads.forEach(function (thr) {
 					thr.data.forEach(function (d) {
 						const k = d.name + "/" + d.category
@@ -131,7 +149,7 @@
 					if (a.parent)
 						a.parent.children.push(a)
 					a.depth = 0
-					b = a
+					let b = a
 					while (b.parent) {
 						a.depth++
 						b = b.parent
@@ -141,10 +159,24 @@
 			}
 
 			function redraw(thr, stor) {
-				function updateAxes() {
-					stor.x.domain([data.startTime, data.endTime]).range([0, stor.width])
+				function resetAxes() {
+					stor.x.domain([data.startTime, data.endTime]).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
 					stor.y.domain([-1, thr.data.depth]).range([0, stor.height])
 					stor.axis.call(d3.axisBottom().scale(stor.x))
+				}
+
+				function positions(selection) {
+					selection
+						.attr("x", d => stor.x(d.startTime))
+						.attr("y", d => stor.y(d.depth))
+						.attr("width", d => stor.x(d.endTime) - stor.x(d.startTime))
+						.attr("height", d => stor.y(d.depth + 1) - stor.y(d.depth))
+				}
+
+				function zoomed(event) {
+					zoomTrans = event.transform
+					resetAxes()
+					stor.items.call(positions)
 				}
 
 				if (typeof stor["div"] === "undefined") {
@@ -153,34 +185,23 @@
 					stor.svg = stor.div.append("svg").attr("width", "100%")
 					stor.x = d3.scaleLinear()
 					stor.y = d3.scaleLinear()
-					stor.positions = function (selection) {
-						selection
-							.attr("x", d => stor.x(d.startTime))
-							.attr("y", d => stor.y(d.depth))
-							.attr("width", d => stor.x(d.endTime) - stor.x(d.startTime))
-							.attr("height", d => stor.y(d.depth + 1) - stor.y(d.depth))
-					}
 					stor.itemsGroup = stor.svg.append("g").classed("items", true)
 					stor.axis = stor.svg.append("g").classed("axis", true)
-					stor.zoomed = function () {
-						updateAxes()
-						stor.items.call(stor.positions)
-					}
-					stor.svg.call(zoom.on("zoom." + Object.keys(data.threads).length, stor.zoomed))
+					stor.svg.call(zoom.on("zoom." + (uniqueCounter++), zoomed))
 				}
 
 				makeHierarchy(thr.data)
 				stor.width = d3.select("body").node().getBoundingClientRect().width
 				stor.height = (thr.data.depth + 1) * 20
 				stor.svg.attr("height", stor.height)
-				updateAxes()
+				resetAxes()
 
 				stor.items = stor.itemsGroup
 					.selectAll(".item")
 					.data(thr.data, d => d.startTime)
 					.join("svg")
 					.classed("item", true)
-					.call(stor.positions)
+					.call(positions)
 				stor.items
 					.append("rect")
 					.attr("fill", d => d.color)
@@ -197,6 +218,8 @@
 			}
 
 			function update(incoming) {
+				if (paused)
+					return
 				mergeData(data, incoming)
 				clearOldData(data)
 				assignColors(data)
@@ -205,16 +228,17 @@
 				})
 			}
 
-			const urlParams = new URLSearchParams(window.location.search)
-			const ws = new WebSocket("ws://localhost:" + urlParams.get("port"))
+			const ws = new WebSocket("ws://localhost:" + (new URLSearchParams(window.location.search)).get("port"))
 			ws.addEventListener("open", event => {
+				d3.select("#status").text("connected")
 				console.log("connected")
 			})
 			ws.addEventListener("close", event => {
+				d3.select("#status").text("disconnected")
 				console.log("disconnected")
 			})
 			ws.onmessage = function(message) {
-				reader = new FileReader()
+				let reader = new FileReader()
 				reader.onload = () => {
 					if (reader.result) {
 						const incoming = JSON.parse(reader.result)
