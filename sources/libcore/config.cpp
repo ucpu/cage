@@ -12,321 +12,231 @@
 #include <robin_hood.h>
 
 #include <vector>
+#include <variant>
 
 namespace cage
 {
 	PathTypeFlags realType(const String &path);
 	Holder<File> realNewFile(const String &path, const FileMode &mode);
+	using privat::ConfigVariable;
+
+	// variables and storage
+
+	namespace privat
+	{
+		struct ConfigVariable
+		{
+			std::variant<std::monostate, bool, sint32, uint32, sint64, uint64, float, double, String> data;
+			ConfigTypeEnum type = ConfigTypeEnum::Undefined;
+		};
+	}
 
 	namespace
 	{
+		int loadGlobalConfiguration();
+
 		Mutex *mut()
 		{
 			static Holder<Mutex> *m = new Holder<Mutex>(newMutex()); // this leak is intentional
-			return m->get();
+			return +*m;
 		}
 
-		struct Variable
+		using ConfigStorage = robin_hood::unordered_map<String, ConfigVariable *>;
+
+		ConfigStorage &storageAlreadyLocked()
 		{
-			ConfigTypeEnum type;
-			union
-			{
-				bool b;
-				sint32 s32;
-				uint32 u32;
-				sint64 s64;
-				uint64 u64;
-				float f;
-				double d;
-			};
-			String *s; // pointer is separate from the union to prevent memory corruption
-
-			Variable() : type(ConfigTypeEnum::Undefined), u64(0), s(nullptr) {}
-
-			void set(bool value) { setType(ConfigTypeEnum::Bool); b = value; }
-			void set(sint32 value) { setType(ConfigTypeEnum::Sint32); s32 = value; }
-			void set(uint32 value) { setType(ConfigTypeEnum::Uint32); u32 = value; }
-			void set(sint64 value) { setType(ConfigTypeEnum::Sint64); s64 = value; }
-			void set(uint64 value) { setType(ConfigTypeEnum::Uint64); u64 = value; }
-			void set(float value) { setType(ConfigTypeEnum::Float); f = value; }
-			void set(double value) { setType(ConfigTypeEnum::Double); d = value; }
-			void set(const String &value) { if (!s) s = systemMemory().createObject<String>(value); else *s = value; setType(ConfigTypeEnum::String); }
-			void setDynamic(const String &value)
-			{
-				if (value.empty())
-					set(value);
-				else if (isDigitsOnly(value))
-					set(toUint64(value));
-				else if (isInteger(value))
-					set(toSint64(value));
-				else if (isReal(value))
-					set(toFloat(value));
-				else if (isBool(value))
-					set(toBool(value));
-				else
-					set(value);
-			}
-
-		private:
-			void setType(ConfigTypeEnum t)
-			{
-				CAGE_ASSERT(t != ConfigTypeEnum::Undefined);
-				if (t != type && type != ConfigTypeEnum::Undefined)
-					CAGE_LOG(SeverityEnum::Warning, "config", "changing type of config variable");
-				type = t;
-			}
-		};
-
-		typedef robin_hood::unordered_map<String, Variable *> VarsType;
-
-		VarsType &directVariables()
-		{
-			static VarsType *v = new VarsType(); // intentionally left to leak
+			static ConfigStorage *v = new ConfigStorage(); // this leak is intentional
 			return *v;
 		}
 
-		Variable *directVariable(const String &name)
+		ConfigVariable *cfgVarAlreadyLocked(const String &name)
 		{
-			CAGE_ASSERT(!name.empty());
-			if (find(name, ".") != m)
-			{
-				CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "accessing deprecated config variable '" + name + "'");
-				CAGE_LOG(SeverityEnum::Note, "config", "new names use slashes instead of dots");
-				detail::debugBreakpoint();
-			}
-			Variable *&v = directVariables()[name];
-			if (!v)
-				v = systemMemory().createObject<Variable>();
-			return v;
+			ConfigStorage &s = storageAlreadyLocked();
+			auto it = s.find(name);
+			if (it != s.end())
+				return it->second;
+			s[name] = new ConfigVariable(); // this leak is intentional
+			return s[name];
 		}
 
-		void loadGlobalConfigFile(const String &filename, const String &prefix)
+		ConfigVariable *cfgVar(const String &name)
 		{
-			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: '" + filename + "'");
-			if (any(realType(filename) & PathTypeFlags::File))
+			ScopeLock lock(mut());
+			static int dummy = loadGlobalConfiguration();
+			return cfgVarAlreadyLocked(name);
+		}
+
+		template<class T> struct TypeMapping;
+		template<> struct TypeMapping<bool>   { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Bool;   };
+		template<> struct TypeMapping<sint32> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint32; };
+		template<> struct TypeMapping<uint32> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint32; };
+		template<> struct TypeMapping<sint64> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint64; };
+		template<> struct TypeMapping<uint64> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint64; };
+		template<> struct TypeMapping<float > { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Float;  };
+		template<> struct TypeMapping<double> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Double; };
+		template<> struct TypeMapping<String> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::String; };
+
+		template<class T>
+		void cfgSet(ConfigVariable *cfg, const T &value)
+		{
+			cfg->type = ConfigTypeEnum::Undefined;
+			cfg->data = value;
+			cfg->type = TypeMapping<T>::type;
+		}
+
+		void cfgSetDynamic(ConfigVariable *cfg, const String &value)
+		{
+			if (value.empty())
+				cfgSet(cfg, value);
+			else if (isDigitsOnly(value))
 			{
-				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: '" + filename + "'");
-				String pref = prefix;
-				if (!pref.empty())
-					pref += "/";
-				// the logic of function configLoadIni is replicated here, but we are inside the mutex already
 				try
 				{
-					Holder<File> file = realNewFile(filename, FileMode(true, false));
-					Holder<PointerRange<char>> buff = file->readAll();
-					Holder<Ini> ini = newIni();
-					ini->importBuffer(buff);
-					for (const String &section : ini->sections())
-					{
-						for (const String &name : ini->items(section))
-						{
-							String value = ini->getString(section, name);
-							directVariable(pref + section + "/" + name)->setDynamic(value);
-						}
-					}
+					detail::OverrideException oe;
+					cfgSet(cfg, toUint32(value));
 				}
-				catch (...)
+				catch (const cage::Exception &)
 				{
-					// do nothing
+					cfgSet(cfg, toUint64(value));
 				}
+			}
+			else if (isInteger(value))
+			{
+				try
+				{
+					detail::OverrideException oe;
+					cfgSet(cfg, toSint32(value));
+				}
+				catch (const cage::Exception &)
+				{
+					cfgSet(cfg, toSint64(value));
+				}
+			}
+			else if (isReal(value))
+				cfgSet(cfg, toFloat(value));
+			else if (isBool(value))
+				cfgSet(cfg, toBool(value));
+			else
+				cfgSet(cfg, value);
+		}
+
+		template<class T>
+		ConfigVariable *cfgVar(const String &name, const T &default_)
+		{
+			ConfigVariable *var = cfgVar(name);
+			if (var->type == ConfigTypeEnum::Undefined)
+				cfgSet<T>(var, default_);
+			return var;
+		}
+
+		template<class T> T stringToNumber(const String &s);
+		template<> sint32 stringToNumber(const String &s) { return toUint32(s); }
+		template<> uint32 stringToNumber(const String &s) { return toSint32(s); }
+		template<> sint64 stringToNumber(const String &s) { return toUint64(s); }
+		template<> uint64 stringToNumber(const String &s) { return toSint64(s); }
+		template<> float  stringToNumber(const String &s) { return toFloat(s);  }
+		template<> double stringToNumber(const String &s) { return toDouble(s); }
+
+		template<class T>
+		T cfgGet(const ConfigVariable *cfg)
+		{
+			switch (cfg->type)
+			{
+			case ConfigTypeEnum::Bool: return std::get<bool>(cfg->data);
+			case ConfigTypeEnum::Sint32: return numeric_cast<T>(std::get<sint32>(cfg->data));
+			case ConfigTypeEnum::Uint32: return numeric_cast<T>(std::get<uint32>(cfg->data));
+			case ConfigTypeEnum::Sint64: return numeric_cast<T>(std::get<sint64>(cfg->data));
+			case ConfigTypeEnum::Uint64: return numeric_cast<T>(std::get<uint64>(cfg->data));
+			case ConfigTypeEnum::Float:  return numeric_cast<T>(std::get<float>(cfg->data));
+			case ConfigTypeEnum::Double: return numeric_cast<T>(std::get<double>(cfg->data));
+			case ConfigTypeEnum::String: return stringToNumber<T>(std::get<String>(cfg->data));
+			default: return 0;
 			}
 		}
 
-		int loadGlobalConfiguration()
-		{
-			detail::globalLogger(); // ensure global logger was initialized
-			const String pr = detail::globalConfigPrefix();
-			const String ep = pathExtractDirectory(detail::executableFullPath());
-			const String wp = pathWorkingDir();
-			const bool same = ep == wp;
-			if (!same)
-				loadGlobalConfigFile(pathJoin(ep, "cage.ini"), "");
-			loadGlobalConfigFile(pathJoin(wp, "cage.ini"), "");
-			if (!same)
-				loadGlobalConfigFile(pathJoin(ep, pr + ".ini"), pr);
-			loadGlobalConfigFile(pathJoin(wp, pr + ".ini"), pr);
-			return 0;
-		}
-
-		Variable *getVar(const String &name)
-		{
-			static int cageIni = loadGlobalConfiguration();
-			return directVariable(name);
-		}
-
-		template<class C>
-		C cast(const Variable *v);
-
 		template<>
-		bool cast(const Variable *v)
+		bool cfgGet(const ConfigVariable *cfg)
 		{
-			switch (v->type)
+			switch (cfg->type)
 			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return v->s32 != 0;
-			case ConfigTypeEnum::Uint32: return v->u32 != 0;
-			case ConfigTypeEnum::Sint64: return v->s64 != 0;
-			case ConfigTypeEnum::Uint64: return v->u64 != 0;
-			case ConfigTypeEnum::Float: return Real(v->f) != Real(0);
-			case ConfigTypeEnum::Double: return Real(v->d) != Real(0);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toBool(*v->s);
+			case ConfigTypeEnum::Bool: return std::get<bool>(cfg->data);
+			case ConfigTypeEnum::Sint32: return !!std::get<sint32>(cfg->data);
+			case ConfigTypeEnum::Uint32: return !!std::get<uint32>(cfg->data);
+			case ConfigTypeEnum::Sint64: return !!std::get<sint64>(cfg->data);
+			case ConfigTypeEnum::Uint64: return !!std::get<uint64>(cfg->data);
+			case ConfigTypeEnum::Float:  return !!std::get<float>(cfg->data);
+			case ConfigTypeEnum::Double: return !!std::get<double>(cfg->data);
+			case ConfigTypeEnum::String: return toBool(std::get<String>(cfg->data));
 			default: return false;
 			}
 		}
 
 		template<>
-		sint32 cast(const Variable *v)
+		String cfgGet(const ConfigVariable *cfg)
 		{
-			switch (v->type)
+			switch (cfg->type)
 			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<sint32>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<sint32>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<sint32>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<sint32>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<sint32>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<sint32>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toSint32(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		uint32 cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<uint32>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<uint32>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<uint32>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<uint32>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<uint32>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<uint32>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toUint32(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		sint64 cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<sint64>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<sint64>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<sint64>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<sint64>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<sint64>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<sint64>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toSint64(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		uint64 cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<uint64>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<uint64>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<uint64>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<uint64>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<uint64>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<uint64>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toUint64(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		float cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<float>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<float>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<float>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<float>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<float>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<float>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toFloat(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		double cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return v->b;
-			case ConfigTypeEnum::Sint32: return numeric_cast<double>(v->s32);
-			case ConfigTypeEnum::Uint32: return numeric_cast<double>(v->u32);
-			case ConfigTypeEnum::Sint64: return numeric_cast<double>(v->s64);
-			case ConfigTypeEnum::Uint64: return numeric_cast<double>(v->u64);
-			case ConfigTypeEnum::Float:  return numeric_cast<double>(v->f);
-			case ConfigTypeEnum::Double: return numeric_cast<double>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toDouble(*v->s);
-			default: return 0;
-			}
-		}
-
-		template<>
-		String cast(const Variable *v)
-		{
-			switch (v->type)
-			{
-			case ConfigTypeEnum::Bool: return Stringizer() + v->b;
-			case ConfigTypeEnum::Sint32: return Stringizer() + v->s32;
-			case ConfigTypeEnum::Uint32: return Stringizer() + v->u32;
-			case ConfigTypeEnum::Sint64: return Stringizer() + v->s64;
-			case ConfigTypeEnum::Uint64: return Stringizer() + v->u64;
-			case ConfigTypeEnum::Float: return Stringizer() + v->f;
-			case ConfigTypeEnum::Double: return Stringizer() + v->d;
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return *v->s;
+			case ConfigTypeEnum::Bool: return Stringizer() + std::get<bool>(cfg->data);
+			case ConfigTypeEnum::Sint32: return Stringizer() + std::get<sint32>(cfg->data);
+			case ConfigTypeEnum::Uint32: return Stringizer() + std::get<uint32>(cfg->data);
+			case ConfigTypeEnum::Sint64: return Stringizer() + std::get<sint64>(cfg->data);
+			case ConfigTypeEnum::Uint64: return Stringizer() + std::get<uint64>(cfg->data);
+			case ConfigTypeEnum::Float:  return Stringizer() + std::get<float>(cfg->data);
+			case ConfigTypeEnum::Double: return Stringizer() + std::get<double>(cfg->data);
+			case ConfigTypeEnum::String: return std::get<String>(cfg->data);
 			default: return "";
 			}
 		}
 
-		class ConfigListImpl : public ConfigList
+		template<class T>
+		T cfgGet(const ConfigList *ths);
+
+		template<class T>
+		void cfgSet(const String &name, const T &value)
 		{
-		public:
-			std::vector<String> names;
-			Variable *var;
-			uint32 index;
-			bool valid;
+			cfgSet<T>(cfgVar(name), value);
+		}
 
-			ConfigListImpl() : var(nullptr), index(0), valid(false)
-			{
-				ScopeLock<Mutex> lock(mut());
-				const auto &mp = directVariables();
-				names.reserve(mp.size());
-				for (const auto &it : mp)
-					names.push_back(it.first);
-				valid = !names.empty();
-				if (valid)
-					var = getVar(names[0]);
-			}
+		template<class T>
+		T cfgGet(const String &name, const T &default_)
+		{
+			const ConfigVariable *cfg = cfgVar(name);
+			if (cfg->type == ConfigTypeEnum::Undefined)
+				return default_;
+			return cfgGet<T>(cfg);
+		}
+	}
 
-			void next()
-			{
-				CAGE_ASSERT(valid);
-				index++;
-				valid = index < names.size();
-				if (valid)
-				{
-					ScopeLock<Mutex> lock(mut());
-					var = getVar(names[index]);
-				}
-				else
-					var = nullptr;
-			}
-		};
+	// public api
+
+	void configSetString(const String &name, const String &value) { cfgSet(name, value); }
+	String configGetString(const String &name, const String &default_) { return cfgGet(name, default_); }
+	ConfigString::ConfigString(const String &name) { data = cfgVar(name); }
+	ConfigString::ConfigString(const String &name, const String &default_) { data = cfgVar(name, default_); }
+	ConfigString &ConfigString::operator = (const String &value) { cfgSet(data, value); return *this; }
+	ConfigString::operator String() const { return cfgGet<String>(data); }
+	String ConfigList::getString() const { return cfgGet<String>(this); }
+
+#define GCHL_CONFIG(T, t) \
+	void CAGE_JOIN(configSet, T)(const String &name, t value) { cfgSet(name, value); } \
+	t CAGE_JOIN(configGet, T)(const String &name, t default_) { return cfgGet(name, default_); } \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name) { data = cfgVar(name); } \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name, t default_) { data = cfgVar(name, default_); } \
+	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { cfgSet(data, value); return *this; } \
+	CAGE_JOIN(Config, T)::operator t() const { return cfgGet<t>(data); } \
+	t ConfigList::CAGE_JOIN(get, T)() const { return cfgGet<t>(this); }
+	GCHL_CONFIG(Bool, bool)
+	GCHL_CONFIG(Sint32, sint32)
+	GCHL_CONFIG(Sint64, sint64)
+	GCHL_CONFIG(Uint32, uint32)
+	GCHL_CONFIG(Uint64, uint64)
+	GCHL_CONFIG(Float, float)
+	GCHL_CONFIG(Double, double)
+#undef GCHL_CONFIG
+
+	void configSetDynamic(const String &name, const String &value)
+	{
+		cfgSetDynamic(cfgVar(name), value);
 	}
 
 	String configTypeToString(const ConfigTypeEnum type)
@@ -346,84 +256,18 @@ namespace cage
 		}
 	}
 
-	void configSetDynamic(const String &name, const String &value)
-	{
-		ScopeLock<Mutex> lock(mut());
-		getVar(name)->setDynamic(value);
-	}
-
 	ConfigTypeEnum configGetType(const String &name)
 	{
-		ScopeLock<Mutex> lock(mut());
-		return getVar(name)->type;
+		return cfgVar(name)->type;
 	}
 
-#define GCHL_CONFIG(T, t) \
-	void CAGE_JOIN(configSet, T)(const String &name, t value) { ScopeLock lock(mut()); getVar(name)->set(value); } \
-	t CAGE_JOIN(configGet, T)(const String &name, t default_) { ScopeLock lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<t>(v); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name) { ScopeLock lock(mut()); data = getVar(name); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name, t default_) { ScopeLock lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); } \
-	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { ((Variable*)data)->set(value); return *this; } \
-	CAGE_JOIN(Config, T)::operator t() const { return cast<t>((Variable*)data); } \
-	t ConfigList::CAGE_JOIN(get, T)() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<t>(impl->var); }
-	GCHL_CONFIG(Bool, bool)
-	GCHL_CONFIG(Sint32, sint32)
-	GCHL_CONFIG(Sint64, sint64)
-	GCHL_CONFIG(Uint32, uint32)
-	GCHL_CONFIG(Uint64, uint64)
-	GCHL_CONFIG(Float, float)
-	GCHL_CONFIG(Double, double)
-#undef GCHL_CONFIG
-
-	void configSetString(const String &name, const String &value) { ScopeLock lock(mut()); getVar(name)->set(value); }
-	String configGetString(const String &name, const String &default_) { ScopeLock lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<String>(v); }
-	ConfigString::ConfigString(const String &name) { ScopeLock lock(mut()); data = getVar(name); }
-	ConfigString::ConfigString(const String &name, const String &default_) { ScopeLock lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); }
-	ConfigString &ConfigString::operator = (const String &value) { ((Variable*)data)->set(value); return *this; }
-	ConfigString::operator String() const { return cast<String>((Variable*)data); }
-	String ConfigList::getString() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<String>(impl->var); }
-
-	bool ConfigList::valid() const
-	{
-		ConfigListImpl *impl = (ConfigListImpl*)this;
-		return impl->valid;
-	}
-
-	String ConfigList::name() const
-	{
-		ConfigListImpl *impl = (ConfigListImpl*)this;
-		CAGE_ASSERT(impl->valid);
-		return impl->names[impl->index];
-	}
-
-	ConfigTypeEnum ConfigList::type() const
-	{
-		ConfigListImpl *impl = (ConfigListImpl*)this;
-		CAGE_ASSERT(impl->valid);
-		return impl->var->type;
-	}
-
-	String ConfigList::typeName() const
-	{
-		return configTypeToString(type());
-	}
-
-	void ConfigList::next()
-	{
-		ConfigListImpl *impl = (ConfigListImpl*)this;
-		impl->next();
-	}
-
-	Holder<ConfigList> newConfigList()
-	{
-		return systemMemory().createImpl<ConfigList, ConfigListImpl>();
-	}
+	// ini
 
 	void configApplyIni(const Ini *ini, const String &prefix)
 	{
 		if (find(prefix, '/') != m || prefix.empty())
 			CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config prefix '" + prefix + "'");
-		String pref = prefix.empty() ? "" : prefix + "/";
+		const String pref = prefix.empty() ? "" : prefix + "/";
 		for (const String &section : ini->sections())
 		{
 			if (prefix.empty() && find(section, '/') != m)
@@ -432,7 +276,7 @@ namespace cage
 			{
 				if (prefix.empty() && find(name, '/') != m)
 					CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config field '" + name + "'");
-				String value = ini->getString(section, name);
+				const String value = ini->getString(section, name);
 				configSetDynamic(Stringizer() + pref + section + "/" + name, value);
 			}
 		}
@@ -463,7 +307,7 @@ namespace cage
 	{
 		Holder<Ini> ini = newIni();
 		ini->importFile(filename);
-		configApplyIni(ini.get(), prefix);
+		configApplyIni(+ini, prefix);
 	}
 
 	void configExportIni(const String &filename, const String &prefix)
@@ -471,6 +315,91 @@ namespace cage
 		Holder<Ini> ini = configGenerateIni(prefix);
 		ini->exportFile(filename);
 	}
+
+	// listing
+
+	namespace
+	{
+		class ConfigListImpl : public ConfigList
+		{
+		public:
+			std::vector<String> names;
+			const ConfigVariable *var = nullptr;
+			uint32 index = 0;
+			bool valid = false;
+
+			ConfigListImpl()
+			{
+				{
+					ScopeLock<Mutex> lock(mut());
+					const auto &s = storageAlreadyLocked();
+					names.reserve(s.size());
+					for (const auto &it : s)
+						names.push_back(it.first);
+				}
+				valid = !names.empty();
+				if (valid)
+					var = cfgVar(names[0]);
+			}
+
+			void next()
+			{
+				CAGE_ASSERT(valid);
+				index++;
+				valid = index < names.size();
+				if (valid)
+					var = cfgVar(names[index]);
+				else
+					var = nullptr;
+			}
+		};
+
+		template<class T>
+		T cfgGet(const ConfigList *ths)
+		{
+			const ConfigListImpl *impl = (const ConfigListImpl *)ths;
+			CAGE_ASSERT(impl->valid);
+			return cfgGet<T>(impl->var);
+		}
+	}
+
+	bool ConfigList::valid() const
+	{
+		const ConfigListImpl *impl = (const ConfigListImpl *)this;
+		return impl->valid;
+	}
+
+	String ConfigList::name() const
+	{
+		const ConfigListImpl *impl = (const ConfigListImpl *)this;
+		CAGE_ASSERT(impl->valid);
+		return impl->names[impl->index];
+	}
+
+	ConfigTypeEnum ConfigList::type() const
+	{
+		const ConfigListImpl *impl = (const ConfigListImpl *)this;
+		CAGE_ASSERT(impl->valid);
+		return impl->var->type;
+	}
+
+	String ConfigList::typeName() const
+	{
+		return configTypeToString(type());
+	}
+
+	void ConfigList::next()
+	{
+		ConfigListImpl *impl = (ConfigListImpl *)this;
+		impl->next();
+	}
+
+	Holder<ConfigList> newConfigList()
+	{
+		return systemMemory().createImpl<ConfigList, ConfigListImpl>();
+	}
+
+	// detail
 
 	namespace detail
 	{
@@ -480,9 +409,58 @@ namespace cage
 		}
 	}
 
+	// initialization
+
 	namespace
 	{
-		ConfigBool confAutoSave("cage/config/autoSave", false);
+		void loadGlobalConfigFile(const String &filename, const String &prefix)
+		{
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: '" + filename + "'");
+			if (any(realType(filename) & PathTypeFlags::File))
+			{
+				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: '" + filename + "'");
+				try
+				{
+					// the logic of function configLoadIni is replicated here, but we are inside the mutex already
+					String pref = prefix;
+					if (!pref.empty())
+						pref += "/";
+					Holder<Ini> ini = newIni();
+					// real files only to reduce chances of failures
+					ini->importBuffer(realNewFile(filename, FileMode(true, false))->readAll());
+					for (const String &section : ini->sections())
+					{
+						for (const String &name : ini->items(section))
+						{
+							const String value = ini->getString(section, name);
+							cfgSetDynamic(cfgVarAlreadyLocked(pref + section + "/" + name), value);
+						}
+					}
+				}
+				catch (...)
+				{
+					// do nothing
+				}
+			}
+		}
+
+		int loadGlobalConfiguration()
+		{
+			detail::globalLogger(); // ensure global logger was initialized
+			const String pr = detail::globalConfigPrefix();
+			const String ep = pathExtractDirectory(detail::executableFullPath());
+			const String wp = pathWorkingDir();
+			const bool same = ep == wp;
+			if (!same)
+				loadGlobalConfigFile(pathJoin(ep, "cage.ini"), "");
+			loadGlobalConfigFile(pathJoin(wp, "cage.ini"), "");
+			if (!same)
+				loadGlobalConfigFile(pathJoin(ep, pr + ".ini"), pr);
+			loadGlobalConfigFile(pathJoin(wp, pr + ".ini"), pr);
+			return 0;
+		}
+
+		const ConfigBool confAutoSave("cage/config/autoSave", false);
 
 		struct AutoSaveConfig
 		{

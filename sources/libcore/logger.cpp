@@ -6,7 +6,6 @@
 #include <cage-core/systemInformation.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-#include <cage-core/profiling.h>
 
 #include <cstdio>
 #include <exception>
@@ -403,7 +402,6 @@ namespace cage
 				}
 
 				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
-				profilingThreadOrder(-1000);
 			}
 
 			~InitialLog()

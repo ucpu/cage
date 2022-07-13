@@ -123,7 +123,6 @@ namespace cage
 		private:
 			void threadEntry()
 			{
-				profilingThreadOrder(1000);
 				thrData.executorThread = true;
 				try
 				{
