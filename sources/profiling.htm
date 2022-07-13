@@ -43,6 +43,10 @@
 				text-anchor: middle;
 				dominant-baseline: middle;
 			}
+
+			.current {
+				fill: black;
+			}
 		</style>
 	</head>
 	<body>
@@ -62,6 +66,7 @@
 			let zoomTrans = null
 			let paused = false
 			let uniqueCounter = 1
+			let filteredDomain = [0, 0]
 
 			d3.select("#pauseButton").on("click", d => paused = !paused )
 
@@ -170,6 +175,16 @@
 				data.depth = d3.max(data, d => d.depth) || 0
 			}
 
+			function filterData(thr) {
+				let filtered = []
+				thr.data.forEach(function(a) {
+					if (a.endTime > filteredDomain[0] && a.startTime < filteredDomain[1]) {
+						filtered.push(a)
+					}
+				})
+				return filtered
+			}
+
 			function framesRedraw(frm, stor) {
 				function positions(selection) {
 					selection
@@ -177,6 +192,17 @@
 						.attr("y", d => stor.height - (stor.y(d.startTime) - stor.y(d.endTime)))
 						.attr("width", d => stor.x(d.endTime) - stor.x(d.prevTime))
 						.attr("height", d => stor.y(d.startTime) - stor.y(d.endTime))
+				}
+
+				function filtered(e, d) {
+					d3.selectAll(".current").classed("current", false)
+					d3.select(e.currentTarget).classed("current", true)
+					let c = (d.endTime + d.prevTime) / 2
+					let r = d.endTime - d.prevTime
+					filteredDomain = [ c - r, c + r ]
+					data.threads.forEach(function (thr) {
+						tasksRedraw(thr, thr.stor)
+					})
 				}
 
 				if (typeof stor["div"] === "undefined") {
@@ -209,14 +235,26 @@
 				stor.items
 					.append("title")
 					.text(d => (d.endTime - d.startTime) + " us")
+				stor.items
+					.on("click", function(e, d) {
+						if (paused)
+							filtered(e, d)
+					})
+					.on("mouseover", function(e, d) {
+						if (!paused)
+							filtered(e, d)
+					})
 
 				stor.svg.node()
 			}
 
 			function tasksRedraw(thr, stor) {
+				let filtered = filterData(thr)
+				makeHierarchy(filtered)
+
 				function resetAxes() {
-					stor.x.domain([data.startTime, data.endTime]).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
-					stor.y.domain([-1, thr.data.depth]).range([0, stor.height])
+					stor.x.domain(filteredDomain).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
+					stor.y.domain([-1, filtered.depth]).range([0, stor.height])
 					stor.axis.call(d3.axisBottom().scale(stor.x))
 				}
 
@@ -245,15 +283,14 @@
 					stor.svg.call(zoom.on("zoom." + (uniqueCounter++), zoomed))
 				}
 
-				makeHierarchy(thr.data)
 				stor.width = d3.select("body").node().getBoundingClientRect().width
-				stor.height = (thr.data.depth + 1) * 20
+				stor.height = (filtered.depth + 1) * 20
 				stor.svg.attr("height", stor.height)
 				resetAxes()
 
 				stor.items = stor.itemsGroup
 					.selectAll(".item")
-					.data(thr.data, d => d.startTime)
+					.data(filtered, d => d.startTime)
 					.join("svg")
 					.classed("item", true)
 					.call(positions)
@@ -278,9 +315,6 @@
 				assignColors(data)
 				data.frames.forEach(function (frm) {
 					framesRedraw(frm, frm.stor)
-				})
-				data.threads.forEach(function (thr) {
-					//tasksRedraw(thr, thr.stor)
 				})
 			}
 
