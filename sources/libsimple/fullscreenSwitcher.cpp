@@ -53,11 +53,11 @@ namespace cage
 				confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
-				windowMoveListener.attach(window->events);
+				windowMoveListener.attach(window->events, -13665);
 				windowMoveListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowMove>(this);
-				windowResizeListener.attach(window->events);
+				windowResizeListener.attach(window->events, -13666);
 				windowResizeListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowResize>(this);
-				keyListener.attach(window->events);
+				keyListener.attach(window->events, -13667);
 				keyListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::keyRelease>(this);
 				if (window->isHidden())
 					update(confFullscreenEnabled);

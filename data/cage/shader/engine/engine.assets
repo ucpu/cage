@@ -7,5 +7,6 @@ engine.pack
 scheme = shader
 billboard.glsl
 blit.glsl
+decal.glsl
 skybox.glsl
 standard.glsl

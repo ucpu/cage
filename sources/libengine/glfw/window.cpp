@@ -23,14 +23,14 @@ namespace cage
 
 	namespace
 	{
-		ConfigBool confDebugContext("cage/graphics/debugContext",
+		const ConfigBool confDebugContext("cage/graphics/debugContext",
 #ifdef CAGE_DEBUG
 			true
 #else
 			false
 #endif // CAGE_DEBUG
 		);
-		ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
+		const ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
 
 		ModifiersFlags getKeyModifiers(int mods)
 		{
@@ -159,7 +159,7 @@ namespace cage
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 				glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
-				glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
+				//glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // GLFW_FALSE is useful for multiple simultaneous fullscreen windows but breaks alt-tabbing out of the application
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -419,7 +419,7 @@ namespace cage
 
 	bool Window::isFocused() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
 		return impl->focus;
 #else
@@ -429,13 +429,13 @@ namespace cage
 
 	bool Window::isFullscreen() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return !!glfwGetWindowMonitor(impl->window);
 	}
 
 	bool Window::isMaximized() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_MAXIMIZED);
 	}
 
@@ -446,13 +446,13 @@ namespace cage
 
 	bool Window::isMinimized() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_ICONIFIED);
 	}
 
 	bool Window::isHidden() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return !glfwGetWindowAttrib(impl->window, GLFW_VISIBLE);
 	}
 
@@ -517,7 +517,7 @@ namespace cage
 
 	bool Window::mouseVisible() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
 	}
 
@@ -532,7 +532,7 @@ namespace cage
 
 	Vec2i Window::mousePosition() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateMousePosition;
 	}
 
@@ -551,19 +551,19 @@ namespace cage
 
 	MouseButtonsFlags Window::mouseButtons() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateButtons;
 	}
 
 	ModifiersFlags Window::keyboardModifiers() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateMods;
 	}
 
 	bool Window::keyboardKey(uint32 key) const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateKeys.count(key);
 	}
 
@@ -641,7 +641,7 @@ namespace cage
 
 	Vec2i Window::resolution() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		int w = 0, h = 0;
 		glfwGetFramebufferSize(impl->window, &w, &h);
 		return Vec2i(w, h);
@@ -649,7 +649,7 @@ namespace cage
 
 	Real Window::contentScaling() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		float x = 1, y = 1;
 		glfwGetWindowContentScale(impl->window, &x, &y);
 		return max(x, y);
@@ -657,7 +657,7 @@ namespace cage
 
 	String Window::screenId() const
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		{
 			auto m = glfwGetWindowMonitor(impl->window);
 			if (m)
@@ -686,7 +686,7 @@ namespace cage
 
 	Vec2i Window::windowedSize() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		int w = 0, h = 0;
 		glfwGetWindowSize(impl->window, &w, &h);
 		return Vec2i(w, h);
@@ -700,7 +700,7 @@ namespace cage
 
 	Vec2i Window::windowedPosition() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		const WindowImpl *impl = (const WindowImpl *)this;
 		int x = 0, y = 0;
 		glfwGetWindowPos(impl->window, &x, &y);
 		return Vec2i(x, y);

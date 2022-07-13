@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Cage Profiling Client</title>
+		<script src="https://d3js.org/d3.v7.min.js"></script>
+		<style>
+			#status {
+				float: left;
+			}
+
+			#menu {
+				float: right;
+			}
+
+			#header hr {
+				clear: both;
+			}
+
+			.framesName, .threadName {
+				text-align: center;
+				padding: 0px;
+				margin-top: 3px;
+				margin-bottom: 1px;
+				font-size: 12px;
+			}
+
+			.item rect, rect.item {
+				stroke-width: 1;
+				stroke: white;
+			}
+
+			.item rect {
+				width: 100%;
+				height: 100%;
+			}
+
+			.item:hover rect, rect.item:hover {
+				opacity: 40%;
+			}
+
+			.item text {
+				text-anchor: middle;
+				dominant-baseline: middle;
+			}
+
+			.current {
+				fill: black;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="header">
+			<span id="status"></span>
+			<span id="menu">
+				<button id="pauseButton">Pause</button>
+			</span>
+			<hr>
+		</div>
+		<div id="frames"></div>
+		<div id="tasks"></div>
+		<script>
+			const data = { threads: [], frames: [] }
+			const colors = {}
+			const zoom = d3.zoom()
+			let zoomTrans = null
+			let paused = false
+			let uniqueCounter = 1
+			let filteredDomain = [0, 0]
+
+			d3.select("#pauseButton").on("click", d => paused = !paused )
+
+			function mergeData(data, incoming) {
+				incoming.threads.pop()
+				incoming.threads.forEach(function (thr) {
+					let i = data.threads.findIndex(t => t.name == thr.name)
+					if (i == -1) {
+						data.threads.push({
+							name: thr.name,
+							data: [],
+							stor: {}
+						})
+						i = data.threads.length - 1
+					}
+					const dst = data.threads[i]
+					thr.events.pop()
+					thr.events.forEach(function (d) {
+						let t = {}
+						t.name = incoming.names[d[0]]
+						t.category = incoming.names[d[1]]
+						t.startTime = d[2]
+						t.endTime = d[2] + d[3]
+						dst.data.push(t)
+						if (d[4]) {
+							const fn = t.category + " / " + t.name
+							let j = data.frames.findIndex(t => t.name == fn)
+							if (j == -1) {
+								data.frames.push({
+									name: fn,
+									data: [],
+									stor: {}
+								})
+								j = data.frames.length - 1
+							}
+							const dstf = data.frames[j]
+							dstf.data.push(t)
+						}
+					})
+				})
+			}
+
+			function clearOldData(data) {
+				data.endTime = d3.max(data.threads, thr => d3.max(thr.data, d => d.endTime))
+				data.startTime = data.endTime - 3000000;
+				data.threads.forEach(function (thr) {
+					thr.data = thr.data.filter(d => d.endTime > data.startTime)
+				})
+				data.frames.forEach(function (frm) {
+					frm.data = frm.data.filter(d => d.endTime > data.startTime)
+				})
+			}
+
+			function assignColors(data) {
+				let regenerate = false
+				data.threads.forEach(function (thr) {
+					thr.data.forEach(function (d) {
+						const k = d.name + "/" + d.category
+						if (typeof colors[k] === "undefined") {
+							colors[k] = null
+							regenerate = true
+						}
+						else
+							d.color = colors[k]
+					})
+				})
+				if (regenerate) {
+					const step = 1.0 / Object.keys(colors).length
+					Object.keys(colors).forEach(function(key, index) {
+						colors[key] = d3.interpolateSinebow(index * step)
+					})
+					assignColors(data, colors)
+				}
+			}
+
+			function makePrev(data) {
+				let prev = null
+				data.forEach(function (a) {
+					a.prevTime = prev ? prev.endTime : a.startTime
+					prev = a
+				})
+				data.maximum = d3.max(data, d => d.endTime - d.startTime) || 0
+			}
+
+			function makeHierarchy(data) {
+				data.forEach(function (a) {
+					a.parent = null
+					data.forEach(function (b) {
+						if (b.startTime < a.startTime && b.endTime > a.startTime) {
+							if (!a.parent || b.startTime > a.parent.startTime)
+								a.parent = b
+						}
+					})
+					a.children = []
+				})
+				data.forEach(function (a) {
+					if (a.parent)
+						a.parent.children.push(a)
+					a.depth = 0
+					let b = a
+					while (b.parent) {
+						a.depth++
+						b = b.parent
+					}
+				})
+				data.depth = d3.max(data, d => d.depth) || 0
+			}
+
+			function filterData(thr) {
+				let filtered = []
+				thr.data.forEach(function(a) {
+					if (a.endTime > filteredDomain[0] && a.startTime < filteredDomain[1]) {
+						filtered.push(a)
+					}
+				})
+				return filtered
+			}
+
+			function framesRedraw(frm, stor) {
+				function positions(selection) {
+					selection
+						.attr("x", d => stor.x(d.prevTime))
+						.attr("y", d => stor.height - (stor.y(d.startTime) - stor.y(d.endTime)))
+						.attr("width", d => stor.x(d.endTime) - stor.x(d.prevTime))
+						.attr("height", d => stor.y(d.startTime) - stor.y(d.endTime))
+				}
+
+				function filtered(e, d) {
+					d3.selectAll(".current").classed("current", false)
+					d3.select(e.currentTarget).classed("current", true)
+					let c = (d.endTime + d.prevTime) / 2
+					let r = d.endTime - d.prevTime
+					filteredDomain = [ c - r, c + r ]
+					data.threads.forEach(function (thr) {
+						tasksRedraw(thr, thr.stor)
+					})
+				}
+
+				if (typeof stor["div"] === "undefined") {
+					stor.div = d3.select("#frames").append("div")
+					stor.p = stor.div.append("p").classed("framesName", true).text(frm.name)
+					stor.svg = stor.div.append("svg").attr("width", "100%")
+					stor.x = d3.scaleLinear()
+					stor.y = d3.scaleLinear()
+					stor.itemsGroup = stor.svg.append("g").classed("items", true)
+					stor.xAxis = stor.svg.append("g").classed("axis", true)
+					stor.yAxis = stor.svg.append("g").classed("axis", true)
+				}
+
+				makePrev(frm.data)
+				stor.width = d3.select("body").node().getBoundingClientRect().width
+				stor.height = 50
+				stor.svg.attr("height", stor.height)
+				stor.x.domain([data.startTime, data.endTime]).range([0, stor.width])
+				stor.y.domain([0, frm.data.maximum]).range([stor.height, 0])
+				stor.xAxis.call(d3.axisBottom().scale(stor.x))
+				stor.yAxis.call(d3.axisRight().scale(stor.y).ticks(2))
+
+				stor.items = stor.itemsGroup
+					.selectAll(".item")
+					.data(frm.data, d => d.startTime)
+					.join("rect")
+					.classed("item", true)
+					.attr("fill", d => d.color)
+					.call(positions)
+				stor.items
+					.append("title")
+					.text(d => (d.endTime - d.startTime) + " us")
+				stor.items
+					.on("click", function(e, d) {
+						if (paused)
+							filtered(e, d)
+					})
+					.on("mouseover", function(e, d) {
+						if (!paused)
+							filtered(e, d)
+					})
+
+				stor.svg.node()
+			}
+
+			function tasksRedraw(thr, stor) {
+				let filtered = filterData(thr)
+				makeHierarchy(filtered)
+
+				function resetAxes() {
+					stor.x.domain(filteredDomain).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
+					stor.y.domain([-1, filtered.depth]).range([0, stor.height])
+					stor.axis.call(d3.axisBottom().scale(stor.x))
+				}
+
+				function positions(selection) {
+					selection
+						.attr("x", d => stor.x(d.startTime))
+						.attr("y", d => stor.y(d.depth))
+						.attr("width", d => stor.x(d.endTime) - stor.x(d.startTime))
+						.attr("height", d => stor.y(d.depth + 1) - stor.y(d.depth))
+				}
+
+				function zoomed(event) {
+					zoomTrans = event.transform
+					resetAxes()
+					stor.items.call(positions)
+				}
+
+				if (typeof stor["div"] === "undefined") {
+					stor.div = d3.select("#tasks").append("div")
+					stor.p = stor.div.append("p").classed("threadName", true).text(thr.name)
+					stor.svg = stor.div.append("svg").attr("width", "100%")
+					stor.x = d3.scaleLinear()
+					stor.y = d3.scaleLinear()
+					stor.itemsGroup = stor.svg.append("g").classed("items", true)
+					stor.axis = stor.svg.append("g").classed("axis", true)
+					stor.svg.call(zoom.on("zoom." + (uniqueCounter++), zoomed))
+				}
+
+				stor.width = d3.select("body").node().getBoundingClientRect().width
+				stor.height = (filtered.depth + 1) * 20
+				stor.svg.attr("height", stor.height)
+				resetAxes()
+
+				stor.items = stor.itemsGroup
+					.selectAll(".item")
+					.data(filtered, d => d.startTime)
+					.join("svg")
+					.classed("item", true)
+					.call(positions)
+				stor.items
+					.append("rect")
+					.attr("fill", d => d.color)
+				stor.items
+					.append("text")
+					.attr("x", "50%")
+					.attr("y", "50%")
+					.text(d => d.category + " / " + d.name)
+				stor.items
+					.append("title")
+					.text(d => d.category + "\n" + d.name + "\n" + (d.endTime - d.startTime) + " us")
+
+				stor.svg.node()
+			}
+
+			function update(incoming) {
+				mergeData(data, incoming)
+				clearOldData(data)
+				assignColors(data)
+				data.frames.forEach(function (frm) {
+					framesRedraw(frm, frm.stor)
+				})
+			}
+
+			const ws = new WebSocket("ws://localhost:" + (new URLSearchParams(window.location.search)).get("port"))
+			ws.addEventListener("open", event => {
+				d3.select("#status").text("connected")
+				console.log("connected")
+			})
+			ws.addEventListener("close", event => {
+				d3.select("#status").text("disconnected")
+				console.log("disconnected")
+			})
+			ws.onmessage = function(message) {
+				if (paused)
+					return
+				let reader = new FileReader()
+				reader.onload = () => {
+					if (reader.result) {
+						const incoming = JSON.parse(reader.result)
+						update(incoming)
+					}
+				}
+				reader.readAsText(message.data)
+			}
+		</script>
+	</body>
+</html>

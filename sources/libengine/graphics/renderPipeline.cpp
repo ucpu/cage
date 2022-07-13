@@ -946,6 +946,7 @@ namespace cage
 				renderQueue->activeAttachments(renderTarget, 1);
 				renderQueue->checkFrameBuffer(renderTarget);
 				renderQueue->checkGlErrorDebug();
+				renderQueue->bind(depthTexture, CAGE_SHADER_TEXTURE_DEPTH);
 
 				renderQueue->viewport(Vec2i(), data.resolution);
 				renderQueue->clear(true, true);

@@ -25,6 +25,11 @@ namespace cage
 		detail::memcpy(dst.data(), buffer.data(), buffer.size());
 	}
 
+	PointerRange<char> Serializer::write(uintPtr size)
+	{
+		return advance(size);
+	}
+
 	void Serializer::writeLine(const String &line)
 	{
 		write(line);
