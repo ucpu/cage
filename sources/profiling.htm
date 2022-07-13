@@ -17,27 +17,29 @@
 				clear: both;
 			}
 
-			#tasks .threadName {
+			.framesName, .threadName {
 				text-align: center;
 				padding: 0px;
-				margin-top: 5px;
+				margin-top: 3px;
 				margin-bottom: 1px;
+				font-size: 12px;
 			}
 
-			#tasks .item {
-				border: 1px solid red;
+			.item rect, rect.item {
+				stroke-width: 1;
+				stroke: white;
 			}
 
-			#tasks .item rect {
+			.item rect {
 				width: 100%;
 				height: 100%;
 			}
 
-			#tasks .item:hover rect {
+			.item:hover rect, rect.item:hover {
 				opacity: 40%;
 			}
 
-			#tasks .item text {
+			.item text {
 				text-anchor: middle;
 				dominant-baseline: middle;
 			}
@@ -90,7 +92,8 @@
 							if (j == -1) {
 								data.frames.push({
 									name: fn,
-									data: []
+									data: [],
+									stor: {}
 								})
 								j = data.frames.length - 1
 							}
@@ -103,7 +106,7 @@
 
 			function clearOldData(data) {
 				data.endTime = d3.max(data.threads, thr => d3.max(thr.data, d => d.endTime))
-				data.startTime = data.endTime - 100000;
+				data.startTime = data.endTime - 3000000;
 				data.threads.forEach(function (thr) {
 					thr.data = thr.data.filter(d => d.endTime > data.startTime)
 				})
@@ -133,7 +136,16 @@
 					assignColors(data, colors)
 				}
 			}
-			
+
+			function makePrev(data) {
+				let prev = null
+				data.forEach(function (a) {
+					a.prevTime = prev ? prev.endTime : a.startTime
+					prev = a
+				})
+				data.maximum = d3.max(data, d => d.endTime - d.startTime) || 0
+			}
+
 			function makeHierarchy(data) {
 				data.forEach(function (a) {
 					a.parent = null
@@ -158,7 +170,50 @@
 				data.depth = d3.max(data, d => d.depth) || 0
 			}
 
-			function redraw(thr, stor) {
+			function framesRedraw(frm, stor) {
+				function positions(selection) {
+					selection
+						.attr("x", d => stor.x(d.prevTime))
+						.attr("y", d => stor.height - (stor.y(d.startTime) - stor.y(d.endTime)))
+						.attr("width", d => stor.x(d.endTime) - stor.x(d.prevTime))
+						.attr("height", d => stor.y(d.startTime) - stor.y(d.endTime))
+				}
+
+				if (typeof stor["div"] === "undefined") {
+					stor.div = d3.select("#frames").append("div")
+					stor.p = stor.div.append("p").classed("framesName", true).text(frm.name)
+					stor.svg = stor.div.append("svg").attr("width", "100%")
+					stor.x = d3.scaleLinear()
+					stor.y = d3.scaleLinear()
+					stor.itemsGroup = stor.svg.append("g").classed("items", true)
+					stor.xAxis = stor.svg.append("g").classed("axis", true)
+					stor.yAxis = stor.svg.append("g").classed("axis", true)
+				}
+
+				makePrev(frm.data)
+				stor.width = d3.select("body").node().getBoundingClientRect().width
+				stor.height = 50
+				stor.svg.attr("height", stor.height)
+				stor.x.domain([data.startTime, data.endTime]).range([0, stor.width])
+				stor.y.domain([0, frm.data.maximum]).range([stor.height, 0])
+				stor.xAxis.call(d3.axisBottom().scale(stor.x))
+				stor.yAxis.call(d3.axisRight().scale(stor.y).ticks(2))
+
+				stor.items = stor.itemsGroup
+					.selectAll(".item")
+					.data(frm.data, d => d.startTime)
+					.join("rect")
+					.classed("item", true)
+					.attr("fill", d => d.color)
+					.call(positions)
+				stor.items
+					.append("title")
+					.text(d => (d.endTime - d.startTime) + " us")
+
+				stor.svg.node()
+			}
+
+			function tasksRedraw(thr, stor) {
 				function resetAxes() {
 					stor.x.domain([data.startTime, data.endTime]).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
 					stor.y.domain([-1, thr.data.depth]).range([0, stor.height])
@@ -218,13 +273,14 @@
 			}
 
 			function update(incoming) {
-				if (paused)
-					return
 				mergeData(data, incoming)
 				clearOldData(data)
 				assignColors(data)
+				data.frames.forEach(function (frm) {
+					framesRedraw(frm, frm.stor)
+				})
 				data.threads.forEach(function (thr) {
-					redraw(thr, thr.stor)
+					//tasksRedraw(thr, thr.stor)
 				})
 			}
 
@@ -238,6 +294,8 @@
 				console.log("disconnected")
 			})
 			ws.onmessage = function(message) {
+				if (paused)
+					return
 				let reader = new FileReader()
 				reader.onload = () => {
 					if (reader.result) {
