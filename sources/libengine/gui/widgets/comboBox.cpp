@@ -176,7 +176,8 @@ namespace cage
 				Vec2 s = c->renderSize;
 				const uint32 md = allowHover ? mode(p, s, 0) : 0;
 				allowHover &= !md; // items may have small overlap, this will ensure that only one item has hover
-				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, md, p, s);
+				const bool disabled = c->ent->has<GuiWidgetStateComponent>() && c->ent->value<GuiWidgetStateComponent>().disabled;
+				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, disabled ? 3 : md, p, s);
 				offset(p, s, itemFrame);
 				c->text->emit(p, s).setClip(hierarchy);
 				idx++;
@@ -194,7 +195,8 @@ namespace cage
 			HierarchyItem *newlySelected = nullptr;
 			for (const auto &c : combo->hierarchy->children)
 			{
-				if (pointInside(c->renderPos, c->renderSize, point))
+				const bool disabled = c->ent->has<GuiWidgetStateComponent>() && c->ent->value<GuiWidgetStateComponent>().disabled;
+				if (!disabled && pointInside(c->renderPos, c->renderSize, point))
 				{
 					combo->data.selected = idx;
 					newlySelected = +c;
