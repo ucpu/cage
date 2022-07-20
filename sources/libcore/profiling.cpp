@@ -28,22 +28,31 @@ namespace cage
 		constexpr String DefaultBrowser = "firefox";
 #endif // CAGE_SYSTEM_WINDOWS
 
+		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
+
 		ConfigBool confEnabled("cage/profiling/enabled", false);
 		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
 		const ConfigString confBrowser("cage/profiling/browser", DefaultBrowser);
 
-		uint64 timestamp()
+		uint64 timestamp() noexcept
 		{
-			// ensures that all timestamps are unique
-			static std::atomic<uint64> atom = 0;
-			uint64 newv = applicationTime();
-			uint64 oldv = atom.load();
-			do
+			try
 			{
-				if (oldv >= newv)
-					newv = oldv + 1;
-			} while (!atom.compare_exchange_weak(oldv, newv));
-			return newv;
+				// ensures that all timestamps are unique
+				static std::atomic<uint64> atom = 0;
+				uint64 newv = applicationTime();
+				uint64 oldv = atom.load();
+				do
+				{
+					if (oldv >= newv)
+						newv = oldv + 1;
+				} while (!atom.compare_exchange_weak(oldv, newv));
+				return newv;
+			}
+			catch (...)
+			{
+				return m;
+			}
 		}
 
 		struct QueueItem
@@ -66,148 +75,147 @@ namespace cage
 
 		struct Dispatcher
 		{
-			std::unordered_map<uint64, String> threadNames;
-			Holder<WebsocketServer> server;
-			Holder<WebsocketConnection> connection;
-			Holder<Process> client;
-			Holder<Thread> thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
-
-			void eraseQueue()
+			struct Runner
 			{
-				QueueItem qi;
-				while (queue().tryPop(qi))
+				std::unordered_map<uint64, String> threadNames;
+				Holder<WebsocketServer> server;
+				Holder<WebsocketConnection> connection;
+				Holder<Process> client;
+
+				void eraseQueue()
 				{
-					if (qi.startTime == m && qi.endTime == m)
-						threadNames[qi.threadId] = qi.name;
+					QueueItem qi;
+					while (queue().tryPop(qi))
+					{
+						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
+							threadNames[qi.threadId] = qi.name;
+					}
 				}
-			}
 
-			void updateConnected()
-			{
-				struct NamesMap
+				void updateConnected()
 				{
-					std::unordered_map<String, uint32> data;
-					uint32 next = 0;
-
-					uint32 index(const String &name)
+					struct NamesMap
 					{
-						const auto it = data.find(name);
-						if (it != data.end()) [[likely]]
-							return it->second;
-						return data[name] = next++;
+						std::unordered_map<String, uint32> data;
+						uint32 next = 0;
+
+						uint32 index(const String &name)
+						{
+							const auto it = data.find(name);
+							if (it != data.end()) [[likely]]
+								return it->second;
+							return data[name] = next++;
+						}
+
+						uint32 index(StringLiteral name)
+						{
+							return index(String(name));
+						}
+
+						std::string mapping() const
+						{
+							std::vector<const String *> v;
+							v.resize(data.size());
+							for (const auto &it : data)
+								v[it.second] = &it.first;
+
+							std::string str;
+							str.reserve(v.size() * 100);
+							for (const auto &n : v)
+								str += (Stringizer() + "\"" + *n + "\",\n ").value.c_str();
+							return str + "\"\"";
+						}
+
+						NamesMap()
+						{
+							data.reserve(200);
+						}
+					} names;
+
+					struct ThreadData
+					{
+						std::string events;
+
+						ThreadData()
+						{
+							events.reserve(50000);
+						}
+					};
+					std::unordered_map<uint64, ThreadData> data;
+
+					QueueItem qi;
+					while (queue().tryPop(qi))
+					{
+						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
+							threadNames[qi.threadId] = qi.name;
+						else
+						{
+							const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
+							data[qi.threadId].events += s.c_str();
+						}
 					}
 
-					uint32 index(StringLiteral name)
+					std::string str = "{\"names\":[";
+					str += names.mapping();
+					str += "],\n\"threads\":[\n";
+					for (const auto &thr : data)
 					{
-						return index(String(name));
+						str += "{\"name\":\"";
+						str += threadNames[thr.first].c_str();
+						str += "\",\n\"events\":[";
+						str += thr.second.events;
+						str += "[]\n]},\n";
 					}
+					str += "{}\n]}";
 
-					std::string mapping() const
-					{
-						std::vector<const String *> v;
-						v.resize(data.size());
-						for (const auto &it : data)
-							v[it.second] = &it.first;
+					connection->write(str);
+				}
 
-						std::string str;
-						str.reserve(v.size() * 100);
-						for (const auto &n : v)
-							str += (Stringizer() + "\"" + *n + "\",\n ").value.c_str();
-						return str + "\"\"";
-					}
-
-					NamesMap()
-					{
-						data.reserve(200);
-					}
-				} names;
-
-				struct ThreadData
+				void updateConnecting()
 				{
-					std::string events;
-
-					ThreadData()
+					if (server)
 					{
-						events.reserve(50000);
+						connection = server->accept();
+						if (connection)
+						{
+							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + connection->address() + ":" + connection->port());
+							server.clear();
+						}
 					}
-				};
-				std::unordered_map<uint64, ThreadData> data;
-
-				QueueItem qi;
-				while (queue().tryPop(qi))
-				{
-					if (qi.startTime == m && qi.endTime == m)
-						threadNames[qi.threadId] = qi.name;
 					else
 					{
-						const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
-						data[qi.threadId].events += s.c_str();
-					}
-				}
+						server = newWebsocketServer(randomRange(10000u, 65000u));
+						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port " + server->port());
 
-				std::string str = "{\"names\":[";
-				str += names.mapping();
-				str += "],\n\"threads\":[\n";
-				for (const auto &thr : data)
-				{
-					str += "{\"name\":\"";
-					str += threadNames[thr.first].c_str();
-					str += "\",\n\"events\":[";
-					str += thr.second.events;
-					str += "[]\n]},\n";
-				}
-				str += "{}\n]}";
-
-				connection->write(str);
-			}
-
-			void updateConnecting()
-			{
-				if (server)
-				{
-					connection = server->accept();
-					if (connection)
-					{
-						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + connection->address() + ":" + connection->port());
-						server.clear();
-					}
-				}
-				else
-				{
-					server = newWebsocketServer(randomRange(10000u, 65000u));
-					CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port " + server->port());
-
-					if (confAutoStartClient)
-					{
-						try
+						if (confAutoStartClient)
 						{
-							writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
-							const String baseUrl = pathWorkingDir() + "/profiling.htm";
-							const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
-							ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
-							cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
-							client = newProcess(cfg);
-						}
-						catch (const cage::Exception &)
-						{
-							CAGE_LOG(SeverityEnum::Warning, "profiling", "failed to automatically launch profiling client");
+							try
+							{
+								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
+								const String baseUrl = pathWorkingDir() + "/profiling.htm";
+								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
+								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
+								cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
+								client = newProcess(cfg);
+							}
+							catch (const cage::Exception &)
+							{
+								CAGE_LOG(SeverityEnum::Warning, "profiling", "failed to automatically launch profiling client");
+							}
 						}
 					}
+					eraseQueue();
 				}
-				eraseQueue();
-			}
 
-			void updateDisabled()
-			{
-				server.clear();
-				connection.clear();
-				client.clear();
-				eraseQueue();
-			}
+				void updateDisabled()
+				{
+					server.clear();
+					connection.clear();
+					client.clear();
+					eraseQueue();
+				}
 
-			void threadEntry()
-			{
-				try
+				void run()
 				{
 					while (!queue().stopped())
 					{
@@ -238,6 +246,15 @@ namespace cage
 						}
 					}
 				}
+			};
+
+			void threadEntry()
+			{
+				try
+				{
+					Runner runner;
+					runner.run();
+				}
 				catch (...)
 				{
 					// nothing
@@ -247,7 +264,10 @@ namespace cage
 			~Dispatcher()
 			{
 				queue().terminate();
+				thread.clear();
 			}
+
+			Holder<Thread> thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
 		} dispatcher;
 	}
 
@@ -258,7 +278,7 @@ namespace cage
 			QueueItem qi;
 			qi.name = currentThreadName();
 			qi.threadId = currentThreadId();
-			qi.startTime = qi.endTime = m;
+			qi.startTime = qi.endTime = ThreadNameSpecifier;
 			queue().push(qi);
 		}
 		catch (...)
@@ -281,17 +301,17 @@ namespace cage
 	{
 		if (ev.startTime == m)
 			return;
-		if (!confEnabled)
-			return;
-		QueueItem qi;
-		qi.name = ev.name;
-		qi.category = ev.category;
-		qi.startTime = ev.startTime;
-		qi.endTime = timestamp();
-		qi.threadId = currentThreadId();
-		qi.framing = ev.framing;
 		try
 		{
+			if (!confEnabled)
+				return;
+			QueueItem qi;
+			qi.name = ev.name;
+			qi.category = ev.category;
+			qi.startTime = ev.startTime;
+			qi.endTime = timestamp();
+			qi.threadId = currentThreadId();
+			qi.framing = ev.framing;
 			queue().push(qi);
 		}
 		catch (...)
