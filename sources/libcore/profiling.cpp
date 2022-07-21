@@ -3,271 +3,330 @@
 #include <cage-core/profiling.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/networkWebsocket.h>
+#include <cage-core/process.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
+#include <cage-core/math.h>
+#include <cage-core/string.h>
+#include <cage-core/stdHash.h>
 
 #include <atomic>
+#include <vector>
+#include <string>
+#include <unordered_map>
+
+cage::PointerRange<const cage::uint8> profiling_htm();
 
 namespace cage
 {
-	Holder<File> realNewFile(const String &path, const FileMode &mode);
-	void realTryFlushFile(File *f);
-
 	namespace
 	{
-		ConfigBool cnfEnabled("cage/profiling/enabled", false);
-		std::atomic<uint64> nextEventId = 1;
+#ifdef CAGE_SYSTEM_WINDOWS
+		constexpr String DefaultBrowser = "\"C:/Program Files/Mozilla Firefox/firefox.exe\" --new-window";
+#else
+		constexpr String DefaultBrowser = "firefox";
+#endif // CAGE_SYSTEM_WINDOWS
 
-		using EventsQueue = ConcurrentQueue<String>;
-		EventsQueue &eventsQueue()
+		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
+
+		ConfigBool confEnabled("cage/profiling/enabled", false);
+		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
+		const ConfigString confBrowser("cage/profiling/browser", DefaultBrowser);
+
+		uint64 timestamp() noexcept
 		{
-			static EventsQueue *q = new EventsQueue(); // intentional leek
+			try
+			{
+				// ensures that all timestamps are unique
+				static std::atomic<uint64> atom = 0;
+				uint64 newv = applicationTime();
+				uint64 oldv = atom.load();
+				do
+				{
+					if (oldv >= newv)
+						newv = oldv + 1;
+				} while (!atom.compare_exchange_weak(oldv, newv));
+				return newv;
+			}
+			catch (...)
+			{
+				return m;
+			}
+		}
+
+		struct QueueItem
+		{
+			String name;
+			StringLiteral category;
+			uint64 startTime = 0;
+			uint64 endTime = 0;
+			uint64 threadId = 0;
+			bool framing = false;
+		};
+
+		using QueueType = ConcurrentQueue<QueueItem>;
+
+		QueueType &queue()
+		{
+			static QueueType *q = new QueueType(); // intentional memory leak
 			return *q;
 		}
 
-		struct Profiling : private Immovable
+		struct Dispatcher
 		{
-			void writerEntry()
+			struct Runner
 			{
-				try
+				std::unordered_map<uint64, String> threadNames;
+				Holder<WebsocketServer> server;
+				Holder<WebsocketConnection> connection;
+				Holder<Process> client;
+
+				void eraseQueue()
 				{
-					while (!stopping)
+					QueueItem qi;
+					while (queue().tryPop(qi))
 					{
-						String evt;
-						eventsQueue().pop(evt);
-						if (evt.empty())
+						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
+							threadNames[qi.threadId] = qi.name;
+					}
+				}
+
+				void updateConnected()
+				{
+					struct NamesMap
+					{
+						std::unordered_map<String, uint32> data;
+						uint32 next = 0;
+
+						uint32 index(const String &name)
 						{
-							realTryFlushFile(+file);
+							const auto it = data.find(name);
+							if (it != data.end()) [[likely]]
+								return it->second;
+							return data[name] = next++;
 						}
+
+						uint32 index(StringLiteral name)
+						{
+							return index(String(name));
+						}
+
+						std::string mapping() const
+						{
+							std::vector<const String *> v;
+							v.resize(data.size());
+							for (const auto &it : data)
+								v[it.second] = &it.first;
+
+							std::string str;
+							str.reserve(v.size() * 100);
+							for (const auto &n : v)
+								str += (Stringizer() + "\"" + *n + "\",\n ").value.c_str();
+							return str + "\"\"";
+						}
+
+						NamesMap()
+						{
+							data.reserve(200);
+						}
+					} names;
+
+					struct ThreadData
+					{
+						std::string events;
+
+						ThreadData()
+						{
+							events.reserve(50000);
+						}
+					};
+					std::unordered_map<uint64, ThreadData> data;
+
+					QueueItem qi;
+					while (queue().tryPop(qi))
+					{
+						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
+							threadNames[qi.threadId] = qi.name;
 						else
 						{
-							if (!file)
+							const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
+							data[qi.threadId].events += s.c_str();
+						}
+					}
+
+					std::string str = "{\"names\":[";
+					str += names.mapping();
+					str += "],\n\"threads\":[\n";
+					for (const auto &thr : data)
+					{
+						str += "{\"name\":\"";
+						str += threadNames[thr.first].c_str();
+						str += "\",\n\"events\":[";
+						str += thr.second.events;
+						str += "[]\n]},\n";
+					}
+					str += "{}\n]}";
+
+					connection->write(str);
+				}
+
+				void updateConnecting()
+				{
+					if (server)
+					{
+						connection = server->accept();
+						if (connection)
+						{
+							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + connection->address() + ":" + connection->port());
+							server.clear();
+						}
+					}
+					else
+					{
+						server = newWebsocketServer(randomRange(10000u, 65000u));
+						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port " + server->port());
+
+						if (confAutoStartClient)
+						{
+							try
 							{
-								const String exe = detail::executableFullPathNoExe();
-								const String filename = Stringizer() + pathExtractDirectory(exe) + "/profiling/" + pathExtractFilename(exe) + "_" + currentProcessId() + ".json";
-								file = realNewFile(filename, FileMode(false, true));
-								file->writeLine("[");
+								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
+								const String baseUrl = pathWorkingDir() + "/profiling.htm";
+								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
+								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
+								cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
+								client = newProcess(cfg);
 							}
-							file->writeLine(evt);
+							catch (const cage::Exception &)
+							{
+								CAGE_LOG(SeverityEnum::Warning, "profiling", "failed to automatically launch profiling client");
+							}
+						}
+					}
+					eraseQueue();
+				}
+
+				void updateDisabled()
+				{
+					server.clear();
+					connection.clear();
+					client.clear();
+					eraseQueue();
+				}
+
+				void run()
+				{
+					while (!queue().stopped())
+					{
+						const bool enabled = confEnabled;
+						try
+						{
+							if (enabled)
+							{
+								if (connection)
+									updateConnected();
+								else
+									updateConnecting();
+								threadSleep(50000);
+							}
+							else
+							{
+								updateDisabled();
+								threadSleep(200000);
+							}
+						}
+						catch (...)
+						{
+							if (enabled)
+							{
+								confEnabled = false;
+								CAGE_LOG(SeverityEnum::Warning, "profiling", "disabling profiling due to error");
+							}
 						}
 					}
 				}
-				catch (...)
-				{
-					stopping = true;
-				}
-			}
+			};
 
-			void tickerEntry()
+			void threadEntry()
 			{
 				try
 				{
-					while (!stopping)
-					{
-						eventsQueue().push("");
-						threadSleep(20000);
-					}
+					Runner runner;
+					runner.run();
 				}
 				catch (...)
 				{
-					stopping = true;
+					// nothing
 				}
 			}
 
-			Profiling()
+			~Dispatcher()
 			{
-				thrWriter = newThread(Delegate<void()>().bind<Profiling, &Profiling::writerEntry>(this), "profiling writer");
-				thrTicker = newThread(Delegate<void()>().bind<Profiling, &Profiling::tickerEntry>(this), "profiling ticker");
+				queue().terminate();
+				thread.clear();
 			}
 
-			~Profiling()
-			{
-				stopping = true;
-				eventsQueue().push("");
-			}
-
-			std::atomic<bool> stopping = false;
-			Holder<File> file;
-			Holder<Thread> thrWriter;
-			Holder<Thread> thrTicker;
-		};
-
-		void enqueueEvent(const String &data)
-		{
-			eventsQueue().push(Stringizer() + "{" + data + "\"pid\":0},");
-		}
-
-		void addEvent(const String &data)
-		{
-			enqueueEvent(data);
-			static Profiling profiling; // initialize threads
-		}
-
-		CAGE_FORCE_INLINE String quote(StringLiteral s)
-		{
-			return Stringizer() + "\"" + (s ? String(s) : String()) + "\"";
-		}
-		CAGE_FORCE_INLINE String quote(const String &s)
-		{
-			return Stringizer() + "\"" + s + "\"";
-		}
-		CAGE_FORCE_INLINE String keyval(StringLiteral k, StringLiteral v)
-		{
-			return Stringizer() + quote(k) + ":" + quote(v) + ", ";
-		}
-		CAGE_FORCE_INLINE String keyval(StringLiteral k, const String &v)
-		{
-			return Stringizer() + quote(k) + ":" + quote(v) + ", ";
-		}
-		CAGE_FORCE_INLINE String keyval(StringLiteral k, uint64 v)
-		{
-			return Stringizer() + quote(k) + ":" + v + ", ";
-		}
-		CAGE_FORCE_INLINE String args(const String &json)
-		{
-			if (json.empty())
-				return {};
-			return Stringizer() + quote(StringLiteral("args")) + ": {" + json + "}, ";
-		}
-
-		uint64 timestamp()
-		{
-			// ensures that all timestamps within a thread are unique
-			thread_local uint64 last = 0;
-			const uint64 current = applicationTime();
-			last = last >= current ? last + 1 : current;
-			return last;
-		}
+			Holder<Thread> thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
+		} dispatcher;
 	}
 
-	ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, ProfilingTypeEnum type) noexcept
+	void profilingThreadName() noexcept
 	{
-		if (type == ProfilingTypeEnum::Invalid)
-			return {};
 		try
 		{
-			if (!cnfEnabled)
-				return {};
-			ProfilingEvent ev;
-			ev.name = name;
-			ev.category = category;
-			ev.eventId = nextEventId++;
-			ev.type = type;
-			Stringizer s;
-			s + keyval("name", name);
-			s + keyval("cat", category);
-			static constexpr StringLiteral phs[] = { "", "B", "b", "s", "N" };
-			s + keyval("ph", phs[(int)ev.type]);
-			s + keyval("ts", timestamp());
-			s + keyval("tid", currentThreadId());
-			s + keyval("id", ev.eventId);
-			addEvent(s);
-			return ev;
+			QueueItem qi;
+			qi.name = currentThreadName();
+			qi.threadId = currentThreadId();
+			qi.startTime = qi.endTime = ThreadNameSpecifier;
+			queue().push(qi);
 		}
 		catch (...)
 		{
-			return {};
+			// nothing
 		}
 	}
 
-	void profilingEventSnapshot(const ProfilingEvent &ev, const String &jsonParams) noexcept
+	ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, bool framing) noexcept
 	{
-		if (ev.type == ProfilingTypeEnum::Invalid)
+		ProfilingEvent ev;
+		ev.name = name;
+		ev.category = category;
+		ev.startTime = timestamp();
+		ev.framing = framing;
+		return ev;
+	}
+
+	void profilingEventEnd(ProfilingEvent &ev) noexcept
+	{
+		if (ev.startTime == m)
 			return;
 		try
 		{
-			if (!cnfEnabled)
+			if (!confEnabled)
 				return;
-			Stringizer s;
-			s + keyval("name", ev.name);
-			s + keyval("cat", ev.category);
-			static constexpr StringLiteral phs[] = { "", "i", "n", "t", "O" };
-			s + keyval("ph", phs[(int)ev.type]);
-			s + keyval("ts", timestamp());
-			s + keyval("tid", currentThreadId());
-			s + keyval("id", ev.eventId);
-			s + args(jsonParams);
-			addEvent(s);
+			QueueItem qi;
+			qi.name = ev.name;
+			qi.category = ev.category;
+			qi.startTime = ev.startTime;
+			qi.endTime = timestamp();
+			qi.threadId = currentThreadId();
+			qi.framing = ev.framing;
+			queue().push(qi);
 		}
 		catch (...)
 		{
 			// nothing
 		}
-	}
-
-	void profilingEventEnd(const ProfilingEvent &ev, const String &jsonParams) noexcept
-	{
-		if (ev.type == ProfilingTypeEnum::Invalid)
-			return;
-		try
-		{
-			Stringizer s;
-			s + keyval("name", ev.name);
-			s + keyval("cat", ev.category);
-			static constexpr StringLiteral phs[] = { "", "E", "e", "f", "D" };
-			s + keyval("ph", phs[(int)ev.type]);
-			s + keyval("ts", timestamp());
-			s + keyval("tid", currentThreadId());
-			s + keyval("id", ev.eventId);
-			s + args(jsonParams);
-			addEvent(s);
-		}
-		catch (...)
-		{
-			// nothing
-		}
-	}
-
-	void profilingMarker(const String &name, StringLiteral category, bool global) noexcept
-	{
-		try
-		{
-			if (!cnfEnabled)
-				return;
-			Stringizer s;
-			s + keyval("name", name);
-			s + keyval("cat", category);
-			s + keyval("ph", StringLiteral("i"));
-			s + keyval("ts", timestamp());
-			s + keyval("tid", currentThreadId());
-			if (global)
-				s + keyval("s", StringLiteral("g"));
-			addEvent(s);
-		}
-		catch (...)
-		{
-			// nothing
-		}
-	}
-
-	void profilingEvent(uint64 duration, const String &name, StringLiteral category, const String &jsonParams) noexcept
-	{
-		try
-		{
-			if (!cnfEnabled)
-				return;
-			Stringizer s;
-			s + keyval("name", name);
-			s + keyval("cat", category);
-			s + keyval("ph", StringLiteral("X"));
-			s + keyval("ts", timestamp() - duration);
-			s + keyval("tid", currentThreadId());
-			s + keyval("dur", duration);
-			s + args(jsonParams);
-			addEvent(s);
-		}
-		catch (...)
-		{
-			// nothing
-		}
+		ev.startTime = m;
 	}
 
 	ProfilingScope::ProfilingScope() noexcept
 	{}
 
-	ProfilingScope::ProfilingScope(const String &name, StringLiteral category, ProfilingTypeEnum type) noexcept
+	ProfilingScope::ProfilingScope(const String &name, StringLiteral category, bool framing) noexcept
 	{
-		event = profilingEventBegin(name, category, type);
+		event = profilingEventBegin(name, category, framing);
 	}
 
 	ProfilingScope::ProfilingScope(ProfilingScope &&other) noexcept
@@ -286,45 +345,6 @@ namespace cage
 	ProfilingScope::~ProfilingScope() noexcept
 	{
 		profilingEventEnd(event);
-	}
-
-	void ProfilingScope::snapshot(const String &jsonParams) noexcept
-	{
-		profilingEventSnapshot(event, jsonParams);
-	}
-
-	void profilingThreadName(const String &name) noexcept
-	{
-		try
-		{
-			Stringizer s;
-			s + keyval("name", StringLiteral("thread_name"));
-			s + keyval("ph", StringLiteral("M"));
-			s + keyval("tid", currentThreadId());
-			s + args(Stringizer() + "\"name\": \"" + name + "\"");
-			enqueueEvent(s); // insert into the queue without initializing the profiling threads
-		}
-		catch (...)
-		{
-			// nothing
-		}
-	}
-
-	void profilingThreadOrder(sint32 order) noexcept
-	{
-		try
-		{
-			Stringizer s;
-			s + keyval("name", StringLiteral("thread_sort_index"));
-			s + keyval("ph", StringLiteral("M"));
-			s + keyval("tid", currentThreadId());
-			s + args(Stringizer() + "\"sort_index\": " + order);
-			enqueueEvent(s); // insert into the queue without initializing the profiling threads
-		}
-		catch (...)
-		{
-			// nothing
-		}
 	}
 }
 

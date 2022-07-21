@@ -6,12 +6,15 @@
 #include <cage-core/systemInformation.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-#include <cage-core/profiling.h>
 
 #include <cstdio>
 #include <exception>
 #include <chrono>
 #include <ctime>
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "incWin.h" // SetConsoleCP
+#endif
 
 namespace cage
 {
@@ -85,6 +88,11 @@ namespace cage
 			public:
 				GlobalLogger()
 				{
+#ifdef CAGE_SYSTEM_WINDOWS
+					SetConsoleCP(CP_UTF8);
+					SetConsoleOutputCP(CP_UTF8);
+#endif
+
 					if (detail::isDebugging())
 					{
 						loggerDebug = newLogger();
@@ -394,7 +402,6 @@ namespace cage
 				}
 
 				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
-				profilingThreadOrder(-1000);
 			}
 
 			~InitialLog()
