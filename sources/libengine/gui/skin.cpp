@@ -75,7 +75,7 @@ namespace cage
 		};
 	}
 
-	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/texture/gui.psd"))
+	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/texture/gui.png"))
 	{
 		std::vector<GuiElementTypeEnum> largeElements = {
 			GuiElementTypeEnum::PanelBase, // overlaps SpoilerBase

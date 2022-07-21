@@ -1,7 +1,10 @@
 
 []
 scheme = texture
-gui.psd
+premultiplyAlpha = true
+srgb = true
+gamma = true
+gui.png
 
 []
 scheme = texture

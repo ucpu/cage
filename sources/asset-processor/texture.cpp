@@ -94,7 +94,7 @@ namespace
 
 	uint32 findInternalFormatForRaw(const TextureHeader &data)
 	{
-		if (toBool(properties("srgb")))
+		if (any(data.flags & TextureFlags::Srgb))
 		{
 			switch (data.channels)
 			{
@@ -376,7 +376,7 @@ namespace
 		data.mipmapLevels = data.containedLevels;
 		if (toBool(properties("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
-		if (toBool(properties("srgb")))
+		if (toBool(properties("srgb")) && !toBool(properties("gamma")))
 			data.flags |= TextureFlags::Srgb;
 		data.animationDuration = toUint64(properties("animationDuration"));
 		data.copyType = GL_UNSIGNED_BYTE;
@@ -438,6 +438,8 @@ void processTexture()
 			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
 		if (cc && properties("target") != "cubeMap")
 			CAGE_THROW_ERROR(Exception, "convert skyboxToCube requires target to be cubeMap");
+		if (toBool(properties("gamma")) && !s)
+			CAGE_THROW_ERROR(Exception, "sampling in gamma requires srgb color space");
 	}
 
 	loadAllFiles();
@@ -513,7 +515,7 @@ void processTexture()
 			for (auto &it : images.parts)
 				imageConvert(+it.image, GammaSpaceEnum::Linear);
 			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to linear space without alpha");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to linear space (with alpha mode: none)");
 		}
 	}
 

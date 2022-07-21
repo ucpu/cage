@@ -38,10 +38,10 @@ namespace cage
 {
 	namespace
 	{
-		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
-		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
-		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
-		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
+		const ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
+		const ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
+		const ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
+		const ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
 		struct UniMesh
 		{

@@ -27,7 +27,7 @@ namespace cage
 {
 	namespace
 	{
-		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
+		const ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
 
 		struct EmitBuffer : private Immovable
 		{
