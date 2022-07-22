@@ -13,26 +13,33 @@
 
 namespace cage
 {
+	struct ProfilingFrameTag
+	{};
+
 	struct ProfilingEvent
 	{
 #ifdef CAGE_PROFILING_ENABLED
-		String name;
-		StringLiteral category;
+		String data;
+		StringLiteral name;
 		uint64 startTime = m;
 		bool framing = false;
 #endif
+		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
 	};
 
-	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, bool framing = false) noexcept GCHL_PROFILING_BODY(return {};);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringLiteral name) noexcept GCHL_PROFILING_BODY(return {};);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringLiteral name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(return {};);
 	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) noexcept GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{
 		[[nodiscard]] GCHL_PROFILING_API ProfilingScope() noexcept GCHL_PROFILING_BODY(;); // empty/invalid scope
-		[[nodiscard]] GCHL_PROFILING_API ProfilingScope(const String &name, StringLiteral category, bool framing = false) noexcept GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringLiteral name) noexcept GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringLiteral name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope &operator = (ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
 		GCHL_PROFILING_API ~ProfilingScope() noexcept GCHL_PROFILING_BODY(;);
+		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
 
 	private:
 #ifdef CAGE_PROFILING_ENABLED

@@ -221,7 +221,7 @@ namespace cage
 				}
 
 				{
-					ProfilingScope profiling("prepare", "sound");
+					ProfilingScope profiling("sound prepare");
 					emitRead = &emitBuffers[lock.index()];
 					ClearOnScopeExit resetEmitRead(emitRead);
 					emitTime = emitRead->time;
@@ -231,7 +231,7 @@ namespace cage
 				}
 
 				{
-					ProfilingScope profiling("speaker", "sound");
+					ProfilingScope profiling("speaker");
 					engineSpeaker()->process(dispatchTime);
 				}
 			}

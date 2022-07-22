@@ -47,7 +47,7 @@ namespace cage
 		{
 			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(+unlock)
 			{
-				ProfilingScope profiling("semaphore waiting", "gameloop");
+				ProfilingScope profiling("semaphore waiting");
 				lock->lock();
 			}
 
@@ -160,14 +160,14 @@ namespace cage
 
 			void graphicsPrepareStep()
 			{
-				ProfilingScope profiling("graphics prepare", "gameloop", true);
+				ProfilingScope profiling("graphics prepare", ProfilingFrameTag());
 				{
-					ProfilingScope profiling("graphics prepare callback", "gameloop");
+					ProfilingScope profiling("graphics prepare callback");
 					graphicsPrepareThread().prepare.dispatch();
 				}
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-					ProfilingScope profiling("graphics prepare run", "gameloop");
+					ProfilingScope profiling("graphics prepare run");
 					ScopedTimer timing(profilingBufferGraphicsPrepare);
 					uint32 drawCalls = 0, drawPrimitives = 0;
 					graphicsPrepare(applicationTime(), drawCalls, drawPrimitives);
@@ -202,35 +202,35 @@ namespace cage
 
 			void graphicsDispatchStep()
 			{
-				ProfilingScope profiling("graphics dispatch", "gameloop", true);
+				ProfilingScope profiling("graphics dispatch", ProfilingFrameTag());
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
-					ProfilingScope profiling("graphics dispatch callback", "gameloop");
+					ProfilingScope profiling("graphics dispatch callback");
 					graphicsDispatchThread().dispatch.dispatch();
 				}
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
-					ProfilingScope profiling("graphics dispatch run", "gameloop");
+					ProfilingScope profiling("graphics dispatch run");
 					ScopedTimer timing(profilingBufferGraphicsDispatch);
 					graphicsDispatch();
 				}
 				{
-					ProfilingScope profiling("render gui", "gameloop");
+					ProfilingScope profiling("render gui");
 					Holder<RenderQueue> grq = guiRenderQueue.get();
 					if (grq)
 						grq->dispatch();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				{
-					ProfilingScope profiling("graphics assets", "gameloop");
+					ProfilingScope profiling("graphics assets");
 					while (assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex));
 				}
 				{
-					ProfilingScope profiling("swap callback", "gameloop");
+					ProfilingScope profiling("swap callback");
 					graphicsDispatchThread().swap.dispatch();
 				}
 				{
-					ProfilingScope profiling("swap", "gameloop");
+					ProfilingScope profiling("swap");
 					graphicsSwap();
 				}
 			}
@@ -263,18 +263,18 @@ namespace cage
 
 			void soundUpdate()
 			{
-				ProfilingScope profiling("sound", "gameloop", true);
+				ProfilingScope profiling("sound", ProfilingFrameTag());
 				if (stopping)
 				{
 					soundScheduler->stop();
 					return;
 				}
 				{
-					ProfilingScope profiling("sound callback", "gameloop");
+					ProfilingScope profiling("sound callback");
 					soundThread().sound.dispatch();
 				}
 				{
-					ProfilingScope profiling("sound run", "gameloop");
+					ProfilingScope profiling("sound run");
 					soundTick(soundUpdateSchedule->time());
 				}
 			}
@@ -310,26 +310,26 @@ namespace cage
 
 			void controlInputs()
 			{
-				ProfilingScope profiling("inputs", "gameloop");
+				ProfilingScope profiling("inputs");
 				{
-					ProfilingScope profiling("gui prepare", "gameloop");
+					ProfilingScope profiling("gui prepare");
 					gui->outputResolution(window->resolution());
 					gui->outputRetina(window->contentScaling());
 					gui->prepare();
 				}
 				{
-					ProfilingScope profiling("window events", "gameloop");
+					ProfilingScope profiling("window events");
 					window->processEvents();
 				}
 				{
-					ProfilingScope profiling("gui finish", "gameloop");
+					ProfilingScope profiling("gui finish");
 					guiRenderQueue.assign(gui->finish());
 				}
 			}
 
 			void controlUpdate()
 			{
-				ProfilingScope profiling("control update", "gameloop", true);
+				ProfilingScope profiling("control update", ProfilingFrameTag());
 				if (stopping)
 				{
 					controlScheduler->stop();
@@ -337,19 +337,19 @@ namespace cage
 				}
 				controlTime = controlUpdateSchedule->time();
 				{
-					ProfilingScope profiling("update history components", "gameloop");
+					ProfilingScope profiling("update history components");
 					updateHistoryComponents();
 				}
 				{
-					ProfilingScope profiling("control callback", "gameloop");
+					ProfilingScope profiling("control callback");
 					controlThread().update.dispatch();
 				}
 				{
-					ProfilingScope profiling("sound emit", "gameloop");
+					ProfilingScope profiling("sound emit");
 					soundEmit(controlTime);
 				}
 				{
-					ProfilingScope profiling("graphics emit", "gameloop");
+					ProfilingScope profiling("graphics emit");
 					graphicsEmit(controlTime);
 				}
 				profilingBufferEntities.add(entities->group()->count());

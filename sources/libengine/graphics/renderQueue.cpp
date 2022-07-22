@@ -90,7 +90,7 @@ namespace cage
 
 			void resetQueue()
 			{
-				ProfilingScope profiling("queue reset", "render queue");
+				ProfilingScope profiling("queue reset");
 				for (const auto &it1 : cmdsAllocs)
 					for (CmdBase *it2 : it1)
 						arena->destroy<CmdBase>(it2);
@@ -117,7 +117,7 @@ namespace cage
 				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
 				if (uubStaging.size() > 0)
 				{
-					ProfilingScope profiling("UUB upload", "render queue");
+					ProfilingScope profiling("UUB upload");
 					if (provisionalGraphics)
 					{
 						uub = provisionalGraphics->uniformBuffer(Stringizer() + "UUB_" + queueName)->resolve();
@@ -238,7 +238,7 @@ namespace cage
 			void pushNamedScope(StringLiteral name)
 			{
 #ifdef CAGE_PROFILING_ENABLED
-				profilingStack.push_back(profilingEventBegin(String(name), "render queue"));
+				profilingStack.push_back(profilingEventBegin(name));
 #endif // CAGE_PROFILING_ENABLED
 
 				struct Cmd : public CmdBase
@@ -250,7 +250,7 @@ namespace cage
 						impl->namesStack.push_back(name);
 #endif // CAGE_DEBUG
 #ifdef CAGE_PROFILING_ENABLED
-						impl->profilingStack.push_back(profilingEventBegin(String(name), "render queue"));
+						impl->profilingStack.push_back(profilingEventBegin(name));
 #endif // CAGE_PROFILING_ENABLED
 						glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 					}

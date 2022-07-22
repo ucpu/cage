@@ -451,7 +451,8 @@ namespace cage
 
 		void Loading::diskload()
 		{
-			ProfilingScope profiling("loading from disk", "assets manager");
+			ProfilingScope profiling("loading from disk");
+			profiling.set(asset->textName);
 			ASS_LOG(2, asset, "loading from disk");
 
 			CAGE_ASSERT(!asset->assetHolder);
@@ -512,7 +513,8 @@ namespace cage
 
 		void Loading::decompress()
 		{
-			ProfilingScope profiling("asset decompression", "assets manager");
+			ProfilingScope profiling("asset decompression");
+			profiling.set(asset->textName);
 			ASS_LOG(2, asset, "decompression");
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
@@ -531,7 +533,8 @@ namespace cage
 
 		void Loading::process()
 		{
-			ProfilingScope profiling("asset loading process", "assets manager");
+			ProfilingScope profiling("asset loading process");
+			profiling.set(asset->textName);
 			ASS_LOG(2, asset, "loading process");
 			CAGE_ASSERT(asset->scheme < impl->schemes.size());
 
@@ -601,7 +604,8 @@ namespace cage
 
 		void Unloading::process()
 		{
-			ProfilingScope profiling("asset unloading process", "assets manager");
+			ProfilingScope profiling("asset unloading process");
+			profiling.set(asset->textName);
 			ASS_LOG(2, asset, "unloading process");
 
 			asset->assetHolder.clear();

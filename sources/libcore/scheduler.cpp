@@ -159,7 +159,7 @@ namespace cage
 
 			void goSleep()
 			{
-				ProfilingScope profiling("sleep", "scheduler");
+				ProfilingScope profiling("scheduler sleep");
 				activateAllEmpty();
 				uint64 s = minimalScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
@@ -267,7 +267,7 @@ namespace cage
 	void Schedule::run()
 	{
 		ScheduleImpl *impl = (ScheduleImpl *)this;
-		ProfilingScope profiling(impl->conf.name, "scheduler");
+		ProfilingScope profiling(impl->conf.name);
 		if (!impl->conf.action)
 			return;
 		try

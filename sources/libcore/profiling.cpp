@@ -57,8 +57,8 @@ namespace cage
 
 		struct QueueItem
 		{
-			String name;
-			StringLiteral category;
+			String data;
+			StringLiteral name;
 			uint64 startTime = 0;
 			uint64 endTime = 0;
 			uint64 threadId = 0;
@@ -82,13 +82,25 @@ namespace cage
 				Holder<WebsocketConnection> connection;
 				Holder<Process> client;
 
+				static String sanitize(const String &s)
+				{
+					String r;
+					for (const char c : s)
+					{
+						if (c == '\\' || c == '"')
+							r += "\\";
+						r += String(c);
+					}
+					return r;
+				}
+
 				void eraseQueue()
 				{
 					QueueItem qi;
 					while (queue().tryPop(qi))
 					{
 						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
-							threadNames[qi.threadId] = qi.name;
+							threadNames[qi.threadId] = qi.data;
 					}
 				}
 
@@ -122,7 +134,7 @@ namespace cage
 							std::string str;
 							str.reserve(v.size() * 100);
 							for (const auto &n : v)
-								str += (Stringizer() + "\"" + *n + "\",\n ").value.c_str();
+								str += (Stringizer() + "\"" + sanitize(*n) + "\",\n ").value.c_str();
 							return str + "\"\"";
 						}
 
@@ -147,10 +159,10 @@ namespace cage
 					while (queue().tryPop(qi))
 					{
 						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
-							threadNames[qi.threadId] = qi.name;
+							threadNames[qi.threadId] = qi.data;
 						else
 						{
-							const String s = Stringizer() + "[" + names.index(qi.name) + "," + names.index(qi.category) + "," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
+							const String s = Stringizer() + "[" + names.index(qi.name) + ",\"" + sanitize(qi.data) + "\"," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
 							data[qi.threadId].events += s.c_str();
 						}
 					}
@@ -276,7 +288,7 @@ namespace cage
 		try
 		{
 			QueueItem qi;
-			qi.name = currentThreadName();
+			qi.data = currentThreadName();
 			qi.threadId = currentThreadId();
 			qi.startTime = qi.endTime = ThreadNameSpecifier;
 			queue().push(qi);
@@ -287,13 +299,26 @@ namespace cage
 		}
 	}
 
-	ProfilingEvent profilingEventBegin(const String &name, StringLiteral category, bool framing) noexcept
+	void ProfilingEvent::set(const String &data)
+	{
+		this->data = data;
+	}
+
+	ProfilingEvent profilingEventBegin(StringLiteral name) noexcept
 	{
 		ProfilingEvent ev;
 		ev.name = name;
-		ev.category = category;
 		ev.startTime = timestamp();
-		ev.framing = framing;
+		ev.framing = false;
+		return ev;
+	}
+
+	ProfilingEvent profilingEventBegin(StringLiteral name, ProfilingFrameTag) noexcept
+	{
+		ProfilingEvent ev;
+		ev.name = name;
+		ev.startTime = timestamp();
+		ev.framing = true;
 		return ev;
 	}
 
@@ -307,7 +332,7 @@ namespace cage
 				return;
 			QueueItem qi;
 			qi.name = ev.name;
-			qi.category = ev.category;
+			qi.data = ev.data;
 			qi.startTime = ev.startTime;
 			qi.endTime = timestamp();
 			qi.threadId = currentThreadId();
@@ -324,9 +349,14 @@ namespace cage
 	ProfilingScope::ProfilingScope() noexcept
 	{}
 
-	ProfilingScope::ProfilingScope(const String &name, StringLiteral category, bool framing) noexcept
+	ProfilingScope::ProfilingScope(StringLiteral name) noexcept
 	{
-		event = profilingEventBegin(name, category, framing);
+		event = profilingEventBegin(name);
+	}
+
+	ProfilingScope::ProfilingScope(StringLiteral name, ProfilingFrameTag) noexcept
+	{
+		event = profilingEventBegin(name, ProfilingFrameTag());
 	}
 
 	ProfilingScope::ProfilingScope(ProfilingScope &&other) noexcept
@@ -345,6 +375,11 @@ namespace cage
 	ProfilingScope::~ProfilingScope() noexcept
 	{
 		profilingEventEnd(event);
+	}
+
+	void ProfilingScope::set(const String &data)
+	{
+		event.set(data);
 	}
 }
 

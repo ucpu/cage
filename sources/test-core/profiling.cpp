@@ -32,13 +32,15 @@ void testProfiling()
 
 	{
 		CAGE_TESTCASE("scope");
-		ProfilingScope profiling("profiling-scope-test", "test");
+		ProfilingScope profiling("profiling scope test");
+		profiling.set("extra description");
 		someMeaninglessWork();
 	}
 
 	{
 		CAGE_TESTCASE("separate event");
-		auto evt = profilingEventBegin("separate-event", "test");
+		auto evt = profilingEventBegin("separate event");
+		evt.set("extra description");
 		someMeaninglessWork();
 		profilingEventEnd(evt);
 	}

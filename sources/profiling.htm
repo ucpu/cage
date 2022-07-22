@@ -87,16 +87,15 @@
 					thr.events.forEach(function (d) {
 						let t = {}
 						t.name = incoming.names[d[0]]
-						t.category = incoming.names[d[1]]
+						t.description = d[1]
 						t.startTime = d[2]
 						t.endTime = d[2] + d[3]
 						dst.data.push(t)
 						if (d[4]) {
-							const fn = t.category + " / " + t.name
-							let j = data.frames.findIndex(t => t.name == fn)
+							let j = data.frames.findIndex(d => d.name == t.name)
 							if (j == -1) {
 								data.frames.push({
-									name: fn,
+									name: t.name,
 									data: [],
 									stor: {}
 								})
@@ -124,13 +123,12 @@
 				let regenerate = false
 				data.threads.forEach(function (thr) {
 					thr.data.forEach(function (d) {
-						const k = d.name + "/" + d.category
-						if (typeof colors[k] === "undefined") {
-							colors[k] = null
+						if (typeof colors[d.name] === "undefined") {
+							colors[d.name] = null
 							regenerate = true
 						}
 						else
-							d.color = colors[k]
+							d.color = colors[d.name]
 					})
 				})
 				if (regenerate) {
@@ -301,10 +299,10 @@
 					.append("text")
 					.attr("x", "50%")
 					.attr("y", "50%")
-					.text(d => d.category + " / " + d.name)
+					.text(d => d.name)
 				stor.items
 					.append("title")
-					.text(d => d.category + "\n" + d.name + "\n" + (d.endTime - d.startTime) + " us")
+					.text(d => d.name + "\n" + (d.endTime - d.startTime) + " us\n" + d.description)
 
 				stor.svg.node()
 			}
