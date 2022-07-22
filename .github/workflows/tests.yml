@@ -23,7 +23,7 @@ jobs:
         cmake --version
         git --version
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -62,8 +62,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [20, 22]
-        build-config: [debug, release]
+        os-version: [22]
+        build-config: [debug, release, relwithdebinfo]
         compiler:
         - {
             cc: gcc-11,
@@ -71,9 +71,24 @@ jobs:
             install: gcc-11 g++-11
           }
         - {
-            cc: clang,
-            cxx: clang++,
-            install: clang
+            cc: gcc-12,
+            cxx: g++-12,
+            install: gcc-12 g++-12
+          }
+        - {
+            cc: clang-12,
+            cxx: clang++-12,
+            install: clang-12
+          }
+        - {
+            cc: clang-13,
+            cxx: clang++-13,
+            install: clang-13
+          }
+        - {
+            cc: clang-14,
+            cxx: clang++-14,
+            install: clang-14
           }
 
     steps:
@@ -89,7 +104,7 @@ jobs:
         ${{ matrix.compiler.cxx }} --version
         git --version
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -137,10 +152,6 @@ jobs:
             name: address,
             flags: -fsanitize=address -fno-omit-frame-pointer
           }
-        #- {
-        #    name: memory,
-        #    flags: -fsanitize=memory -fno-omit-frame-pointer
-        #  }
         - {
             name: thread,
             flags: -fsanitize=thread -fno-omit-frame-pointer
@@ -155,10 +166,11 @@ jobs:
     - name: Versions
       run: |
         cmake --version
+        clang --version
         clang++ --version
         git --version
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
@@ -176,5 +188,41 @@ jobs:
     - name: Tests
       run: |
         cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
+
+
+  NoProfiler:
+    name: no-profiler
+    runs-on: ubuntu-latest
+    env:
+      CC: clang
+      CXX: clang++
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev nasm
+
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=DEBUG -Dcage_profiling_enabled=OFF ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --target cage-test-core -- -j3
+
+    - name: Tests
+      run: |
+        cd build/result/debug
         ./cage-test-core
 
