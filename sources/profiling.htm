@@ -252,7 +252,7 @@
 
 				function resetAxes() {
 					stor.x.domain(filteredDomain).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
-					stor.y.domain([-1, filtered.depth]).range([0, stor.height])
+					stor.y.domain([-1, filtered.depth + 1]).range([0, stor.height])
 					stor.axis.call(d3.axisBottom().scale(stor.x))
 				}
 
@@ -282,7 +282,7 @@
 				}
 
 				stor.width = d3.select("body").node().getBoundingClientRect().width
-				stor.height = (filtered.depth + 1) * 20
+				stor.height = (filtered.depth + 2) * 18
 				stor.svg.attr("height", stor.height)
 				resetAxes()
 
