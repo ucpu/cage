@@ -1,7 +1,5 @@
 Cage is game engine/framework designed for programmers with focus on dynamic games and procedural content generation.
 
-It started as a hobby/learning project, but has become fairly feature rich and mature over the years.
-
 # Features
 
 ## Designed for programmers
@@ -34,7 +32,7 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 ## Degrid
 
 ![Degrid](https://raw.githubusercontent.com/ucpu/degrid/master/screenshots/3.png)
-[Degrid](https://github.com/ucpu/degrid) - simple but mostly complete game with birds-eye-view of a spaceship fighting against hundreds of geometrical enemies.
+[Degrid](https://github.com/ucpu/degrid) - simple and mostly complete game with birds-eye-view of a spaceship fighting against hundreds of geometrical enemies.
 
 ## Cragsman
 
@@ -56,9 +54,9 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 ## Core library
 
 - Framework stuff (strings, logging, configuration, events)
-- Operating system abstraction (memory, filesystems, threading, networks)
+- Operating system abstraction (memory, filesystem, threading, networks)
 - GLSL-like math and geometry primitives
-- Image, triangle meshes and sounds en/decoding and algorithms
+- Image, triangle meshes, and sounds en/decoding and algorithms
 - Entity + components framework
 - Assets management
 - Extensive tests
@@ -76,6 +74,10 @@ It started as a hobby/learning project, but has become fairly feature rich and m
   - depth of field
   - ssao
   - fxaa
+- Pipeline-like processing using multiple threads
+  - *50 000 objects* at 30 fps (cpu-bound)
+  - All objects go through automatic instancing
+- Automatic shadowmaps
 - Sound
 - Gui
 
@@ -83,10 +85,11 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 
 - Provides simpler interface for typical games
 - Gameloop and timing
-- Pipeline-like processing using multiple threads
-  - *50 000 objects* at 30 fps (cpu-bound)
-  - All objects goes through automatic instancing
-- Automatic shadowmaps
+- Single globally accessible instance of window, gui, and scene
+- Small utilities:
+  - Fps camera controller
+  - Fullscreen switcher
+  - Statistics gui
 
 ## Tools
 
