@@ -60,29 +60,29 @@
 		<div id="frames"></div>
 		<div id="tasks"></div>
 		<script>
-			const data = { threads: [], frames: [] }
+			const threads = {}
+			const frames = {}
 			const colors = {}
 			const zoom = d3.zoom()
 			let zoomTrans = null
 			let paused = false
 			let uniqueCounter = 1
+			let startTime = 0
+			let endTime = 0
 			let filteredDomain = [0, 0]
 
 			d3.select("#pauseButton").on("click", d => paused = !paused )
 
-			function mergeData(data, incoming) {
-				incoming.threads.pop()
-				incoming.threads.forEach(function (thr) {
-					let i = data.threads.findIndex(t => t.name == thr.name)
-					if (i == -1) {
-						data.threads.push({
+			function mergeData(incoming) {
+				for (const [idx, thr] of Object.entries(incoming.threads)) {
+					if (typeof threads[idx] === "undefined") {
+						threads[idx] = {
 							name: thr.name,
 							data: [],
 							stor: {}
-						})
-						i = data.threads.length - 1
+						}
 					}
-					const dst = data.threads[i]
+					const dst = threads[idx]
 					thr.events.pop()
 					thr.events.forEach(function (d) {
 						let t = {}
@@ -92,36 +92,33 @@
 						t.endTime = d[2] + d[3]
 						dst.data.push(t)
 						if (d[4]) {
-							let j = data.frames.findIndex(d => d.name == t.name)
-							if (j == -1) {
-								data.frames.push({
+							if (typeof frames[t.name] === "undefined") {
+								frames[t.name] = {
 									name: t.name,
 									data: [],
 									stor: {}
-								})
-								j = data.frames.length - 1
+								}
 							}
-							const dstf = data.frames[j]
-							dstf.data.push(t)
+							frames[t.name].data.push(t)
 						}
 					})
-				})
+				}
 			}
 
-			function clearOldData(data) {
-				data.endTime = d3.max(data.threads, thr => d3.max(thr.data, d => d.endTime))
-				data.startTime = data.endTime - 3000000;
-				data.threads.forEach(function (thr) {
-					thr.data = thr.data.filter(d => d.endTime > data.startTime)
-				})
-				data.frames.forEach(function (frm) {
-					frm.data = frm.data.filter(d => d.endTime > data.startTime)
-				})
+			function removeOldData() {
+				endTime = d3.max(Object.values(threads), thr => d3.max(thr.data, d => d.endTime))
+				startTime = endTime - 3000000;
+				for (const thr of Object.values(threads)) {
+					thr.data = thr.data.filter(d => d.endTime > startTime)
+				}
+				for (const frm of Object.values(frames)) {
+					frm.data = frm.data.filter(d => d.endTime > startTime)
+				}
 			}
 
-			function assignColors(data) {
+			function assignColors() {
 				let regenerate = false
-				data.threads.forEach(function (thr) {
+				for (const thr of Object.values(threads)) {
 					thr.data.forEach(function (d) {
 						if (typeof colors[d.name] === "undefined") {
 							colors[d.name] = null
@@ -130,13 +127,13 @@
 						else
 							d.color = colors[d.name]
 					})
-				})
+				}
 				if (regenerate) {
 					const step = 1.0 / Object.keys(colors).length
 					Object.keys(colors).forEach(function(key, index) {
 						colors[key] = d3.interpolateSinebow(index * step)
 					})
-					assignColors(data, colors)
+					assignColors()
 				}
 			}
 
@@ -183,7 +180,9 @@
 				return filtered
 			}
 
-			function framesRedraw(frm, stor) {
+			function framesRedraw(frm) {
+				const stor = frm.stor
+
 				function positions(selection) {
 					selection
 						.attr("x", d => stor.x(d.prevTime))
@@ -198,9 +197,9 @@
 					let c = (d.endTime + d.prevTime) / 2
 					let r = d.endTime - d.prevTime
 					filteredDomain = [ c - r, c + r ]
-					data.threads.forEach(function (thr) {
-						tasksRedraw(thr, thr.stor)
-					})
+					for (const thr of Object.values(threads)) {
+						tasksRedraw(thr)
+					}
 				}
 
 				if (typeof stor["div"] === "undefined") {
@@ -218,7 +217,7 @@
 				stor.width = d3.select("body").node().getBoundingClientRect().width
 				stor.height = 50
 				stor.svg.attr("height", stor.height)
-				stor.x.domain([data.startTime, data.endTime]).range([0, stor.width])
+				stor.x.domain([startTime, endTime]).range([0, stor.width])
 				stor.y.domain([0, frm.data.maximum]).range([stor.height, 0])
 				stor.xAxis.call(d3.axisBottom().scale(stor.x))
 				stor.yAxis.call(d3.axisRight().scale(stor.y).ticks(2))
@@ -246,7 +245,8 @@
 				stor.svg.node()
 			}
 
-			function tasksRedraw(thr, stor) {
+			function tasksRedraw(thr) {
+				const stor = thr.stor
 				let filtered = filterData(thr)
 				makeHierarchy(filtered)
 
@@ -308,12 +308,12 @@
 			}
 
 			function update(incoming) {
-				mergeData(data, incoming)
-				clearOldData(data)
-				assignColors(data)
-				data.frames.forEach(function (frm) {
-					framesRedraw(frm, frm.stor)
-				})
+				mergeData(incoming)
+				removeOldData()
+				assignColors()
+				for (const frm of Object.values(frames)) {
+					framesRedraw(frm)
+				}
 			}
 
 			const ws = new WebSocket("ws://localhost:" + (new URLSearchParams(window.location.search)).get("port"))

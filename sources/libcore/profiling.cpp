@@ -73,6 +73,27 @@ namespace cage
 			return *q;
 		}
 
+		constexpr String sanitize(const String &s)
+		{
+			String r;
+			for (const char c : s)
+			{
+				if (c == '\\' || c == '"')
+					r += "\\";
+				r += String(c);
+			}
+			return r;
+		}
+
+		constexpr bool validateSanitize()
+		{
+			return sanitize(R"foo(Hello World)foo") == R"foo(Hello World)foo"
+				&& sanitize(R"foo(Hello "World")foo") == R"foo(Hello \"World\")foo"
+				&& sanitize(R"foo(H\ell\o "World")foo") == R"foo(H\\ell\\o \"World\")foo";
+		}
+
+		static_assert(validateSanitize());
+
 		struct Dispatcher
 		{
 			struct Runner
@@ -82,25 +103,13 @@ namespace cage
 				Holder<WebsocketConnection> connection;
 				Holder<Process> client;
 
-				static String sanitize(const String &s)
-				{
-					String r;
-					for (const char c : s)
-					{
-						if (c == '\\' || c == '"')
-							r += "\\";
-						r += String(c);
-					}
-					return r;
-				}
-
 				void eraseQueue()
 				{
 					QueueItem qi;
 					while (queue().tryPop(qi))
 					{
 						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
-							threadNames[qi.threadId] = qi.data;
+							threadNames[qi.threadId] = sanitize(qi.data);
 					}
 				}
 
@@ -159,7 +168,7 @@ namespace cage
 					while (queue().tryPop(qi))
 					{
 						if (qi.startTime == ThreadNameSpecifier && qi.endTime == ThreadNameSpecifier)
-							threadNames[qi.threadId] = qi.data;
+							threadNames[qi.threadId] = sanitize(qi.data);
 						else
 						{
 							const String s = Stringizer() + "[" + names.index(qi.name) + ",\"" + sanitize(qi.data) + "\"," + qi.startTime + "," + (qi.endTime - qi.startTime) + (qi.framing ? ",1" : "") + "], ";
@@ -169,16 +178,22 @@ namespace cage
 
 					std::string str = "{\"names\":[";
 					str += names.mapping();
-					str += "],\n\"threads\":[\n";
+					str += "],\n\"threads\":{\n";
+					bool comma = false;
 					for (const auto &thr : data)
 					{
-						str += "{\"name\":\"";
+						if (comma)
+							str += ", ";
+						else
+							comma = true;
+						str += (Stringizer() + "\"" + thr.first + "\":").value.c_str();
+						str += "{\n\"name\":\"";
 						str += threadNames[thr.first].c_str();
 						str += "\",\n\"events\":[";
 						str += thr.second.events;
-						str += "[]\n]},\n";
+						str += "[]\n]}\n";
 					}
-					str += "{}\n]}";
+					str += "}}";
 
 					connection->write(str);
 				}
