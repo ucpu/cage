@@ -215,7 +215,7 @@ namespace cage
 					graphicsDispatch();
 				}
 				{
-					ProfilingScope profiling("render gui");
+					ProfilingScope profiling("dispatch gui");
 					Holder<RenderQueue> grq = guiRenderQueue.get();
 					if (grq)
 						grq->dispatch();
@@ -329,7 +329,7 @@ namespace cage
 
 			void controlUpdate()
 			{
-				ProfilingScope profiling("control update", ProfilingFrameTag());
+				ProfilingScope profiling("control", ProfilingFrameTag());
 				if (stopping)
 				{
 					controlScheduler->stop();
@@ -641,7 +641,7 @@ namespace cage
 			controlScheduler = newScheduler({});
 			{
 				ScheduleCreateConfig c;
-				c.name = "engine control update";
+				c.name = "control schedule";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
 				c.period = 1000000 / 20;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -649,7 +649,7 @@ namespace cage
 			}
 			{
 				ScheduleCreateConfig c;
-				c.name = "engine control inputs";
+				c.name = "inputs schedule";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
 				c.period = 1000000 / 60;
 				c.type = ScheduleTypeEnum::FreePeriodic;
@@ -659,7 +659,7 @@ namespace cage
 			soundScheduler = newScheduler({});
 			{
 				ScheduleCreateConfig c;
-				c.name = "engine sound update";
+				c.name = "sound schedule";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
 				c.period = 1000000 / 40;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;

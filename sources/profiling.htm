@@ -209,8 +209,7 @@
 					stor.x = d3.scaleLinear()
 					stor.y = d3.scaleLinear()
 					stor.itemsGroup = stor.svg.append("g").classed("items", true)
-					stor.xAxis = stor.svg.append("g").classed("axis", true)
-					stor.yAxis = stor.svg.append("g").classed("axis", true)
+					stor.axis = stor.svg.append("g").classed("axis", true)
 				}
 
 				makePrev(frm.data)
@@ -219,8 +218,7 @@
 				stor.svg.attr("height", stor.height)
 				stor.x.domain([startTime, endTime]).range([0, stor.width])
 				stor.y.domain([0, frm.data.maximum]).range([stor.height, 0])
-				stor.xAxis.call(d3.axisBottom().scale(stor.x))
-				stor.yAxis.call(d3.axisRight().scale(stor.y).ticks(2))
+				stor.axis.call(d3.axisRight().scale(stor.y).ticks(2))
 
 				stor.items = stor.itemsGroup
 					.selectAll(".item")
@@ -252,8 +250,7 @@
 
 				function resetAxes() {
 					stor.x.domain(filteredDomain).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
-					stor.y.domain([-1, filtered.depth + 1]).range([0, stor.height])
-					stor.axis.call(d3.axisBottom().scale(stor.x))
+					stor.y.domain([0, filtered.depth + 1]).range([0, stor.height])
 				}
 
 				function positions(selection) {
@@ -277,7 +274,6 @@
 					stor.x = d3.scaleLinear()
 					stor.y = d3.scaleLinear()
 					stor.itemsGroup = stor.svg.append("g").classed("items", true)
-					stor.axis = stor.svg.append("g").classed("axis", true)
 					stor.svg.call(zoom.on("zoom." + (uniqueCounter++), zoomed))
 				}
 

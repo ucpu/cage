@@ -190,6 +190,9 @@ namespace cage
 
 			CAGE_FORCE_INLINE void wait()
 			{
+				ProfilingScope profiling("waiting for tasks");
+				profiling.set(String(name));
+
 				if (thrData.executorThread)
 				{
 					auto &exec = executor();
