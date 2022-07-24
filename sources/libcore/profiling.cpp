@@ -115,6 +115,8 @@ namespace cage
 
 				void updateConnected()
 				{
+					ProfilingScope profiling("connected");
+
 					struct NamesMap
 					{
 						std::unordered_map<String, uint32> data;
@@ -200,6 +202,8 @@ namespace cage
 
 				void updateConnecting()
 				{
+					ProfilingScope profiling("connecting");
+
 					if (server)
 					{
 						connection = server->accept();
@@ -236,6 +240,7 @@ namespace cage
 
 				void updateDisabled()
 				{
+					ProfilingScope profiling("disabled");
 					server.clear();
 					connection.clear();
 					client.clear();
