@@ -3,9 +3,10 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/profiling.h>
 
+#include <plf_list.h>
+
 #include <exception>
 #include <vector>
-#include <queue>
 #include <atomic>
 #include <condition_variable>
 
@@ -15,12 +16,12 @@ namespace cage
 	{
 		struct TaskImpl;
 
-		struct ConcurrentPriorityQueueTerminated : public Exception
+		struct TasksQueueTerminated : public Exception
 		{
 			using Exception::Exception;
 		};
 
-		class ConcurrentPriorityQueue : private Immovable
+		class TasksQueue : private Immovable
 		{
 		public:
 			using Value = Holder<TaskImpl>;
@@ -29,8 +30,8 @@ namespace cage
 			{
 				ScopeLock sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
-				items.emplace(std::move(value));
+					CAGE_THROW_SILENT(TasksQueueTerminated, "tasks queue terminated");
+				items.push_back(std::move(value));
 				cond->signal();
 			}
 
@@ -40,13 +41,13 @@ namespace cage
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
+						CAGE_THROW_SILENT(TasksQueueTerminated, "tasks queue terminated");
 					if (items.empty())
 						cond->wait(sl);
 					else
 					{
-						value = std::move(const_cast<Value &>(items.top()));
-						items.pop();
+						value = std::move(items.front());
+						items.erase(items.begin());
 						return;
 					}
 				}
@@ -56,14 +57,15 @@ namespace cage
 			{
 				ScopeLock sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
-				if (!items.empty())
+					CAGE_THROW_SILENT(TasksQueueTerminated, "tasks queue terminated");
+				if (items.empty())
+					return false;
+				for (auto it = items.begin(); it != items.end(); it++)
 				{
-					const Value &top = items.top();
-					if (!valid(top, requiredPriority))
-						return false;
-					value = std::move(const_cast<Value &>(top));
-					items.pop();
+					if (!valid(*it, requiredPriority))
+						continue;
+					value = std::move(*it);
+					items.erase(it);
 					return true;
 				}
 				return false;
@@ -88,7 +90,7 @@ namespace cage
 
 			Holder<Mutex> mut = newMutex();
 			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
-			std::priority_queue<Value, std::vector<Value>, Comparator> items;
+			plf::list<Value> items;
 			bool stop = false;
 		};
 
@@ -132,13 +134,13 @@ namespace cage
 					while (true)
 						run();
 				}
-				catch (const ConcurrentPriorityQueueTerminated &)
+				catch (const TasksQueueTerminated &)
 				{
 					// nothing
 				}
 			}
 
-			ConcurrentPriorityQueue queue;
+			TasksQueue queue;
 			std::vector<Holder<Thread>> threads;
 		};
 
@@ -235,6 +237,7 @@ namespace cage
 					{
 						ThreadPriorityUpdater prio(priority);
 						ProfilingScope profiling(name);
+						profiling.set(Stringizer() + "task priority: " + priority + ", invocation: " + idx + " / " + invocations);
 						runner(runnerConfig, idx);
 					}
 					if (++finished == invocations)
@@ -268,12 +271,12 @@ namespace cage
 			}
 		};
 
-		CAGE_FORCE_INLINE bool ConcurrentPriorityQueue::Comparator::operator() (const Value &a, const Value &b) const noexcept
+		CAGE_FORCE_INLINE bool TasksQueue::Comparator::operator() (const Value &a, const Value &b) const noexcept
 		{
 			return a->priority < b->priority;
 		}
 
-		CAGE_FORCE_INLINE bool ConcurrentPriorityQueue::valid(const Value &value, const sint32 requiredPriority) const noexcept
+		CAGE_FORCE_INLINE bool TasksQueue::valid(const Value &value, const sint32 requiredPriority) const noexcept
 		{
 			return value->priority >= requiredPriority;
 		}

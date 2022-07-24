@@ -601,32 +601,6 @@ namespace
 	{
 		CAGE_TESTCASE("aggregation");
 
-		/*
-		{
-			CAGE_TESTCASE("counters 1");
-			for (uint32 a = 2; a < 7; a++)
-			{
-				CAGE_TESTCASE(a);
-				TaskTester data;
-				tasksRunBlocking<TaskTester>("blocking", data, 5, { 0, a });
-				CAGE_TEST(data.runCounter == 5);
-				CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
-			}
-		}
-
-		{
-			CAGE_TESTCASE("counters 2");
-			for (uint32 a : { 3, 10, 15, 20, 30, 40, 50, 100 })
-			{
-				CAGE_TESTCASE(a);
-				TaskTester data;
-				tasksRunBlocking<TaskTester>("blocking", data, 42, { 0, a });
-				CAGE_TEST(data.runCounter == 42);
-				CAGE_TEST(data.invocationsSum == 861);
-			}
-		}
-		*/
-
 		{
 			CAGE_TESTCASE("blocking array");
 			TaskTester arr[20];
@@ -672,53 +646,6 @@ namespace
 		tst.goon = true;
 		while (tst.counter < 100)
 			threadYield();
-	}
-
-	struct PriorityTester
-	{
-		static inline std::atomic<uint32> started[2] = { 0, 0 };
-		static inline std::atomic<uint32> finished[2] = { 0, 0 };
-		static inline std::atomic<bool> waiting = true;
-
-		bool slow = false;
-
-		void operator()()
-		{
-			started[slow]++;
-			someMeaninglessWork();
-			if (slow)
-			{
-				while (waiting)
-				{
-					someMeaninglessWork();
-					tasksYield();
-				}
-			}
-			finished[slow]++;
-		}
-	};
-
-	void testPriorities()
-	{
-		CAGE_TESTCASE("priorities");
-
-		const auto &gen = [](bool slow) -> Holder<PointerRange<PriorityTester>> {
-			PointerRangeHolder<PriorityTester> v;
-			v.resize(processorsCount() * 2);
-			for (auto &it : v)
-				it.slow = slow;
-			return v;
-		};
-
-		Holder<PointerRange<PriorityTester>> slow = gen(true);
-		Holder<PointerRange<PriorityTester>> fast = gen(false);
-
-		auto a = tasksRunAsync<PriorityTester>("slow", slow.share(), 5);
-		while (PriorityTester::started[true] < processorsCount())
-			threadYield();
-		tasksRunBlocking<PriorityTester>("fast", fast.share(), 10);
-		PriorityTester::waiting = false;
-		a->wait();
 	}
 
 	void testPerformance()
@@ -809,6 +736,5 @@ void testTasks()
 	testTasksHolders();
 	testTasksAggregation();
 	testFireAndForget();
-	testPriorities();
 	testPerformance();
 }

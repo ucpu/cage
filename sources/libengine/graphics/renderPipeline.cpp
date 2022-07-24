@@ -1215,7 +1215,7 @@ namespace cage
 					}();
 				}
 
-				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
+				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr), 1, tasksCurrentPriority() + 9);
 			}
 
 			RenderPipelineResult prepareCamera(const RenderPipelineCamera &camera) const
@@ -1231,7 +1231,7 @@ namespace cage
 						return;
 					tasks.push_back(prepareShadowmap(data, e, lc, sc));
 				}, +scene, false);
-				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr)));
+				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr), 1, tasksCurrentPriority() + 10));
 				for (const auto &it : tasks)
 					it->wait();
 
