@@ -303,11 +303,13 @@
 					.append("rect")
 					.attr("fill", d => d.color)
 				stor.items
+					.filter(d => stor.x(d.endTime) - stor.x(d.startTime) > 20)
 					.append("text")
 					.attr("x", "50%")
 					.attr("y", "50%")
 					.text(d => d.name)
 				stor.items
+					.filter(d => stor.x(d.endTime) - stor.x(d.startTime) > 1)
 					.append("title")
 					.text(d => d.name + "\n" + (d.endTime - d.startTime) + " us\n" + d.description)
 
