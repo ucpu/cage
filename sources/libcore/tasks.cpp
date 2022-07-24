@@ -107,7 +107,10 @@ namespace cage
 				threads.resize(processorsCount());
 				uint32 index = 0;
 				for (auto &t : threads)
-					t = newThread(Delegate<void()>().bind<Executor, &Executor::threadEntry>(this), Stringizer() + "tasks exec " + index++);
+				{
+					// using ~ to move the threads to the end in the profiler
+					t = newThread(Delegate<void()>().bind<Executor, &Executor::threadEntry>(this), Stringizer() + "~tasks exec " + index++);
+				}
 			}
 
 			~Executor()

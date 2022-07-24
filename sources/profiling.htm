@@ -5,16 +5,16 @@
 		<title>Cage Profiling Client</title>
 		<script src="https://d3js.org/d3.v7.min.js"></script>
 		<style>
+			hr {
+				clear: both;
+			}
+
 			#status {
 				float: left;
 			}
 
 			#menu {
 				float: right;
-			}
-
-			#header hr {
-				clear: both;
 			}
 
 			.framesName, .threadName {
@@ -55,9 +55,10 @@
 			<span id="menu">
 				<button id="pauseButton">Pause</button>
 			</span>
-			<hr>
 		</div>
+		<hr>
 		<div id="frames"></div>
+		<hr>
 		<div id="tasks"></div>
 		<script>
 			const threads = {}
@@ -160,7 +161,7 @@
 				data.forEach(function (a) {
 					if (a.parent)
 						a.parent.children.push(a)
-					a.depth = 0
+					a.depth = 1
 					let b = a
 					while (b.parent) {
 						a.depth++
@@ -178,6 +179,14 @@
 					}
 				})
 				return filtered
+			}
+
+			function sortDivs(parent) {
+				let arr = [].slice.call(parent.childNodes)
+				arr.sort((a, b) => d3.ascending(a.innerHTML, b.innerHTML))
+				arr.forEach(function (d) {
+					parent.appendChild(d)
+				})
 			}
 
 			function framesRedraw(frm) {
@@ -210,6 +219,7 @@
 					stor.y = d3.scaleLinear()
 					stor.itemsGroup = stor.svg.append("g").classed("items", true)
 					stor.axis = stor.svg.append("g").classed("axis", true)
+					sortDivs(document.getElementById("frames"))
 				}
 
 				makePrev(frm.data)
@@ -250,13 +260,13 @@
 
 				function resetAxes() {
 					stor.x.domain(filteredDomain).range([0, stor.width].map(d => (zoomTrans ? zoomTrans.applyX(d) : d)))
-					stor.y.domain([0, filtered.depth + 1]).range([0, stor.height])
+					stor.y.domain([0, filtered.depth]).range([0, stor.height])
 				}
 
 				function positions(selection) {
 					selection
 						.attr("x", d => stor.x(d.startTime))
-						.attr("y", d => stor.y(d.depth))
+						.attr("y", d => stor.y(d.depth - 1))
 						.attr("width", d => stor.x(d.endTime) - stor.x(d.startTime))
 						.attr("height", d => stor.y(d.depth + 1) - stor.y(d.depth))
 				}
@@ -275,10 +285,11 @@
 					stor.y = d3.scaleLinear()
 					stor.itemsGroup = stor.svg.append("g").classed("items", true)
 					stor.svg.call(zoom.on("zoom." + (uniqueCounter++), zoomed))
+					sortDivs(document.getElementById("tasks"))
 				}
 
 				stor.width = d3.select("body").node().getBoundingClientRect().width
-				stor.height = (filtered.depth + 2) * 18
+				stor.height = filtered.depth * 18
 				stor.svg.attr("height", stor.height)
 				resetAxes()
 
