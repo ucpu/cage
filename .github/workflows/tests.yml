@@ -15,6 +15,10 @@ jobs:
         exclude:
         - build-arch: Win32
           build-tool: "-T ClangCL"
+        - os-version: 2022 # https://github.com/ucpu/cage/issues/14
+          build-config: relwithdebinfo
+          build-arch: x64
+          build-tool: "-T ClangCL"
 
     steps:
     - name: Versions
