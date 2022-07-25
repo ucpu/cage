@@ -160,7 +160,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc1");
 			Holder<Image> img = newImage();
-			img->initialize(400, 300, 4);
+			img->initialize(220, 160, 4);
 			drawCircle(+img);
 			imageConvert(+img, 3);
 			const auto buff = imageBc1Encode(+img);
@@ -172,7 +172,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc1 - weird resolution");
 			Holder<Image> img = newImage();
-			img->initialize(403, 301, 4);
+			img->initialize(223, 161, 4);
 			drawCircle(+img);
 			imageConvert(+img, 3);
 			const auto buff = imageBc1Encode(+img);
@@ -184,7 +184,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc3");
 			Holder<Image> img = newImage();
-			img->initialize(400, 300, 4);
+			img->initialize(220, 160, 4);
 			drawCircle(+img);
 			const auto buff = imageBc3Encode(+img);
 			Holder<Image> res = imageBc3Decode(buff, img->resolution());
@@ -195,7 +195,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc3 - weird resolution");
 			Holder<Image> img = newImage();
-			img->initialize(403, 301, 4);
+			img->initialize(223, 161, 4);
 			drawCircle(+img);
 			const auto buff = imageBc3Encode(+img);
 			Holder<Image> res = imageBc3Decode(buff, img->resolution());
@@ -206,7 +206,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc4");
 			Holder<Image> img = newImage();
-			img->initialize(400, 300, 4);
+			img->initialize(220, 160, 4);
 			drawCircle(+img);
 			imageConvert(+img, 1);
 			const auto buff = imageBc4Encode(+img);
@@ -218,7 +218,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc4 - weird resolution");
 			Holder<Image> img = newImage();
-			img->initialize(403, 301, 4);
+			img->initialize(223, 161, 4);
 			drawCircle(+img);
 			imageConvert(+img, 1);
 			const auto buff = imageBc4Encode(+img);
@@ -230,7 +230,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc5");
 			Holder<Image> img = newImage();
-			img->initialize(400, 300, 4);
+			img->initialize(220, 160, 4);
 			drawCircle(+img);
 			imageConvert(+img, 2);
 			const auto buff = imageBc5Encode(+img);
@@ -242,7 +242,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc5 - weird resolution");
 			Holder<Image> img = newImage();
-			img->initialize(403, 301, 4);
+			img->initialize(223, 161, 4);
 			drawCircle(+img);
 			imageConvert(+img, 2);
 			const auto buff = imageBc5Encode(+img);
@@ -254,7 +254,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc7");
 			Holder<Image> img = newImage();
-			img->initialize(400, 300, 4);
+			img->initialize(220, 160, 4);
 			drawCircle(+img);
 			const auto buff = imageBc7Encode(+img);
 			Holder<Image> res = imageBc7Decode(buff, img->resolution());
@@ -265,7 +265,7 @@ void testImage()
 		{
 			CAGE_TESTCASE("bc7 - weird resolution");
 			Holder<Image> img = newImage();
-			img->initialize(403, 301, 4);
+			img->initialize(223, 161, 4);
 			drawCircle(+img);
 			const auto buff = imageBc7Encode(+img);
 			Holder<Image> res = imageBc7Decode(buff, img->resolution());

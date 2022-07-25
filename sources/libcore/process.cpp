@@ -29,25 +29,6 @@ namespace cage
 
 		class ProcessImpl : public Process
 		{
-			struct AutoHandle : private cage::Immovable
-			{
-				HANDLE handle = 0;
-
-				void close()
-				{
-					if (handle)
-					{
-						::CloseHandle(handle);
-						handle = 0;
-					}
-				}
-
-				~AutoHandle()
-				{
-					close();
-				}
-			};
-
 		public:
 			explicit ProcessImpl(const ProcessCreateConfig &config)
 			{

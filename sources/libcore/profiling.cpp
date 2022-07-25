@@ -282,25 +282,36 @@ namespace cage
 
 			void threadEntry()
 			{
-				try
-				{
-					Runner runner;
-					runner.run();
-				}
-				catch (...)
-				{
-					// nothing
-				}
+				sem->unlock();
+				Runner runner;
+				runner.run();
+			}
+
+			Dispatcher()
+			{
+				sem = newSemaphore(0, 1);
+				thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
+				sem->lock();
+				sem.clear();
 			}
 
 			~Dispatcher()
 			{
 				queue().terminate();
-				thread.clear();
+				try
+				{
+					thread->wait();
+				}
+				catch (...)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "profiling", "unhandled exception in profiling dispatcher thread");
+					detail::logCurrentCaughtException();
+				}
 			}
 
-			Holder<Thread> thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
-		} dispatcher;
+			Holder<Semaphore> sem;
+			Holder<Thread> thread;
+		};
 	}
 
 	void profilingThreadName() noexcept
@@ -350,6 +361,7 @@ namespace cage
 		{
 			if (!confEnabled)
 				return;
+			static Dispatcher dispatcher;
 			QueueItem qi;
 			qi.name = ev.name;
 			qi.data = ev.data;

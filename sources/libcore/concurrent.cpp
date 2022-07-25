@@ -535,6 +535,9 @@ namespace cage
 #endif
 
 		class ThreadImpl : public Thread
+#ifdef CAGE_SYSTEM_WINDOWS
+			, public AutoHandle
+#endif
 		{
 		public:
 			const String threadName;
@@ -542,9 +545,7 @@ namespace cage
 			std::exception_ptr exptr = nullptr;
 			uint64 myid = m;
 
-#ifdef CAGE_SYSTEM_WINDOWS
-			HANDLE handle;
-#else
+#ifndef CAGE_SYSTEM_WINDOWS
 			pthread_t handle;
 #endif
 
@@ -556,7 +557,10 @@ namespace cage
 				// reserve 8 MB of memory for its stack to match linux default
 				handle = CreateThread(nullptr, 8 * 1024 * 1024, &threadFunctionImpl, this, 0, &tid);
 				if (!handle)
-					CAGE_THROW_ERROR(Exception, "CreateThread");
+				{
+					auto err = GetLastError();
+					CAGE_THROW_ERROR(SystemError, "CreateThread", err);
+				}
 				myid = uint64(tid);
 
 #else
@@ -576,17 +580,10 @@ namespace cage
 				}
 				catch (...)
 				{
-#ifdef CAGE_SYSTEM_WINDOWS
-					CloseHandle(handle);
-#endif
 					CAGE_LOG(SeverityEnum::Critical, "thread", Stringizer() + "exception thrown in thread '" + threadName + "' was not propagated to the caller thread (missing call to wait), terminating now");
 					detail::logCurrentCaughtException();
 					detail::terminate();
 				}
-
-#ifdef CAGE_SYSTEM_WINDOWS
-				CloseHandle(handle);
-#endif
 			}
 		};
 	}

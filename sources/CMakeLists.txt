@@ -107,6 +107,13 @@ cage_ide_category(cage-test-ginnel cage/tests)
 cage_ide_sort_files(cage-test-ginnel)
 cage_ide_working_dir_in_place(cage-test-ginnel)
 
+file(GLOB_RECURSE cage-test-assets-sources "test-assets/*")
+add_executable(cage-test-assets ${cage-test-assets-sources})
+target_link_libraries(cage-test-assets cage-core)
+cage_ide_category(cage-test-assets cage/tests)
+cage_ide_sort_files(cage-test-assets)
+cage_ide_working_dir_in_place(cage-test-assets)
+
 ########
 # TOOLS
 ########

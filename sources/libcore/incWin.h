@@ -9,3 +9,24 @@
 #endif
 #include <windows.h>
 
+namespace
+{
+	struct AutoHandle : private cage::Immovable
+	{
+		HANDLE handle = 0;
+
+		void close() noexcept
+		{
+			if (handle)
+			{
+				::CloseHandle(handle);
+				handle = 0;
+			}
+		}
+
+		~AutoHandle()
+		{
+			close();
+		}
+	};
+}
