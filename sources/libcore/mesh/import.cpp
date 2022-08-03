@@ -990,7 +990,11 @@ namespace cage
 				CAGE_ASSERT(!input.empty());
 
 				for (auto &it : input)
+				{
+					if (it.images.parts.empty())
+						it.images = imageImportFiles(it.name);
 					imageImportConvertRawToImages(it.images);
+				}
 
 				// pick correct channels for roughness or metallic textures
 				for (auto &it : input)
