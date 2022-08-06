@@ -8,6 +8,8 @@
 #include <cage-core/image.h>
 #include <cage-core/files.h>
 
+#include <vector>
+
 namespace
 {
 	void approxEqual(const Vec3 &a, const Vec3 &b)
@@ -183,11 +185,123 @@ void testMesh()
 	}
 
 	{
-		CAGE_TESTCASE("clip");
-		auto p = poly->copy();
-		meshClip(+p, Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10)));
-		p->exportObjFile("meshes/clip.obj");
+		CAGE_TESTCASE("retexture");
+
+		Holder<Mesh> a = poly->copy();
+		{
+			CAGE_TESTCASE("initial cut");
+			meshClip(+a, Aabb(Vec3(-11, -11, -9), Vec3(11, 11, 9)));
+		}
+		{
+			CAGE_TESTCASE("initial unwrap");
+			std::vector<Vec2> uv;
+			uv.reserve(a->verticesCount());
+			for (Vec3 p : a->positions())
+			{
+				p = normalize(p);
+				Rads theta = acos(p[2]);
+				Rads phi = atan2(p[1], p[0]);
+				Real u = theta.value / Real::Pi();
+				Real v = (phi.value / Real::Pi()) * 0.5 + 0.5;
+				uv.push_back(saturate(Vec2(u, v)));
+			}
+			a->uvs(uv);
+		}
+		Holder<Image> ai = newImage();
+		{
+			CAGE_TESTCASE("initial texture");
+			ai->initialize(300, 200, 3);
+			for (uint32 y = 0; y < 200; y++)
+				for (uint32 x = 0; x < 300; x++)
+					ai->set(x, y, Vec3(sqr(x / 300.0), sqr(y / 200.0), 0));
+		}
+		{
+			CAGE_TESTCASE("initial export");
+			MeshExportObjConfig cfg;
+			cfg.materialLibraryName = "retexture.mtl";
+			cfg.materialName = "retex_init";
+			cfg.objectName = "retex_init";
+			a->exportObjFile("meshes/retextureInit.obj", cfg);
+			ai->exportFile("meshes/retextureInit.png");
+		}
+
+		Holder<Mesh> b = a->copy();
+		{
+			CAGE_TESTCASE("final transform");
+			meshApplyTransform(+b, Transform(Vec3(), Quat(Degs(), Degs(90), Degs())));
+		}
+		uint32 res = 0;
+		{
+			CAGE_TESTCASE("final unwrap");
+			MeshUnwrapConfig cfg;
+			cfg.targetResolution = 256;
+			res = meshUnwrap(+b, cfg);
+		}
+		Holder<Image> bi;
+		{
+			CAGE_TESTCASE("final retexture");
+			MeshRetextureConfig cfg;
+			const Image *in[1] = { +ai };
+			cfg.inputs = in;
+			cfg.source = +a;
+			cfg.target = +b;
+			cfg.resolution = Vec2i(res);
+			cfg.maxDistance = 0.5;
+			cfg.parallelize = false;
+			auto res = meshRetexture(cfg);
+			CAGE_TEST(res.size() == 1);
+			bi = std::move(res[0]);
+		}
+		{
+			CAGE_TESTCASE("final texture dilation");
+			imageDilation(+bi, 4);
+		}
+		{
+			CAGE_TESTCASE("final export");
+			MeshExportObjConfig cfg;
+			cfg.materialLibraryName = "retexture.mtl";
+			cfg.materialName = "retex_fin";
+			cfg.objectName = "retex_fin";
+			b->exportObjFile("meshes/retextureFinal.obj", cfg);
+			bi->exportFile("meshes/retextureFinal.png");
+		}
+		{
+			CAGE_TESTCASE("material write");
+			Holder<File> f = writeFile("meshes/retexture.mtl");
+			f->writeLine("newmtl retex_init");
+			f->writeLine("map_Kd retextureInit.png");
+			f->writeLine("newmtl retex_fin");
+			f->writeLine("map_Kd retextureFinal.png");
+			f->close();
+		}
 	}
+
+	{
+		CAGE_TESTCASE("generate normals");
+		auto p = poly->copy();
+		meshGenerateNormals(+p, {});
+		p->exportObjFile("meshes/generatedNormals.obj");
+		CAGE_TEST(p->normals().size() == p->positions().size());
+	}
+
+	{
+		CAGE_TESTCASE("clip by box");
+		auto p = poly->copy();
+		static constexpr Aabb box = Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10));
+		meshClip(+p, box);
+		p->exportObjFile("meshes/clipByBox.obj");
+		approxEqual(p->boundingBox(), box);
+	}
+
+	/*
+	{
+		CAGE_TESTCASE("clip by plane");
+		auto p = poly->copy();
+		const Plane pln = Plane(Vec3(0, -1, 0), normalize(Vec3(1)));
+		meshClip(+p, pln);
+		p->exportObjFile("meshes/clipByPlane.obj");
+	}
+	*/
 
 	{
 		CAGE_TESTCASE("separateDisconnected");

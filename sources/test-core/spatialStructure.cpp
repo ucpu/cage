@@ -154,6 +154,18 @@ void testSpatialStructure()
 	}
 
 	{
+		CAGE_TESTCASE("insert all types");
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
+		data->update(1, Vec3(5));
+		data->update(1, makeSegment(Vec3(), Vec3(1)));
+		data->update(1, Triangle(Vec3(), Vec3(1), Vec3(0, -1, 0)));
+		data->update(1, Sphere(Vec3(), 1));
+		data->update(1, Aabb(Vec3(2), Vec3(3)));
+		data->update(1, Cone(Vec3(3), Vec3(0, 1, 0), 10, Degs(30)));
+		data->rebuild();
+	}
+
+	{
 		CAGE_TESTCASE("points");
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)

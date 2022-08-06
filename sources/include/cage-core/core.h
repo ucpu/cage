@@ -186,6 +186,7 @@ namespace cage
 	struct MeshGenerateTextureConfig;
 	struct MeshGenerateNormalsConfig;
 	struct MeshGenerateTangentsConfig;
+	struct MeshRetextureConfig;
 	struct MeshExportObjConfig;
 	class Mesh;
 	struct MeshImportMaterial;

@@ -199,18 +199,26 @@ namespace cage
 	CAGE_CORE_API void meshGenerateTexture(const Mesh *msh, const MeshGenerateTextureConfig &config);
 
 	struct CAGE_CORE_API MeshGenerateNormalsConfig
-	{
-		// todo
-	};
+	{};
 
 	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config);
 
 	struct CAGE_CORE_API MeshGenerateTangentsConfig
-	{
-		// todo
-	};
+	{};
 
 	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config);
+
+	struct CAGE_CORE_API MeshRetextureConfig
+	{
+		PointerRange<const Image *> inputs;
+		const Mesh *source = nullptr;
+		const Mesh *target = nullptr;
+		Vec2i resolution;
+		Real maxDistance;
+		bool parallelize = false;
+	};
+
+	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> meshRetexture(const MeshRetextureConfig &config);
 
 	namespace detail
 	{

@@ -99,7 +99,7 @@ namespace cage
 			FastBox box;
 			Vec3 center;
 			const uint32 name;
-			
+
 			virtual Aabb getBox() const = 0;
 			virtual bool intersects(const Line &other) = 0;
 			virtual bool intersects(const Triangle &other) = 0;
@@ -141,7 +141,7 @@ namespace cage
 		struct Node
 		{
 			FastBox box;
-			
+
 			CAGE_FORCE_INLINE Node(const FastBox &box, sint32 a, sint32 b) : box(box)
 			{
 				this->a() = a;
@@ -158,7 +158,7 @@ namespace cage
 		{
 			struct alignas(16) ItemAlloc
 			{
-				char reserved[128];
+				char reserved[144];
 			};
 
 			plf::colony<ItemAlloc, MemoryAllocatorStd<ItemAlloc>> colony;

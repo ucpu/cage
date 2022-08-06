@@ -28,25 +28,18 @@ namespace cage
 			}
 		} initializer;
 
-		const String xAtlasCategoriesNames[] = {
+		constexpr const String xAtlasCategoriesNames[] = {
 			"AddModel",
 			"ComputeCharts",
 			"PackCharts",
 			"BuildOutputModeles"
 		};
 
-		/*
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
 			CAGE_LOG(SeverityEnum::Info, "xatlas", Stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
 			return true; // continue processing
 		}
-
-		void destroyAtlas(void *ptr)
-		{
-			xatlas::Destroy((xatlas::Atlas *)ptr);
-		}
-		*/
 
 		Holder<xatlas::Atlas> newAtlas(bool reportProgress)
 		{
@@ -63,6 +56,8 @@ namespace cage
 				}
 			};
 			Holder<Atl> h = systemMemory().createHolder<Atl>();
+			if (reportProgress)
+				xatlas::SetProgressCallback(h->a, &xAtlasProgress);
 			return Holder<xatlas::Atlas>(h->a, std::move(h));
 		}
 	}

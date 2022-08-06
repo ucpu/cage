@@ -2,6 +2,8 @@
 #include <cage-core/macros.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/spatialStructure.h>
+#include <cage-core/image.h>
+#include <cage-core/tasks.h>
 
 #include "mesh.h"
 
@@ -12,11 +14,12 @@ namespace cage
 {
 	namespace
 	{
-		Vec2 barycoord(const Vec2 &a, const Vec2 &b, const Vec2 &c, const Vec2 &p)
+		template<class T> requires(std::is_same_v<T, Vec2> || std::is_same_v<T, Vec3>)
+		Vec2 barycoord(const T &a, const T &b, const T &c, const T &p)
 		{
-			const Vec2 v0 = b - a;
-			const Vec2 v1 = c - a;
-			const Vec2 v2 = p - a;
+			const T v0 = b - a;
+			const T v1 = c - a;
+			const T v2 = p - a;
 			const Real d00 = dot(v0, v0);
 			const Real d01 = dot(v0, v1);
 			const Real d11 = dot(v1, v1);
@@ -562,7 +565,8 @@ namespace cage
 						c++;
 					}
 				}
-				CAGE_ASSERT(c > 1);
+				if (c < 1)
+					continue;
 				p /= c;
 				for (uint32 j = i; j < vc; j++)
 				{
@@ -635,14 +639,222 @@ namespace cage
 
 	void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config)
 	{
+		if (msh->facesCount() == 0)
+			return;
+
+		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
+
+		meshConvertToIndexed(msh);
 		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "generateNormals");
+		std::vector<Vec3> ns;
+		ns.resize(impl->verticesCount());
+		const uint32 tris = numeric_cast<uint32>(impl->indices.size() / 3);
+		for (uint32 tri = 0; tri < tris; tri++)
+		{
+			const uint32 *ids = impl->indices.data() + tri * 3;
+			const Vec3 &a = impl->positions[ids[0]];
+			const Vec3 &b = impl->positions[ids[1]];
+			const Vec3 &c = impl->positions[ids[2]];
+			const Triangle t = Triangle(a, b, c);
+			const Vec3 n = t.normal() * t.area();
+			ns[ids[0]] += n;
+			ns[ids[1]] += n;
+			ns[ids[2]] += n;
+		}
+		for (Vec3 &n : ns)
+			n = lengthSquared(n) > 1e-7 ? normalize(n) : Vec3();
+		std::swap(impl->normals, ns);
 	}
 
 	void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
+	}
+
+	namespace
+	{
+		template<class T>
+		struct Sampler
+		{
+			void operator()(const Image *src, Image *dst, Vec2 srcUv, Vec2i dstCoord)
+			{
+				srcUv[1] = 1 - srcUv[1];
+				Vec2 uv = srcUv * Vec2(src->resolution());
+				Vec2i p = Vec2i(uv);
+				p = clamp(p, Vec2i(), src->resolution() - 2);
+				uv -= Vec2(p);
+				uv = clamp(uv, 0, 1);
+				T corners[4];
+				src->get(p + Vec2i(0, 0), corners[0]);
+				src->get(p + Vec2i(1, 0), corners[1]);
+				src->get(p + Vec2i(0, 1), corners[2]);
+				src->get(p + Vec2i(1, 1), corners[3]);
+				T res = interpolate(
+					interpolate(corners[0], corners[1], uv[0]),
+					interpolate(corners[2], corners[3], uv[0]),
+					uv[1]
+				);
+				dst->set(dstCoord[0], dst->resolution()[1] - dstCoord[1] - 1, res);
+			}
+		};
+
+		void imageRemap(const Image *src, Image *dst, Vec2 srcUv, Vec2i dstCoord)
+		{
+			CAGE_ASSERT(src->channels() == dst->channels());
+			switch (src->channels())
+			{
+			case 1:
+				Sampler<Real>()(src, dst, srcUv, dstCoord);
+				break;
+			case 2:
+				Sampler<Vec2>()(src, dst, srcUv, dstCoord);
+				break;
+			case 3:
+				Sampler<Vec3>()(src, dst, srcUv, dstCoord);
+				break;
+			case 4:
+				Sampler<Vec4>()(src, dst, srcUv, dstCoord);
+				break;
+			}
+		}
+	}
+
+	Holder<PointerRange<Holder<Image>>> meshRetexture(const MeshRetextureConfig &config)
+	{
+		CAGE_ASSERT(config.source->type() == MeshTypeEnum::Triangles);
+		CAGE_ASSERT(config.target->type() == MeshTypeEnum::Triangles);
+
+		struct Generator
+		{
+			const Mesh *mesh = nullptr;
+
+			struct Pix
+			{
+				Vec3 pos;
+				Vec2i xy;
+			};
+
+			std::vector<Pix> pixels;
+
+			Generator(const Mesh *mesh) : mesh(mesh)
+			{}
+
+			void generate(const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)
+			{
+				Pix p;
+				p.pos = mesh->positionAt(ids, weights);
+				p.xy = xy;
+				pixels.push_back(p);
+			}
+		};
+		Generator generator = Generator(config.target);
+		generator.pixels.reserve(config.resolution[0] * config.resolution[1]);
+
+		{
+			MeshGenerateTextureConfig cfg;
+			cfg.generator.bind<Generator, &Generator::generate>(&generator);
+			cfg.width = config.resolution[0];
+			cfg.height = config.resolution[1];
+			meshGenerateTexture(config.target, cfg);
+		}
+
+		struct MeshFinder
+		{
+			const Mesh *msh = nullptr;
+			std::vector<Triangle> tris;
+			Holder<SpatialStructure> spatialData = newSpatialStructure({});
+			Real maxDist;
+
+			MeshFinder(const Mesh *msh) : msh(msh)
+			{
+				const uint32 trisCnt = msh->indicesCount() / 3;
+				tris.reserve(trisCnt);
+				for (uint32 t = 0; t < trisCnt; t++)
+				{
+					const uint32 *ids = msh->indices().data() + t * 3;
+					const Vec3 &a = msh->positions()[ids[0]];
+					const Vec3 &b = msh->positions()[ids[1]];
+					const Vec3 &c = msh->positions()[ids[2]];
+					Triangle tr(a, b, c);
+					spatialData->update(t, tr);
+					tris.push_back(tr);
+				}
+				spatialData->rebuild();
+			}
+
+			Vec2 find(const Vec3 &pos)
+			{
+				Holder<SpatialQuery> query = newSpatialQuery(spatialData.share());
+				query->intersection(Sphere(pos, maxDist));
+				Real bestDist = Real::Infinity();
+				uint32 bestIndex = m;
+				Vec3 bestPoint;
+				for (uint32 i : query->result())
+				{
+					const Triangle t = tris[i];
+					const Vec3 p = closestPoint(pos, t);
+					const Real dist = distanceSquared(pos, p);
+					if (dist < bestDist)
+					{
+						bestDist = dist;
+						bestIndex = i;
+						bestPoint = p;
+					}
+				}
+				if (bestIndex == m)
+					return Vec2::Nan();
+				Vec3i ids = Vec3i(msh->index(bestIndex * 3 + 0), msh->index(bestIndex * 3 + 1), msh->index(bestIndex * 3 + 2));
+				Vec2 bc = barycoord(msh->position(ids[0]), msh->position(ids[1]), msh->position(ids[2]), bestPoint);
+				Vec3 weights = Vec3(bc[0], bc[1], 1 - bc[0] - bc[1]);
+				return msh->uvAt(ids, weights);
+			}
+		};
+		MeshFinder finder = MeshFinder(config.source);
+		finder.maxDist = config.maxDistance;
+
+		PointerRangeHolder<Holder<Image>> res;
+		res.reserve(config.inputs.size());
+		for (const Image *it : config.inputs)
+		{
+			Holder<Image> i = newImage();
+			i->initialize(config.resolution, it->channels(), it->format());
+			res.push_back(std::move(i));
+		}
+
+		struct Tasker
+		{
+			PointerRange<const Image *> src;
+			PointerRange<Holder<Image>> dst;
+			Generator &generator;
+			MeshFinder &finder;
+
+			Tasker(PointerRange<const Image *> src, PointerRange<Holder<Image>> dst, Generator &generator, MeshFinder &finder) : src(src), dst(dst), generator(generator), finder(finder)
+			{}
+
+			void operator() (uint32 idx)
+			{
+				const Vec2 uv = finder.find(generator.pixels[idx].pos);
+				if (!valid(uv))
+					return;
+				const Vec2i xy = generator.pixels[idx].xy;
+				auto s = src.begin();
+				for (auto &d : dst)
+					imageRemap(*s++, +d, uv, xy);
+			}
+		};
+		Tasker tasker = Tasker(config.inputs, res, generator, finder);
+
+		if (config.parallelize)
+			tasksRunBlocking<Tasker>("retexture", tasker, generator.pixels.size());
+		else
+		{
+			const uintPtr cnt = generator.pixels.size();
+			for (uintPtr i = 0; i < cnt; i++)
+				tasker(i);
+		}
+
+		return res;
 	}
 
 	void meshApplyTransform(Mesh *msh, const Transform &t)
@@ -713,6 +925,8 @@ namespace cage
 
 	void meshClip(Mesh *msh, const Aabb &clipBox)
 	{
+		// todo implement this as 6 times meshClip with a plane when it is implemented
+
 		if (msh->facesCount() == 0)
 			return;
 
@@ -772,14 +986,16 @@ namespace cage
 
 	void meshClip(Mesh *msh, const Plane &pln)
 	{
-		// todo optimized code without constructing the other mesh
-		meshCut(msh, pln);
+		MeshImpl *impl = (MeshImpl *)msh;
+		CAGE_THROW_CRITICAL(NotImplemented, "meshClip");
 	}
 
 	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
 	{
-		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "cut");
+		Holder<Mesh> b = msh->copy();
+		meshClip(msh, pln);
+		meshClip(+b, Plane(pln.origin(), -pln.normal));
+		return b;
 	}
 
 	void meshDiscardInvalid(Mesh *msh)
