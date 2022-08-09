@@ -65,8 +65,10 @@ namespace cage
 
 	void Image::initialize(uint32 w, uint32 h, uint32 c, ImageFormatEnum f)
 	{
-		CAGE_ASSERT(f != ImageFormatEnum::Default);
-		CAGE_ASSERT(c > 0);
+		if (f == ImageFormatEnum::Default)
+			CAGE_THROW_ERROR(Exception, "cannot initialize image with default format");
+		if (c == 0)
+			CAGE_THROW_ERROR(Exception, "cannot initialize image with no channels");
 		ImageImpl *impl = (ImageImpl *)this;
 		impl->width = w;
 		impl->height = h;
@@ -80,7 +82,8 @@ namespace cage
 
 	void Image::initialize(const Vec2i &r, uint32 c, ImageFormatEnum f)
 	{
-		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
+		if (r[0] < 0 || r[1] < 0)
+			CAGE_THROW_ERROR(Exception, "image initialization requires non-negative resolution");
 		initialize(r[0], r[1], c, f);
 	}
 
@@ -100,8 +103,9 @@ namespace cage
 
 	void Image::importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
+		if (buffer.size() < (uintPtr)width * height * channels * formatBytes(format))
+			CAGE_THROW_ERROR(Exception, "image raw import with insufficient buffer");
 		ImageImpl *impl = (ImageImpl *)this;
-		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(0, 0, channels, format);
 		impl->mem = std::move(buffer);
 		impl->width = width;
@@ -110,21 +114,24 @@ namespace cage
 
 	void Image::importRaw(MemoryBuffer &&buffer, const Vec2i &resolution, uint32 channels, ImageFormatEnum format)
 	{
-		CAGE_ASSERT(resolution[0] >= 0 && resolution[1] >= 0);
+		if (resolution[0] < 0 || resolution[1] < 0)
+			CAGE_THROW_ERROR(Exception, "image raw import requires non-negative resolution");
 		importRaw(std::move(buffer), resolution[0], resolution[1], channels, format);
 	}
 
 	void Image::importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
+		if (buffer.size() < (uintPtr)width * height * channels * formatBytes(format))
+			CAGE_THROW_ERROR(Exception, "image raw import with insufficient buffer");
 		ImageImpl *impl = (ImageImpl *)this;
-		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(width, height, channels, format);
 		detail::memcpy(impl->mem.data(), buffer.data(), impl->mem.size());
 	}
 
 	void Image::importRaw(PointerRange<const char> buffer, const Vec2i &resolution, uint32 channels, ImageFormatEnum format)
 	{
-		CAGE_ASSERT(resolution[0] >= 0 && resolution[1] >= 0);
+		if (resolution[0] < 0 || resolution[1] < 0)
+			CAGE_THROW_ERROR(Exception, "image raw import requires non-negative resolution");
 		importRaw(buffer, resolution[0], resolution[1], channels, format);
 	}
 

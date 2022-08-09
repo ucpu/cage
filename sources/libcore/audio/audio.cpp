@@ -32,9 +32,10 @@ namespace cage
 
 	void Audio::initialize(uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
 	{
-		CAGE_ASSERT(format != AudioFormatEnum::Vorbis);
-		CAGE_ASSERT(format != AudioFormatEnum::Default);
-		CAGE_ASSERT(channels > 0);
+		if (format == AudioFormatEnum::Default || format == AudioFormatEnum::Vorbis)
+			CAGE_THROW_ERROR(Exception, "cannot initialize audio with default or vorbis format");
+		if (channels == 0)
+			CAGE_THROW_ERROR(Exception, "cannot initialize audio with no channels");
 		AudioImpl *impl = (AudioImpl *)this;
 		impl->frames = frames;
 		impl->channels = channels;
@@ -60,8 +61,9 @@ namespace cage
 
 	void Audio::importRaw(PointerRange<const char> buffer, uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
 	{
+		if (buffer.size() < (uintPtr)frames * channels * formatBytes(format))
+			CAGE_THROW_ERROR(Exception, "audio raw import with insufficient buffer");
 		AudioImpl *impl = (AudioImpl *)this;
-		CAGE_ASSERT(buffer.size() >= frames * channels * formatBytes(format));
 		initialize(frames, channels, sampleRate, format);
 		detail::memcpy(impl->mem.data(), buffer.data(), impl->mem.size());
 	}
@@ -211,7 +213,8 @@ namespace cage
 
 	void audioConvertFormat(Audio *snd, AudioFormatEnum format)
 	{
-		CAGE_ASSERT(format != AudioFormatEnum::Default);
+		if (format == AudioFormatEnum::Default)
+			CAGE_THROW_ERROR(Exception, "cannot convert audio to default format");
 		AudioImpl *impl = (AudioImpl *)snd;
 		if (impl->format == format)
 			return; // no op
@@ -247,15 +250,18 @@ namespace cage
 		AudioImpl *t = (AudioImpl *)target;
 
 		if (t->format == AudioFormatEnum::Vorbis || (t->format == AudioFormatEnum::Default && s->format == AudioFormatEnum::Vorbis))
-			CAGE_THROW_ERROR(Exception, "audioBlit into vorbis is forbidden");
+			CAGE_THROW_ERROR(Exception, "audioBlit into vorbis is not possible");
 
-		CAGE_ASSERT(s->format != AudioFormatEnum::Default && s->channels > 0);
-		CAGE_ASSERT(s != t || !overlaps(sourceFrameOffset, targetFrameOffset, frames));
+		if (s->format == AudioFormatEnum::Default || s->channels == 0)
+			CAGE_THROW_ERROR(Exception, "audioBlit from default format or no channels");
+		if (s == t && overlaps(sourceFrameOffset, targetFrameOffset, frames))
+			CAGE_THROW_ERROR(Exception, "audioBlit with overlapping source and destination");
 		if (t->format == AudioFormatEnum::Default && targetFrameOffset == 0)
 			t->initialize(s->frames, s->channels, s->sampleRate, s->format);
-		CAGE_ASSERT(s->channels == t->channels);
-		CAGE_ASSERT(sourceFrameOffset + frames <= s->frames);
-		CAGE_ASSERT(targetFrameOffset + frames <= t->frames);
+		if (s->channels != t->channels)
+			CAGE_THROW_ERROR(Exception, "audioBlit with different number of channels");
+		if (sourceFrameOffset + frames > s->frames || targetFrameOffset + frames > t->frames)
+			CAGE_THROW_ERROR(Exception, "audioBlit outside buffer size");
 
 		if (s->format == AudioFormatEnum::Vorbis)
 		{

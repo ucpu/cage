@@ -36,7 +36,7 @@ namespace cage
 		{
 			impl->clear();
 			if (buffer.size() < 32)
-				CAGE_THROW_ERROR(Exception, "insufficient data to determine sound format");
+				CAGE_THROW_ERROR(Exception, "insufficient data to determine audio format");
 			static constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
 			static constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
 			static constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
@@ -55,7 +55,7 @@ namespace cage
 			else if (detail::memcmp(buffer.data(), oggSignature, sizeof(oggSignature)) == 0)
 				oggDecode(buffer, impl);
 			else
-				CAGE_THROW_ERROR(Exception, "sound data do not match any known signature");
+				CAGE_THROW_ERROR(Exception, "audio data do not match any known signature");
 			if (requestedFormat != AudioFormatEnum::Default)
 				audioConvertFormat(this, requestedFormat);
 		}
@@ -76,7 +76,8 @@ namespace cage
 
 	Holder<PointerRange<char>> Audio::exportBuffer(const String &format) const
 	{
-		CAGE_ASSERT(channels() > 0);
+		if (channels() == 0)
+			CAGE_THROW_ERROR(Exception, "cannot export invalid audio");
 		const String ext = toLower(pathExtractExtension(format));
 		if (ext == ".wav")
 			return wavEncode((const AudioImpl *)this);
@@ -86,7 +87,7 @@ namespace cage
 			return mp3Encode((const AudioImpl *)this);
 		if (ext == ".ogg")
 			return oggEncode((const AudioImpl *)this);
-		CAGE_THROW_ERROR(Exception, "unrecognized file extension for sound encoding");
+		CAGE_THROW_ERROR(Exception, "unrecognized file extension for audio encoding");
 	}
 
 	void Audio::exportFile(const String &filename) const

@@ -83,7 +83,8 @@ namespace cage
 
 	void imageConvert(Image *img, uint32 channels)
 	{
-		CAGE_ASSERT(channels > 0);
+		if (channels == 0)
+			CAGE_THROW_ERROR(Exception, "image must have positive number of channels");
 		ImageImpl *impl = (ImageImpl *)img;
 		if (impl->channels == channels)
 			return; // no op
@@ -97,7 +98,8 @@ namespace cage
 
 	void imageConvert(Image *img, ImageFormatEnum format)
 	{
-		CAGE_ASSERT(format != ImageFormatEnum::Default);
+		if (format == ImageFormatEnum::Default)
+			CAGE_THROW_ERROR(Exception, "image cannot have default format");
 		ImageImpl *impl = (ImageImpl *)img;
 		if (impl->format == format)
 			return; // no op
@@ -212,6 +214,8 @@ namespace cage
 
 	void imageConvertHeigthToNormal(Image *img, const Real &strength_)
 	{
+		if (strength_ <= 0)
+			CAGE_THROW_ERROR(Exception, "converting height to normal requires positive strength");
 		const Real strength = 1.f / strength_;
 		const uint32 w = img->width();
 		const uint32 h = img->height();
@@ -312,7 +316,8 @@ namespace cage
 
 	void imageResize(Image *img, const Vec2i &r, bool useColorConfig)
 	{
-		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
+		if (r[0] < 0 || r[1] < 0)
+			CAGE_THROW_ERROR(Exception, "image resize requires non-negative resolution");
 		imageResize(img, r[0], r[1], useColorConfig);
 	}
 
@@ -582,18 +587,22 @@ namespace cage
 	{
 		const ImageImpl *s = (const ImageImpl *)sourceImg;
 		ImageImpl *t = (ImageImpl *)targetImg;
-		CAGE_ASSERT(s->format != ImageFormatEnum::Default && s->channels > 0);
-		CAGE_ASSERT(s != t || !overlaps(sourceX, sourceY, targetX, targetY, width, height));
+		if (s->format == ImageFormatEnum::Default || s->channels == 0)
+			CAGE_THROW_ERROR(Exception, "invalid source image format or channels");
+		if (s == t && overlaps(sourceX, sourceY, targetX, targetY, width, height))
+			CAGE_THROW_ERROR(Exception, "source and target images overlaps");
 		if (t->format == ImageFormatEnum::Default && targetX == 0 && targetY == 0)
 		{
 			t->initialize(width, height, s->channels, s->format);
 			t->colorConfig = s->colorConfig;
 		}
-		CAGE_ASSERT(s->channels == t->channels);
-		CAGE_ASSERT(sourceX + width <= s->width);
-		CAGE_ASSERT(sourceY + height <= s->height);
-		CAGE_ASSERT(targetX + width <= t->width);
-		CAGE_ASSERT(targetY + height <= t->height);
+		if (s->channels != t->channels)
+			CAGE_THROW_ERROR(Exception, "images have different number of channels");
+		if ((sourceX + width > s->width) ||
+			(sourceY + height > s->height) ||
+			(targetX + width > t->width) ||
+			(targetY + height > t->height))
+			CAGE_THROW_ERROR(Exception, "region outside image resolution");
 		if (s->format == t->format)
 		{
 			const uint32 ps = formatBytes(s->format) * s->channels;

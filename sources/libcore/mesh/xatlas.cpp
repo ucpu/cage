@@ -64,9 +64,10 @@ namespace cage
 
 	uint32 meshUnwrap(Mesh *poly, const MeshUnwrapConfig &config)
 	{
-		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
-		CAGE_ASSERT((config.targetResolution == 0) != (config.texelsPerUnit == 0));
-
+		if (poly->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "unwrap requires triangles mesh");
+		if ((config.targetResolution == 0) == (config.texelsPerUnit == 0))
+			CAGE_THROW_ERROR(Exception, "unwrap requires exactly one of targetResolution or texelsPerUnit");
 		if (poly->facesCount() == 0)
 			return 0;
 

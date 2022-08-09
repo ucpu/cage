@@ -75,6 +75,8 @@ namespace cage
 
 	void meshSimplify(Mesh *poly, const MeshSimplifyConfig &config)
 	{
+		if (poly->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh simplification requires triangles mesh");
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(poly);
@@ -91,6 +93,8 @@ namespace cage
 
 	void meshRegularize(Mesh *poly, const MeshRegularizeConfig &config)
 	{
+		if (poly->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh regularization requires triangles mesh");
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(poly);

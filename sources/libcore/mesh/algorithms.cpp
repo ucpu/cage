@@ -590,9 +590,10 @@ namespace cage
 	{
 		if (msh->facesCount() == 0)
 			return;
-
-		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
-		CAGE_ASSERT(!msh->uvs().empty());
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "generating texture requires triangles mesh");
+		if (msh->uvs().empty())
+			CAGE_THROW_ERROR(Exception, "generating texture requires uvs");
 
 		const uint32 triCount = msh->facesCount();
 		const Vec2 scale = Vec2(config.width - 1, config.height - 1);
@@ -641,6 +642,8 @@ namespace cage
 	{
 		if (msh->facesCount() == 0)
 			return;
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "generating normals requires triangles mesh");
 
 		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
 
@@ -722,8 +725,8 @@ namespace cage
 
 	Holder<PointerRange<Holder<Image>>> meshRetexture(const MeshRetextureConfig &config)
 	{
-		CAGE_ASSERT(config.source->type() == MeshTypeEnum::Triangles);
-		CAGE_ASSERT(config.target->type() == MeshTypeEnum::Triangles);
+		if (config.source->type() != MeshTypeEnum::Triangles || config.target->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh retexture requires triangles mesh");
 
 		struct Generator
 		{
@@ -883,8 +886,8 @@ namespace cage
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		const uint32 cnt = msh->verticesCount();
-		CAGE_ASSERT(impl->boneIndices.size() == cnt);
-		CAGE_ASSERT(impl->boneWeights.size() == cnt);
+		if (impl->boneIndices.size() != cnt || impl->boneWeights.size() != cnt)
+			CAGE_THROW_ERROR(Exception, "applying skin animation requires bones");
 		for (uint32 i = 0; i < cnt; i++)
 		{
 			Mat4 tr = Mat4::scale(0);
@@ -896,7 +899,7 @@ namespace cage
 			}
 			CAGE_ASSERT(tr.valid());
 			impl->positions[i] = Vec3(tr * Vec4(impl->positions[i], 1));
-			Mat3 tr3 = Mat3(tr);
+			const Mat3 tr3 = Mat3(tr);
 			if (!impl->normals.empty())
 				impl->normals[i] = tr3 * impl->normals[i];
 			if (!impl->tangents.empty())
@@ -929,8 +932,8 @@ namespace cage
 
 		if (msh->facesCount() == 0)
 			return;
-
-		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles); // todo other types
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh clip requires triangles mesh");
 
 		meshConvertToIndexed(msh);
 		MeshImpl *impl = (MeshImpl *)msh;
@@ -1073,9 +1076,10 @@ namespace cage
 	{
 		if (msh->facesCount() == 0)
 			return {};
-
-		CAGE_ASSERT(config.maxSurfaceArea > 0);
-		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh chunking requires triangles mesh");
+		if (config.maxSurfaceArea <= 0)
+			CAGE_THROW_ERROR(Exception, "mesh chunking requires positive maxSurfaceArea");
 
 		auto m = msh->copy();
 		meshConvertToIndexed(+m);

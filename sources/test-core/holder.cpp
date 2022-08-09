@@ -61,6 +61,19 @@ namespace
 	{
 		Holder<ForwardDeclared> local = std::move(param);
 	}
+
+	struct IntWrapper : public HolderTester
+	{
+		int value = 0;
+	};
+
+	Holder<IntWrapper> increaseValue(Holder<IntWrapper> &&src)
+	{
+		Holder<IntWrapper> dst = systemMemory().createHolder<IntWrapper>();
+		dst->value = src->value + 10;
+		src->value = 0;
+		return dst;
+	}
 }
 
 void testHolder()
@@ -303,6 +316,14 @@ void testHolder()
 		CAGE_TEST(gCount == 4);
 		a = std::move(a->s);
 		CAGE_TEST(gCount == 3);
+	}
+
+	{
+		CAGE_TESTCASE("simultaneous move from and assign to");
+		Holder<IntWrapper> a = systemMemory().createHolder<IntWrapper>();
+		a->value = 13;
+		a = increaseValue(std::move(a));
+		CAGE_TEST(a->value == 23);
 	}
 
 	CAGE_TEST(gCount == 0);

@@ -101,7 +101,8 @@ namespace cage
 
 	Holder<PointerRange<char>> Image::exportBuffer(const String &format) const
 	{
-		CAGE_ASSERT(channels() > 0);
+		if (channels() == 0)
+			CAGE_THROW_ERROR(Exception, "cannot export invalid image");
 		const String ext = toLower(pathExtractExtension(format));
 		if (ext == ".png")
 			return pngEncode((const ImageImpl *)this);
