@@ -95,56 +95,6 @@ namespace cage
 			return r;
 		}
 
-		Mat3 axesMatrix(const detail::StringBase<6> axes)
-		{
-			if (axes.empty() || axes == "+x+y+z")
-				return Mat3();
-			if (axes.length() != 6)
-				CAGE_THROW_ERROR(Exception, "wrong axes definition: length (must be in format +x+y+z)");
-			Mat3 result(0, 0, 0, 0, 0, 0, 0, 0, 0);
-			int sign = 0;
-			uint32 axesUsedCounts[3] = { 0, 0, 0 };
-			for (uint32 i = 0; i < 6; i++)
-			{
-				char c = axes[i];
-				if (i % 2 == 0)
-				{ // signs
-					if (c != '+' && c != '-')
-						CAGE_THROW_ERROR(Exception, "wrong axes definition: signs (must be in format +x+y+z)");
-					if (c == '+')
-						sign = 1;
-					else
-						sign = -1;
-				}
-				else
-				{ // axes
-					uint32 out = i / 2;
-					uint32 in = m;
-					switch (c)
-					{
-					case 'x':
-						axesUsedCounts[0]++;
-						in = 0;
-						break;
-					case 'y':
-						axesUsedCounts[1]++;
-						in = 1;
-						break;
-					case 'z':
-						axesUsedCounts[2]++;
-						in = 2;
-						break;
-					default:
-						CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
-					}
-					result[in * 3 + out] = Real(sign);
-				}
-			}
-			if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
-				CAGE_THROW_ERROR(Exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
-			return result;
-		}
-
 		String convStrTruncate(const aiString &str, uint32 maxLen = cage::String::MaxLength / 2)
 		{
 			String s;
@@ -581,9 +531,6 @@ namespace cage
 						const aiAnimation *ani = scene->mAnimations[i];
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "index: " + i + ", animation: '" + convStrTruncate(ani->mName) + "', channels: " + ani->mNumChannels);
 					}
-
-					if (axesScale != Mat3())
-						CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "using axes/scale conversion matrix: " + axesScale);
 				}
 
 				{
@@ -607,10 +554,7 @@ namespace cage
 				//CAGE_LOG(SeverityEnum::Info, "meshImport", "full node hierarchy:");
 				//printHierarchy(+skeleton, imp.GetScene()->mRootNode, 0);
 
-				const Mat4 axesScale = Mat4(this->axesScale);
-				const Mat4 axesScaleInv = inverse(axesScale);
-
-				const Mat4 globalInverse = inverse(conv(imp.GetScene()->mRootNode->mTransformation)) * axesScale;
+				const Mat4 globalInverse = inverse(conv(imp.GetScene()->mRootNode->mTransformation));
 				const uint32 bonesCount = skeleton->bonesCount();
 
 				std::vector<uint16> ps;
@@ -626,7 +570,7 @@ namespace cage
 					const aiNode *n = skeleton->node(i);
 					const aiBone *b = skeleton->bone(i);
 					const Mat4 t = conv(n->mTransformation);
-					const Mat4 o = (b ? conv(b->mOffsetMatrix) : Mat4()) * axesScaleInv;
+					const Mat4 o = (b ? conv(b->mOffsetMatrix) : Mat4());
 					CAGE_ASSERT(t.valid() && o.valid());
 					ps.push_back(skeleton->parent(i));
 					bs.push_back(t);
@@ -807,7 +751,7 @@ namespace cage
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 p = axesScale * conv(am->mVertices[i]);
+						Vec3 p = conv(am->mVertices[i]);
 						ps.push_back(p);
 					}
 					poly->positions(ps);
@@ -821,7 +765,7 @@ namespace cage
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 n = axes * conv(am->mNormals[i]);
+						Vec3 n = conv(am->mNormals[i]);
 						static constexpr const char Name[] = "normal";
 						ps.push_back(fixUnitVector<Name>(n));
 					}
@@ -836,7 +780,7 @@ namespace cage
 					ts.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 n = axes * conv(am->mTangents[i]);
+						Vec3 n = conv(am->mTangents[i]);
 						static constexpr const char Name[] = "tangent";
 						ts.push_back(fixUnitVector<Name>(n));
 					}
@@ -1459,8 +1403,6 @@ namespace cage
 
 			const String inputFile;
 			const MeshImportConfig config;
-			const Mat3 axes = axesMatrix(config.axesSwizzle);
-			const Mat3 axesScale = axes * config.scale;
 			CageIoSystem ioSystem;
 			Assimp::Importer imp;
 			Holder<AssimpSkeleton> skeleton;

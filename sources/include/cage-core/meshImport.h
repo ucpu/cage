@@ -76,8 +76,6 @@ namespace cage
 		String rootPath = "/";
 		String materialPathOverride; // enforce cage (cpm) material
 		String materialNameAlternative; // prefer cage (cpm) material with this name if it exists
-		detail::StringBase<6> axesSwizzle = "+x+y+z";
-		Real scale = 1;
 		bool mergeParts = false; // merge compatible parts to reduce draw calls (ignores material names)
 		bool generateNormals = false;
 		bool generateTangents = false;

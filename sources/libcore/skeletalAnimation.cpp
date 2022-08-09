@@ -334,6 +334,30 @@ namespace cage
 		return numeric_cast<uint32>(impl->boneParents.size());
 	}
 
+	Mat4 SkeletonRig::globalInverse() const
+	{
+		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
+		return impl->globalInverse;
+	}
+
+	PointerRange<const uint16> SkeletonRig::parents() const
+	{
+		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
+		return impl->boneParents;
+	}
+
+	PointerRange<const Mat4> SkeletonRig::bases() const
+	{
+		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
+		return impl->baseMatrices;
+	}
+
+	PointerRange<const Mat4> SkeletonRig::invRests() const
+	{
+		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
+		return impl->invRestMatrices;
+	}
+
 	Holder<SkeletonRig> newSkeletonRig()
 	{
 		return systemMemory().createImpl<SkeletonRig, SkeletonRigImpl>();

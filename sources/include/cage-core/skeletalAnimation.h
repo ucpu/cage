@@ -46,6 +46,10 @@ namespace cage
 		void skeletonData(const Mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests);
 
 		uint32 bonesCount() const;
+		Mat4 globalInverse() const;
+		PointerRange<const uint16> parents() const;
+		PointerRange<const Mat4> bases() const;
+		PointerRange<const Mat4> invRests() const;
 
 		// todo sockets
 	};

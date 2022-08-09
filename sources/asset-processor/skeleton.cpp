@@ -3,12 +3,14 @@
 
 #include "processor.h"
 
-MeshImportConfig meshImportConfig(bool allowAxes);
+MeshImportConfig meshImportConfig();
+void meshImportTransform(MeshImportResult &result);
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processSkeleton()
 {
-	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig(true));
+	MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
+	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	if (!result.skeleton)
 		CAGE_THROW_ERROR(Exception, "loaded no skeleton");

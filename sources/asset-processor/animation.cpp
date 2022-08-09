@@ -4,12 +4,12 @@
 
 #include "processor.h"
 
-MeshImportConfig meshImportConfig(bool allowAxes);
+MeshImportConfig meshImportConfig();
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processAnimation()
 {
-	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig(false));
+	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
 	meshImportNotifyUsedFiles(result);
 
 	uint32 chosenAnimationIndex = m;

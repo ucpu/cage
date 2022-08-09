@@ -4,13 +4,15 @@
 
 #include "processor.h"
 
-MeshImportConfig meshImportConfig(bool allowAxes);
+MeshImportConfig meshImportConfig();
+void meshImportTransform(MeshImportResult &result);
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 uint32 meshImportSelectIndex(const MeshImportResult &result);
 
 void processCollider()
 {
-	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig(true));
+	MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
+	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	const uint32 partIndex = meshImportSelectIndex(result);
 	const MeshImportPart &part = result.parts[partIndex];

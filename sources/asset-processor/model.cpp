@@ -2,24 +2,114 @@
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/hashString.h>
+#include <cage-core/flatSet.h>
 #include <cage-engine/shaderConventions.h>
 
 #include "processor.h"
 
-#include <set>
+#include <vector>
 
-MeshImportConfig meshImportConfig(bool allowAxes)
+MeshImportConfig meshImportConfig()
 {
 	MeshImportConfig config;
 	config.rootPath = inputDirectory;
-	if (allowAxes)
-	{
-		config.axesSwizzle = toLower(properties("axes"));
-		config.scale = toFloat(properties("scale"));
-	}
 	config.mergeParts = toBool(properties("bakeModel"));
 	config.verbose = true;
 	return config;
+}
+
+namespace
+{
+	Mat3 axesMatrix(const String axes)
+	{
+		if (axes.empty() || axes == "+x+y+z")
+			return Mat3();
+		if (axes.length() != 6)
+			CAGE_THROW_ERROR(Exception, "wrong axes definition: length (must be in format +x+y+z)");
+		Mat3 result(0, 0, 0, 0, 0, 0, 0, 0, 0);
+		int sign = 0;
+		uint32 axesUsedCounts[3] = { 0, 0, 0 };
+		for (uint32 i = 0; i < 6; i++)
+		{
+			char c = axes[i];
+			if (i % 2 == 0)
+			{ // signs
+				if (c != '+' && c != '-')
+					CAGE_THROW_ERROR(Exception, "wrong axes definition: signs (must be in format +x+y+z)");
+				if (c == '+')
+					sign = 1;
+				else
+					sign = -1;
+			}
+			else
+			{ // axes
+				uint32 out = i / 2;
+				uint32 in = m;
+				switch (c)
+				{
+				case 'x':
+					axesUsedCounts[0]++;
+					in = 0;
+					break;
+				case 'y':
+					axesUsedCounts[1]++;
+					in = 1;
+					break;
+				case 'z':
+					axesUsedCounts[2]++;
+					in = 2;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
+				}
+				result[in * 3 + out] = Real(sign);
+			}
+		}
+		if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
+			CAGE_THROW_ERROR(Exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
+		return result;
+	}
+
+	void transformSkeleton(SkeletonRig *skel, const Mat3 &axesScale_)
+	{
+		const Mat4 axesScale = Mat4(axesScale_);
+		const Mat4 axesScaleInv = inverse(axesScale);
+		Mat4 gi = skel->globalInverse();
+		std::vector<Mat4> is(skel->invRests().begin(), skel->invRests().end());
+		gi = gi * axesScale;
+		for (Mat4 &t : is)
+			t = t * axesScaleInv;
+		skel->skeletonData(gi, skel->parents(), skel->bases(), is);
+	}
+
+	void transformMesh(Mesh *msh, const Mat3 &axes, const Mat3 &axesScale)
+	{
+		std::vector<Vec3> p(msh->positions().begin(), msh->positions().end());
+		std::vector<Vec3> n(msh->normals().begin(), msh->normals().end());
+		std::vector<Vec3> t(msh->tangents().begin(), msh->tangents().end());
+		for (Vec3 &i : p)
+			i = axesScale * i;
+		for (Vec3 &i : n)
+			i = axes * i;
+		for (Vec3 &i : t)
+			i = axes * i;
+		msh->positions(p);
+		msh->normals(n);
+		msh->tangents(t);
+	}
+}
+
+void meshImportTransform(MeshImportResult &result)
+{
+	const Mat3 axes = axesMatrix(toLower(properties("axes")));
+	const Mat3 axesScale = axes * toFloat(properties("scale"));
+	if (axesScale == Mat3())
+		return;
+	CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "using axes/scale conversion matrix: " + axesScale);
+	if (result.skeleton)
+		transformSkeleton(+result.skeleton, axesScale);
+	for (auto &it : result.parts)
+		transformMesh(+it.mesh, axes, axesScale);
 }
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result)
@@ -48,7 +138,7 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 			CAGE_THROW_ERROR(Exception, "the input specifier is numeric, but the index is out of range");
 	}
 
-	std::set<uint32> candidates;
+	FlatSet<uint32> candidates;
 	for (uint32 modelIndex = 0; modelIndex < result.parts.size(); modelIndex++)
 	{
 		const String objName = result.parts[modelIndex].objectName;
@@ -165,14 +255,15 @@ namespace
 
 void processModel()
 {
-	MeshImportConfig config = meshImportConfig(true);
+	MeshImportConfig config = meshImportConfig();
 	config.materialPathOverride = properties("material");
 	config.materialNameAlternative = inputSpec;
 	config.generateNormals = toBool(properties("normals"));
 	config.generateTangents = toBool(properties("tangents"));
 	config.trianglesOnly = toBool(properties("trianglesOnly"));
 	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
-	const MeshImportResult result = meshImportFiles(inputFileName, config);
+	MeshImportResult result = meshImportFiles(inputFileName, config);
+	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	const uint32 partIndex = meshImportSelectIndex(result);
 	const MeshImportPart &part = result.parts[partIndex];
