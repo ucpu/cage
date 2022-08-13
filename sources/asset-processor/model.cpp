@@ -109,7 +109,10 @@ void meshImportTransform(MeshImportResult &result)
 	if (result.skeleton)
 		transformSkeleton(+result.skeleton, axesScale);
 	for (auto &it : result.parts)
+	{
 		transformMesh(+it.mesh, axes, axesScale);
+		it.boundingBox *= Mat4(axesScale);
+	}
 }
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result)
