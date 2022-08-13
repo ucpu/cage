@@ -20,56 +20,48 @@ namespace cage
 			textures.name += Stringizer() + "_ch" + channel;
 		}
 
-		void splitChannels(PointerRangeHolder<MeshImportTexture> &textures, const MeshImportPart &part)
+		void splitChannels(MeshImportTexture &it)
 		{
-			std::vector<MeshImportTexture> add;
-
-			for (MeshImportTexture &it : textures)
+			switch (it.type)
 			{
-				switch (it.type)
+			case MeshImportTextureType::AmbientOcclusion:
+			{
+				switch (it.images.parts[0].image->channels())
 				{
-				case MeshImportTextureType::AmbientOcclusion:
-				{
-					switch (it.images.parts[0].image->channels())
-					{
-					case 1: break;
-					case 3: pickChannel(it, 0); break;
-					default: CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
-					}
-				} break;
-				case MeshImportTextureType::Roughness:
-				{
-					switch (it.images.parts[0].image->channels())
-					{
-					case 1: break;
-					case 3: pickChannel(it, 1); break;
-					case 4: pickChannel(it, 1); break;
-					default: CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
-					}
-				} break;
-				case MeshImportTextureType::Metallic:
-				{
-					switch (it.images.parts[0].image->channels())
-					{
-					case 1: break;
-					case 3: pickChannel(it, 2); break;
-					case 4: pickChannel(it, 2); break;
-					default: CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
-					}
-				} break;
-				case MeshImportTextureType::Emission:
-				{
-					switch (it.images.parts[0].image->channels())
-					{
-					case 1: break;
-					default: CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
-					}
-				} break;
+				case 1: break;
+				case 3: pickChannel(it, 0); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
 				}
+			} break;
+			case MeshImportTextureType::Roughness:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: break;
+				case 3: pickChannel(it, 1); break;
+				case 4: pickChannel(it, 1); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+				}
+			} break;
+			case MeshImportTextureType::Metallic:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: break;
+				case 3: pickChannel(it, 2); break;
+				case 4: pickChannel(it, 2); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
+				}
+			} break;
+			case MeshImportTextureType::Emission:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
+				}
+			} break;
 			}
-
-			for (auto &it : add)
-				textures.push_back(std::move(it));
 		}
 
 		void composeAlbedoOpacity(PointerRangeHolder<MeshImportTexture> &textures)
@@ -206,34 +198,41 @@ namespace cage
 
 	namespace privat
 	{
+		void meshImportNormalizeFormats(MeshImportPart &part)
+		{
+			for (auto &it : part.textures)
+			{
+				if (it.images.parts.empty())
+				{
+					if (cage::isPattern(it.name, "", "?", "") || cage::isPattern(it.name, "", ";", ""))
+						continue;
+					it.images = imageImportFiles(it.name);
+				}
+				imageImportConvertRawToImages(it.images);
+				splitChannels(it);
+			}
+		}
+
 		void meshImportConvertToCageFormats(MeshImportPart &part)
 		{
+			meshImportNormalizeFormats(part);
+
 			std::vector<MeshImportTexture> unloadable;
 			PointerRangeHolder<MeshImportTexture> textures;
 			textures.reserve(part.textures.size());
 			for (auto &it : part.textures)
 			{
 				if (it.images.parts.empty())
-				{
-					if (cage::isPattern(it.name, "", "?", "") || cage::isPattern(it.name, "", ";", ""))
-					{
-						unloadable.push_back(std::move(it));
-						continue;
-					}
-					it.images = imageImportFiles(it.name);
-				}
-				imageImportConvertRawToImages(it.images);
-				textures.push_back(std::move(it));
+					unloadable.push_back(std::move(it));
+				else
+					textures.push_back(std::move(it));
 			}
-
-			splitChannels(textures, part);
 
 			std::sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) {
 				return a.type < b.type;
 			});
 
-			if (any(part.renderFlags & (MeshRenderFlags::Translucent | MeshRenderFlags::AlphaClip)))
-				composeAlbedoOpacity(textures);
+			composeAlbedoOpacity(textures);
 			composeSpecial(textures);
 
 			for (auto &it : unloadable)
@@ -249,6 +248,12 @@ namespace cage
 			for (auto &it : part.textures)
 				if (it.images.parts.empty())
 					it.images = imageImportFiles(it.name);
+	}
+
+	void meshImportNormalizeFormats(MeshImportResult &result)
+	{
+		for (MeshImportPart &p : result.parts)
+			privat::meshImportNormalizeFormats(p);
 	}
 
 	void meshImportConvertToCageFormats(MeshImportResult &result)

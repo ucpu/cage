@@ -96,6 +96,7 @@ namespace cage
 	CAGE_CORE_API MeshImportResult meshImportFiles(const String &filename, const MeshImportConfig &config = {});
 
 	CAGE_CORE_API void meshImportLoadExternal(MeshImportResult &result);
+	CAGE_CORE_API void meshImportNormalizeFormats(MeshImportResult &result);
 	CAGE_CORE_API void meshImportConvertToCageFormats(MeshImportResult &result);
 
 	namespace detail
