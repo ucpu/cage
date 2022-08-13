@@ -175,16 +175,16 @@ namespace
 			config.verbose = true;
 			MeshImportResult res = meshImportFiles(inputFileName, config);
 
-			for (const auto &part : res.parts)
-				for (const auto &it : part.textures)
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
+			//for (const auto &part : res.parts)
+			//	for (const auto &it : part.textures)
+			//		CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
 
 			CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
 			meshImportConvertToCageFormats(res);
 
-			for (const auto &part : res.parts)
-				for (const auto &it : part.textures)
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
+			//for (const auto &part : res.parts)
+			//	for (const auto &it : part.textures)
+			//		CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
 
 			meshImportNotifyUsedFiles(res);
 			images = std::move(findEmbeddedTexture(res)->images);

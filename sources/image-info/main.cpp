@@ -34,6 +34,13 @@ int main(int argc, const char *args[])
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");
+		if (cmd->cmdBool('?', "help", false))
+		{
+			cmd->logHelp();
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " image.png");
+			return 0;
+		}
 		cmd->checkUnusedWithHelp();
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");

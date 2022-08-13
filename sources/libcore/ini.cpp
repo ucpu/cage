@@ -235,7 +235,6 @@ namespace cage
 		CAGE_LOG(SeverityEnum::Info, "help", "command line options:");
 		for (const String &h : impl->helps)
 			CAGE_LOG_CONTINUE(SeverityEnum::Info, "help", h);
-		CAGE_LOG(SeverityEnum::Note, "help", "note that this list may be incomplete");
 	}
 
 	void Ini::checkUnusedWithHelp() const

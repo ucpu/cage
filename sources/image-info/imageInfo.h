@@ -51,7 +51,7 @@ namespace cage
 		switch (result.parts.size())
 		{
 		case 0:
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "contains no actual images");
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loaded no images");
 			break;
 		case 1:
 			break;

@@ -46,7 +46,7 @@ int main(int argc, const char *args[])
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "example:");
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --preserve --format .jpg -- a.png b.tiff");
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "  to convert a.png to a.jpg and b.tiff to b.jpg");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--preserve will keep original files too");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--preserve: keep original files too");
 			return 0;
 		}
 		cmd->checkUnusedWithHelp();
