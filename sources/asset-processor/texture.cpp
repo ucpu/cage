@@ -170,13 +170,28 @@ namespace
 		}
 		else
 		{
-			MeshImportResult res = meshImportFiles(inputFileName);
+			MeshImportConfig config;
+			config.rootPath = inputDirectory;
+			config.verbose = true;
+			MeshImportResult res = meshImportFiles(inputFileName, config);
+
+			for (const auto &part : res.parts)
+				for (const auto &it : part.textures)
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
+
+			CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
+			meshImportConvertToCageFormats(res);
+
+			for (const auto &part : res.parts)
+				for (const auto &it : part.textures)
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
+
 			meshImportNotifyUsedFiles(res);
 			images = std::move(findEmbeddedTexture(res)->images);
 		}
 		imageImportConvertRawToImages(images);
 		if (images.parts.empty())
-			CAGE_THROW_ERROR(Exception, "no files were loaded");
+			CAGE_THROW_ERROR(Exception, "loaded no images");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
 	}
 

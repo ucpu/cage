@@ -39,6 +39,11 @@ namespace cage
 			merge(result, tmp);
 			layer++;
 		}
+		if (result.parts.empty())
+		{
+			CAGE_LOG_THROW(Stringizer() + "path: " + filesPattern);
+			CAGE_THROW_ERROR(Exception, "loaded no images");
+		}
 		return result;
 	}
 

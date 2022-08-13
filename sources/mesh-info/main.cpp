@@ -7,13 +7,15 @@
 
 using namespace cage;
 
-void info(const String &src)
+void info(const String &src, bool convertToCage)
 {
 	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "opening file '" + src + "'");
 	MeshImportResult msh;
 	try
 	{
 		msh = meshImportFiles(src);
+		if (convertToCage)
+			meshImportConvertToCageFormats(msh);
 	}
 	catch (const Exception &)
 	{
@@ -95,12 +97,13 @@ int main(int argc, const char *args[])
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");
+		const bool convertToCage = cmd->cmdBool('c', "cage", false);
 		cmd->checkUnusedWithHelp();
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)
 		{
-			info(path);
+			info(path, convertToCage);
 			CAGE_LOG(SeverityEnum::Info, "mesh", "");
 		}
 		CAGE_LOG(SeverityEnum::Info, "mesh", "done");
