@@ -30,6 +30,7 @@ namespace cage
 				{
 				case 1: break;
 				case 3: pickChannel(it, 0); break;
+				case 4: pickChannel(it, 0); break;
 				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
 				}
 			} break;
@@ -61,50 +62,54 @@ namespace cage
 				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
 				}
 			} break;
+			case MeshImportTextureType::Opacity:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: break;
+				case 2: pickChannel(it, 1); break;
+				case 4: pickChannel(it, 3); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
+				}
+			} break;
 			}
 		}
 
 		void composeAlbedoOpacity(PointerRangeHolder<MeshImportTexture> &textures)
 		{
-			Holder<Image> channels[4];
-			uint32 top = 0;
-			String basename;
-			String opacityname;
+			const auto &find = [&](MeshImportTextureType type) -> const MeshImportTexture * {
+				for (const auto &it : textures)
+					if (it.type == type)
+						return &it;
+				return nullptr;
+			};
 
-			for (auto &it : textures)
+			const MeshImportTexture *a = find(MeshImportTextureType::Albedo);
+			const MeshImportTexture *o = find(MeshImportTextureType::Opacity);
+
+			if (!a || !o)
+				return;
+
+			if (a->images.parts[0].image->channels() == 4)
 			{
-				switch (it.type)
-				{
-				case MeshImportTextureType::Albedo:
-				{
-					if (it.images.parts[0].image->channels() == 4)
-						return;
-					if (!channels[0])
-					{
-						auto ch = imageChannelsSplit(+it.images.parts[0].image);
-						channels[0] = std::move(ch[0]);
-						channels[1] = std::move(ch[1]);
-						channels[2] = std::move(ch[2]);
-						String n = it.name;
-						basename = split(n, "?");
-					}
-					top = 3;
-				} break;
-				case MeshImportTextureType::Opacity:
-				{
-					if (!channels[3])
-					{
-						channels[3] = it.images.parts[0].image.share();
-						String n = it.name;
-						opacityname = split(n, "?");
-					}
-					top = 4;
-				} break;
-				}
+				std::erase_if(textures, [](const MeshImportTexture &it) { return it.type == MeshImportTextureType::Opacity; });
+				return;
 			}
 
-			if (top != 4)
-				return;
+			CAGE_ASSERT(a->images.parts[0].image->channels() == 3);
+			CAGE_ASSERT(o->images.parts[0].image->channels() == 1);
+
+			Holder<Image> channels[4];
+			{
+				auto ch = imageChannelsSplit(+a->images.parts[0].image);
+				channels[0] = std::move(ch[0]);
+				channels[1] = std::move(ch[1]);
+				channels[2] = std::move(ch[2]);
+			}
+			channels[3] = std::move(o->images.parts[0].image);
+
+			String n1 = a->name, n2 = o->name;
+			const String name = Stringizer() + split(n1, "?") + "?opacity_" + split(n2, "?");
 
 			std::erase_if(textures, [](const MeshImportTexture &it) {
 				switch (it.type)
@@ -123,7 +128,7 @@ namespace cage
 			parts.push_back(std::move(part));
 			MeshImportTexture res;
 			res.images.parts = std::move(parts);
-			res.name = Stringizer() + basename + "?opacity_" + opacityname;
+			res.name = name;
 			res.type = MeshImportTextureType::Albedo;
 			textures.push_back(std::move(res));
 		}
@@ -228,7 +233,7 @@ namespace cage
 					textures.push_back(std::move(it));
 			}
 
-			std::sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) {
+			std::stable_sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) {
 				return a.type < b.type;
 			});
 
@@ -237,6 +242,19 @@ namespace cage
 
 			for (auto &it : unloadable)
 				textures.push_back(std::move(it));
+
+			std::erase_if(textures, [](const MeshImportTexture &it) {
+				switch (it.type)
+				{
+				case MeshImportTextureType::Albedo:
+				case MeshImportTextureType::Special:
+				case MeshImportTextureType::Normal:
+				case MeshImportTextureType::Bump:
+					return false;
+				default:
+					return true;
+				}
+			});
 
 			part.textures = std::move(textures);
 		}
