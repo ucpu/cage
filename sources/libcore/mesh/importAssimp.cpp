@@ -1150,7 +1150,12 @@ namespace cage
 				}
 				loadTextureAssimp<aiTextureType_SPECULAR, MeshImportTextureType::Specular>(mat, textures);
 				loadTextureAssimp<aiTextureType_SHININESS, MeshImportTextureType::Shininess>(mat, textures);
-				loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures);
+				if (loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures))
+				{
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to opacity texture");
+					part.renderFlags |= MeshRenderFlags::Translucent;
+				}
 
 				// factors
 				if (textures.empty())
