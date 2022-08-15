@@ -1136,10 +1136,21 @@ namespace cage
 				Textures textures;
 
 				// material textures
+				if (mat->GetTextureCount(aiTextureType_UNKNOWN) > 0)
+				{
+					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::AmbientOcclusion>(mat, textures);
+					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::Metallic>(mat, textures);
+					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::Roughness>(mat, textures);
+				}
+				else
+				{
+					loadTextureAssimp<aiTextureType_AMBIENT_OCCLUSION, MeshImportTextureType::AmbientOcclusion>(mat, textures);
+					loadTextureAssimp<aiTextureType_METALNESS, MeshImportTextureType::Metallic>(mat, textures);
+					loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, MeshImportTextureType::Roughness>(mat, textures);
+				}
 				loadTextureAssimp<aiTextureType_SPECULAR, MeshImportTextureType::Specular>(mat, textures);
 				loadTextureAssimp<aiTextureType_SHININESS, MeshImportTextureType::Shininess>(mat, textures);
-				loadTextureAssimp<aiTextureType_METALNESS, MeshImportTextureType::Metallic>(mat, textures);
-				loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, MeshImportTextureType::Roughness>(mat, textures);
+				loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures);
 
 				// factors
 				if (textures.empty())
@@ -1197,7 +1208,7 @@ namespace cage
 					if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
 					{
 						if (config.verbose)
-							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to albedo texture flag");
+							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to albedo texture alpha flag");
 						part.renderFlags |= MeshRenderFlags::Translucent;
 					}
 				};

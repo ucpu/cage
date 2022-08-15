@@ -550,16 +550,17 @@ namespace cage
 		}();
 		if (!first)
 			return newImage();
+		const Vec2i res = first->resolution();
 		Holder<Image> result = newImage();
-		result->initialize(first->resolution(), channels.size(), first->format());
+		result->initialize(res, channels.size(), first->format());
 		for (uint32 ch = 0; ch < result->channels(); ch++)
 		{
 			if (!channels[ch])
 				continue;
-			if (channels[ch]->resolution() != first->resolution() || channels[ch]->format() != first->format() || channels[ch]->channels() != 1)
+			if (channels[ch]->resolution() != res || channels[ch]->format() != first->format() || channels[ch]->channels() != 1)
 				CAGE_THROW_ERROR(Exception, "cannot join image channels with different resolution, format, or non mono-channel sources");
-			for (uint32 y = 0; y < first->resolution()[1]; y++)
-				for (uint32 x = 0; x < first->resolution()[0]; x++)
+			for (uint32 y = 0; y < res[1]; y++)
+				for (uint32 x = 0; x < res[0]; x++)
 					result->value(x, y, ch, channels[ch]->value(x, y, 0));
 		}
 		result->colorConfig.gammaSpace = first->colorConfig.gammaSpace;
