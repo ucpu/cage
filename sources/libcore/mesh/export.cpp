@@ -21,6 +21,20 @@ namespace cage
 			if (config.mesh->verticesCount() > 0 && config.mesh->indicesCount() == 0)
 				CAGE_THROW_ERROR(Exception, "exporting gltf requires indexed mesh");
 
+			// prepare textures
+
+			if (filename.empty())
+			{
+				const auto &tex = [&](const MeshExportTexture &t) {
+					if (!t.filename.empty())
+						CAGE_THROW_ERROR(Exception, "cannot export textures when exporting gltf into buffer only");
+				};
+
+				tex(config.albedo);
+				tex(config.pbr);
+				tex(config.normal);
+			}
+
 			// prepare the buffer, views and accessors
 
 			struct View
@@ -111,6 +125,7 @@ namespace cage
 
 			struct Texture
 			{
+				String filename;
 				Holder<PointerRange<char>> buff;
 				const MeshExportTexture *tex = nullptr;
 
@@ -118,7 +133,10 @@ namespace cage
 				{
 					CAGE_ASSERT(tex);
 					if (tex->image && !tex->filename.empty())
-						tex->image->exportFile(tex->filename);
+					{
+						const String pth = pathJoin(pathExtractDirectory(filename), tex->filename);
+						tex->image->exportFile(pth);
+					}
 					else if (tex->image)
 						buff = tex->image->exportBuffer();
 				}
@@ -129,11 +147,11 @@ namespace cage
 			std::vector<Texture> textures;
 
 			if (config.albedo.image || !config.albedo.filename.empty())
-				textures.push_back(Texture{ .tex = &config.albedo, .type = 1 });
+				textures.push_back(Texture{ .filename = filename, .tex = &config.albedo, .type = 1 });
 			if (config.pbr.image || !config.pbr.filename.empty())
-				textures.push_back(Texture{ .tex = &config.pbr, .type = 2 });
+				textures.push_back(Texture{ .filename = filename, .tex = &config.pbr, .type = 2 });
 			if (config.normal.image || !config.normal.filename.empty())
-				textures.push_back(Texture{ .tex = &config.normal, .type = 3 });
+				textures.push_back(Texture{ .filename = filename, .tex = &config.normal, .type = 3 });
 
 			tasksRunBlocking<Texture>("gltf export texture", textures);
 

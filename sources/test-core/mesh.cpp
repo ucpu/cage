@@ -520,5 +520,37 @@ void testMesh()
 			}
 			CAGE_TEST(foundAlbedo && foundRoughness && foundMetallic && foundNormal);
 		}
+		{
+			CAGE_TESTCASE("export with external texture");
+			MeshExportConfig cfg;
+			cfg.name = "external_texture_test";
+			cfg.mesh = +p;
+			cfg.albedo.image = +albedo;
+			cfg.albedo.filename = "testExportExternalAlbedo.png";
+			meshExportFiles("meshes/testExportExternal.glb", cfg);
+			CAGE_TEST(pathIsFile("meshes/testExportExternalAlbedo.png"));
+			{
+				CAGE_TESTCASE("cannot export texture when exporting to buffer only");
+				CAGE_TEST_THROWN(meshExportBuffer(cfg));
+			}
+		}
+		{
+			CAGE_TESTCASE("verify import");
+			MeshImportResult result = meshImportFiles("meshes/testExportExternal.glb");
+			meshImportNormalizeFormats(result);
+			CAGE_TEST(result.parts.size() == 1);
+			CAGE_TEST(!result.skeleton);
+			CAGE_TEST(result.animations.empty());
+			const auto &part = result.parts[0];
+			CAGE_TEST(part.objectName == "external_texture_test");
+			CAGE_TEST(part.textures.size() == 1);
+			CAGE_TEST(part.textures[0].type == MeshImportTextureType::Albedo);
+			CAGE_TEST(part.textures[0].images.parts.size() == 1);
+			CAGE_TEST(part.textures[0].images.parts[0].image);
+			CAGE_TEST(part.textures[0].images.parts[0].image->resolution() == albedo->resolution());
+			Holder<Mesh> msh = part.mesh.share();
+			CAGE_TEST(msh->facesCount() == p->facesCount());
+			approxEqual(part.boundingBox, p->boundingBox());
+		}
 	}
 }
