@@ -189,6 +189,8 @@ namespace cage
 	struct MeshRetextureConfig;
 	struct MeshExportObjConfig;
 	class Mesh;
+	struct MeshExportTexture;
+	struct MeshExportConfig;
 	struct MeshImportMaterial;
 	enum class MeshRenderFlags : uint32;
 	enum class MeshImportTextureType : uint32;

@@ -31,6 +31,8 @@ namespace cage
 		Holder<PointerRange<char>> exportBuffer() const;
 		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config = {}) const;
 		void exportObjFile(const String &filename, const MeshExportObjConfig &config = {}) const;
+		Holder<PointerRange<char>> exportGltfBuffer() const;
+		void exportGltfFile(const String &filename) const;
 
 		uint32 verticesCount() const;
 

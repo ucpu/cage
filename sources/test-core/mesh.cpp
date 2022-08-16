@@ -3,6 +3,7 @@
 #include <cage-core/mesh.h>
 #include <cage-core/meshShapes.h>
 #include <cage-core/meshImport.h>
+#include <cage-core/meshExport.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/image.h>
@@ -12,6 +13,11 @@
 
 namespace
 {
+	void approxEqual(const Real &a, const Real &b)
+	{
+		CAGE_TEST(abs(a - b) < 0.02);
+	}
+
 	void approxEqual(const Vec3 &a, const Vec3 &b)
 	{
 		CAGE_TEST(distance(a, b) < 1);
@@ -382,6 +388,137 @@ void testMesh()
 			CAGE_TESTCASE("absolute path");
 			const MeshImportResult result = meshImportFiles(pathToAbs("meshes/testImport.obj"));
 			CAGE_TEST(result.parts.size() == 1);
+		}
+	}
+
+	{
+		CAGE_TESTCASE("export gltf (no textures)");
+		Holder<Mesh> orig = newMeshIcosahedron(10);
+		orig->exportGltfFile("meshes/testExport.glb");
+		{
+			CAGE_TESTCASE("verify import");
+			const MeshImportResult result = meshImportFiles("meshes/testExport.glb");
+			CAGE_TEST(result.parts.size() == 1);
+			CAGE_TEST(!result.skeleton);
+			CAGE_TEST(result.animations.empty());
+			const auto &part = result.parts[0];
+			CAGE_TEST(part.objectName == "testExport");
+			CAGE_TEST(part.textures.empty());
+			Holder<Mesh> msh = part.mesh.share();
+			CAGE_TEST(msh->facesCount() == orig->facesCount());
+			approxEqual(part.boundingBox, orig->boundingBox());
+		}
+	}
+
+	{
+		CAGE_TESTCASE("export gltf (with textures)");
+		auto p = poly->copy();
+		uint32 res = 0;
+		{
+			CAGE_TESTCASE("unwrap");
+			MeshUnwrapConfig cfg;
+			cfg.targetResolution = 256;
+			res = meshUnwrap(+p, cfg);
+		}
+		Holder<Image> albedo, pbr, normal;
+		{
+			CAGE_TESTCASE("texturing albedo");
+			albedo = newImage();
+			albedo->initialize(Vec2i(res), 3);
+			MeshImage data;
+			data.msh = +p;
+			data.img = +albedo;
+			MeshGenerateTextureConfig cfg;
+			cfg.width = cfg.height = res;
+			cfg.generator.bind<MeshImage *, &genTex>(&data);
+			meshGenerateTexture(+p, cfg);
+		}
+		{
+			CAGE_TESTCASE("texturing pbr");
+			pbr = newImage();
+			pbr->initialize(Vec2i(100, 50), 3);
+			imageFill(+pbr, Vec3(0.1, 0.2, 0.3));
+		}
+		{
+			CAGE_TESTCASE("texturing normal");
+			normal = newImage();
+			normal->initialize(Vec2i(100, 50), 3);
+			imageFill(+normal, Vec3(0.5, 0.5, 1));
+		}
+		{
+			CAGE_TESTCASE("export");
+			MeshExportConfig cfg;
+			cfg.name = "textured_test";
+			cfg.mesh = +p;
+			cfg.albedo.image = +albedo;
+			meshExportFiles("meshes/testExport1.glb", cfg);
+		}
+		{
+			CAGE_TESTCASE("verify import");
+			MeshImportResult result = meshImportFiles("meshes/testExport1.glb");
+			meshImportNormalizeFormats(result);
+			CAGE_TEST(result.parts.size() == 1);
+			CAGE_TEST(!result.skeleton);
+			CAGE_TEST(result.animations.empty());
+			const auto &part = result.parts[0];
+			CAGE_TEST(part.objectName == "textured_test");
+			CAGE_TEST(part.textures.size() == 1);
+			CAGE_TEST(part.textures[0].type == MeshImportTextureType::Albedo);
+			CAGE_TEST(part.textures[0].images.parts.size() == 1);
+			CAGE_TEST(part.textures[0].images.parts[0].image);
+			CAGE_TEST(part.textures[0].images.parts[0].image->resolution() == albedo->resolution());
+			Holder<Mesh> msh = part.mesh.share();
+			CAGE_TEST(msh->facesCount() == p->facesCount());
+			approxEqual(part.boundingBox, p->boundingBox());
+		}
+		{
+			CAGE_TESTCASE("export with 3 textures");
+			MeshExportConfig cfg;
+			cfg.name = "textured_test_2";
+			cfg.mesh = +p;
+			cfg.albedo.image = +albedo;
+			cfg.pbr.image = +pbr;
+			cfg.normal.image = +normal;
+			meshExportFiles("meshes/testExport3.glb", cfg);
+		}
+		{
+			CAGE_TESTCASE("verify import");
+			MeshImportResult result = meshImportFiles("meshes/testExport3.glb");
+			meshImportNormalizeFormats(result);
+			bool foundAlbedo = false, foundRoughness = false, foundMetallic = false, foundNormal = false;
+			for (const auto &it : result.parts[0].textures)
+			{
+				switch (it.type)
+				{
+				case MeshImportTextureType::Albedo:
+				{
+					foundAlbedo = true;
+					CAGE_TEST(it.images.parts[0].image->resolution() == albedo->resolution());
+				} break;
+				case MeshImportTextureType::Roughness:
+				{
+					foundRoughness = true;
+					CAGE_TEST(it.images.parts[0].image->resolution() == pbr->resolution());
+					const Real val = it.images.parts[0].image->get1(20, 20);
+					approxEqual(val, Real(0.2));
+				} break;
+				case MeshImportTextureType::Metallic:
+				{
+					foundMetallic = true;
+					CAGE_TEST(it.images.parts[0].image->resolution() == pbr->resolution());
+					const Real val = it.images.parts[0].image->get1(20, 20);
+					approxEqual(val, Real(0.3));
+				} break;
+				case MeshImportTextureType::Normal:
+				{
+					foundNormal = true;
+					CAGE_TEST(it.images.parts[0].image->resolution() == pbr->resolution());
+					const Vec3 val = it.images.parts[0].image->get3(20, 20);
+					approxEqual(val * 10, Vec3(0.5, 0.5, 1) * 10);
+				} break;
+				}
+			}
+			CAGE_TEST(foundAlbedo && foundRoughness && foundMetallic && foundNormal);
 		}
 	}
 }
