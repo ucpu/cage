@@ -90,6 +90,7 @@ namespace cage
 		bool renormalizeVectors = true;
 		bool passInvalidVectors = true;
 		bool trianglesOnly = false; // discard non-triangle faces
+		bool verticalFlipUv = true;
 		bool verbose = false;
 	};
 

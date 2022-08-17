@@ -163,8 +163,8 @@ namespace cage
 		{
 			target[0] = source[0];
 			target[2] = source[2];
-			target[1] = 1 - source[3]; // these are swapped intentionally
-			target[3] = 1 - source[1];
+			target[1] = source[3]; // these are swapped intentionally
+			target[3] = source[1];
 		}
 
 		void copyTextureUv(const GuiSkinElementLayout::TextureUvOi &source, GuiSkinElementLayout::TextureUvOi &target)

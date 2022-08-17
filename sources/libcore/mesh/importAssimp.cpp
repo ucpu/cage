@@ -1328,6 +1328,17 @@ namespace cage
 			result.parts = std::move(parts);
 		}
 
+		if (config.verticalFlipUv)
+		{
+			for (MeshImportPart &part : result.parts)
+			{
+				for (Vec2 &v : part.mesh->uvs())
+					v[1] = 1 - v[1];
+				for (Vec3 &v : part.mesh->uvs3())
+					v[1] = 1 - v[1];
+			}
+		}
+
 		if (context.skeleton)
 		{
 			result.skeleton = context.skeletonRig();

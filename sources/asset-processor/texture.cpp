@@ -578,11 +578,11 @@ void processTexture()
 	}
 
 	{ // vertical flip
-		if (!toBool(properties("flip")))
+		if (toBool(properties("flip")))
 		{
 			for (auto &it : images.parts)
 				imageVerticalFlip(+it.image);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped (flip was false)");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped");
 		}
 	}
 
@@ -598,7 +598,6 @@ void processTexture()
 		for (auto &it : images.parts)
 		{
 			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
-			imageVerticalFlip(+it.image);
 			it.image->exportFile(dbgName);
 		}
 	}
