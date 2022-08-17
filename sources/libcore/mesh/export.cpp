@@ -185,7 +185,7 @@ namespace cage
 					viewsJson += (Stringizer()
 						+ "{\"buffer\":0,\"byteOffset\":" + v.byteOffset
 						+ ",\"byteLength\":" + v.byteLength
-						+ ",\"target\":" + v.target + "}").value.c_str();
+						+ (v.target == 0 ? Stringizer() : (Stringizer() + ",\"target\":" + v.target)) + "}").value.c_str();
 
 					// accessor
 					if (v.componentType > 0)
@@ -213,6 +213,13 @@ namespace cage
 					index++;
 				}
 
+				static constexpr const char *textureTypeNames[4] = {
+					"invalid",
+					"albedo",
+					"pbr",
+					"normal",
+				};
+
 				index = 0;
 				for (const Texture &t : textures)
 				{
@@ -222,19 +229,23 @@ namespace cage
 						imagesJson += ",";
 					}
 
+					const String name = Stringizer() + ", \"name\":\"" + config.name + "_" + textureTypeNames[t.type] + "\"";
+
 					texturesJson += (Stringizer()
-						+ "{\"source\":" + index + "}").value.c_str();
+						+ "{\"source\":" + index + name + "}").value.c_str();
 
 					if (t.buff)
 					{
 						imagesJson += (Stringizer()
 							+ "{\"bufferView\":" + t.bufferView
-							+ ",\"mimeType\":\"image/png\"}").value.c_str();
+							+ ",\"mimeType\":\"image/png\""
+							+ name + "}").value.c_str();
 					}
 					else
 					{
 						imagesJson += (Stringizer()
-							+ "{\"uri\":\"" + t.tex->filename + "\"}").value.c_str();
+							+ "{\"uri\":\"" + t.tex->filename + "\""
+							+ name + "}").value.c_str();
 					}
 
 					switch (t.type)
@@ -268,7 +279,7 @@ namespace cage
 
 				if (!materialJson.empty())
 					materialJson += ",";
-				materialJson += "\"pbrMetallicRoughness\":{" + materialPbrJson + "}";
+				materialJson += "\"pbrMetallicRoughness\":{" + materialPbrJson + "}, \"name\":\"" + config.name.c_str() + "\"";
 
 				std::string tiJson;
 				if (!textures.empty())

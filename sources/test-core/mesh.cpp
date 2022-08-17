@@ -35,6 +35,19 @@ namespace
 		CAGE_TEST(abs(a.radius - b.radius) < 1);
 	}
 
+	void approxEqual(const Image *a, const Image *b)
+	{
+		CAGE_TEST(a->resolution() == b->resolution());
+		const uint32 x = a->resolution()[0] / 2;
+		const uint32 h = a->resolution()[1];
+		for (uint32 y = 0; y < h; y++)
+		{
+			const Vec3 s = a->get3(x, y);
+			const Vec3 t = b->get3(x, y);
+			approxEqual(s, t);
+		}
+	}
+
 	Holder<Mesh> splitSphereIntoTwo(const Mesh *poly)
 	{
 		auto p = poly->copy();
@@ -432,6 +445,7 @@ void testMesh()
 			cfg.width = cfg.height = res;
 			cfg.generator.bind<MeshImage *, &genTex>(&data);
 			meshGenerateTexture(+p, cfg);
+			imageDilation(+albedo, 4);
 		}
 		{
 			CAGE_TESTCASE("texturing pbr");
@@ -467,10 +481,39 @@ void testMesh()
 			CAGE_TEST(part.textures[0].images.parts.size() == 1);
 			CAGE_TEST(part.textures[0].images.parts[0].image);
 			CAGE_TEST(part.textures[0].images.parts[0].image->resolution() == albedo->resolution());
+			approxEqual(+albedo, +part.textures[0].images.parts[0].image);
+			Holder<Mesh> msh = part.mesh.share();
+			CAGE_TEST(msh->facesCount() == p->facesCount());
+			approxEqual(part.boundingBox, p->boundingBox());
+			{
+				CAGE_TESTCASE("reexport");
+				MeshExportConfig cfg;
+				cfg.name = "reexport_test";
+				cfg.mesh = +result.parts[0].mesh;
+				cfg.albedo.image = +part.textures[0].images.parts[0].image;
+				meshExportFiles("meshes/testExportAgain.glb", cfg);
+			}
+		}
+		{
+			CAGE_TESTCASE("reload");
+			MeshImportResult result = meshImportFiles("meshes/testExportAgain.glb");
+			meshImportNormalizeFormats(result);
+			CAGE_TEST(result.parts.size() == 1);
+			CAGE_TEST(!result.skeleton);
+			CAGE_TEST(result.animations.empty());
+			const auto &part = result.parts[0];
+			CAGE_TEST(part.objectName == "reexport_test");
+			CAGE_TEST(part.textures.size() == 1);
+			CAGE_TEST(part.textures[0].type == MeshImportTextureType::Albedo);
+			CAGE_TEST(part.textures[0].images.parts.size() == 1);
+			CAGE_TEST(part.textures[0].images.parts[0].image);
+			CAGE_TEST(part.textures[0].images.parts[0].image->resolution() == albedo->resolution());
+			approxEqual(+albedo, +part.textures[0].images.parts[0].image);
 			Holder<Mesh> msh = part.mesh.share();
 			CAGE_TEST(msh->facesCount() == p->facesCount());
 			approxEqual(part.boundingBox, p->boundingBox());
 		}
+
 		{
 			CAGE_TESTCASE("export with 3 textures");
 			MeshExportConfig cfg;
@@ -520,6 +563,7 @@ void testMesh()
 			}
 			CAGE_TEST(foundAlbedo && foundRoughness && foundMetallic && foundNormal);
 		}
+
 		{
 			CAGE_TESTCASE("export with external texture");
 			MeshExportConfig cfg;
