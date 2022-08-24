@@ -1334,8 +1334,8 @@ namespace cage
 			{
 				for (Vec2 &v : part.mesh->uvs())
 					v[1] = 1 - v[1];
-				for (Vec3 &v : part.mesh->uvs3())
-					v[1] = 1 - v[1];
+				//for (Vec3 &v : part.mesh->uvs3()) // uvs3 are vectors in range -1..1, do not invert
+				//	v[1] = 1 - v[1];
 			}
 		}
 
