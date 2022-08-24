@@ -769,7 +769,7 @@ namespace cage
 					{
 						Vec3 n = conv(am->mNormals[i]);
 						static constexpr const char Name[] = "normal";
-						ps.push_back(fixUnitVector<Name>(n));
+						ps.push_back(fixUnitVector(Name, n));
 					}
 					poly->normals(ps);
 				}
@@ -784,7 +784,7 @@ namespace cage
 					{
 						Vec3 n = conv(am->mTangents[i]);
 						static constexpr const char Name[] = "tangent";
-						ts.push_back(fixUnitVector<Name>(n));
+						ts.push_back(fixUnitVector(Name, n));
 					}
 					poly->tangents(ts);
 				}
@@ -1282,19 +1282,18 @@ namespace cage
 			Assimp::Importer imp;
 			Holder<AssimpSkeleton> skeleton;
 
-			template<const char Name[]>
-			Vec3 fixUnitVector(Vec3 n) const
+			Vec3 fixUnitVector(const char *name, Vec3 n) const
 			{
 				if (abs(lengthSquared(n) - 1) > 1e-3)
 				{
-					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "fixing denormalized " + Name + ": " + n);
+					CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "fixing denormalized " + name + ": " + n);
 					n = normalize(n);
 				}
 				if (!n.valid())
 				{
 					if (config.passInvalidVectors)
 					{
-						CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "passing invalid " + Name + ": " + n);
+						CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "passing invalid " + name + ": " + n);
 						n = Vec3();
 					}
 					else
