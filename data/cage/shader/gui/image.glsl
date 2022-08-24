@@ -13,7 +13,7 @@ void main()
 {
 	gl_Position.z = 0.0;
 	gl_Position.w = 1.0;
-	gl_Position.xy = pos.xy + (pos.zw - pos.xy) * inUv;
+	gl_Position.xy = pos.xy + (pos.zw - pos.xy) * inPosition.xy;
 	varUv = uv.xy + (uv.zw - uv.xy) * inUv;
 }
 
@@ -24,7 +24,7 @@ out vec4 outColor;
 
 $if inputSpec ^ 0 = A
 
-layout(location = 2) uniform vec4  aniTexFrames;
+layout(location = 2) uniform vec4 aniTexFrames;
 layout(binding = 0) uniform sampler2DArray texImg;
 
 void main()
