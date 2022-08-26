@@ -5,22 +5,35 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API MeshExportTexture
+	struct CAGE_CORE_API MeshExportObjConfig
+	{
+		String materialLibraryName;
+		String materialName;
+		String objectName;
+		const Mesh *mesh = nullptr;
+		bool verticalFlipUv = true;
+	};
+
+	CAGE_CORE_API Holder<PointerRange<char>> meshExportBuffer(const MeshExportObjConfig &config);
+	CAGE_CORE_API void meshExportFiles(const String &filename, const MeshExportObjConfig &config);
+
+	struct CAGE_CORE_API MeshExportGltfTexture
 	{
 		String filename;
 		const Image *image = nullptr;
 	};
 
-	struct CAGE_CORE_API MeshExportConfig
+	struct CAGE_CORE_API MeshExportGltfConfig
 	{
 		String name;
-		MeshExportTexture albedo, pbr, normal;
+		MeshExportGltfTexture albedo, pbr, normal;
 		// the pbr texture contains: R: unused, G: roughness and B: metallic channels
 		const Mesh *mesh = nullptr;
+		bool verticalFlipUv = false;
 	};
 
-	CAGE_CORE_API Holder<PointerRange<char>> meshExportBuffer(const MeshExportConfig &config);
-	CAGE_CORE_API void meshExportFiles(const String &filename, const MeshExportConfig &config);
+	CAGE_CORE_API Holder<PointerRange<char>> meshExportBuffer(const MeshExportGltfConfig &config);
+	CAGE_CORE_API void meshExportFiles(const String &filename, const MeshExportGltfConfig &config);
 }
 
 #endif // guard_meshExport_h_n1bv859wrffcg89

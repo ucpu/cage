@@ -540,12 +540,12 @@ namespace cage
 		return result;
 	}
 
-	Holder<Image> imageChannelsJoin(PointerRange<const Holder<Image>> channels)
+	Holder<Image> imageChannelsJoin(PointerRange<const Image *> channels)
 	{
-		const Image *first = [&]() -> Image * {
+		const Image *first = [&]() -> const Image * {
 			for (const auto &it : channels)
 				if (it)
-					return +it;
+					return it;
 			return nullptr;
 		}();
 		if (!first)
@@ -565,6 +565,15 @@ namespace cage
 		}
 		result->colorConfig.gammaSpace = first->colorConfig.gammaSpace;
 		return result;
+	}
+
+	Holder<Image> imageChannelsJoin(PointerRange<const Holder<Image>> channels)
+	{
+		std::vector<const Image *> vec;
+		vec.reserve(channels.size());
+		for (const auto &ch : channels)
+			vec.push_back(+ch);
+		return imageChannelsJoin(vec);
 	}
 
 	namespace

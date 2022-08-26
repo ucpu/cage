@@ -1,9 +1,11 @@
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include "mesh.h"
+#include <cage-core/meshExport.h>
+#include <cage-core/mesh.h>
 
 #include <set>
+#include <vector>
 #include <algorithm> // lower_bound
 #include <numeric> // iota
 
@@ -29,8 +31,7 @@ namespace cage
 		template<class T>
 		struct Attribute
 		{
-		private:
-			const std::vector<T> &data;
+			PointerRange<const T> data;
 			std::vector<T> vec;
 
 			struct Cmp
@@ -50,8 +51,7 @@ namespace cage
 				return numeric_cast<uint32>(it - vec.begin()) + 1;
 			}
 
-		public:
-			Attribute(const std::vector<T> &data) : data(data)
+			Attribute(PointerRange<const T> data) : data(data)
 			{
 				std::set<T, Cmp> set(data.begin(), data.end());
 				vec = std::vector<T>(set.begin(), set.end());
@@ -84,10 +84,11 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Mesh::exportObjBuffer(const MeshExportObjConfig &config) const
+	Holder<PointerRange<char>> meshExportBuffer(const MeshExportObjConfig &config)
 	{
-		const MeshImpl *impl = (const MeshImpl *)this;
-		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
+		CAGE_ASSERT(config.mesh);
+		const Mesh *impl = config.mesh;
+		CAGE_ASSERT(impl->uvs().empty() || impl->uvs3().empty());
 
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
@@ -99,39 +100,47 @@ namespace cage
 		if (!config.materialName.empty())
 			writeLine(ser, Stringizer() + "usemtl " + config.materialName);
 
-		Attribute<Vec3> pos(impl->positions);
+		Attribute<Vec3> pos(impl->positions());
 		pos.writeOut(ser, "v");
-		Attribute<Vec3> norms(impl->normals);
+		Attribute<Vec3> norms(impl->normals());
 		norms.writeOut(ser, "vn");
-		Attribute<Vec2> uvs(impl->uvs);
-		uvs.writeOut(ser, "vt");
-		Attribute<Vec3> uvs3(impl->uvs3);
+		Attribute<Vec2> uvs(impl->uvs());
+		if (config.verticalFlipUv)
+		{
+			Attribute tmp = uvs;
+			for (Vec2 &uv : tmp.vec)
+				uv[1] = 1 - uv[1];
+			tmp.writeOut(ser, "vt");
+		}
+		else
+			uvs.writeOut(ser, "vt");
+		Attribute<Vec3> uvs3(impl->uvs3());
 		uvs3.writeOut(ser, "vt");
 
 		std::vector<uint32> origIndices;
-		if (impl->indices.empty())
+		if (impl->indices().empty())
 		{
-			origIndices.resize(impl->positions.size());
+			origIndices.resize(impl->positions().size());
 			std::iota(origIndices.begin(), origIndices.end(), (uint32)0);
 		}
 		else
-			origIndices = impl->indices;
+			origIndices = std::vector<uint32>(impl->indices().begin(), impl->indices().end());
 
 		std::vector<uint32> pi = origIndices;
 		std::vector<uint32> ni;
 		std::vector<uint32> ti;
 		pos.remap(pi);
-		if (!impl->normals.empty())
+		if (!impl->normals().empty())
 		{
 			ni = origIndices;
 			norms.remap(ni);
 		}
-		if (!impl->uvs.empty())
+		if (!impl->uvs().empty())
 		{
 			ti = origIndices;
 			uvs.remap(ti);
 		}
-		if (!impl->uvs3.empty())
+		if (!impl->uvs3().empty())
 		{
 			ti = origIndices;
 			uvs3.remap(ti);
@@ -139,7 +148,7 @@ namespace cage
 		CAGE_ASSERT(ni.empty() || ni.size() == pi.size());
 		CAGE_ASSERT(ti.empty() || ti.size() == pi.size());
 
-		switch (impl->type)
+		switch (impl->type())
 		{
 		case MeshTypeEnum::Points:
 		{
@@ -166,9 +175,13 @@ namespace cage
 		return std::move(buffer);
 	}
 
-	void Mesh::exportObjFile(const String &filename, const MeshExportObjConfig &config) const
+	void meshExportFiles(const String &filename, const MeshExportObjConfig &config)
 	{
-		Holder<PointerRange<char>> buff = exportObjBuffer(config);
-		writeFile(filename)->write(buff);
+		if (filename.empty())
+			CAGE_THROW_ERROR(Exception, "file name cannot be empty");
+		Holder<PointerRange<char>> buff = meshExportBuffer(config);
+		Holder<File> f = writeFile(filename);
+		f->write(buff);
+		f->close();
 	}
 }

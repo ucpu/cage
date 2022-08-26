@@ -14,6 +14,7 @@ MeshImportConfig meshImportConfig()
 	MeshImportConfig config;
 	config.rootPath = inputDirectory;
 	config.mergeParts = toBool(properties("bakeModel"));
+	config.verticalFlipUv = true;
 	config.verbose = true;
 	return config;
 }

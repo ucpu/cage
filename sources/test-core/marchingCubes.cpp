@@ -100,7 +100,7 @@ void testMarchingCubes()
 		Holder<Mesh> poly = cubes->makeMesh();
 		CAGE_TEST(poly->verticesCount() > 10);
 		CAGE_TEST(poly->indicesCount() > 10);
-		poly->exportObjFile("meshes/marchingCubes/sphere.obj");
+		poly->exportFile("meshes/marchingCubes/sphere.obj");
 
 		{
 			CAGE_TESTCASE("coordinates of center of the Sphere");
@@ -124,19 +124,19 @@ void testMarchingCubes()
 			CAGE_TESTCASE("clip x");
 			auto p = poly->copy();
 			meshClip(+p, Aabb(Vec3(-100, 2, 2), Vec3(100, 8, 8)));
-			p->exportObjFile("meshes/marchingCubes/clipX.obj");
+			p->exportFile("meshes/marchingCubes/clipX.obj");
 		}
 		{
 			CAGE_TESTCASE("clip y");
 			auto p = poly->copy();
 			meshClip(+p, Aabb(Vec3(2, -100, 2), Vec3(8, 100, 8)));
-			p->exportObjFile("meshes/marchingCubes/clipY.obj");
+			p->exportFile("meshes/marchingCubes/clipY.obj");
 		}
 		{
 			CAGE_TESTCASE("clip z");
 			auto p = poly->copy();
 			meshClip(+p, Aabb(Vec3(2, 2, -100), Vec3(8, 8, 100)));
-			p->exportObjFile("meshes/marchingCubes/clipZ.obj");
+			p->exportFile("meshes/marchingCubes/clipZ.obj");
 		}
 	}
 
@@ -149,6 +149,6 @@ void testMarchingCubes()
 		Holder<MarchingCubes> cubes = newMarchingCubes(config);
 		cubes->updateByPosition(Delegate<Real(const Vec3 &)>().bind<&sdfTiltedPlane>());
 		Holder<Mesh> poly = cubes->makeMesh();
-		poly->exportObjFile("meshes/marchingCubes/hexagon.obj");
+		poly->exportFile("meshes/marchingCubes/hexagon.obj");
 	}
 }

@@ -12,13 +12,6 @@ namespace cage
 		Triangles = 3,
 	};
 
-	struct CAGE_CORE_API MeshExportObjConfig
-	{
-		String materialLibraryName;
-		String materialName;
-		String objectName;
-	};
-
 	class CAGE_CORE_API Mesh : private Immovable
 	{
 	public:
@@ -28,11 +21,8 @@ namespace cage
 		void importBuffer(PointerRange<const char> buffer);
 		void importCollider(const Collider *collider);
 
-		Holder<PointerRange<char>> exportBuffer() const;
-		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config = {}) const;
-		void exportObjFile(const String &filename, const MeshExportObjConfig &config = {}) const;
-		Holder<PointerRange<char>> exportGltfBuffer() const;
-		void exportGltfFile(const String &filename) const;
+		Holder<PointerRange<char>> exportBuffer(const String &format = ".cagemesh") const;
+		void exportFile(const String &filename) const;
 
 		uint32 verticesCount() const;
 

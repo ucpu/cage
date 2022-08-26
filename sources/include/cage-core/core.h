@@ -187,10 +187,10 @@ namespace cage
 	struct MeshGenerateNormalsConfig;
 	struct MeshGenerateTangentsConfig;
 	struct MeshRetextureConfig;
-	struct MeshExportObjConfig;
 	class Mesh;
-	struct MeshExportTexture;
-	struct MeshExportConfig;
+	struct MeshExportObjConfig;
+	struct MeshExportGltfTexture;
+	struct MeshExportGltfConfig;
 	struct MeshImportMaterial;
 	enum class MeshRenderFlags : uint32;
 	enum class MeshImportTextureType : uint32;

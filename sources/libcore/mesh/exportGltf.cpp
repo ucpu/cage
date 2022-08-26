@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		Holder<PointerRange<char>> exportImpl(const String &filename, const MeshExportConfig &config)
+		Holder<PointerRange<char>> exportImpl(const String &filename, const MeshExportGltfConfig &config)
 		{
 			CAGE_ASSERT(config.mesh);
 			if (config.mesh->verticesCount() > 0 && config.mesh->indicesCount() == 0)
@@ -25,7 +25,7 @@ namespace cage
 
 			if (filename.empty())
 			{
-				const auto &tex = [&](const MeshExportTexture &t) {
+				const auto &tex = [&](const MeshExportGltfTexture &t) {
 					if (!t.filename.empty())
 						CAGE_THROW_ERROR(Exception, "cannot export textures when exporting gltf into buffer only");
 				};
@@ -86,7 +86,15 @@ namespace cage
 				v.componentType = 5126; // float
 				v.count = numeric_cast<uint32>(config.mesh->uvs().size());
 				v.byteOffset = numeric_cast<uint32>(buffer.size());
-				ser.write(bufferCast(config.mesh->uvs()));
+				if (config.verticalFlipUv)
+				{
+					std::vector<Vec2> uvs(config.mesh->uvs().begin(), config.mesh->uvs().end());
+					for (Vec2 &uv : uvs)
+						uv[1] = 1 - uv[1];
+					ser.write(bufferCast(PointerRange<const Vec2>(uvs)));
+				}
+				else
+					ser.write(bufferCast(config.mesh->uvs()));
 				v.byteLength = numeric_cast<uint32>(buffer.size()) - v.byteOffset;
 				v.target = 34962; // array buffer
 				views.push_back(v);
@@ -127,7 +135,7 @@ namespace cage
 			{
 				String filename;
 				Holder<PointerRange<char>> buff;
-				const MeshExportTexture *tex = nullptr;
+				const MeshExportGltfTexture *tex = nullptr;
 
 				void operator () ()
 				{
@@ -324,31 +332,16 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Mesh::exportGltfBuffer() const
-	{
-		MeshExportConfig cfg;
-		cfg.mesh = this;
-		return meshExportBuffer(cfg);
-	}
-
-	void Mesh::exportGltfFile(const String &filename) const
-	{
-		MeshExportConfig cfg;
-		cfg.name = pathExtractFilenameNoExtension(filename);
-		cfg.mesh = this;
-		return meshExportFiles(filename, cfg);
-	}
-
-	Holder<PointerRange<char>> meshExportBuffer(const MeshExportConfig &config)
+	Holder<PointerRange<char>> meshExportBuffer(const MeshExportGltfConfig &config)
 	{
 		return exportImpl("", config);
 	}
 
-	void meshExportFiles(const String &filename, const MeshExportConfig &config)
+	void meshExportFiles(const String &filename, const MeshExportGltfConfig &config)
 	{
 		if (filename.empty())
-			CAGE_THROW_ERROR(Exception, "name cannot be empty");
-		auto buff = exportImpl(filename, config);
+			CAGE_THROW_ERROR(Exception, "file name cannot be empty");
+		Holder<PointerRange<char>> buff = exportImpl(filename, config);
 		Holder<File> f = writeFile(filename);
 		f->write(buff);
 		f->close();

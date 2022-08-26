@@ -135,6 +135,7 @@ namespace cage
 	CAGE_CORE_API void imageInvertChannel(Image *img, uint32 channelIndex);
 
 	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> imageChannelsSplit(const Image *img);
+	CAGE_CORE_API Holder<Image> imageChannelsJoin(PointerRange<const Image *> channels);
 	CAGE_CORE_API Holder<Image> imageChannelsJoin(PointerRange<const Holder<Image>> channels);
 
 	// copies parts of an image into another image

@@ -682,7 +682,7 @@ namespace cage
 		{
 			void operator()(const Image *src, Image *dst, Vec2 srcUv, Vec2i dstCoord)
 			{
-				srcUv[1] = 1 - srcUv[1];
+				//srcUv[1] = 1 - srcUv[1];
 				Vec2 uv = srcUv * Vec2(src->resolution());
 				Vec2i p = Vec2i(uv);
 				p = clamp(p, Vec2i(), src->resolution() - 2);
@@ -698,7 +698,8 @@ namespace cage
 					interpolate(corners[2], corners[3], uv[0]),
 					uv[1]
 				);
-				dst->set(dstCoord[0], dst->resolution()[1] - dstCoord[1] - 1, res);
+				//dst->set(dstCoord[0], dst->resolution()[1] - dstCoord[1] - 1, res);
+				dst->set(dstCoord, res);
 			}
 		};
 
@@ -807,9 +808,9 @@ namespace cage
 				}
 				if (bestIndex == m)
 					return Vec2::Nan();
-				Vec3i ids = Vec3i(msh->index(bestIndex * 3 + 0), msh->index(bestIndex * 3 + 1), msh->index(bestIndex * 3 + 2));
-				Vec2 bc = barycoord(msh->position(ids[0]), msh->position(ids[1]), msh->position(ids[2]), bestPoint);
-				Vec3 weights = Vec3(bc[0], bc[1], 1 - bc[0] - bc[1]);
+				const Vec3i ids = Vec3i(msh->index(bestIndex * 3 + 0), msh->index(bestIndex * 3 + 1), msh->index(bestIndex * 3 + 2));
+				const Vec2 bc = barycoord(msh->position(ids[0]), msh->position(ids[1]), msh->position(ids[2]), bestPoint);
+				const Vec3 weights = Vec3(bc[0], bc[1], 1 - bc[0] - bc[1]);
 				return msh->uvAt(ids, weights);
 			}
 		};
