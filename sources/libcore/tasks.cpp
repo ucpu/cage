@@ -98,6 +98,7 @@ namespace cage
 		{
 			sint32 currentPriority = std::numeric_limits<sint32>().min();
 			bool executorThread = false;
+			bool insideTask = false;
 		};
 
 		thread_local ThrData thrData;
@@ -152,18 +153,21 @@ namespace cage
 
 		struct ThreadPriorityUpdater : private Immovable
 		{
-			sint32 &thrPrio = thrData.currentPriority;
+			ThrData &thr = thrData;
 			sint32 tmpPrio = m;
+			bool tmpInside = true;
 
 			CAGE_FORCE_INLINE ThreadPriorityUpdater(sint32 tskPrio) : tmpPrio(tskPrio)
 			{
-				CAGE_ASSERT(tskPrio >= thrPrio);
-				std::swap(tmpPrio, thrPrio);
+				CAGE_ASSERT(tskPrio >= thr.currentPriority);
+				std::swap(tmpPrio, thr.currentPriority);
+				std::swap(tmpInside, thr.insideTask);
 			}
 
 			CAGE_FORCE_INLINE ~ThreadPriorityUpdater()
 			{
-				thrPrio = tmpPrio;
+				thr.currentPriority = tmpPrio;
+				thr.insideTask = tmpInside;
 			}
 		};
 
@@ -375,6 +379,14 @@ namespace cage
 	sint32 tasksCurrentPriority()
 	{
 		return thrData.currentPriority;
+	}
+
+	namespace privat
+	{
+		sint32 tasksDefaultPriority()
+		{
+			return thrData.insideTask ? thrData.currentPriority : 0;
+		}
 	}
 
 	std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount)
