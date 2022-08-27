@@ -159,7 +159,6 @@ namespace cage
 
 			CAGE_FORCE_INLINE ThreadPriorityUpdater(sint32 tskPrio) : tmpPrio(tskPrio)
 			{
-				CAGE_ASSERT(tskPrio >= thr.currentPriority);
 				std::swap(tmpPrio, thr.currentPriority);
 				std::swap(tmpInside, thr.insideTask);
 			}

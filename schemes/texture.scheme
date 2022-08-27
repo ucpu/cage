@@ -11,7 +11,7 @@ default = 2d
 [convert]
 display = re-purpose the texture
 type = enum
-values = none, heightToNormal, specularToSpecial, skyboxToCube
+values = none, heightToNormal, specularToSpecial, gltfToSpecial, skyboxToCube
 default = none
 
 [normalStrength]

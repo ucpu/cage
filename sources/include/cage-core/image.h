@@ -116,6 +116,8 @@ namespace cage
 
 	CAGE_CORE_API void imageConvertHeigthToNormal(Image *img, const Real &strength);
 	CAGE_CORE_API void imageConvertSpecularToSpecial(Image *img);
+	CAGE_CORE_API void imageConvertGltfPbrToSpecial(Image *img);
+	CAGE_CORE_API void imageConvertSpecialToGltfPbr(Image *img);
 
 	// setting a value must match the number of channels
 	CAGE_CORE_API void imageFill(Image *img, const Real &value);

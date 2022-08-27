@@ -282,6 +282,22 @@ namespace cage
 		}
 	}
 
+	void imageConvertGltfPbrToSpecial(Image *img)
+	{
+		auto chs = imageChannelsSplit(img);
+		const Image *arr[2] = { +chs[1], +chs[2] };
+		auto tmp = imageChannelsJoin(arr);
+		swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
+	}
+
+	void imageConvertSpecialToGltfPbr(Image *img)
+	{
+		auto chs = imageChannelsSplit(img);
+		const Image *arr[3] = { nullptr, +chs[0], +chs[1] };
+		auto tmp = imageChannelsJoin(arr);
+		swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
+	}
+
 	void imageResize(Image *img, uint32 w, uint32 h, bool useColorConfig)
 	{
 		ImageImpl *impl = (ImageImpl *)img;

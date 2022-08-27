@@ -439,15 +439,16 @@ void processTexture()
 	{
 		const bool cn = properties("convert") == "heightToNormal";
 		const bool cs = properties("convert") == "specularToSpecial";
+		const bool cg = properties("convert") == "gltfToSpecial";
 		const bool cc = properties("convert") == "skyboxToCube";
 		const bool a = toBool(properties("premultiplyAlpha"));
 		const bool s = toBool(properties("srgb"));
 		const bool n = toBool(properties("normal"));
-		if ((cn || cs || n) && a)
+		if ((cn || cs || cg || n) && a)
 			CAGE_THROW_ERROR(Exception, "premultiplied alpha is for colors only");
-		if ((cn || cs || n) && s)
+		if ((cn || cs || cg || n) && s)
 			CAGE_THROW_ERROR(Exception, "srgb is for colors only");
-		if ((cs || a || s) && n)
+		if ((cs || cg || a || s) && n)
 			CAGE_THROW_ERROR(Exception, "incompatible options for normal map");
 		if (cn && !n)
 			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
@@ -461,6 +462,15 @@ void processTexture()
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
+
+	{ // vertical flip
+		if (toBool(properties("flip")))
+		{
+			for (auto &it : images.parts)
+				imageVerticalFlip(+it.image);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped");
+		}
+	}
 
 	{ // invert
 		if (toBool(properties("invertRed")))
@@ -507,6 +517,16 @@ void processTexture()
 				imageConvertSpecularToSpecial(+it.image);
 			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
+		}
+	}
+
+	{ // convert gltf pbr to special
+		if (properties("convert") == "gltfToSpecial")
+		{
+			for (auto &it : images.parts)
+				imageConvertGltfPbrToSpecial(+it.image);
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted gltf pbr to material special");
 		}
 	}
 
@@ -574,15 +594,6 @@ void processTexture()
 			}
 			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
-		}
-	}
-
-	{ // vertical flip
-		if (toBool(properties("flip")))
-		{
-			for (auto &it : images.parts)
-				imageVerticalFlip(+it.image);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped");
 		}
 	}
 

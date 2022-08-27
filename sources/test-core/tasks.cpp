@@ -723,6 +723,48 @@ namespace
 		std::sort(std::begin(durations), std::end(durations));
 		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[15] + " us"); // median
 	}
+
+	void priorityTestNegative(uint32)
+	{
+		CAGE_TEST(tasksCurrentPriority() < 0);
+	}
+
+	void priorityTestPositive(uint32)
+	{
+		CAGE_TEST(tasksCurrentPriority() > 0);
+	}
+
+	void priorityTestZero(uint32)
+	{
+		CAGE_TEST(tasksCurrentPriority() == 0);
+		tasksRunBlocking("priority negative", Delegate<void(uint32)>().bind<&priorityTestNegative>(), 1, -5);
+		tasksRunBlocking("priority positive", Delegate<void(uint32)>().bind<&priorityTestPositive>(), 1, 5);
+	}
+
+	void priorityTestDecreasing(uint32)
+	{
+		const uint32 c = tasksCurrentPriority();
+		if (c > -100)
+			tasksRunBlocking("priority decreasing", Delegate<void(uint32)>().bind<&priorityTestDecreasing>(), 1, c - 5);
+	}
+
+	void priorityTestIncreasing(uint32)
+	{
+		const uint32 c = tasksCurrentPriority();
+		if (c < 100)
+			tasksRunBlocking("priority increasing", Delegate<void(uint32)>().bind<&priorityTestIncreasing>(), 1, c + 5);
+	}
+
+	void testTaskPriorities()
+	{
+		tasksRunBlocking("priority zero", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, 0);
+		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, privat::tasksDefaultPriority());
+		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1);
+		tasksRunBlocking("priority negative", Delegate<void(uint32)>().bind<&priorityTestNegative>(), 1, -5);
+		tasksRunBlocking("priority positive", Delegate<void(uint32)>().bind<&priorityTestPositive>(), 1, 5);
+		tasksRunBlocking("priority decreasing", Delegate<void(uint32)>().bind<&priorityTestDecreasing>(), 1, 100);
+		tasksRunBlocking("priority increasing", Delegate<void(uint32)>().bind<&priorityTestIncreasing>(), 1, -100);
+	}
 }
 
 void testTasks()
@@ -737,4 +779,5 @@ void testTasks()
 	testTasksAggregation();
 	testFireAndForget();
 	testPerformance();
+	testTaskPriorities();
 }
