@@ -18,6 +18,8 @@ namespace cage
 		Holder<PointerRange<char>> exportImpl(const String &filename, const MeshExportGltfConfig &config)
 		{
 			CAGE_ASSERT(config.mesh);
+			if (config.mesh->type() != MeshTypeEnum::Triangles)
+				CAGE_THROW_ERROR(Exception, "exporting gltf requires triangle mesh");
 			if (config.mesh->verticesCount() > 0 && config.mesh->indicesCount() == 0)
 				CAGE_THROW_ERROR(Exception, "exporting gltf requires indexed mesh");
 
