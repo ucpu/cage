@@ -11,7 +11,7 @@ default = 2d
 [convert]
 display = re-purpose the texture
 type = enum
-values = none, heightToNormal, specularToSpecial, gltfToSpecial, skyboxToCube
+values = none, heightToNormal, specularToSpecial, gltfToSpecial
 default = none
 
 [normalStrength]
@@ -21,9 +21,32 @@ type = real
 default = 1
 min = 0
 
+[skyboxToCube]
+display = convert skybox cross to cubemap
+type = bool
+default = false
+
 [premultiplyAlpha]
 display = premultiply rgb with alpha
 hint = true for color images, false otherwise
+type = bool
+default = false
+
+[srgb]
+display = srgb (degamma/linearize)
+hint = true for color images, false otherwise
+type = bool
+default = false
+
+[gamma]
+display = sample in gamma space
+hint = true for color images used directly in gamma space, eg. in gui
+type = bool
+default = false
+
+[normal]
+display = normal map
+hint = normal maps are converted to two-channel textures with different compression method
 type = bool
 default = false
 
@@ -32,6 +55,23 @@ display = downscale
 type = uint32
 min = 1
 default = 1
+
+[compression]
+display = compression method
+type = enum
+values = raw, bcn
+default = bcn
+
+[animationDuration]
+display = animation duration
+hint = microseconds
+type = uint32
+default = 1000000
+
+[animationLoop]
+display = animation loop
+type = bool
+default = true
 
 [flip]
 display = vertical flip
@@ -57,41 +97,6 @@ default = false
 display = invert alpha channel
 type = bool
 default = false
-
-[srgb]
-display = srgb (degamma/linearize)
-hint = true for color images, false otherwise
-type = bool
-default = false
-
-[gamma]
-display = sample in gamma space
-hint = true for color images used directly in gamma space, eg. in gui
-type = bool
-default = false
-
-[normal]
-display = normal map
-hint = normal maps are converted to two-channel textures with different compression methods
-type = bool
-default = false
-
-[compression]
-display = compression method
-type = enum
-values = raw, bcn
-default = bcn
-
-[animationDuration]
-display = animation duration
-hint = microseconds
-type = uint32
-default = 1000000
-
-[animationLoop]
-display = animation loop
-type = bool
-default = true
 
 [filterMin]
 display = minification filter

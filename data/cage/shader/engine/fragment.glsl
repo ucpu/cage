@@ -16,7 +16,7 @@ flat in int varInstanceId;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 normal; // world space
+vec3 normal;
 
 const float confLightThreshold = 0.05;
 
@@ -172,12 +172,6 @@ vec4 lighting(Material material)
 	return res;
 }
 
-vec4 restoreNormalMapZ(vec4 n)
-{
-	n.z = sqrt(1 - clamp(dot(n.xy, n.xy), 0, 1));
-	return n;
-}
-
 vec4 matMapImpl(int index)
 {
 	switch (uniRoutines[index])
@@ -189,33 +183,11 @@ vec4 matMapImpl(int index)
 		case CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D: return texture(texMaterialSpecial2d, varUv.xy);
 		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
 		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE: return texture(texMaterialSpecialCube, varUv);
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D: return restoreNormalMapZ(texture(texMaterialNormal2d, varUv.xy));
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY: return restoreNormalMapZ(sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames));
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE: return restoreNormalMapZ(texture(texMaterialNormalCube, varUv));
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D: return texture(texMaterialNormal2d, varUv.xy);
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE: return texture(texMaterialNormalCube, varUv);
 		default: return vec4(-100);
 	}
-}
-
-void updateNormal()
-{
-	normal = normalize(varNormal);
-
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] != 0)
-	{
-		vec4 normalMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL);
-		vec3 tangent = normalize(varTangent);
-		vec3 bitangent = cross(normal, tangent); // todo orthonormalize
-		normal = mat3(tangent, bitangent, normal) * (normalMap.xyz * 2 - 1);
-	}
-
-	if (!gl_FrontFacing)
-		normal *= -1;
-
-	mat3x4 nm = uniMeshes[varInstanceId].normalMat;
-	if (nm[2][3] > 0.5) // is lighting enabled
-		normal = normalize(mat3(nm) * normal);
-	else
-		normal = vec3(0);
 }
 
 Material loadMaterial()
@@ -242,4 +214,35 @@ Material loadMaterial()
 	material.albedo *= material.opacity; // premultiplied alpha
 
 	return material;
+}
+
+vec3 restoreNormalMap(vec4 n)
+{
+	n.xy = n.xy * 2 - 1;
+	n.z = sqrt(1 - clamp(dot(n.xy, n.xy), 0, 1));
+	return n.xyz;
+}
+
+// converts normal from object to world space
+// additionally applies normal map
+void updateNormal()
+{
+	normal = normalize(varNormal);
+
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] != 0)
+	{
+		vec3 normalMap = restoreNormalMap(matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL));
+		vec3 tangent = normalize(varTangent);
+		vec3 bitangent = cross(normal, tangent);
+		normal = mat3(tangent, bitangent, normal) * normalMap;
+	}
+
+	if (!gl_FrontFacing)
+		normal *= -1;
+
+	mat3x4 nm = uniMeshes[varInstanceId].normalMat;
+	if (nm[2][3] > 0.5) // is lighting enabled
+		normal = normalize(mat3(nm) * normal);
+	else
+		normal = vec3(0);
 }

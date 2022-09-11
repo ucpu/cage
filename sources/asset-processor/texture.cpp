@@ -437,24 +437,24 @@ namespace
 void processTexture()
 {
 	{
-		const bool cn = properties("convert") == "heightToNormal";
-		const bool cs = properties("convert") == "specularToSpecial";
-		const bool cg = properties("convert") == "gltfToSpecial";
-		const bool cc = properties("convert") == "skyboxToCube";
-		const bool a = toBool(properties("premultiplyAlpha"));
-		const bool s = toBool(properties("srgb"));
-		const bool n = toBool(properties("normal"));
-		if ((cn || cs || cg || n) && a)
+		const bool h2n = properties("convert") == "heightToNormal";
+		const bool s2s = properties("convert") == "specularToSpecial";
+		const bool g2s = properties("convert") == "gltfToSpecial";
+		const bool s2c = toBool(properties("skyboxToCube"));
+		const bool pa = toBool(properties("premultiplyAlpha"));
+		const bool srgb = toBool(properties("srgb"));
+		const bool normal = toBool(properties("normal"));
+		if ((h2n || s2s || g2s || normal) && pa)
 			CAGE_THROW_ERROR(Exception, "premultiplied alpha is for colors only");
-		if ((cn || cs || cg || n) && s)
+		if ((h2n || s2s || g2s || normal) && srgb)
 			CAGE_THROW_ERROR(Exception, "srgb is for colors only");
-		if ((cs || cg || a || s) && n)
+		if ((s2s || g2s || pa || srgb) && normal)
 			CAGE_THROW_ERROR(Exception, "incompatible options for normal map");
-		if (cn && !n)
+		if (h2n && !normal)
 			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
-		if (cc && properties("target") != "cubeMap")
-			CAGE_THROW_ERROR(Exception, "convert skyboxToCube requires target to be cubeMap");
-		if (toBool(properties("gamma")) && !s)
+		if (s2c && properties("target") != "cubeMap")
+			CAGE_THROW_ERROR(Exception, "skyboxToCube requires target to be cubeMap");
+		if (toBool(properties("gamma")) && !srgb)
 			CAGE_THROW_ERROR(Exception, "sampling in gamma requires srgb color space");
 	}
 
@@ -462,6 +462,20 @@ void processTexture()
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
+
+	{ // convert to srgb
+		if (toBool(properties("srgb")))
+		{
+			for (auto &it : images.parts)
+				imageConvert(+it.image, GammaSpaceEnum::Gamma);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to gamma space");
+		}
+		else
+		{
+			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "override to linear space (with alpha mode: none)");
+		}
+	}
 
 	{ // vertical flip
 		if (toBool(properties("flip")))
@@ -499,13 +513,12 @@ void processTexture()
 		}
 	}
 
-	{ // convert height map to normal map
+	{ // convert height to normal map
 		if (properties("convert") == "heightToNormal")
 		{
 			const float strength = toFloat(properties("normalStrength"));
 			for (auto &it : images.parts)
 				imageConvertHeigthToNormal(+it.image, strength);
-			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
@@ -515,7 +528,6 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvertSpecularToSpecial(+it.image);
-			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
 		}
 	}
@@ -525,32 +537,15 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvertGltfPbrToSpecial(+it.image);
-			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted gltf pbr to material special");
 		}
 	}
 
-	{ // convert skybox to cube
-		if (properties("convert") == "skyboxToCube")
+	{ // skybox to cube
+		if (toBool(properties("skyboxToCube")))
 		{
 			performSkyboxToCube();
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted skybox to cube map");
-		}
-	}
-
-	{ // convert to srgb
-		if (toBool(properties("srgb")))
-		{
-			for (auto &it : images.parts)
-				imageConvert(+it.image, GammaSpaceEnum::Gamma);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to gamma space");
-		}
-		else
-		{
-			for (auto &it : images.parts)
-				imageConvert(+it.image, GammaSpaceEnum::Linear);
-			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to linear space (with alpha mode: none)");
 		}
 	}
 
@@ -570,15 +565,6 @@ void processTexture()
 		}
 	}
 
-	{ // downscale
-		const uint32 downscale = toUint32(properties("downscale"));
-		if (downscale > 1)
-		{
-			performDownscale(downscale, target);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
-		}
-	}
-
 	{ // normal map
 		if (toBool(properties("normal")))
 		{
@@ -592,8 +578,16 @@ void processTexture()
 				}
 				imageConvert(+it.image, 2);
 			}
-			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
+		}
+	}
+
+	{ // downscale
+		const uint32 downscale = toUint32(properties("downscale"));
+		if (downscale > 1)
+		{
+			performDownscale(downscale, target);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 		}
 	}
 
