@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Entity;
+
 	Aabb getBoxForModel(uint32 name);
 	Aabb getBoxForObject(uint32 name);
 	Aabb getBoxForAsset(uint32 name);

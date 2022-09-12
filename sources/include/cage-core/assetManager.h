@@ -6,6 +6,8 @@
 
 namespace cage
 {
+	class File;
+
 	class CAGE_CORE_API AssetManager : private Immovable
 	{
 	public:

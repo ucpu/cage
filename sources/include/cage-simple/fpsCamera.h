@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Entity;
+
 	class FpsCamera : private Immovable
 	{
 	public:

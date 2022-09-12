@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	class Image;
+	struct BindlessHandle;
+
 	class CAGE_ENGINE_API Texture : private Immovable
 	{
 #ifdef CAGE_DEBUG

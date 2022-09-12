@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Audio;
+
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
 #ifdef CAGE_DEBUG

@@ -2,6 +2,8 @@
 
 namespace cage
 {
+	class EntityComponent;
+
 	EntityComponent *transformHistoryComponent;
 
 	EngineControlThread &controlThread()

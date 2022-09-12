@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class SkeletalAnimation;
+
 	class CAGE_CORE_API SkeletalAnimationPreparatorInstance : private Immovable
 	{
 	public:

@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Window;
+
 	class FullscreenSwitcher : private Immovable
 	{
 	public:

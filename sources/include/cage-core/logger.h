@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class File;
+
 	namespace detail
 	{
 		struct CAGE_CORE_API LoggerInfo

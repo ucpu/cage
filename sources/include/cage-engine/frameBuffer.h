@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Texture;
+
 	class CAGE_ENGINE_API FrameBuffer : private Immovable
 	{
 #ifdef CAGE_DEBUG

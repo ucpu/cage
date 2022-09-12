@@ -8,6 +8,10 @@
 
 namespace cage
 {
+	class Window;
+	class Gamepad;
+	class GuiManager;
+
 	enum class InputClassEnum : uint32
 	{
 		None = 0,

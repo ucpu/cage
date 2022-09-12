@@ -2,6 +2,8 @@
 
 #include <cage-core/any.h>
 
+using Any = detail::AnyBase<1024>;
+
 void testAny()
 {
 	CAGE_TESTCASE("any");

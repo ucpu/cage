@@ -7,6 +7,8 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+
 	class CAGE_CORE_API BufferIStream : protected std::streambuf, public std::istream
 	{
 	public:

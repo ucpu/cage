@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Texture;
+
 	struct CAGE_ENGINE_API TransformComponent : public Transform
 	{
 		using Transform::Transform;

@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Mesh;
+
 	class CAGE_ENGINE_API Model : private Immovable
 	{
 #ifdef CAGE_DEBUG

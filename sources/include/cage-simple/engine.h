@@ -6,6 +6,16 @@
 
 namespace cage
 {
+	class EntityManager;
+	class Scheduler;
+	class Window;
+	class GuiManager;
+	class Speaker;
+	class VoicesMixer;
+	struct AssetManagerCreateConfig;
+	struct GuiManagerCreateConfig;
+	struct SpeakerCreateConfig;
+
 	struct EngineControlThread
 	{
 		EventDispatcher<bool()> initialize; // called once from engineStart()

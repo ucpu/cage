@@ -5,6 +5,13 @@
 
 namespace cage
 {
+	class UniformBuffer;
+	class FrameBuffer;
+	class Texture;
+	class ProvisionalUniformBuffer;
+	class ProvisionalFrameBuffer;
+	class ProvisionalTexture;
+
 	namespace privat
 	{
 		template<class A, class B>

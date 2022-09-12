@@ -5,6 +5,10 @@
 
 namespace cage
 {
+	class Model;
+	class ShaderProgram;
+	class ProvisionalGraphics;
+
 	struct UubRange
 	{
 		uint32 offset = 0;

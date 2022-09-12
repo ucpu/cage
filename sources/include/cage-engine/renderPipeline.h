@@ -8,6 +8,11 @@
 
 namespace cage
 {
+	class EntityManager;
+	class ShaderProgram;
+	class RenderQueue;
+	class ProvisionalGraphics;
+
 	struct CAGE_ENGINE_API RenderPipelineCamera
 	{
 		String name;

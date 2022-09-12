@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	template<class T, uint32 N>
+	template<class T, uint32 N = 16>
 	struct VariableSmoothingBuffer
 	{
 		void seed(const T &value)

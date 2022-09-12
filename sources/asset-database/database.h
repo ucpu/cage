@@ -3,6 +3,7 @@
 
 #include <cage-core/string.h> // StringComparatorFast
 #include <cage-core/serialization.h>
+#include <cage-core/config.h>
 
 #include <set>
 #include <map>

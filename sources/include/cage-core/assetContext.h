@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	struct AssetContext;
+
 	using AssetDelegate = Delegate<void(AssetContext *)>;
 
 	struct CAGE_CORE_API AssetContext : private Immovable

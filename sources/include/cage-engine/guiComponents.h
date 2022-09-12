@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
 		uint32 parent = 0;

@@ -5,6 +5,11 @@
 
 namespace cage
 {
+	class EntityManager;
+	class RenderQueue;
+	class ProvisionalGraphics;
+	struct GuiSkinConfig;
+
 	class CAGE_ENGINE_API GuiManager : private Immovable
 	{
 	public:

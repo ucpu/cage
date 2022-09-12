@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class EntityManager;
+
 	struct CAGE_CORE_API EntitiesCopyConfig
 	{
 		const EntityManager *source = nullptr;

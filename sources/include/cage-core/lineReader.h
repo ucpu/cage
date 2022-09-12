@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+
 	// split first line from the buffer
 	// correctly handles both CRLF and LF
 

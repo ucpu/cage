@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	template<class> struct EventListener;
+	template<class> struct EventDispatcher;
+
 	namespace privat
 	{
 		struct CAGE_CORE_API EventLinker : private Immovable

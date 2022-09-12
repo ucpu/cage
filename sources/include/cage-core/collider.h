@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Mesh;
+
 	class CAGE_CORE_API Collider : private Immovable
 	{
 	public:

@@ -6,6 +6,10 @@
 
 namespace cage
 {
+	class RenderQueue;
+	class AssetManager;
+	class ProvisionalGraphics;
+
 	struct CAGE_ENGINE_API ScreenSpaceCommonConfig
 	{
 		RenderQueue *queue = nullptr;

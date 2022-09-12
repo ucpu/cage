@@ -35,6 +35,8 @@ namespace cage
 	}
 	*/
 
+	class SwapBufferGuard;
+
 	namespace privat
 	{
 		class CAGE_CORE_API SwapBufferLock : private Noncopyable

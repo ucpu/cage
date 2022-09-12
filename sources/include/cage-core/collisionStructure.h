@@ -5,6 +5,10 @@
 
 namespace cage
 {
+	class Collider;
+	struct CollisionPair;
+	struct SpatialStructureCreateConfig;
+
 	class CAGE_CORE_API CollisionQuery : private Immovable
 	{
 	public:

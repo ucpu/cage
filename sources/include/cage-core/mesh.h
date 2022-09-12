@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	class Image;
+	class Collider;
+
 	enum class MeshTypeEnum : uint32
 	{
 		Points = 1,

@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	class Mesh;
+	class Image;
+
 	struct CAGE_CORE_API MeshExportObjConfig
 	{
 		String materialLibraryName;

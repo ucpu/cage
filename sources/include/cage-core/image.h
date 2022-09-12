@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+
 	enum class ImageFormatEnum : uint32
 	{
 		U8 = 1, // 8 bit normalized

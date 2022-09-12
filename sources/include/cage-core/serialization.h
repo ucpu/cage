@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+
 	struct CAGE_CORE_API Serializer : private Noncopyable
 	{
 		explicit Serializer(PointerRange<char> buffer);

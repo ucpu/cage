@@ -5,6 +5,10 @@
 
 namespace cage
 {
+	class RenderQueue;
+	class Model;
+	class ShaderProgram;
+
 	struct CAGE_ENGINE_API FontFormat
 	{
 		Real size = 13;

@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	struct MemoryBuffer;
+	enum class PathTypeFlags : uint32;
+
 	struct CAGE_CORE_API FileMode
 	{
 		explicit FileMode(bool read, bool write) : read(read), write(write)

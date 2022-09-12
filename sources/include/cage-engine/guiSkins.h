@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Image;
+
 	enum class InputButtonsPlacementModeEnum : uint32
 	{
 		Left,

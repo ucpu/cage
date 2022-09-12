@@ -7,6 +7,10 @@
 
 namespace cage
 {
+	class Mesh;
+	class SkeletonRig;
+	class SkeletalAnimation;
+
 	struct CAGE_CORE_API MeshImportMaterial
 	{
 		Vec4 albedoBase = Vec4(0); // albedo rgb is linear, and NOT alpha-premultiplied

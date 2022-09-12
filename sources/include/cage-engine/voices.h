@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Sound;
+
 	struct CAGE_ENGINE_API Voice
 	{
 		Holder<Sound> sound; // use exactly one of sound or callback

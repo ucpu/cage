@@ -6,6 +6,11 @@
 
 namespace cage
 {
+	class EntityManager;
+	class EntityComponent;
+	class Entity;
+	class EntityGroup;
+
 	class CAGE_CORE_API EntityManager : private Immovable
 	{
 	public:

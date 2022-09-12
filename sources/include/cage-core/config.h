@@ -18,6 +18,8 @@ namespace cage
 
 	// ini values are mapped to config variables as 'prefix/section/item' = 'value'
 
+	class Ini;
+
 	enum class ConfigTypeEnum : uint32
 	{
 		Undefined,

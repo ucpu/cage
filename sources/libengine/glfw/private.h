@@ -5,7 +5,7 @@
 namespace cage
 {
 	void cageGlfwInitializeFunc();
-	Mutex *cageGlfwMutex();
+	class Mutex *cageGlfwMutex();
 	String getMonitorId(GLFWmonitor *monitor);
 	GLFWmonitor *getMonitorById(const String &id);
 }

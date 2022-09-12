@@ -5,6 +5,10 @@
 
 namespace cage
 {
+	class UniformBuffer;
+	class FrameBuffer;
+	class Texture;
+
 	class CAGE_ENGINE_API ProvisionalUniformBuffer : private Immovable
 	{
 	public:
