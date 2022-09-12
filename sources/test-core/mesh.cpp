@@ -176,6 +176,20 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("remove small");
+			auto p = makeSphere();
+			const uint32 initialFacesCount = p->facesCount();
+			{
+				MeshRemoveSmallConfig cfg;
+				cfg.threshold = 4;
+				meshRemoveSmall(+p, cfg);
+			}
+			const uint32 f = p->facesCount();
+			CAGE_TEST(f > 10 && f < initialFacesCount);
+			p->exportFile("meshes/algorithms/meshRemoveSmall.obj");
+		}
+
+		{
 			CAGE_TESTCASE("simplify");
 			auto p = makeSphere();
 			MeshSimplifyConfig cfg;

@@ -1086,4 +1086,55 @@ namespace cage
 		meshConvertToIndexed(+m);
 		return PointerRangeHolder<Holder<Mesh>>(meshChunkingImpl(std::move(m), config));
 	}
+
+	void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config)
+	{
+		if (msh->facesCount() == 0)
+			return;
+		if (config.threshold <= 0)
+			CAGE_THROW_ERROR(Exception, "mesh remove small requires positive threshold");
+
+		const uint32 incnt = msh->indicesCount();
+		const auto orig = msh->indices();
+		const auto poss = msh->positions();
+		std::vector<uint32> inds;
+		inds.reserve(incnt);
+
+		switch (msh->type())
+		{
+		case MeshTypeEnum::Triangles:
+		{
+			for (uint32 i = 0; i < incnt; i += 3)
+			{
+				const Vec3 a = poss[orig[i + 0]];
+				const Vec3 b = poss[orig[i + 1]];
+				const Vec3 c = poss[orig[i + 2]];
+				if (Triangle(a, b, c).area() >= config.threshold)
+				{
+					inds.push_back(orig[i + 0]);
+					inds.push_back(orig[i + 1]);
+					inds.push_back(orig[i + 2]);
+				}
+			}
+		} break;
+		case MeshTypeEnum::Lines:
+		{
+			for (uint32 i = 0; i < incnt; i += 2)
+			{
+				const Vec3 a = poss[orig[i + 0]];
+				const Vec3 b = poss[orig[i + 1]];
+				if (distanceSquared(a, b) >= sqr(config.threshold))
+				{
+					inds.push_back(orig[i + 0]);
+					inds.push_back(orig[i + 1]);
+				}
+			}
+		} break;
+		default:
+			CAGE_THROW_ERROR(Exception, "mesh remove small requires triangles or lines");
+		}
+
+		msh->indices(inds);
+		meshDiscardInvalid(+msh);
+	}
 }

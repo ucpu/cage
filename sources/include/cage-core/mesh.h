@@ -123,6 +123,13 @@ namespace cage
 	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh);
 
+	struct CAGE_CORE_API MeshRemoveSmallConfig
+	{
+		Real threshold = 0.1;
+	};
+
+	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
+
 	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{
 		Real distanceThreshold = 1e-5;
