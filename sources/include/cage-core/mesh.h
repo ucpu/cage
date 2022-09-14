@@ -117,6 +117,7 @@ namespace cage
 	CAGE_CORE_API void meshApplyAnimation(Mesh *msh, PointerRange<const Mat4> skinTransformation);
 
 	CAGE_CORE_API void meshFlipNormals(Mesh *msh);
+	CAGE_CORE_API void meshDuplicateSides(Mesh *msh);
 
 	CAGE_CORE_API void meshClip(Mesh *msh, const Aabb &box);
 	CAGE_CORE_API void meshClip(Mesh *msh, const Plane &pln);

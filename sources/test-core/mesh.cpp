@@ -307,6 +307,20 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("flip triangles");
+			auto p = makeSphere();
+			meshFlipNormals(+p);
+			p->exportFile("meshes/algorithms/flipNormals.obj");
+		}
+
+		{
+			CAGE_TESTCASE("duplicate sides");
+			auto p = makeSphere();
+			meshDuplicateSides(+p);
+			p->exportFile("meshes/algorithms/duplicateSides.obj");
+		}
+
+		{
 			CAGE_TESTCASE("clip by box");
 			auto p = makeSphere();
 			static constexpr Aabb box = Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10));

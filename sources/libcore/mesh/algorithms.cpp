@@ -959,8 +959,50 @@ namespace cage
 				std::swap(impl->indices[i + 1], impl->indices[i + 2]);
 		}
 		for (Vec3 &n : impl->normals)
-			n *= -1;
-		// todo tangents & bitangents ?
+			n *= -1; // todo should normals be reflected by the plane of the triangle instead?
+		// todo tangents and other attributes
+	}
+
+	void meshDuplicateSides(Mesh *msh)
+	{
+		if (msh->facesCount() == 0)
+			return;
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh duplicate sides requires triangles mesh");
+		meshConvertToIndexed(msh);
+
+		struct T
+		{
+			uint32 a, b, c;
+
+			bool operator < (const T &other) const
+			{
+				return detail::memcmp(this, &other, sizeof(*this)) < 0;
+			}
+		};
+		FlatSet<T> ts;
+		ts.reserve(msh->facesCount() * 2);
+
+		const uint32 origCnt = msh->indicesCount();
+		const auto orig = msh->indices();
+		for (uint32 i = 0; i < origCnt; i += 3)
+		{
+			ts.insert(T{ orig[i + 0], orig[i + 1], orig[i + 2] });
+			ts.insert(T{ orig[i + 0], orig[i + 2], orig[i + 1] }); // flip triangle winding
+		}
+
+		MeshImpl *impl = (MeshImpl *)msh;
+		impl->indices.clear();
+		impl->indices.reserve(impl->indices.size() * 2);
+		for (const T &t : ts)
+		{
+			impl->indices.push_back(t.a);
+			impl->indices.push_back(t.b);
+			impl->indices.push_back(t.c);
+		}
+
+		// todo normals and other attributes
+		meshDiscardInvalid(impl);
 	}
 
 	void meshClip(Mesh *msh, const Aabb &clipBox)
