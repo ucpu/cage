@@ -1,4 +1,4 @@
-Cage is game engine/framework designed for programmers with focus on dynamic games and procedural content generation.
+Cage is game engine/framework designed for programmers with focus on ease of use, dynamic games, and procedural content generation.
 
 # Features
 
@@ -10,9 +10,9 @@ Cage is game engine/framework designed for programmers with focus on dynamic gam
 
 ## Ease of use
 
-- Cage is programming framework that creates a consistent basis for engine, tools and game development.
+- Cage is programming framework that creates consistent basis for engine, tools and game development.
 - It encourages readable, maintainable and safe code while also allowing for quick prototyping.
-- Performance optimizations are added as necessary, preferably without changing api.
+- Performance optimizations are added as necessary, and without changing api.
 
 ## Portable
 
@@ -29,14 +29,19 @@ Cage is game engine/framework designed for programmers with focus on dynamic gam
 
 # Examples
 
+## MazeTD
+
+![MazeTD](https://raw.githubusercontent.com/ucpu/mazetd/master/screenshots/1.png)
+[MazeTD](https://github.com/ucpu/mazetd) - almost complete tower defence game with unique mechanics, procedurally generated terrain, and mana powered towers.
+
 ## Degrid
 
-![Degrid](https://raw.githubusercontent.com/ucpu/degrid/master/screenshots/3.png)
+![Degrid](https://raw.githubusercontent.com/ucpu/degrid/master/screenshots/1.png)
 [Degrid](https://github.com/ucpu/degrid) - simple and mostly complete game with birds-eye-view of a spaceship fighting against hundreds of geometrical enemies.
 
 ## Cragsman
 
-![Cragsman](https://raw.githubusercontent.com/ucpu/cragsman/master/screenshots/2.png)
+![Cragsman](https://raw.githubusercontent.com/ucpu/cragsman/master/screenshots/1.png)
 [Cragsman](https://github.com/ucpu/cragsman) - a game demo with procedurally generated terrain and simple physics
 
 ## Space Ants
