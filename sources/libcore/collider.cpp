@@ -36,6 +36,15 @@ namespace cage
 				((Collider *)this)->rebuild();
 			}
 
+			void builLeaf(std::vector<Triangle> &ts)
+			{
+				Node n;
+				n.left = numeric_cast<uint32>(tris.size());
+				n.right = n.left + numeric_cast<uint32>(ts.size());
+				tris.insert(tris.end(), ts.begin(), ts.end());
+				nodes.push_back(n);
+			}
+
 			void build(std::vector<Triangle> &ts, uint32 level)
 			{
 				// find the total bounding box
@@ -47,11 +56,7 @@ namespace cage
 				// primitive nodes form leaves
 				if (ts.size() <= 10)
 				{
-					Node n;
-					n.left = numeric_cast<uint32>(tris.size());
-					n.right = n.left + numeric_cast<uint32>(ts.size());
-					tris.insert(tris.end(), ts.begin(), ts.end());
-					nodes.push_back(n);
+					builLeaf(ts);
 					return;
 				}
 
@@ -117,6 +122,12 @@ namespace cage
 					}
 				}
 
+				if (axis == m) // found no split
+				{
+					builLeaf(ts);
+					return;
+				}
+
 				// actually split the triangles
 				CAGE_ASSERT(axis < 3);
 				CAGE_ASSERT(split > 0 && split < ts.size());
@@ -125,7 +136,6 @@ namespace cage
 				});
 				std::vector<Triangle> left(ts.begin(), ts.begin() + split);
 				std::vector<Triangle> right(ts.begin() + split, ts.end());
-				// std::vector<Triangle>().swap(ts); // free some memory
 
 				// build the node and recurse
 				uint32 idx = numeric_cast<uint32>(nodes.size());
@@ -158,10 +168,13 @@ namespace cage
 
 			void rebuild()
 			{
+				const uint32 trisCount = numeric_cast<uint32>(tris.size());
 				boxes.clear();
+				boxes.reserve(trisCount / 5);
 				nodes.clear();
-				uint32 trisCount = numeric_cast<uint32>(tris.size());
+				nodes.reserve(trisCount / 5);
 				std::vector<Triangle> ts;
+				ts.reserve(trisCount);
 				ts.swap(tris);
 				build(ts, 0);
 				CAGE_ASSERT(tris.size() == trisCount);
