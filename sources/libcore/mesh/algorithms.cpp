@@ -1025,58 +1025,6 @@ namespace cage
 	{
 		PointerRange<Triangle> planeCut(const Plane &plane, const Triangle &in, Triangle out[3])
 		{
-			/*
-			if (!intersects(plane, in))
-			{
-				out[0] = in;
-				return { out, out + 1 };
-			}
-			*/
-
-			/*
-			// intersecting vertices
-			const bool vns[3] = {
-				intersects(plane, in[0]),
-				intersects(plane, in[1]),
-				intersects(plane, in[2])
-			};
-			const uint32 vnc = vns[0] + vns[1] + vns[2];
-
-			switch (vnc)
-			{
-			case 1:
-			{
-				if (vns[0])
-				{
-					const Vec3 p = intersection(plane, makeLine(in[1], in[2]));
-					out[0] = Triangle(in[0], in[1], p);
-					out[1] = Triangle(in[0], p, in[2]);
-					return { out, out + 2 };
-				}
-				if (vns[1])
-				{
-					const Vec3 p = intersection(plane, makeLine(in[0], in[2]));
-					out[0] = Triangle(in[0], in[1], p);
-					out[1] = Triangle(in[1], in[2], p);
-					return { out, out + 2 };
-				}
-				CAGE_ASSERT(vns[2]);
-				{
-					const Vec3 p = intersection(plane, makeLine(in[0], in[1]));
-					out[1] = Triangle(in[0], p, in[2]);
-					out[0] = Triangle(p, in[1], in[2]);
-					return { out, out + 2 };
-				}
-			} break;
-
-			case 2:
-			case 3:
-				out[0] = in;
-				return { out, out + 1 };
-			}
-			CAGE_ASSERT(vnc == 0);
-			*/
-
 			const Vec3 a = intersection(plane, makeSegment(in[0], in[1]));
 			const Vec3 b = intersection(plane, makeSegment(in[1], in[2]));
 			const Vec3 c = intersection(plane, makeSegment(in[2], in[0]));
@@ -1113,48 +1061,7 @@ namespace cage
 			out[1] = Triangle(r[0], mids[1], mids[2]);
 			out[2] = Triangle(mids[1], r[2], mids[2]);
 			return { out, out + 3 };
-
-
-			/*
-			// intersecting edges
-			const bool lns[3] = {
-				intersects(plane, makeSegment(in[0], in[1])),
-				intersects(plane, makeSegment(in[1], in[2])),
-				intersects(plane, makeSegment(in[2], in[0]))
-			};
-			const uint32 lnc = lns[0] + lns[1] + lns[2];
-			if (lnc != 2)
-			{
-				out[0] = in;
-				return { out, out + 1 };
-			}
-
-			// rotated triangle such that the plane does not intersect the edge 0,1
-			const Triangle r = !lns[0] ? in : !lns[1] ? Triangle(in[1], in[2], in[0]) : Triangle(in[2], in[0], in[1]);
-			const Vec3 a = intersection(plane, makeSegment(r[1], r[2]));
-			const Vec3 b = intersection(plane, makeSegment(r[2], r[0]));
-			CAGE_ASSERT(valid(a));
-			CAGE_ASSERT(valid(b));
-			out[0] = Triangle(r[0], r[1], a);
-			out[1] = Triangle(r[0], a, b);
-			out[2] = Triangle(a, r[2], b);
-			return { out, out + 3 };
-			*/
 		}
-
-		/*
-		PointerRange<Triangle> planeCut(const Plane &plane, const Triangle &in, Triangle out[3])
-		{
-			auto r = planeCutImpl(plane, in, out);
-			for (const auto &it : r)
-			{
-				CAGE_ASSERT(valid(it[0]));
-				CAGE_ASSERT(valid(it[1]));
-				CAGE_ASSERT(valid(it[2]));
-			}
-			return r;
-		}
-		*/
 	}
 
 	void meshClip(Mesh *msh, const Plane &pln)
