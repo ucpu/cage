@@ -122,6 +122,19 @@ namespace
 #endif // CAGE_DEBUG
 	}
 
+	Holder<Mesh> makeDoubleBalls()
+	{
+		auto p = makeSphere();
+		auto k = makeSphere();
+		meshApplyTransform(+k, Transform(Vec3(5, 0, 0)));
+		const uint32 incnt = k->indicesCount();
+		const auto ins = k->indices();
+		const auto pos = k->positions();
+		for (uint32 i = 0; i < incnt; i += 3)
+			p->addTriangle(Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]));
+		return p;
+	}
+
 	void testMeshBasics()
 	{
 		Holder<Mesh> poly = makeSphere();
@@ -199,7 +212,7 @@ namespace
 			}
 			const uint32 f = p->facesCount();
 			CAGE_TEST(f > 10 && f < initialFacesCount);
-			p->exportFile("meshes/algorithms/meshRemoveSmall.obj");
+			p->exportFile("meshes/algorithms/removeSmall.obj");
 		}
 
 		{
@@ -312,18 +325,20 @@ namespace
 
 		{
 			CAGE_TESTCASE("split intersecting");
-			auto p = makeSphere();
-			{
-				auto k = makeSphere();
-				meshApplyTransform(+k, Transform(Vec3(5, 0, 0)));
-				const uint32 incnt = k->indicesCount();
-				const auto ins = k->indices();
-				const auto pos = k->positions();
-				for (uint32 i = 0; i < incnt; i += 3)
-					p->addTriangle(Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]));
-			}
+			auto p = makeDoubleBalls();
 			meshSplitIntersecting(+p);
 			p->exportFile("meshes/algorithms/splitIntersecting.obj");
+		}
+
+		{
+			CAGE_TESTCASE("remove invisible");
+			auto p = makeDoubleBalls();
+			meshSplitIntersecting(+p);
+			MeshRemoveInvisibleConfig cfg;
+			cfg.raysPerUnitArea = 5;
+			cfg.parallelize = true;
+			meshRemoveInvisible(+p, cfg);
+			p->exportFile("meshes/algorithms/removeInvisible.obj");
 		}
 
 		{

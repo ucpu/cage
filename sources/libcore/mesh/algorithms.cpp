@@ -5,6 +5,7 @@
 #include <cage-core/image.h>
 #include <cage-core/tasks.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/collider.h>
 
 #include "mesh.h"
 
@@ -885,7 +886,7 @@ namespace cage
 		Tasker tasker = Tasker(config.inputs, res, generator, finder);
 
 		if (config.parallelize)
-			tasksRunBlocking<Tasker>("retexture", tasker, generator.pixels.size());
+			tasksRunBlocking<Tasker>("meshRetexture", tasker, generator.pixels.size());
 		else
 		{
 			const uintPtr cnt = generator.pixels.size();
@@ -1236,6 +1237,7 @@ namespace cage
 			return;
 		if (config.threshold <= 0)
 			CAGE_THROW_ERROR(Exception, "mesh remove small requires positive threshold");
+		meshConvertToIndexed(msh);
 
 		const uint32 incnt = msh->indicesCount();
 		const auto orig = msh->indices();
@@ -1279,5 +1281,90 @@ namespace cage
 
 		msh->indices(inds);
 		meshDiscardInvalid(+msh);
+	}
+
+	void meshRemoveInvisible(Mesh *msh, const MeshRemoveInvisibleConfig &config)
+	{
+		if (msh->facesCount() == 0)
+			return;
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh removing invisible requires triangles mesh");
+		if (config.maxRaysPerTriangle < config.minRaysPerTriangle || config.raysPerUnitArea <= 1e-5)
+			CAGE_THROW_ERROR(Exception, "mesh removing invisible requires valid configuration");
+
+		struct Processor
+		{
+			Mesh *msh = nullptr;
+			const MeshRemoveInvisibleConfig &config;
+			Holder<Collider> collider = newCollider();
+			std::vector<uint8> visible;
+
+			Processor(Mesh *msh, const MeshRemoveInvisibleConfig &config) : msh(msh), config(config)
+			{
+				meshConvertToIndexed(msh);
+				visible.resize(msh->facesCount(), 0);
+				collider->importMesh(msh);
+				collider->rebuild();
+			}
+
+			void operator()(uint32 triIdx)
+			{
+				const auto inds = msh->indices();
+				const auto poss = msh->positions();
+				const Triangle t = Triangle(poss[inds[triIdx * 3 + 0]], poss[inds[triIdx * 3 + 1]], poss[inds[triIdx * 3 + 2]]);
+				const Vec3 n = t.normal();
+				const uint32 raysCount = clamp(numeric_cast<uint32>(t.area() * config.raysPerUnitArea), config.minRaysPerTriangle, config.maxRaysPerTriangle);
+				const Vec3 u = t[1] - t[0];
+				const Vec3 v = t[2] - t[0];
+				for (uint32 i = 0; i < raysCount; i++)
+				{
+					const Vec2 fs = randomChance2() * 0.5;
+					const Vec3 o = t[0] + fs[0] * u + fs[1] * v;
+					Vec3 d = randomDirection3();
+					if (!config.doubleSided && dot(d, n) < 0)
+						d *= -1;
+					const Line ray = makeRay(o, o + d);
+					if (!intersects(ray, +collider, Transform()))
+					{
+						visible[triIdx] = 1;
+						break;
+					}
+				}
+			}
+
+			void run()
+			{
+				if (config.parallelize)
+					tasksRunBlocking<Processor>("meshRemoveInvisible", *this, msh->facesCount());
+				else
+				{
+					const uint32 cnt = msh->facesCount();
+					for (uint32 i = 0; i < cnt; i++)
+						operator()(i);
+				}
+
+				{
+					const auto orig = msh->indices();
+					std::vector<uint32> inds;
+					inds.reserve(orig.size());
+					const uint32 cnt = orig.size() / 3;
+					for (uint32 i = 0; i < cnt; i++)
+					{
+						if (visible[i])
+						{
+							inds.push_back(orig[i * 3 + 0]);
+							inds.push_back(orig[i * 3 + 1]);
+							inds.push_back(orig[i * 3 + 2]);
+						}
+					}
+					msh->indices(inds);
+				}
+
+				meshDiscardInvalid(+msh);
+			}
+		};
+
+		Processor proc(msh, config);
+		proc.run();
 	}
 }

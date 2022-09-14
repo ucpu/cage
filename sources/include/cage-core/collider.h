@@ -46,11 +46,11 @@ namespace cage
 	// fractionContact is the ratio between initial and final transformations just when the models are colliding
 	// note that fractionBefore and fractionContact are just approximations
 	// the collisionPairs will contain all of the CollisionPairs corresponding to the fractionContact
-	struct CAGE_CORE_API CollisionDetectionParams
+	struct CAGE_CORE_API CollisionDetectionConfig
 	{
-		CollisionDetectionParams() = default;
-		explicit CollisionDetectionParams(const Collider *ao, const Collider *bo) : ao(ao), bo(bo) {}
-		explicit CollisionDetectionParams(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt) : ao(ao), bo(bo), at1(at), at2(at), bt1(bt), bt2(bt) {}
+		CollisionDetectionConfig() = default;
+		explicit CollisionDetectionConfig(const Collider *ao, const Collider *bo) : ao(ao), bo(bo) {}
+		explicit CollisionDetectionConfig(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt) : ao(ao), bo(bo), at1(at), at2(at), bt1(bt), bt2(bt) {}
 
 		// inputs
 		const Collider *ao = nullptr;
@@ -66,7 +66,7 @@ namespace cage
 		Holder<PointerRange<CollisionPair>> collisionPairs;
 	};
 
-	CAGE_CORE_API bool collisionDetection(CollisionDetectionParams &params);
+	CAGE_CORE_API bool collisionDetection(CollisionDetectionConfig &params);
 
 	CAGE_CORE_API Real distance(const Line &shape, const Collider *collider, const Transform &t);
 	CAGE_CORE_API Real distance(const Triangle &shape, const Collider *collider, const Transform &t);

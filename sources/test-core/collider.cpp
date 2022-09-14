@@ -13,7 +13,7 @@ void testColliders()
 			CAGE_TESTCASE("empty colliders");
 			Holder<Collider> c1 = newCollider();
 			Holder<Collider> c2 = newCollider();
-			CollisionDetectionParams p(+c1, +c2);
+			CollisionDetectionConfig p(+c1, +c2);
 			CAGE_TEST(!collisionDetection(p));
 		}
 		{
@@ -24,7 +24,7 @@ void testColliders()
 			c2->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
 			c1->rebuild();
 			c2->rebuild();
-			CollisionDetectionParams p(+c1, +c2);
+			CollisionDetectionConfig p(+c1, +c2);
 			CAGE_TEST(!collisionDetection(p));
 		}
 		{
@@ -35,7 +35,7 @@ void testColliders()
 			c2->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0)));
 			c1->rebuild();
 			c2->rebuild();
-			CollisionDetectionParams p(+c1, +c2);
+			CollisionDetectionConfig p(+c1, +c2);
 			CAGE_TEST(collisionDetection(p));
 			CAGE_TEST(p.collisionPairs.size() == 1);
 			CAGE_TEST(p.collisionPairs[0].a == 0);
@@ -48,7 +48,7 @@ void testColliders()
 			c1->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
 			c1->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0)));
 			c1->rebuild();
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			CAGE_TEST(collisionDetection(p));
 		}
 		{
@@ -58,7 +58,7 @@ void testColliders()
 			c1->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
 			c1->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0)));
 			c1->rebuild();
-			CollisionDetectionParams p(+c1, +c1, Transform(), Transform(Vec3(20, 0, 0)));
+			CollisionDetectionConfig p(+c1, +c1, Transform(), Transform(Vec3(20, 0, 0)));
 			CAGE_TEST(!collisionDetection(p));
 		}
 		{
@@ -69,7 +69,7 @@ void testColliders()
 			c2->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
 			c1->rebuild();
 			c2->rebuild();
-			CollisionDetectionParams p(+c1, +c2, Transform(), Transform(Vec3(), Quat(Degs(), Degs(90), Degs())));
+			CollisionDetectionConfig p(+c1, +c2, Transform(), Transform(Vec3(), Quat(Degs(), Degs(90), Degs())));
 			CAGE_TEST(collisionDetection(p));
 		}
 		{
@@ -90,7 +90,7 @@ void testColliders()
 			c1->addTriangle(Triangle(Vec3(-1, 0, 0), Vec3(1, 0, 0), Vec3(0, 2, 0)));
 			c1->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
 			c1->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0)));
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			CAGE_TEST_ASSERTED(collisionDetection(p));
 		}
 	}
@@ -111,12 +111,12 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("ensure static collision");
-			CollisionDetectionParams p(+c1, +c1, Transform(Vec3(-5, 0, 0), Quat(), 7), Transform(Vec3(5, 0, 0), Quat(), 7));
+			CollisionDetectionConfig p(+c1, +c1, Transform(Vec3(-5, 0, 0), Quat(), 7), Transform(Vec3(5, 0, 0), Quat(), 7));
 			CAGE_TEST(collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons meet in the middle");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-5, 0, 0));
 			p.bt1 = Transform(Vec3(5, 0, 0));
 			p.at2 = Transform();
@@ -129,7 +129,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons do not meet");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-5, 0, 0));
 			p.bt1 = Transform(Vec3(5, 0, 0));
 			p.at2 = Transform(Vec3(-5, 10, 0));
@@ -141,7 +141,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons are very close");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-1, 0, 0));
 			p.bt1 = Transform(Vec3(1, 0, 0));
 			p.at2 = Transform();
@@ -154,7 +154,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons are far apart");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-500, 0, 0));
 			p.bt1 = Transform(Vec3(500, 0, 0));
 			p.at2 = Transform();
@@ -167,7 +167,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("one tetrahedron is very large");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-500, 0, 0), Quat(), 50);
 			p.bt1 = Transform(Vec3(5, 0, 0));
 			p.at2 = Transform(Vec3(), Quat(), 50);
@@ -180,7 +180,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("one tetrahedron is very small");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-5, 0, 0), Quat(), 0.01);
 			p.bt1 = Transform(Vec3(5, 0, 0));
 			p.at2 = Transform(Vec3(), Quat(), 0.01);
@@ -193,7 +193,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("no dynamic change (no collision)");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-5, 0, 0));
 			p.bt1 = Transform(Vec3(5, 0, 0));
 			p.at2 = Transform(Vec3(-5, 0, 0));
@@ -202,7 +202,7 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("no dynamic change (with collision)");
-			CollisionDetectionParams p(+c1, +c1);
+			CollisionDetectionConfig p(+c1, +c1);
 			p.at1 = Transform(Vec3(-0.5001, 0, 0));
 			p.bt1 = Transform(Vec3(0.5, 0, 0));
 			p.at2 = Transform(Vec3(-0.5, 0, 0));
@@ -242,28 +242,28 @@ void testColliders()
 		{
 			CAGE_TESTCASE("ensure static collision");
 			{
-				CollisionDetectionParams p(+c1, +c2);
+				CollisionDetectionConfig p(+c1, +c2);
 				CAGE_TEST(!collisionDetection(p));
 			}
 			{
-				CollisionDetectionParams p(+c1, +c2, Transform(Vec3(-10, 9.5, 0)), Transform());
+				CollisionDetectionConfig p(+c1, +c2, Transform(Vec3(-10, 9.5, 0)), Transform());
 				CAGE_TEST(collisionDetection(p));
 			}
 			{
-				CollisionDetectionParams p(+c1, +c2, Transform(), Transform(Vec3(), Quat(Degs(), Degs(), Degs(-90))));
+				CollisionDetectionConfig p(+c1, +c2, Transform(), Transform(Vec3(), Quat(Degs(), Degs(), Degs(-90))));
 				CAGE_TEST(collisionDetection(p));
 			}
 		}
 		{
 			CAGE_TESTCASE("rotations");
 			{
-				CollisionDetectionParams p(+c1, +c2);
+				CollisionDetectionConfig p(+c1, +c2);
 				p.bt1 = Transform(Vec3(), Quat(Degs(), Degs(), Degs(-100)));
 				p.bt2 = Transform(Vec3(), Quat(Degs(), Degs(), Degs(-80)));
 				CAGE_TEST(collisionDetection(p));
 			}
 			{
-				CollisionDetectionParams p(+c1, +c2);
+				CollisionDetectionConfig p(+c1, +c2);
 				p.bt1 = Transform(Vec3(0.01, 0, 0), Quat(Degs(), Degs(), Degs(-80)));
 				p.bt2 = Transform(Vec3(), Quat(Degs(), Degs(), Degs(-100)));
 				CAGE_TEST(collisionDetection(p));

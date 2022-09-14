@@ -660,7 +660,7 @@ namespace cage
 
 
 
-	bool collisionDetection(CollisionDetectionParams &params)
+	bool collisionDetection(CollisionDetectionConfig &params)
 	{
 		const ColliderImpl *const ao = (const ColliderImpl *)params.ao;
 		const ColliderImpl *const bo = (const ColliderImpl *)params.bo;
@@ -716,7 +716,7 @@ namespace cage
 			maxDiff = min(maxDiff, (time2 - time1) * 0.2);
 			while (time1 <= time2)
 			{
-				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, time1), interpolate(bt1, bt2, time1));
+				CollisionDetectionConfig p(ao, bo, interpolate(at1, at2, time1), interpolate(bt1, bt2, time1));
 				if (collisionDetection(p))
 				{
 					time2 = time1;
@@ -735,7 +735,7 @@ namespace cage
 			for (uint32 i = 0; i < 6; i++)
 			{
 				const Real time = (time1 + time2) * 0.5;
-				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, time), interpolate(bt1, bt2, time));
+				CollisionDetectionConfig p(ao, bo, interpolate(at1, at2, time), interpolate(bt1, bt2, time));
 				if (collisionDetection(p))
 				{
 					time2 = time;
@@ -754,14 +754,14 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 			{
 				// verify that there is no collision at fractionBefore
-				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore));
+				CollisionDetectionConfig p(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore));
 				CAGE_ASSERT(fractionBefore == 0 || !collisionDetection(p));
 			}
 #endif
 
 			{
 				// find the actual collision at fractionContact
-				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact));
+				CollisionDetectionConfig p(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact));
 				bool res = collisionDetection(p);
 				CAGE_ASSERT(res);
 				outputBuffer = std::move(p.collisionPairs);
@@ -865,7 +865,7 @@ namespace cage
 
 	bool intersects(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt)
 	{
-		CollisionDetectionParams p(ao, bo, at, bt);
+		CollisionDetectionConfig p(ao, bo, at, bt);
 		return collisionDetection(p);
 	}
 

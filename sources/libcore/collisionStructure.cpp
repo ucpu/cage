@@ -67,7 +67,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					CollisionDetectionParams p(collider, +item.c, t, item.t);
+					CollisionDetectionConfig p(collider, +item.c, t, item.t);
 					if (collisionDetection(p)) // exact phase
 					{
 						CAGE_ASSERT(!p.collisionPairs.empty());
@@ -88,7 +88,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					CollisionDetectionParams p(collider, +item.c);
+					CollisionDetectionConfig p(collider, +item.c);
 					p.at1 = t1;
 					p.at2 = t2;
 					p.bt1 = item.t;

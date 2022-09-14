@@ -134,6 +134,17 @@ namespace cage
 
 	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
 
+	struct CAGE_CORE_API MeshRemoveInvisibleConfig
+	{
+		Real raysPerUnitArea = 1;
+		uint32 minRaysPerTriangle = 10;
+		uint32 maxRaysPerTriangle = 50;
+		bool doubleSided = false;
+		bool parallelize = false;
+	};
+
+	CAGE_CORE_API void meshRemoveInvisible(Mesh *msh, const MeshRemoveInvisibleConfig &config);
+
 	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{
 		Real distanceThreshold = 1e-5;
