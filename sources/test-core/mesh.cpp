@@ -216,6 +216,19 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("smoothing");
+			auto p = makeSphere();
+			for (Vec3 &v : p->positions())
+				v += randomDirection3() * 0.5;
+			MeshSmoothingConfig cfg;
+#ifdef CAGE_DEBUG
+			cfg.iterations = 1;
+#endif
+			meshSmoothing(+p, cfg);
+			p->exportFile("meshes/algorithms/smoothing.obj");
+		}
+
+		{
 			CAGE_TESTCASE("chunking");
 			auto p = makeSphere();
 			MeshChunkingConfig cfg;

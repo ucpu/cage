@@ -161,6 +161,14 @@ namespace cage
 
 	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizeConfig &config);
 
+	struct CAGE_CORE_API MeshSmoothingConfig
+	{
+		uint32 iterations = 10;
+		bool uniform = false;
+	};
+
+	CAGE_CORE_API void meshSmoothing(Mesh *msh, const MeshSmoothingConfig &config);
+
 	struct CAGE_CORE_API MeshChunkingConfig
 	{
 		Real maxSurfaceArea;

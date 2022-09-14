@@ -4,6 +4,7 @@
 
 #include <pmp/SurfaceMesh.h>
 #include <pmp/algorithms/SurfaceRemeshing.h>
+#include <pmp/algorithms/SurfaceSmoothing.h>
 
 #include "mesh.h"
 
@@ -73,16 +74,16 @@ namespace cage
 		}
 	}
 
-	void meshSimplify(Mesh *poly, const MeshSimplifyConfig &config)
+	void meshSimplify(Mesh *msh, const MeshSimplifyConfig &config)
 	{
-		if (poly->type() != MeshTypeEnum::Triangles)
+		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh simplification requires triangles mesh");
 		try
 		{
-			Holder<pmp::SurfaceMesh> pm = toPmp(poly);
+			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
 			pmp::SurfaceRemeshing rms(*pm);
 			rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
-			fromPmp(poly, pm);
+			fromPmp(msh, pm);
 		}
 		catch (const std::exception &e)
 		{
@@ -91,21 +92,39 @@ namespace cage
 		}
 	}
 
-	void meshRegularize(Mesh *poly, const MeshRegularizeConfig &config)
+	void meshRegularize(Mesh *msh, const MeshRegularizeConfig &config)
 	{
-		if (poly->type() != MeshTypeEnum::Triangles)
+		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh regularization requires triangles mesh");
 		try
 		{
-			Holder<pmp::SurfaceMesh> pm = toPmp(poly);
+			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
 			pmp::SurfaceRemeshing rms(*pm);
 			rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
-			fromPmp(poly, pm);
+			fromPmp(msh, pm);
 		}
 		catch (const std::exception &e)
 		{
 			CAGE_LOG_THROW(e.what());
 			CAGE_THROW_ERROR(Exception, "mesh regularization failure");
+		}
+	}
+
+	void meshSmoothing(Mesh *msh, const MeshSmoothingConfig &config)
+	{
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh smoothing requires triangles mesh");
+		try
+		{
+			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
+			pmp::SurfaceSmoothing rms(*pm);
+			rms.explicit_smoothing(config.iterations, config.uniform);
+			fromPmp(msh, pm);
+		}
+		catch (const std::exception &e)
+		{
+			CAGE_LOG_THROW(e.what());
+			CAGE_THROW_ERROR(Exception, "mesh smoothing failure");
 		}
 	}
 }
