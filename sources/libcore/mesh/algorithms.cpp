@@ -1002,7 +1002,6 @@ namespace cage
 		}
 
 		// todo normals and other attributes
-		meshDiscardInvalid(impl);
 	}
 
 	void meshClip(Mesh *msh, const Aabb &clipBox)
@@ -1061,7 +1060,6 @@ namespace cage
 		else
 			removeUnusedVertices(impl);
 		meshDiscardInvalid(impl);
-		meshMergeCloseVertices(impl, {});
 	}
 
 	namespace
@@ -1133,7 +1131,6 @@ namespace cage
 			msh->addTriangle(t);
 
 		meshDiscardInvalid(msh);
-		meshMergeCloseVertices(msh, {});
 	}
 
 	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
@@ -1185,7 +1182,6 @@ namespace cage
 			msh->addTriangle(t);
 
 		meshDiscardInvalid(msh);
-		meshMergeCloseVertices(msh, {});
 	}
 
 	void meshDiscardInvalid(Mesh *msh)
@@ -1361,7 +1357,7 @@ namespace cage
 				for (uint32 i = 0; i < raysCount; i++)
 				{
 					const Vec2 fs = randomChance2() * 0.5;
-					const Vec3 o = t[0] + fs[0] * u + fs[1] * v;
+					const Vec3 o = t[0] + fs[0] * u + fs[1] * v + n * 1e-6;
 					Vec3 d = randomDirection3();
 					if (!config.doubleSided && dot(d, n) < 0)
 						d *= -1;
