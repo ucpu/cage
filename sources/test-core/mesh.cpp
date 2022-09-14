@@ -131,6 +131,19 @@ namespace
 		CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
 
 		{
+			CAGE_TESTCASE("valid vertices");
+			for (const Vec3 &p : poly->positions())
+			{
+				CAGE_TEST(valid(p));
+			}
+			for (const Vec3 &p : poly->normals())
+			{
+				CAGE_TEST(valid(p));
+				CAGE_TEST(abs(length(p) - 1) < 1e-5);
+			}
+		}
+
+		{
 			CAGE_TESTCASE("bounding box");
 			approxEqual(poly->boundingBox(), Aabb(Vec3(-10), Vec3(10)));
 		}
@@ -289,7 +302,6 @@ namespace
 			approxEqual(p->boundingBox(), box);
 		}
 
-		/*
 		{
 			CAGE_TESTCASE("clip by plane");
 			auto p = makeSphere();
@@ -297,7 +309,22 @@ namespace
 			meshClip(+p, pln);
 			p->exportFile("meshes/algorithms/clipByPlane.obj");
 		}
-		*/
+
+		{
+			CAGE_TESTCASE("split intersecting");
+			auto p = makeSphere();
+			{
+				auto k = makeSphere();
+				meshApplyTransform(+k, Transform(Vec3(5, 0, 0)));
+				const uint32 incnt = k->indicesCount();
+				const auto ins = k->indices();
+				const auto pos = k->positions();
+				for (uint32 i = 0; i < incnt; i += 3)
+					p->addTriangle(Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]));
+			}
+			meshSplitIntersecting(+p);
+			p->exportFile("meshes/algorithms/splitIntersecting.obj");
+		}
 
 		{
 			CAGE_TESTCASE("separateDisconnected");

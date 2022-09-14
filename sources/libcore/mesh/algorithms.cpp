@@ -4,11 +4,13 @@
 #include <cage-core/spatialStructure.h>
 #include <cage-core/image.h>
 #include <cage-core/tasks.h>
+#include <cage-core/flatSet.h>
 
 #include "mesh.h"
 
 #include <algorithm> // std::erase_if
 #include <numeric> // std::iota
+#include <array>
 
 namespace cage
 {
@@ -496,16 +498,49 @@ namespace cage
 	{
 		if (!msh->indices().empty() || msh->positions().empty())
 			return;
-		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "convertToIndexed");
+
+		struct Comparator
+		{
+			bool operator() (const Vec3 &a, const Vec3 &b) const
+			{
+				return detail::memcmp(&a, &b, sizeof(a)) < 0;
+			}
+		};
+		FlatSet<Vec3, Comparator> pos;
+		pos.reserve(msh->verticesCount());
+		pos.insert(msh->positions().begin(), msh->positions().end());
+
+		std::vector<uint32> inds;
+		inds.reserve(msh->positions().size());
+		for (const Vec3 &p : msh->positions())
+			inds.push_back(pos.find(p) - pos.begin());
+
+		// todo other attributes
+
+		const MeshTypeEnum type = msh->type();
+		msh->clear();
+		msh->type(type);
+		msh->positions(pos);
+		msh->indices(inds);
 	}
 
 	void meshConvertToExpanded(Mesh *msh)
 	{
 		if (msh->indices().empty())
 			return;
-		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
+
+		std::vector<Vec3> ps;
+		ps.reserve(msh->indicesCount());
+
+		for (uint32 i : msh->indices())
+			ps.push_back(msh->position(i));
+
+		// todo other attributes
+
+		const MeshTypeEnum type = msh->type();
+		msh->clear();
+		msh->type(type);
+		msh->positions(ps);
 	}
 
 	void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config)
@@ -929,8 +964,6 @@ namespace cage
 
 	void meshClip(Mesh *msh, const Aabb &clipBox)
 	{
-		// todo implement this as 6 times meshClip with a plane when it is implemented
-
 		if (msh->facesCount() == 0)
 			return;
 		if (msh->type() != MeshTypeEnum::Triangles)
@@ -988,10 +1021,169 @@ namespace cage
 		meshMergeCloseVertices(impl, {});
 	}
 
+	namespace
+	{
+		PointerRange<Triangle> planeCut(const Plane &plane, const Triangle &in, Triangle out[3])
+		{
+			/*
+			if (!intersects(plane, in))
+			{
+				out[0] = in;
+				return { out, out + 1 };
+			}
+			*/
+
+			/*
+			// intersecting vertices
+			const bool vns[3] = {
+				intersects(plane, in[0]),
+				intersects(plane, in[1]),
+				intersects(plane, in[2])
+			};
+			const uint32 vnc = vns[0] + vns[1] + vns[2];
+
+			switch (vnc)
+			{
+			case 1:
+			{
+				if (vns[0])
+				{
+					const Vec3 p = intersection(plane, makeLine(in[1], in[2]));
+					out[0] = Triangle(in[0], in[1], p);
+					out[1] = Triangle(in[0], p, in[2]);
+					return { out, out + 2 };
+				}
+				if (vns[1])
+				{
+					const Vec3 p = intersection(plane, makeLine(in[0], in[2]));
+					out[0] = Triangle(in[0], in[1], p);
+					out[1] = Triangle(in[1], in[2], p);
+					return { out, out + 2 };
+				}
+				CAGE_ASSERT(vns[2]);
+				{
+					const Vec3 p = intersection(plane, makeLine(in[0], in[1]));
+					out[1] = Triangle(in[0], p, in[2]);
+					out[0] = Triangle(p, in[1], in[2]);
+					return { out, out + 2 };
+				}
+			} break;
+
+			case 2:
+			case 3:
+				out[0] = in;
+				return { out, out + 1 };
+			}
+			CAGE_ASSERT(vnc == 0);
+			*/
+
+			const Vec3 a = intersection(plane, makeSegment(in[0], in[1]));
+			const Vec3 b = intersection(plane, makeSegment(in[1], in[2]));
+			const Vec3 c = intersection(plane, makeSegment(in[2], in[0]));
+			const bool lns[3] = { valid(a), valid(b), valid(c) };
+			const uint32 lnc = lns[0] + lns[1] + lns[2];
+			if (lnc != 2)
+			{
+				out[0] = in;
+				return { out, out + 1 };
+			}
+
+			Triangle r;
+			std::array<Vec3, 3> mids;
+			if (!lns[0])
+			{
+				r = in;
+				mids = { a, b, c };
+			}
+			if (!lns[1])
+			{
+				r = Triangle(in[1], in[2], in[0]);
+				mids = { b, c, a };
+			}
+			if (!lns[2])
+			{
+				r = Triangle(in[2], in[0], in[1]);
+				mids = { c, a, b };
+			}
+
+			CAGE_ASSERT(!valid(mids[0]));
+			CAGE_ASSERT(valid(mids[1]));
+			CAGE_ASSERT(valid(mids[2]));
+			out[0] = Triangle(r[0], r[1], mids[1]);
+			out[1] = Triangle(r[0], mids[1], mids[2]);
+			out[2] = Triangle(mids[1], r[2], mids[2]);
+			return { out, out + 3 };
+
+
+			/*
+			// intersecting edges
+			const bool lns[3] = {
+				intersects(plane, makeSegment(in[0], in[1])),
+				intersects(plane, makeSegment(in[1], in[2])),
+				intersects(plane, makeSegment(in[2], in[0]))
+			};
+			const uint32 lnc = lns[0] + lns[1] + lns[2];
+			if (lnc != 2)
+			{
+				out[0] = in;
+				return { out, out + 1 };
+			}
+
+			// rotated triangle such that the plane does not intersect the edge 0,1
+			const Triangle r = !lns[0] ? in : !lns[1] ? Triangle(in[1], in[2], in[0]) : Triangle(in[2], in[0], in[1]);
+			const Vec3 a = intersection(plane, makeSegment(r[1], r[2]));
+			const Vec3 b = intersection(plane, makeSegment(r[2], r[0]));
+			CAGE_ASSERT(valid(a));
+			CAGE_ASSERT(valid(b));
+			out[0] = Triangle(r[0], r[1], a);
+			out[1] = Triangle(r[0], a, b);
+			out[2] = Triangle(a, r[2], b);
+			return { out, out + 3 };
+			*/
+		}
+
+		/*
+		PointerRange<Triangle> planeCut(const Plane &plane, const Triangle &in, Triangle out[3])
+		{
+			auto r = planeCutImpl(plane, in, out);
+			for (const auto &it : r)
+			{
+				CAGE_ASSERT(valid(it[0]));
+				CAGE_ASSERT(valid(it[1]));
+				CAGE_ASSERT(valid(it[2]));
+			}
+			return r;
+		}
+		*/
+	}
+
 	void meshClip(Mesh *msh, const Plane &pln)
 	{
-		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "meshClip");
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh clip requires triangles mesh");
+		meshConvertToIndexed(msh);
+
+		std::vector<Triangle> b;
+		b.reserve(msh->facesCount() * 2);
+
+		const uint32 incnt = msh->indicesCount();
+		const auto ins = msh->indices();
+		const auto pos = msh->positions();
+		for (uint32 i = 0; i < incnt; i += 3)
+		{
+			Triangle tmp[3];
+			const Triangle t = Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]);
+			for (const Triangle &k : planeCut(pln, t, tmp))
+				if (dot(k.center() - pln.origin(), pln.normal) > 0)
+					b.push_back(k);
+		}
+
+		msh->clear();
+		for (const Triangle &t : b)
+			msh->addTriangle(t);
+
+		meshDiscardInvalid(msh);
+		meshMergeCloseVertices(msh, {});
 	}
 
 	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
@@ -1000,6 +1192,50 @@ namespace cage
 		meshClip(msh, pln);
 		meshClip(+b, Plane(pln.origin(), -pln.normal));
 		return b;
+	}
+
+	void meshSplitIntersecting(Mesh *msh)
+	{
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh split intersecting requires triangles mesh");
+		meshConvertToIndexed(msh);
+
+		std::vector<Triangle> a;
+		{
+			const uint32 incnt = msh->indicesCount();
+			const auto ins = msh->indices();
+			const auto pos = msh->positions();
+			for (uint32 i = 0; i < incnt; i += 3)
+				a.emplace_back(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]);
+		}
+		msh->clear();
+
+		std::vector<Triangle> b;
+		b.reserve(a.size() * 2);
+
+		std::vector<Triangle> cutters = a;
+		for (const Triangle &cutter : cutters)
+		{
+			for (const Triangle &t : a)
+			{
+				if (intersects(cutter, t))
+				{
+					Triangle tmp[3];
+					for (const Triangle &k : planeCut(Plane(cutter), t, tmp))
+						b.push_back(k);
+				}
+				else
+					b.push_back(t);
+			}
+			std::swap(a, b);
+			b.clear();
+		}
+
+		for (const Triangle &t : a)
+			msh->addTriangle(t);
+
+		meshDiscardInvalid(msh);
+		meshMergeCloseVertices(msh, {});
 	}
 
 	void meshDiscardInvalid(Mesh *msh)

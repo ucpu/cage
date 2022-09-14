@@ -404,14 +404,14 @@ namespace cage
 		{
 			if (perpendicular(a.direction, b.normal))
 				return distance(a.origin, b) < 1e-5;
-			Real x = dot(a.origin - b.origin(), b.normal);
-			Real y = dot(a.direction, b.normal);
+			const Real x = dot(a.origin - b.origin(), b.normal);
+			const Real y = dot(a.direction, b.normal);
 			return x < 0 != y < 0;
 		}
 		else
 		{
-			Real x = dot(a.a() - b.origin(), b.normal);
-			Real y = dot(a.b() - b.origin(), b.normal);
+			const Real x = dot(a.a() - b.origin(), b.normal);
+			const Real y = dot(a.b() - b.origin(), b.normal);
 			return x == 0 || y == 0 || (x < 0 != y < 0);
 		}
 	}
@@ -438,10 +438,12 @@ namespace cage
 
 	bool intersects(const Triangle &a, const Plane &b)
 	{
-		uint32 sigs[2] = { 0, 0 };
+		uint32 sigs[3] = { 0, 0, 0 };
 		for (uint32 i = 0; i < 3; i++)
-			sigs[dot(a[i], b.normal) - b.d < 0]++;
-		return sigs[0] > 0 && sigs[1] > 0;
+			sigs[sign(dot(a[i] - b.origin(), b.normal)) + 1]++;
+		sigs[0] += sigs[1];
+		sigs[2] += sigs[1];
+		return sigs[0] > 0 && sigs[2] > 0;
 	}
 
 	bool intersects(const Triangle &a, const Sphere &b)

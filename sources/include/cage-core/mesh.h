@@ -121,6 +121,7 @@ namespace cage
 	CAGE_CORE_API void meshClip(Mesh *msh, const Aabb &box);
 	CAGE_CORE_API void meshClip(Mesh *msh, const Plane &pln);
 	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const Plane &pln);
+	CAGE_CORE_API void meshSplitIntersecting(Mesh *msh);
 
 	CAGE_CORE_API void meshDiscardInvalid(Mesh *msh);
 	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);
