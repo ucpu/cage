@@ -993,7 +993,7 @@ namespace cage
 
 		MeshImpl *impl = (MeshImpl *)msh;
 		impl->indices.clear();
-		impl->indices.reserve(impl->indices.size() * 2);
+		impl->indices.reserve(ts.size() * 3);
 		for (const T &t : ts)
 		{
 			impl->indices.push_back(t.a);
@@ -1371,6 +1371,78 @@ namespace cage
 
 		msh->indices(inds);
 		meshDiscardInvalid(+msh);
+	}
+
+	namespace
+	{
+		Plane longTriangleCuttingPlane(const Triangle &t)
+		{
+			const Real lengths[3] = { distanceSquared(t[0], t[1]), distanceSquared(t[1], t[2]), distanceSquared(t[2], t[0]) };
+			const Real ll = max(max(lengths[0], lengths[1]), lengths[2]);
+			Vec3 n;
+			for (uint32 i = 0; i < 3; i++)
+				if (lengths[i] == ll)
+					n = t[i] - t[(i + 1) % 3];
+			n = normalize(n);
+			CAGE_ASSERT(valid(n));
+			return Plane(t.center(), n);
+		}
+	}
+
+	void meshSplitLong(Mesh *msh, const MeshSplitLongConfig &config)
+	{
+		if (msh->facesCount() == 0)
+			return;
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh split long requires triangles mesh");
+		if (config.ratio < 1e-5 || config.length < 0)
+			CAGE_THROW_ERROR(Exception, "mesh split long requires valid config");
+		meshConvertToIndexed(msh);
+
+		std::vector<Triangle> a;
+		{
+			a.reserve(msh->facesCount() * 2);
+			const uint32 incnt = msh->indicesCount();
+			const auto ins = msh->indices();
+			const auto pos = msh->positions();
+			for (uint32 i = 0; i < incnt; i += 3)
+				a.push_back(Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]));
+		}
+		std::vector<Triangle> b, f;
+		b.reserve(a.size());
+		f.reserve(a.size());
+
+		Triangle tmp[3];
+		while (!a.empty())
+		{
+			for (const Triangle &t : a)
+			{
+				Real lengths[3] = { distance(t[0], t[1]), distance(t[1], t[2]), distance(t[2], t[0]) };
+				std::sort(std::begin(lengths), std::end(lengths));
+				if (lengths[0] / lengths[2] > config.ratio || lengths[2] < config.length)
+				{
+					f.push_back(t);
+					continue;
+				}
+				const auto r = planeCut(longTriangleCuttingPlane(t), t, tmp);
+				if (r.size() == 1)
+					f.push_back(r[0]);
+				else if (r.size() > 1)
+				{
+					for (const Triangle &k : r)
+						if (!k.degenerated())
+							b.push_back(k);
+				}
+			}
+			std::swap(a, b);
+			b.clear();
+		}
+
+		msh->clear();
+		for (const Triangle &t : f)
+			msh->addTriangle(t);
+
+		meshDiscardInvalid(msh);
 	}
 
 	void meshRemoveInvisible(Mesh *msh, const MeshRemoveInvisibleConfig &config)

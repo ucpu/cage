@@ -338,6 +338,16 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("split long");
+			auto p = makeSphere();
+			meshApplyTransform(+p, Mat4::scale(Vec3(0.5, 5, 0.5)));
+			MeshSplitLongConfig cfg;
+			cfg.length = 10;
+			meshSplitLong(+p, cfg);
+			p->exportFile("meshes/algorithms/splitLong.obj");
+		}
+
+		{
 			CAGE_TESTCASE("split intersecting");
 			auto p = makeDoubleBalls();
 			MeshSplitIntersectingConfig cfg;

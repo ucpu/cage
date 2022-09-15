@@ -134,6 +134,14 @@ namespace cage
 
 	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
 
+	struct CAGE_CORE_API MeshSplitLongConfig
+	{
+		Real length = 1;
+		Real ratio = 0.25;
+	};
+
+	CAGE_CORE_API void meshSplitLong(Mesh *msh, const MeshSplitLongConfig &config);
+
 	struct CAGE_CORE_API MeshSplitIntersectingConfig
 	{
 		uint32 maxCuttersForTriangle = m;
