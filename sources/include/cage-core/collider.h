@@ -24,6 +24,8 @@ namespace cage
 		void addTriangle(const Triangle &t);
 		void addTriangles(PointerRange<const Triangle> tris);
 
+		void optimize(); // removes duplicated triangles
+
 		void rebuild();
 		bool needsRebuild() const;
 

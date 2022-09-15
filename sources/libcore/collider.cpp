@@ -4,6 +4,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/mesh.h>
+#include <cage-core/flatSet.h>
 
 #include <vector>
 #include <algorithm>
@@ -203,6 +204,40 @@ namespace cage
 	{
 		ColliderImpl *impl = (ColliderImpl *)this;
 		impl->tris.insert(impl->tris.end(), tris.begin(), tris.end());
+		impl->dirty = true;
+	}
+
+	void Collider::optimize()
+	{
+		ColliderImpl *impl = (ColliderImpl *)this;
+
+		static constexpr const auto &order = [](Triangle t) -> Triangle {
+			struct Comparator
+			{
+				bool operator() (const Vec3 &a, const Vec3 &b) const
+				{
+					return detail::memcmp(&a, &b, sizeof(a)) < 0;
+				}
+			};
+			std::sort(std::begin(t.vertices), std::end(t.vertices), Comparator());
+			return t;
+		};
+
+		struct Comparator
+		{
+			bool operator() (const Triangle &a, const Triangle &b) const
+			{
+				return detail::memcmp(&a, &b, sizeof(a)) < 0;
+			}
+		};
+		FlatSet<Triangle, Comparator> ts;
+		ts.reserve(impl->tris.size());
+
+		for (const Triangle &t : impl->tris)
+			if (!t.degenerated())
+				ts.insert(order(t));
+
+		std::swap(impl->tris, ts.unsafeData());
 		impl->dirty = true;
 	}
 

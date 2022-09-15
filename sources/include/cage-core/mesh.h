@@ -136,6 +136,7 @@ namespace cage
 
 	struct CAGE_CORE_API MeshSplitIntersectingConfig
 	{
+		uint32 maxCuttersForTriangle = m;
 		bool parallelize = false;
 	};
 

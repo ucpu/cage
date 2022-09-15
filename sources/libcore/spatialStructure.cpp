@@ -547,6 +547,7 @@ namespace cage
 
 	Holder<SpatialQuery> newSpatialQuery(Holder<const SpatialStructure> data)
 	{
+		CAGE_ASSERT(data);
 		return systemMemory().createImpl<SpatialQuery, SpatialQueryImpl>(std::move(data).cast<const SpatialDataImpl>());
 	}
 }

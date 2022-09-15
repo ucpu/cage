@@ -93,6 +93,18 @@ void testColliders()
 			CollisionDetectionConfig p(+c1, +c1);
 			CAGE_TEST_ASSERTED(collisionDetection(p));
 		}
+		{
+			CAGE_TESTCASE("optimize");
+			Holder<Collider> c1 = newCollider();
+			c1->addTriangle(Triangle(Vec3(-1, 0, 0), Vec3(1, 0, 0), Vec3(0, 2, 0)));
+			c1->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1)));
+			c1->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0)));
+			c1->addTriangle(Triangle(Vec3(-2, 1, -5), Vec3(2, 1, 0), Vec3(0, 1, 5)));
+			c1->addTriangle(Triangle(Vec3(-2, 0, 1), Vec3(0, 3, 1), Vec3(2, 0, 1)));
+			CAGE_TEST(c1->triangles().size() == 5);
+			c1->optimize();
+			CAGE_TEST(c1->triangles().size() == 3);
+		}
 	}
 
 	{

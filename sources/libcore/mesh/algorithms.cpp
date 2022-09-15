@@ -1117,9 +1117,9 @@ namespace cage
 		const uint32 incnt = msh->indicesCount();
 		const auto ins = msh->indices();
 		const auto pos = msh->positions();
+		Triangle tmp[3];
 		for (uint32 i = 0; i < incnt; i += 3)
 		{
-			Triangle tmp[3];
 			const Triangle t = Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]);
 			for (const Triangle &k : planeCut(pln, t, tmp))
 				if (dot(k.center() - pln.origin(), pln.normal) > 0)
@@ -1145,74 +1145,95 @@ namespace cage
 	{
 		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh split intersecting requires triangles mesh");
-		meshConvertToIndexed(msh);
 
-		struct Tsk
+		struct Processor
 		{
-			std::vector<Triangle> tris;
-			Holder<const SpatialStructure> spatialStructure;
-			const Mesh *msh = nullptr;
+			Mesh *msh = nullptr;
+			const MeshSplitIntersectingConfig &config;
+			Holder<Collider> collider = newCollider();
+			Holder<SpatialStructure> spatialStructure = newSpatialStructure({});
+			std::vector<std::vector<Triangle>> tasks;
 
-			void operator() ()
+			Processor(Mesh *msh, const MeshSplitIntersectingConfig &config) : msh(msh), config(config)
+			{}
+
+			void operator()(uint32 triIdx)
 			{
+				std::vector<Triangle> &tris = tasks[triIdx];
 				CAGE_ASSERT(tris.size() == 1);
+				const Triangle origTri = tris[0];
+				Holder<SpatialQuery> q = newSpatialQuery(spatialStructure.share());
+				q->intersection(origTri);
+				const auto cutterIds = q->result();
+				if (cutterIds.size() >= config.maxCuttersForTriangle)
+					return;
 				std::vector<Triangle> b;
 				b.reserve(10);
-				Holder<SpatialQuery> q = newSpatialQuery(std::move(spatialStructure));
-				q->intersection(tris[0]);
-				const auto ins = msh->indices();
-				const auto pos = msh->positions();
-				for (uint32 qi : q->result())
+				Triangle tmp[3];
+				for (const uint32 qi : cutterIds)
 				{
-					qi *= 3;
-					const Triangle cutter = Triangle(pos[ins[qi + 0]], pos[ins[qi + 1]], pos[ins[qi + 2]]);
+					const Triangle &cutterTri = collider->triangles()[qi];
+					CAGE_ASSERT(intersects(origTri, cutterTri));
+					const Plane cutterPl = Plane(cutterTri);
 					for (const Triangle &t : tris)
 					{
-						Triangle tmp[3];
-						for (const Triangle &k : planeCut(Plane(cutter), t, tmp))
-							b.push_back(k);
+						for (const Triangle &k : planeCut(cutterPl, t, tmp))
+							if (!k.degenerated())
+								b.push_back(k);
 					}
 					std::swap(tris, b);
 					b.clear();
 				}
 			}
-		};
-		std::vector<Tsk> tsks;
-		tsks.reserve(msh->facesCount());
 
-		Holder<SpatialStructure> spatialStructure = newSpatialStructure({});
-		{
-			const uint32 incnt = msh->indicesCount();
-			const auto ins = msh->indices();
-			const auto pos = msh->positions();
-			for (uint32 i = 0; i < incnt; i += 3)
+			void run()
 			{
-				const Triangle t = Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]);
-				spatialStructure->update(i / 3, t);
-				Tsk tsk;
-				tsk.tris.reserve(10);
-				tsk.tris.push_back(t);
-				tsk.spatialStructure = spatialStructure.share();
-				tsk.msh = msh;
-				tsks.push_back(std::move(tsk));
+				meshConvertToIndexed(msh);
+
+				{ // prepare triangles used for cutting
+					collider->importMesh(msh);
+					collider->optimize();
+					uint32 idx = 0;
+					for (const Triangle &t : collider->triangles())
+						spatialStructure->update(idx++, t);
+					spatialStructure->rebuild();
+				}
+
+				{ // prepare triangles to be cut
+					tasks.reserve(msh->facesCount());
+					const uint32 incnt = msh->indicesCount();
+					const auto ins = msh->indices();
+					const auto pos = msh->positions();
+					for (uint32 i = 0; i < incnt; i += 3)
+					{
+						const Triangle t = Triangle(pos[ins[i + 0]], pos[ins[i + 1]], pos[ins[i + 2]]);
+						std::vector<Triangle> tsk;
+						tsk.reserve(10);
+						tsk.push_back(t);
+						tasks.push_back(std::move(tsk));
+					}
+				}
+
+				if (config.parallelize)
+					tasksRunBlocking<Processor>("meshSplitIntersecting", *this, tasks.size());
+				else
+				{
+					const uint32 sz = tasks.size();
+					for (uint32 i = 0; i < sz; i++)
+						operator()(i);
+				}
+
+				msh->clear();
+				for (const auto &tsk : tasks)
+					for (const Triangle &t : tsk)
+						msh->addTriangle(t);
+
+				meshDiscardInvalid(msh);
 			}
-		}
-		spatialStructure->rebuild();
+		};
 
-		if (config.parallelize)
-			tasksRunBlocking<Tsk>("meshSplitIntersecting", tsks);
-		else
-		{
-			for (Tsk &tsk : tsks)
-				tsk();
-		}
-
-		msh->clear();
-		for (Tsk &tsk : tsks)
-			for (const Triangle &t : tsk.tris)
-				msh->addTriangle(t);
-
-		meshDiscardInvalid(msh);
+		Processor proc(msh, config);
+		proc.run();
 	}
 
 	void meshDiscardInvalid(Mesh *msh)
@@ -1369,12 +1390,7 @@ namespace cage
 			std::vector<uint8> visible;
 
 			Processor(Mesh *msh, const MeshRemoveInvisibleConfig &config) : msh(msh), config(config)
-			{
-				meshConvertToIndexed(msh);
-				visible.resize(msh->facesCount(), 0);
-				collider->importMesh(msh);
-				collider->rebuild();
-			}
+			{}
 
 			void operator()(uint32 triIdx)
 			{
@@ -1403,6 +1419,11 @@ namespace cage
 
 			void run()
 			{
+				meshConvertToIndexed(msh);
+				visible.resize(msh->facesCount(), 0);
+				collider->importMesh(msh);
+				collider->rebuild();
+
 				if (config.parallelize)
 					tasksRunBlocking<Processor>("meshRemoveInvisible", *this, msh->facesCount());
 				else
