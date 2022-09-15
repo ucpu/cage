@@ -122,7 +122,6 @@ namespace cage
 	CAGE_CORE_API void meshClip(Mesh *msh, const Aabb &box);
 	CAGE_CORE_API void meshClip(Mesh *msh, const Plane &pln);
 	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const Plane &pln);
-	CAGE_CORE_API void meshSplitIntersecting(Mesh *msh);
 
 	CAGE_CORE_API void meshDiscardInvalid(Mesh *msh);
 	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);
@@ -134,6 +133,13 @@ namespace cage
 	};
 
 	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
+
+	struct CAGE_CORE_API MeshSplitIntersectingConfig
+	{
+		bool parallelize = false;
+	};
+
+	CAGE_CORE_API void meshSplitIntersecting(Mesh *msh, const MeshSplitIntersectingConfig &config);
 
 	struct CAGE_CORE_API MeshRemoveInvisibleConfig
 	{

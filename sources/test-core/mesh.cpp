@@ -340,18 +340,22 @@ namespace
 		{
 			CAGE_TESTCASE("split intersecting");
 			auto p = makeDoubleBalls();
-			meshSplitIntersecting(+p);
+			MeshSplitIntersectingConfig cfg;
+			cfg.parallelize = true;
+			meshSplitIntersecting(+p, cfg);
 			p->exportFile("meshes/algorithms/splitIntersecting.obj");
 		}
 
 		{
 			CAGE_TESTCASE("remove invisible");
 			auto p = makeDoubleBalls();
-			meshSplitIntersecting(+p);
-			MeshRemoveInvisibleConfig cfg;
-			cfg.raysPerUnitArea = 5;
-			cfg.parallelize = true;
-			meshRemoveInvisible(+p, cfg);
+			MeshSplitIntersectingConfig cfg1;
+			cfg1.parallelize = true;
+			meshSplitIntersecting(+p, cfg1);
+			MeshRemoveInvisibleConfig cfg2;
+			cfg2.raysPerUnitArea = 5;
+			cfg2.parallelize = true;
+			meshRemoveInvisible(+p, cfg2);
 			p->exportFile("meshes/algorithms/removeInvisible.obj");
 		}
 
