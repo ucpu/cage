@@ -1,12 +1,11 @@
+#include "processor.h"
+
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/hashString.h>
 #include <cage-core/flatSet.h>
 #include <cage-engine/shaderConventions.h>
-
-#include "processor.h"
-
 #include <vector>
 
 MeshImportConfig meshImportConfig()

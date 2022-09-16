@@ -2,7 +2,6 @@
 #include <cage-core/color.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>
-#include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/pointerRangeHolder.h>

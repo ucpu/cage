@@ -2,11 +2,12 @@
 #pragma warning(push, 0)
 #endif
 
+#include "mesh.h"
+
+#include <cage-core/meshAlgorithms.h>
 #include <pmp/SurfaceMesh.h>
 #include <pmp/algorithms/SurfaceRemeshing.h>
 #include <pmp/algorithms/SurfaceSmoothing.h>
-
-#include "mesh.h"
 
 namespace cage
 {

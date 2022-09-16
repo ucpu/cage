@@ -1,11 +1,11 @@
 #include "main.h"
+
 #include <cage-core/tasks.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
 #include <cage-core/concurrent.h>
-
 #include <atomic>
 #include <vector>
 #include <algorithm>

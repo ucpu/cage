@@ -1,8 +1,8 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
-
 #include <cmath>
 
 void test(Real a, Real b);

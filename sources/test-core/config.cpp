@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/config.h>
 
 namespace

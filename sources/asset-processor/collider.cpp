@@ -1,8 +1,8 @@
+#include "processor.h"
+
 #include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 #include <cage-core/meshImport.h>
-
-#include "processor.h"
 
 MeshImportConfig meshImportConfig();
 void meshImportTransform(MeshImportResult &result);

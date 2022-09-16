@@ -1,10 +1,11 @@
+#include "mesh.h"
+
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>
 #include <cage-core/macros.h>
 #include <cage-core/meshExport.h>
-#include "mesh.h"
 
 namespace cage
 {

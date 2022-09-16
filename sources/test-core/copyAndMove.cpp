@@ -1,7 +1,6 @@
 #include "main.h"
 
 #include <cage-core/memoryBuffer.h>
-
 #include <vector>
 
 void testCopyAndMove()

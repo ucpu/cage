@@ -1,7 +1,7 @@
+#include "processor.h"
+
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/meshImport.h>
-
-#include "processor.h"
 
 MeshImportConfig meshImportConfig();
 void meshImportTransform(MeshImportResult &result);

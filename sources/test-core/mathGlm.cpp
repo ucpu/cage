@@ -1,7 +1,7 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>

@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/files.h>
 #include <cage-core/serialization.h>
 #include <cage-core/concurrent.h>
@@ -7,7 +8,6 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/math.h>
 #include <cage-core/config.h>
-
 #include <atomic>
 
 namespace

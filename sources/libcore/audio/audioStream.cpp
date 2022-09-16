@@ -1,5 +1,7 @@
 #include "vorbis.h"
 
+#include <cage-core/audioAlgorithms.h>
+
 namespace cage
 {
 	void Audio::decode(uintPtr startFrame, PointerRange<float> buffer) const

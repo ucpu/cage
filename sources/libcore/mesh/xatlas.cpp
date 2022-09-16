@@ -1,9 +1,10 @@
+#include "mesh.h"
+
+#include <cage-core/meshAlgorithms.h>
 #include <cstddef> // fix missing size_t in xatlas
 #include <cstdarg> // va_start
 #include <cstdio> // vsprintf
 #include <xatlas.h>
-
-#include "mesh.h"
 
 namespace cage
 {

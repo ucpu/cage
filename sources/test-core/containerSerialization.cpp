@@ -1,9 +1,9 @@
 #include "main.h"
+
 #include <cage-core/containerSerialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdHash.h>
 #include <cage-core/flatSet.h>
-
 #include <vector>
 #include <list>
 #include <map>

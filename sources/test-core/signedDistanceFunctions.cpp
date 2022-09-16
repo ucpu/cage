@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/signedDistanceFunctions.h>
 #include <cage-core/marchingCubes.h>
 #include <cage-core/mesh.h>

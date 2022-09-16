@@ -1,8 +1,8 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
 #include <cage-core/entitiesCopy.h>
-
 #include <map>
 
 namespace

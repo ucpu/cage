@@ -1,9 +1,9 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/timer.h>
 #include <cage-core/macros.h>
-
 #include <cmath>
 
 void test(Real a, Real b)

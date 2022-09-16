@@ -1,5 +1,7 @@
 #include "vorbis.h"
 
+#include <cage-core/audioAlgorithms.h>
+
 namespace cage
 {
 	void oggDecode(PointerRange<const char> inBuffer, AudioImpl *impl)

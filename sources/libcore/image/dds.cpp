@@ -1,4 +1,6 @@
 #include "image.h"
+
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageBlocks.h>
 #include <cage-core/serialization.h>
 #include <cage-core/imageImport.h>

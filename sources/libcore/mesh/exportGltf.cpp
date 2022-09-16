@@ -1,13 +1,11 @@
 #include <cage-core/files.h>
 #include <cage-core/string.h>
 #include <cage-core/image.h>
-#include <cage-core/mesh.h>
 #include <cage-core/meshExport.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/geometry.h>
 #include <cage-core/tasks.h>
-
 #include <vector>
 #include <string>
 

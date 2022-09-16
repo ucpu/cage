@@ -1,10 +1,11 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/image.h>
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageBlocks.h>
 #include <cage-core/color.h>
 #include <cage-core/timer.h>
-
 #include <initializer_list>
 
 void test(Real, Real);

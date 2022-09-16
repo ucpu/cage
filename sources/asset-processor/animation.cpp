@@ -1,8 +1,8 @@
+#include "processor.h"
+
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/hashString.h>
 #include <cage-core/meshImport.h>
-
-#include "processor.h"
 
 MeshImportConfig meshImportConfig();
 void meshImportNotifyUsedFiles(const MeshImportResult &result);

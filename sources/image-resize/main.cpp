@@ -1,6 +1,7 @@
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
 #include <cage-core/image.h>
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/ini.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>

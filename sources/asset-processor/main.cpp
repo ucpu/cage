@@ -1,8 +1,7 @@
-#include <cage-core/logger.h>
-#include <cage-core/hashString.h>
-
 #include "processor.h"
 
+#include <cage-core/logger.h>
+#include <cage-core/hashString.h>
 #include <map>
 #include <cstdio> // fgets, ferror
 #include <cstring> // strlen

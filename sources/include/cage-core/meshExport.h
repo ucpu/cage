@@ -1,11 +1,10 @@
 #ifndef guard_meshExport_h_n1bv859wrffcg89
 #define guard_meshExport_h_n1bv859wrffcg89
 
-#include "core.h"
+#include "mesh.h"
 
 namespace cage
 {
-	class Mesh;
 	class Image;
 
 	struct CAGE_CORE_API MeshExportObjConfig

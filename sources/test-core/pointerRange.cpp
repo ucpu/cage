@@ -1,7 +1,7 @@
 #include "main.h"
+
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
-
 #include <vector>
 
 namespace
