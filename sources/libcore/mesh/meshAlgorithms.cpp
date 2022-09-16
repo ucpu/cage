@@ -181,14 +181,16 @@ namespace cage
 				return detail::memcmp(&a, &b, sizeof(a)) < 0;
 			}
 		};
-		FlatSet<Vec3, Comparator> pos;
-		pos.reserve(msh->verticesCount());
-		pos.insert(msh->positions().begin(), msh->positions().end());
+		const FlatSet pos = makeFlatSet<Vec3, Comparator>(msh->positions());
 
 		std::vector<uint32> inds;
 		inds.reserve(msh->positions().size());
 		for (const Vec3 &p : msh->positions())
-			inds.push_back(pos.find(p) - pos.begin());
+		{
+			const auto it = pos.find(p);
+			CAGE_ASSERT(it != pos.end());
+			inds.push_back(it - pos.begin());
+		}
 
 		// todo other attributes
 
@@ -301,16 +303,17 @@ namespace cage
 				return detail::memcmp(this, &other, sizeof(*this)) < 0;
 			}
 		};
-		FlatSet<T> ts;
-		ts.reserve(msh->facesCount() * 2);
 
 		const uint32 origCnt = msh->indicesCount();
 		const auto orig = msh->indices();
+		std::vector<T> vec;
+		vec.reserve(msh->facesCount() * 2);
 		for (uint32 i = 0; i < origCnt; i += 3)
 		{
-			ts.insert(T{ orig[i + 0], orig[i + 1], orig[i + 2] });
-			ts.insert(T{ orig[i + 0], orig[i + 2], orig[i + 1] }); // flip triangle winding
+			vec.push_back(T{ orig[i + 0], orig[i + 1], orig[i + 2] });
+			vec.push_back(T{ orig[i + 0], orig[i + 2], orig[i + 1] }); // flip triangle winding
 		}
+		const FlatSet ts = makeFlatSet<T>(std::move(vec));
 
 		MeshImpl *impl = (MeshImpl *)msh;
 		impl->indices.clear();

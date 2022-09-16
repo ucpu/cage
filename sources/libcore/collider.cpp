@@ -230,14 +230,14 @@ namespace cage
 				return detail::memcmp(&a, &b, sizeof(a)) < 0;
 			}
 		};
-		FlatSet<Triangle, Comparator> ts;
-		ts.reserve(impl->tris.size());
 
+		std::vector<Triangle> vec;
+		vec.reserve(impl->tris.size());
 		for (const Triangle &t : impl->tris)
 			if (!t.degenerated())
-				ts.insert(order(t));
-
-		std::swap(impl->tris, ts.unsafeData());
+				vec.push_back(order(t));
+		auto st = makeFlatSet<Triangle, Comparator>(std::move(vec));
+		std::swap(impl->tris, st.unsafeData());
 		impl->dirty = true;
 	}
 
@@ -321,22 +321,23 @@ namespace cage
 		readVector(des, impl->nodes, header.nodesCount);
 	}
 
-	void Collider::importMesh(const Mesh *poly)
+	void Collider::importMesh(const Mesh *msh)
 	{
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "collider import mesh requires triangles mesh");
 		clear();
-		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
-		if (poly->indices().empty())
+		if (msh->indices().empty())
 		{
-			CAGE_ASSERT(poly->positions().size() % 3 == 0);
+			CAGE_ASSERT(msh->positions().size() % 3 == 0);
 			CAGE_ASSERT(sizeof(Triangle) == 3 * sizeof(Vec3));
-			addTriangles(bufferCast<const Triangle>(poly->positions()));
+			addTriangles(bufferCast<const Triangle>(msh->positions()));
 		}
 		else
 		{
-			CAGE_ASSERT(poly->indices().size() % 3 == 0);
-			const uint32 cnt = numeric_cast<uint32>(poly->indices().size()) / 3;
-			const auto pos = poly->positions();
-			const auto ind = poly->indices();
+			CAGE_ASSERT(msh->indices().size() % 3 == 0);
+			const uint32 cnt = numeric_cast<uint32>(msh->indices().size()) / 3;
+			const auto pos = msh->positions();
+			const auto ind = msh->indices();
 			for (uint32 i = 0; i < cnt; i++)
 			{
 				Triangle t;
