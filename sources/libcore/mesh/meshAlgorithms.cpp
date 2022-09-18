@@ -507,13 +507,13 @@ namespace cage
 		{
 			const Real lengths[3] = { distanceSquared(t[0], t[1]), distanceSquared(t[1], t[2]), distanceSquared(t[2], t[0]) };
 			const Real ll = max(max(lengths[0], lengths[1]), lengths[2]);
-			Vec3 n;
+			Line l;
 			for (uint32 i = 0; i < 3; i++)
 				if (lengths[i] == ll)
-					n = t[i] - t[(i + 1) % 3];
-			n = normalize(n);
+					l = makeSegment(t[i], t[(i + 1) % 3]);
+			const Vec3 n = l.direction;
 			CAGE_ASSERT(valid(n));
-			return Plane(t.center(), n);
+			return Plane((l.a() + l.b()) * 0.5, n);
 		}
 	}
 

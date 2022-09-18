@@ -379,7 +379,7 @@ void testImage()
 		drawCircle(+img);
 		Holder<Image> tg = newImage();
 		imageBlit(+img, +tg, 50, 0, 0, 0, 300, 300);
-		tg->exportFile("images/operations/blit1.png");
+		tg->exportFile("images/algorithms/blit1.png");
 	}
 
 	{
@@ -390,7 +390,7 @@ void testImage()
 		Holder<Image> tg = newImage();
 		tg->initialize(400, 400, 4);
 		imageBlit(+img, +tg, 50, 0, 50, 50, 300, 300);
-		tg->exportFile("images/operations/blit2.png");
+		tg->exportFile("images/algorithms/blit2.png");
 	}
 
 	{
@@ -399,7 +399,7 @@ void testImage()
 		img->importFile("images/formats/circle8.png", m, ImageFormatEnum::U16);
 		CAGE_TEST(img->channels() == 4);
 		CAGE_TEST(img->format() == ImageFormatEnum::U16);
-		img->exportFile("images/operations/8_to_16_bits.png");
+		img->exportFile("images/algorithms/8_to_16_bits.png");
 	}
 
 	{
@@ -408,7 +408,7 @@ void testImage()
 		img->importFile("images/formats/circle16.png", m, ImageFormatEnum::U8);
 		CAGE_TEST(img->channels() == 4);
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/operations/16_to_8_bits.png");
+		img->exportFile("images/algorithms/16_to_8_bits.png");
 	}
 
 	{
@@ -417,7 +417,7 @@ void testImage()
 		img->importFile("images/formats/circle8.png", 1);
 		CAGE_TEST(img->channels() == 1);
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/operations/to_1_channel.png");
+		img->exportFile("images/algorithms/to_1_channel.png");
 	}
 
 	{
@@ -428,7 +428,7 @@ void testImage()
 		CAGE_TEST(img->height() == 300);
 		CAGE_TEST(img->channels() == 3);
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/operations/to_3_channels.png");
+		img->exportFile("images/algorithms/to_3_channels.png");
 	}
 
 	{
@@ -437,9 +437,9 @@ void testImage()
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageConvert(+img, GammaSpaceEnum::Linear);
-		img->exportFile("images/operations/to_linear.png");
+		img->exportFile("images/algorithms/to_linear.png");
 		imageConvert(+img, GammaSpaceEnum::Gamma);
-		img->exportFile("images/operations/to_linear_to_gamma.png");
+		img->exportFile("images/algorithms/to_linear_to_gamma.png");
 	}
 
 	{
@@ -448,9 +448,9 @@ void testImage()
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
-		img->exportFile("images/operations/to_premultiplied.png");
+		img->exportFile("images/algorithms/to_premultiplied.png");
 		imageConvert(+img, AlphaModeEnum::Opacity);
-		img->exportFile("images/operations/to_premultiplied_to_opacity.png");
+		img->exportFile("images/algorithms/to_premultiplied_to_opacity.png");
 	}
 
 	{
@@ -459,12 +459,12 @@ void testImage()
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageResize(+img, 600, 450, true);
-		img->exportFile("images/operations/upscaled_colorconfig.png");
+		img->exportFile("images/algorithms/upscaled_colorconfig.png");
 		img = newImage();
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageResize(+img, 600, 450, false);
-		img->exportFile("images/operations/upscaled_raw.png");
+		img->exportFile("images/algorithms/upscaled_raw.png");
 	}
 
 	{
@@ -473,12 +473,12 @@ void testImage()
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageResize(+img, 200, 150, true);
-		img->exportFile("images/operations/downscaled_colorconfig.png");
+		img->exportFile("images/algorithms/downscaled_colorconfig.png");
 		img = newImage();
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageResize(+img, 200, 150, false);
-		img->exportFile("images/operations/downscaled_raw.png");
+		img->exportFile("images/algorithms/downscaled_raw.png");
 	}
 
 	{
@@ -487,7 +487,7 @@ void testImage()
 		img->initialize(400, 300);
 		drawCircle(+img);
 		imageResize(+img, 300, 500);
-		img->exportFile("images/operations/stretched.png");
+		img->exportFile("images/algorithms/stretched.png");
 	}
 
 	{
@@ -556,5 +556,18 @@ void testImage()
 		}
 		imageConvert(+img, ImageFormatEnum::U8);
 		img->exportFile("images/dilation/nan.png");
+	}
+
+	{
+		CAGE_TESTCASE("channels split");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300, 4);
+		drawCircle(+img);
+		const auto res = imageChannelsSplit(+img);
+		CAGE_TEST(res.size() == 4);
+		res[0]->exportFile("images/algorithms/spliChannel_0.png");
+		res[1]->exportFile("images/algorithms/spliChannel_1.png");
+		res[2]->exportFile("images/algorithms/spliChannel_2.png");
+		res[3]->exportFile("images/algorithms/spliChannel_3.png");
 	}
 }
