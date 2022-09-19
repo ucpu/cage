@@ -25,6 +25,10 @@ namespace cage
 	};
 	CAGE_CORE_API void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config);
 
+	struct CAGE_CORE_API MeshMergePlanarConfig
+	{};
+	CAGE_CORE_API void meshMergePlanar(Mesh *msh, const MeshMergePlanarConfig &config);
+
 	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const Plane &pln);
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh);
 
@@ -59,6 +63,7 @@ namespace cage
 		Real raysPerUnitArea = 1;
 		uint32 minRaysPerTriangle = 10;
 		uint32 maxRaysPerTriangle = 50;
+		Rads grazingAngle = Degs(5);
 		bool doubleSided = false;
 		bool parallelize = false;
 	};

@@ -239,6 +239,18 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("merge planar");
+			auto p = makeDoubleBalls();
+			meshSplitIntersecting(+p, {});
+			meshRemoveInvisible(+p, {});
+			meshMergeCloseVertices(+p, {});
+			p->exportFile("meshes/algorithms/mergePlanarBefore.obj");
+			MeshMergePlanarConfig cfg;
+			meshMergePlanar(+p, cfg);
+			p->exportFile("meshes/algorithms/mergePlanar.obj");
+		}
+
+		{
 			CAGE_TESTCASE("separateDisconnected");
 			auto p = splitSphereIntoTwo(+makeSphere());
 			auto ps = meshSeparateDisconnected(+p);

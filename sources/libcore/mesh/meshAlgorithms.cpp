@@ -10,6 +10,7 @@
 #include <cage-core/flatSet.h>
 #include <cage-core/collider.h>
 #include <algorithm> // std::erase_if
+#include <iterator> // back_insterter
 #include <numeric> // std::iota
 #include <array>
 
@@ -328,26 +329,92 @@ namespace cage
 		// todo normals and other attributes
 	}
 
+	namespace
+	{
+		struct UnionFind
+		{
+			void init(uint32 cnt)
+			{
+				data.clear();
+				data.resize(cnt);
+				std::iota(data.begin(), data.end(), (uint32)0);
+			}
+
+			uint32 representative(uint32 x)
+			{
+				uint32 &y = data[x];
+				if (y == x)
+					return x;
+				return y = representative(y);
+			}
+
+			void merge(uint32 a, uint32 b)
+			{
+				const uint32 x = representative(a);
+				const uint32 y = representative(b);
+				CAGE_ASSERT(x <= a);
+				CAGE_ASSERT(y <= b);
+				if (data[x] > y)
+					data[x] = y;
+				else
+					data[y] = x;
+			}
+
+			std::vector<std::vector<uint32>> groups(bool all = false)
+			{
+				const uint32 cnt = data.size();
+				std::vector<std::vector<uint32>> res;
+				res.resize(cnt);
+				for (uint32 i = 0; i < cnt; i++)
+					res[representative(i)].push_back(i);
+				if (all)
+					std::erase_if(res, [](const auto &v) { return v.empty(); });
+				else
+					std::erase_if(res, [](const auto &v) { return v.size() < 2; });
+				return res;
+			}
+
+		private:
+			std::vector<uint32> data;
+		};
+
+#ifdef CAGE_DEBUG
+		struct UnionFindTester
+		{
+			UnionFindTester()
+			{
+				UnionFind r;
+				r.init(7); // 0 | 1 | 2 | 3 | 4 | 5 | 6
+				r.merge(2, 4); // 0 | 1 | 2, 4 | 3 | 5 | 6
+				r.merge(3, 1); // 0 | 1, 3 | 2, 4 | 5 | 6
+				r.merge(4, 2); // 0 | 1, 3 | 2, 4 | 5 | 6
+				r.merge(0, 5); // 0, 5 | 1, 3 | 2, 4 | 6
+				r.merge(5, 2); // 0, 2, 4, 5 | 1, 3 | 6
+				const auto g = r.groups();
+				CAGE_ASSERT(g.size() == 2); // the 6 is not changed so not reported
+				CAGE_ASSERT(g[0].size() == 4);
+				CAGE_ASSERT(g[0] == std::vector<uint32>({ 0, 2, 4, 5 }));
+				CAGE_ASSERT(g[1].size() == 2);
+				CAGE_ASSERT(g[1] == std::vector<uint32>({ 1, 3 }));
+			}
+		} unionFindTester;
+#endif // CAGE_DEBUG
+	}
+
 	void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config)
 	{
 		if (msh->facesCount() == 0)
 			return;
-
 		if (!config.moveVerticesOnly)
 			meshConvertToIndexed(msh);
 
-		MeshImpl *impl = (MeshImpl *)msh;
-		const uint32 vc = numeric_cast<uint32>(impl->positions.size());
-		std::vector<bool> needsRecenter; // mark vertices that need to reposition
-		needsRecenter.resize(vc, false);
-		std::vector<uint32> remap; // remap[originalVertexIndex] = newVertexIndex
-		remap.resize(vc);
-		std::iota(remap.begin(), remap.end(), (uint32)0);
-		PointerRange<const Vec3> ps = impl->positions;
+		PointerRange<const Vec3> ps = msh->positions();
+		const uint32 vc = numeric_cast<uint32>(msh->positions().size());
+		UnionFind remap;
+		remap.init(vc);
 
 		// find which vertices can be remapped to other vertices
 		{
-			const Real threashold = config.distanceThreshold * config.distanceThreshold;
 			Holder<SpatialStructure> ss = newSpatialStructure({});
 			for (uint32 i = 0; i < vc; i++)
 				ss->update(i, ps[i]);
@@ -357,53 +424,149 @@ namespace cage
 			{
 				q->intersection(Aabb(ps[i] - config.distanceThreshold, ps[i] + config.distanceThreshold));
 				for (uint32 j : q->result())
-				{
-					if (distanceSquared(ps[i], ps[j]) < threashold)
-					{
-						remap[i] = remap[j];
-						needsRecenter[remap[i]] = true;
-						break;
-					}
-				}
+					remap.merge(i, j);
 			}
 		}
 
+		// apply changes
+		MeshImpl *impl = (MeshImpl *)msh;
 		if (config.moveVerticesOnly)
 		{
 			// recenter vertices
-			for (uint32 i = 0; i < vc; i++)
+			const auto groups = remap.groups();
+			for (const auto &it : groups)
 			{
-				if (!needsRecenter[i])
-					continue;
 				Vec3 p;
-				uint32 c = 0;
-				for (uint32 j = i; j < vc; j++)
-				{
-					if (remap[j] == i)
-					{
-						p += ps[j];
-						c++;
-					}
-				}
-				if (c < 1)
-					continue;
-				p /= c;
-				for (uint32 j = i; j < vc; j++)
-				{
-					if (remap[j] == i)
-						impl->positions[j] = p;
-				}
+				for (uint32 j : it)
+					p += ps[j];
+				p /= it.size();
+				for (uint32 j : it)
+					impl->positions[j] = p;
 			}
 		}
 		else
 		{
 			// reassign indices
 			for (uint32 &i : impl->indices)
-				i = remap[i];
+				i = remap.representative(i);
 		}
 
 		// remove faces that has collapsed
 		meshRemoveInvalid(msh);
+	}
+
+	void meshMergePlanar(Mesh *msh, const MeshMergePlanarConfig &config)
+	{
+		if (msh->facesCount() == 0)
+			return;
+		if (msh->type() != MeshTypeEnum::Triangles)
+			CAGE_THROW_ERROR(Exception, "mesh merge planar requires triangles mesh");
+		meshConvertToIndexed(msh);
+
+		const uint32 vc = msh->verticesCount();
+		const uint32 tc = msh->facesCount();
+		const auto poss = msh->positions();
+		const auto inds = msh->indices();
+
+		// find all triangles for particular vertices
+		std::vector<FlatSet<uint32>> inverseMapping; // vertex index -> set of triangles
+		inverseMapping.resize(vc);
+		{
+			uint32 i = 0;
+			for (uint32 j : msh->indices())
+				inverseMapping[j].insert(i++ / 3);
+		}
+
+		const auto &getTri = [&](uint32 ti) -> Triangle {
+			return Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]);
+		};
+
+		const auto &getVertIdx = [&](uint32 ti, uint32 notA, uint32 notB) -> uint32 {
+			uint32 s[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
+			for (uint32 x : s)
+				if (x != notA && x != notB)
+					return x;
+			CAGE_THROW_CRITICAL(Exception, "invalid triangle indices");
+		};
+
+		const auto &isColinear = [&](uint32 a, uint32 b, uint32 c) -> bool {
+			const Vec3 x = normalize(poss[b] - poss[a]);
+			const Vec3 y = normalize(poss[c] - poss[b]);
+			return dot(x, y) > 0.999;
+		};
+
+		FlatSet<uint32> banned;
+		banned.reserve(tc);
+
+		std::vector<uint32> indsCopy = std::vector<uint32>(inds.begin(), inds.end());
+
+		// make a triangle with vertices a, b, c, honoring winding order, and remove triangles t1 and t2
+		const auto &overlapTriangle = [&](uint32 t1, uint32 t2, uint32 ai, uint32 bi, uint32 ci, const Vec3 &n1) -> void {
+			CAGE_ASSERT(t1 != t2);
+			CAGE_ASSERT(banned.count(t1) == 0);
+			CAGE_ASSERT(banned.count(t2) == 0);
+			banned.insert(t1);
+			banned.insert(t2);
+			if (dot(Triangle(poss[ai], poss[bi], poss[ci]).normal(), n1) < 0)
+				std::swap(bi, ci);
+			indsCopy[t1 * 3 + 0] = ai;
+			indsCopy[t1 * 3 + 1] = bi;
+			indsCopy[t1 * 3 + 2] = ci;
+			indsCopy[t2 * 3 + 0] = 0;
+			indsCopy[t2 * 3 + 1] = 0;
+			indsCopy[t2 * 3 + 2] = 0;
+		};
+
+		// find all neighboring triangles in a plane
+		std::vector<uint32> tmp;
+		for (uint32 ti = 0; ti < tc; ti++)
+		{
+			const Triangle t1 = getTri(ti);
+			const Vec3 n1 = t1.normal();
+			for (const std::pair vis : { std::pair(0, 1), std::pair(1, 2), std::pair(2, 0) })
+			{
+				if (banned.count(ti))
+					break;
+				const uint32 ai = inds[ti * 3 + vis.first];
+				const uint32 bi = inds[ti * 3 + vis.second];
+				const uint32 ci = getVertIdx(ti, ai, bi);
+				const FlatSet<uint32> &ats = inverseMapping[ai];
+				const FlatSet<uint32> &bts = inverseMapping[bi];
+				CAGE_ASSERT(ats.count(ti));
+				CAGE_ASSERT(bts.count(ti));
+				tmp.clear();
+				std::set_intersection(ats.begin(), ats.end(), bts.begin(), bts.end(), std::back_inserter(tmp));
+				for (uint32 tj : tmp)
+				{
+					if (ti == tj)
+						continue; // cannot merge with itself
+					if (banned.count(tj))
+						continue;
+					const Triangle t2 = getTri(tj);
+					const Vec3 n2 = t2.normal();
+					if (dot(n1, n2) < 0.999)
+						continue; // triangles not coplanar
+					const uint32 di = getVertIdx(tj, ai, bi);
+					if (isColinear(ci, ai, di))
+					{
+						overlapTriangle(ti, tj, bi, ci, di, n1);
+						break;
+					}
+					if (isColinear(ci, bi, di))
+					{
+						overlapTriangle(ti, tj, ai, ci, di, n1);
+						break;
+					}
+				}
+			}
+		}
+
+		msh->indices(indsCopy);
+		meshRemoveInvalid(msh);
+
+		// repeat until it cannot improve
+		if (msh->facesCount() < tc)
+			meshMergePlanar(msh, config);
 	}
 
 	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
@@ -416,58 +579,39 @@ namespace cage
 
 	namespace
 	{
-		uint32 componentsRoot(std::vector<uint32> &c, uint32 a)
-		{
-			if (c[a] == a)
-				return a;
-			uint32 r = componentsRoot(c, c[a]);
-			c[a] = r;
-			return r;
-		}
-
-		void componentsMerge(std::vector<uint32> &c, uint32 a, uint32 b)
-		{
-			uint32 aa = componentsRoot(c, a), bb = componentsRoot(c, b);
-			uint32 r = min(aa, bb);
-			c[aa] = c[bb] = r;
-			c[a] = c[b] = r;
-		}
-
 		Holder<PointerRange<Holder<Mesh>>> splitComponentsTriangles(const MeshImpl *src)
 		{
-			std::vector<uint32> components; // components[vertexIndex] = vertexIndex
-			components.resize(src->positions.size());
-			std::iota(components.begin(), components.end(), (uint32)0);
-
+			UnionFind comps;
+			comps.init(src->positions.size());
 			const uint32 trisCnt = numeric_cast<uint32>(src->indices.size() / 3);
 			for (uint32 t = 0; t < trisCnt; t++)
 			{
-				componentsMerge(components, src->indices[t * 3 + 0], src->indices[t * 3 + 1]);
-				componentsMerge(components, src->indices[t * 3 + 1], src->indices[t * 3 + 2]);
+				comps.merge(src->indices[t * 3 + 0], src->indices[t * 3 + 1]);
+				comps.merge(src->indices[t * 3 + 1], src->indices[t * 3 + 2]);
 			}
-
-			const uint32 compsCount = numeric_cast<uint32>(components.size());
-			for (uint32 i = 0; i < compsCount; i++)
-				components[i] = componentsRoot(components, i);
 
 			const uint32 indsCount = numeric_cast<uint32>(src->indices.size());
 			std::vector<uint32> inds;
 			inds.reserve(indsCount);
 			PointerRangeHolder<Holder<Mesh>> result;
-			for (uint32 c = 0; c < compsCount; c++)
+			const auto groups = comps.groups(true);
+			for (const auto &grp : groups)
 			{
-				if (components[c] != c)
-					continue;
+				const uint32 gid = grp[0];
 				Holder<Mesh> p = src->copy();
-				for (uint32 i = 0; i < indsCount; i++)
+				for (uint32 t = 0; t < trisCnt; t++)
 				{
-					if (components[src->index(i)] == c)
-						inds.push_back(src->index(i));
+					const uint32 tid = comps.representative(src->indices[t * 3 + 0]);
+					if (gid != tid)
+						continue;
+					inds.push_back(src->indices[t * 3 + 0]);
+					inds.push_back(src->indices[t * 3 + 1]);
+					inds.push_back(src->indices[t * 3 + 2]);
 				}
 				p->indices(inds);
-				removeUnusedVertices((MeshImpl *)p.get());
-				inds.clear();
+				removeUnusedVertices((MeshImpl *)+p);
 				result.push_back(std::move(p));
+				inds.clear();
 			}
 			return result;
 		}
@@ -476,7 +620,7 @@ namespace cage
 	Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh)
 	{
 		msh->verticesCount(); // validate vertices
-		if (msh->facesCount() == 0)
+		if (msh->facesCount() == 0 || msh->type() == MeshTypeEnum::Points)
 			return {};
 		const MeshImpl *impl = (const MeshImpl *)msh;
 		Holder<Mesh> srcCopy;
@@ -490,8 +634,6 @@ namespace cage
 
 		switch (impl->type)
 		{
-		case MeshTypeEnum::Points:
-			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
 		case MeshTypeEnum::Lines:
 			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
 		case MeshTypeEnum::Triangles:
@@ -596,15 +738,19 @@ namespace cage
 				const Triangle origTri = tris[0];
 				Holder<SpatialQuery> q = newSpatialQuery(spatialStructure.share());
 				q->intersection(origTri);
-				const auto cutterIds = q->result();
+				auto cutterIds = q->result();
 				if (cutterIds.size() >= config.maxCuttersForTriangle)
 					return;
+				const PointerRange<const Triangle> cctris = collider->triangles();
+				std::sort(cutterIds.begin(), cutterIds.end(), [cctris](uint32 a, uint32 b) {
+					return cctris[a].area() > cctris[b].area(); // cut with largest triangles first
+				});
 				std::vector<Triangle> b;
 				b.reserve(10);
 				Triangle tmp[3];
 				for (const uint32 qi : cutterIds)
 				{
-					const Triangle &cutterTri = collider->triangles()[qi];
+					const Triangle &cutterTri = cctris[qi];
 					CAGE_ASSERT(intersects(origTri, cutterTri));
 					const Plane cutterPl = Plane(cutterTri);
 					for (const Triangle &t : tris)
@@ -960,8 +1106,8 @@ namespace cage
 				verticesToRemove.reserve(tris * 3);
 				for (uint32 i = 0; i < tris; i++)
 				{
-					Triangle t(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]);
-					bool d = t.degenerated();
+					const Triangle t(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]);
+					const bool d = t.degenerated();
 					verticesToRemove.push_back(d);
 					verticesToRemove.push_back(d);
 					verticesToRemove.push_back(d);
@@ -976,7 +1122,7 @@ namespace cage
 				indicesToRemove.reserve(tris * 3);
 				for (uint32 i = 0; i < tris; i++)
 				{
-					Triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
+					const Triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
 					const bool d = t.degenerated();
 					indicesToRemove.push_back(d);
 					indicesToRemove.push_back(d);
@@ -1102,6 +1248,7 @@ namespace cage
 			const MeshRemoveInvisibleConfig &config;
 			Holder<Collider> collider = newCollider();
 			std::vector<uint8> visible;
+			Real grazingDot;
 
 			Processor(Mesh *msh, const MeshRemoveInvisibleConfig &config) : msh(msh), config(config)
 			{}
@@ -1120,6 +1267,8 @@ namespace cage
 					const Vec2 fs = randomChance2() * 0.5;
 					const Vec3 o = t[0] + fs[0] * u + fs[1] * v + n * 1e-6;
 					Vec3 d = randomDirection3();
+					while (abs(dot(d, n)) < grazingDot)
+						d = randomDirection3();
 					if (!config.doubleSided && dot(d, n) < 0)
 						d *= -1;
 					const Line ray = makeRay(o, o + d);
@@ -1133,6 +1282,8 @@ namespace cage
 
 			void run()
 			{
+				grazingDot = cage::cos(Degs(90) - config.grazingAngle);
+
 				meshConvertToIndexed(msh);
 				visible.resize(msh->facesCount(), 0);
 				collider->importMesh(msh);
