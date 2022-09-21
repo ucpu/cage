@@ -1,19 +1,17 @@
-#include <cage-core/hashString.h>
-#include <cage-core/image.h>
-#include <cage-core/rectPacking.h>
-
 #include "processor.h"
 
+#include <cage-core/hashString.h>
+#include <cage-core/image.h>
+#include <cage-core/imageAlgorithms.h>
+#include <cage-core/rectPacking.h>
 #include <msdfgen.h>
 #include <msdfgen-ext.h>
+#include <vector>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
-
-#include <vector>
-
 #define CALL(FNC, ...) { int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG_THROW(translateErrorCode(err)); CAGE_THROW_ERROR(SystemError, "FreeType " #FNC " error", err); } }
 
 namespace

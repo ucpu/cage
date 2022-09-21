@@ -1,5 +1,6 @@
 #include "audio.h"
 
+#include <cage-core/audioAlgorithms.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>
 

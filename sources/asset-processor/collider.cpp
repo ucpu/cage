@@ -1,8 +1,8 @@
+#include "processor.h"
+
 #include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 #include <cage-core/meshImport.h>
-
-#include "processor.h"
 
 MeshImportConfig meshImportConfig();
 void meshImportTransform(MeshImportResult &result);
@@ -18,10 +18,11 @@ void processCollider()
 	const MeshImportPart &part = result.parts[partIndex];
 
 	if (part.mesh->type() != MeshTypeEnum::Triangles)
-		CAGE_THROW_ERROR(Exception, "collider works with triangles only");
+		CAGE_THROW_ERROR(Exception, "collider requires triangles mesh");
 
 	Holder<Collider> collider = newCollider();
 	collider->importMesh(+part.mesh);
+	collider->optimize();
 	collider->rebuild();
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "triangles: " + collider->triangles().size());

@@ -3,7 +3,6 @@
 #include <cage-core/imageBlocks.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/pointerRangeHolder.h>
-
 #include <basis_universal/encoder/basisu_comp.h>
 #include <basis_universal/transcoder/basisu_transcoder.h>
 

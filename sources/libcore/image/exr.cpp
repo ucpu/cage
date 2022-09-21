@@ -1,9 +1,7 @@
 #include "image.h"
 
 #include <cage-core/serialization.h> // bufferCast
-
 #include <tinyexr.h>
-
 #include <vector>
 #include <stdlib.h> // free
 

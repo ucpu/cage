@@ -1,8 +1,10 @@
+#include "mesh.h"
+
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/geometry.h>
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
 #include <cage-core/macros.h>
-#include "mesh.h"
 
 namespace cage
 {

@@ -1,8 +1,8 @@
 #include "main.h"
+
 #include <cage-core/enumerate.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/flatSet.h>
-
 #include <vector>
 #include <map>
 

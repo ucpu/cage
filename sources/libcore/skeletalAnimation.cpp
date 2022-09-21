@@ -3,7 +3,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/skeletalAnimation.h>
-#include <cage-core/mesh.h>
+#include <cage-core/meshAlgorithms.h>
 
 #include <algorithm>
 #include <vector>

@@ -1,4 +1,6 @@
 #include "image.h"
+
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/serialization.h>
 
 namespace cage

@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/geometry.h>
 #include <cage-core/collisionStructure.h>
 #include <cage-core/collider.h>

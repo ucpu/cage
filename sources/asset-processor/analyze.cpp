@@ -1,7 +1,7 @@
+#include "processor.h"
+
 #include <cage-core/debug.h>
 #include <cage-core/meshImport.h>
-
-#include "processor.h"
 
 namespace
 {

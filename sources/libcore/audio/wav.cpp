@@ -1,5 +1,6 @@
 #include "audio.h"
 
+#include <cage-core/audioAlgorithms.h>
 #include <dr_libs/dr_wav.h>
 
 namespace cage

@@ -1,6 +1,6 @@
-#include <cage-core/events.h>
-
 #include "main.h"
+
+#include <cage-core/events.h>
 
 namespace
 {

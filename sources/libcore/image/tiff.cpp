@@ -1,6 +1,6 @@
 #include "image.h"
-#include <cage-core/stdBufferStream.h>
 
+#include <cage-core/stdBufferStream.h>
 #include <tiffio.h>
 #include <tiffio.hxx>
 

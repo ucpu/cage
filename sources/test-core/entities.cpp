@@ -4,7 +4,6 @@
 #include <cage-core/entities.h>
 #include <cage-core/timer.h>
 #include <cage-core/hashString.h>
-
 #include <vector>
 #include <map>
 #include <set>

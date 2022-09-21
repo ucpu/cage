@@ -2,8 +2,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/meshExport.h>
-#include <cage-core/mesh.h>
-
 #include <set>
 #include <vector>
 #include <algorithm> // lower_bound

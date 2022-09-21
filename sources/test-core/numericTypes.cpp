@@ -1,6 +1,6 @@
 #include "main.h"
-#include <cage-core/endianness.h>
 
+#include <cage-core/endianness.h>
 #include <cmath> // std::isnan
 
 void testNumericTypes()

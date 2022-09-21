@@ -1,8 +1,8 @@
 #ifndef guard_imageImport_h_our98esyd23gh4
 #define guard_imageImport_h_our98esyd23gh4
 
-#include "math.h"
 #include "image.h"
+#include "math.h"
 
 namespace cage
 {

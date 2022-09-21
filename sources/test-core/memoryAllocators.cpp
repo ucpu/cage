@@ -1,7 +1,7 @@
 #include "main.h"
+
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/math.h>
-
 #include <vector>
 #include <list>
 #include <utility>

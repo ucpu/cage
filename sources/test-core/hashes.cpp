@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/hashes.h>
 
 void testHashes()

@@ -1,6 +1,5 @@
 #include <cage-core/image.h>
 #include <cage-core/memoryUtils.h>
-
 #include <avir/lancir.h>
 
 namespace cage

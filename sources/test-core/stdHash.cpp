@@ -1,7 +1,6 @@
 #include "main.h"
 
 #include <cage-core/stdHash.h>
-
 #include <unordered_set>
 
 namespace

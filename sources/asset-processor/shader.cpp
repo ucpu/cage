@@ -1,9 +1,8 @@
+#include "processor.h"
+
 #include <cage-core/timer.h>
 #include <cage-core/hashString.h>
 #include <cage-engine/opengl.h>
-
-#include "processor.h"
-
 #include <map>
 #include <set>
 #include <vector>

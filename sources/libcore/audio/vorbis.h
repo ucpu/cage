@@ -2,7 +2,6 @@
 
 #include <cage-core/serialization.h>
 #include <cage-core/files.h>
-
 #include <vorbis/vorbisenc.h>
 #include <vorbis/vorbisfile.h>
 

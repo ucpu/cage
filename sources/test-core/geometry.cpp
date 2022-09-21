@@ -1,8 +1,8 @@
 #include "main.h"
+
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
-
 #include <cmath>
 
 void test(Real a, Real b);
@@ -258,24 +258,6 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("intersections (with lines)");
-
-			const Triangle t1(Vec3(-1, 0, 0), Vec3(1, 0, 0), Vec3(0, 2, 0));
-			const Triangle t2(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1));
-			const Triangle t3(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0));
-			test(intersection(makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1)), t1), Vec3(0, 1, 0));
-			test(intersection(t1, makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1))), Vec3(0, 1, 0));
-			CAGE_TEST(intersects(makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1)), t1));
-			CAGE_TEST(intersects(t1, makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1))));
-			CAGE_TEST(!intersection(makeSegment(Vec3(5, 1, -1), Vec3(0, 1, 1)), t1).valid());
-			CAGE_TEST(!intersects(makeSegment(Vec3(5, 1, -1), Vec3(0, 1, 1)), t1));
-			test(intersection(makeSegment(Vec3(2, 5, 0), Vec3(2, -5, 0)), t3), Vec3(2, 1, 0));
-			CAGE_TEST(intersects(makeSegment(Vec3(2, 5, 0), Vec3(2, -5, 0)), t3));
-			CAGE_TEST(!intersection(makeSegment(Vec3(2, 0, 0), Vec3(2, -5, 0)), t3).valid());
-			CAGE_TEST(!intersects(makeSegment(Vec3(2, 0, 0), Vec3(2, -5, 0)), t3));
-		}
-
-		{
 			CAGE_TESTCASE("distances (with lines)");
 
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(-1, -1, -2), Vec3(-1, -1, 2))), 0);
@@ -294,6 +276,37 @@ void testGeometry()
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 4, 0), Vec3(4, -2, 0)), Triangle(Vec3(0, 0, 0.5), Vec3(0, 0, 2), Vec3(0, 1, 2))), 0.5);
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0))), cage::sqrt(2));
 			test(distance(Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0)), Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0))), cage::sqrt(2));
+		}
+
+		{
+			CAGE_TESTCASE("intersections (with lines)");
+
+			const Triangle t1(Vec3(-1, 0, 0), Vec3(1, 0, 0), Vec3(0, 2, 0));
+			const Triangle t2(Vec3(-2, 0, 1), Vec3(2, 0, 1), Vec3(0, 3, 1));
+			const Triangle t3(Vec3(-2, 1, -5), Vec3(0, 1, 5), Vec3(2, 1, 0));
+			test(intersection(makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1)), t1), Vec3(0, 1, 0));
+			test(intersection(t1, makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1))), Vec3(0, 1, 0));
+			CAGE_TEST(intersects(makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1)), t1));
+			CAGE_TEST(intersects(t1, makeSegment(Vec3(0, 1, -1), Vec3(0, 1, 1))));
+			CAGE_TEST(!intersection(makeSegment(Vec3(5, 1, -1), Vec3(0, 1, 1)), t1).valid());
+			CAGE_TEST(!intersects(makeSegment(Vec3(5, 1, -1), Vec3(0, 1, 1)), t1));
+			test(intersection(makeSegment(Vec3(2, 5, 0), Vec3(2, -5, 0)), t3), Vec3(2, 1, 0));
+			CAGE_TEST(intersects(makeSegment(Vec3(2, 5, 0), Vec3(2, -5, 0)), t3));
+			CAGE_TEST(!intersection(makeSegment(Vec3(2, 0, 0), Vec3(2, -5, 0)), t3).valid());
+			CAGE_TEST(!intersects(makeSegment(Vec3(2, 0, 0), Vec3(2, -5, 0)), t3));
+		}
+
+		{
+			CAGE_TESTCASE("intersects (with triangles)");
+
+			const Triangle a = Triangle(Vec3(10.5860138, -0.126804054, -10.5860195), Vec3(15.8790216, -0.190205932, -15.8790274), Vec3(15.8786421, -0.253607780, -15.8786469));
+			const Triangle b = Triangle(Vec3(10.5860157, -0.126804069, -10.5860205), Vec3(5.29338837, -3.57627869e-07, -5.29339361), Vec3(5.29300880, -0.0634022281, -5.29301405));
+			CAGE_TEST(intersects(a, b) == intersects(b, a));
+
+			//const Triangle c = Triangle(Vec3(5.23147297, 5.81014061, -6.23489857), Vec3(7.14238548, 3.17999482, -6.23489857), Vec3(3.96372533, 1.76476419, -9.00968838));
+			//const Triangle d = Triangle(Vec3(-4.37113897e-07, -0.00000000, -10.0000000), Vec3(3.96372533, 1.76476419, -9.00968838), Vec3(4.33883762, 0.00000000, -9.00968838));
+			//CAGE_TEST(intersects(c, d));
+			//CAGE_TEST(intersects(d, c));
 		}
 
 		{

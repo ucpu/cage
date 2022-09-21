@@ -1,4 +1,5 @@
 #include "main.h"
+
 #include <cage-core/color.h>
 #include <cage-core/image.h>
 

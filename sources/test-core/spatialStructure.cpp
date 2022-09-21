@@ -5,7 +5,6 @@
 #include <cage-core/config.h>
 #include <cage-core/timer.h>
 #include <cage-core/spatialStructure.h>
-
 #include <set>
 #include <vector>
 #include <algorithm>

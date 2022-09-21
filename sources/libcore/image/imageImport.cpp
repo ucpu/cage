@@ -1,4 +1,5 @@
 #include <cage-core/files.h>
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/imageBlocks.h>
 #include <cage-core/pointerRangeHolder.h>

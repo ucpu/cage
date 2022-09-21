@@ -1,14 +1,14 @@
 #include "main.h"
+
 #include <cage-core/geometry.h>
-#include <cage-core/mesh.h>
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshShapes.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/meshExport.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/image.h>
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/files.h>
-
 #include <vector>
 
 namespace
@@ -48,9 +48,9 @@ namespace
 		}
 	}
 
-	Holder<Mesh> splitSphereIntoTwo(const Mesh *poly)
+	Holder<Mesh> splitSphereIntoTwo(const Mesh *msh)
 	{
-		auto p = poly->copy();
+		auto p = msh->copy();
 		{
 			MeshMergeCloseVerticesConfig cfg;
 			cfg.distanceThreshold = 1e-3;
@@ -62,7 +62,7 @@ namespace
 			if (x > 2 && x < 4)
 				x = Real::Nan();
 		}
-		meshDiscardInvalid(+p);
+		meshRemoveInvalid(+p);
 		return p;
 	}
 
@@ -137,19 +137,18 @@ namespace
 
 	void testMeshBasics()
 	{
-		Holder<Mesh> poly = makeSphere();
-
-		CAGE_TEST(poly->verticesCount() > 10);
-		CAGE_TEST(poly->indicesCount() > 10);
-		CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
+		const Holder<const Mesh> msh = makeSphere();
+		CAGE_TEST(msh->verticesCount() > 10);
+		CAGE_TEST(msh->indicesCount() > 10);
+		CAGE_TEST(msh->indicesCount() == msh->facesCount() * 3);
 
 		{
 			CAGE_TESTCASE("valid vertices");
-			for (const Vec3 &p : poly->positions())
+			for (const Vec3 &p : msh->positions())
 			{
 				CAGE_TEST(valid(p));
 			}
-			for (const Vec3 &p : poly->normals())
+			for (const Vec3 &p : msh->normals())
 			{
 				CAGE_TEST(valid(p));
 				CAGE_TEST(abs(length(p) - 1) < 1e-5);
@@ -158,33 +157,71 @@ namespace
 
 		{
 			CAGE_TESTCASE("bounding box");
-			approxEqual(poly->boundingBox(), Aabb(Vec3(-10), Vec3(10)));
+			approxEqual(msh->boundingBox(), Aabb(Vec3(-10), Vec3(10)));
 		}
 
 		{
 			CAGE_TESTCASE("bounding sphere");
-			approxEqual(poly->boundingSphere(), Sphere(Vec3(), 10));
+			approxEqual(msh->boundingSphere(), Sphere(Vec3(), 10));
 		}
 
 		{
-			CAGE_TESTCASE("apply transformation");
-			auto p = poly->copy();
-			meshApplyTransform(+p, Transform(Vec3(0, 5, 0)));
-			approxEqual(p->boundingBox(), Aabb(Vec3(-10, -5, -10), Vec3(10, 15, 10)));
+			CAGE_TESTCASE("collider");
+			const uint32 initialFacesCount = msh->facesCount();
+			Holder<Collider> c = newCollider();
+			c->importMesh(+msh);
+			CAGE_TEST(c->triangles().size() > 10);
+			Holder<Mesh> p = newMesh();
+			p->importCollider(+c);
+			CAGE_TEST(p->positions().size() > 10);
+			CAGE_TEST(p->facesCount() == initialFacesCount);
+		}
+
+		{
+			CAGE_TESTCASE("shapes");
+			newMeshSphereUv(10, 20, 30)->exportFile("meshes/shapes/uv-sphere.obj");
+			newMeshIcosahedron(10)->exportFile("meshes/shapes/icosahedron.obj");
+			newMeshSphereRegular(10, 1.5)->exportFile("meshes/shapes/regular-sphere.obj");
+		}
+
+		{
+			CAGE_TESTCASE("serialize");
+			Holder<PointerRange<char>> buff = msh->exportBuffer();
+			CAGE_TEST(buff.size() > 10);
+			Holder<Mesh> p = newMesh();
+			p->importBuffer(buff);
+			CAGE_TEST(p->verticesCount() == msh->verticesCount());
+			CAGE_TEST(p->indicesCount() == msh->indicesCount());
+			CAGE_TEST(p->positions().size() == msh->positions().size());
+			CAGE_TEST(p->normals().size() == msh->normals().size());
+			CAGE_TEST(p->uvs().size() == msh->uvs().size());
+			CAGE_TEST(p->uvs3().size() == msh->uvs3().size());
+			CAGE_TEST(p->tangents().size() == msh->tangents().size());
+			CAGE_TEST(p->boneIndices().size() == msh->boneIndices().size());
 		}
 	}
 
 	void testMeshAlgorithms()
 	{
 		{
-			CAGE_TESTCASE("discard invalid");
+			CAGE_TESTCASE("apply transformation");
 			auto p = makeSphere();
-			const uint32 initialFacesCount = p->facesCount();
-			p->position(42, Vec3::Nan()); // intentionally corrupt one vertex
-			meshDiscardInvalid(+p);
-			const uint32 f = p->facesCount();
-			CAGE_TEST(f > 10 && f < initialFacesCount);
-			p->exportFile("meshes/algorithms/discardInvalid.obj");
+			meshApplyTransform(+p, Transform(Vec3(0, 5, 0)));
+			approxEqual(p->boundingBox(), Aabb(Vec3(-10, -5, -10), Vec3(10, 15, 10)));
+		}
+
+		{
+			CAGE_TESTCASE("flip normals");
+			auto p = makeSphere();
+			meshFlipNormals(+p);
+			p->exportFile("meshes/algorithms/flipNormals.obj");
+		}
+
+		{
+			CAGE_TESTCASE("duplicate sides");
+			auto p = makeSphere();
+			meshDuplicateSides(+p);
+			p->exportFile("meshes/algorithms/duplicateSides.obj");
 		}
 
 		{
@@ -202,6 +239,81 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("merge planar");
+			auto p = makeDoubleBalls();
+			meshSplitIntersecting(+p, {});
+			meshRemoveInvisible(+p, {});
+			meshMergeCloseVertices(+p, {});
+			p->exportFile("meshes/algorithms/mergePlanarBefore.obj");
+			MeshMergePlanarConfig cfg;
+			meshMergePlanar(+p, cfg);
+			p->exportFile("meshes/algorithms/mergePlanar.obj");
+		}
+
+		{
+			CAGE_TESTCASE("separateDisconnected");
+			auto p = splitSphereIntoTwo(+makeSphere());
+			auto ps = meshSeparateDisconnected(+p);
+			CAGE_TEST(ps.size() == 2);
+			ps[0]->exportFile("meshes/algorithms/separateDisconnected_1.obj");
+			ps[1]->exportFile("meshes/algorithms/separateDisconnected_2.obj");
+		}
+
+		{
+			CAGE_TESTCASE("split long");
+			auto p = makeSphere();
+			meshApplyTransform(+p, Mat4::scale(Vec3(0.5, 5, 0.5)));
+			MeshSplitLongConfig cfg;
+			cfg.length = 10;
+			meshSplitLong(+p, cfg);
+			p->exportFile("meshes/algorithms/splitLong.obj");
+		}
+
+		{
+			CAGE_TESTCASE("split intersecting");
+			auto p = makeDoubleBalls();
+			MeshSplitIntersectingConfig cfg;
+			cfg.parallelize = true;
+			meshSplitIntersecting(+p, cfg);
+			p->exportFile("meshes/algorithms/splitIntersecting.obj");
+		}
+
+		{
+			CAGE_TESTCASE("clip by box");
+			auto p = makeSphere();
+			static constexpr Aabb box = Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10));
+			meshClip(+p, box);
+			p->exportFile("meshes/algorithms/clipByBox.obj");
+			approxEqual(p->boundingBox(), box);
+		}
+
+		{
+			CAGE_TESTCASE("clip by plane");
+			auto p = makeSphere();
+			const Plane pln = Plane(Vec3(0, -1, 0), normalize(Vec3(1)));
+			meshClip(+p, pln);
+			p->exportFile("meshes/algorithms/clipByPlane.obj");
+		}
+
+		{
+			CAGE_TESTCASE("remove invalid");
+			auto p = makeSphere();
+			const uint32 initialFacesCount = p->facesCount();
+			p->position(42, Vec3::Nan()); // intentionally corrupt one vertex
+			meshRemoveInvalid(+p);
+			const uint32 f = p->facesCount();
+			CAGE_TEST(f > 10 && f < initialFacesCount);
+			p->exportFile("meshes/algorithms/removeInvalid.obj");
+		}
+
+		{
+			CAGE_TESTCASE("remove disconnected");
+			auto p = splitSphereIntoTwo(+makeSphere());
+			meshRemoveDisconnected(+p);
+			p->exportFile("meshes/algorithms/removeDisconnected.obj");
+		}
+
+		{
 			CAGE_TESTCASE("remove small");
 			auto p = makeSphere();
 			const uint32 initialFacesCount = p->facesCount();
@@ -213,6 +325,19 @@ namespace
 			const uint32 f = p->facesCount();
 			CAGE_TEST(f > 10 && f < initialFacesCount);
 			p->exportFile("meshes/algorithms/removeSmall.obj");
+		}
+
+		{
+			CAGE_TESTCASE("remove invisible");
+			auto p = makeDoubleBalls();
+			MeshSplitIntersectingConfig cfg1;
+			cfg1.parallelize = true;
+			meshSplitIntersecting(+p, cfg1);
+			MeshRemoveInvisibleConfig cfg2;
+			cfg2.raysPerUnitArea = 5;
+			cfg2.parallelize = true;
+			meshRemoveInvisible(+p, cfg2);
+			p->exportFile("meshes/algorithms/removeInvisible.obj");
 		}
 
 		{
@@ -304,108 +429,6 @@ namespace
 			meshGenerateNormals(+p, {});
 			p->exportFile("meshes/algorithms/generatedNormals.obj");
 			CAGE_TEST(p->normals().size() == p->positions().size());
-		}
-
-		{
-			CAGE_TESTCASE("flip triangles");
-			auto p = makeSphere();
-			meshFlipNormals(+p);
-			p->exportFile("meshes/algorithms/flipNormals.obj");
-		}
-
-		{
-			CAGE_TESTCASE("duplicate sides");
-			auto p = makeSphere();
-			meshDuplicateSides(+p);
-			p->exportFile("meshes/algorithms/duplicateSides.obj");
-		}
-
-		{
-			CAGE_TESTCASE("clip by box");
-			auto p = makeSphere();
-			static constexpr Aabb box = Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10));
-			meshClip(+p, box);
-			p->exportFile("meshes/algorithms/clipByBox.obj");
-			approxEqual(p->boundingBox(), box);
-		}
-
-		{
-			CAGE_TESTCASE("clip by plane");
-			auto p = makeSphere();
-			const Plane pln = Plane(Vec3(0, -1, 0), normalize(Vec3(1)));
-			meshClip(+p, pln);
-			p->exportFile("meshes/algorithms/clipByPlane.obj");
-		}
-
-		{
-			CAGE_TESTCASE("split intersecting");
-			auto p = makeDoubleBalls();
-			meshSplitIntersecting(+p);
-			p->exportFile("meshes/algorithms/splitIntersecting.obj");
-		}
-
-		{
-			CAGE_TESTCASE("remove invisible");
-			auto p = makeDoubleBalls();
-			meshSplitIntersecting(+p);
-			MeshRemoveInvisibleConfig cfg;
-			cfg.raysPerUnitArea = 5;
-			cfg.parallelize = true;
-			meshRemoveInvisible(+p, cfg);
-			p->exportFile("meshes/algorithms/removeInvisible.obj");
-		}
-
-		{
-			CAGE_TESTCASE("separateDisconnected");
-			auto p = splitSphereIntoTwo(+makeSphere());
-			auto ps = meshSeparateDisconnected(+p);
-			CAGE_TEST(ps.size() == 2);
-			ps[0]->exportFile("meshes/algorithms/separateDisconnected_1.obj");
-			ps[1]->exportFile("meshes/algorithms/separateDisconnected_2.obj");
-		}
-
-		{
-			CAGE_TESTCASE("discardDisconnected");
-			auto p = splitSphereIntoTwo(+makeSphere());
-			meshDiscardDisconnected(+p);
-			p->exportFile("meshes/algorithms/discardDisconnected.obj");
-		}
-
-		{
-			CAGE_TESTCASE("collider");
-			auto k = makeSphere();
-			const uint32 initialFacesCount = k->facesCount();
-			Holder<Collider> c = newCollider();
-			c->importMesh(+k);
-			CAGE_TEST(c->triangles().size() > 10);
-			Holder<Mesh> p = newMesh();
-			p->importCollider(+c);
-			CAGE_TEST(p->positions().size() > 10);
-			CAGE_TEST(p->facesCount() == initialFacesCount);
-		}
-
-		{
-			CAGE_TESTCASE("shapes");
-			newMeshSphereUv(10, 20, 30)->exportFile("meshes/shapes/uv-sphere.obj");
-			newMeshIcosahedron(10)->exportFile("meshes/shapes/icosahedron.obj");
-			newMeshSphereRegular(10, 1.5)->exportFile("meshes/shapes/regular-sphere.obj");
-		}
-
-		{
-			CAGE_TESTCASE("serialize");
-			auto poly = makeSphere();
-			Holder<PointerRange<char>> buff = poly->exportBuffer();
-			CAGE_TEST(buff.size() > 10);
-			Holder<Mesh> p = newMesh();
-			p->importBuffer(buff);
-			CAGE_TEST(p->verticesCount() == poly->verticesCount());
-			CAGE_TEST(p->indicesCount() == poly->indicesCount());
-			CAGE_TEST(p->positions().size() == poly->positions().size());
-			CAGE_TEST(p->normals().size() == poly->normals().size());
-			CAGE_TEST(p->uvs().size() == poly->uvs().size());
-			CAGE_TEST(p->uvs3().size() == poly->uvs3().size());
-			CAGE_TEST(p->tangents().size() == poly->tangents().size());
-			CAGE_TEST(p->boneIndices().size() == poly->boneIndices().size());
 		}
 	}
 

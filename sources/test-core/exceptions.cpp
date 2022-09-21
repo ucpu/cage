@@ -1,7 +1,7 @@
 #include "main.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/string.h>
-
 #include <cstring> // strcmp
 
 namespace

@@ -1,9 +1,8 @@
 #include "image.h"
+
 #include <cage-core/imageBlocks.h>
 #include <cage-core/serialization.h>
-
 #include <basis_universal/encoder/basisu_gpu_texture.h>
-
 #include <vector>
 
 namespace cage

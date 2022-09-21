@@ -1,7 +1,7 @@
+#include "main.h"
+
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
-
-#include "main.h"
 
 void testMacros();
 void testEnums();

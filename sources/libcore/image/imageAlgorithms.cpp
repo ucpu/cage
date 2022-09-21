@@ -1,5 +1,6 @@
 #include "image.h"
 
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/math.h>
 #include <cage-core/color.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -538,6 +539,41 @@ namespace cage
 		}
 	}
 
+	namespace
+	{
+		template<class Type> PointerRange<const Type> imageChannelsSplitAccessor(const Image *img);
+		template<> PointerRange<const uint8> imageChannelsSplitAccessor(const Image *img) { return img->rawViewU8(); }
+		template<> PointerRange<const uint16> imageChannelsSplitAccessor(const Image *img) { return img->rawViewU16(); }
+		template<> PointerRange<const float> imageChannelsSplitAccessor(const Image *img) { return img->rawViewFloat(); }
+
+		template<class Type>
+		PointerRange<Type> rangeRemoveConst(PointerRange<const Type> in)
+		{
+			return PointerRange<Type>(const_cast<Type *>(in.begin()), const_cast<Type *>(in.end()));
+		}
+
+		template<class Type>
+		void imageChannelsSplitImpl(const Image *src, PointerRange<const Holder<Image>> result)
+		{
+			PointerRange<const Type> s = imageChannelsSplitAccessor<Type>(src);
+			std::vector<PointerRange<Type>> dsts;
+			dsts.reserve(result.size());
+			for (const auto &it : result)
+				dsts.push_back(rangeRemoveConst<Type>(imageChannelsSplitAccessor<Type>(+it)));
+
+			const uint32 w = src->width(), h = src->height(), cs = result.size();
+			for (uint32 y = 0; y < h; y++)
+			{
+				for (uint32 x = 0; x < w; x++)
+				{
+					const uint32 off = y * w + x;
+					for (uint32 c = 0; c < cs; c++)
+						dsts[c][off] = s[off * cs + c];
+				}
+			}
+		}
+	}
+
 	Holder<PointerRange<Holder<Image>>> imageChannelsSplit(const Image *src)
 	{
 		PointerRangeHolder<Holder<Image>> result;
@@ -546,12 +582,22 @@ namespace cage
 		{
 			Holder<Image> dst = newImage();
 			dst->initialize(src->resolution(), 1, src->format());
-			const uint32 w = src->width(), h = src->height();
-			for (uint32 y = 0; y < h; y++)
-				for (uint32 x = 0; x < w; x++)
-					dst->value(x, y, 0, src->value(x, y, ch));
 			dst->colorConfig.gammaSpace = src->colorConfig.gammaSpace;
 			result.push_back(std::move(dst));
+		}
+		switch (src->format())
+		{
+		case ImageFormatEnum::U8:
+			imageChannelsSplitImpl<uint8>(src, result);
+			break;
+		case ImageFormatEnum::U16:
+			imageChannelsSplitImpl<uint16>(src, result);
+			break;
+		case ImageFormatEnum::Float:
+			imageChannelsSplitImpl<float>(src, result);
+			break;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid image format enum");
 		}
 		return result;
 	}

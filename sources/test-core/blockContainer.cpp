@@ -1,6 +1,6 @@
 #include "main.h"
-#include <cage-core/blockContainer.h>
 
+#include <cage-core/blockContainer.h>
 #include <vector>
 
 namespace

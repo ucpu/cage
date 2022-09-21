@@ -1,7 +1,7 @@
 #include <cage-core/string.h>
+#include <cage-core/imageAlgorithms.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
-
 #include <algorithm>
 
 namespace cage

@@ -184,6 +184,31 @@ namespace cage
 			return a.data_ == b.data_;
 		}
 	};
+
+	template<class T, class C = std::less<T>>
+	FlatSet<T, C> makeFlatSet(std::vector<T> &&v)
+	{
+		std::sort(v.begin(), v.end(), C());
+		struct U
+		{
+			bool operator() (const T &a, const T &b) const
+			{
+				return !C()(a, b) && !C()(b, a);
+			}
+		};
+		auto i = std::unique(v.begin(), v.end(), U());
+		v.erase(i, v.end());
+		FlatSet<T, C> r;
+		std::swap(r.unsafeData(), v);
+		return r;
+	}
+
+	template<class T, class C = std::less<T>>
+	FlatSet<T, C> makeFlatSet(PointerRange<T> r)
+	{
+		std::vector<T> vec(r.begin(), r.end());
+		return makeFlatSet<T, C>(std::move(vec));
+	}
 }
 
 #endif // guard_flatSet_BDA291015B42

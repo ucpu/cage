@@ -1,8 +1,9 @@
+#include "audio.h"
+
+#include <cage-core/audioAlgorithms.h>
 #include <cage-core/math.h>
 #include <cage-core/serialization.h>
 #include <cage-core/sampleRateConverter.h>
-
-#include "audio.h"
 
 namespace cage
 {

@@ -1,5 +1,6 @@
-#include <cage-core/macros.h>
 #include "mesh.h"
+
+#include <cage-core/macros.h>
 
 namespace cage
 {
