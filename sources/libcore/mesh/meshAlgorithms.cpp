@@ -18,6 +18,13 @@ namespace cage
 {
 	namespace
 	{
+		template<class T>
+		void turnLeft(T &a, T &b, T &c)
+		{
+			std::swap(a, b); // bac
+			std::swap(b, c); // bca
+		}
+
 		template<class T> requires(std::is_same_v<T, Vec2> || std::is_same_v<T, Vec3>)
 		Vec2 barycoord(const T &a, const T &b, const T &c, const T &p)
 		{
@@ -303,6 +310,14 @@ namespace cage
 			{
 				return detail::memcmp(this, &other, sizeof(*this)) < 0;
 			}
+
+			T &order()
+			{
+				const uint32 ll = min(a, min(b, c));
+				while (a != ll)
+					turnLeft(a, b, c);
+				return *this;
+			}
 		};
 
 		const uint32 origCnt = msh->indicesCount();
@@ -311,8 +326,8 @@ namespace cage
 		vec.reserve(msh->facesCount() * 2);
 		for (uint32 i = 0; i < origCnt; i += 3)
 		{
-			vec.push_back(T{ orig[i + 0], orig[i + 1], orig[i + 2] });
-			vec.push_back(T{ orig[i + 0], orig[i + 2], orig[i + 1] }); // flip triangle winding
+			vec.push_back(T{ orig[i + 0], orig[i + 1], orig[i + 2] }.order());
+			vec.push_back(T{ orig[i + 0], orig[i + 2], orig[i + 1] }.order()); // flip triangle winding
 		}
 		const FlatSet ts = makeFlatSet<T>(std::move(vec));
 
@@ -500,7 +515,7 @@ namespace cage
 
 		std::vector<uint32> indsCopy = std::vector<uint32>(inds.begin(), inds.end());
 
-		// make a triangle with vertices a, b, c, honoring winding order, and remove triangles t1 and t2
+		// make a triangle with vertices ai, bi, ci, honoring normal n1, and remove triangles t1 and t2
 		const auto &overlapTriangle = [&](uint32 t1, uint32 t2, uint32 ai, uint32 bi, uint32 ci, const Vec3 &n1) -> void {
 			CAGE_ASSERT(t1 != t2);
 			CAGE_ASSERT(banned.count(t1) == 0);
@@ -836,13 +851,6 @@ namespace cage
 			if (!impl->uvs3.empty())
 				impl->uvs3.push_back(interpolate(impl->uvs3[ai], impl->uvs3[bi], pu));
 			return numeric_cast<uint32>(impl->positions.size()) - 1;
-		}
-
-		template<class T>
-		void turnLeft(T &a, T &b, T &c)
-		{
-			std::swap(a, b); // bac
-			std::swap(b, c); // bca
 		}
 
 		void clipTriangles(MeshImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const Real value, const bool side)
