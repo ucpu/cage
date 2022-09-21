@@ -751,7 +751,7 @@ namespace cage
 				for (const uint32 qi : cutterIds)
 				{
 					const Triangle &cutterTri = cctris[qi];
-					CAGE_ASSERT(intersects(origTri, cutterTri));
+					CAGE_ASSERT(intersects(cutterTri, origTri));
 					const Plane cutterPl = Plane(cutterTri);
 					for (const Triangle &t : tris)
 					{
