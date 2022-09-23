@@ -483,99 +483,153 @@ namespace cage
 		const auto poss = msh->positions();
 		const auto inds = msh->indices();
 
-		// find all triangles for particular vertices
+		// triangle normals
+		std::vector<Vec3> triNorms;
+		triNorms.reserve(tc);
+
+		// triangles sharing particular vertices
 		std::vector<FlatSet<uint32>> inverseMapping; // vertex index -> set of triangles
 		inverseMapping.resize(vc);
+
+		for (uint32 ti = 0; ti < tc; ti++)
 		{
-			uint32 i = 0;
-			for (uint32 j : msh->indices())
-				inverseMapping[j].insert(i++ / 3);
+			inverseMapping[inds[ti * 3 + 0]].insert(ti);
+			inverseMapping[inds[ti * 3 + 1]].insert(ti);
+			inverseMapping[inds[ti * 3 + 2]].insert(ti);
+			triNorms.push_back(Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]).normal());
 		}
 
-		const auto &getTri = [&](uint32 ti) -> Triangle {
-			return Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]);
-		};
-
-		const auto &getVertIdx = [&](uint32 ti, uint32 notA, uint32 notB) -> uint32 {
-			uint32 s[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
-			for (uint32 x : s)
-				if (x != notA && x != notB)
-					return x;
-			CAGE_THROW_CRITICAL(Exception, "invalid triangle indices");
-		};
-
+		// are 3 points collinear (must be in order)
 		const auto &isColinear = [&](uint32 a, uint32 b, uint32 c) -> bool {
 			const Vec3 x = normalize(poss[b] - poss[a]);
 			const Vec3 y = normalize(poss[c] - poss[b]);
 			return dot(x, y) > 0.999;
 		};
 
+		// triangles that has already changed
 		FlatSet<uint32> banned;
 		banned.reserve(tc);
 
+		// new indices (preserve original unmodified indices inside the mesh)
 		std::vector<uint32> indsCopy = std::vector<uint32>(inds.begin(), inds.end());
 
-		// make a triangle with vertices ai, bi, ci, honoring normal n1, and remove triangles t1 and t2
-		const auto &overlapTriangle = [&](uint32 t1, uint32 t2, uint32 ai, uint32 bi, uint32 ci, const Vec3 &n1) -> void {
-			CAGE_ASSERT(t1 != t2);
-			CAGE_ASSERT(banned.count(t1) == 0);
-			CAGE_ASSERT(banned.count(t2) == 0);
-			banned.insert(t1);
-			banned.insert(t2);
-			if (dot(Triangle(poss[ai], poss[bi], poss[ci]).normal(), n1) < 0)
-				std::swap(bi, ci);
-			indsCopy[t1 * 3 + 0] = ai;
-			indsCopy[t1 * 3 + 1] = bi;
-			indsCopy[t1 * 3 + 2] = ci;
-			indsCopy[t2 * 3 + 0] = 0;
-			indsCopy[t2 * 3 + 1] = 0;
-			indsCopy[t2 * 3 + 2] = 0;
+		// verify if merging vertex v1 to v2 is valid for all triangles tris and do it
+		// it is valid to degenerate triangles but not to flip orientation
+		const auto &checkAndMergeVertex = [&](PointerRange<const uint32> tris, uint32 v1, uint32 v2) -> bool {
+			CAGE_ASSERT(v1 != v2);
+			const auto &loop = [&](bool perform) -> bool {
+				for (uint32 ti : tris)
+				{
+					uint32 is[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
+					for (uint32 &i : is)
+						if (i == v1)
+							i = v2;
+					CAGE_ASSERT((is[0] == v2) + (is[1] == v2) + (is[2] == v2) >= 1);
+					const Triangle t = Triangle(poss[is[0]], poss[is[1]], poss[is[2]]);
+					if (perform)
+					{
+						CAGE_ASSERT(banned.count(ti) == 0);
+						banned.insert(ti);
+						indsCopy[ti * 3 + 0] = is[0];
+						indsCopy[ti * 3 + 1] = is[1];
+						indsCopy[ti * 3 + 2] = is[2];
+					}
+					else
+					{
+						if (dot(t.normal(), triNorms[ti]) < 0 && !t.degenerated())
+							return false;
+					}
+				}
+				return true;
+			};
+			if (!loop(false))
+				return false;
+			loop(true);
+			return true;
 		};
 
-		// find all neighboring triangles in a plane
-		std::vector<uint32> tmp;
-		for (uint32 ti = 0; ti < tc; ti++)
+		// find vertices that can be merged elsewhere
+		UnionFind planesUnions;
+		for (uint32 vi = 0; vi < vc; vi++)
 		{
-			const Triangle t1 = getTri(ti);
-			const Vec3 n1 = t1.normal();
-			for (const std::pair vis : { std::pair(0, 1), std::pair(1, 2), std::pair(2, 0) })
+			// separate incident triangles into planar groups
+			planesUnions.init(tc);
+			for (uint32 t1 : inverseMapping[vi])
 			{
-				if (banned.count(ti))
-					break;
-				const uint32 ai = inds[ti * 3 + vis.first];
-				const uint32 bi = inds[ti * 3 + vis.second];
-				const uint32 ci = getVertIdx(ti, ai, bi);
-				const FlatSet<uint32> &ats = inverseMapping[ai];
-				const FlatSet<uint32> &bts = inverseMapping[bi];
-				CAGE_ASSERT(ats.count(ti));
-				CAGE_ASSERT(bts.count(ti));
-				tmp.clear();
-				std::set_intersection(ats.begin(), ats.end(), bts.begin(), bts.end(), std::back_inserter(tmp));
-				for (uint32 tj : tmp)
+				for (uint32 t2 : inverseMapping[vi])
 				{
-					if (ti == tj)
-						continue; // cannot merge with itself
-					if (banned.count(tj))
+					if (t2 <= t1)
 						continue;
-					const Triangle t2 = getTri(tj);
-					const Vec3 n2 = t2.normal();
-					if (dot(n1, n2) < 0.999)
-						continue; // triangles not coplanar
-					const uint32 di = getVertIdx(tj, ai, bi);
-					if (isColinear(ci, ai, di))
+					if (dot(triNorms[t1], triNorms[t2]) > 0.999)
+						planesUnions.merge(t1, t2);
+				}
+			}
+
+			// for each group of triangles in a plane
+			for (const auto &group : planesUnions.groups())
+			{
+				// find if any of the triangles in the group is banned
+				if ([&] {
+					for (uint32 i : group)
+						if (banned.count(i))
+							return true;
+					return false;
+				}())
+					continue; // some triangle is banned
+
+				// check if the vi vertex is fully surrounded or on an edge
+				std::vector<uint32> edgeVerts;
+				std::unordered_map<uint32, uint32> trisOnVertsCount;
+				trisOnVertsCount.reserve(group.size());
+				for (uint32 ti : group)
+				{
+					trisOnVertsCount[inds[ti * 3 + 0]]++;
+					trisOnVertsCount[inds[ti * 3 + 1]]++;
+					trisOnVertsCount[inds[ti * 3 + 2]]++;
+				}
+				CAGE_ASSERT(trisOnVertsCount.at(vi) == group.size());
+				uint32 ones = 0;
+				uint32 twos = 0;
+				for (const auto &it : trisOnVertsCount)
+				{
+					switch (it.second)
 					{
-						overlapTriangle(ti, tj, bi, ci, di, n1);
+					case 1:
+						ones++;
+						edgeVerts.push_back(it.first);
+						break;
+					case 2:
+						twos++;
 						break;
 					}
-					if (isColinear(ci, bi, di))
+				}
+				if (ones != 2 && twos != group.size())
+					continue; // the vertex cannot be merged
+
+				// if the vertex is on edge
+				if (edgeVerts.size() == 2)
+				{
+					if (!isColinear(edgeVerts[0], vi, edgeVerts[1]))
+						continue; // the vertex is on edge but not straight
+					if (checkAndMergeVertex(group, vi, edgeVerts[0]))
+						continue;
+					checkAndMergeVertex(group, vi, edgeVerts[1]);
+					continue;
+				}
+
+				// the vertex is fully surrounded
+				for (const auto &it : trisOnVertsCount)
+				{
+					if (it.second == 2)
 					{
-						overlapTriangle(ti, tj, ai, ci, di, n1);
-						break;
+						if (checkAndMergeVertex(group, vi, it.first))
+							break;
 					}
 				}
 			}
 		}
 
+		// finish the changes
 		msh->indices(indsCopy);
 		meshRemoveInvalid(msh);
 
