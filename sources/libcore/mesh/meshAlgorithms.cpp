@@ -507,8 +507,8 @@ namespace cage
 		};
 
 		// triangles that has already changed
-		FlatSet<uint32> banned;
-		banned.reserve(tc);
+		std::vector<bool> banned;
+		banned.resize(tc, false);
 
 		// new indices (preserve original unmodified indices inside the mesh)
 		std::vector<uint32> indsCopy = std::vector<uint32>(inds.begin(), inds.end());
@@ -528,8 +528,8 @@ namespace cage
 					const Triangle t = Triangle(poss[is[0]], poss[is[1]], poss[is[2]]);
 					if (perform)
 					{
-						CAGE_ASSERT(banned.count(ti) == 0);
-						banned.insert(ti);
+						CAGE_ASSERT(!banned[ti]);
+						banned[ti] = true;
 						indsCopy[ti * 3 + 0] = is[0];
 						indsCopy[ti * 3 + 1] = is[1];
 						indsCopy[ti * 3 + 2] = is[2];
@@ -549,38 +549,37 @@ namespace cage
 		};
 
 		// find vertices that can be merged elsewhere
-		UnionFind planesUnions;
+		std::vector<uint32> group;
+		std::vector<uint32> edgeVerts;
+		std::unordered_map<uint32, uint32> trisOnVertsCount;
 		for (uint32 vi = 0; vi < vc; vi++)
 		{
-			// separate incident triangles into planar groups
-			planesUnions.init(tc);
 			for (uint32 t1 : inverseMapping[vi])
 			{
+				// find triangles that are coplanar with t1
+				group.clear();
 				for (uint32 t2 : inverseMapping[vi])
 				{
 					if (t2 <= t1)
 						continue;
 					if (dot(triNorms[t1], triNorms[t2]) > 0.999)
-						planesUnions.merge(t1, t2);
+						group.push_back(t2);
 				}
-			}
+				if (group.empty())
+					continue;
+				group.push_back(t1);
 
-			// for each group of triangles in a plane
-			for (const auto &group : planesUnions.groups())
-			{
 				// find if any of the triangles in the group is banned
 				if ([&] {
 					for (uint32 i : group)
-						if (banned.count(i))
+						if (banned[i])
 							return true;
 					return false;
 				}())
 					continue; // some triangle is banned
 
 				// check if the vi vertex is fully surrounded or on an edge
-				std::vector<uint32> edgeVerts;
-				std::unordered_map<uint32, uint32> trisOnVertsCount;
-				trisOnVertsCount.reserve(group.size());
+				trisOnVertsCount.clear();
 				for (uint32 ti : group)
 				{
 					trisOnVertsCount[inds[ti * 3 + 0]]++;
@@ -590,6 +589,7 @@ namespace cage
 				CAGE_ASSERT(trisOnVertsCount.at(vi) == group.size());
 				uint32 ones = 0;
 				uint32 twos = 0;
+				edgeVerts.clear();
 				for (const auto &it : trisOnVertsCount)
 				{
 					switch (it.second)
@@ -610,7 +610,7 @@ namespace cage
 				if (edgeVerts.size() == 2)
 				{
 					if (!isColinear(edgeVerts[0], vi, edgeVerts[1]))
-						continue; // the vertex is on edge but not straight
+						continue; // not straight
 					if (checkAndMergeVertex(group, vi, edgeVerts[0]))
 						continue;
 					checkAndMergeVertex(group, vi, edgeVerts[1]);
