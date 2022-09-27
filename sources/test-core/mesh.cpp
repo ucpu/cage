@@ -346,7 +346,7 @@ namespace
 			CAGE_TESTCASE("merge planar (balls)");
 			auto p = makeDoubleBalls();
 			meshSplitIntersecting(+p, {});
-			meshRemoveInvisible(+p, {});
+			meshRemoveOccluded(+p, {});
 			meshMergeCloseVertices(+p, {});
 			MeshMergePlanarConfig cfg;
 			meshMergePlanar(+p, cfg);
@@ -447,10 +447,10 @@ namespace
 			MeshSplitIntersectingConfig cfg1;
 			cfg1.parallelize = true;
 			meshSplitIntersecting(+p, cfg1);
-			MeshRemoveInvisibleConfig cfg2;
+			MeshRemoveOccludedConfig cfg2;
 			cfg2.raysPerUnitArea = 5;
 			cfg2.parallelize = true;
-			meshRemoveInvisible(+p, cfg2);
+			meshRemoveOccluded(+p, cfg2);
 			p->exportFile("meshes/algorithms/removeInvisible.obj");
 		}
 

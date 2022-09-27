@@ -1295,7 +1295,7 @@ namespace cage
 		meshRemoveInvalid(+msh);
 	}
 
-	void meshRemoveInvisible(Mesh *msh, const MeshRemoveInvisibleConfig &config)
+	void meshRemoveOccluded(Mesh *msh, const MeshRemoveOccludedConfig &config)
 	{
 		if (msh->facesCount() == 0)
 			return;
@@ -1307,12 +1307,12 @@ namespace cage
 		struct Processor
 		{
 			Mesh *msh = nullptr;
-			const MeshRemoveInvisibleConfig &config;
+			const MeshRemoveOccludedConfig &config;
 			Holder<Collider> collider = newCollider();
 			std::vector<uint8> visible;
 			Real grazingDot;
 
-			Processor(Mesh *msh, const MeshRemoveInvisibleConfig &config) : msh(msh), config(config)
+			Processor(Mesh *msh, const MeshRemoveOccludedConfig &config) : msh(msh), config(config)
 			{}
 
 			void operator()(uint32 triIdx)
@@ -1352,7 +1352,7 @@ namespace cage
 				collider->rebuild();
 
 				if (config.parallelize)
-					tasksRunBlocking<Processor>("meshRemoveInvisible", *this, msh->facesCount());
+					tasksRunBlocking<Processor>("meshRemoveOccluded", *this, msh->facesCount());
 				else
 				{
 					const uint32 cnt = msh->facesCount();

@@ -671,7 +671,7 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Warning, "thread", Stringizer() + "unhandled exception in thread '" + currentThreadName() + "'");
 				detail::logCurrentCaughtException();
 			}
-			CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "thread '" + currentThreadName() + "' ended");
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "thread '" + currentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else
@@ -732,7 +732,7 @@ namespace cage
 		profilingThreadName();
 #endif
 
-		CAGE_LOG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
+		CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
 	}
 
 	String currentThreadName()

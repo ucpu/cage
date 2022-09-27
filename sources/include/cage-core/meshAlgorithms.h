@@ -58,7 +58,7 @@ namespace cage
 	};
 	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
 
-	struct CAGE_CORE_API MeshRemoveInvisibleConfig
+	struct CAGE_CORE_API MeshRemoveOccludedConfig
 	{
 		Real raysPerUnitArea = 1;
 		uint32 minRaysPerTriangle = 10;
@@ -67,7 +67,7 @@ namespace cage
 		bool doubleSided = false;
 		bool parallelize = false;
 	};
-	CAGE_CORE_API void meshRemoveInvisible(Mesh *msh, const MeshRemoveInvisibleConfig &config);
+	CAGE_CORE_API void meshRemoveOccluded(Mesh *msh, const MeshRemoveOccludedConfig &config);
 
 	struct CAGE_CORE_API MeshSimplifyConfig
 	{
