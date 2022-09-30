@@ -217,8 +217,9 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "translucent: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alphaClip: " + any(dsm.renderFlags & MeshRenderFlags::AlphaClip));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "cutOut: " + any(dsm.renderFlags & MeshRenderFlags::CutOut));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "transparent: " + any(dsm.renderFlags & MeshRenderFlags::Transparent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "fade: " + any(dsm.renderFlags & MeshRenderFlags::Fade));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
@@ -238,11 +239,11 @@ namespace
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
 			if (texCount && none(flags & (ModelDataFlags::Uvs2 | ModelDataFlags::Uvs3)))
-				CAGE_THROW_ERROR(Exception, "material has a texture and no uvs");
+				CAGE_THROW_ERROR(Exception, "material has a texture but no uvs");
 		}
 
-		if (any(renderFlags & MeshRenderFlags::Translucent) && any(renderFlags & MeshRenderFlags::AlphaClip))
-			CAGE_THROW_ERROR(Exception, "material has both translucent and alphaClip flags");
+		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
+			CAGE_THROW_ERROR(Exception, "material has multiple transparency flags (cutOut, transparent, fade)");
 
 		if (any(flags & ModelDataFlags::Tangents) && none(flags & ModelDataFlags::Uvs2))
 			CAGE_THROW_ERROR(Exception, "tangents are exported, but uvs are missing");

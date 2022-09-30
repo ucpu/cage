@@ -21,9 +21,9 @@ void main()
 		discard;
 	updateNormal();
 	Material material = loadMaterial();
-#ifdef AlphaClip
+#ifdef CutOut
 	if (material.opacity < 0.5)
 		discard;
-#endif // AlphaClip
+#endif // CutOut
 	outColor = lighting(material);
 }

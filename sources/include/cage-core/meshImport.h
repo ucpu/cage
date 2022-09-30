@@ -22,13 +22,14 @@ namespace cage
 	enum class MeshRenderFlags : uint32
 	{
 		None = 0,
-		Translucent = 1 << 0,
-		AlphaClip = 1 << 1,
-		TwoSided = 1 << 2,
-		DepthTest = 1 << 3,
-		DepthWrite = 1 << 4,
-		ShadowCast = 1 << 5,
-		Lighting = 1 << 6,
+		CutOut = 1 << 0, // leaves, holes in cloth
+		Transparent = 1 << 1, // glass, plastic
+		Fade = 1 << 2, // holograms, fade out animation
+		TwoSided = 1 << 3,
+		DepthTest = 1 << 4,
+		DepthWrite = 1 << 5,
+		ShadowCast = 1 << 6,
+		Lighting = 1 << 7,
 	};
 	GCHL_ENUM_BITS(MeshRenderFlags);
 

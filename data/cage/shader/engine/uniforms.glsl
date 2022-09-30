@@ -35,7 +35,7 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_MATERIAL) uniform MaterialBlock
 struct UniMesh
 {
 	mat4 mvpMat;
-	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
+	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
 	mat3x4 mMat;
 	vec4 color; // color rgb is linear, and NOT alpha-premultiplied
 	vec4 aniTexFrames;

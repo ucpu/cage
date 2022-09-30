@@ -22,11 +22,12 @@ const float confLightThreshold = 0.05;
 
 struct Material
 {
-	vec3 albedo; // linear
+	vec3 albedo; // linear, not-premultiplied
 	float opacity;
 	float roughness;
 	float metalness;
 	float emissive;
+	float fade;
 };
 
 vec3 lightingBrdf(Material material, vec3 L, vec3 V)
@@ -148,7 +149,10 @@ float lightAmbientOcclusion()
 
 vec4 lighting(Material material)
 {
-	vec4 res = vec4(0);
+	if (material.fade < 0.5)
+		material.albedo *= material.opacity;
+
+	vec4 res = vec4(0, 0, 0, 1);
 
 	// emissive
 	res.rgb += material.albedo * material.emissive;
@@ -168,7 +172,11 @@ vec4 lighting(Material material)
 		}
 	}
 
-	res.a = material.opacity;
+	if (material.fade < 0.5)
+		res.a = material.opacity;
+	else
+		res *= material.opacity;
+
 	return res;
 }
 
@@ -211,7 +219,7 @@ Material loadMaterial()
 
 	material.albedo = mix(uniMeshes[varInstanceId].color.rgb, material.albedo, special4.a);
 	material.opacity *= uniMeshes[varInstanceId].color.a;
-	material.albedo *= material.opacity; // premultiplied alpha
+	material.fade = uniMeshes[varInstanceId].normalMat[1][3];
 
 	return material;
 }

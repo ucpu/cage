@@ -1067,14 +1067,19 @@ namespace cage
 				for (const String &n : ini->items("flags"))
 				{
 					const String v = ini->getString("flags", n);
-					if (v == "translucent")
+					if (v == "cutOut")
 					{
-						part.renderFlags |= MeshRenderFlags::Translucent;
+						part.renderFlags |= MeshRenderFlags::CutOut;
 						continue;
 					}
-					if (v == "alphaClip")
+					if (v == "transparent")
 					{
-						part.renderFlags |= MeshRenderFlags::AlphaClip;
+						part.renderFlags |= MeshRenderFlags::Transparent;
+						continue;
+					}
+					if (v == "fade")
+					{
+						part.renderFlags |= MeshRenderFlags::Fade;
 						continue;
 					}
 					if (v == "twoSided")
@@ -1152,8 +1157,8 @@ namespace cage
 				if (loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures))
 				{
 					if (config.verbose)
-						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to opacity texture");
-					part.renderFlags |= MeshRenderFlags::Translucent;
+						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to opacity texture");
+					part.renderFlags |= MeshRenderFlags::Transparent;
 				}
 
 				// factors
@@ -1201,8 +1206,8 @@ namespace cage
 				if (opacity > 0 && opacity < 1)
 				{
 					if (config.verbose)
-						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to opacity");
-					part.renderFlags |= MeshRenderFlags::Translucent;
+						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to opacity");
+					part.renderFlags |= MeshRenderFlags::Transparent;
 				}
 
 				// albedo
@@ -1212,8 +1217,8 @@ namespace cage
 					if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
 					{
 						if (config.verbose)
-							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling translucent flag due to albedo texture alpha flag");
-						part.renderFlags |= MeshRenderFlags::Translucent;
+							CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to albedo texture alpha flag");
+						part.renderFlags |= MeshRenderFlags::Transparent;
 					}
 				};
 				if (loadTextureAssimp<aiTextureType_BASE_COLOR, MeshImportTextureType::Albedo>(mat, textures))

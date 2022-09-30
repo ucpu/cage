@@ -46,7 +46,7 @@ namespace cage
 		struct UniMesh
 		{
 			Mat4 mvpMat;
-			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
+			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
 			Mat3x4 mMat;
 			Vec4 color; // color rgb is linear, and NOT alpha-premultiplied
 			Vec4 aniTexFrames;
@@ -110,7 +110,7 @@ namespace cage
 			RenderComponent render;
 			std::optional<TextureAnimationComponent> textureAnimation;
 			Entity *e = nullptr;
-			bool translucent = false;
+			bool translucent = false; // transparent or fade
 
 			ModelPrepare clone() const
 			{
@@ -299,7 +299,7 @@ namespace cage
 		struct RenderPipelineImpl : public RenderPipeline, public RenderPipelineCreateConfig
 		{
 			Holder<Model> modelSquare, modelBone;
-			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthAlphaClip, shaderStandardAlphaClip;
+			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
 
@@ -329,9 +329,9 @@ namespace cage
 				shaderBlit = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl")));
 				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
 				shaderStandard = defaultProgram(standard, 0);
-				shaderStandardAlphaClip = defaultProgram(standard, HashString("AlphaClip"));
+				shaderStandardCutOut = defaultProgram(standard, HashString("CutOut"));
 				shaderDepth = defaultProgram(standard, HashString("DepthOnly"));
-				shaderDepthAlphaClip = defaultProgram(standard, HashString("DepthOnly") + HashString("AlphaClip"));
+				shaderDepthCutOut = defaultProgram(standard, HashString("DepthOnly") + HashString("CutOut"));
 				shaderVisualizeColor = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl")));
 				shaderVisualizeDepth = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/depth.glsl")));
 				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
@@ -371,23 +371,23 @@ namespace cage
 						uint32 variant = 0;
 						if constexpr (RenderMode != RenderModeEnum::Color)
 							variant += HashString("DepthOnly");
-						if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-							variant += HashString("AlphaClip");
+						if (any(sh.mesh->flags & MeshRenderFlags::CutOut))
+							variant += HashString("CutOut");
 						return assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(sh.mesh->shaderName)->get(variant);
 					}
 					else
 					{
 						if constexpr (RenderMode == RenderModeEnum::Color)
 						{ // color
-							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-								return shaderStandardAlphaClip.share();
+							if (any(sh.mesh->flags & MeshRenderFlags::CutOut))
+								return shaderStandardCutOut.share();
 							else
 								return shaderStandard.share();
 						}
 						else
 						{ // depth
-							if (any(sh.mesh->flags & MeshRenderFlags::AlphaClip))
-								return shaderDepthAlphaClip.share();
+							if (any(sh.mesh->flags & MeshRenderFlags::CutOut))
+								return shaderDepthCutOut.share();
 							else
 								return shaderDepth.share();
 						}
@@ -673,8 +673,9 @@ namespace cage
 				}
 				CAGE_ASSERT(!!pr.skeletal == !!pr.skeletalAnimation);
 
-				pr.translucent = any(pr.mesh->flags & MeshRenderFlags::Translucent) || pr.render.opacity < 1;
+				pr.translucent = any(pr.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || pr.render.opacity < 1;
 				pr.uni.normalMat.data[2][3] = any(pr.mesh->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				pr.uni.normalMat.data[1][3] = any(pr.mesh->flags & MeshRenderFlags::Fade) ? 1 : 0; // transparent mode is to fade
 
 				pr.depth = (pr.uni.mvpMat * Vec4(0, 0, 0, 1))[2];
 

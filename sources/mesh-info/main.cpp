@@ -53,7 +53,9 @@ void info(const String &src, int format)
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "albedo mult: " + pt.material.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "special base: " + pt.material.specialBase);
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "special mult: " + pt.material.specialMult);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "translucent: " + any(pt.renderFlags & MeshRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "cutOut: " + any(pt.renderFlags & MeshRenderFlags::CutOut));
+		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "transparent: " + any(pt.renderFlags & MeshRenderFlags::Transparent));
+		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "fade: " + any(pt.renderFlags & MeshRenderFlags::Fade));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "two sided: " + any(pt.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth test: " + any(pt.renderFlags & MeshRenderFlags::DepthTest));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth write: " + any(pt.renderFlags & MeshRenderFlags::DepthWrite));

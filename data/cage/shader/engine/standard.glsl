@@ -10,7 +10,7 @@ void main()
 
 $include fragment.glsl
 
-#ifndef AlphaClip
+#ifndef CutOut
 layout(early_fragment_tests) in;
 #endif
 
@@ -18,19 +18,19 @@ void main()
 {
 #ifdef DepthOnly
 
-#ifdef AlphaClip
+#ifdef CutOut
 	if (loadMaterial().opacity < 0.5)
 		discard;
-#endif // AlphaClip
+#endif // CutOut
 
 #else // DepthOnly
 
 	updateNormal();
 	Material material = loadMaterial();
-#ifdef AlphaClip
+#ifdef CutOut
 	if (material.opacity < 0.5)
 		discard;
-#endif // AlphaClip
+#endif // CutOut
 	outColor = lighting(material);
 
 #endif // DepthOnly
