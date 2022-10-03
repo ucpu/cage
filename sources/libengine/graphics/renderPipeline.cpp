@@ -644,7 +644,7 @@ namespace cage
 					if (!pt->offset.valid())
 						pt->offset = 0;
 					if (Holder<Texture> tex = assets->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureNames[0]))
-						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, time, pt->startTime, pt->speed, pt->offset);
+						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, currentTime, pt->startTime, pt->speed, pt->offset);
 				}
 
 				if (ps)
@@ -665,7 +665,7 @@ namespace cage
 					Holder<SkeletalAnimation> anim = assets->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name);
 					if (anim)
 					{
-						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, time, ps->startTime, ps->speed, ps->offset);
+						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, currentTime, ps->startTime, ps->speed, ps->offset);
 						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
 						pr.skeletalAnimation->prepare();
 						pr.skeletal = true;
@@ -1068,6 +1068,7 @@ namespace cage
 						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
 						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
+						cfg.elapsedTime = elapsedTime * 1e-6;
 						screenSpaceEyeAdaptationPrepare(cfg);
 					}
 
@@ -1092,6 +1093,7 @@ namespace cage
 						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
+						cfg.elapsedTime = elapsedTime * 1e-6;
 						screenSpaceEyeAdaptationApply(cfg);
 						std::swap(texSource, texTarget);
 					}
@@ -1250,7 +1252,7 @@ namespace cage
 					viewport.ambientLight = Vec4(colorGammaToLinear(data.camera.ambientColor) * data.camera.ambientIntensity, 0);
 					viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(data.camera.ambientDirectionalColor) * data.camera.ambientDirectionalIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(data.resolution));
-					viewport.time = Vec4(frameIndex % 10000, (time % uint64(1e6)) / 1e6, (time % uint64(1e9)) / 1e9, 0);
+					viewport.time = Vec4(frameIndex % 10000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 				}
 

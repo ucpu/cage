@@ -31,7 +31,10 @@ void main()
 
 	// tone mapping
 	if (tonemapSecond[3] > 0.5)
-		color = uncharted2Tonemap(color) / uncharted2Tonemap(vec3(tonemapSecond[2]));
+	{
+		const float exposureBias = 2;
+		color = uncharted2Tonemap(color * exposureBias) / uncharted2Tonemap(vec3(tonemapSecond[2]));
+	}
 
 	// gamma correction
 	color = pow(color, vec3(gammaParams[0]));

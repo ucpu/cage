@@ -37,7 +37,8 @@ namespace cage
 	class CAGE_ENGINE_API RenderPipeline : private Immovable
 	{
 	public:
-		uint64 time = 0;
+		uint64 currentTime = 0;
+		uint64 elapsedTime = 1000000 / 60; // microseconds since last frame
 		uint32 frameIndex = 0;
 		Real interpolationFactor = 1;
 

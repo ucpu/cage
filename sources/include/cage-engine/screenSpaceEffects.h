@@ -39,6 +39,7 @@ namespace cage
 		String cameraId; // for synchronizing data across frames
 		TextureHandle inColor; // used in both passes
 		TextureHandle outColor; // used in the apply pass only
+		Real elapsedTime = 1.0 / 60;
 	};
 
 	struct CAGE_ENGINE_API ScreenSpaceBloomConfig : public ScreenSpaceCommonConfig, public ScreenSpaceBloom

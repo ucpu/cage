@@ -10,7 +10,7 @@ namespace cage
 	class FpsCamera : private Immovable
 	{
 	public:
-		Vec2 turningSpeed = Vec2(0.008);
+		Vec2 turningSpeed = Vec2(0.005);
 		Real rollSpeed = 10;
 		Real movementSpeed = 1;
 		Rads pitchLimitUp = Degs(80);

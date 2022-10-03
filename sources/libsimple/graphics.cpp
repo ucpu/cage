@@ -183,8 +183,9 @@ namespace cage
 				if (auto lock = emitBuffersGuard->read())
 				{
 					const EmitBuffer &eb = emitBuffers[lock.index()];
-					eb.pipeline->time = itc(eb.emitTime, dispatchTime, controlThread().updatePeriod());
-					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->time - eb.emitTime) / controlThread().updatePeriod());
+					eb.pipeline->currentTime = itc(eb.emitTime, dispatchTime, controlThread().updatePeriod());
+					eb.pipeline->elapsedTime = dispatchTime - lastDispatchTime;
+					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->currentTime - eb.emitTime) / controlThread().updatePeriod());
 					eb.pipeline->frameIndex = frameIndex;
 
 					renderQueue->resetQueue();
@@ -196,6 +197,7 @@ namespace cage
 					outputDrawCalls = renderQueue->drawsCount();
 					outputDrawPrimitives = renderQueue->primitivesCount();
 					frameIndex++;
+					lastDispatchTime = dispatchTime;
 				}
 			}
 
@@ -230,6 +232,7 @@ namespace cage
 			EmitBuffer emitBuffers[3];
 			InterpolationTimingCorrector itc;
 
+			uint64 lastDispatchTime = 0;
 			uint32 outputDrawCalls = 0;
 			uint32 outputDrawPrimitives = 0;
 			uint32 frameIndex = 0;

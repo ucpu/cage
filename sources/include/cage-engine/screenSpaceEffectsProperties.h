@@ -29,10 +29,12 @@ namespace cage
 
 	struct CAGE_ENGINE_API ScreenSpaceEyeAdaptation
 	{
-		Real key = 0.15;
-		Real strength = 0.5;
-		Real darkerSpeed = 0.2;
-		Real lighterSpeed = 1;
+		Real darkerSpeed = 0.5;
+		Real lighterSpeed = 2;
+		Real nightOffset = 3;
+		Real nightScale = 0.3;
+		Real key = 0.1; // target gray
+		Real strength = 0.8; // whole effect factor
 	};
 
 	struct CAGE_ENGINE_API ScreenSpaceBloom
@@ -43,11 +45,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API ScreenSpaceTonemap
 	{
-		Real shoulderStrength = 0.22;
-		Real linearStrength = 0.3;
+		Real shoulderStrength = 0.15;
+		Real linearStrength = 0.5;
 		Real linearAngle = 0.1;
 		Real toeStrength = 0.2;
-		Real toeNumerator = 0.01;
+		Real toeNumerator = 0.02;
 		Real toeDenominator = 0.3;
 		Real white = 11.2;
 	};

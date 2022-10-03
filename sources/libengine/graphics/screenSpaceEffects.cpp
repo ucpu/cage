@@ -244,7 +244,7 @@ namespace cage
 		q->bind(texAccum, 1);
 		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCopy.glsl"))->get(0);
 		q->bind(shader);
-		q->uniform(shader, 0, Vec2(config.darkerSpeed, config.lighterSpeed));
+		q->uniform(shader, 0, Vec2(config.darkerSpeed, config.lighterSpeed) * config.elapsedTime);
 		q->draw(model);
 	}
 
@@ -321,7 +321,7 @@ namespace cage
 		q->bind(texAccum, 1);
 		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"))->get(0);
 		q->bind(shader);
-		q->uniform(shader, 0, Vec2(config.key, config.strength));
+		q->uniform(shader, 0, Vec4(config.key, config.strength, config.nightOffset, config.nightScale));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 	}
 

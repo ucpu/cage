@@ -6,7 +6,7 @@ $define shader fragment
 layout(binding = 0) uniform sampler2D texColor;
 layout(binding = 1) uniform sampler2D texLuminance;
 
-layout(location = 0) uniform vec2 uniLuminanceParams; // key, strength
+layout(location = 0) uniform vec4 uniLuminanceParams; // key, strength, nightOffset, nightScale
 
 out vec3 outColor;
 
@@ -39,12 +39,11 @@ vec3 desaturate(vec3 color, float strength)
 void main()
 {
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
-	float avgLuminance = texelFetch(texLuminance, ivec2(0), 0).x;
-	avgLuminance = exp(avgLuminance);
-	float li = uniLuminanceParams[0] / avgLuminance;
-	vec3 c = color * li;
-	//float night = max((li - 25.0) / li, 0.0);
+	float avgLuminanceLog = texelFetch(texLuminance, ivec2(0), 0).x;
+	float avgLuminance = exp(avgLuminanceLog);
+	vec3 c = color * uniLuminanceParams[0] / avgLuminance;
+	float night = clamp((-avgLuminanceLog - uniLuminanceParams[2]) * uniLuminanceParams[3], 0.0, 1.0);
 	//c = blueShift(c, night);
-	//c = desaturate(c, night);
+	c = desaturate(c, night);
 	outColor = mix(color, c, uniLuminanceParams[1]);
 }
