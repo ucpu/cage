@@ -28,6 +28,7 @@ namespace cage
 	namespace
 	{
 		const ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
+		const ConfigFloat confRenderGamma("cage/graphics/gamma", 2.2);
 
 		struct EmitBuffer : private Immovable
 		{
@@ -129,6 +130,7 @@ namespace cage
 					CameraData data;
 					data.pipeline = eb.pipeline.share();
 					data.inputs.camera = cam;
+					data.inputs.camera.gamma = Real(confRenderGamma);
 					data.inputs.name = Stringizer() + "camera_" + e->name();
 					data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
 					data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;

@@ -16,11 +16,13 @@ namespace cage
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 		ConfigBool confProfilingEnabled("cage/profiling/enabled");
+		ConfigFloat confRenderGamma("cage/graphics/gamma");
 
 		class StatisticsGuiImpl : public StatisticsGui
 		{
 		public:
 			InputListener<InputClassEnum::KeyPress, InputKey, bool> keyPressListener;
+			InputListener<InputClassEnum::KeyRepeat, InputKey, bool> keyRepeatListener;
 			EventListener<bool()> updateListener;
 
 			uint32 panelIndex = 0;
@@ -35,6 +37,8 @@ namespace cage
 			{
 				keyPressListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::keyPress>(this);
 				keyPressListener.attach(engineWindow()->events);
+				keyRepeatListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::keyRepeat>(this);
+				keyRepeatListener.attach(engineWindow()->events);
 				updateListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::update>(this);
 				updateListener.attach(controlThread().update);
 			}
@@ -259,6 +263,28 @@ namespace cage
 					if (in.key == keyToggleRenderSkeletonBones)
 					{
 						confRenderSkeletonBones = !confRenderSkeletonBones;
+						return true;
+					}
+				}
+				return false;
+			}
+
+			bool keyRepeat(InputKey in)
+			{
+				if (in.mods == keyModifiers)
+				{
+					if (in.key == keyDecreaseGamma)
+					{
+						Real g = Real(confRenderGamma);
+						g = max(1, g - 0.05);
+						confRenderGamma = g.value;
+						return true;
+					}
+					if (in.key == keyIncreaseGamma)
+					{
+						Real g = Real(confRenderGamma);
+						g = min(5, g + 0.05);
+						confRenderGamma = g.value;
 						return true;
 					}
 				}

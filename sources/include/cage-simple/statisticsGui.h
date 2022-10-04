@@ -47,6 +47,8 @@ namespace cage
 		uint32 keyVisualizeBufferNext = 295; // f6
 		uint32 keyToggleRenderMissingModels = 296; // f7
 		uint32 keyToggleRenderSkeletonBones = 297; // f8
+		uint32 keyDecreaseGamma = 298; // f9
+		uint32 keyIncreaseGamma = 299; // f10
 		ModifiersFlags keyModifiers = ModifiersFlags::Ctrl;
 		StatisticsGuiScopeEnum statisticsScope = StatisticsGuiScopeEnum::Full;
 		StatisticsGuiModeEnum statisticsMode = StatisticsGuiModeEnum::Maximum;
