@@ -34,7 +34,8 @@ namespace cage
 		Real lowLogLum = -12;
 		Real highLogLum = 2;
 		Real nightOffset = 3;
-		Real nightScale = 0.3;
+		Real nightDesaturate = 0.2;
+		Real nightContrast = 0.01;
 		Real key = 0.1; // target gray
 		Real strength = 0.8; // whole effect factor
 	};

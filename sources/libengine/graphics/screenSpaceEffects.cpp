@@ -215,7 +215,7 @@ namespace cage
 		{
 			Vec4 logRange; // min, max range in log2 space
 			Vec4 adaptationSpeed; // darker, lighter
-			Vec4 nightParams; // nightOffset, nightScale
+			Vec4 nightParams; // nightOffset, nightDesaturation, nightContrast
 			Vec4 applyParams; // key, strength
 		};
 
@@ -224,7 +224,7 @@ namespace cage
 			EyeAdaptationParams s;
 			s.logRange = Vec4(config.lowLogLum, config.highLogLum, 0, 0);
 			s.adaptationSpeed = Vec4(config.darkerSpeed, config.lighterSpeed, 0, 0) * config.elapsedTime;
-			s.nightParams = Vec4(config.nightOffset, config.nightScale, 0, 0);
+			s.nightParams = Vec4(config.nightOffset, config.nightDesaturate, config.nightContrast, 0);
 			s.applyParams = Vec4(config.key, config.strength, 0, 0);
 			return s;
 		}
