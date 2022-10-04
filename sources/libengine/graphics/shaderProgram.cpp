@@ -15,10 +15,14 @@
 
 namespace cage
 {
-	ConfigBool shaderIntrospection("cage/graphics/shaderIntrospection", false);
+	const ConfigBool shaderIntrospection("cage/graphics/shaderIntrospection", false);
 
 	namespace
 	{
+#ifdef CAGE_ASSERT_ENABLED
+		thread_local uint32 boundShader = 0;
+#endif // CAGE_ASSERT_ENABLED
+
 		static_assert(sizeof(GLuint) == sizeof(uint32), "incompatible size of GLuint");
 
 		struct SourceHolder : private Noncopyable
@@ -165,6 +169,9 @@ namespace cage
 		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		glUseProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
+#ifdef CAGE_ASSERT_ENABLED
+		boundShader = impl->id;
+#endif // CAGE_ASSERT_ENABLED
 	}
 
 	void ShaderProgram::uniform(uint32 name, const sint32 &u)
@@ -688,6 +695,16 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
 			CAGE_THROW_ERROR(GraphicsError, "shader validation failed", len);
+	}
+
+	void ShaderProgram::compute(const Vec3i &groupsCounts)
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+#ifdef CAGE_ASSERT_ENABLED
+		CAGE_ASSERT(boundShader == impl->id);
+#endif
+		glDispatchCompute(groupsCounts[0], groupsCounts[1], groupsCounts[2]);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void MultiShaderProgram::setDebugName(const String &name)

@@ -37,6 +37,8 @@ namespace cage
 		GCHL_GENERATE(Mat3);
 		GCHL_GENERATE(Mat4);
 #undef GCHL_GENERATE
+
+		void compute(const Vec3i &groupsCounts);
 	};
 
 	class CAGE_ENGINE_API MultiShaderProgram : private Immovable

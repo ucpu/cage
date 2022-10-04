@@ -25,7 +25,7 @@ namespace cage
 			{
 				glCreateTextures(target, 1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
-				bind();
+				bind(0);
 			}
 
 			~TextureImpl()
@@ -176,9 +176,10 @@ namespace cage
 		return impl->mipmapLevels;
 	}
 
-	void Texture::bind() const
+	void Texture::bind(uint32 bindingPoint) const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
+		glActiveTexture(GL_TEXTURE0 + bindingPoint);
 		glBindTexture(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -405,6 +406,15 @@ namespace cage
 				glMakeTextureHandleNonResidentARB(bindlessHandle().handle);
 		}
 		CAGE_ASSERT(impl->residentCounter >= 0); // detect overflows
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void Texture::bindImage(uint32 bindingPoint, bool read, bool write) const
+	{
+		CAGE_ASSERT(read || write);
+		const TextureImpl *impl = (const TextureImpl *)this;
+		const uint32 access = read && write ? GL_READ_WRITE : write ? GL_WRITE_ONLY : GL_READ_ONLY;
+		glBindImageTexture(bindingPoint, impl->id, 0, GL_FALSE, 0, access, impl->internalFormat);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

@@ -13,7 +13,7 @@ fxaa.glsl
 gaussianBlur.glsl
 luminanceApply.glsl
 luminanceCollection.glsl
-luminanceCopy.glsl
+luminanceHistogram.glsl
 ssaoResolve.glsl
 ssaoGenerate.glsl
 tonemap.glsl

@@ -582,8 +582,7 @@ namespace cage
 			uint32 bindingPoint = m;
 			void dispatch(RenderQueueImpl *) const override
 			{
-				glActiveTexture(GL_TEXTURE0 + bindingPoint);
-				texture.resolve()->bind();
+				texture.resolve()->bind(bindingPoint);
 			}
 		};
 
@@ -753,6 +752,30 @@ namespace cage
 		impl->addCmd<Cmd>();
 	}
 
+	void RenderQueue::bindImage(TextureHandle texture, uint32 bindingPoint, bool read, bool write)
+	{
+		CAGE_ASSERT(read || write);
+
+		struct Cmd : public CmdBase
+		{
+			TextureHandle texture;
+			uint32 bindingPoint = 0;
+			bool read = false;
+			bool write = false;
+			void dispatch(RenderQueueImpl *) const override
+			{
+				texture.resolve()->bindImage(bindingPoint, read, write);
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.texture = texture;
+		cmd.bindingPoint = bindingPoint;
+		cmd.read = read;
+		cmd.write = write;
+	}
+
 	void RenderQueue::bindlessUniform(Holder<PointerRange<TextureHandle>> bindlessHandles, uint32 bindingPoint, bool makeResident)
 	{
 		struct CmdSetup : public CmdBase
@@ -855,6 +878,42 @@ namespace cage
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.model = model.share();
 		cmd.instances = instances;
+	}
+
+	void RenderQueue::compute(const Holder<ShaderProgram> &shader, const Vec3i &groupsCounts)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<ShaderProgram> shader;
+			Vec3i groupsCounts;
+			void dispatch(RenderQueueImpl *) const override
+			{
+				shader->bind();
+				shader->compute(groupsCounts);
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->drawsCount++;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.shader = shader.share();
+		cmd.groupsCounts = groupsCounts;
+	}
+
+	void RenderQueue::memoryBarrier(uint32 bits)
+	{
+		struct Cmd : public CmdBase
+		{
+			uint32 bits = 0;
+			void dispatch(RenderQueueImpl *) const override
+			{
+				glMemoryBarrier(bits);
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.bits = bits;
 	}
 
 	void RenderQueue::viewport(Vec2i origin, Vec2i size)

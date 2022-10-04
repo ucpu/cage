@@ -27,7 +27,7 @@ namespace cage
 		Vec3i resolution3() const;
 		uint32 mipmapLevels() const; // 1 is just base level
 
-		void bind() const;
+		void bind(uint32 bindingPoint) const;
 
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
@@ -49,6 +49,8 @@ namespace cage
 
 		BindlessHandle bindlessHandle();
 		void makeResident(bool resident);
+
+		void bindImage(uint32 bindingPoint, bool read, bool write) const;
 	};
 
 	CAGE_ENGINE_API Holder<Texture> newTexture();

@@ -918,7 +918,7 @@ namespace cage
 					{
 						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
 						renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						renderQueue->image2d(t, data.resolution, 1, GL_RGB16F);
+						renderQueue->image2d(t, data.resolution, 1, GL_RGBA16F);
 					}
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
@@ -1041,7 +1041,7 @@ namespace cage
 						{
 							renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
 							renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-							renderQueue->image2d(t, data.resolution, 1, GL_RGB16F);
+							renderQueue->image2d(t, data.resolution, 1, GL_RGBA16F);
 						}
 						return t;
 					}();

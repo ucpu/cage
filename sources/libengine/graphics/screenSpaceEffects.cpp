@@ -209,6 +209,32 @@ namespace cage
 		q->draw(model);
 	}
 
+	namespace
+	{
+		struct EyeAdaptationParams
+		{
+			Vec4 logRange; // min, max range in log2 space
+			Vec4 adaptationSpeed; // darker, lighter
+			Vec4 nightParams; // nightOffset, nightScale
+			Vec4 applyParams; // key, strength
+		};
+
+		EyeAdaptationParams eyeAdaptationShaderParams(const ScreenSpaceEyeAdaptationConfig &config)
+		{
+			EyeAdaptationParams s;
+			s.logRange = Vec4(config.lowLogLum, config.highLogLum, 0, 0);
+			s.adaptationSpeed = Vec4(config.darkerSpeed, config.lighterSpeed, 0, 0) * config.elapsedTime;
+			s.nightParams = Vec4(config.nightOffset, config.nightScale, 0, 0);
+			s.applyParams = Vec4(config.key, config.strength, 0, 0);
+			return s;
+		}
+
+		uint32 roundUpTo16(uint32 x)
+		{
+			return x / 16 + ((x % 16) > 0 ? 1 : 0);
+		}
+	}
+
 	void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config)
 	{
 		const int downscale = 4;
@@ -217,35 +243,24 @@ namespace cage
 		const auto graphicsDebugScope = q->namedScope("eye adaptation prepare");
 
 		const Vec2i res = max(config.resolution / downscale, 1u);
-		q->viewport(Vec2i(), res);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
+
+		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
+
+		q->bindImage(config.inColor, 0, true, false);
+		TextureHandle texHist = provTex(config.provisionals, config.queue, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
+		q->bindImage(texHist, 1, true, true);
+		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
+		q->bindImage(texAccum, 2, true, true);
 
 		// collection
-		TextureHandle texCollect = provTex(config.provisionals, config.queue, "luminanceCollection", res, mipsForResolution(res), GL_R16F);
-		q->filters(texCollect, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0); // is linear necessary?
-		q->colorTexture(fb, 0, texCollect);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCollection.glsl"))->get(0));
-		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-		q->draw(model);
+		Holder<ShaderProgram> shaderCollection = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCollection.glsl"))->get(0);
+		q->compute(shaderCollection, Vec3i(roundUpTo16(res[0]), roundUpTo16(res[1]), 1));
+		q->memoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-		// downscale
-		q->generateMipmaps(texCollect);
-
-		// accumulation / copy
-		q->viewport(Vec2i(), Vec2i(1));
-		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R16F);
-		q->bind(fb);
-		q->colorTexture(fb, 0, texAccum);
-		q->checkFrameBuffer(fb);
-		q->bind(texCollect, 0);
-		q->bind(texAccum, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceCopy.glsl"))->get(0);
-		q->bind(shader);
-		q->uniform(shader, 0, Vec2(config.darkerSpeed, config.lighterSpeed) * config.elapsedTime);
-		q->draw(model);
+		// histogram and accumulation
+		Holder<ShaderProgram> shaderHistogram = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceHistogram.glsl"))->get(0);
+		q->compute(shaderHistogram, Vec3i(1));
+		q->memoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT); // which one?
 	}
 
 	void screenSpaceBloom(const ScreenSpaceBloomConfig &config)
@@ -313,15 +328,16 @@ namespace cage
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
 
+		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
+
 		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R16F);
+		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
 		q->bind(texAccum, 1);
 		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"))->get(0);
 		q->bind(shader);
-		q->uniform(shader, 0, Vec4(config.key, config.strength, config.nightOffset, config.nightScale));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 	}
 
