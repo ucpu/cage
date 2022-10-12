@@ -16,8 +16,14 @@ namespace cage
 {
 	namespace
 	{
-		ConfigBool confDetailedInfo("cage/graphics/openglLogExtensions", false);
-		ConfigBool confLogSynchronous("cage/graphics/openglLogSynchronous", false);
+		const ConfigBool confDetailedInfo("cage/graphics/openglLogExtensions", false);
+		const ConfigBool confLogSynchronous("cage/graphics/openglLogSynchronous",
+#ifdef CAGE_DEBUG
+			true
+#else
+			false
+#endif
+			);
 	}
 
 	void checkGlError()
