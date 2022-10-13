@@ -1527,7 +1527,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "generating texture requires uvs");
 
 		const uint32 triCount = msh->facesCount();
-		const Vec2 scale = Vec2(config.width - 1, config.height - 1);
+		const Vec2 scale = Vec2(config.width, config.height);
 		for (uint32 triIdx = 0; triIdx < triCount; triIdx++)
 		{
 			Vec3i idx;
@@ -1548,19 +1548,21 @@ namespace cage
 				std::swap(t1, t2);
 			const sint32 totalHeight = t2[1] - t0[1];
 			const Real totalHeightInv = 1.f / totalHeight;
-			for (sint32 i = 0; i < totalHeight; i++)
+			for (sint32 i = 0; i <= totalHeight; i++)
 			{
 				const bool secondHalf = i > t1[1] - t0[1] || t1[1] == t0[1];
 				const uint32 segmentHeight = secondHalf ? t2[1] - t1[1] : t1[1] - t0[1];
-				const Real alpha = i * totalHeightInv;
-				const Real beta = Real(i - (secondHalf ? t1[1] - t0[1] : 0)) / segmentHeight;
+				const Real alpha = totalHeight ? i * totalHeightInv : 0;
+				const Real beta = totalHeight ? Real(i - (secondHalf ? t1[1] - t0[1] : 0)) / segmentHeight : 0;
 				Vec2i A = t0 + (t2 - t0) * alpha;
 				Vec2i B = secondHalf ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
 				if (A[0] > B[0])
 					std::swap(A, B);
+				const sint32 y = t0[1] + i;
+				CAGE_ASSERT(y >= 0 && y < config.height);
 				for (sint32 x = A[0]; x <= B[0]; x++)
 				{
-					const sint32 y = t0[1] + i;
+					CAGE_ASSERT(x >= 0 && x < config.width);
 					const Vec2 uv = Vec2(x, y);
 					const Vec2 b = barycoord(vertUvs[0], vertUvs[1], vertUvs[2], uv);
 					config.generator(Vec2i(x, y), idx, Vec3(b, 1 - b[0] - b[1]));

@@ -46,12 +46,8 @@ namespace
 			}
 		}
 	}
-}
 
-void testImage()
-{
-	CAGE_TESTCASE("image");
-
+	void validValuesInFormats()
 	{
 		CAGE_TESTCASE("valid values for different formats");
 		Holder<Image> img = newImage();
@@ -90,25 +86,107 @@ void testImage()
 		}
 	}
 
+	void variousFormats()
 	{
-		CAGE_TESTCASE("fill");
-		Holder<Image> img = newImage();
-		img->initialize(150, 40, 1);
-		imageFill(+img, 0.4);
-		test(img->get1(42, 13), 0.4);
-		img->initialize(150, 40, 2);
-		imageFill(+img, Vec2(0.1, 0.2));
-		test(img->get2(42, 13) / 100, Vec2(0.1, 0.2) / 100);
-		img->initialize(150, 40, 3);
-		imageFill(+img, Vec3(0.1, 0.2, 0.3));
-		test(img->get3(42, 13) / 100, Vec3(0.1, 0.2, 0.3) / 100);
-		img->initialize(150, 40, 4);
-		imageFill(+img, Vec4(0.1, 0.2, 0.3, 0.4));
-		test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.3, 0.4) / 100);
-		imageFill(+img, 2, 0.5);
-		test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.5, 0.4) / 100);
+		{
+			CAGE_TESTCASE("circle png 8bit");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			img->exportFile("images/formats/circle8.png");
+			CAGE_TEST(img->width() == 400);
+			img = newImage();
+			CAGE_TEST(img->width() == 0);
+			img->importFile("images/formats/circle8.png");
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			CAGE_TEST(img->width() == 400);
+			CAGE_TEST(img->height() == 300);
+		}
+
+		{
+			CAGE_TESTCASE("circle png 16bit");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4, ImageFormatEnum::U16);
+			drawCircle(+img);
+			img->exportFile("images/formats/circle16.png");
+			CAGE_TEST(img->width() == 400);
+			img = newImage();
+			CAGE_TEST(img->width() == 0);
+			img->importFile("images/formats/circle16.png");
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::U16);
+			CAGE_TEST(img->width() == 400);
+			CAGE_TEST(img->height() == 300);
+			img->exportFile("images/formats/circle16_2.png");
+		}
+
+		{
+			CAGE_TESTCASE("circle tiff float");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4, ImageFormatEnum::Float);
+			drawCircle(+img);
+			img->exportFile("images/formats/circleFloat.tiff");
+			CAGE_TEST(img->width() == 400);
+			img = newImage();
+			CAGE_TEST(img->width() == 0);
+			img->importFile("images/formats/circleFloat.tiff");
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::Float);
+			CAGE_TEST(img->width() == 400);
+			CAGE_TEST(img->height() == 300);
+			img->exportFile("images/formats/circleFloat_2.tiff");
+		}
+
+		{
+			CAGE_TESTCASE("tiff with 6 channels");
+			Holder<Image> img = newImage();
+			img->initialize(256, 256, 6, ImageFormatEnum::U8);
+			drawStripes(+img);
+			img->exportFile("images/formats/6_channels.tiff");
+			img = newImage();
+			img->importFile("images/formats/6_channels.tiff");
+			CAGE_TEST(img->width() == 256);
+			CAGE_TEST(img->height() == 256);
+			CAGE_TEST(img->channels() == 6);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			img->exportFile("images/formats/6_channels_2.tiff");
+		}
+
+		{
+			CAGE_TESTCASE("psd with 6 channels");
+			Holder<Image> img = newImage();
+			img->initialize(256, 256, 6, ImageFormatEnum::U8);
+			drawStripes(+img);
+			img->exportFile("images/formats/6_channels.psd");
+			img = newImage();
+			img->importFile("images/formats/6_channels.psd");
+			CAGE_TEST(img->width() == 256);
+			CAGE_TEST(img->height() == 256);
+			CAGE_TEST(img->channels() == 6);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			img->exportFile("images/formats/6_channels_2.psd");
+		}
+
+		{
+			CAGE_TESTCASE("circle exr");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4, ImageFormatEnum::Float);
+			drawCircle(+img);
+			img->exportFile("images/formats/circleFloat.exr");
+			CAGE_TEST(img->width() == 400);
+			img = newImage();
+			CAGE_TEST(img->width() == 0);
+			img->importFile("images/formats/circleFloat.exr");
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::Float);
+			CAGE_TEST(img->width() == 400);
+			CAGE_TEST(img->height() == 300);
+			img->exportFile("images/formats/circleFloat_2.exr");
+		}
 	}
 
+	void channelsInFormats()
 	{
 		CAGE_TESTCASE("store different channels counts in different formats");
 		Holder<Image> img = newImage();
@@ -149,6 +227,7 @@ void testImage()
 		}
 	}
 
+	void bcn()
 	{
 		CAGE_TESTCASE("bcn");
 
@@ -275,299 +354,255 @@ void testImage()
 		}
 	}
 
+	void conversions()
 	{
-		CAGE_TESTCASE("circle png 8bit");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		img->exportFile("images/formats/circle8.png");
-		CAGE_TEST(img->width() == 400);
-		img = newImage();
-		CAGE_TEST(img->width() == 0);
-		img->importFile("images/formats/circle8.png");
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-	}
-
-	{
-		CAGE_TESTCASE("circle png 16bit");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4, ImageFormatEnum::U16);
-		drawCircle(+img);
-		img->exportFile("images/formats/circle16.png");
-		CAGE_TEST(img->width() == 400);
-		img = newImage();
-		CAGE_TEST(img->width() == 0);
-		img->importFile("images/formats/circle16.png");
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U16);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		img->exportFile("images/formats/circle16_2.png");
-	}
-
-	{
-		CAGE_TESTCASE("circle tiff float");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4, ImageFormatEnum::Float);
-		drawCircle(+img);
-		img->exportFile("images/formats/circleFloat.tiff");
-		CAGE_TEST(img->width() == 400);
-		img = newImage();
-		CAGE_TEST(img->width() == 0);
-		img->importFile("images/formats/circleFloat.tiff");
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::Float);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		img->exportFile("images/formats/circleFloat_2.tiff");
-	}
-
-	{
-		CAGE_TESTCASE("tiff with 6 channels");
-		Holder<Image> img = newImage();
-		img->initialize(256, 256, 6, ImageFormatEnum::U8);
-		drawStripes(+img);
-		img->exportFile("images/formats/6_channels.tiff");
-		img = newImage();
-		img->importFile("images/formats/6_channels.tiff");
-		CAGE_TEST(img->width() == 256);
-		CAGE_TEST(img->height() == 256);
-		CAGE_TEST(img->channels() == 6);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/formats/6_channels_2.tiff");
-	}
-
-	{
-		CAGE_TESTCASE("psd with 6 channels");
-		Holder<Image> img = newImage();
-		img->initialize(256, 256, 6, ImageFormatEnum::U8);
-		drawStripes(+img);
-		img->exportFile("images/formats/6_channels.psd");
-		img = newImage();
-		img->importFile("images/formats/6_channels.psd");
-		CAGE_TEST(img->width() == 256);
-		CAGE_TEST(img->height() == 256);
-		CAGE_TEST(img->channels() == 6);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/formats/6_channels_2.psd");
-	}
-
-	{
-		CAGE_TESTCASE("circle exr");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4, ImageFormatEnum::Float);
-		drawCircle(+img);
-		img->exportFile("images/formats/circleFloat.exr");
-		CAGE_TEST(img->width() == 400);
-		img = newImage();
-		CAGE_TEST(img->width() == 0);
-		img->importFile("images/formats/circleFloat.exr");
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::Float);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		img->exportFile("images/formats/circleFloat_2.exr");
-	}
-
-	{
-		CAGE_TESTCASE("blit 1");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		Holder<Image> tg = newImage();
-		imageBlit(+img, +tg, 50, 0, 0, 0, 300, 300);
-		tg->exportFile("images/algorithms/blit1.png");
-	}
-
-	{
-		CAGE_TESTCASE("blit 2");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		Holder<Image> tg = newImage();
-		tg->initialize(400, 400, 4);
-		imageBlit(+img, +tg, 50, 0, 50, 50, 300, 300);
-		tg->exportFile("images/algorithms/blit2.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert 8 to 16 bit");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", m, ImageFormatEnum::U16);
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U16);
-		img->exportFile("images/algorithms/8_to_16_bits.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert 16 to 8 bit");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle16.png", m, ImageFormatEnum::U8);
-		CAGE_TEST(img->channels() == 4);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/algorithms/16_to_8_bits.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert to 1 channel");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", 1);
-		CAGE_TEST(img->channels() == 1);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/algorithms/to_1_channel.png");
-	}
-
-	{
-		CAGE_TESTCASE("convert to 3 channel");
-		Holder<Image> img = newImage();
-		img->importFile("images/formats/circle8.png", 3);
-		CAGE_TEST(img->width() == 400);
-		CAGE_TEST(img->height() == 300);
-		CAGE_TEST(img->channels() == 3);
-		CAGE_TEST(img->format() == ImageFormatEnum::U8);
-		img->exportFile("images/algorithms/to_3_channels.png");
-	}
-
-	{
-		CAGE_TESTCASE("linearize (degamma) and back");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageConvert(+img, GammaSpaceEnum::Linear);
-		img->exportFile("images/algorithms/to_linear.png");
-		imageConvert(+img, GammaSpaceEnum::Gamma);
-		img->exportFile("images/algorithms/to_linear_to_gamma.png");
-	}
-
-	{
-		CAGE_TESTCASE("premultiply alpha and back");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
-		img->exportFile("images/algorithms/to_premultiplied.png");
-		imageConvert(+img, AlphaModeEnum::Opacity);
-		img->exportFile("images/algorithms/to_premultiplied_to_opacity.png");
-	}
-
-	{
-		CAGE_TESTCASE("upscale");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageResize(+img, 600, 450, true);
-		img->exportFile("images/algorithms/upscaled_colorconfig.png");
-		img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageResize(+img, 600, 450, false);
-		img->exportFile("images/algorithms/upscaled_raw.png");
-	}
-
-	{
-		CAGE_TESTCASE("downscale");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageResize(+img, 200, 150, true);
-		img->exportFile("images/algorithms/downscaled_colorconfig.png");
-		img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageResize(+img, 200, 150, false);
-		img->exportFile("images/algorithms/downscaled_raw.png");
-	}
-
-	{
-		CAGE_TESTCASE("stretch");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300);
-		drawCircle(+img);
-		imageResize(+img, 300, 500);
-		img->exportFile("images/algorithms/stretched.png");
-	}
-
-	{
-		CAGE_TESTCASE("dilation without transparency");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		imageConvert(+img, 3);
-		imageDilation(+img, 1);
-		img->exportFile("images/dilation/3_1.png");
-		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
-		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
-		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		imageConvert(+img, 3);
 		{
-			Holder<Timer> timer = newTimer();
-			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			CAGE_TESTCASE("convert 8 to 16 bit");
+			Holder<Image> img = newImage();
+			img->importFile("images/formats/circle8.png", m, ImageFormatEnum::U16);
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::U16);
+			img->exportFile("images/algorithms/8_to_16_bits.png");
 		}
-		img->exportFile("images/dilation/3_5.png");
-		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
-		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
-		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
-	}
 
-	{
-		CAGE_TESTCASE("dilation with transparency");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		imageDilation(+img, 1);
-		img->exportFile("images/dilation/4_1.png");
-		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
-		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
-		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
-		CAGE_TEST(img->value(50 - 1, 150, 3) > 0.9);
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
 		{
-			Holder<Timer> timer = newTimer();
-			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			CAGE_TESTCASE("convert 16 to 8 bit");
+			Holder<Image> img = newImage();
+			img->importFile("images/formats/circle16.png", m, ImageFormatEnum::U8);
+			CAGE_TEST(img->channels() == 4);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			img->exportFile("images/algorithms/16_to_8_bits.png");
 		}
-		img->exportFile("images/dilation/4_5.png");
-		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
-		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
-		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
-		CAGE_TEST(img->value(50 - 5, 150, 3) > 0.9);
-	}
 
-	{
-		CAGE_TESTCASE("dilation with nan");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4, ImageFormatEnum::Float);
-		drawCircle(+img);
-		for (uint32 y = 0; y < 300; y++)
-			for (uint32 x = 0; x < 400; x++)
-				if (randomChance() < 0.3)
-					img->set(x, y, Vec4::Nan());
 		{
-			Holder<Timer> timer = newTimer();
-			imageDilation(+img, 1, true);
-			CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			CAGE_TESTCASE("convert to 1 channel");
+			Holder<Image> img = newImage();
+			img->importFile("images/formats/circle8.png", 1);
+			CAGE_TEST(img->channels() == 1);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			img->exportFile("images/algorithms/to_1_channel.png");
 		}
-		imageConvert(+img, ImageFormatEnum::U8);
-		img->exportFile("images/dilation/nan.png");
+
+		{
+			CAGE_TESTCASE("convert to 3 channel");
+			Holder<Image> img = newImage();
+			img->importFile("images/formats/circle8.png", 3);
+			CAGE_TEST(img->width() == 400);
+			CAGE_TEST(img->height() == 300);
+			CAGE_TEST(img->channels() == 3);
+			CAGE_TEST(img->format() == ImageFormatEnum::U8);
+			img->exportFile("images/algorithms/to_3_channels.png");
+		}
+
+		{
+			CAGE_TESTCASE("linearize (degamma) and back");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageConvert(+img, GammaSpaceEnum::Linear);
+			img->exportFile("images/algorithms/to_linear.png");
+			imageConvert(+img, GammaSpaceEnum::Gamma);
+			img->exportFile("images/algorithms/to_linear_to_gamma.png");
+		}
+
+		{
+			CAGE_TESTCASE("premultiply alpha and back");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
+			img->exportFile("images/algorithms/to_premultiplied.png");
+			imageConvert(+img, AlphaModeEnum::Opacity);
+			img->exportFile("images/algorithms/to_premultiplied_to_opacity.png");
+		}
 	}
 
+	void algorithms()
 	{
-		CAGE_TESTCASE("channels split");
-		Holder<Image> img = newImage();
-		img->initialize(400, 300, 4);
-		drawCircle(+img);
-		const auto res = imageChannelsSplit(+img);
-		CAGE_TEST(res.size() == 4);
-		res[0]->exportFile("images/algorithms/spliChannel_0.png");
-		res[1]->exportFile("images/algorithms/spliChannel_1.png");
-		res[2]->exportFile("images/algorithms/spliChannel_2.png");
-		res[3]->exportFile("images/algorithms/spliChannel_3.png");
+		{
+			CAGE_TESTCASE("fill");
+			Holder<Image> img = newImage();
+			img->initialize(150, 40, 1);
+			imageFill(+img, 0.4);
+			test(img->get1(42, 13), 0.4);
+			img->initialize(150, 40, 2);
+			imageFill(+img, Vec2(0.1, 0.2));
+			test(img->get2(42, 13) / 100, Vec2(0.1, 0.2) / 100);
+			img->initialize(150, 40, 3);
+			imageFill(+img, Vec3(0.1, 0.2, 0.3));
+			test(img->get3(42, 13) / 100, Vec3(0.1, 0.2, 0.3) / 100);
+			img->initialize(150, 40, 4);
+			imageFill(+img, Vec4(0.1, 0.2, 0.3, 0.4));
+			test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.3, 0.4) / 100);
+			imageFill(+img, 2, 0.5);
+			test(img->get4(42, 13) / 100, Vec4(0.1, 0.2, 0.5, 0.4) / 100);
+		}
+
+		{
+			CAGE_TESTCASE("blit 1");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			Holder<Image> tg = newImage();
+			imageBlit(+img, +tg, 50, 0, 0, 0, 300, 300);
+			tg->exportFile("images/algorithms/blit1.png");
+		}
+
+		{
+			CAGE_TESTCASE("blit 2");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			Holder<Image> tg = newImage();
+			tg->initialize(400, 400, 4);
+			imageBlit(+img, +tg, 50, 0, 50, 50, 300, 300);
+			tg->exportFile("images/algorithms/blit2.png");
+		}
+
+		{
+			CAGE_TESTCASE("upscale");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageResize(+img, 600, 450, true);
+			img->exportFile("images/algorithms/upscaled_colorconfig.png");
+			img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageResize(+img, 600, 450, false);
+			img->exportFile("images/algorithms/upscaled_raw.png");
+		}
+
+		{
+			CAGE_TESTCASE("downscale");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageResize(+img, 200, 150, true);
+			img->exportFile("images/algorithms/downscaled_colorconfig.png");
+			img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageResize(+img, 200, 150, false);
+			img->exportFile("images/algorithms/downscaled_raw.png");
+		}
+
+		{
+			CAGE_TESTCASE("stretch");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300);
+			drawCircle(+img);
+			imageResize(+img, 300, 500);
+			img->exportFile("images/algorithms/stretched.png");
+		}
+
+		{
+			CAGE_TESTCASE("dilation without transparency");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 3);
+			imageDilation(+img, 1);
+			img->exportFile("images/dilation/3_1.png");
+			CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
+			CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
+			CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageConvert(+img, 3);
+			{
+				Holder<Timer> timer = newTimer();
+				imageDilation(+img, 5);
+				CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			}
+			img->exportFile("images/dilation/3_5.png");
+			CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
+			CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
+			CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
+		}
+
+		{
+			CAGE_TESTCASE("dilation with transparency");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			imageDilation(+img, 1);
+			img->exportFile("images/dilation/4_1.png");
+			CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
+			CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
+			CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
+			CAGE_TEST(img->value(50 - 1, 150, 3) > 0.9);
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			{
+				Holder<Timer> timer = newTimer();
+				imageDilation(+img, 5);
+				CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			}
+			img->exportFile("images/dilation/4_5.png");
+			CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
+			CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
+			CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
+			CAGE_TEST(img->value(50 - 5, 150, 3) > 0.9);
+		}
+
+		{
+			CAGE_TESTCASE("dilation with nan");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4, ImageFormatEnum::Float);
+			drawCircle(+img);
+			for (uint32 y = 0; y < 300; y++)
+				for (uint32 x = 0; x < 400; x++)
+					if (randomChance() < 0.3)
+						img->set(x, y, Vec4::Nan());
+			{
+				Holder<Timer> timer = newTimer();
+				imageDilation(+img, 1, true);
+				CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + timer->duration());
+			}
+			imageConvert(+img, ImageFormatEnum::U8);
+			img->exportFile("images/dilation/nan.png");
+		}
+
+		{
+			CAGE_TESTCASE("dilation test channels");
+			Holder<Image> img = newImage();
+			img->initialize(11, 11, 3, ImageFormatEnum::Float);
+			img->set(0, 0, Vec3(1, 0, 0));
+			img->set(5, 5, Vec3(0, 1, 0));
+			img->set(10, 0, Vec3(0, 0, 1));
+			imageDilation(+img, 8);
+			imageConvert(+img, ImageFormatEnum::U8);
+			img->exportFile("images/dilation/channels.png");
+			test(img->get3(0, 0), Vec3(1, 0, 0));
+			test(img->get3(5, 5), Vec3(0, 1, 0));
+			test(img->get3(10, 0), Vec3(0, 0, 1));
+			test(img->get3(0, 10), Vec3(0, 1, 0));
+			test(img->get3(10, 10), Vec3(0, 1, 0));
+		}
+
+		{
+			CAGE_TESTCASE("channels split");
+			Holder<Image> img = newImage();
+			img->initialize(400, 300, 4);
+			drawCircle(+img);
+			const auto res = imageChannelsSplit(+img);
+			CAGE_TEST(res.size() == 4);
+			res[0]->exportFile("images/algorithms/spliChannel_0.png");
+			res[1]->exportFile("images/algorithms/spliChannel_1.png");
+			res[2]->exportFile("images/algorithms/spliChannel_2.png");
+			res[3]->exportFile("images/algorithms/spliChannel_3.png");
+		}
 	}
+}
+
+void testImage()
+{
+	CAGE_TESTCASE("image");
+	validValuesInFormats();
+	variousFormats();
+	channelsInFormats();
+	bcn();
+	conversions();
+	algorithms();
 }

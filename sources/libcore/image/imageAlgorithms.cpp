@@ -348,17 +348,17 @@ namespace cage
 		template<class T, bool UseNan>
 		struct Dilation
 		{
-			Image *const src;
-			Image *const dst;
-			const uint32 w;
-			const uint32 h;
+			Image *const src = nullptr;
+			Image *const dst = nullptr;
+			const uint32 w = 0;
+			const uint32 h = 0;
 
 			Dilation(Image *src, Image *dst) : src(src), dst(dst), w(src->width()), h(src->height())
 			{}
 
 			CAGE_FORCE_INLINE bool valid(const T &v)
 			{
-				if (UseNan)
+				if constexpr (UseNan)
 					return cage::valid(v);
 				return v != T();
 			}
@@ -366,7 +366,7 @@ namespace cage
 			CAGE_FORCE_INLINE void update(const T &a, T &m, uint32 &cnt)
 			{
 				const bool v = valid(a);
-				if (UseNan)
+				if constexpr (UseNan)
 				{
 					if (v)
 					{
@@ -455,13 +455,13 @@ namespace cage
 					return;
 				}
 				processRowSimple(0);
-				processRowSimple(h - 1);
 				for (uint32 y = 1; y < h - 1; y++)
 				{
 					processPixelSimple(0, y);
 					processRowCenter(y);
 					processPixelSimple(w - 1, y);
 				}
+				processRowSimple(h - 1);
 			}
 		};
 
