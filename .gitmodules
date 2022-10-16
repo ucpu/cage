@@ -88,3 +88,6 @@
 [submodule "externals/avir/avir"]
 	path = externals/avir/avir
 	url = https://github.com/avaneev/avir.git
+[submodule "externals/openxr-sdk/OpenXR-SDK"]
+	path = externals/openxr-sdk/OpenXR-SDK
+	url = https://github.com/KhronosGroup/OpenXR-SDK.git
