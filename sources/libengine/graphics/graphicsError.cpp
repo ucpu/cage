@@ -17,7 +17,7 @@ namespace cage
 	namespace
 	{
 		const ConfigBool confDetailedInfo("cage/graphics/openglLogExtensions", false);
-		const ConfigBool confLogSynchronous("cage/graphics/openglLogSynchronous",
+		const ConfigBool confLogSynchronous("cage/graphics/openglSynchronousCallback",
 #ifdef CAGE_DEBUG
 			true
 #else
@@ -129,8 +129,8 @@ namespace cage
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl extensions: ");

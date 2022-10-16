@@ -13,7 +13,11 @@ namespace cage
 		void processEvents();
 	};
 
-	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality();
+	struct CAGE_CORE_API VirtualRealityCreateConfig
+	{};
+
+	// opengl context must be bound in the current thread
+	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
 }
 
 #endif
