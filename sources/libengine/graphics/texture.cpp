@@ -15,6 +15,7 @@ namespace cage
 		public:
 			const uint32 target = 0;
 			uint32 id = 0;
+			const bool owning = true;
 
 			Vec3i resolution;
 			uint32 mipmapLevels = 0;
@@ -28,6 +29,10 @@ namespace cage
 				bind(0);
 			}
 
+			// createTextureForOpenXr
+			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D_ARRAY), id(id), internalFormat(internalFormat), owning(false), resolution(resolution, 2)
+			{}
+
 			~TextureImpl()
 			{
 				try
@@ -36,7 +41,8 @@ namespace cage
 				}
 				catch (...)
 				{}
-				glDeleteTextures(1, &id);
+				if (owning)
+					glDeleteTextures(1, &id);
 			}
 
 			Vec3i mipRes(uint32 mip) const
@@ -448,6 +454,14 @@ namespace cage
 			CAGE_ASSERT(i < frames);
 			CAGE_ASSERT(f >= 0 && f <= 1);
 			return Vec4(i, (i + 1) % frames, f, 0);
+		}
+	}
+
+	namespace privat
+	{
+		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution)
+		{
+			return systemMemory().createImpl<Texture, TextureImpl>(id, internalFormat, resolution);
 		}
 	}
 }

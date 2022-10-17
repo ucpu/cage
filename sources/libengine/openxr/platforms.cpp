@@ -29,13 +29,13 @@ namespace cage
 			{
 				PFN_xrGetOpenGLGraphicsRequirementsKHR pfnGetOpenGLGraphicsRequirementsKHR = NULL;
 				res = xrGetInstanceProcAddr(instance, "xrGetOpenGLGraphicsRequirementsKHR", (PFN_xrVoidFunction *)&pfnGetOpenGLGraphicsRequirementsKHR);
-				if (res != XrResult::XR_SUCCESS)
+				if (!XR_SUCCEEDED(res))
 					return res;
 
 				XrGraphicsRequirementsOpenGLKHR reqs;
 				init(reqs, XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR);
 				res = pfnGetOpenGLGraphicsRequirementsKHR(instance, systemId, &reqs);
-				if (res != XrResult::XR_SUCCESS)
+				if (!XR_SUCCEEDED(res))
 					return res;
 			}
 
