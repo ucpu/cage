@@ -2,6 +2,7 @@
 #define guard_virtualReality_h_dt4fuj1iu4ftc
 
 #include <cage-engine/inputs.h>
+#include <array>
 
 namespace cage
 {
@@ -9,8 +10,8 @@ namespace cage
 
 	struct VirtualRealityGraphicsFrame
 	{
-		Texture *colorTexture = nullptr;
-		Texture *depthTexture = nullptr;
+		std::array<Texture *, 2> colorTexture = {};
+		std::array<Texture *, 2> depthTexture = {};
 		Vec2i resolution;
 		Real nearPlane = 1, farPlane = 100;
 	};

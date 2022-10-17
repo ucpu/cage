@@ -13,6 +13,11 @@
 #if defined(CAGE_DEBUG) && !defined(CAGE_ASSERT_ENABLED)
 #error CAGE_ASSERT_ENABLED must be defined for debug builds
 #endif
+#if defined(CAGE_DEBUG)
+static_assert(CAGE_DEBUG_BOOL == true);
+#else
+static_assert(CAGE_DEBUG_BOOL == false);
+#endif
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"

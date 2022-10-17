@@ -23,13 +23,7 @@ namespace cage
 
 	namespace
 	{
-		const ConfigBool confDebugContext("cage/graphics/debugContext",
-#ifdef CAGE_DEBUG
-			true
-#else
-			false
-#endif // CAGE_DEBUG
-		);
+		const ConfigBool confDebugContext("cage/graphics/debugContext", CAGE_DEBUG_BOOL);
 		const ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
 
 		ModifiersFlags getKeyModifiers(int mods)

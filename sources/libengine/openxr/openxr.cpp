@@ -12,6 +12,8 @@
 #include <vector>
 #include <cstring> // strcpy
 
+#define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
+
 // taking inspiration from https://gitlab.freedesktop.org/monado/demos/openxr-simple-example/-/blob/master/main.c
 
 namespace cage
@@ -24,15 +26,10 @@ namespace cage
 
 	namespace
 	{
-		const ConfigBool confPrintApiLayers("cage/virtualReality/openxrLogApiLayers", false);
-		const ConfigBool confPrintExtensions("cage/virtualReality/openxrLogExtensions", false);
-		const ConfigBool confEnableValidation("cage/virtualReality/openxrValidationLayer",
-#ifdef CAGE_DEBUG
-			true
-#else
-			false
-#endif
-		);
+		const ConfigBool confPrintApiLayers("cage/virtualReality/printApiLayers", false);
+		const ConfigBool confPrintExtensions("cage/virtualReality/printExtensions", false);
+		const ConfigBool confEnableValidation("cage/virtualReality/validationLayer", CAGE_DEBUG_BOOL);
+		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
 
 		template<class T>
 		void init(T &t, XrStructureType type)
@@ -41,11 +38,35 @@ namespace cage
 			t.type = type;
 		}
 
+		XrBool32 debugUtilsCallback(XrDebugUtilsMessageSeverityFlagsEXT severity, XrDebugUtilsMessageTypeFlagsEXT types, const XrDebugUtilsMessengerCallbackDataEXT *msg, void *user_data)
+		{
+			const class VirtualRealityImpl *impl = (VirtualRealityImpl *)user_data;
+			SeverityEnum cageSeverity = SeverityEnum::Critical;
+			switch (severity)
+			{
+			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+				cageSeverity = SeverityEnum::Error;
+				break;
+			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+				cageSeverity = SeverityEnum::Warning;
+				break;
+			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+				cageSeverity = SeverityEnum::Info;
+				break;
+			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+				cageSeverity = SeverityEnum::Note;
+				break;
+			}
+			CAGE_LOG(cageSeverity, "openxr", msg->message);
+			return XR_FALSE;
+		}
+
 		class VirtualRealityImpl : public VirtualReality
 		{
 		public:
 			VirtualRealityImpl(const VirtualRealityCreateConfig &config)
 			{
+				CAGE_LOG(SeverityEnum::Info, "virtualReality", "initializing openxr");
 				printApiLayers();
 				printExtensions();
 				initHandles();
@@ -96,6 +117,12 @@ namespace cage
 					for (const auto &it : props)
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "virtualReality", Stringizer() + "api layer: " + it.layerName + ", version: " + it.layerVersion);
 				}
+
+				for (const auto &it : props)
+				{
+					if (String(it.layerName) == XR_APILAYER_LUNARG_core_validation)
+						haveApiValidationLayer = true;
+				}
 			}
 
 			void printExtensions()
@@ -116,6 +143,12 @@ namespace cage
 					for (const auto &it : props)
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "virtualReality", Stringizer() + "extension: " + it.extensionName + ", version: " + it.extensionVersion);
 				}
+
+				for (const auto &it : props)
+				{
+					if (String(it.extensionName) == XR_EXT_DEBUG_UTILS_EXTENSION_NAME)
+						haveExtDebugUtils = true;
+				}
 			}
 
 			void initHandles()
@@ -123,11 +156,33 @@ namespace cage
 				{
 					std::vector<const char *> exts, layers;
 					exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+
+					if (confEnableDebugUtils)
+					{
+						if (haveExtDebugUtils)
+						{
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "enabling extension debug utils");
+							exts.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+						}
+						else
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "requested extension debug utils is not available - skipping");
+					}
+					else
+						haveExtDebugUtils = false;
+
 					if (confEnableValidation)
 					{
-						CAGE_LOG(SeverityEnum::Info, "virtualReality", "enabling api validation layer");
-						layers.push_back("XR_APILAYER_LUNARG_core_validation");
+						if (haveApiValidationLayer)
+						{
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "enabling api validation layer");
+							layers.push_back(XR_APILAYER_LUNARG_core_validation);
+						}
+						else
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "requested api validation layer is not available - skipping");
 					}
+					else
+						haveApiValidationLayer = false;
+
 					XrInstanceCreateInfo info;
 					init(info, XR_TYPE_INSTANCE_CREATE_INFO);
 					info.enabledExtensionCount = exts.size();
@@ -148,6 +203,29 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "openxr runtime version: " + XR_VERSION_MAJOR(props.runtimeVersion) + "." + XR_VERSION_MINOR(props.runtimeVersion) + "." + XR_VERSION_PATCH(props.runtimeVersion));
 				}
 
+				if (haveExtDebugUtils)
+				{
+					PFN_xrCreateDebugUtilsMessengerEXT createMessenger = nullptr;
+					check(xrGetInstanceProcAddr(instance, "xrCreateDebugUtilsMessengerEXT", (PFN_xrVoidFunction *)&createMessenger));
+
+					XrDebugUtilsMessengerCreateInfoEXT info;
+					init(info, XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
+					info.messageTypes =
+						XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
+					info.messageSeverities =
+						XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+						XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+					info.userCallback = &debugUtilsCallback;
+					info.userData = this;
+					XrDebugUtilsMessengerEXT debug = {};
+					check(createMessenger(instance, &info, &debug));
+				}
+
 				{
 					XrSystemGetInfo info;
 					init(info, XR_TYPE_SYSTEM_GET_INFO);
@@ -163,8 +241,8 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "system name: " + props.systemName);
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "vendor id: " + props.vendorId);
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "max system resolution: " + props.graphicsProperties.maxSwapchainImageWidth + "x" + props.graphicsProperties.maxSwapchainImageHeight);
-					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "orientation tracking: " + (bool)props.trackingProperties.orientationTracking);
-					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "position tracking: " + (bool)props.trackingProperties.positionTracking);
+					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "orientation tracking available: " + (bool)props.trackingProperties.orientationTracking);
+					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "position tracking available: " + (bool)props.trackingProperties.positionTracking);
 				}
 
 				check(privat::plaformInitSession(instance, systemId, session));
@@ -173,7 +251,7 @@ namespace cage
 					static constexpr const XrPosef identityPose = { .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0}, .position = {.x = 0, .y = 0, .z = 0} };
 					XrReferenceSpaceCreateInfo info;
 					init(info, XR_TYPE_REFERENCE_SPACE_CREATE_INFO);
-					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
+					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 					info.poseInReferenceSpace = identityPose;
 					check(xrCreateReferenceSpace(session, &info, &playSpace));
 				}
@@ -192,7 +270,7 @@ namespace cage
 					info.height = v.recommendedImageRectHeight;
 					info.sampleCount = 1;
 					info.faceCount = 1;
-					info.arraySize = 2; // left and right
+					info.arraySize = 1;
 					info.mipCount = 1;
 					check(xrCreateSwapchain(session, &info, &swapchain));
 				}
@@ -242,27 +320,28 @@ namespace cage
 
 					// todo pick format from the enumeration
 
-					createSwapchain(GL_SRGB8_ALPHA8, XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchain, colorImages, colorTextures);
-					createSwapchain(GL_DEPTH_COMPONENT32, XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthSwapchain, depthImages, depthTextures);
+					for (uint32 i = 0; i < 2; i++)
+					{
+						createSwapchain(GL_SRGB8_ALPHA8, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
+						createSwapchain(GL_DEPTH_COMPONENT16, XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthSwapchains[i], depthImages[i], depthTextures[i]);
+					}
 				}
 
 				for (uint32 i = 0; i < 2; i++)
 				{
 					auto &cv = colorViews[i];
 					init(cv, XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW);
-					cv.subImage.swapchain = colorSwapchain;
+					cv.subImage.swapchain = colorSwapchains[i];
 					cv.subImage.imageRect.extent.width = v.recommendedImageRectWidth;
 					cv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
-					cv.subImage.imageArrayIndex = i;
 
 					auto &dv = depthViews[i];
 					init(dv, XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR);
 					dv.minDepth = 0;
 					dv.maxDepth = 1;
-					dv.subImage.swapchain = depthSwapchain;
+					dv.subImage.swapchain = depthSwapchains[i];
 					dv.subImage.imageRect.extent.width = v.recommendedImageRectWidth;
 					dv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
-					dv.subImage.imageArrayIndex = i;
 
 					cv.next = &dv; // chain the depth to the color views
 
@@ -280,7 +359,7 @@ namespace cage
 				switch (event.type)
 				{
 				case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
-					instanceLost = true;
+					sessionStopping = true;
 					break;
 				case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
 				{
@@ -299,6 +378,7 @@ namespace cage
 					{
 						if (!sessionRunning)
 						{
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "beginning openxr session");
 							XrSessionBeginInfo info;
 							init(info, XR_TYPE_SESSION_BEGIN_INFO);
 							info.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
@@ -310,13 +390,14 @@ namespace cage
 					{
 						if (sessionRunning)
 						{
+							CAGE_LOG(SeverityEnum::Info, "virtualReality", "ending openxr session");
 							check(xrEndSession(session));
 							sessionRunning = false;
 						}
 					} break;
 					case XR_SESSION_STATE_LOSS_PENDING:
 					case XR_SESSION_STATE_EXITING:
-						sessionLost = true;
+						sessionStopping = true;
 						break;
 					}
 				} break;
@@ -360,11 +441,7 @@ namespace cage
 			void nextFrame(VirtualRealityGraphicsFrame &frame)
 			{
 				ScopeLock lock(mutex);
-				if (instanceLost || sessionLost || !sessionRunning)
-				{
-					frame = VirtualRealityGraphicsFrame();
-					return;
-				}
+				const bool shouldStop = sessionStopping || !sessionRunning;
 
 				// submit rendered images to the headset
 				if (rendering)
@@ -382,18 +459,25 @@ namespace cage
 					projectionLayer.space = playSpace;
 					projectionLayer.viewCount = 2;
 					projectionLayer.views = colorViews.data();
-					const XrCompositionLayerBaseHeader *submittedLayer = (XrCompositionLayerBaseHeader *)&projectionLayer;
+					projectionLayer.layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
+					std::array<const XrCompositionLayerBaseHeader *, 1> submittedLayers = { (XrCompositionLayerBaseHeader *)&projectionLayer };
 
 					XrFrameEndInfo frameEndInfo;
 					init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
 
 					if (frameState.shouldRender)
 					{
-						check(xrReleaseSwapchainImage(colorSwapchain, nullptr));
-						check(xrReleaseSwapchainImage(depthSwapchain, nullptr));
+						for (uint32 i = 0; i < 2; i++)
+						{
+							check(xrReleaseSwapchainImage(colorSwapchains[i], nullptr));
+							check(xrReleaseSwapchainImage(depthSwapchains[i], nullptr));
+						}
 
-						frameEndInfo.layerCount = 1;
-						frameEndInfo.layers = &submittedLayer;
+						if (!shouldStop)
+						{
+							frameEndInfo.layerCount = submittedLayers.size();
+							frameEndInfo.layers = submittedLayers.data();
+						}
 					}
 
 					frameEndInfo.displayTime = frameState.predictedDisplayTime;
@@ -404,18 +488,16 @@ namespace cage
 
 				// reset to empty
 				frame = VirtualRealityGraphicsFrame();
+				if (shouldStop)
+					return;
 
 				// prepare data for rendering next frame
 				{
 					init(frameState, XR_TYPE_FRAME_STATE);
 					check(xrWaitFrame(session, nullptr, &frameState)); // blocking call
 
-					if (frameState.shouldRender)
-					{
-						frame.colorTexture = acquireTexture(colorSwapchain, colorTextures);
-						frame.depthTexture = acquireTexture(depthSwapchain, depthTextures);
-						frame.resolution = Vec2i(viewConfigs[0].recommendedImageRectWidth, viewConfigs[0].recommendedImageRectHeight);
-					}
+					check(xrBeginFrame(session, nullptr));
+					rendering = true;
 
 					XrViewLocateInfo viewLocateInfo;
 					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
@@ -427,10 +509,20 @@ namespace cage
 					uint32 count = 0;
 					check(xrLocateViews(session, &viewLocateInfo, &viewState, 2, &count, views.data()));
 
-					check(xrBeginFrame(session, nullptr));
-					rendering = true;
+					if (frameState.shouldRender)
+					{
+						for (uint32 i = 0; i < 2; i++)
+						{
+							frame.colorTexture[i] = acquireTexture(colorSwapchains[i], colorTextures[i]);
+							frame.depthTexture[i] = acquireTexture(depthSwapchains[i], depthTextures[i]);
+						}
+						frame.resolution = Vec2i(viewConfigs[0].recommendedImageRectWidth, viewConfigs[0].recommendedImageRectHeight);
+					}
 				}
 			}
+
+			bool haveApiValidationLayer = false;
+			bool haveExtDebugUtils = false;
 
 			Holder<Mutex> mutex = newMutex();
 
@@ -440,18 +532,17 @@ namespace cage
 			XrSpace playSpace = XR_NULL_HANDLE;
 
 			std::array<XrViewConfigurationView, 2> viewConfigs = {};
-			XrSwapchain colorSwapchain, depthSwapchain;
-			std::vector<XrSwapchainImageOpenGLKHR> colorImages, depthImages;
-			std::vector<Holder<Texture>> colorTextures, depthTextures;
+			std::array<XrSwapchain, 2> colorSwapchains, depthSwapchains;
+			std::array<std::vector<XrSwapchainImageOpenGLKHR>, 2> colorImages, depthImages;
+			std::array<std::vector<Holder<Texture>>, 2> colorTextures, depthTextures;
 			std::array<XrCompositionLayerProjectionView, 2> colorViews;
 			std::array<XrCompositionLayerDepthInfoKHR, 2> depthViews;
 			std::array<XrView, 2> views;
 
 			XrFrameState frameState = {};
-			XrSessionState sessionState = XrSessionState::XR_SESSION_STATE_UNKNOWN;
+			XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
+			bool sessionStopping = false;
 			bool sessionRunning = false;
-			bool sessionLost = false;
-			bool instanceLost = false;
 			bool rendering = false;
 		};
 	}

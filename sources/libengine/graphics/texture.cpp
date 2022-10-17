@@ -30,7 +30,7 @@ namespace cage
 			}
 
 			// createTextureForOpenXr
-			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D_ARRAY), id(id), internalFormat(internalFormat), owning(false), resolution(resolution, 2)
+			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D), id(id), owning(false), resolution(resolution, 1), mipmapLevels(1), internalFormat(internalFormat)
 			{}
 
 			~TextureImpl()
