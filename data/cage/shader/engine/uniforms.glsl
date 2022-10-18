@@ -77,9 +77,13 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSCUBE) uniform ShadowsCubeBl
 	uvec4 texShadowsCube[CAGE_SHADER_MAX_LIGHTS];
 };
 
-layout(location = CAGE_SHADER_UNI_BONESPERINSTANCE) uniform uint uniBonesPerInstance;
-layout(location = CAGE_SHADER_UNI_LIGHTSCOUNT) uniform uint uniLightsCount;
-layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_COUNTS) uniform CountsBlock
+{
+	// this is suboptimal - it takes four times the space that would be necessary
+	uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
+	uint uniBonesPerInstance;
+	uint uniLightsCount;
+};
 
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texMaterialAlbedo2d;
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO_ARRAY) uniform sampler2DArray texMaterialAlbedoArray;

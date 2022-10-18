@@ -75,6 +75,14 @@ namespace cage
 			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 		};
 
+		struct UniCounts
+		{
+			// this is suboptimal - it takes four times the space that would be necessary
+			std::array<Vec4i, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
+			Vec4i bonesPerInstance;
+			Vec4i lightsCount;
+		};
+
 		struct ModelShared
 		{
 			Holder<Model> mesh;
@@ -219,61 +227,61 @@ namespace cage
 			return res;
 		}
 
-		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<uint32, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
+		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<Vec4i, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
 		{
 			if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO][0] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO][0] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO][0] = CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = 0;
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO][0] = 0;
 
 			if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL][0] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL][0] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL][0] = CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = 0;
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL][0] = 0;
 
 			if (textures[CAGE_SHADER_TEXTURE_NORMAL])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL][0] = CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL][0] = CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D;
+					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL][0] = CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = 0;
+				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL][0] = 0;
 		}
 
 		template<class T>
@@ -361,9 +369,9 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
+			void renderModelsImpl(const CameraData& data, const ModelShared& sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
-				const Holder<RenderQueue> &renderQueue = data.renderQueue;
+				const Holder<RenderQueue>& renderQueue = data.renderQueue;
 
 				Holder<ShaderProgram> shader = [&]() {
 					if (sh.mesh->shaderName)
@@ -412,12 +420,12 @@ namespace cage
 					renderQueue->blending(false);
 				}
 
-				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
+				UniCounts uniCounts;
+				uniCounts.lightsCount[0] = data.lightsCount;
+				uniCounts.bonesPerInstance[0] = sh.mesh->bones;
+				uniCounts.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON][0] = sh.skeletal ? 1 : 0;
 				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
+				uniCounts.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION][0] = ssao ? 1 : 0;
 
 				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -434,9 +442,9 @@ namespace cage
 						}
 					}
 				}
-				updateShaderRoutinesForTextures(textures, shaderRoutines);
+				updateShaderRoutinesForTextures(textures, uniCounts.shaderRoutines);
 
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+				renderQueue->universalUniformStruct(uniCounts, CAGE_SHADER_UNIBLOCK_COUNTS);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)

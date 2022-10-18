@@ -35,12 +35,6 @@ $define allowParsingHash true
 #define CAGE_SHADER_TEXTURE_SSAO 12
 #define CAGE_SHADER_TEXTURE_DEPTH 13
 
-// uniform locations
-
-#define CAGE_SHADER_UNI_BONESPERINSTANCE 0
-#define CAGE_SHADER_UNI_LIGHTSCOUNT 1
-#define CAGE_SHADER_UNI_ROUTINES 2
-
 // uniform block bindings
 
 #define CAGE_SHADER_UNIBLOCK_VIEWPORT 0
@@ -51,6 +45,7 @@ $define allowParsingHash true
 #define CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES 5
 #define CAGE_SHADER_UNIBLOCK_SHADOWS2D 6
 #define CAGE_SHADER_UNIBLOCK_SHADOWSCUBE 7
+#define CAGE_SHADER_UNIBLOCK_COUNTS 8
 
 // subroutine procedure indexes
 
