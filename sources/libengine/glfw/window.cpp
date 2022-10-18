@@ -63,8 +63,9 @@ namespace cage
 			Vec2i stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
-			Window *shareContext = nullptr;
+			Window *const shareContext = nullptr;
 			GLFWwindow *window = nullptr;
+			const int vsync = true;
 			bool focus = true;
 
 #ifdef GCHL_WINDOWS_THREAD
@@ -114,7 +115,7 @@ namespace cage
 			}
 #endif
 
-			explicit WindowImpl(Window *shareContext) : shareContext(shareContext)
+			explicit WindowImpl(const WindowCreateConfig &config) : shareContext(config.shareContext), vsync(config.vsync)
 			{
 				ScopeLock l(cageGlfwMutex());
 
@@ -134,6 +135,8 @@ namespace cage
 				makeCurrent();
 				detail::initializeOpengl();
 				detail::configureOpengl(this);
+				if (vsync >= 0)
+					glfwSwapInterval(vsync > 0 ? 1 : 0);
 			}
 
 			~WindowImpl()
@@ -723,9 +726,9 @@ namespace cage
 		glfwSwapBuffers(impl->window);
 	}
 
-	Holder<Window> newWindow(Window *shareContext)
+	Holder<Window> newWindow(const WindowCreateConfig &config)
 	{
 		cageGlfwInitializeFunc();
-		return systemMemory().createImpl<Window, WindowImpl>(shareContext);
+		return systemMemory().createImpl<Window, WindowImpl>(config);
 	}
 }

@@ -18,7 +18,7 @@ namespace cage
 		Mono,
 		Horizontal,
 		Vertical,
-		// todo separate buffers
+		Separate,
 	};
 
 	enum class StereoEyeEnum : uint32
@@ -51,7 +51,7 @@ namespace cage
 
 	CAGE_CORE_API StereoModeEnum stringToStereoMode(const String &mode);
 	CAGE_CORE_API String stereoModeToString(StereoModeEnum mode);
-	CAGE_CORE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye);
+	CAGE_CORE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoEyeEnum eye, StereoModeEnum stereoMode = StereoModeEnum::Separate);
 }
 
 #endif // guard_camera_h_m1nv5e8967gsx856dghzgg

@@ -88,6 +88,7 @@ namespace cage
 		if (m == "mono") return StereoModeEnum::Mono;
 		if (m == "horizontal") return StereoModeEnum::Horizontal;
 		if (m == "vertical") return StereoModeEnum::Vertical;
+		if (m == "separate") return StereoModeEnum::Separate;
 		CAGE_THROW_ERROR(Exception, "invalid stereo mode name");
 	}
 
@@ -98,11 +99,12 @@ namespace cage
 		case StereoModeEnum::Mono: return "mono";
 		case StereoModeEnum::Horizontal: return "horizontal";
 		case StereoModeEnum::Vertical: return "vertical";
+		case StereoModeEnum::Separate: return "separate";
 		default: CAGE_THROW_CRITICAL(Exception, "invalid stereo mode enum");
 		}
 	}
 
-	StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye)
+	StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoEyeEnum eye, StereoModeEnum stereoMode)
 	{
 		Real viewportX = input.viewportOrigin[0];
 		Real viewportY = input.viewportOrigin[1];
@@ -127,6 +129,8 @@ namespace cage
 				viewportY *= 0.5;
 				viewportY += 0.5;
 				break;
+			case StereoModeEnum::Separate:
+				break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 			}
@@ -145,6 +149,8 @@ namespace cage
 				viewportHeight *= 0.5;
 				viewportY *= 0.5;
 				break;
+			case StereoModeEnum::Separate:
+				break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 			}
@@ -152,35 +158,34 @@ namespace cage
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid eye");
 		}
-		StereoCameraOutput out;
-		Vec3 p = input.position;
-		Vec3 forward = input.orientation * Vec3(0, 0, -1);
-		Vec3 up = input.orientation * Vec3(0, 1, 0);
+
+		Real dir = 0;
 		switch (eye)
 		{
 		case StereoEyeEnum::Mono:
-			if (input.orthographic)
-				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
-			else
-				out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far);
 			break;
 		case StereoEyeEnum::Left:
-			if (input.orthographic)
-				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
-			else
-				out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far, input.zeroParallaxDistance, -input.eyeSeparation);
-			p -= cross(forward, up) * (input.eyeSeparation * 0.5);
+			dir = -1;
 			break;
 		case StereoEyeEnum::Right:
-			if (input.orthographic)
-				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
-			else
-				out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far, input.zeroParallaxDistance, input.eyeSeparation);
-			p += cross(forward, up) * (input.eyeSeparation * 0.5);
+			dir = 1;
 			break;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid eye");
 		}
+
+		StereoCameraOutput out;
+		if (input.orthographic)
+			out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
+		else if (eye == StereoEyeEnum::Mono)
+			out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far);
+		else
+			out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far, input.zeroParallaxDistance, input.eyeSeparation * dir);
+
+		const Vec3 forward = input.orientation * Vec3(0, 0, -1);
+		const Vec3 up = input.orientation * Vec3(0, 1, 0);
+		const Vec3 side = cross(forward, up);
+		const Vec3 p = input.position + cross(forward, up) * (input.eyeSeparation * 0.5) * dir;
 		out.view = Mat4(inverse(Transform(p, input.orientation, input.scale)));
 		out.viewportOrigin = Vec2(viewportX, viewportY);
 		out.viewportSize = Vec2(viewportWidth, viewportHeight);

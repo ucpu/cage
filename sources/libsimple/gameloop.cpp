@@ -423,7 +423,7 @@ namespace cage
 				}
 
 				{ // create graphics
-					window = newWindow();
+					window = newWindow({});
 					window->makeNotCurrent();
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					windowUpload = newWindow(window.get());

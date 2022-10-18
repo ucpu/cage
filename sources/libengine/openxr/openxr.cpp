@@ -11,6 +11,7 @@
 #include <array>
 #include <vector>
 #include <cstring> // strcpy
+#include <cmath> // tan
 
 #define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
 
@@ -59,6 +60,45 @@ namespace cage
 			}
 			CAGE_LOG(cageSeverity, "openxr", msg->message);
 			return XR_FALSE;
+		}
+
+		Transform poseToTranform(const XrPosef &pose)
+		{
+			static_assert(sizeof(Vec3) == sizeof(XrVector3f));
+			static_assert(sizeof(Quat) == sizeof(XrQuaternionf));
+			Transform res;
+			res.position = *(Vec3 *)&pose.position;
+			res.orientation = *(Quat *)&pose.orientation;
+			return res;
+		}
+
+		Mat4 fovToProjection(const XrFovf &fov, float nearZ, float farZ)
+		{
+			const float tanAngleLeft = std::tan(fov.angleLeft);
+			const float tanAngleRight = std::tan(fov.angleRight);
+			const float tanAngleDown = std::tan(fov.angleDown);
+			const float tanAngleUp = std::tan(fov.angleUp);
+			const float tanAngleWidth = tanAngleRight - tanAngleLeft;
+			const float tanAngleHeight = (tanAngleUp - tanAngleDown);
+
+			Mat4 result;
+			result.data[0] = 2 / tanAngleWidth;
+			result.data[4] = 0;
+			result.data[8] = (tanAngleRight + tanAngleLeft) / tanAngleWidth;
+			result.data[12] = 0;
+			result.data[1] = 0;
+			result.data[5] = 2 / tanAngleHeight;
+			result.data[9] = (tanAngleUp + tanAngleDown) / tanAngleHeight;
+			result.data[13] = 0;
+			result.data[2] = 0;
+			result.data[6] = 0;
+			result.data[10] = -(farZ + nearZ) / (farZ - nearZ);
+			result.data[14] = -(farZ * (nearZ + nearZ)) / (farZ - nearZ);
+			result.data[3] = 0;
+			result.data[7] = 0;
+			result.data[11] = -1;
+			result.data[15] = 0;
+			return result;
 		}
 
 		class VirtualRealityImpl : public VirtualReality
@@ -320,10 +360,16 @@ namespace cage
 
 					// todo pick format from the enumeration
 
+					uint32 nameIndex = 0;
 					for (uint32 i = 0; i < 2; i++)
 					{
 						createSwapchain(GL_SRGB8_ALPHA8, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
+						for (Holder<Texture> &it : colorTextures[i])
+							it->setDebugName(Stringizer() + "openxr color " + nameIndex++);
+
 						createSwapchain(GL_DEPTH_COMPONENT16, XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthSwapchains[i], depthImages[i], depthTextures[i]);
+						for (Holder<Texture> &it : colorTextures[i])
+							it->setDebugName(Stringizer() + "openxr depth " + nameIndex++);
 					}
 				}
 
@@ -346,6 +392,18 @@ namespace cage
 					cv.next = &dv; // chain the depth to the color views
 
 					init(views[i], XR_TYPE_VIEW);
+				}
+
+				{
+					outputViews.resize(2);
+					// as of now, each view has exactly one projection
+					outputProjections.resize(2);
+					uint32 i = 0;
+					for (auto &it : outputViews)
+					{
+						it.projections = PointerRange(outputProjections.data() + i, outputProjections.data() + i + 1);
+						i++;
+					}
 				}
 			}
 
@@ -438,7 +496,7 @@ namespace cage
 				return +textures[acquiredIndex];
 			}
 
-			void nextFrame(VirtualRealityGraphicsFrame &frame)
+			void nextFrame()
 			{
 				ScopeLock lock(mutex);
 				const bool shouldStop = sessionStopping || !sessionRunning;
@@ -450,8 +508,8 @@ namespace cage
 					{
 						colorViews[i].pose = views[i].pose;
 						colorViews[i].fov = views[i].fov;
-						depthViews[i].nearZ = frame.nearPlane.value;
-						depthViews[i].farZ = frame.farPlane.value;
+						depthViews[i].nearZ = outputViews[i].nearPlane.value;
+						depthViews[i].farZ = outputViews[i].farPlane.value;
 					}
 
 					XrCompositionLayerProjection projectionLayer;
@@ -487,7 +545,6 @@ namespace cage
 				}
 
 				// reset to empty
-				frame = VirtualRealityGraphicsFrame();
 				if (shouldStop)
 					return;
 
@@ -502,7 +559,7 @@ namespace cage
 					XrViewLocateInfo viewLocateInfo;
 					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
 					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-					viewLocateInfo.displayTime = frameState.predictedDisplayPeriod;
+					viewLocateInfo.displayTime = frameState.predictedDisplayTime;
 					viewLocateInfo.space = playSpace;
 					XrViewState viewState;
 					init(viewState, XR_TYPE_VIEW_STATE);
@@ -513,10 +570,12 @@ namespace cage
 					{
 						for (uint32 i = 0; i < 2; i++)
 						{
-							frame.colorTexture[i] = acquireTexture(colorSwapchains[i], colorTextures[i]);
-							frame.depthTexture[i] = acquireTexture(depthSwapchains[i], depthTextures[i]);
+							outputProjections[i].transform = poseToTranform(views[i].pose); // there is currently same number of projections as views
+							outputProjections[i].projection = fovToProjection(views[i].fov, outputViews[i].nearPlane.value, outputViews[i].farPlane.value);
+							outputViews[i].colorTexture = acquireTexture(colorSwapchains[i], colorTextures[i]);
+							outputViews[i].depthTexture = acquireTexture(depthSwapchains[i], depthTextures[i]);
+							outputViews[i].resolution = Vec2i(viewConfigs[0].recommendedImageRectWidth, viewConfigs[0].recommendedImageRectHeight);
 						}
-						frame.resolution = Vec2i(viewConfigs[0].recommendedImageRectWidth, viewConfigs[0].recommendedImageRectHeight);
 					}
 				}
 			}
@@ -544,6 +603,10 @@ namespace cage
 			bool sessionStopping = false;
 			bool sessionRunning = false;
 			bool rendering = false;
+
+			std::vector<VirtualRealityProjection> outputProjections;
+			std::vector<VirtualRealityView> outputViews;
+			VirtualRealityGraphicsFrame outputFrame;
 		};
 	}
 
@@ -553,10 +616,14 @@ namespace cage
 		impl->pollEvents();
 	}
 
-	void VirtualReality::graphicsFrame(VirtualRealityGraphicsFrame &frame)
+	const VirtualRealityGraphicsFrame &VirtualReality::graphicsFrame()
 	{
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
-		impl->nextFrame(frame);
+		impl->outputFrame.views = impl->outputViews;
+		impl->nextFrame();
+		if (!impl->frameState.shouldRender)
+			impl->outputFrame.views = {};
+		return impl->outputFrame;
 	}
 
 	Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config)

@@ -61,7 +61,13 @@ namespace cage
 		void swapBuffers();
 	};
 
-	CAGE_ENGINE_API Holder<Window> newWindow(Window *shareContext = nullptr);
+	struct CAGE_ENGINE_API WindowCreateConfig
+	{
+		Window *shareContext = nullptr;
+		int vsync = -1; // -1 = use system default, 0 = disable, 1 = true
+	};
+
+	CAGE_ENGINE_API Holder<Window> newWindow(const WindowCreateConfig &config);
 }
 
 #endif
