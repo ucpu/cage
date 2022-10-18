@@ -20,7 +20,7 @@ namespace cage
 		Vec2i resolution;
 		Texture *colorTexture = nullptr;
 		Texture *depthTexture = nullptr;
-		mutable Real nearPlane = 1, farPlane = 100; // fill in
+		mutable Real nearPlane = 0.3, farPlane = 10000; // fill in
 	};
 
 	struct VirtualRealityGraphicsFrame

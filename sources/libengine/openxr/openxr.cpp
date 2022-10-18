@@ -196,6 +196,7 @@ namespace cage
 				{
 					std::vector<const char *> exts, layers;
 					exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+					exts.push_back(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
 
 					if (confEnableDebugUtils)
 					{
@@ -389,7 +390,7 @@ namespace cage
 					dv.subImage.imageRect.extent.width = v.recommendedImageRectWidth;
 					dv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
 
-					cv.next = &dv; // chain the depth to the color views
+					//cv.next = &dv; // chain the depth to the color views
 
 					init(views[i], XR_TYPE_VIEW);
 				}
