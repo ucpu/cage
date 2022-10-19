@@ -63,7 +63,9 @@ namespace cage
 		class WindowImpl : public Window
 		{
 		public:
+			Vec2 lastMouseButtonPressPositions[5] = {};
 			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
+
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
 			Vec2 stateMousePosition;
@@ -196,16 +198,19 @@ namespace cage
 			bool determineMouseDoubleClick(InputMouse in)
 			{
 				CAGE_ASSERT((uint32)in.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
-				const uint64 current = applicationTime();
-				uint64 &last = lastMouseButtonPressTimes[(uint32)in.buttons];
-				if (current - last < 500000)
+				const uint64 ct = applicationTime();
+				const Vec2 cp = in.position;
+				uint64 &lt = lastMouseButtonPressTimes[(uint32)in.buttons];
+				Vec2 &lp = lastMouseButtonPressPositions[(uint32)in.buttons];
+				if (ct - lt < 300000 && distance(cp, lp) < 5)
 				{
-					last = 0;
+					lt = 0;
 					return true;
 				}
 				else
 				{
-					last = current;
+					lt = ct;
+					lp = cp;
 					return false;
 				}
 			}
