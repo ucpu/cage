@@ -41,10 +41,10 @@ namespace cage
 				updateListener.attach(controlThread().update);
 			}
 
-			Vec2i centerMouse()
+			Vec2 centerMouse()
 			{
 				auto w = engineWindow();
-				Vec2i pt2 = w->resolution();
+				Vec2 pt2 = Vec2(w->resolution());
 				pt2[0] /= 2;
 				pt2[1] /= 2;
 				w->mousePosition(pt2);
@@ -67,7 +67,7 @@ namespace cage
 			{
 				if (!mouseEnabled(in.buttons))
 					return false;
-				const Vec2 pt2 = Vec2(centerMouse() - in.position);
+				const Vec2 pt2 = centerMouse() - in.position;
 				if (length(pt2) < 150 * currentScaling)
 					mouseMoveAccum += pt2;
 				return false;

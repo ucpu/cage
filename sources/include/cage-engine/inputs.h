@@ -41,7 +41,7 @@ namespace cage
 	struct InputMouse
 	{
 		Window *window = nullptr;
-		Vec2i position;
+		Vec2 position;
 		MouseButtonsFlags buttons = MouseButtonsFlags::None;
 		ModifiersFlags mods = ModifiersFlags::None;
 	};
@@ -49,8 +49,8 @@ namespace cage
 	struct InputMouseWheel
 	{
 		Window *window = nullptr;
-		Vec2i position;
-		sint32 wheel = 0;
+		Vec2 position;
+		Real wheel;
 		ModifiersFlags mods = ModifiersFlags::None;
 	};
 

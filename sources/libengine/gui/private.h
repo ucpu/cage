@@ -93,7 +93,7 @@ namespace cage
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) = 0;
+		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) = 0;
@@ -120,7 +120,7 @@ namespace cage
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
@@ -138,7 +138,7 @@ namespace cage
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override;
+		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
@@ -275,8 +275,8 @@ namespace cage
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 
 		Vec2i inputResolution; // last window resolution (pixels)
-		Vec2i inputMouse; // last position of mouse (pixels)
 		Vec2i outputResolution; // resolution of output texture or screen (pixels)
+		Vec2 inputMouse; // last position of mouse (pixels)
 		Vec2 outputSize; // (points)
 		Vec2 outputMouse; // (points)
 		Real zoom = 1, retina = 1, pointsScale = 1; // how many pixels per point (1D)
@@ -323,15 +323,15 @@ namespace cage
 		~GuiImpl();
 		void scaling();
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;
-		bool eventPoint(const Vec2i &ptIn, Vec2 &ptOut);
+		bool eventPoint(Vec2 ptIn, Vec2 &ptOut);
 		Holder<RenderQueue> emit();
 	};
 
 	uint32 entityWidgetsCount(Entity *e);
 	uint32 entityLayoutsCount(Entity *e);
-	void offsetPosition(Vec2 &position, const Vec4 &offset);
-	void offsetSize(Vec2 &size, const Vec4 &offset);
-	void offset(Vec2 &position, Vec2 &size, const Vec4 &offset);
+	void offsetPosition(Vec2 &position, Vec4 offset);
+	void offsetSize(Vec2 &size, Vec4 offset);
+	void offset(Vec2 &position, Vec2 &size, Vec4 offset);
 	bool pointInside(Vec2 pos, Vec2 size, Vec2 point);
 	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // return whether the clipped rect has positive area
 	HierarchyItem *subsideItem(HierarchyItem *item);

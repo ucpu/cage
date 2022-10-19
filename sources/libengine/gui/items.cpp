@@ -199,7 +199,7 @@ namespace cage
 		return true;
 	}
 
-	bool WidgetItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point)
+	bool WidgetItem::mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
 	}
@@ -247,7 +247,7 @@ namespace cage
 		return false;
 	}
 
-	bool LayoutItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point)
+	bool LayoutItem::mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
 	}

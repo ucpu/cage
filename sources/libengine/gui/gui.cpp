@@ -59,7 +59,7 @@ namespace cage
 		return Vec4(resPos, resPos + resSiz);
 	}
 
-	void GuiManager::outputResolution(const Vec2i &resolution)
+	void GuiManager::outputResolution(Vec2i resolution)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->outputResolution = resolution;
@@ -376,20 +376,20 @@ namespace cage
 		return result;
 	}
 
-	void offsetPosition(Vec2 &position, const Vec4 &offset)
+	void offsetPosition(Vec2 &position, Vec4 offset)
 	{
 		CAGE_ASSERT(position.valid() && offset.valid());
 		position -= Vec2(offset);
 	}
 
-	void offsetSize(Vec2 &size, const Vec4 &offset)
+	void offsetSize(Vec2 &size, Vec4 offset)
 	{
 		CAGE_ASSERT(size.valid() && offset.valid());
 		size += Vec2(offset) + Vec2(offset[2], offset[3]);
 		size = max(size, Vec2());
 	}
 
-	void offset(Vec2 &position, Vec2 &size, const Vec4 &offset)
+	void offset(Vec2 &position, Vec2 &size, Vec4 offset)
 	{
 		offsetPosition(position, offset);
 		offsetSize(size, offset);

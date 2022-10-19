@@ -38,7 +38,7 @@ namespace cage
 		}
 
 		template<class A, bool (WidgetItem::*F)(A, ModifiersFlags, Vec2)>
-		bool passMouseEvent(GuiImpl *impl, A a, ModifiersFlags m, const Vec2i &point)
+		bool passMouseEvent(GuiImpl *impl, A a, ModifiersFlags m, const Vec2 &point)
 		{
 			Vec2 pt;
 			if (!impl->eventPoint(point, pt))
@@ -81,7 +81,7 @@ namespace cage
 		}
 	}
 
-	bool GuiImpl::eventPoint(const Vec2i &ptIn, Vec2 &ptOut)
+	bool GuiImpl::eventPoint(Vec2 ptIn, Vec2 &ptOut)
 	{
 		inputMouse = ptIn;
 		if (!eventsEnabled)
