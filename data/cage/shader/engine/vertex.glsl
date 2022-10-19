@@ -18,11 +18,12 @@ flat out int varInstanceId;
 
 void skeletalAnimation()
 {
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] == 0)
+	if (getOption(CAGE_SHADER_OPTIONINDEX_SKELETON) == 0)
 		return;
+	int bonesPerInstance = getOption(CAGE_SHADER_OPTIONINDEX_BONESCOUNT);
 	mat3x4 sum = mat3x4(0);
 	for (int i = 0; i < 4; i++)
-		sum += uniArmatures[varInstanceId * uniBonesPerInstance + inBoneIndex[i]] * inBoneWeight[i];
+		sum += uniArmatures[varInstanceId * bonesPerInstance + inBoneIndex[i]] * inBoneWeight[i];
 	varPosition = vec3(transpose(mat4(sum)) * vec4(varPosition, 1));
 	mat3 s = transpose(mat3(sum));
 	varNormal = s * varNormal;
