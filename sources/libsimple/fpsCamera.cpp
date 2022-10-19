@@ -22,6 +22,7 @@ namespace cage
 			VariableSmoothingBuffer<Real, 2> wheelSmoother;
 			Vec2 mouseMoveAccum;
 			Real wheelAccum;
+			Real currentScaling = 1;
 
 			Entity *ent = nullptr;
 			bool keysPressedArrows[6] = {}; // wsadeq
@@ -40,7 +41,7 @@ namespace cage
 				updateListener.attach(controlThread().update);
 			}
 
-			const Vec2i centerMouse()
+			Vec2i centerMouse()
 			{
 				auto w = engineWindow();
 				Vec2i pt2 = w->resolution();
@@ -66,8 +67,9 @@ namespace cage
 			{
 				if (!mouseEnabled(in.buttons))
 					return false;
-				Vec2i pt2 = centerMouse();
-				mouseMoveAccum += Vec2(pt2 - in.position);
+				const Vec2 pt2 = Vec2(centerMouse() - in.position);
+				if (length(pt2) < 150 * currentScaling)
+					mouseMoveAccum += pt2;
 				return false;
 			}
 
@@ -141,6 +143,7 @@ namespace cage
 			{
 				if (!ent)
 					return;
+				currentScaling = engineWindow()->contentScaling();
 				TransformComponent &t = ent->value<TransformComponent>();
 
 				// orientation
