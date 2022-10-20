@@ -8,13 +8,13 @@ namespace cage
 {
 	class Texture;
 
-	struct VirtualRealityProjection
+	struct CAGE_ENGINE_API VirtualRealityProjection
 	{
 		Mat4 projection;
 		Transform transform;
 	};
 
-	struct VirtualRealityView
+	struct CAGE_ENGINE_API VirtualRealityCamera
 	{
 		PointerRange<const VirtualRealityProjection> projections; // contains multiple items for array or cube textures
 		Vec2i resolution;
@@ -23,9 +23,21 @@ namespace cage
 		mutable Real nearPlane = 0.3, farPlane = 10000; // fill in
 	};
 
-	struct VirtualRealityGraphicsFrame
+	struct CAGE_ENGINE_API VirtualRealityGraphicsFrame : private Immovable
 	{
-		PointerRange<const VirtualRealityView> views;
+		PointerRange<const VirtualRealityCamera> cameras;
+
+		// recalculate projection matrices with updated near/far planes
+		void updateProjections();
+
+		// acquire textures to render into
+		// acquires no textures if rendering is unnecessary
+		// requires opengl context
+		void renderBegin();
+
+		// submit textures to the device
+		// requires opengl context
+		void renderCommit();
 	};
 
 	class CAGE_ENGINE_API VirtualReality : private Immovable
@@ -35,7 +47,7 @@ namespace cage
 
 		void processEvents();
 
-		const VirtualRealityGraphicsFrame &graphicsFrame();
+		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityCreateConfig

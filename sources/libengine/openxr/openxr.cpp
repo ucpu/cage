@@ -1,6 +1,5 @@
 #include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
 #include <cage-core/config.h>
-#include <cage-core/concurrent.h>
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/opengl.h>
@@ -33,7 +32,7 @@ namespace cage
 		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
 
 		template<class T>
-		void init(T &t, XrStructureType type)
+		CAGE_FORCE_INLINE void init(T &t, XrStructureType type)
 		{
 			detail::memset(&t, 0, sizeof(t));
 			t.type = type;
@@ -62,7 +61,7 @@ namespace cage
 			return XR_FALSE;
 		}
 
-		Transform poseToTranform(const XrPosef &pose)
+		CAGE_FORCE_INLINE Transform poseToTranform(const XrPosef &pose)
 		{
 			static_assert(sizeof(Vec3) == sizeof(XrVector3f));
 			static_assert(sizeof(Quat) == sizeof(XrQuaternionf));
@@ -72,7 +71,7 @@ namespace cage
 			return res;
 		}
 
-		Mat4 fovToProjection(const XrFovf &fov, float nearZ, float farZ)
+		CAGE_FORCE_INLINE Mat4 fovToProjection(const XrFovf &fov, float nearZ, float farZ)
 		{
 			const float tanAngleLeft = std::tan(fov.angleLeft);
 			const float tanAngleRight = std::tan(fov.angleRight);
@@ -123,7 +122,7 @@ namespace cage
 				}
 			}
 
-			void check(XrResult result)
+			CAGE_FORCE_INLINE void check(XrResult result)
 			{
 				if (XR_SUCCEEDED(result))
 					return;
@@ -391,20 +390,6 @@ namespace cage
 					dv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
 
 					//cv.next = &dv; // chain the depth to the color views
-
-					init(views[i], XR_TYPE_VIEW);
-				}
-
-				{
-					outputViews.resize(2);
-					// as of now, each view has exactly one projection
-					outputProjections.resize(2);
-					uint32 i = 0;
-					for (auto &it : outputViews)
-					{
-						it.projections = PointerRange(outputProjections.data() + i, outputProjections.data() + i + 1);
-						i++;
-					}
 				}
 			}
 
@@ -418,13 +403,12 @@ namespace cage
 				switch (event.type)
 				{
 				case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
-					sessionStopping = true;
+					stopping = true;
 					break;
 				case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
 				{
 					const XrEventDataSessionStateChanged &ev = (const XrEventDataSessionStateChanged &)event;
-					sessionState = ev.state;
-					switch (sessionState)
+					switch (ev.state)
 					{
 					case XR_SESSION_STATE_IDLE:
 					case XR_SESSION_STATE_UNKNOWN:
@@ -456,7 +440,7 @@ namespace cage
 					} break;
 					case XR_SESSION_STATE_LOSS_PENDING:
 					case XR_SESSION_STATE_EXITING:
-						sessionStopping = true;
+						stopping = true;
 						break;
 					}
 				} break;
@@ -469,7 +453,6 @@ namespace cage
 
 			void pollEvents()
 			{
-				ScopeLock lock(mutex);
 				while (true)
 				{
 					XrEventDataBuffer event;
@@ -497,94 +480,8 @@ namespace cage
 				return +textures[acquiredIndex];
 			}
 
-			void nextFrame()
-			{
-				ScopeLock lock(mutex);
-				const bool shouldStop = sessionStopping || !sessionRunning;
-
-				// submit rendered images to the headset
-				if (rendering)
-				{
-					for (uint32 i = 0; i < 2; i++)
-					{
-						colorViews[i].pose = views[i].pose;
-						colorViews[i].fov = views[i].fov;
-						depthViews[i].nearZ = outputViews[i].nearPlane.value;
-						depthViews[i].farZ = outputViews[i].farPlane.value;
-					}
-
-					XrCompositionLayerProjection projectionLayer;
-					init(projectionLayer, XR_TYPE_COMPOSITION_LAYER_PROJECTION);
-					projectionLayer.space = playSpace;
-					projectionLayer.viewCount = 2;
-					projectionLayer.views = colorViews.data();
-					projectionLayer.layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
-					std::array<const XrCompositionLayerBaseHeader *, 1> submittedLayers = { (XrCompositionLayerBaseHeader *)&projectionLayer };
-
-					XrFrameEndInfo frameEndInfo;
-					init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
-
-					if (frameState.shouldRender)
-					{
-						for (uint32 i = 0; i < 2; i++)
-						{
-							check(xrReleaseSwapchainImage(colorSwapchains[i], nullptr));
-							check(xrReleaseSwapchainImage(depthSwapchains[i], nullptr));
-						}
-
-						if (!shouldStop)
-						{
-							frameEndInfo.layerCount = submittedLayers.size();
-							frameEndInfo.layers = submittedLayers.data();
-						}
-					}
-
-					frameEndInfo.displayTime = frameState.predictedDisplayTime;
-					frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-					check(xrEndFrame(session, &frameEndInfo));
-					rendering = false;
-				}
-
-				// reset to empty
-				if (shouldStop)
-					return;
-
-				// prepare data for rendering next frame
-				{
-					init(frameState, XR_TYPE_FRAME_STATE);
-					check(xrWaitFrame(session, nullptr, &frameState)); // blocking call
-
-					check(xrBeginFrame(session, nullptr));
-					rendering = true;
-
-					XrViewLocateInfo viewLocateInfo;
-					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
-					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-					viewLocateInfo.displayTime = frameState.predictedDisplayTime;
-					viewLocateInfo.space = playSpace;
-					XrViewState viewState;
-					init(viewState, XR_TYPE_VIEW_STATE);
-					uint32 count = 0;
-					check(xrLocateViews(session, &viewLocateInfo, &viewState, 2, &count, views.data()));
-
-					if (frameState.shouldRender)
-					{
-						for (uint32 i = 0; i < 2; i++)
-						{
-							outputProjections[i].transform = poseToTranform(views[i].pose); // there is currently same number of projections as views
-							outputProjections[i].projection = fovToProjection(views[i].fov, outputViews[i].nearPlane.value, outputViews[i].farPlane.value);
-							outputViews[i].colorTexture = acquireTexture(colorSwapchains[i], colorTextures[i]);
-							outputViews[i].depthTexture = acquireTexture(depthSwapchains[i], depthTextures[i]);
-							outputViews[i].resolution = Vec2i(viewConfigs[0].recommendedImageRectWidth, viewConfigs[0].recommendedImageRectHeight);
-						}
-					}
-				}
-			}
-
 			bool haveApiValidationLayer = false;
 			bool haveExtDebugUtils = false;
-
-			Holder<Mutex> mutex = newMutex();
 
 			XrInstance instance = XR_NULL_HANDLE;
 			XrSystemId systemId = XR_NULL_SYSTEM_ID;
@@ -597,18 +494,155 @@ namespace cage
 			std::array<std::vector<Holder<Texture>>, 2> colorTextures, depthTextures;
 			std::array<XrCompositionLayerProjectionView, 2> colorViews;
 			std::array<XrCompositionLayerDepthInfoKHR, 2> depthViews;
-			std::array<XrView, 2> views;
 
-			XrFrameState frameState = {};
-			XrSessionState sessionState = XR_SESSION_STATE_UNKNOWN;
-			bool sessionStopping = false;
+			bool stopping = false;
 			bool sessionRunning = false;
+		};
+
+		class VirtualRealityGraphicsFrameImpl : public VirtualRealityGraphicsFrame
+		{
+		public:
+			VirtualRealityImpl *const impl = nullptr;
+			XrFrameState frameState = {};
+			std::array<XrView, 2> views;
+			std::array<VirtualRealityCamera, 2> cams;
+			std::array<VirtualRealityProjection, 2> projs;
 			bool rendering = false;
 
-			std::vector<VirtualRealityProjection> outputProjections;
-			std::vector<VirtualRealityView> outputViews;
-			VirtualRealityGraphicsFrame outputFrame;
+			VirtualRealityGraphicsFrameImpl(VirtualRealityImpl *impl) : impl(impl)
+			{
+				{
+					init(frameState, XR_TYPE_FRAME_STATE);
+					const XrResult res = xrWaitFrame(impl->session, nullptr, &frameState);
+					switch (res)
+					{
+					case XR_SESSION_LOSS_PENDING:
+					case XR_ERROR_INSTANCE_LOST:
+					case XR_ERROR_SESSION_LOST:
+					case XR_ERROR_SESSION_NOT_RUNNING:
+						return;
+					}
+					check(res);
+				}
+
+				rendering = true;
+				if (!frameState.shouldRender)
+					return;
+
+				for (uint32 i = 0; i < 2; i++)
+					init(views[i], XR_TYPE_VIEW);
+
+				{
+					XrViewLocateInfo viewLocateInfo;
+					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
+					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+					viewLocateInfo.displayTime = frameState.predictedDisplayTime;
+					viewLocateInfo.space = impl->playSpace;
+					XrViewState viewState;
+					init(viewState, XR_TYPE_VIEW_STATE);
+					uint32 count = 0;
+					check(xrLocateViews(impl->session, &viewLocateInfo, &viewState, 2, &count, views.data()));
+				}
+
+				for (uint32 i = 0; i < 2; i++)
+				{
+					projs[i].transform = poseToTranform(views[i].pose); // there is currently 1 projection per camera
+					cams[i].resolution = Vec2i(impl->viewConfigs[i].recommendedImageRectWidth, impl->viewConfigs[i].recommendedImageRectHeight);
+				}
+
+				{
+					cameras = cams;
+					auto *p = projs.data();
+					cams[0].projections = PointerRange(p, p + 1);
+					cams[1].projections = PointerRange(p + 1, p + 2);
+				}
+			}
+
+			void updateProjections()
+			{
+				for (uint32 i = 0; i < 2; i++)
+					projs[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
+			}
+
+			void begin()
+			{
+				if (!rendering)
+					return;
+
+				check(xrBeginFrame(impl->session, nullptr));
+
+				if (frameState.shouldRender)
+				{
+					for (uint32 i = 0; i < 2; i++)
+					{
+						cams[i].colorTexture = impl->acquireTexture(impl->colorSwapchains[i], impl->colorTextures[i]);
+						cams[i].depthTexture = impl->acquireTexture(impl->depthSwapchains[i], impl->depthTextures[i]);
+					}
+				}
+			}
+
+			void commit()
+			{
+				if (!rendering)
+					return;
+
+				if (frameState.shouldRender)
+				{
+					for (uint32 i = 0; i < 2; i++)
+					{
+						check(xrReleaseSwapchainImage(impl->colorSwapchains[i], nullptr));
+						check(xrReleaseSwapchainImage(impl->depthSwapchains[i], nullptr));
+					}
+				}
+
+				for (uint32 i = 0; i < 2; i++)
+				{
+					impl->colorViews[i].pose = views[i].pose;
+					impl->colorViews[i].fov = views[i].fov;
+					impl->depthViews[i].nearZ = cams[i].nearPlane.value;
+					impl->depthViews[i].farZ = cams[i].farPlane.value;
+				}
+
+				XrCompositionLayerProjection projectionLayer;
+				init(projectionLayer, XR_TYPE_COMPOSITION_LAYER_PROJECTION);
+				projectionLayer.space = impl->playSpace;
+				projectionLayer.viewCount = 2;
+				projectionLayer.views = impl->colorViews.data();
+				projectionLayer.layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
+				std::array<const XrCompositionLayerBaseHeader *, 1> submittedLayers = { (XrCompositionLayerBaseHeader *)&projectionLayer };
+
+				XrFrameEndInfo frameEndInfo;
+				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
+				frameEndInfo.layerCount = frameState.shouldRender ? submittedLayers.size() : 0;
+				frameEndInfo.layers = submittedLayers.data();
+				frameEndInfo.displayTime = frameState.predictedDisplayTime;
+				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+				check(xrEndFrame(impl->session, &frameEndInfo));
+			}
+
+			CAGE_FORCE_INLINE void check(XrResult result)
+			{
+				return impl->check(result);
+			}
 		};
+	}
+
+	void VirtualRealityGraphicsFrame::updateProjections()
+	{
+		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
+		impl->updateProjections();
+	}
+
+	void VirtualRealityGraphicsFrame::renderBegin()
+	{
+		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
+		impl->begin();
+	}
+
+	void VirtualRealityGraphicsFrame::renderCommit()
+	{
+		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
+		impl->commit();
 	}
 
 	void VirtualReality::processEvents()
@@ -617,14 +651,10 @@ namespace cage
 		impl->pollEvents();
 	}
 
-	const VirtualRealityGraphicsFrame &VirtualReality::graphicsFrame()
+	Holder<VirtualRealityGraphicsFrame> VirtualReality::graphicsFrame()
 	{
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
-		impl->outputFrame.views = impl->outputViews;
-		impl->nextFrame();
-		if (!impl->frameState.shouldRender)
-			impl->outputFrame.views = {};
-		return impl->outputFrame;
+		return systemMemory().createImpl<VirtualRealityGraphicsFrame, VirtualRealityGraphicsFrameImpl>(impl);
 	}
 
 	Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config)
