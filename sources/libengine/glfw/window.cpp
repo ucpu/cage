@@ -550,7 +550,7 @@ namespace cage
 		impl->mouseOffsetApi += d;
 		impl->mouseOffsetsThr.push(d);
 #else
-		glfwSetCursorPos(impl->window, p[0], p[1]);
+		glfwSetCursorPos(impl->window, p[0].value, p[1].value);
 #endif // GCHL_WINDOWS_THREAD
 	}
 
