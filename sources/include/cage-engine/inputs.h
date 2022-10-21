@@ -10,6 +10,7 @@ namespace cage
 {
 	class Window;
 	class Gamepad;
+	class VirtualRealityController;
 	class GuiManager;
 
 	enum class InputClassEnum : uint32
@@ -23,6 +24,8 @@ namespace cage
 		GamepadConnected, GamepadDisconnected, // InputGamepadState
 		GamepadPress, GamepadRelease, // InputGamepadKey
 		GamepadAxis, // InputGamepadAxis
+		ControllerPress, ControllerRelease, // InputControllerKey
+		ControllerAxis, // InputControllerAxis
 		GuiWidget, // InputGuiWidget
 		Custom = 1000,
 	};
@@ -79,6 +82,19 @@ namespace cage
 		Real value;
 	};
 
+	struct InputControllerKey
+	{
+		VirtualRealityController *controller = nullptr;
+		uint32 key = 0;
+	};
+
+	struct InputControllerAxis
+	{
+		VirtualRealityController *controller = nullptr;
+		uint32 axis = 0;
+		Real value;
+	};
+
 	struct InputGuiWidget
 	{
 		GuiManager *manager = nullptr;
@@ -115,6 +131,9 @@ namespace cage
 		bool gamepadPress(InputGamepadKey);
 		bool gamepadRelease(InputGamepadKey);
 		bool gamepadAxis(InputGamepadAxis);
+		bool controllerPress(InputControllerKey);
+		bool controllerRelease(InputControllerKey);
+		bool controllerAxis(InputControllerAxis);
 		bool guiWidget(InputGuiWidget);
 		bool custom(const GenericInput::Any &);
 		bool unknown(const GenericInput &);
@@ -132,6 +151,8 @@ namespace cage
 		EventDispatcher<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
 		EventDispatcher<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventDispatcher<bool(InputGamepadAxis)> gamepadAxis;
+		EventDispatcher<bool(InputControllerKey)> controllerPress, controllerRelease;
+		EventDispatcher<bool(InputControllerAxis)> controllerAxis;
 		EventDispatcher<bool(InputGuiWidget)> guiWidget;
 		EventDispatcher<bool(const GenericInput::Any &)> custom;
 		EventDispatcher<bool(const GenericInput &)> unknown;
@@ -149,6 +170,8 @@ namespace cage
 		EventListener<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
 		EventListener<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventListener<bool(InputGamepadAxis)> gamepadAxis;
+		EventListener<bool(InputControllerKey)> controllerPress, controllerRelease;
+		EventListener<bool(InputControllerAxis)> controllerAxis;
 		EventListener<bool(InputGuiWidget)> guiWidget;
 		EventListener<bool(const GenericInput::Any &)> custom;
 		EventListener<bool(const GenericInput &)> unknown;

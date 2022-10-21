@@ -113,6 +113,21 @@ namespace cage
 		GENERALIZER(GamepadAxis);
 	}
 
+	bool InputsGeneralizer::controllerPress(InputControllerKey in)
+	{
+		GENERALIZER(ControllerPress);
+	}
+
+	bool InputsGeneralizer::controllerRelease(InputControllerKey in)
+	{
+		GENERALIZER(ControllerRelease);
+	}
+
+	bool InputsGeneralizer::controllerAxis(InputControllerAxis in)
+	{
+		GENERALIZER(ControllerAxis);
+	}
+
 	bool InputsGeneralizer::guiWidget(InputGuiWidget in)
 	{
 		GENERALIZER(GuiWidget);
@@ -157,6 +172,9 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(ControllerPress, controllerPress, InputControllerKey);
+		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
+		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 #undef EVENT
 
@@ -195,6 +213,9 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(ControllerPress, controllerPress, InputControllerKey);
+		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
+		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 
 		EVENT(Custom, custom, const GenericInput::Any &);
@@ -231,6 +252,9 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(ControllerPress, controllerPress, InputControllerKey);
+		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
+		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
 		EVENT(GuiWidget, guiWidget, InputGuiWidget);
 
 		EVENT(Custom, custom, const GenericInput::Any &);

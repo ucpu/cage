@@ -8,19 +8,28 @@ namespace cage
 {
 	class Texture;
 
-	struct CAGE_ENGINE_API VirtualRealityProjection
+	class CAGE_ENGINE_API VirtualRealityController
 	{
-		Mat4 projection;
-		Transform transform;
+	public:
+		EventDispatcher<bool(const GenericInput &)> events;
+
+		bool connected() const;
+		bool tracking() const;
+		Transform aimPose() const;
+		Transform gripPose() const;
+		PointerRange<const Real> axes() const;
+		PointerRange<const bool> buttons() const;
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityCamera
 	{
-		PointerRange<const VirtualRealityProjection> projections; // contains multiple items for array or cube textures
+		Mat4 projection;
+		Transform transform;
 		Vec2i resolution;
 		Texture *colorTexture = nullptr;
 		Texture *depthTexture = nullptr;
 		mutable Real nearPlane = 0.3, farPlane = 10000; // fill in
+		bool primary = false; // primary cameras share same origin and should use optimized rendering
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityGraphicsFrame : private Immovable
@@ -46,6 +55,9 @@ namespace cage
 		EventDispatcher<bool(const GenericInput &)> events;
 
 		void processEvents();
+
+		VirtualRealityController &leftController();
+		VirtualRealityController &rightController();
 
 		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
 	};

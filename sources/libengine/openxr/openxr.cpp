@@ -8,9 +8,11 @@
 #include <openxr/openxr_platform.h>
 
 #include <array>
+#include <tuple>
 #include <vector>
 #include <cstring> // strcpy
 #include <cmath> // tan
+#include <atomic>
 
 #define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
 
@@ -30,6 +32,9 @@ namespace cage
 		const ConfigBool confPrintExtensions("cage/virtualReality/printExtensions", false);
 		const ConfigBool confEnableValidation("cage/virtualReality/validationLayer", CAGE_DEBUG_BOOL);
 		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
+
+		constexpr const XrPosef IdentityPose = { .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0}, .position = {.x = 0, .y = 0, .z = 0} };
+		constexpr const Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
 
 		template<class T>
 		CAGE_FORCE_INLINE void init(T &t, XrStructureType type)
@@ -99,6 +104,21 @@ namespace cage
 			result.data[15] = 0;
 			return result;
 		}
+
+		class VirtualRealityControllerImpl : public VirtualRealityController
+		{
+		public:
+			struct Pose
+			{
+				XrAction action;
+				XrSpace space;
+				Transform transform = InvalidTransform;
+			} aim, grip;
+			XrAction selectClick, triggerValue;
+
+			bool connected = false;
+			bool tracking = false;
+		};
 
 		class VirtualRealityImpl : public VirtualReality
 		{
@@ -288,11 +308,10 @@ namespace cage
 				check(privat::plaformInitSession(instance, systemId, session));
 
 				{
-					static constexpr const XrPosef identityPose = { .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0}, .position = {.x = 0, .y = 0, .z = 0} };
 					XrReferenceSpaceCreateInfo info;
 					init(info, XR_TYPE_REFERENCE_SPACE_CREATE_INFO);
 					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-					info.poseInReferenceSpace = identityPose;
+					info.poseInReferenceSpace = IdentityPose;
 					check(xrCreateReferenceSpace(session, &info, &playSpace));
 				}
 			}
@@ -395,7 +414,134 @@ namespace cage
 
 			void initInputs()
 			{
-				// todo
+				{
+					XrActionSetCreateInfo actionsetInfo;
+					init(actionsetInfo, XR_TYPE_ACTION_SET_CREATE_INFO);
+					std::strcpy(actionsetInfo.actionSetName, "generic_actionset");
+					std::strcpy(actionsetInfo.localizedActionSetName, "generic_actionset");
+					check(xrCreateActionSet(instance, &actionsetInfo, &actionSet));
+				}
+
+				std::vector<XrActionSuggestedBinding> suggestions;
+				suggestions.reserve(20);
+
+				for (uint32 side = 0; side < 2; side++)
+				{
+					VirtualRealityControllerImpl &cntrl = controllers[side];
+					static constexpr const char *names[2] = { "left", "right" };
+					const char *name = names[side];
+
+					std::array<XrPath, 2> pathPoses; // aim, grip
+					XrPath pathTriggerClick, pathTriggerValue;
+
+					{
+						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/aim/pose").value.c_str(), &pathPoses[0]));
+						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/grip/pose").value.c_str(), &pathPoses[1]));
+						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/trigger/click").value.c_str(), &pathTriggerClick));
+						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/trigger/value").value.c_str(), &pathTriggerValue));
+					}
+
+					for (uint32 i = 0; i < 2; i++)
+					{
+						VirtualRealityControllerImpl::Pose &p = *std::array{ &cntrl.aim, &cntrl.grip }[i];
+						static constexpr const char *ns[2] = { "aim", "grip" };
+						const String n = Stringizer() + name + "_" + ns[i] + "_pose";
+
+						{
+							XrActionCreateInfo info;
+							init(info, XR_TYPE_ACTION_CREATE_INFO);
+							info.actionType = XR_ACTION_TYPE_POSE_INPUT;
+							std::strcpy(info.actionName, n.c_str());
+							std::strcpy(info.localizedActionName, n.c_str());
+							check(xrCreateAction(actionSet, &info, &p.action));
+							suggestions.push_back(XrActionSuggestedBinding{ p.action, pathPoses[i] });
+						}
+						{
+							XrActionSpaceCreateInfo info;
+							init(info, XR_TYPE_ACTION_SPACE_CREATE_INFO);
+							info.poseInActionSpace = IdentityPose;
+							info.action = p.action;
+							check(xrCreateActionSpace(session, &info, &p.space));
+						}
+					}
+
+					{
+						XrActionCreateInfo info;
+						init(info, XR_TYPE_ACTION_CREATE_INFO);
+						info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+						std::strcpy(info.actionName, (Stringizer() + name + "_trigger_click").value.c_str());
+						std::strcpy(info.localizedActionName, (Stringizer() + name + "_trigger_click").value.c_str());
+						check(xrCreateAction(actionSet, &info, &cntrl.selectClick));
+						suggestions.push_back(XrActionSuggestedBinding{ cntrl.selectClick, pathTriggerClick });
+					}
+
+					{
+						XrActionCreateInfo info;
+						init(info, XR_TYPE_ACTION_CREATE_INFO);
+						info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+						std::strcpy(info.actionName, (Stringizer() + name + "_trigger_value").value.c_str());
+						std::strcpy(info.localizedActionName, (Stringizer() + name + "_trigger_value").value.c_str());
+						check(xrCreateAction(actionSet, &info, &cntrl.triggerValue));
+						suggestions.push_back(XrActionSuggestedBinding{ cntrl.triggerValue, pathTriggerValue });
+					}
+				}
+
+				{
+					XrPath pathProfile;
+					check(xrStringToPath(instance, "/interaction_profiles/valve/index_controller", &pathProfile));
+					XrInteractionProfileSuggestedBinding info;
+					init(info, XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING);
+					info.interactionProfile = pathProfile;
+					info.countSuggestedBindings = suggestions.size();
+					info.suggestedBindings = suggestions.data();
+					check(xrSuggestInteractionProfileBindings(instance, &info));
+				}
+
+				{
+					XrSessionActionSetsAttachInfo info;
+					init(info, XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO);
+					info.countActionSets = 1;
+					info.actionSets = &actionSet;
+					check(xrAttachSessionActionSets(session, &info));
+				}
+			}
+
+			void updateInputs()
+			{
+				{
+					XrActiveActionSet active;
+					active.actionSet = actionSet;
+					active.subactionPath = XR_NULL_PATH;
+					XrActionsSyncInfo info;
+					init(info, XR_TYPE_ACTIONS_SYNC_INFO);
+					info.countActiveActionSets = 1;
+					info.activeActionSets = &active;
+					check(xrSyncActions(session, &info));
+				}
+
+				const XrTime time = syncTime;
+				if (time == 0)
+					return;
+
+				for (VirtualRealityControllerImpl &cntrl : controllers)
+				{
+					for (VirtualRealityControllerImpl::Pose *it : { &cntrl.aim, &cntrl.grip })
+					{
+						it->transform = InvalidTransform;
+						XrActionStatePose state;
+						init(state, XR_TYPE_ACTION_STATE_POSE);
+						XrActionStateGetInfo info;
+						init(info, XR_TYPE_ACTION_STATE_GET_INFO);
+						info.action = it->action;
+						check(xrGetActionStatePose(session, &info, &state));
+						XrSpaceLocation location;
+						init(location, XR_TYPE_SPACE_LOCATION);
+						check(xrLocateSpace(it->space, playSpace, time, &location));
+						it->transform = poseToTranform(location.pose);
+					}
+
+					// todo
+				}
 			}
 
 			void handleEvent(const XrEventDataBuffer &event)
@@ -495,6 +641,10 @@ namespace cage
 			std::array<XrCompositionLayerProjectionView, 2> colorViews;
 			std::array<XrCompositionLayerDepthInfoKHR, 2> depthViews;
 
+			std::array<VirtualRealityControllerImpl, 2> controllers;
+			XrActionSet actionSet;
+			std::atomic<XrTime> syncTime = 0;
+
 			bool stopping = false;
 			bool sessionRunning = false;
 		};
@@ -506,7 +656,6 @@ namespace cage
 			XrFrameState frameState = {};
 			std::array<XrView, 2> views;
 			std::array<VirtualRealityCamera, 2> cams;
-			std::array<VirtualRealityProjection, 2> projs;
 			bool rendering = false;
 
 			VirtualRealityGraphicsFrameImpl(VirtualRealityImpl *impl) : impl(impl)
@@ -523,6 +672,7 @@ namespace cage
 						return;
 					}
 					check(res);
+					impl->syncTime = frameState.predictedDisplayTime;
 				}
 
 				rendering = true;
@@ -546,22 +696,17 @@ namespace cage
 
 				for (uint32 i = 0; i < 2; i++)
 				{
-					projs[i].transform = poseToTranform(views[i].pose); // there is currently 1 projection per camera
+					cams[i].transform = poseToTranform(views[i].pose); // there is currently 1 projection per camera
 					cams[i].resolution = Vec2i(impl->viewConfigs[i].recommendedImageRectWidth, impl->viewConfigs[i].recommendedImageRectHeight);
 				}
 
-				{
-					cameras = cams;
-					auto *p = projs.data();
-					cams[0].projections = PointerRange(p, p + 1);
-					cams[1].projections = PointerRange(p + 1, p + 2);
-				}
+				cameras = cams;
 			}
 
 			void updateProjections()
 			{
 				for (uint32 i = 0; i < 2; i++)
-					projs[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
+					cams[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
 			}
 
 			void begin()
@@ -627,6 +772,42 @@ namespace cage
 		};
 	}
 
+	bool VirtualRealityController::connected() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return impl->connected;
+	}
+
+	bool VirtualRealityController::tracking() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return impl->tracking;
+	}
+
+	Transform VirtualRealityController::aimPose() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return impl->aim.transform;
+	}
+
+	Transform VirtualRealityController::gripPose() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return impl->grip.transform;
+	}
+
+	PointerRange<const Real> VirtualRealityController::axes() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return {}; // todo
+	}
+
+	PointerRange<const bool> VirtualRealityController::buttons() const
+	{
+		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
+		return {}; // todo
+	}
+
 	void VirtualRealityGraphicsFrame::updateProjections()
 	{
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
@@ -649,6 +830,19 @@ namespace cage
 	{
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		impl->pollEvents();
+		impl->updateInputs();
+	}
+
+	VirtualRealityController &VirtualReality::leftController()
+	{
+		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
+		return impl->controllers[0];
+	}
+
+	VirtualRealityController &VirtualReality::rightController()
+	{
+		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
+		return impl->controllers[1];
 	}
 
 	Holder<VirtualRealityGraphicsFrame> VirtualReality::graphicsFrame()
