@@ -11,7 +11,6 @@ namespace cage
 	class CAGE_ENGINE_API VirtualRealityController
 	{
 	public:
-		bool connected() const;
 		bool tracking() const;
 		Transform aimPose() const;
 		Transform gripPose() const;
@@ -25,8 +24,7 @@ namespace cage
 		Transform transform;
 		Vec2i resolution;
 		Texture *colorTexture = nullptr;
-		Texture *depthTexture = nullptr;
-		mutable Real nearPlane = 0.3, farPlane = 10000; // fill in
+		mutable Real nearPlane = 0.2, farPlane = 10000; // fill in
 		bool primary = false; // primary cameras share same origin and should use optimized rendering
 	};
 
@@ -54,8 +52,11 @@ namespace cage
 
 		void processEvents();
 
-		VirtualRealityController &leftController();
-		VirtualRealityController &rightController();
+		bool tracking() const;
+		Transform pose() const;
+
+		const VirtualRealityController &leftController() const;
+		const VirtualRealityController &rightController() const;
 
 		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
 	};

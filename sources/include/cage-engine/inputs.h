@@ -10,6 +10,7 @@ namespace cage
 {
 	class Window;
 	class Gamepad;
+	class VirtualReality;
 	class VirtualRealityController;
 	class GuiManager;
 
@@ -24,6 +25,8 @@ namespace cage
 		GamepadConnected, GamepadDisconnected, // InputGamepadState
 		GamepadPress, GamepadRelease, // InputGamepadKey
 		GamepadAxis, // InputGamepadAxis
+		HeadsetConnected, HeadsetDisconnected, // InputHeadsetState
+		ControllerConnected, ControllerDisconnected, // InputControllerState
 		ControllerPress, ControllerRelease, // InputControllerKey
 		ControllerAxis, // InputControllerAxis
 		GuiWidget, // InputGuiWidget
@@ -82,6 +85,16 @@ namespace cage
 		Real value;
 	};
 
+	struct InputHeadsetState
+	{
+		VirtualReality *headset = nullptr;
+	};
+
+	struct InputControllerState
+	{
+		VirtualRealityController *controller = nullptr;
+	};
+
 	struct InputControllerKey
 	{
 		VirtualRealityController *controller = nullptr;
@@ -131,6 +144,10 @@ namespace cage
 		bool gamepadPress(InputGamepadKey);
 		bool gamepadRelease(InputGamepadKey);
 		bool gamepadAxis(InputGamepadAxis);
+		bool headsetConnected(InputHeadsetState);
+		bool headsetDisconnected(InputHeadsetState);
+		bool controllerConnected(InputControllerState);
+		bool controllerDisconnected(InputControllerState);
 		bool controllerPress(InputControllerKey);
 		bool controllerRelease(InputControllerKey);
 		bool controllerAxis(InputControllerAxis);
@@ -151,6 +168,8 @@ namespace cage
 		EventDispatcher<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
 		EventDispatcher<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventDispatcher<bool(InputGamepadAxis)> gamepadAxis;
+		EventDispatcher<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
+		EventDispatcher<bool(InputControllerState)> controllerConnected, controllerDisconnected;
 		EventDispatcher<bool(InputControllerKey)> controllerPress, controllerRelease;
 		EventDispatcher<bool(InputControllerAxis)> controllerAxis;
 		EventDispatcher<bool(InputGuiWidget)> guiWidget;
@@ -170,6 +189,8 @@ namespace cage
 		EventListener<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
 		EventListener<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventListener<bool(InputGamepadAxis)> gamepadAxis;
+		EventListener<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
+		EventListener<bool(InputControllerState)> controllerConnected, controllerDisconnected;
 		EventListener<bool(InputControllerKey)> controllerPress, controllerRelease;
 		EventListener<bool(InputControllerAxis)> controllerAxis;
 		EventListener<bool(InputGuiWidget)> guiWidget;

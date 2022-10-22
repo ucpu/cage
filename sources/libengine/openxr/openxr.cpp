@@ -38,6 +38,8 @@ namespace cage
 
 		constexpr const XrPosef IdentityPose = { .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0}, .position = {.x = 0, .y = 0, .z = 0} };
 		constexpr const Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
+		constexpr const XrSpaceLocationFlags ValidMask = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+		constexpr const XrSpaceLocationFlags TrackingMask = XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
 
 		template<class T>
 		CAGE_FORCE_INLINE void init(T &t, XrStructureType type)
@@ -108,6 +110,13 @@ namespace cage
 			return result;
 		}
 
+		CAGE_FORCE_INLINE bool valueChange(bool &prev, bool next)
+		{
+			const bool res = prev != next;
+			prev = next;
+			return res;
+		}
+
 		class VirtualRealityControllerImpl : public VirtualRealityController
 		{
 		public:
@@ -123,7 +132,6 @@ namespace cage
 			std::array<bool, 10> buts = {};
 			std::array<XrAction, 10> butsActions = {};
 
-			bool connected = false;
 			bool tracking = false;
 		};
 
@@ -222,7 +230,6 @@ namespace cage
 				{
 					std::vector<const char *> exts, layers;
 					exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
-					exts.push_back(XR_KHR_COMPOSITION_LAYER_DEPTH_EXTENSION_NAME);
 
 					if (confEnableDebugUtils)
 					{
@@ -317,9 +324,11 @@ namespace cage
 				{
 					XrReferenceSpaceCreateInfo info;
 					init(info, XR_TYPE_REFERENCE_SPACE_CREATE_INFO);
-					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
 					info.poseInReferenceSpace = IdentityPose;
-					check(xrCreateReferenceSpace(session, &info, &playSpace));
+					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+					check(xrCreateReferenceSpace(session, &info, &localSpace));
+					info.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
+					check(xrCreateReferenceSpace(session, &info, &viewSpace));
 				}
 			}
 
@@ -392,10 +401,6 @@ namespace cage
 						createSwapchain(GL_SRGB8_ALPHA8, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
 						for (Holder<Texture> &it : colorTextures[i])
 							it->setDebugName(Stringizer() + "openxr color " + nameIndex++);
-
-						createSwapchain(GL_DEPTH_COMPONENT16, XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, depthSwapchains[i], depthImages[i], depthTextures[i]);
-						for (Holder<Texture> &it : colorTextures[i])
-							it->setDebugName(Stringizer() + "openxr depth " + nameIndex++);
 					}
 				}
 
@@ -406,16 +411,6 @@ namespace cage
 					cv.subImage.swapchain = colorSwapchains[i];
 					cv.subImage.imageRect.extent.width = v.recommendedImageRectWidth;
 					cv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
-
-					auto &dv = depthViews[i];
-					init(dv, XR_TYPE_COMPOSITION_LAYER_DEPTH_INFO_KHR);
-					dv.minDepth = 0;
-					dv.maxDepth = 1;
-					dv.subImage.swapchain = depthSwapchains[i];
-					dv.subImage.imageRect.extent.width = v.recommendedImageRectWidth;
-					dv.subImage.imageRect.extent.height = v.recommendedImageRectHeight;
-
-					//cv.next = &dv; // chain the depth to the color views
 				}
 			}
 
@@ -537,8 +532,19 @@ namespace cage
 
 				std::vector<GenericInput> eventsQueue;
 
+				{
+					XrSpaceLocation location;
+					init(location, XR_TYPE_SPACE_LOCATION);
+					check(xrLocateSpace(viewSpace, localSpace, time, &location));
+					headTransform = poseToTranform(location.pose);
+					if (valueChange(tracking, (location.locationFlags & TrackingMask) == TrackingMask))
+						eventsQueue.push_back(GenericInput{ InputHeadsetState{ this }, tracking ? InputClassEnum::HeadsetConnected : InputClassEnum::HeadsetDisconnected });
+				}
+
 				for (VirtualRealityControllerImpl &cntrl : controllers)
 				{
+					bool nextTracking = true;
+
 					for (VirtualRealityControllerImpl::Pose *it : { &cntrl.aim, &cntrl.grip })
 					{
 						it->transform = InvalidTransform;
@@ -550,9 +556,13 @@ namespace cage
 						check(xrGetActionStatePose(session, &info, &state));
 						XrSpaceLocation location;
 						init(location, XR_TYPE_SPACE_LOCATION);
-						check(xrLocateSpace(it->space, playSpace, time, &location));
+						check(xrLocateSpace(it->space, localSpace, time, &location));
 						it->transform = poseToTranform(location.pose);
+						nextTracking &= (location.locationFlags & ValidMask) == ValidMask;
 					}
+
+					if (valueChange(cntrl.tracking, nextTracking))
+						eventsQueue.push_back(GenericInput{ InputControllerState{ &cntrl }, nextTracking ? InputClassEnum::ControllerConnected : InputClassEnum::ControllerDisconnected });
 
 					for (uint32 i = 0; i < cntrl.axes.size(); i++)
 					{
@@ -677,14 +687,14 @@ namespace cage
 			XrInstance instance = XR_NULL_HANDLE;
 			XrSystemId systemId = XR_NULL_SYSTEM_ID;
 			XrSession session = XR_NULL_HANDLE;
-			XrSpace playSpace = XR_NULL_HANDLE;
+			XrSpace localSpace = XR_NULL_HANDLE;
+			XrSpace viewSpace = XR_NULL_HANDLE;
 
 			std::array<XrViewConfigurationView, 2> viewConfigs = {};
-			std::array<XrSwapchain, 2> colorSwapchains, depthSwapchains;
-			std::array<std::vector<XrSwapchainImageOpenGLKHR>, 2> colorImages, depthImages;
-			std::array<std::vector<Holder<Texture>>, 2> colorTextures, depthTextures;
+			std::array<XrSwapchain, 2> colorSwapchains;
+			std::array<std::vector<XrSwapchainImageOpenGLKHR>, 2> colorImages;
+			std::array<std::vector<Holder<Texture>>, 2> colorTextures;
 			std::array<XrCompositionLayerProjectionView, 2> colorViews;
-			std::array<XrCompositionLayerDepthInfoKHR, 2> depthViews;
 
 			std::array<VirtualRealityControllerImpl, 2> controllers;
 			XrActionSet actionSet;
@@ -692,6 +702,9 @@ namespace cage
 
 			bool stopping = false;
 			bool sessionRunning = false;
+
+			Transform headTransform = InvalidTransform;
+			bool tracking = false;
 		};
 
 		class VirtualRealityGraphicsFrameImpl : public VirtualRealityGraphicsFrame
@@ -732,7 +745,7 @@ namespace cage
 					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
 					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 					viewLocateInfo.displayTime = frameState.predictedDisplayTime;
-					viewLocateInfo.space = impl->playSpace;
+					viewLocateInfo.space = impl->localSpace;
 					XrViewState viewState;
 					init(viewState, XR_TYPE_VIEW_STATE);
 					uint32 count = 0;
@@ -743,6 +756,7 @@ namespace cage
 				{
 					cams[i].transform = poseToTranform(views[i].pose); // there is currently 1 projection per camera
 					cams[i].resolution = Vec2i(impl->viewConfigs[i].recommendedImageRectWidth, impl->viewConfigs[i].recommendedImageRectHeight);
+					cams[i].primary = true; // all cameras are primary for now
 				}
 
 				cameras = cams;
@@ -762,13 +776,8 @@ namespace cage
 				check(xrBeginFrame(impl->session, nullptr));
 
 				if (frameState.shouldRender)
-				{
 					for (uint32 i = 0; i < 2; i++)
-					{
 						cams[i].colorTexture = impl->acquireTexture(impl->colorSwapchains[i], impl->colorTextures[i]);
-						cams[i].depthTexture = impl->acquireTexture(impl->depthSwapchains[i], impl->depthTextures[i]);
-					}
-				}
 			}
 
 			void commit()
@@ -777,25 +786,18 @@ namespace cage
 					return;
 
 				if (frameState.shouldRender)
-				{
 					for (uint32 i = 0; i < 2; i++)
-					{
 						check(xrReleaseSwapchainImage(impl->colorSwapchains[i], nullptr));
-						check(xrReleaseSwapchainImage(impl->depthSwapchains[i], nullptr));
-					}
-				}
 
 				for (uint32 i = 0; i < 2; i++)
 				{
 					impl->colorViews[i].pose = views[i].pose;
 					impl->colorViews[i].fov = views[i].fov;
-					impl->depthViews[i].nearZ = cams[i].nearPlane.value;
-					impl->depthViews[i].farZ = cams[i].farPlane.value;
 				}
 
 				XrCompositionLayerProjection projectionLayer;
 				init(projectionLayer, XR_TYPE_COMPOSITION_LAYER_PROJECTION);
-				projectionLayer.space = impl->playSpace;
+				projectionLayer.space = impl->localSpace;
 				projectionLayer.viewCount = 2;
 				projectionLayer.views = impl->colorViews.data();
 				projectionLayer.layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
@@ -815,12 +817,6 @@ namespace cage
 				return impl->check(result);
 			}
 		};
-	}
-
-	bool VirtualRealityController::connected() const
-	{
-		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
-		return impl->connected;
 	}
 
 	bool VirtualRealityController::tracking() const
@@ -878,15 +874,27 @@ namespace cage
 		impl->updateInputs();
 	}
 
-	VirtualRealityController &VirtualReality::leftController()
+	bool VirtualReality::tracking() const
 	{
-		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
+		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
+		return impl->tracking;
+	}
+
+	Transform VirtualReality::pose() const
+	{
+		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
+		return impl->headTransform;
+	}
+
+	const VirtualRealityController &VirtualReality::leftController() const
+	{
+		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
 		return impl->controllers[0];
 	}
 
-	VirtualRealityController &VirtualReality::rightController()
+	const VirtualRealityController &VirtualReality::rightController() const
 	{
-		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
+		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
 		return impl->controllers[1];
 	}
 

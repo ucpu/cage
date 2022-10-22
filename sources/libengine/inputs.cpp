@@ -113,6 +113,26 @@ namespace cage
 		GENERALIZER(GamepadAxis);
 	}
 
+	bool InputsGeneralizer::headsetConnected(InputHeadsetState in)
+	{
+		GENERALIZER(HeadsetConnected);
+	}
+
+	bool InputsGeneralizer::headsetDisconnected(InputHeadsetState in)
+	{
+		GENERALIZER(HeadsetDisconnected);
+	}
+
+	bool InputsGeneralizer::controllerConnected(InputControllerState in)
+	{
+		GENERALIZER(ControllerConnected);
+	}
+
+	bool InputsGeneralizer::controllerDisconnected(InputControllerState in)
+	{
+		GENERALIZER(ControllerDisconnected);
+	}
+
 	bool InputsGeneralizer::controllerPress(InputControllerKey in)
 	{
 		GENERALIZER(ControllerPress);
@@ -172,6 +192,10 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(HeadsetConnected, headsetConnected, InputHeadsetState);
+		EVENT(HeadsetDisconnected, headsetDisconnected, InputHeadsetState);
+		EVENT(ControllerConnected, controllerConnected, InputControllerState);
+		EVENT(ControllerDisconnected, controllerDisconnected, InputControllerState);
 		EVENT(ControllerPress, controllerPress, InputControllerKey);
 		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
 		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
@@ -213,6 +237,10 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(HeadsetConnected, headsetConnected, InputHeadsetState);
+		EVENT(HeadsetDisconnected, headsetDisconnected, InputHeadsetState);
+		EVENT(ControllerConnected, controllerConnected, InputControllerState);
+		EVENT(ControllerDisconnected, controllerDisconnected, InputControllerState);
 		EVENT(ControllerPress, controllerPress, InputControllerKey);
 		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
 		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
@@ -252,6 +280,10 @@ namespace cage
 		EVENT(GamepadPress, gamepadPress, InputGamepadKey);
 		EVENT(GamepadRelease, gamepadRelease, InputGamepadKey);
 		EVENT(GamepadAxis, gamepadAxis, InputGamepadAxis);
+		EVENT(HeadsetConnected, headsetConnected, InputHeadsetState);
+		EVENT(HeadsetDisconnected, headsetDisconnected, InputHeadsetState);
+		EVENT(ControllerConnected, controllerConnected, InputControllerState);
+		EVENT(ControllerDisconnected, controllerDisconnected, InputControllerState);
 		EVENT(ControllerPress, controllerPress, InputControllerKey);
 		EVENT(ControllerRelease, controllerRelease, InputControllerKey);
 		EVENT(ControllerAxis, controllerAxis, InputControllerAxis);
