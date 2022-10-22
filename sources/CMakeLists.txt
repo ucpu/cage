@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 ########
-# LIBS
+# CORE
 ########
 
 file(GLOB_RECURSE cage-core-sources "libcore/*" "include/cage-core/*")
@@ -67,6 +67,10 @@ cage_target_api_macro(cage-core CAGE_CORE_API)
 cage_ide_category(cage-core cage/libs)
 cage_ide_sort_files(cage-core)
 
+########
+# ENGINE
+########
+
 file(GLOB_RECURSE cage-engine-sources "libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
 target_include_directories(cage-engine PUBLIC include)
@@ -77,9 +81,20 @@ if(WIN32)
 else()
 	# todo
 endif()
+file(GLOB_RECURSE controller-bindings RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "controller-bindings/*")
+set(index 0)
+foreach(cb IN ITEMS ${controller-bindings})
+	cage_embed_file(cage-engine "${cb}" "controller_binding_${index}")
+	target_sources(cage-engine PRIVATE "${CMAKE_CURRENT_LIST_DIR}/${cb}")
+	math(EXPR index "${index}+1")
+endforeach()
 cage_target_api_macro(cage-engine CAGE_ENGINE_API)
 cage_ide_category(cage-engine cage/libs)
 cage_ide_sort_files(cage-engine)
+
+########
+# SIMPLE
+########
 
 file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
 add_library(cage-simple STATIC ${cage-simple-sources})
@@ -87,6 +102,10 @@ target_include_directories(cage-simple PUBLIC include)
 target_link_libraries(cage-simple PUBLIC cage-engine)
 cage_ide_category(cage-simple cage/libs)
 cage_ide_sort_files(cage-simple)
+
+########
+# DATA
+########
 
 if(MSVC)
 	file(GLOB_RECURSE cage-data-sources "../data/*")

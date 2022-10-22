@@ -11,14 +11,12 @@ namespace cage
 	class CAGE_ENGINE_API VirtualRealityController
 	{
 	public:
-		EventDispatcher<bool(const GenericInput &)> events;
-
 		bool connected() const;
 		bool tracking() const;
 		Transform aimPose() const;
 		Transform gripPose() const;
-		PointerRange<const Real> axes() const;
-		PointerRange<const bool> buttons() const;
+		PointerRange<const Real> axes() const; // thumbstick x, y, trackpad x, y, trigger, squeeze
+		PointerRange<const bool> buttons() const; // a, b, x, y, thumbstick, trackpad, select, menu, trigger, squeeze
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityCamera

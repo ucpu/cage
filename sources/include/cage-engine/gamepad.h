@@ -15,8 +15,8 @@ namespace cage
 		String name() const;
 		bool connected() const;
 		bool mapped() const;
-		PointerRange<const Real> axes() const;
-		PointerRange<const bool> buttons() const;
+		PointerRange<const Real> axes() const; // left stick x, y, right stick x, y, left trigger, right trigger
+		PointerRange<const bool> buttons() const; // a, b, x, y, left shoulder, right shoulder, select, menu, _, _, _, up, right, down, left
 
 		Real deadzone = 0.05;
 	};

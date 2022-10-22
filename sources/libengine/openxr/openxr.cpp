@@ -10,6 +10,7 @@
 #include <array>
 #include <tuple>
 #include <vector>
+#include <map>
 #include <cstring> // strcpy
 #include <cmath> // tan
 #include <atomic>
@@ -24,6 +25,8 @@ namespace cage
 	{
 		XrResult plaformInitSession(XrInstance instance, XrSystemId systemId, XrSession &session);
 		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution);
+		void loadControllerBindins(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
+		void controllerBindingsCheckUnused();
 	}
 
 	namespace
@@ -110,11 +113,15 @@ namespace cage
 		public:
 			struct Pose
 			{
-				XrAction action;
-				XrSpace space;
+				XrAction action = 0;
+				XrSpace space = 0;
 				Transform transform = InvalidTransform;
 			} aim, grip;
-			XrAction selectClick, triggerValue;
+
+			std::array<Real, 6> axes = {};
+			std::array<XrAction, 6> axesActions = {};
+			std::array<bool, 10> buts = {};
+			std::array<XrAction, 10> butsActions = {};
 
 			bool connected = false;
 			bool tracking = false;
@@ -422,30 +429,51 @@ namespace cage
 					check(xrCreateActionSet(instance, &actionsetInfo, &actionSet));
 				}
 
-				std::vector<XrActionSuggestedBinding> suggestions;
-				suggestions.reserve(20);
+				std::map<String, std::vector<XrActionSuggestedBinding>> suggestions;
 
 				for (uint32 side = 0; side < 2; side++)
 				{
 					VirtualRealityControllerImpl &cntrl = controllers[side];
-					static constexpr const char *names[2] = { "left", "right" };
-					const char *name = names[side];
+					static constexpr const char *sideNames[2] = { "left", "right" };
+					const char *sideName = sideNames[side];
+
+					for (uint32 i = 0; i < cntrl.axesActions.size(); i++)
+					{
+						static constexpr const char *axesNames[] = { "thumbstick_x", "thumbstick_y", "trackpad_x", "tracpad_y", "trigger_value", "squeeze_value" };
+						static_assert(sizeof(axesNames) / sizeof(axesNames[0]) == decltype(cntrl.axesActions){}.size());
+						XrActionCreateInfo info;
+						init(info, XR_TYPE_ACTION_CREATE_INFO);
+						info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+						const String n = Stringizer() + sideName + "_" + axesNames[i];
+						std::strcpy(info.actionName, n.c_str());
+						std::strcpy(info.localizedActionName, n.c_str());
+						check(xrCreateAction(actionSet, &info, &cntrl.axesActions[i]));
+					}
+
+					for (uint32 i = 0; i < cntrl.butsActions.size(); i++)
+					{
+						static constexpr const char *butsNames[] = { "a", "b", "x", "y", "thumbstick", "trackpad", "select", "menu", "trigger_click", "squeeze_click" };
+						static_assert(sizeof(butsNames) / sizeof(butsNames[0]) == decltype(cntrl.butsActions){}.size());
+						XrActionCreateInfo info;
+						init(info, XR_TYPE_ACTION_CREATE_INFO);
+						info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+						const String n = Stringizer() + sideName + "_" + butsNames[i];
+						std::strcpy(info.actionName, n.c_str());
+						std::strcpy(info.localizedActionName, n.c_str());
+						check(xrCreateAction(actionSet, &info, &cntrl.butsActions[i]));
+					}
+
+					privat::loadControllerBindins(instance, sideName, suggestions, cntrl.axesActions, cntrl.butsActions);
 
 					std::array<XrPath, 2> pathPoses; // aim, grip
-					XrPath pathTriggerClick, pathTriggerValue;
-
-					{
-						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/aim/pose").value.c_str(), &pathPoses[0]));
-						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/grip/pose").value.c_str(), &pathPoses[1]));
-						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/trigger/click").value.c_str(), &pathTriggerClick));
-						check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + name + "/input/trigger/value").value.c_str(), &pathTriggerValue));
-					}
+					check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + sideName + "/input/aim/pose").value.c_str(), &pathPoses[0]));
+					check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + sideName + "/input/grip/pose").value.c_str(), &pathPoses[1]));
 
 					for (uint32 i = 0; i < 2; i++)
 					{
 						VirtualRealityControllerImpl::Pose &p = *std::array{ &cntrl.aim, &cntrl.grip }[i];
 						static constexpr const char *ns[2] = { "aim", "grip" };
-						const String n = Stringizer() + name + "_" + ns[i] + "_pose";
+						const String n = Stringizer() + sideName + "_" + ns[i] + "_pose";
 
 						{
 							XrActionCreateInfo info;
@@ -454,7 +482,8 @@ namespace cage
 							std::strcpy(info.actionName, n.c_str());
 							std::strcpy(info.localizedActionName, n.c_str());
 							check(xrCreateAction(actionSet, &info, &p.action));
-							suggestions.push_back(XrActionSuggestedBinding{ p.action, pathPoses[i] });
+							for (auto &it : suggestions)
+								it.second.push_back(XrActionSuggestedBinding{ p.action, pathPoses[i] });
 						}
 						{
 							XrActionSpaceCreateInfo info;
@@ -464,36 +493,19 @@ namespace cage
 							check(xrCreateActionSpace(session, &info, &p.space));
 						}
 					}
-
-					{
-						XrActionCreateInfo info;
-						init(info, XR_TYPE_ACTION_CREATE_INFO);
-						info.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
-						std::strcpy(info.actionName, (Stringizer() + name + "_trigger_click").value.c_str());
-						std::strcpy(info.localizedActionName, (Stringizer() + name + "_trigger_click").value.c_str());
-						check(xrCreateAction(actionSet, &info, &cntrl.selectClick));
-						suggestions.push_back(XrActionSuggestedBinding{ cntrl.selectClick, pathTriggerClick });
-					}
-
-					{
-						XrActionCreateInfo info;
-						init(info, XR_TYPE_ACTION_CREATE_INFO);
-						info.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
-						std::strcpy(info.actionName, (Stringizer() + name + "_trigger_value").value.c_str());
-						std::strcpy(info.localizedActionName, (Stringizer() + name + "_trigger_value").value.c_str());
-						check(xrCreateAction(actionSet, &info, &cntrl.triggerValue));
-						suggestions.push_back(XrActionSuggestedBinding{ cntrl.triggerValue, pathTriggerValue });
-					}
 				}
 
+				privat::controllerBindingsCheckUnused();
+
+				for (const auto &it : suggestions)
 				{
 					XrPath pathProfile;
-					check(xrStringToPath(instance, "/interaction_profiles/valve/index_controller", &pathProfile));
+					check(xrStringToPath(instance, it.first.c_str(), &pathProfile));
 					XrInteractionProfileSuggestedBinding info;
 					init(info, XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING);
 					info.interactionProfile = pathProfile;
-					info.countSuggestedBindings = suggestions.size();
-					info.suggestedBindings = suggestions.data();
+					info.countSuggestedBindings = it.second.size();
+					info.suggestedBindings = it.second.data();
 					check(xrSuggestInteractionProfileBindings(instance, &info));
 				}
 
@@ -523,6 +535,8 @@ namespace cage
 				if (time == 0)
 					return;
 
+				std::vector<GenericInput> eventsQueue;
+
 				for (VirtualRealityControllerImpl &cntrl : controllers)
 				{
 					for (VirtualRealityControllerImpl::Pose *it : { &cntrl.aim, &cntrl.grip })
@@ -540,8 +554,39 @@ namespace cage
 						it->transform = poseToTranform(location.pose);
 					}
 
-					// todo
+					for (uint32 i = 0; i < cntrl.axes.size(); i++)
+					{
+						if (cntrl.axesActions[i] == 0)
+							continue;
+						XrActionStateFloat state;
+						init(state, XR_TYPE_ACTION_STATE_FLOAT);
+						XrActionStateGetInfo info;
+						init(info, XR_TYPE_ACTION_STATE_GET_INFO);
+						info.action = cntrl.axesActions[i];
+						check(xrGetActionStateFloat(session, &info, &state));
+						cntrl.axes[i] = state.currentState;
+						if (state.changedSinceLastSync)
+							eventsQueue.push_back(GenericInput{ InputControllerAxis{ &cntrl, i, state.currentState }, InputClassEnum::ControllerAxis });
+					}
+
+					for (uint32 i = 0; i < cntrl.buts.size(); i++)
+					{
+						if (cntrl.butsActions[i] == 0)
+							continue;
+						XrActionStateBoolean state;
+						init(state, XR_TYPE_ACTION_STATE_BOOLEAN);
+						XrActionStateGetInfo info;
+						init(info, XR_TYPE_ACTION_STATE_GET_INFO);
+						info.action = cntrl.butsActions[i];
+						check(xrGetActionStateBoolean(session, &info, &state));
+						cntrl.buts[i] = state.currentState;
+						if (state.changedSinceLastSync)
+							eventsQueue.push_back(GenericInput{ InputControllerKey{ &cntrl, i }, state.currentState ? InputClassEnum::ControllerPress : InputClassEnum::ControllerRelease });
+					}
 				}
+
+				for (GenericInput &e : eventsQueue)
+					events.dispatch(e);
 			}
 
 			void handleEvent(const XrEventDataBuffer &event)
@@ -799,13 +844,13 @@ namespace cage
 	PointerRange<const Real> VirtualRealityController::axes() const
 	{
 		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
-		return {}; // todo
+		return impl->axes;
 	}
 
 	PointerRange<const bool> VirtualRealityController::buttons() const
 	{
 		const VirtualRealityControllerImpl *impl = (const VirtualRealityControllerImpl *)this;
-		return {}; // todo
+		return impl->buts;
 	}
 
 	void VirtualRealityGraphicsFrame::updateProjections()
