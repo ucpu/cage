@@ -26,7 +26,9 @@ namespace cage
 		GamepadPress, GamepadRelease, // InputGamepadKey
 		GamepadAxis, // InputGamepadAxis
 		HeadsetConnected, HeadsetDisconnected, // InputHeadsetState
+		HeadsetPose, // InputHeadsetPose
 		ControllerConnected, ControllerDisconnected, // InputControllerState
+		ControllerPose, // InputControllerPose
 		ControllerPress, ControllerRelease, // InputControllerKey
 		ControllerAxis, // InputControllerAxis
 		GuiWidget, // InputGuiWidget
@@ -90,8 +92,20 @@ namespace cage
 		VirtualReality *headset = nullptr;
 	};
 
+	struct InputHeadsetPose
+	{
+		Transform pose; // in local space of the virtual reality
+		VirtualReality *headset = nullptr;
+	};
+
 	struct InputControllerState
 	{
+		VirtualRealityController *controller = nullptr;
+	};
+
+	struct InputControllerPose
+	{
+		Transform pose; // grip pose in local space of the virtual reality
 		VirtualRealityController *controller = nullptr;
 	};
 
@@ -116,7 +130,7 @@ namespace cage
 
 	struct GenericInput
 	{
-		using Any = detail::AnyBase<32>;
+		using Any = detail::AnyBase<44>;
 		Any data;
 		InputClassEnum type = InputClassEnum::None;
 	};
@@ -146,8 +160,10 @@ namespace cage
 		bool gamepadAxis(InputGamepadAxis);
 		bool headsetConnected(InputHeadsetState);
 		bool headsetDisconnected(InputHeadsetState);
+		bool headsetPose(InputHeadsetPose);
 		bool controllerConnected(InputControllerState);
 		bool controllerDisconnected(InputControllerState);
+		bool controllerPose(InputControllerPose);
 		bool controllerPress(InputControllerKey);
 		bool controllerRelease(InputControllerKey);
 		bool controllerAxis(InputControllerAxis);
@@ -169,7 +185,9 @@ namespace cage
 		EventDispatcher<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventDispatcher<bool(InputGamepadAxis)> gamepadAxis;
 		EventDispatcher<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
+		EventDispatcher<bool(InputHeadsetPose)> headsetPose;
 		EventDispatcher<bool(InputControllerState)> controllerConnected, controllerDisconnected;
+		EventDispatcher<bool(InputControllerPose)> controllerPose;
 		EventDispatcher<bool(InputControllerKey)> controllerPress, controllerRelease;
 		EventDispatcher<bool(InputControllerAxis)> controllerAxis;
 		EventDispatcher<bool(InputGuiWidget)> guiWidget;
@@ -190,7 +208,9 @@ namespace cage
 		EventListener<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
 		EventListener<bool(InputGamepadAxis)> gamepadAxis;
 		EventListener<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
+		EventListener<bool(InputHeadsetPose)> headsetPose;
 		EventListener<bool(InputControllerState)> controllerConnected, controllerDisconnected;
+		EventListener<bool(InputControllerPose)> controllerPose;
 		EventListener<bool(InputControllerKey)> controllerPress, controllerRelease;
 		EventListener<bool(InputControllerAxis)> controllerAxis;
 		EventListener<bool(InputGuiWidget)> guiWidget;

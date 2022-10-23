@@ -539,6 +539,7 @@ namespace cage
 					headTransform = poseToTranform(location.pose);
 					if (valueChange(tracking, (location.locationFlags & TrackingMask) == TrackingMask))
 						eventsQueue.push_back(GenericInput{ InputHeadsetState{ this }, tracking ? InputClassEnum::HeadsetConnected : InputClassEnum::HeadsetDisconnected });
+					eventsQueue.push_back(GenericInput{ InputHeadsetPose{ headTransform, this }, InputClassEnum::HeadsetPose });
 				}
 
 				for (VirtualRealityControllerImpl &cntrl : controllers)
@@ -563,6 +564,7 @@ namespace cage
 
 					if (valueChange(cntrl.tracking, nextTracking))
 						eventsQueue.push_back(GenericInput{ InputControllerState{ &cntrl }, nextTracking ? InputClassEnum::ControllerConnected : InputClassEnum::ControllerDisconnected });
+					eventsQueue.push_back(GenericInput{ InputControllerPose{ cntrl.grip.transform, &cntrl }, InputClassEnum::ControllerPose });
 
 					for (uint32 i = 0; i < cntrl.axes.size(); i++)
 					{
