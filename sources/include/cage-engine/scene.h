@@ -1,7 +1,7 @@
 #ifndef guard_scene_qedf4gh8hj555j4k
 #define guard_scene_qedf4gh8hj555j4k
 
-#include "camera.h"
+#include "core.h"
 
 namespace cage
 {
@@ -76,8 +76,32 @@ namespace cage
 		uint32 sceneMask = 1;
 	};
 
-	struct CAGE_ENGINE_API CameraComponent : public CameraProperties
+	enum class CameraTypeEnum : uint32
 	{
+		Perspective,
+		Orthographic,
+	};
+
+	struct CameraCommonProperties
+	{
+		Vec3 ambientColor = Vec3();
+		Vec3 ambientDirectionalColor = Vec3(); // fake forward light affected by ssao
+		Real ambientIntensity = 1;
+		Real ambientDirectionalIntensity = 1;
+		uint32 sceneMask = 1;
+	};
+
+	struct CAGE_ENGINE_API CameraComponent : public CameraCommonProperties
+	{
+		union CameraUnion
+		{
+			Vec2 orthographicSize;
+			Rads perspectiveFov = Degs(60);
+			CameraUnion() {}
+		} camera;
+		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
+		Real near = 1, far = 100;
+
 		Texture *target = nullptr;
 	};
 

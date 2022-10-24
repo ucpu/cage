@@ -12,7 +12,7 @@ namespace cage
 	enum class FontFlags : uint32;
 	enum class SoundTypeEnum : uint32;
 	enum class SoundFlags : uint32;
-	enum class CameraEffectsFlags : uint32;
+	enum class ScreenSpaceEffectsFlags : uint32;
 	enum class CameraTypeEnum : uint32;
 	enum class ImageModeEnum : uint32;
 	enum class OverflowModeEnum : uint32;
@@ -51,7 +51,7 @@ namespace cage
 
 	// enums flags
 
-	GCHL_ENUM_BITS(CameraEffectsFlags);
+	GCHL_ENUM_BITS(ScreenSpaceEffectsFlags);
 	GCHL_ENUM_BITS(InputStyleFlags);
 	GCHL_ENUM_BITS(TextureFlags);
 	GCHL_ENUM_BITS(FontFlags);

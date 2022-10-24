@@ -152,14 +152,6 @@ namespace cage
 			Mat4 model;
 			Mat4 view;
 			Mat4 viewProj;
-			Mat4 proj;
-
-			struct LodSelection
-			{
-				Vec3 center; // center of camera (NOT light)
-				Real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
-				bool orthographic = false;
-			} lodSelection;
 
 			std::map<sint32, DataLayer> layers;
 			PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
@@ -197,26 +189,6 @@ namespace cage
 			uni.parameters[0] = cos(lc.spotAngle * 0.5);
 			uni.parameters[1] = lc.spotExponent;
 			return uni;
-		}
-
-		CameraData::LodSelection initializeLodSelection(const CameraData &data)
-		{
-			CameraData::LodSelection res;
-			switch (data.camera.cameraType)
-			{
-			case CameraTypeEnum::Orthographic:
-			{
-				res.screenSize = data.camera.camera.orthographicSize[1] * data.resolution[1];
-				res.orthographic = true;
-			} break;
-			case CameraTypeEnum::Perspective:
-				res.screenSize = tan(data.camera.camera.perspectiveFov * 0.5) * 2 * data.resolution[1];
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "invalid camera type");
-			}
-			res.center = Vec3(Mat4(data.transform) * Vec4(0, 0, 0, 1));
-			return res;
 		}
 
 		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<uint32, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
@@ -416,7 +388,7 @@ namespace cage
 				renderQueue->uniform(shader, CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
 				renderQueue->uniform(shader, CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
-				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion);
+				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
 
 				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
@@ -889,26 +861,13 @@ namespace cage
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
 				if (confNoAmbientOcclusion)
-					data.camera.effects &= ~CameraEffectsFlags::AmbientOcclusion;
+					data.effects.effects &= ~ScreenSpaceEffectsFlags::AmbientOcclusion;
 				if (confNoBloom)
-					data.camera.effects &= ~CameraEffectsFlags::Bloom;
+					data.effects.effects &= ~ScreenSpaceEffectsFlags::Bloom;
 
 				data.model = Mat4(data.transform);
 				data.view = inverse(data.model);
-				data.proj = [&]() {
-					switch (data.camera.cameraType)
-					{
-					case CameraTypeEnum::Orthographic:
-					{
-						const Vec2 &os = data.camera.camera.orthographicSize;
-						return orthographicProjection(-os[0], os[0], -os[1], os[1], data.camera.near, data.camera.far);
-					}
-					case CameraTypeEnum::Perspective: return perspectiveProjection(data.camera.camera.perspectiveFov, Real(data.resolution[0]) / Real(data.resolution[1]), data.camera.near, data.camera.far);
-					default: CAGE_THROW_ERROR(Exception, "invalid camera type");
-					}
-				}();
-				data.viewProj = data.proj * data.view;
-				data.lodSelection = initializeLodSelection(data);
+				data.viewProj = data.projection * data.view;
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
@@ -963,7 +922,7 @@ namespace cage
 					renderModels<RenderModeEnum::DepthPrepass>(data);
 				}
 
-				if (any(data.camera.effects & CameraEffectsFlags::AmbientOcclusion))
+				if (any(data.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion))
 				{
 					const Vec2i ssaoResolution = data.resolution / 3;
 
@@ -1008,9 +967,9 @@ namespace cage
 
 					ScreenSpaceAmbientOcclusionConfig cfg;
 					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceAmbientOcclusion &)cfg = data.camera.ssao;
+					(ScreenSpaceAmbientOcclusion &)cfg = data.effects.ssao;
 					cfg.resolution = ssaoResolution;
-					cfg.proj = data.proj;
+					cfg.proj = data.projection;
 					cfg.inDepth = depthTextureLowRes;
 					cfg.outAo = ssaoTexture;
 					cfg.frameIndex = frameIndex;
@@ -1047,12 +1006,12 @@ namespace cage
 					}();
 
 					// depth of field
-					if (any(data.camera.effects & CameraEffectsFlags::DepthOfField))
+					if (any(data.effects.effects & ScreenSpaceEffectsFlags::DepthOfField))
 					{
 						ScreenSpaceDepthOfFieldConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceDepthOfField &)cfg = data.camera.depthOfField;
-						cfg.proj = data.proj;
+						(ScreenSpaceDepthOfField &)cfg = data.effects.depthOfField;
+						cfg.proj = data.projection;
 						cfg.inDepth = depthTexture;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
@@ -1061,11 +1020,11 @@ namespace cage
 					}
 
 					// eye adaptation
-					if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
+					if (any(data.effects.effects & ScreenSpaceEffectsFlags::EyeAdaptation))
 					{
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
+						(ScreenSpaceEyeAdaptation &)cfg = data.effects.eyeAdaptation;
 						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
 						cfg.elapsedTime = elapsedTime * 1e-6;
@@ -1073,11 +1032,11 @@ namespace cage
 					}
 
 					// bloom
-					if (any(data.camera.effects & CameraEffectsFlags::Bloom))
+					if (any(data.effects.effects & ScreenSpaceEffectsFlags::Bloom))
 					{
 						ScreenSpaceBloomConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceBloom &)cfg = data.camera.bloom;
+						(ScreenSpaceBloom &)cfg = data.effects.bloom;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
 						screenSpaceBloom(cfg);
@@ -1085,11 +1044,11 @@ namespace cage
 					}
 
 					// eye adaptation
-					if (any(data.camera.effects & CameraEffectsFlags::EyeAdaptation))
+					if (any(data.effects.effects & ScreenSpaceEffectsFlags::EyeAdaptation))
 					{
 						ScreenSpaceEyeAdaptationConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceEyeAdaptation &)cfg = data.camera.eyeAdaptation;
+						(ScreenSpaceEyeAdaptation &)cfg = data.effects.eyeAdaptation;
 						cfg.cameraId = data.name;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
@@ -1099,21 +1058,21 @@ namespace cage
 					}
 
 					// final screen effects
-					if (any(data.camera.effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+					if (any(data.effects.effects & (ScreenSpaceEffectsFlags::ToneMapping | ScreenSpaceEffectsFlags::GammaCorrection)))
 					{
 						ScreenSpaceTonemapConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceTonemap &)cfg = data.camera.tonemap;
+						(ScreenSpaceTonemap &)cfg = data.effects.tonemap;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
-						cfg.tonemapEnabled = any(data.camera.effects & CameraEffectsFlags::ToneMapping);
-						cfg.gamma = any(data.camera.effects & CameraEffectsFlags::GammaCorrection) ? data.camera.gamma : 1;
+						cfg.tonemapEnabled = any(data.effects.effects & ScreenSpaceEffectsFlags::ToneMapping);
+						cfg.gamma = any(data.effects.effects & ScreenSpaceEffectsFlags::GammaCorrection) ? data.effects.gamma : 1;
 						screenSpaceTonemap(cfg);
 						std::swap(texSource, texTarget);
 					}
 
 					// fxaa
-					if (any(data.camera.effects & CameraEffectsFlags::AntiAliasing))
+					if (any(data.effects.effects & ScreenSpaceEffectsFlags::AntiAliasing))
 					{
 						ScreenSpaceFastApproximateAntiAliasingConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
@@ -1176,7 +1135,7 @@ namespace cage
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
 				data.model = modelTransform(e);
 				data.view = inverse(data.model);
-				data.proj = [&]() {
+				data.projection = [&]() {
 					const auto &sc = data.shadowmapComponent;
 					switch (data.lightComponent.lightType)
 					{
@@ -1186,8 +1145,8 @@ namespace cage
 					default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 				}();
-				data.viewProj = data.proj * data.view;
-				data.lodSelection = initializeLodSelection(camera);
+				data.viewProj = data.projection * data.view;
+				data.lodSelection = camera.lodSelection;
 				static constexpr Mat4 bias = Mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
@@ -1244,7 +1203,7 @@ namespace cage
 					// viewport must be dispatched before shadowmaps
 					UniViewport viewport;
 					viewport.vMat = data.view;
-					viewport.pMat = data.proj;
+					viewport.pMat = data.projection;
 					viewport.vpMat = data.viewProj;
 					viewport.vpInv = inverse(data.viewProj);
 					viewport.eyePos = data.model * Vec4(0, 0, 0, 1);

@@ -1,5 +1,6 @@
 #include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
 #include <cage-core/config.h>
+#include <cage-core/profiling.h>
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/opengl.h>
@@ -672,6 +673,8 @@ namespace cage
 
 			Texture *acquireTexture(XrSwapchain swapchain, std::vector<Holder<Texture>> &textures)
 			{
+				ProfilingScope profiling("VR wait swapchain image");
+
 				uint32 acquiredIndex = 0;
 				check(xrAcquireSwapchainImage(swapchain, nullptr, &acquiredIndex));
 
@@ -716,6 +719,7 @@ namespace cage
 			XrFrameState frameState = {};
 			std::array<XrView, 2> views;
 			std::array<VirtualRealityCamera, 2> cams;
+			Transform headTransform = InvalidTransform;
 			bool rendering = false;
 
 			VirtualRealityGraphicsFrameImpl(VirtualRealityImpl *impl) : impl(impl)
@@ -733,6 +737,13 @@ namespace cage
 					}
 					check(res);
 					impl->syncTime = frameState.predictedDisplayTime;
+				}
+
+				{
+					XrSpaceLocation location;
+					init(location, XR_TYPE_SPACE_LOCATION);
+					check(xrLocateSpace(impl->viewSpace, impl->localSpace, frameState.predictedDisplayTime, &location));
+					headTransform = poseToTranform(location.pose);
 				}
 
 				rendering = true;
@@ -767,7 +778,10 @@ namespace cage
 			void updateProjections()
 			{
 				for (uint32 i = 0; i < 2; i++)
+				{
 					cams[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
+					cams[i].verticalFov = Rads(views[i].fov.angleUp - views[i].fov.angleDown);
+				}
 			}
 
 			void begin()
@@ -857,6 +871,12 @@ namespace cage
 		impl->updateProjections();
 	}
 
+	Transform VirtualRealityGraphicsFrame::pose() const
+	{
+		const VirtualRealityGraphicsFrameImpl *impl = (const VirtualRealityGraphicsFrameImpl *)this;
+		return impl->headTransform;
+	}
+
 	void VirtualRealityGraphicsFrame::renderBegin()
 	{
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
@@ -871,6 +891,7 @@ namespace cage
 
 	void VirtualReality::processEvents()
 	{
+		ProfilingScope profiling("VR process events");
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		impl->pollEvents();
 		impl->updateInputs();
@@ -888,20 +909,21 @@ namespace cage
 		return impl->headTransform;
 	}
 
-	const VirtualRealityController &VirtualReality::leftController() const
+	VirtualRealityController &VirtualReality::leftController()
 	{
-		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
+		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		return impl->controllers[0];
 	}
 
-	const VirtualRealityController &VirtualReality::rightController() const
+	VirtualRealityController &VirtualReality::rightController()
 	{
-		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
+		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		return impl->controllers[1];
 	}
 
 	Holder<VirtualRealityGraphicsFrame> VirtualReality::graphicsFrame()
 	{
+		ProfilingScope profiling("VR wait graphics frame");
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		return systemMemory().createImpl<VirtualRealityGraphicsFrame, VirtualRealityGraphicsFrameImpl>(impl);
 	}

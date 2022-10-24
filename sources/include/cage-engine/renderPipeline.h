@@ -1,10 +1,9 @@
 #ifndef guard_renderPipeline_h_4hg1s8596drfh4
 #define guard_renderPipeline_h_4hg1s8596drfh4
 
-#include "camera.h"
+#include "scene.h"
+#include "sceneScreenSpaceEffects.h"
 #include "provisionalHandles.h"
-
-#include <variant>
 
 namespace cage
 {
@@ -13,12 +12,22 @@ namespace cage
 	class RenderQueue;
 	class ProvisionalGraphics;
 
+	struct LodSelection
+	{
+		Vec3 center; // center of camera
+		Real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
+		bool orthographic = false;
+	};
+
 	struct CAGE_ENGINE_API RenderPipelineCamera
 	{
+		CameraCommonProperties camera;
+		ScreenSpaceEffectsComponent effects;
+		LodSelection lodSelection;
 		String name;
-		TextureHandle target;
-		CameraProperties camera;
+		Mat4 projection;
 		Transform transform;
+		TextureHandle target;
 		Vec2i resolution;
 	};
 

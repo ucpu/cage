@@ -4,11 +4,13 @@
 #include <cage-core/entitiesCopy.h>
 #include <cage-core/hashString.h>
 #include <cage-core/entities.h>
+#include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/tasks.h>
 
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/renderPipeline.h>
+#include <cage-engine/virtualReality.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/renderQueue.h>
@@ -16,6 +18,8 @@
 #include <cage-engine/window.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/sceneVirtualReality.h>
+#include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/model.h>
 
 #include "engine.h"
@@ -68,6 +72,44 @@ namespace cage
 			}
 			else
 				return e->value<TransformComponent>(transformComponent);
+		}
+
+		Mat4 initializeProjection(const CameraComponent &data, const Vec2i resolution)
+		{
+			switch (data.cameraType)
+			{
+			case CameraTypeEnum::Orthographic:
+			{
+				const Vec2 &os = data.camera.orthographicSize;
+				return orthographicProjection(-os[0], os[0], -os[1], os[1], data.near, data.far);
+			}
+			case CameraTypeEnum::Perspective: return perspectiveProjection(data.camera.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
+			default: CAGE_THROW_ERROR(Exception, "invalid camera type");
+			}
+		}
+
+		Real perspectiveScreenSize(Rads vFov, sint32 screenHeight)
+		{
+			return tan(vFov * 0.5) * 2 * screenHeight;
+		}
+
+		LodSelection initializeLodSelection(const CameraComponent &data, sint32 screenHeight)
+		{
+			LodSelection res;
+			switch (data.cameraType)
+			{
+			case CameraTypeEnum::Orthographic:
+			{
+				res.screenSize = data.camera.orthographicSize[1] * screenHeight;
+				res.orthographic = true;
+			} break;
+			case CameraTypeEnum::Perspective:
+				res.screenSize = perspectiveScreenSize(data.camera.perspectiveFov, screenHeight);
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "invalid camera type");
+			}
+			return res;
 		}
 
 		class Graphics : private Immovable
@@ -125,24 +167,85 @@ namespace cage
 					return;
 
 				std::vector<CameraData> cameras;
+
+				if (auto vr = engineVirtualReality())
+				{
+					vrFrame = vr->graphicsFrame();
+
+					Entity *origEnt = nullptr;
+					{
+						auto r = eb.scene->component<VrOriginComponent>()->entities();
+						if (!r.empty())
+							origEnt = r[0];
+					}
+					Entity *camEnt = nullptr;
+					{
+						auto r = eb.scene->component<VrCameraComponent>()->entities();
+						if (!r.empty())
+							camEnt = r[0];
+					}
+
+					if (camEnt)
+					{
+						const auto &cam = camEnt->value<VrCameraComponent>();
+						for (VirtualRealityCamera &it : vrFrame->cameras)
+						{
+							it.nearPlane = cam.near;
+							it.farPlane = cam.far;
+						}
+					}
+
+					vrFrame->updateProjections();
+					vrTargets.clear();
+
+					uint32 index = 0;
+					for (const VirtualRealityCamera &it : vrFrame->cameras)
+					{
+						CameraData data;
+						data.pipeline = eb.pipeline.share();
+						if (camEnt)
+						{
+							data.inputs.camera = camEnt->value<VrCameraComponent>();
+							if (camEnt->has<ScreenSpaceEffectsComponent>())
+								data.inputs.effects = camEnt->value<ScreenSpaceEffectsComponent>();
+						}
+						data.inputs.effects.gamma = Real(confRenderGamma);
+						data.inputs.name = Stringizer() + "vrcamera_" + index;
+						data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
+						vrTargets.push_back(data.inputs.target);
+						data.inputs.resolution = it.resolution;
+						data.inputs.transform = it.transform; // todo transform relative to the origin
+						data.inputs.projection = it.projection;
+						data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
+						data.inputs.lodSelection.center = vrFrame->pose().position;
+						cameras.push_back(std::move(data));
+						index++;
+					}
+				}
+
 				uint32 windowOutputs = 0;
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
 					CameraData data;
 					data.pipeline = eb.pipeline.share();
 					data.inputs.camera = cam;
-					data.inputs.camera.gamma = Real(confRenderGamma);
+					if (e->has<ScreenSpaceEffectsComponent>())
+						data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
+					data.inputs.effects.gamma = Real(confRenderGamma);
 					data.inputs.name = Stringizer() + "camera_" + e->name();
 					data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
 					data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
 					data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
+					data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
+					data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
+					data.inputs.lodSelection.center = data.inputs.transform.position;
 					data.order = !cam.target;
 					cameras.push_back(std::move(data));
 					windowOutputs += cam.target ? 0 : 1;
 				}, +eb.scene, false);
 				CAGE_ASSERT(windowOutputs <= 1);
+
 				if (cameras.empty())
 					return;
-
 				std::sort(cameras.begin(), cameras.end());
 				tasksRunBlocking<CameraData>("prepare camera task", cameras);
 
@@ -205,7 +308,16 @@ namespace cage
 
 			void dispatch() // opengl thread
 			{
-				renderQueue->dispatch();
+				if (vrFrame)
+				{
+					vrFrame->renderBegin();
+					copyVrContents();
+					renderQueue->dispatch();
+					vrFrame->renderCommit();
+				}
+				else
+					renderQueue->dispatch();
+
 				provisionalData->reset();
 
 				{ // check gl errors (even in release, but do not halt the game)
@@ -227,8 +339,51 @@ namespace cage
 				glFinish(); // this is where the engine should be waiting for the gpu
 			}
 
+			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
+			{
+				auto q = +renderQueue;
+				const String name = Stringizer() + prefix + "_" + resolution;
+				TextureHandle tex = provisionalData->texture(name);
+				if (tex.first())
+				{
+					q->image2d(tex, resolution, 1, GL_SRGB8_ALPHA8);
+					q->wraps(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					q->filters(tex, GL_LINEAR, GL_LINEAR, 0);
+				}
+				return tex;
+			}
+
+			void copyVrContents()
+			{
+				const auto graphicsDebugScope = renderQueue->namedScope("VR blit");
+				CAGE_ASSERT(vrFrame);
+				CAGE_ASSERT(vrFrame->cameras.size() == vrTargets.size());
+				
+				auto assets = engineAssets();
+				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
+				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("VR_blit");
+
+				renderQueue->bind(shaderBlit);
+				renderQueue->bind(renderTarget);
+				for (uint32 i = 0; i < vrTargets.size(); i++)
+				{
+					if (!vrFrame->cameras[i].colorTexture)
+						continue;
+					renderQueue->colorTexture(renderTarget, 0, TextureHandle(Holder<Texture>(vrFrame->cameras[i].colorTexture, nullptr)));
+					renderQueue->checkFrameBuffer(renderTarget);
+					renderQueue->viewport(Vec2i(), vrFrame->cameras[i].resolution);
+					renderQueue->bind(vrTargets[i], 0);
+					renderQueue->draw(modelSquare);
+				}
+				renderQueue->resetFrameBuffer();
+			}
+
 			Holder<RenderQueue> renderQueue;
 			Holder<ProvisionalGraphics> provisionalData;
+
+			Holder<VirtualRealityGraphicsFrame> vrFrame;
+			std::vector<TextureHandle> vrTargets;
 
 			Holder<SwapBufferGuard> emitBuffersGuard;
 			EmitBuffer emitBuffers[3];

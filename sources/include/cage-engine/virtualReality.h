@@ -24,16 +24,20 @@ namespace cage
 		Transform transform;
 		Vec2i resolution;
 		Texture *colorTexture = nullptr;
-		mutable Real nearPlane = 0.2, farPlane = 10000; // fill in
+		Real nearPlane = 0.2, farPlane = 10000; // fill in and call updateProjections
+		Rads verticalFov; // for lod selection
 		bool primary = false; // primary cameras share same origin and should use optimized rendering
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityGraphicsFrame : private Immovable
 	{
-		PointerRange<const VirtualRealityCamera> cameras;
+		PointerRange<VirtualRealityCamera> cameras;
 
 		// recalculate projection matrices with updated near/far planes
 		void updateProjections();
+
+		// headset pose irrespective of individual views
+		Transform pose() const;
 
 		// acquire textures to render into
 		// acquires no textures if rendering is unnecessary
@@ -55,9 +59,10 @@ namespace cage
 		bool tracking() const;
 		Transform pose() const;
 
-		const VirtualRealityController &leftController() const;
-		const VirtualRealityController &rightController() const;
+		VirtualRealityController &leftController();
+		VirtualRealityController &rightController();
 
+		// waits for the virtual reality runtime to get ready for next frame
 		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
 	};
 

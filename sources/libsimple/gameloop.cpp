@@ -29,6 +29,9 @@
 #include <cage-engine/guiManager.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/sceneScreenSpaceEffects.h>
+#include <cage-engine/sceneVirtualReality.h>
+#include <cage-engine/virtualReality.h>
 
 #include <cage-simple/statisticsGui.h>
 
@@ -118,6 +121,7 @@ namespace cage
 
 			Holder<AssetManager> assets;
 			Holder<Window> window;
+			Holder<VirtualReality> virtualReality;
 			Holder<Speaker> speaker;
 			Holder<VoicesMixer> masterBus;
 			Holder<VoicesMixer> effectsBus;
@@ -317,6 +321,11 @@ namespace cage
 					gui->outputRetina(window->contentScaling());
 					gui->prepare();
 				}
+				if (virtualReality)
+				{
+					ProfilingScope profiling("virtual reality events");
+					virtualReality->processEvents();
+				}
 				{
 					ProfilingScope profiling("window events");
 					window->processEvents();
@@ -388,24 +397,6 @@ namespace cage
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			void graphicsUploadEntry()
-			{
-				windowUpload->makeCurrent();
-				while (!stopping)
-				{
-					while (assets->processCustomThread(EngineGraphicsUploadThread::threadIndex));
-					threadSleep(10000);
-				}
-				while (assets->countTotal() > 0)
-				{
-					while (assets->processCustomThread(EngineGraphicsUploadThread::threadIndex));
-					threadSleep(2000);
-				}
-				windowUpload->makeNotCurrent();
-			}
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-
 			void initialize(const EngineCreateConfig &config)
 			{
 				CAGE_ASSERT(engineStarted == 0);
@@ -423,13 +414,15 @@ namespace cage
 				}
 
 				{ // create graphics
-					window = newWindow({});
+					WindowCreateConfig cfg;
+					if (config.window)
+						cfg = *config.window;
+					if (config.virtualReality)
+						cfg.vsync = 0; // explicitly disable vsync for the window when virtual reality controls frame rate
+					window = newWindow(cfg);
+					if (config.virtualReality)
+						virtualReality = newVirtualReality(*config.virtualReality);
 					window->makeNotCurrent();
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					windowUpload = newWindow(window.get());
-					windowUpload->makeNotCurrent();
-					windowUpload->setHidden();
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 				}
 
 				{ // create sound
@@ -509,8 +502,12 @@ namespace cage
 					entityMgr->defineComponent(ShadowmapComponent());
 					entityMgr->defineComponent(TextComponent());
 					entityMgr->defineComponent(CameraComponent());
+					entityMgr->defineComponent(ScreenSpaceEffectsComponent());
 					entityMgr->defineComponent(SoundComponent());
 					entityMgr->defineComponent(ListenerComponent());
+					entityMgr->defineComponent(VrOriginComponent());
+					entityMgr->defineComponent(VrCameraComponent());
+					entityMgr->defineComponent(VrControllerComponent());
 				}
 
 				{ ScopeLock l(threadsStateBarier); }
@@ -584,9 +581,6 @@ namespace cage
 				{ // wait for threads to finish
 					graphicsPrepareThreadHolder->wait();
 					graphicsDispatchThreadHolder->wait();
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					graphicsUploadThreadHolder->wait();
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					soundThreadHolder->wait();
 				}
 
@@ -610,12 +604,9 @@ namespace cage
 				{ // destroy graphics
 					if (window)
 						window->makeCurrent();
+					if (virtualReality)
+						virtualReality.clear();
 					window.clear();
-#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					if (windowUpload)
-						windowUpload->makeCurrent();
-					windowUpload.clear();
-#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 				}
 
 				{ // destroy assets
@@ -749,17 +740,22 @@ namespace cage
 
 	AssetManager *engineAssets()
 	{
-		return engineData->assets.get();
+		return +engineData->assets;
 	}
 
 	EntityManager *engineEntities()
 	{
-		return engineData->entities.get();
+		return +engineData->entities;
 	}
 
 	Window *engineWindow()
 	{
-		return engineData->window.get();
+		return +engineData->window;
+	}
+
+	VirtualReality *engineVirtualReality()
+	{
+		return +engineData->virtualReality;
 	}
 
 	EntityManager *engineGuiEntities()
@@ -769,27 +765,27 @@ namespace cage
 
 	GuiManager *engineGuiManager()
 	{
-		return engineData->gui.get();
+		return +engineData->gui;
 	}
 
 	Speaker *engineSpeaker()
 	{
-		return engineData->speaker.get();
+		return +engineData->speaker;
 	}
 
 	VoicesMixer *engineMasterMixer()
 	{
-		return engineData->masterBus.get();
+		return +engineData->masterBus;
 	}
 
 	VoicesMixer *engineEffectsMixer()
 	{
-		return engineData->effectsBus.get();
+		return +engineData->effectsBus;
 	}
 
 	VoicesMixer *engineGuiMixer()
 	{
-		return engineData->guiBus.get();
+		return +engineData->guiBus;
 	}
 
 	uint64 engineControlTime()

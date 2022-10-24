@@ -12,9 +12,12 @@ namespace cage
 	class GuiManager;
 	class Speaker;
 	class VoicesMixer;
+	class VirtualReality;
+	struct WindowCreateConfig;
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
 	struct SpeakerCreateConfig;
+	struct VirtualRealityCreateConfig;
 
 	struct EngineControlThread
 	{
@@ -62,6 +65,8 @@ namespace cage
 	struct EngineCreateConfig
 	{
 		AssetManagerCreateConfig *assets = nullptr;
+		WindowCreateConfig *window = nullptr;
+		VirtualRealityCreateConfig *virtualReality = nullptr;
 		GuiManagerCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;
 	};
@@ -74,6 +79,7 @@ namespace cage
 	AssetManager *engineAssets();
 	EntityManager *engineEntities();
 	Window *engineWindow();
+	VirtualReality *engineVirtualReality();
 	EntityManager *engineGuiEntities();
 	GuiManager *engineGuiManager();
 	Speaker *engineSpeaker();
