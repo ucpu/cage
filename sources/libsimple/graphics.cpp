@@ -29,6 +29,11 @@
 
 namespace cage
 {
+	namespace privat
+	{
+		CAGE_API_IMPORT Transform vrTransformByOrigin(EntityManager *ents, const Transform &in);
+	}
+
 	namespace
 	{
 		const ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
@@ -172,12 +177,6 @@ namespace cage
 				{
 					vrFrame = vr->graphicsFrame();
 
-					Entity *origEnt = nullptr;
-					{
-						auto r = eb.scene->component<VrOriginComponent>()->entities();
-						if (!r.empty())
-							origEnt = r[0];
-					}
 					Entity *camEnt = nullptr;
 					{
 						auto r = eb.scene->component<VrCameraComponent>()->entities();
@@ -214,7 +213,7 @@ namespace cage
 						data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
 						vrTargets.push_back(data.inputs.target);
 						data.inputs.resolution = it.resolution;
-						data.inputs.transform = it.transform; // todo transform relative to the origin
+						data.inputs.transform = privat::vrTransformByOrigin(+eb.scene, it.transform);
 						data.inputs.projection = it.projection;
 						data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
 						data.inputs.lodSelection.center = vrFrame->pose().position;
@@ -244,8 +243,6 @@ namespace cage
 				}, +eb.scene, false);
 				CAGE_ASSERT(windowOutputs <= 1);
 
-				if (cameras.empty())
-					return;
 				std::sort(cameras.begin(), cameras.end());
 				tasksRunBlocking<CameraData>("prepare camera task", cameras);
 
@@ -257,7 +254,7 @@ namespace cage
 					{
 						RenderPipelineDebugVisualization deb;
 						deb.texture = cam.inputs.target;
-						deb.shader = engineAssets()->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
+						deb.shader = engineAssets()->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl"))->get(0);
 						CAGE_ASSERT(deb.shader);
 						debugVisualizations.push_back(std::move(deb));
 					}
@@ -279,6 +276,15 @@ namespace cage
 					renderQueue->bind(debugVisualizations[index].shader);
 					renderQueue->uniform(debugVisualizations[index].shader, 0, 1.0 / Vec2(windowResolution));
 					renderQueue->draw(engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
+					renderQueue->checkGlErrorDebug();
+				}
+
+				// clear the window if there were no cameras
+				if (index == m && windowOutputs == 0)
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("clear window without cameras");
+					renderQueue->viewport(Vec2i(), windowResolution);
+					renderQueue->clear(true, false);
 					renderQueue->checkGlErrorDebug();
 				}
 			}
@@ -336,20 +342,18 @@ namespace cage
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				engineWindow()->swapBuffers();
-				glFinish(); // this is where the engine should be waiting for the gpu
+				if (!vrFrame)
+					glFinish(); // this is where the engine should be waiting for the gpu
 			}
 
 			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
 			{
-				auto q = +renderQueue;
 				const String name = Stringizer() + prefix + "_" + resolution;
-				TextureHandle tex = provisionalData->texture(name);
-				if (tex.first())
-				{
-					q->image2d(tex, resolution, 1, GL_SRGB8_ALPHA8);
-					q->wraps(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					q->filters(tex, GL_LINEAR, GL_LINEAR, 0);
-				}
+				TextureHandle tex = provisionalData->texture(name, [resolution](Texture *tex) {
+					tex->initialize(resolution, 1, GL_RGBA8);
+					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					tex->filters(GL_LINEAR, GL_LINEAR, 0);
+				});
 				return tex;
 			}
 
@@ -375,6 +379,7 @@ namespace cage
 					renderQueue->viewport(Vec2i(), vrFrame->cameras[i].resolution);
 					renderQueue->bind(vrTargets[i], 0);
 					renderQueue->draw(modelSquare);
+					renderQueue->checkGlErrorDebug();
 				}
 				renderQueue->resetFrameBuffer();
 			}

@@ -3,6 +3,8 @@
 
 #include "core.h"
 
+#include <functional>
+
 namespace cage
 {
 	class UniformBuffer;
@@ -14,7 +16,6 @@ namespace cage
 	public:
 		Holder<UniformBuffer> resolve(); // requires opengl context
 		bool ready() const;
-		bool first(); // return true the first time it is called on this provisional buffer
 	};
 
 	class CAGE_ENGINE_API ProvisionalFrameBuffer : private Immovable
@@ -22,7 +23,6 @@ namespace cage
 	public:
 		Holder<FrameBuffer> resolve(); // requires opengl context
 		bool ready() const;
-		bool first(); // return true the first time it is called on this provisional buffer
 	};
 
 	class CAGE_ENGINE_API ProvisionalTexture : private Immovable
@@ -30,7 +30,6 @@ namespace cage
 	public:
 		Holder<Texture> resolve(); // requires opengl context
 		bool ready() const;
-		bool first(); // return true the first time it is called on this provisional texture
 	};
 
 	class CAGE_ENGINE_API ProvisionalGraphics : private Immovable
@@ -43,12 +42,8 @@ namespace cage
 		Holder<ProvisionalFrameBuffer> frameBufferDraw(const String &name);
 		Holder<ProvisionalFrameBuffer> frameBufferRead(const String &name);
 
-		Holder<ProvisionalTexture> texture(const String &name);
-		Holder<ProvisionalTexture> texture(const String &name, uint32 target);
-		Holder<ProvisionalTexture> texture2dArray(const String &name);
-		Holder<ProvisionalTexture> textureRectangle(const String &name);
-		Holder<ProvisionalTexture> texture3d(const String &name);
-		Holder<ProvisionalTexture> textureCube(const String &name);
+		Holder<ProvisionalTexture> texture(const String &name, std::function<void(Texture *)> &&init);
+		Holder<ProvisionalTexture> texture(const String &name, uint32 target, std::function<void(Texture *)> &&init);
 
 		// section: thread-safe, requires opengl context
 

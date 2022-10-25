@@ -77,15 +77,6 @@ namespace cage
 				return +data_;
 			}
 
-			bool first()
-			{
-				switch (type_)
-				{
-				case 2: return data_.share().template cast<B>()->first();
-				default: return false;
-				}
-			}
-
 			explicit operator bool() const
 			{
 				return !!data_;

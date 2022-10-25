@@ -149,7 +149,8 @@ namespace cage
 			Holder<Scheduler> soundScheduler;
 			Holder<Schedule> soundUpdateSchedule;
 
-			EventListener<bool(const GenericInput &)> listener;
+			EventListener<bool(const GenericInput &)> windowGuiEventsListener;
+			EventListener<void(const GenericInput &)> virtualRealityEventsListener;
 
 			EngineData(const EngineCreateConfig &config);
 
@@ -404,6 +405,13 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "initializing engine");
 
+				controlUpdateSchedule->period(1000000 / (config.virtualReality ? 90 : 20));
+				controlInputSchedule->period(1000000 / (config.virtualReality ? 90 : 60));
+
+				{ // create entities
+					entities = newEntityManager();
+				}
+
 				{ // create assets manager
 					AssetManagerCreateConfig c;
 					if (config.assets)
@@ -421,7 +429,11 @@ namespace cage
 						cfg.vsync = 0; // explicitly disable vsync for the window when virtual reality controls frame rate
 					window = newWindow(cfg);
 					if (config.virtualReality)
+					{
 						virtualReality = newVirtualReality(*config.virtualReality);
+						virtualRealityEventsListener.attach(virtualReality->events, -123456);
+						virtualRealityEventsListener.bind<EntityManager *, virtualRealitySceneUpdate>(engineEntities());
+					}
 					window->makeNotCurrent();
 				}
 
@@ -444,12 +456,8 @@ namespace cage
 						c = *config.gui;
 					c.assetMgr = +assets;
 					gui = newGuiManager(c);
-					listener.attach(window->events);
-					listener.bind<GuiManager, &GuiManager::handleInput>(+gui);
-				}
-
-				{ // create entities
-					entities = newEntityManager();
+					windowGuiEventsListener.attach(window->events);
+					windowGuiEventsListener.bind<GuiManager, &GuiManager::handleInput>(+gui);
 				}
 
 				{ // create sync objects
@@ -559,7 +567,7 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");
 				{ ScopeLock l(threadsStateBarier); }
 
-				{ // release resources hold by gui
+				{ // release resources held by gui
 					guiRenderQueue.clear();
 					if (gui)
 						gui->cleanUp();
@@ -634,7 +642,6 @@ namespace cage
 				ScheduleCreateConfig c;
 				c.name = "control schedule";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-				c.period = 1000000 / 20;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;
 				controlUpdateSchedule = controlScheduler->newSchedule(c);
 			}
@@ -642,7 +649,6 @@ namespace cage
 				ScheduleCreateConfig c;
 				c.name = "inputs schedule";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-				c.period = 1000000 / 60;
 				c.type = ScheduleTypeEnum::FreePeriodic;
 				controlInputSchedule = controlScheduler->newSchedule(c);
 			}

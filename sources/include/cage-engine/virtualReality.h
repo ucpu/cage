@@ -7,6 +7,7 @@
 namespace cage
 {
 	class Texture;
+	class EntityManager;
 
 	class CAGE_ENGINE_API VirtualRealityController
 	{
@@ -71,6 +72,8 @@ namespace cage
 
 	// opengl context must be bound in the current thread (for both constructing and destroying the object)
 	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
+
+	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *ents, const GenericInput &gin);
 }
 
 #endif

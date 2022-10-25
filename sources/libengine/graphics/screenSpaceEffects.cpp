@@ -15,27 +15,20 @@ namespace cage
 {
 	namespace
 	{
-		void updateTexture(RenderQueue *q, TextureHandle tex, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
-		{
-			if (tex.first())
-			{
-				q->image2d(tex, resolution, mipmapLevels, internalFormat);
-				q->wraps(tex, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				if (mipmapLevels > 1)
-				{
-					q->filters(tex, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-					q->generateMipmaps(tex);
-				}
-				else
-					q->filters(tex, GL_LINEAR, GL_LINEAR, 0);
-			}
-		}
-
-		TextureHandle provTex(ProvisionalGraphics *prov, RenderQueue *q, const String &prefix, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
+		TextureHandle provTex(ProvisionalGraphics *prov, const String &prefix, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
 		{
 			const String name = Stringizer() + prefix + "_" + resolution + "_" + mipmapLevels + "_" + internalFormat;
-			TextureHandle tex = prov->texture(name);
-			updateTexture(q, tex, resolution, mipmapLevels, internalFormat);
+			TextureHandle tex = prov->texture(name, [resolution, mipmapLevels, internalFormat](Texture *tex) {
+				tex->initialize(resolution, mipmapLevels, internalFormat);
+				tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				if (mipmapLevels > 1)
+				{
+					tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+					tex->generateMipmaps();
+				}
+				else
+					tex->filters(GL_LINEAR, GL_LINEAR, 0);
+			});
 			return tex;
 		}
 
@@ -59,7 +52,7 @@ namespace cage
 			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/gaussianBlur.glsl"))->get(0);
 			q->bind(shader);
 			q->uniform(shader, 1, (int)config.mipmapLevel);
-			TextureHandle tex = provTex(config.provisionals, config.queue, "blur", config.resolution, config.mipmapsCount, config.internalFormat);
+			TextureHandle tex = provTex(config.provisionals, "blur", config.resolution, config.mipmapsCount, config.internalFormat);
 			Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 
 			const auto &blur = [&](const TextureHandle &texIn, const TextureHandle &texOut, const Vec2 &direction)
@@ -96,8 +89,12 @@ namespace cage
 		q->bind(fb);
 
 		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints");
-		if (ssaoPoints.first())
-			q->writeWhole(ssaoPoints, privat::pointsForSsaoShader(), GL_STATIC_DRAW);
+		{ // potentially dangerous hack
+			ProvisionalUniformBuffer *pub = (ProvisionalUniformBuffer *)ssaoPoints.pointer();
+			CAGE_ASSERT(pub);
+			if (!pub->ready())
+				q->writeWhole(ssaoPoints, privat::pointsForSsaoShader(), GL_STATIC_DRAW);
+		}
 		q->bind(ssaoPoints, 3);
 
 		struct Shader
@@ -115,7 +112,7 @@ namespace cage
 		q->universalUniformStruct(s, 2);
 
 		// generate
-		updateTexture(q, config.outAo, config.resolution, 1, GL_R8);
+		config.outAo = provTex(config.provisionals, "ssao", config.resolution, 1, GL_R8);
 		q->colorTexture(fb, 0, config.outAo);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inDepth, 0);
@@ -163,8 +160,8 @@ namespace cage
 		s.dofFar = Vec4(fd + fr, fd + fr + br, 0, 0);
 		q->universalUniformStruct(s, 2);
 
-		TextureHandle texNear = provTex(config.provisionals, config.queue, "dofNear", res, 1, GL_RGB16F);
-		TextureHandle texFar = provTex(config.provisionals, config.queue, "dofFar", res, 1, GL_RGB16F);
+		TextureHandle texNear = provTex(config.provisionals, "dofNear", res, 1, GL_RGB16F);
+		TextureHandle texFar = provTex(config.provisionals, "dofFar", res, 1, GL_RGB16F);
 
 		q->bind(config.inColor, 0);
 		q->bind(config.inDepth, 1);
@@ -198,7 +195,6 @@ namespace cage
 
 		// apply
 		q->viewport(Vec2i(), config.resolution);
-		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
@@ -247,9 +243,9 @@ namespace cage
 		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
 
 		q->bindImage(config.inColor, 0, true, false);
-		TextureHandle texHist = provTex(config.provisionals, config.queue, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
+		TextureHandle texHist = provTex(config.provisionals, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
 		q->bindImage(texHist, 1, true, true);
-		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
+		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
 		q->bindImage(texAccum, 2, true, true);
 
 		// collection
@@ -277,7 +273,7 @@ namespace cage
 
 		// generate
 		const uint32 mips = max(config.blurPasses, 1u);
-		TextureHandle tex = provTex(config.provisionals, config.queue, "bloom", res, mips, GL_RGB16F);
+		TextureHandle tex = provTex(config.provisionals, "bloom", res, mips, GL_RGB16F);
 		q->colorTexture(fb, 0, tex);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
@@ -307,7 +303,6 @@ namespace cage
 
 		// apply
 		q->viewport(Vec2i(), config.resolution);
-		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->bind(fb);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
@@ -330,11 +325,10 @@ namespace cage
 
 		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
 
-		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		TextureHandle texAccum = provTex(config.provisionals, config.queue, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
+		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
 		q->bind(texAccum, 1);
 		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"))->get(0);
 		q->bind(shader);
@@ -361,7 +355,6 @@ namespace cage
 		s.gamma = Vec4(1.0 / config.gamma, 0, 0, 0);
 		q->universalUniformStruct(s, 2);
 
-		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
@@ -378,7 +371,6 @@ namespace cage
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
 
-		updateTexture(q, config.outColor, config.resolution, 1, GL_RGB16F);
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);

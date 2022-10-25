@@ -879,12 +879,14 @@ namespace cage
 
 	void VirtualRealityGraphicsFrame::renderBegin()
 	{
+		ProfilingScope profiling("VR render begin");
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
 		impl->begin();
 	}
 
 	void VirtualRealityGraphicsFrame::renderCommit()
 	{
+		ProfilingScope profiling("VR render commit");
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
 		impl->commit();
 	}
@@ -923,7 +925,7 @@ namespace cage
 
 	Holder<VirtualRealityGraphicsFrame> VirtualReality::graphicsFrame()
 	{
-		ProfilingScope profiling("VR wait graphics frame");
+		ProfilingScope profiling("VR graphics frame");
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		return systemMemory().createImpl<VirtualRealityGraphicsFrame, VirtualRealityGraphicsFrameImpl>(impl);
 	}

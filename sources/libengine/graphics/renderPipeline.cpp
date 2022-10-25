@@ -751,17 +751,6 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
-				if (data.shadowTexture->first())
-				{
-					if (data.lightComponent.lightType == LightTypeEnum::Point)
-						renderQueue->image2d(data.shadowTexture, data.resolution, 1, GL_DEPTH_COMPONENT16);
-					else
-						renderQueue->image2d(data.shadowTexture, data.resolution, 1, GL_DEPTH_COMPONENT24);
-					renderQueue->filters(data.shadowTexture, GL_LINEAR, GL_LINEAR, 16);
-					renderQueue->wraps(data.shadowTexture, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					renderQueue->checkGlErrorDebug();
-				}
-
 				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
 				renderQueue->clearFrameBuffer(renderTarget);
@@ -872,13 +861,11 @@ namespace cage
 				prepareCameraLights(data);
 
 				TextureHandle colorTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution);
-					if (t.first())
-					{
-						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
-						renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						renderQueue->image2d(t, data.resolution, 1, GL_RGBA16F);
-					}
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution, [resolution = data.resolution](Texture *t) {
+						t->initialize(resolution, 1, GL_RGBA16F);
+						t->filters(GL_LINEAR, GL_LINEAR, 0);
+						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					});
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeColor.share();
@@ -886,13 +873,11 @@ namespace cage
 					return t;
 				}();
 				TextureHandle depthTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution);
-					if (t.first())
-					{
-						renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
-						renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						renderQueue->image2d(t, data.resolution, 1, GL_DEPTH_COMPONENT32);
-					}
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution, [resolution = data.resolution](Texture *t) {
+						t->initialize(resolution, 1, GL_DEPTH_COMPONENT32);
+						t->filters(GL_LINEAR, GL_LINEAR, 0);
+						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					});
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeDepth.share();
@@ -928,13 +913,11 @@ namespace cage
 
 					TextureHandle depthTextureLowRes = [&]() {
 						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name + "_" + data.resolution);
-						if (t.first())
-						{
-							renderQueue->filters(t, GL_NEAREST, GL_NEAREST, 0);
-							renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-							renderQueue->image2d(t, ssaoResolution, 1, GL_R32F);
-						}
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name + "_" + data.resolution, [ssaoResolution](Texture *t) {
+							t->initialize(ssaoResolution, 1, GL_R32F);
+							t->filters(GL_NEAREST, GL_NEAREST, 0);
+							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						});
 						RenderPipelineDebugVisualization deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeDepth.share();
@@ -956,27 +939,24 @@ namespace cage
 						return t;
 					}();
 
-					TextureHandle ssaoTexture = [&]() {
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "ssao_" + data.name + "_" + data.resolution);
-						RenderPipelineDebugVisualization deb;
-						deb.texture = t;
-						deb.shader = shaderVisualizeMonochromatic.share();
-						data.debugVisualizations.push_back(std::move(deb));
-						return t;
-					}();
-
 					ScreenSpaceAmbientOcclusionConfig cfg;
 					(ScreenSpaceCommonConfig &)cfg = commonConfig;
 					(ScreenSpaceAmbientOcclusion &)cfg = data.effects.ssao;
 					cfg.resolution = ssaoResolution;
 					cfg.proj = data.projection;
 					cfg.inDepth = depthTextureLowRes;
-					cfg.outAo = ssaoTexture;
 					cfg.frameIndex = frameIndex;
 					screenSpaceAmbientOcclusion(cfg);
 
+					{
+						RenderPipelineDebugVisualization deb;
+						deb.texture = cfg.outAo;
+						deb.shader = shaderVisualizeMonochromatic.share();
+						data.debugVisualizations.push_back(std::move(deb));
+					}
+
 					// bind the texture for sampling
-					renderQueue->bind(ssaoTexture, CAGE_SHADER_TEXTURE_SSAO);
+					renderQueue->bind(cfg.outAo, CAGE_SHADER_TEXTURE_SSAO);
 
 					// restore rendering state
 					renderQueue->bind(renderTarget);
@@ -995,13 +975,11 @@ namespace cage
 
 					TextureHandle texSource = colorTexture;
 					TextureHandle texTarget = [&]() {
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution);
-						if (t.first())
-						{
-							renderQueue->filters(t, GL_LINEAR, GL_LINEAR, 0);
-							renderQueue->wraps(t, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-							renderQueue->image2d(t, data.resolution, 1, GL_RGBA16F);
-						}
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution, [resolution = data.resolution](Texture *t) {
+							t->initialize(resolution, 1, GL_RGBA16F);
+							t->filters(GL_LINEAR, GL_LINEAR, 0);
+							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						});
 						return t;
 					}();
 
@@ -1156,10 +1134,11 @@ namespace cage
 
 				{
 					const String name = Stringizer() + data.name + "_" + data.resolution;
-					if (data.lightComponent.lightType == LightTypeEnum::Point)
-						data.shadowTexture = provisionalGraphics->textureCube(name);
-					else
-						data.shadowTexture = provisionalGraphics->texture(name);
+					data.shadowTexture = provisionalGraphics->texture(name, data.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, [resolution = data.resolution, format = data.lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t) {
+						t->initialize(resolution, 1, format);
+						t->filters(GL_LINEAR, GL_LINEAR, 16);
+						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					});
 				}
 
 				{

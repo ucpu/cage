@@ -22,7 +22,6 @@ namespace cage
 			Holder<UniformBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			bool used = true;
-			bool first = true;
 
 			ProvisionalUniformBufferImpl(const String &name) : name(name)
 			{}
@@ -36,7 +35,6 @@ namespace cage
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
-			bool first = true;
 
 			ProvisionalFrameBufferHandleImpl(const String &name) : name(name)
 			{}
@@ -46,11 +44,11 @@ namespace cage
 		{
 		public:
 			const String name;
+			std::function<void(Texture *)> init;
 			Holder<Texture> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 target = m;
 			bool used = true;
-			bool first = true;
 
 			ProvisionalTextureHandleImpl(const String &name) : name(name)
 			{}
@@ -148,22 +146,28 @@ namespace cage
 				return std::move(fb).cast<ProvisionalFrameBuffer>();
 			}
 
-			Holder<ProvisionalTexture> texture(const String &name, uint32 target)
+			Holder<ProvisionalTexture> texture(const String &name, std::function<void(Texture *)> &&init, uint32 target)
 			{
 				auto t = textures.acquire(name);
 				CAGE_ASSERT(t->target == m || t->target == target);
-				t->target = target;
+				if (t->target == m)
+				{
+					t->target = target;
+					t->init = std::move(init);
+				}
 				return std::move(t).cast<ProvisionalTexture>();
 			}
 
 			void reset()
 			{
+				uniformBuffers.reset();
 				textures.reset();
 				frameBuffers.reset();
 			}
 
 			void purge()
 			{
+				uniformBuffers.purge();
 				textures.purge();
 				frameBuffers.purge();
 			}
@@ -186,14 +190,6 @@ namespace cage
 	{
 		const ProvisionalUniformBufferImpl *impl = (const ProvisionalUniformBufferImpl *)this;
 		return !!impl->result;
-	}
-
-	bool ProvisionalUniformBuffer::first()
-	{
-		ProvisionalUniformBufferImpl *impl = (ProvisionalUniformBufferImpl *)this;
-		const bool res = impl->first;
-		impl->first = false;
-		return res;
 	}
 
 	Holder<FrameBuffer> ProvisionalFrameBuffer::resolve()
@@ -222,14 +218,6 @@ namespace cage
 		return !!impl->result;
 	}
 
-	bool ProvisionalFrameBuffer::first()
-	{
-		ProvisionalFrameBufferHandleImpl *impl = (ProvisionalFrameBufferHandleImpl *)this;
-		const bool res = impl->first;
-		impl->first = false;
-		return res;
-	}
-
 	Holder<Texture> ProvisionalTexture::resolve()
 	{
 		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
@@ -238,6 +226,7 @@ namespace cage
 		{
 			impl->result = newTexture(impl->target);
 			impl->result->setDebugName(impl->name);
+			impl->init(+impl->result);
 		}
 		return impl->result.share();
 	}
@@ -246,14 +235,6 @@ namespace cage
 	{
 		const ProvisionalTextureHandleImpl *impl = (const ProvisionalTextureHandleImpl *)this;
 		return !!impl->result;
-	}
-
-	bool ProvisionalTexture::first()
-	{
-		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
-		const bool res = impl->first;
-		impl->first = false;
-		return res;
 	}
 
 	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const String &name)
@@ -274,35 +255,15 @@ namespace cage
 		return impl->frameBuffer(name, 2);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name, std::function<void(Texture *)> &&init)
 	{
-		return texture(name, GL_TEXTURE_2D);
+		return texture(name, GL_TEXTURE_2D, std::move(init));
 	}
 
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name, uint32 target)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const String &name, uint32 target, std::function<void(Texture *)> &&init)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
-		return impl->texture(name, target);
-	}
-
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture2dArray(const String &name)
-	{
-		return texture(name, GL_TEXTURE_2D_ARRAY);
-	}
-
-	Holder<ProvisionalTexture> ProvisionalGraphics::textureRectangle(const String &name)
-	{
-		return texture(name, GL_TEXTURE_RECTANGLE);
-	}
-
-	Holder<ProvisionalTexture> ProvisionalGraphics::texture3d(const String &name)
-	{
-		return texture(name, GL_TEXTURE_3D);
-	}
-
-	Holder<ProvisionalTexture> ProvisionalGraphics::textureCube(const String &name)
-	{
-		return texture(name, GL_TEXTURE_CUBE_MAP);
+		return impl->texture(name, std::move(init), target);
 	}
 
 	void ProvisionalGraphics::reset()

@@ -22,7 +22,7 @@ namespace cage
 	{
 		Mat4 proj;
 		TextureHandle inDepth;
-		TextureHandle outAo;
+		mutable TextureHandle outAo;
 		uint32 frameIndex = 0;
 	};
 
