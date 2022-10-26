@@ -77,8 +77,8 @@ namespace cage
 	// opengl context must be bound in the current thread (for both constructing and destroying the object)
 	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
 
-	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *ents, const GenericInput &gin);
-	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *ents, Real height, bool keepUp = true);
+	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene, const GenericInput &in);
+	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp = true);
 }
 
 #endif

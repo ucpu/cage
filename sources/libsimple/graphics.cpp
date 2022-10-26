@@ -32,7 +32,7 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_API_IMPORT Transform vrTransformByOrigin(EntityManager *ents, const Transform &in);
+		CAGE_API_IMPORT Transform vrTransformByOrigin(EntityManager *scene, const Transform &in);
 	}
 
 	namespace
@@ -217,7 +217,7 @@ namespace cage
 						data.inputs.transform = privat::vrTransformByOrigin(+eb.scene, it.transform);
 						data.inputs.projection = it.projection;
 						data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
-						data.inputs.lodSelection.center = vrFrame->pose().position;
+						data.inputs.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
 						cameras.push_back(std::move(data));
 						index++;
 					}
@@ -317,6 +317,11 @@ namespace cage
 			{
 				if (vrFrame)
 				{
+					struct ScopeExit
+					{
+						Holder<VirtualRealityGraphicsFrame> &vrFrame;
+						~ScopeExit() { vrFrame.clear(); }
+					} scopeExit{ vrFrame };
 					vrFrame->renderBegin();
 					renderQueue->dispatch();
 					vrFrame->acquireTextures();

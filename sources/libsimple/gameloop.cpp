@@ -60,7 +60,7 @@ namespace cage
 			}
 
 		private:
-			Semaphore *sem;
+			Semaphore *sem = nullptr;
 		};
 
 		struct ScopedTimer : private Immovable
@@ -172,6 +172,8 @@ namespace cage
 				}
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
+					if (stopping)
+						return; // prevent getting stuck in virtual reality waiting for previous (already terminated) frame dispatch
 					ProfilingScope profiling("graphics prepare run");
 					ScopedTimer timing(profilingBufferGraphicsPrepare);
 					uint32 drawCalls = 0, drawPrimitives = 0;
@@ -405,8 +407,33 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "initializing engine");
 
-				controlUpdateSchedule->period(1000000 / (config.virtualReality ? 90 : 20));
-				controlInputSchedule->period(1000000 / (config.virtualReality ? 90 : 60));
+				controlScheduler = newScheduler({});
+				{
+					ScheduleCreateConfig c;
+					c.name = "control schedule";
+					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
+					c.period = 1000000 / (config.virtualReality ? 90 : 20);
+					c.type = ScheduleTypeEnum::SteadyPeriodic;
+					controlUpdateSchedule = controlScheduler->newSchedule(c);
+				}
+				{
+					ScheduleCreateConfig c;
+					c.name = "inputs schedule";
+					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
+					c.period = 1000000 / (config.virtualReality ? 90 : 60);
+					c.type = ScheduleTypeEnum::FreePeriodic;
+					controlInputSchedule = controlScheduler->newSchedule(c);
+				}
+
+				soundScheduler = newScheduler({});
+				{
+					ScheduleCreateConfig c;
+					c.name = "sound schedule";
+					c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
+					c.period = 1000000 / 40;
+					c.type = ScheduleTypeEnum::SteadyPeriodic;
+					soundUpdateSchedule = soundScheduler->newSchedule(c);
+				}
 
 				{ // create entities
 					entities = newEntityManager();
@@ -633,36 +660,8 @@ namespace cage
 		EngineData::EngineData(const EngineCreateConfig &config)
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
-
 			graphicsCreate(config);
 			soundCreate(config);
-
-			controlScheduler = newScheduler({});
-			{
-				ScheduleCreateConfig c;
-				c.name = "control schedule";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-				c.type = ScheduleTypeEnum::SteadyPeriodic;
-				controlUpdateSchedule = controlScheduler->newSchedule(c);
-			}
-			{
-				ScheduleCreateConfig c;
-				c.name = "inputs schedule";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-				c.type = ScheduleTypeEnum::FreePeriodic;
-				controlInputSchedule = controlScheduler->newSchedule(c);
-			}
-
-			soundScheduler = newScheduler({});
-			{
-				ScheduleCreateConfig c;
-				c.name = "sound schedule";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
-				c.period = 1000000 / 40;
-				c.type = ScheduleTypeEnum::SteadyPeriodic;
-				soundUpdateSchedule = soundScheduler->newSchedule(c);
-			}
-
 			CAGE_LOG(SeverityEnum::Info, "engine", "engine created");
 		}
 
