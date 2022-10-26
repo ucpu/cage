@@ -13,7 +13,7 @@ namespace cage
 	struct CAGE_ENGINE_API VrOriginComponent
 	{
 		VirtualReality *virtualReality = nullptr;
-		//Transform manualCorrection;
+		Transform manualCorrection;
 	};
 
 	// the transform of this entity is updated automatically by the virtual reality

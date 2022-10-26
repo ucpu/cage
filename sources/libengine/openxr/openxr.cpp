@@ -16,7 +16,9 @@
 #include <cmath> // tan
 #include <atomic>
 
+#ifndef XR_APILAYER_LUNARG_core_validation
 #define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
+#endif
 
 // taking inspiration from https://gitlab.freedesktop.org/monado/demos/openxr-simple-example/-/blob/master/main.c
 
@@ -394,12 +396,23 @@ namespace cage
 					formats.resize(count);
 					check(xrEnumerateSwapchainFormats(session, count, &count, formats.data()));
 
-					// todo pick format from the enumeration
+					const uint32 selectedFormat = [&]() {
+						for (uint32 f : formats)
+						{
+							switch (f)
+							{
+							case GL_SRGB8_ALPHA8:
+							case GL_SRGB8:
+								return f;
+							}
+						}
+						CAGE_THROW_ERROR(Exception, "no supported swapchain format");
+					}();
 
 					uint32 nameIndex = 0;
 					for (uint32 i = 0; i < 2; i++)
 					{
-						createSwapchain(GL_SRGB8_ALPHA8, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
+						createSwapchain(selectedFormat, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
 						for (Holder<Texture> &it : colorTextures[i])
 							it->setDebugName(Stringizer() + "openxr color " + nameIndex++);
 					}
@@ -673,8 +686,6 @@ namespace cage
 
 			Texture *acquireTexture(XrSwapchain swapchain, std::vector<Holder<Texture>> &textures)
 			{
-				ProfilingScope profiling("VR wait swapchain image");
-
 				uint32 acquiredIndex = 0;
 				check(xrAcquireSwapchainImage(swapchain, nullptr, &acquiredIndex));
 
@@ -790,6 +801,12 @@ namespace cage
 					return;
 
 				check(xrBeginFrame(impl->session, nullptr));
+			}
+
+			void acquire()
+			{
+				if (!rendering)
+					return;
 
 				if (frameState.shouldRender)
 					for (uint32 i = 0; i < 2; i++)
@@ -882,6 +899,13 @@ namespace cage
 		ProfilingScope profiling("VR render begin");
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
 		impl->begin();
+	}
+
+	void VirtualRealityGraphicsFrame::acquireTextures()
+	{
+		ProfilingScope profiling("VR acquire textures");
+		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
+		impl->acquire();
 	}
 
 	void VirtualRealityGraphicsFrame::renderCommit()

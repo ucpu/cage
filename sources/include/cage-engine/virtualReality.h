@@ -40,12 +40,16 @@ namespace cage
 		// headset pose irrespective of individual views
 		Transform pose() const;
 
-		// acquire textures to render into
-		// acquires no textures if rendering is unnecessary
+		// signal beginning of rendering the frame
 		// requires opengl context
 		void renderBegin();
 
-		// submit textures to the device
+		// acquires no textures if rendering is unnecessary
+		// requires opengl context
+		void acquireTextures();
+
+		// signal finishing of rendering the frame
+		// also submits acquired textures to the device
 		// requires opengl context
 		void renderCommit();
 	};
@@ -74,6 +78,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
 
 	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *ents, const GenericInput &gin);
+	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *ents, Real height, bool keepUp = true);
 }
 
 #endif

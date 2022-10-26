@@ -13,6 +13,7 @@
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/shaderProgram.h>
+#include <cage-engine/frameBuffer.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
@@ -317,8 +318,9 @@ namespace cage
 				if (vrFrame)
 				{
 					vrFrame->renderBegin();
-					copyVrContents();
 					renderQueue->dispatch();
+					vrFrame->acquireTextures();
+					copyVrContents();
 					vrFrame->renderCommit();
 				}
 				else
@@ -342,8 +344,7 @@ namespace cage
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				engineWindow()->swapBuffers();
-				if (!vrFrame)
-					glFinish(); // this is where the engine should be waiting for the gpu
+				glFinish(); // this is where the engine should be waiting for the gpu
 			}
 
 			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
@@ -359,29 +360,29 @@ namespace cage
 
 			void copyVrContents()
 			{
-				const auto graphicsDebugScope = renderQueue->namedScope("VR blit");
 				CAGE_ASSERT(vrFrame);
 				CAGE_ASSERT(vrFrame->cameras.size() == vrTargets.size());
 				
 				auto assets = engineAssets();
 				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
-				FrameBufferHandle renderTarget = provisionalData->frameBufferDraw("VR_blit");
+				Holder<FrameBuffer> renderTarget = provisionalData->frameBufferDraw("VR_blit")->resolve();
 
-				renderQueue->bind(shaderBlit);
-				renderQueue->bind(renderTarget);
+				shaderBlit->bind();
+				renderTarget->bind();
 				for (uint32 i = 0; i < vrTargets.size(); i++)
 				{
 					if (!vrFrame->cameras[i].colorTexture)
 						continue;
-					renderQueue->colorTexture(renderTarget, 0, TextureHandle(Holder<Texture>(vrFrame->cameras[i].colorTexture, nullptr)));
-					renderQueue->checkFrameBuffer(renderTarget);
-					renderQueue->viewport(Vec2i(), vrFrame->cameras[i].resolution);
-					renderQueue->bind(vrTargets[i], 0);
-					renderQueue->draw(modelSquare);
-					renderQueue->checkGlErrorDebug();
+					renderTarget->colorTexture(0, vrFrame->cameras[i].colorTexture);
+					renderTarget->checkStatus();
+					glViewport(0, 0, vrFrame->cameras[i].resolution[0], vrFrame->cameras[i].resolution[1]);
+					vrTargets[i].resolve()->bind(0);
+					modelSquare->bind();
+					modelSquare->dispatch();
+					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
-				renderQueue->resetFrameBuffer();
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 
 			Holder<RenderQueue> renderQueue;
