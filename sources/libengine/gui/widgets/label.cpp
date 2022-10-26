@@ -64,7 +64,7 @@ namespace cage
 				return false;
 			}
 
-			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override
+			virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return false;
 			}

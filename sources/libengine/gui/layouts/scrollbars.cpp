@@ -151,7 +151,7 @@ namespace cage
 				return handleMouse(buttons, modifiers, point, true);
 			}
 
-			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, Vec2 point) override
+			virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (modifiers != ModifiersFlags::None)
 					return false;

@@ -51,16 +51,18 @@ namespace cage
 
 		struct MouseOffset
 		{
-			Vec2i off;
+			Vec2 off;
 		};
 
 		class WindowImpl : public Window
 		{
 		public:
+			Vec2 lastMouseButtonPressPositions[5] = {};
 			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
+
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
-			Vec2i stateMousePosition;
+			Vec2 stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
 			Window *const shareContext = nullptr;
@@ -72,8 +74,8 @@ namespace cage
 			Holder<Thread> windowThread;
 			Holder<Semaphore> windowSemaphore;
 			std::atomic<bool> stopping = false;
-			Vec2i mouseOffsetApi;
-			ConcurrentQueue<Vec2i> mouseOffsetsThr;
+			Vec2 mouseOffsetApi;
+			ConcurrentQueue<Vec2> mouseOffsetsThr;
 
 			void threadEntry()
 			{
@@ -93,13 +95,13 @@ namespace cage
 						glfwPollEvents();
 					}
 
-					Vec2i d;
+					Vec2 d;
 					while (mouseOffsetsThr.tryPop(d))
 					{
 						double x, y;
 						glfwGetCursorPos(window, &x, &y);
-						x += d[0];
-						y += d[1];
+						x += d[0].value;
+						y += d[1].value;
 						glfwSetCursorPos(window, x, y);
 						MouseOffset off;
 						off.off = -d;
@@ -193,21 +195,24 @@ namespace cage
 			bool determineMouseDoubleClick(InputMouse in)
 			{
 				CAGE_ASSERT((uint32)in.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
-				const uint64 current = applicationTime();
-				uint64 &last = lastMouseButtonPressTimes[(uint32)in.buttons];
-				if (current - last < 500000)
+				const uint64 ct = applicationTime();
+				const Vec2 cp = in.position;
+				uint64 &lt = lastMouseButtonPressTimes[(uint32)in.buttons];
+				Vec2 &lp = lastMouseButtonPressPositions[(uint32)in.buttons];
+				if (ct - lt < 300000 && distance(cp, lp) < 5)
 				{
-					last = 0;
+					lt = 0;
 					return true;
 				}
 				else
 				{
-					last = current;
+					lt = ct;
+					lp = cp;
 					return false;
 				}
 			}
 
-			Vec2i offsetMousePositionApi(Vec2i p)
+			Vec2 offsetMousePositionApi(Vec2 p)
 			{
 				stateMousePosition = p;
 #ifdef GCHL_WINDOWS_THREAD
@@ -283,8 +288,8 @@ namespace cage
 			InputMouse e;
 			e.window = impl;
 			e.mods = getKeyModifiers(w);
-			e.position[0] = numeric_cast<sint32>(floor(xpos));
-			e.position[1] = numeric_cast<sint32>(floor(ypos));
+			e.position[0] = xpos;
+			e.position[1] = ypos;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
 				e.buttons |= MouseButtonsFlags::Left;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT))
@@ -328,8 +333,8 @@ namespace cage
 			}
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
-			e.position[0] = numeric_cast<sint32>(floor(xpos));
-			e.position[1] = numeric_cast<sint32>(floor(ypos));
+			e.position[0] = xpos;
+			e.position[1] = ypos;
 			const bool doubleClick = type == InputClassEnum::MousePress && impl->determineMouseDoubleClick(e);
 			impl->eventsQueue.push({ e, type });
 			if (doubleClick)
@@ -344,9 +349,9 @@ namespace cage
 			e.mods = getKeyModifiers(w);
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
-			e.position[0] = numeric_cast<sint32>(floor(xpos));
-			e.position[1] = numeric_cast<sint32>(floor(ypos));
-			e.wheel = numeric_cast<sint32>(yoffset);
+			e.position[0] = xpos;
+			e.position[1] = ypos;
+			e.wheel = yoffset;
 			impl->eventsQueue.push({ e, InputClassEnum::MouseWheel });
 		}
 
@@ -527,22 +532,22 @@ namespace cage
 			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	}
 
-	Vec2i Window::mousePosition() const
+	Vec2 Window::mousePosition() const
 	{
 		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateMousePosition;
 	}
 
-	void Window::mousePosition(const Vec2i &p)
+	void Window::mousePosition(const Vec2 &p)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
-		Vec2i d = p - impl->stateMousePosition;
+		Vec2 d = p - impl->stateMousePosition;
 		impl->stateMousePosition = p;
 		impl->mouseOffsetApi += d;
 		impl->mouseOffsetsThr.push(d);
 #else
-		glfwSetCursorPos(impl->window, p[0], p[1]);
+		glfwSetCursorPos(impl->window, p[0].value, p[1].value);
 #endif // GCHL_WINDOWS_THREAD
 	}
 

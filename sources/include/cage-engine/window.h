@@ -40,8 +40,8 @@ namespace cage
 		bool mouseVisible() const;
 		void mouseVisible(bool value);
 
-		Vec2i mousePosition() const;
-		void mousePosition(const Vec2i &);
+		Vec2 mousePosition() const;
+		void mousePosition(const Vec2 &);
 		MouseButtonsFlags mouseButtons() const;
 
 		ModifiersFlags keyboardModifiers() const;
