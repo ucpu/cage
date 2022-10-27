@@ -57,8 +57,8 @@ vec3 lightSpotImpl(Material material, UniLight light, float intensity)
 {
 	vec3 lightSourceToFragmentDirection = normalize(light.position.xyz - varPosition);
 	float d = max(dot(-light.direction.xyz, lightSourceToFragmentDirection), 0);
-	float a = light.parameters[0]; // angle
-	float e = light.parameters[1]; // exponent
+	float a = light.fparams[0]; // angle
+	float e = light.fparams[1]; // exponent
 	if (d < a)
 		return vec3(0);
 	d = pow(d, e);
@@ -69,64 +69,48 @@ vec3 lightSpotImpl(Material material, UniLight light, float intensity)
 	) * light.color.rgb * d * intensity;
 }
 
-vec4 shadowSamplingPosition4(UniLight light, uint shadowIndex)
+vec4 shadowSamplingPosition4(UniLight light)
 {
-	float normalOffsetScale = light.parameters[2];
+	float normalOffsetScale = light.fparams[2];
 	vec3 p3 = varPosition + normal * normalOffsetScale;
-	return uniShadowsMatrices[shadowIndex] * vec4(p3, 1);
+	return uniShadowsMatrices[light.iparams[2]] * vec4(p3, 1);
 }
 
-sampler2D pickShadowSampler2d(uint shadowIndex)
+vec3 lightDirectionalShadow(Material material, UniLight light)
 {
-	if ((shadowIndex % 2) == 0)
-		return sampler2D(texShadows2d[shadowIndex / 2].xy);
-	else
-		return sampler2D(texShadows2d[shadowIndex / 2].zw);
-}
-
-samplerCube pickShadowSamplerCube(uint shadowIndex)
-{
-	if ((shadowIndex % 2) == 0)
-		return samplerCube(texShadowsCube[shadowIndex / 2].xy);
-	else
-		return samplerCube(texShadowsCube[shadowIndex / 2].zw);
-}
-
-vec3 lightDirectionalShadow(Material material, UniLight light, uint shadowIndex)
-{
-	vec3 shadowPos = vec3(shadowSamplingPosition4(light, shadowIndex));
-	float shadow = sampleShadowMap2d(pickShadowSampler2d(shadowIndex), shadowPos);
+	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
+	float shadow = sampleShadowMap2d(texShadows2d[light.iparams[1]], shadowPos);
 	return lightDirectionalImpl(material, light, shadow);
 }
 
-vec3 lightPointShadow(Material material, UniLight light, float att, uint shadowIndex)
+vec3 lightPointShadow(Material material, UniLight light, float att)
 {
-	vec3 shadowPos = vec3(shadowSamplingPosition4(light, shadowIndex));
-	float shadow = sampleShadowMapCube(pickShadowSamplerCube(shadowIndex), shadowPos);
+	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
+	float shadow = sampleShadowMapCube(texShadowsCube[light.iparams[1]], shadowPos);
 	return lightPointImpl(material, light, shadow * att);
 }
 
-vec3 lightSpotShadow(Material material, UniLight light, float att, uint shadowIndex)
+vec3 lightSpotShadow(Material material, UniLight light, float att)
 {
-	vec4 shadowPos4 = shadowSamplingPosition4(light, shadowIndex);
+	vec4 shadowPos4 = shadowSamplingPosition4(light);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
-	float shadow = sampleShadowMap2d(pickShadowSampler2d(shadowIndex), shadowPos);
+	float shadow = sampleShadowMap2d(texShadows2d[light.iparams[1]], shadowPos);
 	return lightSpotImpl(material, light, shadow * att);
 }
 
-vec3 lightType(Material material, UniLight light, uint shadowIndex)
+vec3 lightType(Material material, UniLight light)
 {
 	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
 	if (att < confLightThreshold)
 		return vec3(0);
-	switch (uint(light.parameters[3]))
+	switch (light.iparams[0])
 	{
 	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light);
 	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINT: return lightPointImpl(material, light, att);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att);
 	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOT: return lightSpotImpl(material, light, att);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att);
 	default: return vec3(191, 85, 236) / 255;
 	}
 }
@@ -169,7 +153,7 @@ vec4 lighting(Material material)
 		{ // direct
 			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
 			for (int i = 0; i < lightsCount; i++)
-				res.rgb += lightType(material, uniLights[i], i);
+				res.rgb += lightType(material, uniLights[i]);
 		}
 	}
 

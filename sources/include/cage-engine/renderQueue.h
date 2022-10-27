@@ -80,9 +80,6 @@ namespace cage
 		void resetAllTextures(); // bind default (0) texture in all texture units in all types
 		void bindImage(TextureHandle texture, uint32 bindingPoint, bool read, bool write);
 
-		void bindlessUniform(Holder<PointerRange<TextureHandle>> textures, uint32 bindingPoint, bool makeResident = false);
-		void bindlessResident(Holder<PointerRange<TextureHandle>> textures, bool resident);
-
 		void draw(const Holder<Model> &model, uint32 instances = 1);
 
 		void compute(const Holder<ShaderProgram> &shader, const Vec3i &groupsCounts);

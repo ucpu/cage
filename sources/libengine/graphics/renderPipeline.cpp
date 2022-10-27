@@ -58,7 +58,8 @@ namespace cage
 			Vec4 position;
 			Vec4 direction;
 			Vec4 attenuation;
-			Vec4 parameters; // spotAngle, spotExponent, normalOffsetScale, lightType
+			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale
+			Vec4i iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
 		};
 
 		struct UniViewport
@@ -196,8 +197,8 @@ namespace cage
 			uni.position = model * Vec4(0, 0, 0, 1);
 			uni.direction = model * Vec4(0, 0, -1, 0);
 			uni.attenuation = lc.lightType == LightTypeEnum::Directional ? Vec4(1, 0, 0, 0) : Vec4(lc.attenuation, 0);
-			uni.parameters[0] = cos(lc.spotAngle * 0.5);
-			uni.parameters[1] = lc.spotExponent;
+			uni.fparams[0] = cos(lc.spotAngle * 0.5);
+			uni.fparams[1] = lc.spotExponent;
 			return uni;
 		}
 
@@ -802,20 +803,24 @@ namespace cage
 				PointerRangeHolder<TextureHandle> tex2d, texCube;
 
 				// add shadowed lights
-				for (const auto &[e, sh] : data.shadowmaps)
+				for (auto &[e, sh] : data.shadowmaps)
 				{
-					lights.push_back(sh.shadowUni);
-					shadows.push_back(sh.shadowMat);
 					if (sh.lightComponent.lightType == LightTypeEnum::Spot)
 					{
-						tex2d.push_back({});
+						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
+						sh.shadowUni.iparams[1] = texCube.size();
+						sh.shadowUni.iparams[2] = shadows.size();
 						texCube.push_back(sh.shadowTexture);
 					}
 					else
 					{
+						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
+						sh.shadowUni.iparams[1] = texCube.size();
+						sh.shadowUni.iparams[2] = shadows.size();
 						tex2d.push_back(sh.shadowTexture);
-						texCube.push_back({});
 					}
+					lights.push_back(sh.shadowUni);
+					shadows.push_back(sh.shadowMat);
 				}
 
 				// add unshadowed lights
@@ -825,7 +830,7 @@ namespace cage
 					if (e->has<ShadowmapComponent>())
 						return;
 					UniLight uni = initializeLightUni(modelTransform(e), lc);
-					uni.parameters[3] = [&]() {
+					uni.iparams[0] = [&]() {
 						switch (lc.lightType)
 						{
 						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
@@ -841,21 +846,7 @@ namespace cage
 				if (!lights.empty())
 					renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
 				if (!shadows.empty())
-				{
 					renderQueue->universalUniformArray<Mat4>(shadows, CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES);
-					if (!tex2d.empty())
-						renderQueue->bindlessUniform(std::move(tex2d), CAGE_SHADER_UNIBLOCK_SHADOWS2D, true);
-					if (!texCube.empty())
-						renderQueue->bindlessUniform(std::move(texCube), CAGE_SHADER_UNIBLOCK_SHADOWSCUBE, true);
-				}
-			}
-
-			void finishCameraLights(CameraData &data) const
-			{
-				PointerRangeHolder<TextureHandle> texs;
-				for (const auto &[e, sh] : data.shadowmaps)
-					texs.push_back(sh.shadowTexture);
-				data.renderQueue->bindlessResident(std::move(texs), false);
 			}
 
 			void taskCamera(CameraData &data, uint32) const
@@ -982,8 +973,6 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("standard");
 					renderModels<RenderModeEnum::Color>(data);
 				}
-
-				finishCameraLights(data);
 
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("effects");
@@ -1159,8 +1148,8 @@ namespace cage
 				{
 					UniLight &uni = data.shadowUni;
 					uni = initializeLightUni(data.model, data.lightComponent);
-					uni.parameters[2] = e->value<ShadowmapComponent>().normalOffsetScale;
-					uni.parameters[3] = [&]() {
+					uni.fparams[2] = e->value<ShadowmapComponent>().normalOffsetScale;
+					uni.iparams[0] = [&]() {
 						switch (data.lightComponent.lightType)
 						{
 						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW;

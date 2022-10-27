@@ -6,7 +6,6 @@
 namespace cage
 {
 	class Image;
-	struct BindlessHandle;
 
 	class CAGE_ENGINE_API Texture : private Immovable
 	{
@@ -28,6 +27,7 @@ namespace cage
 		uint32 mipmapLevels() const; // 1 is just base level
 
 		void bind(uint32 bindingPoint) const;
+		void bindImage(uint32 bindingPoint, bool read, bool write) const; // for use in compute shaders
 
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
@@ -46,11 +46,6 @@ namespace cage
 		void image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer);
 
 		void generateMipmaps();
-
-		BindlessHandle bindlessHandle();
-		void makeResident(bool resident);
-
-		void bindImage(uint32 bindingPoint, bool read, bool write) const;
 	};
 
 	CAGE_ENGINE_API Holder<Texture> newTexture();
@@ -64,11 +59,6 @@ namespace cage
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
 	constexpr uint32 AssetSchemeIndexTexture = 11;
-
-	struct CAGE_ENGINE_API BindlessHandle
-	{
-		uint64 handle = 0;
-	};
 }
 
 #endif // guard_texture_h_ds54ghlkj89s77e4g

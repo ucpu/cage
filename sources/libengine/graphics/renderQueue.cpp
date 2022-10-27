@@ -732,17 +732,7 @@ namespace cage
 		{
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				for (uint32 i = 0; i < 16; i++)
-				{
-					glActiveTexture(GL_TEXTURE0 + i);
-					glBindTexture(GL_TEXTURE_1D, 0);
-					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_2D, 0);
-					glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_RECTANGLE, 0);
-					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-					glBindTexture(GL_TEXTURE_3D, 0);
-				}
+				glBindTextures(0, 32, nullptr);
 				glActiveTexture(GL_TEXTURE0 + 0);
 			}
 		};
@@ -774,87 +764,6 @@ namespace cage
 		cmd.bindingPoint = bindingPoint;
 		cmd.read = read;
 		cmd.write = write;
-	}
-
-	void RenderQueue::bindlessUniform(Holder<PointerRange<TextureHandle>> bindlessHandles, uint32 bindingPoint, bool makeResident)
-	{
-		struct CmdSetup : public CmdBase
-		{
-			Holder<PointerRange<TextureHandle>> bindlessHandles;
-			UubRange range;
-
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				uint64 *arr = (uint64 *)CAGE_ALLOCA(sizeof(uint64) * bindlessHandles.size());
-				uint64 *arrit = arr;
-				for (auto &it : bindlessHandles)
-				{
-					if (!it)
-					{
-						*arrit++ = 0;
-						continue;
-					}
-					Holder<Texture> tex = it.resolve();
-					BindlessHandle hnd = tex->bindlessHandle();
-					*arrit++ = hnd.handle;
-				}
-				const_cast<CmdSetup *>(this)->range = impl->universalUniformArray<uint64>(PointerRange<uint64>(arr, arr + bindlessHandles.size()));
-			}
-		};
-
-		struct CmdDispatch : public CmdBase
-		{
-			const CmdSetup *setup = nullptr;
-			uint32 bindingPoint = m;
-			bool makeResident = false;
-
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				if (makeResident)
-				{
-					for (auto &it : setup->bindlessHandles)
-					{
-						if (!it)
-							continue;
-						Holder<Texture> tex = it.resolve();
-						tex->makeResident(true);
-					}
-				}
-
-				impl->uubObject->bind(bindingPoint, setup->range.offset, setup->range.size);
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CmdSetup &setup = impl->addSetup<CmdSetup>();
-		setup.bindlessHandles = std::move(bindlessHandles);
-		CmdDispatch &cmd = impl->addCmd<CmdDispatch>();
-		cmd.setup = &setup;
-		cmd.bindingPoint = bindingPoint;
-		cmd.makeResident = makeResident;
-	}
-
-	void RenderQueue::bindlessResident(Holder<PointerRange<TextureHandle>> bindlessHandles, bool resident)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<PointerRange<TextureHandle>> bindlessHandles;
-			bool resident = false;
-
-			void dispatch(RenderQueueImpl *) const override
-			{
-				for (auto &it : bindlessHandles)
-				{
-					Holder<Texture> tex = it.resolve();
-					tex->makeResident(resident);
-				}
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.bindlessHandles = std::move(bindlessHandles);
-		cmd.resident = resident;
 	}
 
 	void RenderQueue::draw(const Holder<Model> &model, uint32 instances)

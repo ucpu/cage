@@ -57,7 +57,8 @@ struct UniLight
 	vec4 position;
 	vec4 direction;
 	vec4 attenuation;
-	vec4 parameters; // spotAngle, spotExponent, normalOffsetScale, lightType
+	vec4 fparams; // spotAngle, spotExponent, normalOffsetScale
+	ivec4 iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
@@ -67,14 +68,6 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES) uniform ShadowsMatricesBlock
 {
 	mat4 uniShadowsMatrices[CAGE_SHADER_MAX_LIGHTS];
-};
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWS2D) uniform Shadows2dBlock
-{
-	uvec4 texShadows2d[CAGE_SHADER_MAX_LIGHTS];
-};
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSCUBE) uniform ShadowsCubeBlock
-{
-	uvec4 texShadowsCube[CAGE_SHADER_MAX_LIGHTS];
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_OPTIONS) uniform OptionsBlock
@@ -97,4 +90,6 @@ layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texMaterialNormal
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_ARRAY) uniform sampler2DArray texMaterialNormalArray;
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMaterialNormalCube;
 layout(binding = CAGE_SHADER_TEXTURE_SSAO) uniform sampler2D texSsao;
+layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAP2D0) uniform sampler2D texShadows2d[CAGE_SHADER_MAX_SHADOWMAPS2D];
+layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0) uniform samplerCube texShadowsCube[CAGE_SHADER_MAX_SHADOWMAPSCUBE];
 

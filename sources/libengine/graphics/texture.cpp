@@ -190,6 +190,15 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
+	void Texture::bindImage(uint32 bindingPoint, bool read, bool write) const
+	{
+		CAGE_ASSERT(read || write);
+		const TextureImpl *impl = (const TextureImpl *)this;
+		const uint32 access = read && write ? GL_READ_WRITE : write ? GL_WRITE_ONLY : GL_READ_ONLY;
+		glBindImageTexture(bindingPoint, impl->id, 0, GL_FALSE, 0, access, impl->internalFormat);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
 	void Texture::filters(uint32 mig, uint32 mag, uint32 aniso)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
@@ -387,40 +396,6 @@ namespace cage
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		glGenerateTextureMipmap(impl->id);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	BindlessHandle Texture::bindlessHandle()
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		BindlessHandle h;
-		h.handle = glGetTextureHandleARB(impl->id);
-		return h;
-	}
-
-	void Texture::makeResident(bool resident)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		if (resident)
-		{
-			if (++impl->residentCounter == 1)
-				glMakeTextureHandleResidentARB(bindlessHandle().handle);
-		}
-		else
-		{
-			if (--impl->residentCounter == 0)
-				glMakeTextureHandleNonResidentARB(bindlessHandle().handle);
-		}
-		CAGE_ASSERT(impl->residentCounter >= 0); // detect overflows
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::bindImage(uint32 bindingPoint, bool read, bool write) const
-	{
-		CAGE_ASSERT(read || write);
-		const TextureImpl *impl = (const TextureImpl *)this;
-		const uint32 access = read && write ? GL_READ_WRITE : write ? GL_WRITE_ONLY : GL_READ_ONLY;
-		glBindImageTexture(bindingPoint, impl->id, 0, GL_FALSE, 0, access, impl->internalFormat);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

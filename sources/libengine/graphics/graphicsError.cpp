@@ -168,11 +168,19 @@ namespace cage
 			static bool blah = logOpenglInfo(); // log just once
 
 #define checkExtension(NAME) if (!NAME) { CAGE_THROW_ERROR(Exception, "missing required OpenGL extension: " #NAME); }
-			checkExtension(GLAD_GL_ARB_bindless_texture);
 			checkExtension(GLAD_GL_EXT_texture_compression_s3tc);
 			checkExtension(GLAD_GL_EXT_texture_filter_anisotropic);
 			checkExtension(GLAD_GL_EXT_texture_sRGB);
 #undef checkExtension
+
+			{
+				GLint combined = 0, fs = 0;
+				glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &combined);
+				glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &fs);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+				if (combined < 32 || fs < 32)
+					CAGE_THROW_ERROR(Exception, "insufficient number of texture units");
+			}
 
 			{ // pack alignment
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
