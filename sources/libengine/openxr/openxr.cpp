@@ -198,7 +198,7 @@ namespace cage
 				for (const auto &it : props)
 				{
 					if (String(it.layerName) == XR_APILAYER_LUNARG_core_validation)
-						haveApiValidationLayer = true;
+						haveApilayerCoreValidation = true;
 				}
 			}
 
@@ -223,6 +223,8 @@ namespace cage
 
 				for (const auto &it : props)
 				{
+					if (String(it.extensionName) == XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)
+						haveKhrOpenglEnable = true;
 					if (String(it.extensionName) == XR_EXT_DEBUG_UTILS_EXTENSION_NAME)
 						haveExtDebugUtils = true;
 				}
@@ -231,6 +233,9 @@ namespace cage
 			void initHandles()
 			{
 				{
+					if (!haveKhrOpenglEnable)
+						CAGE_THROW_ERROR(Exception, "missing required OpenXR extension: XR_KHR_OPENGL_ENABLE")
+
 					std::vector<const char *> exts, layers;
 					exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 
@@ -249,7 +254,7 @@ namespace cage
 
 					if (confEnableValidation)
 					{
-						if (haveApiValidationLayer)
+						if (haveApilayerCoreValidation)
 						{
 							CAGE_LOG(SeverityEnum::Info, "virtualReality", "enabling api validation layer");
 							layers.push_back(XR_APILAYER_LUNARG_core_validation);
@@ -258,7 +263,7 @@ namespace cage
 							CAGE_LOG(SeverityEnum::Info, "virtualReality", "requested api validation layer is not available - skipping");
 					}
 					else
-						haveApiValidationLayer = false;
+						haveApilayerCoreValidation = false;
 
 					XrInstanceCreateInfo info;
 					init(info, XR_TYPE_INSTANCE_CREATE_INFO);
@@ -697,8 +702,9 @@ namespace cage
 				return +textures[acquiredIndex];
 			}
 
-			bool haveApiValidationLayer = false;
-			bool haveExtDebugUtils = false;
+			bool haveKhrOpenglEnable = false; // XR_KHR_OPENGL_ENABLE_EXTENSION_NAME
+			bool haveExtDebugUtils = false; // XR_EXT_DEBUG_UTILS_EXTENSION_NAME
+			bool haveApilayerCoreValidation = false; // XR_APILAYER_LUNARG_core_validation
 
 			XrInstance instance = XR_NULL_HANDLE;
 			XrSystemId systemId = XR_NULL_SYSTEM_ID;

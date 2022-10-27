@@ -167,6 +167,13 @@ namespace cage
 
 			static bool blah = logOpenglInfo(); // log just once
 
+#define checkExtension(NAME) if (!NAME) { CAGE_THROW_ERROR(Exception, "missing required OpenGL extension: " #NAME); }
+			checkExtension(GLAD_GL_ARB_bindless_texture);
+			checkExtension(GLAD_GL_EXT_texture_compression_s3tc);
+			checkExtension(GLAD_GL_EXT_texture_filter_anisotropic);
+			checkExtension(GLAD_GL_EXT_texture_sRGB);
+#undef checkExtension
+
 			{ // pack alignment
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 				glPixelStorei(GL_PACK_ALIGNMENT, 1);
