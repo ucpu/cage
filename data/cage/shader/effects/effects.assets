@@ -17,4 +17,3 @@ luminanceHistogram.glsl
 ssaoResolve.glsl
 ssaoGenerate.glsl
 tonemap.glsl
-

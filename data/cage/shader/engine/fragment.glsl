@@ -121,12 +121,12 @@ vec3 lightType(Material material, UniLight light, uint shadowIndex)
 		return vec3(0);
 	switch (uint(light.parameters[3]))
 	{
-	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light, shadowIndex);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINT: return lightPointImpl(material, light, att);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att, shadowIndex);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOT: return lightSpotImpl(material, light, att);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINT: return lightPointImpl(material, light, att);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att, shadowIndex);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOT: return lightSpotImpl(material, light, att);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att, shadowIndex);
 	default: return vec3(191, 85, 236) / 255;
 	}
 }
@@ -161,13 +161,14 @@ vec4 lighting(Material material)
 	{
 		{ // ambient
 			float ssao = 1;
-			if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] > 0)
+			if (getOption(CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION) > 0)
 				ssao = lightAmbientOcclusion();
 			res.rgb += lightAmbient(material) * ssao;
 		}
 
 		{ // direct
-			for (int i = 0; i < uniLightsCount; i++)
+			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
+			for (int i = 0; i < lightsCount; i++)
 				res.rgb += lightType(material, uniLights[i], i);
 		}
 	}
@@ -182,18 +183,18 @@ vec4 lighting(Material material)
 
 vec4 matMapImpl(int index)
 {
-	switch (uniRoutines[index])
+	switch (getOption(index))
 	{
 		case 0: return vec4(0, 0, 0, 1);
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D: return texture(texMaterialAlbedo2d, varUv.xy);
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY: return sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE: return texture(texMaterialAlbedoCube, varUv);
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D: return texture(texMaterialSpecial2d, varUv.xy);
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE: return texture(texMaterialSpecialCube, varUv);
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D: return texture(texMaterialNormal2d, varUv.xy);
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE: return texture(texMaterialNormalCube, varUv);
+		case CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D: return texture(texMaterialAlbedo2d, varUv.xy);
+		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY: return sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE: return texture(texMaterialAlbedoCube, varUv);
+		case CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D: return texture(texMaterialSpecial2d, varUv.xy);
+		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE: return texture(texMaterialSpecialCube, varUv);
+		case CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D: return texture(texMaterialNormal2d, varUv.xy);
+		case CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE: return texture(texMaterialNormalCube, varUv);
 		default: return vec4(-100);
 	}
 }
@@ -202,13 +203,13 @@ Material loadMaterial()
 {
 	Material material;
 
-	vec4 specialMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL);
+	vec4 specialMap = matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPSPECIAL);
 	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
 	material.roughness = special4.r;
 	material.metalness = special4.g;
 	material.emissive = special4.b;
 
-	vec4 albedoMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPALBEDO);
+	vec4 albedoMap = matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPALBEDO);
 	if (albedoMap.a > 1e-6)
 		albedoMap.rgb /= albedoMap.a; // depremultiply albedo texture
 	else
@@ -237,9 +238,9 @@ void updateNormal()
 {
 	normal = normalize(varNormal);
 
-	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] != 0)
+	if (getOption(CAGE_SHADER_OPTIONINDEX_MAPNORMAL) != 0)
 	{
-		vec3 normalMap = restoreNormalMap(matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL));
+		vec3 normalMap = restoreNormalMap(matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPNORMAL));
 		vec3 tangent = normalize(varTangent);
 		vec3 bitangent = cross(normal, tangent);
 		normal = mat3(tangent, bitangent, normal) * normalMap;

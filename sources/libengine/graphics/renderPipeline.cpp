@@ -75,6 +75,16 @@ namespace cage
 			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 		};
 
+		struct UniOptions
+		{
+			Vec4i options[(CAGE_SHADER_MAX_OPTIONS + 3) / 4];
+
+			sint32 &operator[] (uint32 index)
+			{
+				return options[index / 4][index % 4];
+			}
+		};
+
 		struct ModelShared
 		{
 			Holder<Model> mesh;
@@ -191,61 +201,61 @@ namespace cage
 			return uni;
 		}
 
-		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, std::array<uint32, CAGE_SHADER_MAX_ROUTINES> &shaderRoutines)
+		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, UniOptions &options)
 		{
 			if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY;
+					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE;
+					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D;
+					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPALBEDO] = 0;
+				options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = 0;
 
 			if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY;
+					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE;
+					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D;
+					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL] = 0;
+				options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = 0;
 
 			if (textures[CAGE_SHADER_TEXTURE_NORMAL])
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->target())
 				{
 				case GL_TEXTURE_2D_ARRAY:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY;
+					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY;
 					break;
 				case GL_TEXTURE_CUBE_MAP:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE;
+					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE;
 					break;
 				default:
-					shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D;
+					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D;
 					break;
 				}
 			}
 			else
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] = 0;
+				options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = 0;
 		}
 
 		template<class T>
@@ -333,9 +343,9 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
+			void renderModelsImpl(const CameraData& data, const ModelShared& sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
-				const Holder<RenderQueue> &renderQueue = data.renderQueue;
+				const Holder<RenderQueue>& renderQueue = data.renderQueue;
 
 				Holder<ShaderProgram> shader = [&]() {
 					if (sh.mesh->shaderName)
@@ -384,12 +394,12 @@ namespace cage
 					renderQueue->blending(false);
 				}
 
-				std::array<uint32, CAGE_SHADER_MAX_ROUTINES> shaderRoutines = {};
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_LIGHTSCOUNT, data.lightsCount);
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_BONESPERINSTANCE, sh.mesh->bones);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON] = sh.skeletal ? 1 : 0;
+				UniOptions uniOptions;
+				uniOptions[CAGE_SHADER_OPTIONINDEX_BONESCOUNT] = sh.mesh->bones;
+				uniOptions[CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT] = data.lightsCount;
+				uniOptions[CAGE_SHADER_OPTIONINDEX_SKELETON] = sh.skeletal ? 1 : 0;
 				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
-				shaderRoutines[CAGE_SHADER_ROUTINEUNIF_AMBIENTOCCLUSION] = ssao ? 1 : 0;
+				uniOptions[CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION] = ssao ? 1 : 0;
 
 				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -406,9 +416,9 @@ namespace cage
 						}
 					}
 				}
-				updateShaderRoutinesForTextures(textures, shaderRoutines);
+				updateShaderRoutinesForTextures(textures, uniOptions);
 
-				renderQueue->uniform(shader, CAGE_SHADER_UNI_ROUTINES, shaderRoutines);
+				renderQueue->universalUniformStruct(uniOptions, CAGE_SHADER_UNIBLOCK_OPTIONS);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
 				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
@@ -813,9 +823,9 @@ namespace cage
 					uni.parameters[3] = [&]() {
 						switch (lc.lightType)
 						{
-						case LightTypeEnum::Directional: return CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL;
-						case LightTypeEnum::Spot: return CAGE_SHADER_ROUTINEPROC_LIGHTSPOT;
-						case LightTypeEnum::Point: return CAGE_SHADER_ROUTINEPROC_LIGHTPOINT;
+						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
+						case LightTypeEnum::Spot: return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
+						case LightTypeEnum::Point: return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
 						default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
 						}
 					}();
@@ -1148,9 +1158,9 @@ namespace cage
 					uni.parameters[3] = [&]() {
 						switch (data.lightComponent.lightType)
 						{
-						case LightTypeEnum::Directional: return CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW;
-						case LightTypeEnum::Spot: return CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW;
-						case LightTypeEnum::Point: return CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW;
+						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW;
+						case LightTypeEnum::Spot: return CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW;
+						case LightTypeEnum::Point: return CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW;
 						default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
 						}
 					}();
