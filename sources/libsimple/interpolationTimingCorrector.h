@@ -12,7 +12,7 @@ namespace cage
 		{
 			CAGE_ASSERT(step > 0);
 			corrections.add((sint64)emit - (sint64)dispatch);
-			sint64 c = corrections.smooth();
+			const sint64 c = corrections.smooth();
 			return max(emit, dispatch + c + step / 2);
 		}
 

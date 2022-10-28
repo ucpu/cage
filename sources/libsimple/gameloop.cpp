@@ -324,11 +324,6 @@ namespace cage
 					gui->outputRetina(window->contentScaling());
 					gui->prepare();
 				}
-				if (virtualReality)
-				{
-					ProfilingScope profiling("virtual reality events");
-					virtualReality->processEvents();
-				}
 				{
 					ProfilingScope profiling("window events");
 					window->processEvents();
@@ -351,6 +346,11 @@ namespace cage
 				{
 					ProfilingScope profiling("update history components");
 					updateHistoryComponents();
+				}
+				if (virtualReality)
+				{
+					ProfilingScope profiling("virtual reality events");
+					virtualReality->processEvents();
 				}
 				{
 					ProfilingScope profiling("control callback");
@@ -420,7 +420,7 @@ namespace cage
 					ScheduleCreateConfig c;
 					c.name = "inputs schedule";
 					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-					c.period = 1000000 / (config.virtualReality ? 90 : 60);
+					c.period = 1000000 / 60;
 					c.type = ScheduleTypeEnum::FreePeriodic;
 					controlInputSchedule = controlScheduler->newSchedule(c);
 				}

@@ -40,6 +40,10 @@ namespace cage
 		// headset pose irrespective of individual views
 		Transform pose() const;
 
+		// time elapsed since first frame
+		// warning: this time is not related to the application time
+		uint64 displayTime() const;
+
 		// signal beginning of rendering the frame
 		// requires opengl context
 		void renderBegin();

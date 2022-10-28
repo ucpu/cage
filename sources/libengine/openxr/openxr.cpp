@@ -727,6 +727,7 @@ namespace cage
 
 			Transform headTransform = InvalidTransform;
 			bool tracking = false;
+			XrTime firstFrameTime = m;
 		};
 
 		class VirtualRealityGraphicsFrameImpl : public VirtualRealityGraphicsFrame
@@ -754,6 +755,8 @@ namespace cage
 					}
 					check(res);
 					impl->syncTime = frameState.predictedDisplayTime;
+					if (impl->firstFrameTime == m)
+						impl->firstFrameTime = frameState.predictedDisplayTime;
 				}
 
 				{
@@ -898,6 +901,13 @@ namespace cage
 	{
 		const VirtualRealityGraphicsFrameImpl *impl = (const VirtualRealityGraphicsFrameImpl *)this;
 		return impl->headTransform;
+	}
+
+	uint64 VirtualRealityGraphicsFrame::displayTime() const
+	{
+		const VirtualRealityGraphicsFrameImpl *impl = (const VirtualRealityGraphicsFrameImpl *)this;
+		// openxr uses nanoseconds, engine uses microseconds
+		return (impl->frameState.predictedDisplayTime - impl->impl->firstFrameTime) / 1000;
 	}
 
 	void VirtualRealityGraphicsFrame::renderBegin()

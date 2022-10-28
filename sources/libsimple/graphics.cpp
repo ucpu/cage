@@ -163,67 +163,58 @@ namespace cage
 				}
 			}
 
-			void prepare(const EmitBuffer &eb)
+			void prepareVrCameras(const EmitBuffer &eb, std::vector<CameraData> &cameras)
 			{
-				const Vec2i windowResolution = engineWindow()->resolution();
-				if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
-					return;
-
-				if (!eb.pipeline->reinitialize())
-					return;
-
-				std::vector<CameraData> cameras;
-
-				if (auto vr = engineVirtualReality())
+				Entity *camEnt = nullptr;
 				{
-					vrFrame = vr->graphicsFrame();
+					auto r = eb.scene->component<VrCameraComponent>()->entities();
+					if (!r.empty())
+						camEnt = r[0];
+				}
 
-					Entity *camEnt = nullptr;
+				if (camEnt)
+				{
+					const auto &cam = camEnt->value<VrCameraComponent>();
+					for (VirtualRealityCamera &it : vrFrame->cameras)
 					{
-						auto r = eb.scene->component<VrCameraComponent>()->entities();
-						if (!r.empty())
-							camEnt = r[0];
-					}
-
-					if (camEnt)
-					{
-						const auto &cam = camEnt->value<VrCameraComponent>();
-						for (VirtualRealityCamera &it : vrFrame->cameras)
-						{
-							it.nearPlane = cam.near;
-							it.farPlane = cam.far;
-						}
-					}
-
-					vrFrame->updateProjections();
-					vrTargets.clear();
-
-					uint32 index = 0;
-					for (const VirtualRealityCamera &it : vrFrame->cameras)
-					{
-						CameraData data;
-						data.pipeline = eb.pipeline.share();
-						if (camEnt)
-						{
-							data.inputs.camera = camEnt->value<VrCameraComponent>();
-							if (camEnt->has<ScreenSpaceEffectsComponent>())
-								data.inputs.effects = camEnt->value<ScreenSpaceEffectsComponent>();
-						}
-						data.inputs.effects.gamma = Real(confRenderGamma);
-						data.inputs.name = Stringizer() + "vrcamera_" + index;
-						data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
-						vrTargets.push_back(data.inputs.target);
-						data.inputs.resolution = it.resolution;
-						data.inputs.transform = privat::vrTransformByOrigin(+eb.scene, it.transform);
-						data.inputs.projection = it.projection;
-						data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
-						data.inputs.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
-						cameras.push_back(std::move(data));
-						index++;
+						it.nearPlane = cam.near;
+						it.farPlane = cam.far;
 					}
 				}
 
+				vrFrame->updateProjections();
+				vrTargets.clear();
+
+				uint32 index = 0;
+				for (const VirtualRealityCamera &it : vrFrame->cameras)
+				{
+					CameraData data;
+					data.pipeline = eb.pipeline.share();
+					if (camEnt)
+					{
+						data.inputs.camera = camEnt->value<VrCameraComponent>();
+						if (camEnt->has<ScreenSpaceEffectsComponent>())
+							data.inputs.effects = camEnt->value<ScreenSpaceEffectsComponent>();
+					}
+					data.inputs.effects.gamma = Real(confRenderGamma);
+					data.inputs.name = Stringizer() + "vrcamera_" + index;
+					data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
+					vrTargets.push_back(data.inputs.target);
+					data.inputs.resolution = it.resolution;
+					data.inputs.transform = privat::vrTransformByOrigin(+eb.scene, it.transform);
+					data.inputs.projection = it.projection;
+					data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
+					data.inputs.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
+					cameras.push_back(std::move(data));
+					index++;
+				}
+			}
+
+			void prepareCameras(const EmitBuffer &eb, std::vector<CameraData> &cameras)
+			{
+				const Vec2i windowResolution = engineWindow()->resolution();
 				uint32 windowOutputs = 0;
+
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
 					CameraData data;
 					data.pipeline = eb.pipeline.share();
@@ -294,14 +285,34 @@ namespace cage
 			{
 				if (auto lock = emitBuffersGuard->read())
 				{
+					{
+						const Vec2i windowResolution = engineWindow()->resolution();
+						if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
+							return;
+					}
+
 					const EmitBuffer &eb = emitBuffers[lock.index()];
+					if (!eb.pipeline->reinitialize())
+						return;
+
+					if (auto vr = engineVirtualReality())
+					{
+						vrFrame = vr->graphicsFrame();
+						dispatchTime = vrFrame->displayTime();
+					}
+
 					eb.pipeline->currentTime = itc(eb.emitTime, dispatchTime, controlThread().updatePeriod());
 					eb.pipeline->elapsedTime = dispatchTime - lastDispatchTime;
 					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->currentTime - eb.emitTime) / controlThread().updatePeriod());
 					eb.pipeline->frameIndex = frameIndex;
 
 					renderQueue->resetQueue();
-					prepare(eb);
+					{
+						std::vector<CameraData> cameras;
+						if (vrFrame)
+							prepareVrCameras(eb, cameras);
+						prepareCameras(eb, cameras);
+					}
 					renderQueue->resetFrameBuffer();
 					renderQueue->resetAllTextures();
 					renderQueue->resetAllState();
