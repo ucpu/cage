@@ -210,12 +210,20 @@ namespace cage
 				}
 			}
 
-			void prepareCameras(const EmitBuffer &eb, std::vector<CameraData> &cameras)
+			void prepareCameras(const EmitBuffer &eb, const Vec2i windowResolution)
 			{
-				const Vec2i windowResolution = engineWindow()->resolution();
+				std::vector<CameraData> cameras;
 				uint32 windowOutputs = 0;
+				const bool enabled = windowResolution[0] > 0 || windowResolution[1] > 0;
 
 				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
+					if (!enabled)
+					{
+						if (!cam.target)
+							return; // no rendering into minimized window
+						if (!vrFrame)
+							return; // no intermediate renders are used
+					}
 					CameraData data;
 					data.pipeline = eb.pipeline.share();
 					data.inputs.camera = cam;
@@ -235,13 +243,21 @@ namespace cage
 				}, +eb.scene, false);
 				CAGE_ASSERT(windowOutputs <= 1);
 
-				std::sort(cameras.begin(), cameras.end());
+				if (vrFrame)
+					prepareVrCameras(eb, cameras);
+
+				std::stable_sort(cameras.begin(), cameras.end());
 				tasksRunBlocking<CameraData>("prepare camera task", cameras);
+
+				for (CameraData &cam : cameras)
+					renderQueue->enqueue(std::move(cam.outputs.renderQueue));
+
+				if (!enabled)
+					return; // no output into minimized window
 
 				std::vector<RenderPipelineDebugVisualization> debugVisualizations;
 				for (CameraData &cam : cameras)
 				{
-					renderQueue->enqueue(std::move(cam.outputs.renderQueue));
 					if (cam.inputs.target)
 					{
 						RenderPipelineDebugVisualization deb;
@@ -285,19 +301,14 @@ namespace cage
 			{
 				if (auto lock = emitBuffersGuard->read())
 				{
-					{
-						const Vec2i windowResolution = engineWindow()->resolution();
-						if (windowResolution[0] <= 0 || windowResolution[1] <= 0)
-							return;
-					}
-
 					const EmitBuffer &eb = emitBuffers[lock.index()];
-					if (!eb.pipeline->reinitialize())
-						return;
+					const Vec2i windowResolution = engineWindow()->resolution();
+					const bool enabled = eb.pipeline->reinitialize();
 
-					if (auto vr = engineVirtualReality())
+					CAGE_ASSERT(!vrFrame);
+					if (enabled && engineVirtualReality())
 					{
-						vrFrame = vr->graphicsFrame();
+						vrFrame = engineVirtualReality()->graphicsFrame();
 						dispatchTime = vrFrame->displayTime();
 					}
 
@@ -307,12 +318,8 @@ namespace cage
 					eb.pipeline->frameIndex = frameIndex;
 
 					renderQueue->resetQueue();
-					{
-						std::vector<CameraData> cameras;
-						if (vrFrame)
-							prepareVrCameras(eb, cameras);
-						prepareCameras(eb, cameras);
-					}
+					if (enabled)
+						prepareCameras(eb, windowResolution);
 					renderQueue->resetFrameBuffer();
 					renderQueue->resetAllTextures();
 					renderQueue->resetAllState();
@@ -367,7 +374,7 @@ namespace cage
 			{
 				const String name = Stringizer() + prefix + "_" + resolution;
 				TextureHandle tex = provisionalData->texture(name, [resolution](Texture *tex) {
-					tex->initialize(resolution, 1, GL_RGBA8);
+					tex->initialize(resolution, 1, GL_RGB8);
 					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					tex->filters(GL_LINEAR, GL_LINEAR, 0);
 				});
@@ -383,6 +390,8 @@ namespace cage
 				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
 				Holder<FrameBuffer> renderTarget = provisionalData->frameBufferDraw("VR_blit")->resolve();
+				if (!modelSquare || !shaderBlit)
+					return;
 
 				shaderBlit->bind();
 				renderTarget->bind();
