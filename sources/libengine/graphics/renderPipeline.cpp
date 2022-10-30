@@ -798,15 +798,22 @@ namespace cage
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
 				std::vector<UniLight> lights;
-				lights.reserve(50);
 				std::vector<Mat4> shadows;
 				PointerRangeHolder<TextureHandle> tex2d, texCube;
+				lights.reserve(CAGE_SHADER_MAX_LIGHTS);
+				shadows.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D);
+				tex2d.reserve(CAGE_SHADER_MAX_SHADOWMAPS2D);
+				texCube.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE);
 
 				// add shadowed lights
 				for (auto &[e, sh] : data.shadowmaps)
 				{
+					if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
+						CAGE_THROW_ERROR(Exception, "too many lights");
 					if (sh.lightComponent.lightType == LightTypeEnum::Point)
 					{
+						if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
+							CAGE_THROW_ERROR(Exception, "too many shadowmaps (pointlights)");
 						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
 						sh.shadowUni.iparams[1] = texCube.size();
 						sh.shadowUni.iparams[2] = shadows.size();
@@ -814,6 +821,8 @@ namespace cage
 					}
 					else
 					{
+						if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
+							CAGE_THROW_ERROR(Exception, "too many shadowmaps");
 						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
 						sh.shadowUni.iparams[1] = tex2d.size();
 						sh.shadowUni.iparams[2] = shadows.size();
@@ -829,6 +838,8 @@ namespace cage
 						return;
 					if (e->has<ShadowmapComponent>())
 						return;
+					if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
+						CAGE_THROW_ERROR(Exception, "too many lights");
 					UniLight uni = initializeLightUni(modelTransform(e), lc);
 					uni.iparams[0] = [&]() {
 						switch (lc.lightType)
