@@ -805,7 +805,7 @@ namespace cage
 				// add shadowed lights
 				for (auto &[e, sh] : data.shadowmaps)
 				{
-					if (sh.lightComponent.lightType == LightTypeEnum::Spot)
+					if (sh.lightComponent.lightType == LightTypeEnum::Point)
 					{
 						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
 						sh.shadowUni.iparams[1] = texCube.size();
@@ -815,7 +815,7 @@ namespace cage
 					else
 					{
 						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
-						sh.shadowUni.iparams[1] = texCube.size();
+						sh.shadowUni.iparams[1] = tex2d.size();
 						sh.shadowUni.iparams[2] = shadows.size();
 						tex2d.push_back(sh.shadowTexture);
 					}
