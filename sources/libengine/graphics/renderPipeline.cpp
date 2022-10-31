@@ -3,6 +3,7 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/assetManager.h>
+#include <cage-core/assetOnDemand.h>
 #include <cage-core/hashString.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/profiling.h>
@@ -285,6 +286,7 @@ namespace cage
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
+			Holder<AssetOnDemand> onDemand;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
@@ -293,7 +295,9 @@ namespace cage
 			bool cnfRenderSkeletonBones = false;
 
 			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
-			{}
+			{
+				onDemand = newAssetOnDemand(assets);
+			}
 
 			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
 			{
@@ -320,6 +324,7 @@ namespace cage
 				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
 				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
 				CAGE_ASSERT(shaderBlit);
+				onDemand->process();
 
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets, confRenderSkeletonBones);
 				transformComponent = scene->component<TransformComponent>();
@@ -693,7 +698,7 @@ namespace cage
 				for (uint32 it : object->models(lod))
 				{
 					ModelPrepare pr = prepare.clone();
-					pr.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(it);
+					pr.mesh = onDemand->tryGet<AssetSchemeIndexModel, Model>(it);
 					prepareModel<PrepareMode>(data, pr, object.share());
 				}
 			}

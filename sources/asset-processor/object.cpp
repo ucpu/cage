@@ -10,9 +10,9 @@ namespace
 {
 	struct Lod
 	{
-		uint32 index;
-		float threshold;
 		std::set<uint32> models;
+		uint32 index = 0;
+		Real threshold;
 	};
 }
 
@@ -24,7 +24,6 @@ void processObject()
 	ini->importFile(inputFileName);
 
 	std::vector<Lod> lods;
-	std::set<uint32> deps;
 	uint32 totalModeles = 0;
 	for (const String &section : ini->sections())
 	{
@@ -41,7 +40,6 @@ void processObject()
 			v = convertAssetPath(v);
 			uint32 h = HashString(v);
 			ls.models.insert(h);
-			deps.insert(h);
 		}
 		totalModeles += numeric_cast<uint32>(ls.models.size());
 		lods.push_back(std::move(ls));
@@ -49,13 +47,24 @@ void processObject()
 
 	for (Lod &ls : lods)
 	{
-		if (!Real(ls.threshold).valid())
-			ls.threshold = float(lods.size() - ls.index) / lods.size();
+		if (!valid(ls.threshold))
+			ls.threshold = Real(lods.size() - ls.index) / lods.size();
 	}
 
 	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) {
 		return a.threshold > b.threshold;
 	});
+
+	std::set<uint32> deps;
+
+	uint32 preload = ini->getUint32("lods", "preload");
+	for (const Lod &ls : lods)
+	{
+		if (preload-- == 0)
+			break;
+		for (uint32 it : ls.models)
+			deps.insert(it);
+	}
 
 	RenderObjectHeader o;
 	{

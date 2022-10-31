@@ -66,6 +66,7 @@ namespace cage
 		void fabricate_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
 		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
+		friend class AssetOnDemand;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig

@@ -60,6 +60,7 @@ void testVariableInterpolatingBuffer();
 void testVariableSmoothingBuffer();
 void testCopyAndMove();
 void testAssetManager();
+void testAssetOnDemand();
 void testSwapBufferGuard();
 void testScheduler();
 void testNetworkTcp();
@@ -135,6 +136,7 @@ int main()
 	testVariableSmoothingBuffer();
 	testCopyAndMove();
 	testAssetManager();
+	testAssetOnDemand();
 	testSwapBufferGuard();
 	testScheduler();
 	testNetworkTcp();
