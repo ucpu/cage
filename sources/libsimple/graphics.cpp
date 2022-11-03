@@ -30,11 +30,6 @@
 
 namespace cage
 {
-	namespace privat
-	{
-		CAGE_API_IMPORT Transform vrTransformByOrigin(EntityManager *scene, const Transform &in);
-	}
-
 	namespace
 	{
 		const ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
@@ -116,6 +111,22 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
 			return res;
+		}
+
+		Entity *findVrOrigin(EntityManager *scene)
+		{
+			auto r = scene->component<VrOriginComponent>()->entities();
+			if (r.size() != 1)
+				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
+			return r[0];
+		}
+
+		Transform transformByVrOrigin(EntityManager *scene, const Transform &in, Real interpolationFactor)
+		{
+			Entity *e = findVrOrigin(scene);
+			const Transform t = modelTransform(e, interpolationFactor);
+			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
+			return t * c * in;
 		}
 
 		class Graphics : private Immovable
@@ -201,7 +212,7 @@ namespace cage
 					data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
 					vrTargets.push_back(data.inputs.target);
 					data.inputs.resolution = it.resolution;
-					data.inputs.transform = privat::vrTransformByOrigin(+eb.scene, it.transform);
+					data.inputs.transform = transformByVrOrigin(+eb.scene, it.transform, eb.pipeline->interpolationFactor);
 					data.inputs.projection = it.projection;
 					data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
 					data.inputs.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;

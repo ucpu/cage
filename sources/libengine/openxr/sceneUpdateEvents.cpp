@@ -16,25 +16,19 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
 			return r[0];
 		}
-	}
 
-	namespace privat
-	{
-		CAGE_API_EXPORT Transform vrTransformByOrigin(EntityManager *scene, const Transform &in)
+		Transform transformByOrigin(EntityManager *scene, const Transform &in)
 		{
 			Entity *e = findOrigin(scene);
 			const TransformComponent &t = e->value<TransformComponent>();
 			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
 			return t * c * in;
 		}
-	}
 
-	namespace
-	{
 		void headsetPose(EntityManager *scene, const InputHeadsetPose &in)
 		{
 			entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) {
-				t = privat::vrTransformByOrigin(scene, in.pose);
+				t = transformByOrigin(scene, in.pose);
 			}, scene, false);
 		}
 
@@ -43,8 +37,8 @@ namespace cage
 			entitiesVisitor([&](Entity *e, TransformComponent &t, VrControllerComponent &cc) {
 				if (cc.controller != in.controller)
 					return;
-				t = privat::vrTransformByOrigin(scene, in.pose);
-				cc.aim = privat::vrTransformByOrigin(scene, in.controller->aimPose());
+				t = transformByOrigin(scene, in.pose);
+				cc.aim = transformByOrigin(scene, in.controller->aimPose());
 			}, scene, false);
 		}
 	}
