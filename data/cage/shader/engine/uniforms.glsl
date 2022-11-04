@@ -9,7 +9,6 @@ struct UniViewport
 	vec4 eyeDir;
 	vec4 viewport; // x, y, w, h
 	vec4 ambientLight; // color rgb is linear, no alpha
-	vec4 ambientDirectionalLight; // color rgb is linear, no alpha
 	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 };
 
@@ -57,7 +56,7 @@ struct UniLight
 	vec4 position;
 	vec4 direction;
 	vec4 attenuation;
-	vec4 fparams; // spotAngle, spotExponent, normalOffsetScale
+	vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
 	ivec4 iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
 };
 

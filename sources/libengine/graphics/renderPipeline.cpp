@@ -44,6 +44,19 @@ namespace cage
 		const ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
 		const ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
+		struct UniViewport
+		{
+			Mat4 vMat; // view matrix
+			Mat4 pMat; // proj matrix
+			Mat4 vpMat; // viewProj matrix
+			Mat4 vpInv; // viewProj inverse matrix
+			Vec4 eyePos;
+			Vec4 eyeDir;
+			Vec4 viewport; // x, y, w, h
+			Vec4 ambientLight; // color rgb is linear, no alpha
+			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
+		};
+
 		struct UniMesh
 		{
 			Mat4 mvpMat;
@@ -59,22 +72,8 @@ namespace cage
 			Vec4 position;
 			Vec4 direction;
 			Vec4 attenuation;
-			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale
+			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
 			Vec4i iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
-		};
-
-		struct UniViewport
-		{
-			Mat4 vMat; // view matrix
-			Mat4 pMat; // proj matrix
-			Mat4 vpMat; // viewProj matrix
-			Mat4 vpInv; // viewProj inverse matrix
-			Vec4 eyePos;
-			Vec4 eyeDir;
-			Vec4 viewport; // x, y, w, h
-			Vec4 ambientLight; // color rgb is linear, no alpha
-			Vec4 ambientDirectionalLight; // color rgb is linear, no alpha
-			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 		};
 
 		struct UniOptions
@@ -200,6 +199,7 @@ namespace cage
 			uni.attenuation = lc.lightType == LightTypeEnum::Directional ? Vec4(1, 0, 0, 0) : Vec4(lc.attenuation, 0);
 			uni.fparams[0] = cos(lc.spotAngle * 0.5);
 			uni.fparams[1] = lc.spotExponent;
+			uni.fparams[3] = lc.ssaoFactor;
 			return uni;
 		}
 
@@ -1208,7 +1208,6 @@ namespace cage
 					viewport.eyePos = data.model * Vec4(0, 0, 0, 1);
 					viewport.eyeDir = data.model * Vec4(0, 0, -1, 0);
 					viewport.ambientLight = Vec4(colorGammaToLinear(data.camera.ambientColor) * data.camera.ambientIntensity, 0);
-					viewport.ambientDirectionalLight = Vec4(colorGammaToLinear(data.camera.ambientDirectionalColor) * data.camera.ambientDirectionalIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(data.resolution));
 					viewport.time = Vec4(frameIndex % 10000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);

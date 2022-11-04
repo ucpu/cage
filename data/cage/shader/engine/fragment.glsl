@@ -76,54 +76,44 @@ vec4 shadowSamplingPosition4(UniLight light)
 	return uniShadowsMatrices[light.iparams[2]] * vec4(p3, 1);
 }
 
-vec3 lightDirectionalShadow(Material material, UniLight light)
+vec3 lightDirectionalShadow(Material material, UniLight light, float intensity)
 {
 	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
 	float shadow = sampleShadowMap2d(texShadows2d[light.iparams[1]], shadowPos);
-	return lightDirectionalImpl(material, light, shadow);
+	return lightDirectionalImpl(material, light, shadow * intensity);
 }
 
-vec3 lightPointShadow(Material material, UniLight light, float att)
+vec3 lightPointShadow(Material material, UniLight light, float intensity)
 {
 	vec3 shadowPos = vec3(shadowSamplingPosition4(light));
 	float shadow = sampleShadowMapCube(texShadowsCube[light.iparams[1]], shadowPos);
-	return lightPointImpl(material, light, shadow * att);
+	return lightPointImpl(material, light, shadow * intensity);
 }
 
-vec3 lightSpotShadow(Material material, UniLight light, float att)
+vec3 lightSpotShadow(Material material, UniLight light, float intensity)
 {
 	vec4 shadowPos4 = shadowSamplingPosition4(light);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
 	float shadow = sampleShadowMap2d(texShadows2d[light.iparams[1]], shadowPos);
-	return lightSpotImpl(material, light, shadow * att);
+	return lightSpotImpl(material, light, shadow * intensity);
 }
 
-vec3 lightType(Material material, UniLight light)
+vec3 lightType(Material material, UniLight light, float ssao)
 {
-	float att = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
-	if (att < confLightThreshold)
+	float intensity = attenuation(light.attenuation.xyz, length(light.position.xyz - varPosition));
+	intensity *= mix(1.0, ssao, light.fparams[3]);
+	if (intensity < confLightThreshold)
 		return vec3(0);
 	switch (light.iparams[0])
 	{
-	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, 1);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINT: return lightPointImpl(material, light, att);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW: return lightPointShadow(material, light, att);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOT: return lightSpotImpl(material, light, att);
-	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, att);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL: return lightDirectionalImpl(material, light, intensity);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW: return lightDirectionalShadow(material, light, intensity);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINT: return lightPointImpl(material, light, intensity);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW: return lightPointShadow(material, light, intensity);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOT: return lightSpotImpl(material, light, intensity);
+	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW: return lightSpotShadow(material, light, intensity);
 	default: return vec3(191, 85, 236) / 255;
 	}
-}
-
-vec3 lightAmbient(Material material)
-{
-	vec3 d = lightingBrdf(
-		material,
-		-uniViewport.eyeDir.xyz,
-		normalize(uniViewport.eyePos.xyz - varPosition)
-	) * uniViewport.ambientDirectionalLight.rgb;
-	vec3 a = material.albedo * uniViewport.ambientLight.rgb;
-	return d + a;
 }
 
 float lightAmbientOcclusion()
@@ -143,18 +133,17 @@ vec4 lighting(Material material)
 
 	if (dot(normal, normal) > 0.5)
 	{
-		{ // ambient
-			float ssao = 1;
-			if (getOption(CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION) > 0)
-				ssao = lightAmbientOcclusion();
-			res.rgb += lightAmbient(material) * ssao;
-		}
+		float ssao = 1;
+		if (getOption(CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION) > 0)
+			ssao = lightAmbientOcclusion();
 
-		{ // direct
-			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
-			for (int i = 0; i < lightsCount; i++)
-				res.rgb += lightType(material, uniLights[i]);
-		}
+		// ambient
+		res.rgb += material.albedo * uniViewport.ambientLight.rgb * ssao;
+
+		// direct
+		int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
+		for (int i = 0; i < lightsCount; i++)
+			res.rgb += lightType(material, uniLights[i], ssao);
 	}
 
 	if (material.fade < 0.5)

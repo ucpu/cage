@@ -51,6 +51,7 @@ namespace cage
 		Real intensity = 1;
 		Rads spotAngle = Degs(40);
 		Real spotExponent = 80;
+		Real ssaoFactor = 0;
 		uint32 sceneMask = 1;
 		LightTypeEnum lightType = LightTypeEnum::Point;
 	};
@@ -85,9 +86,7 @@ namespace cage
 	struct CameraCommonProperties
 	{
 		Vec3 ambientColor = Vec3();
-		Vec3 ambientDirectionalColor = Vec3(); // fake forward light affected by ssao
 		Real ambientIntensity = 1;
-		Real ambientDirectionalIntensity = 1;
 		uint32 sceneMask = 1;
 	};
 
