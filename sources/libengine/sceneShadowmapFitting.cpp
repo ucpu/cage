@@ -78,14 +78,7 @@ namespace cage
 				box += boxes.asset(r.object) * t;
 		}, config.light->manager(), false);
 
-		TransformComponent &t = config.light->value<TransformComponent>();
-		ShadowmapComponent &s = config.light->value<ShadowmapComponent>();
-		if (box.empty())
-			s.worldSize = Vec3(1);
-		else
-		{
-			t.position = box.center();
-			s.worldSize = Vec3(box.diagonal() * 0.5);
-		}
+		config.light->value<TransformComponent>().position = box.empty() ? Vec3() : box.center();
+		config.light->value<ShadowmapComponent>().worldSize = Vec3(max(box.diagonal() * 0.5, 1e-3));
 	}
 }
