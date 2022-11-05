@@ -2,7 +2,7 @@
 #include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "incWin.h"
+#include "../incWin.h"
 #else
 #include <pthread.h>
 #include <sys/types.h>

@@ -3,6 +3,7 @@
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/screenSpaceEffects.h>
+#include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/model.h>
 #include <cage-engine/texture.h>

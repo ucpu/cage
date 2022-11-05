@@ -20,7 +20,7 @@ static_assert(CAGE_DEBUG_BOOL == false);
 #endif
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
+#include "incWin.h"
 #include <intrin.h> // __debugbreak
 #endif
 

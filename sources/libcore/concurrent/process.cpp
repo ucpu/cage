@@ -3,7 +3,7 @@
 #include <cage-core/lineReader.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "incWin.h"
+#include "../incWin.h"
 #else
 #include <unistd.h>
 #include <signal.h>
