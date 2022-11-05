@@ -77,7 +77,7 @@ target_include_directories(cage-engine PUBLIC include)
 target_link_libraries(cage-engine PRIVATE cubeb glfw openxr_loader)
 target_link_libraries(cage-engine PUBLIC cage-core glad)
 if(WIN32)
-	set_source_files_properties(libengine/openxr/platforms.cpp PROPERTIES COMPILE_DEFINITIONS "XR_USE_PLATFORM_WIN32")
+	set_source_files_properties(libengine/virtualReality/platforms.cpp PROPERTIES COMPILE_DEFINITIONS "XR_USE_PLATFORM_WIN32")
 else()
 	# todo
 endif()
