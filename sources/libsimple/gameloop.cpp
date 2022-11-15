@@ -150,7 +150,6 @@ namespace cage
 			Holder<Schedule> soundUpdateSchedule;
 
 			EventListener<bool(const GenericInput &)> windowGuiEventsListener;
-			EventListener<void(const GenericInput &)> virtualRealityEventsListener;
 
 			EngineData(const EngineCreateConfig &config);
 
@@ -351,6 +350,7 @@ namespace cage
 				{
 					ProfilingScope profiling("virtual reality events");
 					virtualReality->processEvents();
+					virtualRealitySceneUpdate(+entities);
 				}
 				{
 					ProfilingScope profiling("control callback");
@@ -412,7 +412,7 @@ namespace cage
 					ScheduleCreateConfig c;
 					c.name = "control schedule";
 					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-					c.period = 1000000 / (config.virtualReality ? 90 : 20);
+					c.period = 1000000 / 20;
 					c.type = ScheduleTypeEnum::SteadyPeriodic;
 					controlUpdateSchedule = controlScheduler->newSchedule(c);
 				}
@@ -458,8 +458,7 @@ namespace cage
 					if (config.virtualReality)
 					{
 						virtualReality = newVirtualReality(*config.virtualReality);
-						virtualRealityEventsListener.attach(virtualReality->events, -123456);
-						virtualRealityEventsListener.bind<EntityManager *, virtualRealitySceneUpdate>(engineEntities());
+						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
 					window->makeNotCurrent();
 				}

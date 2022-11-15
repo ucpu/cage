@@ -160,7 +160,7 @@ namespace cage
 				}
 			}
 
-			CAGE_FORCE_INLINE void check(XrResult result)
+			CAGE_FORCE_INLINE void check(XrResult result) const
 			{
 				if (XR_SUCCEEDED(result))
 					return;
@@ -227,6 +227,8 @@ namespace cage
 						haveKhrOpenglEnable = true;
 					if (String(it.extensionName) == XR_EXT_DEBUG_UTILS_EXTENSION_NAME)
 						haveExtDebugUtils = true;
+					if (String(it.extensionName) == XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME)
+						haveFbDisplayRefreshRate = true;
 				}
 			}
 
@@ -251,6 +253,12 @@ namespace cage
 					}
 					else
 						haveExtDebugUtils = false;
+
+					if (haveFbDisplayRefreshRate)
+					{
+						CAGE_LOG(SeverityEnum::Info, "virtualReality", "enabling extension display refresh rate");
+						exts.push_back(XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME);
+					}
 
 					if (confEnableValidation)
 					{
@@ -307,6 +315,9 @@ namespace cage
 					XrDebugUtilsMessengerEXT debug = {};
 					check(createMessenger(instance, &info, &debug));
 				}
+
+				if (haveFbDisplayRefreshRate)
+					check(xrGetInstanceProcAddr(instance, "xrGetDisplayRefreshRateFB", (PFN_xrVoidFunction *)&xrGetDisplayRefreshRateFB));
 
 				{
 					XrSystemGetInfo info;
@@ -379,20 +390,27 @@ namespace cage
 				{
 					uint32 count = 0;
 					check(xrEnumerateViewConfigurationViews(instance, systemId, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, 0, &count, nullptr));
-					if (count != 2)
-						CAGE_THROW_ERROR(Exception, "virtual reality requires two eyes");
+					if (count == 0)
+						CAGE_THROW_ERROR(Exception, "virtual reality has no views");
+					viewConfigs.resize(count);
 					for (auto &it : viewConfigs)
 						init(it, XR_TYPE_VIEW_CONFIGURATION_VIEW);
-					check(xrEnumerateViewConfigurationViews(instance, systemId, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, 2, &count, viewConfigs.data()));
+					check(xrEnumerateViewConfigurationViews(instance, systemId, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, viewConfigs.size(), &count, viewConfigs.data()));
+					CAGE_ASSERT(count == viewConfigs.size());
 				}
 				const auto &v = viewConfigs[0];
 
 				{
-					// assume that properties are the same for both eyes
-					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "recommended view resolution: " + v.recommendedImageRectWidth + "x" + v.recommendedImageRectHeight);
-					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "max view resolution: " + v.maxImageRectWidth + "x" + v.maxImageRectHeight);
-					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "recommended view samples: " + v.recommendedSwapchainSampleCount + ", max: " + v.maxSwapchainSampleCount);
+					// log properties for the first view
+					CAGE_LOG_DEBUG(SeverityEnum::Info, "virtualReality", Stringizer() + "recommended view resolution: " + v.recommendedImageRectWidth + "x" + v.recommendedImageRectHeight);
+					CAGE_LOG_DEBUG(SeverityEnum::Info, "virtualReality", Stringizer() + "max view resolution: " + v.maxImageRectWidth + "x" + v.maxImageRectHeight);
+					CAGE_LOG_DEBUG(SeverityEnum::Info, "virtualReality", Stringizer() + "recommended view samples: " + v.recommendedSwapchainSampleCount + ", max: " + v.maxSwapchainSampleCount);
 				}
+
+				colorSwapchains.resize(viewConfigs.size());
+				colorImages.resize(viewConfigs.size());
+				colorTextures.resize(viewConfigs.size());
+				colorViews.resize(viewConfigs.size());
 
 				{
 					uint32 count = 0;
@@ -415,7 +433,7 @@ namespace cage
 					}();
 
 					uint32 nameIndex = 0;
-					for (uint32 i = 0; i < 2; i++)
+					for (uint32 i = 0; i < viewConfigs.size(); i++)
 					{
 						createSwapchain(selectedFormat, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
 						for (Holder<Texture> &it : colorTextures[i])
@@ -423,7 +441,7 @@ namespace cage
 					}
 				}
 
-				for (uint32 i = 0; i < 2; i++)
+				for (uint32 i = 0; i < viewConfigs.size(); i++)
 				{
 					auto &cv = colorViews[i];
 					init(cv, XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW);
@@ -704,6 +722,7 @@ namespace cage
 
 			bool haveKhrOpenglEnable = false; // XR_KHR_OPENGL_ENABLE_EXTENSION_NAME
 			bool haveExtDebugUtils = false; // XR_EXT_DEBUG_UTILS_EXTENSION_NAME
+			bool haveFbDisplayRefreshRate = false; // XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME
 			bool haveApilayerCoreValidation = false; // XR_APILAYER_LUNARG_core_validation
 
 			XrInstance instance = XR_NULL_HANDLE;
@@ -712,11 +731,11 @@ namespace cage
 			XrSpace localSpace = XR_NULL_HANDLE;
 			XrSpace viewSpace = XR_NULL_HANDLE;
 
-			std::array<XrViewConfigurationView, 2> viewConfigs = {};
-			std::array<XrSwapchain, 2> colorSwapchains;
-			std::array<std::vector<XrSwapchainImageOpenGLKHR>, 2> colorImages;
-			std::array<std::vector<Holder<Texture>>, 2> colorTextures;
-			std::array<XrCompositionLayerProjectionView, 2> colorViews;
+			std::vector<XrViewConfigurationView> viewConfigs = {};
+			std::vector<XrSwapchain> colorSwapchains;
+			std::vector<std::vector<XrSwapchainImageOpenGLKHR>> colorImages;
+			std::vector<std::vector<Holder<Texture>>> colorTextures;
+			std::vector<XrCompositionLayerProjectionView> colorViews;
 
 			std::array<VirtualRealityControllerImpl, 2> controllers;
 			XrActionSet actionSet;
@@ -728,6 +747,8 @@ namespace cage
 			Transform headTransform = InvalidTransform;
 			bool tracking = false;
 			XrTime firstFrameTime = m;
+
+			PFN_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB = nullptr;
 		};
 
 		class VirtualRealityGraphicsFrameImpl : public VirtualRealityGraphicsFrame
@@ -735,8 +756,8 @@ namespace cage
 		public:
 			VirtualRealityImpl *const impl = nullptr;
 			XrFrameState frameState = {};
-			std::array<XrView, 2> views;
-			std::array<VirtualRealityCamera, 2> cams;
+			std::vector<XrView> views;
+			std::vector<VirtualRealityCamera> cams;
 			Transform headTransform = InvalidTransform;
 			bool rendering = false;
 
@@ -770,8 +791,9 @@ namespace cage
 				if (!frameState.shouldRender)
 					return;
 
-				for (uint32 i = 0; i < 2; i++)
-					init(views[i], XR_TYPE_VIEW);
+				views.resize(impl->viewConfigs.size());
+				for (auto &it : views)
+					init(it, XR_TYPE_VIEW);
 
 				{
 					XrViewLocateInfo viewLocateInfo;
@@ -782,10 +804,12 @@ namespace cage
 					XrViewState viewState;
 					init(viewState, XR_TYPE_VIEW_STATE);
 					uint32 count = 0;
-					check(xrLocateViews(impl->session, &viewLocateInfo, &viewState, 2, &count, views.data()));
+					check(xrLocateViews(impl->session, &viewLocateInfo, &viewState, views.size(), &count, views.data()));
+					CAGE_ASSERT(count == views.size());
 				}
 
-				for (uint32 i = 0; i < 2; i++)
+				cams.resize(views.size());
+				for (uint32 i = 0; i < cams.size(); i++)
 				{
 					cams[i].transform = poseToTranform(views[i].pose); // there is currently 1 projection per camera
 					cams[i].resolution = Vec2i(impl->viewConfigs[i].recommendedImageRectWidth, impl->viewConfigs[i].recommendedImageRectHeight);
@@ -797,7 +821,7 @@ namespace cage
 
 			void updateProjections()
 			{
-				for (uint32 i = 0; i < 2; i++)
+				for (uint32 i = 0; i < cams.size(); i++)
 				{
 					cams[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
 					cams[i].verticalFov = Rads(views[i].fov.angleUp - views[i].fov.angleDown);
@@ -818,7 +842,7 @@ namespace cage
 					return;
 
 				if (frameState.shouldRender)
-					for (uint32 i = 0; i < 2; i++)
+					for (uint32 i = 0; i < cams.size(); i++)
 						cams[i].colorTexture = impl->acquireTexture(impl->colorSwapchains[i], impl->colorTextures[i]);
 			}
 
@@ -828,10 +852,10 @@ namespace cage
 					return;
 
 				if (frameState.shouldRender)
-					for (uint32 i = 0; i < 2; i++)
+					for (uint32 i = 0; i < views.size(); i++)
 						check(xrReleaseSwapchainImage(impl->colorSwapchains[i], nullptr));
 
-				for (uint32 i = 0; i < 2; i++)
+				for (uint32 i = 0; i < views.size(); i++)
 				{
 					impl->colorViews[i].pose = views[i].pose;
 					impl->colorViews[i].fov = views[i].fov;
@@ -840,7 +864,7 @@ namespace cage
 				XrCompositionLayerProjection projectionLayer;
 				init(projectionLayer, XR_TYPE_COMPOSITION_LAYER_PROJECTION);
 				projectionLayer.space = impl->localSpace;
-				projectionLayer.viewCount = 2;
+				projectionLayer.viewCount = impl->colorViews.size();
 				projectionLayer.views = impl->colorViews.data();
 				projectionLayer.layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
 				std::array<const XrCompositionLayerBaseHeader *, 1> submittedLayers = { (XrCompositionLayerBaseHeader *)&projectionLayer };
@@ -968,6 +992,19 @@ namespace cage
 		ProfilingScope profiling("VR graphics frame");
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
 		return systemMemory().createImpl<VirtualRealityGraphicsFrame, VirtualRealityGraphicsFrameImpl>(impl);
+	}
+
+	uint64 VirtualReality::targetFrameTiming() const
+	{
+		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
+		if (impl->haveFbDisplayRefreshRate)
+		{
+			float fps = 0;
+			impl->check(impl->xrGetDisplayRefreshRateFB(impl->session, &fps));
+			if (fps > 1)
+				return 1000000 / (double)fps;
+		}
+		return 1000000 / 90;
 	}
 
 	Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config)

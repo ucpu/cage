@@ -24,32 +24,17 @@ namespace cage
 			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
 			return t * c * in;
 		}
-
-		void headsetPose(EntityManager *scene, const InputHeadsetPose &in)
-		{
-			entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) {
-				t = transformByOrigin(scene, in.pose);
-			}, scene, false);
-		}
-
-		void controllerPose(EntityManager *scene, const InputControllerPose &in)
-		{
-			entitiesVisitor([&](Entity *e, TransformComponent &t, VrControllerComponent &cc) {
-				if (cc.controller != in.controller)
-					return;
-				t = transformByOrigin(scene, in.pose);
-				cc.aim = transformByOrigin(scene, in.controller->aimPose());
-			}, scene, false);
-		}
 	}
 
-	void virtualRealitySceneUpdate(EntityManager *scene, const GenericInput &in)
+	void virtualRealitySceneUpdate(EntityManager *scene)
 	{
-		switch (in.type)
-		{
-		case InputClassEnum::HeadsetPose: return headsetPose(scene, in.data.get<InputHeadsetPose>());
-		case InputClassEnum::ControllerPose: return controllerPose(scene, in.data.get<InputControllerPose>());
-		}
+		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) {
+			t = transformByOrigin(scene, cc.virtualReality->pose());
+		}, scene, false);
+		entitiesVisitor([&](Entity *e, TransformComponent &t, VrControllerComponent &cc) {
+			t = transformByOrigin(scene, cc.controller->gripPose());
+			cc.aim = transformByOrigin(scene, cc.controller->aimPose());
+		}, scene, false);
 	}
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)

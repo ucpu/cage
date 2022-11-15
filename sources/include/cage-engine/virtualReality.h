@@ -9,7 +9,7 @@ namespace cage
 	class Texture;
 	class EntityManager;
 
-	class CAGE_ENGINE_API VirtualRealityController
+	class CAGE_ENGINE_API VirtualRealityController : private Immovable
 	{
 	public:
 		bool tracking() const;
@@ -27,11 +27,12 @@ namespace cage
 		Texture *colorTexture = nullptr;
 		Real nearPlane = 0.2, farPlane = 10000; // fill in and call updateProjections
 		Rads verticalFov; // for lod selection
-		bool primary = false; // primary cameras share same origin and should use optimized rendering
+		bool primary = false;
 	};
 
-	struct CAGE_ENGINE_API VirtualRealityGraphicsFrame : private Immovable
+	class CAGE_ENGINE_API VirtualRealityGraphicsFrame : private Immovable
 	{
+	public:
 		PointerRange<VirtualRealityCamera> cameras;
 
 		// recalculate projection matrices with updated near/far planes
@@ -44,7 +45,7 @@ namespace cage
 		// warning: this time is not related to the application time
 		uint64 displayTime() const;
 
-		// signal beginning of rendering the frame
+		// notify beginning of rendering the frame
 		// requires opengl context
 		void renderBegin();
 
@@ -52,7 +53,7 @@ namespace cage
 		// requires opengl context
 		void acquireTextures();
 
-		// signal finishing of rendering the frame
+		// notify finishing of rendering the frame
 		// also submits acquired textures to the device
 		// requires opengl context
 		void renderCommit();
@@ -73,6 +74,8 @@ namespace cage
 
 		// waits for the virtual reality runtime to get ready for next frame
 		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
+
+		uint64 targetFrameTiming() const;
 	};
 
 	struct CAGE_ENGINE_API VirtualRealityCreateConfig
@@ -81,7 +84,7 @@ namespace cage
 	// opengl context must be bound in the current thread (for both constructing and destroying the object)
 	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
 
-	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene, const GenericInput &in);
+	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene);
 	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp = true);
 }
 
