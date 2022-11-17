@@ -429,7 +429,7 @@ namespace cage
 		struct StringizerBase;
 
 		template<uint32 N>
-		struct alignas(64) StringBase
+		struct alignas(32) StringBase
 		{
 			// constructors
 			StringBase() noexcept = default;
@@ -571,7 +571,7 @@ namespace cage
 		};
 
 		template<uint32 N>
-		struct alignas(64) StringizerBase
+		struct alignas(32) StringizerBase
 		{
 			StringBase<N> value;
 
