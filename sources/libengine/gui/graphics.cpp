@@ -1,4 +1,5 @@
 #include <cage-core/assetManager.h>
+#include <cage-core/assetOnDemand.h>
 #include <cage-core/hashString.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/serialization.h>
@@ -198,6 +199,8 @@ namespace cage
 
 	Holder<RenderQueue> GuiImpl::emit()
 	{
+		assetOnDemand->process();
+
 		if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
 			return {};
 

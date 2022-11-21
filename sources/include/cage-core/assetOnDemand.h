@@ -30,6 +30,7 @@ namespace cage
 		}
 
 		void process();
+		void clear();
 
 		// end thread-safe methods
 

@@ -1,5 +1,6 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/macros.h>
+#include <cage-core/assetOnDemand.h>
 
 #include <cage-engine/renderQueue.h>
 
@@ -10,7 +11,7 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetMgr(config.assetMgr), provisionalGraphics(config.provisionalGraphics)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetMgr)), assetMgr(config.assetMgr), provisionalGraphics(config.provisionalGraphics)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
@@ -343,7 +344,7 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		Holder<RenderQueue> q = impl->emit();
-		cleanUp();
+		impl->root.clear();
 		return q;
 	}
 
@@ -351,6 +352,7 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->root.clear();
+		impl->assetOnDemand->clear();
 	}
 
 	Holder<GuiManager> newGuiManager(const GuiManagerCreateConfig &config)

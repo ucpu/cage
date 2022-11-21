@@ -9,6 +9,17 @@ namespace cage
 {
 	namespace
 	{
+		// difference that considers overflows
+		constexpr uint32 diff(uint32 a, uint32 b)
+		{
+			return b - a;
+		}
+		static_assert(diff(13, 13) == 0);
+		static_assert(diff(13, 15) == 2);
+		static_assert(diff(4294967295, 4294967295) == 0);
+		static_assert(diff(4294967295, 0) == 1);
+		static_assert(diff(4294967290, 5) == 11);
+
 		class AssetOnDemandImpl : public AssetOnDemand
 		{
 		public:
@@ -32,7 +43,7 @@ namespace cage
 				auto it = lastUse.begin();
 				while (it != lastUse.end())
 				{
-					if (it->second != tick)
+					if (tick - it->second > 20)
 					{
 						assets->remove(it->first);
 						it = lastUse.erase(it);
@@ -41,6 +52,36 @@ namespace cage
 						it++;
 				}
 				tick++;
+			}
+
+			void clear()
+			{
+				ScopeLock lock(mut, WriteLockTag());
+				for (const auto &it : lastUse)
+					assets->remove(it.first);
+				lastUse.clear();
+				tick++;
+			}
+
+			void update(bool valid, uint32 assetName, bool autoLoad)
+			{
+				{
+					ScopeLock lock(mut, ReadLockTag()); // read lock is sufficient: we update the value _inside_ the map, not the map itself
+					auto it = lastUse.find(assetName);
+					if (it != lastUse.end())
+						it->second = tick;
+					if (valid)
+						return;
+				}
+				if (autoLoad)
+				{
+					ScopeLock lock(mut, WriteLockTag());
+					if (lastUse.count(assetName) == 0) // check again after reacquiring the lock
+					{
+						lastUse[assetName] = tick;
+						assets->add(assetName);
+					}
+				}
 			}
 		};
 	}
@@ -51,28 +92,18 @@ namespace cage
 		impl->process();
 	}
 
+	void AssetOnDemand::clear()
+	{
+		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
+		impl->clear();
+	}
+
 	Holder<void> AssetOnDemand::get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		{
-			auto r = impl->assets->get_(scheme, assetName, throwOnInvalidScheme);
-			ScopeLock lock(impl->mut, ReadLockTag());
-			auto it = impl->lastUse.find(assetName);
-			if (it != impl->lastUse.end())
-				it->second = impl->tick;
-			if (r)
-				return r;
-		}
-		if (autoLoad)
-		{
-			ScopeLock lock(impl->mut, WriteLockTag());
-			if (impl->lastUse.count(assetName) == 0)
-			{
-				impl->lastUse[assetName] = impl->tick;
-				impl->assets->add(assetName);
-			}
-		}
-		return {};
+		auto r = impl->assets->get_(scheme, assetName, throwOnInvalidScheme);
+		impl->update(!!r, assetName, autoLoad);
+		return r;
 	}
 
 	uint32 AssetOnDemand::schemeTypeHash_(uint32 scheme) const

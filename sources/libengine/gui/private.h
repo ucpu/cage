@@ -22,6 +22,7 @@
 
 namespace cage
 {
+	class AssetOnDemand;
 	class GuiImpl;
 	struct HierarchyItem;
 	struct RenderableElement;
@@ -271,6 +272,7 @@ namespace cage
 		Holder<MemoryArena> memory; // must be last to destroy
 
 		Holder<EntityManager> entityMgr = newEntityManager();
+		Holder<AssetOnDemand> assetOnDemand;
 		AssetManager *assetMgr = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 

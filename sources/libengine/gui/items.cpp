@@ -1,4 +1,5 @@
 #include <cage-core/assetManager.h>
+#include <cage-core/assetOnDemand.h>
 #include <cage-core/textPack.h>
 
 #include <cage-engine/texture.h>
@@ -388,7 +389,8 @@ namespace cage
 	void ImageItem::assign(const GuiImageComponent &value)
 	{
 		image = value;
-		texture = hierarchy->impl->assetMgr->get<AssetSchemeIndexTexture, Texture>(value.textureName);
+		texture = hierarchy->impl->assetOnDemand->get<AssetSchemeIndexTexture, Texture>(value.textureName);
+		//texture = hierarchy->impl->assetMgr->get<AssetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)
