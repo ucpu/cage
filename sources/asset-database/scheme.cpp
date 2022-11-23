@@ -2,11 +2,11 @@
 #include <cage-core/macros.h>
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
-#include <cage-core/config.h>
 
 #include "database.h"
 
 std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
+extern ConfigString configPathSchemes;
 
 void Scheme::parse(Ini *ini)
 {
@@ -53,17 +53,7 @@ void Scheme::parse(Ini *ini)
 		}
 	}
 
-	{
-		String s, t, v;
-		if (ini->anyUnused(s, t, v))
-		{
-			CAGE_LOG_THROW(Stringizer() + "scheme: '" + name + "'");
-			CAGE_LOG_THROW(Stringizer() + "section: '" + s + "'");
-			CAGE_LOG_THROW(Stringizer() + "item: '" + t + "'");
-			CAGE_LOG_THROW(Stringizer() + "value: '" + v + "'");
-			CAGE_THROW_ERROR(Exception, "unused scheme property");
-		}
-	}
+	ini->checkUnused();
 }
 
 Serializer &operator << (Serializer &ser, const SchemeField &s)

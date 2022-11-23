@@ -1,16 +1,59 @@
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
-#include <cage-core/math.h>
 #include <cage-core/ini.h>
-#include <cage-core/config.h>
+#include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/hashString.h>
 
 #include "database.h"
 
 #include <algorithm>
+#include <vector>
 
-uint64 lastModificationTime = 0;
+extern ConfigString configPathInput;
+extern ConfigString configPathOutput;
+extern ConfigString configPathIntermediate;
+extern ConfigString configPathDatabase;
+extern ConfigString configPathByHash;
+extern ConfigString configPathByName;
+extern ConfigString configPathInjectedNames;
+extern ConfigUint64 configArchiveWriteThreshold;
+extern ConfigBool configFromScratch;
+extern ConfigBool configOutputArchive;
+extern std::set<String, StringComparatorFast> configIgnoreExtensions;
+extern std::set<String, StringComparatorFast> configIgnorePaths;
+extern std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
+
+std::map<String, Holder<Asset>, StringComparatorFast> assets;
 std::set<String, StringComparatorFast> corruptedDatabanks;
+std::set<uint32> injectedNames;
+uint64 lastModificationTime = 0;
+
+Serializer &operator << (Serializer &ser, const Asset &s)
+{
+	ser << s.name << s.aliasName << s.scheme << s.databank;
+	ser << s.fields << s.files << s.references;
+	ser << s.corrupted;
+	return ser;
+}
+
+Deserializer &operator >> (Deserializer &des, Asset &s)
+{
+	des >> s.name >> s.aliasName >> s.scheme >> s.databank;
+	des >> s.fields >> s.files >> s.references;
+	des >> s.corrupted;
+	return des;
+}
+
+uint32 Asset::outputPath() const
+{
+	return HashString(name);
+}
+
+uint32 Asset::aliasPath() const
+{
+	return HashString(aliasName);
+}
 
 namespace
 {
@@ -153,16 +196,28 @@ bool databankParse(const String &databank)
 
 namespace
 {
-	const String databaseBegin = "cage-asset-database-begin";
-	const String databaseVersion = "11";
-	const String databaseEnd = "cage-asset-database-end";
+	constexpr String databaseBegin = "cage-asset-database-begin";
+	constexpr String databaseVersion = "11";
+	constexpr String databaseEnd = "cage-asset-database-end";
 }
 
 void databanksLoad()
 {
-	lastModificationTime = 0;
-	corruptedDatabanks.clear();
 	assets.clear();
+	corruptedDatabanks.clear();
+	injectedNames.clear();
+	lastModificationTime = 0;
+
+	if (!((String)configPathInjectedNames).empty())
+	{
+		Holder<File> f = readFile(configPathInjectedNames);
+		String l;
+		f->readLine(l); // skip the header
+		while (f->readLine(l))
+			if (!l.empty())
+				injectedNames.insert(toUint32(split(l)));
+		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "injected " + injectedNames.size() + " names");
+	}
 
 	if (configFromScratch)
 	{
@@ -273,4 +328,89 @@ void databanksSave()
 			f->writeLine(Stringizer() + fill(hash, 11) + (ass.corrupted ? "CORRUPTED " : "") + fill(ass.name, 101) + fill(ass.scheme, 16) + fill(ass.databank, 31));
 		}
 	}
+}
+
+bool isNameDatabank(const String &name)
+{
+	return isPattern(name, "", "", ".assets");
+}
+
+bool isNameIgnored(const String &name)
+{
+	for (const String &it : configIgnoreExtensions)
+	{
+		if (isPattern(name, "", "", it))
+			return true;
+	}
+	for (const String &it : configIgnorePaths)
+	{
+		if (isPattern(name, it, "", ""))
+			return true;
+	}
+	return false;
+}
+
+namespace
+{
+	void findFiles(std::map<String, uint64, StringComparatorFast> &files, const String &path)
+	{
+		const String pth = pathJoin(configPathInput, path);
+		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path '" + pth + "'");
+		Holder<DirectoryList> d = newDirectoryList(pth);
+		while (d->valid())
+		{
+			const String p = pathJoin(path, d->name());
+			if (!isNameIgnored(p))
+			{
+				if (d->isDirectory())
+					findFiles(files, p);
+				else
+				{
+					const uint64 lt = d->lastChange();
+					files[p] = lt;
+				}
+			}
+			d->next();
+		}
+	}
+}
+
+std::map<String, uint64, StringComparatorFast> findFiles()
+{
+	std::map<String, uint64, StringComparatorFast> files;
+	findFiles(files, "");
+	return files;
+}
+
+void checkOutputDir()
+{
+	const PathTypeFlags t = pathType(configPathOutput);
+	if (configOutputArchive && any(t & PathTypeFlags::NotFound))
+		return pathCreateArchive(configPathOutput);
+	if (any(t & PathTypeFlags::Archive))
+		return;
+	// the output is not an archive, output to it directly
+	configPathIntermediate = "";
+}
+
+void moveIntermediateFiles()
+{
+	Holder<DirectoryList> listIn = newDirectoryList(configPathIntermediate);
+	Holder<DirectoryList> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
+	uint64 movedSize = 0;
+	while (listIn->valid())
+	{
+		if (movedSize > configArchiveWriteThreshold)
+		{
+			listOut.clear(); // close the archive
+			listOut = newDirectoryList(configPathOutput); // reopen the archive
+			movedSize = 0;
+		}
+		const String f = pathJoin(configPathIntermediate, listIn->name());
+		const String t = pathJoin(configPathOutput, listIn->name());
+		movedSize += readFile(f)->size();
+		pathMove(f, t);
+		listIn->next();
+	}
+	pathRemove(configPathIntermediate);
 }

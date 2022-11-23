@@ -1,7 +1,13 @@
 #include <cage-core/logger.h>
-#include <cage-core/config.h>
 
 #include "database.h"
+
+extern ConfigBool configListening;
+extern bool verdictValue;
+
+void configParseCmd(int argc, const char *args[]);
+void start();
+void listen();
 
 bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 {

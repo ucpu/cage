@@ -1,17 +1,35 @@
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/process.h>
-#include <cage-core/config.h>
 #include <cage-core/tasks.h>
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
-#include <cage-core/ini.h>
+#include <cage-core/hashString.h>
 
 #include "database.h"
 
 #include <algorithm>
 #include <vector>
 
+extern ConfigString configPathInput;
+extern ConfigString configPathOutput;
+extern ConfigString configPathIntermediate;
+extern std::set<String, StringComparatorFast> configIgnoreExtensions;
+extern std::set<String, StringComparatorFast> configIgnorePaths;
+extern std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
+extern std::map<String, Holder<Asset>, StringComparatorFast> assets;
+extern std::set<String, StringComparatorFast> corruptedDatabanks;
+extern std::set<uint32> injectedNames;
+extern uint64 lastModificationTime;
 bool verdictValue = false;
+
+void loadSchemes();
+bool databankParse(const String &path);
+void databanksLoad();
+void databanksSave();
+void checkOutputDir();
+void moveIntermediateFiles();
+bool isNameDatabank(const String &name);
+void notifierSendNotifications();
+std::map<String, uint64, StringComparatorFast> findFiles();
 
 namespace
 {
@@ -217,7 +235,7 @@ namespace
 			bool anyMissing = false;
 			for (const String &it : ass.references)
 			{
-				if (assets.count(it) == 0)
+				if (assets.count(it) == 0 && injectedNames.count(HashString(it)) == 0)
 				{
 					anyMissing = true;
 					CAGE_LOG(SeverityEnum::Warning, "database", Stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + it + "'");
@@ -247,37 +265,37 @@ namespace
 			verdictValue = true;
 		}
 	}
+}
 
-	void checkAssets()
-	{
-		verdictValue = false;
+void checkAssets()
+{
+	verdictValue = false;
 
-		CAGE_LOG(SeverityEnum::Info, "database", "looking for assets to process");
+	CAGE_LOG(SeverityEnum::Info, "database", "looking for assets to process");
 
-		if (!String(configPathIntermediate).empty())
-			pathRemove(configPathIntermediate);
+	if (!String(configPathIntermediate).empty())
+		pathRemove(configPathIntermediate);
 
-		detectAssetsToProcess();
+	detectAssetsToProcess();
 
-		{ // reprocess assets
-			std::vector<Asset *> asses;
-			asses.reserve(assets.size());
-			for (const auto &it : assets)
-				if (it.second->corrupted)
-					asses.push_back(+it.second);
-			tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<&processAsset>(), asses);
-		}
-
-		validateAssets();
-
-		if (!String(configPathIntermediate).empty())
-			moveIntermediateFiles();
-
-		databanksSave();
-
-		if (verdictValue)
-			notifierSendNotifications();
+	{ // reprocess assets
+		std::vector<Asset *> asses;
+		asses.reserve(assets.size());
+		for (const auto &it : assets)
+			if (it.second->corrupted)
+				asses.push_back(+it.second);
+		tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<&processAsset>(), asses);
 	}
+
+	validateAssets();
+
+	if (!String(configPathIntermediate).empty())
+		moveIntermediateFiles();
+
+	databanksSave();
+
+	if (verdictValue)
+		notifierSendNotifications();
 }
 
 void start()
@@ -286,39 +304,4 @@ void start()
 	databanksLoad();
 	checkOutputDir();
 	checkAssets();
-}
-
-void listen()
-{
-	CAGE_LOG(SeverityEnum::Info, "database", "initializing listening for changes");
-	notifierInitialize();
-	Holder<FilesystemWatcher> changes = newFilesystemWatcher();
-	changes->registerPath(configPathInput);
-	uint32 cycles = 0;
-	bool changed = false;
-	while (true)
-	{
-		notifierAcceptConnections();
-		{
-			String path = changes->waitForChange(1000 * 200);
-			if (!path.empty())
-			{
-				path = pathToRel(path, configPathInput);
-				if (isNameIgnored(path))
-					continue;
-				cycles = 0;
-				changed = true;
-			}
-		}
-		if (!changed)
-			continue;
-		if (cycles >= 3)
-		{
-			checkAssets();
-			changed = false;
-			cycles = 0;
-		}
-		else
-			cycles++;
-	}
 }
