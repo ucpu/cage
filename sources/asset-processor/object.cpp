@@ -45,6 +45,9 @@ void processObject()
 		lods.push_back(std::move(ls));
 	}
 
+	if (lods.empty())
+		CAGE_THROW_ERROR(Exception, "loaded no LODs");
+
 	for (Lod &ls : lods)
 	{
 		if (!valid(ls.threshold))
