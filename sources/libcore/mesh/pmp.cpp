@@ -6,8 +6,8 @@
 
 #include <cage-core/meshAlgorithms.h>
 #include <pmp/SurfaceMesh.h>
-#include <pmp/algorithms/SurfaceRemeshing.h>
-#include <pmp/algorithms/SurfaceSmoothing.h>
+#include <pmp/algorithms/Remeshing.h>
+#include <pmp/algorithms/Smoothing.h>
 
 namespace cage
 {
@@ -82,7 +82,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::SurfaceRemeshing rms(*pm);
+			pmp::Remeshing rms(*pm);
 			rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
 			fromPmp(msh, pm);
 		}
@@ -100,7 +100,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::SurfaceRemeshing rms(*pm);
+			pmp::Remeshing rms(*pm);
 			rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
 			fromPmp(msh, pm);
 		}
@@ -118,7 +118,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::SurfaceSmoothing rms(*pm);
+			pmp::Smoothing rms(*pm);
 			rms.explicit_smoothing(config.iterations, config.uniform);
 			fromPmp(msh, pm);
 		}

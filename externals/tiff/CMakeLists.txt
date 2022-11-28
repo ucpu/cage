@@ -5,17 +5,17 @@ message(STATUS "tiff")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
-set(SKIP_TOOLS 1)
-set(SKIP_TEST 1)
-set(SKIP_DOC 1)
-set(SKIP_CONTRIB 1)
-set(ZSTD_RECENT_ENOUGH TRUE) # fake check that would have errored - we know we have sufficient version of zstd
+set(ZSTD_HAVE_DECOMPRESS_STREAM TRUE) # avoid check that would have failed - we know we have sufficient version of zstd
+set(HAVE_JPEGTURBO_DUAL_MODE_8_12 FALSE) # avoid check that would have failed
 
-option(jpeg "use libjpeg (required for JPEG compression)" ON)
-option(old-jpeg "support for Old JPEG compression (read-only)" OFF)
-option(jbig "use ISO JBIG compression (requires JBIT-KIT library)" OFF)
-option(lzma "use liblzma (required for LZMA2 compression)" OFF)
-option(webp "use libwebp (required for WEBP compression)" OFF)
+option(tiff-tools "build TIFF tools" OFF)
+option(tiff-tests "build TIFF tests" OFF)
+option(tiff-contrib "build TIFF contrib" OFF)
+option(tiff-docs "build TIFF documentation" OFF)
+option(tiff-deprecated "build TIFF deprecated features" OFF)
+option(tiff-install "install TIFF targets" OFF)
+
+option(webp "use libwebp (required for WEBP compression)" OFF) # webp causes linker errors - explicitly disabling
 
 add_subdirectory(tiff)
 
