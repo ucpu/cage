@@ -22,7 +22,7 @@ namespace cage
 		uint64 period = 1000; // used for periodic schedules only
 		ScheduleTypeEnum type = ScheduleTypeEnum::Once;
 		sint32 priority = 0; // higher priority is run earlier or more often
-		uint32 maxSteadyPeriods = 3; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
+		uint32 maxSteadyPeriods = 5; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
 	};
 
 	struct ScheduleStatistics : private Immovable

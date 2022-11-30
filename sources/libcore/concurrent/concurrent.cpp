@@ -770,8 +770,25 @@ namespace cage
 	void threadSleep(uint64 micros)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		micros /= 1000;
-		Sleep(numeric_cast<DWORD>(micros));
+		// windows Sleep has millisecond precision only
+		if (micros < 1000)
+		{
+			// we yield the thread and potentially busy wait for the remaining duration
+			static_assert(sizeof(uint64) == sizeof(LARGE_INTEGER));
+			uint64 freq = 0, begin = 0, end = 0;
+			QueryPerformanceFrequency((LARGE_INTEGER *)&freq);
+			QueryPerformanceCounter((LARGE_INTEGER *)&begin);
+			while (true)
+			{
+				Sleep(0); // yields the thread
+				QueryPerformanceCounter((LARGE_INTEGER *)&end);
+				const uint64 elapsed = 1000000 * (end - begin) / freq;
+				if (elapsed >= micros)
+					return;
+			}
+		}
+		else
+			Sleep(numeric_cast<DWORD>(micros / 1000));
 #else
 		usleep(micros);
 #endif

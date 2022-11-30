@@ -163,8 +163,7 @@ namespace cage
 				activateAllEmpty();
 				uint64 s = minimalScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
-				s = max(s, (uint64)1000); // some systems do not have higher precision sleeps; this will prevent busy looping
-				//CAGE_LOG(SeverityEnum::Info, "scheduler", stringizer() + "scheduler is going to sleep for " + s + " us");
+				profiling.set(Stringizer() + "requested sleep: " + s + " us");
 				threadSleep(s);
 			}
 
