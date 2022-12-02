@@ -658,7 +658,7 @@ namespace cage
 		constexpr Delegate &bind() noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
-				return F(std::forward<Ts>(vs)...);
+				return (F)(std::forward<Ts>(vs)...);
 			};
 			return *this;
 		}
@@ -676,7 +676,7 @@ namespace cage
 			fnc = +[](void *inst, Ts... vs) {
 				U u;
 				u.p = inst;
-				return F(u.d, std::forward<Ts>(vs)...);
+				return (F)(u.d, std::forward<Ts>(vs)...);
 			};
 			U u;
 			u.d = d;
