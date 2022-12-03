@@ -119,8 +119,8 @@ namespace cage
 				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
-				Vec2 mousePos = data.mousePosition + Vec2(-x, lineY + lineHeight * data.format->size);
-				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
+				const Vec2 mousePos = data.mousePosition + Vec2(-x, lineY + lineHeight * data.format->size);
+				const bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
 				if (!data.renderQueue && !mouseInLine)
 					return;
 				if (mouseInLine)
@@ -135,8 +135,8 @@ namespace cage
 				while (begin != end)
 				{
 					processCursor(data, begin, x, lineY);
-					FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
-					Real k = findKerning(prev, *begin, data.format->size);
+					const FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
+					const Real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
 					if (data.renderQueue)
 						data.instances.emplace_back(x + k, lineY, g);
@@ -152,11 +152,12 @@ namespace cage
 				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
 				CAGE_ASSERT(data.format->wrapWidth > 0);
 				CAGE_ASSERT(data.format->size > 0);
+				CAGE_ASSERT(data.format->lineSpacing.valid());
 				data.instances.reserve(data.glyphs.size() + 1);
 				const uint32 *const totalEnd = data.glyphs.end();
 				const uint32 *it = data.glyphs.begin();
 				const Real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
-				Real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
+				Real lineY = (firstLineOffset - data.format->lineSpacing * 0.5) * data.format->size;
 
 				if (data.glyphs.empty())
 				{ // process cursor
@@ -185,8 +186,7 @@ namespace cage
 							it++;
 							break;
 						}
-						Real w = getGlyph(*it, data.format->size).advance;
-						w += findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
+						const Real w = getGlyph(*it, data.format->size).advance + findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
 						if (it != lineStart && itWidth + w > data.format->wrapWidth + data.format->size * 1e-6)
 						{ // at this point, the line needs to be wrapped somewhere
 							if (*lineEnd == spaceGlyph)

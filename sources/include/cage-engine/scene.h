@@ -75,6 +75,8 @@ namespace cage
 		uint32 textName = 0;
 		uint32 font = 0;
 		uint32 sceneMask = 1;
+		Real lineSpacing = 0;
+		TextAlignEnum align = TextAlignEnum::Left;
 	};
 
 	enum class CameraTypeEnum : uint32

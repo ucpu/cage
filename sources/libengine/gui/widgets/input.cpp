@@ -181,9 +181,9 @@ namespace cage
 				leftPos = rightPos = mainPos;
 				if (showArrows)
 				{
-					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
+					mainSize[0] -= (s.buttonsWidth + s.buttonsOffset) * 2;
 					Real mw = mainSize[0];
-					Real bw = s.buttonsSize;
+					Real bw = s.buttonsWidth;
 					Real off = s.buttonsOffset;
 					Real bwo = bw + off;
 					switch (s.buttonsMode)
@@ -215,7 +215,7 @@ namespace cage
 				emitElement(GuiElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (showArrows)
 				{
-					Vec2 ss = Vec2(s.buttonsSize, mainSize[1]);
+					Vec2 ss = Vec2(s.buttonsWidth, mainSize[1]);
 					uint32 m = mode(leftPos, ss);
 					emitElement(GuiElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
 					m = mode(rightPos, ss);
@@ -226,7 +226,7 @@ namespace cage
 
 			bool insideButton(Vec2 pos, Vec2 point)
 			{
-				return pointInside(pos, Vec2(skin->defaults.inputBox.buttonsSize, mainSize[1]), point);
+				return pointInside(pos, Vec2(skin->defaults.inputBox.buttonsWidth, mainSize[1]), point);
 			}
 
 			void increment(int sign)

@@ -29,7 +29,13 @@ namespace cage
 		inputsListeners.keyRelease.bind<GuiImpl, &GuiImpl::keyRelease>(this);
 		inputsListeners.keyChar.bind<GuiImpl, &GuiImpl::keyChar>(this);
 
-		skins.resize(config.skinsCount);
+		skins.reserve(config.skinsCount);
+		for (uint32 i = 0; i < config.skinsCount; i++)
+		{
+			SkinData d;
+			(GuiSkinConfig &)d = detail::guiSkinGenerate(i);
+			skins.push_back(std::move(d));
+		}
 
 		memory = newMemoryAllocatorStream({});
 	}

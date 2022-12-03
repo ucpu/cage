@@ -42,7 +42,7 @@ namespace cage
 	{
 		AssetManager *assetMgr = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
-		uint32 skinsCount = 1;
+		uint32 skinsCount = 3;
 	};
 
 	CAGE_ENGINE_API Holder<GuiManager> newGuiManager(const GuiManagerCreateConfig &config);

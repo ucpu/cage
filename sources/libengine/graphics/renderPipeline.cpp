@@ -758,6 +758,8 @@ namespace cage
 						prepare.font->transcript(str, prepare.glyphs);
 						prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
 						prepare.format.size = 1;
+						prepare.format.align = pt.align;
+						prepare.format.lineSpacing = pt.lineSpacing;
 						const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
 						prepare.format.wrapWidth = size[0];
 						prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));

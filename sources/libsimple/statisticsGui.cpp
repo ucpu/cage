@@ -103,23 +103,23 @@ namespace cage
 				Entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
-					GuiScrollbarsComponent &sc = panel->value<GuiScrollbarsComponent>();
-					sc.alignment = screenPosition;
+					panel->value<GuiScrollbarsComponent>().alignment = screenPosition;
+					panel->value<GuiWidgetStateComponent>().skinIndex = 2; // compact style
 				}
 				Entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
 					layout->value<GuiPanelComponent>();
 					layout->value<GuiLayoutTableComponent>();
-					GuiParentComponent &child = layout->value<GuiParentComponent>();
-					child.parent = panel->name();
+					layout->value<GuiParentComponent>().parent = panel->name();
 				}
 
 				static constexpr uint32 labelsPerMode[] = {
 					sizeof(flagsFull) / sizeof(flagsFull[0]),
 					sizeof(flagsShort) / sizeof(flagsShort[0]),
 					sizeof(flagsFps) / sizeof(flagsFps[0]),
-					0 };
+					0
+				};
 				labelsCount = labelsPerMode[(uint32)statisticsScope];
 				for (uint32 i = 0; i < labelsCount * 2; i++)
 				{
@@ -130,10 +130,7 @@ namespace cage
 					child.parent = layout->name();
 					child.order = i;
 					if (i % 2 == 1)
-					{
-						GuiTextFormatComponent &tf = e->value<GuiTextFormatComponent>();
-						tf.align = TextAlignEnum::Right;
-					}
+						e->value<GuiTextFormatComponent>().align = TextAlignEnum::Right;
 				}
 
 				switch (statisticsScope)
@@ -195,8 +192,7 @@ namespace cage
 				if (labelIndices[index] == 0 || !engineGuiEntities()->has(labelIndices[index]))
 					return;
 				Entity *timing = engineGuiEntities()->get(labelIndices[index]);
-				GuiTextComponent &t = timing->value<GuiTextComponent>();
-				t.value = value;
+				timing->value<GuiTextComponent>().value = value;
 			}
 
 			bool update()

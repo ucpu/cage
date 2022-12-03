@@ -20,15 +20,16 @@ namespace cage
 		{
 			GuiTextFormatComponent textFormat;
 			GuiImageFormatComponent imageFormat;
-			Vec4 margin = Vec4(1, 2, 1, 2);
+			Vec4 margin = Vec4(6);
 			Label();
 		} label;
 		struct CAGE_ENGINE_API Button
 		{
 			GuiTextFormatComponent textFormat;
 			GuiImageFormatComponent imageFormat;
-			Vec4 padding = Vec4(1), margin = Vec4(1);
-			Vec2 size = Vec2(150, 32);
+			Vec4 padding = Vec4(2);
+			Vec4 margin = Vec4(1);
+			Vec2 size = Vec2(150, 28);
 			Button();
 		} button;
 		struct CAGE_ENGINE_API Input
@@ -38,8 +39,8 @@ namespace cage
 			GuiTextFormatComponent placeholderFormat;
 			Vec4 basePadding = Vec4(2);
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(300, 32);
-			Real buttonsSize = 32;
+			Vec2 size = Vec2(300, 28);
+			Real buttonsWidth = 28;
 			Real buttonsOffset = 2;
 			InputButtonsPlacementModeEnum buttonsMode = InputButtonsPlacementModeEnum::Sides;
 			Input();
@@ -47,7 +48,8 @@ namespace cage
 		struct CAGE_ENGINE_API TextArea
 		{
 			GuiTextFormatComponent textFormat;
-			Vec4 padding = Vec4(3), margin = Vec4(1);
+			Vec4 padding = Vec4(4);
+			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(450, 200);
 			TextArea();
 		} textArea;
@@ -56,7 +58,7 @@ namespace cage
 			GuiTextFormatComponent textFormat;
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(28);
-			Vec2 labelOffset = Vec2(3, 5);
+			Vec2 labelOffset = Vec2(4, 6);
 			CheckBox();
 		} checkBox;
 		struct CAGE_ENGINE_API RadioBox
@@ -64,7 +66,7 @@ namespace cage
 			GuiTextFormatComponent textFormat;
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(28);
-			Vec2 labelOffset = Vec2(3, 5);
+			Vec2 labelOffset = Vec2(4, 5);
 			RadioBox();
 		} radioBox;
 		struct CAGE_ENGINE_API ComboBox
@@ -72,18 +74,22 @@ namespace cage
 			GuiTextFormatComponent placeholderFormat;
 			GuiTextFormatComponent itemsFormat;
 			GuiTextFormatComponent selectedFormat;
-			Vec4 basePadding = Vec4(1), baseMargin = Vec4(1);
-			Vec4 listPadding = Vec4(0), itemPadding = Vec4(1, 2, 1, 2);
-			Vec2 size = Vec2(250, 32);
-			Real listOffset = -6, itemSpacing = -2;
+			Vec4 basePadding = Vec4(2);
+			Vec4 baseMargin = Vec4(1);
+			Vec4 listPadding = Vec4(-4);
+			Vec4 itemPadding = Vec4(1);
+			Vec2 size = Vec2(250, 28);
+			Real listOffset = -2;
+			Real itemSpacing = -2;
 			ComboBox();
 		} comboBox;
 		struct CAGE_ENGINE_API ListBox
 		{
 			GuiTextFormatComponent textFormat;
-			Vec4 basePadding = Vec4(0), baseMargin = Vec4(1);
-			Vec4 itemPadding = Vec4(1);
-			Vec2 size = Vec2(250, 32);
+			Vec4 basePadding = Vec4(2);
+			Vec4 baseMargin = Vec4(1);
+			Vec4 itemPadding = Vec4(2);
+			Vec2 size = Vec2(250, 28);
 			Real itemSpacing = 0;
 			ListBox();
 		} listBox;
@@ -94,7 +100,8 @@ namespace cage
 			GuiImageFormatComponent fillingImageFormat;
 			GuiImageComponent fillingImage;
 			Vec4 baseMargin = Vec4(1);
-			Vec4 textPadding = Vec4(1), fillingPadding = Vec4(1);
+			Vec4 textPadding = Vec4(2);
+			Vec4 fillingPadding = Vec4(2);
 			Vec2 size = Vec2(200, 28);
 			ProgressBar();
 		} progressBar;
@@ -102,7 +109,8 @@ namespace cage
 		{
 			struct Direction
 			{
-				Vec4 padding = Vec4(1), margin = Vec4(1);
+				Vec4 padding = Vec4(1);
+				Vec4 margin = Vec4(1);
 				Vec2 size;
 				bool collapsedBar = true;
 			} horizontal, vertical;
@@ -111,7 +119,7 @@ namespace cage
 		struct CAGE_ENGINE_API ColorPicker
 		{
 			Vec4 margin = Vec4(1);
-			Vec2 collapsedSize = Vec2(40, 32);
+			Vec2 collapsedSize = Vec2(28);
 			Vec2 fullSize = Vec2(250, 180);
 			Real hueBarPortion = 0.18;
 			Real resultBarPortion = 0.35;
@@ -122,8 +130,8 @@ namespace cage
 			GuiImageFormatComponent imageFormat;
 			Vec4 baseMargin = Vec4(1);
 			Vec4 contentPadding = Vec4(2);
-			Vec4 captionPadding = Vec4(3, 1, 3, 1);
-			Real captionHeight = 28;
+			Vec4 captionPadding = Vec4(2);
+			Real captionHeight = 30;
 			Panel();
 		} panel;
 		struct CAGE_ENGINE_API Spoiler
@@ -132,8 +140,8 @@ namespace cage
 			GuiImageFormatComponent imageFormat;
 			Vec4 baseMargin = Vec4(1);
 			Vec4 contentPadding = Vec4(2);
-			Vec4 captionPadding = Vec4(3, 1, 3, 1);
-			Real captionHeight = 28;
+			Vec4 captionPadding = Vec4(2);
+			Real captionHeight = 30;
 			Spoiler();
 		} spoiler;
 		struct CAGE_ENGINE_API Scrollbars
@@ -141,11 +149,6 @@ namespace cage
 			Real scrollbarSize = 15;
 			Real contentPadding = 4;
 		} scrollbars;
-		struct CAGE_ENGINE_API Tooltip
-		{
-			GuiTextFormatComponent textFormat;
-			Tooltip();
-		} tooltip;
 	};
 
 	struct CAGE_ENGINE_API GuiSkinElementLayout
@@ -168,7 +171,7 @@ namespace cage
 		ScrollbarVerticalPanel,
 		ScrollbarHorizontalDot,
 		ScrollbarVerticalDot,
-		ToolTip,
+		ToolTip, // obsolete
 		PanelBase,
 		PanelCaption,
 		SpoilerBase,
@@ -217,6 +220,7 @@ namespace cage
 
 	namespace detail
 	{
+		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(uint32 styleIndex); // 0 = default, 1 = large, 2 = compact
 		CAGE_ENGINE_API Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution);
 	}
 }

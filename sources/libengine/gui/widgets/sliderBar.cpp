@@ -49,8 +49,7 @@ namespace cage
 						offsetSize(fs, skin->layouts[(uint32)baseElement].border);
 						Vec2 diff = (bs - fs) / 2;
 						Real m = min(diff[0], diff[1]);
-						diff = Vec2(m, m);
-						offset(bp, bs, -Vec4(diff, diff));
+						offset(bp, bs, -Vec4(m));
 					}
 					emitElement(baseElement, mode(), bp, bs);
 				}

@@ -192,7 +192,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiRadioBoxComponent
 	{
-		uint32 group = 0; // defines what other radio buttons are unchecked when this becomes checked
 		CheckBoxStateEnum state = CheckBoxStateEnum::Unchecked;
 		// GuiTextComponent defines label shown next to the radio box
 	};
