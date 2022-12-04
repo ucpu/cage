@@ -16,7 +16,7 @@ namespace cage
 
 			ColorPickerRenderable(const ColorPickerImpl *item);
 
-			virtual ~ColorPickerRenderable() override
+			~ColorPickerRenderable() override
 			{
 				if (!prepare())
 					return;
@@ -50,7 +50,7 @@ namespace cage
 			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small)
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->text);
@@ -91,7 +91,7 @@ namespace cage
 				color = data.color;
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				if (this == large)
 					hierarchy->requestedSize = skin->defaults.colorPicker.fullSize;
@@ -102,7 +102,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.colorPicker.margin);
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				if (this == large && small)
 				{ // this is a popup
@@ -140,7 +140,7 @@ namespace cage
 				t.rgb = color;
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
@@ -148,7 +148,7 @@ namespace cage
 				if (this == large)
 				{ // large
 					emitElement(GuiElementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
-					uint32 m = mode(false, 0);
+					const ElementModeEnum m = mode(false, 0);
 					emitElement(GuiElementTypeEnum::ColorPickerHuePanel, m, sliderPos, sliderSize);
 					emitElement(GuiElementTypeEnum::ColorPickerSatValPanel, m, rectPos, rectSize);
 					emitElement(GuiElementTypeEnum::ColorPickerPreviewPanel, m, resultPos, resultSize);
@@ -201,12 +201,12 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}

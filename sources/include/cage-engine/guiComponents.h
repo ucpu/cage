@@ -56,13 +56,6 @@ namespace cage
 		uint32 length = 0; // utf32 characters (not bytes)
 	};
 
-	struct CAGE_ENGINE_API GuiTooltipComponent
-	{
-		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		uint32 assetName = 0;
-		uint32 textName = 0;
-	};
-
 	struct CAGE_ENGINE_API GuiWidgetStateComponent
 	{
 		uint32 skinIndex = m; // -1 = inherit
@@ -142,12 +135,12 @@ namespace cage
 	{
 		// input box and text area
 		None = 0,
-		ReadOnly = 1 << 0,
-		SelectAllOnFocusGain = 1 << 1,
+		//ReadOnly = 1 << 0,
+		//SelectAllOnFocusGain = 1 << 1,
 		GoToEndOnFocusGain = 1 << 2,
 		ShowArrowButtons = 1 << 3,
 		AlwaysRoundValueToStep = 1 << 4,
-		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
+		//AcceptTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
 
 	struct CAGE_ENGINE_API GuiInputComponent
@@ -170,7 +163,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiTextAreaComponent
 	{
-		MemoryBuffer *buffer = nullptr; // utf8 encoded string
+		MemoryBuffer *buffer = nullptr; // utf8 encoded string (size is in bytes)
 		uint32 cursor = m; // utf32 characters (not bytes)
 		uint32 maxLength = 1024 * 1024; // bytes
 		InputStyleFlags style = InputStyleFlags::None;
@@ -203,14 +196,6 @@ namespace cage
 		// children with GuiTextComponent defines individual lines
 		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
 		// GuiSelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
-	};
-
-	struct CAGE_ENGINE_API GuiListBoxComponent
-	{
-		// real scrollbar;
-		// children with GuiTextComponent defines individual lines
-		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
-		// GuiSelectedItemComponent on childs defines which lines are selected
 	};
 
 	struct CAGE_ENGINE_API GuiProgressBarComponent

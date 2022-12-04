@@ -37,10 +37,9 @@ namespace cage
 		return false;
 	}
 
-	RenderableElement::RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableElement::RenderableElement(WidgetItem *item, GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
 		CAGE_ASSERT(element < GuiElementTypeEnum::TotalElements);
-		CAGE_ASSERT(mode < 4);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());
 		CAGE_ASSERT(item->skin->texture);
@@ -65,7 +64,7 @@ namespace cage
 		q->uniform(shader, 0, data.outer);
 		q->uniform(shader, 1, data.inner);
 		q->uniform(shader, 2, data.element);
-		q->uniform(shader, 3, data.mode);
+		q->uniform(shader, 3, (uint32)data.mode);
 		q->draw(impl->graphicsData.elementModel);
 	}
 

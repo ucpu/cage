@@ -128,18 +128,18 @@ namespace cage
 	WidgetItem::WidgetItem(HierarchyItem *hierarchy) : BaseItem(hierarchy)
 	{}
 
-	uint32 WidgetItem::mode(bool hover, uint32 focusParts) const
+	ElementModeEnum WidgetItem::mode(bool hover, uint32 focusParts) const
 	{
 		if (widgetState.disabled)
-			return 3;
+			return ElementModeEnum::Disabled;
 		if (hierarchy->impl->hover == this && hover)
-			return 2;
+			return ElementModeEnum::Hover;
 		if (hasFocus(focusParts))
-			return 1;
-		return 0;
+			return ElementModeEnum::Focus;
+		return ElementModeEnum::Default;
 	}
 
-	uint32 WidgetItem::mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts) const
+	ElementModeEnum WidgetItem::mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts) const
 	{
 		return mode(pointInside(pos, size, hierarchy->impl->outputMouse), focusParts);
 	}
@@ -174,7 +174,7 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
-	RenderableElement WidgetItem::emitElement(GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size)
+	RenderableElement WidgetItem::emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size)
 	{
 		return RenderableElement(this, element, mode, pos, size);
 	}
@@ -331,7 +331,7 @@ namespace cage
 			glyphs = font->transcript(value);
 	}
 
-	void TextItem::transcript(const char *value)
+	void TextItem::transcript(PointerRange<const char> value)
 	{
 		if (font)
 			glyphs = font->transcript(value);
@@ -390,7 +390,6 @@ namespace cage
 	{
 		image = value;
 		texture = hierarchy->impl->assetOnDemand->get<AssetSchemeIndexTexture, Texture>(value.textureName);
-		//texture = hierarchy->impl->assetMgr->get<AssetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)

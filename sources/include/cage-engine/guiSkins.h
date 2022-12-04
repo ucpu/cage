@@ -83,26 +83,14 @@ namespace cage
 			Real itemSpacing = -2;
 			ComboBox();
 		} comboBox;
-		struct CAGE_ENGINE_API ListBox
-		{
-			GuiTextFormatComponent textFormat;
-			Vec4 basePadding = Vec4(2);
-			Vec4 baseMargin = Vec4(1);
-			Vec4 itemPadding = Vec4(2);
-			Vec2 size = Vec2(250, 28);
-			Real itemSpacing = 0;
-			ListBox();
-		} listBox;
 		struct CAGE_ENGINE_API ProgressBar
 		{
 			GuiTextFormatComponent textFormat;
-			GuiImageFormatComponent backgroundImageFormat;
-			GuiImageFormatComponent fillingImageFormat;
-			GuiImageComponent fillingImage;
 			Vec4 baseMargin = Vec4(1);
 			Vec4 textPadding = Vec4(2);
-			Vec4 fillingPadding = Vec4(2);
-			Vec2 size = Vec2(200, 28);
+			Vec4 fillingPadding = Vec4();
+			Vec2 size = Vec2(300, 28);
+			uint32 fillingTextureName = 0;
 			ProgressBar();
 		} progressBar;
 		struct CAGE_ENGINE_API SliderBar
@@ -193,9 +181,9 @@ namespace cage
 		ComboBoxList,
 		ComboBoxItemUnchecked,
 		ComboBoxItemChecked,
-		ListBoxBase,
-		ListBoxItemUnchecked,
-		ListBoxItemChecked,
+		ListBoxBase, // obsolete
+		ListBoxItemUnchecked, // obsolete
+		ListBoxItemChecked, // obsolete
 		SliderHorizontalPanel,
 		SliderVerticalPanel,
 		SliderHorizontalDot,

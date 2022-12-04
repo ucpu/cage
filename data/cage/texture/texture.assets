@@ -1,4 +1,3 @@
-
 []
 scheme = texture
 premultiplyAlpha = true
@@ -10,6 +9,14 @@ gui.png
 scheme = texture
 srgb = true
 helper.jpg
+
+[]
+scheme = texture
+target = 2dArray
+srgb = true
+gamma = true
+animationLoop = false
+progressbar/$.png
 
 []
 scheme = pack

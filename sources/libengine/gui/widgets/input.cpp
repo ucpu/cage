@@ -1,7 +1,6 @@
 #include <cage-core/utf.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-
 #include "../private.h"
 
 namespace cage
@@ -23,7 +22,7 @@ namespace cage
 			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection))
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->image);
@@ -66,11 +65,11 @@ namespace cage
 						hierarchy->text->apply(skin->defaults.inputBox.textInvalidFormat);
 					if (data.type == InputTypeEnum::Password)
 					{
-						hierarchy->text->transcript("*");
-						uint32 g = hierarchy->text->glyphs[0];
+						hierarchy->text->transcript(String("*"));
+						const uint32 g = hierarchy->text->glyphs[0];
 						hierarchy->text->transcript(data.value);
-						for (uint32 i = 0; i < hierarchy->text->glyphs.size(); i++)
-							hierarchy->text->glyphs[i] = g;
+						for (uint32 &it : hierarchy->text->glyphs)
+							it = g;
 					}
 					else
 						hierarchy->text->transcript(data.value);
@@ -166,13 +165,13 @@ namespace cage
 				}
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = skin->defaults.inputBox.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.inputBox.margin);
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				const auto &s = skin->defaults.inputBox;
 				mainPos = hierarchy->renderPos;
@@ -209,17 +208,17 @@ namespace cage
 				offset(textPos, textSize, -skin->layouts[(uint32)GuiElementTypeEnum::Input].border - s.basePadding);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				const auto &s = skin->defaults.inputBox;
 				emitElement(GuiElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (showArrows)
 				{
 					Vec2 ss = Vec2(s.buttonsWidth, mainSize[1]);
-					uint32 m = mode(leftPos, ss);
-					emitElement(GuiElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
+					ElementModeEnum m = mode(leftPos, ss);
+					emitElement(GuiElementTypeEnum::InputButtonDecrement, m == ElementModeEnum::Focus ? ElementModeEnum::Default : m, leftPos, ss);
 					m = mode(rightPos, ss);
-					emitElement(GuiElementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
+					emitElement(GuiElementTypeEnum::InputButtonIncrement, m == ElementModeEnum::Focus ? ElementModeEnum::Default : m, rightPos, ss);
 				}
 				hierarchy->text->emit(textPos, textSize);
 			}
@@ -263,14 +262,14 @@ namespace cage
 			void gainFocus()
 			{
 				// update cursor
-				uint32 len = utf32Length(data.value);
 				uint32 &cur = data.cursor;
+				const uint32 len = utf32Length(data.value);
 				cur = min(cur, len);
-				if ((data.style & InputStyleFlags::GoToEndOnFocusGain) == InputStyleFlags::GoToEndOnFocusGain)
+				if (any(data.style & InputStyleFlags::GoToEndOnFocusGain))
 					cur = len;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (!hasFocus())
 					gainFocus();
@@ -301,10 +300,10 @@ namespace cage
 				return true;
 			}
 
-			virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override
+			bool keyRepeat(uint32 key, ModifiersFlags modifiers) override
 			{
 				uint32 &cursor = data.cursor;
-				uint32 len = utf32Length(data.value);
+				const uint32 len = utf32Length(data.value);
 				std::vector<uint32> utf32;
 				utf32.resize(len);
 				PointerRange<uint32> utf32pr = utf32;
@@ -346,12 +345,12 @@ namespace cage
 				return true;
 			}
 
-			virtual bool keyChar(uint32 key) override
+			bool keyChar(uint32 key) override
 			{
-				if (data.value.length() + 1 >= String::MaxLength)
+				if (data.value.length() + 6 >= String::MaxLength)
 					return true;
 				uint32 &cursor = data.cursor;
-				uint32 len = utf32Length(data.value);
+				const uint32 len = utf32Length(data.value);
 				std::vector<uint32> utf32;
 				utf32.reserve(len + 1);
 				utf32.resize(len);

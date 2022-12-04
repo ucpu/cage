@@ -12,7 +12,7 @@ namespace cage
 			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox))
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->image);
@@ -21,7 +21,7 @@ namespace cage
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::RadioBoxUnchecked + (uint32)data.state);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = skin->defaults.radioBox.size;
 				if (hierarchy->text)
@@ -33,7 +33,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.radioBox.margin);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 sd = skin->defaults.radioBox.size;
 				{
@@ -53,23 +53,24 @@ namespace cage
 				}
 			}
 
-			void update()
+			static void deselect(HierarchyItem *item)
 			{
-				if (data.state == CheckBoxStateEnum::Checked)
-					data.state = CheckBoxStateEnum::Unchecked;
-				else
-					data.state = CheckBoxStateEnum::Checked;
-				hierarchy->fireWidgetEvent();
+				if (RadioBoxImpl *b = dynamic_cast<RadioBoxImpl *>(+item->item))
+					b->data.state = CheckBoxStateEnum::Unchecked;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)
 					return true;
 				if (modifiers != ModifiersFlags::None)
 					return true;
-				update();
+				HierarchyItem *parent = hierarchy->impl->root->findParentOf(hierarchy);
+				for (const auto &it : parent->children)
+					deselect(+it);
+				data.state = CheckBoxStateEnum::Checked;
+				hierarchy->fireWidgetEvent();
 				return true;
 			}
 		};

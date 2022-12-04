@@ -283,15 +283,10 @@ namespace cage
 		selectedFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::ListBox::ListBox() : textFormat(textInit)
-	{}
-
-	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit)
+	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit)
 	{
-		fillingImage.animationStart = 0;
-		fillingImage.textureName = HashString("todo"); // todo
-		fillingImage.textureUvOffset = Vec2();
-		fillingImage.textureUvSize = Vec2(1);
+		textFormat.align = TextAlignEnum::Center;
+		fillingTextureName = HashString("cage/texture/progressbar/$.png");
 	}
 
 	GuiSkinWidgetDefaults::SliderBar::SliderBar()
@@ -331,6 +326,11 @@ namespace cage
 			d.inputBox.buttonsWidth = 34;
 			d.inputBox.textValidFormat.size = d.inputBox.textInvalidFormat.size = d.inputBox.placeholderFormat.size = 18;
 
+			d.textArea.margin = Vec4(2);
+			d.textArea.padding = Vec4(3);
+			d.textArea.size *= 34.0 / 28.0;
+			d.textArea.textFormat.size = 18;
+
 			d.checkBox.margin = Vec4(2);
 			d.checkBox.size = Vec2(34);
 			d.checkBox.textFormat.size = 18;
@@ -350,6 +350,11 @@ namespace cage
 			d.comboBox.itemSpacing = -3;
 			d.comboBox.itemsFormat.size = d.comboBox.selectedFormat.size = d.comboBox.placeholderFormat.size = 18;
 
+			d.progressBar.baseMargin = Vec4(2);
+			d.progressBar.textPadding = Vec4(3);
+			d.progressBar.size[1] = 34;
+			d.progressBar.textFormat.size = 18;
+
 			d.sliderBar.horizontal.padding = Vec4(2);
 			d.sliderBar.vertical.padding = Vec4(2);
 			d.sliderBar.horizontal.margin = Vec4(2);
@@ -366,6 +371,12 @@ namespace cage
 			d.panel.captionPadding = Vec4(3);
 			d.panel.captionHeight = 36;
 			d.panel.textFormat.size = 18;
+
+			d.spoiler.baseMargin = Vec4(2);
+			d.spoiler.contentPadding = Vec4(3);
+			d.spoiler.captionPadding = Vec4(3);
+			d.spoiler.captionHeight = 36;
+			d.spoiler.textFormat.size = 18;
 		}
 
 		void generateCompact(GuiSkinConfig &skin)
@@ -386,6 +397,10 @@ namespace cage
 			d.inputBox.textValidFormat.size = d.inputBox.textInvalidFormat.size = d.inputBox.placeholderFormat.size = 11;
 			d.inputBox.buttonsOffset = 1;
 
+			d.textArea.padding = Vec4(1);
+			d.textArea.size *= 20.0 / 28.0;
+			d.textArea.textFormat.size = 11;
+
 			d.checkBox.size = Vec2(20);
 			d.checkBox.textFormat.size = 11;
 			d.checkBox.labelOffset = Vec2(2, 5);
@@ -402,6 +417,10 @@ namespace cage
 			d.comboBox.itemSpacing = -2;
 			d.comboBox.itemsFormat.size = d.comboBox.selectedFormat.size = d.comboBox.placeholderFormat.size = 11;
 
+			d.progressBar.textPadding = Vec4();
+			d.progressBar.size[1] = 20;
+			d.progressBar.textFormat.size = 11;
+
 			d.sliderBar.horizontal.padding = Vec4(-1);
 			d.sliderBar.vertical.padding = Vec4(-1);
 			d.sliderBar.horizontal.margin = Vec4(1);
@@ -416,6 +435,11 @@ namespace cage
 			d.panel.captionPadding = Vec4(1);
 			d.panel.captionHeight = 22;
 			d.panel.textFormat.size = 11;
+
+			d.spoiler.contentPadding = Vec4(1);
+			d.spoiler.captionPadding = Vec4(1);
+			d.spoiler.captionHeight = 22;
+			d.spoiler.textFormat.size = 11;
 		}
 	}
 

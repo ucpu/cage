@@ -13,11 +13,11 @@ namespace cage
 			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo)
 			{}
 
-			virtual void initialize() override;
-			virtual void findRequestedSize() override;
-			virtual void findFinalPosition(const FinalPosition &update) override;
-			virtual void emit() override;
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+			void initialize() override;
+			void findRequestedSize() override;
+			void findFinalPosition(const FinalPosition &update) override;
+			void emit() override;
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		};
 
 		struct ComboBoxImpl : public WidgetItem
@@ -30,7 +30,7 @@ namespace cage
 			ComboBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ComboBox))
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(!hierarchy->image);
 				CAGE_ASSERT(areChildrenValid());
@@ -59,13 +59,13 @@ namespace cage
 				}
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = skin->defaults.comboBox.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.comboBox.baseMargin);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
@@ -166,7 +166,7 @@ namespace cage
 
 		void ComboListImpl::emit()
 		{
-			emitElement(GuiElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
+			emitElement(GuiElementTypeEnum::ComboBoxList, ElementModeEnum::Default, hierarchy->renderPos, hierarchy->renderSize);
 			const Vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
 			uint32 idx = 0;
 			bool allowHover = true;
@@ -174,10 +174,10 @@ namespace cage
 			{
 				Vec2 p = c->renderPos;
 				Vec2 s = c->renderSize;
-				const uint32 md = allowHover ? mode(p, s, 0) : 0;
-				allowHover &= !md; // items may have small overlap, this will ensure that only one item has hover
+				const ElementModeEnum md = allowHover ? mode(p, s, 0) : ElementModeEnum::Default;
+				allowHover &= md != ElementModeEnum::Default; // items may have small overlap, this will ensure that only one item has hover
 				const bool disabled = c->ent->has<GuiWidgetStateComponent>() && c->ent->value<GuiWidgetStateComponent>().disabled;
-				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, disabled ? 3 : md, p, s);
+				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, disabled ? ElementModeEnum::Disabled : md, p, s);
 				offset(p, s, itemFrame);
 				c->text->emit(p, s).setClip(hierarchy);
 				idx++;

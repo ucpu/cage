@@ -12,7 +12,7 @@ namespace cage
 			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->image);
@@ -21,7 +21,7 @@ namespace cage
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::CheckBoxUnchecked + (uint32)data.state);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = skin->defaults.checkBox.size;
 				if (hierarchy->text)
@@ -33,7 +33,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.checkBox.margin);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 sd = skin->defaults.checkBox.size;
 				{
@@ -62,7 +62,7 @@ namespace cage
 				hierarchy->fireWidgetEvent();
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)

@@ -28,10 +28,10 @@ namespace cage
 				}
 			}
 
-			virtual void initialize() override
+			void initialize() override
 			{}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				const uint32 childs = numeric_cast<uint32>(hierarchy->children.size());
 
@@ -99,7 +99,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				const Vec2 spacing = (update.renderSize - hierarchy->requestedSize) / Vec2(mws, mhs);
 				Vec2 pos = update.renderPos;

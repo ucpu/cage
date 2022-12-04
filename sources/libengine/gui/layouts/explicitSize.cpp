@@ -11,10 +11,10 @@ namespace cage
 			ExplicitSizeImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(ExplicitSize))
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
@@ -30,7 +30,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				FinalPosition u(update);
 				for (const auto &c : hierarchy->children)

@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, Tooltip, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
-#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has<Gui##T##Component>()
@@ -28,6 +28,14 @@ namespace cage
 	struct RenderableElement;
 	struct RenderableText;
 	struct RenderableImage;
+
+	enum class ElementModeEnum
+	{
+		Default = 0,
+		Focus = 1,
+		Hover = 2,
+		Disabled = 3,
+	};
 
 	struct SkinData : public GuiSkinConfig
 	{
@@ -108,11 +116,11 @@ namespace cage
 
 		WidgetItem(HierarchyItem *hierarchy);
 
-		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
-		uint32 mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts = 1) const;
+		ElementModeEnum mode(bool hover = true, uint32 focusParts = 1) const;
+		ElementModeEnum mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		RenderableElement emitElement(GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
+		RenderableElement emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
@@ -169,7 +177,7 @@ namespace cage
 
 		void transcript();
 		void transcript(const String &value);
-		void transcript(const char *value);
+		void transcript(PointerRange<const char> value);
 
 		Vec2 findRequestedSize();
 
@@ -221,12 +229,12 @@ namespace cage
 			Vec4 outer;
 			Vec4 inner;
 			uint32 element = m;
-			uint32 mode = m;
+			ElementModeEnum mode = m;
 		} data;
 
 		const SkinData *skin = nullptr;
 
-		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
+		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
 		virtual ~RenderableElement() override;
 	};
