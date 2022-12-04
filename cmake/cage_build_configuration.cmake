@@ -4,6 +4,10 @@ macro(cage_build_configuration)
 		message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
 	endif()
 
+	message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+	message(STATUS "CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
+	message(STATUS "CMAKE_CXX_SIMULATE_ID: ${CMAKE_CXX_SIMULATE_ID}")
+
 	cmake_policy(SET CMP0063 NEW)
 
 	# language standard
@@ -19,10 +23,6 @@ macro(cage_build_configuration)
 	set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
 	if(MSVC)
-		# multi-process compilation
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-
 		# enable UTF-8
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
@@ -38,23 +38,31 @@ macro(cage_build_configuration)
 		set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
 		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 
-		# disable compiler warnings:
+		# disable some compiler warnings:
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
 
 		# optionally improve runtime performance in debug builds
 		option(CAGE_FASTER_DEBUG "enable some optimizations to improve performance in debug builds" ON)
 		if(CAGE_FASTER_DEBUG)
+			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG})
+			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG})
 			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Ob1")
 			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ob1 /D_ITERATOR_DEBUG_LEVEL=0")
+		endif()
+
+		# multi-process compilation
+		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 		endif()
 	else()
 		# link time optimizations
 		# fails with clang - generates empty archive in zlib-ng
-		if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		#if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
 			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-		endif()
+		#endif()
 
 		# disable warnings about attributes
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")

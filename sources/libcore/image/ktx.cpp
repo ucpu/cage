@@ -24,28 +24,26 @@ namespace cage
 			case ImageKtxTranscodeFormatEnum::Bc4: return basist::transcoder_texture_format::cTFBC4_R;
 			case ImageKtxTranscodeFormatEnum::Bc5: return basist::transcoder_texture_format::cTFBC5_RG;
 			case ImageKtxTranscodeFormatEnum::Bc7: return basist::transcoder_texture_format::cTFBC7_RGBA;
+			default: CAGE_THROW_ERROR(Exception, "invalid ImageKtxBlocksFormatEnum");
 			}
-			CAGE_THROW_ERROR(Exception, "invalid ImageKtxBlocksFormatEnum");
 		}
 
 		void throwError(basisu::basis_compressor::error_code result)
 		{
-			if (result != basisu::basis_compressor::error_code::cECSuccess)
+			switch (result)
 			{
-				switch (result)
-				{
-				case basisu::basis_compressor::error_code::cECFailedReadingSourceImages: CAGE_LOG_THROW("failed loading source images"); break;
-				case basisu::basis_compressor::error_code::cECFailedValidating: CAGE_LOG_THROW("failed validation"); break;
-				case basisu::basis_compressor::error_code::cECFailedEncodeUASTC: CAGE_LOG_THROW("failed encoding uastc"); break;
-				case basisu::basis_compressor::error_code::cECFailedFrontEnd: CAGE_LOG_THROW("failed frontend"); break;
-				case basisu::basis_compressor::error_code::cECFailedFontendExtract: CAGE_LOG_THROW("failed frontend extract"); break;
-				case basisu::basis_compressor::error_code::cECFailedBackend: CAGE_LOG_THROW("failed backend"); break;
-				case basisu::basis_compressor::error_code::cECFailedCreateBasisFile: CAGE_LOG_THROW("failed to create basis file"); break;
-				case basisu::basis_compressor::error_code::cECFailedWritingOutput: CAGE_LOG_THROW("failed writing output"); break;
-				case basisu::basis_compressor::error_code::cECFailedUASTCRDOPostProcess: CAGE_LOG_THROW("failed uastc rdo post process"); break;
-				case basisu::basis_compressor::error_code::cECFailedCreateKTX2File: CAGE_LOG_THROW("failed to create ktx file"); break;
-				}
-				CAGE_THROW_ERROR(Exception, "failed encoding ktx image");
+			case basisu::basis_compressor::error_code::cECSuccess: return;
+			case basisu::basis_compressor::error_code::cECFailedReadingSourceImages: CAGE_LOG_THROW("failed loading source images"); break;
+			case basisu::basis_compressor::error_code::cECFailedValidating: CAGE_LOG_THROW("failed validation"); break;
+			case basisu::basis_compressor::error_code::cECFailedEncodeUASTC: CAGE_LOG_THROW("failed encoding uastc"); break;
+			case basisu::basis_compressor::error_code::cECFailedFrontEnd: CAGE_LOG_THROW("failed frontend"); break;
+			case basisu::basis_compressor::error_code::cECFailedFontendExtract: CAGE_LOG_THROW("failed frontend extract"); break;
+			case basisu::basis_compressor::error_code::cECFailedBackend: CAGE_LOG_THROW("failed backend"); break;
+			case basisu::basis_compressor::error_code::cECFailedCreateBasisFile: CAGE_LOG_THROW("failed to create basis file"); break;
+			case basisu::basis_compressor::error_code::cECFailedWritingOutput: CAGE_LOG_THROW("failed writing output"); break;
+			case basisu::basis_compressor::error_code::cECFailedUASTCRDOPostProcess: CAGE_LOG_THROW("failed uastc rdo post process"); break;
+			case basisu::basis_compressor::error_code::cECFailedCreateKTX2File: CAGE_LOG_THROW("failed to create ktx file"); break;
+			default: CAGE_THROW_ERROR(Exception, "failed encoding ktx image");
 			}
 		}
 
