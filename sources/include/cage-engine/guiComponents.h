@@ -6,6 +6,7 @@
 namespace cage
 {
 	struct MemoryBuffer;
+	class Entity;
 
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
@@ -88,6 +89,29 @@ namespace cage
 	struct CAGE_ENGINE_API GuiEventComponent
 	{
 		Delegate<bool(uint32)> event;
+	};
+
+	enum class TooltipCloseConditionEnum : uint32
+	{
+		Instant, // the tooltip is closed as soon as the cursor moves
+		Modal, // the tooltip acts as a modal window and is closed only when the cursor moves outside of the tooltip
+		Never, // the application is responsible for closing the tooltip by removing the entity
+	};
+
+	struct CAGE_ENGINE_API GuiTooltipConfig
+	{
+		Entity *invoker = nullptr; // the widget for which the tooltip is to be shown
+		Entity *tooltip = nullptr; // entity automatically prepared by the guiManager for the application to fill in
+		Vec2 position; // cursor position
+		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
+		mutable bool reposition = true; // move the tooltip to appropriate position at the cursor
+	};
+
+	struct CAGE_ENGINE_API GuiTooltipComponent
+	{
+		Delegate<void(const GuiTooltipConfig &)> tooltip;
+		uint64 delay = 500000; // duration to hold mouse over the widget before showing the tooltip
+		bool enableForDisabled = false;
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutLineComponent
@@ -231,6 +255,33 @@ namespace cage
 		// GuiTextComponent defines caption
 		// GuiImageComponent defines background
 	};
+
+	namespace privat
+	{
+		template<uint32 N>
+		struct GuiStringLiteral
+		{
+			consteval GuiStringLiteral(const char(&str)[N]) noexcept
+			{
+				detail::memcpy(value, str, N);
+			}
+			char value[N];
+		};
+
+		CAGE_ENGINE_API decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt);
+	}
+
+	namespace detail
+	{
+		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
+
+		template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+		decltype(GuiTooltipComponent::tooltip) guiTooltipText() noexcept
+		{
+			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
+			return privat::guiTooltipText(&txt);
+		}
+	}
 }
 
 #endif // guard_guiComponents_sdf1gh45hk485aws

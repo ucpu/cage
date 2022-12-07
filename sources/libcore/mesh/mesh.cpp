@@ -275,7 +275,7 @@ namespace cage
 
 	namespace detail
 	{
-		StringLiteral meshTypeToString(MeshTypeEnum type)
+		StringPointer meshTypeToString(MeshTypeEnum type)
 		{
 			switch (type)
 			{

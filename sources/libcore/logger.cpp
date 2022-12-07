@@ -169,7 +169,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const String &message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 

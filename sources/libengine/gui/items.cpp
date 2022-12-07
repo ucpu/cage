@@ -88,7 +88,7 @@ namespace cage
 
 	void HierarchyItem::generateEventReceivers() const
 	{
-		for (auto i = children.size(); i-- > 0;) // typographically pleasing iteration in reverse order ;)
+		for (auto i = children.size(); i-->0;) // typographically pleasing iteration in reverse order ;)
 			children[i]->generateEventReceivers();
 		if (item)
 			item->generateEventReceivers();
@@ -170,6 +170,8 @@ namespace cage
 		e.widget = this;
 		e.pos = hierarchy->renderPos;
 		e.size = hierarchy->renderSize;
+		if (hierarchy->ent && hierarchy->ent->has<GuiTooltipComponent>())
+			e.mask |= GuiEventsTypesFlags::Tooltips;
 		if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}

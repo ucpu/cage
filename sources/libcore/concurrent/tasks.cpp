@@ -174,7 +174,7 @@ namespace cage
 		{
 			const privat::TaskRunnerConfig runnerConfig;
 			const privat::TaskRunner runner = nullptr;
-			const StringLiteral name;
+			const StringPointer name;
 			const sint32 priority = 0;
 			const uint32 invocations = 0;
 			std::atomic<uint32> scheduled = 0;
@@ -342,7 +342,7 @@ namespace cage
 	namespace
 	{
 		template<bool Async>
-		auto tasksRunImpl(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 		{
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
@@ -358,12 +358,12 @@ namespace cage
 		}
 	}
 
-	void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	void tasksRunBlocking(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
 		return tasksRunImpl<false>(name, function, invocations, priority);
 	}
 
-	Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+	Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
 	{
 		return tasksRunImpl<true>(name, function, invocations, priority);
 	}

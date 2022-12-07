@@ -109,7 +109,7 @@ namespace cage
 		void genericEnable(uint32 key, bool enable);
 		void resetAllState(); // set viewport, scissors, culling, depth, blend etc all to default values
 
-		[[nodiscard]] struct RenderQueueNamedScope namedScope(StringLiteral name);
+		[[nodiscard]] struct RenderQueueNamedScope namedScope(StringPointer name);
 
 		// dispatch another queue as part of this queue
 		// stores a reference to the queue - do not modify it after it has been enqueued
@@ -135,7 +135,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API RenderQueueNamedScope : private Immovable
 	{
-		[[nodiscard]] RenderQueueNamedScope(RenderQueue *queue, StringLiteral name);
+		[[nodiscard]] RenderQueueNamedScope(RenderQueue *queue, StringPointer name);
 		~RenderQueueNamedScope();
 
 	private:

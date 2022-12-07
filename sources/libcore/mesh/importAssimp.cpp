@@ -1393,7 +1393,7 @@ namespace cage
 
 	namespace detail
 	{
-		StringLiteral meshImportTextureTypeToString(MeshImportTextureType type)
+		StringPointer meshImportTextureTypeToString(MeshImportTextureType type)
 		{
 			switch (type)
 			{

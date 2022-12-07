@@ -12,7 +12,7 @@
 
 #include <vector>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event, Tooltip, TooltipMarker
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
 
@@ -263,16 +263,29 @@ namespace cage
 		virtual ~RenderableImage() override;
 	};
 
+	enum class GuiEventsTypesFlags : uint32
+	{
+		Default = 1u << 0,
+		Wheel = 1u << 1,
+		Tooltips = 1u << 2,
+	};
+	GCHL_ENUM_BITS(GuiEventsTypesFlags);
+
 	struct EventReceiver
 	{
 		Vec2 pos, size;
-		WidgetItem *widget;
-		uint32 mask; // bitmask for event classes
+		WidgetItem *widget = nullptr;
+		GuiEventsTypesFlags mask = GuiEventsTypesFlags::Default;
 
-		EventReceiver();
-
-		bool pointInside(Vec2 point, uint32 maskRequests = 1) const;
+		bool pointInside(Vec2 point, GuiEventsTypesFlags maskRequests = GuiEventsTypesFlags::Default) const;
 	};
+
+	struct TooltipData : public GuiTooltipConfig
+	{
+		bool removing = false;
+	};
+
+	struct GuiTooltipMarkerComponent {}; // this component is added to the root entity of shown tooltip to track its deletion
 
 	class GuiImpl : public GuiManager
 	{
@@ -329,12 +342,23 @@ namespace cage
 
 		std::vector<SkinData> skins;
 
+		Vec2 ttLastMousePos; // points
+		Real ttMouseTraveledDistance; // points
+		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much
+		std::vector<TooltipData> ttData;
+		EventListener<bool(Entity *)> ttRemovedListener;
+		void ttMouseMove(InputMouse in);
+		void updateTooltips();
+		void clearTooltips();
+		bool tooltipRemoved(Entity *e);
+
 		explicit GuiImpl(const GuiManagerCreateConfig &config);
 		~GuiImpl();
-		void scaling();
+		void scaling(); // update outputSize and outputMouse
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;
 		bool eventPoint(Vec2 ptIn, Vec2 &ptOut);
 		Holder<RenderQueue> emit();
+		void prepareImplGeneration();
 	};
 
 	uint32 entityWidgetsCount(Entity *e);
@@ -343,7 +367,7 @@ namespace cage
 	void offsetSize(Vec2 &size, Vec4 offset);
 	void offset(Vec2 &position, Vec2 &size, Vec4 offset);
 	bool pointInside(Vec2 pos, Vec2 size, Vec2 point);
-	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // return whether the clipped rect has positive area
+	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // clips the rect and returns whether the clipped rect has positive area
 	HierarchyItem *subsideItem(HierarchyItem *item);
 	void ensureItemHasLayout(HierarchyItem *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }

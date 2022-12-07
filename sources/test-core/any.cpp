@@ -10,10 +10,10 @@ void testAny()
 
 	{
 		CAGE_TESTCASE("string literal");
-		Any a = StringLiteral("hello world");
+		Any a = StringPointer("hello world");
 		CAGE_TEST(a);
-		CAGE_TEST(a.typeHash() == detail::typeHash<StringLiteral>());
-		CAGE_TEST(String(a.get<StringLiteral>()) == "hello world");
+		CAGE_TEST(a.typeHash() == detail::typeHash<StringPointer>());
+		CAGE_TEST(String(a.get<StringPointer>()) == "hello world");
 		a.clear();
 		CAGE_TEST(!a);
 		CAGE_TEST(a.typeHash() == m);
@@ -36,9 +36,9 @@ void testAny()
 		CAGE_TEST(a);
 		CAGE_TEST(a.typeHash() == detail::typeHash<String>());
 		CAGE_TEST(a.get<String>() == "hello world");
-		a = StringLiteral("abc");
+		a = StringPointer("abc");
 		CAGE_TEST(a);
-		CAGE_TEST(a.typeHash() == detail::typeHash<StringLiteral>());
-		CAGE_TEST(String(a.get<StringLiteral>()) == "abc");
+		CAGE_TEST(a.typeHash() == detail::typeHash<StringPointer>());
+		CAGE_TEST(String(a.get<StringPointer>()) == "abc");
 	}
 }

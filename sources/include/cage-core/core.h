@@ -117,11 +117,11 @@ namespace cage
 
 	// string literal
 
-	struct StringLiteral
+	struct StringPointer
 	{
-		constexpr StringLiteral() = default;
-		template<uint32 N> CAGE_FORCE_INLINE constexpr StringLiteral(const char(&str)[N]) noexcept : str(str) {}
-		CAGE_FORCE_INLINE constexpr explicit StringLiteral(const char *str) noexcept : str(str) {}
+		constexpr StringPointer() = default;
+		template<uint32 N> CAGE_FORCE_INLINE constexpr StringPointer(const char(&str)[N]) noexcept : str(str) {}
+		CAGE_FORCE_INLINE constexpr explicit StringPointer(const char *str) noexcept : str(str) {}
 		CAGE_FORCE_INLINE constexpr operator const char *() const noexcept { return str; }
 	private:
 		const char *str = nullptr;
@@ -141,9 +141,9 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringLiteral component, const String &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const String &message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(const std::source_location &location, const String &message) noexcept;
-		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(const std::source_location &location, StringLiteral expt);
+		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(const std::source_location &location, StringPointer expt);
 	}
 
 	namespace detail
@@ -240,14 +240,14 @@ namespace cage
 
 	struct CAGE_CORE_API Exception
 	{
-		explicit Exception(const std::source_location &location, SeverityEnum severity, StringLiteral message) noexcept;
+		explicit Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept;
 		virtual ~Exception() noexcept;
 
 		void makeLog() const; // check conditions and call log()
 		virtual void log() const;
 
 		std::source_location location;
-		StringLiteral message;
+		StringPointer message;
 		SeverityEnum severity = SeverityEnum::Critical;
 	};
 
@@ -259,7 +259,7 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
+		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept;
 		void log() const override;
 		sint64 code = 0;
 	};

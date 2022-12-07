@@ -25,7 +25,7 @@ namespace
 		CAGE_TEST(std::abs(a - b) < 1e-12);
 	}
 
-	constexpr StringLiteral pickName(uint32 i)
+	constexpr StringPointer pickName(uint32 i)
 	{
 		switch (i)
 		{
@@ -40,7 +40,7 @@ namespace
 	void testStringLiterals()
 	{
 		CAGE_TESTCASE("string literals");
-		constexpr StringLiteral one = pickName(1);
+		constexpr StringPointer one = pickName(1);
 		CAGE_TEST(String(one) == "one");
 	}
 
@@ -376,7 +376,7 @@ namespace
 			HashString("1");
 			HashString("12");
 			HashString("123");
-			HashString(StringLiteral("123"));
+			HashString(StringPointer("123"));
 			String a = "hel";
 			String b = "lo";
 			constexpr uint32 compile_time = HashString("hello");

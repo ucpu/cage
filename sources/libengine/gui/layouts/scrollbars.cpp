@@ -110,7 +110,7 @@ namespace cage
 					e.widget = this;
 					e.pos = hierarchy->renderPos;
 					e.size = hierarchy->renderSize;
-					e.mask = 1 << 31;
+					e.mask = GuiEventsTypesFlags::Wheel;
 					if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
 						hierarchy->impl->mouseEventReceivers.push_back(e);
 				}

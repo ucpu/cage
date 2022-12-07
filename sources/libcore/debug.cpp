@@ -171,7 +171,7 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(const std::source_location &location, StringLiteral expt)
+		void runtimeAssertFailure(const std::source_location &location, StringPointer expt)
 		{
 			char buffer[2048];
 			buffer[0] = 0;

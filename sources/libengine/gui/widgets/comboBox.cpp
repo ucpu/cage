@@ -175,7 +175,7 @@ namespace cage
 				Vec2 p = c->renderPos;
 				Vec2 s = c->renderSize;
 				const ElementModeEnum md = allowHover ? mode(p, s, 0) : ElementModeEnum::Default;
-				allowHover &= md != ElementModeEnum::Default; // items may have small overlap, this will ensure that only one item has hover
+				allowHover &= md == ElementModeEnum::Default; // items may have small overlap, this will ensure that only one item has hover
 				const bool disabled = c->ent->has<GuiWidgetStateComponent>() && c->ent->value<GuiWidgetStateComponent>().disabled;
 				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, disabled ? ElementModeEnum::Disabled : md, p, s);
 				offset(p, s, itemFrame);

@@ -41,7 +41,7 @@ namespace cage
 		}
 	}
 
-	GraphicsDebugScope::GraphicsDebugScope(StringLiteral name)
+	GraphicsDebugScope::GraphicsDebugScope(StringPointer name)
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 	}

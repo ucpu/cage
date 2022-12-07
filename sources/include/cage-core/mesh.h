@@ -109,7 +109,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API StringLiteral meshTypeToString(MeshTypeEnum type);
+		CAGE_CORE_API StringPointer meshTypeToString(MeshTypeEnum type);
 	}
 }
 

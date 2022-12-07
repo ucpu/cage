@@ -29,7 +29,6 @@ namespace cage
 		bool handleInput(const GenericInput &);
 		void invalidateInputs(); // skip all remaining inputs until next prepare
 		Vec2i inputResolution() const;
-		Delegate<bool(Vec2 in, Vec2 &out)> eventCoordinatesTransformer; // called from prepare or handleInput, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from prepare or handleInput
 
 		GuiSkinConfig &skin(uint32 index = 0);
