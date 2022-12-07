@@ -282,6 +282,7 @@ namespace cage
 
 	struct TooltipData : public GuiTooltipConfig
 	{
+		Entity *rect = nullptr;
 		bool removing = false;
 	};
 
@@ -345,6 +346,7 @@ namespace cage
 		Vec2 ttLastMousePos; // points
 		Real ttMouseTraveledDistance; // points
 		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much
+		bool ttHasMovedSinceLast = false;
 		std::vector<TooltipData> ttData;
 		EventListener<bool(Entity *)> ttRemovedListener;
 		void ttMouseMove(InputMouse in);

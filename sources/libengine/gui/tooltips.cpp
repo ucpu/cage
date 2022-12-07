@@ -34,6 +34,7 @@ namespace cage
 		{
 			ttTimestampMouseMove = currentTime;
 			ttMouseTraveledDistance = 0;
+			ttHasMovedSinceLast = true;
 
 			// close instant tooltips
 			for (auto &it : ttData)
@@ -47,10 +48,8 @@ namespace cage
 		{
 			if (it.closeCondition != TooltipCloseConditionEnum::Modal)
 				continue;
-			if (it.reposition)
-				continue; // cannot close tooltip that has not yet been positioned
-			// todo check if mouse is outside of the tooltip
-			it.removing = true;
+			if (const HierarchyItem *h = findHierarchy(+root, it.rect))
+				it.removing |= !pointInside(h->renderPos, h->renderSize, outputMouse);
 		}
 
 		// actually remove tooltips
@@ -70,46 +69,53 @@ namespace cage
 				break;
 		}
 
+		if (!ttHasMovedSinceLast)
+			return;
+
 		// find new tooltips
 		bool needsReposition = false;
 		for (const auto &it : mouseEventReceivers)
 		{
-			if (it.pointInside(outputMouse, GuiEventsTypesFlags::Tooltips))
-			{
-				Entity *ent = it.widget->hierarchy->ent;
-				CAGE_ASSERT(ent && ent->has<GuiTooltipComponent>());
-				const GuiTooltipComponent &c = ent->value<GuiTooltipComponent>();
-				if (c.delay > elapsed)
-					continue;
-				if (!c.enableForDisabled && it.widget->widgetState.disabled)
-					continue;
-				if ([&]() {
-					for (const auto &tt : ttData)
-						if (tt.invoker == ent)
-							return true;
-					return false;
-				}())
-					continue; // this tooltip is already shown
+			if (!it.pointInside(outputMouse, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Tooltips))
+				continue; // this widget is not under the cursor - completely ignore and continue searching
+			if (none(it.mask & GuiEventsTypesFlags::Tooltips))
+				break; // this is top-level widget under the cursor, but does not have a tooltip - stop searching as all following widgets would be covered by this one
+			Entity *ent = it.widget->hierarchy->ent;
+			CAGE_ASSERT(ent && ent->has<GuiTooltipComponent>());
+			const GuiTooltipComponent &c = ent->value<GuiTooltipComponent>();
+			if (c.delay > elapsed)
+				break;
+			if (!c.enableForDisabled && it.widget->widgetState.disabled)
+				break;
+			if ([&]() {
+				for (const auto &tt : ttData)
+					if (tt.invoker == ent)
+						return true;
+				return false;
+			}())
+				break; // this tooltip is already shown
 
-				TooltipData tt;
-				try
-				{
-					tt.invoker = ent;
-					tt.tooltip = entityMgr->createUnique();
-					tt.tooltip->value<GuiTooltipMarkerComponent>();
-					tt.position = outputMouse;
-					c.tooltip(tt);
-					if (tt.reposition)
-						needsReposition = true;
-					ttData.push_back(std::move(tt));
-				}
-				catch (...)
-				{
-					if (tt.tooltip)
-						detail::guiDestroyEntityRecursively(tt.tooltip);
-					throw;
-				}
+			TooltipData tt;
+			try
+			{
+				tt.invoker = ent;
+				tt.tooltip = entityMgr->createUnique();
+				tt.tooltip->value<GuiTooltipMarkerComponent>();
+				tt.rect = tt.tooltip;
+				tt.anchor = outputMouse;
+				c.tooltip(tt);
+				if (tt.placement != TooltipPlacementEnum::Manual)
+					needsReposition = true;
+				ttData.push_back(std::move(tt));
+				ttHasMovedSinceLast = false;
 			}
+			catch (...)
+			{
+				if (tt.tooltip)
+					detail::guiDestroyEntityRecursively(tt.tooltip);
+				throw;
+			}
+			break;
 		}
 
 		// update tooltip positions
@@ -118,8 +124,6 @@ namespace cage
 			prepareImplGeneration(); // regenerate the whole hierarchy to calculate the requested sizes
 			for (auto &it : ttData)
 			{
-				if (!it.reposition)
-					continue;
 				if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
 				{
 					Entity *f = entityMgr->createUnique();
@@ -127,10 +131,27 @@ namespace cage
 					const Vec2 s = h->requestedSize;
 					it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
 					it.tooltip->value<GuiParentComponent>().parent = f->name();
-					f->value<GuiScrollbarsComponent>().alignment = (it.position - s * Vec2(0.5, 1)) / (outputSize - s) - Vec2(0, 1e-3);
+					switch (it.placement)
+					{
+					case TooltipPlacementEnum::Corner:
+					{
+						Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
+						CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
+						CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
+						if (corner[1] == 0)
+							corner[1] = 1; // avoid centering the tooltip under the cursor
+						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
+						f->value<GuiScrollbarsComponent>().alignment += (it.closeCondition == TooltipCloseConditionEnum::Modal ? 10 : -17) * Vec2(corner) / outputSize;
+					} break;
+					case TooltipPlacementEnum::Center:
+						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
+						break;
+					case TooltipPlacementEnum::Manual:
+						break;
+					}
 					it.tooltip = f;
 				}
-				it.reposition = false;
+				it.placement = TooltipPlacementEnum::Manual;
 			}
 			prepareImplGeneration(); // and again to apply the changes
 		}

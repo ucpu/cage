@@ -98,13 +98,20 @@ namespace cage
 		Never, // the application is responsible for closing the tooltip by removing the entity
 	};
 
+	enum class TooltipPlacementEnum : uint32
+	{
+		Corner, // corner of the tooltip positioned at the cursor
+		Center,
+		Manual,
+	};
+
 	struct CAGE_ENGINE_API GuiTooltipConfig
 	{
 		Entity *invoker = nullptr; // the widget for which the tooltip is to be shown
 		Entity *tooltip = nullptr; // entity automatically prepared by the guiManager for the application to fill in
-		Vec2 position; // cursor position
+		Vec2 anchor; // cursor position
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
-		mutable bool reposition = true; // move the tooltip to appropriate position at the cursor
+		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::Corner;
 	};
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
