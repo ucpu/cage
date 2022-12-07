@@ -235,11 +235,10 @@ namespace cage
 			void initHandles()
 			{
 				{
-					if (!haveKhrOpenglEnable)
-						CAGE_THROW_ERROR(Exception, "missing required OpenXR extension: XR_KHR_OPENGL_ENABLE")
-
 					std::vector<const char *> exts, layers;
-					exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+
+					if (haveKhrOpenglEnable)
+						exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
 
 					if (confEnableDebugUtils)
 					{
@@ -292,6 +291,9 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "openxr runtime name: " + props.runtimeName);
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "openxr runtime version: " + XR_VERSION_MAJOR(props.runtimeVersion) + "." + XR_VERSION_MINOR(props.runtimeVersion) + "." + XR_VERSION_PATCH(props.runtimeVersion));
 				}
+
+				if (!haveKhrOpenglEnable)
+					CAGE_THROW_ERROR(Exception, "missing required OpenXR extension: XR_KHR_OPENGL_ENABLE")
 
 				if (haveExtDebugUtils)
 				{
