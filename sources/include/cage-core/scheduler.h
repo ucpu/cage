@@ -62,6 +62,7 @@ namespace cage
 	struct CAGE_CORE_API SchedulerCreateConfig
 	{
 		uint64 maxSleepDuration = 1000000;
+		bool spinInsteadOfSleep = false;
 	};
 
 	class CAGE_CORE_API Scheduler : private Immovable

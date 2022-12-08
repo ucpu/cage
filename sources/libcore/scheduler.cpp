@@ -54,7 +54,7 @@ namespace cage
 		public:
 			const SchedulerCreateConfig conf;
 			std::vector<Holder<ScheduleImpl>> scheds;
-			std::vector<ScheduleImpl*> tmp;
+			std::vector<ScheduleImpl *> tmp;
 			Holder<Timer> realTimer;
 			uint64 realDrift = 0; // offset for the real timer, this happens when switching lockstep mode
 			uint64 t = 0; // current time for scheduling events
@@ -161,10 +161,22 @@ namespace cage
 			{
 				ProfilingScope profiling("scheduler sleep");
 				activateAllEmpty();
-				uint64 s = minimalScheduleTime() - t;
-				s = min(s, conf.maxSleepDuration);
+				const uint64 mst = minimalScheduleTime();
+				const uint64 s = mst < t ? 0 : min(mst - t, conf.maxSleepDuration);
 				profiling.set(Stringizer() + "requested sleep: " + s + " us");
-				threadSleep(s);
+				if (conf.spinInsteadOfSleep)
+				{
+					const uint64 begin = realTimer->duration();
+					while (true)
+					{
+						threadYield();
+						const uint64 elapsed = realTimer->duration() - begin;
+						if (elapsed >= s)
+							break;
+					}
+				}
+				else
+					threadSleep(s);
 			}
 
 			void sortSchedulesByPriority()
@@ -266,9 +278,10 @@ namespace cage
 	void Schedule::run()
 	{
 		ScheduleImpl *impl = (ScheduleImpl *)this;
-		ProfilingScope profiling(impl->conf.name);
 		if (!impl->conf.action)
 			return;
+		ProfilingScope profiling(impl->conf.name);
+		profiling.set(Stringizer() + "delay: " + (impl->schr->t - impl->sched) + " us");
 		try
 		{
 			impl->conf.action();

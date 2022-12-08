@@ -407,7 +407,11 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "initializing engine");
 
-				controlScheduler = newScheduler({});
+				{
+					SchedulerCreateConfig cfg;
+					cfg.spinInsteadOfSleep = !!config.virtualReality;
+					controlScheduler = newScheduler(cfg);
+				}
 				{
 					ScheduleCreateConfig c;
 					c.name = "control schedule";
@@ -526,7 +530,7 @@ namespace cage
 				}
 
 				{ // initialize entity components
-					EntityManager *entityMgr = entities.get();
+					EntityManager *entityMgr = +entities;
 					entityMgr->defineComponent(TransformComponent());
 					transformHistoryComponent = entityMgr->defineComponent(TransformComponent());
 					entityMgr->defineComponent(RenderComponent());
