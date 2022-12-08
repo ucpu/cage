@@ -1,64 +1,31 @@
 #include "image.h"
 
 #include <cage-core/imageBlocks.h>
-#include <cage-core/serialization.h>
-#include <basis_universal/encoder/basisu_gpu_texture.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <vector>
+
+#include <bc7enc_rdo/bc7decomp.h>
+#include <bc7enc_rdo/bc7enc.h>
+#include <bc7enc_rdo/rgbcx.h>
 
 namespace cage
 {
-	Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageKtxEncodeConfig &config)
-	{
-		if (image->channels() != 3)
-			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc1 encoding");
-		const Image *imgs[1] = { image };
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = ImageKtxTranscodeFormatEnum::Bc1;
-		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
-	}
-
-	Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageKtxEncodeConfig &config)
-	{
-		if (image->channels() != 4)
-			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc3 encoding");
-		const Image *imgs[1] = { image };
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = ImageKtxTranscodeFormatEnum::Bc3;
-		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
-	}
-
-	Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageKtxEncodeConfig &config)
-	{
-		if (image->channels() != 1)
-			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc4 encoding");
-		const Image *imgs[1] = { image };
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = ImageKtxTranscodeFormatEnum::Bc4;
-		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
-	}
-
-	Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageKtxEncodeConfig &config)
-	{
-		if (image->channels() != 2)
-			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc5 encoding");
-		const Image *imgs[1] = { image };
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = ImageKtxTranscodeFormatEnum::Bc5;
-		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
-	}
-
-	Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageKtxEncodeConfig &config)
-	{
-		if (image->channels() != 3 && image->channels() != 4)
-			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc7 encoding");
-		const Image *imgs[1] = { image };
-		ImageKtxTranscodeConfig cfg2;
-		cfg2.format = ImageKtxTranscodeFormatEnum::Bc7;
-		return std::move(imageKtxTranscode(imgs, config, cfg2)[0].data);
-	}
-
 	namespace
 	{
+		void initRgbcx()
+		{
+			static const int initDummy = []() { rgbcx::init(); return 0; }();
+		}
+
+		union Color
+		{
+			uint8 rgba[4];
+			uint32 data;
+			Color() : rgba{0, 0, 0, 255}
+			{}
+		};
+		static_assert(sizeof(Color) == 4);
+
 		CAGE_FORCE_INLINE uint32 blockyIndex(uint32 x, uint32 y, uint32 width)
 		{
 			const uint32 bx = x / 4;
@@ -69,36 +36,152 @@ namespace cage
 			return block * 16 + pixelInBlock;
 		}
 
-		Holder<Image> finalize(PointerRange<const basisu::color_rgba> colors, const Vec2i &resolution_, uint32 channels)
+		template <uint32 Channels, uint32 BytesPerBlock, class Function>
+		Holder<PointerRange<char>> encoder(const Image *img, const ImageBcnEncodeConfig &config, const Function &function)
 		{
-			const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-			CAGE_ASSERT(colors.size() == resolution[0] * resolution[1]);
-			Holder<Image> img = newImage();
-			img->initialize(resolution_, channels, ImageFormatEnum::U8);
+			CAGE_ASSERT(img->channels() == Channels);
+			const Vec2i resolution_ = img->resolution();
+			const Vec2i resolution = 4 * ((resolution_ + 3) / 4); // round up to multiple of 4x4
+			const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
+			std::vector<Color> colors; // todo rewrite to streaming version avoiding this vector
+			colors.resize(blocksRequired * 16);
 			for (uint32 y = 0; y < resolution_[1]; y++)
+			{
 				for (uint32 x = 0; x < resolution_[0]; x++)
-					for (uint32 c = 0; c < channels; c++)
-						img->value(x, y, c, colors[blockyIndex(x, y, resolution[0])][c] / 255.f);
+				{
+					Color &color = colors[blockyIndex(x, y, resolution[0])];
+					for (uint32 c = 0; c < Channels; c++)
+						color.rgba[c] = numeric_cast<uint8>(img->value(x, y, c) * 255);
+				}
+			}
+			PointerRangeHolder<char> buffer;
+			buffer.resize(blocksRequired * BytesPerBlock);
+			for (uint32 bi = 0; bi < blocksRequired; bi++)
+				function(buffer.data() + bi * BytesPerBlock, (colors.data() + bi * 16)->rgba);
+			return buffer;
+		}
+
+		template <uint32 Channels, uint32 BytesPerBlock, class Function>
+		Holder<Image> decoder(PointerRange<const char> buffer, const Vec2i &resolution_, const Function &function)
+		{
+			const Vec2i resolution = 4 * ((resolution_ + 3) / 4); // round up to multiple of 4x4
+			const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
+			if (blocksRequired * BytesPerBlock != buffer.size())
+				CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
+			std::vector<Color> colors; // todo rewrite to streaming version avoiding this vector
+			colors.resize(blocksRequired * 16);
+			for (uint32 bi = 0; bi < blocksRequired; bi++)
+				function((colors.data() + bi * 16)->rgba, buffer.data() + bi * BytesPerBlock);
+			Holder<Image> img = newImage();
+			img->initialize(resolution_, Channels, ImageFormatEnum::U8);
+			for (uint32 y = 0; y < resolution_[1]; y++)
+			{
+				for (uint32 x = 0; x < resolution_[0]; x++)
+				{
+					const Color color = colors[blockyIndex(x, y, resolution[0])];
+					for (uint32 c = 0; c < Channels; c++)
+						img->value(x, y, c, color.rgba[c] / 255.f);
+				}
+			}
 			return img;
 		}
 	}
 
-	Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
+	Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageBcnEncodeConfig &config)
 	{
-		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		static constexpr uintPtr blockSize = 8;
-		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		if (blocksRequired * blockSize > buffer.size())
-			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
-		const uint32 pixelsCount = blocksRequired * 16;
-		std::vector<basisu::color_rgba> colors;
-		colors.resize(pixelsCount);
-		for (uint32 bi = 0; bi < blocksRequired; bi++)
-			basisu::unpack_bc1(buffer.data() + bi * blockSize, colors.data() + bi * 16, false);
-		return finalize(colors, resolution_, 3);
+		if (image->channels() != 3)
+			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc1 encoding");
+		initRgbcx();
+		struct Fnc
+		{
+			void operator()(void *dst, const uint8 *src) const
+			{
+				rgbcx::encode_bc1(rgbcx::MAX_LEVEL, dst, src, true, false);
+			}
+		};
+		return encoder<3, 8>(image, config, Fnc());
 	}
 
-	namespace
+	Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageBcnEncodeConfig &config)
+	{
+		if (image->channels() != 4)
+			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc3 encoding");
+		initRgbcx();
+		struct Fnc
+		{
+			void operator()(void *dst, const uint8 *src) const
+			{
+				rgbcx::encode_bc3(rgbcx::MAX_LEVEL, dst, src);
+			}
+		};
+		return encoder<4, 16>(image, config, Fnc());
+	}
+
+	Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageBcnEncodeConfig &config)
+	{
+		if (image->channels() != 1)
+			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc4 encoding");
+		initRgbcx();
+		struct Fnc
+		{
+			void operator()(void *dst, const uint8 *src) const
+			{
+				rgbcx::encode_bc4(dst, src);
+			}
+		};
+		return encoder<1, 8>(image, config, Fnc());
+	}
+
+	Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageBcnEncodeConfig &config)
+	{
+		if (image->channels() != 2)
+			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc5 encoding");
+		initRgbcx();
+		struct Fnc
+		{
+			void operator()(void *dst, const uint8 *src) const
+			{
+				rgbcx::encode_bc5(dst, src);
+			}
+		};
+		return encoder<2, 16>(image, config, Fnc());
+	}
+
+	Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageBcnEncodeConfig &config)
+	{
+		if (image->channels() != 3 && image->channels() != 4)
+			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc7 encoding");
+		static const int initDummy = []() { bc7enc_compress_block_init(); return 0; }();
+		struct Fnc
+		{
+			bc7enc_compress_block_params conf;
+			void operator()(void *dst, const uint8 *src) const
+			{
+				bc7enc_compress_block(dst, src, &conf);
+			}
+		};
+		Fnc fnc;
+		bc7enc_compress_block_params_init(&fnc.conf);
+		if (image->channels() == 3)
+			return encoder<3, 16>(image, config, fnc);
+		if (image->channels() == 4)
+			return encoder<4, 16>(image, config, fnc);
+		throw;
+	}
+
+	Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution)
+	{
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				rgbcx::unpack_bc1(src, dst);
+			}
+		};
+		return decoder<3, 8>(buffer, resolution, Fnc());
+	}
+
+	namespace bc2
 	{
 		struct Bc2Block // r5g6b5a4 dxt3 uncorrelated alpha
 		{
@@ -119,15 +202,15 @@ namespace cage
 			Vec4 texel[4][4];
 		};
 
-		Vec3 unpack565(uint16 v)
+		CAGE_FORCE_INLINE Vec3 unpack565(uint16 v)
 		{
-			uint8 x = (v >> 0) & 31u;
-			uint8 y = (v >> 5) & 63u;
-			uint8 z = (v >> 11) & 31u;
+			const uint8 x = (v >> 0) & 31u;
+			const uint8 y = (v >> 5) & 63u;
+			const uint8 z = (v >> 11) & 31u;
 			return Vec3(x, y, z) * Vec3(1.0 / 31, 1.0 / 63, 1.0 / 31);
 		}
 
-		U8Block F32ToU8Block(const F32Block &in)
+		CAGE_FORCE_INLINE U8Block F32ToU8Block(const F32Block &in)
 		{
 			U8Block res;
 			for (uint32 y = 0; y < 4; y++)
@@ -160,106 +243,65 @@ namespace cage
 
 			out = F32ToU8Block(texelBlock);
 		}
-
-		void decompress(Deserializer &des, ImageImpl *impl)
-		{
-			Serializer masterSer(impl->mem);
-			const uint32 cols = impl->width / 4; // blocks count
-			const uint32 rows = impl->height / 4; // blocks count
-			const uint32 lineSize = impl->width * 4; // bytes count
-			for (uint32 y = 0; y < rows; y++)
-			{
-				Serializer tmpSer0 = masterSer.reserve(lineSize);
-				Serializer tmpSer1 = masterSer.reserve(lineSize);
-				Serializer tmpSer2 = masterSer.reserve(lineSize);
-				Serializer tmpSer3 = masterSer.reserve(lineSize);
-				Serializer *lineSer[4] = { &tmpSer0, &tmpSer1, &tmpSer2, &tmpSer3 };
-				for (uint32 x = 0; x < cols; x++)
-				{
-					Bc2Block block;
-					des >> block;
-					U8Block texels;
-					bcDecompress(block, texels);
-					for (uint32 b = 0; b < 4; b++)
-					{
-						for (uint32 a = 0; a < 4; a++)
-						{
-							for (uint32 i = 0; i < 4; i++)
-								*(lineSer[b]) << texels.texel[b][a][i];
-						}
-					}
-				}
-			}
-			CAGE_ASSERT(masterSer.available() == 0);
-		}
 	}
 
 	Holder<Image> imageBc2Decode(PointerRange<const char> buffer, const Vec2i &resolution)
 	{
-		Holder<Image> img = newImage();
-		img->initialize(resolution, 4, ImageFormatEnum::U8);
-		Deserializer des(buffer);
-		decompress(des, (ImageImpl *)+img);
-		return img;
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				bc2::bcDecompress(*(const bc2::Bc2Block *)src, *(bc2::U8Block *)dst);
+			}
+		};
+		return decoder<4, 16>(buffer, resolution, Fnc());
 	}
 
-	Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
+	Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution)
 	{
-		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		static constexpr uintPtr blockSize = 16;
-		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		if (blocksRequired * blockSize > buffer.size())
-			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
-		const uint32 pixelsCount = blocksRequired * 16;
-		std::vector<basisu::color_rgba> colors;
-		colors.resize(pixelsCount);
-		for (uint32 bi = 0; bi < blocksRequired; bi++)
-			basisu::unpack_bc3(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution_, 4);
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				rgbcx::unpack_bc3(src, dst);
+			}
+		};
+		return decoder<4, 16>(buffer, resolution, Fnc());
 	}
 
-	Holder<Image> imageBc4Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
+	Holder<Image> imageBc4Decode(PointerRange<const char> buffer, const Vec2i &resolution)
 	{
-		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		static constexpr uintPtr blockSize = 8;
-		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		if (blocksRequired * blockSize > buffer.size())
-			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
-		const uint32 pixelsCount = blocksRequired * 16;
-		std::vector<basisu::color_rgba> colors;
-		colors.resize(pixelsCount);
-		for (uint32 bi = 0; bi < blocksRequired; bi++)
-			basisu::unpack_bc4(buffer.data() + bi * blockSize, (uint8_t *)(colors.data() + bi * 16), 4);
-		return finalize(colors, resolution_, 1);
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				rgbcx::unpack_bc4(src, dst);
+			}
+		};
+		return decoder<1, 8>(buffer, resolution, Fnc());
 	}
 
-	Holder<Image> imageBc5Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
+	Holder<Image> imageBc5Decode(PointerRange<const char> buffer, const Vec2i &resolution)
 	{
-		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		static constexpr uintPtr blockSize = 16;
-		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		if (blocksRequired * blockSize > buffer.size())
-			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
-		const uint32 pixelsCount = blocksRequired * 16;
-		std::vector<basisu::color_rgba> colors;
-		colors.resize(pixelsCount);
-		for (uint32 bi = 0; bi < blocksRequired; bi++)
-			basisu::unpack_bc5(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution_, 2);
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				rgbcx::unpack_bc5(src, dst);
+			}
+		};
+		return decoder<2, 16>(buffer, resolution, Fnc());
 	}
 
-	Holder<Image> imageBc7Decode(PointerRange<const char> buffer, const Vec2i &resolution_)
+	Holder<Image> imageBc7Decode(PointerRange<const char> buffer, const Vec2i &resolution)
 	{
-		const Vec2i resolution = 4 * ((resolution_ + 3) / 4);
-		static constexpr uintPtr blockSize = 16;
-		const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
-		if (blocksRequired * blockSize > buffer.size())
-			CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
-		const uint32 pixelsCount = blocksRequired * 16;
-		std::vector<basisu::color_rgba> colors;
-		colors.resize(pixelsCount);
-		for (uint32 bi = 0; bi < blocksRequired; bi++)
-			basisu::unpack_bc7(buffer.data() + bi * blockSize, colors.data() + bi * 16);
-		return finalize(colors, resolution_, 4);
+		struct Fnc
+		{
+			void operator()(uint8 *dst, const void *src) const
+			{
+				bc7decomp::unpack_bc7(src, (bc7decomp::color_rgba *)dst);
+			}
+		};
+		return decoder<4, 16>(buffer, resolution, Fnc());
 	}
 }

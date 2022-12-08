@@ -196,7 +196,7 @@ namespace
 		{
 			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds", ".ktx" })
+			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds" })
 			{
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
@@ -211,12 +211,12 @@ namespace
 				tg->importFile(name);
 				CAGE_TEST(tg->width() == img->width());
 				CAGE_TEST(tg->height() == img->height());
-				if (fmt == ".dds" || fmt == ".ktx")
+				if (fmt == ".dds")
 					CAGE_TEST(tg->channels() == 4) // always loads 4 channels
 				else
 					CAGE_TEST(tg->channels() == img->channels());
 				CAGE_TEST(tg->format() == img->format());
-				if (fmt != ".jpeg" && fmt != ".dds" && fmt != ".ktx") // lossy formats
+				if (fmt != ".jpeg" && fmt != ".dds") // lossy formats
 				{
 					for (uint32 c = 0; c < ch; c++)
 						test(tg->value(120, 90, c), img->value(120, 90, c));
