@@ -9,20 +9,20 @@ namespace cage
 			ButtonImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.button.textFormat);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = skin->defaults.button.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.button.margin);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				{
 					Vec2 p = hierarchy->renderPos;
@@ -41,7 +41,7 @@ namespace cage
 				}
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)

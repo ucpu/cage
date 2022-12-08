@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API OutOfMemory : public Exception
 	{
-		explicit OutOfMemory(const std::source_location &location, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept;
+		explicit OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept;
 		void log() const override;
 		uintPtr memory = 0;
 	};

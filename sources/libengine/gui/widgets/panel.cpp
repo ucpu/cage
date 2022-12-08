@@ -11,13 +11,13 @@ namespace cage
 				ensureItemHasLayout(hierarchy);
 			}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.panel.textFormat);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->children[0]->findRequestedSize();
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
@@ -35,7 +35,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.baseMargin);
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				FinalPosition u(update);
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.baseMargin);
@@ -49,7 +49,7 @@ namespace cage
 				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;

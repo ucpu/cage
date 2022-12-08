@@ -27,7 +27,7 @@ namespace cage
 			Holder<void> data;
 			Delegate<void()> function;
 			TaskRunner runner = nullptr;
-			StringLiteral name;
+			StringPointer name;
 			uint32 elements = 0;
 			sint32 priority = 0;
 			uint32 invocations = 0;
@@ -72,7 +72,7 @@ namespace cage
 		template<> CAGE_FORCE_INLINE auto tasksRunImpl<true>(TaskCreateConfig &&task) { return tasksRunAsync(std::move(task)); }
 
 		template<class T, uint32 Aggregation, bool Async>
-		auto tasksRunImpl(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority)
 		{
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
@@ -93,7 +93,7 @@ namespace cage
 		}
 
 		template<class T, uint32 Aggregation, bool Async>
-		auto tasksRunImpl(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Holder<PointerRange<T>> data, sint32 priority)
 		{
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
@@ -111,7 +111,7 @@ namespace cage
 		}
 
 		template<class T, bool Async>
-		auto tasksRunImpl(StringLiteral name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations, sint32 priority)
 		{
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
@@ -129,7 +129,7 @@ namespace cage
 		}
 
 		template<class T, bool Async>
-		auto tasksRunImpl(StringLiteral name, Holder<T> data, uint32 invocations, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Holder<T> data, uint32 invocations, sint32 priority)
 		{
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
@@ -147,24 +147,24 @@ namespace cage
 	}
 
 	// invoke the function once for each element of the range
-	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE void tasksRunBlocking(StringLiteral name, Delegate<void(T &)> function, PointerRange<T> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, false>(name, function, Holder<PointerRange<T>>(&data, nullptr), priority); }
-	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, true>(name, function, std::move(data), priority); }
+	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, Delegate<void(T &)> function, PointerRange<T> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, false>(name, function, Holder<PointerRange<T>>(&data, nullptr), priority); }
+	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &)> function, Holder<PointerRange<T>> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, true>(name, function, std::move(data), priority); }
 
 	// invoke operator()() once for each element of the range
-	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE void tasksRunBlocking(StringLiteral name, PointerRange<T> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, false>(name, Holder<PointerRange<T>>(&data, nullptr), priority); }
-	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<PointerRange<T>> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, true>(name, std::move(data), priority); }
+	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, PointerRange<T> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, false>(name, Holder<PointerRange<T>>(&data, nullptr), priority); }
+	template<class T, uint32 Aggregation = 1> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<PointerRange<T>> data, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, Aggregation, true>(name, std::move(data), priority); }
 
 	// invoke the function invocations time, each time with the same data
-	template<class T> CAGE_FORCE_INLINE void tasksRunBlocking(StringLiteral name, Delegate<void(T &, uint32)> function, T &data, uint32 invocations, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, false>(name, function, Holder<T>(&data, nullptr), invocations, priority); }
-	template<class T> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, true>(name, function, std::move(data), invocations, priority); }
+	template<class T> CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, Delegate<void(T &, uint32)> function, T &data, uint32 invocations, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, false>(name, function, Holder<T>(&data, nullptr), invocations, priority); }
+	template<class T> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, true>(name, function, std::move(data), invocations, priority); }
 
 	// invoke operator()(uint32) invocations time, each time with the same data
-	template<class T> CAGE_FORCE_INLINE void tasksRunBlocking(StringLiteral name, T &data, uint32 invocations, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, false>(name, Holder<T>(&data, nullptr), invocations, priority); }
-	template<class T> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringLiteral name, Holder<T> data, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, true>(name, std::move(data), invocations, priority); }
+	template<class T> CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, T &data, uint32 invocations, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, false>(name, Holder<T>(&data, nullptr), invocations, priority); }
+	template<class T> CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<T> data, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority()) { return privat::tasksRunImpl<T, true>(name, std::move(data), invocations, priority); }
 
 	// invoke the function invocations time
-	CAGE_CORE_API void tasksRunBlocking(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority = privat::tasksDefaultPriority());
-	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringLiteral name, Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority());
+	CAGE_CORE_API void tasksRunBlocking(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority = privat::tasksDefaultPriority());
+	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = privat::tasksDefaultPriority());
 
 	// allows running higher priority tasks from inside long running task
 	CAGE_CORE_API void tasksYield();

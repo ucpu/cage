@@ -21,7 +21,7 @@ namespace cage
 			PointerRange<const char> image = des.read(data.texSize);
 			PointerRange<const char> glyphs = des.read(sizeof(FontHeader::GlyphData) * data.glyphCount);
 			PointerRange<const char> kerning;
-			if ((data.flags & FontFlags::Kerning) == FontFlags::Kerning)
+			if (any(data.flags & FontFlags::Kerning))
 				kerning = des.read(data.glyphCount * data.glyphCount * sizeof(Real));
 			PointerRange<const char> charmapChars = des.read(sizeof(uint32) * data.charCount);
 			PointerRange<const char> charmapGlyphs = des.read(sizeof(uint32) * data.charCount);

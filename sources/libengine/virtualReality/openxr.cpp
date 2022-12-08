@@ -684,6 +684,8 @@ namespace cage
 					case XR_SESSION_STATE_EXITING:
 						stopping = true;
 						break;
+					case XR_SESSION_STATE_MAX_ENUM:
+						break;
 					}
 				} break;
 				case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
@@ -775,6 +777,8 @@ namespace cage
 					case XR_ERROR_SESSION_LOST:
 					case XR_ERROR_SESSION_NOT_RUNNING:
 						return;
+					default:
+						break;
 					}
 					check(res);
 					impl->syncTime = frameState.predictedDisplayTime;

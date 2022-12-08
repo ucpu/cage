@@ -58,7 +58,7 @@ namespace cage
 		struct QueueItem
 		{
 			String data;
-			StringLiteral name;
+			StringPointer name;
 			uint64 startTime = 0;
 			uint64 endTime = 0;
 			uint64 threadId = 0;
@@ -130,7 +130,7 @@ namespace cage
 							return data[name] = next++;
 						}
 
-						uint32 index(StringLiteral name)
+						uint32 index(StringPointer name)
 						{
 							return index(String(name));
 						}
@@ -335,7 +335,7 @@ namespace cage
 		this->data = data;
 	}
 
-	ProfilingEvent profilingEventBegin(StringLiteral name) noexcept
+	ProfilingEvent profilingEventBegin(StringPointer name) noexcept
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -344,7 +344,7 @@ namespace cage
 		return ev;
 	}
 
-	ProfilingEvent profilingEventBegin(StringLiteral name, ProfilingFrameTag) noexcept
+	ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -381,12 +381,12 @@ namespace cage
 	ProfilingScope::ProfilingScope() noexcept
 	{}
 
-	ProfilingScope::ProfilingScope(StringLiteral name) noexcept
+	ProfilingScope::ProfilingScope(StringPointer name) noexcept
 	{
 		event = profilingEventBegin(name);
 	}
 
-	ProfilingScope::ProfilingScope(StringLiteral name, ProfilingFrameTag) noexcept
+	ProfilingScope::ProfilingScope(StringPointer name, ProfilingFrameTag) noexcept
 	{
 		event = profilingEventBegin(name, ProfilingFrameTag());
 	}

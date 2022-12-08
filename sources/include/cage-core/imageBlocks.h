@@ -6,49 +6,16 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API ImageKtxEncodeConfig
+	struct CAGE_CORE_API ImageBcnEncodeConfig
 	{
 		bool normals = false; // treat inputs as normal map
 	};
 
-	CAGE_CORE_API Holder<PointerRange<char>> imageKtxEncode(PointerRange<const Image *> images, const ImageKtxEncodeConfig &config);
-
-	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> imageKtxDecode(PointerRange<const char> buffer);
-
-	enum class ImageKtxTranscodeFormatEnum : uint32
-	{
-		None = 0,
-		Bc1, // rgb 0.16 dxt1
-		Bc3, // rgba 0.25 dxt5
-		Bc4, // r 0.5
-		Bc5, // rg 0.5
-		Bc7, // rgb/rgba 0.25
-	};
-
-	struct CAGE_CORE_API ImageKtxTranscodeConfig
-	{
-		ImageKtxTranscodeFormatEnum format = ImageKtxTranscodeFormatEnum::None;
-	};
-
-	struct CAGE_CORE_API ImageKtxTranscodeResult
-	{
-		Holder<PointerRange<char>> data;
-		Vec2i resolution;
-		Vec2i blocks;
-		uint32 mipmapLevel = 0;
-		uint32 cubeFace = 0;
-		uint32 layer = 0;
-	};
-
-	CAGE_CORE_API Holder<PointerRange<ImageKtxTranscodeResult>> imageKtxTranscode(PointerRange<const char> buffer, const ImageKtxTranscodeConfig &config);
-
-	CAGE_CORE_API Holder<PointerRange<ImageKtxTranscodeResult>> imageKtxTranscode(PointerRange<const Image *> images, const ImageKtxEncodeConfig &compression, const ImageKtxTranscodeConfig &transcode);
-
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
-	CAGE_CORE_API Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageKtxEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc1Encode(const Image *image, const ImageBcnEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc3Encode(const Image *image, const ImageBcnEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc4Encode(const Image *image, const ImageBcnEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc5Encode(const Image *image, const ImageBcnEncodeConfig &config = {});
+	CAGE_CORE_API Holder<PointerRange<char>> imageBc7Encode(const Image *image, const ImageBcnEncodeConfig &config = {});
 	CAGE_CORE_API Holder<Image> imageBc1Decode(PointerRange<const char> buffer, const Vec2i &resolution);
 	CAGE_CORE_API Holder<Image> imageBc2Decode(PointerRange<const char> buffer, const Vec2i &resolution);
 	CAGE_CORE_API Holder<Image> imageBc3Decode(PointerRange<const char> buffer, const Vec2i &resolution);

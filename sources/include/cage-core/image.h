@@ -113,9 +113,9 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API StringLiteral imageFormatToString(ImageFormatEnum format);
-		CAGE_CORE_API StringLiteral imageGammaSpaceToString(GammaSpaceEnum space);
-		CAGE_CORE_API StringLiteral imageAlphaModeToString(AlphaModeEnum mode);
+		CAGE_CORE_API StringPointer imageFormatToString(ImageFormatEnum format);
+		CAGE_CORE_API StringPointer imageGammaSpaceToString(GammaSpaceEnum space);
+		CAGE_CORE_API StringPointer imageAlphaModeToString(AlphaModeEnum mode);
 	}
 }
 

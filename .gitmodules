@@ -82,12 +82,12 @@
 [submodule "externals/samplerate/libsamplerate"]
 	path = externals/samplerate/libsamplerate
 	url = https://github.com/libsndfile/libsamplerate.git
-[submodule "externals/basis_universal/basis_universal"]
-	path = externals/basis_universal/basis_universal
-	url = https://github.com/BinomialLLC/basis_universal.git
 [submodule "externals/avir/avir"]
 	path = externals/avir/avir
 	url = https://github.com/avaneev/avir.git
 [submodule "externals/openxr-sdk/OpenXR-SDK"]
 	path = externals/openxr-sdk/OpenXR-SDK
 	url = https://github.com/KhronosGroup/OpenXR-SDK.git
+[submodule "externals/bc7enc_rdo/bc7enc_rdo"]
+	path = externals/bc7enc_rdo/bc7enc_rdo
+	url = https://github.com/richgel999/bc7enc_rdo.git

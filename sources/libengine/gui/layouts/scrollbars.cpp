@@ -26,19 +26,19 @@ namespace cage
 				ensureItemHasLayout(hierarchy);
 			}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(!hierarchy->text);
 				CAGE_ASSERT(!hierarchy->image);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->children[0]->findRequestedSize();
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
@@ -70,7 +70,7 @@ namespace cage
 				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				hierarchy->childrenEmit();
 				for (uint32 a = 0; a < 2; a++)
@@ -78,7 +78,7 @@ namespace cage
 					const Scrollbar &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
+						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, ElementModeEnum::Default, s.position, s.size);
 						Vec2 ds;
 						ds[a] = s.dotSize;
 						ds[1 - a] = s.size[1 - a];
@@ -89,7 +89,7 @@ namespace cage
 				}
 			}
 
-			virtual void generateEventReceivers() override
+			void generateEventReceivers() override
 			{
 				for (uint32 a = 0; a < 2; a++)
 				{
@@ -110,7 +110,7 @@ namespace cage
 					e.widget = this;
 					e.pos = hierarchy->renderPos;
 					e.size = hierarchy->renderSize;
-					e.mask = 1 << 31;
+					e.mask = GuiEventsTypesFlags::Wheel;
 					if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
 						hierarchy->impl->mouseEventReceivers.push_back(e);
 				}
@@ -140,18 +140,18 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}
 
-			virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
+			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (modifiers != ModifiersFlags::None)
 					return false;

@@ -11,7 +11,7 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr explicit HashString(const char *str) noexcept : value(hashRawString(str) | ((uint32)1 << 31))
 		{}
 
-		CAGE_FORCE_INLINE constexpr explicit HashString(const StringLiteral &str) noexcept : value(hashRawString(str) | ((uint32)1 << 31))
+		CAGE_FORCE_INLINE constexpr explicit HashString(const StringPointer &str) noexcept : value(hashRawString(str) | ((uint32)1 << 31))
 		{}
 
 		template<uint32 N>

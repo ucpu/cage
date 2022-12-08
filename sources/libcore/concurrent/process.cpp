@@ -113,7 +113,7 @@ namespace cage
 				return ret;
 			}
 
-			void error(StringLiteral msg)
+			void error(StringPointer msg)
 			{
 				const DWORD err = GetLastError();
 				if (err == ERROR_BROKEN_PIPE)

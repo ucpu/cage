@@ -14,7 +14,7 @@ namespace cage
 				ensureItemHasLayout(hierarchy);
 			}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				collapsed = data.collapsed;
 				if (collapsed)
@@ -23,7 +23,7 @@ namespace cage
 					hierarchy->text->apply(skin->defaults.spoiler.textFormat);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				if (!hierarchy->children.empty())
 				{
@@ -41,7 +41,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.baseMargin);
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				if (hierarchy->children.empty())
 					return;
@@ -53,7 +53,7 @@ namespace cage
 				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
@@ -74,13 +74,13 @@ namespace cage
 				hierarchy->childrenEmit();
 			}
 
-			void collapse(HierarchyItem *item)
+			static void collapse(HierarchyItem *item)
 			{
 				if (SpoilerImpl *b = dynamic_cast<SpoilerImpl *>(+item->item))
 					b->data.collapsed = true;
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				hierarchy->impl->focusName = 0;
 				if (buttons != MouseButtonsFlags::Left)

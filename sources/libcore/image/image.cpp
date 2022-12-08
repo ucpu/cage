@@ -467,7 +467,7 @@ namespace cage
 
 	namespace detail
 	{
-		StringLiteral imageFormatToString(ImageFormatEnum format)
+		StringPointer imageFormatToString(ImageFormatEnum format)
 		{
 			switch (format)
 			{
@@ -479,7 +479,7 @@ namespace cage
 			}
 		}
 
-		StringLiteral imageGammaSpaceToString(GammaSpaceEnum space)
+		StringPointer imageGammaSpaceToString(GammaSpaceEnum space)
 		{
 			switch (space)
 			{
@@ -490,7 +490,7 @@ namespace cage
 			}
 		}
 
-		StringLiteral imageAlphaModeToString(AlphaModeEnum mode)
+		StringPointer imageAlphaModeToString(AlphaModeEnum mode)
 		{
 			switch (mode)
 			{

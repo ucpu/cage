@@ -6,6 +6,7 @@
 namespace cage
 {
 	struct MemoryBuffer;
+	class Entity;
 
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
@@ -56,13 +57,6 @@ namespace cage
 		uint32 length = 0; // utf32 characters (not bytes)
 	};
 
-	struct CAGE_ENGINE_API GuiTooltipComponent
-	{
-		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		uint32 assetName = 0;
-		uint32 textName = 0;
-	};
-
 	struct CAGE_ENGINE_API GuiWidgetStateComponent
 	{
 		uint32 skinIndex = m; // -1 = inherit
@@ -95,6 +89,36 @@ namespace cage
 	struct CAGE_ENGINE_API GuiEventComponent
 	{
 		Delegate<bool(uint32)> event;
+	};
+
+	enum class TooltipCloseConditionEnum : uint32
+	{
+		Instant, // the tooltip is closed as soon as the cursor moves
+		Modal, // the tooltip acts as a modal window and is closed only when the cursor moves outside of the tooltip
+		Never, // the application is responsible for closing the tooltip by removing the entity
+	};
+
+	enum class TooltipPlacementEnum : uint32
+	{
+		Corner, // corner of the tooltip positioned at the cursor
+		Center,
+		Manual,
+	};
+
+	struct CAGE_ENGINE_API GuiTooltipConfig
+	{
+		Entity *invoker = nullptr; // the widget for which the tooltip is to be shown
+		Entity *tooltip = nullptr; // entity automatically prepared by the guiManager for the application to fill in
+		Vec2 anchor; // cursor position
+		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
+		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::Corner;
+	};
+
+	struct CAGE_ENGINE_API GuiTooltipComponent
+	{
+		Delegate<void(const GuiTooltipConfig &)> tooltip;
+		uint64 delay = 500000; // duration to hold mouse over the widget before showing the tooltip
+		bool enableForDisabled = false;
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutLineComponent
@@ -142,12 +166,12 @@ namespace cage
 	{
 		// input box and text area
 		None = 0,
-		ReadOnly = 1 << 0,
-		SelectAllOnFocusGain = 1 << 1,
+		//ReadOnly = 1 << 0,
+		//SelectAllOnFocusGain = 1 << 1,
 		GoToEndOnFocusGain = 1 << 2,
 		ShowArrowButtons = 1 << 3,
 		AlwaysRoundValueToStep = 1 << 4,
-		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
+		//AcceptTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
 
 	struct CAGE_ENGINE_API GuiInputComponent
@@ -170,7 +194,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiTextAreaComponent
 	{
-		MemoryBuffer *buffer = nullptr; // utf8 encoded string
+		MemoryBuffer *buffer = nullptr; // utf8 encoded string (size is in bytes)
 		uint32 cursor = m; // utf32 characters (not bytes)
 		uint32 maxLength = 1024 * 1024; // bytes
 		InputStyleFlags style = InputStyleFlags::None;
@@ -192,7 +216,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiRadioBoxComponent
 	{
-		uint32 group = 0; // defines what other radio buttons are unchecked when this becomes checked
 		CheckBoxStateEnum state = CheckBoxStateEnum::Unchecked;
 		// GuiTextComponent defines label shown next to the radio box
 	};
@@ -204,14 +227,6 @@ namespace cage
 		// children with GuiTextComponent defines individual lines
 		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
 		// GuiSelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
-	};
-
-	struct CAGE_ENGINE_API GuiListBoxComponent
-	{
-		// real scrollbar;
-		// children with GuiTextComponent defines individual lines
-		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
-		// GuiSelectedItemComponent on childs defines which lines are selected
 	};
 
 	struct CAGE_ENGINE_API GuiProgressBarComponent
@@ -247,6 +262,33 @@ namespace cage
 		// GuiTextComponent defines caption
 		// GuiImageComponent defines background
 	};
+
+	namespace privat
+	{
+		template<uint32 N>
+		struct GuiStringLiteral
+		{
+			consteval GuiStringLiteral(const char(&str)[N]) noexcept
+			{
+				detail::memcpy(value, str, N);
+			}
+			char value[N];
+		};
+
+		CAGE_ENGINE_API decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt);
+	}
+
+	namespace detail
+	{
+		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
+
+		template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+		decltype(GuiTooltipComponent::tooltip) guiTooltipText() noexcept
+		{
+			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
+			return privat::guiTooltipText(&txt);
+		}
+	}
 }
 
 #endif // guard_guiComponents_sdf1gh45hk485aws

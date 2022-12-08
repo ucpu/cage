@@ -17,7 +17,7 @@ namespace cage
 				data.value = clamp(data.value, data.min, data.max);
 			}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->text);
@@ -27,7 +27,7 @@ namespace cage
 				normalizedValue = (data.value - data.min) / (data.max - data.min);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				defaults = data.vertical ? skin->defaults.sliderBar.vertical : skin->defaults.sliderBar.horizontal;
 				baseElement = data.vertical ? GuiElementTypeEnum::SliderVerticalPanel : GuiElementTypeEnum::SliderHorizontalPanel;
@@ -36,7 +36,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}
 
-			virtual void emit() override
+			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
@@ -49,8 +49,7 @@ namespace cage
 						offsetSize(fs, skin->layouts[(uint32)baseElement].border);
 						Vec2 diff = (bs - fs) / 2;
 						Real m = min(diff[0], diff[1]);
-						diff = Vec2(m, m);
-						offset(bp, bs, -Vec4(diff, diff));
+						offset(bp, bs, -Vec4(m));
 					}
 					emitElement(baseElement, mode(), bp, bs);
 				}
@@ -88,7 +87,7 @@ namespace cage
 				}
 			}
 
-			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				if (buttons != MouseButtonsFlags::Left)
@@ -99,7 +98,7 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				if (hasFocus())
 					return mousePress(buttons, modifiers, point);

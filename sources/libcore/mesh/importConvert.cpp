@@ -72,6 +72,8 @@ namespace cage
 				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
 				}
 			} break;
+			default:
+				break;
 			}
 		}
 
@@ -169,6 +171,8 @@ namespace cage
 					break;
 				case MeshImportTextureType::Mask:
 					process(it, 3);
+					break;
+				default:
 					break;
 				}
 			}

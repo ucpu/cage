@@ -107,7 +107,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API StringLiteral meshImportTextureTypeToString(MeshImportTextureType type);
+		CAGE_CORE_API StringPointer meshImportTextureTypeToString(MeshImportTextureType type);
 	}
 }
 

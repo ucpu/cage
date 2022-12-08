@@ -59,7 +59,7 @@ namespace cage
 			UniformBuffer *uubObject = nullptr;
 
 #ifdef CAGE_DEBUG
-			std::vector<StringLiteral> namesStack;
+			std::vector<StringPointer> namesStack;
 #endif // CAGE_DEBUG
 #ifdef CAGE_PROFILING_ENABLED
 			std::vector<ProfilingEvent> profilingStack;
@@ -235,7 +235,7 @@ namespace cage
 				cmd.name = name;
 			}
 
-			void pushNamedScope(StringLiteral name)
+			void pushNamedScope(StringPointer name)
 			{
 #ifdef CAGE_PROFILING_ENABLED
 				profilingStack.push_back(profilingEventBegin(name));
@@ -243,7 +243,7 @@ namespace cage
 
 				struct Cmd : public CmdBase
 				{
-					StringLiteral name;
+					StringPointer name;
 					void dispatch(RenderQueueImpl *impl) const override
 					{
 #ifdef CAGE_DEBUG
@@ -1077,7 +1077,7 @@ namespace cage
 		clearColor(Vec4());
 	}
 
-	RenderQueueNamedScope RenderQueue::namedScope(StringLiteral name)
+	RenderQueueNamedScope RenderQueue::namedScope(StringPointer name)
 	{
 		return RenderQueueNamedScope(this, name);
 	}
@@ -1174,7 +1174,7 @@ namespace cage
 		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>(name, provisionalGraphics);
 	}
 
-	RenderQueueNamedScope::RenderQueueNamedScope(RenderQueue *queue, StringLiteral name) : queue(queue)
+	RenderQueueNamedScope::RenderQueueNamedScope(RenderQueue *queue, StringPointer name) : queue(queue)
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)queue;
 		impl->pushNamedScope(name);

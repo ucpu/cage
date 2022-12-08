@@ -20,7 +20,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsDebugScope : private Immovable
 	{
-		GraphicsDebugScope(StringLiteral name);
+		GraphicsDebugScope(StringPointer name);
 		~GraphicsDebugScope();
 	};
 

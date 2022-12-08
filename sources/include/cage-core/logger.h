@@ -14,7 +14,7 @@ namespace cage
 			std::source_location location;
 			String message;
 			String currentThreadName;
-			StringLiteral component = "";
+			StringPointer component = "";
 			uint64 time = 0;
 			uint64 createThreadId = 0;
 			uint64 currentThreadId = 0;

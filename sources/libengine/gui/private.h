@@ -12,8 +12,8 @@
 
 #include <vector>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, Tooltip, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
-#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event, Tooltip, TooltipMarker
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has<Gui##T##Component>()
@@ -28,6 +28,14 @@ namespace cage
 	struct RenderableElement;
 	struct RenderableText;
 	struct RenderableImage;
+
+	enum class ElementModeEnum
+	{
+		Default = 0,
+		Focus = 1,
+		Hover = 2,
+		Disabled = 3,
+	};
 
 	struct SkinData : public GuiSkinConfig
 	{
@@ -108,11 +116,11 @@ namespace cage
 
 		WidgetItem(HierarchyItem *hierarchy);
 
-		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
-		uint32 mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts = 1) const;
+		ElementModeEnum mode(bool hover = true, uint32 focusParts = 1) const;
+		ElementModeEnum mode(const Vec2 &pos, const Vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		RenderableElement emitElement(GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
+		RenderableElement emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
@@ -169,7 +177,7 @@ namespace cage
 
 		void transcript();
 		void transcript(const String &value);
-		void transcript(const char *value);
+		void transcript(PointerRange<const char> value);
 
 		Vec2 findRequestedSize();
 
@@ -221,12 +229,12 @@ namespace cage
 			Vec4 outer;
 			Vec4 inner;
 			uint32 element = m;
-			uint32 mode = m;
+			ElementModeEnum mode = m;
 		} data;
 
 		const SkinData *skin = nullptr;
 
-		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, Vec2 pos, Vec2 size);
+		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
 		virtual ~RenderableElement() override;
 	};
@@ -255,16 +263,30 @@ namespace cage
 		virtual ~RenderableImage() override;
 	};
 
+	enum class GuiEventsTypesFlags : uint32
+	{
+		Default = 1u << 0,
+		Wheel = 1u << 1,
+		Tooltips = 1u << 2,
+	};
+	GCHL_ENUM_BITS(GuiEventsTypesFlags);
+
 	struct EventReceiver
 	{
 		Vec2 pos, size;
-		WidgetItem *widget;
-		uint32 mask; // bitmask for event classes
+		WidgetItem *widget = nullptr;
+		GuiEventsTypesFlags mask = GuiEventsTypesFlags::Default;
 
-		EventReceiver();
-
-		bool pointInside(Vec2 point, uint32 maskRequests = 1) const;
+		bool pointInside(Vec2 point, GuiEventsTypesFlags maskRequests = GuiEventsTypesFlags::Default) const;
 	};
+
+	struct TooltipData : public GuiTooltipConfig
+	{
+		Entity *rect = nullptr;
+		bool removing = false;
+	};
+
+	struct GuiTooltipMarkerComponent {}; // this component is added to the root entity of shown tooltip to track its deletion
 
 	class GuiImpl : public GuiManager
 	{
@@ -321,12 +343,24 @@ namespace cage
 
 		std::vector<SkinData> skins;
 
+		Vec2 ttLastMousePos; // points
+		Real ttMouseTraveledDistance; // points
+		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much
+		bool ttHasMovedSinceLast = false;
+		std::vector<TooltipData> ttData;
+		EventListener<bool(Entity *)> ttRemovedListener;
+		void ttMouseMove(InputMouse in);
+		void updateTooltips();
+		void clearTooltips();
+		bool tooltipRemoved(Entity *e);
+
 		explicit GuiImpl(const GuiManagerCreateConfig &config);
 		~GuiImpl();
-		void scaling();
+		void scaling(); // update outputSize and outputMouse
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;
 		bool eventPoint(Vec2 ptIn, Vec2 &ptOut);
 		Holder<RenderQueue> emit();
+		void prepareImplGeneration();
 	};
 
 	uint32 entityWidgetsCount(Entity *e);
@@ -335,7 +369,7 @@ namespace cage
 	void offsetSize(Vec2 &size, Vec4 offset);
 	void offset(Vec2 &position, Vec2 &size, Vec4 offset);
 	bool pointInside(Vec2 pos, Vec2 size, Vec2 point);
-	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // return whether the clipped rect has positive area
+	bool clip(Vec2 &pos, Vec2 &size, Vec2 clipPos, Vec2 clipSize); // clips the rect and returns whether the clipped rect has positive area
 	HierarchyItem *subsideItem(HierarchyItem *item);
 	void ensureItemHasLayout(HierarchyItem *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }

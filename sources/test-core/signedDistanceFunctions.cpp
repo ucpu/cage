@@ -20,7 +20,7 @@ namespace
 
 	using Function = Real(*)(const Vec3 &);
 
-	void sdfTest(Delegate<Real(const Vec3 &)> function, StringLiteral name)
+	void sdfTest(Delegate<Real(const Vec3 &)> function, StringPointer name)
 	{
 		CAGE_TESTCASE(Stringizer() + name);
 

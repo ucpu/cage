@@ -1,7 +1,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/macros.h>
 #include <cage-core/assetOnDemand.h>
-
+#include <cage-core/entitiesVisitor.h>
 #include <cage-engine/renderQueue.h>
 
 #include "private.h"
@@ -29,9 +29,18 @@ namespace cage
 		inputsListeners.keyRelease.bind<GuiImpl, &GuiImpl::keyRelease>(this);
 		inputsListeners.keyChar.bind<GuiImpl, &GuiImpl::keyChar>(this);
 
-		skins.resize(config.skinsCount);
+		skins.reserve(config.skinsCount);
+		for (uint32 i = 0; i < config.skinsCount; i++)
+		{
+			SkinData d;
+			(GuiSkinConfig &)d = detail::guiSkinGenerate(i);
+			skins.push_back(std::move(d));
+		}
 
 		memory = newMemoryAllocatorStream({});
+
+		ttRemovedListener.attach(entityMgr->component<GuiTooltipMarkerComponent>()->group()->entityRemoved);
+		ttRemovedListener.bind<GuiImpl, &GuiImpl::tooltipRemoved>(this);
 	}
 
 	GuiImpl::~GuiImpl()
@@ -116,6 +125,7 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = false;
+		impl->clearTooltips();
 	}
 
 	Vec2i GuiManager::inputResolution() const
@@ -302,41 +312,45 @@ namespace cage
 		}
 	}
 
-	void GuiManager::prepare()
+	void GuiImpl::prepareImplGeneration()
 	{
-		GuiImpl *impl = (GuiImpl *)this;
+		mouseEventReceivers.clear();
+		root.clear();
 
-		impl->mouseEventReceivers.clear();
-		impl->root.clear();
-		impl->eventsEnabled = true;
-
-		generateHierarchy(impl);
-		generateItems(+impl->root);
+		generateHierarchy(this);
+		generateItems(+root);
 
 		{ // propagate widget state
 			GuiWidgetStateComponent ws;
 			ws.skinIndex = 0;
-			propagateWidgetState(+impl->root, ws);
+			propagateWidgetState(+root, ws);
 		}
 
 		{ // initialize
-			impl->root->initialize();
+			root->initialize();
 			// make sure that items added during initialization are initialized too
 			std::size_t i = 0;
-			while (i < impl->root->children.size())
-				callInitialize(+impl->root->children[i++]);
+			while (i < root->children.size())
+				callInitialize(+root->children[i++]);
 		}
 
 		{ // layouting
-			impl->root->findRequestedSize();
+			root->findRequestedSize();
 			FinalPosition u;
 			u.renderPos = u.clipPos = Vec2();
-			u.renderSize = u.clipSize = impl->outputSize;
-			impl->root->findFinalPosition(u);
+			u.renderSize = u.clipSize = outputSize;
+			root->findFinalPosition(u);
 		}
 
-		impl->root->generateEventReceivers();
+		root->generateEventReceivers();
+	}
 
+	void GuiManager::prepare()
+	{
+		GuiImpl *impl = (GuiImpl *)this;
+		impl->eventsEnabled = true;
+		impl->prepareImplGeneration();
+		impl->updateTooltips();
 		findHover(impl);
 	}
 
@@ -434,5 +448,20 @@ namespace cage
 	{
 		if (entityLayoutsCount(hierarchy->ent) == 0)
 			subsideItem(hierarchy); // fall back to default layouting
+	}
+
+	namespace detail
+	{
+		void guiDestroyEntityRecursively(Entity *root)
+		{
+			std::vector<Entity *> ents;
+			entitiesVisitor([&](Entity *e, const GuiParentComponent &p) {
+				if (p.parent == root->name())
+					ents.push_back(e);
+			}, root->manager(), false);
+			for (Entity *e : ents)
+				guiDestroyEntityRecursively(e);
+			root->destroy();
+		}
 	}
 }

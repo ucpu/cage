@@ -663,6 +663,8 @@ namespace
 			case MeshImportTextureType::Normal:
 				normal = std::move(it.images.parts[0].image);
 				break;
+			default:
+				break;
 			}
 		}
 		const Image *arr[] = { nullptr, +roughness, +metallic };

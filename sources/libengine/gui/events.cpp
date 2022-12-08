@@ -2,12 +2,9 @@
 
 namespace cage
 {
-	EventReceiver::EventReceiver() : widget(nullptr), mask(1)
-	{}
-
-	bool EventReceiver::pointInside(Vec2 point, uint32 maskRequest) const
+	bool EventReceiver::pointInside(Vec2 point, GuiEventsTypesFlags maskRequest) const
 	{
-		if ((mask & maskRequest) == 0)
+		if (none(mask & maskRequest))
 			return false;
 		return cage::pointInside(pos, size, point);
 	}
@@ -28,7 +25,7 @@ namespace cage
 
 		std::vector<WidgetItem *> focused(GuiImpl *impl)
 		{
-			std::vector<WidgetItem*> result;
+			std::vector<WidgetItem *> result;
 			if (impl->focusName)
 			{
 				result.reserve(3);
@@ -86,14 +83,7 @@ namespace cage
 		inputMouse = ptIn;
 		if (!eventsEnabled)
 			return false;
-		if (eventCoordinatesTransformer)
-		{
-			bool ret = eventCoordinatesTransformer(ptIn, ptOut);
-			if (ret)
-				outputMouse = ptOut / pointsScale;
-			return ret;
-		}
-		outputMouse = ptOut = Vec2(ptIn[0], ptIn[1]) / pointsScale;
+		outputMouse = ptOut = ptIn / pointsScale;
 		return true;
 	}
 
@@ -127,6 +117,7 @@ namespace cage
 
 	bool GuiImpl::mouseMove(InputMouse in)
 	{
+		ttMouseMove(in);
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(this, in.buttons, in.mods, in.position);
 	}
 
@@ -137,7 +128,7 @@ namespace cage
 			return false;
 		for (const auto &it : mouseEventReceivers)
 		{
-			if (it.pointInside(pt, 1 | (1 << 31))) // also accept wheel events
+			if (it.pointInside(pt, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Wheel))
 			{
 				if (it.widget->widgetState.disabled || it.widget->mouseWheel(in.wheel, in.mods, pt))
 					return true;

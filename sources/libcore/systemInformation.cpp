@@ -20,7 +20,7 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		static_assert(sizeof(DWORD) == sizeof(uint32));
-		const auto &readUint = [](StringLiteral name) -> uint32
+		const auto &readUint = [](StringPointer name) -> uint32
 		{
 			uint32 res = 0;
 			DWORD sz = sizeof(res);
@@ -29,7 +29,7 @@ namespace cage
 				return 0;
 			return res;
 		};
-		const auto &readString = [](StringLiteral name) -> String
+		const auto &readString = [](StringPointer name) -> String
 		{
 			String res;
 			DWORD sz = String::MaxLength;

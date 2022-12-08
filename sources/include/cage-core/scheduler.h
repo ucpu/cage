@@ -16,7 +16,7 @@ namespace cage
 
 	struct CAGE_CORE_API ScheduleCreateConfig
 	{
-		StringLiteral name = "<unnamed>";
+		StringPointer name = "<unnamed>";
 		Delegate<void()> action;
 		uint64 delay = 0; // used for all types of schedules
 		uint64 period = 1000; // used for periodic schedules only

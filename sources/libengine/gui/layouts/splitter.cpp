@@ -11,12 +11,12 @@ namespace cage
 			LayoutSplitterImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
 			{}
 
-			virtual void initialize() override
+			void initialize() override
 			{
 				CAGE_ASSERT(hierarchy->children.size() == 2);
 			}
 
-			virtual void findRequestedSize() override
+			void findRequestedSize() override
 			{
 				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
@@ -28,7 +28,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			virtual void findFinalPosition(const FinalPosition &update) override
+			void findFinalPosition(const FinalPosition &update) override
 			{
 				HierarchyItem *a = +hierarchy->children[0], *b = +hierarchy->children[1];
 				const uint32 axis = data.vertical ? 1 : 0;
