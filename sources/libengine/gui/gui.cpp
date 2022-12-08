@@ -450,22 +450,6 @@ namespace cage
 			subsideItem(hierarchy); // fall back to default layouting
 	}
 
-	namespace privat
-	{
-		decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt)
-		{
-			decltype(GuiTooltipComponent::tooltip) tt;
-			tt.bind<const GuiTextComponent *, +[](const GuiTextComponent *txt, const GuiTooltipConfig &cfg) -> void {
-				cfg.tooltip->value<GuiPanelComponent>();
-				Entity *e = cfg.tooltip->manager()->createUnique();
-				e->value<GuiParentComponent>().parent = cfg.tooltip->name();
-				e->value<GuiLabelComponent>();
-				e->value<GuiTextComponent>() = *txt;
-			}>(txt);
-			return tt;
-		}
-	}
-
 	namespace detail
 	{
 		void guiDestroyEntityRecursively(Entity *root)

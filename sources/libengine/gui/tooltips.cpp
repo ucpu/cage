@@ -170,4 +170,26 @@ namespace cage
 		std::erase_if(ttData, [&](const TooltipData &tt) { return tt.tooltip == e; });
 		return false;
 	}
+
+	namespace
+	{
+		void guiTooltipTextImpl(const GuiTextComponent *txt, const GuiTooltipConfig &cfg)
+		{
+			cfg.tooltip->value<GuiPanelComponent>();
+			Entity *e = cfg.tooltip->manager()->createUnique();
+			e->value<GuiParentComponent>().parent = cfg.tooltip->name();
+			e->value<GuiLabelComponent>();
+			e->value<GuiTextComponent>() = *txt;
+		}
+	}
+
+	namespace privat
+	{
+		decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt)
+		{
+			decltype(GuiTooltipComponent::tooltip) tt;
+			tt.bind<const GuiTextComponent *, &guiTooltipTextImpl>(txt);
+			return tt;
+		}
+	}
 }
