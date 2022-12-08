@@ -208,7 +208,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(uint32 styleIndex); // 0 = default, 1 = large, 2 = compact
+		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(uint32 styleIndex); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
 		CAGE_ENGINE_API Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution);
 	}
 }

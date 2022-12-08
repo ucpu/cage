@@ -4,6 +4,7 @@ premultiplyAlpha = true
 srgb = true
 gamma = true
 gui.png
+tooltips.png
 
 []
 scheme = texture

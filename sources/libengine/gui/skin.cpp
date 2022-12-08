@@ -456,6 +456,10 @@ namespace cage
 			case 2:
 				generateCompact(skin);
 				break;
+			case 3:
+				generateCompact(skin);
+				skin.textureName = HashString("cage/texture/tooltips.png");
+				break;
 			}
 			return skin;
 		}

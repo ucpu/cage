@@ -106,6 +106,8 @@ namespace cage
 				c.tooltip(tt);
 				if (tt.placement != TooltipPlacementEnum::Manual)
 					needsReposition = true;
+				if (!tt.tooltip->has<GuiWidgetStateComponent>())
+					tt.tooltip->value<GuiWidgetStateComponent>().skinIndex = 3;
 				ttData.push_back(std::move(tt));
 				ttHasMovedSinceLast = false;
 			}
