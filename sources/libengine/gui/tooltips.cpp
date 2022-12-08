@@ -161,7 +161,7 @@ namespace cage
 
 	void GuiImpl::clearTooltips()
 	{
-		while (!!ttData.empty())
+		while (!ttData.empty())
 			detail::guiDestroyEntityRecursively(ttData.front().tooltip);
 	}
 

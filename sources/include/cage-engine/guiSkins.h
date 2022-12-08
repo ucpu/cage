@@ -20,7 +20,7 @@ namespace cage
 		{
 			GuiTextFormatComponent textFormat;
 			GuiImageFormatComponent imageFormat;
-			Vec4 margin = Vec4(6);
+			Vec4 margin = Vec4(4);
 			Label();
 		} label;
 		struct CAGE_ENGINE_API Button
