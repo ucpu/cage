@@ -12,7 +12,7 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 
 - Cage is programming framework that creates consistent basis for engine, tools and game development.
 - It encourages readable, maintainable and safe code while also allowing for quick prototyping.
-- Performance optimizations are added as necessary, and without changing api.
+- Performance optimizations are added as necessary, without sacrificing simple api design.
 
 ## Portable
 
@@ -85,6 +85,7 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Automatic shadowmaps
 - Sound
 - Gui
+- Virtual reality
 
 ## Simple library
 
