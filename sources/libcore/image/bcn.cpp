@@ -67,7 +67,7 @@ namespace cage
 			const Vec2i resolution = 4 * ((resolution_ + 3) / 4); // round up to multiple of 4x4
 			const uint32 blocksRequired = resolution[0] * resolution[1] / 16;
 			if (blocksRequired * BytesPerBlock != buffer.size())
-				CAGE_THROW_ERROR(Exception, "insufficient data for bcn decoding");
+				CAGE_THROW_ERROR(Exception, "incorrect data size for bcn decoding");
 			std::vector<Color> colors; // todo rewrite to streaming version avoiding this vector
 			colors.resize(blocksRequired * 16);
 			for (uint32 bi = 0; bi < blocksRequired; bi++)
