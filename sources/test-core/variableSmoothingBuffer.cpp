@@ -16,6 +16,7 @@ void testVariableSmoothingBuffer()
 		VariableSmoothingBuffer<Vec3> iVec3;
 		VariableSmoothingBuffer<Vec4> iVec4;
 		VariableSmoothingBuffer<Quat> iQuat;
+		VariableSmoothingBuffer<Transform> iTransform;
 	}
 
 	{
@@ -57,6 +58,18 @@ void testVariableSmoothingBuffer()
 		v.add(Quat(Degs(10), Degs(), Degs()));
 		CAGE_TEST(v.current() == Quat(Degs(10), Degs(), Degs()));
 		CAGE_TEST(v.oldest() == Quat(Degs(50), Degs(), Degs()));
+		v.smooth();
+	}
+
+	{
+		CAGE_TESTCASE("smoothing with transform");
+		VariableSmoothingBuffer<Transform, 3> v;
+		v.seed(Transform());
+		v.add(Transform(Vec3(10, 0, 0), Quat(Degs(), Degs(40), Degs())));
+		v.add(Transform(Vec3(20, 0, 0), Quat(Degs(), Degs(50), Degs())));
+		v.add(Transform(Vec3(30, 0, 0), Quat(Degs(), Degs(60), Degs())));
+		CAGE_TEST(v.current() == Transform(Vec3(30, 0, 0), Quat(Degs(), Degs(60), Degs())));
+		CAGE_TEST(v.oldest() == Transform(Vec3(10, 0, 0), Quat(Degs(), Degs(40), Degs())));
 		v.smooth();
 	}
 }

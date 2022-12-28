@@ -107,6 +107,44 @@ namespace cage
 		mutable Quat avg;
 		mutable bool dirty = false;
 	};
+
+	template<uint32 N>
+	struct VariableSmoothingBuffer<Transform, N>
+	{
+		void seed(const Transform &value)
+		{
+			t.seed(value.position);
+			r.seed(value.orientation);
+			s.seed(value.scale);
+		}
+
+		void add(const Transform &value)
+		{
+			t.add(value.position);
+			r.add(value.orientation);
+			s.add(value.scale);
+		}
+
+		Transform smooth() const
+		{
+			return Transform(t.smooth(), r.smooth(), s.smooth());
+		}
+
+		Transform current() const
+		{
+			return Transform(t.current(), r.current(), s.current());
+		}
+
+		Transform oldest() const
+		{
+			return Transform(t.oldest(), r.oldest(), s.oldest());
+		}
+
+	private:
+		VariableSmoothingBuffer<Vec3, N> t;
+		VariableSmoothingBuffer<Quat, N> r;
+		VariableSmoothingBuffer<Real, N> s;
+	};
 }
 
 #endif // guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F
