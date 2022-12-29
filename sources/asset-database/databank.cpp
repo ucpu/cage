@@ -27,7 +27,7 @@ extern std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 std::map<String, Holder<Asset>, StringComparatorFast> assets;
 std::set<String, StringComparatorFast> corruptedDatabanks;
 std::set<uint32> injectedNames;
-uint64 lastModificationTime = 0;
+PathLastChange lastModificationTime;
 
 Serializer &operator << (Serializer &ser, const Asset &s)
 {
@@ -206,7 +206,7 @@ void databanksLoad()
 	assets.clear();
 	corruptedDatabanks.clear();
 	injectedNames.clear();
-	lastModificationTime = 0;
+	lastModificationTime = {};
 
 	if (!((String)configPathInjectedNames).empty())
 	{
@@ -352,32 +352,28 @@ bool isNameIgnored(const String &name)
 
 namespace
 {
-	void findFiles(std::map<String, uint64, StringComparatorFast> &files, const String &path)
+	void findFiles(std::map<String, PathLastChange, StringComparatorFast> &files, const String &path)
 	{
 		const String pth = pathJoin(configPathInput, path);
 		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path '" + pth + "'");
-		Holder<DirectoryList> d = newDirectoryList(pth);
-		while (d->valid())
+		const auto list = pathListDirectory(pth);
+		for (const String &p : list)
 		{
-			const String p = pathJoin(path, d->name());
-			if (!isNameIgnored(p))
+			const String n = pathToRel(p, configPathInput);
+			if (!isNameIgnored(n))
 			{
-				if (d->isDirectory())
-					findFiles(files, p);
+				if (pathIsDirectory(p))
+					findFiles(files, n);
 				else
-				{
-					const uint64 lt = d->lastChange();
-					files[p] = lt;
-				}
+					files[n] = pathLastChange(p);
 			}
-			d->next();
 		}
 	}
 }
 
-std::map<String, uint64, StringComparatorFast> findFiles()
+std::map<String, PathLastChange, StringComparatorFast> findFiles()
 {
-	std::map<String, uint64, StringComparatorFast> files;
+	std::map<String, PathLastChange, StringComparatorFast> files;
 	findFiles(files, "");
 	return files;
 }
@@ -395,22 +391,20 @@ void checkOutputDir()
 
 void moveIntermediateFiles()
 {
-	Holder<DirectoryList> listIn = newDirectoryList(configPathIntermediate);
-	Holder<DirectoryList> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
+	const auto listIn = pathListDirectory(configPathIntermediate);
+	Holder<void> listOut = detail::pathKeepOpen(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
 	uint64 movedSize = 0;
-	while (listIn->valid())
+	for (const String &f : listIn)
 	{
 		if (movedSize > configArchiveWriteThreshold)
 		{
 			listOut.clear(); // close the archive
-			listOut = newDirectoryList(configPathOutput); // reopen the archive
+			listOut = detail::pathKeepOpen(configPathOutput); // reopen the archive
 			movedSize = 0;
 		}
-		const String f = pathJoin(configPathIntermediate, listIn->name());
-		const String t = pathJoin(configPathOutput, listIn->name());
+		const String t = pathJoin(configPathOutput, pathExtractFilename(f));
 		movedSize += readFile(f)->size();
 		pathMove(f, t);
-		listIn->next();
 	}
 	pathRemove(configPathIntermediate);
 }

@@ -335,11 +335,10 @@ namespace
 	void loadSchemes(const String &dir)
 	{
 		const String realpath = pathJoin(configPathSchemes, dir);
-		Holder<DirectoryList> lst = newDirectoryList(realpath);
-		for (; lst->valid(); lst->next())
+		const auto list = pathListDirectory(realpath);
+		for (const String &name : list)
 		{
-			const String name = pathJoin(dir, lst->name());
-			if (lst->isDirectory())
+			if (pathIsDirectory(name))
 			{
 				loadSchemes(name);
 				continue;
@@ -347,10 +346,10 @@ namespace
 			if (!isPattern(name, "", "", ".scheme"))
 				continue;
 			Holder<Scheme> s = systemMemory().createHolder<Scheme>();
-			s->name = subString(name, 0, name.length() - 7);
+			s->name = pathExtractFilenameNoExtension(name);
 			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading scheme '" + s->name + "'");
 			Holder<Ini> ini = newIni();
-			ini->importFile(pathJoin(configPathSchemes, name));
+			ini->importFile(name);
 			s->parse(+ini);
 			schemes.emplace(s->name, std::move(s));
 		}

@@ -132,8 +132,7 @@ void testArchivesRecursion()
 			for (uint32 i = 0; i < 5; i++)
 			{
 				p = pathJoin(p, Stringizer() + i + ".zip");
-				Holder<DirectoryList> list = newDirectoryList(p); // ensure the archive is open
-				CAGE_TEST(list->valid()); // sanity check that there is at least one file in the archive
+				Holder<void> tmp = detail::pathKeepOpen(p); // ensure the archive is open
 				CAGE_TEST_THROWN(readFile(p));
 			}
 		}

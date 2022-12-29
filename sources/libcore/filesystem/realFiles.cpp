@@ -1,7 +1,5 @@
 #include <cage-core/string.h>
-#include <cage-core/timer.h>
-#include <cage-core/concurrent.h> // threadSleep
-#include <cage-core/flatSet.h>
+#include <cage-core/pointerRangeHolder.h>
 
 #include "files.h"
 
@@ -21,14 +19,11 @@
 #include <mach-o/dyld.h>
 #endif
 
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
-
-#include <FileWatcher/FileWatcher.h>
-
 namespace cage
 {
+	Holder<File> realNewFile(const String &path, const FileMode &mode);
+	PathTypeFlags realType(const String &path);
+
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -64,259 +59,127 @@ namespace cage
 			return data;
 		}
 #endif
-	}
 
-	Holder<DirectoryList> realNewDirectoryList(const String &path);
-
-	PathTypeFlags realType(const String &path)
-	{
-#ifdef CAGE_SYSTEM_WINDOWS
-
-		auto a = GetFileAttributesW(Widen(path));
-		if (a == INVALID_FILE_ATTRIBUTES)
-			return PathTypeFlags::NotFound;
-		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-			return PathTypeFlags::Directory;
-		else
-			return PathTypeFlags::File;
-
-#else
-
-		struct stat st;
-		if (stat(path.c_str(), &st) != 0)
-			return PathTypeFlags::NotFound;
-		if ((st.st_mode & S_IFDIR) == S_IFDIR)
-			return PathTypeFlags::Directory;
-		if ((st.st_mode & S_IFREG) == S_IFREG)
-			return PathTypeFlags::File;
-		return PathTypeFlags::None;
-
-#endif
-	}
-
-	void realCreateDirectories(const String &path)
-	{
-		String pth = path + "/";
-		uint32 off = 0;
-		while (true)
+		void realCreateDirectories(const String &path)
 		{
-			uint32 pos = find(subString(pth, off, m), '/');
-			if (pos == m)
-				return; // done
-			pos += off;
-			off = pos + 1;
-			if (pos)
+			String pth = path + "/";
+			uint32 off = 0;
+			while (true)
 			{
-				const String p = subString(pth, 0, pos);
-				if (any(realType(p) & PathTypeFlags::Directory))
-					continue;
+				uint32 pos = find(subString(pth, off, m), '/');
+				if (pos == m)
+					return; // done
+				pos += off;
+				off = pos + 1;
+				if (pos)
+				{
+					const String p = subString(pth, 0, pos);
+					if (any(realType(p) & PathTypeFlags::Directory))
+						continue;
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (CreateDirectoryW(Widen(p), nullptr) == 0)
-				{
-					const auto err = GetLastError();
-					if (err != ERROR_ALREADY_EXISTS)
+					if (CreateDirectoryW(Widen(p), nullptr) == 0)
+					{
+						const auto err = GetLastError();
+						if (err != ERROR_ALREADY_EXISTS)
+						{
+							CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+							CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
+						}
+					}
+#else
+					static constexpr mode_t mode = 0755;
+					if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 					{
 						CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-						CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
+						CAGE_THROW_ERROR(Exception, "mkdir");
 					}
-				}
-#else
-				static constexpr mode_t mode = 0755;
-				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
-				{
-					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-					CAGE_THROW_ERROR(Exception, "mkdir");
-				}
 #endif
+				}
 			}
 		}
-	}
 
-	void realMove(const String &from, const String &to)
-	{
-		pathCreateDirectories(pathExtractDirectory(to));
+		class DirectoryListReal : public Immovable
+		{
+		public:
+			const String myPath;
+			bool valid_ = false;
 
 #ifdef CAGE_SYSTEM_WINDOWS
-
-		auto res = MoveFileW(Widen(from), Widen(to));
-		if (res == 0)
-		{
-			CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
-		}
-
+			WIN32_FIND_DATAW ffd;
+			HANDLE list = nullptr;
 #else
-
-		auto res = rename(from.c_str(), to.c_str());
-		if (res != 0)
-		{
-			CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(SystemError, "pathMove", errno);
-		}
-
+			DIR *pdir = nullptr;
+			struct dirent *pent = nullptr;
 #endif
-	}
 
-	void realRemove(const String &path)
-	{
-		const PathTypeFlags t = realType(path);
-		if (any(t & PathTypeFlags::Directory))
-		{
+			DirectoryListReal(const String &path) : myPath(path)
 			{
-				Holder<DirectoryList> list = realNewDirectoryList(path);
-				while (list->valid())
-				{
-					realRemove(pathJoin(path, list->name()));
-					list->next();
-				}
+				realCreateDirectories(path);
+#ifdef CAGE_SYSTEM_WINDOWS
+				CAGE_ASSERT(!myPath.empty());
+				list = FindFirstFileW(Widen(myPath + "/*"), &ffd);
+				valid_ = list != INVALID_HANDLE_VALUE;
+				if (!valid_)
+					return;
+				if (name() == "." || name() == "..")
+					next();
+#else
+				pdir = opendir(path.c_str());
+				valid_ = !!pdir;
+				next();
+#endif
 			}
 
+			~DirectoryListReal()
+			{
 #ifdef CAGE_SYSTEM_WINDOWS
-			if (RemoveDirectoryW(Widen(path)) == 0)
-				CAGE_THROW_ERROR(SystemError, "RemoveDirectory", GetLastError());
+				if (list)
+					FindClose(list);
 #else
-			if (rmdir(path.c_str()) != 0)
-				CAGE_THROW_ERROR(SystemError, "rmdir", errno);
+				if (pdir)
+					closedir(pdir);
 #endif
-		}
-		else if (none(t & PathTypeFlags::NotFound))
-		{
+			}
+
+			bool valid() const
+			{
+				return valid_;
+			}
+
+			String name() const
+			{
 #ifdef CAGE_SYSTEM_WINDOWS
-			if (DeleteFileW(Widen(path)) == 0)
-				CAGE_THROW_ERROR(SystemError, "DeleteFile", GetLastError());
+				return narrow({ ffd.cFileName, ffd.cFileName + wcslen(ffd.cFileName) });
 #else
-			if (unlink(path.c_str()) != 0)
-				CAGE_THROW_ERROR(SystemError, "unlink", errno);
+				return pent->d_name;
 #endif
-		}
-	}
+			}
 
-	uint64 realLastChange(const String &path)
-	{
+			void next()
+			{
+				CAGE_ASSERT(valid_);
+
 #ifdef CAGE_SYSTEM_WINDOWS
-
-		HANDLE hFile = CreateFileW(Widen(path), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
-		if (hFile == INVALID_HANDLE_VALUE)
-		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
-		}
-		FILETIME ftWrite;
-		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
-		{
-			CloseHandle(hFile);
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
-		}
-		ULARGE_INTEGER l;
-		l.LowPart = ftWrite.dwLowDateTime;
-		l.HighPart = ftWrite.dwHighDateTime;
-		CloseHandle(hFile);
-		return l.QuadPart;
-
+				if (FindNextFileW(list, &ffd) == 0)
+				{
+					valid_ = false;
+					return;
+				}
 #else
-
-		struct stat st;
-		if (stat(pathToAbs(path).c_str(), &st) == 0)
-			return st.st_mtime;
-		CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-		CAGE_THROW_ERROR(SystemError, "stat", errno);
-
+				pent = readdir(pdir);
+				if (!pent)
+				{
+					valid_ = false;
+					return;
+				}
 #endif
-	}
 
-	namespace
-	{
-		String pathWorkingDirImpl()
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
+				if (name() == "." || name() == "..")
+					next();
+			}
+		};
 
-			wchar_t buffer[String::MaxLength + 1];
-			uint32 len = GetCurrentDirectoryW(String::MaxLength, buffer);
-			if (len <= 0)
-				CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
-			return pathSimplify(narrow({ buffer, buffer + len }));
-
-#else
-
-			char buffer[String::MaxLength + 1];
-			if (getcwd(buffer, String::MaxLength) != nullptr)
-				return pathSimplify(buffer);
-			CAGE_THROW_ERROR(Exception, "getcwd");
-
-#endif
-		}
-	}
-
-	String pathWorkingDir()
-	{
-		static const String dir = pathWorkingDirImpl();
-		CAGE_ASSERT(dir == pathWorkingDirImpl());
-		return dir;
-	}
-
-	namespace
-	{
-		String executableFullPathImpl()
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
-
-			wchar_t buffer[String::MaxLength];
-			uint32 len = GetModuleFileNameW(nullptr, (wchar_t *)&buffer, String::MaxLength);
-			if (len == 0)
-				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
-			return pathSimplify(narrow({ buffer, buffer + len }));
-
-#elif defined(CAGE_SYSTEM_LINUX)
-
-			char buffer[String::MaxLength];
-			char id[String::MaxLength];
-			sprintf(id, "/proc/%d/exe", getpid());
-			sint32 len = readlink(id, buffer, String::MaxLength);
-			if (len == -1)
-				CAGE_THROW_ERROR(SystemError, "readlink", errno);
-			return pathSimplify(String({ buffer, buffer + len }));
-
-#elif defined(CAGE_SYSTEM_MAC)
-
-			char buffer[String::MaxLength];
-			uint32 len = sizeof(buffer);
-			if (_NSGetExecutablePath(buffer, &len) != 0)
-				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
-			len = detail::strlen(buffer);
-			return pathSimplify(String({ buffer, buffer + len }));
-
-#else
-
-#error This operating system is not supported
-
-#endif
-		}
-	}
-
-	namespace detail
-	{
-		String executableFullPath()
-		{
-			static const String pth = executableFullPathImpl();
-			return pth;
-		}
-
-		String executableFullPathNoExe()
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
-			String p = executableFullPath();
-			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
-			return subString(p, 0, p.length() - 4);
-#else
-			return executableFullPath();
-#endif
-		}
-	}
-
-	namespace
-	{
 		class FileReal : public FileAbstract
 		{
 		public:
@@ -445,115 +308,7 @@ namespace cage
 				return numeric_cast<uintPtr>(siz);
 			}
 		};
-	}
 
-	Holder<File> realNewFile(const String &path, const FileMode &mode)
-	{
-		return systemMemory().createImpl<File, FileReal>(path, mode);
-	}
-
-	void realTryFlushFile(File *f_)
-	{
-		FileReal *f = dynamic_cast<FileReal *>((FileAbstract *)f_);
-		if (f)
-			fflush(f->f);
-	}
-
-	namespace
-	{
-		class DirectoryListReal : public DirectoryListAbstract
-		{
-		public:
-			bool valid_ = false;
-
-#ifdef CAGE_SYSTEM_WINDOWS
-			WIN32_FIND_DATAW ffd;
-			HANDLE list = nullptr;
-#else
-			DIR *pdir = nullptr;
-			struct dirent *pent = nullptr;
-#endif
-
-			DirectoryListReal(const String &path) : DirectoryListAbstract(path)
-			{
-				realCreateDirectories(path);
-
-#ifdef CAGE_SYSTEM_WINDOWS
-				CAGE_ASSERT(!myPath.empty());
-				list = FindFirstFileW(Widen(myPath + "/*"), &ffd);
-				valid_ = list != INVALID_HANDLE_VALUE;
-				if (!valid_)
-					return;
-				if (name() == "." || name() == "..")
-					next();
-#else
-				pdir = opendir(path.c_str());
-				valid_ = !!pdir;
-				next();
-#endif
-			}
-
-			~DirectoryListReal()
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				if (list)
-					FindClose(list);
-#else
-				if (pdir)
-					closedir(pdir);
-#endif
-			}
-
-			bool valid() const override
-			{
-				return valid_;
-			}
-
-			String name() const override
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				return narrow({ ffd.cFileName, ffd.cFileName + wcslen(ffd.cFileName) });
-#else
-				return pent->d_name;
-#endif
-			}
-
-			void next() override
-			{
-				CAGE_ASSERT(valid_);
-
-#ifdef CAGE_SYSTEM_WINDOWS
-
-				if (FindNextFileW(list, &ffd) == 0)
-				{
-					valid_ = false;
-					return;
-				}
-
-#else
-
-				pent = readdir(pdir);
-				if (!pent)
-				{
-					valid_ = false;
-					return;
-				}
-
-#endif
-
-				if (name() == "." || name() == "..")
-					next();
-			}
-		};
-	}
-
-	Holder<DirectoryList> realNewDirectoryList(const String &path)
-	{
-		return systemMemory().createImpl<DirectoryList, DirectoryListReal>(path);
-	}
-
-	namespace
-	{
 		class ArchiveReal : public ArchiveAbstract
 		{
 		public:
@@ -567,22 +322,97 @@ namespace cage
 
 			void createDirectories(const String &path)
 			{
-				return realCreateDirectories(pathJoin(myPath, path));
+				realCreateDirectories(pathJoin(myPath, path));
 			}
 
-			void move(const String &from, const String &to)
+			void move(const String &from_, const String &to_)
 			{
-				realMove(pathJoin(myPath, from), pathJoin(myPath, to));
+				const String from = pathJoin(myPath, from_);
+				const String to = pathJoin(myPath, to_);
+
+				createDirectories(pathJoin(to_, ".."));
+
+#ifdef CAGE_SYSTEM_WINDOWS
+				auto res = MoveFileW(Widen(from), Widen(to));
+				if (res == 0)
+				{
+					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+					CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
+				}
+#else
+				auto res = rename(from.c_str(), to.c_str());
+				if (res != 0)
+				{
+					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+					CAGE_THROW_ERROR(SystemError, "pathMove", errno);
+				}
+#endif
 			}
 
-			void remove(const String &path)
+			void remove(const String &path_)
 			{
-				realRemove(pathJoin(myPath, path));
+				const String path = pathJoin(myPath, path_);
+				const PathTypeFlags t = type(path_);
+				if (any(t & PathTypeFlags::Directory))
+				{
+					{
+						DirectoryListReal list(path);
+						while (list.valid())
+						{
+							remove(pathJoin(path_, list.name()));
+							list.next();
+						}
+					}
+
+#ifdef CAGE_SYSTEM_WINDOWS
+					if (RemoveDirectoryW(Widen(path)) == 0)
+						CAGE_THROW_ERROR(SystemError, "RemoveDirectory", GetLastError());
+#else
+					if (rmdir(path.c_str()) != 0)
+						CAGE_THROW_ERROR(SystemError, "rmdir", errno);
+#endif
+				}
+				else if (none(t & PathTypeFlags::NotFound))
+				{
+#ifdef CAGE_SYSTEM_WINDOWS
+					if (DeleteFileW(Widen(path)) == 0)
+						CAGE_THROW_ERROR(SystemError, "DeleteFile", GetLastError());
+#else
+					if (unlink(path.c_str()) != 0)
+						CAGE_THROW_ERROR(SystemError, "unlink", errno);
+#endif
+				}
 			}
 
-			uint64 lastChange(const String &path) const
+			PathLastChange lastChange(const String &path_) const
 			{
-				return realLastChange(pathJoin(myPath, path));
+				const String path = pathJoin(myPath, path_);
+#ifdef CAGE_SYSTEM_WINDOWS
+				HANDLE hFile = CreateFileW(Widen(path), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+				if (hFile == INVALID_HANDLE_VALUE)
+				{
+					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+					CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
+				}
+				FILETIME ftWrite;
+				if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
+				{
+					CloseHandle(hFile);
+					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+					CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
+				}
+				ULARGE_INTEGER l;
+				l.LowPart = ftWrite.dwLowDateTime;
+				l.HighPart = ftWrite.dwHighDateTime;
+				CloseHandle(hFile);
+				return PathLastChange{ numeric_cast<uint64>(l.QuadPart) };
+#else
+				struct stat st;
+				if (stat(pathToAbs(path).c_str(), &st) == 0)
+					return PathLastChange{ numeric_cast<uint64>(st.st_mtime) };
+				CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+				CAGE_THROW_ERROR(SystemError, "stat", errno);
+#endif
 			}
 
 			Holder<File> openFile(const String &path, const FileMode &mode)
@@ -590,92 +420,138 @@ namespace cage
 				return realNewFile(pathJoin(myPath, path), mode);
 			}
 
-			Holder<DirectoryList> listDirectory(const String &path) const
+			Holder<PointerRange<String>> listDirectory(const String &path) const
 			{
-				return realNewDirectoryList(pathJoin(myPath, path));
+				PointerRangeHolder<String> res;
+				DirectoryListReal list(pathJoin(myPath, path));
+				while (list.valid())
+				{
+					res.push_back(pathJoin(list.myPath, list.name()));
+					list.next();
+				}
+				return res;
 			}
 		};
+
+		String pathWorkingDirImpl()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+
+			wchar_t buffer[String::MaxLength + 1];
+			uint32 len = GetCurrentDirectoryW(String::MaxLength, buffer);
+			if (len <= 0)
+				CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
+			return pathSimplify(narrow({ buffer, buffer + len }));
+
+#else
+
+			char buffer[String::MaxLength + 1];
+			if (getcwd(buffer, String::MaxLength) != nullptr)
+				return pathSimplify(buffer);
+			CAGE_THROW_ERROR(Exception, "getcwd");
+
+#endif
+		}
+
+		String executableFullPathImpl()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+
+			wchar_t buffer[String::MaxLength];
+			uint32 len = GetModuleFileNameW(nullptr, (wchar_t *)&buffer, String::MaxLength);
+			if (len == 0)
+				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
+			return pathSimplify(narrow({ buffer, buffer + len }));
+
+#elif defined(CAGE_SYSTEM_LINUX)
+
+			char buffer[String::MaxLength];
+			char id[String::MaxLength];
+			sprintf(id, "/proc/%d/exe", getpid());
+			sint32 len = readlink(id, buffer, String::MaxLength);
+			if (len == -1)
+				CAGE_THROW_ERROR(SystemError, "readlink", errno);
+			return pathSimplify(String({ buffer, buffer + len }));
+
+#elif defined(CAGE_SYSTEM_MAC)
+
+			char buffer[String::MaxLength];
+			uint32 len = sizeof(buffer);
+			if (_NSGetExecutablePath(buffer, &len) != 0)
+				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
+			len = detail::strlen(buffer);
+			return pathSimplify(String({ buffer, buffer + len }));
+
+#else
+
+#error This operating system is not supported
+
+#endif
+		}
+	}
+
+	Holder<File> realNewFile(const String &path, const FileMode &mode)
+	{
+		return systemMemory().createImpl<File, FileReal>(path, mode);
+	}
+
+	PathTypeFlags realType(const String &path)
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+		auto a = GetFileAttributesW(Widen(path));
+		if (a == INVALID_FILE_ATTRIBUTES)
+			return PathTypeFlags::NotFound;
+		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+			return PathTypeFlags::Directory;
+		else
+			return PathTypeFlags::File;
+#else
+		struct stat st;
+		if (stat(path.c_str(), &st) != 0)
+			return PathTypeFlags::NotFound;
+		if ((st.st_mode & S_IFDIR) == S_IFDIR)
+			return PathTypeFlags::Directory;
+		if ((st.st_mode & S_IFREG) == S_IFREG)
+			return PathTypeFlags::File;
+		return PathTypeFlags::None;
+#endif
+	}
+
+	void realTryFlushFile(File *f_)
+	{
+		if (FileReal *f = dynamic_cast<FileReal *>(f_))
+			fflush(f->f);
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path)
 	{
-		auto a = std::make_shared<ArchiveReal>(path);
-		return a;
+		return std::make_shared<ArchiveReal>(path);
 	}
 
-	namespace
+	String pathWorkingDir()
 	{
-		class FilesystemWatcherImpl : public FilesystemWatcher, private FW::FileWatchListener
-		{
-		public:
-			FlatSet<String, StringComparatorFast> files;
-			Holder<FW::FileWatcher> fw;
-			Holder<Timer> clock;
-
-			FilesystemWatcherImpl()
-			{
-				fw = systemMemory().createHolder<FW::FileWatcher>();
-				clock = newTimer();
-			}
-
-			String waitForChange(uint64 time)
-			{
-				clock->reset();
-				while (files.empty())
-				{
-					fw->update();
-					if (files.empty() && clock->duration() > time)
-						return "";
-					else
-						threadSleep(1000 * 100);
-				}
-				const String res = *files.begin();
-				files.erase(files.begin());
-				return res;
-			}
-
-			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
-			{
-				files.insert(pathJoin(dir.c_str(), filename.c_str()));
-			}
-
-			void registerPath(const String &path)
-			{
-				fw->addWatch(path.c_str(), this);
-				Holder<DirectoryList> dl = newDirectoryList(path);
-				while (dl->valid())
-				{
-					const String p = dl->fullPath();
-					const PathTypeFlags type = realType(p);
-					if (any(type & PathTypeFlags::Directory))
-						registerPath(p);
-					dl->next();
-				}
-			}
-		};
+		static const String dir = pathWorkingDirImpl();
+		CAGE_ASSERT(dir == pathWorkingDirImpl());
+		return dir;
 	}
 
-	void FilesystemWatcher::registerPath(const String &path_)
+	namespace detail
 	{
-		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
-		const String path = pathToAbs(path_);
-		const PathTypeFlags type = realType(path); // FilesystemWatcher works with real filesystem only!
-		if (none(type & PathTypeFlags::Directory))
+		String executableFullPath()
 		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "path must be existing folder");
+			static const String pth = executableFullPathImpl();
+			return pth;
 		}
-		impl->registerPath(path);
-	}
 
-	String FilesystemWatcher::waitForChange(uint64 time)
-	{
-		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
-		return impl->waitForChange(time);
-	}
-
-	Holder<FilesystemWatcher> newFilesystemWatcher()
-	{
-		return systemMemory().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
+		String executableFullPathNoExe()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			String p = executableFullPath();
+			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
+			return subString(p, 0, p.length() - 4);
+#else
+			return executableFullPath();
+#endif
+		}
 	}
 }

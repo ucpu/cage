@@ -1,4 +1,5 @@
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/string.h> // StringComparatorFast
 #include <cage-core/serialization.h> // bufferView
@@ -6,10 +7,8 @@
 
 #include "files.h"
 
-#include <vector>
 #include <algorithm>
-
-#include <zlib.h>
+#include <zlib.h> // crc32_z
 
 namespace cage
 {
@@ -115,9 +114,6 @@ namespace cage
 			uint16 nameLength = 0; // bytes
 			uint16 extraFieldLength = 0; // bytes
 		};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
 		struct CDFileHeader
 		{
 			uint32 signature = 0x02014b50;
@@ -137,6 +133,17 @@ namespace cage
 			uint16 internalFileAttributes =  0;
 			uint32 externalFileAttributes = 0; // 0x10 for directories or 0x80 for files
 			uint32 relativeOffsetOfLocalFileHeader = 0;
+		};
+		struct EndOfCentralDirectoryRecord
+		{
+			uint32 signature = 0x06054b50;
+			uint16 numberOfThisDisk = 0;
+			uint16 diskWhereCDStarts = 0;
+			uint16 numberOfCDFRecordsOnThisDisk = 0;
+			uint16 totalNumberOfCDFRecords = 0;
+			uint32 sizeOfCD = 0; // bytes
+			uint32 offsetOfCD = 0; // bytes
+			uint16 commentLength = 0; // bytes
 		};
 #pragma pack(pop)
 
@@ -163,20 +170,6 @@ namespace cage
 		{
 			return StringComparatorFast()(a.name, b);
 		}
-
-#pragma pack(push, 1)
-		struct EndOfCentralDirectoryRecord
-		{
-			uint32 signature = 0x06054b50;
-			uint16 numberOfThisDisk = 0;
-			uint16 diskWhereCDStarts = 0;
-			uint16 numberOfCDFRecordsOnThisDisk = 0;
-			uint16 totalNumberOfCDFRecords = 0;
-			uint32 sizeOfCD = 0; // bytes
-			uint32 offsetOfCD = 0; // bytes
-			uint16 commentLength = 0; // bytes
-		};
-#pragma pack(pop)
 
 		LocalFileHeader deriveLocal(const CDFileHeaderEx &e)
 		{
@@ -576,7 +569,7 @@ namespace cage
 				removeNoLock(path);
 			}
 
-			uint64 lastChange(const String &path) const override
+			PathLastChange lastChange(const String &path) const override
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
@@ -584,7 +577,7 @@ namespace cage
 			}
 
 			Holder<File> openFile(const String &path, const FileMode &mode) override;
-			Holder<DirectoryList> listDirectory(const String &path) const override;
+			Holder<PointerRange<String>> listDirectory(const String &path) const override;
 		};
 
 		// file contained within the zip archive
@@ -779,67 +772,30 @@ namespace cage
 			}
 		};
 
-		// listing a directory contained within a zip archive
-		struct DirectoryListZip : public DirectoryListAbstract
-		{
-			const std::shared_ptr<const ArchiveZip> a;
-			std::vector<String> names;
-			uint32 index = 0;
-
-			DirectoryListZip(const std::shared_ptr<const ArchiveZip> &archive, const String &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive)
-			{
-				CAGE_ASSERT(isPathValid(path));
-				ScopeLock l(a->mutex);
-				names.reserve(a->files.size());
-				for (const auto &it : a->files)
-				{
-					const String par = pathJoin(it.name, "..");
-					if (par == path)
-					{
-						const String name = pathExtractFilename(it.name);
-						names.push_back(name);
-					}
-				}
-			}
-
-			bool valid() const override
-			{
-				return index < names.size();
-			}
-
-			String name() const override
-			{
-				CAGE_ASSERT(valid());
-				return names[index];
-			}
-
-			void next() override
-			{
-				CAGE_ASSERT(valid());
-				index++;
-			}
-		};
-
 		Holder<File> ArchiveZip::openFile(const String &path, const FileMode &mode)
 		{
 			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
-		Holder<DirectoryList> ArchiveZip::listDirectory(const String &path) const
+		Holder<PointerRange<String>> ArchiveZip::listDirectory(const String &path) const
 		{
-			return systemMemory().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
+			CAGE_ASSERT(isPathValid(path));
+			ScopeLock l(mutex);
+			PointerRangeHolder<String> names;
+			names.reserve(files.size());
+			for (const auto &it : files)
+			{
+				const String par = pathJoin(it.name, "..");
+				if (par == path)
+					names.push_back(pathJoin(myPath, it.name));
+			}
+			return names;
 		}
 	}
 
 	void archiveCreateZip(const String &path, const String &options)
 	{
 		ArchiveZip z(path, options);
-	}
-
-	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f)
-	{
-		auto a = std::make_shared<ArchiveZip>(std::move(f));
-		return a;
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f)

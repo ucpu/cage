@@ -10,7 +10,7 @@
 
 namespace
 {
-	const String directories[2] = {
+	constexpr const String directories[2] = {
 		"testdir/files",
 		"testdir/archive.zip"
 	};
@@ -65,12 +65,9 @@ namespace
 		uint32 i = 0;
 		for (const String &dir : directories)
 		{
-			Holder<DirectoryList> f = newDirectoryList(pathJoin(dir, name));
-			while (f->valid())
-			{
-				p[i]->insert(std::make_pair<String, bool>(f->name(), f->isDirectory()));
-				f->next();
-			}
+			const auto list = pathListDirectory(pathJoin(dir, name));
+			for (const String &n : list)
+				p[i]->insert(std::make_pair<String, bool>(pathExtractFilename(n), any(pathType(n) & (PathTypeFlags::Directory | PathTypeFlags::Archive))));
 			i++;
 		}
 	}
@@ -79,7 +76,7 @@ namespace
 	{
 		const PathTypeFlags a = pathType(pathJoin(directories[0], name));
 		const PathTypeFlags b = pathType(pathJoin(directories[1], name));
-		constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
+		static constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
 		CAGE_TEST((a & msk) == (b & msk));
 		return b;
 	}
@@ -102,7 +99,7 @@ namespace
 		{
 			if (i.second)
 			{
-				String p = pathJoin(name, i.first);
+				const String p = pathJoin(name, i.first);
 				testListRecursive(p);
 			}
 		}
@@ -349,7 +346,7 @@ void testArchives()
 	{
 		CAGE_TESTCASE("remove a file");
 		{
-			Holder<DirectoryList> list = newDirectoryList(directories[1]); // keep the archive open
+			Holder<void> tmp = detail::pathKeepOpen(directories[1]); // keep the archive open
 			for (const String &dir : directories)
 				pathRemove(pathJoin(dir, "multi/2"));
 			testListRecursive(); // listing must work even while the changes to the archive are not yet written out
@@ -392,8 +389,7 @@ void testArchives()
 		const String arch = directories[1];
 		{
 			CAGE_TESTCASE("with open archive");
-			Holder<DirectoryList> list = newDirectoryList(arch); // ensure the archive is open
-			CAGE_TEST(list->valid()); // sanity check that there is at least one file in the archive
+			Holder<void> tmp = detail::pathKeepOpen(arch); // keep the archive open
 			CAGE_TEST_THROWN(readFile(arch));
 		}
 		{
@@ -408,7 +404,7 @@ void testArchives()
 		{
 			CAGE_TESTCASE("remove");
 			{
-				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
 				CAGE_TEST_THROWN(pathRemove("testdir/arch2.zip"));
 			}
 			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
@@ -416,7 +412,7 @@ void testArchives()
 		{
 			CAGE_TESTCASE("move from");
 			{
-				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
 				CAGE_TEST_THROWN(pathMove("testdir/arch2.zip", "testdir/arch3.zip"));
 			}
 			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
@@ -425,11 +421,25 @@ void testArchives()
 		{
 			CAGE_TESTCASE("move to");
 			{
-				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
 				CAGE_TEST_THROWN(pathMove("testdir/archive.zip", "testdir/arch2.zip"));
 			}
 			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
 			CAGE_TEST(any(pathType("testdir/archive.zip") & PathTypeFlags::Archive)); // sanity check
+		}
+		{
+			CAGE_TESTCASE("pathType while the file is in use");
+			{
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
+				CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // try pythType on the archive itself
+			}
+			{
+				writeFile("testdir/arch2.zip/abc.txt");
+				Holder<File> f = writeFile("testdir/arch2.zip/def.txt");
+				CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // try pythType on the archive itself
+				CAGE_TEST(any(pathType("testdir/arch2.zip/abc.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
+				// todo CAGE_TEST(any(pathType("testdir/arch2.zip/def.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
+			}
 		}
 		{
 			CAGE_TESTCASE("allowed remove");

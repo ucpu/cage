@@ -156,13 +156,13 @@ namespace cage
 				{
 					if (pathIsAbs(config.assetsFolderName))
 					{
-						if (any(pathType(config.assetsFolderName) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
+						if (pathIsDirectory(config.assetsFolderName))
 							return config.assetsFolderName;
 					}
 					try
 					{
 						detail::OverrideException oe;
-						return pathSearchTowardsRoot(config.assetsFolderName, pathWorkingDir(), PathTypeFlags::Directory | PathTypeFlags::Archive);
+						return pathSearchTowardsRoot(config.assetsFolderName, PathTypeFlags::Directory | PathTypeFlags::Archive);
 					}
 					catch (const Exception &)
 					{

@@ -90,26 +90,24 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing directory '" + path + "'");
 
 		std::set<String> files, directories;
-		Holder<DirectoryList> dl = newDirectoryList(path);
-		while (dl->valid())
+		const auto list = pathListDirectory(path);
+		for (const String &p : list)
 		{
-			String p = dl->name();
-			if (dl->isDirectory())
+			if (any(pathType(p) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
 				directories.insert(p);
 			else
 				files.insert(p);
-			dl->next();
 		}
 
 		if (recursive)
 		{
 			for (const auto &d : directories)
-				analyzeFolder(pathJoin(path, d));
+				analyzeFolder(d);
 		}
 
 		AssetsLists assets;
 		for (auto &f : files)
-			mergeLists(assets, analyzeFile(pathJoin(path, f)));
+			mergeLists(assets, analyzeFile(f));
 
 		if (assets.empty())
 		{
@@ -119,7 +117,7 @@ namespace
 		{
 			if (generatePacks)
 			{
-				Holder<File> f = newFile(pathJoin(path, "analyzed.pack"), FileMode(false, true));
+				Holder<File> f = writeFile(pathJoin(path, "analyzed.pack"));
 				f->writeLine("[]");
 				for (const auto &a : assets)
 				{
@@ -130,7 +128,7 @@ namespace
 				assets["pack"].insert("analyzed.pack");
 			}
 
-			Holder<File> f = newFile(pathJoin(path, "analyzed.assets"), FileMode(false, true));
+			Holder<File> f = writeFile(pathJoin(path, "analyzed.assets"));
 			for (const auto &a : assets)
 			{
 				f->writeLine("[]");

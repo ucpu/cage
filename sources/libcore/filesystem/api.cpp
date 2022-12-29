@@ -9,6 +9,8 @@
 
 namespace cage
 {
+	void archiveCreateZip(const String &path, const String &options);
+
 	bool FileMode::valid() const
 	{
 		if (!read && !write)
@@ -147,80 +149,6 @@ namespace cage
 		return newFile(path, FileMode(false, true));
 	}
 
-	bool DirectoryList::valid() const
-	{
-		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
-		return impl->valid();
-	}
-
-	String DirectoryList::name() const
-	{
-		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
-		return impl->name();
-	}
-
-	String DirectoryList::fullPath() const
-	{
-		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
-		return impl->fullPath();
-	}
-
-	PathTypeFlags DirectoryList::type() const
-	{
-		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
-		return pathType(impl->fullPath());
-	}
-
-	bool DirectoryList::isDirectory() const
-	{
-		return any(type() & (PathTypeFlags::Directory | PathTypeFlags::Archive));
-	}
-
-	uint64 DirectoryList::lastChange() const
-	{
-		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
-		return pathLastChange(impl->fullPath());
-	}
-
-	Holder<File> DirectoryList::openFile(const FileMode &mode)
-	{
-		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
-		return newFile(impl->fullPath(), mode);
-	}
-
-	Holder<File> DirectoryList::readFile()
-	{
-		return openFile(FileMode(true, false));
-	}
-
-	Holder<File> DirectoryList::writeFile()
-	{
-		return openFile(FileMode(false, true));
-	}
-
-	Holder<DirectoryList> DirectoryList::listDirectory()
-	{
-		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
-		if (!isDirectory())
-		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + impl->fullPath() + "'");
-			CAGE_THROW_ERROR(Exception, "path is not directory");
-		}
-		return newDirectoryList(impl->fullPath());
-	}
-
-	void DirectoryList::next()
-	{
-		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
-		impl->next();
-	}
-
-	Holder<DirectoryList> newDirectoryList(const String &path)
-	{
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
-		return a->listDirectory(p);
-	}
-
 	PathTypeFlags pathType(const String &path)
 	{
 		if (!pathIsValid(path))
@@ -236,41 +164,21 @@ namespace cage
 		return any(pathType(path) & PathTypeFlags::File);
 	}
 
-	void pathCreateDirectories(const String &path)
+	bool pathIsDirectory(const String &path)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
-		a->createDirectories(p);
+		return any(pathType(path) & (PathTypeFlags::Directory | PathTypeFlags::Archive));
 	}
 
-	void pathCreateArchive(const String &path, const String &options)
-	{
-		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
-		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
-		}
-		archiveCreateZip(path, options);
-	}
-
-	void pathMove(const String &from, const String &to)
-	{
-		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
-		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
-		if (af == at)
-			return af->move(pf, pt);
-		mixedMove(af, pf, at, pt);
-	}
-
-	void pathRemove(const String &path)
-	{
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
-		a->remove(p);
-	}
-
-	uint64 pathLastChange(const String &path)
+	PathLastChange pathLastChange(const String &path)
 	{
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusiveThrow);
 		return a->lastChange(p);
+	}
+
+	Holder<PointerRange<String>> pathListDirectory(const String &path)
+	{
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
+		return a->listDirectory(p);
 	}
 
 	String pathSearchTowardsRoot(const String &name, PathTypeFlags type)
@@ -337,5 +245,54 @@ namespace cage
 			}
 		}
 		return result;
+	}
+
+	void pathCreateDirectories(const String &path)
+	{
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
+		a->createDirectories(p);
+	}
+
+	void pathCreateArchive(const String &path, const String &options)
+	{
+		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
+		{
+			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
+		}
+		archiveCreateZip(path, options);
+	}
+
+	void pathMove(const String &from, const String &to)
+	{
+		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
+		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
+		if (af == at)
+			return af->move(pf, pt);
+		{
+			Holder<File> f = af->openFile(pf, FileMode(true, false));
+			Holder<File> t = at->openFile(pt, FileMode(false, true));
+			// todo split big files into multiple smaller steps
+			Holder<PointerRange<char>> b = f->readAll();
+			f->close();
+			t->write(b);
+			t->close();
+		}
+		af->remove(pf);
+	}
+
+	void pathRemove(const String &path)
+	{
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
+		a->remove(p);
+	}
+
+	namespace detail
+	{
+		Holder<void> pathKeepOpen(const String &path)
+		{
+			auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
+			return systemMemory().createHolder<std::shared_ptr<ArchiveAbstract>>(std::move(a)).cast<void>();
+		}
 	}
 }

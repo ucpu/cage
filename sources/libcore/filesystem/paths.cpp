@@ -1,6 +1,5 @@
 #include <cage-core/string.h>
-
-#include "files.h"
+#include <cage-core/files.h>
 
 #include <vector>
 

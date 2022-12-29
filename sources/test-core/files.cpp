@@ -75,53 +75,14 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory");
-		Holder<DirectoryList> fs = newDirectoryList("testdir/files");
-		CAGE_TEST(fs);
+		const auto list = pathListDirectory("testdir/files");
+		CAGE_TEST(list);
 		std::set<String> mp;
-		while (fs->valid())
-		{
-			mp.insert(fs->name());
-			fs->next();
-		}
+		for (const String &n : list)
+			mp.insert(pathExtractFilename(n));
 		CAGE_TEST(mp.size() == 32);
 		for (uint32 i = 1; i <= 32; i++)
 			CAGE_TEST(mp.count(Stringizer() + i));
-	}
-
-	{
-		CAGE_TESTCASE("list directory - test directories");
-		Holder<DirectoryList> fs = newDirectoryList("testdir");
-		CAGE_TEST(fs);
-		bool found = false;
-		while (fs->valid())
-		{
-			if (fs->name() == "files")
-			{
-				CAGE_TEST(fs->isDirectory());
-				found = true;
-			}
-			fs->next();
-		}
-		CAGE_TEST(found);
-	}
-
-	{
-		CAGE_TESTCASE("list directory - test empty file");
-		writeFile("testdir/empty.txt");
-		Holder<DirectoryList> fs = newDirectoryList("testdir");
-		CAGE_TEST(fs);
-		bool found = false;
-		while (fs->valid())
-		{
-			if (fs->name() == "empty.txt")
-			{
-				CAGE_TEST(any(fs->type() & PathTypeFlags::File));
-				CAGE_TEST(!fs->isDirectory());
-				found = true;
-			}
-			fs->next();
-		}
-		CAGE_TEST(found);
 	}
 
 	{
@@ -149,14 +110,8 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list files in subsequent directory");
-		Holder<DirectoryList> fs = newDirectoryList("testdir/files/d/b");
-		uint32 cnt = 0;
-		while (fs->valid())
-		{
-			cnt++;
-			fs->next();
-		}
-		CAGE_TEST(cnt == 4, cnt);
+		const auto list = pathListDirectory("testdir/files/d/b");
+		CAGE_TEST(list->size() == 4);
 	}
 
 	{
@@ -250,7 +205,7 @@ void testFiles()
 		CAGE_TEST_THROWN(pathLastChange(invalidPath));
 		CAGE_TEST_THROWN(pathCreateDirectories(invalidPath));
 		CAGE_TEST_THROWN(pathCreateArchive(invalidPath));
-		CAGE_TEST_THROWN(newDirectoryList(invalidPath));
+		CAGE_TEST_THROWN(pathListDirectory(invalidPath));
 		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
 	}
 
@@ -293,13 +248,10 @@ void testFiles()
 
 		{
 			CAGE_TESTCASE("list files");
-			Holder<DirectoryList> fs = newDirectoryList("testdir/unicode");
-			CAGE_TEST(fs);
-			while (fs->valid())
-			{
-				CAGE_LOG(SeverityEnum::Info, "unicode-test", fs->name());
-				fs->next();
-			}
+			const auto list = pathListDirectory("testdir/unicode");
+			CAGE_TEST(list);
+			for (const String &n : list)
+				CAGE_LOG(SeverityEnum::Info, "unicode-test", n);
 		}
 
 		{

@@ -7,57 +7,14 @@
 
 #include "files.h"
 
-#include <robin_hood.h>
-
 #include <vector>
 #include <atomic>
+#include <map>
 
 namespace cage
 {
-	FileAbstract::FileAbstract(const String &path, const FileMode &mode) : myPath(path), myMode(mode)
-	{}
-
-	void FileAbstract::reopenForModification()
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reopening abstract file");
-	}
-
-	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reading with offset from abstract file");
-	}
-
-	FileMode FileAbstract::mode() const
-	{
-		return myMode;
-	}
-
-	ArchiveAbstract::ArchiveAbstract(const String & path) : myPath(path)
-	{
-		CAGE_ASSERT(path == pathSimplify(path));
-	}
-
-	DirectoryListAbstract::DirectoryListAbstract(const String &path) : myPath(path)
-	{}
-
-	String DirectoryListAbstract::fullPath() const
-	{
-		return pathJoin(myPath, name());
-	}
-
-	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const String &pf, std::shared_ptr<ArchiveAbstract> &at, const String &pt)
-	{
-		{
-			Holder<File> f = af->openFile(pf, FileMode(true, false));
-			Holder<File> t = at->openFile(pt, FileMode(false, true));
-			// todo split big files into multiple smaller steps
-			Holder<PointerRange<char>> b = f->readAll();
-			f->close();
-			t->write(b);
-			t->close();
-		}
-		af->remove(pf);
-	}
+	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f);
+	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path);
 
 	namespace
 	{
@@ -111,7 +68,7 @@ namespace cage
 			}
 
 		private:
-			robin_hood::unordered_map<String, std::weak_ptr<ArchiveAbstract>> map;
+			std::unordered_map<String, std::weak_ptr<ArchiveAbstract>> map;
 			Holder<Mutex> mutex = newMutex(); // access to map must be serialized because the _erase_ method can be called on any thread and outside the archiveFindTowardsRootMutex
 		};
 
@@ -223,6 +180,31 @@ namespace cage
 			static Holder<Mutex> *mut = new Holder<Mutex>(newMutex()); // intentional leak
 			return +*mut;
 		}
+	}
+
+	FileAbstract::FileAbstract(const String &path, const FileMode &mode) : myPath(path), myMode(mode)
+	{
+		CAGE_ASSERT(path == pathSimplify(path));
+	}
+
+	void FileAbstract::reopenForModification()
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "reopening abstract file");
+	}
+
+	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "reading with offset from abstract file");
+	}
+
+	FileMode FileAbstract::mode() const
+	{
+		return myMode;
+	}
+
+	ArchiveAbstract::ArchiveAbstract(const String & path) : myPath(path)
+	{
+		CAGE_ASSERT(path == pathSimplify(path));
 	}
 
 	ArchiveWithPath archiveFindTowardsRoot(const String &path_, ArchiveFindModeEnum mode)

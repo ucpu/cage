@@ -3,6 +3,7 @@
 #include <cage-core/debug.h>
 #include <cage-core/math.h>
 #include <cage-core/hashString.h>
+#include <cage-core/files.h>
 
 #include "database.h"
 
@@ -18,7 +19,7 @@ extern std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 extern std::map<String, Holder<Asset>, StringComparatorFast> assets;
 extern std::set<String, StringComparatorFast> corruptedDatabanks;
 extern std::set<uint32> injectedNames;
-extern uint64 lastModificationTime;
+extern PathLastChange lastModificationTime;
 bool verdictValue = false;
 
 void loadSchemes();
@@ -29,7 +30,7 @@ void checkOutputDir();
 void moveIntermediateFiles();
 bool isNameDatabank(const String &name);
 void notifierSendNotifications();
-std::map<String, uint64, StringComparatorFast> findFiles();
+std::map<String, PathLastChange, StringComparatorFast> findFiles();
 
 namespace
 {
@@ -186,9 +187,9 @@ namespace
 		}
 
 		{ // update modification time
-			lastModificationTime = 0;
+			lastModificationTime = {};
 			for (const auto &f : files)
-				lastModificationTime = max(lastModificationTime, f.second);
+				lastModificationTime.data = max(lastModificationTime.data, f.second.data);
 		}
 	}
 

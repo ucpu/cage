@@ -6,7 +6,29 @@
 namespace cage
 {
 	struct MemoryBuffer;
-	enum class PathTypeFlags : uint32;
+
+	// string manipulation only (does not touch actual filesystem)
+
+	CAGE_CORE_API bool pathIsValid(const String &path);
+	CAGE_CORE_API bool pathIsAbs(const String &path);
+	CAGE_CORE_API String pathToRel(const String &path, const String &ref = ""); // may return absolute path if it cannot be converted
+	CAGE_CORE_API String pathToAbs(const String &path);
+	CAGE_CORE_API String pathJoin(const String &a, const String &b);
+	CAGE_CORE_API String pathJoinUnchecked(const String &a, const String &b); // joins paths with slash where needed, without validating the arguments
+	CAGE_CORE_API String pathSimplify(const String &path);
+	CAGE_CORE_API String pathReplaceInvalidCharacters(const String &path, const String &replacement = "_", bool allowDirectories = false);
+
+	// path decomposition
+
+	CAGE_CORE_API void pathDecompose(const String &input, String &drive, String &directory, String &file, String &extension);
+	CAGE_CORE_API String pathExtractDrive(const String &input);
+	CAGE_CORE_API String pathExtractDirectory(const String &input);
+	CAGE_CORE_API String pathExtractDirectoryNoDrive(const String &input);
+	CAGE_CORE_API String pathExtractFilename(const String &input);
+	CAGE_CORE_API String pathExtractFilenameNoExtension(const String &input);
+	CAGE_CORE_API String pathExtractExtension(const String &input);
+
+	// file
 
 	struct CAGE_CORE_API FileMode
 	{
@@ -53,24 +75,6 @@ namespace cage
 	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode = FileMode(true, true));
 	CAGE_CORE_API Holder<File> newFileBuffer();
 
-	class CAGE_CORE_API DirectoryList : private Immovable
-	{
-	public:
-		bool valid() const;
-		String name() const;
-		String fullPath() const;
-		PathTypeFlags type() const;
-		bool isDirectory() const; // directory or archive
-		uint64 lastChange() const;
-		Holder<File> openFile(const FileMode &mode);
-		Holder<File> readFile();
-		Holder<File> writeFile();
-		Holder<DirectoryList> listDirectory();
-		void next();
-	};
-
-	CAGE_CORE_API Holder<DirectoryList> newDirectoryList(const String &path);
-
 	// receive operating system issued notifications about filesystem changes
 	// use registerPath to add a folder (and all of its subdirectories) to the watch list
 	class CAGE_CORE_API FilesystemWatcher : private Immovable
@@ -81,6 +85,8 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<FilesystemWatcher> newFilesystemWatcher();
+
+	// filesystem manipulation
 
 	enum class PathTypeFlags : uint32
 	{
@@ -93,47 +99,22 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(PathTypeFlags);
 
-	// string manipulation only (does not touch actual filesystem)
-
-	CAGE_CORE_API bool pathIsValid(const String &path);
-	CAGE_CORE_API bool pathIsAbs(const String &path);
-	CAGE_CORE_API String pathToRel(const String &path, const String &ref = ""); // may return absolute path if it cannot be converted
-	CAGE_CORE_API String pathToAbs(const String &path);
-	CAGE_CORE_API String pathJoin(const String &a, const String &b);
-	CAGE_CORE_API String pathJoinUnchecked(const String &a, const String &b); // joins paths with slash where needed, without validating the arguments
-	CAGE_CORE_API String pathSimplify(const String &path);
-	CAGE_CORE_API String pathReplaceInvalidCharacters(const String &path, const String &replacement = "_", bool allowDirectories = false);
-
-	// path decomposition
-
-	CAGE_CORE_API void pathDecompose(const String &input, String &drive, String &directory, String &file, String &extension);
-	CAGE_CORE_API String pathExtractDrive(const String &input);
-	CAGE_CORE_API String pathExtractDirectory(const String &input);
-	CAGE_CORE_API String pathExtractDirectoryNoDrive(const String &input);
-	CAGE_CORE_API String pathExtractFilename(const String &input);
-	CAGE_CORE_API String pathExtractFilenameNoExtension(const String &input);
-	CAGE_CORE_API String pathExtractExtension(const String &input);
-
-	// filesystem manipulation
-
 	CAGE_CORE_API PathTypeFlags pathType(const String &path);
 	CAGE_CORE_API bool pathIsFile(const String &path);
-
-	// create all parent folders for the entire path
-	CAGE_CORE_API void pathCreateDirectories(const String &path);
-
-	// create an empty archive at the specified path, it can be populated afterwards
-	CAGE_CORE_API void pathCreateArchive(const String &path, const String &options = "");
-
-	// moves (renames) a file or directory
-	CAGE_CORE_API void pathMove(const String &from, const String &to);
-
-	// permanently removes a file or folder including all sub-folders
-	CAGE_CORE_API void pathRemove(const String &path);
+	CAGE_CORE_API bool pathIsDirectory(const String &path); // directory or archive
 
 	// path modification time is not related to any other source of time
 	// the only valid operation is to compare it to repeated calls to pathLastChange
-	CAGE_CORE_API uint64 pathLastChange(const String &path);
+	struct CAGE_CORE_API PathLastChange
+	{
+		uint64 data = 0;
+		auto operator <=> (const PathLastChange &) const = default;
+		bool operator == (const PathLastChange &) const = default;
+	};
+	CAGE_CORE_API PathLastChange pathLastChange(const String &path);
+
+	// enumerate all files and folders in a directory
+	CAGE_CORE_API Holder<PointerRange<String>> pathListDirectory(const String &path);
 
 	// example, name = logo.png, whereToStart = /abc/def/ghi will look for files at these paths (in order):
 	// /abc/def/ghi/logo.png
@@ -152,12 +133,27 @@ namespace cage
 	// and stops searching on first path that does not exist (except all zeros)
 	CAGE_CORE_API Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute = '$', uint32 limit = 1000);
 
+	// create all parent folders for the entire path
+	CAGE_CORE_API void pathCreateDirectories(const String &path);
+
+	// create an empty archive at the specified path, it can be populated afterwards
+	CAGE_CORE_API void pathCreateArchive(const String &path, const String &options = "");
+
+	// moves (renames) a file or directory
+	CAGE_CORE_API void pathMove(const String &from, const String &to);
+
+	// permanently removes a file or folder including all sub-folders
+	CAGE_CORE_API void pathRemove(const String &path);
+
 	CAGE_CORE_API String pathWorkingDir();
 
 	namespace detail
 	{
 		CAGE_CORE_API String executableFullPath();
 		CAGE_CORE_API String executableFullPathNoExe();
+
+		// open a path in an archive preventing closing it to optimize bulk operations
+		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);
 	}
 }
 
