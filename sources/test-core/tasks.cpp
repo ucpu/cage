@@ -605,7 +605,7 @@ namespace
 			CAGE_TESTCASE("blocking array");
 			TaskTester arr[20];
 			tasksRunBlocking<TaskTester, 3>("blocking", arr);
-			for (TaskTester &t : arr)
+			for (const TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
 				CAGE_TEST(t.invocationsSum == 0);
@@ -616,7 +616,7 @@ namespace
 			CAGE_TESTCASE("async array");
 			Holder<PointerRange<TaskTester>> arr = newTaskTesterArray(20);
 			tasksRunAsync<TaskTester, 3>("async", arr.share())->wait();
-			for (TaskTester &t : arr)
+			for (const TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
 				CAGE_TEST(t.invocationsSum == 0);

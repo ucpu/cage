@@ -20,7 +20,7 @@ namespace cage
 			uint32 elements = 0;
 		};
 
-		using TaskRunner = void (*)(const struct TaskRunnerConfig &task, uint32 idx);
+		using TaskRunner = void (*)(const TaskRunnerConfig &task, uint32 idx);
 
 		struct CAGE_CORE_API TaskCreateConfig : private Noncopyable
 		{
@@ -77,10 +77,10 @@ namespace cage
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
-			tsk.function = *(Delegate<void()> *) & function;
+			tsk.function = reinterpret_cast<Delegate<void()> &>(function);
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				Delegate<void(T &)> function = *(Delegate<void(T &)> *) & task.function;
-				PointerRange<T> &data = *(PointerRange<T> *) + task.data;
+				const Delegate<void(T &)> function = reinterpret_cast<const Delegate<void(T &)> &>(task.function);
+				const PointerRange<T> &data = *static_cast<PointerRange<T> *>(+task.data);
 				const auto range = privat::aggRange<Aggregation>(idx, task.elements);
 				for (uint32 i = range.first; i < range.second; i++)
 					function(data[i]);
@@ -98,7 +98,7 @@ namespace cage
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				PointerRange<T> &data = *(PointerRange<T> *) + task.data;
+				const PointerRange<T> &data = *static_cast<PointerRange<T> *>(+task.data);
 				const auto range = privat::aggRange<Aggregation>(idx, task.elements);
 				for (uint32 i = range.first; i < range.second; i++)
 					data[i]();
@@ -116,10 +116,10 @@ namespace cage
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
-			tsk.function = *(Delegate<void()> *) & function;
+			tsk.function = reinterpret_cast<Delegate<void()> &>(function);
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				Delegate<void(T &, uint32)> function = *(Delegate<void(T &, uint32)> *) & task.function;
-				T *data = (T *)+task.data;
+				const Delegate<void(T &, uint32)> function = reinterpret_cast<const Delegate<void(T &, uint32)> &>(task.function);
+				T *data = static_cast<T *>(+task.data);
 				function(*data, idx);
 			};
 			tsk.invocations = invocations;
@@ -134,7 +134,7 @@ namespace cage
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				T *data = (T *)+task.data;
+				T *data = static_cast<T *>(+task.data);
 				(*data)(idx);
 			};
 			tsk.invocations = invocations;
