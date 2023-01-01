@@ -361,15 +361,22 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("filesystem watcher");
-		Holder<FilesystemWatcher> w = newFilesystemWatcher();
-		pathCreateDirectories("testdir/watch/dir");
-		w->registerPath("testdir/watch");
-		CAGE_TEST(w->waitForChange(0) == "");
-		writeFile("testdir/watch/1");
-		CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
-		CAGE_TEST(w->waitForChange(0) == "");
-		writeFile("testdir/watch/dir/2");
-		CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
-		CAGE_TEST(w->waitForChange(0) == "");
+		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
+		{
+			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are possibly running on a filesystem that does not support watching");
+		}
+		else
+		{
+			Holder<FilesystemWatcher> w = newFilesystemWatcher();
+			pathCreateDirectories("testdir/watch/dir");
+			w->registerPath("testdir/watch");
+			CAGE_TEST(w->waitForChange(0) == "");
+			writeFile("testdir/watch/1");
+			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
+			CAGE_TEST(w->waitForChange(0) == "");
+			writeFile("testdir/watch/dir/2");
+			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
+			CAGE_TEST(w->waitForChange(0) == "");
+		}
 	}
 }

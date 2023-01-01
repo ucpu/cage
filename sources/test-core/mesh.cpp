@@ -433,7 +433,7 @@ namespace
 			const uint32 initialFacesCount = p->facesCount();
 			{
 				MeshRemoveSmallConfig cfg;
-				cfg.threshold = 4;
+				cfg.threshold = 1;
 				meshRemoveSmall(+p, cfg);
 			}
 			const uint32 f = p->facesCount();

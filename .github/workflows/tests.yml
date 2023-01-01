@@ -221,3 +221,41 @@ jobs:
         cd build/result/debug
         ./cage-test-core
 
+
+  Valgrind:
+    name: valgrind-${{ matrix.tool }}
+    runs-on: ubuntu-latest
+    env:
+      CC: gcc-12
+      CXX: g++-12
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [memcheck, helgrind]
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev nasm valgrind g++-12
+
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --target cage-test-core -- -j3
+
+    - name: Tests
+      run: |
+        cd build/result/relwithdebinfo
+        valgrind --tool=${{ matrix.tool }} ./cage-test-core
+

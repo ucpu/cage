@@ -1291,8 +1291,13 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "mesh remove small requires triangles or lines");
 		}
 
-		msh->indices(inds);
-		meshRemoveInvalid(+msh);
+		if (inds.empty())
+			msh->clear();
+		else
+		{
+			msh->indices(inds);
+			meshRemoveInvalid(+msh);
+		}
 	}
 
 	void meshRemoveOccluded(Mesh *msh, const MeshRemoveOccludedConfig &config)

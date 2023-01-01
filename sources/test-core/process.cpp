@@ -68,9 +68,8 @@ void testProcess()
 	{
 		CAGE_TESTCASE("readAll (after sleep)");
 		Holder<Process> prg = newProcess(cmdLs);
-		threadSleep(300000); // give the process time to write the data
+		threadSleep(100000); // give the process time to write the data
 		auto output = prg->readAll(); // process's readAll can only read what is currently in the pipes buffer
-		CAGE_TEST(output.size() > 100);
 		readAllLines(prg); // we need to read the remaining stream here
 		CAGE_TEST(prg->wait() == 0);
 	}

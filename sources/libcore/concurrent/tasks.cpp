@@ -347,9 +347,9 @@ namespace cage
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
-			tsk.function = *(Delegate<void()> *) & function;
+			tsk.function = *(Delegate<void()> *)&function;
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				Delegate<void(uint32)> function = *(Delegate<void(uint32)> *) & task.function;
+				Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
 				function(idx);
 			};
 			tsk.invocations = invocations;
