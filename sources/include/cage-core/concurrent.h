@@ -33,6 +33,18 @@ namespace cage
 
 	CAGE_CORE_API Holder<RwMutex> newRwMutex();
 
+	// fully exclusive lock
+	// RecursiveMutex may be locked again in the same thread
+	class CAGE_CORE_API RecursiveMutex : private Immovable
+	{
+	public:
+		bool tryLock(); // return true on successfully acquiring the lock
+		void lock();
+		void unlock();
+	};
+
+	CAGE_CORE_API Holder<RecursiveMutex> newRecursiveMutex();
+
 	// blocks all threads until the threshold is reached
 	class CAGE_CORE_API Barrier : private Immovable
 	{

@@ -1,4 +1,5 @@
 #include <cage-core/string.h>
+#include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
 
 #include "files.h"
@@ -180,12 +181,46 @@ namespace cage
 			}
 		};
 
-		class FileReal : public FileAbstract
+		void readAtImpl(PointerRange<char> buffer, uintPtr at, FILE *f)
+		{
+			CAGE_ASSERT(f);
+#ifdef CAGE_SYSTEM_WINDOWS
+			OVERLAPPED o;
+			detail::memset(&o, 0, sizeof(o));
+			o.Offset = (DWORD)at;
+			o.OffsetHigh = (DWORD)((uint64)at >> 32);
+			DWORD r = 0;
+			if (!ReadFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
+				CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+#else
+			if (pread(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
+				CAGE_THROW_ERROR(SystemError, "pread", errno);
+#endif
+		}
+
+		void writeAtImpl(PointerRange<const char> buffer, uintPtr at, FILE *f)
+		{
+			CAGE_ASSERT(f);
+#ifdef CAGE_SYSTEM_WINDOWS
+			OVERLAPPED o;
+			detail::memset(&o, 0, sizeof(o));
+			o.Offset = (DWORD)at;
+			o.OffsetHigh = (DWORD)((uint64)at >> 32);
+			DWORD r = 0;
+			if (!WriteFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
+				CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
+#else
+			if (pwrite(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
+				CAGE_THROW_ERROR(SystemError, "pwrite", errno);
+#endif
+		}
+
+		class FileRealBase : public FileAbstract
 		{
 		public:
 			FILE *f = nullptr;
 
-			FileReal(const String &path, const FileMode &mode) : FileAbstract(path, mode)
+			FileRealBase(const String &path, const FileMode &mode) : FileAbstract(path, mode)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.write)
@@ -203,7 +238,7 @@ namespace cage
 				}
 			}
 
-			~FileReal()
+			~FileRealBase()
 			{
 				if (f)
 				{
@@ -218,42 +253,13 @@ namespace cage
 				}
 			}
 
-			void reopenForModification() override
-			{
-				CAGE_ASSERT(myMode.read && !myMode.write);
-				CAGE_ASSERT(f);
-				myMode.write = true;
-#ifdef CAGE_SYSTEM_WINDOWS
-				f = _wfreopen(Widen(myPath), Widen(myMode.mode()), f);
-#else
-				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
-#endif
-				if (!f)
-				{
-					CAGE_LOG_THROW(Stringizer() + "path: " + myPath);
-					CAGE_THROW_ERROR(SystemError, "freopen", errno);
-				}
-			}
-
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(myMode.read);
 				if (buffer.size() == 0)
 					return;
-
-#ifdef CAGE_SYSTEM_WINDOWS
-				OVERLAPPED o;
-				detail::memset(&o, 0, sizeof(o));
-				o.Offset = (DWORD)at;
-				o.OffsetHigh = (DWORD)((uint64)at >> 32);
-				DWORD r = 0;
-				if (!ReadFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
-					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
-#else
-				if (pread(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
-					CAGE_THROW_ERROR(SystemError, "pread", errno);
-#endif
+				readAtImpl(buffer, at, f);
 			}
 
 			void read(PointerRange<char> buffer) override
@@ -306,6 +312,169 @@ namespace cage
 				auto siz = ftell(f);
 				fseek(f, pos, 0);
 				return numeric_cast<uintPtr>(siz);
+			}
+
+			virtual void flush() = 0;
+		};
+
+		// binary files performs locking on all operations except actual data transfers to/from the drive
+		class FileRealBinary : public FileRealBase
+		{
+		public:
+			Holder<Mutex> mut = newMutex();
+
+			FileRealBinary(const String &path, const FileMode &mode) : FileRealBase(path, mode)
+			{
+				CAGE_ASSERT(!mode.textual);
+			}
+
+			void reopenForModification() override
+			{
+				ScopeLock lock(mut);
+				CAGE_ASSERT(myMode.read && !myMode.write);
+				CAGE_ASSERT(f);
+				myMode.write = true;
+#ifdef CAGE_SYSTEM_WINDOWS
+				f = _wfreopen(Widen(myPath), Widen(myMode.mode()), f);
+#else
+				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
+#endif
+				if (!f)
+				{
+					CAGE_LOG_THROW(Stringizer() + "path: " + myPath);
+					CAGE_THROW_ERROR(SystemError, "freopen", errno);
+				}
+			}
+
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				if (buffer.size() == 0)
+					return;
+				FILE *ff = nullptr;
+				{
+					ScopeLock lock(mut);
+					CAGE_ASSERT(f);
+					CAGE_ASSERT(myMode.read);
+					ff = f;
+				}
+				readAtImpl(buffer, at, ff);
+			}
+
+			void read(PointerRange<char> buffer) override
+			{
+				if (buffer.size() == 0)
+					return;
+				FILE *ff = nullptr;
+				uintPtr at = 0;
+				{
+					ScopeLock lock(mut);
+					CAGE_ASSERT(f);
+					CAGE_ASSERT(myMode.read);
+					ff = f;
+					at = numeric_cast<uintPtr>(ftell(f));
+					if (fseek(f, at + buffer.size(), 0) != 0)
+						CAGE_THROW_ERROR(SystemError, "fseek", errno);
+				}
+				readAtImpl(buffer, at, ff);
+			}
+
+			void write(PointerRange<const char> buffer) override
+			{
+				if (buffer.size() == 0)
+					return;
+				FILE *ff = nullptr;
+				uintPtr at = 0;
+				{
+					ScopeLock lock(mut);
+					CAGE_ASSERT(f);
+					CAGE_ASSERT(myMode.write);
+					ff = f;
+					at = numeric_cast<uintPtr>(ftell(f));
+					if (fseek(f, at + buffer.size(), 0) != 0)
+						CAGE_THROW_ERROR(SystemError, "fseek", errno);
+				}
+				writeAtImpl(buffer, at, ff);
+			}
+
+			void seek(uintPtr position) override
+			{
+				ScopeLock lock(mut);
+				FileRealBase::seek(position);
+			}
+
+			void close() override
+			{
+				ScopeLock lock(mut);
+				FileRealBase::close();
+			}
+
+			uintPtr tell() override
+			{
+				ScopeLock lock(mut);
+				return FileRealBase::tell();
+			}
+
+			uintPtr size() override
+			{
+				ScopeLock lock(mut);
+				return FileRealBase::size();
+			}
+
+			void flush() override
+			{
+				FILE *ff = nullptr;
+				{
+					ScopeLock lock(mut);
+					CAGE_ASSERT(f);
+					ff = f;
+				}
+				fflush(ff);
+			}
+		};
+
+		// textual file does not do any locking and does not allow reopening for modification or seeking
+		class FileRealTextual : public FileRealBase
+		{
+		public:
+			FileRealTextual(const String &path, const FileMode &mode) : FileRealBase(path, mode)
+			{
+				CAGE_ASSERT(mode.textual);
+			}
+
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				CAGE_THROW_ERROR(Exception, "reading with offset in textual file is not allowed");
+			}
+
+			void read(PointerRange<char> buffer) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(myMode.read);
+				if (buffer.size() == 0)
+					return;
+				if (fread(buffer.data(), buffer.size(), 1, f) != 1)
+					CAGE_THROW_ERROR(SystemError, "fread", errno);
+			}
+
+			void write(PointerRange<const char> buffer) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(myMode.write);
+				if (buffer.size() == 0)
+					return;
+				if (fwrite(buffer.data(), buffer.size(), 1, f) != 1)
+					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
+			}
+
+			void seek(uintPtr position) override
+			{
+				CAGE_THROW_ERROR(Exception, "seeking in textual file is not allowed");
+			}
+
+			void flush() override
+			{
+				CAGE_ASSERT(f);
+				fflush(f);
 			}
 		};
 
@@ -436,35 +605,28 @@ namespace cage
 		String pathWorkingDirImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-
 			wchar_t buffer[String::MaxLength + 1];
 			uint32 len = GetCurrentDirectoryW(String::MaxLength, buffer);
 			if (len <= 0)
 				CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
 			return pathSimplify(narrow({ buffer, buffer + len }));
-
 #else
-
 			char buffer[String::MaxLength + 1];
 			if (getcwd(buffer, String::MaxLength) != nullptr)
 				return pathSimplify(buffer);
 			CAGE_THROW_ERROR(Exception, "getcwd");
-
 #endif
 		}
 
 		String executableFullPathImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-
 			wchar_t buffer[String::MaxLength];
 			uint32 len = GetModuleFileNameW(nullptr, (wchar_t *)&buffer, String::MaxLength);
 			if (len == 0)
 				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
 			return pathSimplify(narrow({ buffer, buffer + len }));
-
 #elif defined(CAGE_SYSTEM_LINUX)
-
 			char buffer[String::MaxLength];
 			char id[String::MaxLength];
 			sprintf(id, "/proc/%d/exe", getpid());
@@ -472,27 +634,22 @@ namespace cage
 			if (len == -1)
 				CAGE_THROW_ERROR(SystemError, "readlink", errno);
 			return pathSimplify(String({ buffer, buffer + len }));
-
 #elif defined(CAGE_SYSTEM_MAC)
-
 			char buffer[String::MaxLength];
 			uint32 len = sizeof(buffer);
 			if (_NSGetExecutablePath(buffer, &len) != 0)
 				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
 			len = detail::strlen(buffer);
 			return pathSimplify(String({ buffer, buffer + len }));
-
 #else
-
 #error This operating system is not supported
-
 #endif
 		}
 	}
 
 	Holder<File> realNewFile(const String &path, const FileMode &mode)
 	{
-		return systemMemory().createImpl<File, FileReal>(path, mode);
+		return mode.textual ? systemMemory().createImpl<File, FileRealTextual>(path, mode) : systemMemory().createImpl<File, FileRealBinary>(path, mode);
 	}
 
 	PathTypeFlags realType(const String &path)
@@ -519,8 +676,8 @@ namespace cage
 
 	void realTryFlushFile(File *f_)
 	{
-		if (FileReal *f = dynamic_cast<FileReal *>(f_))
-			fflush(f->f);
+		if (FileRealBase *f = dynamic_cast<FileRealBase *>(f_))
+			f->flush();
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path)

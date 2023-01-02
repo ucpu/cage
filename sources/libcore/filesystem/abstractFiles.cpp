@@ -78,11 +78,6 @@ namespace cage
 			return *cache;
 		}
 
-		std::shared_ptr<ArchiveAbstract> archiveCtorReal(const String &path)
-		{
-			return archiveOpenReal(path);
-		}
-
 		std::shared_ptr<ArchiveAbstract> archiveCtorArchive(ArchiveAbstract *parent, const String &fullPath)
 		{
 			CAGE_ASSERT(parent);
@@ -235,7 +230,7 @@ namespace cage
 
 		ScopeLock lock(archiveFindTowardsRootMutex());
 
-		std::shared_ptr<ArchiveAbstract> root = archivesCache().getOrCreate(rootPath, Delegate<std::shared_ptr<ArchiveAbstract>(const String &)>().bind<&archiveCtorReal>()).archive;
+		std::shared_ptr<ArchiveAbstract> root = archivesCache().getOrCreate(rootPath, Delegate<std::shared_ptr<ArchiveAbstract>(const String &)>().bind<&archiveOpenReal>()).archive;
 
 		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
 		switch (mode)

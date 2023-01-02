@@ -30,6 +30,7 @@
 
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <exception>
 #include <cerrno>
 
@@ -200,6 +201,38 @@ namespace cage
 	Holder<RwMutex> newRwMutex()
 	{
 		return systemMemory().createImpl<RwMutex, RwMutexImpl>();
+	}
+
+	namespace
+	{
+		class RecursiveMutexImpl : public RecursiveMutex
+		{
+		public:
+			std::recursive_mutex mut;
+		};
+	}
+
+	bool RecursiveMutex::tryLock()
+	{
+		RecursiveMutexImpl *impl = (RecursiveMutexImpl *)this;
+		return impl->mut.try_lock();
+	}
+
+	void RecursiveMutex::lock()
+	{
+		RecursiveMutexImpl *impl = (RecursiveMutexImpl *)this;
+		impl->mut.lock();
+	}
+
+	void RecursiveMutex::unlock()
+	{
+		RecursiveMutexImpl *impl = (RecursiveMutexImpl *)this;
+		impl->mut.unlock();
+	}
+
+	Holder<RecursiveMutex> newRecursiveMutex()
+	{
+		return systemMemory().createImpl<RecursiveMutex, RecursiveMutexImpl>();
 	}
 
 	namespace
