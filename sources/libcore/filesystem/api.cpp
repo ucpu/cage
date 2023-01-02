@@ -4,6 +4,7 @@
 #include <cage-core/math.h> // min
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
+#include <cage-core/concurrent.h>
 
 #include "files.h"
 
@@ -135,6 +136,7 @@ namespace cage
 
 	Holder<File> newFile(const String &path, const FileMode &mode)
 	{
+		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		return a->openFile(p, mode);
 	}
@@ -151,6 +153,7 @@ namespace cage
 
 	PathTypeFlags pathType(const String &path)
 	{
+		ScopeLock lock(fsMutex());
 		if (!pathIsValid(path))
 			return PathTypeFlags::Invalid;
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
@@ -171,12 +174,14 @@ namespace cage
 
 	PathLastChange pathLastChange(const String &path)
 	{
+		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusiveThrow);
 		return a->lastChange(p);
 	}
 
 	Holder<PointerRange<String>> pathListDirectory(const String &path)
 	{
+		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		return a->listDirectory(p);
 	}
@@ -188,6 +193,7 @@ namespace cage
 
 	String pathSearchTowardsRoot(const String &name, const String &whereToStart, PathTypeFlags type)
 	{
+		ScopeLock lock(fsMutex());
 		CAGE_ASSERT(any(type & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
 		CAGE_ASSERT(none(type & ~(PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
 		if (name.empty() || !pathIsValid(name) || pathIsAbs(name))
@@ -217,6 +223,7 @@ namespace cage
 
 	Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute, uint32 limit)
 	{
+		ScopeLock lock(fsMutex());
 		PointerRangeHolder<String> result;
 		const uint32 firstDollar = find(pattern, substitute);
 		if (firstDollar == m)
@@ -249,12 +256,14 @@ namespace cage
 
 	void pathCreateDirectories(const String &path)
 	{
+		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		a->createDirectories(p);
 	}
 
 	void pathCreateArchive(const String &path, const String &options)
 	{
+		ScopeLock lock(fsMutex());
 		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
 		{
 			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
@@ -265,6 +274,7 @@ namespace cage
 
 	void pathMove(const String &from, const String &to)
 	{
+		ScopeLock lock(fsMutex());
 		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
 		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
 		if (af == at)
@@ -283,6 +293,7 @@ namespace cage
 
 	void pathRemove(const String &path)
 	{
+		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		a->remove(p);
 	}
@@ -291,6 +302,7 @@ namespace cage
 	{
 		Holder<void> pathKeepOpen(const String &path)
 		{
+			ScopeLock lock(fsMutex());
 			auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 			return systemMemory().createHolder<std::shared_ptr<ArchiveAbstract>>(std::move(a)).cast<void>();
 		}

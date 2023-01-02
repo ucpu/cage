@@ -17,44 +17,29 @@ namespace cage
 		// provides a limited section of a file as another file
 		struct ProxyFile : public FileAbstract
 		{
-			Mutex *const mutex = nullptr;
-			File *f = nullptr;
+			FileAbstract *f = nullptr;
 			const uintPtr start;
 			const uintPtr capacity;
 			uintPtr off = 0;
 
-			ProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr capacity) : FileAbstract(((FileAbstract *)f)->myPath, FileMode(true, false)), mutex(mutex), f(f), start(start), capacity(capacity)
-			{
-				CAGE_ASSERT(mutex);
-			}
+			ProxyFile(FileAbstract *f, uintPtr start, uintPtr capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity)
+			{}
 
 			~ProxyFile()
 			{}
 
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(buffer.size() <= capacity - at);
-				((FileAbstract *)f)->readAt(buffer, start + at);
+				f->readAt(buffer, start + at);
 			}
 
 			void read(PointerRange<char> buffer) override
 			{
-				/*
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(f);
-				uintPtr at = 0;
-				{
-					ScopeLock l(mutex);
-					CAGE_ASSERT(buffer.size() <= capacity - off);
-					at = off;
-					off += buffer.size();
-					f->seek(start + off);
-				}
-				readAt(buffer, at);
-				*/
-
-				CAGE_ASSERT(f);
-				ScopeLock l(mutex);
 				CAGE_ASSERT(buffer.size() <= capacity - off);
 				f->seek(start + off);
 				f->read(buffer);
@@ -63,32 +48,34 @@ namespace cage
 
 			void seek(uintPtr position) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(f);
-				ScopeLock l(mutex); // enforce memory ordering
 				CAGE_ASSERT(position <= capacity);
 				off = position;
 			}
 
 			void close() override
 			{
+				ScopeLock lock(fsMutex());
 				f = nullptr;
 			}
 
 			uintPtr tell() override
 			{
-				ScopeLock l(mutex); // enforce memory ordering
+				ScopeLock lock(fsMutex());
 				return off;
 			}
 
 			uintPtr size() override
 			{
+				ScopeLock lock(fsMutex());
 				return capacity;
 			}
 		};
 
-		Holder<File> newProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr size)
+		Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size)
 		{
-			return systemMemory().createImpl<File, ProxyFile>(mutex, f, start, size);
+			return systemMemory().createImpl<File, ProxyFile>(class_cast<FileAbstract *>(f), start, size);
 		}
 	}
 
@@ -207,7 +194,6 @@ namespace cage
 		{
 		public:
 			Holder<File> src;
-			Holder<Mutex> mutex = newMutex();
 			std::vector<CDFileHeaderEx> files;
 			uint32 originalCDFilesPosition = 0;
 			uint32 originalEOCDPosition = 0;
@@ -222,7 +208,7 @@ namespace cage
 			}
 
 			// open existing archive
-			ArchiveZip(Holder<File> &&file, bool throwing = true) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(std::move(file))
+			ArchiveZip(Holder<File> &&file, bool throwing = true) : ArchiveAbstract(class_cast<FileAbstract *>(+file)->myPath), src(std::move(file))
 			{
 				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
@@ -361,8 +347,7 @@ namespace cage
 
 			~ArchiveZip()
 			{
-				ScopeLock lck(mutex);
-
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				CAGE_ASSERT(src->mode().write == modified);
 				if (!modified)
@@ -434,14 +419,16 @@ namespace cage
 
 			void reopenForModification()
 			{
+				ScopeLock lock(fsMutex());
 				if (src->mode().write)
 					return; // already modifiable
-				((FileAbstract *)+src)->reopenForModification();
+				class_cast<FileAbstract *>(+src)->reopenForModification();
 			}
 
 			uint32 createRecord(const String &path)
 			{
 				CAGE_ASSERT(isPathValid(path));
+				CAGE_ASSERT(findRecordIndex(path) == m); // make sure the path does not exist yet
 				auto it = std::lower_bound(files.begin(), files.end(), path);
 				it = files.insert(it, CDFileHeaderEx());
 				it->nameLength = path.length();
@@ -460,16 +447,10 @@ namespace cage
 				return numeric_cast<uint32>(it - files.begin());
 			}
 
-			void testFileNotLocked(uint32 index) const
+			void throwIfFileLocked(uint32 index) const
 			{
 				if (index != m && files[index].locked)
 					CAGE_THROW_ERROR(Exception, "file is in use");
-			}
-
-			void testFileNotLocked(const String &path) const
-			{
-				const uint32 index = findRecordIndex(path);
-				testFileNotLocked(index);
 			}
 
 			PathTypeFlags typeNoLock(uint32 index) const
@@ -482,17 +463,12 @@ namespace cage
 				return PathTypeFlags::File;
 			}
 
-			PathTypeFlags typeNoLock(const String &path) const
-			{
-				const uint32 index = findRecordIndex(path);
-				return typeNoLock(index);
-			}
-
 			PathTypeFlags type(const String &path) const override
 			{
 				CAGE_ASSERT(isPathValid(path));
-				ScopeLock l(mutex);
-				return typeNoLock(path);
+				ScopeLock lock(fsMutex());
+				const uint32 index = findRecordIndex(path);
+				return typeNoLock(index);
 			}
 
 			void createDirectoriesNoLock(const String &path)
@@ -529,7 +505,7 @@ namespace cage
 			void createDirectories(const String &path) override
 			{
 				CAGE_ASSERT(isPathValid(path));
-				ScopeLock l(mutex);
+				ScopeLock lock(fsMutex());
 				reopenForModification();
 				createDirectoriesNoLock(path);
 			}
@@ -540,33 +516,27 @@ namespace cage
 				CAGE_ASSERT(!to.empty());
 				CAGE_ASSERT(isPathValid(from));
 				CAGE_ASSERT(isPathValid(to));
-
 				if (from == to)
 					return;
-
+				ScopeLock lock(fsMutex());
 				// todo optimize this
 				Holder<PointerRange<char>> buff = openFile(from, FileMode(true, false))->readAll();
 				openFile(to, FileMode(false, true))->write(buff);
 				remove(from);
 			}
 
-			void removeNoLock(const String &path)
-			{
-				const uint32 index = findRecordIndex(path);
-				if (index == m)
-					return;
-				testFileNotLocked(index);
-				files.erase(files.begin() + index);
-				modified = true;
-			}
-
 			void remove(const String &path) override
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
-				ScopeLock l(mutex);
+				ScopeLock lock(fsMutex());
 				reopenForModification();
-				removeNoLock(path);
+				const uint32 index = findRecordIndex(path);
+				if (index == m)
+					return;
+				throwIfFileLocked(index);
+				files.erase(files.begin() + index);
+				modified = true;
 			}
 
 			PathLastChange lastChange(const String &path) const override
@@ -583,7 +553,7 @@ namespace cage
 		// file contained within the zip archive
 		struct FileZip : public FileAbstract
 		{
-			const std::shared_ptr<ArchiveZip> a;
+			std::shared_ptr<ArchiveZip> a;
 			const String myName; // name inside the archive
 			MemoryBuffer buff;
 			Holder<File> src;
@@ -596,7 +566,7 @@ namespace cage
 				CAGE_ASSERT(mode.valid());
 				CAGE_ASSERT(!mode.append);
 
-				ScopeLock l(a->mutex);
+				ScopeLock lock(fsMutex());
 				if (mode.write)
 					a->reopenForModification();
 				uint32 index = a->findRecordIndex(name);
@@ -607,14 +577,12 @@ namespace cage
 					if (mode.read)
 						CAGE_THROW_ERROR(Exception, "cannot open file in zip archive, it does not exist");
 					a->createDirectoriesNoLock(pathJoin(name, ".."));
-					if (index != m)
-						index = a->findRecordIndex(name);
 					index = a->createRecord(name);
 					auto &r = a->files[index];
 					r.externalFileAttributes = 0x80;
 				}
 				else
-					a->testFileNotLocked(index);
+					a->throwIfFileLocked(index);
 
 				CAGE_ASSERT(index != m);
 				auto &r = a->files[index];
@@ -639,7 +607,7 @@ namespace cage
 					if (r.modified)
 						src = newFileBuffer(systemMemory().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
 					else
-						src = newProxyFile(+a->mutex, +a->src, r.getFileStartOffset(), r.uncompressedSize);
+						src = newProxyFile(+a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
 
 				CAGE_ASSERT(src);
@@ -647,7 +615,7 @@ namespace cage
 
 			~FileZip()
 			{
-				ScopeLock l(a->mutex);
+				ScopeLock lock(fsMutex());
 				if (src && modified)
 				{
 					try
@@ -664,6 +632,7 @@ namespace cage
 				CDFileHeaderEx &h = a->files[index];
 				CAGE_ASSERT(h.locked);
 				h.locked = false;
+				a.reset(); // make sure the archive itself is released while the lock is still held
 			}
 
 			void reopenForModificationInternal()
@@ -687,6 +656,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!modified);
 				CAGE_ASSERT(!myMode.write);
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				reopenForModificationInternal();
 				myMode.write = true;
@@ -694,13 +664,15 @@ namespace cage
 
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read);
 				CAGE_ASSERT(src);
-				((FileAbstract *)+src)->readAt(buffer, at);
+				class_cast<FileAbstract *>(+src)->readAt(buffer, at);
 			}
 
 			void read(PointerRange<char> buffer) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read);
 				CAGE_ASSERT(src);
 				src->read(buffer);
@@ -708,6 +680,7 @@ namespace cage
 
 			void write(PointerRange<const char> buffer) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.write);
 				CAGE_ASSERT(src);
 				if (!modified)
@@ -717,6 +690,7 @@ namespace cage
 
 			void seek(uintPtr position) override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				src->seek(position);
 			}
@@ -750,23 +724,23 @@ namespace cage
 
 			void close() override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				src.clear();
 				if (modified)
-				{
-					ScopeLock l(a->mutex);
 					closeNoLock();
-				}
 			}
 
 			uintPtr tell() override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				return src->tell();
 			}
 
 			uintPtr size() override
 			{
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				return src->size();
 			}
@@ -774,13 +748,14 @@ namespace cage
 
 		Holder<File> ArchiveZip::openFile(const String &path, const FileMode &mode)
 		{
+			ScopeLock lock(fsMutex());
 			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
 		Holder<PointerRange<String>> ArchiveZip::listDirectory(const String &path) const
 		{
 			CAGE_ASSERT(isPathValid(path));
-			ScopeLock l(mutex);
+			ScopeLock lock(fsMutex());
 			PointerRangeHolder<String> names;
 			names.reserve(files.size());
 			for (const auto &it : files)
@@ -795,11 +770,13 @@ namespace cage
 
 	void archiveCreateZip(const String &path, const String &options)
 	{
+		ScopeLock lock(fsMutex());
 		ArchiveZip z(path, options);
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f)
 	{
+		ScopeLock lock(fsMutex());
 		auto a = std::make_shared<ArchiveZip>(std::move(f), false);
 		return a->isZip ? a : std::shared_ptr<ArchiveAbstract>();
 	}

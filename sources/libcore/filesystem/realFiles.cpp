@@ -321,8 +321,6 @@ namespace cage
 		class FileRealBinary : public FileRealBase
 		{
 		public:
-			Holder<Mutex> mut = newMutex();
-
 			FileRealBinary(const String &path, const FileMode &mode) : FileRealBase(path, mode)
 			{
 				CAGE_ASSERT(!mode.textual);
@@ -330,7 +328,7 @@ namespace cage
 
 			void reopenForModification() override
 			{
-				ScopeLock lock(mut);
+				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read && !myMode.write);
 				CAGE_ASSERT(f);
 				myMode.write = true;
@@ -352,7 +350,7 @@ namespace cage
 					return;
 				FILE *ff = nullptr;
 				{
-					ScopeLock lock(mut);
+					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.read);
 					ff = f;
@@ -367,7 +365,7 @@ namespace cage
 				FILE *ff = nullptr;
 				uintPtr at = 0;
 				{
-					ScopeLock lock(mut);
+					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.read);
 					ff = f;
@@ -385,7 +383,7 @@ namespace cage
 				FILE *ff = nullptr;
 				uintPtr at = 0;
 				{
-					ScopeLock lock(mut);
+					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.write);
 					ff = f;
@@ -398,25 +396,25 @@ namespace cage
 
 			void seek(uintPtr position) override
 			{
-				ScopeLock lock(mut);
+				ScopeLock lock(fsMutex());
 				FileRealBase::seek(position);
 			}
 
 			void close() override
 			{
-				ScopeLock lock(mut);
+				ScopeLock lock(fsMutex());
 				FileRealBase::close();
 			}
 
 			uintPtr tell() override
 			{
-				ScopeLock lock(mut);
+				ScopeLock lock(fsMutex());
 				return FileRealBase::tell();
 			}
 
 			uintPtr size() override
 			{
-				ScopeLock lock(mut);
+				ScopeLock lock(fsMutex());
 				return FileRealBase::size();
 			}
 
@@ -424,7 +422,7 @@ namespace cage
 			{
 				FILE *ff = nullptr;
 				{
-					ScopeLock lock(mut);
+					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					ff = f;
 				}
@@ -486,21 +484,22 @@ namespace cage
 
 			PathTypeFlags type(const String &path) const
 			{
+				ScopeLock lock(fsMutex());
 				return realType(pathJoin(myPath, path));
 			}
 
 			void createDirectories(const String &path)
 			{
+				ScopeLock lock(fsMutex());
 				realCreateDirectories(pathJoin(myPath, path));
 			}
 
 			void move(const String &from_, const String &to_)
 			{
+				ScopeLock lock(fsMutex());
 				const String from = pathJoin(myPath, from_);
 				const String to = pathJoin(myPath, to_);
-
 				createDirectories(pathJoin(to_, ".."));
-
 #ifdef CAGE_SYSTEM_WINDOWS
 				auto res = MoveFileW(Widen(from), Widen(to));
 				if (res == 0)
@@ -520,6 +519,7 @@ namespace cage
 
 			void remove(const String &path_)
 			{
+				ScopeLock lock(fsMutex());
 				const String path = pathJoin(myPath, path_);
 				const PathTypeFlags t = type(path_);
 				if (any(t & PathTypeFlags::Directory))
@@ -555,6 +555,7 @@ namespace cage
 
 			PathLastChange lastChange(const String &path_) const
 			{
+				ScopeLock lock(fsMutex());
 				const String path = pathJoin(myPath, path_);
 #ifdef CAGE_SYSTEM_WINDOWS
 				HANDLE hFile = CreateFileW(Widen(path), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
@@ -586,11 +587,13 @@ namespace cage
 
 			Holder<File> openFile(const String &path, const FileMode &mode)
 			{
+				ScopeLock lock(fsMutex());
 				return realNewFile(pathJoin(myPath, path), mode);
 			}
 
 			Holder<PointerRange<String>> listDirectory(const String &path) const
 			{
+				ScopeLock lock(fsMutex());
 				PointerRangeHolder<String> res;
 				DirectoryListReal list(pathJoin(myPath, path));
 				while (list.valid())

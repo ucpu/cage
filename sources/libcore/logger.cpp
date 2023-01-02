@@ -23,7 +23,7 @@ namespace cage
 
 	namespace
 	{
-		ConfigBool confDetailedInfo("cage/log/systemInfo", false);
+		const ConfigBool confDetailedInfo("cage/log/systemInfo", false);
 
 		Mutex *loggerMutex()
 		{

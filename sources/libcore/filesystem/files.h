@@ -24,7 +24,6 @@ namespace cage
 	{
 	public:
 		const String myPath;
-		bool succesfullyMounted = false;
 
 		ArchiveAbstract(const String &path);
 		virtual ~ArchiveAbstract();
@@ -51,6 +50,8 @@ namespace cage
 		String path;
 	};
 	ArchiveWithPath archiveFindTowardsRoot(const String &path, ArchiveFindModeEnum mode);
+
+	class RecursiveMutex *fsMutex();
 }
 
 #endif // guard_files_h_sdrgds45rfgt
