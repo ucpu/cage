@@ -139,8 +139,9 @@ namespace cage
 	// create an empty archive at the specified path, it can be populated afterwards
 	CAGE_CORE_API void pathCreateArchive(const String &path, const String &options = "");
 
-	// moves (renames) a file or directory
+	// moves (renames) or copies a file or directory
 	CAGE_CORE_API void pathMove(const String &from, const String &to);
+	CAGE_CORE_API void pathCopy(const String &from, const String &to);
 
 	// permanently removes a file or folder including all sub-folders
 	CAGE_CORE_API void pathRemove(const String &path);

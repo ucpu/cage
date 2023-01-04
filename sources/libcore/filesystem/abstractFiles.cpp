@@ -122,23 +122,19 @@ namespace cage
 						{
 							switch (mode)
 							{
-							case ArchiveFindModeEnum::FileExclusiveThrow:
+							case ArchiveFindModeEnum::FileExclusive:
 								if (b.existing)
 								{
 									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
 									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 								}
 								return { parent, path };
-							case ArchiveFindModeEnum::ArchiveExclusiveThrow:
+							case ArchiveFindModeEnum::ArchiveExclusive:
 								if (b.existing)
 								{
 									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
 									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 								}
-								return { b.archive };
-							case ArchiveFindModeEnum::ArchiveExclusiveNull:
-								if (b.existing)
-									return {};
 								return { b.archive };
 							case ArchiveFindModeEnum::ArchiveShared:
 								return { b.archive };
@@ -209,14 +205,12 @@ namespace cage
 		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
 		switch (mode)
 		{
-		case ArchiveFindModeEnum::FileExclusiveThrow:
+		case ArchiveFindModeEnum::FileExclusive:
 			CAGE_ASSERT(r.archive);
 			CAGE_ASSERT(!r.path.empty());
 			break;
-		case ArchiveFindModeEnum::ArchiveExclusiveThrow:
+		case ArchiveFindModeEnum::ArchiveExclusive:
 			CAGE_ASSERT(r.archive);
-			break;
-		case ArchiveFindModeEnum::ArchiveExclusiveNull:
 			break;
 		case ArchiveFindModeEnum::ArchiveShared:
 			CAGE_ASSERT(r.archive);

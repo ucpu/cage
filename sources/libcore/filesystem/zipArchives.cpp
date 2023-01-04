@@ -510,7 +510,7 @@ namespace cage
 				createDirectoriesNoLock(path);
 			}
 
-			void move(const String &from, const String &to) override
+			void move(const String &from, const String &to, bool copying) override
 			{
 				CAGE_ASSERT(!from.empty());
 				CAGE_ASSERT(!to.empty());
@@ -519,10 +519,25 @@ namespace cage
 				if (from == to)
 					return;
 				ScopeLock lock(fsMutex());
-				// todo optimize this
-				Holder<PointerRange<char>> buff = openFile(from, FileMode(true, false))->readAll();
-				openFile(to, FileMode(false, true))->write(buff);
-				remove(from);
+				const uint32 srcIndex = findRecordIndex(from);
+				if (srcIndex == m)
+					CAGE_THROW_ERROR(Exception, "source does not exist");
+				if (typeNoLock(srcIndex) == PathTypeFlags::File)
+				{
+					Holder<PointerRange<char>> buff = openFile(from, FileMode(true, false))->readAll();
+					openFile(to, FileMode(false, true))->write(buff);
+				}
+				else
+				{
+					const auto list = listDirectory(from);
+					for (const auto &it : list)
+					{
+						const String name = pathExtractFilename(it);
+						move(pathJoin(from, name), pathJoin(to, name), copying);
+					}
+				}
+				if (!copying)
+					remove(from);
 			}
 
 			void remove(const String &path) override
@@ -530,10 +545,10 @@ namespace cage
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
 				ScopeLock lock(fsMutex());
-				reopenForModification();
 				const uint32 index = findRecordIndex(path);
 				if (index == m)
 					return;
+				reopenForModification();
 				throwIfFileLocked(index);
 				files.erase(files.begin() + index);
 				modified = true;

@@ -17,7 +17,6 @@ extern ConfigString configPathDatabase;
 extern ConfigString configPathByHash;
 extern ConfigString configPathByName;
 extern ConfigString configPathInjectedNames;
-extern ConfigUint64 configArchiveWriteThreshold;
 extern ConfigBool configFromScratch;
 extern ConfigBool configOutputArchive;
 extern std::set<String, StringComparatorFast> configIgnoreExtensions;
@@ -391,20 +390,5 @@ void checkOutputDir()
 
 void moveIntermediateFiles()
 {
-	const auto listIn = pathListDirectory(configPathIntermediate);
-	Holder<void> listOut = detail::pathKeepOpen(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
-	uint64 movedSize = 0;
-	for (const String &f : listIn)
-	{
-		if (movedSize > configArchiveWriteThreshold)
-		{
-			listOut.clear(); // close the archive
-			listOut = detail::pathKeepOpen(configPathOutput); // reopen the archive
-			movedSize = 0;
-		}
-		const String t = pathJoin(configPathOutput, pathExtractFilename(f));
-		movedSize += readFile(f)->size();
-		pathMove(f, t);
-	}
-	pathRemove(configPathIntermediate);
+	pathMove(configPathIntermediate, configPathOutput);
 }

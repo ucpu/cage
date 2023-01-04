@@ -32,16 +32,15 @@ namespace cage
 		virtual PathLastChange lastChange(const String &path) const = 0;
 		virtual Holder<PointerRange<String>> listDirectory(const String &path) const = 0;
 		virtual void createDirectories(const String &path) = 0;
-		virtual void move(const String &from, const String &to) = 0;
+		virtual void move(const String &from, const String &to, bool copying) = 0;
 		virtual void remove(const String &path) = 0;
 		virtual Holder<File> openFile(const String &path, const FileMode &mode) = 0;
 	};
 
 	enum class ArchiveFindModeEnum
 	{
-		FileExclusiveThrow,
-		ArchiveExclusiveThrow,
-		ArchiveExclusiveNull,
+		FileExclusive,
+		ArchiveExclusive,
 		ArchiveShared,
 	};
 	struct ArchiveWithPath

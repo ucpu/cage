@@ -12,7 +12,6 @@ ConfigString configPathByName("cage-asset-database/path/listByName", "assets-by-
 ConfigString configPathSchemes("cage-asset-database/path/schemes", "schemes");
 ConfigString configPathInjectedNames("cage-asset-database/path/injectNames", "");
 ConfigSint32 configNotifierPort("cage-asset-database/database/port", 65042);
-ConfigUint64 configArchiveWriteThreshold("cage-asset-database/database/archiveWriteThreshold", 256 * 1024 * 1024);
 ConfigBool configListening("cage-asset-database/database/listening", false);
 ConfigBool configFromScratch("cage-asset-database/database/fromScratch", false);
 ConfigBool configOutputArchive("cage-asset-database/database/outputArchive", false);

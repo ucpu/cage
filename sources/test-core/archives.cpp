@@ -57,7 +57,7 @@ namespace
 			pathCreateDirectories(pathJoin(dir, name));
 	}
 
-	typedef std::set<std::pair<String, bool>> Listing;
+	using Listing = std::set<std::pair<String, bool>>;
 
 	void testListDirectory2(const String &name, Listing &a, Listing &b)
 	{
@@ -67,7 +67,7 @@ namespace
 		{
 			const auto list = pathListDirectory(pathJoin(dir, name));
 			for (const String &n : list)
-				p[i]->insert(std::make_pair<String, bool>(pathExtractFilename(n), any(pathType(n) & (PathTypeFlags::Directory | PathTypeFlags::Archive))));
+				p[i]->insert(std::make_pair<String, bool>(pathExtractFilename(n), pathIsDirectory(n)));
 			i++;
 		}
 	}
@@ -76,7 +76,7 @@ namespace
 	{
 		const PathTypeFlags a = pathType(pathJoin(directories[0], name));
 		const PathTypeFlags b = pathType(pathJoin(directories[1], name));
-		static constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
+		static constexpr PathTypeFlags msk = ~PathTypeFlags::Archive;
 		CAGE_TEST((a & msk) == (b & msk));
 		return b;
 	}
@@ -356,24 +356,40 @@ void testArchives()
 	}
 
 	{
-		CAGE_TESTCASE("move a file");
+		CAGE_TESTCASE("remove non-existent file");
+		for (const String &dir : directories)
+			pathRemove(pathJoin(dir, "non-existent-file-blee-bloo")); // does not throw
+		testListRecursive();
+	}
+
+	{
+		CAGE_TESTCASE("move");
 		{
 			CAGE_TESTCASE("inside same archive");
 			for (const String &dir : directories)
-				pathMove(pathJoin(dir, "multi/3"), pathJoin(dir, "multi/4"));
+				pathMove(pathJoin(dir, "multi/3"), pathJoin(dir, "multi/4")); // file
+			testListRecursive();
+			for (const String &dir : directories)
+				pathMove(pathJoin(dir, "multi"), pathJoin(dir, "multi2")); // folder
+			testListRecursive();
+			for (const String &dir : directories)
+				pathMove(pathJoin(dir, "multi2"), pathJoin(dir, "multi")); // folder back
 			testListRecursive();
 		}
 		{
 			CAGE_TESTCASE("from real filesystem to the archive");
 			for (const String &dir : directories)
 			{
-				{
-					Holder<File> f = writeFile("testdir/tmp");
-					f->write(data2);
-				}
-				pathMove("testdir/tmp", pathJoin(dir, "moved"));
+				writeFile("testdir/tmp")->write(data2);
+				pathMove("testdir/tmp", pathJoin(dir, "moved")); // file
 			}
 			testReadFile("moved");
+			testListRecursive();
+			for (const String &dir : directories)
+			{
+				writeFile("testdir/a/b/c")->write(data2);
+				pathMove("testdir/a", pathJoin(dir, "b")); // folder
+			}
 			testListRecursive();
 		}
 		{
@@ -381,6 +397,27 @@ void testArchives()
 			for (const String &dir : directories)
 				pathMove(pathJoin(dir, "multi/1"), "testdir/moved_up");
 			testListRecursive();
+			for (const String &dir : directories)
+			{
+				writeFile(pathJoin(dir, "c/d/e"))->write(data2);
+				pathMove(pathJoin(dir, "c"), "testdir/d"); // folder
+			}
+			testListRecursive();
+		}
+		{
+			CAGE_TESTCASE("move folder onto archive");
+			for (const String &dir : directories)
+			{
+				writeFile("testdir/g/txt")->write(data2);
+				pathMove("testdir/g", dir);
+			}
+			testListRecursive();
+			pathCreateArchive("testdir/arch3.zip");
+			writeFile("testdir/arch3.zip/file.txt")->writeLine("haha");
+			pathCreateDirectories("testdir/arch3");
+			pathMove("testdir/arch3.zip", "testdir/arch3");
+			CAGE_TEST(pathType("testdir/arch3.zip") == PathTypeFlags::NotFound);
+			CAGE_TEST(pathType("testdir/arch3/file.txt") == PathTypeFlags::File);
 		}
 	}
 
@@ -438,7 +475,7 @@ void testArchives()
 				Holder<File> f = writeFile("testdir/arch2.zip/def.txt");
 				CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // try pythType on the archive itself
 				CAGE_TEST(any(pathType("testdir/arch2.zip/abc.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
-				// todo CAGE_TEST(any(pathType("testdir/arch2.zip/def.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
+				// todo CAGE_TEST(any(pathType("testdir/arch2.zip/def.txt") & PathTypeFlags::File)); // try pythType on an opened file inside the archive
 			}
 		}
 		{

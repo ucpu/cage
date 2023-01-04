@@ -482,42 +482,84 @@ namespace cage
 			ArchiveReal(const String &path) : ArchiveAbstract(path)
 			{}
 
-			PathTypeFlags type(const String &path) const
+			PathTypeFlags type(const String &path) const override
 			{
 				ScopeLock lock(fsMutex());
 				return realType(pathJoin(myPath, path));
 			}
 
-			void createDirectories(const String &path)
+			void createDirectories(const String &path) override
 			{
 				ScopeLock lock(fsMutex());
 				realCreateDirectories(pathJoin(myPath, path));
 			}
 
-			void move(const String &from_, const String &to_)
+			// 1) move/rename a file - the destination is overwritten
+			// 2) move/rename a directory - the destination may NOT exist
+			// 3) copy a file - the destination is overwritten
+			void moveImpl(const String &from_, const String &to_, bool copying)
 			{
-				ScopeLock lock(fsMutex());
 				const String from = pathJoin(myPath, from_);
 				const String to = pathJoin(myPath, to_);
-				createDirectories(pathJoin(to_, ".."));
 #ifdef CAGE_SYSTEM_WINDOWS
-				auto res = MoveFileW(Widen(from), Widen(to));
+				auto res = copying ? CopyFileW(Widen(from), Widen(to), false) : MoveFileW(Widen(from), Widen(to));
 				if (res == 0)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 					CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
 				}
 #else
-				auto res = rename(from.c_str(), to.c_str());
-				if (res != 0)
+				if (copying)
 				{
-					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-					CAGE_THROW_ERROR(SystemError, "pathMove", errno);
+					Holder<PointerRange<char>> buff = openFile(from_, FileMode(true, false))->readAll();
+					openFile(to_, FileMode(false, true))->write(buff);
+				}
+				else
+				{
+					auto res = rename(from.c_str(), to.c_str());
+					if (res != 0)
+					{
+						CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+						CAGE_THROW_ERROR(SystemError, "pathMove", errno);
+					}
 				}
 #endif
 			}
 
-			void remove(const String &path_)
+			void move(const String &from_, const String &to_, bool copying) override
+			{
+				if (from_ == to_)
+					return;
+				ScopeLock lock(fsMutex());
+				createDirectories(pathJoin(to_, ".."));
+				switch (type(from_))
+				{
+				case PathTypeFlags::NotFound:
+					CAGE_THROW_ERROR(Exception, "source does not exist");
+				case PathTypeFlags::File:
+				{
+					moveImpl(from_, to_, copying);
+				} break;
+				case PathTypeFlags::Directory:
+				{
+					if (!copying && type(to_) == PathTypeFlags::NotFound)
+						moveImpl(from_, to_, false);
+					else
+					{
+						const auto list = listDirectory(from_);
+						for (const String &it : list)
+						{
+							const String n = pathExtractFilename(it);
+							move(pathJoin(from_, n), pathJoin(to_, n), copying);
+						}
+					}
+				} break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid path type flags");
+				}
+			}
+
+			void remove(const String &path_) override
 			{
 				ScopeLock lock(fsMutex());
 				const String path = pathJoin(myPath, path_);
@@ -553,7 +595,7 @@ namespace cage
 				}
 			}
 
-			PathLastChange lastChange(const String &path_) const
+			PathLastChange lastChange(const String &path_) const override
 			{
 				ScopeLock lock(fsMutex());
 				const String path = pathJoin(myPath, path_);
@@ -585,13 +627,13 @@ namespace cage
 #endif
 			}
 
-			Holder<File> openFile(const String &path, const FileMode &mode)
+			Holder<File> openFile(const String &path, const FileMode &mode) override
 			{
 				ScopeLock lock(fsMutex());
 				return realNewFile(pathJoin(myPath, path), mode);
 			}
 
-			Holder<PointerRange<String>> listDirectory(const String &path) const
+			Holder<PointerRange<String>> listDirectory(const String &path) const override
 			{
 				ScopeLock lock(fsMutex());
 				PointerRangeHolder<String> res;

@@ -137,7 +137,7 @@ namespace cage
 	Holder<File> newFile(const String &path, const FileMode &mode)
 	{
 		ScopeLock lock(fsMutex());
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusive);
 		return a->openFile(p, mode);
 	}
 
@@ -175,7 +175,7 @@ namespace cage
 	PathLastChange pathLastChange(const String &path)
 	{
 		ScopeLock lock(fsMutex());
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusiveThrow);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusive);
 		return a->lastChange(p);
 	}
 
@@ -272,29 +272,70 @@ namespace cage
 		archiveCreateZip(path, options);
 	}
 
+	namespace
+	{
+		struct Mixed
+		{
+			String f, t;
+		};
+
+		void moveImplRecursive(std::vector<Mixed> &mixed, const String &from, const String &to, bool copying)
+		{
+			auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::ArchiveExclusive);
+			auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::ArchiveExclusive);
+			if (af == at)
+				return af->move(pf, pt, copying);
+			if (any(af->type(pf) & PathTypeFlags::File))
+				mixed.push_back({ from, to });
+			else
+			{
+				const auto list = af->listDirectory(pf);
+				for (const String &p : list)
+				{
+					const String n = pathExtractFilename(p);
+					moveImplRecursive(mixed, pathJoin(from, n), pathJoin(to, n), copying);
+				}
+			}
+		}
+
+		void moveImpl(const String &from_, const String &to_, bool copying)
+		{
+			const String from = pathSimplify(from_);
+			const String to = pathSimplify(to_);
+			if (from == to)
+				return;
+			if (subString(to + "/", 0, from.length()) == from + "/")
+				CAGE_THROW_ERROR(Exception, "move/copy into itself");
+			std::vector<Mixed> mixed;
+			moveImplRecursive(mixed, from, to, copying);
+			for (const auto &it : mixed)
+			{
+				auto [af, pf] = archiveFindTowardsRoot(it.f, ArchiveFindModeEnum::FileExclusive);
+				auto [at, pt] = archiveFindTowardsRoot(it.t, ArchiveFindModeEnum::FileExclusive);
+				Holder<PointerRange<char>> b = af->openFile(pf, FileMode(true, false))->readAll();
+				at->openFile(pt, FileMode(false, true))->write(b);
+			}
+			if (!copying)
+				pathRemove(from);
+		}
+	}
+
 	void pathMove(const String &from, const String &to)
 	{
 		ScopeLock lock(fsMutex());
-		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
-		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
-		if (af == at)
-			return af->move(pf, pt);
-		{
-			Holder<File> f = af->openFile(pf, FileMode(true, false));
-			Holder<File> t = at->openFile(pt, FileMode(false, true));
-			// todo split big files into multiple smaller steps
-			Holder<PointerRange<char>> b = f->readAll();
-			f->close();
-			t->write(b);
-			t->close();
-		}
-		af->remove(pf);
+		moveImpl(from, to, false);
+	}
+
+	void pathCopy(const String &from, const String &to)
+	{
+		ScopeLock lock(fsMutex());
+		moveImpl(from, to, true);
 	}
 
 	void pathRemove(const String &path)
 	{
 		ScopeLock lock(fsMutex());
-		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusive);
 		a->remove(p);
 	}
 

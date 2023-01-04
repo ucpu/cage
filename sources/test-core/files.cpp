@@ -147,17 +147,39 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("move file");
+		CAGE_TESTCASE("move (rename)");
 
 		{
 			CAGE_TESTCASE("simple move");
-			const String source = "testdir/files/1";
-			const String dest = "testdir/moved/1";
+			static constexpr const String source = "testdir/files/1";
+			static constexpr const String dest = "testdir/moved/1";
 			CAGE_TEST(pathIsFile(source));
 			CAGE_TEST(!pathIsFile(dest));
 			pathMove(source, dest);
 			CAGE_TEST(!pathIsFile(source));
 			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("rename file");
+			static constexpr const String source = "testdir/files/2";
+			static constexpr const String dest = "testdir/files/renamed";
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
+			pathMove(source, dest);
+			CAGE_TEST(!pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("rename folder");
+			writeFile("testdir/rename1/1")->writeLine("haha");
+			writeFile("testdir/rename1/2")->writeLine("haha");
+			CAGE_TEST(pathIsDirectory("testdir/rename1"));
+			CAGE_TEST(!pathIsDirectory("testdir/rename2"));
+			pathMove("testdir/rename1", "testdir/rename2");
+			CAGE_TEST(!pathIsDirectory("testdir/rename1"));
+			CAGE_TEST(pathIsDirectory("testdir/rename2"));
 		}
 
 		{
@@ -168,6 +190,97 @@ void testFiles()
 		{
 			CAGE_TESTCASE("move non-existing file");
 			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
+		}
+
+		{
+			CAGE_TESTCASE("move folder");
+			writeFile("testdir/moved/2")->writeLine("haha");
+			writeFile("testdir/moved/3")->writeLine("haha");
+			CAGE_TEST(pathListDirectory("testdir/moved").size() == 3);
+			pathMove("testdir/moved", "testdir/moved2");
+			CAGE_TEST(!pathIsDirectory("testdir/moved"));
+			CAGE_TEST(pathIsDirectory("testdir/moved2"));
+			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("move to itself");
+			writeFile("testdir/moving")->writeLine("haha");
+			pathMove("testdir/moving", "testdir/moving");
+			CAGE_TEST(pathIsFile("testdir/moving"));
+			CAGE_TEST(readFile("testdir/moving")->readLine() == "haha");
+		}
+
+		{
+			CAGE_TESTCASE("merge move folder");
+			writeFile("testdir/ttt/5")->writeLine("haha");
+			writeFile("testdir/ttt/6")->writeLine("haha");
+			pathMove("testdir/ttt", "testdir/moved2");
+			CAGE_TEST(!pathIsDirectory("testdir/ttt"));
+			CAGE_TEST(pathIsDirectory("testdir/moved2"));
+			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 5);
+		}
+
+		{
+			CAGE_TESTCASE("move inside itself");
+			CAGE_TEST_THROWN(pathMove("testdir", "testdir/moved2"));
+		}
+	}
+
+	{
+		CAGE_TESTCASE("copy");
+
+		{
+			CAGE_TESTCASE("simple copy");
+			static constexpr const String source = "testdir/files/3";
+			static constexpr const String dest = "testdir/copied/3";
+			writeFile(source)->writeLine("haha");
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
+			pathCopy(source, dest);
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("copy to non-existing directory");
+			writeFile("testdir/files/4")->writeLine("haha");
+			pathCopy("testdir/files/4", "testdir/copied/non-exist2/4");
+		}
+
+		{
+			CAGE_TESTCASE("copy non-existing file");
+			CAGE_TEST_THROWN(pathCopy("testdir/copied/non-existing-file2", "testdir/copied/2"));
+		}
+
+		{
+			CAGE_TESTCASE("copy folder");
+			writeFile("testdir/copied/2")->writeLine("haha");
+			writeFile("testdir/copied/3")->writeLine("haha");
+			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
+			pathCopy("testdir/copied", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/copied"));
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("copy to itself");
+			pathCopy("testdir/copied2", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("merge copy folder");
+			writeFile("testdir/ttt/7")->writeLine("haha");
+			writeFile("testdir/ttt/8")->writeLine("haha");
+			pathCopy("testdir/ttt", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/ttt"));
+			CAGE_TEST(pathListDirectory("testdir/ttt").size() == 2);
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 5);
 		}
 	}
 
