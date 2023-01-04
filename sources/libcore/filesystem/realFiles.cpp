@@ -506,7 +506,7 @@ namespace cage
 				if (res == 0)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-					CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
+					CAGE_THROW_ERROR(SystemError, "CopyFileW/MoveFileW", GetLastError());
 				}
 #else
 				if (copying)
@@ -520,7 +520,7 @@ namespace cage
 					if (res != 0)
 					{
 						CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-						CAGE_THROW_ERROR(SystemError, "pathMove", errno);
+						CAGE_THROW_ERROR(SystemError, "rename", errno);
 					}
 				}
 #endif
@@ -535,7 +535,10 @@ namespace cage
 				switch (type(from_))
 				{
 				case PathTypeFlags::NotFound:
+				{
+					CAGE_LOG_THROW(Stringizer() + "path: " + from_);
 					CAGE_THROW_ERROR(Exception, "source does not exist");
+				} break;
 				case PathTypeFlags::File:
 				{
 					moveImpl(from_, to_, copying);

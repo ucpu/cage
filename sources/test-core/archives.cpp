@@ -170,9 +170,16 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("create empty archive");
-		pathCreateArchive(directories[1], "");
+		pathCreateArchive(directories[1]);
 		CAGE_TEST(pathType(directories[1]) == (PathTypeFlags::File | PathTypeFlags::Archive));
 		testListDirectory("");
+	}
+
+	{
+		CAGE_TESTCASE("create archive where name already exists");
+		CAGE_TEST_THROWN(pathCreateArchive(directories[1])); // already existing archive
+		pathCreateDirectories("testdir/archiveplaceholder");
+		CAGE_TEST_THROWN(pathCreateArchive("testdir/archiveplaceholder")); // already existing folder
 	}
 
 	Holder<PointerRange<char>> data1, data2, data3;
@@ -482,6 +489,36 @@ void testArchives()
 			CAGE_TESTCASE("allowed remove");
 			pathRemove("testdir/arch2.zip"); // finally try to remove the file
 			CAGE_TEST(none(pathType("testdir/arch2.zip") & PathTypeFlags::File)); // sanity check
+		}
+	}
+
+	{
+		CAGE_TESTCASE("keep open");
+		pathCreateDirectories("testdir/keep-open/folder");
+		writeFile("testdir/keep-open/file")->writeLine("haha");
+		pathCreateArchive("testdir/keep-open/archive.zip");
+		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/folder"));
+		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/file"));
+		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/archive.zip"));
+		CAGE_TEST_THROWN(detail::pathKeepOpen("testdir/keep-open/non-existent")); // the path must already exist
+		CAGE_TEST(pathType("testdir/keep-open/folder") == (PathTypeFlags::Directory));
+		CAGE_TEST(pathType("testdir/keep-open/file") == (PathTypeFlags::File));
+		CAGE_TEST(pathType("testdir/keep-open/archive.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
+		CAGE_TEST(pathType("testdir/keep-open/non-existent") == (PathTypeFlags::NotFound)); // the path may not be created
+	}
+
+	{
+		CAGE_TESTCASE("open same file multiple times");
+		pathCreateArchive("testdir/arch5.zip");
+		{
+			Holder<File> f1 = writeFile("testdir/arch5.zip/samefile.txt");
+			CAGE_TEST(f1);
+			CAGE_TEST_THROWN(readFile("testdir/arch5.zip/samefile.txt"));
+		}
+		{
+			Holder<File> f1 = readFile("testdir/arch5.zip/samefile.txt");
+			CAGE_TEST(f1);
+			CAGE_TEST_THROWN(readFile("testdir/arch5.zip/samefile.txt"));
 		}
 	}
 

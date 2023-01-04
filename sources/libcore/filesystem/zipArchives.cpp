@@ -307,7 +307,7 @@ namespace cage
 						if (e.extraFieldLength)
 						{
 							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
 							d.read(e.extraFieldLength);
 							e.extraFieldLength = 0;
@@ -315,7 +315,7 @@ namespace cage
 						if (e.commentLength)
 						{
 							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
 							d.read(e.commentLength);
 							e.commentLength = 0;
@@ -450,7 +450,11 @@ namespace cage
 			void throwIfFileLocked(uint32 index) const
 			{
 				if (index != m && files[index].locked)
+				{
+					CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+					CAGE_LOG_THROW(Stringizer() + "name: '" + files[index].name + "'");
 					CAGE_THROW_ERROR(Exception, "file is in use");
+				}
 			}
 
 			PathTypeFlags typeNoLock(uint32 index) const
@@ -521,7 +525,11 @@ namespace cage
 				ScopeLock lock(fsMutex());
 				const uint32 srcIndex = findRecordIndex(from);
 				if (srcIndex == m)
+				{
+					CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+					CAGE_LOG_THROW(Stringizer() + "name: '" + from + "'");
 					CAGE_THROW_ERROR(Exception, "source does not exist");
+				}
 				if (typeNoLock(srcIndex) == PathTypeFlags::File)
 				{
 					Holder<PointerRange<char>> buff = openFile(from, FileMode(true, false))->readAll();
@@ -764,7 +772,16 @@ namespace cage
 		Holder<File> ArchiveZip::openFile(const String &path, const FileMode &mode)
 		{
 			ScopeLock lock(fsMutex());
-			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			try
+			{
+				return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			}
+			catch (...)
+			{
+				CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+				CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
+				throw;
+			}
 		}
 
 		Holder<PointerRange<String>> ArchiveZip::listDirectory(const String &path) const

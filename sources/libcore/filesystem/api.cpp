@@ -305,7 +305,11 @@ namespace cage
 			if (from == to)
 				return;
 			if (subString(to + "/", 0, from.length()) == from + "/")
+			{
+				CAGE_LOG_THROW(Stringizer() + "from: " + from);
+				CAGE_LOG_THROW(Stringizer() + "to: " + to);
 				CAGE_THROW_ERROR(Exception, "move/copy into itself");
+			}
 			std::vector<Mixed> mixed;
 			moveImplRecursive(mixed, from, to, copying);
 			for (const auto &it : mixed)
@@ -345,6 +349,11 @@ namespace cage
 		{
 			ScopeLock lock(fsMutex());
 			auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
+			if (p != "" && a->type(p) == PathTypeFlags::NotFound)
+			{
+				CAGE_LOG_THROW(Stringizer() + "path: " + path);
+				CAGE_THROW_ERROR(Exception, "pathKeepOpen: path does not exist");
+			}
 			return systemMemory().createHolder<std::shared_ptr<ArchiveAbstract>>(std::move(a)).cast<void>();
 		}
 	}
