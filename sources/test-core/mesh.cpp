@@ -239,6 +239,31 @@ namespace
 		return msh;
 	}
 
+	Holder<Mesh> makeGrid()
+	{
+		std::vector<Vec3> p;
+		p.reserve(121);
+		for (uint32 y = 0; y < 11; y++)
+			for (uint32 x = 0; x < 11; x++)
+				p.push_back(Vec3(Real(x) - 5, Real(y) - 5, 0));
+		std::vector<uint32> is;
+		is.reserve(100 * 2 * 3);
+		for (uint32 y = 0; y < 10; y++)
+		{
+			for (uint32 x = 0; x < 10; x++)
+			{
+				const uint32 a = y * 11 + x;
+				static constexpr uint32 o[6] = { 0, 1, 11, 1, 12, 11 };
+				for (uint32 b : o)
+					is.push_back(a + b);
+			}
+		}
+		Holder<Mesh> msh = newMesh();
+		msh->positions(p);
+		msh->indices(is);
+		return msh;
+	}
+
 	void testMeshBasics()
 	{
 		const Holder<const Mesh> msh = makeSphere();
@@ -365,6 +390,15 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("merge planar (grid)");
+			auto p = makeGrid();
+			meshMergePlanar(+p, {});
+			p->exportFile("meshes/algorithms/mergePlanarGrid.obj");
+			CAGE_TEST(p->verticesCount() == 4);
+			CAGE_TEST(p->facesCount() == 2);
+		}
+
+		{
 			CAGE_TESTCASE("separate disconnected");
 			auto p = splitSphereIntoTwo(+makeSphere());
 			auto ps = meshSeparateDisconnected(+p);
@@ -393,12 +427,24 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("clip by box");
+			CAGE_TESTCASE("clip by box (sphere)");
 			auto p = makeSphere();
 			static constexpr Aabb box = Aabb(Vec3(-6, -6, -10), Vec3(6, 6, 10));
 			meshClip(+p, box);
-			p->exportFile("meshes/algorithms/clipByBox.obj");
+			p->exportFile("meshes/algorithms/clipByBoxFromSphere.obj");
 			approxEqual(p->boundingBox(), box);
+		}
+
+		{
+			CAGE_TESTCASE("clip by box (grid)");
+			auto p = makeGrid();
+			static constexpr Aabb box = Aabb(Vec3(-3.5), Vec3(3.5));
+			meshClip(+p, box);
+			p->exportFile("meshes/algorithms/clipByBoxFromGrid.obj");
+			Aabb b = box;
+			b.a[2] = 0;
+			b.b[2] = 0;
+			approxEqual(p->boundingBox(), b);
 		}
 
 		{
@@ -455,7 +501,7 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("simplify");
+			CAGE_TESTCASE("simplify (sphere)");
 			auto p = makeSphere();
 			MeshSimplifyConfig cfg;
 #ifdef CAGE_DEBUG
@@ -465,7 +511,16 @@ namespace
 			cfg.approximateError = 0.5;
 #endif
 			meshSimplify(+p, cfg);
-			p->exportFile("meshes/algorithms/simplify.obj");
+			p->exportFile("meshes/algorithms/simplifySphere.obj");
+		}
+
+		{
+			CAGE_TESTCASE("simplify (grid after cut)");
+			auto p = makeGrid();
+			static constexpr Aabb box = Aabb(Vec3(-3.5), Vec3(3.5));
+			meshClip(+p, box);
+			meshSimplify(+p, {});
+			p->exportFile("meshes/algorithms/simplifyGrid.obj");
 		}
 
 		{

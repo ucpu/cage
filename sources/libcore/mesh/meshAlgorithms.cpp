@@ -1068,6 +1068,7 @@ namespace cage
 		else
 			removeUnusedVertices(impl);
 		meshRemoveInvalid(impl);
+		meshMergeCloseVertices(impl, {});
 	}
 
 	void meshClip(Mesh *msh, const Plane &pln)
