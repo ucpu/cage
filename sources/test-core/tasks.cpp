@@ -5,7 +5,6 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
-#include <cage-core/concurrent.h>
 #include <atomic>
 #include <vector>
 #include <algorithm>
@@ -627,34 +626,27 @@ namespace
 	void testFireAndForget()
 	{
 		CAGE_TESTCASE("fire and forget");
+
+		Holder<Semaphore> sem = newSemaphore(0, 100);
 		struct Tester
 		{
 			void operator()(uint32 idx)
 			{
-				if (idx == 42)
-				{
-					while (!goon)
-						threadYield();
-				}
-				counter++;
+				while (randomChance() < 0.2) // spice things up a bit
+					threadYield();
+				sem->unlock();
 			}
-
-			std::atomic<bool> goon = false;
-			std::atomic<sint32> counter = 0;
+			Holder<Semaphore> sem;
 		} tst;
+		tst.sem = sem.share();
 		tasksRunAsync<Tester>("fireAndForget", Holder<Tester>(&tst, nullptr), 100, 0);
-		tst.goon = true;
-		while (tst.counter < 100)
-			threadYield();
+		for (uint32 i = 0; i < 100; i++)
+			sem->lock();
 	}
 
 	void testPerformance()
 	{
-		CAGE_TESTCASE("performance");
-
-		std::vector<uint32> input, output;
-		input.resize(10000);
-		output.resize(input.size());
+		CAGE_TESTCASE("performance (parallel merge sort)");
 
 		struct Sorter
 		{
@@ -705,6 +697,9 @@ namespace
 			}
 		};
 
+		std::vector<uint32> input, output;
+		input.resize(10000);
+		output.resize(input.size());
 		Sorter s;
 		s.input = input;
 		s.output = output;

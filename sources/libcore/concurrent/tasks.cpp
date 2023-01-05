@@ -177,13 +177,13 @@ namespace cage
 			const StringPointer name;
 			const sint32 priority = 0;
 			const uint32 invocations = 0;
+			std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
+			std::condition_variable cond = {};
+			std::exception_ptr exptr = nullptr;
 			std::atomic<uint32> scheduled = 0;
 			std::atomic<uint32> executing = 0;
 			std::atomic<uint32> finished = 0;
 			std::atomic<bool> done = false;
-			std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
-			std::condition_variable cond = {};
-			std::exception_ptr exptr = nullptr;
 
 			CAGE_FORCE_INLINE explicit TaskImpl(privat::TaskCreateConfig &&task) : runnerConfig(copy(std::move(task.data), task.function, task.elements)), runner(task.runner), name(task.name), priority(task.priority), invocations(task.invocations)
 			{
@@ -198,7 +198,7 @@ namespace cage
 
 			CAGE_FORCE_INLINE void wait()
 			{
-				ProfilingScope profiling("waiting for tasks");
+				ProfilingScope profiling("waiting for task");
 				profiling.set(String(name));
 				if (thrData.executorThread)
 				{
@@ -222,9 +222,9 @@ namespace cage
 			CAGE_FORCE_INLINE void rethrow()
 			{
 				CAGE_ASSERT(done);
+				std::unique_lock lock(mutex);
 				if (exptr)
 				{
-					std::unique_lock lock(mutex);
 					std::exception_ptr tmp = nullptr;
 					std::swap(tmp, exptr);
 					std::rethrow_exception(tmp);
@@ -244,14 +244,14 @@ namespace cage
 					}
 					if (++finished == invocations)
 					{
-						std::unique_lock lck(mutex);
+						std::unique_lock lock(mutex);
 						done = true;
 						cond.notify_all();
 					}
 				}
 				catch (...)
 				{
-					std::unique_lock lck(mutex);
+					std::unique_lock lock(mutex);
 					exptr = std::current_exception();
 					done = true;
 					cond.notify_all();

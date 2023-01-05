@@ -19,12 +19,17 @@ namespace cage
 		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems)
 		{}
 
-		void push(const T &value)
+		~ConcurrentQueue()
+		{
+			ScopeLock sl(mut); // mandate memory barriers
+		}
+
+		void push(const T &value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
 			while (true)
 			{
-				if (stop)
+				if (stop && !ignoreStop)
 					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				if (items.size() >= maxItems)
 					writer->wait(sl);
@@ -37,12 +42,12 @@ namespace cage
 			}
 		}
 
-		void push(T &&value)
+		void push(T &&value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
 			while (true)
 			{
-				if (stop)
+				if (stop && !ignoreStop)
 					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				if (items.size() >= maxItems)
 					writer->wait(sl);
@@ -55,10 +60,10 @@ namespace cage
 			}
 		}
 
-		bool tryPush(const T &value)
+		bool tryPush(const T &value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
-			if (stop)
+			if (stop && !ignoreStop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (items.size() < maxItems)
 			{
@@ -69,10 +74,10 @@ namespace cage
 			return false;
 		}
 
-		bool tryPush(T &&value)
+		bool tryPush(T &&value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
-			if (stop)
+			if (stop && !ignoreStop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (items.size() < maxItems)
 			{
@@ -83,12 +88,12 @@ namespace cage
 			return false;
 		}
 
-		void pop(T &value)
+		void pop(T &value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
 			while (true)
 			{
-				if (stop)
+				if (stop && !ignoreStop)
 					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				if (items.empty())
 					reader->wait(sl);
@@ -102,10 +107,10 @@ namespace cage
 			}
 		}
 
-		bool tryPop(T &value)
+		bool tryPop(T &value, bool ignoreStop = false)
 		{
 			ScopeLock sl(mut);
-			if (stop)
+			if (stop && !ignoreStop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (!items.empty())
 			{
@@ -142,7 +147,7 @@ namespace cage
 		Holder<ConditionalVariable> writer = newConditionalVariable();
 		Holder<ConditionalVariable> reader = newConditionalVariable();
 		plf::list<T> items;
-		const uint32 maxItems = m;
+		uint32 maxItems = m;
 		bool stop = false;
 	};
 }

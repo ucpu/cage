@@ -58,11 +58,8 @@ macro(cage_build_configuration)
 		endif()
 	else()
 		# link time optimizations
-		# fails with clang - generates empty archive in zlib-ng
-		#if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
-			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-		#endif()
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 
 		# disable warnings about attributes
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")

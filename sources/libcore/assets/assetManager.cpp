@@ -134,20 +134,20 @@ namespace cage
 		public:
 			const String path;
 			const sint32 tasksPriority = 0;
-			uint32 generateName = 0;
-			std::atomic<sint32> workingCounter = 0;
-			std::atomic<sint32> existsCounter = 0;
 			Holder<Mutex> privateMutex = newMutex(); // protects generateName, privateIndex
 			Holder<RwMutex> publicMutex = newRwMutex(); // protects publicIndex, waitingIndex
+			std::vector<AssetScheme> schemes;
+			std::atomic<sint32> workingCounter = 0;
+			std::atomic<sint32> existsCounter = 0;
+			uint32 generateName = 0;
 			robin_hood::unordered_map<uint32, Collection> privateIndex;
 			robin_hood::unordered_map<uint32, Holder<Asset>> publicIndex;
 			robin_hood::unordered_map<uint32, std::vector<Holder<Waiting>>> waitingIndex;
-			std::vector<AssetScheme> schemes;
 			ConcurrentQueue<Holder<CommandBase>> commandsQueue;
-			std::vector<Holder<ConcurrentQueue<Holder<CustomProcessing>>>> customProcessingQueues;
 			ConcurrentQueue<Holder<Loading>> diskLoadingQueue;
-			Holder<Thread> commandsThread;
+			std::vector<Holder<ConcurrentQueue<Holder<CustomProcessing>>>> customProcessingQueues;
 			std::vector<Holder<Thread>> diskLoadingThreads;
+			Holder<Thread> commandsThread;
 			Holder<AssetListener> listener;
 
 			static String findAssetsFolderPath(const AssetManagerCreateConfig &config)
@@ -178,24 +178,26 @@ namespace cage
 
 			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config)), tasksPriority(config.tasksPriority)
 			{
-				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using asset path: '" + path + "'");
+				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using assets path: '" + path + "'");
 				schemes.resize(config.schemesMaxCount);
 				customProcessingQueues.resize(config.customProcessingThreads);
 				for (auto &it : customProcessingQueues)
 					it = systemMemory().createHolder<ConcurrentQueue<Holder<CustomProcessing>>>();
+				diskLoadingThreads.reserve(config.diskLoadingThreads);
+				for (uint32 i = 0; i < config.diskLoadingThreads; i++)
+					diskLoadingThreads.push_back(newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), Stringizer() + "asset disk loading " + i));
 				commandsThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::commandsEntry>(this), "asset commands");
-				diskLoadingThreads.resize(config.diskLoadingThreads);
-				for (auto &it : diskLoadingThreads)
-					it = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), "asset disk loading");
 			}
 
 			~AssetManagerImpl()
 			{
 				listener.clear();
-				diskLoadingQueue.terminate();
 				for (auto &it : customProcessingQueues)
 					it->terminate();
+				diskLoadingQueue.terminate();
 				commandsQueue.terminate();
+				commandsThread.clear();
+				diskLoadingThreads.clear();
 				CAGE_ASSERT(privateIndex.empty());
 			}
 
