@@ -88,7 +88,7 @@ namespace cage
 			bool valid(const Value &value, const sint32 requiredPriority) const noexcept;
 
 			Holder<Mutex> mut = newMutex();
-			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
+			Holder<ConditionalVariable> cond = newConditionalVariable();
 			plf::list<Value> items;
 			bool stop = false;
 		};
@@ -123,9 +123,10 @@ namespace cage
 
 			void schedule(const Holder<TaskImpl> &tsk);
 			bool tryRun(sint32 requiredPriority);
-			void run();
 
 		private:
+			void run();
+
 			void threadEntry()
 			{
 				thrData.executorThread = true;
@@ -199,7 +200,6 @@ namespace cage
 			{
 				ProfilingScope profiling("waiting for tasks");
 				profiling.set(String(name));
-
 				if (thrData.executorThread)
 				{
 					auto &exec = executor();
@@ -322,7 +322,8 @@ namespace cage
 	{
 		void tasksRunBlocking(TaskCreateConfig &&task)
 		{
-			tasksRunAsync(std::move(task))->wait();
+			Holder<AsyncTask> h = tasksRunAsync(std::move(task));
+			h->wait();
 		}
 
 		Holder<AsyncTask> tasksRunAsync(TaskCreateConfig &&task)

@@ -378,45 +378,6 @@ namespace cage
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
-
-#if 0
-			// old implementation compatible with windows before version 8
-
-			Holder<Mutex> mut;
-			Holder<Semaphore> sem1, sem2;
-			uint32 total, current;
-
-			explicit BarrierImpl(uint32 value) : mut(newMutex()), sem1(newSemaphore(0, value)), sem2(newSemaphore(0, value)), total(value), current(0)
-			{}
-
-			~BarrierImpl()
-			{}
-
-			void lock()
-			{
-				{
-					ScopeLock l(mut);
-					if (++current == total)
-					{
-						for (uint32 i = 0; i < total; i++)
-							sem1->unlock();
-					}
-				}
-				sem1->lock();
-				{
-					ScopeLock l(mut);
-					if (--current == 0)
-					{
-						for (uint32 i = 0; i < total; i++)
-							sem2->unlock();
-					}
-				}
-				sem2->lock();
-			}
-
-#else
-			// new implementation that requires windows 8 or later
-
 			SYNCHRONIZATION_BARRIER bar;
 
 			explicit BarrierImpl(uint32 value)
@@ -434,11 +395,7 @@ namespace cage
 			{
 				EnterSynchronizationBarrier(&bar, SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
 			}
-
-#endif // windows version compatibility
-
 #else
-
 			pthread_barrier_t bar;
 
 			BarrierImpl(uint32 value)
@@ -455,7 +412,6 @@ namespace cage
 			{
 				pthread_barrier_wait(&bar);
 			}
-
 #endif
 		};
 	}
@@ -473,7 +429,7 @@ namespace cage
 
 	namespace
 	{
-		class ConditionalVariableBaseImpl : public ConditionalVariableBase
+		class ConditionalVariableImpl : public ConditionalVariable
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -482,7 +438,7 @@ namespace cage
 			pthread_cond_t cond;
 #endif
 
-			ConditionalVariableBaseImpl()
+			ConditionalVariableImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				InitializeConditionVariable(&cond);
@@ -491,7 +447,7 @@ namespace cage
 #endif
 			}
 
-			~ConditionalVariableBaseImpl()
+			~ConditionalVariableImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				// do nothing
@@ -500,25 +456,11 @@ namespace cage
 #endif
 			}
 		};
-
-		class ConditionalVariableImpl : public ConditionalVariable
-		{
-		public:
-			Holder<Mutex> mut;
-			Holder<ConditionalVariableBase> cond;
-			bool broadcasting;
-
-			ConditionalVariableImpl(bool broadcasting) : broadcasting(broadcasting)
-			{
-				mut = newMutex();
-				cond = newConditionalVariableBase();
-			}
-		};
 	}
 
-	void ConditionalVariableBase::wait(Mutex *mut)
+	void ConditionalVariable::wait(Mutex *mut)
 	{
-		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		MutexImpl *m = (MutexImpl*)mut;
 #ifdef CAGE_SYSTEM_WINDOWS
 		SleepConditionVariableSRW(&impl->cond, &m->srw, INFINITE, 0);
@@ -527,9 +469,9 @@ namespace cage
 #endif
 	}
 
-	void ConditionalVariableBase::signal()
+	void ConditionalVariable::signal()
 	{
-		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WakeConditionVariable(&impl->cond);
 #else
@@ -537,9 +479,9 @@ namespace cage
 #endif
 	}
 
-	void ConditionalVariableBase::broadcast()
+	void ConditionalVariable::broadcast()
 	{
-		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WakeAllConditionVariable(&impl->cond);
 #else
@@ -547,48 +489,9 @@ namespace cage
 #endif
 	}
 
-	Holder<ConditionalVariableBase> newConditionalVariableBase()
+	Holder<ConditionalVariable> newConditionalVariable()
 	{
-		return systemMemory().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
-	}
-
-	void ConditionalVariable::lock()
-	{
-		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		impl->mut->lock();
-	}
-
-	void ConditionalVariable::unlock()
-	{
-		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		impl->mut->unlock();
-		if (impl->broadcasting)
-			impl->cond->broadcast();
-		else
-			impl->cond->signal();
-	}
-
-	void ConditionalVariable::wait()
-	{
-		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		impl->cond->wait(impl->mut);
-	}
-
-	void ConditionalVariable::signal()
-	{
-		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		impl->cond->signal();
-	}
-
-	void ConditionalVariable::broadcast()
-	{
-		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		impl->cond->broadcast();
-	}
-
-	Holder<ConditionalVariable> newConditionalVariable(bool broadcast)
-	{
-		return systemMemory().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
+		return systemMemory().createImpl<ConditionalVariable, ConditionalVariableImpl>();
 	}
 
 	namespace

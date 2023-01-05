@@ -68,7 +68,7 @@ namespace cage
 	CAGE_CORE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
 
 	// unlock a mutex and atomically reacquire it when signaled
-	class CAGE_CORE_API ConditionalVariableBase : private Immovable
+	class CAGE_CORE_API ConditionalVariable : private Immovable
 	{
 	public:
 		void wait(Mutex *mut);
@@ -78,20 +78,7 @@ namespace cage
 		void broadcast();
 	};
 
-	CAGE_CORE_API Holder<ConditionalVariableBase> newConditionalVariableBase();
-
-	// compound class containing both mutex and conditional variable
-	class CAGE_CORE_API ConditionalVariable : private Immovable
-	{
-	public:
-		void lock(); // lock the mutex
-		void unlock(); // unlock the mutex and signal (or broadcast) the conditional variable
-		void wait(); // unlock the mutex and wait on the conditional variable (beware of spurious wake up)
-		void signal(); // signal the conditional variable without touching the mutex
-		void broadcast(); // broadcast the conditional variable without touching the mutex
-	};
-
-	CAGE_CORE_API Holder<ConditionalVariable> newConditionalVariable(bool broadcast = false);
+	CAGE_CORE_API Holder<ConditionalVariable> newConditionalVariable();
 
 	class CAGE_CORE_API Thread : private Immovable
 	{

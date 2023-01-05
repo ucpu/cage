@@ -139,8 +139,8 @@ namespace cage
 
 	private:
 		Holder<Mutex> mut = newMutex();
-		Holder<ConditionalVariableBase> writer = newConditionalVariableBase();
-		Holder<ConditionalVariableBase> reader = newConditionalVariableBase();
+		Holder<ConditionalVariable> writer = newConditionalVariable();
+		Holder<ConditionalVariable> reader = newConditionalVariable();
 		plf::list<T> items;
 		const uint32 maxItems = m;
 		bool stop = false;

@@ -80,7 +80,7 @@ namespace cage
 	private:
 		T *ptr = nullptr;
 
-		friend class ConditionalVariableBase;
+		friend class ConditionalVariable;
 	};
 }
 
