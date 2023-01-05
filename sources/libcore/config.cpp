@@ -331,7 +331,7 @@ namespace cage
 			ConfigListImpl()
 			{
 				{
-					ScopeLock<Mutex> lock(mut());
+					ScopeLock lock(mut());
 					const auto &s = storageAlreadyLocked();
 					names.reserve(s.size());
 					for (const auto &it : s)

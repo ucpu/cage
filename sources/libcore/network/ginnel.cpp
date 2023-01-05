@@ -1191,7 +1191,7 @@ namespace cage
 				detail::OverrideBreakpoint brk;
 				std::shared_ptr<SockGroup::Receiver> acc;
 				{
-					ScopeLock<Mutex> lock(sockGroup->mut);
+					ScopeLock lock(sockGroup->mut);
 					sockGroup->readAll();
 					if (accepting->empty())
 						return {};

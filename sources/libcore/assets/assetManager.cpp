@@ -23,7 +23,7 @@
 
 namespace cage
 {
-	ConfigUint32 logLevel("cage/assets/logLevel", 1);
+	const ConfigUint32 logLevel("cage/assets/logLevel", 1);
 #define ASS_LOG(LEVEL, ASS, MSG) \
 	{ \
 		if (logLevel >= (LEVEL)) \
@@ -358,7 +358,7 @@ namespace cage
 				}
 
 				{
-					ScopeLock<RwMutex> lock(publicMutex, WriteLockTag());
+					ScopeLock lock(publicMutex, WriteLockTag());
 					bool found = false;
 					for (const auto &v : c.versions)
 					{
@@ -660,7 +660,7 @@ namespace cage
 				if (c.references-- == 1)
 				{
 					{
-						ScopeLock<RwMutex> lock(impl->publicMutex, WriteLockTag());
+						ScopeLock lock(impl->publicMutex, WriteLockTag());
 						impl->unpublish(name);
 					}
 					for (auto &a : c.versions)
@@ -700,7 +700,7 @@ namespace cage
 		static constexpr uint32 b = (uint32)1 << 30;
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		uint32 &name = impl->generateName;
-		ScopeLock<Mutex> lock(impl->privateMutex);
+		ScopeLock lock(impl->privateMutex);
 		if (name < a || name > b)
 			name = a;
 		while (impl->privateIndex.count(name))
@@ -738,7 +738,7 @@ namespace cage
 	bool AssetManager::unloaded() const
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		ScopeLock<Mutex> lock(impl->privateMutex);
+		ScopeLock lock(impl->privateMutex);
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
@@ -862,7 +862,7 @@ namespace cage
 		const auto &publicIndex = impl->publicIndex;
 		CAGE_ASSERT(scheme < schemes.size());
 		CAGE_ASSERT(schemes[scheme].load);
-		ScopeLock<RwMutex> lock(impl->publicMutex, ReadLockTag());
+		ScopeLock lock(impl->publicMutex, ReadLockTag());
 		auto it = publicIndex.find(assetName);
 		if (it == publicIndex.end())
 			return {}; // not found

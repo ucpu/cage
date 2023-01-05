@@ -119,10 +119,9 @@ namespace cage
 
 		void terminate()
 		{
-			{
-				ScopeLock sl(mut); // mandate memory barriers
-				stop = true;
-			}
+			ScopeLock sl(mut); // mandate memory barriers
+			stop = true;
+			// broadcast before unlock - just to satisfy helgrind
 			writer->broadcast();
 			reader->broadcast();
 		}

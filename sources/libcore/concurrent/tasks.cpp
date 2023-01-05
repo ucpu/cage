@@ -73,10 +73,9 @@ namespace cage
 
 			void terminate()
 			{
-				{
-					ScopeLock sl(mut); // mandate memory barriers
-					stop = true;
-				}
+				ScopeLock sl(mut); // mandate memory barriers
+				stop = true;
+				// broadcast before unlock - just to satisfy helgrind
 				cond->broadcast();
 			}
 
@@ -245,20 +244,16 @@ namespace cage
 					}
 					if (++finished == invocations)
 					{
-						{
-							std::unique_lock lck(mutex);
-							done = true;
-						}
+						std::unique_lock lck(mutex);
+						done = true;
 						cond.notify_all();
 					}
 				}
 				catch (...)
 				{
-					{
-						std::unique_lock lck(mutex);
-						exptr = std::current_exception();
-						done = true;
-					}
+					std::unique_lock lck(mutex);
+					exptr = std::current_exception();
+					done = true;
 					cond.notify_all();
 				}
 			}
@@ -347,9 +342,9 @@ namespace cage
 			static_assert(sizeof(privat::TaskCreateConfig::function) == sizeof(function));
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
-			tsk.function = *(Delegate<void()> *)&function;
+			tsk.function = reinterpret_cast<Delegate<void()> &>(function);
 			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
-				Delegate<void(uint32)> function = *(Delegate<void(uint32)> *)&task.function;
+				const Delegate<void(uint32)> function = reinterpret_cast<const Delegate<void(uint32)> &>(task.function);
 				function(idx);
 			};
 			tsk.invocations = invocations;
