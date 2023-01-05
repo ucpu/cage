@@ -257,5 +257,5 @@ jobs:
     - name: Tests
       run: |
         cd build/result/relwithdebinfo
-        valgrind --tool=${{ matrix.tool }} ./cage-test-core
+        valgrind --exit-on-first-error=yes --error-exitcode=1 --tool=${{ matrix.tool }} ./cage-test-core
 

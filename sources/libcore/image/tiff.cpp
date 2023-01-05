@@ -97,7 +97,9 @@ namespace cage
 		try
 		{
 			MemoryBuffer res;
-			res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
+			res.resize(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100); // preallocate and fill, instead of reserve
+			detail::memset(res.data(), 0, res.size()); // avoid storing uninitialized memory from the tiff library
+			res.resize(0);
 			BufferOStream stream(res);
 			t = TIFFStreamOpen("MemTIFF", &stream);
 			if (!t)
@@ -123,7 +125,7 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "unsupported format in tiff encoding");
 			}
 			TIFFSetField(t, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
-			TIFFSetField(t, TIFFTAG_COMPRESSION, COMPRESSION_DEFLATE);
+			TIFFSetField(t, TIFFTAG_COMPRESSION, COMPRESSION_ADOBE_DEFLATE);
 			switch (impl->channels)
 			{
 			case 1:
