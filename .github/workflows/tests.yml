@@ -223,7 +223,7 @@ jobs:
 
 
   Valgrind:
-    name: valgrind-${{ matrix.tool }}
+    name: valgrind-${{ matrix.options.tool }}
     runs-on: ubuntu-latest
     env:
       CC: gcc-12
@@ -231,7 +231,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tool: [memcheck, helgrind]
+        options:
+        - {
+            tool: memcheck,
+            flags: --exit-on-first-error=yes --error-exitcode=1
+          }
+        - {
+            tool: helgrind,
+            flags: # helgrind produces some false-positives so lets not fail on them
+          }
 
     steps:
     - name: Install packages
@@ -257,5 +265,5 @@ jobs:
     - name: Tests
       run: |
         cd build/result/relwithdebinfo
-        valgrind --exit-on-first-error=yes --error-exitcode=1 --tool=${{ matrix.tool }} ./cage-test-core
+        valgrind ${{ matrix.options.flags }} --tool=${{ matrix.options.tool }} ./cage-test-core
 

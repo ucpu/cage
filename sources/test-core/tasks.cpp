@@ -258,7 +258,7 @@ namespace
 		CAGE_TEST(RecursiveTester::runCounter == 1 + 2 + 4 + 8 + 16 + 32);
 	}
 
-	struct ParallelTester : private Noncopyable
+	struct ParallelTester : private Immovable
 	{
 		static inline std::atomic<sint32> counter = 0;
 		std::atomic<sint32> runs = 0;
