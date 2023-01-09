@@ -11,7 +11,7 @@ namespace cage
 		{
 			GuiTextFormatComponent text;
 			text.color = Vec3(1);
-			text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
+			text.font = HashString("cage/font/ubuntu/regular.ttf");
 			text.size = 14;
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 0.4;

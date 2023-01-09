@@ -746,7 +746,7 @@ namespace cage
 						TextComponent pt = tc_;
 						TextPrepare prepare;
 						if (!pt.font)
-							pt.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
+							pt.font = HashString("cage/font/ubuntu/regular.ttf");
 						prepare.font = assets->tryGet<AssetSchemeIndexFont, Font>(pt.font);
 						if (!prepare.font)
 							return;

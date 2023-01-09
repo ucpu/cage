@@ -1,11 +1,6 @@
 
 This is modified distribution of Ubuntu Font Family 0.83
 
-Removed Fonts:
-Ubuntu-B.ttf   Ubuntu-LI.ttf     UbuntuMono-BI.ttf  Ubuntu-RI.ttf
-Ubuntu-BI.ttf  Ubuntu-M.ttf      UbuntuMono-R.ttf
-Ubuntu-C.ttf   Ubuntu-MI.ttf     UbuntuMono-RI.ttf
-Ubuntu-L.ttf   UbuntuMono-B.ttf
+Some of the fonts have been removed.
 
-Kept Fonts:
-Ubuntu-R.ttf
+The files have been renamed.

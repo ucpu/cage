@@ -1,8 +1,10 @@
-
 []
 scheme = pack
 font.pack
 
 []
 scheme = font
-ubuntu/Ubuntu-R.ttf
+ubuntu/regular.ttf
+ubuntu/bold.ttf
+ubuntu/italic.ttf
+ubuntu/monospace.ttf
