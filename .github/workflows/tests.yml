@@ -52,6 +52,17 @@ jobs:
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
 
+    - name: Install
+      shell: bash
+      run: |
+        cd build
+        cmake --install . --config ${{ matrix.build-config }} --prefix "C:/cage"
+        cd ../sources/test-install
+        mkdir build
+        cd build
+        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -DCage_DIR="C:/cage/cmake" ..
+        cmake --build . --config ${{ matrix.build-config }}
+
 
   Ubuntu:
     name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
@@ -112,7 +123,7 @@ jobs:
     - name: Build
       run: |
         cd build
-        cmake --build . --config ${{ matrix.build-config }} -- -j3
+        cmake --build . -- -j3
 
     - name: Tests
       run: |
@@ -123,6 +134,16 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
+
+    - name: Install
+      run: |
+        cd build
+        sudo cmake --install .
+        cd ../sources/test-install
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        cmake --build . -- -j3
 
 
   Sanitizers:

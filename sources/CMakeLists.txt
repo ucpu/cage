@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.22)
 
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "cage itself")
+message(STATUS "----------------------------------------------------------------")
+
 ########
 # CORE
 ########
 
 file(GLOB_RECURSE cage-core-sources "libcore/*" "include/cage-core/*")
 add_library(cage-core SHARED ${cage-core-sources})
-target_include_directories(cage-core PUBLIC include)
+target_compile_features(cage-core PUBLIC cxx_std_${CMAKE_CXX_STANDARD})
+target_include_directories(cage-core PUBLIC $<INSTALL_INTERFACE:include> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_link_libraries(cage-core PRIVATE zlib libzstd_static simplefilewatcher utfcpp fastnoise hsluv png_static cage-jpeg tiff tiffxx tinyexr stb xatlas pmp dualmc dr_libs ogg vorbis vorbisfile vorbisenc samplerate assimp bc7enc_rdo avir)
 target_link_libraries(cage-core PUBLIC robin-hood-hashing plf)
 if(WIN32)
@@ -73,7 +78,6 @@ cage_ide_sort_files(cage-core)
 
 file(GLOB_RECURSE cage-engine-sources "libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
-target_include_directories(cage-engine PUBLIC include)
 target_link_libraries(cage-engine PRIVATE cubeb glfw openxr_loader)
 target_link_libraries(cage-engine PUBLIC cage-core glad)
 if(WIN32)
@@ -98,7 +102,6 @@ cage_ide_sort_files(cage-engine)
 
 file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
 add_library(cage-simple STATIC ${cage-simple-sources})
-target_include_directories(cage-simple PUBLIC include)
 target_link_libraries(cage-simple PUBLIC cage-engine)
 cage_ide_category(cage-simple cage/libs)
 cage_ide_sort_files(cage-simple)
@@ -144,6 +147,7 @@ cage_ide_working_dir_in_place(cage-test-assets)
 # TOOLS
 ########
 
+set(cage_tools_targets_list)
 macro(cage_define_tool target sourcePattern)
 	file(GLOB_RECURSE ${target}-sources ${sourcePattern})
 	add_executable(${target} ${${target}-sources})
@@ -151,6 +155,7 @@ macro(cage_define_tool target sourcePattern)
 	cage_ide_category(${target} cage/tools)
 	cage_ide_sort_files(${target})
 	cage_ide_working_dir_in_place(${target})
+	list(APPEND cage_tools_targets_list ${target})
 endmacro()
 
 cage_define_tool(cage-asset-analyze "asset-analyze/*")
@@ -167,3 +172,21 @@ target_link_libraries(cage-asset-processor cage-engine freetype lib_msdfgen)
 
 add_dependencies(cage-asset-database cage-asset-processor)
 add_dependencies(cage-asset-analyze cage-asset-processor)
+
+########
+# INSTALL
+########
+
+option(cage_install_enabled "enable installing cage" ON)
+include(GNUInstallDirs)
+if (cage_install_enabled)
+	install(TARGETS robin-hood-hashing plf glad EXPORT CageConfig)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/robin-hood-hashing/robin-hood-hashing/src/include/robin_hood.h" DESTINATION include)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_colony/plf_colony.h" DESTINATION include)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_list/plf_list.h" DESTINATION include)
+	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_stack/plf_stack.h" DESTINATION include)
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../externals/glad/glad/include" DESTINATION .)
+	install(TARGETS cage-core cage-engine cage-simple ${cage_tools_targets_list} EXPORT CageConfig)
+	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include" DESTINATION .)
+	install(EXPORT CageConfig DESTINATION cmake)
+endif()

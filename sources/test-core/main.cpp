@@ -71,6 +71,7 @@ void testProcess();
 void testLogger();
 void testSystemInformation();
 void generatePointsOnSphere();
+void testCageInstallConsistentPaths();
 
 int main()
 {
@@ -146,6 +147,7 @@ int main()
 	testProcess();
 	testLogger();
 	testSystemInformation();
+	testCageInstallConsistentPaths();
 
 	{
 		CAGE_TESTCASE("removing testdir");

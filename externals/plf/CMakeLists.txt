@@ -4,6 +4,5 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "plf")
 message(STATUS "----------------------------------------------------------------")
 
-add_library(plf STATIC plf_colony/plf_colony.h plf_list/plf_list.h plf_stack/plf_stack.h dummy.cpp)
-target_include_directories(robin-hood-hashing PUBLIC plf_colony plf_list plf_stack)
-
+add_library(plf INTERFACE)
+target_include_directories(robin-hood-hashing INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/plf_colony> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/plf_list> $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/plf_stack>)
