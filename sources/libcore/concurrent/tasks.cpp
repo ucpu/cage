@@ -176,14 +176,14 @@ namespace cage
 			const privat::TaskRunner runner = nullptr;
 			const StringPointer name;
 			const sint32 priority = 0;
-			const uint32 invocations = 0;
-			std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
+			const uint32 invocations = 0; // how many times should the runner be executed
+			mutable std::mutex mutex = {}; // using std mutex etc to avoid dynamic allocation associated with cage::Mutex
 			std::condition_variable cond = {};
 			std::exception_ptr exptr = nullptr;
-			std::atomic<uint32> scheduled = 0;
-			std::atomic<uint32> executing = 0;
-			std::atomic<uint32> finished = 0;
-			std::atomic<bool> done = false;
+			std::atomic<uint32> scheduling = 0; // number of times this task was tried to be added to the queue
+			std::atomic<uint32> executing = 0; // number of times the runner for this task has started
+			std::atomic<uint32> finished = 0; // number of times the runner for this task has completed
+			bool done = false; // successfully finished all invocations or thrown an exception
 
 			CAGE_FORCE_INLINE explicit TaskImpl(privat::TaskCreateConfig &&task) : runnerConfig(copy(std::move(task.data), task.function, task.elements)), runner(task.runner), name(task.name), priority(task.priority), invocations(task.invocations)
 			{
@@ -191,22 +191,22 @@ namespace cage
 					done = true;
 			}
 
-			CAGE_FORCE_INLINE ~TaskImpl()
-			{
-				CAGE_ASSERT(done);
-			}
-
 			CAGE_FORCE_INLINE void wait()
 			{
 				ProfilingScope profiling("waiting for task");
 				profiling.set(String(name));
+
 				if (thrData.executorThread)
 				{
 					auto &exec = executor();
-					while (!done)
+					while (true)
 					{
-						while (exec.tryRun(priority) && !done);
-						if (!done)
+						{
+							std::unique_lock lock(mutex);
+							if (done)
+								break;
+						}
+						if (!exec.tryRun(priority))
 							threadYield();
 					}
 				}
@@ -216,18 +216,29 @@ namespace cage
 					while (!done)
 						cond.wait(lock);
 				}
-				rethrow();
-			}
 
-			CAGE_FORCE_INLINE void rethrow()
-			{
-				CAGE_ASSERT(done);
-				std::unique_lock lock(mutex);
-				if (exptr)
-				{
-					std::exception_ptr tmp = nullptr;
-					std::swap(tmp, exptr);
-					std::rethrow_exception(tmp);
+				{ // rethrow exception if any
+					std::unique_lock lock(mutex);
+					CAGE_ASSERT(done);
+					if (exptr)
+					{
+						std::exception_ptr tmp = nullptr;
+						try
+						{
+							CAGE_THROW_SILENT(Exception, "repeated wait on failed task");
+						}
+						catch (...)
+						{
+							tmp = std::current_exception();
+						}
+						std::swap(tmp, exptr);
+						std::rethrow_exception(tmp);
+					}
+					else
+					{
+						CAGE_ASSERT(executing == invocations);
+						CAGE_ASSERT(finished == invocations);
+					}
 				}
 			}
 
@@ -236,6 +247,7 @@ namespace cage
 				try
 				{
 					const uint32 idx = executing++;
+					CAGE_ASSERT(idx < invocations);
 					{
 						ThreadPriorityUpdater prio(priority);
 						ProfilingScope profiling(name);
@@ -245,6 +257,8 @@ namespace cage
 					if (++finished == invocations)
 					{
 						std::unique_lock lock(mutex);
+						CAGE_ASSERT(executing == invocations);
+						CAGE_ASSERT(finished == invocations);
 						done = true;
 						cond.notify_all();
 					}
@@ -281,7 +295,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE void Executor::schedule(const Holder<TaskImpl> &tsk)
 		{
-			if (tsk->scheduled++ < tsk->invocations)
+			if (tsk->scheduling++ < tsk->invocations)
 				queue.push(tsk.share());
 		}
 
@@ -309,6 +323,7 @@ namespace cage
 	bool AsyncTask::done() const
 	{
 		const TaskImpl *impl = (const TaskImpl *)this;
+		std::unique_lock lock(impl->mutex);
 		return impl->done;
 	}
 

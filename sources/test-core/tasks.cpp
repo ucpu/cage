@@ -214,6 +214,24 @@ namespace
 				CAGE_TEST_THROWN(ref->wait());
 			}
 		}
+
+		{
+			CAGE_TESTCASE("repeated waits");
+			{
+				CAGE_TESTCASE("non-throwing");
+				Holder<AsyncTask> tsk = tasksRunAsync("async", Delegate<void(uint32)>().bind<&throwingTasks>(), 10); // no exception
+				tsk->wait();
+				tsk->wait();
+				tsk->wait();
+			}
+			{
+				CAGE_TESTCASE("throwing");
+				Holder<AsyncTask> tsk = tasksRunAsync("async", Delegate<void(uint32)>().bind<&throwingTasks>(), 30); // one exception
+				CAGE_TEST_THROWN(tsk->wait());
+				CAGE_TEST_THROWN(tsk->wait());
+				CAGE_TEST_THROWN(tsk->wait());
+			}
+		}
 	}
 
 	struct RecursiveTester : private Immovable
@@ -650,13 +668,13 @@ namespace
 
 		struct Sorter
 		{
-			PointerRange<uint32> input, output;
+			PointerRange<uint32> data;
 
-			static void merge(PointerRange<uint32> a_, PointerRange<uint32> b_, PointerRange<uint32> o_)
+			static void merge(const PointerRange<const uint32> a_, const PointerRange<const uint32> b_, const PointerRange<uint32> o_)
 			{
 				CAGE_ASSERT(a_.size() + b_.size() == o_.size());
-				uint32 *a = a_.begin();
-				uint32 *b = b_.begin();
+				const uint32 *a = a_.begin();
+				const uint32 *b = b_.begin();
 				uint32 *o = o_.begin();
 				while (o != o_.end())
 				{
@@ -675,45 +693,40 @@ namespace
 
 			void operator()()
 			{
-				CAGE_ASSERT(input.size() == output.size());
-				if (input.size() > 20)
+				if (data.size() > 20)
 				{
-					uint32 *const midi = input.begin() + input.size() / 2;
-					uint32 *const mido = output.begin() + output.size() / 2;
+					uint32 *const dataMid = data.begin() + data.size() / 2;
 					Sorter s[2];
-					s[0].input = { input.begin(), midi };
-					s[0].output = { output.begin(), mido };
-					s[1].input = { midi, input.end() };
-					s[1].output = { mido, output.end() };
+					s[0].data = { data.begin(), dataMid };
+					s[1].data = { dataMid, data.end() };
 					tasksRunBlocking<Sorter>("sorting", s);
-					merge(s[0].input, s[1].input, output);
-					std::copy(output.begin(), output.end(), input.begin());
+					std::vector<uint32> tmp;
+					tmp.resize(data.size());
+					merge(s[0].data, s[1].data, tmp);
+					std::copy(tmp.begin(), tmp.end(), data.begin());
 				}
 				else
 				{
-					std::sort(input.begin(), input.end());
-					std::copy(input.begin(), input.end(), output.begin());
+					std::sort(data.begin(), data.end());
 				}
 			}
 		};
 
-		std::vector<uint32> input, output;
-		input.resize(10000);
-		output.resize(input.size());
+		std::vector<uint32> data;
+		data.resize(10000);
 		Sorter s;
-		s.input = input;
-		s.output = output;
+		s.data = data;
 		Holder<Timer> tmr = newTimer();
 		uint64 durations[31];
 		for (uint64 &duration : durations)
 		{
-			for (uint32 &it : input)
+			for (uint32 &it : data)
 				it = randomRange(0u, 1000000u);
+			CAGE_TEST(!std::is_sorted(data.begin(), data.end()));
 			tmr->reset();
 			s.operator()();
 			duration = tmr->duration();
-			CAGE_TEST(input.size() == output.size());
-			CAGE_TEST(std::is_sorted(output.begin(), output.end()));
+			CAGE_TEST(std::is_sorted(data.begin(), data.end()));
 		}
 		std::sort(std::begin(durations), std::end(durations));
 		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[15] + " us"); // median
