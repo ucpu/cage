@@ -1,4 +1,3 @@
-#include <cage-core/concurrent.h>
 #include <cage-core/systemInformation.h>
 #include <cage-core/string.h>
 
@@ -10,8 +9,9 @@
 #pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
 #pragma comment(lib, "Advapi32.lib") // RegGetValue
 #else
-#include <cage-core/process.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/process.h>
+#include <cage-core/debug.h>
 #endif
 
 namespace cage
@@ -139,6 +139,7 @@ namespace cage
 #else
 		try
 		{
+			detail::OverrideBreakpoint ob;
 			Holder<Process> prg = newProcess(String("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
 			return toUint32(prg->readLine()) * 1000;
 		}
@@ -177,6 +178,7 @@ namespace cage
 #else
 		try
 		{
+			detail::OverrideBreakpoint ob;
 			Holder<Process> prg = newProcess(String("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
 			return toUint64(prg->readLine()) * 1024;
 		}

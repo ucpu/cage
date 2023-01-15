@@ -182,6 +182,11 @@ namespace cage
 	Holder<PointerRange<String>> pathListDirectory(const String &path)
 	{
 		ScopeLock lock(fsMutex());
+		if (none(pathType(path) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
+		{
+			CAGE_LOG_THROW(Stringizer() + "path: " + path);
+			CAGE_THROW_ERROR(Exception, "cannot list path that is not directory");
+		}
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		return a->listDirectory(p);
 	}
@@ -274,66 +279,95 @@ namespace cage
 
 	namespace
 	{
-		struct Mixed
+		void copyFileContentMixed(const String &from, const String &to)
 		{
-			String f, t;
-		};
+			auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusive);
+			auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusive);
+			CAGE_ASSERT(af != at);
+			Holder<PointerRange<char>> b = af->openFile(pf, FileMode(true, false))->readAll();
+			at->openFile(pt, FileMode(false, true))->write(b);
+		}
 
-		void moveImplRecursive(std::vector<Mixed> &mixed, const String &from, const String &to, bool copying)
+		void mergeRecursive(const String &from, const String &to, bool copying)
 		{
 			auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::ArchiveExclusive);
 			auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::ArchiveExclusive);
 			if (af == at)
 				return af->move(pf, pt, copying);
 			if (any(af->type(pf) & PathTypeFlags::File))
-				mixed.push_back({ from, to });
+				copyFileContentMixed(from, to);
 			else
 			{
 				const auto list = af->listDirectory(pf);
 				for (const String &p : list)
 				{
 					const String n = pathExtractFilename(p);
-					moveImplRecursive(mixed, pathJoin(from, n), pathJoin(to, n), copying);
+					mergeRecursive(pathJoin(from, n), pathJoin(to, n), copying);
 				}
 			}
 		}
 
 		void moveImpl(const String &from_, const String &to_, bool copying)
 		{
-			const String from = pathSimplify(from_);
-			const String to = pathSimplify(to_);
+			const String from = pathToAbs(from_);
+			const String to = pathToAbs(to_);
 			if (from == to)
 				return;
 			if (subString(to + "/", 0, from.length()) == from + "/")
-			{
-				CAGE_LOG_THROW(Stringizer() + "from: " + from);
-				CAGE_LOG_THROW(Stringizer() + "to: " + to);
 				CAGE_THROW_ERROR(Exception, "move/copy into itself");
+			const PathTypeFlags fromFlags = pathType(from);
+			if (fromFlags == PathTypeFlags::NotFound)
+				CAGE_THROW_ERROR(Exception, "source for move/copy not found");
+			const PathTypeFlags toFlags = pathType(to);
+			if (fromFlags == PathTypeFlags::Directory && toFlags == PathTypeFlags::File)
+				CAGE_THROW_ERROR(Exception, "cannot move/copy a directory onto a file");
+			if (fromFlags == PathTypeFlags::File || toFlags == PathTypeFlags::File || toFlags == PathTypeFlags::NotFound)
+			{ // replace
+				auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusive);
+				auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusive);
+				if (af == at)
+					af->move(pf, pt, copying);
+				else if (any(fromFlags & PathTypeFlags::File))
+					copyFileContentMixed(from, to);
+				else
+				{
+					pathRemove(to);
+					mergeRecursive(from, to, copying);
+				}
 			}
-			std::vector<Mixed> mixed;
-			moveImplRecursive(mixed, from, to, copying);
-			for (const auto &it : mixed)
-			{
-				auto [af, pf] = archiveFindTowardsRoot(it.f, ArchiveFindModeEnum::FileExclusive);
-				auto [at, pt] = archiveFindTowardsRoot(it.t, ArchiveFindModeEnum::FileExclusive);
-				Holder<PointerRange<char>> b = af->openFile(pf, FileMode(true, false))->readAll();
-				at->openFile(pt, FileMode(false, true))->write(b);
+			else
+			{ // merge
+				mergeRecursive(from, to, copying);
 			}
 			if (!copying)
 				pathRemove(from);
+		}
+
+		void moveImplEntry(const String &from, const String &to, bool copying)
+		{
+			try
+			{
+				moveImpl(from, to, copying);
+			}
+			catch (const cage::Exception &)
+			{
+				CAGE_LOG_THROW(Stringizer() + "from: " + from);
+				CAGE_LOG_THROW(Stringizer() + "to: " + to);
+				throw;
+			}
 		}
 	}
 
 	void pathMove(const String &from, const String &to)
 	{
 		ScopeLock lock(fsMutex());
-		moveImpl(from, to, false);
+		moveImplEntry(from, to, false);
 	}
 
 	void pathCopy(const String &from, const String &to)
 	{
 		ScopeLock lock(fsMutex());
-		moveImpl(from, to, true);
+		moveImplEntry(from, to, true);
 	}
 
 	void pathRemove(const String &path)

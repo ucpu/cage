@@ -160,6 +160,164 @@ namespace
 			threadPool->run();
 		}
 	};
+
+	enum class MovePositionEnum
+	{
+		Nothing,
+		File,
+		Folder,
+		Archive,
+	};
+
+	enum class MoveResultEnum
+	{
+		Error,
+		Rename,
+		Replace,
+		Merge,
+	};
+
+	template<MovePositionEnum Source, MovePositionEnum Target, MoveResultEnum Result>
+	void testMovesTableImpl()
+	{
+		const auto &prepare = [](MovePositionEnum pos, const String &pth) {
+			switch (pos)
+			{
+			case MovePositionEnum::Nothing:
+				break;
+			case MovePositionEnum::File:
+				writeFile(pth)->writeLine("file");
+				break;
+			case MovePositionEnum::Folder:
+				pathCreateDirectories(pth);
+				writeFile(pathJoin(pth, "aaa"))->writeLine("aaa");
+				writeFile(pathJoin(pth, "bbb"))->writeLine("bbb");
+				writeFile(pathJoin(pth, "ccc"))->writeLine("ccc");
+				break;
+			case MovePositionEnum::Archive:
+				pathCreateArchive(pth);
+				writeFile(pathJoin(pth, "aaa"))->writeLine("123");
+				writeFile(pathJoin(pth, "ddd"))->writeLine("ddd");
+				break;
+			}
+		};
+
+		const auto &count = [](const String &pth) -> uint32 {
+			if (none(pathType(pth) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
+				return 0;
+			return pathListDirectory(pth).size();
+		};
+
+		static constexpr String source = "testdir/movingtester/source";
+		static constexpr String target = "testdir/movingtester/target";
+		pathRemove("testdir/movingtester");
+		prepare(Source, source);
+		prepare(Target, target);
+		const uint32 srcCnt = count(source);
+		const uint32 tgtCnt = count(target);
+
+		if (Result == MoveResultEnum::Error)
+		{
+			CAGE_TEST_THROWN(pathMove(source, target));
+		}
+		else
+			pathMove(source, target);
+
+		if (Result != MoveResultEnum::Error)
+			CAGE_TEST(pathType(source) == PathTypeFlags::NotFound);
+
+		switch (Result)
+		{
+		case MoveResultEnum::Error:
+			break;
+		case MoveResultEnum::Rename:
+		case MoveResultEnum::Replace:
+		{
+			switch (Source)
+			{
+			case MovePositionEnum::Nothing:
+				break;
+			case MovePositionEnum::File:
+				CAGE_TEST(pathType(target) == PathTypeFlags::File);
+				CAGE_TEST(readFile(target)->readLine() == "file");
+				break;
+			case MovePositionEnum::Folder:
+				CAGE_TEST(pathType(target) == PathTypeFlags::Directory);
+				CAGE_TEST(count(target) == 3);
+				CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
+				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
+				CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
+				CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
+				CAGE_TEST(pathType(pathJoin(target, "ddd")) == PathTypeFlags::NotFound);
+				break;
+			case MovePositionEnum::Archive:
+				CAGE_TEST(any(pathType(target) & PathTypeFlags::Archive));
+				CAGE_TEST(count(target) == 2);
+				CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
+				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
+				CAGE_TEST(pathType(pathJoin(target, "bbb")) == PathTypeFlags::NotFound);
+				CAGE_TEST(pathType(pathJoin(target, "ccc")) == PathTypeFlags::NotFound);
+				CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
+				break;
+			}
+		} break;
+		case MoveResultEnum::Merge:
+		{
+			CAGE_TEST(any(pathType(target) & (PathTypeFlags::Archive | PathTypeFlags::Directory)));
+			CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
+			switch (Source)
+			{
+			case MovePositionEnum::Nothing:
+			case MovePositionEnum::File:
+				break;
+			case MovePositionEnum::Folder:
+				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
+				CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
+				CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
+				break;
+			case MovePositionEnum::Archive:
+				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
+				CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
+				break;
+			}
+			switch (Target)
+			{
+			case MovePositionEnum::Nothing:
+			case MovePositionEnum::File:
+				break;
+			case MovePositionEnum::Folder:
+				if (Source == Target)
+					CAGE_TEST(count(target) == 3); // aaa, bbb, ccc
+				break;
+			case MovePositionEnum::Archive:
+				if (Source == Target)
+					CAGE_TEST(count(target) == 2); // aaa, ddd
+				break;
+			}
+			if (Source != Target)
+				CAGE_TEST(count(target) == 4); // aaa, bbb, ccc, ddd
+		} break;
+		}
+	}
+
+	void testMovesTable()
+	{
+		CAGE_TESTCASE("pathMove table");
+		/*
+			to	|	nothing	file	folder	archive
+		from----+-----------------------------------
+		nothing	|	error	error	error	error
+		file	|	rename	replace	error	replace
+		folder	|	rename	error	merge	merge
+		archive	|	rename	replace	merge	merge
+		*/
+		using P = MovePositionEnum;
+		using R = MoveResultEnum;
+		testMovesTableImpl<P::Nothing, P::Nothing, R::Error>(); testMovesTableImpl<P::Nothing, P::File, R::Error>(); testMovesTableImpl<P::Nothing, P::Folder, R::Error>(); testMovesTableImpl<P::Nothing, P::Archive, R::Error>();
+		testMovesTableImpl<P::File, P::Nothing, R::Rename>(); testMovesTableImpl<P::File, P::File, R::Replace>(); testMovesTableImpl<P::File, P::Folder, R::Error>(); testMovesTableImpl<P::File, P::Archive, R::Replace>();
+		testMovesTableImpl<P::Folder, P::Nothing, R::Rename>(); testMovesTableImpl<P::Folder, P::File, R::Error>(); testMovesTableImpl<P::Folder, P::Folder, R::Merge>(); testMovesTableImpl<P::Folder, P::Archive, R::Merge>();
+		testMovesTableImpl<P::Archive, P::Nothing, R::Rename>(); testMovesTableImpl<P::Archive, P::File, R::Replace>(); testMovesTableImpl<P::Archive, P::Folder, R::Merge>(); testMovesTableImpl<P::Archive, P::Archive, R::Merge>();
+	}
 }
 
 void testArchives()
@@ -170,6 +328,7 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("create empty archive");
+		pathCreateDirectories(directories[0]);
 		pathCreateArchive(directories[1]);
 		CAGE_TEST(pathType(directories[1]) == (PathTypeFlags::File | PathTypeFlags::Archive));
 		testListDirectory("");
@@ -370,6 +529,33 @@ void testArchives()
 	}
 
 	{
+		CAGE_TESTCASE("list invalid folder");
+		for (const String &dir : directories)
+		{
+			CAGE_TEST(pathType(pathJoin(dir, "rw.bin")) == PathTypeFlags::File);
+			CAGE_TEST_THROWN(pathListDirectory(pathJoin(dir, "rw.bin")));
+			CAGE_TEST(pathType(pathJoin(dir, "non-existent-dir-jupii-jou")) == PathTypeFlags::NotFound);
+			CAGE_TEST_THROWN(pathListDirectory(pathJoin(dir, "non-existent-dir-jupii-jou")));
+		}
+		testListRecursive();
+	}
+
+	{
+		CAGE_TESTCASE("list folder with none/one/multiple files");
+		for (const String &dir : directories)
+		{
+			const String pth = pathJoin(dir, "listcounts");
+			pathCreateDirectories(pth);
+			CAGE_TEST(pathListDirectory(pth).empty());
+			writeFile(pathJoin(pth, "one"))->writeLine("helo");
+			CAGE_TEST(pathListDirectory(pth).size() == 1);
+			writeFile(pathJoin(pth, "two"))->writeLine("hello");
+			CAGE_TEST(pathListDirectory(pth).size() == 2);
+		}
+		testListRecursive();
+	}
+
+	{
 		CAGE_TESTCASE("move");
 		{
 			CAGE_TESTCASE("inside same archive");
@@ -426,7 +612,23 @@ void testArchives()
 			CAGE_TEST(pathType("testdir/arch3.zip") == PathTypeFlags::NotFound);
 			CAGE_TEST(pathType("testdir/arch3/file.txt") == PathTypeFlags::File);
 		}
+		{
+			CAGE_TESTCASE("move archive into folder");
+			pathCreateArchive("testdir/movingarch.zip");
+			writeFile("testdir/movingarch.zip/file.txt")->writeLine("haha");
+			pathCreateDirectories("testdir/movingdest");
+			CAGE_TEST(pathType("testdir/movingarch.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
+			CAGE_TEST(pathType("testdir/movingarch.zip/file.txt") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/movingdest") == PathTypeFlags::Directory);
+			pathMove("testdir/movingarch.zip", "testdir/movingdest/movedarch.zip");
+			CAGE_TEST(pathType("testdir/movingarch.zip") == PathTypeFlags::NotFound);
+			CAGE_TEST(pathType("testdir/movingdest/movedarch.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
+			CAGE_TEST(pathType("testdir/movingdest/movedarch.zip/file.txt") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/movingdest") == PathTypeFlags::Directory);
+		}
 	}
+
+	testMovesTable();
 
 	{
 		CAGE_TESTCASE("opening an archive as regular file");

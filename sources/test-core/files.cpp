@@ -83,6 +83,8 @@ void testFiles()
 		CAGE_TEST(mp.size() == 32);
 		for (uint32 i = 1; i <= 32; i++)
 			CAGE_TEST(mp.count(Stringizer() + i));
+		CAGE_TEST(pathType("testdir/files/1") == PathTypeFlags::File);
+		CAGE_TEST_THROWN(pathListDirectory("testdir/files/1"));
 	}
 
 	{
@@ -116,7 +118,10 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("non-existing file");
+		CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound);
+		CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound); // sanity check - the first pathType may not create it
 		CAGE_TEST_THROWN(readFile("testdir/files/non-existing-file"));
+		CAGE_TEST_THROWN(pathListDirectory("testdir/files/non-existing-file"));
 	}
 
 	{

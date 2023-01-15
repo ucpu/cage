@@ -119,10 +119,10 @@ namespace cage
 				realCreateDirectories(path);
 #ifdef CAGE_SYSTEM_WINDOWS
 				CAGE_ASSERT(!myPath.empty());
-				list = FindFirstFileW(Widen(myPath + "/*"), &ffd);
-				valid_ = list != INVALID_HANDLE_VALUE;
-				if (!valid_)
-					return;
+				list = FindFirstFileExW(Widen(myPath + "/*"), FindExInfoBasic, &ffd, FindExSearchNameMatch, nullptr, 0);
+				if (list == INVALID_HANDLE_VALUE)
+					CAGE_THROW_ERROR(SystemError, "FindFirstFileExW", GetLastError());
+				valid_ = true;
 				if (name() == "." || name() == "..")
 					next();
 #else
@@ -494,15 +494,12 @@ namespace cage
 				realCreateDirectories(pathJoin(myPath, path));
 			}
 
-			// 1) move/rename a file - the destination is overwritten
-			// 2) move/rename a directory - the destination may NOT exist
-			// 3) copy a file - the destination is overwritten
 			void moveImpl(const String &from_, const String &to_, bool copying)
 			{
 				const String from = pathJoin(myPath, from_);
 				const String to = pathJoin(myPath, to_);
 #ifdef CAGE_SYSTEM_WINDOWS
-				auto res = copying ? CopyFileW(Widen(from), Widen(to), false) : MoveFileW(Widen(from), Widen(to));
+				auto res = copying ? CopyFileW(Widen(from), Widen(to), false) : MoveFileExW(Widen(from), Widen(to), MOVEFILE_REPLACE_EXISTING);
 				if (res == 0)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
@@ -537,7 +534,7 @@ namespace cage
 				case PathTypeFlags::NotFound:
 				{
 					CAGE_LOG_THROW(Stringizer() + "path: " + from_);
-					CAGE_THROW_ERROR(Exception, "source does not exist");
+					CAGE_THROW_ERROR(Exception, "path to move/copy does not exist");
 				} break;
 				case PathTypeFlags::File:
 				{
