@@ -19,7 +19,7 @@ namespace cage
 {
 	namespace
 	{
-		const uint32 MaxCharacters = 512;
+		constexpr uint32 MaxCharacters = 512;
 
 		struct Instance
 		{
@@ -60,7 +60,6 @@ namespace cage
 
 			Holder<Texture> tex;
 
-			Vec2i resolution;
 			uint32 spaceGlyph = 0;
 			uint32 returnGlyph = 0;
 			uint32 cursorGlyph = m;
@@ -260,7 +259,6 @@ namespace cage
 	void Font::setImage(Vec2i resolution, PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl *)this;
-		impl->resolution = resolution;
 		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (resolution[0] * resolution[1]));

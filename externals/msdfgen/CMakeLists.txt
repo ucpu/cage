@@ -4,8 +4,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "msdfgen")
 message(STATUS "----------------------------------------------------------------")
 
-add_subdirectory(msdfgen)
-
-target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_NO_PRAGMA_LIB)
-target_include_directories(lib_msdfgen INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/msdfgen)
-
+file(GLOB_RECURSE msdfgen-sources "msdfgen/msdfgen.h" "msdfgen/core/*" "msdfgen/ext/import-font.*")
+add_library(lib_msdfgen ${msdfgen-sources})
+target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_USE_CPP11)
+target_include_directories(lib_msdfgen INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(lib_msdfgen PUBLIC freetype)

@@ -39,7 +39,7 @@
 	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
 [submodule "externals/msdfgen/msdfgen"]
 	path = externals/msdfgen/msdfgen
-	url = https://github.com/ckohnert/msdfgen.git
+	url = https://github.com/Chlumsky/msdfgen.git
 [submodule "externals/fastnoise/fastnoise"]
 	path = externals/fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
