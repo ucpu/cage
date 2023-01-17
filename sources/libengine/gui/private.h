@@ -156,7 +156,7 @@ namespace cage
 
 	struct CommonTextData
 	{
-		Mat4 Transform;
+		Mat4 transform;
 		FontFormat format;
 		Holder<Font> font;
 		Holder<PointerRange<uint32>> glyphs;

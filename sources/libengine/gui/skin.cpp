@@ -14,7 +14,7 @@ namespace cage
 			text.font = HashString("cage/font/ubuntu/regular.ttf");
 			text.size = 14;
 			text.align = TextAlignEnum::Left;
-			text.lineSpacing = 0.4;
+			text.lineSpacing = 1;
 			return text;
 		}
 
@@ -313,7 +313,7 @@ namespace cage
 
 			d.label.margin = Vec4(6);
 			d.label.textFormat.size = 20;
-			d.label.textFormat.lineSpacing = 0.6;
+			d.label.textFormat.lineSpacing = 1.1;
 
 			d.button.padding = Vec4(3);
 			d.button.margin = Vec4(2);
@@ -385,7 +385,7 @@ namespace cage
 
 			d.label.margin = Vec4(2);
 			d.label.textFormat.size = 13;
-			d.label.textFormat.lineSpacing = 0.3;
+			d.label.textFormat.lineSpacing = 0.9;
 
 			d.button.padding = Vec4();
 			d.button.size[1] = 20;

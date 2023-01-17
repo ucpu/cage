@@ -29,6 +29,11 @@ namespace cage
 					textCreate(hierarchy);
 				hierarchy->text->skipInitialize = true;
 				hierarchy->text->apply(skin->defaults.textArea.textFormat);
+				if (GUI_HAS_COMPONENT(TextFormat, hierarchy->ent))
+				{
+					GUI_COMPONENT(TextFormat, f, hierarchy->ent);
+					hierarchy->text->apply(f);
+				}
 				hierarchy->text->transcript(buffer);
 
 				if (hasFocus())

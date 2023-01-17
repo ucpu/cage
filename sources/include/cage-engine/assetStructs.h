@@ -110,9 +110,8 @@ namespace cage
 	struct CAGE_ENGINE_API FontHeader
 	{
 		FontFlags flags;
-		Vec2 glyphMaxSize; // linear units
-		Real lineHeight; // linear units
-		Real firstLineOffset; // linear units
+		Real lineHeight; // pixels for 1pt
+		Real firstLineOffset; // pixels for 1pt
 		uint32 texSize; // bytes
 		Vec2i texResolution;
 		uint32 glyphCount;
@@ -121,9 +120,9 @@ namespace cage
 		struct CAGE_ENGINE_API GlyphData
 		{
 			Vec4 texUv;
-			Vec2 size; // linear units
-			Vec2 bearing; // linear units
-			Real advance; // linear units
+			Vec2 size; // pixels for 1pt
+			Vec2 bearing; // pixels for 1pt
+			Real advance; // pixels for 1pt
 		};
 
 		// follows:
@@ -132,10 +131,6 @@ namespace cage
 		// array of kerning, each 1 real
 		// array of charset characters, each uint32
 		// array of charset glyphs, each uint32
-
-		// notes:
-		// linear units are pixels for 1pt-font
-		// linear units must be multiplied by font size before rendering
 	};
 
 	enum class SoundTypeEnum : uint32

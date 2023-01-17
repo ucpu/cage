@@ -1,9 +1,3 @@
 [scheme]
 processor = cage-asset-processor font
 index = 14
-
-[resolution]
-display = nominal resolution of one glyph
-type = uint32
-default = 64
-

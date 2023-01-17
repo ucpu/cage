@@ -74,7 +74,7 @@ namespace cage
 		if (!item->font)
 			return;
 		setClip(item->hierarchy);
-		data.Transform = item->Transform;
+		data.transform = item->transform;
 		data.format = item->format;
 		data.font = item->font.share();
 		item->glyphs = std::move(item->glyphs);
@@ -84,7 +84,7 @@ namespace cage
 		data.format.size *= item->hierarchy->impl->pointsScale;
 		const Vec2i &orr = item->hierarchy->impl->outputResolution;
 		position *= item->hierarchy->impl->pointsScale;
-		data.Transform = transpose(Mat4(
+		data.transform = transpose(Mat4(
 			2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0,
 			0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1],
 			0, 0, 1, 0,
@@ -103,7 +103,7 @@ namespace cage
 		RenderQueue *q = impl->activeQueue;
 		Holder<ShaderProgram> shader = impl->graphicsData.fontShader.share();
 		q->bind(shader);
-		q->uniform(shader, 0, data.Transform);
+		q->uniform(shader, 0, data.transform);
 		q->uniform(shader, 4, data.color);
 		data.font->render(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader, data.glyphs, data.format, data.cursor);
 	}
