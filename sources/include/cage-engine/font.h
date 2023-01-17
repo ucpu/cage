@@ -13,7 +13,7 @@ namespace cage
 	{
 		Real size = 13;
 		Real wrapWidth = Real::Infinity();
-		Real lineSpacing = 0;
+		Real lineSpacing = 1;
 		TextAlignEnum align = TextAlignEnum::Left;
 	};
 

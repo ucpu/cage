@@ -75,7 +75,7 @@ namespace cage
 		uint32 textName = 0;
 		uint32 font = 0;
 		uint32 sceneMask = 1;
-		Real lineSpacing = 0;
+		Real lineSpacing = 1;
 		TextAlignEnum align = TextAlignEnum::Left;
 	};
 

@@ -107,7 +107,7 @@ namespace cage
 				}
 			}
 
-			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, Real lineWidth, Real lineY) const
+			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, Real lineWidth, Real lineY, Real lineYCursor, Real actualLineHeight) const
 			{
 				Real x;
 				switch (data.format->align)
@@ -118,8 +118,8 @@ namespace cage
 				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
-				const Vec2 mousePos = data.mousePosition + Vec2(-x, lineY + lineHeight * data.format->size);
-				const bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
+				const Vec2 mousePos = data.mousePosition + Vec2(-x, lineYCursor);
+				const bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= actualLineHeight;
 				if (!data.renderQueue && !mouseInLine)
 					return;
 				if (mouseInLine)
@@ -151,16 +151,17 @@ namespace cage
 				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
 				CAGE_ASSERT(data.format->wrapWidth > 0);
 				CAGE_ASSERT(data.format->size > 0);
-				CAGE_ASSERT(data.format->lineSpacing.valid());
+				CAGE_ASSERT(data.format->lineSpacing >= 0);
 				data.instances.reserve(data.glyphs.size() + 1);
 				const uint32 *const totalEnd = data.glyphs.end();
 				const uint32 *it = data.glyphs.begin();
-				const Real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
-				Real lineY = (firstLineOffset - data.format->lineSpacing * 0.5) * data.format->size;
+				const Real actualLineHeight = lineHeight * data.format->lineSpacing * data.format->size;
+				Real lineY = (firstLineOffset - lineHeight * (data.format->lineSpacing - 1) * 0.5) * data.format->size;
+				Real lineYCursor;
 
 				if (data.glyphs.empty())
 				{ // process cursor
-					processLine(data, it, totalEnd, 0, lineY);
+					processLine(data, it, totalEnd, 0, lineY, lineYCursor, actualLineHeight);
 				}
 
 				while (it != totalEnd)
@@ -208,10 +209,11 @@ namespace cage
 						itWidth += w;
 					}
 
-					processLine(data, lineStart, lineEnd, lineWidth, lineY);
+					processLine(data, lineStart, lineEnd, lineWidth, lineY, lineYCursor, actualLineHeight);
 					data.outSize[0] = max(data.outSize[0], lineWidth);
 					data.outSize[1] += actualLineHeight;
 					lineY -= actualLineHeight;
+					lineYCursor -= actualLineHeight;
 				}
 
 				if (data.renderQueue)

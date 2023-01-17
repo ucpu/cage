@@ -87,6 +87,7 @@ namespace
 		glyphs.resize(data.glyphCount);
 		Vec2i maxPngResolution;
 		Vec2 maxGlyphSize;
+		Real maxAscender, minDescender;
 		msdfgen::FontHandle *handle = msdfgen::adoptFreetypeFont(face);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
@@ -111,11 +112,17 @@ namespace
 			// update global data
 			maxGlyphSize = max(maxGlyphSize, g.data.size);
 			if (g.png)
+			{
 				maxPngResolution = max(maxPngResolution, g.png->resolution());
+				maxAscender = max(maxAscender, g.data.bearing[1]);
+				minDescender = min(minDescender, g.data.bearing[1] - g.data.size[1]);
+			}
 		}
 		msdfgen::destroyFont(handle);
-		data.firstLineOffset = Real(face->ascender) / face->units_per_EM;
-		data.lineHeight = Real(face->height) / face->units_per_EM;
+		//data.firstLineOffset = Real(face->ascender) / face->units_per_EM;
+		//data.lineHeight = Real(face->height) / face->units_per_EM;
+		data.firstLineOffset = maxAscender;
+		data.lineHeight = maxAscender - minDescender;
 		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "first line offset: " + data.firstLineOffset);
 		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "line height: " + data.lineHeight);
 		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "max glyph size: " + maxGlyphSize);
@@ -163,11 +170,8 @@ namespace
 
 	msdfgen::Shape cursorShape()
 	{
-		const float y0 = -face->descender / face->units_per_EM;
-		const float y1 = -face->ascender / face->units_per_EM;
-		const float x = (y0 - y1) * 0.1;
 		const msdfgen::Point2 points[4] = {
-			{0, y0}, {0, y1}, {x, y1}, {x, y0}
+			{0, 0}, {0, 10}, {1, 10}, {1, 0}
 		};
 		msdfgen::Shape shape;
 		msdfgen::Contour &c = shape.addContour();
@@ -193,27 +197,27 @@ namespace
 		}
 		if (!foundReturn)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "artificially adding return");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "artificially adding return character");
 			uint32 idx = 0;
 			while (idx < charsetChars.size() && charsetChars[idx] < '\n')
 				idx++;
 			charsetChars.insert(charsetChars.begin() + idx, '\n');
-			charsetGlyphs.insert(charsetGlyphs.begin() + idx, (uint32)-1);
+			charsetGlyphs.insert(charsetGlyphs.begin() + idx, uint32(m));
 			data.charCount++;
 		}
 
 		{ // add cursor
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "artificially adding cursor glyph");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "artificially adding cursor glyph");
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
 			Glyph &g = glyphs[glyphs.size() - 1];
+			g.data.advance = 0;
+			g.data.size[0] = 0.1;
+			g.data.size[1] = data.lineHeight;
+			g.data.bearing[0] = g.data.size[0] * -0.5;
+			g.data.bearing[1] = data.firstLineOffset;
 			msdfgen::Shape shape = cursorShape();
 			glyphImage(g, shape);
-			g.data.advance = 0;
-			g.data.bearing[0] = -0.1;
-			g.data.bearing[1] = data.lineHeight * 3 / 5;
-			g.data.size[0] = 0.2;
-			g.data.size[1] = data.lineHeight;
 
 			if (!kerning.empty())
 			{ // compensate kerning
@@ -233,6 +237,7 @@ namespace
 		Holder<RectPacking> packer = newRectPacking();
 		uint32 area = 0;
 		uint32 mgs = 0;
+		uint32 count = 0;
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			Glyph &g = glyphs[glyphIndex];
@@ -240,8 +245,16 @@ namespace
 				continue;
 			area += g.png->width() * g.png->height();
 			mgs = max(mgs, max(g.png->width(), g.png->height()));
-			packer->resize(numeric_cast<uint32>(packer->data().size()) + 1);
-			packer->data()[packer->data().size() - 1] = PackingRect{ glyphIndex, g.png->width(), g.png->height() };
+			count++;
+		}
+		packer->resize(count);
+		count = 0;
+		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
+		{
+			Glyph &g = glyphs[glyphIndex];
+			if (!g.png)
+				continue;
+			packer->data()[count++] = PackingRect{ glyphIndex, g.png->width(), g.png->height() };
 		}
 		uint32 res = 64;
 		while (res < mgs) res *= 2;
@@ -250,7 +263,7 @@ namespace
 		{
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "trying to pack into resolution " + res + "*" + res);
 			RectPackingSolveConfig cfg;
-			cfg.margin = 2;
+			cfg.margin = 1;
 			cfg.width = cfg.height = res;
 			if (packer->solve(cfg))
 				break;
