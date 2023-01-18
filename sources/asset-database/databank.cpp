@@ -387,8 +387,3 @@ void checkOutputDir()
 	// the output is not an archive, output to it directly
 	configPathIntermediate = "";
 }
-
-void moveIntermediateFiles()
-{
-	pathMove(configPathIntermediate, configPathOutput);
-}

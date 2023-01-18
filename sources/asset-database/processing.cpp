@@ -27,7 +27,6 @@ bool databankParse(const String &path);
 void databanksLoad();
 void databanksSave();
 void checkOutputDir();
-void moveIntermediateFiles();
 bool isNameDatabank(const String &name);
 void notifierSendNotifications();
 std::map<String, PathLastChange, StringComparatorFast> findFiles();
@@ -290,8 +289,8 @@ void checkAssets()
 
 	validateAssets();
 
-	if (!String(configPathIntermediate).empty())
-		moveIntermediateFiles();
+	if (!String(configPathIntermediate).empty() && pathIsDirectory(configPathIntermediate))
+		pathMove(configPathIntermediate, configPathOutput);
 
 	databanksSave();
 
