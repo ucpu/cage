@@ -2,7 +2,8 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
+#include <unordered_dense.h>
 #include <algorithm>
 
 namespace cage
@@ -25,7 +26,7 @@ namespace cage
 		public:
 			AssetManager *assets = nullptr;
 			Holder<RwMutex> mut = newRwMutex();
-			robin_hood::unordered_map<uint32, uint32> lastUse;
+			ankerl::unordered_dense::map<uint32, uint32> lastUse;
 			uint32 tick = 0;
 
 			AssetOnDemandImpl(AssetManager *assets) : assets(assets)

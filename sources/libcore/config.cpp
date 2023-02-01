@@ -9,7 +9,7 @@
 #include <cage-core/logger.h>
 #include <cage-core/macros.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 #include <vector>
 #include <variant>
@@ -41,7 +41,7 @@ namespace cage
 			return +*m;
 		}
 
-		using ConfigStorage = robin_hood::unordered_map<String, ConfigVariable *>;
+		using ConfigStorage = ankerl::unordered_dense::map<String, ConfigVariable *>;
 
 		ConfigStorage &storageAlreadyLocked()
 		{

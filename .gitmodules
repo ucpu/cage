@@ -43,9 +43,6 @@
 [submodule "externals/fastnoise/fastnoise"]
 	path = externals/fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
-[submodule "externals/robin-hood-hashing/robin-hood-hashing"]
-	path = externals/robin-hood-hashing/robin-hood-hashing
-	url = https://github.com/martinus/robin-hood-hashing.git
 [submodule "externals/zlib-ng/zlib-ng"]
 	path = externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
@@ -91,3 +88,6 @@
 [submodule "externals/bc7enc_rdo/bc7enc_rdo"]
 	path = externals/bc7enc_rdo/bc7enc_rdo
 	url = https://github.com/richgel999/bc7enc_rdo.git
+[submodule "externals/unordered_dense/unordered_dense"]
+	path = externals/unordered_dense/unordered_dense
+	url = https://github.com/martinus/unordered_dense.git

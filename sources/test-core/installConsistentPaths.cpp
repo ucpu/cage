@@ -6,7 +6,7 @@
 #include <cage-engine/opengl.h>
 #endif // !CAGE_ENGINE_API
 #include <plf_colony.h>
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 using namespace cage;
 
@@ -32,7 +32,7 @@ namespace
 
 	void testRobinHood()
 	{
-		robin_hood::unordered_map<uint32, Vec3> um;
+		ankerl::unordered_dense::map<uint32, Vec3> um;
 		um[13] = Vec3(42);
 	}
 }

@@ -2,7 +2,7 @@
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/collider.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 #include <dualmc.h>
 
 #include <vector>
@@ -54,8 +54,8 @@ namespace cage
 				}
 			};
 
-			robin_hood::unordered_set<EdgeFace, EdgeHash, EdgeEqual> edges;
-			robin_hood::unordered_set<uint32> singularFaces;
+			ankerl::unordered_dense::set<EdgeFace, EdgeHash, EdgeEqual> edges;
+			ankerl::unordered_dense::set<uint32> singularFaces;
 			const uint32 cnt = poly->indicesCount();
 			for (uint32 i = 0; i < cnt; i += 3)
 			{

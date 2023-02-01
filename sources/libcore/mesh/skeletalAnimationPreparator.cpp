@@ -5,7 +5,7 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/skeletalAnimationPreparator.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 #include <vector>
 
@@ -19,7 +19,7 @@ namespace cage
 			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets, bool animateSkeletonsInsteadOfSkins) : assets(assets), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins)
 			{}
 
-			robin_hood::unordered_map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
+			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 			Holder<Mutex> mutex = newMutex();
 			AssetManager *assets = nullptr;
 			bool animateSkeletonsInsteadOfSkins = false;

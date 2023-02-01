@@ -4,7 +4,7 @@
 #include <cage-core/spatialStructure.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 #include <algorithm>
 
@@ -15,16 +15,13 @@ namespace cage
 		struct Item
 		{
 			Holder<const Collider> c;
-			const Transform t;
-
-			Item(Holder<const Collider> c, const Transform &t) : c(std::move(c)), t(t)
-			{}
+			Transform t;
 		};
 
 		class CollisionDataImpl : public CollisionStructure
 		{
 		public:
-			robin_hood::unordered_map<uint32, Item> allItems;
+			ankerl::unordered_dense::map<uint32, Item> allItems;
 			Holder<SpatialStructure> spatial;
 
 			CollisionDataImpl(const CollisionStructureCreateConfig &config)
@@ -166,7 +163,6 @@ namespace cage
 			{
 				const Item &item = data->allItems.at(nameIt);
 				Vec3 p = intersection(shape, +item.c, item.t); // exact phase
-				//CAGE_ASSERT(intersects(shape, item.c, item.t) == p.valid());
 				if (!p.valid())
 					continue;
 				Real d = dot(p - shape.origin, shape.direction);
@@ -280,7 +276,7 @@ namespace cage
 		CollisionDataImpl *impl = (CollisionDataImpl *)this;
 		remove(name);
 		impl->spatial->update(name, collider->box() * t);
-		impl->allItems.emplace(name, Item(std::move(collider), t));
+		impl->allItems.emplace(name, Item{ std::move(collider), t });
 	}
 
 	void CollisionStructure::remove(uint32 name)

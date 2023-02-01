@@ -7,7 +7,7 @@
 
 #include "net.h"
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 #include <plf_list.h>
 
 #include <array>
@@ -78,7 +78,7 @@ namespace cage
 				uint32 connId = 0;
 			};
 
-			robin_hood::unordered_map<uint32, std::weak_ptr<Receiver>> receivers;
+			ankerl::unordered_dense::map<uint32, std::weak_ptr<Receiver>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<Receiver>>> accepting;
 			std::vector<Sock> socks;
 			Holder<Mutex> mut = newMutex();
@@ -441,7 +441,7 @@ namespace cage
 
 				plf::list<std::shared_ptr<ReliableMsg>> relMsgs;
 				plf::list<Command> cmds;
-				robin_hood::unordered_map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
+				ankerl::unordered_dense::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
 				FlatSet<uint16> seqnToAck; // packets seqn to be acked
 				uint16 packetSeqn = 0; // next packet seqn to be used
@@ -747,7 +747,7 @@ namespace cage
 					uint8 channel = 0;
 				};
 
-				std::array<robin_hood::unordered_map<uint16, Msg>, 256> staging = {};
+				std::array<ankerl::unordered_dense::map<uint16, Msg>, 256> staging = {};
 				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
 				plf::list<Msg> messages;
 				FlatSet<PackAck> ackPacks;
@@ -837,8 +837,7 @@ namespace cage
 				for (auto &stage : receiving.staging)
 				{
 					auto it = stage.begin();
-					auto et = stage.end();
-					while (it != et)
+					while (it != stage.end())
 					{
 						if (it->second.data.size() == 0)
 							it = stage.erase(it);

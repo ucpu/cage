@@ -13,7 +13,7 @@
 #include "interpolationTimingCorrector.h"
 
 #include <vector>
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 namespace cage
 {
@@ -74,7 +74,7 @@ namespace cage
 			Holder<VoicesMixer> mixer;
 			Holder<Voice> chaining; // register this mixer in the engine effects mixer
 
-			robin_hood::unordered_map<uintPtr, Holder<Voice>> voicesMapping;
+			ankerl::unordered_dense::map<uintPtr, Holder<Voice>> voicesMapping;
 		};
 
 		struct SoundPrepareImpl
@@ -88,7 +88,7 @@ namespace cage
 			uint64 dispatchTime = 0;
 			Real interFactor;
 
-			robin_hood::unordered_map<uintPtr, PrepareListener> listenersMapping;
+			ankerl::unordered_dense::map<uintPtr, PrepareListener> listenersMapping;
 
 			explicit SoundPrepareImpl(const EngineCreateConfig &config)
 			{

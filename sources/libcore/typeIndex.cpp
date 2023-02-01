@@ -1,7 +1,7 @@
 #include <cage-core/typeIndex.h>
 #include <cage-core/concurrent.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 #include <array>
 #include <cstring>
@@ -22,7 +22,7 @@ namespace cage
 		struct Data
 		{
 			Holder<Mutex> mut = newMutex();
-			robin_hood::unordered_map<uint32, uint32> hashToIndex;
+			ankerl::unordered_dense::map<uint32, uint32> hashToIndex;
 			std::array<Type, 10000> values = {};
 			uint32 cnt = 0;
 

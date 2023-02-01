@@ -3,7 +3,7 @@
 
 #include "core.h"
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 #include <vector>
 #include <optional>
@@ -23,7 +23,7 @@ namespace cage
 		};
 
 		std::vector<Data> data;
-		robin_hood::unordered_map<Key, uint32, Hasher> indices;
+		ankerl::unordered_dense::map<Key, uint32, Hasher> indices;
 		uint32 head = 0;
 		const uint32 capacity = 0;
 

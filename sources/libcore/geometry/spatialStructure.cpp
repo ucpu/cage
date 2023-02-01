@@ -3,7 +3,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryArena.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 #include <plf_colony.h>
 
 #include <vector>
@@ -185,7 +185,7 @@ namespace cage
 		public:
 			ColonyAsAllocator itemsPool;
 			MemoryArena itemsArena;
-			robin_hood::unordered_map<uint32, Holder<ItemBase>> itemsTable;
+			ankerl::unordered_dense::map<uint32, Holder<ItemBase>> itemsTable;
 			std::atomic<bool> dirty = false;
 			std::vector<Node> nodes;
 			std::vector<ItemBase *> indices;

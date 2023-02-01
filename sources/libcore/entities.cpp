@@ -6,7 +6,7 @@
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 #include <plf_colony.h>
 
 #include <vector>
@@ -51,7 +51,7 @@ namespace cage
 			std::vector<Holder<GroupImpl>> groups;
 			std::vector<Holder<ComponentImpl>> components;
 			std::vector<EntityComponent *> componentsByTypes;
-			robin_hood::unordered_map<uint32, Entity *> namedEntities;
+			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
 			plf::colony<EntityImpl> ents;
 			GroupImpl allEntities;
 			uint32 generateName = 0;

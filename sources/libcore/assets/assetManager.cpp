@@ -19,7 +19,7 @@
 #include <atomic>
 #include <algorithm>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 namespace cage
 {
@@ -140,9 +140,9 @@ namespace cage
 			std::atomic<sint32> workingCounter = 0;
 			std::atomic<sint32> existsCounter = 0;
 			uint32 generateName = 0;
-			robin_hood::unordered_map<uint32, Collection> privateIndex;
-			robin_hood::unordered_map<uint32, Holder<Asset>> publicIndex;
-			robin_hood::unordered_map<uint32, std::vector<Holder<Waiting>>> waitingIndex;
+			ankerl::unordered_dense::map<uint32, Collection> privateIndex;
+			ankerl::unordered_dense::map<uint32, Holder<Asset>> publicIndex;
+			ankerl::unordered_dense::map<uint32, std::vector<Holder<Waiting>>> waitingIndex;
 			ConcurrentQueue<Holder<CommandBase>> commandsQueue;
 			ConcurrentQueue<Holder<Loading>> diskLoadingQueue;
 			std::vector<Holder<ConcurrentQueue<Holder<CustomProcessing>>>> customProcessingQueues;

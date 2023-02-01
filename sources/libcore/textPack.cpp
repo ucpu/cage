@@ -4,7 +4,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#include <robin_hood.h>
+#include <unordered_dense.h>
 
 namespace cage
 {
@@ -13,7 +13,7 @@ namespace cage
 		class TextPackImpl : public TextPack
 		{
 		public:
-			robin_hood::unordered_map<uint32, String> texts;
+			ankerl::unordered_dense::map<uint32, String> texts;
 		};
 	}
 
