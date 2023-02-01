@@ -27,9 +27,9 @@ namespace cage
 	{
 		using namespace privat;
 
-		ConfigUint32 logLevel("cage/ginnel/logLevel", 0);
-		ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
-		ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
+		const ConfigUint32 logLevel("cage/ginnel/logLevel", 0);
+		const ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
+		const ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
 
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); } }
 
@@ -198,13 +198,14 @@ namespace cage
 			result.reserve(32);
 			for (uint16 i = 0; i < 32; i++)
 			{
-				uint32 m = uint32(1) << i;
+				const uint32 m = uint32(1) << i;
 				if ((bits & m) == m)
 				{
 					uint16 s = seqn - i;
-					result.insert(s);
+					result.unsafeData().push_back(s);
 				}
 			}
+			std::sort(result.unsafeData().begin(), result.unsafeData().end());
 			return result;
 		}
 
@@ -259,11 +260,11 @@ namespace cage
 			MtuDiscovery = 43, // todo
 		};
 
-		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
+		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 LongMessage commands in single packet)
 
 		constexpr uint16 longCmdsCount(uint32 totalSize)
 		{
-			return totalSize / LongSize + ((totalSize % LongSize) == 0 ? 0 : 1);
+			return (totalSize + LongSize - 1) / LongSize;
 		}
 
 		class GinnelConnectionImpl : public GinnelConnection
@@ -346,7 +347,7 @@ namespace cage
 				stats.packetsSentTotal++;
 
 				{ // simulated packet loss for testing purposes
-					float ch = confSimulatedPacketLoss;
+					const float ch = confSimulatedPacketLoss;
 					if (ch > 0 && randomChance() < ch)
 					{
 						UDP_LOG(4, "dropping packet due to simulated packet loss");
@@ -424,9 +425,6 @@ namespace cage
 					} stats;
 
 					CommandUnion()
-					{}
-
-					~CommandUnion()
 					{}
 				};
 
@@ -708,30 +706,18 @@ namespace cage
 				sending.seqnToAck.clear();
 
 				{ // clear finished reliable messages
-					auto it = sending.relMsgs.begin();
-					auto et = sending.relMsgs.end();
-					while (it != et)
-					{
-						if (!*it)
-							it = sending.relMsgs.erase(it);
-						else
-							it++;
-					}
+					std::erase_if(sending.relMsgs, [](const std::shared_ptr<Sending::ReliableMsg> &v)->bool {
+						return !v;
+					});
 				}
 
 				{ // clear ackMap
-					auto it = sending.ackMap.begin();
-					auto et = sending.ackMap.end();
-					while (it != et)
-					{
-						std::erase_if(it->second, [](Sending::MsgAck &p){
+					std::erase_if(sending.ackMap, [](std::pair<uint16, std::vector<Sending::MsgAck>> &v)->bool {
+						std::erase_if(v.second, [](Sending::MsgAck &p) {
 							return !p.msg.lock();
 						});
-						if (it->second.empty())
-							it = sending.ackMap.erase(it);
-						else
-							it++;
-					}
+						return v.second.empty();
+					});
 				}
 			}
 
@@ -767,10 +753,9 @@ namespace cage
 				{
 					if (sending.ackMap.count(ack) == 0)
 						continue;
-					for (auto &ma : sending.ackMap[ack])
+					for (const auto &ma : sending.ackMap[ack])
 					{
-						auto m = ma.msg.lock();
-						if (m)
+						if (const auto m = ma.msg.lock())
 							m->parts[ma.index] = true;
 					}
 					sending.ackMap.erase(ack);
@@ -836,14 +821,9 @@ namespace cage
 				// erase empty
 				for (auto &stage : receiving.staging)
 				{
-					auto it = stage.begin();
-					while (it != stage.end())
-					{
-						if (it->second.data.size() == 0)
-							it = stage.erase(it);
-						else
-							it++;
-					}
+					std::erase_if(stage, [](const std::pair<uint16, Receiving::Msg> &v)->bool {
+						return v.second.data.size() == 0;
+					});
 				}
 			}
 
