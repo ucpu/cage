@@ -32,6 +32,7 @@ namespace cage
 		// the pbr texture contains: R: unused, G: roughness and B: metallic channels
 		const Mesh *mesh = nullptr;
 		bool verticalFlipUv = false;
+		bool parallelize = false;
 	};
 
 	CAGE_CORE_API Holder<PointerRange<char>> meshExportBuffer(const MeshExportGltfConfig &config);

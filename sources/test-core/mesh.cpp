@@ -791,6 +791,7 @@ namespace
 			cfg.albedo.image = +albedo;
 			cfg.pbr.image = +pbr;
 			cfg.normal.image = +normal;
+			cfg.parallelize = true;
 			meshExportFiles("meshes/exports/threeTextures.glb", cfg);
 		}
 

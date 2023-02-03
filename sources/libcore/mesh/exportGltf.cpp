@@ -161,7 +161,11 @@ namespace cage
 			if (config.normal.image || !config.normal.filename.empty())
 				textures.push_back(Texture{ .filename = filename, .tex = &config.normal, .type = 3 });
 
-			tasksRunBlocking<Texture>("gltf export texture", textures);
+			if (config.parallelize)
+				tasksRunBlocking<Texture>("gltf export texture", textures);
+			else
+				for (Texture &it : textures)
+					it();
 
 			for (Texture &t : textures)
 			{
