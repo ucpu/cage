@@ -5,7 +5,7 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/hashString.h>
-#include <cage-core/meshImport.h>
+#include <cage-core/meshIoCommon.h>
 #include <cage-core/profiling.h>
 #include <cage-core/textPack.h>
 #include <cage-core/geometry.h>

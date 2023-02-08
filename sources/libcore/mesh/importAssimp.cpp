@@ -15,6 +15,7 @@
 #include <assimp/IOSystem.hpp>
 #include <assimp/LogStream.hpp>
 #include <assimp/DefaultLogger.hpp>
+#include <assimp/GltfMaterial.h>
 
 #include <set>
 
@@ -1006,8 +1007,6 @@ namespace cage
 				return true;
 			}
 
-			static constexpr MeshRenderFlags DefaultRenderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
-
 			void loadMaterialCage(const String &path, MeshImportPart &part)
 			{
 				CAGE_LOG(SeverityEnum::Info, "meshImport", "overriding material with cage (.cpm) file");
@@ -1025,7 +1024,7 @@ namespace cage
 
 				{ // reset material to default
 					part.material = MeshImportMaterial();
-					part.renderFlags = DefaultRenderFlags;
+					part.renderFlags = MeshRenderFlags::Default;
 					part.renderLayer = 0;
 					part.shaderName = {};
 				}
@@ -1135,7 +1134,7 @@ namespace cage
 				if (!mat)
 					CAGE_THROW_ERROR(Exception, "material is null");
 
-				part.renderFlags = DefaultRenderFlags;
+				part.renderFlags = MeshRenderFlags::Default;
 
 				Textures textures;
 
@@ -1209,6 +1208,14 @@ namespace cage
 						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to opacity");
 					part.renderFlags |= MeshRenderFlags::Transparent;
 				}
+				aiString gltfAlphaMode;
+				mat->Get(AI_MATKEY_GLTF_ALPHAMODE, gltfAlphaMode);
+				if(config.verbose && gltfAlphaMode != aiString(""))
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded gltf alpha mode: " + gltfAlphaMode.C_Str());
+				if (gltfAlphaMode == aiString("BLEND"))
+					part.renderFlags |= MeshRenderFlags::Transparent;
+				if (gltfAlphaMode == aiString("MASK"))
+					part.renderFlags |= MeshRenderFlags::CutOut;
 
 				// albedo
 				const auto &albedoCheckAlpha = [&](aiTextureType type) {

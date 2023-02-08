@@ -7,6 +7,8 @@
 
 namespace cage
 {
+	enum class MeshRenderFlags : uint32;
+
 	/*
 	struct CAGE_ENGINE_API ShaderProgramHeader
 	{

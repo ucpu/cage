@@ -6,6 +6,7 @@
 namespace cage
 {
 	class Mesh;
+	enum class MeshRenderFlags : uint32;
 
 	class CAGE_ENGINE_API Model : private Immovable
 	{

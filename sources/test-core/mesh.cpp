@@ -730,6 +730,7 @@ namespace
 		cfg.albedo.image = +albedo;
 		cfg.pbr.image = +pbr;
 		cfg.normal.image = +normal;
+		cfg.renderFlags = part.renderFlags;
 		meshExportFiles(out, cfg);
 	}
 
@@ -809,6 +810,25 @@ namespace
 		}
 
 		loadAndExport("meshes/exports/externalTextures.glb", "meshes/exports/externalTextures_2.glb");
+
+		Holder<Image> transparent = newImage();
+		transparent->initialize(albedo->resolution(), 4);
+		for (uint32 y = 0; y < albedo->height(); y++)
+			for (uint32 x = 0; x < albedo->width(); x++)
+				transparent->set(x, y, Vec4(albedo->get3(x, y), Real(y) / albedo->height()));
+
+		{
+			CAGE_TESTCASE("export with transparent texture");
+			MeshExportGltfConfig cfg;
+			cfg.name = "transparentTexture";
+			cfg.mesh = +p;
+			cfg.albedo.image = +transparent;
+			cfg.renderFlags |= MeshRenderFlags::Transparent;
+			meshExportFiles("meshes/exports/transparentTexture.glb", cfg);
+		}
+
+		loadAndExport("meshes/exports/transparentTexture.glb", "meshes/exports/transparentTexture_2.glb");
+		loadAndExport("meshes/exports/transparentTexture_2.glb", "meshes/exports/transparentTexture_3.glb");
 	}
 
 	void testMeshRetexture()

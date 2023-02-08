@@ -292,6 +292,13 @@ namespace cage
 				if (!materialJson.empty())
 					materialJson += ",";
 				materialJson += "\"pbrMetallicRoughness\":{" + materialPbrJson + "}, \"name\":\"" + config.name.c_str() + "\"";
+				if (any(config.renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)))
+					materialJson += ", \"alphaMode\":\"BLEND\"";
+				else if (any(config.renderFlags & MeshRenderFlags::CutOut))
+					materialJson += ", \"alphaMode\":\"MASK\"";
+				else
+					materialJson += ", \"alphaMode\":\"OPAQUE\"";
+				materialJson += (Stringizer() + ", \"doubleSided\":" + (any(config.renderFlags & MeshRenderFlags::TwoSided) ? "true" : "false")).value.c_str();
 
 				std::string tiJson;
 				if (!textures.empty())
