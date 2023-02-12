@@ -107,37 +107,16 @@ bool databankParse(const String &databank)
 			errors++;
 			continue;
 		}
-		auto schit = schemes.find(scheme);
-		if (schit == schemes.end())
+		if (schemes.count(scheme) == 0)
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "invalid scheme '" + scheme + "' in databank '" + databank + "' in section '" + section + "'");
 			errors++;
 			continue;
 		}
-		const auto &sch = schit->second;
-
-		const auto items = ini->items(section);
-
-		// find invalid properties
-		bool propertiesOk = true;
-		for (const String &prop : items)
-		{
-			if (isDigitsOnly(prop) || prop == "scheme")
-				continue;
-			if (sch->schemeFields.count(prop) == 0)
-			{
-				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unknown property '" + prop + "' (value '" + ini->getString(section, prop) + "') in databank '" + databank + "' in section '" + section + "'");
-				propertiesOk = false;
-			}
-		}
-		if (!propertiesOk)
-		{
-			errors++;
-			continue;
-		}
+		const auto &sch = schemes[scheme];
 
 		// find all assets
-		for (const String &assItem : items)
+		for (const String &assItem : ini->items(section))
 		{
 			if (!isDigitsOnly(assItem))
 				continue; // not an asset
@@ -167,12 +146,11 @@ bool databankParse(const String &databank)
 			}
 
 			// load asset properties
-			for (const String &prop : items)
+			for (const auto &propit : sch->schemeFields)
 			{
-				if (isDigitsOnly(prop) || prop == "scheme")
-					continue;
-				CAGE_ASSERT(sch->schemeFields.count(prop) > 0);
-				ass->fields[prop] = ini->getString(section, prop);
+				const String prop = propit.first;
+				if (ini->itemExists(section, prop))
+					ass->fields[prop] = ini->getString(section, prop);
 			}
 
 			assets.emplace(ass->name, std::move(ass));
@@ -185,7 +163,7 @@ bool databankParse(const String &databank)
 		String s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unused property/asset '" + t + "' (value '" + v + "') in databank '" + databank + "' in section '" + s + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unused property/asset '" + t + "' = '" + v + "' in databank '" + databank + "' in section '" + s + "'");
 			errors++;
 		}
 	}
