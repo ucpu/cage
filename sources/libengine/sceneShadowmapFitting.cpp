@@ -2,7 +2,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/assetManager.h>
-#include <cage-core/meshImport.h>
+#include <cage-core/meshIoCommon.h>
 #include <cage-engine/model.h>
 #include <cage-engine/renderObject.h>
 #include <cage-engine/scene.h>

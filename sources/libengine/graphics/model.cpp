@@ -22,8 +22,6 @@ namespace cage
 
 		class ModelImpl : public Model
 		{
-			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
-
 		public:
 			Aabb box = Aabb::Universe();
 			uint32 id = 0;
@@ -38,7 +36,7 @@ namespace cage
 
 			ModelImpl()
 			{
-				flags = defaultFlags;
+				flags = MeshRenderFlags::Default;
 				glGenVertexArrays(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();

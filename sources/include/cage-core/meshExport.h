@@ -1,7 +1,7 @@
 #ifndef guard_meshExport_h_n1bv859wrffcg89
 #define guard_meshExport_h_n1bv859wrffcg89
 
-#include "mesh.h"
+#include "meshIoCommon.h"
 
 namespace cage
 {
@@ -31,6 +31,7 @@ namespace cage
 		MeshExportGltfTexture albedo, pbr, normal;
 		// the pbr texture contains: R: unused, G: roughness and B: metallic channels
 		const Mesh *mesh = nullptr;
+		MeshRenderFlags renderFlags = MeshRenderFlags::Default;
 		bool verticalFlipUv = false;
 		bool parallelize = false;
 	};

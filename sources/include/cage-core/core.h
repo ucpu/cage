@@ -93,7 +93,6 @@ namespace cage
 
 	class AssetManager;
 	struct AssetScheme;
-	enum class MeshRenderFlags : uint32;
 
 	// Immovable
 

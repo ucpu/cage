@@ -1,13 +1,12 @@
 #ifndef guard_meshImport_h_rtkusd4g4b78fd
 #define guard_meshImport_h_rtkusd4g4b78fd
 
-#include "mesh.h"
+#include "meshIoCommon.h"
 #include "geometry.h"
 #include "imageImport.h"
 
 namespace cage
 {
-	class Mesh;
 	class SkeletonRig;
 	class SkeletalAnimation;
 
@@ -18,20 +17,6 @@ namespace cage
 		Vec4 albedoMult = Vec4(1);
 		Vec4 specialMult = Vec4(1);
 	};
-
-	enum class MeshRenderFlags : uint32
-	{
-		None = 0,
-		CutOut = 1 << 0, // leaves, holes in cloth
-		Transparent = 1 << 1, // glass, plastic
-		Fade = 1 << 2, // holograms, fade out animation
-		TwoSided = 1 << 3,
-		DepthTest = 1 << 4,
-		DepthWrite = 1 << 5,
-		ShadowCast = 1 << 6,
-		Lighting = 1 << 7,
-	};
-	GCHL_ENUM_BITS(MeshRenderFlags);
 
 	enum class MeshImportTextureType : uint32
 	{
