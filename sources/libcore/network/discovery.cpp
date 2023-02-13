@@ -4,6 +4,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/hashString.h>
 
 #include "net.h"
 
@@ -17,211 +18,138 @@ namespace cage
 
 	namespace
 	{
+#ifdef CAGE_SYSTEM_WINDOWS
+		constexpr const char *EmptyAddress = "";
+#else
+		constexpr const char *EmptyAddress = nullptr;
+#endif // CAGE_SYSTEM_WINDOWS
+		constexpr uint32 ProtocolId = HashString("cage network discovery");
 		constexpr uint32 IdSize = 64;
 
-		// AF_INET = ipv4 only, AF_INET6 = ipv6 only, AF_UNSPEC = both
-		constexpr int ProtocolFamily = AF_UNSPEC;
-
-		struct PeerStruct : public DiscoveryPeer
+		struct Peer : public DiscoveryPeer
 		{
+			Guid<IdSize> guid;
 			uint32 ttl = 0;
-		};
 
-		struct SockAddrs
-		{
-			FlatSet<Addr> addresses;
-			Sock s;
-
-			SockAddrs(int family, int type, int protocol) : s(family, type, protocol)
-			{}
+			bool operator < (const Peer &p) const
+			{
+				return guid < p.guid;
+			}
 		};
 
 		class DiscoveryClientImpl : public DiscoveryClient
 		{
 		public:
-			std::map<Guid<IdSize>, PeerStruct> peers;
-			std::vector<SockAddrs> sockets;
-			uint32 gameId = 0;
-			uint16 sendPort = 0;
+			const uint32 gameId = 0;
+			std::vector<Sock> sockets;
+			FlatSet<Addr> servers;
+			FlatSet<Peer> peers;
 
-			DiscoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
+			DiscoveryClientImpl(uint16 listenPort, uint32 gameId) : gameId(gameId)
 			{
-				AddrList l(nullptr, 0, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-				while (l.valid())
+				AddrList lst(EmptyAddress, 0, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				while (lst.valid())
 				{
-					int family = -1, type = -1, protocol = -1;
-					Addr address;
-					l.getAll(address, family, type, protocol);
-					SockAddrs s(family, type, protocol);
-					s.s.setBlocking(false);
-					s.s.setBroadcast(true);
-					s.s.setReuseaddr(true);
-					s.s.bind(address);
+					Sock s(lst.family(), lst.type(), lst.protocol());
+					s.setBlocking(false);
+					s.setBroadcast(true);
+					s.setReuseaddr(true);
+					s.bind(lst.address());
 					sockets.push_back(std::move(s));
-					l.next();
+					lst.next();
 				}
-				try
-				{
-					addServer("255.255.255.255", sendPort); // ipv4 broadcast
-				}
-				catch (const cage::Exception &)
-				{
-					// nothing
-				}
+
+				addServer("255.255.255.255", listenPort);
 			}
 
-			void addServer(const String &address, uint16 port)
+			void addServer(const String &address, uint16 listenPort)
 			{
-				AddrList l(address.c_str(), port, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
-				while (l.valid())
+				detail::OverrideBreakpoint OverrideBreakpoint;
+				AddrList lst(address, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+				while (lst.valid())
 				{
-					for (auto &it : sockets)
-						if (it.s.getFamily() == l.family())
-							it.addresses.insert(l.address());
-					l.next();
-				}
-			}
-
-			void ttlPeers()
-			{
-				auto it = peers.begin();
-				while (it != peers.end())
-				{
-					PeerStruct &p = it->second;
-					if (p.ttl-- == 0)
-						it = peers.erase(it);
-					else
-						it++;
-				}
-			}
-
-			void cleanSockets()
-			{
-				auto it = sockets.begin();
-				while (it != sockets.end())
-				{
-					if (!it->s.isValid())
-						it = sockets.erase(it);
-					else
-						it++;
-				}
-			}
-
-			void receive()
-			{
-				Addr a;
-				MemoryBuffer buffer;
-				for (auto &s : sockets)
-				{
-					while (true)
-					{
-						buffer.resize(1024);
-						try
-						{
-							buffer.resize(s.s.recvFrom(buffer.data(), buffer.size(), a, 0));
-						}
-						catch (const cage::Exception &)
-						{
-							s.s = Sock();
-							break;
-						}
-						if (buffer.size() == 0)
-							break;
-						try
-						{
-							PeerStruct p;
-							Guid<IdSize> id;
-							uint32 gid;
-							Deserializer d(buffer);
-							d >> gid >> id >> p.port;
-							auto av = numeric_cast<uint32>(d.available());
-							auto ap = d.read(av).data();
-							p.message = String({ ap, ap + av });
-							auto pit = peers.find(id);
-							if (pit == peers.end())
-							{
-								uint16 dummyPort;
-								a.translate(p.address, dummyPort);
-								p.ttl = 5;
-								peers[id] = p;
-							}
-							else
-							{
-								pit->second.ttl = 5;
-								pit->second.message = p.message;
-							}
-						}
-						catch (const cage::Exception &)
-						{
-							// ignore invalid message
-						}
-					}
-				}
-				cleanSockets();
-			}
-
-			void send()
-			{
-				for (auto &s : sockets)
-				{
-					for (auto &a : s.addresses)
-					{
-						try
-						{
-							s.s.sendTo(&gameId, 4, a);
-						}
-						catch (const cage::Exception &)
-						{
-							// nothing
-						}
-					}
+					servers.insert(lst.address());
+					lst.next();
 				}
 			}
 
 			void update()
 			{
 				detail::OverrideBreakpoint OverrideBreakpoint;
-				ttlPeers();
-				receive();
-				send();
+				MemoryBuffer buffer;
+				for (Sock &s : sockets)
+				{
+					try
+					{
+						while (true)
+						{
+							buffer.resize(2000);
+							Addr addr;
+							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), addr));
+							if (buffer.size() == 0)
+								break; // no more messages
+							if (buffer.size() < 14 + IdSize)
+								continue; // message is not intended for us
+							Deserializer des(buffer);
+							{
+								uint32 protocolId = 0, g = 0;
+								des >> protocolId >> g;
+								if (protocolId != ProtocolId + 1 || g != gameId)
+									continue; // message is not intended for us
+							}
+							Peer p;
+							des >> p.guid >> p.port >> p.message;
+							uint16 dummy;
+							addr.translate(p.address, dummy);
+							p.ttl = 5;
+							peers.erase(p);
+							peers.insert(p);
+						}
+						{
+							buffer.resize(0);
+							Serializer ser(buffer);
+							ser << ProtocolId << gameId;
+							for (const Addr &a : servers)
+							{
+								try
+								{
+									s.sendTo(buffer.data(), buffer.size(), a);
+								}
+								catch (...)
+								{
+									// ignore
+								}
+							}
+						}
+					}
+					catch (...)
+					{
+						// ignore
+					}
+				}
 			}
 		};
 
 		class DiscoveryServerImpl : public DiscoveryServer
 		{
 		public:
-			Guid<IdSize> uniId;
-			uint32 gameId;
-			uint16 gamePort;
+			const Guid<IdSize> guid = Guid<IdSize>(true);
+			const uint32 gameId = 0;
+			const uint16 gamePort = 0;
 			std::vector<Sock> sockets;
 
-			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : uniId(true), gameId(gameId), gamePort(gamePort)
+			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : gameId(gameId), gamePort(gamePort)
 			{
-				AddrList l(nullptr, listenPort, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-				while (l.valid())
+				AddrList lst(EmptyAddress, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				while (lst.valid())
 				{
-					int family = -1, type = -1, protocol = -1;
-					Addr address;
-					l.getAll(address, family, type, protocol);
-					Sock s(family, type, protocol);
+					Sock s(lst.family(), lst.type(), lst.protocol());
 					s.setBlocking(false);
 					s.setBroadcast(true);
 					s.setReuseaddr(true);
-					s.bind(address);
+					s.bind(lst.address());
 					sockets.push_back(std::move(s));
-					l.next();
-				}
-			}
-
-			void cleanSockets()
-			{
-				auto it = sockets.begin();
-				while (it != sockets.end())
-				{
-					if (!it->isValid())
-						it = sockets.erase(it);
-					else
-						it++;
+					lst.next();
 				}
 			}
 
@@ -229,49 +157,37 @@ namespace cage
 			{
 				detail::OverrideBreakpoint OverrideBreakpoint;
 				MemoryBuffer buffer;
-				Addr a;
-				for (auto &s : sockets)
+				for (Sock &s : sockets)
 				{
-					while (true)
+					try
 					{
-						buffer.resize(256);
-						try
+						while (true)
 						{
-							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), a, 0));
-						}
-						catch (const cage::Exception &)
-						{
-							s = Sock();
-							break;
-						}
-						if (buffer.size() == 0)
-							break;
-						try
-						{
-							{ // parse
-								Deserializer d(buffer);
-								uint32 gid;
-								d >> gid;
-								if (gid != gameId)
-									continue; // message not for us
-								if (s.available() != 0)
-									continue; // message too long
+							buffer.resize(100);
+							Addr addr;
+							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), addr));
+							if (buffer.size() == 0)
+								break; // no more messages
+							{
+								if (buffer.size() < 8)
+									continue; // message is not intended for us
+								Deserializer des(buffer);
+								uint32 protocolId = 0, g = 0;
+								des >> protocolId >> g;
+								if (protocolId != ProtocolId || g != gameId)
+									continue; // message is not intended for us
 							}
-							{ // respond
-								buffer.clear();
-								Serializer ser(buffer);
-								ser << uniId << gameId << gamePort;
-								ser.write({ message.c_str(), message.c_str() + message.length() });
-								s.sendTo(buffer.data(), buffer.size(), a);
-							}
-						}
-						catch (const cage::Exception &)
-						{
-							continue; // ignore invalid messages
+							buffer.resize(0);
+							Serializer ser(buffer);
+							ser << (ProtocolId + 1) << gameId << guid << gamePort << message;
+							s.sendTo(buffer.data(), buffer.size(), addr);
 						}
 					}
+					catch (...)
+					{
+						// ignore
+					}
 				}
-				cleanSockets();
 			}
 		};
 	}
@@ -282,10 +198,10 @@ namespace cage
 		impl->update();
 	}
 
-	void DiscoveryClient::addServer(const String &address, uint16 port)
+	void DiscoveryClient::addServer(const String &address, uint16 listenPort)
 	{
 		DiscoveryClientImpl *impl = (DiscoveryClientImpl *)this;
-		impl->addServer(address, port);
+		impl->addServer(address, listenPort);
 	}
 
 	Holder<PointerRange<DiscoveryPeer>> DiscoveryClient::peers() const
@@ -294,13 +210,13 @@ namespace cage
 		PointerRangeHolder<DiscoveryPeer> h;
 		h.reserve(impl->peers.size());
 		for (const auto &it : impl->peers)
-			h.push_back(it.second);
+			h.push_back(it);
 		return h;
 	}
 
-	Holder<DiscoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
+	Holder<DiscoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId)
 	{
-		return systemMemory().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
+		return systemMemory().createImpl<DiscoveryClient, DiscoveryClientImpl>(listenPort, gameId);
 	}
 
 	void DiscoveryServer::update()

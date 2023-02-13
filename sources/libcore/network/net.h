@@ -68,7 +68,7 @@ namespace cage
 			friend struct AddrList;
 		};
 
-		struct Sock
+		struct Sock : private Noncopyable
 		{
 			Sock(); // invalid socket
 			Sock(int family, int type, int protocol); // create new socket
@@ -134,7 +134,7 @@ namespace cage
 			void next();
 
 		private:
-			addrinfo *start, *current;
+			addrinfo *start = nullptr, *current = nullptr;
 		};
 	}
 }

@@ -16,7 +16,7 @@ namespace cage
 	{
 	public:
 		void update();
-		void addServer(const String &address, uint16 port);
+		void addServer(const String &address, uint16 listenPort);
 		Holder<PointerRange<DiscoveryPeer>> peers() const;
 	};
 

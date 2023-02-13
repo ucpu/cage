@@ -276,8 +276,8 @@ namespace cage
 			hints.ai_socktype = type;
 			hints.ai_protocol = protocol;
 			hints.ai_flags = flags;
-			if (getaddrinfo(address, String(Stringizer() + port).c_str(), &hints, &start) != 0)
-				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", WSAGetLastError());
+			if (auto err = getaddrinfo(address, String(Stringizer() + port).c_str(), &hints, &start) != 0)
+				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", err);
 			current = start;
 		}
 
