@@ -12,9 +12,12 @@
 #include <msdfgen/ext/import-font.h>
 
 #include <vector>
+#include <algorithm>
 
 namespace
 {
+	Real nominalScale;
+
 	struct Glyph
 	{
 		FontHeader::GlyphData data;
@@ -47,7 +50,7 @@ namespace
 		return msdfgen::Vector2(v[0].value, v[1].value);
 	}
 
-	void glyphImage(Glyph &g, msdfgen::Shape &shape)
+	Holder<Image> glyphImage(msdfgen::Shape &shape)
 	{
 		if (!shape.validate())
 			CAGE_THROW_ERROR(Exception, "shape validation failed");
@@ -55,27 +58,26 @@ namespace
 		shape.orientContours();
 		msdfgen::edgeColoringSimple(shape, 3.0);
 
-		static constexpr Real scale = 4;
-		static constexpr Real range = 4 / scale;
 		const auto bounds = shape.getBounds();
 		Real l = bounds.l, b = bounds.b, r = bounds.r, t = bounds.t;
-		l -= .5 * range, b -= .5 * range;
-		r += .5 * range, t += .5 * range;
-		const Real wf = (r - l) * scale;
-		const Real hf = (t - b) * scale;
+		l -= .5, b -= .5;
+		r += .5, t += .5;
+		const Real wf = (r - l);
+		const Real hf = (t - b);
 		const uint32 wi = numeric_cast<uint32>(cage::ceil(wf)) + 1;
 		const uint32 hi = numeric_cast<uint32>(cage::ceil(hf)) + 1;
-		const Real tx = -l + .5 * (wi - wf) / scale;
-		const Real ty = -b + .5 * (hi - hf) / scale;
+		const Real tx = -l + .5 * (wi - wf);
+		const Real ty = -b + .5 * (hi - hf);
 		msdfgen::Bitmap<float, 3> msdf(wi, hi);
-		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(scale.value, from(Vec2(tx, ty))), range.value);
+		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 1.0);
 
-		g.png = newImage();
-		g.png->initialize(wi, hi, 3);
-		for (uint32 y = 0; y < g.png->height(); y++)
-			for (uint32 x = 0; x < g.png->width(); x++)
+		Holder<Image> png = newImage();
+		png->initialize(wi, hi, 3);
+		for (uint32 y = 0; y < png->height(); y++)
+			for (uint32 x = 0; x < png->width(); x++)
 				for (uint32 c = 0; c < 3; c++)
-					g.png->value(x, y, c, msdf(x, y)[c]);
+					png->value(x, y, c, msdf(x, y)[c]);
+		return png;
 	}
 
 	void loadGlyphs()
@@ -91,23 +93,20 @@ namespace
 		msdfgen::FontHandle *handle = msdfgen::adoptFreetypeFont(face);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
-			msdfgen::Shape shape;
-			if (!msdfgen::loadGlyph(shape, handle, msdfgen::GlyphIndex(glyphIndex)))
-			{
-				CAGE_LOG_THROW(Stringizer() + "glyph index: " + glyphIndex);
-				CAGE_THROW_ERROR(Exception, "failed loading glyph (by msdfgen)");
-			}
+			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
 
 			// load glyph metrics
 			Glyph &g = glyphs[glyphIndex];
 			const FT_Glyph_Metrics &glm = face->glyph->metrics;
-			g.data.size = Vec2(float(glm.width), float(glm.height)) / face->units_per_EM;
-			g.data.bearing = Vec2(float(glm.horiBearingX), float(glm.horiBearingY)) / face->units_per_EM;
-			g.data.advance = float(glm.horiAdvance) / face->units_per_EM;
+			g.data.size = Vec2(float(glm.width), float(glm.height)) * nominalScale;
+			g.data.bearing = Vec2(float(glm.horiBearingX), float(glm.horiBearingY)) * nominalScale;
+			g.data.advance = float(glm.horiAdvance) * nominalScale;
 
 			// load glyph shape
+			msdfgen::Shape shape;
+			CALL(msdfgen::readFreetypeOutline, shape, &face->glyph->outline);
 			if (!shape.contours.empty())
-				glyphImage(g, shape);
+				g.png = glyphImage(shape);
 
 			// update global data
 			maxGlyphSize = max(maxGlyphSize, g.data.size);
@@ -119,8 +118,6 @@ namespace
 			}
 		}
 		msdfgen::destroyFont(handle);
-		//data.firstLineOffset = Real(face->ascender) / face->units_per_EM;
-		//data.lineHeight = Real(face->height) / face->units_per_EM;
 		data.firstLineOffset = maxAscender;
 		data.lineHeight = maxAscender - minDescender;
 		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "first line offset: " + data.firstLineOffset);
@@ -217,7 +214,7 @@ namespace
 			g.data.bearing[0] = g.data.size[0] * -0.5;
 			g.data.bearing[1] = data.firstLineOffset;
 			msdfgen::Shape shape = cursorShape();
-			glyphImage(g, shape);
+			g.png = glyphImage(shape);
 
 			if (!kerning.empty())
 			{ // compensate kerning
@@ -257,8 +254,8 @@ namespace
 			packer->data()[count++] = PackingRect{ glyphIndex, g.png->width(), g.png->height() };
 		}
 		uint32 res = 64;
-		while (res < mgs) res *= 2;
-		while (res * res < area) res *= 2;
+		while (res < mgs) res += 32;
+		while (res * res < area) res += 32;
 		while (true)
 		{
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "trying to pack into resolution " + res + "*" + res);
@@ -267,7 +264,7 @@ namespace
 			cfg.width = cfg.height = res;
 			if (packer->solve(cfg))
 				break;
-			res *= 2;
+			res += 32;
 		}
 		for (const auto &it : packer->data())
 		{
@@ -449,6 +446,12 @@ namespace
 		charsetGlyphs.clear();
 		texels.clear();
 	}
+
+	void setSize(uint32 nominalSize)
+	{
+		CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
+		nominalScale = 1.0 / nominalSize / 64;
+	}
 }
 
 void processFont()
@@ -461,7 +464,8 @@ void processFont()
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(Exception, "font is not scalable");
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "units per EM: " + face->units_per_EM);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "units per EM: " + face->units_per_EM);
+	setSize(60);
 	loadGlyphs();
 	loadCharset();
 	loadKerning();

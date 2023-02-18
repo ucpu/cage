@@ -44,29 +44,8 @@ float median(vec3 v)
 
 void main()
 {
-$if 0
-	vec2 dpdx = dFdx(varUv);
-	vec2 dpdy = dFdy(varUv);
-	float m = length(vec2(length(dpdx), length(dpdy))) * 0.70710678118654757;
-	vec3 sampl = texture(uniTexture, varUv).rgb;
-	float opacity = median(sampl) / m * 0.005;
-	outColor = vec4(uniColor, opacity);
-$end
-
-$if 0
-	ivec2 sz = textureSize(uniTexture, 0);
-	float dx = dFdx(varUv.x) * sz.x;
-	float dy = dFdy(varUv.y) * sz.y;
-	float toPixels = 5.0 * inversesqrt(dot(dx, dy));
-	vec3 sampl = texture(uniTexture, varUv).rgb;
-	float opacity = toPixels * (median(sampl) - 0.5) + 0.5;
-	outColor = vec4(uniColor, opacity);
-$end
-
-$if 1
 	float dist = median(texture(uniTexture, varUv).rgb);
 	float edgeWidth = length(vec2(dFdx(dist), dFdy(dist))) * 0.70710678118654757;
 	float opacity = smoothstep(0.5 - edgeWidth, 0.5 + edgeWidth, dist);
 	outColor = vec4(uniColor, opacity);
-$end
 }
