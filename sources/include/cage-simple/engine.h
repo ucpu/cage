@@ -87,6 +87,11 @@ namespace cage
 	VoicesMixer *engineEffectsMixer();
 	VoicesMixer *engineGuiMixer();
 	uint64 engineControlTime();
+
+	namespace detail
+	{
+		void purgeAssetsOnDemandCache();
+	}
 }
 
 #endif // guard_engine_asg4ukio4up897sdr

@@ -62,6 +62,7 @@ namespace cage
 		AssetManager *assets = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 		EntityManager *scene = nullptr;
+		AssetOnDemand *onDemand = nullptr;
 	};
 
 	CAGE_ENGINE_API Holder<RenderPipeline> newRenderPipeline(const RenderPipelineCreateConfig &config);

@@ -296,7 +296,10 @@ namespace cage
 
 			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
 			{
-				onDemand = newAssetOnDemand(assets);
+				if (config.onDemand)
+					onDemand = Holder<AssetOnDemand>(config.onDemand, nullptr);
+				else
+					onDemand = newAssetOnDemand(assets);
 			}
 
 			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)

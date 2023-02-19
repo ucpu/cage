@@ -1,5 +1,6 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/entitiesVisitor.h>
+#include <cage-core/assetOnDemand.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/entitiesCopy.h>
 #include <cage-core/hashString.h>
@@ -144,12 +145,14 @@ namespace cage
 			{
 				provisionalData = newProvisionalGraphics();
 				renderQueue = newRenderQueue("engine", +provisionalData);
+				onDemand = newAssetOnDemand(engineAssets());
 				for (EmitBuffer &it : emitBuffers)
 				{
 					RenderPipelineCreateConfig cfg;
 					cfg.assets = engineAssets();
 					cfg.provisionalGraphics = +provisionalData;
 					cfg.scene = +it.scene;
+					cfg.onDemand = +onDemand;
 					it.pipeline = newRenderPipeline(cfg);
 				}
 			}
@@ -158,6 +161,7 @@ namespace cage
 			{
 				for (EmitBuffer &it : emitBuffers)
 					it.pipeline.clear();
+				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to purgeAssetsOnDemandCache
 				renderQueue.clear();
 				provisionalData.clear();
 			}
@@ -421,8 +425,9 @@ namespace cage
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 
-			Holder<RenderQueue> renderQueue;
 			Holder<ProvisionalGraphics> provisionalData;
+			Holder<RenderQueue> renderQueue;
+			Holder<AssetOnDemand> onDemand;
 
 			Holder<VirtualRealityGraphicsFrame> vrFrame;
 			std::vector<TextureHandle> vrTargets;
@@ -482,5 +487,13 @@ namespace cage
 	void graphicsSwap()
 	{
 		graphics->swap();
+	}
+
+	namespace detail
+	{
+		void purgeAssetsOnDemandCache()
+		{
+			graphics->onDemand->clear();
+		}
 	}
 }
