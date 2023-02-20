@@ -325,7 +325,6 @@ namespace
 			CAGE_TEST(p->normals().size() == msh->normals().size());
 			CAGE_TEST(p->uvs().size() == msh->uvs().size());
 			CAGE_TEST(p->uvs3().size() == msh->uvs3().size());
-			CAGE_TEST(p->tangents().size() == msh->tangents().size());
 			CAGE_TEST(p->boneIndices().size() == msh->boneIndices().size());
 		}
 	}

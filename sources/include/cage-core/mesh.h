@@ -42,13 +42,6 @@ namespace cage
 		void normal(uint32 idx, const Vec3 &value);
 		Vec3 normalAt(const Vec3i &ids, const Vec3 &weights) const;
 
-		PointerRange<const Vec3> tangents() const;
-		PointerRange<Vec3> tangents();
-		void tangents(const PointerRange<const Vec3> &values);
-		Vec3 tangent(uint32 idx) const;
-		void tangent(uint32 idx, const Vec3 &value);
-		Vec3 tangentAt(const Vec3i &ids, const Vec3 &weights) const;
-
 		PointerRange<const Vec4i> boneIndices() const;
 		PointerRange<Vec4i> boneIndices();
 		void boneIndices(const PointerRange<const Vec4i> &values);

@@ -16,12 +16,10 @@ namespace cage
 			none = 0,
 			positions = 1 << 0,
 			normals = 1 << 1,
-			tangents = 1 << 2,
-			bitangents = 1 << 3,
-			uvs = 1 << 4,
-			uvs3 = 1 << 5,
-			boneIndices = 1 << 6,
-			boneWeights = 1 << 7,
+			uvs = 1 << 2,
+			uvs3 = 1 << 3,
+			boneIndices = 1 << 4,
+			boneWeights = 1 << 5,
 		};
 	}
 

@@ -10,7 +10,6 @@ $include uniforms.glsl
 
 in vec3 varPosition; // world space
 in vec3 varNormal; // object space
-in vec3 varTangent; // object space
 in vec3 varUv;
 flat in int varInstanceId;
 
@@ -205,6 +204,22 @@ vec3 restoreNormalMap(vec4 n)
 	return n.xyz;
 }
 
+mat3 makeTangentSpace(vec3 N, vec3 p, vec2 uv)
+{
+	// http://www.thetenthplanet.de/archives/1180
+	uv.y = 1 - uv.y;
+	vec3 dp1 = dFdx(p);
+	vec3 dp2 = dFdy(p);
+	vec2 duv1 = dFdx(uv);
+	vec2 duv2 = dFdy(uv);
+	vec3 dp2perp = cross(dp2, N);
+	vec3 dp1perp = cross(N, dp1);
+	vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+	vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+	float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
+	return mat3(T * invmax, B * invmax, N);
+}
+
 // converts normal from object to world space
 // additionally applies normal map
 void updateNormal()
@@ -214,9 +229,8 @@ void updateNormal()
 	if (getOption(CAGE_SHADER_OPTIONINDEX_MAPNORMAL) != 0)
 	{
 		vec3 normalMap = restoreNormalMap(matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPNORMAL));
-		vec3 tangent = normalize(varTangent);
-		vec3 bitangent = cross(normal, tangent);
-		normal = mat3(tangent, bitangent, normal) * normalMap;
+		mat3 tbn = makeTangentSpace(normal, varPosition - uniViewport.eyePos.xyz, varUv.xy);
+		normal = tbn * normalMap;
 	}
 
 	if (!gl_FrontFacing)

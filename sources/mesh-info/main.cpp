@@ -43,7 +43,6 @@ void info(const String &src, int format)
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has uvs: " + !pt.mesh->uvs().empty());
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has uvs 3D: " + !pt.mesh->uvs3().empty());
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has normals: " + !pt.mesh->normals().empty());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has tangents: " + !pt.mesh->tangents().empty());
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has bones: " + !pt.mesh->boneIndices().empty());
 		const Aabb box = pt.mesh->boundingBox();
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "bounding box: " + box);

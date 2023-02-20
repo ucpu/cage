@@ -126,10 +126,6 @@ namespace cage
 	{};
 	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config);
 
-	struct CAGE_CORE_API MeshGenerateTangentsConfig
-	{};
-	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config);
-
 	struct CAGE_CORE_API MeshGenerateTextureConfig
 	{
 		Delegate<void(const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)> generator;

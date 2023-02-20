@@ -467,8 +467,6 @@ namespace cage
 						flags |= AssimpBakeLoadFlags;
 					if (config.generateNormals)
 						flags |= aiProcess_GenSmoothNormals;
-					if (config.generateTangents)
-						flags |= aiProcess_CalcTangentSpace;
 					if (config.trianglesOnly)
 						imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
 
@@ -772,21 +770,6 @@ namespace cage
 						ps.push_back(fixUnitVector(Name, n));
 					}
 					poly->normals(ps);
-				}
-
-				if (am->HasTangentsAndBitangents())
-				{
-					if (config.verbose)
-						CAGE_LOG(SeverityEnum::Info, "meshImport", "copying tangents");
-					std::vector<Vec3> ts;
-					ts.reserve(verticesCount);
-					for (uint32 i = 0; i < verticesCount; i++)
-					{
-						Vec3 n = conv(am->mTangents[i]);
-						static constexpr const char Name[] = "tangent";
-						ts.push_back(fixUnitVector(Name, n));
-					}
-					poly->tangents(ts);
 				}
 
 				if (am->HasBones())

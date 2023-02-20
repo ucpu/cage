@@ -235,8 +235,6 @@ namespace cage
 			it = t * it;
 		for (Vec3 &it : impl->normals)
 			it = t.orientation * it;
-		for (Vec3 &it : impl->tangents)
-			it = t.orientation * it;
 	}
 
 	void meshApplyTransform(Mesh *msh, const Mat4 &t)
@@ -245,8 +243,6 @@ namespace cage
 		for (Vec3 &it : impl->positions)
 			it = Vec3(t * Vec4(it, 1));
 		for (Vec3 &it : impl->normals)
-			it = Vec3(t * Vec4(it, 0));
-		for (Vec3 &it : impl->tangents)
 			it = Vec3(t * Vec4(it, 0));
 	}
 
@@ -270,8 +266,6 @@ namespace cage
 			const Mat3 tr3 = Mat3(tr);
 			if (!impl->normals.empty())
 				impl->normals[i] = tr3 * impl->normals[i];
-			if (!impl->tangents.empty())
-				impl->tangents[i] = tr3 * impl->tangents[i];
 		}
 		// erase bone attributes to prevent repeatedly applying animations
 		impl->boneIndices.clear();
@@ -1515,12 +1509,6 @@ namespace cage
 		for (Vec3 &n : ns)
 			n = lengthSquared(n) > 1e-7 ? normalize(n) : Vec3();
 		std::swap(impl->normals, ns);
-	}
-
-	void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config)
-	{
-		MeshImpl *impl = (MeshImpl *)msh;
-		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
 	}
 
 	void meshGenerateTexture(const Mesh *msh, const MeshGenerateTextureConfig &config)

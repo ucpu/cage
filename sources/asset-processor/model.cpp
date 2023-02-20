@@ -86,16 +86,12 @@ namespace
 	{
 		std::vector<Vec3> p(msh->positions().begin(), msh->positions().end());
 		std::vector<Vec3> n(msh->normals().begin(), msh->normals().end());
-		std::vector<Vec3> t(msh->tangents().begin(), msh->tangents().end());
 		for (Vec3 &i : p)
 			i = axesScale * i;
 		for (Vec3 &i : n)
 			i = axes * i;
-		for (Vec3 &i : t)
-			i = axes * i;
 		msh->positions(p);
 		msh->normals(n);
-		msh->tangents(t);
 	}
 }
 
@@ -182,10 +178,9 @@ namespace
 	{
 		None = 0,
 		Normals = 1 << 0,
-		Tangents = 1 << 1,
-		Bones = 1 << 2,
-		Uvs2 = 1 << 3,
-		Uvs3 = 1 << 4,
+		Bones = 1 << 1,
+		Uvs2 = 1 << 2,
+		Uvs3 = 1 << 3,
 	};
 }
 
@@ -245,15 +240,8 @@ namespace
 		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
 			CAGE_THROW_ERROR(Exception, "material has multiple transparency flags (cutOut, transparent, fade)");
 
-		if (any(flags & ModelDataFlags::Tangents) && none(flags & ModelDataFlags::Uvs2))
-			CAGE_THROW_ERROR(Exception, "tangents are exported, but uvs are missing");
-		if (any(flags & ModelDataFlags::Tangents) && none(flags & ModelDataFlags::Normals))
-			CAGE_THROW_ERROR(Exception, "tangents are exported, but normals are missing");
-
 		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no normals");
-		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Tangents))
-			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no tangents");
 	}
 }
 
@@ -263,7 +251,6 @@ void processModel()
 	config.materialPathOverride = properties("material");
 	config.materialNameAlternative = inputSpec;
 	config.generateNormals = toBool(properties("normals"));
-	config.generateTangents = toBool(properties("tangents"));
 	config.trianglesOnly = toBool(properties("trianglesOnly"));
 	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
 	MeshImportResult result = meshImportFiles(inputFileName, config);
@@ -277,7 +264,6 @@ void processModel()
 	ModelDataFlags flags = ModelDataFlags::None;
 	setFlags(flags, ModelDataFlags::Uvs2, !part.mesh->uvs().empty() || !part.mesh->uvs3().empty(), "uvs");
 	setFlags(flags, ModelDataFlags::Normals, !part.mesh->normals().empty(), "normals");
-	setFlags(flags, ModelDataFlags::Tangents, !part.mesh->tangents().empty(), "tangents");
 	setFlags(flags, ModelDataFlags::Bones, !part.mesh->boneIndices().empty(), "bones");
 
 	if (!part.mesh->uvs3().empty())
@@ -297,8 +283,6 @@ void processModel()
 		part.mesh->uvs3({});
 	if (none(flags & ModelDataFlags::Normals))
 		part.mesh->normals({});
-	if (none(flags & ModelDataFlags::Tangents))
-		part.mesh->tangents({});
 	if (none(flags & ModelDataFlags::Bones))
 	{
 		part.mesh->boneIndices(PointerRange<Vec4i>());

@@ -13,7 +13,6 @@ namespace cage
 	public:
 		MeshAttribute<Vec3> positions;
 		MeshAttribute<Vec3> normals;
-		MeshAttribute<Vec3> tangents;
 		MeshAttribute<Vec4i> boneIndices;
 		MeshAttribute<Vec4> boneWeights;
 		MeshAttribute<Vec2> uvs;
@@ -27,4 +26,4 @@ namespace cage
 	};
 }
 
-#define POLYHEDRON_ATTRIBUTES positions, normals, tangents, boneIndices, boneWeights, uvs, uvs3
+#define POLYHEDRON_ATTRIBUTES positions, normals, boneIndices, boneWeights, uvs, uvs3

@@ -11,6 +11,7 @@ namespace cage
 	class ShaderProgram;
 	class RenderQueue;
 	class ProvisionalGraphics;
+	class AssetOnDemand;
 
 	struct LodSelection
 	{

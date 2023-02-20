@@ -27,11 +27,6 @@ display = export normals
 type = bool
 default = true
 
-[tangents]
-display = generate tangents
-type = bool
-default = false
-
 [bones]
 display = export bones
 type = bool

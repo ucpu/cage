@@ -76,7 +76,6 @@ namespace cage
 		String materialNameAlternative; // prefer cage (cpm) material with this name if it exists
 		bool mergeParts = false; // merge compatible parts to reduce draw calls (ignores material names)
 		bool generateNormals = false;
-		bool generateTangents = false;
 		bool renormalizeVectors = true;
 		bool passInvalidVectors = true;
 		bool trianglesOnly = false; // discard non-triangle faces

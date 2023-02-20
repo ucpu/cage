@@ -63,7 +63,6 @@ namespace cage
 
 	GCHL_GENERATE(false, Vec3, position, positions);
 	GCHL_GENERATE(true, Vec3, normal, normals);
-	GCHL_GENERATE(true, Vec3, tangent, tangents);
 	GCHL_GENERATE(false, Vec4i, boneIndices, boneIndices);
 	GCHL_GENERATE(false, Vec4, boneWeights, boneWeights);
 	GCHL_GENERATE(false, Vec2, uv, uvs);
