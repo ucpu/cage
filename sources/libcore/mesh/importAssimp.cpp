@@ -517,8 +517,6 @@ namespace cage
 							contains += "normals ";
 						if (am->HasTextureCoords(0))
 							contains += "uvs ";
-						if (am->HasTangentsAndBitangents())
-							contains += "tangents ";
 						if (am->HasVertexColors(0))
 							contains += "colors ";
 						CAGE_LOG_CONTINUE(SeverityEnum::Note, "meshImport", Stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);

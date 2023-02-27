@@ -463,6 +463,16 @@ void processTexture()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
 
+	{ // change channels count
+		const uint32 ch = toUint32(properties("channels"));
+		if (ch != 0 && images.parts[0].image->channels() != ch)
+		{
+			for (auto &p : images.parts)
+				imageConvert(+p.image, ch);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to " + ch + " channels");
+		}
+	}
+
 	{ // convert to srgb
 		if (toBool(properties("srgb")))
 		{

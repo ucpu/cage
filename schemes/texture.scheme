@@ -8,6 +8,14 @@ type = enum
 values = 2d, 3d, 2dArray, cubeMap
 default = 2d
 
+[channels]
+display = change channels count
+hint = zero means no change
+type = uint32
+min = 0
+max = 4
+default = 0
+
 [convert]
 display = re-purpose the texture
 type = enum
