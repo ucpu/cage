@@ -671,7 +671,7 @@ namespace
 	{
 		CAGE_TESTCASE("stringizer");
 		{
-			CAGE_TESTCASE("conversions");
+			CAGE_TESTCASE("conversions 1");
 			uint8  ui8 = 1;
 			uint16 ui16 = 2;
 			uint32 ui32 = 3;
@@ -683,6 +683,31 @@ namespace
 			bool bt = true;
 			bool bf = false;
 			CAGE_TEST(String(Stringizer() + "begin" + ui8 + ui16 + ui32 + ui64 + "s" + si8 + si16 + si32 + si64 + "b" + bt + bf + "end") == "begin1234s5678btruefalseend");
+		}
+		{
+			CAGE_TESTCASE("conversions 2");
+			uint8  ui8 = m;
+			uint16 ui16 = m;
+			uint32 ui32 = m;
+			uint64 ui64 = m;
+			sint8  si8 = m;
+			sint16 si16 = m;
+			sint32 si32 = m;
+			sint64 si64 = m;
+			const String s1 = Stringizer() + ui8 + "_" + ui16 + "_" + ui32 + "_" + ui64 + "_" + si8 + "_" + si16 + "_" + si32 + "_" + si64;
+			static constexpr String s1_ = "255_65535_4294967295_18446744073709551615_127_32767_2147483647_9223372036854775807";
+			CAGE_TEST(s1 == s1_);
+			ui8 = 0;
+			ui16 = 0;
+			ui32 = 0;
+			ui64 = 0;
+			si8 = std::numeric_limits<sint8>().min();
+			si16 = std::numeric_limits<sint16>().min();
+			si32 = std::numeric_limits<sint32>().min();
+			si64 = std::numeric_limits<sint64>().min();
+			const String s2 = Stringizer() + ui8 + "_" + ui16 + "_" + ui32 + "_" + ui64 + "_" + si8 + "_" + si16 + "_" + si32 + "_" + si64;
+			static constexpr String s2_ = "0_0_0_0_-128_-32768_-2147483648_-9223372036854775808";
+			CAGE_TEST(s2 == s2_);
 		}
 		{
 			CAGE_TESTCASE("r-value stringizer");

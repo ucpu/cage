@@ -606,25 +606,25 @@ namespace cage
 				return *this + (uintPtr)other;
 			}
 
-#define GCHL_GENERATE(TYPE) \
+#define GCHL_GENERATE(TYPE, SIZE) \
 			CAGE_FORCE_INLINE StringizerBase<N> &operator + (TYPE other) \
 			{ \
-				StringBase<30> tmp; \
-				tmp.rawLength() = privat::toString(tmp.rawData(), 30, other); \
+				StringBase<SIZE> tmp; \
+				tmp.rawLength() = privat::toString(tmp.rawData(), SIZE, other); \
 				return *this + tmp; \
 			}
-			GCHL_GENERATE(char);
-			GCHL_GENERATE(sint8);
-			GCHL_GENERATE(sint16);
-			GCHL_GENERATE(sint32);
-			GCHL_GENERATE(sint64);
-			GCHL_GENERATE(uint8);
-			GCHL_GENERATE(uint16);
-			GCHL_GENERATE(uint32);
-			GCHL_GENERATE(uint64);
-			GCHL_GENERATE(float);
-			GCHL_GENERATE(double);
-			GCHL_GENERATE(bool);
+			GCHL_GENERATE(char, 4);
+			GCHL_GENERATE(sint8, 4);
+			GCHL_GENERATE(sint16, 6);
+			GCHL_GENERATE(sint32, 11);
+			GCHL_GENERATE(sint64, 21);
+			GCHL_GENERATE(uint8, 3);
+			GCHL_GENERATE(uint16, 5);
+			GCHL_GENERATE(uint32, 10);
+			GCHL_GENERATE(uint64, 20);
+			GCHL_GENERATE(float, 50);
+			GCHL_GENERATE(double, 350);
+			GCHL_GENERATE(bool, 5);
 #undef GCHL_GENERATE
 
 			// allow to use l-value-reference operator overloads with r-value-reference stringizer

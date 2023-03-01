@@ -5,6 +5,7 @@
 #include <cage-core/timer.h>
 #include <cage-core/macros.h>
 #include <cmath>
+#include <initializer_list>
 
 void test(Real a, Real b)
 {
@@ -1106,6 +1107,30 @@ namespace
 					String s = Stringizer() + v;
 					Real r = Real::parse(s);
 					test(v, r);
+				}
+				static constexpr Real largeNumbers[] = { 0.0,
+					1e-5, -1e-7, 0.123456789e-10, 0.456789e-15, 0.789123e-20, -0.123456e-25, 0.123456e-30, 0.123456e-37,
+					1e+5, -1e+7, 0.123456789e+10, 0.456789e+15, 0.789123e+20, -0.123456e+25, 0.123456e+30, 0.123456e+37 };
+				for (Real v : largeNumbers)
+				{
+					String s = Stringizer() + v;
+					Real r = Real::parse(s);
+					test(v, r);
+				}
+				{
+					String s = Stringizer() + Real::Infinity();
+					Real r = Real::parse(s);
+					CAGE_TEST(std::isinf(r.value));
+				}
+				{
+					String s = Stringizer() + -Real::Infinity();
+					Real r = Real::parse(s);
+					CAGE_TEST(std::isinf(r.value));
+				}
+				{
+					String s = Stringizer() + Real::Nan();
+					Real r = Real::parse(s);
+					CAGE_TEST(std::isnan(r.value));
 				}
 			}
 			{
