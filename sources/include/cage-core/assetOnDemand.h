@@ -14,19 +14,10 @@ namespace cage
 
 		// returns null if the asset is not yet loaded or has different scheme
 		template<uint32 Scheme, class T>
-		Holder<T> tryGet(uint32 assetName, bool autoLoad = true)
-		{
-			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName, false, autoLoad).template cast<T>();
-		}
-
-		// returns null if the asset is not yet loaded
-		// throws an exception if the asset has different scheme
-		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName, bool autoLoad = true)
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName, true, autoLoad).template cast<T>();
+			return get_(Scheme, assetName, false, autoLoad).template cast<T>();
 		}
 
 		void process();

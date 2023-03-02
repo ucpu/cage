@@ -701,7 +701,7 @@ namespace cage
 				for (uint32 it : object->models(lod))
 				{
 					ModelPrepare pr = prepare.clone();
-					pr.mesh = onDemand->tryGet<AssetSchemeIndexModel, Model>(it);
+					pr.mesh = onDemand->get<AssetSchemeIndexModel, Model>(it);
 					prepareModel<PrepareMode>(data, pr, object.share());
 				}
 			}
