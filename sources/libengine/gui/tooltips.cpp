@@ -49,7 +49,12 @@ namespace cage
 			if (it.closeCondition != TooltipCloseConditionEnum::Modal)
 				continue;
 			if (const HierarchyItem *h = findHierarchy(+root, it.rect))
-				it.removing |= !pointInside(h->renderPos, h->renderSize, outputMouse);
+			{
+				Vec2 p = h->renderPos;
+				Vec2 s = h->renderSize;
+				offset(p, s, Vec4(20));
+				it.removing |= !pointInside(p, s, outputMouse);
+			}
 		}
 
 		// actually remove tooltips
@@ -143,7 +148,7 @@ namespace cage
 						if (corner[1] == 0)
 							corner[1] = 1; // avoid centering the tooltip under the cursor
 						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
-						f->value<GuiScrollbarsComponent>().alignment += (it.closeCondition == TooltipCloseConditionEnum::Modal ? 10 : -17) * Vec2(corner) / outputSize;
+						f->value<GuiScrollbarsComponent>().alignment += -17 * Vec2(corner) / outputSize;
 					} break;
 					case TooltipPlacementEnum::Center:
 						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
