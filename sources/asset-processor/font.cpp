@@ -69,7 +69,7 @@ namespace
 		const Real tx = -l + .5 * (wi - wf);
 		const Real ty = -b + .5 * (hi - hf);
 		msdfgen::Bitmap<float, 3> msdf(wi, hi);
-		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 1.0);
+		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 2.5);
 
 		Holder<Image> png = newImage();
 		png->initialize(wi, hi, 3);
@@ -465,7 +465,7 @@ void processFont()
 		CAGE_THROW_ERROR(Exception, "font is not scalable");
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "units per EM: " + face->units_per_EM);
-	setSize(60);
+	setSize(40);
 	loadGlyphs();
 	loadCharset();
 	loadKerning();
