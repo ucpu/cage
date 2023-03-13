@@ -20,12 +20,13 @@ namespace cage
 		FileMode mode() const override;
 	};
 
-	class ArchiveAbstract : public std::enable_shared_from_this<ArchiveAbstract>, private Immovable
+	class ArchiveAbstract : public std::enable_shared_from_this<ArchiveAbstract>, private Noncopyable
 	{
 	public:
 		const String myPath;
 
 		ArchiveAbstract(const String &path);
+		ArchiveAbstract(ArchiveAbstract &&) noexcept = default;
 		virtual ~ArchiveAbstract();
 
 		virtual PathTypeFlags type(const String &path) const = 0;

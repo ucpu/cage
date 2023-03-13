@@ -16,7 +16,6 @@ void main()
 	varInstanceId = gl_InstanceID;
 	varPosition = inPosition;
 	varNormal = inNormal;
-	varTangent = inTangent;
 	varUv = inUv;
 	skeletalAnimation();
 

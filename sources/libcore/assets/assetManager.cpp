@@ -14,6 +14,7 @@
 #include <cage-core/profiling.h>
 #include <cage-core/tasks.h>
 #include <cage-core/logger.h>
+#include <cage-core/stdHash.h>
 
 #include <vector>
 #include <atomic>
@@ -126,6 +127,28 @@ namespace cage
 			virtual void perform() = 0;
 		};
 
+		class KeepOpen : private Immovable
+		{
+			Holder<Mutex> mut = newMutex();
+			ankerl::unordered_dense::map<String, Holder<void>> items;
+
+		public:
+			void add(const String &path_)
+			{
+				const String path = pathJoin(path_, "..");
+				ScopeLock l(mut);
+				if (items.count(path))
+					return;
+				items[path] = detail::pathKeepOpen(path);
+			}
+
+			void clear()
+			{
+				ScopeLock l(mut);
+				items.clear();
+			}
+		};
+
 		class AssetListener : private Immovable
 		{};
 
@@ -136,6 +159,7 @@ namespace cage
 			const sint32 tasksPriority = 0;
 			Holder<Mutex> privateMutex = newMutex(); // protects generateName, privateIndex
 			Holder<RwMutex> publicMutex = newRwMutex(); // protects publicIndex, waitingIndex
+			KeepOpen keepOpen;
 			std::vector<AssetScheme> schemes;
 			std::atomic<sint32> workingCounter = 0;
 			std::atomic<sint32> existsCounter = 0;
@@ -382,6 +406,12 @@ namespace cage
 					waitingIndex.erase(ass->realName);
 				}
 			}
+
+			void decremenWorking()
+			{
+				if (--workingCounter == 0)
+					keepOpen.clear();
+			}
 		};
 
 		struct PublishCommand : public CommandBase
@@ -429,7 +459,7 @@ namespace cage
 
 		CustomProcessing::~CustomProcessing()
 		{
-			impl->workingCounter--;
+			impl->decremenWorking();
 		}
 
 		Loading::Loading(Holder<Asset> &&asset_) : CustomProcessing(asset_->impl)
@@ -466,8 +496,22 @@ namespace cage
 				detail::OverrideBreakpoint OverrideBreakpoint;
 
 				Holder<File> file;
-				if (!impl->findAsset.dispatch(asset->realName, file))
-					file = readFile(pathJoin(impl->path, Stringizer() + asset->realName));
+				{
+					String foundName;
+					if (impl->findAsset.dispatch(asset->realName, foundName, file))
+					{
+						if (!file && !foundName.empty())
+							file = readFile(foundName);
+					}
+					else
+					{
+						CAGE_ASSERT(!file && foundName.empty());
+						foundName = pathJoin(impl->path, Stringizer() + asset->realName);
+						file = readFile(foundName);
+					}
+					if (!foundName.empty())
+						impl->keepOpen.add(foundName);
+				}
 				CAGE_ASSERT(file);
 
 				AssetHeader h;
@@ -620,7 +664,7 @@ namespace cage
 
 		CommandBase::~CommandBase()
 		{
-			impl->workingCounter--;
+			impl->decremenWorking();
 		}
 	}
 

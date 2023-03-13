@@ -42,9 +42,20 @@ namespace cage
 				return { it->second.lock(), true };
 			}
 
+			bool validErase(ArchiveAbstract *a) const
+			{
+				if (map.count(a->myPath) == 0)
+					return true;
+				const auto l = map.at(a->myPath).lock();
+				if (!l)
+					return true;
+				return l.get() == a;
+			}
+
 			void erase(ArchiveAbstract *a)
 			{
-				CAGE_ASSERT(map.count(a->myPath) == 0 || !map[a->myPath].lock());
+				// make sure that the element being removed is actually the same
+				CAGE_ASSERT(validErase(a));
 				map.erase(a->myPath);
 			}
 
@@ -168,9 +179,15 @@ namespace cage
 		return myMode;
 	}
 
-	ArchiveAbstract::ArchiveAbstract(const String & path) : myPath(path)
+	ArchiveAbstract::ArchiveAbstract(const String &path) : myPath(path)
 	{
 		CAGE_ASSERT(path == pathSimplify(path));
+	}
+
+	ArchiveAbstract::~ArchiveAbstract()
+	{
+		ScopeLock lock(fsMutex());
+		archivesCache().erase(this);
 	}
 
 	ArchiveWithPath archiveFindTowardsRoot(const String &path_, ArchiveFindModeEnum mode)
@@ -217,12 +234,6 @@ namespace cage
 			break;
 		}
 		return r;
-	}
-
-	ArchiveAbstract::~ArchiveAbstract()
-	{
-		ScopeLock lock(fsMutex());
-		archivesCache().erase(this);
 	}
 
 	RecursiveMutex *fsMutex()

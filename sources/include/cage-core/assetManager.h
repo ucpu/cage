@@ -59,7 +59,7 @@ namespace cage
 
 		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
 
-		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from loading threads
+		EventDispatcher<bool(uint32 requestName, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value);

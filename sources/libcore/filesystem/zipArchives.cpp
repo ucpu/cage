@@ -208,7 +208,7 @@ namespace cage
 			}
 
 			// open existing archive
-			ArchiveZip(Holder<File> &&file, bool throwing = true) : ArchiveAbstract(class_cast<FileAbstract *>(+file)->myPath), src(std::move(file))
+			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(class_cast<FileAbstract *>(+file)->myPath), src(std::move(file))
 			{
 				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
@@ -249,15 +249,7 @@ namespace cage
 						break;
 					}
 					if (totalFiles == m)
-					{
-						if (throwing)
-						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_THROW_ERROR(Exception, "file is not a zip archive");
-						}
-						else
-							return;
-					}
+						return; // isZip remains false
 				}
 
 				{ // read central directory (populate files)
@@ -345,10 +337,14 @@ namespace cage
 				modified = false; // all modifications so far can be safely discarded
 			}
 
+			ArchiveZip(ArchiveZip &&z) noexcept = default;
+
 			~ArchiveZip()
 			{
+				if (!src)
+					return; // already moved-from
+
 				ScopeLock lock(fsMutex());
-				CAGE_ASSERT(src);
 				CAGE_ASSERT(src->mode().write == modified);
 				if (!modified)
 					return;
@@ -809,7 +805,7 @@ namespace cage
 	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f)
 	{
 		ScopeLock lock(fsMutex());
-		auto a = std::make_shared<ArchiveZip>(std::move(f), false);
-		return a->isZip ? a : std::shared_ptr<ArchiveAbstract>();
+		ArchiveZip z(std::move(f));
+		return z.isZip ? std::make_shared<ArchiveZip>(std::move(z)) : std::shared_ptr<ArchiveAbstract>();
 	}
 }
