@@ -190,9 +190,9 @@ namespace cage
 
 	namespace privat
 	{
-		decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt)
+		GuiTooltipComponent::Tooltip guiTooltipText(const GuiTextComponent *txt)
 		{
-			decltype(GuiTooltipComponent::tooltip) tt;
+			GuiTooltipComponent::Tooltip tt;
 			tt.bind<const GuiTextComponent *, &guiTooltipTextImpl>(txt);
 			return tt;
 		}

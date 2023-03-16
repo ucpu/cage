@@ -116,7 +116,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{
-		Delegate<void(const GuiTooltipConfig &)> tooltip;
+		using Tooltip = Delegate<void(const GuiTooltipConfig &)>;
+		Tooltip tooltip;
 		uint64 delay = 500000; // duration to hold mouse over the widget before showing the tooltip
 		bool enableForDisabled = false;
 	};
@@ -257,8 +258,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiSpoilerComponent
 	{
-		bool collapsesSiblings = true;
 		bool collapsed = true;
+		bool collapsesSiblings = true;
 		// GuiTextComponent defines caption
 		// GuiImageComponent defines background
 	};
@@ -275,7 +276,7 @@ namespace cage
 			char value[N];
 		};
 
-		CAGE_ENGINE_API decltype(GuiTooltipComponent::tooltip) guiTooltipText(const GuiTextComponent *txt);
+		CAGE_ENGINE_API GuiTooltipComponent::Tooltip guiTooltipText(const GuiTextComponent *txt);
 	}
 
 	namespace detail
@@ -283,7 +284,7 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
 		template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
-		decltype(GuiTooltipComponent::tooltip) guiTooltipText() noexcept
+		GuiTooltipComponent::Tooltip guiTooltipText() noexcept
 		{
 			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
 			return privat::guiTooltipText(&txt);
