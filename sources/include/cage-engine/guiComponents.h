@@ -88,7 +88,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiEventComponent
 	{
-		Delegate<bool(uint32)> event;
+		Delegate<bool(Entity *)> event;
 	};
 
 	enum class TooltipCloseConditionEnum : uint32
@@ -108,7 +108,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiTooltipConfig
 	{
 		Entity *invoker = nullptr; // the widget for which the tooltip is to be shown
-		Entity *tooltip = nullptr; // entity automatically prepared by the guiManager for the application to fill in
+		Entity *tooltip = nullptr; // entity automatically prepared by the GuiManager for the application to fill in
 		Vec2 anchor; // cursor position
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
 		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::Corner;

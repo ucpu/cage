@@ -173,7 +173,7 @@ namespace cage
 			GuiEventComponent &v = ent->value<GuiEventComponent>();
 			if (v.event)
 			{
-				if (v.event(ent->name()))
+				if (v.event(ent))
 					return;
 			}
 		}

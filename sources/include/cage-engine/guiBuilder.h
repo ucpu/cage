@@ -9,19 +9,19 @@ namespace cage
 	class EntityManager;
 	class Entity;
 
+	namespace privat
+	{
+		template<void (*F)(), bool StopPropagation = true>
+		CAGE_FORCE_INLINE bool guiActionWrapper(Entity *)
+		{
+			(F)();
+			return StopPropagation;
+		}
+	}
+
 	namespace guiBuilder
 	{
 		class GuiBuilder;
-
-		namespace
-		{
-			template<void (*F)(), bool StopPropagation = true>
-			bool guiActionWrapper(uint32)
-			{
-				(F)();
-				return StopPropagation;
-			}
-		}
 
 		struct CAGE_ENGINE_API BuilderItem
 		{
@@ -52,16 +52,16 @@ namespace cage
 			BuilderItem skin(uint32 index = m);
 			BuilderItem disabled(bool disable = true);
 
-			BuilderItem event(Delegate<bool(uint32)> ev);
-			template<bool (*F)(uint32)>
+			BuilderItem event(Delegate<bool(Entity *)> ev);
+			template<bool (*F)(Entity *)>
 			BuilderItem bind()
 			{
-				return event(Delegate<bool(uint32)>().bind<F>());
+				return event(Delegate<bool(Entity *)>().bind<F>());
 			}
 			template<void (*F)(), bool StopPropagation = true>
 			BuilderItem bind()
 			{
-				return event(Delegate<bool(uint32)>().bind<&guiActionWrapper<F, StopPropagation>>());
+				return event(Delegate<bool(Entity *)>().bind<&privat::guiActionWrapper<F, StopPropagation>>());
 			}
 
 			template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
