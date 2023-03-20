@@ -13,6 +13,16 @@ namespace cage
 	{
 		class GuiBuilder;
 
+		namespace
+		{
+			template<void (*F)(), bool StopPropagation = true>
+			bool guiActionWrapper(uint32)
+			{
+				(F)();
+				return StopPropagation;
+			}
+		}
+
 		struct CAGE_ENGINE_API BuilderItem
 		{
 			BuilderItem(GuiBuilder *g, uint32 entityName = 0);
@@ -28,16 +38,31 @@ namespace cage
 
 			BuilderItem text(const GuiTextComponent &txt);
 			BuilderItem text(const String &txt);
-			BuilderItem format(const GuiTextFormatComponent &textFormat);
+			BuilderItem text(uint32 assetName, uint32 textName, const String &parameters = "");
+			BuilderItem textFormat(const GuiTextFormatComponent &textFormat);
+			BuilderItem textColor(Vec3 color);
+			BuilderItem textSize(Real size);
+			BuilderItem textAlign(TextAlignEnum align);
 			BuilderItem image(const GuiImageComponent &img);
 			BuilderItem image(uint32 textureName);
-			BuilderItem format(const GuiImageFormatComponent &imageFormat);
+			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
 			BuilderItem scrollbars(const GuiScrollbarsComponent &sc);
 			BuilderItem scrollbars(Vec2 alignment);
 			BuilderItem size(Vec2 size);
 			BuilderItem skin(uint32 index = m);
 			BuilderItem disabled(bool disable = true);
+
 			BuilderItem event(Delegate<bool(uint32)> ev);
+			template<bool (*F)(uint32)>
+			BuilderItem bind()
+			{
+				return event(Delegate<bool(uint32)>().bind<F>());
+			}
+			template<void (*F)(), bool StopPropagation = true>
+			BuilderItem bind()
+			{
+				return event(Delegate<bool(uint32)>().bind<&guiActionWrapper<F, StopPropagation>>());
+			}
 
 			template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)

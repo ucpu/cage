@@ -667,19 +667,12 @@ namespace cage
 		{
 			static_assert(sizeof(d) <= sizeof(inst));
 			static_assert(std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>);
-			union U
-			{
-				void *p;
-				D d;
-			};
 			fnc = +[](void *inst, Ts... vs) {
-				U u;
-				u.p = inst;
-				return (F)(u.d, std::forward<Ts>(vs)...);
+				D d;
+				detail::memcpy(&d, &inst, sizeof(D));
+				return (F)(d, std::forward<Ts>(vs)...);
 			};
-			U u;
-			u.d = d;
-			inst = u.p;
+			detail::memcpy(&inst, &d, sizeof(D));
 			return *this;
 		}
 

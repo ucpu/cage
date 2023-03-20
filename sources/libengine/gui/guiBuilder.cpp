@@ -107,9 +107,32 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::format(const GuiTextFormatComponent &textFormat)
+		BuilderItem BuilderItem::text(uint32 assetName, uint32 textName, const String &parameters)
+		{
+			return text(GuiTextComponent{ parameters, assetName, textName });
+		}
+
+		BuilderItem BuilderItem::textFormat(const GuiTextFormatComponent &textFormat)
 		{
 			(*this)->value<GuiTextFormatComponent>() = textFormat;
+			return *this;
+		}
+
+		BuilderItem BuilderItem::textColor(Vec3 color)
+		{
+			(*this)->value<GuiTextFormatComponent>().color = color;
+			return *this;
+		}
+
+		BuilderItem BuilderItem::textSize(Real size)
+		{
+			(*this)->value<GuiTextFormatComponent>().size = size;
+			return *this;
+		}
+
+		BuilderItem BuilderItem::textAlign(TextAlignEnum align)
+		{
+			(*this)->value<GuiTextFormatComponent>().align = align;
 			return *this;
 		}
 
@@ -125,7 +148,7 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::format(const GuiImageFormatComponent &imageFormat)
+		BuilderItem BuilderItem::imageFormat(const GuiImageFormatComponent &imageFormat)
 		{
 			(*this)->value<GuiImageFormatComponent>() = imageFormat;
 			return *this;
