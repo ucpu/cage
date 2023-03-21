@@ -103,7 +103,8 @@ namespace cage
 							Peer p;
 							des >> p.guid >> p.port >> p.message;
 							uint16 dummy;
-							addr.translate(p.address, dummy);
+							addr.translate(p.address, dummy, false);
+							addr.translate(p.domain, dummy, true);
 							p.ttl = 20;
 							peers.erase(p);
 							peers.insert(p);
