@@ -9,8 +9,7 @@
 #include "net.h"
 
 #include <vector>
-#include <set>
-#include <map>
+#include <algorithm>
 
 namespace cage
 {
@@ -75,6 +74,10 @@ namespace cage
 
 			void update()
 			{
+				std::erase_if((std::vector<Peer>&)peers, [](Peer &p) -> bool {
+					CAGE_ASSERT(p.ttl > 0);
+					return --p.ttl == 0;
+				});
 				detail::OverrideBreakpoint OverrideBreakpoint;
 				MemoryBuffer buffer;
 				for (Sock &s : sockets)
@@ -101,7 +104,7 @@ namespace cage
 							des >> p.guid >> p.port >> p.message;
 							uint16 dummy;
 							addr.translate(p.address, dummy);
-							p.ttl = 5;
+							p.ttl = 20;
 							peers.erase(p);
 							peers.insert(p);
 						}
