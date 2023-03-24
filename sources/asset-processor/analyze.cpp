@@ -9,7 +9,11 @@ namespace
 	{
 		try
 		{
-			const MeshImportResult result = meshImportFiles(inputFileName);
+			MeshImportConfig cfg;
+			cfg.rootPath = inputDirectory;
+			cfg.passInvalidVectors = true;
+			MeshImportResult result = meshImportFiles(inputFileName, cfg);
+			meshImportConvertToCageFormats(result);
 			writeLine("cage-begin");
 			try
 			{

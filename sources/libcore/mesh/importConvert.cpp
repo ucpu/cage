@@ -17,7 +17,21 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "channel index out of range");
 				it.image = std::move(vals[channel]);
 			}
-			textures.name += Stringizer() + "_ch" + channel;
+			if (find(textures.name, '?') != m)
+				textures.name += Stringizer() + "_ch" + channel;
+		}
+
+		void limitChannels(MeshImportTexture &textures, uint32 channels)
+		{
+			for (auto &it : textures.images.parts)
+			{
+				auto vals = imageChannelsSplit(+it.image);
+				if (channels > vals.size())
+					CAGE_THROW_ERROR(Exception, "channel index out of range");
+				it.image = imageChannelsJoin(PointerRange{ vals.begin(), vals.begin() + channels });
+			}
+			if (find(textures.name, '?') != m)
+				textures.name += Stringizer() + "_lch" + channels;
 		}
 
 		void splitChannels(MeshImportTexture &it)
@@ -70,6 +84,27 @@ namespace cage
 				case 2: pickChannel(it, 1); break;
 				case 4: pickChannel(it, 3); break;
 				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
+				}
+			} break;
+			case MeshImportTextureType::Normal:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: it.type = MeshImportTextureType::Bump; break;
+				case 2: break;
+				case 3: break;
+				case 4: limitChannels(it, 3); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for normal texture");
+				}
+			} break;
+			case MeshImportTextureType::Bump:
+			{
+				switch (it.images.parts[0].image->channels())
+				{
+				case 1: break;
+				case 3: pickChannel(it, 1); break;
+				case 4: pickChannel(it, 1); break;
+				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
 				}
 			} break;
 			default:
@@ -213,7 +248,7 @@ namespace cage
 			{
 				if (it.images.parts.empty())
 				{
-					if (cage::isPattern(it.name, "", "?", "") || cage::isPattern(it.name, "", ";", ""))
+					if (find(it.name, '?') != m || find(it.name, ';') != m)
 						continue;
 					it.images = imageImportFiles(it.name);
 				}
@@ -259,6 +294,12 @@ namespace cage
 					return true;
 				}
 			});
+
+			for (auto &it : textures)
+			{
+				if (find(it.name, '?') != m)
+					it.name = Stringizer() + split(it.name, "?") + "?" + part.objectName + "_" + detail::meshImportTextureTypeToString(it.type);
+			}
 
 			part.textures = std::move(textures);
 		}
