@@ -662,11 +662,9 @@ namespace cage
 			return *this;
 		}
 
-		template<class D, R(*F)(D, Ts...)>
+		template<class D, R(*F)(D, Ts...)> requires(sizeof(D) <= sizeof(void*) && std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>)
 		Delegate &bind(D d) noexcept
 		{
-			static_assert(sizeof(d) <= sizeof(inst));
-			static_assert(std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>);
 			fnc = +[](void *inst, Ts... vs) {
 				D d;
 				detail::memcpy(&d, &inst, sizeof(D));

@@ -147,11 +147,11 @@ namespace cage
 						CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
 						if (corner[1] == 0)
 							corner[1] = 1; // avoid centering the tooltip under the cursor
-						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
-						f->value<GuiScrollbarsComponent>().alignment += -17 * Vec2(corner) / outputSize;
+						f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
+						f->value<GuiLayoutAlignmentComponent>().alignment += -17 * Vec2(corner) / outputSize;
 					} break;
 					case TooltipPlacementEnum::Center:
-						f->value<GuiScrollbarsComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
+						f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
 						break;
 					case TooltipPlacementEnum::Manual:
 						break;

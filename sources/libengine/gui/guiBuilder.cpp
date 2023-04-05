@@ -20,6 +20,7 @@ namespace cage
 			public:
 				std::vector<StackItem> stack;
 				EntityManager *man = nullptr;
+				uint32 nextName = 0;
 
 				GuiBuilderImpl(Entity *root)
 				{
@@ -30,10 +31,11 @@ namespace cage
 			};
 		}
 
-		BuilderItem::BuilderItem(GuiBuilder *g, uint32 entityName) : g(g)
+		BuilderItem::BuilderItem(GuiBuilder *g) : g(g)
 		{
 			GuiBuilderImpl *impl = (GuiBuilderImpl *)g;
-			e = entityName ? impl->man->getOrCreate(entityName) : impl->man->createUnique();
+			e = impl->nextName ? impl->man->getOrCreate(impl->nextName) : impl->man->createUnique();
+			impl->nextName = 0;
 			if (!impl->stack.empty())
 			{
 				e->value<GuiParentComponent>().parent = impl->stack.back().e->name();
@@ -154,18 +156,6 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::scrollbars(const GuiScrollbarsComponent &sc)
-		{
-			(*this)->value<GuiScrollbarsComponent>() = sc;
-			return *this;
-		}
-
-		BuilderItem BuilderItem::scrollbars(Vec2 alignment)
-		{
-			(*this)->value<GuiScrollbarsComponent>().alignment = alignment;
-			return *this;
-		}
-
 		BuilderItem BuilderItem::size(Vec2 size)
 		{
 			(*this)->value<GuiExplicitSizeComponent>().size = size;
@@ -190,17 +180,87 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem GuiBuilder::row()
+		GuiBuilder &GuiBuilder::setNextName(uint32 name)
+		{
+			CAGE_ASSERT(name != m);
+			GuiBuilderImpl *impl = (GuiBuilderImpl *)this;
+			impl->nextName = name;
+			return *this;
+		}
+
+		BuilderItem GuiBuilder::row(bool spaced, Real crossAlign)
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutLineComponent>();
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = l.end = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::column()
+		BuilderItem GuiBuilder::leftRow(bool flexibleRight, Real crossAlign)
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutLineComponent>().vertical = true;
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.end = flexibleRight ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::rightRow(bool flexibleLeft, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = flexibleLeft ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::centerRow(bool flexibleEdges, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = l.end = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::column(bool spaced, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = l.end = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::topColumn(bool flexibleBottom, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.end = flexibleBottom ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::bottomColumn(bool flexibleTop, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = flexibleTop ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::middleColumn(bool flexibleEdges, Real crossAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = crossAlign;
+			l.begin = l.end = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.vertical = true;
 			return c;
 		}
 
@@ -209,6 +269,7 @@ namespace cage
 			BuilderItem c(this);
 			c->value<GuiLayoutTableComponent>().sections = rows;
 			c->value<GuiLayoutTableComponent>().grid = grid;
+			c->value<GuiLayoutTableComponent>().vertical = false;
 			return c;
 		}
 
@@ -221,61 +282,30 @@ namespace cage
 			return c;
 		}
 
-		BuilderItem GuiBuilder::leftRight()
+		BuilderItem GuiBuilder::alignment(Vec2 align)
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutSplitterComponent>().vertical = false;
-			c->value<GuiLayoutSplitterComponent>().inverse = false;
+			c->value<GuiLayoutAlignmentComponent>().alignment = align;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::rightLeft()
+		BuilderItem GuiBuilder::scrollbars()
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutSplitterComponent>().vertical = false;
-			c->value<GuiLayoutSplitterComponent>().inverse = true;
+			c->value<GuiLayoutScrollbarsComponent>();
 			return c;
 		}
 
-		BuilderItem GuiBuilder::topBottom()
+		BuilderItem GuiBuilder::scrollbars(const GuiLayoutScrollbarsComponent &sc)
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutSplitterComponent>().vertical = true;
-			c->value<GuiLayoutSplitterComponent>().inverse = false;
-			return c;
-		}
-
-		BuilderItem GuiBuilder::bottomTop()
-		{
-			BuilderItem c(this);
-			c->value<GuiLayoutSplitterComponent>().vertical = true;
-			c->value<GuiLayoutSplitterComponent>().inverse = true;
-			return c;
-		}
-
-		BuilderItem GuiBuilder::panel()
-		{
-			BuilderItem c(this);
-			c->value<GuiPanelComponent>();
-			return c;
-		}
-
-		BuilderItem GuiBuilder::spoiler(bool collapsed, bool collapsesSiblings)
-		{
-			BuilderItem c(this);
-			c->value<GuiSpoilerComponent>().collapsed = collapsed;
-			c->value<GuiSpoilerComponent>().collapsesSiblings = collapsesSiblings;
+			c->value<GuiLayoutScrollbarsComponent>() = sc;
 			return c;
 		}
 
 		BuilderItem GuiBuilder::empty()
 		{
 			return BuilderItem(this);
-		}
-
-		BuilderItem GuiBuilder::empty(uint32 entityName)
-		{
-			return BuilderItem(this, entityName);
 		}
 
 		BuilderItem GuiBuilder::label()
@@ -389,6 +419,21 @@ namespace cage
 			BuilderItem c(this);
 			c->value<GuiColorPickerComponent>().color = color;
 			c->value<GuiColorPickerComponent>().collapsible = collapsible;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::panel()
+		{
+			BuilderItem c(this);
+			c->value<GuiPanelComponent>();
+			return c;
+		}
+
+		BuilderItem GuiBuilder::spoiler(bool collapsed, bool collapsesSiblings)
+		{
+			BuilderItem c(this);
+			c->value<GuiSpoilerComponent>().collapsed = collapsed;
+			c->value<GuiSpoilerComponent>().collapsesSiblings = collapsesSiblings;
 			return c;
 		}
 	}

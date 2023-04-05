@@ -25,7 +25,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API BuilderItem
 		{
-			BuilderItem(GuiBuilder *g, uint32 entityName = 0);
+			BuilderItem(GuiBuilder *g);
 			BuilderItem(BuilderItem &&) noexcept;
 			BuilderItem(BuilderItem &) noexcept;
 			BuilderItem &operator = (BuilderItem &) noexcept;
@@ -46,8 +46,6 @@ namespace cage
 			BuilderItem image(const GuiImageComponent &img);
 			BuilderItem image(uint32 textureName);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
-			BuilderItem scrollbars(const GuiScrollbarsComponent &sc);
-			BuilderItem scrollbars(Vec2 alignment);
 			BuilderItem size(Vec2 size);
 			BuilderItem skin(uint32 index = m);
 			BuilderItem disabled(bool disable = true);
@@ -57,6 +55,11 @@ namespace cage
 			BuilderItem bind()
 			{
 				return event(Delegate<bool(Entity *)>().bind<F>());
+			}
+			template<class D, bool (*F)(D, Entity *)>
+			BuilderItem bind(D d)
+			{
+				return event(Delegate<bool(Entity *)>().bind<D, F>(d));
 			}
 			template<void (*F)(), bool StopPropagation = true>
 			BuilderItem bind()
@@ -80,19 +83,23 @@ namespace cage
 		class CAGE_ENGINE_API GuiBuilder : public Immovable
 		{
 		public:
-			[[nodiscard]] BuilderItem row();
-			[[nodiscard]] BuilderItem column();
+			[[nodiscard]] GuiBuilder &setNextName(uint32 name);
+
+			[[nodiscard]] BuilderItem row(bool spaced = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem leftRow(bool flexibleRight = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem rightRow(bool flexibleLeft = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem centerRow(bool flexibleEdges = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem column(bool spaced = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem topColumn(bool flexibleBottom = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem bottomColumn(bool flexibleTop = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem middleColumn(bool flexibleEdges = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalTable(uint32 rows = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem verticalTable(uint32 columns = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
-			[[nodiscard]] BuilderItem leftRight();
-			[[nodiscard]] BuilderItem rightLeft();
-			[[nodiscard]] BuilderItem topBottom();
-			[[nodiscard]] BuilderItem bottomTop();
-			[[nodiscard]] BuilderItem panel();
-			[[nodiscard]] BuilderItem spoiler(bool collapsed = GuiSpoilerComponent().collapsed, bool collapsesSiblings = GuiSpoilerComponent().collapsesSiblings);
+			[[nodiscard]] BuilderItem alignment(Vec2 align = GuiLayoutAlignmentComponent().alignment);
+			[[nodiscard]] BuilderItem scrollbars();
+			[[nodiscard]] BuilderItem scrollbars(const GuiLayoutScrollbarsComponent &sc);
 
 			BuilderItem empty();
-			BuilderItem empty(uint32 entityName);
 			BuilderItem label();
 			BuilderItem button();
 			BuilderItem input(const GuiInputComponent &in);
@@ -107,6 +114,8 @@ namespace cage
 			BuilderItem horizontalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem verticalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem colorPicker(Vec3 color = GuiColorPickerComponent().color, bool collapsible = GuiColorPickerComponent().collapsible);
+			BuilderItem panel();
+			BuilderItem spoiler(bool collapsed = GuiSpoilerComponent().collapsed, bool collapsesSiblings = GuiSpoilerComponent().collapsesSiblings);
 		};
 	}
 

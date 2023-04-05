@@ -6,7 +6,7 @@ namespace cage
 	{
 		struct ScrollbarsImpl : public WidgetItem
 		{
-			GuiScrollbarsComponent &data;
+			GuiLayoutScrollbarsComponent &data;
 
 			struct Scrollbar
 			{
@@ -21,13 +21,14 @@ namespace cage
 
 			Real wheelFactor;
 
-			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
+			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(LayoutScrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
 			{
 				ensureItemHasLayout(hierarchy);
 			}
 
 			void initialize() override
 			{
+				CAGE_ASSERT(hierarchy->children.size() == 1);
 				CAGE_ASSERT(!hierarchy->text);
 				CAGE_ASSERT(!hierarchy->image);
 			}
@@ -43,7 +44,6 @@ namespace cage
 				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
 				FinalPosition u(update);
-				u.renderSize = hierarchy->requestedSize;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					bool show = data.overflow[a] == OverflowModeEnum::Always;
@@ -56,14 +56,11 @@ namespace cage
 						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
 						s.position[a] = update.renderPos[a];
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
+						u.renderSize[a] = hierarchy->requestedSize[a];
 						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a] + scw) * scrollbars[a].value;
 						u.clipSize[1 - a] -= scw;
 						Real minSize = min(s.size[0], s.size[1]);
 						s.dotSize = max(minSize, sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
-					}
-					else
-					{ // the content is smaller than the available area
-						u.renderPos[a] += (update.renderSize[a] - hierarchy->requestedSize[a]) * data.alignment[a];
 					}
 				}
 				u.clipSize = max(u.clipSize, 0);

@@ -103,7 +103,7 @@ namespace cage
 				Entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
-					panel->value<GuiScrollbarsComponent>().alignment = screenPosition;
+					panel->value<GuiLayoutAlignmentComponent>().alignment = screenPosition;
 					panel->value<GuiWidgetStateComponent>().skinIndex = 2; // compact style
 				}
 				Entity *layout = g->createUnique();

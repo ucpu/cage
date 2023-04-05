@@ -8,28 +8,19 @@ namespace cage
 	{
 		struct LayoutTableImpl : public LayoutItem
 		{
-			GuiLayoutTableComponent data; // may not be reference
+			GuiLayoutTableComponent data; // not const, not reference
 			std::vector<Real> widths;
 			std::vector<Real> heights;
 			uint32 mws = 0, mhs = 0;
 
-			LayoutTableImpl(HierarchyItem *hierarchy, bool justLine) : LayoutItem(hierarchy)
-			{
-				if (justLine)
-				{
-					GUI_COMPONENT(LayoutLine, l, hierarchy->ent);
-					data.vertical = l.vertical;
-					data.sections = 1;
-				}
-				else
-				{
-					GUI_COMPONENT(LayoutTable, t, hierarchy->ent);
-					data = t;
-				}
-			}
+			LayoutTableImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutTable))
+			{}
 
 			void initialize() override
-			{}
+			{
+				CAGE_ASSERT(!hierarchy->text);
+				CAGE_ASSERT(!hierarchy->image);
+			}
 
 			void findRequestedSize() override
 			{
@@ -145,15 +136,9 @@ namespace cage
 		};
 	}
 
-	void LayoutLineCreate(HierarchyItem *item)
-	{
-		CAGE_ASSERT(!item->item);
-		item->item = item->impl->memory->createHolder<LayoutTableImpl>(item, true).cast<BaseItem>();
-	}
-
 	void LayoutTableCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->memory->createHolder<LayoutTableImpl>(item, false).cast<BaseItem>();
+		item->item = item->impl->memory->createHolder<LayoutTableImpl>(item).cast<BaseItem>();
 	}
 }

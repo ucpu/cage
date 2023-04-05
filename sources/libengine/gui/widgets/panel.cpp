@@ -13,6 +13,8 @@ namespace cage
 
 			void initialize() override
 			{
+				CAGE_ASSERT(hierarchy->children.size() == 1);
+				CAGE_ASSERT(!hierarchy->image);
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.panel.textFormat);
 			}

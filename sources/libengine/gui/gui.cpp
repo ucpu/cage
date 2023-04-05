@@ -9,6 +9,10 @@
 #include <unordered_map>
 #include <algorithm>
 
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Tooltip, TooltipMarker
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
+#define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable
+
 namespace cage
 {
 	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetMgr)), assetMgr(config.assetMgr), provisionalGraphics(config.provisionalGraphics)
@@ -159,6 +163,7 @@ namespace cage
 	void imageCreate(HierarchyItem *item);
 	void explicitSizeCreate(HierarchyItem *item);
 	void scrollbarsCreate(HierarchyItem *item);
+	void alignmentCreate(HierarchyItem *item);
 
 	namespace
 	{
@@ -166,7 +171,7 @@ namespace cage
 		{
 			std::sort(item->children.begin(), item->children.end(), [](const Holder<HierarchyItem> &a, const Holder<HierarchyItem> &b) {
 				return a->order < b->order;
-				});
+			});
 			for (const auto &it : item->children)
 				sortChildren(+it);
 		}
@@ -207,6 +212,9 @@ namespace cage
 
 		void generateItem(HierarchyItem *item)
 		{
+			CAGE_ASSERT(entityWidgetsCount(item->ent) <= 1);
+			CAGE_ASSERT(entityLayoutsCount(item->ent) <= 1);
+
 			// explicit size
 			if (GUI_HAS_COMPONENT(ExplicitSize, item->ent))
 			{
@@ -220,40 +228,41 @@ namespace cage
 			if (GUI_HAS_COMPONENT(Image, item->ent))
 				imageCreate(item);
 
-			// counts
-			const uint32 wc = entityWidgetsCount(item->ent);
-			const bool sc = GUI_HAS_COMPONENT(Scrollbars, item->ent);
-			const uint32 lc = entityLayoutsCount(item->ent);
-			CAGE_ASSERT(wc <= 1);
-			CAGE_ASSERT(lc <= 1);
-
 			// widget
-			if (wc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-				CAGE_ASSERT(item->item);
-				if (sc || !!lc)
-					item = subsideItem(item);
 			}
 
 			// scrollbars
-			if (sc)
+			if (GUI_HAS_COMPONENT(LayoutScrollbars, item->ent))
 			{
+				if (item->item)
+					item = subsideItem(item);
 				scrollbarsCreate(item);
 				CAGE_ASSERT(item->item);
-				if (!!lc)
-					item = subsideItem(item);
+				item = subsideItem(item);
 			}
 
-			// layouter
-			if (lc)
+			// alignment
+			if (GUI_HAS_COMPONENT(LayoutAlignment, item->ent))
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item); CAGE_JOIN(T, Create)(item); }
+				if (item->item)
+					item = subsideItem(item);
+				alignmentCreate(item);
+				CAGE_ASSERT(item->item);
+				item = subsideItem(item);
+			}
+
+			// layout
+			if (entityLayoutsCount(item->ent))
+			{
+				if (item->item)
+					item = subsideItem(item);
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-				CAGE_ASSERT(item->item);
 			}
 		}
 

@@ -16,6 +16,8 @@ namespace cage
 
 			void initialize() override
 			{
+				CAGE_ASSERT(hierarchy->children.size() == 1);
+				CAGE_ASSERT(!hierarchy->image);
 				collapsed = data.collapsed;
 				if (collapsed)
 					hierarchy->children.clear();

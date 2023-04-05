@@ -66,21 +66,6 @@ namespace cage
 	struct CAGE_ENGINE_API GuiSelectedItemComponent
 	{};
 
-	enum class OverflowModeEnum : uint32
-	{
-		Auto, // show scrollbar when needed only
-		Always, // always show scrollbar
-		Never, // never show scrollbar
-		// overflowing content is hidden irrespective of this setting
-	};
-
-	struct CAGE_ENGINE_API GuiScrollbarsComponent
-	{
-		Vec2 alignment; // 0.5 is center
-		Vec2 scroll;
-		OverflowModeEnum overflow[2] = { OverflowModeEnum::Auto, OverflowModeEnum::Auto };
-	};
-
 	struct CAGE_ENGINE_API GuiExplicitSizeComponent
 	{
 		Vec2 size = Vec2::Nan();
@@ -122,9 +107,20 @@ namespace cage
 		bool enableForDisabled = false;
 	};
 
+	enum class LineEdgeModeEnum : uint32
+	{
+		None, // elements are stretched so that the first/last element touches the edge
+		Spaced, // elements are spaced so that the first/last element touches the edge
+		Flexible, // the first/last element stretches to fill all the space to the edge
+		Empty, // the space between first/last element and the edge is left empty
+	};
+
 	struct CAGE_ENGINE_API GuiLayoutLineComponent
 	{
-		bool vertical = false; // false -> items are next to each other, true -> items are above/under each other
+		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
+		LineEdgeModeEnum begin = LineEdgeModeEnum::None;
+		LineEdgeModeEnum end = LineEdgeModeEnum::None;
+		bool vertical = false; // false -> items go left-to-right, true -> items go top-to-bottom
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutTableComponent
@@ -134,11 +130,23 @@ namespace cage
 		bool vertical = true; // false -> fills entire row; true -> fills entire column
 	};
 
-	// must have exactly two children
-	struct CAGE_ENGINE_API GuiLayoutSplitterComponent
+	struct CAGE_ENGINE_API GuiLayoutAlignmentComponent
 	{
-		bool vertical = false; // false -> left sub-area, right sub-area; true -> top, bottom
-		bool inverse = false; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
+		Vec2 alignment = Vec2(0.5); // use NaN to fill the area in the particular axis
+	};
+
+	enum class OverflowModeEnum : uint32
+	{
+		Auto, // show scrollbar when needed only
+		Always, // always show scrollbar
+		Never, // never show scrollbar
+		// overflowing content is hidden irrespective of this setting
+	};
+
+	struct CAGE_ENGINE_API GuiLayoutScrollbarsComponent
+	{
+		Vec2 scroll;
+		OverflowModeEnum overflow[2] = { OverflowModeEnum::Auto, OverflowModeEnum::Auto };
 	};
 
 	struct CAGE_ENGINE_API GuiLabelComponent
@@ -253,7 +261,6 @@ namespace cage
 	struct CAGE_ENGINE_API GuiPanelComponent
 	{
 		// GuiTextComponent defines caption
-		// GuiImageComponent defines background
 	};
 
 	struct CAGE_ENGINE_API GuiSpoilerComponent
@@ -261,7 +268,6 @@ namespace cage
 		bool collapsed = true;
 		bool collapsesSiblings = true;
 		// GuiTextComponent defines caption
-		// GuiImageComponent defines background
 	};
 
 	namespace privat

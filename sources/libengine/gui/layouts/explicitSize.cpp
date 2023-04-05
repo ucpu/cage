@@ -12,16 +12,16 @@ namespace cage
 			{}
 
 			void initialize() override
-			{}
+			{
+				CAGE_ASSERT(hierarchy->children.size() == 1);
+				CAGE_ASSERT(!hierarchy->text);
+				CAGE_ASSERT(!hierarchy->image);
+			}
 
 			void findRequestedSize() override
 			{
+				hierarchy->children[0]->findRequestedSize();
 				hierarchy->requestedSize = Vec2();
-				for (const auto &c : hierarchy->children)
-				{
-					c->findRequestedSize();
-					hierarchy->requestedSize = max(hierarchy->requestedSize, c->requestedSize);
-				}
 				for (uint32 i = 0; i < 2; i++)
 				{
 					if (data.size[i].valid())
@@ -32,11 +32,7 @@ namespace cage
 
 			void findFinalPosition(const FinalPosition &update) override
 			{
-				FinalPosition u(update);
-				for (const auto &c : hierarchy->children)
-				{
-					c->findFinalPosition(u);
-				}
+				hierarchy->children[0]->findFinalPosition(update);
 			}
 		};
 	}

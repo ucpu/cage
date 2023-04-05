@@ -12,10 +12,6 @@
 
 #include <vector>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event, Tooltip, TooltipMarker
-#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
-#define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
-
 #define GUI_HAS_COMPONENT(T,E) (E)->has<Gui##T##Component>()
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()
 #define GUI_COMPONENT(T,N,E) Gui##T##Component &N = (E)->value<Gui##T##Component>();
