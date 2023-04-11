@@ -180,6 +180,12 @@ namespace cage
 			return *this;
 		}
 
+		BuilderItem BuilderItem::tooltip(const GuiTooltipComponent &t)
+		{
+			(*this)->value<GuiTooltipComponent>() = t;
+			return *this;
+		}
+
 		GuiBuilder &GuiBuilder::setNextName(uint32 name)
 		{
 			CAGE_ASSERT(name != m);

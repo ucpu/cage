@@ -83,7 +83,9 @@ namespace cage
 				Real offset = positioning.firstOffset;
 				for (const auto &c : hierarchy->children)
 				{
-					const Real s = c->requestedSize[data.vertical] * positioning.sizeFactors[edgeIndex(c)];
+					Real s = c->requestedSize[data.vertical] * positioning.sizeFactors[edgeIndex(c)];
+					if (!valid(s))
+						s = 0;
 					FinalPosition u(update);
 					u.renderSize[data.vertical] = s;
 					u.renderPos[data.vertical] += offset;

@@ -67,6 +67,7 @@ namespace cage
 				return event(Delegate<bool(Entity *)>().bind<&privat::guiActionWrapper<F, StopPropagation>>());
 			}
 
+			BuilderItem tooltip(const GuiTooltipComponent &t);
 			template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)
 			{
