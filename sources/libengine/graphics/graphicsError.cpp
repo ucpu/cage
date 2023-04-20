@@ -114,6 +114,9 @@ namespace cage
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is being recompiled based on opengl state
 
+			if (id == 0 && source == GL_DEBUG_SOURCE_SHADER_COMPILER && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_OTHER)
+				return; // intel gpu: do not break on messages that barrier call inside control flow
+
 			if (cageSevr > SeverityEnum::Info)
 				detail::debugBreakpoint();
 		}
