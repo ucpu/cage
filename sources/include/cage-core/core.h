@@ -884,8 +884,8 @@ namespace cage
 	}
 }
 
-CAGE_FORCE_INLINE void *operator new(cage::uintPtr size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
-CAGE_FORCE_INLINE void *operator new[](cage::uintPtr size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
+CAGE_FORCE_INLINE void *operator new(std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
+CAGE_FORCE_INLINE void *operator new[](std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
 CAGE_FORCE_INLINE void operator delete(void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
 CAGE_FORCE_INLINE void operator delete[](void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
 
