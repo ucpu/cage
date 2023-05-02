@@ -11,11 +11,11 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef char raw_type;
-#undef near
-#undef far
 #define POLLRDHUP 0
 #undef POLLPRI // WSAPoll rejects POLLPRI with an error
 #define POLLPRI 0
+#undef near
+#undef far
 
 #else
 
@@ -61,8 +61,8 @@ namespace cage
 			}
 
 		private:
-			sockaddr_storage storage;
-			socklen_t addrlen;
+			sockaddr_storage storage = {};
+			socklen_t addrlen = 0;
 
 			friend struct Sock;
 			friend struct AddrList;
@@ -114,9 +114,9 @@ namespace cage
 			bool getConnected() const { return connected; }
 
 		private:
-			SOCKET descriptor;
-			int family, type, protocol;
-			bool connected;
+			SOCKET descriptor = INVALID_SOCKET;
+			int family = -1, type = -1, protocol = -1;
+			bool connected = false;
 		};
 
 		struct AddrList : private Immovable

@@ -27,10 +27,9 @@ namespace cage
 
 	namespace privat
 	{
-		Addr::Addr() : addrlen(0)
+		Addr::Addr()
 		{
 			networkInitialize();
-			detail::memset(&storage, 0, sizeof(storage));
 		}
 
 		void Addr::translate(String &address, uint16 &port, bool domain) const
@@ -42,10 +41,10 @@ namespace cage
 			port = numeric_cast<uint16>(toUint32(String(portBuf)));
 		}
 
-		Sock::Sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1), connected(false)
+		Sock::Sock()
 		{}
 
-		Sock::Sock(int family, int type, int protocol) : descriptor(INVALID_SOCKET), family(family), type(type), protocol(protocol), connected(false)
+		Sock::Sock(int family, int type, int protocol) : family(family), type(type), protocol(protocol)
 		{
 			networkInitialize();
 			descriptor = socket(family, type, protocol);
@@ -146,7 +145,7 @@ namespace cage
 		void Sock::connect(const Addr &remoteAddress)
 		{
 			if (::connect(descriptor, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) < 0)
-				CAGE_THROW_SILENT(SystemError, "connect failed (connect)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "connect failed (connect)", WSAGetLastError());
 			connected = true;
 		}
 
@@ -195,7 +194,7 @@ namespace cage
 			Addr a;
 			a.addrlen = sizeof(a.storage);
 			if (getpeername(descriptor, (sockaddr*)&a.storage, (socklen_t*)&a.addrlen) < 0)
-				CAGE_THROW_ERROR(SystemError, "fetch of foreign address failed (getpeername)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "fetch of remote address failed (getpeername)", WSAGetLastError());
 			return a;
 		}
 

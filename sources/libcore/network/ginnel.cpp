@@ -4,6 +4,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/debug.h>
 
 #include "net.h"
 
@@ -270,27 +271,79 @@ namespace cage
 		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
+			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange((uint32)1, (uint32)m))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
 				AddrList lst(address, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (lst.valid())
 				{
-					Addr adr;
-					int family, type, protocol;
-					lst.getAll(adr, family, type, protocol);
-					Sock s(family, type, protocol);
-					s.setBlocking(false);
-					s.connect(adr);
-					if (s.isValid())
-						sockGroup->socks.push_back(std::move(s));
+					try
+					{
+						detail::OverrideBreakpoint ob;
+						Addr adr;
+						int family, type, protocol;
+						lst.getAll(adr, family, type, protocol);
+						CAGE_ASSERT(type == SOCK_DGRAM);
+						CAGE_ASSERT(protocol == IPPROTO_UDP);
+						Sock s(family, type, protocol);
+						s.setBlocking(false);
+						s.connect(adr);
+						if (s.isValid())
+							sockGroup->socks.push_back(std::move(s));
+					}
+					catch (...)
+					{
+						// nothing
+					}
 					lst.next();
 				}
-				sockGroup->applyBufferSizes();
+				initializationCompletion(timeout);
+			}
+
+			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint32 connId, uint64 timeout) : startTime(applicationTime()), connId(connId)
+			{
+				CAGE_ASSERT(connId != 0 && connId != m);
+				UDP_LOG(1, "creating new connection to remote address: '" + remoteAddress + "', remote port: " + remotePort + ", at local address: '" + localAddress + "', local port: '" + localPort + "', timeout: " + timeout);
+				sockGroup = std::make_shared<SockGroup>();
+				AddrList ll(localAddress, localPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
+				while (ll.valid())
+				{
+					Addr l;
+					int family, type, protocol;
+					ll.getAll(l, family, type, protocol);
+					CAGE_ASSERT(type == SOCK_DGRAM);
+					CAGE_ASSERT(protocol == IPPROTO_UDP);
+					AddrList rl(remoteAddress, remotePort, family, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+					while (rl.valid())
+					{
+						try
+						{
+							detail::OverrideBreakpoint ob;
+							Sock s(family, SOCK_DGRAM, IPPROTO_UDP);
+							s.setBlocking(false);
+							s.bind(l);
+							s.connect(rl.address());
+							if (s.isValid())
+								sockGroup->socks.push_back(std::move(s));
+						}
+						catch (...)
+						{
+							// nothing
+						}
+						rl.next();
+					}
+					ll.next();
+				}
+				initializationCompletion(timeout);
+			}
+
+			void initializationCompletion(uint64 timeout)
+			{
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(Exception, "failed to connect (no sockets available)");
 				UDP_LOG(2, "created " + sockGroup->socks.size() + " sockets");
+				sockGroup->applyBufferSizes();
 				sockReceiver = std::make_shared<SockGroup::Receiver>();
 				sockReceiver->connId = connId;
 				sockGroup->receivers[connId] = sockReceiver;
@@ -881,10 +934,11 @@ namespace cage
 					{
 						if (logLevel >= 2)
 						{
-							String a;
+							String a, n;
 							uint16 p;
-							sockReceiver->address.translate(a, p, true);
-							CAGE_LOG(SeverityEnum::Info, "udp", Stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
+							sockReceiver->address.translate(a, p, false);
+							sockReceiver->address.translate(n, p, true);
+							CAGE_LOG(SeverityEnum::Info, "udp", Stringizer() + "connection established, remote address: " + a + ", remote name: " + n + ", remote port: " + p);
 						}
 						established = true;
 					}
@@ -1307,6 +1361,12 @@ namespace cage
 		return impl->writeBandwidth.capacity;
 	}
 
+	bool GinnelConnection::established() const
+	{
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		return impl->established;
+	}
+
 	Holder<GinnelConnection> GinnelServer::accept()
 	{
 		GinnelServerImpl *impl = (GinnelServerImpl *)this;
@@ -1316,6 +1376,11 @@ namespace cage
 	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout)
 	{
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
+	}
+
+	Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint32 connectionId, uint64 timeout)
+	{
+		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(localAddress, localPort, remoteAddress, remotePort, connectionId, timeout);
 	}
 
 	Holder<GinnelServer> newGinnelServer(uint16 port)
