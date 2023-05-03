@@ -82,8 +82,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::Remeshing rms(*pm);
-			rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
+			pmp::adaptive_remeshing(*pm, config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
 			fromPmp(msh, pm);
 		}
 		catch (const std::exception &e)
@@ -100,8 +99,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::Remeshing rms(*pm);
-			rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
+			pmp::uniform_remeshing(*pm, config.targetEdgeLength.value, config.iterations, config.useProjection);
 			fromPmp(msh, pm);
 		}
 		catch (const std::exception &e)
@@ -118,8 +116,7 @@ namespace cage
 		try
 		{
 			Holder<pmp::SurfaceMesh> pm = toPmp(msh);
-			pmp::Smoothing rms(*pm);
-			rms.explicit_smoothing(config.iterations, config.uniform);
+			pmp::explicit_smoothing(*pm, config.iterations, config.uniform);
 			fromPmp(msh, pm);
 		}
 		catch (const std::exception &e)

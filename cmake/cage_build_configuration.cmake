@@ -4,10 +4,6 @@ macro(cage_build_configuration)
 		message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
 	endif()
 
-	message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
-	message(STATUS "CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
-	message(STATUS "CMAKE_CXX_SIMULATE_ID: ${CMAKE_CXX_SIMULATE_ID}")
-
 	cmake_policy(SET CMP0063 NEW)
 
 	# language standard
