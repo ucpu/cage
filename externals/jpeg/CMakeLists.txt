@@ -22,7 +22,7 @@ set(installdir "${CMAKE_CURRENT_BINARY_DIR}/jpeg_install_dir/$<CONFIG>")
 ExternalProject_Add(jpeg-static
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/jpeg"
 	PREFIX "${CMAKE_CURRENT_BINARY_DIR}/jpeg_build_dir"
-	CMAKE_CACHE_ARGS "-DENABLE_SHARED:BOOL=FALSE;-DWITH_SIMD:BOOL=TRUE;-DREQUIRE_SIMD:BOOL=TRUE;-DWITH_TURBOJPEG:BOOL=FALSE;-DCMAKE_PREFIX_PATH:PATH=${prefixpth};-DCMAKE_INSTALL_PREFIX:PATH=${installdir}"
+	CMAKE_CACHE_ARGS "-DENABLE_SHARED:BOOL=FALSE;-DWITH_SIMD:BOOL=TRUE;-DREQUIRE_SIMD:BOOL=TRUE;-DWITH_TURBOJPEG:BOOL=FALSE;-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=TRUE;-DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE};-DCMAKE_PREFIX_PATH:PATH=${prefixpth};-DCMAKE_INSTALL_PREFIX:PATH=${installdir}"
 	TEST_COMMAND ""
 	EXCLUDE_FROM_ALL TRUE
 	DEPENDS zlib
@@ -30,7 +30,11 @@ ExternalProject_Add(jpeg-static
 
 add_library(cage-jpeg INTERFACE)
 add_dependencies(cage-jpeg jpeg-static)
-target_link_libraries(cage-jpeg INTERFACE "${installdir}/lib/jpeg-static.lib")
+if(MSVC)
+	target_link_libraries(cage-jpeg INTERFACE "${installdir}/lib/jpeg-static.lib")
+else()
+	target_link_libraries(cage-jpeg INTERFACE "${installdir}/lib/libjpeg.a")
+endif()
 target_include_directories(cage-jpeg INTERFACE "${installdir}/include")
 
 cage_gen_module(JPEG $<TARGET_LINKER_FILE:cage-jpeg> $<TARGET_PROPERTY:cage-jpeg,INTERFACE_INCLUDE_DIRECTORIES>)

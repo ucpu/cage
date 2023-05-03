@@ -5,6 +5,7 @@ macro(cage_build_configuration)
 	endif()
 
 	cmake_policy(SET CMP0063 NEW)
+	set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
 
 	# language standard
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
