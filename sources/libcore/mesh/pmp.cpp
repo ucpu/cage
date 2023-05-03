@@ -6,8 +6,8 @@
 
 #include <cage-core/meshAlgorithms.h>
 #include <pmp/SurfaceMesh.h>
-#include <pmp/algorithms/Remeshing.h>
-#include <pmp/algorithms/Smoothing.h>
+#include <pmp/algorithms/remeshing.h>
+#include <pmp/algorithms/smoothing.h>
 
 namespace cage
 {
