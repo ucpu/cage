@@ -134,21 +134,10 @@ namespace cage
 
 #endif // GCHL_USE_CHARCONV
 
-			void stringSortAndUnique(char *data, uint32 &current)
-			{
-				std::sort(data, data + current);
-				const auto it = std::unique(data, data + current);
-				current = numeric_cast<uint32>(it - data);
-			}
-
 			bool isOrdered(const char *data, uint32 current)
 			{
-				std::vector<char> data2(data, data + current);
-				uint32 current2 = current;
-				stringSortAndUnique(data2.data(), current2);
-				if (current2 != current)
-					return false;
-				return std::memcmp(data, data2.data(), current) == 0;
+				// use adjacent_find to test that there are no duplicates
+				return std::is_sorted(data, data + current) && std::adjacent_find(data, data + current) == data + current;
 			}
 
 			bool stringContains(const char *data, uint32 current, char what)
