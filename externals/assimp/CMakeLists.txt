@@ -8,6 +8,8 @@ set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 option(ASSIMP_NO_EXPORT "Disable Assimp's export functionality." ON)
 option(ASSIMP_BUILD_ASSIMP_TOOLS "If the supplementary tools for Assimp are built in addition to the library." OFF)
 option(ASSIMP_BUILD_TESTS "If the test suite for Assimp is built in addition to the library." OFF)
+OPTION(ASSIMP_INSTALL "Disable this if you want to use assimp as a submodule." OFF)
+OPTION(ASSIMP_BUILD_ZLIB "Build your own zlib" OFF)
 
 # disable some formats to speed up build
 # one may enable them in the cache or by setting the default before including this cmake

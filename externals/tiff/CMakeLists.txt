@@ -19,6 +19,8 @@ option(webp "use libwebp (required for WEBP compression)" OFF) # webp causes lin
 
 add_subdirectory(tiff)
 
+set_source_files_properties("tiff/libtiff/tif_win32_versioninfo.rc" TARGET_DIRECTORY tiff PROPERTIES HEADER_FILE_ONLY on) # exclude this file from compilation - it fails with clang-cl
+
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libtiff/libtiff")
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/libtiff/libtiff")
 
