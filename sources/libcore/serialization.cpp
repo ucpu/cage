@@ -22,7 +22,8 @@ namespace cage
 	void Serializer::write(PointerRange<const char> buffer)
 	{
 		auto dst = advance(buffer.size());
-		detail::memcpy(dst.data(), buffer.data(), buffer.size());
+		if (!buffer.empty())
+			detail::memcpy(dst.data(), buffer.data(), buffer.size());
 	}
 
 	PointerRange<char> Serializer::write(uintPtr size)
@@ -72,7 +73,8 @@ namespace cage
 	void Deserializer::read(PointerRange<char> buffer)
 	{
 		auto src = read(buffer.size());
-		detail::memcpy(buffer.data(), src.data(), buffer.size());
+		if (!buffer.empty())
+			detail::memcpy(buffer.data(), src.data(), buffer.size());
 	}
 
 	PointerRange<const char> Deserializer::read(uintPtr s)

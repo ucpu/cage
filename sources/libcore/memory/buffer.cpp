@@ -75,7 +75,8 @@ namespace cage
 		}
 		MemoryBuffer c = std::move(*this);
 		allocate(size);
-		detail::memcpy(data_, c.data(), c.size());
+		if (c.size() > 0)
+			detail::memcpy(data_, c.data(), c.size());
 	}
 
 	void MemoryBuffer::resizeSmart(uintPtr size)
@@ -96,7 +97,8 @@ namespace cage
 		CAGE_ASSERT(capacity_ > size_);
 		MemoryBuffer c = std::move(*this);
 		allocate(c.size());
-		detail::memcpy(data_, c.data(), c.size());
+		if (c.size() > 0)
+			detail::memcpy(data_, c.data(), c.size());
 	}
 
 	void MemoryBuffer::zero()

@@ -43,7 +43,8 @@ namespace cage
 	{ \
 		MeshImpl *impl = (MeshImpl *)this; \
 		impl->PLURAL.resize(values.size()); \
-		detail::memcpy(impl->PLURAL.data(), values.data(), values.size() * sizeof(TYPE)); \
+		if (!values.empty()) \
+			detail::memcpy(impl->PLURAL.data(), values.data(), values.size() * sizeof(TYPE)); \
 	} \
 	TYPE Mesh::SINGULAR(uint32 idx) const \
 	{ \

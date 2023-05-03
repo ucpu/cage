@@ -28,21 +28,28 @@ namespace cage
 	{
 		void *memset(void *ptr, int value, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(ptr || num == 0);
 			return std::memset(ptr, value, num);
 		}
 
 		void *memcpy(void *destination, const void *source, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(destination); // If either dest or src is an invalid or null pointer, the behavior is undefined, even if count is zero.
+			CAGE_ASSERT(source);
 			return std::memcpy(destination, source, num);
 		}
 
 		void *memmove(void *destination, const void *source, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(destination); // If either dest or src is an invalid or null pointer, the behavior is undefined, even if count is zero.
+			CAGE_ASSERT(source);
 			return std::memmove(destination, source, num);
 		}
 
 		int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(ptr1 || num == 0);
+			CAGE_ASSERT(ptr2 || num == 0);
 			return std::memcmp(ptr1, ptr2, num);
 		}
 	}

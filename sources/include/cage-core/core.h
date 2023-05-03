@@ -399,7 +399,8 @@ namespace cage
 					l++;
 				if (l > n)
 					throw;
-				detail::memcpy(s, src, l);
+				if (l)
+					detail::memcpy(s, src, l);
 				s[l] = 0;
 				return numeric_cast<uint32>(l);
 			}
@@ -442,7 +443,8 @@ namespace cage
 						CAGE_THROW_ERROR(Exception, "string truncation");
 				}
 				current = other.length();
-				detail::memcpy(value, other.c_str(), current);
+				if (current)
+					detail::memcpy(value, other.c_str(), current);
 				value[current] = 0;
 			}
 
@@ -454,7 +456,8 @@ namespace cage
 				if (range.size() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
 				current = numeric_cast<uint32>(range.size());
-				detail::memcpy(value, range.data(), range.size());
+				if (!range.empty())
+					detail::memcpy(value, range.data(), range.size());
 				value[current] = 0;
 			}
 
@@ -480,7 +483,8 @@ namespace cage
 			{
 				if (current + other.current > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
-				detail::memcpy(value + current, other.value, other.current);
+				if (other.current)
+					detail::memcpy(value + current, other.value, other.current);
 				current += other.current;
 				value[current] = 0;
 				return *this;
@@ -667,6 +671,7 @@ namespace cage
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				D d;
+				static_assert(sizeof(D) > 0);
 				detail::memcpy(&d, &inst, sizeof(D));
 				return (F)(d, std::forward<Ts>(vs)...);
 			};
