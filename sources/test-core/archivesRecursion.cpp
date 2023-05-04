@@ -23,7 +23,7 @@ namespace
 			threadPool->function.bind<ConcurrentTester, &ConcurrentTester::threadEntry>(this);
 			{ // generate random data
 				Serializer ser(data);
-				uint32 cnt = randomRange(10, 100);
+				const uint32 cnt = randomRange(10, 100);
 				for (uint32 i = 0; i < cnt; i++)
 					ser << randomRange(-1.0, 1.0);
 			}

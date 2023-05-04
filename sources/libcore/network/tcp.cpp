@@ -92,7 +92,8 @@ namespace cage
 			{
 				CAGE_ASSERT(staging.size() >= sz);
 				const uintPtr ts = staging.size() - sz;
-				detail::memmove(staging.data(), staging.data() + sz, ts);
+				if (ts > 0)
+					detail::memmove(staging.data(), staging.data() + sz, ts);
 				staging.resize(ts);
 			}
 

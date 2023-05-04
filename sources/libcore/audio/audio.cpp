@@ -247,6 +247,9 @@ namespace cage
 
 	void audioBlit(const Audio *source, Audio *target, uintPtr sourceFrameOffset, uintPtr targetFrameOffset, uintPtr frames)
 	{
+		if (frames == 0)
+			return;
+
 		const AudioImpl *s = (const AudioImpl *)source;
 		AudioImpl *t = (AudioImpl *)target;
 

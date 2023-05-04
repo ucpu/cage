@@ -178,6 +178,7 @@ namespace cage
 
 			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
+				CAGE_ASSERT(typeSize > 0);
 				componentEntities = systemMemory().createHolder<GroupImpl>(manager);
 				values = newValues(typeSize, detail::typeAlignmentByIndex(typeIndex));
 				prototype = values->newVal();

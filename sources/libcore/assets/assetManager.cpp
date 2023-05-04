@@ -953,6 +953,7 @@ namespace cage
 		if (name.length() > MaxTexName)
 			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);
+		CAGE_ASSERT(name.length() > 0);
 		detail::memcpy(textName, name.c_str(), name.length());
 		scheme = schemeIndex;
 	}

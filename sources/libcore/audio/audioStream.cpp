@@ -10,6 +10,8 @@ namespace cage
 		const uint32 channels = impl->channels;
 		CAGE_ASSERT((buffer.size() % channels) == 0);
 		const uintPtr frames = buffer.size() / channels;
+		if (frames == 0)
+			return;
 		switch (impl->format)
 		{
 		case AudioFormatEnum::Vorbis:

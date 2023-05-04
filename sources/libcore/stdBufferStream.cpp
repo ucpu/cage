@@ -50,7 +50,8 @@ namespace cage
 		uintPtr req = numeric_cast<uintPtr>(writePos + n);
 		if (buffer.size() < req)
 			buffer.resizeSmart(req);
-		detail::memcpy(buffer.data() + writePos, s, numeric_cast<uintPtr>(n));
+		if (n)
+			detail::memcpy(buffer.data() + writePos, s, numeric_cast<uintPtr>(n));
 		writePos += numeric_cast<uintPtr>(n);
 		return n;
 	};

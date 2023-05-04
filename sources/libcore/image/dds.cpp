@@ -125,6 +125,7 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
+		CAGE_ASSERT(bufferSize > 0);
 
 		{
 			PointerRangeHolder<char> data;

@@ -34,7 +34,8 @@ namespace cage
 	MemoryBuffer MemoryBuffer::copy() const
 	{
 		MemoryBuffer r(size());
-		detail::memcpy(r.data(), data(), size());
+		if (size())
+			detail::memcpy(r.data(), data(), size());
 		return r;
 	}
 

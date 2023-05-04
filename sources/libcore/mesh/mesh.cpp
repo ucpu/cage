@@ -157,7 +157,8 @@ namespace cage
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		impl->indices.resize(values.size());
-		detail::memcpy(impl->indices.data(), values.data(), values.size() * sizeof(uint32));
+		if (!values.empty())
+			detail::memcpy(impl->indices.data(), values.data(), values.size() * sizeof(uint32));
 	}
 
 	uint32 Mesh::index(uint32 idx) const

@@ -18,6 +18,7 @@ namespace cage
 			{
 				static_assert(std::is_trivially_copyable_v<T>);
 				static_assert(sizeof(T) <= MaxSize);
+				static_assert(sizeof(T) > 0);
 				detail::typeIndex<T>(); // detect hash collisions
 				detail::memcpy(data_, &v, sizeof(T));
 				type_ = detail::typeHash<T>();
@@ -51,6 +52,7 @@ namespace cage
 			{
 				static_assert(std::is_trivially_copyable_v<T>);
 				static_assert(sizeof(T) <= MaxSize);
+				static_assert(sizeof(T) > 0);
 				CAGE_ASSERT(detail::typeHash<T>() == type_);
 				T tmp;
 				detail::memcpy(&tmp, data_, sizeof(T));

@@ -664,7 +664,8 @@ namespace cage
 					buff.resize(src->size());
 					Holder<PointerRange<char>> tmp = src->readAll();
 					CAGE_ASSERT(tmp.size() == buff.size());
-					detail::memcpy(buff.data(), tmp.data(), buff.size());
+					if (buff.size() > 0)
+						detail::memcpy(buff.data(), tmp.data(), buff.size());
 				}
 				src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				src->seek(pos);

@@ -101,7 +101,8 @@ namespace cage
 		{
 			String s;
 			s.rawLength() = min(str.length, maxLen);
-			detail::memcpy(s.rawData(), str.data, s.length());
+			if (s.length())
+				detail::memcpy(s.rawData(), str.data, s.length());
 			s.rawData()[s.length()] = 0;
 			return s;
 		}

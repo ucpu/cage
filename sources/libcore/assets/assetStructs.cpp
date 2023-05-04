@@ -52,6 +52,7 @@ namespace cage
 		void processRawLoad(AssetContext *context)
 		{
 			Holder<PointerRange<char>> h = systemMemory().createBuffer(context->originalData.size());
+			CAGE_ASSERT(h.size() > 0);
 			detail::memcpy(h.data(), context->originalData.data(), h.size());
 			context->assetHolder = std::move(h).cast<void>();
 		}

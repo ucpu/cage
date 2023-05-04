@@ -27,7 +27,8 @@ namespace cage
 				const uintPtr size = buffer.size();
 				if (pos + size > buf->size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf->data() + pos, size);
+				if (size)
+					detail::memcpy(data, buf->data() + pos, size);
 				pos += size;
 			}
 
@@ -39,7 +40,8 @@ namespace cage
 				const uintPtr size = buffer.size();
 				if (pos + size > buf->size())
 					buf->resizeSmart(pos + size);
-				detail::memcpy(buf->data() + pos, data, size);
+				if (size)
+					detail::memcpy(buf->data() + pos, data, size);
 				pos += size;
 			}
 
@@ -92,7 +94,8 @@ namespace cage
 				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf.data() + pos, size);
+				if (size)
+					detail::memcpy(data, buf.data() + pos, size);
 				pos += size;
 			}
 
@@ -104,7 +107,8 @@ namespace cage
 				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					CAGE_THROW_ERROR(Exception, "writing beyond buffer");
-				detail::memcpy(buf.data() + pos, data, size);
+				if (size)
+					detail::memcpy(buf.data() + pos, data, size);
 				pos += size;
 			}
 
