@@ -13,6 +13,7 @@ namespace cage
 	class Speaker;
 	class VoicesMixer;
 	class VirtualReality;
+	class ProvisionalGraphics;
 	struct WindowCreateConfig;
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
@@ -21,9 +22,9 @@ namespace cage
 
 	struct EngineControlThread
 	{
-		EventDispatcher<bool()> initialize; // called once from engineStart()
-		EventDispatcher<bool()> finalize; // called once from engineStart()
-		EventDispatcher<bool()> update; // periodically called from engineStart()
+		EventDispatcher<bool()> initialize; // called once from engineRun()
+		EventDispatcher<bool()> finalize; // called once from engineRun()
+		EventDispatcher<bool()> update; // periodically called from engineRun()
 		EventDispatcher<bool()> unload; // periodically called from engineFinalize()
 		Scheduler *scheduler();
 		uint64 updatePeriod() const;
@@ -72,7 +73,7 @@ namespace cage
 	};
 
 	void engineInitialize(const EngineCreateConfig &config);
-	void engineStart();
+	void engineRun();
 	void engineStop();
 	void engineFinalize();
 
@@ -86,6 +87,7 @@ namespace cage
 	VoicesMixer *engineMasterMixer();
 	VoicesMixer *engineEffectsMixer();
 	VoicesMixer *engineGuiMixer();
+	ProvisionalGraphics *engineProvisonalGraphics();
 	uint64 engineControlTime();
 
 	namespace detail

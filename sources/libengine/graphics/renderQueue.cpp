@@ -1085,6 +1085,7 @@ namespace cage
 	void RenderQueue::enqueue(Holder<RenderQueue> queue)
 	{
 		CAGE_ASSERT(queue);
+		CAGE_ASSERT(+queue != this);
 
 		struct Cmd : public CmdBase
 		{

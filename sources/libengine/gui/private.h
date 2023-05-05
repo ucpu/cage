@@ -294,7 +294,6 @@ namespace cage
 		AssetManager *assetMgr = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 
-		Vec2i inputResolution; // last window resolution (pixels)
 		Vec2i outputResolution; // resolution of output texture or screen (pixels)
 		Vec2 inputMouse; // last position of mouse (pixels)
 		Vec2 outputSize; // (points)
@@ -320,7 +319,6 @@ namespace cage
 		} graphicsData;
 		RenderQueue *activeQueue = nullptr;
 
-		bool windowResize(InputWindowValue);
 		bool mouseMove(InputMouse);
 		bool mousePress(InputMouse);
 		bool mouseDoublePress(InputMouse);

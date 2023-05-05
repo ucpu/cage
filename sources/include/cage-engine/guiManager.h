@@ -28,7 +28,6 @@ namespace cage
 
 		bool handleInput(const GenericInput &);
 		void invalidateInputs(); // skip all remaining inputs until next prepare
-		Vec2i inputResolution() const;
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from prepare or handleInput
 
 		GuiSkinConfig &skin(uint32 index = 0);
@@ -39,7 +38,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiManagerCreateConfig
 	{
-		AssetManager *assetMgr = nullptr;
+		AssetManager *assetManager = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 		uint32 skinsCount = 4;
 	};

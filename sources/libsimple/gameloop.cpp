@@ -32,6 +32,7 @@
 #include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/virtualReality.h>
+#include <cage-engine/provisionalGraphics.h>
 
 #include <cage-simple/statisticsGui.h>
 
@@ -131,6 +132,7 @@ namespace cage
 			Holder<GuiManager> gui;
 			ExclusiveHolder<RenderQueue> guiRenderQueue;
 			Holder<EntityManager> entities;
+			Holder<ProvisionalGraphics> provisionalGraphics;
 
 			Holder<Semaphore> graphicsSemaphore1;
 			Holder<Semaphore> graphicsSemaphore2;
@@ -465,6 +467,7 @@ namespace cage
 						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
 					window->makeNotCurrent();
+					provisionalGraphics = newProvisionalGraphics();
 				}
 
 				{ // create sound
@@ -484,7 +487,8 @@ namespace cage
 					GuiManagerCreateConfig c;
 					if (config.gui)
 						c = *config.gui;
-					c.assetMgr = +assets;
+					c.assetManager = +assets;
+					c.provisionalGraphics = +provisionalGraphics;
 					gui = newGuiManager(c);
 					windowGuiEventsListener.attach(window->events);
 					windowGuiEventsListener.bind<GuiManager, &GuiManager::handleInput>(+gui);
@@ -601,8 +605,11 @@ namespace cage
 					guiRenderQueue.clear();
 					if (gui)
 						gui->cleanUp();
+					if (provisionalGraphics)
+						provisionalGraphics->purge();
 				}
 
+				if (assets)
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));
 					while (!assets->unloaded())
@@ -642,8 +649,8 @@ namespace cage
 				{ // destroy graphics
 					if (window)
 						window->makeCurrent();
-					if (virtualReality)
-						virtualReality.clear();
+					virtualReality.clear();
+					provisionalGraphics.clear();
 					window.clear();
 				}
 
@@ -724,7 +731,7 @@ namespace cage
 		engineData->initialize(config);
 	}
 
-	void engineStart()
+	void engineRun()
 	{
 		CAGE_ASSERT(engineData);
 		engineData->start();
@@ -794,6 +801,11 @@ namespace cage
 	VoicesMixer *engineGuiMixer()
 	{
 		return +engineData->guiBus;
+	}
+
+	ProvisionalGraphics *engineProvisonalGraphics()
+	{
+		return +engineData->provisionalGraphics;
 	}
 
 	uint64 engineControlTime()

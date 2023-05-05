@@ -93,12 +93,6 @@ namespace cage
 		return impl->inputsDispatchers.dispatch(in);
 	}
 
-	bool GuiImpl::windowResize(InputWindowValue in)
-	{
-		inputResolution = in.value;
-		return false;
-	}
-
 	bool GuiImpl::mousePress(InputMouse in)
 	{
 		focusName = 0;

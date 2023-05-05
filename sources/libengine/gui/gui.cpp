@@ -15,14 +15,13 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetMgr)), assetMgr(config.assetMgr), provisionalGraphics(config.provisionalGraphics)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 
 		inputsListeners.attach(&inputsDispatchers);
-		inputsListeners.windowResize.bind<GuiImpl, &GuiImpl::windowResize>(this);
 		inputsListeners.mousePress.bind<GuiImpl, &GuiImpl::mousePress>(this);
 		inputsListeners.mouseDoublePress.bind<GuiImpl, &GuiImpl::mouseDoublePress>(this);
 		inputsListeners.mouseRelease.bind<GuiImpl, &GuiImpl::mouseRelease>(this);
@@ -56,8 +55,8 @@ namespace cage
 	void GuiImpl::scaling()
 	{
 		pointsScale = zoom * retina;
-		outputSize = Vec2(outputResolution[0], outputResolution[1]) / pointsScale;
-		outputMouse = Vec2(inputMouse[0], inputMouse[1]) / pointsScale;
+		outputSize = Vec2(outputResolution) / pointsScale;
+		outputMouse = Vec2(inputMouse) / pointsScale;
 	}
 
 	Vec4 GuiImpl::pointsToNdc(Vec2 position, Vec2 size) const
@@ -130,12 +129,6 @@ namespace cage
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = false;
 		impl->clearTooltips();
-	}
-
-	Vec2i GuiManager::inputResolution() const
-	{
-		const GuiImpl *impl = (const GuiImpl *)this;
-		return impl->inputResolution;
 	}
 
 	GuiSkinConfig &GuiManager::skin(uint32 index)
