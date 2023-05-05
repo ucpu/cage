@@ -143,14 +143,13 @@ namespace cage
 
 			void initialize() // opengl thread
 			{
-				provisionalData = newProvisionalGraphics();
-				renderQueue = newRenderQueue("engine", +provisionalData);
+				renderQueue = newRenderQueue("engine", engineProvisonalGraphics());
 				onDemand = newAssetOnDemand(engineAssets());
 				for (EmitBuffer &it : emitBuffers)
 				{
 					RenderPipelineCreateConfig cfg;
 					cfg.assets = engineAssets();
-					cfg.provisionalGraphics = +provisionalData;
+					cfg.provisionalGraphics = engineProvisonalGraphics();
 					cfg.scene = +it.scene;
 					cfg.onDemand = +onDemand;
 					it.pipeline = newRenderPipeline(cfg);
@@ -163,7 +162,7 @@ namespace cage
 					it.pipeline.clear();
 				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to purgeAssetsOnDemandCache
 				renderQueue.clear();
-				provisionalData.clear();
+				engineProvisonalGraphics()->purge();
 			}
 
 			void emit(uint64 emitTime) // control thread
@@ -364,7 +363,7 @@ namespace cage
 				else
 					renderQueue->dispatch();
 
-				provisionalData->reset();
+				engineProvisonalGraphics()->reset();
 
 				{ // check gl errors (even in release, but do not halt the game)
 					try
@@ -388,7 +387,7 @@ namespace cage
 			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
 			{
 				const String name = Stringizer() + prefix + "_" + resolution;
-				TextureHandle tex = provisionalData->texture(name, [resolution](Texture *tex) {
+				TextureHandle tex = engineProvisonalGraphics()->texture(name, [resolution](Texture *tex) {
 					tex->initialize(resolution, 1, GL_RGB8);
 					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					tex->filters(GL_LINEAR, GL_LINEAR, 0);
@@ -404,7 +403,7 @@ namespace cage
 				auto assets = engineAssets();
 				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
-				Holder<FrameBuffer> renderTarget = provisionalData->frameBufferDraw("VR_blit")->resolve();
+				Holder<FrameBuffer> renderTarget = engineProvisonalGraphics()->frameBufferDraw("VR_blit")->resolve();
 				if (!modelSquare || !shaderBlit)
 					return;
 
@@ -425,7 +424,6 @@ namespace cage
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 
-			Holder<ProvisionalGraphics> provisionalData;
 			Holder<RenderQueue> renderQueue;
 			Holder<AssetOnDemand> onDemand;
 
