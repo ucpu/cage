@@ -40,7 +40,7 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> dispatch;
 		EventDispatcher<bool()> swap;
-		static constexpr uint32 threadIndex = 1;
+		static constexpr uint32 threadIndex = 1; // used for loading graphical assets
 	};
 	EngineGraphicsDispatchThread &graphicsDispatchThread();
 
@@ -58,8 +58,6 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> sound;
 		Scheduler *scheduler();
-		uint64 updatePeriod() const;
-		void updatePeriod(uint64 p);
 	};
 	EngineSoundThread &soundThread();
 

@@ -277,6 +277,7 @@ namespace cage
 					soundScheduler->stop();
 					return;
 				}
+				soundUpdateSchedule->period(controlUpdateSchedule->period()); // sound thread goes at same speed as control thread
 				{
 					ProfilingScope profiling("sound callback");
 					soundThread().sound.dispatch();
@@ -436,7 +437,7 @@ namespace cage
 					ScheduleCreateConfig c;
 					c.name = "sound schedule";
 					c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
-					c.period = 1000000 / 40;
+					c.period = 1000000 / 20;
 					c.type = ScheduleTypeEnum::SteadyPeriodic;
 					soundUpdateSchedule = soundScheduler->newSchedule(c);
 				}
@@ -712,16 +713,6 @@ namespace cage
 	Scheduler *EngineSoundThread::scheduler()
 	{
 		return engineData->soundScheduler.get();
-	}
-
-	uint64 EngineSoundThread::updatePeriod() const
-	{
-		return engineData->soundUpdateSchedule->period();
-	}
-
-	void EngineSoundThread::updatePeriod(uint64 p)
-	{
-		engineData->soundUpdateSchedule->period(p);
 	}
 
 	void engineInitialize(const EngineCreateConfig &config)

@@ -326,9 +326,10 @@ namespace cage
 						dispatchTime = vrFrame->displayTime();
 					}
 
-					eb.pipeline->currentTime = itc(eb.emitTime, dispatchTime, controlThread().updatePeriod());
+					const uint64 period = controlThread().updatePeriod();
+					eb.pipeline->currentTime = itc(eb.emitTime, dispatchTime, period);
 					eb.pipeline->elapsedTime = dispatchTime - lastDispatchTime;
-					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->currentTime - eb.emitTime) / controlThread().updatePeriod());
+					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->currentTime - eb.emitTime) / period);
 					eb.pipeline->frameIndex = frameIndex;
 
 					renderQueue->resetQueue();

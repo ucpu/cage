@@ -107,10 +107,7 @@ namespace cage
 			{
 				auto lock = swapController->write();
 				if (!lock)
-				{
-					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping sound emit");
 					return;
-				}
 
 				emitWrite = &emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitWrite(emitWrite);
@@ -215,18 +212,16 @@ namespace cage
 			{
 				auto lock = swapController->read();
 				if (!lock)
-				{
-					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping sound tick");
 					return;
-				}
 
 				{
 					ProfilingScope profiling("sound prepare");
 					emitRead = &emitBuffers[lock.index()];
 					ClearOnScopeExit resetEmitRead(emitRead);
 					emitTime = emitRead->time;
-					dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
-					interFactor = saturate(Real(dispatchTime - emitTime) / controlThread().updatePeriod());
+					const uint64 period = controlThread().updatePeriod();
+					dispatchTime = itc(emitTime, time, period);
+					interFactor = saturate(Real(dispatchTime - emitTime) / period);
 					prepare();
 				}
 
