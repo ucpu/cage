@@ -20,6 +20,8 @@ namespace cage
 	class GuiInWorld : private Immovable
 	{
 	public:
+		bool intersects(const Line &ray) const;
+		Vec3 intersection(const Line &ray) const;
 		void update(const Line &ray, bool interact);
 		void cleanUp();
 		GuiManager *guiManager();

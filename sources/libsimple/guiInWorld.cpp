@@ -48,31 +48,49 @@ namespace cage
 				cleanUp();
 			}
 
+			struct Intersection
+			{
+				Vec3 c;
+				Vec2 n;
+				Vec2 p;
+				bool intersects = false;
+			};
+
+			CAGE_FORCE_INLINE Intersection detect(const Line &ray) const
+			{
+				Intersection res;
+				const Transform tr = config.renderEntity->value<TransformComponent>();
+				const Plane pl = Plane(tr.position, tr.orientation * Vec3(0, 0, -1));
+				res.c = cage::intersection(pl, ray) - tr.position;
+				const Vec3 r = tr.orientation * Vec3(-1, 0, 0); // the rendered texture is horizontally swapped (see texture coordinates on the render mesh)
+				const Vec3 u = tr.orientation * Vec3(0, -1, 0); // the gui has Y axis going top-down, the world has Y going bottom-up
+				res.n = Vec2(dot(res.c, r), dot(res.c, u)) / tr.scale * Vec2(1, Real(config.resolution[0]) / Real(config.resolution[1])) * 0.5 + 0.5; // 0*0 .. 1*1
+				res.p = res.n * Vec2(config.resolution); // 0*0 .. w*h
+				res.intersects = res.c.valid() && res.n[0] >= 0 && res.n[0] <= 1 && res.n[1] >= 0 && res.n[1] <= 1;
+				if (!res.intersects)
+					res.c = Vec3::Nan();
+				return res;
+			}
+
 			void update(const Line &ray, bool interact)
 			{
 				guiMan->prepare();
 
-				const Transform tr = config.renderEntity->value<TransformComponent>();
-				const Plane pl = Plane(tr.position, tr.orientation * Vec3(0, 0, -1));
-				const Vec3 c = intersection(pl, ray) - tr.position;
-				const Vec3 r = tr.orientation * Vec3(-1, 0, 0); // the rendered texture is horizontally swapped (see texture coordinates on the render mesh)
-				const Vec3 u = tr.orientation * Vec3(0, -1, 0); // the gui has Y axis going top-down, the world has Y going bottom-up
-				const Vec2 n = Vec2(dot(c, r), dot(c, u)) / tr.scale * Vec2(1, Real(config.resolution[0]) / Real(config.resolution[1])) * 0.5 + 0.5; // 0*0 .. 1*1
-				const Vec2 p = n * Vec2(config.resolution); // 0*0 .. w*h
-				if (c.valid() && n[0] >= 0 && n[0] <= 1 && n[1] >= 0 && n[1] <= 1)
+				const auto i = detect(ray);
+				if (i.intersects)
 				{
 					if (interact)
 					{
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MousePress });
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MouseRelease });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MousePress });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MouseRelease });
 					}
 					else
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = p }, InputClassEnum::MouseMove });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p }, InputClassEnum::MouseMove });
 				}
 				else
 				{
 					guiMan->focus(0);
-					guiMan->handleInput(GenericInput{ InputMouse(), InputClassEnum::MouseMove });
+					guiMan->handleInput(GenericInput{ InputMouse{ .position = Vec2(-1) }, InputClassEnum::MouseMove });
 				}
 
 				auto q = guiMan->finish();
@@ -176,6 +194,18 @@ namespace cage
 			EventListener<void()> graphicsDispatchListener;
 			EventListener<void()> updateListener;
 		};
+	}
+
+	bool GuiInWorld::intersects(const Line &ray) const
+	{
+		GuiInWorldImpl *impl = (GuiInWorldImpl *)this;
+		return impl->detect(ray).intersects;
+	}
+
+	Vec3 GuiInWorld::intersection(const Line &ray) const
+	{
+		GuiInWorldImpl *impl = (GuiInWorldImpl *)this;
+		return impl->detect(ray).c;
 	}
 
 	void GuiInWorld::update(const Line &ray, bool interact)
