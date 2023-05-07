@@ -51,9 +51,8 @@ namespace cage
 
 			struct Intersection
 			{
-				Vec3 c;
-				Vec2 n;
-				Vec2 p;
+				Vec3 wp; // world position
+				Vec2 gp; // gui position in 0*0 .. w*h
 				bool intersects = false;
 			};
 
@@ -62,14 +61,15 @@ namespace cage
 				Intersection res;
 				const Transform tr = config.renderEntity->value<TransformComponent>();
 				const Plane pl = Plane(tr.position, tr.orientation * Vec3(0, 0, -1));
-				res.c = cage::intersection(pl, ray) - tr.position;
+				res.wp = cage::intersection(pl, ray);
+				const Vec3 c = res.wp - tr.position;
 				const Vec3 r = tr.orientation * Vec3(-1, 0, 0); // the rendered texture is horizontally swapped (see texture coordinates on the render mesh)
 				const Vec3 u = tr.orientation * Vec3(0, -1, 0); // the gui has Y axis going top-down, the world has Y going bottom-up
-				res.n = Vec2(dot(res.c, r), dot(res.c, u)) / tr.scale * Vec2(1, Real(config.resolution[0]) / Real(config.resolution[1])) * 0.5 + 0.5; // 0*0 .. 1*1
-				res.p = res.n * Vec2(config.resolution); // 0*0 .. w*h
-				res.intersects = res.c.valid() && res.n[0] >= 0 && res.n[0] <= 1 && res.n[1] >= 0 && res.n[1] <= 1;
+				const Vec2 n = Vec2(dot(c, r), dot(c, u)) / tr.scale * Vec2(1, Real(config.resolution[0]) / Real(config.resolution[1])) * 0.5 + 0.5; // 0*0 .. 1*1
+				res.gp = n * Vec2(config.resolution); // 0*0 .. w*h
+				res.intersects = c.valid() && n[0] >= 0 && n[0] <= 1 && n[1] >= 0 && n[1] <= 1;
 				if (!res.intersects)
-					res.c = Vec3::Nan();
+					res.wp = Vec3::Nan();
 				return res;
 			}
 
@@ -84,11 +84,11 @@ namespace cage
 				{
 					if (interact)
 					{
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MousePress });
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MouseRelease });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MousePress });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MouseRelease });
 					}
 					else
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.p }, InputClassEnum::MouseMove });
+						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp }, InputClassEnum::MouseMove });
 				}
 				else
 				{
@@ -213,7 +213,7 @@ namespace cage
 	Vec3 GuiInWorld::intersection(const Line &ray) const
 	{
 		GuiInWorldImpl *impl = (GuiInWorldImpl *)this;
-		return impl->detect(ray).c;
+		return impl->detect(ray).wp;
 	}
 
 	void GuiInWorld::update(const Line &ray, bool interact)
