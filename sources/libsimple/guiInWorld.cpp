@@ -5,6 +5,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/entities.h>
 #include <cage-core/assetManager.h>
+#include <cage-core/profiling.h>
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/renderQueue.h>
@@ -74,6 +75,8 @@ namespace cage
 
 			void update(const Line &ray, bool interact)
 			{
+				ProfilingScope profiling("gui in world update");
+
 				guiMan->prepare();
 
 				const auto i = detect(ray);
@@ -112,6 +115,8 @@ namespace cage
 
 			void dispatchEntry()
 			{
+				ProfilingScope profiling("gui in world graphics dispatch");
+
 				Holder<Texture> tex;
 				if (firstFrame)
 				{
@@ -163,13 +168,16 @@ namespace cage
 					return;
 
 				Holder<RenderQueue> q = newRenderQueue("gui in world", engineProvisonalGraphics());
-				q->bind(fb);
-				q->colorTexture(fb, 0, tex);
-				q->viewport(Vec2i(), config.resolution);
-				q->clear(true, false);
-				q->enqueue(std::move(qq));
-				q->resetAllState();
-				q->resetFrameBuffer();
+				{
+					auto name = q->namedScope("gui in world");
+					q->bind(fb);
+					q->colorTexture(fb, 0, tex);
+					q->viewport(Vec2i(), config.resolution);
+					q->clear(true, false);
+					q->enqueue(std::move(qq));
+					q->resetAllState();
+					q->resetFrameBuffer();
+				}
 				q->dispatch();
 			}
 
