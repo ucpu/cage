@@ -16,32 +16,26 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
 			return r[0];
 		}
-
-		Transform transformByOrigin(EntityManager *scene, const Transform &in)
-		{
-			Entity *e = findOrigin(scene);
-			const TransformComponent &t = e->value<TransformComponent>();
-			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
-			return t * c * in;
-		}
 	}
 
 	void virtualRealitySceneUpdate(EntityManager *scene)
 	{
+		Entity *origin = findOrigin(scene);
+		const Transform tr = origin->value<TransformComponent>() * origin->value<VrOriginComponent>().manualCorrection;
 		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) {
-			t = transformByOrigin(scene, cc.virtualReality->pose());
+			t = tr * cc.virtualReality->pose();
 		}, scene, false);
 		entitiesVisitor([&](Entity *e, TransformComponent &t, VrControllerComponent &cc) {
-			t = transformByOrigin(scene, cc.controller->gripPose());
-			cc.aim = transformByOrigin(scene, cc.controller->aimPose());
+			t = tr * cc.controller->gripPose();
+			cc.aim = tr * cc.controller->aimPose();
 		}, scene, false);
 	}
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)
 	{
-		Entity *e = findOrigin(scene);
-		const TransformComponent &tr = e->value<TransformComponent>();
-		VrOriginComponent &vc = e->value<VrOriginComponent>();
+		Entity *origin = findOrigin(scene);
+		const TransformComponent &tr = origin->value<TransformComponent>();
+		VrOriginComponent &vc = origin->value<VrOriginComponent>();
 		Transform headset = vc.virtualReality->pose();
 		if (keepUp)
 			headset.orientation = Quat(headset.orientation * Vec3(0, 0, -1), Vec3(0, 1, 0), true);
