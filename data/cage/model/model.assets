@@ -23,3 +23,12 @@ guiElement.obj
 []
 scheme = pack
 model.pack
+
+[]
+scheme = model
+axes.obj
+
+[]
+scheme = texture
+srgb = true
+axes-albedo.png
