@@ -192,7 +192,43 @@ void testDelegates()
 	{
 		CAGE_TESTCASE("constexpr delegate");
 		constexpr auto val = constexprTest();
-		CAGE_TEST(val == 5);
+		static_assert(val == 5);
+	}
+
+	{
+		CAGE_TESTCASE("delegate with lambda (simple)");
+		Delegate d = Delegate<int(int, int)>().bind([](int a, int b) { return a + b; });
+		CAGE_TEST(d(42, 13) == 42 + 13);
+	}
+
+	{
+		CAGE_TESTCASE("delegate with lambda (with capture)");
+		int tmp = 500;
+		Delegate d = Delegate<void(int)>().bind([&](int a) { tmp += a; });
+		d(42);
+		CAGE_TEST(tmp == 542);
+	}
+
+	{
+		CAGE_TESTCASE("delegate with lambda (in constructor)");
+		int tmp = 500;
+		Delegate d = Delegate<void(int)>([&](int a) { tmp += a; });
+		d(42);
+		CAGE_TEST(tmp == 542);
+	}
+
+	{
+		CAGE_TESTCASE("delegate with lambda (direct assignment)");
+		int tmp = 500;
+		Delegate<void(int)> d = [&](int a) { tmp += a; };
+		d(42);
+		CAGE_TEST(tmp == 542);
+	}
+
+	{
+		CAGE_TESTCASE("function in constructor");
+		Delegate<void(int, int)> d = &test2;
+		d(3, 4);
 	}
 }
 
