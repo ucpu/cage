@@ -191,16 +191,16 @@ namespace
 		} manCbs, posCbs, oriCbs;
 
 		Holder<EntityManager> man = newEntityManager();
-		man->group()->entityAdded.attach(manCbs.addListener);
-		man->group()->entityRemoved.attach(manCbs.removeListener);
+		manCbs.addListener.attach(man->group()->entityAdded);
+		manCbs.removeListener.attach(man->group()->entityRemoved);
 
 		EntityComponent *pos = man->defineComponent(Vec3());
-		pos->group()->entityAdded.attach(posCbs.addListener);
-		pos->group()->entityRemoved.attach(posCbs.removeListener);
+		posCbs.addListener.attach(pos->group()->entityAdded);
+		posCbs.removeListener.attach(pos->group()->entityRemoved);
 
 		EntityComponent *ori = man->defineComponent(Quat());
-		ori->group()->entityAdded.attach(oriCbs.addListener);
-		ori->group()->entityRemoved.attach(oriCbs.removeListener);
+		oriCbs.addListener.attach(ori->group()->entityAdded);
+		oriCbs.removeListener.attach(ori->group()->entityRemoved);
 
 		for (uint32 i = 0; i < 100; i++)
 		{

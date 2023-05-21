@@ -33,10 +33,10 @@ namespace cage
 	template<class... Ts>
 	struct EventListener<bool(Ts...)> : private privat::EventLinker, private Delegate<bool(Ts...)>
 	{
-		explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
+		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
 		{}
 
-		void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
+		CAGE_FORCE_INLINE void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
 		{
 			privat::EventLinker::attach(&dispatcher, order);
 		}
@@ -46,7 +46,7 @@ namespace cage
 		using Delegate<bool(Ts...)>::clear;
 
 	private:
-		bool invoke(Ts... vs) const
+		CAGE_FORCE_INLINE bool invoke(Ts... vs) const
 		{
 			auto &d = (Delegate<bool(Ts...)>&)*this;
 			if (d)
@@ -61,7 +61,7 @@ namespace cage
 	template<class... Ts>
 	struct EventListener<void(Ts...)> : private EventListener<bool(Ts...)>, private Delegate<void(Ts...)>
 	{
-		explicit EventListener(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
+		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
 		{
 			EventListener<bool(Ts...)>::template bind<EventListener, &EventListener::invoke>(this);
 		}
@@ -72,7 +72,7 @@ namespace cage
 		using Delegate<void(Ts...)>::clear;
 
 	private:
-		bool invoke(Ts... vs) const
+		CAGE_FORCE_INLINE bool invoke(Ts... vs) const
 		{
 			auto &d = (Delegate<void(Ts...)>&)*this;
 			if (d)
@@ -84,7 +84,7 @@ namespace cage
 	template<class... Ts>
 	struct EventDispatcher<bool(Ts...)> : private EventListener<bool(Ts...)>
 	{
-		explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
+		CAGE_FORCE_INLINE explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
 		{}
 
 		bool dispatch(Ts... vs) const
@@ -100,14 +100,33 @@ namespace cage
 			return false;
 		}
 
-		void attach(EventListener<bool(Ts...)> &listener, sint32 order = 0)
+		template<class Callable> requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
+		[[nodiscard]] CAGE_FORCE_INLINE auto listen(Callable &&callable, sint32 order = 0)
 		{
-			listener.attach(*this, order);
-		}
+			struct Listener : private Immovable
+			{
+				EventListener<bool(Ts...)> el;
+				Callable cl;
 
-		void attach(EventListener<void(Ts...)> &listener, sint32 order = 0)
-		{
-			listener.attach(*this, order);
+				CAGE_FORCE_INLINE explicit Listener(Callable &&callable, EventDispatcher<bool(Ts...)> &disp, sint32 order) : cl(std::move(callable))
+				{
+					el.attach(disp, order);
+					el.template bind<Listener, &Listener::call>(this);
+				}
+
+				CAGE_FORCE_INLINE bool call(Ts... vs) const
+				{
+					if constexpr (std::is_same_v<decltype(cl(std::forward<Ts>(vs)...)), void>)
+					{
+						cl(std::forward<Ts>(vs)...);
+						return false;
+					}
+					else
+						return cl(std::forward<Ts>(vs)...);
+				}
+			};
+
+			return Listener(std::move(callable), *this, order);
 		}
 
 		using EventListener<bool(Ts...)>::detach;
