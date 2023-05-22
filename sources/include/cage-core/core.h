@@ -657,6 +657,32 @@ namespace cage
 		void *inst = nullptr;
 
 	public:
+		constexpr Delegate() noexcept = default;
+		constexpr Delegate(const Delegate &) noexcept = default;
+		constexpr Delegate &operator = (const Delegate &) noexcept = default;
+
+		template<class Callable> requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
+		Delegate(Callable &&callable) noexcept
+		{
+			bind(std::move(callable));
+		}
+
+		template<class Callable> requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
+		Delegate &bind(Callable &&callable) noexcept
+		{
+			auto l = [cl = std::move(callable)](Ts... vs) {
+				return (cl)(std::forward<Ts>(vs)...);
+			};
+			using L = decltype(l);
+			static_assert(sizeof(L) <= sizeof(void *) && std::is_trivially_copyable_v<L> && std::is_trivially_destructible_v<L>);
+			fnc = +[](void *inst, Ts... vs) {
+				L l = *(L *)(&inst);
+				return (l)(std::forward<Ts>(vs)...);
+			};
+			detail::memcpy(&inst, &l, sizeof(L));
+			return *this;
+		}
+
 		template<R(*F)(Ts...)>
 		constexpr Delegate &bind() noexcept
 		{
