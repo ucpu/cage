@@ -31,10 +31,37 @@ namespace cage
 	}
 
 	template<class... Ts>
-	struct EventListener<bool(Ts...)> : private privat::EventLinker, private Delegate<bool(Ts...)>
+	struct EventListener<bool(Ts...)> : private privat::EventLinker
 	{
 		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
 		{}
+
+		template<class Callable>
+		CAGE_FORCE_INLINE explicit EventListener(Callable &&callable, EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0, const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
+		{
+			bind(std::move(callable));
+			attach(dispatcher, order);
+		}
+
+		template<class Callable> requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
+		CAGE_FORCE_INLINE void bind(Callable &&callable)
+		{
+			if constexpr (std::is_same_v<std::invoke_result_t<Callable, Ts...>, bool>)
+			{
+				del.b = std::move(callable);
+				vd = false;
+			}
+			else
+			{
+				del.v = std::move(callable);
+				vd = true;
+			}
+		}
+
+		CAGE_FORCE_INLINE void clear()
+		{
+			del.b.clear();
+		}
 
 		CAGE_FORCE_INLINE void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
 		{
@@ -42,49 +69,36 @@ namespace cage
 		}
 
 		using privat::EventLinker::detach;
-		using Delegate<bool(Ts...)>::bind;
-		using Delegate<bool(Ts...)>::clear;
 
 	private:
 		CAGE_FORCE_INLINE bool invoke(Ts... vs) const
 		{
-			auto &d = (Delegate<bool(Ts...)>&)*this;
-			if (d)
-				return d(std::forward<Ts>(vs)...);
-			return false;
+			if (!del.b)
+				return false;
+			if (vd)
+			{
+				(del.v)(std::forward<Ts>(vs)...);
+				return false;
+			}
+			else
+				return (del.b)(std::forward<Ts>(vs)...);
 		}
 
-		using privat::EventLinker::logAllNames;
+		union Del
+		{
+			Delegate<bool(Ts...)> b;
+			Delegate<void(Ts...)> v;
+			CAGE_FORCE_INLINE Del() : b() {};
+		} del;
+		bool vd = false;
+
 		friend struct EventDispatcher<bool(Ts...)>;
 	};
 
 	template<class... Ts>
-	struct EventListener<void(Ts...)> : private EventListener<bool(Ts...)>, private Delegate<void(Ts...)>
+	struct EventDispatcher<bool(Ts...)> : private privat::EventLinker
 	{
-		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
-		{
-			EventListener<bool(Ts...)>::template bind<EventListener, &EventListener::invoke>(this);
-		}
-
-		using EventListener<bool(Ts...)>::attach;
-		using EventListener<bool(Ts...)>::detach;
-		using Delegate<void(Ts...)>::bind;
-		using Delegate<void(Ts...)>::clear;
-
-	private:
-		CAGE_FORCE_INLINE bool invoke(Ts... vs) const
-		{
-			auto &d = (Delegate<void(Ts...)>&)*this;
-			if (d)
-				d(std::forward<Ts>(vs)...);
-			return false;
-		}
-	};
-
-	template<class... Ts>
-	struct EventDispatcher<bool(Ts...)> : private EventListener<bool(Ts...)>
-	{
-		CAGE_FORCE_INLINE explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : EventListener<bool(Ts...)>(location)
+		CAGE_FORCE_INLINE explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
 		{}
 
 		bool dispatch(Ts... vs) const
@@ -100,37 +114,14 @@ namespace cage
 			return false;
 		}
 
-		template<class Callable> requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
-		[[nodiscard]] CAGE_FORCE_INLINE auto listen(Callable &&callable, sint32 order = 0)
+		template<class Callable>
+		[[nodiscard]] CAGE_FORCE_INLINE auto listen(Callable &&callable, sint32 order = 0, const std::source_location &location = std::source_location::current())
 		{
-			struct Listener : private Immovable
-			{
-				EventListener<bool(Ts...)> el;
-				Callable cl;
-
-				CAGE_FORCE_INLINE explicit Listener(Callable &&callable, EventDispatcher<bool(Ts...)> &disp, sint32 order) : cl(std::move(callable))
-				{
-					el.attach(disp, order);
-					el.template bind<Listener, &Listener::call>(this);
-				}
-
-				CAGE_FORCE_INLINE bool call(Ts... vs) const
-				{
-					if constexpr (std::is_same_v<decltype(cl(std::forward<Ts>(vs)...)), void>)
-					{
-						cl(std::forward<Ts>(vs)...);
-						return false;
-					}
-					else
-						return cl(std::forward<Ts>(vs)...);
-				}
-			};
-
-			return Listener(std::move(callable), *this, order);
+			return EventListener<bool(Ts...)>(std::move(callable), *this, order, location);
 		}
 
-		using EventListener<bool(Ts...)>::detach;
-		using EventListener<bool(Ts...)>::logAllNames;
+		using privat::EventLinker::detach;
+		using privat::EventLinker::logAllNames;
 
 	private:
 		friend struct EventListener<bool(Ts...)>;

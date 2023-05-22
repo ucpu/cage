@@ -37,11 +37,6 @@ namespace cage
 					guiMan->outputResolution(config.resolution);
 					guiMan->outputRetina(config.retinaScale);
 				}
-
-				graphicsDispatchListener.attach(graphicsDispatchThread().dispatch);
-				graphicsDispatchListener.bind<GuiInWorldImpl, &GuiInWorldImpl::dispatchEntry>(this);
-				updateListener.attach(controlThread().update);
-				updateListener.bind<GuiInWorldImpl, &GuiInWorldImpl::update>(this);
 			}
 
 			~GuiInWorldImpl()
@@ -199,8 +194,8 @@ namespace cage
 			uint32 modelName = 0;
 			bool firstFrame = true;
 
-			EventListener<void()> graphicsDispatchListener;
-			EventListener<void()> updateListener;
+			const EventListener<bool()> graphicsDispatchListener = graphicsDispatchThread().dispatch.listen([this]() { return this->dispatchEntry(); });
+			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
 		};
 	}
 

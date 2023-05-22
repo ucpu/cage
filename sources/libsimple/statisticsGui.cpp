@@ -21,9 +21,9 @@ namespace cage
 		class StatisticsGuiImpl : public StatisticsGui
 		{
 		public:
-			InputListener<InputClassEnum::KeyPress, InputKey, bool> keyPressListener;
-			InputListener<InputClassEnum::KeyRepeat, InputKey, bool> keyRepeatListener;
-			EventListener<bool()> updateListener;
+			const EventListener<bool(const GenericInput &)> keyPressListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyPress, InputKey>([this](InputKey in) { return this->keyPress(in); }));
+			const EventListener<bool(const GenericInput &)> keyRepeatListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyRepeat, InputKey>([this](InputKey in) { return this->keyRepeat(in); }));
+			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
 
 			uint32 panelIndex = 0;
 			uint32 layoutIndex = 0;
@@ -34,14 +34,7 @@ namespace cage
 			StatisticsGuiScopeEnum profilingModeOld = StatisticsGuiScopeEnum::Full;
 
 			StatisticsGuiImpl()
-			{
-				keyPressListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::keyPress>(this);
-				keyPressListener.attach(engineWindow()->events);
-				keyRepeatListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::keyRepeat>(this);
-				keyRepeatListener.attach(engineWindow()->events);
-				updateListener.bind<StatisticsGuiImpl, &StatisticsGuiImpl::update>(this);
-				updateListener.attach(controlThread().update);
-			}
+			{}
 
 			void nullData()
 			{

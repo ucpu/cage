@@ -221,37 +221,16 @@ namespace cage
 		void bind(InputsGeneralizer *generalizer);
 	};
 
-	template<InputClassEnum C, class T, class R = void>
-	struct InputListener : private EventListener<R(const GenericInput &)>, private Delegate<R(T)>
+	template<InputClassEnum C, class T, class Callable> requires(std::is_invocable_r_v<bool, Callable, T> || std::is_invocable_r_v<void, Callable, T>)
+	auto inputListener(Callable &&callable)
 	{
-		static_assert(std::is_same_v<R, void> || std::is_same_v<R, bool>);
-
-		explicit InputListener(const std::source_location &location = std::source_location::current()) : EventListener<R(const GenericInput &)>(location)
-		{
-			EventListener<R(const GenericInput &)>::template bind<InputListener, &InputListener::run>(this);
-		}
-
-		using EventListener<R(const GenericInput &)>::attach;
-		using EventListener<R(const GenericInput &)>::detach;
-		using Delegate<R(T)>::bind;
-		using Delegate<R(T)>::clear;
-
-	private:
-		template<class G = R, typename = std::enable_if_t<std::is_same_v<G, bool>>>
-		bool run(const GenericInput &in)
-		{
-			if (in.type == C && in.data.typeHash() == detail::typeHash<T>())
-				return (*(Delegate<R(T)> *)this)(in.data.get<T>());
-			return false;
-		}
-
-		template<class G = R, typename = std::enable_if_t<std::is_same_v<G, void>>>
-		void run(const GenericInput &in)
-		{
-			if (in.type == C && in.data.typeHash() == detail::typeHash<T>())
-				(*(Delegate<R(T)> *)this)(in.data.get<T>());
-		}
-	};
+		return [cl = std::move(callable)](const GenericInput &in) {
+			if (in.type == C)
+				return cl(in.data.get<T>());
+			if constexpr (std::is_same_v<std::invoke_result_t<Callable, T>, bool>)
+				return false;
+		};
+	}
 }
 
 #endif // guard_inputs_juhgf98ser4g

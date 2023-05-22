@@ -492,7 +492,7 @@ namespace cage
 					c.provisionalGraphics = +provisionalGraphics;
 					gui = newGuiManager(c);
 					windowGuiEventsListener.attach(window->events);
-					windowGuiEventsListener.bind<GuiManager, &GuiManager::handleInput>(+gui);
+					windowGuiEventsListener.bind([gui = +gui](const GenericInput &in) { return gui->handleInput(in); });
 				}
 
 				{ // create sync objects

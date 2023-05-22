@@ -22,15 +22,15 @@ namespace cage
 #undef GCHL_GENERATE
 
 		inputsListeners.attach(&inputsDispatchers);
-		inputsListeners.mousePress.bind<GuiImpl, &GuiImpl::mousePress>(this);
-		inputsListeners.mouseDoublePress.bind<GuiImpl, &GuiImpl::mouseDoublePress>(this);
-		inputsListeners.mouseRelease.bind<GuiImpl, &GuiImpl::mouseRelease>(this);
-		inputsListeners.mouseMove.bind<GuiImpl, &GuiImpl::mouseMove>(this);
-		inputsListeners.mouseWheel.bind<GuiImpl, &GuiImpl::mouseWheel>(this);
-		inputsListeners.keyPress.bind<GuiImpl, &GuiImpl::keyPress>(this);
-		inputsListeners.keyRepeat.bind<GuiImpl, &GuiImpl::keyRepeat>(this);
-		inputsListeners.keyRelease.bind<GuiImpl, &GuiImpl::keyRelease>(this);
-		inputsListeners.keyChar.bind<GuiImpl, &GuiImpl::keyChar>(this);
+		inputsListeners.mousePress.bind([this](InputMouse in) { return this->mousePress(in); });
+		inputsListeners.mouseDoublePress.bind([this](InputMouse in) { return this->mouseDoublePress(in); });
+		inputsListeners.mouseRelease.bind([this](InputMouse in) { return this->mouseRelease(in); });
+		inputsListeners.mouseMove.bind([this](InputMouse in) { return this->mouseMove(in); });
+		inputsListeners.mouseWheel.bind([this](InputMouseWheel in) { return this->mouseWheel(in); });
+		inputsListeners.keyPress.bind([this](InputKey in) { return this->keyPress(in); });
+		inputsListeners.keyRepeat.bind([this](InputKey in) { return this->keyRepeat(in); });
+		inputsListeners.keyRelease.bind([this](InputKey in) { return this->keyRelease(in); });
+		inputsListeners.keyChar.bind([this](InputKey in) { return this->keyChar(in); });
 
 		skins.reserve(config.skinsCount);
 		for (uint32 i = 0; i < config.skinsCount; i++)
@@ -43,7 +43,7 @@ namespace cage
 		memory = newMemoryAllocatorStream({});
 
 		ttRemovedListener.attach(entityMgr->component<GuiTooltipMarkerComponent>()->group()->entityRemoved);
-		ttRemovedListener.bind<GuiImpl, &GuiImpl::tooltipRemoved>(this);
+		ttRemovedListener.bind([this](Entity *e) { return this->tooltipRemoved(e); });
 	}
 
 	GuiImpl::~GuiImpl()

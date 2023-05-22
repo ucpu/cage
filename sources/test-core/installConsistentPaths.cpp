@@ -45,9 +45,9 @@ void testCageInstallConsistentPaths()
 #ifdef CAGE_ENGINE_API
 	CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "creating window");
 	Holder<Window> window = newWindow({});
-	EventListener<void(const GenericInput &in)> windowEventsListener;
+	EventListener<bool(const GenericInput &in)> windowEventsListener;
 	windowEventsListener.attach(window->events);
-	windowEventsListener.bind<&windowEvent>();
+	windowEventsListener.bind(&windowEvent);
 	window->setWindowed();
 	window->windowedSize(Vec2i(400, 300));
 	window->title("cage-test-install");

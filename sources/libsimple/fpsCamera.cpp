@@ -15,8 +15,8 @@ namespace cage
 		public:
 			InputsDispatchers dispatchers;
 			InputsListeners listeners;
-			EventListener<bool(const GenericInput &)> windowListener;
-			EventListener<void()> updateListener;
+			const EventListener<bool(const GenericInput &)> windowListener = engineWindow()->events.listen([this](const GenericInput &in) { return this->dispatchers.dispatch(in); });
+			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
 			VariableSmoothingBuffer<Vec2, 1> mouseSmoother;
 			VariableSmoothingBuffer<Vec3, 3> moveSmoother;
 			VariableSmoothingBuffer<Real, 2> wheelSmoother;
@@ -30,15 +30,11 @@ namespace cage
 			FpsCameraImpl(Entity *ent) : ent(ent)
 			{
 				listeners.attach(&dispatchers);
-				listeners.mousePress.bind<FpsCameraImpl, &FpsCameraImpl::mousePress>(this);
-				listeners.mouseMove.bind<FpsCameraImpl, &FpsCameraImpl::mouseMove>(this);
-				listeners.mouseWheel.bind<FpsCameraImpl, &FpsCameraImpl::mouseWheel>(this);
-				listeners.keyPress.bind<FpsCameraImpl, &FpsCameraImpl::keyPress>(this);
-				listeners.keyRelease.bind<FpsCameraImpl, &FpsCameraImpl::keyRelease>(this);
-				windowListener.bind<InputsDispatchers, &InputsDispatchers::dispatch>(&dispatchers);
-				windowListener.attach(engineWindow()->events);
-				updateListener.bind<FpsCameraImpl, &FpsCameraImpl::update>(this);
-				updateListener.attach(controlThread().update);
+				listeners.mousePress.bind([this](InputMouse in) { return this->mousePress(in); });
+				listeners.mouseMove.bind([this](InputMouse in) { return this->mouseMove(in); });
+				listeners.mouseWheel.bind([this](InputMouseWheel in) { return this->mouseWheel(in); });
+				listeners.keyPress.bind([this](InputKey in) { return this->keyPress(in); });
+				listeners.keyRelease.bind([this](InputKey in) { return this->keyRelease(in); });
 			}
 
 			Vec2 centerMouse()

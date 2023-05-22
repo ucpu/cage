@@ -43,8 +43,8 @@ void testEvents()
 		n = 0;
 		EventDispatcher<bool()> d;
 		EventListener<bool()> l1, l2;
-		l1.bind<&simpleCallback>();
-		l2.bind<&simpleCallback>();
+		l1.bind<bool(*)()>(&simpleCallback);
+		l2.bind<bool(*)()>(&simpleCallback);
 		d.dispatch();
 		CAGE_TEST(n == 0);
 		l1.attach(d);
@@ -53,14 +53,15 @@ void testEvents()
 		CAGE_TEST(n == 1);
 		l1.detach();
 		l1.attach(d);
+		l1.clear();
 	}
 
 	{
 		CAGE_TESTCASE("void callbacks");
 		n = 0;
 		EventDispatcher<bool()> d;
-		EventListener<void()> l;
-		l.bind<&incrementCallback>();
+		EventListener<bool()> l;
+		l.bind(&incrementCallback);
 		d.dispatch();
 		CAGE_TEST(n == 0);
 		l.attach(d);
@@ -74,8 +75,8 @@ void testEvents()
 		n = 0;
 		EventDispatcher<bool(int, int)> d;
 		EventListener<bool(int, int)> l1, l2;
-		l1.bind<&simpleCallback>();
-		l2.bind<&simpleCallback>();
+		l1.bind<bool(*)(int, int)>(&simpleCallback);
+		l2.bind<bool(*)(int, int)>(&simpleCallback);
 		d.dispatch(5, 3);
 		CAGE_TEST(n == 0);
 		l1.attach(d);
@@ -90,9 +91,9 @@ void testEvents()
 		CAGE_TESTCASE("sorting callbacks");
 		n = 3;
 		EventDispatcher<bool()> d;
-		EventListener<void()> inc, dbl;
-		inc.bind<&incrementCallback>();
-		dbl.bind<&doubleCallback>();
+		EventListener<bool()> inc, dbl;
+		inc.bind(&incrementCallback);
+		dbl.bind(&doubleCallback);
 		d.dispatch();
 		CAGE_TEST(n == 3);
 		inc.attach(d);
@@ -150,7 +151,7 @@ void testEvents()
 		EventDispatcher<bool(bool)> d;
 		EventListener<bool(bool)> l;
 		l.attach(d);
-		l.bind<&returnBoolCallback>();
+		l.bind(&returnBoolCallback);
 		CAGE_TEST(d.dispatch(true) == true);
 		CAGE_TEST(d.dispatch(false) == false);
 	}
@@ -162,7 +163,7 @@ void testEvents()
 			EventDispatcher<bool(int, int)> d;
 			auto l = d.listen<bool(*)(int, int)>(&simpleCallback);
 			CAGE_TEST(n == 0);
-			d.dispatch(42, 13);
+			CAGE_TEST(d.dispatch(42, 13) == true);
 			CAGE_TEST(n == 42 + 13);
 		}
 		{
@@ -170,12 +171,12 @@ void testEvents()
 			EventDispatcher<bool(int, int)> d;
 			auto l = d.listen([](int a, int b) { return simpleCallback(a, b); });
 			CAGE_TEST(n == 0);
-			d.dispatch(42, 13);
+			CAGE_TEST(d.dispatch(42, 13) == true);
 			CAGE_TEST(n == 42 + 13);
 		}
 		{
 			EventDispatcher<bool(bool)> d;
-			auto l = d.listen(returnBoolCallback);
+			auto l = d.listen(&returnBoolCallback);
 			CAGE_TEST(d.dispatch(true) == true);
 			CAGE_TEST(d.dispatch(false) == false);
 		}
@@ -197,7 +198,62 @@ void testEvents()
 		EventDispatcher<bool()> d;
 		auto l = d.listen([&]() { callcount++; });
 		CAGE_TEST(callcount == 0);
-		d.dispatch();
+		CAGE_TEST(d.dispatch() == false);
 		CAGE_TEST(callcount == 1);
+	}
+
+	{
+		CAGE_TESTCASE("listener with function pointer only (void)");
+		n = 13;
+		EventDispatcher<bool()> d;
+		auto l = d.listen(&doubleCallback);
+		CAGE_TEST(n == 13);
+		CAGE_TEST(d.dispatch() == false);
+		CAGE_TEST(n == 13 * 2);
+	}
+
+	{
+		CAGE_TESTCASE("listener with function pointer only (bool)");
+		EventDispatcher<bool(bool)> d;
+		auto l = d.listen(&returnBoolCallback);
+		CAGE_TEST(d.dispatch(true) == true);
+		CAGE_TEST(d.dispatch(false) == false);
+	}
+
+	{
+		CAGE_TESTCASE("listener with class (void)");
+		struct Tmp
+		{
+			int b = 0;
+			void call(int a)
+			{
+				b = a;
+			}
+		};
+		EventDispatcher<bool(int)> d;
+		Tmp tmp;
+		auto l = d.listen(Delegate<void(int)>().bind<Tmp, &Tmp::call>(&tmp));
+		CAGE_TEST(tmp.b == 0);
+		CAGE_TEST(d.dispatch(13) == false);
+		CAGE_TEST(tmp.b == 13);
+	}
+
+	{
+		CAGE_TESTCASE("listener with class (bool)");
+		struct Tmp
+		{
+			int b = 0;
+			bool call(int a)
+			{
+				b = a;
+				return false;
+			}
+		};
+		EventDispatcher<bool(int)> d;
+		Tmp tmp;
+		auto l = d.listen(Delegate<bool(int)>().bind<Tmp, &Tmp::call>(&tmp));
+		CAGE_TEST(tmp.b == 0);
+		CAGE_TEST(d.dispatch(13) == false);
+		CAGE_TEST(tmp.b == 13);
 	}
 }

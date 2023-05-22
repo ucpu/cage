@@ -170,23 +170,13 @@ namespace
 			uint32 added = 0;
 			uint32 removed = 0;
 
-			EventListener<void(Entity *)> addListener;
-			EventListener<void(Entity *)> removeListener;
+			EventListener<bool(Entity *)> addListener;
+			EventListener<bool(Entity *)> removeListener;
 
 			Callbacks()
 			{
-				addListener.bind<Callbacks, &Callbacks::addEntity>(this);
-				removeListener.bind<Callbacks, &Callbacks::removeEntity>(this);
-			}
-
-			void addEntity(Entity *e)
-			{
-				added++;
-			}
-
-			void removeEntity(Entity *e)
-			{
-				removed++;
+				addListener.bind([&](Entity *) { added++; });
+				removeListener.bind([&](Entity *) { removed++; });
 			}
 		} manCbs, posCbs, oriCbs;
 

@@ -272,7 +272,7 @@ namespace cage
 	{
 #define EVENT(CLASS, NAME, TYPE) \
 		if (generalizer) \
-			NAME.bind<InputsGeneralizer, &InputsGeneralizer::NAME>(generalizer); \
+			NAME.bind([generalizer](TYPE in) { return generalizer->NAME(in); }); \
 		else \
 			NAME.clear();
 

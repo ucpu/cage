@@ -24,10 +24,10 @@ namespace cage
 		class FullscreenSwitcherImpl : public FullscreenSwitcher
 		{
 		public:
-			InputListener<InputClassEnum::WindowMove, InputWindowValue> windowMoveListener;
-			InputListener<InputClassEnum::WindowResize, InputWindowValue> windowResizeListener;
-			InputListener<InputClassEnum::KeyRelease, InputKey, bool> keyListener;
-			Window *window = nullptr;
+			Window *const window = nullptr;
+			const EventListener<bool(const GenericInput &)> windowMoveListener = window->events.listen(inputListener<InputClassEnum::WindowMove, InputWindowValue>([this](InputWindowValue in) { return this->windowMove(in); }), -13665);
+			const EventListener<bool(const GenericInput &)> windowResizeListener = window->events.listen(inputListener<InputClassEnum::WindowResize, InputWindowValue>([this](InputWindowValue in) { return this->windowResize(in); }), -13666);
+			const EventListener<bool(const GenericInput &)> keyListener = window->events.listen(inputListener<InputClassEnum::KeyRelease, InputKey>([this](InputKey in) { return this->keyRelease(in); }), -13667);
 
 			ConfigSint32 confWindowLeft;
 			ConfigSint32 confWindowTop;
@@ -53,12 +53,6 @@ namespace cage
 				confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
-				windowMoveListener.attach(window->events, -13665);
-				windowMoveListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowMove>(this);
-				windowResizeListener.attach(window->events, -13666);
-				windowResizeListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowResize>(this);
-				keyListener.attach(window->events, -13667);
-				keyListener.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::keyRelease>(this);
 				if (window->isHidden())
 					update(confFullscreenEnabled);
 			}
