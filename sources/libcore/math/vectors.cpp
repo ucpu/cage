@@ -246,7 +246,7 @@ namespace cage
 
 	void toAxisAngle(const Quat &x, Vec3 &axis, Rads &angle)
 	{
-		angle = acos(x[3]) * 2;
+		angle = acos(clamp(x[3], -1, 1)) * 2;
 		Real s = sqrt(1 - x[3] * x[3]);
 		if (s < 0.001)
 			axis = Vec3(1, 0, 0);

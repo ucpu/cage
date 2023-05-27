@@ -473,7 +473,7 @@ namespace cage
 
 					for (uint32 i = 0; i < cntrl.axesActions.size(); i++)
 					{
-						static constexpr const char *axesNames[] = { "thumbstick_x", "thumbstick_y", "trackpad_x", "tracpad_y", "trigger_value", "squeeze_value" };
+						static constexpr const char *axesNames[] = { "thumbstick_x", "thumbstick_y", "trackpad_x", "trackpad_y", "trigger_value", "squeeze_value" };
 						static_assert(sizeof(axesNames) / sizeof(axesNames[0]) == decltype(cntrl.axesActions){}.size());
 						XrActionCreateInfo info;
 						init(info, XR_TYPE_ACTION_CREATE_INFO);
