@@ -28,7 +28,7 @@ namespace cage
 	{
 		XrResult plaformInitSession(XrInstance instance, XrSystemId systemId, XrSession &session);
 		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution);
-		void loadControllerBindins(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
+		void loadControllerBindings(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
 		void controllerBindingsCheckUnused();
 	}
 
@@ -497,7 +497,7 @@ namespace cage
 						check(xrCreateAction(actionSet, &info, &cntrl.butsActions[i]));
 					}
 
-					privat::loadControllerBindins(instance, sideName, suggestions, cntrl.axesActions, cntrl.butsActions);
+					privat::loadControllerBindings(instance, sideName, suggestions, cntrl.axesActions, cntrl.butsActions);
 
 					std::array<XrPath, 2> pathPoses; // aim, grip
 					check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + sideName + "/input/aim/pose").value.c_str(), &pathPoses[0]));
