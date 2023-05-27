@@ -47,7 +47,7 @@ namespace cage
 			return bindings;
 		}
 
-		void loadControllerBindinsImpl(XrInstance instance, const char *sideName, const String &profile, std::vector<XrActionSuggestedBinding> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions, Ini *ini)
+		void loadControllerBindingsImpl(XrInstance instance, const char *sideName, const String &profile, std::vector<XrActionSuggestedBinding> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions, Ini *ini)
 		{
 			const auto &check = [&](XrResult result) {
 				if (XR_SUCCEEDED(result))
@@ -95,7 +95,7 @@ namespace cage
 
 	namespace privat
 	{
-		void loadControllerBindins(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions)
+		void loadControllerBindings(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions)
 		{
 			const std::map<String, Holder<Ini>> &bindings = loadBindings();
 
@@ -103,7 +103,7 @@ namespace cage
 			{
 				try
 				{
-					loadControllerBindinsImpl(instance, sideName, it.first, suggestions[it.first], axesActions, butsActions, +it.second);
+					loadControllerBindingsImpl(instance, sideName, it.first, suggestions[it.first], axesActions, butsActions, +it.second);
 				}
 				catch (...)
 				{

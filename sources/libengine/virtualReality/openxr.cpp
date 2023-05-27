@@ -28,7 +28,7 @@ namespace cage
 	{
 		XrResult plaformInitSession(XrInstance instance, XrSystemId systemId, XrSession &session);
 		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution);
-		void loadControllerBindins(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
+		void loadControllerBindings(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
 		void controllerBindingsCheckUnused();
 	}
 
@@ -473,7 +473,7 @@ namespace cage
 
 					for (uint32 i = 0; i < cntrl.axesActions.size(); i++)
 					{
-						static constexpr const char *axesNames[] = { "thumbstick_x", "thumbstick_y", "trackpad_x", "tracpad_y", "trigger_value", "squeeze_value" };
+						static constexpr const char *axesNames[] = { "thumbstick_x", "thumbstick_y", "trackpad_x", "trackpad_y", "trigger_value", "squeeze_value" };
 						static_assert(sizeof(axesNames) / sizeof(axesNames[0]) == decltype(cntrl.axesActions){}.size());
 						XrActionCreateInfo info;
 						init(info, XR_TYPE_ACTION_CREATE_INFO);
@@ -497,7 +497,7 @@ namespace cage
 						check(xrCreateAction(actionSet, &info, &cntrl.butsActions[i]));
 					}
 
-					privat::loadControllerBindins(instance, sideName, suggestions, cntrl.axesActions, cntrl.butsActions);
+					privat::loadControllerBindings(instance, sideName, suggestions, cntrl.axesActions, cntrl.butsActions);
 
 					std::array<XrPath, 2> pathPoses; // aim, grip
 					check(xrStringToPath(instance, (Stringizer() + "/user/hand/" + sideName + "/input/aim/pose").value.c_str(), &pathPoses[0]));
