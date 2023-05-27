@@ -879,6 +879,19 @@ namespace
 			a *= Quat();
 			CAGE_TEST(a == Vec3(3, 4, 5));
 		}
+
+		{
+			CAGE_TESTCASE("toAxisAngle");
+			for (uint32 i = 0; i < 100; i++)
+			{
+				const Quat q1 = i == 0 ? Quat() : randomDirectionQuat();
+				Vec3 axis;
+				Rads angle;
+				toAxisAngle(q1, axis, angle);
+				const Quat q2 = Quat(axis, angle);
+				test(q1, q2);
+			}
+		}
 	}
 
 	void testMathMat3()
