@@ -1,5 +1,5 @@
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/files.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {
@@ -56,20 +56,11 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() override
-			{
-				return pos;
-			}
+			uintPtr tell() override { return pos; }
 
-			uintPtr size() override
-			{
-				return buf->size();
-			}
+			uintPtr size() override { return buf->size(); }
 
-			FileMode mode() const override
-			{
-				return myMode;
-			}
+			FileMode mode() const override { return myMode; }
 		};
 
 		class FileRange : public File
@@ -123,26 +114,17 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() override
-			{
-				return pos;
-			}
+			uintPtr tell() override { return pos; }
 
-			uintPtr size() override
-			{
-				return buf.size();
-			}
+			uintPtr size() override { return buf.size(); }
 
-			FileMode mode() const override
-			{
-				return myMode;
-			}
+			FileMode mode() const override { return myMode; }
 		};
 	}
 
 	Holder<File> newFileBuffer(Holder<PointerRange<const char>> buffer)
 	{
-		PointerRange<char> *r = (PointerRange<char>*)+buffer;
+		PointerRange<char> *r = (PointerRange<char> *)+buffer;
 		Holder<PointerRange<char>> tmp = Holder<PointerRange<char>>(r, std::move(buffer));
 		return newFileBuffer(std::move(tmp), FileMode(true, false));
 	}

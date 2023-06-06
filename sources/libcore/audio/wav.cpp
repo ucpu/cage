@@ -21,16 +21,16 @@ namespace cage
 			{
 				switch (wav.bitsPerSample)
 				{
-				case 16:
-					impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S16);
-					if (drwav_read_pcm_frames_s16(&wav, impl->frames, (sint16 *)impl->mem.data()) != impl->frames)
-						CAGE_THROW_ERROR(Exception, "failed to read s16 samples in decoding wav sound");
-					break;
-				case 32:
-					impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S32);
-					if (drwav_read_pcm_frames_s32(&wav, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
-						CAGE_THROW_ERROR(Exception, "failed to read s32 samples in decoding wav sound");
-					break;
+					case 16:
+						impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S16);
+						if (drwav_read_pcm_frames_s16(&wav, impl->frames, (sint16 *)impl->mem.data()) != impl->frames)
+							CAGE_THROW_ERROR(Exception, "failed to read s16 samples in decoding wav sound");
+						break;
+					case 32:
+						impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S32);
+						if (drwav_read_pcm_frames_s32(&wav, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
+							CAGE_THROW_ERROR(Exception, "failed to read s32 samples in decoding wav sound");
+						break;
 				}
 			}
 			if (impl->format == AudioFormatEnum::Default)
@@ -64,20 +64,20 @@ namespace cage
 		format.channels = impl->channels;
 		switch (impl->format)
 		{
-		case AudioFormatEnum::S16:
-			format.format = DR_WAVE_FORMAT_PCM;
-			format.bitsPerSample = 16;
-			break;
-		case AudioFormatEnum::S32:
-			format.format = DR_WAVE_FORMAT_PCM;
-			format.bitsPerSample = 32;
-			break;
-		case AudioFormatEnum::Float:
-			format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
-			format.bitsPerSample = 32;
-			break;
-		default:
-			CAGE_THROW_CRITICAL(NotImplemented, "wav encode unsupported format");
+			case AudioFormatEnum::S16:
+				format.format = DR_WAVE_FORMAT_PCM;
+				format.bitsPerSample = 16;
+				break;
+			case AudioFormatEnum::S32:
+				format.format = DR_WAVE_FORMAT_PCM;
+				format.bitsPerSample = 32;
+				break;
+			case AudioFormatEnum::Float:
+				format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
+				format.bitsPerSample = 32;
+				break;
+			default:
+				CAGE_THROW_CRITICAL(NotImplemented, "wav encode unsupported format");
 		}
 		format.sampleRate = impl->sampleRate;
 		if (!drwav_init_memory_write_sequential_pcm_frames(&wav, &buffer, &size, &format, impl->frames, nullptr))

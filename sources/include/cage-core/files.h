@@ -32,8 +32,7 @@ namespace cage
 
 	struct CAGE_CORE_API FileMode
 	{
-		explicit FileMode(bool read, bool write) : read(read), write(write)
-		{}
+		explicit FileMode(bool read, bool write) : read(read), write(write) {}
 
 		bool valid() const;
 		String mode() const;
@@ -108,8 +107,8 @@ namespace cage
 	struct CAGE_CORE_API PathLastChange
 	{
 		uint64 data = 0;
-		auto operator <=> (const PathLastChange &) const = default;
-		bool operator == (const PathLastChange &) const = default;
+		auto operator<=>(const PathLastChange &) const = default;
+		bool operator==(const PathLastChange &) const = default;
 	};
 	CAGE_CORE_API PathLastChange pathLastChange(const String &path);
 

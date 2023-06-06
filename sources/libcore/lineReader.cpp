@@ -43,11 +43,9 @@ namespace cage
 		class LineReaderImpl : public LineReader
 		{
 		public:
-			LineReaderImpl(const char *buff, uintPtr size) : buffer(buff), size(size)
-			{}
+			LineReaderImpl(const char *buff, uintPtr size) : buffer(buff), size(size) {}
 
-			LineReaderImpl(MemoryBuffer &&buff) : mb(std::move(buff)), buffer(mb.data()), size(mb.size())
-			{}
+			LineReaderImpl(MemoryBuffer &&buff) : mb(std::move(buff)), buffer(mb.data()), size(mb.size()) {}
 
 			MemoryBuffer mb;
 			const char *buffer = nullptr;
@@ -75,7 +73,7 @@ namespace cage
 
 	uintPtr LineReader::remaining() const
 	{
-		LineReaderImpl *impl = (LineReaderImpl*)this;
+		LineReaderImpl *impl = (LineReaderImpl *)this;
 		return impl->size;
 	}
 

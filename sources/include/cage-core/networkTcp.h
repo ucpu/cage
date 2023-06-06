@@ -1,8 +1,8 @@
 #ifndef guard_networkTcp_h_olkjhgv56ce
 #define guard_networkTcp_h_olkjhgv56ce
 
-#include "networkUtils.h"
 #include "files.h"
+#include "networkUtils.h"
 
 namespace cage
 {

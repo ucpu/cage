@@ -1,7 +1,7 @@
-#include <cage-core/core.h>
-#include <cage-core/config.h>
-#include <cage-core/networkGinnel.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/core.h>
+#include <cage-core/networkGinnel.h>
 
 using namespace cage;
 
@@ -17,10 +17,7 @@ struct Thr
 	Runner runner;
 	bool done = false;
 
-	Thr(Holder<Conn> conn) : conn(std::move(conn))
-	{
-		thr = newThread(Delegate<void()>().bind<Thr, &Thr::entry>(this), "thr");
-	}
+	Thr(Holder<Conn> conn) : conn(std::move(conn)) { thr = newThread(Delegate<void()>().bind<Thr, &Thr::entry>(this), "thr"); }
 
 	void entry()
 	{

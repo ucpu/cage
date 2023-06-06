@@ -1,7 +1,7 @@
-#include <cage-core/core.h>
-#include <cage-core/config.h>
-#include <cage-core/networkGinnel.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/core.h>
+#include <cage-core/networkGinnel.h>
 
 using namespace cage;
 

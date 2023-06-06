@@ -1,7 +1,7 @@
 #include <cage-core/geometry.h>
 
 #if defined(_MSC_VER) && _MSC_VER > 1930
-#pragma optimize("", off)
+	#pragma optimize("", off)
 #endif
 
 namespace cage
@@ -25,8 +25,6 @@ namespace cage
 			return acos(dot(a, b));
 		}
 	}
-
-
 
 	Rads angle(const Line &a, const Line &b)
 	{
@@ -57,8 +55,6 @@ namespace cage
 	{
 		return angle(a.normal, b.normal);
 	}
-
-
 
 	Real distance(const Vec3 &a, const Line &b)
 	{
@@ -161,11 +157,7 @@ namespace cage
 	{
 		if (intersects(a, b))
 			return 0;
-		return min(min(
-			distance(a[0], b),
-			distance(a[1], b)),
-			distance(a[2], b)
-		);
+		return min(min(distance(a[0], b), distance(a[1], b)), distance(a[2], b));
 	}
 
 	Real distance(const Triangle &a, const Sphere &b)
@@ -177,38 +169,12 @@ namespace cage
 	{
 		if (intersects(a, b))
 			return 0;
-		const Vec3 v[8] = {
-			Vec3(b.a[0], b.a[1], b.a[2]),
-			Vec3(b.b[0], b.a[1], b.a[2]),
-			Vec3(b.a[0], b.b[1], b.a[2]),
-			Vec3(b.b[0], b.b[1], b.a[2]),
-			Vec3(b.a[0], b.a[1], b.b[2]),
-			Vec3(b.b[0], b.a[1], b.b[2]),
-			Vec3(b.a[0], b.b[1], b.b[2]),
-			Vec3(b.b[0], b.b[1], b.b[2])
-		};
-		static constexpr const uint32 ids[12 * 3] =  {
-			0, 1, 2,
-			1, 2, 3,
-			4, 5, 6,
-			5, 6, 7,
-			0, 1, 4,
-			1, 4, 5,
-			2, 3, 6,
-			3, 6, 7,
-			0, 2, 4,
-			2, 4, 6,
-			1, 3, 5,
-			3, 5, 7
-		};
+		const Vec3 v[8] = { Vec3(b.a[0], b.a[1], b.a[2]), Vec3(b.b[0], b.a[1], b.a[2]), Vec3(b.a[0], b.b[1], b.a[2]), Vec3(b.b[0], b.b[1], b.a[2]), Vec3(b.a[0], b.a[1], b.b[2]), Vec3(b.b[0], b.a[1], b.b[2]), Vec3(b.a[0], b.b[1], b.b[2]), Vec3(b.b[0], b.b[1], b.b[2]) };
+		static constexpr const uint32 ids[12 * 3] = { 0, 1, 2, 1, 2, 3, 4, 5, 6, 5, 6, 7, 0, 1, 4, 1, 4, 5, 2, 3, 6, 3, 6, 7, 0, 2, 4, 2, 4, 6, 1, 3, 5, 3, 5, 7 };
 		Real d = Real::Infinity();
 		for (uint32 i = 0; i < 12; i++)
 		{
-			const Triangle t(
-				v[ids[i * 3 + 0]],
-				v[ids[i * 3 + 1]],
-				v[ids[i * 3 + 2]]
-			);
+			const Triangle t(v[ids[i * 3 + 0]], v[ids[i * 3 + 1]], v[ids[i * 3 + 2]]);
 			d = min(d, distance(t, a));
 		}
 		return d;
@@ -310,8 +276,6 @@ namespace cage
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
-
-
 
 	bool intersects(const Vec3 &a, const Vec3 &b)
 	{
@@ -538,8 +502,10 @@ namespace cage
 			return false;
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (a.b.data[i] < b.a.data[i]) return false;
-			if (a.a.data[i] > b.b.data[i]) return false;
+			if (a.b.data[i] < b.a.data[i])
+				return false;
+			if (a.a.data[i] > b.b.data[i])
+				return false;
 		}
 		return true;
 	}
@@ -551,10 +517,7 @@ namespace cage
 		{
 			const Vec4 &p = frustum.planes[i]; // current plane
 			const Vec3 pv = Vec3( // current p-vertex
-				b[!!(p[0] > 0)][0],
-				b[!!(p[1] > 0)][1],
-				b[!!(p[2] > 0)][2]
-			);
+			    b[!!(p[0] > 0)][0], b[!!(p[1] > 0)][1], b[!!(p[2] > 0)][2]);
 			const Real d = dot(Vec3(p), pv);
 			if (d < -p[3])
 				return false;
@@ -571,8 +534,6 @@ namespace cage
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
-
-
 
 	Vec3 intersection(const Line &ray, const Triangle &tri)
 	{
@@ -672,8 +633,6 @@ namespace cage
 			return Aabb();
 	}
 
-
-
 	Vec3 closestPoint(const Vec3 &p, const Line &l)
 	{
 		Real d = dot(p - l.origin, l.direction);
@@ -741,5 +700,5 @@ namespace cage
 }
 
 #if defined(_MSC_VER) && _MSC_VER > 1930
-#pragma optimize("", on)
+	#pragma optimize("", on)
 #endif

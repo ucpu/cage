@@ -1,13 +1,13 @@
 #include "main.h"
 
-#include <cage-core/config.h>
-#include <cage-core/networkGinnel.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/math.h>
-#include <cage-core/memoryBuffer.h>
-#include <vector>
 #include <algorithm>
 #include <atomic>
+#include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/math.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/networkGinnel.h>
+#include <vector>
 
 namespace
 {

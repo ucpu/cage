@@ -1,39 +1,39 @@
-#include <cage-core/skeletalAnimationPreparator.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/skeletalAnimation.h>
-#include <cage-core/entitiesVisitor.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
+#include <cage-core/camera.h>
+#include <cage-core/color.h>
+#include <cage-core/config.h>
+#include <cage-core/entitiesVisitor.h>
+#include <cage-core/geometry.h>
 #include <cage-core/hashString.h>
 #include <cage-core/meshIoCommon.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/profiling.h>
-#include <cage-core/textPack.h>
-#include <cage-core/geometry.h>
-#include <cage-core/camera.h>
-#include <cage-core/config.h>
-#include <cage-core/color.h>
+#include <cage-core/skeletalAnimation.h>
+#include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/tasks.h>
+#include <cage-core/textPack.h>
 
+#include <cage-engine/font.h>
+#include <cage-engine/model.h>
+#include <cage-engine/opengl.h> // all the constants
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/provisionalHandles.h>
+#include <cage-engine/renderObject.h>
+#include <cage-engine/renderPipeline.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/scene.h>
 #include <cage-engine/screenSpaceEffects.h>
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/renderPipeline.h>
 #include <cage-engine/shaderProgram.h>
-#include <cage-engine/renderObject.h>
-#include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
-#include <cage-engine/opengl.h> // all the constants
-#include <cage-engine/model.h>
-#include <cage-engine/scene.h>
-#include <cage-engine/font.h>
 
 #include <algorithm>
+#include <array>
+#include <map>
 #include <optional>
 #include <vector>
-#include <map>
-#include <array>
 
 namespace cage
 {
@@ -80,10 +80,7 @@ namespace cage
 		{
 			Vec4i options[(CAGE_SHADER_MAX_OPTIONS + 3) / 4];
 
-			sint32 &operator[] (uint32 index)
-			{
-				return options[index / 4][index % 4];
-			}
+			sint32 &operator[](uint32 index) { return options[index / 4][index % 4]; }
 		};
 
 		struct ModelShared
@@ -97,10 +94,7 @@ namespace cage
 				return std::tuple{ mesh->shaderName, mesh->flags, +mesh, skeletal };
 			}
 
-			bool operator < (const ModelShared &other) const
-			{
-				return cmp() < other.cmp();
-			}
+			bool operator<(const ModelShared &other) const { return cmp() < other.cmp(); }
 		};
 
 		struct ModelInstance
@@ -209,15 +203,15 @@ namespace cage
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->target())
 				{
-				case GL_TEXTURE_2D_ARRAY:
-					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY;
-					break;
-				case GL_TEXTURE_CUBE_MAP:
-					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE;
-					break;
-				default:
-					options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D;
-					break;
+					case GL_TEXTURE_2D_ARRAY:
+						options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY;
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE;
+						break;
+					default:
+						options[CAGE_SHADER_OPTIONINDEX_MAPALBEDO] = CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D;
+						break;
 				}
 			}
 			else
@@ -227,15 +221,15 @@ namespace cage
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->target())
 				{
-				case GL_TEXTURE_2D_ARRAY:
-					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY;
-					break;
-				case GL_TEXTURE_CUBE_MAP:
-					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE;
-					break;
-				default:
-					options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D;
-					break;
+					case GL_TEXTURE_2D_ARRAY:
+						options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY;
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE;
+						break;
+					default:
+						options[CAGE_SHADER_OPTIONINDEX_MAPSPECIAL] = CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D;
+						break;
 				}
 			}
 			else
@@ -245,15 +239,15 @@ namespace cage
 			{
 				switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->target())
 				{
-				case GL_TEXTURE_2D_ARRAY:
-					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY;
-					break;
-				case GL_TEXTURE_CUBE_MAP:
-					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE;
-					break;
-				default:
-					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D;
-					break;
+					case GL_TEXTURE_2D_ARRAY:
+						options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY;
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE;
+						break;
+					default:
+						options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D;
+						break;
 				}
 			}
 			else
@@ -352,11 +346,12 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CameraData& data, const ModelShared& sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
+			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
-				const Holder<RenderQueue>& renderQueue = data.renderQueue;
+				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
-				Holder<ShaderProgram> shader = [&]() {
+				Holder<ShaderProgram> shader = [&]()
+				{
 					if (sh.mesh->shaderName)
 					{
 						uint32 variant = 0;
@@ -421,9 +416,15 @@ namespace cage
 						{
 							switch (textures[i]->target())
 							{
-							case GL_TEXTURE_2D_ARRAY: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i); break;
-							case GL_TEXTURE_CUBE_MAP: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i); break;
-							default: renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i); break;
+								case GL_TEXTURE_2D_ARRAY:
+									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
+									break;
+								case GL_TEXTURE_CUBE_MAP:
+									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
+									break;
+								default:
+									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i);
+									break;
 							}
 						}
 						else
@@ -709,33 +710,36 @@ namespace cage
 			template<PrepareModeEnum PrepareMode>
 			void prepareEntities(CameraData &data) const
 			{
-				entitiesVisitor([&](Entity *e, const RenderComponent &rc) {
-					if ((rc.sceneMask & data.camera.sceneMask) == 0)
-						return;
-					ModelPrepare prepare;
-					prepare.e = e;
-					prepare.render = rc;
-					prepare.model = modelTransform(e);
-					prepare.uni = initializeMeshUni(data, prepare.model);
-					prepare.frustum = Frustum(prepare.uni.mvpMat);
-					if (Holder<RenderObject> obj = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
-					{
-						prepareObject<PrepareMode>(data, prepare, std::move(obj));
-						return;
-					}
-					if (Holder<Model> mesh = assets->tryGet<AssetSchemeIndexModel, Model>(rc.object))
-					{
-						prepare.mesh = std::move(mesh);
-						prepareModel<PrepareMode>(data, prepare);
-						return;
-					}
-					if (cnfRenderMissingModels)
-					{
-						prepare.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
-						prepareModel<PrepareMode>(data, prepare);
-						return;
-					}
-				}, +scene, false);
+				entitiesVisitor(
+				    [&](Entity *e, const RenderComponent &rc)
+				    {
+					    if ((rc.sceneMask & data.camera.sceneMask) == 0)
+						    return;
+					    ModelPrepare prepare;
+					    prepare.e = e;
+					    prepare.render = rc;
+					    prepare.model = modelTransform(e);
+					    prepare.uni = initializeMeshUni(data, prepare.model);
+					    prepare.frustum = Frustum(prepare.uni.mvpMat);
+					    if (Holder<RenderObject> obj = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
+					    {
+						    prepareObject<PrepareMode>(data, prepare, std::move(obj));
+						    return;
+					    }
+					    if (Holder<Model> mesh = assets->tryGet<AssetSchemeIndexModel, Model>(rc.object))
+					    {
+						    prepare.mesh = std::move(mesh);
+						    prepareModel<PrepareMode>(data, prepare);
+						    return;
+					    }
+					    if (cnfRenderMissingModels)
+					    {
+						    prepare.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+						    prepareModel<PrepareMode>(data, prepare);
+						    return;
+					    }
+				    },
+				    +scene, false);
 
 				if constexpr (PrepareMode == PrepareModeEnum::Camera)
 				{
@@ -743,31 +747,34 @@ namespace cage
 					for (auto &it : data.layers)
 						std::sort(it.second.translucent.begin(), it.second.translucent.end(), [](const auto &a, const auto &b) { return a.depth > b.depth; });
 
-					entitiesVisitor([&](Entity *e, const TextComponent &tc_) {
-						if ((tc_.sceneMask & data.camera.sceneMask) == 0)
-							return;
-						TextComponent pt = tc_;
-						TextPrepare prepare;
-						if (!pt.font)
-							pt.font = HashString("cage/font/ubuntu/regular.ttf");
-						prepare.font = assets->tryGet<AssetSchemeIndexFont, Font>(pt.font);
-						if (!prepare.font)
-							return;
-						const String str = loadFormattedString(assets, pt.assetName, pt.textName, pt.value);
-						const uint32 count = prepare.font->glyphsCount(str);
-						if (count == 0)
-							return;
-						prepare.glyphs.resize(count);
-						prepare.font->transcript(str, prepare.glyphs);
-						prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
-						prepare.format.size = 1;
-						prepare.format.align = pt.align;
-						prepare.format.lineSpacing = pt.lineSpacing;
-						const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
-						prepare.format.wrapWidth = size[0];
-						prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
-						data.layers[0].texts.push_back(std::move(prepare));
-					}, +scene, false);
+					entitiesVisitor(
+					    [&](Entity *e, const TextComponent &tc_)
+					    {
+						    if ((tc_.sceneMask & data.camera.sceneMask) == 0)
+							    return;
+						    TextComponent pt = tc_;
+						    TextPrepare prepare;
+						    if (!pt.font)
+							    pt.font = HashString("cage/font/ubuntu/regular.ttf");
+						    prepare.font = assets->tryGet<AssetSchemeIndexFont, Font>(pt.font);
+						    if (!prepare.font)
+							    return;
+						    const String str = loadFormattedString(assets, pt.assetName, pt.textName, pt.value);
+						    const uint32 count = prepare.font->glyphsCount(str);
+						    if (count == 0)
+							    return;
+						    prepare.glyphs.resize(count);
+						    prepare.font->transcript(str, prepare.glyphs);
+						    prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
+						    prepare.format.size = 1;
+						    prepare.format.align = pt.align;
+						    prepare.format.lineSpacing = pt.lineSpacing;
+						    const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
+						    prepare.format.wrapWidth = size[0];
+						    prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
+						    data.layers[0].texts.push_back(std::move(prepare));
+					    },
+					    +scene, false);
 				}
 			}
 
@@ -843,25 +850,33 @@ namespace cage
 				}
 
 				// add unshadowed lights
-				entitiesVisitor([&](Entity *e, const LightComponent &lc) {
-					if ((lc.sceneMask & data.camera.sceneMask) == 0)
-						return;
-					if (e->has<ShadowmapComponent>())
-						return;
-					if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
-						CAGE_THROW_ERROR(Exception, "too many lights");
-					UniLight uni = initializeLightUni(modelTransform(e), lc);
-					uni.iparams[0] = [&]() {
-						switch (lc.lightType)
-						{
-						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
-						case LightTypeEnum::Spot: return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
-						case LightTypeEnum::Point: return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
-						default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
-						}
-					}();
-					lights.push_back(uni);
-				}, +scene, false);
+				entitiesVisitor(
+				    [&](Entity *e, const LightComponent &lc)
+				    {
+					    if ((lc.sceneMask & data.camera.sceneMask) == 0)
+						    return;
+					    if (e->has<ShadowmapComponent>())
+						    return;
+					    if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
+						    CAGE_THROW_ERROR(Exception, "too many lights");
+					    UniLight uni = initializeLightUni(modelTransform(e), lc);
+					    uni.iparams[0] = [&]()
+					    {
+						    switch (lc.lightType)
+						    {
+							    case LightTypeEnum::Directional:
+								    return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
+							    case LightTypeEnum::Spot:
+								    return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
+							    case LightTypeEnum::Point:
+								    return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
+							    default:
+								    CAGE_THROW_CRITICAL(Exception, "invalid light type");
+						    }
+					    }();
+					    lights.push_back(uni);
+				    },
+				    +scene, false);
 
 				data.lightsCount = numeric_cast<uint32>(lights.size());
 				if (!lights.empty())
@@ -887,24 +902,30 @@ namespace cage
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
-				TextureHandle colorTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution, [resolution = data.resolution](Texture *t) {
-						t->initialize(resolution, 1, GL_RGBA16F);
-						t->filters(GL_LINEAR, GL_LINEAR, 0);
-						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					});
+				TextureHandle colorTexture = [&]()
+				{
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution,
+					    [resolution = data.resolution](Texture *t)
+					    {
+						    t->initialize(resolution, 1, GL_RGBA16F);
+						    t->filters(GL_LINEAR, GL_LINEAR, 0);
+						    t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					    });
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeColor.share();
 					data.debugVisualizations.push_back(std::move(deb));
 					return t;
 				}();
-				TextureHandle depthTexture = [&]() {
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution, [resolution = data.resolution](Texture *t) {
-						t->initialize(resolution, 1, GL_DEPTH_COMPONENT32);
-						t->filters(GL_LINEAR, GL_LINEAR, 0);
-						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					});
+				TextureHandle depthTexture = [&]()
+				{
+					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution,
+					    [resolution = data.resolution](Texture *t)
+					    {
+						    t->initialize(resolution, 1, GL_DEPTH_COMPONENT32);
+						    t->filters(GL_LINEAR, GL_LINEAR, 0);
+						    t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					    });
 					RenderPipelineDebugVisualization deb;
 					deb.texture = t;
 					deb.shader = shaderVisualizeDepth.share();
@@ -938,13 +959,16 @@ namespace cage
 				{
 					const Vec2i ssaoResolution = data.resolution / 3;
 
-					TextureHandle depthTextureLowRes = [&]() {
+					TextureHandle depthTextureLowRes = [&]()
+					{
 						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name + "_" + data.resolution, [ssaoResolution](Texture *t) {
-							t->initialize(ssaoResolution, 1, GL_R32F);
-							t->filters(GL_NEAREST, GL_NEAREST, 0);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						});
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + data.name + "_" + data.resolution,
+						    [ssaoResolution](Texture *t)
+						    {
+							    t->initialize(ssaoResolution, 1, GL_R32F);
+							    t->filters(GL_NEAREST, GL_NEAREST, 0);
+							    t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						    });
 						RenderPipelineDebugVisualization deb;
 						deb.texture = t;
 						deb.shader = shaderVisualizeDepth.share();
@@ -999,12 +1023,15 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("effects");
 
 					TextureHandle texSource = colorTexture;
-					TextureHandle texTarget = [&]() {
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution, [resolution = data.resolution](Texture *t) {
-							t->initialize(resolution, 1, GL_RGBA16F);
-							t->filters(GL_LINEAR, GL_LINEAR, 0);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						});
+					TextureHandle texTarget = [&]()
+					{
+						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution,
+						    [resolution = data.resolution](Texture *t)
+						    {
+							    t->initialize(resolution, 1, GL_RGBA16F);
+							    t->filters(GL_LINEAR, GL_LINEAR, 0);
+							    t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						    });
 						return t;
 					}();
 
@@ -1138,50 +1165,58 @@ namespace cage
 				data.resolution = Vec2i(data.shadowmapComponent.resolution);
 				data.model = modelTransform(e);
 				data.view = inverse(data.model);
-				data.projection = [&]() {
+				data.projection = [&]()
+				{
 					const auto &sc = data.shadowmapComponent;
 					switch (data.lightComponent.lightType)
 					{
-					case LightTypeEnum::Directional: return orthographicProjection(-sc.worldSize[0], sc.worldSize[0], -sc.worldSize[1], sc.worldSize[1], -sc.worldSize[2], sc.worldSize[2]);
-					case LightTypeEnum::Spot: return perspectiveProjection(data.lightComponent.spotAngle, 1, sc.worldSize[0], sc.worldSize[1]);
-					case LightTypeEnum::Point: return perspectiveProjection(Degs(90), 1, sc.worldSize[0], sc.worldSize[1]);
-					default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
+						case LightTypeEnum::Directional:
+							return orthographicProjection(-sc.worldSize[0], sc.worldSize[0], -sc.worldSize[1], sc.worldSize[1], -sc.worldSize[2], sc.worldSize[2]);
+						case LightTypeEnum::Spot:
+							return perspectiveProjection(data.lightComponent.spotAngle, 1, sc.worldSize[0], sc.worldSize[1]);
+						case LightTypeEnum::Point:
+							return perspectiveProjection(Degs(90), 1, sc.worldSize[0], sc.worldSize[1]);
+						default:
+							CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 				}();
 				data.viewProj = data.projection * data.view;
 				data.lodSelection = camera.lodSelection;
-				static constexpr Mat4 bias = Mat4(
-					0.5, 0.0, 0.0, 0.0,
-					0.0, 0.5, 0.0, 0.0,
-					0.0, 0.0, 0.5, 0.0,
-					0.5, 0.5, 0.5, 1.0);
+				static constexpr Mat4 bias = Mat4(0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
 				data.shadowMat = bias * data.viewProj;
 
 				{
 					const String name = Stringizer() + data.name + "_" + data.resolution;
-					data.shadowTexture = provisionalGraphics->texture(name, data.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D, [resolution = data.resolution, format = data.lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t) {
-						t->initialize(resolution, 1, format);
-						t->filters(GL_LINEAR, GL_LINEAR, 16);
-						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					});
+					data.shadowTexture = provisionalGraphics->texture(name, data.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D,
+					    [resolution = data.resolution, format = data.lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t)
+					    {
+						    t->initialize(resolution, 1, format);
+						    t->filters(GL_LINEAR, GL_LINEAR, 16);
+						    t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					    });
 				}
 
 				{
 					UniLight &uni = data.shadowUni;
 					uni = initializeLightUni(data.model, data.lightComponent);
 					uni.fparams[2] = e->value<ShadowmapComponent>().normalOffsetScale;
-					uni.iparams[0] = [&]() {
+					uni.iparams[0] = [&]()
+					{
 						switch (data.lightComponent.lightType)
 						{
-						case LightTypeEnum::Directional: return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW;
-						case LightTypeEnum::Spot: return CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW;
-						case LightTypeEnum::Point: return CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW;
-						default: CAGE_THROW_CRITICAL(Exception, "invalid light type");
+							case LightTypeEnum::Directional:
+								return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW;
+							case LightTypeEnum::Spot:
+								return CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW;
+							case LightTypeEnum::Point:
+								return CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW;
+							default:
+								CAGE_THROW_CRITICAL(Exception, "invalid light type");
 						}
 					}();
 				}
 
-				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr), 1, tasksCurrentPriority() + 9);
+				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData &, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr), 1, tasksCurrentPriority() + 9);
 			}
 
 			RenderPipelineResult prepareCamera(const RenderPipelineCamera &camera) const
@@ -1192,12 +1227,15 @@ namespace cage
 				(RenderPipelineCamera &)data = camera;
 
 				std::vector<Holder<AsyncTask>> tasks;
-				entitiesVisitor([&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) {
-					if ((lc.sceneMask & data.camera.sceneMask) == 0)
-						return;
-					tasks.push_back(prepareShadowmap(data, e, lc, sc));
-				}, +scene, false);
-				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData&, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr), 1, tasksCurrentPriority() + 10));
+				entitiesVisitor(
+				    [&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+				    {
+					    if ((lc.sceneMask & data.camera.sceneMask) == 0)
+						    return;
+					    tasks.push_back(prepareShadowmap(data, e, lc, sc));
+				    },
+				    +scene, false);
+				tasks.push_back(tasksRunAsync<CameraData>("render camera task", Delegate<void(CameraData &, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this), Holder<CameraData>(&data, nullptr), 1, tasksCurrentPriority() + 10));
 				for (const auto &it : tasks)
 					it->wait();
 

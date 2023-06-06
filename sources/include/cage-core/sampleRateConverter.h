@@ -25,8 +25,7 @@ namespace cage
 		uint32 channels = 0;
 		uint32 quality = DefaultQuality; // 0 = nearest neighbor, 1 = linear, 2 = low, 3 = medium, 4 = high
 
-		SampleRateConverterCreateConfig(uint32 channels) : channels(channels)
-		{}
+		SampleRateConverterCreateConfig(uint32 channels) : channels(channels) {}
 	};
 
 	CAGE_CORE_API Holder<SampleRateConverter> newSampleRateConverter(const SampleRateConverterCreateConfig &config);

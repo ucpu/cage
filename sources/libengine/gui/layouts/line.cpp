@@ -8,8 +8,7 @@ namespace cage
 		{
 			const GuiLayoutLineComponent &data;
 
-			LineImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutLine))
-			{}
+			LineImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutLine)) {}
 
 			void initialize() override
 			{
@@ -30,10 +29,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			CAGE_FORCE_INLINE uint32 edgeIndex(const Holder<HierarchyItem> &c) const
-			{
-				return &c == &hierarchy->children.front() ? 0 : &c == &hierarchy->children.back() ? 2 : 1;
-			}
+			CAGE_FORCE_INLINE uint32 edgeIndex(const Holder<HierarchyItem> &c) const { return &c == &hierarchy->children.front() ? 0 : &c == &hierarchy->children.back() ? 2 : 1; }
 
 			CAGE_FORCE_INLINE Vec3 edgeRequests() const
 			{

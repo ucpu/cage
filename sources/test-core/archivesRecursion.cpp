@@ -1,10 +1,10 @@
 #include "main.h"
 
+#include <cage-core/concurrent.h>
 #include <cage-core/files.h>
+#include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-core/math.h>
-#include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 
 namespace
@@ -34,10 +34,10 @@ namespace
 			pathCreateArchive(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
-				{ ScopeLock lck(barrier); }
-				const String name = Mode == 0
-					? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin"
-					: Stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				{
+					ScopeLock lck(barrier);
+				}
+				const String name = Mode == 0 ? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin" : Stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{

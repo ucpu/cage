@@ -1,15 +1,15 @@
-#include <cage-core/networkDiscovery.h>
-#include <cage-core/guid.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
-#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/guid.h>
 #include <cage-core/hashString.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/networkDiscovery.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
 
 #include "net.h"
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace cage
 {
@@ -30,10 +30,7 @@ namespace cage
 			Guid<IdSize> guid;
 			uint32 ttl = 0;
 
-			bool operator < (const Peer &p) const
-			{
-				return guid < p.guid;
-			}
+			bool operator<(const Peer &p) const { return guid < p.guid; }
 		};
 
 		class DiscoveryClientImpl : public DiscoveryClient
@@ -74,10 +71,12 @@ namespace cage
 
 			void update()
 			{
-				std::erase_if((std::vector<Peer>&)peers, [](Peer &p) -> bool {
-					CAGE_ASSERT(p.ttl > 0);
-					return --p.ttl == 0;
-				});
+				std::erase_if((std::vector<Peer> &)peers,
+				    [](Peer &p) -> bool
+				    {
+					    CAGE_ASSERT(p.ttl > 0);
+					    return --p.ttl == 0;
+				    });
 				detail::OverrideBreakpoint OverrideBreakpoint;
 				MemoryBuffer buffer;
 				for (Sock &s : sockets)

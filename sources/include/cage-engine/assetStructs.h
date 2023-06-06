@@ -34,8 +34,12 @@ namespace cage
 
 	enum class TextureSwizzleEnum : uint8
 	{
-		Zero, One,
-		R, G, B, A,
+		Zero,
+		One,
+		R,
+		G,
+		B,
+		A,
 	};
 
 	struct CAGE_ENGINE_API TextureHeader
@@ -85,7 +89,7 @@ namespace cage
 		Vec3 color;
 		Real intensity;
 		Real opacity;
-		
+
 		Real texAnimSpeed;
 		Real texAnimOffset;
 		uint32 skelAnimName;

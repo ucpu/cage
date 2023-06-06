@@ -1,16 +1,13 @@
+#include <avir/lancir.h>
 #include <cage-core/image.h>
 #include <cage-core/memoryUtils.h>
-#include <avir/lancir.h>
 
 namespace cage
 {
 	namespace
 	{
 		template<class T>
-		void imageResizeImpl(
-			const T *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
-			      T *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
-			uint32 channels)
+		void imageResizeImpl(const T *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth, T *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth, uint32 channels)
 		{
 			if (sourceDepth != 1 || targetDepth != 1)
 			{
@@ -25,26 +22,14 @@ namespace cage
 
 	namespace detail
 	{
-		void imageResize(
-			const uint8 *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
-			      uint8 *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
-			uint32 channels)
+		void imageResize(const uint8 *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth, uint8 *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth, uint32 channels)
 		{
-			imageResizeImpl<uint8>(
-				sourceData, sourceWidth, sourceHeight, sourceDepth,
-				targetData, targetWidth, targetHeight, targetDepth,
-				channels);
+			imageResizeImpl<uint8>(sourceData, sourceWidth, sourceHeight, sourceDepth, targetData, targetWidth, targetHeight, targetDepth, channels);
 		}
 
-		void imageResize(
-			const float *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
-			      float *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
-			uint32 channels)
+		void imageResize(const float *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth, float *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth, uint32 channels)
 		{
-			imageResizeImpl<float>(
-				sourceData, sourceWidth, sourceHeight, sourceDepth,
-				targetData, targetWidth, targetHeight, targetDepth,
-				channels);
+			imageResizeImpl<float>(sourceData, sourceWidth, sourceHeight, sourceDepth, targetData, targetWidth, targetHeight, targetDepth, channels);
 		}
 	}
 }

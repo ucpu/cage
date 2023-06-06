@@ -11,10 +11,7 @@ namespace cage
 		{
 			GuiProgressBarComponent &data;
 
-			ProgressBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ProgressBar))
-			{
-				data.progress = saturate(data.progress);
-			}
+			ProgressBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ProgressBar)) { data.progress = saturate(data.progress); }
 
 			void initialize() override
 			{

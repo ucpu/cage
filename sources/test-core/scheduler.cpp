@@ -1,8 +1,8 @@
 #include "main.h"
 
-#include <cage-core/scheduler.h>
-#include <cage-core/math.h> // randomRange
 #include <cage-core/concurrent.h> // threadSleep
+#include <cage-core/math.h> // randomRange
+#include <cage-core/scheduler.h>
 
 namespace
 {
@@ -59,7 +59,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &inc>(&periodicCount);
+			c.action.bind<uint32 *, &inc>(&periodicCount);
 			c.name = "periodic add one";
 			c.period = 30000;
 			sch->newSchedule(c);
@@ -67,14 +67,14 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Empty;
-			c.action.bind<uint32*, &inc>(&emptyCount);
+			c.action.bind<uint32 *, &inc>(&emptyCount);
 			c.name = "empty add one";
 			sch->newSchedule(c);
 		}
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -94,7 +94,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "frequent";
 			c.period = 30000;
 			sch->newSchedule(c);
@@ -102,7 +102,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "infrequent";
 			c.period = 80000;
 			sch->newSchedule(c);
@@ -110,7 +110,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -128,7 +128,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "low priority";
 			c.period = 30000;
 			c.priority = 1;
@@ -138,7 +138,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "high priority";
 			c.period = 30000;
 			c.priority = 3;
@@ -148,7 +148,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -167,7 +167,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "steady";
 			c.period = 50000;
 			sch->newSchedule(c);
@@ -175,7 +175,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::FreePeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "free";
 			c.period = 30000;
 			sch->newSchedule(c);
@@ -183,7 +183,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -202,7 +202,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &inc>(&cnt1);
+			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "steady";
 			c.period = 30000;
 			sch->newSchedule(c);
@@ -210,14 +210,14 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::External;
-			c.action.bind<uint32*, &inc>(&cnt2);
+			c.action.bind<uint32 *, &inc>(&cnt2);
 			c.name = "external";
 			trig = sch->newSchedule(c);
 		}
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Schedule*, &trigger>(+trig);
+			c.action.bind<Schedule *, &trigger>(+trig);
 			c.name = "trigger";
 			c.delay = 100000;
 			c.priority = 50;
@@ -226,7 +226,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -246,7 +246,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
-			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "steady";
 			c.period = 30000;
 			trig = sch->newSchedule(c);
@@ -254,7 +254,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(+sch);
+			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;

@@ -1,10 +1,10 @@
 #include "processor.h"
 
-#include <cage-core/ini.h>
-#include <cage-core/hashString.h>
-#include <vector>
-#include <set>
 #include <algorithm>
+#include <cage-core/hashString.h>
+#include <cage-core/ini.h>
+#include <set>
+#include <vector>
 
 namespace
 {
@@ -54,9 +54,7 @@ void processObject()
 			ls.threshold = Real(lods.size() - ls.index) / lods.size();
 	}
 
-	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) {
-		return a.threshold > b.threshold;
-	});
+	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) { return a.threshold > b.threshold; });
 
 	std::set<uint32> deps;
 

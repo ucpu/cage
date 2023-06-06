@@ -9,28 +9,16 @@ namespace
 
 	struct HolderTester : private Immovable
 	{
-		HolderTester()
-		{
-			gCount++;
-		}
+		HolderTester() { gCount++; }
 
-		virtual ~HolderTester()
-		{
-			gCount--;
-		}
+		virtual ~HolderTester() { gCount--; }
 	};
 
 	struct HolderDerived : public HolderTester
 	{
-		HolderDerived()
-		{
-			dCount++;
-		}
+		HolderDerived() { dCount++; }
 
-		virtual ~HolderDerived()
-		{
-			dCount--;
-		}
+		virtual ~HolderDerived() { dCount--; }
 	};
 
 	void takeByReference(Holder<HolderTester> &ts)

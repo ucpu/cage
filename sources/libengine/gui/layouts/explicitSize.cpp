@@ -8,8 +8,7 @@ namespace cage
 		{
 			const GuiExplicitSizeComponent &data;
 
-			ExplicitSizeImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(ExplicitSize))
-			{}
+			ExplicitSizeImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(ExplicitSize)) {}
 
 			void initialize() override
 			{
@@ -30,10 +29,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			void findFinalPosition(const FinalPosition &update) override
-			{
-				hierarchy->children[0]->findFinalPosition(update);
-			}
+			void findFinalPosition(const FinalPosition &update) override { hierarchy->children[0]->findFinalPosition(update); }
 		};
 	}
 

@@ -1,9 +1,9 @@
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
+#include <cage-core/hashString.h>
 #include <cage-core/ini.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/hashString.h>
 
 #include "database.h"
 
@@ -28,7 +28,7 @@ std::set<String, StringComparatorFast> corruptedDatabanks;
 std::set<uint32> injectedNames;
 PathLastChange lastModificationTime;
 
-Serializer &operator << (Serializer &ser, const Asset &s)
+Serializer &operator<<(Serializer &ser, const Asset &s)
 {
 	ser << s.name << s.aliasName << s.scheme << s.databank;
 	ser << s.fields << s.files << s.references;
@@ -36,7 +36,7 @@ Serializer &operator << (Serializer &ser, const Asset &s)
 	return ser;
 }
 
-Deserializer &operator >> (Deserializer &des, Asset &s)
+Deserializer &operator>>(Deserializer &des, Asset &s)
 {
 	des >> s.name >> s.aliasName >> s.scheme >> s.databank;
 	des >> s.fields >> s.files >> s.references;
@@ -270,9 +270,7 @@ void databanksSave()
 			const auto &ass = it.second;
 			items.emplace_back(ass->outputPath(), +ass);
 		}
-		std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
-			return a.first < b.first;
-		});
+		std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
 		f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 		for (const auto &it : items)
 		{
@@ -294,9 +292,7 @@ void databanksSave()
 			const auto &ass = it.second;
 			items.emplace_back(ass->name, +ass);
 		}
-		std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
-			return a.first < b.first;
-		});
+		std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
 		f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 		for (const auto &it : items)
 		{

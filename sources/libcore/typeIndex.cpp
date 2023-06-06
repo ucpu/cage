@@ -1,5 +1,5 @@
-#include <cage-core/typeIndex.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/typeIndex.h>
 
 #include <unordered_dense.h>
 

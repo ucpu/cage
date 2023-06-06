@@ -4,11 +4,14 @@
 #include "core.h"
 
 #ifdef CAGE_PROFILING_ENABLED
-#define GCHL_PROFILING_API CAGE_CORE_API
-#define GCHL_PROFILING_BODY(BODY)
+	#define GCHL_PROFILING_API CAGE_CORE_API
+	#define GCHL_PROFILING_BODY(BODY)
 #else
-#define GCHL_PROFILING_API CAGE_FORCE_INLINE
-#define GCHL_PROFILING_BODY(BODY) { BODY }
+	#define GCHL_PROFILING_API CAGE_FORCE_INLINE
+	#define GCHL_PROFILING_BODY(BODY) \
+		{ \
+			BODY \
+		}
 #endif
 
 namespace cage
@@ -37,7 +40,7 @@ namespace cage
 		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name) noexcept GCHL_PROFILING_BODY(;);
 		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(;);
-		GCHL_PROFILING_API ProfilingScope &operator = (ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
+		GCHL_PROFILING_API ProfilingScope &operator=(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
 		GCHL_PROFILING_API ~ProfilingScope() noexcept GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
 

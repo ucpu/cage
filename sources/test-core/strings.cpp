@@ -1,15 +1,15 @@
 #include "main.h"
 
-#include <cage-core/math.h>
+#include <algorithm>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
+#include <cage-core/math.h>
 #include <cage-core/string.h>
-#include <cstring>
 #include <cmath> // std::abs
+#include <cstring>
 #include <map>
-#include <vector>
-#include <algorithm>
 #include <random>
+#include <vector>
 
 void test(Real a, Real b);
 
@@ -29,11 +29,16 @@ namespace
 	{
 		switch (i)
 		{
-		case 0: return "zero";
-		case 1: return "one";
-		case 2: return "two";
-		case 3: return "three";
-		default: return "too much";
+			case 0:
+				return "zero";
+			case 1:
+				return "one";
+			case 2:
+				return "two";
+			case 3:
+				return "three";
+			default:
+				return "too much";
 		}
 	}
 
@@ -654,29 +659,27 @@ namespace
 	struct Custom
 	{
 		int value;
-		explicit Custom(int value = 0) : value(value)
-		{}
+		explicit Custom(int value = 0) : value(value) {}
 	};
 
 	template<uint32 N>
-	detail::StringizerBase<N> &operator + (detail::StringizerBase<N> &str, const Custom &other)
+	detail::StringizerBase<N> &operator+(detail::StringizerBase<N> &str, const Custom &other)
 	{
 		return str + other.value;
 	}
 
-	void functionTakingString(const String &str)
-	{}
+	void functionTakingString(const String &str) {}
 
 	void testStringizer()
 	{
 		CAGE_TESTCASE("stringizer");
 		{
 			CAGE_TESTCASE("conversions 1");
-			uint8  ui8 = 1;
+			uint8 ui8 = 1;
 			uint16 ui16 = 2;
 			uint32 ui32 = 3;
 			uint64 ui64 = 4;
-			sint8  si8 = 5;
+			sint8 si8 = 5;
 			sint16 si16 = 6;
 			sint32 si32 = 7;
 			sint64 si64 = 8;
@@ -686,11 +689,11 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("conversions 2");
-			uint8  ui8 = m;
+			uint8 ui8 = m;
 			uint16 ui16 = m;
 			uint32 ui32 = m;
 			uint64 ui64 = m;
-			sint8  si8 = m;
+			sint8 si8 = m;
 			sint16 si16 = m;
 			sint32 si32 = m;
 			sint64 si64 = m;
@@ -893,5 +896,7 @@ void testStrings()
 	testCopies2();
 	testStringizer();
 	testNaturalSort();
-	{ constexpr int a = testConstexprString(); }
+	{
+		constexpr int a = testConstexprString();
+	}
 }

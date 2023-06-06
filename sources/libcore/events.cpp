@@ -5,8 +5,7 @@ namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const std::source_location &location) : location(location), order(std::numeric_limits<sint32>::min())
-		{}
+		EventLinker::EventLinker(const std::source_location &location) : location(location), order(std::numeric_limits<sint32>::min()) {}
 
 		EventLinker::~EventLinker()
 		{
@@ -47,7 +46,7 @@ namespace cage
 			unlink();
 		}
 
-		Stringizer &operator + (Stringizer &s, const std::source_location &l)
+		Stringizer &operator+(Stringizer &s, const std::source_location &l)
 		{
 			String n = l.file_name();
 #ifdef CAGE_SYSTEM_WINDOWS

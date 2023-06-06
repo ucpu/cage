@@ -1,8 +1,8 @@
+#include <cage-core/math.h> // max
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryArena.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
-#include <cage-core/memoryArena.h>
-#include <cage-core/math.h> // max
 
 #include <vector>
 
@@ -12,8 +12,7 @@ namespace cage
 	{
 		struct MemoryAllocatorLinearImpl : private Immovable
 		{
-			explicit MemoryAllocatorLinearImpl(const MemoryAllocatorLinearCreateConfig &config) : config(config)
-			{}
+			explicit MemoryAllocatorLinearImpl(const MemoryAllocatorLinearCreateConfig &config) : config(config) {}
 
 			void updatePointers()
 			{
@@ -46,10 +45,7 @@ namespace cage
 				return allocate(size, alignment);
 			}
 
-			void deallocate(void *ptr)
-			{
-				CAGE_THROW_CRITICAL(Exception, "linear memory allocator does not support individual deallocations");
-			}
+			void deallocate(void *ptr) { CAGE_THROW_CRITICAL(Exception, "linear memory allocator does not support individual deallocations"); }
 
 			void flush()
 			{
@@ -77,8 +73,7 @@ namespace cage
 				sint32 cnt = 0;
 			};
 
-			explicit MemoryAllocatorStreamImpl(const MemoryAllocatorStreamCreateConfig &config) : config(config)
-			{}
+			explicit MemoryAllocatorStreamImpl(const MemoryAllocatorStreamCreateConfig &config) : config(config) {}
 
 			void updatePointers()
 			{

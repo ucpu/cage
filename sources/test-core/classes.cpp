@@ -35,14 +35,8 @@ namespace
 	{
 	public:
 		int countingDerived;
-		CountingDerived() : countingDerived(5)
-		{
-			count++;
-		}
-		~CountingDerived()
-		{
-			count--;
-		}
+		CountingDerived() : countingDerived(5) { count++; }
+		~CountingDerived() { count--; }
 
 		static int count;
 	};
@@ -74,13 +68,13 @@ void testClasses()
 		Holder<Base> bh = systemMemory().createImpl<Base, Derived>();
 		Base *a = +ah;
 		Base *b = +bh;
-		CAGE_TEST(class_cast<Base*>(a));
-		CAGE_TEST(class_cast<Base*>(b));
-		CAGE_TEST(class_cast<Derived*>(b));
-		CAGE_TEST_ASSERTED(class_cast<OtherDerived*>(b));
+		CAGE_TEST(class_cast<Base *>(a));
+		CAGE_TEST(class_cast<Base *>(b));
+		CAGE_TEST(class_cast<Derived *>(b));
+		CAGE_TEST_ASSERTED(class_cast<OtherDerived *>(b));
 		Base *n = nullptr;
-		CAGE_TEST(class_cast<Base*>(n) == nullptr);
-		CAGE_TEST(class_cast<Derived*>(n) == nullptr);
+		CAGE_TEST(class_cast<Base *>(n) == nullptr);
+		CAGE_TEST(class_cast<Derived *>(n) == nullptr);
 	}
 
 	{

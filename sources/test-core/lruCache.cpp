@@ -12,13 +12,10 @@ namespace
 
 	struct Hasher
 	{
-		auto operator () (const Key &k) const
-		{
-			return std::hash<uint32>()(k.k);
-		}
+		auto operator()(const Key &k) const { return std::hash<uint32>()(k.k); }
 	};
 
-	bool operator == (const Key &a, const Key &b)
+	bool operator==(const Key &a, const Key &b)
 	{
 		return a.k == b.k;
 	}

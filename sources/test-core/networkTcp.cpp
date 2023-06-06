@@ -1,10 +1,10 @@
 #include "main.h"
 
-#include <cage-core/networkTcp.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/serialization.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/math.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/networkTcp.h>
+#include <cage-core/serialization.h>
 
 namespace
 {
@@ -122,10 +122,7 @@ namespace
 			Holder<TcpConnection> conn;
 			Holder<Thread> thr;
 
-			Echo(Holder<TcpConnection> conn) : conn(std::move(conn))
-			{
-				thr = newThread(Delegate<void()>().bind<Echo, &Echo::responder>(this), "tcp responder");
-			}
+			Echo(Holder<TcpConnection> conn) : conn(std::move(conn)) { thr = newThread(Delegate<void()>().bind<Echo, &Echo::responder>(this), "tcp responder"); }
 
 			void responder()
 			{

@@ -1,14 +1,14 @@
 #include "main.h"
 
-#include <cage-core/files.h>
-#include <cage-core/serialization.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/assetManager.h>
-#include <cage-core/assetHeader.h>
-#include <cage-core/assetContext.h>
-#include <cage-core/math.h>
-#include <cage-core/config.h>
 #include <atomic>
+#include <cage-core/assetContext.h>
+#include <cage-core/assetHeader.h>
+#include <cage-core/assetManager.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/files.h>
+#include <cage-core/math.h>
+#include <cage-core/serialization.h>
 
 namespace
 {
@@ -165,10 +165,22 @@ void testAssetManager()
 		man->defineScheme<72, uint16>(genDummyScheme(detail::typeHash<uint16>()));
 		man->defineScheme<73, uint32>(genDummyScheme(detail::typeHash<uint32>()));
 		man->defineScheme<74, uint64>(genDummyScheme(detail::typeHash<uint64>()));
-		{ auto a = man->tryGet<71, uint8>(42); CAGE_TEST(!a); }
-		{ auto a = man->tryGet<72, uint16>(42); CAGE_TEST(!a); }
-		{ auto a = man->tryGet<73, uint32>(42); CAGE_TEST(!a); }
-		{ auto a = man->tryGet<74, uint64>(42); CAGE_TEST(!a); }
+		{
+			auto a = man->tryGet<71, uint8>(42);
+			CAGE_TEST(!a);
+		}
+		{
+			auto a = man->tryGet<72, uint16>(42);
+			CAGE_TEST(!a);
+		}
+		{
+			auto a = man->tryGet<73, uint32>(42);
+			CAGE_TEST(!a);
+		}
+		{
+			auto a = man->tryGet<74, uint64>(42);
+			CAGE_TEST(!a);
+		}
 		CAGE_TEST_ASSERTED((man->tryGet<71, uint64>(42)));
 		CAGE_TEST_ASSERTED((man->tryGet<72, uint8>(42)));
 		CAGE_TEST_ASSERTED((man->tryGet<73, uint16>(42)));

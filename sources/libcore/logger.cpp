@@ -1,19 +1,19 @@
-#include <cage-core/logger.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/files.h>
-#include <cage-core/timer.h>
 #include <cage-core/config.h>
-#include <cage-core/systemInformation.h>
 #include <cage-core/debug.h>
+#include <cage-core/files.h>
+#include <cage-core/logger.h>
 #include <cage-core/string.h>
+#include <cage-core/systemInformation.h>
+#include <cage-core/timer.h>
 
-#include <cstdio>
-#include <exception>
 #include <chrono>
+#include <cstdio>
 #include <ctime>
+#include <exception>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "incWin.h" // SetConsoleCP
+	#include "incWin.h" // SetConsoleCP
 #endif
 
 namespace cage
@@ -128,13 +128,20 @@ namespace cage
 		{
 			switch (severity)
 			{
-			case SeverityEnum::Hint: return "hint";
-			case SeverityEnum::Note: return "note";
-			case SeverityEnum::Info: return "info";
-			case SeverityEnum::Warning: return "warn";
-			case SeverityEnum::Error: return "EROR";
-			case SeverityEnum::Critical: return "CRIT";
-			default: return "UNKN";
+				case SeverityEnum::Hint:
+					return "hint";
+				case SeverityEnum::Note:
+					return "note";
+				case SeverityEnum::Info:
+					return "info";
+				case SeverityEnum::Warning:
+					return "warn";
+				case SeverityEnum::Error:
+					return "EROR";
+				case SeverityEnum::Critical:
+					return "CRIT";
+				default:
+					return "UNKN";
 			}
 		}
 
@@ -299,10 +306,7 @@ namespace cage
 					f = newFile(path, fm);
 			}
 
-			LoggerOutputFileImpl(Holder<File> file) : f(std::move(file))
-			{
-				CAGE_ASSERT(f->mode().write);
-			}
+			LoggerOutputFileImpl(Holder<File> file) : f(std::move(file)) { CAGE_ASSERT(f->mode().write); }
 
 			Holder<File> f;
 		};
@@ -354,7 +358,7 @@ namespace cage
 #elif defined(CAGE_SYSTEM_MAC)
 					version += "mac";
 #else
-#error unknown platform
+	#error unknown platform
 #endif // CAGE_SYSTEM_WINDOWS
 					version += ", ";
 

@@ -1,10 +1,10 @@
 #include "main.h"
 
-#include <cage-core/math.h>
+#include <cage-core/color.h>
 #include <cage-core/image.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageBlocks.h>
-#include <cage-core/color.h>
+#include <cage-core/math.h>
 #include <cage-core/timer.h>
 #include <initializer_list>
 
@@ -41,7 +41,7 @@ namespace
 		{
 			for (uint32 x = 0; x < w; x++)
 			{
-				for (uint32 c = 0; c <cc; c++)
+				for (uint32 c = 0; c < cc; c++)
 					img->value(x, y, c, ((x + y + c * 10) % 256) / 255.f);
 			}
 		}

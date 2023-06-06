@@ -5,57 +5,65 @@ namespace cage
 	namespace
 	{
 		const Vec3 DefaultSpeakerDirections[8][8] = {
-			{ // mono
-				normalize(Vec3(+0, 0, -1)), // C
+			{
+			    // mono
+			    normalize(Vec3(+0, 0, -1)), // C
 			},
-			{ // stereo
-				normalize(Vec3(-1, 0, -1)), // L
-				normalize(Vec3(+1, 0, -1)), // R
+			{
+			    // stereo
+			    normalize(Vec3(-1, 0, -1)), // L
+			    normalize(Vec3(+1, 0, -1)), // R
 			},
-			{ // 3
-				normalize(Vec3(-1, 0, -1)), // L
-				normalize(Vec3(+0, 0, -1)), // C
-				normalize(Vec3(+1, 0, -1)), // R
+			{
+			    // 3
+			    normalize(Vec3(-1, 0, -1)), // L
+			    normalize(Vec3(+0, 0, -1)), // C
+			    normalize(Vec3(+1, 0, -1)), // R
 			},
-			{ // 4
-				normalize(Vec3(-1, 0, -1)), // FL
-				normalize(Vec3(+1, 0, -1)), // FR
-				normalize(Vec3(-1, 0, +1)), // RL
-				normalize(Vec3(+1, 0, +1)), // RR
+			{
+			    // 4
+			    normalize(Vec3(-1, 0, -1)), // FL
+			    normalize(Vec3(+1, 0, -1)), // FR
+			    normalize(Vec3(-1, 0, +1)), // RL
+			    normalize(Vec3(+1, 0, +1)), // RR
 			},
-			{ // 5
-				normalize(Vec3(-1, 0, -1)), // FL
-				normalize(Vec3(+0, 0, -1)), // C
-				normalize(Vec3(+1, 0, -1)), // FR
-				normalize(Vec3(-1, 0, +1)), // RL
-				normalize(Vec3(+1, 0, +1)), // RR
+			{
+			    // 5
+			    normalize(Vec3(-1, 0, -1)), // FL
+			    normalize(Vec3(+0, 0, -1)), // C
+			    normalize(Vec3(+1, 0, -1)), // FR
+			    normalize(Vec3(-1, 0, +1)), // RL
+			    normalize(Vec3(+1, 0, +1)), // RR
 			},
-			{ // 5.1
-				normalize(Vec3(-1, 0, -1)), // FL
-				normalize(Vec3(+0, 0, -1)), // C
-				normalize(Vec3(+1, 0, -1)), // FR
-				normalize(Vec3(-1, 0, +1)), // RL
-				normalize(Vec3(+1, 0, +1)), // RR
-				Vec3(0, 0, 0), // LFE
+			{
+			    // 5.1
+			    normalize(Vec3(-1, 0, -1)), // FL
+			    normalize(Vec3(+0, 0, -1)), // C
+			    normalize(Vec3(+1, 0, -1)), // FR
+			    normalize(Vec3(-1, 0, +1)), // RL
+			    normalize(Vec3(+1, 0, +1)), // RR
+			    Vec3(0, 0, 0), // LFE
 			},
-			{ // 6.1
-				normalize(Vec3(-1, 0, -1)), // FL
-				normalize(Vec3(+0, 0, -1)), // C
-				normalize(Vec3(+1, 0, -1)), // FR
-				normalize(Vec3(-1, 0, +0)), // SL
-				normalize(Vec3(+1, 0, +0)), // SR
-				normalize(Vec3(+0, 0, +1)), // RC
-				Vec3(0, 0, 0), // LFE
+			{
+			    // 6.1
+			    normalize(Vec3(-1, 0, -1)), // FL
+			    normalize(Vec3(+0, 0, -1)), // C
+			    normalize(Vec3(+1, 0, -1)), // FR
+			    normalize(Vec3(-1, 0, +0)), // SL
+			    normalize(Vec3(+1, 0, +0)), // SR
+			    normalize(Vec3(+0, 0, +1)), // RC
+			    Vec3(0, 0, 0), // LFE
 			},
-			{ // 7.1
-				normalize(Vec3(-1, 0, -1)), // FL
-				normalize(Vec3(+0, 0, -1)), // C
-				normalize(Vec3(+1, 0, -1)), // FR
-				normalize(Vec3(-1, 0, +0)), // SL
-				normalize(Vec3(+1, 0, +0)), // SR
-				normalize(Vec3(-1, 0, +1)), // RL
-				normalize(Vec3(+1, 0, +1)), // RR
-				Vec3(0, 0, 0), // LFE
+			{
+			    // 7.1
+			    normalize(Vec3(-1, 0, -1)), // FL
+			    normalize(Vec3(+0, 0, -1)), // C
+			    normalize(Vec3(+1, 0, -1)), // FR
+			    normalize(Vec3(-1, 0, +0)), // SL
+			    normalize(Vec3(+1, 0, +0)), // SR
+			    normalize(Vec3(-1, 0, +1)), // RL
+			    normalize(Vec3(+1, 0, +1)), // RR
+			    Vec3(0, 0, 0), // LFE
 			},
 		};
 
@@ -64,10 +72,7 @@ namespace cage
 		public:
 			const AudioDirectionalConverterCreateConfig config;
 
-			AudioDirectionalConverterImpl(const AudioDirectionalConverterCreateConfig &config) : config(config)
-			{
-				CAGE_ASSERT(config.channels > 0 && config.channels <= 8);
-			}
+			AudioDirectionalConverterImpl(const AudioDirectionalConverterCreateConfig &config) : config(config) { CAGE_ASSERT(config.channels > 0 && config.channels <= 8); }
 
 			void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalProcessConfig &data)
 			{

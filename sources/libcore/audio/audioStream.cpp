@@ -14,22 +14,25 @@ namespace cage
 			return;
 		switch (impl->format)
 		{
-		case AudioFormatEnum::Vorbis:
-		{
-			VorbisDecoder dec(newFileBuffer(Holder<const MemoryBuffer>(&impl->mem, nullptr)));
-			dec.seek(startFrame);
-			dec.decode(buffer);
-		} break;
-		case AudioFormatEnum::Float:
-		{
-			detail::memcpy(buffer.data(), impl->mem.data() + startFrame * channels * sizeof(float), frames * channels * sizeof(float));
-		} break;
-		default:
-		{
-			for (uintPtr f = 0; f < frames; f++)
-				for (uint32 c = 0; c < channels; c++)
-					buffer[f * channels + c] = impl->value(startFrame + f, c);
-		} break;
+			case AudioFormatEnum::Vorbis:
+			{
+				VorbisDecoder dec(newFileBuffer(Holder<const MemoryBuffer>(&impl->mem, nullptr)));
+				dec.seek(startFrame);
+				dec.decode(buffer);
+			}
+			break;
+			case AudioFormatEnum::Float:
+			{
+				detail::memcpy(buffer.data(), impl->mem.data() + startFrame * channels * sizeof(float), frames * channels * sizeof(float));
+			}
+			break;
+			default:
+			{
+				for (uintPtr f = 0; f < frames; f++)
+					for (uint32 c = 0; c < channels; c++)
+						buffer[f * channels + c] = impl->value(startFrame + f, c);
+			}
+			break;
 		}
 	}
 

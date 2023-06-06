@@ -10,25 +10,15 @@ namespace
 
 	struct Test : private Noncopyable
 	{
-		Test()
-		{
-			counter++;
-		}
+		Test() { counter++; }
 
-		Test(Test &&) noexcept
-		{
-			counter++;
-		}
+		Test(Test &&) noexcept { counter++; }
 
-		~Test()
-		{
-			counter--;
-		}
+		~Test() { counter--; }
 
-		Test &operator = (Test &&) = default;
+		Test &operator=(Test &&) = default;
 
-		void fnc()
-		{}
+		void fnc() {}
 
 	private:
 		uint32 data_[5] = {};

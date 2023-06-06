@@ -1,28 +1,28 @@
-#include <cage-core/string.h>
-#include <cage-core/files.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/files.h>
+#include <cage-core/string.h>
 
 #include <cage-engine/speaker.h>
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN
+	#define VC_EXTRALEAN
 #endif
 #ifndef NOMINMAX
-#define NOMINMAX
+	#define NOMINMAX
 #endif
 #include <../src/cubeb_ringbuffer.h>
 
 #include <cubeb/cubeb.h>
 #ifdef CAGE_SYSTEM_WINDOWS
-#include <Objbase.h>
+	#include <Objbase.h>
 #endif // CAGE_SYSTEM_WINDOWS
 
 //#define GCHL_CUBEB_LOGGING
 #ifdef GCHL_CUBEB_LOGGING
-#include <cstdarg>
+	#include <cstdarg>
 #endif
 
 #include <vector>
@@ -33,25 +33,25 @@ namespace cage
 	{
 		switch (code)
 		{
-		case CUBEB_OK:
-			return;
-		case CUBEB_ERROR:
-			CAGE_THROW_ERROR(Exception, "generic sound error");
-			break;
-		case CUBEB_ERROR_INVALID_FORMAT:
-			CAGE_THROW_ERROR(Exception, "invalid sound format");
-			break;
-		case CUBEB_ERROR_INVALID_PARAMETER:
-			CAGE_THROW_ERROR(Exception, "invalid sound parameter");
-			break;
-		case CUBEB_ERROR_NOT_SUPPORTED:
-			CAGE_THROW_ERROR(Exception, "sound not supported error");
-			break;
-		case CUBEB_ERROR_DEVICE_UNAVAILABLE:
-			CAGE_THROW_ERROR(Exception, "sound device unavailable");
-			break;
-		default:
-			CAGE_THROW_CRITICAL(SystemError, "unknown sound error", code);
+			case CUBEB_OK:
+				return;
+			case CUBEB_ERROR:
+				CAGE_THROW_ERROR(Exception, "generic sound error");
+				break;
+			case CUBEB_ERROR_INVALID_FORMAT:
+				CAGE_THROW_ERROR(Exception, "invalid sound format");
+				break;
+			case CUBEB_ERROR_INVALID_PARAMETER:
+				CAGE_THROW_ERROR(Exception, "invalid sound parameter");
+				break;
+			case CUBEB_ERROR_NOT_SUPPORTED:
+				CAGE_THROW_ERROR(Exception, "sound not supported error");
+				break;
+			case CUBEB_ERROR_DEVICE_UNAVAILABLE:
+				CAGE_THROW_ERROR(Exception, "sound device unavailable");
+				break;
+			default:
+				CAGE_THROW_CRITICAL(SystemError, "unknown sound error", code);
 		}
 	}
 
@@ -132,8 +132,7 @@ namespace cage
 			const uint32 channels = 0;
 			const uint32 sampleRate = 0;
 
-			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SoundCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate)
-			{}
+			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SoundCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate) {}
 
 			void process(uint64 currentTime)
 			{
@@ -186,15 +185,9 @@ namespace cage
 
 		struct DevicesCollection : private Immovable, public cubeb_device_collection
 		{
-			DevicesCollection()
-			{
-				cageCheckCubebError(cubeb_enumerate_devices(context, CUBEB_DEVICE_TYPE_OUTPUT, this));
-			}
+			DevicesCollection() { cageCheckCubebError(cubeb_enumerate_devices(context, CUBEB_DEVICE_TYPE_OUTPUT, this)); }
 
-			~DevicesCollection()
-			{
-				cubeb_device_collection_destroy(context, this);
-			}
+			~DevicesCollection() { cubeb_device_collection_destroy(context, this); }
 
 		private:
 			cubeb *context = cageCubebInitializeFunc();

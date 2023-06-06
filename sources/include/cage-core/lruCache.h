@@ -5,8 +5,8 @@
 
 #include <unordered_dense.h>
 
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace cage
 {
@@ -130,15 +130,18 @@ namespace cage
 			Data() = default;
 			Data(Data &&other) = default;
 			Data(const Data &other) : data(other.data.share()) {}
-			Data &operator = (Data &&other) = default;
-			Data &operator = (const Data &other) { data = other.data.share(); return *this; }
+			Data &operator=(Data &&other) = default;
+			Data &operator=(const Data &other)
+			{
+				data = other.data.share();
+				return *this;
+			}
 		};
 
 		LruCache<Key, Data, Hasher> cache;
 
 	public:
-		explicit LruCache(uint32 capacity) : cache(capacity)
-		{}
+		explicit LruCache(uint32 capacity) : cache(capacity) {}
 
 		Holder<Value> find(Key k)
 		{
@@ -155,15 +158,9 @@ namespace cage
 			return cache.set(k, d).data;
 		}
 
-		void erase(Key k)
-		{
-			cache.erase(k);
-		}
+		void erase(Key k) { cache.erase(k); }
 
-		void clear()
-		{
-			cache.clear();
-		}
+		void clear() { cache.clear(); }
 	};
 }
 

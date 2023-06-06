@@ -1,6 +1,6 @@
+#include <cage-core/concurrent.h>
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/concurrent.h>
 
 using namespace cage;
 

@@ -1,6 +1,6 @@
-#include <cage-core/networkTcp.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
+#include <cage-core/networkTcp.h>
 
 #include "net.h"
 
@@ -44,10 +44,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "no connection");
 			}
 
-			TcpConnectionImpl(Sock &&sock) : sock(std::move(sock))
-			{
-				this->sock.setBlocking(true);
-			}
+			TcpConnectionImpl(Sock &&sock) : sock(std::move(sock)) { this->sock.setBlocking(true); }
 
 			void update()
 			{

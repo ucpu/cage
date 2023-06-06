@@ -1,14 +1,14 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
 
-#include <cage-engine/opengl.h>
-#include <cage-engine/screenSpaceEffects.h>
-#include <cage-engine/sceneScreenSpaceEffects.h>
-#include <cage-engine/renderQueue.h>
 #include <cage-engine/model.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/shaderProgram.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/sceneScreenSpaceEffects.h>
+#include <cage-engine/screenSpaceEffects.h>
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/texture.h>
 
 #include <cmath>
 
@@ -19,17 +19,19 @@ namespace cage
 		TextureHandle provTex(ProvisionalGraphics *prov, const String &prefix, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
 		{
 			const String name = Stringizer() + prefix + "_" + resolution + "_" + mipmapLevels + "_" + internalFormat;
-			TextureHandle tex = prov->texture(name, [resolution, mipmapLevels, internalFormat](Texture *tex) {
-				tex->initialize(resolution, mipmapLevels, internalFormat);
-				tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				if (mipmapLevels > 1)
-				{
-					tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-					tex->generateMipmaps();
-				}
-				else
-					tex->filters(GL_LINEAR, GL_LINEAR, 0);
-			});
+			TextureHandle tex = prov->texture(name,
+			    [resolution, mipmapLevels, internalFormat](Texture *tex)
+			    {
+				    tex->initialize(resolution, mipmapLevels, internalFormat);
+				    tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				    if (mipmapLevels > 1)
+				    {
+					    tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+					    tex->generateMipmaps();
+				    }
+				    else
+					    tex->filters(GL_LINEAR, GL_LINEAR, 0);
+			    });
 			return tex;
 		}
 

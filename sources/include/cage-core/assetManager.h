@@ -80,7 +80,8 @@ namespace cage
 
 	CAGE_CORE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
 
-	struct CAGE_CORE_API AssetPack {};
+	struct CAGE_CORE_API AssetPack
+	{};
 	CAGE_CORE_API AssetScheme genAssetSchemePack();
 	constexpr uint32 AssetSchemeIndexPack = 0;
 

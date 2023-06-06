@@ -1,38 +1,38 @@
-#include <cage-core/camera.h>
-#include <cage-core/config.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/files.h> // getExecutableName
-#include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
-#include <cage-core/collider.h> // for sizeof in defineScheme
-#include <cage-core/textPack.h> // for sizeof in defineScheme
-#include <cage-core/threadPool.h>
-#include <cage-core/scheduler.h>
-#include <cage-core/debug.h>
-#include <cage-core/macros.h>
-#include <cage-core/logger.h>
 #include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
-#include <cage-core/hashString.h>
-#include <cage-core/profiling.h>
+#include <cage-core/camera.h>
+#include <cage-core/collider.h> // for sizeof in defineScheme
+#include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/debug.h>
 #include <cage-core/entities.h>
+#include <cage-core/files.h> // getExecutableName
+#include <cage-core/hashString.h>
+#include <cage-core/logger.h>
+#include <cage-core/macros.h>
+#include <cage-core/profiling.h>
+#include <cage-core/scheduler.h>
+#include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
+#include <cage-core/textPack.h> // for sizeof in defineScheme
+#include <cage-core/threadPool.h>
 
-#include <cage-engine/graphicsError.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/model.h>
-#include <cage-engine/shaderProgram.h>
 #include <cage-engine/font.h>
-#include <cage-engine/renderObject.h>
-#include <cage-engine/window.h>
-#include <cage-engine/sound.h>
-#include <cage-engine/speaker.h>
-#include <cage-engine/voices.h>
+#include <cage-engine/graphicsError.h>
 #include <cage-engine/guiManager.h>
+#include <cage-engine/model.h>
+#include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/renderObject.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/sceneVirtualReality.h>
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/sound.h>
+#include <cage-engine/speaker.h>
+#include <cage-engine/texture.h>
 #include <cage-engine/virtualReality.h>
-#include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/voices.h>
+#include <cage-engine/window.h>
 
 #include <cage-simple/statisticsGui.h>
 
@@ -55,10 +55,7 @@ namespace cage
 				lock->lock();
 			}
 
-			~ScopedSemaphores()
-			{
-				sem->unlock();
-			}
+			~ScopedSemaphores() { sem->unlock(); }
 
 		private:
 			Semaphore *sem = nullptr;
@@ -69,8 +66,7 @@ namespace cage
 			VariableSmoothingBuffer<uint64, 100> &vsb;
 			uint64 st;
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, 100> &vsb) : vsb(vsb), st(applicationTime())
-			{}
+			explicit ScopedTimer(VariableSmoothingBuffer<uint64, 100> &vsb) : vsb(vsb), st(applicationTime()) {}
 
 			~ScopedTimer()
 			{
@@ -161,8 +157,7 @@ namespace cage
 			// graphics PREPARE
 			//////////////////////////////////////
 
-			void graphicsPrepareInitializeStage()
-			{}
+			void graphicsPrepareInitializeStage() {}
 
 			void graphicsPrepareStep()
 			{
@@ -190,13 +185,9 @@ namespace cage
 					graphicsPrepareStep();
 			}
 
-			void graphicsPrepareStopStage()
-			{
-				graphicsSemaphore2->unlock();
-			}
+			void graphicsPrepareStopStage() { graphicsSemaphore2->unlock(); }
 
-			void graphicsPrepareFinalizeStage()
-			{}
+			void graphicsPrepareFinalizeStage() {}
 
 			//////////////////////////////////////
 			// graphics DISPATCH
@@ -231,7 +222,8 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("graphics assets");
-					while (assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex));
+					while (assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex))
+						;
 				}
 				{
 					ProfilingScope profiling("swap callback");
@@ -249,10 +241,7 @@ namespace cage
 					graphicsDispatchStep();
 			}
 
-			void graphicsDispatchStopStage()
-			{
-				graphicsSemaphore1->unlock();
-			}
+			void graphicsDispatchStopStage() { graphicsSemaphore1->unlock(); }
 
 			void graphicsDispatchFinalizeStage()
 			{
@@ -264,10 +253,7 @@ namespace cage
 			// SOUND
 			//////////////////////////////////////
 
-			void soundInitializeStage()
-			{
-				speaker->start();
-			}
+			void soundInitializeStage() { speaker->start(); }
 
 			void soundUpdate()
 			{
@@ -288,20 +274,11 @@ namespace cage
 				}
 			}
 
-			void soundGameloopStage()
-			{
-				soundScheduler->run();
-			}
+			void soundGameloopStage() { soundScheduler->run(); }
 
-			void soundStopStage()
-			{
-				speaker->stop();
-			}
+			void soundStopStage() { speaker->stop(); }
 
-			void soundFinalizeStage()
-			{
-				soundFinalize();
-			}
+			void soundFinalizeStage() { soundFinalize(); }
 
 			//////////////////////////////////////
 			// CONTROL
@@ -370,36 +347,61 @@ namespace cage
 				profilingBufferEntities.add(entities->group()->count());
 			}
 
-			void controlGameloopStage()
-			{
-				controlScheduler->run();
-			}
+			void controlGameloopStage() { controlScheduler->run(); }
 
 			//////////////////////////////////////
 			// ENTRY methods
 			//////////////////////////////////////
 
 #define GCHL_GENERATE_CATCH(NAME, STAGE) \
-			catch (...) { CAGE_LOG(SeverityEnum::Error, "engine", "unhandled exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); detail::logCurrentCaughtException(); engineStop(); }
+	catch (...) \
+	{ \
+		CAGE_LOG(SeverityEnum::Error, "engine", "unhandled exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); \
+		detail::logCurrentCaughtException(); \
+		engineStop(); \
+	}
 #define GCHL_GENERATE_ENTRY(NAME) \
-			void CAGE_JOIN(NAME, Entry)() \
-			{ \
-				try { CAGE_JOIN(NAME, InitializeStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, initialization (engine)); \
-				{ ScopeLock l(threadsStateBarier); } \
-				{ ScopeLock l(threadsStateBarier); } \
-				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
-				GCHL_GENERATE_CATCH(NAME, initialization (application)); \
-				{ ScopeLock l(threadsStateBarier); } \
-				try { CAGE_JOIN(NAME, GameloopStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, gameloop); \
-				CAGE_JOIN(NAME, StopStage)(); \
-				{ ScopeLock l(threadsStateBarier); } \
-				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
-				GCHL_GENERATE_CATCH(NAME, finalization (application)); \
-				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, finalization (engine)); \
-			}
+	void CAGE_JOIN(NAME, Entry)() \
+	{ \
+		try \
+		{ \
+			CAGE_JOIN(NAME, InitializeStage)(); \
+		} \
+		GCHL_GENERATE_CATCH(NAME, initialization(engine)); \
+		{ \
+			ScopeLock l(threadsStateBarier); \
+		} \
+		{ \
+			ScopeLock l(threadsStateBarier); \
+		} \
+		try \
+		{ \
+			CAGE_JOIN(NAME, Thread)().initialize.dispatch(); \
+		} \
+		GCHL_GENERATE_CATCH(NAME, initialization(application)); \
+		{ \
+			ScopeLock l(threadsStateBarier); \
+		} \
+		try \
+		{ \
+			CAGE_JOIN(NAME, GameloopStage)(); \
+		} \
+		GCHL_GENERATE_CATCH(NAME, gameloop); \
+		CAGE_JOIN(NAME, StopStage)(); \
+		{ \
+			ScopeLock l(threadsStateBarier); \
+		} \
+		try \
+		{ \
+			CAGE_JOIN(NAME, Thread)().finalize.dispatch(); \
+		} \
+		GCHL_GENERATE_CATCH(NAME, finalization(application)); \
+		try \
+		{ \
+			CAGE_JOIN(NAME, FinalizeStage)(); \
+		} \
+		GCHL_GENERATE_CATCH(NAME, finalization(engine)); \
+	}
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
@@ -553,7 +555,9 @@ namespace cage
 					entityMgr->defineComponent(VrControllerComponent());
 				}
 
-				{ ScopeLock l(threadsStateBarier); }
+				{
+					ScopeLock l(threadsStateBarier);
+				}
 				CAGE_LOG(SeverityEnum::Info, "engine", "engine initialized");
 
 				CAGE_ASSERT(engineStarted == 1);
@@ -569,12 +573,16 @@ namespace cage
 				{
 					controlThread().initialize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, initialization (application));
+				GCHL_GENERATE_CATCH(control, initialization(application));
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
-				{ ScopeLock l(threadsStateBarier); }
-				{ ScopeLock l(threadsStateBarier); }
+				{
+					ScopeLock l(threadsStateBarier);
+				}
+				{
+					ScopeLock l(threadsStateBarier);
+				}
 
 				try
 				{
@@ -588,7 +596,7 @@ namespace cage
 				{
 					controlThread().finalize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, finalization (application));
+				GCHL_GENERATE_CATCH(control, finalization(application));
 
 				CAGE_ASSERT(engineStarted == 3);
 				engineStarted = 4;
@@ -600,7 +608,9 @@ namespace cage
 				engineStarted = 5;
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");
-				{ ScopeLock l(threadsStateBarier); }
+				{
+					ScopeLock l(threadsStateBarier);
+				}
 
 				{ // release resources held by gui
 					guiRenderQueue.clear();
@@ -812,10 +822,17 @@ namespace cage
 		{
 			switch (mode)
 			{
-			case StatisticsGuiModeEnum::Average: result += buffer.smooth(); break;
-			case StatisticsGuiModeEnum::Maximum: result += buffer.max(); break;
-			case StatisticsGuiModeEnum::Last: result += buffer.current(); break;
-			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+				case StatisticsGuiModeEnum::Average:
+					result += buffer.smooth();
+					break;
+				case StatisticsGuiModeEnum::Maximum:
+					result += buffer.max();
+					break;
+				case StatisticsGuiModeEnum::Last:
+					result += buffer.current();
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
 			}
 		};
 
@@ -825,19 +842,12 @@ namespace cage
 			add(engineData->soundUpdateSchedule->statistics().durations);
 
 #define GCHL_GENERATE(NAME) \
-		if (any(flags & StatisticsGuiFlags::NAME)) \
-		{ \
-			auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
-			add(buffer); \
-		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
-			GraphicsPrepare,
-			GraphicsDispatch,
-			FrameTime,
-			DrawCalls,
-			DrawPrimitives,
-			Entities
-		));
+	if (any(flags & StatisticsGuiFlags::NAME)) \
+	{ \
+		auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
+		add(buffer); \
+	}
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GraphicsPrepare, GraphicsDispatch, FrameTime, DrawCalls, DrawPrimitives, Entities));
 #undef GCHL_GENERATE
 
 		return result;

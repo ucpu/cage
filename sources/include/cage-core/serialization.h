@@ -11,7 +11,7 @@ namespace cage
 	{
 		explicit Serializer(PointerRange<char> buffer);
 		explicit Serializer(MemoryBuffer &buffer, uintPtr size = m);
-		
+
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		void write(PointerRange<const char> buffer);
 		PointerRange<char> write(uintPtr size); // use with care!
@@ -52,7 +52,8 @@ namespace cage
 
 	// reinterpret types of range of elements
 	// preserves number of bytes, but may change number of elements
-	template<class Dst = const char, class Src> requires(std::is_trivially_copyable_v<Dst> && std::is_trivially_copyable_v<Src>)
+	template<class Dst = const char, class Src>
+	requires(std::is_trivially_copyable_v<Dst> && std::is_trivially_copyable_v<Src>)
 	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
 		return { reinterpret_cast<Dst *>(src.begin()), reinterpret_cast<Dst *>(src.end()) };
@@ -77,20 +78,22 @@ namespace cage
 	namespace privat
 	{
 		template<class>
-		struct IsPointerRangeConcept : std::false_type {};
+		struct IsPointerRangeConcept : std::false_type
+		{};
 		template<class V>
-		struct IsPointerRangeConcept<PointerRange<V>> : std::true_type {};
+		struct IsPointerRangeConcept<PointerRange<V>> : std::true_type
+		{};
 		template<class T>
 		concept SerializableConcept = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !IsPointerRangeConcept<T>::value;
 	}
 
-	Serializer &operator << (Serializer &s, const privat::SerializableConcept auto &v)
+	Serializer &operator<<(Serializer &s, const privat::SerializableConcept auto &v)
 	{
 		s.write(bufferView<const char>(v));
 		return s;
 	}
 
-	Deserializer &operator >> (Deserializer &s, privat::SerializableConcept auto &v)
+	Deserializer &operator>>(Deserializer &s, privat::SerializableConcept auto &v)
 	{
 		s.read(bufferView<char>(v));
 		return s;
@@ -99,7 +102,7 @@ namespace cage
 	// r-value deserializer
 
 	template<class T>
-	Deserializer &&operator >> (Deserializer &&s, T &v)
+	Deserializer &&operator>>(Deserializer &&s, T &v)
 	{
 		s >> v;
 		return std::move(s);
@@ -108,7 +111,7 @@ namespace cage
 	// overloads for c array
 
 	template<class T, uintPtr N>
-	Serializer &operator << (Serializer &s, const T (&v)[N])
+	Serializer &operator<<(Serializer &s, const T (&v)[N])
 	{
 		for (auto &it : v)
 			s << it;
@@ -116,7 +119,7 @@ namespace cage
 	}
 
 	template<class T, uintPtr N>
-	Deserializer &operator >> (Deserializer &s, T (&v)[N])
+	Deserializer &operator>>(Deserializer &s, T (&v)[N])
 	{
 		for (auto &it : v)
 			s >> it;
@@ -126,7 +129,7 @@ namespace cage
 	// overloads for strings
 
 	template<uint32 N>
-	Serializer &operator << (Serializer &s, const detail::StringBase<N> &v)
+	Serializer &operator<<(Serializer &s, const detail::StringBase<N> &v)
 	{
 		s << v.length();
 		s.write(v);
@@ -134,7 +137,7 @@ namespace cage
 	}
 
 	template<uint32 N>
-	Deserializer &operator >> (Deserializer &s, detail::StringBase<N> &v)
+	Deserializer &operator>>(Deserializer &s, detail::StringBase<N> &v)
 	{
 		decltype(v.length()) size = 0;
 		s >> size;

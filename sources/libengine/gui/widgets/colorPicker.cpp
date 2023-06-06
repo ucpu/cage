@@ -26,12 +26,12 @@ namespace cage
 				q->uniform(shader, 0, pos);
 				switch (mode)
 				{
-				case 0:
-					q->uniform(shader, 1, rgb);
-					break;
-				case 2:
-					q->uniform(shader, 1, colorRgbToHsv(rgb)[0]);
-					break;
+					case 0:
+						q->uniform(shader, 1, rgb);
+						break;
+					case 2:
+						q->uniform(shader, 1, colorRgbToHsv(rgb)[0]);
+						break;
 				}
 				q->draw(impl->graphicsData.imageModel.share());
 			}
@@ -47,8 +47,7 @@ namespace cage
 			Vec2 resultPos, resultSize;
 			Vec2 rectPos, rectSize;
 
-			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small)
-			{}
+			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small) {}
 
 			void initialize() override
 			{
@@ -201,19 +200,12 @@ namespace cage
 				return true;
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return handleMouse(buttons, modifiers, point, false);
-			}
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, false); }
 
-			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return handleMouse(buttons, modifiers, point, true);
-			}
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, true); }
 		};
 
-		ColorPickerRenderable::ColorPickerRenderable(const ColorPickerImpl *item) : RenderableBase(item->hierarchy->impl)
-		{}
+		ColorPickerRenderable::ColorPickerRenderable(const ColorPickerImpl *item) : RenderableBase(item->hierarchy->impl) {}
 	}
 
 	void ColorPickerCreate(HierarchyItem *item)

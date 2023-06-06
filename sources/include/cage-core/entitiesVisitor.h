@@ -3,9 +3,9 @@
 
 #include "entities.h"
 
+#include <algorithm>
 #include <tuple>
 #include <vector>
-#include <algorithm>
 
 namespace cage
 {
@@ -62,9 +62,19 @@ namespace cage
 				visitor(((e->value<std::decay_t<std::tuple_element_t<I, Types>>>(components[I])))...);
 		}
 
-		template<bool ArrayCopy> struct VectorOrNothing {};
-		template<> struct VectorOrNothing<true> { typedef std::vector<Entity *> vec; };
-		template<> struct VectorOrNothing<false> { typedef char vec; };
+		template<bool ArrayCopy>
+		struct VectorOrNothing
+		{};
+		template<>
+		struct VectorOrNothing<true>
+		{
+			typedef std::vector<Entity *> vec;
+		};
+		template<>
+		struct VectorOrNothing<false>
+		{
+			typedef char vec;
+		};
 	}
 
 	namespace detail

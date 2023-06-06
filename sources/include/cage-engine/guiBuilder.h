@@ -1,8 +1,8 @@
 #ifndef guard_guiBuilder_sxrdk487
 #define guard_guiBuilder_sxrdk487
 
-#include <cage-core/entities.h>
 #include "guiComponents.h"
+#include <cage-core/entities.h>
 
 namespace cage
 {
@@ -28,13 +28,13 @@ namespace cage
 			BuilderItem(GuiBuilder *g);
 			BuilderItem(BuilderItem &&) noexcept;
 			BuilderItem(BuilderItem &) noexcept;
-			BuilderItem &operator = (BuilderItem &) noexcept;
-			BuilderItem &operator = (BuilderItem &&) noexcept;
+			BuilderItem &operator=(BuilderItem &) noexcept;
+			BuilderItem &operator=(BuilderItem &&) noexcept;
 			~BuilderItem();
 
 			Entity *entity() const;
-			Entity *operator -> () const;
-			Entity &operator * () const;
+			Entity *operator->() const;
+			Entity &operator*() const;
 
 			BuilderItem text(const GuiTextComponent &txt);
 			BuilderItem text(const String &txt);

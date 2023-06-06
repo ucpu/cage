@@ -1,7 +1,7 @@
 #include "audio.h"
 
-#include <cage-core/serialization.h>
 #include <cage-core/files.h>
+#include <cage-core/serialization.h>
 #include <vorbis/vorbisenc.h>
 #include <vorbis/vorbisfile.h>
 

@@ -34,7 +34,8 @@ void testFlatSet()
 	{
 		CAGE_TESTCASE("const set");
 
-		const FlatSet<uint32> s = []() {
+		const FlatSet<uint32> s = []()
+		{
 			FlatSet<uint32> s;
 			s.insert(13);
 			s.insert(42);
@@ -65,16 +66,12 @@ void testFlatSet()
 		{
 			uint32 v = m;
 
-			explicit Custom(uint32 v) : v(v)
-			{}
+			explicit Custom(uint32 v) : v(v) {}
 		};
 
 		struct Comparator
 		{
-			bool operator () (const Custom &a, const Custom &b) const
-			{
-				return a.v < b.v;
-			}
+			bool operator()(const Custom &a, const Custom &b) const { return a.v < b.v; }
 		};
 
 		FlatSet<Custom, Comparator> s;
@@ -94,13 +91,9 @@ void testFlatSet()
 		{
 			uint32 v = m;
 
-			explicit Custom(uint32 v) : v(v)
-			{}
+			explicit Custom(uint32 v) : v(v) {}
 
-			bool operator < (const Custom &b) const
-			{
-				return v < b.v;
-			}
+			bool operator<(const Custom &b) const { return v < b.v; }
 		};
 
 		FlatSet<Custom> s;

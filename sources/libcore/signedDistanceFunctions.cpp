@@ -39,7 +39,7 @@ namespace cage
 
 	Real sdfTetrahedron(const Vec3 &pos, Real radius)
 	{
-		static constexpr const Vec3 corners[4] = { Vec3(1,1,1), Vec3(1,-1,-1), Vec3(-1,1,-1), Vec3(-1,-1,1) };
+		static constexpr const Vec3 corners[4] = { Vec3(1, 1, 1), Vec3(1, -1, -1), Vec3(-1, 1, -1), Vec3(-1, -1, 1) };
 		static constexpr const Triangle tris[4] = {
 			Triangle(corners[1], corners[3], corners[2]),
 			Triangle(corners[0], corners[2], corners[3]),

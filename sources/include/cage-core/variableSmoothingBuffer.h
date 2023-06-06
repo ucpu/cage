@@ -22,20 +22,9 @@ namespace cage
 			buffer[index] = value;
 		}
 
-		T smooth() const
-		{
-			return sum / N;
-		}
-
-		T current() const
-		{
-			return buffer[index];
-		}
-
-		T oldest() const
-		{
-			return buffer[(index + 1) % N];
-		}
+		T smooth() const { return sum / N; }
+		T current() const { return buffer[index]; }
+		T oldest() const { return buffer[(index + 1) % N]; }
 
 		T max() const
 		{
@@ -91,15 +80,8 @@ namespace cage
 			return avg;
 		}
 
-		Quat current() const
-		{
-			return buffer[index];
-		}
-
-		Quat oldest() const
-		{
-			return buffer[(index + 1) % N];
-		}
+		Quat current() const { return buffer[index]; }
+		Quat oldest() const { return buffer[(index + 1) % N]; }
 
 	private:
 		uint32 index = 0;
@@ -125,20 +107,9 @@ namespace cage
 			s.add(value.scale);
 		}
 
-		Transform smooth() const
-		{
-			return Transform(t.smooth(), r.smooth(), s.smooth());
-		}
-
-		Transform current() const
-		{
-			return Transform(t.current(), r.current(), s.current());
-		}
-
-		Transform oldest() const
-		{
-			return Transform(t.oldest(), r.oldest(), s.oldest());
-		}
+		Transform smooth() const { return Transform(t.smooth(), r.smooth(), s.smooth()); }
+		Transform current() const { return Transform(t.current(), r.current(), s.current()); }
+		Transform oldest() const { return Transform(t.oldest(), r.oldest(), s.oldest()); }
 
 	private:
 		VariableSmoothingBuffer<Vec3, N> t;

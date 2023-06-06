@@ -14,7 +14,7 @@ namespace cage
 	{
 		String command;
 		String workingDirectory;
-		
+
 		bool discardStdIn = false;
 		bool discardStdOut = false;
 		bool discardStdErr = false;

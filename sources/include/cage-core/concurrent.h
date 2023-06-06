@@ -50,7 +50,7 @@ namespace cage
 	{
 	public:
 		void lock();
-		void unlock() {}; // does nothing
+		void unlock(){}; // does nothing
 	};
 
 	CAGE_CORE_API Holder<Barrier> newBarrier(uint32 threshold);

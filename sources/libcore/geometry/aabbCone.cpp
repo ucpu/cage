@@ -26,7 +26,7 @@ namespace cage
 		};
 
 		class TIQuery;
-		typedef void (TIQuery:: *ConfigurationFunction)(uint16, const Face &);
+		typedef void (TIQuery::*ConfigurationFunction)(uint16, const Face &);
 
 		class TIQuery
 		{
@@ -73,10 +73,7 @@ namespace cage
 				boxMaxHeight = DdCmV + radius;
 			}
 
-			static bool ConeAxisIntersectsBox(Aabb const &box, Cone const &cone)
-			{
-				return intersects(box, makeSegment(cone.origin, cone.origin + cone.direction * cone.length));
-			}
+			static bool ConeAxisIntersectsBox(Aabb const &box, Cone const &cone) { return intersects(box, makeSegment(cone.origin, cone.origin + cone.direction * cone.length)); }
 
 			static bool HasPointInsideCone(Vec3 const &P0, Vec3 const &P1, Cone const &cone)
 			{
@@ -149,34 +146,17 @@ namespace cage
 				}
 			}
 
-			void NNNN_0(uint16, Face const &)
-			{
-			}
+			void NNNN_0(uint16, Face const &) {}
 
-			void NNNP_2(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], base + face.e[3]);
-			}
+			void NNNP_2(uint16 base, Face const &face) { InsertEdge(base + face.e[2], base + face.e[3]); }
 
-			void NNZP_5(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[2], base + face.e[3]);
-			}
+			void NNZP_5(uint16 base, Face const &face) { InsertEdge(face.v[2], base + face.e[3]); }
 
-			void NNPN_6(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[1], base + face.e[2]);
-			}
+			void NNPN_6(uint16 base, Face const &face) { InsertEdge(base + face.e[1], base + face.e[2]); }
 
-			void NNPZ_7(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[1], face.v[3]);
-			}
+			void NNPZ_7(uint16 base, Face const &face) { InsertEdge(base + face.e[1], face.v[3]); }
 
-			void NNPP_8(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[1], base + face.e[3]);
-			}
+			void NNPP_8(uint16 base, Face const &face) { InsertEdge(base + face.e[1], base + face.e[3]); }
 
 			void NZNP_11(uint16 base, Face const &face)
 			{
@@ -190,25 +170,13 @@ namespace cage
 				InsertEdge(base + face.e[3], face.v[3]);
 			}
 
-			void NZPN_15(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], face.v[1]);
-			}
+			void NZPN_15(uint16 base, Face const &face) { InsertEdge(base + face.e[2], face.v[1]); }
 
-			void NZPZ_16(uint16, Face const &face)
-			{
-				InsertEdge(face.v[1], face.v[3]);
-			}
+			void NZPZ_16(uint16, Face const &face) { InsertEdge(face.v[1], face.v[3]); }
 
-			void NZPP_17(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[3], face.v[1]);
-			}
+			void NZPP_17(uint16 base, Face const &face) { InsertEdge(base + face.e[3], face.v[1]); }
 
-			void NPNN_18(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], base + face.e[1]);
-			}
+			void NPNN_18(uint16 base, Face const &face) { InsertEdge(base + face.e[0], base + face.e[1]); }
 
 			void NPNZ_19(uint16 base, Face const &face)
 			{
@@ -224,10 +192,7 @@ namespace cage
 				InsertEdge(base + face.e[3], face.v[3]);
 			}
 
-			void NPZN_21(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], face.v[2]);
-			}
+			void NPZN_21(uint16 base, Face const &face) { InsertEdge(base + face.e[0], face.v[2]); }
 
 			void NPZZ_22(uint16 base, Face const &face)
 			{
@@ -243,30 +208,15 @@ namespace cage
 				InsertEdge(face.v[2], face.v[3]);
 			}
 
-			void NPPN_24(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], base + face.e[2]);
-			}
+			void NPPN_24(uint16 base, Face const &face) { InsertEdge(base + face.e[0], base + face.e[2]); }
 
-			void NPPZ_25(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], face.v[3]);
-			}
+			void NPPZ_25(uint16 base, Face const &face) { InsertEdge(base + face.e[0], face.v[3]); }
 
-			void NPPP_26(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], base + face.e[3]);
-			}
+			void NPPP_26(uint16 base, Face const &face) { InsertEdge(base + face.e[0], base + face.e[3]); }
 
-			void ZNNP_29(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], face.v[0]);
-			}
+			void ZNNP_29(uint16 base, Face const &face) { InsertEdge(base + face.e[2], face.v[0]); }
 
-			void ZNZP_32(uint16, Face const &face)
-			{
-				InsertEdge(face.v[0], face.v[2]);
-			}
+			void ZNZP_32(uint16, Face const &face) { InsertEdge(face.v[0], face.v[2]); }
 
 			void ZNPN_33(uint16 base, Face const &face)
 			{
@@ -280,10 +230,7 @@ namespace cage
 				InsertEdge(face.v[2], face.v[3]);
 			}
 
-			void ZNPP_35(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[0], base + face.e[1]);
-			}
+			void ZNPP_35(uint16 base, Face const &face) { InsertEdge(face.v[0], base + face.e[1]); }
 
 			void ZZNP_38(uint16 base, Face const &face)
 			{
@@ -309,10 +256,7 @@ namespace cage
 				InsertEdge(face.v[2], face.v[3]);
 			}
 
-			void ZPNN_45(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[0], base + face.e[1]);
-			}
+			void ZPNN_45(uint16 base, Face const &face) { InsertEdge(face.v[0], base + face.e[1]); }
 
 			void ZPNZ_46(uint16 base, Face const &face)
 			{
@@ -328,10 +272,7 @@ namespace cage
 				InsertEdge(face.v[3], face.v[0]);
 			}
 
-			void ZPZN_48(uint16, Face const &face)
-			{
-				InsertEdge(face.v[0], face.v[2]);
-			}
+			void ZPZN_48(uint16, Face const &face) { InsertEdge(face.v[0], face.v[2]); }
 
 			void ZPZZ_49(uint16, Face const &face)
 			{
@@ -339,25 +280,13 @@ namespace cage
 				InsertEdge(face.v[1], face.v[2]);
 			}
 
-			void ZPPN_51(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[0], base + face.e[2]);
-			}
+			void ZPPN_51(uint16 base, Face const &face) { InsertEdge(face.v[0], base + face.e[2]); }
 
-			void PNNN_54(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[3], base + face.e[0]);
-			}
+			void PNNN_54(uint16 base, Face const &face) { InsertEdge(base + face.e[3], base + face.e[0]); }
 
-			void PNNZ_55(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[3], base + face.e[0]);
-			}
+			void PNNZ_55(uint16 base, Face const &face) { InsertEdge(face.v[3], base + face.e[0]); }
 
-			void PNNP_56(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], base + face.e[0]);
-			}
+			void PNNP_56(uint16 base, Face const &face) { InsertEdge(base + face.e[2], base + face.e[0]); }
 
 			void PNZN_57(uint16 base, Face const &face)
 			{
@@ -371,10 +300,7 @@ namespace cage
 				InsertEdge(face.v[0], base + face.e[0]);
 			}
 
-			void PNZP_59(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[2], base + face.e[0]);
-			}
+			void PNZP_59(uint16 base, Face const &face) { InsertEdge(face.v[2], base + face.e[0]); }
 
 			void PNPN_60(uint16 base, Face const &face)
 			{
@@ -392,25 +318,13 @@ namespace cage
 				InsertEdge(face.v[2], face.v[3]);
 			}
 
-			void PNPP_62(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[0], base + face.e[1]);
-			}
+			void PNPP_62(uint16 base, Face const &face) { InsertEdge(base + face.e[0], base + face.e[1]); }
 
-			void PZNN_63(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[3], face.v[1]);
-			}
+			void PZNN_63(uint16 base, Face const &face) { InsertEdge(base + face.e[3], face.v[1]); }
 
-			void PZNZ_64(uint16, Face const &face)
-			{
-				InsertEdge(face.v[3], face.v[1]);
-			}
+			void PZNZ_64(uint16, Face const &face) { InsertEdge(face.v[3], face.v[1]); }
 
-			void PZNP_65(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], face.v[1]);
-			}
+			void PZNP_65(uint16 base, Face const &face) { InsertEdge(base + face.e[2], face.v[1]); }
 
 			void PZZN_66(uint16 base, Face const &face)
 			{
@@ -426,30 +340,15 @@ namespace cage
 				InsertEdge(face.v[2], base + face.e[2]);
 			}
 
-			void PPNN_72(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[3], base + face.e[1]);
-			}
+			void PPNN_72(uint16 base, Face const &face) { InsertEdge(base + face.e[3], base + face.e[1]); }
 
-			void PPNZ_73(uint16 base, Face const &face)
-			{
-				InsertEdge(face.v[3], base + face.e[1]);
-			}
+			void PPNZ_73(uint16 base, Face const &face) { InsertEdge(face.v[3], base + face.e[1]); }
 
-			void PPNP_74(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], base + face.e[1]);
-			}
+			void PPNP_74(uint16 base, Face const &face) { InsertEdge(base + face.e[2], base + face.e[1]); }
 
-			void PPZN_75(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[2], face.v[2]);
-			}
+			void PPZN_75(uint16 base, Face const &face) { InsertEdge(base + face.e[2], face.v[2]); }
 
-			void PPPN_78(uint16 base, Face const &face)
-			{
-				InsertEdge(base + face.e[3], base + face.e[2]);
-			}
+			void PPPN_78(uint16 base, Face const &face) { InsertEdge(base + face.e[3], base + face.e[2]); }
 		};
 
 		consteval std::array<ConfigurationFunction, NUM_CONFIGURATIONS> initConfiguration()
@@ -542,32 +441,19 @@ namespace cage
 
 		consteval std::array<std::array<uint16, 2>, NUM_BOX_EDGES> initEdges()
 		{
-			return {
-				std::array<uint16, 2>{ 0, 1 },
-				std::array<uint16, 2>{ 1, 3 },
-				std::array<uint16, 2>{ 2, 3 },
-				std::array<uint16, 2>{ 0, 2 },
-				std::array<uint16, 2>{ 4, 5 },
-				std::array<uint16, 2>{ 5, 7 },
-				std::array<uint16, 2>{ 6, 7 },
-				std::array<uint16, 2>{ 4, 6 },
-				std::array<uint16, 2>{ 0, 4 },
-				std::array<uint16, 2>{ 1, 5 },
-				std::array<uint16, 2>{ 3, 7 },
-				std::array<uint16, 2>{ 2, 6 }
-			};
+			return { std::array<uint16, 2>{ 0, 1 }, std::array<uint16, 2>{ 1, 3 }, std::array<uint16, 2>{ 2, 3 }, std::array<uint16, 2>{ 0, 2 }, std::array<uint16, 2>{ 4, 5 }, std::array<uint16, 2>{ 5, 7 }, std::array<uint16, 2>{ 6, 7 }, std::array<uint16, 2>{ 4, 6 }, std::array<uint16, 2>{ 0, 4 }, std::array<uint16, 2>{ 1, 5 }, std::array<uint16, 2>{ 3, 7 }, std::array<uint16, 2>{ 2, 6 } };
 		}
 		constexpr const std::array<std::array<uint16, 2>, NUM_BOX_EDGES> mEdges = initEdges();
 
 		consteval std::array<Face, NUM_BOX_FACES> initFaces()
 		{
 			return {
-				Face{ { 0, 4, 6, 2 }, {  8,  7, 11,  3 } },
-				Face{ { 1, 3, 7, 5 }, {  1, 10,  5,  9 } },
-				Face{ { 0, 1, 5, 4 }, {  0,  9,  4,  8 } },
-				Face{ { 2, 6, 7, 3 }, { 11,  6, 10,  2 } },
-				Face{ { 0, 2, 3, 1 }, {  3,  2,  1,  0 } },
-				Face{ { 4, 5, 7, 6 }, {  4,  5,  6,  7 } },
+				Face{ { 0, 4, 6, 2 }, { 8, 7, 11, 3 } },
+				Face{ { 1, 3, 7, 5 }, { 1, 10, 5, 9 } },
+				Face{ { 0, 1, 5, 4 }, { 0, 9, 4, 8 } },
+				Face{ { 2, 6, 7, 3 }, { 11, 6, 10, 2 } },
+				Face{ { 0, 2, 3, 1 }, { 3, 2, 1, 0 } },
+				Face{ { 4, 5, 7, 6 }, { 4, 5, 6, 7 } },
 			};
 		}
 		constexpr const std::array<Face, NUM_BOX_FACES> mFaces = initFaces();
@@ -609,12 +495,12 @@ namespace cage
 				auto const &edge = mEdges[i];
 				Real p0Min = mProjectionMin[edge[0]];
 				Real p1Min = mProjectionMin[edge[1]];
-				bool clipMin = (p0Min < (Real)0 && p1Min >(Real)0) || (p0Min > (Real)0 && p1Min < (Real)0);
+				bool clipMin = (p0Min < (Real)0 && p1Min > (Real)0) || (p0Min > (Real)0 && p1Min < (Real)0);
 				if (clipMin)
 					mVertices[v0] = (p1Min * mVertices[edge[0]] - p0Min * mVertices[edge[1]]) / (p1Min - p0Min);
 				Real p0Max = mProjectionMax[edge[0]];
 				Real p1Max = mProjectionMax[edge[1]];
-				bool clipMax = (p0Max < (Real)0 && p1Max >(Real)0) || (p0Max > (Real)0 && p1Max < (Real)0);
+				bool clipMax = (p0Max < (Real)0 && p1Max > (Real)0) || (p0Max > (Real)0 && p1Max < (Real)0);
 				if (clipMax)
 					mVertices[v1] = (p1Max * mVertices[edge[0]] - p0Max * mVertices[edge[1]]) / (p1Max - p0Max);
 				if (clipMin)

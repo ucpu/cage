@@ -58,7 +58,7 @@ void testMemoryBuffers()
 		{
 			MemoryBuffer b1(1000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
-				((uint8*)b1.data())[i] = (uint8)i;
+				((uint8 *)b1.data())[i] = (uint8)i;
 			Holder<PointerRange<char>> b2 = compress(b1);
 			CAGE_TEST(b2.size() < b1.size());
 			Holder<PointerRange<char>> b3 = decompress(b2, 2000);
@@ -69,7 +69,7 @@ void testMemoryBuffers()
 		{
 			MemoryBuffer b1(128);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
-				((uint8*)b1.data())[i] = (uint8)i;
+				((uint8 *)b1.data())[i] = (uint8)i;
 			Holder<PointerRange<char>> b2 = compress(b1);
 			Holder<PointerRange<char>> b3 = decompress(b2, 200);
 			CAGE_TEST(b3.size() == b1.size());
@@ -85,12 +85,12 @@ void testMemoryBuffers()
 
 			MemoryBuffer b1(2000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
-				((uint8*)b1.data())[i] = (uint8)i;
+				((uint8 *)b1.data())[i] = (uint8)i;
 			BufferIStream is(b1);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 			{
 				uint8 c;
-				is.read((char*)&c, 1);
+				is.read((char *)&c, 1);
 				CAGE_TEST(c == (uint8)i);
 			}
 		}
@@ -115,10 +115,10 @@ void testMemoryBuffers()
 			dataStruct s;
 			detail::memset(&s, 0, sizeof(dataStruct));
 			for (uint32 i = 0; i < 128; i++)
-				is.read((char*)&s.arr[i], 1);
+				is.read((char *)&s.arr[i], 1);
 			CAGE_TEST(is.tellg() == 128);
-			is.read((char*)&s.u64, 8);
-			is.read((char*)&s.u16, 2);
+			is.read((char *)&s.u64, 8);
+			is.read((char *)&s.u16, 2);
 			CAGE_TEST(detail::memcmp(&data, &s, sizeof(dataStruct)) == 0);
 		}
 
@@ -139,9 +139,9 @@ void testMemoryBuffers()
 			MemoryBuffer b;
 			BufferOStream os(b);
 			for (uint32 i = 0; i < 128; i++)
-				os.write((char*)&data.arr[i], 1);
-			os.write((char*)&data.u64, 8);
-			os.write((char*)&data.u16, 2);
+				os.write((char *)&data.arr[i], 1);
+			os.write((char *)&data.u64, 8);
+			os.write((char *)&data.u16, 2);
 			CAGE_TEST(b.size() >= 128 + 8 + 2 && b.size() <= sizeof(dataStruct), b.size(), sizeof(dataStruct));
 			CAGE_TEST(detail::memcmp(&data, b.data(), b.size()) == 0);
 		}

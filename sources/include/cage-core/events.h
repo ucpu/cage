@@ -5,8 +5,10 @@
 
 namespace cage
 {
-	template<class> struct EventListener;
-	template<class> struct EventDispatcher;
+	template<class>
+	struct EventListener;
+	template<class>
+	struct EventDispatcher;
 
 	namespace privat
 	{
@@ -33,8 +35,7 @@ namespace cage
 	template<class... Ts>
 	struct EventListener<bool(Ts...)> : private privat::EventLinker
 	{
-		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
-		{}
+		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location) {}
 
 		template<class Callable>
 		CAGE_FORCE_INLINE explicit EventListener(Callable &&callable, EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0, const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
@@ -43,7 +44,8 @@ namespace cage
 			attach(dispatcher, order);
 		}
 
-		template<class Callable> requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
+		template<class Callable>
+		requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
 		CAGE_FORCE_INLINE void bind(Callable &&callable)
 		{
 			if constexpr (std::is_same_v<std::invoke_result_t<Callable, Ts...>, bool>)
@@ -58,15 +60,9 @@ namespace cage
 			}
 		}
 
-		CAGE_FORCE_INLINE void clear()
-		{
-			del.b.clear();
-		}
+		CAGE_FORCE_INLINE void clear() { del.b.clear(); }
 
-		CAGE_FORCE_INLINE void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
-		{
-			privat::EventLinker::attach(&dispatcher, order);
-		}
+		CAGE_FORCE_INLINE void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0) { privat::EventLinker::attach(&dispatcher, order); }
 
 		using privat::EventLinker::detach;
 
@@ -88,7 +84,7 @@ namespace cage
 		{
 			Delegate<bool(Ts...)> b;
 			Delegate<void(Ts...)> v;
-			CAGE_FORCE_INLINE Del() : b() {};
+			CAGE_FORCE_INLINE Del() : b(){};
 		} del;
 		bool vd = false;
 
@@ -98,8 +94,7 @@ namespace cage
 	template<class... Ts>
 	struct EventDispatcher<bool(Ts...)> : private privat::EventLinker
 	{
-		CAGE_FORCE_INLINE explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
-		{}
+		CAGE_FORCE_INLINE explicit EventDispatcher(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location) {}
 
 		bool dispatch(Ts... vs) const
 		{
@@ -107,7 +102,7 @@ namespace cage
 			const privat::EventLinker *l = this->n;
 			while (l)
 			{
-				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(vs...))
+				if (static_cast<const EventListener<bool(Ts...)> *>(l)->invoke(vs...))
 					return true;
 				l = l->n;
 			}

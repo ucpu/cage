@@ -1,5 +1,5 @@
-#include <cage-core/string.h>
 #include <cage-core/files.h>
+#include <cage-core/string.h>
 
 #include <vector>
 
@@ -12,27 +12,27 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			switch (c)
 			{
-			case '<':
-			case '>':
-			case ':':
-			case '"':
-			case '|':
-			case '?':
-			case '*':
-			case '\\':
-				return false;
-			case '/':
-				return allowSlash;
-			default:
-				return (unsigned char)c >= 32;
+				case '<':
+				case '>':
+				case ':':
+				case '"':
+				case '|':
+				case '?':
+				case '*':
+				case '\\':
+					return false;
+				case '/':
+					return allowSlash;
+				default:
+					return (unsigned char)c >= 32;
 			}
 #else
 			switch (c)
 			{
-			case '/':
-				return allowSlash;
-			default:
-				return (unsigned char)c >= 32;
+				case '/':
+					return allowSlash;
+				default:
+					return (unsigned char)c >= 32;
 			}
 #endif
 		}

@@ -181,8 +181,8 @@ namespace cage
 	bool InputsDispatchers::dispatch(const GenericInput &in)
 	{
 #define EVENT(CLASS, NAME, TYPE) \
-		if (in.type == InputClassEnum::CLASS && in.data.typeHash() == detail::typeHash<TYPE>()) \
-			return NAME.dispatch(in.data.get<TYPE>());
+	if (in.type == InputClassEnum::CLASS && in.data.typeHash() == detail::typeHash<TYPE>()) \
+		return NAME.dispatch(in.data.get<TYPE>());
 
 		EVENT(FocusGain, focusGain, InputWindow);
 		EVENT(FocusLose, focusLose, InputWindow);
@@ -226,10 +226,10 @@ namespace cage
 	void InputsListeners::attach(InputsDispatchers *dispatchers, sint32 order)
 	{
 #define EVENT(CLASS, NAME, TYPE) \
-		if (dispatchers) \
-			NAME.attach(dispatchers->NAME, order); \
-		else \
-			NAME.detach();
+	if (dispatchers) \
+		NAME.attach(dispatchers->NAME, order); \
+	else \
+		NAME.detach();
 
 		EVENT(FocusGain, focusGain, InputWindow);
 		EVENT(FocusLose, focusLose, InputWindow);
@@ -271,10 +271,10 @@ namespace cage
 	void InputsListeners::bind(InputsGeneralizer *generalizer)
 	{
 #define EVENT(CLASS, NAME, TYPE) \
-		if (generalizer) \
-			NAME.bind([generalizer](TYPE in) { return generalizer->NAME(in); }); \
-		else \
-			NAME.clear();
+	if (generalizer) \
+		NAME.bind([generalizer](TYPE in) { return generalizer->NAME(in); }); \
+	else \
+		NAME.clear();
 
 		EVENT(FocusGain, focusGain, InputWindow);
 		EVENT(FocusLose, focusLose, InputWindow);

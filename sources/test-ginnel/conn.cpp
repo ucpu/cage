@@ -1,12 +1,12 @@
+#include <cage-core/config.h>
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/networkGinnel.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
+#include <cage-core/networkGinnel.h>
 #include <cage-core/random.h>
-#include <cage-core/variableSmoothingBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-core/string.h>
-#include <cage-core/config.h>
+#include <cage-core/variableSmoothingBuffer.h>
 
 using namespace cage;
 
@@ -35,10 +35,7 @@ namespace
 			CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
 		}
 
-		~ConnImpl()
-		{
-			statistics(applicationTime());
-		}
+		~ConnImpl() { statistics(applicationTime()); }
 
 		template<class T>
 		static String leftFill(const T &value, uint32 n = 6)

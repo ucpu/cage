@@ -1,12 +1,12 @@
 #include "processor.h"
 
-#include <cage-core/timer.h>
 #include <cage-core/hashString.h>
+#include <cage-core/timer.h>
 #include <cage-engine/opengl.h>
 #include <map>
 #include <set>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace
 {
@@ -317,10 +317,17 @@ namespace
 						stack.pop_back();
 						switch (v)
 						{
-						case 0: stack.push_back(1); break;
-						case 1: stack.push_back(2); break;
-						case 2: stack.push_back(2); break;
-						default: CAGE_THROW_CRITICAL(Exception, "invalid stack value");
+							case 0:
+								stack.push_back(1);
+								break;
+							case 1:
+								stack.push_back(2);
+								break;
+							case 2:
+								stack.push_back(2);
+								break;
+							default:
+								CAGE_THROW_CRITICAL(Exception, "invalid stack value");
 						}
 					}
 					else if (cmd == "end" || cmd == "endif")

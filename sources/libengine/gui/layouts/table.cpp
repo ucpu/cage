@@ -13,8 +13,7 @@ namespace cage
 			std::vector<Real> heights;
 			uint32 mws = 0, mhs = 0;
 
-			LayoutTableImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutTable))
-			{}
+			LayoutTableImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutTable)) {}
 
 			void initialize() override
 			{

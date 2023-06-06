@@ -16,13 +16,18 @@ namespace cage
 			{
 				switch (quality)
 				{
-				case 0: return SRC_ZERO_ORDER_HOLD;
-				case 1: return SRC_LINEAR;
-				case 2: return SRC_SINC_FASTEST;
-				case 3: return SRC_SINC_MEDIUM_QUALITY;
-				case 4: return SRC_SINC_BEST_QUALITY;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid sample rate conversion quality option");
+					case 0:
+						return SRC_ZERO_ORDER_HOLD;
+					case 1:
+						return SRC_LINEAR;
+					case 2:
+						return SRC_SINC_FASTEST;
+					case 3:
+						return SRC_SINC_MEDIUM_QUALITY;
+					case 4:
+						return SRC_SINC_BEST_QUALITY;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid sample rate conversion quality option");
 				}
 			}
 
@@ -34,10 +39,7 @@ namespace cage
 					handleError(err);
 			}
 
-			~SampleRateConverterImpl()
-			{
-				src_delete(state);
-			}
+			~SampleRateConverterImpl() { src_delete(state); }
 
 			void handleError(int err)
 			{

@@ -1,8 +1,8 @@
 #include "main.h"
 
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
+#include <cage-core/math.h>
 #include <cmath>
 
 void test(Real a, Real b);
@@ -314,7 +314,7 @@ void testGeometry()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				const Transform tr = Transform(randomDirection3() *randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+				const Transform tr = Transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
 				const Line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
 				const Triangle t = Triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
 				CAGE_TEST(intersects(l * tr, t * tr) == intersects(l, t));
@@ -328,7 +328,7 @@ void testGeometry()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				const Transform tr = Transform(randomDirection3() *randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+				const Transform tr = Transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
 				const Triangle t1 = Triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
 				const Triangle t2 = Triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
 				CAGE_TEST(intersects(t1 * tr, t2 * tr) == intersects(t1, t2));
@@ -650,14 +650,7 @@ void testGeometry()
 
 	{
 		CAGE_TESTCASE("stringize");
-		const String s = detail::StringizerBase<5432>()
-			+ makeSegment(Vec3(1, 2, 3), Vec3(4, 5, 6)) + ", "
-			+ Triangle() + ", "
-			+ Plane() + ", "
-			+ Sphere() + ", "
-			+ Aabb() + ", "
-			+ Cone() + ", "
-			+ Frustum();
+		const String s = detail::StringizerBase<5432>() + makeSegment(Vec3(1, 2, 3), Vec3(4, 5, 6)) + ", " + Triangle() + ", " + Plane() + ", " + Sphere() + ", " + Aabb() + ", " + Cone() + ", " + Frustum();
 	}
 
 	{

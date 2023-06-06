@@ -1,10 +1,10 @@
-#include <cage-core/macros.h>
 #include <cage-core/image.h>
+#include <cage-core/macros.h>
 #include <cage-core/serialization.h>
 
-#include <cage-engine/texture.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
 
 namespace cage
 {
@@ -30,8 +30,7 @@ namespace cage
 			}
 
 			// createTextureForOpenXr
-			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D), id(id), owning(false), resolution(resolution, 1), mipmapLevels(1), internalFormat(internalFormat)
-			{}
+			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D), id(id), owning(false), resolution(resolution, 1), mipmapLevels(1), internalFormat(internalFormat) {}
 
 			~TextureImpl()
 			{
@@ -48,11 +47,7 @@ namespace cage
 			Vec3i mipRes(uint32 mip) const
 			{
 				CAGE_ASSERT(mip < mipmapLevels);
-				return Vec3i(
-					max(resolution[0] >> mip, 1),
-					max(resolution[1] >> mip, 1),
-					max(resolution[2] >> (target == GL_TEXTURE_2D_ARRAY ? 0 : mip), 1)
-				);
+				return Vec3i(max(resolution[0] >> mip, 1), max(resolution[1] >> mip, 1), max(resolution[2] >> (target == GL_TEXTURE_2D_ARRAY ? 0 : mip), 1));
 			}
 		};
 
@@ -60,75 +55,76 @@ namespace cage
 		{
 			switch (internalFormat)
 			{
-			case GL_R8:
-			case GL_R16:
-			case GL_R16F:
-			case GL_R16I:
-			case GL_R16UI:
-			case GL_R32F:
-			case GL_R32I:
-			case GL_R32UI:
-			case GL_R8_SNORM:
-			case GL_R16_SNORM:
-				return GL_RED;
-			case GL_RG8:
-			case GL_RG16:
-			case GL_RG16F:
-			case GL_RG16I:
-			case GL_RG16UI:
-			case GL_RG32F:
-			case GL_RG32I:
-			case GL_RG32UI:
-			case GL_RG8_SNORM:
-			case GL_RG16_SNORM:
-				return GL_RG;
-			case GL_RGB8:
-			case GL_RGB16:
-			case GL_RGB16F:
-			case GL_RGB16I:
-			case GL_RGB16UI:
-			case GL_RGB32F:
-			case GL_RGB32I:
-			case GL_RGB32UI:
-			case GL_RGB8_SNORM:
-			case GL_RGB16_SNORM:
-			case GL_RGB10:
-			case GL_RGB4:
-			case GL_RGB5:
-			case GL_RGB565:
-			case GL_RGB12:
-			case GL_R11F_G11F_B10F:
-			case GL_RGB9_E5:
-			case GL_R3_G3_B2:
-			case GL_SRGB8:
-				return GL_RGB;
-			case GL_RGBA8:
-			case GL_RGBA16:
-			case GL_RGBA16F:
-			case GL_RGBA16I:
-			case GL_RGBA16UI:
-			case GL_RGBA32F:
-			case GL_RGBA32I:
-			case GL_RGBA32UI:
-			case GL_RGBA8_SNORM:
-			case GL_RGBA16_SNORM:
-			case GL_RGBA2:
-			case GL_RGBA4:
-			case GL_RGBA12:
-			case GL_RGB5_A1:
-			case GL_RGB10_A2:
-			case GL_RGB10_A2UI:
-			case GL_SRGB8_ALPHA8:
-				return GL_RGBA;
-			case GL_DEPTH_COMPONENT16:
-			case GL_DEPTH_COMPONENT24:
-			case GL_DEPTH_COMPONENT32:
-			case GL_DEPTH_COMPONENT32F:
-				return GL_DEPTH_COMPONENT;
-			case GL_DEPTH24_STENCIL8:
-			case GL_DEPTH32F_STENCIL8:
-				return GL_DEPTH_STENCIL;
-			default: CAGE_THROW_CRITICAL(Exception, "unknown texture internal format");
+				case GL_R8:
+				case GL_R16:
+				case GL_R16F:
+				case GL_R16I:
+				case GL_R16UI:
+				case GL_R32F:
+				case GL_R32I:
+				case GL_R32UI:
+				case GL_R8_SNORM:
+				case GL_R16_SNORM:
+					return GL_RED;
+				case GL_RG8:
+				case GL_RG16:
+				case GL_RG16F:
+				case GL_RG16I:
+				case GL_RG16UI:
+				case GL_RG32F:
+				case GL_RG32I:
+				case GL_RG32UI:
+				case GL_RG8_SNORM:
+				case GL_RG16_SNORM:
+					return GL_RG;
+				case GL_RGB8:
+				case GL_RGB16:
+				case GL_RGB16F:
+				case GL_RGB16I:
+				case GL_RGB16UI:
+				case GL_RGB32F:
+				case GL_RGB32I:
+				case GL_RGB32UI:
+				case GL_RGB8_SNORM:
+				case GL_RGB16_SNORM:
+				case GL_RGB10:
+				case GL_RGB4:
+				case GL_RGB5:
+				case GL_RGB565:
+				case GL_RGB12:
+				case GL_R11F_G11F_B10F:
+				case GL_RGB9_E5:
+				case GL_R3_G3_B2:
+				case GL_SRGB8:
+					return GL_RGB;
+				case GL_RGBA8:
+				case GL_RGBA16:
+				case GL_RGBA16F:
+				case GL_RGBA16I:
+				case GL_RGBA16UI:
+				case GL_RGBA32F:
+				case GL_RGBA32I:
+				case GL_RGBA32UI:
+				case GL_RGBA8_SNORM:
+				case GL_RGBA16_SNORM:
+				case GL_RGBA2:
+				case GL_RGBA4:
+				case GL_RGBA12:
+				case GL_RGB5_A1:
+				case GL_RGB10_A2:
+				case GL_RGB10_A2UI:
+				case GL_SRGB8_ALPHA8:
+					return GL_RGBA;
+				case GL_DEPTH_COMPONENT16:
+				case GL_DEPTH_COMPONENT24:
+				case GL_DEPTH_COMPONENT32:
+				case GL_DEPTH_COMPONENT32F:
+					return GL_DEPTH_COMPONENT;
+				case GL_DEPTH24_STENCIL8:
+				case GL_DEPTH32F_STENCIL8:
+					return GL_DEPTH_STENCIL;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "unknown texture internal format");
 			}
 		}
 
@@ -143,7 +139,7 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		TextureImpl *impl = (TextureImpl*)this;
+		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());
 	}
@@ -271,56 +267,102 @@ namespace cage
 		{
 			switch (img->format())
 			{
-			case ImageFormatEnum::U8:
-			{
-				switch (img->channels())
+				case ImageFormatEnum::U8:
 				{
-				case 3: initialize(res, 1, GL_SRGB8); image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
-				case 4: initialize(res, 1, GL_SRGB8_ALPHA8); image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+					switch (img->channels())
+					{
+						case 3:
+							initialize(res, 1, GL_SRGB8);
+							image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+						case 4:
+							initialize(res, 1, GL_SRGB8_ALPHA8);
+							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+					}
 				}
-			} break;
-			default:
-				// pass
 				break;
+				default:
+					// pass
+					break;
 			}
 		}
 		else
 		{
 			switch (img->format())
 			{
-			case ImageFormatEnum::U8:
-			{
-				switch (img->channels())
+				case ImageFormatEnum::U8:
 				{
-				case 1: initialize(res, 1, GL_R8); image2d(0, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
-				case 2: initialize(res, 1, GL_RG8); image2d(0, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
-				case 3: initialize(res, 1, GL_RGB8); image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
-				case 4: initialize(res, 1, GL_RGBA8); image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8())); return;
+					switch (img->channels())
+					{
+						case 1:
+							initialize(res, 1, GL_R8);
+							image2d(0, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+						case 2:
+							initialize(res, 1, GL_RG8);
+							image2d(0, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+						case 3:
+							initialize(res, 1, GL_RGB8);
+							image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+						case 4:
+							initialize(res, 1, GL_RGBA8);
+							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+							return;
+					}
 				}
-			} break;
-			case ImageFormatEnum::U16:
-			{
-				switch (img->channels())
-				{
-				case 1: initialize(res, 1, GL_R16); image2d(0, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
-				case 2: initialize(res, 1, GL_RG16); image2d(0, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
-				case 3: initialize(res, 1, GL_RGB16); image2d(0, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
-				case 4: initialize(res, 1, GL_RGBA16); image2d(0, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16())); return;
-				}
-			} break;
-			case ImageFormatEnum::Float:
-			{
-				switch (img->channels())
-				{
-				case 1: initialize(res, 1, GL_R32F); image2d(0, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
-				case 2: initialize(res, 1, GL_RG32F); image2d(0, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
-				case 3: initialize(res, 1, GL_RGB32F); image2d(0, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
-				case 4: initialize(res, 1, GL_RGBA32F); image2d(0, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat())); return;
-				}
-			} break;
-			default:
-				// pass
 				break;
+				case ImageFormatEnum::U16:
+				{
+					switch (img->channels())
+					{
+						case 1:
+							initialize(res, 1, GL_R16);
+							image2d(0, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+							return;
+						case 2:
+							initialize(res, 1, GL_RG16);
+							image2d(0, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+							return;
+						case 3:
+							initialize(res, 1, GL_RGB16);
+							image2d(0, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+							return;
+						case 4:
+							initialize(res, 1, GL_RGBA16);
+							image2d(0, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+							return;
+					}
+				}
+				break;
+				case ImageFormatEnum::Float:
+				{
+					switch (img->channels())
+					{
+						case 1:
+							initialize(res, 1, GL_R32F);
+							image2d(0, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+							return;
+						case 2:
+							initialize(res, 1, GL_RG32F);
+							image2d(0, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+							return;
+						case 3:
+							initialize(res, 1, GL_RGB32F);
+							image2d(0, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+							return;
+						case 4:
+							initialize(res, 1, GL_RGBA32F);
+							image2d(0, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+							return;
+					}
+				}
+				break;
+				default:
+					// pass
+					break;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");

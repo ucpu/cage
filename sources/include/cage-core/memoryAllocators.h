@@ -36,25 +36,17 @@ namespace cage
 	{
 		using value_type = T;
 
-		MemoryAllocatorStd() : a(systemMemory())
-		{}
+		MemoryAllocatorStd() : a(systemMemory()) {}
 
-		explicit MemoryAllocatorStd(const MemoryArena &arena) : a(arena)
-		{}
+		explicit MemoryAllocatorStd(const MemoryArena &arena) : a(arena) {}
 
 		template<class TT>
 		explicit MemoryAllocatorStd(const MemoryAllocatorStd<TT> &other) : a(other.a)
 		{}
 
-		T *allocate(uintPtr cnt)
-		{
-			return (T *)a.allocate(cnt * sizeof(T), alignof(T));
-		}
+		T *allocate(uintPtr cnt) { return (T *)a.allocate(cnt * sizeof(T), alignof(T)); }
 
-		void deallocate(T *ptr, uintPtr)
-		{
-			a.deallocate(ptr);
-		}
+		void deallocate(T *ptr, uintPtr) { a.deallocate(ptr); }
 
 	private:
 		MemoryArena a;

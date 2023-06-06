@@ -1,6 +1,6 @@
-#include <cage-core/utf.h>
-#include <cage-core/memoryBuffer.h>
 #include "../private.h"
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/utf.h>
 
 namespace cage
 {
@@ -14,10 +14,7 @@ namespace cage
 			MemoryBuffer &buffer;
 			Vec2 textPos, textSize;
 
-			TextAreaImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(TextArea)), buffer(*data.buffer)
-			{
-				CAGE_ASSERT(data.buffer);
-			}
+			TextAreaImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(TextArea)), buffer(*data.buffer) { CAGE_ASSERT(data.buffer); }
 
 			void initialize() override
 			{
@@ -112,31 +109,35 @@ namespace cage
 				CAGE_ASSERT(cursor <= len);
 				switch (key)
 				{
-				case 263: // left
-				{
-					if (cursor > 0)
+					case 263: // left
+					{
+						if (cursor > 0)
+							cursor--;
+					}
+					break;
+					case 262: // right
+					{
+						if (cursor < len)
+							cursor++;
+					}
+					break;
+					case 259: // backspace
+					{
+						if (len == 0 || cursor == 0)
+							break;
 						cursor--;
-				} break;
-				case 262: // right
-				{
-					if (cursor < len)
-						cursor++;
-				} break;
-				case 259: // backspace
-				{
-					if (len == 0 || cursor == 0)
-						break;
-					cursor--;
-					utf32.erase(utf32.begin() + cursor);
-					store(utf32);
-				} break;
-				case 261: // delete
-				{
-					if (cursor == len)
-						break;
-					utf32.erase(utf32.begin() + cursor);
-					store(utf32);
-				} break;
+						utf32.erase(utf32.begin() + cursor);
+						store(utf32);
+					}
+					break;
+					case 261: // delete
+					{
+						if (cursor == len)
+							break;
+						utf32.erase(utf32.begin() + cursor);
+						store(utf32);
+					}
+					break;
 				}
 				return true;
 			}

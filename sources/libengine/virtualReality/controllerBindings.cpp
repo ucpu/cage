@@ -22,7 +22,8 @@ namespace cage
 		{
 			std::map<String, Holder<Ini>> result;
 
-			const auto &load = [&](PointerRange<const uint8> data) {
+			const auto &load = [&](PointerRange<const uint8> data)
+			{
 				Holder<Ini> ini = newIni();
 				ini->importBuffer(bufferCast<const char>(data));
 				result[ini->getString("profile", "profile")] = std::move(ini);
@@ -49,7 +50,8 @@ namespace cage
 
 		void loadControllerBindingsImpl(XrInstance instance, const char *sideName, const String &profile, std::vector<XrActionSuggestedBinding> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions, Ini *ini)
 		{
-			const auto &check = [&](XrResult result) {
+			const auto &check = [&](XrResult result)
+			{
 				if (XR_SUCCEEDED(result))
 					return;
 

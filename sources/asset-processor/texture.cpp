@@ -32,13 +32,13 @@ namespace
 	{
 		switch (f)
 		{
-		case GL_NEAREST_MIPMAP_NEAREST:
-		case GL_LINEAR_MIPMAP_NEAREST:
-		case GL_NEAREST_MIPMAP_LINEAR:
-		case GL_LINEAR_MIPMAP_LINEAR:
-			return true;
-		default:
-			return false;
+			case GL_NEAREST_MIPMAP_NEAREST:
+			case GL_LINEAR_MIPMAP_NEAREST:
+			case GL_NEAREST_MIPMAP_LINEAR:
+			case GL_LINEAR_MIPMAP_LINEAR:
+				return true;
+			default:
+				return false;
 		}
 	}
 
@@ -75,18 +75,24 @@ namespace
 		{
 			switch (data.channels)
 			{
-			case 3: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
-			case 4: return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+				case 3:
+					return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+				case 4:
+					return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
 			}
 		}
 		else
 		{
 			switch (data.channels)
 			{
-			case 1: return GL_COMPRESSED_RED_RGTC1;
-			case 2: return GL_COMPRESSED_RG_RGTC2;
-			case 3: return GL_COMPRESSED_RGBA_BPTC_UNORM;
-			case 4: return GL_COMPRESSED_RGBA_BPTC_UNORM;
+				case 1:
+					return GL_COMPRESSED_RED_RGTC1;
+				case 2:
+					return GL_COMPRESSED_RG_RGTC2;
+				case 3:
+					return GL_COMPRESSED_RGBA_BPTC_UNORM;
+				case 4:
+					return GL_COMPRESSED_RGBA_BPTC_UNORM;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
@@ -98,18 +104,24 @@ namespace
 		{
 			switch (data.channels)
 			{
-			case 3: return GL_SRGB8;
-			case 4: return GL_SRGB8_ALPHA8;
+				case 3:
+					return GL_SRGB8;
+				case 4:
+					return GL_SRGB8_ALPHA8;
 			}
 		}
 		else
 		{
 			switch (data.channels)
 			{
-			case 1: return GL_R8;
-			case 2: return GL_RG8;
-			case 3: return GL_RGB8;
-			case 4: return GL_RGBA8;
+				case 1:
+					return GL_R8;
+				case 2:
+					return GL_RG8;
+				case 3:
+					return GL_RGB8;
+				case 4:
+					return GL_RGBA8;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
@@ -119,10 +131,14 @@ namespace
 	{
 		switch (data.channels)
 		{
-		case 1: return GL_RED;
-		case 2: return GL_RG;
-		case 3: return GL_RGB;
-		case 4: return GL_RGBA;
+			case 1:
+				return GL_RED;
+			case 2:
+				return GL_RG;
+			case 3:
+				return GL_RGB;
+			case 4:
+				return GL_RGBA;
 		}
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
@@ -250,30 +266,30 @@ namespace
 			uint32 yOffset = 0, xOffset = 0;
 			switch (sideIndex++)
 			{
-			case 0:
-				xOffset = 2;
-				yOffset = 1;
-				break;
-			case 1:
-				xOffset = 0;
-				yOffset = 1;
-				break;
-			case 2:
-				xOffset = 1;
-				yOffset = 0;
-				break;
-			case 3:
-				xOffset = 1;
-				yOffset = 2;
-				break;
-			case 4:
-				xOffset = 1;
-				yOffset = 1;
-				break;
-			case 5:
-				xOffset = 3;
-				yOffset = 1;
-				break;
+				case 0:
+					xOffset = 2;
+					yOffset = 1;
+					break;
+				case 1:
+					xOffset = 0;
+					yOffset = 1;
+					break;
+				case 2:
+					xOffset = 1;
+					yOffset = 0;
+					break;
+				case 3:
+					xOffset = 1;
+					yOffset = 2;
+					break;
+				case 4:
+					xOffset = 1;
+					yOffset = 1;
+					break;
+				case 5:
+					xOffset = 3;
+					yOffset = 1;
+					break;
 			}
 			xOffset *= tgt.image->width();
 			yOffset *= tgt.image->height();
@@ -582,9 +598,12 @@ void processTexture()
 			{
 				switch (it.image->channels())
 				{
-				case 2: continue;
-				case 3: break;
-				default: CAGE_THROW_ERROR(Exception, "normal map requires 2 or 3 channels");
+					case 2:
+						continue;
+					case 3:
+						break;
+					default:
+						CAGE_THROW_ERROR(Exception, "normal map requires 2 or 3 channels");
 				}
 				imageConvert(+it.image, 2);
 			}

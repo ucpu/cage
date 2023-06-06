@@ -1,16 +1,16 @@
 #include <cage-core/entities.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/memoryAllocators.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
+#include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
 
-#include <unordered_dense.h>
 #include <plf_colony.h>
+#include <unordered_dense.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace cage
 {
@@ -57,15 +57,14 @@ namespace cage
 			uint32 generateName = 0;
 
 #ifdef _MSC_VER
-#pragma warning (push)
-#pragma warning (disable: 4355) // disable warning that using this in initializer list is dangerous
+	#pragma warning(push)
+	#pragma warning(disable : 4355) // disable warning that using this in initializer list is dangerous
 #endif
 
-			EntityManagerImpl() : allEntities(this)
-			{}
+			EntityManagerImpl() : allEntities(this) {}
 
 #ifdef _MSC_VER
-#pragma warning (pop)
+	#pragma warning(pop)
 #endif
 
 			~EntityManagerImpl()
@@ -86,15 +85,9 @@ namespace cage
 				return generateName++;
 			}
 
-			EntityImpl *newEnt(uint32 name)
-			{
-				return &*ents.emplace(this, name);
-			}
+			EntityImpl *newEnt(uint32 name) { return &*ents.emplace(this, name); }
 
-			void desEnt(EntityImpl *e)
-			{
-				ents.erase(ents.get_iterator(e));
-			}
+			void desEnt(EntityImpl *e) { ents.erase(ents.get_iterator(e)); }
 		};
 
 		class Values
@@ -116,15 +109,9 @@ namespace cage
 
 			plf::colony<Value, MemoryAllocatorStd<Value>> data;
 
-			void *newVal() override
-			{
-				return &*data.emplace();
-			}
+			void *newVal() override { return &*data.emplace(); }
 
-			void desVal(void *val) override
-			{
-				data.erase(data.get_iterator((Value *)val));
-			}
+			void desVal(void *val) override { data.erase(data.get_iterator((Value *)val)); }
 		};
 
 		class ValuesFallback : public Values
@@ -133,18 +120,11 @@ namespace cage
 			const uintPtr size = m;
 			const uintPtr alignment = m;
 
-			ValuesFallback(uintPtr size, uintPtr alignment) : size(size), alignment(alignment)
-			{}
+			ValuesFallback(uintPtr size, uintPtr alignment) : size(size), alignment(alignment) {}
 
-			void *newVal() override
-			{
-				return systemMemory().allocate(size, alignment);
-			}
+			void *newVal() override { return systemMemory().allocate(size, alignment); }
 
-			void desVal(void *val) override
-			{
-				systemMemory().deallocate(val);
-			}
+			void desVal(void *val) override { systemMemory().deallocate(val); }
 		};
 
 		Holder<Values> newValues(uintPtr size, uintPtr alignment)
@@ -153,7 +133,9 @@ namespace cage
 			if (s > 128)
 				return systemMemory().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
-#define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemMemory().createHolder<ValuesImpl<SIZE>>().cast<Values>();
+#define GCHL_GENERATE(SIZE) \
+	if (s <= SIZE) \
+		return systemMemory().createHolder<ValuesImpl<SIZE>>().cast<Values>();
 			GCHL_GENERATE(4);
 			GCHL_GENERATE(8);
 			GCHL_GENERATE(16);
@@ -199,10 +181,7 @@ namespace cage
 				return v;
 			}
 
-			void desVal(void *v)
-			{
-				values->desVal(v);
-			}
+			void desVal(void *v) { values->desVal(v); }
 		};
 
 		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 name) : manager(manager), name(name)
@@ -444,7 +423,7 @@ namespace cage
 			return;
 		EntityImpl *impl = (EntityImpl *)this;
 		impl->groups.insert(group);
-		((GroupImpl*)group)->entities.push_back(impl);
+		((GroupImpl *)group)->entities.push_back(impl);
 		group->entityAdded.dispatch(this);
 	}
 
@@ -454,11 +433,11 @@ namespace cage
 			return;
 		EntityImpl *impl = (EntityImpl *)this;
 		impl->groups.erase(group);
-		for (std::vector<Entity*>::reverse_iterator it = ((GroupImpl*)group)->entities.rbegin(), et = ((GroupImpl*)group)->entities.rend(); it != et; it++)
+		for (std::vector<Entity *>::reverse_iterator it = ((GroupImpl *)group)->entities.rbegin(), et = ((GroupImpl *)group)->entities.rend(); it != et; it++)
 		{
 			if (*it == impl)
 			{
-				((GroupImpl*)group)->entities.erase(--(it.base()));
+				((GroupImpl *)group)->entities.erase(--(it.base()));
 				break;
 			}
 		}
@@ -469,7 +448,7 @@ namespace cage
 	{
 		CAGE_ASSERT(group->manager() == this->manager());
 		const EntityImpl *impl = (const EntityImpl *)this;
-		return impl->groups.count(const_cast<EntityGroup*>(group)) != 0;
+		return impl->groups.count(const_cast<EntityGroup *>(group)) != 0;
 	}
 
 	void Entity::add(EntityComponent *component)
@@ -511,7 +490,7 @@ namespace cage
 	{
 		CAGE_ASSERT(component->manager() == this->manager());
 		EntityImpl *impl = (EntityImpl *)this;
-		ComponentImpl *ci = (ComponentImpl*)component;
+		ComponentImpl *ci = (ComponentImpl *)component;
 		if (impl->components.size() > ci->definitionIndex)
 		{
 			void *res = impl->components[ci->definitionIndex];

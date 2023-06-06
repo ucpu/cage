@@ -1,9 +1,9 @@
+#include <cage-core/camera.h>
+#include <cage-core/entities.h>
+#include <cage-engine/scene.h>
+#include <cage-engine/window.h>
 #include <cage-simple/cameraRay.h>
 #include <cage-simple/engine.h>
-#include <cage-engine/window.h>
-#include <cage-engine/scene.h>
-#include <cage-core/entities.h>
-#include <cage-core/camera.h>
 
 namespace cage
 {

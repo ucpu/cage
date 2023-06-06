@@ -68,15 +68,15 @@ namespace cage
 		VorbisDecoder *impl = (VorbisDecoder *)datasource;
 		switch (whence)
 		{
-		case SEEK_SET:
-			impl->file->seek(numeric_cast<uintPtr>(offset));
-			break;
-		case SEEK_CUR:
-			impl->file->seek(numeric_cast<uintPtr>(impl->file->tell() + offset));
-			break;
-		case SEEK_END:
-			impl->file->seek(numeric_cast<uintPtr>(impl->file->size() + offset));
-			break;
+			case SEEK_SET:
+				impl->file->seek(numeric_cast<uintPtr>(offset));
+				break;
+			case SEEK_CUR:
+				impl->file->seek(numeric_cast<uintPtr>(impl->file->tell() + offset));
+				break;
+			case SEEK_END:
+				impl->file->seek(numeric_cast<uintPtr>(impl->file->size() + offset));
+				break;
 		}
 		return 0;
 	}

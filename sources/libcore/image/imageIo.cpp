@@ -1,10 +1,10 @@
 #include "image.h"
 
 #include <cage-core/files.h>
-#include <cage-core/string.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -62,8 +62,7 @@ namespace cage
 				jpegDecode(buffer, impl);
 			else if (compare(buffer, tiffSignature))
 				tiffDecode(buffer, impl);
-			else if (compare(buffEnd(buffer, sizeof(tgaSignature1)), tgaSignature1)
-				  || compare(buffEnd(buffer, sizeof(tgaSignature2)), tgaSignature2))
+			else if (compare(buffEnd(buffer, sizeof(tgaSignature1)), tgaSignature1) || compare(buffEnd(buffer, sizeof(tgaSignature2)), tgaSignature2))
 				tgaDecode(buffer, impl);
 			else if (compare(buffer, psdSignature))
 				psdDecode(buffer, impl);

@@ -1,18 +1,18 @@
-#include <cage-core/string.h>
-#include <cage-core/stdHash.h>
-#include <cage-core/math.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/files.h>
 #include <cage-core/config.h>
-#include <cage-core/ini.h>
 #include <cage-core/debug.h>
+#include <cage-core/files.h>
+#include <cage-core/ini.h>
 #include <cage-core/logger.h>
 #include <cage-core/macros.h>
+#include <cage-core/math.h>
+#include <cage-core/stdHash.h>
+#include <cage-core/string.h>
 
 #include <unordered_dense.h>
 
-#include <vector>
 #include <variant>
+#include <vector>
 
 namespace cage
 {
@@ -66,15 +66,48 @@ namespace cage
 			return cfgVarAlreadyLocked(name);
 		}
 
-		template<class T> struct TypeMapping;
-		template<> struct TypeMapping<bool>   { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Bool;   };
-		template<> struct TypeMapping<sint32> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint32; };
-		template<> struct TypeMapping<uint32> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint32; };
-		template<> struct TypeMapping<sint64> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint64; };
-		template<> struct TypeMapping<uint64> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint64; };
-		template<> struct TypeMapping<float > { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Float;  };
-		template<> struct TypeMapping<double> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::Double; };
-		template<> struct TypeMapping<String> { static constexpr ConfigTypeEnum type = ConfigTypeEnum::String; };
+		template<class T>
+		struct TypeMapping;
+		template<>
+		struct TypeMapping<bool>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Bool;
+		};
+		template<>
+		struct TypeMapping<sint32>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint32;
+		};
+		template<>
+		struct TypeMapping<uint32>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint32;
+		};
+		template<>
+		struct TypeMapping<sint64>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Sint64;
+		};
+		template<>
+		struct TypeMapping<uint64>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Uint64;
+		};
+		template<>
+		struct TypeMapping<float>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Float;
+		};
+		template<>
+		struct TypeMapping<double>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::Double;
+		};
+		template<>
+		struct TypeMapping<String>
+		{
+			static constexpr ConfigTypeEnum type = ConfigTypeEnum::String;
+		};
 
 		template<class T>
 		void cfgSet(ConfigVariable *cfg, const T &value)
@@ -129,28 +162,62 @@ namespace cage
 			return var;
 		}
 
-		template<class T> T stringToNumber(const String &s);
-		template<> sint32 stringToNumber(const String &s) { return toUint32(s); }
-		template<> uint32 stringToNumber(const String &s) { return toSint32(s); }
-		template<> sint64 stringToNumber(const String &s) { return toUint64(s); }
-		template<> uint64 stringToNumber(const String &s) { return toSint64(s); }
-		template<> float  stringToNumber(const String &s) { return toFloat(s);  }
-		template<> double stringToNumber(const String &s) { return toDouble(s); }
+		template<class T>
+		T stringToNumber(const String &s);
+		template<>
+		sint32 stringToNumber(const String &s)
+		{
+			return toUint32(s);
+		}
+		template<>
+		uint32 stringToNumber(const String &s)
+		{
+			return toSint32(s);
+		}
+		template<>
+		sint64 stringToNumber(const String &s)
+		{
+			return toUint64(s);
+		}
+		template<>
+		uint64 stringToNumber(const String &s)
+		{
+			return toSint64(s);
+		}
+		template<>
+		float stringToNumber(const String &s)
+		{
+			return toFloat(s);
+		}
+		template<>
+		double stringToNumber(const String &s)
+		{
+			return toDouble(s);
+		}
 
 		template<class T>
 		T cfgGet(const ConfigVariable *cfg)
 		{
 			switch (cfg->type)
 			{
-			case ConfigTypeEnum::Bool: return std::get<bool>(cfg->data);
-			case ConfigTypeEnum::Sint32: return numeric_cast<T>(std::get<sint32>(cfg->data));
-			case ConfigTypeEnum::Uint32: return numeric_cast<T>(std::get<uint32>(cfg->data));
-			case ConfigTypeEnum::Sint64: return numeric_cast<T>(std::get<sint64>(cfg->data));
-			case ConfigTypeEnum::Uint64: return numeric_cast<T>(std::get<uint64>(cfg->data));
-			case ConfigTypeEnum::Float:  return numeric_cast<T>(std::get<float>(cfg->data));
-			case ConfigTypeEnum::Double: return numeric_cast<T>(std::get<double>(cfg->data));
-			case ConfigTypeEnum::String: return stringToNumber<T>(std::get<String>(cfg->data));
-			default: return 0;
+				case ConfigTypeEnum::Bool:
+					return std::get<bool>(cfg->data);
+				case ConfigTypeEnum::Sint32:
+					return numeric_cast<T>(std::get<sint32>(cfg->data));
+				case ConfigTypeEnum::Uint32:
+					return numeric_cast<T>(std::get<uint32>(cfg->data));
+				case ConfigTypeEnum::Sint64:
+					return numeric_cast<T>(std::get<sint64>(cfg->data));
+				case ConfigTypeEnum::Uint64:
+					return numeric_cast<T>(std::get<uint64>(cfg->data));
+				case ConfigTypeEnum::Float:
+					return numeric_cast<T>(std::get<float>(cfg->data));
+				case ConfigTypeEnum::Double:
+					return numeric_cast<T>(std::get<double>(cfg->data));
+				case ConfigTypeEnum::String:
+					return stringToNumber<T>(std::get<String>(cfg->data));
+				default:
+					return 0;
 			}
 		}
 
@@ -159,15 +226,24 @@ namespace cage
 		{
 			switch (cfg->type)
 			{
-			case ConfigTypeEnum::Bool: return std::get<bool>(cfg->data);
-			case ConfigTypeEnum::Sint32: return !!std::get<sint32>(cfg->data);
-			case ConfigTypeEnum::Uint32: return !!std::get<uint32>(cfg->data);
-			case ConfigTypeEnum::Sint64: return !!std::get<sint64>(cfg->data);
-			case ConfigTypeEnum::Uint64: return !!std::get<uint64>(cfg->data);
-			case ConfigTypeEnum::Float:  return !!std::get<float>(cfg->data);
-			case ConfigTypeEnum::Double: return !!std::get<double>(cfg->data);
-			case ConfigTypeEnum::String: return toBool(std::get<String>(cfg->data));
-			default: return false;
+				case ConfigTypeEnum::Bool:
+					return std::get<bool>(cfg->data);
+				case ConfigTypeEnum::Sint32:
+					return !!std::get<sint32>(cfg->data);
+				case ConfigTypeEnum::Uint32:
+					return !!std::get<uint32>(cfg->data);
+				case ConfigTypeEnum::Sint64:
+					return !!std::get<sint64>(cfg->data);
+				case ConfigTypeEnum::Uint64:
+					return !!std::get<uint64>(cfg->data);
+				case ConfigTypeEnum::Float:
+					return !!std::get<float>(cfg->data);
+				case ConfigTypeEnum::Double:
+					return !!std::get<double>(cfg->data);
+				case ConfigTypeEnum::String:
+					return toBool(std::get<String>(cfg->data));
+				default:
+					return false;
 			}
 		}
 
@@ -176,15 +252,24 @@ namespace cage
 		{
 			switch (cfg->type)
 			{
-			case ConfigTypeEnum::Bool: return Stringizer() + std::get<bool>(cfg->data);
-			case ConfigTypeEnum::Sint32: return Stringizer() + std::get<sint32>(cfg->data);
-			case ConfigTypeEnum::Uint32: return Stringizer() + std::get<uint32>(cfg->data);
-			case ConfigTypeEnum::Sint64: return Stringizer() + std::get<sint64>(cfg->data);
-			case ConfigTypeEnum::Uint64: return Stringizer() + std::get<uint64>(cfg->data);
-			case ConfigTypeEnum::Float:  return Stringizer() + std::get<float>(cfg->data);
-			case ConfigTypeEnum::Double: return Stringizer() + std::get<double>(cfg->data);
-			case ConfigTypeEnum::String: return std::get<String>(cfg->data);
-			default: return "";
+				case ConfigTypeEnum::Bool:
+					return Stringizer() + std::get<bool>(cfg->data);
+				case ConfigTypeEnum::Sint32:
+					return Stringizer() + std::get<sint32>(cfg->data);
+				case ConfigTypeEnum::Uint32:
+					return Stringizer() + std::get<uint32>(cfg->data);
+				case ConfigTypeEnum::Sint64:
+					return Stringizer() + std::get<sint64>(cfg->data);
+				case ConfigTypeEnum::Uint64:
+					return Stringizer() + std::get<uint64>(cfg->data);
+				case ConfigTypeEnum::Float:
+					return Stringizer() + std::get<float>(cfg->data);
+				case ConfigTypeEnum::Double:
+					return Stringizer() + std::get<double>(cfg->data);
+				case ConfigTypeEnum::String:
+					return std::get<String>(cfg->data);
+				default:
+					return "";
 			}
 		}
 
@@ -209,22 +294,66 @@ namespace cage
 
 	// public api
 
-	void configSetString(const String &name, const String &value) { cfgSet(name, value); }
-	String configGetString(const String &name, const String &default_) { return cfgGet(name, default_); }
-	ConfigString::ConfigString(const String &name) { data = cfgVar(name); }
-	ConfigString::ConfigString(const String &name, const String &default_) { data = cfgVar(name, default_); }
-	ConfigString &ConfigString::operator = (const String &value) { cfgSet(data, value); return *this; }
-	ConfigString::operator String() const { return cfgGet<String>(data); }
-	String ConfigList::getString() const { return cfgGet<String>(this); }
+	void configSetString(const String &name, const String &value)
+	{
+		cfgSet(name, value);
+	}
+	String configGetString(const String &name, const String &default_)
+	{
+		return cfgGet(name, default_);
+	}
+	ConfigString::ConfigString(const String &name)
+	{
+		data = cfgVar(name);
+	}
+	ConfigString::ConfigString(const String &name, const String &default_)
+	{
+		data = cfgVar(name, default_);
+	}
+	ConfigString &ConfigString::operator=(const String &value)
+	{
+		cfgSet(data, value);
+		return *this;
+	}
+	ConfigString::operator String() const
+	{
+		return cfgGet<String>(data);
+	}
+	String ConfigList::getString() const
+	{
+		return cfgGet<String>(this);
+	}
 
 #define GCHL_CONFIG(T, t) \
-	void CAGE_JOIN(configSet, T)(const String &name, t value) { cfgSet(name, value); } \
-	t CAGE_JOIN(configGet, T)(const String &name, t default_) { return cfgGet(name, default_); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name) { data = cfgVar(name); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name, t default_) { data = cfgVar(name, default_); } \
-	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { cfgSet(data, value); return *this; } \
-	CAGE_JOIN(Config, T)::operator t() const { return cfgGet<t>(data); } \
-	t ConfigList::CAGE_JOIN(get, T)() const { return cfgGet<t>(this); }
+	void CAGE_JOIN(configSet, T)(const String &name, t value) \
+	{ \
+		cfgSet(name, value); \
+	} \
+	t CAGE_JOIN(configGet, T)(const String &name, t default_) \
+	{ \
+		return cfgGet(name, default_); \
+	} \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name) \
+	{ \
+		data = cfgVar(name); \
+	} \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const String &name, t default_) \
+	{ \
+		data = cfgVar(name, default_); \
+	} \
+	CAGE_JOIN(Config, T) & CAGE_JOIN(Config, T)::operator=(t value) \
+	{ \
+		cfgSet(data, value); \
+		return *this; \
+	} \
+	CAGE_JOIN(Config, T)::operator t() const \
+	{ \
+		return cfgGet<t>(data); \
+	} \
+	t ConfigList::CAGE_JOIN(get, T)() const \
+	{ \
+		return cfgGet<t>(this); \
+	}
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -243,16 +372,26 @@ namespace cage
 	{
 		switch (type)
 		{
-		case ConfigTypeEnum::Bool: return "bool";
-		case ConfigTypeEnum::Sint32: return "sint32";
-		case ConfigTypeEnum::Uint32: return "uint32";
-		case ConfigTypeEnum::Sint64: return "sint64";
-		case ConfigTypeEnum::Uint64: return "uint64";
-		case ConfigTypeEnum::Float: return "float";
-		case ConfigTypeEnum::Double: return "double";
-		case ConfigTypeEnum::String: return "string";
-		case ConfigTypeEnum::Undefined: return "undefined";
-		default: CAGE_THROW_CRITICAL(Exception, "invalid config type enum");
+			case ConfigTypeEnum::Bool:
+				return "bool";
+			case ConfigTypeEnum::Sint32:
+				return "sint32";
+			case ConfigTypeEnum::Uint32:
+				return "uint32";
+			case ConfigTypeEnum::Sint64:
+				return "sint64";
+			case ConfigTypeEnum::Uint64:
+				return "uint64";
+			case ConfigTypeEnum::Float:
+				return "float";
+			case ConfigTypeEnum::Double:
+				return "double";
+			case ConfigTypeEnum::String:
+				return "string";
+			case ConfigTypeEnum::Undefined:
+				return "undefined";
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid config type enum");
 		}
 	}
 

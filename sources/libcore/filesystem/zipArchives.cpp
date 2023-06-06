@@ -1,9 +1,9 @@
+#include <cage-core/concurrent.h>
+#include <cage-core/math.h> // min
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/string.h> // StringComparatorFast
 #include <cage-core/serialization.h> // bufferView
-#include <cage-core/math.h> // min
+#include <cage-core/string.h> // StringComparatorFast
 
 #include "files.h"
 
@@ -22,11 +22,9 @@ namespace cage
 			const uintPtr capacity;
 			uintPtr off = 0;
 
-			ProxyFile(FileAbstract *f, uintPtr start, uintPtr capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity)
-			{}
+			ProxyFile(FileAbstract *f, uintPtr start, uintPtr capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity) {}
 
-			~ProxyFile()
-			{}
+			~ProxyFile() {}
 
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
@@ -117,7 +115,7 @@ namespace cage
 			uint16 extraFieldLength = 0; // bytes
 			uint16 commentLength = 0; // bytes
 			uint16 diskNumberWhereFileStarts = 0;
-			uint16 internalFileAttributes =  0;
+			uint16 internalFileAttributes = 0;
 			uint32 externalFileAttributes = 0; // 0x10 for directories or 0x80 for files
 			uint32 relativeOffsetOfLocalFileHeader = 0;
 		};
@@ -148,12 +146,12 @@ namespace cage
 			}
 		};
 
-		bool operator < (const CDFileHeaderEx &a, const CDFileHeaderEx &b)
+		bool operator<(const CDFileHeaderEx &a, const CDFileHeaderEx &b)
 		{
 			return StringComparatorFast()(a.name, b.name);
 		}
 
-		bool operator < (const CDFileHeaderEx &a, const String &b)
+		bool operator<(const CDFileHeaderEx &a, const String &b)
 		{
 			return StringComparatorFast()(a.name, b);
 		}
@@ -479,16 +477,16 @@ namespace cage
 					const uint32 index = findRecordIndex(path);
 					switch (typeNoLock(index))
 					{
-					case PathTypeFlags::Directory:
-						return; // directory already exists
-					case PathTypeFlags::NotFound:
-						break; // ok
-					default:
-					{
-						CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-						CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
-						CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
-					}
+						case PathTypeFlags::Directory:
+							return; // directory already exists
+						case PathTypeFlags::NotFound:
+							break; // ok
+						default:
+						{
+							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
+							CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
+						}
 					}
 				}
 				{ // create all parents

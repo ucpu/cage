@@ -1,5 +1,5 @@
 #ifdef _MSC_VER
-#pragma warning(push, 0)
+	#pragma warning(push, 0)
 #endif
 
 #include "mesh.h"
@@ -66,9 +66,12 @@ namespace cage
 			{
 				auto t = pm->vertices(f);
 				auto v = t.begin();
-				uint32 a = (*v).idx(); ++v;
-				uint32 b = (*v).idx(); ++v;
-				uint32 c = (*v).idx(); ++v;
+				uint32 a = (*v).idx();
+				++v;
+				uint32 b = (*v).idx();
+				++v;
+				uint32 c = (*v).idx();
+				++v;
 				CAGE_ASSERT(v == t.end());
 				model->addTriangle(a, b, c);
 			}
@@ -128,5 +131,5 @@ namespace cage
 }
 
 #ifdef _MSC_VER
-#pragma warning(pop)
+	#pragma warning(pop)
 #endif

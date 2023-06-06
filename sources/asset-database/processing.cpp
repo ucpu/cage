@@ -1,9 +1,9 @@
+#include <cage-core/debug.h>
+#include <cage-core/files.h>
+#include <cage-core/hashString.h>
+#include <cage-core/math.h>
 #include <cage-core/process.h>
 #include <cage-core/tasks.h>
-#include <cage-core/debug.h>
-#include <cage-core/math.h>
-#include <cage-core/hashString.h>
-#include <cage-core/files.h>
 
 #include "database.h"
 
@@ -254,10 +254,7 @@ namespace
 		// verdict
 		if (!corruptedDatabanks.empty() || countCorruptedAssets || countMissingReferences)
 		{
-			CAGE_LOG(SeverityEnum::Warning, "verdict", Stringizer() +
-				corruptedDatabanks.size() + " corrupted databanks, " +
-				countCorruptedAssets + " corrupted assets, " +
-				countMissingReferences + " missing references");
+			CAGE_LOG(SeverityEnum::Warning, "verdict", Stringizer() + corruptedDatabanks.size() + " corrupted databanks, " + countCorruptedAssets + " corrupted assets, " + countMissingReferences + " missing references");
 		}
 		else
 		{

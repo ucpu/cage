@@ -1,15 +1,15 @@
-#include <cage-core/string.h>
-#include <cage-core/stdHash.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/stdHash.h>
+#include <cage-core/string.h>
 
 #include "files.h"
 
-#include <vector>
 #include <atomic>
 #include <map>
+#include <vector>
 
 namespace cage
 {
@@ -133,22 +133,22 @@ namespace cage
 						{
 							switch (mode)
 							{
-							case ArchiveFindModeEnum::FileExclusive:
-								if (b.existing)
-								{
-									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
-									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
-								}
-								return { parent, path };
-							case ArchiveFindModeEnum::ArchiveExclusive:
-								if (b.existing)
-								{
-									CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
-									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
-								}
-								return { b.archive };
-							case ArchiveFindModeEnum::ArchiveShared:
-								return { b.archive };
+								case ArchiveFindModeEnum::FileExclusive:
+									if (b.existing)
+									{
+										CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
+									}
+									return { parent, path };
+								case ArchiveFindModeEnum::ArchiveExclusive:
+									if (b.existing)
+									{
+										CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
+									}
+									return { b.archive };
+								case ArchiveFindModeEnum::ArchiveShared:
+									return { b.archive };
 							}
 						}
 						return archiveFindIterate(b.archive, i, mode);
@@ -222,16 +222,16 @@ namespace cage
 		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
 		switch (mode)
 		{
-		case ArchiveFindModeEnum::FileExclusive:
-			CAGE_ASSERT(r.archive);
-			CAGE_ASSERT(!r.path.empty());
-			break;
-		case ArchiveFindModeEnum::ArchiveExclusive:
-			CAGE_ASSERT(r.archive);
-			break;
-		case ArchiveFindModeEnum::ArchiveShared:
-			CAGE_ASSERT(r.archive);
-			break;
+			case ArchiveFindModeEnum::FileExclusive:
+				CAGE_ASSERT(r.archive);
+				CAGE_ASSERT(!r.path.empty());
+				break;
+			case ArchiveFindModeEnum::ArchiveExclusive:
+				CAGE_ASSERT(r.archive);
+				break;
+			case ArchiveFindModeEnum::ArchiveShared:
+				CAGE_ASSERT(r.archive);
+				break;
 		}
 		return r;
 	}

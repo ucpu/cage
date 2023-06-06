@@ -8,7 +8,12 @@ namespace cage
 {
 	namespace
 	{
-#define GCHL_LOG(SEVERITY) { char buffer[1000]; vsprintf(buffer, fmt, args); CAGE_LOG(SEVERITY, "tiff", buffer); }
+#define GCHL_LOG(SEVERITY) \
+	{ \
+		char buffer[1000]; \
+		vsprintf(buffer, fmt, args); \
+		CAGE_LOG(SEVERITY, "tiff", buffer); \
+	}
 
 		void tiffErrorHandler(const char *modul, const char *fmt, va_list args)
 		{
@@ -109,32 +114,32 @@ namespace cage
 			TIFFSetField(t, TIFFTAG_SAMPLESPERPIXEL, impl->channels);
 			switch (impl->format)
 			{
-			case ImageFormatEnum::U8:
-				TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 8);
-				TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-				break;
-			case ImageFormatEnum::U16:
-				TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 16);
-				TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
-				break;
-			case ImageFormatEnum::Float:
-				TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 32);
-				TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported format in tiff encoding");
+				case ImageFormatEnum::U8:
+					TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 8);
+					TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+					break;
+				case ImageFormatEnum::U16:
+					TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 16);
+					TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
+					break;
+				case ImageFormatEnum::Float:
+					TIFFSetField(t, TIFFTAG_BITSPERSAMPLE, 32);
+					TIFFSetField(t, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported format in tiff encoding");
 			}
 			TIFFSetField(t, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 			TIFFSetField(t, TIFFTAG_COMPRESSION, COMPRESSION_ADOBE_DEFLATE);
 			switch (impl->channels)
 			{
-			case 1:
-			case 2:
-				TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-				break;
-			default:
-				TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-				break;
+				case 1:
+				case 2:
+					TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+					break;
+				default:
+					TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+					break;
 			}
 			TIFFSetField(t, TIFFTAG_SOFTWARE, "CageEngine");
 			uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));

@@ -43,8 +43,8 @@ void testEvents()
 		n = 0;
 		EventDispatcher<bool()> d;
 		EventListener<bool()> l1, l2;
-		l1.bind<bool(*)()>(&simpleCallback);
-		l2.bind<bool(*)()>(&simpleCallback);
+		l1.bind<bool (*)()>(&simpleCallback);
+		l2.bind<bool (*)()>(&simpleCallback);
 		d.dispatch();
 		CAGE_TEST(n == 0);
 		l1.attach(d);
@@ -75,8 +75,8 @@ void testEvents()
 		n = 0;
 		EventDispatcher<bool(int, int)> d;
 		EventListener<bool(int, int)> l1, l2;
-		l1.bind<bool(*)(int, int)>(&simpleCallback);
-		l2.bind<bool(*)(int, int)>(&simpleCallback);
+		l1.bind<bool (*)(int, int)>(&simpleCallback);
+		l2.bind<bool (*)(int, int)>(&simpleCallback);
 		d.dispatch(5, 3);
 		CAGE_TEST(n == 0);
 		l1.attach(d);
@@ -161,7 +161,7 @@ void testEvents()
 		{
 			n = 0;
 			EventDispatcher<bool(int, int)> d;
-			auto l = d.listen<bool(*)(int, int)>(&simpleCallback);
+			auto l = d.listen<bool (*)(int, int)>(&simpleCallback);
 			CAGE_TEST(n == 0);
 			CAGE_TEST(d.dispatch(42, 13) == true);
 			CAGE_TEST(n == 42 + 13);
@@ -225,10 +225,7 @@ void testEvents()
 		struct Tmp
 		{
 			int b = 0;
-			void call(int a)
-			{
-				b = a;
-			}
+			void call(int a) { b = a; }
 		};
 		EventDispatcher<bool(int)> d;
 		Tmp tmp;

@@ -6,10 +6,7 @@ namespace cage
 	{
 		struct PanelImpl : public WidgetItem
 		{
-			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
-			{
-				ensureItemHasLayout(hierarchy);
-			}
+			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy) { ensureItemHasLayout(hierarchy); }
 
 			void initialize() override
 			{

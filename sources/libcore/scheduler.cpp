@@ -1,13 +1,13 @@
+#include <cage-core/concurrent.h> // threadSleep
+#include <cage-core/math.h> // max
+#include <cage-core/profiling.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/timer.h>
-#include <cage-core/math.h> // max
-#include <cage-core/concurrent.h> // threadSleep
 #include <cage-core/variableSmoothingBuffer.h>
-#include <cage-core/profiling.h>
 
-#include <vector>
 #include <algorithm>
 #include <atomic>
+#include <vector>
 
 namespace cage
 {
@@ -43,10 +43,7 @@ namespace cage
 					stats = systemMemory().createHolder<ScheduleStatistics>();
 			}
 
-			~ScheduleImpl()
-			{
-				detach();
-			}
+			~ScheduleImpl() { detach(); }
 		};
 
 		class SchedulerImpl : public Scheduler
@@ -64,10 +61,7 @@ namespace cage
 			bool lockstepApi = false;
 			bool lockstepEffective = false;
 
-			explicit SchedulerImpl(const SchedulerCreateConfig &config) : conf(config)
-			{
-				realTimer = newTimer();
-			}
+			explicit SchedulerImpl(const SchedulerCreateConfig &config) : conf(config) { realTimer = newTimer(); }
 
 			void reset()
 			{
@@ -133,15 +127,9 @@ namespace cage
 				}
 			}
 
-			uint64 adjustedRealTime()
-			{
-				return realTimer->duration() + realDrift;
-			}
+			uint64 adjustedRealTime() { return realTimer->duration() + realDrift; }
 
-			uint64 currentTime()
-			{
-				return lockstepEffective ? t : adjustedRealTime();
-			}
+			uint64 currentTime() { return lockstepEffective ? t : adjustedRealTime(); }
 
 			uint64 minimalScheduleTime()
 			{
@@ -183,9 +171,11 @@ namespace cage
 			{
 				for (const auto &it : tmp)
 					it->pri++;
-				std::stable_sort(tmp.begin(), tmp.end(), [](const ScheduleImpl *a, const ScheduleImpl *b) {
-					return a->pri > b->pri; // higher priority goes first
-				});
+				std::stable_sort(tmp.begin(), tmp.end(),
+				    [](const ScheduleImpl *a, const ScheduleImpl *b)
+				    {
+					    return a->pri > b->pri; // higher priority goes first
+				    });
 			}
 
 			void runSchedule()
@@ -203,26 +193,27 @@ namespace cage
 					s->stats->add(start - s->sched, end - start);
 				switch (s->conf.type)
 				{
-				case ScheduleTypeEnum::Once:
-					return s->detach();
-				case ScheduleTypeEnum::SteadyPeriodic:
-				{
-					const uint64 skip = (end - s->sched) / s->conf.period;
-					if (skip >= s->conf.maxSteadyPeriods)
+					case ScheduleTypeEnum::Once:
+						return s->detach();
+					case ScheduleTypeEnum::SteadyPeriodic:
 					{
-						CAGE_LOG(SeverityEnum::Warning, "scheduler", Stringizer() + "schedule '" + s->conf.name + "' cannot keep up and will skip " + skip + " iterations");
-						s->sched += skip * s->conf.period;
+						const uint64 skip = (end - s->sched) / s->conf.period;
+						if (skip >= s->conf.maxSteadyPeriods)
+						{
+							CAGE_LOG(SeverityEnum::Warning, "scheduler", Stringizer() + "schedule '" + s->conf.name + "' cannot keep up and will skip " + skip + " iterations");
+							s->sched += skip * s->conf.period;
+						}
+						else
+							s->sched += s->conf.period;
 					}
-					else
-						s->sched += s->conf.period;
-				} break;
-				case ScheduleTypeEnum::FreePeriodic:
-					s->sched = end + s->conf.period;
 					break;
-				case ScheduleTypeEnum::External:
-				case ScheduleTypeEnum::Empty:
-					// nothing
-					break;
+					case ScheduleTypeEnum::FreePeriodic:
+						s->sched = end + s->conf.period;
+						break;
+					case ScheduleTypeEnum::External:
+					case ScheduleTypeEnum::Empty:
+						// nothing
+						break;
 				}
 			}
 

@@ -61,11 +61,9 @@ namespace cage
 
 	// exception
 
-	Exception::Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept : location(location), severity(severity), message(message)
-	{}
+	Exception::Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept : location(location), severity(severity), message(message) {}
 
-	Exception::~Exception() noexcept
-	{}
+	Exception::~Exception() noexcept {}
 
 	void Exception::makeLog() const
 	{
@@ -89,8 +87,7 @@ namespace cage
 
 	// SystemError
 
-	SystemError::SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept : Exception(location, severity, message), code(code)
-	{}
+	SystemError::SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept : Exception(location, severity, message), code(code) {}
 
 	void SystemError::log() const
 	{

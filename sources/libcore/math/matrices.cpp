@@ -48,14 +48,10 @@ namespace cage
 		forward = normalize(forward);
 		up = normalize(up);
 		right = cross(forward, up);
-		*this = Mat3(
-			right[0], right[1], right[2],
-			up[0], up[1], up[2],
-			-forward[0], -forward[1], -forward[2]
-		);
+		*this = Mat3(right[0], right[1], right[2], up[0], up[1], up[2], -forward[0], -forward[1], -forward[2]);
 	}
 
-	Vec3 operator * (const Mat3 &l, const Vec3 &r) noexcept
+	Vec3 operator*(const Mat3 &l, const Vec3 &r) noexcept
 	{
 		Vec3 res;
 		for (uint8 i = 0; i < 3; i++)
@@ -66,12 +62,12 @@ namespace cage
 		return res;
 	}
 
-	Vec3 operator * (const Vec3 &l, const Mat3 &r) noexcept
+	Vec3 operator*(const Vec3 &l, const Mat3 &r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	Mat3 operator * (const Mat3 &l, const Mat3 &r) noexcept
+	Mat3 operator*(const Mat3 &l, const Mat3 &r) noexcept
 	{
 		Mat3 res = Mat3::Zero();
 		for (uint8 x = 0; x < 3; x++)
@@ -105,10 +101,7 @@ namespace cage
 
 	Real determinant(const Mat3 &x)
 	{
-		return
-			x[0 * 3 + 0] * (x[1 * 3 + 1] * x[2 * 3 + 2] - x[2 * 3 + 1] * x[1 * 3 + 2])
-			- x[0 * 3 + 1] * (x[1 * 3 + 0] * x[2 * 3 + 2] - x[1 * 3 + 2] * x[2 * 3 + 0])
-			+ x[0 * 3 + 2] * (x[1 * 3 + 0] * x[2 * 3 + 1] - x[1 * 3 + 1] * x[2 * 3 + 0]);
+		return x[0 * 3 + 0] * (x[1 * 3 + 1] * x[2 * 3 + 2] - x[2 * 3 + 1] * x[1 * 3 + 2]) - x[0 * 3 + 1] * (x[1 * 3 + 0] * x[2 * 3 + 2] - x[1 * 3 + 2] * x[2 * 3 + 0]) + x[0 * 3 + 2] * (x[1 * 3 + 0] * x[2 * 3 + 1] - x[1 * 3 + 1] * x[2 * 3 + 0]);
 	}
 
 	Mat3 inverse(const Mat3 &x)
@@ -142,15 +135,10 @@ namespace cage
 	{
 		// this = T * R * S
 		Mat3 r(q);
-		*this = Mat4(
-			r[0] * s[0], r[1] * s[0], r[2] * s[0], 0,
-			r[3] * s[1], r[4] * s[1], r[5] * s[1], 0,
-			r[6] * s[2], r[7] * s[2], r[8] * s[2], 0,
-			p[0], p[1], p[2], 1
-		);
+		*this = Mat4(r[0] * s[0], r[1] * s[0], r[2] * s[0], 0, r[3] * s[1], r[4] * s[1], r[5] * s[1], 0, r[6] * s[2], r[7] * s[2], r[8] * s[2], 0, p[0], p[1], p[2], 1);
 	}
 
-	Vec4 operator * (const Mat4 &l, const Vec4 &r) noexcept
+	Vec4 operator*(const Mat4 &l, const Vec4 &r) noexcept
 	{
 		Vec4 res;
 		for (uint8 i = 0; i < 4; i++)
@@ -161,12 +149,12 @@ namespace cage
 		return res;
 	}
 
-	Vec4 operator * (const Vec4 &l, const Mat4 &r) noexcept
+	Vec4 operator*(const Vec4 &l, const Mat4 &r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	Mat4 operator + (const Mat4 &l, const Mat4 &r) noexcept
+	Mat4 operator+(const Mat4 &l, const Mat4 &r) noexcept
 	{
 		Mat4 res;
 		for (uint8 i = 0; i < 16; i++)
@@ -174,7 +162,7 @@ namespace cage
 		return res;
 	}
 
-	Mat4 operator * (const Mat4 &l, const Mat4 &r) noexcept
+	Mat4 operator*(const Mat4 &l, const Mat4 &r) noexcept
 	{
 		Mat4 res;
 		for (uint8 x = 0; x < 4; x++)
@@ -216,19 +204,7 @@ namespace cage
 
 	Real determinant(const Mat4 &x)
 	{
-		return
-			x[12] * x[9] * x[6] * x[3] - x[8] * x[13] * x[6] * x[3] -
-			x[12] * x[5] * x[10] * x[3] + x[4] * x[13] * x[10] * x[3] +
-			x[8] * x[5] * x[14] * x[3] - x[4] * x[9] * x[14] * x[3] -
-			x[12] * x[9] * x[2] * x[7] + x[8] * x[13] * x[2] * x[7] +
-			x[12] * x[1] * x[10] * x[7] - x[0] * x[13] * x[10] * x[7] -
-			x[8] * x[1] * x[14] * x[7] + x[0] * x[9] * x[14] * x[7] +
-			x[12] * x[5] * x[2] * x[11] - x[4] * x[13] * x[2] * x[11] -
-			x[12] * x[1] * x[6] * x[11] + x[0] * x[13] * x[6] * x[11] +
-			x[4] * x[1] * x[14] * x[11] - x[0] * x[5] * x[14] * x[11] -
-			x[8] * x[5] * x[2] * x[15] + x[4] * x[9] * x[2] * x[15] +
-			x[8] * x[1] * x[6] * x[15] - x[0] * x[9] * x[6] * x[15] -
-			x[4] * x[1] * x[10] * x[15] + x[0] * x[5] * x[10] * x[15];
+		return x[12] * x[9] * x[6] * x[3] - x[8] * x[13] * x[6] * x[3] - x[12] * x[5] * x[10] * x[3] + x[4] * x[13] * x[10] * x[3] + x[8] * x[5] * x[14] * x[3] - x[4] * x[9] * x[14] * x[3] - x[12] * x[9] * x[2] * x[7] + x[8] * x[13] * x[2] * x[7] + x[12] * x[1] * x[10] * x[7] - x[0] * x[13] * x[10] * x[7] - x[8] * x[1] * x[14] * x[7] + x[0] * x[9] * x[14] * x[7] + x[12] * x[5] * x[2] * x[11] - x[4] * x[13] * x[2] * x[11] - x[12] * x[1] * x[6] * x[11] + x[0] * x[13] * x[6] * x[11] + x[4] * x[1] * x[14] * x[11] - x[0] * x[5] * x[14] * x[11] - x[8] * x[5] * x[2] * x[15] + x[4] * x[9] * x[2] * x[15] + x[8] * x[1] * x[6] * x[15] - x[0] * x[9] * x[6] * x[15] - x[4] * x[1] * x[10] * x[15] + x[0] * x[5] * x[10] * x[15];
 	}
 
 	Mat4 transpose(const Mat4 &x) noexcept
@@ -249,8 +225,7 @@ namespace cage
 		return x * (1 / len);
 	}
 
-	Mat3x4::Mat3x4() : Mat3x4(Mat4())
-	{}
+	Mat3x4::Mat3x4() : Mat3x4(Mat4()) {}
 
 	Mat3x4::Mat3x4(const Mat3 &in)
 	{

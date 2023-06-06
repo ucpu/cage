@@ -1,23 +1,23 @@
-#include <cage-core/string.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/string.h>
 
 #include "files.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
-#include <io.h> // _get_osfhandle
-#define fseek _fseeki64
-#define ftell _ftelli64
-#include <vector> // wide characters
+	#include "../incWin.h"
+	#include <io.h> // _get_osfhandle
+	#define fseek _fseeki64
+	#define ftell _ftelli64
+	#include <vector> // wide characters
 #else
-#define _FILE_OFFSET_BITS 64
-#include <unistd.h>
-#include <sys/stat.h>
-#include <dirent.h>
+	#define _FILE_OFFSET_BITS 64
+	#include <dirent.h>
+	#include <sys/stat.h>
+	#include <unistd.h>
 #endif
 #ifdef CAGE_SYSTEM_MAC
-#include <mach-o/dyld.h>
+	#include <mach-o/dyld.h>
 #endif
 
 namespace cage
@@ -41,10 +41,7 @@ namespace cage
 				data[ret] = 0;
 			}
 
-			operator const wchar_t *() const
-			{
-				return data.data();
-			}
+			operator const wchar_t *() const { return data.data(); }
 
 			std::vector<wchar_t> data;
 		};
@@ -143,10 +140,7 @@ namespace cage
 #endif
 			}
 
-			bool valid() const
-			{
-				return valid_;
-			}
+			bool valid() const { return valid_; }
 
 			String name() const
 			{
@@ -321,10 +315,7 @@ namespace cage
 		class FileRealBinary : public FileRealBase
 		{
 		public:
-			FileRealBinary(const String &path, const FileMode &mode) : FileRealBase(path, mode)
-			{
-				CAGE_ASSERT(!mode.textual);
-			}
+			FileRealBinary(const String &path, const FileMode &mode) : FileRealBase(path, mode) { CAGE_ASSERT(!mode.textual); }
 
 			void reopenForModification() override
 			{
@@ -434,15 +425,9 @@ namespace cage
 		class FileRealTextual : public FileRealBase
 		{
 		public:
-			FileRealTextual(const String &path, const FileMode &mode) : FileRealBase(path, mode)
-			{
-				CAGE_ASSERT(mode.textual);
-			}
+			FileRealTextual(const String &path, const FileMode &mode) : FileRealBase(path, mode) { CAGE_ASSERT(mode.textual); }
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
-			{
-				CAGE_THROW_ERROR(Exception, "reading with offset in textual file is not allowed");
-			}
+			void readAt(PointerRange<char> buffer, uintPtr at) override { CAGE_THROW_ERROR(Exception, "reading with offset in textual file is not allowed"); }
 
 			void read(PointerRange<char> buffer) override
 			{
@@ -464,10 +449,7 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 
-			void seek(uintPtr position) override
-			{
-				CAGE_THROW_ERROR(Exception, "seeking in textual file is not allowed");
-			}
+			void seek(uintPtr position) override { CAGE_THROW_ERROR(Exception, "seeking in textual file is not allowed"); }
 
 			void flush() override
 			{
@@ -479,8 +461,7 @@ namespace cage
 		class ArchiveReal : public ArchiveAbstract
 		{
 		public:
-			ArchiveReal(const String &path) : ArchiveAbstract(path)
-			{}
+			ArchiveReal(const String &path) : ArchiveAbstract(path) {}
 
 			PathTypeFlags type(const String &path) const override
 			{
@@ -531,31 +512,34 @@ namespace cage
 				createDirectories(pathJoin(to_, ".."));
 				switch (type(from_))
 				{
-				case PathTypeFlags::NotFound:
-				{
-					CAGE_LOG_THROW(Stringizer() + "path: " + from_);
-					CAGE_THROW_ERROR(Exception, "path to move/copy does not exist");
-				} break;
-				case PathTypeFlags::File:
-				{
-					moveImpl(from_, to_, copying);
-				} break;
-				case PathTypeFlags::Directory:
-				{
-					if (!copying && type(to_) == PathTypeFlags::NotFound)
-						moveImpl(from_, to_, false);
-					else
+					case PathTypeFlags::NotFound:
 					{
-						const auto list = listDirectory(from_);
-						for (const String &it : list)
+						CAGE_LOG_THROW(Stringizer() + "path: " + from_);
+						CAGE_THROW_ERROR(Exception, "path to move/copy does not exist");
+					}
+					break;
+					case PathTypeFlags::File:
+					{
+						moveImpl(from_, to_, copying);
+					}
+					break;
+					case PathTypeFlags::Directory:
+					{
+						if (!copying && type(to_) == PathTypeFlags::NotFound)
+							moveImpl(from_, to_, false);
+						else
 						{
-							const String n = pathExtractFilename(it);
-							move(pathJoin(from_, n), pathJoin(to_, n), copying);
+							const auto list = listDirectory(from_);
+							for (const String &it : list)
+							{
+								const String n = pathExtractFilename(it);
+								move(pathJoin(from_, n), pathJoin(to_, n), copying);
+							}
 						}
 					}
-				} break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid path type flags");
+					break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid path type flags");
 				}
 			}
 
@@ -687,7 +671,7 @@ namespace cage
 			len = detail::strlen(buffer);
 			return pathSimplify(String({ buffer, buffer + len }));
 #else
-#error This operating system is not supported
+	#error This operating system is not supported
 #endif
 		}
 	}

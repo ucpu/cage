@@ -1,20 +1,20 @@
 #ifdef CAGE_PROFILING_ENABLED
 
-#include <cage-core/profiling.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/concurrentQueue.h>
-#include <cage-core/networkWebsocket.h>
-#include <cage-core/process.h>
-#include <cage-core/config.h>
-#include <cage-core/files.h>
-#include <cage-core/math.h>
-#include <cage-core/string.h>
-#include <cage-core/stdHash.h>
+	#include <cage-core/concurrent.h>
+	#include <cage-core/concurrentQueue.h>
+	#include <cage-core/config.h>
+	#include <cage-core/files.h>
+	#include <cage-core/math.h>
+	#include <cage-core/networkWebsocket.h>
+	#include <cage-core/process.h>
+	#include <cage-core/profiling.h>
+	#include <cage-core/stdHash.h>
+	#include <cage-core/string.h>
 
-#include <atomic>
-#include <vector>
-#include <string>
-#include <unordered_map>
+	#include <atomic>
+	#include <string>
+	#include <unordered_map>
+	#include <vector>
 
 cage::PointerRange<const cage::uint8> profiling_htm();
 
@@ -22,11 +22,11 @@ namespace cage
 {
 	namespace
 	{
-#ifdef CAGE_SYSTEM_WINDOWS
+	#ifdef CAGE_SYSTEM_WINDOWS
 		constexpr String DefaultBrowser = "\"C:/Program Files/Mozilla Firefox/firefox.exe\" --new-window";
-#else
+	#else
 		constexpr String DefaultBrowser = "firefox";
-#endif // CAGE_SYSTEM_WINDOWS
+	#endif // CAGE_SYSTEM_WINDOWS
 
 		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
 
@@ -87,9 +87,7 @@ namespace cage
 
 		constexpr bool validateSanitize()
 		{
-			return sanitize(R"foo(Hello World)foo") == R"foo(Hello World)foo"
-				&& sanitize(R"foo(Hello "World")foo") == R"foo(Hello \"World\")foo"
-				&& sanitize(R"foo(H\ell\o "World")foo") == R"foo(H\\ell\\o \"World\")foo";
+			return sanitize(R"foo(Hello World)foo") == R"foo(Hello World)foo" && sanitize(R"foo(Hello "World")foo") == R"foo(Hello \"World\")foo" && sanitize(R"foo(H\ell\o "World")foo") == R"foo(H\\ell\\o \"World\")foo";
 		}
 
 		static_assert(validateSanitize());
@@ -130,10 +128,7 @@ namespace cage
 							return data[name] = next++;
 						}
 
-						uint32 index(StringPointer name)
-						{
-							return index(String(name));
-						}
+						uint32 index(StringPointer name) { return index(String(name)); }
 
 						std::string mapping() const
 						{
@@ -149,20 +144,14 @@ namespace cage
 							return str + "\"\"";
 						}
 
-						NamesMap()
-						{
-							data.reserve(200);
-						}
+						NamesMap() { data.reserve(200); }
 					} names;
 
 					struct ThreadData
 					{
 						std::string events;
 
-						ThreadData()
-						{
-							events.reserve(50000);
-						}
+						ThreadData() { events.reserve(50000); }
 					};
 					std::unordered_map<uint64, ThreadData> data;
 
@@ -378,8 +367,7 @@ namespace cage
 		ev.startTime = m;
 	}
 
-	ProfilingScope::ProfilingScope() noexcept
-	{}
+	ProfilingScope::ProfilingScope() noexcept {}
 
 	ProfilingScope::ProfilingScope(StringPointer name) noexcept
 	{
@@ -396,7 +384,7 @@ namespace cage
 		*this = std::move(other);
 	}
 
-	ProfilingScope &ProfilingScope::operator = (ProfilingScope &&other) noexcept
+	ProfilingScope &ProfilingScope::operator=(ProfilingScope &&other) noexcept
 	{
 		profilingEventEnd(event);
 		event = {};

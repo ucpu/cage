@@ -1,13 +1,13 @@
 #include "main.h"
 
-#include <cage-core/tasks.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/math.h>
-#include <cage-core/timer.h>
-#include <atomic>
-#include <vector>
 #include <algorithm>
+#include <atomic>
+#include <cage-core/concurrent.h>
+#include <cage-core/math.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/tasks.h>
+#include <cage-core/timer.h>
+#include <vector>
 
 namespace
 {
@@ -30,19 +30,19 @@ namespace
 			// nothing
 		}
 
-		TaskTester &operator = (TaskTester &&) noexcept
+		TaskTester &operator=(TaskTester &&) noexcept
 		{
 			// nothing
 			return *this;
 		}
 
-		void operator() ()
+		void operator()()
 		{
 			someMeaninglessWork();
 			runCounter++;
 		}
 
-		void operator() (uint32 idx)
+		void operator()(uint32 idx)
 		{
 			someMeaninglessWork();
 			runCounter++;
@@ -80,7 +80,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, function");
 			TaskTester arr[20];
-			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr);
+			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester & tester)>().bind<&testerRun>(), arr);
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -102,7 +102,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, function");
 			TaskTester data;
-			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data, 5);
+			tasksRunBlocking<TaskTester>("blocking", Delegate<void(TaskTester & tester, uint32)>().bind<&testerRun>(), data, 5);
 			CAGE_TEST(data.runCounter == 5);
 			CAGE_TEST(data.invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -152,7 +152,7 @@ namespace
 		{
 			CAGE_TESTCASE("array, function");
 			Holder<PointerRange<TaskTester>> arr = newTaskTesterArray(20);
-			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester &tester)>().bind<&testerRun>(), arr.share())->wait();
+			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester & tester)>().bind<&testerRun>(), arr.share())->wait();
 			for (TaskTester &t : arr)
 			{
 				CAGE_TEST(t.runCounter == 1);
@@ -174,7 +174,7 @@ namespace
 		{
 			CAGE_TESTCASE("single, function");
 			Holder<TaskTester> data = systemMemory().createHolder<TaskTester>();
-			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester &tester, uint32)>().bind<&testerRun>(), data.share(), 5)->wait();
+			tasksRunAsync<TaskTester>("async", Delegate<void(TaskTester & tester, uint32)>().bind<&testerRun>(), data.share(), 5)->wait();
 			CAGE_TEST(data->runCounter == 5);
 			CAGE_TEST(data->invocationsSum == 0 + 1 + 2 + 3 + 4);
 		}
@@ -241,15 +241,9 @@ namespace
 
 		const uint32 depth = 0;
 
-		RecursiveTester(uint32 depth) : depth(depth)
-		{
-			instances++;
-		}
+		RecursiveTester(uint32 depth) : depth(depth) { instances++; }
 
-		~RecursiveTester()
-		{
-			instances--;
-		}
+		~RecursiveTester() { instances--; }
 
 		void operator()(uint32 = 0)
 		{
@@ -283,15 +277,9 @@ namespace
 
 		Holder<Barrier> bar = newBarrier(processorsCount());
 
-		ParallelTester()
-		{
-			counter++;
-		}
+		ParallelTester() { counter++; }
 
-		~ParallelTester()
-		{
-			counter--;
-		}
+		~ParallelTester() { counter--; }
 
 		void operator()(uint32)
 		{
@@ -530,10 +518,7 @@ namespace
 			counter++;
 		}
 
-		~TaskHolderTester()
-		{
-			counter--;
-		}
+		~TaskHolderTester() { counter--; }
 
 		void operator()(uint32)
 		{

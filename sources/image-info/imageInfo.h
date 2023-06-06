@@ -50,14 +50,14 @@ namespace cage
 	{
 		switch (result.parts.size())
 		{
-		case 0:
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loaded no images");
-			break;
-		case 1:
-			break;
-		default:
-			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "contains " + result.parts.size() + " subimages");
-			break;
+			case 0:
+				CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loaded no images");
+				break;
+			case 1:
+				break;
+			default:
+				CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "contains " + result.parts.size() + " subimages");
+				break;
 		}
 		for (const auto &it : result.parts)
 			imageInfo(&it);

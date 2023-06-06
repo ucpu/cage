@@ -8,7 +8,7 @@ namespace cage
 {
 	struct InterpolationTimingCorrector
 	{
-		uint64 operator() (uint64 emit, uint64 dispatch, uint64 step)
+		uint64 operator()(uint64 emit, uint64 dispatch, uint64 step)
 		{
 			CAGE_ASSERT(step > 0);
 			corrections.add((sint64)emit - (sint64)dispatch);

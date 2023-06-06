@@ -1,13 +1,13 @@
 #include <cage-core/files.h>
-#include <cage-core/string.h>
+#include <cage-core/geometry.h>
 #include <cage-core/image.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/meshExport.h>
 #include <cage-core/serialization.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/geometry.h>
+#include <cage-core/string.h>
 #include <cage-core/tasks.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace cage
 {
@@ -25,7 +25,8 @@ namespace cage
 
 			if (filename.empty())
 			{
-				const auto &tex = [&](const MeshExportGltfTexture &t) {
+				const auto &tex = [&](const MeshExportGltfTexture &t)
+				{
 					if (!t.filename.empty())
 						CAGE_THROW_ERROR(Exception, "cannot export textures when exporting gltf into buffer only");
 				};
@@ -137,7 +138,7 @@ namespace cage
 				Holder<PointerRange<char>> buff;
 				const MeshExportGltfTexture *tex = nullptr;
 
-				void operator () ()
+				void operator()()
 				{
 					CAGE_ASSERT(tex);
 					if (tex->image && !tex->filename.empty())
@@ -194,23 +195,14 @@ namespace cage
 					// view
 					if (index > 0)
 						viewsJson += ",";
-					viewsJson += (Stringizer()
-						+ "{\"buffer\":0,\"byteOffset\":" + v.byteOffset
-						+ ",\"byteLength\":" + v.byteLength
-						+ (v.target == 0 ? Stringizer() : (Stringizer() + ",\"target\":" + v.target)) + "}").value.c_str();
+					viewsJson += (Stringizer() + "{\"buffer\":0,\"byteOffset\":" + v.byteOffset + ",\"byteLength\":" + v.byteLength + (v.target == 0 ? Stringizer() : (Stringizer() + ",\"target\":" + v.target)) + "}").value.c_str();
 
 					// accessor
 					if (v.componentType > 0)
 					{
 						if (index > 0)
 							accessorsJson += ",";
-						accessorsJson += (Stringizer()
-							+ "{\"bufferView\":" + index
-							+ (v.min.empty() ? Stringizer() : (Stringizer() + ",\"min\":" + v.min))
-							+ (v.max.empty() ? Stringizer() : (Stringizer() + ",\"max\":" + v.max))
-							+ ",\"componentType\":" + v.componentType
-							+ ",\"type\":\"" + v.type + "\""
-							+ ",\"count\":" + v.count + "}").value.c_str();
+						accessorsJson += (Stringizer() + "{\"bufferView\":" + index + (v.min.empty() ? Stringizer() : (Stringizer() + ",\"min\":" + v.min)) + (v.max.empty() ? Stringizer() : (Stringizer() + ",\"max\":" + v.max)) + ",\"componentType\":" + v.componentType + ",\"type\":\"" + v.type + "\"" + ",\"count\":" + v.count + "}").value.c_str();
 					}
 
 					// attribute
@@ -218,8 +210,7 @@ namespace cage
 					{
 						if (index > 0)
 							attributesJson += ",";
-						attributesJson += (Stringizer()
-							+ "\"" + v.attribute + "\":" + index).value.c_str();
+						attributesJson += (Stringizer() + "\"" + v.attribute + "\":" + index).value.c_str();
 					}
 
 					index++;
@@ -243,47 +234,40 @@ namespace cage
 
 					const String name = Stringizer() + ", \"name\":\"" + config.name + "_" + textureTypeNames[t.type] + "\"";
 
-					texturesJson += (Stringizer()
-						+ "{\"source\":" + index + name + "}").value.c_str();
+					texturesJson += (Stringizer() + "{\"source\":" + index + name + "}").value.c_str();
 
 					if (t.buff)
 					{
-						imagesJson += (Stringizer()
-							+ "{\"bufferView\":" + t.bufferView
-							+ ",\"mimeType\":\"image/png\""
-							+ name + "}").value.c_str();
+						imagesJson += (Stringizer() + "{\"bufferView\":" + t.bufferView + ",\"mimeType\":\"image/png\"" + name + "}").value.c_str();
 					}
 					else
 					{
-						imagesJson += (Stringizer()
-							+ "{\"uri\":\"" + t.tex->filename + "\""
-							+ name + "}").value.c_str();
+						imagesJson += (Stringizer() + "{\"uri\":\"" + t.tex->filename + "\"" + name + "}").value.c_str();
 					}
 
 					switch (t.type)
 					{
-					case 1: // albedo
-					{
-						if (!materialPbrJson.empty())
-							materialPbrJson += ",";
-						materialPbrJson += (Stringizer()
-							+ "\"baseColorTexture\":{\"index\":" + index + "}").value.c_str();
-
-					} break;
-					case 2: // roughness metallic
-					{
-						if (!materialPbrJson.empty())
-							materialPbrJson += ",";
-						materialPbrJson += (Stringizer()
-							+ "\"metallicRoughnessTexture\":{\"index\":" + index + "}").value.c_str();
-					} break;
-					case 3: // normal
-					{
-						if (!materialJson.empty())
-							materialJson += ",";
-						materialJson += (Stringizer()
-							+ "\"normalTexture\":{\"index\":" + index + "}").value.c_str();
-					} break;
+						case 1: // albedo
+						{
+							if (!materialPbrJson.empty())
+								materialPbrJson += ",";
+							materialPbrJson += (Stringizer() + "\"baseColorTexture\":{\"index\":" + index + "}").value.c_str();
+						}
+						break;
+						case 2: // roughness metallic
+						{
+							if (!materialPbrJson.empty())
+								materialPbrJson += ",";
+							materialPbrJson += (Stringizer() + "\"metallicRoughnessTexture\":{\"index\":" + index + "}").value.c_str();
+						}
+						break;
+						case 3: // normal
+						{
+							if (!materialJson.empty())
+								materialJson += ",";
+							materialJson += (Stringizer() + "\"normalTexture\":{\"index\":" + index + "}").value.c_str();
+						}
+						break;
 					}
 
 					index++;
@@ -304,12 +288,7 @@ namespace cage
 				if (!textures.empty())
 					tiJson = std::string() + ", \"textures\":[" + texturesJson + "],\"images\":[" + imagesJson + "]";
 
-				json = std::string() +  "{\"scene\":0,\"scenes\":[{\"nodes\":[0]}],\"nodes\":[{\"mesh\":0,\"name\":\""
-					+ config.name.c_str() + "\"}],\"meshes\":[{\"primitives\":[{\"attributes\":{"
-					+ attributesJson + "},\"indices\":" + (Stringizer() + indicesIndex).value.c_str() + ",\"material\":0}],\"name\":\""
-					+ config.name.c_str() + "\"}],\"materials\":[{" + materialJson + "}]" + tiJson + ",\"buffers\":[{\"byteLength\":"
-					+ (Stringizer() + buffer.size()).value.c_str() + "}],\"bufferViews\":[" + viewsJson + "],\"accessors\":["
-					+ accessorsJson + "],\"asset\":{\"version\":\"2.0\"}}";
+				json = std::string() + "{\"scene\":0,\"scenes\":[{\"nodes\":[0]}],\"nodes\":[{\"mesh\":0,\"name\":\"" + config.name.c_str() + "\"}],\"meshes\":[{\"primitives\":[{\"attributes\":{" + attributesJson + "},\"indices\":" + (Stringizer() + indicesIndex).value.c_str() + ",\"material\":0}],\"name\":\"" + config.name.c_str() + "\"}],\"materials\":[{" + materialJson + "}]" + tiJson + ",\"buffers\":[{\"byteLength\":" + (Stringizer() + buffer.size()).value.c_str() + "}],\"bufferViews\":[" + viewsJson + "],\"accessors\":[" + accessorsJson + "],\"asset\":{\"version\":\"2.0\"}}";
 
 				while ((json.length() % 4) != 0)
 					json += ' ';

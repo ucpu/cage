@@ -1,8 +1,8 @@
-#include <cage-core/concurrent.h>
 #include "private.h"
+#include <cage-core/concurrent.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#define GLFW_EXPOSE_NATIVE_WIN32
+	#define GLFW_EXPOSE_NATIVE_WIN32
 #endif // CAGE_SYSTEM_WINDOWS
 #include <GLFW/glfw3native.h>
 
@@ -20,7 +20,8 @@ namespace cage
 
 	void cageGlfwInitializeFunc()
 	{
-		static int init = []() {
+		static int init = []()
+		{
 			CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "initializing glfw");
 			glfwSetErrorCallback(&handleGlfwError);
 			if (!glfwInit())

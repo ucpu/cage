@@ -31,7 +31,7 @@ namespace cage
 		};
 		char *base = (char *)allocate(sizeof(CharBuff) + size + alignment - 1, alignof(CharBuff));
 		CAGE_ASSERT(base);
-		CharBuff *cb = new(base, privat::OperatorNewTrait()) CharBuff();
+		CharBuff *cb = new (base, privat::OperatorNewTrait()) CharBuff();
 		CAGE_ASSERT(cb);
 		CAGE_ASSERT((void *)base == (void *)cb);
 		cb->deletee = cb;
@@ -89,10 +89,7 @@ namespace cage
 					CAGE_THROW_CRITICAL(Exception, "memory corruption - double deallocation detected");
 			}
 
-			void flush()
-			{
-				CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used");
-			}
+			void flush() { CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used"); }
 
 			MemoryArena arena = MemoryArena(this);
 

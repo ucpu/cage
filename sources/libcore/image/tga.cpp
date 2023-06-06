@@ -35,7 +35,7 @@ namespace cage
 
 		void monoCompressed(Deserializer &inBuffer, Serializer &outBuffer, uint32 size)
 		{
-			for (uint32 i = 0; i < size; )
+			for (uint32 i = 0; i < size;)
 			{
 				uint8 header;
 				inBuffer >> header;
@@ -63,7 +63,7 @@ namespace cage
 
 		void rgbCompressed(Deserializer &inBuffer, Serializer &outBuffer, uint32 size)
 		{
-			for (uint32 i = 0; i < size; )
+			for (uint32 i = 0; i < size;)
 			{
 				uint8 header;
 				inBuffer >> header;
@@ -91,7 +91,7 @@ namespace cage
 
 		void rgbaCompressed(Deserializer &inBuffer, Serializer &outBuffer, uint32 size)
 		{
-			for (uint32 i = 0; i < size; )
+			for (uint32 i = 0; i < size;)
 			{
 				uint8 header;
 				inBuffer >> header;
@@ -172,7 +172,7 @@ namespace cage
 			const uint32 colorMapSize = head.colorMapLength * colorMapElementSize;
 			const uint8 *colorMap = nullptr;
 			if (head.colorMapType == 1)
-				colorMap = (uint8*)des.read(colorMapSize).data();
+				colorMap = (uint8 *)des.read(colorMapSize).data();
 
 			impl->width = head.width;
 			impl->height = head.height;
@@ -184,51 +184,62 @@ namespace cage
 			Serializer ser(impl->mem);
 			switch (head.imageType)
 			{
-			case 1: // uncompressed palette
-			{
-				if (head.bits == 8)
+				case 1: // uncompressed palette
 				{
-					switch (pixelSize)
+					if (head.bits == 8)
 					{
-					case 3: return rgbPalette<uint8>(des, colorMap, ser, pixelsCount);
-					case 4: return rgbaPalette<uint8>(des, colorMap, ser, pixelsCount);
+						switch (pixelSize)
+						{
+							case 3:
+								return rgbPalette<uint8>(des, colorMap, ser, pixelsCount);
+							case 4:
+								return rgbaPalette<uint8>(des, colorMap, ser, pixelsCount);
+						}
+					}
+					else if (head.bits == 16)
+					{
+						switch (pixelSize)
+						{
+							case 3:
+								return rgbPalette<uint16>(des, colorMap, ser, pixelsCount);
+							case 4:
+								return rgbaPalette<uint16>(des, colorMap, ser, pixelsCount);
+						}
 					}
 				}
-				else if (head.bits == 16)
+				break;
+				case 2: // uncompressed color
 				{
-					switch (pixelSize)
+					if (head.bits == 24 || head.bits == 32)
 					{
-					case 3: return rgbPalette<uint16>(des, colorMap, ser, pixelsCount);
-					case 4: return rgbaPalette<uint16>(des, colorMap, ser, pixelsCount);
+						ser.write(des.read(imageSize));
+						swapRB((uint8 *)impl->mem.data(), pixelsCount, pixelSize);
+						return;
 					}
 				}
-			} break;
-			case 2: // uncompressed color
-			{
-				if (head.bits == 24 || head.bits == 32)
+				break;
+				case 3: // uncompressed mono
 				{
-					ser.write(des.read(imageSize));
-					swapRB((uint8*)impl->mem.data(), pixelsCount, pixelSize);
-					return;
+					return ser.write(des.read(imageSize));
 				}
-			} break;
-			case 3: // uncompressed mono
-			{
-				return ser.write(des.read(imageSize));
-			} break;
-			case 10: // compressed color
-			{
-				switch (head.bits)
+				break;
+				case 10: // compressed color
 				{
-				case 24: return rgbCompressed(des, ser, pixelsCount);
-				case 32: return rgbaCompressed(des, ser, pixelsCount);
+					switch (head.bits)
+					{
+						case 24:
+							return rgbCompressed(des, ser, pixelsCount);
+						case 32:
+							return rgbaCompressed(des, ser, pixelsCount);
+					}
 				}
-			} break;
-			case 11: // compressed mono
-			{
-				if (head.bits == 8)
-					return monoCompressed(des, ser, pixelsCount);
-			} break;
+				break;
+				case 11: // compressed mono
+				{
+					if (head.bits == 8)
+						return monoCompressed(des, ser, pixelsCount);
+				}
+				break;
 			}
 
 			CAGE_THROW_ERROR(Exception, "unsupported format in tga decoding");
@@ -257,20 +268,20 @@ namespace cage
 		detail::memset(&head, 0, sizeof(head));
 		switch (impl->channels)
 		{
-		case 1:
-			head.imageType = 3; // uncompressed mono
-			head.bits = 8;
-			break;
-		case 3:
-			head.imageType = 2; // uncompressed color
-			head.bits = 24;
-			break;
-		case 4:
-			head.imageType = 2; // uncompressed color
-			head.bits = 32;
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported image channels for tga encoding");
+			case 1:
+				head.imageType = 3; // uncompressed mono
+				head.bits = 8;
+				break;
+			case 3:
+				head.imageType = 2; // uncompressed color
+				head.bits = 24;
+				break;
+			case 4:
+				head.imageType = 2; // uncompressed color
+				head.bits = 32;
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported image channels for tga encoding");
 		}
 		head.width = impl->width;
 		head.height = impl->height;
@@ -291,7 +302,7 @@ namespace cage
 		const uint32 scanline = impl->width * impl->channels;
 		const uint32 size = scanline * impl->height;
 		MemoryBuffer tmp(size);
-		uint8 *pixels = (uint8*)tmp.data();
+		uint8 *pixels = (uint8 *)tmp.data();
 		for (uint32 i = 0; i < impl->height; i++)
 			detail::memcpy(pixels + (impl->height - i - 1) * scanline, impl->mem.data() + i * scanline, scanline);
 		if (impl->channels > 1)

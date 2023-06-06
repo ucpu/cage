@@ -1,7 +1,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/entities.h>
 #include <cage-core/debug.h>
+#include <cage-core/entities.h>
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/window.h>
 
@@ -33,8 +33,7 @@ namespace cage
 			uint32 labelsCount = 0;
 			StatisticsGuiScopeEnum profilingModeOld = StatisticsGuiScopeEnum::Full;
 
-			StatisticsGuiImpl()
-			{}
+			StatisticsGuiImpl() {}
 
 			void nullData()
 			{
@@ -59,7 +58,7 @@ namespace cage
 					StatisticsGuiFlags::DrawPrimitives,
 					StatisticsGuiFlags::Entities,
 				};
-				static constexpr const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
+				static constexpr const char *namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
 					"Control: ",
 					"Sound: ",
 					"Graphics Prepare: ",
@@ -76,7 +75,7 @@ namespace cage
 					StatisticsGuiFlags::GraphicsPrepare,
 					StatisticsGuiFlags::FrameTime,
 				};
-				static constexpr const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
+				static constexpr const char *namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control: ",
 					"Sound: ",
 					"Prepare: ",
@@ -86,7 +85,7 @@ namespace cage
 				static constexpr StatisticsGuiFlags flagsFps[] = {
 					StatisticsGuiFlags::FrameTime,
 				};
-				static constexpr const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
+				static constexpr const char *namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
 					"Frame Time: ",
 				};
 
@@ -107,12 +106,7 @@ namespace cage
 					layout->value<GuiParentComponent>().parent = panel->name();
 				}
 
-				static constexpr uint32 labelsPerMode[] = {
-					sizeof(flagsFull) / sizeof(flagsFull[0]),
-					sizeof(flagsShort) / sizeof(flagsShort[0]),
-					sizeof(flagsFps) / sizeof(flagsFps[0]),
-					0
-				};
+				static constexpr uint32 labelsPerMode[] = { sizeof(flagsFull) / sizeof(flagsFull[0]), sizeof(flagsShort) / sizeof(flagsShort[0]), sizeof(flagsFps) / sizeof(flagsFps[0]), 0 };
 				labelsCount = labelsPerMode[(uint32)statisticsScope];
 				for (uint32 i = 0; i < labelsCount * 2; i++)
 				{
@@ -128,22 +122,22 @@ namespace cage
 
 				switch (statisticsScope)
 				{
-				case StatisticsGuiScopeEnum::None:
-					labelFlags = nullptr;
-					labelNames = nullptr;
-					break;
-				case StatisticsGuiScopeEnum::Fps:
-					labelFlags = flagsFps;
-					labelNames = namesFps;
-					break;
-				case StatisticsGuiScopeEnum::Short:
-					labelFlags = flagsShort;
-					labelNames = namesShort;
-					break;
-				case StatisticsGuiScopeEnum::Full:
-					labelFlags = flagsFull;
-					labelNames = namesFull;
-					break;
+					case StatisticsGuiScopeEnum::None:
+						labelFlags = nullptr;
+						labelNames = nullptr;
+						break;
+					case StatisticsGuiScopeEnum::Fps:
+						labelFlags = flagsFps;
+						labelNames = namesFps;
+						break;
+					case StatisticsGuiScopeEnum::Short:
+						labelFlags = flagsShort;
+						labelNames = namesShort;
+						break;
+					case StatisticsGuiScopeEnum::Full:
+						labelFlags = flagsFull;
+						labelNames = namesFull;
+						break;
 				}
 			}
 
@@ -210,11 +204,20 @@ namespace cage
 					{
 						switch (statisticsScope)
 						{
-						case StatisticsGuiScopeEnum::Full: statisticsScope = StatisticsGuiScopeEnum::Short; break;
-						case StatisticsGuiScopeEnum::Short: statisticsScope = StatisticsGuiScopeEnum::Fps; break;
-						case StatisticsGuiScopeEnum::Fps: statisticsScope = StatisticsGuiScopeEnum::None; break;
-						case StatisticsGuiScopeEnum::None: statisticsScope = StatisticsGuiScopeEnum::Full; break;
-						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling scope enum");
+							case StatisticsGuiScopeEnum::Full:
+								statisticsScope = StatisticsGuiScopeEnum::Short;
+								break;
+							case StatisticsGuiScopeEnum::Short:
+								statisticsScope = StatisticsGuiScopeEnum::Fps;
+								break;
+							case StatisticsGuiScopeEnum::Fps:
+								statisticsScope = StatisticsGuiScopeEnum::None;
+								break;
+							case StatisticsGuiScopeEnum::None:
+								statisticsScope = StatisticsGuiScopeEnum::Full;
+								break;
+							default:
+								CAGE_THROW_CRITICAL(Exception, "invalid engine profiling scope enum");
 						}
 						return true;
 					}
@@ -222,10 +225,17 @@ namespace cage
 					{
 						switch (statisticsMode)
 						{
-						case StatisticsGuiModeEnum::Average: statisticsMode = StatisticsGuiModeEnum::Maximum; break;
-						case StatisticsGuiModeEnum::Maximum: statisticsMode = StatisticsGuiModeEnum::Last; break;
-						case StatisticsGuiModeEnum::Last: statisticsMode = StatisticsGuiModeEnum::Average; break;
-						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling mode enum");
+							case StatisticsGuiModeEnum::Average:
+								statisticsMode = StatisticsGuiModeEnum::Maximum;
+								break;
+							case StatisticsGuiModeEnum::Maximum:
+								statisticsMode = StatisticsGuiModeEnum::Last;
+								break;
+							case StatisticsGuiModeEnum::Last:
+								statisticsMode = StatisticsGuiModeEnum::Average;
+								break;
+							default:
+								CAGE_THROW_CRITICAL(Exception, "invalid engine profiling mode enum");
 						}
 						return true;
 					}

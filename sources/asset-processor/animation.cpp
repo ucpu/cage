@@ -1,8 +1,8 @@
 #include "processor.h"
 
-#include <cage-core/skeletalAnimation.h>
 #include <cage-core/hashString.h>
 #include <cage-core/meshImport.h>
+#include <cage-core/skeletalAnimation.h>
 
 MeshImportConfig meshImportConfig();
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
@@ -32,7 +32,8 @@ void processAnimation()
 	Holder<SkeletalAnimation> anim = result.animations[chosenAnimationIndex].animation.share();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "duration: " + anim->duration() + " microseconds");
 
-	const uint32 skeletonName = []() {
+	const uint32 skeletonName = []()
+	{
 		String n = properties("skeleton");
 		if (n.empty())
 			n = inputFile + ";skeleton";

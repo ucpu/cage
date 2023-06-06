@@ -13,11 +13,9 @@ namespace cage
 	{
 		using CT = std::remove_const_t<T>;
 
-		PointerRangeHolder()
-		{}
+		PointerRangeHolder() {}
 
-		explicit PointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(std::move(other))
-		{}
+		explicit PointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(std::move(other)) {}
 
 		template<class IT>
 		explicit PointerRangeHolder(IT a, IT b) : std::vector<CT>(a, b)

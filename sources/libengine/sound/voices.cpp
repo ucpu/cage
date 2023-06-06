@@ -1,9 +1,9 @@
+#include <cage-core/audioChannelsConverter.h>
 #include <cage-core/audioDirectionalConverter.h>
 #include <cage-core/sampleRateConverter.h>
-#include <cage-core/audioChannelsConverter.h>
 
-#include <cage-engine/voices.h>
 #include <cage-engine/sound.h>
+#include <cage-engine/voices.h>
 
 #include <plf_colony.h>
 
@@ -19,8 +19,7 @@ namespace cage
 		class VoicesMixerImpl : public VoicesMixer
 		{
 		public:
-			VoicesMixerImpl(const VoicesMixerCreateConfig &config)
-			{}
+			VoicesMixerImpl(const VoicesMixerCreateConfig &config) {}
 
 			Listener listener;
 			plf::colony<VoiceImpl> voices;
@@ -29,10 +28,7 @@ namespace cage
 			Holder<AudioChannelsConverter> chansConv;
 			std::vector<float> tmp1, tmp2;
 
-			void removeVoice(void *p)
-			{
-				voices.erase(voices.get_iterator((VoiceImpl *)p));
-			}
+			void removeVoice(void *p) { voices.erase(voices.get_iterator((VoiceImpl *)p)); }
 
 			Holder<Voice> createVoice()
 			{
@@ -40,10 +36,7 @@ namespace cage
 				{
 					VoiceImpl *v = nullptr;
 					VoicesMixerImpl *m = nullptr;
-					~VoiceReference()
-					{
-						m->voices.erase(m->voices.get_iterator(v));
-					}
+					~VoiceReference() { m->voices.erase(m->voices.get_iterator(v)); }
 				};
 				Holder<VoiceReference> h = systemMemory().createHolder<VoiceReference>();
 				h->v = &*voices.emplace();

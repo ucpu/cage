@@ -10,7 +10,7 @@ namespace cage
 	struct CAGE_ENGINE_API TransformComponent : public Transform
 	{
 		using Transform::Transform;
-		using Transform::operator =;
+		using Transform::operator=;
 	};
 
 	struct CAGE_ENGINE_API RenderComponent

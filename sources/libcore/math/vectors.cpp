@@ -106,9 +106,9 @@ namespace cage
 		data[3] = cos(angle * 0.5);
 	}
 
-	Quat::Quat(const Mat3 & rot)
+	Quat::Quat(const Mat3 &rot)
 	{
-#define a(x,y) rot[y*3+x]
+#define a(x, y) rot[y * 3 + x]
 		Real trace = a(0, 0) + a(1, 1) + a(2, 2);
 		if (trace > 0)
 		{
@@ -150,13 +150,13 @@ namespace cage
 		*this = Quat(Mat3(forward, up, keepUp));
 	}
 
-	Vec3 operator * (const Quat &l, const Vec3 &r) noexcept
+	Vec3 operator*(const Quat &l, const Vec3 &r) noexcept
 	{
 		Vec3 t = cross(Vec3(l[0], l[1], l[2]), r) * 2;
 		return r + t * l[3] + cross(Vec3(l[0], l[1], l[2]), t);
 	}
 
-	Vec3 operator * (const Vec3 &l, const Quat &r) noexcept
+	Vec3 operator*(const Vec3 &l, const Quat &r) noexcept
 	{
 		return r * l;
 	}

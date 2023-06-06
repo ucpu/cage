@@ -7,12 +7,20 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#define CALL(FNC, ...) { const int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG_THROW(translateErrorCode(err)); CAGE_THROW_ERROR(SystemError, "FreeType " #FNC " error", err); } }
-#include <msdfgen/msdfgen.h>
+#define CALL(FNC, ...) \
+	{ \
+		const int err = FNC(__VA_ARGS__); \
+		if (err) \
+		{ \
+			CAGE_LOG_THROW(translateErrorCode(err)); \
+			CAGE_THROW_ERROR(SystemError, "FreeType " #FNC " error", err); \
+		} \
+	}
 #include <msdfgen/ext/import-font.h>
+#include <msdfgen/msdfgen.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace
 {
@@ -38,9 +46,13 @@ namespace
 	{
 		switch (code)
 #undef __FTERRORS_H__
-#define FT_ERRORDEF(E,V,S) case V: return S;
+#define FT_ERRORDEF(E, V, S) \
+	case V: \
+		return S;
 #define FT_ERROR_START_LIST {
-#define FT_ERROR_END_LIST };
+#define FT_ERROR_END_LIST \
+	} \
+	;
 #include FT_ERRORS_H
 			CAGE_THROW_ERROR(Exception, "unknown freetype error code");
 	}
@@ -167,9 +179,7 @@ namespace
 
 	msdfgen::Shape cursorShape()
 	{
-		const msdfgen::Point2 points[4] = {
-			{0, 0}, {0, 10}, {1, 10}, {1, 0}
-		};
+		const msdfgen::Point2 points[4] = { { 0, 0 }, { 0, 10 }, { 1, 10 }, { 1, 0 } };
 		msdfgen::Shape shape;
 		msdfgen::Contour &c = shape.addContour();
 		c.addEdge(msdfgen::EdgeHolder(points[0], points[1]));
@@ -254,8 +264,10 @@ namespace
 			packer->data()[count++] = PackingRect{ glyphIndex, g.png->width(), g.png->height() };
 		}
 		uint32 res = 64;
-		while (res < mgs) res += 32;
-		while (res * res < area) res += 32;
+		while (res < mgs)
+			res += 32;
+		while (res * res < area)
+			res += 32;
 		while (true)
 		{
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "trying to pack into resolution " + res + "*" + res);
@@ -308,11 +320,7 @@ namespace
 		CAGE_ASSERT(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount);
 
 		AssetHeader h = initializeAssetHeader();
-		h.originalSize = sizeof(data) + data.texSize +
-			data.glyphCount * sizeof(FontHeader::GlyphData) +
-			sizeof(Real) * numeric_cast<uint32>(kerning.size()) +
-			sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) +
-			sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());
+		h.originalSize = sizeof(data) + data.texSize + data.glyphCount * sizeof(FontHeader::GlyphData) + sizeof(Real) * numeric_cast<uint32>(kerning.size()) + sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) + sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());
 
 		MemoryBuffer buf;
 		Serializer sr(buf);
@@ -362,23 +370,11 @@ namespace
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
-			f->writeLine(
-				fill(String("glyph"), 10) +
-				fill(String("tex coord"), 60) +
-				fill(String("size"), 30) +
-				fill(String("bearing"), 30) +
-				String("advance")
-			);
+			f->writeLine(fill(String("glyph"), 10) + fill(String("tex coord"), 60) + fill(String("size"), 30) + fill(String("bearing"), 30) + String("advance"));
 			for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			{
 				Glyph &g = glyphs[glyphIndex];
-				f->writeLine(
-					fill(String(Stringizer() + glyphIndex), 10) +
-					fill(String(Stringizer() + g.data.texUv), 60) +
-					fill(String(Stringizer() + g.data.size), 30) +
-					fill(String(Stringizer() + g.data.bearing), 30) +
-					String(Stringizer() + g.data.advance.value)
-				);
+				f->writeLine(fill(String(Stringizer() + glyphIndex), 10) + fill(String(Stringizer() + g.data.texUv), 60) + fill(String(Stringizer() + g.data.size), 30) + fill(String(Stringizer() + g.data.bearing), 30) + String(Stringizer() + g.data.advance.value));
 			}
 		}
 
@@ -387,20 +383,12 @@ namespace
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
-			f->writeLine(
-				fill(String("code"), 10) +
-				fill(String("char"), 5) +
-				String("glyph")
-			);
+			f->writeLine(fill(String("code"), 10) + fill(String("char"), 5) + String("glyph"));
 			for (uint32 charIndex = 0; charIndex < data.charCount; charIndex++)
 			{
 				uint32 c = charsetChars[charIndex];
 				char C = c < 256 ? c : ' ';
-				f->writeLine(Stringizer() +
-					fill(String(Stringizer() + c), 10) +
-					fill(String({ &C, &C + 1 }), 5) +
-					charsetGlyphs[charIndex]
-				);
+				f->writeLine(Stringizer() + fill(String(Stringizer() + c), 10) + fill(String({ &C, &C + 1 }), 5) + charsetGlyphs[charIndex]);
 			}
 		}
 
@@ -409,11 +397,7 @@ namespace
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
-			f->writeLine(
-				fill(String("g1"), 5) +
-				fill(String("g2"), 5) +
-				String("kerning")
-			);
+			f->writeLine(fill(String("g1"), 5) + fill(String("g2"), 5) + String("kerning"));
 			if (kerning.empty())
 				f->writeLine("no data");
 			else
@@ -427,11 +411,7 @@ namespace
 						const Real k = kerning[x * m + y];
 						if (k == 0)
 							continue;
-						f->writeLine(
-							fill(String(Stringizer() + x), 5) +
-							fill(String(Stringizer() + y), 5) +
-							String(Stringizer() + k)
-						);
+						f->writeLine(fill(String(Stringizer() + x), 5) + fill(String(Stringizer() + y), 5) + String(Stringizer() + k));
 					}
 				}
 			}

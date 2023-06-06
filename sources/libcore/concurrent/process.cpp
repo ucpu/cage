@@ -1,27 +1,26 @@
 #include <cage-core/concurrent.h>
-#include <cage-core/process.h>
 #include <cage-core/lineReader.h>
+#include <cage-core/process.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
+	#include "../incWin.h"
 #else
-#include <unistd.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
+	#include <fcntl.h>
+	#include <signal.h>
+	#include <sys/ioctl.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
+	#include <sys/wait.h>
+	#include <unistd.h>
 #endif
 
-#include <cstdlib>
 #include <cerrno>
+#include <cstdlib>
 #include <string>
 
 namespace cage
 {
-	ProcessCreateConfig::ProcessCreateConfig(const String &command, const String &workingDirectory) : command(command), workingDirectory(workingDirectory)
-	{}
+	ProcessCreateConfig::ProcessCreateConfig(const String &command, const String &workingDirectory) : command(command), workingDirectory(workingDirectory) {}
 
 	namespace
 	{
@@ -68,18 +67,7 @@ namespace cage
 				detail::memset(cmd2, 0, String::MaxLength);
 				detail::memcpy(cmd2, config.command.c_str(), config.command.length());
 
-				if (!CreateProcess(
-					nullptr,
-					cmd2,
-					nullptr,
-					nullptr,
-					TRUE,
-					0,
-					nullptr,
-					workingDir.c_str(),
-					&siStartInfo,
-					&piProcInfo
-				))
+				if (!CreateProcess(nullptr, cmd2, nullptr, nullptr, TRUE, 0, nullptr, workingDir.c_str(), &siStartInfo, &piProcInfo))
 				{
 					CAGE_THROW_ERROR(SystemError, "CreateProcess", GetLastError());
 				}
@@ -93,15 +81,9 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 			}
 
-			~ProcessImpl()
-			{
-				wait();
-			}
+			~ProcessImpl() { wait(); }
 
-			void terminate()
-			{
-				TerminateProcess(hProcess.handle, 1);
-			}
+			void terminate() { TerminateProcess(hProcess.handle, 1); }
 
 			int wait()
 			{
@@ -215,10 +197,7 @@ namespace cage
 					close(1);
 				}
 
-				~AutoPipe()
-				{
-					close();
-				}
+				~AutoPipe() { close(); }
 			};
 
 		public:
@@ -303,15 +282,9 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
 			}
 
-			~ProcessImpl()
-			{
-				wait();
-			}
+			~ProcessImpl() { wait(); }
 
-			void terminate()
-			{
-				kill(pid, SIGKILL);
-			}
+			void terminate() { kill(pid, SIGKILL); }
 
 			int wait()
 			{

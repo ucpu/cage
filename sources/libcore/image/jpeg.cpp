@@ -1,7 +1,9 @@
 #include "image.h"
 
+// clang-format off
 #include <stdio.h> // needed for jpeglib
 #include <jpeglib.h>
+// clang-format on
 
 namespace cage
 {
@@ -23,7 +25,7 @@ namespace cage
 			try
 			{
 				jpeg_create_decompress(&info);
-				jpeg_mem_src(&info, (unsigned char*)inBuffer, numeric_cast<uint32>(inSize));
+				jpeg_mem_src(&info, (unsigned char *)inBuffer, numeric_cast<uint32>(inSize));
 				jpeg_read_header(&info, TRUE);
 				jpeg_start_decompress(&info);
 				width = info.output_width;
@@ -34,7 +36,7 @@ namespace cage
 				while (info.output_scanline < info.output_height)
 				{
 					unsigned char *ptr[1];
-					ptr[0] = (unsigned char*)out.data() + lineSize * info.output_scanline;
+					ptr[0] = (unsigned char *)out.data() + lineSize * info.output_scanline;
 					jpeg_read_scanlines(&info, ptr, 1);
 				}
 				jpeg_finish_decompress(&info);
@@ -69,7 +71,7 @@ namespace cage
 		{
 			JpegWriteCtx *ctx = (JpegWriteCtx *)cinfo->dest;
 			ctx->buf.resizeSmart(blockSize);
-			ctx->next_output_byte = (JOCTET*)ctx->buf.data();
+			ctx->next_output_byte = (JOCTET *)ctx->buf.data();
 			ctx->free_in_buffer = ctx->buf.size();
 		}
 
@@ -78,7 +80,7 @@ namespace cage
 			JpegWriteCtx *ctx = (JpegWriteCtx *)cinfo->dest;
 			uintPtr oldsize = ctx->buf.size();
 			ctx->buf.resizeSmart(oldsize + blockSize);
-			ctx->next_output_byte = (JOCTET*)(ctx->buf.data() + oldsize);
+			ctx->next_output_byte = (JOCTET *)(ctx->buf.data() + oldsize);
 			ctx->free_in_buffer = ctx->buf.size() - oldsize;
 			return true;
 		}
@@ -106,12 +108,12 @@ namespace cage
 				info.in_color_space = JCS_UNKNOWN;
 				switch (components)
 				{
-				case 1:
-					info.in_color_space = JCS_GRAYSCALE;
-					break;
-				case 3:
-					info.in_color_space = JCS_RGB;
-					break;
+					case 1:
+						info.in_color_space = JCS_GRAYSCALE;
+						break;
+					case 3:
+						info.in_color_space = JCS_RGB;
+						break;
 				}
 				jpeg_set_defaults(&info);
 				jpeg_start_compress(&info, true);
@@ -119,7 +121,7 @@ namespace cage
 				while (info.next_scanline < info.image_height)
 				{
 					unsigned char *ptr[1];
-					ptr[0] = (unsigned char*)in.data() + lineSize * info.next_scanline;
+					ptr[0] = (unsigned char *)in.data() + lineSize * info.next_scanline;
 					jpeg_write_scanlines(&info, ptr, 1);
 				}
 				jpeg_finish_compress(&info);

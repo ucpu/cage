@@ -1,9 +1,9 @@
-#include <cage-core/logger.h>
+#include "../image-info/imageInfo.h"
 #include <cage-core/ini.h>
+#include <cage-core/logger.h>
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
-#include "../image-info/imageInfo.h"
 
 using namespace cage;
 
@@ -16,14 +16,14 @@ void info(const String &src, int format)
 		msh = meshImportFiles(src);
 		switch (format)
 		{
-		case 1:
-			CAGE_LOG(SeverityEnum::Info, "mesh", "normalizing format");
-			meshImportNormalizeFormats(msh);
-			break;
-		case 2:
-			CAGE_LOG(SeverityEnum::Info, "mesh", "converting to cage format");
-			meshImportConvertToCageFormats(msh);
-			break;
+			case 1:
+				CAGE_LOG(SeverityEnum::Info, "mesh", "normalizing format");
+				meshImportNormalizeFormats(msh);
+				break;
+			case 2:
+				CAGE_LOG(SeverityEnum::Info, "mesh", "converting to cage format");
+				meshImportConvertToCageFormats(msh);
+				break;
 		}
 	}
 	catch (const Exception &)

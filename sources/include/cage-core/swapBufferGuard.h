@@ -46,9 +46,13 @@ namespace cage
 			explicit SwapBufferLock(SwapBufferGuard *controller, uint32 index);
 			SwapBufferLock(SwapBufferLock &&other) noexcept;
 			~SwapBufferLock();
-			SwapBufferLock &operator = (SwapBufferLock &&other) noexcept;
+			SwapBufferLock &operator=(SwapBufferLock &&other) noexcept;
 			explicit operator bool() const { return !!controller_; }
-			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
+			uint32 index() const
+			{
+				CAGE_ASSERT(!!controller_);
+				return index_;
+			}
 
 		private:
 			SwapBufferGuard *controller_ = nullptr;
@@ -68,7 +72,6 @@ namespace cage
 		uint32 buffersCount = 0;
 		bool repeatedReads = false; // allow to read last buffer again (instead of failing) if the producer cannot keep up - this can lead to duplicated data, but it may safe some unnecessary copies
 		bool repeatedWrites = false; // allow to override last write buffer (instead of failing) if the consumer cannot keep up - this allows to lose some data, but the consumer will get the most up-to-date data
-		//SwapBufferGuardCreateConfig(uint32 buffersCount);
 	};
 
 	CAGE_CORE_API Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config);

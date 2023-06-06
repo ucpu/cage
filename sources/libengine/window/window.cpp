@@ -3,14 +3,14 @@
 #include <cage-core/config.h>
 #include <cage-core/flatSet.h>
 
-#include <cage-engine/window.h>
 #include "private.h"
+#include <cage-engine/window.h>
 
 #include <atomic>
 #include <vector>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#define GCHL_WINDOWS_THREAD
+	#define GCHL_WINDOWS_THREAD
 #endif // CAGE_SYSTEM_WINDOWS
 
 namespace cage
@@ -28,11 +28,7 @@ namespace cage
 
 		ModifiersFlags getKeyModifiers(int mods)
 		{
-			return ModifiersFlags::None
-				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? ModifiersFlags::Shift : ModifiersFlags::None)
-				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? ModifiersFlags::Ctrl : ModifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? ModifiersFlags::Alt : ModifiersFlags::None)
-				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? ModifiersFlags::Super : ModifiersFlags::None);
+			return ModifiersFlags::None | ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? ModifiersFlags::Shift : ModifiersFlags::None) | ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? ModifiersFlags::Ctrl : ModifiersFlags::None) | ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? ModifiersFlags::Alt : ModifiersFlags::None) | ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? ModifiersFlags::Super : ModifiersFlags::None);
 		}
 
 		ModifiersFlags getKeyModifiers(GLFWwindow *w)
@@ -253,17 +249,17 @@ namespace cage
 			InputClassEnum type;
 			switch (action)
 			{
-			case GLFW_PRESS:
-				type = InputClassEnum::KeyPress;
-				break;
-			case GLFW_REPEAT:
-				type = InputClassEnum::KeyRepeat;
-				break;
-			case GLFW_RELEASE:
-				type = InputClassEnum::KeyRelease;
-				break;
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid key action");
+				case GLFW_PRESS:
+					type = InputClassEnum::KeyPress;
+					break;
+				case GLFW_REPEAT:
+					type = InputClassEnum::KeyRepeat;
+					break;
+				case GLFW_RELEASE:
+					type = InputClassEnum::KeyRelease;
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid key action");
 			}
 			InputKey e;
 			e.window = impl;
@@ -305,31 +301,31 @@ namespace cage
 			InputClassEnum type;
 			switch (action)
 			{
-			case GLFW_PRESS:
-				type = InputClassEnum::MousePress;
-				break;
-			case GLFW_RELEASE:
-				type = InputClassEnum::MouseRelease;
-				break;
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid mouse action");
+				case GLFW_PRESS:
+					type = InputClassEnum::MousePress;
+					break;
+				case GLFW_RELEASE:
+					type = InputClassEnum::MouseRelease;
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid mouse action");
 			}
 			InputMouse e;
 			e.window = impl;
 			e.mods = getKeyModifiers(mods);
 			switch (button)
 			{
-			case GLFW_MOUSE_BUTTON_LEFT:
-				e.buttons = MouseButtonsFlags::Left;
-				break;
-			case GLFW_MOUSE_BUTTON_RIGHT:
-				e.buttons = MouseButtonsFlags::Right;
-				break;
-			case GLFW_MOUSE_BUTTON_MIDDLE:
-				e.buttons = MouseButtonsFlags::Middle;
-				break;
-			default:
-				return; // ignore other keys
+				case GLFW_MOUSE_BUTTON_LEFT:
+					e.buttons = MouseButtonsFlags::Left;
+					break;
+				case GLFW_MOUSE_BUTTON_RIGHT:
+					e.buttons = MouseButtonsFlags::Right;
+					break;
+				case GLFW_MOUSE_BUTTON_MIDDLE:
+					e.buttons = MouseButtonsFlags::Middle;
+					break;
+				default:
+					return; // ignore other keys
 			}
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
@@ -484,10 +480,7 @@ namespace cage
 		normalizeWindow(impl, WindowFlags::None);
 		GLFWmonitor *m = getMonitorById(deviceId);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
-		glfwSetWindowMonitor(impl->window, m, 0, 0,
-			resolution[0] == 0 ? v->width : resolution[0],
-			resolution[1] == 0 ? v->height : resolution[1],
-			frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
+		glfwSetWindowMonitor(impl->window, m, 0, 0, resolution[0] == 0 ? v->width : resolution[0], resolution[1] == 0 ? v->height : resolution[1], frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
 	}
 
 	void Window::setMaximized()
@@ -590,53 +583,53 @@ namespace cage
 
 			switch (e.type)
 			{
-			case InputClassEnum::WindowClose:
-			case InputClassEnum::WindowResize:
-			case InputClassEnum::WindowMove:
-			case InputClassEnum::WindowShow:
-			case InputClassEnum::WindowHide:
-			case InputClassEnum::KeyChar:
-			case InputClassEnum::KeyRepeat:
-				events.dispatch(e);
-				break;
-			case InputClassEnum::MouseMove:
-			case InputClassEnum::MouseDoublePress:
-			case InputClassEnum::MouseWheel:
-				impl->offsetMousePositionApi(e);
-				break;
-			case InputClassEnum::KeyPress:
-				impl->stateKeys.insert(e.data.get<InputKey>().key);
-				events.dispatch(e);
-				e.type = InputClassEnum::KeyRepeat;
-				events.dispatch(e);
-				break;
-			case InputClassEnum::KeyRelease:
-				events.dispatch(e);
-				impl->stateKeys.erase(e.data.get<InputKey>().key);
-				break;
-			case InputClassEnum::MousePress:
-				impl->stateButtons |= e.data.get<InputMouse>().buttons;
-				impl->offsetMousePositionApi(e);
-				break;
-			case InputClassEnum::MouseRelease:
-				impl->offsetMousePositionApi(e);
-				impl->stateButtons &= ~e.data.get<InputMouse>().buttons;
-				break;
-			case InputClassEnum::FocusGain:
-				impl->focus = true;
-				events.dispatch(e);
-				break;
-			case InputClassEnum::FocusLose:
-				impl->focus = false;
-				events.dispatch(e);
-				break;
+				case InputClassEnum::WindowClose:
+				case InputClassEnum::WindowResize:
+				case InputClassEnum::WindowMove:
+				case InputClassEnum::WindowShow:
+				case InputClassEnum::WindowHide:
+				case InputClassEnum::KeyChar:
+				case InputClassEnum::KeyRepeat:
+					events.dispatch(e);
+					break;
+				case InputClassEnum::MouseMove:
+				case InputClassEnum::MouseDoublePress:
+				case InputClassEnum::MouseWheel:
+					impl->offsetMousePositionApi(e);
+					break;
+				case InputClassEnum::KeyPress:
+					impl->stateKeys.insert(e.data.get<InputKey>().key);
+					events.dispatch(e);
+					e.type = InputClassEnum::KeyRepeat;
+					events.dispatch(e);
+					break;
+				case InputClassEnum::KeyRelease:
+					events.dispatch(e);
+					impl->stateKeys.erase(e.data.get<InputKey>().key);
+					break;
+				case InputClassEnum::MousePress:
+					impl->stateButtons |= e.data.get<InputMouse>().buttons;
+					impl->offsetMousePositionApi(e);
+					break;
+				case InputClassEnum::MouseRelease:
+					impl->offsetMousePositionApi(e);
+					impl->stateButtons &= ~e.data.get<InputMouse>().buttons;
+					break;
+				case InputClassEnum::FocusGain:
+					impl->focus = true;
+					events.dispatch(e);
+					break;
+				case InputClassEnum::FocusLose:
+					impl->focus = false;
+					events.dispatch(e);
+					break;
 #ifdef GCHL_WINDOWS_THREAD
-			case InputClassEnum::Custom:
-				impl->mouseOffsetApi += e.data.get<MouseOffset>().off;
-				break;
+				case InputClassEnum::Custom:
+					impl->mouseOffsetApi += e.data.get<MouseOffset>().off;
+					break;
 #endif
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid window event type");
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid window event type");
 			}
 		}
 	}
@@ -696,7 +689,7 @@ namespace cage
 
 	void Window::windowedSize(const Vec2i &tmp)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowSize(impl->window, tmp[0], tmp[1]);
 	}
 
@@ -710,13 +703,13 @@ namespace cage
 
 	void Window::windowedPosition(const Vec2i &tmp)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);
 	}
 
 	void Window::makeCurrent()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		glfwMakeContextCurrent(impl->window);
 	}
 
@@ -727,7 +720,7 @@ namespace cage
 
 	void Window::swapBuffers()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		glfwSwapBuffers(impl->window);
 	}
 

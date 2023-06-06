@@ -1,5 +1,5 @@
-#include <cage-core/memoryUtils.h> // OutOfMemory
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/memoryUtils.h> // OutOfMemory
 
 namespace cage
 {
@@ -15,7 +15,7 @@ namespace cage
 		std::swap(capacity_, other.capacity_);
 	}
 
-	MemoryBuffer &MemoryBuffer::operator = (MemoryBuffer &&other) noexcept
+	MemoryBuffer &MemoryBuffer::operator=(MemoryBuffer &&other) noexcept
 	{
 		if (&other == this)
 			return *this;

@@ -1,7 +1,7 @@
 #include <cage-engine/frameBuffer.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
 
 namespace cage
 {
@@ -20,10 +20,7 @@ namespace cage
 				bind();
 			}
 
-			~FrameBufferImpl()
-			{
-				glDeleteFramebuffers(1, &id);
-			}
+			~FrameBufferImpl() { glDeleteFramebuffers(1, &id); }
 		};
 	}
 
@@ -83,15 +80,15 @@ namespace cage
 		}
 		switch (impl->target)
 		{
-		case GL_DRAW_FRAMEBUFFER:
-			glNamedFramebufferDrawBuffers(impl->id, count, bufs);
-			break;
-		case GL_READ_FRAMEBUFFER:
-			CAGE_ASSERT(count == 1);
-			glNamedFramebufferReadBuffer(impl->id, *bufs);
-			break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
+			case GL_DRAW_FRAMEBUFFER:
+				glNamedFramebufferDrawBuffers(impl->id, count, bufs);
+				break;
+			case GL_READ_FRAMEBUFFER:
+				CAGE_ASSERT(count == 1);
+				glNamedFramebufferReadBuffer(impl->id, *bufs);
+				break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
 		}
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -111,11 +108,16 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		switch (result)
 		{
-		case GL_FRAMEBUFFER_COMPLETE: return;
-		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
-		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
-		case GL_FRAMEBUFFER_UNSUPPORTED: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
-		default: CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
+			case GL_FRAMEBUFFER_COMPLETE:
+				return;
+			case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+				CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
+			case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+				CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
+			case GL_FRAMEBUFFER_UNSUPPORTED:
+				CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
+			default:
+				CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
 		}
 	}
 

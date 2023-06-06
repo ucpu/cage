@@ -14,15 +14,18 @@ namespace cage
 	{
 		void initRgbcx()
 		{
-			static const int initDummy = []() { rgbcx::init(); return 0; }();
+			static const int initDummy = []()
+			{
+				rgbcx::init();
+				return 0;
+			}();
 		}
 
 		union Color
 		{
 			uint8 rgba[4];
 			uint32 data;
-			Color() : rgba{0, 0, 0, 255}
-			{}
+			Color() : rgba{ 0, 0, 0, 255 } {}
 		};
 		static_assert(sizeof(Color) == 4);
 
@@ -36,7 +39,7 @@ namespace cage
 			return block * 16 + pixelInBlock;
 		}
 
-		template <uint32 Channels, uint32 BytesPerBlock, class Function>
+		template<uint32 Channels, uint32 BytesPerBlock, class Function>
 		Holder<PointerRange<char>> encoder(const Image *img, const ImageBcnEncodeConfig &config, const Function &function)
 		{
 			CAGE_ASSERT(img->channels() == Channels);
@@ -61,7 +64,7 @@ namespace cage
 			return buffer;
 		}
 
-		template <uint32 Channels, uint32 BytesPerBlock, class Function>
+		template<uint32 Channels, uint32 BytesPerBlock, class Function>
 		Holder<Image> decoder(PointerRange<const char> buffer, const Vec2i &resolution_, const Function &function)
 		{
 			const Vec2i resolution = 4 * ((resolution_ + 3) / 4); // round up to multiple of 4x4
@@ -94,10 +97,7 @@ namespace cage
 		initRgbcx();
 		struct Fnc
 		{
-			void operator()(void *dst, const uint8 *src) const
-			{
-				rgbcx::encode_bc1(rgbcx::MAX_LEVEL, dst, src, true, false);
-			}
+			void operator()(void *dst, const uint8 *src) const { rgbcx::encode_bc1(rgbcx::MAX_LEVEL, dst, src, true, false); }
 		};
 		return encoder<3, 8>(image, config, Fnc());
 	}
@@ -109,10 +109,7 @@ namespace cage
 		initRgbcx();
 		struct Fnc
 		{
-			void operator()(void *dst, const uint8 *src) const
-			{
-				rgbcx::encode_bc3(rgbcx::MAX_LEVEL, dst, src);
-			}
+			void operator()(void *dst, const uint8 *src) const { rgbcx::encode_bc3(rgbcx::MAX_LEVEL, dst, src); }
 		};
 		return encoder<4, 16>(image, config, Fnc());
 	}
@@ -124,10 +121,7 @@ namespace cage
 		initRgbcx();
 		struct Fnc
 		{
-			void operator()(void *dst, const uint8 *src) const
-			{
-				rgbcx::encode_bc4(dst, src);
-			}
+			void operator()(void *dst, const uint8 *src) const { rgbcx::encode_bc4(dst, src); }
 		};
 		return encoder<1, 8>(image, config, Fnc());
 	}
@@ -139,10 +133,7 @@ namespace cage
 		initRgbcx();
 		struct Fnc
 		{
-			void operator()(void *dst, const uint8 *src) const
-			{
-				rgbcx::encode_bc5(dst, src);
-			}
+			void operator()(void *dst, const uint8 *src) const { rgbcx::encode_bc5(dst, src); }
 		};
 		return encoder<2, 16>(image, config, Fnc());
 	}
@@ -151,14 +142,15 @@ namespace cage
 	{
 		if (image->channels() != 3 && image->channels() != 4)
 			CAGE_THROW_ERROR(Exception, "invalid number of channels for bc7 encoding");
-		static const int initDummy = []() { bc7enc_compress_block_init(); return 0; }();
+		static const int initDummy = []()
+		{
+			bc7enc_compress_block_init();
+			return 0;
+		}();
 		struct Fnc
 		{
 			bc7enc_compress_block_params conf;
-			void operator()(void *dst, const uint8 *src) const
-			{
-				bc7enc_compress_block(dst, src, &conf);
-			}
+			void operator()(void *dst, const uint8 *src) const { bc7enc_compress_block(dst, src, &conf); }
 		};
 		Fnc fnc;
 		bc7enc_compress_block_params_init(&fnc.conf);
@@ -173,10 +165,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				rgbcx::unpack_bc1(src, dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { rgbcx::unpack_bc1(src, dst); }
 		};
 		return decoder<3, 8>(buffer, resolution, Fnc());
 	}
@@ -249,10 +238,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				bc2::bcDecompress(*(const bc2::Bc2Block *)src, *(bc2::U8Block *)dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { bc2::bcDecompress(*(const bc2::Bc2Block *)src, *(bc2::U8Block *)dst); }
 		};
 		return decoder<4, 16>(buffer, resolution, Fnc());
 	}
@@ -261,10 +247,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				rgbcx::unpack_bc3(src, dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { rgbcx::unpack_bc3(src, dst); }
 		};
 		return decoder<4, 16>(buffer, resolution, Fnc());
 	}
@@ -273,10 +256,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				rgbcx::unpack_bc4(src, dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { rgbcx::unpack_bc4(src, dst); }
 		};
 		return decoder<1, 8>(buffer, resolution, Fnc());
 	}
@@ -285,10 +265,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				rgbcx::unpack_bc5(src, dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { rgbcx::unpack_bc5(src, dst); }
 		};
 		return decoder<2, 16>(buffer, resolution, Fnc());
 	}
@@ -297,10 +274,7 @@ namespace cage
 	{
 		struct Fnc
 		{
-			void operator()(uint8 *dst, const void *src) const
-			{
-				bc7decomp::unpack_bc7(src, (bc7decomp::color_rgba *)dst);
-			}
+			void operator()(uint8 *dst, const void *src) const { bc7decomp::unpack_bc7(src, (bc7decomp::color_rgba *)dst); }
 		};
 		return decoder<4, 16>(buffer, resolution, Fnc());
 	}

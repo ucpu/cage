@@ -1,0 +1,50 @@
+# requires clang-format version 16 or later
+---
+AccessModifierOffset: -4
+AlignAfterOpenBracket: DontAlign
+AlignEscapedNewlines: DontAlign
+AlignOperands: DontAlign
+AlignTrailingComments: false
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BasedOnStyle: Microsoft
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterExternBlock: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
+BreakBeforeBraces: Custom
+ColumnLimit: 1000
+Cpp11BracedListStyle: false
+EmptyLineBeforeAccessModifier: Always
+FixNamespaceComments: false
+IncludeBlocks: Preserve
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
+IndentWidth: 4
+Language: Cpp
+LineEnding: DeriveLF
+NamespaceIndentation: All
+#QualifierOrder: ['friend', 'static', 'inline', 'constexpr', 'const', 'volatile', 'restrict', 'type']
+ReflowComments: false
+RequiresClausePosition: WithPreceding
+SpaceAfterTemplateKeyword: false
+SpaceInEmptyBlock: false
+Standard: Latest
+TabWidth: 4
+UseTab: ForIndentation
+...

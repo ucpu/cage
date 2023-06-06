@@ -97,14 +97,21 @@ namespace
 		CAGE_TEST(man->count() == 3);
 
 		uint32 cnt = 0;
-		entitiesVisitor([&](Entity *e, const uint32 &v) {
-			cnt++;
-			switch (v)
-			{
-			case 3: man->createUnique()->value<Real>(); break;
-			case 5: e->destroy(); break;
-			}
-		}, +man, true);
+		entitiesVisitor(
+		    [&](Entity *e, const uint32 &v)
+		    {
+			    cnt++;
+			    switch (v)
+			    {
+				    case 3:
+					    man->createUnique()->value<Real>();
+					    break;
+				    case 5:
+					    e->destroy();
+					    break;
+			    }
+		    },
+		    +man, true);
 
 		CAGE_TEST(cnt == 2);
 		CAGE_TEST(man->component<Real>()->count() == 3);
@@ -146,7 +153,13 @@ namespace
 		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
 			entitiesVisitor([](Vec3 &v, const Real &r) { v[1] += r; }, +man, false);
-			entitiesVisitor([](Vec3 &v, const Real &r, uint32 &u) { v[0] += r; u++; }, +man, false);
+			entitiesVisitor(
+			    [](Vec3 &v, const Real &r, uint32 &u)
+			    {
+				    v[0] += r;
+				    u++;
+			    },
+			    +man, false);
 			entitiesVisitor([](uint32 &u) { u++; }, +man, false);
 		}
 
@@ -163,4 +176,3 @@ void testEntitiesVisitor()
 	visitorWithModifications();
 	performanceTest();
 }
-

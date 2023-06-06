@@ -1,13 +1,13 @@
-#include <cage-core/memoryAllocators.h>
-#include <cage-core/macros.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/entitiesVisitor.h>
+#include <cage-core/macros.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-engine/renderQueue.h>
 
 #include "private.h"
 
-#include <unordered_map>
 #include <algorithm>
+#include <unordered_map>
 
 #define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Tooltip, TooltipMarker
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
@@ -149,7 +149,7 @@ namespace cage
 		return impl->entityMgr.get();
 	}
 
-#define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem *item);
+#define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem * item);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 	void textCreate(HierarchyItem *item);
@@ -162,9 +162,7 @@ namespace cage
 	{
 		void sortChildren(HierarchyItem *item)
 		{
-			std::sort(item->children.begin(), item->children.end(), [](const Holder<HierarchyItem> &a, const Holder<HierarchyItem> &b) {
-				return a->order < b->order;
-			});
+			std::sort(item->children.begin(), item->children.end(), [](const Holder<HierarchyItem> &a, const Holder<HierarchyItem> &b) { return a->order < b->order; });
 			for (const auto &it : item->children)
 				sortChildren(+it);
 		}
@@ -223,7 +221,11 @@ namespace cage
 
 			// widget
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) \
+	if (GUI_HAS_COMPONENT(T, item->ent)) \
+	{ \
+		CAGE_JOIN(T, Create)(item); \
+	}
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 			}
@@ -253,7 +255,11 @@ namespace cage
 			{
 				if (item->item)
 					item = subsideItem(item);
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) \
+	if (GUI_HAS_COMPONENT(T, item->ent)) \
+	{ \
+		CAGE_JOIN(T, Create)(item); \
+	}
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 			}
@@ -379,7 +385,9 @@ namespace cage
 	uint32 entityWidgetsCount(Entity *e)
 	{
 		uint32 result = 0;
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
+#define GCHL_GENERATE(T) \
+	if (GUI_HAS_COMPONENT(T, e)) \
+		result++;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 		return result;
@@ -388,7 +396,9 @@ namespace cage
 	uint32 entityLayoutsCount(Entity *e)
 	{
 		uint32 result = 0;
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
+#define GCHL_GENERATE(T) \
+	if (GUI_HAS_COMPONENT(T, e)) \
+		result++;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 		return result;
@@ -457,10 +467,13 @@ namespace cage
 		void guiDestroyEntityRecursively(Entity *root)
 		{
 			std::vector<Entity *> ents;
-			entitiesVisitor([&](Entity *e, const GuiParentComponent &p) {
-				if (p.parent == root->name())
-					ents.push_back(e);
-			}, root->manager(), false);
+			entitiesVisitor(
+			    [&](Entity *e, const GuiParentComponent &p)
+			    {
+				    if (p.parent == root->name())
+					    ents.push_back(e);
+			    },
+			    root->manager(), false);
 			for (Entity *e : ents)
 				guiDestroyEntityRecursively(e);
 			root->destroy();

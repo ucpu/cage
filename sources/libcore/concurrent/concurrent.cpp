@@ -2,37 +2,37 @@
 #include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
+	#include "../incWin.h"
 #else
-#include <pthread.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <semaphore.h>
+	#include <pthread.h>
+	#include <semaphore.h>
+	#include <sys/types.h>
+	#include <unistd.h>
 #endif
 
 #ifdef CAGE_SYSTEM_LINUX
-#include <sys/prctl.h>
+	#include <sys/prctl.h>
 #endif
 
 #ifdef CAGE_SYSTEM_MAC
-#include <dispatch/dispatch.h>
+	#include <dispatch/dispatch.h>
 #endif
 
 #if __has_include(<valgrind/helgrind.h>)
-// https://github.com/fredericgermain/valgrind/blob/master/helgrind/tests/annotate_rwlock.c
-#include <valgrind/helgrind.h>
+    // https://github.com/fredericgermain/valgrind/blob/master/helgrind/tests/annotate_rwlock.c
+	#include <valgrind/helgrind.h>
 #else
-#define ANNOTATE_RWLOCK_CREATE(ADDR)
-#define ANNOTATE_RWLOCK_DESTROY(ADDR)
-#define ANNOTATE_RWLOCK_ACQUIRED(ADDR, WRT)
-#define ANNOTATE_RWLOCK_RELEASED(ADDR, WRT)
+	#define ANNOTATE_RWLOCK_CREATE(ADDR)
+	#define ANNOTATE_RWLOCK_DESTROY(ADDR)
+	#define ANNOTATE_RWLOCK_ACQUIRED(ADDR, WRT)
+	#define ANNOTATE_RWLOCK_RELEASED(ADDR, WRT)
 #endif
 
-#include <thread>
 #include <atomic>
-#include <mutex>
-#include <exception>
 #include <cerrno>
+#include <exception>
+#include <mutex>
+#include <thread>
 
 namespace cage
 {
@@ -124,15 +124,9 @@ namespace cage
 			static constexpr uint32 YieldAfter = 50;
 			static constexpr uint32 Writer = m;
 
-			RwMutexImpl()
-			{
-				ANNOTATE_RWLOCK_CREATE(this);
-			}
+			RwMutexImpl() { ANNOTATE_RWLOCK_CREATE(this); }
 
-			~RwMutexImpl()
-			{
-				ANNOTATE_RWLOCK_DESTROY(this);
-			}
+			~RwMutexImpl() { ANNOTATE_RWLOCK_DESTROY(this); }
 		};
 	}
 
@@ -386,39 +380,24 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "InitializeSynchronizationBarrier", GetLastError());
 			}
 
-			~BarrierImpl()
-			{
-				DeleteSynchronizationBarrier(&bar);
-			}
+			~BarrierImpl() { DeleteSynchronizationBarrier(&bar); }
 
-			void lock()
-			{
-				EnterSynchronizationBarrier(&bar, SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
-			}
+			void lock() { EnterSynchronizationBarrier(&bar, SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY); }
 #else
 			pthread_barrier_t bar;
 
-			BarrierImpl(uint32 value)
-			{
-				pthread_barrier_init(&bar, NULL, value);
-			}
+			BarrierImpl(uint32 value) { pthread_barrier_init(&bar, NULL, value); }
 
-			~BarrierImpl()
-			{
-				pthread_barrier_destroy(&bar);
-			}
+			~BarrierImpl() { pthread_barrier_destroy(&bar); }
 
-			void lock()
-			{
-				pthread_barrier_wait(&bar);
-			}
+			void lock() { pthread_barrier_wait(&bar); }
 #endif
 		};
 	}
 
 	void Barrier::lock()
 	{
-		BarrierImpl *impl = (BarrierImpl*)this;
+		BarrierImpl *impl = (BarrierImpl *)this;
 		impl->lock();
 	}
 
@@ -461,7 +440,7 @@ namespace cage
 	void ConditionalVariable::wait(Mutex *mut)
 	{
 		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
-		MutexImpl *m = (MutexImpl*)mut;
+		MutexImpl *m = (MutexImpl *)mut;
 #ifdef CAGE_SYSTEM_WINDOWS
 		SleepConditionVariableSRW(&impl->cond, &m->srw, INFINITE, 0);
 #else
@@ -504,7 +483,8 @@ namespace cage
 
 		class ThreadImpl : public Thread
 #ifdef CAGE_SYSTEM_WINDOWS
-			, public AutoHandle
+		    ,
+		                   public AutoHandle
 #endif
 		{
 		public:
@@ -569,23 +549,30 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		return WaitForSingleObject(impl->handle, 0) == WAIT_OBJECT_0;
 #else
-		if (impl->handle == (pthread_t)nullptr)
+		if (impl->handle == (pthread_t) nullptr)
 			return true;
-#ifdef CAGE_SYSTEM_MAC
+	#ifdef CAGE_SYSTEM_MAC
 		// mac does not have pthread_tryjoin_np
 		switch (pthread_kill(impl->handle, 0))
 		{
-		case 0: return false;
-		default: const_cast<Thread *>(this)->wait(); return true;
+			case 0:
+				return false;
+			default:
+				const_cast<Thread *>(this)->wait();
+				return true;
 		}
-#else
+	#else
 		switch (int err = pthread_tryjoin_np(impl->handle, nullptr))
 		{
-		case 0: const_cast<ThreadImpl *>(impl)->handle = (pthread_t)nullptr; return true;
-		case EBUSY: return false;
-		default: CAGE_THROW_ERROR(SystemError, "pthread_tryjoin_np", err);
+			case 0:
+				const_cast<ThreadImpl *>(impl)->handle = (pthread_t) nullptr;
+				return true;
+			case EBUSY:
+				return false;
+			default:
+				CAGE_THROW_ERROR(SystemError, "pthread_tryjoin_np", err);
 		}
-#endif
+	#endif
 #endif
 	}
 
@@ -596,12 +583,15 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->handle, INFINITE);
 #else
-		if (impl->handle != (pthread_t)nullptr)
+		if (impl->handle != (pthread_t) nullptr)
 		{
 			switch (int err = pthread_join(impl->handle, nullptr))
 			{
-			case 0: impl->handle = (pthread_t)nullptr; break;
-			default: CAGE_THROW_ERROR(SystemError, "pthread_join", err);
+				case 0:
+					impl->handle = (pthread_t) nullptr;
+					break;
+				default:
+					CAGE_THROW_ERROR(SystemError, "pthread_join", err);
 			}
 		}
 #endif
@@ -667,7 +657,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			static constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
-#pragma pack(push,8)
+	#pragma pack(push, 8)
 			struct THREADNAME_INFO
 			{
 				DWORD dwType; // Must be 0x1000.
@@ -675,20 +665,21 @@ namespace cage
 				DWORD dwThreadID; // Thread ID (-1=caller thread).
 				DWORD dwFlags; // Reserved for future use, must be zero.
 			};
-#pragma pack(pop)
+	#pragma pack(pop)
 			THREADNAME_INFO info;
 			info.dwType = 0x1000;
 			info.szName = name.c_str();
 			info.dwThreadID = -1;
 			info.dwFlags = 0;
-#pragma warning(push)
-#pragma warning(disable: 6320 6322)
-			__try {
-				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+	#pragma warning(push)
+	#pragma warning(disable : 6320 6322)
+			__try
+			{
+				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR *)&info);
 			}
-			__except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-#pragma warning(pop)
+			__except (EXCEPTION_EXECUTE_HANDLER)
+			{}
+	#pragma warning(pop)
 #endif
 
 #ifdef CAGE_SYSTEM_LINUX

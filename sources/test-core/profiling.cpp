@@ -1,8 +1,8 @@
 #include "main.h"
 
-#include <cage-core/profiling.h>
-#include <cage-core/config.h>
 #include <atomic>
+#include <cage-core/config.h>
+#include <cage-core/profiling.h>
 
 namespace
 {

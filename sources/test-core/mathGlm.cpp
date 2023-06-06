@@ -1,11 +1,11 @@
 #include "main.h"
 
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
+#include <cage-core/math.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 void test(Real a, Real b);
 void test(Rads a, Rads b);
@@ -35,11 +35,7 @@ namespace
 	}
 	const glm::mat3 c2g(const Mat3 &v)
 	{
-		return glm::mat3(
-			v[0].value, v[1].value, v[2].value,
-			v[3].value, v[4].value, v[5].value,
-			v[6].value, v[7].value, v[8].value
-		);
+		return glm::mat3(v[0].value, v[1].value, v[2].value, v[3].value, v[4].value, v[5].value, v[6].value, v[7].value, v[8].value);
 	}
 	const Mat3 g2c(const glm::mat3 &v)
 	{
@@ -51,12 +47,7 @@ namespace
 	}
 	const glm::mat4 c2g(const Mat4 &v)
 	{
-		return glm::mat4(
-			v[0].value, v[1].value, v[2].value, v[3].value,
-			v[4].value, v[5].value, v[6].value, v[7].value,
-			v[8].value, v[9].value, v[10].value, v[11].value,
-			v[12].value, v[13].value, v[14].value, v[15].value
-		);
+		return glm::mat4(v[0].value, v[1].value, v[2].value, v[3].value, v[4].value, v[5].value, v[6].value, v[7].value, v[8].value, v[9].value, v[10].value, v[11].value, v[12].value, v[13].value, v[14].value, v[15].value);
 	}
 	const Mat4 g2c(const glm::mat4 &v)
 	{
@@ -195,7 +186,7 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				Mat3 q;
-				glm::mat3 g = {1,0,0,0,1,0,0,0,1};
+				glm::mat3 g = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 				for (int i = 0; i < 10; i++)
 				{
 					Mat3 q2;
@@ -210,7 +201,7 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				Mat4 q;
-				glm::mat4 g = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+				glm::mat4 g = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 				for (int i = 0; i < 10; i++)
 				{
 					Mat4 q2;
@@ -319,7 +310,7 @@ void testMathGlm()
 				Rads rot = randomAngle();
 				Mat4 m1 = Mat4(Quat(rot, Degs(), Degs()));
 				glm::mat4 m2 = c2g(Mat4());
-				m2 = glm::rotate(m2, Real(rot).value, glm::vec3(1,0,0));
+				m2 = glm::rotate(m2, Real(rot).value, glm::vec3(1, 0, 0));
 				test(m1, g2c(m2));
 			}
 		}

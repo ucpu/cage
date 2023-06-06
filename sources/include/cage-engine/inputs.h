@@ -17,19 +17,35 @@ namespace cage
 	enum class InputClassEnum : uint32
 	{
 		None = 0,
-		FocusGain, FocusLose, WindowClose, WindowShow, WindowHide, // InputWindow
-		WindowMove, WindowResize, // InputWindowValue
-		MouseMove, MousePress, MouseDoublePress, MouseRelease, // InputMouse
+		FocusGain,
+		FocusLose,
+		WindowClose,
+		WindowShow,
+		WindowHide, // InputWindow
+		WindowMove,
+		WindowResize, // InputWindowValue
+		MouseMove,
+		MousePress,
+		MouseDoublePress,
+		MouseRelease, // InputMouse
 		MouseWheel, // InputMouseWheel
-		KeyPress, KeyRelease, KeyRepeat, KeyChar, // InputKey
-		GamepadConnected, GamepadDisconnected, // InputGamepadState
-		GamepadPress, GamepadRelease, // InputGamepadKey
+		KeyPress,
+		KeyRelease,
+		KeyRepeat,
+		KeyChar, // InputKey
+		GamepadConnected,
+		GamepadDisconnected, // InputGamepadState
+		GamepadPress,
+		GamepadRelease, // InputGamepadKey
 		GamepadAxis, // InputGamepadAxis
-		HeadsetConnected, HeadsetDisconnected, // InputHeadsetState
+		HeadsetConnected,
+		HeadsetDisconnected, // InputHeadsetState
 		HeadsetPose, // InputHeadsetPose
-		ControllerConnected, ControllerDisconnected, // InputControllerState
+		ControllerConnected,
+		ControllerDisconnected, // InputControllerState
 		ControllerPose, // InputControllerPose
-		ControllerPress, ControllerRelease, // InputControllerKey
+		ControllerPress,
+		ControllerRelease, // InputControllerKey
 		ControllerAxis, // InputControllerAxis
 		GuiWidget, // InputGuiWidget
 		Custom = 1000,
@@ -221,10 +237,12 @@ namespace cage
 		void bind(InputsGeneralizer *generalizer);
 	};
 
-	template<InputClassEnum C, class T, class Callable> requires(std::is_invocable_r_v<bool, Callable, T> || std::is_invocable_r_v<void, Callable, T>)
+	template<InputClassEnum C, class T, class Callable>
+	requires(std::is_invocable_r_v<bool, Callable, T> || std::is_invocable_r_v<void, Callable, T>)
 	auto inputListener(Callable &&callable)
 	{
-		return [cl = std::move(callable)](const GenericInput &in) {
+		return [cl = std::move(callable)](const GenericInput &in)
+		{
 			if (in.type == C)
 				return cl(in.data.get<T>());
 			if constexpr (std::is_same_v<std::invoke_result_t<Callable, T>, bool>)

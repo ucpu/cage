@@ -1,8 +1,8 @@
-#include <cage-engine/renderObject.h>
 #include <cage-engine/graphicsError.h>
+#include <cage-engine/renderObject.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace cage
 {
@@ -29,9 +29,7 @@ namespace cage
 		CAGE_ASSERT(modelIndices[0] == 0);
 		CAGE_ASSERT(modelIndices.size() == thresholds.size() + 1);
 		CAGE_ASSERT(modelIndices[thresholds.size()] == modelNames.size());
-		CAGE_ASSERT(std::is_sorted(thresholds.begin(), thresholds.end(), [](Real a, Real b) {
-			return b < a;
-		}));
+		CAGE_ASSERT(std::is_sorted(thresholds.begin(), thresholds.end(), [](Real a, Real b) { return b < a; }));
 		CAGE_ASSERT(std::is_sorted(modelIndices.begin(), modelIndices.end()));
 		RenderObjectImpl *impl = (RenderObjectImpl *)this;
 		impl->thresholds.resize(thresholds.size());

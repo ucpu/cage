@@ -1,42 +1,42 @@
 #ifndef guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 #define guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 
-#include <cage-core/networkUtils.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/debug.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/networkUtils.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-#include "../incWin.h"
-#include <winsock2.h>
-#include <ws2tcpip.h>
+	#include "../incWin.h"
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
 typedef char raw_type;
-#define POLLRDHUP 0
-#undef POLLPRI // WSAPoll rejects POLLPRI with an error
-#define POLLPRI 0
-#undef near
-#undef far
+	#define POLLRDHUP 0
+	#undef POLLPRI // WSAPoll rejects POLLPRI with an error
+	#define POLLPRI 0
+	#undef near
+	#undef far
 
 #else
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <poll.h>
+	#include <arpa/inet.h>
+	#include <errno.h>
+	#include <netdb.h>
+	#include <netinet/in.h>
+	#include <poll.h>
+	#include <sys/ioctl.h>
+	#include <sys/socket.h>
+	#include <sys/types.h>
+	#include <unistd.h>
 typedef void raw_type;
 typedef int SOCKET;
-#define WSAGetLastError() errno
-#define closesocket close
-#define ioctlsocket ioctl
-#define WSAEWOULDBLOCK EWOULDBLOCK
-#define WSAECONNRESET ECONNRESET
-#define INVALID_SOCKET -1
-#define WSAPoll poll
+	#define WSAGetLastError() errno
+	#define closesocket close
+	#define ioctlsocket ioctl
+	#define WSAEWOULDBLOCK EWOULDBLOCK
+	#define WSAECONNRESET ECONNRESET
+	#define INVALID_SOCKET -1
+	#define WSAPoll poll
 
 #endif
 
@@ -50,12 +50,12 @@ namespace cage
 
 			void translate(String &address, uint16 &port, bool domain = false) const;
 
-			bool operator < (const Addr &other) const // fast (binary) comparison
+			bool operator<(const Addr &other) const // fast (binary) comparison
 			{
 				return detail::memcmp(&storage, &other.storage, sizeof(storage)) < 0;
 			}
 
-			bool operator == (const Addr &other) const // fast (binary) comparison
+			bool operator==(const Addr &other) const // fast (binary) comparison
 			{
 				return detail::memcmp(&storage, &other.storage, sizeof(storage)) == 0;
 			}
@@ -74,11 +74,11 @@ namespace cage
 			Sock(int family, int type, int protocol); // create new socket
 			Sock(int family, int type, int protocol, SOCKET descriptor, bool connected); // copy socket
 			Sock(Sock &&other) noexcept;
-			void operator = (Sock &&other) noexcept;
+			void operator=(Sock &&other) noexcept;
 			~Sock();
 
 			Sock(const Sock &) = delete;
-			void operator = (const Sock &other) = delete;
+			void operator=(const Sock &other) = delete;
 
 			void setBlocking(bool blocking);
 			void setReuseaddr(bool reuse);
@@ -103,7 +103,7 @@ namespace cage
 			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0);
 			uintPtr recvFrom(void *buffer, uintPtr bufferSize, Addr &remoteAddress, int flags = 0);
 
-			bool operator < (const Sock &other) const // fast comparison
+			bool operator<(const Sock &other) const // fast comparison
 			{
 				return descriptor < other.descriptor;
 			}

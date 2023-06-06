@@ -1,9 +1,9 @@
 #include "main.h"
 
+#include <atomic>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/threadPool.h>
-#include <atomic>
 
 namespace
 {
@@ -12,22 +12,13 @@ namespace
 	class Task
 	{
 	public:
-		Task(uint32 id, bool final = false) : id(id), final(final)
-		{
-			itemsCounter++;
-		}
+		Task(uint32 id, bool final = false) : id(id), final(final) { itemsCounter++; }
 
-		Task(const Task &other) : id(other.id), final(other.final)
-		{
-			itemsCounter++;
-		}
+		Task(const Task &other) : id(other.id), final(other.final) { itemsCounter++; }
 
-		Task(Task &&other) noexcept : id(other.id), final(other.final)
-		{
-			itemsCounter++;
-		}
+		Task(Task &&other) noexcept : id(other.id), final(other.final) { itemsCounter++; }
 
-		Task &operator = (const Task &other)
+		Task &operator=(const Task &other)
 		{
 			id = other.id;
 			final = other.final;
@@ -35,7 +26,7 @@ namespace
 			return *this;
 		}
 
-		Task &operator = (Task &&other) noexcept
+		Task &operator=(Task &&other) noexcept
 		{
 			id = other.id;
 			final = other.final;
@@ -64,8 +55,7 @@ namespace
 	class Tester
 	{
 	public:
-		Tester() : produceItems(1000), produceFinals(1), queue(10)
-		{}
+		Tester() : produceItems(1000), produceFinals(1), queue(10) {}
 
 		void consumeBlocking()
 		{

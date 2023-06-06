@@ -1,7 +1,7 @@
 #include <cage-core/assetContext.h>
-#include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
+#include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
 
 #include <cage-engine/assetStructs.h>

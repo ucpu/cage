@@ -6,8 +6,7 @@ namespace cage
 	{
 		struct ButtonImpl : public WidgetItem
 		{
-			ButtonImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
-			{}
+			ButtonImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy) {}
 
 			void initialize() override
 			{

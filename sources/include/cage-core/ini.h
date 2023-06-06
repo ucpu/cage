@@ -69,10 +69,10 @@ namespace cage
 		void checkUnusedWithHelp() const; // logs help and rethrows the exception, if any
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
-		void set##NAME (const String &section, const String &item, const TYPE &value); \
-		TYPE get##NAME (const String &section, const String &item, const TYPE &defaul = DEF) const; \
-		TYPE cmd##NAME (char shortName, const String &longName, const TYPE &defaul) const; \
-		TYPE cmd##NAME (char shortName, const String &longName) const;
+	void set##NAME(const String &section, const String &item, const TYPE &value); \
+	TYPE get##NAME(const String &section, const String &item, const TYPE &defaul = DEF) const; \
+	TYPE cmd##NAME(char shortName, const String &longName, const TYPE &defaul) const; \
+	TYPE cmd##NAME(char shortName, const String &longName) const;
 		GCHL_GENERATE(bool, Bool, false);
 		GCHL_GENERATE(sint32, Sint32, 0);
 		GCHL_GENERATE(uint32, Uint32, 0);

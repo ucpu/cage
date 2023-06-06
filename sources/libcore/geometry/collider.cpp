@@ -1,13 +1,13 @@
-#include <cage-core/geometry.h>
 #include <cage-core/collider.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/mesh.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/geometry.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/mesh.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace cage
 {
@@ -32,10 +32,7 @@ namespace cage
 			std::vector<Node> nodes;
 			bool dirty = true;
 
-			ColliderImpl()
-			{
-				((Collider *)this)->rebuild();
-			}
+			ColliderImpl() { ((Collider *)this)->rebuild(); }
 
 			void builLeaf(std::vector<Triangle> &ts)
 			{
@@ -132,9 +129,7 @@ namespace cage
 				// actually split the triangles
 				CAGE_ASSERT(axis < 3);
 				CAGE_ASSERT(split > 0 && split < ts.size());
-				std::sort(ts.begin(), ts.end(), [axis](const Triangle &a, const Triangle &b) {
-					return a.center()[axis] < b.center()[axis];
-				});
+				std::sort(ts.begin(), ts.end(), [axis](const Triangle &a, const Triangle &b) { return a.center()[axis] < b.center()[axis]; });
 				std::vector<Triangle> left(ts.begin(), ts.begin() + split);
 				std::vector<Triangle> right(ts.begin() + split, ts.end());
 
@@ -211,13 +206,11 @@ namespace cage
 	{
 		ColliderImpl *impl = (ColliderImpl *)this;
 
-		static constexpr const auto &order = [](Triangle t) -> Triangle {
+		static constexpr const auto &order = [](Triangle t) -> Triangle
+		{
 			struct Comparator
 			{
-				bool operator() (const Vec3 &a, const Vec3 &b) const
-				{
-					return detail::memcmp(&a, &b, sizeof(a)) < 0;
-				}
+				bool operator()(const Vec3 &a, const Vec3 &b) const { return detail::memcmp(&a, &b, sizeof(a)) < 0; }
 			};
 			std::sort(std::begin(t.vertices), std::end(t.vertices), Comparator());
 			return t;
@@ -225,10 +218,7 @@ namespace cage
 
 		struct Comparator
 		{
-			bool operator() (const Triangle &a, const Triangle &b) const
-			{
-				return detail::memcmp(&a, &b, sizeof(a)) < 0;
-			}
+			bool operator()(const Triangle &a, const Triangle &b) const { return detail::memcmp(&a, &b, sizeof(a)) < 0; }
 		};
 
 		std::vector<Triangle> vec;
@@ -378,7 +368,7 @@ namespace cage
 		return systemMemory().createImpl<Collider, ColliderImpl>();
 	}
 
-	bool operator < (const CollisionPair &l, const CollisionPair &r)
+	bool operator<(const CollisionPair &l, const CollisionPair &r)
 	{
 		if (l.a == r.a)
 			return l.b < r.b;
@@ -388,7 +378,8 @@ namespace cage
 	namespace
 	{
 		template<class T, bool Transform>
-		class LazyData {};
+		class LazyData
+		{};
 
 		template<class T>
 		class LazyData<T, true>
@@ -405,7 +396,7 @@ namespace cage
 				flags.resize(count, false);
 			}
 
-			const T &operator[] (uint32 idx)
+			const T &operator[](uint32 idx)
 			{
 				CAGE_ASSERT(idx < data.size());
 				if (!flags[idx])
@@ -423,15 +414,9 @@ namespace cage
 		public:
 			const T *const original;
 
-			LazyData(const T *original, uint32 count, const Transform &m) : original(original)
-			{
-				CAGE_ASSERT(m == Transform());
-			}
+			LazyData(const T *original, uint32 count, const Transform &m) : original(original) { CAGE_ASSERT(m == Transform()); }
 
-			const T &operator[] (uint32 idx) const
-			{
-				return original[idx];
-			}
+			const T &operator[](uint32 idx) const { return original[idx]; }
 		};
 
 		template<bool Swap>
@@ -448,11 +433,7 @@ namespace cage
 			Holder<PointerRange<CollisionPair>> &outputBuffer;
 			PointerRangeHolder<CollisionPair> collisions;
 
-			CollisionDetector(const ColliderImpl *ao, const ColliderImpl *bo, const Transform &am, const Transform &bm, Holder<PointerRange<CollisionPair>> &outputBuffer) :
-				ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm),
-				abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm),
-				ao(ao), bo(bo), outputBuffer(outputBuffer)
-			{}
+			CollisionDetector(const ColliderImpl *ao, const ColliderImpl *bo, const Transform &am, const Transform &bm, Holder<PointerRange<CollisionPair>> &outputBuffer) : ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm), abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm), ao(ao), bo(bo), outputBuffer(outputBuffer) {}
 
 			void process(uint32 a, uint32 b)
 			{
@@ -550,10 +531,7 @@ namespace cage
 			const ColliderImpl *const col;
 			const Transform m;
 
-			IntersectionDetector(const ColliderImpl *collider, const Transform &m) : col(collider), m(m)
-			{
-				CAGE_ASSERT(!collider->dirty);
-			}
+			IntersectionDetector(const ColliderImpl *collider, const Transform &m) : col(collider), m(m) { CAGE_ASSERT(!collider->dirty); }
 
 			template<class T>
 			Real distance(const T &l, uint32 nodeIdx)
@@ -707,8 +685,6 @@ namespace cage
 		};
 	}
 
-
-
 	bool collisionDetection(CollisionDetectionConfig &params)
 	{
 		const ColliderImpl *const ao = (const ColliderImpl *)params.ao;
@@ -758,8 +734,7 @@ namespace cage
 
 			// find first contact
 			const Real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
-			const Real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
-				distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
+			const Real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)), distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
 			Real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
 			CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1);
 			maxDiff = min(maxDiff, (time2 - time1) * 0.2);
@@ -819,8 +794,6 @@ namespace cage
 		}
 	}
 
-
-
 	Real distance(const Line &shape, const Collider *collider, const Transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
@@ -867,8 +840,6 @@ namespace cage
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "collider-collider distance");
 	}
-
-
 
 	bool intersects(const Line &shape, const Collider *collider, const Transform &t)
 	{
@@ -917,7 +888,6 @@ namespace cage
 		CollisionDetectionConfig p(ao, bo, at, bt);
 		return collisionDetection(p);
 	}
-
 
 	Vec3 intersection(const Line &shape, const Collider *collider, const Transform &t)
 	{

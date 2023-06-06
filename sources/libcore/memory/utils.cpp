@@ -1,20 +1,20 @@
 #include <cage-core/memoryUtils.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
-#include <malloc.h>
+	#include "../incWin.h"
+	#include <malloc.h>
 #else
-#include <unistd.h>
-#include <sys/mman.h>
+	#include <sys/mman.h>
+	#include <unistd.h>
 #endif
 
 #if __has_include(<valgrind/helgrind.h>)
-// see https://valgrind.org/docs/manual/hg-manual.html
-#include <valgrind/helgrind.h>
+    // see https://valgrind.org/docs/manual/hg-manual.html
+	#include <valgrind/helgrind.h>
 #else
-#define ANNOTATE_HAPPENS_AFTER(XXX)
-#define ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(XXX)
-#define ANNOTATE_HAPPENS_BEFORE(XXX)
+	#define ANNOTATE_HAPPENS_AFTER(XXX)
+	#define ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(XXX)
+	#define ANNOTATE_HAPPENS_BEFORE(XXX)
 #endif
 
 #include <cerrno>
@@ -24,8 +24,7 @@ namespace cage
 	static_assert(sizeof(Holder<uint32>) == 2 * sizeof(uintPtr));
 	static_assert(sizeof(Holder<String>) == 2 * sizeof(uintPtr));
 
-	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept : Exception(location, severity, message), memory(memory)
-	{};
+	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept : Exception(location, severity, message), memory(memory){};
 
 	void OutOfMemory::log() const
 	{
@@ -41,9 +40,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-				InterlockedIncrement(&counter);
+			    InterlockedIncrement(&counter);
 #else
-				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
+			    __atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 		}
@@ -52,9 +51,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-				InterlockedDecrement(&counter);
+			    InterlockedDecrement(&counter);
 #else
-				__atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
+			    __atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 
@@ -76,13 +75,9 @@ namespace cage
 		class VirtualMemoryImpl : public VirtualMemory
 		{
 		public:
-			VirtualMemoryImpl()
-			{}
+			VirtualMemoryImpl() {}
 
-			~VirtualMemoryImpl()
-			{
-				free();
-			}
+			~VirtualMemoryImpl() { free(); }
 
 			void *reserve(const uintPtr pages)
 			{
@@ -134,10 +129,10 @@ namespace cage
 					CAGE_THROW_CRITICAL(Exception, "virtual memory depleted");
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (!VirtualAlloc((char*)origin + pgs * pageSize, pages * pageSize, MEM_COMMIT, PAGE_READWRITE))
+				if (!VirtualAlloc((char *)origin + pgs * pageSize, pages * pageSize, MEM_COMMIT, PAGE_READWRITE))
 					CAGE_THROW_ERROR(Exception, "VirtualAlloc");
 #else
-				if (mprotect((char*)origin + pgs * pageSize, pages * pageSize, PROT_READ | PROT_WRITE) != 0)
+				if (mprotect((char *)origin + pgs * pageSize, pages * pageSize, PROT_READ | PROT_WRITE) != 0)
 					CAGE_THROW_ERROR(SystemError, "mprotect", errno);
 #endif
 

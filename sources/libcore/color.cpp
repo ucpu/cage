@@ -1,8 +1,8 @@
-#include <cage-core/math.h>
 #include <cage-core/color.h>
+#include <cage-core/math.h>
 
-#include <cmath>
 #include "hsluv.h"
+#include <cmath>
 
 namespace cage
 {
@@ -95,11 +95,10 @@ namespace cage
 			return outColor;
 		if (inColor[0] >= maxColor)
 			outColor[0] = (inColor[1] - inColor[2]) / delta;
+		else if (inColor[1] >= maxColor)
+			outColor[0] = 2 + (inColor[2] - inColor[0]) / delta;
 		else
-			if (inColor[1] >= maxColor)
-				outColor[0] = 2 + (inColor[2] - inColor[0]) / delta;
-			else
-				outColor[0] = 4 + (inColor[0] - inColor[1]) / delta;
+			outColor[0] = 4 + (inColor[0] - inColor[1]) / delta;
 		outColor[0] *= 60.f / 360.f;
 		if (outColor[0] < 0)
 			outColor[0] += 1;
@@ -128,37 +127,37 @@ namespace cage
 		Real t = inColor[2] * (1 - (inColor[1] * (1 - ff)));
 		switch (i)
 		{
-		case 0:
-			outColor[0] = inColor[2];
-			outColor[1] = t;
-			outColor[2] = p;
-			break;
-		case 1:
-			outColor[0] = q;
-			outColor[1] = inColor[2];
-			outColor[2] = p;
-			break;
-		case 2:
-			outColor[0] = p;
-			outColor[1] = inColor[2];
-			outColor[2] = t;
-			break;
-		case 3:
-			outColor[0] = p;
-			outColor[1] = q;
-			outColor[2] = inColor[2];
-			break;
-		case 4:
-			outColor[0] = t;
-			outColor[1] = p;
-			outColor[2] = inColor[2];
-			break;
-		case 5:
-		default:
-			outColor[0] = inColor[2];
-			outColor[1] = p;
-			outColor[2] = q;
-			break;
+			case 0:
+				outColor[0] = inColor[2];
+				outColor[1] = t;
+				outColor[2] = p;
+				break;
+			case 1:
+				outColor[0] = q;
+				outColor[1] = inColor[2];
+				outColor[2] = p;
+				break;
+			case 2:
+				outColor[0] = p;
+				outColor[1] = inColor[2];
+				outColor[2] = t;
+				break;
+			case 3:
+				outColor[0] = p;
+				outColor[1] = q;
+				outColor[2] = inColor[2];
+				break;
+			case 4:
+				outColor[0] = t;
+				outColor[1] = p;
+				outColor[2] = inColor[2];
+				break;
+			case 5:
+			default:
+				outColor[0] = inColor[2];
+				outColor[1] = p;
+				outColor[2] = q;
+				break;
 		}
 		return outColor;
 	}
@@ -190,31 +189,31 @@ namespace cage
 		Vec3 result;
 		switch (band)
 		{
-		case 0:
-			result[0] = 1;
-			result[1] = value;
-			result[2] = 0;
-			break;
-		case 1:
-			result[0] = 1.0f - value;
-			result[1] = 1;
-			result[2] = 0;
-			break;
-		case 2:
-			result[0] = 0;
-			result[1] = 1;
-			result[2] = value;
-			break;
-		case 3:
-			result[0] = 0;
-			result[1] = 1.0f - value;
-			result[2] = 1;
-			break;
-		default:
-			result[0] = value;
-			result[1] = 0;
-			result[2] = 1;
-			break;
+			case 0:
+				result[0] = 1;
+				result[1] = value;
+				result[2] = 0;
+				break;
+			case 1:
+				result[0] = 1.0f - value;
+				result[1] = 1;
+				result[2] = 0;
+				break;
+			case 2:
+				result[0] = 0;
+				result[1] = 1;
+				result[2] = value;
+				break;
+			case 3:
+				result[0] = 0;
+				result[1] = 1.0f - value;
+				result[2] = 1;
+				break;
+			default:
+				result[0] = value;
+				result[1] = 0;
+				result[2] = 1;
+				break;
 		}
 		return result;
 	}

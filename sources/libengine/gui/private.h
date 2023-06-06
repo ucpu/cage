@@ -3,18 +3,18 @@
 
 #include <cage-core/entities.h>
 
+#include <cage-engine/font.h> // FontFormat
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
-#include <cage-engine/font.h> // FontFormat
-#include <cage-engine/window.h> // WindowEventListeners
 #include <cage-engine/renderQueue.h> // UubRange
+#include <cage-engine/window.h> // WindowEventListeners
 
 #include <vector>
 
-#define GUI_HAS_COMPONENT(T,E) (E)->has<Gui##T##Component>()
+#define GUI_HAS_COMPONENT(T, E) (E)->has<Gui##T##Component>()
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()
-#define GUI_COMPONENT(T,N,E) Gui##T##Component &N = (E)->value<Gui##T##Component>();
+#define GUI_COMPONENT(T, N, E) Gui##T##Component &N = (E)->value<Gui##T##Component>();
 
 namespace cage
 {
@@ -209,8 +209,7 @@ namespace cage
 		GuiImpl *impl = nullptr;
 		Vec2 clipPos, clipSize;
 
-		RenderableBase(GuiImpl *impl) : impl(impl)
-		{}
+		RenderableBase(GuiImpl *impl) : impl(impl) {}
 
 		virtual ~RenderableBase() = default;
 
@@ -282,7 +281,8 @@ namespace cage
 		bool removing = false;
 	};
 
-	struct GuiTooltipMarkerComponent {}; // this component is added to the root entity of shown tooltip to track its deletion
+	struct GuiTooltipMarkerComponent
+	{}; // this component is added to the root entity of shown tooltip to track its deletion
 
 	class GuiImpl : public GuiManager
 	{

@@ -1,12 +1,12 @@
-#include <cage-core/concurrentQueue.h>
-#include <cage-core/serialization.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/flatSet.h>
-#include <cage-engine/gamepad.h>
 #include "private.h"
+#include <cage-core/concurrent.h>
+#include <cage-core/concurrentQueue.h>
+#include <cage-core/flatSet.h>
+#include <cage-core/serialization.h>
+#include <cage-engine/gamepad.h>
 
-#include <vector>
 #include <map>
+#include <vector>
 
 namespace cage
 {
@@ -136,28 +136,30 @@ namespace cage
 			ScopeLock l(d.mut);
 			switch (event)
 			{
-			case GLFW_CONNECTED:
-			{
-				if (d.used.count(jid))
+				case GLFW_CONNECTED:
 				{
-					GamepadImpl *g = d.used[jid];
-					g->connected = true;
-					g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadConnected });
+					if (d.used.count(jid))
+					{
+						GamepadImpl *g = d.used[jid];
+						g->connected = true;
+						g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadConnected });
+					}
+					else
+						d.available.insert(jid);
 				}
-				else
-					d.available.insert(jid);
-			} break;
-			case GLFW_DISCONNECTED:
-			{
-				if (d.used.count(jid))
+				break;
+				case GLFW_DISCONNECTED:
 				{
-					GamepadImpl *g = d.used[jid];
-					g->connected = false;
-					g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadDisconnected });
+					if (d.used.count(jid))
+					{
+						GamepadImpl *g = d.used[jid];
+						g->connected = false;
+						g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadDisconnected });
+					}
+					else
+						d.available.erase(jid);
 				}
-				else
-					d.available.erase(jid);
-			} break;
+				break;
 			}
 		}
 	}

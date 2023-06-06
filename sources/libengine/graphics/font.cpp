@@ -1,19 +1,19 @@
-#include <cage-core/utf.h>
 #include <cage-core/geometry.h>
-#include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
+#include <cage-core/utf.h>
 
-#include <cage-engine/font.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/renderQueue.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/font.h>
 #include <cage-engine/graphicsError.h>
-#include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/shaderConventions.h>
+#include <cage-engine/texture.h>
 
-#include <vector>
-#include <cstring>
 #include <algorithm>
+#include <cstring>
+#include <vector>
 
 namespace cage
 {
@@ -66,10 +66,7 @@ namespace cage
 			Real lineHeight = 0;
 			Real firstLineOffset = 0;
 
-			FontImpl()
-			{
-				tex = newTexture();
-			}
+			FontImpl() { tex = newTexture(); }
 
 			FontHeader::GlyphData getGlyph(uint32 glyphIndex, Real size) const
 			{
@@ -112,10 +109,16 @@ namespace cage
 				Real x;
 				switch (data.format->align)
 				{
-				case TextAlignEnum::Left: break;
-				case TextAlignEnum::Right: x = data.format->wrapWidth - lineWidth; break;
-				case TextAlignEnum::Center: x = (data.format->wrapWidth - lineWidth) / 2; break;
-				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
+					case TextAlignEnum::Left:
+						break;
+					case TextAlignEnum::Right:
+						x = data.format->wrapWidth - lineWidth;
+						break;
+					case TextAlignEnum::Center:
+						x = (data.format->wrapWidth - lineWidth) / 2;
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
 				const Vec2 mousePos = data.mousePosition + Vec2(-x, lineYCursor);
@@ -267,32 +270,32 @@ namespace cage
 		CAGE_ASSERT(resolution[0] * resolution[1] * bpp == buffer.size());
 		switch (bpp)
 		{
-		case 1:
-			impl->tex->initialize(resolution, 1, GL_R8);
-			impl->tex->image2d(0, GL_RED, GL_UNSIGNED_BYTE, buffer);
-			break;
-		case 2:
-			impl->tex->initialize(resolution, 1, GL_R16);
-			impl->tex->image2d(0, GL_RED, GL_UNSIGNED_SHORT, buffer);
-			break;
-		case 3:
-			impl->tex->initialize(resolution, 1, GL_RGB8);
-			impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-			break;
-		case 4:
-			impl->tex->initialize(resolution, 1, GL_R32F);
-			impl->tex->image2d(0, GL_RED, GL_FLOAT, buffer);
-			break;
-		case 6:
-			impl->tex->initialize(resolution, 1, GL_RGB16);
-			impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_SHORT, buffer);
-			break;
-		case 12:
-			impl->tex->initialize(resolution, 1, GL_RGB32F);
-			impl->tex->image2d(0, GL_RGB, GL_FLOAT, buffer);
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");
+			case 1:
+				impl->tex->initialize(resolution, 1, GL_R8);
+				impl->tex->image2d(0, GL_RED, GL_UNSIGNED_BYTE, buffer);
+				break;
+			case 2:
+				impl->tex->initialize(resolution, 1, GL_R16);
+				impl->tex->image2d(0, GL_RED, GL_UNSIGNED_SHORT, buffer);
+				break;
+			case 3:
+				impl->tex->initialize(resolution, 1, GL_RGB8);
+				impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+				break;
+			case 4:
+				impl->tex->initialize(resolution, 1, GL_R32F);
+				impl->tex->image2d(0, GL_RED, GL_FLOAT, buffer);
+				break;
+			case 6:
+				impl->tex->initialize(resolution, 1, GL_RGB16);
+				impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_SHORT, buffer);
+				break;
+			case 12:
+				impl->tex->initialize(resolution, 1, GL_RGB32F);
+				impl->tex->image2d(0, GL_RGB, GL_FLOAT, buffer);
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");
 		}
 	}
 

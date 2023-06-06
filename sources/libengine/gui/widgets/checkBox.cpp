@@ -9,8 +9,7 @@ namespace cage
 			GuiCheckBoxComponent &data;
 			GuiElementTypeEnum element;
 
-			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)
-			{}
+			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements) {}
 
 			void initialize() override
 			{

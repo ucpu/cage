@@ -1,9 +1,9 @@
 #include "main.h"
 
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
-#include <cage-core/timer.h>
 #include <cage-core/macros.h>
+#include <cage-core/math.h>
+#include <cage-core/timer.h>
 #include <cmath>
 #include <initializer_list>
 
@@ -74,13 +74,39 @@ void test(Rads a, Rads b)
 
 namespace
 {
-	template<class T> struct MakeNotReal {};
-	template<> struct MakeNotReal<Vec2> { using type = Vec2i; };
-	template<> struct MakeNotReal<Vec3> { using type = Vec3i; };
-	template<> struct MakeNotReal<Vec4> { using type = Vec4i; };
-	template<> struct MakeNotReal<Vec2i> { using type = Vec2; };
-	template<> struct MakeNotReal<Vec3i> { using type = Vec3; };
-	template<> struct MakeNotReal<Vec4i> { using type = Vec4; };
+	template<class T>
+	struct MakeNotReal
+	{};
+	template<>
+	struct MakeNotReal<Vec2>
+	{
+		using type = Vec2i;
+	};
+	template<>
+	struct MakeNotReal<Vec3>
+	{
+		using type = Vec3i;
+	};
+	template<>
+	struct MakeNotReal<Vec4>
+	{
+		using type = Vec4i;
+	};
+	template<>
+	struct MakeNotReal<Vec2i>
+	{
+		using type = Vec2;
+	};
+	template<>
+	struct MakeNotReal<Vec3i>
+	{
+		using type = Vec3;
+	};
+	template<>
+	struct MakeNotReal<Vec4i>
+	{
+		using type = Vec4;
+	};
 
 	template<class T, uint32 N>
 	void checkVectorsCommon()
@@ -92,14 +118,14 @@ namespace
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
-			r = b OPERATOR b; \
-			r = b OPERATOR 5; \
-			r = 5 OPERATOR b;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
+	r = b OPERATOR b; \
+	r = b OPERATOR 5; \
+	r = 5 OPERATOR b;
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-			r = a OPERATOR b; \
-			r = a OPERATOR 5;
+	r = a OPERATOR b; \
+	r = a OPERATOR 5;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
 			-b;
@@ -141,7 +167,7 @@ namespace
 
 			constexpr T other = T(typename MakeNotReal<T>::type(5));
 			test(other[0], 5);
-			test(other[N-1], 5);
+			test(other[N - 1], 5);
 		}
 
 		T t(42);
@@ -155,15 +181,15 @@ namespace
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
-			r = b OPERATOR 5.5f; \
-			r = 5.5f OPERATOR b; \
-			r = b OPERATOR 5.5; \
-			r = 5.5 OPERATOR b;
+	r = b OPERATOR 5.5f; \
+	r = 5.5f OPERATOR b; \
+	r = b OPERATOR 5.5; \
+	r = 5.5 OPERATOR b;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-			r = a OPERATOR 5.5f; \
-			r = a OPERATOR 5.f;
+	r = a OPERATOR 5.5f; \
+	r = a OPERATOR 5.f;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
 		}
@@ -559,7 +585,6 @@ namespace
 		CAGE_TEST(abs(Vec3i(1, -3, 5)) == Vec3i(1, 3, 5));
 		CAGE_TEST(abs(Vec3i(-1, 3, -5)) == Vec3i(1, 3, 5));
 		CAGE_TEST(abs(Vec3i(-1, -3, -5)) == Vec3i(1, 3, 5));
-
 	}
 
 	void testMathIVec4()
@@ -1121,9 +1146,7 @@ namespace
 					Real r = Real::parse(s);
 					test(v, r);
 				}
-				static constexpr Real largeNumbers[] = { 0.0,
-					1e-5, -1e-7, 0.123456789e-10, 0.456789e-15, 0.789123e-20, -0.123456e-25, 0.123456e-30, 0.123456e-37,
-					1e+5, -1e+7, 0.123456789e+10, 0.456789e+15, 0.789123e+20, -0.123456e+25, 0.123456e+30, 0.123456e+37 };
+				static constexpr Real largeNumbers[] = { 0.0, 1e-5, -1e-7, 0.123456789e-10, 0.456789e-15, 0.789123e-20, -0.123456e-25, 0.123456e-30, 0.123456e-37, 1e+5, -1e+7, 0.123456789e+10, 0.456789e+15, 0.789123e+20, -0.123456e+25, 0.123456e+30, 0.123456e+37 };
 				for (Real v : largeNumbers)
 				{
 					String s = Stringizer() + v;
@@ -1326,7 +1349,7 @@ namespace
 	{
 		CAGE_TESTCASE("matrix multiplication - performance");
 
-#if defined (CAGE_DEBUG)
+#if defined(CAGE_DEBUG)
 		constexpr uint32 matricesCount = 100;
 #else
 		constexpr uint32 matricesCount = 10000;
@@ -1370,4 +1393,3 @@ void testMath()
 	testMathStrings();
 	testMathMatrixMultiplication();
 }
-

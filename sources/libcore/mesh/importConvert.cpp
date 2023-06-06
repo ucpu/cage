@@ -1,8 +1,8 @@
-#include <cage-core/string.h>
+#include <algorithm>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
-#include <algorithm>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -38,83 +38,130 @@ namespace cage
 		{
 			switch (it.type)
 			{
-			case MeshImportTextureType::AmbientOcclusion:
-			{
-				switch (it.images.parts[0].image->channels())
+				case MeshImportTextureType::AmbientOcclusion:
 				{
-				case 1: break;
-				case 3: pickChannel(it, 0); break;
-				case 4: pickChannel(it, 0); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 3:
+							pickChannel(it, 0);
+							break;
+						case 4:
+							pickChannel(it, 0);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
+					}
 				}
-			} break;
-			case MeshImportTextureType::Roughness:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: break;
-				case 3: pickChannel(it, 1); break;
-				case 4: pickChannel(it, 1); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
-				}
-			} break;
-			case MeshImportTextureType::Metallic:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: break;
-				case 3: pickChannel(it, 2); break;
-				case 4: pickChannel(it, 2); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
-				}
-			} break;
-			case MeshImportTextureType::Emission:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
-				}
-			} break;
-			case MeshImportTextureType::Opacity:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: break;
-				case 2: pickChannel(it, 1); break;
-				case 4: pickChannel(it, 3); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
-				}
-			} break;
-			case MeshImportTextureType::Normal:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: it.type = MeshImportTextureType::Bump; break;
-				case 2: break;
-				case 3: break;
-				case 4: limitChannels(it, 3); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for normal texture");
-				}
-			} break;
-			case MeshImportTextureType::Bump:
-			{
-				switch (it.images.parts[0].image->channels())
-				{
-				case 1: break;
-				case 3: pickChannel(it, 1); break;
-				case 4: pickChannel(it, 1); break;
-				default: CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
-				}
-			} break;
-			default:
 				break;
+				case MeshImportTextureType::Roughness:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 3:
+							pickChannel(it, 1);
+							break;
+						case 4:
+							pickChannel(it, 1);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+					}
+				}
+				break;
+				case MeshImportTextureType::Metallic:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 3:
+							pickChannel(it, 2);
+							break;
+						case 4:
+							pickChannel(it, 2);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
+					}
+				}
+				break;
+				case MeshImportTextureType::Emission:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
+					}
+				}
+				break;
+				case MeshImportTextureType::Opacity:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 2:
+							pickChannel(it, 1);
+							break;
+						case 4:
+							pickChannel(it, 3);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
+					}
+				}
+				break;
+				case MeshImportTextureType::Normal:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							it.type = MeshImportTextureType::Bump;
+							break;
+						case 2:
+							break;
+						case 3:
+							break;
+						case 4:
+							limitChannels(it, 3);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for normal texture");
+					}
+				}
+				break;
+				case MeshImportTextureType::Bump:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 3:
+							pickChannel(it, 1);
+							break;
+						case 4:
+							pickChannel(it, 1);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
+					}
+				}
+				break;
+				default:
+					break;
 			}
 		}
 
 		void composeAlbedoOpacity(PointerRangeHolder<MeshImportTexture> &textures)
 		{
-			const auto &find = [&](MeshImportTextureType type) -> const MeshImportTexture * {
+			const auto &find = [&](MeshImportTextureType type) -> const MeshImportTexture *
+			{
 				for (const auto &it : textures)
 					if (it.type == type)
 						return &it;
@@ -148,16 +195,18 @@ namespace cage
 			String n1 = a->name, n2 = o->name;
 			const String name = Stringizer() + split(n1, "?") + "?opacity_" + split(n2, "?");
 
-			std::erase_if(textures, [](const MeshImportTexture &it) {
-				switch (it.type)
-				{
-				case MeshImportTextureType::Albedo:
-				case MeshImportTextureType::Opacity:
-					return true;
-				default:
-					return false;
-				}
-			});
+			std::erase_if(textures,
+			    [](const MeshImportTexture &it)
+			    {
+				    switch (it.type)
+				    {
+					    case MeshImportTextureType::Albedo:
+					    case MeshImportTextureType::Opacity:
+						    return true;
+					    default:
+						    return false;
+				    }
+			    });
 
 			ImageImportPart part;
 			part.image = imageChannelsJoin(channels);
@@ -177,7 +226,8 @@ namespace cage
 			String base;
 			String names;
 
-			const auto &process = [&](const MeshImportTexture &in, uint32 index) {
+			const auto &process = [&](const MeshImportTexture &in, uint32 index)
+			{
 				if (channels[index])
 					return;
 				channels[index] = in.images.parts[0].image.share();
@@ -195,38 +245,40 @@ namespace cage
 			{
 				switch (it.type)
 				{
-				case MeshImportTextureType::Roughness:
-					process(it, 0);
-					break;
-				case MeshImportTextureType::Metallic:
-					process(it, 1);
-					break;
-				case MeshImportTextureType::Emission:
-					process(it, 2);
-					break;
-				case MeshImportTextureType::Mask:
-					process(it, 3);
-					break;
-				default:
-					break;
+					case MeshImportTextureType::Roughness:
+						process(it, 0);
+						break;
+					case MeshImportTextureType::Metallic:
+						process(it, 1);
+						break;
+					case MeshImportTextureType::Emission:
+						process(it, 2);
+						break;
+					case MeshImportTextureType::Mask:
+						process(it, 3);
+						break;
+					default:
+						break;
 				}
 			}
 
 			if (top == 0)
 				return;
 
-			std::erase_if(textures, [](const MeshImportTexture &it) {
-				switch (it.type)
-				{
-				case MeshImportTextureType::Roughness:
-				case MeshImportTextureType::Metallic:
-				case MeshImportTextureType::Emission:
-				case MeshImportTextureType::Mask:
-					return true;
-				default:
-					return false;
-				}
-			});
+			std::erase_if(textures,
+			    [](const MeshImportTexture &it)
+			    {
+				    switch (it.type)
+				    {
+					    case MeshImportTextureType::Roughness:
+					    case MeshImportTextureType::Metallic:
+					    case MeshImportTextureType::Emission:
+					    case MeshImportTextureType::Mask:
+						    return true;
+					    default:
+						    return false;
+				    }
+			    });
 
 			ImageImportPart part;
 			part.image = imageChannelsJoin({ channels, channels + top });
@@ -272,9 +324,7 @@ namespace cage
 					textures.push_back(std::move(it));
 			}
 
-			std::stable_sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) {
-				return a.type < b.type;
-			});
+			std::stable_sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) { return a.type < b.type; });
 
 			composeAlbedoOpacity(textures);
 			composeSpecial(textures);
@@ -282,18 +332,20 @@ namespace cage
 			for (auto &it : unloadable)
 				textures.push_back(std::move(it));
 
-			std::erase_if(textures, [](const MeshImportTexture &it) {
-				switch (it.type)
-				{
-				case MeshImportTextureType::Albedo:
-				case MeshImportTextureType::Special:
-				case MeshImportTextureType::Normal:
-				case MeshImportTextureType::Bump:
-					return false;
-				default:
-					return true;
-				}
-			});
+			std::erase_if(textures,
+			    [](const MeshImportTexture &it)
+			    {
+				    switch (it.type)
+				    {
+					    case MeshImportTextureType::Albedo:
+					    case MeshImportTextureType::Special:
+					    case MeshImportTextureType::Normal:
+					    case MeshImportTextureType::Bump:
+						    return false;
+					    default:
+						    return true;
+				    }
+			    });
 
 			for (auto &it : textures)
 			{

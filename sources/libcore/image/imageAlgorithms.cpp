@@ -1,8 +1,8 @@
 #include "image.h"
 
+#include <cage-core/color.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/math.h>
-#include <cage-core/color.h>
 #include <cage-core/pointerRangeHolder.h>
 
 namespace cage
@@ -251,35 +251,37 @@ namespace cage
 		const uint32 h = img->height();
 		switch (img->channels())
 		{
-		case 1:
-		{
-			for (uint32 y = 0; y < h; y++)
+			case 1:
 			{
-				for (uint32 x = 0; x < w; x++)
+				for (uint32 y = 0; y < h; y++)
 				{
-					const Vec3 color = Vec3(img->get1(x, y));
-					const Vec2 special = colorSpecularToRoughnessMetallic(color);
-					CAGE_ASSERT(special[1] < 1e-7);
-					img->set(x, y, special[0]);
+					for (uint32 x = 0; x < w; x++)
+					{
+						const Vec3 color = Vec3(img->get1(x, y));
+						const Vec2 special = colorSpecularToRoughnessMetallic(color);
+						CAGE_ASSERT(special[1] < 1e-7);
+						img->set(x, y, special[0]);
+					}
 				}
 			}
-		} break;
-		case 3:
-		{
-			Holder<Image> src = img->copy();
-			img->initialize(w, h, 2, src->format());
-			for (uint32 y = 0; y < h; y++)
+			break;
+			case 3:
 			{
-				for (uint32 x = 0; x < w; x++)
+				Holder<Image> src = img->copy();
+				img->initialize(w, h, 2, src->format());
+				for (uint32 y = 0; y < h; y++)
 				{
-					Vec3 color = src->get3(x, y);
-					Vec2 special = colorSpecularToRoughnessMetallic(color);
-					img->set(x, y, special);
+					for (uint32 x = 0; x < w; x++)
+					{
+						Vec3 color = src->get3(x, y);
+						Vec2 special = colorSpecularToRoughnessMetallic(color);
+						img->set(x, y, special);
+					}
 				}
 			}
-		} break;
-		default:
-			CAGE_THROW_ERROR(Exception, "exactly 1 or 3 channels are required for conversion of specular color to special material");
+			break;
+			default:
+				CAGE_THROW_ERROR(Exception, "exactly 1 or 3 channels are required for conversion of specular color to special material");
 		}
 	}
 
@@ -353,8 +355,7 @@ namespace cage
 			const uint32 w = 0;
 			const uint32 h = 0;
 
-			Dilation(Image *src, Image *dst) : src(src), dst(dst), w(src->width()), h(src->height())
-			{}
+			Dilation(Image *src, Image *dst) : src(src), dst(dst), w(src->width()), h(src->height()) {}
 
 			CAGE_FORCE_INLINE bool valid(const T &v)
 			{
@@ -506,11 +507,20 @@ namespace cage
 		imageConvert(img, ImageFormatEnum::Float);
 		switch (img->channels())
 		{
-		case 1: dilationProcess<Real>(img, rounds, useNan); break;
-		case 2: dilationProcess<Vec2>(img, rounds, useNan); break;
-		case 3: dilationProcess<Vec3>(img, rounds, useNan); break;
-		case 4: dilationProcess<Vec4>(img, rounds, useNan); break;
-		default: CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
+			case 1:
+				dilationProcess<Real>(img, rounds, useNan);
+				break;
+			case 2:
+				dilationProcess<Vec2>(img, rounds, useNan);
+				break;
+			case 3:
+				dilationProcess<Vec3>(img, rounds, useNan);
+				break;
+			case 4:
+				dilationProcess<Vec4>(img, rounds, useNan);
+				break;
+			default:
+				CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
 		}
 		imageConvert(img, originalFormat);
 	}
@@ -541,10 +551,23 @@ namespace cage
 
 	namespace
 	{
-		template<class Type> PointerRange<const Type> imageChannelsSplitAccessor(const Image *img);
-		template<> PointerRange<const uint8> imageChannelsSplitAccessor(const Image *img) { return img->rawViewU8(); }
-		template<> PointerRange<const uint16> imageChannelsSplitAccessor(const Image *img) { return img->rawViewU16(); }
-		template<> PointerRange<const float> imageChannelsSplitAccessor(const Image *img) { return img->rawViewFloat(); }
+		template<class Type>
+		PointerRange<const Type> imageChannelsSplitAccessor(const Image *img);
+		template<>
+		PointerRange<const uint8> imageChannelsSplitAccessor(const Image *img)
+		{
+			return img->rawViewU8();
+		}
+		template<>
+		PointerRange<const uint16> imageChannelsSplitAccessor(const Image *img)
+		{
+			return img->rawViewU16();
+		}
+		template<>
+		PointerRange<const float> imageChannelsSplitAccessor(const Image *img)
+		{
+			return img->rawViewFloat();
+		}
 
 		template<class Type>
 		PointerRange<Type> rangeRemoveConst(PointerRange<const Type> in)
@@ -587,24 +610,25 @@ namespace cage
 		}
 		switch (src->format())
 		{
-		case ImageFormatEnum::U8:
-			imageChannelsSplitImpl<uint8>(src, result);
-			break;
-		case ImageFormatEnum::U16:
-			imageChannelsSplitImpl<uint16>(src, result);
-			break;
-		case ImageFormatEnum::Float:
-			imageChannelsSplitImpl<float>(src, result);
-			break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format enum");
+			case ImageFormatEnum::U8:
+				imageChannelsSplitImpl<uint8>(src, result);
+				break;
+			case ImageFormatEnum::U16:
+				imageChannelsSplitImpl<uint16>(src, result);
+				break;
+			case ImageFormatEnum::Float:
+				imageChannelsSplitImpl<float>(src, result);
+				break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format enum");
 		}
 		return result;
 	}
 
 	Holder<Image> imageChannelsJoin(PointerRange<const Image *> channels)
 	{
-		const Image *first = [&]() -> const Image * {
+		const Image *first = [&]() -> const Image *
+		{
 			for (const auto &it : channels)
 				if (it)
 					return it;
@@ -670,10 +694,7 @@ namespace cage
 		}
 		if (s->channels != t->channels)
 			CAGE_THROW_ERROR(Exception, "images have different number of channels");
-		if ((sourceX + width > s->width) ||
-			(sourceY + height > s->height) ||
-			(targetX + width > t->width) ||
-			(targetY + height > t->height))
+		if ((sourceX + width > s->width) || (sourceY + height > s->height) || (targetX + width > t->width) || (targetY + height > t->height))
 			CAGE_THROW_ERROR(Exception, "region outside image resolution");
 		if (s->format == t->format)
 		{
@@ -690,37 +711,42 @@ namespace cage
 			uint32 cc = s->channels;
 			switch (cc)
 			{
-			case 1:
-			{
-				for (uint32 y = 0; y < height; y++)
-					for (uint32 x = 0; x < width; x++)
-						t->set(targetX + x, targetY + y, s->get1(sourceX + x, sourceY + y));
-			} break;
-			case 2:
-			{
-				for (uint32 y = 0; y < height; y++)
-					for (uint32 x = 0; x < width; x++)
-						t->set(targetX + x, targetY + y, s->get2(sourceX + x, sourceY + y));
-			} break;
-			case 3:
-			{
-				for (uint32 y = 0; y < height; y++)
-					for (uint32 x = 0; x < width; x++)
-						t->set(targetX + x, targetY + y, s->get3(sourceX + x, sourceY + y));
-			} break;
-			case 4:
-			{
-				for (uint32 y = 0; y < height; y++)
-					for (uint32 x = 0; x < width; x++)
-						t->set(targetX + x, targetY + y, s->get4(sourceX + x, sourceY + y));
-			} break;
-			default:
-			{
-				for (uint32 y = 0; y < height; y++)
-					for (uint32 x = 0; x < width; x++)
-						for (uint32 c = 0; c < cc; c++)
-							t->value(targetX + x, targetY + y, c, s->value(sourceX + x, sourceY + y, c));
-			} break;
+				case 1:
+				{
+					for (uint32 y = 0; y < height; y++)
+						for (uint32 x = 0; x < width; x++)
+							t->set(targetX + x, targetY + y, s->get1(sourceX + x, sourceY + y));
+				}
+				break;
+				case 2:
+				{
+					for (uint32 y = 0; y < height; y++)
+						for (uint32 x = 0; x < width; x++)
+							t->set(targetX + x, targetY + y, s->get2(sourceX + x, sourceY + y));
+				}
+				break;
+				case 3:
+				{
+					for (uint32 y = 0; y < height; y++)
+						for (uint32 x = 0; x < width; x++)
+							t->set(targetX + x, targetY + y, s->get3(sourceX + x, sourceY + y));
+				}
+				break;
+				case 4:
+				{
+					for (uint32 y = 0; y < height; y++)
+						for (uint32 x = 0; x < width; x++)
+							t->set(targetX + x, targetY + y, s->get4(sourceX + x, sourceY + y));
+				}
+				break;
+				default:
+				{
+					for (uint32 y = 0; y < height; y++)
+						for (uint32 x = 0; x < width; x++)
+							for (uint32 c = 0; c < cc; c++)
+								t->value(targetX + x, targetY + y, c, s->value(sourceX + x, sourceY + y, c));
+				}
+				break;
 			}
 		}
 	}

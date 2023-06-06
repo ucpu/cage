@@ -4,17 +4,31 @@ namespace
 {
 	void test1() {}
 	void test2(int, int) {}
-	int test3(int) { return 0; }
+	int test3(int)
+	{
+		return 0;
+	}
 
-	int test4(uint8) { return 8; }
-	int test4(uint16) { return 16; }
-	int test4(uint32) { return 32; }
+	int test4(uint8)
+	{
+		return 8;
+	}
+	int test4(uint16)
+	{
+		return 16;
+	}
+	int test4(uint32)
+	{
+		return 32;
+	}
 
-	int test5(int a, int b, int c) { return a + b + c; };
-	void test6(void *) {};
+	int test5(int a, int b, int c)
+	{
+		return a + b + c;
+	};
+	void test6(void *){};
 
-	void test7() noexcept
-	{}
+	void test7() noexcept {}
 
 	struct Tester
 	{
@@ -96,7 +110,7 @@ void testDelegates()
 		CAGE_TESTCASE("free functions with data");
 		Delegate d7 = Delegate<int(int, int)>().bind<int, &test5>(13);
 		CAGE_TEST(d7(42, 45) == 100);
-		Delegate d8 = Delegate<void()>().bind<void*, &test6>(nullptr);
+		Delegate d8 = Delegate<void()>().bind<void *, &test6>(nullptr);
 		d8();
 	}
 
@@ -231,4 +245,3 @@ void testDelegates()
 		d(3, 4);
 	}
 }
-

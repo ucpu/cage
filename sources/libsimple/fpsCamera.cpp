@@ -1,7 +1,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/variableSmoothingBuffer.h>
-#include <cage-engine/window.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/window.h>
 
 #include <cage-simple/engine.h>
 #include <cage-simple/fpsCamera.h>
@@ -47,10 +47,7 @@ namespace cage
 				return pt2;
 			}
 
-			bool mouseEnabled(MouseButtonsFlags buttons)
-			{
-				return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
-			}
+			bool mouseEnabled(MouseButtonsFlags buttons) { return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton); }
 
 			bool mousePress(InputMouse in)
 			{
@@ -81,59 +78,53 @@ namespace cage
 			{
 				switch (k)
 				{
-				case 87: // w
-					if (keysWsadEnabled)
-						keysPressedArrows[0] = v;
-					return true;
-				case 265: // up
-					if (keysArrowsEnabled)
-						keysPressedArrows[0] = v;
-					return true;
-				case 83: // s
-					if (keysWsadEnabled)
-						keysPressedArrows[1] = v;
-					return true;
-				case 264: // down
-					if (keysArrowsEnabled)
-						keysPressedArrows[1] = v;
-					return true;
-				case 65: // a
-					if (keysWsadEnabled)
-						keysPressedArrows[2] = v;
-					return true;
-				case 263: // left
-					if (keysArrowsEnabled)
-						keysPressedArrows[2] = v;
-					return true;
-				case 68: // d
-					if (keysWsadEnabled)
-						keysPressedArrows[3] = v;
-					return true;
-				case 262: // right
-					if (keysArrowsEnabled)
-						keysPressedArrows[3] = v;
-					return true;
-				case 69: // e
-					if (keysEqEnabled)
-						keysPressedArrows[4] = v;
-					return true;
-				case 81: // q
-					if (keysEqEnabled)
-						keysPressedArrows[5] = v;
-					return true;
+					case 87: // w
+						if (keysWsadEnabled)
+							keysPressedArrows[0] = v;
+						return true;
+					case 265: // up
+						if (keysArrowsEnabled)
+							keysPressedArrows[0] = v;
+						return true;
+					case 83: // s
+						if (keysWsadEnabled)
+							keysPressedArrows[1] = v;
+						return true;
+					case 264: // down
+						if (keysArrowsEnabled)
+							keysPressedArrows[1] = v;
+						return true;
+					case 65: // a
+						if (keysWsadEnabled)
+							keysPressedArrows[2] = v;
+						return true;
+					case 263: // left
+						if (keysArrowsEnabled)
+							keysPressedArrows[2] = v;
+						return true;
+					case 68: // d
+						if (keysWsadEnabled)
+							keysPressedArrows[3] = v;
+						return true;
+					case 262: // right
+						if (keysArrowsEnabled)
+							keysPressedArrows[3] = v;
+						return true;
+					case 69: // e
+						if (keysEqEnabled)
+							keysPressedArrows[4] = v;
+						return true;
+					case 81: // q
+						if (keysEqEnabled)
+							keysPressedArrows[5] = v;
+						return true;
 				}
 				return false;
 			}
 
-			bool keyPress(InputKey in)
-			{
-				return setKey(in.key, true);
-			}
+			bool keyPress(InputKey in) { return setKey(in.key, true); }
 
-			bool keyRelease(InputKey in)
-			{
-				return setKey(in.key, false);
-			}
+			bool keyRelease(InputKey in) { return setKey(in.key, false); }
 
 			void update()
 			{
@@ -156,7 +147,8 @@ namespace cage
 				{ // limit pitch
 					Vec3 f = t.orientation * Vec3(0, 0, -1);
 					Rads pitch = asin(f[1]);
-					f[1] = 0; f = normalize(f);
+					f[1] = 0;
+					f = normalize(f);
 					Rads yaw = atan2(-f[0], f[2]) + Degs(90) + Rads(r[0]);
 					pitch = clamp(pitch + Rads(r[1]), pitchLimitDown, pitchLimitUp);
 					t.orientation = Quat(pitch, yaw, Degs());
@@ -170,16 +162,24 @@ namespace cage
 					u = t.orientation * u;
 				else
 				{
-					f[1] = 0; f = normalize(f);
-					l[1] = 0; l = normalize(l);
+					f[1] = 0;
+					f = normalize(f);
+					l[1] = 0;
+					l = normalize(l);
 				}
 				Vec3 movement = Vec3();
-				if (keysPressedArrows[0]) movement += f;
-				if (keysPressedArrows[1]) movement -= f;
-				if (keysPressedArrows[2]) movement += l;
-				if (keysPressedArrows[3]) movement -= l;
-				if (keysPressedArrows[4]) movement += u;
-				if (keysPressedArrows[5]) movement -= u;
+				if (keysPressedArrows[0])
+					movement += f;
+				if (keysPressedArrows[1])
+					movement -= f;
+				if (keysPressedArrows[2])
+					movement += l;
+				if (keysPressedArrows[3])
+					movement -= l;
+				if (keysPressedArrows[4])
+					movement += u;
+				if (keysPressedArrows[5])
+					movement -= u;
 				if (movement != Vec3())
 					moveSmoother.add(normalize(movement) * movementSpeed);
 				else
@@ -191,7 +191,7 @@ namespace cage
 
 	void FpsCamera::setEntity(Entity *ent)
 	{
-		FpsCameraImpl *impl = (FpsCameraImpl*)this;
+		FpsCameraImpl *impl = (FpsCameraImpl *)this;
 		impl->ent = ent;
 	}
 

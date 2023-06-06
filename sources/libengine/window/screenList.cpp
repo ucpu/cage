@@ -1,6 +1,6 @@
+#include "private.h"
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-engine/screenList.h>
-#include "private.h"
 
 #include <vector>
 
@@ -8,7 +8,7 @@ namespace cage
 {
 	namespace
 	{
-		bool operator == (const GLFWvidmode &a, const GLFWvidmode &b)
+		bool operator==(const GLFWvidmode &a, const GLFWvidmode &b)
 		{
 			return a.width == b.width && a.height == b.height && a.refreshRate == b.refreshRate;
 		}
@@ -64,38 +64,38 @@ namespace cage
 
 	uint32 ScreenDevice::currentMode() const
 	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
+		ScreenDeviceImpl *impl = (ScreenDeviceImpl *)this;
 		return impl->current_;
 	}
 
 	PointerRange<const ScreenMode> ScreenDevice::modes() const
 	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
+		ScreenDeviceImpl *impl = (ScreenDeviceImpl *)this;
 		return impl->modes;
 	}
 
 	String ScreenDevice::name() const
 	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
+		ScreenDeviceImpl *impl = (ScreenDeviceImpl *)this;
 		return impl->name_;
 	}
 
 	String ScreenDevice::id() const
 	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
+		ScreenDeviceImpl *impl = (ScreenDeviceImpl *)this;
 		return impl->id_;
 	}
 
 	uint32 ScreenList::defaultDevice() const
 	{
-		ScreenListImpl *impl = (ScreenListImpl*)this;
+		ScreenListImpl *impl = (ScreenListImpl *)this;
 		return impl->primary;
 	}
 
-	Holder<PointerRange<const ScreenDevice*>> ScreenList::devices() const
+	Holder<PointerRange<const ScreenDevice *>> ScreenList::devices() const
 	{
-		const ScreenListImpl *impl = (const ScreenListImpl*)this;
-		PointerRangeHolder<const ScreenDevice*> prh;
+		const ScreenListImpl *impl = (const ScreenListImpl *)this;
+		PointerRangeHolder<const ScreenDevice *> prh;
 		prh.reserve(impl->devices.size());
 		for (auto &it : impl->devices)
 			prh.push_back(it.get());

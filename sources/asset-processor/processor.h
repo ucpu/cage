@@ -1,8 +1,8 @@
-#include <cage-core/math.h>
-#include <cage-core/geometry.h>
-#include <cage-core/files.h>
-#include <cage-core/config.h>
 #include <cage-core/assetHeader.h>
+#include <cage-core/config.h>
+#include <cage-core/files.h>
+#include <cage-core/geometry.h>
+#include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryCompression.h>
 #include <cage-core/serialization.h>
@@ -48,9 +48,7 @@ void analyzeTexture();
 void analyzeFont();
 void analyzeSound();
 
-
 // relative path is interpreted relative to the input file (unless specified otherwise)
 // absolute path is interpreted as relative to input root path
 String convertAssetPath(const String &input, const String &relativeTo = "", bool markAsReferenced = true);
 String convertFilePath(const String &input, const String &relativeTo = "", bool markAsUsed = true);
-

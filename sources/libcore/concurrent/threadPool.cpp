@@ -1,9 +1,9 @@
 #include <cage-core/concurrent.h>
-#include <cage-core/threadPool.h>
 #include <cage-core/logger.h>
+#include <cage-core/threadPool.h>
 
-#include <vector>
 #include <exception>
+#include <vector>
 
 namespace cage
 {
@@ -33,7 +33,9 @@ namespace cage
 			~ThreadPoolImpl()
 			{
 				ending = true;
-				{ ScopeLock l(barrier1); }
+				{
+					ScopeLock l(barrier1);
+				}
 				thrs.clear(); // all threads must be destroyed before any of the barriers are
 			}
 
@@ -46,7 +48,9 @@ namespace cage
 				}
 				while (true)
 				{
-					{ ScopeLock l(barrier1); }
+					{
+						ScopeLock l(barrier1);
+					}
 					if (ending)
 						break;
 					try
@@ -64,7 +68,9 @@ namespace cage
 						else
 							exptr = std::current_exception();
 					}
-					{ ScopeLock l(barrier2); }
+					{
+						ScopeLock l(barrier2);
+					}
 				}
 			}
 
@@ -76,8 +82,12 @@ namespace cage
 					return;
 				}
 
-				{ ScopeLock l(barrier1); }
-				{ ScopeLock l(barrier2); }
+				{
+					ScopeLock l(barrier1);
+				}
+				{
+					ScopeLock l(barrier2);
+				}
 				if (exptr)
 					std::rethrow_exception(exptr);
 			}

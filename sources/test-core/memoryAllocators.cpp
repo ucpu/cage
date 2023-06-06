@@ -1,10 +1,10 @@
 #include "main.h"
 
-#include <cage-core/memoryAllocators.h>
 #include <cage-core/math.h>
-#include <vector>
+#include <cage-core/memoryAllocators.h>
 #include <list>
 #include <utility>
+#include <vector>
 
 namespace
 {
@@ -35,10 +35,7 @@ namespace
 			count--;
 		}
 
-		void check() const
-		{
-			destruct(arr, Size);
-		}
+		void check() const { destruct(arr, Size); }
 
 		static sint32 count;
 

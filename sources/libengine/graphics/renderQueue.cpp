@@ -1,22 +1,22 @@
 #include <cage-core/blockContainer.h>
-#include <cage-core/memoryAllocators.h>
-#include <cage-core/memoryUtils.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/profiling.h>
 #include <cage-core/memoryAlloca.h>
+#include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/memoryUtils.h>
+#include <cage-core/profiling.h>
 
-#include <cage-engine/opengl.h>
-#include <cage-engine/model.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/frameBuffer.h>
-#include <cage-engine/renderQueue.h>
-#include <cage-engine/uniformBuffer.h>
-#include <cage-engine/shaderProgram.h>
 #include <cage-engine/graphicsError.h>
+#include <cage-engine/model.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/uniformBuffer.h>
 
-#include <vector> // namesStack
 #include <array>
+#include <vector> // namesStack
 
 namespace cage
 {
@@ -65,10 +65,7 @@ namespace cage
 			std::vector<ProfilingEvent> profilingStack;
 #endif // CAGE_PROFILING_ENABLED
 
-			RenderQueueImpl(const String &name, ProvisionalGraphics *provisionalGraphics) : queueName(name), provisionalGraphics(provisionalGraphics)
-			{
-				initHeads();
-			}
+			RenderQueueImpl(const String &name, ProvisionalGraphics *provisionalGraphics) : queueName(name), provisionalGraphics(provisionalGraphics) { initHeads(); }
 
 			~RenderQueueImpl()
 			{
@@ -79,8 +76,7 @@ namespace cage
 			{
 				struct Cmd : public CmdBase
 				{
-					void dispatch(RenderQueueImpl *) const override
-					{}
+					void dispatch(RenderQueueImpl *) const override {}
 				};
 				setupHead = setupTail = arena->createObject<Cmd>();
 				cmdsAllocs.push_back(setupHead);
@@ -113,7 +109,7 @@ namespace cage
 
 				for (const CmdBase *cmd = setupHead; cmd; cmd = cmd->next)
 					cmd->dispatch(this);
-				
+
 				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
 				if (uubStaging.size() > 0)
 				{
@@ -201,10 +197,7 @@ namespace cage
 					Holder<ShaderProgram> shader;
 					T value = {};
 					uint32 name = 0;
-					void dispatch(RenderQueueImpl *) const override
-					{
-						shader->uniform(name, value);
-					}
+					void dispatch(RenderQueueImpl *) const override { shader->uniform(name, value); }
 				};
 
 				Cmd &cmd = addCmd<Cmd>();
@@ -223,10 +216,7 @@ namespace cage
 					Holder<ShaderProgram> shader;
 					PointerRange<const T> values;
 					uint32 name = 0;
-					void dispatch(RenderQueueImpl *) const override
-					{
-						shader->uniform(name, values);
-					}
+					void dispatch(RenderQueueImpl *) const override { shader->uniform(name, values); }
 				};
 
 				Cmd &cmd = addCmd<Cmd>();
@@ -300,10 +290,7 @@ namespace cage
 		struct Cmd : public CmdBase, public UubRange
 		{
 			uint32 bindingPoint = 0;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				impl->uubObject->bind(bindingPoint, offset, size);
-			}
+			void dispatch(RenderQueueImpl *impl) const override { impl->uubObject->bind(bindingPoint, offset, size); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -368,10 +355,7 @@ namespace cage
 			UniformBufferHandle uniformBuffer;
 			PointerRange<const char> data;
 			uint32 usage = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				uniformBuffer.resolve()->writeWhole(data, usage);
-			}
+			void dispatch(RenderQueueImpl *) const override { uniformBuffer.resolve()->writeWhole(data, usage); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -388,10 +372,7 @@ namespace cage
 			UniformBufferHandle uniformBuffer;
 			PointerRange<const char> data;
 			uint32 offset = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				uniformBuffer.resolve()->writeRange(data, offset);
-			}
+			void dispatch(RenderQueueImpl *) const override { uniformBuffer.resolve()->writeRange(data, offset); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -408,10 +389,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			Holder<ShaderProgram> shaderProgram;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				shaderProgram->bind();
-			}
+			void dispatch(RenderQueueImpl *) const override { shaderProgram->bind(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -450,10 +428,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			FrameBufferHandle frameBuffer;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				frameBuffer.resolve()->bind();
-			}
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->bind(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -468,10 +443,7 @@ namespace cage
 		{
 			FrameBufferHandle frameBuffer;
 			TextureHandle texture;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				frameBuffer.resolve()->depthTexture(+texture.resolve());
-			}
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->depthTexture(+texture.resolve()); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -490,10 +462,7 @@ namespace cage
 			TextureHandle texture;
 			uint32 index = 0;
 			uint32 mipmapLevel = 0;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				frameBuffer.resolve()->colorTexture(index, +texture.resolve(), mipmapLevel);
-			}
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->colorTexture(index, +texture.resolve(), mipmapLevel); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -512,10 +481,7 @@ namespace cage
 		{
 			FrameBufferHandle frameBuffer;
 			uint32 mask = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				frameBuffer.resolve()->activeAttachments(mask);
-			}
+			void dispatch(RenderQueueImpl *) const override { frameBuffer.resolve()->activeAttachments(mask); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -531,10 +497,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			FrameBufferHandle frameBuffer;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				frameBuffer.resolve()->clear();
-			}
+			void dispatch(RenderQueueImpl *) const override { frameBuffer.resolve()->clear(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -548,10 +511,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			FrameBufferHandle frameBuffer;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				frameBuffer.resolve()->checkStatus();
-			}
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->checkStatus(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -562,10 +522,7 @@ namespace cage
 	{
 		struct Cmd : public CmdBase
 		{
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			}
+			void dispatch(RenderQueueImpl *) const override { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -580,10 +537,7 @@ namespace cage
 		{
 			TextureHandle texture;
 			uint32 bindingPoint = m;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->bind(bindingPoint);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->bind(bindingPoint); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -604,10 +558,7 @@ namespace cage
 			Vec2i resolution;
 			uint32 mipmapLevels = 0;
 			uint32 internalFormat = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->initialize(resolution, mipmapLevels, internalFormat);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->initialize(resolution, mipmapLevels, internalFormat); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -630,10 +581,7 @@ namespace cage
 			Vec3i resolution;
 			uint32 mipmapLevels = 0;
 			uint32 internalFormat = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->initialize(resolution, mipmapLevels, internalFormat);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->initialize(resolution, mipmapLevels, internalFormat); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -652,10 +600,7 @@ namespace cage
 		{
 			TextureHandle texture;
 			uint32 mig = 0, mag = 0, aniso = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->filters(mig, mag, aniso);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->filters(mig, mag, aniso); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -674,10 +619,7 @@ namespace cage
 		{
 			TextureHandle texture;
 			uint32 s = 0, t = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->wraps(s, t);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->wraps(s, t); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -695,10 +637,7 @@ namespace cage
 		{
 			TextureHandle texture;
 			uint32 s = 0, t = 0, r = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->wraps(s, t, r);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->wraps(s, t, r); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -716,10 +655,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			TextureHandle texture;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->generateMipmaps();
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->generateMipmaps(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -752,10 +688,7 @@ namespace cage
 			uint32 bindingPoint = 0;
 			bool read = false;
 			bool write = false;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				texture.resolve()->bindImage(bindingPoint, read, write);
-			}
+			void dispatch(RenderQueueImpl *) const override { texture.resolve()->bindImage(bindingPoint, read, write); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -814,10 +747,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			uint32 bits = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glMemoryBarrier(bits);
-			}
+			void dispatch(RenderQueueImpl *) const override { glMemoryBarrier(bits); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -850,10 +780,7 @@ namespace cage
 		{
 			Vec2i origin;
 			Vec2i size;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glScissor(origin[0], origin[1], size[0], size[1]);
-			}
+			void dispatch(RenderQueueImpl *) const override { glScissor(origin[0], origin[1], size[0], size[1]); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -872,10 +799,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			uint32 key = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glCullFace(key);
-			}
+			void dispatch(RenderQueueImpl *) const override { glCullFace(key); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -892,10 +816,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			uint32 func = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glDepthFunc(func);
-			}
+			void dispatch(RenderQueueImpl *) const override { glDepthFunc(func); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -932,10 +853,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			bool enable = false;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glDepthMask(enable);
-			}
+			void dispatch(RenderQueueImpl *) const override { glDepthMask(enable); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -947,10 +865,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			bool enable = false;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glColorMask(enable, enable, enable, enable);
-			}
+			void dispatch(RenderQueueImpl *) const override { glColorMask(enable, enable, enable, enable); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -962,10 +877,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			uint32 s = 0, d = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glBlendFunc(s, d);
-			}
+			void dispatch(RenderQueueImpl *) const override { glBlendFunc(s, d); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -1004,10 +916,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			Vec4 rgba;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glClearColor(rgba[0].value, rgba[1].value, rgba[2].value, rgba[3].value);
-			}
+			void dispatch(RenderQueueImpl *) const override { glClearColor(rgba[0].value, rgba[1].value, rgba[2].value, rgba[3].value); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -1019,17 +928,17 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			uint32 mask = 0;
-			void dispatch(RenderQueueImpl *) const override
-			{
-				glClear(mask);
-			}
+			void dispatch(RenderQueueImpl *) const override { glClear(mask); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		if (color) cmd.mask |= GL_COLOR_BUFFER_BIT;
-		if (depth) cmd.mask |= GL_DEPTH_BUFFER_BIT;
-		if (stencil) cmd.mask |= GL_STENCIL_BUFFER_BIT;
+		if (color)
+			cmd.mask |= GL_COLOR_BUFFER_BIT;
+		if (depth)
+			cmd.mask |= GL_DEPTH_BUFFER_BIT;
+		if (stencil)
+			cmd.mask |= GL_STENCIL_BUFFER_BIT;
 	}
 
 	void RenderQueue::genericEnable(uint32 key, bool enable)
@@ -1040,10 +949,7 @@ namespace cage
 			struct Cmd : public CmdBase
 			{
 				uint32 key = 0;
-				void dispatch(RenderQueueImpl *) const override
-				{
-					glEnable(key);
-				}
+				void dispatch(RenderQueueImpl *) const override { glEnable(key); }
 			};
 			impl->addCmd<Cmd>().key = key;
 		}
@@ -1052,10 +958,7 @@ namespace cage
 			struct Cmd : public CmdBase
 			{
 				uint32 key = 0;
-				void dispatch(RenderQueueImpl *) const override
-				{
-					glDisable(key);
-				}
+				void dispatch(RenderQueueImpl *) const override { glDisable(key); }
 			};
 			impl->addCmd<Cmd>().key = key;
 		}
@@ -1090,10 +993,7 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			Holder<RenderQueue> queue;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				queue->dispatch();
-			}
+			void dispatch(RenderQueueImpl *impl) const override { queue->dispatch(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -1130,10 +1030,7 @@ namespace cage
 	{
 		struct Cmd : public CmdBase
 		{
-			void dispatch(RenderQueueImpl *) const override
-			{
-				cage::checkGlError();
-			}
+			void dispatch(RenderQueueImpl *) const override { cage::checkGlError(); }
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;

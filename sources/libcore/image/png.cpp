@@ -49,7 +49,7 @@ namespace cage
 
 		void pngReadFunc(png_structp png, png_bytep buf, png_size_t siz)
 		{
-			PngReadCtx *io = (PngReadCtx*)png_get_io_ptr(png);
+			PngReadCtx *io = (PngReadCtx *)png_get_io_ptr(png);
 			if (io->off + siz > io->size)
 				png_error(png, "png reading outside memory buffer");
 			detail::memcpy(buf, io->start + io->off, siz);
@@ -75,7 +75,7 @@ namespace cage
 			width = png_get_image_width(png, info);
 			height = png_get_image_height(png, info);
 			png_byte colorType = png_get_color_type(png, info);
-			png_byte bitDepth  = png_get_bit_depth(png, info);
+			png_byte bitDepth = png_get_bit_depth(png, info);
 
 			png_set_expand(png);
 			if (endianness::little())
@@ -83,34 +83,34 @@ namespace cage
 
 			png_read_update_info(png, info);
 			colorType = png_get_color_type(png, info);
-			bitDepth  = png_get_bit_depth(png, info);
+			bitDepth = png_get_bit_depth(png, info);
 			switch (bitDepth)
 			{
-			case 8:
-				bpp = 1;
-				break;
-			case 16:
-				bpp = 2;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "png decoder failed (unsupported bit depth)");
+				case 8:
+					bpp = 1;
+					break;
+				case 16:
+					bpp = 2;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "png decoder failed (unsupported bit depth)");
 			}
 			switch (colorType)
 			{
-			case PNG_COLOR_TYPE_GRAY:
-				components = 1;
-				break;
-			case PNG_COLOR_TYPE_GA:
-				components = 2;
-				break;
-			case PNG_COLOR_TYPE_RGB:
-				components = 3;
-				break;
-			case PNG_COLOR_TYPE_RGBA:
-				components = 4;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "png decoder failed (unsupported color type)");
+				case PNG_COLOR_TYPE_GRAY:
+					components = 1;
+					break;
+				case PNG_COLOR_TYPE_GA:
+					components = 2;
+					break;
+				case PNG_COLOR_TYPE_RGB:
+					components = 3;
+					break;
+				case PNG_COLOR_TYPE_RGBA:
+					components = 4;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "png decoder failed (unsupported color type)");
 			}
 
 			std::vector<png_bytep> rows;
@@ -128,15 +128,12 @@ namespace cage
 			MemoryBuffer &buf;
 			uintPtr off = 0;
 
-			PngWriteCtx(MemoryBuffer &buf) : buf(buf)
-			{
-				buf.resize(0);
-			}
+			PngWriteCtx(MemoryBuffer &buf) : buf(buf) { buf.resize(0); }
 		};
 
 		void pngWriteFunc(png_structp png, png_bytep buf, png_size_t siz)
 		{
-			PngWriteCtx *io = (PngWriteCtx*)png_get_io_ptr(png);
+			PngWriteCtx *io = (PngWriteCtx *)png_get_io_ptr(png);
 			io->buf.resizeSmart(io->off + siz);
 			detail::memcpy(io->buf.data() + io->off, buf, siz);
 			io->off += siz;
@@ -163,20 +160,20 @@ namespace cage
 			int colorType;
 			switch (components)
 			{
-			case 1:
-				colorType = PNG_COLOR_TYPE_GRAY;
-				break;
-			case 2:
-				colorType = PNG_COLOR_TYPE_GA;
-				break;
-			case 3:
-				colorType = PNG_COLOR_TYPE_RGB;
-				break;
-			case 4:
-				colorType = PNG_COLOR_TYPE_RGBA;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "png encoder failed (unsupported color type)");
+				case 1:
+					colorType = PNG_COLOR_TYPE_GRAY;
+					break;
+				case 2:
+					colorType = PNG_COLOR_TYPE_GA;
+					break;
+				case 3:
+					colorType = PNG_COLOR_TYPE_RGB;
+					break;
+				case 4:
+					colorType = PNG_COLOR_TYPE_RGBA;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "png encoder failed (unsupported color type)");
 			}
 			png_set_IHDR(png, info, width, height, bpp * 8, colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 			png_write_info(png, info);
@@ -200,14 +197,14 @@ namespace cage
 		pngDecode(inBuffer.data(), inBuffer.size(), impl->mem, impl->width, impl->height, impl->channels, bpp);
 		switch (bpp)
 		{
-		case 1:
-			impl->format = ImageFormatEnum::U8;
-			break;
-		case 2:
-			impl->format = ImageFormatEnum::U16;
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported png image bpp");
+			case 1:
+				impl->format = ImageFormatEnum::U8;
+				break;
+			case 2:
+				impl->format = ImageFormatEnum::U16;
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported png image bpp");
 		}
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
@@ -221,14 +218,14 @@ namespace cage
 		res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-			pngEncode(impl->mem, res, impl->width, impl->height, impl->channels, 1);
-			break;
-		case ImageFormatEnum::U16:
-			pngEncode(impl->mem, res, impl->width, impl->height, impl->channels, 2);
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported format for png encoding");
+			case ImageFormatEnum::U8:
+				pngEncode(impl->mem, res, impl->width, impl->height, impl->channels, 1);
+				break;
+			case ImageFormatEnum::U16:
+				pngEncode(impl->mem, res, impl->width, impl->height, impl->channels, 2);
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported format for png encoding");
 		}
 		return res;
 	}

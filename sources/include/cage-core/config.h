@@ -43,7 +43,8 @@ namespace cage
 		explicit ConfigString(const String &name);
 		explicit ConfigString(const String &name, const String &default_);
 		operator String() const;
-		ConfigString &operator = (const String &value);
+		ConfigString &operator=(const String &value);
+
 	private:
 		privat::ConfigVariable *data = nullptr;
 	};
@@ -56,8 +57,10 @@ namespace cage
 		explicit Config##T(const String &name); \
 		explicit Config##T(const String &name, t default_); \
 		operator t() const; \
-		Config##T &operator = (t value); \
-		private: privat::ConfigVariable *data = nullptr; \
+		Config##T &operator=(t value); \
+\
+	private: \
+		privat::ConfigVariable *data = nullptr; \
 	}; \
 	CAGE_CORE_API void configSet##T(const String &name, t value); \
 	CAGE_CORE_API t configGet##T(const String &name, t default_ = 0);

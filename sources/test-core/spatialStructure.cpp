@@ -1,13 +1,13 @@
 #include "main.h"
 
-#include <cage-core/math.h>
-#include <cage-core/geometry.h>
+#include <algorithm>
 #include <cage-core/config.h>
-#include <cage-core/timer.h>
+#include <cage-core/geometry.h>
+#include <cage-core/math.h>
 #include <cage-core/spatialStructure.h>
+#include <cage-core/timer.h>
 #include <set>
 #include <vector>
-#include <algorithm>
 
 namespace
 {
@@ -42,10 +42,7 @@ namespace
 		const Holder<const SpatialStructure> data;
 		Holder<SpatialQuery> query;
 
-		Checker(Holder<const SpatialStructure> data) : data(data.share())
-		{
-			query = newSpatialQuery(data.share());
-		}
+		Checker(Holder<const SpatialStructure> data) : data(data.share()) { query = newSpatialQuery(data.share()); }
 
 		void checkResults(const std::set<uint32> &b)
 		{
@@ -81,15 +78,9 @@ namespace
 			checkResults(b);
 		}
 
-		void randomAabb()
-		{
-			query->intersection(generateRandomBox());
-		}
+		void randomAabb() { query->intersection(generateRandomBox()); }
 
-		void randomRange()
-		{
-			query->intersection(Sphere(generateRandomPoint(), cage::randomRange(10, 100)));
-		}
+		void randomRange() { query->intersection(Sphere(generateRandomPoint(), cage::randomRange(10, 100))); }
 	};
 
 	void verifiableQueries(const Aabb elData[], const uint32 elCount, Holder<const SpatialStructure> data)

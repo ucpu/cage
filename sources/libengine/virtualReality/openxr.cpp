@@ -1,23 +1,23 @@
-#include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
 #include <cage-core/config.h>
+#include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
 #include <cage-core/profiling.h>
-#include <cage-engine/virtualReality.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/virtualReality.h>
 
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
 
 #include <array>
+#include <atomic>
+#include <cmath> // tan
+#include <cstring> // strcpy
+#include <map>
 #include <tuple>
 #include <vector>
-#include <map>
-#include <cstring> // strcpy
-#include <cmath> // tan
-#include <atomic>
 
 #ifndef XR_APILAYER_LUNARG_core_validation
-#define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
+	#define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
 #endif
 
 // taking inspiration from https://gitlab.freedesktop.org/monado/demos/openxr-simple-example/-/blob/master/main.c
@@ -39,7 +39,7 @@ namespace cage
 		const ConfigBool confEnableValidation("cage/virtualReality/validationLayer", CAGE_DEBUG_BOOL);
 		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
 
-		constexpr const XrPosef IdentityPose = { .orientation = {.x = 0, .y = 0, .z = 0, .w = 1.0}, .position = {.x = 0, .y = 0, .z = 0} };
+		constexpr const XrPosef IdentityPose = { .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 }, .position = { .x = 0, .y = 0, .z = 0 } };
 		constexpr const Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
 		constexpr const XrSpaceLocationFlags ValidMask = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 		constexpr const XrSpaceLocationFlags TrackingMask = XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
@@ -57,18 +57,18 @@ namespace cage
 			SeverityEnum cageSeverity = SeverityEnum::Critical;
 			switch (severity)
 			{
-			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-				cageSeverity = SeverityEnum::Error;
-				break;
-			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-				cageSeverity = SeverityEnum::Warning;
-				break;
-			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-				cageSeverity = SeverityEnum::Info;
-				break;
-			case XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-				cageSeverity = SeverityEnum::Note;
-				break;
+				case XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+					cageSeverity = SeverityEnum::Error;
+					break;
+				case XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+					cageSeverity = SeverityEnum::Warning;
+					break;
+				case XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+					cageSeverity = SeverityEnum::Info;
+					break;
+				case XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+					cageSeverity = SeverityEnum::Note;
+					break;
 			}
 			CAGE_LOG(cageSeverity, "openxr", msg->message);
 			return XR_FALSE;
@@ -302,16 +302,8 @@ namespace cage
 
 					XrDebugUtilsMessengerCreateInfoEXT info;
 					init(info, XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
-					info.messageTypes =
-						XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
-					info.messageSeverities =
-						XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
-						XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+					info.messageTypes = XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_TYPE_CONFORMANCE_BIT_EXT;
+					info.messageSeverities = XR_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | XR_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 					info.userCallback = &debugUtilsCallback;
 					info.userData = this;
 					XrDebugUtilsMessengerEXT debug = {};
@@ -421,14 +413,15 @@ namespace cage
 					formats.resize(count);
 					check(xrEnumerateSwapchainFormats(session, count, &count, formats.data()));
 
-					const uint32 selectedFormat = [&]() {
+					const uint32 selectedFormat = [&]()
+					{
 						for (uint32 f : formats)
 						{
 							switch (f)
 							{
-							case GL_SRGB8_ALPHA8:
-							case GL_SRGB8:
-								return f;
+								case GL_SRGB8_ALPHA8:
+								case GL_SRGB8:
+									return f;
 							}
 						}
 						CAGE_THROW_ERROR(Exception, "no supported swapchain format");
@@ -644,54 +637,57 @@ namespace cage
 			{
 				switch (event.type)
 				{
-				case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
-					stopping = true;
-					break;
-				case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
-				{
-					const XrEventDataSessionStateChanged &ev = (const XrEventDataSessionStateChanged &)event;
-					switch (ev.state)
-					{
-					case XR_SESSION_STATE_IDLE:
-					case XR_SESSION_STATE_UNKNOWN:
-						break;
-					case XR_SESSION_STATE_FOCUSED:
-					case XR_SESSION_STATE_SYNCHRONIZED:
-					case XR_SESSION_STATE_VISIBLE:
-						break;
-					case XR_SESSION_STATE_READY:
-					{
-						if (!sessionRunning)
-						{
-							CAGE_LOG(SeverityEnum::Info, "virtualReality", "beginning openxr session");
-							XrSessionBeginInfo info;
-							init(info, XR_TYPE_SESSION_BEGIN_INFO);
-							info.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-							check(xrBeginSession(session, &info));
-							sessionRunning = true;
-						}
-					} break;
-					case XR_SESSION_STATE_STOPPING:
-					{
-						if (sessionRunning)
-						{
-							CAGE_LOG(SeverityEnum::Info, "virtualReality", "ending openxr session");
-							check(xrEndSession(session));
-							sessionRunning = false;
-						}
-					} break;
-					case XR_SESSION_STATE_LOSS_PENDING:
-					case XR_SESSION_STATE_EXITING:
+					case XR_TYPE_EVENT_DATA_INSTANCE_LOSS_PENDING:
 						stopping = true;
 						break;
-					case XR_SESSION_STATE_MAX_ENUM:
-						break;
+					case XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED:
+					{
+						const XrEventDataSessionStateChanged &ev = (const XrEventDataSessionStateChanged &)event;
+						switch (ev.state)
+						{
+							case XR_SESSION_STATE_IDLE:
+							case XR_SESSION_STATE_UNKNOWN:
+								break;
+							case XR_SESSION_STATE_FOCUSED:
+							case XR_SESSION_STATE_SYNCHRONIZED:
+							case XR_SESSION_STATE_VISIBLE:
+								break;
+							case XR_SESSION_STATE_READY:
+							{
+								if (!sessionRunning)
+								{
+									CAGE_LOG(SeverityEnum::Info, "virtualReality", "beginning openxr session");
+									XrSessionBeginInfo info;
+									init(info, XR_TYPE_SESSION_BEGIN_INFO);
+									info.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+									check(xrBeginSession(session, &info));
+									sessionRunning = true;
+								}
+							}
+							break;
+							case XR_SESSION_STATE_STOPPING:
+							{
+								if (sessionRunning)
+								{
+									CAGE_LOG(SeverityEnum::Info, "virtualReality", "ending openxr session");
+									check(xrEndSession(session));
+									sessionRunning = false;
+								}
+							}
+							break;
+							case XR_SESSION_STATE_LOSS_PENDING:
+							case XR_SESSION_STATE_EXITING:
+								stopping = true;
+								break;
+							case XR_SESSION_STATE_MAX_ENUM:
+								break;
+						}
 					}
-				} break;
-				case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
 					break;
-				default:
-					break;
+					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
+						break;
+					default:
+						break;
 				}
 			}
 
@@ -772,13 +768,13 @@ namespace cage
 					const XrResult res = xrWaitFrame(impl->session, nullptr, &frameState);
 					switch (res)
 					{
-					case XR_SESSION_LOSS_PENDING:
-					case XR_ERROR_INSTANCE_LOST:
-					case XR_ERROR_SESSION_LOST:
-					case XR_ERROR_SESSION_NOT_RUNNING:
-						return;
-					default:
-						break;
+						case XR_SESSION_LOSS_PENDING:
+						case XR_ERROR_INSTANCE_LOST:
+						case XR_ERROR_SESSION_LOST:
+						case XR_ERROR_SESSION_NOT_RUNNING:
+							return;
+						default:
+							break;
 					}
 					check(res);
 					impl->syncTime = frameState.predictedDisplayTime;
@@ -884,10 +880,7 @@ namespace cage
 				check(xrEndFrame(impl->session, &frameEndInfo));
 			}
 
-			CAGE_FORCE_INLINE void check(XrResult result)
-			{
-				return impl->check(result);
-			}
+			CAGE_FORCE_INLINE void check(XrResult result) { return impl->check(result); }
 		};
 	}
 

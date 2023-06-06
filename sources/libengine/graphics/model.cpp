@@ -1,14 +1,14 @@
-#include <cage-core/mesh.h>
-#include <cage-core/meshImport.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
+#include <cage-core/mesh.h>
+#include <cage-core/meshImport.h>
 
-#include <cage-engine/model.h>
 #include <cage-engine/assetStructs.h>
-#include <cage-engine/uniformBuffer.h>
-#include <cage-engine/shaderConventions.h>
 #include <cage-engine/graphicsError.h>
+#include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/shaderConventions.h>
+#include <cage-engine/uniformBuffer.h>
 
 #include <vector>
 
@@ -54,26 +54,26 @@ namespace cage
 				uint32 cnt = indicesCount ? indicesCount : verticesCount;
 				switch (primitiveType)
 				{
-				case GL_POINTS:
-				case GL_LINE_LOOP:
-					primitivesCount = cnt;
-					break;
-				case GL_LINE_STRIP:
-					primitivesCount = cnt - 1;
-					break;
-				case GL_LINES:
-					primitivesCount = cnt / 2;
-					break;
-				case GL_TRIANGLE_STRIP:
-				case GL_TRIANGLE_FAN:
-					primitivesCount = cnt - 2;
-					break;
-				case GL_TRIANGLES:
-					primitivesCount = cnt / 3;
-					break;
-				default:
-					primitivesCount = cnt / 4; // we do not want to fail, so just return an estimate
-					break;
+					case GL_POINTS:
+					case GL_LINE_LOOP:
+						primitivesCount = cnt;
+						break;
+					case GL_LINE_STRIP:
+						primitivesCount = cnt - 1;
+						break;
+					case GL_LINES:
+						primitivesCount = cnt / 2;
+						break;
+					case GL_TRIANGLE_STRIP:
+					case GL_TRIANGLE_FAN:
+						primitivesCount = cnt - 2;
+						break;
+					case GL_TRIANGLES:
+						primitivesCount = cnt / 3;
+						break;
+					default:
+						primitivesCount = cnt / 4; // we do not want to fail, so just return an estimate
+						break;
 				}
 			}
 		};
@@ -200,10 +200,17 @@ namespace cage
 
 		switch (poly->type())
 		{
-		case MeshTypeEnum::Points: setPrimitiveType(GL_POINTS); break;
-		case MeshTypeEnum::Lines: setPrimitiveType(GL_LINES); break;
-		case MeshTypeEnum::Triangles: setPrimitiveType(GL_TRIANGLES); break;
-		default: CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+			case MeshTypeEnum::Points:
+				setPrimitiveType(GL_POINTS);
+				break;
+			case MeshTypeEnum::Lines:
+				setPrimitiveType(GL_LINES);
+				break;
+			case MeshTypeEnum::Triangles:
+				setPrimitiveType(GL_TRIANGLES);
+				break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 
 		for (const Attr &a : attrs)
@@ -244,11 +251,7 @@ namespace cage
 
 		const GLint bufferAlignment = UniformBuffer::alignmentRequirement();
 
-		const uint32 bufferSize = numeric_cast<uint32>(
-			impl->verticesCount * vertexSize + detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment) +
-			impl->indicesCount * sizeof(uint32) + detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment) +
-			impl->materialSize + detail::addToAlign(materialBuffer.size(), bufferAlignment)
-			);
+		const uint32 bufferSize = numeric_cast<uint32>(impl->verticesCount * vertexSize + detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment) + impl->indicesCount * sizeof(uint32) + detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment) + impl->materialSize + detail::addToAlign(materialBuffer.size(), bufferAlignment));
 		glNamedBufferData(impl->vbo, bufferSize, nullptr, GL_STATIC_DRAW);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -294,19 +297,19 @@ namespace cage
 			glVertexArrayAttribBinding(impl->id, index, index);
 			switch (type)
 			{
-			case GL_BYTE:
-			case GL_UNSIGNED_BYTE:
-			case GL_SHORT:
-			case GL_UNSIGNED_SHORT:
-			case GL_INT:
-			case GL_UNSIGNED_INT:
-				glVertexArrayAttribIFormat(impl->id, index, size, type, 0);
-				break;
-			case GL_DOUBLE:
-				glVertexArrayAttribLFormat(impl->id, index, size, type, 0);
-				break;
-			default:
-				glVertexArrayAttribFormat(impl->id, index, size, type, GL_FALSE, 0);
+				case GL_BYTE:
+				case GL_UNSIGNED_BYTE:
+				case GL_SHORT:
+				case GL_UNSIGNED_SHORT:
+				case GL_INT:
+				case GL_UNSIGNED_INT:
+					glVertexArrayAttribIFormat(impl->id, index, size, type, 0);
+					break;
+				case GL_DOUBLE:
+					glVertexArrayAttribLFormat(impl->id, index, size, type, 0);
+					break;
+				default:
+					glVertexArrayAttribFormat(impl->id, index, size, type, GL_FALSE, 0);
 			}
 		}
 	}
@@ -342,7 +345,7 @@ namespace cage
 		CAGE_ASSERT(boundModel == impl->id);
 #endif
 		if (impl->indicesCount)
-			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
+			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void *)(uintPtr)impl->indicesOffset);
 		else
 			glDrawArrays(impl->primitiveType, 0, impl->verticesCount);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -355,7 +358,7 @@ namespace cage
 		CAGE_ASSERT(boundModel == impl->id);
 #endif
 		if (impl->indicesCount)
-			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);
+			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void *)(uintPtr)impl->indicesOffset, instances);
 		else
 			glDrawArraysInstanced(impl->primitiveType, 0, impl->verticesCount, instances);
 		CAGE_CHECK_GL_ERROR_DEBUG();

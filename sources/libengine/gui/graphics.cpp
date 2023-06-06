@@ -1,13 +1,13 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/hashString.h>
-#include <cage-core/swapBufferGuard.h>
 #include <cage-core/serialization.h>
+#include <cage-core/swapBufferGuard.h>
 
-#include <cage-engine/shaderProgram.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h> // GL_TEXTURE_2D_ARRAY
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/texture.h>
 
 #include "private.h"
 
@@ -84,12 +84,7 @@ namespace cage
 		data.format.size *= item->hierarchy->impl->pointsScale;
 		const Vec2i &orr = item->hierarchy->impl->outputResolution;
 		position *= item->hierarchy->impl->pointsScale;
-		data.transform = transpose(Mat4(
-			2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0,
-			0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1],
-			0, 0, 1, 0,
-			0, 0, 0, 1
-		));
+		data.transform = transpose(Mat4(2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
 		data.format.wrapWidth = size[0] * item->hierarchy->impl->pointsScale;
 	}
 
@@ -183,8 +178,7 @@ namespace cage
 		{
 			GuiImpl *impl = nullptr;
 
-			GraphicsDataCleaner(GuiImpl *impl) : impl(impl)
-			{}
+			GraphicsDataCleaner(GuiImpl *impl) : impl(impl) {}
 
 			~GraphicsDataCleaner()
 			{

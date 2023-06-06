@@ -1,10 +1,10 @@
+#include "imageInfo.h"
+#include <cage-core/files.h>
+#include <cage-core/ini.h>
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
-#include <cage-core/ini.h>
-#include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/string.h>
-#include "imageInfo.h"
 
 using namespace cage;
 

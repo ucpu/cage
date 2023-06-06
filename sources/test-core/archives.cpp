@@ -1,19 +1,16 @@
 #include "main.h"
+#include <cage-core/concurrent.h>
 #include <cage-core/files.h>
+#include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-core/math.h>
-#include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 
 #include <set>
 
 namespace
 {
-	constexpr const String directories[2] = {
-		"testdir/files",
-		"testdir/archive.zip"
-	};
+	constexpr const String directories[2] = { "testdir/files", "testdir/archive.zip" };
 
 	void testWriteFile(const String &name, PointerRange<const char> data)
 	{
@@ -130,7 +127,9 @@ namespace
 		{
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
-				{ ScopeLock lck(barrier); }
+				{
+					ScopeLock lck(barrier);
+				}
 				const String name = Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
@@ -180,29 +179,31 @@ namespace
 	template<MovePositionEnum Source, MovePositionEnum Target, MoveResultEnum Result>
 	void testMovesTableImpl()
 	{
-		const auto &prepare = [](MovePositionEnum pos, const String &pth) {
+		const auto &prepare = [](MovePositionEnum pos, const String &pth)
+		{
 			switch (pos)
 			{
-			case MovePositionEnum::Nothing:
-				break;
-			case MovePositionEnum::File:
-				writeFile(pth)->writeLine("file");
-				break;
-			case MovePositionEnum::Folder:
-				pathCreateDirectories(pth);
-				writeFile(pathJoin(pth, "aaa"))->writeLine("aaa");
-				writeFile(pathJoin(pth, "bbb"))->writeLine("bbb");
-				writeFile(pathJoin(pth, "ccc"))->writeLine("ccc");
-				break;
-			case MovePositionEnum::Archive:
-				pathCreateArchive(pth);
-				writeFile(pathJoin(pth, "aaa"))->writeLine("123");
-				writeFile(pathJoin(pth, "ddd"))->writeLine("ddd");
-				break;
+				case MovePositionEnum::Nothing:
+					break;
+				case MovePositionEnum::File:
+					writeFile(pth)->writeLine("file");
+					break;
+				case MovePositionEnum::Folder:
+					pathCreateDirectories(pth);
+					writeFile(pathJoin(pth, "aaa"))->writeLine("aaa");
+					writeFile(pathJoin(pth, "bbb"))->writeLine("bbb");
+					writeFile(pathJoin(pth, "ccc"))->writeLine("ccc");
+					break;
+				case MovePositionEnum::Archive:
+					pathCreateArchive(pth);
+					writeFile(pathJoin(pth, "aaa"))->writeLine("123");
+					writeFile(pathJoin(pth, "ddd"))->writeLine("ddd");
+					break;
 			}
 		};
 
-		const auto &count = [](const String &pth) -> uint32 {
+		const auto &count = [](const String &pth) -> uint32
+		{
 			if (none(pathType(pth) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
 				return 0;
 			return pathListDirectory(pth).size();
@@ -228,75 +229,77 @@ namespace
 
 		switch (Result)
 		{
-		case MoveResultEnum::Error:
+			case MoveResultEnum::Error:
+				break;
+			case MoveResultEnum::Rename:
+			case MoveResultEnum::Replace:
+			{
+				switch (Source)
+				{
+					case MovePositionEnum::Nothing:
+						break;
+					case MovePositionEnum::File:
+						CAGE_TEST(pathType(target) == PathTypeFlags::File);
+						CAGE_TEST(readFile(target)->readLine() == "file");
+						break;
+					case MovePositionEnum::Folder:
+						CAGE_TEST(pathType(target) == PathTypeFlags::Directory);
+						CAGE_TEST(count(target) == 3);
+						CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
+						CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
+						CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
+						CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
+						CAGE_TEST(pathType(pathJoin(target, "ddd")) == PathTypeFlags::NotFound);
+						break;
+					case MovePositionEnum::Archive:
+						CAGE_TEST(any(pathType(target) & PathTypeFlags::Archive));
+						CAGE_TEST(count(target) == 2);
+						CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
+						CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
+						CAGE_TEST(pathType(pathJoin(target, "bbb")) == PathTypeFlags::NotFound);
+						CAGE_TEST(pathType(pathJoin(target, "ccc")) == PathTypeFlags::NotFound);
+						CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
+						break;
+				}
+			}
 			break;
-		case MoveResultEnum::Rename:
-		case MoveResultEnum::Replace:
-		{
-			switch (Source)
+			case MoveResultEnum::Merge:
 			{
-			case MovePositionEnum::Nothing:
-				break;
-			case MovePositionEnum::File:
-				CAGE_TEST(pathType(target) == PathTypeFlags::File);
-				CAGE_TEST(readFile(target)->readLine() == "file");
-				break;
-			case MovePositionEnum::Folder:
-				CAGE_TEST(pathType(target) == PathTypeFlags::Directory);
-				CAGE_TEST(count(target) == 3);
+				CAGE_TEST(any(pathType(target) & (PathTypeFlags::Archive | PathTypeFlags::Directory)));
 				CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
-				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
-				CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
-				CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
-				CAGE_TEST(pathType(pathJoin(target, "ddd")) == PathTypeFlags::NotFound);
-				break;
-			case MovePositionEnum::Archive:
-				CAGE_TEST(any(pathType(target) & PathTypeFlags::Archive));
-				CAGE_TEST(count(target) == 2);
-				CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
-				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
-				CAGE_TEST(pathType(pathJoin(target, "bbb")) == PathTypeFlags::NotFound);
-				CAGE_TEST(pathType(pathJoin(target, "ccc")) == PathTypeFlags::NotFound);
-				CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
-				break;
+				switch (Source)
+				{
+					case MovePositionEnum::Nothing:
+					case MovePositionEnum::File:
+						break;
+					case MovePositionEnum::Folder:
+						CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
+						CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
+						CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
+						break;
+					case MovePositionEnum::Archive:
+						CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
+						CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
+						break;
+				}
+				switch (Target)
+				{
+					case MovePositionEnum::Nothing:
+					case MovePositionEnum::File:
+						break;
+					case MovePositionEnum::Folder:
+						if (Source == Target)
+							CAGE_TEST(count(target) == 3); // aaa, bbb, ccc
+						break;
+					case MovePositionEnum::Archive:
+						if (Source == Target)
+							CAGE_TEST(count(target) == 2); // aaa, ddd
+						break;
+				}
+				if (Source != Target)
+					CAGE_TEST(count(target) == 4); // aaa, bbb, ccc, ddd
 			}
-		} break;
-		case MoveResultEnum::Merge:
-		{
-			CAGE_TEST(any(pathType(target) & (PathTypeFlags::Archive | PathTypeFlags::Directory)));
-			CAGE_TEST(pathType(pathJoin(target, "file")) == PathTypeFlags::NotFound);
-			switch (Source)
-			{
-			case MovePositionEnum::Nothing:
-			case MovePositionEnum::File:
-				break;
-			case MovePositionEnum::Folder:
-				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "aaa");
-				CAGE_TEST(readFile(pathJoin(target, "bbb"))->readLine() == "bbb");
-				CAGE_TEST(readFile(pathJoin(target, "ccc"))->readLine() == "ccc");
-				break;
-			case MovePositionEnum::Archive:
-				CAGE_TEST(readFile(pathJoin(target, "aaa"))->readLine() == "123");
-				CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
-				break;
-			}
-			switch (Target)
-			{
-			case MovePositionEnum::Nothing:
-			case MovePositionEnum::File:
-				break;
-			case MovePositionEnum::Folder:
-				if (Source == Target)
-					CAGE_TEST(count(target) == 3); // aaa, bbb, ccc
-				break;
-			case MovePositionEnum::Archive:
-				if (Source == Target)
-					CAGE_TEST(count(target) == 2); // aaa, ddd
-				break;
-			}
-			if (Source != Target)
-				CAGE_TEST(count(target) == 4); // aaa, bbb, ccc, ddd
-		} break;
+			break;
 		}
 	}
 
@@ -313,10 +316,22 @@ namespace
 		*/
 		using P = MovePositionEnum;
 		using R = MoveResultEnum;
-		testMovesTableImpl<P::Nothing, P::Nothing, R::Error>(); testMovesTableImpl<P::Nothing, P::File, R::Error>(); testMovesTableImpl<P::Nothing, P::Folder, R::Error>(); testMovesTableImpl<P::Nothing, P::Archive, R::Error>();
-		testMovesTableImpl<P::File, P::Nothing, R::Rename>(); testMovesTableImpl<P::File, P::File, R::Replace>(); testMovesTableImpl<P::File, P::Folder, R::Error>(); testMovesTableImpl<P::File, P::Archive, R::Replace>();
-		testMovesTableImpl<P::Folder, P::Nothing, R::Rename>(); testMovesTableImpl<P::Folder, P::File, R::Error>(); testMovesTableImpl<P::Folder, P::Folder, R::Merge>(); testMovesTableImpl<P::Folder, P::Archive, R::Merge>();
-		testMovesTableImpl<P::Archive, P::Nothing, R::Rename>(); testMovesTableImpl<P::Archive, P::File, R::Replace>(); testMovesTableImpl<P::Archive, P::Folder, R::Merge>(); testMovesTableImpl<P::Archive, P::Archive, R::Merge>();
+		testMovesTableImpl<P::Nothing, P::Nothing, R::Error>();
+		testMovesTableImpl<P::Nothing, P::File, R::Error>();
+		testMovesTableImpl<P::Nothing, P::Folder, R::Error>();
+		testMovesTableImpl<P::Nothing, P::Archive, R::Error>();
+		testMovesTableImpl<P::File, P::Nothing, R::Rename>();
+		testMovesTableImpl<P::File, P::File, R::Replace>();
+		testMovesTableImpl<P::File, P::Folder, R::Error>();
+		testMovesTableImpl<P::File, P::Archive, R::Replace>();
+		testMovesTableImpl<P::Folder, P::Nothing, R::Rename>();
+		testMovesTableImpl<P::Folder, P::File, R::Error>();
+		testMovesTableImpl<P::Folder, P::Folder, R::Merge>();
+		testMovesTableImpl<P::Folder, P::Archive, R::Merge>();
+		testMovesTableImpl<P::Archive, P::Nothing, R::Rename>();
+		testMovesTableImpl<P::Archive, P::File, R::Replace>();
+		testMovesTableImpl<P::Archive, P::Folder, R::Merge>();
+		testMovesTableImpl<P::Archive, P::Archive, R::Merge>();
 	}
 }
 
@@ -404,14 +419,7 @@ void testArchives()
 	{
 		CAGE_TESTCASE("multiple write files at once");
 		{
-			Holder<File> ws[] = {
-				writeFile(pathJoin(directories[0], "multi/1")),
-				writeFile(pathJoin(directories[1], "multi/1")),
-				writeFile(pathJoin(directories[0], "multi/2")),
-				writeFile(pathJoin(directories[1], "multi/2")),
-				writeFile(pathJoin(directories[0], "multi/3")),
-				writeFile(pathJoin(directories[1], "multi/3"))
-			};
+			Holder<File> ws[] = { writeFile(pathJoin(directories[0], "multi/1")), writeFile(pathJoin(directories[1], "multi/1")), writeFile(pathJoin(directories[0], "multi/2")), writeFile(pathJoin(directories[1], "multi/2")), writeFile(pathJoin(directories[0], "multi/3")), writeFile(pathJoin(directories[1], "multi/3")) };
 			for (auto &f : ws)
 				f->write(data1);
 			for (auto &f : ws)
@@ -427,14 +435,7 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("multiple read files at once");
-		Holder<File> rs[] = {
-			readFile(pathJoin(directories[0], "multi/1")),
-			readFile(pathJoin(directories[1], "multi/1")),
-			readFile(pathJoin(directories[0], "multi/2")),
-			readFile(pathJoin(directories[1], "multi/2")),
-			readFile(pathJoin(directories[0], "multi/3")),
-			readFile(pathJoin(directories[1], "multi/3"))
-		};
+		Holder<File> rs[] = { readFile(pathJoin(directories[0], "multi/1")), readFile(pathJoin(directories[1], "multi/1")), readFile(pathJoin(directories[0], "multi/2")), readFile(pathJoin(directories[1], "multi/2")), readFile(pathJoin(directories[0], "multi/3")), readFile(pathJoin(directories[1], "multi/3")) };
 		for (auto &f : rs)
 			f->read(data3.size());
 		for (auto &f : rs)

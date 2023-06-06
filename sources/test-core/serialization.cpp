@@ -186,7 +186,7 @@ void testSerialization()
 			functionTakingPointerRangeOfItems(bufferCast<Item>(items));
 			functionTakingPointerRangeBuffer(items);
 
-			functionTakingRawArrayOfItems((Item*)items.data(), numeric_cast<uint32>(items.size()));
+			functionTakingRawArrayOfItems((Item *)items.data(), numeric_cast<uint32>(items.size()));
 			functionTakingVoidPointer(items.data(), items.size());
 			functionTakingCharPointer(items.data(), items.size());
 		}

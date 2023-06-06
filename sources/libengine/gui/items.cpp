@@ -61,8 +61,9 @@ namespace cage
 
 		if (item)
 			item->findFinalPosition(u);
-		else for (const auto &c : children)
-			c->findFinalPosition(u);
+		else
+			for (const auto &c : children)
+				c->findFinalPosition(u);
 
 		CAGE_ASSERT(renderPos.valid());
 		CAGE_ASSERT(renderSize.valid());
@@ -88,7 +89,7 @@ namespace cage
 
 	void HierarchyItem::generateEventReceivers() const
 	{
-		for (auto i = children.size(); i-->0;) // typographically pleasing iteration in reverse order ;)
+		for (auto i = children.size(); i-- > 0;) // typographically pleasing iteration in reverse order ;)
 			children[i]->generateEventReceivers();
 		if (item)
 			item->generateEventReceivers();
@@ -122,11 +123,9 @@ namespace cage
 		return nullptr;
 	}
 
-	BaseItem::BaseItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
-	{}
+	BaseItem::BaseItem(HierarchyItem *hierarchy) : hierarchy(hierarchy) {}
 
-	WidgetItem::WidgetItem(HierarchyItem *hierarchy) : BaseItem(hierarchy)
-	{}
+	WidgetItem::WidgetItem(HierarchyItem *hierarchy) : BaseItem(hierarchy) {}
 
 	ElementModeEnum WidgetItem::mode(bool hover, uint32 focusParts) const
 	{
@@ -227,8 +226,7 @@ namespace cage
 		return true;
 	}
 
-	LayoutItem::LayoutItem(HierarchyItem *hierarchy) : BaseItem(hierarchy)
-	{}
+	LayoutItem::LayoutItem(HierarchyItem *hierarchy) : BaseItem(hierarchy) {}
 
 	bool LayoutItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
@@ -291,8 +289,7 @@ namespace cage
 		item->text = item->impl->memory->createHolder<TextItem>(item);
 	}
 
-	TextItem::TextItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
-	{}
+	TextItem::TextItem(HierarchyItem *hierarchy) : hierarchy(hierarchy) {}
 
 	void TextItem::initialize()
 	{
@@ -366,8 +363,7 @@ namespace cage
 		item->image = item->impl->memory->createHolder<ImageItem>(item);
 	}
 
-	ImageItem::ImageItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
-	{}
+	ImageItem::ImageItem(HierarchyItem *hierarchy) : hierarchy(hierarchy) {}
 
 	void ImageItem::initialize()
 	{

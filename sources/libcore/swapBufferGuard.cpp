@@ -105,26 +105,20 @@ namespace cage
 				ScopeLock lock(mutex);
 				switch (states[index])
 				{
-				case StateEnum::Reading:
-					states[index] = StateEnum::Read;
-					break;
-				case StateEnum::Writing:
-					states[index] = StateEnum::Wrote;
-					break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid swap buffer controller state");
+					case StateEnum::Reading:
+						states[index] = StateEnum::Read;
+						break;
+					case StateEnum::Writing:
+						states[index] = StateEnum::Wrote;
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid swap buffer controller state");
 				}
 			}
 
-			uint32 next(uint32 i) const
-			{
-				return (i + 1) % buffersCount;
-			}
+			uint32 next(uint32 i) const { return (i + 1) % buffersCount; }
 
-			uint32 prev(uint32 i) const
-			{
-				return (i + buffersCount - 1) % buffersCount;
-			}
+			uint32 prev(uint32 i) const { return (i + buffersCount - 1) % buffersCount; }
 
 			Holder<Mutex> mutex;
 			StateEnum states[4];
@@ -136,12 +130,11 @@ namespace cage
 
 	namespace privat
 	{
-		SwapBufferLock::SwapBufferLock()
-		{}
+		SwapBufferLock::SwapBufferLock() {}
 
 		SwapBufferLock::SwapBufferLock(SwapBufferGuard *controller, uint32 index) : controller_(controller), index_(index)
 		{
-			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
+			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)controller_;
 			CAGE_ASSERT(impl->states[index] == StateEnum::Reading || impl->states[index] == StateEnum::Writing);
 		}
 
@@ -155,15 +148,15 @@ namespace cage
 		{
 			if (!controller_)
 				return;
-			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
+			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)controller_;
 			impl->finished(index_);
 		}
 
-		SwapBufferLock &SwapBufferLock::operator = (SwapBufferLock &&other) noexcept
+		SwapBufferLock &SwapBufferLock::operator=(SwapBufferLock &&other) noexcept
 		{
 			if (controller_)
 			{
-				SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
+				SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)controller_;
 				impl->finished(index_);
 				controller_ = nullptr;
 				index_ = m;
@@ -176,13 +169,13 @@ namespace cage
 
 	privat::SwapBufferLock SwapBufferGuard::read()
 	{
-		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)this;
+		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)this;
 		return impl->read();
 	}
 
 	privat::SwapBufferLock SwapBufferGuard::write()
 	{
-		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)this;
+		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)this;
 		return impl->write();
 	}
 
@@ -194,4 +187,3 @@ namespace cage
 		return systemMemory().createImpl<SwapBufferGuard, SwapBufferGuardImpl>(config);
 	}
 }
-

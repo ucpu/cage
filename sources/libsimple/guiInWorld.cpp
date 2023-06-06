@@ -1,22 +1,22 @@
+#include <cage-core/assetManager.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/entities.h>
 #include <cage-core/geometry.h>
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
-#include <cage-core/serialization.h>
-#include <cage-core/entities.h>
-#include <cage-core/assetManager.h>
 #include <cage-core/profiling.h>
-#include <cage-engine/provisionalGraphics.h>
+#include <cage-core/serialization.h>
 #include <cage-engine/guiManager.h>
-#include <cage-engine/renderQueue.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/texture.h>
 #include <cage-engine/window.h>
-#include <cage-simple/guiInWorld.h>
 #include <cage-simple/cameraRay.h>
 #include <cage-simple/engine.h>
+#include <cage-simple/guiInWorld.h>
 
 namespace cage
 {
@@ -39,10 +39,7 @@ namespace cage
 				}
 			}
 
-			~GuiInWorldImpl()
-			{
-				cleanUp();
-			}
+			~GuiInWorldImpl() { cleanUp(); }
 
 			struct Intersection
 			{
@@ -131,7 +128,7 @@ namespace cage
 					msh->addVertex(Vec3(-1, +h, 0), Vec3(0, 0, -1), Vec2(1, 1));
 					msh->addVertex(Vec3(+1, +h, 0), Vec3(0, 0, -1), Vec2(0, 1));
 					msh->addVertex(Vec3(+1, -h, 0), Vec3(0, 0, -1), Vec2(0, 0));
-					msh->indices({ { 0, 1, 2,   0, 2, 3 } });
+					msh->indices({ { 0, 1, 2, 0, 2, 3 } });
 					MeshImportMaterial material;
 					material.specialBase[0] = 1;
 					material.specialBase[2] = 1;

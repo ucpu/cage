@@ -1,7 +1,7 @@
 #include "main.h"
 
-#include <cage-core/math.h>
 #include <cage-core/guid.h>
+#include <cage-core/math.h>
 #include <cage-core/random.h>
 
 void test(const Vec2 &a, const Vec2 &b);

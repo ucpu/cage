@@ -10,18 +10,14 @@ namespace cage
 		template<class T>
 		struct DefaultInterpolator
 		{
-			T operator () (const T &a, const T &b, float p) const
-			{
-				return cage::interpolate(a, b, p);
-			}
+			T operator()(const T &a, const T &b, float p) const { return cage::interpolate(a, b, p); }
 		};
 	}
 
 	template<class T, class F = privat::DefaultInterpolator<T>>
 	struct VariableInterpolatingBuffer
 	{
-		explicit VariableInterpolatingBuffer(F fnc = F()) : fnc(fnc)
-		{}
+		explicit VariableInterpolatingBuffer(F fnc = F()) : fnc(fnc) {}
 
 		void clear()
 		{
@@ -69,7 +65,7 @@ namespace cage
 			}
 		}
 
-		T operator () (uint64 current) const
+		T operator()(uint64 current) const
 		{
 			CAGE_ASSERT(current > 0);
 			if (times[0] == 0)
@@ -81,10 +77,7 @@ namespace cage
 			return interp(1, current);
 		}
 
-		explicit operator bool() const
-		{
-			return times[0] != 0;
-		}
+		explicit operator bool() const { return times[0] != 0; }
 
 	private:
 		T data[3] = {};

@@ -2,9 +2,9 @@
 
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageBlocks.h>
-#include <cage-core/serialization.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
 
 // todo
 // mipmaps, cubemaps, arrays, volumes are not supported
@@ -67,23 +67,26 @@ namespace cage
 
 		switch (header.format.fourCC)
 		{
-		case makeFourCC("DXT1"):
-		{
-			auto res = imageBc1Decode(des.read(header.width * header.height / 2), Vec2i(header.width, header.height));
-			swapAll(impl, (ImageImpl *)+res);
-		} break;
-		case makeFourCC("DXT3"):
-		{
-			auto res = imageBc2Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
-			swapAll(impl, (ImageImpl *)+res);
-		} break;
-		case makeFourCC("DXT5"):
-		{
-			auto res = imageBc3Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
-			swapAll(impl, (ImageImpl *)+res);
-		} break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
+			case makeFourCC("DXT1"):
+			{
+				auto res = imageBc1Decode(des.read(header.width * header.height / 2), Vec2i(header.width, header.height));
+				swapAll(impl, (ImageImpl *)+res);
+			}
+			break;
+			case makeFourCC("DXT3"):
+			{
+				auto res = imageBc2Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
+				swapAll(impl, (ImageImpl *)+res);
+			}
+			break;
+			case makeFourCC("DXT5"):
+			{
+				auto res = imageBc3Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
+				swapAll(impl, (ImageImpl *)+res);
+			}
+			break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
 
 		impl->colorConfig = defaultConfig(impl->channels);
@@ -107,23 +110,23 @@ namespace cage
 		uint32 bufferSize = 0;
 		switch (header.format.fourCC)
 		{
-		case makeFourCC("DXT1"):
-			bufferSize = header.width * header.height / 2;
-			raw.format = "bc1";
-			raw.channels = 3;
-			break;
-		case makeFourCC("DXT3"):
-			bufferSize = header.width * header.height;
-			raw.format = "bc2";
-			raw.channels = 4;
-			break;
-		case makeFourCC("DXT5"):
-			bufferSize = header.width * header.height;
-			raw.format = "bc3";
-			raw.channels = 4;
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
+			case makeFourCC("DXT1"):
+				bufferSize = header.width * header.height / 2;
+				raw.format = "bc1";
+				raw.channels = 3;
+				break;
+			case makeFourCC("DXT3"):
+				bufferSize = header.width * header.height;
+				raw.format = "bc2";
+				raw.channels = 4;
+				break;
+			case makeFourCC("DXT5"):
+				bufferSize = header.width * header.height;
+				raw.format = "bc3";
+				raw.channels = 4;
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
 		CAGE_ASSERT(bufferSize > 0);
 

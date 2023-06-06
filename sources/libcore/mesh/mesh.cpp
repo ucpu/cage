@@ -1,10 +1,10 @@
 #include "mesh.h"
 
-#include <cage-core/meshAlgorithms.h>
-#include <cage-core/geometry.h>
 #include <cage-core/collider.h>
-#include <cage-core/serialization.h>
+#include <cage-core/geometry.h>
 #include <cage-core/macros.h>
+#include <cage-core/meshAlgorithms.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {
@@ -50,7 +50,9 @@ namespace cage
 		}
 		else
 		{
-#define GCHL_GENERATE(NAME) if (!impl->NAME.empty()) impl->NAME.push_back({});
+#define GCHL_GENERATE(NAME) \
+	if (!impl->NAME.empty()) \
+		impl->NAME.push_back({});
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			impl->positions[impl->positions.size() - 1] = position;
@@ -128,16 +130,16 @@ namespace cage
 		const uint32 i = (indices().empty() ? numeric_cast<uint32>(positions().size()) : numeric_cast<uint32>(indices().size()));
 		switch (type())
 		{
-		case MeshTypeEnum::Points:
-			return i;
-		case MeshTypeEnum::Lines:
-			CAGE_ASSERT(i % 2 == 0);
-			return i / 2;
-		case MeshTypeEnum::Triangles:
-			CAGE_ASSERT(i % 3 == 0);
-			return i / 3;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+			case MeshTypeEnum::Points:
+				return i;
+			case MeshTypeEnum::Lines:
+				CAGE_ASSERT(i % 2 == 0);
+				return i / 2;
+			case MeshTypeEnum::Triangles:
+				CAGE_ASSERT(i % 3 == 0);
+				return i / 3;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 	}
 
@@ -280,10 +282,14 @@ namespace cage
 		{
 			switch (type)
 			{
-			case MeshTypeEnum::Points: return "points";
-			case MeshTypeEnum::Lines: return "lines";
-			case MeshTypeEnum::Triangles: return "triangles";
-			default: return "unknown";
+				case MeshTypeEnum::Points:
+					return "points";
+				case MeshTypeEnum::Lines:
+					return "lines";
+				case MeshTypeEnum::Triangles:
+					return "triangles";
+				default:
+					return "unknown";
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 #include "processor.h"
 
+#include <cage-core/flatSet.h>
+#include <cage-core/hashString.h>
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
-#include <cage-core/hashString.h>
-#include <cage-core/flatSet.h>
 #include <cage-engine/shaderConventions.h>
 #include <vector>
 
@@ -47,20 +47,20 @@ namespace
 				uint32 in = m;
 				switch (c)
 				{
-				case 'x':
-					axesUsedCounts[0]++;
-					in = 0;
-					break;
-				case 'y':
-					axesUsedCounts[1]++;
-					in = 1;
-					break;
-				case 'z':
-					axesUsedCounts[2]++;
-					in = 2;
-					break;
-				default:
-					CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
+					case 'x':
+						axesUsedCounts[0]++;
+						in = 0;
+						break;
+					case 'y':
+						axesUsedCounts[1]++;
+						in = 1;
+						break;
+					case 'z':
+						axesUsedCounts[2]++;
+						in = 2;
+						break;
+					default:
+						CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
 				}
 				result[in * 3 + out] = Real(sign);
 			}
@@ -162,13 +162,13 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 
 	switch (candidates.size())
 	{
-	case 0:
-		CAGE_THROW_ERROR(Exception, "file does not contain requested model");
-	case 1:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using model at index " + *candidates.begin());
-		return *candidates.begin();
-	default:
-		CAGE_THROW_ERROR(Exception, "requested name is not unique");
+		case 0:
+			CAGE_THROW_ERROR(Exception, "file does not contain requested model");
+		case 1:
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using model at index " + *candidates.begin());
+			return *candidates.begin();
+		default:
+			CAGE_THROW_ERROR(Exception, "requested name is not unique");
 	}
 }
 
@@ -299,17 +299,17 @@ void processModel()
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{
-		case MeshImportTextureType::Albedo:
-			dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
-			break;
-		case MeshImportTextureType::Special:
-			dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
-			break;
-		case MeshImportTextureType::Normal:
-			dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
-			break;
-		default:
-			break;
+			case MeshImportTextureType::Albedo:
+				dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
+				break;
+			case MeshImportTextureType::Special:
+				dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
+				break;
+			case MeshImportTextureType::Normal:
+				dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
+				break;
+			default:
+				break;
 		}
 	}
 

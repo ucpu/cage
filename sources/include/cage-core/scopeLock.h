@@ -5,24 +5,20 @@
 
 namespace cage
 {
-	struct TryLockTag {};
-	struct ReadLockTag {};
-	struct WriteLockTag {};
+	struct TryLockTag
+	{};
+	struct ReadLockTag
+	{};
+	struct WriteLockTag
+	{};
 
 	template<class T>
 	struct ScopeLock : private Noncopyable
 	{
-		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, TryLockTag) : ScopeLock(+ptr, TryLockTag())
-		{}
-
-		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, ReadLockTag) : ScopeLock(+ptr, ReadLockTag())
-		{}
-
-		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, WriteLockTag) : ScopeLock(+ptr, WriteLockTag())
-		{}
-
-		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(+ptr)
-		{}
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, TryLockTag) : ScopeLock(+ptr, TryLockTag()) {}
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, ReadLockTag) : ScopeLock(+ptr, ReadLockTag()) {}
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, WriteLockTag) : ScopeLock(+ptr, WriteLockTag()) {}
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(+ptr) {}
 
 		[[nodiscard]] explicit ScopeLock(T *ptr, TryLockTag) : ptr(ptr)
 		{
@@ -50,18 +46,12 @@ namespace cage
 		}
 
 		// move constructible
-		ScopeLock(ScopeLock &&other) noexcept
-		{
-			std::swap(ptr, other.ptr);
-		}
+		ScopeLock(ScopeLock &&other) noexcept { std::swap(ptr, other.ptr); }
 
 		// not move assignable (releasing the original lock owned by this would not be atomic)
-		ScopeLock &operator = (ScopeLock &&) = delete;
+		ScopeLock &operator=(ScopeLock &&) = delete;
 
-		~ScopeLock()
-		{
-			clear();
-		}
+		~ScopeLock() { clear(); }
 
 		void clear()
 		{
@@ -72,10 +62,7 @@ namespace cage
 			}
 		}
 
-		explicit operator bool() const noexcept
-		{
-			return !!ptr;
-		}
+		explicit operator bool() const noexcept { return !!ptr; }
 
 	private:
 		T *ptr = nullptr;

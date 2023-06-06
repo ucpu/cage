@@ -1,13 +1,13 @@
 #include "main.h"
 
-#include <cage-core/math.h>
+#include <algorithm>
 #include <cage-core/entities.h>
-#include <cage-core/timer.h>
 #include <cage-core/hashString.h>
-#include <vector>
+#include <cage-core/math.h>
+#include <cage-core/timer.h>
 #include <map>
 #include <set>
-#include <algorithm>
+#include <vector>
 
 namespace
 {
@@ -248,73 +248,78 @@ namespace
 			{
 				switch (randomRange(0, 6))
 				{
-				case 0:
-				{ // remove random entity
-					if (reference.empty())
-						break;
-					auto it = reference.begin();
-					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					manager->get(it->first)->destroy();
-					reference.erase(it);
-				} break;
-				case 1:
-				case 2:
-				{ // add entity
-					CAGE_ASSERT(reference.find(entName) == reference.end());
-					Entity *e = manager->create(entName);
-					reference[entName];
-					for (uint32 i = 0; i < TotalComponents; i++)
-					{
-						if (randomChance() < 0.5)
+					case 0:
+					{ // remove random entity
+						if (reference.empty())
+							break;
+						auto it = reference.begin();
+						std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
+						manager->get(it->first)->destroy();
+						reference.erase(it);
+					}
+					break;
+					case 1:
+					case 2:
+					{ // add entity
+						CAGE_ASSERT(reference.find(entName) == reference.end());
+						Entity *e = manager->create(entName);
+						reference[entName];
+						for (uint32 i = 0; i < TotalComponents; i++)
 						{
-							e->add(manager->componentByDefinition(i));
-							reference[entName].insert(i);
+							if (randomChance() < 0.5)
+							{
+								e->add(manager->componentByDefinition(i));
+								reference[entName].insert(i);
+							}
+						}
+						entName++;
+					}
+					break;
+					case 3:
+					{ // add components
+						if (reference.empty())
+							break;
+						auto it = reference.begin();
+						std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
+						Entity *e = manager->get(it->first);
+						for (uint32 i = 0; i < TotalComponents; i++)
+						{
+							if (randomChance() < 0.5)
+							{
+								e->add(manager->componentByDefinition(i));
+								reference[it->first].insert(i);
+							}
 						}
 					}
-					entName++;
-				} break;
-				case 3:
-				{ // add components
-					if (reference.empty())
-						break;
-					auto it = reference.begin();
-					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < TotalComponents; i++)
-					{
-						if (randomChance() < 0.5)
+					break;
+					case 4:
+					{ // remove components
+						if (reference.empty())
+							break;
+						auto it = reference.begin();
+						std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
+						Entity *e = manager->get(it->first);
+						for (uint32 i = 0; i < TotalComponents; i++)
 						{
-							e->add(manager->componentByDefinition(i));
-							reference[it->first].insert(i);
+							if (randomChance() < 0.5)
+							{
+								e->remove(manager->componentByDefinition(i));
+								reference[it->first].erase(i);
+							}
 						}
 					}
-				} break;
-				case 4:
-				{ // remove components
-					if (reference.empty())
-						break;
-					auto it = reference.begin();
-					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < TotalComponents; i++)
-					{
-						if (randomChance() < 0.5)
-						{
-							e->remove(manager->componentByDefinition(i));
-							reference[it->first].erase(i);
-						}
+					break;
+					case 5:
+					{ // test components
+						if (reference.empty())
+							break;
+						auto it = reference.begin();
+						std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
+						Entity *e = manager->get(it->first);
+						for (uint32 i = 0; i < TotalComponents; i++)
+							CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByDefinition(i)));
 					}
-				} break;
-				case 5:
-				{ // test components
-					if (reference.empty())
-						break;
-					auto it = reference.begin();
-					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < TotalComponents; i++)
-						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByDefinition(i)));
-				} break;
+					break;
 				}
 			}
 
@@ -518,4 +523,3 @@ void testEntities()
 	performanceTypeVsComponent();
 	performanceSimulationTest();
 }
-

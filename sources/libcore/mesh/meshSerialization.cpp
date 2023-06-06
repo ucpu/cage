@@ -1,11 +1,11 @@
 #include "mesh.h"
 
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/files.h>
-#include <cage-core/string.h>
 #include <cage-core/macros.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/meshExport.h>
+#include <cage-core/serialization.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -30,14 +30,15 @@ namespace cage
 		AttrFlags attrFlags(const MeshImpl *impl)
 		{
 			AttrFlags flags = AttrFlags::none;
-#define GCHL_GENERATE(NAME) if (!impl->NAME.empty()) flags |= AttrFlags::NAME;
+#define GCHL_GENERATE(NAME) \
+	if (!impl->NAME.empty()) \
+		flags |= AttrFlags::NAME;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			return flags;
 		}
 
-		constexpr uint64 Magic = uint64('c') + (uint64('a') << 8) + (uint64('g') << 16) + (uint64('e') << 24)
-			+ (uint64('m') << 32) + (uint64('e') << 40) + (uint64('s') << 48) + (uint64('h') << 56);
+		constexpr uint64 Magic = uint64('c') + (uint64('a') << 8) + (uint64('g') << 16) + (uint64('e') << 24) + (uint64('m') << 32) + (uint64('e') << 40) + (uint64('s') << 48) + (uint64('h') << 56);
 		constexpr uint32 Version = 1;
 
 		Holder<PointerRange<char>> exportImpl(const Mesh *mesh)
@@ -48,7 +49,11 @@ namespace cage
 			const AttrFlags flags = attrFlags(impl);
 			const uint32 flagsi = (uint32)flags, type = (uint32)impl->type, vs = impl->verticesCount(), is = impl->indicesCount();
 			ser << Magic << Version << flagsi << type << vs << is;
-#define GCHL_GENERATE(NAME) if (any(flags & AttrFlags::NAME)) { ser.write(bufferCast<const char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); }
+#define GCHL_GENERATE(NAME) \
+	if (any(flags & AttrFlags::NAME)) \
+	{ \
+		ser.write(bufferCast<const char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); \
+	}
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			ser.write(bufferCast<const char, const uint32>(impl->indices));
@@ -68,7 +73,12 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid magic or version in mesh deserialization");
 		impl->type = (MeshTypeEnum)type;
 		const AttrFlags flags = (AttrFlags)flagsi;
-#define GCHL_GENERATE(NAME) if (any(flags & AttrFlags::NAME)) { impl->NAME.resize(vs); des.read(bufferCast<char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); }
+#define GCHL_GENERATE(NAME) \
+	if (any(flags & AttrFlags::NAME)) \
+	{ \
+		impl->NAME.resize(vs); \
+		des.read(bufferCast<char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); \
+	}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		impl->indices.resize(is);

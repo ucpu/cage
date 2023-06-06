@@ -1,18 +1,17 @@
+#include <cage-core/config.h>
+#include <cage-core/guid.h>
+#include <cage-core/macros.h>
 #include <cage-core/math.h>
 #include <cage-core/random.h>
-#include <cage-core/guid.h>
-#include <cage-core/config.h>
-#include <cage-core/macros.h>
 
 namespace cage
 {
 	RandomGenerator::RandomGenerator()
 	{
-		privat::generateRandomData((uint8*)s, sizeof(s));
+		privat::generateRandomData((uint8 *)s, sizeof(s));
 	}
 
-	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{s1, s2}
-	{}
+	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{ s1, s2 } {}
 
 	uint64 RandomGenerator::next()
 	{
@@ -34,7 +33,8 @@ namespace cage
 		return res;
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) \
+	TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		if (min == max) \
 			return min; \
@@ -48,7 +48,8 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
 
-#define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) \
+	TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		CAGE_ASSERT(min <= max); \
 		const Real c = randomChance(); \
@@ -183,7 +184,11 @@ namespace cage
 		return detail::randomGenerator().randomChance();
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return detail::randomGenerator().randomRange(min, max); }
+#define GCHL_GENERATE(TYPE) \
+	TYPE randomRange(TYPE min, TYPE max) \
+	{ \
+		return detail::randomGenerator().randomRange(min, max); \
+	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, Real, Rads, Degs, float, double));
 #undef GCHL_GENERATE
 

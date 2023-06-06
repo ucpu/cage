@@ -24,8 +24,7 @@ namespace cage
 	{
 		uint32 channels = 0;
 
-		AudioDirectionalConverterCreateConfig(uint32 channels) : channels(channels)
-		{}
+		AudioDirectionalConverterCreateConfig(uint32 channels) : channels(channels) {}
 	};
 
 	CAGE_CORE_API Holder<AudioDirectionalConverter> newAudioDirectionalConverter(const AudioDirectionalConverterCreateConfig &config);

@@ -1,7 +1,7 @@
 #include "image.h"
 
-#include <cage-core/math.h>
 #include <cage-core/color.h>
+#include <cage-core/math.h>
 #include <cage-core/serialization.h>
 
 namespace cage
@@ -10,10 +10,14 @@ namespace cage
 	{
 		switch (format)
 		{
-		case ImageFormatEnum::U8: return sizeof(uint8);
-		case ImageFormatEnum::U16: return sizeof(uint16);
-		case ImageFormatEnum::Float: return sizeof(float);
-		default: CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+				return sizeof(uint8);
+			case ImageFormatEnum::U16:
+				return sizeof(uint16);
+			case ImageFormatEnum::Float:
+				return sizeof(float);
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -22,22 +26,22 @@ namespace cage
 		ImageColorConfig c;
 		switch (channels)
 		{
-		case 1:
-			c.gammaSpace = GammaSpaceEnum::Gamma;
-			break;
-		case 2:
-			c.alphaChannelIndex = 1;
-			c.alphaMode = AlphaModeEnum::Opacity;
-			c.gammaSpace = GammaSpaceEnum::Gamma;
-			break;
-		case 3:
-			c.gammaSpace = GammaSpaceEnum::Gamma;
-			break;
-		case 4:
-			c.alphaChannelIndex = 3;
-			c.alphaMode = AlphaModeEnum::Opacity;
-			c.gammaSpace = GammaSpaceEnum::Gamma;
-			break;
+			case 1:
+				c.gammaSpace = GammaSpaceEnum::Gamma;
+				break;
+			case 2:
+				c.alphaChannelIndex = 1;
+				c.alphaMode = AlphaModeEnum::Opacity;
+				c.gammaSpace = GammaSpaceEnum::Gamma;
+				break;
+			case 3:
+				c.gammaSpace = GammaSpaceEnum::Gamma;
+				break;
+			case 4:
+				c.alphaChannelIndex = 3;
+				c.alphaMode = AlphaModeEnum::Opacity;
+				c.gammaSpace = GammaSpaceEnum::Gamma;
+				break;
 		}
 		return c;
 	}
@@ -172,14 +176,14 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * impl->channels;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-			return ((uint8 *)impl->mem.data())[offset + c] / 255.f;
-		case ImageFormatEnum::U16:
-			return ((uint16 *)impl->mem.data())[offset + c] / 65535.f;
-		case ImageFormatEnum::Float:
-			return ((float *)impl->mem.data())[offset + c];
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+				return ((uint8 *)impl->mem.data())[offset + c] / 255.f;
+			case ImageFormatEnum::U16:
+				return ((uint16 *)impl->mem.data())[offset + c] / 65535.f;
+			case ImageFormatEnum::Float:
+				return ((float *)impl->mem.data())[offset + c];
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -196,17 +200,17 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * impl->channels;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-			((uint8 *)impl->mem.data())[offset + c] = numeric_cast<uint8>(saturate(v) * 255.f);
-			break;
-		case ImageFormatEnum::U16:
-			((uint16 *)impl->mem.data())[offset + c] = numeric_cast<uint16>(saturate(v) * 65535.f);
-			break;
-		case ImageFormatEnum::Float:
-			((float *)impl->mem.data())[offset + c] = v;
-			break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+				((uint8 *)impl->mem.data())[offset + c] = numeric_cast<uint8>(saturate(v) * 255.f);
+				break;
+			case ImageFormatEnum::U16:
+				((uint16 *)impl->mem.data())[offset + c] = numeric_cast<uint16>(saturate(v) * 65535.f);
+				break;
+			case ImageFormatEnum::Float:
+				((float *)impl->mem.data())[offset + c] = v;
+				break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -241,23 +245,23 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 2;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			return Vec2(p[0], p[1]) / 255;
-		}
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			return Vec2(p[0], p[1]) / 65535;
-		}
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			return Vec2(p[0], p[1]);
-		}
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				return Vec2(p[0], p[1]) / 255;
+			}
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				return Vec2(p[0], p[1]) / 65535;
+			}
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				return Vec2(p[0], p[1]);
+			}
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -269,23 +273,23 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 3;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			return Vec3(p[0], p[1], p[2]) / 255;
-		}
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			return Vec3(p[0], p[1], p[2]) / 65535;
-		}
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			return Vec3(p[0], p[1], p[2]);
-		}
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				return Vec3(p[0], p[1], p[2]) / 255;
+			}
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				return Vec3(p[0], p[1], p[2]) / 65535;
+			}
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				return Vec3(p[0], p[1], p[2]);
+			}
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -297,40 +301,80 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 4;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			return Vec4(p[0], p[1], p[2], p[3]) / 255;
-		}
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			return Vec4(p[0], p[1], p[2], p[3]) / 65535;
-		}
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			return Vec4(p[0], p[1], p[2], p[3]);
-		}
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				return Vec4(p[0], p[1], p[2], p[3]) / 255;
+			}
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				return Vec4(p[0], p[1], p[2], p[3]) / 65535;
+			}
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				return Vec4(p[0], p[1], p[2], p[3]);
+			}
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
-	Real Image::get1(const Vec2i &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get1(p[0], p[1]); }
-	Vec2 Image::get2(const Vec2i &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get2(p[0], p[1]); }
-	Vec3 Image::get3(const Vec2i &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get3(p[0], p[1]); }
-	Vec4 Image::get4(const Vec2i &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get4(p[0], p[1]); }
+	Real Image::get1(const Vec2i &p) const
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		return get1(p[0], p[1]);
+	}
+	Vec2 Image::get2(const Vec2i &p) const
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		return get2(p[0], p[1]);
+	}
+	Vec3 Image::get3(const Vec2i &p) const
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		return get3(p[0], p[1]);
+	}
+	Vec4 Image::get4(const Vec2i &p) const
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		return get4(p[0], p[1]);
+	}
 
-	void Image::get(uint32 x, uint32 y, Real &value) const { value = get1(x, y); }
-	void Image::get(uint32 x, uint32 y, Vec2 &value) const { value = get2(x, y); }
-	void Image::get(uint32 x, uint32 y, Vec3 &value) const { value = get3(x, y); }
-	void Image::get(uint32 x, uint32 y, Vec4 &value) const { value = get4(x, y); }
+	void Image::get(uint32 x, uint32 y, Real &value) const
+	{
+		value = get1(x, y);
+	}
+	void Image::get(uint32 x, uint32 y, Vec2 &value) const
+	{
+		value = get2(x, y);
+	}
+	void Image::get(uint32 x, uint32 y, Vec3 &value) const
+	{
+		value = get3(x, y);
+	}
+	void Image::get(uint32 x, uint32 y, Vec4 &value) const
+	{
+		value = get4(x, y);
+	}
 
-	void Image::get(const Vec2i &p, Real &value) const { value = get1(p); }
-	void Image::get(const Vec2i &p, Vec2 &value) const { value = get2(p); }
-	void Image::get(const Vec2i &p, Vec3 &value) const { value = get3(p); }
-	void Image::get(const Vec2i &p, Vec4 &value) const { value = get4(p); }
+	void Image::get(const Vec2i &p, Real &value) const
+	{
+		value = get1(p);
+	}
+	void Image::get(const Vec2i &p, Vec2 &value) const
+	{
+		value = get2(p);
+	}
+	void Image::get(const Vec2i &p, Vec3 &value) const
+	{
+		value = get3(p);
+	}
+	void Image::get(const Vec2i &p, Vec4 &value) const
+	{
+		value = get4(p);
+	}
 
 	void Image::set(uint32 x, uint32 y, const Real &v)
 	{
@@ -346,27 +390,30 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 2;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			Vec2 vv = saturate(v) * 255;
-			for (int i = 0; i < 2; i++)
-				p[i] = numeric_cast<uint8>(vv[i]);
-		} break;
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			Vec2 vv = saturate(v) * 65535;
-			for (int i = 0; i < 2; i++)
-				p[i] = numeric_cast<uint16>(vv[i]);
-		} break;
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			*(Vec2 *)p = v;
-		} break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				Vec2 vv = saturate(v) * 255;
+				for (int i = 0; i < 2; i++)
+					p[i] = numeric_cast<uint8>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				Vec2 vv = saturate(v) * 65535;
+				for (int i = 0; i < 2; i++)
+					p[i] = numeric_cast<uint16>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				*(Vec2 *)p = v;
+			}
+			break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -378,27 +425,30 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 3;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			Vec3 vv = saturate(v) * 255;
-			for (int i = 0; i < 3; i++)
-				p[i] = numeric_cast<uint8>(vv[i]);
-		} break;
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			Vec3 vv = saturate(v) * 65535;
-			for (int i = 0; i < 3; i++)
-				p[i] = numeric_cast<uint16>(vv[i]);
-		} break;
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			*(Vec3 *)p = v;
-		} break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				Vec3 vv = saturate(v) * 255;
+				for (int i = 0; i < 3; i++)
+					p[i] = numeric_cast<uint8>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				Vec3 vv = saturate(v) * 65535;
+				for (int i = 0; i < 3; i++)
+					p[i] = numeric_cast<uint16>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				*(Vec3 *)p = v;
+			}
+			break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
@@ -410,34 +460,53 @@ namespace cage
 		uint32 offset = (y * impl->width + x) * 4;
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-		{
-			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			Vec4 vv = saturate(v) * 255;
-			for (int i = 0; i < 4; i++)
-				p[i] = numeric_cast<uint8>(vv[i]);
-		} break;
-		case ImageFormatEnum::U16:
-		{
-			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			Vec4 vv = saturate(v) * 65535;
-			for (int i = 0; i < 4; i++)
-				p[i] = numeric_cast<uint16>(vv[i]);
-		} break;
-		case ImageFormatEnum::Float:
-		{
-			float *p = ((float *)impl->mem.data()) + offset;
-			*(Vec4 *)p = v;
-		} break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			case ImageFormatEnum::U8:
+			{
+				uint8 *p = ((uint8 *)impl->mem.data()) + offset;
+				Vec4 vv = saturate(v) * 255;
+				for (int i = 0; i < 4; i++)
+					p[i] = numeric_cast<uint8>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::U16:
+			{
+				uint16 *p = ((uint16 *)impl->mem.data()) + offset;
+				Vec4 vv = saturate(v) * 65535;
+				for (int i = 0; i < 4; i++)
+					p[i] = numeric_cast<uint16>(vv[i]);
+			}
+			break;
+			case ImageFormatEnum::Float:
+			{
+				float *p = ((float *)impl->mem.data()) + offset;
+				*(Vec4 *)p = v;
+			}
+			break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
 
-	void Image::set(const Vec2i &p, const Real &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
-	void Image::set(const Vec2i &p, const Vec2 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
-	void Image::set(const Vec2i &p, const Vec3 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
-	void Image::set(const Vec2i &p, const Vec4 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
+	void Image::set(const Vec2i &p, const Real &value)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		set(p[0], p[1], value);
+	}
+	void Image::set(const Vec2i &p, const Vec2 &value)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		set(p[0], p[1], value);
+	}
+	void Image::set(const Vec2i &p, const Vec3 &value)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		set(p[0], p[1], value);
+	}
+	void Image::set(const Vec2i &p, const Vec4 &value)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		set(p[0], p[1], value);
+	}
 
 	PointerRange<const uint8> Image::rawViewU8() const
 	{
@@ -471,11 +540,16 @@ namespace cage
 		{
 			switch (format)
 			{
-			case ImageFormatEnum::U8: return "u8";
-			case ImageFormatEnum::U16: return "u16";
-			case ImageFormatEnum::Float: return "float";
-			case ImageFormatEnum::Default: return "default";
-			default: return "unknown";
+				case ImageFormatEnum::U8:
+					return "u8";
+				case ImageFormatEnum::U16:
+					return "u16";
+				case ImageFormatEnum::Float:
+					return "float";
+				case ImageFormatEnum::Default:
+					return "default";
+				default:
+					return "unknown";
 			}
 		}
 
@@ -483,10 +557,14 @@ namespace cage
 		{
 			switch (space)
 			{
-			case GammaSpaceEnum::None: return "none";
-			case GammaSpaceEnum::Gamma: return "gamma";
-			case GammaSpaceEnum::Linear: return "linear";
-			default: return "unknown";
+				case GammaSpaceEnum::None:
+					return "none";
+				case GammaSpaceEnum::Gamma:
+					return "gamma";
+				case GammaSpaceEnum::Linear:
+					return "linear";
+				default:
+					return "unknown";
 			}
 		}
 
@@ -494,10 +572,14 @@ namespace cage
 		{
 			switch (mode)
 			{
-			case AlphaModeEnum::None: return "none";
-			case AlphaModeEnum::Opacity: return "opacity";
-			case AlphaModeEnum::PremultipliedOpacity: return "premultiplied opacity";
-			default: return "unknown";
+				case AlphaModeEnum::None:
+					return "none";
+				case AlphaModeEnum::Opacity:
+					return "opacity";
+				case AlphaModeEnum::PremultipliedOpacity:
+					return "premultiplied opacity";
+				default:
+					return "unknown";
 			}
 		}
 	}

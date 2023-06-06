@@ -1,28 +1,28 @@
-#include <cage-core/swapBufferGuard.h>
-#include <cage-core/entitiesVisitor.h>
-#include <cage-core/assetOnDemand.h>
 #include <cage-core/assetManager.h>
-#include <cage-core/entitiesCopy.h>
-#include <cage-core/hashString.h>
-#include <cage-core/entities.h>
+#include <cage-core/assetOnDemand.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
+#include <cage-core/entities.h>
+#include <cage-core/entitiesCopy.h>
+#include <cage-core/entitiesVisitor.h>
+#include <cage-core/hashString.h>
+#include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
 
+#include <cage-engine/frameBuffer.h>
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/model.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/renderPipeline.h>
-#include <cage-engine/virtualReality.h>
-#include <cage-engine/graphicsError.h>
-#include <cage-engine/shaderProgram.h>
-#include <cage-engine/frameBuffer.h>
 #include <cage-engine/renderQueue.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/window.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/scene.h>
-#include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
-#include <cage-engine/model.h>
+#include <cage-engine/sceneVirtualReality.h>
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/virtualReality.h>
+#include <cage-engine/window.h>
 
 #include "engine.h"
 #include "interpolationTimingCorrector.h"
@@ -50,15 +50,9 @@ namespace cage
 			RenderPipelineResult outputs;
 			bool order = false;
 
-			void operator() ()
-			{
-				outputs = pipeline->render(inputs);
-			}
+			void operator()() { outputs = pipeline->render(inputs); }
 
-			bool operator < (const CameraData &other) const
-			{
-				return order < other.order;
-			}
+			bool operator<(const CameraData &other) const { return order < other.order; }
 		};
 
 		Transform modelTransform(Entity *e, Real interpolationFactor)
@@ -80,13 +74,15 @@ namespace cage
 		{
 			switch (data.cameraType)
 			{
-			case CameraTypeEnum::Orthographic:
-			{
-				const Vec2 &os = data.camera.orthographicSize;
-				return orthographicProjection(-os[0], os[0], -os[1], os[1], data.near, data.far);
-			}
-			case CameraTypeEnum::Perspective: return perspectiveProjection(data.camera.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
-			default: CAGE_THROW_ERROR(Exception, "invalid camera type");
+				case CameraTypeEnum::Orthographic:
+				{
+					const Vec2 &os = data.camera.orthographicSize;
+					return orthographicProjection(-os[0], os[0], -os[1], os[1], data.near, data.far);
+				}
+				case CameraTypeEnum::Perspective:
+					return perspectiveProjection(data.camera.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
 		}
 
@@ -100,16 +96,17 @@ namespace cage
 			LodSelection res;
 			switch (data.cameraType)
 			{
-			case CameraTypeEnum::Orthographic:
-			{
-				res.screenSize = data.camera.orthographicSize[1] * screenHeight;
-				res.orthographic = true;
-			} break;
-			case CameraTypeEnum::Perspective:
-				res.screenSize = perspectiveScreenSize(data.camera.perspectiveFov, screenHeight);
+				case CameraTypeEnum::Orthographic:
+				{
+					res.screenSize = data.camera.orthographicSize[1] * screenHeight;
+					res.orthographic = true;
+				}
 				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "invalid camera type");
+				case CameraTypeEnum::Perspective:
+					res.screenSize = perspectiveScreenSize(data.camera.perspectiveFov, screenHeight);
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
 			return res;
 		}
@@ -230,31 +227,34 @@ namespace cage
 				uint32 windowOutputs = 0;
 				const bool enabled = windowResolution[0] > 0 || windowResolution[1] > 0;
 
-				entitiesVisitor([&](Entity *e, const CameraComponent &cam) {
-					if (!enabled)
-					{
-						if (!cam.target)
-							return; // no rendering into minimized window
-						if (!vrFrame)
-							return; // no intermediate renders are used
-					}
-					CameraData data;
-					data.pipeline = eb.pipeline.share();
-					data.inputs.camera = cam;
-					if (e->has<ScreenSpaceEffectsComponent>())
-						data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
-					data.inputs.effects.gamma = Real(confRenderGamma);
-					data.inputs.name = Stringizer() + "camera_" + e->name();
-					data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
-					data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
-					data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
-					data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
-					data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
-					data.inputs.lodSelection.center = data.inputs.transform.position;
-					data.order = !cam.target;
-					cameras.push_back(std::move(data));
-					windowOutputs += cam.target ? 0 : 1;
-				}, +eb.scene, false);
+				entitiesVisitor(
+				    [&](Entity *e, const CameraComponent &cam)
+				    {
+					    if (!enabled)
+					    {
+						    if (!cam.target)
+							    return; // no rendering into minimized window
+						    if (!vrFrame)
+							    return; // no intermediate renders are used
+					    }
+					    CameraData data;
+					    data.pipeline = eb.pipeline.share();
+					    data.inputs.camera = cam;
+					    if (e->has<ScreenSpaceEffectsComponent>())
+						    data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
+					    data.inputs.effects.gamma = Real(confRenderGamma);
+					    data.inputs.name = Stringizer() + "camera_" + e->name();
+					    data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
+					    data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
+					    data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
+					    data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
+					    data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
+					    data.inputs.lodSelection.center = data.inputs.transform.position;
+					    data.order = !cam.target;
+					    cameras.push_back(std::move(data));
+					    windowOutputs += cam.target ? 0 : 1;
+				    },
+				    +eb.scene, false);
 				CAGE_ASSERT(windowOutputs <= 1);
 
 				if (vrFrame)
@@ -388,11 +388,13 @@ namespace cage
 			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
 			{
 				const String name = Stringizer() + prefix + "_" + resolution;
-				TextureHandle tex = engineProvisonalGraphics()->texture(name, [resolution](Texture *tex) {
-					tex->initialize(resolution, 1, GL_RGB8);
-					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					tex->filters(GL_LINEAR, GL_LINEAR, 0);
-				});
+				TextureHandle tex = engineProvisonalGraphics()->texture(name,
+				    [resolution](Texture *tex)
+				    {
+					    tex->initialize(resolution, 1, GL_RGB8);
+					    tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					    tex->filters(GL_LINEAR, GL_LINEAR, 0);
+				    });
 				return tex;
 			}
 
@@ -400,7 +402,7 @@ namespace cage
 			{
 				CAGE_ASSERT(vrFrame);
 				CAGE_ASSERT(vrFrame->cameras.size() == vrTargets.size());
-				
+
 				auto assets = engineAssets();
 				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);

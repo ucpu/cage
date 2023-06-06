@@ -18,12 +18,7 @@ namespace cage
 
 		void renderRectangle(Image *png, const Vec4 &rect, const Vec3 &color)
 		{
-			renderRectangle(png,
-				numeric_cast<uint32>(rect[0] * png->width()),
-				numeric_cast<uint32>(rect[1] * png->height()),
-				numeric_cast<uint32>(rect[2] * png->width()),
-				numeric_cast<uint32>(rect[3] * png->height()),
-				color);
+			renderRectangle(png, numeric_cast<uint32>(rect[0] * png->width()), numeric_cast<uint32>(rect[1] * png->height()), numeric_cast<uint32>(rect[2] * png->width()), numeric_cast<uint32>(rect[3] * png->height()), color);
 		}
 
 		void renderRectangle(Image *png, const GuiSkinElementLayout::TextureUvOi &rects, const Vec3 &outerBorder, const Vec3 &innerBorder, const Vec3 &content)

@@ -1,10 +1,10 @@
 #include <cage-core/assetContext.h>
-#include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
 
-#include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>
 
 namespace cage
@@ -15,13 +15,20 @@ namespace cage
 		{
 			switch (s)
 			{
-			case TextureSwizzleEnum::Zero: return GL_ZERO;
-			case TextureSwizzleEnum::One: return GL_ONE;
-			case TextureSwizzleEnum::R: return GL_RED;
-			case TextureSwizzleEnum::G: return GL_GREEN;
-			case TextureSwizzleEnum::B: return GL_BLUE;
-			case TextureSwizzleEnum::A: return GL_ALPHA;
-			default: CAGE_THROW_ERROR(Exception, "invalid TextureSwizzleEnum value");
+				case TextureSwizzleEnum::Zero:
+					return GL_ZERO;
+				case TextureSwizzleEnum::One:
+					return GL_ONE;
+				case TextureSwizzleEnum::R:
+					return GL_RED;
+				case TextureSwizzleEnum::G:
+					return GL_GREEN;
+				case TextureSwizzleEnum::B:
+					return GL_BLUE;
+				case TextureSwizzleEnum::A:
+					return GL_ALPHA;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid TextureSwizzleEnum value");
 			}
 		}
 

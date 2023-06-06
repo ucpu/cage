@@ -1,5 +1,5 @@
-#include <cage-engine/guiBuilder.h>
 #include <cage-core/entities.h>
+#include <cage-engine/guiBuilder.h>
 
 #include <vector>
 
@@ -56,7 +56,7 @@ namespace cage
 			std::swap(e, other.e);
 		}
 
-		BuilderItem &BuilderItem::operator = (BuilderItem &other) noexcept
+		BuilderItem &BuilderItem::operator=(BuilderItem &other) noexcept
 		{
 			CAGE_ASSERT(this != &other);
 			std::swap(g, other.g);
@@ -64,7 +64,7 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem &BuilderItem::operator = (BuilderItem &&other) noexcept
+		BuilderItem &BuilderItem::operator=(BuilderItem &&other) noexcept
 		{
 			CAGE_ASSERT(this != &other);
 			std::swap(g, other.g);
@@ -87,12 +87,12 @@ namespace cage
 			return e;
 		}
 
-		Entity *BuilderItem::operator -> () const
+		Entity *BuilderItem::operator->() const
 		{
 			return entity();
 		}
 
-		Entity &BuilderItem::operator * () const
+		Entity &BuilderItem::operator*() const
 		{
 			return *entity();
 		}

@@ -1,7 +1,7 @@
 #include "image.h"
 
-#include <cage-core/serialization.h>
 #include <cage-core/endianness.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {
@@ -11,32 +11,34 @@ namespace cage
 		{
 			switch (impl->format)
 			{
-			case ImageFormatEnum::U8:
-			{
-				uint8 *dst = (uint8*)impl->mem.data();
-				for (uint32 ch = 0; ch < impl->channels; ch++)
-					for (uint32 y = 0; y < impl->height; y++)
-						for (uint32 x = 0; x < impl->width; x++)
-							des >> dst[(y * impl->width + x) * impl->channels + ch];
-			} break;
-			case ImageFormatEnum::U16:
-			{
-				uint16 *dst = (uint16*)impl->mem.data();
-				for (uint32 ch = 0; ch < impl->channels; ch++)
+				case ImageFormatEnum::U8:
 				{
-					for (uint32 y = 0; y < impl->height; y++)
+					uint8 *dst = (uint8 *)impl->mem.data();
+					for (uint32 ch = 0; ch < impl->channels; ch++)
+						for (uint32 y = 0; y < impl->height; y++)
+							for (uint32 x = 0; x < impl->width; x++)
+								des >> dst[(y * impl->width + x) * impl->channels + ch];
+				}
+				break;
+				case ImageFormatEnum::U16:
+				{
+					uint16 *dst = (uint16 *)impl->mem.data();
+					for (uint32 ch = 0; ch < impl->channels; ch++)
 					{
-						for (uint32 x = 0; x < impl->width; x++)
+						for (uint32 y = 0; y < impl->height; y++)
 						{
-							uint16 &d = dst[(y * impl->width + x) * impl->channels + ch];
-							des >> d;
-							d = endianness::change(d);
+							for (uint32 x = 0; x < impl->width; x++)
+							{
+								uint16 &d = dst[(y * impl->width + x) * impl->channels + ch];
+								des >> d;
+								d = endianness::change(d);
+							}
 						}
 					}
 				}
-			} break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported image format in psd decoding");
+				break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported image format in psd decoding");
 			}
 		}
 
@@ -92,24 +94,26 @@ namespace cage
 		{
 			switch (impl->format)
 			{
-			case ImageFormatEnum::U8:
-			{
-				const uint8 *src = (uint8*)impl->mem.data();
-				for (uint32 ch = 0; ch < impl->channels; ch++)
-					for (uint32 y = 0; y < impl->height; y++)
-						for (uint32 x = 0; x < impl->width; x++)
-							ser << src[(y * impl->width + x) * impl->channels + ch];
-			} break;
-			case ImageFormatEnum::U16:
-			{
-				const uint16 *src = (uint16*)impl->mem.data();
-				for (uint32 ch = 0; ch < impl->channels; ch++)
-					for (uint32 y = 0; y < impl->height; y++)
-						for (uint32 x = 0; x < impl->width; x++)
-							ser << endianness::change<uint16>(src[(y * impl->width + x) * impl->channels + ch]);
-			} break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported image format for psd encoding");
+				case ImageFormatEnum::U8:
+				{
+					const uint8 *src = (uint8 *)impl->mem.data();
+					for (uint32 ch = 0; ch < impl->channels; ch++)
+						for (uint32 y = 0; y < impl->height; y++)
+							for (uint32 x = 0; x < impl->width; x++)
+								ser << src[(y * impl->width + x) * impl->channels + ch];
+				}
+				break;
+				case ImageFormatEnum::U16:
+				{
+					const uint16 *src = (uint16 *)impl->mem.data();
+					for (uint32 ch = 0; ch < impl->channels; ch++)
+						for (uint32 y = 0; y < impl->height; y++)
+							for (uint32 x = 0; x < impl->width; x++)
+								ser << endianness::change<uint16>(src[(y * impl->width + x) * impl->channels + ch]);
+				}
+				break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported image format for psd encoding");
 			}
 		}
 	}
@@ -129,11 +133,11 @@ namespace cage
 		version = endianness::change(version);
 		switch (version)
 		{
-		case 1:
-		case 2:
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");
+			case 1:
+			case 2:
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");
 		}
 
 		// reserved
@@ -159,14 +163,14 @@ namespace cage
 			depth = endianness::change(depth);
 			switch (depth)
 			{
-			case 8:
-				impl->format = ImageFormatEnum::U8;
-				break;
-			case 16:
-				impl->format = ImageFormatEnum::U16;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported depth in psd decoding");
+				case 8:
+					impl->format = ImageFormatEnum::U8;
+					break;
+				case 16:
+					impl->format = ImageFormatEnum::U16;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported depth in psd decoding");
 			}
 		}
 
@@ -192,22 +196,24 @@ namespace cage
 		// layer and mask information section
 		switch (version)
 		{
-		case 1:
-		{
-			uint32 len;
-			des >> len;
-			len = endianness::change(len);
-			des.read(len); // ignore
-		} break;
-		case 2:
-		{
-			uint64 len;
-			des >> len;
-			len = endianness::change(len);
-			des.read(numeric_cast<uintPtr>(len)); // ignore
-		} break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");
+			case 1:
+			{
+				uint32 len;
+				des >> len;
+				len = endianness::change(len);
+				des.read(len); // ignore
+			}
+			break;
+			case 2:
+			{
+				uint64 len;
+				des >> len;
+				len = endianness::change(len);
+				des.read(numeric_cast<uintPtr>(len)); // ignore
+			}
+			break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");
 		}
 
 		// image data section
@@ -219,20 +225,20 @@ namespace cage
 		compression = endianness::change(compression);
 		switch (compression)
 		{
-		case 0:
-			decodeRaw(des, impl);
-			break;
-		case 1:
-			decodeRLE(des, impl);
-			break;
-		case 2:
-			decodeZip(des, impl, false);
-			break;
-		case 3:
-			decodeZip(des, impl, true);
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported compression method in psd decoding");
+			case 0:
+				decodeRaw(des, impl);
+				break;
+			case 1:
+				decodeRLE(des, impl);
+				break;
+			case 2:
+				decodeZip(des, impl, false);
+				break;
+			case 3:
+				decodeZip(des, impl, true);
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported compression method in psd decoding");
 		}
 
 		// color config
@@ -265,28 +271,28 @@ namespace cage
 		// depth
 		switch (impl->format)
 		{
-		case ImageFormatEnum::U8:
-			ser << endianness::change<uint16>(8);
-			break;
-		case ImageFormatEnum::U16:
-			ser << endianness::change<uint16>(16);
-			break;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported image format for psd encoding");
+			case ImageFormatEnum::U8:
+				ser << endianness::change<uint16>(8);
+				break;
+			case ImageFormatEnum::U16:
+				ser << endianness::change<uint16>(16);
+				break;
+			default:
+				CAGE_THROW_ERROR(Exception, "unsupported image format for psd encoding");
 		}
 		// color mode
 		switch (impl->channels)
 		{
-		case 1:
-			ser << endianness::change<uint16>(1); // grayscale
-			break;
-		case 3:
-		case 4:
-			ser << endianness::change<uint16>(3); // rgb
-			break;
-		default:
-			ser << endianness::change<uint16>(7); // multichannel
-			break;
+			case 1:
+				ser << endianness::change<uint16>(1); // grayscale
+				break;
+			case 3:
+			case 4:
+				ser << endianness::change<uint16>(3); // rgb
+				break;
+			default:
+				ser << endianness::change<uint16>(7); // multichannel
+				break;
 		}
 
 		// color mode data section

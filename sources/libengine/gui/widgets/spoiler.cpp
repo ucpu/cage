@@ -9,10 +9,7 @@ namespace cage
 			GuiSpoilerComponent &data;
 			bool collapsed = false;
 
-			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler))
-			{
-				ensureItemHasLayout(hierarchy);
-			}
+			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler)) { ensureItemHasLayout(hierarchy); }
 
 			void initialize() override
 			{

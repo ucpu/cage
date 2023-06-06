@@ -1,7 +1,7 @@
+#include <cage-core/concurrent.h>
+#include <cage-core/files.h>
 #include <cage-core/logger.h>
 #include <cage-core/process.h>
-#include <cage-core/files.h>
-#include <cage-core/concurrent.h>
 
 using namespace cage;
 

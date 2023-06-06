@@ -1,11 +1,11 @@
 #ifndef guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 #define guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 
-#include <cage-core/string.h> // StringComparatorFast
 #include <cage-core/config.h>
+#include <cage-core/string.h> // StringComparatorFast
 
-#include <set>
 #include <map>
+#include <set>
 
 using namespace cage;
 
@@ -29,8 +29,8 @@ struct SchemeField
 	bool valid() const;
 	bool applyToAssetField(String &val, const String &assetName) const;
 
-	friend Serializer &operator << (Serializer &ser, const SchemeField &s);
-	friend Deserializer &operator >> (Deserializer &des, SchemeField &s);
+	friend Serializer &operator<<(Serializer &ser, const SchemeField &s);
+	friend Deserializer &operator>>(Deserializer &des, SchemeField &s);
 };
 
 struct Scheme
@@ -43,8 +43,8 @@ struct Scheme
 	void parse(Ini *ini);
 	bool applyOnAsset(struct Asset &ass);
 
-	friend Serializer &operator << (Serializer &ser, const Scheme &s);
-	friend Deserializer &operator >> (Deserializer &des, Scheme &s);
+	friend Serializer &operator<<(Serializer &ser, const Scheme &s);
+	friend Deserializer &operator>>(Deserializer &des, Scheme &s);
 };
 
 struct Asset
@@ -62,8 +62,8 @@ struct Asset
 	uint32 outputPath() const;
 	uint32 aliasPath() const;
 
-	friend Serializer &operator << (Serializer &ser, const Asset &s);
-	friend Deserializer &operator >> (Deserializer &des, Asset &s);
+	friend Serializer &operator<<(Serializer &ser, const Asset &s);
+	friend Deserializer &operator>>(Deserializer &des, Asset &s);
 };
 
 #endif // guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_

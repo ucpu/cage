@@ -10,8 +10,7 @@ namespace cage
 		{
 			ComboBoxImpl *combo = nullptr;
 
-			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo)
-			{}
+			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo) {}
 
 			void initialize() override;
 			void findRequestedSize() override;
@@ -27,8 +26,7 @@ namespace cage
 			uint32 count = 0;
 			uint32 selected = m;
 
-			ComboBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ComboBox))
-			{}
+			ComboBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ComboBox)) {}
 
 			void initialize() override
 			{

@@ -2,16 +2,16 @@
 #include <cage-core/string.h>
 
 #if !defined(CAGE_CORE_API)
-#error CAGE_CORE_API must be defined
+	#error CAGE_CORE_API must be defined
 #endif
 #if defined(CAGE_ARCHITECTURE_64) == defined(CAGE_ARCHITECTURE_32)
-#error exactly one of CAGE_ARCHITECTURE_64 and CAGE_ARCHITECTURE_32 must be defined
+	#error exactly one of CAGE_ARCHITECTURE_64 and CAGE_ARCHITECTURE_32 must be defined
 #endif
 #if defined(CAGE_DEBUG) == defined(NDEBUG)
-#error exactly one of CAGE_DEBUG and NDEBUG must be defined
+	#error exactly one of CAGE_DEBUG and NDEBUG must be defined
 #endif
 #if defined(CAGE_DEBUG) && !defined(CAGE_ASSERT_ENABLED)
-#error CAGE_ASSERT_ENABLED must be defined for debug builds
+	#error CAGE_ASSERT_ENABLED must be defined for debug builds
 #endif
 #if defined(CAGE_DEBUG)
 static_assert(CAGE_DEBUG_BOOL == true);
@@ -20,13 +20,13 @@ static_assert(CAGE_DEBUG_BOOL == false);
 #endif
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "incWin.h"
-#include <intrin.h> // __debugbreak
+	#include "incWin.h"
+	#include <intrin.h> // __debugbreak
 #endif
 
 #include <atomic>
-#include <exception> // std::terminate
 #include <cstring> // std::strcat
+#include <exception> // std::terminate
 #include <fstream> // std::ifstream
 #include <string> // std::getline
 
@@ -66,13 +66,19 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			return IsDebuggerPresent();
 #else
-			static bool underDebugger = []() {
+			static bool underDebugger = []()
+			{
 				try
 				{
 					FILE *f = std::fopen("/proc/self/status", "r");
 					if (!f)
 						return false;
-					struct Closer { FILE *f = nullptr; Closer(FILE *f) : f(f) {} ~Closer() { std::fclose(f); } } closer(f);
+					struct Closer
+					{
+						FILE *f = nullptr;
+						Closer(FILE *f) : f(f) {}
+						~Closer() { std::fclose(f); }
+					} closer(f);
 					String s;
 					while (std::fgets(s.rawData(), s.MaxLength, f))
 					{
@@ -108,7 +114,7 @@ namespace cage
 			String value = msg + "\n";
 			OutputDebugString(value.c_str());
 #else
-			// todo
+				// todo
 #endif
 		}
 
@@ -207,12 +213,12 @@ namespace cage
 		static_assert(sizeof(uint16) == 2);
 		static_assert(sizeof(uint32) == 4);
 		static_assert(sizeof(uint64) == 8);
-		static_assert(sizeof(uintPtr) == sizeof(void*));
+		static_assert(sizeof(uintPtr) == sizeof(void *));
 		static_assert(sizeof(sint8) == 1);
 		static_assert(sizeof(sint16) == 2);
 		static_assert(sizeof(sint32) == 4);
 		static_assert(sizeof(sint64) == 8);
-		static_assert(sizeof(sintPtr) == sizeof(void*));
+		static_assert(sizeof(sintPtr) == sizeof(void *));
 		static_assert(sizeof(bool) == 1);
 
 		static_assert(std::is_trivially_copy_constructible_v<String>);

@@ -1,7 +1,7 @@
 #include <cage-core/assetContext.h>
-#include <cage-core/serialization.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/audioAlgorithms.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
 
 #include <cage-engine/assetStructs.h>
@@ -46,15 +46,15 @@ namespace cage
 			Holder<Audio> poly = newAudio();
 			switch (snd.soundType)
 			{
-			case SoundTypeEnum::RawRaw:
-			case SoundTypeEnum::CompressedRaw:
-				poly->importRaw(des.read(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
-				break;
-			case SoundTypeEnum::CompressedCompressed:
-				poly->importBuffer(des.read(des.available()));
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "invalid sound type");
+				case SoundTypeEnum::RawRaw:
+				case SoundTypeEnum::CompressedRaw:
+					poly->importRaw(des.read(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
+					break;
+				case SoundTypeEnum::CompressedCompressed:
+					poly->importBuffer(des.read(des.available()));
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid sound type");
 			}
 
 			CAGE_ASSERT(des.available() == 0);

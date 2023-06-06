@@ -1,57 +1,96 @@
 #ifndef guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_
 #define guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_
 
+#include <compare>
 #include <cstdint>
 #include <limits>
-#include <utility>
 #include <type_traits>
-#include <compare>
+#include <utility>
 
 #ifdef GCHL_DUMMY_SOURCE_LOCATION
-#include "sourceLocationDummy.h"
+	#include "sourceLocationDummy.h"
 #else
-#include <source_location>
+	#include <source_location>
 #endif
 
 #if defined(_MSC_VER)
-#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
+	#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
 #elif defined(__clang__)
-#define CAGE_ASSUME_TRUE(EXPR) __builtin_assume((bool)(EXPR))
+	#define CAGE_ASSUME_TRUE(EXPR) __builtin_assume((bool)(EXPR))
 #else
-#define CAGE_ASSUME_TRUE(EXPR)
+	#define CAGE_ASSUME_TRUE(EXPR)
 #endif
 
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(::std::source_location::current(), #EXPR); int i_ = 42; (void)i_; } CAGE_ASSUME_TRUE(EXPR); }
+	#define CAGE_ASSERT(EXPR) \
+		{ \
+			if (!(EXPR)) \
+			{ \
+				::cage::privat::runtimeAssertFailure(::std::source_location::current(), #EXPR); \
+				int i_ = 42; \
+				(void)i_; \
+			} \
+			CAGE_ASSUME_TRUE(EXPR); \
+		}
 #else
-#define CAGE_ASSERT(EXPR) { CAGE_ASSUME_TRUE(EXPR); }
+	#define CAGE_ASSERT(EXPR) \
+		{ \
+			CAGE_ASSUME_TRUE(EXPR); \
+		}
 #endif
 
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { try { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { try { throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Critical, __VA_ARGS__); } catch (const cage::Exception &e) { e.makeLog(); throw; } }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) \
+	{ \
+		throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); \
+	}
+#define CAGE_THROW_ERROR(EXCEPTION, ...) \
+	{ \
+		try \
+		{ \
+			throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); \
+		} \
+		catch (const cage::Exception &e) \
+		{ \
+			e.makeLog(); \
+			throw; \
+		} \
+	}
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) \
+	{ \
+		try \
+		{ \
+			throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Critical, __VA_ARGS__); \
+		} \
+		catch (const cage::Exception &e) \
+		{ \
+			e.makeLog(); \
+			throw; \
+		} \
+	}
 
 #define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(::std::source_location::current(), MESSAGE)
 
 #define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, false)
 #define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, false)
 #ifdef CAGE_DEBUG
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, true)
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, true)
+	#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, true)
+	#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, true)
 #else
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
+	#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) \
+		{}
+	#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) \
+		{}
 #endif
 
 namespace cage
 {
 	// numeric types
 
-	using uint8 =  std::uint8_t;
+	using uint8 = std::uint8_t;
 	using uint16 = std::uint16_t;
 	using uint32 = std::uint32_t;
 	using uint64 = std::uint64_t;
-	using sint8 =  std::int8_t;
+	using sint8 = std::int8_t;
 	using sint16 = std::int16_t;
 	using sint32 = std::int32_t;
 	using sint64 = std::int64_t;
@@ -62,8 +101,10 @@ namespace cage
 
 	namespace detail
 	{
-		template<uint32 N> struct StringBase;
-		template<uint32 N> struct StringizerBase;
+		template<uint32 N>
+		struct StringBase;
+		template<uint32 N>
+		struct StringizerBase;
 	}
 	using String = detail::StringBase<1019>;
 	using Stringizer = detail::StringizerBase<1019>;
@@ -101,8 +142,8 @@ namespace cage
 		Immovable() = default;
 		Immovable(const Immovable &) = delete;
 		Immovable(Immovable &&) = delete;
-		Immovable &operator = (const Immovable &) = delete;
-		Immovable &operator = (Immovable &&) = delete;
+		Immovable &operator=(const Immovable &) = delete;
+		Immovable &operator=(Immovable &&) = delete;
 	};
 
 	struct CAGE_CORE_API Noncopyable
@@ -110,8 +151,8 @@ namespace cage
 		Noncopyable() = default;
 		Noncopyable(const Noncopyable &) = delete;
 		Noncopyable(Noncopyable &&) = default;
-		Noncopyable &operator = (const Noncopyable &) = delete;
-		Noncopyable &operator = (Noncopyable &&) = default;
+		Noncopyable &operator=(const Noncopyable &) = delete;
+		Noncopyable &operator=(Noncopyable &&) = default;
 	};
 
 	// string literal
@@ -119,9 +160,12 @@ namespace cage
 	struct StringPointer
 	{
 		constexpr StringPointer() = default;
-		template<uint32 N> CAGE_FORCE_INLINE constexpr StringPointer(const char(&str)[N]) noexcept : str(str) {}
+		template<uint32 N>
+		CAGE_FORCE_INLINE constexpr StringPointer(const char (&str)[N]) noexcept : str(str)
+		{}
 		CAGE_FORCE_INLINE constexpr explicit StringPointer(const char *str) noexcept : str(str) {}
 		CAGE_FORCE_INLINE constexpr operator const char *() const noexcept { return str; }
+
 	private:
 		const char *str = nullptr;
 	};
@@ -197,19 +241,19 @@ namespace cage
 		struct MaxValue
 		{
 			template<class T>
-			CAGE_FORCE_INLINE consteval operator T () const noexcept
+			CAGE_FORCE_INLINE consteval operator T() const noexcept
 			{
 				return std::numeric_limits<T>::max();
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE constexpr auto operator <=> (T rhs) const noexcept
+			CAGE_FORCE_INLINE constexpr auto operator<=>(T rhs) const noexcept
 			{
 				return std::numeric_limits<T>::max() <=> rhs;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE constexpr bool operator == (T rhs) const noexcept
+			CAGE_FORCE_INLINE constexpr bool operator==(T rhs) const noexcept
 			{
 				return std::numeric_limits<T>::max() == rhs;
 			}
@@ -220,20 +264,77 @@ namespace cage
 
 	// enum class bit operators
 
-	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
-	template<class T> constexpr bool enable_bitmask_operators_v = enable_bitmask_operators<T>::enable;
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator ~ (T lhs) noexcept { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator | (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator & (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator ^ (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator |= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator &= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr T operator ^= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs)); }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr bool any(T lhs) noexcept { return static_cast<std::underlying_type_t<T>>(lhs) != 0; }
-	template<class T> requires(enable_bitmask_operators_v<T>) CAGE_FORCE_INLINE constexpr bool none(T lhs) noexcept { return static_cast<std::underlying_type_t<T>>(lhs) == 0; }
+	template<class T>
+	struct enable_bitmask_operators
+	{
+		static constexpr bool enable = false;
+	};
+	template<class T>
+	constexpr bool enable_bitmask_operators_v = enable_bitmask_operators<T>::enable;
+
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator~(T lhs) noexcept
+	{
+		return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator|(T lhs, T rhs) noexcept
+	{
+		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator&(T lhs, T rhs) noexcept
+	{
+		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator^(T lhs, T rhs) noexcept
+	{
+		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator|=(T &lhs, T rhs) noexcept
+	{
+		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator&=(T &lhs, T rhs) noexcept
+	{
+		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr T operator^=(T &lhs, T rhs) noexcept
+	{
+		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs));
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr bool any(T lhs) noexcept
+	{
+		return static_cast<std::underlying_type_t<T>>(lhs) != 0;
+	}
+	template<class T>
+	requires(enable_bitmask_operators_v<T>)
+	CAGE_FORCE_INLINE constexpr bool none(T lhs) noexcept
+	{
+		return static_cast<std::underlying_type_t<T>>(lhs) == 0;
+	}
 
 	// this macro has to be used inside namespace cage
-#define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static_assert(std::is_enum_v<TYPE>); static constexpr bool enable = true; };
+#define GCHL_ENUM_BITS(TYPE) \
+	template<> \
+	struct enable_bitmask_operators<TYPE> \
+	{ \
+		static_assert(std::is_enum_v<TYPE>); \
+		static constexpr bool enable = true; \
+	};
 
 	// exceptions
 
@@ -268,8 +369,16 @@ namespace cage
 	namespace privat
 	{
 		// this can be moved directly into the PointerRange once compilers implemented CWG 727
-		template<class K> struct TerminalZero { static constexpr int value = 0; };
-		template<> struct TerminalZero<char> { static constexpr int value = -1; };
+		template<class K>
+		struct TerminalZero
+		{
+			static constexpr int value = 0;
+		};
+		template<>
+		struct TerminalZero<char>
+		{
+			static constexpr int value = -1;
+		};
 	}
 
 	template<class T>
@@ -287,18 +396,27 @@ namespace cage
 		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
-		CAGE_FORCE_INLINE constexpr PointerRange(T(&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
-		template<class U> requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
-		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
-		template<class U> requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
-		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value)
+		{}
+		template<class U>
+		requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
+		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size())
+		{}
+		template<class U>
+		requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
+		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size())
+		{}
 
 		CAGE_FORCE_INLINE constexpr T *begin() const noexcept { return begin_; }
 		CAGE_FORCE_INLINE constexpr T *end() const noexcept { return end_; }
 		CAGE_FORCE_INLINE constexpr T *data() const noexcept { return begin_; }
 		CAGE_FORCE_INLINE constexpr size_type size() const noexcept { return end_ - begin_; }
 		CAGE_FORCE_INLINE constexpr bool empty() const noexcept { return size() == 0; }
-		CAGE_FORCE_INLINE constexpr T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
+		CAGE_FORCE_INLINE constexpr T &operator[](size_type idx) const
+		{
+			CAGE_ASSERT(idx < size());
+			return begin_[idx];
+		}
 
 		template<class M>
 		CAGE_FORCE_INLINE constexpr PointerRange<M> cast() const noexcept
@@ -373,8 +491,8 @@ namespace cage
 	namespace privat
 	{
 #define GCHL_GENERATE(TYPE) \
-		CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value); \
-		CAGE_CORE_API void fromString(const PointerRange<const char> &str, TYPE &value);
+	CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value); \
+	CAGE_CORE_API void fromString(const PointerRange<const char> &str, TYPE &value);
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -468,18 +586,12 @@ namespace cage
 				current = 1;
 			}
 
-			CAGE_FORCE_INLINE explicit constexpr StringBase(char *other)
-			{
-				current = privat::toString(value, N, other);
-			}
+			CAGE_FORCE_INLINE explicit constexpr StringBase(char *other) { current = privat::toString(value, N, other); }
 
-			CAGE_FORCE_INLINE constexpr StringBase(const char *other)
-			{
-				current = privat::toString(value, N, other);
-			}
+			CAGE_FORCE_INLINE constexpr StringBase(const char *other) { current = privat::toString(value, N, other); }
 
 			// compound operators
-			constexpr StringBase &operator += (const StringBase &other)
+			constexpr StringBase &operator+=(const StringBase &other)
 			{
 				if (current + other.current > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
@@ -491,32 +603,22 @@ namespace cage
 			}
 
 			// binary operators
-			CAGE_FORCE_INLINE constexpr StringBase operator + (const StringBase &other) const
-			{
-				return StringBase(*this) += other;
-			}
+			CAGE_FORCE_INLINE constexpr StringBase operator+(const StringBase &other) const { return StringBase(*this) += other; }
 
-			CAGE_FORCE_INLINE constexpr char &operator [] (uint32 idx)
+			CAGE_FORCE_INLINE constexpr char &operator[](uint32 idx)
 			{
 				CAGE_ASSERT(idx < current);
 				return value[idx];
 			}
 
-			CAGE_FORCE_INLINE constexpr const char &operator [] (uint32 idx) const
+			CAGE_FORCE_INLINE constexpr const char &operator[](uint32 idx) const
 			{
 				CAGE_ASSERT(idx < current);
 				return value[idx];
 			}
 
-			CAGE_FORCE_INLINE constexpr auto operator <=> (const StringBase &other) const noexcept
-			{
-				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) <=> 0;
-			}
-
-			CAGE_FORCE_INLINE constexpr bool operator == (const StringBase &other) const noexcept
-			{
-				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) == 0;
-			}
+			CAGE_FORCE_INLINE constexpr auto operator<=>(const StringBase &other) const noexcept { return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) <=> 0; }
+			CAGE_FORCE_INLINE constexpr bool operator==(const StringBase &other) const noexcept { return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) == 0; }
 
 			// methods
 			CAGE_FORCE_INLINE constexpr const char *c_str() const
@@ -525,45 +627,14 @@ namespace cage
 				return value;
 			}
 
-			CAGE_FORCE_INLINE constexpr const char *begin() const noexcept
-			{
-				return value;
-			}
-
-			CAGE_FORCE_INLINE constexpr const char *end() const noexcept
-			{
-				return value + current;
-			}
-
-			CAGE_FORCE_INLINE constexpr const char *data() const noexcept
-			{
-				return value;
-			}
-
-			CAGE_FORCE_INLINE constexpr uint32 size() const noexcept
-			{
-				return current;
-			}
-
-			CAGE_FORCE_INLINE constexpr uint32 length() const noexcept
-			{
-				return current;
-			}
-
-			CAGE_FORCE_INLINE constexpr bool empty() const noexcept
-			{
-				return current == 0;
-			}
-
-			CAGE_FORCE_INLINE constexpr char *rawData() noexcept
-			{
-				return value;
-			}
-
-			CAGE_FORCE_INLINE constexpr uint32 &rawLength() noexcept
-			{
-				return current;
-			}
+			CAGE_FORCE_INLINE constexpr const char *begin() const noexcept { return value; }
+			CAGE_FORCE_INLINE constexpr const char *end() const noexcept { return value + current; }
+			CAGE_FORCE_INLINE constexpr const char *data() const noexcept { return value; }
+			CAGE_FORCE_INLINE constexpr uint32 size() const noexcept { return current; }
+			CAGE_FORCE_INLINE constexpr uint32 length() const noexcept { return current; }
+			CAGE_FORCE_INLINE constexpr bool empty() const noexcept { return current == 0; }
+			CAGE_FORCE_INLINE constexpr char *rawData() noexcept { return value; }
+			CAGE_FORCE_INLINE constexpr uint32 &rawLength() noexcept { return current; }
 
 			static constexpr uint32 MaxLength = N;
 			using value_type = char;
@@ -579,44 +650,44 @@ namespace cage
 			StringBase<N> value;
 
 			template<uint32 M>
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const StringizerBase<M> &other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const StringizerBase<M> &other)
 			{
 				value += other.value;
 				return *this;
 			}
 
 			template<uint32 M>
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const StringBase<M> &other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const StringBase<M> &other)
 			{
 				value += other;
 				return *this;
 			}
 
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const char *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const char *other)
 			{
 				value += other;
 				return *this;
 			}
 
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (char *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(char *other)
 			{
 				value += other;
 				return *this;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (T *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(T *other)
 			{
 				return *this + (uintPtr)other;
 			}
 
 #define GCHL_GENERATE(TYPE, SIZE) \
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (TYPE other) \
-			{ \
-				StringBase<SIZE> tmp; \
-				tmp.rawLength() = privat::toString(tmp.rawData(), SIZE, other); \
-				return *this + tmp; \
-			}
+	CAGE_FORCE_INLINE StringizerBase<N> &operator+(TYPE other) \
+	{ \
+		StringBase<SIZE> tmp; \
+		tmp.rawLength() = privat::toString(tmp.rawData(), SIZE, other); \
+		return *this + tmp; \
+	}
 			GCHL_GENERATE(char, 4);
 			GCHL_GENERATE(sint8, 4);
 			GCHL_GENERATE(sint16, 6);
@@ -631,15 +702,16 @@ namespace cage
 			GCHL_GENERATE(bool, 5);
 #undef GCHL_GENERATE
 
-			// allow to use l-value-reference operator overloads with r-value-reference stringizer
+			// allow to use l-value-reference operator overloads with r-value-reference Stringizer
 			template<class T>
-			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const T &other) &&
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const T &other) &&
 			{
 				return *this + other;
 			}
 		};
 
-		template<uint32 N> template<uint32 M>
+		template<uint32 N>
+		template<uint32 M>
 		CAGE_FORCE_INLINE constexpr StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
 		{}
 	}
@@ -653,29 +725,30 @@ namespace cage
 	struct Delegate<R(Ts...)>
 	{
 	private:
-		R(*fnc)(void *, Ts...) = nullptr;
+		R (*fnc)(void *, Ts...) = nullptr;
 		void *inst = nullptr;
 
 	public:
 		constexpr Delegate() noexcept = default;
 		constexpr Delegate(const Delegate &) noexcept = default;
-		constexpr Delegate &operator = (const Delegate &) noexcept = default;
+		constexpr Delegate &operator=(const Delegate &) noexcept = default;
 
-		template<class Callable> requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
+		template<class Callable>
+		requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
 		Delegate(Callable &&callable) noexcept
 		{
 			bind(std::move(callable));
 		}
 
-		template<class Callable> requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
+		template<class Callable>
+		requires(std::is_invocable_r_v<R, Callable, Ts...> && !std::is_same_v<std::remove_cvref_t<Callable>, std::remove_cvref_t<Delegate<R(Ts...)>>>)
 		Delegate &bind(Callable &&callable) noexcept
 		{
-			auto l = [cl = std::move(callable)](Ts... vs) {
-				return (cl)(std::forward<Ts>(vs)...);
-			};
+			auto l = [cl = std::move(callable)](Ts... vs) { return (cl)(std::forward<Ts>(vs)...); };
 			using L = decltype(l);
 			static_assert(sizeof(L) <= sizeof(void *) && std::is_trivially_copyable_v<L> && std::is_trivially_destructible_v<L>);
-			fnc = +[](void *inst, Ts... vs) {
+			fnc = +[](void *inst, Ts... vs)
+			{
 				L l = *(L *)(&inst);
 				return (l)(std::forward<Ts>(vs)...);
 			};
@@ -683,20 +756,20 @@ namespace cage
 			return *this;
 		}
 
-		template<R(*F)(Ts...)>
+		template<R (*F)(Ts...)>
 		constexpr Delegate &bind() noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) {
-				return (F)(std::forward<Ts>(vs)...);
-			};
+			fnc = +[](void *inst, Ts... vs) { return (F)(std::forward<Ts>(vs)...); };
 			return *this;
 		}
 
-		template<class D, R(*F)(D, Ts...)> requires(sizeof(D) <= sizeof(void*) && std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>)
+		template<class D, R (*F)(D, Ts...)>
+		requires(sizeof(D) <= sizeof(void *) && std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>)
 		Delegate &bind(D d) noexcept
 		{
 			static_assert(sizeof(D) > 0);
-			fnc = +[](void *inst, Ts... vs) {
+			fnc = +[](void *inst, Ts... vs)
+			{
 				D d;
 				detail::memcpy(&d, &inst, sizeof(D));
 				return (F)(d, std::forward<Ts>(vs)...);
@@ -705,30 +778,23 @@ namespace cage
 			return *this;
 		}
 
-		template<class C, R(C::*F)(Ts...)>
+		template<class C, R (C::*F)(Ts...)>
 		Delegate &bind(C *i) noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) {
-				return (((C*)inst)->*F)(std::forward<Ts>(vs)...);
-			};
+			fnc = +[](void *inst, Ts... vs) { return (((C *)inst)->*F)(std::forward<Ts>(vs)...); };
 			inst = i;
 			return *this;
 		}
 
-		template<class C, R(C::*F)(Ts...) const>
+		template<class C, R (C::*F)(Ts...) const>
 		Delegate &bind(const C *i) noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) {
-				return (((const C*)inst)->*F)(std::forward<Ts>(vs)...);
-			};
-			inst = const_cast<C*>(i);
+			fnc = +[](void *inst, Ts... vs) { return (((const C *)inst)->*F)(std::forward<Ts>(vs)...); };
+			inst = const_cast<C *>(i);
 			return *this;
 		}
 
-		CAGE_FORCE_INLINE constexpr explicit operator bool() const noexcept
-		{
-			return !!fnc;
-		}
+		CAGE_FORCE_INLINE constexpr explicit operator bool() const noexcept { return !!fnc; }
 
 		CAGE_FORCE_INLINE constexpr void clear() noexcept
 		{
@@ -736,18 +802,19 @@ namespace cage
 			fnc = nullptr;
 		}
 
-		CAGE_FORCE_INLINE constexpr R operator ()(Ts... vs) const
+		CAGE_FORCE_INLINE constexpr R operator()(Ts... vs) const
 		{
 			CAGE_ASSERT(!!*this);
 			return fnc(inst, std::forward<Ts>(vs)...);
 		}
 
-		constexpr bool operator == (const Delegate &other) const noexcept = default;
+		constexpr bool operator==(const Delegate &) const noexcept = default;
 	};
 
 	// holder
 
-	template<class T> struct Holder;
+	template<class T>
+	struct Holder;
 
 	namespace privat
 	{
@@ -757,6 +824,7 @@ namespace cage
 			void *deletee = nullptr;
 			void inc();
 			void dec();
+
 		private:
 			alignas(4) volatile uint32 counter = 0;
 		};
@@ -778,10 +846,9 @@ namespace cage
 				base.control_ = nullptr;
 			}
 
-			HolderBase(HolderBase &&other) noexcept : HolderBase(other.data_, std::move(other))
-			{}
+			HolderBase(HolderBase &&other) noexcept : HolderBase(other.data_, std::move(other)) {}
 
-			HolderBase &operator = (HolderBase &&other) noexcept
+			HolderBase &operator=(HolderBase &&other) noexcept
 			{
 				HolderBase tmp(other.share());
 				clear();
@@ -790,38 +857,26 @@ namespace cage
 				return *this;
 			}
 
-			~HolderBase()
-			{
-				clear();
-			}
+			~HolderBase() { clear(); }
 
-			CAGE_FORCE_INLINE explicit operator bool() const noexcept
-			{
-				return !!data_;
-			}
+			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!data_; }
 
-			CAGE_FORCE_INLINE T *operator -> () const
+			CAGE_FORCE_INLINE T *operator->() const
 			{
 				CAGE_ASSERT(data_);
 				return data_;
 			}
 
 			template<bool Enable = !std::is_same_v<T, void>>
-			CAGE_FORCE_INLINE typename std::enable_if_t<Enable, T> &operator * () const
+			CAGE_FORCE_INLINE typename std::enable_if_t<Enable, T> &operator*() const
 			{
 				CAGE_ASSERT(data_);
 				return *data_;
 			}
 
-			CAGE_FORCE_INLINE T *get() const noexcept
-			{
-				return data_;
-			}
+			CAGE_FORCE_INLINE T *get() const noexcept { return data_; }
 
-			CAGE_FORCE_INLINE T *operator + () const noexcept
-			{
-				return data_;
-			}
+			CAGE_FORCE_INLINE T *operator+() const noexcept { return data_; }
 
 			void clear()
 			{
@@ -833,10 +888,7 @@ namespace cage
 					tmpCtrl->dec();
 			}
 
-			CAGE_FORCE_INLINE Holder<T> share() const
-			{
-				return Holder<T>(data_, control_);
-			}
+			CAGE_FORCE_INLINE Holder<T> share() const { return Holder<T>(data_, control_); }
 
 		protected:
 			T *data_ = nullptr;
@@ -855,7 +907,7 @@ namespace cage
 		template<class M>
 		Holder<M> dynCast() &&
 		{
-			M *m = dynamic_cast<M*>(this->data_);
+			M *m = dynamic_cast<M *>(this->data_);
 			if (!m && this->data_)
 				CAGE_THROW_ERROR(Exception, "bad dynamic cast");
 			return Holder<M>(m, std::move(*this));
@@ -864,13 +916,10 @@ namespace cage
 		template<class M>
 		Holder<M> cast() &&
 		{
-			return Holder<M>(static_cast<M*>(this->data_), std::move(*this));
+			return Holder<M>(static_cast<M *>(this->data_), std::move(*this));
 		}
 
-		CAGE_FORCE_INLINE operator Holder<const T>() &&
-		{
-			return Holder<const T>((const T*)this->data_, std::move(*this));
-		}
+		CAGE_FORCE_INLINE operator Holder<const T>() && { return Holder<const T>((const T *)this->data_, std::move(*this)); }
 	};
 
 	template<class T>
@@ -885,38 +934,48 @@ namespace cage
 		CAGE_FORCE_INLINE T *data() const noexcept { return begin(); }
 		CAGE_FORCE_INLINE size_type size() const noexcept { return end() - begin(); }
 		CAGE_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
-		CAGE_FORCE_INLINE T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
+		CAGE_FORCE_INLINE T &operator[](size_type idx) const
+		{
+			CAGE_ASSERT(idx < size());
+			return begin()[idx];
+		}
 
-		template<class M> requires(std::is_same_v<std::remove_cv_t<M>, void>)
+		template<class M>
+		requires(std::is_same_v<std::remove_cv_t<M>, void>)
 		Holder<void> cast() &&
 		{
 			return Holder<void>((void *)this->data_, std::move(*this));
 		}
 
-		template<class M> requires(!std::is_same_v<std::remove_cv_t<M>, void>)
+		template<class M>
+		requires(!std::is_same_v<std::remove_cv_t<M>, void>)
 		Holder<PointerRange<M>> cast() &&
 		{
 			this->data_->template cast<M>(); // verify preconditions
 			return Holder<PointerRange<M>>((PointerRange<M> *)this->data_, std::move(*this));
 		}
 
-		CAGE_FORCE_INLINE operator Holder<PointerRange<const T>>() &&
-		{
-			return Holder<PointerRange<const T>>((PointerRange<const T>*)this->data_, std::move(*this));
-		}
+		CAGE_FORCE_INLINE operator Holder<PointerRange<const T>>() && { return Holder<PointerRange<const T>>((PointerRange<const T> *)this->data_, std::move(*this)); }
 	};
 
 	// memory arena
 
 	namespace privat
 	{
-		struct OperatorNewTrait {};
+		struct OperatorNewTrait
+		{};
 		struct MemoryArenaStub;
 	}
 }
 
-CAGE_FORCE_INLINE void *operator new(std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
-CAGE_FORCE_INLINE void *operator new[](std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
+CAGE_FORCE_INLINE void *operator new(std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept
+{
+	return ptr;
+}
+CAGE_FORCE_INLINE void *operator new[](std::size_t size, void *ptr, cage::privat::OperatorNewTrait) noexcept
+{
+	return ptr;
+}
 CAGE_FORCE_INLINE void operator delete(void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
 CAGE_FORCE_INLINE void operator delete[](void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
 
@@ -944,7 +1003,7 @@ namespace cage
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try
 			{
-				return new(ptr, privat::OperatorNewTrait()) T(std::forward<Ts>(vs)...);
+				return new (ptr, privat::OperatorNewTrait()) T(std::forward<Ts>(vs)...);
 			}
 			catch (...)
 			{
@@ -990,7 +1049,7 @@ namespace cage
 			deallocate(ptr);
 		}
 
-		CAGE_FORCE_INLINE bool operator == (const MemoryArena &other) const noexcept { return inst == other.inst; }
+		CAGE_FORCE_INLINE bool operator==(const MemoryArena &other) const noexcept { return inst == other.inst; }
 	};
 
 	CAGE_CORE_API MemoryArena &systemMemory();

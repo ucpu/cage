@@ -91,11 +91,11 @@ void testExceptions()
 			}
 			catch (const Exception &e)
 			{
-#ifndef GCHL_DUMMY_SOURCE_LOCATION
+	#ifndef GCHL_DUMMY_SOURCE_LOCATION
 				CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
 				CAGE_TEST(e.location.line() == 16); // marked line number
 				CAGE_TEST(isPattern(String(e.location.function_name()), "", "assertFailureFunction", ""));
-#endif
+	#endif
 				CAGE_TEST(e.severity == SeverityEnum::Critical);
 			}
 		}

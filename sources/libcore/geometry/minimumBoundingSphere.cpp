@@ -49,10 +49,17 @@ namespace cage
 			Sphere MB = Sphere(Vec3(), -1);
 			switch (b)
 			{
-			case 1: MB = MbSphere(*P[-1]); break;
-			case 2: MB = MbSphere(*P[-1], *P[-2]); break;
-			case 3: MB = MbSphere(*P[-1], *P[-2], *P[-3]); break;
-			case 4: return MbSphere(*P[-1], *P[-2], *P[-3], *P[-4]);
+				case 1:
+					MB = MbSphere(*P[-1]);
+					break;
+				case 2:
+					MB = MbSphere(*P[-1], *P[-2]);
+					break;
+				case 3:
+					MB = MbSphere(*P[-1], *P[-2], *P[-3]);
+					break;
+				case 4:
+					return MbSphere(*P[-1], *P[-2], *P[-3], *P[-4]);
 			}
 			for (uint32 i = 0; i < p; i++)
 			{
@@ -85,10 +92,14 @@ namespace cage
 	{
 		switch (points.size())
 		{
-		case 0: return Sphere();
-		case 1: return Sphere(points[0], 0);
-		case 2: return Sphere(makeSegment(points[0], points[1]));
-		case 3: return Sphere(Triangle(points[0], points[1], points[2]));
+			case 0:
+				return Sphere();
+			case 1:
+				return Sphere(points[0], 0);
+			case 2:
+				return Sphere(makeSegment(points[0], points[1]));
+			case 3:
+				return Sphere(Triangle(points[0], points[1], points[2]));
 		}
 		std::vector<const Vec3 *> L;
 		L.resize(points.size());

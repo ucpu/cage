@@ -1,21 +1,21 @@
-#include <cage-core/ini.h>
 #include <cage-core/color.h>
 #include <cage-core/files.h>
-#include <cage-core/string.h>
+#include <cage-core/ini.h>
 #include <cage-core/meshImport.h>
-#include <cage-core/skeletalAnimation.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/skeletalAnimation.h>
+#include <cage-core/string.h>
 
-#include <assimp/scene.h>
-#include <assimp/config.h>
-#include <assimp/postprocess.h>
-#include <assimp/Importer.hpp>
+#include <assimp/DefaultLogger.hpp>
 #include <assimp/Exporter.hpp>
+#include <assimp/GltfMaterial.h>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
+#include <assimp/Importer.hpp>
 #include <assimp/LogStream.hpp>
-#include <assimp/DefaultLogger.hpp>
-#include <assimp/GltfMaterial.h>
+#include <assimp/config.h>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 
 #include <set>
 
@@ -33,8 +33,7 @@ namespace cage
 		public:
 			const cage::SeverityEnum severity;
 
-			CageLogStream(cage::SeverityEnum severity) : severity(severity)
-			{}
+			CageLogStream(cage::SeverityEnum severity) : severity(severity) {}
 
 			void write(const char *message) override
 			{
@@ -120,21 +119,23 @@ namespace cage
 		{
 			switch (primitiveTypes)
 			{
-			case aiPrimitiveType_POINT: return 1;
-			case aiPrimitiveType_LINE: return 2;
-			case aiPrimitiveType_TRIANGLE: return 3;
-			default: CAGE_THROW_ERROR(Exception, "mesh has invalid primitive type");
+				case aiPrimitiveType_POINT:
+					return 1;
+				case aiPrimitiveType_LINE:
+					return 2;
+				case aiPrimitiveType_TRIANGLE:
+					return 3;
+				default:
+					CAGE_THROW_ERROR(Exception, "mesh has invalid primitive type");
 			}
 		}
 
 		class CageIoStream : public Assimp::IOStream
 		{
 		public:
-			explicit CageIoStream(cage::Holder<cage::File> r) : r(std::move(r))
-			{}
+			explicit CageIoStream(cage::Holder<cage::File> r) : r(std::move(r)) {}
 
-			virtual ~CageIoStream()
-			{}
+			virtual ~CageIoStream() {}
 
 			size_t Read(void *pvBuffer, size_t pSize, size_t pCount) override
 			{
@@ -149,37 +150,32 @@ namespace cage
 				return pCount;
 			}
 
-			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override
-			{
-				CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Write");
-			}
+			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override { CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Write"); }
 
 			aiReturn Seek(size_t pOffset, aiOrigin pOrigin) override
 			{
 				switch (pOrigin)
 				{
-				case aiOrigin_SET: r->seek(pOffset); break;
-				case aiOrigin_CUR: r->seek(r->tell() + pOffset); break;
-				case aiOrigin_END: r->seek(r->size() + pOffset); break;
-				default: CAGE_THROW_CRITICAL(Exception, "cageIOStream::Seek: unknown pOrigin");
+					case aiOrigin_SET:
+						r->seek(pOffset);
+						break;
+					case aiOrigin_CUR:
+						r->seek(r->tell() + pOffset);
+						break;
+					case aiOrigin_END:
+						r->seek(r->size() + pOffset);
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "cageIOStream::Seek: unknown pOrigin");
 				}
 				return aiReturn_SUCCESS;
 			}
 
-			size_t Tell() const override
-			{
-				return (size_t)r->tell();
-			}
+			size_t Tell() const override { return (size_t)r->tell(); }
 
-			size_t FileSize() const override
-			{
-				return (size_t)r->size();
-			}
+			size_t FileSize() const override { return (size_t)r->size(); }
 
-			void Flush() override
-			{
-				CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Flush");
-			}
+			void Flush() override { CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Flush"); }
 
 		private:
 			cage::Holder<cage::File> r;
@@ -188,15 +184,9 @@ namespace cage
 		class CageIoSystem : public Assimp::IOSystem
 		{
 		public:
-			bool Exists(const char *pFile) const override
-			{
-				return any(pathType(pathToAbs(pFile)) & PathTypeFlags::File);
-			}
+			bool Exists(const char *pFile) const override { return any(pathType(pathToAbs(pFile)) & PathTypeFlags::File); }
 
-			char getOsSeparator() const override
-			{
-				return '/';
-			}
+			char getOsSeparator() const override { return '/'; }
 
 			Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb") override
 			{
@@ -211,22 +201,16 @@ namespace cage
 				return new CageIoStream(readFile(pFile));
 			}
 
-			void Close(Assimp::IOStream *pFile) override
-			{
-				delete (CageIoStream *)pFile;
-			}
+			void Close(Assimp::IOStream *pFile) override { delete (CageIoStream *)pFile; }
 
-			bool ComparePaths(const char *one, const char *second) const override
-			{
-				CAGE_THROW_ERROR(NotImplemented, "cageIOsystem::ComparePaths");
-			}
+			bool ComparePaths(const char *one, const char *second) const override { CAGE_THROW_ERROR(NotImplemented, "cageIOsystem::ComparePaths"); }
 
 			std::set<String> paths;
 		};
 
 		struct CmpAiStr
 		{
-			bool operator ()(const aiString &a, const aiString &b) const
+			bool operator()(const aiString &a, const aiString &b) const
 			{
 				if (a.length == b.length)
 					return cage::detail::memcmp(a.data, b.data, a.length) < 0;
@@ -357,10 +341,7 @@ namespace cage
 				return numeric_cast<uint16>(bones.size());
 			}
 
-			aiNode *node(aiBone *bone) const
-			{
-				return node(index(bone));
-			}
+			aiNode *node(aiBone *bone) const { return node(index(bone)); }
 
 			aiNode *node(uint16 index) const
 			{
@@ -369,10 +350,7 @@ namespace cage
 				return nodes[index];
 			}
 
-			aiBone *bone(aiNode *node) const
-			{
-				return bone(index(node));
-			}
+			aiBone *bone(aiNode *node) const { return bone(index(node)); }
 
 			aiBone *bone(uint16 index) const
 			{
@@ -411,16 +389,10 @@ namespace cage
 				return parents[index];
 			}
 
-			aiBone *parent(aiBone *bone_) const
-			{
-				return bone(parent(index(bone_)));
-			}
+			aiBone *parent(aiBone *bone_) const { return bone(parent(index(bone_))); }
 
 			// this may skip some nodes in the original hierarchy - this function returns node that corresponds to another bone
-			aiNode *parent(aiNode *node_) const
-			{
-				return node(parent(index(node_)));
-			}
+			aiNode *parent(aiNode *node_) const { return node(parent(index(node_))); }
 
 		private:
 			std::vector<aiBone *> bones;
@@ -440,28 +412,18 @@ namespace cage
 
 				try
 				{
-					static constexpr uint32 AssimpDefaultLoadFlags =
-						aiProcess_JoinIdenticalVertices |
-						aiProcess_Triangulate |
-						aiProcess_LimitBoneWeights |
-						//aiProcess_ValidateDataStructure |
-						aiProcess_ImproveCacheLocality |
-						aiProcess_SortByPType |
-						//aiProcess_FindInvalidData |
-						aiProcess_GenUVCoords |
-						aiProcess_TransformUVCoords |
-						aiProcess_FindDegenerates |
-						aiProcess_OptimizeGraph |
-						//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
-						//aiProcess_SplitLargeModeles |
-						0;
+					static constexpr uint32 AssimpDefaultLoadFlags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_LimitBoneWeights |
+					    //aiProcess_ValidateDataStructure |
+					    aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+					    //aiProcess_FindInvalidData |
+					    aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_FindDegenerates | aiProcess_OptimizeGraph |
+					    //aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
+					    //aiProcess_SplitLargeModeles |
+					    0;
 
-					static constexpr uint32 AssimpBakeLoadFlags =
-						aiProcess_RemoveRedundantMaterials |
-						//aiProcess_FindInstances |
-						aiProcess_OptimizeMeshes |
-						aiProcess_OptimizeGraph |
-						0;
+					static constexpr uint32 AssimpBakeLoadFlags = aiProcess_RemoveRedundantMaterials |
+					    //aiProcess_FindInstances |
+					    aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | 0;
 
 					uint32 flags = AssimpDefaultLoadFlags;
 					if (config.mergeParts)
@@ -737,10 +699,17 @@ namespace cage
 				Holder<Mesh> poly = newMesh();
 				switch (indicesPerPrimitive)
 				{
-				case 1: poly->type(MeshTypeEnum::Points); break;
-				case 2: poly->type(MeshTypeEnum::Lines); break;
-				case 3: poly->type(MeshTypeEnum::Triangles); break;
-				default: CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
+					case 1:
+						poly->type(MeshTypeEnum::Points);
+						break;
+					case 2:
+						poly->type(MeshTypeEnum::Lines);
+						break;
+					case 3:
+						poly->type(MeshTypeEnum::Triangles);
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
 				}
 
 				{
@@ -775,7 +744,7 @@ namespace cage
 				{
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", "copying bones");
-					
+
 					CAGE_ASSERT(am->mNumBones > 0);
 					std::vector<Vec4i> boneIndices;
 					boneIndices.resize(verticesCount, Vec4i((sint32)m));
@@ -1014,29 +983,13 @@ namespace cage
 				Holder<Ini> ini = newIni();
 				ini->importFile(path);
 
-				part.material.albedoBase = Vec4(
-					colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
-					ini->getFloat("base", "opacity", 0)
-				);
+				part.material.albedoBase = Vec4(colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1), ini->getFloat("base", "opacity", 0));
 
-				part.material.specialBase = Vec4(
-					ini->getFloat("base", "roughness", 0),
-					ini->getFloat("base", "metallic", 0),
-					ini->getFloat("base", "emission", 0),
-					ini->getFloat("base", "mask", 0)
-				);
+				part.material.specialBase = Vec4(ini->getFloat("base", "roughness", 0), ini->getFloat("base", "metallic", 0), ini->getFloat("base", "emission", 0), ini->getFloat("base", "mask", 0));
 
-				part.material.albedoMult = Vec4(
-					colorGammaToLinear(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
-					ini->getFloat("mult", "opacity", 1)
-				);
+				part.material.albedoMult = Vec4(colorGammaToLinear(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1), ini->getFloat("mult", "opacity", 1));
 
-				part.material.specialMult = Vec4(
-					ini->getFloat("mult", "roughness", 1),
-					ini->getFloat("mult", "metallic", 1),
-					ini->getFloat("mult", "emission", 1),
-					ini->getFloat("mult", "mask", 1)
-				);
+				part.material.specialMult = Vec4(ini->getFloat("mult", "roughness", 1), ini->getFloat("mult", "metallic", 1), ini->getFloat("mult", "emission", 1), ini->getFloat("mult", "mask", 1));
 
 				Textures textures;
 				const String pathBase = pathExtractDirectory(path);
@@ -1192,7 +1145,7 @@ namespace cage
 				}
 				aiString gltfAlphaMode;
 				mat->Get(AI_MATKEY_GLTF_ALPHAMODE, gltfAlphaMode);
-				if(config.verbose && gltfAlphaMode != aiString(""))
+				if (config.verbose && gltfAlphaMode != aiString(""))
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "assimp loaded gltf alpha mode: " + gltfAlphaMode.C_Str());
 				if (gltfAlphaMode == aiString("BLEND"))
 					part.renderFlags |= MeshRenderFlags::Transparent;
@@ -1200,7 +1153,8 @@ namespace cage
 					part.renderFlags |= MeshRenderFlags::CutOut;
 
 				// albedo
-				const auto &albedoCheckAlpha = [&](aiTextureType type) {
+				const auto &albedoCheckAlpha = [&](aiTextureType type)
+				{
 					int flg = 0;
 					mat->Get(AI_MATKEY_TEXFLAGS(type, 0), flg);
 					if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
@@ -1386,20 +1340,34 @@ namespace cage
 		{
 			switch (type)
 			{
-			case MeshImportTextureType::None: return "none";
-			case MeshImportTextureType::Albedo: return "albedo";
-			case MeshImportTextureType::Special: return "special";
-			case MeshImportTextureType::Normal: return "normal";
-			case MeshImportTextureType::Opacity: return "opacity";
-			case MeshImportTextureType::Roughness: return "roughness";
-			case MeshImportTextureType::Metallic: return "metallic";
-			case MeshImportTextureType::Emission: return "emission";
-			case MeshImportTextureType::Specular: return "specular";
-			case MeshImportTextureType::Shininess: return "shininess";
-			case MeshImportTextureType::AmbientOcclusion: return "ambient occlusion";
-			case MeshImportTextureType::Mask: return "mask";
-			case MeshImportTextureType::Bump: return "bump";
-			default: return "unknown";
+				case MeshImportTextureType::None:
+					return "none";
+				case MeshImportTextureType::Albedo:
+					return "albedo";
+				case MeshImportTextureType::Special:
+					return "special";
+				case MeshImportTextureType::Normal:
+					return "normal";
+				case MeshImportTextureType::Opacity:
+					return "opacity";
+				case MeshImportTextureType::Roughness:
+					return "roughness";
+				case MeshImportTextureType::Metallic:
+					return "metallic";
+				case MeshImportTextureType::Emission:
+					return "emission";
+				case MeshImportTextureType::Specular:
+					return "specular";
+				case MeshImportTextureType::Shininess:
+					return "shininess";
+				case MeshImportTextureType::AmbientOcclusion:
+					return "ambient occlusion";
+				case MeshImportTextureType::Mask:
+					return "mask";
+				case MeshImportTextureType::Bump:
+					return "bump";
+				default:
+					return "unknown";
 			}
 		}
 	}

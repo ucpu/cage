@@ -1,12 +1,12 @@
+#include <cage-core/math.h> // max
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdBufferStream.h>
-#include <cage-core/math.h> // max
 
 namespace cage
 {
 	BufferIStream::BufferIStream(PointerRange<const char> buffer) : std::istream(this)
 	{
-		setg((char*)buffer.begin(), (char*)buffer.begin(), (char*)buffer.end());
+		setg((char *)buffer.begin(), (char *)buffer.begin(), (char *)buffer.end());
 		exceptions(std::istream::badbit | std::istream::failbit);
 	}
 
@@ -23,17 +23,17 @@ namespace cage
 
 			switch (dir)
 			{
-			case std::ios_base::beg:
-				setg(s, s + off, c);
-				break;
-			case std::ios_base::cur:
-				setg(s, p + off, c);
-				break;
-			case std::ios_base::end:
-				setg(s, c + off, c);
-				break;
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid seek direction");
+				case std::ios_base::beg:
+					setg(s, s + off, c);
+					break;
+				case std::ios_base::cur:
+					setg(s, p + off, c);
+					break;
+				case std::ios_base::end:
+					setg(s, c + off, c);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid seek direction");
 			}
 			return gptr() - eback();
 		}
@@ -73,17 +73,17 @@ namespace cage
 		{
 			switch (dir)
 			{
-			case std::ios_base::beg:
-				writePos = numeric_cast<uintPtr>(off);
-				break;
-			case std::ios_base::cur:
-				writePos += numeric_cast<uintPtr>(off);
-				break;
-			case std::ios_base::end:
-				writePos = buffer.size() + numeric_cast<uintPtr>(off);
-				break;
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid seek direction");
+				case std::ios_base::beg:
+					writePos = numeric_cast<uintPtr>(off);
+					break;
+				case std::ios_base::cur:
+					writePos += numeric_cast<uintPtr>(off);
+					break;
+				case std::ios_base::end:
+					writePos = buffer.size() + numeric_cast<uintPtr>(off);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid seek direction");
 			}
 			return writePos;
 		}

@@ -1,8 +1,8 @@
 #include "main.h"
 
-#include <cage-core/math.h>
 #include <cage-core/audio.h>
 #include <cage-core/audioAlgorithms.h>
+#include <cage-core/math.h>
 #include <cage-core/sampleRateConverter.h>
 #include <cage-core/serialization.h>
 #include <initializer_list>

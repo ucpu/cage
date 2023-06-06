@@ -2,8 +2,8 @@
 
 #include <cage-core/audioAlgorithms.h>
 #include <cage-core/math.h>
-#include <cage-core/serialization.h>
 #include <cage-core/sampleRateConverter.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {
@@ -11,13 +11,16 @@ namespace cage
 	{
 		switch (format)
 		{
-		case AudioFormatEnum::S16: return sizeof(sint16);
-		case AudioFormatEnum::S32: return sizeof(sint32);
-		case AudioFormatEnum::Float: return sizeof(float);
-		case AudioFormatEnum::Vorbis:
-			CAGE_THROW_ERROR(Exception, "vorbis encoding has variable bitrate");
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid audio format");
+			case AudioFormatEnum::S16:
+				return sizeof(sint16);
+			case AudioFormatEnum::S32:
+				return sizeof(sint32);
+			case AudioFormatEnum::Float:
+				return sizeof(float);
+			case AudioFormatEnum::Vorbis:
+				CAGE_THROW_ERROR(Exception, "vorbis encoding has variable bitrate");
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid audio format");
 		}
 	}
 
@@ -133,39 +136,39 @@ namespace cage
 		const uintPtr offset = f * impl->channels + c;
 		switch (impl->format)
 		{
-		case AudioFormatEnum::S16:
-			return ((sint16 *)impl->mem.data())[offset] / 32767.f;
-		case AudioFormatEnum::S32:
-			return ((sint32 *)impl->mem.data())[offset] / 2147483647.f;
-		case AudioFormatEnum::Float:
-			return ((float *)impl->mem.data())[offset];
-		case AudioFormatEnum::Vorbis:
-			CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded audio");
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid audio format");
+			case AudioFormatEnum::S16:
+				return ((sint16 *)impl->mem.data())[offset] / 32767.f;
+			case AudioFormatEnum::S32:
+				return ((sint32 *)impl->mem.data())[offset] / 2147483647.f;
+			case AudioFormatEnum::Float:
+				return ((float *)impl->mem.data())[offset];
+			case AudioFormatEnum::Vorbis:
+				CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded audio");
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid audio format");
 		}
 	}
 
 	void Audio::value(uintPtr f, uint32 c, float v)
 	{
 		AudioImpl *impl = (AudioImpl *)this;
-		CAGE_ASSERT(f < impl->frames &&c < impl->channels);
+		CAGE_ASSERT(f < impl->frames && c < impl->channels);
 		const uintPtr offset = f * impl->channels + c;
 		switch (impl->format)
 		{
-		case AudioFormatEnum::S16:
-			((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(clamp(Real(v), -1, 1) * 32767.f);
-			break;
-		case AudioFormatEnum::S32:
-			((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(clamp(Real(v), -1, 1) * 2147483647.f);
-			break;
-		case AudioFormatEnum::Float:
-			((float *)impl->mem.data())[offset] = v;
-			break;
-		case AudioFormatEnum::Vorbis:
-			CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded audio");
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid audio format");
+			case AudioFormatEnum::S16:
+				((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(clamp(Real(v), -1, 1) * 32767.f);
+				break;
+			case AudioFormatEnum::S32:
+				((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(clamp(Real(v), -1, 1) * 2147483647.f);
+				break;
+			case AudioFormatEnum::Float:
+				((float *)impl->mem.data())[offset] = v;
+				break;
+			case AudioFormatEnum::Vorbis:
+				CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded audio");
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid audio format");
 		}
 	}
 
@@ -219,7 +222,7 @@ namespace cage
 		AudioImpl *impl = (AudioImpl *)snd;
 		if (impl->format == format)
 			return; // no op
-		
+
 		if (impl->format == AudioFormatEnum::Vorbis || format == AudioFormatEnum::Vorbis)
 			return vorbisConvertFormat(impl, format);
 

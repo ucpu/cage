@@ -1,9 +1,9 @@
 #include <cage-core/timer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "incWin.h"
+	#include "incWin.h"
 #else
-#include <time.h>
+	#include <time.h>
 #endif
 
 #ifndef CAGE_SYSTEM_WINDOWS
@@ -25,10 +25,7 @@ namespace cage
 			struct timespec begin = {};
 #endif
 
-			TimerImpl()
-			{
-				reset();
-			}
+			TimerImpl() { reset(); }
 		};
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -58,7 +55,7 @@ namespace cage
 
 	void Timer::reset()
 	{
-		TimerImpl *impl = (TimerImpl*)this;
+		TimerImpl *impl = (TimerImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		QueryPerformanceCounter(&impl->begin);
 #else
@@ -69,7 +66,7 @@ namespace cage
 
 	uint64 Timer::duration()
 	{
-		TimerImpl *impl = (TimerImpl*)this;
+		TimerImpl *impl = (TimerImpl *)this;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -88,7 +85,7 @@ namespace cage
 
 	uint64 Timer::elapsed()
 	{
-		TimerImpl *impl = (TimerImpl*)this;
+		TimerImpl *impl = (TimerImpl *)this;
 		uint64 curr = duration();
 		uint64 res = curr - impl->last;
 		impl->last = curr;

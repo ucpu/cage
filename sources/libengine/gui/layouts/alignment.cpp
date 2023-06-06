@@ -8,10 +8,7 @@ namespace cage
 		{
 			const GuiLayoutAlignmentComponent &data;
 
-			AlignmentImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutAlignment))
-			{
-				ensureItemHasLayout(hierarchy);
-			}
+			AlignmentImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutAlignment)) { ensureItemHasLayout(hierarchy); }
 
 			void initialize() override
 			{

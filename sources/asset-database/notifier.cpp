@@ -1,6 +1,6 @@
-#include <cage-core/networkTcp.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
+#include <cage-core/networkTcp.h>
 
 #include "database.h"
 

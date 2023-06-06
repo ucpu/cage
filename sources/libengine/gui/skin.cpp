@@ -1,5 +1,5 @@
-#include <cage-core/hashString.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/hashString.h>
 
 #include "private.h"
 
@@ -87,51 +87,8 @@ namespace cage
 				};
 
 				std::vector<GuiElementTypeEnum> smallElements = {
-					GuiElementTypeEnum::ScrollbarHorizontalPanel,
-					GuiElementTypeEnum::ScrollbarVerticalPanel,
-					GuiElementTypeEnum::ScrollbarHorizontalDot,
-					GuiElementTypeEnum::ScrollbarVerticalDot,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ToolTip,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::PanelCaption,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::SpoilerCaption,
-					GuiElementTypeEnum::SpoilerIconCollapsed,
-					GuiElementTypeEnum::SpoilerIconShown,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::Button,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::Input,
-					GuiElementTypeEnum::InputButtonDecrement,
-					GuiElementTypeEnum::InputButtonIncrement,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::CheckBoxUnchecked,
-					GuiElementTypeEnum::CheckBoxChecked,
-					GuiElementTypeEnum::CheckBoxIndetermined,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::RadioBoxUnchecked,
-					GuiElementTypeEnum::RadioBoxChecked,
-					GuiElementTypeEnum::RadioBoxIndetermined,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ComboBoxBase,
-					GuiElementTypeEnum::ComboBoxList,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ListBoxBase,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ListBoxItemUnchecked,
-					GuiElementTypeEnum::ComboBoxItemUnchecked,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ListBoxItemChecked,
-					GuiElementTypeEnum::ComboBoxItemChecked,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::SliderHorizontalPanel,
-					GuiElementTypeEnum::SliderVerticalPanel,
-					GuiElementTypeEnum::SliderHorizontalDot,
-					GuiElementTypeEnum::SliderVerticalDot,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ProgressBar,
-					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ScrollbarHorizontalPanel, GuiElementTypeEnum::ScrollbarVerticalPanel, GuiElementTypeEnum::ScrollbarHorizontalDot, GuiElementTypeEnum::ScrollbarVerticalDot, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ToolTip, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::PanelCaption, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::SpoilerCaption, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::Button, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::Input, GuiElementTypeEnum::InputButtonDecrement, GuiElementTypeEnum::InputButtonIncrement, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::CheckBoxUnchecked, GuiElementTypeEnum::CheckBoxChecked, GuiElementTypeEnum::CheckBoxIndetermined, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::RadioBoxUnchecked, GuiElementTypeEnum::RadioBoxChecked,
+					GuiElementTypeEnum::RadioBoxIndetermined, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ComboBoxBase, GuiElementTypeEnum::ComboBoxList, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxBase, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxItemUnchecked, GuiElementTypeEnum::ComboBoxItemUnchecked, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxItemChecked, GuiElementTypeEnum::ComboBoxItemChecked, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::SliderHorizontalPanel, GuiElementTypeEnum::SliderVerticalPanel, GuiElementTypeEnum::SliderHorizontalDot, GuiElementTypeEnum::SliderVerticalDot, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ProgressBar, GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::ColorPickerCompact, // overlaps: ColorPickerFull
 					GuiElementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
 				};
@@ -153,27 +110,45 @@ namespace cage
 				};
 
 				FlatSet<GuiElementTypeEnum> noBorder = {
-					GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
-					GuiElementTypeEnum::RadioBoxChecked, GuiElementTypeEnum::RadioBoxUnchecked, GuiElementTypeEnum::RadioBoxIndetermined,
-					GuiElementTypeEnum::SliderHorizontalDot, GuiElementTypeEnum::SliderVerticalDot,
+					GuiElementTypeEnum::SpoilerIconCollapsed,
+					GuiElementTypeEnum::SpoilerIconShown,
+					GuiElementTypeEnum::RadioBoxChecked,
+					GuiElementTypeEnum::RadioBoxUnchecked,
+					GuiElementTypeEnum::RadioBoxIndetermined,
+					GuiElementTypeEnum::SliderHorizontalDot,
+					GuiElementTypeEnum::SliderVerticalDot,
 				};
 
 				FlatSet<GuiElementTypeEnum> noFocus = {
-					GuiElementTypeEnum::PanelBase, GuiElementTypeEnum::PanelCaption,
-					GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerCaption, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
-					GuiElementTypeEnum::InputButtonDecrement, GuiElementTypeEnum::InputButtonIncrement,
-					GuiElementTypeEnum::ComboBoxList, GuiElementTypeEnum::ComboBoxItemUnchecked, GuiElementTypeEnum::ComboBoxItemChecked,
-					GuiElementTypeEnum::ListBoxItemUnchecked, GuiElementTypeEnum::ListBoxItemChecked,
+					GuiElementTypeEnum::PanelBase,
+					GuiElementTypeEnum::PanelCaption,
+					GuiElementTypeEnum::SpoilerBase,
+					GuiElementTypeEnum::SpoilerCaption,
+					GuiElementTypeEnum::SpoilerIconCollapsed,
+					GuiElementTypeEnum::SpoilerIconShown,
+					GuiElementTypeEnum::InputButtonDecrement,
+					GuiElementTypeEnum::InputButtonIncrement,
+					GuiElementTypeEnum::ComboBoxList,
+					GuiElementTypeEnum::ComboBoxItemUnchecked,
+					GuiElementTypeEnum::ComboBoxItemChecked,
+					GuiElementTypeEnum::ListBoxItemUnchecked,
+					GuiElementTypeEnum::ListBoxItemChecked,
 					GuiElementTypeEnum::ProgressBar,
-					GuiElementTypeEnum::ColorPickerHuePanel, GuiElementTypeEnum::ColorPickerPreviewPanel, GuiElementTypeEnum::ColorPickerSatValPanel,
+					GuiElementTypeEnum::ColorPickerHuePanel,
+					GuiElementTypeEnum::ColorPickerPreviewPanel,
+					GuiElementTypeEnum::ColorPickerSatValPanel,
 					GuiElementTypeEnum::ToolTip,
 				};
 
 				FlatSet<GuiElementTypeEnum> noHover = {
 					GuiElementTypeEnum::PanelBase,
-					GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
+					GuiElementTypeEnum::SpoilerBase,
+					GuiElementTypeEnum::SpoilerIconCollapsed,
+					GuiElementTypeEnum::SpoilerIconShown,
 					GuiElementTypeEnum::ComboBoxList,
-					GuiElementTypeEnum::ColorPickerHuePanel, GuiElementTypeEnum::ColorPickerPreviewPanel, GuiElementTypeEnum::ColorPickerSatValPanel,
+					GuiElementTypeEnum::ColorPickerHuePanel,
+					GuiElementTypeEnum::ColorPickerPreviewPanel,
+					GuiElementTypeEnum::ColorPickerSatValPanel,
 					GuiElementTypeEnum::ToolTip,
 				};
 
@@ -258,12 +233,11 @@ namespace cage
 
 	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit)
 	{
-		textInvalidFormat.color = Vec3(1,0,0);
-		placeholderFormat.color = Vec3(0.5,0.5,0.5);
+		textInvalidFormat.color = Vec3(1, 0, 0);
+		placeholderFormat.color = Vec3(0.5, 0.5, 0.5);
 	}
 
-	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit)
-	{}
+	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit) {}
 
 	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(textInit)
 	{
@@ -450,16 +424,16 @@ namespace cage
 			GuiSkinConfig skin;
 			switch (styleIndex)
 			{
-			case 1:
-				generateLarge(skin);
-				break;
-			case 2:
-				generateCompact(skin);
-				break;
-			case 3:
-				generateCompact(skin);
-				skin.textureName = HashString("cage/texture/tooltips.png");
-				break;
+				case 1:
+					generateLarge(skin);
+					break;
+				case 2:
+					generateCompact(skin);
+					break;
+				case 3:
+					generateCompact(skin);
+					skin.textureName = HashString("cage/texture/tooltips.png");
+					break;
 			}
 			return skin;
 		}

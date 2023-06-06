@@ -1,8 +1,8 @@
 #include "main.h"
 
+#include <cage-core/image.h>
 #include <cage-core/math.h>
 #include <cage-core/noiseFunction.h>
-#include <cage-core/image.h>
 #include <initializer_list>
 #include <vector>
 
@@ -55,7 +55,7 @@ void testNoise()
 
 	{
 		CAGE_TESTCASE("value");
-		for (uint32 oct : {1, 2, 3})
+		for (uint32 oct : { 1, 2, 3 })
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Value;
@@ -68,7 +68,7 @@ void testNoise()
 
 	{
 		CAGE_TESTCASE("perlin");
-		for (uint32 oct : {1, 2, 3})
+		for (uint32 oct : { 1, 2, 3 })
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Perlin;
@@ -81,7 +81,7 @@ void testNoise()
 
 	{
 		CAGE_TESTCASE("simplex");
-		for (uint32 oct : {1, 2, 3})
+		for (uint32 oct : { 1, 2, 3 })
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Simplex;

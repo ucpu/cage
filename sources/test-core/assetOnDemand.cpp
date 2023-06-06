@@ -1,12 +1,12 @@
 #include "main.h"
 
-#include <cage-core/files.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/serialization.h>
-#include <cage-core/assetHeader.h>
 #include <cage-core/assetContext.h>
+#include <cage-core/assetHeader.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/files.h>
+#include <cage-core/serialization.h>
 
 namespace
 {

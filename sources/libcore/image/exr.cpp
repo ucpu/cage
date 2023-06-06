@@ -1,9 +1,9 @@
 #include "image.h"
 
 #include <cage-core/serialization.h> // bufferCast
+#include <stdlib.h> // free
 #include <tinyexr.h>
 #include <vector>
-#include <stdlib.h> // free
 
 namespace cage
 {
@@ -19,20 +19,25 @@ namespace cage
 		InitEXRHeader(&exr_header);
 		if (ParseEXRHeaderFromMemory(&exr_header, &exr_version, buff.data(), buff.size(), nullptr) != 0)
 			CAGE_THROW_ERROR(Exception, "failed to load header table from exr image");
-		struct FreeHeader { EXRHeader *exr_header = m; FreeHeader(EXRHeader *exr_header) : exr_header(exr_header) {} ~FreeHeader() { FreeEXRHeader(exr_header); } } freeHeader(&exr_header);
+		struct FreeHeader
+		{
+			EXRHeader *exr_header = m;
+			FreeHeader(EXRHeader *exr_header) : exr_header(exr_header) {}
+			~FreeHeader() { FreeEXRHeader(exr_header); }
+		} freeHeader(&exr_header);
 
 		for (int i = 0; i < exr_header.num_channels; i++)
 		{
 			switch (exr_header.pixel_types[i])
 			{
-			case TINYEXR_PIXELTYPE_FLOAT:
-				break;
-			case TINYEXR_PIXELTYPE_HALF:
-				// convert half floats to actual floats
-				exr_header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "unsupported pixel type in loading exr image");
+				case TINYEXR_PIXELTYPE_FLOAT:
+					break;
+				case TINYEXR_PIXELTYPE_HALF:
+					// convert half floats to actual floats
+					exr_header.requested_pixel_types[i] = TINYEXR_PIXELTYPE_FLOAT;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "unsupported pixel type in loading exr image");
 			}
 		}
 
@@ -40,7 +45,12 @@ namespace cage
 		InitEXRImage(&exr_image);
 		if (LoadEXRImageFromMemory(&exr_image, &exr_header, buff.data(), buff.size(), nullptr) != 0)
 			CAGE_THROW_ERROR(Exception, "failed to load exr image");
-		struct FreeImage { EXRImage *exr_image = m; FreeImage(EXRImage *exr_image) : exr_image(exr_image) {} ~FreeImage() { FreeEXRImage(exr_image); } } freeImage(&exr_image);
+		struct FreeImage
+		{
+			EXRImage *exr_image = m;
+			FreeImage(EXRImage *exr_image) : exr_image(exr_image) {}
+			~FreeImage() { FreeEXRImage(exr_image); }
+		} freeImage(&exr_image);
 
 		impl->width = numeric_cast<uint32>(exr_image.width);
 		impl->height = numeric_cast<uint32>(exr_image.height);
@@ -83,31 +93,31 @@ namespace cage
 			detail::memset(&it, 0, sizeof(it));
 		switch (impl->channels)
 		{
-		case 1:
-			channelInfos[0].name[0] = 'A';
-			break;
-		case 2:
-			channelInfos[0].name[0] = 'A';
-			channelInfos[1].name[0] = 'R';
-			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			break;
-		case 3:
-			channelInfos[0].name[0] = 'B';
-			channelInfos[1].name[0] = 'G';
-			channelInfos[2].name[0] = 'R';
-			channelInfos[0].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			break;
-		case 4:
-			channelInfos[0].name[0] = 'A';
-			channelInfos[1].name[0] = 'B';
-			channelInfos[2].name[0] = 'G';
-			channelInfos[3].name[0] = 'R';
-			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			channelInfos[3].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
-			break;
+			case 1:
+				channelInfos[0].name[0] = 'A';
+				break;
+			case 2:
+				channelInfos[0].name[0] = 'A';
+				channelInfos[1].name[0] = 'R';
+				channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				break;
+			case 3:
+				channelInfos[0].name[0] = 'B';
+				channelInfos[1].name[0] = 'G';
+				channelInfos[2].name[0] = 'R';
+				channelInfos[0].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				break;
+			case 4:
+				channelInfos[0].name[0] = 'A';
+				channelInfos[1].name[0] = 'B';
+				channelInfos[2].name[0] = 'G';
+				channelInfos[3].name[0] = 'R';
+				channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				channelInfos[3].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+				break;
 		}
 		exr_header.channels = channelInfos.data();
 
@@ -141,7 +151,12 @@ namespace cage
 		std::size_t size = SaveEXRImageToMemory(&exr_image, &exr_header, &mem, nullptr);
 		if (size == 0)
 			CAGE_THROW_ERROR(Exception, "failed to save exr image");
-		struct FreeMem { unsigned char *mem = m; FreeMem(unsigned char *mem) : mem(mem) {} ~FreeMem() { free(mem); } } freeMem(mem);
+		struct FreeMem
+		{
+			unsigned char *mem = m;
+			FreeMem(unsigned char *mem) : mem(mem) {}
+			~FreeMem() { free(mem); }
+		} freeMem(mem);
 
 		MemoryBuffer buff;
 		buff.allocate(size);

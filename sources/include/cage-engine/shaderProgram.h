@@ -22,8 +22,8 @@ namespace cage
 		void validate() const;
 
 #define GCHL_GENERATE(TYPE) \
-		void uniform(uint32 name, const TYPE &value); \
-		void uniform(uint32 name, PointerRange<const TYPE> values);
+	void uniform(uint32 name, const TYPE &value); \
+	void uniform(uint32 name, PointerRange<const TYPE> values);
 		GCHL_GENERATE(sint32);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(Vec2i);

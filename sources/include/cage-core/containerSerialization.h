@@ -16,14 +16,10 @@ namespace cage
 		};
 
 		template<class C>
-		concept ReservableContainerConcept = ContainerConcept<C> && requires(C c) {
-			c.reserve(42);
-		};
+		concept ReservableContainerConcept = ContainerConcept<C> && requires(C c) { c.reserve(42); };
 
 		template<class C>
-		concept InsertableContainerConcept = ContainerConcept<C> && requires(C c) {
-			c.insert(c.end(), *c.begin());
-		};
+		concept InsertableContainerConcept = ContainerConcept<C> && requires(C c) { c.insert(c.end(), *c.begin()); };
 
 		template<class C>
 		concept IsCageString = requires(C c) {
@@ -32,21 +28,18 @@ namespace cage
 		};
 
 		template<class C>
-		concept MemcpyContainerConcept = ContainerConcept<C> && std::is_trivially_copyable_v<std::remove_cvref_t<typename C::value_type>> && (!IsCageString<typename C::value_type>) && requires(C c) {
-			c.data();
-		};
+		concept MemcpyContainerConcept = ContainerConcept<C> && std::is_trivially_copyable_v<std::remove_cvref_t<typename C::value_type>> && (!IsCageString<typename C::value_type>)&&requires(C c) { c.data(); };
 
 		template<class C>
-		concept MemcpyWritableContainerConcept = MemcpyContainerConcept<C> && requires(C c) {
-			c.resize(42);
-		};
+		concept MemcpyWritableContainerConcept = MemcpyContainerConcept<C> && requires(C c) { c.resize(42); };
 
 		template<class C>
 		concept ContainerOfBoolConcept = ContainerConcept<C> && std::is_same_v<std::remove_cvref_t<typename C::value_type>, bool>;
 	}
 
-	template<class Cont> requires(privat::ContainerConcept<Cont>)
-	Serializer &operator << (Serializer &s, const Cont &c)
+	template<class Cont>
+	requires(privat::ContainerConcept<Cont>)
+	Serializer &operator<<(Serializer &s, const Cont &c)
 	{
 		s << numeric_cast<uint64>(c.size());
 		if constexpr (privat::ContainerOfBoolConcept<Cont>)
@@ -80,8 +73,9 @@ namespace cage
 		return s;
 	}
 
-	template<class Cont> requires(privat::InsertableContainerConcept<Cont>)
-	Deserializer &operator >> (Deserializer &s, Cont &c)
+	template<class Cont>
+	requires(privat::InsertableContainerConcept<Cont>)
+	Deserializer &operator>>(Deserializer &s, Cont &c)
 	{
 		CAGE_ASSERT(c.empty());
 		uint64 size = 0;
@@ -126,14 +120,14 @@ namespace cage
 	}
 
 	template<class A, class B>
-	Serializer &operator << (Serializer &s, const std::pair<A, B> &p)
+	Serializer &operator<<(Serializer &s, const std::pair<A, B> &p)
 	{
 		s << p.first << p.second;
 		return s;
 	}
 
 	template<class A, class B>
-	Deserializer &operator >> (Deserializer &s, std::pair<A, B> &p)
+	Deserializer &operator>>(Deserializer &s, std::pair<A, B> &p)
 	{
 		s >> const_cast<std::remove_cv_t<A> &>(p.first) >> const_cast<std::remove_cv_t<B> &>(p.second);
 		return s;

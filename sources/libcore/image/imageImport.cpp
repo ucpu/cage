@@ -1,7 +1,7 @@
 #include <cage-core/files.h>
 #include <cage-core/imageAlgorithms.h>
-#include <cage-core/imageImport.h>
 #include <cage-core/imageBlocks.h>
+#include <cage-core/imageImport.h>
 #include <cage-core/pointerRangeHolder.h>
 
 namespace cage
@@ -91,24 +91,24 @@ namespace cage
 				r.channels = part.image->channels();
 				switch (part.image->channels())
 				{
-				case 1:
-					r.format = "bc4";
-					r.data = imageBc4Encode(+part.image, { normals });
-					break;
-				case 2:
-					r.format = "bc5";
-					r.data = imageBc5Encode(+part.image, { normals });
-					break;
-				case 3:
-					r.format = "bc7";
-					r.data = imageBc7Encode(+part.image, { normals });
-					break;
-				case 4:
-					r.format = "bc7";
-					r.data = imageBc7Encode(+part.image, { normals });
-					break;
-				default:
-					CAGE_THROW_ERROR(Exception, "unsupported number of channels for image-to-bcn conversion");
+					case 1:
+						r.format = "bc4";
+						r.data = imageBc4Encode(+part.image, { normals });
+						break;
+					case 2:
+						r.format = "bc5";
+						r.data = imageBc5Encode(+part.image, { normals });
+						break;
+					case 3:
+						r.format = "bc7";
+						r.data = imageBc7Encode(+part.image, { normals });
+						break;
+					case 4:
+						r.format = "bc7";
+						r.data = imageBc7Encode(+part.image, { normals });
+						break;
+					default:
+						CAGE_THROW_ERROR(Exception, "unsupported number of channels for image-to-bcn conversion");
 				}
 				CAGE_ASSERT(r.data);
 				part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(r));
@@ -121,7 +121,8 @@ namespace cage
 	{
 		imageImportConvertRawToImages(result);
 
-		const auto &has = [&](uint32 level, uint32 face, uint32 layer) {
+		const auto &has = [&](uint32 level, uint32 face, uint32 layer)
+		{
 			for (const auto &it : result.parts)
 				if (it.mipmapLevel == level && it.cubeFace == face && it.layer == layer)
 					return true;
@@ -144,7 +145,7 @@ namespace cage
 				imageConvert(+img, AlphaModeEnum::PremultipliedOpacity);
 
 			Vec2i resolution = img->resolution();
-			for (uint32 level = 1; ; level++)
+			for (uint32 level = 1;; level++)
 			{
 				resolution /= 2;
 				resolution = max(resolution, 1);

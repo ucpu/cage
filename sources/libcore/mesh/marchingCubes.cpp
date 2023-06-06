@@ -1,11 +1,11 @@
+#include <cage-core/collider.h>
 #include <cage-core/marchingCubes.h>
 #include <cage-core/meshAlgorithms.h>
-#include <cage-core/collider.h>
 
 #include <unordered_dense.h>
-#include <dualmc.h>
-
 #include <vector>
+
+#include <dualmc.h> // must be included last
 
 namespace cage
 {
@@ -39,7 +39,7 @@ namespace cage
 
 			struct EdgeHash
 			{
-				std::size_t operator () (const EdgeFace &l) const
+				std::size_t operator()(const EdgeFace &l) const
 				{
 					std::hash<uint32> h;
 					return h(l.e1) ^ h(l.e1 ^ l.e2 + 5641851);
@@ -48,10 +48,7 @@ namespace cage
 
 			struct EdgeEqual
 			{
-				bool operator () (const EdgeFace &l, const EdgeFace &r) const
-				{
-					return std::make_pair(l.e1, l.e2) == std::make_pair(r.e1, r.e2);
-				}
+				bool operator()(const EdgeFace &l, const EdgeFace &r) const { return std::make_pair(l.e1, l.e2) == std::make_pair(r.e1, r.e2); }
 			};
 
 			ankerl::unordered_dense::set<EdgeFace, EdgeHash, EdgeEqual> edges;
@@ -62,7 +59,7 @@ namespace cage
 				const uint32 a = poly->indices()[i + 0];
 				const uint32 b = poly->indices()[i + 1];
 				const uint32 c = poly->indices()[i + 2];
-				for (const EdgeFace &p : { EdgeFace{a, b, i}, EdgeFace{b, c, i}, EdgeFace{c, a, i} })
+				for (const EdgeFace &p : { EdgeFace{ a, b, i }, EdgeFace{ b, c, i }, EdgeFace{ c, a, i } })
 				{
 					auto it = edges.find(p);
 					if (it == edges.end())
@@ -101,39 +98,39 @@ namespace cage
 
 	PointerRange<Real> MarchingCubes::densities()
 	{
-		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
+		MarchingCubesImpl *impl = (MarchingCubesImpl *)this;
 		return impl->dens;
 	}
 
 	PointerRange<const Real> MarchingCubes::densities() const
 	{
-		const MarchingCubesImpl *impl = (const MarchingCubesImpl*)this;
+		const MarchingCubesImpl *impl = (const MarchingCubesImpl *)this;
 		return impl->dens;
 	}
 
 	void MarchingCubes::densities(const PointerRange<const Real> &values)
 	{
-		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
+		MarchingCubesImpl *impl = (MarchingCubesImpl *)this;
 		CAGE_ASSERT(impl->dens.size() == values.size());
 		detail::memcpy(impl->dens.data(), values.data(), values.size() * sizeof(Real));
 	}
 
 	Real MarchingCubes::density(uint32 x, uint32 y, uint32 z) const
 	{
-		const MarchingCubesImpl *impl = (const MarchingCubesImpl*)this;
+		const MarchingCubesImpl *impl = (const MarchingCubesImpl *)this;
 		return impl->dens[impl->config.index(x, y, z)];
 	}
 
 	void MarchingCubes::density(uint32 x, uint32 y, uint32 z, Real value)
 	{
 		CAGE_ASSERT(value.valid());
-		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
+		MarchingCubesImpl *impl = (MarchingCubesImpl *)this;
 		impl->dens[impl->config.index(x, y, z)] = value;
 	}
 
 	void MarchingCubes::updateByCoordinates(const Delegate<Real(uint32, uint32, uint32)> &generator)
 	{
-		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
+		MarchingCubesImpl *impl = (MarchingCubesImpl *)this;
 		auto it = impl->dens.begin();
 		for (uint32 z = 0; z < numeric_cast<uint32>(impl->config.resolution[2]); z++)
 		{
@@ -151,7 +148,7 @@ namespace cage
 
 	void MarchingCubes::updateByPosition(const Delegate<Real(const Vec3 &)> &generator)
 	{
-		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
+		MarchingCubesImpl *impl = (MarchingCubesImpl *)this;
 		auto it = impl->dens.begin();
 		for (uint32 z = 0; z < numeric_cast<uint32>(impl->config.resolution[2]); z++)
 		{
@@ -178,13 +175,13 @@ namespace cage
 
 	Holder<Mesh> MarchingCubes::makeMesh() const
 	{
-		const MarchingCubesImpl *impl = (const MarchingCubesImpl*)this;
+		const MarchingCubesImpl *impl = (const MarchingCubesImpl *)this;
 		const MarchingCubesCreateConfig &cfg = impl->config;
 
 		dualmc::DualMC<float> mc;
 		std::vector<dualmc::Vertex> mcVertices;
 		std::vector<dualmc::Quad> mcIndices;
-		mc.build((float*)impl->dens.data(), cfg.resolution[0], cfg.resolution[1], cfg.resolution[2], 0, true, false, mcVertices, mcIndices);
+		mc.build((float *)impl->dens.data(), cfg.resolution[0], cfg.resolution[1], cfg.resolution[2], 0, true, false, mcVertices, mcIndices);
 
 		std::vector<Vec3> positions;
 		std::vector<Vec3> normals;
@@ -202,8 +199,8 @@ namespace cage
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
 			const bool which = distanceSquared(positions[is[0]], positions[is[2]]) < distanceSquared(positions[is[1]], positions[is[3]]); // split the quad by shorter diagonal
-			static constexpr int first[6] = { 0,1,2, 0,2,3 };
-			static constexpr int second[6] = { 1,2,3, 1,3,0 };
+			static constexpr int first[6] = { 0, 1, 2, 0, 2, 3 };
+			static constexpr int second[6] = { 1, 2, 3, 1, 3, 0 };
 			const int *const selected = (which ? first : second);
 			const auto &tri = [&](const int *inds)
 			{

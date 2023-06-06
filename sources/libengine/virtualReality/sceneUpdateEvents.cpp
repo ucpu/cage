@@ -1,9 +1,9 @@
 #include <cage-core/entities.h>
 #include <cage-core/entitiesVisitor.h>
+#include <cage-engine/inputs.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/virtualReality.h>
-#include <cage-engine/inputs.h>
 
 namespace cage
 {
@@ -22,13 +22,14 @@ namespace cage
 	{
 		Entity *origin = findOrigin(scene);
 		const Transform tr = origin->value<TransformComponent>() * origin->value<VrOriginComponent>().manualCorrection;
-		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) {
-			t = tr * cc.virtualReality->pose();
-		}, scene, false);
-		entitiesVisitor([&](Entity *e, TransformComponent &t, VrControllerComponent &cc) {
-			t = tr * cc.controller->gripPose();
-			cc.aim = tr * cc.controller->aimPose();
-		}, scene, false);
+		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) { t = tr * cc.virtualReality->pose(); }, scene, false);
+		entitiesVisitor(
+		    [&](Entity *e, TransformComponent &t, VrControllerComponent &cc)
+		    {
+			    t = tr * cc.controller->gripPose();
+			    cc.aim = tr * cc.controller->aimPose();
+		    },
+		    scene, false);
 	}
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)

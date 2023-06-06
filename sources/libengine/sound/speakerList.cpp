@@ -1,7 +1,7 @@
 #include <cage-engine/speakerList.h>
 
-#include <vector>
 #include <cubeb/cubeb.h>
+#include <vector>
 
 namespace cage
 {
@@ -12,15 +12,9 @@ namespace cage
 	{
 		struct Devices : private Immovable, public cubeb_device_collection
 		{
-			Devices()
-			{
-				cageCheckCubebError(cubeb_enumerate_devices(context, CUBEB_DEVICE_TYPE_OUTPUT, this));
-			}
+			Devices() { cageCheckCubebError(cubeb_enumerate_devices(context, CUBEB_DEVICE_TYPE_OUTPUT, this)); }
 
-			~Devices()
-			{
-				cubeb_device_collection_destroy(context, this);
-			}
+			~Devices() { cubeb_device_collection_destroy(context, this); }
 
 		private:
 			cubeb *context = cageCubebInitializeFunc();

@@ -1,17 +1,14 @@
+#include <cage-core/lineReader.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-core/lineReader.h>
 
 namespace cage
 {
-	Serializer::Serializer(PointerRange<char> buffer) : data(buffer.data()), size(buffer.size())
-	{}
+	Serializer::Serializer(PointerRange<char> buffer) : data(buffer.data()), size(buffer.size()) {}
 
-	Serializer::Serializer(MemoryBuffer &buffer, uintPtr size) : buffer(&buffer), size(size == m && buffer.size() != 0 ? buffer.size() : size)
-	{}
+	Serializer::Serializer(MemoryBuffer &buffer, uintPtr size) : buffer(&buffer), size(size == m && buffer.size() != 0 ? buffer.size() : size) {}
 
-	Serializer::Serializer(MemoryBuffer *buffer, char *data, uintPtr offset, uintPtr size) : buffer(buffer), data(data), offset(offset), size(size)
-	{}
+	Serializer::Serializer(MemoryBuffer *buffer, char *data, uintPtr offset, uintPtr size) : buffer(buffer), data(data), offset(offset), size(size) {}
 
 	uintPtr Serializer::available() const
 	{
@@ -58,11 +55,9 @@ namespace cage
 		return { dst, dst + s };
 	}
 
-	Deserializer::Deserializer(PointerRange<const char> buffer) : data(buffer.data()), size(buffer.size())
-	{}
+	Deserializer::Deserializer(PointerRange<const char> buffer) : data(buffer.data()), size(buffer.size()) {}
 
-	Deserializer::Deserializer(const char *data, uintPtr offset, uintPtr size) : data(data), offset(offset), size(size)
-	{}
+	Deserializer::Deserializer(const char *data, uintPtr offset, uintPtr size) : data(data), offset(offset), size(size) {}
 
 	uintPtr Deserializer::available() const
 	{

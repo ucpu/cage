@@ -1,8 +1,8 @@
 #include "main.h"
 
-#include <cage-core/geometry.h>
-#include <cage-core/collisionStructure.h>
 #include <cage-core/collider.h>
+#include <cage-core/collisionStructure.h>
+#include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
 #include <initializer_list>
 
@@ -222,18 +222,18 @@ void testCollisionStructure()
 		}
 		{
 			CAGE_TESTCASE("plane 1");
-			CAGE_TEST(query->query(Plane(Vec3(0,0,0), Vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(Vec3(0, 0, 0), Vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("plane 2");
-			CAGE_TEST(!query->query(Plane(Vec3(0,0,10), Vec3(0, 0, 1))));
+			CAGE_TEST(!query->query(Plane(Vec3(0, 0, 10), Vec3(0, 0, 1))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("plane 3");
-			CAGE_TEST(query->query(Plane(Vec3(123,0,456), Vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(Vec3(123, 0, 456), Vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}

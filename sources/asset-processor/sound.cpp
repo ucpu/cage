@@ -61,63 +61,65 @@ void processSound()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "sample rate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
-	case SoundTypeEnum::RawRaw:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: raw file, raw play");
-		break;
-	case SoundTypeEnum::CompressedRaw:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, raw play");
-		break;
-	case SoundTypeEnum::CompressedCompressed:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
-		break;
-	default:
-		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
+		case SoundTypeEnum::RawRaw:
+			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: raw file, raw play");
+			break;
+		case SoundTypeEnum::CompressedRaw:
+			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, raw play");
+			break;
+		case SoundTypeEnum::CompressedCompressed:
+			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
+			break;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
 	switch (sds.soundType)
 	{
-	case SoundTypeEnum::RawRaw:
-	{
-		audioConvertFormat(+audio, AudioFormatEnum::Float);
-		Holder<File> f = writeFile(outputFileName);
-		AssetHeader h = initializeAssetHeader();
-		h.originalSize = sizeof(SoundSourceHeader) + rawSize;
-		f->write(bufferView(h));
-		f->write(bufferView(sds));
-		PointerRange<const char> buff = bufferCast<const char, const float>(audio->rawViewFloat());
-		CAGE_ASSERT(buff.size() == rawSize);
-		f->write(buff);
-		f->close();
-	} break;
-	case SoundTypeEnum::CompressedRaw:
-	case SoundTypeEnum::CompressedCompressed:
-	{
-		Holder<PointerRange<char>> buff = audio->exportBuffer(".ogg");
-		const uint64 oggSize = buff.size();
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compressed size: " + oggSize + " bytes");
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
-		AssetHeader h = initializeAssetHeader();
-		switch (sds.soundType)
+		case SoundTypeEnum::RawRaw:
 		{
+			audioConvertFormat(+audio, AudioFormatEnum::Float);
+			Holder<File> f = writeFile(outputFileName);
+			AssetHeader h = initializeAssetHeader();
+			h.originalSize = sizeof(SoundSourceHeader) + rawSize;
+			f->write(bufferView(h));
+			f->write(bufferView(sds));
+			PointerRange<const char> buff = bufferCast<const char, const float>(audio->rawViewFloat());
+			CAGE_ASSERT(buff.size() == rawSize);
+			f->write(buff);
+			f->close();
+		}
+		break;
 		case SoundTypeEnum::CompressedRaw:
-			h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
-			h.originalSize = sizeof(SoundSourceHeader) + rawSize; // same as rawraw, so that loading can use same code
-			break;
 		case SoundTypeEnum::CompressedCompressed:
-			h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
-			h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
-			break;
+		{
+			Holder<PointerRange<char>> buff = audio->exportBuffer(".ogg");
+			const uint64 oggSize = buff.size();
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compressed size: " + oggSize + " bytes");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
+			AssetHeader h = initializeAssetHeader();
+			switch (sds.soundType)
+			{
+				case SoundTypeEnum::CompressedRaw:
+					h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
+					h.originalSize = sizeof(SoundSourceHeader) + rawSize; // same as rawraw, so that loading can use same code
+					break;
+				case SoundTypeEnum::CompressedCompressed:
+					h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
+					h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid sound type");
+			}
+			Holder<File> f = writeFile(outputFileName);
+			f->write(bufferView(h));
+			f->write(bufferView(sds));
+			f->write(buff);
+			f->close();
+		}
+		break;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid sound type");
-		}
-		Holder<File> f = writeFile(outputFileName);
-		f->write(bufferView(h));
-		f->write(bufferView(sds));
-		f->write(buff);
-		f->close();
-	} break;
-	default:
-		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
 	// preview sound

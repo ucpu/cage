@@ -1,14 +1,14 @@
 #include "main.h"
 
-#include <cage-core/geometry.h>
-#include <cage-core/meshAlgorithms.h>
-#include <cage-core/meshShapes.h>
-#include <cage-core/meshImport.h>
-#include <cage-core/meshExport.h>
 #include <cage-core/collider.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/imageAlgorithms.h>
 #include <cage-core/files.h>
+#include <cage-core/geometry.h>
+#include <cage-core/imageAlgorithms.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/meshAlgorithms.h>
+#include <cage-core/meshExport.h>
+#include <cage-core/meshImport.h>
+#include <cage-core/meshShapes.h>
 #include <vector>
 
 namespace
@@ -137,99 +137,10 @@ namespace
 
 	Holder<Mesh> makeComplexCube()
 	{
-		static constexpr const Vec3 verts[] = {
-			Vec3(-1.000000,-1.000000,1.000000),
-			Vec3(-1.000000,1.000000,1.000000),
-			Vec3(-1.000000,-1.000000,-1.000000),
-			Vec3(-1.000000,1.000000,-1.000000),
-			Vec3(1.000000,-1.000000,1.000000),
-			Vec3(-0.033372,-1.000000,-0.186082),
-			Vec3(1.000000,-1.000000,-1.000000),
-			Vec3(0.000000,-1.000000,0.500000),
-			Vec3(-1.000000,-1.000000,-0.333333),
-			Vec3(-1.000000,-1.000000,0.333333),
-			Vec3(-1.000000,1.000000,0.333333),
-			Vec3(-1.000000,1.000000,-0.333333),
-			Vec3(1.000000,-1.000000,0.000000),
-			Vec3(1.000000,1.000000,-1.000000),
-			Vec3(1.000000,1.000000,1.000000),
-			Vec3(-1.000000,0.000000,1.000000),
-			Vec3(-1.000000,0.000000,-1.000000),
-			Vec3(1.000000,0.000000,-1.000000),
-			Vec3(1.000000,0.000000,1.000000),
-			Vec3(1.000000,0.000000,-0.333333),
-			Vec3(1.000000,0.000000,0.333333),
-			Vec3(-1.000000,0.000000,0.000000),
-			Vec3(1.000000,-1.000000,0.500000),
-			Vec3(0.000000,-1.000000,0.166667),
-			Vec3(-0.500000,-1.000000,-0.250000),
-			Vec3(1.000000,-1.000000,-0.500000),
-			Vec3(-0.500000,-1.000000,0.750000),
-			Vec3(-1.000000,-1.000000,0.000000),
-			Vec3(0.500000,-1.000000,-0.083333),
-			Vec3(0.000000,-1.000000,-0.666667),
-			Vec3(0.250000,-1.000000,-0.375000),
-			Vec3(-0.250000,-1.000000,-0.041667)
-		};
+		static constexpr const Vec3 verts[] = { Vec3(-1.000000, -1.000000, 1.000000), Vec3(-1.000000, 1.000000, 1.000000), Vec3(-1.000000, -1.000000, -1.000000), Vec3(-1.000000, 1.000000, -1.000000), Vec3(1.000000, -1.000000, 1.000000), Vec3(-0.033372, -1.000000, -0.186082), Vec3(1.000000, -1.000000, -1.000000), Vec3(0.000000, -1.000000, 0.500000), Vec3(-1.000000, -1.000000, -0.333333), Vec3(-1.000000, -1.000000, 0.333333), Vec3(-1.000000, 1.000000, 0.333333), Vec3(-1.000000, 1.000000, -0.333333), Vec3(1.000000, -1.000000, 0.000000), Vec3(1.000000, 1.000000, -1.000000), Vec3(1.000000, 1.000000, 1.000000), Vec3(-1.000000, 0.000000, 1.000000), Vec3(-1.000000, 0.000000, -1.000000), Vec3(1.000000, 0.000000, -1.000000), Vec3(1.000000, 0.000000, 1.000000), Vec3(1.000000, 0.000000, -0.333333), Vec3(1.000000, 0.000000, 0.333333), Vec3(-1.000000, 0.000000, 0.000000), Vec3(1.000000, -1.000000, 0.500000), Vec3(0.000000, -1.000000, 0.166667), Vec3(-0.500000, -1.000000, -0.250000),
+			Vec3(1.000000, -1.000000, -0.500000), Vec3(-0.500000, -1.000000, 0.750000), Vec3(-1.000000, -1.000000, 0.000000), Vec3(0.500000, -1.000000, -0.083333), Vec3(0.000000, -1.000000, -0.666667), Vec3(0.250000, -1.000000, -0.375000), Vec3(-0.250000, -1.000000, -0.041667) };
 
-		static constexpr const uint32 faces[] = {
-			12, 17, 22,
-			4, 18, 17,
-			21, 15, 19,
-			15, 16, 19,
-			27, 10, 24,
-			15, 11, 2,
-			14, 4, 12,
-			12, 15, 14,
-			30, 3, 7,
-			29, 24, 32,
-			18, 14, 20,
-			14, 21, 20,
-			16, 11, 22,
-			22, 11, 12,
-			16, 10, 1,
-			13, 20, 21,
-			13, 7, 18,
-			19, 1, 5,
-			5, 13, 21,
-			3, 18, 7,
-			9, 17, 3,
-			12, 11, 15,
-			12, 4, 17,
-			16, 2, 11,
-			16, 22, 10,
-			9, 22, 17,
-			14, 15, 21,
-			21, 19, 5,
-			18, 20, 13,
-			15, 2, 16,
-			19, 16, 1,
-			4, 14, 18,
-			3, 17, 18,
-			31, 6, 25,
-			13, 23, 8,
-			5, 27, 23,
-			30, 25, 9,
-			24, 13, 27,
-			28, 32, 10,
-			7, 31, 30,
-			26, 29, 31,
-			6, 32, 25,
-			5, 1, 27,
-			27, 1, 10,
-			32, 24, 10,
-			25, 32, 28,
-			30, 31, 25,
-			7, 26, 31,
-			26, 13, 29,
-			29, 13, 24,
-			30, 9, 3,
-			10, 22, 9,
-			13, 26, 7,
-			25, 28, 9,
-			31, 29, 32,
-			23, 27, 8
-		};
+		static constexpr const uint32 faces[] = { 12, 17, 22, 4, 18, 17, 21, 15, 19, 15, 16, 19, 27, 10, 24, 15, 11, 2, 14, 4, 12, 12, 15, 14, 30, 3, 7, 29, 24, 32, 18, 14, 20, 14, 21, 20, 16, 11, 22, 22, 11, 12, 16, 10, 1, 13, 20, 21, 13, 7, 18, 19, 1, 5, 5, 13, 21, 3, 18, 7, 9, 17, 3, 12, 11, 15, 12, 4, 17, 16, 2, 11, 16, 22, 10, 9, 22, 17, 14, 15, 21, 21, 19, 5, 18, 20, 13, 15, 2, 16, 19, 16, 1, 4, 14, 18, 3, 17, 18, 31, 6, 25, 13, 23, 8, 5, 27, 23, 30, 25, 9, 24, 13, 27, 28, 32, 10, 7, 31, 30, 26, 29, 31, 6, 32, 25, 5, 1, 27, 27, 1, 10, 32, 24, 10, 25, 32, 28, 30, 31, 25, 7, 26, 31, 26, 13, 29, 29, 13, 24, 30, 9, 3, 10, 22, 9, 13, 26, 7, 25, 28, 9, 31, 29, 32, 23, 27, 8 };
 
 		Holder<Mesh> msh = newMesh();
 		msh->positions(verts);
@@ -705,20 +616,20 @@ namespace
 		{
 			switch (it.type)
 			{
-			case MeshImportTextureType::Albedo:
-				albedo = std::move(it.images.parts[0].image);
-				break;
-			case MeshImportTextureType::Roughness:
-				roughness = std::move(it.images.parts[0].image);
-				break;
-			case MeshImportTextureType::Metallic:
-				metallic = std::move(it.images.parts[0].image);
-				break;
-			case MeshImportTextureType::Normal:
-				normal = std::move(it.images.parts[0].image);
-				break;
-			default:
-				break;
+				case MeshImportTextureType::Albedo:
+					albedo = std::move(it.images.parts[0].image);
+					break;
+				case MeshImportTextureType::Roughness:
+					roughness = std::move(it.images.parts[0].image);
+					break;
+				case MeshImportTextureType::Metallic:
+					metallic = std::move(it.images.parts[0].image);
+					break;
+				case MeshImportTextureType::Normal:
+					normal = std::move(it.images.parts[0].image);
+					break;
+				default:
+					break;
 			}
 		}
 		const Image *arr[] = { nullptr, +roughness, +metallic };

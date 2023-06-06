@@ -1,8 +1,8 @@
-#include <cage-core/textPack.h>
-#include <cage-core/string.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
+#include <cage-core/string.h>
+#include <cage-core/textPack.h>
 
 #include <unordered_dense.h>
 
@@ -42,7 +42,7 @@ namespace cage
 
 	void TextPack::clear()
 	{
-		TextPackImpl *impl = (TextPackImpl*)this;
+		TextPackImpl *impl = (TextPackImpl *)this;
 		impl->texts.clear();
 	}
 

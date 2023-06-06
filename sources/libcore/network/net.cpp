@@ -35,14 +35,13 @@ namespace cage
 		void Addr::translate(String &address, uint16 &port, bool domain) const
 		{
 			char nameBuf[String::MaxLength], portBuf[7];
-			if (getnameinfo((sockaddr*)&storage, addrlen, nameBuf, String::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
+			if (getnameinfo((sockaddr *)&storage, addrlen, nameBuf, String::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
 				CAGE_THROW_ERROR(SystemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
 			address = String(nameBuf);
 			port = numeric_cast<uint16>(toUint32(String(portBuf)));
 		}
 
-		Sock::Sock()
-		{}
+		Sock::Sock() {}
 
 		Sock::Sock(int family, int type, int protocol) : family(family), type(type), protocol(protocol)
 		{
@@ -52,15 +51,14 @@ namespace cage
 				CAGE_THROW_ERROR(SystemError, "socket creation failed (socket)", WSAGetLastError());
 		}
 
-		Sock::Sock(int family, int type, int protocol, SOCKET desc, bool connected) : descriptor(desc), family(family), type(type), protocol(protocol), connected(connected)
-		{}
+		Sock::Sock(int family, int type, int protocol, SOCKET desc, bool connected) : descriptor(desc), family(family), type(type), protocol(protocol), connected(connected) {}
 
 		Sock::Sock(Sock &&other) noexcept : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol), connected(other.connected)
 		{
 			other.descriptor = INVALID_SOCKET;
 		}
 
-		void Sock::operator = (Sock &&other) noexcept
+		void Sock::operator=(Sock &&other) noexcept
 		{
 			if (this == &other)
 				return;
@@ -89,10 +87,10 @@ namespace cage
 		void Sock::setReuseaddr(bool reuse)
 		{
 			int b = reuse ? 1 : 0;
-			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEADDR, (raw_type*)&b, sizeof(b)) != 0)
+			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEADDR, (raw_type *)&b, sizeof(b)) != 0)
 				CAGE_THROW_ERROR(SystemError, "setting reuseaddr mode (setsockopt)", WSAGetLastError());
 #ifndef CAGE_SYSTEM_WINDOWS
-			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEPORT, (raw_type*)&b, sizeof(b)) != 0)
+			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEPORT, (raw_type *)&b, sizeof(b)) != 0)
 				CAGE_THROW_ERROR(SystemError, "setting reuseport mode (setsockopt)", WSAGetLastError());
 #endif
 		}
@@ -100,7 +98,7 @@ namespace cage
 		void Sock::setBroadcast(bool broadcast)
 		{
 			int broadcastPermission = broadcast ? 1 : 0;
-			if (setsockopt(descriptor, SOL_SOCKET, SO_BROADCAST, (raw_type*)&broadcastPermission, sizeof(broadcastPermission)) != 0)
+			if (setsockopt(descriptor, SOL_SOCKET, SO_BROADCAST, (raw_type *)&broadcastPermission, sizeof(broadcastPermission)) != 0)
 				CAGE_THROW_ERROR(SystemError, "setting broadcast mode (setsockopt)", WSAGetLastError());
 		}
 
@@ -110,7 +108,7 @@ namespace cage
 			{
 				socklen_t len = sizeof(sint32);
 				sint32 cur = 0;
-				if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
+				if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type *)&cur, &len) != 0)
 					CAGE_THROW_ERROR(SystemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
 				CAGE_ASSERT(len == sizeof(sint32));
 				sint32 last = request;
@@ -118,10 +116,10 @@ namespace cage
 				while (cur != last && cur < r)
 				{
 					CAGE_ASSERT(r > 0);
-					if (setsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&r, len) != 0)
+					if (setsockopt(descriptor, SOL_SOCKET, optname, (raw_type *)&r, len) != 0)
 						CAGE_THROW_ERROR(SystemError, "setting buffer size (setsockopt)", WSAGetLastError());
 					last = cur;
-					if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
+					if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type *)&cur, &len) != 0)
 						CAGE_THROW_ERROR(SystemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
 					r -= 32768;
 				}
@@ -138,13 +136,13 @@ namespace cage
 
 		void Sock::bind(const Addr &localAddress)
 		{
-			if (::bind(descriptor, (sockaddr*)&localAddress, localAddress.addrlen) < 0)
+			if (::bind(descriptor, (sockaddr *)&localAddress, localAddress.addrlen) < 0)
 				CAGE_THROW_ERROR(SystemError, "setting local address and port failed (bind)", WSAGetLastError());
 		}
 
 		void Sock::connect(const Addr &remoteAddress)
 		{
-			if (::connect(descriptor, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) < 0)
+			if (::connect(descriptor, (sockaddr *)&remoteAddress.storage, remoteAddress.addrlen) < 0)
 				CAGE_THROW_ERROR(SystemError, "connect failed (connect)", WSAGetLastError());
 			connected = true;
 		}
@@ -184,7 +182,7 @@ namespace cage
 		{
 			Addr a;
 			a.addrlen = sizeof(a.storage);
-			if (getsockname(descriptor, (sockaddr*)&a.storage, (socklen_t*)&a.addrlen) < 0)
+			if (getsockname(descriptor, (sockaddr *)&a.storage, (socklen_t *)&a.addrlen) < 0)
 				CAGE_THROW_ERROR(SystemError, "fetch of local address failed (getsockname)", WSAGetLastError());
 			return a;
 		}
@@ -193,7 +191,7 @@ namespace cage
 		{
 			Addr a;
 			a.addrlen = sizeof(a.storage);
-			if (getpeername(descriptor, (sockaddr*)&a.storage, (socklen_t*)&a.addrlen) < 0)
+			if (getpeername(descriptor, (sockaddr *)&a.storage, (socklen_t *)&a.addrlen) < 0)
 				CAGE_THROW_ERROR(SystemError, "fetch of remote address failed (getpeername)", WSAGetLastError());
 			return a;
 		}
@@ -224,14 +222,14 @@ namespace cage
 		void Sock::send(const void *buffer, uintPtr bufferSize)
 		{
 			CAGE_ASSERT(connected);
-			if (::send(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
+			if (::send(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
 				CAGE_THROW_ERROR(SystemError, "send failed (send)", WSAGetLastError());
 		}
 
 		void Sock::sendTo(const void *buffer, uintPtr bufferSize, const Addr &remoteAddress)
 		{
 			CAGE_ASSERT(!connected);
-			if (::sendto(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
+			if (::sendto(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr *)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(SystemError, "send failed (sendto)", WSAGetLastError());
 		}
 
@@ -263,8 +261,7 @@ namespace cage
 			return rtn;
 		}
 
-		AddrList::AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags)
-		{}
+		AddrList::AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags) {}
 
 		AddrList::AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
 		{

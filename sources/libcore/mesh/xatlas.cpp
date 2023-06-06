@@ -1,8 +1,8 @@
 #include "mesh.h"
 
 #include <cage-core/meshAlgorithms.h>
-#include <cstddef> // fix missing size_t in xatlas
 #include <cstdarg> // va_start
+#include <cstddef> // fix missing size_t in xatlas
 #include <cstdio> // vsprintf
 #include <xatlas.h>
 
@@ -23,18 +23,10 @@ namespace cage
 
 		struct Initializer
 		{
-			Initializer()
-			{
-				xatlas::SetPrint(&xAtlasPrint, false);
-			}
+			Initializer() { xatlas::SetPrint(&xAtlasPrint, false); }
 		} initializer;
 
-		constexpr const String xAtlasCategoriesNames[] = {
-			"AddModel",
-			"ComputeCharts",
-			"PackCharts",
-			"BuildOutputModeles"
-		};
+		constexpr const String xAtlasCategoriesNames[] = { "AddModel", "ComputeCharts", "PackCharts", "BuildOutputModeles" };
 
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
@@ -47,14 +39,8 @@ namespace cage
 			struct Atl : private Immovable
 			{
 				xatlas::Atlas *a = nullptr;
-				Atl()
-				{
-					a = xatlas::Create();
-				}
-				~Atl()
-				{
-					xatlas::Destroy(a);
-				}
+				Atl() { a = xatlas::Create(); }
+				~Atl() { xatlas::Destroy(a); }
 			};
 			Holder<Atl> h = systemMemory().createHolder<Atl>();
 			if (reportProgress)

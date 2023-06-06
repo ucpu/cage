@@ -23,11 +23,12 @@ namespace
 					writeLine("scheme=model");
 					writeLine(Stringizer() + "asset=" + inputFile);
 				}
-				else for (const auto &part : result.parts)
-				{
-					writeLine("scheme=model");
-					writeLine(Stringizer() + "asset=" + inputFile + "?" + part.objectName + "_" + part.materialName);
-				}
+				else
+					for (const auto &part : result.parts)
+					{
+						writeLine("scheme=model");
+						writeLine(Stringizer() + "asset=" + inputFile + "?" + part.objectName + "_" + part.materialName);
+					}
 
 				// textures
 				for (const auto &part : result.parts)
@@ -55,8 +56,7 @@ namespace
 				}
 			}
 			catch (...)
-			{
-			}
+			{}
 			writeLine("cage-end");
 		}
 		catch (...)

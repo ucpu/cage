@@ -92,12 +92,14 @@ namespace cage
 				break;
 			if (!c.enableForDisabled && it.widget->widgetState.disabled)
 				break;
-			if ([&]() {
-				for (const auto &tt : ttData)
-					if (tt.invoker == ent)
-						return true;
-				return false;
-			}())
+			if (
+			    [&]()
+			    {
+				    for (const auto &tt : ttData)
+					    if (tt.invoker == ent)
+						    return true;
+				    return false;
+			    }())
 				break; // this tooltip is already shown
 
 			TooltipData tt;
@@ -140,21 +142,22 @@ namespace cage
 					it.tooltip->value<GuiParentComponent>().parent = f->name();
 					switch (it.placement)
 					{
-					case TooltipPlacementEnum::Corner:
-					{
-						Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
-						CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
-						CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
-						if (corner[1] == 0)
-							corner[1] = 1; // avoid centering the tooltip under the cursor
-						f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
-						f->value<GuiLayoutAlignmentComponent>().alignment += -17 * Vec2(corner) / outputSize;
-					} break;
-					case TooltipPlacementEnum::Center:
-						f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
+						case TooltipPlacementEnum::Corner:
+						{
+							Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
+							CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
+							CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
+							if (corner[1] == 0)
+								corner[1] = 1; // avoid centering the tooltip under the cursor
+							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
+							f->value<GuiLayoutAlignmentComponent>().alignment += -17 * Vec2(corner) / outputSize;
+						}
 						break;
-					case TooltipPlacementEnum::Manual:
-						break;
+						case TooltipPlacementEnum::Center:
+							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
+							break;
+						case TooltipPlacementEnum::Manual:
+							break;
 					}
 					it.tooltip = f;
 				}

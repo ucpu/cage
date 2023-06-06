@@ -1,8 +1,8 @@
+#include <cage-core/concurrent.h> // threadSleep
+#include <cage-core/files.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/string.h>
-#include <cage-core/files.h>
 #include <cage-core/timer.h>
-#include <cage-core/concurrent.h> // threadSleep
 
 #include <FileWatcher/FileWatcher.h>
 
@@ -41,10 +41,7 @@ namespace cage
 				return res;
 			}
 
-			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
-			{
-				files.insert(pathJoin(dir.c_str(), filename.c_str()));
-			}
+			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override { files.insert(pathJoin(dir.c_str(), filename.c_str())); }
 
 			void registerPath(const String &path)
 			{

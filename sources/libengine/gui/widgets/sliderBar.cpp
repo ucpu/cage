@@ -12,10 +12,7 @@ namespace cage
 			GuiElementTypeEnum dotElement = GuiElementTypeEnum::InvalidElement;
 			Real normalizedValue;
 
-			SliderBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(SliderBar))
-			{
-				data.value = clamp(data.value, data.min, data.max);
-			}
+			SliderBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(SliderBar)) { data.value = clamp(data.value, data.min, data.max); }
 
 			void initialize() override
 			{

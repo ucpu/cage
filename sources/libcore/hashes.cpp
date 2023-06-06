@@ -1,8 +1,8 @@
 #include <cage-core/hashes.h>
 
+#include <algorithm>
 #include <array>
 #include <vector>
-#include <algorithm>
 
 namespace cage
 {
@@ -11,10 +11,7 @@ namespace cage
 		// https://thealgorithms.github.io/C-Plus-Plus/d8/d7a/sha1_8cpp.html
 		// modified
 
-		const auto &leftRotate32bits = [](uint32 n, uint32 rotate) -> uint32
-		{
-			return (n << rotate) | (n >> (32 - rotate));
-		};
+		const auto &leftRotate32bits = [](uint32 n, uint32 rotate) -> uint32 { return (n << rotate) | (n >> (32 - rotate)); };
 
 		uint32 h0 = 0x67452301, a = 0;
 		uint32 h1 = 0xEFCDAB89, b = 0;
@@ -123,16 +120,7 @@ namespace cage
 		// https://gist.github.com/tomykaira/f0fd86b6c73063283afe550bc5d77594
 		// modified
 
-		static constexpr const char sEncodingTable[] = {
-		  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-		  'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-		  'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
-		  'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-		  'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-		  'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-		  'w', 'x', 'y', 'z', '0', '1', '2', '3',
-		  '4', '5', '6', '7', '8', '9', '+', '/'
-		};
+		static constexpr const char sEncodingTable[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/' };
 
 		String ret;
 		ret.rawLength() = 4 * ((data.size() + 2) / 3);

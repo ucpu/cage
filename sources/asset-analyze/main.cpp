@@ -1,9 +1,9 @@
-#include <cage-core/logger.h>
-#include <cage-core/files.h>
 #include <cage-core/config.h>
-#include <cage-core/ini.h>
-#include <cage-core/process.h>
 #include <cage-core/debug.h>
+#include <cage-core/files.h>
+#include <cage-core/ini.h>
+#include <cage-core/logger.h>
+#include <cage-core/process.h>
 #include <cage-core/string.h>
 
 #include <map>
@@ -14,7 +14,7 @@ using namespace cage;
 namespace
 {
 	typedef std::map<String, std::set<String>> AssetsLists; // scheme -> assets
-	
+
 	void mergeLists(AssetsLists &out, const AssetsLists &in)
 	{
 		for (const auto &a : in)

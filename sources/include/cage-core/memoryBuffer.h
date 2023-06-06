@@ -10,7 +10,7 @@ namespace cage
 		MemoryBuffer() = default; // no allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
 		MemoryBuffer(MemoryBuffer &&other) noexcept;
-		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;
+		MemoryBuffer &operator=(MemoryBuffer &&other) noexcept;
 		~MemoryBuffer();
 
 		MemoryBuffer copy() const;
@@ -25,35 +25,12 @@ namespace cage
 		void clear(); // sets size to zero; does not deallocate the buffer
 		void free(); // deallocates the buffer
 
-		char *data() noexcept
-		{
-			return data_;
-		}
-
-		const char *data() const noexcept
-		{
-			return data_;
-		}
-
-		uintPtr size() const noexcept
-		{
-			return size_;
-		}
-
-		uintPtr capacity() const noexcept
-		{
-			return capacity_;
-		}
-
-		operator PointerRange<char>() noexcept
-		{
-			return { data_, data_ + size_ };
-		}
-
-		operator PointerRange<const char>() const noexcept
-		{
-			return { data_, data_ + size_ };
-		}
+		CAGE_FORCE_INLINE char *data() noexcept { return data_; }
+		CAGE_FORCE_INLINE const char *data() const noexcept { return data_; }
+		CAGE_FORCE_INLINE uintPtr size() const noexcept { return size_; }
+		CAGE_FORCE_INLINE uintPtr capacity() const noexcept { return capacity_; }
+		CAGE_FORCE_INLINE operator PointerRange<char>() noexcept { return { data_, data_ + size_ }; }
+		CAGE_FORCE_INLINE operator PointerRange<const char>() const noexcept { return { data_, data_ + size_ }; }
 
 		operator Holder<PointerRange<char>>() &&;
 

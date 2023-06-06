@@ -1,17 +1,17 @@
-#include <cage-core/systemInformation.h>
 #include <cage-core/string.h>
+#include <cage-core/systemInformation.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include <Windows.h>
-#include <intrin.h>
-#include <powerbase.h> // CallNtPowerInformation
-#include <Psapi.h> // GetProcessMemoryInfo
-#pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
-#pragma comment(lib, "Advapi32.lib") // RegGetValue
+	#include "incWin.h" // must be included first
+	#include <Psapi.h> // GetProcessMemoryInfo
+	#include <intrin.h>
+	#include <powerbase.h> // CallNtPowerInformation
+	#pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
+	#pragma comment(lib, "Advapi32.lib") // RegGetValue
 #else
-#include <cage-core/concurrent.h>
-#include <cage-core/process.h>
-#include <cage-core/debug.h>
+	#include <cage-core/concurrent.h>
+	#include <cage-core/debug.h>
+	#include <cage-core/process.h>
 #endif
 
 namespace cage
@@ -124,12 +124,12 @@ namespace cage
 		// is there any better way than using CallNtPowerInformation?
 		struct PPI
 		{
-		ULONG Number;
-		ULONG MaxMhz;
-		ULONG CurrentMhz;
-		ULONG MhzLimit;
-		ULONG MaxIdleState;
-		ULONG CurrentIdleState;
+			ULONG Number;
+			ULONG MaxMhz;
+			ULONG CurrentMhz;
+			ULONG MhzLimit;
+			ULONG MaxIdleState;
+			ULONG CurrentIdleState;
 		} ppi[32];
 		memset(&ppi, 0, sizeof(ppi));
 		auto ret = CallNtPowerInformation(ProcessorInformation, nullptr, 0, &ppi, sizeof(ppi));
@@ -143,7 +143,7 @@ namespace cage
 			Holder<Process> prg = newProcess(String("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
 			return toUint32(prg->readLine()) * 1000;
 		}
-		catch(const cage::Exception &)
+		catch (const cage::Exception &)
 		{
 			// When the cpufreq driver is not loaded (file above does not exist), the CPU should be running on full speed
 		}
@@ -205,4 +205,3 @@ namespace cage
 #endif
 	}
 }
-

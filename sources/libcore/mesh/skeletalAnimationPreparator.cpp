@@ -1,9 +1,9 @@
-#include <cage-core/tasks.h>
-#include <cage-core/concurrent.h>
 #include <cage-core/assetManager.h>
+#include <cage-core/concurrent.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/skeletalAnimationPreparator.h>
+#include <cage-core/tasks.h>
 
 #include <unordered_dense.h>
 
@@ -16,8 +16,7 @@ namespace cage
 		class SkeletalAnimationPreparatorCollectionImpl : public SkeletalAnimationPreparatorCollection
 		{
 		public:
-			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets, bool animateSkeletonsInsteadOfSkins) : assets(assets), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins)
-			{}
+			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets, bool animateSkeletonsInsteadOfSkins) : assets(assets), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins) {}
 
 			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 			Holder<Mutex> mutex = newMutex();
@@ -28,8 +27,7 @@ namespace cage
 		class SkeletalAnimationPreparatorInstanceImpl : public SkeletalAnimationPreparatorInstance
 		{
 		public:
-			explicit SkeletalAnimationPreparatorInstanceImpl(Holder<SkeletalAnimation> animation, Real coefficient, SkeletalAnimationPreparatorCollectionImpl *impl) : animation(std::move(animation)), coefficient(coefficient), impl(impl)
-			{}
+			explicit SkeletalAnimationPreparatorInstanceImpl(Holder<SkeletalAnimation> animation, Real coefficient, SkeletalAnimationPreparatorCollectionImpl *impl) : animation(std::move(animation)), coefficient(coefficient), impl(impl) {}
 
 			void prepare()
 			{
@@ -41,7 +39,7 @@ namespace cage
 				task = tasksRunAsync("skeletal-animation", Holder<SkeletalAnimationPreparatorInstanceImpl>(this, nullptr));
 			}
 
-			void operator () (uint32)
+			void operator()(uint32)
 			{
 				CAGE_ASSERT(armature.empty());
 				Holder<SkeletonRig> skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(animation->skeletonName());

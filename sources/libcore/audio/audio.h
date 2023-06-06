@@ -1,5 +1,5 @@
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/audio.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {

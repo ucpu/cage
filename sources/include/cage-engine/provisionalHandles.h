@@ -20,67 +20,58 @@ namespace cage
 		public:
 			ProvisionalHandle() = default;
 			ProvisionalHandle(ProvisionalHandle &&) = default;
-			ProvisionalHandle(const ProvisionalHandle &other) : data_(other.data_.share()), type_(other.type_){}
+			ProvisionalHandle(const ProvisionalHandle &other) : data_(other.data_.share()), type_(other.type_) {}
 			ProvisionalHandle(const Holder<A> &data) : data_(data.share().template cast<void>()), type_(1) {}
 			ProvisionalHandle(const Holder<B> &data) : data_(data.share().template cast<void>()), type_(2) {}
 
-			ProvisionalHandle &operator = (ProvisionalHandle &&) = default;
-			ProvisionalHandle &operator = (const ProvisionalHandle &other)
+			ProvisionalHandle &operator=(ProvisionalHandle &&) = default;
+			ProvisionalHandle &operator=(const ProvisionalHandle &other)
 			{
 				data_ = other.data_.share();
 				type_ = other.type_;
 				return *this;
 			}
-			ProvisionalHandle &operator = (const Holder<A> &data)
+			ProvisionalHandle &operator=(const Holder<A> &data)
 			{
 				data_ = data.share().template cast<void>();
 				type_ = 1;
 				return *this;
 			}
-			ProvisionalHandle &operator = (const Holder<B> &data)
+			ProvisionalHandle &operator=(const Holder<B> &data)
 			{
 				data_ = data.share().template cast<void>();
 				type_ = 2;
 				return *this;
 			}
 
-			bool operator == (const ProvisionalHandle &other) const
+			bool operator==(const ProvisionalHandle &other) const
 			{
 				if (type() != other.type())
 					return false;
 				return pointer() == other.pointer();
 			}
 
-			bool operator != (const ProvisionalHandle &other) const
-			{
-				return !(*this == other);
-			}
+			bool operator!=(const ProvisionalHandle &other) const { return !(*this == other); }
 
-			uint32 type() const
-			{
-				return type_;
-			}
+			uint32 type() const { return type_; }
 
 			// requires opengl thread
 			Holder<A> resolve() const
 			{
 				switch (type_)
 				{
-				case 1: return data_.share().template cast<A>();
-				case 2: return data_.share().template cast<B>()->resolve();
-				default: return Holder<A>();
+					case 1:
+						return data_.share().template cast<A>();
+					case 2:
+						return data_.share().template cast<B>()->resolve();
+					default:
+						return Holder<A>();
 				}
 			}
 
-			void *pointer() const
-			{
-				return +data_;
-			}
+			void *pointer() const { return +data_; }
 
-			explicit operator bool() const
-			{
-				return !!data_;
-			}
+			explicit operator bool() const { return !!data_; }
 
 		private:
 			Holder<void> data_;

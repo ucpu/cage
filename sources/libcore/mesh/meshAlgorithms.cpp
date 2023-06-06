@@ -1,18 +1,18 @@
 #include "mesh.h"
 
-#include <cage-core/meshAlgorithms.h>
+#include <algorithm> // std::erase_if
+#include <array>
+#include <cage-core/collider.h>
+#include <cage-core/flatSet.h>
 #include <cage-core/geometry.h>
+#include <cage-core/image.h>
 #include <cage-core/macros.h>
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/spatialStructure.h>
-#include <cage-core/image.h>
 #include <cage-core/tasks.h>
-#include <cage-core/flatSet.h>
-#include <cage-core/collider.h>
-#include <algorithm> // std::erase_if
 #include <iterator> // back_insterter
 #include <numeric> // std::iota
-#include <array>
 
 namespace cage
 {
@@ -25,7 +25,8 @@ namespace cage
 			std::swap(b, c); // bca
 		}
 
-		template<class T> requires(std::is_same_v<T, Vec2> || std::is_same_v<T, Vec3>)
+		template<class T>
+		requires(std::is_same_v<T, Vec2> || std::is_same_v<T, Vec3>)
 		Vec2 barycoord(const T &a, const T &b, const T &c, const T &p)
 		{
 			const T v0 = b - a;
@@ -47,7 +48,7 @@ namespace cage
 			return Vec2(u, v);
 		}
 
-		Vec2i operator * (const Vec2i &a, Real b)
+		Vec2i operator*(const Vec2i &a, Real b)
 		{
 			return Vec2i(sint32(a[0] * b.value), sint32(a[1] * b.value));
 		}
@@ -57,9 +58,7 @@ namespace cage
 		{
 			CAGE_ASSERT(v.size() == toRemove.size());
 			auto flagit = toRemove.begin();
-			std::erase_if(v, [&](T&) {
-				return *flagit++;
-			});
+			std::erase_if(v, [&](T &) { return *flagit++; });
 			CAGE_ASSERT(flagit == toRemove.end());
 		}
 
@@ -90,7 +89,9 @@ namespace cage
 				}
 			}
 
-#define GCHL_GENERATE(NAME) if (!impl->NAME.empty()) vectorEraseIf(impl->NAME, verticesToRemove);
+#define GCHL_GENERATE(NAME) \
+	if (!impl->NAME.empty()) \
+		vectorEraseIf(impl->NAME, verticesToRemove);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		}
@@ -111,28 +112,30 @@ namespace cage
 		{
 			switch (type)
 			{
-			case MeshTypeEnum::Points:
+				case MeshTypeEnum::Points:
+					break;
+				case MeshTypeEnum::Lines:
+				{
+					const uint32 cnt = numeric_cast<uint32>(marks.size()) / 2;
+					for (uint32 i = 0; i < cnt; i++)
+					{
+						if (marks[i * 2 + 0] || marks[i * 2 + 1])
+							marks[i * 2 + 0] = marks[i * 2 + 1] = true;
+					}
+				}
 				break;
-			case MeshTypeEnum::Lines:
-			{
-				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 2;
-				for (uint32 i = 0; i < cnt; i++)
+				case MeshTypeEnum::Triangles:
 				{
-					if (marks[i * 2 + 0] || marks[i * 2 + 1])
-						marks[i * 2 + 0] = marks[i * 2 + 1] = true;
+					const uint32 cnt = numeric_cast<uint32>(marks.size()) / 3;
+					for (uint32 i = 0; i < cnt; i++)
+					{
+						if (marks[i * 3 + 0] || marks[i * 3 + 1] || marks[i * 3 + 2])
+							marks[i * 3 + 0] = marks[i * 3 + 1] = marks[i * 3 + 2] = true;
+					}
 				}
-			} break;
-			case MeshTypeEnum::Triangles:
-			{
-				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 3;
-				for (uint32 i = 0; i < cnt; i++)
-				{
-					if (marks[i * 3 + 0] || marks[i * 3 + 1] || marks[i * 3 + 2])
-						marks[i * 3 + 0] = marks[i * 3 + 1] = marks[i * 3 + 2] = true;
-				}
-			} break;
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+				break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 			}
 		}
 
@@ -184,10 +187,7 @@ namespace cage
 
 		struct Comparator
 		{
-			bool operator() (const Vec3 &a, const Vec3 &b) const
-			{
-				return detail::memcmp(&a, &b, sizeof(a)) < 0;
-			}
+			bool operator()(const Vec3 &a, const Vec3 &b) const { return detail::memcmp(&a, &b, sizeof(a)) < 0; }
 		};
 		const FlatSet pos = makeFlatSet<Vec3, Comparator>(msh->positions());
 
@@ -300,10 +300,7 @@ namespace cage
 		{
 			uint32 a, b, c;
 
-			bool operator < (const T &other) const
-			{
-				return detail::memcmp(this, &other, sizeof(*this)) < 0;
-			}
+			bool operator<(const T &other) const { return detail::memcmp(this, &other, sizeof(*this)) < 0; }
 
 			T &order()
 			{
@@ -494,7 +491,8 @@ namespace cage
 		}
 
 		// are 3 points collinear (must be in order)
-		const auto &isColinear = [&](uint32 a, uint32 b, uint32 c) -> bool {
+		const auto &isColinear = [&](uint32 a, uint32 b, uint32 c) -> bool
+		{
 			const Vec3 x = normalize(poss[b] - poss[a]);
 			const Vec3 y = normalize(poss[c] - poss[b]);
 			return dot(x, y) > 0.999;
@@ -509,9 +507,11 @@ namespace cage
 
 		// verify if merging vertex v1 to v2 is valid for all triangles tris and do it
 		// it is valid to degenerate triangles but not to flip orientation
-		const auto &checkAndMergeVertex = [&](PointerRange<const uint32> tris, uint32 v1, uint32 v2) -> bool {
+		const auto &checkAndMergeVertex = [&](PointerRange<const uint32> tris, uint32 v1, uint32 v2) -> bool
+		{
 			CAGE_ASSERT(v1 != v2);
-			const auto &loop = [&](bool perform) -> bool {
+			const auto &loop = [&](bool perform) -> bool
+			{
 				for (uint32 ti : tris)
 				{
 					uint32 is[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
@@ -564,12 +564,14 @@ namespace cage
 				group.push_back(t1);
 
 				// find if any of the triangles in the group is banned
-				if ([&] {
-					for (uint32 i : group)
-						if (banned[i])
-							return true;
-					return false;
-				}())
+				if (
+				    [&]
+				    {
+					    for (uint32 i : group)
+						    if (banned[i])
+							    return true;
+					    return false;
+				    }())
 					continue; // some triangle is banned
 
 				// check if the vi vertex is fully surrounded or on an edge
@@ -588,13 +590,13 @@ namespace cage
 				{
 					switch (it.second)
 					{
-					case 1:
-						ones++;
-						edgeVerts.push_back(it.first);
-						break;
-					case 2:
-						twos++;
-						break;
+						case 1:
+							ones++;
+							edgeVerts.push_back(it.first);
+							break;
+						case 2:
+							twos++;
+							break;
 					}
 				}
 				if (ones != 2 && twos != group.size())
@@ -697,12 +699,12 @@ namespace cage
 
 		switch (impl->type)
 		{
-		case MeshTypeEnum::Lines:
-			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
-		case MeshTypeEnum::Triangles:
-			return splitComponentsTriangles(impl);
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+			case MeshTypeEnum::Lines:
+				CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
+			case MeshTypeEnum::Triangles:
+				return splitComponentsTriangles(impl);
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 	}
 
@@ -791,8 +793,7 @@ namespace cage
 			Holder<SpatialStructure> spatialStructure = newSpatialStructure({});
 			std::vector<std::vector<Triangle>> tasks;
 
-			Processor(Mesh *msh, const MeshSplitIntersectingConfig &config) : msh(msh), config(config)
-			{}
+			Processor(Mesh *msh, const MeshSplitIntersectingConfig &config) : msh(msh), config(config) {}
 
 			void operator()(uint32 triIdx)
 			{
@@ -805,9 +806,11 @@ namespace cage
 				if (cutterIds.size() >= config.maxCuttersForTriangle)
 					return;
 				const PointerRange<const Triangle> cctris = collider->triangles();
-				std::sort(cutterIds.begin(), cutterIds.end(), [cctris](uint32 a, uint32 b) {
-					return cctris[a].area() > cctris[b].area(); // cut with largest triangles first
-				});
+				std::sort(cutterIds.begin(), cutterIds.end(),
+				    [cctris](uint32 a, uint32 b)
+				    {
+					    return cctris[a].area() > cctris[b].area(); // cut with largest triangles first
+				    });
 				std::vector<Triangle> b;
 				b.reserve(10);
 				Triangle tmp[3];
@@ -1202,16 +1205,16 @@ namespace cage
 		discardInvalidVertices(impl);
 		switch (impl->type)
 		{
-		case MeshTypeEnum::Points:
-			break;
-		case MeshTypeEnum::Lines:
-			discardInvalidLines(impl);
-			break;
-		case MeshTypeEnum::Triangles:
-			discardInvalidTriangles(impl);
-			break;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+			case MeshTypeEnum::Points:
+				break;
+			case MeshTypeEnum::Lines:
+				discardInvalidLines(impl);
+				break;
+			case MeshTypeEnum::Triangles:
+				discardInvalidTriangles(impl);
+				break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 		msh->verticesCount(); // validate vertices
 	}
@@ -1254,36 +1257,38 @@ namespace cage
 
 		switch (msh->type())
 		{
-		case MeshTypeEnum::Triangles:
-		{
-			for (uint32 i = 0; i < incnt; i += 3)
+			case MeshTypeEnum::Triangles:
 			{
-				const Vec3 a = poss[orig[i + 0]];
-				const Vec3 b = poss[orig[i + 1]];
-				const Vec3 c = poss[orig[i + 2]];
-				if (Triangle(a, b, c).area() >= config.threshold)
+				for (uint32 i = 0; i < incnt; i += 3)
 				{
-					inds.push_back(orig[i + 0]);
-					inds.push_back(orig[i + 1]);
-					inds.push_back(orig[i + 2]);
+					const Vec3 a = poss[orig[i + 0]];
+					const Vec3 b = poss[orig[i + 1]];
+					const Vec3 c = poss[orig[i + 2]];
+					if (Triangle(a, b, c).area() >= config.threshold)
+					{
+						inds.push_back(orig[i + 0]);
+						inds.push_back(orig[i + 1]);
+						inds.push_back(orig[i + 2]);
+					}
 				}
 			}
-		} break;
-		case MeshTypeEnum::Lines:
-		{
-			for (uint32 i = 0; i < incnt; i += 2)
+			break;
+			case MeshTypeEnum::Lines:
 			{
-				const Vec3 a = poss[orig[i + 0]];
-				const Vec3 b = poss[orig[i + 1]];
-				if (distanceSquared(a, b) >= sqr(config.threshold))
+				for (uint32 i = 0; i < incnt; i += 2)
 				{
-					inds.push_back(orig[i + 0]);
-					inds.push_back(orig[i + 1]);
+					const Vec3 a = poss[orig[i + 0]];
+					const Vec3 b = poss[orig[i + 1]];
+					if (distanceSquared(a, b) >= sqr(config.threshold))
+					{
+						inds.push_back(orig[i + 0]);
+						inds.push_back(orig[i + 1]);
+					}
 				}
 			}
-		} break;
-		default:
-			CAGE_THROW_ERROR(Exception, "mesh remove small requires triangles or lines");
+			break;
+			default:
+				CAGE_THROW_ERROR(Exception, "mesh remove small requires triangles or lines");
 		}
 
 		if (inds.empty())
@@ -1312,8 +1317,7 @@ namespace cage
 			std::vector<uint8> visible;
 			Real grazingDot;
 
-			Processor(Mesh *msh, const MeshRemoveOccludedConfig &config) : msh(msh), config(config)
-			{}
+			Processor(Mesh *msh, const MeshRemoveOccludedConfig &config) : msh(msh), config(config) {}
 
 			void operator()(uint32 triIdx)
 			{
@@ -1583,11 +1587,7 @@ namespace cage
 				src->get(p + Vec2i(1, 0), corners[1]);
 				src->get(p + Vec2i(0, 1), corners[2]);
 				src->get(p + Vec2i(1, 1), corners[3]);
-				T res = interpolate(
-					interpolate(corners[0], corners[1], uv[0]),
-					interpolate(corners[2], corners[3], uv[0]),
-					uv[1]
-				);
+				T res = interpolate(interpolate(corners[0], corners[1], uv[0]), interpolate(corners[2], corners[3], uv[0]), uv[1]);
 				//dst->set(dstCoord[0], dst->resolution()[1] - dstCoord[1] - 1, res);
 				dst->set(dstCoord, res);
 			}
@@ -1598,18 +1598,18 @@ namespace cage
 			CAGE_ASSERT(src->channels() == dst->channels());
 			switch (src->channels())
 			{
-			case 1:
-				Sampler<Real>()(src, dst, srcUv, dstCoord);
-				break;
-			case 2:
-				Sampler<Vec2>()(src, dst, srcUv, dstCoord);
-				break;
-			case 3:
-				Sampler<Vec3>()(src, dst, srcUv, dstCoord);
-				break;
-			case 4:
-				Sampler<Vec4>()(src, dst, srcUv, dstCoord);
-				break;
+				case 1:
+					Sampler<Real>()(src, dst, srcUv, dstCoord);
+					break;
+				case 2:
+					Sampler<Vec2>()(src, dst, srcUv, dstCoord);
+					break;
+				case 3:
+					Sampler<Vec3>()(src, dst, srcUv, dstCoord);
+					break;
+				case 4:
+					Sampler<Vec4>()(src, dst, srcUv, dstCoord);
+					break;
 			}
 		}
 	}
@@ -1631,8 +1631,7 @@ namespace cage
 
 			std::vector<Pix> pixels;
 
-			Generator(const Mesh *mesh) : mesh(mesh)
-			{}
+			Generator(const Mesh *mesh) : mesh(mesh) {}
 
 			void generate(const Vec2i &xy, const Vec3i &ids, const Vec3 &weights)
 			{
@@ -1723,10 +1722,9 @@ namespace cage
 			Generator &generator;
 			MeshFinder &finder;
 
-			Tasker(PointerRange<const Image *> src, PointerRange<Holder<Image>> dst, Generator &generator, MeshFinder &finder) : src(src), dst(dst), generator(generator), finder(finder)
-			{}
+			Tasker(PointerRange<const Image *> src, PointerRange<Holder<Image>> dst, Generator &generator, MeshFinder &finder) : src(src), dst(dst), generator(generator), finder(finder) {}
 
-			void operator() (uint32 idx)
+			void operator()(uint32 idx)
 			{
 				const Vec2 uv = finder.find(generator.pixels[idx].pos);
 				if (!valid(uv))

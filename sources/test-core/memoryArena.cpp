@@ -4,30 +4,18 @@ namespace
 {
 	struct TestBase : private Immovable
 	{
-		TestBase()
-		{
-			baseCounter++;
-		}
+		TestBase() { baseCounter++; }
 
-		virtual ~TestBase()
-		{
-			baseCounter--;
-		}
+		virtual ~TestBase() { baseCounter--; }
 
 		static inline sint32 baseCounter = 0;
 	};
 
 	struct TestDerived : public TestBase
 	{
-		TestDerived()
-		{
-			derivedCounter++;
-		}
+		TestDerived() { derivedCounter++; }
 
-		~TestDerived()
-		{
-			derivedCounter--;
-		}
+		~TestDerived() { derivedCounter--; }
 
 		static inline sint32 derivedCounter = 0;
 	};

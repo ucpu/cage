@@ -1,7 +1,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/files.h>
 #include <cage-core/debug.h>
+#include <cage-core/files.h>
 #include <cage-core/string.h>
 #include <cage-engine/window.h>
 
@@ -40,17 +40,7 @@ namespace cage
 			ConfigString confScreen;
 			ConfigBool confFullscreenEnabled;
 
-			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window),
-				confWindowLeft(confName(config, "window/left"), 100),
-				confWindowTop(confName(config, "window/top"), 100),
-				confWindowWidth(confName(config, "window/windowWidth"), 800),
-				confWindowHeight(confName(config, "window/windowHeight"), 600),
-				confWindowMaximized(confName(config, "window/maximized"), true),
-				confScreen(confName(config, "window/screen"), ""),
-				confFullscreenWidth(confName(config, "window/width"), 0),
-				confFullscreenHeight(confName(config, "window/height"), 0),
-				confFullscreenFrequency(confName(config, "window/refreshRate"), 0),
-				confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
+			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window), confWindowLeft(confName(config, "window/left"), 100), confWindowTop(confName(config, "window/top"), 100), confWindowWidth(confName(config, "window/windowWidth"), 800), confWindowHeight(confName(config, "window/windowHeight"), 600), confWindowMaximized(confName(config, "window/maximized"), true), confScreen(confName(config, "window/screen"), ""), confFullscreenWidth(confName(config, "window/width"), 0), confFullscreenHeight(confName(config, "window/height"), 0), confFullscreenFrequency(confName(config, "window/refreshRate"), 0), confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
 				if (window->isHidden())
@@ -130,7 +120,7 @@ namespace cage
 
 	void FullscreenSwitcher::update(bool fullscreen)
 	{
-		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl*)this;
+		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl *)this;
 		impl->update(fullscreen);
 	}
 
@@ -155,8 +145,7 @@ namespace cage
 		}
 	}
 
-	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig() : FullscreenSwitcherCreateConfig(defaultFullscreenEnvironment())
-	{}
+	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig() : FullscreenSwitcherCreateConfig(defaultFullscreenEnvironment()) {}
 
 	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : defaultFullscreen(defaultFullscreen)
 	{

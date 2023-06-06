@@ -1,10 +1,10 @@
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/memoryBuffer.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
-#include <cage-core/debug.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
-#include <cage-core/concurrent.h>
 
 #include "files.h"
 
@@ -238,7 +238,8 @@ namespace cage
 		}
 		else
 		{
-			const uint32 dollarsCount = [&]() {
+			const uint32 dollarsCount = [&]()
+			{
 				uint32 i = 0;
 				String s = subString(pattern, firstDollar, m);
 				while (i < s.length() && s[i] == substitute)

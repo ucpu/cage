@@ -1,7 +1,7 @@
-#include <cage-core/geometry.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/entities.h>
 #include <cage-core/entitiesVisitor.h>
-#include <cage-core/assetManager.h>
+#include <cage-core/geometry.h>
 #include <cage-core/meshIoCommon.h>
 #include <cage-engine/model.h>
 #include <cage-engine/renderObject.h>
@@ -73,10 +73,13 @@ namespace cage
 		Boxes boxes;
 		boxes.assets = config.assets;
 		Aabb box;
-		entitiesVisitor([&](Entity *e, const TransformComponent &t, const RenderComponent &r) {
-			if (r.sceneMask & mask)
-				box += boxes.asset(r.object) * t;
-		}, config.light->manager(), false);
+		entitiesVisitor(
+		    [&](Entity *e, const TransformComponent &t, const RenderComponent &r)
+		    {
+			    if (r.sceneMask & mask)
+				    box += boxes.asset(r.object) * t;
+		    },
+		    config.light->manager(), false);
 
 		config.light->value<TransformComponent>().position = box.empty() ? Vec3() : box.center();
 		config.light->value<ShadowmapComponent>().worldSize = Vec3(max(box.diagonal() * 0.5, 1e-3));

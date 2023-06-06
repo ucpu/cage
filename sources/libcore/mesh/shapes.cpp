@@ -117,8 +117,9 @@ namespace cage
 			Holder<Mesh> tmp = newMesh();
 			tmp->positions(mesh->positions());
 			const auto originalPositions = mesh->positions();
-			struct Hasher {
-				std::size_t operator () (const std::pair<uint32, uint32> &p) const
+			struct Hasher
+			{
+				std::size_t operator()(const std::pair<uint32, uint32> &p) const
 				{
 					const auto h = std::hash<uint32>();
 					return h(h(p.first) ^ p.second);
@@ -126,7 +127,8 @@ namespace cage
 			};
 			std::unordered_map<std::pair<uint32, uint32>, uint32, Hasher> mapping;
 			mapping.reserve(mesh->verticesCount() * 2);
-			const auto &split = [&](uint32 a, uint32 b) -> uint32 {
+			const auto &split = [&](uint32 a, uint32 b) -> uint32
+			{
 				uint32 &r = mapping[std::pair(min(a, b), max(a, b))];
 				if (r == 0)
 				{

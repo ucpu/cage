@@ -1,11 +1,11 @@
 #include "main.h"
 
-#include <cage-core/typeIndex.h>
 #include <cage-core/timer.h>
+#include <cage-core/typeIndex.h>
 
 namespace
 {
-	template<uint32(*FNC)()>
+	template<uint32 (*FNC)()>
 	void measurePerformance(const char *name)
 	{
 		Holder<Timer> timer = newTimer();

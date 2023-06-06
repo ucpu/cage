@@ -1,7 +1,7 @@
-#include <cage-core/ini.h>
-#include <cage-core/macros.h>
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
+#include <cage-core/ini.h>
+#include <cage-core/macros.h>
 
 #include "database.h"
 
@@ -42,7 +42,7 @@ void Scheme::parse(Ini *ini)
 #define GCHL_GENERATE(NAME) fld.NAME = ini->getString(section, CAGE_STRINGIZE(NAME));
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
 #undef GCHL_GENERATE
-			fld.defaul = ini->getString(section, "default");
+		fld.defaul = ini->getString(section, "default");
 		if (fld.valid())
 			schemeFields.emplace(fld.name, std::move(fld));
 		else
@@ -56,7 +56,7 @@ void Scheme::parse(Ini *ini)
 	ini->checkUnused();
 }
 
-Serializer &operator << (Serializer &ser, const SchemeField &s)
+Serializer &operator<<(Serializer &ser, const SchemeField &s)
 {
 	ser << s.name;
 	ser << s.type;
@@ -67,7 +67,7 @@ Serializer &operator << (Serializer &ser, const SchemeField &s)
 	return ser;
 }
 
-Deserializer &operator >> (Deserializer &des, SchemeField &s)
+Deserializer &operator>>(Deserializer &des, SchemeField &s)
 {
 	des >> s.name;
 	des >> s.type;
@@ -78,14 +78,14 @@ Deserializer &operator >> (Deserializer &des, SchemeField &s)
 	return des;
 }
 
-Serializer &operator << (Serializer &ser, const Scheme &s)
+Serializer &operator<<(Serializer &ser, const Scheme &s)
 {
 	ser << s.name << s.processor << s.schemeIndex;
 	ser << s.schemeFields;
 	return ser;
 }
 
-Deserializer &operator >> (Deserializer &des, Scheme &s)
+Deserializer &operator>>(Deserializer &des, Scheme &s)
 {
 	des >> s.name >> s.processor >> s.schemeIndex;
 	des >> s.schemeFields;

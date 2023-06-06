@@ -24,13 +24,10 @@ namespace cage
 
 		uint8 data[N];
 
-		operator String() const
-		{
-			return privat::guidToString(data, N);
-		}
+		operator String() const { return privat::guidToString(data, N); }
 
-		auto operator <=> (const Guid &) const noexcept = default;
-		bool operator == (const Guid &) const noexcept = default;
+		auto operator<=>(const Guid &) const noexcept = default;
+		bool operator==(const Guid &) const noexcept = default;
 	};
 }
 

@@ -18,41 +18,27 @@ namespace cage
 					It it;
 					Counter index;
 
-					CAGE_FORCE_INLINE constexpr Pair(const It &it, const Counter &index) : it(it), index(index)
-					{}
-
-					CAGE_FORCE_INLINE constexpr auto &get() const noexcept
-					{
-						return *it;
-					}
-
-					CAGE_FORCE_INLINE constexpr auto &operator * () const noexcept
-					{
-						return *it;
-					}
-
-					CAGE_FORCE_INLINE constexpr const auto &operator -> () const noexcept
-					{
-						return it;
-					}
+					CAGE_FORCE_INLINE constexpr Pair(const It &it, const Counter &index) : it(it), index(index) {}
+					CAGE_FORCE_INLINE constexpr auto &get() const noexcept { return *it; }
+					CAGE_FORCE_INLINE constexpr auto &operator*() const noexcept { return *it; }
+					CAGE_FORCE_INLINE constexpr const auto &operator->() const noexcept { return it; }
 				};
 
-				CAGE_FORCE_INLINE constexpr Iterator(const It &it, const Counter &index) : p(it, index)
-				{}
+				CAGE_FORCE_INLINE constexpr Iterator(const It &it, const Counter &index) : p(it, index) {}
 
 				template<class U>
-				CAGE_FORCE_INLINE constexpr bool operator == (const Iterator<U> &other) const
+				CAGE_FORCE_INLINE constexpr bool operator==(const Iterator<U> &other) const
 				{
 					return p.it == other.p.it;
 				}
 
 				template<class U>
-				CAGE_FORCE_INLINE constexpr bool operator != (const Iterator<U> &other) const
+				CAGE_FORCE_INLINE constexpr bool operator!=(const Iterator<U> &other) const
 				{
 					return p.it != other.p.it;
 				}
 
-				CAGE_FORCE_INLINE constexpr Iterator operator ++ ()
+				CAGE_FORCE_INLINE constexpr Iterator operator++()
 				{
 					auto r = *this;
 					p.it++;
@@ -60,17 +46,14 @@ namespace cage
 					return r;
 				}
 
-				CAGE_FORCE_INLINE constexpr Iterator &operator ++ (int)
+				CAGE_FORCE_INLINE constexpr Iterator &operator++(int)
 				{
 					++p.it;
 					++p.index;
 					return *this;
 				}
 
-				CAGE_FORCE_INLINE constexpr const Pair &operator * () const
-				{
-					return p;
-				}
+				CAGE_FORCE_INLINE constexpr const Pair &operator*() const { return p; }
 
 			private:
 				Pair p;
@@ -79,8 +62,7 @@ namespace cage
 			CAGE_FORCE_INLINE constexpr auto begin() const { return Iterator<It1>(it1, start); }
 			CAGE_FORCE_INLINE constexpr auto end() const { return Iterator<It2>(it2, start); }
 
-			CAGE_FORCE_INLINE constexpr Enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range) : Range(std::move(range)), it1(it1), it2(it2), start(start)
-			{}
+			CAGE_FORCE_INLINE constexpr Enumerate(const It1 &it1, const It2 &it2, const Counter &start, Range &&range) : Range(std::move(range)), it1(it1), it2(it2), start(start) {}
 
 		private:
 			const It1 it1;

@@ -1,17 +1,17 @@
 #include <cage-core/config.h>
 #include <cage-core/files.h>
+#include <cage-core/hashString.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/serialization.h>
-#include <cage-core/hashString.h>
 #include <cage-core/string.h>
 
-#include <cage-engine/shaderProgram.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/shaderProgram.h>
 
-#include <vector>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace cage
 {
@@ -29,15 +29,11 @@ namespace cage
 		{
 			SourceHolder() = default;
 
-			explicit SourceHolder(uint32 id) : id(id)
-			{}
+			explicit SourceHolder(uint32 id) : id(id) {}
 
-			SourceHolder(SourceHolder &&other) noexcept
-			{
-				std::swap(id, other.id);
-			}
+			SourceHolder(SourceHolder &&other) noexcept { std::swap(id, other.id); }
 
-			SourceHolder &operator = (SourceHolder &&other) noexcept
+			SourceHolder &operator=(SourceHolder &&other) noexcept
 			{
 				std::swap(id, other.id);
 				return *this;
@@ -50,7 +46,7 @@ namespace cage
 				id = 0;
 			}
 
-			operator GLuint () const noexcept { return id; }
+			operator GLuint() const noexcept { return id; }
 
 		private:
 			uint32 id = 0;
@@ -68,10 +64,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			~ShaderProgramImpl()
-			{
-				glDeleteProgram(id);
-			}
+			~ShaderProgramImpl() { glDeleteProgram(id); }
 		};
 
 		class MultiShaderProgramImpl : public MultiShaderProgram
@@ -191,21 +184,21 @@ namespace cage
 	void ShaderProgram::uniform(uint32 name, const Vec2i &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform2iv(impl->id, name, 1, &const_cast<Vec2i&>(u)[0]);
+		glProgramUniform2iv(impl->id, name, 1, &const_cast<Vec2i &>(u)[0]);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, const Vec3i &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform3iv(impl->id, name, 1, &const_cast<Vec3i&>(u)[0]);
+		glProgramUniform3iv(impl->id, name, 1, &const_cast<Vec3i &>(u)[0]);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, const Vec4i &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform4iv(impl->id, name, 1, &const_cast<Vec4i&>(u)[0]);
+		glProgramUniform4iv(impl->id, name, 1, &const_cast<Vec4i &>(u)[0]);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -219,21 +212,21 @@ namespace cage
 	void ShaderProgram::uniform(uint32 name, const Vec2 &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform2fv(impl->id, name, 1, &const_cast<Vec2&>(u)[0].value);
+		glProgramUniform2fv(impl->id, name, 1, &const_cast<Vec2 &>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, const Vec3 &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform3fv(impl->id, name, 1, &const_cast<Vec3&>(u)[0].value);
+		glProgramUniform3fv(impl->id, name, 1, &const_cast<Vec3 &>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, const Vec4 &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform4fv(impl->id, name, 1, &const_cast<Vec4&>(u)[0].value);
+		glProgramUniform4fv(impl->id, name, 1, &const_cast<Vec4 &>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -245,14 +238,14 @@ namespace cage
 	void ShaderProgram::uniform(uint32 name, const Mat3 &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniformMatrix3fv(impl->id, name, 1, GL_FALSE, &const_cast<Mat3&>(u)[0].value);
+		glProgramUniformMatrix3fv(impl->id, name, 1, GL_FALSE, &const_cast<Mat3 &>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, const Mat4 &u)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniformMatrix4fv(impl->id, name, 1, GL_FALSE, &const_cast<Mat4&>(u)[0].value);
+		glProgramUniformMatrix4fv(impl->id, name, 1, GL_FALSE, &const_cast<Mat4 &>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -294,28 +287,28 @@ namespace cage
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Real> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform1fv(impl->id, name, numeric_cast<uint32>(values.size()), (float*)values.data());
+		glProgramUniform1fv(impl->id, name, numeric_cast<uint32>(values.size()), (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Vec2> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform2fv(impl->id, name, numeric_cast<uint32>(values.size()), (float*)values.data());
+		glProgramUniform2fv(impl->id, name, numeric_cast<uint32>(values.size()), (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Vec3> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform3fv(impl->id, name, numeric_cast<uint32>(values.size()), (float*)values.data());
+		glProgramUniform3fv(impl->id, name, numeric_cast<uint32>(values.size()), (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Vec4> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniform4fv(impl->id, name, numeric_cast<uint32>(values.size()), (float*)values.data());
+		glProgramUniform4fv(impl->id, name, numeric_cast<uint32>(values.size()), (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -327,14 +320,14 @@ namespace cage
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Mat3> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniformMatrix3fv(impl->id, name, numeric_cast<uint32>(values.size()), GL_FALSE, (float*)values.data());
+		glProgramUniformMatrix3fv(impl->id, name, numeric_cast<uint32>(values.size()), GL_FALSE, (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void ShaderProgram::uniform(uint32 name, PointerRange<const Mat4> values)
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
-		glProgramUniformMatrix4fv(impl->id, name, numeric_cast<uint32>(values.size()), GL_FALSE, (float*)values.data());
+		glProgramUniformMatrix4fv(impl->id, name, numeric_cast<uint32>(values.size()), GL_FALSE, (float *)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -344,81 +337,156 @@ namespace cage
 		{
 			switch (type)
 			{
-			case GL_FLOAT: return "float";
-			case GL_FLOAT_VEC2: return "vec2";
-			case GL_FLOAT_VEC3: return "vec3";
-			case GL_FLOAT_VEC4: return "vec4";
-			case GL_DOUBLE: return "double";
-			case GL_DOUBLE_VEC2: return "dvec2";
-			case GL_DOUBLE_VEC3: return "dvec3";
-			case GL_DOUBLE_VEC4: return "dvec4";
-			case GL_INT: return "int";
-			case GL_INT_VEC2: return "ivec2";
-			case GL_INT_VEC3: return "ivec3";
-			case GL_INT_VEC4: return "ivec4";
-			case GL_UNSIGNED_INT: return "unsigned int";
-			case GL_UNSIGNED_INT_VEC2: return "uvec2";
-			case GL_UNSIGNED_INT_VEC3: return "uvec3";
-			case GL_UNSIGNED_INT_VEC4: return "uvec4";
-			case GL_BOOL: return "bool";
-			case GL_BOOL_VEC2: return "bvec2";
-			case GL_BOOL_VEC3: return "bvec3";
-			case GL_BOOL_VEC4: return "bvec4";
-			case GL_FLOAT_MAT2: return "mat2";
-			case GL_FLOAT_MAT3: return "mat3";
-			case GL_FLOAT_MAT4: return "mat4";
-			case GL_FLOAT_MAT2x3: return "mat2x3";
-			case GL_FLOAT_MAT2x4: return "mat2x4";
-			case GL_FLOAT_MAT3x2: return "mat3x2";
-			case GL_FLOAT_MAT3x4: return "mat3x4";
-			case GL_FLOAT_MAT4x2: return "mat4x2";
-			case GL_FLOAT_MAT4x3: return "mat4x3";
-			case GL_DOUBLE_MAT2: return "dmat2";
-			case GL_DOUBLE_MAT3: return "dmat3";
-			case GL_DOUBLE_MAT4: return "dmat4";
-			case GL_DOUBLE_MAT2x3: return "dmat2x3";
-			case GL_DOUBLE_MAT2x4: return "dmat2x4";
-			case GL_DOUBLE_MAT3x2: return "dmat3x2";
-			case GL_DOUBLE_MAT3x4: return "dmat3x4";
-			case GL_DOUBLE_MAT4x2: return "dmat4x2";
-			case GL_DOUBLE_MAT4x3: return "dmat4x3";
-			case GL_SAMPLER_1D: return "sampler1D";
-			case GL_SAMPLER_2D: return "sampler2D";
-			case GL_SAMPLER_3D: return "sampler3D";
-			case GL_SAMPLER_CUBE: return "samplerCube";
-			case GL_SAMPLER_1D_SHADOW: return "sampler1DShadow";
-			case GL_SAMPLER_2D_SHADOW: return "sampler2DShadow";
-			case GL_SAMPLER_1D_ARRAY: return "sampler1DArray";
-			case GL_SAMPLER_2D_ARRAY: return "sampler2DArray";
-			case GL_SAMPLER_1D_ARRAY_SHADOW: return "sampler1DArrayShadow";
-			case GL_SAMPLER_2D_ARRAY_SHADOW: return "sampler2DArrayShadow";
-			case GL_SAMPLER_2D_MULTISAMPLE: return "sampler2DMS";
-			case GL_SAMPLER_2D_MULTISAMPLE_ARRAY: return "sampler2DMSArray";
-			case GL_SAMPLER_CUBE_SHADOW: return "samplerCubeShadow";
-			case GL_SAMPLER_BUFFER: return "samplerBuffer";
-			case GL_SAMPLER_2D_RECT: return "sampler2DRect";
-			case GL_SAMPLER_2D_RECT_SHADOW: return "sampler2DRectShadow";
-			case GL_INT_SAMPLER_1D: return "isampler1D";
-			case GL_INT_SAMPLER_2D: return "isampler2D";
-			case GL_INT_SAMPLER_3D: return "isampler3D";
-			case GL_INT_SAMPLER_CUBE: return "isamplerCube";
-			case GL_INT_SAMPLER_1D_ARRAY: return "isampler1DArray";
-			case GL_INT_SAMPLER_2D_ARRAY: return "isampler2DArray";
-			case GL_INT_SAMPLER_2D_MULTISAMPLE: return "isampler2DMS";
-			case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "isampler2DMSArray";
-			case GL_INT_SAMPLER_BUFFER: return "isamplerBuffer";
-			case GL_INT_SAMPLER_2D_RECT: return "isampler2DRect";
-			case GL_UNSIGNED_INT_SAMPLER_1D: return "usampler1D";
-			case GL_UNSIGNED_INT_SAMPLER_2D: return "usampler2D";
-			case GL_UNSIGNED_INT_SAMPLER_3D: return "usampler3D";
-			case GL_UNSIGNED_INT_SAMPLER_CUBE: return "usamplerCube";
-			case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY: return "usampler2DArray";
-			case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return "usampler2DArray";
-			case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE: return "usampler2DMS";
-			case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usampler2DMSArray";
-			case GL_UNSIGNED_INT_SAMPLER_BUFFER: return "usamplerBuffer";
-			case GL_UNSIGNED_INT_SAMPLER_2D_RECT: return "usampler2DRect";
-			default: return "unknown";
+				case GL_FLOAT:
+					return "float";
+				case GL_FLOAT_VEC2:
+					return "vec2";
+				case GL_FLOAT_VEC3:
+					return "vec3";
+				case GL_FLOAT_VEC4:
+					return "vec4";
+				case GL_DOUBLE:
+					return "double";
+				case GL_DOUBLE_VEC2:
+					return "dvec2";
+				case GL_DOUBLE_VEC3:
+					return "dvec3";
+				case GL_DOUBLE_VEC4:
+					return "dvec4";
+				case GL_INT:
+					return "int";
+				case GL_INT_VEC2:
+					return "ivec2";
+				case GL_INT_VEC3:
+					return "ivec3";
+				case GL_INT_VEC4:
+					return "ivec4";
+				case GL_UNSIGNED_INT:
+					return "unsigned int";
+				case GL_UNSIGNED_INT_VEC2:
+					return "uvec2";
+				case GL_UNSIGNED_INT_VEC3:
+					return "uvec3";
+				case GL_UNSIGNED_INT_VEC4:
+					return "uvec4";
+				case GL_BOOL:
+					return "bool";
+				case GL_BOOL_VEC2:
+					return "bvec2";
+				case GL_BOOL_VEC3:
+					return "bvec3";
+				case GL_BOOL_VEC4:
+					return "bvec4";
+				case GL_FLOAT_MAT2:
+					return "mat2";
+				case GL_FLOAT_MAT3:
+					return "mat3";
+				case GL_FLOAT_MAT4:
+					return "mat4";
+				case GL_FLOAT_MAT2x3:
+					return "mat2x3";
+				case GL_FLOAT_MAT2x4:
+					return "mat2x4";
+				case GL_FLOAT_MAT3x2:
+					return "mat3x2";
+				case GL_FLOAT_MAT3x4:
+					return "mat3x4";
+				case GL_FLOAT_MAT4x2:
+					return "mat4x2";
+				case GL_FLOAT_MAT4x3:
+					return "mat4x3";
+				case GL_DOUBLE_MAT2:
+					return "dmat2";
+				case GL_DOUBLE_MAT3:
+					return "dmat3";
+				case GL_DOUBLE_MAT4:
+					return "dmat4";
+				case GL_DOUBLE_MAT2x3:
+					return "dmat2x3";
+				case GL_DOUBLE_MAT2x4:
+					return "dmat2x4";
+				case GL_DOUBLE_MAT3x2:
+					return "dmat3x2";
+				case GL_DOUBLE_MAT3x4:
+					return "dmat3x4";
+				case GL_DOUBLE_MAT4x2:
+					return "dmat4x2";
+				case GL_DOUBLE_MAT4x3:
+					return "dmat4x3";
+				case GL_SAMPLER_1D:
+					return "sampler1D";
+				case GL_SAMPLER_2D:
+					return "sampler2D";
+				case GL_SAMPLER_3D:
+					return "sampler3D";
+				case GL_SAMPLER_CUBE:
+					return "samplerCube";
+				case GL_SAMPLER_1D_SHADOW:
+					return "sampler1DShadow";
+				case GL_SAMPLER_2D_SHADOW:
+					return "sampler2DShadow";
+				case GL_SAMPLER_1D_ARRAY:
+					return "sampler1DArray";
+				case GL_SAMPLER_2D_ARRAY:
+					return "sampler2DArray";
+				case GL_SAMPLER_1D_ARRAY_SHADOW:
+					return "sampler1DArrayShadow";
+				case GL_SAMPLER_2D_ARRAY_SHADOW:
+					return "sampler2DArrayShadow";
+				case GL_SAMPLER_2D_MULTISAMPLE:
+					return "sampler2DMS";
+				case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
+					return "sampler2DMSArray";
+				case GL_SAMPLER_CUBE_SHADOW:
+					return "samplerCubeShadow";
+				case GL_SAMPLER_BUFFER:
+					return "samplerBuffer";
+				case GL_SAMPLER_2D_RECT:
+					return "sampler2DRect";
+				case GL_SAMPLER_2D_RECT_SHADOW:
+					return "sampler2DRectShadow";
+				case GL_INT_SAMPLER_1D:
+					return "isampler1D";
+				case GL_INT_SAMPLER_2D:
+					return "isampler2D";
+				case GL_INT_SAMPLER_3D:
+					return "isampler3D";
+				case GL_INT_SAMPLER_CUBE:
+					return "isamplerCube";
+				case GL_INT_SAMPLER_1D_ARRAY:
+					return "isampler1DArray";
+				case GL_INT_SAMPLER_2D_ARRAY:
+					return "isampler2DArray";
+				case GL_INT_SAMPLER_2D_MULTISAMPLE:
+					return "isampler2DMS";
+				case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+					return "isampler2DMSArray";
+				case GL_INT_SAMPLER_BUFFER:
+					return "isamplerBuffer";
+				case GL_INT_SAMPLER_2D_RECT:
+					return "isampler2DRect";
+				case GL_UNSIGNED_INT_SAMPLER_1D:
+					return "usampler1D";
+				case GL_UNSIGNED_INT_SAMPLER_2D:
+					return "usampler2D";
+				case GL_UNSIGNED_INT_SAMPLER_3D:
+					return "usampler3D";
+				case GL_UNSIGNED_INT_SAMPLER_CUBE:
+					return "usamplerCube";
+				case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
+					return "usampler2DArray";
+				case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+					return "usampler2DArray";
+				case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
+					return "usampler2DMS";
+				case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+					return "usampler2DMSArray";
+				case GL_UNSIGNED_INT_SAMPLER_BUFFER:
+					return "usamplerBuffer";
+				case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
+					return "usampler2DRect";
+				default:
+					return "unknown";
 			}
 		}
 
@@ -429,16 +497,24 @@ namespace cage
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
 
-		const String stageName = [&]() {
+		const String stageName = [&]()
+		{
 			switch (stage)
 			{
-			case GL_VERTEX_SHADER: return "vertex";
-			case GL_TESS_CONTROL_SHADER: return "tess_control";
-			case GL_TESS_EVALUATION_SHADER: return "tess_evaluation";
-			case GL_GEOMETRY_SHADER: return "geometry";
-			case GL_FRAGMENT_SHADER: return "fragment";
-			case GL_COMPUTE_SHADER: return "compute";
-			default: CAGE_THROW_CRITICAL(Exception, "invalid shader stage");
+				case GL_VERTEX_SHADER:
+					return "vertex";
+				case GL_TESS_CONTROL_SHADER:
+					return "tess_control";
+				case GL_TESS_EVALUATION_SHADER:
+					return "tess_evaluation";
+				case GL_GEOMETRY_SHADER:
+					return "geometry";
+				case GL_FRAGMENT_SHADER:
+					return "fragment";
+				case GL_COMPUTE_SHADER:
+					return "compute";
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid shader stage");
 			}
 		}();
 

@@ -9,8 +9,7 @@ namespace cage
 			GuiRadioBoxComponent &data;
 			GuiElementTypeEnum element = GuiElementTypeEnum::InvalidElement;
 
-			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox))
-			{}
+			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox)) {}
 
 			void initialize() override
 			{

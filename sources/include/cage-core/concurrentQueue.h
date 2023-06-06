@@ -16,8 +16,7 @@ namespace cage
 	class ConcurrentQueue : private Immovable
 	{
 	public:
-		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems)
-		{}
+		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems) {}
 
 		~ConcurrentQueue()
 		{
@@ -137,10 +136,7 @@ namespace cage
 			return stop;
 		}
 
-		uint32 estimatedSize() const
-		{
-			return numeric_cast<uint32>(items.size());
-		}
+		uint32 estimatedSize() const { return numeric_cast<uint32>(items.size()); }
 
 	private:
 		Holder<Mutex> mut = newMutex();

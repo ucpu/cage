@@ -1,14 +1,14 @@
-#include <cage-core/tasks.h>
-#include <cage-core/debug.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 #include <cage-core/profiling.h>
+#include <cage-core/tasks.h>
 
 #include <plf_list.h>
 
-#include <exception>
-#include <vector>
 #include <atomic>
 #include <condition_variable>
+#include <exception>
+#include <vector>
 
 namespace cage
 {
@@ -82,7 +82,7 @@ namespace cage
 		private:
 			struct Comparator
 			{
-				bool operator() (const Value &a, const Value &b) const noexcept;
+				bool operator()(const Value &a, const Value &b) const noexcept;
 			};
 
 			bool valid(const Value &value, const sint32 requiredPriority) const noexcept;
@@ -283,7 +283,7 @@ namespace cage
 			}
 		};
 
-		CAGE_FORCE_INLINE bool TasksQueue::Comparator::operator() (const Value &a, const Value &b) const noexcept
+		CAGE_FORCE_INLINE bool TasksQueue::Comparator::operator()(const Value &a, const Value &b) const noexcept
 		{
 			return a->priority < b->priority;
 		}
@@ -359,7 +359,8 @@ namespace cage
 			privat::TaskCreateConfig tsk;
 			tsk.name = name;
 			tsk.function = reinterpret_cast<Delegate<void()> &>(function);
-			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx) {
+			tsk.runner = +[](const privat::TaskRunnerConfig &task, uint32 idx)
+			{
 				const Delegate<void(uint32)> function = reinterpret_cast<const Delegate<void(uint32)> &>(task.function);
 				function(idx);
 			};
@@ -383,7 +384,8 @@ namespace cage
 	{
 		auto &exec = executor();
 		const sint32 reqPri = thrData.currentPriority + 1; // do not allow same-priority tasks
-		while (exec.tryRun(reqPri));
+		while (exec.tryRun(reqPri))
+			;
 	}
 
 	sint32 tasksCurrentPriority()

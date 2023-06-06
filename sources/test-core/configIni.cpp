@@ -1,9 +1,9 @@
 #include "main.h"
 
+#include <algorithm>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <vector>
-#include <algorithm>
 
 namespace
 {
@@ -81,14 +81,8 @@ void testConfigIni()
 	{
 		CAGE_TESTCASE("parse command line arguments (no positional arguments)");
 		Holder<Ini> ini = newIni();
-		const char *const cmd[] = {
-			"appName",
-			"--long",
-			"haha",
-			"-s",
-			"-o"
-		};
-		ini->parseCmd(sizeof(cmd) / sizeof(char*), cmd);
+		const char *const cmd[] = { "appName", "--long", "haha", "-s", "-o" };
+		ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
 		testVectors(vectorize(ini->sections()), { "long", "s", "o" });
 		testVectors(vectorize(ini->values("long")), { "haha" });
 		testVectors(vectorize(ini->values("s")), { "true" });
@@ -98,17 +92,8 @@ void testConfigIni()
 	{
 		CAGE_TESTCASE("parse command line arguments (with positional arguments)");
 		Holder<Ini> ini = newIni();
-		const char *const cmd[] = {
-			"appName",
-			"pos1",
-			"-abc",
-			"very",
-			"nice",
-			"--long",
-			"--",
-			"pos2"
-		};
-		ini->parseCmd(sizeof(cmd) / sizeof(char*), cmd);
+		const char *const cmd[] = { "appName", "pos1", "-abc", "very", "nice", "--long", "--", "pos2" };
+		ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
 		testVectors(vectorize(ini->sections()), { "a", "b", "c", "long", "--" });
 		testVectors(vectorize(ini->values("a")), { "true" });
 		testVectors(vectorize(ini->values("b")), { "true" });
@@ -155,21 +140,8 @@ void testConfigIni()
 	{
 		CAGE_TESTCASE("parse command line arguments with helpers");
 		Holder<Ini> ini = newIni();
-		const char *const cmd[] = {
-			"appName",
-			"pos1",
-			"-abc",
-			"very",
-			"nice",
-			"-n",
-			"42",
-			"--ccc",
-			"indeed",
-			"--long",
-			"--",
-			"pos2"
-		};
-		ini->parseCmd(sizeof(cmd) / sizeof(char*), cmd);
+		const char *const cmd[] = { "appName", "pos1", "-abc", "very", "nice", "-n", "42", "--ccc", "indeed", "--long", "--", "pos2" };
+		ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
 		CAGE_TEST(ini->cmdBool('a', "aaa")); // required option
 		CAGE_TEST(ini->cmdBool('a', "aaa", false)); // optional option
 		CAGE_TEST(ini->cmdBool('a', "aaa", true));

@@ -1,24 +1,24 @@
-#include <cage-core/math.h>
-#include <cage-core/networkTcp.h>
-#include <cage-core/concurrent.h>
-#include <cage-core/files.h>
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
-#include <cage-core/config.h>
-#include <cage-core/hashString.h>
-#include <cage-core/serialization.h>
-#include <cage-core/concurrentQueue.h>
 #include <cage-core/assetManager.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/concurrentQueue.h>
+#include <cage-core/config.h>
 #include <cage-core/debug.h>
-#include <cage-core/string.h>
-#include <cage-core/profiling.h>
-#include <cage-core/tasks.h>
+#include <cage-core/files.h>
+#include <cage-core/hashString.h>
 #include <cage-core/logger.h>
+#include <cage-core/math.h>
+#include <cage-core/networkTcp.h>
+#include <cage-core/profiling.h>
+#include <cage-core/serialization.h>
 #include <cage-core/stdHash.h>
+#include <cage-core/string.h>
+#include <cage-core/tasks.h>
 
-#include <vector>
-#include <atomic>
 #include <algorithm>
+#include <atomic>
+#include <vector>
 
 #include <unordered_dense.h>
 
@@ -316,8 +316,7 @@ namespace cage
 				{
 					Asset *ass = nullptr;
 
-					explicit DereferencedCommand(Asset *ass) : CommandBase(ass->impl), ass(ass)
-					{}
+					explicit DereferencedCommand(Asset *ass) : CommandBase(ass->impl), ass(ass) {}
 
 					void perform() override
 					{
@@ -372,10 +371,7 @@ namespace cage
 					{
 						Asset *ass = nullptr;
 						AssetManagerImpl *impl = nullptr;
-						~PublicAssetReference()
-						{
-							impl->dereference(ass);
-						}
+						~PublicAssetReference() { impl->dereference(ass); }
 					};
 					Holder<PublicAssetReference> ctrl = systemMemory().createHolder<PublicAssetReference>();
 					ctrl->ass = +ass;
@@ -418,8 +414,7 @@ namespace cage
 		{
 			Holder<Asset> asset;
 
-			explicit PublishCommand(Holder<Asset> &&asset) : CommandBase(asset->impl), asset(std::move(asset))
-			{}
+			explicit PublishCommand(Holder<Asset> &&asset) : CommandBase(asset->impl), asset(std::move(asset)) {}
 
 			void perform() override
 			{
@@ -627,8 +622,7 @@ namespace cage
 			{
 				Holder<Asset> asset;
 
-				explicit UnloadCommand(Holder<Asset> &&asset) : CommandBase(asset->impl), asset(std::move(asset))
-				{}
+				explicit UnloadCommand(Holder<Asset> &&asset) : CommandBase(asset->impl), asset(std::move(asset)) {}
 
 				void perform() override
 				{
@@ -637,9 +631,7 @@ namespace cage
 
 					ScopeLock lock(impl->privateMutex);
 					auto &c = impl->privateIndex[asset->realName];
-					std::erase_if(c.versions, [&](const Holder<Asset> &it) {
-						return +it == +asset;
-					});
+					std::erase_if(c.versions, [&](const Holder<Asset> &it) { return +it == +asset; });
 					if (c.versions.empty())
 						impl->privateIndex.erase(asset->realName);
 				}
@@ -674,8 +666,7 @@ namespace cage
 		{
 			uint32 name = 0;
 
-			explicit AddCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name)
-			{}
+			explicit AddCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name) {}
 
 			void perform() override
 			{
@@ -686,7 +677,7 @@ namespace cage
 			}
 		};
 
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		impl->commandsQueue.push(systemMemory().createImpl<CommandBase, AddCommand>(impl, assetName));
 	}
 
@@ -696,8 +687,7 @@ namespace cage
 		{
 			uint32 name = 0;
 
-			explicit RemoveCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name)
-			{}
+			explicit RemoveCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name) {}
 
 			void perform() override
 			{
@@ -715,7 +705,7 @@ namespace cage
 			}
 		};
 
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		impl->commandsQueue.push(systemMemory().createImpl<CommandBase, RemoveCommand>(impl, assetName));
 	}
 
@@ -725,8 +715,7 @@ namespace cage
 		{
 			uint32 name = 0;
 
-			explicit ReloadCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name)
-			{}
+			explicit ReloadCommand(AssetManagerImpl *impl, uint32 name) : CommandBase(impl), name(name) {}
 
 			void perform() override
 			{
@@ -736,7 +725,7 @@ namespace cage
 			}
 		};
 
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		impl->commandsQueue.push(systemMemory().createImpl<CommandBase, ReloadCommand>(impl, assetName));
 	}
 
@@ -744,7 +733,7 @@ namespace cage
 	{
 		static constexpr uint32 a = (uint32)1 << 28;
 		static constexpr uint32 b = (uint32)1 << 30;
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		uint32 &name = impl->generateName;
 		ScopeLock lock(impl->privateMutex);
 		if (name < a || name > b)
@@ -756,7 +745,7 @@ namespace cage
 
 	bool AssetManager::processCustomThread(uint32 threadIndex)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		return impl->customProcessEntry(threadIndex);
 	}
 
@@ -764,7 +753,8 @@ namespace cage
 	{
 		while (!unloaded())
 		{
-			while (processCustomThread(threadIndex));
+			while (processCustomThread(threadIndex))
+				;
 			threadYield();
 		}
 	}
@@ -783,7 +773,7 @@ namespace cage
 
 	bool AssetManager::unloaded() const
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
@@ -801,10 +791,7 @@ namespace cage
 			Holder<TcpConnection> tcp;
 			Holder<Thread> thread;
 
-			AssetListenerImpl(AssetManager *man, const String &address, uint32 port, uint64 period) : man(man), address(address), port(port), period(period)
-			{
-				thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener");
-			}
+			AssetListenerImpl(AssetManager *man, const String &address, uint32 port, uint64 period) : man(man), address(address), port(port), period(period) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
 
 			~AssetListenerImpl()
 			{
@@ -854,7 +841,7 @@ namespace cage
 			}
 		};
 
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		impl->listener.clear();
 		impl->listener = systemMemory().createImpl<AssetListener, AssetListenerImpl>(this, address, port, listenerPeriod);
 	}
@@ -879,8 +866,7 @@ namespace cage
 			uint32 scheme = m;
 			uint32 realName = m;
 
-			explicit FabricateCommand(AssetManagerImpl *impl, const detail::StringBase<64> &textName, Holder<void> value, uint32 scheme, uint32 realName) : CommandBase(impl), textName(textName), value(std::move(value)), scheme(scheme), realName(realName)
-			{}
+			explicit FabricateCommand(AssetManagerImpl *impl, const detail::StringBase<64> &textName, Holder<void> value, uint32 scheme, uint32 realName) : CommandBase(impl), textName(textName), value(std::move(value)), scheme(scheme), realName(realName) {}
 
 			void perform() override
 			{

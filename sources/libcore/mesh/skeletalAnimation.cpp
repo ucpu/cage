@@ -1,9 +1,9 @@
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/skeletalAnimation.h>
 #include <cage-core/meshAlgorithms.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
+#include <cage-core/skeletalAnimation.h>
 
 #include <algorithm>
 #include <vector>
@@ -59,19 +59,21 @@ namespace cage
 				const uint32 frames = numeric_cast<uint32>(times.size());
 				switch (frames)
 				{
-				case 0: return Type();
-				case 1: return values[0];
-				default:
-				{
-					uint16 frameIndex = findFrameIndex(coef, times);
-					if (frameIndex + 1 == frames)
-						return values[frameIndex];
-					else
+					case 0:
+						return Type();
+					case 1:
+						return values[0];
+					default:
 					{
-						Real a = amount(times[frameIndex], times[frameIndex + 1], coef);
-						return interpolate(values[frameIndex], values[frameIndex + 1], a);
+						uint16 frameIndex = findFrameIndex(coef, times);
+						if (frameIndex + 1 == frames)
+							return values[frameIndex];
+						else
+						{
+							Real a = amount(times[frameIndex], times[frameIndex + 1], coef);
+							return interpolate(values[frameIndex], values[frameIndex + 1], a);
+						}
 					}
-				}
 				}
 			}
 
@@ -112,7 +114,7 @@ namespace cage
 	namespace
 	{
 		template<class T>
-		Deserializer &operator >> (Deserializer &des, std::vector<T> &vec)
+		Deserializer &operator>>(Deserializer &des, std::vector<T> &vec)
 		{
 			uint32 cnt = 0;
 			des >> cnt;
@@ -125,7 +127,7 @@ namespace cage
 		}
 
 		template<class T>
-		Serializer &operator << (Serializer &ser, std::vector<T> &vec)
+		Serializer &operator<<(Serializer &ser, std::vector<T> &vec)
 		{
 			ser << numeric_cast<uint32>(vec.size());
 			for (T &it : vec)
@@ -134,7 +136,7 @@ namespace cage
 		}
 
 		template<class T>
-		Deserializer &operator << (Deserializer &des, T &other)
+		Deserializer &operator<<(Deserializer &des, T &other)
 		{
 			des >> other;
 			return des;

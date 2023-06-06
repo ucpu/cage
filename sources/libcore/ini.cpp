@@ -1,13 +1,13 @@
-#include <cage-core/string.h>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
-#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/macros.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
+#include <cage-core/string.h>
 
-#include <vector>
 #include <map>
+#include <vector>
 
 namespace cage
 {
@@ -39,13 +39,13 @@ namespace cage
 
 	uint32 Ini::sectionsCount() const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		return numeric_cast<uint32>(impl->sections.size());
 	}
 
 	String Ini::section(uint32 section) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		auto i = impl->sections.cbegin();
 		try
 		{
@@ -445,9 +445,7 @@ namespace cage
 
 		String formatOptionNames(const String &shortName, const String &longName)
 		{
-			return shortName.empty()
-				? Stringizer() + "--" + longName
-				: Stringizer() + "--" + longName + " (-" + shortName + ")";
+			return shortName.empty() ? Stringizer() + "--" + longName : Stringizer() + "--" + longName + " (-" + shortName + ")";
 		}
 
 		void addHelp(const Ini *ini, const String &shortName, const String &longName, const char *typeName)
@@ -477,8 +475,10 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "invalid item names for cmd options");
 			}
 			CAGE_ASSERT(ae != be);
-			if (!ae) const_cast<Ini*>(ini)->markUsed(shortName, "0");
-			if (!be) const_cast<Ini*>(ini)->markUsed(longName, "0");
+			if (!ae)
+				const_cast<Ini *>(ini)->markUsed(shortName, "0");
+			if (!be)
+				const_cast<Ini *>(ini)->markUsed(longName, "0");
 			if (ae)
 				return b;
 			return a;
@@ -486,19 +486,19 @@ namespace cage
 	}
 
 #define GCHL_GENERATE(TYPE, NAME, TO) \
-	void Ini::CAGE_JOIN(set, NAME) (const String &section, const String &item, const TYPE &value) \
+	void Ini::CAGE_JOIN(set, NAME)(const String &section, const String &item, const TYPE &value) \
 	{ \
 		set(section, item, Stringizer() + value); \
 	}; \
-	TYPE Ini::CAGE_JOIN(get, NAME) (const String &section, const String &item, const TYPE &defaul) const \
+	TYPE Ini::CAGE_JOIN(get, NAME)(const String &section, const String &item, const TYPE &defaul) const \
 	{ \
 		const String tmp = get(section, item); \
 		if (tmp.empty()) \
 			return defaul; \
-		const_cast<Ini*>(this)->markUsed(section, item); \
+		const_cast<Ini *>(this)->markUsed(section, item); \
 		return TO(tmp); \
 	} \
-	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const String &longName, const TYPE &defaul) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, const TYPE &defaul) const \
 	{ \
 		const String sn = toShortName(shortName); \
 		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
@@ -506,7 +506,7 @@ namespace cage
 			return defaul; \
 		return TO(tmp); \
 	} \
-	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const String &longName) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName) const \
 	{ \
 		const String sn = toShortName(shortName); \
 		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
@@ -533,9 +533,9 @@ namespace cage
 		const auto s = values(sn);
 		const auto l = values(longName);
 		for (const String &item : items(sn))
-			const_cast<Ini*>(this)->markUsed(sn, item);
+			const_cast<Ini *>(this)->markUsed(sn, item);
 		for (const String &item : items(longName))
-			const_cast<Ini*>(this)->markUsed(longName, item);
+			const_cast<Ini *>(this)->markUsed(longName, item);
 		PointerRangeHolder<String> tmp;
 		tmp.reserve(s.size() + l.size());
 		tmp.insert(tmp.end(), s.begin(), s.end());

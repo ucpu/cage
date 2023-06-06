@@ -1,23 +1,23 @@
-#include <cage-core/string.h>
 #include <cage-core/macros.h>
+#include <cage-core/string.h>
 
-#include <vector>
 #include <algorithm>
 #include <cctype> // std::isspace
 #include <cerrno>
-#include <cstring>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
 
 // charconv (with FP) is available since:
 // GCC 11
 // Visual Studio 2017 version 15.8
 #if (defined(_MSC_VER) && _MSC_VER >= 1915) || (defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 11)
-#define GCHL_USE_CHARCONV
+	#define GCHL_USE_CHARCONV
 #endif
 
 #ifdef GCHL_USE_CHARCONV
-#include <charconv> // to_chars, from_chars
+	#include <charconv> // to_chars, from_chars
 #endif
 
 namespace cage
@@ -155,32 +155,30 @@ namespace cage
 
 			uint32 encodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				static constexpr bool SAFE[256] =
-				{
-					/*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
-					/* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* 1 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* 2 */ 0,0,0,0, 0,0,0,0, 1,1,0,1, 0,1,1,0, // (, ), +, -, .
-					/* 3 */ 1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,
+				static constexpr bool SAFE[256] = { /*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
+					/* 0 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* 1 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* 2 */ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, // (, ), +, -, .
+					/* 3 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
 
-					/* 4 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-					/* 5 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,1, // _
-					/* 6 */ 0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-					/* 7 */ 1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,1,0, // ~
+					/* 4 */ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+					/* 5 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, // _
+					/* 6 */ 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+					/* 7 */ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, // ~
 
-					/* 8 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* 9 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* A */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* B */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+					/* 8 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* 9 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* A */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* B */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
-					/* C */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* D */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* E */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
-					/* F */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+					/* C */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* D */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* E */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					/* F */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 				};
 				static constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
-				char * pEnd = pStart;
-				const char * const SRC_END = pSrc + length;
+				char *pEnd = pStart;
+				const char *const SRC_END = pSrc + length;
 				for (; pSrc < SRC_END; ++pSrc)
 				{
 					if (SAFE[(unsigned char)*pSrc])
@@ -197,39 +195,36 @@ namespace cage
 
 			uint32 decodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				static constexpr char HEX2DEC[256] =
-				{
-					/*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
-					/* 0 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 1 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 2 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 3 */  0, 1, 2, 3,  4, 5, 6, 7,  8, 9,-1,-1, -1,-1,-1,-1,
+				static constexpr char HEX2DEC[256] = { /*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
+					/* 0 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 1 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 2 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 3 */ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
 
-					/* 4 */ -1,10,11,12, 13,14,15,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 5 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 6 */ -1,10,11,12, 13,14,15,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 7 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
+					/* 4 */ -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 5 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 6 */ -1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 7 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-					/* 8 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* 9 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* A */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* B */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
+					/* 8 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* 9 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* A */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* B */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 
-					/* C */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* D */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* E */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
-					/* F */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1
+					/* C */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* D */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* E */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+					/* F */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 				};
-				const char * const SRC_END = pSrc + length;
-				const char * const SRC_LAST_DEC = SRC_END - 2;
-				char * pEnd = pStart;
+				const char *const SRC_END = pSrc + length;
+				const char *const SRC_LAST_DEC = SRC_END - 2;
+				char *pEnd = pStart;
 				while (pSrc < SRC_LAST_DEC)
 				{
 					if (*pSrc == '%')
 					{
 						char dec1, dec2;
-						if (-1 != (dec1 = HEX2DEC[(unsigned char)*(pSrc + 1)])
-							&& -1 != (dec2 = HEX2DEC[(unsigned char)*(pSrc + 2)]))
+						if (-1 != (dec1 = HEX2DEC[(unsigned char)*(pSrc + 1)]) && -1 != (dec2 = HEX2DEC[(unsigned char)*(pSrc + 2)]))
 						{
 							*pEnd++ = (dec1 << 4) + dec2;
 							pSrc += 3;
@@ -246,31 +241,39 @@ namespace cage
 
 #if not defined(GCHL_USE_CHARCONV)
 
-#define GCHL_GENERATE(TYPE, SPEC) \
+	#define GCHL_GENERATE(TYPE, SPEC) \
 		uint32 toString(char *s, uint32, TYPE value) \
-		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(Exception, "toString failed"); s[ret] = 0; return ret; } \
+		{ \
+			sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); \
+			if (ret < 0) \
+				CAGE_THROW_ERROR(Exception, "toString failed"); \
+			s[ret] = 0; \
+			return ret; \
+		} \
 		void fromString(const char *s, uint32, TYPE &value) \
-		{ return genericScan(s, value); }
-		GCHL_GENERATE(sint8, %hhd);
-		GCHL_GENERATE(sint16, %hd);
-		GCHL_GENERATE(sint32, %d);
-		GCHL_GENERATE(uint8, %hhu);
-		GCHL_GENERATE(uint16, %hu);
-		GCHL_GENERATE(uint32, %u);
-#ifdef CAGE_SYSTEM_WINDOWS
-		GCHL_GENERATE(sint64, %lld);
-		GCHL_GENERATE(uint64, %llu);
-#else
-		GCHL_GENERATE(sint64, %ld);
-		GCHL_GENERATE(uint64, %lu);
-#endif
-		GCHL_GENERATE(float, %f);
-		GCHL_GENERATE(double, %.16lg);
-#undef GCHL_GENERATE
+		{ \
+			return genericScan(s, value); \
+		}
+		GCHL_GENERATE(sint8, % hhd);
+		GCHL_GENERATE(sint16, % hd);
+		GCHL_GENERATE(sint32, % d);
+		GCHL_GENERATE(uint8, % hhu);
+		GCHL_GENERATE(uint16, % hu);
+		GCHL_GENERATE(uint32, % u);
+	#ifdef CAGE_SYSTEM_WINDOWS
+		GCHL_GENERATE(sint64, % lld);
+		GCHL_GENERATE(uint64, % llu);
+	#else
+		GCHL_GENERATE(sint64, % ld);
+		GCHL_GENERATE(uint64, % lu);
+	#endif
+		GCHL_GENERATE(float, % f);
+		GCHL_GENERATE(double, % .16lg);
+	#undef GCHL_GENERATE
 
 #else // GCHL_USE_CHARCONV
 
-#define GCHL_FROMSTRING(TYPE) \
+	#define GCHL_FROMSTRING(TYPE) \
 		void fromString(const char *s, uint32 n, TYPE &value) \
 		{ \
 			const auto [p, ec] = std::from_chars(s, s + n, value); \
@@ -281,7 +284,7 @@ namespace cage
 			} \
 		}
 
-#define GCHL_GENERATE(TYPE) \
+	#define GCHL_GENERATE(TYPE) \
 		uint32 toString(char *s, uint32 n, TYPE value) \
 		{ \
 			const auto [p, ec] = std::to_chars(s, s + n, value); \
@@ -300,9 +303,9 @@ namespace cage
 		GCHL_GENERATE(uint16);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(uint64);
-#undef GCHL_GENERATE
+	#undef GCHL_GENERATE
 
-#define GCHL_GENERATE(TYPE) \
+	#define GCHL_GENERATE(TYPE) \
 		uint32 toString(char *s, uint32 n, TYPE value) \
 		{ \
 			const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
@@ -315,7 +318,7 @@ namespace cage
 
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
-#undef GCHL_GENERATE
+	#undef GCHL_GENERATE
 
 #endif // GCHL_USE_CHARCONV
 
@@ -353,10 +356,10 @@ namespace cage
 		}
 
 #define GCHL_GENERATE(TYPE) \
-		void fromString(const PointerRange<const char> &str, TYPE &value) \
-		{ \
-			fromString(str.data(), numeric_cast<uint32>(str.size()), value); \
-		}
+	void fromString(const PointerRange<const char> &str, TYPE &value) \
+	{ \
+		fromString(str.data(), numeric_cast<uint32>(str.size()), value); \
+	}
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);

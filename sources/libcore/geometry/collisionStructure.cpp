@@ -1,8 +1,8 @@
-#include <cage-core/geometry.h>
-#include <cage-core/collisionStructure.h>
 #include <cage-core/collider.h>
-#include <cage-core/spatialStructure.h>
+#include <cage-core/collisionStructure.h>
+#include <cage-core/geometry.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/spatialStructure.h>
 
 #include <unordered_dense.h>
 
@@ -24,15 +24,9 @@ namespace cage
 			ankerl::unordered_dense::map<uint32, Item> allItems;
 			Holder<SpatialStructure> spatial;
 
-			CollisionDataImpl(const CollisionStructureCreateConfig &config)
-			{
-				spatial = newSpatialStructure(config.spatialConfig ? *config.spatialConfig : SpatialStructureCreateConfig());
-			}
+			CollisionDataImpl(const CollisionStructureCreateConfig &config) { spatial = newSpatialStructure(config.spatialConfig ? *config.spatialConfig : SpatialStructureCreateConfig()); }
 
-			~CollisionDataImpl()
-			{
-				clear();
-			}
+			~CollisionDataImpl() { clear(); }
 		};
 
 		class CollisionQueryImpl : public CollisionQuery
@@ -45,10 +39,7 @@ namespace cage
 			Real resultFractionContact = Real::Nan();
 			Holder<PointerRange<CollisionPair>> resultPairs;
 
-			CollisionQueryImpl(Holder<const CollisionDataImpl> data) : data(std::move(data))
-			{
-				spatial = newSpatialQuery(this->data->spatial.share());
-			}
+			CollisionQueryImpl(Holder<const CollisionDataImpl> data) : data(std::move(data)) { spatial = newSpatialQuery(this->data->spatial.share()); }
 
 			void clear()
 			{

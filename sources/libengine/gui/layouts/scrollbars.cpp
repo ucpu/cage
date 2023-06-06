@@ -15,16 +15,12 @@ namespace cage
 				Real dotSize = Real::Nan();
 				Real &value;
 
-				Scrollbar(Real &value) : value(value)
-				{}
+				Scrollbar(Real &value) : value(value) {}
 			} scrollbars[2];
 
 			Real wheelFactor;
 
-			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(LayoutScrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
-			{
-				ensureItemHasLayout(hierarchy);
-			}
+			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(LayoutScrollbars)), scrollbars{ data.scroll[0], data.scroll[1] } { ensureItemHasLayout(hierarchy); }
 
 			void initialize() override
 			{
@@ -143,10 +139,7 @@ namespace cage
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return handleMouse(buttons, modifiers, point, true);
-			}
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, true); }
 
 			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
 			{

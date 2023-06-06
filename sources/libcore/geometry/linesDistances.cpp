@@ -92,7 +92,8 @@ namespace cage
 					sN = 0.0;
 				else if (-d > a)
 					sN = sD;
-				else {
+				else
+				{
 					sN = -d;
 					sD = a;
 				}
@@ -104,7 +105,8 @@ namespace cage
 					sN = 0;
 				else if ((-d + b) > a)
 					sN = sD;
-				else {
+				else
+				{
 					sN = (-d + b);
 					sD = a;
 				}

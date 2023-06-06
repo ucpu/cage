@@ -1,11 +1,11 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/string.h>
 
-#include <cage-engine/opengl.h>
-#include <cage-engine/texture.h>
 #include <cage-engine/frameBuffer.h>
-#include <cage-engine/uniformBuffer.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/uniformBuffer.h>
 
 #include <set>
 
@@ -23,8 +23,7 @@ namespace cage
 			ProvisionalGraphicsImpl *impl = nullptr;
 			bool used = true;
 
-			ProvisionalUniformBufferImpl(const String &name) : name(name)
-			{}
+			ProvisionalUniformBufferImpl(const String &name) : name(name) {}
 		};
 
 		class ProvisionalFrameBufferHandleImpl : public ProvisionalFrameBuffer
@@ -36,8 +35,7 @@ namespace cage
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
 
-			ProvisionalFrameBufferHandleImpl(const String &name) : name(name)
-			{}
+			ProvisionalFrameBufferHandleImpl(const String &name) : name(name) {}
 		};
 
 		class ProvisionalTextureHandleImpl : public ProvisionalTexture
@@ -50,8 +48,7 @@ namespace cage
 			uint32 target = m;
 			bool used = true;
 
-			ProvisionalTextureHandleImpl(const String &name) : name(name)
-			{}
+			ProvisionalTextureHandleImpl(const String &name) : name(name) {}
 		};
 
 		class ProvisionalGraphicsImpl : public ProvisionalGraphics
@@ -109,20 +106,11 @@ namespace cage
 				{
 					using is_transparent = void;
 
-					bool operator() (const Holder<T> &a, const Holder<T> &b) const
-					{
-						return StringComparatorFast()(a->name, b->name);
-					}
+					bool operator()(const Holder<T> &a, const Holder<T> &b) const { return StringComparatorFast()(a->name, b->name); }
 
-					bool operator() (const Holder<T> &a, const String &b) const
-					{
-						return StringComparatorFast()(a->name, b);
-					}
+					bool operator()(const Holder<T> &a, const String &b) const { return StringComparatorFast()(a->name, b); }
 
-					bool operator() (const String &a, const Holder<T> &b) const
-					{
-						return StringComparatorFast()(a, b->name);
-					}
+					bool operator()(const String &a, const Holder<T> &b) const { return StringComparatorFast()(a, b->name); }
 				};
 
 				std::set<Holder<T>, Comparator> data;
@@ -200,12 +188,12 @@ namespace cage
 		{
 			switch (impl->type)
 			{
-			case 1:
-				impl->result = newFrameBufferDraw();
-				break;
-			case 2:
-				impl->result = newFrameBufferRead();
-				break;
+				case 1:
+					impl->result = newFrameBufferDraw();
+					break;
+				case 2:
+					impl->result = newFrameBufferRead();
+					break;
 			}
 			impl->result->setDebugName(impl->name);
 		}

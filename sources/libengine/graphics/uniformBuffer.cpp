@@ -1,6 +1,6 @@
-#include <cage-engine/uniformBuffer.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
+#include <cage-engine/uniformBuffer.h>
 
 namespace cage
 {
@@ -43,17 +43,14 @@ namespace cage
 							accessFlags |= GL_MAP_COHERENT_BIT;
 						if (config.explicitFlush)
 							accessFlags |= GL_MAP_FLUSH_EXPLICIT_BIT;
-						mapped = (char*)glMapNamedBufferRange(id, 0, size, accessFlags);
+						mapped = (char *)glMapNamedBufferRange(id, 0, size, accessFlags);
 						CAGE_CHECK_GL_ERROR_DEBUG();
 						CAGE_ASSERT(mapped);
 					}
 				}
 			}
 
-			~UniformBufferImpl()
-			{
-				glDeleteBuffers(1, &id);
-			}
+			~UniformBufferImpl() { glDeleteBuffers(1, &id); }
 		};
 	}
 

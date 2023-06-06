@@ -8,9 +8,20 @@ namespace cage
 	CAGE_ENGINE_API void checkGlError();
 
 #ifdef CAGE_DEBUG
-#define CAGE_CHECK_GL_ERROR_DEBUG() { try { checkGlError(); } catch (const ::cage::GraphicsError &) { CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::Stringizer() + "opengl error caught in file '" + __FILE__ + "' at line " + __LINE__); } }
+	#define CAGE_CHECK_GL_ERROR_DEBUG() \
+		{ \
+			try \
+			{ \
+				checkGlError(); \
+			} \
+			catch (const ::cage::GraphicsError &) \
+			{ \
+				CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::Stringizer() + "opengl error caught in file '" + __FILE__ + "' at line " + __LINE__); \
+			} \
+		}
 #else
-#define CAGE_CHECK_GL_ERROR_DEBUG() {}
+	#define CAGE_CHECK_GL_ERROR_DEBUG() \
+		{}
 #endif
 
 	struct CAGE_ENGINE_API GraphicsError : public SystemError

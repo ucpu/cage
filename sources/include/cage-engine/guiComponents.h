@@ -190,7 +190,7 @@ namespace cage
 		{
 			Real f;
 			sint32 i = 0;
-			Union() {};
+			Union(){};
 		} min, max, step;
 		uint32 cursor = m; // utf32 characters (not bytes)
 		InputTypeEnum type = InputTypeEnum::Text;
@@ -275,7 +275,7 @@ namespace cage
 		template<uint32 N>
 		struct GuiStringLiteral
 		{
-			consteval GuiStringLiteral(const char(&str)[N]) noexcept
+			consteval GuiStringLiteral(const char (&str)[N]) noexcept
 			{
 				static_assert(N > 0);
 				detail::memcpy(value, str, N);

@@ -21,6 +21,7 @@ namespace cage
 		template<class T>
 		CAGE_FORCE_INLINE constexpr T change(T val) noexcept
 		{
+			static_assert(std::is_trivially_copyable_v<T>);
 			union U
 			{
 				T t;

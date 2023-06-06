@@ -6,8 +6,7 @@ namespace cage
 	{
 		struct LabelImpl : public WidgetItem
 		{
-			LabelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
-			{}
+			LabelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy) {}
 
 			void initialize() override
 			{
@@ -44,30 +43,15 @@ namespace cage
 					hierarchy->text->emit(p, s);
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return false;
-			}
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
-			bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return false;
-			}
+			bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
-			bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return false;
-			}
+			bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
-			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return false;
-			}
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
-			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override
-			{
-				return false;
-			}
+			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override { return false; }
 		};
 	}
 
