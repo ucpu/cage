@@ -1,5 +1,9 @@
 #include <cage-core/geometry.h>
 
+#if defined(_MSC_VER) && _MSC_VER > 1930
+#pragma optimize("", off)
+#endif
+
 namespace cage
 {
 	namespace
@@ -735,3 +739,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 }
+
+#if defined(_MSC_VER) && _MSC_VER > 1930
+#pragma optimize("", on)
+#endif
