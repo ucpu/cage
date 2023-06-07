@@ -20,6 +20,33 @@ namespace cage
 	Holder<File> realNewFile(const String &path, const FileMode &mode);
 	using privat::ConfigVariable;
 
+	StringPointer configTypeToString(const ConfigTypeEnum type)
+	{
+		switch (type)
+		{
+			case ConfigTypeEnum::Bool:
+				return "bool";
+			case ConfigTypeEnum::Sint32:
+				return "sint32";
+			case ConfigTypeEnum::Uint32:
+				return "uint32";
+			case ConfigTypeEnum::Sint64:
+				return "sint64";
+			case ConfigTypeEnum::Uint64:
+				return "uint64";
+			case ConfigTypeEnum::Float:
+				return "float";
+			case ConfigTypeEnum::Double:
+				return "double";
+			case ConfigTypeEnum::String:
+				return "string";
+			case ConfigTypeEnum::Undefined:
+				return "undefined";
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid config type enum");
+		}
+	}
+
 	// variables and storage
 
 	namespace privat
@@ -368,33 +395,6 @@ namespace cage
 		cfgSetDynamic(cfgVar(name), value);
 	}
 
-	String configTypeToString(const ConfigTypeEnum type)
-	{
-		switch (type)
-		{
-			case ConfigTypeEnum::Bool:
-				return "bool";
-			case ConfigTypeEnum::Sint32:
-				return "sint32";
-			case ConfigTypeEnum::Uint32:
-				return "uint32";
-			case ConfigTypeEnum::Sint64:
-				return "sint64";
-			case ConfigTypeEnum::Uint64:
-				return "uint64";
-			case ConfigTypeEnum::Float:
-				return "float";
-			case ConfigTypeEnum::Double:
-				return "double";
-			case ConfigTypeEnum::String:
-				return "string";
-			case ConfigTypeEnum::Undefined:
-				return "undefined";
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid config type enum");
-		}
-	}
-
 	ConfigTypeEnum configGetType(const String &name)
 	{
 		return cfgVar(name)->type;
@@ -522,7 +522,7 @@ namespace cage
 		return impl->var->type;
 	}
 
-	String ConfigList::typeName() const
+	StringPointer ConfigList::typeName() const
 	{
 		return configTypeToString(type());
 	}

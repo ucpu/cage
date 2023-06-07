@@ -20,6 +20,8 @@ namespace cage
 		Vertical,
 		Separate,
 	};
+	CAGE_CORE_API StringPointer stereoModeToString(StereoModeEnum mode);
+	CAGE_CORE_API StereoModeEnum stringToStereoMode(const String &mode);
 
 	enum class StereoEyeEnum : uint32
 	{
@@ -40,7 +42,6 @@ namespace cage
 		Real eyeSeparation;
 		bool orthographic = false;
 	};
-
 	struct CAGE_CORE_API StereoCameraOutput
 	{
 		Mat4 view;
@@ -48,9 +49,6 @@ namespace cage
 		Vec2 viewportOrigin; // 0 .. 1
 		Vec2 viewportSize; // 0 .. 1
 	};
-
-	CAGE_CORE_API StereoModeEnum stringToStereoMode(const String &mode);
-	CAGE_CORE_API String stereoModeToString(StereoModeEnum mode);
 	CAGE_CORE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoEyeEnum eye, StereoModeEnum stereoMode = StereoModeEnum::Separate);
 }
 

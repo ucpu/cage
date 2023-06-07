@@ -67,21 +67,7 @@ namespace cage
 		return transpose(Mat4(2 / (right - left), 0, 0, -(right + left) / (right - left), 0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom), 0, 0, -2 / (far - near), -(far + near) / (far - near), 0, 0, 0, 1));
 	}
 
-	StereoModeEnum stringToStereoMode(const String &mode)
-	{
-		const String m = toLower(mode);
-		if (m == "mono")
-			return StereoModeEnum::Mono;
-		if (m == "horizontal")
-			return StereoModeEnum::Horizontal;
-		if (m == "vertical")
-			return StereoModeEnum::Vertical;
-		if (m == "separate")
-			return StereoModeEnum::Separate;
-		CAGE_THROW_ERROR(Exception, "invalid stereo mode name");
-	}
-
-	String stereoModeToString(StereoModeEnum mode)
+	StringPointer stereoModeToString(StereoModeEnum mode)
 	{
 		switch (mode)
 		{
@@ -96,6 +82,20 @@ namespace cage
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid stereo mode enum");
 		}
+	}
+
+	StereoModeEnum stringToStereoMode(const String &mode)
+	{
+		const String m = toLower(mode);
+		if (m == "mono")
+			return StereoModeEnum::Mono;
+		if (m == "horizontal")
+			return StereoModeEnum::Horizontal;
+		if (m == "vertical")
+			return StereoModeEnum::Vertical;
+		if (m == "separate")
+			return StereoModeEnum::Separate;
+		CAGE_THROW_ERROR(Exception, "invalid stereo mode name");
 	}
 
 	StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoEyeEnum eye, StereoModeEnum stereoMode)

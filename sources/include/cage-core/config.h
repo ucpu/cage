@@ -32,6 +32,7 @@ namespace cage
 		Double,
 		String,
 	};
+	CAGE_CORE_API StringPointer configTypeToString(const ConfigTypeEnum type);
 
 	namespace privat
 	{
@@ -75,7 +76,6 @@ namespace cage
 
 	CAGE_CORE_API void configSetDynamic(const String &name, const String &value); // changes the type of the config variable to the one best suited for the value
 
-	CAGE_CORE_API String configTypeToString(const ConfigTypeEnum type);
 	CAGE_CORE_API ConfigTypeEnum configGetType(const String &name);
 
 	CAGE_CORE_API void configApplyIni(const Ini *ini, const String &prefix);
@@ -89,7 +89,7 @@ namespace cage
 		bool valid() const;
 		String name() const;
 		ConfigTypeEnum type() const;
-		String typeName() const;
+		StringPointer typeName() const;
 		bool getBool() const;
 		sint32 getSint32() const;
 		uint32 getUint32() const;

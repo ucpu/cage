@@ -54,8 +54,9 @@ namespace cage
 	namespace detail
 	{
 		CAGE_CORE_API Logger *globalLogger();
-		CAGE_CORE_API String severityToString(const SeverityEnum severity);
 	}
+
+	CAGE_CORE_API StringPointer severityToString(const SeverityEnum severity);
 }
 
 #endif // guard_logger_h_0d9702a6_c7ca_4260_baff_7fc1b3c1dec5_

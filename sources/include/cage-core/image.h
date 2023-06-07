@@ -15,6 +15,7 @@ namespace cage
 
 		Default = m, // used only for decoding an image, it will use original format from the file
 	};
+	CAGE_CORE_API StringPointer imageFormatToString(ImageFormatEnum format);
 
 	enum class AlphaModeEnum : uint32
 	{
@@ -22,6 +23,7 @@ namespace cage
 		Opacity,
 		PremultipliedOpacity,
 	};
+	CAGE_CORE_API StringPointer imageAlphaModeToString(AlphaModeEnum mode);
 
 	enum class GammaSpaceEnum : uint32
 	{
@@ -29,6 +31,7 @@ namespace cage
 		Gamma,
 		Linear,
 	};
+	CAGE_CORE_API StringPointer imageGammaSpaceToString(GammaSpaceEnum space);
 
 	struct CAGE_CORE_API ImageColorConfig
 	{
@@ -110,13 +113,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<Image> newImage();
-
-	namespace detail
-	{
-		CAGE_CORE_API StringPointer imageFormatToString(ImageFormatEnum format);
-		CAGE_CORE_API StringPointer imageGammaSpaceToString(GammaSpaceEnum space);
-		CAGE_CORE_API StringPointer imageAlphaModeToString(AlphaModeEnum mode);
-	}
 }
 
 #endif // guard_image_h_681DF37FA76B4FA48C656E96AF90EE69

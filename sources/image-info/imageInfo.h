@@ -10,15 +10,15 @@ namespace cage
 	{
 		if (config.alphaChannelIndex != m)
 			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha channel index: " + config.alphaChannelIndex);
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha mode: " + detail::imageAlphaModeToString(config.alphaMode));
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "gamma space: " + detail::imageGammaSpaceToString(config.gammaSpace));
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "alpha mode: " + imageAlphaModeToString(config.alphaMode));
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "gamma space: " + imageGammaSpaceToString(config.gammaSpace));
 	}
 
 	inline void imageInfo(const Image *img)
 	{
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + img->width() + "x" + img->height());
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "total channels: " + img->channels());
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "format: " + detail::imageFormatToString(img->format()));
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "format: " + imageFormatToString(img->format()));
 		imageInfo(img->colorConfig);
 	}
 

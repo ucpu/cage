@@ -6,6 +6,54 @@
 
 namespace cage
 {
+
+	StringPointer imageFormatToString(ImageFormatEnum format)
+	{
+		switch (format)
+		{
+			case ImageFormatEnum::U8:
+				return "u8";
+			case ImageFormatEnum::U16:
+				return "u16";
+			case ImageFormatEnum::Float:
+				return "float";
+			case ImageFormatEnum::Default:
+				return "default";
+			default:
+				return "unknown";
+		}
+	}
+
+	StringPointer imageAlphaModeToString(AlphaModeEnum mode)
+	{
+		switch (mode)
+		{
+			case AlphaModeEnum::None:
+				return "none";
+			case AlphaModeEnum::Opacity:
+				return "opacity";
+			case AlphaModeEnum::PremultipliedOpacity:
+				return "premultiplied opacity";
+			default:
+				return "unknown";
+		}
+	}
+
+	StringPointer imageGammaSpaceToString(GammaSpaceEnum space)
+	{
+		switch (space)
+		{
+			case GammaSpaceEnum::None:
+				return "none";
+			case GammaSpaceEnum::Gamma:
+				return "gamma";
+			case GammaSpaceEnum::Linear:
+				return "linear";
+			default:
+				return "unknown";
+		}
+	}
+
 	uint32 formatBytes(ImageFormatEnum format)
 	{
 		switch (format)
@@ -532,55 +580,5 @@ namespace cage
 	Holder<Image> newImage()
 	{
 		return systemMemory().createImpl<Image, ImageImpl>();
-	}
-
-	namespace detail
-	{
-		StringPointer imageFormatToString(ImageFormatEnum format)
-		{
-			switch (format)
-			{
-				case ImageFormatEnum::U8:
-					return "u8";
-				case ImageFormatEnum::U16:
-					return "u16";
-				case ImageFormatEnum::Float:
-					return "float";
-				case ImageFormatEnum::Default:
-					return "default";
-				default:
-					return "unknown";
-			}
-		}
-
-		StringPointer imageGammaSpaceToString(GammaSpaceEnum space)
-		{
-			switch (space)
-			{
-				case GammaSpaceEnum::None:
-					return "none";
-				case GammaSpaceEnum::Gamma:
-					return "gamma";
-				case GammaSpaceEnum::Linear:
-					return "linear";
-				default:
-					return "unknown";
-			}
-		}
-
-		StringPointer imageAlphaModeToString(AlphaModeEnum mode)
-		{
-			switch (mode)
-			{
-				case AlphaModeEnum::None:
-					return "none";
-				case AlphaModeEnum::Opacity:
-					return "opacity";
-				case AlphaModeEnum::PremultipliedOpacity:
-					return "premultiplied opacity";
-				default:
-					return "unknown";
-			}
-		}
 	}
 }

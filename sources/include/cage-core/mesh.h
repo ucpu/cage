@@ -13,6 +13,7 @@ namespace cage
 		Lines = 2,
 		Triangles = 3,
 	};
+	CAGE_CORE_API StringPointer meshTypeToString(MeshTypeEnum type);
 
 	class CAGE_CORE_API Mesh : private Immovable
 	{
@@ -99,11 +100,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<Mesh> newMesh();
-
-	namespace detail
-	{
-		CAGE_CORE_API StringPointer meshTypeToString(MeshTypeEnum type);
-	}
 }
 
 #endif // guard_mesh_h_CA052442302D4C3BAA9293200603C20A

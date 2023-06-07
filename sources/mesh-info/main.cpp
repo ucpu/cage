@@ -37,7 +37,7 @@ void info(const String &src, int format)
 	for (const auto &pt : msh.parts)
 	{
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "part name: " + pt.objectName);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "mesh type: " + detail::meshTypeToString(pt.mesh->type()));
+		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "mesh type: " + meshTypeToString(pt.mesh->type()));
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "indices count: " + pt.mesh->indicesCount());
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "vertices count: " + pt.mesh->verticesCount());
 		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has uvs: " + !pt.mesh->uvs().empty());
@@ -65,7 +65,7 @@ void info(const String &src, int format)
 		for (const auto &tx : pt.textures)
 		{
 			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture name: " + tx.name);
-			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + detail::meshImportTextureTypeToString(tx.type));
+			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + meshImportTextureTypeToString(tx.type));
 			imageInfo(tx.images);
 			CAGE_LOG(SeverityEnum::Info, "mesh", "");
 		}

@@ -124,27 +124,6 @@ namespace cage
 			return +appLoggerInstance->loggerFile;
 		}
 
-		String severityToString(SeverityEnum severity)
-		{
-			switch (severity)
-			{
-				case SeverityEnum::Hint:
-					return "hint";
-				case SeverityEnum::Note:
-					return "note";
-				case SeverityEnum::Info:
-					return "info";
-				case SeverityEnum::Warning:
-					return "warn";
-				case SeverityEnum::Error:
-					return "EROR";
-				case SeverityEnum::Critical:
-					return "CRIT";
-				default:
-					return "UNKN";
-			}
-		}
-
 		void logCurrentCaughtException()
 		{
 			try
@@ -171,6 +150,27 @@ namespace cage
 			{
 				CAGE_LOG(SeverityEnum::Info, "exception", "unknown exception type");
 			}
+		}
+	}
+
+	StringPointer severityToString(SeverityEnum severity)
+	{
+		switch (severity)
+		{
+			case SeverityEnum::Hint:
+				return "hint";
+			case SeverityEnum::Note:
+				return "note";
+			case SeverityEnum::Info:
+				return "info";
+			case SeverityEnum::Warning:
+				return "warn";
+			case SeverityEnum::Error:
+				return "EROR";
+			case SeverityEnum::Critical:
+				return "CRIT";
+			default:
+				return "UNKN";
 		}
 	}
 
@@ -246,7 +246,7 @@ namespace cage
 				String res;
 				res += fill(String(Stringizer() + info.time), 12) + " ";
 				res += fill(String(info.currentThreadName), 26) + " ";
-				res += detail::severityToString(info.severity) + " ";
+				res += Stringizer() + severityToString(info.severity) + " ";
 				res += fill(String(info.component), 20) + " ";
 				res += info.message;
 				if (longer && info.location.file_name())

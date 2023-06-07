@@ -13,7 +13,7 @@ namespace
 			String res = iter->name();
 			if (iter->type() != ConfigTypeEnum::Undefined)
 				res += String(" = ") + iter->getString();
-			res += String(" (") + iter->typeName() + ")";
+			res += Stringizer() + " (" + iter->typeName() + ")";
 			CAGE_LOG_CONTINUE(SeverityEnum::Note, "test", res);
 			iter->next();
 		}

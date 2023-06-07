@@ -119,7 +119,7 @@ namespace cage
 			return; // no op
 		if (impl->colorConfig.gammaSpace == GammaSpaceEnum::None)
 		{
-			CAGE_LOG(SeverityEnum::Warning, "image", Stringizer() + "image had unknown gamma space, setting it to " + detail::imageGammaSpaceToString(gammaSpace) + ", without modifying any pixels");
+			CAGE_LOG(SeverityEnum::Warning, "image", Stringizer() + "image had unknown gamma space, setting it to " + imageGammaSpaceToString(gammaSpace) + ", without modifying any pixels");
 			impl->colorConfig.gammaSpace = gammaSpace;
 			return;
 		}

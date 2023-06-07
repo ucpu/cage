@@ -34,6 +34,7 @@ namespace cage
 		Mask, // cage mask -> white = use albedo from texture, black = use albedo from instance
 		Bump,
 	};
+	CAGE_CORE_API StringPointer meshImportTextureTypeToString(MeshImportTextureType type);
 
 	struct CAGE_CORE_API MeshImportTexture
 	{
@@ -88,11 +89,6 @@ namespace cage
 	CAGE_CORE_API void meshImportLoadExternal(MeshImportResult &result);
 	CAGE_CORE_API void meshImportNormalizeFormats(MeshImportResult &result);
 	CAGE_CORE_API void meshImportConvertToCageFormats(MeshImportResult &result);
-
-	namespace detail
-	{
-		CAGE_CORE_API StringPointer meshImportTextureTypeToString(MeshImportTextureType type);
-	}
 }
 
 #endif // guard_meshImport_h_rtkusd4g4b78fd

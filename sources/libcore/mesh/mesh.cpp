@@ -8,6 +8,21 @@
 
 namespace cage
 {
+	StringPointer meshTypeToString(MeshTypeEnum type)
+	{
+		switch (type)
+		{
+			case MeshTypeEnum::Points:
+				return "points";
+			case MeshTypeEnum::Lines:
+				return "lines";
+			case MeshTypeEnum::Triangles:
+				return "triangles";
+			default:
+				return "unknown";
+		}
+	}
+
 	void MeshImpl::swap(MeshImpl &other)
 	{
 #define GCHL_GENERATE(NAME) std::swap(NAME, other.NAME);
@@ -274,23 +289,5 @@ namespace cage
 	Holder<Mesh> newMesh()
 	{
 		return systemMemory().createImpl<Mesh, MeshImpl>();
-	}
-
-	namespace detail
-	{
-		StringPointer meshTypeToString(MeshTypeEnum type)
-		{
-			switch (type)
-			{
-				case MeshTypeEnum::Points:
-					return "points";
-				case MeshTypeEnum::Lines:
-					return "lines";
-				case MeshTypeEnum::Triangles:
-					return "triangles";
-				default:
-					return "unknown";
-			}
-		}
 	}
 }

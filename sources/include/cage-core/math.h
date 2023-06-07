@@ -303,6 +303,8 @@ namespace cage
 
 		bool operator==(const Quat &) const noexcept = default;
 
+		std::pair<Vec3, Rads> axisAngle() const;
+
 		static Quat parse(const String &str);
 		CAGE_FORCE_INLINE constexpr Real &operator[](uint32 idx)
 		{
@@ -997,7 +999,6 @@ namespace cage
 		return Vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]);
 	}
 	CAGE_CORE_API Vec3 dominantAxis(const Vec3 &x);
-	CAGE_CORE_API void toAxisAngle(const Quat &x, Vec3 &axis, Rads &angle);
 	CAGE_CORE_API Quat lerp(const Quat &a, const Quat &b, Real f);
 	CAGE_CORE_API Quat slerp(const Quat &a, const Quat &b, Real f);
 	CAGE_CORE_API Quat slerpPrecise(const Quat &a, const Quat &b, Real f);

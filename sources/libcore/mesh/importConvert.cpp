@@ -350,7 +350,7 @@ namespace cage
 			for (auto &it : textures)
 			{
 				if (find(it.name, '?') != m)
-					it.name = Stringizer() + split(it.name, "?") + "?" + part.objectName + "_" + detail::meshImportTextureTypeToString(it.type);
+					it.name = Stringizer() + split(it.name, "?") + "?" + part.objectName + "_" + meshImportTextureTypeToString(it.type);
 			}
 
 			part.textures = std::move(textures);

@@ -21,6 +21,41 @@
 
 namespace cage
 {
+	StringPointer meshImportTextureTypeToString(MeshImportTextureType type)
+	{
+		switch (type)
+		{
+			case MeshImportTextureType::None:
+				return "none";
+			case MeshImportTextureType::Albedo:
+				return "albedo";
+			case MeshImportTextureType::Special:
+				return "special";
+			case MeshImportTextureType::Normal:
+				return "normal";
+			case MeshImportTextureType::Opacity:
+				return "opacity";
+			case MeshImportTextureType::Roughness:
+				return "roughness";
+			case MeshImportTextureType::Metallic:
+				return "metallic";
+			case MeshImportTextureType::Emission:
+				return "emission";
+			case MeshImportTextureType::Specular:
+				return "specular";
+			case MeshImportTextureType::Shininess:
+				return "shininess";
+			case MeshImportTextureType::AmbientOcclusion:
+				return "ambient occlusion";
+			case MeshImportTextureType::Mask:
+				return "mask";
+			case MeshImportTextureType::Bump:
+				return "bump";
+			default:
+				return "unknown";
+		}
+	}
+
 	namespace privat
 	{
 		void meshImportConvertToCageFormats(MeshImportPart &part);
@@ -873,7 +908,7 @@ namespace cage
 			template<MeshImportTextureType Type>
 			void loadTextureCage(const String &pathBase, Ini *ini, Textures &textures, PointerRange<MeshImportTexture> replacements)
 			{
-				String n = ini->getString("textures", String(detail::meshImportTextureTypeToString(Type)));
+				String n = ini->getString("textures", String(meshImportTextureTypeToString(Type)));
 				n = convertPath(pathBase, n);
 				if (n.empty())
 					return;
@@ -970,7 +1005,7 @@ namespace cage
 				{
 					CAGE_LOG(SeverityEnum::Info, "meshImport", "available textures:");
 					for (const auto &it : part.textures)
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size());
 				}
 
 				{ // reset material to default
@@ -1332,43 +1367,5 @@ namespace cage
 		}
 
 		return result;
-	}
-
-	namespace detail
-	{
-		StringPointer meshImportTextureTypeToString(MeshImportTextureType type)
-		{
-			switch (type)
-			{
-				case MeshImportTextureType::None:
-					return "none";
-				case MeshImportTextureType::Albedo:
-					return "albedo";
-				case MeshImportTextureType::Special:
-					return "special";
-				case MeshImportTextureType::Normal:
-					return "normal";
-				case MeshImportTextureType::Opacity:
-					return "opacity";
-				case MeshImportTextureType::Roughness:
-					return "roughness";
-				case MeshImportTextureType::Metallic:
-					return "metallic";
-				case MeshImportTextureType::Emission:
-					return "emission";
-				case MeshImportTextureType::Specular:
-					return "specular";
-				case MeshImportTextureType::Shininess:
-					return "shininess";
-				case MeshImportTextureType::AmbientOcclusion:
-					return "ambient occlusion";
-				case MeshImportTextureType::Mask:
-					return "mask";
-				case MeshImportTextureType::Bump:
-					return "bump";
-				default:
-					return "unknown";
-			}
-		}
 	}
 }

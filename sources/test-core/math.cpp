@@ -910,9 +910,7 @@ namespace
 			for (uint32 i = 0; i < 100; i++)
 			{
 				const Quat q1 = i == 0 ? Quat() : randomDirectionQuat();
-				Vec3 axis;
-				Rads angle;
-				toAxisAngle(q1, axis, angle);
+				const auto [axis, angle] = q1.axisAngle();
 				const Quat q2 = Quat(axis, angle);
 				test(q1, q2);
 			}

@@ -244,24 +244,26 @@ namespace cage
 		return atan2(sqr(qw) + sqr(qx) - sqr(qy) - sqr(qz), 2 * (qx * qy + qw * qz));
 	}
 
-	void toAxisAngle(const Quat &x, Vec3 &axis, Rads &angle)
+	std::pair<Vec3, Rads> Quat::axisAngle() const
 	{
-		Real w = clamp(x[3], -1, 1);
-		angle = acos(w) * 2;
+		Vec3 axis;
+		Real w = clamp(data[3], -1, 1);
+		Rads angle = acos(w) * 2;
 		w = sqr(w);
 		Real s = sqrt(1 - sqr(w));
 		if (s > 0.001)
 		{
 			s = 1 / s;
-			axis[0] = x[0] * s;
-			axis[1] = x[1] * s;
-			axis[2] = x[2] * s;
+			axis[0] = data[0] * s;
+			axis[1] = data[1] * s;
+			axis[2] = data[2] * s;
 		}
 		else
 		{
 			axis = Vec3(1, 0, 0);
 			angle = Rads();
 		}
+		return { axis, angle };
 	}
 
 	Vec3 dominantAxis(const Vec3 &x)

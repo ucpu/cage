@@ -18,11 +18,9 @@ namespace cage
 		{
 			if (randomize)
 				privat::generateRandomData(data, N);
-			else
-				detail::memset(data, 0, N);
 		}
 
-		uint8 data[N];
+		uint8 data[N] = {};
 
 		operator String() const { return privat::guidToString(data, N); }
 
