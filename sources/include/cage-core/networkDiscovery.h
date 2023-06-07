@@ -9,7 +9,6 @@ namespace cage
 	{
 		String message;
 		String address;
-		String domain;
 		uint16 port = 0;
 	};
 

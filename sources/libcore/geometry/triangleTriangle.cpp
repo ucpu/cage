@@ -98,7 +98,7 @@ namespace
 
 	int tri_tri_overlap_test_3d(float p1[3], float q1[3], float r1[3],
 
-	    float p2[3], float q2[3], float r2[3])
+		float p2[3], float q2[3], float r2[3])
 	{
 		float dp1, dq1, dr1, dp2, dq2, dr2;
 		float v1[3], v2[3];

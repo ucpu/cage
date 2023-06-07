@@ -565,13 +565,13 @@ namespace cage
 
 				// find if any of the triangles in the group is banned
 				if (
-				    [&]
-				    {
-					    for (uint32 i : group)
-						    if (banned[i])
-							    return true;
-					    return false;
-				    }())
+					[&]
+					{
+						for (uint32 i : group)
+							if (banned[i])
+								return true;
+						return false;
+					}())
 					continue; // some triangle is banned
 
 				// check if the vi vertex is fully surrounded or on an edge
@@ -807,10 +807,10 @@ namespace cage
 					return;
 				const PointerRange<const Triangle> cctris = collider->triangles();
 				std::sort(cutterIds.begin(), cutterIds.end(),
-				    [cctris](uint32 a, uint32 b)
-				    {
-					    return cctris[a].area() > cctris[b].area(); // cut with largest triangles first
-				    });
+					[cctris](uint32 a, uint32 b)
+					{
+						return cctris[a].area() > cctris[b].area(); // cut with largest triangles first
+					});
 				std::vector<Triangle> b;
 				b.reserve(10);
 				Triangle tmp[3];

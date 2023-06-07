@@ -196,17 +196,17 @@ namespace cage
 			const String name = Stringizer() + split(n1, "?") + "?opacity_" + split(n2, "?");
 
 			std::erase_if(textures,
-			    [](const MeshImportTexture &it)
-			    {
-				    switch (it.type)
-				    {
-					    case MeshImportTextureType::Albedo:
-					    case MeshImportTextureType::Opacity:
-						    return true;
-					    default:
-						    return false;
-				    }
-			    });
+				[](const MeshImportTexture &it)
+				{
+					switch (it.type)
+					{
+						case MeshImportTextureType::Albedo:
+						case MeshImportTextureType::Opacity:
+							return true;
+						default:
+							return false;
+					}
+				});
 
 			ImageImportPart part;
 			part.image = imageChannelsJoin(channels);
@@ -266,19 +266,19 @@ namespace cage
 				return;
 
 			std::erase_if(textures,
-			    [](const MeshImportTexture &it)
-			    {
-				    switch (it.type)
-				    {
-					    case MeshImportTextureType::Roughness:
-					    case MeshImportTextureType::Metallic:
-					    case MeshImportTextureType::Emission:
-					    case MeshImportTextureType::Mask:
-						    return true;
-					    default:
-						    return false;
-				    }
-			    });
+				[](const MeshImportTexture &it)
+				{
+					switch (it.type)
+					{
+						case MeshImportTextureType::Roughness:
+						case MeshImportTextureType::Metallic:
+						case MeshImportTextureType::Emission:
+						case MeshImportTextureType::Mask:
+							return true;
+						default:
+							return false;
+					}
+				});
 
 			ImageImportPart part;
 			part.image = imageChannelsJoin({ channels, channels + top });
@@ -333,19 +333,19 @@ namespace cage
 				textures.push_back(std::move(it));
 
 			std::erase_if(textures,
-			    [](const MeshImportTexture &it)
-			    {
-				    switch (it.type)
-				    {
-					    case MeshImportTextureType::Albedo:
-					    case MeshImportTextureType::Special:
-					    case MeshImportTextureType::Normal:
-					    case MeshImportTextureType::Bump:
-						    return false;
-					    default:
-						    return true;
-				    }
-			    });
+				[](const MeshImportTexture &it)
+				{
+					switch (it.type)
+					{
+						case MeshImportTextureType::Albedo:
+						case MeshImportTextureType::Special:
+						case MeshImportTextureType::Normal:
+						case MeshImportTextureType::Bump:
+							return false;
+						default:
+							return true;
+					}
+				});
 
 			for (auto &it : textures)
 			{

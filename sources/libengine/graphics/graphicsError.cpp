@@ -19,9 +19,9 @@ namespace cage
 		const ConfigBool confDetailedInfo("cage/graphics/printExtensions", false);
 		const ConfigBool confLogSynchronous("cage/graphics/synchronousCallback",
 #ifdef CAGE_DEBUG
-		    true
+			true
 #else
-		    false
+			false
 #endif
 		);
 	}

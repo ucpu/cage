@@ -9,7 +9,7 @@
 #endif
 
 #if __has_include(<valgrind/helgrind.h>)
-    // see https://valgrind.org/docs/manual/hg-manual.html
+	// see https://valgrind.org/docs/manual/hg-manual.html
 	#include <valgrind/helgrind.h>
 #else
 	#define ANNOTATE_HAPPENS_AFTER(XXX)
@@ -40,9 +40,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-			    InterlockedIncrement(&counter);
+				InterlockedIncrement(&counter);
 #else
-			    __atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
+				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 		}
@@ -51,9 +51,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-			    InterlockedDecrement(&counter);
+				InterlockedDecrement(&counter);
 #else
-			    __atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
+				__atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 

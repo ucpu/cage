@@ -46,5 +46,5 @@ SpaceAfterTemplateKeyword: false
 SpaceInEmptyBlock: false
 Standard: Latest
 TabWidth: 4
-UseTab: ForIndentation
+UseTab: AlignWithSpaces
 ...

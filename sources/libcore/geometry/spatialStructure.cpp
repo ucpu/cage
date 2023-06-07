@@ -254,11 +254,11 @@ namespace cage
 					const Real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					const Real planeOffset = node.box.low.v4[bestAxis];
 					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()),
-					    [&](const ItemBase *item)
-					    {
-						    const uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
-						    return binIndex < bestSplit + 1;
-					    });
+						[&](const ItemBase *item)
+						{
+							const uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
+							return binIndex < bestSplit + 1;
+						});
 				}
 				const sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
 				nodes.emplace_back(bestBoxLeft, node.a(), bestItemsCount);

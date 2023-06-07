@@ -93,13 +93,13 @@ namespace cage
 			if (!c.enableForDisabled && it.widget->widgetState.disabled)
 				break;
 			if (
-			    [&]()
-			    {
-				    for (const auto &tt : ttData)
-					    if (tt.invoker == ent)
-						    return true;
-				    return false;
-			    }())
+				[&]()
+				{
+					for (const auto &tt : ttData)
+						if (tt.invoker == ent)
+							return true;
+					return false;
+				}())
 				break; // this tooltip is already shown
 
 			TooltipData tt;

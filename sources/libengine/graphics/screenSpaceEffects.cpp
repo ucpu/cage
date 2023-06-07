@@ -20,18 +20,18 @@ namespace cage
 		{
 			const String name = Stringizer() + prefix + "_" + resolution + "_" + mipmapLevels + "_" + internalFormat;
 			TextureHandle tex = prov->texture(name,
-			    [resolution, mipmapLevels, internalFormat](Texture *tex)
-			    {
-				    tex->initialize(resolution, mipmapLevels, internalFormat);
-				    tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				    if (mipmapLevels > 1)
-				    {
-					    tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-					    tex->generateMipmaps();
-				    }
-				    else
-					    tex->filters(GL_LINEAR, GL_LINEAR, 0);
-			    });
+				[resolution, mipmapLevels, internalFormat](Texture *tex)
+				{
+					tex->initialize(resolution, mipmapLevels, internalFormat);
+					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					if (mipmapLevels > 1)
+					{
+						tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+						tex->generateMipmaps();
+					}
+					else
+						tex->filters(GL_LINEAR, GL_LINEAR, 0);
+				});
 			return tex;
 		}
 

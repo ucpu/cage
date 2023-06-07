@@ -228,33 +228,33 @@ namespace cage
 				const bool enabled = windowResolution[0] > 0 || windowResolution[1] > 0;
 
 				entitiesVisitor(
-				    [&](Entity *e, const CameraComponent &cam)
-				    {
-					    if (!enabled)
-					    {
-						    if (!cam.target)
-							    return; // no rendering into minimized window
-						    if (!vrFrame)
-							    return; // no intermediate renders are used
-					    }
-					    CameraData data;
-					    data.pipeline = eb.pipeline.share();
-					    data.inputs.camera = cam;
-					    if (e->has<ScreenSpaceEffectsComponent>())
-						    data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
-					    data.inputs.effects.gamma = Real(confRenderGamma);
-					    data.inputs.name = Stringizer() + "camera_" + e->name();
-					    data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
-					    data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
-					    data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
-					    data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
-					    data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
-					    data.inputs.lodSelection.center = data.inputs.transform.position;
-					    data.order = !cam.target;
-					    cameras.push_back(std::move(data));
-					    windowOutputs += cam.target ? 0 : 1;
-				    },
-				    +eb.scene, false);
+					[&](Entity *e, const CameraComponent &cam)
+					{
+						if (!enabled)
+						{
+							if (!cam.target)
+								return; // no rendering into minimized window
+							if (!vrFrame)
+								return; // no intermediate renders are used
+						}
+						CameraData data;
+						data.pipeline = eb.pipeline.share();
+						data.inputs.camera = cam;
+						if (e->has<ScreenSpaceEffectsComponent>())
+							data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
+						data.inputs.effects.gamma = Real(confRenderGamma);
+						data.inputs.name = Stringizer() + "camera_" + e->name();
+						data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
+						data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
+						data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
+						data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
+						data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
+						data.inputs.lodSelection.center = data.inputs.transform.position;
+						data.order = !cam.target;
+						cameras.push_back(std::move(data));
+						windowOutputs += cam.target ? 0 : 1;
+					},
+					+eb.scene, false);
 				CAGE_ASSERT(windowOutputs <= 1);
 
 				if (vrFrame)
@@ -389,12 +389,12 @@ namespace cage
 			{
 				const String name = Stringizer() + prefix + "_" + resolution;
 				TextureHandle tex = engineProvisonalGraphics()->texture(name,
-				    [resolution](Texture *tex)
-				    {
-					    tex->initialize(resolution, 1, GL_RGB8);
-					    tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					    tex->filters(GL_LINEAR, GL_LINEAR, 0);
-				    });
+					[resolution](Texture *tex)
+					{
+						tex->initialize(resolution, 1, GL_RGB8);
+						tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						tex->filters(GL_LINEAR, GL_LINEAR, 0);
+					});
 				return tex;
 			}
 

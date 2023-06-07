@@ -448,17 +448,17 @@ namespace cage
 				try
 				{
 					static constexpr uint32 AssimpDefaultLoadFlags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_LimitBoneWeights |
-					    //aiProcess_ValidateDataStructure |
-					    aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-					    //aiProcess_FindInvalidData |
-					    aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_FindDegenerates | aiProcess_OptimizeGraph |
-					    //aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
-					    //aiProcess_SplitLargeModeles |
-					    0;
+						//aiProcess_ValidateDataStructure |
+						aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+						//aiProcess_FindInvalidData |
+						aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_FindDegenerates | aiProcess_OptimizeGraph |
+						//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
+						//aiProcess_SplitLargeModeles |
+						0;
 
 					static constexpr uint32 AssimpBakeLoadFlags = aiProcess_RemoveRedundantMaterials |
-					    //aiProcess_FindInstances |
-					    aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | 0;
+						//aiProcess_FindInstances |
+						aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | 0;
 
 					uint32 flags = AssimpDefaultLoadFlags;
 					if (config.mergeParts)

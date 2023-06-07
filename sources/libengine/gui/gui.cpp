@@ -468,12 +468,12 @@ namespace cage
 		{
 			std::vector<Entity *> ents;
 			entitiesVisitor(
-			    [&](Entity *e, const GuiParentComponent &p)
-			    {
-				    if (p.parent == root->name())
-					    ents.push_back(e);
-			    },
-			    root->manager(), false);
+				[&](Entity *e, const GuiParentComponent &p)
+				{
+					if (p.parent == root->name())
+						ents.push_back(e);
+				},
+				root->manager(), false);
 			for (Entity *e : ents)
 				guiDestroyEntityRecursively(e);
 			root->destroy();

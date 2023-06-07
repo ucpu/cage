@@ -172,10 +172,10 @@ namespace cage
 				for (const auto &it : tmp)
 					it->pri++;
 				std::stable_sort(tmp.begin(), tmp.end(),
-				    [](const ScheduleImpl *a, const ScheduleImpl *b)
-				    {
-					    return a->pri > b->pri; // higher priority goes first
-				    });
+					[](const ScheduleImpl *a, const ScheduleImpl *b)
+					{
+						return a->pri > b->pri; // higher priority goes first
+					});
 			}
 
 			void runSchedule()

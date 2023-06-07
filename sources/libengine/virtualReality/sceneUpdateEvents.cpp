@@ -24,12 +24,12 @@ namespace cage
 		const Transform tr = origin->value<TransformComponent>() * origin->value<VrOriginComponent>().manualCorrection;
 		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) { t = tr * cc.virtualReality->pose(); }, scene, false);
 		entitiesVisitor(
-		    [&](Entity *e, TransformComponent &t, VrControllerComponent &cc)
-		    {
-			    t = tr * cc.controller->gripPose();
-			    cc.aim = tr * cc.controller->aimPose();
-		    },
-		    scene, false);
+			[&](Entity *e, TransformComponent &t, VrControllerComponent &cc)
+			{
+				t = tr * cc.controller->gripPose();
+				cc.aim = tr * cc.controller->aimPose();
+			},
+			scene, false);
 	}
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)

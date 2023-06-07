@@ -745,10 +745,10 @@ namespace cage
 				resendReliableMessages();
 
 				sending.cmds.sort(
-				    [](const Sending::Command &a, const Sending::Command &b)
-				    {
-					    return a.priority > b.priority; // higher priority first
-				    });
+					[](const Sending::Command &a, const Sending::Command &b)
+					{
+						return a.priority > b.priority; // higher priority first
+					});
 
 				try
 				{
@@ -770,11 +770,11 @@ namespace cage
 
 				{ // clear ackMap
 					std::erase_if(sending.ackMap,
-					    [](std::pair<uint16, std::vector<Sending::MsgAck>> &v) -> bool
-					    {
-						    std::erase_if(v.second, [](Sending::MsgAck &p) { return !p.msg.lock(); });
-						    return v.second.empty();
-					    });
+						[](std::pair<uint16, std::vector<Sending::MsgAck>> &v) -> bool
+						{
+							std::erase_if(v.second, [](Sending::MsgAck &p) { return !p.msg.lock(); });
+							return v.second.empty();
+						});
 				}
 			}
 

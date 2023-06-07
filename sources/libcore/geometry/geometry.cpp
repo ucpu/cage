@@ -517,7 +517,7 @@ namespace cage
 		{
 			const Vec4 &p = frustum.planes[i]; // current plane
 			const Vec3 pv = Vec3( // current p-vertex
-			    b[!!(p[0] > 0)][0], b[!!(p[1] > 0)][1], b[!!(p[2] > 0)][2]);
+				b[!!(p[0] > 0)][0], b[!!(p[1] > 0)][1], b[!!(p[2] > 0)][2]);
 			const Real d = dot(Vec3(p), pv);
 			if (d < -p[3])
 				return false;

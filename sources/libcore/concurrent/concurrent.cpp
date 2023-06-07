@@ -19,7 +19,7 @@
 #endif
 
 #if __has_include(<valgrind/helgrind.h>)
-    // https://github.com/fredericgermain/valgrind/blob/master/helgrind/tests/annotate_rwlock.c
+	// https://github.com/fredericgermain/valgrind/blob/master/helgrind/tests/annotate_rwlock.c
 	#include <valgrind/helgrind.h>
 #else
 	#define ANNOTATE_RWLOCK_CREATE(ADDR)
@@ -483,8 +483,8 @@ namespace cage
 
 		class ThreadImpl : public Thread
 #ifdef CAGE_SYSTEM_WINDOWS
-		    ,
-		                   public AutoHandle
+			,
+						   public AutoHandle
 #endif
 		{
 		public:

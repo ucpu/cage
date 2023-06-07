@@ -25,6 +25,11 @@ namespace cage
 		constexpr uint32 ProtocolId = HashString("cage network discovery");
 		constexpr uint32 IdSize = 64;
 
+		// ProtocolId is used for client->server requests
+		// (ProtocolId + 1) is used for server->client responses
+		// listenPort is used on server, listening to client broadcasts
+		// (listenPort + 1) is used on clients, listening to server broadcasts
+
 		struct Peer : public DiscoveryPeer
 		{
 			Guid<IdSize> guid;
@@ -38,51 +43,58 @@ namespace cage
 		public:
 			const uint32 gameId = 0;
 			std::vector<Sock> sockets;
-			FlatSet<Addr> servers;
 			FlatSet<Peer> peers;
+			FlatSet<Addr> targets;
 
 			DiscoveryClientImpl(uint16 listenPort, uint32 gameId) : gameId(gameId)
 			{
-				AddrList lst(EmptyAddress, 0, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-				while (lst.valid())
+				if (listenPort == m)
+					listenPort--;
+				const auto &add = [&](AddrList &&lst)
 				{
-					Sock s(lst.family(), lst.type(), lst.protocol());
-					s.setBlocking(false);
-					s.setBroadcast(true);
-					s.setReuseaddr(true);
-					s.bind(lst.address());
-					sockets.push_back(std::move(s));
-					lst.next();
-				}
-
+					while (lst.valid())
+					{
+						Sock s(lst.family(), lst.type(), lst.protocol());
+						s.setBlocking(false);
+						s.setBroadcast(true);
+						s.setReuseaddr(true);
+						s.bind(lst.address());
+						sockets.push_back(std::move(s));
+						lst.next();
+					}
+				};
+				add(AddrList(EmptyAddress, 0, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE));
+				add(AddrList(EmptyAddress, listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE));
 				addServer("255.255.255.255", listenPort);
 			}
 
 			void addServer(const String &address, uint16 listenPort)
 			{
-				detail::OverrideBreakpoint OverrideBreakpoint;
+				detail::OverrideException overrideException;
 				AddrList lst(address, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (lst.valid())
 				{
-					servers.insert(lst.address());
+					targets.insert(lst.address());
 					lst.next();
 				}
 			}
 
 			void update()
 			{
+				detail::OverrideException overrideException;
 				std::erase_if((std::vector<Peer> &)peers,
-				    [](Peer &p) -> bool
-				    {
-					    CAGE_ASSERT(p.ttl > 0);
-					    return --p.ttl == 0;
-				    });
-				detail::OverrideBreakpoint OverrideBreakpoint;
+					[](Peer &p) -> bool
+					{
+						CAGE_ASSERT(p.ttl > 0);
+						return --p.ttl == 0;
+					});
 				MemoryBuffer buffer;
+				buffer.reserve(2000);
 				for (Sock &s : sockets)
 				{
 					try
 					{
+						// client reads all responses from servers
 						while (true)
 						{
 							buffer.resize(2000);
@@ -103,16 +115,17 @@ namespace cage
 							des >> p.guid >> p.port >> p.message;
 							uint16 dummy;
 							addr.translate(p.address, dummy, false);
-							addr.translate(p.domain, dummy, true);
 							p.ttl = 20;
 							peers.erase(p);
 							peers.insert(p);
 						}
+
+						// client sends requests to all potential servers, including broadcast
 						{
 							buffer.resize(0);
 							Serializer ser(buffer);
 							ser << ProtocolId << gameId;
-							for (const Addr &a : servers)
+							for (const Addr &a : targets)
 							{
 								try
 								{
@@ -140,9 +153,12 @@ namespace cage
 			const uint32 gameId = 0;
 			const uint16 gamePort = 0;
 			std::vector<Sock> sockets;
+			FlatSet<Addr> targets;
 
 			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : gameId(gameId), gamePort(gamePort)
 			{
+				if (listenPort == m)
+					listenPort--;
 				AddrList lst(EmptyAddress, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (lst.valid())
 				{
@@ -154,16 +170,26 @@ namespace cage
 					sockets.push_back(std::move(s));
 					lst.next();
 				}
+				{
+					AddrList lst("255.255.255.255", listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+					while (lst.valid())
+					{
+						targets.insert(lst.address());
+						lst.next();
+					}
+				}
 			}
 
 			void update()
 			{
-				detail::OverrideBreakpoint OverrideBreakpoint;
+				detail::OverrideException overrideException;
 				MemoryBuffer buffer;
+				buffer.reserve(2000);
 				for (Sock &s : sockets)
 				{
 					try
 					{
+						// server reads all requests and sends responses
 						while (true)
 						{
 							buffer.resize(100);
@@ -183,7 +209,32 @@ namespace cage
 							buffer.resize(0);
 							Serializer ser(buffer);
 							ser << (ProtocolId + 1) << gameId << guid << gamePort << message;
-							s.sendTo(buffer.data(), buffer.size(), addr);
+							try
+							{
+								s.sendTo(buffer.data(), buffer.size(), addr);
+							}
+							catch (...)
+							{
+								// ignore
+							}
+						}
+
+						// server announces its presence on broadcast
+						{
+							buffer.resize(0);
+							Serializer ser(buffer);
+							ser << (ProtocolId + 1) << gameId << guid << gamePort << message;
+							for (const Addr &a : targets)
+							{
+								try
+								{
+									s.sendTo(buffer.data(), buffer.size(), a);
+								}
+								catch (...)
+								{
+									// ignore
+								}
+							}
 						}
 					}
 					catch (...)

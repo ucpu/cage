@@ -31,7 +31,7 @@ void testNetworkDiscovery()
 	{
 		for (const auto &r : peers)
 		{
-			CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "address: " + r.address + ", domain: " + r.domain + ", message: " + r.message);
+			CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "address: " + r.address + ", message: " + r.message);
 			CAGE_TEST(r.port == 1342);
 		}
 	}
