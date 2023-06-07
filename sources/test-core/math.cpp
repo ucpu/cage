@@ -59,9 +59,9 @@ void test(const Vec2i &a, const Vec2i &b)
 void test(const Quat &a, const Quat &b)
 {
 	test(abs(dot(a, b)), 1);
-	test(a * Vec3(0, 0, 0.1), b * Vec3(0, 0, 0.1));
-	test(a * Vec3(0, 0.1, 0), b * Vec3(0, 0.1, 0));
-	test(a * Vec3(0.1, 0, 0), b * Vec3(0.1, 0, 0));
+	test(a * Vec3(0, 0, 0.01), b * Vec3(0, 0, 0.01));
+	test(a * Vec3(0, 0.01, 0), b * Vec3(0, 0.01, 0));
+	test(a * Vec3(0.01, 0, 0), b * Vec3(0.01, 0, 0));
 }
 void test(Rads a, Rads b)
 {
@@ -906,7 +906,7 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("toAxisAngle");
+			CAGE_TESTCASE("axisAngle");
 			for (uint32 i = 0; i < 100; i++)
 			{
 				const Quat q1 = i == 0 ? Quat() : randomDirectionQuat();

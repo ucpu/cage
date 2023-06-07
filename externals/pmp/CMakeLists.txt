@@ -4,10 +4,6 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "pmp")
 message(STATUS "----------------------------------------------------------------")
 
-project(pmp CXX C)
-
-set(CMAKE_CXX_STANDARD 20)
-
 file(GLOB SOURCES pmp/src/pmp/*.cpp pmp/src/pmp/algorithms/*.cpp)
 file(GLOB HEADERS pmp/src/pmp/*.h pmp/src/pmp/algorithms/*.h)
 

@@ -5,12 +5,7 @@ message(STATUS "freetype")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
-set(SKIP_INSTALL_ALL ON)
-
-set(CMAKE_DISABLE_FIND_PACKAGE_BZip2 ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec ON)
+set(SKIP_INSTALL_ALL ON CACHE INTERNAL "SKIP_INSTALL_ALL")
 
 add_subdirectory(freetype)
 

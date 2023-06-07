@@ -4,12 +4,12 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "png")
 message(STATUS "----------------------------------------------------------------")
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_STANDARD)
 
-option(PNG_SHARED "Build shared lib" OFF)
-option(PNG_TESTS  "Build libpng tests" OFF)
-set(SKIP_INSTALL_ALL ON)
+set(PNG_SHARED OFF CACHE INTERNAL "Build shared lib")
+set(PNG_TESTS OFF CACHE INTERNAL "Build libpng tests")
+set(SKIP_INSTALL_ALL ON CACHE INTERNAL "SKIP_INSTALL_ALL")
 
 # prevent using awk for configuration - it causes spurious rebuilds of the entire build
 find_program(AWK NAMES gawk awk)

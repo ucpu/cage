@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-# no language requirement
-unset(CMAKE_C_STANDARD)
-unset(CMAKE_CXX_STANDARD)
-
 # make cmake find our own provided libraries
 # the libraries provided here have higher priority than system libraries
 set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
@@ -12,12 +8,16 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 include(cage_gen_module.cmake)
 
 # disable some find_package
-set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig TRUE)
-set(CMAKE_DISABLE_FIND_PACKAGE_OpenGL TRUE)
-set(CMAKE_DISABLE_FIND_PACKAGE_SndFile TRUE)
-set(CMAKE_DISABLE_FIND_PACKAGE_FFTW3 TRUE)
-set(CMAKE_DISABLE_FIND_PACKAGE_Fontconfig TRUE)
-set(CMAKE_DISABLE_FIND_PACKAGE_PythonInterp TRUE)
+set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_OpenGL ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_SndFile ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_FFTW3 ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_Fontconfig ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PythonInterp ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_BZip2 ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec ON)
 
 # ensure that all libraries are distinguishable from system libraries
 set(CMAKE_STATIC_LIBRARY_PREFIX "${CMAKE_STATIC_LIBRARY_PREFIX}cage-")

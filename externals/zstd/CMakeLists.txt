@@ -4,8 +4,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "zstd")
 message(STATUS "----------------------------------------------------------------")
 
-set(ZSTD_BUILD_STATIC TRUE CACHE BOOL "ZSTD_BUILD_STATIC" FORCE)
-set(ZSTD_BUILD_SHARED FALSE CACHE BOOL "ZSTD_BUILD_SHARED" FORCE)
+set(ZSTD_BUILD_STATIC ON CACHE INTERNAL "ZSTD_BUILD_STATIC")
+set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "ZSTD_BUILD_SHARED")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/zstd/build/cmake/CMakeModules")
 set(ZSTD_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/zstd")

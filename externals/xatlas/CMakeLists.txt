@@ -4,8 +4,6 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "xatlas")
 message(STATUS "----------------------------------------------------------------")
 
-project(xatlas CXX)
-
 add_library(xatlas STATIC "xatlas/source/xatlas/xatlas.h" "xatlas/source/xatlas/xatlas.cpp")
 
 target_include_directories(xatlas PUBLIC "xatlas/source/xatlas")

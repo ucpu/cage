@@ -5,11 +5,11 @@ message(STATUS "assimp")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
-option(ASSIMP_NO_EXPORT "Disable Assimp's export functionality." ON)
-option(ASSIMP_BUILD_ASSIMP_TOOLS "If the supplementary tools for Assimp are built in addition to the library." OFF)
-option(ASSIMP_BUILD_TESTS "If the test suite for Assimp is built in addition to the library." OFF)
-OPTION(ASSIMP_INSTALL "Disable this if you want to use assimp as a submodule." OFF)
-OPTION(ASSIMP_BUILD_ZLIB "Build your own zlib" OFF)
+set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
+set(ASSIMP_BUILD_ZLIB OFF CACHE INTERNAL "Build your own zlib")
+set(ASSIMP_NO_EXPORT ON CACHE INTERNAL "Disable Assimp's export functionality.")
+set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
+set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "If the test suite for Assimp is built in addition to the library.")
 
 # disable some formats to speed up build
 # one may enable them in the cache or by setting the default before including this cmake

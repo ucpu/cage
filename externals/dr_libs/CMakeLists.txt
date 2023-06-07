@@ -4,8 +4,6 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "dr_libs")
 message(STATUS "----------------------------------------------------------------")
 
-project(dr_libs)
-
 configure_file(dr_libs/dr_wav.h dr_wav.cpp COPYONLY)
 configure_file(dr_libs/dr_flac.h dr_flac.cpp COPYONLY)
 configure_file(dr_libs/dr_mp3.h dr_mp3.cpp COPYONLY)

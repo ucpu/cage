@@ -5,9 +5,9 @@ message(STATUS "ogg")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
-option(INSTALL_DOCS "Install documentation" OFF)
-option(INSTALL_PKG_CONFIG_MODULE "Install ogg.pc file" OFF)
-option(INSTALL_CMAKE_PACKAGE_MODULE "Install CMake package configiguration module" OFF)
+set(INSTALL_DOCS OFF CACHE INTERNAL "Install documentation")
+set(INSTALL_PKG_CONFIG_MODULE OFF CACHE INTERNAL "Install ogg.pc file")
+set(INSTALL_CMAKE_PACKAGE_MODULE OFF CACHE INTERNAL "Install CMake package configiguration module")
 
 add_subdirectory(ogg)
 

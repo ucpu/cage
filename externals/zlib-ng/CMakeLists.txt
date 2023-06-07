@@ -4,11 +4,13 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "zlib-ng")
 message(STATUS "----------------------------------------------------------------")
 
-option(ZLIB_COMPAT "Compile with zlib compatible API" ON)
-option(ZLIB_ENABLE_TESTS "Build test binaries" OFF)
+set(CMAKE_C_STANDARD 11)
+
+set(ZLIB_COMPAT ON CACHE INTERNAL "Compile with zlib compatible API")
+set(ZLIB_ENABLE_TESTS OFF CACHE INTERNAL "Build test binaries")
 set(WITH_SANITIZER OFF CACHE INTERNAL "Enable sanitizer support")
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
-set(SKIP_INSTALL_ALL ON)
+set(SKIP_INSTALL_ALL ON CACHE INTERNAL "SKIP_INSTALL_ALL")
 unset(ENV{CI})
 
 add_subdirectory(zlib-ng)
