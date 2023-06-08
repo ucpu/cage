@@ -63,15 +63,15 @@ namespace cage
 						lst.next();
 					}
 				};
-				add(AddrList(EmptyAddress, 0, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE));
-				add(AddrList(EmptyAddress, listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE));
+				add(AddrList(EmptyAddress, 0, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE)); // searching server with direct addresses can use both ipv4 and ipv6
+				add(AddrList(EmptyAddress, listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE)); // broadcast can use ipv4 only
 				addServer("255.255.255.255", listenPort);
 			}
 
 			void addServer(const String &address, uint16 listenPort)
 			{
 				detail::OverrideException overrideException;
-				AddrList lst(address, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+				AddrList lst(address, listenPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (lst.valid())
 				{
 					targets.insert(lst.address());
@@ -159,7 +159,7 @@ namespace cage
 			{
 				if (listenPort == m)
 					listenPort--;
-				AddrList lst(EmptyAddress, listenPort, AF_INET, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				AddrList lst(EmptyAddress, listenPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE); // searching server with direct addresses can use both ipv4 and ipv6
 				while (lst.valid())
 				{
 					Sock s(lst.family(), lst.type(), lst.protocol());
@@ -171,7 +171,7 @@ namespace cage
 					lst.next();
 				}
 				{
-					AddrList lst("255.255.255.255", listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+					AddrList lst("255.255.255.255", listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0); // broadcast can use ipv4 only
 					while (lst.valid())
 					{
 						targets.insert(lst.address());
@@ -219,7 +219,8 @@ namespace cage
 							}
 						}
 
-						// server announces its presence on broadcast
+						// server announces its presence with broadcast
+						if (s.getFamily() == AF_INET)
 						{
 							buffer.resize(0);
 							Serializer ser(buffer);

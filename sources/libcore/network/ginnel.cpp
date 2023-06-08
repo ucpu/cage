@@ -79,11 +79,11 @@ namespace cage
 			{
 				Addr address;
 				std::vector<MemView> packets;
+				uint64 connId = 0;
 				uint32 sockIndex = m;
-				uint32 connId = 0;
 			};
 
-			ankerl::unordered_dense::map<uint32, std::weak_ptr<Receiver>> receivers;
+			ankerl::unordered_dense::map<uint64, std::weak_ptr<Receiver>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<Receiver>>> accepting;
 			std::vector<Sock> socks;
 			Holder<Mutex> mut = newMutex();
@@ -107,7 +107,7 @@ namespace cage
 						while (true)
 						{
 							auto avail = s.available();
-							if (avail < 8)
+							if (avail < 12)
 								break;
 							Holder<MemoryBuffer> buff = systemMemory().createHolder<MemoryBuffer>();
 							buff->resize(avail);
@@ -119,7 +119,7 @@ namespace cage
 								MemView mv(buff.share(), off, siz);
 								avail -= siz;
 								off += siz;
-								if (siz < 8)
+								if (siz < 12)
 								{
 									UDP_LOG(7, "received invalid packet (too small)");
 									continue;
@@ -134,7 +134,7 @@ namespace cage
 										continue;
 									}
 								}
-								uint32 connId;
+								uint64 connId;
 								des >> connId;
 								auto r = receivers[connId].lock();
 								if (r)
@@ -273,7 +273,7 @@ namespace cage
 		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange((uint32)1, (uint32)m))
+			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange((uint64)1, (uint64)m - 1))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
@@ -283,14 +283,9 @@ namespace cage
 					try
 					{
 						detail::OverrideBreakpoint ob;
-						Addr adr;
-						int family, type, protocol;
-						lst.getAll(adr, family, type, protocol);
-						CAGE_ASSERT(type == SOCK_DGRAM);
-						CAGE_ASSERT(protocol == IPPROTO_UDP);
-						Sock s(family, type, protocol);
+						Sock s(lst.family(), lst.type(), lst.protocol());
 						s.setBlocking(false);
-						s.connect(adr);
+						s.connect(lst.address());
 						if (s.isValid())
 							sockGroup->socks.push_back(std::move(s));
 					}
@@ -303,7 +298,7 @@ namespace cage
 				initializationCompletion(timeout);
 			}
 
-			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint32 connId, uint64 timeout) : startTime(applicationTime()), connId(connId)
+			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connId, uint64 timeout) : startTime(applicationTime()), connId(connId)
 			{
 				CAGE_ASSERT(connId != 0 && connId != m);
 				UDP_LOG(1, "creating new connection to remote address: '" + remoteAddress + "', remote port: " + remotePort + ", at local address: '" + localAddress + "', local port: '" + localPort + "', timeout: " + timeout);
@@ -311,20 +306,15 @@ namespace cage
 				AddrList ll(localAddress, localPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (ll.valid())
 				{
-					Addr l;
-					int family, type, protocol;
-					ll.getAll(l, family, type, protocol);
-					CAGE_ASSERT(type == SOCK_DGRAM);
-					CAGE_ASSERT(protocol == IPPROTO_UDP);
-					AddrList rl(remoteAddress, remotePort, family, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+					AddrList rl(remoteAddress, remotePort, ll.family(), SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 					while (rl.valid())
 					{
 						try
 						{
 							detail::OverrideBreakpoint ob;
-							Sock s(family, SOCK_DGRAM, IPPROTO_UDP);
+							Sock s(ll.family(), ll.type(), ll.protocol());
 							s.setBlocking(false);
-							s.bind(l);
+							s.bind(ll.address());
 							s.connect(rl.address());
 							if (s.isValid())
 								sockGroup->socks.push_back(std::move(s));
@@ -1032,7 +1022,8 @@ namespace cage
 				stats.bytesReceivedTotal += d.available();
 				stats.packetsReceivedTotal++;
 				{ // read signature and connection id
-					uint32 sign, id;
+					uint32 sign;
+					uint64 id;
 					d >> sign >> id;
 				}
 				{ // read packet header
@@ -1132,7 +1123,7 @@ namespace cage
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
 			const uint64 startTime = m;
-			const uint32 connId = m;
+			const uint64 connId = m;
 			uint64 lastStatsSendTime = 0;
 			uint64 currentServiceTime = 0; // time at which this service has started
 			uint64 deltaTime = 0; // time elapsed since last service
@@ -1201,13 +1192,10 @@ namespace cage
 				AddrList lst(nullptr, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (lst.valid())
 				{
-					Addr adr;
-					int family, type, protocol;
-					lst.getAll(adr, family, type, protocol);
-					Sock s(family, type, protocol);
+					Sock s(lst.family(), lst.type(), lst.protocol());
 					s.setBlocking(false);
 					s.setReuseaddr(true);
-					s.bind(adr);
+					s.bind(lst.address());
 					if (s.isValid())
 						sockGroup->socks.push_back(std::move(s));
 					lst.next();
@@ -1381,7 +1369,7 @@ namespace cage
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
 	}
 
-	Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint32 connectionId, uint64 timeout)
+	Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connectionId, uint64 timeout)
 	{
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(localAddress, localPort, remoteAddress, remotePort, connectionId, timeout);
 	}

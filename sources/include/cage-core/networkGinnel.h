@@ -69,7 +69,7 @@ namespace cage
 	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout);
 
 	// create ginnel connection over previously agreed route (eg. with ICE protocol), the connectionId must be random, but same at both ends
-	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint32 connectionId, uint64 timeout);
+	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connectionId, uint64 timeout);
 
 	class CAGE_CORE_API GinnelServer : private Immovable
 	{
