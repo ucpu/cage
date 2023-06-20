@@ -132,9 +132,13 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("exception");
-			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 30)); // one exception
-			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 60)); // two exceptions
+			CAGE_TESTCASE("one exception");
+			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 30));
+		}
+
+		{
+			CAGE_TESTCASE("two exceptions");
+			CAGE_TEST_THROWN(tasksRunBlocking("blocking", Delegate<void(uint32)>().bind<&throwingTasks>(), 60));
 		}
 	}
 
@@ -291,6 +295,8 @@ namespace
 		}
 	};
 
+	// a tasking thread may mark a task completed and then context-switch before releasing the holder,
+	// therefore we cannot immediately check that the counter is zero, and have to wait instead
 	void waitForNoParallelTesters()
 	{
 		while (ParallelTester::counter != 0)
@@ -527,6 +533,8 @@ namespace
 		}
 	};
 
+	// a tasking thread may mark a task completed and then context-switch before releasing the holder,
+	// therefore we cannot immediately check that the counter is zero, and have to wait instead
 	void waitForNoHolderTesters()
 	{
 		while (TaskHolderTester::counter != 0)
@@ -751,12 +759,77 @@ namespace
 	void testTaskPriorities()
 	{
 		tasksRunBlocking("priority zero", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, 0);
-		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, privat::tasksDefaultPriority());
+		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, tasksCurrentPriority());
 		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1);
 		tasksRunBlocking("priority negative", Delegate<void(uint32)>().bind<&priorityTestNegative>(), 1, -5);
 		tasksRunBlocking("priority positive", Delegate<void(uint32)>().bind<&priorityTestPositive>(), 1, 5);
 		tasksRunBlocking("priority decreasing", Delegate<void(uint32)>().bind<&priorityTestDecreasing>(), 1, 100);
 		tasksRunBlocking("priority increasing", Delegate<void(uint32)>().bind<&priorityTestIncreasing>(), 1, -100);
+	}
+
+	struct StressTester : private Immovable
+	{
+		static inline std::atomic<sint32> counter = 0;
+		static inline std::atomic<uint64> nextId = 1;
+
+		uint64 id = nextId++;
+		char data[100] = {};
+
+		StressTester()
+		{
+			counter++;
+			char tmp = 13;
+			for (char &it : data)
+				it = tmp++;
+		}
+
+		~StressTester() { counter--; }
+
+		void check()
+		{
+			char tmp = 13;
+			for (char it : data)
+				CAGE_TEST(it == tmp++);
+		}
+
+		void run()
+		{
+			check();
+			if (counter < randomRange(10, 1000))
+			{
+				if (randomRange(0, 100) < 50)
+				{
+					const uint32 cnt = randomRange(1, 5);
+					std::vector<Holder<AsyncTask>> arr;
+					for (uint32 i = 0; i < cnt; i++)
+						arr.push_back(tasksRunAsync("stress", systemMemory().createHolder<StressTester>(), randomRange(1, 3), randomRange(-100, 100)));
+					for (auto &it : arr)
+						it->wait();
+					arr.clear();
+				}
+				else
+				{
+					StressTester arr[3];
+					tasksRunBlocking<StressTester>("stress", arr, randomRange(-100, 100));
+				}
+			}
+			tasksYield();
+			check();
+		}
+
+		void operator()(uint32) { run(); }
+		void operator()() { run(); }
+	};
+
+	void randomizedStressTest()
+	{
+		CAGE_TESTCASE("randomized stress test");
+		{
+			StressTester t;
+			t();
+		}
+		while (StressTester::counter != 0)
+			threadYield();
 	}
 }
 
@@ -773,4 +846,5 @@ void testTasks()
 	testFireAndForget();
 	testPerformance();
 	testTaskPriorities();
+	randomizedStressTest();
 }

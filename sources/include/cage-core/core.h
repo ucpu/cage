@@ -991,14 +991,14 @@ namespace cage
 		template<class A>
 		inline explicit MemoryArena(A *a) noexcept;
 
-		void *allocate(uintPtr size, uintPtr alignment);
+		[[nodiscard]] void *allocate(uintPtr size, uintPtr alignment);
 		void deallocate(void *ptr);
 		void flush();
 
 		Holder<PointerRange<char>> createBuffer(uintPtr size, uintPtr alignment = 16);
 
 		template<class T, class... Ts>
-		CAGE_FORCE_INLINE T *createObject(Ts... vs)
+		[[nodiscard]] CAGE_FORCE_INLINE T *createObject(Ts... vs)
 		{
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try

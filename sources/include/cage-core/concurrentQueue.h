@@ -138,7 +138,7 @@ namespace cage
 
 		uint32 estimatedSize() const { return numeric_cast<uint32>(items.size()); }
 
-	private:
+	protected:
 		Holder<Mutex> mut = newMutex();
 		Holder<ConditionalVariable> writer = newConditionalVariable();
 		Holder<ConditionalVariable> reader = newConditionalVariable();

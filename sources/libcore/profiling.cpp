@@ -92,9 +92,10 @@ namespace cage
 
 		static_assert(validateSanitize());
 
-		struct Dispatcher
+		struct Dispatcher : private Immovable
 		{
-			struct Runner
+		private:
+			struct Runner : private Immovable
 			{
 				std::unordered_map<uint64, String> threadNames;
 				Holder<WebsocketServer> server;
@@ -271,25 +272,22 @@ namespace cage
 
 			void threadEntry()
 			{
-				sem->unlock();
 				Runner runner;
 				runner.run();
 			}
 
-			Dispatcher()
-			{
-				sem = newSemaphore(0, 1);
-				thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher");
-				sem->lock();
-				sem.clear();
-			}
+			Holder<Thread> thread;
+
+		public:
+			Dispatcher() { thread = newThread(Delegate<void()>().bind<Dispatcher, &Dispatcher::threadEntry>(this), "profiling dispatcher"); }
 
 			~Dispatcher()
 			{
 				queue().terminate();
 				try
 				{
-					thread->wait();
+					if (thread)
+						thread->wait();
 				}
 				catch (...)
 				{
@@ -297,9 +295,6 @@ namespace cage
 					detail::logCurrentCaughtException();
 				}
 			}
-
-			Holder<Semaphore> sem;
-			Holder<Thread> thread;
 		};
 	}
 
