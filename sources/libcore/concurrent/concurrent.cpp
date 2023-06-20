@@ -499,11 +499,13 @@ namespace cage
 
 			ThreadImpl(Delegate<void()> function, const String &threadName) : threadName(threadName), function(function)
 			{
+				// reserve 8 MB of memory for its stack to match linux default
+				static constexpr uintPtr StackSize = 8 * 1024 * 1024;
+
 #ifdef CAGE_SYSTEM_WINDOWS
 
 				DWORD tid = -1;
-				// reserve 8 MB of memory for its stack to match linux default
-				handle = CreateThread(nullptr, 8 * 1024 * 1024, &threadFunctionImpl, this, 0, &tid);
+				handle = CreateThread(nullptr, StackSize, &threadFunctionImpl, this, 0, &tid);
 				if (!handle)
 				{
 					auto err = GetLastError();
@@ -513,9 +515,15 @@ namespace cage
 
 #else
 
-				if (pthread_create(&handle, nullptr, &threadFunctionImpl, this) != 0)
+				pthread_attr_t attr = {};
+				if (pthread_attr_init(&attr) != 0)
+					CAGE_THROW_ERROR(SystemError, "pthread_attr_init", errno);
+				if (pthread_attr_setstacksize(&attr, StackSize) != 0)
+					CAGE_THROW_ERROR(SystemError, "pthread_attr_setstacksize", errno);
+				if (pthread_create(&handle, &attr, &threadFunctionImpl, this) != 0)
 					CAGE_THROW_ERROR(SystemError, "pthread_create", errno);
 				myid = uint64(handle);
+				pthread_attr_destroy(&attr);
 
 #endif
 			}
@@ -612,12 +620,28 @@ namespace cage
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
+		void currentThreadStackGuardLimit()
+		{
+			ULONG v = 128 * 1024;
+			SetThreadStackGuarantee(&v);
+		}
+
+		struct SetupStackGuardLimit
+		{
+			SetupStackGuardLimit() { currentThreadStackGuardLimit(); }
+		} setupStackGuardLimit;
+#endif
+
+#ifdef CAGE_SYSTEM_WINDOWS
 		DWORD WINAPI threadFunctionImpl(LPVOID params)
 #else
 		void *threadFunctionImpl(void *params)
 #endif
 		{
 			ThreadImpl *impl = (ThreadImpl *)params;
+#ifdef CAGE_SYSTEM_WINDOWS
+			currentThreadStackGuardLimit();
+#endif
 			currentThreadName(impl->threadName);
 			try
 			{

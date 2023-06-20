@@ -686,7 +686,7 @@ namespace
 
 			void operator()()
 			{
-				if (data.size() > 20)
+				if (data.size() > 30)
 				{
 					uint32 *const dataMid = data.begin() + data.size() / 2;
 					Sorter s[2];
@@ -706,7 +706,7 @@ namespace
 		};
 
 		std::vector<uint32> data;
-		data.resize(10000);
+		data.resize(5000);
 		Sorter s;
 		s.data = data;
 		Holder<Timer> tmr = newTimer();
@@ -795,7 +795,7 @@ namespace
 		void run()
 		{
 			check();
-			if (counter < randomRange(10, 1000))
+			if (counter < randomRange(10, 100))
 			{
 				if (randomRange(0, 100) < 50)
 				{

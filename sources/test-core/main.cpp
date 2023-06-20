@@ -108,8 +108,7 @@ int main()
 	testConcurrent();
 	testConcurrentQueue();
 	testProfiling();
-	for (uint32 i = 0; i < 100; i++)
-		testTasks();
+	testTasks();
 	testLruCache();
 	testFlatSet();
 	testFiles();

@@ -40,7 +40,7 @@ using namespace cage;
 		} \
 		if (!ok) \
 		{ \
-			CAGE_LOG(SeverityEnum::Info, "exception", "expected exception not caught"); \
+			CAGE_LOG(SeverityEnum::Error, "exception", "expected exception not caught"); \
 			CAGE_THROW_CRITICAL(Exception, #COND); \
 		} \
 	}
