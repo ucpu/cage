@@ -1131,31 +1131,35 @@ namespace cage
 				}
 
 				// factors
-				if (textures.empty())
 				{
-					aiColor3D spec = aiColor3D(0);
-					mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
-					if (conv(spec) != Vec3(0))
-					{ // convert specular color to roughness/metallic material
-						const Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
-						part.material.specialBase[0] = s[0];
-						part.material.specialBase[1] = s[1];
-					}
-					else
-					{ // convert shininess to roughness
-						float shininess = -1;
-						mat->Get(AI_MATKEY_SHININESS, shininess);
-						if (shininess >= 0)
-							part.material.specialBase[0] = sqrt(2 / (2 + shininess));
-					}
-				}
-				else
-				{
-					Real rf = 1, mf = 1;
+					Real rf = Real::Nan(), mf = Real::Nan();
 					mat->Get(AI_MATKEY_ROUGHNESS_FACTOR, rf.value);
 					mat->Get(AI_MATKEY_METALLIC_FACTOR, mf.value);
-					part.material.specialMult[0] = rf;
-					part.material.specialMult[1] = mf;
+					if (valid(rf) || valid(mf))
+					{
+						Vec4 &t = textures.empty() ? part.material.specialBase : part.material.specialMult;
+						if (valid(rf))
+							t[0] = rf;
+						if (valid(mf))
+							t[1] = mf;
+					}
+					else
+					{
+						aiColor3D spec = aiColor3D(0);
+						if (mat->Get(AI_MATKEY_COLOR_SPECULAR, spec))
+						{ // convert specular color to roughness/metallic material
+							const Vec2 s = colorSpecularToRoughnessMetallic(conv(spec));
+							part.material.specialBase[0] = s[0];
+							part.material.specialBase[1] = s[1];
+						}
+						else
+						{ // convert shininess to roughness
+							float shininess = -1;
+							mat->Get(AI_MATKEY_SHININESS, shininess);
+							if (shininess >= 0)
+								part.material.specialBase[0] = sqrt(2 / (2 + shininess));
+						}
+					}
 				}
 
 				// opacity
@@ -1207,6 +1211,7 @@ namespace cage
 				{
 					aiColor3D color = aiColor3D(1);
 					mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+					mat->Get(AI_MATKEY_BASE_COLOR, color);
 					part.material.albedoBase = Vec4(colorGammaToLinear(conv(color)), part.material.albedoBase[3]);
 				}
 
