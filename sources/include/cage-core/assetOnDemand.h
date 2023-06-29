@@ -17,7 +17,7 @@ namespace cage
 		Holder<T> get(uint32 assetName, bool autoLoad = true)
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName, false, autoLoad).template cast<T>();
+			return get_(Scheme, assetName, autoLoad).template cast<T>();
 		}
 
 		void process();
@@ -26,7 +26,7 @@ namespace cage
 		// end thread-safe methods
 
 	private:
-		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme, bool autoLoad);
+		Holder<void> get_(uint32 scheme, uint32 assetName, bool autoLoad);
 		uint32 schemeTypeHash_(uint32 scheme) const;
 	};
 

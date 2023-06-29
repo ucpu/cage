@@ -686,7 +686,7 @@ namespace cage
 			void prepareObject(CameraData &data, const ModelPrepare &prepare, Holder<RenderObject> object) const
 			{
 				CAGE_ASSERT(object->lodsCount() > 0);
-				uint32 lod = 0;
+				uint32 preferredLod = 0;
 				if (object->lodsCount() > 1)
 				{
 					Real d = 1;
@@ -697,12 +697,40 @@ namespace cage
 						d = distance(Vec3(ep4), data.lodSelection.center);
 					}
 					const Real f = data.lodSelection.screenSize * object->worldSize / (d * object->pixelsSize);
-					lod = object->lodSelect(f);
+					preferredLod = object->lodSelect(f);
 				}
-				for (uint32 it : object->models(lod))
+
+				// try load the preferred lod
+				std::vector<Holder<Model>> models;
+				bool ok = true;
+				const auto &fetch = [&](uint32 lod, bool load)
+				{
+					models.clear();
+					ok = true;
+					for (uint32 it : object->models(lod))
+					{
+						auto md = onDemand->get<AssetSchemeIndexModel, Model>(it, load);
+						if (md)
+							models.push_back(std::move(md));
+						else
+							ok = false;
+					}
+				};
+				fetch(preferredLod, true);
+
+				// try acquire one level coarser
+				if (!ok && preferredLod + 1 < object->lodsCount())
+					fetch(preferredLod + 1, false);
+
+				// try acquire one level finer
+				if (!ok && preferredLod > 0)
+					fetch(preferredLod - 1, false);
+
+				// render selected lod
+				for (auto &it : models)
 				{
 					ModelPrepare pr = prepare.clone();
-					pr.mesh = onDemand->get<AssetSchemeIndexModel, Model>(it);
+					pr.mesh = std::move(it);
 					prepareModel<PrepareMode>(data, pr, object.share());
 				}
 			}
