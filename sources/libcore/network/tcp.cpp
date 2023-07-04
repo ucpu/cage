@@ -20,26 +20,20 @@ namespace cage
 
 			TcpConnectionImpl(const String &address, uint16 port)
 			{
-				AddrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
-				while (l.valid())
+				detail::OverrideBreakpoint overrideBreakpoint;
+				for (AddrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0); l.valid(); l.next())
 				{
-					detail::OverrideBreakpoint OverrideBreakpoint;
-					int family = -1, type = -1, protocol = -1;
-					Addr address;
-					l.getAll(address, family, type, protocol);
 					try
 					{
-						sock = Sock(family, type, protocol);
-						sock.connect(address);
+						sock = l.sock();
+						sock.connect(l.address());
 						break;
 					}
-					catch (const Exception &)
+					catch (...)
 					{
 						sock = Sock();
 					}
-					l.next();
 				}
-
 				if (!sock.isValid())
 					CAGE_THROW_ERROR(Exception, "no connection");
 			}
@@ -150,28 +144,23 @@ namespace cage
 
 			TcpServerImpl(uint16 port)
 			{
-				AddrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE);
-				while (l.valid())
+				detail::OverrideBreakpoint overrideBreakpoint;
+				for (AddrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE); l.valid(); l.next())
 				{
-					int family = -1, type = -1, protocol = -1;
-					Addr address;
-					l.getAll(address, family, type, protocol);
 					try
 					{
-						Sock s(family, type, protocol);
+						Sock s = l.sock();
 						s.setBlocking(false);
 						s.setReuseaddr(true);
-						s.bind(address);
+						s.bind(l.address());
 						s.listen();
 						socks.push_back(std::move(s));
 					}
-					catch (const Exception &)
+					catch (...)
 					{
 						// do nothing
 					}
-					l.next();
 				}
-
 				if (socks.empty())
 					CAGE_THROW_ERROR(Exception, "no interface");
 			}
@@ -181,28 +170,19 @@ namespace cage
 	String TcpConnection::address() const
 	{
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		String a;
-		uint16 p;
-		impl->sock.getRemoteAddress().translate(a, p);
-		return a;
+		return impl->sock.getRemoteAddress().translate(false).first;
 	}
 
 	uint16 TcpConnection::port() const
 	{
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		String a;
-		uint16 p;
-		impl->sock.getRemoteAddress().translate(a, p);
-		return p;
+		return impl->sock.getRemoteAddress().translate(false).second;
 	}
 
 	uint16 TcpServer::port() const
 	{
 		const TcpServerImpl *impl = (const TcpServerImpl *)this;
-		String a;
-		uint16 p;
-		impl->socks[0].getLocalAddress().translate(a, p);
-		return p;
+		return impl->socks[0].getLocalAddress().translate(false).second;
 	}
 
 	Holder<TcpConnection> TcpServer::accept()

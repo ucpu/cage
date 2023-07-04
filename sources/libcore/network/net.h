@@ -1,6 +1,7 @@
 #ifndef guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 #define guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 
+#include <array>
 #include <cage-core/debug.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkUtils.h>
@@ -42,30 +43,49 @@ typedef int SOCKET;
 
 namespace cage
 {
+	struct Serializer;
+	struct Deserializer;
+
 	namespace privat
 	{
+		constexpr uint32 CageMagic = 0x65676163;
+
+#ifdef CAGE_SYSTEM_WINDOWS
+		constexpr const char *EmptyAddress = "";
+#else
+		constexpr const char *EmptyAddress = nullptr;
+#endif // CAGE_SYSTEM_WINDOWS
+
 		struct Addr
 		{
-			Addr();
+			Addr() = default;
+			Addr(std::array<uint8, 4> ipv4, uint16 port); // arguments are in host byte order
+			Addr(std::array<uint8, 16> ipv6, uint16 port); // arguments are in host byte order
 
-			void translate(String &address, uint16 &port, bool domain = false) const;
+			std::pair<String, uint16> translate(bool domain) const;
 
 			bool operator<(const Addr &other) const // fast (binary) comparison
 			{
-				return detail::memcmp(&storage, &other.storage, sizeof(storage)) < 0;
+				if (addrlen == other.addrlen)
+					return detail::memcmp(&storage, &other.storage, addrlen) < 0;
+				return addrlen < other.addrlen;
 			}
 
 			bool operator==(const Addr &other) const // fast (binary) comparison
 			{
-				return detail::memcmp(&storage, &other.storage, sizeof(storage)) == 0;
+				return addrlen == other.addrlen && detail::memcmp(&storage, &other.storage, addrlen) == 0;
 			}
 
+			int getFamily() const { return storage.ss_family; }
+
 		private:
-			sockaddr_storage storage = {};
+			sockaddr_storage storage = {}; // port and ip are in network byte order
 			socklen_t addrlen = 0;
 
 			friend struct Sock;
 			friend struct AddrList;
+			friend Serializer &operator<<(Serializer &s, const Addr &v);
+			friend Deserializer &operator>>(Deserializer &s, Addr &v);
 		};
 
 		struct Sock : private Noncopyable
@@ -108,6 +128,7 @@ namespace cage
 				return descriptor < other.descriptor;
 			}
 
+			SOCKET getSocket() const { return descriptor; }
 			int getFamily() const { return family; };
 			int getType() const { return type; };
 			int getProtocol() const { return protocol; };
@@ -121,17 +142,21 @@ namespace cage
 
 		struct AddrList : private Immovable
 		{
-			AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags);
-			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
+			// flags = AI_PASSIVE -> bind/listen
+			// flags = 0 -> connect/sendTo
+
+			AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
+			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
 			~AddrList();
 
 			bool valid() const;
+			void next();
+
+			Sock sock() const; // uses family, type, and protocol; it is up to you to use the address
 			Addr address() const;
 			int family() const;
 			int type() const;
 			int protocol() const;
-			void getAll(Addr &address, int &family, int &type, int &protocol) const;
-			void next();
 
 		private:
 			addrinfo *start = nullptr, *current = nullptr;

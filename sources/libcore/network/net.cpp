@@ -1,3 +1,5 @@
+#include <cage-core/endianness.h>
+#include <cage-core/serialization.h>
 #include <cage-core/string.h>
 
 #include "net.h"
@@ -27,18 +29,94 @@ namespace cage
 
 	namespace privat
 	{
-		Addr::Addr()
+		Addr::Addr(std::array<uint8, 4> ipv4, uint16 port)
 		{
-			networkInitialize();
+			sockaddr_in &in = (sockaddr_in &)storage;
+			in.sin_family = AF_INET;
+			in.sin_port = port;
+			static_assert(sizeof(in.sin_addr) == sizeof(ipv4));
+			detail::memcpy(&in.sin_addr, &ipv4, sizeof(ipv4));
+			in.sin_port = endianness::change(in.sin_port);
+			in.sin_addr = endianness::change(in.sin_addr);
+			addrlen = sizeof(sockaddr_in);
 		}
 
-		void Addr::translate(String &address, uint16 &port, bool domain) const
+		Addr::Addr(std::array<uint8, 16> ipv6, uint16 port)
 		{
+			sockaddr_in6 &in = (sockaddr_in6 &)storage;
+			in.sin6_family = AF_INET6;
+			in.sin6_port = port;
+			static_assert(sizeof(in.sin6_addr) == sizeof(ipv6));
+			detail::memcpy(&in.sin6_addr, &ipv6, sizeof(ipv6));
+			in.sin6_port = endianness::change(in.sin6_port);
+			in.sin6_addr = endianness::change(in.sin6_addr);
+			addrlen = sizeof(sockaddr_in6);
+		}
+
+		std::pair<String, uint16> Addr::translate(bool domain) const
+		{
+			networkInitialize();
 			char nameBuf[String::MaxLength], portBuf[7];
 			if (getnameinfo((sockaddr *)&storage, addrlen, nameBuf, String::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
 				CAGE_THROW_ERROR(SystemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
-			address = String(nameBuf);
-			port = numeric_cast<uint16>(toUint32(String(portBuf)));
+			std::pair<String, uint16> res;
+			res.first = String(nameBuf);
+			res.second = numeric_cast<uint16>(toUint32(String(portBuf)));
+			return res;
+		}
+
+		Serializer &operator<<(Serializer &s, const Addr &v)
+		{
+			switch (v.storage.ss_family)
+			{
+				case AF_INET:
+				{
+					CAGE_ASSERT(v.addrlen == sizeof(sockaddr_in));
+					const sockaddr_in &in = (const sockaddr_in &)v.storage;
+					s << (uint16)1;
+					s << (uint16)in.sin_port;
+					static_assert(sizeof(in.sin_addr) == 4);
+					s << in.sin_addr;
+					return s;
+				}
+				case AF_INET6:
+				{
+					CAGE_ASSERT(v.addrlen == sizeof(sockaddr_in6));
+					const sockaddr_in6 &in = (const sockaddr_in6 &)v.storage;
+					s << (uint16)2;
+					s << (uint16)in.sin6_port;
+					static_assert(sizeof(in.sin6_addr) == 16);
+					s << in.sin6_addr;
+					return s;
+				}
+				default:
+					CAGE_THROW_ERROR(Exception, "cannot serialize Addr - unknown ip family");
+			}
+		}
+
+		Deserializer &operator>>(Deserializer &s, Addr &v)
+		{
+			uint16 f, p;
+			s >> f >> p;
+			switch (f)
+			{
+				case 1:
+				{
+					std::array<uint8, 4> ip;
+					s >> ip;
+					v = Addr(endianness::change(ip), endianness::change(p));
+					return s;
+				}
+				case 2:
+				{
+					std::array<uint8, 16> ip;
+					s >> ip;
+					v = Addr(endianness::change(ip), endianness::change(p));
+					return s;
+				}
+				default:
+					CAGE_THROW_ERROR(Exception, "cannot deserialize Addr - unknown ip family");
+			}
 		}
 
 		Sock::Sock() {}
@@ -46,7 +124,12 @@ namespace cage
 		Sock::Sock(int family, int type, int protocol) : family(family), type(type), protocol(protocol)
 		{
 			networkInitialize();
+			// SOCK_CLOEXEC -> close the socket on exec
+#ifdef CAGE_SYSTEM_WINDOWS
 			descriptor = socket(family, type, protocol);
+#else
+			descriptor = socket(family, type | SOCK_CLOEXEC, protocol);
+#endif // CAGE_SYSTEM_WINDOWS
 			if (descriptor == INVALID_SOCKET)
 				CAGE_THROW_ERROR(SystemError, "socket creation failed (socket)", WSAGetLastError());
 		}
@@ -229,6 +312,7 @@ namespace cage
 		void Sock::sendTo(const void *buffer, uintPtr bufferSize, const Addr &remoteAddress)
 		{
 			CAGE_ASSERT(!connected);
+			CAGE_ASSERT(remoteAddress.getFamily() == family);
 			if (::sendto(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr *)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(SystemError, "send failed (sendto)", WSAGetLastError());
 		}
@@ -289,6 +373,18 @@ namespace cage
 			return !!current;
 		}
 
+		void AddrList::next()
+		{
+			CAGE_ASSERT(valid());
+			current = current->ai_next;
+		}
+
+		Sock AddrList::sock() const
+		{
+			CAGE_ASSERT(valid());
+			return Sock(family(), type(), protocol());
+		}
+
 		Addr AddrList::address() const
 		{
 			CAGE_ASSERT(valid());
@@ -314,22 +410,6 @@ namespace cage
 		{
 			CAGE_ASSERT(valid());
 			return current->ai_protocol;
-		}
-
-		void AddrList::getAll(Addr &address, int &family, int &type, int &protocol) const
-		{
-			CAGE_ASSERT(valid());
-			detail::memcpy(&address.storage, current->ai_addr, current->ai_addrlen);
-			address.addrlen = numeric_cast<socklen_t>(current->ai_addrlen);
-			family = current->ai_family;
-			type = current->ai_socktype;
-			protocol = current->ai_protocol;
-		}
-
-		void AddrList::next()
-		{
-			CAGE_ASSERT(valid());
-			current = current->ai_next;
 		}
 	}
 }

@@ -7,15 +7,25 @@ namespace cage
 {
 	namespace endianness
 	{
-		CAGE_FORCE_INLINE consteval bool little() noexcept
+		CAGE_FORCE_INLINE constexpr uint8 change(uint8 val) noexcept
 		{
-			const uint32 one = 1;
-			return (const uint8 &)one == 1;
+			return val;
 		}
-
-		CAGE_FORCE_INLINE consteval bool big() noexcept // network
+		CAGE_FORCE_INLINE constexpr uint16 change(uint16 val) noexcept
 		{
-			return !little();
+			return (val & 0xff00) >> 8 | (val & 0x00ff) << 8;
+		}
+		CAGE_FORCE_INLINE constexpr uint32 change(uint32 val) noexcept
+		{
+			uint32 a = change(uint16(val));
+			uint32 b = change(uint16(val >> 16));
+			return a << 16 | b;
+		}
+		CAGE_FORCE_INLINE constexpr uint64 change(uint64 val) noexcept
+		{
+			uint64 a = change(uint32(val));
+			uint64 b = change(uint32(val >> 32));
+			return a << 32 | b;
 		}
 
 		template<class T>

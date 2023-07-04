@@ -17,11 +17,6 @@ namespace cage
 
 	namespace
 	{
-#ifdef CAGE_SYSTEM_WINDOWS
-		constexpr const char *EmptyAddress = "";
-#else
-		constexpr const char *EmptyAddress = nullptr;
-#endif // CAGE_SYSTEM_WINDOWS
 		constexpr uint32 ProtocolId = HashString("cage network discovery");
 		constexpr uint32 IdSize = 64;
 
@@ -48,19 +43,26 @@ namespace cage
 
 			DiscoveryClientImpl(uint16 listenPort, uint32 gameId) : gameId(gameId)
 			{
+				detail::OverrideBreakpoint ob;
 				if (listenPort == m)
 					listenPort--;
 				const auto &add = [&](AddrList &&lst)
 				{
-					while (lst.valid())
+					for (; lst.valid(); lst.next())
 					{
-						Sock s(lst.family(), lst.type(), lst.protocol());
-						s.setBlocking(false);
-						s.setBroadcast(true);
-						s.setReuseaddr(true);
-						s.bind(lst.address());
-						sockets.push_back(std::move(s));
-						lst.next();
+						try
+						{
+							Sock s = lst.sock();
+							s.setBlocking(false);
+							s.setBroadcast(true);
+							s.setReuseaddr(true);
+							s.bind(lst.address());
+							sockets.push_back(std::move(s));
+						}
+						catch (...)
+						{
+							// nothing
+						}
 					}
 				};
 				add(AddrList(EmptyAddress, 0, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE)); // searching server with direct addresses can use both ipv4 and ipv6
@@ -113,8 +115,7 @@ namespace cage
 							}
 							Peer p;
 							des >> p.guid >> p.port >> p.message;
-							uint16 dummy;
-							addr.translate(p.address, dummy, false);
+							p.address = addr.translate(false).first;
 							p.ttl = 20;
 							peers.erase(p);
 							peers.insert(p);
@@ -127,14 +128,8 @@ namespace cage
 							ser << ProtocolId << gameId;
 							for (const Addr &a : targets)
 							{
-								try
-								{
+								if (s.getFamily() == a.getFamily())
 									s.sendTo(buffer.data(), buffer.size(), a);
-								}
-								catch (...)
-								{
-									// ignore
-								}
 							}
 						}
 					}
@@ -157,27 +152,31 @@ namespace cage
 
 			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : gameId(gameId), gamePort(gamePort)
 			{
+				detail::OverrideBreakpoint ob;
 				if (listenPort == m)
 					listenPort--;
-				AddrList lst(EmptyAddress, listenPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE); // searching server with direct addresses can use both ipv4 and ipv6
-				while (lst.valid())
+
+				// searching server with direct addresses can use both ipv4 and ipv6
+				for (AddrList lst(EmptyAddress, listenPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE); lst.valid(); lst.next())
 				{
-					Sock s(lst.family(), lst.type(), lst.protocol());
-					s.setBlocking(false);
-					s.setBroadcast(true);
-					s.setReuseaddr(true);
-					s.bind(lst.address());
-					sockets.push_back(std::move(s));
-					lst.next();
-				}
-				{
-					AddrList lst("255.255.255.255", listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0); // broadcast can use ipv4 only
-					while (lst.valid())
+					try
 					{
-						targets.insert(lst.address());
-						lst.next();
+						Sock s = lst.sock();
+						s.setBlocking(false);
+						s.setBroadcast(true);
+						s.setReuseaddr(true);
+						s.bind(lst.address());
+						sockets.push_back(std::move(s));
+					}
+					catch (...)
+					{
+						// nothing
 					}
 				}
+
+				// broadcast can use ipv4 only
+				for (AddrList lst("255.255.255.255", listenPort + 1, AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0); lst.valid(); lst.next())
+					targets.insert(lst.address());
 			}
 
 			void update()

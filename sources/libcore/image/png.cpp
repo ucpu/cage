@@ -78,8 +78,7 @@ namespace cage
 			png_byte bitDepth = png_get_bit_depth(png, info);
 
 			png_set_expand(png);
-			if (endianness::little())
-				png_set_swap(png);
+			png_set_swap(png);
 
 			png_read_update_info(png, info);
 			colorType = png_get_color_type(png, info);
@@ -151,8 +150,7 @@ namespace cage
 			PngWriteCtx ioCtx(out);
 			png_set_write_fn(png, &ioCtx, &pngWriteFunc, &pngFlushFunc);
 
-			if (endianness::little())
-				png_set_swap(png);
+			png_set_swap(png);
 			info = png_create_info_struct(png);
 			if (!info)
 				CAGE_THROW_ERROR(Exception, "png encoder failed (png_infop)");
@@ -177,8 +175,7 @@ namespace cage
 			}
 			png_set_IHDR(png, info, width, height, bpp * 8, colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 			png_write_info(png, info);
-			if (endianness::little())
-				png_set_swap(png);
+			png_set_swap(png);
 
 			std::vector<png_bytep> rows;
 			rows.resize(height);

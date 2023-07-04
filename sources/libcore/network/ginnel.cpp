@@ -12,7 +12,6 @@
 #include <unordered_dense.h>
 
 #include <algorithm>
-#include <array>
 #include <map>
 #include <memory>
 #include <vector>
@@ -77,10 +76,10 @@ namespace cage
 		{
 			struct Receiver : private Immovable
 			{
-				Addr address;
+				Addr address; // preferred address for responding
 				std::vector<MemView> packets;
 				uint64 connId = 0;
-				uint32 sockIndex = m;
+				uint32 sockIndex = m; // preferred socket for responding
 			};
 
 			ankerl::unordered_dense::map<uint64, std::weak_ptr<Receiver>> receivers;
@@ -126,9 +125,9 @@ namespace cage
 								}
 								Deserializer des = mv.des();
 								{ // read signature
-									char c, a, g, e;
-									des >> c >> a >> g >> e;
-									if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
+									uint32 sign = 0;
+									des >> sign;
+									if (sign != CageMagic)
 									{
 										UDP_LOG(7, "received invalid packet (wrong signature)");
 										continue;
@@ -142,6 +141,7 @@ namespace cage
 									r->packets.push_back(mv);
 									if (r->sockIndex == m)
 									{
+										// set preferred socket and address for responding
 										r->sockIndex = sockIndex;
 										r->address = adr;
 									}
@@ -273,60 +273,68 @@ namespace cage
 		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange((uint64)1, (uint64)m - 1))
+			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : connId(randomRange((uint64)1, (uint64)m - 1))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
+				detail::OverrideBreakpoint ob;
 				sockGroup = std::make_shared<SockGroup>();
-				AddrList lst(address, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-				while (lst.valid())
+				for (AddrList lst(address, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0); lst.valid(); lst.next())
 				{
 					try
 					{
-						detail::OverrideBreakpoint ob;
-						Sock s(lst.family(), lst.type(), lst.protocol());
+						Sock s = lst.sock();
 						s.setBlocking(false);
 						s.connect(lst.address());
-						if (s.isValid())
-							sockGroup->socks.push_back(std::move(s));
+						sockGroup->socks.push_back(std::move(s));
 					}
 					catch (...)
 					{
 						// nothing
 					}
-					lst.next();
 				}
 				initializationCompletion(timeout);
 			}
 
-			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connId, uint64 timeout) : startTime(applicationTime()), connId(connId)
+			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connId, uint64 timeout) : connId(connId)
 			{
 				CAGE_ASSERT(connId != 0 && connId != m);
 				UDP_LOG(1, "creating new connection to remote address: '" + remoteAddress + "', remote port: " + remotePort + ", at local address: '" + localAddress + "', local port: '" + localPort + "', timeout: " + timeout);
+				detail::OverrideBreakpoint ob;
 				sockGroup = std::make_shared<SockGroup>();
-				AddrList ll(localAddress, localPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
-				while (ll.valid())
+				for (AddrList ll(localAddress, localPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE); ll.valid(); ll.next())
 				{
-					AddrList rl(remoteAddress, remotePort, ll.family(), SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-					while (rl.valid())
+					for (AddrList rl(remoteAddress, remotePort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0); rl.valid(); rl.next())
 					{
+						if (ll.family() != rl.family())
+							continue;
 						try
 						{
-							detail::OverrideBreakpoint ob;
-							Sock s(ll.family(), ll.type(), ll.protocol());
+							Sock s = ll.sock();
 							s.setBlocking(false);
 							s.bind(ll.address());
 							s.connect(rl.address());
-							if (s.isValid())
-								sockGroup->socks.push_back(std::move(s));
+							sockGroup->socks.push_back(std::move(s));
 						}
 						catch (...)
 						{
 							// nothing
 						}
-						rl.next();
 					}
-					ll.next();
 				}
+				initializationCompletion(timeout);
+			}
+
+			GinnelConnectionImpl(Sock &&sock, uint64 connId, uint64 timeout) : connId(connId)
+			{
+				CAGE_ASSERT(connId != 0 && connId != m);
+				CAGE_ASSERT(sock.isValid());
+				CAGE_ASSERT(sock.getType() == SOCK_DGRAM);
+				CAGE_ASSERT(sock.getProtocol() == IPPROTO_UDP);
+				CAGE_ASSERT(sock.getConnected());
+				UDP_LOG(1, "creating new connection with given socket");
+				sock.setBlocking(false);
+				sockGroup = std::make_shared<SockGroup>();
+				sockGroup->socks.push_back(std::move(sock));
 				initializationCompletion(timeout);
 			}
 
@@ -336,27 +344,33 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed to connect (no sockets available)");
 				UDP_LOG(2, "created " + sockGroup->socks.size() + " sockets");
 				sockGroup->applyBufferSizes();
+
 				sockReceiver = std::make_shared<SockGroup::Receiver>();
 				sockReceiver->connId = connId;
 				sockGroup->receivers[connId] = sockReceiver;
-				{ // initialize connection
-					service();
-					if (timeout)
+
+				// initialize connection
+				service();
+				if (timeout)
+				{
+					while (true)
 					{
-						while (true)
-						{
-							threadSleep(5000);
-							service();
-							if (established)
-								break;
-							if (applicationTime() > startTime + timeout)
-								CAGE_THROW_ERROR(Disconnected, "failed to connect (timeout)");
-						}
+						threadSleep(5000);
+						service();
+						if (established)
+							break;
+						if (applicationTime() > startTime + timeout)
+							CAGE_THROW_ERROR(Disconnected, "failed to connect (timeout)");
 					}
 				}
 			}
 
-			GinnelConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(applicationTime()), connId(rec->connId) { UDP_LOG(1, "accepting new connection"); }
+			GinnelConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), connId(rec->connId)
+			{
+				CAGE_ASSERT(rec->sockIndex < sg->socks.size());
+				CAGE_ASSERT(!sg->socks[rec->sockIndex].getConnected());
+				UDP_LOG(1, "accepting new connection");
+			}
 
 			~GinnelConnectionImpl()
 			{
@@ -400,6 +414,7 @@ namespace cage
 				// sending does not need to be under mutex
 				if (sockReceiver->sockIndex == m)
 				{
+					// client-side or p2p connection
 					for (Sock &s : sockGroup->socks)
 					{
 						if (!s.isValid())
@@ -410,14 +425,12 @@ namespace cage
 				}
 				else
 				{
+					// server-side of a connection
 					Sock &s = sockGroup->socks[sockReceiver->sockIndex];
 					if (s.isValid())
 					{
 						if (s.getConnected())
-						{
-							CAGE_ASSERT(s.getRemoteAddress() == sockReceiver->address);
 							s.send(data, size);
-						}
 						else
 							s.sendTo(data, size, sockReceiver->address);
 					}
@@ -634,26 +647,26 @@ namespace cage
 					case CmdTypeEnum::ConnectionInit:
 					{
 						ser << cmd.data.initIndex << LongSize;
+						break;
 					}
-					break;
 					case CmdTypeEnum::ConnectionFinish:
 					{
 						// nothing
+						break;
 					}
-					break;
 					case CmdTypeEnum::Acknowledgement:
 					{
 						ser << cmd.data.ack.ackSeqn << cmd.data.ack.ackBits;
+						break;
 					}
-					break;
 					case CmdTypeEnum::ShortMessage:
 					{
 						ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
 						uint16 size = numeric_cast<uint16>(cmd.msgData.size);
 						ser << size;
 						ser.write({ cmd.msgData.buffer->data(), cmd.msgData.buffer->data() + cmd.msgData.size });
+						break;
 					}
-					break;
 					case CmdTypeEnum::LongMessage:
 					{
 						ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
@@ -661,14 +674,14 @@ namespace cage
 						uint16 index = numeric_cast<uint16>(cmd.msgData.offset / LongSize);
 						ser << totalSize << index;
 						ser.write({ cmd.msgData.buffer->data() + cmd.msgData.offset, cmd.msgData.buffer->data() + cmd.msgData.offset + cmd.msgData.size });
+						break;
 					}
-					break;
 					case CmdTypeEnum::StatsDiscovery:
 					{
 						const auto &s = cmd.data.stats;
 						ser << s.a.receivedBytes << s.a.sentBytes << s.a.time << s.b.receivedBytes << s.b.sentBytes << s.b.time << s.a.receivedPackets << s.a.sentPackets << s.b.receivedPackets << s.b.sentPackets << s.step;
+						break;
 					}
-					break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid udp command type enum");
 				}
@@ -698,10 +711,8 @@ namespace cage
 					// generate packet header
 					if (buff.size() == 0)
 					{
-						static constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
-						ser << c << a << g << e << connId;
 						currentPacketSeqn = sending.packetSeqn++;
-						ser << currentPacketSeqn;
+						ser << CageMagic << connId << currentPacketSeqn;
 					}
 
 					// serialize the command
@@ -924,11 +935,9 @@ namespace cage
 						{
 							if (logLevel >= 2)
 							{
-								String a, n;
-								uint16 p;
-								sockReceiver->address.translate(a, p, false);
-								sockReceiver->address.translate(n, p, true);
-								CAGE_LOG(SeverityEnum::Info, "udp", Stringizer() + "connection established, remote address: " + a + ", remote name: " + n + ", remote port: " + p);
+								const auto n1 = sockReceiver->address.translate(false);
+								const auto n2 = sockReceiver->address.translate(true);
+								CAGE_LOG(SeverityEnum::Info, "udp", Stringizer() + "connection established, remote address: " + n1.first + ", remote name: " + n2.first + ", remote port: " + n1.second);
 							}
 							established = true;
 						}
@@ -940,20 +949,20 @@ namespace cage
 							cmd.priority = 10;
 							sending.cmds.push_back(cmd);
 						}
+						break;
 					}
-					break;
 					case CmdTypeEnum::ConnectionFinish:
 					{
 						CAGE_THROW_ERROR(Disconnected, "connection closed by peer");
+						break;
 					}
-					break;
 					case CmdTypeEnum::Acknowledgement:
 					{
 						PackAck ackPack;
 						d >> ackPack.ackSeqn >> ackPack.ackBits;
 						receiving.ackPacks.insert(ackPack);
+						break;
 					}
-					break;
 					case CmdTypeEnum::ShortMessage:
 					{
 						Receiving::Msg msg;
@@ -969,8 +978,8 @@ namespace cage
 							d.read(msg.data);
 							receiving.staging[msg.channel][msg.msgSeqn] = std::move(msg);
 						}
+						break;
 					}
-					break;
 					case CmdTypeEnum::LongMessage:
 					{
 						uint8 channel = 0;
@@ -1001,15 +1010,15 @@ namespace cage
 							msg.parts[index] = true;
 							d.read({ msg.data.data() + index * LongSize, msg.data.data() + index * LongSize + size });
 						}
+						break;
 					}
-					break;
 					case CmdTypeEnum::StatsDiscovery:
 					{
 						Sending::CommandUnion::Stats s;
 						d >> s.a.receivedBytes >> s.a.sentBytes >> s.a.time >> s.b.receivedBytes >> s.b.sentBytes >> s.b.time >> s.a.receivedPackets >> s.a.sentPackets >> s.b.receivedPackets >> s.b.sentPackets >> s.step;
 						handleStats(s);
+						break;
 					}
-					break;
 					default:
 						CAGE_THROW_ERROR(Exception, "invalid message type enum");
 				}
@@ -1025,6 +1034,7 @@ namespace cage
 					uint32 sign;
 					uint64 id;
 					d >> sign >> id;
+					CAGE_ASSERT(sign == CageMagic && id == connId);
 				}
 				{ // read packet header
 					uint16 packetSeqn;
@@ -1122,7 +1132,7 @@ namespace cage
 			GinnelStatistics stats;
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
-			const uint64 startTime = m;
+			const uint64 startTime = applicationTime();
 			const uint64 connId = m;
 			uint64 lastStatsSendTime = 0;
 			uint64 currentServiceTime = 0; // time at which this service has started
@@ -1188,21 +1198,26 @@ namespace cage
 			GinnelServerImpl(uint16 port)
 			{
 				UDP_LOG(1, "creating new server on port " + port);
+				detail::OverrideBreakpoint ob;
 				sockGroup = std::make_shared<SockGroup>();
-				AddrList lst(nullptr, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
-				while (lst.valid())
+				for (AddrList lst(nullptr, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE); lst.valid(); lst.next())
 				{
-					Sock s(lst.family(), lst.type(), lst.protocol());
-					s.setBlocking(false);
-					s.setReuseaddr(true);
-					s.bind(lst.address());
-					if (s.isValid())
+					try
+					{
+						Sock s = lst.sock();
+						s.setBlocking(false);
+						s.setReuseaddr(true);
+						s.bind(lst.address());
 						sockGroup->socks.push_back(std::move(s));
-					lst.next();
+					}
+					catch (...)
+					{
+						// nothing
+					}
 				}
-				sockGroup->applyBufferSizes();
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(Exception, "failed to bind (no sockets available)");
+				sockGroup->applyBufferSizes();
 				accepting = std::make_shared<std::vector<std::shared_ptr<SockGroup::Receiver>>>();
 				sockGroup->accepting = accepting;
 				UDP_LOG(2, "listening on " + sockGroup->socks.size() + " sockets");
@@ -1377,5 +1392,13 @@ namespace cage
 	Holder<GinnelServer> newGinnelServer(uint16 port)
 	{
 		return systemMemory().createImpl<GinnelServer, GinnelServerImpl>(port);
+	}
+
+	namespace privat
+	{
+		Holder<GinnelConnection> makeGinnel(Sock &&sock, uint64 connectionId, uint64 timeout)
+		{
+			return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(std::move(sock), connectionId, timeout);
+		}
 	}
 }
