@@ -13,10 +13,11 @@ set(protobuf_MSVC_STATIC_RUNTIME OFF CACHE INTERNAL "protobuf msvc static runtim
 set(utf8_range_ENABLE_TESTS OFF CACHE INTERNAL "protobuf utf8_range tests")
 set(utf8_range_ENABLE_INSTALL OFF CACHE INTERNAL "protobuf utf8_range install")
 set(ABSL_PROPAGATE_CXX_STD ON CACHE INTERNAL "protobuf absl propagate cxx standard")
+set(ABSL_IDE_FOLDER "cage/externals/abseil")
 
 add_subdirectory(protobuf)
 
-set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindPROTOBUF.cmake")
+set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindProtobuf.cmake")
 file(WRITE ${filename} "\n")
 macro(append_lib varname libname)
 	set(lib $<TARGET_LINKER_FILE:${libname}>)

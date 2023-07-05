@@ -36,7 +36,7 @@ It may work on other distributions with little changes.
 
 Install required packages.
 ```bash
-sudo apt install xorg-dev nasm
+sudo apt install xorg-dev nasm libssl-dev
 ```
 
 Optional sound backend (choose one).
