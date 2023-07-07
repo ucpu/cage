@@ -51,7 +51,7 @@ namespace
 		Run runnerClient1("1", "cage-test-ginnel -n ginnel-test-1 -c");
 		Run runnerServerS("S", "cage-test-ginnel -n ginnel-test-S -s");
 		Run runnerClient2("2", "cage-test-ginnel -n ginnel-test-2 -c");
-		Run runnerClient3("L", "cage-test-ginnel -n ginnel-test-L -c -x 0.02");
+		Run runnerClient3("3", "cage-test-ginnel -n ginnel-test-3 -c");
 	}
 
 	void initializeSecondaryLog(const String &path)
@@ -90,7 +90,6 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		ConfigString address("address", "localhost");
 		ConfigUint32 port("port", 42789);
-		ConfigFloat packetLoss("cage/ginnel/simulatedPacketLoss");
 		ConfigUint64 maxBytesPerSecond("maxBytesPerSecond");
 		const bool modeServer = cmd->cmdBool('s', "server", false);
 		const bool modeClient = cmd->cmdBool('c', "client", false);
@@ -99,9 +98,6 @@ int main(int argc, const char *args[])
 		port = cmd->cmdUint32('p', "port", port);
 		if (port <= 1024 || port >= 65536)
 			CAGE_THROW_ERROR(Exception, "invalid port");
-		packetLoss = cmd->cmdFloat('x', "packetLoss", packetLoss);
-		if (packetLoss < 0 || packetLoss > 1)
-			CAGE_THROW_ERROR(Exception, "invalid packet loss");
 		maxBytesPerSecond = cmd->cmdUint64('l', "limit", MaxBytesPerSecond);
 		cmd->checkUnusedWithHelp();
 		cmd.clear();
@@ -111,7 +107,6 @@ int main(int argc, const char *args[])
 
 		if (!name.empty())
 			initializeSecondaryLog(name + ".log");
-		CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "packet loss: " + (float)packetLoss);
 
 		if (modeServer)
 			runServer();

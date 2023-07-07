@@ -1,12 +1,12 @@
 #include "main.h"
 
-#include <algorithm>
-#include <atomic>
 #include <cage-core/concurrent.h>
-#include <cage-core/config.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkGinnel.h>
+
+#include <algorithm>
+#include <atomic>
 #include <vector>
 
 namespace
@@ -37,11 +37,13 @@ namespace
 
 			for (auto &c : conns)
 			{
-				while (c->available())
+				while (true)
 				{
 					uint32 ch;
 					bool r;
 					Holder<PointerRange<char>> b = c->read(ch, r);
+					if (!b)
+						break;
 					c->write(b, ch, r); // just repeat back the same message
 					lastTime = applicationTime();
 				}
@@ -84,7 +86,7 @@ namespace
 					b.data()[i] = (char)randomRange(0u, 256u);
 				sends.push_back(std::move(b));
 			}
-			udp = newGinnelConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
+			udp = newGinnelConnection("localhost", 3210);
 		}
 
 		~ClientImpl()
@@ -92,16 +94,18 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
+				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "ping: " + (s.ping / 1000) + " ms, receiving: " + (s.receivingBytesPerSecond / 1024) + " KB/s, sending: " + (s.sendingBytesPerSecond / 1024) + " KB/s");
 			}
 			connectionsLeft--;
 		}
 
 		bool service()
 		{
-			while (udp->available())
+			while (true)
 			{
 				Holder<PointerRange<char>> r = udp->read();
+				if (!r)
+					break;
 				MemoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
@@ -110,7 +114,7 @@ namespace
 			if (si < ri + 2 && si < sends.size())
 			{
 				MemoryBuffer &b = sends[si++];
-				udp->write(b, 13, true);
+				udp->write(b, 5, true);
 			}
 			udp->update();
 			return ri < sends.size();
@@ -128,10 +132,6 @@ namespace
 void testNetworkGinnel()
 {
 	CAGE_TESTCASE("network ginnel");
-
-	configSetUint32("cage/udp/logLevel", 2);
-	configSetFloat("cage/udp/simulatedPacketLoss", 0.1f);
-
 	Holder<Thread> server = newThread(Delegate<void()>().bind<&ServerImpl::entry>(), "server");
 	std::vector<Holder<Thread>> clients;
 	clients.resize(3);

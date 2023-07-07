@@ -1,20 +1,22 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/config.h>
-#include <cage-core/debug.h>
-#include <cage-core/flatSet.h>
-#include <cage-core/math.h> // random
-#include <cage-core/networkGinnel.h>
-#include <cage-core/serialization.h>
+#if 0
 
-#include "net.h"
+	#include <cage-core/concurrent.h>
+	#include <cage-core/config.h>
+	#include <cage-core/debug.h>
+	#include <cage-core/flatSet.h>
+	#include <cage-core/math.h> // random
+	#include <cage-core/networkGinnel.h>
+	#include <cage-core/serialization.h>
 
-#include <plf_list.h>
-#include <unordered_dense.h>
+	#include "net.h"
 
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <vector>
+	#include <plf_list.h>
+	#include <unordered_dense.h>
+
+	#include <algorithm>
+	#include <map>
+	#include <memory>
+	#include <vector>
 
 namespace cage
 {
@@ -31,13 +33,13 @@ namespace cage
 		const ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
 		const ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
 
-#define UDP_LOG(LEVEL, MSG) \
-	{ \
-		if (logLevel >= (LEVEL)) \
+	#define UDP_LOG(LEVEL, MSG) \
 		{ \
-			CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); \
-		} \
-	}
+			if (logLevel >= (LEVEL)) \
+			{ \
+				CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); \
+			} \
+		}
 
 		struct MemView
 		{
@@ -575,7 +577,7 @@ namespace cage
 					acks.push_back(p);
 				}
 
-#ifdef CAGE_ASSERT_ENABLED
+	#ifdef CAGE_ASSERT_ENABLED
 				{ // verification
 					FlatSet<uint16> ver;
 					for (PackAck pa : acks)
@@ -585,7 +587,7 @@ namespace cage
 					}
 					CAGE_ASSERT(ver == sending.seqnToAck);
 				}
-#endif // CAGE_ASSERT_ENABLED
+	#endif // CAGE_ASSERT_ENABLED
 
 				for (const PackAck &pa : acks)
 				{
@@ -1402,3 +1404,5 @@ namespace cage
 		}
 	}
 }
+
+#endif

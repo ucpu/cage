@@ -65,6 +65,57 @@ namespace cage
 			return res;
 		}
 
+		std::array<uint8, 4> Addr::getIp4() const
+		{
+			CAGE_ASSERT(storage.ss_family == AF_INET);
+			std::array<uint8, 4> a;
+			const sockaddr_in &in = (const sockaddr_in &)storage;
+			detail::memcpy(a.data(), &in.sin_addr, 4);
+			return endianness::change(a);
+		}
+
+		std::array<uint8, 16> Addr::getIp6() const
+		{
+			CAGE_ASSERT(storage.ss_family == AF_INET6);
+			std::array<uint8, 16> a;
+			const sockaddr_in6 &in = (const sockaddr_in6 &)storage;
+			detail::memcpy(a.data(), &in.sin6_addr, 16);
+			return endianness::change(a);
+		}
+
+		uint16 Addr::getPort() const
+		{
+			CAGE_ASSERT(storage.ss_family == AF_INET || storage.ss_family == AF_INET6);
+			if (storage.ss_family == AF_INET6)
+			{
+				const sockaddr_in6 &in = (const sockaddr_in6 &)storage;
+				return endianness::change(in.sin6_port);
+			}
+			else
+			{
+				const sockaddr_in &in = (const sockaddr_in &)storage;
+				return endianness::change(in.sin_port);
+			}
+		}
+
+		struct Test
+		{
+			bool testing()
+			{
+				constexpr auto ip4 = std::array<uint8, 4>{ 10, 20, 30, 40 };
+				constexpr auto ip6 = std::array<uint8, 16>{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+				if (Addr(ip4, 1234).getIp4() != ip4)
+					return false;
+				if (Addr(ip4, 1234).getPort() != 1234)
+					return false;
+				if (Addr(ip6, 1234).getIp6() != ip6)
+					return false;
+				return true;
+			}
+
+			Test() { CAGE_ASSERT(testing()); }
+		} testInstance;
+
 		Serializer &operator<<(Serializer &s, const Addr &v)
 		{
 			switch (v.storage.ss_family)
@@ -117,6 +168,73 @@ namespace cage
 				default:
 					CAGE_THROW_ERROR(Exception, "cannot deserialize Addr - unknown ip family");
 			}
+		}
+
+		AddrList::AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags) {}
+
+		AddrList::AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
+		{
+			networkInitialize();
+			addrinfo hints;
+			detail::memset(&hints, 0, sizeof(hints));
+			hints.ai_family = family;
+			hints.ai_socktype = type;
+			hints.ai_protocol = protocol;
+			hints.ai_flags = flags;
+			if (auto err = getaddrinfo(address, String(Stringizer() + port).c_str(), &hints, &start) != 0)
+				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", err);
+			current = start;
+		}
+
+		AddrList::~AddrList()
+		{
+			if (start)
+				freeaddrinfo(start);
+			start = current = nullptr;
+		}
+
+		bool AddrList::valid() const
+		{
+			return !!current;
+		}
+
+		void AddrList::next()
+		{
+			CAGE_ASSERT(valid());
+			current = current->ai_next;
+		}
+
+		Sock AddrList::sock() const
+		{
+			CAGE_ASSERT(valid());
+			return Sock(family(), type(), protocol());
+		}
+
+		Addr AddrList::address() const
+		{
+			CAGE_ASSERT(valid());
+			Addr address;
+			detail::memcpy(&address.storage, current->ai_addr, current->ai_addrlen);
+			address.addrlen = numeric_cast<socklen_t>(current->ai_addrlen);
+			return address;
+		}
+
+		int AddrList::family() const
+		{
+			CAGE_ASSERT(valid());
+			return current->ai_family;
+		}
+
+		int AddrList::type() const
+		{
+			CAGE_ASSERT(valid());
+			return current->ai_socktype;
+		}
+
+		int AddrList::protocol() const
+		{
+			CAGE_ASSERT(valid());
+			return current->ai_protocol;
 		}
 
 		Sock::Sock() {}
@@ -343,73 +461,6 @@ namespace cage
 				return 0;
 			}
 			return rtn;
-		}
-
-		AddrList::AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags) : AddrList(address.c_str(), port, family, type, protocol, flags) {}
-
-		AddrList::AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
-		{
-			networkInitialize();
-			addrinfo hints;
-			detail::memset(&hints, 0, sizeof(hints));
-			hints.ai_family = family;
-			hints.ai_socktype = type;
-			hints.ai_protocol = protocol;
-			hints.ai_flags = flags;
-			if (auto err = getaddrinfo(address, String(Stringizer() + port).c_str(), &hints, &start) != 0)
-				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", err);
-			current = start;
-		}
-
-		AddrList::~AddrList()
-		{
-			if (start)
-				freeaddrinfo(start);
-			start = current = nullptr;
-		}
-
-		bool AddrList::valid() const
-		{
-			return !!current;
-		}
-
-		void AddrList::next()
-		{
-			CAGE_ASSERT(valid());
-			current = current->ai_next;
-		}
-
-		Sock AddrList::sock() const
-		{
-			CAGE_ASSERT(valid());
-			return Sock(family(), type(), protocol());
-		}
-
-		Addr AddrList::address() const
-		{
-			CAGE_ASSERT(valid());
-			Addr address;
-			detail::memcpy(&address.storage, current->ai_addr, current->ai_addrlen);
-			address.addrlen = numeric_cast<socklen_t>(current->ai_addrlen);
-			return address;
-		}
-
-		int AddrList::family() const
-		{
-			CAGE_ASSERT(valid());
-			return current->ai_family;
-		}
-
-		int AddrList::type() const
-		{
-			CAGE_ASSERT(valid());
-			return current->ai_socktype;
-		}
-
-		int AddrList::protocol() const
-		{
-			CAGE_ASSERT(valid());
-			return current->ai_protocol;
 		}
 	}
 }
