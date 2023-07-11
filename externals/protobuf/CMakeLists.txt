@@ -60,7 +60,8 @@ set(code_after [[
 set_target_properties(libprotobuf libprotobuf-lite PROPERTIES
 	UNITY_BUILD ON
 	UNITY_BUILD_BATCH_SIZE 100
-	UNITY_BUILD_CODE_AFTER_INCLUDE "${code_after}")
+	UNITY_BUILD_CODE_AFTER_INCLUDE "${code_after}"
+)
 file(GLOB_RECURSE pb_files
 	"protobuf/src/google/protobuf/*.pb.cc"
 	"protobuf/src/google/protobuf/extension_set_heavy.cc"

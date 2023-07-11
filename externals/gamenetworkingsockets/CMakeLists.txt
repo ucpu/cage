@@ -15,4 +15,21 @@ endif()
 
 add_subdirectory(GameNetworkingSockets)
 
-set_target_properties(GameNetworkingSockets_s PROPERTIES CXX_STANDARD ${CMAKE_CXX_STANDARD})
+set_target_properties(GameNetworkingSockets_s PROPERTIES
+	CXX_STANDARD ${CMAKE_CXX_STANDARD}
+	UNITY_BUILD ON
+	UNITY_BUILD_BATCH_SIZE 100
+)
+file(GLOB_RECURSE prohibit_files
+	"GameNetworkingSockets/src/external/ed25519-donna/*.c"
+	"GameNetworkingSockets/src/external/curve25519-donna/*.c"
+)
+set_source_files_properties(
+	${prohibit_files}
+	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages.pb.cc"
+	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_certs.pb.cc"
+	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_udp.pb.cc"
+	"GameNetworkingSockets/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp"
+	TARGET_DIRECTORY GameNetworkingSockets_s
+	PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+)
