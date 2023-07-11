@@ -148,6 +148,7 @@ jobs:
 
   Sanitizers:
     name: sanitizer-${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CFLAGS: ${{ matrix.sanitizer.flags }}
@@ -209,6 +210,7 @@ jobs:
 
   NoProfiler:
     name: no-profiler
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CC: clang
@@ -245,6 +247,7 @@ jobs:
 
   Valgrind:
     name: valgrind-${{ matrix.options.tool }}
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CC: gcc-12
