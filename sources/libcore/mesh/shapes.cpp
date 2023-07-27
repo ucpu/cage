@@ -1,3 +1,4 @@
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshShapes.h>
 
 #include <unordered_map>
@@ -31,6 +32,7 @@ namespace cage
 			}
 		}
 
+		meshRemoveInvalid(+mesh);
 		return mesh;
 	}
 

@@ -28,7 +28,7 @@ namespace cage
 				const auto &tex = [&](const MeshExportGltfTexture &t)
 				{
 					if (!t.filename.empty())
-						CAGE_THROW_ERROR(Exception, "cannot export textures when exporting gltf into buffer only");
+						CAGE_THROW_ERROR(Exception, "cannot export textures into files when exporting gltf into buffer only");
 				};
 
 				tex(config.albedo);
@@ -115,7 +115,7 @@ namespace cage
 				views.push_back(v);
 			}
 
-			// todo tangents
+			// todo bones
 
 			{
 				indicesIndex = numeric_cast<uint32>(views.size());

@@ -618,7 +618,6 @@ namespace
 		else
 			return ccw_tri_tri_intersection_2d(p1, q1, r1, p2, q2, r2);
 	};
-
 }
 
 #include <cage-core/geometry.h>

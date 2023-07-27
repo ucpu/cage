@@ -141,15 +141,41 @@ namespace cage
 
 		PointerRange<Triangle> planeCut(const Plane &plane, const Triangle &in, Triangle out[3])
 		{
-			const Vec3 a = intersection(plane, makeSegment(in[0], in[1]));
-			const Vec3 b = intersection(plane, makeSegment(in[1], in[2]));
-			const Vec3 c = intersection(plane, makeSegment(in[2], in[0]));
-			const bool lns[3] = { valid(a), valid(b), valid(c) };
-			const uint32 lnc = lns[0] + lns[1] + lns[2];
-			if (lnc != 2)
+			CAGE_ASSERT(!in.degenerated());
+			CAGE_ASSERT(plane.valid() && plane.normalized());
+			//CAGE_ASSERT(abs(dot(plane.normal, in.normal())) < 0.5);
+			Vec3 a = intersection(plane, makeSegment(in[0], in[1]));
+			Vec3 b = intersection(plane, makeSegment(in[1], in[2]));
+			Vec3 c = intersection(plane, makeSegment(in[2], in[0]));
+			bool lns[3] = { valid(a), valid(b), valid(c) };
+			switch (uint32(lns[0] + lns[1] + lns[2]))
 			{
-				out[0] = in;
-				return { out, out + 1 };
+				/*
+				case 3:
+				{
+					// all 3 intersections can be valid if one of the intersections is at shared vertex between two edges (two of the intersection points are extremely close to each other, and the third one is farther away)
+					const auto &invalidateIfSame = [](Vec3 &a, Vec3 &b, bool &ln)
+					{
+						if (distanceSquared(a, b) < 1e-5)
+						{
+							a = Vec3::Nan();
+							ln = false;
+						}
+					};
+					invalidateIfSame(a, b, lns[0]);
+					invalidateIfSame(b, c, lns[1]);
+					invalidateIfSame(c, a, lns[2]);
+					CAGE_ASSERT(uint32(lns[0] + lns[1] + lns[2]) == 2);
+					break;
+				}
+				*/
+				case 2:
+					break;
+				default:
+				{
+					out[0] = in;
+					return { out, out + 1 };
+				}
 			}
 
 			Triangle r;
@@ -176,7 +202,15 @@ namespace cage
 			out[0] = Triangle(r[0], r[1], mids[1]);
 			out[1] = Triangle(r[0], mids[1], mids[2]);
 			out[2] = Triangle(mids[1], r[2], mids[2]);
-			return { out, out + 3 };
+			uint32 good = 0;
+			for (const Triangle &t : { Triangle(r[0], r[1], mids[1]), Triangle(r[0], mids[1], mids[2]), Triangle(mids[1], r[2], mids[2]) })
+			{
+				if (t.degenerated())
+					continue;
+				CAGE_ASSERT(dot(t.normal(), in.normal()) > 0.99);
+				out[good++] = t;
+			}
+			return { out, out + good };
 		}
 	}
 
@@ -184,6 +218,9 @@ namespace cage
 	{
 		if (!msh->indices().empty() || msh->positions().empty())
 			return;
+
+		if (!msh->uvs().empty() || !msh->uvs3().empty() || !msh->normals().empty() || !msh->boneIndices().empty())
+			CAGE_THROW_ERROR(NotImplemented, "meshConvertToIndexed with other attributes is not yet implemented");
 
 		struct Comparator
 		{
@@ -285,7 +322,6 @@ namespace cage
 		}
 		for (Vec3 &n : impl->normals)
 			n *= -1; // todo should normals be reflected by the plane of the triangle instead?
-		// todo tangents and other attributes
 	}
 
 	void meshDuplicateSides(Mesh *msh)
@@ -470,6 +506,7 @@ namespace cage
 		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh merge planar requires triangles mesh");
 		meshConvertToIndexed(msh);
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 
 		const uint32 vc = msh->verticesCount();
 		const uint32 tc = msh->facesCount();
@@ -552,7 +589,8 @@ namespace cage
 		for (uint32 vi = 0; vi < vc; vi++)
 		{
 			const auto &group = inverseMapping[vi];
-			CAGE_ASSERT(!group.empty());
+			if (group.empty())
+				continue;
 
 			// check if any of the triangles surrounding v1 is banned
 			{
@@ -691,6 +729,7 @@ namespace cage
 		msh->verticesCount(); // validate vertices
 		if (msh->facesCount() == 0 || msh->type() == MeshTypeEnum::Points)
 			return {};
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 		const MeshImpl *impl = (const MeshImpl *)msh;
 		Holder<Mesh> srcCopy;
 		if (msh->indicesCount() == 0)
@@ -734,9 +773,10 @@ namespace cage
 			return;
 		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh split long requires triangles mesh");
-		if (config.ratio < 1e-5 || config.length < 0)
+		if (config.length < 0 || config.ratio < 1e-5 || config.ratio > 1 || (config.length < 1e-5 && config.ratio > 1 - 1e-5))
 			CAGE_THROW_ERROR(Exception, "mesh split long requires valid config");
 		meshConvertToIndexed(msh);
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 
 		std::vector<Triangle> a;
 		{
@@ -763,15 +803,14 @@ namespace cage
 					f.push_back(t);
 					continue;
 				}
-				const auto r = planeCut(longTriangleCuttingPlane(t), t, tmp);
-				if (r.size() == 1)
-					f.push_back(r[0]);
-				else if (r.size() > 1)
+				const auto cutted = planeCut(longTriangleCuttingPlane(t), t, tmp);
+				if (cutted.size() == 1 && cutted[0] == t)
 				{
-					for (const Triangle &k : r)
-						if (!k.degenerated())
-							b.push_back(k);
+					f.push_back(t);
+					continue;
 				}
+				for (const Triangle &k : cutted)
+					b.push_back(k);
 			}
 			std::swap(a, b);
 			b.clear();
@@ -786,10 +825,7 @@ namespace cage
 
 	void meshSplitIntersecting(Mesh *msh, const MeshSplitIntersectingConfig &config)
 	{
-		if (msh->type() != MeshTypeEnum::Triangles)
-			CAGE_THROW_ERROR(Exception, "mesh split intersecting requires triangles mesh");
-
-		struct Processor
+		struct Processor : private Immovable
 		{
 			Mesh *msh = nullptr;
 			const MeshSplitIntersectingConfig &config;
@@ -804,6 +840,7 @@ namespace cage
 				std::vector<Triangle> &tris = tasks[triIdx];
 				CAGE_ASSERT(tris.size() == 1);
 				const Triangle origTri = tris[0];
+				CAGE_ASSERT(!origTri.degenerated());
 				Holder<SpatialQuery> q = newSpatialQuery(spatialStructure.share());
 				q->intersection(origTri);
 				auto cutterIds = q->result();
@@ -826,8 +863,7 @@ namespace cage
 					for (const Triangle &t : tris)
 					{
 						for (const Triangle &k : planeCut(cutterPl, t, tmp))
-							if (!k.degenerated())
-								b.push_back(k);
+							b.push_back(k);
 					}
 					std::swap(tris, b);
 					b.clear();
@@ -836,7 +872,10 @@ namespace cage
 
 			void run()
 			{
+				if (msh->type() != MeshTypeEnum::Triangles)
+					CAGE_THROW_ERROR(Exception, "mesh split intersecting requires triangles mesh");
 				meshConvertToIndexed(msh);
+				CAGE_ASSERT(!meshDetectInvalid(msh));
 
 				{ // prepare triangles used for cutting
 					collider->importMesh(msh);
@@ -1021,6 +1060,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "mesh clip requires triangles mesh");
 
 		meshConvertToIndexed(msh);
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 		MeshImpl *impl = (MeshImpl *)msh;
 		const Vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
 		std::vector<uint32> sourceIndices;
@@ -1077,6 +1117,7 @@ namespace cage
 		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh clip requires triangles mesh");
 		meshConvertToIndexed(msh);
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 
 		std::vector<Triangle> b;
 		b.reserve(msh->facesCount() * 2);
@@ -1148,7 +1189,10 @@ namespace cage
 				std::vector<bool> invalidIndices;
 				invalidIndices.reserve(impl->indices.size());
 				for (uint32 i : impl->indices)
+				{
+					CAGE_ASSERT(i < impl->positions.size());
 					invalidIndices.push_back(verticesToRemove[i]);
+				}
 				markFacesWithInvalidVertices(impl->type, invalidIndices);
 				vectorEraseIf(impl->indices, invalidIndices);
 			}
@@ -1202,6 +1246,47 @@ namespace cage
 		}
 	}
 
+	bool meshDetectInvalid(const Mesh *msh)
+	{
+		msh->verticesCount(); // validate vertices
+		const MeshImpl *impl = (const MeshImpl *)msh;
+		for (const Vec3 &v : impl->positions)
+			if (!valid(v))
+				return true;
+		switch (impl->type)
+		{
+			case MeshTypeEnum::Points:
+				break;
+			case MeshTypeEnum::Lines:
+			{
+				// todo
+				break;
+			}
+			case MeshTypeEnum::Triangles:
+			{
+				const uint32 tris = impl->facesCount();
+				PointerRange<const Vec3> ps = impl->positions;
+				if (impl->indices.empty())
+				{
+					for (uint32 i = 0; i < tris; i++)
+						if (Triangle(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]).degenerated())
+							return true;
+				}
+				else
+				{
+					PointerRange<const uint32> is = impl->indices;
+					for (uint32 i = 0; i < tris; i++)
+						if (Triangle(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]).degenerated())
+							return true;
+				}
+				break;
+			}
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
+		}
+		return false;
+	}
+
 	void meshRemoveInvalid(Mesh *msh)
 	{
 		msh->verticesCount(); // validate vertices
@@ -1221,6 +1306,7 @@ namespace cage
 				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 		msh->verticesCount(); // validate vertices
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 	}
 
 	void meshRemoveDisconnected(Mesh *msh)
@@ -1306,20 +1392,13 @@ namespace cage
 
 	void meshRemoveOccluded(Mesh *msh, const MeshRemoveOccludedConfig &config)
 	{
-		if (msh->facesCount() == 0)
-			return;
-		if (msh->type() != MeshTypeEnum::Triangles)
-			CAGE_THROW_ERROR(Exception, "mesh removing invisible requires triangles mesh");
-		if (config.maxRaysPerTriangle < config.minRaysPerTriangle || config.raysPerUnitArea <= 1e-5)
-			CAGE_THROW_ERROR(Exception, "mesh removing invisible requires valid configuration");
-
 		struct Processor
 		{
 			Mesh *msh = nullptr;
 			const MeshRemoveOccludedConfig &config;
 			Holder<Collider> collider = newCollider();
 			std::vector<uint8> visible;
-			Real grazingDot;
+			Real grazingDot = cage::cos(Degs(90) - config.grazingAngle);
 
 			Processor(Mesh *msh, const MeshRemoveOccludedConfig &config) : msh(msh), config(config) {}
 
@@ -1352,9 +1431,15 @@ namespace cage
 
 			void run()
 			{
-				grazingDot = cage::cos(Degs(90) - config.grazingAngle);
-
+				if (msh->facesCount() == 0)
+					return;
+				if (msh->type() != MeshTypeEnum::Triangles)
+					CAGE_THROW_ERROR(Exception, "mesh removing invisible requires triangles mesh");
+				if (config.maxRaysPerTriangle < config.minRaysPerTriangle || config.raysPerUnitArea <= 1e-5)
+					CAGE_THROW_ERROR(Exception, "mesh removing invisible requires valid configuration");
 				meshConvertToIndexed(msh);
+				CAGE_ASSERT(!meshDetectInvalid(msh));
+
 				visible.resize(msh->facesCount(), 0);
 				collider->importMesh(msh);
 				collider->rebuild();
@@ -1482,9 +1567,9 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "mesh chunking requires triangles mesh");
 		if (config.maxSurfaceArea <= 0)
 			CAGE_THROW_ERROR(Exception, "mesh chunking requires positive maxSurfaceArea");
-
 		auto m = msh->copy();
 		meshConvertToIndexed(+m);
+		CAGE_ASSERT(!meshDetectInvalid(+m));
 		return PointerRangeHolder<Holder<Mesh>>(meshChunkingImpl(std::move(m), config));
 	}
 
@@ -1495,28 +1580,52 @@ namespace cage
 		if (msh->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "generating normals requires triangles mesh");
 
-		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
-
-		meshConvertToIndexed(msh);
-		MeshImpl *impl = (MeshImpl *)msh;
-		std::vector<Vec3> ns;
-		ns.resize(impl->verticesCount());
-		const uint32 tris = numeric_cast<uint32>(impl->indices.size() / 3);
-		for (uint32 tri = 0; tri < tris; tri++)
+		if (config.flat)
 		{
-			const uint32 *ids = impl->indices.data() + tri * 3;
-			const Vec3 &a = impl->positions[ids[0]];
-			const Vec3 &b = impl->positions[ids[1]];
-			const Vec3 &c = impl->positions[ids[2]];
-			const Triangle t = Triangle(a, b, c);
-			const Vec3 n = t.normal() * t.area();
-			ns[ids[0]] += n;
-			ns[ids[1]] += n;
-			ns[ids[2]] += n;
+			meshConvertToExpanded(msh);
+			CAGE_ASSERT(!meshDetectInvalid(msh));
+			MeshImpl *impl = (MeshImpl *)msh;
+			std::vector<Vec3> ns;
+			ns.resize(impl->verticesCount());
+			const uint32 tris = numeric_cast<uint32>(impl->indices.size() / 3);
+			for (uint32 tri = 0; tri < tris; tri++)
+			{
+				const uint32 *ids = impl->indices.data() + tri * 3;
+				const Vec3 &a = impl->positions[ids[0]];
+				const Vec3 &b = impl->positions[ids[1]];
+				const Vec3 &c = impl->positions[ids[2]];
+				const Triangle t = Triangle(a, b, c);
+				const Vec3 n = t.normal();
+				ns[ids[0]] = n;
+				ns[ids[1]] = n;
+				ns[ids[2]] = n;
+			}
+			std::swap(impl->normals, ns);
 		}
-		for (Vec3 &n : ns)
-			n = lengthSquared(n) > 1e-7 ? normalize(n) : Vec3();
-		std::swap(impl->normals, ns);
+		else
+		{
+			meshConvertToIndexed(msh);
+			CAGE_ASSERT(!meshDetectInvalid(msh));
+			MeshImpl *impl = (MeshImpl *)msh;
+			std::vector<Vec3> ns;
+			ns.resize(impl->verticesCount());
+			const uint32 tris = numeric_cast<uint32>(impl->indices.size() / 3);
+			for (uint32 tri = 0; tri < tris; tri++)
+			{
+				const uint32 *ids = impl->indices.data() + tri * 3;
+				const Vec3 &a = impl->positions[ids[0]];
+				const Vec3 &b = impl->positions[ids[1]];
+				const Vec3 &c = impl->positions[ids[2]];
+				const Triangle t = Triangle(a, b, c);
+				const Vec3 n = t.normal() * t.area();
+				ns[ids[0]] += n;
+				ns[ids[1]] += n;
+				ns[ids[2]] += n;
+			}
+			for (Vec3 &n : ns)
+				n = lengthSquared(n) > 1e-7 ? normalize(n) : Vec3();
+			std::swap(impl->normals, ns);
+		}
 	}
 
 	void meshGenerateTexture(const Mesh *msh, const MeshGenerateTextureConfig &config)
@@ -1527,6 +1636,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "generating texture requires triangles mesh");
 		if (msh->uvs().empty())
 			CAGE_THROW_ERROR(Exception, "generating texture requires uvs");
+		CAGE_ASSERT(!meshDetectInvalid(msh));
 
 		const uint32 triCount = msh->facesCount();
 		const Vec2 scale = Vec2(config.width, config.height);
@@ -1622,6 +1732,8 @@ namespace cage
 	{
 		if (config.source->type() != MeshTypeEnum::Triangles || config.target->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "mesh retexture requires triangles mesh");
+		CAGE_ASSERT(!meshDetectInvalid(+config.source));
+		CAGE_ASSERT(!meshDetectInvalid(+config.target));
 
 		struct Generator
 		{
@@ -1751,5 +1863,38 @@ namespace cage
 		}
 
 		return res;
+	}
+
+	MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs, const MeshMergeConfig &config)
+	{
+		MeshMergeResult r;
+		r.mesh = newMesh();
+		for (const auto &in : inputs)
+		{
+			const Mesh *msh = in.mesh;
+			if (msh->facesCount() == 0)
+				continue;
+			if (msh->type() != MeshTypeEnum::Triangles)
+				CAGE_THROW_ERROR(NotImplemented, "merging meshes requires triangles mesh"); // todo
+			if (msh->indicesCount() == 0)
+				CAGE_THROW_ERROR(NotImplemented, "merging meshes requires indexed mesh"); // todo
+			CAGE_ASSERT(!meshDetectInvalid(msh));
+			const auto inds = msh->indices();
+			const auto poss = msh->positions();
+			const uint32 tris = numeric_cast<uint32>(inds.size() / 3);
+			for (uint32 tri = 0; tri < tris; tri++)
+			{
+				const uint32 *ids = inds.data() + tri * 3;
+				const Vec3 &a = poss[ids[0]];
+				const Vec3 &b = poss[ids[1]];
+				const Vec3 &c = poss[ids[2]];
+				const Triangle t = Triangle(a, b, c);
+				r.mesh->addTriangle(t);
+			}
+		}
+		// todo other attributes
+		// todo textures
+		meshConvertToIndexed(+r.mesh);
+		return r;
 	}
 }

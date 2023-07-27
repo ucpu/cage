@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cage-core/imageAlgorithms.h>
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
@@ -296,6 +297,8 @@ namespace cage
 	{
 		void meshImportNormalizeFormats(MeshImportPart &part)
 		{
+			meshConvertToIndexed(+part.mesh);
+			meshRemoveInvalid(+part.mesh);
 			for (auto &it : part.textures)
 			{
 				if (it.images.parts.empty())
@@ -375,5 +378,43 @@ namespace cage
 	{
 		for (MeshImportPart &p : result.parts)
 			privat::meshImportConvertToCageFormats(p);
+	}
+
+	MeshImportResult meshImportMerge(PointerRange<const MeshImportResult> inputs)
+	{
+		if (inputs.empty())
+			return {};
+		PointerRangeHolder<String> paths;
+		std::vector<MeshMergeInput> mis;
+		for (const auto &in : inputs)
+		{
+			if (in.skeleton && inputs.size() > 1)
+				CAGE_THROW_ERROR(Exception, "cannot merge mesh parts with skeletons");
+			for (const auto &pt : in.parts)
+			{
+				MeshMergeInput mi;
+				mi.mesh = +pt.mesh;
+				// todo textures
+				// todo material
+				mis.push_back(std::move(mi));
+			}
+			for (const String &p : in.paths)
+				paths.push_back(p);
+		}
+		auto merged = meshMerge(mis, {});
+		PointerRangeHolder<MeshImportPart> parts;
+		MeshImportPart prt;
+		prt.mesh = std::move(merged.mesh);
+		// todo textures
+		parts.push_back(std::move(prt));
+		MeshImportResult r;
+		r.parts = std::move(parts);
+		r.paths = std::move(paths);
+		if (inputs[0].skeleton)
+		{
+			r.skeleton = inputs[0].skeleton.share();
+			r.animations = inputs[0].animations.share();
+		}
+		return r;
 	}
 }

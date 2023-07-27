@@ -34,8 +34,9 @@ namespace cage
 
 	struct CAGE_CORE_API MeshSplitLongConfig
 	{
-		Real length = 1;
-		Real ratio = 0.25;
+		// triangle is split if it is longer than the specified length AND its "spikiness" is greater than the specified ratio
+		Real length = 1; // using length = 0 disables checking for length -> only spiky triangles are split
+		Real ratio = 1; // using ratio = 1 disables checking for spikiness -> only long triangles are split
 	};
 	CAGE_CORE_API void meshSplitLong(Mesh *msh, const MeshSplitLongConfig &config);
 
@@ -49,12 +50,13 @@ namespace cage
 	CAGE_CORE_API void meshClip(Mesh *msh, const Aabb &box);
 	CAGE_CORE_API void meshClip(Mesh *msh, const Plane &pln);
 
+	CAGE_CORE_API bool meshDetectInvalid(const Mesh *msh);
 	CAGE_CORE_API void meshRemoveInvalid(Mesh *msh);
 	CAGE_CORE_API void meshRemoveDisconnected(Mesh *msh);
 
 	struct CAGE_CORE_API MeshRemoveSmallConfig
 	{
-		Real threshold = 0.1;
+		Real threshold = 0.1; // area for triangles or length for lines
 	};
 	CAGE_CORE_API void meshRemoveSmall(Mesh *msh, const MeshRemoveSmallConfig &config);
 
@@ -76,14 +78,23 @@ namespace cage
 		Real approximateError = 0.05;
 		uint32 iterations = 10;
 		bool useProjection = true;
+		bool ignoreInvalid = false;
 	};
 	CAGE_CORE_API void meshSimplify(Mesh *msh, const MeshSimplifyConfig &config);
+
+	struct CAGE_CORE_API MeshDecimateConfig
+	{
+		uint32 targetVertices = 0;
+		bool ignoreInvalid = false;
+	};
+	CAGE_CORE_API void meshDecimate(Mesh *msh, const MeshDecimateConfig &config);
 
 	struct CAGE_CORE_API MeshRegularizeConfig
 	{
 		Real targetEdgeLength = 1;
 		uint32 iterations = 10;
 		bool useProjection = true;
+		bool ignoreInvalid = false;
 	};
 	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizeConfig &config);
 
@@ -91,6 +102,7 @@ namespace cage
 	{
 		uint32 iterations = 10;
 		bool uniform = false;
+		bool ignoreInvalid = false;
 	};
 	CAGE_CORE_API void meshSmoothing(Mesh *msh, const MeshSmoothingConfig &config);
 
@@ -123,7 +135,9 @@ namespace cage
 	CAGE_CORE_API uint32 meshUnwrap(Mesh *msh, const MeshUnwrapConfig &config);
 
 	struct CAGE_CORE_API MeshGenerateNormalsConfig
-	{};
+	{
+		bool flat = false;
+	};
 	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config);
 
 	struct CAGE_CORE_API MeshGenerateTextureConfig
@@ -144,6 +158,20 @@ namespace cage
 		bool parallelize = false;
 	};
 	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> meshRetexture(const MeshRetextureConfig &config);
+
+	struct CAGE_CORE_API MeshMergeConfig
+	{};
+	struct CAGE_CORE_API MeshMergeInput
+	{
+		Mesh *mesh = nullptr;
+		PointerRange<const Image *> textures;
+	};
+	struct CAGE_CORE_API MeshMergeResult
+	{
+		Holder<Mesh> mesh;
+		Holder<PointerRange<Holder<Image>>> textures;
+	};
+	CAGE_CORE_API MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs, const MeshMergeConfig &config);
 }
 
 #endif // guard_meshAlgorithms_h_df5641hj6fghj

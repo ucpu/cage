@@ -89,6 +89,8 @@ namespace cage
 	CAGE_CORE_API void meshImportLoadExternal(MeshImportResult &result);
 	CAGE_CORE_API void meshImportNormalizeFormats(MeshImportResult &result);
 	CAGE_CORE_API void meshImportConvertToCageFormats(MeshImportResult &result);
+
+	CAGE_CORE_API MeshImportResult meshImportMerge(PointerRange<const MeshImportResult> inputs);
 }
 
 #endif // guard_meshImport_h_rtkusd4g4b78fd

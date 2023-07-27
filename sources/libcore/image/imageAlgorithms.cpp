@@ -529,7 +529,7 @@ namespace cage
 	{
 		const uint32 w = img->width();
 		const uint32 h = img->height();
-		const uint32 c = useColorConfig ? img->colorConfig.alphaChannelIndex : img->channels();
+		const uint32 c = min(img->channels(), useColorConfig ? img->colorConfig.alphaChannelIndex : m);
 		for (uint32 y = 0; y < h; y++)
 			for (uint32 x = 0; x < w; x++)
 				for (uint32 i = 0; i < c; i++)

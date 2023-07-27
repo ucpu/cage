@@ -51,12 +51,14 @@ namespace cage
 
 	uint32 meshUnwrap(Mesh *poly, const MeshUnwrapConfig &config)
 	{
+		if (poly->facesCount() == 0)
+			return 0;
 		if (poly->type() != MeshTypeEnum::Triangles)
 			CAGE_THROW_ERROR(Exception, "unwrap requires triangles mesh");
 		if ((config.targetResolution == 0) == (config.texelsPerUnit == 0))
 			CAGE_THROW_ERROR(Exception, "unwrap requires exactly one of targetResolution or texelsPerUnit");
-		if (poly->facesCount() == 0)
-			return 0;
+		meshConvertToIndexed(poly);
+		CAGE_ASSERT(!meshDetectInvalid(poly));
 
 		const bool useNormals = !poly->normals().empty();
 		Holder<xatlas::Atlas> atlas = newAtlas(config.logProgress);

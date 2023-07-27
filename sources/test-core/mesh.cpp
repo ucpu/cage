@@ -122,6 +122,37 @@ namespace
 #endif // CAGE_DEBUG
 	}
 
+	// generates sphere with invalid/degenerated triangles
+	Holder<Mesh> makeSphereRaw()
+	{
+		constexpr Real radius = 10;
+		constexpr uint32 segments = 16;
+		constexpr uint32 rings = 8;
+		Holder<Mesh> mesh = newMesh();
+		const Vec2 uvScale = 1 / Vec2(segments - 1, rings - 1);
+		for (uint32 r = 0; r < rings; r++)
+		{
+			const Rads b = Degs(180 * Real(r) / (rings - 1) - 90);
+			for (uint32 s = 0; s < segments; s++)
+			{
+				const Rads a = Degs(360 * Real(s) / (segments - 1));
+				const Real cosb = cos(b);
+				const Vec3 pos = Vec3(cos(a) * cosb, sin(a) * cosb, sin(b));
+				CAGE_ASSERT(abs(distance(pos, normalize(pos))) < 1e-4);
+				mesh->addVertex(pos * radius, pos, Vec2(s, r) * uvScale);
+			}
+		}
+		for (uint32 r = 0; r < rings - 1; r++)
+		{
+			for (uint32 s = 0; s < segments - 1; s++)
+			{
+				mesh->addTriangle(r * segments + s, (r + 1) * segments + s + 1, (r + 1) * segments + s);
+				mesh->addTriangle(r * segments + s, r * segments + s + 1, (r + 1) * segments + s + 1);
+			}
+		}
+		return mesh;
+	}
+
 	Holder<Mesh> makeDoubleBalls()
 	{
 		auto p = makeSphere();
@@ -219,9 +250,21 @@ namespace
 
 		{
 			CAGE_TESTCASE("shapes");
-			newMeshSphereUv(10, 20, 30)->exportFile("meshes/shapes/uv-sphere.obj");
-			newMeshIcosahedron(10)->exportFile("meshes/shapes/icosahedron.obj");
-			newMeshSphereRegular(10, 1.5)->exportFile("meshes/shapes/regular-sphere.obj");
+			{
+				auto s = newMeshSphereUv(10, 20, 30);
+				CAGE_TEST(!meshDetectInvalid(+s));
+				s->exportFile("meshes/shapes/uv-sphere.obj");
+			}
+			{
+				auto s = newMeshIcosahedron(10);
+				CAGE_TEST(!meshDetectInvalid(+s));
+				s->exportFile("meshes/shapes/icosahedron.obj");
+			}
+			{
+				auto s = newMeshSphereRegular(10, 1.5);
+				CAGE_TEST(!meshDetectInvalid(+s));
+				s->exportFile("meshes/shapes/regular-sphere.obj");
+			}
 		}
 
 		{
@@ -265,7 +308,7 @@ namespace
 
 		{
 			CAGE_TESTCASE("merge close vertices");
-			auto p = makeSphere();
+			auto p = makeSphereRaw();
 			const uint32 initialFacesCount = p->facesCount();
 			{
 				MeshMergeCloseVerticesConfig cfg;
@@ -369,8 +412,11 @@ namespace
 			CAGE_TESTCASE("remove invalid");
 			auto p = makeSphere();
 			const uint32 initialFacesCount = p->facesCount();
+			CAGE_TEST(!meshDetectInvalid(+p));
 			p->position(42, Vec3::Nan()); // intentionally corrupt one vertex
+			CAGE_TEST(meshDetectInvalid(+p));
 			meshRemoveInvalid(+p);
+			CAGE_TEST(!meshDetectInvalid(+p));
 			const uint32 f = p->facesCount();
 			CAGE_TEST(f > 10 && f < initialFacesCount);
 			p->exportFile("meshes/algorithms/removeInvalid.obj");
@@ -385,7 +431,7 @@ namespace
 
 		{
 			CAGE_TESTCASE("remove small");
-			auto p = makeSphere();
+			auto p = makeSphereRaw();
 			const uint32 initialFacesCount = p->facesCount();
 			{
 				MeshRemoveSmallConfig cfg;
@@ -503,12 +549,63 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("generate normals");
+			CAGE_TESTCASE("generate flat normals");
+			auto p = makeSphere();
+			MeshGenerateNormalsConfig cfg;
+			cfg.flat = true;
+			meshGenerateNormals(+p, cfg);
+			CAGE_TEST(p->normals().size() == p->positions().size());
+			p->exportFile("meshes/algorithms/generatedNormals_flat.obj");
+		}
+
+		{
+			CAGE_TESTCASE("generate smooth normals");
 			auto p = makeSphere();
 			meshGenerateNormals(+p, {});
-			p->exportFile("meshes/algorithms/generatedNormals.obj");
 			CAGE_TEST(p->normals().size() == p->positions().size());
+			p->exportFile("meshes/algorithms/generatedNormals_smooth.obj");
 		}
+
+		/*
+		{
+			CAGE_TESTCASE("mesh merge");
+			const auto &make = []()
+			{
+				auto msh = makeSphere();
+				meshGenerateNormals(+msh, {});
+				meshUnwrap(+msh, MeshUnwrapConfig{ .targetResolution = 256 });
+				auto tex = newImage();
+				tex->initialize(Vec2i(256), 3);
+				MeshImage tmp;
+				tmp.msh = +msh;
+				tmp.img = +tex;
+				MeshGenerateTextureConfig cfg;
+				cfg.width = cfg.height = 256;
+				cfg.generator.bind<MeshImage *, &genTex>(&tmp);
+				meshGenerateTexture(+msh, cfg);
+				return std::pair{ std::move(msh), std::move(tex) };
+			};
+			auto a = make();
+			auto b = make();
+			imageInvertColors(+b.second);
+			meshApplyTransform(+a.first, Transform(Vec3(-11, 0, 0)));
+			meshApplyTransform(+b.first, Transform(Vec3(+11, 0, 0)));
+			MeshMergeInput in[2];
+			const Image *at[1] = { +a.second };
+			const Image *bt[1] = { +a.second };
+			in[0].mesh = +a.first;
+			in[0].textures = at;
+			in[1].mesh = +b.first;
+			in[1].textures = bt;
+			auto r = meshMerge(in, {});
+			CAGE_TEST(r.textures.size() == 1);
+			MeshExportGltfConfig exportCfg;
+			exportCfg.name = "merged";
+			exportCfg.mesh = +r.mesh;
+			exportCfg.albedo.image = +r.textures[0];
+			meshExportFiles("meshes/algorithms/merge.glb", exportCfg);
+		}
+		*/
 	}
 
 	void testMeshImports()
