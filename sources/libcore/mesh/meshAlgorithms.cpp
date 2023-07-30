@@ -463,6 +463,8 @@ namespace cage
 
 	void meshMergePlanar(Mesh *msh, const MeshMergePlanarConfig &config)
 	{
+		static constexpr Real CoplanarThreshold = 0.9999;
+
 		if (msh->facesCount() == 0)
 			return;
 		if (msh->type() != MeshTypeEnum::Triangles)
@@ -495,7 +497,7 @@ namespace cage
 		{
 			const Vec3 x = normalize(poss[b] - poss[a]);
 			const Vec3 y = normalize(poss[c] - poss[b]);
-			return dot(x, y) > 0.999;
+			return dot(x, y) > CoplanarThreshold;
 		};
 
 		// triangles that has already changed
@@ -505,76 +507,64 @@ namespace cage
 		// new indices (preserve original unmodified indices inside the mesh)
 		std::vector<uint32> indsCopy = std::vector<uint32>(inds.begin(), inds.end());
 
-		// verify if merging vertex v1 to v2 is valid for all triangles tris and do it
-		// it is valid to degenerate triangles but not to flip orientation
-		const auto &checkAndMergeVertex = [&](PointerRange<const uint32> tris, uint32 v1, uint32 v2) -> bool
+		// verify if merging vertex v1 to v2 is valid for all triangles
+		// it is allowed to degenerate triangles but forbidden to flip orientation
+		// normalDotThreshold = 0 -> check for flipped normal
+		// normalDotThreshold = 0.999 -> check the normal is the same
+		const auto &checkVertex = [&](uint32 v1, uint32 v2, Real normalDotThreshold = 0) -> bool
 		{
 			CAGE_ASSERT(v1 != v2);
-			const auto &loop = [&](bool perform) -> bool
+			for (uint32 ti : inverseMapping[v1])
 			{
-				for (uint32 ti : tris)
-				{
-					uint32 is[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
-					for (uint32 &i : is)
-						if (i == v1)
-							i = v2;
-					CAGE_ASSERT((is[0] == v2) + (is[1] == v2) + (is[2] == v2) >= 1);
-					const Triangle t = Triangle(poss[is[0]], poss[is[1]], poss[is[2]]);
-					if (perform)
-					{
-						CAGE_ASSERT(!banned[ti]);
-						banned[ti] = true;
-						indsCopy[ti * 3 + 0] = is[0];
-						indsCopy[ti * 3 + 1] = is[1];
-						indsCopy[ti * 3 + 2] = is[2];
-					}
-					else
-					{
-						if (dot(t.normal(), triNorms[ti]) < 0 && !t.degenerated())
-							return false;
-					}
-				}
-				return true;
-			};
-			if (!loop(false))
-				return false;
-			loop(true);
+				CAGE_ASSERT(!banned[ti]);
+				uint32 is[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
+				for (uint32 &i : is)
+					if (i == v1)
+						i = v2;
+				CAGE_ASSERT((is[0] == v2) + (is[1] == v2) + (is[2] == v2) >= 1);
+				const Triangle t = Triangle(poss[is[0]], poss[is[1]], poss[is[2]]);
+				if (!t.degenerated() && dot(t.normal(), triNorms[ti]) < normalDotThreshold)
+					return false;
+			}
 			return true;
 		};
 
+		// merge the vertex v1 onto v2 modifying all affected triangles
+		const auto &mergeVertex = [&](uint32 v1, uint32 v2)
+		{
+			CAGE_ASSERT(checkVertex(v1, v2));
+			for (uint32 ti : inverseMapping[v1])
+			{
+				uint32 is[3] = { inds[ti * 3 + 0], inds[ti * 3 + 1], inds[ti * 3 + 2] };
+				for (uint32 &i : is)
+					if (i == v1)
+						i = v2;
+				banned[ti] = true;
+				indsCopy[ti * 3 + 0] = is[0];
+				indsCopy[ti * 3 + 1] = is[1];
+				indsCopy[ti * 3 + 2] = is[2];
+			}
+		};
+
 		// find vertices that can be merged elsewhere
-		std::vector<uint32> group;
 		std::vector<uint32> edgeVerts;
 		std::unordered_map<uint32, uint32> trisOnVertsCount;
 		for (uint32 vi = 0; vi < vc; vi++)
 		{
-			for (uint32 t1 : inverseMapping[vi])
+			const auto &group = inverseMapping[vi];
+			CAGE_ASSERT(!group.empty());
+
+			// check if any of the triangles surrounding v1 is banned
 			{
-				// find triangles that are coplanar with t1
-				group.clear();
-				for (uint32 t2 : inverseMapping[vi])
-				{
-					if (t2 <= t1)
-						continue;
-					if (dot(triNorms[t1], triNorms[t2]) > 0.999)
-						group.push_back(t2);
-				}
-				if (group.empty())
-					continue;
-				group.push_back(t1);
-
-				// find if any of the triangles in the group is banned
-				if (
-					[&]
-					{
-						for (uint32 i : group)
-							if (banned[i])
-								return true;
-						return false;
-					}())
+				bool anyBanned = false;
+				for (uint32 i : group)
+					anyBanned |= banned[i];
+				if (anyBanned)
 					continue; // some triangle is banned
+			}
 
-				// check if the vi vertex is fully surrounded or on an edge
+			// check if the vi vertex is fully surrounded or on an edge
+			{
 				trisOnVertsCount.clear();
 				for (uint32 ti : group)
 				{
@@ -600,27 +590,41 @@ namespace cage
 					}
 				}
 				if (ones != 2 && twos != group.size())
-					continue; // the vertex cannot be merged
+					continue; // the vertex cannot be merged - it has weird topology
+			}
 
-				// if the vertex is on edge
-				if (edgeVerts.size() == 2)
-				{
-					if (!isColinear(edgeVerts[0], vi, edgeVerts[1]))
-						continue; // not straight
-					if (checkAndMergeVertex(group, vi, edgeVerts[0]))
-						continue;
-					checkAndMergeVertex(group, vi, edgeVerts[1]);
+			// if the vertex is on edge
+			if (edgeVerts.size() == 2)
+			{
+				if (!isColinear(edgeVerts[0], vi, edgeVerts[1]))
+					continue; // the edge is not straight
+
+				// check if all triangles surrounding v1 are coplanar
+				const Vec3 firstNorm = triNorms[*group.begin()];
+				bool allCoplanar = true;
+				for (uint32 t2 : group)
+					allCoplanar &= dot(firstNorm, triNorms[t2]) > CoplanarThreshold;
+				if (!allCoplanar)
+					continue; // some triangles are not coplanar
+
+				// try to merge the vertex to either end of the edge
+				if (checkVertex(vi, edgeVerts[0]))
+					mergeVertex(vi, edgeVerts[0]);
+				else if (checkVertex(vi, edgeVerts[1]))
+					mergeVertex(vi, edgeVerts[1]);
+
+				continue; // the vertex is on edge and cannot proceed
+			}
+
+			// the vertex is fully surrounded
+			for (const auto &it : trisOnVertsCount)
+			{
+				if (it.second != 2)
 					continue;
-				}
-
-				// the vertex is fully surrounded
-				for (const auto &it : trisOnVertsCount)
+				if (checkVertex(vi, it.first, CoplanarThreshold))
 				{
-					if (it.second == 2)
-					{
-						if (checkAndMergeVertex(group, vi, it.first))
-							break;
-					}
+					mergeVertex(vi, it.first);
+					break;
 				}
 			}
 		}

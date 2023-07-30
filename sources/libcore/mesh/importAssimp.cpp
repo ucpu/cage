@@ -1210,8 +1210,14 @@ namespace cage
 				else
 				{
 					aiColor3D color = aiColor3D(1);
-					mat->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-					mat->Get(AI_MATKEY_BASE_COLOR, color);
+					const auto &getColor = [&](const char *a, int b, int c) // temporary fix until https://github.com/assimp/assimp/pull/5161 is merged
+					{
+						aiColor4D tmp;
+						if (mat->Get(a, b, c, tmp) == aiReturn_SUCCESS)
+							color = aiColor3D(tmp.r, tmp.g, tmp.b);
+					};
+					getColor(AI_MATKEY_COLOR_DIFFUSE);
+					getColor(AI_MATKEY_BASE_COLOR);
 					part.material.albedoBase = Vec4(colorGammaToLinear(conv(color)), part.material.albedoBase[3]);
 				}
 

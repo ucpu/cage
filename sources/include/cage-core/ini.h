@@ -71,8 +71,8 @@ namespace cage
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
 	void set##NAME(const String &section, const String &item, const TYPE &value); \
 	TYPE get##NAME(const String &section, const String &item, const TYPE &defaul = DEF) const; \
-	TYPE cmd##NAME(char shortName, const String &longName, const TYPE &defaul) const; \
-	TYPE cmd##NAME(char shortName, const String &longName) const;
+	TYPE cmd##NAME(char shortName, const String &longName, const TYPE &defaul); \
+	TYPE cmd##NAME(char shortName, const String &longName);
 		GCHL_GENERATE(bool, Bool, false);
 		GCHL_GENERATE(sint32, Sint32, 0);
 		GCHL_GENERATE(uint32, Uint32, 0);
@@ -83,7 +83,7 @@ namespace cage
 		GCHL_GENERATE(String, String, "");
 #undef GCHL_GENERATE
 
-		Holder<PointerRange<String>> cmdArray(char shortName, const String &longName) const;
+		Holder<PointerRange<String>> cmdArray(char shortName, const String &longName);
 	};
 
 	CAGE_CORE_API Holder<Ini> newIni();

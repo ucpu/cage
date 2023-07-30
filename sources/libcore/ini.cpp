@@ -448,13 +448,13 @@ namespace cage
 			return shortName.empty() ? Stringizer() + "--" + longName : Stringizer() + "--" + longName + " (-" + shortName + ")";
 		}
 
-		void addHelp(const Ini *ini, const String &shortName, const String &longName, const char *typeName)
+		void addHelp(Ini *ini, const String &shortName, const String &longName, const char *typeName)
 		{
 			const String h = Stringizer() + formatOptionNames(shortName, longName) + ": " + typeName;
-			((IniImpl *)const_cast<Ini *>(ini))->helps.push_back(h);
+			((IniImpl *)ini)->helps.push_back(h);
 		}
 
-		String getCmd(const Ini *ini, const String &shortName, const String &longName, const char *typeName)
+		String getCmd(Ini *ini, const String &shortName, const String &longName, const char *typeName)
 		{
 			addHelp(ini, shortName, longName, typeName);
 			const uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
@@ -476,9 +476,9 @@ namespace cage
 			}
 			CAGE_ASSERT(ae != be);
 			if (!ae)
-				const_cast<Ini *>(ini)->markUsed(shortName, "0");
+				ini->markUsed(shortName, "0");
 			if (!be)
-				const_cast<Ini *>(ini)->markUsed(longName, "0");
+				ini->markUsed(longName, "0");
 			if (ae)
 				return b;
 			return a;
@@ -498,7 +498,7 @@ namespace cage
 		const_cast<Ini *>(this)->markUsed(section, item); \
 		return TO(tmp); \
 	} \
-	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, const TYPE &defaul) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, const TYPE &defaul) \
 	{ \
 		const String sn = toShortName(shortName); \
 		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
@@ -506,7 +506,7 @@ namespace cage
 			return defaul; \
 		return TO(tmp); \
 	} \
-	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName) \
 	{ \
 		const String sn = toShortName(shortName); \
 		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
@@ -527,15 +527,15 @@ namespace cage
 	GCHL_GENERATE(String, String, );
 #undef GCHL_GENERATE
 
-	Holder<PointerRange<String>> Ini::cmdArray(char shortName, const String &longName) const
+	Holder<PointerRange<String>> Ini::cmdArray(char shortName, const String &longName)
 	{
 		const String sn = toShortName(shortName);
 		const auto s = values(sn);
 		const auto l = values(longName);
 		for (const String &item : items(sn))
-			const_cast<Ini *>(this)->markUsed(sn, item);
+			markUsed(sn, item);
 		for (const String &item : items(longName))
-			const_cast<Ini *>(this)->markUsed(longName, item);
+			markUsed(longName, item);
 		PointerRangeHolder<String> tmp;
 		tmp.reserve(s.size() + l.size());
 		tmp.insert(tmp.end(), s.begin(), s.end());
