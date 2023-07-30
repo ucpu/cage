@@ -20,16 +20,22 @@ set_target_properties(GameNetworkingSockets_s PROPERTIES
 	UNITY_BUILD ON
 	UNITY_BUILD_BATCH_SIZE 100
 )
-file(GLOB_RECURSE prohibit_files
+file(GLOB_RECURSE donna_files
 	"GameNetworkingSockets/src/external/ed25519-donna/*.c"
 	"GameNetworkingSockets/src/external/curve25519-donna/*.c"
 )
 set_source_files_properties(
-	${prohibit_files}
+	${donna_files}
 	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages.pb.cc"
 	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_certs.pb.cc"
 	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_udp.pb.cc"
 	"GameNetworkingSockets/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp"
 	TARGET_DIRECTORY GameNetworkingSockets_s
 	PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
+)
+
+set_source_files_properties(
+	${donna_files}
+	TARGET_DIRECTORY GameNetworkingSockets_s
+	PROPERTIES COMPILE_DEFINITIONS "WIN32_LEAN_AND_MEAN;VC_EXTRALEAN;NOMINMAX"
 )

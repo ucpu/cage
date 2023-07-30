@@ -19,5 +19,6 @@ add_subdirectory(png)
 
 target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/png")
 target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/png")
+target_compile_definitions(png_static PRIVATE WIN32_LEAN_AND_MEAN VC_EXTRALEAN NOMINMAX)
 
 cage_gen_module(PNG $<TARGET_LINKER_FILE:png_static> $<TARGET_PROPERTY:png_static,INTERFACE_INCLUDE_DIRECTORIES>)
