@@ -880,7 +880,7 @@ namespace cage
 	}
 	CAGE_CORE_API Real sqrt(Real x);
 	CAGE_CORE_API Real pow(Real base, Real exponent); // base ^ exponent
-	CAGE_CORE_API Real powE(Real x); // e ^ x
+	CAGE_CORE_API Real powE(Real x); // e ^ x (exp)
 	CAGE_CORE_API Real pow2(Real x); // 2 ^ x
 	CAGE_CORE_API Real pow10(Real x); // 10 ^ x
 	CAGE_CORE_API Real log(Real x);
