@@ -19,6 +19,7 @@
 namespace cage
 {
 	class AssetOnDemand;
+	class MultiShaderProgram;
 	class GuiImpl;
 	struct HierarchyItem;
 	struct RenderableElement;
@@ -219,15 +220,11 @@ namespace cage
 
 	struct RenderableElement : public RenderableBase
 	{
-		struct Element
-		{
-			Vec4 outer;
-			Vec4 inner;
-			uint32 element = m;
-			ElementModeEnum mode = m;
-		} data;
-
+		Vec4 outer;
+		Vec4 inner;
 		const SkinData *skin = nullptr;
+		uint32 element = m;
+		ElementModeEnum mode = m;
 
 		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
@@ -245,15 +242,13 @@ namespace cage
 
 	struct RenderableImage : public RenderableBase
 	{
-		struct Image
-		{
-			Vec4 ndcPos;
-			Vec4 uvClip;
-			Vec4 aniTexFrames;
-			Holder<Texture> texture;
-		} data;
+		Holder<Texture> texture;
+		Vec4 ndcPos;
+		Vec4 uvClip;
+		Vec4 aniTexFrames;
+		bool disabled = false;
 
-		RenderableImage(ImageItem *item, Vec2 position, Vec2 size);
+		RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled);
 
 		virtual ~RenderableImage() override;
 	};
@@ -308,9 +303,8 @@ namespace cage
 		{
 			Holder<ShaderProgram> elementShader;
 			Holder<ShaderProgram> fontShader;
-			Holder<ShaderProgram> imageAnimatedShader;
-			Holder<ShaderProgram> imageStaticShader;
-			Holder<ShaderProgram> colorPickerShader[3];
+			Holder<MultiShaderProgram> imageShader;
+			Holder<ShaderProgram> colorPickerShader[3]; // H, S, V
 			Holder<Model> elementModel;
 			Holder<Model> fontModel;
 			Holder<Model> imageModel;

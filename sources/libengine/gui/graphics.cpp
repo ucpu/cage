@@ -44,13 +44,13 @@ namespace cage
 		CAGE_ASSERT(size.valid());
 		CAGE_ASSERT(item->skin->texture);
 		setClip(item->hierarchy);
-		data.element = (uint32)element;
-		data.mode = mode;
-		data.outer = item->hierarchy->impl->pointsToNdc(pos, size);
+		this->element = (uint32)element;
+		this->mode = mode;
+		this->outer = item->hierarchy->impl->pointsToNdc(pos, size);
 		const Vec4 &border = item->skin->layouts[(uint32)element].border;
 		offset(pos, size, -border);
-		data.inner = item->hierarchy->impl->pointsToNdc(pos, size);
-		skin = item->skin;
+		this->inner = item->hierarchy->impl->pointsToNdc(pos, size);
+		this->skin = item->skin;
 	}
 
 	RenderableElement::~RenderableElement()
@@ -61,10 +61,10 @@ namespace cage
 		skin->bind(q);
 		Holder<ShaderProgram> shader = impl->graphicsData.elementShader.share();
 		q->bind(shader);
-		q->uniform(shader, 0, data.outer);
-		q->uniform(shader, 1, data.inner);
-		q->uniform(shader, 2, data.element);
-		q->uniform(shader, 3, (uint32)data.mode);
+		q->uniform(shader, 0, outer);
+		q->uniform(shader, 1, inner);
+		q->uniform(shader, 2, element);
+		q->uniform(shader, 3, (uint32)mode);
 		q->draw(impl->graphicsData.elementModel);
 	}
 
@@ -103,47 +103,51 @@ namespace cage
 		data.font->render(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader, data.glyphs, data.format, data.cursor);
 	}
 
-	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
 	{
 		if (!item->texture)
 			return;
 		setClip(item->hierarchy);
-		data.texture = item->texture.share();
-		data.ndcPos = item->hierarchy->impl->pointsToNdc(position, size);
-		data.uvClip = Vec4(item->image.textureUvOffset, item->image.textureUvOffset + item->image.textureUvSize);
+		this->texture = item->texture.share();
+		this->ndcPos = item->hierarchy->impl->pointsToNdc(position, size);
+		this->uvClip = Vec4(item->image.textureUvOffset, item->image.textureUvOffset + item->image.textureUvSize);
+		this->disabled = disabled;
 		// todo format mode
-		data.aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, item->format.animationSpeed, item->format.animationOffset);
+		this->aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, item->format.animationSpeed, item->format.animationOffset);
 	}
 
 	RenderableImage::~RenderableImage()
 	{
 		if (!prepare())
 			return;
-		CAGE_ASSERT(data.texture);
+		CAGE_ASSERT(texture);
 		RenderQueue *q = impl->activeQueue;
-		q->bind(data.texture, 0);
-		Holder<ShaderProgram> shader = (data.texture->target() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader).share();
+		q->bind(texture, 0);
+		uint32 hash = 0;
+		if (texture->target() == GL_TEXTURE_2D_ARRAY)
+			hash += HashString("Animated");
+		if (disabled)
+			hash += HashString("Disabled");
+		Holder<ShaderProgram> shader = impl->graphicsData.imageShader->get(hash);
 		q->bind(shader);
-		q->uniform(shader, 0, data.ndcPos);
-		q->uniform(shader, 1, data.uvClip);
-		if (data.texture->target() == GL_TEXTURE_2D_ARRAY)
-			q->uniform(shader, 2, data.aniTexFrames);
+		q->uniform(shader, 0, ndcPos);
+		q->uniform(shader, 1, uvClip);
+		if (texture->target() == GL_TEXTURE_2D_ARRAY)
+			q->uniform(shader, 2, aniTexFrames);
 		q->draw(impl->graphicsData.imageModel);
-	}
-
-	Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi)
-	{
-		if (multi)
-			return multi->get(0);
-		return {};
 	}
 
 	void GuiImpl::GraphicsData::load(AssetManager *assetMgr)
 	{
+		const auto &defaultProgram = [](const Holder<MultiShaderProgram> &multi) -> Holder<ShaderProgram>
+		{
+			if (multi)
+				return multi->get(0);
+			return {};
+		};
 		elementShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/element.glsl")));
 		fontShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
-		imageAnimatedShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl?A")));
-		imageStaticShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl?a")));
+		imageShader = assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl"));
 		colorPickerShader[0] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F")));
 		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H")));
 		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S")));

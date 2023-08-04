@@ -879,13 +879,14 @@ namespace cage
 		return x * x;
 	}
 	CAGE_CORE_API Real sqrt(Real x);
-	CAGE_CORE_API Real pow(Real base, Real exponent); // base ^ exponent
-	CAGE_CORE_API Real powE(Real x); // e ^ x (exp)
+	CAGE_CORE_API Real pow(Real base, Real x); // base ^ x
+	CAGE_CORE_API Real pow(Real x); // e ^ x
 	CAGE_CORE_API Real pow2(Real x); // 2 ^ x
 	CAGE_CORE_API Real pow10(Real x); // 10 ^ x
-	CAGE_CORE_API Real log(Real x);
-	CAGE_CORE_API Real log2(Real x);
-	CAGE_CORE_API Real log10(Real x);
+	CAGE_CORE_API Real log(Real base, Real x); // log_base(x)
+	CAGE_CORE_API Real log(Real x); // log_e(x)
+	CAGE_CORE_API Real log2(Real x); // log_2(x)
+	CAGE_CORE_API Real log10(Real x); // log_10(x)
 	CAGE_CORE_API Real round(Real x);
 	CAGE_CORE_API Real floor(Real x);
 	CAGE_CORE_API Real ceil(Real x);
@@ -901,6 +902,24 @@ namespace cage
 	{
 		return distanceWrap((a / Rads::Full()).value, (b / Rads::Full()).value) * Rads::Full();
 	}
+
+#define GCHL_GENERATE(TYPE) \
+	CAGE_FORCE_INLINE constexpr TYPE sqr(TYPE x) noexcept \
+	{ \
+		return x * x; \
+	} \
+	CAGE_CORE_API double sqrt(TYPE x);
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+#undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE constexpr TYPE abs(TYPE a) noexcept \

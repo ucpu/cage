@@ -31,7 +31,7 @@ namespace
 	{
 		Real x = randomRange(-120, 120);
 		Real z = randomRange(-120, 120);
-		Real y = 4 * sin(Rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * powE(1 + cos(Rads(x / 20 + (z - 40) / 30)));
+		Real y = 4 * sin(Rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * pow(1 + cos(Rads(x / 20 + (z - 40) / 30)));
 		Vec3 o = Vec3(x, y, z);
 		Vec3 s = generateRandomPoint() * 0.05;
 		return Aabb(o + s, o - s);

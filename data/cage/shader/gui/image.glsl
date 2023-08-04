@@ -22,7 +22,18 @@ $define shader fragment
 in vec2 varUv;
 out vec4 outColor;
 
-$if inputSpec ^ 0 = A
+vec4 desaturateDisabled(vec4 ca)
+{
+#ifdef Disabled
+	const vec3 lum = vec3(0.299, 0.587, 0.114);
+	float bw = dot(lum, vec3(ca));
+	return vec4(bw, bw, bw, ca.a);
+#else
+	return ca;
+#endif
+}
+
+#ifdef Animated
 
 layout(location = 2) uniform vec4 aniTexFrames;
 layout(binding = 0) uniform sampler2DArray texImg;
@@ -31,16 +42,16 @@ void main()
 {
 	vec4 a = texture(texImg, vec3(varUv, aniTexFrames.x));
 	vec4 b = texture(texImg, vec3(varUv, aniTexFrames.y));
-	outColor = mix(a, b, aniTexFrames.z);
+	outColor = desaturateDisabled(mix(a, b, aniTexFrames.z));
 }
 
-$else
+#else
 
 layout(binding = 0) uniform sampler2D texImg;
 
 void main()
 {
-	outColor = texture(texImg, varUv);
+	outColor = desaturateDisabled(texture(texImg, varUv));
 }
 
-$end
+#endif

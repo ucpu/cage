@@ -405,6 +405,9 @@ namespace cage
 
 	RenderableImage ImageItem::emit(Vec2 position, Vec2 size)
 	{
-		return RenderableImage(this, position, size);
+		bool disabled = false;
+		if (hierarchy->item && dynamic_cast<WidgetItem *>(+hierarchy->item))
+			disabled = class_cast<WidgetItem *>(+hierarchy->item)->widgetState.disabled;
+		return RenderableImage(this, position, size, disabled);
 	}
 }
