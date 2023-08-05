@@ -178,7 +178,7 @@ namespace cage
 
 		Vec2 findRequestedSize();
 
-		RenderableText emit(Vec2 position, Vec2 size);
+		RenderableText emit(Vec2 position, Vec2 size, bool disabled);
 
 		void updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor);
 	};
@@ -202,7 +202,7 @@ namespace cage
 
 		Vec2 findRequestedSize();
 
-		RenderableImage emit(Vec2 position, Vec2 size);
+		RenderableImage emit(Vec2 position, Vec2 size, bool disabled);
 	};
 
 	struct RenderableBase : private Immovable
@@ -235,7 +235,7 @@ namespace cage
 	{
 		CommonTextData data;
 
-		RenderableText(TextItem *text, Vec2 position, Vec2 size);
+		RenderableText(TextItem *text, Vec2 position, Vec2 size, bool disabled);
 
 		virtual ~RenderableText() override;
 	};

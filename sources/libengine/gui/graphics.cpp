@@ -68,7 +68,7 @@ namespace cage
 		q->draw(impl->graphicsData.elementModel);
 	}
 
-	RenderableText::RenderableText(TextItem *item, Vec2 position, Vec2 size) : RenderableBase(item->hierarchy->impl)
+	RenderableText::RenderableText(TextItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
 	{
 		CAGE_ASSERT(item->color.valid());
 		if (!item->font)
@@ -80,6 +80,13 @@ namespace cage
 		item->glyphs = std::move(item->glyphs);
 		data.glyphs = item->glyphs.share();
 		data.color = item->color;
+		if (disabled)
+		{
+			static constexpr Vec3 lum = Vec3(0.299, 0.587, 0.114);
+			Real bw = dot(lum, data.color); // desaturate
+			bw = (bw - 0.5) * 0.7 + 0.5; // reduce contrast
+			data.color = Vec3(bw);
+		}
 		data.cursor = item->cursor;
 		data.format.size *= item->hierarchy->impl->pointsScale;
 		const Vec2i &orr = item->hierarchy->impl->outputResolution;

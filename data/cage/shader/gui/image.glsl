@@ -26,7 +26,8 @@ vec4 desaturateDisabled(vec4 ca)
 {
 #ifdef Disabled
 	const vec3 lum = vec3(0.299, 0.587, 0.114);
-	float bw = dot(lum, vec3(ca));
+	float bw = dot(lum, vec3(ca)); // desaturate
+	bw = (bw - 0.5) * 0.7 + 0.5; // reduce contrast
 	return vec4(bw, bw, bw, ca.a);
 #else
 	return ca;

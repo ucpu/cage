@@ -146,7 +146,7 @@ namespace
 			for (uint32 round = 0; round < 20; round++)
 			{
 				for (uint32 i = 0; i < 20; i++)
-					(void *)arena->allocate(randomRange(1, 1000), uintPtr(1) << randomRange(2, 8));
+					(void)arena->allocate(randomRange(1, 1000), uintPtr(1) << randomRange(2, 8));
 				arena->flush();
 			}
 		}

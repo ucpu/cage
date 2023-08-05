@@ -59,7 +59,7 @@ namespace cage
 				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.textArea.margin);
 				emitElement(GuiElementTypeEnum::TextArea, mode(), p, s);
-				hierarchy->text->emit(textPos, textSize);
+				hierarchy->text->emit(textPos, textSize, widgetState.disabled);
 			}
 
 			void gainFocus()

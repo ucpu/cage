@@ -343,9 +343,9 @@ namespace cage
 		return Vec2();
 	}
 
-	RenderableText TextItem::emit(Vec2 position, Vec2 size)
+	RenderableText TextItem::emit(Vec2 position, Vec2 size, bool disabled)
 	{
-		return RenderableText(this, position, size);
+		return RenderableText(this, position, size, disabled);
 	}
 
 	void TextItem::updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor)
@@ -403,11 +403,8 @@ namespace cage
 		return Vec2();
 	}
 
-	RenderableImage ImageItem::emit(Vec2 position, Vec2 size)
+	RenderableImage ImageItem::emit(Vec2 position, Vec2 size, bool disabled)
 	{
-		bool disabled = false;
-		if (hierarchy->item && dynamic_cast<WidgetItem *>(+hierarchy->item))
-			disabled = class_cast<WidgetItem *>(+hierarchy->item)->widgetState.disabled;
 		return RenderableImage(this, position, size, disabled);
 	}
 }

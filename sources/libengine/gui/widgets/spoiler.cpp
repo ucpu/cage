@@ -68,7 +68,7 @@ namespace cage
 				{
 					s[0] -= s[1];
 					s[0] = max(0, s[0]);
-					hierarchy->text->emit(p, s);
+					hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 				hierarchy->childrenEmit();
 			}
