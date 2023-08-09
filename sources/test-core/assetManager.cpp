@@ -1,6 +1,7 @@
+#include <atomic>
+
 #include "main.h"
 
-#include <atomic>
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
 #include <cage-core/assetManager.h>

@@ -1,9 +1,9 @@
-#include <cage-core/math.h>
-#include <cage-core/noiseFunction.h>
+#include <vector>
 
 #include <FastNoiseLite.h>
 
-#include <vector>
+#include <cage-core/math.h>
+#include <cage-core/noiseFunction.h>
 
 using FastNoise = FastNoiseLite;
 

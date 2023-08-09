@@ -1,9 +1,9 @@
 #ifndef guard_bufferStream_h_sadgDS_gfrdskjhgidsajgoa
 #define guard_bufferStream_h_sadgDS_gfrdskjhgidsajgoa
 
-#include "core.h"
-
 #include <iostream>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

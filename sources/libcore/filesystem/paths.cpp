@@ -1,7 +1,7 @@
+#include <vector>
+
 #include <cage-core/files.h>
 #include <cage-core/string.h>
-
-#include <vector>
 
 namespace cage
 {

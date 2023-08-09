@@ -1,7 +1,7 @@
 #ifndef guard_memoryCompression_h_edrz4gh6ret54zh6r4t
 #define guard_memoryCompression_h_edrz4gh6ret54zh6r4t
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

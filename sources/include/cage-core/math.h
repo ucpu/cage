@@ -1,7 +1,7 @@
 #ifndef guard_math_h_c0d63c8d_8398_4b39_81b4_99671252b150_
 #define guard_math_h_c0d63c8d_8398_4b39_81b4_99671252b150_
 
-#include "core.h"
+#include <cage-core/core.h>
 
 #define GCHL_DIMENSION(TYPE) (sizeof(TYPE::data) / sizeof(TYPE::data[0]))
 

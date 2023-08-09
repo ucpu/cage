@@ -1,8 +1,8 @@
-#include <cage-core/memoryArena.h>
-#include <cage-core/memoryUtils.h> // isPowerOf2
-
 #include <atomic>
 #include <cstdlib>
+
+#include <cage-core/memoryArena.h>
+#include <cage-core/memoryUtils.h> // isPowerOf2
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_random_h_623364ED17804404AAC89652473FEBAC
 #define guard_random_h_623364ED17804404AAC89652473FEBAC
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_frameBuffer_h_mnbv1cw98e7rft
 #define guard_frameBuffer_h_mnbv1cw98e7rft
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

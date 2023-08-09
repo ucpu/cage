@@ -1,7 +1,7 @@
 #ifndef guard_audioDirectionalConverter_h_dt45rzr6t54uh185
 #define guard_audioDirectionalConverter_h_dt45rzr6t54uh185
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

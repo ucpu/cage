@@ -1,7 +1,7 @@
 #ifndef guard_audio_h_C930FD49904A491DBB9CF3D0AE972EB2
 #define guard_audio_h_C930FD49904A491DBB9CF3D0AE972EB2
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

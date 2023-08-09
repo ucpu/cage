@@ -1,7 +1,7 @@
 #ifndef guard_model_h_sdx54gfgh24jksd5f4
 #define guard_model_h_sdx54gfgh24jksd5f4
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

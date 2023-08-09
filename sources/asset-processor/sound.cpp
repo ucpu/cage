@@ -1,8 +1,9 @@
+#include <utility> // swap
+
 #include "processor.h"
 
 #include <cage-core/audioAlgorithms.h>
 #include <cage-core/audioChannelsConverter.h>
-#include <utility> // swap
 
 void processSound()
 {

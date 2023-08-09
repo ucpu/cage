@@ -1,9 +1,5 @@
-#include "processor.h"
-
-#include <cage-core/hashString.h>
-#include <cage-core/image.h>
-#include <cage-core/imageAlgorithms.h>
-#include <cage-core/rectPacking.h>
+#include <algorithm>
+#include <vector>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -19,8 +15,12 @@
 #include <msdfgen/ext/import-font.h>
 #include <msdfgen/msdfgen.h>
 
-#include <algorithm>
-#include <vector>
+#include "processor.h"
+
+#include <cage-core/hashString.h>
+#include <cage-core/image.h>
+#include <cage-core/imageAlgorithms.h>
+#include <cage-core/rectPacking.h>
 
 namespace
 {

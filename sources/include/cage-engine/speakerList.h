@@ -1,7 +1,7 @@
 #ifndef guard_speakerList_h_m1n5ewqa7r8fuj4
 #define guard_speakerList_h_m1n5ewqa7r8fuj4
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

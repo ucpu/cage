@@ -1,7 +1,7 @@
 #ifndef guard_shaderProgram_h_qdsxc187uijf8c7frg
 #define guard_shaderProgram_h_qdsxc187uijf8c7frg
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

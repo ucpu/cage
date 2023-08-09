@@ -1,7 +1,7 @@
 #ifndef guard_memoryArena_h_yysrtdf56hhuio784hg12edr
 #define guard_memoryArena_h_yysrtdf56hhuio784hg12edr
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

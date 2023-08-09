@@ -1,7 +1,7 @@
 #ifndef guard_geometry_h_waesfes54hg96r85t4h6rt4h564rzth_
 #define guard_geometry_h_waesfes54hg96r85t4h6rt4h564rzth_
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

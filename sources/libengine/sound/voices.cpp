@@ -1,13 +1,12 @@
-#include <cage-core/audioChannelsConverter.h>
-#include <cage-core/audioDirectionalConverter.h>
-#include <cage-core/sampleRateConverter.h>
-
-#include <cage-engine/sound.h>
-#include <cage-engine/voices.h>
+#include <vector>
 
 #include <plf_colony.h>
 
-#include <vector>
+#include <cage-core/audioChannelsConverter.h>
+#include <cage-core/audioDirectionalConverter.h>
+#include <cage-core/sampleRateConverter.h>
+#include <cage-engine/sound.h>
+#include <cage-engine/voices.h>
 
 namespace cage
 {

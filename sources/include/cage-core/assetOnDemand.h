@@ -1,7 +1,7 @@
 #ifndef guard_assetsOnDemand_h_wesdxfc74j
 #define guard_assetsOnDemand_h_wesdxfc74j
 
-#include "typeIndex.h"
+#include <cage-core/typeIndex.h>
 
 namespace cage
 {

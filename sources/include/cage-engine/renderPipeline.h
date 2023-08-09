@@ -1,9 +1,9 @@
 #ifndef guard_renderPipeline_h_4hg1s8596drfh4
 #define guard_renderPipeline_h_4hg1s8596drfh4
 
-#include "provisionalHandles.h"
-#include "scene.h"
-#include "sceneScreenSpaceEffects.h"
+#include <cage-engine/provisionalHandles.h>
+#include <cage-engine/scene.h>
+#include <cage-engine/sceneScreenSpaceEffects.h>
 
 namespace cage
 {

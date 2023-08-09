@@ -1,16 +1,15 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
-#include <cage-core/entities.h>
+#include <vector>
 
+#include <cage-core/entities.h>
 #include <cage-engine/font.h> // FontFormat
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
 #include <cage-engine/renderQueue.h> // UubRange
 #include <cage-engine/window.h> // WindowEventListeners
-
-#include <vector>
 
 #define GUI_HAS_COMPONENT(T, E) (E)->has<Gui##T##Component>()
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()

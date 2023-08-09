@@ -1,15 +1,15 @@
-#include <cage-core/geometry.h>
-#include <cage-core/memoryAllocators.h>
-#include <cage-core/memoryArena.h>
-#include <cage-core/spatialStructure.h>
-
-#include <plf_colony.h>
-#include <unordered_dense.h>
-
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <vector>
+
+#include <plf_colony.h>
+#include <unordered_dense.h>
+
+#include <cage-core/geometry.h>
+#include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryArena.h>
+#include <cage-core/spatialStructure.h>
 
 namespace cage
 {

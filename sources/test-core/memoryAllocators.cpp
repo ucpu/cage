@@ -1,10 +1,11 @@
+#include <list>
+#include <utility>
+#include <vector>
+
 #include "main.h"
 
 #include <cage-core/math.h>
 #include <cage-core/memoryAllocators.h>
-#include <list>
-#include <utility>
-#include <vector>
 
 namespace
 {

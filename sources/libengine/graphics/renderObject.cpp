@@ -1,8 +1,8 @@
-#include <cage-engine/graphicsError.h>
-#include <cage-engine/renderObject.h>
-
 #include <algorithm>
 #include <vector>
+
+#include <cage-engine/graphicsError.h>
+#include <cage-engine/renderObject.h>
 
 namespace cage
 {

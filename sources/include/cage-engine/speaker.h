@@ -1,7 +1,7 @@
 #ifndef guard_speaker_h_sdfh4df6h4drt6see
 #define guard_speaker_h_sdfh4df6h4drt6see
 
-#include "soundCommon.h"
+#include <cage-engine/soundCommon.h>
 
 namespace cage
 {

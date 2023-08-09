@@ -1,11 +1,12 @@
 #include <algorithm> // lower_bound
+#include <numeric> // iota
+#include <set>
+#include <vector>
+
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/meshExport.h>
 #include <cage-core/serialization.h>
-#include <numeric> // iota
-#include <set>
-#include <vector>
 
 namespace cage
 {

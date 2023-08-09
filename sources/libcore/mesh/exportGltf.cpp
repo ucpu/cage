@@ -1,3 +1,6 @@
+#include <string>
+#include <vector>
+
 #include <cage-core/files.h>
 #include <cage-core/geometry.h>
 #include <cage-core/image.h>
@@ -6,8 +9,6 @@
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
 #include <cage-core/tasks.h>
-#include <string>
-#include <vector>
 
 namespace cage
 {

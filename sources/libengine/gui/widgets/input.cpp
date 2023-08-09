@@ -1,4 +1,5 @@
 #include "../private.h"
+
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
 #include <cage-core/utf.h>

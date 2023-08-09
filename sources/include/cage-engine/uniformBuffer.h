@@ -1,7 +1,7 @@
 #ifndef guard_uniformBuffer_h_sdr5g4t5edr4g65e4rg6
 #define guard_uniformBuffer_h_sdr5g4t5edr4g65e4rg6
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

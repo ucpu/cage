@@ -1,12 +1,13 @@
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
+
 #include "processor.h"
 
 #include <cage-core/hashString.h>
 #include <cage-core/timer.h>
 #include <cage-engine/opengl.h>
-#include <map>
-#include <set>
-#include <string>
-#include <vector>
 
 namespace
 {

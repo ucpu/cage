@@ -1,13 +1,12 @@
+#include <set>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/string.h>
-
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/uniformBuffer.h>
-
-#include <set>
 
 namespace cage
 {

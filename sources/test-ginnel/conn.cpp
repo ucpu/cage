@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include <cage-core/config.h>
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -7,10 +9,6 @@
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
 #include <cage-core/variableSmoothingBuffer.h>
-
-using namespace cage;
-
-#include "conn.h"
 
 namespace
 {

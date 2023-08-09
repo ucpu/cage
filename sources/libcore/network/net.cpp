@@ -1,8 +1,8 @@
+#include "net.h"
+
 #include <cage-core/endianness.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
-
-#include "net.h"
 
 namespace cage
 {

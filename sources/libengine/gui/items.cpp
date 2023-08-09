@@ -1,10 +1,9 @@
+#include "private.h"
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/textPack.h>
-
 #include <cage-engine/texture.h>
-
-#include "private.h"
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_assetHeader_h_k1i7178asdvujhz89jhg14j
 #define guard_assetHeader_h_k1i7178asdvujhz89jhg14j
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_lineReader_h_09089ef7_374c_4571_85be_3e7de9acc3aa_
 #define guard_lineReader_h_09089ef7_374c_4571_85be_3e7de9acc3aa_
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

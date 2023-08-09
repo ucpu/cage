@@ -1,3 +1,9 @@
+#include <algorithm>
+#include <vector>
+
+#include <plf_colony.h>
+#include <unordered_dense.h>
+
 #include <cage-core/entities.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
@@ -5,12 +11,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
-
-#include <plf_colony.h>
-#include <unordered_dense.h>
-
-#include <algorithm>
-#include <vector>
 
 namespace cage
 {

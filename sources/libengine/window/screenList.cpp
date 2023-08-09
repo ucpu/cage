@@ -1,8 +1,9 @@
+#include <vector>
+
 #include "private.h"
+
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-engine/screenList.h>
-
-#include <vector>
 
 namespace cage
 {

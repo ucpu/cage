@@ -1,10 +1,11 @@
+#include <map>
+#include <vector>
+
 #include "main.h"
 
 #include <cage-core/enumerate.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/pointerRangeHolder.h>
-#include <map>
-#include <vector>
 
 namespace
 {

@@ -1,5 +1,3 @@
-#include <cage-core/core.h>
-
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include <mutex>
 	#include "incWin.h"
@@ -7,6 +5,8 @@
 	#pragma comment(lib, "DbgHelp.lib")
 	#define EXCEPTION_CPP_UNKNOWN 0xE06D7363
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
+
+	#include <cage-core/core.h>
 
 namespace cage
 {

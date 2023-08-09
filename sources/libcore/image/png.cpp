@@ -1,8 +1,10 @@
+#include <vector>
+
+#include <png.h>
+
 #include "image.h"
 
 #include <cage-core/endianness.h>
-#include <png.h>
-#include <vector>
 
 namespace cage
 {

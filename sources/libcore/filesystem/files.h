@@ -1,9 +1,9 @@
 #ifndef guard_files_h_sdrgds45rfgt
 #define guard_files_h_sdrgds45rfgt
 
-#include <cage-core/files.h>
-
 #include <memory>
+
+#include <cage-core/files.h>
 
 namespace cage
 {

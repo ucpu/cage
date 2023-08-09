@@ -1,15 +1,14 @@
+#include "private.h"
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/hashString.h>
 #include <cage-core/serialization.h>
 #include <cage-core/swapBufferGuard.h>
-
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h> // GL_TEXTURE_2D_ARRAY
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
-
-#include "private.h"
 
 namespace cage
 {

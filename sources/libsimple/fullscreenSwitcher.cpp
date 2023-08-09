@@ -1,14 +1,13 @@
+#include <cstdlib>
+
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/files.h>
 #include <cage-core/string.h>
 #include <cage-engine/window.h>
-
 #include <cage-simple/engine.h>
 #include <cage-simple/fullscreenSwitcher.h>
-
-#include <cstdlib>
 
 namespace cage
 {

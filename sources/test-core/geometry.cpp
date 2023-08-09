@@ -1,9 +1,10 @@
+#include <cmath>
+
 #include "main.h"
 
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
 #include <cage-core/math.h>
-#include <cmath>
 
 void test(Real a, Real b);
 void test(Rads a, Rads b);

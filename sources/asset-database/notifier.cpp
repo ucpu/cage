@@ -1,10 +1,10 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/debug.h>
-#include <cage-core/networkTcp.h>
+#include <vector>
 
 #include "database.h"
 
-#include <vector>
+#include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
+#include <cage-core/networkTcp.h>
 
 extern ConfigString configPathInput;
 extern ConfigSint32 configNotifierPort;

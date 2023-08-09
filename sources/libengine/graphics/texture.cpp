@@ -1,7 +1,6 @@
 #include <cage-core/image.h>
 #include <cage-core/macros.h>
 #include <cage-core/serialization.h>
-
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>

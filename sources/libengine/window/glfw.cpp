@@ -1,10 +1,11 @@
 #include "private.h"
-#include <cage-core/concurrent.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#define GLFW_EXPOSE_NATIVE_WIN32
 #endif // CAGE_SYSTEM_WINDOWS
 #include <GLFW/glfw3native.h>
+
+#include <cage-core/concurrent.h>
 
 namespace cage
 {

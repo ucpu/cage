@@ -1,10 +1,10 @@
+#include <unordered_dense.h>
+
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
 #include <cage-core/textPack.h>
-
-#include <unordered_dense.h>
 
 namespace cage
 {

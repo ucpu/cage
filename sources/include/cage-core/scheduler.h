@@ -1,7 +1,7 @@
 #ifndef guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 #define guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 
-#include "variableSmoothingBuffer.h"
+#include <cage-core/variableSmoothingBuffer.h>
 
 namespace cage
 {

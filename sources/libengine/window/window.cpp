@@ -1,13 +1,13 @@
+#include <atomic>
+#include <vector>
+
+#include "private.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/config.h>
 #include <cage-core/flatSet.h>
-
-#include "private.h"
 #include <cage-engine/window.h>
-
-#include <atomic>
-#include <vector>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#define GCHL_WINDOWS_THREAD

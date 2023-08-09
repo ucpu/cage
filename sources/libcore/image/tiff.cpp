@@ -1,8 +1,9 @@
+#include <tiffio.h>
+#include <tiffio.hxx>
+
 #include "image.h"
 
 #include <cage-core/stdBufferStream.h>
-#include <tiffio.h>
-#include <tiffio.hxx>
 
 namespace cage
 {

@@ -1,8 +1,8 @@
-#include <cage-core/rectPacking.h>
-
 #include <vector>
 
 #include <stb_rect_pack.h>
+
+#include <cage-core/rectPacking.h>
 
 namespace cage
 {

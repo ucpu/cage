@@ -1,5 +1,5 @@
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/utf.h>
+#include <cstring>
+#include <exception>
 
 #ifdef CAGE_DEBUG
 	#include "utf8/checked.h"
@@ -11,8 +11,8 @@ namespace utf8
 }
 #endif
 
-#include <cstring>
-#include <exception>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/utf.h>
 
 #define TRY_BEGIN try
 #define TRY_END \

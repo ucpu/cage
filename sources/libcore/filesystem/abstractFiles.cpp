@@ -1,15 +1,15 @@
+#include <atomic>
+#include <map>
+#include <vector>
+
+#include "files.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/stdHash.h>
 #include <cage-core/string.h>
-
-#include "files.h"
-
-#include <atomic>
-#include <map>
-#include <vector>
 
 namespace cage
 {

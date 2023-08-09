@@ -1,10 +1,11 @@
+#include <initializer_list>
+
 #include "main.h"
 
 #include <cage-core/collider.h>
 #include <cage-core/collisionStructure.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
-#include <initializer_list>
 
 void testCollisionStructure()
 {

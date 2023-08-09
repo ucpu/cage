@@ -1,11 +1,11 @@
 #ifndef guard_entitiesVisitor_h_m1nb54v6sre8t
 #define guard_entitiesVisitor_h_m1nb54v6sre8t
 
-#include "entities.h"
-
 #include <algorithm>
 #include <tuple>
 #include <vector>
+
+#include <cage-core/entities.h>
 
 namespace cage
 {

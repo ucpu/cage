@@ -1,10 +1,11 @@
+#include <cstdio> // fgets, ferror
+#include <cstring> // strlen
+#include <map>
+
 #include "processor.h"
 
 #include <cage-core/hashString.h>
 #include <cage-core/logger.h>
-#include <cstdio> // fgets, ferror
-#include <cstring> // strlen
-#include <map>
 
 // passed names
 String inputDirectory; // c:/asset

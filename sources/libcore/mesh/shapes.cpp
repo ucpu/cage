@@ -1,6 +1,6 @@
-#include <cage-core/meshShapes.h>
-
 #include <unordered_map>
+
+#include <cage-core/meshShapes.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
+#include "database.h"
+
 #include <cage-core/files.h> // pathSimplify
 #include <cage-core/ini.h>
-
-#include "database.h"
 
 ConfigString configPathInput("cage-asset-database/path/input", "data");
 ConfigString configPathOutput("cage-asset-database/path/output", "assets");

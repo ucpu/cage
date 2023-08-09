@@ -1,7 +1,7 @@
 #ifndef guard_imageAlgorithms_h_fgzhj4gbv1r
 #define guard_imageAlgorithms_h_fgzhj4gbv1r
 
-#include "image.h"
+#include <cage-core/image.h>
 
 namespace cage
 {

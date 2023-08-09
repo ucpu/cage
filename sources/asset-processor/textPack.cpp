@@ -1,9 +1,10 @@
+#include <map>
+
 #include "processor.h"
 
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
 #include <cage-core/textPack.h>
-#include <map>
 
 void processTextpack()
 {

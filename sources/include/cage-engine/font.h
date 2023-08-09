@@ -1,7 +1,7 @@
 #ifndef guard_font_h_oiu56trd4svdf5
 #define guard_font_h_oiu56trd4svdf5
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

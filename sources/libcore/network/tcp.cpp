@@ -1,10 +1,10 @@
-#include <cage-core/lineReader.h>
-#include <cage-core/math.h> // min
-#include <cage-core/networkTcp.h>
+#include <vector>
 
 #include "net.h"
 
-#include <vector>
+#include <cage-core/lineReader.h>
+#include <cage-core/math.h> // min
+#include <cage-core/networkTcp.h>
 
 namespace cage
 {

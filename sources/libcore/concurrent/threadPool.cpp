@@ -1,9 +1,9 @@
+#include <exception>
+#include <vector>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/logger.h>
 #include <cage-core/threadPool.h>
-
-#include <exception>
-#include <vector>
 
 namespace cage
 {

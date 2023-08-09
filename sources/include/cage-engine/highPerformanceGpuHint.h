@@ -1,7 +1,7 @@
 #ifndef guard_highPerformanceGpuHint_h_1ds32fg4dhzhh
 #define guard_highPerformanceGpuHint_h_1ds32fg4dhzhh
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 extern "C"
 {

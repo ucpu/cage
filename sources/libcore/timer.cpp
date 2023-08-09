@@ -1,5 +1,3 @@
-#include <cage-core/timer.h>
-
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "incWin.h"
 #else
@@ -9,6 +7,8 @@
 #ifndef CAGE_SYSTEM_WINDOWS
 static constexpr clockid_t clockid = CLOCK_REALTIME;
 #endif
+
+#include <cage-core/timer.h>
 
 namespace cage
 {

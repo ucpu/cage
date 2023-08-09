@@ -1,5 +1,10 @@
 #ifdef CAGE_PROFILING_ENABLED
 
+	#include <atomic>
+	#include <string>
+	#include <unordered_map>
+	#include <vector>
+
 	#include <cage-core/concurrent.h>
 	#include <cage-core/concurrentQueue.h>
 	#include <cage-core/config.h>
@@ -10,11 +15,6 @@
 	#include <cage-core/profiling.h>
 	#include <cage-core/stdHash.h>
 	#include <cage-core/string.h>
-
-	#include <atomic>
-	#include <string>
-	#include <unordered_map>
-	#include <vector>
 
 cage::PointerRange<const cage::uint8> profiling_htm();
 

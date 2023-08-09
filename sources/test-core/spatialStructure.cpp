@@ -1,13 +1,14 @@
+#include <algorithm>
+#include <set>
+#include <vector>
+
 #include "main.h"
 
-#include <algorithm>
 #include <cage-core/config.h>
 #include <cage-core/geometry.h>
 #include <cage-core/math.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/timer.h>
-#include <set>
-#include <vector>
 
 namespace
 {

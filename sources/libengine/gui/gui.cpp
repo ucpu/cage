@@ -1,13 +1,13 @@
+#include <algorithm>
+#include <unordered_map>
+
+#include "private.h"
+
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/macros.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-engine/renderQueue.h>
-
-#include "private.h"
-
-#include <algorithm>
-#include <unordered_map>
 
 #define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Tooltip, TooltipMarker
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler

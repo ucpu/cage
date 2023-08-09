@@ -1,3 +1,8 @@
+#include <atomic>
+#include <exception>
+
+#include "engine.h"
+
 #include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/camera.h>
@@ -15,7 +20,6 @@
 #include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
-
 #include <cage-engine/font.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/guiManager.h>
@@ -33,13 +37,7 @@
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/voices.h>
 #include <cage-engine/window.h>
-
 #include <cage-simple/statisticsGui.h>
-
-#include "engine.h"
-
-#include <atomic>
-#include <exception>
 
 namespace cage
 {

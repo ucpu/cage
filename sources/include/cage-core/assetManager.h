@@ -1,8 +1,8 @@
 #ifndef guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 #define guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 
-#include "events.h"
-#include "typeIndex.h"
+#include <cage-core/events.h>
+#include <cage-core/typeIndex.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_events_h_h544fdjh44jjh9s
 #define guard_events_h_h544fdjh44jjh9s
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

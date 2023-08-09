@@ -1,6 +1,6 @@
-#include <cage-core/enumerate.h>
-
 #include "../private.h"
+
+#include <cage-core/enumerate.h>
 
 namespace cage
 {

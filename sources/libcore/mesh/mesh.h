@@ -1,6 +1,6 @@
-#include <cage-core/mesh.h>
-
 #include <vector>
+
+#include <cage-core/mesh.h>
 
 namespace cage
 {

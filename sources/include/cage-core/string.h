@@ -1,7 +1,7 @@
 #ifndef guard_string_h_sdrgh4s6ert4gzh6r5t4sedg48s9
 #define guard_string_h_sdrgh4s6ert4gzh6r5t4sedg48s9
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

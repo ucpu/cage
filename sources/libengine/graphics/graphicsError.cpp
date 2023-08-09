@@ -1,16 +1,15 @@
+#include <cstdlib>
+#include <cstring>
+#include <map>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/lineReader.h>
-
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/uniformBuffer.h>
 #include <cage-engine/window.h>
-
-#include <cstdlib>
-#include <cstring>
-#include <map>
 
 namespace cage
 {

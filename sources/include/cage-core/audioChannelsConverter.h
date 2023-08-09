@@ -1,7 +1,7 @@
 #ifndef guard_audioChannelsConverter_h_56dtj4ew89a
 #define guard_audioChannelsConverter_h_56dtj4ew89a
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

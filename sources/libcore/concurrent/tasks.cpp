@@ -1,11 +1,12 @@
 #include <atomic>
+#include <exception>
+#include <mutex>
+#include <vector>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/profiling.h>
 #include <cage-core/tasks.h>
-#include <exception>
-#include <mutex>
-#include <vector>
 
 namespace cage
 {

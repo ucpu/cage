@@ -1,7 +1,7 @@
 #ifndef guard_meshShapes_h_vvcj14du74cu89f
 #define guard_meshShapes_h_vvcj14du74cu89f
 
-#include "mesh.h"
+#include <cage-core/mesh.h>
 
 namespace cage
 {

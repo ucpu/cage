@@ -1,12 +1,13 @@
+#include <set>
+
 #include "main.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/threadPool.h>
-
-#include <set>
 
 namespace
 {

@@ -1,6 +1,7 @@
+#include <atomic>
+
 #include "main.h"
 
-#include <atomic>
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 #include <cage-core/swapBufferGuard.h>

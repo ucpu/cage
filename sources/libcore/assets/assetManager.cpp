@@ -1,3 +1,9 @@
+#include <algorithm>
+#include <atomic>
+#include <vector>
+
+#include <unordered_dense.h>
+
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
 #include <cage-core/assetManager.h>
@@ -15,12 +21,6 @@
 #include <cage-core/stdHash.h>
 #include <cage-core/string.h>
 #include <cage-core/tasks.h>
-
-#include <algorithm>
-#include <atomic>
-#include <vector>
-
-#include <unordered_dense.h>
 
 namespace cage
 {

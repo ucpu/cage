@@ -1,8 +1,8 @@
-#include <cage-core/hashes.h>
-
 #include <algorithm>
 #include <array>
 #include <vector>
+
+#include <cage-core/hashes.h>
 
 namespace cage
 {

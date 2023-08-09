@@ -1,13 +1,13 @@
+#include <vector>
+
+#include <unordered_dense.h>
+
 #include <cage-core/assetManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/tasks.h>
-
-#include <unordered_dense.h>
-
-#include <vector>
 
 namespace cage
 {

@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <vector>
+
+#include "main.h"
 
 namespace
 {

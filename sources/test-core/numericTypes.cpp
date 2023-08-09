@@ -1,9 +1,9 @@
+#include <array>
+#include <cmath> // std::isnan
+
 #include "main.h"
 
 #include <cage-core/endianness.h>
-#include <cmath> // std::isnan
-
-#include <array>
 
 void testNumericTypes()
 {

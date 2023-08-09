@@ -1,3 +1,13 @@
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <vector>
+
+#include <plf_list.h>
+#include <unordered_dense.h>
+
+#include "net.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
@@ -5,16 +15,6 @@
 #include <cage-core/math.h> // random
 #include <cage-core/networkGinnel.h>
 #include <cage-core/serialization.h>
-
-#include "net.h"
-
-#include <plf_list.h>
-#include <unordered_dense.h>
-
-#include <algorithm>
-#include <map>
-#include <memory>
-#include <vector>
 
 namespace cage
 {

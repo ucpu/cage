@@ -1,7 +1,7 @@
 #ifndef guard_provisionalHandles_h_zj6h8sa7eg51f0z5ui
 #define guard_provisionalHandles_h_zj6h8sa7eg51f0z5ui
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

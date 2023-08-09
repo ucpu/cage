@@ -1,10 +1,11 @@
-#include "processor.h"
-
 #include <algorithm>
-#include <cage-core/hashString.h>
-#include <cage-core/ini.h>
 #include <set>
 #include <vector>
+
+#include "processor.h"
+
+#include <cage-core/hashString.h>
+#include <cage-core/ini.h>
 
 namespace
 {

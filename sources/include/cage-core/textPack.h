@@ -1,7 +1,7 @@
 #ifndef guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1
 #define guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

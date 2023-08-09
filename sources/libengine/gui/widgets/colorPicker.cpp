@@ -1,6 +1,6 @@
-#include <cage-core/color.h>
-
 #include "../private.h"
+
+#include <cage-core/color.h>
 
 namespace cage
 {
