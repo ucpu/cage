@@ -28,7 +28,7 @@ macro(cage_build_configuration)
 	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 	set(CMAKE_INSTALL_RPATH "\$ORIGIN")
 
-	if(MSVC)
+	if(WIN32)
 		# enable UTF-8
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /utf-8")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
@@ -64,7 +64,7 @@ macro(cage_build_configuration)
 		endif()
 
 		# 8 MB default stack size
-		if(WIN32)
+		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
 		else()
 			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack,8388608")
