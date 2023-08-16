@@ -1,7 +1,7 @@
 #ifndef guard_systemInformation_h_dsgdfhtdhsdirgrdht54fd54hj54jz
 #define guard_systemInformation_h_dsgdfhtdhsdirgrdht54fd54hj54jz
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

@@ -1,9 +1,3 @@
-#include "main.h"
-
-#include <cage-core/containerSerialization.h>
-#include <cage-core/flatSet.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/stdHash.h>
 #include <list>
 #include <map>
 #include <set>
@@ -11,6 +5,13 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "main.h"
+
+#include <cage-core/containerSerialization.h>
+#include <cage-core/flatSet.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/stdHash.h>
 
 void testContainerSerialization()
 {

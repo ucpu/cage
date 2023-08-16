@@ -1,6 +1,6 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/lineReader.h>
-#include <cage-core/process.h>
+#include <cerrno>
+#include <cstdlib>
+#include <string>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "../incWin.h"
@@ -14,9 +14,9 @@
 	#include <unistd.h>
 #endif
 
-#include <cerrno>
-#include <cstdlib>
-#include <string>
+#include <cage-core/concurrent.h>
+#include <cage-core/lineReader.h>
+#include <cage-core/process.h>
 
 namespace cage
 {

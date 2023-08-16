@@ -1,7 +1,10 @@
-#include "mesh.h"
-
 #include <algorithm> // std::erase_if
 #include <array>
+#include <iterator> // back_insterter
+#include <numeric> // std::iota
+
+#include "mesh.h"
+
 #include <cage-core/collider.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/geometry.h>
@@ -11,8 +14,6 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/tasks.h>
-#include <iterator> // back_insterter
-#include <numeric> // std::iota
 
 namespace cage
 {

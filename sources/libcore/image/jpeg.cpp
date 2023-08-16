@@ -1,9 +1,9 @@
-#include "image.h"
-
 // clang-format off
 #include <stdio.h> // needed for jpeglib
 #include <jpeglib.h>
 // clang-format on
+
+#include "image.h"
 
 namespace cage
 {

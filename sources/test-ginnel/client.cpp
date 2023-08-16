@@ -1,12 +1,9 @@
+#include "common.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/core.h>
 #include <cage-core/networkGinnel.h>
-
-using namespace cage;
-
-#include "conn.h"
-#include "runner.h"
 
 void runClient()
 {

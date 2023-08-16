@@ -1,6 +1,6 @@
-#include <cage-core/sampleRateConverter.h>
-
 #include "samplerate.h"
+
+#include <cage-core/sampleRateConverter.h>
 
 namespace cage
 {

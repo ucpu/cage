@@ -1,8 +1,8 @@
+#include <zstd.h>
+
 #include <cage-core/math.h> // clamp
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryCompression.h>
-
-#include <zstd.h>
 
 namespace cage
 {

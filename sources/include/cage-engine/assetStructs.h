@@ -2,8 +2,7 @@
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
 #include <cage-core/geometry.h>
-
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

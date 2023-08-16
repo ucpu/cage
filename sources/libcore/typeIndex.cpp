@@ -1,11 +1,11 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/typeIndex.h>
-
-#include <unordered_dense.h>
-
 #include <array>
 #include <cstring>
 #include <exception> // std::terminate
+
+#include <unordered_dense.h>
+
+#include <cage-core/concurrent.h>
+#include <cage-core/typeIndex.h>
 
 namespace cage
 {

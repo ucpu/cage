@@ -1,16 +1,15 @@
+#include <vector>
+
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
 #include <cage-core/mesh.h>
 #include <cage-core/meshImport.h>
-
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/uniformBuffer.h>
-
-#include <vector>
 
 namespace cage
 {

@@ -1,7 +1,8 @@
+#include <vector>
+
 #include "main.h"
 
 #include <cage-core/blockContainer.h>
-#include <vector>
 
 namespace
 {

@@ -1,7 +1,7 @@
 #ifndef guard_utf_h_C5D02E44A78446C9AAB8A83E5B27BC60
 #define guard_utf_h_C5D02E44A78446C9AAB8A83E5B27BC60
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

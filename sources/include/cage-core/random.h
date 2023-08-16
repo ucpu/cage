@@ -1,7 +1,7 @@
 #ifndef guard_random_h_623364ED17804404AAC89652473FEBAC
 #define guard_random_h_623364ED17804404AAC89652473FEBAC
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {
@@ -17,6 +17,7 @@ namespace cage
 		uint64 next();
 
 		Real randomChance(); // 0 to 1; including 0, excluding 1
+		double randomChanceDouble(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max);
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);

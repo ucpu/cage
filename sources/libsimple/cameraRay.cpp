@@ -14,6 +14,8 @@ namespace cage
 		CAGE_ASSERT(camera->has<CameraComponent>());
 		CAGE_ASSERT(screenPosition.valid());
 		const Vec2i res = engineWindow()->resolution();
+		if (res[0] <= 0 || res[1] <= 0)
+			return Line(); // the window is minimized
 		Vec2 p = screenPosition;
 		p /= Vec2(res[0], res[1]);
 		p = p * 2 - 1;

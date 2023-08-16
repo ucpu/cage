@@ -1,7 +1,7 @@
 #ifndef guard_logger_h_0d9702a6_c7ca_4260_baff_7fc1b3c1dec5_
 #define guard_logger_h_0d9702a6_c7ca_4260_baff_7fc1b3c1dec5_
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

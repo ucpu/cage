@@ -1,7 +1,7 @@
 #ifndef guard_collider_h_qeqwdrwuegfoixwoihediuzerw456
 #define guard_collider_h_qeqwdrwuegfoixwoihediuzerw456
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

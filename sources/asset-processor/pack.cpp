@@ -1,8 +1,9 @@
+#include <set>
+
 #include "processor.h"
 
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
-#include <set>
 
 void processPack()
 {

@@ -1,7 +1,7 @@
 #ifndef guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 #define guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

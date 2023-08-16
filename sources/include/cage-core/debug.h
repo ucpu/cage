@@ -1,7 +1,7 @@
 #ifndef guard_debug_h_564gv56esr4tfj
 #define guard_debug_h_564gv56esr4tfj
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

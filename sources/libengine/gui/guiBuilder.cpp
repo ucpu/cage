@@ -1,7 +1,7 @@
+#include <vector>
+
 #include <cage-core/entities.h>
 #include <cage-engine/guiBuilder.h>
-
-#include <vector>
 
 namespace cage
 {

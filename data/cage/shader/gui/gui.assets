@@ -7,8 +7,7 @@ gui.pack
 scheme = shader
 font.glsl
 element.glsl
-image.glsl?a
-image.glsl?A
+image.glsl
 colorPicker.glsl?F # Flat
 colorPicker.glsl?H # Hue
 colorPicker.glsl?S # Saturation & Value

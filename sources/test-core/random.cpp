@@ -48,33 +48,48 @@ void testRandom()
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec2i v = g.randomRange2i(10, 1000);
-			CAGE_TEST(v == Vec2i(721, 670));
+			CAGE_TEST(v == Vec2i(730, 955));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec3i v = g.randomRange3i(10, 1000);
-			CAGE_TEST(v == Vec3i(721, 670, 70));
+			CAGE_TEST(v == Vec3i(730, 955, 866));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec4i v = g.randomRange4i(10, 1000);
-			CAGE_TEST(v == Vec4i(721, 670, 70, 385));
+			CAGE_TEST(v == Vec4i(730, 955, 866, 863));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec2 v = g.randomRange2(10, 1000);
-			test(v, Vec2(616.199036, 286.644745));
+			test(v, Vec2(10.4162464, 931.966248));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec3 v = g.randomRange3(10, 1000);
-			test(v, Vec3(616.199036, 286.644745, 843.249634));
+			test(v, Vec3(10.4162464, 931.966248, 645.401428));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec4 v = g.randomRange4(10, 1000);
-			test(v, Vec4(616.199036, 286.644745, 843.249634, 29.7623386));
+			test(v, Vec4(10.4162464, 931.966248, 645.401428, 848.857239));
 		}
+	}
+
+	{
+		CAGE_TESTCASE("random distribution");
+		RandomGenerator g1(1346519564496, 42245614964156);
+		constexpr uint32 count = 5;
+		uint32 buckets[count] = {};
+		for (uint32 i = 0; i < 1000; i++)
+		{
+			const uint32 r = g1.randomRange(0u, count);
+			CAGE_TEST(r < count);
+			buckets[r]++;
+		}
+		for (uint32 v : buckets)
+			CAGE_LOG(SeverityEnum::Info, "random-distribution", Stringizer() + v);
 	}
 
 	{

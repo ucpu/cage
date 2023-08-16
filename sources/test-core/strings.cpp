@@ -1,15 +1,16 @@
-#include "main.h"
-
 #include <algorithm>
-#include <cage-core/files.h>
-#include <cage-core/hashString.h>
-#include <cage-core/math.h>
-#include <cage-core/string.h>
 #include <cmath> // std::abs
 #include <cstring>
 #include <map>
 #include <random>
 #include <vector>
+
+#include "main.h"
+
+#include <cage-core/files.h>
+#include <cage-core/hashString.h>
+#include <cage-core/math.h>
+#include <cage-core/string.h>
 
 void test(Real a, Real b);
 

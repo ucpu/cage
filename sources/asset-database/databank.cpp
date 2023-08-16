@@ -1,14 +1,14 @@
+#include <algorithm>
+#include <vector>
+
+#include "database.h"
+
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
-
-#include "database.h"
-
-#include <algorithm>
-#include <vector>
 
 extern ConfigString configPathInput;
 extern ConfigString configPathOutput;

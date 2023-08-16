@@ -1,12 +1,12 @@
+#include <algorithm>
+#include <vector>
+
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
-
-#include <algorithm>
-#include <vector>
 
 namespace cage
 {

@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/collider.h>
@@ -7,8 +9,6 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/string.h>
 #include <cage-core/textPack.h>
-
-#include <vector>
 
 namespace cage
 {

@@ -1,12 +1,3 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/config.h>
-#include <cage-core/debug.h>
-#include <cage-core/files.h>
-#include <cage-core/logger.h>
-#include <cage-core/string.h>
-#include <cage-core/systemInformation.h>
-#include <cage-core/timer.h>
-
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -15,6 +6,15 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "incWin.h" // SetConsoleCP
 #endif
+
+#include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/debug.h>
+#include <cage-core/files.h>
+#include <cage-core/logger.h>
+#include <cage-core/string.h>
+#include <cage-core/systemInformation.h>
+#include <cage-core/timer.h>
 
 namespace cage
 {

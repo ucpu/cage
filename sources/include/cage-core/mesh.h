@@ -1,7 +1,7 @@
 #ifndef guard_mesh_h_CA052442302D4C3BAA9293200603C20A
 #define guard_mesh_h_CA052442302D4C3BAA9293200603C20A
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

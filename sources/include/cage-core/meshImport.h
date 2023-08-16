@@ -1,9 +1,9 @@
 #ifndef guard_meshImport_h_rtkusd4g4b78fd
 #define guard_meshImport_h_rtkusd4g4b78fd
 
-#include "geometry.h"
-#include "imageImport.h"
-#include "meshIoCommon.h"
+#include <cage-core/geometry.h>
+#include <cage-core/imageImport.h>
+#include <cage-core/meshIoCommon.h>
 
 namespace cage
 {

@@ -1,12 +1,15 @@
-#include <cage-core/core.h>
-
 #ifdef CAGE_SYSTEM_WINDOWS
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 	#include <Windows.h>
 	#pragma comment(lib, "opengl32") // wglGetCurrentDC
 #endif // CAGE_SYSTEM_WINDOWS
 
 #define XR_USE_GRAPHICS_API_OPENGL
 #include <openxr/openxr_platform.h>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

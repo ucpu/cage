@@ -1,11 +1,11 @@
-#include <cage-core/collider.h>
-#include <cage-core/marchingCubes.h>
-#include <cage-core/meshAlgorithms.h>
-
 #include <unordered_dense.h>
 #include <vector>
 
 #include <dualmc.h> // must be included last
+
+#include <cage-core/collider.h>
+#include <cage-core/marchingCubes.h>
+#include <cage-core/meshAlgorithms.h>
 
 namespace cage
 {

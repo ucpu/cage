@@ -1,3 +1,9 @@
+#include <algorithm>
+#include <array>
+#include <map>
+#include <optional>
+#include <vector>
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/camera.h>
@@ -13,7 +19,6 @@
 #include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/tasks.h>
 #include <cage-core/textPack.h>
-
 #include <cage-engine/font.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h> // all the constants
@@ -28,12 +33,6 @@
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
-
-#include <algorithm>
-#include <array>
-#include <map>
-#include <optional>
-#include <vector>
 
 namespace cage
 {

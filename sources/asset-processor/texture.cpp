@@ -1,3 +1,5 @@
+#include <map>
+
 #include "processor.h"
 
 #include <cage-core/imageAlgorithms.h>
@@ -5,7 +7,6 @@
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-engine/opengl.h>
-#include <map>
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 

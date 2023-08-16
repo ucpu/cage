@@ -3,8 +3,7 @@
 
 #include <cage-core/any.h>
 #include <cage-core/events.h>
-
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

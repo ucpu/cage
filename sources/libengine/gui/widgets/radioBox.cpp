@@ -48,7 +48,7 @@ namespace cage
 					Vec2 o = sd * Vec2(1, 0) + skin->defaults.radioBox.labelOffset;
 					p += o;
 					s -= o;
-					hierarchy->text->emit(p, s);
+					hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 			}
 

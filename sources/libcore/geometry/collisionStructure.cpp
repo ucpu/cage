@@ -1,12 +1,12 @@
+#include <algorithm>
+
+#include <unordered_dense.h>
+
 #include <cage-core/collider.h>
 #include <cage-core/collisionStructure.h>
 #include <cage-core/geometry.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/spatialStructure.h>
-
-#include <unordered_dense.h>
-
-#include <algorithm>
 
 namespace cage
 {

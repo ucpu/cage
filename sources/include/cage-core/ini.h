@@ -1,7 +1,7 @@
 #ifndef guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 #define guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 
-#include "core.h"
+#include <cage-core/core.h>
 
 /*
 	rules for loading from file:

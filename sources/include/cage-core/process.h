@@ -1,7 +1,7 @@
 #ifndef guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 #define guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 
-#include "files.h"
+#include <cage-core/files.h>
 
 namespace cage
 {

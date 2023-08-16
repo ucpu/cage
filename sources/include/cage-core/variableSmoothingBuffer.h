@@ -1,7 +1,7 @@
 #ifndef guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F
 #define guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

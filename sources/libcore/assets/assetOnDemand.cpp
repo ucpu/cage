@@ -1,9 +1,10 @@
+#include <algorithm>
+
+#include <unordered_dense.h>
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/concurrent.h>
-
-#include <algorithm>
-#include <unordered_dense.h>
 
 namespace cage
 {

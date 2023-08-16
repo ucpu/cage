@@ -1,9 +1,9 @@
 #ifndef guard_hashes_h_41hbvw8e45rfgth
 #define guard_hashes_h_41hbvw8e45rfgth
 
-#include "core.h"
-
 #include <array>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

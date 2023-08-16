@@ -1,9 +1,10 @@
-#include "image.h"
-
-#include <cage-core/serialization.h> // bufferCast
 #include <stdlib.h> // free
 #include <tinyexr.h>
 #include <vector>
+
+#include "image.h"
+
+#include <cage-core/serialization.h> // bufferCast
 
 namespace cage
 {

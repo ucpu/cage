@@ -1,8 +1,8 @@
-#include <cage-core/color.h>
-#include <cage-core/math.h>
-
 #include "hsluv.h"
 #include <cmath>
+
+#include <cage-core/color.h>
+#include <cage-core/math.h>
 
 namespace cage
 {

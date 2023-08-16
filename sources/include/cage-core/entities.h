@@ -1,8 +1,8 @@
 #ifndef guard_entities_h_1259B2E89D514872B54F01F42E1EC56A
 #define guard_entities_h_1259B2E89D514872B54F01F42E1EC56A
 
-#include "events.h"
-#include "typeIndex.h"
+#include <cage-core/events.h>
+#include <cage-core/typeIndex.h>
 
 namespace cage
 {

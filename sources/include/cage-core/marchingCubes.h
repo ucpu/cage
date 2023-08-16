@@ -1,7 +1,7 @@
 #ifndef guard_marchingCubes_h_5C676C29C593444FAD41FE48E265E5DA
 #define guard_marchingCubes_h_5C676C29C593444FAD41FE48E265E5DA
 
-#include "geometry.h"
+#include <cage-core/geometry.h>
 
 namespace cage
 {

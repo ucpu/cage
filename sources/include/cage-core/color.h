@@ -1,7 +1,7 @@
 #ifndef guard_colors_h_FE9390CFCE3E4DF2B955C7AF40FD8978
 #define guard_colors_h_FE9390CFCE3E4DF2B955C7AF40FD8978
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

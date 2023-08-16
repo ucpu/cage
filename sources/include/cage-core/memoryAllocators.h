@@ -1,7 +1,7 @@
 #ifndef guard_memoryAllocators_h_1swf4glmnb9s
 #define guard_memoryAllocators_h_1swf4glmnb9s
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

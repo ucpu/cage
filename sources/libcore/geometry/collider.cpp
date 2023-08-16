@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <vector>
+
 #include <cage-core/collider.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/geometry.h>
@@ -5,9 +8,6 @@
 #include <cage-core/mesh.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
-
-#include <algorithm>
-#include <vector>
 
 namespace cage
 {

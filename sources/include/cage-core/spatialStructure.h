@@ -1,7 +1,7 @@
 #ifndef guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578
 #define guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

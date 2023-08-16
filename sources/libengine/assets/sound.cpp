@@ -3,7 +3,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
-
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/sound.h>
 

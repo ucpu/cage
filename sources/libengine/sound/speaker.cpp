@@ -1,8 +1,4 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/files.h>
-#include <cage-core/string.h>
-
-#include <cage-engine/speaker.h>
+#include <vector>
 
 #ifndef WIN32_LEAN_AND_MEAN
 	#define WIN32_LEAN_AND_MEAN
@@ -25,7 +21,10 @@
 	#include <cstdarg>
 #endif
 
-#include <vector>
+#include <cage-core/concurrent.h>
+#include <cage-core/files.h>
+#include <cage-core/string.h>
+#include <cage-engine/speaker.h>
 
 namespace cage
 {

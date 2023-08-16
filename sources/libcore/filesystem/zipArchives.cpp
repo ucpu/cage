@@ -1,14 +1,15 @@
+#include <algorithm>
+
+#include <zlib.h> // crc32_z
+
+#include "files.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h> // min
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h> // bufferView
 #include <cage-core/string.h> // StringComparatorFast
-
-#include "files.h"
-
-#include <algorithm>
-#include <zlib.h> // crc32_z
 
 namespace cage
 {

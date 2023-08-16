@@ -1,7 +1,7 @@
 #ifndef guard_renderObject_h_sd54fgh1ikuj187j4kuj8i
 #define guard_renderObject_h_sd54fgh1ikuj187j4kuj8i
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

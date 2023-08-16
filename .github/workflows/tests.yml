@@ -255,8 +255,8 @@ jobs:
     needs: Ubuntu
     runs-on: ubuntu-latest
     env:
-      CC: gcc-12
-      CXX: g++-12
+      CC: gcc-13
+      CXX: g++-13
     strategy:
       fail-fast: false
       matrix:
@@ -274,7 +274,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-12
+        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-13
 
     - uses: actions/checkout@v3
       with:

@@ -1,7 +1,7 @@
 #ifndef guard_rectPacking_h_CBAB7F4B_90B1_4151_968F_9C5336718D0D
 #define guard_rectPacking_h_CBAB7F4B_90B1_4151_968F_9C5336718D0D
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

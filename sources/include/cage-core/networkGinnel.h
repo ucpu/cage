@@ -1,7 +1,7 @@
 #ifndef guard_networkGinnel_h_yxdrz748wq
 #define guard_networkGinnel_h_yxdrz748wq
 
-#include "networkUtils.h"
+#include <cage-core/networkUtils.h>
 
 namespace cage
 {

@@ -38,9 +38,9 @@ namespace cage
 				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.label.margin);
 				if (hierarchy->image)
-					hierarchy->image->emit(p, s);
+					hierarchy->image->emit(p, s, widgetState.disabled);
 				if (hierarchy->text)
-					hierarchy->text->emit(p, s);
+					hierarchy->text->emit(p, s, widgetState.disabled);
 			}
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }

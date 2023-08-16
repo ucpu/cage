@@ -1,9 +1,9 @@
 #ifndef guard_stdHash_ik4j1hb8vsaerg
 #define guard_stdHash_ik4j1hb8vsaerg
 
-#include "hashBuffer.h"
-
 #include <functional> // std::hash
+
+#include <cage-core/hashBuffer.h>
 
 namespace cage
 {

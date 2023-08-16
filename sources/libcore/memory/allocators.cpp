@@ -1,10 +1,10 @@
+#include <vector>
+
 #include <cage-core/math.h> // max
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryArena.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
-
-#include <vector>
 
 namespace cage
 {

@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
@@ -5,8 +7,6 @@
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
 #include <cage-core/process.h>
-
-using namespace cage;
 
 void runServer();
 void runClient();

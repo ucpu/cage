@@ -1,4 +1,5 @@
 #include "../private.h"
+
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
 #include <cage-core/utf.h>
@@ -221,7 +222,7 @@ namespace cage
 					m = mode(rightPos, ss);
 					emitElement(GuiElementTypeEnum::InputButtonIncrement, m == ElementModeEnum::Focus ? ElementModeEnum::Default : m, rightPos, ss);
 				}
-				hierarchy->text->emit(textPos, textSize);
+				hierarchy->text->emit(textPos, textSize, widgetState.disabled);
 			}
 
 			bool insideButton(Vec2 pos, Vec2 point) { return pointInside(pos, Vec2(skin->defaults.inputBox.buttonsWidth, mainSize[1]), point); }

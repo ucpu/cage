@@ -60,7 +60,7 @@ namespace cage
 					emitElement(GuiElementTypeEnum::PanelCaption, mode(false, 0), p, s);
 					offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::PanelCaption].border);
 					offset(p, s, -skin->defaults.panel.captionPadding);
-					hierarchy->text->emit(p, s);
+					hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 				hierarchy->childrenEmit();
 			}

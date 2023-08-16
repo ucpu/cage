@@ -1,10 +1,8 @@
+#include "common.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-
-using namespace cage;
-
-#include "runner.h"
 
 Runner::Runner() : last(applicationTime())
 {

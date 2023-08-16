@@ -1,19 +1,18 @@
+#include <unordered_dense.h>
+#include <vector>
+
+#include "engine.h"
+#include "interpolationTimingCorrector.h"
+
 #include <cage-core/assetManager.h>
 #include <cage-core/entities.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/profiling.h>
 #include <cage-core/swapBufferGuard.h>
-
 #include <cage-engine/scene.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/speaker.h>
 #include <cage-engine/voices.h>
-
-#include "engine.h"
-#include "interpolationTimingCorrector.h"
-
-#include <unordered_dense.h>
-#include <vector>
 
 namespace cage
 {

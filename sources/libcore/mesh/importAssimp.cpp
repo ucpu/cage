@@ -1,10 +1,4 @@
-#include <cage-core/color.h>
-#include <cage-core/files.h>
-#include <cage-core/ini.h>
-#include <cage-core/meshImport.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/skeletalAnimation.h>
-#include <cage-core/string.h>
+#include <set>
 
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/Exporter.hpp>
@@ -17,7 +11,13 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
-#include <set>
+#include <cage-core/color.h>
+#include <cage-core/files.h>
+#include <cage-core/ini.h>
+#include <cage-core/meshImport.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/skeletalAnimation.h>
+#include <cage-core/string.h>
 
 namespace cage
 {

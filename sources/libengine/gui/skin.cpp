@@ -1,7 +1,7 @@
+#include "private.h"
+
 #include <cage-core/flatSet.h>
 #include <cage-core/hashString.h>
-
-#include "private.h"
 
 namespace cage
 {

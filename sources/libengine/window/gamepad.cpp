@@ -1,12 +1,13 @@
+#include <map>
+#include <vector>
+
 #include "private.h"
+
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/serialization.h>
 #include <cage-engine/gamepad.h>
-
-#include <map>
-#include <vector>
 
 namespace cage
 {

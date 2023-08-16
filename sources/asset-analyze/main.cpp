@@ -1,3 +1,6 @@
+#include <map>
+#include <set>
+
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/files.h>
@@ -5,9 +8,6 @@
 #include <cage-core/logger.h>
 #include <cage-core/process.h>
 #include <cage-core/string.h>
-
-#include <map>
-#include <set>
 
 using namespace cage;
 

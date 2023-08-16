@@ -1,6 +1,7 @@
+#include <atomic>
+
 #include "main.h"
 
-#include <atomic>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/threadPool.h>

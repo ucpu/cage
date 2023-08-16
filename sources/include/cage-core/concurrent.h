@@ -1,7 +1,7 @@
 #ifndef guard_concurrent_h_585972b8_5791_4554_b4fa_29342c539280_
 #define guard_concurrent_h_585972b8_5791_4554_b4fa_29342c539280_
 
-#include "scopeLock.h"
+#include <cage-core/scopeLock.h>
 
 namespace cage
 {

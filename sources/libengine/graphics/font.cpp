@@ -1,8 +1,11 @@
+#include <algorithm>
+#include <cstring>
+#include <vector>
+
 #include <cage-core/geometry.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/utf.h>
-
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
 #include <cage-engine/graphicsError.h>
@@ -10,10 +13,6 @@
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/texture.h>
-
-#include <algorithm>
-#include <cstring>
-#include <vector>
 
 namespace cage
 {

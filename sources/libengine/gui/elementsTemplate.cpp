@@ -1,6 +1,6 @@
-#include <cage-core/image.h>
-
 #include "private.h"
+
+#include <cage-core/image.h>
 
 namespace cage
 {

@@ -1,10 +1,9 @@
+#include "private.h"
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/textPack.h>
-
 #include <cage-engine/texture.h>
-
-#include "private.h"
 
 namespace cage
 {
@@ -343,9 +342,9 @@ namespace cage
 		return Vec2();
 	}
 
-	RenderableText TextItem::emit(Vec2 position, Vec2 size)
+	RenderableText TextItem::emit(Vec2 position, Vec2 size, bool disabled)
 	{
-		return RenderableText(this, position, size);
+		return RenderableText(this, position, size, disabled);
 	}
 
 	void TextItem::updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor)
@@ -403,8 +402,8 @@ namespace cage
 		return Vec2();
 	}
 
-	RenderableImage ImageItem::emit(Vec2 position, Vec2 size)
+	RenderableImage ImageItem::emit(Vec2 position, Vec2 size, bool disabled)
 	{
-		return RenderableImage(this, position, size);
+		return RenderableImage(this, position, size, disabled);
 	}
 }

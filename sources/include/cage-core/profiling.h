@@ -1,7 +1,7 @@
 #ifndef guard_profiling_h_q9n1a8t4l3
 #define guard_profiling_h_q9n1a8t4l3
 
-#include "core.h"
+#include <cage-core/core.h>
 
 #ifdef CAGE_PROFILING_ENABLED
 	#define GCHL_PROFILING_API CAGE_CORE_API

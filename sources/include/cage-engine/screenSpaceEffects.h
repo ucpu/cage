@@ -1,8 +1,8 @@
 #ifndef guard_screenSpaceEffects_h_xcfvh241448960sdrt
 #define guard_screenSpaceEffects_h_xcfvh241448960sdrt
 
-#include "provisionalHandles.h"
-#include "screenSpaceEffectsProperties.h"
+#include <cage-engine/provisionalHandles.h>
+#include <cage-engine/screenSpaceEffectsProperties.h>
 
 namespace cage
 {

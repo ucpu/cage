@@ -1,7 +1,7 @@
 #ifndef guard_endianness_h_l4kjhgsa8567fhj4hgfj
 #define guard_endianness_h_l4kjhgsa8567fhj4hgfj
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

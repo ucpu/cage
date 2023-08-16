@@ -1,11 +1,11 @@
 #ifndef guard_flatSet_BDA291015B42
 #define guard_flatSet_BDA291015B42
 
-#include "core.h"
-
 #include <algorithm> // lower_bound, binary_search
 #include <functional> // less
 #include <vector>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

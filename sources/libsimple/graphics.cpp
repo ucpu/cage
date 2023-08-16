@@ -1,3 +1,8 @@
+#include <vector>
+
+#include "engine.h"
+#include "interpolationTimingCorrector.h"
+
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
 #include <cage-core/camera.h>
@@ -8,7 +13,6 @@
 #include <cage-core/hashString.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
-
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/model.h>
@@ -23,11 +27,6 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/window.h>
-
-#include "engine.h"
-#include "interpolationTimingCorrector.h"
-
-#include <vector>
 
 namespace cage
 {

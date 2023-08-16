@@ -1,7 +1,7 @@
 #ifndef guard_screenSpaceEffectsProperties_h_0156sdrf4treth1
 #define guard_screenSpaceEffectsProperties_h_0156sdrf4treth1
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

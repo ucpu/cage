@@ -1,8 +1,8 @@
 #ifndef guard_networkWebsocket_h_lkjhgse897drzh4
 #define guard_networkWebsocket_h_lkjhgse897drzh4
 
-#include "files.h"
-#include "networkUtils.h"
+#include <cage-core/files.h>
+#include <cage-core/networkUtils.h>
 
 namespace cage
 {

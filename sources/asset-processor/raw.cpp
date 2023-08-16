@@ -1,7 +1,5 @@
 #include "processor.h"
 
-#include <utility>
-
 void processRaw()
 {
 	writeLine(String("use=") + inputFile);

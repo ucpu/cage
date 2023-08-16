@@ -1,13 +1,13 @@
+#include <algorithm>
+#include <atomic>
+#include <vector>
+
 #include <cage-core/concurrent.h> // threadSleep
 #include <cage-core/math.h> // max
 #include <cage-core/profiling.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/timer.h>
 #include <cage-core/variableSmoothingBuffer.h>
-
-#include <algorithm>
-#include <atomic>
-#include <vector>
 
 namespace cage
 {

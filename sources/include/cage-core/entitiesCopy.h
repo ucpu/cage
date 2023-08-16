@@ -1,7 +1,7 @@
 #ifndef guard_entitiesCopy_4jh1gv89sert74hz
 #define guard_entitiesCopy_4jh1gv89sert74hz
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

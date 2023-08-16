@@ -63,14 +63,14 @@ namespace cage
 					Vec2 p = hierarchy->renderPos;
 					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.progressBar.baseMargin - skin->layouts[(uint32)GuiElementTypeEnum::ProgressBar].border - skin->defaults.progressBar.fillingPadding);
-					hierarchy->image->emit(p, s);
+					hierarchy->image->emit(p, s, widgetState.disabled);
 				}
 				if (hierarchy->text)
 				{
 					Vec2 p = hierarchy->renderPos;
 					Vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.progressBar.baseMargin - skin->layouts[(uint32)GuiElementTypeEnum::ProgressBar].border - skin->defaults.progressBar.textPadding);
-					hierarchy->text->emit(p, s);
+					hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 			}
 		};

@@ -1,6 +1,3 @@
-#include <cage-core/string.h>
-#include <cage-core/systemInformation.h>
-
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "incWin.h" // must be included first
 	#include <Psapi.h> // GetProcessMemoryInfo
@@ -13,6 +10,9 @@
 	#include <cage-core/debug.h>
 	#include <cage-core/process.h>
 #endif
+
+#include <cage-core/string.h>
+#include <cage-core/systemInformation.h>
 
 namespace cage
 {

@@ -4,7 +4,6 @@
 #include <cage-core/entities.h>
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/window.h>
-
 #include <cage-simple/engine.h>
 #include <cage-simple/statisticsGui.h>
 
