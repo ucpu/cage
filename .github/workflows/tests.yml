@@ -32,7 +32,8 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        # cage_use_steam_sockets causes issues on win32
+        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=${{ matrix.build-arch == 'x64' && 'ON' || 'OFF' }} ..
 
     - name: Build
       shell: bash
@@ -123,7 +124,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=1 ..
 
     - name: Build
       run: |

@@ -1,13 +1,15 @@
-#include <steam/isteamnetworkingsockets.h>
-#include <steam/isteamnetworkingutils.h>
-#include <steam/steamnetworkingsockets.h>
+#ifdef CAGE_USE_STEAM_SOCKETS
 
-#include "net.h"
+	#include <steam/isteamnetworkingsockets.h>
+	#include <steam/isteamnetworkingutils.h>
+	#include <steam/steamnetworkingsockets.h>
 
-#include <cage-core/concurrent.h>
-#include <cage-core/concurrentQueue.h>
-#include <cage-core/endianness.h>
-#include <cage-core/networkSteam.h>
+	#include "net.h"
+
+	#include <cage-core/concurrent.h>
+	#include <cage-core/concurrentQueue.h>
+	#include <cage-core/endianness.h>
+	#include <cage-core/networkSteam.h>
 
 namespace cage
 {
@@ -333,3 +335,5 @@ namespace cage
 		return systemMemory().createImpl<SteamServer, SteamServerImpl>(port);
 	}
 }
+
+#endif // CAGE_USE_STEAM_SOCKETS

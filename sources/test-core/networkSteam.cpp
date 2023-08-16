@@ -9,6 +9,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkSteam.h>
 
+#ifdef CAGE_USE_STEAM_SOCKETS
+
 namespace
 {
 	std::atomic<uint32> connectionsLeft;
@@ -142,3 +144,13 @@ void testNetworkSteam()
 	for (auto &c : clients)
 		c->wait();
 }
+
+#else
+
+void testNetworkSteam()
+{
+	CAGE_TESTCASE("network steam");
+	CAGE_LOG(SeverityEnum::Info, "test", "network steam was disabled at compile time");
+}
+
+#endif // CAGE_USE_STEAM_SOCKETS

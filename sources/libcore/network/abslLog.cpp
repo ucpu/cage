@@ -1,10 +1,12 @@
-#include <absl/log/globals.h>
-#include <absl/log/initialize.h>
-#include <absl/log/log.h>
-#include <absl/log/log_sink.h>
-#include <absl/log/log_sink_registry.h>
+#ifdef CAGE_USE_STEAM_SOCKETS
 
-#include <cage-core/core.h>
+	#include <absl/log/globals.h>
+	#include <absl/log/initialize.h>
+	#include <absl/log/log.h>
+	#include <absl/log/log_sink.h>
+	#include <absl/log/log_sink_registry.h>
+
+	#include <cage-core/core.h>
 
 namespace cage
 {
@@ -52,3 +54,5 @@ namespace cage
 		} abslLogSinkInstance;
 	}
 }
+
+#endif // CAGE_USE_STEAM_SOCKETS
