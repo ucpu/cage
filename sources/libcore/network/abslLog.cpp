@@ -1,10 +1,10 @@
-#include <cage-core/core.h>
-
 #include <absl/log/globals.h>
 #include <absl/log/initialize.h>
 #include <absl/log/log.h>
 #include <absl/log/log_sink.h>
 #include <absl/log/log_sink_registry.h>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

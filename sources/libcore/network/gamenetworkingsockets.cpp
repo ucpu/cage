@@ -1,13 +1,13 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/concurrentQueue.h>
-#include <cage-core/endianness.h>
-#include <cage-core/networkGinnel.h>
-
 #include <steam/isteamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
 #include <steam/steamnetworkingsockets.h>
 
 #include "net.h"
+
+#include <cage-core/concurrent.h>
+#include <cage-core/concurrentQueue.h>
+#include <cage-core/endianness.h>
+#include <cage-core/networkSteam.h>
 
 namespace cage
 {
@@ -103,14 +103,14 @@ namespace cage
 			}
 		};
 
-		class GinnelConnectionImpl : public GinnelConnection
+		class SteamConnectionImpl : public SteamConnection
 		{
 		public:
 			HSteamNetConnection sock = {};
 			bool connected = false;
 			bool disconnected = false;
 
-			GinnelConnectionImpl(const String &address, uint16 port)
+			SteamConnectionImpl(const String &address, uint16 port)
 			{
 				CAGE_ASSERT(((uint64)this % 2) == 0);
 				SteamNetworkingConfigValue_t cfg[2] = {};
@@ -121,7 +121,7 @@ namespace cage
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
-			GinnelConnectionImpl(HSteamNetConnection s) : sock(s)
+			SteamConnectionImpl(HSteamNetConnection s) : sock(s)
 			{
 				CAGE_ASSERT(((uint64)this % 2) == 0);
 				sockets()->SetConnectionUserData(sock, (sint64)this);
@@ -129,7 +129,7 @@ namespace cage
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
-			~GinnelConnectionImpl() { sockets()->CloseConnection(sock, 0, nullptr, false); }
+			~SteamConnectionImpl() { sockets()->CloseConnection(sock, 0, nullptr, false); }
 
 			Holder<PointerRange<char>> read(uint32 &channel, bool &reliable)
 			{
@@ -169,11 +169,11 @@ namespace cage
 				// todo
 			}
 
-			GinnelStatistics statistics() const
+			SteamStatistics statistics() const
 			{
 				SteamNetConnectionRealTimeStatus_t r = {};
 				handleResult(sockets()->GetConnectionRealTimeStatus(sock, &r, 0, nullptr));
-				GinnelStatistics s;
+				SteamStatistics s;
 				s.sendingBytesPerSecond = r.m_flOutBytesPerSec;
 				s.receivingBytesPerSecond = r.m_flInBytesPerSec;
 				s.estimatedBandwidth = r.m_nSendRateBytesPerSecond;
@@ -183,13 +183,13 @@ namespace cage
 			}
 		};
 
-		class GinnelServerImpl : public GinnelServer
+		class SteamServerImpl : public SteamServer
 		{
 		public:
 			HSteamListenSocket sock = {};
 			ConcurrentQueue<HSteamNetConnection> waiting;
 
-			GinnelServerImpl(uint16 port)
+			SteamServerImpl(uint16 port)
 			{
 				CAGE_ASSERT(((uint64)this % 2) == 0);
 				SteamNetworkingConfigValue_t cfg[2] = {};
@@ -200,7 +200,7 @@ namespace cage
 				sock = sockets()->CreateListenSocketIP(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
 			}
 
-			~GinnelServerImpl()
+			~SteamServerImpl()
 			{
 				/*
 				while (true)
@@ -215,31 +215,31 @@ namespace cage
 				sockets()->CloseListenSocket(sock);
 			}
 
-			Holder<GinnelConnection> accept()
+			Holder<SteamConnection> accept()
 			{
 				sockets()->RunCallbacks();
 				HSteamNetConnection c = 0;
 				if (waiting.tryPop(c))
-					return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(c);
+					return systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(c);
 				return {};
 			}
 		};
 
-		GinnelConnectionImpl *getConnection(HSteamNetConnection sock)
+		SteamConnectionImpl *getConnection(HSteamNetConnection sock)
 		{
 			sint64 v = sockets()->GetConnectionUserData(sock);
 			CAGE_ASSERT(v >= 0);
 			if ((v % 2) == 0)
-				return (GinnelConnectionImpl *)v;
+				return (SteamConnectionImpl *)v;
 			return nullptr;
 		}
 
-		GinnelServerImpl *getServer(HSteamNetConnection sock)
+		SteamServerImpl *getServer(HSteamNetConnection sock)
 		{
 			sint64 v = sockets()->GetConnectionUserData(sock);
 			CAGE_ASSERT(v >= 0);
 			if ((v % 2) == 1)
-				return (GinnelServerImpl *)(v - 1);
+				return (SteamServerImpl *)(v - 1);
 			return nullptr;
 		}
 
@@ -248,14 +248,14 @@ namespace cage
 			if (info->m_info.m_hListenSocket && info->m_eOldState == k_ESteamNetworkingConnectionState_None)
 			{
 				CAGE_ASSERT(info->m_info.m_eState == k_ESteamNetworkingConnectionState_Connecting);
-				if (GinnelServerImpl *impl = getServer(info->m_hConn))
+				if (SteamServerImpl *impl = getServer(info->m_hConn))
 					impl->waiting.push(info->m_hConn);
 			}
 			switch (info->m_info.m_eState)
 			{
 				case k_ESteamNetworkingConnectionState_Connected:
 				{
-					if (GinnelConnectionImpl *impl = getConnection(info->m_hConn))
+					if (SteamConnectionImpl *impl = getConnection(info->m_hConn))
 						impl->connected = true;
 					break;
 				}
@@ -264,7 +264,7 @@ namespace cage
 				case k_ESteamNetworkingConnectionState_Dead:
 				case k_ESteamNetworkingConnectionState_Linger:
 				{
-					if (GinnelConnectionImpl *impl = getConnection(info->m_hConn))
+					if (SteamConnectionImpl *impl = getConnection(info->m_hConn))
 						impl->disconnected = true;
 					break;
 				}
@@ -272,64 +272,64 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> GinnelConnection::read(uint32 &channel, bool &reliable)
+	Holder<PointerRange<char>> SteamConnection::read(uint32 &channel, bool &reliable)
 	{
-		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
+		SteamConnectionImpl *impl = (SteamConnectionImpl *)this;
 		return impl->read(channel, reliable);
 	}
 
-	Holder<PointerRange<char>> GinnelConnection::read()
+	Holder<PointerRange<char>> SteamConnection::read()
 	{
 		uint32 channel;
 		bool reliable;
 		return read(channel, reliable);
 	}
 
-	void GinnelConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
+	void SteamConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 	{
-		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
+		SteamConnectionImpl *impl = (SteamConnectionImpl *)this;
 		impl->write(buffer, channel, reliable);
 	}
 
-	sint64 GinnelConnection::capacity() const
+	sint64 SteamConnection::capacity() const
 	{
-		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
 		return impl->capacity();
 	}
 
-	void GinnelConnection::update()
+	void SteamConnection::update()
 	{
-		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
+		SteamConnectionImpl *impl = (SteamConnectionImpl *)this;
 		impl->update();
 	}
 
-	GinnelStatistics GinnelConnection::statistics() const
+	SteamStatistics SteamConnection::statistics() const
 	{
-		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
 		return impl->statistics();
 	}
 
-	bool GinnelConnection::established() const
+	bool SteamConnection::established() const
 	{
-		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
 		return impl->connected;
 	}
 
-	Holder<GinnelConnection> GinnelServer::accept()
+	Holder<SteamConnection> SteamServer::accept()
 	{
-		GinnelServerImpl *impl = (GinnelServerImpl *)this;
+		SteamServerImpl *impl = (SteamServerImpl *)this;
 		return impl->accept();
 	}
 
-	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port)
+	Holder<SteamConnection> newSteamConnection(const String &address, uint16 port)
 	{
 		initialize();
-		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port);
+		return systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(address, port);
 	}
 
-	Holder<GinnelServer> newGinnelServer(uint16 port)
+	Holder<SteamServer> newSteamServer(uint16 port)
 	{
 		initialize();
-		return systemMemory().createImpl<GinnelServer, GinnelServerImpl>(port);
+		return systemMemory().createImpl<SteamServer, SteamServerImpl>(port);
 	}
 }

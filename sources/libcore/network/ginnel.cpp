@@ -1,22 +1,20 @@
-#if 0
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <vector>
 
-	#include <algorithm>
-	#include <map>
-	#include <memory>
-	#include <vector>
+#include <plf_list.h>
+#include <unordered_dense.h>
 
-	#include <plf_list.h>
-	#include <unordered_dense.h>
+#include "net.h"
 
-	#include "net.h"
-
-	#include <cage-core/concurrent.h>
-	#include <cage-core/config.h>
-	#include <cage-core/debug.h>
-	#include <cage-core/flatSet.h>
-	#include <cage-core/math.h> // random
-	#include <cage-core/networkGinnel.h>
-	#include <cage-core/serialization.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/config.h>
+#include <cage-core/debug.h>
+#include <cage-core/flatSet.h>
+#include <cage-core/math.h> // random
+#include <cage-core/networkGinnel.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {
@@ -33,13 +31,13 @@ namespace cage
 		const ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
 		const ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
 
-	#define UDP_LOG(LEVEL, MSG) \
+#define UDP_LOG(LEVEL, MSG) \
+	{ \
+		if (logLevel >= (LEVEL)) \
 		{ \
-			if (logLevel >= (LEVEL)) \
-			{ \
-				CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); \
-			} \
-		}
+			CAGE_LOG(SeverityEnum::Info, "ginnel", Stringizer() + MSG); \
+		} \
+	}
 
 		struct MemView
 		{
@@ -577,7 +575,7 @@ namespace cage
 					acks.push_back(p);
 				}
 
-	#ifdef CAGE_ASSERT_ENABLED
+#ifdef CAGE_ASSERT_ENABLED
 				{ // verification
 					FlatSet<uint16> ver;
 					for (PackAck pa : acks)
@@ -587,7 +585,7 @@ namespace cage
 					}
 					CAGE_ASSERT(ver == sending.seqnToAck);
 				}
-	#endif // CAGE_ASSERT_ENABLED
+#endif // CAGE_ASSERT_ENABLED
 
 				for (const PackAck &pa : acks)
 				{
@@ -892,6 +890,7 @@ namespace cage
 						return; // discard obsolete stats packet
 					s.timestamp = p.b.time;
 					s.roundTripDuration = currentServiceTime - p.b.time;
+					s.estimatedBandwidth = writeBandwidth.bandwidth;
 					s.bytesReceivedLately = s.bytesReceivedTotal - p.b.receivedBytes;
 					s.bytesSentLately = s.bytesSentTotal - p.b.sentBytes;
 					s.bytesDeliveredLately = p.a.receivedBytes - s.bytesDeliveredTotal;
@@ -1143,17 +1142,10 @@ namespace cage
 
 			// API
 
-			uintPtr available()
+			Holder<PointerRange<char>> read(uint32 &channel, bool &reliable)
 			{
 				if (receiving.messages.empty())
-					return 0;
-				return receiving.messages.front().data.size();
-			}
-
-			MemoryBuffer read(uint32 &channel, bool &reliable)
-			{
-				if (receiving.messages.empty())
-					CAGE_THROW_ERROR(Exception, "no data available");
+					return {};
 				auto tmp = std::move(receiving.messages.front());
 				receiving.messages.pop_front();
 				channel = tmp.channel & 127; // strip reliability bit
@@ -1303,27 +1295,6 @@ namespace cage
 		return 0;
 	}
 
-	uintPtr GinnelConnection::available()
-	{
-		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
-		return impl->available();
-	}
-
-	void GinnelConnection::read(PointerRange<char> &buffer, uint32 &channel, bool &reliable)
-	{
-		Holder<PointerRange<char>> b = read(channel, reliable);
-		CAGE_ASSERT(buffer.size() >= b.size());
-		detail::memcpy(buffer.data(), b.data(), b.size());
-		buffer = { buffer.data(), buffer.data() + b.size() };
-	}
-
-	void GinnelConnection::read(PointerRange<char> &buffer)
-	{
-		uint32 channel;
-		bool reliable;
-		read(buffer, channel, reliable);
-	}
-
 	Holder<PointerRange<char>> GinnelConnection::read(uint32 &channel, bool &reliable)
 	{
 		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
@@ -1345,6 +1316,12 @@ namespace cage
 		impl->write(std::move(b), channel, reliable);
 	}
 
+	sint64 GinnelConnection::capacity() const
+	{
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		return impl->writeBandwidth.capacity;
+	}
+
 	void GinnelConnection::update()
 	{
 		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
@@ -1355,18 +1332,6 @@ namespace cage
 	{
 		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
 		return impl->stats;
-	}
-
-	uint64 GinnelConnection::bandwidth() const
-	{
-		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
-		return impl->writeBandwidth.bandwidth;
-	}
-
-	sint64 GinnelConnection::capacity() const
-	{
-		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
-		return impl->writeBandwidth.capacity;
 	}
 
 	bool GinnelConnection::established() const
@@ -1386,23 +1351,8 @@ namespace cage
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
 	}
 
-	Holder<GinnelConnection> newGinnelConnection(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connectionId, uint64 timeout)
-	{
-		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(localAddress, localPort, remoteAddress, remotePort, connectionId, timeout);
-	}
-
 	Holder<GinnelServer> newGinnelServer(uint16 port)
 	{
 		return systemMemory().createImpl<GinnelServer, GinnelServerImpl>(port);
 	}
-
-	namespace privat
-	{
-		Holder<GinnelConnection> makeGinnel(Sock &&sock, uint64 connectionId, uint64 timeout)
-		{
-			return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(std::move(sock), connectionId, timeout);
-		}
-	}
 }
-
-#endif

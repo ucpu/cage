@@ -44,7 +44,7 @@ namespace
 		void statistics()
 		{
 			const auto s = udp->statistics();
-			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "receiving: " + leftFill(s.receivingBytesPerSecond / 1024) + " KB/s, sending: " + leftFill(s.sendingBytesPerSecond / 1024) + " KB/s, estimated bandwidth: " + leftFill(s.estimatedBandwidth / 1024) + " KB/s, ping: " + leftFill(s.ping / 1000) + " ms");
+			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "receiving: " + leftFill(s.bpsReceived() / 1024) + " KB/s, sending: " + leftFill(s.bpsSent() / 1024) + " KB/s, estimated bandwidth: " + leftFill(s.estimatedBandwidth / 1024) + " KB/s, ping: " + leftFill(s.roundTripDuration / 1000) + " ms");
 		}
 
 		bool process()

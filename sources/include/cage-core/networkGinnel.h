@@ -14,11 +14,23 @@ namespace cage
 
 	struct CAGE_CORE_API GinnelStatistics
 	{
-		uint64 sendingBytesPerSecond = 0;
-		uint64 receivingBytesPerSecond = 0;
+		uint64 timestamp = 0;
+		uint64 roundTripDuration = 0;
 		uint64 estimatedBandwidth = 0; // bytes per second
-		uint64 ping = 0;
-		float quality = 0; // 0 = bad, 1 = good
+		uint64 bytesReceivedTotal = 0, bytesSentTotal = 0, bytesDeliveredTotal = 0;
+		uint64 bytesReceivedLately = 0, bytesSentLately = 0, bytesDeliveredLately = 0;
+		uint32 packetsReceivedTotal = 0, packetsSentTotal = 0, packetsDeliveredTotal = 0;
+		uint32 packetsReceivedLately = 0, packetsSentLately = 0, packetsDeliveredLately = 0;
+
+		// bytes per second
+		uint64 bpsReceived() const;
+		uint64 bpsSent() const;
+		uint64 bpsDelivered() const;
+
+		// packets per second
+		uint64 ppsReceived() const;
+		uint64 ppsSent() const;
+		uint64 ppsDelivered() const;
 	};
 
 	class CAGE_CORE_API GinnelConnection : private Immovable
@@ -37,23 +49,24 @@ namespace cage
 		// update also manages timeouts and resending, therefore it should be called periodically even if you wrote nothing
 		void update();
 
-		GinnelStatistics statistics() const;
+		const GinnelStatistics &statistics() const;
 
 		// successfully completed connection initialization
 		bool established() const;
 	};
 
-	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port);
+	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
+	// zero timeout will return immediately and the connection will be established progressively as you use it
+	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout);
 
 	class CAGE_CORE_API GinnelServer : private Immovable
 	{
 	public:
 		// returns empty holder if no new peer has connected
-		// serves as an update, therefore it should be called periodically, even if you do not expect any new connections
-		Holder<GinnelConnection> accept();
+		Holder<GinnelConnection> accept(); // non-blocking
 	};
 
-	CAGE_CORE_API Holder<GinnelServer> newGinnelServer(uint16 port);
+	CAGE_CORE_API Holder<GinnelServer> newGinnelServer(uint16 port); // non-blocking
 }
 
 #endif // guard_networkGinnel_h_yxdrz748wq

@@ -66,6 +66,7 @@ void testScheduler();
 void testNetworkTcp();
 void testNetworkWebsocket();
 void testNetworkGinnel();
+void testNetworkSteam();
 void testNetworkDiscovery();
 void testProcess();
 void testLogger();
@@ -143,6 +144,7 @@ int main()
 	testNetworkTcp();
 	testNetworkWebsocket();
 	testNetworkGinnel();
+	testNetworkSteam();
 	testNetworkDiscovery();
 	testProcess();
 	testLogger();
