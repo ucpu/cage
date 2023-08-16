@@ -1,7 +1,7 @@
 #ifndef guard_hashBuffer_h_io45uuzjhd8s5xfgh
 #define guard_hashBuffer_h_io45uuzjhd8s5xfgh
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

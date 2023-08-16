@@ -1,7 +1,7 @@
 #ifndef guard_sampleRateConverter_h_ds54hgz56dse3t544h
 #define guard_sampleRateConverter_h_ds54hgz56dse3t544h
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

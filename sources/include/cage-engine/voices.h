@@ -1,7 +1,7 @@
 #ifndef guard_voices_h_ies6yxd44kld6
 #define guard_voices_h_ies6yxd44kld6
 
-#include "soundCommon.h"
+#include <cage-engine/soundCommon.h>
 
 namespace cage
 {

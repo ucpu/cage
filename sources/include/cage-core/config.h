@@ -1,7 +1,7 @@
 #ifndef guard_config_h_B892887C89784EDE9E816F4BCF6EFB0F
 #define guard_config_h_B892887C89784EDE9E816F4BCF6EFB0F
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_sceneVirtualReality_h_5es4tuhj
 #define guard_sceneVirtualReality_h_5es4tuhj
 
-#include "scene.h"
+#include <cage-engine/scene.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_screenList_h_q56ew4rk87h64847
 #define guard_screenList_h_q56ew4rk87h64847
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

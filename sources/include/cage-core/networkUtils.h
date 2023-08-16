@@ -1,7 +1,7 @@
 #ifndef guard_networkUtils_h_qerf45gh88dr
 #define guard_networkUtils_h_qerf45gh88dr
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

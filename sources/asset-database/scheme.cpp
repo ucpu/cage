@@ -1,9 +1,9 @@
+#include "database.h"
+
 #include <cage-core/containerSerialization.h>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <cage-core/macros.h>
-
-#include "database.h"
 
 std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 extern ConfigString configPathSchemes;

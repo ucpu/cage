@@ -1,7 +1,7 @@
 #ifndef guard_texture_h_ds54ghlkj89s77e4g
 #define guard_texture_h_ds54ghlkj89s77e4g
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

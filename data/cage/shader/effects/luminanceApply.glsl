@@ -12,7 +12,7 @@ out vec3 outColor;
 
 vec3 desaturate(vec3 color, float strength)
 {
-	float i = dot(color, vec3(0.3, 0.59, 0.11)); // gray intensity
+	float i = dot(color, vec3(0.299, 0.587, 0.114)); // gray intensity
 	return mix(color, vec3(i), strength);
 }
 

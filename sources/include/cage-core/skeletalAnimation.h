@@ -1,7 +1,7 @@
 #ifndef guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 #define guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

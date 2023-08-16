@@ -1,7 +1,7 @@
 #ifndef guard_scopeLock_h_sdgfrdsfhg54s5sd54hg544h444
 #define guard_scopeLock_h_sdgfrdsfhg54s5sd54hg544h444
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

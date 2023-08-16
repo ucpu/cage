@@ -1,7 +1,7 @@
 #ifndef guard_scene_qedf4gh8hj555j4k
 #define guard_scene_qedf4gh8hj555j4k
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

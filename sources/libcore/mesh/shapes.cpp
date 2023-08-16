@@ -1,7 +1,7 @@
+#include <unordered_map>
+
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshShapes.h>
-
-#include <unordered_map>
 
 namespace cage
 {

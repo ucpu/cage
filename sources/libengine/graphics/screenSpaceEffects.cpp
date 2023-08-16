@@ -1,6 +1,5 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
-
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/provisionalGraphics.h>
@@ -9,8 +8,6 @@
 #include <cage-engine/screenSpaceEffects.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
-
-#include <cmath>
 
 namespace cage
 {
@@ -48,7 +45,7 @@ namespace cage
 			RenderQueue *q = config.queue;
 			const auto graphicsDebugScope = q->namedScope("blur");
 
-			const Vec2i res = max(config.resolution / numeric_cast<uint32>(std::pow(2, config.mipmapLevel)), 1);
+			const Vec2i res = max(config.resolution / numeric_cast<uint32>(cage::pow2(config.mipmapLevel)), 1);
 			q->viewport(Vec2i(), res);
 			FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 			q->bind(fb);

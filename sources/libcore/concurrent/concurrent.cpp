@@ -1,5 +1,8 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/debug.h>
+#include <atomic>
+#include <cerrno>
+#include <exception>
+#include <mutex>
+#include <thread>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "../incWin.h"
@@ -28,11 +31,8 @@
 	#define ANNOTATE_RWLOCK_RELEASED(ADDR, WRT)
 #endif
 
-#include <atomic>
-#include <cerrno>
-#include <exception>
-#include <mutex>
-#include <thread>
+#include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 
 namespace cage
 {

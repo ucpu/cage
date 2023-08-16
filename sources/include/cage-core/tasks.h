@@ -1,7 +1,7 @@
 #ifndef guard_tasks_h_vbnmf15dvt89zh
 #define guard_tasks_h_vbnmf15dvt89zh
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

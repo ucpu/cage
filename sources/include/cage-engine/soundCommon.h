@@ -1,7 +1,7 @@
 #ifndef guard_soundCommon_h_dokzt5456rtz45
 #define guard_soundCommon_h_dokzt5456rtz45
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

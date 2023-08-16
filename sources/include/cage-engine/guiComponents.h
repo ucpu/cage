@@ -1,7 +1,7 @@
 #ifndef guard_guiComponents_sdf1gh45hk485aws
 #define guard_guiComponents_sdf1gh45hk485aws
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

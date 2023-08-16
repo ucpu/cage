@@ -1,17 +1,16 @@
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
-
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderProgram.h>
-
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace cage
 {

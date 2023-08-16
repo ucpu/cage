@@ -1,6 +1,3 @@
-#include <cage-core/macros.h>
-#include <cage-core/string.h>
-
 #include <algorithm>
 #include <cctype> // std::isspace
 #include <cerrno>
@@ -19,6 +16,9 @@
 #ifdef GCHL_USE_CHARCONV
 	#include <charconv> // to_chars, from_chars
 #endif
+
+#include <cage-core/macros.h>
+#include <cage-core/string.h>
 
 namespace cage
 {

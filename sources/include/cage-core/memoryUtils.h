@@ -1,7 +1,7 @@
 #ifndef guard_memoryUtils_h_dsh45s56ed4hs94rt4ezhk47op
 #define guard_memoryUtils_h_dsh45s56ed4hs94rt4ezhk47op
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

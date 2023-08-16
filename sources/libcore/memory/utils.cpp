@@ -1,4 +1,4 @@
-#include <cage-core/memoryUtils.h>
+#include <cerrno>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "../incWin.h"
@@ -17,7 +17,7 @@
 	#define ANNOTATE_HAPPENS_BEFORE(XXX)
 #endif
 
-#include <cerrno>
+#include <cage-core/memoryUtils.h>
 
 namespace cage
 {

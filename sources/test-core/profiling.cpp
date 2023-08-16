@@ -1,6 +1,7 @@
+#include <atomic>
+
 #include "main.h"
 
-#include <atomic>
 #include <cage-core/config.h>
 #include <cage-core/profiling.h>
 

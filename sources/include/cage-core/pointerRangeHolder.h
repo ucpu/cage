@@ -1,9 +1,9 @@
 #ifndef guard_pointerRangeHolder_h_thgfd564h64fdrht64r6ht4r56th4u7ik
 #define guard_pointerRangeHolder_h_thgfd564h64fdrht64r6ht4r56th4u7ik
 
-#include "core.h"
-
 #include <vector>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

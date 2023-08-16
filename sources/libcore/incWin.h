@@ -9,6 +9,8 @@
 #endif
 #include <windows.h>
 
+#include <cage-core/core.h>
+
 namespace
 {
 	struct AutoHandle : private cage::Immovable

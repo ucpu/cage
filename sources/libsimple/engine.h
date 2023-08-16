@@ -1,6 +1,7 @@
 #ifndef header_guard_engine_h_saf54g4ds4qaqq56q44olpoiu
 #define header_guard_engine_h_saf54g4ds4qaqq56q44olpoiu
 
+#include <cage-core/entities.h>
 #include <cage-simple/engine.h>
 
 namespace cage

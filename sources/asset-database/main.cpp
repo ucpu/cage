@@ -1,6 +1,6 @@
-#include <cage-core/logger.h>
-
 #include "database.h"
+
+#include <cage-core/logger.h>
 
 extern ConfigBool configListening;
 extern bool verdictValue;

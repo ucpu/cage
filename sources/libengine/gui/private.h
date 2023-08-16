@@ -1,16 +1,15 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
-#include <cage-core/entities.h>
+#include <vector>
 
+#include <cage-core/entities.h>
 #include <cage-engine/font.h> // FontFormat
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
 #include <cage-engine/renderQueue.h> // UubRange
 #include <cage-engine/window.h> // WindowEventListeners
-
-#include <vector>
 
 #define GUI_HAS_COMPONENT(T, E) (E)->has<Gui##T##Component>()
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()
@@ -19,6 +18,7 @@
 namespace cage
 {
 	class AssetOnDemand;
+	class MultiShaderProgram;
 	class GuiImpl;
 	struct HierarchyItem;
 	struct RenderableElement;
@@ -177,7 +177,7 @@ namespace cage
 
 		Vec2 findRequestedSize();
 
-		RenderableText emit(Vec2 position, Vec2 size);
+		RenderableText emit(Vec2 position, Vec2 size, bool disabled);
 
 		void updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor);
 	};
@@ -201,7 +201,7 @@ namespace cage
 
 		Vec2 findRequestedSize();
 
-		RenderableImage emit(Vec2 position, Vec2 size);
+		RenderableImage emit(Vec2 position, Vec2 size, bool disabled);
 	};
 
 	struct RenderableBase : private Immovable
@@ -219,15 +219,11 @@ namespace cage
 
 	struct RenderableElement : public RenderableBase
 	{
-		struct Element
-		{
-			Vec4 outer;
-			Vec4 inner;
-			uint32 element = m;
-			ElementModeEnum mode = m;
-		} data;
-
+		Vec4 outer;
+		Vec4 inner;
 		const SkinData *skin = nullptr;
+		uint32 element = m;
+		ElementModeEnum mode = m;
 
 		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
@@ -238,22 +234,20 @@ namespace cage
 	{
 		CommonTextData data;
 
-		RenderableText(TextItem *text, Vec2 position, Vec2 size);
+		RenderableText(TextItem *text, Vec2 position, Vec2 size, bool disabled);
 
 		virtual ~RenderableText() override;
 	};
 
 	struct RenderableImage : public RenderableBase
 	{
-		struct Image
-		{
-			Vec4 ndcPos;
-			Vec4 uvClip;
-			Vec4 aniTexFrames;
-			Holder<Texture> texture;
-		} data;
+		Holder<Texture> texture;
+		Vec4 ndcPos;
+		Vec4 uvClip;
+		Vec4 aniTexFrames;
+		bool disabled = false;
 
-		RenderableImage(ImageItem *item, Vec2 position, Vec2 size);
+		RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled);
 
 		virtual ~RenderableImage() override;
 	};
@@ -308,9 +302,8 @@ namespace cage
 		{
 			Holder<ShaderProgram> elementShader;
 			Holder<ShaderProgram> fontShader;
-			Holder<ShaderProgram> imageAnimatedShader;
-			Holder<ShaderProgram> imageStaticShader;
-			Holder<ShaderProgram> colorPickerShader[3];
+			Holder<MultiShaderProgram> imageShader;
+			Holder<ShaderProgram> colorPickerShader[3]; // H, S, V
 			Holder<Model> elementModel;
 			Holder<Model> fontModel;
 			Holder<Model> imageModel;

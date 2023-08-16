@@ -1,4 +1,5 @@
 #include "math.h"
+
 #include <cage-core/mat3x4.h>
 
 namespace cage

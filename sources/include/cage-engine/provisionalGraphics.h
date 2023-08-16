@@ -1,9 +1,9 @@
 #ifndef guard_provisionalGraphics_h_dftrh5serft4l4u696f
 #define guard_provisionalGraphics_h_dftrh5serft4l4u696f
 
-#include "core.h"
-
 #include <functional>
+
+#include <cage-engine/core.h>
 
 namespace cage
 {

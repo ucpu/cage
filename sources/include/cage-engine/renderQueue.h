@@ -1,7 +1,7 @@
 #ifndef guard_renderQueue_h_edrtz54sedr9wse4g4jk7
 #define guard_renderQueue_h_edrtz54sedr9wse4g4jk7
 
-#include "provisionalHandles.h"
+#include <cage-engine/provisionalHandles.h>
 
 namespace cage
 {

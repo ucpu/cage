@@ -1,7 +1,7 @@
+#include <random>
+
 #include <cage-core/guid.h>
 #include <cage-core/math.h>
-
-#include <random>
 
 namespace cage
 {

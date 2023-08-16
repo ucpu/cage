@@ -1,11 +1,11 @@
 #ifndef guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 #define guard_database_h_f17e7ce9_c9c5_49b3_b59d_c42929085c79_
 
-#include <cage-core/config.h>
-#include <cage-core/string.h> // StringComparatorFast
-
 #include <map>
 #include <set>
+
+#include <cage-core/config.h>
+#include <cage-core/string.h> // StringComparatorFast
 
 using namespace cage;
 

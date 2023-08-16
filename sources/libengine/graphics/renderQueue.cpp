@@ -1,10 +1,12 @@
+#include <array>
+#include <vector> // namesStack
+
 #include <cage-core/blockContainer.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/profiling.h>
-
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/model.h>
@@ -14,9 +16,6 @@
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/uniformBuffer.h>
-
-#include <array>
-#include <vector> // namesStack
 
 namespace cage
 {

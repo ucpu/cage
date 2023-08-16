@@ -1,7 +1,7 @@
 #ifndef guard_guiSkin_h_4j8uz79rd
 #define guard_guiSkin_h_4j8uz79rd
 
-#include "guiComponents.h"
+#include <cage-engine/guiComponents.h>
 
 namespace cage
 {

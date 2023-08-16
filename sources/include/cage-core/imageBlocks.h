@@ -1,8 +1,8 @@
 #ifndef guard_imageBlocks_h_dsfhg54drftjsdrfgv
 #define guard_imageBlocks_h_dsfhg54drftjsdrfgv
 
-#include "image.h"
-#include "math.h"
+#include <cage-core/image.h>
+#include <cage-core/math.h>
 
 namespace cage
 {

@@ -1,7 +1,7 @@
 #ifndef guard_typeIndex_h_d65r4h6driolui40yq153
 #define guard_typeIndex_h_d65r4h6driolui40yq153
 
-#include "hashBuffer.h"
+#include <cage-core/hashBuffer.h>
 
 namespace cage
 {

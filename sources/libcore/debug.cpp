@@ -1,6 +1,3 @@
-#include <cage-core/debug.h>
-#include <cage-core/string.h>
-
 #if !defined(CAGE_CORE_API)
 	#error CAGE_CORE_API must be defined
 #endif
@@ -19,16 +16,19 @@ static_assert(CAGE_DEBUG_BOOL == true);
 static_assert(CAGE_DEBUG_BOOL == false);
 #endif
 
-#ifdef CAGE_SYSTEM_WINDOWS
-	#include "incWin.h"
-	#include <intrin.h> // __debugbreak
-#endif
-
 #include <atomic>
 #include <cstring> // std::strcat
 #include <exception> // std::terminate
 #include <fstream> // std::ifstream
 #include <string> // std::getline
+
+#ifdef CAGE_SYSTEM_WINDOWS
+	#include "incWin.h"
+	#include <intrin.h> // __debugbreak
+#endif
+
+#include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 namespace cage
 {

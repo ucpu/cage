@@ -1,6 +1,6 @@
-#include <cage-engine/core.h>
-
 #include <GLFW/glfw3.h>
+
+#include <cage-engine/core.h>
 
 namespace cage
 {

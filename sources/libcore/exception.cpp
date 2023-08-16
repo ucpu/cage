@@ -1,6 +1,6 @@
-#include <cage-core/debug.h>
-
 #include <atomic>
+
+#include <cage-core/debug.h>
 
 namespace cage
 {

@@ -1,10 +1,10 @@
-#include <cage-core/ini.h>
-#include <cage-core/serialization.h>
+#include <map>
+#include <vector>
 
 #include <openxr/openxr.h>
 
-#include <map>
-#include <vector>
+#include <cage-core/ini.h>
+#include <cage-core/serialization.h>
 
 cage::PointerRange<const cage::uint8> controller_binding_0();
 cage::PointerRange<const cage::uint8> controller_binding_1();

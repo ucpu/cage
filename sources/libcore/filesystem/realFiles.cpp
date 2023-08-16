@@ -1,15 +1,9 @@
-#include <cage-core/concurrent.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/string.h>
-
-#include "files.h"
-
 #ifdef CAGE_SYSTEM_WINDOWS
+	#include <vector> // wide characters
 	#include "../incWin.h"
 	#include <io.h> // _get_osfhandle
 	#define fseek _fseeki64
 	#define ftell _ftelli64
-	#include <vector> // wide characters
 #else
 	#define _FILE_OFFSET_BITS 64
 	#include <dirent.h>
@@ -19,6 +13,12 @@
 #ifdef CAGE_SYSTEM_MAC
 	#include <mach-o/dyld.h>
 #endif
+
+#include "files.h"
+
+#include <cage-core/concurrent.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/string.h>
 
 namespace cage
 {

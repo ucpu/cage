@@ -1,7 +1,7 @@
 #ifndef guard_image_h_681DF37FA76B4FA48C656E96AF90EE69
 #define guard_image_h_681DF37FA76B4FA48C656E96AF90EE69
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

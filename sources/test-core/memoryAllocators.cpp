@@ -1,10 +1,11 @@
+#include <list>
+#include <utility>
+#include <vector>
+
 #include "main.h"
 
 #include <cage-core/math.h>
 #include <cage-core/memoryAllocators.h>
-#include <list>
-#include <utility>
-#include <vector>
 
 namespace
 {
@@ -146,7 +147,7 @@ namespace
 			for (uint32 round = 0; round < 20; round++)
 			{
 				for (uint32 i = 0; i < 20; i++)
-					arena->allocate(randomRange(1, 1000), uintPtr(1) << randomRange(2, 8));
+					(void)arena->allocate(randomRange(1, 1000), uintPtr(1) << randomRange(2, 8));
 				arena->flush();
 			}
 		}

@@ -1,7 +1,7 @@
 #ifndef guard_camera_h_m1nv5e8967gsx856dghzgg
 #define guard_camera_h_m1nv5e8967gsx856dghzgg
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

@@ -1,13 +1,3 @@
-#include <cage-core/config.h>
-#include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
-#include <cage-core/profiling.h>
-#include <cage-engine/opengl.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/virtualReality.h>
-
-#define XR_USE_GRAPHICS_API_OPENGL
-#include <openxr/openxr_platform.h>
-
 #include <array>
 #include <atomic>
 #include <cmath> // tan
@@ -15,6 +5,16 @@
 #include <map>
 #include <tuple>
 #include <vector>
+
+#define XR_USE_GRAPHICS_API_OPENGL
+#include <openxr/openxr_platform.h>
+
+#include <cage-core/config.h>
+#include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
+#include <cage-core/profiling.h>
+#include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/virtualReality.h>
 
 #ifndef XR_APILAYER_LUNARG_core_validation
 	#define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"

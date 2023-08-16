@@ -1,7 +1,7 @@
 #ifndef guard_swapBufferController_h_rds4jh4jdr64jzdr64
 #define guard_swapBufferController_h_rds4jh4jdr64jzdr64
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

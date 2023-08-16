@@ -1,4 +1,5 @@
 #include <algorithm>
+
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshImport.h>

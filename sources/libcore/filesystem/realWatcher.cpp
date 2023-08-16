@@ -1,10 +1,10 @@
+#include <FileWatcher/FileWatcher.h>
+
 #include <cage-core/concurrent.h> // threadSleep
 #include <cage-core/files.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/string.h>
 #include <cage-core/timer.h>
-
-#include <FileWatcher/FileWatcher.h>
 
 namespace cage
 {

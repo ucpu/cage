@@ -1,7 +1,7 @@
 #ifndef guard_graphicsError_h_d776d3a243c7464db721291294b5b1ef_
 #define guard_graphicsError_h_d776d3a243c7464db721291294b5b1ef_
 
-#include "core.h"
+#include <cage-engine/core.h>
 
 namespace cage
 {

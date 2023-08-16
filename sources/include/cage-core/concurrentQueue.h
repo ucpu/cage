@@ -1,9 +1,9 @@
 #ifndef guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 #define guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 
-#include "concurrent.h"
-
 #include <plf_list.h>
+
+#include <cage-core/concurrent.h>
 
 namespace cage
 {

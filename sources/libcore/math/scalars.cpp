@@ -1,6 +1,6 @@
-#include "math.h"
-
 #include <cmath>
+
+#include "math.h"
 
 namespace cage
 {
@@ -91,12 +91,29 @@ namespace cage
 		return std::sqrt(x.value);
 	}
 
+#define GCHL_GENERATE(TYPE) \
+	double sqrt(TYPE x) \
+	{ \
+		return std::sqrt(x); \
+	}
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+#undef GCHL_GENERATE
+
 	Real pow(Real base, Real exponent)
 	{
 		return std::pow(base.value, exponent.value);
 	}
 
-	Real powE(Real x)
+	Real pow(Real x)
 	{
 		return std::exp(x.value);
 	}
@@ -109,6 +126,11 @@ namespace cage
 	Real pow10(Real x)
 	{
 		return std::pow(10, x.value);
+	}
+
+	Real log(Real base, Real x)
+	{
+		return std::log(x.value) / std::log(base.value);
 	}
 
 	Real log(Real x)

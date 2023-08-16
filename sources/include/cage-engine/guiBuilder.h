@@ -1,8 +1,8 @@
 #ifndef guard_guiBuilder_sxrdk487
 #define guard_guiBuilder_sxrdk487
 
-#include "guiComponents.h"
 #include <cage-core/entities.h>
+#include <cage-engine/guiComponents.h>
 
 namespace cage
 {

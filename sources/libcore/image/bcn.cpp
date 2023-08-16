@@ -1,12 +1,13 @@
-#include "image.h"
-
-#include <cage-core/imageBlocks.h>
-#include <cage-core/pointerRangeHolder.h>
 #include <vector>
 
 #include <bc7enc_rdo/bc7decomp.h>
 #include <bc7enc_rdo/bc7enc.h>
 #include <bc7enc_rdo/rgbcx.h>
+
+#include "image.h"
+
+#include <cage-core/imageBlocks.h>
+#include <cage-core/pointerRangeHolder.h>
 
 namespace cage
 {

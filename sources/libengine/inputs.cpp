@@ -2,7 +2,6 @@
 
 namespace cage
 {
-	//char(*__kaboom)[sizeof(GenericInput)] = 1;
 	static_assert(sizeof(GenericInput) == 64);
 
 #define GENERALIZER(CLASS) \

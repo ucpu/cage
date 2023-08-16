@@ -1,7 +1,7 @@
 #ifndef guard_containerSerialization_ncas56d74j8zud9s
 #define guard_containerSerialization_ncas56d74j8zud9s
 
-#include "serialization.h"
+#include <cage-core/serialization.h>
 
 namespace cage
 {

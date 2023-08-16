@@ -1,7 +1,7 @@
 #ifndef guard_collisionStructure_h_erthg456ter4h56r1th64rth
 #define guard_collisionStructure_h_erthg456ter4h56r1th64rth
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

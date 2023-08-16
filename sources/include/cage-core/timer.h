@@ -1,7 +1,7 @@
 #ifndef guard_timer_h_95034fdd_21d1_4b36_b8f9_d5eeb0f6e2c1_
 #define guard_timer_h_95034fdd_21d1_4b36_b8f9_d5eeb0f6e2c1_
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

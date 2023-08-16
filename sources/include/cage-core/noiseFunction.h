@@ -1,7 +1,7 @@
 #ifndef guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
 #define guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
 
-#include "math.h"
+#include <cage-core/math.h>
 
 namespace cage
 {

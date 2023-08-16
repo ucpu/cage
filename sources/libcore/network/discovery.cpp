@@ -1,3 +1,8 @@
+#include <algorithm>
+#include <vector>
+
+#include "net.h"
+
 #include <cage-core/flatSet.h>
 #include <cage-core/guid.h>
 #include <cage-core/hashString.h>
@@ -5,11 +10,6 @@
 #include <cage-core/networkDiscovery.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
-
-#include "net.h"
-
-#include <algorithm>
-#include <vector>
 
 namespace cage
 {

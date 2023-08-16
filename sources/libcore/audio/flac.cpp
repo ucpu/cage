@@ -1,6 +1,6 @@
-#include "audio.h"
-
 #include <dr_libs/dr_flac.h>
+
+#include "audio.h"
 
 namespace cage
 {

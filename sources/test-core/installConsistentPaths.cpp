@@ -1,12 +1,14 @@
+#include <plf_colony.h>
+#include <unordered_dense.h>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
+
 #ifdef CAGE_ENGINE_API
 	#include <cage-engine/inputs.h>
 	#include <cage-engine/opengl.h>
 	#include <cage-engine/window.h>
 #endif // !CAGE_ENGINE_API
-#include <plf_colony.h>
-#include <unordered_dense.h>
 
 using namespace cage;
 

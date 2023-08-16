@@ -7,7 +7,6 @@
 #include <cage-core/memoryCompression.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
-
 #include <cage-engine/assetStructs.h>
 
 using namespace cage;

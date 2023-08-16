@@ -1,7 +1,7 @@
 #ifndef guard_audioAlgorithms_h_sd5rf4g6t5r
 #define guard_audioAlgorithms_h_sd5rf4g6t5r
 
-#include "audio.h"
+#include <cage-core/audio.h>
 
 namespace cage
 {

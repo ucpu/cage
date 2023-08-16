@@ -1,7 +1,7 @@
 #ifndef guard_networkDiscovery_h_ds5gh4q6as5d48
 #define guard_networkDiscovery_h_ds5gh4q6as5d48
 
-#include "networkUtils.h"
+#include <cage-core/networkUtils.h>
 
 namespace cage
 {

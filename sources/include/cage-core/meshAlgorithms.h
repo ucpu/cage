@@ -1,7 +1,7 @@
 #ifndef guard_meshAlgorithms_h_df5641hj6fghj
 #define guard_meshAlgorithms_h_df5641hj6fghj
 
-#include "mesh.h"
+#include <cage-core/mesh.h>
 
 namespace cage
 {

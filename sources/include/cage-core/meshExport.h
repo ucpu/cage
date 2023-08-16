@@ -1,7 +1,7 @@
 #ifndef guard_meshExport_h_n1bv859wrffcg89
 #define guard_meshExport_h_n1bv859wrffcg89
 
-#include "meshIoCommon.h"
+#include <cage-core/meshIoCommon.h>
 
 namespace cage
 {

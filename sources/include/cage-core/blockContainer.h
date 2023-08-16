@@ -1,9 +1,9 @@
 #ifndef header_guard_blockCollection_h_m1rt89d6rt4zu
 #define header_guard_blockCollection_h_m1rt89d6rt4zu
 
-#include <cage-core/core.h>
-
 #include <vector>
+
+#include <cage-core/core.h>
 
 namespace cage
 {

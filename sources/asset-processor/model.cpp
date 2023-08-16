@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "processor.h"
 
 #include <cage-core/flatSet.h>
@@ -6,7 +8,6 @@
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-engine/shaderConventions.h>
-#include <vector>
 
 MeshImportConfig meshImportConfig()
 {

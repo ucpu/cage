@@ -1,7 +1,8 @@
-#include <cage-engine/speakerList.h>
+#include <vector>
 
 #include <cubeb/cubeb.h>
-#include <vector>
+
+#include <cage-engine/speakerList.h>
 
 namespace cage
 {

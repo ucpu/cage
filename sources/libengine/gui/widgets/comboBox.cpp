@@ -73,7 +73,7 @@ namespace cage
 				if (selected == m)
 				{ // emit placeholder
 					if (hierarchy->text)
-						hierarchy->text->emit(p, s);
+						hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 				else
 				{ // emit selected item
@@ -82,7 +82,7 @@ namespace cage
 					{
 						if (idx++ == selected)
 						{
-							c->text->emit(p, s).setClip(hierarchy);
+							c->text->emit(p, s, widgetState.disabled).setClip(hierarchy);
 							break;
 						}
 					}
@@ -177,7 +177,7 @@ namespace cage
 				const bool disabled = c->ent->has<GuiWidgetStateComponent>() && c->ent->value<GuiWidgetStateComponent>().disabled;
 				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, disabled ? ElementModeEnum::Disabled : md, p, s);
 				offset(p, s, itemFrame);
-				c->text->emit(p, s).setClip(hierarchy);
+				c->text->emit(p, s, disabled).setClip(hierarchy);
 				idx++;
 			}
 		}

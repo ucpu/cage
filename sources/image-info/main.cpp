@@ -1,4 +1,5 @@
 #include "imageInfo.h"
+
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <cage-core/logger.h>

@@ -1,7 +1,7 @@
 #ifndef guard_memoryBuffer_h_10EAF6AFD8624EA4B9E88ECA618A55DD
 #define guard_memoryBuffer_h_10EAF6AFD8624EA4B9E88ECA618A55DD
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

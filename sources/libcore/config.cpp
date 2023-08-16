@@ -1,3 +1,8 @@
+#include <variant>
+#include <vector>
+
+#include <unordered_dense.h>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
@@ -8,11 +13,6 @@
 #include <cage-core/math.h>
 #include <cage-core/stdHash.h>
 #include <cage-core/string.h>
-
-#include <unordered_dense.h>
-
-#include <variant>
-#include <vector>
 
 namespace cage
 {

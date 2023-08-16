@@ -1,7 +1,7 @@
 #ifndef guard_assetContext_h_4lkjh9sd654gtsdfg
 #define guard_assetContext_h_4lkjh9sd654gtsdfg
 
-#include "core.h"
+#include <cage-core/core.h>
 
 namespace cage
 {

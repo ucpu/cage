@@ -1,12 +1,12 @@
 #ifndef guard_lruCache_h_ABEDFC7ADD4A
 #define guard_lruCache_h_ABEDFC7ADD4A
 
-#include "core.h"
+#include <optional>
+#include <vector>
 
 #include <unordered_dense.h>
 
-#include <optional>
-#include <vector>
+#include <cage-core/core.h>
 
 namespace cage
 {

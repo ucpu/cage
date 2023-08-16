@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <cage-core/endianness.h>
 #include <cage-core/hashes.h>
 #include <cage-core/lineReader.h>
@@ -7,8 +9,6 @@
 #include <cage-core/networkWebsocket.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
-
-#include <vector>
 
 namespace cage
 {

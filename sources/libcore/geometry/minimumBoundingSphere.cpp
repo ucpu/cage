@@ -1,6 +1,6 @@
-#include <cage-core/geometry.h>
-
 #include <vector>
+
+#include <cage-core/geometry.h>
 
 namespace cage
 {
