@@ -1236,6 +1236,7 @@ namespace cage
 	}
 
 	CAGE_CORE_API Real randomChance(); // 0 to 1; including 0, excluding 1
+	CAGE_CORE_API double randomChanceDouble(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) CAGE_CORE_API TYPE randomRange(TYPE min, TYPE max);
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);

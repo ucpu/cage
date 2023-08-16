@@ -17,6 +17,7 @@ namespace cage
 		uint64 next();
 
 		Real randomChance(); // 0 to 1; including 0, excluding 1
+		double randomChanceDouble(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max);
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);

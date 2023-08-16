@@ -11,25 +11,42 @@ namespace cage
 		privat::generateRandomData((uint8 *)s, sizeof(s));
 	}
 
-	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{ s1, s2 } {}
+	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{ s1, s2 }
+	{
+		CAGE_ASSERT(s1 != 0 && s2 != 0);
+	}
+
+	namespace
+	{
+		CAGE_FORCE_INLINE uint64 rotl(const uint64 x, int k)
+		{
+			return (x << k) | (x >> (64 - k));
+		}
+	}
 
 	uint64 RandomGenerator::next()
 	{
-		uint64 x = s[0];
-		const uint64 y = s[1];
-		s[0] = y;
-		x ^= x << 23;
-		s[1] = x ^ y ^ (x >> 17) ^ (y >> 26);
-		return s[1] + y;
+		// xoroshiro128**
+		// https://prng.di.unimi.it/xoroshiro128starstar.c
+		const uint64 s0 = s[0];
+		uint64 s1 = s[1];
+		const uint64 result = rotl(s0 * 5, 7) * 9;
+		s1 ^= s0;
+		s[0] = rotl(s0, 24) ^ s1 ^ (s1 << 16);
+		s[1] = rotl(s1, 37);
+		return result;
 	}
 
 	Real RandomGenerator::randomChance()
 	{
+		return randomChanceDouble();
+	}
+
+	double RandomGenerator::randomChanceDouble()
+	{
 		const uint64 r = next();
-		Real res = (Real)r / (Real)std::numeric_limits<uint64>::max();
-		if (res >= 1.0)
-			res = 0;
-		CAGE_ASSERT(res >= 0.f && res < 1.f);
+		const double res = (r >> 11) * 0x1.0p-53;
+		CAGE_ASSERT(res >= 0.0 && res < 1.0);
 		return res;
 	}
 
@@ -62,11 +79,8 @@ namespace cage
 	double RandomGenerator::randomRange(double min, double max)
 	{
 		CAGE_ASSERT(min <= max);
-		const uint64 r = next();
-		double f = (double)r / (double)std::numeric_limits<uint64>::max();
-		if (f >= 1.0)
-			f = 0;
-		const double res = (max - min) * f + min;
+		const double c = randomChanceDouble();
+		const double res = interpolate(min, max, c);
 		CAGE_ASSERT(res >= min && res < max);
 		return res;
 	}
@@ -182,6 +196,11 @@ namespace cage
 	Real randomChance()
 	{
 		return detail::randomGenerator().randomChance();
+	}
+
+	double randomChanceDouble()
+	{
+		return detail::randomGenerator().randomChanceDouble();
 	}
 
 #define GCHL_GENERATE(TYPE) \
