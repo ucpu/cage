@@ -1,8 +1,11 @@
-#ifdef CAGE_USE_STEAM_SOCKETS
+#if defined(CAGE_USE_STEAM_SOCKETS) || defined(CAGE_USE_STEAM_SDK)
 
 	#include <steam/isteamnetworkingsockets.h>
 	#include <steam/isteamnetworkingutils.h>
-	#include <steam/steamnetworkingsockets.h>
+
+	#if defined(CAGE_USE_STEAM_SOCKETS)
+		#include <steam/steamnetworkingsockets.h>
+	#endif
 
 	#include "net.h"
 
@@ -19,6 +22,7 @@ namespace cage
 
 		void initialize()
 		{
+	#if defined(CAGE_USE_STEAM_SOCKETS)
 			static int dummy = []()
 			{
 				SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
@@ -30,6 +34,7 @@ namespace cage
 				}
 				return 0;
 			}();
+	#endif
 		}
 
 		CAGE_FORCE_INLINE ISteamNetworkingSockets *sockets()
