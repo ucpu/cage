@@ -1,10 +1,12 @@
 #if defined(CAGE_USE_STEAM_SOCKETS) || defined(CAGE_USE_STEAM_SDK)
 
-	#include <steam/isteamnetworkingsockets.h>
-	#include <steam/isteamnetworkingutils.h>
-
 	#if defined(CAGE_USE_STEAM_SOCKETS)
+		#include <steam/isteamnetworkingsockets.h>
+		#include <steam/isteamnetworkingutils.h>
 		#include <steam/steamnetworkingsockets.h>
+	#endif
+	#if defined(CAGE_USE_STEAM_SDK)
+		#include <steam/steam_api.h>
 	#endif
 
 	#include "net.h"
@@ -13,29 +15,15 @@
 	#include <cage-core/concurrentQueue.h>
 	#include <cage-core/endianness.h>
 	#include <cage-core/networkSteam.h>
+	#include <cage-core/config.h>
 
 namespace cage
 {
 	namespace
 	{
-		constexpr uint32 LanesCount = 8;
+		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Warning);
 
-		void initialize()
-		{
-	#if defined(CAGE_USE_STEAM_SOCKETS)
-			static int dummy = []()
-			{
-				SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
-				SteamNetworkingErrMsg msg;
-				if (!GameNetworkingSockets_Init(nullptr, msg))
-				{
-					CAGE_LOG_THROW(msg);
-					CAGE_THROW_ERROR(Exception, "failed to initialize steam networking library");
-				}
-				return 0;
-			}();
-	#endif
-		}
+		constexpr uint32 LanesCount = 8;
 
 		CAGE_FORCE_INLINE ISteamNetworkingSockets *sockets()
 		{
@@ -45,6 +33,33 @@ namespace cage
 		CAGE_FORCE_INLINE ISteamNetworkingUtils *utils()
 		{
 			return SteamNetworkingUtils();
+		}
+
+		const char *connectionStateToString(ESteamNetworkingConnectionState s)
+		{
+			switch (s)
+			{
+				case k_ESteamNetworkingConnectionState_None:
+					return "none";
+				case k_ESteamNetworkingConnectionState_Connecting:
+					return "connecting";
+				case k_ESteamNetworkingConnectionState_FindingRoute:
+					return "finding route";
+				case k_ESteamNetworkingConnectionState_Connected:
+					return "connected";
+				case k_ESteamNetworkingConnectionState_ClosedByPeer:
+					return "closed by peer";
+				case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
+					return "problem detected locally";
+				case k_ESteamNetworkingConnectionState_FinWait:
+					return "fin wait";
+				case k_ESteamNetworkingConnectionState_Linger:
+					return "linger";
+				case k_ESteamNetworkingConnectionState_Dead:
+					return "dead";
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid steam networking connection state");
+			}
 		}
 
 		void handleResult(EResult r)
@@ -59,6 +74,81 @@ namespace cage
 					CAGE_LOG_THROW(Stringizer() + "steam sockets result code: " + r);
 					CAGE_THROW_ERROR(Exception, "steam sockets error");
 			}
+		}
+
+		void debugOutputHandler(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg)
+		{
+			const cage::SeverityEnum level = [&]() -> cage::SeverityEnum
+			{
+				switch (nType)
+				{
+					default:
+					case k_ESteamNetworkingSocketsDebugOutputType_None:
+					case k_ESteamNetworkingSocketsDebugOutputType_Bug:
+						return SeverityEnum::Critical;
+					case k_ESteamNetworkingSocketsDebugOutputType_Error:
+						return SeverityEnum::Error;
+					case k_ESteamNetworkingSocketsDebugOutputType_Important:
+					case k_ESteamNetworkingSocketsDebugOutputType_Warning:
+						return SeverityEnum::Warning;
+					case k_ESteamNetworkingSocketsDebugOutputType_Msg:
+						return SeverityEnum::Info;
+					case k_ESteamNetworkingSocketsDebugOutputType_Verbose:
+					case k_ESteamNetworkingSocketsDebugOutputType_Debug:
+					case k_ESteamNetworkingSocketsDebugOutputType_Everything:
+						return SeverityEnum::Note;
+				}
+			}();
+			CAGE_LOG(level, "steamsocks", pszMsg);
+		}
+
+		void initializeSockets()
+		{
+	#if defined(CAGE_USE_STEAM_SOCKETS)
+			SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
+			SteamNetworkingErrMsg msg;
+			if (!GameNetworkingSockets_Init(nullptr, msg))
+			{
+				CAGE_LOG_THROW(msg);
+				CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets networking library");
+			}
+	#endif
+		}
+
+		void initializeAuthentication()
+		{
+	#if defined(CAGE_USE_STEAM_SDK)
+			ESteamNetworkingAvailability a = sockets()->InitAuthentication();
+			while (true)
+			{
+				switch (a)
+				{
+					case k_ESteamNetworkingAvailability_Current:
+						return; // all is done
+					case k_ESteamNetworkingAvailability_CannotTry:
+					case k_ESteamNetworkingAvailability_Failed:
+					case k_ESteamNetworkingAvailability_Previously:
+						CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets network authentication");
+						break;
+					default:
+						break;
+				}
+				threadSleep(5000);
+				SteamAPI_RunCallbacks();
+				a = sockets()->GetAuthenticationStatus(nullptr);
+			}
+	#endif
+		}
+
+		void initialize()
+		{
+			static int dummy = []()
+			{
+				initializeSockets();
+				utils()->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
+				initializeAuthentication();
+				return 0;
+			}();
 		}
 
 		void statusChangedCallback(SteamNetConnectionStatusChangedCallback_t *info);
@@ -252,6 +342,7 @@ namespace cage
 
 		void statusChangedCallback(SteamNetConnectionStatusChangedCallback_t *info)
 		{
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "steamsocks", Stringizer() + "connection " + info->m_info.m_szConnectionDescription + " transitions from: " + connectionStateToString(info->m_eOldState) + ", to: " + connectionStateToString(info->m_info.m_eState));
 			if (info->m_info.m_hListenSocket && info->m_eOldState == k_ESteamNetworkingConnectionState_None)
 			{
 				CAGE_ASSERT(info->m_info.m_eState == k_ESteamNetworkingConnectionState_Connecting);
@@ -268,9 +359,8 @@ namespace cage
 				}
 				case k_ESteamNetworkingConnectionState_ClosedByPeer:
 				case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
-				case k_ESteamNetworkingConnectionState_Dead:
-				case k_ESteamNetworkingConnectionState_Linger:
 				{
+					CAGE_LOG_DEBUG(SeverityEnum::Info, "steamsocks", Stringizer() + "connection " + info->m_info.m_szConnectionDescription + " terminates with code: " + info->m_info.m_eEndReason + ", explanation: " + info->m_info.m_szEndDebug);
 					if (SteamConnectionImpl *impl = getConnection(info->m_hConn))
 						impl->disconnected = true;
 					break;
