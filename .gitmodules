@@ -91,3 +91,9 @@
 [submodule "externals/unordered_dense/unordered_dense"]
 	path = externals/unordered_dense/unordered_dense
 	url = https://github.com/martinus/unordered_dense.git
+[submodule "externals/gamenetworkingsockets/GameNetworkingSockets"]
+	path = externals/gamenetworkingsockets/GameNetworkingSockets
+	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
+[submodule "externals/protobuf/protobuf"]
+	path = externals/protobuf/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git

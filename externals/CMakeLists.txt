@@ -22,6 +22,9 @@ set(CMAKE_DISABLE_FIND_PACKAGE_liblzma ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_JBIG ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_Deflate ON)
 
+# disable installs
+set(CMAKE_SKIP_INSTALL_RULES TRUE) # this is the most awesome addition to cmake ever!
+
 # ensure that all libraries are distinguishable from system libraries
 set(CMAKE_STATIC_LIBRARY_PREFIX "${CMAKE_STATIC_LIBRARY_PREFIX}cage-")
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
@@ -74,6 +77,12 @@ add_subdirectory(bc7enc_rdo)
 add_subdirectory(avir)
 add_subdirectory(openxr-sdk)
 
+option(cage_use_steam_sockets "include Game Networking Sockets library by Valve/Steam" OFF)
+if (cage_use_steam_sockets)
+	add_subdirectory(protobuf)
+	add_subdirectory(gamenetworkingsockets)
+endif()
+
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "finished cage external subdirectories")
 message(STATUS "----------------------------------------------------------------")
@@ -87,6 +96,10 @@ add_dependencies(lib_msdfgen freetype)
 
 function(disable_compilation_warnings target)
 	if(NOT TARGET ${target})
+		return()
+	endif()
+	get_target_property(imported ${target} IMPORTED)
+	if(imported)
 		return()
 	endif()
 	if(MSVC)
@@ -153,4 +166,9 @@ external_target_properties(avir)
 external_target_properties(openxr_loader)
 external_target_folder(generate_openxr_header)
 external_target_folder(xr_global_generated_files)
+external_target_properties(libprotobuf)
+external_target_properties(libprotoc)
+external_target_properties(protoc)
+external_target_properties(utf8_validity)
+external_target_properties(GameNetworkingSockets_s)
 

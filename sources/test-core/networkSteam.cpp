@@ -7,7 +7,9 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/networkGinnel.h>
+#include <cage-core/networkSteam.h>
+
+#ifdef CAGE_USE_STEAM_SOCKETS
 
 namespace
 {
@@ -16,8 +18,8 @@ namespace
 	class ServerImpl
 	{
 	public:
-		Holder<GinnelServer> udp = newGinnelServer(3210);
-		std::vector<Holder<GinnelConnection>> conns;
+		Holder<SteamServer> udp = newSteamServer(3210);
+		std::vector<Holder<SteamConnection>> conns;
 		uint64 lastTime = applicationTime();
 		bool hadConnection = false;
 
@@ -71,7 +73,7 @@ namespace
 	class ClientImpl
 	{
 	public:
-		Holder<GinnelConnection> udp;
+		Holder<SteamConnection> udp;
 		std::vector<MemoryBuffer> sends;
 		uint32 si = 0, ri = 0;
 
@@ -86,7 +88,7 @@ namespace
 					b.data()[i] = (char)randomRange(0u, 256u);
 				sends.push_back(std::move(b));
 			}
-			udp = newGinnelConnection("localhost", 3210, 0);
+			udp = newSteamConnection("localhost", 3210);
 		}
 
 		~ClientImpl()
@@ -94,7 +96,7 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "ping: " + (s.roundTripDuration / 1000) + " ms, receiving: " + (s.bpsReceived() / 1024) + " KB/s, sending: " + (s.bpsSent() / 1024) + " KB/s");
+				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "ping: " + (s.ping / 1000) + " ms, receiving: " + (s.receivingBytesPerSecond / 1024) + " KB/s, sending: " + (s.sendingBytesPerSecond / 1024) + " KB/s");
 			}
 			connectionsLeft--;
 		}
@@ -129,9 +131,9 @@ namespace
 	};
 }
 
-void testNetworkGinnel()
+void testNetworkSteam()
 {
-	CAGE_TESTCASE("network ginnel");
+	CAGE_TESTCASE("network steam");
 	Holder<Thread> server = newThread(Delegate<void()>().bind<&ServerImpl::entry>(), "server");
 	std::vector<Holder<Thread>> clients;
 	clients.resize(3);
@@ -142,3 +144,13 @@ void testNetworkGinnel()
 	for (auto &c : clients)
 		c->wait();
 }
+
+#else
+
+void testNetworkSteam()
+{
+	CAGE_TESTCASE("network steam");
+	CAGE_LOG(SeverityEnum::Info, "test", "network steam was disabled at compile time");
+}
+
+#endif // CAGE_USE_STEAM_SOCKETS

@@ -8,7 +8,6 @@
 #include <cage-core/random.h>
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
-#include <cage-core/variableSmoothingBuffer.h>
 
 namespace
 {
@@ -22,8 +21,6 @@ namespace
 		uint64 sendSeqn = 0, recvSeqn = 0, recvCnt = 0, recvBytes = 0;
 		uint64 lastStatsTimestamp = 0;
 		uint64 maxBytesPerSecond = 0;
-		VariableSmoothingBuffer<uint64, 20> smoothRtt;
-		VariableSmoothingBuffer<uint64, 20> smoothThroughput;
 
 		ConnImpl(Holder<GinnelConnection> udp) : udp(std::move(udp)), timeStart(applicationTime())
 		{
@@ -33,7 +30,7 @@ namespace
 			CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
 		}
 
-		~ConnImpl() { statistics(applicationTime()); }
+		~ConnImpl() { statistics(); }
 
 		template<class T>
 		static String leftFill(const T &value, uint32 n = 6)
@@ -44,12 +41,10 @@ namespace
 			return s;
 		}
 
-		void statistics(uint64 t)
+		void statistics()
 		{
-			const uint64 throughput1 = 1000000 * recvBytes / (t - timeStart);
-			const double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
-			const double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
-			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "received: " + leftFill(recvBytes / 1024) + " KB, messages: " + leftFill(recvCnt) + ", lost: " + leftFill(lost) + ", overhead: " + leftFill(overhead) + ", rate: " + leftFill(throughput1 / 1024) + " KB/s, send rate: " + leftFill(smoothThroughput.smooth() / 1024) + " KB/s, estimated bandwidth: " + leftFill(udp->bandwidth() / 1024) + " KB/s, rtt: " + leftFill(smoothRtt.smooth() / 1000) + " ms");
+			const auto s = udp->statistics();
+			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "receiving: " + leftFill(s.bpsReceived() / 1024) + " KB/s, sending: " + leftFill(s.bpsSent() / 1024) + " KB/s, estimated bandwidth: " + leftFill(s.estimatedBandwidth / 1024) + " KB/s, ping: " + leftFill(s.roundTripDuration / 1000) + " ms");
 		}
 
 		bool process()
@@ -61,7 +56,7 @@ namespace
 			// show statistics
 			if (currentTime > timeStats)
 			{
-				statistics(currentTime);
+				statistics();
 				timeStats = currentTime + 1000000;
 			}
 
@@ -70,9 +65,11 @@ namespace
 				udp->update();
 
 				{ // read
-					while (udp->available())
+					while (true)
 					{
 						Holder<PointerRange<char>> b = udp->read();
+						if (!b)
+							break;
 						recvBytes += b.size();
 						Deserializer d(b);
 						uint64 r;
@@ -98,16 +95,6 @@ namespace
 						while (b.size() < bytes)
 							s << detail::randomGenerator().next();
 						udp->write(b, randomRange(0, 20), randomChance() < 0.1);
-					}
-				}
-
-				{ // update statistics
-					const auto &s = udp->statistics();
-					if (s.roundTripDuration > 0 && s.timestamp != lastStatsTimestamp)
-					{
-						lastStatsTimestamp = s.timestamp;
-						smoothRtt.add(s.roundTripDuration);
-						smoothThroughput.add(s.bpsDelivered());
 					}
 				}
 

@@ -49,8 +49,8 @@ macro(cage_build_configuration)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
 
 		# optionally improve runtime performance in debug builds
-		option(CAGE_FASTER_DEBUG "enable some optimizations to improve performance in debug builds" ON)
-		if(CAGE_FASTER_DEBUG)
+		option(cage_faster_debug "enable some optimizations to improve performance in debug builds" ON)
+		if(cage_faster_debug)
 			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Ob1")

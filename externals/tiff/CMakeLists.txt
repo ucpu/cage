@@ -22,5 +22,7 @@ set_source_files_properties("tiff/libtiff/tif_win32_versioninfo.rc" TARGET_DIREC
 
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libtiff/libtiff")
 target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/libtiff/libtiff")
+target_compile_definitions(tiff PRIVATE WIN32_LEAN_AND_MEAN VC_EXTRALEAN NOMINMAX)
+target_compile_definitions(tiffxx PRIVATE WIN32_LEAN_AND_MEAN VC_EXTRALEAN NOMINMAX)
 
 cage_gen_module(TIFF "$<TARGET_LINKER_FILE:tiff>;$<TARGET_LINKER_FILE:zlib>" $<TARGET_PROPERTY:tiff,INTERFACE_INCLUDE_DIRECTORIES>)

@@ -32,7 +32,8 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        # cage_use_steam_sockets causes issues on win32
+        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=${{ matrix.build-arch == 'x64' && 'ON' || 'OFF' }} ..
 
     - name: Build
       shell: bash
@@ -106,7 +107,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm ${{ matrix.compiler.install }}
+        sudo apt-get install -y xorg-dev nasm libssl-dev ${{ matrix.compiler.install }}
 
     - name: Versions
       run: |
@@ -123,7 +124,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=1 ..
 
     - name: Build
       run: |
@@ -161,6 +162,7 @@ jobs:
 
   Sanitizers:
     name: sanitizer-${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CFLAGS: ${{ matrix.sanitizer.flags }}
@@ -190,7 +192,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm
+        sudo apt-get install -y xorg-dev nasm libssl-dev
 
     - name: Versions
       run: |
@@ -222,6 +224,7 @@ jobs:
 
   NoProfiler:
     name: no-profiler
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CC: clang
@@ -233,7 +236,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm
+        sudo apt-get install -y xorg-dev nasm libssl-dev
 
     - uses: actions/checkout@v3
       with:
@@ -258,6 +261,7 @@ jobs:
 
   Valgrind:
     name: valgrind-${{ matrix.options.tool }}
+    needs: Ubuntu
     runs-on: ubuntu-latest
     env:
       CC: gcc-13
@@ -279,7 +283,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm valgrind g++-13
+        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-13
 
     - uses: actions/checkout@v3
       with:

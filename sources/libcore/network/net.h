@@ -57,6 +57,9 @@ namespace cage
 		constexpr const char *EmptyAddress = nullptr;
 #endif // CAGE_SYSTEM_WINDOWS
 
+		struct Sock;
+		struct AddrList;
+
 		struct Addr
 		{
 			Addr() = default;
@@ -79,14 +82,40 @@ namespace cage
 
 			int getFamily() const { return storage.ss_family; }
 
+			std::array<uint8, 4> getIp4() const; // host byte order
+			std::array<uint8, 16> getIp6() const; // host byte order
+			uint16 getPort() const; // host byte order
+
 		private:
 			sockaddr_storage storage = {}; // port and ip are in network byte order
 			socklen_t addrlen = 0;
 
-			friend struct Sock;
-			friend struct AddrList;
+			friend Sock;
+			friend AddrList;
 			friend Serializer &operator<<(Serializer &s, const Addr &v);
 			friend Deserializer &operator>>(Deserializer &s, Addr &v);
+		};
+
+		struct AddrList : private Immovable
+		{
+			// flags = AI_PASSIVE -> bind/listen
+			// flags = 0 -> connect/sendTo
+
+			AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
+			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
+			~AddrList();
+
+			bool valid() const;
+			void next();
+
+			Sock sock() const; // uses family, type, and protocol; it is up to you to use the address
+			Addr address() const;
+			int family() const;
+			int type() const;
+			int protocol() const;
+
+		private:
+			addrinfo *start = nullptr, *current = nullptr;
 		};
 
 		struct Sock : private Noncopyable
@@ -139,28 +168,6 @@ namespace cage
 			SOCKET descriptor = INVALID_SOCKET;
 			int family = -1, type = -1, protocol = -1;
 			bool connected = false;
-		};
-
-		struct AddrList : private Immovable
-		{
-			// flags = AI_PASSIVE -> bind/listen
-			// flags = 0 -> connect/sendTo
-
-			AddrList(const String &address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
-			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags); // port is in host byte order
-			~AddrList();
-
-			bool valid() const;
-			void next();
-
-			Sock sock() const; // uses family, type, and protocol; it is up to you to use the address
-			Addr address() const;
-			int family() const;
-			int type() const;
-			int protocol() const;
-
-		private:
-			addrinfo *start = nullptr, *current = nullptr;
 		};
 	}
 }
