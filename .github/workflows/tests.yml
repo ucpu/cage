@@ -150,6 +150,14 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
         cmake --build . -- -j3
 
+    - name: List dependencies
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        echo "cage-core:"
+        ldd libcage-core.so
+        echo "cage-engine:"
+        ldd libcage-engine.so
+
 
   Sanitizers:
     name: sanitizer-${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
