@@ -2,6 +2,7 @@
 #define guard_guiBuilder_sxrdk487
 
 #include <cage-core/entities.h>
+#include <cage-core/stringLiteral.h>
 #include <cage-engine/guiComponents.h>
 
 namespace cage
@@ -68,7 +69,7 @@ namespace cage
 			}
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
-			template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+			template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)
 			{
 				(*this)->template value<GuiTooltipComponent>().tooltip = detail::guiTooltipText<Text, AssetName, TextName>();

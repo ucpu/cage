@@ -125,7 +125,7 @@ namespace cage
 		{
 			ScopeLock sl(mut); // mandate memory barriers
 			stop = true;
-			// broadcast before unlock - just to satisfy helgrind
+			// broadcast before unlock
 			writer->broadcast();
 			reader->broadcast();
 		}

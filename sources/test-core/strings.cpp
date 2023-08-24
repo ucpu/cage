@@ -11,6 +11,7 @@
 #include <cage-core/hashString.h>
 #include <cage-core/math.h>
 #include <cage-core/string.h>
+#include <cage-core/stringLiteral.h>
 
 void test(Real a, Real b);
 
@@ -854,6 +855,25 @@ namespace
 		}
 	}
 
+	template<StringLiteral Lit>
+	struct Literal
+	{
+		constexpr String value() const { return Lit.value; }
+	};
+
+	constexpr void testStringLiteral()
+	{
+		static_assert(Literal<"Hello">().value() == "Hello");
+		Literal<"Hello"> a;
+		Literal<"Beautiful"> b;
+		static_assert(sizeof(a) == sizeof(b));
+		static_assert(std::is_same_v<Literal<"Hello">, Literal<"Hello">>);
+		static_assert(!std::is_same_v<Literal<"Hello">, Literal<"Beautiful">>);
+		CAGE_TEST(a.value() == "Hello");
+		CAGE_TEST(b.value() == "Beautiful");
+		CAGE_TEST(a.value() + " " + b.value() == "Hello Beautiful");
+	}
+
 	constexpr int testConstexprString()
 	{
 		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
@@ -867,15 +887,16 @@ namespace
 			detail::StringBase<128> a = "ahoj";
 			String b = "nazdar";
 			detail::StringBase<1024> c = "cau";
-			String d = a + b + c; // causes compiler crash in visual studio 2022
+			String d = a + b + c;
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
 		testComparisons();
 		testPointerRange();
 		testMethods();
 		testCopies1();
+		testStringLiteral();
 		{
-			String s = Stringizer() + "hello" + " " + "world"; // causes compiler crash in visual studio 2022
+			String s = Stringizer() + "hello" + " " + "world";
 			CAGE_TEST(s == "hello world");
 		}
 		return 0;
@@ -897,6 +918,7 @@ void testStrings()
 	testCopies2();
 	testStringizer();
 	testNaturalSort();
+	testConstexprString();
 	{
 		constexpr int a = testConstexprString();
 	}

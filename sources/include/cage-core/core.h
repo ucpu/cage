@@ -155,7 +155,7 @@ namespace cage
 		Noncopyable &operator=(Noncopyable &&) = default;
 	};
 
-	// string literal
+	// string pointer
 
 	struct StringPointer
 	{

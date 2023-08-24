@@ -1,6 +1,7 @@
 #ifndef guard_guiComponents_sdf1gh45hk485aws
 #define guard_guiComponents_sdf1gh45hk485aws
 
+#include <cage-core/stringLiteral.h>
 #include <cage-engine/core.h>
 
 namespace cage
@@ -272,17 +273,6 @@ namespace cage
 
 	namespace privat
 	{
-		template<uint32 N>
-		struct GuiStringLiteral
-		{
-			consteval GuiStringLiteral(const char (&str)[N]) noexcept
-			{
-				static_assert(N > 0);
-				detail::memcpy(value, str, N);
-			}
-			char value[N];
-		};
-
 		CAGE_ENGINE_API GuiTooltipComponent::Tooltip guiTooltipText(const GuiTextComponent *txt);
 	}
 
@@ -290,7 +280,7 @@ namespace cage
 	{
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
-		template<privat::GuiStringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+		template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
 		GuiTooltipComponent::Tooltip guiTooltipText() noexcept
 		{
 			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
