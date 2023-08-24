@@ -28,18 +28,18 @@ namespace cage
 			const EventListener<bool(const GenericInput &)> windowResizeListener = window->events.listen(inputListener<InputClassEnum::WindowResize, InputWindowValue>([this](InputWindowValue in) { return this->windowResize(in); }), -13666);
 			const EventListener<bool(const GenericInput &)> keyListener = window->events.listen(inputListener<InputClassEnum::KeyRelease, InputKey>([this](InputKey in) { return this->keyRelease(in); }), -13667);
 
+			ConfigBool confFullscreenEnabled;
+			ConfigBool confWindowMaximized;
 			ConfigSint32 confWindowLeft;
 			ConfigSint32 confWindowTop;
 			ConfigUint32 confWindowWidth;
 			ConfigUint32 confWindowHeight;
-			ConfigBool confWindowMaximized;
 			ConfigUint32 confFullscreenWidth;
 			ConfigUint32 confFullscreenHeight;
 			ConfigUint32 confFullscreenFrequency;
 			ConfigString confScreen;
-			ConfigBool confFullscreenEnabled;
 
-			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window), confWindowLeft(confName(config, "window/left"), 100), confWindowTop(confName(config, "window/top"), 100), confWindowWidth(confName(config, "window/windowWidth"), 800), confWindowHeight(confName(config, "window/windowHeight"), 600), confWindowMaximized(confName(config, "window/maximized"), true), confScreen(confName(config, "window/screen"), ""), confFullscreenWidth(confName(config, "window/width"), 0), confFullscreenHeight(confName(config, "window/height"), 0), confFullscreenFrequency(confName(config, "window/refreshRate"), 0), confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
+			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window), confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen), confWindowMaximized(confName(config, "window/maximized"), true), confWindowLeft(confName(config, "window/left"), 100), confWindowTop(confName(config, "window/top"), 100), confWindowWidth(confName(config, "window/windowWidth"), 800), confWindowHeight(confName(config, "window/windowHeight"), 600), confFullscreenWidth(confName(config, "window/width"), 0), confFullscreenHeight(confName(config, "window/height"), 0), confFullscreenFrequency(confName(config, "window/refreshRate"), 0), confScreen(confName(config, "window/screen"), "")
 			{
 				CAGE_ASSERT(window);
 				if (window->isHidden())

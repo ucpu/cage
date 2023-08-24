@@ -6,11 +6,8 @@
 namespace
 {
 	int tri_tri_overlap_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3]);
-
 	int tri_tri_intersection_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], int *coplanar, float source[3], float target[3]);
-
 	int coplanar_tri_tri3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], float N1[3]);
-
 	int tri_tri_overlap_test_2d(float p1[2], float q1[2], float r1[2], float p2[2], float q2[2], float r2[2]);
 
 #define CROSS(dest, v1, v2) \
@@ -386,7 +383,6 @@ namespace
 	}
 
 	int tri_tri_intersection_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], int *coplanar, float source[3], float target[3])
-
 	{
 		float dp1, dq1, dr1, dp2, dq2, dr2;
 		float v1[3], v2[3], v[3];

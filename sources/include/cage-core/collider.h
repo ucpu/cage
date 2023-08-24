@@ -52,15 +52,15 @@ namespace cage
 	{
 		CollisionDetectionConfig() = default;
 		explicit CollisionDetectionConfig(const Collider *ao, const Collider *bo) : ao(ao), bo(bo) {}
-		explicit CollisionDetectionConfig(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt) : ao(ao), bo(bo), at1(at), at2(at), bt1(bt), bt2(bt) {}
+		explicit CollisionDetectionConfig(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt) : at1(at), bt1(bt), at2(at), bt2(bt), ao(ao), bo(bo) {}
 
 		// inputs
-		const Collider *ao = nullptr;
-		const Collider *bo = nullptr;
 		Transform at1;
 		Transform bt1;
 		Transform at2;
 		Transform bt2;
+		const Collider *ao = nullptr;
+		const Collider *bo = nullptr;
 
 		// outputs
 		Real fractionBefore = Real::Nan();

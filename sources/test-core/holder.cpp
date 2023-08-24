@@ -287,7 +287,14 @@ void testHolder()
 		CAGE_TESTCASE("self assignment");
 		auto s = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
+#if defined(__GNUC__) || defined(__clang__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wself-move"
+#endif
 		s = std::move(s);
+#if defined(__GNUC__) || defined(__clang__)
+	#pragma GCC diagnostic pop
+#endif
 		CAGE_TEST(gCount == 1);
 	}
 

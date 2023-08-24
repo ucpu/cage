@@ -53,7 +53,6 @@ namespace cage
 
 		XrBool32 XRAPI_PTR debugUtilsCallback(XrDebugUtilsMessageSeverityFlagsEXT severity, XrDebugUtilsMessageTypeFlagsEXT types, const XrDebugUtilsMessengerCallbackDataEXT *msg, void *user_data)
 		{
-			const class VirtualRealityImpl *impl = (VirtualRealityImpl *)user_data;
 			SeverityEnum cageSeverity = SeverityEnum::Critical;
 			switch (severity)
 			{

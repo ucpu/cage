@@ -176,14 +176,14 @@ void testAudio()
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
 		// no encoding to mp3 or flac for now
-		for (const String &format : { ".ogg", ".wav" })
+		for (const auto &format : { ".ogg", ".wav" })
 			snd->exportFile(Stringizer() + "sounds/formats/sample" + format);
 	}
 
 	{
 		CAGE_TESTCASE("import formats");
 		Holder<Audio> snd = newAudio();
-		for (const String &format : { ".ogg", ".wav" })
+		for (const auto &format : { ".ogg", ".wav" })
 		{
 			snd->importFile(Stringizer() + "sounds/formats/sample" + format);
 			CAGE_TEST(snd->frames() == 480000);

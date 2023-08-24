@@ -107,12 +107,6 @@ namespace cage
 			return *(Vec3 *)&v;
 		}
 
-		Vec4 conv(const aiColor4D &v)
-		{
-			static_assert(sizeof(aiColor4D) == sizeof(cage::Vec4));
-			return *(Vec4 *)&v;
-		}
-
 		Mat4 conv(const aiMatrix4x4 &m)
 		{
 			static_assert(sizeof(aiMatrix4x4) == sizeof(cage::Mat4));
@@ -441,6 +435,7 @@ namespace cage
 			explicit AssimpContext(const String &filename, const MeshImportConfig &config) : inputFile(filename), config(config)
 			{
 				static int assimpLogger = initializeAssimpLogger();
+				(void)assimpLogger;
 
 				//imp.SetPropertyBool(AI_CONFIG_PP_DB_ALL_OR_NONE, true);
 				imp.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, 30);

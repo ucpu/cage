@@ -228,6 +228,7 @@ namespace cage
 				glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 			static bool blah = logOpenglInfo(); // log just once
+			(void)blah;
 
 #define checkExtension(NAME) \
 	if (!NAME) \

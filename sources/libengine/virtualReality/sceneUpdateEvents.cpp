@@ -35,7 +35,7 @@ namespace cage
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)
 	{
 		Entity *origin = findOrigin(scene);
-		const TransformComponent &tr = origin->value<TransformComponent>();
+		origin->value<TransformComponent>();
 		VrOriginComponent &vc = origin->value<VrOriginComponent>();
 		Transform headset = vc.virtualReality->pose();
 		if (keepUp)

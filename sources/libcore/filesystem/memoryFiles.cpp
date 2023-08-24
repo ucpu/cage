@@ -66,9 +66,9 @@ namespace cage
 		class FileRange : public File
 		{
 		public:
-			const FileMode myMode;
 			Holder<PointerRange<char>> buf;
 			uintPtr pos = 0;
+			const FileMode myMode;
 
 			FileRange(Holder<PointerRange<char>> buffer, const FileMode &mode) : buf(std::move(buffer)), myMode(mode)
 			{

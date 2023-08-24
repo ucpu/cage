@@ -23,6 +23,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			static const bool init = networkInitializeImpl();
+			(void)init;
 #endif
 		}
 	}

@@ -368,7 +368,6 @@ namespace cage
 	{
 		if (skipInitialize)
 			return;
-		auto *impl = hierarchy->impl;
 		if (GUI_HAS_COMPONENT(ImageFormat, hierarchy->ent))
 		{
 			GUI_COMPONENT(ImageFormat, f, hierarchy->ent);

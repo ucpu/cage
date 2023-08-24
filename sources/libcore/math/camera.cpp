@@ -178,7 +178,6 @@ namespace cage
 
 		const Vec3 forward = input.orientation * Vec3(0, 0, -1);
 		const Vec3 up = input.orientation * Vec3(0, 1, 0);
-		const Vec3 side = cross(forward, up);
 		const Vec3 p = input.position + cross(forward, up) * (input.eyeSeparation * 0.5) * dir;
 		out.view = Mat4(inverse(Transform(p, input.orientation, input.scale)));
 		out.viewportOrigin = Vec2(viewportX, viewportY);

@@ -10,10 +10,12 @@ namespace
 	struct AnItem
 	{};
 
+	/*
 	bool operator==(const AnItem &a, const AnItem &b) noexcept
 	{
 		return &a == &b;
 	}
+	*/
 }
 
 void testStdHash()

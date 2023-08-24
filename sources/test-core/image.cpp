@@ -197,8 +197,9 @@ namespace
 		{
 			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const String &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds" })
+			for (const auto &fmt_ : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds" })
 			{
+				const String fmt = fmt_;
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
 				if (ch == 2 && fmt == ".tga")

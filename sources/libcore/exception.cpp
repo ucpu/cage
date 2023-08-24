@@ -61,7 +61,7 @@ namespace cage
 
 	// exception
 
-	Exception::Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept : location(location), severity(severity), message(message) {}
+	Exception::Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept : location(location), message(message), severity(severity) {}
 
 	Exception::~Exception() noexcept {}
 

@@ -6,7 +6,7 @@
 namespace cage
 {
 	class VirtualRealityController;
-	class VirtualRealityCamera;
+	struct VirtualRealityCamera;
 	class VirtualReality;
 
 	// the transform of this entity maps the virtual reality coordinates space into the scene coordinates space

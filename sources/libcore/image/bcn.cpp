@@ -20,6 +20,7 @@ namespace cage
 				rgbcx::init();
 				return 0;
 			}();
+			(void)initDummy;
 		}
 
 		union Color
@@ -148,6 +149,7 @@ namespace cage
 			bc7enc_compress_block_init();
 			return 0;
 		}();
+		(void)initDummy;
 		struct Fnc
 		{
 			bc7enc_compress_block_params conf;

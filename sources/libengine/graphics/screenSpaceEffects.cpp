@@ -66,12 +66,6 @@ namespace cage
 			blur(config.texture, tex, Vec2(1, 0));
 			blur(tex, config.texture, Vec2(0, 1));
 		}
-
-		uint32 mipsForResolution(const Vec2i res)
-		{
-			uint32 s = min(res[0], res[1]);
-			return numeric_cast<uint32>(floor(log2(s))) + 1;
-		}
 	}
 
 	namespace privat

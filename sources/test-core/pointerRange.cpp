@@ -19,7 +19,7 @@ namespace
 
 		Test &operator=(Test &&) = default;
 
-		void fnc() {}
+		void fnc() { (void)data_; }
 
 	private:
 		uint32 data_[5] = {};

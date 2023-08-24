@@ -64,11 +64,7 @@ macro(cage_build_configuration)
 		endif()
 
 		# 8 MB default stack size
-		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
-		else()
-			set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--stack,8388608")
-		endif()
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
 	else()
 		# link time optimizations
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")

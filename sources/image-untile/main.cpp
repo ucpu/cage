@@ -10,7 +10,6 @@ using namespace cage;
 void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, const String &name)
 {
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "cutting image at: " + x + ", " + y);
-	const uint32 tc = in->channels();
 	Holder<Image> out = newImage();
 	imageBlit(in.get(), out.get(), x, y, 0, 0, w, h);
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving to: '" + name + "'");

@@ -90,6 +90,7 @@ namespace cage
 		{
 			ScopeLock lock(mut());
 			static int dummy = loadGlobalConfiguration();
+			(void)dummy;
 			return cfgVarAlreadyLocked(name);
 		}
 

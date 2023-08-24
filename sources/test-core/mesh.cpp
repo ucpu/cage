@@ -14,11 +14,6 @@
 
 namespace
 {
-	void approxEqual(const Real &a, const Real &b)
-	{
-		CAGE_TEST(abs(a - b) < 0.02);
-	}
-
 	void approxEqual(const Vec3 &a, const Vec3 &b)
 	{
 		CAGE_TEST(distance(a, b) < 1);
@@ -34,19 +29,6 @@ namespace
 	{
 		approxEqual(a.center, b.center);
 		CAGE_TEST(abs(a.radius - b.radius) < 1);
-	}
-
-	void approxEqual(const Image *a, const Image *b)
-	{
-		CAGE_TEST(a->resolution() == b->resolution());
-		const uint32 x = a->resolution()[0] / 2;
-		const uint32 h = a->resolution()[1];
-		for (uint32 y = 0; y < h; y++)
-		{
-			const Vec3 s = a->get3(x, y);
-			const Vec3 t = b->get3(x, y);
-			approxEqual(s, t);
-		}
 	}
 
 	Holder<Mesh> splitSphereIntoTwo(const Mesh *msh)

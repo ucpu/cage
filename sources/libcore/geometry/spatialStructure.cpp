@@ -344,7 +344,7 @@ namespace cage
 				const SpatialDataImpl *const data;
 				std::vector<uint32> &resultNames;
 
-				CAGE_FORCE_INLINE Intersector(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(Aabb(other))
+				CAGE_FORCE_INLINE Intersector(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : otherBox(Aabb(other)), other(other), data(data), resultNames(resultNames)
 				{
 					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 					CAGE_ASSERT((uintPtr(&otherBox) % alignof(FastBox)) == 0);
