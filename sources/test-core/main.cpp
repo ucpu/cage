@@ -80,7 +80,6 @@ int main()
 	log1->format.bind<logFormatConsole>();
 	log1->output.bind<logOutputStdOut>();
 
-	testMesh();
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();

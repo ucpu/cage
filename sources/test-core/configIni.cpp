@@ -172,4 +172,36 @@ void testConfigIni()
 			CAGE_TEST(!ini->anyUnused(s, i));
 		}
 	}
+
+	{
+		CAGE_TESTCASE("parse command line arguments (empty string)");
+		{
+			Holder<Ini> ini = newIni();
+			const char *const cmd[] = { "appName", "pos1", "-a", "", "nice", "", "--", "pos2", "" };
+			ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
+			testVectors(vectorize(ini->sections()), { "a", "--" });
+			testVectors(vectorize(ini->values("a")), { "", "nice", "" });
+			testVectors(vectorize(ini->values("--")), { "pos1", "pos2", "" });
+		}
+		{
+			Holder<Ini> ini = newIni();
+			const char *const cmd[] = { "appName", "pos1", "-a", "", "--", "pos2" };
+			ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
+			testVectors(vectorize(ini->sections()), { "a", "--" });
+			testVectors(vectorize(ini->values("a")), { "" });
+			testVectors(vectorize(ini->values("--")), { "pos1", "pos2" });
+			CAGE_TEST(ini->cmdString('a', "aaa") == "");
+		}
+	}
+
+	{
+		CAGE_TESTCASE("parse command line arguments (dash - only)");
+		Holder<Ini> ini = newIni();
+		const char *const cmd[] = { "appName", "pos1", "-a", "-", "--", "pos2" };
+		ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
+		testVectors(vectorize(ini->sections()), { "a", "--" });
+		testVectors(vectorize(ini->values("a")), { "-" });
+		testVectors(vectorize(ini->values("--")), { "pos1", "pos2" });
+		CAGE_TEST(ini->cmdString('a', "aaa") == "-");
+	}
 }

@@ -1,4 +1,5 @@
 #include <map>
+#include <optional>
 #include <vector>
 
 #include <cage-core/files.h>
@@ -291,13 +292,13 @@ namespace cage
 			for (uint32 i = 1; i < argc; i++)
 			{
 				String s = args[i];
-				CAGE_ASSERT(!s.empty());
 				if (!argumentsOnly)
 				{
-					if (isPattern(s, "---", "", ""))
-						CAGE_THROW_ERROR(Exception, "invalid option prefix (---)");
-					if (s == "-")
-						CAGE_THROW_ERROR(Exception, "missing option name");
+					if (s == "-" || isPattern(s, "---", "", ""))
+					{
+						set(option, Stringizer() + itemsCount(option), s);
+						continue;
+					}
 					if (s == "--")
 					{
 						argumentsOnly = true;
@@ -454,7 +455,7 @@ namespace cage
 			((IniImpl *)ini)->helps.push_back(h);
 		}
 
-		String getCmd(Ini *ini, const String &shortName, const String &longName, const char *typeName)
+		std::optional<String> getCmd(Ini *ini, const String &shortName, const String &longName, const char *typeName)
 		{
 			addHelp(ini, shortName, longName, typeName);
 			const uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
@@ -464,24 +465,19 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "cmd option contains multiple values");
 			}
 			if (cnt == 0)
-				return "";
-			const String a = ini->get(shortName, "0");
-			const String b = ini->get(longName, "0");
-			const bool ae = a.empty();
-			const bool be = b.empty();
-			if (ae && be)
+				return {};
+			CAGE_ASSERT(cnt == 1);
+			for (const String &n : { shortName, longName })
 			{
-				CAGE_LOG_THROW(Stringizer() + "option name: " + formatOptionNames(shortName, longName));
-				CAGE_THROW_ERROR(Exception, "invalid item names for cmd options");
+				if (ini->itemsCount(n))
+				{
+					const String &a = ini->get(n, "0");
+					ini->markUsed(n, "0");
+					return a;
+				}
 			}
-			CAGE_ASSERT(ae != be);
-			if (!ae)
-				ini->markUsed(shortName, "0");
-			if (!be)
-				ini->markUsed(longName, "0");
-			if (ae)
-				return b;
-			return a;
+			CAGE_LOG_THROW(Stringizer() + "option name: " + formatOptionNames(shortName, longName));
+			CAGE_THROW_ERROR(Exception, "invalid item names for cmd options");
 		}
 	}
 
@@ -501,21 +497,21 @@ namespace cage
 	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, const TYPE &defaul) \
 	{ \
 		const String sn = toShortName(shortName); \
-		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
-		if (tmp.empty()) \
+		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		if (!tmp) \
 			return defaul; \
-		return TO(tmp); \
+		return TO(*tmp); \
 	} \
 	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName) \
 	{ \
 		const String sn = toShortName(shortName); \
-		const String tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
-		if (tmp.empty()) \
+		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		if (!tmp) \
 		{ \
 			CAGE_LOG_THROW(Stringizer() + "option name: " + formatOptionNames(sn, longName)); \
 			CAGE_THROW_ERROR(Exception, "missing required cmd option"); \
 		} \
-		return TO(tmp); \
+		return TO(*tmp); \
 	}
 	GCHL_GENERATE(bool, Bool, toBool);
 	GCHL_GENERATE(sint32, Sint32, toSint32);
