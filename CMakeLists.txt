@@ -27,6 +27,7 @@ endif()
 
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 add_subdirectory(sources)
+cage_ide_startup_project(cage-test-core)
 
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "cage done")
