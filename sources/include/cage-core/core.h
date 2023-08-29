@@ -981,6 +981,17 @@ CAGE_FORCE_INLINE void operator delete[](void *ptr, void *ptr2, cage::privat::Op
 
 namespace cage
 {
+	namespace privat
+	{
+		template<class T, class... Ts>
+		requires(std::is_constructible_v<T, Ts...>)
+		struct HolderControlMixin : public privat::HolderControlBase
+		{
+			CAGE_FORCE_INLINE explicit HolderControlMixin(Ts... vs) : data(std::forward<Ts>(vs)...) {}
+			T data;
+		};
+	}
+
 	struct CAGE_CORE_API MemoryArena
 	{
 	private:
@@ -998,6 +1009,7 @@ namespace cage
 		Holder<PointerRange<char>> createBuffer(uintPtr size, uintPtr alignment = 16);
 
 		template<class T, class... Ts>
+		requires(std::is_constructible_v<T, Ts...>)
 		[[nodiscard]] CAGE_FORCE_INLINE T *createObject(Ts... vs)
 		{
 			void *ptr = allocate(sizeof(T), alignof(T));
@@ -1013,13 +1025,10 @@ namespace cage
 		}
 
 		template<class T, class... Ts>
+		requires(std::is_constructible_v<T, Ts...>)
 		CAGE_FORCE_INLINE Holder<T> createHolder(Ts... vs)
 		{
-			struct Ctrl : public privat::HolderControlBase
-			{
-				Ctrl(Ts... vs) : data(std::forward<Ts>(vs)...) {}
-				T data;
-			};
+			using Ctrl = privat::HolderControlMixin<T, Ts...>;
 			Ctrl *p = createObject<Ctrl>(std::forward<Ts>(vs)...);
 			p->deletee = p;
 			p->deleter.template bind<MemoryArena, &MemoryArena::destroy<Ctrl>>(this);
@@ -1027,6 +1036,7 @@ namespace cage
 		};
 
 		template<class Interface, class Impl, class... Ts>
+		requires(std::is_constructible_v<Impl, Ts...>)
 		CAGE_FORCE_INLINE Holder<Interface> createImpl(Ts... vs)
 		{
 			return createHolder<Impl>(std::forward<Ts>(vs)...).template cast<Interface>();

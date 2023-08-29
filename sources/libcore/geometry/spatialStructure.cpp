@@ -83,7 +83,8 @@ namespace cage
 			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
-			return !((a.high.v4[0] < b.low.v4[0]) | (a.high.v4[1] < b.low.v4[1]) | (a.high.v4[2] < b.low.v4[2]) | (a.low.v4[0] > b.high.v4[0]) | (a.low.v4[1] > b.high.v4[1]) | (a.low.v4[2] > b.high.v4[2]));
+			// bitwise OR to avoid branching
+			return !(int(a.high.v4[0] < b.low.v4[0]) | int(a.high.v4[1] < b.low.v4[1]) | int(a.high.v4[2] < b.low.v4[2]) | int(a.low.v4[0] > b.high.v4[0]) | int(a.low.v4[1] > b.high.v4[1]) | int(a.low.v4[2] > b.high.v4[2]));
 		}
 
 		struct ItemBase

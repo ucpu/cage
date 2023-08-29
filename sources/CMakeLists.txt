@@ -134,6 +134,7 @@ cage_ide_sort_files(cage-test-core)
 cage_ide_working_dir_in_place(cage-test-core)
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(cage-test-core PRIVATE "-Wno-unused-variable")
+	target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
 endif()
 
 file(GLOB_RECURSE cage-test-ginnel-sources "test-ginnel/*")
