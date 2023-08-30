@@ -102,6 +102,11 @@ jobs:
             cxx: clang++-14,
             install: clang-14
           }
+        - {
+            cc: clang-15,
+            cxx: clang++-15,
+            install: clang-15
+          }
 
     steps:
     - name: Install packages
@@ -112,9 +117,9 @@ jobs:
     - name: Versions
       run: |
         cmake --version
+        git --version
         ${{ matrix.compiler.cc }} --version
         ${{ matrix.compiler.cxx }} --version
-        git --version
 
     - uses: actions/checkout@v3
       with:
