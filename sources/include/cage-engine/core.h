@@ -1,6 +1,7 @@
 #ifndef guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 #define guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 
+#include <cage-core/enumBits.h>
 #include <cage-core/math.h>
 
 namespace cage

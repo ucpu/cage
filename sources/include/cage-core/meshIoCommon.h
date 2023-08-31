@@ -1,6 +1,7 @@
 #ifndef guard_meshIoCommon_h_nbv1ec9rt7zh
 #define guard_meshIoCommon_h_nbv1ec9rt7zh
 
+#include <cage-core/enumBits.h>
 #include <cage-core/mesh.h>
 
 namespace cage

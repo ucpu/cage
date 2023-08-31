@@ -1,5 +1,7 @@
 #include "main.h"
 
+#include <cage-core/enumBits.h>
+
 namespace
 {
 	enum class TestEnum
