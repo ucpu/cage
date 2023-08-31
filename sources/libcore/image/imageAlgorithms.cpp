@@ -342,7 +342,7 @@ namespace cage
 
 	void imageBoxBlur(Image *img, uint32 radius, uint32 rounds, bool useColorConfig)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "imageBoxBlur");
+		CAGE_THROW_CRITICAL(Exception, "imageBoxBlur");
 	}
 
 	namespace
@@ -520,7 +520,7 @@ namespace cage
 				dilationProcess<Vec4>(img, rounds, useNan);
 				break;
 			default:
-				CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
+				CAGE_THROW_CRITICAL(Exception, "image dilation with more than 4 channels");
 		}
 		imageConvert(img, originalFormat);
 	}

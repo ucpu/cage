@@ -351,12 +351,6 @@ namespace cage
 		SeverityEnum severity = SeverityEnum::Critical;
 	};
 
-	struct CAGE_CORE_API NotImplemented : public Exception
-	{
-		using Exception::Exception;
-		void log() const override;
-	};
-
 	struct CAGE_CORE_API SystemError : public Exception
 	{
 		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept;

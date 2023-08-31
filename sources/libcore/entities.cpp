@@ -144,7 +144,7 @@ namespace cage
 			GCHL_GENERATE(128);
 #undef GCHL_GENERATE
 
-			CAGE_THROW_CRITICAL(NotImplemented, "impossible entity component size or alignment");
+			CAGE_THROW_CRITICAL(Exception, "impossible entity component size or alignment");
 		}
 
 		class ComponentImpl : public EntityComponent

@@ -360,7 +360,7 @@ namespace cage
 
 	Holder<Mesh> Collider::exportMesh() const
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "Collider::exportMesh");
+		CAGE_THROW_CRITICAL(Exception, "Collider::exportMesh");
 	}
 
 	Holder<Collider> newCollider()
@@ -838,7 +838,7 @@ namespace cage
 
 	Real distance(const Collider *ao, const Collider *bo, const Transform &at, const Transform &bt)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "collider-collider distance");
+		CAGE_THROW_CRITICAL(Exception, "collider-collider distance");
 	}
 
 	bool intersects(const Line &shape, const Collider *collider, const Transform &t)

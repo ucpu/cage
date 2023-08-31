@@ -230,7 +230,7 @@ namespace
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
 			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling whole image (3D)");
-			CAGE_THROW_ERROR(NotImplemented, "3D texture downscale");
+			CAGE_THROW_ERROR(Exception, "3D texture downscale is not yet implemented");
 		}
 		else
 		{ // downscale each image separately
@@ -415,7 +415,7 @@ namespace
 
 		// todo
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
-			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
+			CAGE_THROW_ERROR(Exception, "8-bit precision only for now");
 
 		if (data.containedLevels > 1)
 			imageImportGenerateMipmaps(images);

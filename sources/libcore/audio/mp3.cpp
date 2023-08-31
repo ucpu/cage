@@ -30,6 +30,6 @@ namespace cage
 
 	MemoryBuffer mp3Encode(const AudioImpl *impl)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "encoding mp3 sound files");
+		CAGE_THROW_CRITICAL(Exception, "encoding mp3 sound files");
 	}
 }

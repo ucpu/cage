@@ -221,7 +221,7 @@ namespace cage
 			return;
 
 		if (!msh->uvs().empty() || !msh->uvs3().empty() || !msh->normals().empty() || !msh->boneIndices().empty())
-			CAGE_THROW_ERROR(NotImplemented, "meshConvertToIndexed with other attributes is not yet implemented");
+			CAGE_THROW_ERROR(Exception, "meshConvertToIndexed with other attributes is not yet implemented");
 
 		struct Comparator
 		{
@@ -744,7 +744,7 @@ namespace cage
 		switch (impl->type)
 		{
 			case MeshTypeEnum::Lines:
-				CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
+				CAGE_THROW_CRITICAL(Exception, "separateDisconnected");
 			case MeshTypeEnum::Triangles:
 				return splitComponentsTriangles(impl);
 			default:
@@ -1876,9 +1876,9 @@ namespace cage
 			if (msh->facesCount() == 0)
 				continue;
 			if (msh->type() != MeshTypeEnum::Triangles)
-				CAGE_THROW_ERROR(NotImplemented, "merging meshes requires triangles mesh"); // todo
+				CAGE_THROW_ERROR(Exception, "merging meshes requires triangles mesh only for now"); // todo
 			if (msh->indicesCount() == 0)
-				CAGE_THROW_ERROR(NotImplemented, "merging meshes requires indexed mesh"); // todo
+				CAGE_THROW_ERROR(Exception, "merging meshes requires indexed mesh for now"); // todo
 			CAGE_ASSERT(!meshDetectInvalid(msh));
 			const auto inds = msh->indices();
 			const auto poss = msh->positions();

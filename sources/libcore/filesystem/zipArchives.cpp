@@ -239,7 +239,7 @@ namespace cage
 						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_THROW_ERROR(NotImplemented, "cannot read zip archives that span multiple disks");
+							CAGE_THROW_ERROR(Exception, "cannot read zip archives that span multiple disks");
 						}
 						totalFiles = e.totalNumberOfCDFRecords;
 						cdSize = e.sizeOfCD;
@@ -285,7 +285,7 @@ namespace cage
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
 							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
-							CAGE_THROW_ERROR(NotImplemented, "cannot read file, zip64 not yet supported");
+							CAGE_THROW_ERROR(Exception, "cannot read file, zip64 not yet supported");
 						}
 						e.name = pathSimplify(e.name);
 						e.nameLength = e.name.length();
@@ -561,7 +561,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
-				CAGE_THROW_CRITICAL(NotImplemented, "reading last modification time of a file inside zip archive is not yet supported");
+				CAGE_THROW_CRITICAL(Exception, "reading last modification time of a file inside zip archive is not yet supported");
 			}
 
 			Holder<File> openFile(const String &path, const FileMode &mode) override;
@@ -606,7 +606,7 @@ namespace cage
 				auto &r = a->files[index];
 				CAGE_ASSERT(!r.locked);
 				if (r.compressionMethod != 0 && mode.read)
-					CAGE_THROW_ERROR(NotImplemented, "reading compressed files from zip archives is not yet supported");
+					CAGE_THROW_ERROR(Exception, "reading compressed files from zip archives is not yet supported");
 				r.locked = true;
 
 				if (mode.write && !mode.read)

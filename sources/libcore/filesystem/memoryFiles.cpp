@@ -22,7 +22,7 @@ namespace cage
 			void read(PointerRange<char> buffer) override
 			{
 				if (!myMode.read)
-					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+					CAGE_THROW_CRITICAL(Exception, "reading from write-only memory file");
 				char *data = buffer.data();
 				const uintPtr size = buffer.size();
 				if (pos + size > buf->size())
@@ -35,7 +35,7 @@ namespace cage
 			void write(PointerRange<const char> buffer) override
 			{
 				if (!myMode.write)
-					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
+					CAGE_THROW_CRITICAL(Exception, "writing to read-only memory file");
 				const char *data = buffer.data();
 				const uintPtr size = buffer.size();
 				if (pos + size > buf->size())
@@ -80,7 +80,7 @@ namespace cage
 			void read(PointerRange<char> buffer) override
 			{
 				if (!myMode.read)
-					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+					CAGE_THROW_CRITICAL(Exception, "reading from write-only memory file");
 				char *data = buffer.data();
 				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
@@ -93,7 +93,7 @@ namespace cage
 			void write(PointerRange<const char> buffer) override
 			{
 				if (!myMode.write)
-					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
+					CAGE_THROW_CRITICAL(Exception, "writing to read-only memory file");
 				const char *data = buffer.data();
 				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())

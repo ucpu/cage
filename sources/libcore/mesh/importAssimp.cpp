@@ -179,7 +179,7 @@ namespace cage
 				return pCount;
 			}
 
-			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override { CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Write"); }
+			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override { CAGE_THROW_CRITICAL(Exception, "cageIOStream::Write"); }
 
 			aiReturn Seek(size_t pOffset, aiOrigin pOrigin) override
 			{
@@ -204,7 +204,7 @@ namespace cage
 
 			size_t FileSize() const override { return (size_t)r->size(); }
 
-			void Flush() override { CAGE_THROW_ERROR(NotImplemented, "cageIOStream::Flush"); }
+			void Flush() override { CAGE_THROW_CRITICAL(Exception, "cageIOStream::Flush"); }
 
 		private:
 			cage::Holder<cage::File> r;
@@ -232,7 +232,7 @@ namespace cage
 
 			void Close(Assimp::IOStream *pFile) override { delete (CageIoStream *)pFile; }
 
-			bool ComparePaths(const char *one, const char *second) const override { CAGE_THROW_ERROR(NotImplemented, "cageIOsystem::ComparePaths"); }
+			bool ComparePaths(const char *one, const char *second) const override { CAGE_THROW_CRITICAL(Exception, "cageIOsystem::ComparePaths"); }
 
 			std::set<String> paths;
 		};

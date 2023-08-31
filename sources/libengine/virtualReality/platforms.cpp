@@ -51,7 +51,7 @@ namespace cage
 
 #else
 
-			CAGE_THROW_CRITICAL(NotImplemented, "openxr currently works on windows only");
+			CAGE_THROW_CRITICAL(Exception, "openxr currently works on windows only");
 
 			char binding[100] = {}; // dummy structure to allow compiling
 			//XrGraphicsBindingOpenGLXlibKHR binding;

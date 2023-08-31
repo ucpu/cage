@@ -46,7 +46,7 @@ namespace cage
 
 	void File::read(PointerRange<char> buffer)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reading from abstract (possibly write-only) file");
+		CAGE_THROW_CRITICAL(Exception, "reading from abstract (possibly write-only) file");
 	}
 
 	Holder<PointerRange<char>> File::read(uintPtr size)
@@ -100,7 +100,7 @@ namespace cage
 
 	void File::write(PointerRange<const char> buffer)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "writing to abstract (possibly read-only) file");
+		CAGE_THROW_CRITICAL(Exception, "writing to abstract (possibly read-only) file");
 	}
 
 	void File::writeLine(const String &line)
@@ -111,27 +111,27 @@ namespace cage
 
 	void File::seek(uintPtr position)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "calling seek on an abstract file");
+		CAGE_THROW_CRITICAL(Exception, "calling seek on an abstract file");
 	}
 
 	void File::close()
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "calling close on an abstract file");
+		CAGE_THROW_CRITICAL(Exception, "calling close on an abstract file");
 	}
 
 	uintPtr File::tell()
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "calling tell on an abstract file");
+		CAGE_THROW_CRITICAL(Exception, "calling tell on an abstract file");
 	}
 
 	uintPtr File::size()
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "calling size on an abstract file");
+		CAGE_THROW_CRITICAL(Exception, "calling size on an abstract file");
 	}
 
 	FileMode File::mode() const
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "calling mode on an abstract file");
+		CAGE_THROW_CRITICAL(Exception, "calling mode on an abstract file");
 	}
 
 	Holder<File> newFile(const String &path, const FileMode &mode)

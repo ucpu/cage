@@ -20,7 +20,7 @@ namespace cage
 			return makeRay(tr(origin), tr(origin + direction));
 		if (isSegment())
 			return makeSegment(tr(a()), tr(b()));
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool Line::normalized() const
@@ -312,7 +312,7 @@ namespace cage
 
 	Cone Cone::operator*(const Mat4 &other) const
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Frustum::Frustum(const Transform &camera, const Mat4 &proj) : Frustum(proj * Mat4(inverse(camera))) {}

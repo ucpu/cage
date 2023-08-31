@@ -12,7 +12,7 @@ namespace cage
 		{
 			if (sourceDepth != 1 || targetDepth != 1)
 			{
-				CAGE_THROW_CRITICAL(NotImplemented, "3D image resize");
+				CAGE_THROW_CRITICAL(Exception, "3D image resize");
 			}
 
 			avir::CLancIR ir;

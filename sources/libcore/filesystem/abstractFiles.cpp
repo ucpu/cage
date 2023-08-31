@@ -165,12 +165,12 @@ namespace cage
 
 	void FileAbstract::reopenForModification()
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reopening abstract file");
+		CAGE_THROW_CRITICAL(Exception, "reopening abstract file");
 	}
 
 	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reading with offset from abstract file");
+		CAGE_THROW_CRITICAL(Exception, "reading with offset from abstract file");
 	}
 
 	FileMode FileAbstract::mode() const

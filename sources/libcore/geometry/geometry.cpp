@@ -127,17 +127,17 @@ namespace cage
 
 	Real distance(const Line &a, const Aabb &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Line &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Line &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Triangle &a, const Triangle &b)
@@ -182,12 +182,12 @@ namespace cage
 
 	Real distance(const Triangle &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Triangle &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Plane &a, const Plane &b)
@@ -205,17 +205,17 @@ namespace cage
 
 	Real distance(const Plane &a, const Aabb &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Plane &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Plane &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Sphere &a, const Sphere &b)
@@ -254,27 +254,27 @@ namespace cage
 
 	Real distance(const Aabb &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Aabb &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Cone &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Cone &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Real distance(const Frustum &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Vec3 &a, const Vec3 &b)
@@ -314,7 +314,7 @@ namespace cage
 
 	bool intersects(const Vec3 &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Vec3 &point, const Frustum &frustum)
@@ -396,12 +396,12 @@ namespace cage
 
 	bool intersects(const Line &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Line &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Triangle &a, const Plane &b)
@@ -421,12 +421,12 @@ namespace cage
 
 	bool intersects(const Triangle &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Triangle &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Plane &a, const Plane &b)
@@ -453,12 +453,12 @@ namespace cage
 
 	bool intersects(const Plane &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Plane &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Sphere &a, const Sphere &b)
@@ -527,12 +527,12 @@ namespace cage
 
 	bool intersects(const Cone &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	bool intersects(const Cone &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Vec3 intersection(const Line &ray, const Triangle &tri)
@@ -617,12 +617,12 @@ namespace cage
 
 	Line intersection(const Line &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Line intersection(const Line &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Aabb intersection(const Aabb &a, const Aabb &b)
@@ -690,12 +690,12 @@ namespace cage
 
 	Vec3 closestPoint(const Vec3 &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
 	Vec3 closestPoint(const Vec3 &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 }
 

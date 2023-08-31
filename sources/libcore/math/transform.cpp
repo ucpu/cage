@@ -4,7 +4,7 @@ namespace cage
 {
 	Transform Transform::parse(const String &str)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "transform::parse");
+		CAGE_THROW_CRITICAL(Exception, "transform::parse");
 	}
 
 	Transform operator*(const Transform &l, const Transform &r) noexcept

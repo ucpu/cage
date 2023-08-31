@@ -87,7 +87,7 @@ namespace cage
 
 		void decodeZip(Deserializer &des, ImageImpl *impl, bool prediction)
 		{
-			CAGE_THROW_ERROR(NotImplemented, "unsupported compression method (zip) in psd decoding");
+			CAGE_THROW_ERROR(Exception, "unsupported compression method (zip) in psd decoding");
 		}
 
 		void encodeRaw(Serializer &ser, const ImageImpl *impl)

@@ -27,6 +27,6 @@ namespace cage
 
 	MemoryBuffer flacEncode(const AudioImpl *impl)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "encoding flac sound files");
+		CAGE_THROW_CRITICAL(Exception, "encoding flac sound files");
 	}
 }

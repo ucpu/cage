@@ -78,7 +78,7 @@ namespace cage
 				format.bitsPerSample = 32;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(NotImplemented, "wav encode unsupported format");
+				CAGE_THROW_CRITICAL(Exception, "wav encode unsupported format");
 		}
 		format.sampleRate = impl->sampleRate;
 		if (!drwav_init_memory_write_sequential_pcm_frames(&wav, &buffer, &size, &format, impl->frames, nullptr))

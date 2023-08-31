@@ -78,13 +78,6 @@ namespace cage
 		::cage::privat::makeLog(location, severity, "exception", +message, false, false);
 	}
 
-	// NotImplemented
-
-	void NotImplemented::log() const
-	{
-		::cage::privat::makeLog(location, severity, "exception", String() + "not implemented: '" + +message + "'", false, false);
-	}
-
 	// SystemError
 
 	SystemError::SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept : Exception(location, severity, message), code(code) {}
