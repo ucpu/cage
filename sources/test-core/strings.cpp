@@ -1,13 +1,10 @@
 #include <algorithm>
-#include <cmath> // std::abs
-#include <cstring>
 #include <map>
 #include <random>
 #include <vector>
 
 #include "main.h"
 
-#include <cage-core/files.h>
 #include <cage-core/hashString.h>
 #include <cage-core/math.h>
 #include <cage-core/string.h>
@@ -19,12 +16,12 @@ namespace
 {
 	void test(float a, float b)
 	{
-		CAGE_TEST(std::abs(a - b) < 1e-5);
+		CAGE_TEST(cage::abs(a - b) < 1e-5);
 	}
 
 	void test(double a, double b)
 	{
-		CAGE_TEST(std::abs(a - b) < 1e-12);
+		CAGE_TEST(cage::abs(a - b) < 1e-12);
 	}
 
 	constexpr StringPointer pickName(uint32 i)
@@ -41,74 +38,6 @@ namespace
 				return "three";
 			default:
 				return "too much";
-		}
-	}
-
-	void testStringLiterals()
-	{
-		CAGE_TESTCASE("string literals");
-		constexpr StringPointer one = pickName(1);
-		CAGE_TEST(String(one) == "one");
-	}
-
-	void testConstructors()
-	{
-		CAGE_TESTCASE("constructors and operator +");
-		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
-		bool b = true;
-		CAGE_TEST(String(Stringizer() + b) == "true");
-		b = false;
-		CAGE_TEST(String(Stringizer() + b) == "false");
-		int i1 = -123;
-		CAGE_TEST(String(Stringizer() + i1) == "-123");
-		unsigned int i2 = 123;
-		CAGE_TEST(String(Stringizer() + i2) == "123");
-		sint8 i3 = 123;
-		CAGE_TEST(String(Stringizer() + i3) == "123");
-		sint16 i4 = 123;
-		CAGE_TEST(String(Stringizer() + i4) == "123");
-		sint32 i5 = 123;
-		CAGE_TEST(String(Stringizer() + i5) == "123");
-		sint64 i6 = 123;
-		CAGE_TEST(String(Stringizer() + i6) == "123");
-		uint8 i7 = 123;
-		CAGE_TEST(String(Stringizer() + i7) == "123");
-		uint16 i8 = 123;
-		CAGE_TEST(String(Stringizer() + i8) == "123");
-		uint32 i9 = 123;
-		CAGE_TEST(String(Stringizer() + i9) == "123");
-		uint64 i10 = 123;
-		CAGE_TEST(String(Stringizer() + i10) == "123");
-		{
-			float f = 5;
-			String fs = Stringizer() + f;
-			CAGE_TEST(fs == "5" || fs == "5.000000");
-			double d = 5;
-			String ds = Stringizer() + d;
-			CAGE_TEST(ds == "5" || ds == "5.000000");
-		}
-		{
-			float f = 5.5;
-			String fs = Stringizer() + f;
-			CAGE_TEST(fs == "5.5" || fs == "5.500000");
-			double d = 5.5;
-			String ds = Stringizer() + d;
-			CAGE_TEST(ds == "5.5" || ds == "5.500000");
-		}
-		{
-			CAGE_TESTCASE("array");
-			const char arr[] = "array";
-			CAGE_TEST(String(arr) == "array");
-			char arr2[] = "array";
-			CAGE_TEST(String(arr2) == "array");
-		}
-		{
-			CAGE_TESTCASE("different baseString<N>");
-			detail::StringBase<128> a = "ahoj";
-			String b = "nazdar";
-			detail::StringBase<1024> c = "cau";
-			String d = a + b + c;
-			CAGE_TEST(d == "ahojnazdarcau");
 		}
 	}
 
@@ -208,6 +137,151 @@ namespace
 		}
 	}
 
+	constexpr void testCopies1()
+	{
+		CAGE_TESTCASE("copies and changes 1 - just operators");
+		String a = "ahoj";
+		String b = "nazdar";
+		String c = "pokus";
+		String d = "omega";
+		String e = a + b;
+		String f = b + c + d;
+		String g = a;
+		a = "opice";
+		b = "lapis";
+		c = "";
+		CAGE_TEST(a == "opice");
+		CAGE_TEST(b == "lapis");
+		CAGE_TEST(c == "");
+		CAGE_TEST(d == "omega");
+		CAGE_TEST(e == "ahojnazdar");
+		CAGE_TEST(f == "nazdarpokusomega");
+		CAGE_TEST(g == "ahoj");
+		a = b;
+		b = c;
+		d = e;
+		CAGE_TEST(a == "lapis");
+		CAGE_TEST(b == "");
+		CAGE_TEST(c == "");
+		CAGE_TEST(d == "ahojnazdar");
+	}
+
+	constexpr void testStringPointer()
+	{
+		CAGE_TESTCASE("string literals");
+		constexpr StringPointer one = pickName(1);
+		CAGE_TEST(String(one) == "one");
+	}
+
+	template<StringLiteral Lit>
+	struct Literal
+	{
+		constexpr String value() const { return Lit.value; }
+	};
+
+	constexpr void testStringLiteral()
+	{
+		static_assert(Literal<"Hello">().value() == "Hello");
+		Literal<"Hello"> a;
+		Literal<"Beautiful"> b;
+		static_assert(sizeof(a) == sizeof(b));
+		static_assert(std::is_same_v<Literal<"Hello">, Literal<"Hello">>);
+		static_assert(!std::is_same_v<Literal<"Hello">, Literal<"Beautiful">>);
+		CAGE_TEST(a.value() == "Hello");
+		CAGE_TEST(b.value() == "Beautiful");
+		CAGE_TEST(a.value() + " " + b.value() == "Hello Beautiful");
+	}
+
+	constexpr int testConstexprString()
+	{
+		testComparisons();
+		testPointerRange();
+		testMethods();
+		testCopies1();
+		testStringPointer();
+		testStringLiteral();
+		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
+		{
+			const char arr[] = "array";
+			CAGE_TEST(String(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(String(arr2) == "array");
+		}
+		{
+			detail::StringBase<128> a = "ahoj";
+			String b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			String d = a + b + c;
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+		{
+			String s = Stringizer() + "hello" + " " + "world";
+			CAGE_TEST(s == "hello world");
+		}
+		return 0;
+	}
+
+	void testConstructors()
+	{
+		CAGE_TESTCASE("constructors and operator +");
+		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
+		bool b = true;
+		CAGE_TEST(String(Stringizer() + b) == "true");
+		b = false;
+		CAGE_TEST(String(Stringizer() + b) == "false");
+		int i1 = -123;
+		CAGE_TEST(String(Stringizer() + i1) == "-123");
+		unsigned int i2 = 123;
+		CAGE_TEST(String(Stringizer() + i2) == "123");
+		sint8 i3 = 123;
+		CAGE_TEST(String(Stringizer() + i3) == "123");
+		sint16 i4 = 123;
+		CAGE_TEST(String(Stringizer() + i4) == "123");
+		sint32 i5 = 123;
+		CAGE_TEST(String(Stringizer() + i5) == "123");
+		sint64 i6 = 123;
+		CAGE_TEST(String(Stringizer() + i6) == "123");
+		uint8 i7 = 123;
+		CAGE_TEST(String(Stringizer() + i7) == "123");
+		uint16 i8 = 123;
+		CAGE_TEST(String(Stringizer() + i8) == "123");
+		uint32 i9 = 123;
+		CAGE_TEST(String(Stringizer() + i9) == "123");
+		uint64 i10 = 123;
+		CAGE_TEST(String(Stringizer() + i10) == "123");
+		{
+			float f = 5;
+			String fs = Stringizer() + f;
+			CAGE_TEST(fs == "5" || fs == "5.000000");
+			double d = 5;
+			String ds = Stringizer() + d;
+			CAGE_TEST(ds == "5" || ds == "5.000000");
+		}
+		{
+			float f = 5.5;
+			String fs = Stringizer() + f;
+			CAGE_TEST(fs == "5.5" || fs == "5.500000");
+			double d = 5.5;
+			String ds = Stringizer() + d;
+			CAGE_TEST(ds == "5.5" || ds == "5.500000");
+		}
+		{
+			CAGE_TESTCASE("array");
+			const char arr[] = "array";
+			CAGE_TEST(String(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(String(arr2) == "array");
+		}
+		{
+			CAGE_TESTCASE("different baseString<N>");
+			detail::StringBase<128> a = "ahoj";
+			String b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			String d = a + b + c;
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+	}
+
 	void testFunctions()
 	{
 		{
@@ -271,57 +345,6 @@ namespace
 			CAGE_TEST_ASSERTED(split(f, "za")); // delimiting characters have to be sorted
 		}
 		{
-			CAGE_TESTCASE("find");
-			{
-				CAGE_TESTCASE("ratata://omega.alt.com/blah/keee/jojo.armagedon");
-				const String s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-				CAGE_TEST(find(s, 'r', 0) == 0);
-				CAGE_TEST(find(s, 'a', 1) == 1);
-				CAGE_TEST(find(s, 'a', 2) == 3);
-				CAGE_TEST(find(s, ':', 0) == 6);
-				CAGE_TEST(find(s, ':', 3) == 6);
-				CAGE_TEST(find(s, ':', 7) == m);
-				CAGE_TEST(find(s, "ta", 0) == 2);
-				CAGE_TEST(find(s, "://", 0) == 6);
-				CAGE_TEST(find(s, "a", 2) == 3);
-				CAGE_TEST(find(s, "ra", 0) == 0);
-				CAGE_TEST(find(s, "tata", 0) == 2);
-				CAGE_TEST(find(s, "tata", 7) == m);
-			}
-			{
-				CAGE_TESTCASE("0123456789");
-				const String s = "0123456789";
-				CAGE_TEST(find(s, "35", 0) == m);
-				CAGE_TEST(find(s, "45", 0) == 4);
-				CAGE_TEST(find(s, "34", 0) == 3);
-				CAGE_TEST(find(s, "0", 0) == 0);
-				CAGE_TEST(find(s, "89", 0) == 8);
-				CAGE_TEST(find(s, "9", 0) == 9);
-				CAGE_TEST(find(s, "k", 0) == m);
-			}
-			{
-				CAGE_TESTCASE("finding char only");
-				const String s = "0123456789";
-				CAGE_TEST(find(s, 'j', 0) == m);
-				CAGE_TEST(find(s, '4', 0) == 4);
-				CAGE_TEST(find(s, '3', 0) == 3);
-				CAGE_TEST(find(s, '0', 0) == 0);
-				CAGE_TEST(find(s, '8', 0) == 8);
-				CAGE_TEST(find(s, '9', 0) == 9);
-				CAGE_TEST(find(s, 'k', 0) == m);
-			}
-			{
-				CAGE_TESTCASE("corner cases");
-				const String s = "0123456789";
-				CAGE_TEST(find(s, 'a', 100) == m);
-				CAGE_TEST(find(s, "a", 100) == m);
-				CAGE_TEST(find(s, "abcdefghijklmnopq", 0) == m);
-				CAGE_TEST(find(s, "") == m);
-				CAGE_TEST(find(s, String(s)) == 0);
-				CAGE_TEST(find(String("h"), 'h') == 0);
-			}
-		}
-		{
 			CAGE_TESTCASE("trim");
 			CAGE_TEST(trim(String("   ori  ")) == "ori");
 			CAGE_TEST(trim(String("   ori  "), false, true) == "   ori");
@@ -362,6 +385,59 @@ namespace
 		}
 	}
 
+	void testFunctionFind()
+	{
+		CAGE_TESTCASE("find");
+		{
+			CAGE_TESTCASE("ratata://omega.alt.com/blah/keee/jojo.armagedon");
+			const String s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			CAGE_TEST(find(s, 'r', 0) == 0);
+			CAGE_TEST(find(s, 'a', 1) == 1);
+			CAGE_TEST(find(s, 'a', 2) == 3);
+			CAGE_TEST(find(s, ':', 0) == 6);
+			CAGE_TEST(find(s, ':', 3) == 6);
+			CAGE_TEST(find(s, ':', 7) == m);
+			CAGE_TEST(find(s, "ta", 0) == 2);
+			CAGE_TEST(find(s, "://", 0) == 6);
+			CAGE_TEST(find(s, "a", 2) == 3);
+			CAGE_TEST(find(s, "ra", 0) == 0);
+			CAGE_TEST(find(s, "tata", 0) == 2);
+			CAGE_TEST(find(s, "tata", 7) == m);
+		}
+		{
+			CAGE_TESTCASE("0123456789");
+			const String s = "0123456789";
+			CAGE_TEST(find(s, "35", 0) == m);
+			CAGE_TEST(find(s, "45", 0) == 4);
+			CAGE_TEST(find(s, "34", 0) == 3);
+			CAGE_TEST(find(s, "0", 0) == 0);
+			CAGE_TEST(find(s, "89", 0) == 8);
+			CAGE_TEST(find(s, "9", 0) == 9);
+			CAGE_TEST(find(s, "k", 0) == m);
+		}
+		{
+			CAGE_TESTCASE("finding char only");
+			const String s = "0123456789";
+			CAGE_TEST(find(s, 'j', 0) == m);
+			CAGE_TEST(find(s, '4', 0) == 4);
+			CAGE_TEST(find(s, '3', 0) == 3);
+			CAGE_TEST(find(s, '0', 0) == 0);
+			CAGE_TEST(find(s, '8', 0) == 8);
+			CAGE_TEST(find(s, '9', 0) == 9);
+			CAGE_TEST(find(s, 'k', 0) == m);
+		}
+		{
+			CAGE_TESTCASE("corner cases");
+			const String s = "0123456789";
+			CAGE_TEST(find(s, 'a', 100) == m);
+			CAGE_TEST(find(s, "a", 100) == m);
+			CAGE_TEST(find(s, "abcdefghijklmnopq", 0) == m);
+			CAGE_TEST(find(s, "") == m);
+			CAGE_TEST(find(s, String(s)) == 0);
+			CAGE_TEST(find(String("h"), 'h') == 0);
+		}
+	}
+
 	void testContainers()
 	{
 		{
@@ -395,9 +471,9 @@ namespace
 		}
 	}
 
-	void testConversions()
+	void testConversionsBasics()
 	{
-		CAGE_TESTCASE("conversions");
+		CAGE_TESTCASE("conversions basics");
 		test(toFloat(String("0.5")), 0.5f);
 		test(toFloat(String("-45.123")), -45.123f);
 		test(toFloat(String("-3.8e9")), -3.8e9f);
@@ -469,7 +545,11 @@ namespace
 		CAGE_TEST_THROWN(toBool(String("tee")));
 		CAGE_TEST_THROWN(toSint32(String("50000000000")));
 		CAGE_TEST_THROWN(toUint32(String("50000000000")));
+	}
 
+	void testConversionsFunctions()
+	{
+		CAGE_TESTCASE("conversions functions");
 		{
 			CAGE_TESTCASE("long long numbers and toSint64()");
 			CAGE_TEST(toSint64(String("-1099511627776")) == -1099511627776);
@@ -529,42 +609,10 @@ namespace
 		}
 	}
 
-	constexpr void testCopies1()
-	{
-		CAGE_TESTCASE("copies and changes 1 - just operators");
-		String a = "ahoj";
-		String b = "nazdar";
-		String c = "pokus";
-		String d = "omega";
-		String e = a + b;
-		String f = b + c + d;
-		String g = a;
-		a = "opice";
-		b = "lapis";
-		c = "";
-		CAGE_TEST(a == "opice");
-		CAGE_TEST(b == "lapis");
-		CAGE_TEST(c == "");
-		CAGE_TEST(d == "omega");
-		CAGE_TEST(e == "ahojnazdar");
-		CAGE_TEST(f == "nazdarpokusomega");
-		CAGE_TEST(g == "ahoj");
-		a = b;
-		b = c;
-		d = e;
-		CAGE_TEST(a == "lapis");
-		CAGE_TEST(b == "");
-		CAGE_TEST(c == "");
-		CAGE_TEST(d == "ahojnazdar");
-	}
-
 	void testCopies2()
 	{
 		CAGE_TESTCASE("copies and changes 2 - with methods");
 		String a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-		String d, p, f, e;
-		pathDecompose(a, d, p, f, e);
-		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		reverse(a);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		toLower(a);
@@ -752,174 +800,124 @@ namespace
 		}
 	}
 
-	void testNaturalSort()
+	void testNaturalSortBasics()
 	{
 		CAGE_TESTCASE("natural sort");
-		{
-			CAGE_TESTCASE("basic tests");
-			using namespace detail;
-			CAGE_TEST(naturalComparison("", "") == 0);
-			CAGE_TEST(naturalComparison("", "aa") < 0);
-			CAGE_TEST(naturalComparison("aa", "") > 0);
-			CAGE_TEST(naturalComparison("a", "b") < 0);
-			CAGE_TEST(naturalComparison("b", "a") > 0);
-			CAGE_TEST(naturalComparison("xxayy", "xxbyy") < 0);
-			CAGE_TEST(naturalComparison("xxbyy", "xxayy") > 0);
-			CAGE_TEST(naturalComparison("0", "1") < 0);
-			CAGE_TEST(naturalComparison("10", "200") < 0);
-			CAGE_TEST(naturalComparison("30", "200") < 0);
-			CAGE_TEST(naturalComparison("100", "200") < 0);
-			CAGE_TEST(naturalComparison("300", "200") > 0);
-			CAGE_TEST(naturalComparison("1000", "200") > 0);
-			CAGE_TEST(naturalComparison("30xx", "300xx") < 0);
-			CAGE_TEST(naturalComparison("xx30", "xx300") < 0);
-			CAGE_TEST(naturalComparison("30  ", "300  ") < 0);
-			CAGE_TEST(naturalComparison("  30", "  300") < 0);
-			CAGE_TEST(naturalComparison("test10xx", "test200xx") < 0);
-			CAGE_TEST(naturalComparison("test30xx", "test200xx") < 0);
-			CAGE_TEST(naturalComparison("test100xx", "test200xx") < 0);
-			CAGE_TEST(naturalComparison("test300xx", "test200xx") > 0);
-			CAGE_TEST(naturalComparison("test1000xx", "test200xx") > 0);
-			CAGE_TEST(naturalComparison("a100b30c", "a100b200c") < 0);
-			CAGE_TEST(naturalComparison("a30b100c", "a200b100c") < 0);
-			CAGE_TEST(naturalComparison("30 300", "300 300") < 0);
-			CAGE_TEST(naturalComparison("300 30", "300 300") < 0);
-			CAGE_TEST(naturalComparison("100 200 40 400 500", "100 200 300 400 500") < 0);
-			CAGE_TEST(naturalComparison("20 200 300 400 500", "100 200 300 400 500") < 0);
-			CAGE_TEST(naturalComparison("100 200 300 400 60", "100 200 300 400 500") < 0);
-		}
-		{
-			CAGE_TESTCASE("randomized test");
-			static constexpr const String original[] = {
-				"",
-				"  5",
-				"  30",
-				"  40 ",
-				"  100",
-				"  300",
-				" 5",
-				" 30",
-				" 40 ",
-				" 100",
-				" 300",
-				"1",
-				"10",
-				"10  ",
-				"30",
-				"30  ",
-				"100",
-				"100 ",
-				"200",
-				"200  ",
-				"300",
-				"300 ",
-				"1000",
-				"aaa",
-				"bb",
-				"bbbb",
-				"bbbb",
-				"ccc",
-				"kkk100ja200h",
-				"kkk100jj5h",
-				"kkk100jj30h",
-				"kkk100jj200h",
-				"kkk100jj1000h",
-				"kkk100jm200h",
-				"test10xx",
-				"test30xx",
-				"test100xx",
-				"test200xx",
-				"test300xx",
-				"test1000xx",
-				"z1",
-				"z10",
-				"z10  ",
-				"z30",
-				"z30  ",
-				"z100",
-				"z100 ",
-				"z200",
-				"z200  ",
-				"z300",
-				"z300 ",
-				"z1000",
-				"zzz1",
-			};
-			std::vector<String> vec(std::begin(original), std::end(original));
-			std::shuffle(vec.begin(), vec.end(), std::mt19937(randomRange(uint32(0), uint32(m))));
-			std::sort(vec.begin(), vec.end(), StringComparatorNatural());
-			//std::sort(vec.begin(), vec.end());
-			auto o = std::begin(original);
-			for (const auto &v : vec)
-				CAGE_TEST(*o++ == v);
-		}
+		using namespace detail;
+		CAGE_TEST(naturalComparison("", "") == 0);
+		CAGE_TEST(naturalComparison("", "aa") < 0);
+		CAGE_TEST(naturalComparison("aa", "") > 0);
+		CAGE_TEST(naturalComparison("a", "b") < 0);
+		CAGE_TEST(naturalComparison("b", "a") > 0);
+		CAGE_TEST(naturalComparison("xxayy", "xxbyy") < 0);
+		CAGE_TEST(naturalComparison("xxbyy", "xxayy") > 0);
+		CAGE_TEST(naturalComparison("0", "1") < 0);
+		CAGE_TEST(naturalComparison("10", "200") < 0);
+		CAGE_TEST(naturalComparison("30", "200") < 0);
+		CAGE_TEST(naturalComparison("100", "200") < 0);
+		CAGE_TEST(naturalComparison("300", "200") > 0);
+		CAGE_TEST(naturalComparison("1000", "200") > 0);
+		CAGE_TEST(naturalComparison("30xx", "300xx") < 0);
+		CAGE_TEST(naturalComparison("xx30", "xx300") < 0);
+		CAGE_TEST(naturalComparison("30  ", "300  ") < 0);
+		CAGE_TEST(naturalComparison("  30", "  300") < 0);
+		CAGE_TEST(naturalComparison("test10xx", "test200xx") < 0);
+		CAGE_TEST(naturalComparison("test30xx", "test200xx") < 0);
+		CAGE_TEST(naturalComparison("test100xx", "test200xx") < 0);
+		CAGE_TEST(naturalComparison("test300xx", "test200xx") > 0);
+		CAGE_TEST(naturalComparison("test1000xx", "test200xx") > 0);
+		CAGE_TEST(naturalComparison("a100b30c", "a100b200c") < 0);
+		CAGE_TEST(naturalComparison("a30b100c", "a200b100c") < 0);
+		CAGE_TEST(naturalComparison("30 300", "300 300") < 0);
+		CAGE_TEST(naturalComparison("300 30", "300 300") < 0);
+		CAGE_TEST(naturalComparison("100 200 40 400 500", "100 200 300 400 500") < 0);
+		CAGE_TEST(naturalComparison("20 200 300 400 500", "100 200 300 400 500") < 0);
+		CAGE_TEST(naturalComparison("100 200 300 400 60", "100 200 300 400 500") < 0);
 	}
 
-	template<StringLiteral Lit>
-	struct Literal
+	void testNaturalSortRandom()
 	{
-		constexpr String value() const { return Lit.value; }
-	};
-
-	constexpr void testStringLiteral()
-	{
-		static_assert(Literal<"Hello">().value() == "Hello");
-		Literal<"Hello"> a;
-		Literal<"Beautiful"> b;
-		static_assert(sizeof(a) == sizeof(b));
-		static_assert(std::is_same_v<Literal<"Hello">, Literal<"Hello">>);
-		static_assert(!std::is_same_v<Literal<"Hello">, Literal<"Beautiful">>);
-		CAGE_TEST(a.value() == "Hello");
-		CAGE_TEST(b.value() == "Beautiful");
-		CAGE_TEST(a.value() + " " + b.value() == "Hello Beautiful");
-	}
-
-	constexpr int testConstexprString()
-	{
-		CAGE_TEST(String("ra") + "ke" + "ta" == "raketa");
-		{
-			const char arr[] = "array";
-			CAGE_TEST(String(arr) == "array");
-			char arr2[] = "array";
-			CAGE_TEST(String(arr2) == "array");
-		}
-		{
-			detail::StringBase<128> a = "ahoj";
-			String b = "nazdar";
-			detail::StringBase<1024> c = "cau";
-			String d = a + b + c;
-			CAGE_TEST(d == "ahojnazdarcau");
-		}
-		testComparisons();
-		testPointerRange();
-		testMethods();
-		testCopies1();
-		testStringLiteral();
-		{
-			String s = Stringizer() + "hello" + " " + "world";
-			CAGE_TEST(s == "hello world");
-		}
-		return 0;
+		CAGE_TESTCASE("natural sort - randomized test");
+		static constexpr const String original[] = {
+			"",
+			"  5",
+			"  30",
+			"  40 ",
+			"  100",
+			"  300",
+			" 5",
+			" 30",
+			" 40 ",
+			" 100",
+			" 300",
+			"1",
+			"10",
+			"10  ",
+			"30",
+			"30  ",
+			"100",
+			"100 ",
+			"200",
+			"200  ",
+			"300",
+			"300 ",
+			"1000",
+			"aaa",
+			"bb",
+			"bbbb",
+			"bbbb",
+			"ccc",
+			"kkk100ja200h",
+			"kkk100jj5h",
+			"kkk100jj30h",
+			"kkk100jj200h",
+			"kkk100jj1000h",
+			"kkk100jm200h",
+			"test10xx",
+			"test30xx",
+			"test100xx",
+			"test200xx",
+			"test300xx",
+			"test1000xx",
+			"z1",
+			"z10",
+			"z10  ",
+			"z30",
+			"z30  ",
+			"z100",
+			"z100 ",
+			"z200",
+			"z200  ",
+			"z300",
+			"z300 ",
+			"z1000",
+			"zzz1",
+		};
+		std::vector<String> vec(std::begin(original), std::end(original));
+		std::shuffle(vec.begin(), vec.end(), std::mt19937(randomRange(uint32(0), uint32(m))));
+		std::sort(vec.begin(), vec.end(), StringComparatorNatural());
+		//std::sort(vec.begin(), vec.end());
+		auto o = std::begin(original);
+		for (const auto &v : vec)
+			CAGE_TEST(*o++ == v);
 	}
 }
 
 void testStrings()
 {
 	CAGE_TESTCASE("strings");
-	testStringLiterals();
-	testConstructors();
-	testComparisons();
-	testPointerRange();
-	testMethods();
-	testFunctions();
-	testContainers();
-	testConversions();
-	testCopies1();
-	testCopies2();
-	testStringizer();
-	testNaturalSort();
-	testConstexprString();
 	{
 		constexpr int a = testConstexprString();
 	}
+	testConstexprString(); // runtime test of constexpr string
+	testConstructors();
+	testFunctions();
+	testFunctionFind();
+	testContainers();
+	testConversionsBasics();
+	testConversionsFunctions();
+	testCopies2();
+	testStringizer();
+	testNaturalSortBasics();
+	testNaturalSortRandom();
 }

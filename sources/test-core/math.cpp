@@ -1,11 +1,9 @@
 #include <cmath>
-#include <initializer_list>
 
 #include "main.h"
 
 #include <cage-core/camera.h>
 #include <cage-core/macros.h>
-#include <cage-core/math.h>
 #include <cage-core/timer.h>
 
 void test(Real a, Real b)
@@ -606,7 +604,7 @@ namespace
 		test(a * b, Vec4i(3, 4, 12, 4));
 	}
 
-	void testMathQuat()
+	void testMathQuat1()
 	{
 		CAGE_TESTCASE("quat");
 
@@ -733,116 +731,6 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("quaternion from forward and up");
-
-			{ // no rotation, keep forward
-				Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
-			}
-
-			{ // no rotation, keep up
-				Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
-			}
-
-			{ // rotation left, keep forward
-				Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
-			}
-
-			{ // rotation left, keep up
-				Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
-			}
-
-			{ // rotation right, keep forward
-				Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
-			}
-
-			{ // rotation right, keep up
-				Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
-			}
-
-			{ // rotation 180, keep forward
-				Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
-			}
-
-			{ // rotation 180, keep up
-				Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
-				test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
-				test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
-			}
-
-			{ // up is left, keep forward
-				Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
-				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
-			}
-
-			{ // up is left, keep up
-				Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
-				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
-			}
-
-			{ // uhh, keep forward
-				Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), false);
-				test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
-				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
-			}
-
-			{ // uhh, keep up
-				Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), true);
-				test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
-				test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
-				test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
-			}
-
-			// random
-			for (uint32 i = 0; i < 10; i++)
-			{
-				const Vec3 f = randomDirection3();
-				const Vec3 u = randomDirection3();
-				const Vec3 r = normalize(cross(f, u));
-				test(f, normalize(f));
-				test(u, normalize(u));
-				{ // keep forward
-					Quat q(f, u, false);
-					test(q * Vec3(0, 0, -1), f);
-					test(q * Vec3(0, 1, 0), normalize(cross(r, f)));
-					test(q * Vec3(1, 0, 0), r);
-				}
-				{ // keep up
-					Quat q(f, u, true);
-					test(q * Vec3(0, 0, -1), normalize(cross(u, r)));
-					test(q * Vec3(0, 1, 0), u);
-					test(q * Vec3(1, 0, 0), r);
-				}
-			}
-		}
-
-		{
 			CAGE_TESTCASE("slerpPrecise");
 			for (uint32 i = 0; i < 10; i++)
 			{
@@ -914,6 +802,117 @@ namespace
 				const auto [axis, angle] = q1.axisAngle();
 				const Quat q2 = Quat(axis, angle);
 				test(q1, q2);
+			}
+		}
+	}
+
+	void testMathQuat2()
+	{
+		CAGE_TESTCASE("quaternion from forward and up");
+
+		{ // no rotation, keep forward
+			Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
+		}
+
+		{ // no rotation, keep up
+			Quat q(Vec3(0, 0, -1), Vec3(0, 1, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(1, 0, 0));
+		}
+
+		{ // rotation left, keep forward
+			Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
+		}
+
+		{ // rotation left, keep up
+			Quat q(Vec3(-1, 0, 0), Vec3(0, 1, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(-1, 0, 0));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, -1));
+		}
+
+		{ // rotation right, keep forward
+			Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
+		}
+
+		{ // rotation right, keep up
+			Quat q(Vec3(1, 0, 0), Vec3(0, 1, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(1, 0, 0));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
+		}
+
+		{ // rotation 180, keep forward
+			Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
+		}
+
+		{ // rotation 180, keep up
+			Quat q(Vec3(0, 0, 1), Vec3(0, 1, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, 1));
+			test(q * Vec3(0, 1, 0), Vec3(0, 1, 0));
+			test(q * Vec3(1, 0, 0), Vec3(-1, 0, 0));
+		}
+
+		{ // up is left, keep forward
+			Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+			test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
+		}
+
+		{ // up is left, keep up
+			Quat q(Vec3(0, 0, -1), Vec3(-1, 0, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(0, 0, -1));
+			test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 1, 0));
+		}
+
+		{ // uhh, keep forward
+			Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), false);
+			test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
+			test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
+		}
+
+		{ // uhh, keep up
+			Quat q(Vec3(0, 1, 0), Vec3(-1, 0, 0), true);
+			test(q * Vec3(0, 0, -1), Vec3(0, 1, 0));
+			test(q * Vec3(0, 1, 0), Vec3(-1, 0, 0));
+			test(q * Vec3(1, 0, 0), Vec3(0, 0, 1));
+		}
+
+		// random
+		for (uint32 i = 0; i < 10; i++)
+		{
+			const Vec3 f = randomDirection3();
+			const Vec3 u = randomDirection3();
+			const Vec3 r = normalize(cross(f, u));
+			test(f, normalize(f));
+			test(u, normalize(u));
+			{ // keep forward
+				Quat q(f, u, false);
+				test(q * Vec3(0, 0, -1), f);
+				test(q * Vec3(0, 1, 0), normalize(cross(r, f)));
+				test(q * Vec3(1, 0, 0), r);
+			}
+			{ // keep up
+				Quat q(f, u, true);
+				test(q * Vec3(0, 0, -1), normalize(cross(u, r)));
+				test(q * Vec3(0, 1, 0), u);
+				test(q * Vec3(1, 0, 0), r);
 			}
 		}
 	}
@@ -1384,7 +1383,8 @@ void testMath()
 	testMathIVec2();
 	testMathIVec3();
 	testMathIVec4();
-	testMathQuat();
+	testMathQuat1();
+	testMathQuat2();
 	testMathMat3();
 	testMathMat4();
 	testMathTransform();

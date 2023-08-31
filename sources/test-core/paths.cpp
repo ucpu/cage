@@ -86,12 +86,8 @@ namespace
 		}
 		CAGE_TEST(pathJoin(input, "haha") == pathJoin(simple, "haha"));
 	}
-}
 
-void testPaths()
-{
-	CAGE_TESTCASE("file paths");
-
+	void sectionReplaceInvalid()
 	{
 		// some file names are invalid on windows, but are valid on linux
 		// this makes testing a lot more complex.
@@ -107,6 +103,7 @@ void testPaths()
 #endif // CAGE_SYSTEM_WINDOWS
 	}
 
+	void sectionSimple()
 	{
 		CAGE_TESTCASE("basics");
 		testPathSimple("", "", false);
@@ -218,6 +215,7 @@ void testPaths()
 		testPathSimple("path/name1:name2/path/file", "path/name1:name2/path/file", false, shouldBeValid);
 	}
 
+	void sectionDecompose()
 	{
 		CAGE_TESTCASE("pathDecompose");
 		testPathDecomposition(".", "", "", "", "", false);
@@ -239,10 +237,8 @@ void testPaths()
 		testPathDecomposition("/path/path/path/file.ext", "", "/path/path/path", "file", ".ext", true);
 		testPathDecomposition("ratata://omega.alt.com/blah/keee/jojo.armagedon", "ratata", "/omega.alt.com/blah/keee", "jojo", ".armagedon", true);
 		testPathDecomposition("ratata:\\\\omega.alt.com\\blah\\keee\\jojo.armagedon", "ratata", "/omega.alt.com/blah/keee", "jojo", ".armagedon", true);
-	}
 
 #ifndef CAGE_SYSTEM_WINDOWS
-	{
 		CAGE_TESTCASE("pathDecompose with linux-only paths");
 		testPathDecompositionCommon(":", "", "", ":", "", false);
 		testPathDecompositionCommon("::", "", "", "::", "", false);
@@ -260,9 +256,10 @@ void testPaths()
 		testPathDecompositionCommon("proto:/path/name1:name2", "proto", "/path", "name1:name2", "", true);
 		testPathDecompositionCommon("path/name1:name2/path/file", "", "path/name1:name2/path", "file", "", false);
 		testPathDecompositionCommon("hhh:path/path/path/file.ext", "", "hhh:path/path/path", "file", ".ext", false);
-	}
 #endif // CAGE_SYSTEM_WINDOWS
+	}
 
+	void sectionJoin()
 	{
 		CAGE_TESTCASE("pathJoin");
 		CAGE_TEST(pathJoin("", "") == "");
@@ -305,10 +302,8 @@ void testPaths()
 		CAGE_TEST_THROWN(pathJoin("/a", "../.."));
 		CAGE_TEST_THROWN(pathJoin("", "proto:/ab"));
 		CAGE_TEST_THROWN(pathJoin("haha", "proto:/ab"));
-	}
 
 #ifndef CAGE_SYSTEM_WINDOWS
-	{
 		CAGE_TESTCASE("pathJoin with linux-only paths");
 		CAGE_TEST(pathJoin(":", "") == ":");
 		CAGE_TEST(pathJoin("", ":") == ":");
@@ -320,9 +315,10 @@ void testPaths()
 		CAGE_TEST(pathJoin("aa:", "bb") == "./aa:/bb");
 		CAGE_TEST(pathJoin("/aa:", "bb") == "/aa:/bb");
 		CAGE_TEST(pathJoin("p:/aa:", "bb") == "p:/aa:/bb");
-	}
 #endif // CAGE_SYSTEM_WINDOWS
+	}
 
+	void sectionRelative()
 	{
 		CAGE_TESTCASE("path to relative");
 		CAGE_TEST(pathToRel("") == "");
@@ -340,6 +336,7 @@ void testPaths()
 		CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc"), pathJoin(pathWorkingDir(), "abc")) == "");
 	}
 
+	void sectionAbsolute()
 	{
 		CAGE_TESTCASE("path to absolute");
 		CAGE_TEST(pathToAbs("") == pathWorkingDir());
@@ -360,4 +357,15 @@ void testPaths()
 			CAGE_TEST(pathToAbs("/abc/def") == pathJoin(root, "abc/def"));
 		}
 	}
+}
+
+void testPaths()
+{
+	CAGE_TESTCASE("file paths");
+	sectionReplaceInvalid();
+	sectionSimple();
+	sectionDecompose();
+	sectionJoin();
+	sectionRelative();
+	sectionAbsolute();
 }

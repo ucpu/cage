@@ -1,10 +1,7 @@
-#include <cmath>
-
 #include "main.h"
 
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
-#include <cage-core/math.h>
 
 void test(Real a, Real b);
 void test(Rads a, Rads b);
@@ -43,12 +40,8 @@ namespace
 		testEx(a[1], b[1]);
 		testEx(a[2], b[2]);
 	}
-}
 
-void testGeometry()
-{
-	CAGE_TESTCASE("geometry");
-
+	void geometryPoints()
 	{
 		CAGE_TESTCASE("points");
 
@@ -61,6 +54,7 @@ void testGeometry()
 		test(distance(Vec2(1, 2), Vec2(1, 2)), 0);
 	}
 
+	void geometryLines()
 	{
 		CAGE_TESTCASE("lines");
 
@@ -175,6 +169,7 @@ void testGeometry()
 		}
 	}
 
+	void geometryTriangles()
 	{
 		CAGE_TESTCASE("triangles");
 
@@ -302,8 +297,10 @@ void testGeometry()
 
 			const Triangle a = Triangle(Vec3(10.5860138, -0.126804054, -10.5860195), Vec3(15.8790216, -0.190205932, -15.8790274), Vec3(15.8786421, -0.253607780, -15.8786469));
 			const Triangle b = Triangle(Vec3(10.5860157, -0.126804069, -10.5860205), Vec3(5.29338837, -3.57627869e-07, -5.29339361), Vec3(5.29300880, -0.0634022281, -5.29301405));
-			CAGE_TEST(intersects(a, b) == intersects(b, a));
+			CAGE_TEST(!intersects(a, b));
+			CAGE_TEST(!intersects(b, a));
 
+			// todo: following two tests should have same result, but dont -> this is an error and should be fixed
 			//const Triangle c = Triangle(Vec3(5.23147297, 5.81014061, -6.23489857), Vec3(7.14238548, 3.17999482, -6.23489857), Vec3(3.96372533, 1.76476419, -9.00968838));
 			//const Triangle d = Triangle(Vec3(-4.37113897e-07, -0.00000000, -10.0000000), Vec3(3.96372533, 1.76476419, -9.00968838), Vec3(4.33883762, 0.00000000, -9.00968838));
 			//CAGE_TEST(intersects(c, d));
@@ -339,6 +336,7 @@ void testGeometry()
 		}
 	}
 
+	void geometryPlanes()
 	{
 		CAGE_TESTCASE("planes");
 
@@ -404,6 +402,7 @@ void testGeometry()
 		}
 	}
 
+	void geometrySpheres()
 	{
 		CAGE_TESTCASE("spheres");
 
@@ -453,6 +452,7 @@ void testGeometry()
 		}
 	}
 
+	void geometryAabb()
 	{
 		CAGE_TESTCASE("aabb");
 
@@ -594,6 +594,7 @@ void testGeometry()
 		}
 	}
 
+	void geometryFrustum()
 	{
 		CAGE_TESTCASE("frustum");
 
@@ -649,14 +650,30 @@ void testGeometry()
 		}
 	}
 
+	void geometryMisc()
 	{
-		CAGE_TESTCASE("stringize");
-		const String s = detail::StringizerBase<5432>() + makeSegment(Vec3(1, 2, 3), Vec3(4, 5, 6)) + ", " + Triangle() + ", " + Plane() + ", " + Sphere() + ", " + Aabb() + ", " + Cone() + ", " + Frustum();
-	}
+		{
+			CAGE_TESTCASE("stringize");
+			const String s = detail::StringizerBase<5432>() + makeSegment(Vec3(1, 2, 3), Vec3(4, 5, 6)) + ", " + Triangle() + ", " + Plane() + ", " + Sphere() + ", " + Aabb() + ", " + Cone() + ", " + Frustum();
+		}
 
-	{
-		CAGE_TESTCASE("angle quat");
-		test(angle(Quat(), Quat()), Degs());
-		test(angle(Quat(), Quat(Vec3(1, 0, 0), Vec3(0, 1, 0))), Degs(90));
+		{
+			CAGE_TESTCASE("angle quat");
+			test(angle(Quat(), Quat()), Degs());
+			test(angle(Quat(), Quat(Vec3(1, 0, 0), Vec3(0, 1, 0))), Degs(90));
+		}
 	}
+}
+
+void testGeometry()
+{
+	CAGE_TESTCASE("geometry");
+	geometryPoints();
+	geometryLines();
+	geometryTriangles();
+	geometryPlanes();
+	geometrySpheres();
+	geometryAabb();
+	geometryFrustum();
+	geometryMisc();
 }
