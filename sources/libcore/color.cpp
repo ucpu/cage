@@ -1,5 +1,6 @@
-#include "hsluv.h"
 #include <cmath>
+
+#include "hsluv.h"
 
 #include <cage-core/color.h>
 #include <cage-core/math.h>
@@ -10,19 +11,16 @@ namespace cage
 	{
 		void float2rgbe(uint8 rgbe[4], float red, float green, float blue)
 		{
-			float v;
-			int e;
-			v = red;
+			float v = red;
 			if (green > v)
 				v = green;
 			if (blue > v)
 				v = blue;
 			if (v < 1e-32)
-			{
 				rgbe[0] = rgbe[1] = rgbe[2] = rgbe[3] = 0;
-			}
 			else
 			{
+				int e = 0;
 				v = frexp(v, &e) * 256.0f / v;
 				rgbe[0] = (uint8)(red * v);
 				rgbe[1] = (uint8)(green * v);
@@ -33,10 +31,9 @@ namespace cage
 
 		void rgbe2float(float &red, float &green, float &blue, const uint8 rgbe[4])
 		{
-			float f;
 			if (rgbe[3])
 			{
-				f = ldexp(1.0f, rgbe[3] - (int)(128 + 8));
+				const float f = ldexp(1.0f, rgbe[3] - (int)(128 + 8));
 				red = rgbe[0] * f;
 				green = rgbe[1] * f;
 				blue = rgbe[2] * f;
@@ -56,7 +53,7 @@ namespace cage
 
 		bool colorInRange(const Vec3 &color)
 		{
-			return clamp(color, 0, 1) == color;
+			return saturate(color) == color;
 		}
 	}
 
@@ -74,6 +71,7 @@ namespace cage
 		hlp.val = color;
 		Vec3 res;
 		rgbe2float(res.data[0].value, res.data[1].value, res.data[2].value, hlp.rgbe);
+		CAGE_ASSERT(colorInRange(res));
 		return res;
 	}
 
@@ -114,6 +112,7 @@ namespace cage
 			outColor[0] = inColor[2];
 			outColor[1] = inColor[2];
 			outColor[2] = inColor[2];
+			CAGE_ASSERT(colorInRange(outColor));
 			return outColor;
 		}
 		Real hh = inColor[0];
@@ -159,6 +158,7 @@ namespace cage
 				outColor[2] = q;
 				break;
 		}
+		CAGE_ASSERT(colorInRange(outColor));
 		return outColor;
 	}
 
@@ -166,25 +166,27 @@ namespace cage
 	{
 		CAGE_ASSERT(colorInRange(rgb));
 		double h, s, l;
-		double r = rgb[0].value, g = rgb[1].value, b = rgb[2].value;
+		const double r = rgb[0].value, g = rgb[1].value, b = rgb[2].value;
 		rgb2hsluv(r, g, b, &h, &s, &l);
-		return Vec3(h / 360, s / 100, l / 100);
+		const Vec3 res = Vec3(h / 360, s / 100, l / 100);
+		CAGE_ASSERT(colorInRange(res));
+		return res;
 	}
 
 	Vec3 colorHsluvToRgb(const Vec3 &hsluv)
 	{
 		CAGE_ASSERT(colorInRange(hsluv));
-		double h = hsluv[0].value * 360, s = hsluv[1].value * 100, l = hsluv[2].value * 100;
+		const double h = hsluv[0].value * 360, s = hsluv[1].value * 100, l = hsluv[2].value * 100;
 		double r, g, b;
 		hsluv2rgb(h, s, l, &r, &g, &b);
-		return Vec3(r, g, b);
+		return saturate(Vec3(r, g, b)); // the library may return values outside valid range, so we need to saturate here
 	}
 
 	Vec3 colorValueToHeatmapRgb(Real inValue)
 	{
 		Real value = 4.0f * (1.0f - inValue);
 		value = clamp(value, 0, 4);
-		int band = int(value.value);
+		const int band = int(value.value);
 		value -= band;
 		Vec3 result;
 		switch (band)
@@ -221,8 +223,8 @@ namespace cage
 	Vec3 colorGammaToLinear(const Vec3 &rgb)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
-		Vec3 c2 = rgb * rgb;
-		Vec3 c3 = c2 * rgb;
+		const Vec3 c2 = rgb * rgb;
+		const Vec3 c3 = c2 * rgb;
 		return 0.755 * c2 + 0.245 * c3;
 	}
 
@@ -244,17 +246,17 @@ namespace cage
 	{
 		CAGE_ASSERT(colorInRange(rgb1));
 		CAGE_ASSERT(colorInRange(rgb2));
-		Vec3 hsluv1 = colorRgbToHsluv(rgb1);
-		Vec3 hsluv2 = colorRgbToHsluv(rgb2);
-		Real h1 = hsluv1[0];
-		Real h2 = hsluv2[0];
-		Real s1 = hsluv1[1];
-		Real s2 = hsluv2[1];
-		Real l1 = hsluv1[2];
-		Real l2 = hsluv2[2];
-		Real h = distanceWrap(h1, h2);
-		Real s = abs(s1 - s2);
-		Real l = abs(l1 - l2);
+		const Vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		const Vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		const Real h1 = hsluv1[0];
+		const Real h2 = hsluv2[0];
+		const Real s1 = hsluv1[1];
+		const Real s2 = hsluv2[1];
+		const Real l1 = hsluv1[2];
+		const Real l2 = hsluv2[2];
+		const Real h = distanceWrap(h1, h2);
+		const Real s = abs(s1 - s2);
+		const Real l = abs(l1 - l2);
 		return length(Vec3(h, s, l));
 	}
 
@@ -262,25 +264,27 @@ namespace cage
 	{
 		CAGE_ASSERT(colorInRange(rgb1));
 		CAGE_ASSERT(colorInRange(rgb2));
-		Vec3 hsluv1 = colorRgbToHsluv(rgb1);
-		Vec3 hsluv2 = colorRgbToHsluv(rgb2);
-		Real h1 = hsluv1[0];
-		Real h2 = hsluv2[0];
-		Real s1 = hsluv1[1];
-		Real s2 = hsluv2[1];
-		Real l1 = hsluv1[2];
-		Real l2 = hsluv2[2];
-		Real h = interpolateWrap(h1, h2, factor);
-		Real s = interpolate(s1, s2, factor);
-		Real l = interpolate(l1, l2, factor);
-		Vec3 hsluv = Vec3(h, s, l);
-		Vec3 rgb = colorHsluvToRgb(hsluv);
+		CAGE_ASSERT(saturate(factor) == factor);
+		const Vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		const Vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		const Real h1 = hsluv1[0];
+		const Real h2 = hsluv2[0];
+		const Real s1 = hsluv1[1];
+		const Real s2 = hsluv2[1];
+		const Real l1 = hsluv1[2];
+		const Real l2 = hsluv2[2];
+		const Real h = interpolateWrap(h1, h2, factor);
+		const Real s = interpolate(s1, s2, factor);
+		const Real l = interpolate(l1, l2, factor);
+		const Vec3 hsluv = Vec3(h, s, l);
+		const Vec3 rgb = colorHsluvToRgb(hsluv);
+		CAGE_ASSERT(colorInRange(rgb));
 		return rgb;
 	}
 
 	Vec2 colorSpecularToRoughnessMetallic(const Vec3 &specular)
 	{
-		Vec3 hsv = colorRgbToHsv(specular);
+		const Vec3 hsv = colorRgbToHsv(specular);
 		return Vec2(hsv[2], hsv[1]);
 	}
 }
