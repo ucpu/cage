@@ -38,6 +38,7 @@ namespace cage
 		CAGE_FORCE_INLINE explicit EventListener(const std::source_location &location = std::source_location::current()) : privat::EventLinker(location) {}
 
 		template<class Callable>
+		requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
 		CAGE_FORCE_INLINE explicit EventListener(Callable &&callable, EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0, const std::source_location &location = std::source_location::current()) : privat::EventLinker(location)
 		{
 			bind(std::move(callable));
@@ -110,6 +111,7 @@ namespace cage
 		}
 
 		template<class Callable>
+		requires(std::is_invocable_r_v<bool, Callable, Ts...> || std::is_invocable_r_v<void, Callable, Ts...>)
 		[[nodiscard]] CAGE_FORCE_INLINE auto listen(Callable &&callable, sint32 order = 0, const std::source_location &location = std::source_location::current())
 		{
 			return EventListener<bool(Ts...)>(std::move(callable), *this, order, location);

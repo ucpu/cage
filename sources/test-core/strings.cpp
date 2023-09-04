@@ -164,6 +164,16 @@ namespace
 		CAGE_TEST(b == "");
 		CAGE_TEST(c == "");
 		CAGE_TEST(d == "ahojnazdar");
+
+		// verify updating string by raw* methods
+		CAGE_TEST(a.length() == 5);
+		CAGE_TEST(a[0] == 'l');
+		detail::memcpy(a.rawData(), "hello world", 12); // update data
+		CAGE_TEST(a.length() == 5);
+		CAGE_TEST(a[0] == 'h');
+		a = String(a.rawData()); // update length with strlen (inplace)
+		CAGE_TEST(a.length() == 11);
+		CAGE_TEST(a == "hello world");
 	}
 
 	constexpr void testStringPointer()

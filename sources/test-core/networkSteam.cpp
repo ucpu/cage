@@ -9,8 +9,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkSteam.h>
 
-#ifdef CAGE_USE_STEAM_SOCKETS
-
 namespace
 {
 	std::atomic<uint32> connectionsLeft;
@@ -18,7 +16,7 @@ namespace
 	class ServerImpl
 	{
 	public:
-		Holder<SteamServer> udp = newSteamServer(3210);
+		Holder<SteamServer> udp = newSteamServer({ 3210 });
 		std::vector<Holder<SteamConnection>> conns;
 		uint64 lastTime = applicationTime();
 		bool hadConnection = false;
@@ -134,6 +132,7 @@ namespace
 void testNetworkSteam()
 {
 	CAGE_TESTCASE("network steam");
+#ifdef CAGE_USE_STEAM_SOCKETS
 	Holder<Thread> server = newThread(Delegate<void()>().bind<&ServerImpl::entry>(), "server");
 	std::vector<Holder<Thread>> clients;
 	clients.resize(3);
@@ -143,14 +142,7 @@ void testNetworkSteam()
 	server->wait();
 	for (auto &c : clients)
 		c->wait();
-}
-
 #else
-
-void testNetworkSteam()
-{
-	CAGE_TESTCASE("network steam");
-	CAGE_LOG(SeverityEnum::Info, "test", "network steam was disabled at compile time");
+	CAGE_LOG(SeverityEnum::Info, "test", "steam network was disabled at compile time");
+#endif
 }
-
-#endif // CAGE_USE_STEAM_SOCKETS

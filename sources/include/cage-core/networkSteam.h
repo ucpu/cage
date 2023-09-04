@@ -23,7 +23,7 @@ namespace cage
 
 		void write(PointerRange<const char> buffer, uint32 channel, bool reliable);
 
-		// suggested capacity for writing, in bytes, before calling update, assuming the update is called at regular rate
+		// suggested capacity for writing, in bytes
 		sint64 capacity() const;
 
 		// update will check for received packets and flush packets pending for send
@@ -37,6 +37,7 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<SteamConnection> newSteamConnection(const String &address, uint16 port);
+	CAGE_CORE_API Holder<SteamConnection> newSteamConnection(uint64 steamId); // requires steam sdk
 
 	class CAGE_CORE_API SteamServer : private Immovable
 	{
@@ -46,7 +47,14 @@ namespace cage
 		Holder<SteamConnection> accept();
 	};
 
-	CAGE_CORE_API Holder<SteamServer> newSteamServer(uint16 port);
+	struct CAGE_CORE_API SteamServerCreateConfig
+	{
+		uint16 port = 0;
+		bool listenNetwork = true;
+		bool listenSteamRelay = false; // requires steam sdk
+	};
+
+	CAGE_CORE_API Holder<SteamServer> newSteamServer(const SteamServerCreateConfig &config);
 }
 
 #endif // guard_networkSteam_h_vrdfk4q

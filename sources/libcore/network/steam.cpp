@@ -1,12 +1,9 @@
 #if defined(CAGE_USE_STEAM_SOCKETS) || defined(CAGE_USE_STEAM_SDK)
 
+	#include <steam/isteamnetworkingsockets.h>
+	#include <steam/isteamnetworkingutils.h>
 	#if defined(CAGE_USE_STEAM_SOCKETS)
-		#include <steam/isteamnetworkingsockets.h>
-		#include <steam/isteamnetworkingutils.h>
 		#include <steam/steamnetworkingsockets.h>
-	#endif
-	#if defined(CAGE_USE_STEAM_SDK)
-		#include <steam/steam_api.h>
 	#endif
 
 	#include "net.h"
@@ -28,6 +25,7 @@ namespace cage
 		CAGE_FORCE_INLINE ISteamNetworkingSockets *sockets()
 		{
 			return SteamNetworkingSockets();
+			//SteamGameServerNetworkingSockets();
 		}
 
 		CAGE_FORCE_INLINE ISteamNetworkingUtils *utils()
@@ -102,53 +100,79 @@ namespace cage
 			CAGE_LOG(level, "steamsocks", pszMsg);
 		}
 
-		void initializeSockets()
-		{
-	#if defined(CAGE_USE_STEAM_SOCKETS)
-			SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
-			SteamNetworkingErrMsg msg;
-			if (!GameNetworkingSockets_Init(nullptr, msg))
-			{
-				CAGE_LOG_THROW(msg);
-				CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets networking library");
-			}
-	#endif
-		}
-
-		void initializeAuthentication()
-		{
 	#if defined(CAGE_USE_STEAM_SDK)
-			ESteamNetworkingAvailability a = sockets()->InitAuthentication();
-			while (true)
+		bool networkingAvailable(ESteamNetworkingAvailability a)
+		{
+			switch (a)
 			{
-				switch (a)
-				{
-					case k_ESteamNetworkingAvailability_Current:
-						return; // all is done
-					case k_ESteamNetworkingAvailability_CannotTry:
-					case k_ESteamNetworkingAvailability_Failed:
-					case k_ESteamNetworkingAvailability_Previously:
-						CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets network authentication");
-						break;
-					default:
-						break;
-				}
-				threadSleep(5000);
-				SteamAPI_RunCallbacks();
-				a = sockets()->GetAuthenticationStatus(nullptr);
+				case k_ESteamNetworkingAvailability_Current:
+					return true; // all is done
+				case k_ESteamNetworkingAvailability_CannotTry:
+				case k_ESteamNetworkingAvailability_Failed:
+				case k_ESteamNetworkingAvailability_Previously:
+					CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets network authentication");
+					return false;
+				default:
+					return false;
 			}
-	#endif
 		}
+	#endif
 
-		void initialize()
+		void initializeCommon()
 		{
 			static int dummy = []()
 			{
-				initializeSockets();
+	#if defined(CAGE_USE_STEAM_SOCKETS)
+				{
+					SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
+					SteamNetworkingErrMsg msg;
+					if (!GameNetworkingSockets_Init(nullptr, msg))
+					{
+						CAGE_LOG_THROW(msg);
+						CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets networking library");
+					}
+				}
+	#endif
+
 				utils()->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
-				initializeAuthentication();
+
+	#if defined(CAGE_USE_STEAM_SDK)
+				{
+					ESteamNetworkingAvailability a = sockets()->InitAuthentication();
+					while (!networkingAvailable(a))
+					{
+						threadSleep(5000);
+						SteamAPI_RunCallbacks();
+						a = sockets()->GetAuthenticationStatus(nullptr);
+					}
+				}
+	#endif
+
 				return 0;
 			}();
+			(void)dummy;
+		}
+
+		void initializeRelay()
+		{
+	#if defined(CAGE_USE_STEAM_SDK)
+			static int dummy = []()
+			{
+				utils()->InitRelayNetworkAccess();
+				while (true)
+				{
+					ESteamNetworkingAvailability a = utils()->GetRelayNetworkStatus(nullptr);
+					if (networkingAvailable(a))
+						break;
+					threadSleep(5000);
+					SteamAPI_RunCallbacks();
+				}
+				return 0;
+			}();
+			(void)dummy;
+	#else
+			CAGE_THROW_CRITICAL(Exception, "steam relay network requires steam sdk");
+	#endif
 		}
 
 		void statusChangedCallback(SteamNetConnectionStatusChangedCallback_t *info);
@@ -218,6 +242,18 @@ namespace cage
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
+			SteamConnectionImpl(uint64 steamId)
+			{
+				CAGE_ASSERT(((uint64)this % 2) == 0);
+				SteamNetworkingConfigValue_t cfg[2] = {};
+				cfg[0].SetInt64(k_ESteamNetworkingConfig_ConnectionUserData, (sint64)this);
+				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
+				SteamNetworkingIdentity id;
+				id.SetSteamID64(steamId);
+				sock = sockets()->ConnectP2P(id, 0, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
+			}
+
 			SteamConnectionImpl(HSteamNetConnection s) : sock(s)
 			{
 				CAGE_ASSERT(((uint64)this % 2) == 0);
@@ -283,42 +319,47 @@ namespace cage
 		class SteamServerImpl : public SteamServer
 		{
 		public:
-			HSteamListenSocket sock = {};
-			ConcurrentQueue<HSteamNetConnection> waiting;
+			std::array<HSteamListenSocket, 2> socks = {};
+			ConcurrentQueue<Holder<SteamConnection>> waiting;
 
-			SteamServerImpl(uint16 port)
+			SteamServerImpl(const SteamServerCreateConfig &config)
 			{
 				CAGE_ASSERT(((uint64)this % 2) == 0);
 				SteamNetworkingConfigValue_t cfg[2] = {};
 				cfg[0].SetInt64(k_ESteamNetworkingConfig_ConnectionUserData, (sint64)(sint64(this) + 1));
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
-				SteamNetworkingIPAddr sa = {};
-				sa.m_port = port;
-				sock = sockets()->CreateListenSocketIP(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				if (config.listenNetwork)
+				{
+					SteamNetworkingIPAddr sa = {};
+					sa.m_port = config.port;
+					socks[0] = sockets()->CreateListenSocketIP(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				}
+				if (config.listenSteamRelay)
+				{
+					socks[1] = sockets()->CreateListenSocketP2P(0, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				}
 			}
 
 			~SteamServerImpl()
 			{
-				/*
-				while (true)
+				waiting.terminate();
 				{
-					HSteamNetConnection c = 0;
-					if (waiting.tryPop(c, true))
-						sockets()->CloseConnection(c, 0, nullptr, false);
-					else
-						break;
+					Holder<SteamConnection> c;
+					while (waiting.tryPop(c, true))
+					{
+						c.clear();
+					}
 				}
-				*/
-				sockets()->CloseListenSocket(sock);
+				for (auto &it : socks)
+					sockets()->CloseListenSocket(it);
 			}
 
 			Holder<SteamConnection> accept()
 			{
 				sockets()->RunCallbacks();
-				HSteamNetConnection c = 0;
-				if (waiting.tryPop(c))
-					return systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(c);
-				return {};
+				Holder<SteamConnection> c;
+				waiting.tryPop(c);
+				return c;
 			}
 		};
 
@@ -347,7 +388,21 @@ namespace cage
 			{
 				CAGE_ASSERT(info->m_info.m_eState == k_ESteamNetworkingConnectionState_Connecting);
 				if (SteamServerImpl *impl = getServer(info->m_hConn))
-					impl->waiting.push(info->m_hConn);
+				{
+					try
+					{
+						impl->waiting.push(systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(info->m_hConn));
+					}
+					catch (const ConcurrentQueueTerminated &)
+					{
+						// nothing
+					}
+				}
+				else
+				{
+					CAGE_LOG(SeverityEnum::Warning, "steamsocks", "ignoring prematurely attempted connection");
+					sockets()->CloseConnection(info->m_hConn, 0, nullptr, false);
+				}
 			}
 			switch (info->m_info.m_eState)
 			{
@@ -365,6 +420,8 @@ namespace cage
 						impl->disconnected = true;
 					break;
 				}
+				default:
+					break;
 			}
 		}
 	}
@@ -420,15 +477,24 @@ namespace cage
 
 	Holder<SteamConnection> newSteamConnection(const String &address, uint16 port)
 	{
-		initialize();
+		initializeCommon();
 		return systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(address, port);
 	}
 
-	Holder<SteamServer> newSteamServer(uint16 port)
+	Holder<SteamConnection> newSteamConnection(uint64 steamId)
 	{
-		initialize();
-		return systemMemory().createImpl<SteamServer, SteamServerImpl>(port);
+		initializeCommon();
+		initializeRelay();
+		return systemMemory().createImpl<SteamConnection, SteamConnectionImpl>(steamId);
+	}
+
+	Holder<SteamServer> newSteamServer(const SteamServerCreateConfig &config)
+	{
+		initializeCommon();
+		if (config.listenSteamRelay)
+			initializeRelay();
+		return systemMemory().createImpl<SteamServer, SteamServerImpl>(config);
 	}
 }
 
-#endif // CAGE_USE_STEAM_SOCKETS
+#endif
