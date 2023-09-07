@@ -3,7 +3,7 @@
 	#include "incWin.h"
 	#include <DbgHelp.h>
 	#pragma comment(lib, "DbgHelp.lib")
-	#define EXCEPTION_CPP_UNKNOWN 0xE06D7363
+	#define EXCEPTION_CPP 0xE06D7363
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
 
 	#include <cage-core/core.h>
@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		StringPointer exceptionCodeToString(uint64 code)
+		String exceptionCodeToString(uint64 code)
 		{
 			switch (code)
 			{
@@ -74,14 +74,50 @@ namespace cage
 					return "EXCEPTION_TARGET_UNWIND";
 				case EXCEPTION_UNWINDING:
 					return "EXCEPTION_UNWINDING";
+				case DBG_EXCEPTION_HANDLED:
+					return "DBG_EXCEPTION_HANDLED";
+				case DBG_CONTINUE:
+					return "DBG_CONTINUE";
+				case DBG_REPLY_LATER:
+					return "DBG_REPLY_LATER";
+				case DBG_TERMINATE_THREAD:
+					return "DBG_TERMINATE_THREAD";
+				case DBG_TERMINATE_PROCESS:
+					return "DBG_TERMINATE_PROCESS";
 				case DBG_CONTROL_C:
 					return "DBG_CONTROL_C";
-				case EXCEPTION_CPP_UNKNOWN:
-					return "EXCEPTION_CPP_UNKNOWN";
+				case DBG_PRINTEXCEPTION_C:
+					return "DBG_PRINTEXCEPTION_C";
+				case DBG_RIPEXCEPTION:
+					return "DBG_RIPEXCEPTION";
+				case DBG_CONTROL_BREAK:
+					return "DBG_CONTROL_BREAK";
+				case DBG_COMMAND_EXCEPTION:
+					return "DBG_COMMAND_EXCEPTION";
+				case DBG_PRINTEXCEPTION_WIDE_C:
+					return "DBG_PRINTEXCEPTION_WIDE_C";
+				case DBG_EXCEPTION_NOT_HANDLED:
+					return "DBG_EXCEPTION_NOT_HANDLED";
+				case EXCEPTION_CPP:
+					return "EXCEPTION_CPP";
 				case EXCEPTION_RENAME_THREAD:
 					return "EXCEPTION_RENAME_THREAD";
 				default:
-					return "UNKNOWN_EXCEPTION_CODE";
+					return Stringizer() + "unknown code: " + code;
+			}
+		}
+
+		bool ignoredExceptionCodes(uint64 code)
+		{
+			switch (code)
+			{
+				case DBG_PRINTEXCEPTION_C: // OutputDebugStringA
+				case DBG_PRINTEXCEPTION_WIDE_C: // OutputDebugStringW
+				case EXCEPTION_CPP: // regular c++ exception
+				case EXCEPTION_RENAME_THREAD: // exception raised to rename current thread
+					return true;
+				default:
+					return false;
 			}
 		}
 
@@ -177,17 +213,8 @@ namespace cage
 
 		LONG WINAPI vectoredHandler(PEXCEPTION_POINTERS ex)
 		{
-			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_CPP_UNKNOWN || ex->ExceptionRecord->ExceptionCode == EXCEPTION_RENAME_THREAD)
-				return EXCEPTION_CONTINUE_SEARCH;
-			commonHandler(ex);
-			return EXCEPTION_CONTINUE_SEARCH;
-		}
-
-		LONG WINAPI continueHandler(PEXCEPTION_POINTERS ex)
-		{
-			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_CPP_UNKNOWN || ex->ExceptionRecord->ExceptionCode == EXCEPTION_RENAME_THREAD)
-				return EXCEPTION_CONTINUE_SEARCH;
-			commonHandler(ex);
+			if (!ignoredExceptionCodes(ex->ExceptionRecord->ExceptionCode))
+				commonHandler(ex);
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
@@ -206,7 +233,7 @@ namespace cage
 			SetupHandlers()
 			{
 				AddVectoredExceptionHandler(1, &vectoredHandler);
-				AddVectoredContinueHandler(1, &continueHandler);
+				AddVectoredContinueHandler(1, &vectoredHandler);
 				previous = SetUnhandledExceptionFilter(&unhandledHandler);
 			}
 		} setupHandlers;

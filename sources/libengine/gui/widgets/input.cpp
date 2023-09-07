@@ -303,12 +303,13 @@ namespace cage
 			{
 				uint32 &cursor = data.cursor;
 				const uint32 len = utf32Length(data.value);
+				cursor = min(cursor, len);
 				std::vector<uint32> utf32;
 				utf32.resize(len);
-				PointerRange<uint32> utf32pr = utf32;
-				utf8to32(utf32pr, data.value);
-				CAGE_ASSERT(utf32pr.size() == utf32.size());
-				CAGE_ASSERT(cursor <= len);
+				{
+					PointerRange<uint32> utf32pr = utf32;
+					utf8to32(utf32pr, data.value);
+				}
 				switch (key)
 				{
 					case 263: // left
@@ -354,13 +355,14 @@ namespace cage
 					return true;
 				uint32 &cursor = data.cursor;
 				const uint32 len = utf32Length(data.value);
+				cursor = min(cursor, len);
 				std::vector<uint32> utf32;
 				utf32.reserve(len + 1);
 				utf32.resize(len);
-				PointerRange<uint32> utf32pr = utf32;
-				utf8to32(utf32pr, data.value);
-				CAGE_ASSERT(utf32pr.size() == utf32.size());
-				CAGE_ASSERT(cursor <= len);
+				{
+					PointerRange<uint32> utf32pr = utf32;
+					utf8to32(utf32pr, data.value);
+				}
 				utf32.insert(utf32.begin() + cursor, key);
 				data.value = utf32to8string(utf32);
 				cursor++;
