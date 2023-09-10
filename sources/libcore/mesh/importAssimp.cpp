@@ -1014,11 +1014,8 @@ namespace cage
 				ini->importFile(path);
 
 				part.material.albedoBase = Vec4(colorGammaToLinear(Vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1), ini->getFloat("base", "opacity", 0));
-
 				part.material.specialBase = Vec4(ini->getFloat("base", "roughness", 0), ini->getFloat("base", "metallic", 0), ini->getFloat("base", "emission", 0), ini->getFloat("base", "mask", 0));
-
-				part.material.albedoMult = Vec4(colorGammaToLinear(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1), ini->getFloat("mult", "opacity", 1));
-
+				part.material.albedoMult = Vec4(Vec3::parse(ini->getString("mult", "albedo", "1, 1, 1")) * ini->getFloat("mult", "intensity", 1), ini->getFloat("mult", "opacity", 1));
 				part.material.specialMult = Vec4(ini->getFloat("mult", "roughness", 1), ini->getFloat("mult", "metallic", 1), ini->getFloat("mult", "emission", 1), ini->getFloat("mult", "mask", 1));
 
 				Textures textures;
