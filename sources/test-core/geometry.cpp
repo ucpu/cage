@@ -257,7 +257,7 @@ namespace
 			CAGE_TESTCASE("distances (with lines)");
 
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(-1, -1, -2), Vec3(-1, -1, 2))), 0);
-			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(1, 1, -2), Vec3(1, 1, 2))), cage::sqrt(2));
+			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(1, 1, -2), Vec3(1, 1, 2))), sqrt(2));
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(-5, 0, 1), Vec3(5, 0, 1))), 1);
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(-1.5, 0, 1), Vec3(-0.5, 0, 1))), 1);
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), makeSegment(Vec3(-1.5, -6, 3), Vec3(-0.5, -6, 3))), 5);
@@ -270,8 +270,8 @@ namespace
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), Triangle(Vec3(-1, -1, -2), Vec3(-1, -1, 2), Vec3(2, 2, 0))), 0);
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 4, 0), Vec3(4, -2, 0)), Triangle(Vec3(-2, -2, 1), Vec3(-2, 4, 1), Vec3(4, -2, 1))), 1);
 			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 4, 0), Vec3(4, -2, 0)), Triangle(Vec3(0, 0, 0.5), Vec3(0, 0, 2), Vec3(0, 1, 2))), 0.5);
-			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0))), cage::sqrt(2));
-			test(distance(Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0)), Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0))), cage::sqrt(2));
+			test(distance(Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0)), Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0))), sqrt(2));
+			test(distance(Triangle(Vec3(1, 1, -2), Vec3(1, 1, 2), Vec3(2, 2, 0)), Triangle(Vec3(-2, -2, 0), Vec3(-2, 2, 0), Vec3(2, -2, 0))), sqrt(2));
 		}
 
 		{
@@ -299,12 +299,22 @@ namespace
 			const Triangle b = Triangle(Vec3(10.5860157, -0.126804069, -10.5860205), Vec3(5.29338837, -3.57627869e-07, -5.29339361), Vec3(5.29300880, -0.0634022281, -5.29301405));
 			CAGE_TEST(!intersects(a, b));
 			CAGE_TEST(!intersects(b, a));
+			CAGE_TEST(!intersection(a, b).intersects);
+			CAGE_TEST(!intersection(a, b).line.valid());
 
-			// todo: following two tests should have same result, but dont -> this is an error and should be fixed
-			//const Triangle c = Triangle(Vec3(5.23147297, 5.81014061, -6.23489857), Vec3(7.14238548, 3.17999482, -6.23489857), Vec3(3.96372533, 1.76476419, -9.00968838));
-			//const Triangle d = Triangle(Vec3(-4.37113897e-07, -0.00000000, -10.0000000), Vec3(3.96372533, 1.76476419, -9.00968838), Vec3(4.33883762, 0.00000000, -9.00968838));
-			//CAGE_TEST(intersects(c, d));
-			//CAGE_TEST(intersects(d, c));
+			const Triangle c = Triangle(Vec3(5.23147297, 5.81014061, -6.23489857), Vec3(7.14238548, 3.17999482, -6.23489857), Vec3(3.96372533, 1.76476419, -9.00968838));
+			const Triangle d = Triangle(Vec3(-4.37113897e-07, -0.00000000, -10.0000000), Vec3(3.96372533, 1.76476419, -9.00968838), Vec3(4.33883762, 0.00000000, -9.00968838));
+			CAGE_TEST(intersects(c, d));
+			CAGE_TEST(intersects(d, c)); // this test requires double precision implementation, otherwise the function returns inconsistent results
+			CAGE_TEST(intersection(c, d).intersects);
+			CAGE_TEST(intersection(c, d).line.valid());
+
+			const Triangle e = Triangle(Vec3(-21, -72, 63), Vec3(-78, 99, 40), Vec3(-19, -78, -83));
+			const Triangle f = Triangle(Vec3(96, 77, -51), Vec3(-95, -1, -16), Vec3(9, 5, -21));
+			CAGE_TEST(intersects(e, f));
+			CAGE_TEST(intersects(f, e));
+			CAGE_TEST(intersection(e, f).intersects);
+			CAGE_TEST(intersection(e, f).line.valid());
 		}
 
 		{
@@ -332,6 +342,9 @@ namespace
 				CAGE_TEST(intersects(t1 * tr, t2 * tr) == intersects(t1, t2));
 				CAGE_TEST(intersects(t1, t2 * tr) == intersects(t1 * inverse(tr), t2));
 				CAGE_TEST(intersects(t1 * tr, t2) == intersects(t1, t2 * inverse(tr)));
+				CAGE_TEST(intersects(t2, t1) == intersects(t1, t2));
+				CAGE_TEST(intersection(t2, t1).intersects == intersects(t1, t2));
+				CAGE_TEST(intersection(t1, t2).intersects == intersects(t1, t2));
 			}
 		}
 	}

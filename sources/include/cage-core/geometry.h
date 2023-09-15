@@ -256,37 +256,37 @@ namespace cage
 	namespace detail
 	{
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Line &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Line &other)
 		{
 			return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Triangle &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Triangle &other)
 		{
 			return str + "(" + other.vertices[0] + ", " + other.vertices[1] + ", " + other.vertices[2] + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Plane &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Plane &other)
 		{
 			return str + "(" + other.normal + ", " + other.d + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Sphere &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Sphere &other)
 		{
 			return str + "(" + other.center + ", " + other.radius + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Aabb &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Aabb &other)
 		{
 			return str + "(" + other.a + "," + other.b + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Cone &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Cone &other)
 		{
 			return str + "(" + other.origin + "," + other.direction + "," + other.length + "," + other.halfAngle + ")";
 		}
 		template<uint32 N>
-		inline StringizerBase<N> &operator+(StringizerBase<N> &str, const Frustum &other)
+		StringizerBase<N> &operator+(StringizerBase<N> &str, const Frustum &other)
 		{
 			return str + other.viewProj;
 		}
@@ -379,12 +379,19 @@ namespace cage
 	CAGE_CORE_API bool intersects(const Cone &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Cone &a, const Frustum &b);
 
+	struct CAGE_CORE_API TriTriIntersectionResult
+	{
+		Line line;
+		bool intersects = false;
+	};
+
 	CAGE_CORE_API Vec3 intersection(const Line &a, const Triangle &b);
 	CAGE_CORE_API Vec3 intersection(const Line &a, const Plane &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Sphere &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Aabb &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Cone &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Frustum &b);
+	CAGE_CORE_API TriTriIntersectionResult intersection(const Triangle &a, const Triangle &b);
 	CAGE_CORE_API Aabb intersection(const Aabb &a, const Aabb &b);
 
 	CAGE_CORE_API Vec3 closestPoint(const Vec3 &a, const Line &b);

@@ -3,12 +3,14 @@
 // taken from https://github.com/erich666/jgt-code/blob/master/Volume_08/Number_1/Guigue2003/tri_tri_intersect.c
 // and modified
 
+using Number = double;
+
 namespace
 {
-	int tri_tri_overlap_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3]);
-	int tri_tri_intersection_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], int *coplanar, float source[3], float target[3]);
-	int coplanar_tri_tri3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], float N1[3]);
-	int tri_tri_overlap_test_2d(float p1[2], float q1[2], float r1[2], float p2[2], float q2[2], float r2[2]);
+	int tri_tri_overlap_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3]);
+	int tri_tri_intersection_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], int *coplanar, Number source[3], Number target[3]);
+	int coplanar_tri_tri3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], Number N1[3]);
+	int tri_tri_overlap_test_2d(Number p1[2], Number q1[2], Number r1[2], Number p2[2], Number q2[2], Number r2[2]);
 
 #define CROSS(dest, v1, v2) \
 	dest[0] = v1[1] * v2[2] - v1[2] * v2[1]; \
@@ -93,13 +95,13 @@ namespace
 		} \
 	}
 
-	int tri_tri_overlap_test_3d(float p1[3], float q1[3], float r1[3],
+	int tri_tri_overlap_test_3d(Number p1[3], Number q1[3], Number r1[3],
 
-		float p2[3], float q2[3], float r2[3])
+		Number p2[3], Number q2[3], Number r2[3])
 	{
-		float dp1, dq1, dr1, dp2, dq2, dr2;
-		float v1[3], v2[3];
-		float N1[3], N2[3];
+		Number dp1, dq1, dr1, dp2, dq2, dr2;
+		Number v1[3], v2[3];
+		Number N1[3], N2[3];
 
 		SUB(v1, p2, r2)
 		SUB(v2, q2, r2)
@@ -175,13 +177,13 @@ namespace
 		}
 	};
 
-	int coplanar_tri_tri3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], float normal_1[3])
+	int coplanar_tri_tri3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], Number normal_1[3])
 	{
 
-		float P1[2], Q1[2], R1[2];
-		float P2[2], Q2[2], R2[2];
+		Number P1[2], Q1[2], R1[2];
+		Number P2[2], Q2[2], R2[2];
 
-		float n_x, n_y, n_z;
+		Number n_x, n_y, n_z;
 
 		n_x = ((normal_1[0] < 0) ? -normal_1[0] : normal_1[0]);
 		n_y = ((normal_1[1] < 0) ? -normal_1[1] : normal_1[1]);
@@ -382,12 +384,12 @@ namespace
 		} \
 	}
 
-	int tri_tri_intersection_test_3d(float p1[3], float q1[3], float r1[3], float p2[3], float q2[3], float r2[3], int *coplanar, float source[3], float target[3])
+	int tri_tri_intersection_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], int *coplanar, Number source[3], Number target[3])
 	{
-		float dp1, dq1, dr1, dp2, dq2, dr2;
-		float v1[3], v2[3], v[3];
-		float N1[3], N2[3], N[3];
-		float alpha;
+		Number dp1, dq1, dr1, dp2, dq2, dr2;
+		Number v1[3], v2[3], v[3];
+		Number N1[3], N2[3], N[3];
+		Number alpha;
 
 		SUB(v1, p2, r2)
 		SUB(v2, q2, r2)
@@ -569,7 +571,7 @@ namespace
 		} \
 	}
 
-	int ccw_tri_tri_intersection_2d(float p1[2], float q1[2], float r1[2], float p2[2], float q2[2], float r2[2])
+	int ccw_tri_tri_intersection_2d(Number p1[2], Number q1[2], Number r1[2], Number p2[2], Number q2[2], Number r2[2])
 	{
 		if (ORIENT_2D(p2, q2, p1) >= 0.0f)
 		{
@@ -602,7 +604,7 @@ namespace
 		}
 	};
 
-	int tri_tri_overlap_test_2d(float p1[2], float q1[2], float r1[2], float p2[2], float q2[2], float r2[2])
+	int tri_tri_overlap_test_2d(Number p1[2], Number q1[2], Number r1[2], Number p2[2], Number q2[2], Number r2[2])
 	{
 		if (ORIENT_2D(p1, q1, r1) < 0.0f)
 			if (ORIENT_2D(p2, q2, r2) < 0.0f)
@@ -620,8 +622,31 @@ namespace
 
 namespace cage
 {
+	namespace
+	{
+		struct V
+		{
+			Number data[3] = {};
+			CAGE_FORCE_INLINE V() {}
+			CAGE_FORCE_INLINE V(const Vec3 &a) : data{ a[0].value, a[1].value, a[2].value } {}
+			CAGE_FORCE_INLINE operator Number *() noexcept { return data; };
+			CAGE_FORCE_INLINE operator Vec3() const noexcept { return Vec3(data[0], data[1], data[2]); }
+		};
+	}
+
 	bool intersects(const Triangle &a, const Triangle &b)
 	{
-		return tri_tri_overlap_test_3d((float *)a[0].data, (float *)a[1].data, (float *)a[2].data, (float *)b[0].data, (float *)b[1].data, (float *)b[2].data);
+		return tri_tri_overlap_test_3d(V(a[0]), V(a[1]), V(a[2]), V(b[0]), V(b[1]), V(b[2]));
+	}
+
+	TriTriIntersectionResult intersection(const Triangle &a, const Triangle &b)
+	{
+		V s, t;
+		int coplanar = 0;
+		TriTriIntersectionResult res;
+		res.intersects = tri_tri_intersection_test_3d(V(a[0]), V(a[1]), V(a[2]), V(b[0]), V(b[1]), V(b[2]), &coplanar, s, t);
+		if (res.intersects && !coplanar)
+			res.line = makeSegment(s, t);
+		return res;
 	}
 }
