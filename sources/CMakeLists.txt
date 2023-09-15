@@ -134,7 +134,9 @@ cage_ide_sort_files(cage-test-core)
 cage_ide_working_dir_in_place(cage-test-core)
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(cage-test-core PRIVATE "-Wno-unused-variable")
-	target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
+	if ((NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)) # clang-12 does not have this warning yet
+		target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
+	endif()
 endif()
 
 file(GLOB_RECURSE cage-test-ginnel-sources "test-ginnel/*")

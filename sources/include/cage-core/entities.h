@@ -11,13 +11,15 @@ namespace cage
 	class Entity;
 	class EntityGroup;
 
+	template<class T>
+	concept ComponentConcept = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
+
 	class CAGE_CORE_API EntityManager : private Immovable
 	{
 	public:
-		template<class T>
+		template<ComponentConcept T>
 		EntityComponent *defineComponent(const T &prototype)
 		{
-			static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
 			return defineComponent_(detail::typeIndex<T>(), &prototype);
 		}
 		EntityComponent *defineComponent(EntityComponent *source);
@@ -25,7 +27,7 @@ namespace cage
 		EntityComponent *componentByDefinition(uint32 definitionIndex) const;
 		EntityComponent *componentByType(uint32 typeIndex) const;
 		Holder<PointerRange<EntityComponent *>> componentsByType(uint32 typeIndex) const;
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE EntityComponent *component() const
 		{
 			return componentByType(detail::typeIndex<T>());
@@ -81,39 +83,39 @@ namespace cage
 		bool has(const EntityGroup *group) const;
 
 		void add(EntityComponent *component);
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE void add(EntityComponent *component, const T &data)
 		{
 			value<T>(component) = data;
 		}
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE void add(const T &data)
 		{
 			add(component_<T>(), data);
 		}
 
 		void remove(EntityComponent *component);
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE void remove()
 		{
 			remove(component_<T>());
 		}
 
 		bool has(const EntityComponent *component) const;
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE bool has() const
 		{
 			return has(component_<T>());
 		}
 
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE T &value(EntityComponent *component)
 		{
 			CAGE_ASSERT(component->manager() == manager());
 			CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>());
 			return *(T *)unsafeValue(component);
 		}
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE T &value()
 		{
 			return value<T>(component_<T>());
@@ -123,7 +125,7 @@ namespace cage
 		void destroy();
 
 	private:
-		template<class T>
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE EntityComponent *component_() const
 		{
 			return manager()->component<T>();

@@ -42,6 +42,7 @@ namespace cage
 		{
 			using T = std::tuple_element_t<I, Types>;
 			using D = std::decay_t<T>;
+			static_assert(ComponentConcept<D>);
 			static_assert(std::is_same_v<T, D &> || std::is_same_v<T, const D &>);
 			components[I] = ents->component<D>();
 			if (!components[I])
@@ -75,18 +76,15 @@ namespace cage
 		{
 			typedef char vec;
 		};
-	}
 
-	namespace detail
-	{
 		template<bool ArrayCopy, class Visitor>
 		void entitiesVisitor(const Visitor &visitor, const EntityManager *ents)
 		{
-			using Types = typename privat::LambdaParamsPack<Visitor>::Params;
+			using Types = typename LambdaParamsPack<Visitor>::Params;
 			static constexpr uint32 typesCount = std::tuple_size_v<Types>;
 			static_assert(typesCount > 0);
 			static constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
-			typename privat::VectorOrNothing<ArrayCopy>::vec copy;
+			typename VectorOrNothing<ArrayCopy>::vec copy;
 
 			if constexpr (useEnt && typesCount == 1)
 			{
@@ -102,10 +100,10 @@ namespace cage
 			else
 			{
 				static constexpr std::size_t offset = useEnt ? 1 : 0;
-				using Sequence = privat::offset_sequence_t<offset, std::make_index_sequence<typesCount - offset>>;
+				using Sequence = offset_sequence_t<offset, std::make_index_sequence<typesCount - offset>>;
 
 				EntityComponent *components[typesCount] = {};
-				privat::fillComponentsArray<Types>(ents, components, Sequence());
+				fillComponentsArray<Types>(ents, components, Sequence());
 
 				EntityComponent *cmps[typesCount - offset] = {};
 				for (uint32 i = 0; i < typesCount - offset; i++)
@@ -128,7 +126,7 @@ namespace cage
 						ok = ok && e->has(c);
 					if (!ok)
 						continue;
-					privat::invokeVisitor<useEnt, Visitor, Types>(visitor, components, e, Sequence());
+					invokeVisitor<useEnt, Visitor, Types>(visitor, components, e, Sequence());
 				}
 			}
 		}
@@ -139,9 +137,9 @@ namespace cage
 	CAGE_FORCE_INLINE void entitiesVisitor(const Visitor &visitor, const EntityManager *ents, bool arrayCopy)
 	{
 		if (arrayCopy)
-			detail::entitiesVisitor<true>(visitor, ents);
+			privat::entitiesVisitor<true>(visitor, ents);
 		else
-			detail::entitiesVisitor<false>(visitor, ents);
+			privat::entitiesVisitor<false>(visitor, ents);
 	}
 }
 
