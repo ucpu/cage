@@ -1,8 +1,11 @@
+#include <vector>
+
 #include <tiffio.h>
 #include <tiffio.hxx>
 
 #include "image.h"
 
+#include <cage-core/math.h>
 #include <cage-core/stdBufferStream.h>
 
 namespace cage
@@ -35,6 +38,21 @@ namespace cage
 				TIFFSetWarningHandler(&tiffWarningHandler);
 			}
 		} initializer;
+
+		void setExtraSamples(TIFF *t, const ImageImpl *impl)
+		{
+			const uint32 alphaIndex = min(impl->colorConfig.alphaChannelIndex, impl->channels);
+			const uint32 colors = impl->colorConfig.gammaSpace == GammaSpaceEnum::None || impl->colorConfig.gammaSpace == GammaSpaceEnum::Gamma ? min(alphaIndex, 3u) : 0u;
+			const uint32 extras = colors == 2 ? impl->channels - 1 : impl->channels - colors;
+			TIFFSetField(t, TIFFTAG_PHOTOMETRIC, colors == 3 ? PHOTOMETRIC_RGB : PHOTOMETRIC_MINISBLACK);
+			if (extras)
+			{
+				std::vector<uint16> cfg;
+				cfg.resize(extras, EXTRASAMPLE_UNSPECIFIED);
+				cfg[0] = impl->colorConfig.alphaMode == AlphaModeEnum::Opacity ? EXTRASAMPLE_ASSOCALPHA : impl->colorConfig.alphaMode == AlphaModeEnum::PremultipliedOpacity ? EXTRASAMPLE_UNASSALPHA : EXTRASAMPLE_UNSPECIFIED;
+				TIFFSetField(t, TIFFTAG_EXTRASAMPLES, extras, cfg.data());
+			}
+		}
 	}
 
 	void tiffDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
@@ -75,7 +93,7 @@ namespace cage
 				else
 					CAGE_THROW_ERROR(Exception, "unsupported format in tiff decoding");
 			}
-			uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
+			const uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
 			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
 			impl->mem.resize(impl->height * stride);
 			for (uint32 row = 0; row < impl->height; row++)
@@ -132,18 +150,9 @@ namespace cage
 			}
 			TIFFSetField(t, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 			TIFFSetField(t, TIFFTAG_COMPRESSION, COMPRESSION_ADOBE_DEFLATE);
-			switch (impl->channels)
-			{
-				case 1:
-				case 2:
-					TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-					break;
-				default:
-					TIFFSetField(t, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
-					break;
-			}
+			setExtraSamples(t, impl);
 			TIFFSetField(t, TIFFTAG_SOFTWARE, "CageEngine");
-			uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
+			const uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
 			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
 			for (uint32 row = 0; row < impl->height; row++)
 			{
