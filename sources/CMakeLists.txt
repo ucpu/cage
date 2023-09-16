@@ -63,9 +63,6 @@ endif()
 if(MSVC)
 	set_source_files_properties(libcore/mesh/marchingCubes.cpp PROPERTIES COMPILE_FLAGS "/wd4244 /wd4267") # it includes file with weird extension which does not honor warnings disabled by pragma
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-	target_compile_options(cage-core PUBLIC "-Wno-assume") # __builtin_assume has side effects that are discarded
-endif()
 try_compile(sourceLocationAvailable "${CMAKE_CURRENT_BINARY_DIR}/tryCompile" SOURCES "${CMAKE_CURRENT_LIST_DIR}/tryCompileSourceLocation.cpp" OUTPUT_VARIABLE sourceLocationMessages)
 if(NOT sourceLocationAvailable)
 	target_compile_definitions(cage-core PUBLIC GCHL_DUMMY_SOURCE_LOCATION)

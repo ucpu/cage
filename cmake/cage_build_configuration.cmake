@@ -1,7 +1,7 @@
 
 macro(cage_build_configuration)
 	if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-		message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
+		message(FATAL_ERROR "CMAKE_BUILD_TYPE must be set")
 	endif()
 
 	cmake_policy(SET CMP0063 NEW)
@@ -44,11 +44,12 @@ macro(cage_build_configuration)
 		set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
 		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 
-		# disable some compiler warnings:
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
+		# disable some warnings
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd26812") # The enum type ___ is unscoped. Prefer 'enum class' over 'enum'
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd26451") # Arithmetic overflow: Using operator ___ on a 4 byte value and then casting the result to a 8 byte value.
 
-		# optionally improve runtime performance in debug builds
+		# optionally improve runtime performance in debug builds (basic inlining)
 		option(cage_faster_debug "enable some optimizations to improve performance in debug builds" ON)
 		if(cage_faster_debug)
 			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
@@ -57,10 +58,13 @@ macro(cage_build_configuration)
 			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ob1 /D_ITERATOR_DEBUG_LEVEL=0")
 		endif()
 
-		# multi-process compilation
-		if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+		# optionally improve runtime performance in release builds (more aggressive inlining)
+		option(cage_faster_release "enable more aggressive inlining in release builds" OFF)
+		if(cage_faster_release)
+			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+			string(REGEX REPLACE "/Ob[0-9]" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /Ob3")
+			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ob3")
 		endif()
 
 		# 8 MB default stack size
@@ -70,12 +74,17 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 
-		# disable warnings about attributes
+		# disable some warnings
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-abi")
+	endif()
 
-		# no warnings about changes in ABI
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-abi")
+	if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP") # multi-process compilation
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+	endif()
+
+	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-assume") # __builtin_assume has side effects that are discarded
 	endif()
 endmacro(cage_build_configuration)
-

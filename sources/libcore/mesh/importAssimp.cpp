@@ -646,7 +646,7 @@ namespace cage
 					}
 					totalKeys += n->mNumScalingKeys;
 				}
-				const uint32 animationBonesCount = numeric_cast<uint32>(bones.size());
+				const uint16 animationBonesCount = numeric_cast<uint16>(bones.size());
 				if (config.verbose)
 				{
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "animated bones: " + animationBonesCount);
@@ -658,7 +658,7 @@ namespace cage
 				{
 					std::vector<uint16> mapping;
 					mapping.resize(skeletonBonesCount, m);
-					for (uint16 i = 0; i < bones.size(); i++)
+					for (uint16 i = 0; i < animationBonesCount; i++)
 					{
 						CAGE_ASSERT(mapping[boneIndices[i]] == m);
 						mapping[boneIndices[i]] = i;
