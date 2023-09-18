@@ -194,78 +194,78 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem GuiBuilder::row(bool spaced, Real crossAlign)
+		BuilderItem GuiBuilder::row(bool spaced, Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = l.end = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
+			l.crossAlign = verticalAlign;
+			l.first = l.last = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::leftRow(bool flexibleRight, Real crossAlign)
+		BuilderItem GuiBuilder::leftRow(bool flexibleRight, Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.end = flexibleRight ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = verticalAlign;
+			l.last = flexibleRight ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::rightRow(bool flexibleLeft, Real crossAlign)
+		BuilderItem GuiBuilder::rightRow(bool flexibleLeft, Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = flexibleLeft ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = verticalAlign;
+			l.first = flexibleLeft ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::centerRow(bool flexibleEdges, Real crossAlign)
+		BuilderItem GuiBuilder::centerRow(bool flexibleEdges, Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = l.end = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = verticalAlign;
+			l.first = l.last = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::column(bool spaced, Real crossAlign)
+		BuilderItem GuiBuilder::column(bool spaced, Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = l.end = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
+			l.crossAlign = horizontalAlign;
+			l.first = l.last = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::topColumn(bool flexibleBottom, Real crossAlign)
+		BuilderItem GuiBuilder::topColumn(bool flexibleBottom, Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.end = flexibleBottom ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = horizontalAlign;
+			l.last = flexibleBottom ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::bottomColumn(bool flexibleTop, Real crossAlign)
+		BuilderItem GuiBuilder::bottomColumn(bool flexibleTop, Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = flexibleTop ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = horizontalAlign;
+			l.first = flexibleTop ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::middleColumn(bool flexibleEdges, Real crossAlign)
+		BuilderItem GuiBuilder::middleColumn(bool flexibleEdges, Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
-			l.crossAlign = crossAlign;
-			l.begin = l.end = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.crossAlign = horizontalAlign;
+			l.first = l.last = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
 			l.vertical = true;
 			return c;
 		}
@@ -295,10 +295,11 @@ namespace cage
 			return c;
 		}
 
-		BuilderItem GuiBuilder::scrollbars()
+		BuilderItem GuiBuilder::scrollbars(bool alwaysShown)
 		{
 			BuilderItem c(this);
-			c->value<GuiLayoutScrollbarsComponent>();
+			c->value<GuiLayoutScrollbarsComponent>().overflow[0] = alwaysShown ? OverflowModeEnum::Always : OverflowModeEnum::Auto;
+			c->value<GuiLayoutScrollbarsComponent>().overflow[1] = alwaysShown ? OverflowModeEnum::Always : OverflowModeEnum::Auto;
 			return c;
 		}
 
@@ -306,6 +307,22 @@ namespace cage
 		{
 			BuilderItem c(this);
 			c->value<GuiLayoutScrollbarsComponent>() = sc;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::horizontalScrollbar(bool alwaysShown)
+		{
+			BuilderItem c(this);
+			c->value<GuiLayoutScrollbarsComponent>().overflow[0] = alwaysShown ? OverflowModeEnum::Always : OverflowModeEnum::Auto;
+			c->value<GuiLayoutScrollbarsComponent>().overflow[1] = OverflowModeEnum::Never;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::verticalScrollbar(bool alwaysShown)
+		{
+			BuilderItem c(this);
+			c->value<GuiLayoutScrollbarsComponent>().overflow[0] = OverflowModeEnum::Never;
+			c->value<GuiLayoutScrollbarsComponent>().overflow[1] = alwaysShown ? OverflowModeEnum::Always : OverflowModeEnum::Auto;
 			return c;
 		}
 

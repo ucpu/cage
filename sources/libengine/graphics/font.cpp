@@ -404,6 +404,8 @@ namespace cage
 
 	void Font::render(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
+		if (format.wrapWidth <= 0 || format.size <= 0)
+			return;
 		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;
 		data.model = model.share();

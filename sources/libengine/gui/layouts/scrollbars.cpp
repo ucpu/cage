@@ -14,6 +14,7 @@ namespace cage
 				Vec2 size = Vec2::Nan();
 				Real dotSize = Real::Nan();
 				Real &value;
+				bool shown = false;
 
 				Scrollbar(Real &value) : value(value) {}
 			} scrollbars[2];
@@ -31,36 +32,46 @@ namespace cage
 
 			void findRequestedSize() override
 			{
+				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				hierarchy->children[0]->findRequestedSize();
-				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
+				for (uint32 a = 0; a < 2; a++)
+					hierarchy->requestedSize[a] = hierarchy->children[0]->requestedSize[a] + (data.overflow[1 - a] == OverflowModeEnum::Never ? 0 : scw);
 			}
 
 			void findFinalPosition(const FinalPosition &update) override
 			{
-				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
-				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
+				const Vec2 requested = hierarchy->children[0]->requestedSize;
 				FinalPosition u(update);
 				for (uint32 a = 0; a < 2; a++)
 				{
-					bool show = data.overflow[a] == OverflowModeEnum::Always;
-					if (data.overflow[a] == OverflowModeEnum::Auto && update.renderSize[a] + 1e-7 < hierarchy->requestedSize[a])
-						show = true;
-					if (show)
-					{ // the content is larger than the available area
-						Scrollbar &s = scrollbars[a];
-						s.size[a] = update.renderSize[a];
+					Scrollbar &s = scrollbars[a];
+					s.shown = data.overflow[a] == OverflowModeEnum::Always;
+					if (data.overflow[a] == OverflowModeEnum::Auto && requested[a] > update.renderSize[a] + 1e-3)
+						s.shown = true; // the content is larger than the available area
+				}
+				const Real scw1 = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
+				const Vec2 scw = Vec2(scrollbars[1].shown ? scw1 : 0, scrollbars[0].shown ? scw1 : 0);
+				for (uint32 a = 0; a < 2; a++)
+				{
+					Scrollbar &s = scrollbars[a];
+					if (s.shown)
+					{
+						s.size[a] = update.renderSize[a] - scw[a];
 						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
 						s.position[a] = update.renderPos[a];
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
-						u.renderSize[a] = hierarchy->requestedSize[a];
-						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a] + scw) * scrollbars[a].value;
-						u.clipSize[1 - a] -= scw;
-						Real minSize = min(s.size[0], s.size[1]);
-						s.dotSize = max(minSize, sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
+						s.dotSize = max(min(s.size[0], s.size[1]), sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
+
+						u.renderSize[a] = requested[a];
+						u.renderPos[a] -= (hierarchy->children[0]->requestedSize[a] - update.renderSize[a] + scw[a]) * scrollbars[a].value;
 					}
+					else
+						u.renderSize[a] -= scw[a];
 				}
-				u.clipSize = max(u.clipSize, 0);
+				u.renderSize = max(u.renderSize, 0);
+				u.clipSize = min(u.clipSize, update.renderSize - scw);
 				hierarchy->children[0]->findFinalPosition(u);
+				wheelFactor = 70 / (requested[1] - update.renderSize[1]);
 			}
 
 			void emit() override
@@ -69,7 +80,10 @@ namespace cage
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const Scrollbar &s = scrollbars[a];
-					if (s.position.valid())
+					CAGE_ASSERT(s.shown == s.position.valid());
+					CAGE_ASSERT(s.shown == s.size.valid());
+					CAGE_ASSERT(s.shown == s.dotSize.valid());
+					if (s.shown)
 					{
 						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, ElementModeEnum::Default, s.position, s.size);
 						Vec2 ds;
@@ -87,7 +101,7 @@ namespace cage
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const Scrollbar &s = scrollbars[a];
-					if (s.position.valid())
+					if (s.shown)
 					{
 						EventReceiver e;
 						e.widget = this;
@@ -118,14 +132,14 @@ namespace cage
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const Scrollbar &s = scrollbars[a];
-					if (s.position.valid())
+					if (s.shown)
 					{
 						if (!move && pointInside(s.position, s.size, point))
 							makeFocused(1 << (30 + a));
 						if (hasFocus(1 << (30 + a)))
 						{
 							s.value = (point[a] - s.position[a] - s.dotSize * 0.5) / (s.size[a] - s.dotSize);
-							s.value = clamp(s.value, 0, 1);
+							s.value = saturate(s.value);
 							return true;
 						}
 					}
@@ -146,10 +160,10 @@ namespace cage
 				if (modifiers != ModifiersFlags::None)
 					return false;
 				const Scrollbar &s = scrollbars[1];
-				if (s.position.valid())
+				if (s.shown)
 				{
 					s.value -= wheel * wheelFactor;
-					s.value = clamp(s.value, 0, 1);
+					s.value = saturate(s.value);
 					return true;
 				}
 				return false;

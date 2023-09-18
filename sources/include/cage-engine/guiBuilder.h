@@ -87,19 +87,21 @@ namespace cage
 		public:
 			[[nodiscard]] GuiBuilder &setNextName(uint32 name);
 
-			[[nodiscard]] BuilderItem row(bool spaced = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem leftRow(bool flexibleRight = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem rightRow(bool flexibleLeft = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem centerRow(bool flexibleEdges = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem column(bool spaced = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem topColumn(bool flexibleBottom = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem bottomColumn(bool flexibleTop = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem middleColumn(bool flexibleEdges = false, Real crossAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem row(bool spaced = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem leftRow(bool flexibleRight = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem rightRow(bool flexibleLeft = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem centerRow(bool flexibleEdges = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem column(bool spaced = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem topColumn(bool flexibleBottom = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem bottomColumn(bool flexibleTop = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem middleColumn(bool flexibleEdges = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalTable(uint32 rows = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem verticalTable(uint32 columns = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem alignment(Vec2 align = GuiLayoutAlignmentComponent().alignment);
-			[[nodiscard]] BuilderItem scrollbars();
+			[[nodiscard]] BuilderItem scrollbars(bool alwaysShown = false);
 			[[nodiscard]] BuilderItem scrollbars(const GuiLayoutScrollbarsComponent &sc);
+			[[nodiscard]] BuilderItem horizontalScrollbar(bool alwaysShown = false);
+			[[nodiscard]] BuilderItem verticalScrollbar(bool alwaysShown = false);
 
 			BuilderItem empty();
 			BuilderItem label();

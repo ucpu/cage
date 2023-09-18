@@ -20,7 +20,7 @@ namespace cage
 			void findRequestedSize() override
 			{
 				hierarchy->children[0]->findRequestedSize();
-				hierarchy->requestedSize = Vec2();
+				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				for (uint32 i = 0; i < 2; i++)
 				{
 					if (data.size[i].valid())

@@ -69,7 +69,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiExplicitSizeComponent
 	{
-		Vec2 size = Vec2::Nan();
+		Vec2 size = Vec2::Nan(); // use nan to preserve original size in that axis
 	};
 
 	struct CAGE_ENGINE_API GuiEventComponent
@@ -110,30 +110,44 @@ namespace cage
 
 	enum class LineEdgeModeEnum : uint32
 	{
-		None, // elements are stretched so that the first/last element touches the edge
-		Spaced, // elements are spaced so that the first/last element touches the edge
-		Flexible, // the first/last element stretches to fill all the space to the edge
+		None, // all elements are stretched so that the first/last element touches the edge
+		Flexible, // the first/last element only is stretched to fill all the space to the edge
+		Spaced, // add spaces between elements so that the first/last element touches the edge
 		Empty, // the space between first/last element and the edge is left empty
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutLineComponent
 	{
 		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
-		LineEdgeModeEnum begin = LineEdgeModeEnum::None;
-		LineEdgeModeEnum end = LineEdgeModeEnum::None;
-		bool vertical = false; // false -> items go left-to-right, true -> items go top-to-bottom
+		LineEdgeModeEnum first = LineEdgeModeEnum::None;
+		LineEdgeModeEnum last = LineEdgeModeEnum::None;
+		bool vertical = false;
 	};
+
+	/* TODO
+	struct CAGE_ENGINE_API GuiLayoutSplitComponent
+	{
+		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
+		bool vertical = false;
+	};
+
+	struct CAGE_ENGINE_API GuiLayoutFlowComponent
+	{
+		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
+		bool vertical = false;
+	};
+	*/
 
 	struct CAGE_ENGINE_API GuiLayoutTableComponent
 	{
 		uint32 sections = 2; // set sections to 0 to make it square-ish
-		bool grid = false; // false -> each column and row sizes are independent; true -> all columns and rows have same sizes
-		bool vertical = true; // false -> fills entire row; true -> fills entire column
+		bool grid = false; // false -> each column and row sizes are independent; true -> all cells have same size
+		bool vertical = true;
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutAlignmentComponent
 	{
-		Vec2 alignment = Vec2(0.5); // use NaN to fill the area in the particular axis
+		Vec2 alignment = Vec2(0.5); // use nan to fill the area in the particular axis
 	};
 
 	enum class OverflowModeEnum : uint32
