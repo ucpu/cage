@@ -270,6 +270,23 @@ namespace cage
 			return c;
 		}
 
+		BuilderItem GuiBuilder::horizontalSplit(Real verticalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutSplitComponent &l = c->value<GuiLayoutSplitComponent>();
+			l.crossAlign = verticalAlign;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::verticalSplit(Real horizontalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutSplitComponent &l = c->value<GuiLayoutSplitComponent>();
+			l.crossAlign = horizontalAlign;
+			l.vertical = true;
+			return c;
+		}
+
 		BuilderItem GuiBuilder::horizontalTable(uint32 rows, bool grid)
 		{
 			BuilderItem c(this);

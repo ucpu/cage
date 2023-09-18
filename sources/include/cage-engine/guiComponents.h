@@ -124,13 +124,13 @@ namespace cage
 		bool vertical = false;
 	};
 
-	/* TODO
 	struct CAGE_ENGINE_API GuiLayoutSplitComponent
 	{
 		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
 		bool vertical = false;
 	};
 
+	/* TODO
 	struct CAGE_ENGINE_API GuiLayoutFlowComponent
 	{
 		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom

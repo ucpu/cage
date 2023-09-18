@@ -95,6 +95,8 @@ namespace cage
 			[[nodiscard]] BuilderItem topColumn(bool flexibleBottom = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem bottomColumn(bool flexibleTop = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem middleColumn(bool flexibleEdges = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem horizontalSplit(Real verticalAlign = GuiLayoutSplitComponent().crossAlign);
+			[[nodiscard]] BuilderItem verticalSplit(Real horizontalAlign = GuiLayoutSplitComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalTable(uint32 rows = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem verticalTable(uint32 columns = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem alignment(Vec2 align = GuiLayoutAlignmentComponent().alignment);
