@@ -68,17 +68,17 @@ namespace cage
 					p.firstOffset = (update.renderSize[data.vertical] - hierarchy->requestedSize[data.vertical]) / 2;
 				else if (data.first == LineEdgeModeEnum::Flexible && data.last == LineEdgeModeEnum::Flexible)
 				{
-					const Real f = (update.renderSize[data.vertical] - er[1]) / (er[0] + er[2]);
+					const Real f = (update.renderSize[data.vertical] - er[1]) / max(er[0] + er[2], 1);
 					p.sizeFactors = Vec3(f, 1, f);
 					p.firstOffset = min(0, update.renderSize[data.vertical] - hierarchy->requestedSize[data.vertical]) / 2;
 				}
 				else if (data.first == LineEdgeModeEnum::Flexible || (data.last == LineEdgeModeEnum::Flexible && hierarchy->children.size() == 1))
 				{
-					p.sizeFactors[0] = (update.renderSize[data.vertical] - er[1] - er[2]) / er[0];
+					p.sizeFactors[0] = (update.renderSize[data.vertical] - er[1] - er[2]) / max(er[0], 1);
 					p.firstOffset = min(0, update.renderSize[data.vertical] - hierarchy->requestedSize[data.vertical]);
 				}
 				else if (data.last == LineEdgeModeEnum::Flexible)
-					p.sizeFactors[2] = (update.renderSize[data.vertical] - er[0] - er[1]) / er[2];
+					p.sizeFactors[2] = (update.renderSize[data.vertical] - er[0] - er[1]) / max(er[2], 1);
 				else if (data.first == LineEdgeModeEnum::Empty)
 					p.firstOffset = update.renderSize[data.vertical] - hierarchy->requestedSize[data.vertical];
 				p.sizeFactors = max(0, p.sizeFactors);
@@ -89,7 +89,7 @@ namespace cage
 					sum += c->requestedSize[data.vertical] * p.sizeFactors[edgeIndex(c)];
 				if (sum > update.renderSize[data.vertical])
 					p.sizeFactors *= update.renderSize[data.vertical] / sum;
-				CAGE_ASSERT(valid(p.sizeFactors));
+				CAGE_ASSERT(valid(p.sizeFactors) && p.sizeFactors[0].finite() && p.sizeFactors[1].finite() && p.sizeFactors[2].finite());
 				return p;
 			}
 

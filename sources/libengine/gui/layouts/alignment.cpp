@@ -30,8 +30,8 @@ namespace cage
 				{
 					if (data.alignment[a].valid())
 					{
-						u.renderPos[a] += (update.renderSize[a] - hierarchy->requestedSize[a]) * data.alignment[a];
-						u.renderSize[a] = hierarchy->requestedSize[a];
+						u.renderSize[a] = min(hierarchy->requestedSize[a], u.renderSize[a]);
+						u.renderPos[a] += (update.renderSize[a] - u.renderSize[a]) * data.alignment[a];
 					}
 				}
 				hierarchy->children[0]->findFinalPosition(u);
