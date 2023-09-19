@@ -58,7 +58,7 @@ namespace cage
 				}
 				const Vec3 er = edgeRequests();
 				if (data.first == LineEdgeModeEnum::None && data.last == LineEdgeModeEnum::None)
-					p.sizeFactors = Vec3(update.renderSize[data.vertical] / hierarchy->requestedSize[data.vertical]);
+					p.sizeFactors = Vec3(update.renderSize[data.vertical] / max(hierarchy->requestedSize[data.vertical], 1));
 				else if (data.first == LineEdgeModeEnum::Spaced)
 				{
 					CAGE_ASSERT(data.last == LineEdgeModeEnum::Spaced);
