@@ -674,7 +674,10 @@ namespace cage
 
 	void currentThreadName(const String &name)
 	{
+#ifdef CAGE_DEBUG
 		const String oldName = currentThreadName_();
+#endif
+
 		currentThreadName_() = name;
 
 		if (!name.empty())

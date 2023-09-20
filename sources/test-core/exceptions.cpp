@@ -117,4 +117,6 @@ void testExceptions()
 		}
 		detail::globalBreakpointOverride(true);
 	}
+
+	(void)&assertFailureFunction; // maybe unused
 }

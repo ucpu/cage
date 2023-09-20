@@ -774,8 +774,8 @@ namespace cage
 
 	void ShaderProgram::compute(const Vec3i &groupsCounts)
 	{
-		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 #ifdef CAGE_ASSERT_ENABLED
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(boundShader == impl->id);
 #endif
 		glDispatchCompute(groupsCounts[0], groupsCounts[1], groupsCounts[2]);

@@ -76,13 +76,6 @@ namespace cage
 			return archiveOpenZipTry(parent->openFile(inPath, FileMode(true, false)));
 		}
 
-		void walkLeft(String &p, String &i)
-		{
-			const String s = pathJoin(p, "..");
-			i = pathJoin(subString(p, s.length() + 1, m), i);
-			p = s;
-		}
-
 		void walkRight(String &p, String &i)
 		{
 			const String k = split(i, "/");
@@ -90,6 +83,13 @@ namespace cage
 		}
 
 #ifdef CAGE_DEBUG
+		void walkLeft(String &p, String &i)
+		{
+			const String s = pathJoin(p, "..");
+			i = pathJoin(subString(p, s.length() + 1, m), i);
+			p = s;
+		}
+
 		class WalkTester : private Immovable
 		{
 		public:
