@@ -25,6 +25,30 @@ namespace cage
 					return r;
 			return nullptr;
 		}
+
+		// test of B is descendant of A
+		bool isDescendantOf(const HierarchyItem *a, const HierarchyItem *b)
+		{
+			if (a == b)
+				return true;
+			for (const auto &it : a->children)
+				if (isDescendantOf(+it, b))
+					return true;
+			return false;
+		}
+
+		void closeAllExceptSequenceWith(GuiImpl *impl, Entity *ent)
+		{
+			const HierarchyItem *k = findHierarchy(+impl->root, ent);
+			for (auto &it : impl->ttData)
+			{
+				if (it.closeCondition == TooltipCloseConditionEnum::Never)
+					continue;
+				if (const HierarchyItem *h = findHierarchy(+impl->root, it.rect))
+					if (!isDescendantOf(h, k))
+						it.removing = true;
+			}
+		}
 	}
 
 	void GuiImpl::updateTooltips()
@@ -95,7 +119,7 @@ namespace cage
 			if (
 				[&]()
 				{
-					for (const auto &tt : ttData)
+					for (const TooltipData &tt : ttData)
 						if (tt.invoker == ent)
 							return true;
 					return false;
@@ -111,12 +135,12 @@ namespace cage
 				tt.rect = tt.tooltip;
 				tt.anchor = outputMouse;
 				c.tooltip(tt);
-				if (tt.placement != TooltipPlacementEnum::Manual)
-					needsReposition = true;
 				if (!tt.tooltip->has<GuiWidgetStateComponent>())
 					tt.tooltip->value<GuiWidgetStateComponent>().skinIndex = 3;
+				closeAllExceptSequenceWith(this, ent);
 				ttData.push_back(std::move(tt));
 				ttHasMovedSinceLast = false;
+				needsReposition = true;
 			}
 			catch (...)
 			{
@@ -131,8 +155,10 @@ namespace cage
 		if (needsReposition)
 		{
 			prepareImplGeneration(); // regenerate the whole hierarchy to calculate the requested sizes
-			for (auto &it : ttData)
+			for (TooltipData &it : ttData)
 			{
+				if (it.placement == TooltipPlacementEnum::Manual)
+					continue;
 				if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
 				{
 					Entity *f = entityMgr->createUnique();
@@ -151,8 +177,8 @@ namespace cage
 								corner[1] = 1; // avoid centering the tooltip under the cursor
 							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
 							f->value<GuiLayoutAlignmentComponent>().alignment += -17 * Vec2(corner) / outputSize;
+							break;
 						}
-						break;
 						case TooltipPlacementEnum::Center:
 							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
 							break;

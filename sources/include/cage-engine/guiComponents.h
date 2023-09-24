@@ -79,15 +79,15 @@ namespace cage
 
 	enum class TooltipCloseConditionEnum : uint32
 	{
-		Instant, // the tooltip is closed as soon as the cursor moves
-		Modal, // the tooltip acts as a modal window and is closed only when the cursor moves outside of the tooltip
-		Never, // the application is responsible for closing the tooltip by removing the entity
+		Instant, // closes as soon as cursor moves
+		Modal, // acts as a modal window and is closed when the cursor moves far away from the tooltip
+		Never, // the application is responsible for closing the tooltip (by removing the entity)
 	};
 
 	enum class TooltipPlacementEnum : uint32
 	{
 		Corner, // corner of the tooltip positioned at the cursor
-		Center,
+		Center, // center of the whole screen
 		Manual,
 	};
 
@@ -104,7 +104,7 @@ namespace cage
 	{
 		using Tooltip = Delegate<void(const GuiTooltipConfig &)>;
 		Tooltip tooltip;
-		uint64 delay = 500000; // duration to hold mouse over the widget before showing the tooltip
+		uint64 delay = 500000; // duration to hold cursor over the widget before showing the tooltip
 		bool enableForDisabled = false;
 	};
 
