@@ -210,6 +210,9 @@ namespace cage
 		if (!assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
 			return {};
 
+		if (!eventsEnabled)
+			return {}; // gui entities have been modified, invalidating any data cached in our hierarchy
+
 		GraphicsDataCleaner graphicsDataCleaner(this);
 
 		for (auto &s : skins)

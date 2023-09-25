@@ -76,6 +76,7 @@ namespace cage
 
 			void emit() override
 			{
+				CAGE_ASSERT(data.scroll.valid());
 				hierarchy->childrenEmit();
 				for (uint32 a = 0; a < 2; a++)
 				{

@@ -26,7 +26,7 @@ namespace cage
 			return nullptr;
 		}
 
-		// test of B is descendant of A
+		// test if B is descendant of A
 		bool isDescendantOf(const HierarchyItem *a, const HierarchyItem *b)
 		{
 			if (a == b)
