@@ -8,7 +8,6 @@ using Number = double;
 namespace
 {
 	int tri_tri_overlap_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3]);
-	int tri_tri_intersection_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], int *coplanar, Number source[3], Number target[3]);
 	int coplanar_tri_tri3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], Number N1[3]);
 	int tri_tri_overlap_test_2d(Number p1[2], Number q1[2], Number r1[2], Number p2[2], Number q2[2], Number r2[2]);
 
@@ -95,9 +94,7 @@ namespace
 		} \
 	}
 
-	int tri_tri_overlap_test_3d(Number p1[3], Number q1[3], Number r1[3],
-
-		Number p2[3], Number q2[3], Number r2[3])
+	int tri_tri_overlap_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3])
 	{
 		Number dp1, dq1, dr1, dp2, dq2, dr2;
 		Number v1[3], v2[3];
@@ -179,10 +176,8 @@ namespace
 
 	int coplanar_tri_tri3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], Number normal_1[3])
 	{
-
 		Number P1[2], Q1[2], R1[2];
 		Number P2[2], Q2[2], R2[2];
-
 		Number n_x, n_y, n_z;
 
 		n_x = ((normal_1[0] < 0) ? -normal_1[0] : normal_1[0]);
@@ -384,93 +379,6 @@ namespace
 		} \
 	}
 
-	int tri_tri_intersection_test_3d(Number p1[3], Number q1[3], Number r1[3], Number p2[3], Number q2[3], Number r2[3], int *coplanar, Number source[3], Number target[3])
-	{
-		Number dp1, dq1, dr1, dp2, dq2, dr2;
-		Number v1[3], v2[3], v[3];
-		Number N1[3], N2[3], N[3];
-		Number alpha;
-
-		SUB(v1, p2, r2)
-		SUB(v2, q2, r2)
-		CROSS(N2, v1, v2)
-
-		SUB(v1, p1, r2)
-		dp1 = DOT(v1, N2);
-		SUB(v1, q1, r2)
-		dq1 = DOT(v1, N2);
-		SUB(v1, r1, r2)
-		dr1 = DOT(v1, N2);
-
-		if (((dp1 * dq1) > 0.0f) && ((dp1 * dr1) > 0.0f))
-			return 0;
-
-		SUB(v1, q1, p1)
-		SUB(v2, r1, p1)
-		CROSS(N1, v1, v2)
-
-		SUB(v1, p2, r1)
-		dp2 = DOT(v1, N1);
-		SUB(v1, q2, r1)
-		dq2 = DOT(v1, N1);
-		SUB(v1, r2, r1)
-		dr2 = DOT(v1, N1);
-
-		if (((dp2 * dq2) > 0.0f) && ((dp2 * dr2) > 0.0f))
-			return 0;
-
-		if (dp1 > 0.0f)
-		{
-			if (dq1 > 0.0f)
-				TRI_TRI_INTER_3D(r1, p1, q1, p2, r2, q2, dp2, dr2, dq2)
-			else if (dr1 > 0.0f)
-				TRI_TRI_INTER_3D(q1, r1, p1, p2, r2, q2, dp2, dr2, dq2)
-
-			else
-				TRI_TRI_INTER_3D(p1, q1, r1, p2, q2, r2, dp2, dq2, dr2)
-		}
-		else if (dp1 < 0.0f)
-		{
-			if (dq1 < 0.0f)
-				TRI_TRI_INTER_3D(r1, p1, q1, p2, q2, r2, dp2, dq2, dr2)
-			else if (dr1 < 0.0f)
-				TRI_TRI_INTER_3D(q1, r1, p1, p2, q2, r2, dp2, dq2, dr2)
-			else
-				TRI_TRI_INTER_3D(p1, q1, r1, p2, r2, q2, dp2, dr2, dq2)
-		}
-		else
-		{
-			if (dq1 < 0.0f)
-			{
-				if (dr1 >= 0.0f)
-					TRI_TRI_INTER_3D(q1, r1, p1, p2, r2, q2, dp2, dr2, dq2)
-				else
-					TRI_TRI_INTER_3D(p1, q1, r1, p2, q2, r2, dp2, dq2, dr2)
-			}
-			else if (dq1 > 0.0f)
-			{
-				if (dr1 > 0.0f)
-					TRI_TRI_INTER_3D(p1, q1, r1, p2, r2, q2, dp2, dr2, dq2)
-				else
-					TRI_TRI_INTER_3D(q1, r1, p1, p2, q2, r2, dp2, dq2, dr2)
-			}
-			else
-			{
-				if (dr1 > 0.0f)
-					TRI_TRI_INTER_3D(r1, p1, q1, p2, q2, r2, dp2, dq2, dr2)
-				else if (dr1 < 0.0f)
-					TRI_TRI_INTER_3D(r1, p1, q1, p2, r2, q2, dp2, dr2, dq2)
-				else
-				{
-					// triangles are co-planar
-
-					*coplanar = 1;
-					return coplanar_tri_tri3d(p1, q1, r1, p2, q2, r2, N1);
-				}
-			}
-		}
-	};
-
 #define ORIENT_2D(a, b, c) ((a[0] - c[0]) * (b[1] - c[1]) - (a[1] - c[1]) * (b[0] - c[0]))
 
 #define INTERSECTION_TEST_VERTEX(P1, Q1, R1, P2, Q2, R2) \
@@ -637,16 +545,5 @@ namespace cage
 	bool intersects(const Triangle &a, const Triangle &b)
 	{
 		return tri_tri_overlap_test_3d(V(a[0]), V(a[1]), V(a[2]), V(b[0]), V(b[1]), V(b[2]));
-	}
-
-	TriTriIntersectionResult intersection(const Triangle &a, const Triangle &b)
-	{
-		V s, t;
-		int coplanar = 0;
-		TriTriIntersectionResult res;
-		res.intersects = tri_tri_intersection_test_3d(V(a[0]), V(a[1]), V(a[2]), V(b[0]), V(b[1]), V(b[2]), &coplanar, s, t);
-		if (res.intersects && !coplanar)
-			res.line = makeSegment(s, t);
-		return res;
 	}
 }
