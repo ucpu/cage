@@ -359,12 +359,13 @@ namespace cage
 		impl->eventsEnabled = true;
 		impl->prepareImplGeneration();
 		impl->updateTooltips();
-		findHover(impl);
 	}
 
 	Holder<RenderQueue> GuiManager::finish()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
+		impl->prepareImplGeneration(); // entities may have been changed -> regenerate our cache
+		findHover(impl);
 		Holder<RenderQueue> q = impl->emit();
 		impl->root.clear();
 		return q;

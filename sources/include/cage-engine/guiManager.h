@@ -28,7 +28,7 @@ namespace cage
 
 		bool handleInput(const GenericInput &);
 		void invalidateInputs(); // skip all remaining inputs until next prepare
-		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from prepare or handleInput
+		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from inside handleInput
 
 		GuiSkinConfig &skin(uint32 index = 0);
 		const GuiSkinConfig &skin(uint32 index = 0) const;

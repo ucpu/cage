@@ -26,6 +26,26 @@ namespace cage
 			return nullptr;
 		}
 
+		// returns top-level widget under cursor and whether it has a tooltip
+		std::pair<WidgetItem *, bool> findTopWidget(GuiImpl *impl)
+		{
+			for (const auto &it : impl->mouseEventReceivers)
+			{
+				if (!it.pointInside(impl->outputMouse, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Tooltips))
+					continue; // this widget is not under the cursor - completely ignore and continue searching
+				return { it.widget, any(it.mask & GuiEventsTypesFlags::Tooltips) };
+			}
+			return {};
+		}
+
+		bool listContains(PointerRange<const TooltipData> ttData, Entity *ent)
+		{
+			for (const TooltipData &tt : ttData)
+				if (tt.invoker == ent)
+					return true;
+			return false;
+		}
+
 		// test if B is descendant of A
 		bool isDescendantOf(const HierarchyItem *a, const HierarchyItem *b)
 		{
@@ -53,6 +73,8 @@ namespace cage
 
 	void GuiImpl::updateTooltips()
 	{
+		auto candidate = findTopWidget(this);
+
 		const uint64 currentTime = applicationTime();
 		if (ttMouseTraveledDistance > 5)
 		{
@@ -72,6 +94,8 @@ namespace cage
 		{
 			if (it.closeCondition != TooltipCloseConditionEnum::Modal)
 				continue;
+			if (candidate.first && candidate.first->hierarchy->ent == it.invoker)
+				continue; // avoid closing tooltip that would be the first to open again
 			if (const HierarchyItem *h = findHierarchy(+root, it.rect))
 			{
 				Vec2 p = h->renderPos;
@@ -101,30 +125,18 @@ namespace cage
 		if (!ttHasMovedSinceLast)
 			return;
 
-		// find new tooltips
-		bool needsReposition = false;
-		for (const auto &it : mouseEventReceivers)
+		// check new tooltip
+		if (candidate.first && candidate.second)
 		{
-			if (!it.pointInside(outputMouse, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Tooltips))
-				continue; // this widget is not under the cursor - completely ignore and continue searching
-			if (none(it.mask & GuiEventsTypesFlags::Tooltips))
-				break; // this is top-level widget under the cursor, but does not have a tooltip - stop searching as all following widgets would be covered by this one
-			Entity *ent = it.widget->hierarchy->ent;
+			Entity *ent = candidate.first->hierarchy->ent;
 			CAGE_ASSERT(ent && ent->has<GuiTooltipComponent>());
 			const GuiTooltipComponent &c = ent->value<GuiTooltipComponent>();
 			if (c.delay > elapsed)
-				break;
-			if (!c.enableForDisabled && it.widget->widgetState.disabled)
-				break;
-			if (
-				[&]()
-				{
-					for (const TooltipData &tt : ttData)
-						if (tt.invoker == ent)
-							return true;
-					return false;
-				}())
-				break; // this tooltip is already shown
+				return;
+			if (!c.enableForDisabled && candidate.first->widgetState.disabled)
+				return;
+			if (listContains(ttData, ent))
+				return; // this tooltip is already shown
 
 			TooltipData tt;
 			try
@@ -140,7 +152,6 @@ namespace cage
 				closeAllExceptSequenceWith(this, ent);
 				ttData.push_back(std::move(tt));
 				ttHasMovedSinceLast = false;
-				needsReposition = true;
 			}
 			catch (...)
 			{
@@ -148,49 +159,47 @@ namespace cage
 					detail::guiDestroyEntityRecursively(tt.tooltip);
 				throw;
 			}
-			break;
 		}
 
 		// update tooltip positions
-		if (needsReposition)
+		prepareImplGeneration(); // regenerate the whole hierarchy to calculate the requested sizes
+		for (TooltipData &it : ttData)
 		{
-			prepareImplGeneration(); // regenerate the whole hierarchy to calculate the requested sizes
-			for (TooltipData &it : ttData)
+			if (it.placement == TooltipPlacementEnum::Manual)
+				continue;
+			if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
 			{
-				if (it.placement == TooltipPlacementEnum::Manual)
-					continue;
-				if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
+				Entity *f = entityMgr->createUnique();
+				f->value<GuiTooltipMarkerComponent>();
+				const Vec2 s = h->requestedSize;
+				it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
+				it.tooltip->value<GuiParentComponent>().parent = f->name();
+				Vec2 &al = f->value<GuiLayoutAlignmentComponent>().alignment;
+				switch (it.placement)
 				{
-					Entity *f = entityMgr->createUnique();
-					f->value<GuiTooltipMarkerComponent>();
-					const Vec2 s = h->requestedSize;
-					it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
-					it.tooltip->value<GuiParentComponent>().parent = f->name();
-					switch (it.placement)
+					case TooltipPlacementEnum::Corner:
 					{
-						case TooltipPlacementEnum::Corner:
-						{
-							Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
-							CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
-							CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
-							if (corner[1] == 0)
-								corner[1] = 1; // avoid centering the tooltip under the cursor
-							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / (outputSize - s);
-							f->value<GuiLayoutAlignmentComponent>().alignment += -17 * Vec2(corner) / outputSize;
-							break;
-						}
-						case TooltipPlacementEnum::Center:
-							f->value<GuiLayoutAlignmentComponent>().alignment = (it.anchor - s * Vec2(0.5)) / (outputSize - s);
-							break;
-						case TooltipPlacementEnum::Manual:
-							break;
+						Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
+						CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
+						CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
+						if (corner[1] == 0)
+							corner[1] = 1; // avoid centering the tooltip under the cursor
+						al = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / max(outputSize - s, 1);
+						al += -17 * Vec2(corner) / outputSize;
+						break;
 					}
-					it.tooltip = f;
+					case TooltipPlacementEnum::Center:
+						al = (it.anchor - s * Vec2(0.5)) / max(outputSize - s, 1);
+						break;
+					case TooltipPlacementEnum::Manual:
+						break;
 				}
-				it.placement = TooltipPlacementEnum::Manual;
+				al = saturate(al);
+				it.tooltip = f;
 			}
-			prepareImplGeneration(); // and again to apply the changes
+			it.placement = TooltipPlacementEnum::Manual;
 		}
+		prepareImplGeneration(); // and again to apply the changes
 	}
 
 	void GuiImpl::clearTooltips()

@@ -15,6 +15,10 @@ namespace cage
 				CAGE_ASSERT(hierarchy->children.size() == 1);
 				CAGE_ASSERT(!hierarchy->text);
 				CAGE_ASSERT(!hierarchy->image);
+				for (uint32 i = 0; i < 2; i++)
+				{
+					CAGE_ASSERT(!data.alignment[i].valid() || data.alignment[i] == saturate(data.alignment[i]));
+				}
 			}
 
 			void findRequestedSize() override

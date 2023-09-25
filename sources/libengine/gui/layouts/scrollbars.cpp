@@ -28,6 +28,7 @@ namespace cage
 				CAGE_ASSERT(hierarchy->children.size() == 1);
 				CAGE_ASSERT(!hierarchy->text);
 				CAGE_ASSERT(!hierarchy->image);
+				CAGE_ASSERT(data.scroll.valid() && data.scroll == saturate(data.scroll));
 			}
 
 			void findRequestedSize() override
