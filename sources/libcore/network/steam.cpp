@@ -33,6 +33,7 @@ namespace cage
 			return SteamNetworkingUtils();
 		}
 
+	#ifdef CAGE_DEBUG
 		const char *connectionStateToString(ESteamNetworkingConnectionState s)
 		{
 			switch (s)
@@ -59,6 +60,7 @@ namespace cage
 					CAGE_THROW_CRITICAL(Exception, "invalid steam networking connection state");
 			}
 		}
+	#endif // CAGE_DEBUG
 
 		void handleResult(EResult r)
 		{
