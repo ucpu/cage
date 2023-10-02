@@ -52,15 +52,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			n = replace(n, "\\", "/");
 #endif // CAGE_SYSTEM_WINDOWS
-
-			// extract just one folder and file name
-			n = reverse(n);
-			String a = split(n, "/");
-			if (!n.empty())
-				a += String() + "/" + split(n, "/");
-			a = reverse(a);
-
-			return s + a + ":" + l.line();
+			return s + n + ":" + l.line();
 		}
 
 		void EventLinker::logAllNames()
