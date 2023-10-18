@@ -1,6 +1,7 @@
 #include <stdlib.h> // free
-#include <tinyexr.h>
 #include <vector>
+
+#include <tinyexr.h>
 
 #include "image.h"
 

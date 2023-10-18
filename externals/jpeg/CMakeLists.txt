@@ -8,7 +8,7 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/j
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	if(WIN32)
-		set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/yasm/win64")
+		set(CMAKE_ASM_NASM_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/yasm/win64/bin/yasm.exe" CACHE INTERNAL "" FORCE)
 		set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DWIN64 -D__x86_64__ -D\"EXTN(name)=name\"") # target_compile_definitions does not work with nasm
 	else()
 		set(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> <INCLUDES> -felf64 -DELF -DPIC -D__x86_64__ -o <OBJECT> <SOURCE>" CACHE INTERNAL "") # no <FLAGS>
