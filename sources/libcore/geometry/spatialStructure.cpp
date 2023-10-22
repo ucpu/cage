@@ -43,13 +43,13 @@ namespace cage
 				high.v4 = Vec4(Vec3(-Real::Infinity()), 0.0f);
 			}
 
-			CAGE_FORCE_INLINE explicit FastBox(const Aabb &b)
+			CAGE_FORCE_INLINE explicit FastBox(Aabb b)
 			{
 				low.s.v3 = b.a;
 				high.s.v3 = b.b;
 			}
 
-			CAGE_FORCE_INLINE FastBox operator+(const FastBox &other) const
+			CAGE_FORCE_INLINE FastBox operator+(FastBox other) const
 			{
 				FastBox r;
 				r.low.v4 = min(low.v4, other.low.v4);
@@ -57,7 +57,7 @@ namespace cage
 				return r;
 			}
 
-			CAGE_FORCE_INLINE FastBox &operator+=(const FastBox &other) { return *this = *this + other; }
+			CAGE_FORCE_INLINE FastBox &operator+=(FastBox other) { return *this = *this + other; }
 
 			CAGE_FORCE_INLINE Real surface() const
 			{
@@ -77,7 +77,7 @@ namespace cage
 			}
 		};
 
-		CAGE_FORCE_INLINE bool intersects(const FastBox &a, const FastBox &b)
+		CAGE_FORCE_INLINE bool intersects(FastBox a, FastBox b)
 		{
 			CAGE_ASSERT(uintPtr(&a) % alignof(FastBox) == 0);
 			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
@@ -94,12 +94,12 @@ namespace cage
 			const uint32 name;
 
 			virtual Aabb getBox() const = 0;
-			virtual bool intersects(const Line &other) = 0;
-			virtual bool intersects(const Triangle &other) = 0;
-			virtual bool intersects(const Plane &other) = 0;
-			virtual bool intersects(const Sphere &other) = 0;
-			virtual bool intersects(const Aabb &other) = 0;
-			virtual bool intersects(const Cone &other) = 0;
+			virtual bool intersects(Line other) = 0;
+			virtual bool intersects(Triangle other) = 0;
+			virtual bool intersects(Plane other) = 0;
+			virtual bool intersects(Sphere other) = 0;
+			virtual bool intersects(Aabb other) = 0;
+			virtual bool intersects(Cone other) = 0;
 			virtual bool intersects(const Frustum &other) = 0;
 
 			CAGE_FORCE_INLINE ItemBase(uint32 name) : name(name) {}
@@ -115,15 +115,15 @@ namespace cage
 		template<class T>
 		struct ItemShape : public ItemBase, public T
 		{
-			CAGE_FORCE_INLINE ItemShape(uint32 name, const T &other) : ItemBase(name), T(other) { update(); }
+			CAGE_FORCE_INLINE ItemShape(uint32 name, T other) : ItemBase(name), T(other) { update(); }
 
 			virtual Aabb getBox() const { return Aabb(*(T *)this); }
-			virtual bool intersects(const Line &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Triangle &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Plane &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Sphere &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Aabb &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Cone &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Line other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Triangle other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Plane other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Sphere other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Aabb other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(Cone other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Frustum &other) { return cage::intersects(*(T *)this, other); };
 		};
 
@@ -131,7 +131,7 @@ namespace cage
 		{
 			FastBox box;
 
-			CAGE_FORCE_INLINE Node(const FastBox &box, sint32 a, sint32 b) : box(box)
+			CAGE_FORCE_INLINE Node(FastBox box, sint32 a, sint32 b) : box(box)
 			{
 				this->a() = a;
 				this->b() = b;
@@ -271,7 +271,7 @@ namespace cage
 				node.b() = -rightNodeIndex;
 			}
 
-			static bool similar(const FastBox &a, const FastBox &b) { return (length(a.low.s.v3 - b.low.s.v3) + length(a.high.s.v3 - b.high.s.v3)) < 1e-3; }
+			static bool similar(FastBox a, FastBox b) { return (length(a.low.s.v3 - b.low.s.v3) + length(a.high.s.v3 - b.high.s.v3)) < 1e-3; }
 
 			void validate(uint32 nodeIndex)
 			{
@@ -381,7 +381,7 @@ namespace cage
 			};
 
 			template<class T>
-			CAGE_FORCE_INLINE bool intersection(const T &other)
+			CAGE_FORCE_INLINE bool intersection(T other)
 			{
 				CAGE_ASSERT(!data->dirty);
 				clear();
@@ -399,42 +399,42 @@ namespace cage
 		return impl->resultNames;
 	}
 
-	bool SpatialQuery::intersection(const Vec3 &shape)
+	bool SpatialQuery::intersection(Vec3 shape)
 	{
 		return intersection(Aabb(shape, shape));
 	}
 
-	bool SpatialQuery::intersection(const Line &shape)
+	bool SpatialQuery::intersection(Line shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const Triangle &shape)
+	bool SpatialQuery::intersection(Triangle shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const Plane &shape)
+	bool SpatialQuery::intersection(Plane shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const Sphere &shape)
+	bool SpatialQuery::intersection(Sphere shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const Aabb &shape)
+	bool SpatialQuery::intersection(Aabb shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const Cone &shape)
+	bool SpatialQuery::intersection(Cone shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);
@@ -446,12 +446,12 @@ namespace cage
 		return impl->intersection(shape);
 	}
 
-	void SpatialStructure::update(uint32 name, const Vec3 &other)
+	void SpatialStructure::update(uint32 name, Vec3 other)
 	{
 		update(name, Aabb(other, other));
 	}
 
-	void SpatialStructure::update(uint32 name, const Line &other)
+	void SpatialStructure::update(uint32 name, Line other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
@@ -460,7 +460,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Line>>(name, other);
 	}
 
-	void SpatialStructure::update(uint32 name, const Triangle &other)
+	void SpatialStructure::update(uint32 name, Triangle other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < Real::Infinity());
@@ -469,7 +469,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Triangle>>(name, other);
 	}
 
-	void SpatialStructure::update(uint32 name, const Sphere &other)
+	void SpatialStructure::update(uint32 name, Sphere other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
@@ -478,7 +478,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Sphere>>(name, other);
 	}
 
-	void SpatialStructure::update(uint32 name, const Aabb &other)
+	void SpatialStructure::update(uint32 name, Aabb other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
@@ -487,7 +487,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Aabb>>(name, other);
 	}
 
-	void SpatialStructure::update(uint32 name, const Cone &other)
+	void SpatialStructure::update(uint32 name, Cone other)
 	{
 		CAGE_ASSERT(other.valid());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;

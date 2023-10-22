@@ -45,7 +45,7 @@ namespace cage
 			return false;
 		}
 
-		bool axisTestX01(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
+		bool axisTestX01(Real a, Real b, Real fa, Real fb, Vec3 v0, Vec3 v2, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
 		{
 			p0 = a * v0[1] - b * v0[2];
 			p2 = a * v2[1] - b * v2[2];
@@ -65,7 +65,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestX2(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
+		bool axisTestX2(Real a, Real b, Real fa, Real fb, Vec3 v0, Vec3 v1, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = a * v0[1] - b * v0[2];
 			p1 = a * v1[1] - b * v1[2];
@@ -85,7 +85,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestY02(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
+		bool axisTestY02(Real a, Real b, Real fa, Real fb, Vec3 v0, Vec3 v2, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p2)
 		{
 			p0 = -a * v0[0] + b * v0[2];
 			p2 = -a * v2[0] + b * v2[2];
@@ -105,7 +105,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestY1(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
+		bool axisTestY1(Real a, Real b, Real fa, Real fb, Vec3 v0, Vec3 v1, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = -a * v0[0] + b * v0[2];
 			p1 = -a * v1[0] + b * v1[2];
@@ -125,7 +125,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestZ12(Real a, Real b, Real fa, Real fb, const Vec3 &v1, const Vec3 &v2, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p1, Real &p2)
+		bool axisTestZ12(Real a, Real b, Real fa, Real fb, Vec3 v1, Vec3 v2, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p1, Real &p2)
 		{
 			p1 = a * v1[0] - b * v1[1];
 			p2 = a * v2[0] - b * v2[1];
@@ -145,7 +145,7 @@ namespace cage
 			return true;
 		}
 
-		bool axisTestZ0(Real a, Real b, Real fa, Real fb, const Vec3 &v0, const Vec3 &v1, const Vec3 &boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
+		bool axisTestZ0(Real a, Real b, Real fa, Real fb, Vec3 v0, Vec3 v1, Vec3 boxhalfsize, Real &rad, Real &min, Real &max, Real &p0, Real &p1)
 		{
 			p0 = a * v0[0] - b * v0[1];
 			p1 = a * v1[0] - b * v1[1];
@@ -165,7 +165,7 @@ namespace cage
 			return true;
 		}
 
-		bool triBoxOverlap(const Vec3 &boxcenter, const Vec3 &boxhalfsize, const Vec3 &tv0, const Vec3 &tv1, const Vec3 &tv2)
+		bool triBoxOverlap(Vec3 boxcenter, Vec3 boxhalfsize, Vec3 tv0, Vec3 tv1, Vec3 tv2)
 		{
 			Vec3 v0, v1, v2;
 			Real min, max, p0, p1, p2, rad, fex, fey, fez;
@@ -219,7 +219,7 @@ namespace cage
 		}
 	}
 
-	bool intersects(const Triangle &a, const Aabb &b)
+	bool intersects(Triangle a, Aabb b)
 	{
 		return triBoxOverlap(b.center(), b.size() * 0.5, a[0], a[1], a[2]);
 	}

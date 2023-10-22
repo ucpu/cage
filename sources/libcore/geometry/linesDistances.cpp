@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace
 	{
-		Real distanceLines(const Vec3 a1, const Vec3 &a2, const Vec3 &b1, const Vec3 &b2)
+		Real distanceLines(const Vec3 a1, const Vec3 a2, const Vec3 b1, const Vec3 b2)
 		{
 			// algorithm taken from http://geomalgorithms.com/a07-_distance.html and modified
 
@@ -39,7 +39,7 @@ namespace cage
 			return length(dP);
 		}
 
-		Real distanceSegments(const Vec3 a1, const Vec3 &a2, const Vec3 &b1, const Vec3 &b2)
+		Real distanceSegments(const Vec3 a1, const Vec3 a2, const Vec3 b1, const Vec3 b2)
 		{
 			// algorithm taken from http://geomalgorithms.com/a07-_distance.html and modified
 
@@ -118,7 +118,7 @@ namespace cage
 		}
 	}
 
-	Real distance(const Line &a, const Line &b)
+	Real distance(Line a, Line b)
 	{
 		if (a.isLine() && b.isLine())
 			return distanceLines(a.origin, a.origin + a.direction, b.origin, b.origin + b.direction);

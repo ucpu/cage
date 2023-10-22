@@ -536,13 +536,13 @@ namespace cage
 		{
 			Number data[3] = {};
 			CAGE_FORCE_INLINE V() {}
-			CAGE_FORCE_INLINE V(const Vec3 &a) : data{ a[0].value, a[1].value, a[2].value } {}
+			CAGE_FORCE_INLINE V(Vec3 a) : data{ a[0].value, a[1].value, a[2].value } {}
 			CAGE_FORCE_INLINE operator Number *() noexcept { return data; };
 			CAGE_FORCE_INLINE operator Vec3() const noexcept { return Vec3(data[0], data[1], data[2]); }
 		};
 	}
 
-	bool intersects(const Triangle &a, const Triangle &b)
+	bool intersects(Triangle a, Triangle b)
 	{
 		return tri_tri_overlap_test_3d(V(a[0]), V(a[1]), V(a[2]), V(b[0]), V(b[1]), V(b[2]));
 	}

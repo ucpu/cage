@@ -8,17 +8,17 @@ namespace cage
 {
 	namespace
 	{
-		bool parallel(const Vec3 &dir1, const Vec3 &dir2)
+		CAGE_FORCE_INLINE bool parallel(Vec3 dir1, Vec3 dir2)
 		{
 			return abs(dot(dir1, dir2)) >= 1 - 1e-5;
 		}
 
-		bool perpendicular(const Vec3 &dir1, const Vec3 &dir2)
+		CAGE_FORCE_INLINE bool perpendicular(Vec3 dir1, Vec3 dir2)
 		{
 			return abs(dot(dir1, dir2)) <= 1e-5;
 		}
 
-		Rads angle(const Vec3 &a, const Vec3 &b)
+		CAGE_FORCE_INLINE Rads angle(Vec3 a, Vec3 b)
 		{
 			CAGE_ASSERT(abs(lengthSquared(a) - 1) < 1e-4);
 			CAGE_ASSERT(abs(lengthSquared(b) - 1) < 1e-4);
@@ -26,74 +26,74 @@ namespace cage
 		}
 	}
 
-	Rads angle(const Line &a, const Line &b)
+	Rads angle(Line a, Line b)
 	{
 		return angle(a.direction, b.direction);
 	}
 
-	Rads angle(const Line &a, const Triangle &b)
+	Rads angle(Line a, Triangle b)
 	{
 		return Rads(Degs(90)) - angle(a.direction, b.normal());
 	}
 
-	Rads angle(const Line &a, const Plane &b)
+	Rads angle(Line a, Plane b)
 	{
 		return Rads(Degs(90)) - angle(a.direction, b.normal);
 	}
 
-	Rads angle(const Triangle &a, const Triangle &b)
+	Rads angle(Triangle a, Triangle b)
 	{
 		return angle(a.normal(), b.normal());
 	}
 
-	Rads angle(const Triangle &a, const Plane &b)
+	Rads angle(Triangle a, Plane b)
 	{
 		return angle(a.normal(), b.normal);
 	}
 
-	Rads angle(const Plane &a, const Plane &b)
+	Rads angle(Plane a, Plane b)
 	{
 		return angle(a.normal, b.normal);
 	}
 
-	Real distance(const Vec3 &a, const Line &b)
+	Real distance(Vec3 a, Line b)
 	{
 		CAGE_ASSERT(b.normalized());
 		return distance(closestPoint(b, a), a);
 	}
 
-	Real distance(const Vec3 &a, const Triangle &b)
+	Real distance(Vec3 a, Triangle b)
 	{
 		return distance(closestPoint(b, a), a);
 	}
 
-	Real distance(const Vec3 &a, const Plane &b)
+	Real distance(Vec3 a, Plane b)
 	{
 		return distance(closestPoint(b, a), a);
 	}
 
-	Real distance(const Vec3 &a, const Sphere &b)
+	Real distance(Vec3 a, Sphere b)
 	{
 		return max(distance(a, b.center) - b.radius, Real(0));
 	}
 
-	Real distance(const Vec3 &a, const Aabb &b)
+	Real distance(Vec3 a, Aabb b)
 	{
 		Vec3 c = max(min(a, b.b), b.a);
 		return distance(c, a);
 	}
 
-	Real distance(const Vec3 &a, const Cone &b)
+	Real distance(Vec3 a, Cone b)
 	{
 		return distance(a, closestPoint(a, b));
 	}
 
-	Real distance(const Vec3 &a, const Frustum &b)
+	Real distance(Vec3 a, const Frustum &b)
 	{
 		return distance(a, closestPoint(a, b));
 	}
 
-	Real distance(const Line &a, const Triangle &b)
+	Real distance(Line a, Triangle b)
 	{
 		Real d = Real::Infinity();
 		if (a.isSegment() || a.isRay() || a.isPoint())
@@ -113,34 +113,34 @@ namespace cage
 		return min(distance(q, a), d);
 	}
 
-	Real distance(const Line &a, const Plane &b)
+	Real distance(Line a, Plane b)
 	{
 		if (intersects(a, b))
 			return 0;
 		return min(distance(a.a(), b), distance(a.b(), b));
 	}
 
-	Real distance(const Line &a, const Sphere &b)
+	Real distance(Line a, Sphere b)
 	{
 		return max(distance(a, b.center) - b.radius, Real(0));
 	}
 
-	Real distance(const Line &a, const Aabb &b)
+	Real distance(Line a, Aabb b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Line &a, const Cone &b)
+	Real distance(Line a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Line &a, const Frustum &b)
+	Real distance(Line a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Triangle &a, const Triangle &b)
+	Real distance(Triangle a, Triangle b)
 	{
 		if (intersects(a, b))
 			return 0;
@@ -153,19 +153,19 @@ namespace cage
 		return d;
 	}
 
-	Real distance(const Triangle &a, const Plane &b)
+	Real distance(Triangle a, Plane b)
 	{
 		if (intersects(a, b))
 			return 0;
 		return min(min(distance(a[0], b), distance(a[1], b)), distance(a[2], b));
 	}
 
-	Real distance(const Triangle &a, const Sphere &b)
+	Real distance(Triangle a, Sphere b)
 	{
 		return max(distance(a, b.center) - b.radius, Real(0));
 	}
 
-	Real distance(const Triangle &a, const Aabb &b)
+	Real distance(Triangle a, Aabb b)
 	{
 		if (intersects(a, b))
 			return 0;
@@ -180,17 +180,17 @@ namespace cage
 		return d;
 	}
 
-	Real distance(const Triangle &a, const Cone &b)
+	Real distance(Triangle a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Triangle &a, const Frustum &b)
+	Real distance(Triangle a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Plane &a, const Plane &b)
+	Real distance(Plane a, Plane b)
 	{
 		CAGE_ASSERT(a.normalized() && b.normalized());
 		if (parallel(a.normal, b.normal))
@@ -198,47 +198,47 @@ namespace cage
 		return 0;
 	}
 
-	Real distance(const Plane &a, const Sphere &b)
+	Real distance(Plane a, Sphere b)
 	{
 		return max(distance(a, b.center) - b.radius, Real(0));
 	}
 
-	Real distance(const Plane &a, const Aabb &b)
+	Real distance(Plane a, Aabb b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Plane &a, const Cone &b)
+	Real distance(Plane a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Plane &a, const Frustum &b)
+	Real distance(Plane a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Sphere &a, const Sphere &b)
+	Real distance(Sphere a, Sphere b)
 	{
 		return max(distance(a.center, b.center) - a.radius - b.radius, Real(0));
 	}
 
-	Real distance(const Sphere &a, const Aabb &b)
+	Real distance(Sphere a, Aabb b)
 	{
 		return max(distance(a.center, b) - a.radius, Real(0));
 	}
 
-	Real distance(const Sphere &a, const Cone &b)
+	Real distance(Sphere a, Cone b)
 	{
 		return max(distance(a.center, b) - a.radius, Real(0));
 	}
 
-	Real distance(const Sphere &a, const Frustum &b)
+	Real distance(Sphere a, const Frustum &b)
 	{
 		return max(distance(a.center, b) - a.radius, Real(0));
 	}
 
-	Real distance(const Aabb &a, const Aabb &b)
+	Real distance(Aabb a, Aabb b)
 	{
 		// https://groups.google.com/g/comp.graphics.algorithms/c/hbu10Xc7JcY modified
 		Real res = 0;
@@ -252,22 +252,22 @@ namespace cage
 		return sqrt(res);
 	}
 
-	Real distance(const Aabb &a, const Cone &b)
+	Real distance(Aabb a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Aabb &a, const Frustum &b)
+	Real distance(Aabb a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Cone &a, const Cone &b)
+	Real distance(Cone a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Real distance(const Cone &a, const Frustum &b)
+	Real distance(Cone a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
@@ -277,32 +277,32 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Vec3 &a, const Vec3 &b)
+	bool intersects(Vec3 a, Vec3 b)
 	{
 		return distance(a, b) <= 1e-5;
 	}
 
-	bool intersects(const Vec3 &point, const Line &other)
+	bool intersects(Vec3 point, Line other)
 	{
 		return distance(point, other) <= 1e-5;
 	}
 
-	bool intersects(const Vec3 &point, const Triangle &other)
+	bool intersects(Vec3 point, Triangle other)
 	{
 		return distance(point, other) <= 1e-5;
 	}
 
-	bool intersects(const Vec3 &point, const Plane &other)
+	bool intersects(Vec3 point, Plane other)
 	{
 		return distance(point, other) <= 1e-5;
 	}
 
-	bool intersects(const Vec3 &point, const Sphere &other)
+	bool intersects(Vec3 point, Sphere other)
 	{
 		return distanceSquared(point, other.center) <= sqr(other.radius);
 	}
 
-	bool intersects(const Vec3 &point, const Aabb &other)
+	bool intersects(Vec3 point, Aabb other)
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
@@ -312,12 +312,12 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Vec3 &a, const Cone &b)
+	bool intersects(Vec3 a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Vec3 &point, const Frustum &frustum)
+	bool intersects(Vec3 point, const Frustum &frustum)
 	{
 		for (uint32 i = 0; i < 6; i++)
 		{
@@ -329,12 +329,12 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Line &a, const Line &b)
+	bool intersects(Line a, Line b)
 	{
 		return distance(a, b) <= 1e-5;
 	}
 
-	bool intersects(const Line &ray, const Triangle &tri)
+	bool intersects(Line ray, Triangle tri)
 	{
 		Vec3 v0 = tri[0];
 		Vec3 v1 = tri[1];
@@ -360,7 +360,7 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Line &a, const Plane &b)
+	bool intersects(Line a, Plane b)
 	{
 		if (a.isLine())
 		{
@@ -384,27 +384,27 @@ namespace cage
 		}
 	}
 
-	bool intersects(const Line &a, const Sphere &b)
+	bool intersects(Line a, Sphere b)
 	{
 		return distance(a, b.center) <= b.radius;
 	}
 
-	bool intersects(const Line &a, const Aabb &b)
+	bool intersects(Line a, Aabb b)
 	{
 		return intersection(a, b).valid();
 	}
 
-	bool intersects(const Line &a, const Cone &b)
+	bool intersects(Line a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Line &a, const Frustum &b)
+	bool intersects(Line a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Triangle &a, const Plane &b)
+	bool intersects(Triangle a, Plane b)
 	{
 		uint32 sigs[3] = { 0, 0, 0 };
 		for (uint32 i = 0; i < 3; i++)
@@ -414,22 +414,22 @@ namespace cage
 		return sigs[0] > 0 && sigs[2] > 0;
 	}
 
-	bool intersects(const Triangle &a, const Sphere &b)
+	bool intersects(Triangle a, Sphere b)
 	{
 		return distance(a, b.center) <= b.radius;
 	}
 
-	bool intersects(const Triangle &a, const Cone &b)
+	bool intersects(Triangle a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Triangle &a, const Frustum &b)
+	bool intersects(Triangle a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Plane &a, const Plane &b)
+	bool intersects(Plane a, Plane b)
 	{
 		CAGE_ASSERT(a.normalized() && b.normalized());
 		if (parallel(a.normal, b.normal))
@@ -437,12 +437,12 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Plane &a, const Sphere &b)
+	bool intersects(Plane a, Sphere b)
 	{
 		return distance(a, b.center) <= b.radius;
 	}
 
-	bool intersects(const Plane &a, const Aabb &b)
+	bool intersects(Plane a, Aabb b)
 	{
 		Vec3 c = b.center();
 		Vec3 e = b.size() * 0.5;
@@ -451,27 +451,27 @@ namespace cage
 		return abs(s) <= r;
 	}
 
-	bool intersects(const Plane &a, const Cone &b)
+	bool intersects(Plane a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Plane &a, const Frustum &b)
+	bool intersects(Plane a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Sphere &a, const Sphere &b)
+	bool intersects(Sphere a, Sphere b)
 	{
 		return distanceSquared(a.center, b.center) <= sqr(a.radius + b.radius);
 	}
 
-	bool intersects(const Sphere &a, const Aabb &b)
+	bool intersects(Sphere a, Aabb b)
 	{
 		return distance(a.center, b) <= a.radius;
 	}
 
-	bool intersects(const Sphere &sphere, const Cone &cone)
+	bool intersects(Sphere sphere, Cone cone)
 	{
 		// https://bartwronski.com/2017/04/13/cull-that-cone/ modified
 		const Vec3 V = sphere.center - cone.origin;
@@ -484,7 +484,7 @@ namespace cage
 		return !(angleCull || frontCull || backCull);
 	}
 
-	bool intersects(const Sphere &sphere, const Frustum &frustum)
+	bool intersects(Sphere sphere, const Frustum &frustum)
 	{
 		// https://www.flipcode.com/archives/Frustum_Culling.shtml modified
 		for (int i = 0; i < 6; i++)
@@ -496,7 +496,7 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Aabb &a, const Aabb &b)
+	bool intersects(Aabb a, Aabb b)
 	{
 		if (a.empty() || b.empty())
 			return false;
@@ -510,7 +510,7 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Aabb &box, const Frustum &frustum)
+	bool intersects(Aabb box, const Frustum &frustum)
 	{
 		const Vec3 b[] = { box.a, box.b };
 		for (uint32 i = 0; i < 6; i++)
@@ -525,17 +525,17 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Cone &a, const Cone &b)
+	bool intersects(Cone a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	bool intersects(const Cone &a, const Frustum &b)
+	bool intersects(Cone a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Vec3 intersection(const Line &ray, const Triangle &tri)
+	Vec3 intersection(Line ray, Triangle tri)
 	{
 		Vec3 v0 = tri[0];
 		Vec3 v1 = tri[1];
@@ -561,7 +561,7 @@ namespace cage
 		return ray.origin + t * ray.direction;
 	}
 
-	Vec3 intersection(const Line &a, const Plane &b)
+	Vec3 intersection(Line a, Plane b)
 	{
 		CAGE_ASSERT(a.normalized());
 		Real numer = dot(b.origin() - a.origin, b.normal);
@@ -579,7 +579,7 @@ namespace cage
 		return a.origin + a.direction * d; // single intersection
 	}
 
-	Line intersection(const Line &a, const Sphere &b)
+	Line intersection(Line a, Sphere b)
 	{
 		CAGE_ASSERT(a.normalized());
 		Vec3 l = b.center - a.origin;
@@ -597,7 +597,7 @@ namespace cage
 		return Line(a.origin, a.direction, max(a.minimum, t0), min(a.maximum, t1));
 	}
 
-	Line intersection(const Line &a, const Aabb &b)
+	Line intersection(Line a, Aabb b)
 	{
 		CAGE_ASSERT(a.normalized());
 		Real tmin = a.minimum;
@@ -615,17 +615,17 @@ namespace cage
 			return Line();
 	}
 
-	Line intersection(const Line &a, const Cone &b)
+	Line intersection(Line a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Line intersection(const Line &a, const Frustum &b)
+	Line intersection(Line a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Aabb intersection(const Aabb &a, const Aabb &b)
+	Aabb intersection(Aabb a, Aabb b)
 	{
 		if (intersects(a, b))
 			return Aabb(max(a.a, b.a), min(a.b, b.b));
@@ -633,14 +633,14 @@ namespace cage
 			return Aabb();
 	}
 
-	Vec3 closestPoint(const Vec3 &p, const Line &l)
+	Vec3 closestPoint(Vec3 p, Line l)
 	{
 		Real d = dot(p - l.origin, l.direction);
 		d = clamp(d, l.minimum, l.maximum);
 		return l.origin + l.direction * d;
 	}
 
-	Vec3 closestPoint(const Vec3 &sourcePosition, const Triangle &trig)
+	Vec3 closestPoint(Vec3 sourcePosition, Triangle trig)
 	{
 		const Vec3 p = closestPoint(Plane(trig), sourcePosition);
 		{
@@ -670,30 +670,30 @@ namespace cage
 		return pca;
 	}
 
-	Vec3 closestPoint(const Vec3 &pt, const Plane &pl)
+	Vec3 closestPoint(Vec3 pt, Plane pl)
 	{
 		CAGE_ASSERT(pl.normalized());
 		return pt - dot(pl.normal, pt - pl.origin()) * pl.normal;
 	}
 
-	Vec3 closestPoint(const Vec3 &a, const Sphere &b)
+	Vec3 closestPoint(Vec3 a, Sphere b)
 	{
 		if (distanceSquared(a, b.center) > sqr(b.radius))
 			return normalize(a - b.center) * b.radius + b.center;
 		return a;
 	}
 
-	Vec3 closestPoint(const Vec3 &a, const Aabb &b)
+	Vec3 closestPoint(Vec3 a, Aabb b)
 	{
 		return clamp(a, b.a, b.b);
 	}
 
-	Vec3 closestPoint(const Vec3 &a, const Cone &b)
+	Vec3 closestPoint(Vec3 a, Cone b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 
-	Vec3 closestPoint(const Vec3 &a, const Frustum &b)
+	Vec3 closestPoint(Vec3 a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}

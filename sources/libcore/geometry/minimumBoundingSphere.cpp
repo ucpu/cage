@@ -8,19 +8,19 @@ namespace cage
 
 	namespace
 	{
-		Sphere MbSphere(const Vec3 &O)
+		Sphere MbSphere(Vec3 O)
 		{
 			return Sphere(O, 1e-5);
 		}
 
-		Sphere MbSphere(const Vec3 &O, const Vec3 &A)
+		Sphere MbSphere(Vec3 O, Vec3 A)
 		{
 			Vec3 a = A - O;
 			Vec3 o = a * 0.5;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		Sphere MbSphere(const Vec3 &O, const Vec3 &A, const Vec3 &B)
+		Sphere MbSphere(Vec3 O, Vec3 A, Vec3 B)
 		{
 			Vec3 a = A - O;
 			Vec3 b = B - O;
@@ -29,7 +29,7 @@ namespace cage
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		Sphere MbSphere(const Vec3 &O, const Vec3 &A, const Vec3 &B, const Vec3 &C)
+		Sphere MbSphere(Vec3 O, Vec3 A, Vec3 B, Vec3 C)
 		{
 			Vec3 a = A - O;
 			Vec3 b = B - O;
@@ -39,7 +39,7 @@ namespace cage
 			return Sphere(O + o, length(o) + 1e-5);
 		}
 
-		Real d2(const Sphere &s, const Vec3 &p)
+		Real d2(Sphere s, Vec3 p)
 		{
 			return distanceSquared(p, s.center) - sqr(s.radius);
 		}
