@@ -13,6 +13,25 @@ namespace cage
 		return data;
 	}
 
+	bool Vec2::valid() const noexcept
+	{
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
+	}
+
+	Vec2i Vec2i::parse(const String &str)
+	{
+		Vec2i data;
+		String s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 2; i++)
+			data[i] = toSint32(privat::mathSplit(s));
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing ivec2");
+		return data;
+	}
+
 	Vec3 Vec3::parse(const String &str)
 	{
 		Vec3 data;
@@ -21,6 +40,25 @@ namespace cage
 			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing vec3");
+		return data;
+	}
+
+	bool Vec3::valid() const noexcept
+	{
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
+	}
+
+	Vec3i Vec3i::parse(const String &str)
+	{
+		Vec3i data;
+		String s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 3; i++)
+			data[i] = toSint32(privat::mathSplit(s));
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing ivec3");
 		return data;
 	}
 
@@ -35,26 +73,12 @@ namespace cage
 		return data;
 	}
 
-	Vec2i Vec2i::parse(const String &str)
+	bool Vec4::valid() const noexcept
 	{
-		Vec2i data;
-		String s = privat::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < 2; i++)
-			data[i] = toSint32(privat::mathSplit(s));
-		if (!s.empty())
-			CAGE_THROW_ERROR(Exception, "error parsing ivec2");
-		return data;
-	}
-
-	Vec3i Vec3i::parse(const String &str)
-	{
-		Vec3i data;
-		String s = privat::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < 3; i++)
-			data[i] = toSint32(privat::mathSplit(s));
-		if (!s.empty())
-			CAGE_THROW_ERROR(Exception, "error parsing ivec3");
-		return data;
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
 	}
 
 	Vec4i Vec4i::parse(const String &str)
@@ -79,6 +103,14 @@ namespace cage
 		return data;
 	}
 
+	bool Quat::valid() const noexcept
+	{
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
+	}
+
 	Quat::Quat(Rads pitch, Rads yaw, Rads roll)
 	{
 		Vec3 eulerAngle = Vec3(Real(pitch), Real(yaw), Real(roll)) * 0.5;
@@ -96,7 +128,7 @@ namespace cage
 		*this = normalize(*this);
 	}
 
-	Quat::Quat(const Vec3 &axis, Rads angle)
+	Quat::Quat(Vec3 axis, Rads angle)
 	{
 		Vec3 vn = normalize(axis);
 		Real sinAngle = sin(angle * 0.5);
@@ -106,7 +138,7 @@ namespace cage
 		data[3] = cos(angle * 0.5);
 	}
 
-	Quat::Quat(const Mat3 &rot)
+	Quat::Quat(Mat3 rot)
 	{
 #define a(x, y) rot[y * 3 + x]
 		Real trace = a(0, 0) + a(1, 1) + a(2, 2);
@@ -145,28 +177,28 @@ namespace cage
 #undef a
 	}
 
-	Quat::Quat(const Vec3 &forward, const Vec3 &up, bool keepUp)
+	Quat::Quat(Vec3 forward, Vec3 up, bool keepUp)
 	{
 		*this = Quat(Mat3(forward, up, keepUp));
 	}
 
-	Vec3 operator*(const Quat &l, const Vec3 &r) noexcept
+	Vec3 operator*(Quat l, Vec3 r) noexcept
 	{
 		Vec3 t = cross(Vec3(l[0], l[1], l[2]), r) * 2;
 		return r + t * l[3] + cross(Vec3(l[0], l[1], l[2]), t);
 	}
 
-	Vec3 operator*(const Vec3 &l, const Quat &r) noexcept
+	Vec3 operator*(Vec3 l, Quat r) noexcept
 	{
 		return r * l;
 	}
 
-	Quat lerp(const Quat &a, const Quat &b, Real f)
+	Quat lerp(Quat a, Quat b, Real f)
 	{
 		return normalize(a * (1 - f) + b * f);
 	}
 
-	Quat slerpPrecise(const Quat &a, const Quat &b, Real f)
+	Quat slerpPrecise(Quat a, Quat b, Real f)
 	{
 		Real dt = dot(a, b);
 		Quat c;
@@ -186,7 +218,7 @@ namespace cage
 			return lerp(a, c, f);
 	}
 
-	Quat slerp(const Quat &l, const Quat &r, Real t)
+	Quat slerp(Quat l, Quat r, Real t)
 	{
 		// https://zeux.io/2016/05/05/optimizing-slerp/
 		Real ca = dot(l, r);
@@ -198,7 +230,7 @@ namespace cage
 		return normalize(l * (1 - ot) + r * (ca > 0 ? ot : -ot));
 	}
 
-	Quat rotate(const Quat &from, const Quat &toward, Rads maxTurn)
+	Quat rotate(Quat from, Quat toward, Rads maxTurn)
 	{
 		CAGE_ASSERT(maxTurn >= Degs(0));
 		CAGE_ASSERT(maxTurn <= Degs(180));
@@ -210,14 +242,14 @@ namespace cage
 			return toward;
 	}
 
-	Rads angle(const Quat &a, const Quat &b)
+	Rads angle(Quat a, Quat b)
 	{
 		Quat q = conjugate(a) * b;
 		Vec3 v = Vec3(q.data[0], q.data[1], q.data[2]);
 		return 2 * atan2(q.data[3], length(v));
 	}
 
-	Rads pitch(const Quat &q)
+	Rads pitch(Quat q)
 	{
 		const Real qx = q[0];
 		const Real qy = q[1];
@@ -226,7 +258,7 @@ namespace cage
 		return atan2(sqr(qw) - sqr(qx) - sqr(qy) + sqr(qz), 2 * (qy * qz + qw * qx));
 	}
 
-	Rads yaw(const Quat &q)
+	Rads yaw(Quat q)
 	{
 		const Real qx = q[0];
 		const Real qy = q[1];
@@ -235,7 +267,7 @@ namespace cage
 		return asin(clamp(-2 * (qx * qz - qw * qy), -1, 1));
 	}
 
-	Rads roll(const Quat &q)
+	Rads roll(Quat q)
 	{
 		const Real qx = q[0];
 		const Real qy = q[1];
@@ -266,7 +298,7 @@ namespace cage
 		return { axis, angle };
 	}
 
-	Vec3 dominantAxis(const Vec3 &x)
+	Vec3 dominantAxis(Vec3 x)
 	{
 		if (abs(x[0]) > abs(x[1]) && abs(x[0]) > abs(x[2]))
 			return Vec3(sign(x[0]), 0, 0);

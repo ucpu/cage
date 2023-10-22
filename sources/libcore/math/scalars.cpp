@@ -9,15 +9,14 @@ namespace cage
 		return toFloat(privat::tryRemoveParentheses(str));
 	}
 
-	Degs Degs::parse(const String &str)
+	bool Real::valid() const noexcept
 	{
-		String s = privat::tryRemoveParentheses(str);
-		if (isPattern(s, "", "", "degs"))
-			s = subString(s, 0, s.length() - 4);
-		else if (isPattern(s, "", "", "deg"))
-			s = subString(s, 0, s.length() - 3);
-		s = trim(s, true, true, "\t ");
-		return Degs(toFloat(s));
+		return !std::isnan(value);
+	}
+
+	bool Real::finite() const noexcept
+	{
+		return std::isfinite(value);
 	}
 
 	Rads Rads::parse(const String &str)
@@ -29,6 +28,27 @@ namespace cage
 			s = subString(s, 0, s.length() - 3);
 		s = trim(s, true, true, "\t ");
 		return Rads(toFloat(s));
+	}
+
+	bool Rads::valid() const noexcept
+	{
+		return value.valid();
+	}
+
+	Degs Degs::parse(const String &str)
+	{
+		String s = privat::tryRemoveParentheses(str);
+		if (isPattern(s, "", "", "degs"))
+			s = subString(s, 0, s.length() - 4);
+		else if (isPattern(s, "", "", "deg"))
+			s = subString(s, 0, s.length() - 3);
+		s = trim(s, true, true, "\t ");
+		return Degs(toFloat(s));
+	}
+
+	bool Degs::valid() const noexcept
+	{
+		return value.valid();
 	}
 
 	Real sin(Rads value)
@@ -64,16 +84,6 @@ namespace cage
 	Rads atan2(Real x, Real y)
 	{
 		return (Rads)std::atan2(y.value, x.value);
-	}
-
-	bool Real::valid() const noexcept
-	{
-		return !std::isnan(value);
-	}
-
-	bool Real::finite() const noexcept
-	{
-		return std::isfinite(value);
 	}
 
 	bool valid(float a) noexcept

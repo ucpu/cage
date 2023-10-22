@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	Mat4 lookAt(const Vec3 &eye, const Vec3 &target, const Vec3 &up)
+	Mat4 lookAt(Vec3 eye, Vec3 target, Vec3 up)
 	{
 		CAGE_ASSERT(eye != target);
 		CAGE_ASSERT(up != Vec3());

@@ -284,6 +284,14 @@ namespace cage
 		sint64 code = 0;
 	};
 
+	// array size
+
+	template<class T, uintPtr N>
+	constexpr uintPtr array_size(const T (&)[N]) noexcept
+	{
+		return N;
+	}
+
 	// pointer range
 
 	namespace privat

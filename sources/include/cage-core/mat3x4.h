@@ -10,8 +10,8 @@ namespace cage
 		Vec4 data[3];
 
 		Mat3x4();
-		explicit Mat3x4(const Mat3 &in);
-		explicit Mat3x4(const Mat4 &in);
+		explicit Mat3x4(Mat3 in);
+		explicit Mat3x4(Mat4 in);
 
 		explicit operator Mat4() const;
 	};

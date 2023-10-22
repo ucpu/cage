@@ -4,18 +4,7 @@
 
 namespace cage
 {
-	Mat3 Mat3::parse(const String &str)
-	{
-		Mat3 data;
-		String s = privat::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < 9; i++)
-			data[i] = toFloat(privat::mathSplit(s));
-		if (!s.empty())
-			CAGE_THROW_ERROR(Exception, "error parsing mat3");
-		return data;
-	}
-
-	Mat3::Mat3(const Quat &other) noexcept
+	Mat3::Mat3(Quat other) noexcept
 	{
 		Real x2 = other[0] * other[0];
 		Real y2 = other[1] * other[1];
@@ -37,10 +26,8 @@ namespace cage
 		data[8] = 1.0 - 2.0 * (x2 + y2);
 	}
 
-	Mat3::Mat3(const Vec3 &forward_, const Vec3 &up_, bool keepUp)
+	Mat3::Mat3(Vec3 forward, Vec3 up, bool keepUp)
 	{
-		Vec3 forward = forward_;
-		Vec3 up = up_;
 		Vec3 right = cross(forward, up);
 		if (keepUp)
 			forward = cross(up, right);
@@ -52,7 +39,52 @@ namespace cage
 		*this = Mat3(right[0], right[1], right[2], up[0], up[1], up[2], -forward[0], -forward[1], -forward[2]);
 	}
 
-	Vec3 operator*(const Mat3 &l, const Vec3 &r) noexcept
+	Mat3 Mat3::parse(const String &str)
+	{
+		Mat3 data;
+		String s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 9; i++)
+			data[i] = toFloat(privat::mathSplit(s));
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing mat3");
+		return data;
+	}
+
+	bool Mat3::valid() const noexcept
+	{
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
+	}
+
+	Mat4::Mat4(Vec3 p, Quat q, Vec3 s) noexcept
+	{
+		// this = T * R * S
+		Mat3 r(q);
+		*this = Mat4(r[0] * s[0], r[1] * s[0], r[2] * s[0], 0, r[3] * s[1], r[4] * s[1], r[5] * s[1], 0, r[6] * s[2], r[7] * s[2], r[8] * s[2], 0, p[0], p[1], p[2], 1);
+	}
+
+	Mat4 Mat4::parse(const String &str)
+	{
+		Mat4 data;
+		String s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 16; i++)
+			data[i] = toFloat(privat::mathSplit(s));
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing mat4");
+		return data;
+	}
+
+	bool Mat4::valid() const noexcept
+	{
+		for (Real d : data)
+			if (!d.valid())
+				return false;
+		return true;
+	}
+
+	Vec3 operator*(Mat3 l, Vec3 r) noexcept
 	{
 		Vec3 res;
 		for (uint8 i = 0; i < 3; i++)
@@ -63,12 +95,12 @@ namespace cage
 		return res;
 	}
 
-	Vec3 operator*(const Vec3 &l, const Mat3 &r) noexcept
+	Vec3 operator*(Vec3 l, Mat3 r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	Mat3 operator*(const Mat3 &l, const Mat3 &r) noexcept
+	Mat3 operator*(Mat3 l, Mat3 r) noexcept
 	{
 		Mat3 res = Mat3::Zero();
 		for (uint8 x = 0; x < 3; x++)
@@ -82,7 +114,7 @@ namespace cage
 		return res;
 	}
 
-	Mat3 transpose(const Mat3 &x) noexcept
+	Mat3 transpose(Mat3 x) noexcept
 	{
 		Mat3 tmp;
 		for (uint8 a = 0; a < 3; a++)
@@ -91,7 +123,7 @@ namespace cage
 		return tmp;
 	}
 
-	Mat3 normalize(const Mat3 &x)
+	Mat3 normalize(Mat3 x)
 	{
 		Real len;
 		for (uint8 i = 0; i < 9; i++)
@@ -100,12 +132,12 @@ namespace cage
 		return x * (1 / len);
 	}
 
-	Real determinant(const Mat3 &x)
+	Real determinant(Mat3 x)
 	{
 		return x[0 * 3 + 0] * (x[1 * 3 + 1] * x[2 * 3 + 2] - x[2 * 3 + 1] * x[1 * 3 + 2]) - x[0 * 3 + 1] * (x[1 * 3 + 0] * x[2 * 3 + 2] - x[1 * 3 + 2] * x[2 * 3 + 0]) + x[0 * 3 + 2] * (x[1 * 3 + 0] * x[2 * 3 + 1] - x[1 * 3 + 1] * x[2 * 3 + 0]);
 	}
 
-	Mat3 inverse(const Mat3 &x)
+	Mat3 inverse(Mat3 x)
 	{
 		Real invdet = 1 / determinant(x);
 		Mat3 res;
@@ -121,25 +153,7 @@ namespace cage
 		return res;
 	}
 
-	Mat4 Mat4::parse(const String &str)
-	{
-		Mat4 data;
-		String s = privat::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < 16; i++)
-			data[i] = toFloat(privat::mathSplit(s));
-		if (!s.empty())
-			CAGE_THROW_ERROR(Exception, "error parsing mat4");
-		return data;
-	}
-
-	Mat4::Mat4(const Vec3 &p, const Quat &q, const Vec3 &s) noexcept
-	{
-		// this = T * R * S
-		Mat3 r(q);
-		*this = Mat4(r[0] * s[0], r[1] * s[0], r[2] * s[0], 0, r[3] * s[1], r[4] * s[1], r[5] * s[1], 0, r[6] * s[2], r[7] * s[2], r[8] * s[2], 0, p[0], p[1], p[2], 1);
-	}
-
-	Vec4 operator*(const Mat4 &l, const Vec4 &r) noexcept
+	Vec4 operator*(Mat4 l, Vec4 r) noexcept
 	{
 		Vec4 res;
 		for (uint8 i = 0; i < 4; i++)
@@ -150,12 +164,12 @@ namespace cage
 		return res;
 	}
 
-	Vec4 operator*(const Vec4 &l, const Mat4 &r) noexcept
+	Vec4 operator*(Vec4 l, Mat4 r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	Mat4 operator+(const Mat4 &l, const Mat4 &r) noexcept
+	Mat4 operator+(Mat4 l, Mat4 r) noexcept
 	{
 		Mat4 res;
 		for (uint8 i = 0; i < 16; i++)
@@ -163,7 +177,7 @@ namespace cage
 		return res;
 	}
 
-	Mat4 operator*(const Mat4 &l, const Mat4 &r) noexcept
+	Mat4 operator*(Mat4 l, Mat4 r) noexcept
 	{
 		Mat4 res;
 		for (uint8 x = 0; x < 4; x++)
@@ -178,7 +192,7 @@ namespace cage
 		return res;
 	}
 
-	Mat4 inverse(const Mat4 &x)
+	Mat4 inverse(Mat4 x)
 	{
 		Mat4 res;
 		res[0] = x[5] * x[10] * x[15] - x[5] * x[11] * x[14] - x[9] * x[6] * x[15] + x[9] * x[7] * x[14] + x[13] * x[6] * x[11] - x[13] * x[7] * x[10];
@@ -203,12 +217,12 @@ namespace cage
 		return res;
 	}
 
-	Real determinant(const Mat4 &x)
+	Real determinant(Mat4 x)
 	{
 		return x[12] * x[9] * x[6] * x[3] - x[8] * x[13] * x[6] * x[3] - x[12] * x[5] * x[10] * x[3] + x[4] * x[13] * x[10] * x[3] + x[8] * x[5] * x[14] * x[3] - x[4] * x[9] * x[14] * x[3] - x[12] * x[9] * x[2] * x[7] + x[8] * x[13] * x[2] * x[7] + x[12] * x[1] * x[10] * x[7] - x[0] * x[13] * x[10] * x[7] - x[8] * x[1] * x[14] * x[7] + x[0] * x[9] * x[14] * x[7] + x[12] * x[5] * x[2] * x[11] - x[4] * x[13] * x[2] * x[11] - x[12] * x[1] * x[6] * x[11] + x[0] * x[13] * x[6] * x[11] + x[4] * x[1] * x[14] * x[11] - x[0] * x[5] * x[14] * x[11] - x[8] * x[5] * x[2] * x[15] + x[4] * x[9] * x[2] * x[15] + x[8] * x[1] * x[6] * x[15] - x[0] * x[9] * x[6] * x[15] - x[4] * x[1] * x[10] * x[15] + x[0] * x[5] * x[10] * x[15];
 	}
 
-	Mat4 transpose(const Mat4 &x) noexcept
+	Mat4 transpose(Mat4 x) noexcept
 	{
 		Mat4 tmp;
 		for (uint8 a = 0; a < 4; a++)
@@ -217,7 +231,7 @@ namespace cage
 		return tmp;
 	}
 
-	Mat4 normalize(const Mat4 &x)
+	Mat4 normalize(Mat4 x)
 	{
 		Real len = 0;
 		for (uint8 i = 0; i < 16; i++)
@@ -228,14 +242,14 @@ namespace cage
 
 	Mat3x4::Mat3x4() : Mat3x4(Mat4()) {}
 
-	Mat3x4::Mat3x4(const Mat3 &in)
+	Mat3x4::Mat3x4(Mat3 in)
 	{
 		for (uint32 a = 0; a < 3; a++)
 			for (uint32 b = 0; b < 3; b++)
 				data[b][a] = in[a * 3 + b];
 	}
 
-	Mat3x4::Mat3x4(const Mat4 &in)
+	Mat3x4::Mat3x4(Mat4 in)
 	{
 		CAGE_ASSERT(abs(in[3]) < 1e-5 && abs(in[7]) < 1e-5 && abs(in[11]) < 1e-5 && abs(in[15] - 1) < 1e-5);
 		for (uint32 a = 0; a < 4; a++)

@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	CAGE_CORE_API Mat4 lookAt(const Vec3 &eye, const Vec3 &target, const Vec3 &up);
+	CAGE_CORE_API Mat4 lookAt(Vec3 eye, Vec3 target, Vec3 up);
 
 	// fov is along vertical axis
 	CAGE_CORE_API Mat4 perspectiveProjection(Rads fov, Real aspectRatio, Real near, Real far);
