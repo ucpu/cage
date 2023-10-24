@@ -370,13 +370,6 @@ namespace cage
 
 	namespace
 	{
-		CAGE_FORCE_INLINE bool operator<(const CollisionPair &l, const CollisionPair &r)
-		{
-			if (l.a == r.a)
-				return l.b < r.b;
-			return l.a < r.a;
-		}
-
 		template<class T, bool Transform>
 		class LazyData
 		{};
