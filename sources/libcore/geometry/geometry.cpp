@@ -1,6 +1,8 @@
 #include <cage-core/geometry.h>
 
-#if defined(_MSC_VER) && _MSC_VER > 1930
+#if defined(_MSC_VER) && _MSC_VER > 1930 && !defined(__clang__)
+	// workaround for potential bug in visual studio 2022 compiler
+	// the compiler either crashes, or generates code that produces invalid outputs from some functions
 	#pragma optimize("", off)
 #endif
 
@@ -698,7 +700,3 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "geometry");
 	}
 }
-
-#if defined(_MSC_VER) && _MSC_VER > 1930
-	#pragma optimize("", on)
-#endif
