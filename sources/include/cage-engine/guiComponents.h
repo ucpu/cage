@@ -86,8 +86,11 @@ namespace cage
 
 	enum class TooltipPlacementEnum : uint32
 	{
-		Corner, // corner of the tooltip positioned at the cursor
-		Center, // center of the whole screen
+		InvokerCorner, // corner of the tooltip positioned at corner of the invoker
+		CursorCorner, // corner of the tooltip positioned at the cursor
+		InvokerCenter, // center of the tooltip positioned at center of the invoker
+		CursorCenter, // center of the tooltip positioned at the cursor
+		ScreenCenter, // center of the tooltip positioned at center of the screen
 		Manual,
 	};
 
@@ -95,15 +98,17 @@ namespace cage
 	{
 		Entity *invoker = nullptr; // the widget for which the tooltip is to be shown
 		Entity *tooltip = nullptr; // entity automatically prepared by the GuiManager for the application to fill in
-		Vec2 anchor; // cursor position
+		Vec2 cursorPosition = Vec2::Nan();
+		Vec2 invokerPosition = Vec2::Nan();
+		Vec2 invokerSize = Vec2::Nan();
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
-		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::Corner;
+		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::InvokerCorner;
 	};
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{
-		using Tooltip = Delegate<void(const GuiTooltipConfig &)>;
-		Tooltip tooltip;
+		using TooltipCallback = Delegate<void(const GuiTooltipConfig &)>;
+		TooltipCallback tooltip;
 		uint64 delay = 500000; // duration to hold cursor over the widget before showing the tooltip
 		bool enableForDisabled = false;
 	};
@@ -287,7 +292,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_ENGINE_API GuiTooltipComponent::Tooltip guiTooltipText(const GuiTextComponent *txt);
+		CAGE_ENGINE_API GuiTooltipComponent::TooltipCallback guiTooltipText(const GuiTextComponent *txt);
 	}
 
 	namespace detail
@@ -295,7 +300,7 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
 		template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
-		GuiTooltipComponent::Tooltip guiTooltipText() noexcept
+		GuiTooltipComponent::TooltipCallback guiTooltipText() noexcept
 		{
 			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
 			return privat::guiTooltipText(&txt);

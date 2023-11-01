@@ -271,7 +271,7 @@ namespace cage
 
 	struct TooltipData : public GuiTooltipConfig
 	{
-		Entity *rect = nullptr;
+		Entity *rootTooltip = nullptr; // we need to prepend new entity with layouting to facilitate positioning of the application-designed entity
 		bool removing = false;
 	};
 

@@ -64,7 +64,7 @@ namespace cage
 			{
 				if (it.closeCondition == TooltipCloseConditionEnum::Never)
 					continue;
-				if (const HierarchyItem *h = findHierarchy(+impl->root, it.rect))
+				if (const HierarchyItem *h = findHierarchy(+impl->root, it.tooltip))
 					if (!isDescendantOf(h, k))
 						it.removing = true;
 			}
@@ -95,8 +95,8 @@ namespace cage
 			if (it.closeCondition != TooltipCloseConditionEnum::Modal)
 				continue;
 			if (candidate.first && candidate.first->hierarchy->ent == it.invoker)
-				continue; // avoid closing tooltip that would be the first to open again
-			if (const HierarchyItem *h = findHierarchy(+root, it.rect))
+				continue; // delay closing tooltip that would be the first to open again
+			if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
 			{
 				Vec2 p = h->renderPos;
 				Vec2 s = h->renderSize;
@@ -114,7 +114,7 @@ namespace cage
 				if (it.removing)
 				{
 					anyRemoved = true;
-					detail::guiDestroyEntityRecursively(it.tooltip); // this removes the corresponding item from ttData
+					detail::guiDestroyEntityRecursively(it.rootTooltip); // this also removes the corresponding item from ttData
 					break;
 				}
 			}
@@ -126,7 +126,10 @@ namespace cage
 			return;
 
 		// check new tooltip
-		if (candidate.first && candidate.second)
+		if (!candidate.first || !candidate.second)
+			return;
+
+		// create new tooltip
 		{
 			Entity *ent = candidate.first->hierarchy->ent;
 			CAGE_ASSERT(ent && ent->has<GuiTooltipComponent>());
@@ -144,9 +147,16 @@ namespace cage
 				tt.invoker = ent;
 				tt.tooltip = entityMgr->createUnique();
 				tt.tooltip->value<GuiTooltipMarkerComponent>();
-				tt.rect = tt.tooltip;
-				tt.anchor = outputMouse;
+				tt.rootTooltip = tt.tooltip;
+				tt.cursorPosition = outputMouse;
+				if (const HierarchyItem *h = findHierarchy(+root, ent))
+				{
+					tt.invokerPosition = h->renderPos;
+					tt.invokerSize = h->renderSize;
+				}
 				c.tooltip(tt);
+				CAGE_ASSERT(tt.invoker == ent);
+				CAGE_ASSERT(tt.tooltip == tt.rootTooltip);
 				if (!tt.tooltip->has<GuiWidgetStateComponent>())
 					tt.tooltip->value<GuiWidgetStateComponent>().skinIndex = 3;
 				closeAllExceptSequenceWith(this, ent);
@@ -159,53 +169,76 @@ namespace cage
 					detail::guiDestroyEntityRecursively(tt.tooltip);
 				throw;
 			}
+
+			// regenerate hierarchy with the new tooltip
+			prepareImplGeneration();
 		}
 
-		// update tooltip positions
-		prepareImplGeneration(); // regenerate the whole hierarchy to calculate the requested sizes
-		for (TooltipData &it : ttData)
+		// check if the new tooltip needs to update position
+		TooltipData &it = ttData.back();
+		if (it.placement == TooltipPlacementEnum::Manual)
+			return;
+		const HierarchyItem *h = findHierarchy(+root, it.tooltip);
+		if (!h)
+			return;
+
+		// update new tooltip position
 		{
-			if (it.placement == TooltipPlacementEnum::Manual)
-				continue;
-			if (const HierarchyItem *h = findHierarchy(+root, it.tooltip))
+			it.rootTooltip = entityMgr->createUnique();
+			it.rootTooltip->value<GuiTooltipMarkerComponent>();
+			const Vec2 s = h->requestedSize;
+			it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
+			it.tooltip->value<GuiParentComponent>().parent = it.rootTooltip->name();
+			Vec2 &al = it.rootTooltip->value<GuiLayoutAlignmentComponent>().alignment;
+			switch (it.placement)
 			{
-				Entity *f = entityMgr->createUnique();
-				f->value<GuiTooltipMarkerComponent>();
-				const Vec2 s = h->requestedSize;
-				it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
-				it.tooltip->value<GuiParentComponent>().parent = f->name();
-				Vec2 &al = f->value<GuiLayoutAlignmentComponent>().alignment;
-				switch (it.placement)
+				case TooltipPlacementEnum::InvokerCorner:
 				{
-					case TooltipPlacementEnum::Corner:
-					{
-						Vec2i corner = Vec2i(((it.anchor - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
-						CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
-						CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
-						if (corner[1] == 0)
-							corner[1] = 1; // avoid centering the tooltip under the cursor
-						al = (it.anchor - s * (Vec2(corner) * 0.5 + 0.5)) / max(outputSize - s, 1);
-						al += -17 * Vec2(corner) / outputSize;
-						break;
-					}
-					case TooltipPlacementEnum::Center:
-						al = (it.anchor - s * Vec2(0.5)) / max(outputSize - s, 1);
-						break;
-					case TooltipPlacementEnum::Manual:
-						break;
+					Vec2 corner = it.invokerPosition + it.invokerSize * 0.5 - outputSize * 0.5;
+					corner[0] = corner[0] < 0 ? 0 : 1;
+					corner[1] = corner[1] < 0 ? 0 : 1;
+					al = (it.invokerPosition + it.invokerSize * (1 - corner) - s * corner) / max(outputSize - s, 1);
+					break;
 				}
-				al = saturate(al);
-				it.tooltip = f;
+				case TooltipPlacementEnum::CursorCorner:
+				{
+					Vec2i corner = Vec2i(((it.cursorPosition - outputSize * 0.5) / (outputSize * 0.5) + 1) * 0.5 * 2.9999) - 1;
+					CAGE_ASSERT(corner[0] == -1 || corner[0] == 0 || corner[0] == 1);
+					CAGE_ASSERT(corner[1] == -1 || corner[1] == 0 || corner[1] == 1);
+					if (corner[1] == 0)
+						corner[1] = 1; // avoid centering the tooltip under the cursor
+					al = (it.cursorPosition - s * (Vec2(corner) * 0.5 + 0.5)) / max(outputSize - s, 1);
+					al += -17 * Vec2(corner) / outputSize;
+					break;
+				}
+				case TooltipPlacementEnum::InvokerCenter:
+				{
+					const Vec2 invokerCenter = it.invokerPosition + it.invokerSize * 0.5;
+					al = (invokerCenter - s * Vec2(0.5)) / max(outputSize - s, 1);
+					break;
+				}
+				case TooltipPlacementEnum::CursorCenter:
+				{
+					al = (it.cursorPosition - s * Vec2(0.5)) / max(outputSize - s, 1);
+					break;
+				}
+				case TooltipPlacementEnum::ScreenCenter:
+				{
+					al = Vec2(0.5);
+					break;
+				}
+				case TooltipPlacementEnum::Manual:
+					break;
 			}
-			it.placement = TooltipPlacementEnum::Manual;
+			al = saturate(al);
+			prepareImplGeneration(); // regenerate again to apply the changes
 		}
-		prepareImplGeneration(); // and again to apply the changes
 	}
 
 	void GuiImpl::clearTooltips()
 	{
 		while (!ttData.empty())
-			detail::guiDestroyEntityRecursively(ttData.front().tooltip);
+			detail::guiDestroyEntityRecursively(ttData.front().rootTooltip);
 	}
 
 	bool GuiImpl::tooltipRemoved(Entity *e)
@@ -228,9 +261,9 @@ namespace cage
 
 	namespace privat
 	{
-		GuiTooltipComponent::Tooltip guiTooltipText(const GuiTextComponent *txt)
+		GuiTooltipComponent::TooltipCallback guiTooltipText(const GuiTextComponent *txt)
 		{
-			GuiTooltipComponent::Tooltip tt;
+			GuiTooltipComponent::TooltipCallback tt;
 			tt.bind<const GuiTextComponent *, &guiTooltipTextImpl>(txt);
 			return tt;
 		}
