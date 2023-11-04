@@ -31,9 +31,8 @@ namespace cage
 		{
 			for (const auto &it : impl->mouseEventReceivers)
 			{
-				if (!it.pointInside(impl->outputMouse, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Tooltips))
-					continue; // this widget is not under the cursor - completely ignore and continue searching
-				return { it.widget, any(it.mask & GuiEventsTypesFlags::Tooltips) };
+				if (it.pointInside(impl->outputMouse, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Tooltips))
+					return { it.widget, any(it.mask & GuiEventsTypesFlags::Tooltips) };
 			}
 			return {};
 		}
@@ -149,8 +148,9 @@ namespace cage
 				tt.tooltip->value<GuiTooltipMarkerComponent>();
 				tt.rootTooltip = tt.tooltip;
 				tt.cursorPosition = outputMouse;
-				if (const HierarchyItem *h = findHierarchy(+root, ent))
 				{
+					CAGE_ASSERT(findHierarchy(+root, ent));
+					const HierarchyItem *h = findHierarchy(+root, ent);
 					tt.invokerPosition = h->renderPos;
 					tt.invokerSize = h->renderSize;
 				}
@@ -178,15 +178,13 @@ namespace cage
 		TooltipData &it = ttData.back();
 		if (it.placement == TooltipPlacementEnum::Manual)
 			return;
-		const HierarchyItem *h = findHierarchy(+root, it.tooltip);
-		if (!h)
-			return;
 
 		// update new tooltip position
 		{
 			it.rootTooltip = entityMgr->createUnique();
 			it.rootTooltip->value<GuiTooltipMarkerComponent>();
-			const Vec2 s = h->requestedSize;
+			CAGE_ASSERT(findHierarchy(+root, it.tooltip));
+			const Vec2 s = findHierarchy(+root, it.tooltip)->requestedSize;
 			it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
 			it.tooltip->value<GuiParentComponent>().parent = it.rootTooltip->name();
 			Vec2 &al = it.rootTooltip->value<GuiLayoutAlignmentComponent>().alignment;

@@ -234,7 +234,7 @@ namespace cage
 	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit)
 	{
 		textInvalidFormat.color = Vec3(1, 0, 0);
-		placeholderFormat.color = Vec3(0.5, 0.5, 0.5);
+		placeholderFormat.color = Vec3(0.5);
 	}
 
 	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit) {}
@@ -251,7 +251,7 @@ namespace cage
 
 	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit)
 	{
-		placeholderFormat.color = Vec3(0.5, 0.5, 0.5);
+		placeholderFormat.color = Vec3(0.5);
 		placeholderFormat.align = TextAlignEnum::Center;
 		itemsFormat.align = TextAlignEnum::Center;
 		selectedFormat.align = TextAlignEnum::Center;

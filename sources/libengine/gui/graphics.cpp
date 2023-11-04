@@ -88,7 +88,7 @@ namespace cage
 		}
 		data.cursor = item->cursor;
 		data.format.size *= item->hierarchy->impl->pointsScale;
-		const Vec2i &orr = item->hierarchy->impl->outputResolution;
+		const Vec2i orr = item->hierarchy->impl->outputResolution;
 		position *= item->hierarchy->impl->pointsScale;
 		data.transform = transpose(Mat4(2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
 		data.format.wrapWidth = size[0] * item->hierarchy->impl->pointsScale;
