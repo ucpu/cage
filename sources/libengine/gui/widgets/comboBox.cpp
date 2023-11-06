@@ -152,7 +152,6 @@ namespace cage
 		{
 			hierarchy->requestedSize = Vec2();
 			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
-			const Vec4 itemFrame = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
 			for (const auto &c : hierarchy->children)
 			{
 				c->findRequestedSize();
@@ -166,9 +165,9 @@ namespace cage
 
 		void ComboListImpl::findFinalPosition(const FinalPosition &update)
 		{
-			const Vec4 margin = skin->defaults.comboBox.baseMargin;
 			hierarchy->renderSize = hierarchy->requestedSize;
 			hierarchy->renderPos = combo->hierarchy->renderPos;
+			const Vec4 margin = skin->defaults.comboBox.baseMargin;
 			hierarchy->renderPos[0] += margin[0];
 			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - margin[3];
 			CAGE_ASSERT(hierarchy->renderSize.valid());
@@ -177,7 +176,7 @@ namespace cage
 			const Real spacing = skin->defaults.comboBox.itemSpacing;
 			Vec2 p = hierarchy->renderPos;
 			Vec2 s = hierarchy->renderSize;
-			offset(p, s, -skin->defaults.comboBox.baseMargin * Vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
+			offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
 			for (const auto &c : hierarchy->children)
 			{
 				FinalPosition u(update);
