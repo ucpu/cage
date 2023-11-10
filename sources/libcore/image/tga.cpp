@@ -163,7 +163,7 @@ namespace cage
 			des >> head.imageDescriptor;
 
 			// skip
-			des.read(head.imageDescriptor);
+			des.read(head.idLength);
 
 			const uint32 colorMapElementSize = head.colorMapEntrySize / 8;
 			const uint32 pixelSize = head.colorMapLength == 0 ? (head.bits / 8) : colorMapElementSize;
