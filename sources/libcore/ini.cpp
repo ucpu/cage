@@ -263,7 +263,13 @@ namespace cage
 		for (const String &s : source->sections())
 		{
 			for (const String &i : source->items(s))
-				set(s, i, source->get(s, i));
+			{
+				const String v = source->get(s, i);
+				if (v.empty())
+					itemRemove(s, i);
+				else
+					set(s, i, v);
+			}
 		}
 	}
 
