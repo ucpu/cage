@@ -15,8 +15,7 @@ namespace cage
 		{
 			if (item->ent && item->ent->name() == name)
 			{
-				WidgetItem *w = dynamic_cast<WidgetItem *>(+item->item);
-				if (w)
+				if (WidgetItem *w = dynamic_cast<WidgetItem *>(+item->item))
 					result.push_back(w);
 			}
 			for (auto &it : item->children)
@@ -122,7 +121,7 @@ namespace cage
 			return false;
 		for (const auto &it : mouseEventReceivers)
 		{
-			if (it.pointInside(pt, GuiEventsTypesFlags::Default | GuiEventsTypesFlags::Wheel))
+			if (it.pointInside(pt, GuiEventsTypesFlags::Wheel))
 			{
 				if (it.widget->widgetState.disabled || it.widget->mouseWheel(in.wheel, in.mods, pt))
 					return true;

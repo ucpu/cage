@@ -13,13 +13,12 @@ namespace cage
 				Vec2 position = Vec2::Nan();
 				Vec2 size = Vec2::Nan();
 				Real dotSize = Real::Nan();
+				Real wheelFactor = 0;
 				Real &value;
 				bool shown = false;
 
 				Scrollbar(Real &value) : value(value) {}
 			} scrollbars[2];
-
-			Real wheelFactor;
 
 			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(LayoutScrollbars)), scrollbars{ data.scroll[0], data.scroll[1] } { ensureItemHasLayout(hierarchy); }
 
@@ -72,7 +71,8 @@ namespace cage
 				u.renderSize = max(u.renderSize, 0);
 				u.clipSize = min(u.clipSize, update.renderSize - scw);
 				hierarchy->children[0]->findFinalPosition(u);
-				wheelFactor = 70 / (requested[1] - update.renderSize[1]);
+				for (uint32 a = 0; a < 2; a++)
+					scrollbars[a].wheelFactor = 70 / max(requested[a] - update.renderSize[a], 1);
 			}
 
 			void emit() override
@@ -161,12 +161,14 @@ namespace cage
 			{
 				if (modifiers != ModifiersFlags::None)
 					return false;
-				const Scrollbar &s = scrollbars[1];
-				if (s.shown)
+				for (Scrollbar *s : { &scrollbars[1], &scrollbars[0] })
 				{
-					s.value -= wheel * wheelFactor;
-					s.value = saturate(s.value);
-					return true;
+					if (s->shown)
+					{
+						s->value -= wheel * s->wheelFactor;
+						s->value = saturate(s->value);
+						return true;
+					}
 				}
 				return false;
 			}
