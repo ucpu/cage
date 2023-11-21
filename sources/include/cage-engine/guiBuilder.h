@@ -2,7 +2,6 @@
 #define guard_guiBuilder_sxrdk487
 
 #include <cage-core/entities.h>
-#include <cage-core/stringLiteral.h>
 #include <cage-engine/guiComponents.h>
 
 namespace cage
@@ -53,19 +52,31 @@ namespace cage
 
 			BuilderItem event(Delegate<bool(Entity *)> ev);
 			template<bool (*F)(Entity *)>
-			BuilderItem bind()
+			BuilderItem event()
 			{
 				return event(Delegate<bool(Entity *)>().bind<F>());
 			}
 			template<class D, bool (*F)(D, Entity *)>
-			BuilderItem bind(D d)
+			BuilderItem event(D d)
 			{
 				return event(Delegate<bool(Entity *)>().bind<D, F>(d));
 			}
 			template<void (*F)(), bool StopPropagation = true>
-			BuilderItem bind()
+			BuilderItem event()
 			{
 				return event(Delegate<bool(Entity *)>().bind<&privat::guiActionWrapper<F, StopPropagation>>());
+			}
+
+			BuilderItem update(Delegate<void(Entity *)> u);
+			template<void (*F)(Entity *)>
+			BuilderItem update()
+			{
+				return update(Delegate<void (*)(Entity *)>().bind<F>());
+			}
+			template<class D, void (*F)(D, Entity *)>
+			BuilderItem update(D d)
+			{
+				return update(Delegate<void (*)(Entity *)>().bind<D, F>(D));
 			}
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);

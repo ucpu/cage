@@ -58,6 +58,7 @@ namespace cage
 					{
 						s.size[a] = update.renderSize[a] - scw[a];
 						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
+						s.size = max(s.size, 0);
 						s.position[a] = update.renderPos[a];
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
 						s.dotSize = max(min(s.size[0], s.size[1]), sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
@@ -69,7 +70,7 @@ namespace cage
 						u.renderSize[a] -= scw[a];
 				}
 				u.renderSize = max(u.renderSize, 0);
-				u.clipSize = min(u.clipSize, update.renderSize - scw);
+				u.clipSize = max(min(u.clipSize, update.renderSize - scw), 0);
 				hierarchy->children[0]->findFinalPosition(u);
 				for (uint32 a = 0; a < 2; a++)
 					scrollbars[a].wheelFactor = 70 / max(requested[a] - update.renderSize[a], 1);

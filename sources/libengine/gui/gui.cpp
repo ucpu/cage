@@ -9,7 +9,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-engine/renderQueue.h>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Tooltip, TooltipMarker
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Update, Tooltip, TooltipMarker
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutSplit, LayoutTable
 
@@ -364,6 +364,7 @@ namespace cage
 	Holder<RenderQueue> GuiManager::finish()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
+		entitiesVisitor([&](Entity *e, const GuiUpdateComponent &u) { u.update(e); }, entities(), true);
 		impl->prepareImplGeneration(); // entities may have been changed -> regenerate our cache
 		findHover(impl);
 		Holder<RenderQueue> q = impl->emit();
@@ -465,18 +466,24 @@ namespace cage
 
 	namespace detail
 	{
-		void guiDestroyEntityRecursively(Entity *root)
+		void guiDestroyChildrenRecursively(Entity *root)
 		{
 			std::vector<Entity *> ents;
+			const uint32 name = root->name();
 			entitiesVisitor(
-				[&](Entity *e, const GuiParentComponent &p)
+				[name, &ents](Entity *e, const GuiParentComponent &p)
 				{
-					if (p.parent == root->name())
+					if (p.parent == name)
 						ents.push_back(e);
 				},
 				root->manager(), false);
 			for (Entity *e : ents)
 				guiDestroyEntityRecursively(e);
+		}
+
+		void guiDestroyEntityRecursively(Entity *root)
+		{
+			guiDestroyChildrenRecursively(root);
 			root->destroy();
 		}
 	}

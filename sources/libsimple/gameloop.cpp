@@ -220,7 +220,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("graphics assets");
-					while (assets->processCustomThread(EngineGraphicsDispatchThread::threadIndex))
+					while (assets->processCustomThread(1))
 						;
 				}
 				{
@@ -244,7 +244,7 @@ namespace cage
 			void graphicsDispatchFinalizeStage()
 			{
 				graphicsFinalize();
-				assets->unloadCustomThread(graphicsDispatchThread().threadIndex);
+				assets->unloadCustomThread(1);
 			}
 
 			//////////////////////////////////////
@@ -516,11 +516,11 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
 					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
 					// engine assets
-					assets->defineScheme<AssetSchemeIndexShaderProgram, MultiShaderProgram>(genAssetSchemeShaderProgram(EngineGraphicsDispatchThread::threadIndex));
-					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(EngineGraphicsDispatchThread::threadIndex));
-					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexShaderProgram, MultiShaderProgram>(genAssetSchemeShaderProgram(1));
+					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(1));
+					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(1));
 					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
-					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(1));
 					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound());
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
@@ -826,7 +826,7 @@ namespace cage
 				case StatisticsGuiModeEnum::Maximum:
 					result += buffer.max();
 					break;
-				case StatisticsGuiModeEnum::Last:
+				case StatisticsGuiModeEnum::Latest:
 					result += buffer.current();
 					break;
 				default:

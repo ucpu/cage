@@ -40,7 +40,6 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> dispatch;
 		EventDispatcher<bool()> swap;
-		static constexpr uint32 threadIndex = 1; // used for loading graphical assets
 	};
 	EngineGraphicsDispatchThread &graphicsDispatchThread();
 
@@ -90,7 +89,7 @@ namespace cage
 
 	namespace detail
 	{
-		void purgeAssetsOnDemandCache();
+		void enginePurgeAssetsOnDemandCache();
 	}
 }
 

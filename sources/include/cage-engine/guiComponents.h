@@ -77,6 +77,11 @@ namespace cage
 		Delegate<bool(Entity *)> event;
 	};
 
+	struct CAGE_ENGINE_API GuiUpdateComponent
+	{
+		Delegate<void(Entity *)> update;
+	};
+
 	enum class TooltipCloseConditionEnum : uint32
 	{
 		Instant, // closes as soon as cursor moves
@@ -297,6 +302,7 @@ namespace cage
 
 	namespace detail
 	{
+		CAGE_ENGINE_API void guiDestroyChildrenRecursively(Entity *e);
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
 		template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>

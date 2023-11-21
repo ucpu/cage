@@ -1,8 +1,6 @@
-#include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/debug.h>
 #include <cage-core/entities.h>
-#include <cage-engine/guiComponents.h>
+#include <cage-engine/guiBuilder.h>
 #include <cage-engine/window.h>
 #include <cage-simple/engine.h>
 #include <cage-simple/statisticsGui.h>
@@ -22,177 +20,70 @@ namespace cage
 		public:
 			const EventListener<bool(const GenericInput &)> keyPressListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyPress, InputKey>([this](InputKey in) { return this->keyPress(in); }));
 			const EventListener<bool(const GenericInput &)> keyRepeatListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyRepeat, InputKey>([this](InputKey in) { return this->keyRepeat(in); }));
-			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
+			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { this->update(); });
 
-			uint32 panelIndex = 0;
-			uint32 layoutIndex = 0;
-			uint32 labelIndices[40] = {};
-			const StatisticsGuiFlags *labelFlags = nullptr;
-			const char *const *labelNames = nullptr;
-			uint32 labelsCount = 0;
-			StatisticsGuiScopeEnum profilingModeOld = StatisticsGuiScopeEnum::Full;
+			uint32 rootName = 0;
+			bool needRegen = true;
 
-			StatisticsGuiImpl() {}
-
-			void nullData()
+			template<StatisticsGuiFlags Flags>
+			void generate(GuiBuilder *g, const String &name)
 			{
-				panelIndex = 0;
-				layoutIndex = 0;
-				for (uint32 i = 0; i < sizeof(labelIndices) / sizeof(labelIndices[0]); i++)
-					labelIndices[i] = 0;
-				labelFlags = nullptr;
-				labelNames = nullptr;
-				labelsCount = 0;
+				g->label().text(name);
+				g->label()
+					.text("")
+					.textAlign(TextAlignEnum::Right)
+					.update(
+						[this](Entity *e)
+						{
+							const uint64 v = engineStatisticsValues(Flags, this->statisticsMode);
+							if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
+								e->value<GuiTextComponent>().value = Stringizer() + (v / 1000) + " ms";
+							else
+								e->value<GuiTextComponent>().value = Stringizer() + v;
+						});
 			}
 
-			void generateEntities()
+			void update()
 			{
-				static constexpr StatisticsGuiFlags flagsFull[] = {
-					StatisticsGuiFlags::Control,
-					StatisticsGuiFlags::Sound,
-					StatisticsGuiFlags::GraphicsPrepare,
-					StatisticsGuiFlags::GraphicsDispatch,
-					StatisticsGuiFlags::FrameTime,
-					StatisticsGuiFlags::DrawCalls,
-					StatisticsGuiFlags::DrawPrimitives,
-					StatisticsGuiFlags::Entities,
-				};
-				static constexpr const char *namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
-					"Control: ",
-					"Sound: ",
-					"Graphics Prepare: ",
-					"Graphics Dispatch: ",
-					"Frame Time: ",
-					"Draw Calls: ",
-					"Draw Primitives: ",
-					"Entities: ",
-				};
+				if (statisticsScope != StatisticsGuiScopeEnum::None && (rootName == 0 || !engineGuiEntities()->has(rootName)))
+					needRegen = true;
+				if (statisticsScope == StatisticsGuiScopeEnum::None && rootName != 0)
+					needRegen = true;
+				if (!needRegen)
+					return;
+				needRegen = false;
 
-				static constexpr StatisticsGuiFlags flagsShort[] = {
-					StatisticsGuiFlags::Control,
-					StatisticsGuiFlags::Sound,
-					StatisticsGuiFlags::GraphicsPrepare,
-					StatisticsGuiFlags::FrameTime,
-				};
-				static constexpr const char *namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
-					"Control: ",
-					"Sound: ",
-					"Prepare: ",
-					"Frame: ",
-				};
+				if (rootName != 0 && engineGuiEntities()->has(rootName))
+					detail::guiDestroyEntityRecursively(engineGuiEntities()->get(rootName));
+				rootName = 0;
 
-				static constexpr StatisticsGuiFlags flagsFps[] = {
-					StatisticsGuiFlags::FrameTime,
-				};
-				static constexpr const char *namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
-					"Frame Time: ",
-				};
+				if (statisticsScope == StatisticsGuiScopeEnum::None)
+					return;
 
-				clearEntities();
-				profilingModeOld = statisticsScope;
-				EntityManager *g = engineGuiEntities();
-				Entity *panel = g->createUnique();
-				{
-					panelIndex = panel->name();
-					panel->value<GuiLayoutAlignmentComponent>().alignment = screenPosition;
-					panel->value<GuiWidgetStateComponent>().skinIndex = 2; // compact style
-				}
-				Entity *layout = g->createUnique();
-				{
-					layoutIndex = layout->name();
-					layout->value<GuiPanelComponent>();
-					layout->value<GuiLayoutTableComponent>();
-					layout->value<GuiParentComponent>().parent = panel->name();
-				}
-
-				static constexpr uint32 labelsPerMode[] = { sizeof(flagsFull) / sizeof(flagsFull[0]), sizeof(flagsShort) / sizeof(flagsShort[0]), sizeof(flagsFps) / sizeof(flagsFps[0]), 0 };
-				labelsCount = labelsPerMode[(uint32)statisticsScope];
-				for (uint32 i = 0; i < labelsCount * 2; i++)
-				{
-					Entity *e = g->createUnique();
-					labelIndices[i] = e->name();
-					e->value<GuiLabelComponent>();
-					GuiParentComponent &child = e->value<GuiParentComponent>();
-					child.parent = layout->name();
-					child.order = i;
-					if (i % 2 == 1)
-						e->value<GuiTextFormatComponent>().align = TextAlignEnum::Right;
-				}
+				rootName = engineGuiEntities()->createUnique()->name();
+				Holder<GuiBuilder> g = newGuiBuilder(engineGuiEntities()->get(rootName));
+				auto _1 = g->alignment(screenPosition);
+				auto _2 = g->panel().skin(2); // compact style
+				auto _3 = g->verticalTable(2);
 
 				switch (statisticsScope)
 				{
-					case StatisticsGuiScopeEnum::None:
-						labelFlags = nullptr;
-						labelNames = nullptr;
-						break;
 					case StatisticsGuiScopeEnum::Fps:
-						labelFlags = flagsFps;
-						labelNames = namesFps;
-						break;
-					case StatisticsGuiScopeEnum::Short:
-						labelFlags = flagsShort;
-						labelNames = namesShort;
+						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
 						break;
 					case StatisticsGuiScopeEnum::Full:
-						labelFlags = flagsFull;
-						labelNames = namesFull;
+						generate<StatisticsGuiFlags::Control>(+g, "Control: ");
+						generate<StatisticsGuiFlags::Sound>(+g, "Sound: ");
+						generate<StatisticsGuiFlags::GraphicsPrepare>(+g, "Graphics prepare: ");
+						generate<StatisticsGuiFlags::GraphicsDispatch>(+g, "Graphics dispatch: ");
+						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
+						generate<StatisticsGuiFlags::DrawCalls>(+g, "Draw calls: ");
+						generate<StatisticsGuiFlags::DrawPrimitives>(+g, "Draw primitives: ");
+						generate<StatisticsGuiFlags::Entities>(+g, "Entities: ");
+						break;
+					default:
 						break;
 				}
-			}
-
-			void destroyEntity(uint32 name)
-			{
-				if (name == 0)
-					return;
-				EntityManager *g = engineGuiEntities();
-				if (!g->has(name))
-					return;
-				g->get(name)->destroy();
-			}
-
-			void clearEntities()
-			{
-				destroyEntity(panelIndex);
-				destroyEntity(layoutIndex);
-				for (uint32 i = 0; i < sizeof(labelIndices) / sizeof(labelIndices[0]); i++)
-					destroyEntity(labelIndices[i]);
-				nullData();
-			}
-
-			void checkEntities()
-			{
-				EntityManager *g = engineGuiEntities();
-				const bool panelPresent = panelIndex != 0 && g->has(panelIndex);
-				const bool visible = statisticsScope != StatisticsGuiScopeEnum::None;
-				if (panelPresent != visible || profilingModeOld != statisticsScope)
-				{ // change needed
-					clearEntities();
-					if (visible)
-						generateEntities();
-				}
-			}
-
-			void setTextLabel(uint32 index, const String &value)
-			{
-				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]));
-				if (labelIndices[index] == 0 || !engineGuiEntities()->has(labelIndices[index]))
-					return;
-				Entity *timing = engineGuiEntities()->get(labelIndices[index]);
-				timing->value<GuiTextComponent>().value = value;
-			}
-
-			bool update()
-			{
-				checkEntities();
-				for (uint32 i = 0; i < labelsCount; i++)
-				{
-					setTextLabel(i * 2 + 0, labelNames[i]);
-					if (labelFlags[i] <= StatisticsGuiFlags::FrameTime)
-						setTextLabel(i * 2 + 1, Stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode) / 1000) + " ms");
-					else
-						setTextLabel(i * 2 + 1, Stringizer() + (engineStatisticsValues(labelFlags[i], statisticsMode)));
-				}
-				return false;
 			}
 
 			bool keyPress(InputKey in)
@@ -204,9 +95,6 @@ namespace cage
 						switch (statisticsScope)
 						{
 							case StatisticsGuiScopeEnum::Full:
-								statisticsScope = StatisticsGuiScopeEnum::Short;
-								break;
-							case StatisticsGuiScopeEnum::Short:
 								statisticsScope = StatisticsGuiScopeEnum::Fps;
 								break;
 							case StatisticsGuiScopeEnum::Fps:
@@ -218,6 +106,7 @@ namespace cage
 							default:
 								CAGE_THROW_CRITICAL(Exception, "invalid engine profiling scope enum");
 						}
+						needRegen = true;
 						return true;
 					}
 					if (in.key == keyToggleStatisticsMode)
@@ -228,9 +117,9 @@ namespace cage
 								statisticsMode = StatisticsGuiModeEnum::Maximum;
 								break;
 							case StatisticsGuiModeEnum::Maximum:
-								statisticsMode = StatisticsGuiModeEnum::Last;
+								statisticsMode = StatisticsGuiModeEnum::Latest;
 								break;
-							case StatisticsGuiModeEnum::Last:
+							case StatisticsGuiModeEnum::Latest:
 								statisticsMode = StatisticsGuiModeEnum::Average;
 								break;
 							default:

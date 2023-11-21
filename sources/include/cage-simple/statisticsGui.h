@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	enum class StatisticsGuiFlags
+	enum class StatisticsGuiFlags : uint32
 	{
 		None = 0,
 		Control = 1 << 0,
@@ -19,21 +19,20 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(StatisticsGuiFlags);
 
-	enum class StatisticsGuiModeEnum
+	enum class StatisticsGuiModeEnum : uint8
 	{
 		Average,
 		Maximum,
-		Last,
+		Latest,
 	};
 
 	uint64 engineStatisticsValues(StatisticsGuiFlags flags, StatisticsGuiModeEnum mode);
 
-	enum class StatisticsGuiScopeEnum
+	enum class StatisticsGuiScopeEnum : uint8
 	{
-		Full,
-		Short,
-		Fps,
 		None,
+		Fps,
+		Full,
 	};
 
 	class StatisticsGui : private Immovable

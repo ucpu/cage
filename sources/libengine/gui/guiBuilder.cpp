@@ -180,6 +180,12 @@ namespace cage
 			return *this;
 		}
 
+		BuilderItem BuilderItem::update(Delegate<void(Entity *)> u)
+		{
+			(*this)->value<GuiUpdateComponent>().update = u;
+			return *this;
+		}
+
 		BuilderItem BuilderItem::tooltip(const GuiTooltipComponent &t)
 		{
 			(*this)->value<GuiTooltipComponent>() = t;

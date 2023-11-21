@@ -156,7 +156,7 @@ namespace cage
 			{
 				for (EmitBuffer &it : emitBuffers)
 					it.pipeline.clear();
-				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to purgeAssetsOnDemandCache
+				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to enginePurgeAssetsOnDemandCache
 				renderQueue.clear();
 				engineProvisonalGraphics()->purge();
 			}
@@ -491,7 +491,7 @@ namespace cage
 
 	namespace detail
 	{
-		void purgeAssetsOnDemandCache()
+		void enginePurgeAssetsOnDemandCache()
 		{
 			graphics->onDemand->clear();
 		}
