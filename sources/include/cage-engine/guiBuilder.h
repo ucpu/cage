@@ -71,12 +71,12 @@ namespace cage
 			template<void (*F)(Entity *)>
 			BuilderItem update()
 			{
-				return update(Delegate<void (*)(Entity *)>().bind<F>());
+				return update(Delegate<void(Entity *)>().bind<F>());
 			}
 			template<class D, void (*F)(D, Entity *)>
 			BuilderItem update(D d)
 			{
-				return update(Delegate<void (*)(Entity *)>().bind<D, F>(D));
+				return update(Delegate<void(Entity *)>().bind<D, F>(d));
 			}
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
