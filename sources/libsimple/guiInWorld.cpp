@@ -43,7 +43,7 @@ namespace cage
 
 			struct Intersection
 			{
-				Vec3 wp; // world position
+				Vec3 wp = Vec3::Nan(); // world position
 				Vec2 gp; // gui position in 0*0 .. w*h
 				bool intersects = false;
 			};
@@ -51,6 +51,8 @@ namespace cage
 			CAGE_FORCE_INLINE Intersection detect(const Line &ray) const
 			{
 				Intersection res;
+				if (!ray.valid())
+					return res;
 				const Transform tr = config.renderEntity->value<TransformComponent>();
 				const Plane pl = Plane(tr.position, tr.orientation * Vec3(0, 0, -1));
 				res.wp = cage::intersection(pl, ray);
