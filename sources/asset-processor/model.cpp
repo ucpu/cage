@@ -71,18 +71,6 @@ namespace
 		return result;
 	}
 
-	void transformSkeleton(SkeletonRig *skel, const Mat3 &axesScale_)
-	{
-		const Mat4 axesScale = Mat4(axesScale_);
-		const Mat4 axesScaleInv = inverse(axesScale);
-		Mat4 gi = skel->globalInverse();
-		std::vector<Mat4> is(skel->invRests().begin(), skel->invRests().end());
-		gi = gi * axesScale;
-		for (Mat4 &t : is)
-			t = t * axesScaleInv;
-		skel->skeletonData(gi, skel->parents(), skel->bases(), is);
-	}
-
 	void transformMesh(Mesh *msh, const Mat3 &axes, const Mat3 &axesScale)
 	{
 		std::vector<Vec3> p(msh->positions().begin(), msh->positions().end());
@@ -102,9 +90,9 @@ void meshImportTransform(MeshImportResult &result)
 	const Mat3 axesScale = axes * toFloat(properties("scale"));
 	if (axesScale == Mat3())
 		return;
-	CAGE_LOG(SeverityEnum::Warning, logComponentName, Stringizer() + "using axes/scale conversion matrix: " + axesScale);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using axes/scale conversion matrix: " + axesScale);
 	if (result.skeleton)
-		transformSkeleton(+result.skeleton, axesScale);
+		CAGE_THROW_ERROR(Exception, "meshes with skeletal animations cannot have axes/scale transformation");
 	for (auto &it : result.parts)
 	{
 		transformMesh(+it.mesh, axes, axesScale);
@@ -255,12 +243,14 @@ void processModel()
 	config.trianglesOnly = toBool(properties("trianglesOnly"));
 	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
 	MeshImportResult result = meshImportFiles(inputFileName, config);
+	meshImportTransform(result);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
 	meshImportConvertToCageFormats(result);
-	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	const uint32 partIndex = meshImportSelectIndex(result);
 	const MeshImportPart &part = result.parts[partIndex];
+	if (part.mesh->verticesCount() == 0)
+		CAGE_THROW_ERROR(Exception, "the mesh is empty");
 
 	ModelDataFlags flags = ModelDataFlags::None;
 	setFlags(flags, ModelDataFlags::Uvs2, !part.mesh->uvs().empty() || !part.mesh->uvs3().empty(), "uvs");

@@ -4,13 +4,11 @@
 #include <cage-core/skeletalAnimation.h>
 
 MeshImportConfig meshImportConfig();
-void meshImportTransform(MeshImportResult &result);
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processSkeleton()
 {
 	MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
-	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	if (!result.skeleton)
 		CAGE_THROW_ERROR(Exception, "loaded no skeleton");
