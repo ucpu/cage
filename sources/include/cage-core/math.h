@@ -3,8 +3,6 @@
 
 #include <cage-core/core.h>
 
-#define GCHL_DIMENSION(TYPE) array_size(decltype(TYPE::data){})
-
 namespace cage
 {
 	struct CAGE_CORE_API Real
@@ -637,71 +635,71 @@ namespace cage
 	CAGE_CORE_API Transform operator+(Vec3 l, Transform r) noexcept;
 
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr Real &operator OPERATOR##=(Real &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Real &operator OPERATOR##=(Real & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##=(Rads &l, Rads r) noexcept \
+	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##=(Rads & l, Rads r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##=(Rads &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Rads &operator OPERATOR##=(Rads & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##=(Degs &l, Degs r) noexcept \
+	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##=(Degs & l, Degs r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##=(Degs &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Degs &operator OPERATOR##=(Degs & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##=(Vec2 &l, Vec2 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##=(Vec2 & l, Vec2 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##=(Vec2 &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec2 &operator OPERATOR##=(Vec2 & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##=(Vec3 &l, Vec3 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##=(Vec3 & l, Vec3 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##=(Vec3 &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec3 &operator OPERATOR##=(Vec3 & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##=(Vec4 &l, Vec4 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##=(Vec4 & l, Vec4 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##=(Vec4 &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec4 &operator OPERATOR##=(Vec4 & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##=(Vec2i &l, Vec2i r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##=(Vec2i & l, Vec2i r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##=(Vec2i &l, sint32 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec2i &operator OPERATOR##=(Vec2i & l, sint32 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##=(Vec3i &l, Vec3i r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##=(Vec3i & l, Vec3i r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##=(Vec3i &l, sint32 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec3i &operator OPERATOR##=(Vec3i & l, sint32 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##=(Vec4i &l, Vec4i r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##=(Vec4i & l, Vec4i r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##=(Vec4i &l, sint32 r) noexcept \
+	CAGE_FORCE_INLINE constexpr Vec4i &operator OPERATOR##=(Vec4i & l, sint32 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	}
@@ -712,11 +710,11 @@ namespace cage
 	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##=(Quat &l, Quat r) noexcept \
+	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##=(Quat & l, Quat r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##=(Quat &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Quat &operator OPERATOR##=(Quat & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	}
@@ -726,19 +724,19 @@ namespace cage
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE Mat3 &operator OPERATOR##=(Mat3 &l, Mat3 r) noexcept \
+	CAGE_FORCE_INLINE Mat3 &operator OPERATOR##=(Mat3 & l, Mat3 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE Mat4 &operator OPERATOR##=(Mat4 &l, Mat4 r) noexcept \
+	CAGE_FORCE_INLINE Mat4 &operator OPERATOR##=(Mat4 & l, Mat4 r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Mat3 &operator OPERATOR##=(Mat3 &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Mat3 &operator OPERATOR##=(Mat3 & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	} \
-	CAGE_FORCE_INLINE constexpr Mat4 &operator OPERATOR##=(Mat4 &l, Real r) noexcept \
+	CAGE_FORCE_INLINE constexpr Mat4 &operator OPERATOR##=(Mat4 & l, Real r) noexcept \
 	{ \
 		return l = l OPERATOR r; \
 	}
@@ -922,7 +920,7 @@ namespace cage
 	{ \
 		TYPE m = l * r; \
 		Real sum = 0; \
-		for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) \
+		for (uint32 i = 0; i < array_size(decltype(TYPE::data){}); i++) \
 			sum += m[i]; \
 		return sum; \
 	} \
@@ -1070,28 +1068,28 @@ namespace cage
 	CAGE_FORCE_INLINE constexpr TYPE abs(TYPE x) noexcept \
 	{ \
 		TYPE res; \
-		for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) \
+		for (uint32 i = 0; i < array_size(decltype(TYPE::data){}); i++) \
 			res[i] = abs(x[i]); \
 		return res; \
 	} \
 	CAGE_FORCE_INLINE constexpr TYPE min(TYPE l, TYPE r) noexcept \
 	{ \
 		TYPE res; \
-		for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) \
+		for (uint32 i = 0; i < array_size(decltype(TYPE::data){}); i++) \
 			res[i] = min(l[i], r[i]); \
 		return res; \
 	} \
 	CAGE_FORCE_INLINE constexpr TYPE max(TYPE l, TYPE r) noexcept \
 	{ \
 		TYPE res; \
-		for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) \
+		for (uint32 i = 0; i < array_size(decltype(TYPE::data){}); i++) \
 			res[i] = max(l[i], r[i]); \
 		return res; \
 	} \
 	CAGE_FORCE_INLINE constexpr TYPE clamp(TYPE v, TYPE a, TYPE b) noexcept \
 	{ \
 		TYPE res; \
-		for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) \
+		for (uint32 i = 0; i < array_size(decltype(TYPE::data){}); i++) \
 			res[i] = clamp(v[i], a[i], b[i]); \
 		return res; \
 	}
@@ -1315,7 +1313,5 @@ namespace cage
 		}
 	}
 }
-
-#undef GCHL_DIMENSION
 
 #endif // guard_math_h_c0d63c8d_8398_4b39_81b4_99671252b150_
