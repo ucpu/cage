@@ -52,21 +52,27 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform ArmaturesBlock
 
 struct UniLight
 {
-	vec4 color;
+	vec4 color; // linear RGB, intensity
 	vec4 position;
 	vec4 direction;
 	vec4 attenuation;
 	vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
-	ivec4 iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
+	ivec4 iparams; // lightType, shadowmapSamplerIndex
+};
+
+struct UniShadowedLight
+{
+	UniLight light;
+	mat4 shadowMat;
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
 {
 	UniLight uniLights[CAGE_SHADER_MAX_LIGHTS];
 };
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES) uniform ShadowsMatricesBlock
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWEDLIGHTS) uniform ShadowedLightsBlock
 {
-	mat4 uniShadowsMatrices[CAGE_SHADER_MAX_LIGHTS];
+	UniShadowedLight uniShadowedLights[CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D];
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_OPTIONS) uniform OptionsBlock

@@ -67,12 +67,17 @@ namespace cage
 
 		struct UniLight
 		{
-			Vec4 color;
+			Vec4 color; // linear RGB, intensity
 			Vec4 position;
 			Vec4 direction;
 			Vec4 attenuation;
 			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
-			Vec4i iparams; // lightType, shadowmapSamplerIndex, shadowmapMatrixIndex
+			Vec4i iparams; // lightType, shadowmapSamplerIndex
+		};
+
+		struct UniShadowedLight : public UniLight
+		{
+			Mat4 shadowMat;
 		};
 
 		struct UniOptions
@@ -163,12 +168,12 @@ namespace cage
 
 			std::map<Entity *, struct ShadowmapData> shadowmaps;
 			uint32 lightsCount = 0;
+			uint32 shadowedLightsCount = 0;
 		};
 
 		struct ShadowmapData : public CameraData
 		{
-			UniLight shadowUni;
-			Mat4 shadowMat;
+			UniShadowedLight shadowUni;
 			Holder<ProvisionalTexture> shadowTexture;
 			LightComponent lightComponent;
 			ShadowmapComponent shadowmapComponent;
@@ -186,7 +191,14 @@ namespace cage
 		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
 		{
 			UniLight uni;
-			uni.color = Vec4(colorGammaToLinear(lc.color) * lc.intensity, 0);
+			uni.color = Vec4(colorGammaToLinear(lc.color), lc.intensity);
+			{
+				// move as much of the energy from the intensity to the color
+				// minimizing the intensity ensures tighter bounds on fragments that need lighting
+				Real c = max(uni.color[0], max(uni.color[1], uni.color[2]));
+				c = clamp(c, 0.01, 1);
+				uni.color = Vec4(Vec3(uni.color) / c, uni.color[3] * c);
+			}
 			uni.position = model * Vec4(0, 0, 0, 1);
 			uni.direction = model * Vec4(0, 0, -1, 0);
 			uni.attenuation = lc.lightType == LightTypeEnum::Directional ? Vec4(1, 0, 0, 0) : Vec4(lc.attenuation, 0);
@@ -400,6 +412,7 @@ namespace cage
 				UniOptions uniOptions;
 				uniOptions[CAGE_SHADER_OPTIONINDEX_BONESCOUNT] = sh.mesh->bones;
 				uniOptions[CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT] = data.lightsCount;
+				uniOptions[CAGE_SHADER_OPTIONINDEX_SHADOWEDLIGHTSCOUNT] = data.shadowedLightsCount;
 				uniOptions[CAGE_SHADER_OPTIONINDEX_SKELETON] = sh.skeletal ? 1 : 0;
 				const bool ssao = !translucent && any(sh.mesh->flags & MeshRenderFlags::DepthWrite) && any(data.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 				uniOptions[CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION] = ssao ? 1 : 0;
@@ -841,75 +854,74 @@ namespace cage
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
-				std::vector<UniLight> lights;
-				std::vector<Mat4> shadows;
-				PointerRangeHolder<TextureHandle> tex2d, texCube;
-				lights.reserve(CAGE_SHADER_MAX_LIGHTS);
-				shadows.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D);
-				tex2d.reserve(CAGE_SHADER_MAX_SHADOWMAPS2D);
-				texCube.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE);
-
-				// add shadowed lights
-				for (auto &[e, sh] : data.shadowmaps)
-				{
-					if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
-						CAGE_THROW_ERROR(Exception, "too many lights");
-					if (sh.lightComponent.lightType == LightTypeEnum::Point)
-					{
-						if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
-							CAGE_THROW_ERROR(Exception, "too many shadowmaps (pointlights)");
-						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
-						sh.shadowUni.iparams[1] = texCube.size();
-						sh.shadowUni.iparams[2] = shadows.size();
-						texCube.push_back(sh.shadowTexture);
-					}
-					else
-					{
-						if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
-							CAGE_THROW_ERROR(Exception, "too many shadowmaps");
-						renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
-						sh.shadowUni.iparams[1] = tex2d.size();
-						sh.shadowUni.iparams[2] = shadows.size();
-						tex2d.push_back(sh.shadowTexture);
-					}
-					lights.push_back(sh.shadowUni);
-					shadows.push_back(sh.shadowMat);
+				{ // add unshadowed lights
+					std::vector<UniLight> lights;
+					lights.reserve(CAGE_SHADER_MAX_LIGHTS);
+					entitiesVisitor(
+						[&](Entity *e, const LightComponent &lc)
+						{
+							if ((lc.sceneMask & data.camera.sceneMask) == 0)
+								return;
+							if (e->has<ShadowmapComponent>())
+								return;
+							if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
+								CAGE_THROW_ERROR(Exception, "too many lights");
+							UniLight uni = initializeLightUni(modelTransform(e), lc);
+							uni.iparams[0] = [&]()
+							{
+								switch (lc.lightType)
+								{
+									case LightTypeEnum::Directional:
+										return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
+									case LightTypeEnum::Spot:
+										return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
+									case LightTypeEnum::Point:
+										return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
+									default:
+										CAGE_THROW_CRITICAL(Exception, "invalid light type");
+								}
+							}();
+							lights.push_back(uni);
+						},
+						+scene, false);
+					data.lightsCount = numeric_cast<uint32>(lights.size());
+					if (!lights.empty())
+						renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
 				}
 
-				// add unshadowed lights
-				entitiesVisitor(
-					[&](Entity *e, const LightComponent &lc)
+				{ // add shadowed lights
+					std::vector<UniShadowedLight> shadows;
+					PointerRangeHolder<TextureHandle> tex2d, texCube;
+					shadows.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D);
+					tex2d.reserve(CAGE_SHADER_MAX_SHADOWMAPS2D);
+					texCube.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE);
+					for (auto &[e, sh] : data.shadowmaps)
 					{
-						if ((lc.sceneMask & data.camera.sceneMask) == 0)
-							return;
-						if (e->has<ShadowmapComponent>())
-							return;
-						if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
-							CAGE_THROW_ERROR(Exception, "too many lights");
-						UniLight uni = initializeLightUni(modelTransform(e), lc);
-						uni.iparams[0] = [&]()
+						if (sh.lightComponent.lightType == LightTypeEnum::Point)
 						{
-							switch (lc.lightType)
-							{
-								case LightTypeEnum::Directional:
-									return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
-								case LightTypeEnum::Spot:
-									return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
-								case LightTypeEnum::Point:
-									return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
-								default:
-									CAGE_THROW_CRITICAL(Exception, "invalid light type");
-							}
-						}();
-						lights.push_back(uni);
-					},
-					+scene, false);
-
-				data.lightsCount = numeric_cast<uint32>(lights.size());
-				if (!lights.empty())
-					renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
-				if (!shadows.empty())
-					renderQueue->universalUniformArray<Mat4>(shadows, CAGE_SHADER_UNIBLOCK_SHADOWSMATRICES);
+							if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
+								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
+							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
+							sh.shadowUni.iparams[1] = texCube.size();
+							sh.shadowUni.iparams[2] = shadows.size();
+							texCube.push_back(sh.shadowTexture);
+						}
+						else
+						{
+							if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
+								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
+							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
+							sh.shadowUni.iparams[1] = tex2d.size();
+							sh.shadowUni.iparams[2] = shadows.size();
+							tex2d.push_back(sh.shadowTexture);
+						}
+						shadows.push_back(sh.shadowUni);
+					}
+					CAGE_ASSERT(shadows.size() == tex2d.size() + texCube.size());
+					data.shadowedLightsCount = numeric_cast<uint32>(shadows.size());
+					if (!shadows.empty())
+						renderQueue->universalUniformArray<UniShadowedLight>(shadows, CAGE_SHADER_UNIBLOCK_SHADOWEDLIGHTS);
+				}
 			}
 
 			void taskCamera(CameraData &data, uint32) const
@@ -1210,7 +1222,7 @@ namespace cage
 				data.viewProj = data.projection * data.view;
 				data.lodSelection = camera.lodSelection;
 				static constexpr Mat4 bias = Mat4(0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
-				data.shadowMat = bias * data.viewProj;
+				data.shadowUni.shadowMat = bias * data.viewProj;
 
 				{
 					const String name = Stringizer() + data.name + "_" + data.resolution;
