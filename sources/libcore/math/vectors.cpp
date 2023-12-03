@@ -2,6 +2,10 @@
 
 namespace cage
 {
+	static_assert(sizeof(Vec2) == sizeof(Vec2i));
+	static_assert(sizeof(Vec3) == sizeof(Vec3i));
+	static_assert(sizeof(Vec4) == sizeof(Vec4i));
+
 	Vec2 Vec2::parse(const String &str)
 	{
 		Vec2 data;

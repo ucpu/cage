@@ -15,7 +15,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API RenderComponent
 	{
-		Vec3 color = Vec3::Nan();
+		Vec3 color = Vec3::Nan(); // sRGB
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
 		uint32 object = 0;
@@ -46,8 +46,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API LightComponent
 	{
-		Vec3 attenuation = Vec3(0, 0, 1); // constant, linear, quadratic
-		Vec3 color = Vec3(1);
+		Vec4 attenuation = Vec4(1, 0, 1, 0); // constant, linear, quadratic, ~cubic~
+		Vec3 color = Vec3(1); // sRGB
 		Real intensity = 1;
 		Rads spotAngle = Degs(40);
 		Real spotExponent = 80;
@@ -68,7 +68,7 @@ namespace cage
 	struct CAGE_ENGINE_API TextComponent
 	{
 		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		Vec3 color = Vec3(1);
+		Vec3 color = Vec3(1); // sRGB
 		Real intensity = 1;
 		// real opacity; // todo
 		uint32 assetName = 0;
@@ -87,7 +87,7 @@ namespace cage
 
 	struct CameraCommonProperties
 	{
-		Vec3 ambientColor = Vec3();
+		Vec3 ambientColor = Vec3(); // sRGB
 		Real ambientIntensity = 1;
 		uint32 sceneMask = 1;
 	};

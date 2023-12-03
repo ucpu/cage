@@ -68,7 +68,7 @@ namespace cage
 		struct UniLight
 		{
 			Vec4 color; // linear RGB, intensity
-			Vec4 position;
+			Vec4 position; // xyz, light radius
 			Vec4 direction;
 			Vec4 attenuation;
 			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
@@ -188,6 +188,20 @@ namespace cage
 			return uni;
 		}
 
+		Real lightRadius(Real intensity, const Vec3 &attenuation)
+		{
+			if (intensity <= 1e-5)
+				return 0;
+			const Real e = intensity / CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD;
+			const Real x = attenuation[0], y = attenuation[1], z = attenuation[2];
+			if (z < 1e-5)
+			{
+				CAGE_ASSERT(y > 1e-5);
+				return (e - x) / y;
+			}
+			return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
+		}
+
 		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
 		{
 			UniLight uni;
@@ -201,11 +215,55 @@ namespace cage
 			}
 			uni.position = model * Vec4(0, 0, 0, 1);
 			uni.direction = model * Vec4(0, 0, -1, 0);
-			uni.attenuation = lc.lightType == LightTypeEnum::Directional ? Vec4(1, 0, 0, 0) : Vec4(lc.attenuation, 0);
+			if (lc.lightType == LightTypeEnum::Directional)
+			{
+				uni.attenuation = Vec4(1, 0, 0, 0);
+				uni.position[3] = Real::Infinity();
+			}
+			else
+			{
+				uni.attenuation = lc.attenuation;
+				uni.position[3] = lightRadius(uni.color[3], Vec3(uni.attenuation));
+			}
 			uni.fparams[0] = cos(lc.spotAngle * 0.5);
 			uni.fparams[1] = lc.spotExponent;
 			uni.fparams[3] = lc.ssaoFactor;
+			uni.iparams[0] = [&]()
+			{
+				switch (lc.lightType)
+				{
+					case LightTypeEnum::Directional:
+						return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
+					case LightTypeEnum::Spot:
+						return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
+					case LightTypeEnum::Point:
+						return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid light type");
+				}
+			}();
 			return uni;
+		}
+
+		void filterLightsOverLimit(std::vector<UniLight> &lights, Vec3 cameraCenter)
+		{
+			std::sort(lights.begin(), lights.end(),
+				[&](const UniLight &a, const UniLight &b)
+				{
+					const Real aa = a.position[3] / (1 + distance(Vec3(a.position), cameraCenter));
+					const Real bb = b.position[3] / (1 + distance(Vec3(b.position), cameraCenter));
+					return aa > bb;
+				});
+			if (lights.size() > CAGE_SHADER_MAX_LIGHTS)
+				lights.resize(CAGE_SHADER_MAX_LIGHTS);
+
+			// fade-out lights close to limit
+			Real intensity = 1;
+			for (uint32 i = CAGE_SHADER_MAX_LIGHTS * 85 / 100; i < lights.size(); i++)
+			{
+				intensity *= 0.9;
+				lights[i].color[3] *= intensity;
+			}
 		}
 
 		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, UniOptions &options)
@@ -857,6 +915,7 @@ namespace cage
 				{ // add unshadowed lights
 					std::vector<UniLight> lights;
 					lights.reserve(CAGE_SHADER_MAX_LIGHTS);
+					const Frustum frustum(data.viewProj);
 					entitiesVisitor(
 						[&](Entity *e, const LightComponent &lc)
 						{
@@ -864,26 +923,13 @@ namespace cage
 								return;
 							if (e->has<ShadowmapComponent>())
 								return;
-							if (lights.size() == CAGE_SHADER_MAX_LIGHTS)
-								CAGE_THROW_ERROR(Exception, "too many lights");
 							UniLight uni = initializeLightUni(modelTransform(e), lc);
-							uni.iparams[0] = [&]()
-							{
-								switch (lc.lightType)
-								{
-									case LightTypeEnum::Directional:
-										return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
-									case LightTypeEnum::Spot:
-										return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
-									case LightTypeEnum::Point:
-										return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
-									default:
-										CAGE_THROW_CRITICAL(Exception, "invalid light type");
-								}
-							}();
+							if (lc.lightType == LightTypeEnum::Point && !intersects(frustum, Sphere(Vec3(uni.position), uni.position[3])))
+								return;
 							lights.push_back(uni);
 						},
 						+scene, false);
+					filterLightsOverLimit(lights, data.transform.position);
 					data.lightsCount = numeric_cast<uint32>(lights.size());
 					if (!lights.empty())
 						renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
@@ -1239,20 +1285,7 @@ namespace cage
 					UniLight &uni = data.shadowUni;
 					uni = initializeLightUni(data.model, data.lightComponent);
 					uni.fparams[2] = e->value<ShadowmapComponent>().normalOffsetScale;
-					uni.iparams[0] = [&]()
-					{
-						switch (data.lightComponent.lightType)
-						{
-							case LightTypeEnum::Directional:
-								return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW;
-							case LightTypeEnum::Spot:
-								return CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW;
-							case LightTypeEnum::Point:
-								return CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW;
-							default:
-								CAGE_THROW_CRITICAL(Exception, "invalid light type");
-						}
-					}();
+					uni.iparams[0]++; // shadowed light type
 				}
 
 				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData &, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr), 1, tasksCurrentPriority() + 9);
