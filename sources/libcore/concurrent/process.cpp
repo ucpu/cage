@@ -67,10 +67,12 @@ namespace cage
 				detail::memset(cmd2, 0, String::MaxLength);
 				detail::memcpy(cmd2, config.command.c_str(), config.command.length());
 
-				if (!CreateProcess(nullptr, cmd2, nullptr, nullptr, TRUE, 0, nullptr, workingDir.c_str(), &siStartInfo, &piProcInfo))
-				{
+				DWORD flags = 0;
+				if (config.lowerPriority)
+					flags |= BELOW_NORMAL_PRIORITY_CLASS;
+
+				if (!CreateProcess(nullptr, cmd2, nullptr, nullptr, TRUE, flags, nullptr, workingDir.c_str(), &siStartInfo, &piProcInfo))
 					CAGE_THROW_ERROR(SystemError, "CreateProcess", GetLastError());
-				}
 
 				hProcess.handle = piProcInfo.hProcess;
 				hThread.handle = piProcInfo.hThread;
@@ -257,6 +259,13 @@ namespace cage
 					// new working directory
 					if (chdir(workingDir.c_str()) != 0)
 						CAGE_THROW_ERROR(SystemError, "failed to change working directory", errno);
+
+					// lower priority
+					if (config.lowerPriority)
+					{
+						nice(3);
+						// ignore errors here
+					}
 
 					// run child process image
 					// using bin/sh to automatically split individual arguments

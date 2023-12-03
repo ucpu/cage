@@ -19,7 +19,7 @@ namespace cage
 		bool discardStdOut = false;
 		bool discardStdErr = false;
 
-		// todo option to modify environment
+		bool lowerPriority = false;
 
 		ProcessCreateConfig(const String &command, const String &workingDirectory = "");
 	};
