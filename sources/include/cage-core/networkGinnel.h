@@ -42,7 +42,7 @@ namespace cage
 
 		void write(PointerRange<const char> buffer, uint32 channel, bool reliable);
 
-		// suggested capacity for writing, in bytes, before calling update, assuming the update is called at regular rate
+		// suggested capacity for writing, in bytes
 		sint64 capacity() const;
 
 		// update will check for received packets and flush packets pending for send

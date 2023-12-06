@@ -87,6 +87,10 @@ namespace
 				sends.push_back(std::move(b));
 			}
 			udp = newSteamConnection("localhost", 3210);
+			const SteamRemoteInfo info = udp->remoteInfo();
+			CAGE_LOG(SeverityEnum::Info, "remote info", Stringizer() + "address: " + info.address);
+			CAGE_LOG(SeverityEnum::Info, "remote info", Stringizer() + "port: " + info.port);
+			CAGE_LOG(SeverityEnum::Info, "remote info", Stringizer() + "steam user id: " + info.steamUserId);
 		}
 
 		~ClientImpl()
@@ -143,6 +147,6 @@ void testNetworkSteam()
 	for (auto &c : clients)
 		c->wait();
 #else
-	CAGE_LOG(SeverityEnum::Info, "test", "steam network was disabled at compile time");
+	CAGE_LOG(SeverityEnum::Info, "test", "steam sockets were disabled at compile time");
 #endif
 }

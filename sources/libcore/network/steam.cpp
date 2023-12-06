@@ -6,6 +6,8 @@
 		#include <steam/steamnetworkingsockets.h>
 	#endif
 
+	#include <cstring>
+
 	#include "net.h"
 
 	#include <cage-core/concurrent.h>
@@ -278,8 +280,11 @@ namespace cage
 
 			void write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 			{
+				CAGE_ASSERT(!buffer.empty());
 				CAGE_ASSERT(channel < LanesCount);
 				SteamNetworkingMessage_t *msg = utils()->AllocateMessage(buffer.size());
+				if (!msg)
+					CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
 				detail::memcpy(msg->m_pData, buffer.data(), buffer.size());
 				msg->m_conn = sock;
 				msg->m_idxLane = channel;
@@ -301,7 +306,6 @@ namespace cage
 					detail::OverrideBreakpoint ob;
 					CAGE_THROW_ERROR(Disconnected, "connection closed");
 				}
-				// todo
 			}
 
 			SteamStatistics statistics() const
@@ -337,9 +341,7 @@ namespace cage
 					socks[0] = sockets()->CreateListenSocketIP(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
 				}
 				if (config.listenSteamRelay)
-				{
 					socks[1] = sockets()->CreateListenSocketP2P(0, sizeof(cfg) / sizeof(cfg[0]), cfg);
-				}
 			}
 
 			~SteamServerImpl()
@@ -348,9 +350,7 @@ namespace cage
 				{
 					Holder<SteamConnection> c;
 					while (waiting.tryPop(c, true))
-					{
 						c.clear();
-					}
 				}
 				for (auto &it : socks)
 					sockets()->CloseListenSocket(it);
@@ -469,6 +469,20 @@ namespace cage
 	{
 		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
 		return impl->connected;
+	}
+
+	SteamRemoteInfo SteamConnection::remoteInfo() const
+	{
+		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
+		SteamNetConnectionInfo_t info = {};
+		if (!sockets()->GetConnectionInfo(impl->sock, &info))
+			CAGE_THROW_ERROR(Exception, "failed to read remote connection info");
+		SteamRemoteInfo res;
+		info.m_addrRemote.ToString(res.address.rawData(), res.address.MaxLength, false);
+		res.address.rawLength() = std::strlen(res.address.rawData());
+		res.port = info.m_addrRemote.m_port;
+		res.steamUserId = info.m_identityRemote.GetSteamID64();
+		return res;
 	}
 
 	Holder<SteamConnection> SteamServer::accept()

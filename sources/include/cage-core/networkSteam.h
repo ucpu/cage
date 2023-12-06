@@ -14,6 +14,13 @@ namespace cage
 		float quality = 0; // 0 = bad, 1 = good
 	};
 
+	struct CAGE_CORE_API SteamRemoteInfo
+	{
+		String address;
+		uint64 steamUserId = 0;
+		uint16 port = 0;
+	};
+
 	class CAGE_CORE_API SteamConnection : private Immovable
 	{
 	public:
@@ -34,6 +41,8 @@ namespace cage
 
 		// successfully completed connection initialization
 		bool established() const;
+
+		SteamRemoteInfo remoteInfo() const;
 	};
 
 	CAGE_CORE_API Holder<SteamConnection> newSteamConnection(const String &address, uint16 port);
