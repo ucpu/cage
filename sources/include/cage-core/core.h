@@ -4,14 +4,9 @@
 #include <compare>
 #include <cstdint>
 #include <limits>
+#include <source_location>
 #include <type_traits>
 #include <utility>
-
-#ifdef GCHL_DUMMY_SOURCE_LOCATION
-	#include "sourceLocationDummy.h"
-#else
-	#include <source_location>
-#endif
 
 #if defined(_MSC_VER)
 	#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))

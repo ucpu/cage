@@ -67,11 +67,9 @@ void testExceptions()
 		}
 		catch (const Exception &e)
 		{
-#ifndef GCHL_DUMMY_SOURCE_LOCATION
 			CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
 			CAGE_TEST(e.location.line() == 66); // marked line number
 			CAGE_TEST(isPattern(String(e.location.function_name()), "", "testExceptions", ""));
-#endif
 			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.severity == SeverityEnum::Error);
 		}
@@ -92,11 +90,9 @@ void testExceptions()
 			}
 			catch (const Exception &e)
 			{
-	#ifndef GCHL_DUMMY_SOURCE_LOCATION
 				CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
 				CAGE_TEST(e.location.line() == 17); // marked line number
 				CAGE_TEST(isPattern(String(e.location.function_name()), "", "assertFailureFunction", ""));
-	#endif
 				CAGE_TEST(e.severity == SeverityEnum::Critical);
 			}
 		}

@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [2019, 2022]
+        os-version: [2022]
         build-config: [debug, release, relwithdebinfo]
         build-arch: [Win32, x64]
         build-tool: ["", "-T ClangCL"]
@@ -88,21 +88,6 @@ jobs:
             install: gcc-13 g++-13
           }
         - {
-            cc: clang-12,
-            cxx: clang++-12,
-            install: clang-12
-          }
-        - {
-            cc: clang-13,
-            cxx: clang++-13,
-            install: clang-13
-          }
-        - {
-            cc: clang-14,
-            cxx: clang++-14,
-            install: clang-14
-          }
-        - {
             cc: clang-15,
             cxx: clang++-15,
             install: clang-15
@@ -173,8 +158,8 @@ jobs:
       CFLAGS: ${{ matrix.sanitizer.flags }}
       CXXFLAGS: ${{ matrix.sanitizer.flags }}
       LDFLAGS: ${{ matrix.sanitizer.flags }}
-      CC: clang
-      CXX: clang++
+      CC: clang-15
+      CXX: clang++-15
     strategy:
       fail-fast: false
       matrix:
@@ -197,7 +182,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev
+        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
 
     - name: Versions
       run: |
@@ -232,8 +217,8 @@ jobs:
     needs: Ubuntu
     runs-on: ubuntu-latest
     env:
-      CC: clang
-      CXX: clang++
+      CC: clang-15
+      CXX: clang++-15
     strategy:
       fail-fast: false
 
@@ -241,7 +226,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev
+        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
 
     - uses: actions/checkout@v3
       with:
