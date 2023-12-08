@@ -119,7 +119,7 @@ namespace cage
 
 	namespace
 	{
-		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, void const *input_buffer, void *output_buffer, long nframes);
+		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, const void *input_buffer, void *output_buffer, long nframes);
 		void stateCallbackFree(cubeb_stream *stream, void *user_ptr, cubeb_state state);
 
 		struct RingBuffer : private Immovable
@@ -319,7 +319,7 @@ namespace cage
 			}
 		};
 
-		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, void const *input_buffer, void *output_buffer, long nframes)
+		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, const void *input_buffer, void *output_buffer, long nframes)
 		{
 			((SpeakerImpl *)user_ptr)->dataCallback((float *)output_buffer, numeric_cast<uint32>(nframes));
 			return nframes;

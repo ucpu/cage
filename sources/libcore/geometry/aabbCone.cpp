@@ -64,8 +64,8 @@ namespace cage
 			static void ComputeBoxHeightInterval(Aabb box, Cone cone, Real &boxMinHeight, Real &boxMaxHeight)
 			{
 				Vec3 C = box.center(), e = box.size() / 2;
-				Vec3 const &V = cone.origin;
-				Vec3 const &U = cone.direction;
+				const Vec3 &V = cone.origin;
+				const Vec3 &U = cone.direction;
 				Vec3 CmV = C - V;
 				Real DdCmV = dot(U, CmV);
 				Real radius = e[0] * abs(U[0]) + e[1] * abs(U[1]) + e[2] * abs(U[2]);
@@ -78,7 +78,7 @@ namespace cage
 			static bool HasPointInsideCone(Vec3 P0, Vec3 P1, Cone cone)
 			{
 				const Real coneCosAngle = cos(cone.halfAngle);
-				Vec3 const &U = cone.direction;
+				const Vec3 &U = cone.direction;
 				Real g = dot(U, P0) - coneCosAngle * length(P0);
 				if (g > (Real)0)
 					return true;
@@ -111,9 +111,9 @@ namespace cage
 			{
 				for (uint16 i = 0; i < mNumCandidateEdges; ++i)
 				{
-					auto const &edge = mCandidateEdges[i];
-					Vec3 const &P0 = mVertices[edge[0]];
-					Vec3 const &P1 = mVertices[edge[1]];
+					const auto &edge = mCandidateEdges[i];
+					const Vec3 &P0 = mVertices[edge[0]];
+					const Vec3 &P1 = mVertices[edge[1]];
 					if (HasPointInsideCone(P0, P1, cone))
 						return true;
 				}
@@ -128,7 +128,7 @@ namespace cage
 			{
 				for (uint16 i = 0; i < mNumCandidateEdges; ++i)
 				{
-					auto const &edge = mCandidateEdges[i];
+					const auto &edge = mCandidateEdges[i];
 					mAdjacencyMatrix[edge[0]][edge[1]] = 0;
 					mAdjacencyMatrix[edge[1]][edge[0]] = 0;
 				}
@@ -492,7 +492,7 @@ namespace cage
 			uint16 v0 = VERTEX_MIN_BASE, v1 = VERTEX_MAX_BASE;
 			for (uint16 i = 0; i < NUM_BOX_EDGES; ++i, ++v0, ++v1)
 			{
-				auto const &edge = mEdges[i];
+				const auto &edge = mEdges[i];
 				Real p0Min = mProjectionMin[edge[0]];
 				Real p1Min = mProjectionMin[edge[1]];
 				bool clipMin = (p0Min < (Real)0 && p1Min > (Real)0) || (p0Min > (Real)0 && p1Min < (Real)0);
@@ -530,7 +530,7 @@ namespace cage
 			uint16 b0, b1, b2, b3, index;
 			for (uint16 i = 0; i < NUM_BOX_FACES; ++i)
 			{
-				auto const &face = mFaces[i];
+				const auto &face = mFaces[i];
 
 				// Process the hmin-plane.
 				p0 = mProjectionMin[face.v[0]];

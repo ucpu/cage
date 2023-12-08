@@ -4,7 +4,8 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign
 AlignEscapedNewlines: DontAlign
 AlignOperands: DontAlign
-AlignTrailingComments: false
+AlignTrailingComments:
+  Kind: Never
 AllowShortFunctionsOnASingleLine: Inline
 AlwaysBreakTemplateDeclarations: Yes
 BasedOnStyle: Microsoft
@@ -39,7 +40,8 @@ IndentWidth: 4
 Language: Cpp
 LineEnding: DeriveLF
 NamespaceIndentation: All
-#QualifierOrder: ['friend', 'static', 'inline', 'constexpr', 'const', 'volatile', 'restrict', 'type']
+QualifierAlignment: Custom
+QualifierOrder: ['friend', 'static', 'inline', 'constexpr', 'const', 'volatile', 'restrict', 'type']
 ReflowComments: false
 RequiresClausePosition: WithPreceding
 SpaceAfterTemplateKeyword: false

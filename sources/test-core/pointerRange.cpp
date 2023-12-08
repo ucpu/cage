@@ -318,7 +318,7 @@ void testPointerRange()
 
 	{
 		CAGE_TESTCASE("constexpr pointerRange from char array");
-		constexpr static const char str[] = "hello world";
+		static constexpr const char str[] = "hello world";
 		constexpr PointerRange<const char> r = str;
 		CAGE_TEST(r[0] == 'h');
 		CAGE_TEST(r.size() == 11);
@@ -326,7 +326,7 @@ void testPointerRange()
 
 	{
 		CAGE_TESTCASE("constexpr pointerRange from int array");
-		constexpr static const int arr[] = { 13, 42, 50, 20 };
+		static constexpr const int arr[] = { 13, 42, 50, 20 };
 		constexpr PointerRange<const int> data = arr;
 		CAGE_TEST(data[0] == 13);
 		CAGE_TEST(data.size() == 4);
