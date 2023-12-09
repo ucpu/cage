@@ -330,6 +330,7 @@ namespace cage
 
 		std::vector<SkinData> skins;
 
+		bool ttEnabled = false;
 		Vec2 ttLastMousePos; // points
 		Real ttMouseTraveledDistance; // points
 		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much

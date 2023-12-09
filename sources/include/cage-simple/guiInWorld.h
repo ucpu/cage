@@ -26,6 +26,7 @@ namespace cage
 		Entity *cameraEntity = nullptr; // optional
 		Vec2i resolution = Vec2i(1920, 1080);
 		Real retinaScale = 4;
+		bool tooltipsEnabled = true;
 	};
 
 	Holder<GuiInWorld> newGuiInWorld(const GuiInWorldCreateConfig &config);

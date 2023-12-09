@@ -33,6 +33,7 @@ namespace cage
 					GuiManagerCreateConfig cfg;
 					cfg.assetManager = engineAssets();
 					cfg.provisionalGraphics = +engineProvisonalGraphics();
+					cfg.tooltipsEnabled = config.tooltipsEnabled;
 					guiMan = newGuiManager(cfg);
 					guiMan->outputResolution(config.resolution);
 					guiMan->outputRetina(config.retinaScale);

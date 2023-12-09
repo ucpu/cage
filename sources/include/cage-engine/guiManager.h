@@ -41,6 +41,7 @@ namespace cage
 		AssetManager *assetManager = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 		uint32 skinsCount = 4;
+		bool tooltipsEnabled = true;
 	};
 
 	CAGE_ENGINE_API Holder<GuiManager> newGuiManager(const GuiManagerCreateConfig &config);

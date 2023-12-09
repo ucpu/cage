@@ -15,7 +15,7 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics), ttEnabled(config.tooltipsEnabled)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));

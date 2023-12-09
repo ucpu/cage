@@ -72,6 +72,9 @@ namespace cage
 
 	void GuiImpl::updateTooltips()
 	{
+		if (!ttEnabled)
+			return;
+
 		auto candidate = findTopWidget(this);
 
 		const uint64 currentTime = applicationTime();
