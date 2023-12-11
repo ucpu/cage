@@ -69,6 +69,10 @@ macro(cage_build_configuration)
 
 		# 8 MB default stack size
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+
+		# multi-process compilation
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	else()
 		# link time optimizations
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
@@ -77,11 +81,6 @@ macro(cage_build_configuration)
 		# disable some warnings
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-abi")
-	endif()
-
-	if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP") # multi-process compilation
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	endif()
 
 	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
