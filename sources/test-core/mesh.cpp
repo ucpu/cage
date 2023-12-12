@@ -488,7 +488,7 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("chunking");
+			CAGE_TESTCASE("chunking (serial)");
 			auto p = makeSphere();
 			MeshChunkingConfig cfg;
 			constexpr Real initialAreaImplicit = 4 * Real::Pi() * sqr(10);
@@ -502,7 +502,26 @@ namespace
 				CAGE_TEST(it->facesCount() > 0);
 				CAGE_TEST(it->indicesCount() > 0);
 				CAGE_TEST(it->type() == MeshTypeEnum::Triangles);
-				it->exportFile(Stringizer() + "meshes/algorithms/chunking/" + index++ + ".obj");
+				it->exportFile(Stringizer() + "meshes/algorithms/chunkingSerial/" + index++ + ".obj");
+			}
+		}
+
+		{
+			CAGE_TESTCASE("chunking (parallel)");
+			auto p = makeSphere();
+			MeshChunkingConfig cfg;
+			constexpr Real initialAreaImplicit = 4 * Real::Pi() * sqr(10);
+			constexpr Real targetChunks = 10;
+			cfg.maxSurfaceArea = initialAreaImplicit / targetChunks;
+			const auto res = meshChunking(+p, cfg);
+			CAGE_TEST(res.size() > targetChunks / 2 && res.size() < targetChunks * 2);
+			uint32 index = 0;
+			for (const auto &it : res)
+			{
+				CAGE_TEST(it->facesCount() > 0);
+				CAGE_TEST(it->indicesCount() > 0);
+				CAGE_TEST(it->type() == MeshTypeEnum::Triangles);
+				it->exportFile(Stringizer() + "meshes/algorithms/chunkingParallel/" + index++ + ".obj");
 			}
 		}
 

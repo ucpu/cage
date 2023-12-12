@@ -109,6 +109,7 @@ namespace cage
 	struct CAGE_CORE_API MeshChunkingConfig
 	{
 		Real maxSurfaceArea;
+		bool parallelize = false;
 	};
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshChunking(const Mesh *msh, const MeshChunkingConfig &config);
 

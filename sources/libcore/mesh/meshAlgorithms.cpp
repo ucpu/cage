@@ -1506,57 +1506,101 @@ namespace cage
 			return 2;
 		}
 
-		Aabb clippingBox(const Aabb &box, uint32 axis, Real pos, bool second = false)
+		Aabb clippingBox(const Aabb &box, uint32 axis, Real position, bool second)
 		{
 			const Vec3 c = box.center();
 			const Vec3 hs = box.size() * 0.6; // slightly larger box to avoid clipping due to floating point imprecisions
 			Aabb r = Aabb(c - hs, c + hs);
+			const Real s = interpolate(r.a[axis], r.b[axis], position);
 			if (second)
-				r.a[axis] = pos;
+				r.a[axis] = s;
 			else
-				r.b[axis] = pos;
+				r.b[axis] = s;
 			return r;
 		}
 
 		std::vector<Holder<Mesh>> meshChunkingImpl(Holder<Mesh> mesh, const MeshChunkingConfig &config)
 		{
 			const Real myArea = meshSurfaceArea(+mesh);
-			if (myArea > config.maxSurfaceArea)
-			{
-				const Aabb myBox = mesh->boundingBox();
-				const uint32 a = boxLongestAxis(myBox);
-				Real bestSplitPosition = 0.5;
-				Real bestSplitScore = Real::Infinity();
-				for (Real position : { 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7 })
-				{
-					Holder<Mesh> p = mesh->copy();
-					meshClip(+p, clippingBox(myBox, a, interpolate(myBox.a[a], myBox.b[a], position)));
-					const Real area = meshSurfaceArea(+p);
-					const Real score = abs(0.5 - area / myArea);
-					if (score < bestSplitScore)
-					{
-						bestSplitScore = score;
-						bestSplitPosition = position;
-					}
-				}
-				const Real split = interpolate(myBox.a[a], myBox.b[a], bestSplitPosition);
-				Holder<Mesh> m1 = mesh->copy();
-				Holder<Mesh> m2 = mesh->copy();
-				meshClip(+m1, clippingBox(myBox, a, split));
-				meshClip(+m2, clippingBox(myBox, a, split, true));
-				std::vector<Holder<Mesh>> result = meshChunkingImpl(std::move(m1), config);
-				std::vector<Holder<Mesh>> r2 = meshChunkingImpl(std::move(m2), config);
-				for (auto &it : r2)
-					result.push_back(std::move(it));
-				return result;
-			}
-			else
+			if (myArea < config.maxSurfaceArea)
 			{
 				// no more splitting is required
 				std::vector<Holder<Mesh>> result;
 				result.push_back(std::move(mesh));
 				return result;
 			}
+
+			const Aabb myBox = mesh->boundingBox();
+			const uint32 axis = boxLongestAxis(myBox);
+
+			static constexpr std::array<Real, 7> Positions = { 0.3, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7 };
+			std::array<Real, 7> areas = {};
+			{
+				std::array<Real, 7> positions = Positions;
+				for (Real &p : positions)
+					p = interpolate(myBox.a[axis], myBox.b[axis], p);
+				const auto inds = mesh->indices();
+				const auto poss = mesh->positions();
+				const uint32 cnt = numeric_cast<uint32>(inds.size() / 3);
+				for (uint32 ti = 0; ti < cnt; ti++)
+				{
+					const Triangle t = Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]);
+					const Real a = t.area();
+					const Real p = t.center()[axis];
+					for (uint32 i = 0; i < 7; i++)
+						if (p < positions[i])
+							areas[i] += a;
+				}
+			}
+
+			Real bestSplitPosition = Real::Nan();
+			{
+				Real bestSplitDiff = Real::Infinity();
+				for (uint32 i = 0; i < 7; i++)
+				{
+					const Real s = abs(0.5 - areas[i] / myArea);
+					if (s < bestSplitDiff)
+					{
+						bestSplitDiff = s;
+						bestSplitPosition = Positions[i];
+					}
+				}
+			}
+
+			struct Half
+			{
+				const Mesh *mesh = nullptr;
+				const MeshChunkingConfig *config = nullptr;
+				Aabb box;
+				mutable std::vector<Holder<Mesh>> r;
+
+				void operator()() const
+				{
+					Holder<Mesh> tmp = mesh->copy();
+					meshClip(+tmp, box);
+					r = meshChunkingImpl(std::move(tmp), *config);
+				}
+			};
+			std::array<Half, 2> halves = {};
+			for (Half &h : halves)
+			{
+				h.mesh = +mesh;
+				h.config = &config;
+			}
+			halves[0].box = clippingBox(myBox, axis, bestSplitPosition, false);
+			halves[1].box = clippingBox(myBox, axis, bestSplitPosition, true);
+
+			if (config.parallelize)
+				tasksRunBlocking<Half>("meshChunking", halves);
+			else
+			{
+				halves[0]();
+				halves[1]();
+			}
+
+			for (auto &it : halves[1].r)
+				halves[0].r.push_back(std::move(it));
+			return std::move(halves[0].r);
 		}
 	}
 
