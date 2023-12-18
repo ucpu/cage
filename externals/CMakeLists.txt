@@ -76,6 +76,7 @@ add_subdirectory(samplerate)
 add_subdirectory(bc7enc_rdo)
 add_subdirectory(avir)
 add_subdirectory(openxr-sdk)
+add_subdirectory(quickhull)
 
 option(cage_use_steam_sockets "include Game Networking Sockets library by Valve/Steam" OFF)
 if (cage_use_steam_sockets)
@@ -171,4 +172,4 @@ external_target_properties(libprotoc)
 external_target_properties(protoc)
 external_target_properties(utf8_validity)
 external_target_properties(GameNetworkingSockets_s)
-
+external_target_properties(quickhull)

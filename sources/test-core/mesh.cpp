@@ -526,6 +526,14 @@ namespace
 		}
 
 		{
+			CAGE_TESTCASE("convex hull");
+			auto p = makeDoubleBalls();
+			MeshConvexHullConfig cfg;
+			const auto hull = meshConvexHull(+p, cfg);
+			hull->exportFile("meshes/algorithms/convexHull.obj");
+		}
+
+		{
 			CAGE_TESTCASE("unwrap");
 			auto p = makeSphere();
 			uint32 res = 0;

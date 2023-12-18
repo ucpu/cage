@@ -113,6 +113,10 @@ namespace cage
 	};
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshChunking(const Mesh *msh, const MeshChunkingConfig &config);
 
+	struct CAGE_CORE_API MeshConvexHullConfig
+	{};
+	CAGE_CORE_API Holder<Mesh> meshConvexHull(const Mesh *msh, const MeshConvexHullConfig &config);
+
 	struct CAGE_CORE_API MeshUnwrapConfig
 	{
 		// charting determines which triangles will form islands
