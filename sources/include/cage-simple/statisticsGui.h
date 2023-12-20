@@ -8,14 +8,15 @@ namespace cage
 	enum class StatisticsGuiFlags : uint32
 	{
 		None = 0,
-		Control = 1 << 0,
-		Sound = 1 << 1,
-		GraphicsPrepare = 1 << 2,
-		GraphicsDispatch = 1 << 3,
-		FrameTime = 1 << 4,
-		DrawCalls = 1 << 5,
-		DrawPrimitives = 1 << 6,
-		Entities = 1 << 7,
+		Utilization = 1 << 0, // % main thread cpu use
+		Control = 1 << 1,
+		Sound = 1 << 2,
+		GraphicsPrepare = 1 << 3,
+		GraphicsDispatch = 1 << 4,
+		FrameTime = 1 << 5,
+		DrawCalls = 1 << 6,
+		DrawPrimitives = 1 << 7,
+		Entities = 1 << 8,
 	};
 	GCHL_ENUM_BITS(StatisticsGuiFlags);
 

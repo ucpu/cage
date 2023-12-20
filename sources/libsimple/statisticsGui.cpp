@@ -31,16 +31,18 @@ namespace cage
 				g->label().text(name);
 				g->label()
 					.text("")
-					.textAlign(TextAlignEnum::Right)
 					.update(
 						[this](Entity *e)
 						{
 							const uint64 v = engineStatisticsValues(Flags, this->statisticsMode);
-							if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
+							if constexpr (Flags == StatisticsGuiFlags::Utilization)
+								e->value<GuiTextComponent>().value = Stringizer() + v + " %";
+							else if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
 								e->value<GuiTextComponent>().value = Stringizer() + (v / 1000) + " ms";
 							else
 								e->value<GuiTextComponent>().value = Stringizer() + v;
-						});
+						})
+					.textAlign(TextAlignEnum::Right);
 			}
 
 			void update()
@@ -72,6 +74,7 @@ namespace cage
 						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
 						break;
 					case StatisticsGuiScopeEnum::Full:
+						generate<StatisticsGuiFlags::Utilization>(+g, "Utilization: ");
 						generate<StatisticsGuiFlags::Control>(+g, "Control: ");
 						generate<StatisticsGuiFlags::Sound>(+g, "Sound: ");
 						generate<StatisticsGuiFlags::GraphicsPrepare>(+g, "Graphics prepare: ");

@@ -85,6 +85,7 @@ void testScheduler()
 		sch->run();
 		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
 		CAGE_TEST(emptyCount >= 1 && emptyCount <= 15);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -119,6 +120,7 @@ void testScheduler()
 		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 >= 1 && cnt2 <= 3);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -158,6 +160,7 @@ void testScheduler()
 		const uint32 sum = cnt1 + cnt2;
 		CAGE_TEST(sum >= 6 && sum <= 14);
 		CAGE_TEST(cnt2 > cnt1);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -192,6 +195,7 @@ void testScheduler()
 		sch->run();
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
 		CAGE_TEST(cnt2 >= 2 && cnt2 <= 6);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -236,6 +240,7 @@ void testScheduler()
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -269,6 +274,7 @@ void testScheduler()
 		CAGE_TEST(trig->statistics().maxDuration < 50000);
 		CAGE_TEST(trig->statistics().maxDelay > 0);
 		CAGE_TEST(trig->statistics().maxDelay < 50000);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -295,6 +301,7 @@ void testScheduler()
 		}
 		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -330,6 +337,7 @@ void testScheduler()
 		sch->run();
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
 		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -365,6 +373,7 @@ void testScheduler()
 		sch->run();
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
 		CAGE_TEST(cnt2 >= 4 && cnt2 <= 9);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -391,6 +400,7 @@ void testScheduler()
 		}
 		sch->run();
 		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -436,6 +446,7 @@ void testScheduler()
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -461,6 +472,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -495,6 +507,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -529,6 +542,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{
@@ -574,6 +588,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
+		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
 	{

@@ -1,7 +1,7 @@
 #ifndef guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 #define guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 
-#include <cage-core/variableSmoothingBuffer.h>
+#include <cage-core/core.h>
 
 namespace cage
 {
@@ -27,16 +27,15 @@ namespace cage
 
 	struct ScheduleStatistics : private Immovable
 	{
-		static constexpr uint32 StatisticsWindowSize = 100;
-		VariableSmoothingBuffer<uint64, StatisticsWindowSize> delays;
-		VariableSmoothingBuffer<uint64, StatisticsWindowSize> durations;
-		uint64 totalDelay = 0;
-		uint64 totalDuration = 0;
+		uint64 latestDelay = 0;
+		uint64 latestDuration = 0;
+		uint64 avgDelay = 0;
+		uint64 avgDuration = 0;
 		uint64 maxDelay = 0;
 		uint64 maxDuration = 0;
+		uint64 totalDelay = 0;
+		uint64 totalDuration = 0;
 		uint32 runs = 0;
-
-		void add(uint64 delay, uint64 duration);
 	};
 
 	class CAGE_CORE_API Schedule : private Immovable
@@ -79,6 +78,8 @@ namespace cage
 
 		uint64 latestTime() const;
 		sint32 latestPriority() const;
+
+		float utilization() const;
 	};
 
 	CAGE_CORE_API Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config);

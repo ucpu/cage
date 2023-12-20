@@ -20,6 +20,7 @@
 #include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
+#include <cage-core/variableSmoothingBuffer.h>
 #include <cage-engine/font.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/guiManager.h>
@@ -816,28 +817,53 @@ namespace cage
 	{
 		uint64 result = 0;
 
-		const auto &add = [&](const auto &buffer)
-		{
-			switch (mode)
-			{
-				case StatisticsGuiModeEnum::Average:
-					result += buffer.smooth();
-					break;
-				case StatisticsGuiModeEnum::Maximum:
-					result += buffer.max();
-					break;
-				case StatisticsGuiModeEnum::Latest:
-					result += buffer.current();
-					break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
-			}
-		};
+		if (any(flags & StatisticsGuiFlags::Utilization))
+			result += 100 * engineData->controlScheduler->utilization();
 
-		if (any(flags & StatisticsGuiFlags::Control))
-			add(engineData->controlUpdateSchedule->statistics().durations);
-		if (any(flags & StatisticsGuiFlags::Sound))
-			add(engineData->soundUpdateSchedule->statistics().durations);
+		{
+			const auto &add = [&](const auto &s)
+			{
+				switch (mode)
+				{
+					case StatisticsGuiModeEnum::Latest:
+						result += s.latestDuration;
+						break;
+					case StatisticsGuiModeEnum::Average:
+						result += s.avgDuration;
+						break;
+					case StatisticsGuiModeEnum::Maximum:
+						result += s.maxDuration;
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+				}
+			};
+
+			if (any(flags & StatisticsGuiFlags::Control))
+				add(engineData->controlUpdateSchedule->statistics());
+
+			if (any(flags & StatisticsGuiFlags::Sound))
+				add(engineData->soundUpdateSchedule->statistics());
+		}
+
+		{
+			const auto &add = [&](const auto &buffer)
+			{
+				switch (mode)
+				{
+					case StatisticsGuiModeEnum::Average:
+						result += buffer.smooth();
+						break;
+					case StatisticsGuiModeEnum::Maximum:
+						result += buffer.max();
+						break;
+					case StatisticsGuiModeEnum::Latest:
+						result += buffer.current();
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+				}
+			};
 
 #define GCHL_GENERATE(NAME) \
 	if (any(flags & StatisticsGuiFlags::NAME)) \
@@ -845,8 +871,9 @@ namespace cage
 		auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
 		add(buffer); \
 	}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GraphicsPrepare, GraphicsDispatch, FrameTime, DrawCalls, DrawPrimitives, Entities));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GraphicsPrepare, GraphicsDispatch, FrameTime, DrawCalls, DrawPrimitives, Entities));
 #undef GCHL_GENERATE
+		}
 
 		return result;
 	}
