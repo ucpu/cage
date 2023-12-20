@@ -35,7 +35,9 @@ namespace cage
 	};
 
 	struct CAGE_CORE_API SpatialStructureCreateConfig
-	{};
+	{
+		uint32 reserve = 0;
+	};
 
 	CAGE_CORE_API Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config);
 	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(Holder<const SpatialStructure> data);

@@ -172,16 +172,18 @@ namespace cage
 			std::atomic<bool> dirty = false;
 			std::vector<Node> nodes;
 			std::vector<ItemBase *> indices;
-			static constexpr uint32 binsCount = 10;
-			std::array<FastBox, binsCount> leftBinBoxes = {};
-			std::array<FastBox, binsCount> rightBinBoxes = {};
-			std::array<uint32, binsCount> leftBinCounts = {};
+			static constexpr uint32 BinsCount = 10;
+			std::array<FastBox, BinsCount> leftBinBoxes = {};
+			std::array<FastBox, BinsCount> rightBinBoxes = {};
+			std::array<uint32, BinsCount> leftBinCounts = {};
 
 			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsArena(&itemsPool)
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(FastBox)) == 0);
+				itemsPool.colony.reserve(config.reserve);
+				itemsTable.reserve(config.reserve);
 			}
 
 			~SpatialDataImpl() { clear(); }
@@ -204,30 +206,30 @@ namespace cage
 						continue; // the box is flat (along this axis)
 					leftBinBoxes = {};
 					leftBinCounts = {};
-					const Real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
+					const Real binSizeInv = BinsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
 					const Real planeOffset = node.box.low.v4[axis];
 					for (sint32 i = node.a(), et = node.a() + node.b(); i != et; i++)
 					{
 						ItemBase *item = indices[i];
 						uint32 binIndex = numeric_cast<uint32>((item->center[axis] - planeOffset) * binSizeInv);
-						CAGE_ASSERT(binIndex <= binsCount);
-						binIndex = min(binIndex, binsCount - 1);
+						CAGE_ASSERT(binIndex <= BinsCount);
+						binIndex = min(binIndex, BinsCount - 1);
 						leftBinBoxes[binIndex] += item->box;
 						leftBinCounts[binIndex]++;
 					}
 					// right to left sweep
-					rightBinBoxes[binsCount - 1] = leftBinBoxes[binsCount - 1];
-					for (uint32 i = binsCount - 1; i > 0; i--)
+					rightBinBoxes[BinsCount - 1] = leftBinBoxes[BinsCount - 1];
+					for (uint32 i = BinsCount - 1; i > 0; i--)
 						rightBinBoxes[i - 1] = rightBinBoxes[i] + leftBinBoxes[i - 1];
 					// left to right sweep
-					for (uint32 i = 1; i < binsCount; i++)
+					for (uint32 i = 1; i < BinsCount; i++)
 					{
 						leftBinBoxes[i] += leftBinBoxes[i - 1];
 						leftBinCounts[i] += leftBinCounts[i - 1];
 					}
-					CAGE_ASSERT(leftBinCounts[binsCount - 1] == node.b());
+					CAGE_ASSERT(leftBinCounts[BinsCount - 1] == node.b());
 					// compute sah
-					for (uint32 i = 0; i < binsCount - 1; i++)
+					for (uint32 i = 0; i < BinsCount - 1; i++)
 					{
 						const Real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
 						const Real sahR = rightBinBoxes[i + 1].surface() * (node.b() - leftBinCounts[i]);
@@ -249,10 +251,10 @@ namespace cage
 				if (bestItemsCount == 0)
 					return; // leaf node: split cannot separate any objects (they are probably all at one position)
 				CAGE_ASSERT(bestAxis < 3);
-				CAGE_ASSERT(bestSplit + 1 < binsCount); // splits count is one less than bins count
+				CAGE_ASSERT(bestSplit + 1 < BinsCount); // splits count is one less than bins count
 				CAGE_ASSERT(bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
-					const Real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
+					const Real binSizeInv = BinsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					const Real planeOffset = node.box.low.v4[bestAxis];
 					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()),
 						[&](const ItemBase *item)
@@ -456,7 +458,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		remove(name);
+		impl->dirty = true;
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Line>>(name, other);
 	}
 
@@ -465,7 +467,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		remove(name);
+		impl->dirty = true;
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Triangle>>(name, other);
 	}
 
@@ -474,7 +476,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		remove(name);
+		impl->dirty = true;
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Sphere>>(name, other);
 	}
 
@@ -483,7 +485,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		remove(name);
+		impl->dirty = true;
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Aabb>>(name, other);
 	}
 
@@ -491,7 +493,7 @@ namespace cage
 	{
 		CAGE_ASSERT(other.valid());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		remove(name);
+		impl->dirty = true;
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Cone>>(name, other);
 	}
 
