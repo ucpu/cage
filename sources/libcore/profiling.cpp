@@ -114,7 +114,7 @@ namespace cage
 
 				void updateConnected()
 				{
-					ProfilingScope profiling("connected");
+					const ProfilingScope profiling("connected");
 
 					struct NamesMap
 					{
@@ -192,7 +192,7 @@ namespace cage
 
 				void updateConnecting()
 				{
-					ProfilingScope profiling("connecting");
+					const ProfilingScope profiling("connecting");
 
 					if (server)
 					{
@@ -215,7 +215,7 @@ namespace cage
 								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
 								const String baseUrl = pathWorkingDir() + "/profiling.htm";
 								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
-								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " " + url);
+								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " \"" + url + "\"");
 								cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
 								client = newProcess(cfg);
 							}
@@ -230,7 +230,7 @@ namespace cage
 
 				void updateDisabled()
 				{
-					ProfilingScope profiling("disabled");
+					const ProfilingScope profiling("disabled");
 					server.clear();
 					connection.clear();
 					client.clear();
