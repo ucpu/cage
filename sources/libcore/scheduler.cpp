@@ -15,9 +15,8 @@ namespace cage
 	{
 		struct ScheduleStatisticsImpl : public ScheduleStatistics
 		{
-			static constexpr uint32 StatisticsWindowSize = 100;
-			VariableSmoothingBuffer<uint64, StatisticsWindowSize> delays;
-			VariableSmoothingBuffer<uint64, StatisticsWindowSize> durations;
+			VariableSmoothingBuffer<uint64, 30> delays;
+			VariableSmoothingBuffer<uint64, 30> durations;
 
 			void add(uint64 delay, uint64 duration)
 			{
@@ -60,7 +59,8 @@ namespace cage
 		class SchedulerImpl : public Scheduler
 		{
 		public:
-			VariableSmoothingBuffer<uint64, ScheduleStatisticsImpl::StatisticsWindowSize> utilUse, utilSleep;
+			VariableSmoothingBuffer<uint64, 100> utilUse, utilSleep;
+			VariableSmoothingBuffer<float, 50> utilSmooth;
 			const SchedulerCreateConfig conf;
 			std::vector<Holder<ScheduleImpl>> scheds;
 			std::vector<ScheduleImpl *> tmp;
@@ -69,7 +69,6 @@ namespace cage
 			uint64 t = 0; // current time for scheduling events
 			uint64 lastTime = 0; // time at which the last schedule was run
 			sint32 lastPriority = 0;
-			float utilization = 0;
 			std::atomic<bool> stopping = false;
 			bool lockstepApi = false;
 			bool lockstepEffective = false;
@@ -78,12 +77,14 @@ namespace cage
 
 			void reset()
 			{
+				utilUse.seed(0);
+				utilSleep.seed(0);
+				utilSmooth.seed(0);
 				realTimer->reset();
 				realDrift = 0;
 				t = 0;
 				lastTime = 0;
 				lastPriority = 0;
-				utilization = 0;
 				for (const auto &it : scheds)
 				{
 					it->sched = m;
@@ -163,7 +164,8 @@ namespace cage
 			{
 				utilUse.add(duration * !slept);
 				utilSleep.add(duration * slept);
-				utilization = (double(utilUse.sum()) + 1) / double(utilUse.sum() + utilSleep.sum() + 1);
+				const float util = (double(utilUse.sum()) + 1) / double(utilUse.sum() + utilSleep.sum() + 1);
+				utilSmooth.add(util);
 			}
 
 			void goSleep()
@@ -417,7 +419,7 @@ namespace cage
 	float Scheduler::utilization() const
 	{
 		const SchedulerImpl *impl = (const SchedulerImpl *)this;
-		return impl->utilization;
+		return impl->utilSmooth.max();
 	}
 
 	Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config)
