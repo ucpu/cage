@@ -1,6 +1,26 @@
 #include "main.h"
 
 #include <cage-core/flatSet.h>
+#include <cage-core/string.h>
+
+namespace
+{
+	constexpr uint32 testConstexpr()
+	{
+		FlatSet<String, StringComparatorFast> s = { "hello", "there" };
+		s.insert("Obi-Wan");
+		s.insert("Kenobi");
+		s.insert("says");
+		s.insert("hello");
+		s.insert("how");
+		s.insert("are");
+		s.insert("you");
+		s.insert("you");
+		s.insert("you");
+		s.insert("are");
+		return s.size();
+	}
+}
 
 void testFlatSet()
 {
@@ -171,5 +191,12 @@ void testFlatSet()
 		s.erase(s.begin() + 1, s.begin() + 2);
 		CAGE_TEST(s.size() == 2);
 		CAGE_TEST(s == FlatSet<uint32>({ 13, 1024 }));
+	}
+
+	{
+		CAGE_TESTCASE("constexpr");
+		constexpr const uint32 a = testConstexpr();
+		uint32 b = testConstexpr();
+		CAGE_TEST(a == b);
 	}
 }

@@ -229,7 +229,7 @@ namespace cage
 		template<uint32 N>
 		struct StringComparatorFastBase
 		{
-			bool operator()(const StringBase<N> &a, const StringBase<N> &b) const noexcept
+			constexpr bool operator()(const StringBase<N> &a, const StringBase<N> &b) const noexcept
 			{
 				if (a.length() == b.length())
 					return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
