@@ -144,6 +144,13 @@ cage_ide_category(cage-test-assets cage/tests)
 cage_ide_sort_files(cage-test-assets)
 cage_ide_working_dir_in_place(cage-test-assets)
 
+file(GLOB_RECURSE cage-test-entities-sources "test-entities/*")
+add_executable(cage-test-entities ${cage-test-entities-sources})
+target_link_libraries(cage-test-entities cage-core)
+cage_ide_category(cage-test-entities cage/tests)
+cage_ide_sort_files(cage-test-entities)
+cage_ide_working_dir_in_place(cage-test-entities)
+
 ########
 # TOOLS
 ########

@@ -352,6 +352,10 @@ namespace cage
 	EntityComponent *EntityManager::defineComponent_(uint32 typeIndex, const void *prototype)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
+		if (impl->count())
+		{
+			CAGE_THROW_CRITICAL(Exception, "cannot define new component with already existing entities");
+		}
 		Holder<ComponentImpl> h = systemMemory().createHolder<ComponentImpl>(impl, typeIndex, prototype);
 		{
 			auto &v = impl->componentsByTypes;
