@@ -342,6 +342,18 @@ namespace cage
 		return impl->comp(ci->definitionIndex) != nullptr;
 	}
 
+	bool Entity::has(PointerRange<const EntityComponent *> components) const
+	{
+		const EntityImpl *impl = (const EntityImpl *)this;
+		for (const ComponentImpl *ci : components.cast<const ComponentImpl *>())
+		{
+			CAGE_ASSERT(ci->manager == impl->manager);
+			if (impl->comp(ci->definitionIndex) == nullptr)
+				return false;
+		}
+		return true;
+	}
+
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
 		EntityImpl *impl = (EntityImpl *)this;

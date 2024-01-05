@@ -88,7 +88,7 @@ namespace cage
 
 			if constexpr (useEnt && typesCount == 1)
 			{
-				PointerRange<Entity *const> range = ents->entities();
+				PointerRange range = ents->entities();
 				if constexpr (ArrayCopy)
 				{
 					copy = std::vector<Entity *>(range.begin(), range.end());
@@ -109,10 +109,9 @@ namespace cage
 				for (uint32 i = 0; i < typesCount - offset; i++)
 					cmps[i] = components[i + offset];
 				std::sort(std::begin(cmps), std::end(cmps), [](EntityComponent *a, EntityComponent *b) { return a->count() < b->count(); });
+				PointerRange conds = PointerRange(std::begin(cmps) + 1, std::end(cmps)).template cast<const EntityComponent *>();
 
-				PointerRange<EntityComponent *> conds = { std::begin(cmps) + 1, std::end(cmps) };
-
-				PointerRange<Entity *const> range = cmps[0]->entities();
+				PointerRange range = cmps[0]->entities();
 				if constexpr (ArrayCopy)
 				{
 					copy = std::vector<Entity *>(range.begin(), range.end());
@@ -121,10 +120,7 @@ namespace cage
 
 				for (Entity *e : range)
 				{
-					bool ok = true;
-					for (EntityComponent *c : conds)
-						ok = ok && e->has(c);
-					if (!ok)
+					if (!e->has(conds))
 						continue;
 					invokeVisitor<useEnt, Visitor, Types>(visitor, components, e, Sequence());
 				}

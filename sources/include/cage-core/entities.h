@@ -97,6 +97,7 @@ namespace cage
 		}
 
 		bool has(const EntityComponent *component) const;
+		bool has(PointerRange<const EntityComponent *> components) const;
 		template<ComponentConcept T>
 		CAGE_FORCE_INLINE bool has() const
 		{
