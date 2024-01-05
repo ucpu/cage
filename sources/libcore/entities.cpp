@@ -19,12 +19,13 @@ namespace cage
 		class EntityImpl : public Entity
 		{
 		public:
-			std::vector<void *> components;
 			EntityManagerImpl *const manager = nullptr;
 			const uint32 name = m;
 
 			EntityImpl(EntityManagerImpl *manager, uint32 name);
 			~EntityImpl();
+
+			void *&comp(uint32 i) const;
 		};
 
 		class EntityManagerImpl : public EntityManager
@@ -36,8 +37,7 @@ namespace cage
 			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
 			FlatSet<Entity *> allEntities;
 			uint32 generateName = 0;
-
-			EntityManagerImpl() { arena = newMemoryAllocatorPool({ sizeof(EntityImpl), alignof(EntityImpl) }); }
+			uint32 entSize = 0;
 
 			~EntityManagerImpl()
 			{
@@ -56,7 +56,19 @@ namespace cage
 				return generateName++;
 			}
 
-			EntityImpl *newEnt(uint32 name) { return arena->createObject<EntityImpl>(this, name); }
+			EntityImpl *newEnt(uint32 name)
+			{
+				void *ptr = arena->allocate(entSize, alignof(EntityImpl));
+				try
+				{
+					return new (ptr, privat::OperatorNewTrait()) EntityImpl(this, name);
+				}
+				catch (...)
+				{
+					arena->deallocate(ptr);
+					throw;
+				}
+			}
 
 			void desEnt(EntityImpl *e) { arena->destroy<EntityImpl>(e); }
 		};
@@ -88,7 +100,8 @@ namespace cage
 
 		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 name) : manager(manager), name(name)
 		{
-			components.resize(manager->components.size());
+			for (uint32 i = 0; i < manager->components.size(); i++)
+				comp(i) = nullptr;
 			manager->allEntities.insert(this);
 			if (name != 0)
 				manager->namedEntities.emplace(name, this);
@@ -101,9 +114,16 @@ namespace cage
 			if (name != 0)
 				manager->namedEntities.erase(name);
 			manager->allEntities.erase(this);
-			for (uint32 i = 0, e = numeric_cast<uint32>(components.size()); i != e; i++)
-				if (components[i])
+			for (uint32 i = 0; i < manager->components.size(); i++)
+				if (comp(i))
 					remove(+manager->components[i]);
+		}
+
+		CAGE_FORCE_INLINE void *&EntityImpl::comp(uint32 i) const
+		{
+			CAGE_ASSERT(i < manager->components.size());
+			void **arr = (void **)(((char *)this) + sizeof(EntityImpl));
+			return arr[i];
 		}
 	}
 
@@ -244,6 +264,8 @@ namespace cage
 		}
 		ComponentImpl *c = +h;
 		impl->components.push_back(std::move(h));
+		impl->entSize = sizeof(EntityImpl) + impl->components.size() * sizeof(void *);
+		impl->arena = newMemoryAllocatorPool({ impl->entSize, alignof(EntityImpl) });
 		return c;
 	}
 
@@ -304,12 +326,12 @@ namespace cage
 	{
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		if (impl->components[ci->definitionIndex] == nullptr)
+		if (impl->comp(ci->definitionIndex) == nullptr)
 			return;
 		ci->entityRemoved.dispatch(this);
 		ci->componentEntities.erase(this);
-		ci->desVal(impl->components[ci->definitionIndex]);
-		impl->components[ci->definitionIndex] = nullptr;
+		ci->desVal(impl->comp(ci->definitionIndex));
+		impl->comp(ci->definitionIndex) = nullptr;
 	}
 
 	bool Entity::has(const EntityComponent *component) const
@@ -317,23 +339,22 @@ namespace cage
 		CAGE_ASSERT(component->manager() == this->manager());
 		const EntityImpl *impl = (const EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		CAGE_ASSERT(ci->definitionIndex < impl->components.size());
-		return impl->components[ci->definitionIndex] != nullptr;
+		return impl->comp(ci->definitionIndex) != nullptr;
 	}
 
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		CAGE_ASSERT(ci->definitionIndex < impl->components.size());
-		if (impl->components[ci->definitionIndex] == nullptr)
+		void *&c = impl->comp(ci->definitionIndex);
+		if (c == nullptr)
 		{
-			void *tg = impl->components[ci->definitionIndex] = ci->newVal();
-			detail::memcpy(tg, +ci->prototype, ci->typeSize);
+			c = ci->newVal();
+			detail::memcpy(c, +ci->prototype, ci->typeSize);
 			ci->componentEntities.insert(this);
 			ci->entityAdded.dispatch(this);
 		}
-		return impl->components[ci->definitionIndex];
+		return c;
 	}
 
 	void Entity::destroy()
