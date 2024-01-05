@@ -267,6 +267,119 @@ namespace
 		}
 	}
 
+	void testPool()
+	{
+		CAGE_TESTCASE("pool allocator");
+
+		{
+			CAGE_TESTCASE("flush empty arena");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 16, 8 });
+			arena->flush();
+		}
+
+		{
+			CAGE_TESTCASE("basics raw");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 16, 16 });
+			std::vector<uint8 *> v;
+			v.reserve(100);
+			for (uint32 i = 0; i < 100; i++)
+			{
+				uint8 *p = (uint8 *)arena->allocate(16, 16);
+				construct(p, 16);
+				v.push_back(p);
+			}
+			for (const uint8 *p : v)
+				destruct(p, 16);
+			arena->flush();
+		}
+
+		{
+			CAGE_TESTCASE("basics structs");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 64, 8 });
+			CAGE_TEST(Test<16>::count == 0); // sanity check
+			std::vector<Holder<Test<16>>> v;
+			v.reserve(100);
+			for (uint32 i = 0; i < 100; i++)
+				v.push_back(arena->createHolder<Test<16>>());
+			CAGE_TEST(Test<16>::count == 100);
+			for (const auto &it : v)
+				it->check();
+			v.clear();
+			CAGE_TEST(Test<16>::count == 0);
+		}
+
+		{
+			CAGE_TESTCASE("large structs");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 352, 8 });
+			CAGE_TEST(Test<320>::count == 0); // sanity check
+			std::vector<Holder<Test<320>>> v;
+			v.reserve(100);
+			for (uint32 i = 0; i < 100; i++)
+				v.push_back(arena->createHolder<Test<320>>());
+			CAGE_TEST(Test<320>::count == 100);
+			for (const auto &it : v)
+				it->check();
+			v.clear();
+			CAGE_TEST(Test<320>::count == 0);
+		}
+
+		{
+			CAGE_TESTCASE("over-aligned structs");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 352, 16 });
+			CAGE_TEST(Test<320>::count == 0); // sanity check
+			std::vector<Holder<AlignedTest<320, 16>>> v;
+			v.reserve(100);
+			for (uint32 i = 0; i < 100; i++)
+				v.push_back(arena->createHolder<AlignedTest<320, 16>>());
+			CAGE_TEST(Test<320>::count == 100);
+			for (const auto &it : v)
+				it->check();
+			v.clear();
+			CAGE_TEST(Test<320>::count == 0);
+		}
+
+		{
+			CAGE_TESTCASE("random order deallocations");
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 64, 8 });
+			CAGE_TEST(Test<16>::count == 0); // sanity check
+			std::vector<Holder<Test<16>>> v;
+			v.reserve(100);
+			for (uint32 i = 0; i < 100; i++)
+				v.push_back(arena->createHolder<Test<16>>());
+			CAGE_TEST(Test<16>::count == 100);
+			for (const auto &it : v)
+				it->check();
+			for (uint32 i = 0; i < 100; i++)
+				v.erase(v.begin() + randomRange(uintPtr(0), v.size()));
+			CAGE_TEST(Test<16>::count == 0);
+		}
+
+		{
+			CAGE_TESTCASE("randomized allocations");
+			// put the allocator under a lot of pressure to test multiple blocks
+			Holder<MemoryArena> arena = newMemoryAllocatorPool({ 1024, 256, 4096 });
+			std::vector<void *> v;
+			v.reserve(1000);
+			for (uint32 round = 0; round < 100; round++)
+			{
+				for (uint32 i = 0; i < 10; i++)
+					v.push_back(arena->allocate(randomRange(1, 1000), uintPtr(1) << randomRange(2, 8)));
+				for (uint32 i = 0; i < 8; i++)
+				{
+					const uint32 k = numeric_cast<uint32>(randomRange(uintPtr(0), v.size()));
+					arena->deallocate(v[k]);
+					v.erase(v.begin() + k);
+				}
+			}
+			while (!v.empty())
+			{
+				const uint32 k = numeric_cast<uint32>(randomRange(uintPtr(0), v.size()));
+				arena->deallocate(v[k]);
+				v.erase(v.begin() + k);
+			}
+		}
+	}
+
 	void testStd()
 	{
 		CAGE_TESTCASE("std allocator");
@@ -302,5 +415,6 @@ void testMemoryAllocators()
 
 	testLinear();
 	testStream();
+	testPool();
 	testStd();
 }

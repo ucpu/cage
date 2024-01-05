@@ -5,6 +5,7 @@
 
 #include <cage-core/entities.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/pointerRangeHolder.h>
 
 namespace cage
@@ -29,11 +30,14 @@ namespace cage
 		class EntityManagerImpl : public EntityManager
 		{
 		public:
+			Holder<MemoryArena> arena;
 			std::vector<Holder<ComponentImpl>> components;
 			std::vector<EntityComponent *> componentsByTypes;
 			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
 			FlatSet<Entity *> allEntities;
 			uint32 generateName = 0;
+
+			EntityManagerImpl() { arena = newMemoryAllocatorPool({ sizeof(EntityImpl), alignof(EntityImpl) }); }
 
 			~EntityManagerImpl()
 			{
@@ -52,9 +56,9 @@ namespace cage
 				return generateName++;
 			}
 
-			EntityImpl *newEnt(uint32 name) { return systemMemory().createObject<EntityImpl>(this, name); }
+			EntityImpl *newEnt(uint32 name) { return arena->createObject<EntityImpl>(this, name); }
 
-			void desEnt(EntityImpl *e) { systemMemory().destroy<EntityImpl>(e); }
+			void desEnt(EntityImpl *e) { arena->destroy<EntityImpl>(e); }
 		};
 
 		class ComponentImpl : public EntityComponent
@@ -62,23 +66,24 @@ namespace cage
 		public:
 			FlatSet<Entity *> componentEntities;
 			EntityManagerImpl *const manager = nullptr;
-			void *prototype = nullptr;
+			Holder<MemoryArena> arena;
+			Holder<void> prototype;
 			const uint32 typeIndex = m;
 			const uint32 typeSize = m;
+			const uint32 typeAlignment = m;
 			const uint32 definitionIndex = m;
 
-			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
+			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), typeAlignment(detail::typeAlignmentByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				CAGE_ASSERT(typeSize > 0);
-				prototype = newVal();
-				detail::memcpy(prototype, prototype_, typeSize);
+				prototype = systemMemory().createBuffer(typeSize, typeAlignment).cast<void>();
+				detail::memcpy(+prototype, prototype_, typeSize);
+				arena = newMemoryAllocatorPool({ std::max(typeSize, uint32(sizeof(uintPtr))), typeAlignment });
 			}
 
-			~ComponentImpl() { desVal(prototype); }
+			void *newVal() { return arena->allocate(typeSize, typeAlignment); }
 
-			void *newVal() { return systemMemory().allocate(typeSize, detail::typeAlignmentByIndex(typeIndex)); }
-
-			void desVal(void *v) { systemMemory().deallocate(v); }
+			void desVal(void *v) { arena->deallocate(v); }
 		};
 
 		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 name) : manager(manager), name(name)
@@ -244,7 +249,7 @@ namespace cage
 
 	EntityComponent *EntityManager::defineComponent(EntityComponent *source)
 	{
-		return defineComponent_(source->typeIndex(), ((ComponentImpl *)source)->prototype);
+		return defineComponent_(source->typeIndex(), +((ComponentImpl *)source)->prototype);
 	}
 
 	Holder<EntityManager> newEntityManager()
@@ -295,19 +300,6 @@ namespace cage
 		return impl->name;
 	}
 
-	void Entity::add(EntityComponent *component)
-	{
-		EntityImpl *impl = (EntityImpl *)this;
-		ComponentImpl *ci = (ComponentImpl *)component;
-		if (impl->components[ci->definitionIndex] != nullptr)
-			return;
-		CAGE_ASSERT(ci->definitionIndex < impl->components.size());
-		void *tg = impl->components[ci->definitionIndex] = ci->newVal();
-		detail::memcpy(tg, ci->prototype, ci->typeSize);
-		ci->componentEntities.insert(this);
-		ci->entityAdded.dispatch(this);
-	}
-
 	void Entity::remove(EntityComponent *component)
 	{
 		EntityImpl *impl = (EntityImpl *)this;
@@ -331,11 +323,16 @@ namespace cage
 
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
-		add(component);
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		CAGE_ASSERT(ci->definitionIndex < impl->components.size());
-		CAGE_ASSERT(impl->components[ci->definitionIndex]);
+		if (impl->components[ci->definitionIndex] == nullptr)
+		{
+			void *tg = impl->components[ci->definitionIndex] = ci->newVal();
+			detail::memcpy(tg, +ci->prototype, ci->typeSize);
+			ci->componentEntities.insert(this);
+			ci->entityAdded.dispatch(this);
+		}
 		return impl->components[ci->definitionIndex];
 	}
 

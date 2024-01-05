@@ -77,7 +77,7 @@ namespace cage
 		EntityManager *manager() const;
 		uint32 name() const;
 
-		void add(EntityComponent *component);
+		CAGE_FORCE_INLINE void add(EntityComponent *component) { unsafeValue(component); }
 		template<ComponentConcept T>
 		CAGE_FORCE_INLINE void add(EntityComponent *component, const T &data)
 		{

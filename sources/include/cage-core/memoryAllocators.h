@@ -29,6 +29,20 @@ namespace cage
 
 	CAGE_CORE_API Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config);
 
+	// pool allocator with individual deallocations
+	// both individual deallocations (in any order) and flushing are available
+	// uses free-list to fill the space in each block
+	// allocations must fit into the itemSize and itemAlignment
+
+	struct CAGE_CORE_API MemoryAllocatorPoolCreateConfig
+	{
+		uintPtr itemSize = 0;
+		uintPtr itemAlignment = 0;
+		uintPtr blockSize = 4 * 1024 * 1024;
+	};
+
+	CAGE_CORE_API Holder<MemoryArena> newMemoryAllocatorPool(const MemoryAllocatorPoolCreateConfig &config);
+
 	// allocator facade for use in std containers
 
 	template<class T>

@@ -19,7 +19,7 @@ namespace cage
 				CAGE_ASSERT(blocks.size() > 0);
 				CAGE_ASSERT(index < blocks.size());
 				where = (uintPtr)blocks[index].data();
-				end = where + blocks[index].capacity();
+				end = where + blocks[index].size();
 			}
 
 			void nextBuffer()
@@ -80,7 +80,7 @@ namespace cage
 				CAGE_ASSERT(blocks.size() > 0);
 				CAGE_ASSERT(index < blocks.size());
 				where = (uintPtr)blocks[index]->data();
-				end = where + blocks[index]->capacity();
+				end = where + blocks[index]->size();
 			}
 
 			void nextBuffer()
@@ -138,6 +138,69 @@ namespace cage
 			uintPtr end = 0; // pointer at the end of the capacity of the current buffer
 			uint32 index = 0; // index of the current buffer
 		};
+
+		struct MemoryAllocatorPoolImpl : private Immovable
+		{
+			explicit MemoryAllocatorPoolImpl(const MemoryAllocatorPoolCreateConfig &config) : config(config)
+			{
+				CAGE_ASSERT(config.itemSize >= sizeof(uintPtr));
+				CAGE_ASSERT(config.itemAlignment > 0);
+				CAGE_ASSERT((config.itemSize % config.itemAlignment) == 0);
+				CAGE_ASSERT(config.itemSize + config.itemAlignment + sizeof(uintPtr) <= config.blockSize);
+			}
+
+			void addBlock(MemoryBuffer &b)
+			{
+				char *begin = b.data();
+				char *end = b.data() + b.size();
+				char *p = (char *)detail::roundDownTo((uintPtr)end, config.itemAlignment) - config.itemSize;
+				while (p >= begin)
+				{
+					deallocate(p);
+					p -= config.itemSize; // form the free list in reverse so that consecutive allocations have increasing addresses
+				}
+			}
+
+			void newBlock()
+			{
+				blocks.emplace_back(config.blockSize);
+				addBlock(blocks.back());
+			}
+
+			void *allocate(uintPtr size, uintPtr alignment)
+			{
+				CAGE_ASSERT(size <= config.itemSize);
+				CAGE_ASSERT((config.itemAlignment % alignment) == 0);
+				if (!freeList)
+					newBlock();
+				CAGE_ASSERT(freeList);
+				void *res = freeList;
+				void *prev = *(void **)freeList;
+				freeList = prev;
+#ifdef CAGE_DEBUG
+				*(uintPtr *)res = 0xdeadbeef;
+#endif // CAGE_DEBUG
+				return res;
+			}
+
+			void deallocate(void *ptr)
+			{
+				*(void **)ptr = freeList;
+				freeList = ptr;
+			}
+
+			void flush()
+			{
+				freeList = nullptr;
+				for (MemoryBuffer &b : blocks)
+					addBlock(b);
+			}
+
+			MemoryArena arena = MemoryArena(this);
+			const MemoryAllocatorPoolCreateConfig config;
+			std::vector<MemoryBuffer> blocks;
+			void *freeList = nullptr;
+		};
 	}
 
 	Holder<MemoryArena> newMemoryAllocatorLinear(const MemoryAllocatorLinearCreateConfig &config)
@@ -149,6 +212,12 @@ namespace cage
 	Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config)
 	{
 		Holder<MemoryAllocatorStreamImpl> b = systemMemory().createHolder<MemoryAllocatorStreamImpl>(config);
+		return Holder<MemoryArena>(&b->arena, std::move(b));
+	}
+
+	Holder<MemoryArena> newMemoryAllocatorPool(const MemoryAllocatorPoolCreateConfig &config)
+	{
+		Holder<MemoryAllocatorPoolImpl> b = systemMemory().createHolder<MemoryAllocatorPoolImpl>(config);
 		return Holder<MemoryArena>(&b->arena, std::move(b));
 	}
 }
