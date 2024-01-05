@@ -22,14 +22,11 @@ namespace
 		EntityComponent *velocity = manager->defineComponent(Vec3(0, -1, 0));
 		EntityComponent *orientation = manager->defineComponent(Quat());
 
-		EntityGroup *movement = manager->defineGroup();
-
 		Entity *terrain = manager->createAnonymous();
 		Entity *player = manager->createAnonymous();
 		player->add(position);
 		player->add(velocity);
 		player->add(orientation);
-		player->add(movement);
 		Entity *tank = manager->createAnonymous();
 		tank->add(position, Vec3(100, 0, 50));
 		tank->add(orientation);
@@ -43,9 +40,6 @@ namespace
 
 		tank->value<Vec3>(position)[2] = 100;
 		CAGE_TEST(tank->value<Vec3>(position) == Vec3(100, 0, 100));
-
-		CAGE_TEST(player->has(movement));
-		CAGE_TEST(!tank->has(movement));
 
 		CAGE_TEST(player->has(velocity));
 		CAGE_TEST(!tank->has(velocity));
@@ -61,8 +55,6 @@ namespace
 		Holder<EntityManager> manager = newEntityManager();
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineComponent(Vec3());
-		for (uint32 i = 0; i < 3; i++)
-			manager->defineGroup();
 
 		for (uint32 cycle = 0; cycle < 30; cycle++)
 		{
@@ -73,14 +65,7 @@ namespace
 				{
 					if (randomChance() < 0.5)
 						e->add(manager->componentByDefinition(j));
-					if (randomChance() < 0.5)
-						e->add(manager->groupByDefinition(j));
 				}
-			}
-			for (uint32 j = 0; j < 3; j++)
-			{
-				if (randomChance() < 0.2)
-					manager->groupByDefinition(j)->destroy();
 			}
 		}
 	}
@@ -182,16 +167,16 @@ namespace
 		} manCbs, posCbs, oriCbs;
 
 		Holder<EntityManager> man = newEntityManager();
-		manCbs.addListener.attach(man->group()->entityAdded);
-		manCbs.removeListener.attach(man->group()->entityRemoved);
+		manCbs.addListener.attach(man->entityAdded);
+		manCbs.removeListener.attach(man->entityRemoved);
 
 		EntityComponent *pos = man->defineComponent(Vec3());
-		posCbs.addListener.attach(pos->group()->entityAdded);
-		posCbs.removeListener.attach(pos->group()->entityRemoved);
+		posCbs.addListener.attach(pos->entityAdded);
+		posCbs.removeListener.attach(pos->entityRemoved);
 
 		EntityComponent *ori = man->defineComponent(Quat());
-		oriCbs.addListener.attach(ori->group()->entityAdded);
-		oriCbs.removeListener.attach(ori->group()->entityRemoved);
+		oriCbs.addListener.attach(ori->entityAdded);
+		oriCbs.removeListener.attach(ori->entityRemoved);
 
 		for (uint32 i = 0; i < 100; i++)
 		{
@@ -345,7 +330,7 @@ namespace
 			CAGE_TEST(detail::memcmp(entsBuf.data(), allEntities.data(), sizeof(Entity *) * reference.size()) == 0);
 			for (uint32 i = 0; i < TotalComponents; i++)
 			{
-				const EntityGroup *grp = manager->componentByDefinition(i)->group();
+				const EntityComponent *grp = manager->componentByDefinition(i);
 				CAGE_TEST(grp->count() == componentEntities[i].size());
 				if (componentEntities[i].empty())
 					continue;
@@ -415,14 +400,12 @@ namespace
 #ifdef CAGE_DEBUG
 		constexpr uint32 TotalCycles = 100;
 		constexpr uint32 TotalComponents = 10;
-		constexpr uint32 TotalGroups = 10;
 		constexpr uint32 UsedComponents = 3;
 		constexpr uint32 UsedGroups = 3;
 		constexpr uint32 InitialEntities = 1000;
 #else
 		constexpr uint32 TotalCycles = 500;
 		constexpr uint32 TotalComponents = 25;
-		constexpr uint32 TotalGroups = 25;
 		constexpr uint32 UsedComponents = 15;
 		constexpr uint32 UsedGroups = 15;
 		constexpr uint32 InitialEntities = 5000;
@@ -430,13 +413,9 @@ namespace
 
 		Holder<EntityManager> manager = newEntityManager();
 		EntityComponent *components[TotalComponents];
-		EntityGroup *groups[TotalGroups];
 
 		for (uint32 i = 0; i < TotalComponents; i++)
 			components[i] = manager->defineComponent(Vec3());
-
-		for (uint32 i = 0; i < TotalGroups; i++)
-			groups[i] = manager->defineGroup();
 
 		std::vector<bool> exists;
 		exists.resize(InitialEntities + TotalCycles * 5);
@@ -448,9 +427,6 @@ namespace
 			Entity *e = manager->create(n);
 			for (uint32 j = n % TotalComponents, je = min(j + UsedComponents, TotalComponents); j < je; j++)
 				e->add(components[j]);
-			for (uint32 j = 0; j < TotalGroups; j++)
-				if ((n + j) % TotalGroups < UsedGroups)
-					e->add(groups[j]);
 			exists[n] = true;
 		}
 
@@ -478,20 +454,17 @@ namespace
 					const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
 					for (uint32 j = n % TotalComponents; j < je; j++)
 						e->add(components[j]);
-					for (uint32 j = 0; j < TotalGroups; j++)
-						if ((n + j) % TotalGroups < UsedGroups)
-							e->add(groups[j]);
 					exists[n] = true;
 				}
 			}
 			else
 			{ // simulate draw
-				for (uint32 i = 0; i < TotalGroups; i++)
+				for (uint32 i = 0; i < TotalComponents; i++)
 				{
 					if (randomChance() < 0.5)
 						continue;
 					const bool w = randomChance() < 0.2;
-					for (Entity *e : groups[i]->entities())
+					for (Entity *e : components[i]->entities())
 					{
 						const uint32 n = e->name();
 						const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);

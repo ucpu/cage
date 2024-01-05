@@ -1,6 +1,7 @@
 #include "main.h"
 
 #include <cage-core/entities.h>
+#include <cage-core/entitiesCopy.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 
@@ -50,7 +51,7 @@ namespace
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
-			Holder<PointerRange<char>> buf = entitiesExportBuffer(a->group(), a->componentByDefinition(i));
+			Holder<PointerRange<char>> buf = entitiesExportBuffer(a->entities(), a->componentByDefinition(i));
 			entitiesImportBuffer(buf, b);
 		}
 	}

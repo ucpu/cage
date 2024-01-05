@@ -9,7 +9,6 @@ namespace cage
 	class EntityManager;
 	class EntityComponent;
 	class Entity;
-	class EntityGroup;
 
 	template<class T>
 	concept ComponentConcept = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
@@ -35,11 +34,6 @@ namespace cage
 		Holder<PointerRange<EntityComponent *>> components() const;
 		uint32 componentsCount() const;
 
-		EntityGroup *defineGroup();
-		EntityGroup *groupByDefinition(uint32 definitionIndex) const;
-		uint32 groupsCount() const;
-		const EntityGroup *group() const; // all entities in this manager
-
 		Entity *createUnique(); // new entity with unique name
 		Entity *createAnonymous(); // new entity with name = 0, accessible only with the pointer
 		Entity *create(uint32 name); // must be non-zero
@@ -51,6 +45,9 @@ namespace cage
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities
+
+		EventDispatcher<bool(Entity *)> entityAdded;
+		EventDispatcher<bool(Entity *)> entityRemoved;
 
 	private:
 		EntityComponent *defineComponent_(uint32 typeIndex, const void *prototype);
@@ -65,11 +62,13 @@ namespace cage
 		uint32 definitionIndex() const;
 		uint32 typeIndex() const;
 
-		const EntityGroup *group() const; // all entities with this component
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities with this component
+
+		EventDispatcher<bool(Entity *)> entityAdded;
+		EventDispatcher<bool(Entity *)> entityRemoved;
 	};
 
 	class CAGE_CORE_API Entity : private Immovable
@@ -77,10 +76,6 @@ namespace cage
 	public:
 		EntityManager *manager() const;
 		uint32 name() const;
-
-		void add(EntityGroup *group);
-		void remove(EntityGroup *group);
-		bool has(const EntityGroup *group) const;
 
 		void add(EntityComponent *component);
 		template<ComponentConcept T>
@@ -131,43 +126,6 @@ namespace cage
 			return manager()->component<T>();
 		}
 	};
-
-	class CAGE_CORE_API EntityGroup : private Immovable
-	{
-	public:
-		EntityManager *manager() const;
-		uint32 definitionIndex() const;
-
-		PointerRange<Entity *const> entities() const;
-		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
-
-		CAGE_FORCE_INLINE void add(Entity *ent) { ent->add(this); }
-		CAGE_FORCE_INLINE void remove(Entity *ent) { ent->remove(this); }
-		CAGE_FORCE_INLINE void add(uint32 entityName) { add(manager()->get(entityName)); }
-		CAGE_FORCE_INLINE void remove(uint32 entityName) { remove(manager()->get(entityName)); }
-
-		void merge(const EntityGroup *other); // add all entities from the other group into this group
-		void subtract(const EntityGroup *other); // remove all entities, which are present in the other group, from this group
-		void intersect(const EntityGroup *other); // remove all entities, which are NOT present in the other group, from this group
-
-		void clear(); // remove all entities from this group
-		void destroy(); // destroy all entities in this group
-
-		mutable EventDispatcher<bool(Entity *)> entityAdded;
-		mutable EventDispatcher<bool(Entity *)> entityRemoved;
-	};
-
-	CAGE_FORCE_INLINE PointerRange<Entity *const> EntityManager::entities() const
-	{
-		return group()->entities();
-	}
-	CAGE_FORCE_INLINE PointerRange<Entity *const> EntityComponent::entities() const
-	{
-		return group()->entities();
-	}
-
-	CAGE_CORE_API Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component);
-	CAGE_CORE_API void entitiesImportBuffer(PointerRange<const char> buffer, EntityManager *manager);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

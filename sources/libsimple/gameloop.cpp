@@ -343,7 +343,7 @@ namespace cage
 					ProfilingScope profiling("graphics emit");
 					graphicsEmit(controlTime);
 				}
-				profilingBufferEntities.add(entities->group()->count());
+				profilingBufferEntities.add(entities->count());
 			}
 
 			void controlGameloopStage() { controlScheduler->run(); }
