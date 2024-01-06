@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <cage-core/math.h>
+#include <cage-core/memoryAlloca.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -29,7 +30,7 @@ namespace cage
 			uint64 duration = 0;
 			uint32 skeletonName = 0;
 
-			static uint16 findFrameIndex(Real coef, const std::vector<Real> &times)
+			CAGE_FORCE_INLINE static uint16 findFrameIndex(Real coef, const std::vector<Real> &times)
 			{
 				CAGE_ASSERT(coef >= 0 && coef <= 1);
 				CAGE_ASSERT(!times.empty());
@@ -41,7 +42,7 @@ namespace cage
 				return numeric_cast<uint16>(it - times.begin() - 1);
 			}
 
-			static Real amount(Real a, Real b, Real c)
+			CAGE_FORCE_INLINE static Real amount(Real a, Real b, Real c)
 			{
 				CAGE_ASSERT(a <= b);
 				if (c < a)
@@ -54,7 +55,7 @@ namespace cage
 			}
 
 			template<class Type>
-			static Type evaluateMatrix(Real coef, const std::vector<Real> &times, const std::vector<Type> &values)
+			CAGE_FORCE_INLINE static Type evaluateMatrix(Real coef, const std::vector<Real> &times, const std::vector<Type> &values)
 			{
 				const uint32 frames = numeric_cast<uint32>(times.size());
 				switch (frames)
@@ -114,7 +115,7 @@ namespace cage
 	namespace
 	{
 		template<class T>
-		Deserializer &operator>>(Deserializer &des, std::vector<T> &vec)
+		CAGE_FORCE_INLINE Deserializer &operator>>(Deserializer &des, std::vector<T> &vec)
 		{
 			uint32 cnt = 0;
 			des >> cnt;
@@ -127,7 +128,7 @@ namespace cage
 		}
 
 		template<class T>
-		Serializer &operator<<(Serializer &ser, std::vector<T> &vec)
+		CAGE_FORCE_INLINE Serializer &operator<<(Serializer &ser, std::vector<T> &vec)
 		{
 			ser << numeric_cast<uint32>(vec.size());
 			for (T &it : vec)
@@ -136,14 +137,14 @@ namespace cage
 		}
 
 		template<class T>
-		Deserializer &operator<<(Deserializer &des, T &other)
+		CAGE_FORCE_INLINE Deserializer &operator<<(Deserializer &des, T &other)
 		{
 			des >> other;
 			return des;
 		}
 
 		template<class T>
-		void serialize(SkeletalAnimationImpl *impl, T &ser)
+		CAGE_FORCE_INLINE void serialize(SkeletalAnimationImpl *impl, T &ser)
 		{
 			ser << impl->channelsMapping;
 			ser << impl->positionTimes;
@@ -185,7 +186,7 @@ namespace cage
 	namespace
 	{
 		template<class T>
-		void assign(std::vector<std::vector<T>> &dst, PointerRange<const PointerRange<const T>> src)
+		CAGE_FORCE_INLINE void assign(std::vector<std::vector<T>> &dst, PointerRange<const PointerRange<const T>> src)
 		{
 			dst.clear();
 			dst.reserve(src.size());
@@ -289,7 +290,7 @@ namespace cage
 	namespace
 	{
 		template<class T>
-		void serialize(SkeletonRigImpl *impl, T &ser)
+		CAGE_FORCE_INLINE void serialize(SkeletonRigImpl *impl, T &ser)
 		{
 			ser << impl->globalInverse;
 			ser << impl->boneParents;
@@ -369,6 +370,7 @@ namespace cage
 	{
 		void animateTemporary(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> temporary)
 		{
+			CAGE_ASSERT(temporary.size() == skeleton->bonesCount());
 			CAGE_ASSERT(coef >= 0 && coef <= 1);
 			const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
 			const SkeletalAnimationImpl *anim = (const SkeletalAnimationImpl *)animation;
@@ -391,6 +393,7 @@ namespace cage
 
 	void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output)
 	{
+		CAGE_ASSERT(output.size() == skeleton->bonesCount());
 		CAGE_ASSERT(coef >= 0 && coef <= 1);
 		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
 		const uint32 totalBones = skeleton->bonesCount();
@@ -404,11 +407,11 @@ namespace cage
 
 	void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output)
 	{
+		CAGE_ASSERT(output.size() == skeleton->bonesCount());
 		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)skeleton;
 		const uint32 totalBones = skeleton->bonesCount();
-		std::vector<Mat4> tmp;
-		tmp.resize(totalBones);
-		animateTemporary(skeleton, animation, coef, tmp);
+		Mat4 *tmp = (Mat4 *)CAGE_ALLOCA(sizeof(Mat4) * totalBones);
+		animateTemporary(skeleton, animation, coef, { tmp, tmp + totalBones });
 		for (uint32 i = 0; i < totalBones; i++)
 		{
 			const uint16 p = impl->boneParents[i];
@@ -438,10 +441,10 @@ namespace cage
 
 	void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, Mesh *mesh)
 	{
-		std::vector<Mat4> tmp;
-		tmp.resize(skeleton->bonesCount());
-		animateSkin(skeleton, animation, coef, tmp);
-		meshApplyAnimation(mesh, tmp);
+		const uint32 totalBones = skeleton->bonesCount();
+		Mat4 *tmp = (Mat4 *)CAGE_ALLOCA(sizeof(Mat4) * totalBones);
+		animateSkin(skeleton, animation, coef, { tmp, tmp + totalBones });
+		meshApplyAnimation(mesh, { tmp, tmp + totalBones });
 	}
 
 	namespace detail
@@ -453,8 +456,7 @@ namespace cage
 			const uint64 duration = max(animation->duration(), uint64(1));
 			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
 			// assume that the animation should loop
-			const Real result = saturate(Real(sample - sint64(sample)));
-			return result;
+			return saturate(Real(sample - sint64(sample)));
 		}
 	}
 }

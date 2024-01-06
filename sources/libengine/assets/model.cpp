@@ -28,6 +28,7 @@ namespace cage
 			msh->importMesh(+poly, mat);
 			msh->setBoundingBox(data.box);
 
+			msh->importTransform = data.importTransform;
 			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
 				msh->textureNames[i] = data.textureNames[i];
 			msh->shaderName = data.shaderName;

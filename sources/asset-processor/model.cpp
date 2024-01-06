@@ -84,20 +84,19 @@ namespace
 	}
 }
 
-void meshImportTransform(MeshImportResult &result)
+Mat4 meshImportTransform(MeshImportResult &result)
 {
 	const Mat3 axes = axesMatrix(toLower(properties("axes")));
 	const Mat3 axesScale = axes * toFloat(properties("scale"));
 	if (axesScale == Mat3())
-		return;
+		return Mat4();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using axes/scale conversion matrix: " + axesScale);
-	if (result.skeleton)
-		CAGE_THROW_ERROR(Exception, "meshes with skeletal animations cannot have axes/scale transformation");
 	for (auto &it : result.parts)
 	{
 		transformMesh(+it.mesh, axes, axesScale);
 		it.boundingBox *= Mat4(axesScale);
 	}
+	return Mat4(axesScale);
 }
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result)
@@ -243,7 +242,7 @@ void processModel()
 	config.trianglesOnly = toBool(properties("trianglesOnly"));
 	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
 	MeshImportResult result = meshImportFiles(inputFileName, config);
-	meshImportTransform(result);
+	const Mat4 importTransform = meshImportTransform(result);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
 	meshImportConvertToCageFormats(result);
 	meshImportNotifyUsedFiles(result);
@@ -282,6 +281,7 @@ void processModel()
 
 	ModelHeader dsm;
 	detail::memset(&dsm, 0, sizeof(dsm));
+	dsm.importTransform = importTransform;
 	dsm.box = part.boundingBox;
 
 	for (const auto &t : part.textures)

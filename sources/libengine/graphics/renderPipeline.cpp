@@ -354,6 +354,7 @@ namespace cage
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
 			EntityComponent *prevTransformComponent = nullptr;
+
 			bool cnfRenderMissingModels = false;
 			bool cnfRenderSkeletonBones = false;
 
@@ -363,6 +364,7 @@ namespace cage
 					onDemand = Holder<AssetOnDemand>(config.onDemand, nullptr);
 				else
 					onDemand = newAssetOnDemand(assets);
+				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
 			}
 
 			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
@@ -376,6 +378,9 @@ namespace cage
 			{
 				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
 					return false;
+
+				cnfRenderMissingModels = confRenderMissingModels;
+				cnfRenderSkeletonBones = confRenderSkeletonBones;
 
 				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
@@ -392,11 +397,9 @@ namespace cage
 				CAGE_ASSERT(shaderBlit);
 				onDemand->process();
 
-				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets, confRenderSkeletonBones);
+				skeletonPreparatorCollection->clear();
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
-				cnfRenderMissingModels = confRenderMissingModels;
-				cnfRenderSkeletonBones = confRenderSkeletonBones;
 
 				return true;
 			}
@@ -450,7 +453,7 @@ namespace cage
 				}();
 				renderQueue->bind(shader);
 
-				renderQueue->culling(!any(sh.mesh->flags & MeshRenderFlags::TwoSided));
+				renderQueue->culling(none(sh.mesh->flags & MeshRenderFlags::TwoSided));
 				renderQueue->depthTest(any(sh.mesh->flags & MeshRenderFlags::DepthTest));
 				if constexpr (RenderMode == RenderModeEnum::Color)
 				{
@@ -729,11 +732,10 @@ namespace cage
 
 				if (ps)
 				{
-					Holder<SkeletalAnimation> anim = assets->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name);
-					if (anim)
+					if (Holder<SkeletalAnimation> anim = assets->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name))
 					{
-						Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, currentTime, ps->startTime, ps->speed, ps->offset);
-						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient);
+						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, currentTime, ps->startTime, ps->speed, ps->offset);
+						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient, pr.mesh->importTransform, cnfRenderSkeletonBones);
 						pr.skeletalAnimation->prepare();
 						pr.skeletal = true;
 					}

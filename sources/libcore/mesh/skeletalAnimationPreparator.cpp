@@ -16,18 +16,17 @@ namespace cage
 		class SkeletalAnimationPreparatorCollectionImpl : public SkeletalAnimationPreparatorCollection
 		{
 		public:
-			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets, bool animateSkeletonsInsteadOfSkins) : assets(assets), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins) {}
+			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets) : assets(assets) {}
 
 			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 			Holder<Mutex> mutex = newMutex();
 			AssetManager *assets = nullptr;
-			bool animateSkeletonsInsteadOfSkins = false;
 		};
 
 		class SkeletalAnimationPreparatorInstanceImpl : public SkeletalAnimationPreparatorInstance
 		{
 		public:
-			explicit SkeletalAnimationPreparatorInstanceImpl(Holder<SkeletalAnimation> animation, Real coefficient, SkeletalAnimationPreparatorCollectionImpl *impl) : animation(std::move(animation)), coefficient(coefficient), impl(impl) {}
+			explicit SkeletalAnimationPreparatorInstanceImpl(Holder<SkeletalAnimation> animation, Real coefficient, const Mat4 &modelImportTransform, bool animateSkeletonsInsteadOfSkins, SkeletalAnimationPreparatorCollectionImpl *impl) : modelImportTransform(modelImportTransform), animation(std::move(animation)), coefficient(coefficient), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins), impl(impl) {}
 
 			void prepare()
 			{
@@ -47,19 +46,22 @@ namespace cage
 				CAGE_ASSERT(bonesCount > 0);
 				CAGE_ASSERT(animation->bonesCount() == bonesCount);
 				Mat4 *tmpArmature = (Mat4 *)CAGE_ALLOCA(sizeof(Mat4) * bonesCount);
-				if (impl->animateSkeletonsInsteadOfSkins)
+				if (animateSkeletonsInsteadOfSkins)
 					animateSkeleton(+skeleton, +animation, coefficient, { tmpArmature, tmpArmature + bonesCount });
 				else
 					animateSkin(+skeleton, +animation, coefficient, { tmpArmature, tmpArmature + bonesCount });
 				armature.reserve(bonesCount);
+				Mat4 inv = animateSkeletonsInsteadOfSkins ? Mat4() : inverse(modelImportTransform);
 				for (uint32 i = 0; i < bonesCount; i++)
-					armature.emplace_back(tmpArmature[i]);
+					armature.emplace_back(modelImportTransform * tmpArmature[i] * inv);
 			}
 
+			Mat4 modelImportTransform;
 			std::vector<Mat3x4> armature;
 			Holder<AsyncTask> task;
 			Holder<SkeletalAnimation> animation;
 			Real coefficient = Real::Nan();
+			bool animateSkeletonsInsteadOfSkins = false;
 			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 		};
 	}
@@ -79,7 +81,7 @@ namespace cage
 		return impl->armature;
 	}
 
-	Holder<SkeletalAnimationPreparatorInstance> SkeletalAnimationPreparatorCollection::create(void *object, Holder<SkeletalAnimation> animation, Real coefficient)
+	Holder<SkeletalAnimationPreparatorInstance> SkeletalAnimationPreparatorCollection::create(void *object, Holder<SkeletalAnimation> animation, Real coefficient, const Mat4 &modelImportTransform, bool animateSkeletonsInsteadOfSkins)
 	{
 		SkeletalAnimationPreparatorCollectionImpl *impl = (SkeletalAnimationPreparatorCollectionImpl *)this;
 		ScopeLock lock(impl->mutex);
@@ -88,9 +90,11 @@ namespace cage
 		{
 			CAGE_ASSERT(+it->second->animation == +animation);
 			CAGE_ASSERT(it->second->coefficient == coefficient);
+			CAGE_ASSERT(it->second->animateSkeletonsInsteadOfSkins == animateSkeletonsInsteadOfSkins);
+			CAGE_ASSERT(it->second->modelImportTransform == modelImportTransform);
 			return it->second.share().cast<SkeletalAnimationPreparatorInstance>();
 		}
-		Holder<SkeletalAnimationPreparatorInstanceImpl> inst = systemMemory().createHolder<SkeletalAnimationPreparatorInstanceImpl>(std::move(animation), coefficient, impl);
+		Holder<SkeletalAnimationPreparatorInstanceImpl> inst = systemMemory().createHolder<SkeletalAnimationPreparatorInstanceImpl>(std::move(animation), coefficient, modelImportTransform, animateSkeletonsInsteadOfSkins, impl);
 		impl->objects[object] = inst.share();
 		return std::move(inst).cast<SkeletalAnimationPreparatorInstance>();
 	}
@@ -102,8 +106,8 @@ namespace cage
 		impl->objects.clear();
 	}
 
-	Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets, bool animateSkeletonsInsteadOfSkins)
+	Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets)
 	{
-		return systemMemory().createImpl<SkeletalAnimationPreparatorCollection, SkeletalAnimationPreparatorCollectionImpl>(assets, animateSkeletonsInsteadOfSkins);
+		return systemMemory().createImpl<SkeletalAnimationPreparatorCollection, SkeletalAnimationPreparatorCollectionImpl>(assets);
 	}
 }

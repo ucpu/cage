@@ -5,7 +5,7 @@
 #include <cage-core/meshImport.h>
 
 MeshImportConfig meshImportConfig();
-void meshImportTransform(MeshImportResult &result);
+Mat4 meshImportTransform(MeshImportResult &result);
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 uint32 meshImportSelectIndex(const MeshImportResult &result);
 

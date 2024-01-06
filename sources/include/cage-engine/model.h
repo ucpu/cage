@@ -35,6 +35,7 @@ namespace cage
 		void dispatch() const;
 		void dispatch(uint32 instances) const;
 
+		Mat4 importTransform;
 		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
 		uint32 shaderName = 0;
 		MeshRenderFlags flags = {};

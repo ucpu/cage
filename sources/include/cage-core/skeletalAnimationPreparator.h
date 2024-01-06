@@ -17,11 +17,11 @@ namespace cage
 	class CAGE_CORE_API SkeletalAnimationPreparatorCollection : private Immovable
 	{
 	public:
-		Holder<SkeletalAnimationPreparatorInstance> create(void *object, Holder<SkeletalAnimation> animation, Real coefficient); // thread safe
-		void clear();
+		Holder<SkeletalAnimationPreparatorInstance> create(void *object, Holder<SkeletalAnimation> animation, Real coefficient, const Mat4 &modelImportTransform, bool animateSkeletonsInsteadOfSkins = false); // thread safe
+		void clear(); // thread safe
 	};
 
-	CAGE_CORE_API Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets, bool animateSkeletonsInsteadOfSkins = false);
+	CAGE_CORE_API Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets);
 }
 
 #endif

@@ -70,6 +70,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ModelHeader
 	{
+		Mat4 importTransform;
 		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 shaderName;
