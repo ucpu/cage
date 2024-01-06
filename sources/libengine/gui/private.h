@@ -335,6 +335,7 @@ namespace cage
 		Real ttMouseTraveledDistance; // points
 		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much
 		bool ttHasMovedSinceLast = false;
+		sint32 ttNextOrder = 0;
 		std::vector<TooltipData> ttData;
 		EventListener<bool(Entity *)> ttRemovedListener;
 		void ttMouseMove(InputMouse in);

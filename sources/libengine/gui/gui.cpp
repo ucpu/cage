@@ -162,6 +162,12 @@ namespace cage
 	{
 		void sortChildren(HierarchyItem *item)
 		{
+#ifdef CAGE_DEBUG
+			{ // randomize the order to explicitly reveal issues where the order is not correctly defined
+				for (auto &it : item->children)
+					std::swap(it, item->children[randomRange(std::size_t(), item->children.size())]);
+			}
+#endif // CAGE_DEBUG
 			std::sort(item->children.begin(), item->children.end(), [](const Holder<HierarchyItem> &a, const Holder<HierarchyItem> &b) { return a->order < b->order; });
 			for (const auto &it : item->children)
 				sortChildren(+it);
@@ -183,16 +189,19 @@ namespace cage
 			{
 				const uint32 name = e->name();
 				Holder<HierarchyItem> item = map[name].share();
-				if (GUI_HAS_COMPONENT(Parent, e))
+				if (e->has<GuiParentComponent>())
 				{
-					GUI_COMPONENT(Parent, p, e);
-					CAGE_ASSERT(p.parent != 0 && p.parent != m && p.parent != name);
-					CAGE_ASSERT(map.count(p.parent));
+					const GuiParentComponent &p = e->value<GuiParentComponent>();
 					item->order = p.order;
-					map[p.parent]->children.push_back(std::move(item));
+					if (p.parent)
+					{
+						CAGE_ASSERT(p.parent != m && p.parent != name);
+						CAGE_ASSERT(map.count(p.parent));
+						map[p.parent]->children.push_back(std::move(item));
+						continue;
+					}
 				}
-				else
-					head->children.push_back(std::move(item));
+				head->children.push_back(std::move(item));
 			}
 			// create overlays pre-root
 			impl->root = impl->memory->createHolder<HierarchyItem>(impl, nullptr);

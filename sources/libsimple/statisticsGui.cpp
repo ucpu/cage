@@ -63,7 +63,9 @@ namespace cage
 					return;
 
 				rootName = engineGuiEntities()->createUnique()->name();
-				Holder<GuiBuilder> g = newGuiBuilder(engineGuiEntities()->get(rootName));
+				Entity *root = engineGuiEntities()->get(rootName);
+				root->value<GuiParentComponent>().order = 9000;
+				Holder<GuiBuilder> g = newGuiBuilder(root);
 				auto _1 = g->alignment(screenPosition);
 				auto _2 = g->panel().skin(2); // compact style
 				auto _3 = g->verticalTable(2);

@@ -75,6 +75,9 @@ namespace cage
 		if (!ttEnabled)
 			return;
 
+		if (ttData.empty())
+			ttNextOrder = 10000; // reset to reasonable value
+
 		auto candidate = findTopWidget(this);
 
 		const uint64 currentTime = applicationTime();
@@ -86,8 +89,13 @@ namespace cage
 
 			// close instant tooltips
 			for (auto &it : ttData)
-				if (it.closeCondition == TooltipCloseConditionEnum::Instant)
-					it.removing = true;
+			{
+				if (it.closeCondition != TooltipCloseConditionEnum::Instant)
+					continue;
+				if (candidate.first && candidate.first->hierarchy->ent == it.invoker)
+					continue; // delay closing tooltip that would be the first to open again
+				it.removing = true;
+			}
 		}
 		const uint64 elapsed = currentTime - ttTimestampMouseMove;
 
@@ -102,7 +110,7 @@ namespace cage
 			{
 				Vec2 p = h->renderPos;
 				Vec2 s = h->renderSize;
-				offset(p, s, Vec4(20));
+				offset(p, s, Vec4(30));
 				it.removing |= !pointInside(p, s, outputMouse);
 			}
 		}
@@ -186,6 +194,7 @@ namespace cage
 		{
 			it.rootTooltip = entityMgr->createUnique();
 			it.rootTooltip->value<GuiTooltipMarkerComponent>();
+			it.rootTooltip->value<GuiParentComponent>().order = ttNextOrder++;
 			CAGE_ASSERT(findHierarchy(+root, it.tooltip));
 			const Vec2 s = findHierarchy(+root, it.tooltip)->requestedSize;
 			it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
