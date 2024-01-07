@@ -21,8 +21,6 @@ String inputFile; // path/file
 String inputSpec; // specifier
 String inputIdentifier; // identifier
 
-StringPointer logComponentName = "assetProcessor";
-
 AssetHeader initializeAssetHeader()
 {
 	AssetHeader h(inputName, numeric_cast<uint16>(schemeIndex));
@@ -155,11 +153,11 @@ String convertFilePath(const String &input, const String &relativeTo, bool markA
 
 void writeLine(const String &other)
 {
-	CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "writing: '" + other + "'");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "writing: '" + other + "'");
 	{
 		String b = other;
 		if (trim(split(b, "=")) == "ref")
-			CAGE_LOG(SeverityEnum::Note, "asset-processor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b)) + "'");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b)) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));
@@ -183,9 +181,8 @@ int main(int argc, const char *args[])
 	{
 		if (argc == 3 && String(args[1]) == "analyze")
 		{
-			logComponentName = "analyze";
-			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "analyzing input '" + args[2] + "'");
+			initializeSecondaryLog(pathJoin(configGetString("cage-assetProcessor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "analyzing input '" + args[2] + "'");
 			inputDirectory = pathExtractDirectory(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
@@ -196,12 +193,12 @@ int main(int argc, const char *args[])
 			CAGE_THROW_ERROR(Exception, "missing asset type parameter");
 
 		loadProperties();
-		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
+		initializeSecondaryLog(pathJoin(configGetString("cage-assetProcessor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
 		for (const auto &it : props)
-			CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "property '" + it.first + "': '" + it.second + "'");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "property '" + it.first + "': '" + it.second + "'");
 
-#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", Stringizer() + "input " #N ": '" + N + "'");
+#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input " #N ": '" + N + "'");
 		GCHL_GENERATE(inputFileName);
 		GCHL_GENERATE(outputFileName);
 		GCHL_GENERATE(inputFile);
@@ -238,7 +235,6 @@ int main(int argc, const char *args[])
 		else
 			CAGE_THROW_ERROR(Exception, "invalid asset type parameter");
 
-		logComponentName = StringPointer(args[1]);
 		writeLine("cage-begin");
 		func();
 		writeLine("cage-end");

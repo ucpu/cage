@@ -30,7 +30,7 @@ void processAnimation()
 		CAGE_THROW_ERROR(Exception, "no animation name matches the specifier");
 
 	Holder<SkeletalAnimation> anim = result.animations[chosenAnimationIndex].animation.share();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "duration: " + anim->duration() + " microseconds");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "duration: " + anim->duration() + " microseconds");
 
 	const uint32 skeletonName = []()
 	{
@@ -39,16 +39,16 @@ void processAnimation()
 			n = inputFile + ";skeleton";
 		else
 			n = pathJoin(pathExtractDirectory(inputName), n);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using skeleton name: '" + n + "'");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using skeleton name: '" + n + "'");
 		writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();
 	anim->skeletonName(skeletonName);
 
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

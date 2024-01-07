@@ -22,8 +22,6 @@ extern String inputFile;
 extern String inputSpec;
 extern String inputIdentifier;
 
-extern StringPointer logComponentName;
-
 void writeLine(const String &other);
 String properties(const String &name);
 

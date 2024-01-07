@@ -94,9 +94,9 @@ namespace
 
 	void loadGlyphs()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "load glyphs");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "load glyphs");
 		data.glyphCount = numeric_cast<uint32>(face->num_glyphs);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "font has " + data.glyphCount + " glyphs");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "font has " + data.glyphCount + " glyphs");
 		glyphs.reserve(data.glyphCount + 10);
 		glyphs.resize(data.glyphCount);
 		Vec2i maxPngResolution;
@@ -132,15 +132,15 @@ namespace
 		msdfgen::destroyFont(handle);
 		data.firstLineOffset = maxAscender;
 		data.lineHeight = maxAscender - minDescender;
-		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "first line offset: " + data.firstLineOffset);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "line height: " + data.lineHeight);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "max glyph size: " + maxGlyphSize);
-		CAGE_LOG(SeverityEnum::Note, logComponentName, Stringizer() + "max glyph image resolution: " + maxPngResolution);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "first line offset: " + data.firstLineOffset);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + data.lineHeight);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "max glyph size: " + maxGlyphSize);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "max glyph image resolution: " + maxPngResolution);
 	}
 
 	void loadCharset()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "load charset");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "load charset");
 		charsetChars.reserve(1000);
 		charsetGlyphs.reserve(1000);
 		FT_ULong charcode;
@@ -153,12 +153,12 @@ namespace
 			charcode = FT_Get_Next_Char(face, charcode, &glyphIndex);
 		}
 		data.charCount = numeric_cast<uint32>(charsetChars.size());
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "font has " + data.charCount + " characters");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "font has " + data.charCount + " characters");
 	}
 
 	void loadKerning()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "load kerning");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "load kerning");
 		if (FT_HAS_KERNING(face))
 		{
 			kerning.resize(data.glyphCount * data.glyphCount);
@@ -174,7 +174,7 @@ namespace
 			data.flags |= FontFlags::Kerning;
 		}
 		else
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "font has no kerning");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "font has no kerning");
 	}
 
 	msdfgen::Shape cursorShape()
@@ -191,7 +191,7 @@ namespace
 
 	void addArtificialData()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "adding artificial data");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "adding artificial data");
 
 		bool foundReturn = false;
 		for (uint32 i = 0; i < data.charCount; i++)
@@ -204,7 +204,7 @@ namespace
 		}
 		if (!foundReturn)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "artificially adding return character");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "artificially adding return character");
 			uint32 idx = 0;
 			while (idx < charsetChars.size() && charsetChars[idx] < '\n')
 				idx++;
@@ -214,7 +214,7 @@ namespace
 		}
 
 		{ // add cursor
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "artificially adding cursor glyph");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "artificially adding cursor glyph");
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
 			Glyph &g = glyphs[glyphs.size() - 1];
@@ -240,7 +240,7 @@ namespace
 
 	void createAtlasCoordinates()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas coordinates");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "create atlas coordinates");
 		Holder<RectPacking> packer = newRectPacking();
 		uint32 area = 0;
 		uint32 mgs = 0;
@@ -270,7 +270,7 @@ namespace
 			res += 32;
 		while (true)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "trying to pack into resolution " + res + "*" + res);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "trying to pack into resolution " + res + "*" + res);
 			RectPackingSolveConfig cfg;
 			cfg.margin = 1;
 			cfg.width = cfg.height = res;
@@ -292,12 +292,12 @@ namespace
 			g.data.texUv = Vec4(to, ts);
 		}
 		data.texResolution = Vec2i(res);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture atlas resolution " + data.texResolution[0] + "*" + data.texResolution[1]);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture atlas resolution " + data.texResolution[0] + "*" + data.texResolution[1]);
 	}
 
 	void createAtlasPixels()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas pixels");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "create atlas pixels");
 		texels = newImage();
 		texels->initialize(data.texResolution[0], data.texResolution[1], 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
@@ -312,7 +312,7 @@ namespace
 
 	void exportData()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "export data");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "export data");
 
 		CAGE_ASSERT(glyphs.size() == data.glyphCount);
 		CAGE_ASSERT(charsetChars.size() == data.charCount);
@@ -342,9 +342,9 @@ namespace
 		}
 
 		CAGE_ASSERT(h.originalSize == buf.size());
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buf.size());
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buf.size());
 		Holder<PointerRange<char>> buf2 = compress(buf);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + buf2.size());
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + buf2.size());
 		h.compressedSize = buf2.size();
 
 		Holder<File> f = writeFile(outputFileName);
@@ -355,17 +355,17 @@ namespace
 
 	void printDebugData()
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "print debug data");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "print debug data");
 
-		const ConfigString fontPath("cage-asset-processor/font/path", "asset-preview");
+		const ConfigString fontPath("cage-assetProcessor/font/path", "asset-preview");
 
-		if (configGetBool("cage-asset-processor/font/preview"))
+		if (configGetBool("cage-assetProcessor/font/preview"))
 		{
 			imageVerticalFlip(+texels);
 			texels->exportFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 
-		if (configGetBool("cage-asset-processor/font/glyphs"))
+		if (configGetBool("cage-assetProcessor/font/glyphs"))
 		{ // glyphs
 			FileMode fm(false, true);
 			fm.textual = true;
@@ -378,7 +378,7 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-asset-processor/font/characters"))
+		if (configGetBool("cage-assetProcessor/font/characters"))
 		{ // characters
 			FileMode fm(false, true);
 			fm.textual = true;
@@ -392,7 +392,7 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-asset-processor/font/kerning"))
+		if (configGetBool("cage-assetProcessor/font/kerning"))
 		{ // kerning
 			FileMode fm(false, true);
 			fm.textual = true;
@@ -444,7 +444,7 @@ void processFont()
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(Exception, "font is not scalable");
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "units per EM: " + face->units_per_EM);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "units per EM: " + face->units_per_EM);
 	setSize(40);
 	loadGlyphs();
 	loadCharset();

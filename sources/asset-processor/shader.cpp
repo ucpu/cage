@@ -16,7 +16,7 @@ namespace
 	std::set<String, StringComparatorFast> onces;
 	std::set<detail::StringBase<20>> keywords;
 
-	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
+	ConfigBool configShaderPrint("cage-assetProcessor/shader/preview");
 
 	bool validDefineChar(const char c)
 	{
@@ -233,7 +233,7 @@ namespace
 		{
 			if (!s.empty())
 			{
-				CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, Stringizer() + "output to unspecified shader: '" + s + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Warning, "assetProcessor", Stringizer() + "output to unspecified shader: '" + s + "'");
 			}
 			return;
 		}
@@ -483,7 +483,7 @@ void processShader()
 		ser << numeric_cast<uint32>(keywords.size());
 		for (const auto &it : keywords)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "keyword: " + it);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
 			ser << it;
 		}
 		ser << numeric_cast<uint32>(codes.size());
@@ -492,12 +492,12 @@ void processShader()
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
 			ser.write(it.second);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
 		Holder<PointerRange<char>> comp = compress(buff);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = buff.size();
@@ -512,7 +512,7 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			String name = pathJoin(configGetString("cage-assetProcessor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);

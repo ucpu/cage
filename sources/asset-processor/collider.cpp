@@ -25,13 +25,13 @@ void processCollider()
 	collider->optimize();
 	collider->rebuild();
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "triangles: " + collider->triangles().size());
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "aabb: " + collider->box());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "triangles: " + collider->triangles().size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "aabb: " + collider->box());
 
 	Holder<PointerRange<char>> buff = collider->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

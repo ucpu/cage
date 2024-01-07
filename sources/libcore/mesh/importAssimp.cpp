@@ -1282,7 +1282,10 @@ namespace cage
 						n = Vec3();
 					}
 					else
+					{
+						CAGE_LOG_THROW(Stringizer() + "vector " + name + ": " + n);
 						CAGE_THROW_ERROR(Exception, "invalid vector");
+					}
 				}
 				return n;
 			}

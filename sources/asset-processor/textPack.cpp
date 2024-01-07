@@ -24,11 +24,11 @@ void processTextpack()
 			texts[n] = v;
 		}
 	}
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loaded " + texts.size() + " texts");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "loaded " + texts.size() + " texts");
 
-	if (configGetBool("cage-asset-processor/textpack/preview"))
+	if (configGetBool("cage-assetProcessor/textpack/preview"))
 	{
-		String dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
+		String dbgName = pathJoin(configGetString("cage-assetProcessor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);
@@ -41,9 +41,9 @@ void processTextpack()
 		pack->set(HashString(it.first), it.second);
 
 	Holder<PointerRange<char>> buff = pack->exportBuffer();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = buff.size();

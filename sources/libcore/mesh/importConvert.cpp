@@ -299,7 +299,6 @@ namespace cage
 		void meshImportNormalizeFormats(MeshImportPart &part)
 		{
 			meshConvertToIndexed(+part.mesh);
-			meshRemoveInvalid(+part.mesh);
 			for (auto &it : part.textures)
 			{
 				if (it.images.parts.empty())

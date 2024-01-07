@@ -196,7 +196,7 @@ namespace
 			//	for (const auto &it : part.textures)
 			//		CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "texture: " + it.name + ", type: " + detail::meshImportTextureTypeToString(it.type) + ", parts: " + it.images.parts.size() + ", channels: " + (it.images.parts.empty() ? 0 : it.images.parts[0].image->channels()));
 
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "converting materials to cage format");
 			meshImportConvertToCageFormats(res);
 
 			//for (const auto &part : res.parts)
@@ -209,7 +209,7 @@ namespace
 		imageImportConvertRawToImages(images);
 		if (images.parts.empty())
 			CAGE_THROW_ERROR(Exception, "loaded no images");
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "loading done");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "loading done");
 	}
 
 	void overrideColorConfig(AlphaModeEnum alpha, GammaSpaceEnum gamma)
@@ -229,12 +229,12 @@ namespace
 	{
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling whole image (3D)");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaling whole image (3D)");
 			CAGE_THROW_ERROR(Exception, "3D texture downscale is not yet implemented");
 		}
 		else
 		{ // downscale each image separately
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaling each slice separately");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaling each slice separately");
 			for (auto &it : images.parts)
 				imageResize(+it.image, max(it.image->width() / downscale, 1u), max(it.image->height() / downscale, 1u));
 		}
@@ -312,7 +312,7 @@ namespace
 		if (target == GL_TEXTURE_CUBE_MAP && frames != 6)
 			CAGE_THROW_ERROR(Exception, "cube texture requires exactly 6 images");
 		if (target != GL_TEXTURE_2D && frames == 1)
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to 2d");
+			CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "texture has only one frame. consider setting target to 2d");
 		const Holder<Image> &im0 = images.parts[0].image;
 		if (im0->width() == 0 || im0->height() == 0)
 			CAGE_THROW_ERROR(Exception, "image has zero resolution");
@@ -331,7 +331,7 @@ namespace
 
 	void exportBcn(TextureHeader &data, Serializer &ser)
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using bcn encoding");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using bcn encoding");
 
 		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForBcn(data);
@@ -361,7 +361,7 @@ namespace
 
 	void exportRaw(TextureHeader &data, Serializer &ser)
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using raw encoding - no compression");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
 		data.internalFormat = findInternalFormatForRaw(data);
 		data.copyFormat = findCopyFormatForRaw(data);
@@ -442,7 +442,7 @@ namespace
 		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
@@ -477,8 +477,8 @@ void processTexture()
 
 	loadAllFiles();
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "input channels: " + images.parts[0].image->channels());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input channels: " + images.parts[0].image->channels());
 
 	{ // change channels count
 		const uint32 ch = toUint32(properties("channels"));
@@ -486,7 +486,7 @@ void processTexture()
 		{
 			for (auto &p : images.parts)
 				imageConvert(+p.image, ch);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to " + ch + " channels");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted to " + ch + " channels");
 		}
 	}
 
@@ -495,12 +495,12 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvert(+it.image, GammaSpaceEnum::Gamma);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted to gamma space");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted to gamma space");
 		}
 		else
 		{
 			overrideColorConfig(AlphaModeEnum::None, GammaSpaceEnum::Linear);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "override to linear space (with alpha mode: none)");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "override to linear space (with alpha mode: none)");
 		}
 	}
 
@@ -509,7 +509,7 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageVerticalFlip(+it.image);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "image vertically flipped");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "image vertically flipped");
 		}
 	}
 
@@ -518,25 +518,25 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 0);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "red channel inverted");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "red channel inverted");
 		}
 		if (toBool(properties("invertGreen")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 1);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "green channel inverted");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "green channel inverted");
 		}
 		if (toBool(properties("invertBlue")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 2);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "blue channel inverted");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "blue channel inverted");
 		}
 		if (toBool(properties("invertAlpha")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 3);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "alpha channel inverted");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "alpha channel inverted");
 		}
 	}
 
@@ -546,7 +546,7 @@ void processTexture()
 			const float strength = toFloat(properties("normalStrength"));
 			for (auto &it : images.parts)
 				imageConvertHeigthToNormal(+it.image, strength);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted from height map to normal map with strength of " + strength);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
 
@@ -555,7 +555,7 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvertSpecularToSpecial(+it.image);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted specular colors to material special");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted specular colors to material special");
 		}
 	}
 
@@ -564,7 +564,7 @@ void processTexture()
 		{
 			for (auto &it : images.parts)
 				imageConvertGltfPbrToSpecial(+it.image);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted gltf pbr to material special");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted gltf pbr to material special");
 		}
 	}
 
@@ -572,7 +572,7 @@ void processTexture()
 		if (toBool(properties("skyboxToCube")))
 		{
 			performSkyboxToCube();
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converted skybox to cube map");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted skybox to cube map");
 		}
 	}
 
@@ -588,7 +588,7 @@ void processTexture()
 					CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
 				imageConvert(+it.image, AlphaModeEnum::PremultipliedOpacity);
 			}
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "premultiplied alpha");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "premultiplied alpha");
 		}
 	}
 
@@ -608,7 +608,7 @@ void processTexture()
 				}
 				imageConvert(+it.image, 2);
 			}
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "made two-channel normal map");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "made two-channel normal map");
 		}
 	}
 
@@ -617,22 +617,22 @@ void processTexture()
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "output channels: " + images.parts[0].image->channels());
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output channels: " + images.parts[0].image->channels());
 
 	exportTexture(target);
 
-	if (configGetBool("cage-asset-processor/texture/preview"))
+	if (configGetBool("cage-assetProcessor/texture/preview"))
 	{ // preview images
 		imageImportConvertRawToImages(images); // this is after the export, so this operation does not affect the textures
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-assetProcessor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
 			it.image->exportFile(dbgName);
 		}
 	}

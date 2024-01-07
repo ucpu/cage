@@ -16,7 +16,7 @@ void processSound()
 		const bool mono = toBool(properties("mono"));
 		if (mono && audio->channels() != 1)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converting channels from " + audio->channels() + " to mono");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converting channels from " + audio->channels() + " to mono");
 			audioConvertFormat(+audio, AudioFormatEnum::Float);
 			Holder<Audio> tmp = newAudio();
 			tmp->initialize(audio->frames(), 1, audio->sampleRate());
@@ -30,7 +30,7 @@ void processSound()
 		const uint32 sr = toUint32(properties("sampleRate"));
 		if (sr != 0 && audio->sampleRate() != sr)
 		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
 			audioConvertSampleRate(+audio, sr);
 		}
 	}
@@ -55,21 +55,21 @@ void processSound()
 	else
 		sds.soundType = SoundTypeEnum::CompressedRaw;
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "flags: " + (uint32)sds.flags);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "frames: " + sds.frames);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "channels: " + sds.channels);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "raw size: " + rawSize + " bytes");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "sample rate: " + sds.sampleRate);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "flags: " + (uint32)sds.flags);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "frames: " + sds.frames);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "channels: " + sds.channels);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "raw size: " + rawSize + " bytes");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "sample rate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 		case SoundTypeEnum::RawRaw:
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: raw file, raw play");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "sound type: raw file, raw play");
 			break;
 		case SoundTypeEnum::CompressedRaw:
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, raw play");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "sound type: compressed file, raw play");
 			break;
 		case SoundTypeEnum::CompressedCompressed:
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "sound type: compressed file, compressed play");
 			break;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid sound type");
@@ -96,8 +96,8 @@ void processSound()
 		{
 			Holder<PointerRange<char>> buff = audio->exportBuffer(".ogg");
 			const uint64 oggSize = buff.size();
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compressed size: " + oggSize + " bytes");
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compressed size: " + oggSize + " bytes");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
 			AssetHeader h = initializeAssetHeader();
 			switch (sds.soundType)
 			{
@@ -124,9 +124,9 @@ void processSound()
 	}
 
 	// preview sound
-	if (configGetBool("cage-asset-processor/sound/preview"))
+	if (configGetBool("cage-assetProcessor/sound/preview"))
 	{
-		const String dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		const String dbgName = pathJoin(configGetString("cage-assetProcessor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
 		audio->exportFile(dbgName);
 	}
 }

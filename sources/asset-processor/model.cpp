@@ -90,7 +90,7 @@ Mat4 meshImportTransform(MeshImportResult &result)
 	const Mat3 axesScale = axes * toFloat(properties("scale"));
 	if (axesScale == Mat3())
 		return Mat4();
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using axes/scale conversion matrix: " + axesScale);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using axes/scale conversion matrix: " + axesScale);
 	for (auto &it : result.parts)
 	{
 		transformMesh(+it.mesh, axes, axesScale);
@@ -153,7 +153,7 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 		case 0:
 			CAGE_THROW_ERROR(Exception, "file does not contain requested model");
 		case 1:
-			CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "using model at index " + *candidates.begin());
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using model at index " + *candidates.begin());
 			return *candidates.begin();
 		default:
 			CAGE_THROW_ERROR(Exception, "requested name is not unique");
@@ -190,28 +190,28 @@ namespace
 		if (requested)
 		{
 			flags |= idx;
-			CAGE_LOG(SeverityEnum::Info, logComponentName, cage::Stringizer() + "feature requested: " + name);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", cage::Stringizer() + "feature requested: " + name);
 		}
 	}
 
 	void printMaterial(const ModelHeader &dsm, const MeshImportMaterial &mat)
 	{
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoBase: " + mat.albedoBase);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "albedoMult: " + mat.albedoMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialBase: " + mat.specialBase);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "cutOut: " + any(dsm.renderFlags & MeshRenderFlags::CutOut));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "transparent: " + any(dsm.renderFlags & MeshRenderFlags::Transparent));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "fade: " + any(dsm.renderFlags & MeshRenderFlags::Fade));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "albedoBase: " + mat.albedoBase);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "albedoMult: " + mat.albedoMult);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "specialBase: " + mat.specialBase);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "specialMult: " + mat.specialMult);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "cutOut: " + any(dsm.renderFlags & MeshRenderFlags::CutOut));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "transparent: " + any(dsm.renderFlags & MeshRenderFlags::Transparent));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "fade: " + any(dsm.renderFlags & MeshRenderFlags::Fade));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i])
-				CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
+				CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
 		}
 	}
 
@@ -243,7 +243,7 @@ void processModel()
 	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
 	MeshImportResult result = meshImportFiles(inputFileName, config);
 	const Mat4 importTransform = meshImportTransform(result);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, "converting materials to cage format");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "converting materials to cage format");
 	meshImportConvertToCageFormats(result);
 	meshImportNotifyUsedFiles(result);
 	const uint32 partIndex = meshImportSelectIndex(result);
@@ -263,9 +263,9 @@ void processModel()
 		flags |= ModelDataFlags::Uvs3;
 	}
 	if (any(flags & ModelDataFlags::Uvs2))
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 2D uvs");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using 2D uvs");
 	if (any(flags & ModelDataFlags::Uvs3))
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 3D uvs");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using 3D uvs");
 
 	if (none(flags & ModelDataFlags::Uvs2))
 		part.mesh->uvs({});
@@ -316,9 +316,9 @@ void processModel()
 	printMaterial(dsm, mat);
 	validateFlags(dsm, flags, part.renderFlags, mat);
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "bounding box: " + part.boundingBox);
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "bounding box: " + part.boundingBox);
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
 	AssetHeader h = initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])

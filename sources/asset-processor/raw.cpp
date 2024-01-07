@@ -13,22 +13,22 @@ void processRaw()
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = numeric_cast<uint32>(data.size());
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "original data size: " + data.size() + " bytes");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "original data size: " + data.size() + " bytes");
 	if (data.size() >= toUint32(properties("compressThreshold")))
 	{
 		Holder<PointerRange<char>> data2 = compress(data);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, Stringizer() + "compressed data size: " + data2.size() + " bytes");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compressed data size: " + data2.size() + " bytes");
 		if (data2.size() < data.size())
 		{
 			std::swap(data, data2);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "using the compressed data");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using the compressed data");
 			h.compressedSize = numeric_cast<uint32>(data2.size());
 		}
 		else
-			CAGE_LOG(SeverityEnum::Info, logComponentName, "using the data without compression");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using the data without compression");
 	}
 	else
-		CAGE_LOG(SeverityEnum::Info, logComponentName, "data are under compression threshold");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "data are under compression threshold");
 
 	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
