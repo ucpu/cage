@@ -106,6 +106,7 @@ namespace cage
 		Vec2 cursorPosition = Vec2::Nan();
 		Vec2 invokerPosition = Vec2::Nan();
 		Vec2 invokerSize = Vec2::Nan();
+		mutable Real extensionBorder = 20;
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
 		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::InvokerCorner;
 	};

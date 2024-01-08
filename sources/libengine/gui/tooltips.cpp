@@ -110,7 +110,7 @@ namespace cage
 			{
 				Vec2 p = h->renderPos;
 				Vec2 s = h->renderSize;
-				offset(p, s, Vec4(30));
+				offset(p, s, Vec4(it.extensionBorder));
 				it.removing |= !pointInside(p, s, outputMouse);
 			}
 		}
