@@ -7,7 +7,6 @@ namespace cage
 {
 	class RenderQueue;
 	class Model;
-	class ShaderProgram;
 
 	struct CAGE_ENGINE_API FontFormat
 	{
@@ -45,7 +44,7 @@ namespace cage
 		Vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format) const;
 		Vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format, const Vec2 &mousePosition, uint32 &cursor) const;
 
-		void render(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
+		void render(RenderQueue *queue, const Holder<Model> &model, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();

@@ -1,4 +1,3 @@
-
 []
 scheme = pack
 engine.pack
@@ -8,5 +7,6 @@ scheme = shader
 billboard.glsl
 blit.glsl
 decal.glsl
+font.glsl
 skybox.glsl
 standard.glsl

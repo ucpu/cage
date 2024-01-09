@@ -30,7 +30,6 @@ $define shader fragment
 
 layout(binding = 0) uniform sampler2D uniTexture;
 layout(location = 4) uniform vec3 uniColor;
-layout(location = 15) uniform float uniScreenPxRange;
 
 in vec2 varUv;
 out vec4 outColor;
@@ -43,7 +42,7 @@ float median(vec3 v)
 void main()
 {
 	float sd = median(texture(uniTexture, varUv).rgb);
-	float screenPxDistance = uniScreenPxRange * (sd - 0.5);
-	float opacity = clamp(screenPxDistance + 0.5, 0, 1);
+	float edgeWidth = fwidth(sd);
+	float opacity = smoothstep(0.5 - edgeWidth, 0.5 + edgeWidth, sd);
 	outColor = vec4(uniColor, opacity);
 }

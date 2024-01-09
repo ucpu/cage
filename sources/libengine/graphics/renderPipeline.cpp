@@ -393,7 +393,7 @@ namespace cage
 				shaderVisualizeColor = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl")));
 				shaderVisualizeDepth = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/depth.glsl")));
 				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
-				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
+				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/font.glsl")));
 				CAGE_ASSERT(shaderBlit);
 				onDemand->process();
 
@@ -526,7 +526,7 @@ namespace cage
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->uniform(shaderFont, 0, data.viewProj * text.model);
 				renderQueue->uniform(shaderFont, 4, text.color);
-				text.font->render(+renderQueue, modelSquare, shaderFont, text.glyphs, text.format);
+				text.font->render(+renderQueue, modelSquare, text.glyphs, text.format);
 			}
 
 			template<RenderModeEnum RenderMode>

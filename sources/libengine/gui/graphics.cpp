@@ -73,10 +73,8 @@ namespace cage
 		if (!item->font)
 			return;
 		setClip(item->hierarchy);
-		data.transform = item->transform;
 		data.format = item->format;
 		data.font = item->font.share();
-		item->glyphs = std::move(item->glyphs);
 		data.glyphs = item->glyphs.share();
 		data.color = item->color;
 		if (disabled)
@@ -87,11 +85,14 @@ namespace cage
 			data.color = Vec3(bw);
 		}
 		data.cursor = item->cursor;
-		data.format.size *= item->hierarchy->impl->pointsScale;
 		const Vec2i orr = item->hierarchy->impl->outputResolution;
-		position *= item->hierarchy->impl->pointsScale;
+		const Real pointsScale = item->hierarchy->impl->pointsScale;
+		position *= pointsScale;
 		data.transform = transpose(Mat4(2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
-		data.format.wrapWidth = size[0] * item->hierarchy->impl->pointsScale;
+		data.format.size *= pointsScale;
+		data.format.wrapWidth = size[0] * pointsScale;
+		//data.screenPxRange = 2 * pointsScale;
+		data.screenPxRange = data.format.size * 0.13;
 	}
 
 	RenderableText::~RenderableText()
@@ -106,7 +107,8 @@ namespace cage
 		q->bind(shader);
 		q->uniform(shader, 0, data.transform);
 		q->uniform(shader, 4, data.color);
-		data.font->render(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader, data.glyphs, data.format, data.cursor);
+		q->uniform(shader, 15, data.screenPxRange);
+		data.font->render(q, impl->graphicsData.fontModel, data.glyphs, data.format, data.cursor);
 	}
 
 	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)

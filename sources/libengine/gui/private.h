@@ -158,6 +158,7 @@ namespace cage
 		Holder<PointerRange<uint32>> glyphs;
 		Vec3 color = Vec3::Nan();
 		uint32 cursor = m;
+		Real screenPxRange;
 	};
 
 	struct TextItem : private Immovable, public CommonTextData

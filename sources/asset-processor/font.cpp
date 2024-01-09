@@ -81,7 +81,7 @@ namespace
 		const Real tx = -l + .5 * (wi - wf);
 		const Real ty = -b + .5 * (hi - hf);
 		msdfgen::Bitmap<float, 3> msdf(wi, hi);
-		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 2.5);
+		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 6);
 
 		Holder<Image> png = newImage();
 		png->initialize(wi, hi, 3);

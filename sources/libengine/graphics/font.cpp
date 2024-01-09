@@ -1,17 +1,11 @@
-#include <algorithm>
-#include <cstring>
 #include <vector>
+#include <cstring>
 
-#include <cage-core/geometry.h>
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-core/serialization.h>
 #include <cage-core/utf.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
-#include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
-#include <cage-engine/shaderConventions.h>
 #include <cage-engine/texture.h>
 
 namespace cage
@@ -38,7 +32,6 @@ namespace cage
 		struct ProcessData
 		{
 			Holder<Model> model;
-			Holder<ShaderProgram> shader;
 			RenderQueue *renderQueue = nullptr;
 			std::vector<Instance> instances;
 			PointerRange<const uint32> glyphs;
@@ -189,7 +182,7 @@ namespace cage
 							break;
 						}
 						const Real w = getGlyph(*it, data.format->size).advance + findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
-						if (it != lineStart && itWidth + w > data.format->wrapWidth + data.format->size * 1e-6)
+						if (it != lineStart && itWidth + w > data.format->wrapWidth + (!!data.renderQueue * data.format->size * 1e-5))
 						{ // at this point, the line needs to be wrapped somewhere
 							if (*lineEnd == spaceGlyph)
 							{ // if the line has had a space already, use the space for the wrapping point
@@ -221,7 +214,6 @@ namespace cage
 				if (data.renderQueue)
 				{
 					data.renderQueue->bind(tex, 0);
-					data.renderQueue->bind(data.shader);
 					const uint32 s = numeric_cast<uint32>(data.instances.size());
 					const uint32 a = s / MaxCharacters;
 					const uint32 b = s - a * MaxCharacters;
@@ -402,14 +394,13 @@ namespace cage
 		return data.outSize;
 	}
 
-	void Font::render(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
+	void Font::render(RenderQueue *queue, const Holder<Model> &model, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
 		if (format.wrapWidth <= 0 || format.size <= 0)
 			return;
 		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;
 		data.model = model.share();
-		data.shader = shader.share();
 		data.renderQueue = queue;
 		data.format = &format;
 		data.glyphs = glyphs;
