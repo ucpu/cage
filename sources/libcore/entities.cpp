@@ -4,7 +4,7 @@
 #include <unordered_dense.h>
 
 #include <cage-core/entities.h>
-#include <cage-core/flatSet.h>
+#include <cage-core/flatBag.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/pointerRangeHolder.h>
 
@@ -35,7 +35,7 @@ namespace cage
 			std::vector<Holder<ComponentImpl>> components;
 			std::vector<EntityComponent *> componentsByTypes;
 			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
-			FlatSet<Entity *> allEntities;
+			FlatBag<Entity *> allEntities;
 			uint32 generateName = 0;
 			uint32 entSize = 0;
 
@@ -76,7 +76,7 @@ namespace cage
 		class ComponentImpl : public EntityComponent
 		{
 		public:
-			FlatSet<Entity *> componentEntities;
+			FlatBag<Entity *> componentEntities;
 			EntityManagerImpl *const manager = nullptr;
 			Holder<MemoryArena> arena;
 			Holder<void> prototype;
