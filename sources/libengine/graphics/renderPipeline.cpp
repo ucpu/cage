@@ -592,6 +592,7 @@ namespace cage
 					renderQueue->culling(true);
 					renderQueue->blending(true);
 					renderQueue->blendFuncAlphaTransparency();
+					renderQueue->bind(shaderFont);
 					for (const TextPrepare &text : layer.texts)
 						renderTextImpl(data, text);
 					renderQueue->resetAllState();
