@@ -34,6 +34,7 @@ void testProfiling();
 void testTasks();
 void testLruCache();
 void testFlatSet();
+void testFlatBag();
 void testFiles();
 void testArchives();
 void testArchivesRecursion();
@@ -112,6 +113,7 @@ int main()
 	testTasks();
 	testLruCache();
 	testFlatSet();
+	testFlatBag();
 	testFiles();
 	testArchives();
 	testArchivesRecursion();

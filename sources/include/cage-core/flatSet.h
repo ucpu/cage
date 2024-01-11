@@ -17,7 +17,7 @@ namespace cage
 		using value_type = Value;
 		using const_iterator = typename std::vector<Value>::const_iterator;
 		using const_reverse_iterator = typename std::vector<Value>::const_reverse_iterator;
-		using size_type = typename std::vector<Value>::size_type;
+		using size_type = uintPtr;
 
 		constexpr FlatSet() = default;
 		constexpr FlatSet(const FlatSet &other) = default;
@@ -112,8 +112,6 @@ namespace cage
 		constexpr const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
 
 		constexpr const_reverse_iterator rend() const noexcept { return data_.rend(); }
-
-		constexpr const std::vector<Value> &unsafeData() const noexcept { return data_; }
 
 		constexpr std::vector<Value> &unsafeData() noexcept { return data_; }
 

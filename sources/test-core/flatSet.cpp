@@ -18,6 +18,7 @@ namespace
 		s.insert("you");
 		s.insert("you");
 		s.insert("are");
+		s.erase("bro");
 		return s.size();
 	}
 }
