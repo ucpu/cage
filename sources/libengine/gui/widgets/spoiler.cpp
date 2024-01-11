@@ -31,12 +31,14 @@ namespace cage
 				}
 				else
 					hierarchy->requestedSize = Vec2();
-				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
+				if (!hierarchy->children.empty())
+					offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
 				hierarchy->requestedSize[1] += skin->defaults.spoiler.captionHeight;
 				Vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : Vec2();
 				offsetSize(cs, skin->defaults.spoiler.captionPadding);
 				hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0] + skin->defaults.spoiler.captionHeight);
-				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
+				if (!hierarchy->children.empty())
+					offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.baseMargin);
 			}
 
@@ -82,9 +84,7 @@ namespace cage
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				hierarchy->impl->focusName = 0;
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
+				if (buttons != MouseButtonsFlags::Left || modifiers != ModifiersFlags::None)
 					return true;
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = Vec2(hierarchy->renderSize[0], skin->defaults.spoiler.captionHeight);
