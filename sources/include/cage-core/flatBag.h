@@ -1,8 +1,9 @@
 #ifndef guard_flatBag_sezik4edrt5
 #define guard_flatBag_sezik4edrt5
 
-#include <algorithm> // lower_bound, binary_search
 #include <vector>
+
+#include <unordered_dense.h>
 
 #include <cage-core/core.h>
 
@@ -19,67 +20,46 @@ namespace cage
 
 		constexpr void insert(const Value &value)
 		{
-			CAGE_ASSERT(count(value) == 0);
+			if (indices.count(value))
+				return;
+			indices[value] = data_.size();
 			data_.push_back(value);
-			unsorted++;
-			if (unsorted > 100)
-			{
-				std::sort(data_.begin(), data_.end());
-				sorted = data_.size();
-				unsorted = 0;
-			}
 		}
 
 		constexpr uintPtr erase(const Value &value)
 		{
-			CAGE_ASSERT(sorted + unsorted == data_.size());
-			if (unsorted > 0)
+			auto it = indices.find(value);
+			if (it == indices.end())
+				return 0;
+			const uintPtr off = it->second;
+			indices.erase(it);
+			if (off + 1 != data_.size())
 			{
-				auto it = std::find(data_.begin() + sorted, data_.end(), value);
-				if (it != data_.end())
-				{
-					std::swap(*it, data_.back());
-					data_.pop_back();
-					unsorted--;
-					return 1;
-				}
+				indices[data_.back()] = off;
+				std::swap(data_[off], data_.back());
 			}
-			if (sorted > 0)
-			{
-				auto it = std::lower_bound(data_.begin(), data_.begin() + sorted, value);
-				if (it == data_.begin() + sorted)
-					return 0;
-				if (*it != value)
-					return 0;
-				std::copy_n(it + 1, data_.end() - it - 1, it);
-				data_.pop_back();
-				sorted--;
-				return 1;
-			}
-			return 0;
+			data_.pop_back();
+			return 1;
 		}
 
 		constexpr void clear()
 		{
+			indices.clear();
 			data_.clear();
-			sorted = unsorted = 0;
 		}
 
-		constexpr void reserve(uintPtr s) { data_.reserve(s); }
+		constexpr void reserve(uintPtr s)
+		{
+			indices.reserve(s);
+			data_.reserve(s);
+		}
 
 		constexpr const_iterator find(const Value &value) const
 		{
-			CAGE_ASSERT(sorted + unsorted == data_.size());
-			CAGE_ASSERT(std::is_sorted(data_.begin(), data_.begin() + sorted));
-			auto it = std::find(data_.begin() + sorted, data_.end(), value);
-			if (it != data_.end())
-				return it;
-			it = std::lower_bound(data_.begin(), data_.begin() + sorted, value);
-			if (it == data_.begin() + sorted)
+			auto it = indices.find(value);
+			if (it == indices.end())
 				return data_.end();
-			if (*it == value)
-				return it;
-			return data_.end();
+			return data_.begin() + it->second;
 		}
 
 		constexpr uintPtr count(const Value &value) const { return find(value) == end() ? 0 : 1; }
@@ -94,14 +74,11 @@ namespace cage
 
 		constexpr const_iterator end() const noexcept { return data_.end(); }
 
-		constexpr const std::vector<Value> &unsafeData() const noexcept { return data_; }
-
 		constexpr std::vector<Value> &unsafeData() noexcept { return data_; }
 
 	private:
+		ankerl::unordered_dense::map<Value, uintPtr> indices;
 		std::vector<Value> data_;
-		uintPtr sorted = 0;
-		uintPtr unsorted = 0;
 	};
 }
 

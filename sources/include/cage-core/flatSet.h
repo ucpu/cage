@@ -113,8 +113,6 @@ namespace cage
 
 		constexpr const_reverse_iterator rend() const noexcept { return data_.rend(); }
 
-		constexpr const std::vector<Value> &unsafeData() const noexcept { return data_; }
-
 		constexpr std::vector<Value> &unsafeData() noexcept { return data_; }
 
 	private:
