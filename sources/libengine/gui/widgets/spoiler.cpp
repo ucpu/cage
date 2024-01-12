@@ -31,14 +31,17 @@ namespace cage
 				}
 				else
 					hierarchy->requestedSize = Vec2();
+
 				if (!hierarchy->children.empty())
 					offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
 				hierarchy->requestedSize[1] += skin->defaults.spoiler.captionHeight;
-				Vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : Vec2();
-				offsetSize(cs, skin->defaults.spoiler.captionPadding);
-				hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0] + skin->defaults.spoiler.captionHeight);
-				if (!hierarchy->children.empty())
-					offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
+				{
+					Vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : Vec2();
+					offsetSize(cs, skin->defaults.spoiler.captionPadding);
+					hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0] + skin->defaults.spoiler.captionHeight);
+				}
+				const Real k = hierarchy->children.empty() ? 0 : 1;
+				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border * Vec4(1, k, 1, k));
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.baseMargin);
 			}
 
@@ -59,13 +62,16 @@ namespace cage
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.spoiler.baseMargin);
-				emitElement(GuiElementTypeEnum::SpoilerBase, mode(false), p, s);
-				s = Vec2(s[0], skin->defaults.spoiler.captionHeight);
+				if (!hierarchy->children.empty())
+					emitElement(GuiElementTypeEnum::SpoilerBase, mode(false), p, s);
+				s[1] = skin->defaults.spoiler.captionHeight;
 				emitElement(GuiElementTypeEnum::SpoilerCaption, mode(p, s), p, s);
 				offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::SpoilerCaption].border - skin->defaults.spoiler.captionPadding);
-				Vec2 is = Vec2(s[1], s[1]);
-				Vec2 ip = Vec2(p[0] + s[0] - is[0], p[1]);
-				emitElement(collapsed ? GuiElementTypeEnum::SpoilerIconCollapsed : GuiElementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
+				{
+					const Vec2 is = Vec2(s[1], s[1]);
+					const Vec2 ip = Vec2(p[0] + s[0] - is[0], p[1]);
+					emitElement(collapsed ? GuiElementTypeEnum::SpoilerIconCollapsed : GuiElementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
+				}
 				if (hierarchy->text)
 				{
 					s[0] -= s[1];
