@@ -65,31 +65,39 @@ namespace cage
 		if ((header.width % 4) != 0 || (header.height % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "unsupported resolution in dds decoding");
 
+		bool premultiplied = false;
 		switch (header.format.fourCC)
 		{
 			case makeFourCC("DXT1"):
 			{
 				auto res = imageBc1Decode(des.read(header.width * header.height / 2), Vec2i(header.width, header.height));
 				swapAll(impl, (ImageImpl *)+res);
+				break;
 			}
-			break;
+			case makeFourCC("DXT2"):
+				premultiplied = true;
+				[[fallthrough]];
 			case makeFourCC("DXT3"):
 			{
 				auto res = imageBc2Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
 				swapAll(impl, (ImageImpl *)+res);
+				break;
 			}
-			break;
+			case makeFourCC("DXT4"):
+				premultiplied = true;
+				[[fallthrough]];
 			case makeFourCC("DXT5"):
 			{
 				auto res = imageBc3Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
 				swapAll(impl, (ImageImpl *)+res);
+				break;
 			}
-			break;
 			default:
 				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
-
 		impl->colorConfig = defaultConfig(impl->channels);
+		if (premultiplied)
+			impl->colorConfig.alphaMode = AlphaModeEnum::PremultipliedOpacity;
 	}
 
 	ImageImportResult ddsDecode(PointerRange<const char> inBuffer, const ImageImportConfig &config)
@@ -107,6 +115,7 @@ namespace cage
 		raw.resolution = Vec2i(header.width, header.height);
 		raw.channels = 4;
 
+		bool premultiplied = false;
 		uint32 bufferSize = 0;
 		switch (header.format.fourCC)
 		{
@@ -115,11 +124,17 @@ namespace cage
 				raw.format = "bc1";
 				raw.channels = 3;
 				break;
+			case makeFourCC("DXT2"):
+				premultiplied = true;
+				[[fallthrough]];
 			case makeFourCC("DXT3"):
 				bufferSize = header.width * header.height;
 				raw.format = "bc2";
 				raw.channels = 4;
 				break;
+			case makeFourCC("DXT4"):
+				premultiplied = true;
+				[[fallthrough]];
 			case makeFourCC("DXT5"):
 				bufferSize = header.width * header.height;
 				raw.format = "bc3";
@@ -129,6 +144,9 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
 		CAGE_ASSERT(bufferSize > 0);
+		raw.colorConfig = defaultConfig(raw.channels);
+		if (premultiplied)
+			raw.colorConfig.alphaMode = AlphaModeEnum::PremultipliedOpacity;
 
 		{
 			PointerRangeHolder<char> data;
@@ -139,7 +157,6 @@ namespace cage
 
 		ImageImportPart part;
 		part.raw = systemMemory().createHolder<ImageImportRaw>(std::move(raw));
-		part.raw->colorConfig = defaultConfig(raw.channels);
 		PointerRangeHolder<ImageImportPart> parts;
 		parts.push_back(std::move(part));
 		ImageImportResult result;
