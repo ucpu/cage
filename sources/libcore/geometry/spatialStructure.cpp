@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <variant>
 #include <vector>
 
 #include <unordered_dense.h>
@@ -87,42 +88,28 @@ namespace cage
 
 		struct ItemBase
 		{
+			std::variant<Line, Triangle, Sphere, Aabb, Cone> shape;
 			FastBox box;
 			Vec3 center;
-			const uint32 name;
+			uint32 name = m;
 
-			virtual Aabb getBox() const = 0;
-			virtual bool intersects(Line other) = 0;
-			virtual bool intersects(Triangle other) = 0;
-			virtual bool intersects(Plane other) = 0;
-			virtual bool intersects(Sphere other) = 0;
-			virtual bool intersects(Aabb other) = 0;
-			virtual bool intersects(Cone other) = 0;
-			virtual bool intersects(const Frustum &other) = 0;
-
-			CAGE_FORCE_INLINE explicit ItemBase(uint32 name) : name(name) {}
-
-			CAGE_FORCE_INLINE void update()
+			CAGE_FORCE_INLINE explicit ItemBase(uint32 name, auto sh) : shape(sh), name(name)
 			{
 				const Aabb b = getBox();
 				box = FastBox(b);
 				center = b.center();
 			}
-		};
 
-		template<class T>
-		struct ItemShape : public ItemBase, public T
-		{
-			CAGE_FORCE_INLINE ItemShape(uint32 name, T other) : ItemBase(name), T(other) { update(); }
+			CAGE_FORCE_INLINE Aabb getBox() const
+			{
+				return std::visit([](auto sh) { return Aabb(sh); }, shape);
+			}
 
-			virtual Aabb getBox() const { return Aabb(*(T *)this); }
-			virtual bool intersects(Line other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(Triangle other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(Plane other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(Sphere other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(Aabb other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(Cone other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const Frustum &other) { return cage::intersects(*(T *)this, other); };
+			template<class Other>
+			CAGE_FORCE_INLINE bool intersects(Other other)
+			{
+				return std::visit([other](auto sh) { return cage::intersects(sh, other); }, shape);
+			}
 		};
 
 		struct Node
@@ -144,9 +131,9 @@ namespace cage
 		class SpatialDataImpl : public SpatialStructure
 		{
 		public:
-			Holder<MemoryArena> itemsPool = newMemoryAllocatorPool({ 144, 16 });
+			Holder<MemoryArena> itemsPool = newMemoryAllocatorPool({ 96, 16 });
 			MemoryArena itemsArena;
-			ankerl::unordered_dense::map<uint32, Holder<ItemBase>> itemsTable;
+			ankerl::unordered_dense::map<uint32, ItemBase *> itemsTable;
 			std::atomic<bool> dirty = false;
 			std::vector<Node> nodes;
 			std::vector<ItemBase *> indices;
@@ -299,6 +286,16 @@ namespace cage
 #endif // CAGE_ASSERT_ENABLED
 				dirty = false;
 			}
+
+			template<class Shape>
+			CAGE_FORCE_INLINE void update(uint32 name, Shape shape)
+			{
+				dirty = true;
+				auto it = itemsTable.find(name);
+				if (it != itemsTable.end())
+					itemsArena.destroy<ItemBase>(it->second);
+				itemsTable[name] = itemsArena.createObject<ItemBase>(name, shape);
+			}
 		};
 
 		class SpatialQueryImpl : public SpatialQuery
@@ -435,8 +432,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		impl->dirty = true;
-		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Line>>(name, other);
+		impl->update(name, other);
 	}
 
 	void SpatialStructure::update(uint32 name, Triangle other)
@@ -444,8 +440,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		impl->dirty = true;
-		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Triangle>>(name, other);
+		impl->update(name, other);
 	}
 
 	void SpatialStructure::update(uint32 name, Sphere other)
@@ -453,8 +448,7 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		impl->dirty = true;
-		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Sphere>>(name, other);
+		impl->update(name, other);
 	}
 
 	void SpatialStructure::update(uint32 name, Aabb other)
@@ -462,30 +456,33 @@ namespace cage
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < Real::Infinity());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		impl->dirty = true;
-		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Aabb>>(name, other);
+		impl->update(name, other);
 	}
 
 	void SpatialStructure::update(uint32 name, Cone other)
 	{
 		CAGE_ASSERT(other.valid());
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
-		impl->dirty = true;
-		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Cone>>(name, other);
+		impl->update(name, other);
 	}
 
 	void SpatialStructure::remove(uint32 name)
 	{
 		CAGE_ASSERT(name != m);
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
+		auto it = impl->itemsTable.find(name);
+		if (it == impl->itemsTable.end())
+			return;
 		impl->dirty = true;
-		impl->itemsTable.erase(name);
+		impl->itemsArena.destroy<ItemBase>(it->second);
+		impl->itemsTable.erase(it);
 	}
 
 	void SpatialStructure::clear()
 	{
 		SpatialDataImpl *impl = (SpatialDataImpl *)this;
 		impl->dirty = true;
+		impl->itemsArena.flush();
 		impl->itemsTable.clear();
 	}
 
