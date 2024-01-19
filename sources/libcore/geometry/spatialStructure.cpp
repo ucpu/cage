@@ -3,12 +3,10 @@
 #include <atomic>
 #include <vector>
 
-#include <plf_colony.h>
 #include <unordered_dense.h>
 
 #include <cage-core/geometry.h>
 #include <cage-core/memoryAllocators.h>
-#include <cage-core/memoryArena.h>
 #include <cage-core/spatialStructure.h>
 
 namespace cage
@@ -28,7 +26,7 @@ namespace cage
 				};
 			} s;
 
-			CAGE_FORCE_INLINE FastPoint() : v4{ 0, 0, 0, 0 } {}
+			CAGE_FORCE_INLINE FastPoint() : v4() {}
 		};
 
 		struct FastBox
@@ -102,7 +100,7 @@ namespace cage
 			virtual bool intersects(Cone other) = 0;
 			virtual bool intersects(const Frustum &other) = 0;
 
-			CAGE_FORCE_INLINE ItemBase(uint32 name) : name(name) {}
+			CAGE_FORCE_INLINE explicit ItemBase(uint32 name) : name(name) {}
 
 			CAGE_FORCE_INLINE void update()
 			{
@@ -143,30 +141,10 @@ namespace cage
 			CAGE_FORCE_INLINE sint32 b() const { return box.high.s.i; }
 		};
 
-		struct ColonyAsAllocator
-		{
-			struct alignas(16) ItemAlloc
-			{
-				char reserved[144];
-			};
-
-			plf::colony<ItemAlloc, MemoryAllocatorStd<ItemAlloc>> colony;
-
-			void *allocate(uintPtr size, uintPtr alignment)
-			{
-				CAGE_ASSERT(size <= sizeof(ItemAlloc));
-				return &*colony.insert(ItemAlloc());
-			}
-
-			void deallocate(void *ptr) { colony.erase(colony.get_iterator((ItemAlloc *)ptr)); }
-
-			void flush() { CAGE_THROW_CRITICAL(Exception, "flush may not be used"); }
-		};
-
 		class SpatialDataImpl : public SpatialStructure
 		{
 		public:
-			ColonyAsAllocator itemsPool;
+			Holder<MemoryArena> itemsPool = newMemoryAllocatorPool({ 144, 16 });
 			MemoryArena itemsArena;
 			ankerl::unordered_dense::map<uint32, Holder<ItemBase>> itemsTable;
 			std::atomic<bool> dirty = false;
@@ -177,12 +155,11 @@ namespace cage
 			std::array<FastBox, BinsCount> rightBinBoxes = {};
 			std::array<uint32, BinsCount> leftBinCounts = {};
 
-			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsArena(&itemsPool)
+			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsArena(*itemsPool)
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(FastBox)) == 0);
-				itemsPool.colony.reserve(config.reserve);
 				itemsTable.reserve(config.reserve);
 			}
 
