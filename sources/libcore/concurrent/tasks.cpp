@@ -14,32 +14,10 @@ namespace cage
 	{
 		struct ThreadData
 		{
-			sint32 currentPriority = std::numeric_limits<sint32>().min();
-			bool runningTask = false;
 			bool taskingThread = false;
 		};
 
 		thread_local ThreadData threadData;
-
-		struct PrioritySwapper : private Immovable
-		{
-			sint32 origPriority = m;
-			bool origTask = true;
-
-			explicit PrioritySwapper(sint32 taskPriority) : origPriority(taskPriority)
-			{
-				ThreadData &thr = threadData;
-				std::swap(thr.currentPriority, origPriority);
-				std::swap(thr.runningTask, origTask);
-			}
-
-			~PrioritySwapper()
-			{
-				ThreadData &thr = threadData;
-				thr.currentPriority = origPriority;
-				thr.runningTask = origTask;
-			}
-		};
 
 		struct TaskImpl : public AsyncTask
 		{
@@ -62,10 +40,9 @@ namespace cage
 				if (completed)
 					return;
 				ProfilingScope profiling(config.name);
-				PrioritySwapper prioritySwapper(config.priority);
 				const uint32 idx = executing++;
 				CAGE_ASSERT(idx < config.invocations);
-				profiling.set(Stringizer() + "task invocation: " + idx + " / " + config.invocations + ", priority: " + config.priority);
+				profiling.set(Stringizer() + "task invocation: " + idx + " / " + config.invocations);
 				try
 				{
 					config.runner(config, idx);
@@ -111,20 +88,18 @@ namespace cage
 
 		struct TasksQueue : public ConcurrentQueue<Holder<TaskImpl>>
 		{
-			bool tryPopFilter(Holder<TaskImpl> &value, sint32 requiredPriority)
+			bool tryPopFilter(Holder<TaskImpl> &value)
 			{
 				ScopeLock sl(mut);
 				if (stop)
 					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				for (auto it = items.begin(); it != items.end(); it++)
 				{
-					if ((*it)->config.priority >= requiredPriority)
-					{
-						value = std::move(*it);
-						items.erase(it);
-						writer->signal();
-						return true;
-					}
+					// todo add filters here
+					value = std::move(*it);
+					items.erase(it);
+					writer->signal();
+					return true;
 				}
 				return false;
 			}
@@ -153,7 +128,7 @@ namespace cage
 				while (!completed)
 				{
 					Holder<TaskImpl> t;
-					if (q.tryPopFilter(t, config.priority)) // allow same priority
+					if (q.tryPopFilter(t))
 					{
 						enqueue(t.share());
 						t->execute();
@@ -266,7 +241,7 @@ namespace cage
 		}
 
 		template<bool Async>
-		auto tasksRunImpl(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
+		auto tasksRunImpl(StringPointer name, Delegate<void(uint32)> function, uint32 invocations)
 		{
 			static_assert(sizeof(TaskCreateConfig::function) == sizeof(function));
 			TaskCreateConfig tsk;
@@ -278,37 +253,18 @@ namespace cage
 				function(idx);
 			};
 			tsk.invocations = invocations;
-			tsk.priority = priority;
 			return tasksRunImpl<Async>(std::move(tsk));
 		}
 	}
 
-	void tasksYield()
+	void tasksRunBlocking(StringPointer name, Delegate<void(uint32)> function, uint32 invocations)
 	{
-		const sint32 requiredPriority = threadData.currentPriority + 1; // requires strictly higher priority
-		while (true)
-		{
-			Holder<TaskImpl> t;
-			if (!queue().tryPopFilter(t, requiredPriority))
-				break;
-			enqueue(t.share());
-			t->execute();
-		}
+		return privat::tasksRunImpl<false>(name, function, invocations);
 	}
 
-	sint32 tasksCurrentPriority()
+	Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations)
 	{
-		return threadData.runningTask ? threadData.currentPriority : 0;
-	}
-
-	void tasksRunBlocking(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
-	{
-		return privat::tasksRunImpl<false>(name, function, invocations, priority);
-	}
-
-	Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations, sint32 priority)
-	{
-		return privat::tasksRunImpl<true>(name, function, invocations, priority);
+		return privat::tasksRunImpl<true>(name, function, invocations);
 	}
 
 	std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount)

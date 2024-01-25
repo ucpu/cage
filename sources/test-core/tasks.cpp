@@ -651,7 +651,7 @@ namespace
 			Holder<Semaphore> sem;
 		} tst;
 		tst.sem = sem.share();
-		tasksRunAsync<Tester>("fireAndForget", Holder<Tester>(&tst, nullptr), 100, 0);
+		tasksRunAsync<Tester>("fireAndForget", Holder<Tester>(&tst, nullptr), 100);
 		for (uint32 i = 0; i < 100; i++)
 			sem->lock();
 	}
@@ -726,48 +726,6 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "tasks performance", Stringizer() + "parallel merge sort avg duration: " + durations[15] + " us"); // median
 	}
 
-	void priorityTestNegative(uint32)
-	{
-		CAGE_TEST(tasksCurrentPriority() < 0);
-	}
-
-	void priorityTestPositive(uint32)
-	{
-		CAGE_TEST(tasksCurrentPriority() > 0);
-	}
-
-	void priorityTestZero(uint32)
-	{
-		CAGE_TEST(tasksCurrentPriority() == 0);
-		tasksRunBlocking("priority negative", Delegate<void(uint32)>().bind<&priorityTestNegative>(), 1, -5);
-		tasksRunBlocking("priority positive", Delegate<void(uint32)>().bind<&priorityTestPositive>(), 1, 5);
-	}
-
-	void priorityTestDecreasing(uint32)
-	{
-		const uint32 c = tasksCurrentPriority();
-		if (c > -100)
-			tasksRunBlocking("priority decreasing", Delegate<void(uint32)>().bind<&priorityTestDecreasing>(), 1, c - 5);
-	}
-
-	void priorityTestIncreasing(uint32)
-	{
-		const uint32 c = tasksCurrentPriority();
-		if (c < 100)
-			tasksRunBlocking("priority increasing", Delegate<void(uint32)>().bind<&priorityTestIncreasing>(), 1, c + 5);
-	}
-
-	void testTaskPriorities()
-	{
-		tasksRunBlocking("priority zero", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, 0);
-		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1, tasksCurrentPriority());
-		tasksRunBlocking("priority default", Delegate<void(uint32)>().bind<&priorityTestZero>(), 1);
-		tasksRunBlocking("priority negative", Delegate<void(uint32)>().bind<&priorityTestNegative>(), 1, -5);
-		tasksRunBlocking("priority positive", Delegate<void(uint32)>().bind<&priorityTestPositive>(), 1, 5);
-		tasksRunBlocking("priority decreasing", Delegate<void(uint32)>().bind<&priorityTestDecreasing>(), 1, 100);
-		tasksRunBlocking("priority increasing", Delegate<void(uint32)>().bind<&priorityTestIncreasing>(), 1, -100);
-	}
-
 	struct StressTester : private Immovable
 	{
 		static inline std::atomic<sint32> counter = 0;
@@ -803,7 +761,7 @@ namespace
 					const uint32 cnt = randomRange(1, 5);
 					std::vector<Holder<AsyncTask>> arr;
 					for (uint32 i = 0; i < cnt; i++)
-						arr.push_back(tasksRunAsync("stress", systemMemory().createHolder<StressTester>(), randomRange(1, 3), randomRange(-100, 100)));
+						arr.push_back(tasksRunAsync("stress", systemMemory().createHolder<StressTester>(), randomRange(1, 3)));
 					for (auto &it : arr)
 						it->wait();
 					arr.clear();
@@ -811,10 +769,9 @@ namespace
 				else
 				{
 					StressTester arr[3];
-					tasksRunBlocking<StressTester>("stress", arr, randomRange(-100, 100));
+					tasksRunBlocking<StressTester>("stress", arr);
 				}
 			}
-			tasksYield();
 			check();
 		}
 
@@ -846,6 +803,5 @@ void testTasks()
 	testTasksAggregation();
 	testFireAndForget();
 	testPerformance();
-	testTaskPriorities();
 	randomizedStressTest();
 }

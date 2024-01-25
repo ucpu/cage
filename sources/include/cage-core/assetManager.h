@@ -75,7 +75,6 @@ namespace cage
 		uint32 diskLoadingThreads = 2;
 		uint32 customProcessingThreads = 5;
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
-		sint32 tasksPriority = 0;
 	};
 
 	CAGE_CORE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);

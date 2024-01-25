@@ -156,7 +156,6 @@ namespace cage
 		{
 		public:
 			const String path;
-			const sint32 tasksPriority = 0;
 			Holder<Mutex> privateMutex = newMutex(); // protects generateName, privateIndex
 			Holder<RwMutex> publicMutex = newRwMutex(); // protects publicIndex, waitingIndex
 			KeepOpen keepOpen;
@@ -200,7 +199,7 @@ namespace cage
 				}
 			}
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config)), tasksPriority(config.tasksPriority)
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
 			{
 				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using assets path: '" + path + "'");
 				schemes.resize(config.schemesMaxCount);
@@ -248,7 +247,7 @@ namespace cage
 					return;
 				Holder<TskDecompress> tsk = systemMemory().createHolder<TskDecompress>();
 				tsk->loading = std::move(loading);
-				tasksRunAsync<TskDecompress>("asset decompress", std::move(tsk), 1, tasksPriority);
+				tasksRunAsync<TskDecompress>("asset decompress", std::move(tsk));
 			}
 
 			void enqueueProcess(Holder<Loading> &&loading)
@@ -261,7 +260,7 @@ namespace cage
 					return;
 				const uint32 thr = schemes[scheme].threadIndex;
 				if (thr == m)
-					tasksRunAsync<Loading>("asset loading process", std::move(loading), 1, tasksPriority);
+					tasksRunAsync<Loading>("asset loading process", std::move(loading));
 				else
 					customProcessingQueues[thr]->push(std::move(loading).cast<CustomProcessing>());
 			}
@@ -272,7 +271,7 @@ namespace cage
 					return;
 				const uint32 thr = schemes[unloading->asset->scheme].threadIndex;
 				if (thr == m)
-					tasksRunAsync<Unloading>("asset unloading process", std::move(unloading), 1, tasksPriority);
+					tasksRunAsync<Unloading>("asset unloading process", std::move(unloading));
 				else
 					customProcessingQueues[thr]->push(std::move(unloading).cast<CustomProcessing>());
 			}
