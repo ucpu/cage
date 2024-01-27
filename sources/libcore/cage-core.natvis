@@ -64,6 +64,7 @@
       <Item Name="radians">value.value * 3.141592653589793 / 180</Item>
     </Expand>
   </Type>
+
   <Type Name="cage::Rads">
     <DisplayString>{value} rads</DisplayString>
     <Expand>
@@ -120,7 +121,7 @@
       </ArrayItems>
     </Expand>
   </Type>
-  
+
   <Type Name="cage::Quat">
     <Expand>
       <ArrayItems>
@@ -146,13 +147,44 @@
       </ArrayItems>
     </Expand>
   </Type>
-  
+
   <Type Name="cage::Transform">
     <DisplayString>{position}, {orientation}, {scale}</DisplayString>
     <Expand>
       <Item Name="position">position</Item>
       <Item Name="orientation">orientation</Item>
       <Item Name="scale">scale</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="std::source_location">
+    <DisplayString>{_File,s8} {_Function,s8}</DisplayString>
+  </Type>
+
+  <Type Name="cage::privat::EventLinker">
+    <DisplayString>{order} {location}</DisplayString>
+    <Expand>
+      <Item Name="order">order</Item>
+      <Item Name="location">location</Item>
+      <Synthetic Name="listeners">
+        <Expand>
+          <CustomListItems MaxItemsPerView="100">
+            <Variable Name="node" InitialValue="this" />
+            <Loop>
+              <Break Condition="!node->p" />
+              <Exec>node = node->p</Exec>
+            </Loop>
+            <Loop>
+              <Break Condition="!node" />
+              <If Condition="node == this">
+                <Item>"here:"</Item>
+              </If>
+              <Item>*node</Item>
+              <Exec>node = node->n</Exec>
+            </Loop>
+          </CustomListItems>
+        </Expand>
+      </Synthetic>
     </Expand>
   </Type>
 
