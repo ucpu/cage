@@ -243,7 +243,42 @@ namespace cage
 		void windowKeyCallback(GLFWwindow *w, int key, int, int action, int mods)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
-			const ModifiersFlags ms = getKeyModifiers(mods);
+			ModifiersFlags ms = getKeyModifiers(mods);
+
+#ifndef CAGE_SYSTEM_WINDOWS
+			// https://github.com/glfw/glfw/issues/1630
+			ModifiersFlags md = ModifiersFlags::None;
+			switch (key)
+			{
+				case GLFW_KEY_LEFT_SHIFT:
+				case GLFW_KEY_RIGHT_SHIFT:
+					md = ModifiersFlags::Shift;
+					break;
+				case GLFW_KEY_LEFT_CONTROL:
+				case GLFW_KEY_RIGHT_CONTROL:
+					md = ModifiersFlags::Ctrl;
+					break;
+				case GLFW_KEY_LEFT_ALT:
+				case GLFW_KEY_RIGHT_ALT:
+					md = ModifiersFlags::Alt;
+					break;
+				case GLFW_KEY_LEFT_SUPER:
+				case GLFW_KEY_RIGHT_SUPER:
+					md = ModifiersFlags::Super;
+					break;
+			}
+			switch (action)
+			{
+				case GLFW_PRESS:
+				case GLFW_REPEAT:
+					ms |= md;
+					break;
+				case GLFW_RELEASE:
+					ms &= ~md;
+					break;
+			}
+#endif // CAGE_SYSTEM_WINDOWS
+
 			switch (action)
 			{
 				case GLFW_PRESS:
