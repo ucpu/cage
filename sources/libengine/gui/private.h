@@ -97,13 +97,12 @@ namespace cage
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) = 0;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) = 0;
-		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) = 0;
 		virtual bool keyChar(uint32 key) = 0;
+		// no release events -> always propagate release events to all listeners
 	};
 
 	struct WidgetItem : public BaseItem
@@ -124,13 +123,12 @@ namespace cage
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
+		// no release events -> always propagate release events to all listeners
 	};
 
 	struct LayoutItem : public BaseItem
@@ -142,13 +140,12 @@ namespace cage
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
-		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool keyPress(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
+		// no release events -> always propagate release events to all listeners
 	};
 
 	struct CommonTextData
@@ -317,12 +314,11 @@ namespace cage
 		bool mouseMove(input::MouseMove);
 		bool mousePress(input::MousePress);
 		bool mouseDoublePress(input::MouseDoublePress);
-		bool mouseRelease(input::MouseRelease);
 		bool mouseWheel(input::MouseWheel);
 		bool keyPress(input::KeyPress);
-		bool keyRelease(input::KeyRelease);
 		bool keyRepeat(input::KeyRepeat);
 		bool keyChar(input::Character);
+		// no release events -> always propagate release events to all listeners
 
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;

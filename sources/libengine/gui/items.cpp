@@ -190,11 +190,6 @@ namespace cage
 		return true;
 	}
 
-	bool WidgetItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
-	{
-		return true;
-	}
-
 	bool WidgetItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return true;
@@ -211,11 +206,6 @@ namespace cage
 	}
 
 	bool WidgetItem::keyRepeat(uint32 key, ModifiersFlags modifiers)
-	{
-		return true;
-	}
-
-	bool WidgetItem::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
@@ -237,11 +227,6 @@ namespace cage
 		return false;
 	}
 
-	bool LayoutItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
-	{
-		return false;
-	}
-
 	bool LayoutItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		return false;
@@ -258,11 +243,6 @@ namespace cage
 	}
 
 	bool LayoutItem::keyRepeat(uint32 key, ModifiersFlags modifiers)
-	{
-		return false;
-	}
-
-	bool LayoutItem::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		return false;
 	}

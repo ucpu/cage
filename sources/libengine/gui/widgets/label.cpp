@@ -47,8 +47,6 @@ namespace cage
 
 			bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
-			bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
-
 			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
 			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override { return false; }

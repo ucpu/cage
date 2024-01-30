@@ -93,8 +93,6 @@ namespace cage
 			return impl->mousePress(in.get<input::MousePress>());
 		if (in.has<input::MouseDoublePress>())
 			return impl->mouseDoublePress(in.get<input::MouseDoublePress>());
-		if (in.has<input::MouseRelease>())
-			return impl->mouseRelease(in.get<input::MouseRelease>());
 		if (in.has<input::MouseMove>())
 			return impl->mouseMove(in.get<input::MouseMove>());
 		if (in.has<input::MouseWheel>())
@@ -103,8 +101,6 @@ namespace cage
 			return impl->keyPress(in.get<input::KeyPress>());
 		if (in.has<input::KeyRepeat>())
 			return impl->keyRepeat(in.get<input::KeyRepeat>());
-		if (in.has<input::KeyRelease>())
-			return impl->keyRelease(in.get<input::KeyRelease>());
 		if (in.has<input::Character>())
 			return impl->keyChar(in.get<input::Character>());
 		return false;
@@ -119,11 +115,6 @@ namespace cage
 	bool GuiImpl::mouseDoublePress(input::MouseDoublePress in)
 	{
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(this, in.buttons, in.mods, in.position);
-	}
-
-	bool GuiImpl::mouseRelease(input::MouseRelease in)
-	{
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseRelease>(this, in.buttons, in.mods, in.position);
 	}
 
 	bool GuiImpl::mouseMove(input::MouseMove in)
@@ -156,11 +147,6 @@ namespace cage
 	bool GuiImpl::keyRepeat(input::KeyRepeat in)
 	{
 		return passKeyEvent<&WidgetItem::keyRepeat>(this, in.key, in.mods);
-	}
-
-	bool GuiImpl::keyRelease(input::KeyRelease in)
-	{
-		return passKeyEvent<&WidgetItem::keyRelease>(this, in.key, in.mods);
 	}
 
 	bool GuiImpl::keyChar(input::Character in)
