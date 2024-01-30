@@ -78,6 +78,7 @@ namespace cage
 		// helpers
 		void moveToWindow(bool horizontal, bool vertical);
 		HierarchyItem *findParentOf(HierarchyItem *item);
+		void fireWidgetEvent(GenericInput in) const;
 		void fireWidgetEvent() const;
 	};
 
@@ -313,18 +314,15 @@ namespace cage
 		} graphicsData;
 		RenderQueue *activeQueue = nullptr;
 
-		bool mouseMove(InputMouse);
-		bool mousePress(InputMouse);
-		bool mouseDoublePress(InputMouse);
-		bool mouseRelease(InputMouse);
-		bool mouseWheel(InputMouseWheel);
-		bool keyPress(InputKey);
-		bool keyRelease(InputKey);
-		bool keyRepeat(InputKey);
-		bool keyChar(InputKey);
-
-		InputsDispatchers inputsDispatchers;
-		InputsListeners inputsListeners;
+		bool mouseMove(input::MouseMove);
+		bool mousePress(input::MousePress);
+		bool mouseDoublePress(input::MouseDoublePress);
+		bool mouseRelease(input::MouseRelease);
+		bool mouseWheel(input::MouseWheel);
+		bool keyPress(input::KeyPress);
+		bool keyRelease(input::KeyRelease);
+		bool keyRepeat(input::KeyRepeat);
+		bool keyChar(input::Character);
 
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;
@@ -339,7 +337,7 @@ namespace cage
 		sint32 ttNextOrder = 0;
 		std::vector<TooltipData> ttData;
 		EventListener<bool(Entity *)> ttRemovedListener;
-		void ttMouseMove(InputMouse in);
+		void ttMouseMove(input::MouseMove in);
 		void updateTooltips();
 		void clearTooltips();
 		bool tooltipRemoved(Entity *e);

@@ -569,8 +569,13 @@ namespace cage
 					check(xrLocateSpace(viewSpace, localSpace, time, &location));
 					headTransform = poseToTranform(location.pose);
 					if (valueChange(tracking, (location.locationFlags & TrackingMask) == TrackingMask))
-						eventsQueue.push_back(GenericInput{ InputHeadsetState{ this }, tracking ? InputClassEnum::HeadsetConnected : InputClassEnum::HeadsetDisconnected });
-					eventsQueue.push_back(GenericInput{ InputHeadsetPose{ headTransform, this }, InputClassEnum::HeadsetPose });
+					{
+						if (tracking)
+							eventsQueue.push_back(input::HeadsetConnected{ this });
+						else
+							eventsQueue.push_back(input::HeadsetDisconnected{ this });
+					}
+					eventsQueue.push_back(input::HeadsetPose{ headTransform, this });
 				}
 
 				for (VirtualRealityControllerImpl &cntrl : controllers)
@@ -594,8 +599,13 @@ namespace cage
 					}
 
 					if (valueChange(cntrl.tracking, nextTracking))
-						eventsQueue.push_back(GenericInput{ InputControllerState{ &cntrl }, nextTracking ? InputClassEnum::ControllerConnected : InputClassEnum::ControllerDisconnected });
-					eventsQueue.push_back(GenericInput{ InputControllerPose{ cntrl.grip.transform, &cntrl }, InputClassEnum::ControllerPose });
+					{
+						if (nextTracking)
+							eventsQueue.push_back(input::ControllerConnected{ &cntrl });
+						else
+							eventsQueue.push_back(input::ControllerDisconnected{ &cntrl });
+					}
+					eventsQueue.push_back(input::ControllerPose{ cntrl.grip.transform, &cntrl });
 
 					for (uint32 i = 0; i < cntrl.axes.size(); i++)
 					{
@@ -609,7 +619,7 @@ namespace cage
 						check(xrGetActionStateFloat(session, &info, &state));
 						cntrl.axes[i] = state.currentState;
 						if (state.changedSinceLastSync)
-							eventsQueue.push_back(GenericInput{ InputControllerAxis{ &cntrl, i, state.currentState }, InputClassEnum::ControllerAxis });
+							eventsQueue.push_back(input::ControllerAxis{ &cntrl, i, state.currentState });
 					}
 
 					for (uint32 i = 0; i < cntrl.buts.size(); i++)
@@ -624,7 +634,12 @@ namespace cage
 						check(xrGetActionStateBoolean(session, &info, &state));
 						cntrl.buts[i] = state.currentState;
 						if (state.changedSinceLastSync)
-							eventsQueue.push_back(GenericInput{ InputControllerKey{ &cntrl, i }, state.currentState ? InputClassEnum::ControllerPress : InputClassEnum::ControllerRelease });
+						{
+							if (state.currentState)
+								eventsQueue.push_back(input::ControllerPress{ &cntrl, i });
+							else
+								eventsQueue.push_back(input::ControllerRelease{ &cntrl, i });
+						}
 					}
 				}
 

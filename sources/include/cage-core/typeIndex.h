@@ -11,7 +11,7 @@ namespace cage
 		constexpr PointerRange<const char> typeName() noexcept
 		{
 			static_assert(std::is_same_v<std::decay_t<T>, T>);
-			static_assert(std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, T>);
+			static_assert(std::is_same_v<std::remove_cvref_t<T>, T>);
 #ifdef _MSC_VER
 			return __FUNCSIG__;
 #else

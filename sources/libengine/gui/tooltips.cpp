@@ -2,7 +2,7 @@
 
 namespace cage
 {
-	void GuiImpl::ttMouseMove(InputMouse in)
+	void GuiImpl::ttMouseMove(input::MouseMove in)
 	{
 		Vec2 pt;
 		if (!eventPoint(in.position, pt))

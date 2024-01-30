@@ -2,7 +2,7 @@
 #define guard_guiComponents_sdf1gh45hk485aws
 
 #include <cage-core/stringLiteral.h>
-#include <cage-engine/core.h>
+#include <cage-engine/inputs.h>
 
 namespace cage
 {
@@ -74,11 +74,14 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiEventComponent
 	{
-		Delegate<bool(Entity *)> event;
+		Delegate<bool(const GenericInput &)> event;
 	};
 
 	struct CAGE_ENGINE_API GuiUpdateComponent
 	{
+		// called periodically from the gui itself
+		// useful for updating text, image, format, etc.
+		// do NOT use for adding/removing entities
 		Delegate<void(Entity *)> update;
 	};
 
@@ -201,12 +204,9 @@ namespace cage
 	{
 		// input box and text area
 		None = 0,
-		//ReadOnly = 1 << 0,
-		//SelectAllOnFocusGain = 1 << 1,
-		GoToEndOnFocusGain = 1 << 2,
-		ShowArrowButtons = 1 << 3,
-		AlwaysRoundValueToStep = 1 << 4,
-		//AcceptTabs = 1 << 5, // tab key will write tab rather than skip to next widget
+		ShowArrowButtons = 1 << 1,
+		AlwaysRoundValueToStep = 1 << 2,
+		GoToEndOnFocusGain = 1 << 3,
 	};
 
 	struct CAGE_ENGINE_API GuiInputComponent

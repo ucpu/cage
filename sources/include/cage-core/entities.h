@@ -11,7 +11,7 @@ namespace cage
 	class Entity;
 
 	template<class T>
-	concept ComponentConcept = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>;
+	concept ComponentConcept = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T> && std::is_same_v<std::remove_cvref_t<T>, T>;
 
 	class CAGE_CORE_API EntityManager : private Immovable
 	{

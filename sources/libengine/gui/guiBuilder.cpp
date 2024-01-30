@@ -174,7 +174,7 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::event(Delegate<bool(Entity *)> ev)
+		BuilderItem BuilderItem::event(Delegate<bool(const GenericInput &)> ev)
 		{
 			(*this)->value<GuiEventComponent>().event = ev;
 			return *this;

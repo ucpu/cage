@@ -79,16 +79,16 @@ namespace cage
 				{
 					if (interact)
 					{
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MousePress });
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp, .buttons = MouseButtonsFlags::Left }, InputClassEnum::MouseRelease });
+						guiMan->handleInput(input::MousePress{ { .position = i.gp, .buttons = MouseButtonsFlags::Left } });
+						guiMan->handleInput(input::MouseRelease{ { .position = i.gp, .buttons = MouseButtonsFlags::Left } });
 					}
 					else
-						guiMan->handleInput(GenericInput{ InputMouse{ .position = i.gp }, InputClassEnum::MouseMove });
+						guiMan->handleInput(input::MouseMove{ { .position = i.gp } });
 				}
 				else
 				{
 					guiMan->focus(0);
-					guiMan->handleInput(GenericInput{ InputMouse{ .position = Vec2(-1) }, InputClassEnum::MouseMove });
+					guiMan->handleInput(input::MouseMove{ { .position = Vec2(-1) } });
 				}
 
 				auto q = guiMan->finish();

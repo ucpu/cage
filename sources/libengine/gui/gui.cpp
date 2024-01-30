@@ -21,17 +21,6 @@ namespace cage
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 
-		inputsListeners.attach(&inputsDispatchers);
-		inputsListeners.mousePress.bind([this](InputMouse in) { return this->mousePress(in); });
-		inputsListeners.mouseDoublePress.bind([this](InputMouse in) { return this->mouseDoublePress(in); });
-		inputsListeners.mouseRelease.bind([this](InputMouse in) { return this->mouseRelease(in); });
-		inputsListeners.mouseMove.bind([this](InputMouse in) { return this->mouseMove(in); });
-		inputsListeners.mouseWheel.bind([this](InputMouseWheel in) { return this->mouseWheel(in); });
-		inputsListeners.keyPress.bind([this](InputKey in) { return this->keyPress(in); });
-		inputsListeners.keyRepeat.bind([this](InputKey in) { return this->keyRepeat(in); });
-		inputsListeners.keyRelease.bind([this](InputKey in) { return this->keyRelease(in); });
-		inputsListeners.keyChar.bind([this](InputKey in) { return this->keyChar(in); });
-
 		skins.reserve(config.skinsCount);
 		for (uint32 i = 0; i < config.skinsCount; i++)
 		{

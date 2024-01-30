@@ -85,7 +85,7 @@ namespace cage
 			template<class T>
 			T consolidate(T value, T a, T b, T s)
 			{
-				if ((data.style & InputStyleFlags::AlwaysRoundValueToStep) == InputStyleFlags::AlwaysRoundValueToStep && (value % s) != 0)
+				if (any(data.style & InputStyleFlags::AlwaysRoundValueToStep) && (value % s) != 0)
 					value -= value % s;
 				return clamp(value, a, b);
 			}
@@ -136,8 +136,8 @@ namespace cage
 							}
 							else
 								data.valid = false;
+							break;
 						}
-						break;
 						case InputTypeEnum::Real:
 						{
 							if (isReal(data.value))
@@ -148,8 +148,8 @@ namespace cage
 							}
 							else
 								data.valid = false;
+							break;
 						}
-						break;
 						case InputTypeEnum::Email:
 							// todo
 							break;
@@ -316,14 +316,14 @@ namespace cage
 					{
 						if (cursor > 0)
 							cursor--;
+						break;
 					}
-					break;
 					case 262: // right
 					{
 						if (cursor < len)
 							cursor++;
+						break;
 					}
-					break;
 					case 259: // backspace
 					{
 						if (len == 0 || cursor == 0)
@@ -333,8 +333,8 @@ namespace cage
 						data.value = utf32to8string(utf32);
 						validate();
 						hierarchy->fireWidgetEvent();
+						break;
 					}
-					break;
 					case 261: // delete
 					{
 						if (cursor == len)
@@ -343,8 +343,14 @@ namespace cage
 						data.value = utf32to8string(utf32);
 						validate();
 						hierarchy->fireWidgetEvent();
+						break;
 					}
-					break;
+					case 257: // enter
+					{
+						if (data.valid)
+							hierarchy->fireWidgetEvent(input::GuiInputConfirm{ hierarchy->impl, hierarchy->ent });
+						break;
+					}
 				}
 				return true;
 			}

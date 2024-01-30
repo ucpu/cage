@@ -22,7 +22,6 @@ namespace cage
 	enum class CheckBoxStateEnum : uint32;
 	enum class InputButtonsPlacementModeEnum : uint32;
 	enum class GuiElementTypeEnum : uint32;
-	enum class InputClassEnum : uint32;
 	enum class LightTypeEnum : uint32;
 	enum class WindowFlags : uint32;
 

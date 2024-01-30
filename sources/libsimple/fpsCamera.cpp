@@ -12,9 +12,7 @@ namespace cage
 		class FpsCameraImpl : public FpsCamera
 		{
 		public:
-			InputsDispatchers dispatchers;
-			InputsListeners listeners;
-			const EventListener<bool(const GenericInput &)> windowListener = engineWindow()->events.listen([this](const GenericInput &in) { return this->dispatchers.dispatch(in); });
+			const EventListener<bool(const GenericInput &)> windowListener = engineWindow()->events.listen([this](const GenericInput &in) { return this->event(in); });
 			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
 			VariableSmoothingBuffer<Vec2, 1> mouseSmoother;
 			VariableSmoothingBuffer<Vec3, 3> moveSmoother;
@@ -26,15 +24,7 @@ namespace cage
 			Entity *ent = nullptr;
 			bool keysPressedArrows[6] = {}; // wsadeq
 
-			FpsCameraImpl(Entity *ent) : ent(ent)
-			{
-				listeners.attach(&dispatchers);
-				listeners.mousePress.bind([this](InputMouse in) { return this->mousePress(in); });
-				listeners.mouseMove.bind([this](InputMouse in) { return this->mouseMove(in); });
-				listeners.mouseWheel.bind([this](InputMouseWheel in) { return this->mouseWheel(in); });
-				listeners.keyPress.bind([this](InputKey in) { return this->keyPress(in); });
-				listeners.keyRelease.bind([this](InputKey in) { return this->keyRelease(in); });
-			}
+			FpsCameraImpl(Entity *ent) : ent(ent) {}
 
 			Vec2 centerMouse()
 			{
@@ -48,14 +38,14 @@ namespace cage
 
 			bool mouseEnabled(MouseButtonsFlags buttons) { return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton); }
 
-			bool mousePress(InputMouse in)
+			bool mousePress(input::MousePress in)
 			{
 				if (mouseEnabled(in.buttons))
 					centerMouse();
 				return false;
 			}
 
-			bool mouseMove(InputMouse in)
+			bool mouseMove(input::MouseMove in)
 			{
 				if (!mouseEnabled(in.buttons))
 					return false;
@@ -65,7 +55,7 @@ namespace cage
 				return false;
 			}
 
-			bool mouseWheel(InputMouseWheel in)
+			bool mouseWheel(input::MouseWheel in)
 			{
 				if (!ent)
 					return false;
@@ -121,9 +111,24 @@ namespace cage
 				return false;
 			}
 
-			bool keyPress(InputKey in) { return setKey(in.key, true); }
+			bool keyPress(input::KeyPress in) { return setKey(in.key, true); }
 
-			bool keyRelease(InputKey in) { return setKey(in.key, false); }
+			bool keyRelease(input::KeyRelease in) { return setKey(in.key, false); }
+
+			bool event(GenericInput in)
+			{
+				if (in.has<input::MousePress>())
+					return mousePress(in.get<input::MousePress>());
+				if (in.has<input::MouseMove>())
+					return mouseMove(in.get<input::MouseMove>());
+				if (in.has<input::MouseWheel>())
+					return mouseWheel(in.get<input::MouseWheel>());
+				if (in.has<input::KeyPress>())
+					return keyPress(in.get<input::KeyPress>());
+				if (in.has<input::KeyRelease>())
+					return keyRelease(in.get<input::KeyRelease>());
+				return false;
+			}
 
 			void update()
 			{

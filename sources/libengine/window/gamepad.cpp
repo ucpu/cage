@@ -101,15 +101,15 @@ namespace cage
 					if (abs(a) < deadzone)
 						a = 0;
 					if (a != axes2[i])
-						eventsQueue.push(GenericInput{ InputGamepadAxis{ this, i, axes1[i] }, InputClassEnum::GamepadAxis });
+						eventsQueue.push(input::GamepadAxis{ this, i, axes1[i] });
 				}
 
 				for (uint32 i = 0; i < buts1.size(); i++)
 				{
 					if (buts1[i] && !buts2[i])
-						eventsQueue.push(GenericInput{ InputGamepadKey{ this, i }, InputClassEnum::GamepadPress });
+						eventsQueue.push(input::GamepadPress{ this, i });
 					else if (!buts1[i] && buts2[i])
-						eventsQueue.push(GenericInput{ InputGamepadKey{ this, i }, InputClassEnum::GamepadRelease });
+						eventsQueue.push(input::GamepadRelease{ this, i });
 				}
 
 				axes2 = axes1;
@@ -143,7 +143,7 @@ namespace cage
 					{
 						GamepadImpl *g = d.used[jid];
 						g->connected = true;
-						g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadConnected });
+						g->eventsQueue.push(input::GamepadConnected{ g });
 					}
 					else
 						d.available.insert(jid);
@@ -155,7 +155,7 @@ namespace cage
 					{
 						GamepadImpl *g = d.used[jid];
 						g->connected = false;
-						g->eventsQueue.push(GenericInput{ InputGamepadState{ g }, InputClassEnum::GamepadDisconnected });
+						g->eventsQueue.push(input::GamepadDisconnected{ g });
 					}
 					else
 						d.available.erase(jid);

@@ -12,241 +12,245 @@ namespace cage
 	class VirtualReality;
 	class VirtualRealityController;
 	class GuiManager;
+	class Entity;
 
-	enum class InputClassEnum : uint32
+	namespace input
 	{
-		None = 0,
-		FocusGain,
-		FocusLose,
-		WindowClose,
-		WindowShow,
-		WindowHide, // InputWindow
-		WindowMove,
-		WindowResize, // InputWindowValue
-		MouseMove,
-		MousePress,
-		MouseDoublePress,
-		MouseRelease, // InputMouse
-		MouseWheel, // InputMouseWheel
-		KeyPress,
-		KeyRelease,
-		KeyRepeat,
-		KeyChar, // InputKey
-		GamepadConnected,
-		GamepadDisconnected, // InputGamepadState
-		GamepadPress,
-		GamepadRelease, // InputGamepadKey
-		GamepadAxis, // InputGamepadAxis
-		HeadsetConnected,
-		HeadsetDisconnected, // InputHeadsetState
-		HeadsetPose, // InputHeadsetPose
-		ControllerConnected,
-		ControllerDisconnected, // InputControllerState
-		ControllerPose, // InputControllerPose
-		ControllerPress,
-		ControllerRelease, // InputControllerKey
-		ControllerAxis, // InputControllerAxis
-		GuiWidget, // InputGuiWidget
-		Custom = 1000,
-	};
+		// window
 
-	struct InputWindow
-	{
-		Window *window = nullptr;
-	};
-
-	struct InputWindowValue
-	{
-		Window *window = nullptr;
-		Vec2i value;
-	};
-
-	struct InputMouse
-	{
-		Window *window = nullptr;
-		Vec2 position;
-		MouseButtonsFlags buttons = MouseButtonsFlags::None;
-		ModifiersFlags mods = ModifiersFlags::None;
-	};
-
-	struct InputMouseWheel
-	{
-		Window *window = nullptr;
-		Vec2 position;
-		Real wheel;
-		ModifiersFlags mods = ModifiersFlags::None;
-	};
-
-	struct InputKey
-	{
-		Window *window = nullptr;
-		uint32 key = 0; // glfw key or utf-32 character
-		ModifiersFlags mods = ModifiersFlags::None;
-	};
-
-	struct InputGamepadState
-	{
-		Gamepad *gamepad = nullptr;
-	};
-
-	struct InputGamepadKey
-	{
-		Gamepad *gamepad = nullptr;
-		uint32 key = 0;
-	};
-
-	struct InputGamepadAxis
-	{
-		Gamepad *gamepad = nullptr;
-		uint32 axis = 0;
-		Real value;
-	};
-
-	struct InputHeadsetState
-	{
-		VirtualReality *headset = nullptr;
-	};
-
-	struct InputHeadsetPose
-	{
-		Transform pose; // in local space of the virtual reality
-		VirtualReality *headset = nullptr;
-	};
-
-	struct InputControllerState
-	{
-		VirtualRealityController *controller = nullptr;
-	};
-
-	struct InputControllerPose
-	{
-		Transform pose; // grip pose in local space of the virtual reality
-		VirtualRealityController *controller = nullptr;
-	};
-
-	struct InputControllerKey
-	{
-		VirtualRealityController *controller = nullptr;
-		uint32 key = 0;
-	};
-
-	struct InputControllerAxis
-	{
-		VirtualRealityController *controller = nullptr;
-		uint32 axis = 0;
-		Real value;
-	};
-
-	struct InputGuiWidget
-	{
-		GuiManager *manager = nullptr;
-		uint32 widget = 0;
-	};
-
-	struct GenericInput
-	{
-		using Any = detail::AnyBase<44>;
-		Any data;
-		InputClassEnum type = InputClassEnum::None;
-	};
-
-	struct CAGE_ENGINE_API InputsGeneralizer
-	{
-		bool focusGain(InputWindow);
-		bool focusLose(InputWindow);
-		bool windowClose(InputWindow);
-		bool windowShow(InputWindow);
-		bool windowHide(InputWindow);
-		bool windowMove(InputWindowValue);
-		bool windowResize(InputWindowValue);
-		bool mouseMove(InputMouse);
-		bool mousePress(InputMouse);
-		bool mouseDoublePress(InputMouse);
-		bool mouseRelease(InputMouse);
-		bool mouseWheel(InputMouseWheel);
-		bool keyPress(InputKey);
-		bool keyRelease(InputKey);
-		bool keyRepeat(InputKey);
-		bool keyChar(InputKey);
-		bool gamepadConnected(InputGamepadState);
-		bool gamepadDisconnected(InputGamepadState);
-		bool gamepadPress(InputGamepadKey);
-		bool gamepadRelease(InputGamepadKey);
-		bool gamepadAxis(InputGamepadAxis);
-		bool headsetConnected(InputHeadsetState);
-		bool headsetDisconnected(InputHeadsetState);
-		bool headsetPose(InputHeadsetPose);
-		bool controllerConnected(InputControllerState);
-		bool controllerDisconnected(InputControllerState);
-		bool controllerPose(InputControllerPose);
-		bool controllerPress(InputControllerKey);
-		bool controllerRelease(InputControllerKey);
-		bool controllerAxis(InputControllerAxis);
-		bool guiWidget(InputGuiWidget);
-		bool custom(const GenericInput::Any &);
-		bool unknown(const GenericInput &);
-
-		EventDispatcher<bool(const GenericInput &)> dispatcher;
-	};
-
-	struct CAGE_ENGINE_API InputsDispatchers
-	{
-		EventDispatcher<bool(InputWindow)> focusGain, focusLose, windowClose, windowShow, windowHide;
-		EventDispatcher<bool(InputWindowValue)> windowMove, windowResize;
-		EventDispatcher<bool(InputMouse)> mouseMove, mousePress, mouseDoublePress, mouseRelease;
-		EventDispatcher<bool(InputMouseWheel)> mouseWheel;
-		EventDispatcher<bool(InputKey)> keyPress, keyRelease, keyRepeat, keyChar;
-		EventDispatcher<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
-		EventDispatcher<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
-		EventDispatcher<bool(InputGamepadAxis)> gamepadAxis;
-		EventDispatcher<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
-		EventDispatcher<bool(InputHeadsetPose)> headsetPose;
-		EventDispatcher<bool(InputControllerState)> controllerConnected, controllerDisconnected;
-		EventDispatcher<bool(InputControllerPose)> controllerPose;
-		EventDispatcher<bool(InputControllerKey)> controllerPress, controllerRelease;
-		EventDispatcher<bool(InputControllerAxis)> controllerAxis;
-		EventDispatcher<bool(InputGuiWidget)> guiWidget;
-		EventDispatcher<bool(const GenericInput::Any &)> custom;
-		EventDispatcher<bool(const GenericInput &)> unknown;
-
-		bool dispatch(const GenericInput &input);
-	};
-
-	struct CAGE_ENGINE_API InputsListeners
-	{
-		EventListener<bool(InputWindow)> focusGain, focusLose, windowClose, windowShow, windowHide;
-		EventListener<bool(InputWindowValue)> windowMove, windowResize;
-		EventListener<bool(InputMouse)> mouseMove, mousePress, mouseDoublePress, mouseRelease;
-		EventListener<bool(InputMouseWheel)> mouseWheel;
-		EventListener<bool(InputKey)> keyPress, keyRelease, keyRepeat, keyChar;
-		EventListener<bool(InputGamepadState)> gamepadConnected, gamepadDisconnected;
-		EventListener<bool(InputGamepadKey)> gamepadPress, gamepadRelease;
-		EventListener<bool(InputGamepadAxis)> gamepadAxis;
-		EventListener<bool(InputHeadsetState)> headsetConnected, headsetDisconnected;
-		EventListener<bool(InputHeadsetPose)> headsetPose;
-		EventListener<bool(InputControllerState)> controllerConnected, controllerDisconnected;
-		EventListener<bool(InputControllerPose)> controllerPose;
-		EventListener<bool(InputControllerKey)> controllerPress, controllerRelease;
-		EventListener<bool(InputControllerAxis)> controllerAxis;
-		EventListener<bool(InputGuiWidget)> guiWidget;
-		EventListener<bool(const GenericInput::Any &)> custom;
-		EventListener<bool(const GenericInput &)> unknown;
-
-		void attach(InputsDispatchers *dispatchers, sint32 order = 0);
-		void bind(InputsGeneralizer *generalizer);
-	};
-
-	template<InputClassEnum C, class T, class Callable>
-	requires(std::is_invocable_r_v<bool, Callable, T> || std::is_invocable_r_v<void, Callable, T>)
-	auto inputListener(Callable &&callable)
-	{
-		return [cl = std::move(callable)](const GenericInput &in)
+		namespace privat
 		{
-			if (in.type == C)
-				return cl(in.data.get<T>());
-			if constexpr (std::is_same_v<std::invoke_result_t<Callable, T>, bool>)
-				return false;
+			struct BaseWindow
+			{
+				Window *window = nullptr;
+			};
+		}
+		struct WindowFocusGain : privat::BaseWindow
+		{};
+		struct WindowFocusLose : privat::BaseWindow
+		{};
+		struct WindowClose : privat::BaseWindow
+		{};
+		struct WindowShow : privat::BaseWindow
+		{};
+		struct WindowHide : privat::BaseWindow
+		{};
+		struct WindowMove
+		{
+			Window *window = nullptr;
+			Vec2i position;
 		};
+		struct WindowResize
+		{
+			Window *window = nullptr;
+			Vec2i size;
+		};
+
+		// mouse
+
+		namespace privat
+		{
+			struct BaseMouse
+			{
+				Window *window = nullptr;
+				Vec2 position;
+				MouseButtonsFlags buttons = MouseButtonsFlags::None;
+				ModifiersFlags mods = ModifiersFlags::None;
+			};
+		}
+		struct MouseMove : privat::BaseMouse
+		{};
+		struct MousePress : privat::BaseMouse
+		{};
+		struct MouseDoublePress : privat::BaseMouse
+		{};
+		struct MouseRelease : privat::BaseMouse
+		{};
+		struct MouseWheel
+		{
+			Window *window = nullptr;
+			Vec2 position;
+			Real wheel;
+			ModifiersFlags mods = ModifiersFlags::None;
+		};
+
+		// keyboard
+
+		namespace privat
+		{
+			struct BaseKey
+			{
+				Window *window = nullptr;
+				uint32 key = 0; // glfw key or utf-32 character
+				ModifiersFlags mods = ModifiersFlags::None;
+			};
+		}
+		struct KeyPress : privat::BaseKey
+		{};
+		struct KeyRelease : privat::BaseKey
+		{};
+		struct KeyRepeat : privat::BaseKey
+		{};
+		struct Character
+		{
+			Window *window = nullptr;
+			uint32 character = 0; // utf-32 character
+			ModifiersFlags mods = ModifiersFlags::None;
+		};
+
+		// gamepad
+
+		namespace privat
+		{
+			struct BaseGamepad
+			{
+				Gamepad *gamepad = nullptr;
+			};
+			struct BaseGamepadKey
+			{
+				Gamepad *gamepad = nullptr;
+				uint32 key = 0;
+			};
+		}
+		struct GamepadConnected : privat::BaseGamepad
+		{};
+		struct GamepadDisconnected : privat::BaseGamepad
+		{};
+		struct GamepadPress : privat::BaseGamepadKey
+		{};
+		struct GamepadRelease : privat::BaseGamepadKey
+		{};
+		struct GamepadAxis
+		{
+			Gamepad *gamepad = nullptr;
+			uint32 axis = 0;
+			Real value;
+		};
+
+		// headset
+
+		namespace privat
+		{
+			struct BaseHeadset
+			{
+				VirtualReality *headset = nullptr;
+			};
+		}
+		struct HeadsetConnected : privat::BaseHeadset
+		{};
+		struct HeadsetDisconnected : privat::BaseHeadset
+		{};
+		struct HeadsetPose
+		{
+			Transform pose; // in local space of the virtual reality
+			VirtualReality *headset = nullptr;
+		};
+
+		// controller
+
+		namespace privat
+		{
+			struct BaseController
+			{
+				VirtualRealityController *controller = nullptr;
+			};
+			struct BaseControllerKey
+			{
+				VirtualRealityController *controller = nullptr;
+				uint32 key = 0;
+			};
+		}
+		struct ControllerConnected : privat::BaseController
+		{};
+		struct ControllerDisconnected : privat::BaseController
+		{};
+		struct ControllerPose
+		{
+			Transform pose; // grip pose in local space of the virtual reality
+			VirtualRealityController *controller = nullptr;
+		};
+		struct ControllerPress : privat::BaseControllerKey
+		{};
+		struct ControllerRelease : privat::BaseControllerKey
+		{};
+		struct ControllerAxis
+		{
+			VirtualRealityController *controller = nullptr;
+			uint32 axis = 0;
+			Real value;
+		};
+
+		// gui
+
+		struct GuiValue
+		{
+			GuiManager *manager = nullptr;
+			Entity *entity = nullptr;
+		};
+
+		struct GuiInputConfirm
+		{
+			GuiManager *manager = nullptr;
+			Entity *entity = nullptr;
+		};
+	}
+
+	using GenericInput = detail::AnyBase<44>;
+
+	template<class T>
+	concept InputFilterConcept = detail::AnyValueConcept<T, GenericInput::MaxSize>;
+
+	template<InputFilterConcept T, class Callable>
+	requires((std::is_invocable_r_v<bool, Callable, T> || std::is_invocable_r_v<void, Callable, T>) && !std::is_same_v<T, GenericInput>)
+	auto inputFilter(Callable &&callable)
+	{
+		return [cl = std::move(callable)](const GenericInput &in) -> bool
+		{
+			if (!in.has<T>())
+				return false;
+			if constexpr (std::is_same_v<std::invoke_result_t<Callable, T>, bool>)
+				return cl(in.get<T>());
+			else
+			{
+				cl(in.get<T>());
+				return false;
+			}
+		};
+	}
+
+	namespace privat
+	{
+		template<class>
+		struct ExtractParam;
+		template<class R, class T, class P>
+		struct ExtractParam<R (T::*)(P)>
+		{
+			using Param = P;
+		};
+		template<class R, class T, class P>
+		struct ExtractParam<R (T::*)(P) const>
+		{
+			using Param = P;
+		};
+		template<class R, class P>
+		struct ExtractParam<R(P)>
+		{
+			using Param = P;
+		};
+	}
+
+	template<class Callable>
+	auto inputFilter(Callable &&callable)
+	{
+		using Param = typename privat::ExtractParam<decltype(&Callable::operator())>::Param;
+		return inputFilter<Param, Callable>(std::move(callable));
+	}
+
+	template<class Func>
+	auto inputFilter(Func *func)
+	{
+		using Param = typename privat::ExtractParam<Func>::Param;
+		return inputFilter<Param>([func](const Param &in) { return func(in); });
 	}
 }
 

@@ -18,8 +18,8 @@ namespace cage
 		class StatisticsGuiImpl : public StatisticsGui
 		{
 		public:
-			const EventListener<bool(const GenericInput &)> keyPressListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyPress, InputKey>([this](InputKey in) { return this->keyPress(in); }));
-			const EventListener<bool(const GenericInput &)> keyRepeatListener = engineWindow()->events.listen(inputListener<InputClassEnum::KeyRepeat, InputKey>([this](InputKey in) { return this->keyRepeat(in); }));
+			const EventListener<bool(const GenericInput &)> keyPressListener = engineWindow()->events.listen(inputFilter([this](input::KeyPress in) { return this->keyPress(in); }));
+			const EventListener<bool(const GenericInput &)> keyRepeatListener = engineWindow()->events.listen(inputFilter([this](input::KeyRepeat in) { return this->keyRepeat(in); }));
 			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { this->update(); });
 
 			uint32 rootName = 0;
@@ -91,7 +91,7 @@ namespace cage
 				}
 			}
 
-			bool keyPress(InputKey in)
+			bool keyPress(input::KeyPress in)
 			{
 				if (in.mods == keyModifiers)
 				{
@@ -161,7 +161,7 @@ namespace cage
 				return false;
 			}
 
-			bool keyRepeat(InputKey in)
+			bool keyRepeat(input::KeyRepeat in)
 			{
 				if (in.mods == keyModifiers)
 				{

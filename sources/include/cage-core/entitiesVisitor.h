@@ -16,8 +16,6 @@ namespace cage
 		template<class R, class T, class... Args>
 		struct DecomposeLambda<R (T::*)(Args...) const>
 		{
-			using Return = R;
-			using Class = T;
 			using Params = std::tuple<Args...>;
 		};
 

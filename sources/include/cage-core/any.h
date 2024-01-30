@@ -7,18 +7,18 @@ namespace cage
 {
 	namespace detail
 	{
-		template<uint32 MaxSize>
+		template<class T, uint32 MaxSize>
+		concept AnyValueConcept = std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T> && std::is_same_v<std::remove_cvref_t<T>, T> && sizeof(T) <= MaxSize && sizeof(T) > 0;
+
+		template<uint32 MaxSize_>
 		struct alignas(16) AnyBase
 		{
 			AnyBase() = default;
 			AnyBase(const AnyBase &) = default;
 
-			template<class T>
+			template<AnyValueConcept<MaxSize_> T>
 			CAGE_FORCE_INLINE AnyBase(const T &v) noexcept
 			{
-				static_assert(std::is_trivially_copyable_v<T>);
-				static_assert(sizeof(T) <= MaxSize);
-				static_assert(sizeof(T) > 0);
 				detail::typeIndex<T>(); // detect hash collisions
 				detail::memcpy(data_, &v, sizeof(T));
 				type_ = detail::typeHash<T>();
@@ -26,27 +26,31 @@ namespace cage
 
 			AnyBase &operator=(const AnyBase &) = default;
 
-			template<class T>
+			template<AnyValueConcept<MaxSize_> T>
 			CAGE_FORCE_INLINE AnyBase &operator=(const T &v) noexcept
 			{
 				return *this = AnyBase(v);
 			}
 
-			CAGE_FORCE_INLINE void clear() noexcept { type_ = m; }
-			CAGE_FORCE_INLINE uint32 typeHash() const noexcept { return type_; }
-			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return type_ != m; }
+			template<AnyValueConcept<MaxSize_> T>
+			CAGE_FORCE_INLINE bool has() const noexcept
+			{
+				return detail::typeHash<T>() == type_;
+			}
 
-			template<class T>
+			template<AnyValueConcept<MaxSize_> T>
 			T get() const
 			{
-				static_assert(std::is_trivially_copyable_v<T>);
-				static_assert(sizeof(T) <= MaxSize);
-				static_assert(sizeof(T) > 0);
 				CAGE_ASSERT(detail::typeHash<T>() == type_);
 				T tmp;
 				detail::memcpy(&tmp, data_, sizeof(T));
 				return tmp;
 			}
+
+			CAGE_FORCE_INLINE void clear() noexcept { type_ = m; }
+			CAGE_FORCE_INLINE uint32 typeHash() const noexcept { return type_; }
+			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return type_ != m; }
+			static constexpr uint32 MaxSize = MaxSize_;
 
 		private:
 			char data_[MaxSize];

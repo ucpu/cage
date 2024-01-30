@@ -6,19 +6,6 @@
 
 namespace cage
 {
-	class EntityManager;
-	class Entity;
-
-	namespace privat
-	{
-		template<void (*F)(), bool StopPropagation = true>
-		CAGE_FORCE_INLINE bool guiActionWrapper(Entity *)
-		{
-			(F)();
-			return StopPropagation;
-		}
-	}
-
 	namespace guiBuilder
 	{
 		class GuiBuilder;
@@ -50,34 +37,8 @@ namespace cage
 			BuilderItem skin(uint32 index = m);
 			BuilderItem disabled(bool disable = true);
 
-			BuilderItem event(Delegate<bool(Entity *)> ev);
-			template<bool (*F)(Entity *)>
-			BuilderItem event()
-			{
-				return event(Delegate<bool(Entity *)>().bind<F>());
-			}
-			template<class D, bool (*F)(D, Entity *)>
-			BuilderItem event(D d)
-			{
-				return event(Delegate<bool(Entity *)>().bind<D, F>(d));
-			}
-			template<void (*F)(), bool StopPropagation = true>
-			BuilderItem event()
-			{
-				return event(Delegate<bool(Entity *)>().bind<&privat::guiActionWrapper<F, StopPropagation>>());
-			}
-
+			BuilderItem event(Delegate<bool(const GenericInput &)> ev);
 			BuilderItem update(Delegate<void(Entity *)> u);
-			template<void (*F)(Entity *)>
-			BuilderItem update()
-			{
-				return update(Delegate<void(Entity *)>().bind<F>());
-			}
-			template<class D, void (*F)(D, Entity *)>
-			BuilderItem update(D d)
-			{
-				return update(Delegate<void(Entity *)>().bind<D, F>(d));
-			}
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
 			template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>

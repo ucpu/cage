@@ -89,32 +89,50 @@ namespace cage
 	bool GuiManager::handleInput(const GenericInput &in)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return impl->inputsDispatchers.dispatch(in);
+		if (in.has<input::MousePress>())
+			return impl->mousePress(in.get<input::MousePress>());
+		if (in.has<input::MouseDoublePress>())
+			return impl->mouseDoublePress(in.get<input::MouseDoublePress>());
+		if (in.has<input::MouseRelease>())
+			return impl->mouseRelease(in.get<input::MouseRelease>());
+		if (in.has<input::MouseMove>())
+			return impl->mouseMove(in.get<input::MouseMove>());
+		if (in.has<input::MouseWheel>())
+			return impl->mouseWheel(in.get<input::MouseWheel>());
+		if (in.has<input::KeyPress>())
+			return impl->keyPress(in.get<input::KeyPress>());
+		if (in.has<input::KeyRepeat>())
+			return impl->keyRepeat(in.get<input::KeyRepeat>());
+		if (in.has<input::KeyRelease>())
+			return impl->keyRelease(in.get<input::KeyRelease>());
+		if (in.has<input::Character>())
+			return impl->keyChar(in.get<input::Character>());
+		return false;
 	}
 
-	bool GuiImpl::mousePress(InputMouse in)
+	bool GuiImpl::mousePress(input::MousePress in)
 	{
 		focusName = 0;
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool GuiImpl::mouseDoublePress(InputMouse in)
+	bool GuiImpl::mouseDoublePress(input::MouseDoublePress in)
 	{
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool GuiImpl::mouseRelease(InputMouse in)
+	bool GuiImpl::mouseRelease(input::MouseRelease in)
 	{
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseRelease>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool GuiImpl::mouseMove(InputMouse in)
+	bool GuiImpl::mouseMove(input::MouseMove in)
 	{
 		ttMouseMove(in);
 		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(this, in.buttons, in.mods, in.position);
 	}
 
-	bool GuiImpl::mouseWheel(InputMouseWheel in)
+	bool GuiImpl::mouseWheel(input::MouseWheel in)
 	{
 		Vec2 pt;
 		if (!eventPoint(in.position, pt))
@@ -130,22 +148,22 @@ namespace cage
 		return false;
 	}
 
-	bool GuiImpl::keyPress(InputKey in)
+	bool GuiImpl::keyPress(input::KeyPress in)
 	{
 		return passKeyEvent<&WidgetItem::keyPress>(this, in.key, in.mods);
 	}
 
-	bool GuiImpl::keyRepeat(InputKey in)
+	bool GuiImpl::keyRepeat(input::KeyRepeat in)
 	{
 		return passKeyEvent<&WidgetItem::keyRepeat>(this, in.key, in.mods);
 	}
 
-	bool GuiImpl::keyRelease(InputKey in)
+	bool GuiImpl::keyRelease(input::KeyRelease in)
 	{
 		return passKeyEvent<&WidgetItem::keyRelease>(this, in.key, in.mods);
 	}
 
-	bool GuiImpl::keyChar(InputKey in)
+	bool GuiImpl::keyChar(input::Character in)
 	{
 		Vec2 dummy;
 		if (!eventPoint(inputMouse, dummy))
@@ -153,26 +171,28 @@ namespace cage
 		bool res = false;
 		for (auto f : focused(this))
 		{
-			if (f->widgetState.disabled || f->keyChar(in.key))
+			if (f->widgetState.disabled || f->keyChar(in.character))
 				res = true;
 		}
 		return res;
 	}
 
-	void HierarchyItem::fireWidgetEvent() const
+	void HierarchyItem::fireWidgetEvent(GenericInput in) const
 	{
 		if (ent->has<GuiEventComponent>())
 		{
 			GuiEventComponent &v = ent->value<GuiEventComponent>();
 			if (v.event)
 			{
-				if (v.event(ent))
+				if (v.event(in))
 					return;
 			}
 		}
-		InputGuiWidget e;
-		e.manager = impl;
-		e.widget = ent->name();
-		impl->widgetEvent.dispatch({ e, InputClassEnum::GuiWidget });
+		impl->widgetEvent.dispatch(in);
+	}
+
+	void HierarchyItem::fireWidgetEvent() const
+	{
+		fireWidgetEvent(input::GuiValue{ impl, ent });
 	}
 }

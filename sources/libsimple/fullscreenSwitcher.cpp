@@ -24,9 +24,9 @@ namespace cage
 		{
 		public:
 			Window *const window = nullptr;
-			const EventListener<bool(const GenericInput &)> windowMoveListener = window->events.listen(inputListener<InputClassEnum::WindowMove, InputWindowValue>([this](InputWindowValue in) { return this->windowMove(in); }), -13665);
-			const EventListener<bool(const GenericInput &)> windowResizeListener = window->events.listen(inputListener<InputClassEnum::WindowResize, InputWindowValue>([this](InputWindowValue in) { return this->windowResize(in); }), -13666);
-			const EventListener<bool(const GenericInput &)> keyListener = window->events.listen(inputListener<InputClassEnum::KeyRelease, InputKey>([this](InputKey in) { return this->keyRelease(in); }), -13667);
+			const EventListener<bool(const GenericInput &)> windowMoveListener = window->events.listen(inputFilter([this](input::WindowMove in) { return this->windowMove(in); }), -13665);
+			const EventListener<bool(const GenericInput &)> windowResizeListener = window->events.listen(inputFilter([this](input::WindowResize in) { return this->windowResize(in); }), -13666);
+			const EventListener<bool(const GenericInput &)> keyListener = window->events.listen(inputFilter([this](input::KeyRelease in) { return this->keyRelease(in); }), -13667);
 
 			ConfigBool confFullscreenEnabled;
 			ConfigBool confWindowMaximized;
@@ -78,34 +78,34 @@ namespace cage
 					window->setMaximized();
 			}
 
-			void windowMove(InputWindowValue in)
+			void windowMove(input::WindowMove in)
 			{
 				confScreen = window->screenId();
 				if (window->isWindowed())
 				{
-					confWindowLeft = in.value[0];
-					confWindowTop = in.value[1];
+					confWindowLeft = in.position[0];
+					confWindowTop = in.position[1];
 				}
 			}
 
-			void windowResize(InputWindowValue in)
+			void windowResize(input::WindowResize in)
 			{
 				confScreen = window->screenId();
 				if ((confFullscreenEnabled = window->isFullscreen()))
 				{
-					confFullscreenWidth = in.value[0];
-					confFullscreenHeight = in.value[1];
+					confFullscreenWidth = in.size[0];
+					confFullscreenHeight = in.size[1];
 					return;
 				}
 				if (window->isWindowed())
 				{
-					confWindowWidth = in.value[0];
-					confWindowHeight = in.value[1];
+					confWindowWidth = in.size[0];
+					confWindowHeight = in.size[1];
 				}
 				confWindowMaximized = window->isMaximized();
 			}
 
-			bool keyRelease(InputKey in)
+			bool keyRelease(input::KeyRelease in)
 			{
 				if (in.mods == keyModifiers && in.key == keyToggleFullscreen)
 				{

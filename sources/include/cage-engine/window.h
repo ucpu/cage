@@ -26,7 +26,7 @@ namespace cage
 		bool isFocused() const;
 		bool isFullscreen() const;
 		bool isMaximized() const;
-		bool isWindowed() const; // not hidden, not minimized, not maximized and not fullscreen
+		bool isWindowed() const; // visible, not maximized, and not fullscreen
 		bool isMinimized() const;
 		bool isHidden() const;
 		bool isVisible() const; // not hidden and not minimized
