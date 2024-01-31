@@ -8,6 +8,8 @@ namespace cage
 {
 	// forward declarations
 
+	struct GenericInput;
+
 	enum class TextureFlags : uint32;
 	enum class TextureSwizzleEnum : uint8;
 	enum class FontFlags : uint32;

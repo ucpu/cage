@@ -1,3 +1,4 @@
+#include <cage-engine/inputs.h>
 #include <cage-simple/engine.h>
 
 namespace cage
@@ -27,6 +28,12 @@ namespace cage
 	EngineSoundThread &soundThread()
 	{
 		static EngineSoundThread instance;
+		return instance;
+	}
+
+	EventDispatcher<bool(const GenericInput &)> &engineEvents()
+	{
+		static EventDispatcher<bool(const GenericInput &)> instance;
 		return instance;
 	}
 }

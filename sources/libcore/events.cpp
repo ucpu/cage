@@ -5,7 +5,7 @@ namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const std::source_location &location) : location(location), order(std::numeric_limits<sint32>::min()) {}
+		EventLinker::EventLinker(const std::source_location &location) : location(location) {}
 
 		EventLinker::~EventLinker()
 		{
@@ -41,6 +41,13 @@ namespace cage
 			CAGE_ASSERT(valid());
 		}
 
+		void EventLinker::merge(EventLinker *d)
+		{
+			CAGE_ASSERT(order == std::numeric_limits<sint32>::min());
+			CAGE_ASSERT(d->order == std::numeric_limits<sint32>::min());
+			attach(d, std::numeric_limits<sint32>::min());
+		}
+
 		void EventLinker::detach()
 		{
 			unlink();
@@ -70,6 +77,14 @@ namespace cage
 			}
 		}
 
+		EventLinker *EventLinker::firstListener() const
+		{
+			EventLinker *l = n;
+			while (l && l->order == std::numeric_limits<sint32>::min())
+				l = l->n;
+			return l;
+		}
+
 		void EventLinker::unlink()
 		{
 			if (p)
@@ -81,7 +96,7 @@ namespace cage
 
 		bool EventLinker::valid() const
 		{
-			if (order == 0)
+			if (order == 0 || order == std::numeric_limits<sint32>::min())
 				return true;
 			if (p && p->order >= order)
 				return false;

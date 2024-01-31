@@ -77,6 +77,7 @@ namespace cage
 	AssetManager *engineAssets();
 	EntityManager *engineEntities();
 	Window *engineWindow();
+	EventDispatcher<bool(const GenericInput &)> &engineEvents();
 	VirtualReality *engineVirtualReality();
 	EntityManager *engineGuiEntities();
 	GuiManager *engineGuiManager();

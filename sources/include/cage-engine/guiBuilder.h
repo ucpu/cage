@@ -34,10 +34,15 @@ namespace cage
 			BuilderItem image(uint32 textureName);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
 			BuilderItem size(Vec2 size);
-			BuilderItem skin(uint32 index = m);
+			BuilderItem skin(uint32 index = m); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
 			BuilderItem disabled(bool disable = true);
 
 			BuilderItem event(Delegate<bool(const GenericInput &)> ev);
+			BuilderItem event(void (*fnc)())
+			{
+				return event(inputFilter([fnc](input::GuiValue) { fnc(); }));
+			}
+
 			BuilderItem update(Delegate<void(Entity *)> u);
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);

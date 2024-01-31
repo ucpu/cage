@@ -38,6 +38,7 @@
 #include <cage-engine/virtualReality.h>
 #include <cage-engine/voices.h>
 #include <cage-engine/window.h>
+#include <cage-simple/engine.h>
 #include <cage-simple/statisticsGui.h>
 
 namespace cage
@@ -463,6 +464,8 @@ namespace cage
 					if (config.virtualReality)
 						cfg.vsync = 0; // explicitly disable vsync for the window when virtual reality controls frame rate
 					window = newWindow(cfg);
+					window->events.merge(engineEvents());
+					//engineEvents().merge(window->events);
 					if (config.virtualReality)
 					{
 						virtualReality = newVirtualReality(*config.virtualReality);
@@ -492,7 +495,7 @@ namespace cage
 					c.assetManager = +assets;
 					c.provisionalGraphics = +provisionalGraphics;
 					gui = newGuiManager(c);
-					windowGuiEventsListener.attach(window->events);
+					windowGuiEventsListener.attach(window->events, -1000);
 					windowGuiEventsListener.bind([gui = +gui](const GenericInput &in) { return gui->handleInput(in); });
 				}
 
@@ -765,6 +768,7 @@ namespace cage
 
 	Window *engineWindow()
 	{
+		CAGE_ASSERT(engineData && engineData->window);
 		return +engineData->window;
 	}
 

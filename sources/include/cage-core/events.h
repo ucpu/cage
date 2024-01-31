@@ -18,8 +18,10 @@ namespace cage
 			~EventLinker();
 
 			void attach(EventLinker *d, sint32 order);
+			void merge(EventLinker *d);
 			void detach();
 			void logAllNames();
+			EventLinker *firstListener() const;
 
 			EventLinker *p = nullptr, *n = nullptr;
 
@@ -28,7 +30,7 @@ namespace cage
 			bool valid() const;
 
 			const std::source_location location;
-			sint32 order = 0;
+			sint32 order = std::numeric_limits<sint32>::min();
 		};
 	}
 
@@ -99,8 +101,7 @@ namespace cage
 
 		bool dispatch(Ts... vs) const
 		{
-			CAGE_ASSERT(!this->p);
-			const privat::EventLinker *l = this->n;
+			const privat::EventLinker *l = firstListener();
 			while (l)
 			{
 				if (static_cast<const EventListener<bool(Ts...)> *>(l)->invoke(vs...))
@@ -116,6 +117,8 @@ namespace cage
 		{
 			return EventListener<bool(Ts...)>(std::move(callable), *this, order, location);
 		}
+
+		CAGE_FORCE_INLINE void merge(EventDispatcher &dispatcher) { privat::EventLinker::merge(&dispatcher); }
 
 		using privat::EventLinker::detach;
 		using privat::EventLinker::logAllNames;

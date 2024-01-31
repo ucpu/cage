@@ -195,7 +195,10 @@ namespace cage
 		};
 	}
 
-	using GenericInput = detail::AnyBase<44>;
+	struct GenericInput : detail::AnyBase<44>
+	{
+		using detail::AnyBase<44>::AnyBase;
+	};
 
 	template<class T>
 	concept InputFilterConcept = detail::AnyValueConcept<T, GenericInput::MaxSize>;
