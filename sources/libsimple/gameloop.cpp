@@ -465,10 +465,10 @@ namespace cage
 						cfg.vsync = 0; // explicitly disable vsync for the window when virtual reality controls frame rate
 					window = newWindow(cfg);
 					window->events.merge(engineEvents());
-					//engineEvents().merge(window->events);
 					if (config.virtualReality)
 					{
 						virtualReality = newVirtualReality(*config.virtualReality);
+						virtualReality->events.merge(engineEvents());
 						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
 					window->makeNotCurrent();
@@ -495,6 +495,7 @@ namespace cage
 					c.assetManager = +assets;
 					c.provisionalGraphics = +provisionalGraphics;
 					gui = newGuiManager(c);
+					gui->widgetEvent.merge(engineEvents());
 					windowGuiEventsListener.attach(window->events, -1000);
 					windowGuiEventsListener.bind([gui = +gui](const GenericInput &in) { return gui->handleInput(in); });
 				}
