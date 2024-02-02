@@ -346,6 +346,7 @@ namespace cage
 						break;
 					}
 					case 257: // enter
+					case 335: // numpad enter
 					{
 						if (data.valid)
 							hierarchy->fireWidgetEvent(input::GuiInputConfirm{ hierarchy->impl, hierarchy->ent });
