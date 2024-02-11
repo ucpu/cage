@@ -167,22 +167,19 @@ namespace cage
 		};
 	}
 
-	String TcpConnection::address() const
+	TcpRemoteInfo TcpConnection::remoteInfo() const
 	{
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		return impl->sock.getRemoteAddress().translate(false).first;
-	}
-
-	uint16 TcpConnection::port() const
-	{
-		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
-		return impl->sock.getRemoteAddress().translate(false).second;
+		const auto a = impl->sock.getRemoteAddress().translate(false);
+		return { a.first, a.second };
 	}
 
 	uint16 TcpServer::port() const
 	{
 		const TcpServerImpl *impl = (const TcpServerImpl *)this;
-		return impl->socks[0].getLocalAddress().translate(false).second;
+		if (impl->socks.empty())
+			return 0;
+		return impl->socks[0].getLocalAddress().getPort();
 	}
 
 	Holder<TcpConnection> TcpServer::accept()

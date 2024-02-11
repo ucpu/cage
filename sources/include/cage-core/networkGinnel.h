@@ -33,6 +33,12 @@ namespace cage
 		uint64 ppsDelivered() const;
 	};
 
+	struct CAGE_CORE_API GinnelRemoteInfo
+	{
+		String address;
+		uint16 port = 0;
+	};
+
 	class CAGE_CORE_API GinnelConnection : private Immovable
 	{
 	public:
@@ -53,6 +59,8 @@ namespace cage
 
 		// successfully completed connection initialization
 		bool established() const;
+
+		GinnelRemoteInfo remoteInfo() const;
 	};
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
@@ -62,6 +70,8 @@ namespace cage
 	class CAGE_CORE_API GinnelServer : private Immovable
 	{
 	public:
+		uint16 port() const; // local port
+
 		// returns empty holder if no new peer has connected
 		Holder<GinnelConnection> accept(); // non-blocking
 	};

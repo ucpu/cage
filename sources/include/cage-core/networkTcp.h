@@ -6,11 +6,16 @@
 
 namespace cage
 {
+	struct CAGE_CORE_API TcpRemoteInfo
+	{
+		String address;
+		uint16 port = 0;
+	};
+
 	class CAGE_CORE_API TcpConnection : public File
 	{
 	public:
-		String address() const; // remote address
-		uint16 port() const; // remote port
+		TcpRemoteInfo remoteInfo() const;
 	};
 
 	CAGE_CORE_API Holder<TcpConnection> newTcpConnection(const String &address, uint16 port); // blocking

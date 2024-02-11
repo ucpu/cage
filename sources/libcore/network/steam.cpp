@@ -485,6 +485,15 @@ namespace cage
 		return res;
 	}
 
+	uint16 SteamServer::port() const
+	{
+		const SteamServerImpl *impl = (const SteamServerImpl *)this;
+		SteamNetworkingIPAddr addr = {};
+		if (!sockets()->GetListenSocketAddress(impl->socks[0], &addr))
+			CAGE_THROW_ERROR(Exception, "failed to read local server info");
+		return addr.m_port;
+	}
+
 	Holder<SteamConnection> SteamServer::accept()
 	{
 		SteamServerImpl *impl = (SteamServerImpl *)this;

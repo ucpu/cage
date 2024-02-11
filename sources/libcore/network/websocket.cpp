@@ -218,16 +218,10 @@ namespace cage
 		};
 	}
 
-	String WebsocketConnection::address() const
+	TcpRemoteInfo WebsocketConnection::remoteInfo() const
 	{
 		const WebsocketConnectionImpl *impl = (const WebsocketConnectionImpl *)this;
-		return impl->con->address();
-	}
-
-	uint16 WebsocketConnection::port() const
-	{
-		const WebsocketConnectionImpl *impl = (const WebsocketConnectionImpl *)this;
-		return impl->con->port();
+		return impl->con->remoteInfo();
 	}
 
 	uint16 WebsocketServer::port() const

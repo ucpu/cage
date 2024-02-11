@@ -11,6 +11,7 @@
 	#include <cage-core/files.h>
 	#include <cage-core/math.h>
 	#include <cage-core/networkWebsocket.h>
+	#include <cage-core/networkTcp.h>
 	#include <cage-core/process.h>
 	#include <cage-core/profiling.h>
 	#include <cage-core/stdHash.h>
@@ -199,7 +200,8 @@ namespace cage
 						connection = server->accept();
 						if (connection)
 						{
-							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + connection->address() + ":" + connection->port());
+							const auto info = connection->remoteInfo();
+							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + info.address + ":" + info.port);
 							server.clear();
 						}
 					}

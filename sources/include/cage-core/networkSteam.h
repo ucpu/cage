@@ -51,6 +51,8 @@ namespace cage
 	class CAGE_CORE_API SteamServer : private Immovable
 	{
 	public:
+		uint16 port() const; // local port
+
 		// returns empty holder if no new peer has connected
 		// serves as an update, therefore it should be called periodically, even if you do not expect any new connections
 		Holder<SteamConnection> accept();

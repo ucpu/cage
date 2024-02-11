@@ -1340,6 +1340,23 @@ namespace cage
 		return impl->established;
 	}
 
+	GinnelRemoteInfo GinnelConnection::remoteInfo() const
+	{
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
+		if (!impl->sockGroup || impl->sockGroup->socks.empty())
+			return {};
+		const auto a = impl->sockGroup->socks[0].getRemoteAddress().translate(false);
+		return { a.first, a.second };
+	}
+
+	uint16 GinnelServer::port() const
+	{
+		const GinnelServerImpl *impl = (const GinnelServerImpl *)this;
+		if (!impl->sockGroup || impl->sockGroup->socks.empty())
+			return 0;
+		return impl->sockGroup->socks[0].getLocalAddress().getPort();
+	}
+
 	Holder<GinnelConnection> GinnelServer::accept()
 	{
 		GinnelServerImpl *impl = (GinnelServerImpl *)this;

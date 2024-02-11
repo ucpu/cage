@@ -6,13 +6,14 @@
 
 namespace cage
 {
+	struct TcpRemoteInfo;
+
 	// websocket framing is preserved
 	// full sequence of frames (up to first FIN) will be read before more data are made available
 	class CAGE_CORE_API WebsocketConnection : public File
 	{
 	public:
-		String address() const; // remote address
-		uint16 port() const; // remote port
+		TcpRemoteInfo remoteInfo() const;
 	};
 
 	CAGE_CORE_API Holder<WebsocketConnection> newWebsocketConnection(const String &address, uint16 port); // blocking
