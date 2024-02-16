@@ -349,6 +349,15 @@ namespace cage
 					graphicsEmit(controlTime);
 				}
 				profilingBufferEntities.add(entities->count());
+				{
+					ProfilingScope profiling("control assets");
+					const uint64 start = applicationTime();
+					while (assets->processCustomThread(0))
+					{
+						if (applicationTime() > start + 10'000)
+							break;
+					}
+				}
 			}
 
 			void controlGameloopStage() { controlScheduler->run(); }
@@ -634,6 +643,8 @@ namespace cage
 					{
 						try
 						{
+							while (engineAssets()->processCustomThread(0))
+								;
 							controlThread().unload.dispatch();
 						}
 						GCHL_GENERATE_CATCH(control, unload);

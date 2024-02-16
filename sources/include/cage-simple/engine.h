@@ -31,6 +31,7 @@ namespace cage
 		void updatePeriod(uint64 p);
 		uint64 inputPeriod() const;
 		void inputPeriod(uint64 p);
+		// assets processing thread index: 0
 	};
 	EngineControlThread &controlThread();
 
@@ -40,6 +41,7 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> dispatch;
 		EventDispatcher<bool()> swap;
+		// assets processing thread index: 1
 	};
 	EngineGraphicsDispatchThread &graphicsDispatchThread();
 
