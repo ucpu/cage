@@ -5,6 +5,7 @@
 
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/debug.h>
 #include <cage-core/profiling.h>
 #include <cage-core/tasks.h>
 
@@ -33,6 +34,20 @@ namespace cage
 			{
 				if (config.invocations == 0)
 					completed = true;
+			}
+
+			~TaskImpl()
+			{
+				try
+				{
+					CAGE_ASSERT(completed && "task must complete before destructor. did you forgot to wait on it?");
+				}
+				catch (...)
+				{
+					CAGE_LOG_THROW(Stringizer() + config.name);
+					CAGE_LOG(SeverityEnum::Critical, "tasks", "unhandled exception in task's destructor -> terminating");
+					detail::terminate();
+				}
 			}
 
 			void execute()

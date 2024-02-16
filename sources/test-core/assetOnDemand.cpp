@@ -55,5 +55,5 @@ void testAssetOnDemand()
 	cache.clear();
 	while (man->processing())
 		threadYield();
-	man->unloadWait();
+	man->waitTillEmpty();
 }

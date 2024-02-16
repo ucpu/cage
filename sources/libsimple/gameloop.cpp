@@ -222,8 +222,12 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("graphics assets");
+					const uint64 start = applicationTime();
 					while (assets->processCustomThread(1))
-						;
+					{
+						if (applicationTime() > start + 10'000)
+							break;
+					}
 				}
 				{
 					ProfilingScope profiling("swap callback");
@@ -528,7 +532,7 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(1));
 					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound());
 					// cage pack
-					assets->add(HashString("cage/cage.pack"));
+					assets->load(HashString("cage/cage.pack"));
 				}
 
 				{ // initialize assets change listening
@@ -625,8 +629,8 @@ namespace cage
 
 				if (assets)
 				{ // unload assets
-					assets->remove(HashString("cage/cage.pack"));
-					while (!assets->unloaded())
+					assets->unload(HashString("cage/cage.pack"));
+					while (!assets->empty())
 					{
 						try
 						{

@@ -19,16 +19,24 @@ namespace cage
 
 		// begin thread-safe methods
 
-		void add(uint32 assetName);
-		void remove(uint32 assetName);
+		void load(uint32 assetName);
+		void unload(uint32 assetName);
 		void reload(uint32 assetName);
+
 		uint32 generateUniqueName();
 
 		template<uint32 Scheme, class T>
-		void fabricate(uint32 assetName, Holder<T> &&value, const String &textName = "<fabricated>")
+		void loadValue(uint32 assetName, Holder<T> &&value, const String &textName = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			fabricate_(Scheme, assetName, textName, std::move(value).template cast<void>());
+			load_(Scheme, assetName, textName, std::move(value).template cast<void>());
+		}
+
+		template<uint32 Scheme, class T>
+		void loadCustom(uint32 assetName, const AssetScheme &customScheme, Holder<void> &&customData, const String &textName = "")
+		{
+			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
+			load_(Scheme, assetName, textName, customScheme, std::move(customData));
 		}
 
 		// returns null if the asset is not yet loaded or has different scheme
@@ -50,20 +58,19 @@ namespace cage
 
 		// end thread-safe methods
 
+		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
 		bool processCustomThread(uint32 threadIndex);
 		void unloadCustomThread(uint32 threadIndex);
-		void unloadWait();
-
+		void waitTillEmpty();
 		bool processing() const;
-		bool unloaded() const;
-
-		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
+		bool empty() const;
 
 		EventDispatcher<bool(uint32 requestName, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value);
-		void fabricate_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
+		void load_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
+		void load_(uint32 scheme, uint32 assetName, const String &textName, const AssetScheme &customScheme, Holder<void> &&customData);
 		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
 		friend class AssetOnDemand;

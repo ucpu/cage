@@ -3,8 +3,6 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/collider.h>
-#include <cage-core/math.h>
-#include <cage-core/memoryCompression.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/string.h>
@@ -12,23 +10,6 @@
 
 namespace cage
 {
-	namespace
-	{
-		void defaultDecompress(AssetContext *context)
-		{
-			if (context->compressedData.size() == 0)
-				return;
-			decompress(context->compressedData, context->originalData);
-		}
-	}
-
-	AssetContext::AssetContext(const detail::StringBase<64> &textName, PointerRange<char> compressedData, PointerRange<char> originalData, Holder<void> &assetHolder, uint32 realName) : textName(textName), compressedData(compressedData), originalData(originalData), assetHolder(assetHolder), realName(realName) {}
-
-	AssetScheme::AssetScheme()
-	{
-		decompress.bind<&defaultDecompress>();
-	}
-
 	namespace
 	{
 		void processAssetPackLoad(AssetContext *context)

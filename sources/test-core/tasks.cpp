@@ -635,27 +635,6 @@ namespace
 		}
 	}
 
-	void testFireAndForget()
-	{
-		CAGE_TESTCASE("fire and forget");
-
-		Holder<Semaphore> sem = newSemaphore(0, 100);
-		struct Tester
-		{
-			void operator()(uint32 idx)
-			{
-				while (randomChance() < 0.2) // spice things up a bit
-					threadYield();
-				sem->unlock();
-			}
-			Holder<Semaphore> sem;
-		} tst;
-		tst.sem = sem.share();
-		tasksRunAsync<Tester>("fireAndForget", Holder<Tester>(&tst, nullptr), 100);
-		for (uint32 i = 0; i < 100; i++)
-			sem->lock();
-	}
-
 	void testPerformance()
 	{
 		CAGE_TESTCASE("performance (parallel merge sort)");
@@ -801,7 +780,6 @@ void testTasks()
 	testTasksSplit();
 	testTasksHolders();
 	testTasksAggregation();
-	testFireAndForget();
 	testPerformance();
 	randomizedStressTest();
 }

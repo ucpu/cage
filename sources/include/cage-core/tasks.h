@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API AsyncTask : private Immovable
 	{
-		bool done() const;
+		[[nodiscard]] bool done() const;
 		void wait();
 		void abort();
 	};
@@ -152,7 +152,7 @@ namespace cage
 		return privat::tasksRunImpl<T, Aggregation, false>(name, function, Holder<PointerRange<T>>(&data, nullptr));
 	}
 	template<class T, uint32 Aggregation = 1>
-	CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &)> function, Holder<PointerRange<T>> data)
+	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &)> function, Holder<PointerRange<T>> data)
 	{
 		return privat::tasksRunImpl<T, Aggregation, true>(name, function, std::move(data));
 	}
@@ -164,7 +164,7 @@ namespace cage
 		return privat::tasksRunImpl<T, Aggregation, false>(name, Holder<PointerRange<T>>(&data, nullptr));
 	}
 	template<class T, uint32 Aggregation = 1>
-	CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<PointerRange<T>> data)
+	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<PointerRange<T>> data)
 	{
 		return privat::tasksRunImpl<T, Aggregation, true>(name, std::move(data));
 	}
@@ -176,7 +176,7 @@ namespace cage
 		return privat::tasksRunImpl<T, false>(name, function, Holder<T>(&data, nullptr), invocations);
 	}
 	template<class T>
-	CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1)
+	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(T &, uint32)> function, Holder<T> data, uint32 invocations = 1)
 	{
 		return privat::tasksRunImpl<T, true>(name, function, std::move(data), invocations);
 	}
@@ -188,17 +188,17 @@ namespace cage
 		return privat::tasksRunImpl<T, false>(name, Holder<T>(&data, nullptr), invocations);
 	}
 	template<class T>
-	CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<T> data, uint32 invocations = 1)
+	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<T> data, uint32 invocations = 1)
 	{
 		return privat::tasksRunImpl<T, true>(name, std::move(data), invocations);
 	}
 
 	// invoke the function invocations time
 	CAGE_CORE_API void tasksRunBlocking(StringPointer name, Delegate<void(uint32)> function, uint32 invocations);
-	CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations = 1);
+	[[nodiscard]] CAGE_CORE_API Holder<AsyncTask> tasksRunAsync(StringPointer name, Delegate<void(uint32)> function, uint32 invocations = 1);
 
 	// divide tasks into groups - find begin/end indices for a particular group
-	CAGE_CORE_API std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount);
+	[[nodiscard]] CAGE_CORE_API std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount);
 }
 
 #endif // guard_tasks_h_vbnmf15dvt89zh

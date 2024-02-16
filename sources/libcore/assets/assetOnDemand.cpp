@@ -34,7 +34,7 @@ namespace cage
 			~AssetOnDemandImpl()
 			{
 				for (const auto &it : lastUse)
-					assets->remove(it.first);
+					assets->unload(it.first);
 			}
 
 			void process()
@@ -45,7 +45,7 @@ namespace cage
 				{
 					if (tick - it->second > 20)
 					{
-						assets->remove(it->first);
+						assets->unload(it->first);
 						it = lastUse.erase(it);
 					}
 					else
@@ -58,7 +58,7 @@ namespace cage
 			{
 				ScopeLock lock(mut, WriteLockTag());
 				for (const auto &it : lastUse)
-					assets->remove(it.first);
+					assets->unload(it.first);
 				lastUse.clear();
 				tick++;
 			}
@@ -79,7 +79,7 @@ namespace cage
 					if (lastUse.count(assetName) == 0) // check again after reacquiring the lock
 					{
 						lastUse[assetName] = tick;
-						assets->add(assetName);
+						assets->load(assetName);
 					}
 				}
 			}

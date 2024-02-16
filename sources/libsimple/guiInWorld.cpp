@@ -101,10 +101,10 @@ namespace cage
 			void cleanUp()
 			{
 				if (textureName)
-					engineAssets()->remove(textureName);
+					engineAssets()->unload(textureName);
 				textureName = 0;
 				if (modelName)
-					engineAssets()->remove(modelName);
+					engineAssets()->unload(modelName);
 				modelName = 0;
 			}
 
@@ -123,7 +123,7 @@ namespace cage
 					tex->filters(GL_LINEAR, GL_LINEAR, 8);
 					tex->setDebugName(Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
 					textureName = engineAssets()->generateUniqueName();
-					engineAssets()->fabricate<AssetSchemeIndexTexture>(textureName, tex.share(), Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
+					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
 
 					Holder<Mesh> msh = newMesh();
 					const Real h = Real(config.resolution[1]) / Real(config.resolution[0]);
@@ -142,7 +142,7 @@ namespace cage
 					mod->flags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
 					mod->setDebugName(Stringizer() + "gui-in-world-model-" + (uintPtr)this);
 					modelName = engineAssets()->generateUniqueName();
-					engineAssets()->fabricate<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);
+					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);
 				}
 				else
 				{

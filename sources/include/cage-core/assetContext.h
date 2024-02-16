@@ -1,7 +1,7 @@
 #ifndef guard_assetContext_h_4lkjh9sd654gtsdfg
 #define guard_assetContext_h_4lkjh9sd654gtsdfg
 
-#include <cage-core/core.h>
+#include <cage-core/typeIndex.h>
 
 namespace cage
 {
@@ -11,17 +11,22 @@ namespace cage
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
-		const detail::StringBase<64> &textName;
-		PointerRange<char> compressedData;
-		PointerRange<char> originalData;
-		Holder<void> &assetHolder;
+		detail::StringBase<64> textName;
+		Holder<void> customData;
+		Holder<PointerRange<uint32>> dependencies;
+		Holder<PointerRange<char>> compressedData;
+		Holder<PointerRange<char>> originalData;
+		Holder<void> assetHolder;
 		const uint32 realName = 0;
+		uint32 aliasName = 0;
+		uint32 scheme = m;
 
-		explicit AssetContext(const detail::StringBase<64> &textName, PointerRange<char> compressedData, PointerRange<char> originalData, Holder<void> &assetHolder, uint32 realName);
+		AssetContext(uint32 realName) : realName(realName) {}
 	};
 
 	struct CAGE_CORE_API AssetScheme
 	{
+		AssetDelegate fetch;
 		AssetDelegate decompress;
 		AssetDelegate load;
 		uint32 threadIndex = m;
