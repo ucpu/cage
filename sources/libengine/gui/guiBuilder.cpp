@@ -200,78 +200,154 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem GuiBuilder::row(bool spaced, Real verticalAlign)
+		BuilderItem GuiBuilder::row(Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = verticalAlign;
-			l.first = l.last = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
+			l.first = l.last = LineEdgeModeEnum::None;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::leftRow(bool flexibleRight, Real verticalAlign)
+		BuilderItem GuiBuilder::spacedRow(Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = verticalAlign;
-			l.last = flexibleRight ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.first = l.last = LineEdgeModeEnum::Spaced;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::rightRow(bool flexibleLeft, Real verticalAlign)
+		BuilderItem GuiBuilder::leftRow(Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = verticalAlign;
-			l.first = flexibleLeft ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.last = LineEdgeModeEnum::Empty;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::centerRow(bool flexibleEdges, Real verticalAlign)
+		BuilderItem GuiBuilder::leftRowStretchRight(Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = verticalAlign;
-			l.first = l.last = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.last = LineEdgeModeEnum::Flexible;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::column(bool spaced, Real horizontalAlign)
+		BuilderItem GuiBuilder::rightRow(Real verticalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = verticalAlign;
+			l.first = LineEdgeModeEnum::Empty;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::rightRowStretchLeft(Real verticalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = verticalAlign;
+			l.first = LineEdgeModeEnum::Flexible;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::centerRow(Real verticalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = verticalAlign;
+			l.first = l.last = LineEdgeModeEnum::Empty;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::centerRowStretchBoth(Real verticalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = verticalAlign;
+			l.first = l.last = LineEdgeModeEnum::Flexible;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::column(Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = horizontalAlign;
-			l.first = l.last = spaced ? LineEdgeModeEnum::Spaced : LineEdgeModeEnum::None;
+			l.first = l.last = LineEdgeModeEnum::None;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::topColumn(bool flexibleBottom, Real horizontalAlign)
+		BuilderItem GuiBuilder::spacedColumn(Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = horizontalAlign;
-			l.last = flexibleBottom ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.first = l.last = LineEdgeModeEnum::Spaced;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::bottomColumn(bool flexibleTop, Real horizontalAlign)
+		BuilderItem GuiBuilder::topColumn(Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = horizontalAlign;
-			l.first = flexibleTop ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.last = LineEdgeModeEnum::Empty;
 			l.vertical = true;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::middleColumn(bool flexibleEdges, Real horizontalAlign)
+		BuilderItem GuiBuilder::topColumnStretchBottom(Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
 			l.crossAlign = horizontalAlign;
-			l.first = l.last = flexibleEdges ? LineEdgeModeEnum::Flexible : LineEdgeModeEnum::Empty;
+			l.last = LineEdgeModeEnum::Flexible;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::bottomColumn(Real horizontalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = horizontalAlign;
+			l.first = LineEdgeModeEnum::Empty;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::bottomColumnStretchTop(Real horizontalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = horizontalAlign;
+			l.first = LineEdgeModeEnum::Flexible;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::middleColumn(Real horizontalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = horizontalAlign;
+			l.first = l.last = LineEdgeModeEnum::Empty;
+			l.vertical = true;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::middleColumnStretchBoth(Real horizontalAlign)
+		{
+			BuilderItem c(this);
+			GuiLayoutLineComponent &l = c->value<GuiLayoutLineComponent>();
+			l.crossAlign = horizontalAlign;
+			l.first = l.last = LineEdgeModeEnum::Flexible;
 			l.vertical = true;
 			return c;
 		}

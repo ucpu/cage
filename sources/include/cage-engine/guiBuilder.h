@@ -64,14 +64,22 @@ namespace cage
 		public:
 			[[nodiscard]] GuiBuilder &setNextName(uint32 name);
 
-			[[nodiscard]] BuilderItem row(bool spaced = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem leftRow(bool flexibleRight = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem rightRow(bool flexibleLeft = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem centerRow(bool flexibleEdges = false, Real verticalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem column(bool spaced = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem topColumn(bool flexibleBottom = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem bottomColumn(bool flexibleTop = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem middleColumn(bool flexibleEdges = false, Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem row(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem spacedRow(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem leftRow(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem leftRowStretchRight(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem rightRow(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem rightRowStretchLeft(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem centerRow(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem centerRowStretchBoth(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem column(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem spacedColumn(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem topColumn(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem topColumnStretchBottom(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem bottomColumn(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem bottomColumnStretchTop(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem middleColumn(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
+			[[nodiscard]] BuilderItem middleColumnStretchBoth(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalSplit(Real verticalAlign = GuiLayoutSplitComponent().crossAlign);
 			[[nodiscard]] BuilderItem verticalSplit(Real horizontalAlign = GuiLayoutSplitComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalTable(uint32 rows = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
