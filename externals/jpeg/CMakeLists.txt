@@ -69,13 +69,13 @@ list(TRANSFORM JPEG16_SOURCES PREPEND "jpeg/")
 list(TRANSFORM JPEG12_SOURCES PREPEND "jpeg/")
 list(TRANSFORM JPEG_SOURCES PREPEND "jpeg/")
 
-add_library(jpeg12-static OBJECT ${JPEG12_SOURCES})
-target_compile_definitions(jpeg12-static PRIVATE "BITS_IN_JSAMPLE=12")
-add_library(jpeg16-static OBJECT ${JPEG16_SOURCES})
-target_compile_definitions(jpeg16-static PRIVATE "BITS_IN_JSAMPLE=16")
+add_library(cage-jpeg12-static OBJECT ${JPEG12_SOURCES})
+target_compile_definitions(cage-jpeg12-static PRIVATE "BITS_IN_JSAMPLE=12")
+add_library(cage-jpeg16-static OBJECT ${JPEG16_SOURCES})
+target_compile_definitions(cage-jpeg16-static PRIVATE "BITS_IN_JSAMPLE=16")
 add_library(jpeg-static STATIC ${JPEG_SOURCES}
 	"jpeg/jaricom.c" "jpeg/jcarith.c" "jpeg/jdarith.c"
-	$<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
+	$<TARGET_OBJECTS:cage-jpeg12-static> $<TARGET_OBJECTS:cage-jpeg16-static>
 )
 target_include_directories(jpeg-static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/jpeg")
 if(TARGET jpeg-simd)
