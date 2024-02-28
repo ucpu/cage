@@ -1,7 +1,7 @@
 #include <cage-core/geometry.h>
 
-#if defined(_MSC_VER) && _MSC_VER > 1930 && !defined(__clang__)
-	// workaround for potential bug in visual studio 2022 compiler
+#if defined(_MSC_VER) && _MSC_VER > 1930 && _MSC_VER < 1939 && !defined(__clang__)
+	// workaround for bug in visual studio 2022 compiler
 	// the compiler either crashes, or generates code that produces invalid outputs from some functions
 	#pragma optimize("", off)
 #endif
@@ -129,17 +129,17 @@ namespace cage
 
 	Real distance(Line a, Aabb b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Line, Aabb)");
 	}
 
 	Real distance(Line a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Line, Cone)");
 	}
 
 	Real distance(Line a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Line, Frustum)");
 	}
 
 	Real distance(Triangle a, Triangle b)
@@ -184,12 +184,12 @@ namespace cage
 
 	Real distance(Triangle a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Triangle, Cone)");
 	}
 
 	Real distance(Triangle a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Triangle, Frustum)");
 	}
 
 	Real distance(Plane a, Plane b)
@@ -207,17 +207,17 @@ namespace cage
 
 	Real distance(Plane a, Aabb b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Plane, Aabb)");
 	}
 
 	Real distance(Plane a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Plane, Cone)");
 	}
 
 	Real distance(Plane a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Plane, Frustum)");
 	}
 
 	Real distance(Sphere a, Sphere b)
@@ -256,27 +256,27 @@ namespace cage
 
 	Real distance(Aabb a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Aabb, Cone)");
 	}
 
 	Real distance(Aabb a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Aabb, Frustum)");
 	}
 
 	Real distance(Cone a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Cone, Cone)");
 	}
 
 	Real distance(Cone a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Cone, Frustum)");
 	}
 
 	Real distance(const Frustum &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Frustum, Frustum)");
 	}
 
 	bool intersects(Vec3 a, Vec3 b)
@@ -316,7 +316,7 @@ namespace cage
 
 	bool intersects(Vec3 a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Vec3, Cone)");
 	}
 
 	bool intersects(Vec3 point, const Frustum &frustum)
@@ -398,12 +398,12 @@ namespace cage
 
 	bool intersects(Line a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Line, Cone)");
 	}
 
 	bool intersects(Line a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Line, Frustum)");
 	}
 
 	bool intersects(Triangle a, Plane b)
@@ -423,12 +423,12 @@ namespace cage
 
 	bool intersects(Triangle a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Triangle, Cone)");
 	}
 
 	bool intersects(Triangle a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Triangle, Frustum)");
 	}
 
 	bool intersects(Plane a, Plane b)
@@ -455,12 +455,12 @@ namespace cage
 
 	bool intersects(Plane a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Plane, Cone)");
 	}
 
 	bool intersects(Plane a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Plane, Frustum)");
 	}
 
 	bool intersects(Sphere a, Sphere b)
@@ -529,12 +529,12 @@ namespace cage
 
 	bool intersects(Cone a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Cone, Cone)");
 	}
 
 	bool intersects(Cone a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersects(Cone, Frustum)");
 	}
 
 	Vec3 intersection(Line ray, Triangle tri)
@@ -619,12 +619,12 @@ namespace cage
 
 	Line intersection(Line a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersection(Line, Cone)");
 	}
 
 	Line intersection(Line a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented intersection(Line, Frustum)");
 	}
 
 	Aabb intersection(Aabb a, Aabb b)
@@ -692,11 +692,11 @@ namespace cage
 
 	Vec3 closestPoint(Vec3 a, Cone b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented closestPoint(Vec3, Cone)");
 	}
 
 	Vec3 closestPoint(Vec3 a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented closestPoint(Vec3, Frustum)");
 	}
 }

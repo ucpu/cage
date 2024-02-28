@@ -312,7 +312,7 @@ namespace cage
 
 	Cone Cone::operator*(Mat4 other) const
 	{
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented Cone::operator*(Mat4)");
 	}
 
 	Frustum::Frustum(Transform camera, Mat4 proj) : Frustum(proj * Mat4(inverse(camera))) {}

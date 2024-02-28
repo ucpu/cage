@@ -128,6 +128,6 @@ namespace cage
 			return distance(a.a(), b);
 		if (b.isPoint())
 			return distance(a, b.a());
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(Line, Line) combination");
 	}
 }
