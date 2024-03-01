@@ -16,7 +16,7 @@ namespace
 	std::set<String, StringComparatorFast> onces;
 	std::set<detail::StringBase<20>> keywords;
 
-	ConfigBool configShaderPrint("cage-assetProcessor/shader/preview");
+	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
 
 	bool validDefineChar(const char c)
 	{
@@ -512,7 +512,7 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			String name = pathJoin(configGetString("cage-assetProcessor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);

@@ -626,13 +626,13 @@ void processTexture()
 
 	exportTexture(target);
 
-	if (configGetBool("cage-assetProcessor/texture/preview"))
+	if (configGetBool("cage-asset-processor/texture/preview"))
 	{ // preview images
 		imageImportConvertRawToImages(images); // this is after the export, so this operation does not affect the textures
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-assetProcessor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
 			it.image->exportFile(dbgName);
 		}
 	}

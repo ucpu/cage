@@ -26,9 +26,9 @@ void processTextpack()
 	}
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "loaded " + texts.size() + " texts");
 
-	if (configGetBool("cage-assetProcessor/textpack/preview"))
+	if (configGetBool("cage-asset-processor/textpack/preview"))
 	{
-		String dbgName = pathJoin(configGetString("cage-assetProcessor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
+		String dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);

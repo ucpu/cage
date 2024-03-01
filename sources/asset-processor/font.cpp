@@ -357,15 +357,15 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "print debug data");
 
-		const ConfigString fontPath("cage-assetProcessor/font/path", "asset-preview");
+		const ConfigString fontPath("cage-asset-processor/font/path", "asset-preview");
 
-		if (configGetBool("cage-assetProcessor/font/preview"))
+		if (configGetBool("cage-asset-processor/font/preview"))
 		{
 			imageVerticalFlip(+texels);
 			texels->exportFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 
-		if (configGetBool("cage-assetProcessor/font/glyphs"))
+		if (configGetBool("cage-asset-processor/font/glyphs"))
 		{ // glyphs
 			FileMode fm(false, true);
 			fm.textual = true;
@@ -378,7 +378,7 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-assetProcessor/font/characters"))
+		if (configGetBool("cage-asset-processor/font/characters"))
 		{ // characters
 			FileMode fm(false, true);
 			fm.textual = true;
@@ -392,7 +392,7 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-assetProcessor/font/kerning"))
+		if (configGetBool("cage-asset-processor/font/kerning"))
 		{ // kerning
 			FileMode fm(false, true);
 			fm.textual = true;

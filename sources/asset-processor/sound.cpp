@@ -124,9 +124,9 @@ void processSound()
 	}
 
 	// preview sound
-	if (configGetBool("cage-assetProcessor/sound/preview"))
+	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		const String dbgName = pathJoin(configGetString("cage-assetProcessor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		const String dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
 		audio->exportFile(dbgName);
 	}
 }

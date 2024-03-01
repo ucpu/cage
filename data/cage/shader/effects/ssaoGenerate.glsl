@@ -46,7 +46,7 @@ void main()
 	vec3 myNormal = reconstructNormal(myPos);
 
 	// sampling
-	int n = hash(int(gl_FragCoord.x) ^ hash(int(gl_FragCoord.y) ^ iparams[1]));
+	int n = int(hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ iparams[1]));
 	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;

@@ -1,5 +1,5 @@
 
-int hash(int key)
+uint hash(uint key)
 { // integer finalizer hash function
 	key ^= key >> 16;
 	key *= 0x85ebca6b;

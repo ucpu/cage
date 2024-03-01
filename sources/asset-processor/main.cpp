@@ -181,7 +181,7 @@ int main(int argc, const char *args[])
 	{
 		if (argc == 3 && String(args[1]) == "analyze")
 		{
-			initializeSecondaryLog(pathJoin(configGetString("cage-assetProcessor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
+			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "analyzing input '" + args[2] + "'");
 			inputDirectory = pathExtractDirectory(args[2]);
 			inputName = pathExtractFilename(args[2]);
@@ -193,7 +193,7 @@ int main(int argc, const char *args[])
 			CAGE_THROW_ERROR(Exception, "missing asset type parameter");
 
 		loadProperties();
-		initializeSecondaryLog(pathJoin(configGetString("cage-assetProcessor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
+		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
 		for (const auto &it : props)
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "property '" + it.first + "': '" + it.second + "'");
