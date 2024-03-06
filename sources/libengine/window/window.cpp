@@ -750,6 +750,18 @@ namespace cage
 		glfwSwapBuffers(impl->window);
 	}
 
+	void Window::setClipboard(const String &str)
+	{
+		WindowImpl *impl = (WindowImpl *)this;
+		glfwSetClipboardString(impl->window, str.c_str());
+	}
+
+	String Window::getClipboard()
+	{
+		WindowImpl *impl = (WindowImpl *)this;
+		return glfwGetClipboardString(impl->window);
+	}
+
 	Holder<Window> newWindow(const WindowCreateConfig &config)
 	{
 		cageGlfwInitializeFunc();

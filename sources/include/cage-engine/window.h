@@ -59,6 +59,9 @@ namespace cage
 		void makeCurrent();
 		void makeNotCurrent();
 		void swapBuffers();
+
+		void setClipboard(const String &str);
+		String getClipboard();
 	};
 
 	struct CAGE_ENGINE_API WindowCreateConfig
