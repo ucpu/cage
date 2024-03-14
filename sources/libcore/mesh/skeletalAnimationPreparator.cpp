@@ -51,7 +51,7 @@ namespace cage
 				else
 					animateSkin(+skeleton, +animation, coefficient, { tmpArmature, tmpArmature + bonesCount });
 				armature.reserve(bonesCount);
-				Mat4 inv = animateSkeletonsInsteadOfSkins ? Mat4() : inverse(modelImportTransform);
+				const Mat4 inv = animateSkeletonsInsteadOfSkins ? Mat4() : inverse(modelImportTransform);
 				for (uint32 i = 0; i < bonesCount; i++)
 					armature.emplace_back(modelImportTransform * tmpArmature[i] * inv);
 			}

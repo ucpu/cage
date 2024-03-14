@@ -575,6 +575,9 @@ namespace cage
 
 			Holder<SkeletalAnimation> animation(const uint32 chosenAnimationIndex) const
 			{
+				if (config.verbose)
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "converting assimp animation at index: " + chosenAnimationIndex);
+
 				struct Bone
 				{
 					std::vector<Real> posTimes;

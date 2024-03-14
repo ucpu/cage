@@ -720,7 +720,7 @@ namespace cage
 
 				if (ps)
 				{
-					if (ps->name)
+					if (ps->name && pr.mesh->bones)
 					{
 						if (!ps->speed.valid())
 							ps->speed = 1;

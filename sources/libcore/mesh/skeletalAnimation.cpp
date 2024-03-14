@@ -57,7 +57,7 @@ namespace cage
 			template<class Type>
 			CAGE_FORCE_INLINE static Type evaluateMatrix(Real coef, const std::vector<Real> &times, const std::vector<Type> &values)
 			{
-				const uint32 frames = numeric_cast<uint32>(times.size());
+				const uint16 frames = numeric_cast<uint16>(times.size());
 				switch (frames)
 				{
 					case 0:
@@ -66,12 +66,12 @@ namespace cage
 						return values[0];
 					default:
 					{
-						uint16 frameIndex = findFrameIndex(coef, times);
+						const uint16 frameIndex = findFrameIndex(coef, times);
 						if (frameIndex + 1 == frames)
 							return values[frameIndex];
 						else
 						{
-							Real a = amount(times[frameIndex], times[frameIndex + 1], coef);
+							const Real a = amount(times[frameIndex], times[frameIndex + 1], coef);
 							return interpolate(values[frameIndex], values[frameIndex + 1], a);
 						}
 					}
