@@ -31,7 +31,7 @@ namespace cage
 		bool isHidden() const;
 		bool isVisible() const; // not hidden and not minimized
 
-		void setFullscreen(const Vec2i &resolution, uint32 frequency = 0, const String &screenId = "");
+		void setFullscreen(Vec2i resolution, uint32 frequency = 0, const String &screenId = "");
 		void setMaximized();
 		void setWindowed(WindowFlags flags = WindowFlags::Border | WindowFlags::Resizeable);
 		void setMinimized();
@@ -41,7 +41,7 @@ namespace cage
 		void mouseVisible(bool value);
 
 		Vec2 mousePosition() const;
-		void mousePosition(const Vec2 &);
+		void mousePosition(Vec2 pos);
 		MouseButtonsFlags mouseButtons() const;
 
 		ModifiersFlags keyboardModifiers() const;
@@ -52,16 +52,13 @@ namespace cage
 		String screenId() const;
 
 		Vec2i windowedSize() const;
-		void windowedSize(const Vec2i &);
+		void windowedSize(Vec2i size);
 		Vec2i windowedPosition() const;
-		void windowedPosition(const Vec2i &);
+		void windowedPosition(Vec2i pos);
 
 		void makeCurrent();
 		void makeNotCurrent();
 		void swapBuffers();
-
-		void setClipboard(const String &str);
-		String getClipboard();
 	};
 
 	struct CAGE_ENGINE_API WindowCreateConfig

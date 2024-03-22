@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "private.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -6,6 +8,7 @@
 #include <GLFW/glfw3native.h>
 
 #include <cage-core/concurrent.h>
+#include <cage-engine/clipboard.h>
 
 namespace cage
 {
@@ -59,5 +62,21 @@ namespace cage
 				return ms[i];
 		}
 		return glfwGetPrimaryMonitor();
+	}
+
+	void setClipboard(const String &str)
+	{
+		glfwSetClipboardString(nullptr, str.c_str());
+	}
+
+	String getClipboard()
+	{
+		if (const char *tmp = glfwGetClipboardString(nullptr))
+		{
+			const auto len = std::strlen(tmp);
+			if (len < String::MaxLength)
+				return String(PointerRange(tmp, tmp + len));
+		}
+		return {};
 	}
 }

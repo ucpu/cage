@@ -493,7 +493,7 @@ namespace cage
 		}
 	}
 
-	void Window::setFullscreen(const Vec2i &resolution, uint32 frequency, const String &deviceId)
+	void Window::setFullscreen(Vec2i resolution, uint32 frequency, const String &deviceId)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None);
@@ -550,7 +550,7 @@ namespace cage
 		return impl->stateMousePosition;
 	}
 
-	void Window::mousePosition(const Vec2 &p)
+	void Window::mousePosition(Vec2 p)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
@@ -713,7 +713,7 @@ namespace cage
 		return Vec2i(w, h);
 	}
 
-	void Window::windowedSize(const Vec2i &tmp)
+	void Window::windowedSize(Vec2i tmp)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowSize(impl->window, tmp[0], tmp[1]);
@@ -727,7 +727,7 @@ namespace cage
 		return Vec2i(x, y);
 	}
 
-	void Window::windowedPosition(const Vec2i &tmp)
+	void Window::windowedPosition(Vec2i tmp)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);
@@ -748,18 +748,6 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		glfwSwapBuffers(impl->window);
-	}
-
-	void Window::setClipboard(const String &str)
-	{
-		WindowImpl *impl = (WindowImpl *)this;
-		glfwSetClipboardString(impl->window, str.c_str());
-	}
-
-	String Window::getClipboard()
-	{
-		WindowImpl *impl = (WindowImpl *)this;
-		return glfwGetClipboardString(impl->window);
 	}
 
 	Holder<Window> newWindow(const WindowCreateConfig &config)
