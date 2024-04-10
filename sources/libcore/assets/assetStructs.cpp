@@ -77,7 +77,7 @@ namespace cage
 	{
 		if (asset == 0 || text == 0)
 			return params;
-		auto a = assets->tryGet<AssetSchemeIndexTextPack, TextPack>(asset);
+		auto a = assets->get<AssetSchemeIndexTextPack, TextPack>(asset);
 		if (a)
 		{
 			std::vector<String> ps;

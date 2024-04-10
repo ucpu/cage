@@ -482,7 +482,7 @@ namespace cage
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const uint32 n = sh.mesh->textureNames[i];
-					textures[i] = assets->tryGet<AssetSchemeIndexTexture, Texture>(n);
+					textures[i] = assets->get<AssetSchemeIndexTexture, Texture>(n);
 					if (textures[i])
 					{
 						if (i < 3)
@@ -714,7 +714,7 @@ namespace cage
 						pt->speed = 1;
 					if (!pt->offset.valid())
 						pt->offset = 0;
-					if (Holder<Texture> tex = assets->tryGet<AssetSchemeIndexTexture, Texture>(pr.mesh->textureNames[0]))
+					if (Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(pr.mesh->textureNames[0]))
 						pr.uni.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, currentTime, pt->startTime, pt->speed, pt->offset);
 				}
 
@@ -733,7 +733,7 @@ namespace cage
 
 				if (ps)
 				{
-					if (Holder<SkeletalAnimation> anim = assets->tryGet<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name))
+					if (Holder<SkeletalAnimation> anim = assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name))
 					{
 						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, currentTime, ps->startTime, ps->speed, ps->offset);
 						pr.skeletalAnimation = skeletonPreparatorCollection->create(pr.e, std::move(anim), coefficient, pr.mesh->importTransform, cnfRenderSkeletonBones);
@@ -822,12 +822,12 @@ namespace cage
 						prepare.model = modelTransform(e);
 						prepare.uni = initializeMeshUni(data, prepare.model);
 						prepare.frustum = Frustum(prepare.uni.mvpMat);
-						if (Holder<RenderObject> obj = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
+						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
 						{
 							prepareObject<PrepareMode>(data, prepare, std::move(obj));
 							return;
 						}
-						if (Holder<Model> mesh = assets->tryGet<AssetSchemeIndexModel, Model>(rc.object))
+						if (Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(rc.object))
 						{
 							prepare.mesh = std::move(mesh);
 							prepareModel<PrepareMode>(data, prepare);
@@ -835,7 +835,7 @@ namespace cage
 						}
 						if (cnfRenderMissingModels)
 						{
-							prepare.mesh = assets->tryGet<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+							prepare.mesh = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
 							prepareModel<PrepareMode>(data, prepare);
 							return;
 						}
@@ -857,7 +857,7 @@ namespace cage
 							TextPrepare prepare;
 							if (!pt.font)
 								pt.font = HashString("cage/font/ubuntu/regular.ttf");
-							prepare.font = assets->tryGet<AssetSchemeIndexFont, Font>(pt.font);
+							prepare.font = assets->get<AssetSchemeIndexFont, Font>(pt.font);
 							if (!prepare.font)
 								return;
 							const String str = loadFormattedString(assets, pt.assetName, pt.textName, pt.value);

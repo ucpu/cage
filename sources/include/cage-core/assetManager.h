@@ -40,20 +40,12 @@ namespace cage
 		}
 
 		// returns null if the asset is not yet loaded or has different scheme
-		template<uint32 Scheme, class T>
-		Holder<T> tryGet(uint32 assetName) const
-		{
-			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName, false).template cast<T>();
-		}
-
-		// returns null if the asset is not yet loaded
-		// throws an exception if the asset has different scheme
+		// throws an exception if the asset failed to load
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName, true).template cast<T>();
+			return get_(Scheme, assetName).template cast<T>();
 		}
 
 		// end thread-safe methods
@@ -71,7 +63,7 @@ namespace cage
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value);
 		void load_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
 		void load_(uint32 scheme, uint32 assetName, const String &textName, const AssetScheme &customScheme, Holder<void> &&customData);
-		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
+		Holder<void> get_(uint32 scheme, uint32 assetName) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
 		friend class AssetOnDemand;
 	};

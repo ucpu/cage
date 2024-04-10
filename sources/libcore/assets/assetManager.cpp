@@ -753,7 +753,7 @@ namespace cage
 		}
 	}
 
-	Holder<void> AssetManager::get_(uint32 scheme, uint32 realName, bool throwOnInvalidScheme) const
+	Holder<void> AssetManager::get_(uint32 scheme, uint32 realName) const
 	{
 		const AssetManagerImpl *impl = (const AssetManagerImpl *)this;
 		const auto &schemes = impl->schemes;
@@ -766,15 +766,7 @@ namespace cage
 			return {}; // not found
 		const auto &a = it->second;
 		if (a->scheme != scheme)
-		{
-			if (throwOnInvalidScheme)
-			{
-				CAGE_LOG_THROW(Stringizer() + "asset real name: " + realName + ", text name: " + a->textName);
-				CAGE_LOG_THROW(Stringizer() + "asset loaded scheme: " + a->scheme + ", accessing with: " + scheme);
-				CAGE_THROW_ERROR(Exception, "accessing asset with different scheme");
-			}
-			return {}; // invalid scheme
-		}
+			return {}; // different scheme
 		if (a->failed)
 		{
 			CAGE_LOG_THROW(Stringizer() + "asset real name: " + realName + ", text name: " + a->textName);

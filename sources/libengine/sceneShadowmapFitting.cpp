@@ -25,7 +25,7 @@ namespace cage
 
 			Aabb model(uint32 name) const
 			{
-				Holder<Model> m = assets->tryGet<AssetSchemeIndexModel, Model>(name);
+				Holder<Model> m = assets->get<AssetSchemeIndexModel, Model>(name);
 				if (m && any(m->flags & MeshRenderFlags::ShadowCast))
 					return m->boundingBox();
 				return Aabb();
@@ -33,7 +33,7 @@ namespace cage
 
 			Aabb object(uint32 name) const
 			{
-				Holder<RenderObject> o = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
+				Holder<RenderObject> o = assets->get<AssetSchemeIndexRenderObject, RenderObject>(name);
 				if (!o)
 					return Aabb();
 				Aabb res;
@@ -46,12 +46,12 @@ namespace cage
 			Aabb asset(uint32 name) const
 			{
 				{
-					Holder<Model> m = assets->tryGet<AssetSchemeIndexModel, Model>(name);
+					Holder<Model> m = assets->get<AssetSchemeIndexModel, Model>(name);
 					if (m)
 						return m->boundingBox();
 				}
 				{
-					Holder<RenderObject> o = assets->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
+					Holder<RenderObject> o = assets->get<AssetSchemeIndexRenderObject, RenderObject>(name);
 					if (o)
 						return object(name);
 				}

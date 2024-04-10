@@ -101,7 +101,7 @@ namespace cage
 	Holder<void> AssetOnDemand::get_(uint32 scheme, uint32 assetName, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		auto r = impl->assets->get_(scheme, assetName, false);
+		auto r = impl->assets->get_(scheme, assetName);
 		impl->update(!!r, assetName, autoLoad);
 		return r;
 	}

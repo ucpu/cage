@@ -167,25 +167,25 @@ void testAssetManager()
 		man->defineScheme<73, uint32>(genDummyScheme(detail::typeHash<uint32>()));
 		man->defineScheme<74, uint64>(genDummyScheme(detail::typeHash<uint64>()));
 		{
-			auto a = man->tryGet<71, uint8>(42);
+			auto a = man->get<71, uint8>(42);
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->tryGet<72, uint16>(42);
+			auto a = man->get<72, uint16>(42);
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->tryGet<73, uint32>(42);
+			auto a = man->get<73, uint32>(42);
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->tryGet<74, uint64>(42);
+			auto a = man->get<74, uint64>(42);
 			CAGE_TEST(!a);
 		}
-		CAGE_TEST_ASSERTED((man->tryGet<71, uint64>(42)));
-		CAGE_TEST_ASSERTED((man->tryGet<72, uint8>(42)));
-		CAGE_TEST_ASSERTED((man->tryGet<73, uint16>(42)));
-		CAGE_TEST_ASSERTED((man->tryGet<74, uint32>(42)));
+		CAGE_TEST_ASSERTED((man->get<71, uint64>(42)));
+		CAGE_TEST_ASSERTED((man->get<72, uint8>(42)));
+		CAGE_TEST_ASSERTED((man->get<73, uint16>(42)));
+		CAGE_TEST_ASSERTED((man->get<74, uint32>(42)));
 	}
 
 	{
@@ -416,7 +416,7 @@ void testAssetManager()
 		man->load(10);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 1);
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
+		CAGE_TEST((!man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
 		man->unload(10);
 		man->waitTillEmpty();
 		CAGE_TEST(AssetCounter::counter == 0);
@@ -434,7 +434,7 @@ void testAssetManager()
 		}
 		man->load(10);
 		waitProcessing(man);
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		CAGE_TEST((!man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		man->unload(10);
 		man->waitTillEmpty();
 	}
@@ -444,7 +444,7 @@ void testAssetManager()
 		Holder<AssetManager> man = instantiate();
 		man->load(10);
 		waitProcessing(man);
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		CAGE_TEST(!(man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		man->unload(10);
 		man->waitTillEmpty();
 	}
@@ -463,7 +463,7 @@ void testAssetManager()
 		}
 		man->load(10);
 		waitProcessing(man);
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		CAGE_TEST((!man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		man->unload(10);
 		man->waitTillEmpty();
 	}
