@@ -82,6 +82,9 @@ namespace cage
 			config.light->manager(), false);
 
 		config.light->value<TransformComponent>().position = box.empty() ? Vec3() : box.center();
-		config.light->value<ShadowmapComponent>().worldSize = Vec3(max(box.diagonal() * 0.5, 1e-3));
+
+		const Vec3 s = box.size();
+		const Real l = max(s[0], max(s[1], s[2]));
+		config.light->value<ShadowmapComponent>().worldSize = Vec3(max(l, 1e-3));
 	}
 }
