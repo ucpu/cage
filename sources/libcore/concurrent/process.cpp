@@ -1,9 +1,12 @@
 #include <cerrno>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "../incWin.h"
+	#include <signal.h>
+	#include <psapi.h>
 #else
 	#include <fcntl.h>
 	#include <signal.h>
@@ -15,8 +18,20 @@
 #endif
 
 #include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/process.h>
+
+#ifdef CAGE_SYSTEM_WINDOWS
+extern "C"
+{
+	CAGE_API_EXPORT DWORD WINAPI CageRemoteThreadEntryPointToRaiseSignalTerm(_In_ LPVOID)
+	{
+		raise(SIGTERM);
+		return 0;
+	}
+}
+#endif
 
 namespace cage
 {
@@ -25,6 +40,56 @@ namespace cage
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
+
+		static constexpr const char *CageCoreName = CAGE_DEBUG_BOOL ? "cage-cored.dll" : "cage-core.dll";
+
+		uintPtr baseAddressInProcess(HANDLE hProcess)
+		{
+			std::vector<HMODULE> modules;
+			DWORD size = 1024 * sizeof(HMODULE);
+			modules.resize(size / sizeof(HMODULE));
+			if (!EnumProcessModulesEx(hProcess, modules.data(), size, &size, sizeof(uintPtr) == 4 ? LIST_MODULES_32BIT : LIST_MODULES_64BIT))
+				CAGE_THROW_ERROR(SystemError, "EnumProcessModules", GetLastError());
+			modules.resize(size / sizeof(HMODULE));
+			for (HMODULE h : modules)
+			{
+				char name[MAX_PATH] = {};
+				if (GetModuleBaseName(hProcess, h, name, sizeof(name)))
+				{
+					if (String(name) == CageCoreName)
+					{
+						MODULEINFO info = {};
+						GetModuleInformation(hProcess, h, &info, sizeof(info));
+						return (uintPtr)info.lpBaseOfDll;
+					}
+				}
+			}
+			CAGE_THROW_ERROR(Exception, "cage-core.dll not found in the target process");
+		}
+
+		void sendSigTermTo(HANDLE hProcess)
+		{
+			AutoHandle hRemote;
+			hRemote.handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, GetProcessId(hProcess));
+			if (!hRemote.handle)
+				CAGE_THROW_ERROR(SystemError, "OpenProcess", GetLastError());
+			const uintPtr remoteBase = baseAddressInProcess(hProcess);
+
+			AutoHandle hMyself;
+			hMyself.handle = GetCurrentProcess();
+			const uintPtr localBase = baseAddressInProcess(hMyself.handle);
+
+			const uintPtr localAddress = (uintPtr)GetProcAddress(GetModuleHandle(CageCoreName), "CageRemoteThreadEntryPointToRaiseSignalTerm");
+			if (!localAddress)
+				CAGE_THROW_ERROR(SystemError, "GetProcAddress", GetLastError());
+
+			const uintPtr startAddress = localAddress + remoteBase - localBase;
+			AutoHandle hThread;
+			hThread.handle = CreateRemoteThread(hProcess, nullptr, 0, (LPTHREAD_START_ROUTINE)startAddress, nullptr, 0, nullptr);
+			if (!hThread.handle)
+				CAGE_THROW_ERROR(SystemError, "CreateRemoteThread", GetLastError());
+			WaitForSingleObject(hThread.handle, INFINITE);
+		}
 
 		class ProcessImpl : public Process
 		{
@@ -83,7 +148,30 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 			}
 
-			~ProcessImpl() { wait(); }
+			~ProcessImpl()
+			{
+				try
+				{
+					wait();
+				}
+				catch (...)
+				{
+					// nothing
+				}
+			}
+
+			void requestTerminate()
+			{
+				try
+				{
+					detail::OverrideBreakpoint ob;
+					sendSigTermTo(hProcess.handle);
+				}
+				catch (...)
+				{
+					// do nothing
+				}
+			}
 
 			void terminate() { TerminateProcess(hProcess.handle, 1); }
 
@@ -291,7 +379,19 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
 			}
 
-			~ProcessImpl() { wait(); }
+			~ProcessImpl()
+			{
+				try
+				{
+					wait();
+				}
+				catch (...)
+				{
+					// nothing
+				}
+			}
+
+			void requestTerminate() { kill(pid, SIGTERM); }
 
 			void terminate() { kill(pid, SIGKILL); }
 
@@ -382,6 +482,12 @@ namespace cage
 #endif
 	}
 
+	void Process::requestTerminate()
+	{
+		ProcessImpl *impl = (ProcessImpl *)this;
+		impl->requestTerminate();
+	}
+
 	void Process::terminate()
 	{
 		ProcessImpl *impl = (ProcessImpl *)this;
@@ -397,5 +503,22 @@ namespace cage
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
 		return systemMemory().createImpl<Process, ProcessImpl>(config);
+	}
+
+	namespace
+	{
+		Delegate<void()> sigTermHandler;
+
+		void sigTermHandlerEntry(int)
+		{
+			if (sigTermHandler)
+				sigTermHandler();
+		}
+	}
+
+	void installSigTermHandler(Delegate<void()> handler)
+	{
+		sigTermHandler = handler;
+		signal(SIGTERM, &sigTermHandlerEntry);
 	}
 }
