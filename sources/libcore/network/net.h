@@ -8,17 +8,17 @@
 	#include "../incWin.h"
 	#include <winsock2.h>
 	#include <ws2tcpip.h>
+
 typedef char raw_type;
 	#define POLLRDHUP 0
 	#undef POLLPRI // WSAPoll rejects POLLPRI with an error
 	#define POLLPRI 0
-	#undef near
-	#undef far
 
 #else
 
 	#include <arpa/inet.h>
 	#include <errno.h>
+	#include <fcntl.h>
 	#include <netdb.h>
 	#include <netinet/in.h>
 	#include <poll.h>
@@ -26,6 +26,7 @@ typedef char raw_type;
 	#include <sys/socket.h>
 	#include <sys/types.h>
 	#include <unistd.h>
+
 typedef void raw_type;
 typedef int SOCKET;
 	#define WSAGetLastError() errno
@@ -36,6 +37,12 @@ typedef int SOCKET;
 	#define INVALID_SOCKET -1
 	#define WSAPoll poll
 
+#endif
+
+#ifdef CAGE_SYSTEM_MAC
+	#ifndef POLLRDHUP
+		#define POLLRDHUP 0x2000
+	#endif
 #endif
 
 #include <cage-core/debug.h>

@@ -243,12 +243,18 @@ namespace cage
 		Sock::Sock(int family, int type, int protocol) : family(family), type(type), protocol(protocol)
 		{
 			networkInitialize();
-			// SOCK_CLOEXEC -> close the socket on exec
 #ifdef CAGE_SYSTEM_WINDOWS
 			descriptor = socket(family, type, protocol);
-#else
+#elif defined(CAGE_SYSTEM_LINUX)
+			// SOCK_CLOEXEC -> close the socket on exec
 			descriptor = socket(family, type | SOCK_CLOEXEC, protocol);
-#endif // CAGE_SYSTEM_WINDOWS
+#elif defined(CAGE_SYSTEM_MAC)
+			descriptor = socket(family, type, protocol);
+			// FD_CLOEXEC -> close the socket on exec
+			fcntl(descriptor, F_SETFD, FD_CLOEXEC);
+#else
+	#error This operating system is not supported
+#endif
 			if (descriptor == INVALID_SOCKET)
 				CAGE_THROW_ERROR(SystemError, "socket creation failed (socket)", WSAGetLastError());
 		}

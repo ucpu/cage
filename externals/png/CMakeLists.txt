@@ -8,7 +8,9 @@ unset(CMAKE_C_STANDARD)
 unset(CMAKE_CXX_STANDARD)
 
 set(PNG_SHARED OFF CACHE INTERNAL "Build shared lib")
+set(PNG_FRAMEWORK OFF CACHE INTERNAL "Build libpng as a framework bundle")
 set(PNG_TESTS OFF CACHE INTERNAL "Build libpng tests")
+set(PNG_TOOLS OFF CACHE INTERNAL "Build libpng tools")
 set(SKIP_INSTALL_ALL ON CACHE INTERNAL "SKIP_INSTALL_ALL")
 
 # prevent using awk for configuration - it causes spurious rebuilds of the entire build
