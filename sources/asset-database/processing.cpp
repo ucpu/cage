@@ -38,7 +38,6 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
 
 		ass.corrupted = true;
-		ass.aliasName = "";
 
 		detail::OverrideBreakpoint overrideBreakpoint;
 		try
@@ -101,16 +100,6 @@ namespace
 					}
 					else if (param == "ref")
 						ass.references.insert(line);
-					else if (param == "alias")
-					{
-						if (ass.aliasName.empty())
-							ass.aliasName = line;
-						else
-						{
-							CAGE_LOG_THROW(Stringizer() + "previous: '" + ass.aliasName + "', current: '" + line + "'");
-							CAGE_THROW_ERROR(Exception, "assets alias name cannot be overridden");
-						}
-					}
 					else
 					{
 						CAGE_LOG_THROW(Stringizer() + "parameter: '" + param + "', value: '" + line + "'");
@@ -209,22 +198,6 @@ namespace
 			}
 			else
 				outputHashes[outputHash] = +it.second;
-		}
-
-		// check for alias hash collisions
-		for (const auto &it : assets)
-		{
-			Asset &ass = *it.second;
-			if (ass.aliasName.empty())
-				continue;
-			const uint32 aliasHash = ass.aliasPath();
-			if (outputHashes.count(aliasHash) > 0)
-			{
-				auto &ass2 = *outputHashes[aliasHash];
-				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' has ALIAS hash collision with asset '" + ass2.name + "' in databank '" + ass2.databank + "'");
-				ass.corrupted = true;
-				ass2.corrupted = true;
-			}
 		}
 
 		// warn about missing references

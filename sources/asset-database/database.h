@@ -50,7 +50,6 @@ struct Scheme
 struct Asset
 {
 	String name;
-	String aliasName;
 	String scheme;
 	String databank;
 	std::map<String, String, StringComparatorFast> fields;
@@ -60,7 +59,6 @@ struct Asset
 	bool needNotify = false;
 
 	uint32 outputPath() const;
-	uint32 aliasPath() const;
 
 	friend Serializer &operator<<(Serializer &ser, const Asset &s);
 	friend Deserializer &operator>>(Deserializer &des, Asset &s);

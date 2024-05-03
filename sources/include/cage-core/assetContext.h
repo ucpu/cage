@@ -18,7 +18,6 @@ namespace cage
 		Holder<PointerRange<char>> originalData;
 		Holder<void> assetHolder;
 		const uint32 realName = 0;
-		uint32 aliasName = 0;
 		uint32 scheme = m;
 
 		AssetContext(uint32 realName) : realName(realName) {}

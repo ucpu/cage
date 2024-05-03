@@ -23,16 +23,6 @@ void Scheme::parse(Ini *ini)
 		CAGE_THROW_ERROR(Exception, "empty scheme index field");
 	}
 
-	{
-		SchemeField fld;
-		fld.name = "alias";
-		fld.display = "alias";
-		fld.hint = "common name to reference the asset in multipacks";
-		fld.type = "string";
-		CAGE_ASSERT(fld.valid());
-		schemeFields.emplace(fld.name, std::move(fld));
-	}
-
 	for (const String &section : ini->sections())
 	{
 		if (section == "scheme")

@@ -308,11 +308,6 @@ namespace cage
 						{
 							asset->impl->unpublish(v->realName);
 							asset->impl->publicIndex[v->realName] = v.share();
-							if (v->aliasName)
-							{
-								CAGE_ASSERT(asset->impl->publicIndex.count(v->aliasName) == 0);
-								asset->impl->publicIndex[v->aliasName] = v.share();
-							}
 							found = true;
 						}
 					}
@@ -327,15 +322,7 @@ namespace cage
 
 				auto it = publicIndex.find(realName);
 				if (it != publicIndex.end())
-				{
-					const uint32 alias = it->second->aliasName;
 					publicIndex.erase(it);
-					if (alias)
-					{
-						CAGE_ASSERT(publicIndex.count(alias) == 1);
-						publicIndex.erase(alias);
-					}
-				}
 			}
 		};
 
@@ -828,7 +815,6 @@ namespace cage
 			if (h.scheme >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;
-			asset->aliasName = h.aliasName;
 
 			*((AssetScheme *)(Asset *)asset) = impl->schemes[asset->scheme];
 			if (!impl->schemes[asset->scheme].load)

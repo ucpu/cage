@@ -15,7 +15,6 @@ namespace cage
 		char textName[64] = {};
 		uint64 compressedSize = 0;
 		uint64 originalSize = 0;
-		uint32 aliasName = 0;
 		uint16 scheme = m;
 		uint16 dependenciesCount = 0;
 

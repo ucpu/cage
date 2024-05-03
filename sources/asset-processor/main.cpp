@@ -23,15 +23,7 @@ String inputIdentifier; // identifier
 
 AssetHeader initializeAssetHeader()
 {
-	AssetHeader h(inputName, numeric_cast<uint16>(schemeIndex));
-	String intr = properties("alias");
-	if (!intr.empty())
-	{
-		intr = pathJoin(pathExtractDirectory(inputFile), intr);
-		writeLine(Stringizer() + "alias = " + intr);
-		h.aliasName = HashString(intr);
-	}
-	return h;
+	return AssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
 }
 
 namespace

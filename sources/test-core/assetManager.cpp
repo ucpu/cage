@@ -364,27 +364,6 @@ void testAssetManager()
 	}
 
 	{
-		CAGE_TESTCASE("alias");
-		Holder<AssetManager> man = instantiate();
-		{
-			AssetHeader hdr(Stringizer() + 10, AssetSchemeIndexCounter);
-			hdr.aliasName = 20;
-			Holder<File> f = writeFile(pathJoin(AssetsPath, Stringizer() + 10));
-			f->write(bufferView(hdr));
-			f->close();
-		}
-		man->load(10);
-		waitProcessing(man);
-		CAGE_TEST(AssetCounter::counter == 1);
-		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
-		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(20)));
-		man->unload(10);
-		waitProcessing(man);
-		CAGE_TEST(AssetCounter::counter == 0);
-		man->waitTillEmpty();
-	}
-
-	{
 		CAGE_TESTCASE("non-existent asset");
 		Holder<AssetManager> man = instantiate();
 		Holder<AssetCounter> a = man->get<AssetSchemeIndexCounter, AssetCounter>(5);
@@ -563,7 +542,6 @@ void testAssetManager()
 			CAGE_TEST(String(ass.textName) == "abcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
-			CAGE_TEST(ass.aliasName == 0);
 			CAGE_TEST(ass.scheme == 42);
 			CAGE_TEST(ass.dependenciesCount == 0);
 		}
@@ -576,7 +554,6 @@ void testAssetManager()
 			CAGE_TEST(String(ass.textName) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
-			CAGE_TEST(ass.aliasName == 0);
 			CAGE_TEST(ass.scheme == 13);
 			CAGE_TEST(ass.dependenciesCount == 0);
 		}
