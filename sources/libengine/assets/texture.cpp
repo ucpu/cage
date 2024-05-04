@@ -68,7 +68,7 @@ namespace cage
 			des >> data;
 
 			Holder<Texture> tex = newTexture(data.target);
-			tex->setDebugName(context->textId);
+			tex->setDebugName(context->textName);
 
 			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
 			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);

@@ -14,7 +14,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<MultiShaderProgram> shr = newMultiShaderProgram();
-			shr->setDebugName(context->textId);
+			shr->setDebugName(context->textName);
 
 			Deserializer des(context->originalData);
 			{

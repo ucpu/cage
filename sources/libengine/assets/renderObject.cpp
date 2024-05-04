@@ -12,7 +12,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<RenderObject> obj = newRenderObject();
-			obj->setDebugName(context->textId);
+			obj->setDebugName(context->textName);
 
 			Deserializer des(context->originalData);
 			RenderObjectHeader h;

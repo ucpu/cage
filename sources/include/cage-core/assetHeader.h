@@ -12,7 +12,7 @@ namespace cage
 		char cageName[8] = "cageAss";
 		uint32 version = 0;
 		uint32 flags = 0;
-		char textId[64] = {};
+		char textName[64] = {};
 		uint64 compressedSize = 0;
 		uint64 originalSize = 0;
 		uint32 unused_ = 0;

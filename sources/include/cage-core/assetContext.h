@@ -11,7 +11,7 @@ namespace cage
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
-		detail::StringBase<64> textId;
+		detail::StringBase<64> textName;
 		Holder<void> customData;
 		Holder<PointerRange<uint32>> dependencies;
 		Holder<PointerRange<char>> compressedData;
