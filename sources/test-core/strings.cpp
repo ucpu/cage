@@ -9,6 +9,7 @@
 #include <cage-core/math.h>
 #include <cage-core/string.h>
 #include <cage-core/stringLiteral.h>
+#include <cage-core/texts.h>
 
 void test(Real a, Real b);
 
@@ -913,6 +914,19 @@ namespace
 		for (const auto &v : vec)
 			CAGE_TEST(*o++ == v);
 	}
+
+	void testTextsFormat()
+	{
+		CAGE_TEST(textFormat("", "") == "");
+		CAGE_TEST(textFormat("abc", "") == "abc");
+		CAGE_TEST(textFormat("", "abc") == "");
+		CAGE_TEST(textFormat("abc{0}ghi", "def") == "abcdefghi");
+		CAGE_TEST(textFormat("{1}def{0}", "ghi|abc") == "abcdefghi");
+		CAGE_TEST(textFormat("abc{}ghi", "def") == "abcghi");
+		CAGE_TEST(textFormat("abc{def}ghi", "def") == "abcghi");
+		CAGE_TEST(textFormat("{3}def{2}", "hola|ho|ghi|abc|jey") == "abcdefghi");
+		CAGE_TEST(textFormat("abc{10}ghi", "def|juj") == "abcghi");
+	}
 }
 
 void testStrings()
@@ -932,4 +946,5 @@ void testStrings()
 	testStringizer();
 	testNaturalSortBasics();
 	testNaturalSortRandom();
+	testTextsFormat();
 }

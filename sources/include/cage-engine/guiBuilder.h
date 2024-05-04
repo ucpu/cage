@@ -25,7 +25,7 @@ namespace cage
 
 			BuilderItem text(const GuiTextComponent &txt);
 			BuilderItem text(const String &txt);
-			BuilderItem text(uint32 assetName, uint32 textName, const String &parameters = "");
+			BuilderItem text(uint32 textId, const String &parameters = "");
 			BuilderItem textFormat(const GuiTextFormatComponent &textFormat);
 			BuilderItem textColor(Vec3 color);
 			BuilderItem textSize(Real size);
@@ -46,10 +46,10 @@ namespace cage
 			BuilderItem update(Delegate<void(Entity *)> u);
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
-			template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+			template<StringLiteral Text, uint32 TextId = 0>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)
 			{
-				(*this)->template value<GuiTooltipComponent>().tooltip = detail::guiTooltipText<Text, AssetName, TextName>();
+				(*this)->template value<GuiTooltipComponent>().tooltip = detail::guiTooltipText<Text, TextId>();
 				(*this)->template value<GuiTooltipComponent>().delay = delay;
 				return *this;
 			}

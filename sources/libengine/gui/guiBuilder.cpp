@@ -109,9 +109,9 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::text(uint32 assetName, uint32 textName, const String &parameters)
+		BuilderItem BuilderItem::text(uint32 textId, const String &parameters)
 		{
-			return text(GuiTextComponent{ parameters, assetName, textName });
+			return text(GuiTextComponent{ parameters, textId });
 		}
 
 		BuilderItem BuilderItem::textFormat(const GuiTextFormatComponent &textFormat)

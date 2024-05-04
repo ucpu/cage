@@ -1,0 +1,8 @@
+[scheme]
+processor = cage-asset-processor texts
+index = 2
+
+[multilingual]
+display = multilingual
+type = bool
+default = true

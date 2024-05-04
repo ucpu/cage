@@ -5,8 +5,6 @@
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
-#include <cage-core/string.h>
-#include <cage-core/textPack.h>
 
 namespace cage
 {
@@ -44,49 +42,6 @@ namespace cage
 		s.load.bind<&processRawLoad>();
 		s.typeHash = detail::typeHash<PointerRange<const char>>();
 		return s;
-	}
-
-	namespace
-	{
-		void processTextPackLoad(AssetContext *context)
-		{
-			Holder<TextPack> texts = newTextPack();
-			Deserializer des(context->originalData);
-			uint32 cnt;
-			des >> cnt;
-			for (uint32 i = 0; i < cnt; i++)
-			{
-				uint32 name;
-				String val;
-				des >> name >> val;
-				texts->set(name, val);
-			}
-			context->assetHolder = std::move(texts).cast<void>();
-		}
-	}
-
-	AssetScheme genAssetSchemeTextPack()
-	{
-		AssetScheme s;
-		s.load.bind<&processTextPackLoad>();
-		s.typeHash = detail::typeHash<TextPack>();
-		return s;
-	}
-
-	String loadFormattedString(AssetManager *assets, uint32 asset, uint32 text, String params)
-	{
-		if (asset == 0 || text == 0)
-			return params;
-		auto a = assets->get<AssetSchemeIndexTextPack, TextPack>(asset);
-		if (a)
-		{
-			std::vector<String> ps;
-			while (!params.empty())
-				ps.push_back(split(params, "|"));
-			return a->format(text, ps);
-		}
-		else
-			return "";
 	}
 
 	namespace

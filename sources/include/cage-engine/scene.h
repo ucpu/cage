@@ -71,12 +71,11 @@ namespace cage
 		Vec3 color = Vec3(1); // sRGB
 		Real intensity = 1;
 		// real opacity; // todo
-		uint32 assetName = 0;
-		uint32 textName = 0;
+		uint32 textId = 0;
 		uint32 font = 0;
 		uint32 sceneMask = 1;
 		Real lineSpacing = 1;
-		TextAlignEnum align = TextAlignEnum::Left;
+		TextAlignEnum align = TextAlignEnum::Center;
 	};
 
 	enum class CameraTypeEnum : uint32

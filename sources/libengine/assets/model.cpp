@@ -36,7 +36,7 @@ namespace cage
 			msh->layer = data.renderLayer;
 			msh->bones = data.skeletonBones;
 
-			msh->setDebugName(context->textName); // last command to apply it to all subresources
+			msh->setDebugName(context->textId); // last command to apply it to all subresources
 
 			context->assetHolder = std::move(msh).cast<void>();
 		}

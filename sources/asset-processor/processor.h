@@ -35,7 +35,7 @@ void processModel();
 void processSkeleton();
 void processAnimation();
 void processFont();
-void processTextpack();
+void processTexts();
 void processSound();
 void processCollider();
 void processRaw();

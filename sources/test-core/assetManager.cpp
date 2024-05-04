@@ -539,7 +539,7 @@ void testAssetManager()
 			CAGE_TEST(String(ass.cageName) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textName) == "abcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(String(ass.textId) == "abcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 42);
@@ -551,7 +551,7 @@ void testAssetManager()
 			CAGE_TEST(String(ass.cageName) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textName) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(String(ass.textId) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 13);

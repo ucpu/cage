@@ -18,7 +18,7 @@
 #include <cage-core/profiling.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
-#include <cage-core/textPack.h> // for sizeof in defineScheme
+#include <cage-core/texts.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/variableSmoothingBuffer.h>
 #include <cage-engine/font.h>
@@ -529,7 +529,7 @@ namespace cage
 					// core assets
 					assets->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
 					assets->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());
-					assets->defineScheme<AssetSchemeIndexTextPack, TextPack>(genAssetSchemeTextPack());
+					assets->defineScheme<AssetSchemeIndexTexts, Texts>(genAssetSchemeTexts());
 					assets->defineScheme<AssetSchemeIndexCollider, Collider>(genAssetSchemeCollider());
 					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
 					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());

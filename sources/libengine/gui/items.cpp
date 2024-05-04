@@ -2,7 +2,7 @@
 
 #include <cage-core/assetManager.h>
 #include <cage-core/assetOnDemand.h>
-#include <cage-core/textPack.h>
+#include <cage-core/texts.h>
 #include <cage-engine/texture.h>
 
 namespace cage
@@ -299,7 +299,7 @@ namespace cage
 	void TextItem::transcript()
 	{
 		GUI_COMPONENT(Text, t, hierarchy->ent);
-		String value = loadFormattedString(hierarchy->impl->assetMgr, t.assetName, t.textName, t.value);
+		String value = textsGet(t.textId, t.value);
 		transcript(value);
 	}
 

@@ -39,8 +39,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiTextComponent
 	{
 		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		uint32 assetName = 0;
-		uint32 textName = 0;
+		uint32 textId = 0;
 	};
 
 	struct CAGE_ENGINE_API GuiTextFormatComponent
@@ -306,10 +305,10 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyChildrenRecursively(Entity *e);
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
-		template<StringLiteral Text, uint32 AssetName = 0, uint32 TextName = 0>
+		template<StringLiteral Text, uint32 TextId = 0>
 		GuiTooltipComponent::TooltipCallback guiTooltipText() noexcept
 		{
-			static constexpr GuiTextComponent txt{ Text.value, AssetName, TextName };
+			static constexpr GuiTextComponent txt{ Text.value, TextId };
 			return privat::guiTooltipText(&txt);
 		}
 	}

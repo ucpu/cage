@@ -216,8 +216,8 @@ int main(int argc, const char *args[])
 			func.bind<&processSkeleton>();
 		else if (component == "font")
 			func.bind<&processFont>();
-		else if (component == "textpack")
-			func.bind<&processTextpack>();
+		else if (component == "texts")
+			func.bind<&processTexts>();
 		else if (component == "sound")
 			func.bind<&processSound>();
 		else if (component == "collider")

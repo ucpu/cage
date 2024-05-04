@@ -12,7 +12,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<Font> font = newFont();
-			font->setDebugName(context->textName);
+			font->setDebugName(context->textId);
 
 			Deserializer des(context->originalData);
 			FontHeader data;

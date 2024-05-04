@@ -61,7 +61,7 @@ namespace cage
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
-			source->setDebugName(context->textName);
+			source->setDebugName(context->textId);
 			source->referenceDistance = snd.referenceDistance;
 			source->rolloffFactor = snd.rolloffFactor;
 			source->gain = snd.gain;

@@ -50,8 +50,8 @@ namespace cage
 			bool unloading = false;
 
 			explicit Asset(AssetManagerImpl *impl, uint32 realName);
-			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textName, Holder<void> &&value);
-			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textName, const AssetScheme &customScheme, Holder<void> &&customData);
+			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textId, Holder<void> &&value);
+			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData);
 			~Asset();
 		};
 
@@ -330,14 +330,14 @@ namespace cage
 
 		Asset::Asset(AssetManagerImpl *impl, uint32 realName) : AssetContext(realName), impl(impl)
 		{
-			textName = Stringizer() + "<" + realName + ">";
+			textId = Stringizer() + "<" + realName + ">";
 			impl->existsCounter++;
 			fetch = defaultFetch;
 		}
 
 		Asset::Asset(AssetManagerImpl *impl, uint32 scheme_, uint32 realName, const String &textName_, Holder<void> &&value_) : AssetContext(realName), impl(impl)
 		{
-			textName = textName_.empty() ? (Stringizer() + "<" + realName + "> with value") : textName_;
+			textId = textName_.empty() ? (Stringizer() + "<" + realName + "> with value") : textName_;
 			scheme = scheme_;
 			impl->existsCounter++;
 			assetHolder = std::move(value_);
@@ -345,7 +345,7 @@ namespace cage
 
 		Asset::Asset(AssetManagerImpl *impl, uint32 scheme_, uint32 realName, const String &textName_, const AssetScheme &customScheme_, Holder<void> &&customData_) : AssetContext(realName), impl(impl)
 		{
-			textName = textName_.empty() ? (Stringizer() + "<" + realName + "> with custom scheme") : textName_;
+			textId = textName_.empty() ? (Stringizer() + "<" + realName + "> with custom scheme") : textName_;
 			scheme = scheme_;
 			impl->existsCounter++;
 			*(AssetScheme *)this = customScheme_;
@@ -374,7 +374,7 @@ namespace cage
 			ScopeExit exit([&] { finish(); });
 
 			ProfilingScope profiling("asset fetching");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(asset->fetch);
 
 			try
@@ -409,7 +409,7 @@ namespace cage
 			ScopeExit exit([&] { finish(); });
 
 			ProfilingScope profiling("asset decompression");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(!asset->failed);
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->decompress);
@@ -436,7 +436,7 @@ namespace cage
 			ScopeExit exit([&] { finish(); });
 
 			ProfilingScope profiling("asset loading");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(!asset->failed);
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->load);
@@ -482,7 +482,7 @@ namespace cage
 			ScopeExit exit([&] { finish(); });
 
 			ProfilingScope profiling("asset unloading");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 
 			asset->assetHolder.clear();
 
@@ -701,7 +701,7 @@ namespace cage
 		impl->schemes[scheme] = value;
 	}
 
-	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textName, Holder<void> &&value)
+	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textId, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
@@ -709,12 +709,12 @@ namespace cage
 		auto &c = impl->privateIndex[realName];
 		c.fabricated = true;
 		c.references++;
-		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textName, std::move(value));
+		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textId, std::move(value));
 		c.versions.insert(c.versions.begin(), asset.share());
 		impl->publish(std::move(asset));
 	}
 
-	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textName, const AssetScheme &customScheme, Holder<void> &&customData)
+	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
@@ -724,7 +724,7 @@ namespace cage
 		auto &c = impl->privateIndex[realName];
 		c.fabricated = true;
 		c.references++;
-		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textName, customScheme, std::move(customData));
+		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textId, customScheme, std::move(customData));
 		c.versions.insert(c.versions.begin(), asset.share());
 		lock.clear();
 		if (asset->fetch)
@@ -756,7 +756,7 @@ namespace cage
 			return {}; // different scheme
 		if (a->failed)
 		{
-			CAGE_LOG_THROW(Stringizer() + "asset real name: " + realName + ", text name: " + a->textName);
+			CAGE_LOG_THROW(Stringizer() + "asset real name: " + realName + ", text name: " + a->textId);
 			CAGE_THROW_ERROR(Exception, "accessing asset that failed to load");
 		}
 		CAGE_ASSERT(a->ref);
@@ -809,9 +809,9 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "file is not a cage asset");
 			if (h.version != CurrentAssetVersion)
 				CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
-			if (h.textName[sizeof(h.textName) - 1] != 0)
+			if (h.textId[sizeof(h.textId) - 1] != 0)
 				CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
-			asset->textName = h.textName;
+			asset->textId = h.textId;
 			if (h.scheme >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;
@@ -855,12 +855,12 @@ namespace cage
 	{
 		version = CurrentAssetVersion;
 		String name = name_;
-		static constexpr uint32 MaxTexName = sizeof(textName) - 1;
+		static constexpr uint32 MaxTexName = sizeof(textId) - 1;
 		if (name.length() > MaxTexName)
 			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);
 		CAGE_ASSERT(name.length() > 0);
-		detail::memcpy(textName, name.c_str(), name.length());
+		detail::memcpy(textId, name.c_str(), name.length());
 		scheme = schemeIndex;
 	}
 }

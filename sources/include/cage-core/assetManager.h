@@ -26,17 +26,17 @@ namespace cage
 		uint32 generateUniqueName();
 
 		template<uint32 Scheme, class T>
-		void loadValue(uint32 assetName, Holder<T> &&value, const String &textName = "")
+		void loadValue(uint32 assetName, Holder<T> &&value, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			load_(Scheme, assetName, textName, std::move(value).template cast<void>());
+			load_(Scheme, assetName, textId, std::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
-		void loadCustom(uint32 assetName, const AssetScheme &customScheme, Holder<void> &&customData, const String &textName = "")
+		void loadCustom(uint32 assetName, const AssetScheme &customScheme, Holder<void> &&customData, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			load_(Scheme, assetName, textName, customScheme, std::move(customData));
+			load_(Scheme, assetName, textId, customScheme, std::move(customData));
 		}
 
 		// returns null if the asset is not yet loaded or has different scheme
@@ -61,8 +61,8 @@ namespace cage
 
 	private:
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value);
-		void load_(uint32 scheme, uint32 assetName, const String &textName, Holder<void> &&value);
-		void load_(uint32 scheme, uint32 assetName, const String &textName, const AssetScheme &customScheme, Holder<void> &&customData);
+		void load_(uint32 scheme, uint32 assetName, const String &textId, Holder<void> &&value);
+		void load_(uint32 scheme, uint32 assetName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData);
 		Holder<void> get_(uint32 scheme, uint32 assetName) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
 		friend class AssetOnDemand;

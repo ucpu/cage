@@ -18,7 +18,7 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/tasks.h>
-#include <cage-core/textPack.h>
+#include <cage-core/texts.h>
 #include <cage-engine/font.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h> // all the constants
@@ -860,7 +860,7 @@ namespace cage
 							prepare.font = assets->get<AssetSchemeIndexFont, Font>(pt.font);
 							if (!prepare.font)
 								return;
-							const String str = loadFormattedString(assets, pt.assetName, pt.textName, pt.value);
+							const String str = textsGet(pt.textId, pt.value);
 							const uint32 count = prepare.font->glyphsCount(str);
 							if (count == 0)
 								return;
