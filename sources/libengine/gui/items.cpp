@@ -279,6 +279,12 @@ namespace cage
 			GUI_COMPONENT(TextFormat, f, hierarchy->ent);
 			apply(f);
 		}
+		if (GUI_HAS_COMPONENT(ExplicitSize, hierarchy->ent))
+		{
+			GUI_COMPONENT(ExplicitSize, s, hierarchy->ent);
+			if (valid(s.size[0]))
+				format.wrapWidth = min(format.wrapWidth, s.size[0] - 1e-2);
+		}
 		transcript();
 	}
 
