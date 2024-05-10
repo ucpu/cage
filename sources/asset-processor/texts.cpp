@@ -16,21 +16,36 @@ namespace
 		return "";
 	}
 
+	enum class MsgType
+	{
+		None,
+		Id,
+		Str,
+	};
+
 	void parsePO(Holder<File> f, const LanguageCode &lang, Texts *txt)
 	{
 		String id, str, l;
+		MsgType type = MsgType::None;
 
-		const auto &quotes = [](const String &s) -> String
+		const auto &quotes = [](String s) -> String
 		{
+			s = trim(s, true, true, "\t ");
 			if (s.length() >= 2 && s[0] == '\"' && s[s.length() - 1] == '\"')
-				return subString(s, 1, s.length() - 2);
+				s = subString(s, 1, s.length() - 2);
+			s = replace(s, "\\r\\n", "\n");
+			s = replace(s, "\\n\\r", "\n");
+			s = replace(s, "\\r", "\n");
+			s = replace(s, "\\n", "\n");
+			s = replace(s, "\\t", "\t");
+			s = replace(s, "\\\"", "\"");
 			return s;
 		};
 
 		const auto &add = [&]()
 		{
 			if (!id.empty() && !str.empty())
-				txt->set(quotes(id), quotes(str), lang);
+				txt->set(id, str, lang);
 			else if (!id.empty() || !str.empty())
 			{
 				CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
@@ -38,42 +53,59 @@ namespace
 				CAGE_THROW_ERROR(Exception, "missing msgstr or msgid");
 			}
 			id = str = "";
+			type = MsgType::None;
 		};
 
 		while (f->readLine(l))
 		{
 			l = trim(l);
 			if (l.empty())
-				add();
-			else if (l[0] != '#')
 			{
-				const String p = l;
-				String k = split(l, "\t ");
-				k = toLower(k);
-				if (k == "msgid")
+				add();
+				continue;
+			}
+			if (l[0] == '#')
+				continue;
+
+			const String p = l;
+			String k = split(l, "\t ");
+			k = toLower(k);
+			if (k == "msgid")
+			{
+				if (!id.empty())
 				{
-					if (!id.empty())
-					{
-						CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
-						CAGE_LOG(SeverityEnum::Note, "assetProcessor", p);
-						CAGE_THROW_ERROR(Exception, "multiple msgid");
-					}
-					id = l;
-				}
-				else if (k == "msgstr")
-				{
-					if (!str.empty())
-					{
-						CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
-						CAGE_LOG(SeverityEnum::Note, "assetProcessor", p);
-						CAGE_THROW_ERROR(Exception, "multiple msgstr");
-					}
-					str = l;
-				}
-				else
-				{
+					CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
 					CAGE_LOG(SeverityEnum::Note, "assetProcessor", p);
-					CAGE_THROW_ERROR(Exception, "unknown command");
+					CAGE_THROW_ERROR(Exception, "multiple msgid");
+				}
+				id = quotes(l);
+				type = MsgType::Id;
+			}
+			else if (k == "msgstr")
+			{
+				if (!str.empty())
+				{
+					CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
+					CAGE_LOG(SeverityEnum::Note, "assetProcessor", p);
+					CAGE_THROW_ERROR(Exception, "multiple msgstr");
+				}
+				str = quotes(l);
+				type = MsgType::Str;
+			}
+			else
+			{
+				switch (type)
+				{
+					case MsgType::Id:
+						id += quotes(p);
+						break;
+					case MsgType::Str:
+						str += quotes(p);
+						break;
+					default:
+						CAGE_LOG(SeverityEnum::Note, "assetProcessor", p);
+						CAGE_THROW_ERROR(Exception, "unknown command");
+						break;
 				}
 			}
 		}
@@ -124,7 +156,7 @@ void processTexts()
 		const auto l = txt->allLanguages();
 		if (l.empty())
 			CAGE_THROW_ERROR(Exception, "loaded no languages");
-		for (const String &n : l)
+		for (const LanguageCode &n : l)
 			CAGE_LOG(SeverityEnum::Info, "language", n);
 	}
 	{
