@@ -100,3 +100,6 @@
 [submodule "externals/quickhull/quickhull"]
 	path = externals/quickhull/quickhull
 	url = https://github.com/akuukka/quickhull.git
+[submodule "externals/wamr/wamr"]
+	path = externals/wamr/wamr
+	url = https://github.com/bytecodealliance/wasm-micro-runtime.git

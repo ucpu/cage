@@ -8,19 +8,20 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 include(cage_gen_module.cmake)
 
 # disable some find_package
-set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_OpenGL ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_SndFile ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_BZip2 ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_Deflate ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_Doxygen ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_FFTW3 ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_Fontconfig ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_PythonInterp ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_BZip2 ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_HarfBuzz ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_liblzma ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_JBIG ON)
-set(CMAKE_DISABLE_FIND_PACKAGE_Deflate ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_OpenGL ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PNG ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_PythonInterp ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_SndFile ON)
+set(CMAKE_DISABLE_FIND_PACKAGE_liblzma ON)
 
 # disable installs
 set(CMAKE_SKIP_INSTALL_RULES TRUE) # this is the most awesome addition to cmake ever!
@@ -30,6 +31,9 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "${CMAKE_STATIC_LIBRARY_PREFIX}cage-")
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_LIBRARY_PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_MODULE_PREFIX "${CMAKE_SHARED_MODULE_PREFIX}cage-")
+
+# initialize Masm now, so that jpeg can override it later
+enable_language(ASM_MASM)
 
 # no compilation warnings level
 if(MSVC)
@@ -77,6 +81,7 @@ add_subdirectory(bc7enc_rdo)
 add_subdirectory(avir)
 add_subdirectory(openxr-sdk)
 add_subdirectory(quickhull)
+add_subdirectory(wamr)
 
 option(cage_use_steam_sockets "include Game Networking Sockets library by Valve/Steam" OFF)
 if (cage_use_steam_sockets)
@@ -173,3 +178,4 @@ external_target_properties(protoc)
 external_target_properties(utf8_validity)
 external_target_properties(GameNetworkingSockets_s)
 external_target_properties(quickhull)
+external_target_properties(wamr)
