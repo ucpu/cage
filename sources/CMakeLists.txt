@@ -117,7 +117,7 @@ endif()
 # TESTS
 ########
 
-file(GLOB_RECURSE cage-test-core-sources "test-core/*")
+file(GLOB_RECURSE cage-test-core-sources "test-core/*.cpp")
 add_executable(cage-test-core ${cage-test-core-sources})
 target_link_libraries(cage-test-core cage-core glm)
 cage_ide_category(cage-test-core cage/tests)
@@ -129,6 +129,11 @@ if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 		target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
 	endif()
 endif()
+file(GLOB_RECURSE wasm-files RELATIVE "${CMAKE_CURRENT_LIST_DIR}/test-core/wasm" "*.wasm")
+foreach(wf IN ITEMS ${wasm-files})
+	string(REPLACE "." "_" fn ${wf})
+	cage_embed_file(cage-test-core "test-core/wasm/${wf}" "${fn}")
+endforeach()
 
 file(GLOB_RECURSE cage-test-ginnel-sources "test-ginnel/*")
 add_executable(cage-test-ginnel ${cage-test-ginnel-sources})

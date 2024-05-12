@@ -72,8 +72,9 @@ void testNetworkDiscovery();
 void testProcess();
 void testLogger();
 void testSystemInformation();
-void generatePointsOnSphere();
+void testWasm();
 void testCageInstallConsistentPaths();
+void generatePointsOnSphere();
 
 int main()
 {
@@ -151,6 +152,7 @@ int main()
 	testProcess();
 	testLogger();
 	testSystemInformation();
+	testWasm();
 	testCageInstallConsistentPaths();
 
 	{
