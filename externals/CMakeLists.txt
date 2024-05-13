@@ -32,9 +32,6 @@ set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_LIBRARY_PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_MODULE_PREFIX "${CMAKE_SHARED_MODULE_PREFIX}cage-")
 
-# initialize Masm now, so that jpeg can override it later
-enable_language(ASM_MASM)
-
 # no compilation warnings level
 if(MSVC)
 	foreach(conf IN ITEMS ${CMAKE_CONFIGURATION_TYPES} ${CMAKE_BUILD_TYPE})

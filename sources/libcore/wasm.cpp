@@ -7,26 +7,50 @@
 #include <wasm_export.h>
 
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/string.h>
 #include <cage-core/wasm.h>
 
 extern "C"
 {
 	using namespace cage;
 
-	int cage_wamr_vprintf(const char *format, std::va_list ap)
+	int cage_wamr_vprintf(const char *format, std::va_list va)
 	{
 		String str;
-		int res = std::vsnprintf(str.rawData(), str.MaxLength - 100, format, ap);
+		int res = std::vsnprintf(str.rawData(), str.MaxLength - 100, format, va);
 		str.rawLength() = std::strlen(str.rawData());
 		CAGE_LOG(SeverityEnum::Info, "wasm-print", str);
 		return res;
 	}
 
-	void cage_wamr_log(uint32 log_level, const char *file, int line, const char *fmt, ...)
+	void cage_wamr_log(uint32 log_level, const char *file, int line, const char *format, ...)
 	{
-		// silence wamr catching our c++ exceptions
-		//CAGE_LOG(SeverityEnum::Info, "wasm-log", fmt);
-		// todo
+		std::va_list va;
+		va_start(va, format);
+		String str;
+		std::vsnprintf(str.rawData(), str.MaxLength - 100, format, va);
+		str.rawLength() = std::strlen(str.rawData());
+		str = trim(str);
+		SeverityEnum sev = SeverityEnum::Info;
+		switch (log_level)
+		{
+			case WASM_LOG_LEVEL_FATAL:
+				sev = SeverityEnum::Critical;
+				break;
+			case WASM_LOG_LEVEL_ERROR:
+				sev = SeverityEnum::Error;
+				break;
+			case WASM_LOG_LEVEL_WARNING:
+				sev = SeverityEnum::Warning;
+				break;
+			case WASM_LOG_LEVEL_DEBUG:
+				sev = SeverityEnum::Info;
+				break;
+			case WASM_LOG_LEVEL_VERBOSE:
+				sev = SeverityEnum::Note;
+				break;
+		}
+		CAGE_LOG(sev, "wasm-log", str);
 	}
 }
 
@@ -111,6 +135,30 @@ namespace cage
 			}
 		};
 
+		class WasmBufferImpl : public WasmBuffer
+		{
+		public:
+			Holder<WasmInstanceImpl> instance;
+			uint32 size = 0;
+			uint32 wasmPtr = 0;
+
+			WasmBufferImpl(Holder<WasmInstance> &&instance_, uint32 size) : instance(std::move(instance_).cast<WasmInstanceImpl>()), size(size)
+			{
+				wasmPtr = wasm_runtime_module_malloc(instance->instance, size, nullptr);
+				if (wasmPtr == 0)
+					CAGE_THROW_ERROR(Exception, "failed buffer allocation in wasm");
+			}
+
+			~WasmBufferImpl()
+			{
+				if (wasmPtr)
+				{
+					wasm_runtime_module_free(instance->instance, wasmPtr);
+					wasmPtr = 0;
+				}
+			}
+		};
+
 		void initialize()
 		{
 			static int dummy = []() -> int
@@ -188,10 +236,59 @@ namespace cage
 		return impl->module.share().cast<WasmModule>();
 	}
 
-	Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> module)
+	void *WasmInstance::wasm2native(uint32 address)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		return wasm_runtime_addr_app_to_native(impl->instance, address);
+	}
+
+	uint32 WasmInstance::native2wasm(void *address)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		return numeric_cast<uint32>(wasm_runtime_addr_native_to_app(impl->instance, address));
+	}
+
+	Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module)
 	{
 		CAGE_ASSERT(module);
 		return systemMemory().createImpl<WasmInstance, WasmInstanceImpl>(std::move(module));
+	}
+
+	Holder<WasmInstance> WasmBuffer::instance() const
+	{
+		WasmBufferImpl *impl = (WasmBufferImpl *)this;
+		return impl->instance.share().cast<WasmInstance>();
+	}
+
+	uint32 WasmBuffer::size() const
+	{
+		WasmBufferImpl *impl = (WasmBufferImpl *)this;
+		return impl->size;
+	}
+
+	uint32 WasmBuffer::wasmAddr() const
+	{
+		WasmBufferImpl *impl = (WasmBufferImpl *)this;
+		return impl->wasmPtr;
+	}
+
+	void *WasmBuffer::nativeAddr()
+	{
+		WasmBufferImpl *impl = (WasmBufferImpl *)this;
+		return impl->instance->wasm2native(impl->wasmPtr);
+	}
+
+	PointerRange<char> WasmBuffer::buffer()
+	{
+		WasmBufferImpl *impl = (WasmBufferImpl *)this;
+		char *s = (char *)nativeAddr();
+		return { s, s + impl->size };
+	}
+
+	Holder<WasmBuffer> wasmAllocate(Holder<WasmInstance> &&instance, uint32 size)
+	{
+		CAGE_ASSERT(instance);
+		return systemMemory().createImpl<WasmBuffer, WasmBufferImpl>(std::move(instance), size);
 	}
 
 	namespace privat
@@ -241,10 +338,9 @@ namespace cage
 
 				WasmValEnum returns = WasmValEnum::Void;
 				std::vector<WasmValEnum> params;
-				std::vector<uint32> offsets;
 				std::vector<uint32> data;
 
-				WasmFunctionImpl(Holder<WasmInstance> &&instance_, const String &name_) : name(name_), instance(std::move(instance_).cast<WasmInstanceImpl>())
+				WasmFunctionImpl(Holder<WasmInstance> &&instance_, const String &name) : name(name), instance(std::move(instance_).cast<WasmInstanceImpl>())
 				{
 					func = wasm_runtime_lookup_function(instance->instance, name.c_str());
 					if (!func)
@@ -262,20 +358,18 @@ namespace cage
 
 					const uint32 pc = wasm_func_get_param_count(func, instance->instance);
 					params.reserve(pc);
-					offsets.reserve(pc);
 					std::vector<wasm_valkind_t> vt;
 					vt.resize(pc);
 					wasm_func_get_param_types(func, instance->instance, vt.data());
-					uint32 offset = 0;
+					uint32 sz = 0;
 					for (wasm_valkind_t t : vt)
 					{
 						const WasmValEnum v = convert(t);
 						params.push_back(v);
-						offsets.push_back(offset);
-						offset += countOfWasmVal(v);
+						sz += countOfWasmVal(v);
 					}
 
-					data.resize(std::max(offset, countOfWasmVal(returns)));
+					data.resize(std::max(sz, countOfWasmVal(returns)));
 				}
 
 				~WasmFunctionImpl() {}
@@ -304,12 +398,6 @@ namespace cage
 		{
 			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
 			return impl->params;
-		}
-
-		PointerRange<const uint32> WasmFunctionInternal::offsets() const
-		{
-			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
-			return impl->offsets;
 		}
 
 		PointerRange<uint32> WasmFunctionInternal::data()

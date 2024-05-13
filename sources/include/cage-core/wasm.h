@@ -25,9 +25,23 @@ namespace cage
 	{
 	public:
 		Holder<WasmModule> module() const;
+		void *wasm2native(uint32 address);
+		uint32 native2wasm(void *address);
 	};
 
-	CAGE_CORE_API Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> module);
+	CAGE_CORE_API Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module);
+
+	class CAGE_CORE_API WasmBuffer : private Immovable
+	{
+	public:
+		Holder<WasmInstance> instance() const;
+		uint32 size() const;
+		uint32 wasmAddr() const;
+		void *nativeAddr();
+		PointerRange<char> buffer();
+	};
+
+	CAGE_CORE_API Holder<WasmBuffer> wasmAllocate(Holder<WasmInstance> &&instance, uint32 size);
 
 	namespace privat
 	{
@@ -46,9 +60,9 @@ namespace cage
 		{
 			if constexpr (std::is_same_v<T, void>)
 				return v == WasmValEnum::Void;
-			if constexpr (std::is_same_v<T, sint32>)
+			if constexpr (std::is_same_v<T, sint32> || std::is_same_v<T, uint32>)
 				return v == WasmValEnum::Int32;
-			if constexpr (std::is_same_v<T, sint64>)
+			if constexpr (std::is_same_v<T, sint64> || std::is_same_v<T, uint64>)
 				return v == WasmValEnum::Int64;
 			if constexpr (std::is_same_v<T, float>)
 				return v == WasmValEnum::Float;
@@ -64,7 +78,6 @@ namespace cage
 			String name() const;
 			WasmValEnum returns() const;
 			PointerRange<const WasmValEnum> params() const;
-			PointerRange<const uint32> offsets() const; // number of _sint32 elements_ in data to skip for particular parameter
 			PointerRange<uint32> data();
 			void call();
 		};
@@ -74,14 +87,14 @@ namespace cage
 		template<class T, class... U>
 		concept AnyOfConcept = (std::same_as<T, U> || ...);
 		template<class T>
-		concept WasmCompatibleConcept = AnyOfConcept<T, sint32, sint64, float, double, void>;
+		concept WasmCompatibleConcept = AnyOfConcept<T, sint32, uint32, sint64, uint64, float, double, void>;
 	}
 
 	template<class T>
-	class WasmFunction;
+	struct WasmFunction;
 
 	template<privat::WasmCompatibleConcept R, privat::WasmCompatibleConcept... Ts>
-	class WasmFunction<R(Ts...)> : private Noncopyable
+	struct WasmFunction<R(Ts...)> : private Noncopyable
 	{
 	public:
 		WasmFunction(Holder<privat::WasmFunctionInternal> &&func_) : func(std::move(func_))
@@ -90,14 +103,14 @@ namespace cage
 			try
 			{
 				if (!matchingWasmType<R>(func->returns()))
-					CAGE_THROW_ERROR(Exception, "mismatched size of return value in wasm function");
+					CAGE_THROW_ERROR(Exception, "mismatched return type in wasm function");
 				const auto ps = func->params();
 				if (ps.size() != sizeof...(Ts))
 					CAGE_THROW_ERROR(Exception, "mismatched number of parameters in wasm function");
 				const auto &check = [&]<class T>(uint32 i, T) -> void
 				{
 					if (!matchingWasmType<T>(ps[i]))
-						CAGE_THROW_ERROR(Exception, "mismatched size of parameter in wasm function");
+						CAGE_THROW_ERROR(Exception, "mismatched parameter type in wasm function");
 				};
 				uint32 i = 0;
 				(check(i++, Ts{}), ...);
@@ -112,11 +125,14 @@ namespace cage
 		R operator()(Ts... vs)
 		{
 			PointerRange<uint32> data = func->data();
-			PointerRange<const uint32> offsets = func->offsets();
 
-			const auto &fill = [&]<class T>(uint32 i, T v) -> void { *(T *)(void *)(data.data() + offsets[i]) = v; };
-			uint32 i = 0;
-			(fill(i++, std::forward<Ts>(vs)), ...);
+			uint32 offset = 0;
+			const auto &fill = [&]<class T>(T v) -> void
+			{
+				*(T *)(void *)(data.data() + offset) = v;
+				offset += sizeof(T) / 4;
+			};
+			(fill(std::forward<Ts>(vs)), ...);
 
 			func->call();
 

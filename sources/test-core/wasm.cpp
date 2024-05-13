@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 
 #include "main.h"
 
@@ -28,6 +29,11 @@ namespace
 	{
 		return std::abs(a - b) < 1e-12;
 	}
+
+	bool test(const void *ptr, const String &s)
+	{
+		return String((const char *)ptr) == s;
+	}
 }
 
 void testWasm()
@@ -35,7 +41,7 @@ void testWasm()
 	CAGE_TESTCASE("wasm");
 
 	{
-		CAGE_TESTCASE("sums");
+		CAGE_TESTCASE("simple functions");
 		Holder<WasmModule> mod = newWasmModule(sums_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
@@ -76,10 +82,11 @@ void testWasm()
 		{
 			WasmFunction<void(sint32)> f = wasmFindFunction(inst.share(), "give_number");
 			f(42);
-			f(42);
-			f(42);
+			f(43);
+			f(44);
 		}
 		{
+			CAGE_TESTCASE("invalid functions");
 			CAGE_TEST_THROWN(wasmFindFunction(inst.share(), "sum_invalid"));
 			CAGE_TEST_THROWN([&]() { WasmFunction<float(double, double)> f = wasmFindFunction(inst.share(), "sum_double"); }());
 			CAGE_TEST_THROWN([&]() { WasmFunction<double(float, double)> f = wasmFindFunction(inst.share(), "sum_double"); }());
@@ -88,11 +95,24 @@ void testWasm()
 	}
 
 	{
-		CAGE_TESTCASE("strings");
+		CAGE_TESTCASE("functions with buffers");
 		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
-		// todo
+		WasmFunction<void()> clear_string = wasmFindFunction(inst.share(), "clear_string");
+		WasmFunction<void(sint32)> generate_string = wasmFindFunction(inst.share(), "generate_string");
+		WasmFunction<void(sint32 addr, sint32 size)> set_string = wasmFindFunction(inst.share(), "set_string");
+		WasmFunction<sint32()> get_string = wasmFindFunction(inst.share(), "get_string");
+		WasmFunction<void()> print_string = wasmFindFunction(inst.share(), "print_string");
+		generate_string(20);
+		print_string();
+		CAGE_TEST(test(inst->wasm2native(get_string()), "ABCDEFGHIJKLMNOPQRST"));
+		{
+			auto buf = wasmAllocate(inst.share(), 30);
+			std::strcpy((char *)buf->nativeAddr(), "hello");
+			set_string(buf->wasmAddr(), buf->size());
+		}
+		CAGE_TEST(test(inst->wasm2native(get_string()), "hello"));
 	}
 
 	{

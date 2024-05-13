@@ -18,9 +18,9 @@ set(WAMR_BUILD_FAST_INTERP 1)
 set(WAMR_BUILD_FAST_JIT 0)
 set(WAMR_BUILD_GLOBAL_HEAP_POOL 0)
 set(WAMR_BUILD_INTERP 1)
-set(WAMR_BUILD_INVOKE_NATIVE_GENERAL 1) # avoid using asm - it clashes with jpeg
+#set(WAMR_BUILD_INVOKE_NATIVE_GENERAL 1) # avoid using asm - it clashes with jpeg
 set(WAMR_BUILD_JIT 0)
-set(WAMR_BUILD_LIBC_BUILTIN 0)
+set(WAMR_BUILD_LIBC_BUILTIN 1)
 set(WAMR_BUILD_LIBC_UVWASI 0)
 set(WAMR_BUILD_LIBC_WASI 0)
 set(WAMR_BUILD_LIB_PTHREAD 0)
@@ -37,9 +37,14 @@ set(WAMR_BUILD_TAIL_CALL 1)
 set(WAMR_BUILD_THREAD_MGR 0)
 set(WAMR_BUILD_WASI_NN 0)
 set(WAMR_DISABLE_APP_ENTRY 1)
-set(WAMR_DISABLE_HW_BOUND_CHECK 0)
-set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 0)
+set(WAMR_DISABLE_HW_BOUND_CHECK 1) # interferes with c++ exceptions
+set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 1) # interferes with c++ exceptions
 set(WAMR_DISABLE_WAKEUP_BLOCKING_OP 0)
+
+enable_language(ASM)
+enable_language(ASM_MASM)
+
+add_compile_definitions("$<$<CONFIG:Debug>:BH_DEBUG=1>")
 
 include("${CMAKE_CURRENT_LIST_DIR}/wamr/build-scripts/runtime_lib.cmake")
 file(GLOB_RECURSE iwasm_headers "${CMAKE_CURRENT_LIST_DIR}/wamr/core/*.h")
