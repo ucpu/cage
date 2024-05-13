@@ -1,4 +1,8 @@
-#include <cstring> // std::strlen
+#include <cmath> // max
+#include <cstdarg> // va_list
+#include <cstdio> // vsnprintf
+#include <cstring> // strlen
+#include <vector>
 
 #include <wasm_export.h>
 
@@ -9,10 +13,10 @@ extern "C"
 {
 	using namespace cage;
 
-	int cage_wamr_vprintf(const char *format, va_list ap)
+	int cage_wamr_vprintf(const char *format, std::va_list ap)
 	{
 		String str;
-		int res = vsnprintf(str.rawData(), str.MaxLength - 100, format, ap);
+		int res = std::vsnprintf(str.rawData(), str.MaxLength - 100, format, ap);
 		str.rawLength() = std::strlen(str.rawData());
 		CAGE_LOG(SeverityEnum::Info, "wasm-print", str);
 		return res;
@@ -79,20 +83,22 @@ namespace cage
 		class WasmInstanceImpl : public WasmInstance
 		{
 		public:
-			Holder<WasmModule> module;
+			const Holder<WasmModuleImpl> module;
 			wasm_module_inst_t instance = nullptr;
+			wasm_exec_env_t exec = nullptr;
 
-			WasmInstanceImpl(Holder<WasmModule> &&module_) : module(std::move(module_))
+			WasmInstanceImpl(Holder<WasmModule> &&module_) : module(std::move(module_).cast<WasmModuleImpl>())
 			{
-				WasmModuleImpl *impl = (WasmModuleImpl *)+module;
 				String err;
-				instance = wasm_runtime_instantiate(impl->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
+				instance = wasm_runtime_instantiate(module->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
 				if (!instance)
 				{
 					err.rawLength() = std::strlen(err.rawData());
 					CAGE_LOG_CONTINUE(SeverityEnum::Note, "wasm", err);
 					CAGE_THROW_ERROR(Exception, "failed instantiating wasm module");
 				}
+				exec = wasm_runtime_get_exec_env_singleton(instance);
+				CAGE_ASSERT(exec);
 			}
 
 			~WasmInstanceImpl()
@@ -176,9 +182,157 @@ namespace cage
 		return systemMemory().createImpl<WasmModule, WasmModuleImpl>(buffer, allowAot);
 	}
 
+	Holder<WasmModule> WasmInstance::module() const
+	{
+		const WasmInstanceImpl *impl = (const WasmInstanceImpl *)this;
+		return impl->module.share().cast<WasmModule>();
+	}
+
 	Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> module)
 	{
 		CAGE_ASSERT(module);
 		return systemMemory().createImpl<WasmInstance, WasmInstanceImpl>(std::move(module));
+	}
+
+	namespace privat
+	{
+		namespace
+		{
+			WasmValEnum convert(wasm_valkind_t k)
+			{
+				switch (k)
+				{
+					case WASM_I32:
+						return WasmValEnum::Int32;
+					case WASM_I64:
+						return WasmValEnum::Int64;
+					case WASM_F32:
+						return WasmValEnum::Float;
+					case WASM_F64:
+						return WasmValEnum::Double;
+					default:
+						return WasmValEnum::Unknown;
+				}
+			}
+
+			uint32 countOfWasmVal(WasmValEnum v)
+			{
+				switch (v)
+				{
+					case WasmValEnum::Void:
+					case WasmValEnum::Unknown:
+						return 0;
+					case WasmValEnum::Int32:
+					case WasmValEnum::Float:
+						return 1;
+					case WasmValEnum::Int64:
+					case WasmValEnum::Double:
+						return 2;
+				}
+				return 0;
+			}
+
+			class WasmFunctionImpl : public privat::WasmFunctionInternal
+			{
+			public:
+				const String name;
+				const Holder<WasmInstanceImpl> instance;
+				wasm_function_inst_t func = nullptr;
+
+				WasmValEnum returns = WasmValEnum::Void;
+				std::vector<WasmValEnum> params;
+				std::vector<uint32> offsets;
+				std::vector<uint32> data;
+
+				WasmFunctionImpl(Holder<WasmInstance> &&instance_, const String &name_) : name(name_), instance(std::move(instance_).cast<WasmInstanceImpl>())
+				{
+					func = wasm_runtime_lookup_function(instance->instance, name.c_str());
+					if (!func)
+						CAGE_THROW_ERROR(Exception, "wasm function not found");
+
+					const uint32 rc = wasm_func_get_result_count(func, instance->instance);
+					if (rc >= 2)
+						CAGE_THROW_ERROR(Exception, "wasm function returns multiple values");
+					if (rc)
+					{
+						wasm_valkind_t t = {};
+						wasm_func_get_result_types(func, instance->instance, &t);
+						returns = convert(t);
+					}
+
+					const uint32 pc = wasm_func_get_param_count(func, instance->instance);
+					params.reserve(pc);
+					offsets.reserve(pc);
+					std::vector<wasm_valkind_t> vt;
+					vt.resize(pc);
+					wasm_func_get_param_types(func, instance->instance, vt.data());
+					uint32 offset = 0;
+					for (wasm_valkind_t t : vt)
+					{
+						const WasmValEnum v = convert(t);
+						params.push_back(v);
+						offsets.push_back(offset);
+						offset += countOfWasmVal(v);
+					}
+
+					data.resize(std::max(offset, countOfWasmVal(returns)));
+				}
+
+				~WasmFunctionImpl() {}
+			};
+		}
+
+		Holder<WasmInstance> WasmFunctionInternal::instance() const
+		{
+			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
+			return impl->instance.share().cast<WasmInstance>();
+		}
+
+		String WasmFunctionInternal::name() const
+		{
+			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
+			return impl->name;
+		}
+
+		WasmValEnum WasmFunctionInternal::returns() const
+		{
+			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
+			return impl->returns;
+		}
+
+		PointerRange<const WasmValEnum> WasmFunctionInternal::params() const
+		{
+			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
+			return impl->params;
+		}
+
+		PointerRange<const uint32> WasmFunctionInternal::offsets() const
+		{
+			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
+			return impl->offsets;
+		}
+
+		PointerRange<uint32> WasmFunctionInternal::data()
+		{
+			WasmFunctionImpl *impl = (WasmFunctionImpl *)this;
+			return impl->data;
+		}
+
+		void WasmFunctionInternal::call()
+		{
+			WasmFunctionImpl *impl = (WasmFunctionImpl *)this;
+			if (!wasm_runtime_call_wasm(impl->instance->exec, impl->func, impl->data.size(), impl->data.data()))
+			{
+				const String e = wasm_runtime_get_exception(impl->instance->instance);
+				CAGE_LOG_THROW(e);
+				CAGE_THROW_ERROR(Exception, "wasm function call failed");
+			}
+		}
+
+		Holder<WasmFunctionInternal> wasmFindFunction(Holder<WasmInstance> &&instance, const String &name)
+		{
+			CAGE_ASSERT(instance);
+			return systemMemory().createImpl<WasmFunctionInternal, WasmFunctionImpl>(std::move(instance), name);
+		}
 	}
 }

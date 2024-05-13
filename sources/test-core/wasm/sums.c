@@ -19,3 +19,13 @@ double sum_double(double a, double b)
 {
 	return a + b;
 }
+
+int32_t get_number(void)
+{
+	return 42;
+}
+
+void give_number(int32_t num)
+{
+	// nothing
+}
