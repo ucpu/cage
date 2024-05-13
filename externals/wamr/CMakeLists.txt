@@ -42,7 +42,10 @@ set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 1) # interferes with c++ exceptions
 set(WAMR_DISABLE_WAKEUP_BLOCKING_OP 0)
 
 enable_language(ASM)
-enable_language(ASM_MASM)
+if(MSVC)
+	enable_language(ASM_MASM)
+	set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh")
+endif()
 
 add_compile_definitions("$<$<CONFIG:Debug>:BH_DEBUG=1>")
 

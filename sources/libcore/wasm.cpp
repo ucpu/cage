@@ -114,7 +114,7 @@ namespace cage
 			WasmInstanceImpl(Holder<WasmModule> &&module_) : module(std::move(module_).cast<WasmModuleImpl>())
 			{
 				String err;
-				instance = wasm_runtime_instantiate(module->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
+				instance = wasm_runtime_instantiate(module->module, 500'000, 500'000, err.rawData(), err.MaxLength - 100);
 				if (!instance)
 				{
 					err.rawLength() = std::strlen(err.rawData());
