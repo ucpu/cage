@@ -41,10 +41,11 @@ set(WAMR_DISABLE_HW_BOUND_CHECK 1) # interferes with c++ exceptions
 set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 1) # interferes with c++ exceptions
 set(WAMR_DISABLE_WAKEUP_BLOCKING_OP 0)
 
-enable_language(ASM)
 if(MSVC)
 	enable_language(ASM_MASM)
 	set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh")
+else()
+	enable_language(ASM)
 endif()
 
 add_compile_definitions("$<$<CONFIG:Debug>:BH_DEBUG=1>")
@@ -55,3 +56,8 @@ add_library(iwasm_static STATIC ${WAMR_RUNTIME_LIB_SOURCE} ${iwasm_headers})
 target_include_directories(iwasm_static INTERFACE "wamr/core/iwasm/include")
 target_link_libraries(iwasm_static INTERFACE ${LLVM_AVAILABLE_LIBS} ${UV_A_LIBS})
 target_compile_definitions(iwasm_static PUBLIC WASM_RUNTIME_API_EXTERN= WASM_API_EXTERN= COMPILING_WASM_RUNTIME_API=1)
+
+if(MSVC)
+	list(FILTER WAMR_RUNTIME_LIB_SOURCE INCLUDE REGEX "asm$")
+	set_source_files_properties(${WAMR_RUNTIME_LIB_SOURCE} PROPERTIES LANGUAGE ASM_MASM)
+endif()
