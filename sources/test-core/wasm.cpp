@@ -7,17 +7,18 @@
 
 PointerRange<const uint8> sums_wasm();
 PointerRange<const uint8> strings_wasm();
+PointerRange<const uint8> natives_wasm();
 
 namespace
 {
 	void printModuleDetails(WasmModule *module)
 	{
 		CAGE_LOG(SeverityEnum::Info, "wasm", "imports:");
-		for (const auto &it : module->importInfo())
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.moduleName + " " + it.kind + " " + it.name);
+		for (const auto &it : module->importsInfo())
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.moduleName + " " + it.kind + " " + it.name + (it.linked ? "" : " not-linked"));
 		CAGE_LOG(SeverityEnum::Info, "wasm", "exports:");
-		for (const auto &it : module->exportInfo())
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.moduleName + " " + it.kind + " " + it.name);
+		for (const auto &it : module->exportsInfo())
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.kind + " " + it.name);
 	}
 
 	bool test(float a, float b)
@@ -32,7 +33,9 @@ namespace
 
 	bool test(const void *ptr, const String &s)
 	{
-		return String((const char *)ptr) == s;
+		if (ptr)
+			return String((const char *)ptr) == s;
+		return s == "";
 	}
 }
 
@@ -113,6 +116,89 @@ void testWasm()
 			set_string(buf->wasmAddr(), buf->size());
 		}
 		CAGE_TEST(test(inst->wasm2native(get_string()), "hello"));
+		clear_string();
+		CAGE_TEST(test(inst->wasm2native(get_string()), ""));
+		{
+			CAGE_TESTCASE("invalid addresses");
+			CAGE_TEST_THROWN(inst->native2wasm(&mod));
+			CAGE_TEST_THROWN(inst->wasm2native(1'000'000'000));
+		}
+	}
+
+	{
+		CAGE_TESTCASE("multiple instantiations of same module");
+		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
+		Holder<WasmInstance> inst1 = wasmInstantiate(mod.share());
+		Holder<WasmInstance> inst2 = wasmInstantiate(mod.share());
+		WasmFunction<void(sint32)> gen1 = wasmFindFunction(inst1.share(), "generate_string");
+		WasmFunction<void(sint32)> gen2 = wasmFindFunction(inst2.share(), "generate_string");
+		WasmFunction<sint32()> get1 = wasmFindFunction(inst1.share(), "get_string");
+		WasmFunction<sint32()> get2 = wasmFindFunction(inst2.share(), "get_string");
+		CAGE_TEST(test(inst1->wasm2native(get1()), ""));
+		CAGE_TEST(test(inst2->wasm2native(get2()), ""));
+		gen1(5);
+		gen2(10);
+		CAGE_TEST(test(inst1->wasm2native(get1()), "ABCDE"));
+		CAGE_TEST(test(inst2->wasm2native(get2()), "ABCDEFGHIJ"));
+	}
+
+	{
+		CAGE_TESTCASE("unlinked native functions");
+		Holder<WasmModule> mod = newWasmModule(natives_wasm().cast<const char>());
+		printModuleDetails(+mod);
+		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+		WasmFunction<void()> call1 = wasmFindFunction(inst.share(), "cage_test_call1");
+		CAGE_TEST_THROWN(call1());
+	}
+
+	{
+		CAGE_TESTCASE("linked native functions");
+		uint32 fnc1cnt = 0, fnc2cnt = 0, fnc3cnt = 0;
+		{
+			Holder<WasmNatives> nats = newWasmNatives();
+			nats->add(Delegate<void()>([&]() { fnc1cnt++; }), "cage_test_func1");
+			nats->add(Delegate<uint32(uint32, uint64)>(
+						  [&](uint32 a, uint64 b)
+						  {
+							  fnc2cnt += a == 42 && b == 13'000'000'000'123;
+							  return a;
+						  }),
+				"cage_test_func2");
+			nats->add(Delegate<void(WasmInstance *, uint32)>(
+						  [&](WasmInstance *inst, uint32 addr)
+						  {
+							  CAGE_TEST(inst);
+							  CAGE_TEST(test(inst->wasm2native(addr), "hello"));
+							  fnc3cnt++;
+						  }),
+				"cage_test_func3");
+			nats->commit();
+		}
+		Holder<WasmModule> mod = newWasmModule(natives_wasm().cast<const char>());
+		printModuleDetails(+mod);
+		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+		WasmFunction<void()> call1 = wasmFindFunction(inst.share(), "cage_test_call1");
+		WasmFunction<void()> call2a = wasmFindFunction(inst.share(), "cage_test_call2a"); // calls cage_test_func2 with valid numbers
+		WasmFunction<void()> call2b = wasmFindFunction(inst.share(), "cage_test_call2b"); // calls cage_test_func2 with different numbers
+		WasmFunction<void()> call3 = wasmFindFunction(inst.share(), "cage_test_call3");
+		CAGE_TEST(fnc1cnt == 0);
+		CAGE_TEST(fnc2cnt == 0);
+		CAGE_TEST(fnc3cnt == 0);
+		call1();
+		CAGE_TEST(fnc1cnt == 1);
+		call1();
+		CAGE_TEST(fnc1cnt == 2);
+		call1();
+		CAGE_TEST(fnc1cnt == 3);
+		CAGE_TEST(fnc2cnt == 0);
+		call2a();
+		CAGE_TEST(fnc1cnt == 3);
+		CAGE_TEST(fnc2cnt == 1);
+		call2b();
+		CAGE_TEST(fnc1cnt == 3);
+		CAGE_TEST(fnc2cnt == 1);
+		call3();
+		CAGE_TEST(fnc3cnt == 1);
 	}
 
 	{

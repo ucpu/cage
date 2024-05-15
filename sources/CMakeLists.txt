@@ -117,7 +117,7 @@ endif()
 # TESTS
 ########
 
-file(GLOB_RECURSE cage-test-core-sources "test-core/*.cpp")
+file(GLOB cage-test-core-sources LIST_DIRECTORIES OFF "test-core/*")
 add_executable(cage-test-core ${cage-test-core-sources})
 target_link_libraries(cage-test-core cage-core glm)
 cage_ide_category(cage-test-core cage/tests)

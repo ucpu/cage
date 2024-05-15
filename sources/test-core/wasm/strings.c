@@ -1,8 +1,8 @@
 #include <stdint.h>
 
-void *malloc(int32_t);
+void *malloc(unsigned long);
 void free(void *);
-void *memcpy(void *, const void *, int32_t);
+void *memcpy(void *, const void *, unsigned long);
 int32_t printf(const char *, ...);
 
 char *buffer = 0;
