@@ -83,11 +83,6 @@ jobs:
             install: gcc-12 g++-12
           }
         - {
-            cc: gcc-13,
-            cxx: g++-13,
-            install: gcc-13 g++-13
-          }
-        - {
             cc: clang-15,
             cxx: clang++-15,
             install: clang-15
@@ -119,7 +114,7 @@ jobs:
     - name: Build
       run: |
         cd build
-        cmake --build . -- -j3
+        cmake --build . -- -j$(( `nproc` + 1 ))
 
     - name: Tests
       run: |
@@ -139,7 +134,7 @@ jobs:
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
-        cmake --build . -- -j3
+        cmake --build . -- -j$(( `nproc` + 1 ))
 
     - name: List dependencies
       run: |
@@ -148,6 +143,43 @@ jobs:
         ldd libcage-core.so
         echo "cage-engine:"
         ldd libcage-engine.so
+
+
+  NoProfiler:
+    name: no-profiler
+    needs: Ubuntu
+    runs-on: ubuntu-latest
+    env:
+      CC: clang-15
+      CXX: clang++-15
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=DEBUG -Dcage_profiling_enabled=OFF ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
+
+    - name: Tests
+      run: |
+        cd build/result/debug
+        ./cage-test-core
 
 
   Sanitizers:
@@ -204,48 +236,11 @@ jobs:
     - name: Build
       run: |
         cd build
-        cmake --build . --target cage-test-core -- -j3
+        cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
 
     - name: Tests
       run: |
         cd build/result/${{ matrix.build-config }}
-        ./cage-test-core
-
-
-  NoProfiler:
-    name: no-profiler
-    needs: Ubuntu
-    runs-on: ubuntu-latest
-    env:
-      CC: clang-15
-      CXX: clang++-15
-    strategy:
-      fail-fast: false
-
-    steps:
-    - name: Install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Configure
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=DEBUG -Dcage_profiling_enabled=OFF ..
-
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --target cage-test-core -- -j3
-
-    - name: Tests
-      run: |
-        cd build/result/debug
         ./cage-test-core
 
 
@@ -254,8 +249,8 @@ jobs:
     needs: Ubuntu
     runs-on: ubuntu-latest
     env:
-      CC: gcc-13
-      CXX: g++-13
+      CC: gcc-12
+      CXX: g++-12
     strategy:
       fail-fast: false
       matrix:
@@ -273,7 +268,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-13
+        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-12
 
     - uses: actions/checkout@v4
       with:
@@ -283,12 +278,13 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+        # WAMR_DISABLE_WRITE_GS_BASE: avoid valgrind crashing on an instruction it does not understand
+        cmake -DWAMR_DISABLE_WRITE_GS_BASE=1 -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
 
     - name: Build
       run: |
         cd build
-        cmake --build . --target cage-test-core -- -j3
+        cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
 
     - name: Tests
       run: |
