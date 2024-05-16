@@ -498,7 +498,7 @@ namespace cage
 			template<uint32 M>
 			CAGE_FORCE_INLINE constexpr StringBase(const StringizerBase<M> &other);
 
-			explicit constexpr StringBase(const PointerRange<const char> &range)
+			explicit constexpr StringBase(PointerRange<const char> range)
 			{
 				if (range.size() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");

@@ -1,5 +1,4 @@
 #include <cmath>
-#include <cstring>
 
 #include "main.h"
 
@@ -14,10 +13,10 @@ namespace
 	void printModuleDetails(WasmModule *module)
 	{
 		CAGE_LOG(SeverityEnum::Info, "wasm", "imports:");
-		for (const auto &it : module->importsInfo())
+		for (const auto &it : module->symbolsImports())
 			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.moduleName + " " + it.kind + " " + it.name + (it.linked ? "" : " not-linked"));
 		CAGE_LOG(SeverityEnum::Info, "wasm", "exports:");
-		for (const auto &it : module->exportsInfo())
+		for (const auto &it : module->symbolsExports())
 			CAGE_LOG_CONTINUE(SeverityEnum::Info, "wasm", Stringizer() + it.kind + " " + it.name);
 	}
 
@@ -31,11 +30,12 @@ namespace
 		return std::abs(a - b) < 1e-12;
 	}
 
-	bool test(const void *ptr, const String &s)
+	bool testStr(WasmInstance *inst, uint32 wasmAddr, const String &s)
 	{
-		if (ptr)
-			return String((const char *)ptr) == s;
-		return s == "";
+		if (!wasmAddr)
+			return s == "";
+		WasmBuffer buf = inst->adapt(wasmAddr, inst->strLen(wasmAddr) + 1);
+		return buf.read() == s;
 	}
 }
 
@@ -49,19 +49,19 @@ void testWasm()
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
 		{
-			WasmFunction<sint32(sint32, sint32)> f = wasmFindFunction(inst.share(), "sum_int32");
+			WasmFunction f = inst->function<sint32(sint32, sint32)>("sum_int32");
 			CAGE_TEST(f(13, 42) == 13 + 42);
 			CAGE_TEST(f(5, 7) == 5 + 7);
 			CAGE_TEST(f(10, -5) == 10 - 5);
 		}
 		{
-			WasmFunction<sint64(sint64, sint64)> f = wasmFindFunction(inst.share(), "sum_int64");
+			WasmFunction f = inst->function<sint64(sint64, sint64)>("sum_int64");
 			CAGE_TEST(f(13, 42) == 13 + 42);
 			CAGE_TEST(f(5'000'000'000'000, 7) == 5'000'000'000'000 + 7);
 			CAGE_TEST(f(10, -5'000'000'000'000) == 10 - 5'000'000'000'000);
 		}
 		{
-			WasmFunction<float(float, float)> f = wasmFindFunction(inst.share(), "sum_float");
+			WasmFunction f = inst->function<float(float, float)>("sum_float");
 			CAGE_TEST(test(f(13.1f, 42.6f), 13.1f + 42.6f));
 			CAGE_TEST(test(f(0.5f, 0.7f), 0.5f + 0.7f));
 			CAGE_TEST(test(f(0.5f, -0.7f), 0.5f - 0.7f));
@@ -69,7 +69,7 @@ void testWasm()
 			CAGE_TEST(test(f(3e7f, 4e-5f), 3e7f + 4e-5f));
 		}
 		{
-			WasmFunction<double(double, double)> f = wasmFindFunction(inst.share(), "sum_double");
+			WasmFunction f = inst->function<double(double, double)>("sum_double");
 			CAGE_TEST(test(f(13.1, 42.6), 13.1 + 42.6));
 			CAGE_TEST(test(f(0.5, 0.7), 0.5 + 0.7));
 			CAGE_TEST(test(f(0.5, -0.7), 0.5 - 0.7));
@@ -77,23 +77,23 @@ void testWasm()
 			CAGE_TEST(test(f(3e7, 4e-5), 3e7 + 4e-5));
 		}
 		{
-			WasmFunction<sint32()> f = wasmFindFunction(inst.share(), "get_number");
+			WasmFunction f = inst->function<sint32()>("get_number");
 			CAGE_TEST(f() == 42);
 			CAGE_TEST(f() == 42);
 			CAGE_TEST(f() == 42);
 		}
 		{
-			WasmFunction<void(sint32)> f = wasmFindFunction(inst.share(), "give_number");
+			WasmFunction f = inst->function<void(sint32)>("give_number");
 			f(42);
 			f(43);
 			f(44);
 		}
 		{
 			CAGE_TESTCASE("invalid functions");
-			CAGE_TEST_THROWN(wasmFindFunction(inst.share(), "sum_invalid"));
-			CAGE_TEST_THROWN([&]() { WasmFunction<float(double, double)> f = wasmFindFunction(inst.share(), "sum_double"); }());
-			CAGE_TEST_THROWN([&]() { WasmFunction<double(float, double)> f = wasmFindFunction(inst.share(), "sum_double"); }());
-			CAGE_TEST_THROWN([&]() { WasmFunction<double(double, float)> f = wasmFindFunction(inst.share(), "sum_double"); }());
+			CAGE_TEST_THROWN(inst->function<float(float, float)>("sum_invalid"));
+			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<float(double, double)>("sum_double"); }());
+			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<double(float, double)>("sum_double"); }());
+			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<double(double, float)>("sum_double"); }());
 		}
 	}
 
@@ -102,26 +102,32 @@ void testWasm()
 		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
-		WasmFunction<void()> clear_string = wasmFindFunction(inst.share(), "clear_string");
-		WasmFunction<void(sint32)> generate_string = wasmFindFunction(inst.share(), "generate_string");
-		WasmFunction<void(sint32 addr, sint32 size)> set_string = wasmFindFunction(inst.share(), "set_string");
-		WasmFunction<sint32()> get_string = wasmFindFunction(inst.share(), "get_string");
-		WasmFunction<void()> print_string = wasmFindFunction(inst.share(), "print_string");
+		WasmFunction clear_string = inst->function<void()>("clear_string");
+		WasmFunction generate_string = inst->function<void(uint32)>("generate_string");
+		WasmFunction set_string = inst->function<void(uint32 addr, uint32 size)>("set_string");
+		WasmFunction get_string = inst->function<uint32()>("get_string");
+		WasmFunction get_length = inst->function<uint32()>("get_length");
+		WasmFunction print_string = inst->function<void()>("print_string");
 		generate_string(20);
 		print_string();
-		CAGE_TEST(test(inst->wasm2native(get_string()), "ABCDEFGHIJKLMNOPQRST"));
+		CAGE_TEST(get_length() == 20);
+		CAGE_TEST(testStr(+inst, get_string(), "ABCDEFGHIJKLMNOPQRST"));
+		CAGE_TEST(inst->strLen(get_string() + 10) == 10);
+		CAGE_TEST(inst->strLen(get_string() + 20) == 0);
 		{
-			auto buf = wasmAllocate(inst.share(), 30);
-			std::strcpy((char *)buf->nativeAddr(), "hello");
-			set_string(buf->wasmAddr(), buf->size());
+			auto buf = inst->allocate(30);
+			buf.write("hello");
+			set_string(buf.wasmAddr(), buf.size());
 		}
-		CAGE_TEST(test(inst->wasm2native(get_string()), "hello"));
+		CAGE_TEST(get_length() == 5);
+		CAGE_TEST(testStr(+inst, get_string(), "hello"));
 		clear_string();
-		CAGE_TEST(test(inst->wasm2native(get_string()), ""));
+		CAGE_TEST(testStr(+inst, get_string(), ""));
 		{
 			CAGE_TESTCASE("invalid addresses");
 			CAGE_TEST_THROWN(inst->native2wasm(&mod));
 			CAGE_TEST_THROWN(inst->wasm2native(1'000'000'000));
+			CAGE_TEST_THROWN(inst->strLen(1'000'000'000));
 		}
 	}
 
@@ -130,16 +136,16 @@ void testWasm()
 		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
 		Holder<WasmInstance> inst1 = wasmInstantiate(mod.share());
 		Holder<WasmInstance> inst2 = wasmInstantiate(mod.share());
-		WasmFunction<void(sint32)> gen1 = wasmFindFunction(inst1.share(), "generate_string");
-		WasmFunction<void(sint32)> gen2 = wasmFindFunction(inst2.share(), "generate_string");
-		WasmFunction<sint32()> get1 = wasmFindFunction(inst1.share(), "get_string");
-		WasmFunction<sint32()> get2 = wasmFindFunction(inst2.share(), "get_string");
-		CAGE_TEST(test(inst1->wasm2native(get1()), ""));
-		CAGE_TEST(test(inst2->wasm2native(get2()), ""));
+		WasmFunction gen1 = inst1->function<void(uint32)>("generate_string");
+		WasmFunction gen2 = inst2->function<void(uint32)>("generate_string");
+		WasmFunction get1 = inst1->function<uint32()>("get_string");
+		WasmFunction get2 = inst2->function<uint32()>("get_string");
+		CAGE_TEST(testStr(+inst1, get1(), ""));
+		CAGE_TEST(testStr(+inst2, get2(), ""));
 		gen1(5);
 		gen2(10);
-		CAGE_TEST(test(inst1->wasm2native(get1()), "ABCDE"));
-		CAGE_TEST(test(inst2->wasm2native(get2()), "ABCDEFGHIJ"));
+		CAGE_TEST(testStr(+inst1, get1(), "ABCDE"));
+		CAGE_TEST(testStr(+inst2, get2(), "ABCDEFGHIJ"));
 	}
 
 	{
@@ -147,7 +153,7 @@ void testWasm()
 		Holder<WasmModule> mod = newWasmModule(natives_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
-		WasmFunction<void()> call1 = wasmFindFunction(inst.share(), "cage_test_call1");
+		WasmFunction call1 = inst->function<void()>("cage_test_call1");
 		CAGE_TEST_THROWN(call1());
 	}
 
@@ -168,7 +174,7 @@ void testWasm()
 						  [&](WasmInstance *inst, uint32 addr)
 						  {
 							  CAGE_TEST(inst);
-							  CAGE_TEST(test(inst->wasm2native(addr), "hello"));
+							  CAGE_TEST(testStr(inst, addr, "hello"));
 							  fnc3cnt++;
 						  }),
 				"cage_test_func3");
@@ -177,10 +183,10 @@ void testWasm()
 		Holder<WasmModule> mod = newWasmModule(natives_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
-		WasmFunction<void()> call1 = wasmFindFunction(inst.share(), "cage_test_call1");
-		WasmFunction<void()> call2a = wasmFindFunction(inst.share(), "cage_test_call2a"); // calls cage_test_func2 with valid numbers
-		WasmFunction<void()> call2b = wasmFindFunction(inst.share(), "cage_test_call2b"); // calls cage_test_func2 with different numbers
-		WasmFunction<void()> call3 = wasmFindFunction(inst.share(), "cage_test_call3");
+		WasmFunction call1 = inst->function<void()>("cage_test_call1");
+		WasmFunction call2a = inst->function<void()>("cage_test_call2a"); // calls cage_test_func2 with valid numbers
+		WasmFunction call2b = inst->function<void()>("cage_test_call2b"); // calls cage_test_func2 with different numbers
+		WasmFunction call3 = inst->function<void()>("cage_test_call3");
 		CAGE_TEST(fnc1cnt == 0);
 		CAGE_TEST(fnc2cnt == 0);
 		CAGE_TEST(fnc3cnt == 0);

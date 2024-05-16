@@ -6,6 +6,7 @@
 
 #include <wasm_export.h>
 
+#include <cage-core/memoryUtils.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
 #include <cage-core/wasm.h>
@@ -55,18 +56,7 @@ extern "C"
 
 namespace cage
 {
-	namespace privat
-	{
-		const WasmTypelessDelegate *wasmCallbackAttachment(void *ctx)
-		{
-			return (const WasmTypelessDelegate *)wasm_runtime_get_function_attachment((wasm_exec_env_t)ctx);
-		}
-
-		WasmInstance *wasmCallbackInstance(void *ctx)
-		{
-			return (WasmInstance *)wasm_runtime_get_user_data((wasm_exec_env_t)ctx);
-		}
-	}
+	using namespace privat;
 
 	namespace
 	{
@@ -80,10 +70,61 @@ namespace cage
 			}();
 		}
 
+		WasmTypeEnum convert(wasm_valkind_t k)
+		{
+			switch (k)
+			{
+				case WASM_I32:
+					return WasmTypeEnum::Int32;
+				case WASM_I64:
+					return WasmTypeEnum::Int64;
+				case WASM_F32:
+					return WasmTypeEnum::Float;
+				case WASM_F64:
+					return WasmTypeEnum::Double;
+				default:
+					return WasmTypeEnum::Unknown;
+			}
+		}
+
+		uint32 countOfWasmVal(WasmTypeEnum v)
+		{
+			switch (v)
+			{
+				case WasmTypeEnum::Void:
+				case WasmTypeEnum::Unknown:
+					return 0;
+				case WasmTypeEnum::Int32:
+				case WasmTypeEnum::Float:
+					return 1;
+				case WasmTypeEnum::Int64:
+				case WasmTypeEnum::Double:
+					return 2;
+			}
+			return 0;
+		}
+
+		const char *toString(wasm_import_export_kind_t k)
+		{
+			switch (k)
+			{
+				case WASM_IMPORT_EXPORT_KIND_FUNC:
+					return "function";
+				case WASM_IMPORT_EXPORT_KIND_TABLE:
+					return "table";
+				case WASM_IMPORT_EXPORT_KIND_MEMORY:
+					return "memory";
+				case WASM_IMPORT_EXPORT_KIND_GLOBAL:
+					return "global";
+				default:
+					return "unknown";
+			}
+		}
+
 		class WasmNativesImpl : public WasmNatives
 		{
 		public:
-			std::vector<privat::WasmNative> functions;
+			std::vector<WasmNative> functions;
 
 			WasmNativesImpl() { initialize(); }
 		};
@@ -145,6 +186,7 @@ namespace cage
 
 			WasmInstanceImpl(Holder<WasmModule> &&module_) : module(std::move(module_).cast<WasmModuleImpl>())
 			{
+				CAGE_ASSERT(module);
 				String err;
 				instance = wasm_runtime_instantiate(module->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
 				if (!instance)
@@ -154,7 +196,8 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed instantiating wasm module");
 				}
 				exec = wasm_runtime_get_exec_env_singleton(instance);
-				CAGE_ASSERT(exec);
+				if (!exec)
+					CAGE_THROW_ERROR(Exception, "failed creating wasm execution environment");
 				wasm_runtime_set_user_data(exec, this);
 			}
 
@@ -168,49 +211,65 @@ namespace cage
 			}
 		};
 
-		class WasmBufferImpl : public WasmBuffer
+		class WasmFunctionImpl : public WasmFunctionInternal
 		{
 		public:
-			Holder<WasmInstanceImpl> instance;
-			uint32 size = 0;
-			uint32 wasmPtr = 0;
+			const WasmName name;
+			WasmInstanceImpl *const instance = nullptr;
+			wasm_function_inst_t func = nullptr;
 
-			WasmBufferImpl(Holder<WasmInstance> &&instance_, uint32 size) : instance(std::move(instance_).cast<WasmInstanceImpl>()), size(size)
-			{
-				wasmPtr = wasm_runtime_module_malloc(instance->instance, size, nullptr);
-				if (wasmPtr == 0)
-					CAGE_THROW_ERROR(Exception, "failed buffer allocation in wasm");
-			}
+			WasmTypeEnum returns = WasmTypeEnum::Void;
+			std::vector<WasmTypeEnum> params;
+			std::vector<uint32> data;
 
-			~WasmBufferImpl()
+			WasmFunctionImpl(WasmInstanceImpl *instance, const String &name) : name(name), instance(instance)
 			{
-				if (wasmPtr)
+				func = wasm_runtime_lookup_function(instance->instance, name.c_str());
+				if (!func)
+					CAGE_THROW_ERROR(Exception, "wasm function not found");
+
+				const uint32 rc = wasm_func_get_result_count(func, instance->instance);
+				if (rc >= 2)
+					CAGE_THROW_ERROR(Exception, "wasm function returns multiple values");
+				if (rc)
 				{
-					wasm_runtime_module_free(instance->instance, wasmPtr);
-					wasmPtr = 0;
+					wasm_valkind_t t = {};
+					wasm_func_get_result_types(func, instance->instance, &t);
+					returns = convert(t);
 				}
+
+				const uint32 pc = wasm_func_get_param_count(func, instance->instance);
+				params.reserve(pc);
+				std::vector<wasm_valkind_t> vt;
+				vt.resize(pc);
+				wasm_func_get_param_types(func, instance->instance, vt.data());
+				uint32 sz = 0;
+				for (wasm_valkind_t t : vt)
+				{
+					const WasmTypeEnum v = convert(t);
+					params.push_back(v);
+					sz += countOfWasmVal(v);
+				}
+
+				data.resize(std::max(sz, countOfWasmVal(returns)));
 			}
 		};
+	}
 
-		String toString(wasm_import_export_kind_t k)
+	namespace privat
+	{
+		const WasmTypelessDelegate *wasmCallbackAttachment(void *ctx)
 		{
-			switch (k)
-			{
-				case WASM_IMPORT_EXPORT_KIND_FUNC:
-					return "function";
-				case WASM_IMPORT_EXPORT_KIND_TABLE:
-					return "table";
-				case WASM_IMPORT_EXPORT_KIND_MEMORY:
-					return "memory";
-				case WASM_IMPORT_EXPORT_KIND_GLOBAL:
-					return "global";
-				default:
-					return "unknown";
-			}
+			return (const WasmTypelessDelegate *)wasm_runtime_get_function_attachment((wasm_exec_env_t)ctx);
+		}
+
+		WasmInstance *wasmCallbackInstance(void *ctx)
+		{
+			return (WasmInstance *)wasm_runtime_get_user_data((wasm_exec_env_t)ctx);
 		}
 	}
 
-	void WasmNatives::commit(const detail::StringBase<59> &moduleName_)
+	void WasmNatives::commit(const WasmName &moduleName_)
 	{
 		WasmNativesImpl *impl = (WasmNativesImpl *)this;
 		if (impl->functions.empty())
@@ -219,7 +278,7 @@ namespace cage
 		struct Register : private Immovable
 		{
 			detail::StringBase<59> moduleName;
-			std::vector<privat::WasmNative> as;
+			std::vector<WasmNative> as;
 			std::vector<NativeSymbol> bs;
 
 			void commit()
@@ -227,7 +286,7 @@ namespace cage
 				bs.resize(as.size());
 				for (uint32 i = 0; i < as.size(); i++)
 				{
-					const privat::WasmNative &a = as[i];
+					const WasmNative &a = as[i];
 					NativeSymbol &b = bs[i];
 					b.symbol = a.name.c_str();
 					b.signature = a.signature.c_str();
@@ -241,14 +300,14 @@ namespace cage
 
 		Holder<Register> pair = systemMemory().createHolder<Register>();
 		pair->moduleName = moduleName_;
-		pair->as = std::move(impl->functions);
+		std::swap(pair->as, impl->functions);
 
 		static std::vector<Holder<Register>> natives;
 		natives.push_back(std::move(pair));
 		natives.back()->commit();
 	}
 
-	void WasmNatives::add_(privat::WasmNative fnc)
+	void WasmNatives::add_(WasmNative fnc)
 	{
 		WasmNativesImpl *impl = (WasmNativesImpl *)this;
 		impl->functions.push_back(fnc);
@@ -259,17 +318,17 @@ namespace cage
 		return systemMemory().createImpl<WasmNatives, WasmNativesImpl>();
 	}
 
-	Holder<PointerRange<WasmInfo>> WasmModule::importsInfo() const
+	Holder<PointerRange<WasmSymbol>> WasmModule::symbolsImports() const
 	{
 		const WasmModuleImpl *impl = (const WasmModuleImpl *)this;
 		const uint32 cnt = wasm_runtime_get_import_count(impl->module);
-		PointerRangeHolder<WasmInfo> arr;
+		PointerRangeHolder<WasmSymbol> arr;
 		arr.reserve(cnt);
 		for (uint32 i = 0; i < cnt; i++)
 		{
 			wasm_import_t t = {};
 			wasm_runtime_get_import_type(impl->module, i, &t);
-			WasmInfo w;
+			WasmSymbol w;
 			w.moduleName = t.module_name;
 			w.name = t.name;
 			w.kind = toString(t.kind);
@@ -279,17 +338,17 @@ namespace cage
 		return arr;
 	}
 
-	Holder<PointerRange<WasmInfo>> WasmModule::exportsInfo() const
+	Holder<PointerRange<WasmSymbol>> WasmModule::symbolsExports() const
 	{
 		const WasmModuleImpl *impl = (const WasmModuleImpl *)this;
 		const uint32 cnt = wasm_runtime_get_export_count(impl->module);
-		PointerRangeHolder<WasmInfo> arr;
+		PointerRangeHolder<WasmSymbol> arr;
 		arr.reserve(cnt);
 		for (uint32 i = 0; i < cnt; i++)
 		{
 			wasm_export_t t = {};
 			wasm_runtime_get_export_type(impl->module, i, &t);
-			WasmInfo w;
+			WasmSymbol w;
 			w.name = t.name;
 			w.kind = toString(t.kind);
 			w.linked = true;
@@ -303,181 +362,85 @@ namespace cage
 		return systemMemory().createImpl<WasmModule, WasmModuleImpl>(buffer, allowAot);
 	}
 
-	Holder<WasmModule> WasmInstance::module() const
+	WasmBuffer::WasmBuffer(WasmInstance *instance__) : instance_(instance__)
 	{
-		const WasmInstanceImpl *impl = (const WasmInstanceImpl *)this;
-		return impl->module.share().cast<WasmModule>();
+		CAGE_ASSERT(instance__);
 	}
 
-	void *WasmInstance::wasm2native(uint32 address)
+	WasmBuffer::WasmBuffer(WasmBuffer &&other) noexcept
 	{
-		if (!address)
-			return 0;
-		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
-		void *ret = wasm_runtime_addr_app_to_native(impl->instance, address);
-		if (!ret)
-			CAGE_THROW_ERROR(Exception, "invalid address in wasm2native");
-		return ret;
+		*this = std::move(other);
 	}
 
-	uint32 WasmInstance::native2wasm(void *address)
+	WasmBuffer &WasmBuffer::operator=(WasmBuffer &&other) noexcept
 	{
-		if (!address)
-			return 0;
-		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
-		const uint32 ret = numeric_cast<uint32>(wasm_runtime_addr_native_to_app(impl->instance, address));
-		if (!ret)
-			CAGE_THROW_ERROR(Exception, "invalid address in native2wasm");
-		return ret;
+		free();
+		instance_ = other.instance_;
+		std::swap(size_, other.size_);
+		std::swap(capacity_, other.capacity_);
+		std::swap(wasmPtr_, other.wasmPtr_);
+		std::swap(owned_, other.owned_);
+		return *this;
 	}
 
-	Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module)
+	WasmBuffer::~WasmBuffer()
 	{
-		CAGE_ASSERT(module);
-		return systemMemory().createImpl<WasmInstance, WasmInstanceImpl>(std::move(module));
+		free();
 	}
 
-	Holder<WasmInstance> WasmBuffer::instance() const
+	void WasmBuffer::resize(uint32 s)
 	{
-		WasmBufferImpl *impl = (WasmBufferImpl *)this;
-		return impl->instance.share().cast<WasmInstance>();
+		if (s > capacity_)
+			CAGE_THROW_ERROR(OutOfMemory, "cannot resize wasm buffer over its capacity", s);
+		size_ = s;
 	}
 
-	uint32 WasmBuffer::size() const
+	void WasmBuffer::free()
 	{
-		WasmBufferImpl *impl = (WasmBufferImpl *)this;
-		return impl->size;
+		if (owned_)
+		{
+			CAGE_ASSERT(instance_);
+			instance_->free(wasmPtr_);
+		}
+		size_ = capacity_ = 0;
+		wasmPtr_ = 0;
+		owned_ = false;
 	}
 
-	uint32 WasmBuffer::wasmAddr() const
+	void WasmBuffer::write(PointerRange<const char> buff)
 	{
-		WasmBufferImpl *impl = (WasmBufferImpl *)this;
-		return impl->wasmPtr;
+		resize(buff.size());
+		detail::memcpy(nativeAddr(), buff.data(), buff.size());
 	}
 
-	void *WasmBuffer::nativeAddr()
+	void *WasmBuffer::nativeAddr() const
 	{
-		WasmBufferImpl *impl = (WasmBufferImpl *)this;
-		return impl->instance->wasm2native(impl->wasmPtr);
-	}
-
-	PointerRange<char> WasmBuffer::buffer()
-	{
-		WasmBufferImpl *impl = (WasmBufferImpl *)this;
-		char *s = (char *)nativeAddr();
-		return { s, s + impl->size };
-	}
-
-	Holder<WasmBuffer> wasmAllocate(Holder<WasmInstance> &&instance, uint32 size)
-	{
-		CAGE_ASSERT(instance);
-		return systemMemory().createImpl<WasmBuffer, WasmBufferImpl>(std::move(instance), size);
+		CAGE_ASSERT(instance_);
+		CAGE_ASSERT(capacity_ >= size_);
+		return instance_->wasm2native(wasmPtr_, capacity_);
 	}
 
 	namespace privat
 	{
-		namespace
-		{
-			WasmValEnum convert(wasm_valkind_t k)
-			{
-				switch (k)
-				{
-					case WASM_I32:
-						return WasmValEnum::Int32;
-					case WASM_I64:
-						return WasmValEnum::Int64;
-					case WASM_F32:
-						return WasmValEnum::Float;
-					case WASM_F64:
-						return WasmValEnum::Double;
-					default:
-						return WasmValEnum::Unknown;
-				}
-			}
-
-			uint32 countOfWasmVal(WasmValEnum v)
-			{
-				switch (v)
-				{
-					case WasmValEnum::Void:
-					case WasmValEnum::Unknown:
-						return 0;
-					case WasmValEnum::Int32:
-					case WasmValEnum::Float:
-						return 1;
-					case WasmValEnum::Int64:
-					case WasmValEnum::Double:
-						return 2;
-				}
-				return 0;
-			}
-
-			class WasmFunctionImpl : public privat::WasmFunctionInternal
-			{
-			public:
-				const String name;
-				const Holder<WasmInstanceImpl> instance;
-				wasm_function_inst_t func = nullptr;
-
-				WasmValEnum returns = WasmValEnum::Void;
-				std::vector<WasmValEnum> params;
-				std::vector<uint32> data;
-
-				WasmFunctionImpl(Holder<WasmInstance> &&instance_, const String &name) : name(name), instance(std::move(instance_).cast<WasmInstanceImpl>())
-				{
-					func = wasm_runtime_lookup_function(instance->instance, name.c_str());
-					if (!func)
-						CAGE_THROW_ERROR(Exception, "wasm function not found");
-
-					const uint32 rc = wasm_func_get_result_count(func, instance->instance);
-					if (rc >= 2)
-						CAGE_THROW_ERROR(Exception, "wasm function returns multiple values");
-					if (rc)
-					{
-						wasm_valkind_t t = {};
-						wasm_func_get_result_types(func, instance->instance, &t);
-						returns = convert(t);
-					}
-
-					const uint32 pc = wasm_func_get_param_count(func, instance->instance);
-					params.reserve(pc);
-					std::vector<wasm_valkind_t> vt;
-					vt.resize(pc);
-					wasm_func_get_param_types(func, instance->instance, vt.data());
-					uint32 sz = 0;
-					for (wasm_valkind_t t : vt)
-					{
-						const WasmValEnum v = convert(t);
-						params.push_back(v);
-						sz += countOfWasmVal(v);
-					}
-
-					data.resize(std::max(sz, countOfWasmVal(returns)));
-				}
-
-				~WasmFunctionImpl() {}
-			};
-		}
-
-		Holder<WasmInstance> WasmFunctionInternal::instance() const
+		WasmInstance *WasmFunctionInternal::instance() const
 		{
 			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
-			return impl->instance.share().cast<WasmInstance>();
+			return impl->instance;
 		}
 
-		String WasmFunctionInternal::name() const
+		WasmName WasmFunctionInternal::name() const
 		{
 			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
 			return impl->name;
 		}
 
-		WasmValEnum WasmFunctionInternal::returns() const
+		WasmTypeEnum WasmFunctionInternal::returns() const
 		{
 			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
 			return impl->returns;
 		}
 
-		PointerRange<const WasmValEnum> WasmFunctionInternal::params() const
+		PointerRange<const WasmTypeEnum> WasmFunctionInternal::params() const
 		{
 			const WasmFunctionImpl *impl = (const WasmFunctionImpl *)this;
 			return impl->params;
@@ -499,11 +462,102 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "wasm function call failed");
 			}
 		}
+	}
 
-		Holder<WasmFunctionInternal> wasmFindFunction(Holder<WasmInstance> &&instance, const String &name)
-		{
-			CAGE_ASSERT(instance);
-			return systemMemory().createImpl<WasmFunctionInternal, WasmFunctionImpl>(std::move(instance), name);
-		}
+	Holder<WasmModule> WasmInstance::module() const
+	{
+		const WasmInstanceImpl *impl = (const WasmInstanceImpl *)this;
+		return impl->module.share().cast<WasmModule>();
+	}
+
+	void *WasmInstance::wasm2native(uint32 address, uint32 size)
+	{
+		if (!address)
+			return 0;
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		if (size && !wasm_runtime_validate_app_addr(impl->instance, address, size))
+			CAGE_THROW_ERROR(Exception, "invalid address range in wasm2native");
+		void *ret = wasm_runtime_addr_app_to_native(impl->instance, address);
+		if (!ret)
+			CAGE_THROW_ERROR(Exception, "invalid address in wasm2native");
+		return ret;
+	}
+
+	uint32 WasmInstance::native2wasm(void *address, uint32 size)
+	{
+		if (!address)
+			return 0;
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		if (size && !wasm_runtime_validate_native_addr(impl->instance, address, size))
+			CAGE_THROW_ERROR(Exception, "invalid address range in native2wasm");
+		const uint32 ret = numeric_cast<uint32>(wasm_runtime_addr_native_to_app(impl->instance, address));
+		if (!ret)
+			CAGE_THROW_ERROR(Exception, "invalid address in native2wasm");
+		return ret;
+	}
+
+	uint32 WasmInstance::malloc(uint32 size)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		uint32 r = wasm_runtime_module_malloc(impl->instance, size, nullptr);
+		if (r == 0)
+			CAGE_THROW_ERROR(Exception, "failed wasm memory allocation");
+		return r;
+	}
+
+	void WasmInstance::free(uint32 wasmAddr)
+	{
+		if (wasmAddr == 0)
+			return;
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		wasm_runtime_module_free(impl->instance, wasmAddr);
+	}
+
+	uint32 WasmInstance::strLen(uint32 wasmAddr)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		uint64 a = 0, b = 0;
+		if (!wasm_runtime_get_app_addr_range(impl->instance, wasmAddr, &a, &b))
+			CAGE_THROW_ERROR(Exception, "invalid address in wasm strLen");
+		const auto maxLen = b - wasmAddr;
+		const char *ptr = (const char *)wasm2native(wasmAddr);
+		for (uint32 i = 0; i < maxLen; i++)
+			if (ptr[i] == 0)
+				return i;
+		CAGE_THROW_ERROR(Exception, "found no null in wasm strLen");
+	}
+
+	WasmBuffer WasmInstance::allocate(uint32 size, uint32 capacity, bool owned)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		WasmBuffer b(impl);
+		if (capacity < size)
+			capacity = size;
+		b.owned_ = owned;
+		b.wasmPtr_ = impl->malloc(capacity);
+		b.capacity_ = capacity;
+		b.size_ = size;
+		return b;
+	}
+
+	WasmBuffer WasmInstance::adapt(uint32 wasmAddr, uint32 size, bool owned)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		WasmBuffer b(impl);
+		b.owned_ = owned;
+		b.wasmPtr_ = wasmAddr;
+		b.capacity_ = b.size_ = size;
+		return b;
+	}
+
+	Holder<WasmFunctionInternal> WasmInstance::function_(const WasmName &name)
+	{
+		WasmInstanceImpl *impl = (WasmInstanceImpl *)this;
+		return systemMemory().createImpl<WasmFunctionInternal, WasmFunctionImpl>(impl, name);
+	}
+
+	Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module)
+	{
+		return systemMemory().createImpl<WasmInstance, WasmInstanceImpl>(std::move(module));
 	}
 }

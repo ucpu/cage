@@ -7,6 +7,8 @@ namespace cage
 {
 	class WasmInstance;
 
+	using WasmName = detail::StringBase<59>;
+
 	namespace privat
 	{
 		template<class T, class... U>
@@ -14,7 +16,7 @@ namespace cage
 		template<class T>
 		concept WasmParameterConcept = WasmAnyOfConcept<T, sint32, uint32, sint64, uint64, float, double, void>;
 
-		enum class WasmValEnum : uint8
+		enum class WasmTypeEnum : uint8
 		{
 			Unknown,
 			Void,
@@ -25,19 +27,19 @@ namespace cage
 		};
 
 		template<WasmParameterConcept T>
-		consteval WasmValEnum wasmType()
+		consteval WasmTypeEnum wasmType()
 		{
 			if constexpr (std::is_same_v<T, void>)
-				return WasmValEnum::Void;
+				return WasmTypeEnum::Void;
 			if constexpr (std::is_same_v<T, sint32> || std::is_same_v<T, uint32>)
-				return WasmValEnum::Int32;
+				return WasmTypeEnum::Int32;
 			if constexpr (std::is_same_v<T, sint64> || std::is_same_v<T, uint64>)
-				return WasmValEnum::Int64;
+				return WasmTypeEnum::Int64;
 			if constexpr (std::is_same_v<T, float>)
-				return WasmValEnum::Float;
+				return WasmTypeEnum::Float;
 			if constexpr (std::is_same_v<T, double>)
-				return WasmValEnum::Double;
-			return WasmValEnum::Unknown;
+				return WasmTypeEnum::Double;
+			return WasmTypeEnum::Unknown;
 		}
 
 		struct CAGE_CORE_API WasmTypelessDelegate
@@ -48,7 +50,7 @@ namespace cage
 
 		struct CAGE_CORE_API WasmNative
 		{
-			detail::StringBase<59> name;
+			WasmName name;
 			detail::StringBase<27> signature;
 			WasmTypelessDelegate delegate;
 			void *funcPtr = nullptr;
@@ -61,13 +63,13 @@ namespace cage
 				{
 					switch (wasmType<T>())
 					{
-						case WasmValEnum::Int32:
+						case WasmTypeEnum::Int32:
 							return "i";
-						case WasmValEnum::Int64:
+						case WasmTypeEnum::Int64:
 							return "I";
-						case WasmValEnum::Float:
+						case WasmTypeEnum::Float:
 							return "f";
-						case WasmValEnum::Double:
+						case WasmTypeEnum::Double:
 							return "F";
 						default:
 							return "";
@@ -89,7 +91,7 @@ namespace cage
 	{
 	public:
 		template<privat::WasmParameterConcept R, privat::WasmParameterConcept... Ts>
-		void add(Delegate<R(WasmInstance *, Ts...)> function, const detail::StringBase<59> &name)
+		void add(Delegate<R(WasmInstance *, Ts...)> function, const WasmName &name)
 		{
 			using namespace privat;
 			WasmNative f;
@@ -107,7 +109,7 @@ namespace cage
 		}
 
 		template<privat::WasmParameterConcept R, privat::WasmParameterConcept... Ts>
-		void add(Delegate<R(Ts...)> function, const detail::StringBase<59> &name)
+		void add(Delegate<R(Ts...)> function, const WasmName &name)
 		{
 			using namespace privat;
 			WasmNative f;
@@ -123,7 +125,7 @@ namespace cage
 			add_(f);
 		}
 
-		void commit(const detail::StringBase<59> &moduleName = "env");
+		void commit(const WasmName &moduleName = "env");
 
 	private:
 		void add_(privat::WasmNative fnc);
@@ -131,10 +133,10 @@ namespace cage
 
 	CAGE_CORE_API Holder<WasmNatives> newWasmNatives();
 
-	struct WasmInfo
+	struct CAGE_CORE_API WasmSymbol
 	{
-		detail::StringBase<59> moduleName;
-		detail::StringBase<59> name;
+		WasmName moduleName;
+		WasmName name;
 		detail::StringBase<27> kind;
 		bool linked = false;
 	};
@@ -142,48 +144,84 @@ namespace cage
 	class CAGE_CORE_API WasmModule : private Immovable
 	{
 	public:
-		Holder<PointerRange<WasmInfo>> importsInfo() const;
-		Holder<PointerRange<WasmInfo>> exportsInfo() const;
+		Holder<PointerRange<WasmSymbol>> symbolsImports() const;
+		Holder<PointerRange<WasmSymbol>> symbolsExports() const;
 	};
 
 	CAGE_CORE_API Holder<WasmModule> newWasmModule(PointerRange<const char> buffer, bool allowAot = false);
 
-	class CAGE_CORE_API WasmInstance : private Immovable
+	class CAGE_CORE_API WasmBuffer : private Noncopyable
 	{
+		friend class WasmInstance;
+
 	public:
-		Holder<WasmModule> module() const;
-		void *wasm2native(uint32 address);
-		uint32 native2wasm(void *address);
+		WasmBuffer() = default;
+		WasmBuffer(WasmInstance *);
+		WasmBuffer(WasmBuffer &&) noexcept;
+		WasmBuffer &operator=(WasmBuffer &&) noexcept;
+		~WasmBuffer();
+
+		WasmInstance *instance() const { return instance_; }
+		bool owned() const { return owned_; }
+		void disown() { owned_ = false; }
+
+		uint32 wasmAddr() const { return wasmPtr_; }
+		void *nativeAddr() const;
+
+		uint32 size() const { return size_; }
+		uint32 capacity() const { return capacity_; }
+		void resize(uint32 s);
+		void free();
+
+		PointerRange<char> buffer()
+		{
+			char *p = (char *)nativeAddr();
+			return { p, p + size_ };
+		}
+		PointerRange<const char> buffer() const
+		{
+			const char *p = (const char *)nativeAddr();
+			return { p, p + size_ };
+		}
+
+		void write(PointerRange<const char> buffer);
+
+		template<uint32 N = String::MaxLength>
+		void write(const detail::StringBase<N> &str)
+		{
+			const char *p = str.c_str();
+			write(p, str.length() + 1);
+		}
+
+		template<uint32 N = String::MaxLength>
+		detail::StringBase<N> read() const
+		{
+			detail::StringBase<N> s(buffer());
+			while (s.length() && s[s.length() - 1] == '\0')
+				s.rawLength()--;
+			return s;
+		}
+
+	private:
+		WasmInstance *instance_ = nullptr;
+		uint32 size_ = 0;
+		uint32 capacity_ = 0;
+		uint32 wasmPtr_ = 0;
+		bool owned_ = false;
 	};
-
-	CAGE_CORE_API Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module);
-
-	class CAGE_CORE_API WasmBuffer : private Immovable
-	{
-	public:
-		Holder<WasmInstance> instance() const;
-		uint32 size() const;
-		uint32 wasmAddr() const;
-		void *nativeAddr();
-		PointerRange<char> buffer();
-	};
-
-	CAGE_CORE_API Holder<WasmBuffer> wasmAllocate(Holder<WasmInstance> &&instance, uint32 size);
 
 	namespace privat
 	{
 		class CAGE_CORE_API WasmFunctionInternal : private Immovable
 		{
 		public:
-			Holder<WasmInstance> instance() const;
-			String name() const;
-			WasmValEnum returns() const;
-			PointerRange<const WasmValEnum> params() const;
+			WasmInstance *instance() const;
+			WasmName name() const;
+			WasmTypeEnum returns() const;
+			PointerRange<const WasmTypeEnum> params() const;
 			PointerRange<uint32> data();
 			void call();
 		};
-
-		CAGE_CORE_API Holder<WasmFunctionInternal> wasmFindFunction(Holder<WasmInstance> &&instance, const String &name);
 	}
 
 	template<class T>
@@ -240,6 +278,31 @@ namespace cage
 	private:
 		Holder<privat::WasmFunctionInternal> func;
 	};
+
+	class CAGE_CORE_API WasmInstance : private Immovable
+	{
+	public:
+		Holder<WasmModule> module() const;
+
+		void *wasm2native(uint32 address, uint32 size = 0);
+		uint32 native2wasm(void *address, uint32 size = 0);
+		uint32 malloc(uint32 size);
+		void free(uint32 wasmAddr);
+		uint32 strLen(uint32 wasmAddr);
+		WasmBuffer allocate(uint32 size, uint32 capacity = 0, bool owned = true);
+		WasmBuffer adapt(uint32 wasmAddr, uint32 size, bool owned = false);
+
+		template<class T>
+		CAGE_FORCE_INLINE WasmFunction<T> function(const WasmName &name)
+		{
+			return WasmFunction<T>(function_(name));
+		}
+
+	private:
+		Holder<privat::WasmFunctionInternal> function_(const WasmName &name);
+	};
+
+	CAGE_CORE_API Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module);
 }
 
 #endif // guard_wasm_h_vhj1b548hfdt74h
