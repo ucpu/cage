@@ -361,6 +361,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr char *memset(char *destination, int value, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(destination);
 			if (std::is_constant_evaluated())
 			{
 				char *res = destination;
@@ -374,6 +375,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr char *memcpy(char *destination, const char *source, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(destination && source);
 			if (std::is_constant_evaluated())
 			{
 				char *res = destination;
@@ -387,6 +389,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr char *memmove(char *destination, const char *source, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(destination && source);
 			const bool overlap = destination <= source + num && source <= destination + num;
 			if (std::is_constant_evaluated() && !overlap)
 				return memcpy(destination, source, num);
@@ -396,6 +399,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr int memcmp(const char *ptr1, const char *ptr2, uintPtr num) noexcept
 		{
+			CAGE_ASSERT(ptr1 && ptr2);
 			if (std::is_constant_evaluated())
 			{
 				for (uintPtr i = 0; i < num; i++)
@@ -433,6 +437,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr uint32 toString(char *s, uint32 n, const char *src)
 		{
+			CAGE_ASSERT(src);
 			if (std::is_constant_evaluated())
 			{
 				uintPtr l = 0;
@@ -451,6 +456,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
 		{
+			CAGE_ASSERT(ad && bd);
 			if (std::is_constant_evaluated())
 			{
 				const uint32 l = al < bl ? al : bl;
@@ -492,7 +498,7 @@ namespace cage
 			template<uint32 M>
 			CAGE_FORCE_INLINE constexpr StringBase(const StringizerBase<M> &other);
 
-			explicit constexpr StringBase(const PointerRange<const char> &range)
+			explicit constexpr StringBase(PointerRange<const char> range)
 			{
 				if (range.size() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
@@ -670,7 +676,7 @@ namespace cage
 			auto l = [cl = std::move(callable)](Ts... vs) { return (cl)(std::forward<Ts>(vs)...); };
 			using L = decltype(l);
 			static_assert(sizeof(L) <= sizeof(void *) && std::is_trivially_copyable_v<L> && std::is_trivially_destructible_v<L>);
-			fnc = +[](void *inst, Ts... vs)
+			fnc = +[](void *inst, Ts... vs) -> R
 			{
 				L l = *(L *)(&inst);
 				return (l)(std::forward<Ts>(vs)...);
@@ -682,7 +688,7 @@ namespace cage
 		template<R (*F)(Ts...)>
 		constexpr Delegate &bind() noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) { return (F)(std::forward<Ts>(vs)...); };
+			fnc = +[](void *inst, Ts... vs) -> R { return (F)(std::forward<Ts>(vs)...); };
 			return *this;
 		}
 
@@ -691,7 +697,7 @@ namespace cage
 		Delegate &bind(D d) noexcept
 		{
 			static_assert(sizeof(D) > 0);
-			fnc = +[](void *inst, Ts... vs)
+			fnc = +[](void *inst, Ts... vs) -> R
 			{
 				D d;
 				detail::memcpy(&d, &inst, sizeof(D));
@@ -704,7 +710,7 @@ namespace cage
 		template<class C, R (C::*F)(Ts...)>
 		Delegate &bind(C *i) noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) { return (((C *)inst)->*F)(std::forward<Ts>(vs)...); };
+			fnc = +[](void *inst, Ts... vs) -> R { return (((C *)inst)->*F)(std::forward<Ts>(vs)...); };
 			inst = i;
 			return *this;
 		}
@@ -712,7 +718,7 @@ namespace cage
 		template<class C, R (C::*F)(Ts...) const>
 		Delegate &bind(const C *i) noexcept
 		{
-			fnc = +[](void *inst, Ts... vs) { return (((const C *)inst)->*F)(std::forward<Ts>(vs)...); };
+			fnc = +[](void *inst, Ts... vs) -> R { return (((const C *)inst)->*F)(std::forward<Ts>(vs)...); };
 			inst = const_cast<C *>(i);
 			return *this;
 		}
