@@ -934,6 +934,25 @@ namespace
 			f->close();
 		}
 	}
+
+	void testMeshLines()
+	{
+		CAGE_TESTCASE("mesh lines");
+		Holder<Mesh> msh = newMesh();
+		msh->type(MeshTypeEnum::Lines);
+		for (uint32 i = 0; i < 100; i++)
+		{
+			Real j = Real(i) / 99;
+			Real x = sin(Degs(360 * j));
+			Real y = cos(Degs(360 * j));
+			Real z = (j - 0.5) * 4;
+			msh->addVertex(Vec3(x, y, z));
+		}
+		meshConvertToIndexed(+msh);
+		approxEqual(msh->boundingBox(), Aabb(Vec3(-1, -1, -2), Vec3(1, 1, 2)));
+		meshApplyTransform(+msh, Mat4(Mat3(10, 0, 0, 0, 0, 10, 0, -10, 0)));
+		approxEqual(msh->boundingBox(), Aabb(Vec3(-10, -20, -10), Vec3(10, 20, 10)));
+	}
 }
 
 void testMesh()
@@ -944,4 +963,5 @@ void testMesh()
 	testMeshImports();
 	testMeshExports();
 	testMeshRetexture();
+	testMeshLines();
 }
