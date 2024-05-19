@@ -231,7 +231,8 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+        # WAMR_DISABLE_STACK_OVERFLOW_CHECK: avoid the program stopping on incorrectly detected stack overflow
+        cmake -DWAMR_DISABLE_STACK_OVERFLOW_CHECK=1 -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
 
     - name: Build
       run: |
