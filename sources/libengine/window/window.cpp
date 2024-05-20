@@ -755,4 +755,11 @@ namespace cage
 		cageGlfwInitializeFunc();
 		return systemMemory().createImpl<Window, WindowImpl>(config);
 	}
+
+	GLFWwindow *getGlfwWindow(Window *w)
+	{
+		CAGE_ASSERT(w);
+		WindowImpl *impl = (WindowImpl *)w;
+		return impl->window;
+	}
 }

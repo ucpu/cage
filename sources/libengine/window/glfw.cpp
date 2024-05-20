@@ -79,4 +79,12 @@ namespace cage
 		}
 		return {};
 	}
+
+#ifdef CAGE_SYSTEM_WINDOWS
+	CAGE_ENGINE_API HWND getWindowHwnd(Window *w)
+	{
+		GLFWwindow *g = getGlfwWindow(w);
+		return glfwGetWin32Window(g);
+	}
+#endif // CAGE_SYSTEM_WINDOWS
 }

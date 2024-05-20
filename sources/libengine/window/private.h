@@ -8,4 +8,5 @@ namespace cage
 	class Mutex *cageGlfwMutex();
 	String getMonitorId(GLFWmonitor *monitor);
 	GLFWmonitor *getMonitorById(const String &id);
+	GLFWwindow *getGlfwWindow(class Window *w);
 }
