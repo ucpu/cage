@@ -89,11 +89,25 @@ void testWasm()
 			f(44);
 		}
 		{
+			WasmFunction f = inst->function<sint32(sint32, sint32)>("div_int32");
+			CAGE_TEST(f(19, 5) == 19 / 5);
+			CAGE_TEST(f(20, 5) == 20 / 5);
+			CAGE_TEST(f(21, 5) == 21 / 5);
+			CAGE_TEST(f(-20, 5) == -20 / 5);
+			CAGE_TEST(f(20, -5) == 20 / -5);
+			CAGE_TEST(f(-20, -5) == -20 / -5);
+		}
+		{
 			CAGE_TESTCASE("invalid functions");
 			CAGE_TEST_THROWN(inst->function<float(float, float)>("sum_invalid"));
 			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<float(double, double)>("sum_double"); }());
 			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<double(float, double)>("sum_double"); }());
 			CAGE_TEST_THROWN([&]() { WasmFunction f = inst->function<double(double, float)>("sum_double"); }());
+		}
+		{
+			CAGE_TESTCASE("division by zero inside wasm");
+			WasmFunction f = inst->function<sint32(sint32, sint32)>("div_int32");
+			CAGE_TEST_THROWN(f(10, 0));
 		}
 	}
 
@@ -128,6 +142,10 @@ void testWasm()
 			CAGE_TEST_THROWN(inst->native2wasm(&mod));
 			CAGE_TEST_THROWN(inst->wasm2native(1'000'000'000));
 			CAGE_TEST_THROWN(inst->strLen(1'000'000'000));
+		}
+		{
+			CAGE_TESTCASE("invalid memory access inside wasm");
+			CAGE_TEST_THROWN(set_string(1'000'000'000, 32));
 		}
 	}
 

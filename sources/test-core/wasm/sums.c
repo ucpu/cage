@@ -29,3 +29,8 @@ void give_number(int32_t num)
 {
 	// nothing
 }
+
+int32_t div_int32(int32_t a, int32_t b)
+{
+	return a / b;
+}
