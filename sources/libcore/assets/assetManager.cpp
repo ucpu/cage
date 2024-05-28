@@ -20,6 +20,7 @@
 #include <cage-core/networkTcp.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/profiling.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/serialization.h>
 #include <cage-core/stdHash.h>
 #include <cage-core/string.h>
@@ -30,16 +31,6 @@ namespace cage
 	namespace
 	{
 		class AssetManagerImpl;
-
-		struct ScopeExit : private Immovable
-		{
-		public:
-			ScopeExit(const std::function<void()> &callback) : callback_(callback) {}
-			~ScopeExit() { callback_(); }
-
-		private:
-			std::function<void()> callback_;
-		};
 
 		// one particular version of an asset
 		struct Asset : public AssetContext, AssetScheme
@@ -371,7 +362,7 @@ namespace cage
 
 		void Work::doFetch()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset fetching");
 			profiling.set(asset->textName);
@@ -406,7 +397,7 @@ namespace cage
 
 		void Work::doDecompress()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset decompression");
 			profiling.set(asset->textName);
@@ -433,7 +424,7 @@ namespace cage
 
 		void Work::doLoad()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset loading");
 			profiling.set(asset->textName);
@@ -467,7 +458,7 @@ namespace cage
 
 		void Work::doPublish()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			asset->customData.clear();
 			asset->compressedData.clear();
@@ -479,7 +470,7 @@ namespace cage
 
 		void Work::doUnload()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset unloading");
 			profiling.set(asset->textName);
@@ -491,7 +482,7 @@ namespace cage
 
 		void Work::doRemove()
 		{
-			ScopeExit exit([&] { finish(); });
+			ScopeGuard exit([&] { finish(); });
 
 			for (uint32 n : asset->dependencies)
 				asset->impl->unload(n);

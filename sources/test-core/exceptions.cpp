@@ -3,6 +3,7 @@
 #include "main.h"
 
 #include <cage-core/concurrent.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/string.h>
 
 namespace
@@ -68,7 +69,7 @@ void testExceptions()
 		catch (const Exception &e)
 		{
 			CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
-			CAGE_TEST(e.location.line() == 66); // marked line number
+			CAGE_TEST(e.location.line() == 67); // marked line number
 			CAGE_TEST(isPattern(String(e.location.function_name()), "", "testExceptions", ""));
 			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.severity == SeverityEnum::Error);
@@ -91,7 +92,7 @@ void testExceptions()
 			catch (const Exception &e)
 			{
 				CAGE_TEST(std::strcmp(e.location.file_name(), __FILE__) == 0);
-				CAGE_TEST(e.location.line() == 17); // marked line number
+				CAGE_TEST(e.location.line() == 18); // marked line number
 				CAGE_TEST(isPattern(String(e.location.function_name()), "", "assertFailureFunction", ""));
 				CAGE_TEST(e.severity == SeverityEnum::Critical);
 			}
@@ -100,10 +101,10 @@ void testExceptions()
 	}
 
 	{
+		CAGE_TESTCASE("exception transfer between threads");
 		detail::globalBreakpointOverride(false);
 		try
 		{
-			CAGE_TESTCASE("exception transfer between threads");
 			Holder<Thread> thr = newThread(Delegate<void()>().bind<&throwingFunction>(), "throwing thread");
 			CAGE_TEST_THROWN(thr->wait());
 		}
@@ -114,5 +115,31 @@ void testExceptions()
 		detail::globalBreakpointOverride(true);
 	}
 
-	(void)&assertFailureFunction; // maybe unused
+	{
+		CAGE_TESTCASE("scope guard");
+		{
+			CAGE_TESTCASE("regular flow");
+			int cnt = 0;
+			{
+				ScopeGuard g([&] { cnt++; });
+				CAGE_TEST(cnt == 0);
+			}
+			CAGE_TEST(cnt == 1);
+		}
+		{
+			CAGE_TESTCASE("exceptional flow");
+			int cnt = 0;
+			try
+			{
+				ScopeGuard g([&] { cnt++; });
+				CAGE_TEST(cnt == 0);
+				throw "okay";
+			}
+			catch (...)
+			{
+				// nothing
+			}
+			CAGE_TEST(cnt == 1);
+		}
+	}
 }
