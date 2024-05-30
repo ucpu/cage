@@ -309,8 +309,7 @@ namespace
 			meshSplitIntersecting(+p, {});
 			meshRemoveOccluded(+p, {});
 			meshMergeCloseVertices(+p, {});
-			MeshMergePlanarConfig cfg;
-			meshMergePlanar(+p, cfg);
+			meshMergePlanar(+p);
 			p->exportFile("meshes/algorithms/mergePlanarBalls.obj");
 		}
 
@@ -318,8 +317,7 @@ namespace
 			CAGE_TESTCASE("merge planar (cube)");
 			auto p = makeComplexCube();
 			meshMergeCloseVertices(+p, {});
-			MeshMergePlanarConfig cfg;
-			meshMergePlanar(+p, cfg);
+			meshMergePlanar(+p);
 			p->exportFile("meshes/algorithms/mergePlanarCube.obj");
 			CAGE_TEST(p->verticesCount() == 8);
 			CAGE_TEST(p->facesCount() == 12);
@@ -328,7 +326,7 @@ namespace
 		{
 			CAGE_TESTCASE("merge planar (grid)");
 			auto p = makeGrid();
-			meshMergePlanar(+p, {});
+			meshMergePlanar(+p);
 			p->exportFile("meshes/algorithms/mergePlanarGrid.obj");
 			CAGE_TEST(p->verticesCount() == 4);
 			CAGE_TEST(p->facesCount() == 2);

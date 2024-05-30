@@ -110,13 +110,17 @@ namespace cage
 		uint64 startTime = 0;
 		uint32 name = 0;
 		uint32 sceneMask = 1;
+		SoundAttenuationEnum attenuation = SoundAttenuationEnum::Logarithmic;
+		Real minDistance = 1;
+		Real maxDistance = 500;
 		Real gain = 1; // linear amplitude multiplier
+		bool loop = false;
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		uint32 sceneMask = 1;
-		Real rolloffFactor = 1; // distance multiplier
+		uint32 maxActiveVoices = 100;
 		Real gain = 1; // linear amplitude multiplier
 	};
 }

@@ -18,7 +18,6 @@ namespace cage
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
 	struct SpeakerCreateConfig;
-	struct VirtualRealityCreateConfig;
 
 	struct EngineControlThread
 	{
@@ -66,9 +65,9 @@ namespace cage
 	{
 		AssetManagerCreateConfig *assets = nullptr;
 		WindowCreateConfig *window = nullptr;
-		VirtualRealityCreateConfig *virtualReality = nullptr;
 		GuiManagerCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;
+		bool virtualReality = false;
 	};
 
 	void engineInitialize(const EngineCreateConfig &config);

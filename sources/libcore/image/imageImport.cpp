@@ -21,7 +21,7 @@ namespace cage
 		}
 	}
 
-	ImageImportResult imageImportFiles(const String &filesPattern, const ImageImportConfig &config)
+	ImageImportResult imageImportFiles(const String &filesPattern)
 	{
 		ImageImportResult result;
 		const auto paths = pathSearchSequence(filesPattern);
@@ -31,7 +31,7 @@ namespace cage
 			Holder<File> f = readFile(p);
 			Holder<PointerRange<char>> buffer = f->readAll();
 			f->close();
-			ImageImportResult tmp = imageImportBuffer(buffer, config);
+			ImageImportResult tmp = imageImportBuffer(buffer);
 			for (auto &it : tmp.parts)
 				it.fileName = p;
 			if (paths.size() > 1)

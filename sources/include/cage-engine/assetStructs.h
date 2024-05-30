@@ -139,18 +139,11 @@ namespace cage
 		// array of charset glyphs, each uint32
 	};
 
-	enum class SoundTypeEnum : uint32
+	enum class SoundCompressionEnum : uint32
 	{
 		RawRaw, // short sounds
 		CompressedRaw, // long sounds, but played many times concurrently
 		CompressedCompressed, // long sounds, usually only played once at any given time
-	};
-
-	enum class SoundFlags : uint32
-	{
-		None = 0,
-		LoopBeforeStart = 1 << 0,
-		LoopAfterEnd = 1 << 1,
 	};
 
 	struct CAGE_ENGINE_API SoundSourceHeader
@@ -158,11 +151,7 @@ namespace cage
 		uint64 frames;
 		uint32 channels;
 		uint32 sampleRate;
-		Real referenceDistance;
-		Real rolloffFactor;
-		Real gain;
-		SoundTypeEnum soundType;
-		SoundFlags flags;
+		SoundCompressionEnum soundType;
 
 		// follows (for raw file):
 		// array of frames, each channels * float

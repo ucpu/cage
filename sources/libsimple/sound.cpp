@@ -8,6 +8,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/profiling.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sound.h>
@@ -30,18 +31,6 @@ namespace cage
 					it = map.erase(it);
 			}
 		}
-
-		struct ClearOnScopeExit : private Immovable
-		{
-			template<class T>
-			explicit ClearOnScopeExit(T *&ptr) : ptr((void *&)ptr)
-			{}
-
-			~ClearOnScopeExit() { ptr = nullptr; }
-
-		private:
-			void *&ptr;
-		};
 
 		struct EmitSound
 		{
@@ -103,7 +92,7 @@ namespace cage
 					return;
 
 				emitWrite = &emitBuffers[lock.index()];
-				ClearOnScopeExit resetEmitWrite(emitWrite);
+				ScopeGuard guard([&]() { emitWrite = nullptr; });
 				emitWrite->listeners.clear();
 				emitWrite->sounds.clear();
 				emitWrite->time = time;
@@ -122,7 +111,7 @@ namespace cage
 					emitWrite->listeners.push_back(c);
 				}
 
-				// emit voices
+				// emit sounds
 				for (Entity *e : engineEntities()->component<SoundComponent>()->entities())
 				{
 					EmitSound c;
@@ -149,11 +138,15 @@ namespace cage
 				if (!v)
 					v = l.mixer->newVoice();
 
-				v->sound = s.share();
+				v->sound = std::move(s);
 				const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
 				v->position = t.position;
 				v->startTime = e.sound.startTime;
+				v->attenuation = e.sound.attenuation;
+				v->minDistance = e.sound.minDistance;
+				v->maxDistance = e.sound.maxDistance;
 				v->gain = e.sound.gain;
+				v->loop = e.sound.loop;
 			}
 
 			void prepare(PrepareListener &l, const EmitListener &e)
@@ -161,15 +154,15 @@ namespace cage
 				{ // listener
 					if (!l.mixer)
 					{
-						l.mixer = newVoicesMixer({});
+						l.mixer = newVoicesMixer();
 						l.chaining = engineEffectsMixer()->newVoice();
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
 					Listener &p = l.mixer->listener();
 					const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
-					p.position = t.position;
 					p.orientation = t.orientation;
-					p.rolloffFactor = e.listener.rolloffFactor;
+					p.position = t.position;
+					p.maxActiveVoices = e.listener.maxActiveVoices;
 					p.gain = e.listener.gain;
 				}
 
@@ -210,7 +203,7 @@ namespace cage
 				{
 					ProfilingScope profiling("sound prepare");
 					emitRead = &emitBuffers[lock.index()];
-					ClearOnScopeExit resetEmitRead(emitRead);
+					ScopeGuard guard([&]() { emitRead = nullptr; });
 					emitTime = emitRead->time;
 					const uint64 period = controlThread().updatePeriod();
 					dispatchTime = itc(emitTime, time, period);

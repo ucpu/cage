@@ -78,11 +78,8 @@ namespace cage
 		uint64 targetFrameTiming() const;
 	};
 
-	struct CAGE_ENGINE_API VirtualRealityCreateConfig
-	{};
-
 	// opengl context must be bound in the current thread (for both constructing and destroying the object)
-	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config);
+	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality();
 
 	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene);
 	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp = true);

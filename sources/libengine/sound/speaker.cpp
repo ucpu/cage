@@ -203,7 +203,7 @@ namespace cage
 			uint32 latency = 0;
 			bool started = false;
 
-			SpeakerImpl(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback) : channels(config.channels), sampleRate(config.sampleRate)
+			SpeakerImpl(const SpeakerCreateConfig &config) : channels(config.channels), sampleRate(config.sampleRate)
 			{
 				const String name = config.name.empty() ? defaultName() : sanitizeName(config.name);
 				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "creating speaker, name: '" + name + "'");
@@ -250,11 +250,11 @@ namespace cage
 
 				if (config.ringBuffer)
 				{
-					ringBuffer = systemMemory().createHolder<RingBuffer>(channels, sampleRate, callback);
+					ringBuffer = systemMemory().createHolder<RingBuffer>(channels, sampleRate, config.callback);
 					this->callback = Delegate<void(const SoundCallbackData &)>().bind<RingBuffer, &RingBuffer::speaker>(+ringBuffer);
 				}
 				else
-					this->callback = callback;
+					this->callback = config.callback;
 
 				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "initializing sound stream with " + channels + " channels, " + sampleRate + " Hz sample rate and " + latency + " frames latency");
 
@@ -373,8 +373,8 @@ namespace cage
 		impl->process(timeStamp);
 	}
 
-	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback)
+	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config)
 	{
-		return systemMemory().createImpl<Speaker, SpeakerImpl>(config, callback);
+		return systemMemory().createImpl<Speaker, SpeakerImpl>(config);
 	}
 }

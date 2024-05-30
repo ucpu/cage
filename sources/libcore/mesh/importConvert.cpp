@@ -401,7 +401,7 @@ namespace cage
 			for (const String &p : in.paths)
 				paths.push_back(p);
 		}
-		auto merged = meshMerge(mis, {});
+		auto merged = meshMerge(mis);
 		PointerRangeHolder<MeshImportPart> parts;
 		MeshImportPart prt;
 		prt.mesh = std::move(merged.mesh);

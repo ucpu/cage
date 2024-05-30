@@ -30,11 +30,8 @@ namespace cage
 		Holder<PointerRange<ImageImportPart>> parts;
 	};
 
-	struct CAGE_CORE_API ImageImportConfig
-	{};
-
-	CAGE_CORE_API ImageImportResult imageImportBuffer(PointerRange<const char> buffer, const ImageImportConfig &config = {});
-	CAGE_CORE_API ImageImportResult imageImportFiles(const String &filesPattern, const ImageImportConfig &config = {});
+	CAGE_CORE_API ImageImportResult imageImportBuffer(PointerRange<const char> buffer);
+	CAGE_CORE_API ImageImportResult imageImportFiles(const String &filesPattern);
 
 	CAGE_CORE_API void imageImportConvertRawToImages(ImageImportResult &result);
 	CAGE_CORE_API void imageImportConvertImagesToBcn(ImageImportResult &result, bool normals = false);

@@ -23,6 +23,7 @@ namespace cage
 	{
 		String name;
 		String deviceId;
+		Delegate<void(const SoundCallbackData &)> callback;
 		uint32 channels = 0;
 		uint32 sampleRate = 0;
 
@@ -31,7 +32,7 @@ namespace cage
 		bool ringBuffer = true;
 	};
 
-	CAGE_ENGINE_API Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback);
+	CAGE_ENGINE_API Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config);
 }
 
 #endif // guard_speaker_h_sdfh4df6h4drt6see

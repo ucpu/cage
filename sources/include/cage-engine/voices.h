@@ -7,22 +7,26 @@ namespace cage
 {
 	class Sound;
 
-	struct CAGE_ENGINE_API Voice
+	struct CAGE_ENGINE_API Voice : private Noncopyable
 	{
 		Holder<Sound> sound; // use exactly one of sound or callback
 		Delegate<void(const SoundCallbackData &)> callback;
 		Vec3 position = Vec3::Nan();
 		sint64 startTime = 0;
+		SoundAttenuationEnum attenuation = SoundAttenuationEnum::Logarithmic;
+		Real minDistance = 1;
+		Real maxDistance = 500;
 		Real gain = 1; // linear amplitude multiplier
+		bool loop = false;
 	};
 
-	struct CAGE_ENGINE_API Listener
+	class CAGE_ENGINE_API Listener : private Noncopyable
 	{
+	public:
 		Quat orientation;
 		Vec3 position;
-		Real rolloffFactor = 1; // distance multiplier
-		Real gain = 1; // linear amplitude multiplier
 		uint32 maxActiveVoices = 100;
+		Real gain = 1; // linear amplitude multiplier
 	};
 
 	class CAGE_ENGINE_API VoicesMixer : private Immovable
@@ -35,10 +39,7 @@ namespace cage
 		void process(const SoundCallbackData &data);
 	};
 
-	struct CAGE_ENGINE_API VoicesMixerCreateConfig
-	{};
-
-	CAGE_ENGINE_API Holder<VoicesMixer> newVoicesMixer(const VoicesMixerCreateConfig &config);
+	CAGE_ENGINE_API Holder<VoicesMixer> newVoicesMixer();
 }
 
 #endif // guard_voices_h_ies6yxd44kld6

@@ -11,10 +11,7 @@ namespace cage
 		void convert(PointerRange<const float> src, PointerRange<float> dst, uint32 srcChannels, uint32 dstChannels);
 	};
 
-	struct AudioChannelsConverterCreateConfig
-	{};
-
-	CAGE_CORE_API Holder<AudioChannelsConverter> newAudioChannelsConverter(const AudioChannelsConverterCreateConfig &config);
+	CAGE_CORE_API Holder<AudioChannelsConverter> newAudioChannelsConverter();
 }
 
 #endif // guard_audioChannelsConverter_h_56dtj4ew89a

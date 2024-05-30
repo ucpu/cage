@@ -16,26 +16,17 @@ namespace cage
 	public:
 		void setDebugName(const String &name);
 
-		Real referenceDistance = 1; // minimum distance to apply attenuation
-		Real rolloffFactor = 1; // distance multiplier
-		Real gain = 1; // linear amplitude multiplier
-
-		bool loopBeforeStart = false;
-		bool loopAfterEnd = false;
-
-		void initialize(Holder<Audio> &&audio);
+		void importAudio(Holder<Audio> &&audio);
 
 		uintPtr frames() const;
 		uint32 channels() const;
 		uint32 sampleRate() const;
 		uint64 duration() const; // microseconds
 
-		// looping is handled here but attenuation and gain are not
-		void decode(sintPtr startFrame, PointerRange<float> buffer);
+		void decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const;
 
 		// requires matching sample rate and channels
-		// looping is handled here but attenuation and gain are not
-		void process(const SoundCallbackData &data);
+		void process(const SoundCallbackData &data, bool loop) const;
 	};
 
 	CAGE_ENGINE_API Holder<Sound> newSound();

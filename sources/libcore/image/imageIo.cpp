@@ -15,7 +15,7 @@ namespace cage
 	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
-	ImageImportResult ddsDecode(PointerRange<const char> inBuffer, const ImageImportConfig &config);
+	ImageImportResult ddsDecode(PointerRange<const char> inBuffer);
 
 	MemoryBuffer pngEncode(const ImageImpl *impl);
 	MemoryBuffer jpegEncode(const ImageImpl *impl);
@@ -122,7 +122,7 @@ namespace cage
 
 	namespace
 	{
-		ImageImportResult decodeSingle(PointerRange<const char> buffer, const ImageImportConfig &config)
+		ImageImportResult decodeSingle(PointerRange<const char> buffer)
 		{
 			Holder<Image> img = newImage();
 			img->importBuffer(buffer);
@@ -136,13 +136,13 @@ namespace cage
 		}
 	}
 
-	ImageImportResult imageImportBuffer(PointerRange<const char> buffer, const ImageImportConfig &config)
+	ImageImportResult imageImportBuffer(PointerRange<const char> buffer)
 	{
 		if (buffer.size() < 32)
 			CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
 		// todo tiff
 		if (compare(buffer, ddsSignature))
-			return ddsDecode(buffer, config);
-		return decodeSingle(buffer, config);
+			return ddsDecode(buffer);
+		return decodeSingle(buffer);
 	}
 }

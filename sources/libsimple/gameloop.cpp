@@ -431,20 +431,20 @@ namespace cage
 					controlScheduler = newScheduler(cfg);
 				}
 				{
-					ScheduleCreateConfig c;
-					c.name = "control schedule";
-					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-					c.period = 1000000 / 20;
-					c.type = ScheduleTypeEnum::SteadyPeriodic;
-					controlUpdateSchedule = controlScheduler->newSchedule(c);
+					ScheduleCreateConfig cfg;
+					cfg.name = "control schedule";
+					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
+					cfg.period = 1000000 / 20;
+					cfg.type = ScheduleTypeEnum::SteadyPeriodic;
+					controlUpdateSchedule = controlScheduler->newSchedule(cfg);
 				}
 				{
-					ScheduleCreateConfig c;
-					c.name = "inputs schedule";
-					c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-					c.period = 1000000 / 60;
-					c.type = ScheduleTypeEnum::FreePeriodic;
-					controlInputSchedule = controlScheduler->newSchedule(c);
+					ScheduleCreateConfig cfg;
+					cfg.name = "inputs schedule";
+					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
+					cfg.period = 1000000 / 60;
+					cfg.type = ScheduleTypeEnum::FreePeriodic;
+					controlInputSchedule = controlScheduler->newSchedule(cfg);
 				}
 
 				soundScheduler = newScheduler({});
@@ -462,12 +462,12 @@ namespace cage
 				}
 
 				{ // create assets manager
-					AssetManagerCreateConfig c;
+					AssetManagerCreateConfig cfg;
 					if (config.assets)
-						c = *config.assets;
-					c.schemesMaxCount = max(c.schemesMaxCount, 30u);
-					c.customProcessingThreads = max(c.customProcessingThreads, 5u);
-					assets = newAssetManager(c);
+						cfg = *config.assets;
+					cfg.schemesMaxCount = max(cfg.schemesMaxCount, 30u);
+					cfg.customProcessingThreads = max(cfg.customProcessingThreads, 5u);
+					assets = newAssetManager(cfg);
 				}
 
 				{ // create graphics
@@ -480,7 +480,7 @@ namespace cage
 					window->events.merge(engineEvents());
 					if (config.virtualReality)
 					{
-						virtualReality = newVirtualReality(*config.virtualReality);
+						virtualReality = newVirtualReality();
 						virtualReality->events.merge(engineEvents());
 						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
@@ -489,25 +489,29 @@ namespace cage
 				}
 
 				{ // create sound
-					masterBus = newVoicesMixer({});
-					effectsBus = newVoicesMixer({});
-					guiBus = newVoicesMixer({});
+					masterBus = newVoicesMixer();
+					effectsBus = newVoicesMixer();
+					guiBus = newVoicesMixer();
 					effectsVoice = masterBus->newVoice();
 					guiVoice = masterBus->newVoice();
 					effectsVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+effectsBus);
 					guiVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+guiBus);
-					SpeakerCreateConfig scc;
-					scc.sampleRate = 48000; // minimize sample rate conversions
-					speaker = newSpeaker(config.speaker ? *config.speaker : scc, Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus));
+					SpeakerCreateConfig cfg;
+					if (config.speaker)
+						cfg = *config.speaker;
+					if (cfg.sampleRate == 0)
+						cfg.sampleRate = 48000; // minimize sample rate conversions
+					cfg.callback = Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus);
+					speaker = newSpeaker(cfg);
 				}
 
 				{ // create gui
-					GuiManagerCreateConfig c;
+					GuiManagerCreateConfig cfg;
 					if (config.gui)
-						c = *config.gui;
-					c.assetManager = +assets;
-					c.provisionalGraphics = +provisionalGraphics;
-					gui = newGuiManager(c);
+						cfg = *config.gui;
+					cfg.assetManager = +assets;
+					cfg.provisionalGraphics = +provisionalGraphics;
+					gui = newGuiManager(cfg);
 					gui->widgetEvent.merge(engineEvents());
 					windowGuiEventsListener.attach(window->events, -1000);
 					windowGuiEventsListener.bind([gui = +gui](const GenericInput &in) { return gui->handleInput(in); });
