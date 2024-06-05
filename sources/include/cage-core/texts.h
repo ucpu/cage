@@ -34,6 +34,8 @@ namespace cage
 
 	CAGE_CORE_API void textsSetLanguages(PointerRange<const LanguageCode> languages);
 	CAGE_CORE_API void textsSetLanguages(const String &languages); // list of languages separated by ;
+	CAGE_CORE_API Holder<PointerRange<LanguageCode>> textsGetLanguages();
+	CAGE_CORE_API Holder<PointerRange<LanguageCode>> textsGetAvailableLanguages();
 	CAGE_CORE_API void textsAdd(const Texts *txt);
 	CAGE_CORE_API void textsRemove(const Texts *txt);
 	CAGE_CORE_API String textsGet(uint32 id, String params = "");

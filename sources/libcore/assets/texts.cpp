@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 #include <unordered_dense.h>
@@ -219,6 +220,26 @@ namespace cage
 		while (!l.empty())
 			v.push_back(split(l, ";"));
 		textsSetLanguages(v);
+	}
+
+	Holder<PointerRange<LanguageCode>> textsGetLanguages()
+	{
+		ScopeLock lock(mut, ReadLockTag());
+		return PointerRangeHolder<LanguageCode>(languages.begin(), languages.end());
+	}
+
+	Holder<PointerRange<LanguageCode>> textsGetAvailableLanguages()
+	{
+		ScopeLock lock(mut, ReadLockTag());
+		FlatSet<LanguageCode> codes;
+		for (const auto src : sources)
+		{
+			for (const LanguageCode c : src->allLanguages())
+				codes.insert(c);
+		}
+		auto v = PointerRangeHolder<LanguageCode>(std::move(codes.unsafeData()));
+		std::sort(v.begin(), v.end());
+		return v;
 	}
 
 	void textsAdd(const Texts *txt)

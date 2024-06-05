@@ -917,15 +917,30 @@ namespace
 
 	void testTextsFormat()
 	{
-		CAGE_TEST(textFormat("", "") == "");
-		CAGE_TEST(textFormat("abc", "") == "abc");
-		CAGE_TEST(textFormat("", "abc") == "");
-		CAGE_TEST(textFormat("abc{0}ghi", "def") == "abcdefghi");
-		CAGE_TEST(textFormat("{1}def{0}", "ghi|abc") == "abcdefghi");
-		CAGE_TEST(textFormat("abc{}ghi", "def") == "abcghi");
-		CAGE_TEST(textFormat("abc{def}ghi", "def") == "abcghi");
-		CAGE_TEST(textFormat("{3}def{2}", "hola|ho|ghi|abc|jey") == "abcdefghi");
-		CAGE_TEST(textFormat("abc{10}ghi", "def|juj") == "abcghi");
+		{
+			CAGE_TESTCASE("textFormat");
+			CAGE_TEST(textFormat("", "") == "");
+			CAGE_TEST(textFormat("abc", "") == "abc");
+			CAGE_TEST(textFormat("", "abc") == "");
+			CAGE_TEST(textFormat("abc{0}ghi", "def") == "abcdefghi");
+			CAGE_TEST(textFormat("{1}def{0}", "ghi|abc") == "abcdefghi");
+			CAGE_TEST(textFormat("abc{}ghi", "def") == "abcghi");
+			CAGE_TEST(textFormat("abc{def}ghi", "def") == "abcghi");
+			CAGE_TEST(textFormat("{3}def{2}", "hola|ho|ghi|abc|jey") == "abcdefghi");
+			CAGE_TEST(textFormat("abc{10}ghi", "def|juj") == "abcghi");
+		}
+
+		{
+			CAGE_TESTCASE("textsSetLanguages");
+			const auto original = textsGetLanguages();
+			textsSetLanguages("en_US;cs_CZ;uk_UA");
+			const auto a = textsGetLanguages();
+			CAGE_TEST(a.size() == 3);
+			CAGE_TEST(a[0] == "en_US");
+			CAGE_TEST(a[1] == "cs_CZ");
+			CAGE_TEST(a[2] == "uk_UA");
+			textsSetLanguages(original);
+		}
 	}
 }
 

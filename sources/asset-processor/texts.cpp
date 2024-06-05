@@ -46,12 +46,6 @@ namespace
 		{
 			if (!id.empty() && !str.empty())
 				txt->set(id, str, lang);
-			else if (!id.empty() || !str.empty())
-			{
-				CAGE_LOG(SeverityEnum::Note, "assetProcessor", id);
-				CAGE_LOG(SeverityEnum::Note, "assetProcessor", str);
-				CAGE_THROW_ERROR(Exception, "missing msgstr or msgid");
-			}
 			id = str = "";
 			type = MsgType::None;
 		};
