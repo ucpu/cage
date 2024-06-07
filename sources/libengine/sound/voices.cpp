@@ -18,7 +18,7 @@ namespace cage
 		class VoicesMixerImpl : public VoicesMixer
 		{
 		public:
-			VoicesMixerImpl(const VoicesMixerCreateConfig &config) {}
+			VoicesMixerImpl() {}
 
 			Listener listener;
 			plf::colony<VoiceImpl> voices;
@@ -26,8 +26,6 @@ namespace cage
 			Holder<AudioDirectionalConverter> dirConv;
 			Holder<AudioChannelsConverter> chansConv;
 			std::vector<float> tmp1, tmp2;
-
-			void removeVoice(void *p) { voices.erase(voices.get_iterator((VoiceImpl *)p)); }
 
 			Holder<Voice> createVoice()
 			{
@@ -40,26 +38,37 @@ namespace cage
 				Holder<VoiceReference> h = systemMemory().createHolder<VoiceReference>();
 				h->v = &*voices.emplace();
 				h->m = this;
-				// todo init properties
 				return Holder<Voice>(h->v, std::move(h));
-			}
-
-			Real attenuation(const Vec3 &position, Real referenceDistance, Real rolloffFactor) const
-			{
-				const Real dist = max(distance(position, listener.position), referenceDistance);
-				return referenceDistance / (referenceDistance + rolloffFactor * listener.rolloffFactor * (dist - referenceDistance));
 			}
 
 			Real voiceGain(const VoiceImpl &v) const
 			{
-				Real gain = listener.gain * v.gain;
+				Real att = 1;
 				if (v.position.valid())
 				{
-					if (v.sound)
-						gain *= attenuation(v.position, v.sound->referenceDistance, v.sound->rolloffFactor);
-					else
-						gain *= attenuation(v.position, 1, 1);
+					CAGE_ASSERT(v.maxDistance > v.minDistance);
+					CAGE_ASSERT(v.minDistance > 0);
+					const Real dist = clamp(distance(v.position, listener.position), v.minDistance, v.maxDistance);
+					switch (v.attenuation)
+					{
+						case SoundAttenuationEnum::None:
+							break;
+						case SoundAttenuationEnum::Linear:
+							att = 1 - (dist - v.minDistance) / (v.maxDistance - v.minDistance);
+							break;
+						case SoundAttenuationEnum::Logarithmic:
+							att = 1 - log(dist - v.minDistance + 1) / log(v.maxDistance - v.minDistance + 1);
+							break;
+						case SoundAttenuationEnum::InverseSquare:
+							att = saturate(2 / (1 + sqr(dist / (v.minDistance + 1))));
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "invalid sound attenuation enum");
+					}
 				}
+				CAGE_ASSERT(valid(att) && att >= 0 && att <= 1 + 1e-7);
+				const Real gain = listener.gain * v.gain * att;
+				CAGE_ASSERT(valid(gain) && gain >= 0 && gain.finite());
 				return gain;
 			}
 
@@ -88,7 +97,7 @@ namespace cage
 					const sintPtr startFrame = numeric_cast<sintPtr>((data.time - v.startTime) * sampleRate / 1000000);
 					const uintPtr frames = numeric_cast<uintPtr>(uint64(data.frames) * sampleRate / data.sampleRate);
 					tmp1.resize(frames * channels);
-					v.sound->decode(startFrame, tmp1);
+					v.sound->decode(startFrame, tmp1, v.loop);
 
 					// convert to 1 channel for spatial sound and to output channels otherwise
 					if (spatial && channels != 1)
@@ -153,7 +162,7 @@ namespace cage
 				if (!dirConv || dirConv->channels() != data.channels)
 					dirConv = newAudioDirectionalConverter(data.channels);
 				if (!chansConv)
-					chansConv = newAudioChannelsConverter({});
+					chansConv = newAudioChannelsConverter();
 
 				for (float &dst : data.buffer)
 					dst = 0;
@@ -184,8 +193,8 @@ namespace cage
 		impl->process(data);
 	}
 
-	Holder<VoicesMixer> newVoicesMixer(const VoicesMixerCreateConfig &config)
+	Holder<VoicesMixer> newVoicesMixer()
 	{
-		return systemMemory().createImpl<VoicesMixer, VoicesMixerImpl>(config);
+		return systemMemory().createImpl<VoicesMixer, VoicesMixerImpl>();
 	}
 }

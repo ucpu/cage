@@ -5,9 +5,8 @@
 
 namespace cage
 {
-	class CAGE_ENGINE_API SpeakerDevice
+	struct CAGE_ENGINE_API SpeakerDevice
 	{
-	public:
 		String id;
 		String name;
 		String group;

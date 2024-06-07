@@ -140,7 +140,7 @@ namespace cage
 		class VirtualRealityImpl : public VirtualReality
 		{
 		public:
-			VirtualRealityImpl(const VirtualRealityCreateConfig &config)
+			VirtualRealityImpl()
 			{
 				CAGE_LOG(SeverityEnum::Info, "virtualReality", "initializing openxr");
 				printApiLayers();
@@ -1020,8 +1020,8 @@ namespace cage
 		return 1000000 / 90;
 	}
 
-	Holder<VirtualReality> newVirtualReality(const VirtualRealityCreateConfig &config)
+	Holder<VirtualReality> newVirtualReality()
 	{
-		return systemMemory().createImpl<VirtualReality, VirtualRealityImpl>(config);
+		return systemMemory().createImpl<VirtualReality, VirtualRealityImpl>();
 	}
 }

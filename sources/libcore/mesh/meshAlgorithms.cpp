@@ -498,7 +498,7 @@ namespace cage
 		meshRemoveInvalid(msh);
 	}
 
-	void meshMergePlanar(Mesh *msh, const MeshMergePlanarConfig &config)
+	void meshMergePlanar(Mesh *msh)
 	{
 		static constexpr Real CoplanarThreshold = 0.9999;
 
@@ -674,7 +674,7 @@ namespace cage
 
 		// repeat until it cannot improve
 		if (msh->facesCount() < tc)
-			meshMergePlanar(msh, config);
+			meshMergePlanar(msh);
 	}
 
 	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
@@ -1910,7 +1910,7 @@ namespace cage
 		return res;
 	}
 
-	MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs, const MeshMergeConfig &config)
+	MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs)
 	{
 		MeshMergeResult r;
 		r.mesh = newMesh();

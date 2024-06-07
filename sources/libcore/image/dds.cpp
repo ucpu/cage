@@ -100,7 +100,7 @@ namespace cage
 			impl->colorConfig.alphaMode = AlphaModeEnum::PremultipliedOpacity;
 	}
 
-	ImageImportResult ddsDecode(PointerRange<const char> inBuffer, const ImageImportConfig &config)
+	ImageImportResult ddsDecode(PointerRange<const char> inBuffer)
 	{
 		Deserializer des(inBuffer);
 

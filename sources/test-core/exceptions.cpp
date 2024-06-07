@@ -98,6 +98,8 @@ void testExceptions()
 			}
 		}
 #endif // CAGE_ASSERT_ENABLED
+
+		(void)&assertFailureFunction; // maybe unused
 	}
 
 	{

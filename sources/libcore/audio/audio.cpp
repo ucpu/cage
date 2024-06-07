@@ -234,6 +234,15 @@ namespace cage
 		std::swap(impl->format, t->format);
 	}
 
+	void audioGain(Audio *snd, Real gain)
+	{
+		if (!valid(gain) || gain < 1e-5)
+			CAGE_THROW_ERROR(Exception, "invalid gain");
+		audioConvertFormat(snd, AudioFormatEnum::Float);
+		for (float &f : snd->rawViewFloat().cast<float>())
+			f *= gain.value;
+	}
+
 	namespace
 	{
 		bool overlaps(uintPtr x1, uintPtr y1, uintPtr s)

@@ -1,8 +1,6 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/audioAlgorithms.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-core/typeIndex.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/sound.h>
 
@@ -16,7 +14,7 @@ namespace cage
 			Deserializer des(context->compressedData);
 			SoundSourceHeader snd;
 			des >> snd;
-			if (snd.soundType != SoundTypeEnum::CompressedRaw)
+			if (snd.soundType != SoundCompressionEnum::CompressedRaw)
 				return;
 
 			Holder<Audio> poly = newAudio();
@@ -45,11 +43,11 @@ namespace cage
 			Holder<Audio> poly = newAudio();
 			switch (snd.soundType)
 			{
-				case SoundTypeEnum::RawRaw:
-				case SoundTypeEnum::CompressedRaw:
+				case SoundCompressionEnum::RawRaw:
+				case SoundCompressionEnum::CompressedRaw:
 					poly->importRaw(des.read(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
 					break;
-				case SoundTypeEnum::CompressedCompressed:
+				case SoundCompressionEnum::CompressedCompressed:
 					poly->importBuffer(des.read(des.available()));
 					break;
 				default:
@@ -62,12 +60,7 @@ namespace cage
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
 			source->setDebugName(context->textName);
-			source->referenceDistance = snd.referenceDistance;
-			source->rolloffFactor = snd.rolloffFactor;
-			source->gain = snd.gain;
-			source->loopBeforeStart = any(snd.flags & SoundFlags::LoopBeforeStart);
-			source->loopAfterEnd = any(snd.flags & SoundFlags::LoopAfterEnd);
-			source->initialize(std::move(poly));
+			source->importAudio(std::move(poly));
 			context->assetHolder = std::move(source).cast<void>();
 		}
 	}

@@ -7,7 +7,6 @@ namespace cage
 {
 	struct CAGE_ENGINE_API ScreenMode
 	{
-	public:
 		Vec2i resolution;
 		uint32 frequency = 0;
 	};

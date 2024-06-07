@@ -187,7 +187,6 @@ namespace cage
 			GuiManager *manager = nullptr;
 			Entity *entity = nullptr;
 		};
-
 		struct GuiInputConfirm
 		{
 			GuiManager *manager = nullptr;

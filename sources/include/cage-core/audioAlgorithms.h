@@ -9,6 +9,7 @@ namespace cage
 	CAGE_CORE_API void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality = 4); // preserve duration and change number of frames
 	CAGE_CORE_API void audioConvertFrames(Audio *snd, uintPtr frames, uint32 quality = 4); // preserve duration and change sample rate
 	CAGE_CORE_API void audioConvertFormat(Audio *snd, AudioFormatEnum format);
+	CAGE_CORE_API void audioGain(Audio *snd, Real gain);
 
 	// copies parts of an audio into another audio
 	// if the target and source audios are the same instance, the source range and target range cannot overlap

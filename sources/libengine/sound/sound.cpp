@@ -13,7 +13,7 @@ namespace cage
 			sint32 channels = 0;
 			sint32 sampleRate = 0;
 
-			void initialize(Holder<Audio> &&audio)
+			void importAudio(Holder<Audio> &&audio)
 			{
 				stream = std::move(audio);
 				length = stream->frames();
@@ -55,7 +55,7 @@ namespace cage
 				detail::memset(buffer.data() + channels * bufferOffset, 0, channels * frames * sizeof(float));
 			}
 
-			void resolveLooping(PointerRange<float> buffer, sintPtr startFrame, sintPtr frames) const
+			void resolveLooping(PointerRange<float> buffer, sintPtr startFrame, sintPtr frames, bool loop) const
 			{
 				CAGE_ASSERT(frames >= 0);
 				CAGE_ASSERT(frames * channels == numeric_cast<sintPtr>(buffer.size()));
@@ -65,7 +65,7 @@ namespace cage
 				if (startFrame < 0)
 				{ // before start
 					const sintPtr r = min(-startFrame, frames);
-					if (loopBeforeStart)
+					if (loop)
 						decodeLoop(buffer, bufferOffset, startFrame, r);
 					else
 						zeroFill(buffer, bufferOffset, r);
@@ -86,7 +86,7 @@ namespace cage
 				if (startFrame >= length && frames)
 				{ // after end
 					const sintPtr r = frames;
-					if (loopAfterEnd)
+					if (loop)
 						decodeLoop(buffer, bufferOffset, startFrame, r);
 					else
 						zeroFill(buffer, bufferOffset, r);
@@ -99,17 +99,17 @@ namespace cage
 				CAGE_ASSERT(frames == 0);
 			}
 
-			void decode(sintPtr startFrame, PointerRange<float> buffer)
+			void decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const
 			{
 				CAGE_ASSERT(buffer.size() % channels == 0);
-				resolveLooping(buffer, startFrame, buffer.size() / channels);
+				resolveLooping(buffer, startFrame, buffer.size() / channels, loop);
 			}
 
-			void process(const SoundCallbackData &data)
+			void process(const SoundCallbackData &data, bool loop) const
 			{
 				if (data.channels != channels || data.sampleRate != sampleRate)
 					CAGE_THROW_ERROR(Exception, "unmatched channels or sample rate");
-				resolveLooping(data.buffer, numeric_cast<sintPtr>(data.time * sampleRate / 1000000), data.frames);
+				resolveLooping(data.buffer, numeric_cast<sintPtr>(data.time * sampleRate / 1000000), data.frames, loop);
 			}
 		};
 	}
@@ -121,10 +121,10 @@ namespace cage
 #endif // CAGE_DEBUG
 	}
 
-	void Sound::initialize(Holder<Audio> &&audio)
+	void Sound::importAudio(Holder<Audio> &&audio)
 	{
 		SoundImpl *impl = (SoundImpl *)this;
-		impl->initialize(std::move(audio));
+		impl->importAudio(std::move(audio));
 	}
 
 	uintPtr Sound::frames() const
@@ -147,19 +147,19 @@ namespace cage
 
 	uint64 Sound::duration() const
 	{
-		return 1000000 * frames() / sampleRate();
+		return (uint64)1000000 * frames() / sampleRate();
 	}
 
-	void Sound::decode(sintPtr startFrame, PointerRange<float> buffer)
+	void Sound::decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const
 	{
 		SoundImpl *impl = (SoundImpl *)this;
-		impl->decode(startFrame, buffer);
+		impl->decode(startFrame, buffer, loop);
 	}
 
-	void Sound::process(const SoundCallbackData &data)
+	void Sound::process(const SoundCallbackData &data, bool loop) const
 	{
 		SoundImpl *impl = (SoundImpl *)this;
-		impl->process(data);
+		impl->process(data, loop);
 	}
 
 	Holder<Sound> newSound()

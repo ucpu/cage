@@ -2534,10 +2534,6 @@ namespace cage
 		class AudioChannelsConverterImpl : public AudioChannelsConverter
 		{
 		public:
-			const AudioChannelsConverterCreateConfig config;
-
-			AudioChannelsConverterImpl(const AudioChannelsConverterCreateConfig &config) : config(config) {}
-
 			void convert(PointerRange<const float> src, PointerRange<float> dst, uint32 srcChannels, uint32 dstChannels)
 			{
 				CAGE_ASSERT(src.size() % srcChannels == 0);
@@ -2568,8 +2564,8 @@ namespace cage
 		impl->convert(src, dst, srcChannels, dstChannels);
 	}
 
-	Holder<AudioChannelsConverter> newAudioChannelsConverter(const AudioChannelsConverterCreateConfig &config)
+	Holder<AudioChannelsConverter> newAudioChannelsConverter()
 	{
-		return systemMemory().createImpl<AudioChannelsConverter, AudioChannelsConverterImpl>(config);
+		return systemMemory().createImpl<AudioChannelsConverter, AudioChannelsConverterImpl>();
 	}
 }

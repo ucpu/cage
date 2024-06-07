@@ -25,9 +25,7 @@ namespace cage
 	};
 	CAGE_CORE_API void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config);
 
-	struct CAGE_CORE_API MeshMergePlanarConfig
-	{};
-	CAGE_CORE_API void meshMergePlanar(Mesh *msh, const MeshMergePlanarConfig &config);
+	CAGE_CORE_API void meshMergePlanar(Mesh *msh);
 
 	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const Plane &pln);
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh);
@@ -164,8 +162,6 @@ namespace cage
 	};
 	CAGE_CORE_API Holder<PointerRange<Holder<Image>>> meshRetexture(const MeshRetextureConfig &config);
 
-	struct CAGE_CORE_API MeshMergeConfig
-	{};
 	struct CAGE_CORE_API MeshMergeInput
 	{
 		Mesh *mesh = nullptr;
@@ -176,7 +172,7 @@ namespace cage
 		Holder<Mesh> mesh;
 		Holder<PointerRange<Holder<Image>>> textures;
 	};
-	CAGE_CORE_API MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs, const MeshMergeConfig &config);
+	CAGE_CORE_API MeshMergeResult meshMerge(PointerRange<const MeshMergeInput> inputs);
 }
 
 #endif // guard_meshAlgorithms_h_df5641hj6fghj
