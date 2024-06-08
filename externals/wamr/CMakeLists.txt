@@ -42,6 +42,9 @@ add_compile_definitions(BUILTIN_LIBC_BUFFERED_PRINTF=1 BUILTIN_LIBC_BUFFERED_PRI
 
 if(MSVC)
 	enable_language(ASM_MASM)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh")
+	endif()
 else()
 	enable_language(ASM)
 endif()
