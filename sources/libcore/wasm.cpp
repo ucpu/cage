@@ -68,6 +68,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed to initialize wasm runtime");
 				return 0;
 			}();
+			(void)dummy;
 		}
 
 		WasmTypeEnum convert(wasm_valkind_t k)
