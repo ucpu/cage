@@ -109,7 +109,7 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 {
 	if (result.parts.size() == 1 && inputSpec.empty())
 	{
-		CAGE_LOG(SeverityEnum::Note, "selectModel", "using the first model, because it is the only model available");
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", "using the first model, because it is the only model available");
 		return 0;
 	}
 
@@ -118,7 +118,7 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 		const uint32 n = toUint32(inputSpec);
 		if (n < result.parts.size())
 		{
-			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "using model index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "using model index " + n + ", because the input specifier is numeric");
 			return n;
 		}
 		else
@@ -132,19 +132,19 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 		if (objName == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
 		}
 		const String matName = result.parts[modelIndex].materialName;
 		if (matName == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the material name matches");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the material name matches");
 		}
 		const String comb = objName + "_" + matName;
 		if (comb == inputSpec)
 		{
 			candidates.insert(modelIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectModel", Stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
 		}
 	}
 
@@ -222,7 +222,12 @@ namespace
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
 			if (texCount && none(flags & (ModelDataFlags::Uvs2 | ModelDataFlags::Uvs3)))
-				CAGE_THROW_ERROR(Exception, "material has a texture but no uvs");
+			{
+				if (dsm.shaderName)
+					CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "material has a texture but no uvs");
+				else
+					CAGE_THROW_ERROR(Exception, "material has a texture but no uvs");
+			}
 		}
 
 		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
