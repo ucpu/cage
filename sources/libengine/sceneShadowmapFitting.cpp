@@ -12,11 +12,11 @@ namespace cage
 {
 	namespace
 	{
-		bool isEntityDirectionalLightWithShadowmap(Entity *light)
+		bool isEntityDirectionalLightWithShadowmap(Entity *e)
 		{
-			if (!light->has<TransformComponent>() || !light->has<LightComponent>() || !light->has<ShadowmapComponent>())
+			if (!e->has<TransformComponent>() || !e->has<LightComponent>() || !e->has<ShadowmapComponent>())
 				return false;
-			return light->value<LightComponent>().lightType == LightTypeEnum::Directional;
+			return e->value<LightComponent>().lightType == LightTypeEnum::Directional;
 		}
 
 		struct Boxes
@@ -85,6 +85,6 @@ namespace cage
 
 		const Vec3 s = box.size();
 		const Real l = max(s[0], max(s[1], s[2]));
-		config.light->value<ShadowmapComponent>().worldSize = Vec3(max(l, 1e-3));
+		config.light->value<ShadowmapComponent>().directionalWorldSize = max(l, 1e-3);
 	}
 }

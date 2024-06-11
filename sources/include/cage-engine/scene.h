@@ -37,16 +37,8 @@ namespace cage
 		Real offset = Real::Nan(); // normalized 0..1
 	};
 
-	enum class LightTypeEnum : uint32
-	{
-		Directional,
-		Point,
-		Spot,
-	};
-
 	struct CAGE_ENGINE_API LightComponent
 	{
-		Vec4 attenuation = Vec4(1, 0, 1, 0); // constant, linear, quadratic, ~cubic~
 		Vec3 color = Vec3(1); // sRGB
 		Real intensity = 1;
 		Rads spotAngle = Degs(40);
@@ -54,15 +46,16 @@ namespace cage
 		Real ssaoFactor = 0;
 		uint32 sceneMask = 1;
 		LightTypeEnum lightType = LightTypeEnum::Point;
+		LightAttenuationEnum attenuation = LightAttenuationEnum::Logarithmic;
+		Real minDistance = 1;
+		Real maxDistance = 100;
 	};
 
 	struct CAGE_ENGINE_API ShadowmapComponent
 	{
-		// directional: width, height, depth
-		// spot: near, far, unused
-		Vec3 worldSize = Vec3();
+		Real directionalWorldSize = Real::Nan();
 		Real normalOffsetScale = 0.2;
-		uint32 resolution = 256;
+		uint32 resolution = 1024;
 	};
 
 	struct CAGE_ENGINE_API TextComponent
@@ -78,12 +71,6 @@ namespace cage
 		TextAlignEnum align = TextAlignEnum::Center;
 	};
 
-	enum class CameraTypeEnum : uint32
-	{
-		Perspective,
-		Orthographic,
-	};
-
 	struct CameraCommonProperties
 	{
 		Vec3 ambientColor = Vec3(); // sRGB
@@ -93,16 +80,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraComponent : public CameraCommonProperties
 	{
-		union CameraUnion
-		{
-			Vec2 orthographicSize;
-			Rads perspectiveFov = Degs(60);
-			CameraUnion() {}
-		} camera;
-		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
-		Real near = 1, far = 100;
-
+		Vec2 orthographicSize;
 		Texture *target = nullptr;
+		Rads perspectiveFov = Degs(60);
+		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
+		Real near = 0.1, far = 1000;
 	};
 
 	struct CAGE_ENGINE_API SoundComponent

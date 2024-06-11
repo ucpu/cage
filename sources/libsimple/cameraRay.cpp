@@ -24,7 +24,7 @@ namespace cage
 		const CameraComponent &cs = camera->value<CameraComponent>();
 		CAGE_ASSERT(cs.cameraType == CameraTypeEnum::Perspective);
 		const Mat4 view = inverse(Mat4(ts.position, ts.orientation, Vec3(ts.scale)));
-		const Mat4 proj = perspectiveProjection(cs.camera.perspectiveFov, Real(res[0]) / Real(res[1]), cs.near, cs.far);
+		const Mat4 proj = perspectiveProjection(cs.perspectiveFov, Real(res[0]) / Real(res[1]), cs.near, cs.far);
 		const Mat4 inv = inverse(proj * view);
 		const Vec4 pn = inv * Vec4(px, py, -1, 1);
 		const Vec4 pf = inv * Vec4(px, py, 1, 1);

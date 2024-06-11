@@ -75,11 +75,11 @@ namespace cage
 			{
 				case CameraTypeEnum::Orthographic:
 				{
-					const Vec2 &os = data.camera.orthographicSize;
+					const Vec2 &os = data.orthographicSize;
 					return orthographicProjection(-os[0], os[0], -os[1], os[1], data.near, data.far);
 				}
 				case CameraTypeEnum::Perspective:
-					return perspectiveProjection(data.camera.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
+					return perspectiveProjection(data.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
 				default:
 					CAGE_THROW_ERROR(Exception, "invalid camera type");
 			}
@@ -97,12 +97,12 @@ namespace cage
 			{
 				case CameraTypeEnum::Orthographic:
 				{
-					res.screenSize = data.camera.orthographicSize[1] * screenHeight;
+					res.screenSize = data.orthographicSize[1] * screenHeight;
 					res.orthographic = true;
 				}
 				break;
 				case CameraTypeEnum::Perspective:
-					res.screenSize = perspectiveScreenSize(data.camera.perspectiveFov, screenHeight);
+					res.screenSize = perspectiveScreenSize(data.perspectiveFov, screenHeight);
 					break;
 				default:
 					CAGE_THROW_ERROR(Exception, "invalid camera type");

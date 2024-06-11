@@ -1,6 +1,8 @@
 
 $define shader vertex
 
+$include ../functions/common.glsl
+
 $include uniforms.glsl
 
 layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;

@@ -15,7 +15,6 @@ namespace cage
 	enum class FontFlags : uint32;
 	enum class SoundCompressionEnum : uint32;
 	enum class ScreenSpaceEffectsFlags : uint32;
-	enum class CameraTypeEnum : uint32;
 	enum class ImageModeEnum : uint32;
 	enum class OverflowModeEnum : uint32;
 	enum class InputTypeEnum : uint32;
@@ -23,7 +22,6 @@ namespace cage
 	enum class CheckBoxStateEnum : uint32;
 	enum class InputButtonsPlacementModeEnum : uint32;
 	enum class GuiElementTypeEnum : uint32;
-	enum class LightTypeEnum : uint32;
 	enum class WindowFlags : uint32;
 
 	// enum declarations
@@ -48,6 +46,24 @@ namespace cage
 		Left = 1 << 0,
 		Right = 1 << 1,
 		Middle = 1 << 2,
+	};
+	enum class LightTypeEnum : uint32
+	{
+		Directional,
+		Point,
+		Spot,
+	};
+	enum class LightAttenuationEnum : uint32
+	{
+		None = 0,
+		Linear,
+		Logarithmic,
+		InverseSquare,
+	};
+	enum class CameraTypeEnum : uint32
+	{
+		Perspective,
+		Orthographic,
 	};
 	enum class SoundAttenuationEnum : uint32
 	{

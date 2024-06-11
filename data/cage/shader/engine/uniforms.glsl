@@ -53,17 +53,17 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform ArmaturesBlock
 struct UniLight
 {
 	vec4 color; // linear RGB, intensity
-	vec4 position;
-	vec4 direction;
-	vec4 attenuation;
-	vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
-	ivec4 iparams; // lightType, shadowmapSamplerIndex
+	vec4 position; // xyz, sortingDistance
+	vec4 direction; // xyz, unused
+	vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
+	vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
 };
 
 struct UniShadowedLight
 {
 	UniLight light;
 	mat4 shadowMat;
+	vec4 shadowParams; // normalOffsetScale, shadowmapSamplerIndex, shadowedLightIndex (unused?), unused
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock

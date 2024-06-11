@@ -68,16 +68,16 @@ namespace cage
 		struct UniLight
 		{
 			Vec4 color; // linear RGB, intensity
-			Vec4 position; // xyz, light radius
-			Vec4 direction;
-			Vec4 attenuation;
-			Vec4 fparams; // spotAngle, spotExponent, normalOffsetScale, ssaoFactor
-			Vec4i iparams; // lightType, shadowmapSamplerIndex
+			Vec4 position; // xyz, maxDistanceUsedForSorting
+			Vec4 direction; // xyz, unused
+			Vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
+			Vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
 		};
 
 		struct UniShadowedLight : public UniLight
 		{
 			Mat4 shadowMat;
+			Vec4 shadowParams; // normalOffsetScale, shadowmapSamplerIndex, shadowedLightIndex (unused?), unused
 		};
 
 		struct UniOptions
@@ -188,6 +188,7 @@ namespace cage
 			return uni;
 		}
 
+		/*
 		Real lightRadius(Real intensity, const Vec3 &attenuation)
 		{
 			if (intensity <= 1e-5)
@@ -201,9 +202,11 @@ namespace cage
 			}
 			return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
 		}
+		*/
 
 		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
 		{
+			static constexpr Real RoundingOffset = 1e-7;
 			UniLight uni;
 			uni.color = Vec4(colorGammaToLinear(lc.color), lc.intensity);
 			{
@@ -217,31 +220,33 @@ namespace cage
 			uni.direction = model * Vec4(0, 0, -1, 0);
 			if (lc.lightType == LightTypeEnum::Directional)
 			{
-				uni.attenuation = Vec4(1, 0, 0, 0);
+				uni.attenuation = Vec4(0);
 				uni.position[3] = Real::Infinity();
 			}
 			else
 			{
-				uni.attenuation = lc.attenuation;
-				uni.position[3] = lightRadius(uni.color[3], Vec3(uni.attenuation));
+				uni.attenuation[0] = (int)lc.attenuation + RoundingOffset;
+				uni.attenuation[1] = lc.minDistance;
+				uni.attenuation[2] = lc.maxDistance;
+				uni.position[3] = lc.maxDistance;
 			}
-			uni.fparams[0] = cos(lc.spotAngle * 0.5);
-			uni.fparams[1] = lc.spotExponent;
-			uni.fparams[3] = lc.ssaoFactor;
-			uni.iparams[0] = [&]()
+			uni.params[0] = [&]() -> Real
 			{
 				switch (lc.lightType)
 				{
 					case LightTypeEnum::Directional:
-						return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL;
+						return CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL + RoundingOffset;
 					case LightTypeEnum::Spot:
-						return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT;
+						return CAGE_SHADER_OPTIONVALUE_LIGHTSPOT + RoundingOffset;
 					case LightTypeEnum::Point:
-						return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT;
+						return CAGE_SHADER_OPTIONVALUE_LIGHTPOINT + RoundingOffset;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid light type");
 				}
 			}();
+			uni.params[1] = lc.ssaoFactor;
+			uni.params[2] = cos(lc.spotAngle * 0.5);
+			uni.params[3] = lc.spotExponent;
 			return uni;
 		}
 
@@ -951,8 +956,8 @@ namespace cage
 							if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
 							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
-							sh.shadowUni.iparams[1] = texCube.size();
-							sh.shadowUni.iparams[2] = shadows.size();
+							sh.shadowUni.shadowParams[1] = texCube.size();
+							sh.shadowUni.shadowParams[2] = shadows.size();
 							texCube.push_back(sh.shadowTexture);
 						}
 						else
@@ -960,8 +965,8 @@ namespace cage
 							if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
 							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
-							sh.shadowUni.iparams[1] = tex2d.size();
-							sh.shadowUni.iparams[2] = shadows.size();
+							sh.shadowUni.shadowParams[1] = tex2d.size();
+							sh.shadowUni.shadowParams[2] = shadows.size();
 							tex2d.push_back(sh.shadowTexture);
 						}
 						shadows.push_back(sh.shadowUni);
@@ -1259,11 +1264,11 @@ namespace cage
 					switch (data.lightComponent.lightType)
 					{
 						case LightTypeEnum::Directional:
-							return orthographicProjection(-sc.worldSize[0], sc.worldSize[0], -sc.worldSize[1], sc.worldSize[1], -sc.worldSize[2], sc.worldSize[2]);
+							return orthographicProjection(-sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize);
 						case LightTypeEnum::Spot:
-							return perspectiveProjection(data.lightComponent.spotAngle, 1, sc.worldSize[0], sc.worldSize[1]);
+							return perspectiveProjection(data.lightComponent.spotAngle, 1, lc.minDistance, lc.maxDistance);
 						case LightTypeEnum::Point:
-							return perspectiveProjection(Degs(90), 1, sc.worldSize[0], sc.worldSize[1]);
+							return perspectiveProjection(Degs(90), 1, lc.minDistance, lc.maxDistance);
 						default:
 							CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
@@ -1285,10 +1290,10 @@ namespace cage
 				}
 
 				{
-					UniLight &uni = data.shadowUni;
-					uni = initializeLightUni(data.model, data.lightComponent);
-					uni.fparams[2] = e->value<ShadowmapComponent>().normalOffsetScale;
-					uni.iparams[0]++; // shadowed light type
+					UniShadowedLight &uni = data.shadowUni;
+					(UniLight &)uni = initializeLightUni(data.model, data.lightComponent);
+					uni.shadowParams[0] = data.shadowmapComponent.normalOffsetScale;
+					uni.params[0] += 1; // shadowed light type
 				}
 
 				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData &, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
