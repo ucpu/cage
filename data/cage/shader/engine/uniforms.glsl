@@ -63,7 +63,7 @@ struct UniShadowedLight
 {
 	UniLight light;
 	mat4 shadowMat;
-	vec4 shadowParams; // normalOffsetScale, shadowmapSamplerIndex, shadowedLightIndex (unused?), unused
+	vec4 shadowParams; // shadowmapSamplerIndex, shadowedLightIndex (unused?), normalOffsetScale, shadowFactor
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock

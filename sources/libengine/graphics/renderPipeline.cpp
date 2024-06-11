@@ -68,7 +68,7 @@ namespace cage
 		struct UniLight
 		{
 			Vec4 color; // linear RGB, intensity
-			Vec4 position; // xyz, maxDistanceUsedForSorting
+			Vec4 position; // xyz, maxDistance
 			Vec4 direction; // xyz, unused
 			Vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
 			Vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
@@ -77,7 +77,7 @@ namespace cage
 		struct UniShadowedLight : public UniLight
 		{
 			Mat4 shadowMat;
-			Vec4 shadowParams; // normalOffsetScale, shadowmapSamplerIndex, shadowedLightIndex (unused?), unused
+			Vec4 shadowParams; // shadowmapSamplerIndex, shadowedLightIndex (unused?), normalOffsetScale, shadowFactor
 		};
 
 		struct UniOptions
@@ -956,8 +956,8 @@ namespace cage
 							if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
 							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
-							sh.shadowUni.shadowParams[1] = texCube.size();
-							sh.shadowUni.shadowParams[2] = shadows.size();
+							sh.shadowUni.shadowParams[0] = texCube.size();
+							sh.shadowUni.shadowParams[1] = shadows.size();
 							texCube.push_back(sh.shadowTexture);
 						}
 						else
@@ -965,8 +965,8 @@ namespace cage
 							if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
 							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
-							sh.shadowUni.shadowParams[1] = tex2d.size();
-							sh.shadowUni.shadowParams[2] = shadows.size();
+							sh.shadowUni.shadowParams[0] = tex2d.size();
+							sh.shadowUni.shadowParams[1] = shadows.size();
 							tex2d.push_back(sh.shadowTexture);
 						}
 						shadows.push_back(sh.shadowUni);
@@ -1292,7 +1292,8 @@ namespace cage
 				{
 					UniShadowedLight &uni = data.shadowUni;
 					(UniLight &)uni = initializeLightUni(data.model, data.lightComponent);
-					uni.shadowParams[0] = data.shadowmapComponent.normalOffsetScale;
+					uni.shadowParams[2] = data.shadowmapComponent.normalOffsetScale;
+					uni.shadowParams[3] = data.shadowmapComponent.shadowFactor;
 					uni.params[0] += 1; // shadowed light type
 				}
 

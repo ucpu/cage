@@ -52,28 +52,28 @@ vec3 lightBrdf(Material material, UniLight light)
 
 float shadowedIntensity(UniShadowedLight uni)
 {
-	float normalOffsetScale = uni.shadowParams[0];
-	int shadowmapSamplerIndex = int(uni.shadowParams[1]);
+	float normalOffsetScale = uni.shadowParams[2];
+	int shadowmapSamplerIndex = int(uni.shadowParams[0]);
 	vec3 p3 = varPosition + normal * normalOffsetScale;
 	vec4 shadowPos4 = uni.shadowMat * vec4(p3, 1);
+	float intensity = 1;
 	switch (int(uni.light.params[0]))
 	{
 	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW:
-		return sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], vec3(shadowPos4));
+		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], vec3(shadowPos4));
 	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW:
-		return sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], vec3(shadowPos4));
+		intensity = sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], vec3(shadowPos4));
 	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW:
-		return sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], shadowPos4.xyz / shadowPos4.w);
-	default:
-		return 1;
+		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], shadowPos4.xyz / shadowPos4.w);
 	}
+	return mix(1, intensity, uni.shadowParams[3]);
 }
 
 float lightInitialIntensity(UniLight light, float ssao)
 {
 	float intensity = light.color[3];
 	intensity *= attenuation(light.attenuation, length(light.position.xyz - varPosition));
-	intensity *= mix(1.0, ssao, light.params[1]);
+	intensity *= mix(1, ssao, light.params[1]);
 	return intensity;
 }
 

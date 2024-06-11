@@ -55,6 +55,7 @@ namespace cage
 	{
 		Real directionalWorldSize = Real::Nan();
 		Real normalOffsetScale = 0.2;
+		Real shadowFactor = 1;
 		uint32 resolution = 1024;
 	};
 
