@@ -1,5 +1,5 @@
 
-vec2 poissonDisk5[] =
+const vec2 poissonDisk5[] =
 {
 	vec2(0.5653731, 0.1983621),
 	vec2(-0.2598436, -0.2333631),

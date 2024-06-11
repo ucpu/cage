@@ -2,8 +2,10 @@
 $define shader fragment
 
 $include ../functions/common.glsl
-$include ../functions/brdf.glsl
 $include ../functions/attenuation.glsl
+$include ../functions/brdf.glsl
+$include ../functions/makeTangentSpace.glsl
+$include ../functions/restoreNormalMap.glsl
 $include ../functions/sampleShadowMap.glsl
 $include ../functions/sampleTextureAnimation.glsl
 
@@ -28,7 +30,7 @@ struct Material
 	float fade;
 };
 
-vec3 lightBrdf(Material material, UniLight light)
+vec3 egacLightBrdf(Material material, UniLight light)
 {
 	int lightType = int(light.params[0]);
 	vec3 L;
@@ -50,7 +52,7 @@ vec3 lightBrdf(Material material, UniLight light)
 	return res * light.color.rgb;
 }
 
-float shadowedIntensity(UniShadowedLight uni)
+float egacShadowedIntensity(UniShadowedLight uni)
 {
 	float normalOffsetScale = uni.shadowParams[2];
 	int shadowmapSamplerIndex = int(uni.shadowParams[0]);
@@ -69,7 +71,7 @@ float shadowedIntensity(UniShadowedLight uni)
 	return mix(1, intensity, uni.shadowParams[3]);
 }
 
-float lightInitialIntensity(UniLight light, float ssao)
+float egacLightInitialIntensity(UniLight light, float ssao)
 {
 	float intensity = light.color[3];
 	intensity *= attenuation(light.attenuation, length(light.position.xyz - varPosition));
@@ -77,7 +79,7 @@ float lightInitialIntensity(UniLight light, float ssao)
 	return intensity;
 }
 
-float lightAmbientOcclusion()
+float egacLightAmbientOcclusion()
 {
 	return textureLod(texSsao, vec2(gl_FragCoord.xy) / uniViewport.viewport.zw, 0).x;
 }
@@ -96,7 +98,7 @@ vec4 lighting(Material material)
 	{
 		float ssao = 1;
 		if (getOption(CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION) > 0)
-			ssao = lightAmbientOcclusion();
+			ssao = egacLightAmbientOcclusion();
 
 		// ambient
 		res.rgb += material.albedo * uniViewport.ambientLight.rgb * ssao;
@@ -106,10 +108,10 @@ vec4 lighting(Material material)
 			for (int i = 0; i < lightsCount; i++)
 			{
 				UniLight light = uniLights[i];
-				float intensity = lightInitialIntensity(light, ssao);
+				float intensity = egacLightInitialIntensity(light, ssao);
 				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
 					continue;
-				res.rgb += lightBrdf(material, light) * intensity;
+				res.rgb += egacLightBrdf(material, light) * intensity;
 			}
 		}
 
@@ -118,11 +120,11 @@ vec4 lighting(Material material)
 			for (int i = 0; i < lightsCount; i++)
 			{
 				UniShadowedLight uni = uniShadowedLights[i];
-				float intensity = lightInitialIntensity(uni.light, ssao);
+				float intensity = egacLightInitialIntensity(uni.light, ssao);
 				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
 					continue;
-				intensity *= shadowedIntensity(uni);
-				res.rgb += lightBrdf(material, uni.light) * intensity;
+				intensity *= egacShadowedIntensity(uni);
+				res.rgb += egacLightBrdf(material, uni.light) * intensity;
 			}
 		}
 	}
@@ -135,7 +137,7 @@ vec4 lighting(Material material)
 	return res;
 }
 
-vec4 matMapImpl(int index)
+vec4 egacMatMapImpl(int index)
 {
 	switch (getOption(index))
 	{
@@ -157,13 +159,13 @@ Material loadMaterial()
 {
 	Material material;
 
-	vec4 specialMap = matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPSPECIAL);
+	vec4 specialMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPSPECIAL);
 	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
 	material.roughness = special4.r;
 	material.metalness = special4.g;
 	material.emissive = special4.b;
 
-	vec4 albedoMap = matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPALBEDO);
+	vec4 albedoMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPALBEDO);
 	if (albedoMap.a > 1e-6)
 		albedoMap.rgb /= albedoMap.a; // depremultiply albedo texture
 	else
@@ -179,29 +181,6 @@ Material loadMaterial()
 	return material;
 }
 
-vec3 restoreNormalMap(vec4 n)
-{
-	n.xy = n.xy * 2 - 1;
-	n.z = sqrt(1 - clamp(dot(n.xy, n.xy), 0, 1));
-	return n.xyz;
-}
-
-mat3 makeTangentSpace(vec3 N, vec3 p, vec2 uv)
-{
-	// http://www.thetenthplanet.de/archives/1180
-	uv.y = 1 - uv.y;
-	vec3 dp1 = dFdx(p);
-	vec3 dp2 = dFdy(p);
-	vec2 duv1 = dFdx(uv);
-	vec2 duv2 = dFdy(uv);
-	vec3 dp2perp = cross(dp2, N);
-	vec3 dp1perp = cross(N, dp1);
-	vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
-	vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
-	float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
-	return mat3(T * invmax, B * invmax, N);
-}
-
 // converts normal from object to world space
 // additionally applies normal map
 void updateNormal()
@@ -210,7 +189,7 @@ void updateNormal()
 
 	if (getOption(CAGE_SHADER_OPTIONINDEX_MAPNORMAL) != 0)
 	{
-		vec3 normalMap = restoreNormalMap(matMapImpl(CAGE_SHADER_OPTIONINDEX_MAPNORMAL));
+		vec3 normalMap = restoreNormalMap(egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPNORMAL));
 		mat3 tbn = makeTangentSpace(normal, varPosition - uniViewport.eyePos.xyz, varUv.xy);
 		normal = tbn * normalMap;
 	}

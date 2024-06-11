@@ -97,4 +97,3 @@ layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMateria
 layout(binding = CAGE_SHADER_TEXTURE_SSAO) uniform sampler2D texSsao;
 layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAP2D0) uniform sampler2D texShadows2d[CAGE_SHADER_MAX_SHADOWMAPS2D];
 layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0) uniform samplerCube texShadowsCube[CAGE_SHADER_MAX_SHADOWMAPSCUBE];
-

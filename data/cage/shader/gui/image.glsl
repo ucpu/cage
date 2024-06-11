@@ -11,8 +11,8 @@ out vec2 varUv;
 
 void main()
 {
-	gl_Position.z = 0.0;
-	gl_Position.w = 1.0;
+	gl_Position.z = 0;
+	gl_Position.w = 1;
 	gl_Position.xy = pos.xy + (pos.zw - pos.xy) * inPosition.xy;
 	varUv = uv.xy + (uv.zw - uv.xy) * inUv;
 }

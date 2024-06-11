@@ -1,31 +1,29 @@
 
 $include hash.glsl
 
-// Construct a float with half-open range [0:1] using low 23 bits.
-// All zeroes yields 0.0, all ones yields the next smallest representable value below 1.0.
-float intToFloat(uint m)
+float egacIntToFloat(uint m)
 {
-	const uint ieeeMantissa = 0x007FFFFFu; // binary32 mantissa bitmask
-	const uint ieeeOne      = 0x3F800000u; // 1.0 in IEEE binary32
-	m &= ieeeMantissa;                     // Keep only mantissa bits (fractional part)
-	m |= ieeeOne;                          // Add fractional part to 1.0
-	float f = uintBitsToFloat(m);          // Range [1:2]
-	return f - 1.0;                        // Range [0:1]
+	const uint ieeeMantissa = 0x007FFFFFu;
+	const uint ieeeOne = 0x3F800000u;
+	m &= ieeeMantissa;
+	m |= ieeeOne;
+	float f = uintBitsToFloat(m);
+	return f - 1;
 }
 
 float randomFunc(float x)
 {
-	return intToFloat(hash(floatBitsToUint(x)));
+	return egacIntToFloat(hash(floatBitsToUint(x)));
 }
 float randomFunc(vec2 v)
 {
-	return intToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y))));
+	return egacIntToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y))));
 }
 float randomFunc(vec3 v)
 {
-	return intToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y)) ^ hash(floatBitsToUint(v.z))));
+	return egacIntToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y)) ^ hash(floatBitsToUint(v.z))));
 }
 float randomFunc(vec4 v)
 {
-	return intToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y)) ^ hash(floatBitsToUint(v.z)) ^ hash(floatBitsToUint(v.w))));
+	return egacIntToFloat(hash(floatBitsToUint(v.x) ^ hash(floatBitsToUint(v.y)) ^ hash(floatBitsToUint(v.z)) ^ hash(floatBitsToUint(v.w))));
 }
