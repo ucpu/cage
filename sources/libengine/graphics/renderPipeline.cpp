@@ -206,6 +206,7 @@ namespace cage
 
 		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
 		{
+			CAGE_ASSERT(lc.minDistance > 0 && lc.maxDistance > lc.minDistance);
 			static constexpr Real RoundingOffset = 1e-7;
 			UniLight uni;
 			uni.color = Vec4(colorGammaToLinear(lc.color), lc.intensity);
