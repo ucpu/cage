@@ -242,7 +242,7 @@ namespace cage
 				cfg[0].SetInt64(k_ESteamNetworkingConfig_ConnectionUserData, (sint64)this);
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
 				SteamNetworkingIPAddr sa = parseAddress(address, port);
-				sock = sockets()->ConnectByIPAddress(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				sock = sockets()->ConnectByIPAddress(sa, array_size(cfg), cfg);
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
@@ -254,7 +254,7 @@ namespace cage
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
 				SteamNetworkingIdentity id;
 				id.SetSteamID64(steamId);
-				sock = sockets()->ConnectP2P(id, 0, sizeof(cfg) / sizeof(cfg[0]), cfg);
+				sock = sockets()->ConnectP2P(id, 0, array_size(cfg), cfg);
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
@@ -336,12 +336,13 @@ namespace cage
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
 				if (config.listenNetwork)
 				{
+					CAGE_ASSERT(config.port > 1024);
 					SteamNetworkingIPAddr sa = {};
 					sa.m_port = config.port;
-					socks[0] = sockets()->CreateListenSocketIP(sa, sizeof(cfg) / sizeof(cfg[0]), cfg);
+					socks[0] = sockets()->CreateListenSocketIP(sa, array_size(cfg), cfg);
 				}
 				if (config.listenSteamRelay)
-					socks[1] = sockets()->CreateListenSocketP2P(0, sizeof(cfg) / sizeof(cfg[0]), cfg);
+					socks[1] = sockets()->CreateListenSocketP2P(0, array_size(cfg), cfg);
 			}
 
 			~SteamServerImpl()
