@@ -11,10 +11,19 @@ namespace cage
 		ScopeGuard() = default;
 		[[nodiscard]] ScopeGuard(Callable &&callable) : callable(std::move(callable)) {}
 
-		~ScopeGuard()
+		~ScopeGuard() noexcept
 		{
-			if (!dismissed)
+			if (dismissed)
+				return;
+			try
+			{
 				callable();
+			}
+			catch (...)
+			{
+				detail::logCurrentCaughtException();
+				detail::irrecoverableError("exception in ~ScopeGuard");
+			}
 		}
 
 		void dismiss() { dismissed = true; }

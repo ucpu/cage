@@ -7,7 +7,6 @@ namespace cage
 {
 	namespace detail
 	{
-		[[noreturn]] CAGE_CORE_API void terminate();
 		CAGE_CORE_API bool isDebugging();
 		CAGE_CORE_API void debugOutput(const String &msg);
 		CAGE_CORE_API void debugBreakpoint();

@@ -156,7 +156,9 @@ namespace cage
 				}
 				catch (...)
 				{
-					// nothing
+					detail::logCurrentCaughtException();
+					CAGE_LOG(SeverityEnum::Warning, "process", Stringizer() + "exception thrown in process was not propagated to the caller (missing call to wait)");
+					// we continue
 				}
 			}
 
@@ -387,7 +389,9 @@ namespace cage
 				}
 				catch (...)
 				{
-					// nothing
+					detail::logCurrentCaughtException();
+					CAGE_LOG(SeverityEnum::Warning, "process", Stringizer() + "exception thrown in process was not propagated to the caller (missing call to wait)");
+					// we continue
 				}
 			}
 

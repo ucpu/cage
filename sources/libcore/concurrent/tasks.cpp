@@ -45,8 +45,8 @@ namespace cage
 				catch (...)
 				{
 					CAGE_LOG_THROW(Stringizer() + config.name);
-					CAGE_LOG(SeverityEnum::Critical, "tasks", "unhandled exception in task's destructor -> terminating");
-					detail::terminate();
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception in ~TaskImpl");
 				}
 			}
 

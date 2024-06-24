@@ -124,7 +124,7 @@ namespace cage
 			return +appLoggerInstance->loggerFile;
 		}
 
-		void logCurrentCaughtException()
+		void logCurrentCaughtException() noexcept
 		{
 			try
 			{

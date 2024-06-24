@@ -43,8 +43,7 @@ namespace
 			}
 			catch (...)
 			{
-				// an exception cannot be raised in a destructor
-				detail::terminate();
+				detail::irrecoverableError("exception in ~Task (in testing)");
 			}
 			itemsCounter--;
 		}

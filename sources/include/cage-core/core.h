@@ -186,7 +186,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API void logCurrentCaughtException();
+		CAGE_CORE_API void logCurrentCaughtException() noexcept;
+		[[noreturn]] CAGE_CORE_API void irrecoverableError(StringPointer explanation) noexcept; // eg exception in destructor, terminates the program
 	}
 
 	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
@@ -749,13 +750,14 @@ namespace cage
 	{
 		struct CAGE_CORE_API HolderControlBase : private Immovable
 		{
+		private:
+			alignas(sizeof(void *)) volatile uint32 counter = 0;
+
+		public:
 			Delegate<void(void *)> deleter;
 			void *deletee = nullptr;
 			void inc();
 			void dec();
-
-		private:
-			alignas(4) volatile uint32 counter = 0;
 		};
 
 		template<class T>
@@ -786,7 +788,18 @@ namespace cage
 				return *this;
 			}
 
-			~HolderBase() { clear(); }
+			~HolderBase() noexcept
+			{
+				try
+				{
+					clear();
+				}
+				catch (...)
+				{
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception in ~HolderBase");
+				}
+			}
 
 			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!data_; }
 
@@ -983,7 +996,7 @@ namespace cage
 			catch (...)
 			{
 				detail::logCurrentCaughtException();
-				CAGE_ASSERT(!"exception thrown in destructor");
+				detail::irrecoverableError("exception in MemoryArena::destroy");
 			}
 			deallocate(ptr);
 		}

@@ -1,6 +1,5 @@
 #include <array>
 #include <cstring>
-#include <exception> // std::terminate
 
 #include <unordered_dense.h>
 

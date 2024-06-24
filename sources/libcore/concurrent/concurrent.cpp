@@ -536,9 +536,9 @@ namespace cage
 				}
 				catch (...)
 				{
-					CAGE_LOG(SeverityEnum::Critical, "thread", Stringizer() + "exception thrown in thread '" + threadName + "' was not propagated to the caller thread (missing call to wait), terminating now");
 					detail::logCurrentCaughtException();
-					detail::terminate();
+					CAGE_LOG(SeverityEnum::Critical, "thread", Stringizer() + "exception thrown in thread " + threadName + " was not propagated to the caller thread (missing call to wait)");
+					detail::irrecoverableError("exception in ~ThreadImpl");
 				}
 			}
 		};

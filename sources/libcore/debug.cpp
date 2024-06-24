@@ -34,6 +34,33 @@ namespace cage
 {
 	namespace
 	{
+		std::terminate_handler previousTerminateHandler;
+
+		[[noreturn]] void terminateHandler()
+		{
+			CAGE_LOG(SeverityEnum::Critical, "terminate", "terminate handler was invoked");
+			try
+			{
+				if (std::exception_ptr eptr = std::current_exception())
+					std::rethrow_exception(eptr);
+			}
+			catch (...)
+			{
+				detail::logCurrentCaughtException();
+			}
+			detail::debugBreakpoint();
+			previousTerminateHandler();
+			throw;
+		}
+
+		struct TerminateHandlerInit
+		{
+			TerminateHandlerInit() { previousTerminateHandler = std::set_terminate(terminateHandler); }
+		} terminateHandlerInit;
+	}
+
+	namespace
+	{
 		struct IsLocal
 		{
 			bool breakpointEnabled = true;
@@ -61,6 +88,12 @@ namespace cage
 
 	namespace detail
 	{
+		void irrecoverableError(StringPointer explanation) noexcept
+		{
+			CAGE_LOG(SeverityEnum::Critical, "irrecoverableError", (const char *)explanation);
+			std::terminate();
+		}
+
 		bool isDebugging()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -97,13 +130,6 @@ namespace cage
 			}();
 			return underDebugger;
 #endif
-		}
-
-		void terminate()
-		{
-			debugOutput("invoking terminate");
-			debugBreakpoint();
-			std::terminate();
 		}
 
 		void debugOutput(const String &msg)
@@ -168,7 +194,7 @@ namespace cage
 	{
 		namespace
 		{
-			void assertOutputLine(const char *msg, bool continuous = true)
+			void assertOutputLine(const char *msg, bool continuous)
 			{
 				if (continuous)
 					CAGE_LOG_CONTINUE(SeverityEnum::Critical, "assert", msg);
@@ -194,10 +220,10 @@ namespace cage
 			std::strcat(buffer, linebuf);
 			std::strcat(buffer, ") - ");
 			std::strcat(buffer, location.function_name());
-			assertOutputLine(buffer);
+			assertOutputLine(buffer, true);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
-				detail::terminate();
+				std::terminate();
 			else
 			{
 				auto e = Exception(location, ::cage::SeverityEnum::Critical, "assert failure");
