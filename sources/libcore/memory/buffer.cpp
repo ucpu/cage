@@ -8,14 +8,14 @@ namespace cage
 		allocate(size, capacity);
 	}
 
-	MemoryBuffer::MemoryBuffer(MemoryBuffer &&other) noexcept
+	MemoryBuffer::MemoryBuffer(MemoryBuffer &&other)
 	{
 		std::swap(data_, other.data_);
 		std::swap(size_, other.size_);
 		std::swap(capacity_, other.capacity_);
 	}
 
-	MemoryBuffer &MemoryBuffer::operator=(MemoryBuffer &&other) noexcept
+	MemoryBuffer &MemoryBuffer::operator=(MemoryBuffer &&other)
 	{
 		if (&other == this)
 			return *this;

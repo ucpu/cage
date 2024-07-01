@@ -336,7 +336,7 @@ namespace cage
 				modified = false; // all modifications so far can be safely discarded
 			}
 
-			ArchiveZip(ArchiveZip &&z) noexcept = default;
+			ArchiveZip(ArchiveZip &&z) = default;
 
 			~ArchiveZip()
 			{

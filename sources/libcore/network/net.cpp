@@ -261,12 +261,12 @@ namespace cage
 
 		Sock::Sock(int family, int type, int protocol, SOCKET desc, bool connected) : descriptor(desc), family(family), type(type), protocol(protocol), connected(connected) {}
 
-		Sock::Sock(Sock &&other) noexcept : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol), connected(other.connected)
+		Sock::Sock(Sock &&other) : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol), connected(other.connected)
 		{
 			other.descriptor = INVALID_SOCKET;
 		}
 
-		void Sock::operator=(Sock &&other) noexcept
+		void Sock::operator=(Sock &&other)
 		{
 			if (this == &other)
 				return;

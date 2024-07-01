@@ -26,12 +26,12 @@ namespace
 
 		TaskTester() = default;
 
-		TaskTester(TaskTester &&) noexcept
+		TaskTester(TaskTester &&)
 		{
 			// nothing
 		}
 
-		TaskTester &operator=(TaskTester &&) noexcept
+		TaskTester &operator=(TaskTester &&)
 		{
 			// nothing
 			return *this;

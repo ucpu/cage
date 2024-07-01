@@ -11,7 +11,7 @@ namespace cage
 		ScopeGuard() = default;
 		[[nodiscard]] ScopeGuard(Callable &&callable) : callable(std::move(callable)) {}
 
-		~ScopeGuard() noexcept
+		~ScopeGuard()
 		{
 			if (dismissed)
 				return;

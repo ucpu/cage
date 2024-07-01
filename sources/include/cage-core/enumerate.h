@@ -19,9 +19,9 @@ namespace cage
 					Counter index;
 
 					CAGE_FORCE_INLINE constexpr Pair(const It &it, const Counter &index) : it(it), index(index) {}
-					CAGE_FORCE_INLINE constexpr auto &get() const noexcept { return *it; }
-					CAGE_FORCE_INLINE constexpr auto &operator*() const noexcept { return *it; }
-					CAGE_FORCE_INLINE constexpr const auto &operator->() const noexcept { return it; }
+					CAGE_FORCE_INLINE constexpr auto &get() const { return *it; }
+					CAGE_FORCE_INLINE constexpr auto &operator*() const { return *it; }
+					CAGE_FORCE_INLINE constexpr const auto &operator->() const { return it; }
 				};
 
 				CAGE_FORCE_INLINE constexpr Iterator(const It &it, const Counter &index) : p(it, index) {}

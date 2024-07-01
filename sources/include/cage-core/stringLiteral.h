@@ -9,7 +9,7 @@ namespace cage
 	template<uint32 N>
 	struct StringLiteral
 	{
-		consteval StringLiteral(const char (&str)[N]) noexcept
+		consteval StringLiteral(const char (&str)[N])
 		{
 			static_assert(N > 0);
 			detail::memcpy(value, str, N);

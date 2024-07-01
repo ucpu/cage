@@ -17,7 +17,7 @@ namespace cage
 		return data;
 	}
 
-	bool Vec2::valid() const noexcept
+	bool Vec2::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -47,7 +47,7 @@ namespace cage
 		return data;
 	}
 
-	bool Vec3::valid() const noexcept
+	bool Vec3::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -77,7 +77,7 @@ namespace cage
 		return data;
 	}
 
-	bool Vec4::valid() const noexcept
+	bool Vec4::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -107,7 +107,7 @@ namespace cage
 		return data;
 	}
 
-	bool Quat::valid() const noexcept
+	bool Quat::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -186,13 +186,13 @@ namespace cage
 		*this = Quat(Mat3(forward, up, keepUp));
 	}
 
-	Vec3 operator*(Quat l, Vec3 r) noexcept
+	Vec3 operator*(Quat l, Vec3 r)
 	{
 		Vec3 t = cross(Vec3(l[0], l[1], l[2]), r) * 2;
 		return r + t * l[3] + cross(Vec3(l[0], l[1], l[2]), t);
 	}
 
-	Vec3 operator*(Vec3 l, Quat r) noexcept
+	Vec3 operator*(Vec3 l, Quat r)
 	{
 		return r * l;
 	}

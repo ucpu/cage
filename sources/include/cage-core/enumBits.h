@@ -15,55 +15,55 @@ namespace cage
 
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator~(T lhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator~(T lhs)
 	{
 		return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator|(T lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator|(T lhs, T rhs)
 	{
 		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator&(T lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator&(T lhs, T rhs)
 	{
 		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator^(T lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator^(T lhs, T rhs)
 	{
 		return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator|=(T &lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator|=(T &lhs, T rhs)
 	{
 		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator&=(T &lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator&=(T &lhs, T rhs)
 	{
 		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr T operator^=(T &lhs, T rhs) noexcept
+	CAGE_FORCE_INLINE constexpr T operator^=(T &lhs, T rhs)
 	{
 		return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs));
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr bool any(T lhs) noexcept
+	CAGE_FORCE_INLINE constexpr bool any(T lhs)
 	{
 		return static_cast<std::underlying_type_t<T>>(lhs) != 0;
 	}
 	template<class T>
 	requires(enable_bitmask_operators_v<T>)
-	CAGE_FORCE_INLINE constexpr bool none(T lhs) noexcept
+	CAGE_FORCE_INLINE constexpr bool none(T lhs)
 	{
 		return static_cast<std::underlying_type_t<T>>(lhs) == 0;
 	}

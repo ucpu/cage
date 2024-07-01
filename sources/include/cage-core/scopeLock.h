@@ -46,7 +46,7 @@ namespace cage
 		}
 
 		// move constructible
-		ScopeLock(ScopeLock &&other) noexcept { std::swap(ptr, other.ptr); }
+		ScopeLock(ScopeLock &&other) { std::swap(ptr, other.ptr); }
 
 		// not move assignable (releasing the original lock owned by this would not be atomic)
 		ScopeLock &operator=(ScopeLock &&) = delete;
@@ -62,7 +62,7 @@ namespace cage
 			}
 		}
 
-		explicit operator bool() const noexcept { return !!ptr; }
+		explicit operator bool() const { return !!ptr; }
 
 	private:
 		T *ptr = nullptr;

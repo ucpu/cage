@@ -30,18 +30,18 @@ namespace cage
 		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
 	};
 
-	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name) noexcept GCHL_PROFILING_BODY(return {};);
-	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(return {};);
-	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) noexcept GCHL_PROFILING_BODY(;);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name) GCHL_PROFILING_BODY(return {};);
+	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) GCHL_PROFILING_BODY(return {};);
+	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{
-		[[nodiscard]] GCHL_PROFILING_API ProfilingScope() noexcept GCHL_PROFILING_BODY(;); // empty/invalid scope
-		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name) noexcept GCHL_PROFILING_BODY(;);
-		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(;);
-		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(;);
-		GCHL_PROFILING_API ProfilingScope &operator=(ProfilingScope &&other) noexcept GCHL_PROFILING_BODY(return *this;);
-		GCHL_PROFILING_API ~ProfilingScope() noexcept GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API ProfilingScope() GCHL_PROFILING_BODY(;); // empty/invalid scope
+		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name) GCHL_PROFILING_BODY(;);
+		[[nodiscard]] GCHL_PROFILING_API explicit ProfilingScope(StringPointer name, ProfilingFrameTag) GCHL_PROFILING_BODY(;);
+		GCHL_PROFILING_API ProfilingScope(ProfilingScope &&other) GCHL_PROFILING_BODY(;);
+		GCHL_PROFILING_API ProfilingScope &operator=(ProfilingScope &&other) GCHL_PROFILING_BODY(return *this;);
+		GCHL_PROFILING_API ~ProfilingScope() GCHL_PROFILING_BODY(;);
 		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
 
 	private:

@@ -44,9 +44,9 @@ namespace cage
 		public:
 			SwapBufferLock();
 			explicit SwapBufferLock(SwapBufferGuard *controller, uint32 index);
-			SwapBufferLock(SwapBufferLock &&other) noexcept;
+			SwapBufferLock(SwapBufferLock &&other);
 			~SwapBufferLock();
-			SwapBufferLock &operator=(SwapBufferLock &&other) noexcept;
+			SwapBufferLock &operator=(SwapBufferLock &&other);
 			explicit operator bool() const { return !!controller_; }
 			uint32 index() const
 			{

@@ -24,7 +24,7 @@ namespace cage
 	static_assert(sizeof(Holder<uint32>) == 2 * sizeof(uintPtr));
 	static_assert(sizeof(Holder<String>) == 2 * sizeof(uintPtr));
 
-	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept : Exception(location, severity, message), memory(memory){};
+	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) : Exception(location, severity, message), memory(memory){};
 
 	void OutOfMemory::log() const
 	{

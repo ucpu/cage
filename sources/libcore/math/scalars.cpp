@@ -9,12 +9,12 @@ namespace cage
 		return toFloat(privat::tryRemoveParentheses(str));
 	}
 
-	bool Real::valid() const noexcept
+	bool Real::valid() const
 	{
 		return !std::isnan(value);
 	}
 
-	bool Real::finite() const noexcept
+	bool Real::finite() const
 	{
 		return std::isfinite(value);
 	}
@@ -30,7 +30,7 @@ namespace cage
 		return Rads(toFloat(s));
 	}
 
-	bool Rads::valid() const noexcept
+	bool Rads::valid() const
 	{
 		return value.valid();
 	}
@@ -46,7 +46,7 @@ namespace cage
 		return Degs(toFloat(s));
 	}
 
-	bool Degs::valid() const noexcept
+	bool Degs::valid() const
 	{
 		return value.valid();
 	}
@@ -86,12 +86,12 @@ namespace cage
 		return (Rads)std::atan2(y.value, x.value);
 	}
 
-	bool valid(float a) noexcept
+	bool valid(float a)
 	{
 		return !std::isnan(a);
 	}
 
-	bool valid(double a) noexcept
+	bool valid(double a)
 	{
 		return !std::isnan(a);
 	}

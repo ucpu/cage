@@ -99,21 +99,21 @@ namespace cage
 
 		constexpr uintPtr count(const Value &value) const { return std::binary_search<const_iterator, Value, Compare>(data_.begin(), data_.end(), value, Compare()); }
 
-		constexpr uintPtr size() const noexcept { return data_.size(); }
+		constexpr uintPtr size() const { return data_.size(); }
 
-		constexpr bool empty() const noexcept { return data_.empty(); }
+		constexpr bool empty() const { return data_.empty(); }
 
-		constexpr const Value *data() const noexcept { return data_.data(); }
+		constexpr const Value *data() const { return data_.data(); }
 
-		constexpr const_iterator begin() const noexcept { return data_.begin(); }
+		constexpr const_iterator begin() const { return data_.begin(); }
 
-		constexpr const_iterator end() const noexcept { return data_.end(); }
+		constexpr const_iterator end() const { return data_.end(); }
 
-		constexpr const_reverse_iterator rbegin() const noexcept { return data_.rbegin(); }
+		constexpr const_reverse_iterator rbegin() const { return data_.rbegin(); }
 
-		constexpr const_reverse_iterator rend() const noexcept { return data_.rend(); }
+		constexpr const_reverse_iterator rend() const { return data_.rend(); }
 
-		constexpr std::vector<Value> &unsafeData() noexcept { return data_; }
+		constexpr std::vector<Value> &unsafeData() { return data_; }
 
 	private:
 		std::vector<Value> data_;

@@ -306,7 +306,7 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
 		template<StringLiteral Text, uint32 TextId = 0>
-		GuiTooltipComponent::TooltipCallback guiTooltipText() noexcept
+		GuiTooltipComponent::TooltipCallback guiTooltipText() 
 		{
 			static constexpr GuiTextComponent txt{ Text.value, TextId };
 			return privat::guiTooltipText(&txt);

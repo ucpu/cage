@@ -26,7 +26,7 @@ namespace cage
 		const String myPath;
 
 		ArchiveAbstract(const String &path);
-		ArchiveAbstract(ArchiveAbstract &&) noexcept = default;
+		ArchiveAbstract(ArchiveAbstract &&) = default;
 		virtual ~ArchiveAbstract();
 
 		virtual PathTypeFlags type(const String &path) const = 0;

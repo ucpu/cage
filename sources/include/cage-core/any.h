@@ -17,7 +17,7 @@ namespace cage
 			AnyBase(const AnyBase &) = default;
 
 			template<AnyValueConcept<MaxSize_> T>
-			CAGE_FORCE_INLINE AnyBase(const T &v) noexcept
+			CAGE_FORCE_INLINE AnyBase(const T &v)
 			{
 				detail::typeIndex<T>(); // detect hash collisions
 				detail::memcpy(data_, &v, sizeof(T));
@@ -27,13 +27,13 @@ namespace cage
 			AnyBase &operator=(const AnyBase &) = default;
 
 			template<AnyValueConcept<MaxSize_> T>
-			CAGE_FORCE_INLINE AnyBase &operator=(const T &v) noexcept
+			CAGE_FORCE_INLINE AnyBase &operator=(const T &v)
 			{
 				return *this = AnyBase(v);
 			}
 
 			template<AnyValueConcept<MaxSize_> T>
-			CAGE_FORCE_INLINE bool has() const noexcept
+			CAGE_FORCE_INLINE bool has() const
 			{
 				return detail::typeHash<T>() == type_;
 			}
@@ -47,9 +47,9 @@ namespace cage
 				return tmp;
 			}
 
-			CAGE_FORCE_INLINE void clear() noexcept { type_ = m; }
-			CAGE_FORCE_INLINE uint32 typeHash() const noexcept { return type_; }
-			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return type_ != m; }
+			CAGE_FORCE_INLINE void clear() { type_ = m; }
+			CAGE_FORCE_INLINE uint32 typeHash() const { return type_; }
+			CAGE_FORCE_INLINE explicit operator bool() const { return type_ != m; }
 			static constexpr uint32 MaxSize = MaxSize_;
 
 		private:

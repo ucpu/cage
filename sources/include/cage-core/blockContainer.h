@@ -18,15 +18,15 @@ namespace cage
 		{
 			Iterator() = default;
 
-			CAGE_FORCE_INLINE explicit Iterator(const BlockContainer *collection, uint32 index) noexcept : collection(collection), index(index) {}
+			CAGE_FORCE_INLINE explicit Iterator(const BlockContainer *collection, uint32 index) : collection(collection), index(index) {}
 
-			CAGE_FORCE_INLINE Iterator &operator++() noexcept
+			CAGE_FORCE_INLINE Iterator &operator++()
 			{
 				index++;
 				return *this;
 			}
 
-			CAGE_FORCE_INLINE Iterator operator++(int) noexcept
+			CAGE_FORCE_INLINE Iterator operator++(int)
 			{
 				Iterator retval = *this;
 				index++;
@@ -55,8 +55,8 @@ namespace cage
 
 		CAGE_FORCE_INLINE Iterator begin() const { return Iterator(this, 0); }
 		CAGE_FORCE_INLINE Iterator end() const { return Iterator(this, numeric_cast<uint32>(blocks.size())); }
-		CAGE_FORCE_INLINE bool empty() const noexcept { return size_ == 0; }
-		CAGE_FORCE_INLINE uint32 size() const noexcept { return size_; }
+		CAGE_FORCE_INLINE bool empty() const { return size_ == 0; }
+		CAGE_FORCE_INLINE uint32 size() const { return size_; }
 
 		CAGE_FORCE_INLINE void push_back(const T &val)
 		{

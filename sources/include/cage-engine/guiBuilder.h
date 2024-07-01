@@ -13,10 +13,10 @@ namespace cage
 		struct CAGE_ENGINE_API BuilderItem
 		{
 			BuilderItem(GuiBuilder *g);
-			BuilderItem(BuilderItem &&) noexcept;
-			BuilderItem(BuilderItem &) noexcept;
-			BuilderItem &operator=(BuilderItem &) noexcept;
-			BuilderItem &operator=(BuilderItem &&) noexcept;
+			BuilderItem(BuilderItem &&);
+			BuilderItem(BuilderItem &);
+			BuilderItem &operator=(BuilderItem &);
+			BuilderItem &operator=(BuilderItem &&);
 			~BuilderItem();
 
 			Entity *entity() const;

@@ -669,7 +669,7 @@ namespace cage
 	}
 
 #ifdef CAGE_PROFILING_ENABLED
-	void profilingThreadName() noexcept;
+	void profilingThreadName() ;
 #endif
 
 	void currentThreadName(const String &name)

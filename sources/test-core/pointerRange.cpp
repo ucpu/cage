@@ -13,7 +13,7 @@ namespace
 	{
 		Test() { counter++; }
 
-		Test(Test &&) noexcept { counter++; }
+		Test(Test &&) { counter++; }
 
 		~Test() { counter--; }
 

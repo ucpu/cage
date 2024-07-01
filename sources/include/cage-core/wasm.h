@@ -157,8 +157,8 @@ namespace cage
 	public:
 		WasmBuffer() = default;
 		WasmBuffer(WasmInstance *);
-		WasmBuffer(WasmBuffer &&) noexcept;
-		WasmBuffer &operator=(WasmBuffer &&) noexcept;
+		WasmBuffer(WasmBuffer &&);
+		WasmBuffer &operator=(WasmBuffer &&);
 		~WasmBuffer();
 
 		WasmInstance *instance() const { return instance_; }

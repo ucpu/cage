@@ -30,9 +30,9 @@ namespace cage
 
 			explicit SourceHolder(uint32 id) : id(id) {}
 
-			SourceHolder(SourceHolder &&other) noexcept { std::swap(id, other.id); }
+			SourceHolder(SourceHolder &&other)  { std::swap(id, other.id); }
 
-			SourceHolder &operator=(SourceHolder &&other) noexcept
+			SourceHolder &operator=(SourceHolder &&other) 
 			{
 				std::swap(id, other.id);
 				return *this;
@@ -45,7 +45,7 @@ namespace cage
 				id = 0;
 			}
 
-			operator GLuint() const noexcept { return id; }
+			operator GLuint() const  { return id; }
 
 		private:
 			uint32 id = 0;

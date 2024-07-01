@@ -17,7 +17,7 @@ namespace
 	{
 		HANDLE handle = 0;
 
-		void close() noexcept
+		void close()
 		{
 			if (handle)
 			{

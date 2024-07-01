@@ -368,12 +368,12 @@ namespace cage
 		CAGE_ASSERT(instance__);
 	}
 
-	WasmBuffer::WasmBuffer(WasmBuffer &&other) noexcept
+	WasmBuffer::WasmBuffer(WasmBuffer &&other)
 	{
 		*this = std::move(other);
 	}
 
-	WasmBuffer &WasmBuffer::operator=(WasmBuffer &&other) noexcept
+	WasmBuffer &WasmBuffer::operator=(WasmBuffer &&other)
 	{
 		free();
 		instance_ = other.instance_;

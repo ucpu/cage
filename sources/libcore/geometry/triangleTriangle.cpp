@@ -537,8 +537,8 @@ namespace cage
 			Number data[3] = {};
 			CAGE_FORCE_INLINE V() {}
 			CAGE_FORCE_INLINE V(Vec3 a) : data{ a[0].value, a[1].value, a[2].value } {}
-			CAGE_FORCE_INLINE operator Number *() noexcept { return data; };
-			CAGE_FORCE_INLINE operator Vec3() const noexcept { return Vec3(data[0], data[1], data[2]); }
+			CAGE_FORCE_INLINE operator Number *() { return data; };
+			CAGE_FORCE_INLINE operator Vec3() const { return Vec3(data[0], data[1], data[2]); }
 		};
 	}
 

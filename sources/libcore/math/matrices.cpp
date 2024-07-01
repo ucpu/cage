@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	Mat3::Mat3(Quat other) noexcept
+	Mat3::Mat3(Quat other)
 	{
 		Real x2 = other[0] * other[0];
 		Real y2 = other[1] * other[1];
@@ -50,7 +50,7 @@ namespace cage
 		return data;
 	}
 
-	bool Mat3::valid() const noexcept
+	bool Mat3::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -58,7 +58,7 @@ namespace cage
 		return true;
 	}
 
-	Mat4::Mat4(Vec3 p, Quat q, Vec3 s) noexcept
+	Mat4::Mat4(Vec3 p, Quat q, Vec3 s)
 	{
 		// this = T * R * S
 		Mat3 r(q);
@@ -76,7 +76,7 @@ namespace cage
 		return data;
 	}
 
-	bool Mat4::valid() const noexcept
+	bool Mat4::valid() const
 	{
 		for (Real d : data)
 			if (!d.valid())
@@ -84,7 +84,7 @@ namespace cage
 		return true;
 	}
 
-	Vec3 operator*(Mat3 l, Vec3 r) noexcept
+	Vec3 operator*(Mat3 l, Vec3 r)
 	{
 		Vec3 res;
 		for (uint8 i = 0; i < 3; i++)
@@ -95,12 +95,12 @@ namespace cage
 		return res;
 	}
 
-	Vec3 operator*(Vec3 l, Mat3 r) noexcept
+	Vec3 operator*(Vec3 l, Mat3 r)
 	{
 		return transpose(r) * l;
 	}
 
-	Mat3 operator*(Mat3 l, Mat3 r) noexcept
+	Mat3 operator*(Mat3 l, Mat3 r)
 	{
 		Mat3 res = Mat3::Zero();
 		for (uint8 x = 0; x < 3; x++)
@@ -114,7 +114,7 @@ namespace cage
 		return res;
 	}
 
-	Mat3 transpose(Mat3 x) noexcept
+	Mat3 transpose(Mat3 x)
 	{
 		Mat3 tmp;
 		for (uint8 a = 0; a < 3; a++)
@@ -153,7 +153,7 @@ namespace cage
 		return res;
 	}
 
-	Vec4 operator*(Mat4 l, Vec4 r) noexcept
+	Vec4 operator*(Mat4 l, Vec4 r)
 	{
 		Vec4 res;
 		for (uint8 i = 0; i < 4; i++)
@@ -164,12 +164,12 @@ namespace cage
 		return res;
 	}
 
-	Vec4 operator*(Vec4 l, Mat4 r) noexcept
+	Vec4 operator*(Vec4 l, Mat4 r)
 	{
 		return transpose(r) * l;
 	}
 
-	Mat4 operator+(Mat4 l, Mat4 r) noexcept
+	Mat4 operator+(Mat4 l, Mat4 r)
 	{
 		Mat4 res;
 		for (uint8 i = 0; i < 16; i++)
@@ -177,7 +177,7 @@ namespace cage
 		return res;
 	}
 
-	Mat4 operator*(Mat4 l, Mat4 r) noexcept
+	Mat4 operator*(Mat4 l, Mat4 r)
 	{
 		Mat4 res;
 		for (uint8 x = 0; x < 4; x++)
@@ -222,7 +222,7 @@ namespace cage
 		return x[12] * x[9] * x[6] * x[3] - x[8] * x[13] * x[6] * x[3] - x[12] * x[5] * x[10] * x[3] + x[4] * x[13] * x[10] * x[3] + x[8] * x[5] * x[14] * x[3] - x[4] * x[9] * x[14] * x[3] - x[12] * x[9] * x[2] * x[7] + x[8] * x[13] * x[2] * x[7] + x[12] * x[1] * x[10] * x[7] - x[0] * x[13] * x[10] * x[7] - x[8] * x[1] * x[14] * x[7] + x[0] * x[9] * x[14] * x[7] + x[12] * x[5] * x[2] * x[11] - x[4] * x[13] * x[2] * x[11] - x[12] * x[1] * x[6] * x[11] + x[0] * x[13] * x[6] * x[11] + x[4] * x[1] * x[14] * x[11] - x[0] * x[5] * x[14] * x[11] - x[8] * x[5] * x[2] * x[15] + x[4] * x[9] * x[2] * x[15] + x[8] * x[1] * x[6] * x[15] - x[0] * x[9] * x[6] * x[15] - x[4] * x[1] * x[10] * x[15] + x[0] * x[5] * x[10] * x[15];
 	}
 
-	Mat4 transpose(Mat4 x) noexcept
+	Mat4 transpose(Mat4 x)
 	{
 		Mat4 tmp;
 		for (uint8 a = 0; a < 4; a++)

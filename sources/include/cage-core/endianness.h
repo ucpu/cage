@@ -7,21 +7,21 @@ namespace cage
 {
 	namespace endianness
 	{
-		CAGE_FORCE_INLINE constexpr uint8 change(uint8 val) noexcept
+		CAGE_FORCE_INLINE constexpr uint8 change(uint8 val)
 		{
 			return val;
 		}
-		CAGE_FORCE_INLINE constexpr uint16 change(uint16 val) noexcept
+		CAGE_FORCE_INLINE constexpr uint16 change(uint16 val)
 		{
 			return (val & 0xff00) >> 8 | (val & 0x00ff) << 8;
 		}
-		CAGE_FORCE_INLINE constexpr uint32 change(uint32 val) noexcept
+		CAGE_FORCE_INLINE constexpr uint32 change(uint32 val)
 		{
 			uint32 a = change(uint16(val));
 			uint32 b = change(uint16(val >> 16));
 			return a << 16 | b;
 		}
-		CAGE_FORCE_INLINE constexpr uint64 change(uint64 val) noexcept
+		CAGE_FORCE_INLINE constexpr uint64 change(uint64 val)
 		{
 			uint64 a = change(uint32(val));
 			uint64 b = change(uint32(val >> 32));
@@ -29,7 +29,7 @@ namespace cage
 		}
 
 		template<class T>
-		CAGE_FORCE_INLINE constexpr T change(T val) noexcept
+		CAGE_FORCE_INLINE constexpr T change(T val)
 		{
 			static_assert(std::is_trivially_copyable_v<T>);
 			union U

@@ -201,25 +201,25 @@ namespace cage
 	}
 
 	template<uint32 N>
-	bool isDigitsOnly(const detail::StringBase<N> &str) noexcept
+	bool isDigitsOnly(const detail::StringBase<N> &str)
 	{
 		return privat::stringIsDigitsOnly(str);
 	}
 
 	template<uint32 N>
-	bool isInteger(const detail::StringBase<N> &str) noexcept
+	bool isInteger(const detail::StringBase<N> &str)
 	{
 		return privat::stringIsInteger(str);
 	}
 
 	template<uint32 N>
-	bool isReal(const detail::StringBase<N> &str) noexcept
+	bool isReal(const detail::StringBase<N> &str)
 	{
 		return privat::stringIsReal(str);
 	}
 
 	template<uint32 N>
-	bool isBool(const detail::StringBase<N> &str) noexcept
+	bool isBool(const detail::StringBase<N> &str)
 	{
 		return privat::stringIsBool(str);
 	}
@@ -229,7 +229,7 @@ namespace cage
 		template<uint32 N>
 		struct StringComparatorFastBase
 		{
-			constexpr bool operator()(const StringBase<N> &a, const StringBase<N> &b) const noexcept
+			constexpr bool operator()(const StringBase<N> &a, const StringBase<N> &b) const
 			{
 				if (a.length() == b.length())
 					return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
@@ -242,7 +242,7 @@ namespace cage
 		template<uint32 N>
 		struct StringComparatorNaturalBase
 		{
-			bool operator()(const StringBase<N> &a, const StringBase<N> &b) const noexcept { return naturalComparison(a, b) < 0; }
+			bool operator()(const StringBase<N> &a, const StringBase<N> &b) const { return naturalComparison(a, b) < 0; }
 		};
 	}
 

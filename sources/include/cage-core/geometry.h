@@ -14,8 +14,8 @@ namespace cage
 		Real maximum = Real::Nan();
 
 		// constructors
-		constexpr Line() noexcept {}
-		explicit constexpr Line(Vec3 origin, Vec3 direction, Real minimum, Real maximum) noexcept : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {}
+		constexpr Line() {}
+		explicit constexpr Line(Vec3 origin, Vec3 direction, Real minimum, Real maximum) : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {}
 
 		// compound operators
 		Line &operator*=(Mat4 other) { return *this = *this * other; }
@@ -26,14 +26,14 @@ namespace cage
 		Line operator*(Transform other) const { return *this * Mat4(other); }
 
 		// comparison operators
-		bool operator==(const Line &) const noexcept = default;
+		bool operator==(const Line &) const = default;
 
 		// methods
-		bool valid() const noexcept { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); }
-		bool isPoint() const noexcept { return valid() && minimum == maximum; }
-		bool isLine() const noexcept { return valid() && !minimum.finite() && !maximum.finite(); }
-		bool isRay() const noexcept { return valid() && (minimum.finite() != maximum.finite()); }
-		bool isSegment() const noexcept { return valid() && minimum.finite() && maximum.finite(); }
+		bool valid() const { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); }
+		bool isPoint() const { return valid() && minimum == maximum; }
+		bool isLine() const { return valid() && !minimum.finite() && !maximum.finite(); }
+		bool isRay() const { return valid() && (minimum.finite() != maximum.finite()); }
+		bool isSegment() const { return valid() && minimum.finite() && maximum.finite(); }
 		bool normalized() const;
 		Line normalize() const;
 		Vec3 a() const
@@ -54,10 +54,10 @@ namespace cage
 		Vec3 vertices[3]{ Vec3::Nan(), Vec3::Nan(), Vec3::Nan() };
 
 		// constructors
-		constexpr Triangle() noexcept {}
-		explicit constexpr Triangle(const Vec3 vertices[3]) noexcept : vertices{ vertices[0], vertices[1], vertices[2] } {}
-		explicit constexpr Triangle(Vec3 a, Vec3 b, Vec3 c) noexcept : vertices{ a, b, c } {}
-		explicit constexpr Triangle(const Real coords[9]) noexcept : vertices{ Vec3(coords[0], coords[1], coords[2]), Vec3(coords[3], coords[4], coords[5]), Vec3(coords[6], coords[7], coords[8]) } {}
+		constexpr Triangle() {}
+		explicit constexpr Triangle(const Vec3 vertices[3]) : vertices{ vertices[0], vertices[1], vertices[2] } {}
+		explicit constexpr Triangle(Vec3 a, Vec3 b, Vec3 c) : vertices{ a, b, c } {}
+		explicit constexpr Triangle(const Real coords[9]) : vertices{ Vec3(coords[0], coords[1], coords[2]), Vec3(coords[3], coords[4], coords[5]), Vec3(coords[6], coords[7], coords[8]) } {}
 
 		// compound operators
 		Triangle &operator*=(Mat4 other) { return *this = *this * other; }
@@ -79,14 +79,14 @@ namespace cage
 		}
 
 		// comparison operators
-		bool operator==(const Triangle &) const noexcept = default;
+		bool operator==(const Triangle &) const = default;
 
 		// methods
-		bool valid() const noexcept { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
+		bool valid() const { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
 		bool degenerated() const;
 		Vec3 normal() const { return normalize(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))); }
-		Vec3 center() const noexcept { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
-		Real area() const noexcept { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
+		Vec3 center() const { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
+		Real area() const { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
 		Triangle flip() const;
 	};
 
@@ -97,8 +97,8 @@ namespace cage
 		Real d = Real::Nan();
 
 		// constructors
-		constexpr Plane() noexcept {}
-		explicit constexpr Plane(Vec3 normal, Real d) noexcept : normal(normal), d(d) {}
+		constexpr Plane() {}
+		explicit constexpr Plane(Vec3 normal, Real d) : normal(normal), d(d) {}
 		explicit Plane(Vec3 point, Vec3 normal);
 		explicit Plane(Vec3 a, Vec3 b, Vec3 c);
 		explicit Plane(Triangle other);
@@ -113,13 +113,13 @@ namespace cage
 		Plane operator*(Transform other) const { return *this * Mat4(other); }
 
 		// comparison operators
-		bool operator==(const Plane &) const noexcept = default;
+		bool operator==(const Plane &) const = default;
 
 		// methods
-		bool valid() const noexcept { return d.valid() && normal.valid(); }
+		bool valid() const { return d.valid() && normal.valid(); }
 		bool normalized() const;
 		Plane normalize() const;
-		Vec3 origin() const noexcept { return normal * -d; }
+		Vec3 origin() const { return normal * -d; }
 	};
 
 	struct CAGE_CORE_API Sphere
@@ -129,8 +129,8 @@ namespace cage
 		Real radius = Real::Nan();
 
 		// constructors
-		constexpr Sphere() noexcept {}
-		explicit constexpr Sphere(Vec3 center, Real radius) noexcept : center(center), radius(radius) {}
+		constexpr Sphere() {}
+		explicit constexpr Sphere(Vec3 center, Real radius) : center(center), radius(radius) {}
 		explicit Sphere(Line other);
 		explicit Sphere(Triangle other);
 		explicit Sphere(Aabb other);
@@ -146,13 +146,13 @@ namespace cage
 		Sphere operator*(Transform other) const { return *this * Mat4(other); }
 
 		// comparison operators
-		bool operator==(const Sphere &other) const noexcept { return (empty() && other.empty()) || (center == other.center && radius == other.radius); }
+		bool operator==(const Sphere &other) const { return (empty() && other.empty()) || (center == other.center && radius == other.radius); }
 
 		// methods
-		bool valid() const noexcept { return center.valid() && radius >= 0; }
-		bool empty() const noexcept { return !valid(); }
-		Real volume() const noexcept { return empty() ? 0 : 4 * Real::Pi() * radius * radius * radius / 3; }
-		Real surface() const noexcept { return empty() ? 0 : 4 * Real::Pi() * radius * radius; }
+		bool valid() const { return center.valid() && radius >= 0; }
+		bool empty() const { return !valid(); }
+		Real volume() const { return empty() ? 0 : 4 * Real::Pi() * radius * radius * radius / 3; }
+		Real surface() const { return empty() ? 0 : 4 * Real::Pi() * radius * radius; }
 	};
 
 	struct CAGE_CORE_API Aabb
@@ -161,11 +161,11 @@ namespace cage
 		Vec3 a = Vec3::Nan(), b = Vec3::Nan();
 
 		// constructor
-		constexpr Aabb() noexcept {}
-		explicit constexpr Aabb(Vec3 point) noexcept : a(point), b(point) {}
-		explicit constexpr Aabb(Vec3 a, Vec3 b) noexcept : a(min(a, b)), b(max(a, b)) {}
-		explicit constexpr Aabb(Triangle other) noexcept : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {}
-		explicit constexpr Aabb(Sphere other) noexcept : a(other.center - other.radius), b(other.center + other.radius) {}
+		constexpr Aabb() {}
+		explicit constexpr Aabb(Vec3 point) : a(point), b(point) {}
+		explicit constexpr Aabb(Vec3 a, Vec3 b) : a(min(a, b)), b(max(a, b)) {}
+		explicit constexpr Aabb(Triangle other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {}
+		explicit constexpr Aabb(Sphere other) : a(other.center - other.radius), b(other.center + other.radius) {}
 		explicit Aabb(Line other);
 		explicit Aabb(Plane other);
 		explicit Aabb(Cone other);
@@ -182,15 +182,15 @@ namespace cage
 		Aabb operator*(Transform other) const { return *this * Mat4(other); }
 
 		// comparison operators
-		bool operator==(const Aabb &other) const noexcept { return (empty() && other.empty()) || (a == other.a && b == other.b); }
+		bool operator==(const Aabb &other) const { return (empty() && other.empty()) || (a == other.a && b == other.b); }
 
 		// methods
-		bool valid() const noexcept { return a.valid() && b.valid(); }
-		bool empty() const noexcept { return !valid(); }
+		bool valid() const { return a.valid() && b.valid(); }
+		bool empty() const { return !valid(); }
 		Real volume() const;
 		Real surface() const;
-		Vec3 center() const noexcept { return empty() ? Vec3() : (a + b) * 0.5; }
-		Vec3 size() const noexcept { return empty() ? Vec3() : b - a; }
+		Vec3 center() const { return empty() ? Vec3() : (a + b) * 0.5; }
+		Vec3 size() const { return empty() ? Vec3() : b - a; }
 		Real diagonal() const { return empty() ? 0 : distance(a, b); }
 
 		// constants
@@ -206,8 +206,8 @@ namespace cage
 		Rads halfAngle = Rads::Nan();
 
 		// constructor
-		constexpr Cone() noexcept {}
-		explicit constexpr Cone(Vec3 origin, Vec3 direction, Real length, Rads halfAngle) noexcept : origin(origin), direction(direction), length(length), halfAngle(halfAngle) {}
+		constexpr Cone() {}
+		explicit constexpr Cone(Vec3 origin, Vec3 direction, Real length, Rads halfAngle) : origin(origin), direction(direction), length(length), halfAngle(halfAngle) {}
 
 		// compound operators
 		Cone &operator*=(Mat4 other) { return *this = *this * other; }
@@ -218,11 +218,11 @@ namespace cage
 		Cone operator*(Transform other) const { return *this * Mat4(other); }
 
 		// comparison operators
-		bool operator==(const Cone &other) const noexcept { return (empty() && other.empty()) || (origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle); }
+		bool operator==(const Cone &other) const { return (empty() && other.empty()) || (origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle); }
 
 		// methods
-		bool valid() const noexcept { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
-		bool empty() const noexcept { return !valid(); }
+		bool valid() const { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
+		bool empty() const { return !valid(); }
 	};
 
 	// note: some intersection tests with frustums are conservative
@@ -233,7 +233,7 @@ namespace cage
 		Vec4 planes[6];
 
 		// constructor
-		constexpr Frustum() noexcept {}
+		constexpr Frustum() {}
 		explicit Frustum(Transform camera, Mat4 proj);
 		explicit Frustum(Mat4 viewProj);
 

@@ -8,7 +8,7 @@ namespace cage
 	namespace privat
 	{
 		template<class T>
-		constexpr PointerRange<const char> typeName() noexcept
+		constexpr PointerRange<const char> typeName()
 		{
 			static_assert(std::is_same_v<std::decay_t<T>, T>);
 			static_assert(std::is_same_v<std::remove_cvref_t<T>, T>);
@@ -20,21 +20,21 @@ namespace cage
 		}
 
 		template<class T>
-		consteval uint32 typeHashInit() noexcept
+		consteval uint32 typeHashInit()
 		{
 			return hashBuffer(typeName<T>());
 		};
 
-		CAGE_CORE_API uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment) noexcept;
+		CAGE_CORE_API uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment);
 
 		template<class T>
-		CAGE_FORCE_INLINE uint32 typeIndexInit() noexcept
+		CAGE_FORCE_INLINE uint32 typeIndexInit()
 		{
 			return typeIndexInitImpl(typeName<T>(), sizeof(T), alignof(T));
 		};
 
 		template<>
-		CAGE_FORCE_INLINE uint32 typeIndexInit<void>() noexcept
+		CAGE_FORCE_INLINE uint32 typeIndexInit<void>()
 		{
 			return typeIndexInitImpl(typeName<void>(), 0, 0);
 		};
@@ -46,22 +46,22 @@ namespace cage
 		// works well across DLL boundaries
 		// the indices may differ between different runs of a program!
 		template<class T>
-		CAGE_FORCE_INLINE uint32 typeIndex() noexcept
+		CAGE_FORCE_INLINE uint32 typeIndex()
 		{
 			static const uint32 id = privat::typeIndexInit<T>();
 			return id;
 		};
 
-		CAGE_CORE_API uintPtr typeSizeByIndex(uint32 index) noexcept;
-		CAGE_CORE_API uintPtr typeAlignmentByIndex(uint32 index) noexcept;
-		CAGE_CORE_API uint32 typeHashByIndex(uint32 index) noexcept;
-		CAGE_CORE_API uint32 typeIndexByHash(uint32 hash) noexcept;
+		CAGE_CORE_API uintPtr typeSizeByIndex(uint32 index);
+		CAGE_CORE_API uintPtr typeAlignmentByIndex(uint32 index);
+		CAGE_CORE_API uint32 typeHashByIndex(uint32 index);
+		CAGE_CORE_API uint32 typeIndexByHash(uint32 hash);
 
 		// returns unique identifier for each type
 		// works well across DLL boundaries
 		// the hashes may differ between compilers!
 		template<class T>
-		consteval uint32 typeHash() noexcept
+		consteval uint32 typeHash()
 		{
 			return privat::typeHashInit<T>();
 		};

@@ -32,7 +32,7 @@ namespace cage
 			}
 
 			template<class A>
-			static MemoryArenaStub init() noexcept
+			static MemoryArenaStub init()
 			{
 				MemoryArenaStub s;
 				s.alloc = &allocate<A>;
@@ -44,7 +44,7 @@ namespace cage
 	}
 
 	template<class A>
-	inline MemoryArena::MemoryArena(A *a) noexcept
+	inline MemoryArena::MemoryArena(A *a)
 	{
 		static privat::MemoryArenaStub stb = privat::MemoryArenaStub::init<A>();
 		this->stub = &stb;

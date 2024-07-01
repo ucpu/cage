@@ -130,8 +130,8 @@ namespace cage
 			Sock(); // invalid socket
 			Sock(int family, int type, int protocol); // create new socket
 			Sock(int family, int type, int protocol, SOCKET descriptor, bool connected); // copy socket
-			Sock(Sock &&other) noexcept;
-			void operator=(Sock &&other) noexcept;
+			Sock(Sock &&other);
+			void operator=(Sock &&other);
 			~Sock();
 
 			Sock(const Sock &) = delete;

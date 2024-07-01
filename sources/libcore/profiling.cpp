@@ -35,7 +35,7 @@ namespace cage
 		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
 		const ConfigString confBrowser("cage/profiling/browser", DefaultBrowser);
 
-		uint64 timestamp() noexcept
+		uint64 timestamp()
 		{
 			try
 			{
@@ -300,7 +300,7 @@ namespace cage
 		};
 	}
 
-	void profilingThreadName() noexcept
+	void profilingThreadName()
 	{
 		try
 		{
@@ -321,7 +321,7 @@ namespace cage
 		this->data = data;
 	}
 
-	ProfilingEvent profilingEventBegin(StringPointer name) noexcept
+	ProfilingEvent profilingEventBegin(StringPointer name)
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -330,7 +330,7 @@ namespace cage
 		return ev;
 	}
 
-	ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept
+	ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag)
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -339,7 +339,7 @@ namespace cage
 		return ev;
 	}
 
-	void profilingEventEnd(ProfilingEvent &ev) noexcept
+	void profilingEventEnd(ProfilingEvent &ev)
 	{
 		if (ev.startTime == m)
 			return;
@@ -364,24 +364,24 @@ namespace cage
 		ev.startTime = m;
 	}
 
-	ProfilingScope::ProfilingScope() noexcept {}
+	ProfilingScope::ProfilingScope() {}
 
-	ProfilingScope::ProfilingScope(StringPointer name) noexcept
+	ProfilingScope::ProfilingScope(StringPointer name)
 	{
 		event = profilingEventBegin(name);
 	}
 
-	ProfilingScope::ProfilingScope(StringPointer name, ProfilingFrameTag) noexcept
+	ProfilingScope::ProfilingScope(StringPointer name, ProfilingFrameTag)
 	{
 		event = profilingEventBegin(name, ProfilingFrameTag());
 	}
 
-	ProfilingScope::ProfilingScope(ProfilingScope &&other) noexcept
+	ProfilingScope::ProfilingScope(ProfilingScope &&other)
 	{
 		*this = std::move(other);
 	}
 
-	ProfilingScope &ProfilingScope::operator=(ProfilingScope &&other) noexcept
+	ProfilingScope &ProfilingScope::operator=(ProfilingScope &&other)
 	{
 		profilingEventEnd(event);
 		event = {};
@@ -389,7 +389,7 @@ namespace cage
 		return *this;
 	}
 
-	ProfilingScope::~ProfilingScope() noexcept
+	ProfilingScope::~ProfilingScope()
 	{
 		profilingEventEnd(event);
 	}

@@ -60,8 +60,8 @@ namespace cage
 
 			Work() = default;
 			Work(Holder<Asset> asset);
-			Work(Work &&other) noexcept { std::swap(asset, other.asset); }
-			Work &operator=(Work &&other) noexcept
+			Work(Work &&other) { std::swap(asset, other.asset); }
+			Work &operator=(Work &&other)
 			{
 				std::swap(asset, other.asset);
 				return *this;

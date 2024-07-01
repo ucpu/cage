@@ -11,7 +11,7 @@ namespace cage
 		constexpr uint32 HashPrime = 16777619u;
 	}
 
-	CAGE_FORCE_INLINE constexpr uint32 hashBuffer(PointerRange<const char> buffer) noexcept
+	CAGE_FORCE_INLINE constexpr uint32 hashBuffer(PointerRange<const char> buffer)
 	{
 		const char *b = buffer.begin();
 		const char *e = buffer.end();
@@ -24,7 +24,7 @@ namespace cage
 		return hash;
 	}
 
-	CAGE_FORCE_INLINE constexpr uint32 hashRawString(const char *str) noexcept
+	CAGE_FORCE_INLINE constexpr uint32 hashRawString(const char *str)
 	{
 		const char *e = str;
 		while (*e)

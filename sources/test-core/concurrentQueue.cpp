@@ -17,7 +17,7 @@ namespace
 
 		Task(const Task &other) : id(other.id), final(other.final) { itemsCounter++; }
 
-		Task(Task &&other) noexcept : id(other.id), final(other.final) { itemsCounter++; }
+		Task(Task &&other) : id(other.id), final(other.final) { itemsCounter++; }
 
 		Task &operator=(const Task &other)
 		{
@@ -27,7 +27,7 @@ namespace
 			return *this;
 		}
 
-		Task &operator=(Task &&other) noexcept
+		Task &operator=(Task &&other)
 		{
 			id = other.id;
 			final = other.final;

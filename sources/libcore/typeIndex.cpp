@@ -55,7 +55,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment) noexcept
+		uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment)
 		{
 			return data().index(name, size, alignment);
 		}
@@ -63,24 +63,24 @@ namespace cage
 
 	namespace detail
 	{
-		uintPtr typeSizeByIndex(uint32 index) noexcept
+		uintPtr typeSizeByIndex(uint32 index)
 		{
 			return data().values[index].size;
 		}
 
-		uintPtr typeAlignmentByIndex(uint32 index) noexcept
+		uintPtr typeAlignmentByIndex(uint32 index)
 		{
 			return data().values[index].alignment;
 		}
 
-		uint32 typeHashByIndex(uint32 index) noexcept
+		uint32 typeHashByIndex(uint32 index)
 		{
 			const uint32 res = data().values[index].hash;
 			CAGE_ASSERT(data().hashToIndex.find(res)->second == index);
 			return res;
 		}
 
-		uint32 typeIndexByHash(uint32 hash) noexcept
+		uint32 typeIndexByHash(uint32 hash)
 		{
 			const auto it = data().hashToIndex.find(hash);
 			CAGE_ASSERT(it != data().hashToIndex.end());

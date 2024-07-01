@@ -138,7 +138,7 @@ namespace cage
 			CAGE_ASSERT(impl->states[index] == StateEnum::Reading || impl->states[index] == StateEnum::Writing);
 		}
 
-		SwapBufferLock::SwapBufferLock(SwapBufferLock &&other) noexcept : controller_(nullptr), index_(m)
+		SwapBufferLock::SwapBufferLock(SwapBufferLock &&other) : controller_(nullptr), index_(m)
 		{
 			std::swap(controller_, other.controller_);
 			std::swap(index_, other.index_);
@@ -152,7 +152,7 @@ namespace cage
 			impl->finished(index_);
 		}
 
-		SwapBufferLock &SwapBufferLock::operator=(SwapBufferLock &&other) noexcept
+		SwapBufferLock &SwapBufferLock::operator=(SwapBufferLock &&other)
 		{
 			if (controller_)
 			{
