@@ -8,7 +8,7 @@ namespace cage
 	namespace privat
 	{
 		template<class T>
-		constexpr PointerRange<const char> typeName()
+		consteval PointerRange<const char> typeName()
 		{
 			static_assert(std::is_same_v<std::decay_t<T>, T>);
 			static_assert(std::is_same_v<std::remove_cvref_t<T>, T>);
@@ -30,13 +30,15 @@ namespace cage
 		template<class T>
 		CAGE_FORCE_INLINE uint32 typeIndexInit()
 		{
-			return typeIndexInitImpl(typeName<T>(), sizeof(T), alignof(T));
+			static constexpr const PointerRange<const char> name = typeName<T>();
+			return typeIndexInitImpl(name, sizeof(T), alignof(T));
 		};
 
 		template<>
 		CAGE_FORCE_INLINE uint32 typeIndexInit<void>()
 		{
-			return typeIndexInitImpl(typeName<void>(), 0, 0);
+			static constexpr const PointerRange<const char> name = typeName<void>();
+			return typeIndexInitImpl(name, 0, 0);
 		};
 	}
 

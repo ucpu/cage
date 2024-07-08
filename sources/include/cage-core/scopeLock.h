@@ -51,7 +51,18 @@ namespace cage
 		// not move assignable (releasing the original lock owned by this would not be atomic)
 		ScopeLock &operator=(ScopeLock &&) = delete;
 
-		~ScopeLock() { clear(); }
+		~ScopeLock()
+		{
+			try
+			{
+				clear();
+			}
+			catch (...)
+			{
+				detail::logCurrentCaughtException();
+				detail::irrecoverableError("exception thrown in ~ScopeLock");
+			}
+		}
 
 		void clear()
 		{

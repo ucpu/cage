@@ -44,7 +44,7 @@
 		{ \
 			throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Error, __VA_ARGS__); \
 		} \
-		catch (const cage::Exception &e) \
+		catch (::cage::Exception & e) \
 		{ \
 			e.makeLog(); \
 			throw; \
@@ -56,7 +56,7 @@
 		{ \
 			throw EXCEPTION(::std::source_location::current(), ::cage::SeverityEnum::Critical, __VA_ARGS__); \
 		} \
-		catch (const cage::Exception &e) \
+		catch (::cage::Exception & e) \
 		{ \
 			e.makeLog(); \
 			throw; \
@@ -262,10 +262,10 @@ namespace cage
 
 	struct CAGE_CORE_API Exception
 	{
-		explicit Exception(const std::source_location &location, SeverityEnum severity, StringPointer message);
+		explicit Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept;
 		virtual ~Exception();
 
-		void makeLog() const; // check conditions and call log()
+		void makeLog() const noexcept; // check conditions and call log()
 		virtual void log() const;
 
 		std::source_location location;
@@ -275,7 +275,7 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code);
+		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept;
 		void log() const override;
 		sint64 code = 0;
 	};
@@ -283,7 +283,7 @@ namespace cage
 	// array size
 
 	template<class T, uintPtr N>
-	constexpr uintPtr array_size(const T (&)[N])
+	CAGE_FORCE_INLINE constexpr uintPtr array_size(const T (&)[N])
 	{
 		return N;
 	}
@@ -797,7 +797,7 @@ namespace cage
 				catch (...)
 				{
 					detail::logCurrentCaughtException();
-					detail::irrecoverableError("exception in ~HolderBase");
+					detail::irrecoverableError("exception thrown in ~HolderBase");
 				}
 			}
 
@@ -996,7 +996,7 @@ namespace cage
 			catch (...)
 			{
 				detail::logCurrentCaughtException();
-				detail::irrecoverableError("exception in MemoryArena::destroy");
+				detail::irrecoverableError("exception thrown in MemoryArena::destroy");
 			}
 			deallocate(ptr);
 		}

@@ -126,6 +126,8 @@ namespace cage
 
 		void logCurrentCaughtException() noexcept
 		{
+			if (std::uncaught_exceptions() == 0)
+				CAGE_LOG(SeverityEnum::Info, "exception", "no active exception");
 			try
 			{
 				throw;

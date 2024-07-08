@@ -22,7 +22,7 @@ namespace cage
 			catch (...)
 			{
 				detail::logCurrentCaughtException();
-				detail::irrecoverableError("exception in ~ScopeGuard");
+				detail::irrecoverableError("exception thrown in ~ScopeGuard");
 			}
 		}
 

@@ -16,7 +16,7 @@ namespace cage
 			} \
 			catch (const ::cage::GraphicsError &) \
 			{ \
-				CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::Stringizer() + "opengl error caught in file '" + __FILE__ + "' at line " + __LINE__); \
+				CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::Stringizer() + "caught opengl error"); \
 			} \
 		}
 #else
@@ -31,7 +31,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsDebugScope : private Immovable
 	{
-		GraphicsDebugScope(StringPointer name);
+		[[nodiscard]] GraphicsDebugScope(StringPointer name);
 		~GraphicsDebugScope();
 	};
 

@@ -46,7 +46,7 @@ namespace cage
 				{
 					CAGE_LOG_THROW(Stringizer() + config.name);
 					detail::logCurrentCaughtException();
-					detail::irrecoverableError("exception in ~TaskImpl");
+					detail::irrecoverableError("exception thrown in ~TaskImpl");
 				}
 			}
 
@@ -107,7 +107,7 @@ namespace cage
 			{
 				ScopeLock sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "tasks concurrent queue terminated");
 				for (auto it = items.begin(); it != items.end(); it++)
 				{
 					// todo add filters here

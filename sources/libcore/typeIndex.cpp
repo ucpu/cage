@@ -39,7 +39,7 @@ namespace cage
 				t.alignment = alignment;
 				t.hash = hashBuffer(name);
 				if (hashToIndex.count(t.hash))
-					CAGE_THROW_CRITICAL(Exception, "hash collision in typeHash");
+					CAGE_THROW_CRITICAL(Exception, "hash collision in typeIndex");
 				values[cnt] = t;
 				hashToIndex[t.hash] = cnt;
 				return cnt++;
