@@ -512,11 +512,17 @@ namespace cage
 	namespace
 	{
 		Delegate<void()> sigTermHandler;
-
 		void sigTermHandlerEntry(int)
 		{
 			if (sigTermHandler)
 				sigTermHandler();
+		}
+
+		Delegate<void()> sigIntHandler;
+		void sigIntHandlerEntry(int)
+		{
+			if (sigIntHandler)
+				sigIntHandler();
 		}
 	}
 
@@ -524,5 +530,11 @@ namespace cage
 	{
 		sigTermHandler = handler;
 		signal(SIGTERM, &sigTermHandlerEntry);
+	}
+
+	void installSigIntHandler(Delegate<void()> handler)
+	{
+		sigIntHandler = handler;
+		signal(SIGINT, &sigIntHandlerEntry);
 	}
 }

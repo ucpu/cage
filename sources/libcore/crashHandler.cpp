@@ -4,6 +4,7 @@
 	#include <DbgHelp.h>
 	#pragma comment(lib, "DbgHelp.lib")
 	#define EXCEPTION_CPP 0xE06D7363
+	#define EXCEPTION_DOTNET 0xE0434352
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
 
 	#include <cage-core/core.h>
@@ -100,10 +101,12 @@ namespace cage
 					return "DBG_EXCEPTION_NOT_HANDLED";
 				case EXCEPTION_CPP:
 					return "EXCEPTION_CPP";
+				case EXCEPTION_DOTNET:
+					return "EXCEPTION_DOTNET";
 				case EXCEPTION_RENAME_THREAD:
 					return "EXCEPTION_RENAME_THREAD";
 				default:
-					return Stringizer() + "unknown code: " + code;
+					return Stringizer() + "unknown exception code: " + code;
 			}
 		}
 
@@ -202,11 +205,17 @@ namespace cage
 			static std::mutex mutex;
 			std::scoped_lock lock(mutex);
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION || ex->ExceptionRecord->ExceptionCode == EXCEPTION_IN_PAGE_ERROR)
 			{
 				const uint64 mode = ex->ExceptionRecord->ExceptionInformation[0];
 				const uint64 addr = ex->ExceptionRecord->ExceptionInformation[1];
 				CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "violation: " + exceptionAccessModeToString(mode) + ", at address: " + addr);
+			}
+			else
+			{
+				for (uint32 i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
+					CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "parameter[" + i + "]: " + ex->ExceptionRecord->ExceptionInformation);
 			}
 			printStackTrace(ex);
 		}

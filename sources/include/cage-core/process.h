@@ -35,6 +35,7 @@ namespace cage
 	CAGE_CORE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
 
 	CAGE_CORE_API void installSigTermHandler(Delegate<void()> handler);
+	CAGE_CORE_API void installSigIntHandler(Delegate<void()> handler);
 }
 
 #endif // guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
