@@ -57,15 +57,15 @@ configure_file("jpeg/jconfigint.h.in" "jconfigint.h")
 
 set(JPEG16_SOURCES jcapistd.c jccolor.c jcdiffct.c jclossls.c jcmainct.c
 	jcprepct.c jcsample.c jdapistd.c jdcolor.c jddiffct.c jdlossls.c jdmainct.c
-	jdpostct.c jdsample.c jquant1.c jquant2.c jutils.c)
+	jdpostct.c jdsample.c jutils.c)
 set(JPEG12_SOURCES ${JPEG16_SOURCES} jccoefct.c jcdctmgr.c jdcoefct.c
-	jddctmgr.c jdmerge.c jdpostct.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c
-	jidctint.c jidctred.c)
+	jddctmgr.c jdmerge.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c jidctint.c
+	jidctred.c jquant1.c jquant2.c)
 set(JPEG_SOURCES ${JPEG12_SOURCES} jcapimin.c jchuff.c jcicc.c jcinit.c
 	jclhuff.c jcmarker.c jcmaster.c jcomapi.c jcparam.c jcphuff.c jctrans.c
 	jdapimin.c jdatadst.c jdatasrc.c jdhuff.c jdicc.c jdinput.c jdlhuff.c
 	jdmarker.c jdmaster.c jdphuff.c jdtrans.c jerror.c jfdctflt.c jmemmgr.c
-	jmemnobs.c)
+	jmemnobs.c jpeg_nbits.c)
 
 list(TRANSFORM JPEG16_SOURCES PREPEND "jpeg/")
 list(TRANSFORM JPEG12_SOURCES PREPEND "jpeg/")
