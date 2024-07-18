@@ -3,6 +3,7 @@ $include vertex.glsl
 
 $define shader fragment
 
+$include ../functions/common.glsl
 $include ../functions/hash.glsl
 $include ssaoParams.glsl
 
@@ -27,11 +28,6 @@ vec3 s2w(vec2 p, float d)
 	return p4.xyz / p4.w;
 }
 
-float sqr(float a)
-{
-	return a * a;
-}
-
 void main()
 {
 	vec2 resolution = vec2(textureSize(texDepth, 0));
@@ -46,18 +42,18 @@ void main()
 	vec3 myNormal = reconstructNormal(myPos);
 
 	// sampling
-	int n = int(hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ iparams[1]));
+	int n = int(hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ uint(iparams[1])));
 	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;
 	for (int i = 0; i < iparams[0]; i++)
 	{
-		vec3 dir = pointsOnSphere[hash(n * 17 + i) % 256].xyz;
+		vec3 dir = pointsOnSphere[hash(uint(n * 17 + i)) % 256].xyz;
 		float d = dot(myNormal, dir);
 		if (abs(d) < 0.1)
 			continue; // the direction is close to the surface and susceptible to noise
 		dir = sign(d) * dir; // move the direction into front hemisphere
-		float r = (sqr(pointsOnSphere[hash(n * 13 + i) % 256].w) * 0.9 + 0.1) * ssaoRadius;
+		float r = (sqr(pointsOnSphere[hash(uint(n * 13 + i)) % 256].w) * 0.9 + 0.1) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
 		vec4 s4 = proj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
