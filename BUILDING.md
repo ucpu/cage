@@ -36,13 +36,7 @@ It may work on other distributions with little changes.
 
 Install required packages.
 ```bash
-sudo apt install xorg-dev nasm libssl-dev
-```
-
-Optional sound backend (choose one).
-```bash
-sudo apt install libpulse-dev
-sudo apt install libasound2-dev
+sudo apt install xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 ```
 
 Prepare build directory.

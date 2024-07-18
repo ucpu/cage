@@ -74,25 +74,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [22]
+        os-version: [24]
         build-config: [debug, release, relwithdebinfo]
         compiler:
         - {
-            cc: gcc-12,
-            cxx: g++-12,
-            install: gcc-12 g++-12
+            cc: gcc-13,
+            cxx: g++-13,
+            install: gcc-13 g++-13
           }
         - {
-            cc: clang-15,
-            cxx: clang++-15,
-            install: clang-15
+            cc: clang-18,
+            cxx: clang++-18,
+            install: clang-18
           }
 
     steps:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev ${{ matrix.compiler.install }}
+        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev ${{ matrix.compiler.install }}
 
     - name: Versions
       run: |
@@ -148,10 +148,10 @@ jobs:
   NoProfiler:
     name: no-profiler
     needs: Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
-      CC: clang-15
-      CXX: clang++-15
+      CC: clang
+      CXX: clang++
     strategy:
       fail-fast: false
 
@@ -159,7 +159,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
+        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 
     - uses: actions/checkout@v4
       with:
@@ -185,13 +185,13 @@ jobs:
   Sanitizers:
     name: sanitizer-${{ matrix.sanitizer.name }}-${{ matrix.build-config }}
     needs: Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CFLAGS: ${{ matrix.sanitizer.flags }}
       CXXFLAGS: ${{ matrix.sanitizer.flags }}
       LDFLAGS: ${{ matrix.sanitizer.flags }}
-      CC: clang-15
-      CXX: clang++-15
+      CC: clang-16
+      CXX: clang++-16
     strategy:
       fail-fast: false
       matrix:
@@ -214,7 +214,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev clang-15
+        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 
     - name: Versions
       run: |
@@ -248,10 +248,10 @@ jobs:
   Valgrind:
     name: valgrind-${{ matrix.options.tool }}
     needs: Ubuntu
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
-      CC: gcc-12
-      CXX: g++-12
+      CC: gcc
+      CXX: g++
     strategy:
       fail-fast: false
       matrix:
@@ -269,7 +269,8 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm valgrind libssl-dev g++-12
+        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
+        sudo apt-get install -y valgrind
 
     - uses: actions/checkout@v4
       with:

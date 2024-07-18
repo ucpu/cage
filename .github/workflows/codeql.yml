@@ -4,30 +4,22 @@ on: [push, pull_request]
 jobs:
   analyze:
     name: Analyze
-    runs-on: 'ubuntu-latest'
+    runs-on: ubuntu-24.04
     permissions:
       actions: read
       contents: read
       security-events: write
     env:
-      CC: ${{ matrix.compiler.cc }}
-      CXX: ${{ matrix.compiler.cxx }}
+      CC: clang
+      CXX: clang++
     strategy:
       fail-fast: false
-      matrix:
-        language: [ 'cpp' ]
-        compiler:
-        - {
-            cc: clang-15,
-            cxx: clang++-15,
-            install: clang-15
-          }
 
     steps:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y xorg-dev nasm libssl-dev ${{ matrix.compiler.install }}
+        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -37,7 +29,7 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
       with:
-        languages: ${{ matrix.language }}
+        languages: cpp
         config: |
           query-filters:
             - exclude:
@@ -57,4 +49,4 @@ jobs:
     - name: CodeQL Analysis
       uses: github/codeql-action/analyze@v2
       with:
-        category: "/language:${{matrix.language}}"
+        category: "/language:cpp"
