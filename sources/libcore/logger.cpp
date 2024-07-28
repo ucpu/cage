@@ -1,5 +1,6 @@
 #include <chrono>
 #include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <exception>
 
@@ -12,6 +13,7 @@
 #include <cage-core/debug.h>
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/string.h>
 #include <cage-core/systemInformation.h>
 #include <cage-core/timer.h>
@@ -338,6 +340,35 @@ namespace cage
 
 	namespace
 	{
+		String fullCommandLineImpl()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			const char *p = GetCommandLine();
+			auto l = std::strlen(p);
+			if (l > String::MaxLength / 2)
+				l = String::MaxLength / 2;
+			return String(PointerRange(p, p + l));
+#else
+			FILE *fp = fopen("/proc/self/cmdline", "r");
+			if (!fp)
+				return "";
+			auto _ = ScopeGuard([fp]() { fclose(fp); });
+			String res;
+			while (res.length() < String::MaxLength / 2)
+			{
+				char c = 0;
+				auto l = fread(&c, 1, 1, fp);
+				if (l <= 0)
+					break;
+				CAGE_ASSERT(l == 1);
+				if (c == 0)
+					c = ' '; // /proc/self/cmdline contains null terminators for each parameter
+				res += String(c);
+			}
+			return res;
+#endif // CAGE_SYSTEM_WINDOWS
+		}
+
 		class InitialLog : private Immovable
 		{
 		public:
@@ -384,6 +415,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "current time: " + buffer);
 				}
 
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "command line: " + fullCommandLineImpl());
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::executableFullPath());
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
 
