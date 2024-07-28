@@ -30,9 +30,9 @@ namespace cage
 
 			explicit SourceHolder(uint32 id) : id(id) {}
 
-			SourceHolder(SourceHolder &&other)  { std::swap(id, other.id); }
+			SourceHolder(SourceHolder &&other) noexcept { std::swap(id, other.id); }
 
-			SourceHolder &operator=(SourceHolder &&other) 
+			SourceHolder &operator=(SourceHolder &&other) noexcept
 			{
 				std::swap(id, other.id);
 				return *this;
@@ -45,7 +45,7 @@ namespace cage
 				id = 0;
 			}
 
-			operator GLuint() const  { return id; }
+			operator GLuint() const { return id; }
 
 		private:
 			uint32 id = 0;
@@ -69,7 +69,6 @@ namespace cage
 		class MultiShaderProgramImpl : public MultiShaderProgram
 		{
 		public:
-			detail::StringBase<64> name;
 			std::vector<std::pair<detail::StringBase<20>, uint32>> keywords;
 			std::unordered_map<uint32, std::string> sources; // type -> code
 			std::unordered_map<uint32, Holder<ShaderProgram>> variants;
@@ -89,7 +88,7 @@ namespace cage
 				{
 					const std::string defines_ = defines(checked);
 					Holder<ShaderProgram> prg = newShaderProgram();
-					prg->setDebugName(name);
+					prg->setDebugName(debugName);
 					for (const auto &it : sources)
 					{
 						const std::string src = enhance(it.second, defines_);
@@ -143,9 +142,7 @@ namespace cage
 
 	void ShaderProgram::setDebugName(const String &name)
 	{
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
 		ShaderProgramImpl *impl = (ShaderProgramImpl *)this;
 		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_PROGRAM, impl->id, name.length(), name.c_str());
@@ -548,10 +545,7 @@ namespace cage
 				Holder<File> f = newFile(Stringizer() + "shaderIntrospection/" + impl->id + "/" + stageName + "_compile.log", FileMode(false, true));
 				f->write({ buf, buf + len });
 			}
-#ifdef CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader name: " + debugName);
-#endif // CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader compilation log (id: " + impl->id + ", stage: " + stageName + "):");
+			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader compilation log, name: " + debugName + ", stage: " + stageName);
 			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (String line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
@@ -562,10 +556,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
 		{
-#ifdef CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader name: " + debugName);
-#endif // CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader stage: " + stageName);
+			CAGE_LOG_THROW(Stringizer() + "shader name: " + debugName + ", stage: " + stageName);
 			CAGE_THROW_ERROR(GraphicsError, "shader compilation failed", len);
 		}
 
@@ -607,10 +598,7 @@ namespace cage
 				Holder<File> f = newFile(Stringizer() + "shaderIntrospection/" + impl->id + "/linking.log", FileMode(false, true));
 				f->write({ buf, buf + len });
 			}
-#ifdef CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader name: " + debugName);
-#endif // CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader linking log (id: " + impl->id + "):");
+			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader linking log, name: " + debugName);
 			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (String line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
@@ -621,9 +609,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
 		{
-#ifdef CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader name: " + debugName);
-#endif // CAGE_DEBUG
+			CAGE_LOG_THROW(Stringizer() + "shader name: " + debugName);
 			CAGE_THROW_ERROR(GraphicsError, "shader linking failed", len);
 		}
 
@@ -757,10 +743,7 @@ namespace cage
 				Holder<File> f = newFile(Stringizer() + "shaderIntrospection/" + impl->id + "/validation.log", FileMode(false, true));
 				f->write({ buf, buf + len });
 			}
-#ifdef CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Note, "shader", Stringizer() + "shader name: " + debugName);
-#endif // CAGE_DEBUG
-			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader validation log (id: " + impl->id + "):");
+			CAGE_LOG(SeverityEnum::Warning, "shader", Stringizer() + "shader validation log, name: " + debugName);
 			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (String line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
@@ -769,7 +752,10 @@ namespace cage
 		glGetProgramiv(impl->id, GL_VALIDATE_STATUS, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
+		{
+			CAGE_LOG_THROW(Stringizer() + "shader name: " + debugName);
 			CAGE_THROW_ERROR(GraphicsError, "shader validation failed", len);
+		}
 	}
 
 	void ShaderProgram::compute(const Vec3i &groupsCounts)
@@ -785,10 +771,7 @@ namespace cage
 	void MultiShaderProgram::setDebugName(const String &name)
 	{
 		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
-		impl->name = name;
 	}
 
 	void MultiShaderProgram::setKeywords(PointerRange<detail::StringBase<20>> keywords)
