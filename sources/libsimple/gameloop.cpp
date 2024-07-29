@@ -251,6 +251,7 @@ namespace cage
 			{
 				graphicsFinalize();
 				assets->unloadCustomThread(1);
+                window->makeNotCurrent();
 			}
 
 			//////////////////////////////////////

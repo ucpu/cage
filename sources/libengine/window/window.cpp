@@ -65,6 +65,9 @@ namespace cage
 			GLFWwindow *window = nullptr;
 			const int vsync = true;
 			bool focus = true;
+#ifdef CAGE_DEBUG
+            uint64 currentThreadIdGlBound = 0;
+#endif
 
 #ifdef GCHL_WINDOWS_THREAD
 			Holder<Thread> windowThread;
@@ -733,14 +736,32 @@ namespace cage
 		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);
 	}
 
+#ifdef CAGE_DEBUG
+    namespace
+    {
+        Holder<Mutex> mutex = newMutex();
+    }
+#endif
+
 	void Window::makeCurrent()
 	{
-		WindowImpl *impl = (WindowImpl *)this;
+        WindowImpl *impl = (WindowImpl *)this;
+#ifdef CAGE_DEBUG
+        ScopeLock _(mutex);
+        CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
+        impl->currentThreadIdGlBound = currentThreadId();
+#endif
 		glfwMakeContextCurrent(impl->window);
 	}
 
 	void Window::makeNotCurrent()
 	{
+#ifdef CAGE_DEBUG
+        WindowImpl *impl = (WindowImpl *)this;
+        ScopeLock _(mutex);
+        CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
+        impl->currentThreadIdGlBound = 0;
+#endif
 		glfwMakeContextCurrent(nullptr);
 	}
 

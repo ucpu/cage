@@ -104,7 +104,7 @@ namespace cage
 		else
 		{
 			if (usage == 0)
-				usage = GL_STATIC_DRAW;
+                usage = GL_DYNAMIC_DRAW;
 			glNamedBufferData(impl->id, buffer.size(), buffer.data(), usage);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			impl->size = numeric_cast<uint32>(buffer.size());
