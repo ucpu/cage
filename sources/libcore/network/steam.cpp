@@ -22,7 +22,7 @@ namespace cage
 	{
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Warning);
 
-		constexpr uint32 LanesCount = 8;
+		constexpr uint32 LanesCount = 4;
 
 		CAGE_FORCE_INLINE ISteamNetworkingSockets *sockets()
 		{
@@ -223,6 +223,7 @@ namespace cage
 
 			~Data()
 			{
+				CAGE_ASSERT(sockets());
 				if (msg)
 					msg->Release();
 			}
@@ -266,7 +267,11 @@ namespace cage
 				handleResult(sockets()->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
-			~SteamConnectionImpl() { sockets()->CloseConnection(sock, 0, nullptr, false); }
+			~SteamConnectionImpl()
+			{
+				CAGE_ASSERT(sockets());
+				sockets()->CloseConnection(sock, 0, nullptr, false);
+			}
 
 			Holder<PointerRange<char>> read(uint32 &channel, bool &reliable)
 			{
@@ -347,6 +352,7 @@ namespace cage
 
 			~SteamServerImpl()
 			{
+				CAGE_ASSERT(sockets());
 				waiting.terminate();
 				{
 					Holder<SteamConnection> c;

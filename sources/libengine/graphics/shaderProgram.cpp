@@ -770,7 +770,6 @@ namespace cage
 
 	void MultiShaderProgram::setDebugName(const String &name)
 	{
-		MultiShaderProgramImpl *impl = (MultiShaderProgramImpl *)this;
 		debugName = name;
 	}
 
