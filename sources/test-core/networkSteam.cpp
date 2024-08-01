@@ -118,7 +118,7 @@ namespace
 			if (si < ri + 2 && si < sends.size())
 			{
 				MemoryBuffer &b = sends[si++];
-				udp->write(b, 5, true);
+				udp->write(b, 2, true);
 			}
 			udp->update();
 			return ri < sends.size();
