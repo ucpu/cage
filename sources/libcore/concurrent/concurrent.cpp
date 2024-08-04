@@ -650,10 +650,10 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(SeverityEnum::Warning, "thread", Stringizer() + "unhandled exception in thread '" + currentThreadName() + "'");
+				CAGE_LOG(SeverityEnum::Warning, "thread", Stringizer() + "unhandled exception in thread " + currentThreadName());
 				detail::logCurrentCaughtException();
 			}
-			CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "thread '" + currentThreadName() + "' ended");
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "thread " + currentThreadName() + " ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else
@@ -669,7 +669,7 @@ namespace cage
 	}
 
 #ifdef CAGE_PROFILING_ENABLED
-	void profilingThreadName() ;
+	void profilingThreadName();
 #endif
 
 	void currentThreadName(const String &name)
@@ -718,7 +718,7 @@ namespace cage
 		profilingThreadName();
 #endif
 
-		CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? Stringizer() : Stringizer() + " was '" + oldName + "'"));
+		CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id: " + currentThreadId() + (oldName.empty() ? Stringizer() : Stringizer() + ", from: " + oldName) + ", to: " + name);
 	}
 
 	String currentThreadName()

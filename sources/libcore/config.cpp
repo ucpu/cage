@@ -555,10 +555,10 @@ namespace cage
 	{
 		void loadGlobalConfigFile(const String &filename, const String &prefix)
 		{
-			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: '" + filename + "'");
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: " + filename);
 			if (any(realType(filename) & PathTypeFlags::File))
 			{
-				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: '" + filename + "'");
+				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: " + filename);
 				try
 				{
 					// the logic of function configLoadIni is replicated here, but we are inside the mutex already

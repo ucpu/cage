@@ -81,7 +81,7 @@ namespace cage
 						const auto err = GetLastError();
 						if (err != ERROR_ALREADY_EXISTS)
 						{
-							CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+							CAGE_LOG_THROW(Stringizer() + "path: " + path);
 							CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
 						}
 					}
@@ -89,7 +89,7 @@ namespace cage
 					static constexpr mode_t mode = 0755;
 					if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 					{
-						CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+						CAGE_LOG_THROW(Stringizer() + "path: " + path);
 						CAGE_THROW_ERROR(Exception, "mkdir");
 					}
 #endif
@@ -483,7 +483,7 @@ namespace cage
 				auto res = copying ? CopyFileW(Widen(from), Widen(to), false) : MoveFileExW(Widen(from), Widen(to), MOVEFILE_REPLACE_EXISTING);
 				if (res == 0)
 				{
-					CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+					CAGE_LOG_THROW(Stringizer() + "path from: " + from + ", to: " + to);
 					CAGE_THROW_ERROR(SystemError, "CopyFileW/MoveFileW", GetLastError());
 				}
 #else
@@ -497,7 +497,7 @@ namespace cage
 					auto res = rename(from.c_str(), to.c_str());
 					if (res != 0)
 					{
-						CAGE_LOG_THROW(Stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+						CAGE_LOG_THROW(Stringizer() + "path from: " + from + ", to: " + to);
 						CAGE_THROW_ERROR(SystemError, "rename", errno);
 					}
 				}
@@ -587,14 +587,14 @@ namespace cage
 				HANDLE hFile = CreateFileW(Widen(path), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 				if (hFile == INVALID_HANDLE_VALUE)
 				{
-					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+					CAGE_LOG_THROW(Stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
 				}
 				FILETIME ftWrite;
 				if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 				{
 					CloseHandle(hFile);
-					CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+					CAGE_LOG_THROW(Stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(Exception, "failed to retrieve file last modification time");
 				}
 				ULARGE_INTEGER l;
@@ -606,7 +606,7 @@ namespace cage
 				struct stat st;
 				if (stat(pathToAbs(path).c_str(), &st) == 0)
 					return PathLastChange{ numeric_cast<uint64>(st.st_mtime) };
-				CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+				CAGE_LOG_THROW(Stringizer() + "path: " + path);
 				CAGE_THROW_ERROR(SystemError, "stat", errno);
 #endif
 			}

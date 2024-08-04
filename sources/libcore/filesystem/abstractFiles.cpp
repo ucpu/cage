@@ -136,14 +136,14 @@ namespace cage
 								case ArchiveFindModeEnum::FileExclusive:
 									if (b.existing)
 									{
-										CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+										CAGE_LOG_THROW(Stringizer() + "path: " + pathJoin(parent->myPath, path));
 										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 									}
 									return { parent, path };
 								case ArchiveFindModeEnum::ArchiveExclusive:
 									if (b.existing)
 									{
-										CAGE_LOG_THROW(Stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+										CAGE_LOG_THROW(Stringizer() + "path: " + pathJoin(parent->myPath, path));
 										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 									}
 									return { b.archive };
@@ -194,7 +194,7 @@ namespace cage
 	{
 		if (!pathIsValid(path_))
 		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path_ + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: " + path_);
 			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
 

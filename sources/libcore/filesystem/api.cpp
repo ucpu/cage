@@ -203,7 +203,7 @@ namespace cage
 		CAGE_ASSERT(none(type & ~(PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
 		if (name.empty() || !pathIsValid(name) || pathIsAbs(name))
 		{
-			CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
+			CAGE_LOG_THROW(Stringizer() + "name: " + name);
 			CAGE_THROW_ERROR(Exception, "invalid name in pathSearchTowardsRoot");
 		}
 		try
@@ -220,8 +220,8 @@ namespace cage
 		}
 		catch (const Exception &)
 		{
-			CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
-			CAGE_LOG_THROW(Stringizer() + "whereToStart: '" + whereToStart + "'");
+			CAGE_LOG_THROW(Stringizer() + "name: " + name);
+			CAGE_LOG_THROW(Stringizer() + "whereToStart: " + whereToStart);
 			CAGE_THROW_ERROR(Exception, "pathSearchTowardsRoot failed to find the name");
 		}
 	}
@@ -272,7 +272,7 @@ namespace cage
 		ScopeLock lock(fsMutex());
 		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
 		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: " + path);
 			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
 		}
 		archiveCreateZip(path, options);

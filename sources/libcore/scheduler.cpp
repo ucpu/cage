@@ -227,7 +227,7 @@ namespace cage
 						const uint64 skip = (end - s->sched) / s->conf.period;
 						if (skip >= s->conf.maxSteadyPeriods)
 						{
-							CAGE_LOG(SeverityEnum::Warning, "scheduler", Stringizer() + "schedule '" + s->conf.name + "' cannot keep up and will skip " + skip + " iterations");
+							CAGE_LOG(SeverityEnum::Warning, "scheduler", Stringizer() + "schedule: " + s->conf.name + ", cannot keep up and will skip " + skip + " iterations");
 							s->sched += skip * s->conf.period;
 						}
 						else
@@ -308,7 +308,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG_THROW(Stringizer() + "exception in schedule '" + impl->conf.name + "'");
+			CAGE_LOG_THROW(Stringizer() + "exception in schedule: " + impl->conf.name);
 			throw;
 		}
 	}

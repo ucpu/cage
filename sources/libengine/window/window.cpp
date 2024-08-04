@@ -6,6 +6,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/config.h>
+#include <cage-core/files.h>
 #include <cage-core/flatSet.h>
 #include <cage-engine/window.h>
 
@@ -66,7 +67,7 @@ namespace cage
 			const int vsync = true;
 			bool focus = true;
 #ifdef CAGE_DEBUG
-            uint64 currentThreadIdGlBound = 0;
+			uint64 currentThreadIdGlBound = 0;
 #endif
 
 #ifdef GCHL_WINDOWS_THREAD
@@ -153,9 +154,7 @@ namespace cage
 			{
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-				glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
 				//glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // GLFW_FALSE is useful for multiple simultaneous fullscreen windows but breaks alt-tabbing out of the application
-				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -171,7 +170,8 @@ namespace cage
 				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
 				glfwWindowHint(GLFW_DEPTH_BITS, 0);
 				glfwWindowHint(GLFW_STENCIL_BITS, 0);
-				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((WindowImpl *)shareContext)->window : NULL);
+				const String name = pathExtractFilename(detail::executableFullPathNoExe());
+				window = glfwCreateWindow(1, 1, name.c_str(), NULL, shareContext ? ((WindowImpl *)shareContext)->window : NULL);
 				if (!window)
 					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
@@ -429,6 +429,18 @@ namespace cage
 			glfwSetWindowMaximizeCallback(window, &windowMaximizedCallback);
 			glfwSetWindowFocusCallback(window, &windowFocusCallback);
 		}
+	}
+
+	String Window::title() const
+	{
+		const WindowImpl *impl = (const WindowImpl *)this;
+		if (const char *tmp = glfwGetWindowTitle(impl->window))
+		{
+			const auto len = std::strlen(tmp);
+			if (len < String::MaxLength)
+				return String(PointerRange(tmp, tmp + len));
+		}
+		return {};
 	}
 
 	void Window::title(const String &value)
@@ -737,19 +749,19 @@ namespace cage
 	}
 
 #ifdef CAGE_DEBUG
-    namespace
-    {
-        Holder<Mutex> mutex = newMutex();
-    }
+	namespace
+	{
+		Holder<Mutex> mutex = newMutex();
+	}
 #endif
 
 	void Window::makeCurrent()
 	{
-        WindowImpl *impl = (WindowImpl *)this;
+		WindowImpl *impl = (WindowImpl *)this;
 #ifdef CAGE_DEBUG
-        ScopeLock _(mutex);
-        CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
-        impl->currentThreadIdGlBound = currentThreadId();
+		ScopeLock _(mutex);
+		CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
+		impl->currentThreadIdGlBound = currentThreadId();
 #endif
 		glfwMakeContextCurrent(impl->window);
 	}
@@ -757,10 +769,10 @@ namespace cage
 	void Window::makeNotCurrent()
 	{
 #ifdef CAGE_DEBUG
-        WindowImpl *impl = (WindowImpl *)this;
-        ScopeLock _(mutex);
-        CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
-        impl->currentThreadIdGlBound = 0;
+		WindowImpl *impl = (WindowImpl *)this;
+		ScopeLock _(mutex);
+		CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
+		impl->currentThreadIdGlBound = 0;
 #endif
 		glfwMakeContextCurrent(nullptr);
 	}

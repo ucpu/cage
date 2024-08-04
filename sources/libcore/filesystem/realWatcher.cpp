@@ -64,7 +64,7 @@ namespace cage
 		const PathTypeFlags type = realType(path); // FilesystemWatcher works with real filesystem only!
 		if (none(type & PathTypeFlags::Directory))
 		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: " + path);
 			CAGE_THROW_ERROR(Exception, "path must be existing folder");
 		}
 		impl->registerPath(path);

@@ -156,7 +156,7 @@ namespace cage
 
 			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
 			{
-				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using assets path: '" + path + "'");
+				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using assets path: " + path);
 				schemes.resize(config.schemesMaxCount);
 				customProcessingQueues.resize(config.customProcessingThreads);
 				for (auto &it : customProcessingQueues)

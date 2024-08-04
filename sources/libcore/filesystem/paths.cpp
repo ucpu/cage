@@ -211,7 +211,7 @@ namespace cage
 			if (d != pathExtractDrive(pathWorkingDir()))
 #endif // CAGE_SYSTEM_WINDOWS
 			{
-				CAGE_LOG_THROW(Stringizer() + "path: '" + path + "'");
+				CAGE_LOG_THROW(Stringizer() + "path: " + path);
 				CAGE_THROW_ERROR(Exception, "path with protocol cannot be made absolute");
 			}
 		}
@@ -225,8 +225,8 @@ namespace cage
 		pathDecompose(b, bd, bp, bf, be);
 		if (!bd.empty() || (!bp.empty() && bp[0] == '/'))
 		{
-			CAGE_LOG_THROW(Stringizer() + "first path: '" + a + "'");
-			CAGE_LOG_THROW(Stringizer() + "second path: '" + b + "'");
+			CAGE_LOG_THROW(Stringizer() + "first path: " + a);
+			CAGE_LOG_THROW(Stringizer() + "second path: " + b);
 			CAGE_THROW_ERROR(Exception, "cannot join with absolute path");
 		}
 		bp = pathJoinUnchecked(bp, bf + be);
@@ -236,8 +236,8 @@ namespace cage
 		String r = pathJoinUnchecked(ap, bp);
 		if (!simplifyImplNoThrow(r))
 		{
-			CAGE_LOG_THROW(Stringizer() + "first path: '" + a + "'");
-			CAGE_LOG_THROW(Stringizer() + "second path: '" + b + "'");
+			CAGE_LOG_THROW(Stringizer() + "first path: " + a);
+			CAGE_LOG_THROW(Stringizer() + "second path: " + b);
 			CAGE_THROW_ERROR(Exception, "cannot join paths that would go beyond root");
 		}
 		if (ad.empty() && find(r, ":/") < find(r, '/'))
@@ -281,7 +281,7 @@ namespace cage
 	{
 		if (!decomposeImplNoThrow(input, drive, directory, file, extension))
 		{
-			CAGE_LOG_THROW(Stringizer() + "path: '" + input + "'");
+			CAGE_LOG_THROW(Stringizer() + "path: " + input);
 			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
 	}

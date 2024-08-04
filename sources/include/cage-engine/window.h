@@ -20,7 +20,7 @@ namespace cage
 
 		void processEvents();
 
-		// String title() const;
+		String title() const;
 		void title(const String &value);
 
 		bool isFocused() const;

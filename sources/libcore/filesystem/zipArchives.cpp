@@ -238,7 +238,7 @@ namespace cage
 						isZip = true;
 						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 							CAGE_THROW_ERROR(Exception, "cannot read zip archives that span multiple disks");
 						}
 						totalFiles = e.totalNumberOfCDFRecords;
@@ -263,13 +263,13 @@ namespace cage
 						static constexpr uint32 Signature = CDFileHeader().signature;
 						if (e.signature != Signature)
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 							CAGE_LOG_THROW(Stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record has invalid signature");
 						}
 						if (e.nameLength >= String::MaxLength)
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 							CAGE_LOG_THROW(Stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record name length is too large");
 						}
@@ -277,36 +277,36 @@ namespace cage
 						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
 						if (e.diskNumberWhereFileStarts != 0)
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+							CAGE_LOG_THROW(Stringizer() + "name: " + e.name);
 							CAGE_THROW_ERROR(Exception, "zip file record uses a different disk");
 						}
 						if (e.uncompressedSize == m || e.compressedSize == m)
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+							CAGE_LOG_THROW(Stringizer() + "name: " + e.name);
 							CAGE_THROW_ERROR(Exception, "cannot read file, zip64 not yet supported");
 						}
 						e.name = pathSimplify(e.name);
 						e.nameLength = e.name.length();
 						if (!isPathSafe(e.name))
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+							CAGE_LOG_THROW(Stringizer() + "name: " + e.name);
 							CAGE_THROW_ERROR(Exception, "zip file record name is dangerous");
 						}
 						if (e.extraFieldLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: " + myPath);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
 							d.read(e.extraFieldLength);
 							e.extraFieldLength = 0;
 						}
 						if (e.commentLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: " + myPath);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
 							d.read(e.commentLength);
 							e.commentLength = 0;
@@ -318,8 +318,8 @@ namespace cage
 							e.externalFileAttributes = 0x80; // make it FILE_ATTRIBUTE_NORMAL
 						if (e.externalFileAttributes != 0x80 && e.externalFileAttributes != 0x10)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "archive path: " + myPath);
+							CAGE_LOG(SeverityEnum::Note, "zip", Stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", Stringizer() + "skipping zip file record with unknown external file attributes: " + e.externalFileAttributes);
 							continue;
 						}
@@ -446,8 +446,8 @@ namespace cage
 			{
 				if (index != m && files[index].locked)
 				{
-					CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-					CAGE_LOG_THROW(Stringizer() + "name: '" + files[index].name + "'");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+					CAGE_LOG_THROW(Stringizer() + "name: " + files[index].name);
 					CAGE_THROW_ERROR(Exception, "file is in use");
 				}
 			}
@@ -484,8 +484,8 @@ namespace cage
 							break; // ok
 						default:
 						{
-							CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-							CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
+							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+							CAGE_LOG_THROW(Stringizer() + "name: " + path);
 							CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
 						}
 					}
@@ -521,8 +521,8 @@ namespace cage
 				const uint32 srcIndex = findRecordIndex(from);
 				if (srcIndex == m)
 				{
-					CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-					CAGE_LOG_THROW(Stringizer() + "name: '" + from + "'");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+					CAGE_LOG_THROW(Stringizer() + "name: " + from);
 					CAGE_THROW_ERROR(Exception, "source does not exist");
 				}
 				if (typeNoLock(srcIndex) == PathTypeFlags::File)
@@ -774,8 +774,8 @@ namespace cage
 			}
 			catch (...)
 			{
-				CAGE_LOG_THROW(Stringizer() + "archive path: '" + myPath + "'");
-				CAGE_LOG_THROW(Stringizer() + "name: '" + path + "'");
+				CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+				CAGE_LOG_THROW(Stringizer() + "name: " + path);
 				throw;
 			}
 		}

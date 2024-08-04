@@ -99,10 +99,10 @@ namespace cage
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process '" + config.command + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process: " + config.command);
 
 				const String workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory '" + workingDir + "'");
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -303,10 +303,10 @@ namespace cage
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process '" + config.command + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process: " + config.command);
 
 				const String workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory '" + workingDir + "'");
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
 
 				if (pipe(aStdinPipe.handles) < 0)
 					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);

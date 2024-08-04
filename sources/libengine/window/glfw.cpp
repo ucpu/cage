@@ -20,6 +20,25 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
+
+		const char *platformToString(int platform)
+		{
+			switch (platform)
+			{
+				case GLFW_PLATFORM_NULL:
+					return "null";
+				case GLFW_PLATFORM_WIN32:
+					return "win32";
+				case GLFW_PLATFORM_X11:
+					return "x11";
+				case GLFW_PLATFORM_WAYLAND:
+					return "wayland";
+				case GLFW_PLATFORM_COCOA:
+					return "cocoa";
+				default:
+					return "unknown";
+			}
+		}
 	}
 
 	void cageGlfwInitializeFunc()
@@ -30,6 +49,7 @@ namespace cage
 			glfwSetErrorCallback(&handleGlfwError);
 			if (!glfwInit())
 				CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
+			CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "glfw platform: " + platformToString(glfwGetPlatform()));
 			cageGlfwInitializeGamepads();
 			return 0;
 		}();

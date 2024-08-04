@@ -92,10 +92,10 @@ namespace cage
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 #endif // CAGE_SYSTEM_WINDOWS
 				const String name = defaultName();
-				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "creating cubeb context, name: '" + name + "'");
+				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "creating cubeb context, name: " + name);
 				cageCheckCubebError(cubeb_init(&c, name.c_str(), nullptr));
 				CAGE_ASSERT(c);
-				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "using cubeb backend: '" + cubeb_get_backend_id(c) + "'");
+				CAGE_LOG(SeverityEnum::Info, "cubeb", Stringizer() + "using cubeb backend: " + cubeb_get_backend_id(c));
 			}
 
 			~CageCubebInitializer()
@@ -206,7 +206,7 @@ namespace cage
 			SpeakerImpl(const SpeakerCreateConfig &config) : channels(config.channels), sampleRate(config.sampleRate)
 			{
 				const String name = config.name.empty() ? defaultName() : sanitizeName(config.name);
-				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "creating speaker, name: '" + name + "'");
+				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "creating speaker, name: " + name);
 				cubeb *context = cageCubebInitializeFunc();
 
 				cubeb_devid devid = nullptr;
@@ -227,7 +227,7 @@ namespace cage
 				}
 				else
 				{
-					CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "requesting device id: '" + config.deviceId + "'");
+					CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "requesting device id: " + config.deviceId);
 					DevicesCollection collection;
 					const cubeb_device_info *info = nullptr;
 					for (uint32 index = 0; index < collection.count; index++)
@@ -256,7 +256,7 @@ namespace cage
 				else
 					this->callback = config.callback;
 
-				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "initializing sound stream with " + channels + " channels, " + sampleRate + " Hz sample rate and " + latency + " frames latency");
+				CAGE_LOG(SeverityEnum::Info, "sound", Stringizer() + "initializing sound stream with " + channels + " channels, " + sampleRate + " Hz sample rate, and " + latency + " frames latency");
 
 				{
 					cubeb_stream_params params = {};

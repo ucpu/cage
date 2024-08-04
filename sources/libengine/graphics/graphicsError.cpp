@@ -16,13 +16,7 @@ namespace cage
 	namespace
 	{
 		const ConfigBool confDetailedInfo("cage/graphics/printExtensions", false);
-		const ConfigBool confLogSynchronous("cage/graphics/synchronousCallback",
-#ifdef CAGE_DEBUG
-			true
-#else
-			false
-#endif
-		);
+		const ConfigBool confLogSynchronous("cage/graphics/synchronousCallback", CAGE_DEBUG_BOOL);
 	}
 
 	void checkGlError()
@@ -191,8 +185,8 @@ namespace cage
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl version: " + major + "." + minor);
-			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: '" + (char *)vendor + "'");
-			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: '" + (char *)renderer + "'");
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device vendor: " + (char *)vendor);
+			CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "device renderer: " + (char *)renderer);
 			if (confDetailedInfo)
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "opengl extensions: ");
@@ -201,7 +195,7 @@ namespace cage
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "extension: '" + (char *)ext + "'");
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "graphics", Stringizer() + "extension: " + (char *)ext);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}

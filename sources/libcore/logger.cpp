@@ -424,9 +424,9 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "systemInfo", "system information:");
 					try
 					{
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "system name: '" + systemName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "user name: '" + userName() + "'");
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "system name: " + systemName());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "user name: " + userName());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "host name: " + hostName());
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor name: " + processorName());
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
 						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", Stringizer() + "threads count: " + processorsCount());
