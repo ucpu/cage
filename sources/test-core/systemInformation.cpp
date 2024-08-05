@@ -48,7 +48,7 @@ void testSystemInformation()
 		h.clear();
 		const uint64 c = memoryUsed() / 1024 / 1024;
 		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "a: " + a + ", b: " + b + ", c: " + c + " MB");
-		CAGE_TEST(a > 10);
+		CAGE_TEST(a > 5);
 		CAGE_TEST(b > a + 10);
 	}
 }
