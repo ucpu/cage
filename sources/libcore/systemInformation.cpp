@@ -27,14 +27,19 @@ namespace cage
 		{
 			Holder<File> f = readFile(path);
 			std::string res;
+			res.reserve(1000);
 			try
 			{
 				detail::OverrideException o;
+				char p = 0;
 				while (true)
 				{
 					char c = 0;
 					f->read(PointerRange<char>(&c, &c + 1));
 					res += c;
+					if (c == '\n' && p == '\n')
+						break; // empty line
+					p = c;
 				}
 			}
 			catch (...)
