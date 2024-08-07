@@ -39,8 +39,7 @@ namespace cage
 			load_(Scheme, assetName, textId, customScheme, std::move(customData));
 		}
 
-		// returns null if the asset is not yet loaded or has different scheme
-		// throws an exception if the asset failed to load
+		// returns null if the asset is not yet loaded, failed to load, or has different scheme
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{

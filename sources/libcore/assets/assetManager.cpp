@@ -743,13 +743,8 @@ namespace cage
 		if (it == publicIndex.end())
 			return {}; // not found
 		const auto &a = it->second;
-		if (a->scheme != scheme)
+		if (a->scheme != scheme || a->failed)
 			return {}; // different scheme
-		if (a->failed)
-		{
-			CAGE_LOG_THROW(Stringizer() + "asset real name: " + realName + ", text name: " + a->textName);
-			CAGE_THROW_ERROR(Exception, "accessing asset that failed to load");
-		}
 		CAGE_ASSERT(a->ref);
 		CAGE_ASSERT(+a->ref != (void *)1);
 		return a->ref.share();

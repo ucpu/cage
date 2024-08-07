@@ -467,7 +467,7 @@ void testAssetManager()
 			waitProcessing(man);
 			detail::globalBreakpointOverride(true);
 		}
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
+		CAGE_TEST((!man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10)));
 		man->unload(10);
 		man->waitTillEmpty();
 	}
@@ -482,7 +482,7 @@ void testAssetManager()
 			waitProcessing(man);
 			detail::globalBreakpointOverride(true);
 		}
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
+		CAGE_TEST((!man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
 		man->unload(5000);
 		man->waitTillEmpty();
 	}
@@ -502,7 +502,7 @@ void testAssetManager()
 		CAGE_TEST(AssetCounter::counter == 2);
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(20)));
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
+		CAGE_TEST((!man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
 		man->unload(5000);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
@@ -524,7 +524,7 @@ void testAssetManager()
 		CAGE_TEST(AssetCounter::counter == 2);
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(20)));
-		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
+		CAGE_TEST((!man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
 		man->unload(10);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
