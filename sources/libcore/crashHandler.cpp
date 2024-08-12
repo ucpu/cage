@@ -205,6 +205,8 @@ namespace cage
 			static std::mutex mutex;
 			std::scoped_lock lock(mutex);
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
+			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_DOTNET)
+				return;
 			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION || ex->ExceptionRecord->ExceptionCode == EXCEPTION_IN_PAGE_ERROR)
 			{
