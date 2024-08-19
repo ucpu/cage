@@ -44,19 +44,19 @@ namespace cage
 			impl->stack.push_back({ e });
 		}
 
-		BuilderItem::BuilderItem(BuilderItem &&other) 
+		BuilderItem::BuilderItem(BuilderItem &&other)
 		{
 			std::swap(g, other.g);
 			std::swap(e, other.e);
 		}
 
-		BuilderItem::BuilderItem(BuilderItem &other) 
+		BuilderItem::BuilderItem(BuilderItem &other)
 		{
 			std::swap(g, other.g);
 			std::swap(e, other.e);
 		}
 
-		BuilderItem &BuilderItem::operator=(BuilderItem &other) 
+		BuilderItem &BuilderItem::operator=(BuilderItem &other)
 		{
 			CAGE_ASSERT(this != &other);
 			std::swap(g, other.g);
@@ -64,7 +64,7 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem &BuilderItem::operator=(BuilderItem &&other) 
+		BuilderItem &BuilderItem::operator=(BuilderItem &&other)
 		{
 			CAGE_ASSERT(this != &other);
 			std::swap(g, other.g);

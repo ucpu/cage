@@ -1,5 +1,5 @@
-#include <vector>
 #include <cstring>
+#include <vector>
 
 #include <cage-core/utf.h>
 #include <cage-engine/assetStructs.h>

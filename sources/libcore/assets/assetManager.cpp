@@ -239,7 +239,10 @@ namespace cage
 				if (asset->threadIndex == m)
 					tasksCleanupQueue.push(tasksRunAsync("asset load", Delegate<void(Work &, uint32)>([](Work &w, uint32) { w.doLoad(); }), systemMemory().createHolder<Work>(std::move(asset))));
 				else
-					customProcessingQueues[asset->threadIndex]->push(asset.share());
+				{
+					const uint32 ti = asset->threadIndex;
+					customProcessingQueues[ti]->push(std::move(asset));
+				}
 			}
 
 			void enqueuePublish(Holder<Asset> asset)
@@ -256,7 +259,8 @@ namespace cage
 				else
 				{
 					CAGE_ASSERT(asset->threadIndex < customProcessingQueues.size());
-					customProcessingQueues[asset->threadIndex]->push(asset.share());
+					const uint32 ti = asset->threadIndex;
+					customProcessingQueues[ti]->push(std::move(asset));
 				}
 			}
 

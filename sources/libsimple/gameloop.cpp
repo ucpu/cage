@@ -225,7 +225,7 @@ namespace cage
 					const uint64 start = applicationTime();
 					while (assets->processCustomThread(1))
 					{
-						if (applicationTime() > start + 10'000)
+						if (applicationTime() > start + 5'000)
 							break;
 					}
 				}
@@ -251,7 +251,7 @@ namespace cage
 			{
 				graphicsFinalize();
 				assets->unloadCustomThread(1);
-                window->makeNotCurrent();
+				window->makeNotCurrent();
 			}
 
 			//////////////////////////////////////

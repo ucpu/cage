@@ -759,9 +759,11 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifdef CAGE_DEBUG
-		ScopeLock _(mutex);
-		CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
-		impl->currentThreadIdGlBound = currentThreadId();
+		{
+			ScopeLock _(mutex);
+			CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
+			impl->currentThreadIdGlBound = currentThreadId();
+		}
 #endif
 		glfwMakeContextCurrent(impl->window);
 	}
@@ -769,10 +771,12 @@ namespace cage
 	void Window::makeNotCurrent()
 	{
 #ifdef CAGE_DEBUG
-		WindowImpl *impl = (WindowImpl *)this;
-		ScopeLock _(mutex);
-		CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
-		impl->currentThreadIdGlBound = 0;
+		{
+			WindowImpl *impl = (WindowImpl *)this;
+			ScopeLock _(mutex);
+			CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
+			impl->currentThreadIdGlBound = 0;
+		}
 #endif
 		glfwMakeContextCurrent(nullptr);
 	}
@@ -780,6 +784,12 @@ namespace cage
 	void Window::swapBuffers()
 	{
 		WindowImpl *impl = (WindowImpl *)this;
+#ifdef CAGE_DEBUG
+		{
+			ScopeLock _(mutex);
+			CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
+		}
+#endif
 		glfwSwapBuffers(impl->window);
 	}
 
