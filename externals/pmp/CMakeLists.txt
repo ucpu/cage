@@ -18,3 +18,27 @@ if(MSVC)
 	target_compile_options(pmp PRIVATE /wd4244)
 	target_compile_options(pmp PRIVATE /wd4305)
 endif()
+
+target_precompile_headers(pmp PRIVATE
+	<Eigen/Dense>
+	<Eigen/Sparse>
+	<algorithm>
+	<cassert>
+	<cmath>
+	<compare>
+	<concepts>
+	<cstddef>
+	<cstdint>
+	<filesystem>
+	<iterator>
+	<limits>
+	<map>
+	<memory>
+	<numbers>
+	<ostream>
+	<set>
+	<stdexcept>
+	<string>
+	<utility>
+	<vector>
+)

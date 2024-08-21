@@ -25,3 +25,40 @@ add_subdirectory(assimp)
 
 # assimp/contrib/unzip somehow incorrectly detects zlib(-ng) version and tries to use undefined type
 target_compile_definitions(assimp PRIVATE "ZEXPORT=" "z_crc_t=uint32_t")
+
+target_precompile_headers(assimp PRIVATE
+	<limits.h>
+	<math.h>
+	<stddef.h>
+	<stdint.h>
+	<string.h>
+	<sys/types.h>
+	"$<$<COMPILE_LANGUAGE:CXX>:<algorithm$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cctype$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<chrono$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cmath$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstdarg$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstddef$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstdint$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstdio$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstdlib$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<cstring$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<exception$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<functional$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<iomanip$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<limits$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<list$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<locale$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<map$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<memory$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<new$<ANGLE-R>>" 
+	"$<$<COMPILE_LANGUAGE:CXX>:<numeric$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<set$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<sstream$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<stdexcept$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<string$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<unordered_map$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<unordered_set$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<utility$<ANGLE-R>>"
+	"$<$<COMPILE_LANGUAGE:CXX>:<vector$<ANGLE-R>>"
+)
