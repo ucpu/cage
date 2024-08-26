@@ -33,6 +33,8 @@ namespace cage
 				return "special";
 			case MeshImportTextureType::Normal:
 				return "normal";
+			case MeshImportTextureType::Custom:
+				return "custom";
 			case MeshImportTextureType::Opacity:
 				return "opacity";
 			case MeshImportTextureType::Roughness:
@@ -1026,6 +1028,7 @@ namespace cage
 				loadTextureCage<MeshImportTextureType::Albedo>(pathBase, +ini, textures, part.textures);
 				loadTextureCage<MeshImportTextureType::Special>(pathBase, +ini, textures, part.textures);
 				loadTextureCage<MeshImportTextureType::Normal>(pathBase, +ini, textures, part.textures);
+				loadTextureCage<MeshImportTextureType::Custom>(pathBase, +ini, textures, part.textures);
 				part.textures = std::move(textures);
 
 				for (const String &n : ini->items("flags"))
@@ -1076,7 +1079,7 @@ namespace cage
 						part.boundingBox = Aabb::Universe();
 						continue;
 					}
-					CAGE_LOG_THROW(Stringizer() + "provided flag: '" + v + "'");
+					CAGE_LOG_THROW(Stringizer() + "provided flag: " + v);
 					CAGE_THROW_ERROR(Exception, "unknown material flag");
 				}
 
@@ -1258,7 +1261,7 @@ namespace cage
 				path = pathToAbs(path);
 
 				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at '" + path + "'");
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at " + path);
 
 				if (pathIsFile(path))
 					loadMaterialCage(path, part);

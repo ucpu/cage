@@ -304,6 +304,9 @@ void processModel()
 			case MeshImportTextureType::Normal:
 				dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
 				break;
+			case MeshImportTextureType::Custom:
+				dsm.textureNames[3] = n;
+				break;
 			default:
 				break;
 		}

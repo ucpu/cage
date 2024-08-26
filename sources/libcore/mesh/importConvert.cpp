@@ -344,6 +344,7 @@ namespace cage
 						case MeshImportTextureType::Special:
 						case MeshImportTextureType::Normal:
 						case MeshImportTextureType::Bump:
+						case MeshImportTextureType::Custom:
 							return false;
 						default:
 							return true;

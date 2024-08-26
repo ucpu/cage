@@ -24,6 +24,7 @@ namespace cage
 		Albedo,
 		Special, // cage material texture: roughness, metallic, emission, mask
 		Normal,
+		Custom,
 		Opacity,
 		Roughness,
 		Metallic,

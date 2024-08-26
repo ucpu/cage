@@ -507,7 +507,7 @@ namespace cage
 							}
 						}
 						else
-							renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_USER);
+							renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_CUSTOM);
 					}
 				}
 				updateShaderRoutinesForTextures(textures, uniOptions);
