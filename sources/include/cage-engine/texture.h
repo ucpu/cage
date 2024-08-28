@@ -25,6 +25,8 @@ namespace cage
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
 		uint32 mipmapLevels() const; // 1 is just base level
+		Vec2i mipmapResolution(uint32 mipmapLevel) const;
+		Vec3i mipmapResolution3(uint32 mipmapLevel) const;
 
 		void bind(uint32 bindingPoint) const;
 		void bindImage(uint32 bindingPoint, bool read, bool write) const; // for use in compute shaders
@@ -34,16 +36,16 @@ namespace cage
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void swizzle(const uint32 values[4]);
 
-		void initialize(Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat); // or cube
-		void initialize(Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat);
+		void initialize(Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat); // 2D or Cube
+		void initialize(Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat); // 3D or 2D array
 
 		void importImage(const Image *img);
-		void image2d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer);
-		void image2dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer);
-		void imageCube(uint32 mipmapLevel, uint32 faceIndex, uint32 format, uint32 type, PointerRange<const char> buffer);
-		void imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, PointerRange<const char> buffer);
-		void image3d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer);
-		void image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer);
+		void image2d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer); // 2D or Rectangle
+		void image2dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer); // 2D
+		void image2dSlice(uint32 mipmapLevel, uint32 sliceIndex, uint32 format, uint32 type, PointerRange<const char> buffer); // 3D slice or 2D layer or Cube face
+		void image2dSliceCompressed(uint32 mipmapLevel, uint32 sliceIndex, PointerRange<const char> buffer); // 3D slice or 2D layer or Cube face
+		void image3d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer); // 3D or 2D array
+		void image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer); // 3D or 2D array
 
 		void generateMipmaps();
 	};

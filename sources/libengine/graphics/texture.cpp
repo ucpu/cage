@@ -95,6 +95,18 @@ namespace cage
 		return impl->mipmapLevels;
 	}
 
+	Vec2i Texture::mipmapResolution(uint32 mipmapLevel) const
+	{
+		const TextureImpl *impl = (const TextureImpl *)this;
+		return Vec2i(impl->mipRes(mipmapLevel));
+	}
+
+	Vec3i Texture::mipmapResolution3(uint32 mipmapLevel) const
+	{
+		const TextureImpl *impl = (const TextureImpl *)this;
+		return impl->mipRes(mipmapLevel);
+	}
+
 	void Texture::bind(uint32 bindingPoint) const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
@@ -197,8 +209,8 @@ namespace cage
 							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 							return;
 					}
+					break;
 				}
-				break;
 				default:
 					// pass
 					break;
@@ -229,8 +241,8 @@ namespace cage
 							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 							return;
 					}
+					break;
 				}
-				break;
 				case ImageFormatEnum::U16:
 				{
 					switch (img->channels())
@@ -252,8 +264,8 @@ namespace cage
 							image2d(0, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
 							return;
 					}
+					break;
 				}
-				break;
 				case ImageFormatEnum::Float:
 				{
 					switch (img->channels())
@@ -275,8 +287,8 @@ namespace cage
 							image2d(0, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
 							return;
 					}
+					break;
 				}
-				break;
 				default:
 					// pass
 					break;
@@ -307,25 +319,25 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCube(uint32 mipmapLevel, uint32 faceIndex, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::image2dSlice(uint32 mipmapLevel, uint32 sliceIndex, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
+		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP || impl->target == GL_TEXTURE_2D_ARRAY);
 		CAGE_ASSERT(impl->internalFormat != 0);
 		CAGE_ASSERT(!buffer.empty());
 		const Vec3i res = impl->mipRes(mipmapLevel);
-		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, faceIndex, res[0], res[1], 1, format, type, buffer.data());
+		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, sliceIndex, res[0], res[1], 1, format, type, buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCubeCompressed(uint32 mipmapLevel, uint32 faceIndex, PointerRange<const char> buffer)
+	void Texture::image2dSliceCompressed(uint32 mipmapLevel, uint32 sliceIndex, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
+		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP || impl->target == GL_TEXTURE_2D_ARRAY);
 		CAGE_ASSERT(impl->internalFormat != 0);
 		CAGE_ASSERT(!buffer.empty());
 		const Vec3i res = impl->mipRes(mipmapLevel);
-		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, faceIndex, res[0], res[1], 1, impl->internalFormat, buffer.size(), buffer.data());
+		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, sliceIndex, res[0], res[1], 1, impl->internalFormat, buffer.size(), buffer.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

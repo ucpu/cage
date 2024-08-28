@@ -772,7 +772,7 @@ namespace cage
 
 		void defaultFetch(AssetContext *asset)
 		{
-			auto impl = ((Asset *)asset)->impl;
+			AssetManagerImpl *impl = ((Asset *)asset)->impl;
 
 			Holder<File> file;
 			{
@@ -825,6 +825,10 @@ namespace cage
 				file->read(h.compressedSize ? asset->compressedData : asset->originalData);
 
 			CAGE_ASSERT(file->tell() == file->size());
+
+			const auto f = impl->schemes[asset->scheme].fetch;
+			if (f && f != AssetDelegate().bind<defaultFetch>())
+				impl->schemes[asset->scheme].fetch(asset);
 		}
 
 		void defaultDecompress(AssetContext *asset)
