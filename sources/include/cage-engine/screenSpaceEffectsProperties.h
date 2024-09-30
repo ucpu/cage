@@ -45,17 +45,6 @@ namespace cage
 		uint32 blurPasses = 5;
 		Real threshold = 1;
 	};
-
-	struct CAGE_ENGINE_API ScreenSpaceTonemap
-	{
-		Real shoulderStrength = 0.15;
-		Real linearStrength = 0.5;
-		Real linearAngle = 0.1;
-		Real toeStrength = 0.2;
-		Real toeNumerator = 0.02;
-		Real toeDenominator = 0.3;
-		Real white = 11.2;
-	};
 }
 
 #endif // guard_screenSpaceEffectsProperties_h_0156sdrf4treth1

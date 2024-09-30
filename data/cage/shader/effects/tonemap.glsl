@@ -1,4 +1,3 @@
-
 $include vertex.glsl
 
 $define shader fragment
@@ -7,22 +6,26 @@ layout(binding = 0) uniform sampler2D texColor;
 
 layout(std140, binding = 2) uniform Tonemap
 {
-	vec4 tonemapFirst; // shoulderStrength, linearStrength, linearAngle, toeStrength
-	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, tonemapEnabled
-	vec4 gammaParams; // gamma
+	vec4 params; // gamma, tonemapEnabled
 };
 
 out vec3 outColor;
 
-vec3 uncharted2Tonemap(vec3 x)
+// https://github.com/KhronosGroup/ToneMapping/blob/main/PBR_Neutral/pbrNeutral.glsl
+vec3 neutralToneMapping(vec3 color)
 {
-	float shoulderStrength = tonemapFirst[0];
-	float linearStrength = tonemapFirst[1];
-	float linearAngle = tonemapFirst[2];
-	float toeStrength = tonemapFirst[3];
-	float toeNumerator = tonemapSecond[0];
-	float toeDenominator = tonemapSecond[1];
-	return ((x * (shoulderStrength * x + linearAngle * linearStrength) + toeStrength * toeNumerator) / (x * (shoulderStrength * x + linearStrength) + toeStrength * toeDenominator)) - toeNumerator / toeDenominator;
+	const float startCompression = 0.8 - 0.04;
+	const float desaturation = 0.15;
+	float x = min(color.r, min(color.g, color.b));
+	float offset = x < 0.08 ? x - 6.25 * x * x : 0.04;
+	color -= offset;
+	float peak = max(color.r, max(color.g, color.b));
+	if (peak < startCompression) return color;
+	const float d = 1. - startCompression;
+	float newPeak = 1. - d * d / (peak + d - startCompression);
+	color *= newPeak / peak;
+	float g = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
+	return mix(color, newPeak * vec3(1, 1, 1), g);
 }
 
 void main()
@@ -30,14 +33,11 @@ void main()
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 
 	// tone mapping
-	if (tonemapSecond[3] > 0.5)
-	{
-		const float exposureBias = 2;
-		color = uncharted2Tonemap(color * exposureBias) / uncharted2Tonemap(vec3(tonemapSecond[2]));
-	}
+	if (params[1] > 0.5)
+		color = neutralToneMapping(color);
 
 	// gamma correction
-	color = pow(color, vec3(gammaParams[0]));
+	color = pow(color, vec3(params[0]));
 
 	outColor = color;
 }

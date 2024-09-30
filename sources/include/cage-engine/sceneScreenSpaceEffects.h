@@ -23,7 +23,6 @@ namespace cage
 		ScreenSpaceAmbientOcclusion ssao;
 		ScreenSpaceBloom bloom;
 		ScreenSpaceEyeAdaptation eyeAdaptation;
-		ScreenSpaceTonemap tonemap;
 		ScreenSpaceDepthOfField depthOfField;
 		Real gamma = 2.2;
 		ScreenSpaceEffectsFlags effects = ScreenSpaceEffectsFlags::Default;

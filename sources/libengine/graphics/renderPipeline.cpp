@@ -1186,11 +1186,10 @@ namespace cage
 					{
 						ScreenSpaceTonemapConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceTonemap &)cfg = data.effects.tonemap;
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
-						cfg.tonemapEnabled = any(data.effects.effects & ScreenSpaceEffectsFlags::ToneMapping);
 						cfg.gamma = any(data.effects.effects & ScreenSpaceEffectsFlags::GammaCorrection) ? data.effects.gamma : 1;
+						cfg.tonemapEnabled = any(data.effects.effects & ScreenSpaceEffectsFlags::ToneMapping);
 						screenSpaceTonemap(cfg);
 						std::swap(texSource, texTarget);
 					}

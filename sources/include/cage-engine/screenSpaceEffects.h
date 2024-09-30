@@ -48,7 +48,7 @@ namespace cage
 		TextureHandle outColor;
 	};
 
-	struct CAGE_ENGINE_API ScreenSpaceTonemapConfig : public ScreenSpaceCommonConfig, public ScreenSpaceTonemap
+	struct CAGE_ENGINE_API ScreenSpaceTonemapConfig : public ScreenSpaceCommonConfig
 	{
 		TextureHandle inColor;
 		TextureHandle outColor;

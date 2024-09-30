@@ -340,13 +340,10 @@ namespace cage
 
 		struct Shader
 		{
-			ScreenSpaceTonemap tonemap; // 7 reals
-			Real tonemapEnabled;
-			Vec4 gamma;
+			Vec4 params; // gamma, tonemapEnabled
 		} s;
-		s.tonemap = config;
-		s.tonemapEnabled = config.tonemapEnabled;
-		s.gamma = Vec4(1.0 / config.gamma, 0, 0, 0);
+		s.params[0] = 1.0 / config.gamma;
+		s.params[1] = config.tonemapEnabled;
 		q->universalUniformStruct(s, 2);
 
 		q->colorTexture(fb, 0, config.outColor);
