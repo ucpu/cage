@@ -51,7 +51,7 @@ namespace cage
 	struct CAGE_CORE_API Triangle
 	{
 		// data
-		Vec3 vertices[3]{ Vec3::Nan(), Vec3::Nan(), Vec3::Nan() };
+		Vec3 vertices[3] = { Vec3::Nan(), Vec3::Nan(), Vec3::Nan() };
 
 		// constructors
 		constexpr Triangle() {}
@@ -225,12 +225,12 @@ namespace cage
 		bool empty() const { return !valid(); }
 	};
 
-	// note: some intersection tests with frustums are conservative
+	// note: some intersection tests with frustums are inexact (conservative)
 	struct CAGE_CORE_API Frustum
 	{
 		// data
-		Mat4 viewProj;
-		Vec4 planes[6];
+		Mat4 viewProj = Mat4::Nan();
+		Vec4 planes[6] = { Vec4::Nan(), Vec4::Nan(), Vec4::Nan(), Vec4::Nan(), Vec4::Nan(), Vec4::Nan() };
 
 		// constructor
 		constexpr Frustum() {}
