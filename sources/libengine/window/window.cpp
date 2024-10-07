@@ -495,7 +495,7 @@ namespace cage
 
 	namespace
 	{
-		void normalizeWindow(WindowImpl *impl, WindowFlags flags)
+		void normalizeWindow(WindowImpl *impl, WindowFlags flags, bool fullscreen = false)
 		{
 			if (impl->isFullscreen())
 				glfwSetWindowMonitor(impl->window, nullptr, 100, 100, 800, 600, 0);
@@ -503,18 +503,28 @@ namespace cage
 				glfwShowWindow(impl->window);
 			if (impl->isMinimized() || impl->isMaximized())
 				glfwRestoreWindow(impl->window);
-			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, any(flags & WindowFlags::Border));
-			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, any(flags & WindowFlags::Resizeable));
+
+			// linux: the window minimizes immediately after fullscreen if these attributes are changed
+#ifdef CAGE_SYSTEM_WINDOWS
+			fullscreen = false;
+#endif
+			if (!fullscreen)
+			{
+				glfwSetWindowAttrib(impl->window, GLFW_DECORATED, any(flags & WindowFlags::Border));
+				glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, any(flags & WindowFlags::Resizeable));
+			}
 		}
 	}
 
 	void Window::setFullscreen(Vec2i resolution, uint32 frequency, const String &deviceId)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
-		normalizeWindow(impl, WindowFlags::None);
+		normalizeWindow(impl, WindowFlags::None, true);
 		GLFWmonitor *m = getMonitorById(deviceId);
+		CAGE_ASSERT(m);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
-		glfwSetWindowMonitor(impl->window, m, 0, 0, resolution[0] == 0 ? v->width : resolution[0], resolution[1] == 0 ? v->height : resolution[1], frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
+		CAGE_ASSERT(v);
+		glfwSetWindowMonitor(impl->window, m, 0, 0, resolution[0] > 0 ? resolution[0] : v->width, resolution[1] > 0 ? resolution[1] : v->height, frequency > 0 ? frequency : v->refreshRate);
 	}
 
 	void Window::setMaximized()
