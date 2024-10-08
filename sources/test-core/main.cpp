@@ -78,9 +78,7 @@ void generatePointsOnSphere();
 
 int main()
 {
-	Holder<Logger> log1 = newLogger();
-	log1->format.bind<logFormatConsole>();
-	log1->output.bind<logOutputStdOut>();
+	initializeConsoleLogger();
 
 	//generatePointsOnSphere();
 	testMacros();

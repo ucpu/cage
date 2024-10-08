@@ -105,11 +105,7 @@ bool logFilter(const detail::LoggerInfo &i)
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> log = newLogger();
-	log->filter.bind<logFilter>();
-	log->format.bind<logFormatConsole>();
-	log->output.bind<logOutputStdOut>();
-
+	initializeConsoleLogger()->filter.bind<logFilter>();
 	try
 	{
 		Holder<Ini> cmd = newIni();

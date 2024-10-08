@@ -9,18 +9,14 @@ void configParseCmd(int argc, const char *args[]);
 void start();
 void listen();
 
-bool consoleLogFilter(const cage::detail::LoggerInfo &info)
+bool logFilter(const cage::detail::LoggerInfo &info)
 {
 	return info.severity >= SeverityEnum::Error || String(info.component) == "exception" || String(info.component) == "asset" || String(info.component) == "verdict" || String(info.component) == "help";
 }
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> conLog = newLogger();
-	conLog->filter.bind<&consoleLogFilter>();
-	conLog->format.bind<&logFormatConsole>();
-	conLog->output.bind<&logOutputStdOut>();
-
+	initializeConsoleLogger()->filter.bind<logFilter>();
 	try
 	{
 		configParseCmd(argc, args);

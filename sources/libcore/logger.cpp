@@ -60,7 +60,7 @@ namespace cage
 					loggerLast()->next = this;
 				}
 				loggerLast() = this;
-				output.bind<&logOutputStdErr>();
+				output.bind<logOutputStdErr>();
 			}
 
 			~LoggerImpl()
@@ -98,12 +98,12 @@ namespace cage
 					if (detail::isDebugging())
 					{
 						loggerDebug = newLogger();
-						loggerDebug->format.bind<&logFormatConsole>();
-						loggerDebug->output.bind<&logOutputDebug>();
+						loggerDebug->format.bind<logFormatConsole>();
+						loggerDebug->output.bind<logOutputDebug>();
 					}
 
 					loggerFile = newLogger();
-					loggerFile->format.bind<&logFormatFileShort>();
+					loggerFile->format.bind<logFormatFileShort>();
 
 					try
 					{
@@ -456,5 +456,22 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
 		} initialLogInstance;
+
+		struct ConsoleLogger : private Immovable
+		{
+			Holder<Logger> conLog = newLogger();
+
+			ConsoleLogger()
+			{
+				conLog->format.bind<logFormatConsole>();
+				conLog->output.bind<logOutputStdOut>();
+			}
+		};
+	}
+
+	Logger *initializeConsoleLogger()
+	{
+		static ConsoleLogger *inst = new ConsoleLogger(); // intentional leak
+		return +inst->conLog;
 	}
 }

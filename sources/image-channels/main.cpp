@@ -84,10 +84,7 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> log = newLogger();
-	log->format.bind<logFormatConsole>();
-	log->output.bind<logOutputStdOut>();
-
+	initializeConsoleLogger();
 	try
 	{
 		Holder<Ini> cmd = newIni();

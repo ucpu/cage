@@ -76,10 +76,7 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> log = newLogger();
-	log->format.bind<logFormatConsole>();
-	log->output.bind<logOutputStdOut>();
-
+	initializeConsoleLogger();
 	try
 	{
 		Holder<Ini> cmd = newIni();

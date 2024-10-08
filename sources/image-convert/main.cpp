@@ -29,10 +29,7 @@ void convert(String src, const String &format, bool preserveOriginal)
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> log = newLogger();
-	log->format.bind<logFormatConsole>();
-	log->output.bind<logOutputStdOut>();
-
+	initializeConsoleLogger();
 	try
 	{
 		Holder<Ini> cmd = newIni();

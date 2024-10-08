@@ -26,10 +26,7 @@ void info(const String &src)
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> log = newLogger();
-	log->format.bind<logFormatConsole>();
-	log->output.bind<logOutputStdOut>();
-
+	initializeConsoleLogger();
 	try
 	{
 		Holder<Ini> cmd = newIni();
