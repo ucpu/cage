@@ -3,12 +3,7 @@ $include vertex.glsl
 
 $define shader fragment
 
-$include dofParams.glsl
-
-layout(location = 0) uniform int uniPass;
-
 layout(binding = 0) uniform sampler2D texColor;
-layout(binding = 1) uniform sampler2D texDepth;
 
 out vec3 outDof;
 
@@ -24,8 +19,5 @@ void main()
 		for (int x = 0; x < downscale; x++)
 			color += texelFetch(texColor, ivec2(gl_FragCoord) * downscale + ivec2(x, y) - downscale / 2, 0).rgb;
 	color /= float(downscale * downscale);
-	float depth = textureLod(texDepth, uv, 0).x;
-	float contribs[2];
-	dofContribution(uv, depth, contribs[0], contribs[1]);
-	outDof = color * contribs[uniPass];
+	outDof = color;
 }

@@ -154,49 +154,39 @@ namespace cage
 		s.dofFar = Vec4(fd + fr, fd + fr + br, 0, 0);
 		q->universalUniformStruct(s, 2);
 
-		TextureHandle texNear = provTex(config.provisionals, "dofNear", res, 1, GL_RGB16F);
-		TextureHandle texFar = provTex(config.provisionals, "dofFar", res, 1, GL_RGB16F);
-
-		q->bind(config.inColor, 0);
-		q->bind(config.inDepth, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofCollect.glsl"))->get(0);
-		q->bind(shader);
+		TextureHandle texDof = provTex(config.provisionals, "dofColor", res, 1, GL_RGB16F);
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-		{ // collect near
-			q->colorTexture(fb, 0, texNear);
+
+		{ // collect
+			q->bind(config.inColor, 0);
+			q->bind(config.inDepth, 1);
+			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofCollect.glsl"))->get(0);
+			q->bind(shader);
+			q->colorTexture(fb, 0, texDof);
 			q->checkFrameBuffer(fb);
-			q->uniform(shader, 0, 0);
-			q->draw(model);
-		}
-		{ // collect far
-			q->colorTexture(fb, 0, texFar);
-			q->checkFrameBuffer(fb);
-			q->uniform(shader, 0, 1);
 			q->draw(model);
 		}
 
-		// blur
-		GfGaussianBlurConfig gb;
-		(ScreenSpaceCommonConfig &)gb = config;
-		gb.resolution = res;
-		gb.internalFormat = GL_RGB16F;
-		gb.texture = texNear;
-		for (uint32 i = 0; i < config.blurPasses; i++)
-			gfGaussianBlur(gb);
-		gb.texture = texFar;
-		for (uint32 i = 0; i < config.blurPasses; i++)
-			gfGaussianBlur(gb);
+		{ // blur
+			GfGaussianBlurConfig gb;
+			(ScreenSpaceCommonConfig &)gb = config;
+			gb.resolution = res;
+			gb.internalFormat = GL_RGB16F;
+			gb.texture = texDof;
+			for (uint32 i = 0; i < config.blurPasses; i++)
+				gfGaussianBlur(gb);
+		}
 
-		// apply
-		q->viewport(Vec2i(), config.resolution);
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(config.inDepth, 1);
-		q->bind(texNear, 2);
-		q->bind(texFar, 3);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofApply.glsl"))->get(0));
-		q->draw(model);
+		{ // apply
+			q->viewport(Vec2i(), config.resolution);
+			q->colorTexture(fb, 0, config.outColor);
+			q->checkFrameBuffer(fb);
+			q->bind(config.inColor, 0);
+			q->bind(config.inDepth, 1);
+			q->bind(texDof, 2);
+			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/dofApply.glsl"))->get(0));
+			q->draw(model);
+		}
 	}
 
 	namespace
