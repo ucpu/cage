@@ -4,6 +4,7 @@
 	#endif
 	#include <Windows.h>
 	#pragma comment(lib, "opengl32") // wglGetCurrentDC
+	#define XR_USE_PLATFORM_WIN32
 #endif // CAGE_SYSTEM_WINDOWS
 
 #define XR_USE_GRAPHICS_API_OPENGL
@@ -51,7 +52,7 @@ namespace cage
 
 #else
 
-			CAGE_THROW_CRITICAL(Exception, "openxr currently works on windows only");
+			CAGE_THROW_CRITICAL(Exception, "cage openxr currently works on windows only");
 
 			char binding[100] = {}; // dummy structure to allow compiling
 			//XrGraphicsBindingOpenGLXlibKHR binding;
