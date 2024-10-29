@@ -59,13 +59,17 @@ namespace cage
 
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
-			Vec2 stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
+			Vec2 stateMousePosition;
+			Vec2 lastRelativePosition;
 			Window *const shareContext = nullptr;
 			GLFWwindow *window = nullptr;
-			const int vsync = true;
+			const int vsync = -1;
 			bool focus = true;
+			bool mouseIntendVisible = true;
+			bool mouseIntendRelative = false;
+
 #ifdef CAGE_DEBUG
 			uint64 currentThreadIdGlBound = 0;
 #endif
@@ -74,8 +78,6 @@ namespace cage
 			Holder<Thread> windowThread;
 			Holder<Semaphore> windowSemaphore;
 			std::atomic<bool> stopping = false;
-			Vec2 mouseOffsetApi;
-			ConcurrentQueue<Vec2> mouseOffsetsThr;
 
 			void threadEntry()
 			{
@@ -90,24 +92,11 @@ namespace cage
 				windowSemaphore->unlock();
 				while (!stopping)
 				{
+					updateMouseMode();
 					{
 						ScopeLock l(cageGlfwMutex());
 						glfwPollEvents();
 					}
-
-					Vec2 d;
-					while (mouseOffsetsThr.tryPop(d))
-					{
-						double x, y;
-						glfwGetCursorPos(window, &x, &y);
-						x += d[0].value;
-						y += d[1].value;
-						glfwSetCursorPos(window, x, y);
-						MouseOffset off;
-						off.off = -d;
-						eventsQueue.push(off);
-					}
-
 					threadSleep(5000);
 				}
 				finalizeWindow();
@@ -176,6 +165,8 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
 				glfwSetWindowSizeLimits(window, 800, 600, GLFW_DONT_CARE, GLFW_DONT_CARE);
+				//if (glfwRawMouseMotionSupported())
+				//	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 				initializeEvents();
 			}
 
@@ -187,6 +178,59 @@ namespace cage
 			}
 
 			void initializeEvents();
+
+			void updateMouseMode()
+			{
+				int intent = GLFW_CURSOR_NORMAL;
+				if (!mouseIntendVisible)
+					intent = GLFW_CURSOR_HIDDEN;
+				if (mouseIntendRelative)
+					intent = GLFW_CURSOR_DISABLED;
+				glfwSetInputMode(window, GLFW_CURSOR, intent);
+			}
+
+			template<class T>
+			void updateMouseStateAndDispatch(GenericInput in)
+			{
+				T i = in.get<T>();
+				stateMods = i.mods;
+				if constexpr (std::is_same_v<T, input::MousePress>)
+					stateButtons |= i.buttons;
+				if constexpr (std::is_same_v<T, input::MouseRelease>)
+					stateButtons &= ~i.buttons;
+				if constexpr (std::is_same_v<T, input::MouseMove>)
+				{
+					CAGE_ASSERT(!i.relative);
+				}
+				if constexpr (std::is_same_v<T, input::MouseRelativeMove>)
+				{
+					CAGE_ASSERT(i.relative);
+					const Vec2 n = i.position;
+					if (valid(lastRelativePosition))
+						i.position = n - lastRelativePosition;
+					else
+						i.position = Vec2();
+					lastRelativePosition = n;
+					stateMousePosition = Vec2(resolution()) * 0.5;
+				}
+				else if (i.relative)
+					stateMousePosition = i.position = Vec2(resolution()) * 0.5;
+				else
+					stateMousePosition = i.position;
+				events.dispatch(i);
+			}
+
+			bool getRelative() const { return glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED; }
+
+			Vec2 getPosition()
+			{
+				Vec2 pos;
+				double xpos, ypos;
+				glfwGetCursorPos(window, &xpos, &ypos);
+				pos[0] = xpos;
+				pos[1] = ypos;
+				return pos;
+			}
 
 			bool determineMouseDoubleClick(MouseButtonsFlags buttons, Vec2 cp)
 			{
@@ -206,38 +250,9 @@ namespace cage
 					return false;
 				}
 			}
-
-			Vec2 offsetMousePositionApi(Vec2 p)
-			{
-				stateMousePosition = p;
-#ifdef GCHL_WINDOWS_THREAD
-				stateMousePosition += mouseOffsetApi;
-#endif
-				return stateMousePosition;
-			}
-
-			template<class T>
-			void offsetMousePositionApiImpl(GenericInput in)
-			{
-				if (in.has<T>())
-				{
-					T i = in.get<T>();
-					i.position = offsetMousePositionApi(i.position);
-					events.dispatch(i);
-				}
-			}
-
-			void offsetMousePositionApi(GenericInput in)
-			{
-				offsetMousePositionApiImpl<input::MouseMove>(in);
-				offsetMousePositionApiImpl<input::MousePress>(in);
-				offsetMousePositionApiImpl<input::MouseRelease>(in);
-				offsetMousePositionApiImpl<input::MouseDoublePress>(in);
-				offsetMousePositionApiImpl<input::MouseWheel>(in);
-			}
 		};
 
-		void windowCloseEvent(GLFWwindow *w)
+		void windowCloseCallback(GLFWwindow *w)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			impl->eventsQueue.push(input::WindowClose{ impl });
@@ -305,10 +320,10 @@ namespace cage
 			impl->eventsQueue.push(input::Character{ impl, (uint32)codepoint, ms });
 		}
 
-		void windowMouseMove(GLFWwindow *w, double xpos, double ypos)
+		void windowMouseMoveCallback(GLFWwindow *w, double xpos, double ypos)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
-			input::MouseMove e;
+			input::privat::BaseMouse e;
 			e.window = impl;
 			e.mods = getKeyModifiers(w);
 			e.position[0] = xpos;
@@ -319,7 +334,11 @@ namespace cage
 				e.buttons |= MouseButtonsFlags::Right;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
 				e.buttons |= MouseButtonsFlags::Middle;
-			impl->eventsQueue.push(e);
+			e.relative = impl->getRelative();
+			if (e.relative)
+				impl->eventsQueue.push(input::MouseRelativeMove(e));
+			else
+				impl->eventsQueue.push(input::MouseMove(e));
 		}
 
 		void windowMouseButtonCallback(GLFWwindow *w, int button, int action, int mods)
@@ -341,42 +360,30 @@ namespace cage
 				default:
 					return; // ignore other keys
 			}
-			Vec2 pos;
-			{
-				double xpos, ypos;
-				glfwGetCursorPos(w, &xpos, &ypos);
-				pos[0] = xpos;
-				pos[1] = ypos;
-			}
+			const Vec2 pos = impl->getPosition();
+			const bool relative = impl->getRelative();
 
 			switch (action)
 			{
 				case GLFW_PRESS:
-					impl->eventsQueue.push(input::MousePress{ impl, pos, bf, ms });
+					impl->eventsQueue.push(input::MousePress{ impl, pos, bf, ms, relative });
 					break;
 				case GLFW_RELEASE:
-					impl->eventsQueue.push(input::MouseRelease{ impl, pos, bf, ms });
+					impl->eventsQueue.push(input::MouseRelease{ impl, pos, bf, ms, relative });
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid mouse action");
 			}
 
 			if (action == GLFW_PRESS && impl->determineMouseDoubleClick(bf, pos))
-				impl->eventsQueue.push(input::MouseDoublePress{ impl, pos, bf, ms });
+				impl->eventsQueue.push(input::MouseDoublePress{ impl, pos, bf, ms, relative });
 		}
 
-		void windowMouseWheel(GLFWwindow *w, double, double yoffset)
+		void windowMouseWheelCallback(GLFWwindow *w, double, double yoffset)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			const ModifiersFlags ms = getKeyModifiers(w);
-			Vec2 pos;
-			{
-				double xpos, ypos;
-				glfwGetCursorPos(w, &xpos, &ypos);
-				pos[0] = xpos;
-				pos[1] = ypos;
-			}
-			impl->eventsQueue.push(input::MouseWheel{ impl, pos, Real(yoffset), ms });
+			impl->eventsQueue.push(input::MouseWheel{ impl, impl->getPosition(), Real(yoffset), ms, impl->getRelative() });
 		}
 
 		void windowResizeCallback(GLFWwindow *w, int width, int height)
@@ -417,17 +424,17 @@ namespace cage
 
 		void WindowImpl::initializeEvents()
 		{
-			glfwSetWindowCloseCallback(window, &windowCloseEvent);
-			glfwSetKeyCallback(window, &windowKeyCallback);
-			glfwSetCharCallback(window, &windowCharCallback);
-			glfwSetCursorPosCallback(window, &windowMouseMove);
-			glfwSetMouseButtonCallback(window, &windowMouseButtonCallback);
-			glfwSetScrollCallback(window, &windowMouseWheel);
-			glfwSetWindowSizeCallback(window, &windowResizeCallback);
-			glfwSetWindowPosCallback(window, &windowMoveCallback);
-			glfwSetWindowIconifyCallback(window, &windowIconifiedCallback);
-			glfwSetWindowMaximizeCallback(window, &windowMaximizedCallback);
-			glfwSetWindowFocusCallback(window, &windowFocusCallback);
+			glfwSetWindowCloseCallback(window, windowCloseCallback);
+			glfwSetKeyCallback(window, windowKeyCallback);
+			glfwSetCharCallback(window, windowCharCallback);
+			glfwSetCursorPosCallback(window, windowMouseMoveCallback);
+			glfwSetMouseButtonCallback(window, windowMouseButtonCallback);
+			glfwSetScrollCallback(window, windowMouseWheelCallback);
+			glfwSetWindowSizeCallback(window, windowResizeCallback);
+			glfwSetWindowPosCallback(window, windowMoveCallback);
+			glfwSetWindowIconifyCallback(window, windowIconifiedCallback);
+			glfwSetWindowMaximizeCallback(window, windowMaximizedCallback);
+			glfwSetWindowFocusCallback(window, windowFocusCallback);
 		}
 	}
 
@@ -504,7 +511,7 @@ namespace cage
 			if (impl->isMinimized() || impl->isMaximized())
 				glfwRestoreWindow(impl->window);
 
-			// linux: the window minimizes immediately after fullscreen if these attributes are changed
+				// linux: the window minimizes immediately after fullscreen if these attributes are changed
 #ifdef CAGE_SYSTEM_WINDOWS
 			fullscreen = false;
 #endif
@@ -557,16 +564,26 @@ namespace cage
 	bool Window::mouseVisible() const
 	{
 		const WindowImpl *impl = (const WindowImpl *)this;
-		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+		return impl->mouseIntendVisible && !impl->mouseIntendRelative;
 	}
 
-	void Window::mouseVisible(bool value)
+	void Window::mouseVisible(bool visible)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
-		if (value)
-			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		else
-			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		impl->mouseIntendVisible = visible;
+	}
+
+	bool Window::mouseRelativeMovement() const
+	{
+		const WindowImpl *impl = (const WindowImpl *)this;
+		return impl->mouseIntendRelative;
+	}
+
+	void Window::mouseRelativeMovement(bool relative)
+	{
+		WindowImpl *impl = (WindowImpl *)this;
+		impl->mouseIntendRelative = relative;
+		impl->lastRelativePosition = Vec2::Nan();
 	}
 
 	Vec2 Window::mousePosition() const
@@ -578,14 +595,8 @@ namespace cage
 	void Window::mousePosition(Vec2 p)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
-#ifdef GCHL_WINDOWS_THREAD
-		Vec2 d = p - impl->stateMousePosition;
-		impl->stateMousePosition = p;
-		impl->mouseOffsetApi += d;
-		impl->mouseOffsetsThr.push(d);
-#else
+		CAGE_ASSERT(!impl->mouseIntendRelative);
 		glfwSetCursorPos(impl->window, p[0].value, p[1].value);
-#endif // GCHL_WINDOWS_THREAD
 	}
 
 	MouseButtonsFlags Window::mouseButtons() const
@@ -610,6 +621,7 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifndef GCHL_WINDOWS_THREAD
+		updateMouseMode();
 		{
 			ScopeLock l(cageGlfwMutex());
 			glfwPollEvents();
@@ -621,26 +633,22 @@ namespace cage
 			switch (e.typeHash())
 			{
 				case detail::typeHash<input::MouseMove>():
-					impl->stateMods = e.get<input::MouseMove>().mods;
-					impl->offsetMousePositionApi(e);
+					impl->updateMouseStateAndDispatch<input::MouseMove>(e);
+					break;
+				case detail::typeHash<input::MouseRelativeMove>():
+					impl->updateMouseStateAndDispatch<input::MouseRelativeMove>(e);
 					break;
 				case detail::typeHash<input::MousePress>():
-					impl->stateButtons |= e.get<input::MousePress>().buttons;
-					impl->stateMods = e.get<input::MousePress>().mods;
-					impl->offsetMousePositionApi(e);
-					break;
-				case detail::typeHash<input::MouseRelease>():
-					impl->stateButtons &= ~e.get<input::MouseRelease>().buttons;
-					impl->stateMods = e.get<input::MouseRelease>().mods;
-					impl->offsetMousePositionApi(e);
+					impl->updateMouseStateAndDispatch<input::MousePress>(e);
 					break;
 				case detail::typeHash<input::MouseDoublePress>():
-					impl->stateMods = e.get<input::MouseDoublePress>().mods;
-					impl->offsetMousePositionApi(e);
+					impl->updateMouseStateAndDispatch<input::MouseDoublePress>(e);
+					break;
+				case detail::typeHash<input::MouseRelease>():
+					impl->updateMouseStateAndDispatch<input::MouseRelease>(e);
 					break;
 				case detail::typeHash<input::MouseWheel>():
-					impl->stateMods = e.get<input::MouseWheel>().mods;
-					impl->offsetMousePositionApi(e);
+					impl->updateMouseStateAndDispatch<input::MouseWheel>(e);
 					break;
 				case detail::typeHash<input::KeyPress>():
 				{
@@ -673,11 +681,6 @@ namespace cage
 					impl->focus = false;
 					events.dispatch(e);
 					break;
-#ifdef GCHL_WINDOWS_THREAD
-				case detail::typeHash<MouseOffset>():
-					impl->mouseOffsetApi += e.get<MouseOffset>().off;
-					break;
-#endif
 				default:
 					events.dispatch(e);
 					break;

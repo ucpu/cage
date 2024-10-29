@@ -19,39 +19,26 @@ namespace cage
 			VariableSmoothingBuffer<Real, 2> wheelSmoother;
 			Vec2 mouseMoveAccum;
 			Real wheelAccum;
-			Real currentScaling = 1;
 
 			Entity *ent = nullptr;
-			bool keysPressedArrows[6] = {}; // wsadeq
+			bool keysPressedArrows[10] = {}; // wsadeq up down left right
 
-			FpsCameraImpl(Entity *ent) : ent(ent) {}
+			explicit FpsCameraImpl(Entity *ent) : ent(ent) {}
 
-			Vec2 centerMouse()
-			{
-				auto w = engineWindow();
-				Vec2 pt2 = Vec2(w->resolution());
-				pt2[0] /= 2;
-				pt2[1] /= 2;
-				w->mousePosition(pt2);
-				return pt2;
-			}
-
-			bool mouseEnabled(MouseButtonsFlags buttons) { return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton); }
+			bool mouseEnabled(MouseButtonsFlags buttons) { return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || any(buttons & mouseButton)); }
 
 			bool mousePress(input::MousePress in)
 			{
 				if (mouseEnabled(in.buttons))
-					centerMouse();
+					engineWindow()->mouseRelativeMovement(true);
 				return false;
 			}
 
-			bool mouseMove(input::MouseMove in)
+			bool mouseRelativeMove(input::MouseRelativeMove in)
 			{
 				if (!mouseEnabled(in.buttons))
 					return false;
-				const Vec2 pt2 = centerMouse() - in.position;
-				if (length(pt2) < 150 * currentScaling)
-					mouseMoveAccum += pt2;
+				mouseMoveAccum -= in.position;
 				return false;
 			}
 
@@ -68,44 +55,34 @@ namespace cage
 				switch (k)
 				{
 					case 87: // w
-						if (keysWsadEnabled)
-							keysPressedArrows[0] = v;
-						return true;
-					case 265: // up
-						if (keysArrowsEnabled)
-							keysPressedArrows[0] = v;
+						keysPressedArrows[0] = v;
 						return true;
 					case 83: // s
-						if (keysWsadEnabled)
-							keysPressedArrows[1] = v;
-						return true;
-					case 264: // down
-						if (keysArrowsEnabled)
-							keysPressedArrows[1] = v;
+						keysPressedArrows[1] = v;
 						return true;
 					case 65: // a
-						if (keysWsadEnabled)
-							keysPressedArrows[2] = v;
-						return true;
-					case 263: // left
-						if (keysArrowsEnabled)
-							keysPressedArrows[2] = v;
+						keysPressedArrows[2] = v;
 						return true;
 					case 68: // d
-						if (keysWsadEnabled)
-							keysPressedArrows[3] = v;
-						return true;
-					case 262: // right
-						if (keysArrowsEnabled)
-							keysPressedArrows[3] = v;
+						keysPressedArrows[3] = v;
 						return true;
 					case 69: // e
-						if (keysEqEnabled)
-							keysPressedArrows[4] = v;
+						keysPressedArrows[4] = v;
 						return true;
 					case 81: // q
-						if (keysEqEnabled)
-							keysPressedArrows[5] = v;
+						keysPressedArrows[5] = v;
+						return true;
+					case 265: // up
+						keysPressedArrows[6] = v;
+						return true;
+					case 264: // down
+						keysPressedArrows[7] = v;
+						return true;
+					case 263: // left
+						keysPressedArrows[8] = v;
+						return true;
+					case 262: // right
+						keysPressedArrows[9] = v;
 						return true;
 				}
 				return false;
@@ -113,14 +90,18 @@ namespace cage
 
 			bool keyPress(input::KeyPress in) { return setKey(in.key, true); }
 
-			bool keyRelease(input::KeyRelease in) { return setKey(in.key, false); }
+			bool keyRelease(input::KeyRelease in)
+			{
+				setKey(in.key, false);
+				return false;
+			}
 
 			bool event(GenericInput in)
 			{
 				if (in.has<input::MousePress>())
 					return mousePress(in.get<input::MousePress>());
-				if (in.has<input::MouseMove>())
-					return mouseMove(in.get<input::MouseMove>());
+				if (in.has<input::MouseRelativeMove>())
+					return mouseRelativeMove(in.get<input::MouseRelativeMove>());
 				if (in.has<input::MouseWheel>())
 					return mouseWheel(in.get<input::MouseWheel>());
 				if (in.has<input::KeyPress>())
@@ -134,7 +115,10 @@ namespace cage
 			{
 				if (!ent)
 					return;
-				currentScaling = engineWindow()->contentScaling();
+
+				if (!mouseEnabled(engineWindow()->mouseButtons()))
+					engineWindow()->mouseRelativeMovement(false);
+
 				TransformComponent &t = ent->value<TransformComponent>();
 
 				// orientation
@@ -142,11 +126,9 @@ namespace cage
 				mouseMoveAccum = Vec2();
 				wheelSmoother.add(wheelAccum);
 				wheelAccum = 0;
-				Vec2 r = mouseSmoother.smooth() * turningSpeed;
+				const Vec2 r = mouseSmoother.smooth() * turningSpeed;
 				if (freeMove)
-				{
 					t.orientation = t.orientation * Quat(Rads(r[1]), Rads(r[0]), Degs(wheelSmoother.smooth() * rollSpeed));
-				}
 				else
 				{ // limit pitch
 					Vec3 f = t.orientation * Vec3(0, 0, -1);
@@ -171,23 +153,32 @@ namespace cage
 					l[1] = 0;
 					l = normalize(l);
 				}
-				Vec3 movement = Vec3();
-				if (keysPressedArrows[0])
-					movement += f;
-				if (keysPressedArrows[1])
-					movement -= f;
-				if (keysPressedArrows[2])
-					movement += l;
-				if (keysPressedArrows[3])
-					movement -= l;
-				if (keysPressedArrows[4])
-					movement += u;
-				if (keysPressedArrows[5])
-					movement -= u;
-				if (movement != Vec3())
-					moveSmoother.add(normalize(movement) * movementSpeed);
+				Vec3 move1;
+				if (keysPressedArrows[0] && keysWsadEnabled) // w
+					move1 += f;
+				if (keysPressedArrows[1] && keysWsadEnabled) // s
+					move1 -= f;
+				if (keysPressedArrows[2] && keysWsadEnabled) // a
+					move1 += l;
+				if (keysPressedArrows[3] && keysWsadEnabled) // d
+					move1 -= l;
+				if (keysPressedArrows[4] && keysEqEnabled) // e
+					move1 += u;
+				if (keysPressedArrows[5] && keysEqEnabled) // q
+					move1 -= u;
+				if (keysPressedArrows[6] && keysArrowsEnabled) // up
+					move1 += f;
+				if (keysPressedArrows[7] && keysArrowsEnabled) // down
+					move1 -= f;
+				if (keysPressedArrows[8] && keysArrowsEnabled) // left
+					move1 += l;
+				if (keysPressedArrows[9] && keysArrowsEnabled) // right
+					move1 -= l;
+				if (lengthSquared(move1) > 1e-5)
+					move1 = normalize(move1) * movementSpeed;
 				else
-					moveSmoother.add(Vec3());
+					move1 = Vec3();
+				moveSmoother.add(move1);
 				t.position += moveSmoother.smooth();
 			}
 		};

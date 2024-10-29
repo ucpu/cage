@@ -38,8 +38,9 @@ namespace cage
 		void setHidden();
 
 		bool mouseVisible() const;
-		void mouseVisible(bool value);
-
+		void mouseVisible(bool visible);
+		bool mouseRelativeMovement() const;
+		void mouseRelativeMovement(bool relative);
 		Vec2 mousePosition() const;
 		void mousePosition(Vec2 pos);
 		MouseButtonsFlags mouseButtons() const;

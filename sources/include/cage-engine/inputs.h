@@ -56,9 +56,12 @@ namespace cage
 				Vec2 position;
 				MouseButtonsFlags buttons = MouseButtonsFlags::None;
 				ModifiersFlags mods = ModifiersFlags::None;
+				bool relative = false;
 			};
 		}
 		struct MouseMove : privat::BaseMouse
+		{};
+		struct MouseRelativeMove : privat::BaseMouse
 		{};
 		struct MousePress : privat::BaseMouse
 		{};
@@ -72,6 +75,7 @@ namespace cage
 			Vec2 position;
 			Real wheel;
 			ModifiersFlags mods = ModifiersFlags::None;
+			bool relative = false;
 		};
 
 		// keyboard
