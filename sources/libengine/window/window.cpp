@@ -621,7 +621,7 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 #ifndef GCHL_WINDOWS_THREAD
-		updateMouseMode();
+		impl->updateMouseMode();
 		{
 			ScopeLock l(cageGlfwMutex());
 			glfwPollEvents();

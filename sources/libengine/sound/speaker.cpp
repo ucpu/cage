@@ -147,7 +147,10 @@ namespace cage
 				data.time = lastTime; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
 				lastTime += request * 1000000 / sampleRate;
 				if (request > data.frames)
-					CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer overflow");
+				{
+					// sound buffer overflow
+					// nothing to do
+				}
 				if (data.frames == 0)
 					return;
 
@@ -170,7 +173,8 @@ namespace cage
 				CAGE_ASSERT(r == n);
 				if (r == data.frames)
 					return;
-				//CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer underflow");
+
+				// sound buffer underflow
 				float *buff = data.buffer.data() + r * channels;
 				while (r < data.frames)
 				{
