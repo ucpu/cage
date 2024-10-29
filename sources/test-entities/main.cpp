@@ -28,7 +28,7 @@ struct Value
 		uint32 sum = 0;
 		for (uint32 i : data)
 			sum += i;
-		globalVolatile += sum;
+		globalVolatile = globalVolatile + sum;
 	}
 };
 
