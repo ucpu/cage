@@ -335,10 +335,12 @@ namespace cage
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
 				e.buttons |= MouseButtonsFlags::Middle;
 			e.relative = impl->getRelative();
+			static_assert(sizeof(input::MouseRelativeMove) == sizeof(input::privat::BaseMouse));
+			static_assert(sizeof(input::MouseMove) == sizeof(input::privat::BaseMouse));
 			if (e.relative)
-				impl->eventsQueue.push(input::MouseRelativeMove(e));
+				impl->eventsQueue.push(*(input::MouseRelativeMove *)(&e));
 			else
-				impl->eventsQueue.push(input::MouseMove(e));
+				impl->eventsQueue.push(*(input::MouseMove *)(&e));
 		}
 
 		void windowMouseButtonCallback(GLFWwindow *w, int button, int action, int mods)
