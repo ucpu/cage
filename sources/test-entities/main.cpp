@@ -258,7 +258,7 @@ struct Performance
 		{
 			// remove youngest entity from a random selection
 			std::array<Entity *, 4> arr = { pick(), pick(), pick(), pick() };
-			std::sort(arr.begin(), arr.end(), [](Entity *a, Entity *b) { return a->name() > b->name(); });
+			std::sort(arr.begin(), arr.end(), [](Entity *a, Entity *b) { return a->id() > b->id(); });
 			arr[0]->destroy();
 		}
 	}

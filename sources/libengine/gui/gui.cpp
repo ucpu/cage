@@ -169,14 +169,14 @@ namespace cage
 			// create all items
 			for (auto e : impl->entityMgr->entities())
 			{
-				const uint32 name = e->name();
+				const uint32 name = e->id();
 				CAGE_ASSERT(name != 0 && name != m);
 				map[name] = impl->memory->createHolder<HierarchyItem>(impl, e);
 			}
 			// attach all items to their parents
 			for (auto e : impl->entityMgr->entities())
 			{
-				const uint32 name = e->name();
+				const uint32 name = e->id();
 				Holder<HierarchyItem> item = map[name].share();
 				if (e->has<GuiParentComponent>())
 				{
@@ -467,7 +467,7 @@ namespace cage
 		void guiDestroyChildrenRecursively(Entity *root)
 		{
 			std::vector<Entity *> ents;
-			const uint32 name = root->name();
+			const uint32 name = root->id();
 			entitiesVisitor(
 				[name, &ents](Entity *e, const GuiParentComponent &p)
 				{

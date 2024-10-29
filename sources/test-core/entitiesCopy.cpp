@@ -28,7 +28,7 @@ namespace
 		for (uint32 round = 0; round < 100; round++)
 		{
 			uint32 a = randomRange(1, 500);
-			if (man->has(a))
+			if (man->exists(a))
 			{
 				Entity *e = man->get(a);
 				if (randomChance() < 0.5)
@@ -76,13 +76,13 @@ namespace
 		// verify that names are correctly paired
 		for (Entity *ae : a->entities())
 		{
-			if (ae->name())
-				CAGE_TEST(b->has(ae->name()));
+			if (ae->id())
+				CAGE_TEST(b->exists(ae->id()));
 		}
 		for (Entity *be : b->entities())
 		{
-			if (be->name())
-				CAGE_TEST(a->has(be->name()));
+			if (be->id())
+				CAGE_TEST(a->exists(be->id()));
 		}
 
 		// generate components mapping
@@ -96,9 +96,9 @@ namespace
 		// verify values
 		for (Entity *ae : a->entities())
 		{
-			if (!ae->name())
+			if (!ae->id())
 				continue;
-			Entity *be = b->get(ae->name());
+			Entity *be = b->get(ae->id());
 
 			// compare values of all types in generic way
 			for (const auto &it : mapping)

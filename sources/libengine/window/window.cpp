@@ -584,8 +584,9 @@ namespace cage
 	void Window::mouseRelativeMovement(bool relative)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
+		if (impl->mouseIntendRelative != relative)
+			impl->lastRelativePosition = Vec2::Nan();
 		impl->mouseIntendRelative = relative;
-		impl->lastRelativePosition = Vec2::Nan();
 	}
 
 	Vec2 Window::mousePosition() const

@@ -40,7 +40,6 @@ namespace cage
 		Entity *tryGet(uint32 entityId) const; // return nullptr if it does not exist
 		Entity *get(uint32 entityId) const; // throw if it does not exist
 		Entity *getOrCreate(uint32 entityId);
-		[[deprecated]] bool has(uint32 entityId) const { return exists(entityId); }
 		bool exists(uint32 entityId) const;
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
@@ -76,7 +75,6 @@ namespace cage
 	{
 	public:
 		EntityManager *manager() const;
-		[[deprecated]] uint32 name() const { return id(); }
 		uint32 id() const;
 
 		CAGE_FORCE_INLINE void add(EntityComponent *component) { unsafeValue(component); }

@@ -466,7 +466,7 @@ namespace
 					const bool w = randomChance() < 0.2;
 					for (Entity *e : components[i]->entities())
 					{
-						const uint32 n = e->name();
+						const uint32 n = e->id();
 						const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
 						for (uint32 j = n % TotalComponents; j < je; j++)
 						{

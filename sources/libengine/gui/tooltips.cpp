@@ -198,7 +198,7 @@ namespace cage
 			CAGE_ASSERT(findHierarchy(+root, it.tooltip));
 			const Vec2 s = findHierarchy(+root, it.tooltip)->requestedSize;
 			it.tooltip->value<GuiExplicitSizeComponent>().size = s + Vec2(1e-5);
-			it.tooltip->value<GuiParentComponent>().parent = it.rootTooltip->name();
+			it.tooltip->value<GuiParentComponent>().parent = it.rootTooltip->id();
 			Vec2 &al = it.rootTooltip->value<GuiLayoutAlignmentComponent>().alignment;
 			switch (it.placement)
 			{
@@ -263,7 +263,7 @@ namespace cage
 		{
 			cfg.tooltip->value<GuiPanelComponent>();
 			Entity *e = cfg.tooltip->manager()->createUnique();
-			e->value<GuiParentComponent>().parent = cfg.tooltip->name();
+			e->value<GuiParentComponent>().parent = cfg.tooltip->id();
 			e->value<GuiLabelComponent>();
 			e->value<GuiTextComponent>() = *txt;
 		}

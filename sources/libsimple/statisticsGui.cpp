@@ -47,7 +47,7 @@ namespace cage
 
 			void update()
 			{
-				if (statisticsScope != StatisticsGuiScopeEnum::None && (rootName == 0 || !engineGuiEntities()->has(rootName)))
+				if (statisticsScope != StatisticsGuiScopeEnum::None && (rootName == 0 || !engineGuiEntities()->exists(rootName)))
 					needRegen = true;
 				if (statisticsScope == StatisticsGuiScopeEnum::None && rootName != 0)
 					needRegen = true;
@@ -55,14 +55,14 @@ namespace cage
 					return;
 				needRegen = false;
 
-				if (rootName != 0 && engineGuiEntities()->has(rootName))
+				if (rootName != 0 && engineGuiEntities()->exists(rootName))
 					detail::guiDestroyEntityRecursively(engineGuiEntities()->get(rootName));
 				rootName = 0;
 
 				if (statisticsScope == StatisticsGuiScopeEnum::None)
 					return;
 
-				rootName = engineGuiEntities()->createUnique()->name();
+				rootName = engineGuiEntities()->createUnique()->id();
 				Entity *root = engineGuiEntities()->get(rootName);
 				root->value<GuiParentComponent>().order = 9000;
 				Holder<GuiBuilder> g = newGuiBuilder(root);

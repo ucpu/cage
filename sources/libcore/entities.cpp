@@ -51,7 +51,7 @@ namespace cage
 				static constexpr uint32 b = (uint32)1 << 30;
 				if (generateId < a || generateId > b)
 					generateId = a;
-				while (has(generateId))
+				while (exists(generateId))
 					generateId = generateId == b ? a : generateId + 1;
 				return generateId++;
 			}

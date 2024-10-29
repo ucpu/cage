@@ -32,7 +32,7 @@ namespace
 		for (uint32 round = 0; round < 100; round++)
 		{
 			uint32 a = randomRange(1, 500);
-			if (man->has(a))
+			if (man->exists(a))
 				man->get(a)->destroy();
 			else
 			{
@@ -60,10 +60,10 @@ namespace
 	{
 		for (Entity *ea : a->entities())
 		{
-			uint32 aName = ea->name();
+			uint32 aName = ea->id();
 			if (aName == 0)
 				continue;
-			CAGE_TEST(b->has(aName));
+			CAGE_TEST(b->exists(aName));
 			Entity *eb = b->get(aName);
 			for (uint32 i = 0; i < 3; i++)
 			{

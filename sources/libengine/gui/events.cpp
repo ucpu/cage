@@ -13,7 +13,7 @@ namespace cage
 	{
 		void findWidgets(HierarchyItem *item, uint32 name, std::vector<WidgetItem *> &result)
 		{
-			if (item->ent && item->ent->name() == name)
+			if (item->ent && item->ent->id() == name)
 			{
 				if (WidgetItem *w = dynamic_cast<WidgetItem *>(+item->item))
 					result.push_back(w);

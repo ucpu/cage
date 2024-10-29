@@ -1251,7 +1251,7 @@ namespace cage
 			Holder<AsyncTask> prepareShadowmap(CameraData &camera, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) const
 			{
 				ShadowmapData &data = camera.shadowmaps[e];
-				data.name = Stringizer() + camera.name + "_shadowmap_" + e->name();
+				data.name = Stringizer() + camera.name + "_shadowmap_" + e->id();
 				data.camera.sceneMask = camera.camera.sceneMask;
 				data.lightComponent = lc;
 				data.shadowmapComponent = sc;

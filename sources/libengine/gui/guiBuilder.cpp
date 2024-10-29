@@ -38,7 +38,7 @@ namespace cage
 			impl->nextName = 0;
 			if (!impl->stack.empty())
 			{
-				e->value<GuiParentComponent>().parent = impl->stack.back().e->name();
+				e->value<GuiParentComponent>().parent = impl->stack.back().e->id();
 				e->value<GuiParentComponent>().order = impl->stack.back().order++;
 			}
 			impl->stack.push_back({ e });

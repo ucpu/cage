@@ -62,12 +62,12 @@ namespace
 		b->value<Real>() = 4;
 		c->value<uint32>() = 5;
 
-		entitiesVisitor([](Entity *e, uint32 &u) { u = e->name(); }, +man, false);
+		entitiesVisitor([](Entity *e, uint32 &u) { u = e->id(); }, +man, false);
 
-		CAGE_TEST(a->value<uint32>() == a->name());
-		CAGE_TEST(c->value<uint32>() == c->name());
+		CAGE_TEST(a->value<uint32>() == a->id());
+		CAGE_TEST(c->value<uint32>() == c->id());
 
-		entitiesVisitor([](Entity *e, uint32 &u, Real &r) { r = e->name() - u; }, +man, false);
+		entitiesVisitor([](Entity *e, uint32 &u, Real &r) { r = e->id() - u; }, +man, false);
 
 		uint32 cnt = 0;
 		entitiesVisitor([&](Entity *) { cnt++; }, +man, false);

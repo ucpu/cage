@@ -242,7 +242,7 @@ namespace cage
 						if (e->has<ScreenSpaceEffectsComponent>())
 							data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
 						data.inputs.effects.gamma = Real(confRenderGamma);
-						data.inputs.name = Stringizer() + "camera_" + e->name();
+						data.inputs.name = Stringizer() + "camera_" + e->id();
 						data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
 						data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
 						data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
