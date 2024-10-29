@@ -11,19 +11,19 @@ namespace cage
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
-		detail::StringBase<64> textName;
+		detail::StringBase<64> textId;
 		Holder<void> customData;
 		Holder<PointerRange<uint32>> dependencies;
 		Holder<PointerRange<char>> compressedData;
 		Holder<PointerRange<char>> originalData;
 		Holder<void> assetHolder;
-		const uint32 realName = 0;
+		const uint32 assetId = 0;
 		uint32 scheme = m;
 
-		AssetContext(uint32 realName) : realName(realName) {}
+		AssetContext(uint32 assetId) : assetId(assetId) {}
 	};
 
-	struct CAGE_CORE_API AssetScheme
+	struct CAGE_CORE_API AssetsScheme
 	{
 		AssetDelegate fetch;
 		AssetDelegate decompress;
@@ -31,7 +31,7 @@ namespace cage
 		uint32 threadIndex = m;
 		uint32 typeHash = m;
 
-		AssetScheme();
+		AssetsScheme();
 	};
 }
 

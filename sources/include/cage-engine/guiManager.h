@@ -38,7 +38,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiManagerCreateConfig
 	{
-		AssetManager *assetManager = nullptr;
+		AssetsManager *assetManager = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 		uint32 skinsCount = 4;
 		bool tooltipsEnabled = true;

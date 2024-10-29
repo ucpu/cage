@@ -1,7 +1,7 @@
 #include "private.h"
 
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/texts.h>
 #include <cage-engine/texture.h>
 

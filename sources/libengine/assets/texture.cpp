@@ -68,7 +68,7 @@ namespace cage
 			des >> header;
 
 			Holder<Texture> tex = newTexture(header.target);
-			tex->setDebugName(context->textName);
+			tex->setDebugName(context->textId);
 
 			tex->filters(header.filterMin, header.filterMag, header.filterAniso);
 			tex->wraps(header.wrapX, header.wrapY, header.wrapZ);
@@ -113,9 +113,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeTexture(uint32 threadIndex)
+	AssetsScheme genAssetSchemeTexture(uint32 threadIndex)
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		s.typeHash = detail::typeHash<Texture>();

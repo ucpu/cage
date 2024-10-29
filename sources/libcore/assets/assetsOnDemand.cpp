@@ -2,8 +2,8 @@
 
 #include <unordered_dense.h>
 
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/concurrent.h>
 
 namespace cage
@@ -21,15 +21,15 @@ namespace cage
 		static_assert(diff(4294967295, 0) == 1);
 		static_assert(diff(4294967290, 5) == 11);
 
-		class AssetOnDemandImpl : public AssetOnDemand
+		class AssetOnDemandImpl : public AssetsOnDemand
 		{
 		public:
-			AssetManager *assets = nullptr;
+			AssetsManager *assets = nullptr;
 			Holder<RwMutex> mut = newRwMutex();
 			ankerl::unordered_dense::map<uint32, uint32> lastUse;
 			uint32 tick = 0;
 
-			AssetOnDemandImpl(AssetManager *assets) : assets(assets) {}
+			AssetOnDemandImpl(AssetsManager *assets) : assets(assets) {}
 
 			~AssetOnDemandImpl()
 			{
@@ -63,11 +63,11 @@ namespace cage
 				tick++;
 			}
 
-			void update(bool valid, uint32 assetName, bool autoLoad)
+			void update(bool valid, uint32 assetId, bool autoLoad)
 			{
 				{
 					ScopeLock lock(mut, ReadLockTag()); // read lock is sufficient: we update the value _inside_ the map, not the map itself
-					auto it = lastUse.find(assetName);
+					auto it = lastUse.find(assetId);
 					if (it != lastUse.end())
 						it->second = tick;
 					if (valid)
@@ -76,44 +76,44 @@ namespace cage
 				if (autoLoad)
 				{
 					ScopeLock lock(mut, WriteLockTag());
-					if (lastUse.count(assetName) == 0) // check again after reacquiring the lock
+					if (lastUse.count(assetId) == 0) // check again after reacquiring the lock
 					{
-						lastUse[assetName] = tick;
-						assets->load(assetName);
+						lastUse[assetId] = tick;
+						assets->load(assetId);
 					}
 				}
 			}
 		};
 	}
 
-	void AssetOnDemand::process()
+	void AssetsOnDemand::process()
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		impl->process();
 	}
 
-	void AssetOnDemand::clear()
+	void AssetsOnDemand::clear()
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		impl->clear();
 	}
 
-	Holder<void> AssetOnDemand::get_(uint32 scheme, uint32 assetName, bool autoLoad)
+	Holder<void> AssetsOnDemand::get_(uint32 scheme, uint32 assetId, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		auto r = impl->assets->get_(scheme, assetName);
-		impl->update(!!r, assetName, autoLoad);
+		auto r = impl->assets->get_(scheme, assetId);
+		impl->update(!!r, assetId, autoLoad);
 		return r;
 	}
 
-	uint32 AssetOnDemand::schemeTypeHash_(uint32 scheme) const
+	uint32 AssetsOnDemand::schemeTypeHash_(uint32 scheme) const
 	{
 		const AssetOnDemandImpl *impl = (const AssetOnDemandImpl *)this;
 		return impl->assets->schemeTypeHash_(scheme);
 	}
 
-	Holder<AssetOnDemand> newAssetOnDemand(AssetManager *assets)
+	Holder<AssetsOnDemand> newAssetsOnDemand(AssetsManager *assets)
 	{
-		return systemMemory().createImpl<AssetOnDemand, AssetOnDemandImpl>(assets);
+		return systemMemory().createImpl<AssetsOnDemand, AssetOnDemandImpl>(assets);
 	}
 }

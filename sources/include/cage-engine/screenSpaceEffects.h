@@ -7,13 +7,13 @@
 namespace cage
 {
 	class RenderQueue;
-	class AssetManager;
+	class AssetsManager;
 	class ProvisionalGraphics;
 
 	struct CAGE_ENGINE_API ScreenSpaceCommonConfig
 	{
 		RenderQueue *queue = nullptr;
-		AssetManager *assets = nullptr;
+		AssetsManager *assets = nullptr;
 		ProvisionalGraphics *provisionals = nullptr;
 		Vec2i resolution;
 	};

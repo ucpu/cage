@@ -3,7 +3,7 @@
 
 #include "private.h"
 
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/macros.h>
 #include <cage-core/memoryAllocators.h>
@@ -15,7 +15,7 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics), ttEnabled(config.tooltipsEnabled)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetsOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics), ttEnabled(config.tooltipsEnabled)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));

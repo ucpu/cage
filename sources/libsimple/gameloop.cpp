@@ -4,7 +4,7 @@
 #include "engine.h"
 
 #include <cage-core/assetContext.h>
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/camera.h>
 #include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/concurrent.h>
@@ -116,7 +116,7 @@ namespace cage
 			VariableSmoothingBuffer<uint64, 100> profilingBufferDrawPrimitives;
 			VariableSmoothingBuffer<uint64, 100> profilingBufferEntities;
 
-			Holder<AssetManager> assets;
+			Holder<AssetsManager> assets;
 			Holder<Window> window;
 			Holder<VirtualReality> virtualReality;
 			Holder<Speaker> speaker;
@@ -468,7 +468,7 @@ namespace cage
 						cfg = *config.assets;
 					cfg.schemesMaxCount = max(cfg.schemesMaxCount, 30u);
 					cfg.customProcessingThreads = max(cfg.customProcessingThreads, 5u);
-					assets = newAssetManager(cfg);
+					assets = newAssetsManager(cfg);
 				}
 
 				{ // create graphics
@@ -777,7 +777,7 @@ namespace cage
 		engineData.clear();
 	}
 
-	AssetManager *engineAssets()
+	AssetsManager *engineAssets()
 	{
 		return +engineData->assets;
 	}

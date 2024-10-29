@@ -12,7 +12,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<Font> font = newFont();
-			font->setDebugName(context->textName);
+			font->setDebugName(context->textId);
 
 			Deserializer des(context->originalData);
 			FontHeader data;
@@ -35,9 +35,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeFont(uint32 threadIndex)
+	AssetsScheme genAssetSchemeFont(uint32 threadIndex)
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		s.typeHash = detail::typeHash<Font>();

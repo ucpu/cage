@@ -21,7 +21,7 @@ namespace cage
 		void clear(); // thread safe
 	};
 
-	CAGE_CORE_API Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets);
+	CAGE_CORE_API Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetsManager *assets);
 }
 
 #endif

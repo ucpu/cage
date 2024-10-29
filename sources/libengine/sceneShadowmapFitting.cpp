@@ -1,4 +1,4 @@
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/entities.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/geometry.h>
@@ -21,7 +21,7 @@ namespace cage
 
 		struct Boxes
 		{
-			AssetManager *assets = nullptr;
+			AssetsManager *assets = nullptr;
 
 			Aabb model(uint32 name) const
 			{

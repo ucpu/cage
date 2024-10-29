@@ -4,8 +4,8 @@
 #include <optional>
 #include <vector>
 
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/camera.h>
 #include <cage-core/color.h>
 #include <cage-core/config.h>
@@ -355,7 +355,7 @@ namespace cage
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
-			Holder<AssetOnDemand> onDemand;
+			Holder<AssetsOnDemand> onDemand;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
@@ -367,9 +367,9 @@ namespace cage
 			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
 			{
 				if (config.onDemand)
-					onDemand = Holder<AssetOnDemand>(config.onDemand, nullptr);
+					onDemand = Holder<AssetsOnDemand>(config.onDemand, nullptr);
 				else
-					onDemand = newAssetOnDemand(assets);
+					onDemand = newAssetsOnDemand(assets);
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
 			}
 

@@ -58,7 +58,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();
 	CAGE_ENGINE_API Holder<MultiShaderProgram> newMultiShaderProgram();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex);
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeShaderProgram(uint32 threadIndex);
 	constexpr uint32 AssetSchemeIndexShaderProgram = 10;
 }
 

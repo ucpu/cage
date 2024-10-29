@@ -2,8 +2,8 @@
 
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
 #include <cage-core/serialization.h>
@@ -30,9 +30,9 @@ void testAssetOnDemand()
 	pathCreateDirectories(AssetsPath);
 	AssetManagerCreateConfig cfg;
 	cfg.assetsFolderName = AssetsPath;
-	Holder<AssetManager> man = newAssetManager(cfg);
+	Holder<AssetsManager> man = newAssetsManager(cfg);
 	man->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());
-	Holder<AssetOnDemand> cache = newAssetOnDemand(+man);
+	Holder<AssetsOnDemand> cache = newAssetsOnDemand(+man);
 	makeAssetRaw(13, "hello world");
 	makeAssetRaw(42, "the ultimate question of life, the universe, and everything");
 	CAGE_TEST((!cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(13))); // 13 not yet loaded, but requested now

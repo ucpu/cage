@@ -3,8 +3,8 @@
 #include "engine.h"
 #include "interpolationTimingCorrector.h"
 
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/entities.h>
@@ -140,7 +140,7 @@ namespace cage
 			void initialize() // opengl thread
 			{
 				renderQueue = newRenderQueue("engine", engineProvisonalGraphics());
-				onDemand = newAssetOnDemand(engineAssets());
+				onDemand = newAssetsOnDemand(engineAssets());
 				for (EmitBuffer &it : emitBuffers)
 				{
 					RenderPipelineCreateConfig cfg;
@@ -427,7 +427,7 @@ namespace cage
 			}
 
 			Holder<RenderQueue> renderQueue;
-			Holder<AssetOnDemand> onDemand;
+			Holder<AssetsOnDemand> onDemand;
 
 			Holder<VirtualRealityGraphicsFrame> vrFrame;
 			std::vector<TextureHandle> vrTargets;

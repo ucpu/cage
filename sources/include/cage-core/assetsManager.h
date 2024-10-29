@@ -8,43 +8,43 @@ namespace cage
 {
 	class File;
 
-	class CAGE_CORE_API AssetManager : private Immovable
+	class CAGE_CORE_API AssetsManager : private Immovable
 	{
 	public:
 		template<uint32 Scheme, class T>
-		void defineScheme(const AssetScheme &value)
+		void defineScheme(const AssetsScheme &value)
 		{
 			defineScheme_(detail::typeHash<T>(), Scheme, value);
 		}
 
 		// begin thread-safe methods
 
-		void load(uint32 assetName);
-		void unload(uint32 assetName);
-		void reload(uint32 assetName);
+		void load(uint32 assetId);
+		void unload(uint32 assetId);
+		void reload(uint32 assetId);
 
-		uint32 generateUniqueName();
+		uint32 generateUniqueId();
 
 		template<uint32 Scheme, class T>
-		void loadValue(uint32 assetName, Holder<T> &&value, const String &textId = "")
+		void loadValue(uint32 assetId, Holder<T> &&value, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			load_(Scheme, assetName, textId, std::move(value).template cast<void>());
+			load_(Scheme, assetId, textId, std::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
-		void loadCustom(uint32 assetName, const AssetScheme &customScheme, Holder<void> &&customData, const String &textId = "")
+		void loadCustom(uint32 assetId, const AssetsScheme &customScheme, Holder<void> &&customData, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			load_(Scheme, assetName, textId, customScheme, std::move(customData));
+			load_(Scheme, assetId, textId, customScheme, std::move(customData));
 		}
 
 		// returns null if the asset is not yet loaded, failed to load, or has different scheme
 		template<uint32 Scheme, class T>
-		Holder<T> get(uint32 assetName) const
+		Holder<T> get(uint32 assetId) const
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetName).template cast<T>();
+			return get_(Scheme, assetId).template cast<T>();
 		}
 
 		// end thread-safe methods
@@ -56,15 +56,15 @@ namespace cage
 		bool processing() const;
 		bool empty() const;
 
-		EventDispatcher<bool(uint32 requestName, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
+		EventDispatcher<bool(uint32 requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
-		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value);
-		void load_(uint32 scheme, uint32 assetName, const String &textId, Holder<void> &&value);
-		void load_(uint32 scheme, uint32 assetName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData);
-		Holder<void> get_(uint32 scheme, uint32 assetName) const;
+		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value);
+		void load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value);
+		void load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
+		Holder<void> get_(uint32 scheme, uint32 assetId) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
-		friend class AssetOnDemand;
+		friend class AssetsOnDemand;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig
@@ -75,14 +75,14 @@ namespace cage
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
 	};
 
-	CAGE_CORE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
+	CAGE_CORE_API Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config);
 
 	struct CAGE_CORE_API AssetPack
 	{};
-	CAGE_CORE_API AssetScheme genAssetSchemePack();
+	CAGE_CORE_API AssetsScheme genAssetSchemePack();
 	constexpr uint32 AssetSchemeIndexPack = 0;
 
-	CAGE_CORE_API AssetScheme genAssetSchemeRaw();
+	CAGE_CORE_API AssetsScheme genAssetSchemeRaw();
 	constexpr uint32 AssetSchemeIndexRaw = 1;
 }
 

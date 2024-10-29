@@ -14,7 +14,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<MultiShaderProgram> shr = newMultiShaderProgram();
-			shr->setDebugName(context->textName);
+			shr->setDebugName(context->textId);
 
 			Deserializer des(context->originalData);
 			{
@@ -48,9 +48,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex)
+	AssetsScheme genAssetSchemeShaderProgram(uint32 threadIndex)
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		s.typeHash = detail::typeHash<MultiShaderProgram>();

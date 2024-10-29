@@ -127,8 +127,8 @@ namespace cage
 	struct Cone;
 	struct Frustum;
 
-	class AssetManager;
-	struct AssetScheme;
+	class AssetsManager;
+	struct AssetsScheme;
 
 	// Immovable
 

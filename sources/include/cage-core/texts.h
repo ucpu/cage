@@ -29,7 +29,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<Texts> newTexts();
 
-	CAGE_CORE_API AssetScheme genAssetSchemeTexts();
+	CAGE_CORE_API AssetsScheme genAssetSchemeTexts();
 	constexpr uint32 AssetSchemeIndexTexts = 2;
 
 	CAGE_CORE_API void textsSetLanguages(PointerRange<const LanguageCode> languages);

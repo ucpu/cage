@@ -59,15 +59,15 @@ namespace cage
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
-			source->setDebugName(context->textName);
+			source->setDebugName(context->textId);
 			source->importAudio(std::move(poly));
 			context->assetHolder = std::move(source).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeSound()
+	AssetsScheme genAssetSchemeSound()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
 		s.typeHash = detail::typeHash<Sound>();

@@ -31,7 +31,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Sound> newSound();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeSound();
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeSound();
 	constexpr uint32 AssetSchemeIndexSound = 20;
 }
 

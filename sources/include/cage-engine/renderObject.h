@@ -37,7 +37,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeRenderObject();
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeRenderObject();
 	constexpr uint32 AssetSchemeIndexRenderObject = 13;
 }
 

@@ -11,7 +11,7 @@ namespace cage
 	class ShaderProgram;
 	class RenderQueue;
 	class ProvisionalGraphics;
-	class AssetOnDemand;
+	class AssetsOnDemand;
 
 	struct LodSelection
 	{
@@ -60,10 +60,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API RenderPipelineCreateConfig
 	{
-		AssetManager *assets = nullptr;
+		AssetsManager *assets = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 		EntityManager *scene = nullptr;
-		AssetOnDemand *onDemand = nullptr;
+		AssetsOnDemand *onDemand = nullptr;
 	};
 
 	CAGE_ENGINE_API Holder<RenderPipeline> newRenderPipeline(const RenderPipelineCreateConfig &config);

@@ -75,7 +75,7 @@ namespace cage
 	void engineStop();
 	void engineFinalize();
 
-	AssetManager *engineAssets();
+	AssetsManager *engineAssets();
 	EntityManager *engineEntities();
 	Window *engineWindow();
 	EventDispatcher<bool(const GenericInput &)> &engineEvents();

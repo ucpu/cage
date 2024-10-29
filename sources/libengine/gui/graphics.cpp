@@ -1,7 +1,7 @@
 #include "private.h"
 
-#include <cage-core/assetManager.h>
-#include <cage-core/assetOnDemand.h>
+#include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/hashString.h>
 #include <cage-core/serialization.h>
 #include <cage-core/swapBufferGuard.h>
@@ -145,7 +145,7 @@ namespace cage
 		q->draw(impl->graphicsData.imageModel);
 	}
 
-	void GuiImpl::GraphicsData::load(AssetManager *assetMgr)
+	void GuiImpl::GraphicsData::load(AssetsManager *assetMgr)
 	{
 		const auto &defaultProgram = [](const Holder<MultiShaderProgram> &multi) -> Holder<ShaderProgram>
 		{

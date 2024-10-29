@@ -42,7 +42,7 @@ namespace cage
 		config.destination->destroy();
 		for (Entity *se : config.source->entities())
 		{
-			Entity *de = se->name() ? config.destination->create(se->name()) : config.destination->createAnonymous();
+			Entity *de = se->id() ? config.destination->create(se->id()) : config.destination->createAnonymous();
 			for (const auto &it : mp)
 			{
 				if (!se->has(it.first))
@@ -64,13 +64,13 @@ namespace cage
 		for (Entity *e : entities)
 		{
 			CAGE_ASSERT(e->manager() == component->manager());
-			uint32 name = e->name();
-			if (name == 0)
+			uint32 id = e->id();
+			if (id == 0)
 				continue;
 			if (!e->has(component))
 				continue;
 			cnt++;
-			ser << name;
+			ser << id;
 			const char *u = (const char *)e->unsafeValue(component);
 			ser.write({ u, u + typeSize });
 		}
@@ -98,11 +98,11 @@ namespace cage
 		des >> cnt;
 		while (cnt--)
 		{
-			uint32 name;
-			des >> name;
-			if (name == 0)
+			uint32 id;
+			des >> id;
+			if (id == 0)
 				CAGE_THROW_ERROR(Exception, "anonymous entity");
-			Entity *e = manager->getOrCreate(name);
+			Entity *e = manager->getOrCreate(id);
 			char *u = (char *)e->unsafeValue(component);
 			des.read({ u, u + typeSize });
 		}

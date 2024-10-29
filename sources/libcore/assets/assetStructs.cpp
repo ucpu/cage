@@ -1,7 +1,7 @@
 #include <vector>
 
 #include <cage-core/assetContext.h>
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
@@ -17,9 +17,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemePack()
+	AssetsScheme genAssetSchemePack()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processAssetPackLoad>();
 		s.typeHash = detail::typeHash<AssetPack>();
 		return s;
@@ -36,9 +36,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeRaw()
+	AssetsScheme genAssetSchemeRaw()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processRawLoad>();
 		s.typeHash = detail::typeHash<PointerRange<const char>>();
 		return s;
@@ -55,9 +55,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeCollider()
+	AssetsScheme genAssetSchemeCollider()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processColliderLoad>();
 		s.typeHash = detail::typeHash<Collider>();
 		return s;
@@ -73,9 +73,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeSkeletalAnimation()
+	AssetsScheme genAssetSchemeSkeletalAnimation()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processSkeletalAnimationLoad>();
 		s.typeHash = detail::typeHash<SkeletalAnimation>();
 		return s;
@@ -91,9 +91,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeSkeletonRig()
+	AssetsScheme genAssetSchemeSkeletonRig()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processSkeletonRigLoad>();
 		s.typeHash = detail::typeHash<SkeletonRig>();
 		return s;

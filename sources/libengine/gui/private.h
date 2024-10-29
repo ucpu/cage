@@ -17,7 +17,7 @@
 
 namespace cage
 {
-	class AssetOnDemand;
+	class AssetsOnDemand;
 	class MultiShaderProgram;
 	class GuiImpl;
 	struct HierarchyItem;
@@ -283,8 +283,8 @@ namespace cage
 		Holder<MemoryArena> memory; // must be last to destroy
 
 		Holder<EntityManager> entityMgr = newEntityManager();
-		Holder<AssetOnDemand> assetOnDemand;
-		AssetManager *assetMgr = nullptr;
+		Holder<AssetsOnDemand> assetOnDemand;
+		AssetsManager *assetMgr = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
 
 		Vec2i outputResolution; // resolution of output texture or screen (pixels)
@@ -307,7 +307,7 @@ namespace cage
 			Holder<Model> fontModel;
 			Holder<Model> imageModel;
 
-			void load(AssetManager *assetMgr);
+			void load(AssetsManager *assetMgr);
 		} graphicsData;
 		RenderQueue *activeQueue = nullptr;
 

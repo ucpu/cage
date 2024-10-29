@@ -45,7 +45,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Model> newModel();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeModel(uint32 threadIndex);
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeModel(uint32 threadIndex);
 	constexpr uint32 AssetSchemeIndexModel = 12;
 }
 

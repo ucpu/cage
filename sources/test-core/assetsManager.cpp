@@ -4,7 +4,7 @@
 
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
@@ -36,15 +36,15 @@ namespace
 
 	void processAssetCounterLoad(AssetContext *context)
 	{
-		if (context->realName >= 5000)
+		if (context->assetId >= 5000)
 			CAGE_THROW_ERROR(Exception, "intentionally failed asset processing");
 		Holder<AssetCounter> h = systemMemory().createHolder<AssetCounter>();
 		context->assetHolder = std::move(h).cast<void>();
 	}
 
-	AssetScheme genAssetSchemeCounter()
+	AssetsScheme genAssetSchemeCounter()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processAssetCounterLoad>();
 		s.typeHash = detail::typeHash<AssetCounter>();
 		return s;
@@ -85,28 +85,28 @@ namespace
 		makeAssetCounter(name, {});
 	}
 
-	Holder<AssetManager> instantiate()
+	Holder<AssetsManager> instantiate()
 	{
 		CAGE_TEST(AssetCounter::counter == 0);
 		pathRemove(AssetsPath);
 		pathCreateDirectories(AssetsPath);
 		AssetManagerCreateConfig cfg;
 		cfg.assetsFolderName = AssetsPath;
-		Holder<AssetManager> man = newAssetManager(cfg);
+		Holder<AssetsManager> man = newAssetsManager(cfg);
 		man->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
 		man->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());
 		man->defineScheme<AssetSchemeIndexCounter, AssetCounter>(genAssetSchemeCounter());
 		return man;
 	}
 
-	void waitProcessing(Holder<AssetManager> &man)
+	void waitProcessing(Holder<AssetsManager> &man)
 	{
 		while (man->processing())
 			threadYield();
 	}
 
 	template<uint32 Length>
-	void checkContents(Holder<AssetManager> &man, const uint32 name, const char (&content)[Length])
+	void checkContents(Holder<AssetsManager> &man, const uint32 name, const char (&content)[Length])
 	{
 		Holder<PointerRange<const char>> a = man->get<AssetSchemeIndexRaw, PointerRange<const char>>(10);
 		CAGE_TEST(a);
@@ -119,9 +119,9 @@ namespace
 		// nothing
 	}
 
-	AssetScheme genDummyScheme(uint32 typeHash)
+	AssetsScheme genDummyScheme(uint32 typeHash)
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processAssetDummyLoad>();
 		s.typeHash = typeHash;
 		return s;
@@ -136,7 +136,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("basics");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		makeAssetCounter(20);
 		makeAssetCounter(30);
@@ -161,7 +161,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("type validation");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		man->defineScheme<71, uint8>(genDummyScheme(detail::typeHash<uint8>()));
 		man->defineScheme<72, uint16>(genDummyScheme(detail::typeHash<uint16>()));
 		man->defineScheme<73, uint32>(genDummyScheme(detail::typeHash<uint32>()));
@@ -190,7 +190,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("multiple times added same asset");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->load(10);
@@ -215,7 +215,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("dependencies 1");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		makeAssetCounter(20);
 		makeAssetCounter(30);
@@ -232,7 +232,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("dependencies 2");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		makeAssetCounter(20);
 		makeAssetCounter(30);
@@ -249,7 +249,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("immediate remove");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		man->load(10);
 		man->unload(10);
@@ -260,7 +260,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("repeated add and remove");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		for (uint32 i = 0; i < 10; i++)
 		{
@@ -276,7 +276,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("asset content");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		static constexpr const char Content[] = "hello world";
 		makeAssetRaw(10, Content);
 		man->load(10);
@@ -288,7 +288,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("reload asset");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		static constexpr const char Content1[] = "hello world";
 		static constexpr const char Content2[] = "lorem ipsum dolor sit amet";
 		makeAssetRaw(10, Content1);
@@ -305,7 +305,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("holding asset after remove");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		man->load(10);
 		waitProcessing(man);
@@ -323,7 +323,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fabricated");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		{
 			Holder<AssetCounter> f = systemMemory().createHolder<AssetCounter>();
 			man->loadValue<AssetSchemeIndexCounter, AssetCounter>(10, std::move(f));
@@ -339,7 +339,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fabricated overlay");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		man->load(10);
 		waitProcessing(man);
@@ -365,14 +365,14 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("non-existent asset");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		Holder<AssetCounter> a = man->get<AssetSchemeIndexCounter, AssetCounter>(5);
 		CAGE_TEST(!a);
 	}
 
 	{
 		CAGE_TESTCASE("missing asset file");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		CAGE_TEST(AssetCounter::counter == 0);
 		CAGE_TEST(!pathIsFile(pathJoin(AssetsPath, "10")));
 		man->load(10);
@@ -384,13 +384,13 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("getting asset with scheme mismatching type");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		CAGE_TEST_ASSERTED((man->get<AssetSchemeIndexRaw, AssetCounter>(5)));
 	}
 
 	{
 		CAGE_TESTCASE("getting asset with wrong type");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		man->load(10);
 		waitProcessing(man);
@@ -403,7 +403,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("unknown scheme");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		{
 			static constexpr uint32 name = 10;
 			AssetHeader hdr(Stringizer() + name, 42);
@@ -420,7 +420,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("accessing missing asset file");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		man->load(10);
 		waitProcessing(man);
 		CAGE_TEST(!(man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
@@ -430,7 +430,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("corrupted header");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		{
 			static constexpr uint32 name = 10;
 			AssetHeader hdr(Stringizer() + name, AssetSchemeIndexCounter);
@@ -449,7 +449,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fail decompression");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		{
 			static constexpr const char Content[] = "lorem ipsum dolor sit amet";
 			static constexpr uint32 name = 10;
@@ -474,7 +474,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fail processing");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(5000);
 		{
 			detail::globalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
@@ -489,7 +489,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fail processing with dependencies 1");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10);
 		makeAssetCounter(20);
 		makeAssetCounter(5000, PointerRange<const uint32>({ (uint32)10, (uint32)20 }));
@@ -511,7 +511,7 @@ void testAssetManager()
 
 	{
 		CAGE_TESTCASE("fail processing with dependencies 2");
-		Holder<AssetManager> man = instantiate();
+		Holder<AssetsManager> man = instantiate();
 		makeAssetCounter(10, PointerRange<const uint32>({ (uint32)20, (uint32)5000 }));
 		makeAssetCounter(20);
 		makeAssetCounter(5000);
@@ -539,7 +539,7 @@ void testAssetManager()
 			CAGE_TEST(String(ass.cageName) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textName) == "abcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(String(ass.textId) == "abcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 42);
@@ -551,7 +551,7 @@ void testAssetManager()
 			CAGE_TEST(String(ass.cageName) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textName) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(String(ass.textId) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 13);

@@ -20,9 +20,9 @@ namespace cage
 		{
 		public:
 			EntityManagerImpl *const manager = nullptr;
-			const uint32 name = m;
+			const uint32 id = m;
 
-			EntityImpl(EntityManagerImpl *manager, uint32 name);
+			EntityImpl(EntityManagerImpl *manager, uint32 id);
 			~EntityImpl();
 
 			void *&comp(uint32 i) const;
@@ -36,7 +36,7 @@ namespace cage
 			std::vector<EntityComponent *> componentsByTypes;
 			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
 			FlatBag<Entity *> allEntities;
-			uint32 generateName = 0;
+			uint32 generateId = 0;
 			uint32 entSize = 0;
 
 			~EntityManagerImpl()
@@ -45,23 +45,23 @@ namespace cage
 				components.clear();
 			}
 
-			uint32 generateUniqueName()
+			uint32 generateUniqueId()
 			{
 				static constexpr uint32 a = (uint32)1 << 28;
 				static constexpr uint32 b = (uint32)1 << 30;
-				if (generateName < a || generateName > b)
-					generateName = a;
-				while (has(generateName))
-					generateName = generateName == b ? a : generateName + 1;
-				return generateName++;
+				if (generateId < a || generateId > b)
+					generateId = a;
+				while (has(generateId))
+					generateId = generateId == b ? a : generateId + 1;
+				return generateId++;
 			}
 
-			EntityImpl *newEnt(uint32 name)
+			EntityImpl *newEnt(uint32 id)
 			{
 				void *ptr = arena->allocate(entSize, alignof(EntityImpl));
 				try
 				{
-					return new (ptr, privat::OperatorNewTrait()) EntityImpl(this, name);
+					return new (ptr, privat::OperatorNewTrait()) EntityImpl(this, id);
 				}
 				catch (...)
 				{
@@ -98,21 +98,21 @@ namespace cage
 			void desVal(void *v) { arena->deallocate(v); }
 		};
 
-		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 name) : manager(manager), name(name)
+		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 id) : manager(manager), id(id)
 		{
 			for (uint32 i = 0; i < manager->components.size(); i++)
 				comp(i) = nullptr;
 			manager->allEntities.insert(this);
-			if (name != 0)
-				manager->namedEntities.emplace(name, this);
+			if (id != 0)
+				manager->namedEntities.emplace(id, this);
 			manager->entityAdded.dispatch(this);
 		}
 
 		EntityImpl::~EntityImpl()
 		{
 			manager->entityRemoved.dispatch(this);
-			if (name != 0)
-				manager->namedEntities.erase(name);
+			if (id != 0)
+				manager->namedEntities.erase(id);
 			manager->allEntities.erase(this);
 			for (uint32 i = 0; i < manager->components.size(); i++)
 				if (comp(i))
@@ -174,7 +174,7 @@ namespace cage
 	Entity *EntityManager::createUnique()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		return create(impl->generateUniqueName());
+		return create(impl->generateUniqueId());
 	}
 
 	Entity *EntityManager::createAnonymous()
@@ -183,55 +183,55 @@ namespace cage
 		return impl->newEnt(0);
 	}
 
-	Entity *EntityManager::create(uint32 entityName)
+	Entity *EntityManager::create(uint32 entityId)
 	{
-		CAGE_ASSERT(entityName != 0 && entityName != m);
+		CAGE_ASSERT(entityId != 0 && entityId != m);
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		CAGE_ASSERT(!impl->namedEntities.count(entityName));
-		return impl->newEnt(entityName);
+		CAGE_ASSERT(!impl->namedEntities.count(entityId));
+		return impl->newEnt(entityId);
 	}
 
-	Entity *EntityManager::tryGet(uint32 entityName) const
+	Entity *EntityManager::tryGet(uint32 entityId) const
 	{
-		CAGE_ASSERT(entityName != 0 && entityName != m);
+		CAGE_ASSERT(entityId != 0 && entityId != m);
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		auto it = impl->namedEntities.find(entityName);
+		auto it = impl->namedEntities.find(entityId);
 		if (it == impl->namedEntities.end())
 			return nullptr;
 		return it->second;
 	}
 
-	Entity *EntityManager::get(uint32 entityName) const
+	Entity *EntityManager::get(uint32 entityId) const
 	{
-		CAGE_ASSERT(entityName != 0 && entityName != m);
+		CAGE_ASSERT(entityId != 0 && entityId != m);
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		try
 		{
-			return impl->namedEntities.at(entityName);
+			return impl->namedEntities.at(entityId);
 		}
 		catch (const std::out_of_range &)
 		{
-			CAGE_LOG_THROW(Stringizer() + "name: " + entityName);
+			CAGE_LOG_THROW(Stringizer() + "id: " + entityId);
 			CAGE_THROW_ERROR(Exception, "entity not found");
 		}
 	}
 
-	Entity *EntityManager::getOrCreate(uint32 entityName)
+	Entity *EntityManager::getOrCreate(uint32 entityId)
 	{
-		CAGE_ASSERT(entityName != 0 && entityName != m);
-		Entity *e = tryGet(entityName);
+		CAGE_ASSERT(entityId != 0 && entityId != m);
+		Entity *e = tryGet(entityId);
 		if (e)
 			return e;
-		return create(entityName);
+		return create(entityId);
 	}
 
-	bool EntityManager::has(uint32 entityName) const
+	bool EntityManager::exists(uint32 entityId) const
 	{
-		CAGE_ASSERT(entityName != m);
-		if (entityName == 0)
+		CAGE_ASSERT(entityId != m);
+		if (entityId == 0)
 			return false;
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		return impl->namedEntities.count(entityName);
+		return impl->namedEntities.count(entityId);
 	}
 
 	PointerRange<Entity *const> EntityManager::entities() const
@@ -316,10 +316,10 @@ namespace cage
 		return impl->manager;
 	}
 
-	uint32 Entity::name() const
+	uint32 Entity::id() const
 	{
 		const EntityImpl *impl = (const EntityImpl *)this;
-		return impl->name;
+		return impl->id;
 	}
 
 	void Entity::remove(EntityComponent *component)
@@ -356,6 +356,7 @@ namespace cage
 
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
+		CAGE_ASSERT(component->manager() == manager());
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		void *&c = impl->comp(ci->definitionIndex);

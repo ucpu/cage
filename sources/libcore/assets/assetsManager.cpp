@@ -7,7 +7,7 @@
 
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/config.h>
@@ -30,19 +30,19 @@ namespace cage
 {
 	namespace
 	{
-		class AssetManagerImpl;
+		class AssetsManagerImpl;
 
 		// one particular version of an asset
-		struct Asset : public AssetContext, AssetScheme
+		struct Asset : public AssetContext, AssetsScheme
 		{
-			Holder<void> ref; // the application receives shares of the ref, its destructor will call a method in the AssetManager to schedule the asset for unloading
-			AssetManagerImpl *const impl = nullptr;
+			Holder<void> ref; // the application receives shares of the ref, its destructor will call a method in the AssetsManager to schedule the asset for unloading
+			AssetsManagerImpl *const impl = nullptr;
 			bool failed = false;
 			bool unloading = false;
 
-			explicit Asset(AssetManagerImpl *impl, uint32 realName);
-			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textId, Holder<void> &&value);
-			explicit Asset(AssetManagerImpl *impl, uint32 scheme, uint32 realName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData);
+			explicit Asset(AssetsManagerImpl *impl, uint32 assetId);
+			explicit Asset(AssetsManagerImpl *impl, uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value);
+			explicit Asset(AssetsManagerImpl *impl, uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
 			~Asset();
 		};
 
@@ -129,22 +129,22 @@ namespace cage
 			}
 			catch (const Exception &)
 			{
-				CAGE_LOG(SeverityEnum::Error, "assetManager", "failed to find the directory with assets");
+				CAGE_LOG(SeverityEnum::Error, "assetsManager", "failed to find the directory with assets");
 				throw;
 			}
 		}
 
-		class AssetManagerImpl : public AssetManager
+		class AssetsManagerImpl : public AssetsManager
 		{
 		public:
 			const String path;
-			Holder<Mutex> privateMutex = newMutex(); // protects generateName, privateIndex
+			Holder<Mutex> privateMutex = newMutex(); // protects generateId, privateIndex
 			Holder<RwMutex> publicMutex = newRwMutex(); // protects publicIndex, waitingIndex
 			KeepOpen keepOpen;
-			std::vector<AssetScheme> schemes;
+			std::vector<AssetsScheme> schemes;
 			std::atomic<sint32> workingCounter = 0;
 			std::atomic<sint32> existsCounter = 0;
-			uint32 generateName = 0;
+			uint32 generateId = 0;
 			ankerl::unordered_dense::map<uint32, Collection> privateIndex;
 			ankerl::unordered_dense::map<uint32, Holder<Asset>> publicIndex;
 			ankerl::unordered_dense::map<uint32, std::vector<Holder<Waiting>>> waitingIndex;
@@ -154,19 +154,19 @@ namespace cage
 			std::vector<Holder<Thread>> fetchThreads;
 			Holder<void> listener;
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
+			AssetsManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
 			{
-				CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "using assets path: " + path);
+				CAGE_LOG(SeverityEnum::Info, "assetsManager", Stringizer() + "using assets path: " + path);
 				schemes.resize(config.schemesMaxCount);
 				customProcessingQueues.resize(config.customProcessingThreads);
 				for (auto &it : customProcessingQueues)
 					it = systemMemory().createHolder<ConcurrentQueue<Work>>();
 				fetchThreads.reserve(config.diskLoadingThreads);
 				for (uint32 i = 0; i < config.diskLoadingThreads; i++)
-					fetchThreads.push_back(newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), Stringizer() + "asset disk loading " + i));
+					fetchThreads.push_back(newThread(Delegate<void()>().bind<AssetsManagerImpl, &AssetsManagerImpl::diskLoadingEntry>(this), Stringizer() + "asset disk loading " + i));
 			}
 
-			~AssetManagerImpl()
+			~AssetsManagerImpl()
 			{
 				listener.clear();
 				for (auto &it : customProcessingQueues)
@@ -273,7 +273,7 @@ namespace cage
 			{
 				// private mutex already locked
 
-				auto &c = asset->impl->privateIndex[asset->realName];
+				auto &c = asset->impl->privateIndex[asset->assetId];
 				if (c.references == 0)
 				{
 					asset->impl->enqueueUnload(asset.share());
@@ -301,21 +301,21 @@ namespace cage
 							v->ref.clear();
 						else if (v->ref || v->failed)
 						{
-							asset->impl->unpublish(v->realName);
-							asset->impl->publicIndex[v->realName] = v.share();
+							asset->impl->unpublish(v->assetId);
+							asset->impl->publicIndex[v->assetId] = v.share();
 							found = true;
 						}
 					}
 					CAGE_ASSERT(found);
-					asset->impl->waitingIndex.erase(asset->realName);
+					asset->impl->waitingIndex.erase(asset->assetId);
 				}
 			}
 
-			void unpublish(uint32 realName)
+			void unpublish(uint32 assetId)
 			{
 				// public mutex already locked
 
-				auto it = publicIndex.find(realName);
+				auto it = publicIndex.find(assetId);
 				if (it != publicIndex.end())
 					publicIndex.erase(it);
 			}
@@ -323,27 +323,27 @@ namespace cage
 
 		void defaultFetch(AssetContext *asset);
 
-		Asset::Asset(AssetManagerImpl *impl, uint32 realName) : AssetContext(realName), impl(impl)
+		Asset::Asset(AssetsManagerImpl *impl, uint32 assetId) : AssetContext(assetId), impl(impl)
 		{
-			textName = Stringizer() + "<" + realName + ">";
+			textId = Stringizer() + "<" + assetId + ">";
 			impl->existsCounter++;
 			fetch = defaultFetch;
 		}
 
-		Asset::Asset(AssetManagerImpl *impl, uint32 scheme_, uint32 realName, const String &textName_, Holder<void> &&value_) : AssetContext(realName), impl(impl)
+		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, uint32 assetId, const String &textId_, Holder<void> &&value_) : AssetContext(assetId), impl(impl)
 		{
-			textName = textName_.empty() ? (Stringizer() + "<" + realName + "> with value") : textName_;
+			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with value") : textId_;
 			scheme = scheme_;
 			impl->existsCounter++;
 			assetHolder = std::move(value_);
 		}
 
-		Asset::Asset(AssetManagerImpl *impl, uint32 scheme_, uint32 realName, const String &textName_, const AssetScheme &customScheme_, Holder<void> &&customData_) : AssetContext(realName), impl(impl)
+		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, uint32 assetId, const String &textId_, const AssetsScheme &customScheme_, Holder<void> &&customData_) : AssetContext(assetId), impl(impl)
 		{
-			textName = textName_.empty() ? (Stringizer() + "<" + realName + "> with custom scheme") : textName_;
+			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with custom scheme") : textId_;
 			scheme = scheme_;
 			impl->existsCounter++;
-			*(AssetScheme *)this = customScheme_;
+			*(AssetsScheme *)this = customScheme_;
 			threadIndex = impl->schemes[scheme].threadIndex;
 			typeHash = impl->schemes[scheme].typeHash;
 			customData = std::move(customData_);
@@ -369,7 +369,7 @@ namespace cage
 			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset fetching");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(asset->fetch);
 
 			try
@@ -404,7 +404,7 @@ namespace cage
 			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset decompression");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(!asset->failed);
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->decompress);
@@ -431,7 +431,7 @@ namespace cage
 			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset loading");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 			CAGE_ASSERT(!asset->failed);
 			CAGE_ASSERT(!asset->assetHolder);
 			CAGE_ASSERT(asset->load);
@@ -477,7 +477,7 @@ namespace cage
 			ScopeGuard exit([&] { finish(); });
 
 			ProfilingScope profiling("asset unloading");
-			profiling.set(asset->textName);
+			profiling.set(asset->textId);
 
 			asset->assetHolder.clear();
 
@@ -493,10 +493,10 @@ namespace cage
 			asset->dependencies.clear();
 
 			ScopeLock lock(asset->impl->privateMutex);
-			auto &c = asset->impl->privateIndex[asset->realName];
+			auto &c = asset->impl->privateIndex[asset->assetId];
 			std::erase_if(c.versions, [&](const Holder<Asset> &it) { return +it == +asset; });
 			if (c.versions.empty())
-				asset->impl->privateIndex.erase(asset->realName);
+				asset->impl->privateIndex.erase(asset->assetId);
 		}
 
 		void Work::finish()
@@ -522,60 +522,60 @@ namespace cage
 		}
 	}
 
-	void AssetManager::load(uint32 realName)
+	void AssetsManager::load(uint32 assetId)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
-		auto &c = impl->privateIndex[realName];
+		auto &c = impl->privateIndex[assetId];
 		if (c.references++ == 0)
 		{
-			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, realName);
+			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, assetId);
 			c.versions.insert(c.versions.begin(), asset.share());
 			lock.clear();
 			impl->fetchQueue.push(std::move(asset));
 		}
 	}
 
-	void AssetManager::unload(uint32 realName)
+	void AssetsManager::unload(uint32 assetId)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
-		CAGE_ASSERT(impl->privateIndex.count(realName) == 1);
-		auto &c = impl->privateIndex.at(realName);
+		CAGE_ASSERT(impl->privateIndex.count(assetId) == 1);
+		auto &c = impl->privateIndex.at(assetId);
 		if (c.references-- == 1)
 		{
 			{
 				ScopeLock lock(impl->publicMutex, WriteLockTag());
-				impl->unpublish(realName);
+				impl->unpublish(assetId);
 			}
 			for (auto &a : c.versions)
 				a->ref.clear();
 		}
 	}
 
-	void AssetManager::reload(uint32 realName)
+	void AssetsManager::reload(uint32 assetId)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
-		auto it = impl->privateIndex.find(realName);
+		auto it = impl->privateIndex.find(assetId);
 		if (it == impl->privateIndex.end())
 			return;
 		auto &c = it->second;
 		if (!c.fabricated)
 		{
-			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, realName);
+			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, assetId);
 			c.versions.insert(c.versions.begin(), asset.share());
 			lock.clear();
 			impl->fetchQueue.push(std::move(asset));
 		}
 	}
 
-	uint32 AssetManager::generateUniqueName()
+	uint32 AssetsManager::generateUniqueId()
 	{
 		static constexpr uint32 a = (uint32)1 << 28;
 		static constexpr uint32 b = (uint32)1 << 30;
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
-		uint32 &name = impl->generateName;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
+		uint32 &name = impl->generateId;
 		ScopeLock lock(impl->privateMutex);
 		if (name < a || name > b)
 			name = a;
@@ -584,12 +584,12 @@ namespace cage
 		return name++;
 	}
 
-	void AssetManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
+	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
 	{
 		class AssetListenerImpl
 		{
 		public:
-			AssetManager *const man = nullptr;
+			AssetsManager *const man = nullptr;
 			String address;
 			uint64 period = 0;
 			uint16 port = 0;
@@ -597,7 +597,7 @@ namespace cage
 			Holder<TcpConnection> tcp;
 			Holder<Thread> thread;
 
-			AssetListenerImpl(AssetManager *man, const String &address, uint64 period, uint32 port) : man(man), address(address), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
+			AssetListenerImpl(AssetsManager *man, const String &address, uint64 period, uint32 port) : man(man), address(address), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
 
 			~AssetListenerImpl()
 			{
@@ -615,7 +615,7 @@ namespace cage
 				}
 				catch (...)
 				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed to connect to the database");
+					CAGE_LOG(SeverityEnum::Warning, "assetsManager", "assets network notifications listener failed to connect to the database");
 					return;
 				}
 				try
@@ -627,36 +627,36 @@ namespace cage
 						while (tcp->readLine(line))
 						{
 							const uint32 name = HashString(line);
-							CAGE_LOG(SeverityEnum::Info, "assetManager", Stringizer() + "reloading asset: " + line + " (" + name + ")");
+							CAGE_LOG(SeverityEnum::Info, "assetsManager", Stringizer() + "reloading asset: " + line + " (" + name + ")");
 							man->reload(name);
 						}
 					}
 				}
 				catch (const Disconnected &)
 				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener disconnected");
+					CAGE_LOG(SeverityEnum::Warning, "assetsManager", "assets network notifications listener disconnected");
 				}
 				catch (...)
 				{
-					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed with exception");
+					CAGE_LOG(SeverityEnum::Warning, "assetsManager", "assets network notifications listener failed with exception");
 					detail::logCurrentCaughtException();
 				}
 				tcp.clear();
 			}
 		};
 
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		impl->listener.clear();
 		impl->listener = systemMemory().createHolder<AssetListenerImpl>(this, address, listenerPeriod, port).template cast<void>();
 	}
 
-	bool AssetManager::processCustomThread(uint32 threadIndex)
+	bool AssetsManager::processCustomThread(uint32 threadIndex)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		return impl->customProcessEntry(threadIndex);
 	}
 
-	void AssetManager::unloadCustomThread(uint32 threadIndex)
+	void AssetsManager::unloadCustomThread(uint32 threadIndex)
 	{
 		while (!empty())
 		{
@@ -666,28 +666,28 @@ namespace cage
 		}
 	}
 
-	void AssetManager::waitTillEmpty()
+	void AssetsManager::waitTillEmpty()
 	{
 		while (!empty())
 			threadYield();
 	}
 
-	bool AssetManager::processing() const
+	bool AssetsManager::processing() const
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		return impl->workingCounter > 0;
 	}
 
-	bool AssetManager::empty() const
+	bool AssetsManager::empty() const
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetManager::defineScheme_(uint32 typeHash, uint32 scheme, const AssetScheme &value)
+	void AssetsManager::defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(typeHash != m);
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		CAGE_ASSERT(value.typeHash == typeHash);
@@ -696,30 +696,30 @@ namespace cage
 		impl->schemes[scheme] = value;
 	}
 
-	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textId, Holder<void> &&value)
+	void AssetsManager::load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		ScopeLock lock(impl->privateMutex);
-		auto &c = impl->privateIndex[realName];
+		auto &c = impl->privateIndex[assetId];
 		c.fabricated = true;
 		c.references++;
-		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textId, std::move(value));
+		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, assetId, textId, std::move(value));
 		c.versions.insert(c.versions.begin(), asset.share());
 		impl->publish(std::move(asset));
 	}
 
-	void AssetManager::load_(uint32 scheme, uint32 realName, const String &textId, const AssetScheme &customScheme, Holder<void> &&customData)
+	void AssetsManager::load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData)
 	{
-		AssetManagerImpl *impl = (AssetManagerImpl *)this;
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		CAGE_ASSERT(customScheme.threadIndex == m);
 		CAGE_ASSERT(customScheme.typeHash == m);
 		ScopeLock lock(impl->privateMutex);
-		auto &c = impl->privateIndex[realName];
+		auto &c = impl->privateIndex[assetId];
 		c.fabricated = true;
 		c.references++;
-		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, realName, textId, customScheme, std::move(customData));
+		Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, scheme, assetId, textId, customScheme, std::move(customData));
 		c.versions.insert(c.versions.begin(), asset.share());
 		lock.clear();
 		if (asset->fetch)
@@ -735,15 +735,15 @@ namespace cage
 		}
 	}
 
-	Holder<void> AssetManager::get_(uint32 scheme, uint32 realName) const
+	Holder<void> AssetsManager::get_(uint32 scheme, uint32 assetId) const
 	{
-		const AssetManagerImpl *impl = (const AssetManagerImpl *)this;
+		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
 		const auto &schemes = impl->schemes;
 		const auto &publicIndex = impl->publicIndex;
 		CAGE_ASSERT(scheme < schemes.size());
 		CAGE_ASSERT(schemes[scheme].load);
 		ScopeLock lock(impl->publicMutex, ReadLockTag());
-		auto it = publicIndex.find(realName);
+		auto it = publicIndex.find(assetId);
 		if (it == publicIndex.end())
 			return {}; // not found
 		const auto &a = it->second;
@@ -754,16 +754,16 @@ namespace cage
 		return a->ref.share();
 	}
 
-	uint32 AssetManager::schemeTypeHash_(uint32 scheme) const
+	uint32 AssetsManager::schemeTypeHash_(uint32 scheme) const
 	{
-		const AssetManagerImpl *impl = (const AssetManagerImpl *)this;
+		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		return impl->schemes[scheme].typeHash;
 	}
 
-	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
+	Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config)
 	{
-		return systemMemory().createImpl<AssetManager, AssetManagerImpl>(config);
+		return systemMemory().createImpl<AssetsManager, AssetsManagerImpl>(config);
 	}
 
 	namespace
@@ -772,12 +772,12 @@ namespace cage
 
 		void defaultFetch(AssetContext *asset)
 		{
-			AssetManagerImpl *impl = ((Asset *)asset)->impl;
+			AssetsManagerImpl *impl = ((Asset *)asset)->impl;
 
 			Holder<File> file;
 			{
 				String foundName;
-				if (impl->findAsset.dispatch(asset->realName, foundName, file))
+				if (impl->findAsset.dispatch(asset->assetId, foundName, file))
 				{
 					if (!file && !foundName.empty())
 						file = readFile(foundName);
@@ -785,7 +785,7 @@ namespace cage
 				else
 				{
 					CAGE_ASSERT(!file && foundName.empty());
-					foundName = pathJoin(impl->path, Stringizer() + asset->realName);
+					foundName = pathJoin(impl->path, Stringizer() + asset->assetId);
 					file = readFile(foundName);
 				}
 				if (!foundName.empty())
@@ -799,14 +799,14 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "file is not a cage asset");
 			if (h.version != CurrentAssetVersion)
 				CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
-			if (h.textName[sizeof(h.textName) - 1] != 0)
-				CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
-			asset->textName = h.textName;
+			if (h.textId[sizeof(h.textId) - 1] != 0)
+				CAGE_THROW_ERROR(Exception, "cage asset text id not bounded");
+			asset->textId = h.textId;
 			if (h.scheme >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;
 
-			*((AssetScheme *)(Asset *)asset) = impl->schemes[asset->scheme];
+			*((AssetsScheme *)(Asset *)asset) = impl->schemes[asset->scheme];
 			if (!impl->schemes[asset->scheme].load)
 				return;
 
@@ -839,7 +839,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme::AssetScheme()
+	AssetsScheme::AssetsScheme()
 	{
 		fetch.bind<defaultFetch>();
 		decompress.bind<defaultDecompress>();
@@ -849,12 +849,12 @@ namespace cage
 	{
 		version = CurrentAssetVersion;
 		String name = name_;
-		static constexpr uint32 MaxTexName = sizeof(textName) - 1;
+		static constexpr uint32 MaxTexName = sizeof(textId) - 1;
 		if (name.length() > MaxTexName)
 			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);
 		CAGE_ASSERT(name.length() > 0);
-		detail::memcpy(textName, name.c_str(), name.length());
+		detail::memcpy(textId, name.c_str(), name.length());
 		scheme = schemeIndex;
 	}
 }

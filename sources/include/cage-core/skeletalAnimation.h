@@ -33,7 +33,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
 
-	CAGE_CORE_API AssetScheme genAssetSchemeSkeletalAnimation();
+	CAGE_CORE_API AssetsScheme genAssetSchemeSkeletalAnimation();
 	constexpr uint32 AssetSchemeIndexSkeletalAnimation = 6;
 
 	class CAGE_CORE_API SkeletonRig : private Immovable
@@ -58,7 +58,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();
 
-	CAGE_CORE_API AssetScheme genAssetSchemeSkeletonRig();
+	CAGE_CORE_API AssetsScheme genAssetSchemeSkeletonRig();
 	constexpr uint32 AssetSchemeIndexSkeletonRig = 5;
 
 	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes

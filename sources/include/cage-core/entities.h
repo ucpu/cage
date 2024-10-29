@@ -34,13 +34,14 @@ namespace cage
 		Holder<PointerRange<EntityComponent *>> components() const;
 		uint32 componentsCount() const;
 
-		Entity *createUnique(); // new entity with unique name
-		Entity *createAnonymous(); // new entity with name = 0, accessible only with the pointer
-		Entity *create(uint32 name); // must be non-zero
-		Entity *tryGet(uint32 entityName) const; // return nullptr if it does not exist
-		Entity *get(uint32 entityName) const; // throw if it does not exist
-		Entity *getOrCreate(uint32 entityName);
-		bool has(uint32 entityName) const;
+		Entity *createUnique(); // new entity with unique id
+		Entity *createAnonymous(); // new entity with id = 0, accessible only with the pointer
+		Entity *create(uint32 entityId); // must be non-zero
+		Entity *tryGet(uint32 entityId) const; // return nullptr if it does not exist
+		Entity *get(uint32 entityId) const; // throw if it does not exist
+		Entity *getOrCreate(uint32 entityId);
+		[[deprecated]] bool has(uint32 entityId) const { return exists(entityId); }
+		bool exists(uint32 entityId) const;
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
@@ -75,7 +76,8 @@ namespace cage
 	{
 	public:
 		EntityManager *manager() const;
-		uint32 name() const;
+		[[deprecated]] uint32 name() const { return id(); }
+		uint32 id() const;
 
 		CAGE_FORCE_INLINE void add(EntityComponent *component) { unsafeValue(component); }
 		template<ComponentConcept T>
@@ -107,7 +109,6 @@ namespace cage
 		template<ComponentConcept T>
 		CAGE_FORCE_INLINE T &value(EntityComponent *component)
 		{
-			CAGE_ASSERT(component->manager() == manager());
 			CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>());
 			return *(T *)unsafeValue(component);
 		}

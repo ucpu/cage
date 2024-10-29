@@ -2,7 +2,7 @@
 
 #include <unordered_dense.h>
 
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/skeletalAnimation.h>
@@ -16,11 +16,11 @@ namespace cage
 		class SkeletalAnimationPreparatorCollectionImpl : public SkeletalAnimationPreparatorCollection
 		{
 		public:
-			explicit SkeletalAnimationPreparatorCollectionImpl(AssetManager *assets) : assets(assets) {}
+			explicit SkeletalAnimationPreparatorCollectionImpl(AssetsManager *assets) : assets(assets) {}
 
 			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 			Holder<Mutex> mutex = newMutex();
-			AssetManager *assets = nullptr;
+			AssetsManager *assets = nullptr;
 		};
 
 		class SkeletalAnimationPreparatorInstanceImpl : public SkeletalAnimationPreparatorInstance
@@ -106,7 +106,7 @@ namespace cage
 		impl->objects.clear();
 	}
 
-	Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetManager *assets)
+	Holder<SkeletalAnimationPreparatorCollection> newSkeletalAnimationPreparatorCollection(AssetsManager *assets)
 	{
 		return systemMemory().createImpl<SkeletalAnimationPreparatorCollection, SkeletalAnimationPreparatorCollectionImpl>(assets);
 	}

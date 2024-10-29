@@ -12,7 +12,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<RenderObject> obj = newRenderObject();
-			obj->setDebugName(context->textName);
+			obj->setDebugName(context->textId);
 
 			Deserializer des(context->originalData);
 			RenderObjectHeader h;
@@ -37,9 +37,9 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderObject()
+	AssetsScheme genAssetSchemeRenderObject()
 	{
-		AssetScheme s;
+		AssetsScheme s;
 		s.load.bind<&processLoad>();
 		s.typeHash = detail::typeHash<RenderObject>();
 		return s;

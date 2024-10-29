@@ -5,12 +5,12 @@
 
 namespace cage
 {
-	class AssetManager;
+	class AssetsManager;
 	class Entity;
 
 	struct CAGE_ENGINE_API ShadowmapFittingConfig
 	{
-		AssetManager *assets = nullptr;
+		AssetsManager *assets = nullptr;
 		Entity *light = nullptr;
 		Entity *camera = nullptr; // optional
 		uint32 sceneMask = m;

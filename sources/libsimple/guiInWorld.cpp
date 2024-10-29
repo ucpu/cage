@@ -1,4 +1,4 @@
-#include <cage-core/assetManager.h>
+#include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/entities.h>
 #include <cage-core/geometry.h>
@@ -122,7 +122,7 @@ namespace cage
 					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					tex->filters(GL_LINEAR, GL_LINEAR, 8);
 					tex->setDebugName(Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
-					textureName = engineAssets()->generateUniqueName();
+					textureName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
 
 					Holder<Mesh> msh = newMesh();
@@ -141,7 +141,7 @@ namespace cage
 					mod->textureNames[0] = textureName;
 					mod->flags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
 					mod->setDebugName(Stringizer() + "gui-in-world-model-" + (uintPtr)this);
-					modelName = engineAssets()->generateUniqueName();
+					modelName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);
 				}
 				else
