@@ -11,7 +11,7 @@ constexpr uint32 MaxChannels = 8;
 
 void doSplit(const String names[MaxChannels], const String &input)
 {
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + input + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: " + input);
 	Holder<Image> in = newImage();
 	in->importFile(input);
 	CAGE_LOG(SeverityEnum::Info, "image", "splitting");
@@ -26,7 +26,7 @@ void doSplit(const String names[MaxChannels], const String &input)
 			CAGE_LOG_THROW(Stringizer() + "requested channel index: " + index);
 			CAGE_THROW_ERROR(Exception, "input image does not have specified channel");
 		}
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + names[index] + "'");
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: " + names[index]);
 		CAGE_ASSERT(images[index]->channels() == 1);
 		images[index]->exportFile(names[index]);
 		outputs++;
@@ -64,7 +64,7 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 			continue;
 		highest = index;
 		inputs[index] = newImage();
-		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + names[index] + "' for " + (index + 1) + "th channel");
+		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: " + names[index] + ", for " + (index + 1) + "th channel");
 		inputs[index]->importFile(names[index]);
 		if (inputs[index]->channels() != 1)
 		{
@@ -77,7 +77,7 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining");
 	Holder<Image> image = imageChannelsJoin(inputs);
 	imageConvert(+image, highest + 1);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: '" + output + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: " + output);
 	image->exportFile(output);
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }

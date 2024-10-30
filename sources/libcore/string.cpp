@@ -81,7 +81,7 @@ namespace cage
 				}
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'");
+					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
@@ -94,7 +94,7 @@ namespace cage
 				value = std::strtoll(s, &e, 10);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'");
+					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
@@ -107,7 +107,7 @@ namespace cage
 				value = std::strtoull(s, &e, 10);
 				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'");
+					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
@@ -120,7 +120,7 @@ namespace cage
 				double v = std::strtod(s, &e);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'");
+					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 				value = v;
@@ -133,7 +133,7 @@ namespace cage
 				genericScan(s, v);
 				if (v < std::numeric_limits<float>::lowest() || v > std::numeric_limits<float>::max())
 				{
-					CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'");
+					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 				value = (float)v;
@@ -279,7 +279,7 @@ namespace cage
 			const auto [p, ec] = std::from_chars(s, s + n, value); \
 			if (p != s + n || ec != std::errc()) \
 			{ \
-				CAGE_LOG_THROW(Stringizer() + "input string: '" + s + "'"); \
+				CAGE_LOG_THROW(Stringizer() + "input string: " + s); \
 				CAGE_THROW_ERROR(Exception, "failed conversion of string to " CAGE_STRINGIZE(TYPE)); \
 			} \
 		}

@@ -30,7 +30,7 @@ namespace
 
 	AssetsLists analyzeFile(const String &path)
 	{
-		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing file '" + path + "'");
+		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing file: " + path);
 		try
 		{
 			Holder<Process> prg = newProcess(String() + "cage-asset-processor analyze " + path);
@@ -45,7 +45,7 @@ namespace
 					detail::OverrideBreakpoint ob;
 					line = prg->readLine();
 				}
-				CAGE_LOG_DEBUG(SeverityEnum::Info, "process", Stringizer() + "message '" + line + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Info, "process", Stringizer() + "message: " + line);
 				if (line == "cage-stop")
 					break;
 				else if (line == "cage-begin")
@@ -80,14 +80,14 @@ namespace
 		}
 		catch (...)
 		{
-			CAGE_LOG(SeverityEnum::Warning, "analyze", String() + "an error occurred while analyzing file '" + path + "'");
+			CAGE_LOG(SeverityEnum::Warning, "analyze", String() + "an error occurred while analyzing file: " + path);
 		}
 		return {};
 	}
 
 	void analyzeFolder(const String &path)
 	{
-		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing directory '" + path + "'");
+		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing directory: " + path);
 
 		std::set<String> files, directories;
 		const auto list = pathListDirectory(path);

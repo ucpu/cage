@@ -10,7 +10,7 @@ using namespace cage;
 
 void info(const String &src, int format)
 {
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "opening file '" + src + "'");
+	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "opening file: " + src);
 	MeshImportResult msh;
 	try
 	{

@@ -54,7 +54,7 @@ namespace cage
 				d.used[jid] = this;
 				name = glfwGetJoystickName(jid);
 				if (!glfwJoystickIsGamepad(jid))
-					CAGE_LOG(SeverityEnum::Warning, "gamepad", Stringizer() + "gamepad '" + name + "' does not have input mapping");
+					CAGE_LOG(SeverityEnum::Warning, "gamepad", Stringizer() + "gamepad: " + name + ", does not have input mapping");
 				processEventsImpl();
 			}
 

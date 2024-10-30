@@ -185,9 +185,9 @@ namespace
 					return String({ &left[index], &left[index] + 1 });
 			}
 			{
-				CAGE_LOG_THROW(Stringizer() + "expression: '" + l + "'");
-				CAGE_LOG_THROW(Stringizer() + "string: '" + left + "'");
-				CAGE_LOG_THROW(Stringizer() + "index: '" + right + "'");
+				CAGE_LOG_THROW(Stringizer() + "expression: " + l);
+				CAGE_LOG_THROW(Stringizer() + "string: " + left);
+				CAGE_LOG_THROW(Stringizer() + "index: " + right);
 				CAGE_THROW_ERROR(Exception, "non integer index or out of bounds");
 			}
 		}
@@ -214,15 +214,15 @@ namespace
 			uint32 o = find(reverse(subString(l, 0, z)), '(');
 			if (o == m)
 			{
-				CAGE_LOG_THROW(Stringizer() + "expression: '" + input + "'");
-				CAGE_THROW_ERROR(Exception, "unmatched ')'");
+				CAGE_LOG_THROW(Stringizer() + "expression: " + input);
+				CAGE_THROW_ERROR(Exception, "unmatched )");
 			}
 			l = replace(l, z - o - 1, o + 2, evalExp(subString(l, z - o, o)));
 		}
 		if (find(l, '(') != m)
 		{
-			CAGE_LOG_THROW(Stringizer() + "expression: '" + input + "'");
-			CAGE_THROW_ERROR(Exception, "unmatched '('");
+			CAGE_LOG_THROW(Stringizer() + "expression: " + input);
+			CAGE_THROW_ERROR(Exception, "unmatched (");
 		}
 		return evalExp(l);
 	}
@@ -233,7 +233,7 @@ namespace
 		{
 			if (!s.empty())
 			{
-				CAGE_LOG_DEBUG(SeverityEnum::Warning, "assetProcessor", Stringizer() + "output to unspecified shader: '" + s + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Warning, "assetProcessor", Stringizer() + "output to unspecified shader: " + s);
 			}
 			return;
 		}
@@ -297,13 +297,13 @@ namespace
 					if (cmd == "if")
 					{
 						if (line.empty())
-							CAGE_THROW_ERROR(Exception, "'$if' missing parameters");
+							CAGE_THROW_ERROR(Exception, "$if missing parameters");
 						stack.push_back(evalExpToBool(eval(line)) ? 1 : 0);
 					}
 					else if (cmd == "once")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(Exception, "'$once' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "$once cannot have parameters");
 						String name = Stringizer() + filename + ":" + lineNumber;
 						stack.push_back(onces.find(name) == onces.end() ? 1 : 0);
 						onces.insert(name);
@@ -311,9 +311,9 @@ namespace
 					else if (cmd == "else")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(Exception, "'$else' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "$else cannot have parameters");
 						if (stack.empty())
-							CAGE_THROW_ERROR(Exception, "unexpected '$else'");
+							CAGE_THROW_ERROR(Exception, "unexpected $else");
 						sint32 v = stack.back();
 						stack.pop_back();
 						switch (v)
@@ -334,15 +334,15 @@ namespace
 					else if (cmd == "end" || cmd == "endif")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(Exception, "'$end' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "$end cannot have parameters");
 						if (stack.empty())
-							CAGE_THROW_ERROR(Exception, "unexpected '$end'");
+							CAGE_THROW_ERROR(Exception, "unexpected $end");
 						stack.pop_back();
 					}
 					else if (cmd == "stack")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(Exception, "'$stack' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "$stack cannot have parameters");
 						String s("// CAGE: stack:");
 						for (const auto &it : stack)
 							s += Stringizer() + " " + it;
@@ -355,26 +355,26 @@ namespace
 							String name = split(line);
 							if (name.empty() || line.empty())
 							{
-								CAGE_LOG_THROW(Stringizer() + "name: '" + name + "'");
-								CAGE_THROW_ERROR(Exception, "'$define/set' expects two parameters");
+								CAGE_LOG_THROW(Stringizer() + "name: " + name);
+								CAGE_THROW_ERROR(Exception, "$define/set expects two parameters");
 							}
 							if (!validDefine(name))
 							{
-								CAGE_LOG_THROW(Stringizer() + "name: '" + name + "', value: '" + line + "'");
-								CAGE_THROW_ERROR(Exception, "'$define/set' with invalid name");
+								CAGE_LOG_THROW(Stringizer() + "name: " + name + ", value: " + line);
+								CAGE_THROW_ERROR(Exception, "$define/set with invalid name");
 							}
 							if (cmd == "set")
 								line = eval(line);
 							if (name == "shader" && shaderType(line) == 0)
-								CAGE_THROW_ERROR(Exception, "'$define/set shader ...' must be one of vertex, fragment, geometry, control, evaluation or compute");
+								CAGE_THROW_ERROR(Exception, "$define/set shader must be one of vertex, fragment, geometry, control, evaluation, or compute");
 							defines[name] = line;
 						}
 						else if (cmd == "undef")
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(Exception, "'$undef' with invalid name");
+								CAGE_LOG_THROW(Stringizer() + "name: " + line);
+								CAGE_THROW_ERROR(Exception, "$undef with invalid name");
 							}
 							defines.erase(line);
 						}
@@ -382,13 +382,13 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(Exception, "'$print' with invalid name");
+								CAGE_LOG_THROW(Stringizer() + "name: " + line);
+								CAGE_THROW_ERROR(Exception, "$print with invalid name");
 							}
 							if (defines.find(line) == defines.end())
 							{
-								CAGE_LOG_THROW(Stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(Exception, "'$print' with unknown name");
+								CAGE_LOG_THROW(Stringizer() + "name: " + line);
+								CAGE_THROW_ERROR(Exception, "$print with unknown name");
 							}
 							output(defines[line]);
 						}
@@ -399,31 +399,31 @@ namespace
 						else if (cmd == "variables")
 						{
 							if (!line.empty())
-								CAGE_THROW_ERROR(Exception, "'$variables' expects no parameters");
+								CAGE_THROW_ERROR(Exception, "$variables expects no parameters");
 							for (const auto &it : defines)
-								output(String() + "// CAGE: variable: '" + it.first + "' = '" + it.second + "'");
+								output(String() + "// CAGE: variable: " + it.first + " = " + it.second);
 						}
 						else if (cmd == "include")
 						{
 							if (line.empty())
-								CAGE_THROW_ERROR(Exception, "'$include' expects one parameter");
+								CAGE_THROW_ERROR(Exception, "$include expects one parameter");
 							line = convertFilePath(pathIsAbs(line) ? line : pathJoin(filename + "/..", line));
 							const String fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
-								CAGE_LOG_THROW(Stringizer() + "requested file '" + line + "'");
-								CAGE_THROW_ERROR(Exception, "'$include' file not found");
+								CAGE_LOG_THROW(Stringizer() + "requested file: " + line);
+								CAGE_THROW_ERROR(Exception, "$include file not found");
 							}
 							if (configShaderPrint)
-								output(Stringizer() + "// CAGE: include file: '" + line + "'");
+								output(Stringizer() + "// CAGE: include file: " + line);
 							parse(fn);
 							if (configShaderPrint)
-								output(Stringizer() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
+								output(Stringizer() + "// CAGE: return to file: " + pathToRel(filename, inputDirectory) + ":" + lineNumber);
 						}
 						else
 						{
-							CAGE_LOG_THROW(Stringizer() + "command: '" + cmd + "', params: '" + line + "'");
-							CAGE_THROW_ERROR(Exception, "unknown '$' command");
+							CAGE_LOG_THROW(Stringizer() + "command: " + cmd + ", params: " + line);
+							CAGE_THROW_ERROR(Exception, "unknown $ command");
 						}
 					}
 				}
@@ -437,7 +437,7 @@ namespace
 						if (cmd == "ifdef" || cmd == "ifndef")
 						{
 							if (line.empty())
-								CAGE_THROW_ERROR(Exception, "'#ifdef' missing parameter");
+								CAGE_THROW_ERROR(Exception, "#ifdef missing parameter");
 							keywords.insert(line);
 						}
 					}
@@ -446,16 +446,16 @@ namespace
 			}
 			catch (...)
 			{
-				CAGE_LOG_THROW(Stringizer() + "in file: '" + filename + "':" + lineNumber);
-				CAGE_LOG_THROW(Stringizer() + "original line: '" + originalLine + "'");
+				CAGE_LOG_THROW(Stringizer() + "in file: " + filename + ":" + lineNumber);
+				CAGE_LOG_THROW(Stringizer() + "original line: " + originalLine);
 				throw;
 			}
 		}
 
 		if (!stack.empty())
 		{
-			CAGE_LOG_THROW(Stringizer() + "in file: '" + filename + "':" + lineNumber);
-			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting '$end'");
+			CAGE_LOG_THROW(Stringizer() + "in file: " + filename + ":" + lineNumber);
+			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting $end");
 		}
 	}
 }

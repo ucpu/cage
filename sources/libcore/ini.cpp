@@ -225,7 +225,7 @@ namespace cage
 		String section, item, value;
 		if (anyUnused(section, item, value))
 		{
-			CAGE_LOG_THROW(Stringizer() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+			CAGE_LOG_THROW(Stringizer() + "section: " + section + ", item: " + item + ", value: " + value);
 			CAGE_THROW_ERROR(Exception, "unused ini/config item");
 		}
 	}
@@ -365,7 +365,7 @@ namespace cage
 					sec = Stringizer() + secIndex++;
 				if (sectionExists(sec))
 				{
-					CAGE_LOG_THROW(Stringizer() + "section: '" + sec + "'");
+					CAGE_LOG_THROW(Stringizer() + "section: " + sec);
 					CAGE_THROW_ERROR(Exception, "duplicate section");
 				}
 				continue;
@@ -385,7 +385,7 @@ namespace cage
 				itemName = Stringizer() + itemIndex++;
 			if (itemExists(sec, itemName))
 			{
-				CAGE_LOG_THROW(Stringizer() + "section: '" + sec + "', item: '" + itemName + "'");
+				CAGE_LOG_THROW(Stringizer() + "section: " + sec + ", item: " + itemName);
 				CAGE_THROW_ERROR(Exception, "duplicate item name");
 			}
 			set(sec, itemName, itemValue);
@@ -402,7 +402,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG_THROW(Stringizer() + "failed to load ini file: '" + filename + "'");
+			CAGE_LOG_THROW(Stringizer() + "failed to load ini file: " + filename);
 			throw;
 		}
 	}

@@ -57,7 +57,7 @@ namespace cage
 					const Vec2i s = Vec2i(confFullscreenWidth, confFullscreenHeight);
 					const uint32 freq = confFullscreenFrequency;
 					const String screen = confScreen;
-					CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", Stringizer() + "setting fullscreen window " + s + " on screen '" + screen + "'");
+					CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", Stringizer() + "setting fullscreen window: " + s + ", on screen: " + screen);
 					try
 					{
 						detail::OverrideBreakpoint ob;
@@ -70,7 +70,7 @@ namespace cage
 					}
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", Stringizer() + "setting windowed window " + s);
+				CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", Stringizer() + "setting windowed window: " + s);
 				window->setWindowed();
 				window->windowedPosition(p);
 				window->windowedSize(s);
@@ -133,7 +133,7 @@ namespace cage
 			try
 			{
 				const bool r = toBool(trim(String(env)));
-				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", Stringizer() + "using environment variable CAGE_FULLSCREEN_DEFAULT, value: " + r);
+				CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", Stringizer() + "using environment variable CAGE_FULLSCREEN_DEFAULT, value: " + r);
 				return r;
 			}
 			catch (const Exception &)

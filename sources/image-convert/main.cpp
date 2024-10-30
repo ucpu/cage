@@ -13,7 +13,7 @@ void convert(String src, const String &format, bool preserveOriginal)
 	src = pathSimplify(src);
 	const String path = pathExtractDirectory(src);
 	const String dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "converting '" + src + "' to '" + dst + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "converting: " + src + ", to " + dst);
 	if (src == dst)
 	{
 		CAGE_LOG(SeverityEnum::Info, "image", "no conversion required");

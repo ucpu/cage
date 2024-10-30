@@ -346,7 +346,7 @@ namespace cage
 					if (names.count(n->mName))
 					{ // make the name unique
 						n->mName = String(Stringizer() + n->mName.C_Str() + "_" + n).c_str();
-						CAGE_LOG_DEBUG(SeverityEnum::Warning, "assimp", Stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
+						CAGE_LOG_DEBUG(SeverityEnum::Warning, "assimp", Stringizer() + "renamed a node: " + n->mName.C_Str());
 					}
 					names[n->mName] = n;
 				}
@@ -514,7 +514,7 @@ namespace cage
 							contains += "uvs ";
 						if (am->HasVertexColors(0))
 							contains += "colors ";
-						CAGE_LOG_CONTINUE(SeverityEnum::Note, "meshImport", Stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
+						CAGE_LOG_CONTINUE(SeverityEnum::Note, "meshImport", Stringizer() + "index: " + i + ", object: " + objname + ", material: " + matname + ", contains: " + contains);
 					}
 
 					// print animations
@@ -522,7 +522,7 @@ namespace cage
 					for (uint32 i = 0; i < scene->mNumAnimations; i++)
 					{
 						const aiAnimation *ani = scene->mAnimations[i];
-						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "index: " + i + ", animation: '" + convStrTruncate(ani->mName) + "', channels: " + ani->mNumChannels);
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + "index: " + i + ", animation: " + convStrTruncate(ani->mName) + ", channels: " + ani->mNumChannels);
 					}
 				}
 
@@ -614,7 +614,7 @@ namespace cage
 					uint16 idx = skeleton->index(n->mNodeName);
 					if (idx == m)
 					{
-						CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
+						CAGE_LOG(SeverityEnum::Warning, "meshImport", Stringizer() + "channel index: " + channelIndex + ", name: " + n->mNodeName.data + ", has no corresponding bone and will be ignored");
 						continue;
 					}
 					boneIndices.push_back(idx);

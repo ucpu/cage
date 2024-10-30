@@ -88,12 +88,12 @@ namespace
 					{
 						if (pathIsAbs(line))
 						{
-							CAGE_LOG_THROW(Stringizer() + "path: '" + line + "'");
+							CAGE_LOG_THROW(Stringizer() + "path: " + line);
 							CAGE_THROW_ERROR(Exception, "assets use path must be relative");
 						}
 						if (!pathIsFile(pathJoin(pathToAbs(configPathInput), line)))
 						{
-							CAGE_LOG_THROW(Stringizer() + "path: '" + line + "'");
+							CAGE_LOG_THROW(Stringizer() + "path: " + line);
 							CAGE_THROW_ERROR(Exception, "assets use path does not exist");
 						}
 						ass.files.insert(line);
@@ -102,7 +102,7 @@ namespace
 						ass.references.insert(line);
 					else
 					{
-						CAGE_LOG_THROW(Stringizer() + "parameter: '" + param + "', value: '" + line + "'");
+						CAGE_LOG_THROW(Stringizer() + "parameter: " + param + ", value: " + line);
 						CAGE_THROW_ERROR(Exception, "unknown parameter name");
 					}
 				}
@@ -122,12 +122,12 @@ namespace
 		}
 		catch (const Exception &e)
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "processing asset '" + ass.name + "' failed");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "failed processing asset: " + ass.name);
 		}
 		catch (...)
 		{
 			detail::logCurrentCaughtException();
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unknown exception while processing asset '" + ass.name + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unknown exception while processing asset: " + ass.name);
 		}
 	}
 
@@ -162,8 +162,8 @@ namespace
 		}
 
 		// find new or modified databanks
-		const auto corruptedDbsCopy = std::move(corruptedDatabanks);
-		CAGE_ASSERT(corruptedDatabanks.empty());
+		std::set<String, StringComparatorFast> corruptedDbsCopy;
+		std::swap(corruptedDbsCopy, corruptedDatabanks);
 		for (const auto &f : files)
 		{
 			if (!isNameDatabank(f.first))
@@ -192,7 +192,7 @@ namespace
 			if (outputHashes.count(outputHash) > 0)
 			{
 				auto &ass2 = *outputHashes[outputHash];
-				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' has name hash collision with asset '" + ass2.name + "' in databank '" + ass2.databank + "'");
+				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + ass.name + ", in databank: " + ass.databank + ", has name hash collision with asset: " + ass2.name + ", in databank: " + ass2.databank);
 				ass.corrupted = true;
 				ass2.corrupted = true;
 			}
@@ -211,7 +211,7 @@ namespace
 				if (assets.count(it) == 0 && injectedNames.count(HashString(it)) == 0)
 				{
 					anyMissing = true;
-					CAGE_LOG(SeverityEnum::Warning, "database", Stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + it + "'");
+					CAGE_LOG(SeverityEnum::Warning, "database", Stringizer() + "asset: " + ass.name + ", in databank: " + ass.databank + ", is missing reference: " + it);
 				}
 			}
 			if (anyMissing)
@@ -254,7 +254,7 @@ void checkAssets()
 		for (const auto &it : assets)
 			if (it.second->corrupted)
 				asses.push_back(+it.second);
-		tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<&processAsset>(), asses);
+		tasksRunBlocking<Asset *const>("processing", Delegate<void(Asset *const &)>().bind<processAsset>(), asses);
 	}
 
 	validateAssets();

@@ -123,7 +123,7 @@ namespace cage
 				String section, item, value;
 				if (it.second->anyUnused(section, item, value))
 				{
-					CAGE_LOG_THROW(Stringizer() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+					CAGE_LOG_THROW(Stringizer() + "section: " + section + ", item: " + item + ", value: " + value);
 					CAGE_LOG_THROW(Stringizer() + "in profile: " + it.first);
 					CAGE_THROW_ERROR(Exception, "unused item in openxr controller bindings configuration");
 				}

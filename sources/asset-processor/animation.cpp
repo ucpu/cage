@@ -39,7 +39,7 @@ void processAnimation()
 			n = inputFile + ";skeleton";
 		else
 			n = pathJoin(pathExtractDirectory(inputName), n);
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using skeleton name: '" + n + "'");
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using skeleton name: " + n);
 		writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();

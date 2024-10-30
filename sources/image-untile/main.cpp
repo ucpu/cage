@@ -12,7 +12,7 @@ void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, c
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "cutting image at: " + x + ", " + y);
 	Holder<Image> out = newImage();
 	imageBlit(in.get(), out.get(), x, y, 0, 0, w, h);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving to: '" + name + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving to: " + name);
 	out->exportFile(name);
 }
 
@@ -21,7 +21,7 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 	if (w == 0 || h == 0)
 		CAGE_THROW_ERROR(Exception, "width and height may not be zero");
 
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: '" + input + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: " + input);
 	Holder<Image> in = newImage();
 	in->importFile(input);
 	const uint32 inw = in->width();

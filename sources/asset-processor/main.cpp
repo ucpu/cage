@@ -145,11 +145,11 @@ String convertFilePath(const String &input, const String &relativeTo, bool markA
 
 void writeLine(const String &other)
 {
-	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "writing: '" + other + "'");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "writing: " + other);
 	{
 		String b = other;
 		if (trim(split(b, "=")) == "ref")
-			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "reference hash: '" + (uint32)HashString(trim(b)) + "'");
+			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "reference hash: " + (uint32)HashString(trim(b)));
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));
@@ -162,7 +162,7 @@ String properties(const String &name)
 		return it->second;
 	else
 	{
-		CAGE_LOG_THROW(Stringizer() + "property name: '" + name + "'");
+		CAGE_LOG_THROW(Stringizer() + "property name: " + name);
 		CAGE_THROW_ERROR(Exception, "property not found");
 	}
 }
@@ -174,7 +174,7 @@ int main(int argc, const char *args[])
 		if (argc == 3 && String(args[1]) == "analyze")
 		{
 			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "analyzing input '" + args[2] + "'");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "analyzing input: " + args[2]);
 			inputDirectory = pathExtractDirectory(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
@@ -188,9 +188,9 @@ int main(int argc, const char *args[])
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
 		for (const auto &it : props)
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "property '" + it.first + "': '" + it.second + "'");
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "property: " + it.first + " = " + it.second);
 
-#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input " #N ": '" + N + "'");
+#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input: " #N " = " + N);
 		GCHL_GENERATE(inputFileName);
 		GCHL_GENERATE(outputFileName);
 		GCHL_GENERATE(inputFile);

@@ -11,7 +11,7 @@ using namespace cage;
 
 void info(const String &src)
 {
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "opening image '" + src + "'");
+	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "opening image: " + src);
 	ImageImportResult result;
 	try
 	{

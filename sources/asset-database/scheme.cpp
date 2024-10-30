@@ -222,7 +222,7 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (defaul.empty() && type != "string")
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "' is a required property");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", is a required");
 			return false;
 		}
 		val = defaul;
@@ -232,7 +232,7 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (!isBool(val))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not bool");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is not bool");
 			return false;
 		}
 		val = Stringizer() + toBool(val);
@@ -241,17 +241,17 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (val.empty() || !isDigitsOnly(val))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is not integer");
 			return false;
 		}
 		if (!min.empty() && toUint32(val) < toUint32(min))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too small");
 			return false;
 		}
 		if (!max.empty() && toUint32(val) > toUint32(max))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too large");
 			return false;
 		}
 	}
@@ -259,17 +259,17 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (!isInteger(val))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is not integer");
 			return false;
 		}
 		if (!min.empty() && toSint32(val) < toSint32(min))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too small");
 			return false;
 		}
 		if (!max.empty() && toSint32(val) > toSint32(max))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too large");
 			return false;
 		}
 	}
@@ -277,17 +277,17 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (!isReal(val))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not real");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is not real");
 			return false;
 		}
 		if (!min.empty() && toDouble(val) < toDouble(min))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too small");
 			return false;
 		}
 		if (!max.empty() && toDouble(val) > toDouble(max))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too large");
 			return false;
 		}
 	}
@@ -295,12 +295,12 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (!min.empty() && val.length() < toUint32(min))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too short");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too short");
 			return false;
 		}
 		if (!max.empty() && val.length() > toUint32(max))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too long");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is too long");
 			return false;
 		}
 	}
@@ -308,12 +308,12 @@ bool SchemeField::applyToAssetField(String &val, const String &assetName) const
 	{
 		if (find(val, ',') != m)
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' contains comma");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", contains comma");
 			return false;
 		}
 		if (!valuesContainsValue(values, val))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not listed in values");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "asset: " + assetName + ", property: " + name + ", value: " + val + ", is not listed in values");
 			return false;
 		}
 	}
@@ -337,7 +337,7 @@ namespace
 				continue;
 			Holder<Scheme> s = systemMemory().createHolder<Scheme>();
 			s->name = pathExtractFilenameNoExtension(name);
-			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading scheme '" + s->name + "'");
+			CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading scheme: " + s->name);
 			Holder<Ini> ini = newIni();
 			ini->importFile(name);
 			s->parse(+ini);

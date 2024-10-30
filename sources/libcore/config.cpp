@@ -406,16 +406,16 @@ namespace cage
 	void configApplyIni(const Ini *ini, const String &prefix)
 	{
 		if (find(prefix, '/') != m || prefix.empty())
-			CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config prefix '" + prefix + "'");
+			CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config prefix: " + prefix);
 		const String pref = prefix.empty() ? "" : prefix + "/";
 		for (const String &section : ini->sections())
 		{
 			if (prefix.empty() && find(section, '/') != m)
-				CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config section '" + section + "'");
+				CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config section: " + section);
 			for (const String &name : ini->items(section))
 			{
 				if (prefix.empty() && find(name, '/') != m)
-					CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config field '" + name + "'");
+					CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config field: " + name);
 				const String value = ini->getString(section, name);
 				configSetDynamic(Stringizer() + pref + section + "/" + name, value);
 			}
@@ -425,7 +425,7 @@ namespace cage
 	Holder<Ini> configGenerateIni(const String &prefix)
 	{
 		if (find(prefix, '/') != m || prefix.empty())
-			CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config prefix '" + prefix + "'");
+			CAGE_LOG(SeverityEnum::Warning, "config", Stringizer() + "dangerous config prefix: " + prefix);
 		Holder<Ini> ini = newIni();
 		Holder<ConfigList> cnf = newConfigList();
 		while (cnf->valid())

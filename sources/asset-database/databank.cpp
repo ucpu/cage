@@ -86,7 +86,7 @@ bool databankParse(const String &databank)
 	}
 	catch (cage::Exception &)
 	{
-		CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "invalid databank ini file '" + databank + "'");
+		CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "invalid databank ini file: " + databank);
 		return false;
 	}
 
@@ -98,13 +98,13 @@ bool databankParse(const String &databank)
 		const String scheme = ini->getString(section, "scheme");
 		if (scheme.empty())
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "undefined scheme in databank '" + databank + "' in section '" + section + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "undefined scheme in databank: " + databank + ", in section: " + section);
 			errors++;
 			continue;
 		}
 		if (schemes.count(scheme) == 0)
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "invalid scheme '" + scheme + "' in databank '" + databank + "' in section '" + section + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "invalid scheme: " + scheme + ", in databank: " + databank + ", in section: " + section);
 			errors++;
 			continue;
 		}
@@ -135,7 +135,7 @@ bool databankParse(const String &databank)
 			if (assets.count(ass->name) > 0)
 			{
 				const auto &ass2 = assets[ass->name];
-				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "duplicate asset name '" + ass->name + "' in databank '" + databank + "' in section '" + section + "' with asset in databank '" + ass2->databank + "'");
+				CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "duplicate asset name: " + ass->name + ", in databank: " + databank + ", in section: " + section + ", with asset in databank: " + ass2->databank);
 				errors++;
 				continue;
 			}
@@ -158,7 +158,7 @@ bool databankParse(const String &databank)
 		String s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unused property/asset '" + t + "' = '" + v + "' in databank '" + databank + "' in section '" + s + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", Stringizer() + "unused property/asset: " + t + " = " + v + ", in databank: " + databank + ", in section: " + s);
 			errors++;
 		}
 	}
@@ -198,7 +198,7 @@ void databanksLoad()
 		return;
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading database cache: '" + (String)configPathDatabase + "'");
+	CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "loading database cache: " + (String)configPathDatabase);
 	if (!pathIsFile(configPathDatabase))
 	{
 		CAGE_LOG(SeverityEnum::Info, "database", "database cache does not exist, starting from scratch");
@@ -238,7 +238,7 @@ void databanksSave()
 	// save database
 	if (!((String)configPathDatabase).empty())
 	{
-		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saving database cache: '" + (String)configPathDatabase + "'");
+		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "saving database cache: " + (String)configPathDatabase);
 		MemoryBuffer buf;
 		Serializer ser(buf);
 		ser << databaseBegin;
@@ -323,7 +323,7 @@ namespace
 	void findFiles(std::map<String, PathLastChange, StringComparatorFast> &files, const String &path)
 	{
 		const String pth = pathJoin(configPathInput, path);
-		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path '" + pth + "'");
+		CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path: " + pth);
 		const auto list = pathListDirectory(pth);
 		for (const String &p : list)
 		{

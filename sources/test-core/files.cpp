@@ -333,7 +333,7 @@ void testFiles()
 		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def\7gжяhi.bin";
 		CAGE_TEST_THROWN(writeFile(d));
 		const String s = pathReplaceInvalidCharacters(d, "_", true);
-		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: '" + s + "'");
+		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: " + s);
 		CAGE_TEST(writeFile(s));
 	}
 

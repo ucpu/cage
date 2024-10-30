@@ -11,7 +11,7 @@ void runClient()
 
 	ConfigString address("address");
 	ConfigUint32 port("port");
-	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "address: '" + (String)address + "'");
+	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "address: " + (String)address);
 	CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "port: " + (uint32)port);
 
 	Holder<Conn> client = newConn(newGinnelConnection(address, port, 0));
