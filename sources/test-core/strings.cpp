@@ -928,6 +928,43 @@ namespace
 			CAGE_TEST(textFormat("abc{def}ghi", "def") == "abcghi");
 			CAGE_TEST(textFormat("{3}def{2}", "hola|ho|ghi|abc|jey") == "abcdefghi");
 			CAGE_TEST(textFormat("abc{10}ghi", "def|juj") == "abcghi");
+			CAGE_TEST(textFormat("a {1} b", "") == "a  b");
+			CAGE_TEST(textFormat("a {-1} b", "") == "a  b");
+			CAGE_TEST(textFormat("a {0} b", "") == "a  b");
+			CAGE_TEST(textFormat("a {w} b", "") == "a  b");
+			CAGE_TEST(textFormat("a {} b", "") == "a  b");
+			CAGE_TEST(textFormat("a { } b", "") == "a  b");
+			CAGE_TEST(textFormat("a { b", "") == "a ");
+			CAGE_TEST(textFormat("a } b", "") == "a } b");
+			CAGE_TEST(textFormat("a {1} b", "huh") == "a  b");
+			CAGE_TEST(textFormat("a {-1} b", "huh") == "a  b");
+			CAGE_TEST(textFormat("a {0} b", "huh") == "a huh b");
+			CAGE_TEST(textFormat("a {w} b", "huh") == "a  b");
+			CAGE_TEST(textFormat("a {} b", "huh") == "a  b");
+			CAGE_TEST(textFormat("a { } b", "huh") == "a  b");
+			CAGE_TEST(textFormat("a { b", "huh") == "a ");
+			CAGE_TEST(textFormat("a } b", "huh") == "a } b");
+			CAGE_TEST(textFormat("a {1} b", "|h") == "a h b");
+			CAGE_TEST(textFormat("a {-1} b", "|h") == "a  b");
+			CAGE_TEST(textFormat("a {0} b", "|h") == "a  b");
+			CAGE_TEST(textFormat("a {w} b", "|h") == "a  b");
+			CAGE_TEST(textFormat("a {} b", "|h") == "a  b");
+			CAGE_TEST(textFormat("a { } b", "|h") == "a  b");
+			CAGE_TEST(textFormat("a { b", "|h") == "a ");
+			CAGE_TEST(textFormat("a } b", "|h") == "a } b");
+			CAGE_TEST(textFormat("a {1} b", "h|") == "a  b");
+			CAGE_TEST(textFormat("a {-1} b", "h|") == "a  b");
+			CAGE_TEST(textFormat("a {0} b", "h|") == "a h b");
+			CAGE_TEST(textFormat("a {w} b", "h|") == "a  b");
+			CAGE_TEST(textFormat("a {} b", "h|") == "a  b");
+			CAGE_TEST(textFormat("a { } b", "h|") == "a  b");
+			CAGE_TEST(textFormat("a { b", "h|") == "a ");
+			CAGE_TEST(textFormat("a } b", "h|") == "a } b");
+			CAGE_TEST(textFormat("a{{}}b", "") == "a}b");
+			CAGE_TEST(textFormat("a{}{}b", "") == "ab");
+			CAGE_TEST(textFormat("a}{b", "") == "a}");
+			CAGE_TEST(textFormat("a}{{b", "") == "a}");
+			CAGE_TEST(textFormat("a}{}b", "") == "a}b");
 		}
 
 		{

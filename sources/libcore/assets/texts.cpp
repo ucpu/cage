@@ -273,7 +273,7 @@ namespace cage
 
 	String textFormat(String res, const String &params)
 	{
-		uint32 pc = 1;
+		uint32 pc = 0;
 		for (char c : params)
 			pc += c == '|';
 
