@@ -305,10 +305,17 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyChildrenRecursively(Entity *e);
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
-		template<StringLiteral Text, uint32 TextId = 0>
+		template<StringLiteral Text>
 		GuiTooltipComponent::TooltipCallback guiTooltipText()
 		{
-			static constexpr GuiTextComponent txt{ Text.value, TextId };
+			static constexpr GuiTextComponent txt{ Text.value, 0 };
+			return privat::guiTooltipText(&txt);
+		}
+
+		template<uint32 TextId>
+		GuiTooltipComponent::TooltipCallback guiTooltipText()
+		{
+			static constexpr GuiTextComponent txt{ "", TextId };
 			return privat::guiTooltipText(&txt);
 		}
 	}

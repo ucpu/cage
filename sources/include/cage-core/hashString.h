@@ -10,7 +10,7 @@ namespace cage
 	{
 		CAGE_FORCE_INLINE constexpr explicit HashString(const char *str) : value(hashRawString(str) | ((uint32)1 << 31)) {}
 
-		CAGE_FORCE_INLINE constexpr explicit HashString(const StringPointer &str) : value(hashRawString(str) | ((uint32)1 << 31)) {}
+		CAGE_FORCE_INLINE constexpr explicit HashString(StringPointer str) : value(hashRawString(str) | ((uint32)1 << 31)) {}
 
 		template<uint32 N>
 		CAGE_FORCE_INLINE constexpr explicit HashString(const detail::StringBase<N> &str) : value(hashBuffer(str) | ((uint32)1 << 31))

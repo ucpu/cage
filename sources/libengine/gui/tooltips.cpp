@@ -274,7 +274,7 @@ namespace cage
 		GuiTooltipComponent::TooltipCallback guiTooltipText(const GuiTextComponent *txt)
 		{
 			GuiTooltipComponent::TooltipCallback tt;
-			tt.bind<const GuiTextComponent *, &guiTooltipTextImpl>(txt);
+			tt.bind<const GuiTextComponent *, guiTooltipTextImpl>(txt);
 			return tt;
 		}
 	}
