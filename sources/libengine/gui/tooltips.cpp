@@ -267,6 +267,15 @@ namespace cage
 			e->value<GuiLabelComponent>();
 			e->value<GuiTextComponent>() = *txt;
 		}
+
+		void guiTooltipStringImpl(const GuiTooltipConfig &cfg)
+		{
+			cfg.tooltip->value<GuiPanelComponent>();
+			Entity *e = cfg.tooltip->manager()->createUnique();
+			e->value<GuiParentComponent>().parent = cfg.tooltip->id();
+			e->value<GuiLabelComponent>();
+			e->value<GuiTextComponent>().value = cfg.invoker->value<GuiTooltipStringComponent>().data;
+		}
 	}
 
 	namespace privat
@@ -275,6 +284,14 @@ namespace cage
 		{
 			GuiTooltipComponent::TooltipCallback tt;
 			tt.bind<const GuiTextComponent *, guiTooltipTextImpl>(txt);
+			return tt;
+		}
+
+		GuiTooltipComponent::TooltipCallback guiTooltipText(Entity *e, const String &txt)
+		{
+			e->value<GuiTooltipStringComponent>().data = txt;
+			GuiTooltipComponent::TooltipCallback tt;
+			tt.bind<guiTooltipStringImpl>();
 			return tt;
 		}
 	}

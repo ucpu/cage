@@ -274,8 +274,15 @@ namespace cage
 		bool removing = false;
 	};
 
+	// this component is added to the root entity of shown tooltip to track its deletion
 	struct GuiTooltipMarkerComponent
-	{}; // this component is added to the root entity of shown tooltip to track its deletion
+	{};
+
+	// this component is used to hold data for text-only tooltips
+	struct GuiTooltipStringComponent
+	{
+		String data;
+	};
 
 	class GuiImpl : public GuiManager
 	{

@@ -46,18 +46,21 @@ namespace cage
 			BuilderItem update(Delegate<void(Entity *)> u);
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
+			BuilderItem tooltip(const String &txt, uint64 delay = GuiTooltipComponent().delay)
+			{
+				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), txt), .delay = delay };
+				return *this;
+			}
 			template<StringLiteral Text>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)
 			{
-				(*this)->template value<GuiTooltipComponent>().tooltip = detail::guiTooltipText<Text>();
-				(*this)->template value<GuiTooltipComponent>().delay = delay;
+				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<Text>(), .delay = delay };
 				return *this;
 			}
 			template<uint32 TextId>
 			BuilderItem tooltip(uint64 delay = GuiTooltipComponent().delay)
 			{
-				(*this)->template value<GuiTooltipComponent>().tooltip = detail::guiTooltipText<TextId>();
-				(*this)->template value<GuiTooltipComponent>().delay = delay;
+				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<TextId>(), .delay = delay };
 				return *this;
 			}
 
