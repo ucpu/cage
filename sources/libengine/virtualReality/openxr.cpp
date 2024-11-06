@@ -39,10 +39,10 @@ namespace cage
 		const ConfigBool confEnableValidation("cage/virtualReality/validationLayer", CAGE_DEBUG_BOOL);
 		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
 
-		constexpr const XrPosef IdentityPose = { .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 }, .position = { .x = 0, .y = 0, .z = 0 } };
-		constexpr const Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
-		constexpr const XrSpaceLocationFlags ValidMask = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
-		constexpr const XrSpaceLocationFlags TrackingMask = XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
+		constexpr XrPosef IdentityPose = { .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 }, .position = { .x = 0, .y = 0, .z = 0 } };
+		constexpr Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
+		constexpr XrSpaceLocationFlags ValidMask = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+		constexpr XrSpaceLocationFlags TrackingMask = XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT;
 
 		template<class T>
 		CAGE_FORCE_INLINE void init(T &t, XrStructureType type)
@@ -271,6 +271,7 @@ namespace cage
 					else
 						haveApilayerCoreValidation = false;
 
+					CAGE_LOG(SeverityEnum::Info, "virtualReality", "creating openxr instance");
 					XrInstanceCreateInfo info;
 					init(info, XR_TYPE_INSTANCE_CREATE_INFO);
 					info.enabledExtensionCount = exts.size();
