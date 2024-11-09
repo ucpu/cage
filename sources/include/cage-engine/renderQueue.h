@@ -109,6 +109,20 @@ namespace cage
 		void genericEnable(uint32 key, bool enable);
 		void resetAllState(); // set viewport, scissors, culling, depth, blend etc all to default values
 
+		template<class T>
+		void customCommand(Holder<T> data)
+		{
+			using Fnc = void(void *);
+			static Fnc *fnc = +[](void *d) { (*(T *)d)(); };
+			_customCommand(std::move(data).cast<void>(), fnc);
+		}
+		template<class T>
+		void customCommand(Holder<T> data, void fnc(T *))
+		{
+			using Fnc = void(void *);
+			_customCommand(std::move(data).cast<void>(), (Fnc *)fnc);
+		}
+
 		[[nodiscard]] struct RenderQueueNamedScope namedScope(StringPointer name);
 
 		// dispatch another queue as part of this queue
@@ -129,6 +143,9 @@ namespace cage
 		uint32 commandsCount() const;
 		uint32 drawsCount() const;
 		uint32 primitivesCount() const;
+
+	private:
+		void _customCommand(Holder<void> data, void (*fnc)(void *));
 	};
 
 	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue(const String &name, ProvisionalGraphics *provisionalGraphics);

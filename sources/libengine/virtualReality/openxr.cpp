@@ -895,6 +895,19 @@ namespace cage
 				check(xrEndFrame(impl->session, &frameEndInfo));
 			}
 
+			void cancel()
+			{
+				if (!rendering)
+					return;
+
+				XrFrameEndInfo frameEndInfo;
+				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
+				frameEndInfo.layerCount = 0;
+				frameEndInfo.displayTime = frameState.predictedDisplayTime;
+				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+				check(xrEndFrame(impl->session, &frameEndInfo));
+			}
+
 			CAGE_FORCE_INLINE void check(XrResult result) { return impl->check(result); }
 		};
 	}
@@ -967,6 +980,13 @@ namespace cage
 		ProfilingScope profiling("VR render commit");
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
 		impl->commit();
+	}
+
+	void VirtualRealityGraphicsFrame::renderCancel()
+	{
+		ProfilingScope profiling("VR render cancel");
+		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
+		impl->cancel();
 	}
 
 	void VirtualReality::processEvents()

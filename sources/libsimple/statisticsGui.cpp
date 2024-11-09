@@ -9,7 +9,6 @@ namespace cage
 {
 	namespace
 	{
-		ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer");
 		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 		ConfigBool confProfilingEnabled("cage/profiling/enabled");
@@ -135,16 +134,6 @@ namespace cage
 					if (in.key == keyToggleProfilingEnabled)
 					{
 						confProfilingEnabled = !confProfilingEnabled;
-						return true;
-					}
-					if (in.key == keyVisualizeBufferPrev)
-					{
-						confVisualizeBuffer = confVisualizeBuffer - 1;
-						return true;
-					}
-					if (in.key == keyVisualizeBufferNext)
-					{
-						confVisualizeBuffer = confVisualizeBuffer + 1;
 						return true;
 					}
 					if (in.key == keyToggleRenderMissingModels)

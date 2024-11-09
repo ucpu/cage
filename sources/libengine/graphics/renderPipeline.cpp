@@ -156,14 +156,22 @@ namespace cage
 		};
 
 		// camera or light
-		struct CameraData : public RenderPipelineCamera
+		struct CameraData
 		{
+			String name;
+			ScreenSpaceEffectsComponent effects;
+			Mat4 projection;
+			Transform transform;
+			TextureHandle target;
+			CameraCommonProperties camera;
+			LodSelection lodSelection;
+			Vec2i resolution;
+
 			Mat4 model;
 			Mat4 view;
 			Mat4 viewProj;
 
 			std::map<sint32, DataLayer> layers;
-			PointerRangeHolder<RenderPipelineDebugVisualization> debugVisualizations;
 			Holder<RenderQueue> renderQueue;
 
 			std::map<Entity *, struct ShadowmapData> shadowmaps;
@@ -187,22 +195,6 @@ namespace cage
 			uni.normalMat = Mat3x4(inverse(Mat3(model)));
 			return uni;
 		}
-
-		/*
-		Real lightRadius(Real intensity, const Vec3 &attenuation)
-		{
-			if (intensity <= 1e-5)
-				return 0;
-			const Real e = intensity / CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD;
-			const Real x = attenuation[0], y = attenuation[1], z = attenuation[2];
-			if (z < 1e-5)
-			{
-				CAGE_ASSERT(y > 1e-5);
-				return (e - x) / y;
-			}
-			return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
-		}
-		*/
 
 		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
 		{
@@ -349,44 +341,24 @@ namespace cage
 			Camera,
 		};
 
-		struct RenderPipelineImpl : public RenderPipeline, public RenderPipelineCreateConfig
+		struct RenderPipelineImpl : RenderPipelineConfig
 		{
 			Holder<Model> modelSquare, modelBone;
 			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
 			Holder<ShaderProgram> shaderFont;
-			Holder<AssetsOnDemand> onDemand;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
 			EntityComponent *prevTransformComponent = nullptr;
 
-			bool cnfRenderMissingModels = false;
-			bool cnfRenderSkeletonBones = false;
+			bool cnfRenderMissingModels = confRenderMissingModels;
+			bool cnfRenderSkeletonBones = confRenderSkeletonBones;
 
-			RenderPipelineImpl(const RenderPipelineCreateConfig &config) : RenderPipelineCreateConfig(config)
-			{
-				if (config.onDemand)
-					onDemand = Holder<AssetsOnDemand>(config.onDemand, nullptr);
-				else
-					onDemand = newAssetsOnDemand(assets);
-				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
-			}
-
-			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
-			{
-				if (multi)
-					return multi->get(variant);
-				return {};
-			}
-
-			bool reinitialize()
+			explicit RenderPipelineImpl(const RenderPipelineConfig &config) : RenderPipelineConfig(config)
 			{
 				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
-					return false;
-
-				cnfRenderMissingModels = confRenderMissingModels;
-				cnfRenderSkeletonBones = confRenderSkeletonBones;
+					return;
 
 				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
@@ -401,13 +373,18 @@ namespace cage
 				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
 				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/font.glsl")));
 				CAGE_ASSERT(shaderBlit);
-				onDemand->process();
 
-				skeletonPreparatorCollection->clear();
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
 
-				return true;
+				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
+			}
+
+			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
+			{
+				if (multi)
+					return multi->get(variant);
+				return {};
 			}
 
 			Mat4 modelTransform(Entity *e) const
@@ -910,11 +887,6 @@ namespace cage
 				renderQueue->resetAllState();
 				renderQueue->resetAllTextures();
 				renderQueue->checkGlErrorDebug();
-
-				RenderPipelineDebugVisualization deb;
-				deb.texture = data.shadowTexture.share();
-				deb.shader = shaderVisualizeDepth.share();
-				data.debugVisualizations.push_back(std::move(deb));
 			}
 
 			void prepareCameraLights(CameraData &data) const
@@ -996,36 +968,20 @@ namespace cage
 				prepareEntities<PrepareModeEnum::Camera>(data);
 				prepareCameraLights(data);
 
-				TextureHandle colorTexture = [&]()
-				{
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution,
-						[resolution = data.resolution](Texture *t)
-						{
-							t->initialize(resolution, 1, GL_RGBA16F);
-							t->filters(GL_LINEAR, GL_LINEAR, 0);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						});
-					RenderPipelineDebugVisualization deb;
-					deb.texture = t;
-					deb.shader = shaderVisualizeColor.share();
-					data.debugVisualizations.push_back(std::move(deb));
-					return t;
-				}();
-				TextureHandle depthTexture = [&]()
-				{
-					TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution,
-						[resolution = data.resolution](Texture *t)
-						{
-							t->initialize(resolution, 1, GL_DEPTH_COMPONENT32);
-							t->filters(GL_LINEAR, GL_LINEAR, 0);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						});
-					RenderPipelineDebugVisualization deb;
-					deb.texture = t;
-					deb.shader = shaderVisualizeDepth.share();
-					data.debugVisualizations.push_back(std::move(deb));
-					return t;
-				}();
+				TextureHandle colorTexture = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution,
+					[resolution = data.resolution](Texture *t)
+					{
+						t->initialize(resolution, 1, GL_RGBA16F);
+						t->filters(GL_LINEAR, GL_LINEAR, 0);
+						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					});
+				TextureHandle depthTexture = provisionalGraphics->texture(Stringizer() + "depthTarget_" + data.name + "_" + data.resolution,
+					[resolution = data.resolution](Texture *t)
+					{
+						t->initialize(resolution, 1, GL_DEPTH_COMPONENT32);
+						t->filters(GL_LINEAR, GL_LINEAR, 0);
+						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					});
 				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
 				renderQueue->bind(renderTarget);
 				renderQueue->depthTexture(renderTarget, depthTexture);
@@ -1063,10 +1019,6 @@ namespace cage
 								t->filters(GL_NEAREST, GL_NEAREST, 0);
 								t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 							});
-						RenderPipelineDebugVisualization deb;
-						deb.texture = t;
-						deb.shader = shaderVisualizeDepth.share();
-						data.debugVisualizations.push_back(std::move(deb));
 
 						FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw(Stringizer() + "depthTargetLowRes_" + data.name);
 						renderQueue->bind(renderTarget);
@@ -1092,13 +1044,6 @@ namespace cage
 					cfg.inDepth = depthTextureLowRes;
 					cfg.frameIndex = frameIndex;
 					screenSpaceAmbientOcclusion(cfg);
-
-					{
-						RenderPipelineDebugVisualization deb;
-						deb.texture = cfg.outAo;
-						deb.shader = shaderVisualizeMonochromatic.share();
-						data.debugVisualizations.push_back(std::move(deb));
-					}
 
 					// bind the texture for sampling
 					renderQueue->bind(cfg.outAo, CAGE_SHADER_TEXTURE_SSAO);
@@ -1227,21 +1172,13 @@ namespace cage
 					renderQueue->viewport(Vec2i(), data.resolution);
 					renderQueue->bind(colorTexture, 0);
 					renderQueue->bind(shaderBlit);
-					if (data.target)
-					{ // blit to texture
-						renderQueue->bind(renderTarget);
-						renderQueue->colorTexture(renderTarget, 0, data.target);
-						renderQueue->depthTexture(renderTarget, {});
-						renderQueue->activeAttachments(renderTarget, 1);
-						renderQueue->checkFrameBuffer(renderTarget);
-						renderQueue->draw(modelSquare);
-						renderQueue->resetFrameBuffer();
-					}
-					else
-					{ // blit to window
-						renderQueue->resetFrameBuffer();
-						renderQueue->draw(modelSquare);
-					}
+					renderQueue->bind(renderTarget);
+					renderQueue->colorTexture(renderTarget, 0, data.target);
+					renderQueue->depthTexture(renderTarget, {});
+					renderQueue->activeAttachments(renderTarget, 1);
+					renderQueue->checkFrameBuffer(renderTarget);
+					renderQueue->draw(modelSquare);
+					renderQueue->resetFrameBuffer();
 					renderQueue->resetAllState();
 					renderQueue->resetAllTextures();
 					renderQueue->checkGlErrorDebug();
@@ -1300,12 +1237,19 @@ namespace cage
 				return tasksRunAsync<ShadowmapData>("render shadowmap task", Delegate<void(ShadowmapData &, uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskShadowmap>(this), Holder<ShadowmapData>(&data, nullptr));
 			}
 
-			RenderPipelineResult prepareCamera(const RenderPipelineCamera &camera) const
+			Holder<RenderQueue> prepareCamera()
 			{
-				CAGE_ASSERT(!camera.name.empty());
+				CAGE_ASSERT(!name.empty());
 
 				CameraData data;
-				(RenderPipelineCamera &)data = camera;
+				data.name = name;
+				data.effects = effects;
+				data.projection = projection;
+				data.transform = transform;
+				data.target = target;
+				data.camera = camera;
+				data.lodSelection = lodSelection;
+				data.resolution = resolution;
 
 				std::vector<Holder<AsyncTask>> tasks;
 				entitiesVisitor(
@@ -1320,7 +1264,7 @@ namespace cage
 				for (const auto &it : tasks)
 					it->wait();
 
-				Holder<RenderQueue> queue = newRenderQueue(camera.name + "_pipeline", provisionalGraphics);
+				Holder<RenderQueue> queue = newRenderQueue(name + "_pipeline", provisionalGraphics);
 
 				{
 					// viewport must be dispatched before shadowmaps
@@ -1339,36 +1283,34 @@ namespace cage
 
 				// ensure that shadowmaps are rendered before the camera
 				for (auto &shm : data.shadowmaps)
-				{
 					queue->enqueue(std::move(shm.second.renderQueue));
-					for (RenderPipelineDebugVisualization &di : shm.second.debugVisualizations)
-						data.debugVisualizations.push_back(std::move(di));
-				}
 
 				queue->enqueue(std::move(data.renderQueue));
-
-				RenderPipelineResult result;
-				result.debugVisualizations = std::move(data.debugVisualizations);
-				result.renderQueue = std::move(queue);
-				return result;
+				return queue;
 			}
 		};
 	}
 
-	bool RenderPipeline::reinitialize()
+	Holder<RenderQueue> renderPipeline(const RenderPipelineConfig &config)
 	{
-		RenderPipelineImpl *impl = (RenderPipelineImpl *)this;
-		return impl->reinitialize();
-	}
+		CAGE_ASSERT(config.assets);
+		CAGE_ASSERT(config.provisionalGraphics);
+		CAGE_ASSERT(config.scene);
+		CAGE_ASSERT(config.onDemand);
+		CAGE_ASSERT(config.target);
+		CAGE_ASSERT(config.resolution[0] > 0);
+		CAGE_ASSERT(config.resolution[1] > 0);
+		CAGE_ASSERT(valid(config.projection));
+		CAGE_ASSERT(valid(config.transform.orientation));
+		CAGE_ASSERT(valid(config.transform.position));
+		CAGE_ASSERT(valid(config.transform.scale));
+		CAGE_ASSERT(valid(config.lodSelection.center));
+		CAGE_ASSERT(valid(config.lodSelection.screenSize));
+		CAGE_ASSERT(valid(config.interpolationFactor));
 
-	RenderPipelineResult RenderPipeline::render(const RenderPipelineCamera &camera)
-	{
-		RenderPipelineImpl *impl = (RenderPipelineImpl *)this;
-		return impl->prepareCamera(camera);
-	}
-
-	Holder<RenderPipeline> newRenderPipeline(const RenderPipelineCreateConfig &config)
-	{
-		return systemMemory().createImpl<RenderPipeline, RenderPipelineImpl>(config);
+		RenderPipelineImpl impl(config);
+		if (impl.skeletonPreparatorCollection)
+			return impl.prepareCamera();
+		return {};
 	}
 }

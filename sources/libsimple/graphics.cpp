@@ -7,10 +7,10 @@
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/entities.h>
 #include <cage-core/entitiesCopy.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/hashString.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
 #include <cage-engine/frameBuffer.h>
@@ -32,26 +32,22 @@ namespace cage
 {
 	namespace
 	{
-		const ConfigSint32 confVisualizeBuffer("cage/graphics/visualizeBuffer", 0);
 		const ConfigFloat confRenderGamma("cage/graphics/gamma", 2.2);
 
 		struct EmitBuffer : private Immovable
 		{
-			Holder<RenderPipeline> pipeline;
 			Holder<EntityManager> scene = newEntityManager();
 			uint64 emitTime = 0;
 		};
 
-		struct CameraData
+		struct CameraData : RenderPipelineConfig
 		{
-			Holder<RenderPipeline> pipeline;
-			RenderPipelineCamera inputs;
-			RenderPipelineResult outputs;
-			bool order = false;
+			Holder<RenderQueue> renderQueue;
+			bool finalProduct = false; // ensure render-to-texture before render-to-window
 
-			void operator()() { outputs = pipeline->render(inputs); }
+			void operator()() { renderQueue = renderPipeline(*this); }
 
-			bool operator<(const CameraData &other) const { return order < other.order; }
+			bool operator<(const CameraData &other) const { return finalProduct < other.finalProduct; }
 		};
 
 		Transform modelTransform(Entity *e, Real interpolationFactor)
@@ -110,6 +106,19 @@ namespace cage
 			return res;
 		}
 
+		TextureHandle initializeTarget(const String &prefix, Vec2i resolution)
+		{
+			const String name = Stringizer() + prefix + "_" + resolution;
+			TextureHandle tex = engineProvisonalGraphics()->texture(name,
+				[resolution](Texture *tex)
+				{
+					tex->initialize(resolution, 1, GL_RGB8);
+					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					tex->filters(GL_LINEAR, GL_LINEAR, 0);
+				});
+			return tex;
+		}
+
 		Entity *findVrOrigin(EntityManager *scene)
 		{
 			auto r = scene->component<VrOriginComponent>()->entities();
@@ -141,21 +150,10 @@ namespace cage
 			{
 				renderQueue = newRenderQueue("engine", engineProvisonalGraphics());
 				onDemand = newAssetsOnDemand(engineAssets());
-				for (EmitBuffer &it : emitBuffers)
-				{
-					RenderPipelineCreateConfig cfg;
-					cfg.assets = engineAssets();
-					cfg.provisionalGraphics = engineProvisonalGraphics();
-					cfg.scene = +it.scene;
-					cfg.onDemand = +onDemand;
-					it.pipeline = newRenderPipeline(cfg);
-				}
 			}
 
 			void finalize() // opengl thread
 			{
-				for (EmitBuffer &it : emitBuffers)
-					it.pipeline.clear();
 				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to enginePurgeAssetsOnDemandCache
 				renderQueue.clear();
 				engineProvisonalGraphics()->purge();
@@ -173,58 +171,17 @@ namespace cage
 				}
 			}
 
-			void prepareVrCameras(const EmitBuffer &eb, std::vector<CameraData> &cameras)
+			void prepareCameras(const RenderPipelineConfig &cfg, Holder<VirtualRealityGraphicsFrame> vrFrame)
 			{
-				Entity *camEnt = nullptr;
-				{
-					auto r = eb.scene->component<VrCameraComponent>()->entities();
-					if (!r.empty())
-						camEnt = r[0];
-				}
+				Holder<Model> modelSquare = cfg.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				CAGE_ASSERT(modelSquare);
+				Holder<ShaderProgram> shaderBlit = cfg.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
+				CAGE_ASSERT(shaderBlit);
 
-				if (camEnt)
-				{
-					const auto &cam = camEnt->value<VrCameraComponent>();
-					for (VirtualRealityCamera &it : vrFrame->cameras)
-					{
-						it.nearPlane = cam.near;
-						it.farPlane = cam.far;
-					}
-				}
-
-				vrFrame->updateProjections();
-				vrTargets.clear();
-
-				uint32 index = 0;
-				for (const VirtualRealityCamera &it : vrFrame->cameras)
-				{
-					CameraData data;
-					data.pipeline = eb.pipeline.share();
-					if (camEnt)
-					{
-						data.inputs.camera = camEnt->value<VrCameraComponent>();
-						if (camEnt->has<ScreenSpaceEffectsComponent>())
-							data.inputs.effects = camEnt->value<ScreenSpaceEffectsComponent>();
-					}
-					data.inputs.effects.gamma = Real(confRenderGamma);
-					data.inputs.name = Stringizer() + "vrcamera_" + index;
-					data.inputs.target = initializeVrTarget(data.inputs.name, it.resolution);
-					vrTargets.push_back(data.inputs.target);
-					data.inputs.resolution = it.resolution;
-					data.inputs.transform = transformByVrOrigin(+eb.scene, it.transform, eb.pipeline->interpolationFactor);
-					data.inputs.projection = it.projection;
-					data.inputs.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.inputs.resolution[1]);
-					data.inputs.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
-					cameras.push_back(std::move(data));
-					index++;
-				}
-			}
-
-			void prepareCameras(const EmitBuffer &eb, const Vec2i windowResolution)
-			{
 				std::vector<CameraData> cameras;
-				uint32 windowOutputs = 0;
-				const bool enabled = windowResolution[0] > 0 || windowResolution[1] > 0;
+				std::vector<TextureHandle> vrTargets;
+				TextureHandle windowTarget;
+				const bool enabled = cfg.resolution[0] > 0 && cfg.resolution[1] > 0;
 
 				entitiesVisitor(
 					[&](Entity *e, const CameraComponent &cam)
@@ -237,132 +194,206 @@ namespace cage
 								return; // no intermediate renders are used
 						}
 						CameraData data;
-						data.pipeline = eb.pipeline.share();
-						data.inputs.camera = cam;
+						(RenderPipelineConfig &)data = cfg;
+						data.camera = cam;
 						if (e->has<ScreenSpaceEffectsComponent>())
-							data.inputs.effects = e->value<ScreenSpaceEffectsComponent>();
-						data.inputs.effects.gamma = Real(confRenderGamma);
-						data.inputs.name = Stringizer() + "camera_" + e->id();
-						data.inputs.target = cam.target ? TextureHandle(Holder<Texture>(cam.target, nullptr)) : TextureHandle();
-						data.inputs.resolution = cam.target ? cam.target->resolution() : windowResolution;
-						data.inputs.transform = modelTransform(e, eb.pipeline->interpolationFactor);
-						data.inputs.projection = initializeProjection(cam, data.inputs.resolution);
-						data.inputs.lodSelection = initializeLodSelection(cam, data.inputs.resolution[1]);
-						data.inputs.lodSelection.center = data.inputs.transform.position;
-						data.order = !cam.target;
+							data.effects = e->value<ScreenSpaceEffectsComponent>();
+						data.effects.gamma = Real(confRenderGamma);
+						data.name = Stringizer() + "camera_" + e->id();
+						data.resolution = cam.target ? cam.target->resolution() : cfg.resolution;
+						data.transform = modelTransform(e, cfg.interpolationFactor);
+						data.projection = initializeProjection(cam, data.resolution);
+						data.lodSelection = initializeLodSelection(cam, data.resolution[1]);
+						data.lodSelection.center = data.transform.position;
+						if (cam.target)
+							data.target = TextureHandle(Holder<Texture>(cam.target, nullptr));
+						else
+						{
+							CAGE_ASSERT(!windowTarget);
+							windowTarget = initializeTarget(data.name, data.resolution);
+							data.target = windowTarget;
+						}
+						data.finalProduct = !cam.target;
 						cameras.push_back(std::move(data));
-						windowOutputs += cam.target ? 0 : 1;
 					},
-					+eb.scene, false);
-				CAGE_ASSERT(windowOutputs <= 1);
+					cfg.scene, false);
 
 				if (vrFrame)
-					prepareVrCameras(eb, cameras);
+				{
+					Entity *camEnt = nullptr;
+					{
+						auto r = cfg.scene->component<VrCameraComponent>()->entities();
+						if (!r.empty())
+						{
+							camEnt = r[0];
+							const auto &cam = camEnt->value<VrCameraComponent>();
+							for (VirtualRealityCamera &it : vrFrame->cameras)
+							{
+								it.nearPlane = cam.near;
+								it.farPlane = cam.far;
+							}
+						}
+					}
 
-				std::stable_sort(cameras.begin(), cameras.end());
+					vrFrame->updateProjections();
+
+					uint32 index = 0;
+					for (const VirtualRealityCamera &it : vrFrame->cameras)
+					{
+						CameraData data;
+						(RenderPipelineConfig &)data = cfg;
+						if (camEnt)
+						{
+							data.camera = camEnt->value<VrCameraComponent>();
+							if (camEnt->has<ScreenSpaceEffectsComponent>())
+								data.effects = camEnt->value<ScreenSpaceEffectsComponent>();
+						}
+						data.effects.gamma = Real(confRenderGamma);
+						data.name = Stringizer() + "vr_camera_" + index;
+						data.resolution = it.resolution;
+						data.transform = transformByVrOrigin(cfg.scene, it.transform, cfg.interpolationFactor);
+						data.projection = it.projection;
+						data.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.resolution[1]);
+						data.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
+						data.target = initializeTarget(data.name, data.resolution);
+						data.finalProduct = true;
+						vrTargets.push_back(data.target);
+						cameras.push_back(std::move(data));
+						index++;
+					}
+				}
+
+				std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
 				tasksRunBlocking<CameraData>("prepare camera task", cameras);
 
+				if (vrFrame)
+				{
+					renderQueue->customCommand(
+						vrFrame.share(), +[](VirtualRealityGraphicsFrame *f) { f->renderBegin(); });
+				}
+
 				for (CameraData &cam : cameras)
-					renderQueue->enqueue(std::move(cam.outputs.renderQueue));
+					if (cam.renderQueue)
+						renderQueue->enqueue(std::move(cam.renderQueue));
 
-				if (!enabled)
-					return; // no output into minimized window
+				renderQueue->bind(shaderBlit);
 
-				std::vector<RenderPipelineDebugVisualization> debugVisualizations;
-				for (CameraData &cam : cameras)
+				// blit to window
+				if (enabled)
 				{
-					if (cam.inputs.target)
+					renderQueue->resetFrameBuffer();
+					renderQueue->viewport(Vec2i(), cfg.resolution);
+					if (windowTarget)
 					{
-						RenderPipelineDebugVisualization deb;
-						deb.texture = cam.inputs.target;
-						deb.shader = engineAssets()->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl"))->get(0);
-						CAGE_ASSERT(deb.shader);
-						debugVisualizations.push_back(std::move(deb));
+						renderQueue->bind(windowTarget, 0);
+						renderQueue->draw(modelSquare);
 					}
-					for (RenderPipelineDebugVisualization &di : cam.outputs.debugVisualizations)
+					else
 					{
-						CAGE_ASSERT(di.shader);
-						debugVisualizations.push_back(std::move(di));
+						// clear window (we have no cameras rendering into it)
+						renderQueue->clear(true, false);
 					}
 				}
 
-				const uint32 cnt = numeric_cast<uint32>(debugVisualizations.size()) + 1;
-				const uint32 index = (confVisualizeBuffer % cnt + cnt) % cnt - 1;
-				if (index != m)
+				// blit to vr targets
+				if (vrFrame)
 				{
-					CAGE_ASSERT(index < debugVisualizations.size());
-					const auto graphicsDebugScope = renderQueue->namedScope("visualize buffer");
-					renderQueue->viewport(Vec2i(), windowResolution);
-					renderQueue->bind(debugVisualizations[index].texture, 0);
-					renderQueue->bind(debugVisualizations[index].shader);
-					renderQueue->uniform(debugVisualizations[index].shader, 0, 1.0 / Vec2(windowResolution));
-					renderQueue->draw(engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
-					renderQueue->checkGlErrorDebug();
+					struct VrBlit
+					{
+						Holder<VirtualRealityGraphicsFrame> frame;
+						std::vector<TextureHandle> targets;
+
+						void operator()()
+						{
+							Holder<Model> modelSquare = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+							CAGE_ASSERT(modelSquare);
+							modelSquare->bind();
+							Holder<FrameBuffer> renderTarget = engineProvisonalGraphics()->frameBufferDraw("vr_blit")->resolve();
+							renderTarget->bind();
+							frame->acquireTextures();
+							CAGE_ASSERT(frame->cameras.size() == targets.size());
+							for (uint32 i = 0; i < targets.size(); i++)
+							{
+								if (!frame->cameras[i].colorTexture)
+									continue;
+								renderTarget->colorTexture(0, frame->cameras[i].colorTexture);
+								renderTarget->checkStatus();
+								glViewport(0, 0, frame->cameras[i].resolution[0], frame->cameras[i].resolution[1]);
+								targets[i].resolve()->bind(0);
+								modelSquare->dispatch();
+								CAGE_CHECK_GL_ERROR_DEBUG();
+							}
+							frame->renderCommit();
+						}
+					};
+
+					Holder<VrBlit> vrBlit = systemMemory().createHolder<VrBlit>();
+					vrBlit->frame = std::move(vrFrame);
+					vrBlit->targets = std::move(vrTargets);
+					renderQueue->customCommand(std::move(vrBlit));
 				}
 
-				// clear the window if there were no cameras
-				if (index == m && windowOutputs == 0)
-				{
-					const auto graphicsDebugScope = renderQueue->namedScope("clear window without cameras");
-					renderQueue->viewport(Vec2i(), windowResolution);
-					renderQueue->clear(true, false);
-					renderQueue->checkGlErrorDebug();
-				}
+				// reset the universe
+				renderQueue->resetFrameBuffer();
+				renderQueue->resetAllTextures();
+				renderQueue->resetAllState();
 			}
 
-			void prepare(uint64 dispatchTime) // prepare thread
+			void prepare(uint64 dispatchTime, uint32 &drawCalls, uint32 &drawPrimitives) // prepare thread
 			{
 				if (auto lock = emitBuffersGuard->read())
 				{
-					const EmitBuffer &eb = emitBuffers[lock.index()];
-					const Vec2i windowResolution = engineWindow()->resolution();
-					const bool enabled = eb.pipeline->reinitialize();
+					renderQueue->resetQueue();
 
-					CAGE_ASSERT(!vrFrame);
-					if (enabled && engineVirtualReality())
+					Holder<VirtualRealityGraphicsFrame> vrFrame;
+					if (engineVirtualReality())
 					{
 						vrFrame = engineVirtualReality()->graphicsFrame();
 						dispatchTime = vrFrame->displayTime();
 					}
 
+					const EmitBuffer &eb = emitBuffers[lock.index()];
+					const Vec2i windowResolution = engineWindow()->resolution();
+					RenderPipelineConfig cfg;
+					cfg.assets = engineAssets();
+					cfg.provisionalGraphics = engineProvisonalGraphics();
+					cfg.scene = +eb.scene;
+					cfg.onDemand = +onDemand;
 					const uint64 period = controlThread().updatePeriod();
-					eb.pipeline->currentTime = itc(eb.emitTime, dispatchTime, period);
-					eb.pipeline->elapsedTime = dispatchTime - lastDispatchTime;
-					eb.pipeline->interpolationFactor = saturate(Real(eb.pipeline->currentTime - eb.emitTime) / period);
-					eb.pipeline->frameIndex = frameIndex;
+					cfg.currentTime = itc(eb.emitTime, dispatchTime, period);
+					cfg.elapsedTime = dispatchTime - lastDispatchTime;
+					cfg.interpolationFactor = saturate(Real(cfg.currentTime - eb.emitTime) / period);
+					cfg.frameIndex = frameIndex;
+					cfg.resolution = windowResolution;
 
-					renderQueue->resetQueue();
-					if (enabled)
-						prepareCameras(eb, windowResolution);
-					renderQueue->resetFrameBuffer();
-					renderQueue->resetAllTextures();
-					renderQueue->resetAllState();
+					if (cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) && cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+						prepareCameras(cfg, vrFrame.share());
+					else if (vrFrame)
+					{
+						renderQueue->customCommand(
+							vrFrame.share(),
+							+[](VirtualRealityGraphicsFrame *f)
+							{
+								f->renderBegin();
+								f->renderCancel();
+							});
+					}
 
-					outputDrawCalls = renderQueue->drawsCount();
-					outputDrawPrimitives = renderQueue->primitivesCount();
+					onDemand->process();
+					drawCalls = renderQueue->drawsCount();
+					drawPrimitives = renderQueue->primitivesCount();
 					frameIndex++;
 					lastDispatchTime = dispatchTime;
+				}
+				else
+				{
+					drawCalls = drawPrimitives = 0;
 				}
 			}
 
 			void dispatch() // opengl thread
 			{
-				if (vrFrame)
-				{
-					struct ScopeExit
-					{
-						Holder<VirtualRealityGraphicsFrame> &vrFrame;
-						~ScopeExit() { vrFrame.clear(); }
-					} scopeExit{ vrFrame };
-					vrFrame->renderBegin();
-					renderQueue->dispatch();
-					vrFrame->acquireTextures();
-					copyVrContents();
-					vrFrame->renderCommit();
-				}
-				else
-					renderQueue->dispatch();
-
+				renderQueue->dispatch();
 				engineProvisonalGraphics()->reset();
 
 				{ // check gl errors (even in release, but do not halt the game)
@@ -384,61 +415,14 @@ namespace cage
 				glFinish(); // this is where the engine should be waiting for the gpu
 			}
 
-			TextureHandle initializeVrTarget(const String &prefix, Vec2i resolution)
-			{
-				const String name = Stringizer() + prefix + "_" + resolution;
-				TextureHandle tex = engineProvisonalGraphics()->texture(name,
-					[resolution](Texture *tex)
-					{
-						tex->initialize(resolution, 1, GL_RGB8);
-						tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						tex->filters(GL_LINEAR, GL_LINEAR, 0);
-					});
-				return tex;
-			}
-
-			void copyVrContents()
-			{
-				CAGE_ASSERT(vrFrame);
-				CAGE_ASSERT(vrFrame->cameras.size() == vrTargets.size());
-
-				auto assets = engineAssets();
-				Holder<Model> modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-				Holder<ShaderProgram> shaderBlit = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
-				Holder<FrameBuffer> renderTarget = engineProvisonalGraphics()->frameBufferDraw("VR_blit")->resolve();
-				if (!modelSquare || !shaderBlit)
-					return;
-
-				shaderBlit->bind();
-				renderTarget->bind();
-				for (uint32 i = 0; i < vrTargets.size(); i++)
-				{
-					if (!vrFrame->cameras[i].colorTexture)
-						continue;
-					renderTarget->colorTexture(0, vrFrame->cameras[i].colorTexture);
-					renderTarget->checkStatus();
-					glViewport(0, 0, vrFrame->cameras[i].resolution[0], vrFrame->cameras[i].resolution[1]);
-					vrTargets[i].resolve()->bind(0);
-					modelSquare->bind();
-					modelSquare->dispatch();
-					CAGE_CHECK_GL_ERROR_DEBUG();
-				}
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			}
-
 			Holder<RenderQueue> renderQueue;
 			Holder<AssetsOnDemand> onDemand;
-
-			Holder<VirtualRealityGraphicsFrame> vrFrame;
-			std::vector<TextureHandle> vrTargets;
 
 			Holder<SwapBufferGuard> emitBuffersGuard;
 			EmitBuffer emitBuffers[3];
 			InterpolationTimingCorrector itc;
 
 			uint64 lastDispatchTime = 0;
-			uint32 outputDrawCalls = 0;
-			uint32 outputDrawPrimitives = 0;
 			uint32 frameIndex = 0;
 		};
 
@@ -474,9 +458,7 @@ namespace cage
 
 	void graphicsPrepare(uint64 dispatchTime, uint32 &drawCalls, uint32 &drawPrimitives)
 	{
-		graphics->prepare(dispatchTime);
-		drawCalls = graphics->outputDrawCalls;
-		drawPrimitives = graphics->outputDrawPrimitives;
+		graphics->prepare(dispatchTime, drawCalls, drawPrimitives);
 	}
 
 	void graphicsDispatch()

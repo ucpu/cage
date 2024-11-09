@@ -979,6 +979,22 @@ namespace cage
 		clearColor(Vec4());
 	}
 
+	void RenderQueue::_customCommand(Holder<void> data, void (*fnc)(void *))
+	{
+		struct Cmd : public CmdBase
+		{
+			using Fnc = void(void *);
+			Holder<void> data;
+			Fnc *fnc = nullptr;
+			void dispatch(RenderQueueImpl *) const override { fnc(+data); }
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.data = std::move(data);
+		cmd.fnc = fnc;
+	}
+
 	RenderQueueNamedScope RenderQueue::namedScope(StringPointer name)
 	{
 		return RenderQueueNamedScope(this, name);

@@ -1,4 +1,3 @@
-#include <atomic>
 #include <cstdlib>
 
 #include <cage-core/memoryArena.h>
@@ -76,7 +75,6 @@ namespace cage
 				void *tmp = malloca(size, alignment);
 				if (!tmp)
 					CAGE_THROW_ERROR(OutOfMemory, "system memory arena out of memory", size);
-				allocations++;
 				return tmp;
 			}
 
@@ -85,15 +83,11 @@ namespace cage
 				if (!ptr)
 					return;
 				freea(ptr);
-				if (allocations-- == 0)
-					CAGE_THROW_CRITICAL(Exception, "memory corruption - double deallocation detected");
 			}
 
 			void flush() { CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used"); }
 
 			MemoryArena arena = MemoryArena(this);
-
-			std::atomic<uint32> allocations = 0;
 		};
 	}
 

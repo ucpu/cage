@@ -43,10 +43,8 @@ namespace cage
 		uint32 keyToggleStatisticsScope = 290; // f1
 		uint32 keyToggleStatisticsMode = 291; // f2
 		uint32 keyToggleProfilingEnabled = 292; // f3
-		uint32 keyVisualizeBufferPrev = 294; // f5
-		uint32 keyVisualizeBufferNext = 295; // f6
-		uint32 keyToggleRenderMissingModels = 296; // f7
-		uint32 keyToggleRenderSkeletonBones = 297; // f8
+		uint32 keyToggleRenderMissingModels = 294; // f5
+		uint32 keyToggleRenderSkeletonBones = 295; // f6
 		uint32 keyDecreaseGamma = 298; // f9
 		uint32 keyIncreaseGamma = 299; // f10
 		ModifiersFlags keyModifiers = ModifiersFlags::Ctrl;

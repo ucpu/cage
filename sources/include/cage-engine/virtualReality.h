@@ -57,6 +57,9 @@ namespace cage
 		// also submits acquired textures to the device
 		// requires opengl context
 		void renderCommit();
+
+		// requires opengl context
+		void renderCancel();
 	};
 
 	class CAGE_ENGINE_API VirtualReality : private Immovable
