@@ -61,16 +61,17 @@ namespace cage
 			Semaphore *sem = nullptr;
 		};
 
+		template<uint32 N>
 		struct ScopedTimer : private Immovable
 		{
-			VariableSmoothingBuffer<uint64, 100> &vsb;
-			uint64 st;
+			VariableSmoothingBuffer<uint64, N> &vsb;
+			uint64 st = applicationTime();
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, 100> &vsb) : vsb(vsb), st(applicationTime()) {}
+			explicit ScopedTimer(VariableSmoothingBuffer<uint64, N> &vsb) : vsb(vsb) {}
 
 			~ScopedTimer()
 			{
-				uint64 et = applicationTime();
+				const uint64 et = applicationTime();
 				vsb.add(et - st);
 			}
 		};
@@ -109,12 +110,13 @@ namespace cage
 
 		struct EngineData
 		{
-			VariableSmoothingBuffer<uint64, 100> profilingBufferGraphicsPrepare;
-			VariableSmoothingBuffer<uint64, 100> profilingBufferGraphicsDispatch;
-			VariableSmoothingBuffer<uint64, 100> profilingBufferFrameTime;
-			VariableSmoothingBuffer<uint64, 100> profilingBufferDrawCalls;
-			VariableSmoothingBuffer<uint64, 100> profilingBufferDrawPrimitives;
-			VariableSmoothingBuffer<uint64, 100> profilingBufferEntities;
+			VariableSmoothingBuffer<Real, 60> profilingBufferDynamicResolution;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferPrepareTime;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuTime;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
+			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
 
 			Holder<AssetsManager> assets;
 			Holder<Window> window;
@@ -171,11 +173,13 @@ namespace cage
 					if (stopping)
 						return; // prevent getting stuck in virtual reality waiting for previous (already terminated) frame dispatch
 					ProfilingScope profiling("graphics prepare run");
-					ScopedTimer timing(profilingBufferGraphicsPrepare);
+					ScopedTimer timing(profilingBufferPrepareTime);
 					uint32 drawCalls = 0, drawPrimitives = 0;
-					graphicsPrepare(applicationTime(), drawCalls, drawPrimitives);
+					Real dynamicResolution;
+					graphicsPrepare(applicationTime(), drawCalls, drawPrimitives, dynamicResolution);
 					profilingBufferDrawCalls.add(drawCalls);
 					profilingBufferDrawPrimitives.add(drawPrimitives);
+					profilingBufferDynamicResolution.add(dynamicResolution);
 				}
 			}
 
@@ -210,7 +214,6 @@ namespace cage
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
 					ProfilingScope profiling("graphics dispatch run");
-					ScopedTimer timing(profilingBufferGraphicsDispatch);
 					graphicsDispatch();
 				}
 				{
@@ -235,7 +238,9 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("swap");
-					graphicsSwap();
+					uint64 gpuTime = 0;
+					graphicsSwap(gpuTime);
+					profilingBufferGpuTime.add(gpuTime);
 				}
 			}
 
@@ -355,7 +360,7 @@ namespace cage
 					const uint64 start = applicationTime();
 					while (assets->processCustomThread(0))
 					{
-						if (applicationTime() > start + 10'000)
+						if (applicationTime() > start + 5'000)
 							break;
 					}
 				}
@@ -842,32 +847,51 @@ namespace cage
 	{
 		uint64 result = 0;
 
-		if (any(flags & StatisticsGuiFlags::Utilization))
+		if (any(flags & StatisticsGuiFlags::CpuUtilization))
 			result += 100 * engineData->controlScheduler->utilization();
+
+		if (any(flags & StatisticsGuiFlags::DynamicResolution))
+		{
+			switch (mode)
+			{
+				case StatisticsGuiModeEnum::Average:
+					result += numeric_cast<uint32>(100 * engineData->profilingBufferDynamicResolution.smooth());
+					break;
+				case StatisticsGuiModeEnum::Maximum:
+					// maximum/worts time corresponds to minimum dynamic resolution
+					result += numeric_cast<uint32>(100 * engineData->profilingBufferDynamicResolution.min());
+					break;
+				case StatisticsGuiModeEnum::Latest:
+					result += numeric_cast<uint32>(100 * engineData->profilingBufferDynamicResolution.current());
+					break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+			}
+		}
 
 		{
 			const auto &add = [&](const auto &s)
 			{
 				switch (mode)
 				{
-					case StatisticsGuiModeEnum::Latest:
-						result += s.latestDuration;
-						break;
 					case StatisticsGuiModeEnum::Average:
 						result += s.avgDuration;
 						break;
 					case StatisticsGuiModeEnum::Maximum:
 						result += s.maxDuration;
 						break;
+					case StatisticsGuiModeEnum::Latest:
+						result += s.latestDuration;
+						break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
 				}
 			};
 
-			if (any(flags & StatisticsGuiFlags::Control))
+			if (any(flags & StatisticsGuiFlags::ControlThreadTime))
 				add(engineData->controlUpdateSchedule->statistics());
 
-			if (any(flags & StatisticsGuiFlags::Sound))
+			if (any(flags & StatisticsGuiFlags::SoundThreadTime))
 				add(engineData->soundUpdateSchedule->statistics());
 		}
 
@@ -890,16 +914,19 @@ namespace cage
 				}
 			};
 
-#define GCHL_GENERATE(NAME) \
-	if (any(flags & StatisticsGuiFlags::NAME)) \
-	{ \
-		auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
-		add(buffer); \
-	}
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GraphicsPrepare, GraphicsDispatch, FrameTime, DrawCalls, DrawPrimitives, Entities));
-#undef GCHL_GENERATE
+			if (any(flags & StatisticsGuiFlags::PrepareThreadTime))
+				add(engineData->profilingBufferPrepareTime);
+			if (any(flags & StatisticsGuiFlags::GpuTime))
+				add(engineData->profilingBufferGpuTime);
+			if (any(flags & StatisticsGuiFlags::FrameTime))
+				add(engineData->profilingBufferFrameTime);
+			if (any(flags & StatisticsGuiFlags::DrawCalls))
+				add(engineData->profilingBufferDrawCalls);
+			if (any(flags & StatisticsGuiFlags::DrawPrimitives))
+				add(engineData->profilingBufferDrawPrimitives);
+			if (any(flags & StatisticsGuiFlags::Entities))
+				add(engineData->profilingBufferEntities);
 		}
-
 		return result;
 	}
 }

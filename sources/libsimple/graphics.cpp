@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <array>
 #include <vector>
 
 #include "engine.h"
@@ -33,6 +35,30 @@ namespace cage
 	namespace
 	{
 		const ConfigFloat confRenderGamma("cage/graphics/gamma", 2.2);
+
+		struct TimeQuery : Noncopyable
+		{
+		private:
+			uint32 id = 0;
+
+		public:
+			uint64 time = 0; // nanoseconds
+
+			void start()
+			{
+				if (id == 0)
+					glGenQueries(1, &id);
+				else
+					glGetQueryObjectui64v(id, GL_QUERY_RESULT, &time);
+				glBeginQuery(GL_TIME_ELAPSED, id);
+			}
+
+			void finish()
+			{
+				if (id != 0)
+					glEndQuery(GL_TIME_ELAPSED);
+			}
+		};
 
 		struct EmitBuffer : private Immovable
 		{
@@ -171,13 +197,41 @@ namespace cage
 				}
 			}
 
+			Vec2i applyDynamicResolution(Vec2i in) const
+			{
+				Vec2i res = Vec2i(Vec2(in) * dynamicResolution);
+				CAGE_ASSERT(res[0] > 0 && res[1] > 0);
+				return res;
+			}
+
+			void updateDynamicResolution()
+			{
+				// dynamic resolution may update every 4 frames at most
+				if ((frameIndex % 4) != 0 || frameIndex < 100)
+					return;
+
+				if (!engineDynamicResolution().enabled)
+				{
+					dynamicResolution = 1;
+					return;
+				}
+
+				CAGE_ASSERT(engineDynamicResolution().targetFps > 0);
+				CAGE_ASSERT(valid(engineDynamicResolution().minimumScale));
+				CAGE_ASSERT(engineDynamicResolution().minimumScale > 0 && engineDynamicResolution().minimumScale <= 1);
+
+				const double targetTime = 1'000'000'000 / engineDynamicResolution().targetFps;
+				const double avgTime = (timeQueries[0].time + timeQueries[0].time + timeQueries[1].time + timeQueries[2].time) / 4; // most recent frame time is more significant
+				Real k = dynamicResolution * targetTime / avgTime;
+				if (!valid(k))
+					return;
+				k = clamp(k, engineDynamicResolution().minimumScale, 1);
+				if (abs(dynamicResolution - k) > 0.02)
+					dynamicResolution = k;
+			}
+
 			void prepareCameras(const RenderPipelineConfig &cfg, Holder<VirtualRealityGraphicsFrame> vrFrame)
 			{
-				Holder<Model> modelSquare = cfg.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-				CAGE_ASSERT(modelSquare);
-				Holder<ShaderProgram> shaderBlit = cfg.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl"))->get(0);
-				CAGE_ASSERT(shaderBlit);
-
 				std::vector<CameraData> cameras;
 				std::vector<TextureHandle> vrTargets;
 				TextureHandle windowTarget;
@@ -198,9 +252,11 @@ namespace cage
 						data.camera = cam;
 						if (e->has<ScreenSpaceEffectsComponent>())
 							data.effects = e->value<ScreenSpaceEffectsComponent>();
+						if (dynamicResolution != 1)
+							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 						data.effects.gamma = Real(confRenderGamma);
 						data.name = Stringizer() + "camera_" + e->id();
-						data.resolution = cam.target ? cam.target->resolution() : cfg.resolution;
+						data.resolution = cam.target ? cam.target->resolution() : applyDynamicResolution(cfg.resolution);
 						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
 						data.lodSelection = initializeLodSelection(cam, data.resolution[1]);
@@ -248,9 +304,11 @@ namespace cage
 							if (camEnt->has<ScreenSpaceEffectsComponent>())
 								data.effects = camEnt->value<ScreenSpaceEffectsComponent>();
 						}
+						if (dynamicResolution != 1)
+							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 						data.effects.gamma = Real(confRenderGamma);
 						data.name = Stringizer() + "vr_camera_" + index;
-						data.resolution = it.resolution;
+						data.resolution = applyDynamicResolution(it.resolution);
 						data.transform = transformByVrOrigin(cfg.scene, it.transform, cfg.interpolationFactor);
 						data.projection = it.projection;
 						data.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.resolution[1]);
@@ -276,6 +334,8 @@ namespace cage
 					if (cam.renderQueue)
 						renderQueue->enqueue(std::move(cam.renderQueue));
 
+				Holder<ShaderProgram> shaderBlit = cfg.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitScaled.glsl"))->get(0);
+				CAGE_ASSERT(shaderBlit);
 				renderQueue->bind(shaderBlit);
 
 				// blit to window
@@ -286,6 +346,8 @@ namespace cage
 					if (windowTarget)
 					{
 						renderQueue->bind(windowTarget, 0);
+						Holder<Model> modelSquare = cfg.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+						CAGE_ASSERT(modelSquare);
 						renderQueue->draw(modelSquare);
 					}
 					else
@@ -352,6 +414,7 @@ namespace cage
 						dispatchTime = vrFrame->displayTime();
 					}
 
+					updateDynamicResolution();
 					const EmitBuffer &eb = emitBuffers[lock.index()];
 					const Vec2i windowResolution = engineWindow()->resolution();
 					RenderPipelineConfig cfg;
@@ -411,8 +474,11 @@ namespace cage
 			void swap() // opengl thread
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
+				timeQueries[0].finish();
+				std::rotate(timeQueries.begin(), timeQueries.begin() + 1, timeQueries.end());
 				engineWindow()->swapBuffers();
-				glFinish(); // this is where the engine should be waiting for the gpu
+				// this is where the engine should be waiting for the gpu
+				timeQueries[0].start();
 			}
 
 			Holder<RenderQueue> renderQueue;
@@ -424,6 +490,8 @@ namespace cage
 
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
+			Real dynamicResolution = 1;
+			std::array<TimeQuery, 3> timeQueries = {};
 		};
 
 		Graphics *graphics;
@@ -456,9 +524,10 @@ namespace cage
 		graphics->emit(emitTime);
 	}
 
-	void graphicsPrepare(uint64 dispatchTime, uint32 &drawCalls, uint32 &drawPrimitives)
+	void graphicsPrepare(uint64 dispatchTime, uint32 &drawCalls, uint32 &drawPrimitives, Real &dynamicResolution)
 	{
 		graphics->prepare(dispatchTime, drawCalls, drawPrimitives);
+		dynamicResolution = graphics->dynamicResolution;
 	}
 
 	void graphicsDispatch()
@@ -466,9 +535,10 @@ namespace cage
 		graphics->dispatch();
 	}
 
-	void graphicsSwap()
+	void graphicsSwap(uint64 &gpuTime)
 	{
 		graphics->swap();
+		gpuTime = graphics->timeQueries[0].time / 1000;
 	}
 
 	namespace detail

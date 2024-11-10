@@ -34,7 +34,7 @@ namespace cage
 						[this](Entity *e)
 						{
 							const uint64 v = engineStatisticsValues(Flags, this->statisticsMode);
-							if constexpr (Flags == StatisticsGuiFlags::Utilization)
+							if constexpr (Flags == StatisticsGuiFlags::CpuUtilization || Flags == StatisticsGuiFlags::DynamicResolution)
 								e->value<GuiTextComponent>().value = Stringizer() + v + " %";
 							else if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
 								e->value<GuiTextComponent>().value = Stringizer() + (v / 1000) + " ms";
@@ -75,11 +75,12 @@ namespace cage
 						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
 						break;
 					case StatisticsGuiScopeEnum::Full:
-						generate<StatisticsGuiFlags::Utilization>(+g, "Utilization: ");
-						generate<StatisticsGuiFlags::Control>(+g, "Control: ");
-						generate<StatisticsGuiFlags::Sound>(+g, "Sound: ");
-						generate<StatisticsGuiFlags::GraphicsPrepare>(+g, "Graphics prepare: ");
-						generate<StatisticsGuiFlags::GraphicsDispatch>(+g, "Graphics dispatch: ");
+						generate<StatisticsGuiFlags::CpuUtilization>(+g, "CPU utilization: ");
+						generate<StatisticsGuiFlags::DynamicResolution>(+g, "Dyn. resolution: ");
+						generate<StatisticsGuiFlags::ControlThreadTime>(+g, "Control time: ");
+						generate<StatisticsGuiFlags::SoundThreadTime>(+g, "Sound time: ");
+						generate<StatisticsGuiFlags::PrepareThreadTime>(+g, "Prepare time: ");
+						generate<StatisticsGuiFlags::GpuTime>(+g, "GPU time: ");
 						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
 						generate<StatisticsGuiFlags::DrawCalls>(+g, "Draw calls: ");
 						generate<StatisticsGuiFlags::DrawPrimitives>(+g, "Draw primitives: ");

@@ -40,8 +40,6 @@ namespace cage
 	{
 		const ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		const ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
-		const ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
-		const ConfigBool confNoBloom("cage/graphics/disableBloom", false);
 
 		struct UniViewport
 		{
@@ -344,9 +342,9 @@ namespace cage
 		struct RenderPipelineImpl : RenderPipelineConfig
 		{
 			Holder<Model> modelSquare, modelBone;
-			Holder<ShaderProgram> shaderBlit, shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
-			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic;
-			Holder<ShaderProgram> shaderFont;
+			Holder<ShaderProgram> shaderBlitPixels, shaderBlitScaled;
+			Holder<ShaderProgram> shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
+			Holder<ShaderProgram> shaderText;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
@@ -362,29 +360,22 @@ namespace cage
 
 				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
-				shaderBlit = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blit.glsl")));
+				CAGE_ASSERT(modelSquare && modelBone);
+				shaderBlitPixels = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitPixels.glsl"))->get(0);
+				shaderBlitScaled = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitScaled.glsl"))->get(0);
+				CAGE_ASSERT(shaderBlitPixels && shaderBlitScaled);
 				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
-				shaderStandard = defaultProgram(standard, 0);
-				shaderStandardCutOut = defaultProgram(standard, HashString("CutOut"));
-				shaderDepth = defaultProgram(standard, HashString("DepthOnly"));
-				shaderDepthCutOut = defaultProgram(standard, HashString("DepthOnly") + HashString("CutOut"));
-				shaderVisualizeColor = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/color.glsl")));
-				shaderVisualizeDepth = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/depth.glsl")));
-				shaderVisualizeMonochromatic = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/visualize/monochromatic.glsl")));
-				shaderFont = defaultProgram(assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/font.glsl")));
-				CAGE_ASSERT(shaderBlit);
+				CAGE_ASSERT(standard);
+				shaderDepth = standard->get(HashString("DepthOnly"));
+				shaderDepthCutOut = standard->get(HashString("DepthOnly") + HashString("CutOut"));
+				shaderStandard = standard->get(0);
+				shaderStandardCutOut = standard->get(HashString("CutOut"));
+				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/text.glsl"))->get(0);
 
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
 
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
-			}
-
-			static Holder<ShaderProgram> defaultProgram(const Holder<MultiShaderProgram> &multi, uint32 variant = 0)
-			{
-				if (multi)
-					return multi->get(variant);
-				return {};
 			}
 
 			Mat4 modelTransform(Entity *e) const
@@ -507,8 +498,8 @@ namespace cage
 			void renderTextImpl(const CameraData &data, const TextPrepare &text) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
-				renderQueue->uniform(shaderFont, 0, data.viewProj * text.model);
-				renderQueue->uniform(shaderFont, 4, text.color);
+				renderQueue->uniform(shaderText, 0, data.viewProj * text.model);
+				renderQueue->uniform(shaderText, 4, text.color);
 				text.font->render(+renderQueue, modelSquare, text.glyphs, text.format);
 			}
 
@@ -575,7 +566,7 @@ namespace cage
 					renderQueue->culling(true);
 					renderQueue->blending(true);
 					renderQueue->blendFuncAlphaTransparency();
-					renderQueue->bind(shaderFont);
+					renderQueue->bind(shaderText);
 					for (const TextPrepare &text : layer.texts)
 						renderTextImpl(data, text);
 					renderQueue->resetAllState();
@@ -957,11 +948,6 @@ namespace cage
 				Holder<RenderQueue> &renderQueue = data.renderQueue;
 				const auto graphicsDebugScope = renderQueue->namedScope("camera");
 
-				if (confNoAmbientOcclusion)
-					data.effects.effects &= ~ScreenSpaceEffectsFlags::AmbientOcclusion;
-				if (confNoBloom)
-					data.effects.effects &= ~ScreenSpaceEffectsFlags::Bloom;
-
 				data.model = Mat4(data.transform);
 				data.view = inverse(data.model);
 				data.viewProj = data.projection * data.view;
@@ -1027,8 +1013,7 @@ namespace cage
 						renderQueue->activeAttachments(renderTarget, 1);
 						renderQueue->checkFrameBuffer(renderTarget);
 						renderQueue->viewport(Vec2i(), ssaoResolution);
-						renderQueue->bind(shaderVisualizeColor);
-						renderQueue->uniform(shaderVisualizeColor, 0, 1 / Vec2(ssaoResolution));
+						renderQueue->bind(shaderBlitScaled);
 						renderQueue->bind(depthTexture, 0);
 						renderQueue->draw(modelSquare);
 						renderQueue->resetAllState();
@@ -1155,7 +1140,7 @@ namespace cage
 					{
 						renderQueue->viewport(Vec2i(), data.resolution);
 						renderQueue->bind(texSource, 0);
-						renderQueue->bind(shaderBlit);
+						renderQueue->bind(shaderBlitPixels);
 						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(renderTarget, 0, colorTexture);
 						renderQueue->activeAttachments(renderTarget, 1);
@@ -1171,7 +1156,7 @@ namespace cage
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
 					renderQueue->bind(colorTexture, 0);
-					renderQueue->bind(shaderBlit);
+					renderQueue->bind(shaderBlitPixels);
 					renderQueue->bind(renderTarget);
 					renderQueue->colorTexture(renderTarget, 0, data.target);
 					renderQueue->depthTexture(renderTarget, {});

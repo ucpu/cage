@@ -1,4 +1,5 @@
 []
-blit.glsl
-font.glsl
+blitPixels.glsl
+blitScaled.glsl
 standard.glsl
+text.glsl

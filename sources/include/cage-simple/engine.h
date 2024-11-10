@@ -89,6 +89,14 @@ namespace cage
 	ProvisionalGraphics *engineProvisonalGraphics();
 	uint64 engineControlTime();
 
+	struct EngineDynamicResolution
+	{
+		uint32 targetFps = 30;
+		Real minimumScale = 0.6;
+		bool enabled = false;
+	};
+	EngineDynamicResolution &engineDynamicResolution();
+
 	namespace detail
 	{
 		void enginePurgeAssetsOnDemandCache();

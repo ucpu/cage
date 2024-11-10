@@ -36,4 +36,10 @@ namespace cage
 		static EventDispatcher<bool(const GenericInput &)> instance;
 		return instance;
 	}
+
+	EngineDynamicResolution &engineDynamicResolution()
+	{
+		static EngineDynamicResolution instance;
+		return instance;
+	}
 }

@@ -114,13 +114,13 @@ namespace cage
 		{
 			using Fnc = void(void *);
 			static Fnc *fnc = +[](void *d) { (*(T *)d)(); };
-			_customCommand(std::move(data).cast<void>(), fnc);
+			_customCommand(std::move(data).template cast<void>(), fnc);
 		}
 		template<class T>
 		void customCommand(Holder<T> data, void fnc(T *))
 		{
 			using Fnc = void(void *);
-			_customCommand(std::move(data).cast<void>(), (Fnc *)fnc);
+			_customCommand(std::move(data).template cast<void>(), (Fnc *)fnc);
 		}
 
 		[[nodiscard]] struct RenderQueueNamedScope namedScope(StringPointer name);
