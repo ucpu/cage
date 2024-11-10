@@ -8,6 +8,7 @@
 #include <cage-engine/screenSpaceEffects.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
+#include <cage-engine/uniformBuffer.h>
 
 namespace cage
 {
@@ -82,13 +83,7 @@ namespace cage
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
 
-		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints");
-		{ // potentially dangerous hack
-			ProvisionalUniformBuffer *pub = (ProvisionalUniformBuffer *)ssaoPoints.pointer();
-			CAGE_ASSERT(pub);
-			if (!pub->ready())
-				q->writeWhole(ssaoPoints, privat::pointsForSsaoShader(), GL_STATIC_DRAW);
-		}
+		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints", [](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(), GL_STATIC_DRAW); });
 		q->bind(ssaoPoints, 3);
 
 		struct Shader
@@ -229,7 +224,7 @@ namespace cage
 		q->bindImage(config.inColor, 0, true, false);
 		TextureHandle texHist = provTex(config.provisionals, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
 		q->bindImage(texHist, 1, true, true);
-		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
+		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation_" + config.cameraId, Vec2i(1), 1, GL_R32F);
 		q->bindImage(texAccum, 2, true, true);
 
 		// collection
@@ -312,7 +307,7 @@ namespace cage
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
 		q->bind(config.inColor, 0);
-		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation" + config.cameraId, Vec2i(1), 1, GL_R32F);
+		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation_" + config.cameraId, Vec2i(1), 1, GL_R32F);
 		q->bind(texAccum, 1);
 		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/luminanceApply.glsl"))->get(0);
 		q->bind(shader);

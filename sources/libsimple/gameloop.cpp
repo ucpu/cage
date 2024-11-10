@@ -833,7 +833,7 @@ namespace cage
 		return +engineData->guiBus;
 	}
 
-	ProvisionalGraphics *engineProvisonalGraphics()
+	ProvisionalGraphics *engineProvisionalGraphics()
 	{
 		return +engineData->provisionalGraphics;
 	}

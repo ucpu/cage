@@ -18,8 +18,10 @@ namespace cage
 		{
 		public:
 			const String name;
+			std::function<void(UniformBuffer *)> init;
 			Holder<UniformBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
+			uint32 type = m; // 1 = init copied
 			bool used = true;
 
 			ProvisionalUniformBufferImpl(const String &name) : name(name) {}
@@ -64,7 +66,7 @@ namespace cage
 					{
 						Holder<T> v = systemMemory().createHolder<T>(name);
 						data.insert(v.share());
-						return std::move(v);
+						return v;
 					}
 					return it->share();
 				}
@@ -72,17 +74,13 @@ namespace cage
 				void reset()
 				{
 					ScopeLock lock(mutex);
-					auto it = data.begin();
-					while (it != data.end())
-					{
-						if ((*it)->used)
+					std::erase_if(data,
+						[](auto &it)
 						{
-							(*it)->used = false;
-							it++;
-						}
-						else
-							it = data.erase(it);
-					}
+							const bool res = it->used;
+							it->used = false;
+							return !res;
+						});
 				}
 
 				void purge()
@@ -119,9 +117,14 @@ namespace cage
 			Container<ProvisionalFrameBufferHandleImpl> frameBuffers;
 			Container<ProvisionalTextureHandleImpl> textures;
 
-			Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name)
+			Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name, std::function<void(UniformBuffer *)> &&init)
 			{
 				auto ub = uniformBuffers.acquire(name);
+				if (ub->type == m)
+				{
+					ub->type = 1;
+					ub->init = std::move(init);
+				}
 				return std::move(ub).cast<ProvisionalUniformBuffer>();
 			}
 
@@ -169,14 +172,10 @@ namespace cage
 		{
 			impl->result = newUniformBuffer();
 			impl->result->setDebugName(impl->name);
+			if (impl->init)
+				impl->init(+impl->result);
 		}
 		return impl->result.share();
-	}
-
-	bool ProvisionalUniformBuffer::ready() const
-	{
-		const ProvisionalUniformBufferImpl *impl = (const ProvisionalUniformBufferImpl *)this;
-		return !!impl->result;
 	}
 
 	Holder<FrameBuffer> ProvisionalFrameBuffer::resolve()
@@ -199,12 +198,6 @@ namespace cage
 		return impl->result.share();
 	}
 
-	bool ProvisionalFrameBuffer::ready() const
-	{
-		const ProvisionalFrameBufferHandleImpl *impl = (const ProvisionalFrameBufferHandleImpl *)this;
-		return !!impl->result;
-	}
-
 	Holder<Texture> ProvisionalTexture::resolve()
 	{
 		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
@@ -213,21 +206,16 @@ namespace cage
 		{
 			impl->result = newTexture(impl->target);
 			impl->result->setDebugName(impl->name);
-			impl->init(+impl->result);
+			if (impl->init)
+				impl->init(+impl->result);
 		}
 		return impl->result.share();
 	}
 
-	bool ProvisionalTexture::ready() const
-	{
-		const ProvisionalTextureHandleImpl *impl = (const ProvisionalTextureHandleImpl *)this;
-		return !!impl->result;
-	}
-
-	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const String &name)
+	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const String &name, std::function<void(UniformBuffer *)> &&init)
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
-		return impl->uniformBuffer(name);
+		return impl->uniformBuffer(name, std::move(init));
 	}
 
 	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferDraw(const String &name)

@@ -86,7 +86,7 @@ namespace cage
 	VoicesMixer *engineMasterMixer();
 	VoicesMixer *engineEffectsMixer();
 	VoicesMixer *engineGuiMixer();
-	ProvisionalGraphics *engineProvisonalGraphics();
+	ProvisionalGraphics *engineProvisionalGraphics();
 	uint64 engineControlTime();
 
 	struct EngineDynamicResolution

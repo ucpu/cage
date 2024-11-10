@@ -15,21 +15,18 @@ namespace cage
 	{
 	public:
 		Holder<UniformBuffer> resolve(); // requires opengl context
-		bool ready() const;
 	};
 
 	class CAGE_ENGINE_API ProvisionalFrameBuffer : private Immovable
 	{
 	public:
 		Holder<FrameBuffer> resolve(); // requires opengl context
-		bool ready() const;
 	};
 
 	class CAGE_ENGINE_API ProvisionalTexture : private Immovable
 	{
 	public:
 		Holder<Texture> resolve(); // requires opengl context
-		bool ready() const;
 	};
 
 	class CAGE_ENGINE_API ProvisionalGraphics : private Immovable
@@ -37,13 +34,13 @@ namespace cage
 	public:
 		// section: thread-safe, does not require opengl context
 
-		Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name);
+		Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name, std::function<void(UniformBuffer *)> &&init = {});
 
 		Holder<ProvisionalFrameBuffer> frameBufferDraw(const String &name);
 		Holder<ProvisionalFrameBuffer> frameBufferRead(const String &name);
 
-		Holder<ProvisionalTexture> texture(const String &name, std::function<void(Texture *)> &&init);
-		Holder<ProvisionalTexture> texture(const String &name, uint32 target, std::function<void(Texture *)> &&init);
+		Holder<ProvisionalTexture> texture(const String &name, std::function<void(Texture *)> &&init = {});
+		Holder<ProvisionalTexture> texture(const String &name, uint32 target, std::function<void(Texture *)> &&init = {});
 
 		// section: thread-safe, requires opengl context
 

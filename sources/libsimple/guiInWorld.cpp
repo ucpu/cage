@@ -32,7 +32,7 @@ namespace cage
 				{
 					GuiManagerCreateConfig cfg;
 					cfg.assetManager = engineAssets();
-					cfg.provisionalGraphics = +engineProvisonalGraphics();
+					cfg.provisionalGraphics = +engineProvisionalGraphics();
 					cfg.tooltipsEnabled = config.tooltipsEnabled;
 					guiMan = newGuiManager(cfg);
 					guiMan->outputResolution(config.resolution);
@@ -152,7 +152,7 @@ namespace cage
 				}
 
 				// retrieve this every frame so that it is not removed
-				auto fb = engineProvisonalGraphics()->frameBufferDraw(Stringizer() + "gui-in-world-framebuffer-" + (uintPtr)this);
+				auto fb = engineProvisionalGraphics()->frameBufferDraw(Stringizer() + "gui-in-world-framebuffer-" + (uintPtr)this);
 
 				Holder<RenderQueue> qq;
 				{
@@ -162,7 +162,7 @@ namespace cage
 				if (!qq)
 					return;
 
-				Holder<RenderQueue> q = newRenderQueue("gui in world", engineProvisonalGraphics());
+				Holder<RenderQueue> q = newRenderQueue("gui in world", engineProvisionalGraphics());
 				{
 					auto name = q->namedScope("gui in world");
 					q->bind(fb);

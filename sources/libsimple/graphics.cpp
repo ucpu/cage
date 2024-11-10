@@ -135,7 +135,7 @@ namespace cage
 		TextureHandle initializeTarget(const String &prefix, Vec2i resolution)
 		{
 			const String name = Stringizer() + prefix + "_" + resolution;
-			TextureHandle tex = engineProvisonalGraphics()->texture(name,
+			TextureHandle tex = engineProvisionalGraphics()->texture(name,
 				[resolution](Texture *tex)
 				{
 					tex->initialize(resolution, 1, GL_RGB8);
@@ -174,7 +174,7 @@ namespace cage
 
 			void initialize() // opengl thread
 			{
-				renderQueue = newRenderQueue("engine", engineProvisonalGraphics());
+				renderQueue = newRenderQueue("engine", engineProvisionalGraphics());
 				onDemand = newAssetsOnDemand(engineAssets());
 			}
 
@@ -182,7 +182,7 @@ namespace cage
 			{
 				onDemand->clear(); // make sure to release all assets, but keep the structure to allow remaining calls to enginePurgeAssetsOnDemandCache
 				renderQueue.clear();
-				engineProvisonalGraphics()->purge();
+				engineProvisionalGraphics()->purge();
 			}
 
 			void emit(uint64 emitTime) // control thread
@@ -266,7 +266,7 @@ namespace cage
 						else
 						{
 							CAGE_ASSERT(!windowTarget);
-							windowTarget = initializeTarget(data.name, data.resolution);
+							windowTarget = initializeTarget(Stringizer() + "windowTarget_" + data.name, data.resolution);
 							data.target = windowTarget;
 						}
 						data.finalProduct = !cam.target;
@@ -307,13 +307,13 @@ namespace cage
 						if (dynamicResolution != 1)
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 						data.effects.gamma = Real(confRenderGamma);
-						data.name = Stringizer() + "vr_camera_" + index;
+						data.name = Stringizer() + "vrCamera_" + index;
 						data.resolution = applyDynamicResolution(it.resolution);
 						data.transform = transformByVrOrigin(cfg.scene, it.transform, cfg.interpolationFactor);
 						data.projection = it.projection;
 						data.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.resolution[1]);
 						data.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
-						data.target = initializeTarget(data.name, data.resolution);
+						data.target = initializeTarget(Stringizer() + "vrTarget_" + data.name, data.resolution);
 						data.finalProduct = true;
 						vrTargets.push_back(data.target);
 						cameras.push_back(std::move(data));
@@ -370,7 +370,7 @@ namespace cage
 							Holder<Model> modelSquare = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 							CAGE_ASSERT(modelSquare);
 							modelSquare->bind();
-							Holder<FrameBuffer> renderTarget = engineProvisonalGraphics()->frameBufferDraw("vr_blit")->resolve();
+							Holder<FrameBuffer> renderTarget = engineProvisionalGraphics()->frameBufferDraw("vr_blit")->resolve();
 							renderTarget->bind();
 							frame->acquireTextures();
 							CAGE_ASSERT(frame->cameras.size() == targets.size());
@@ -419,7 +419,7 @@ namespace cage
 					const Vec2i windowResolution = engineWindow()->resolution();
 					RenderPipelineConfig cfg;
 					cfg.assets = engineAssets();
-					cfg.provisionalGraphics = engineProvisonalGraphics();
+					cfg.provisionalGraphics = engineProvisionalGraphics();
 					cfg.scene = +eb.scene;
 					cfg.onDemand = +onDemand;
 					const uint64 period = controlThread().updatePeriod();
@@ -457,7 +457,7 @@ namespace cage
 			void dispatch() // opengl thread
 			{
 				renderQueue->dispatch();
-				engineProvisonalGraphics()->reset();
+				engineProvisionalGraphics()->reset();
 
 				{ // check gl errors (even in release, but do not halt the game)
 					try

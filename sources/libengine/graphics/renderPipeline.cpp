@@ -957,7 +957,7 @@ namespace cage
 				TextureHandle colorTexture = provisionalGraphics->texture(Stringizer() + "colorTarget_" + data.name + "_" + data.resolution,
 					[resolution = data.resolution](Texture *t)
 					{
-						t->initialize(resolution, 1, GL_RGBA16F);
+						t->initialize(resolution, 1, GL_RGBA16F); // RGB16F (without alpha) is not required to work in frame buffer
 						t->filters(GL_LINEAR, GL_LINEAR, 0);
 						t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					});
@@ -1047,17 +1047,13 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("effects");
 
 					TextureHandle texSource = colorTexture;
-					TextureHandle texTarget = [&]()
-					{
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution,
-							[resolution = data.resolution](Texture *t)
-							{
-								t->initialize(resolution, 1, GL_RGBA16F);
-								t->filters(GL_LINEAR, GL_LINEAR, 0);
-								t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-							});
-						return t;
-					}();
+					TextureHandle texTarget = provisionalGraphics->texture(Stringizer() + "intermediateTarget_" + data.resolution,
+						[resolution = data.resolution](Texture *t)
+						{
+							t->initialize(resolution, 1, GL_RGBA16F); // RGB16F (without alpha) is not required to work in frame buffer
+							t->filters(GL_LINEAR, GL_LINEAR, 0);
+							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+						});
 
 					// depth of field
 					if (any(data.effects.effects & ScreenSpaceEffectsFlags::DepthOfField))
@@ -1072,6 +1068,10 @@ namespace cage
 						screenSpaceDepthOfField(cfg);
 						std::swap(texSource, texTarget);
 					}
+
+					renderQueue->resetFrameBuffer();
+					renderQueue->resetAllState();
+					renderQueue->resetAllTextures();
 
 					// eye adaptation
 					if (any(data.effects.effects & ScreenSpaceEffectsFlags::EyeAdaptation))
@@ -1138,11 +1138,13 @@ namespace cage
 					// blit to destination
 					if (texSource != colorTexture)
 					{
+						const auto graphicsDebugScope = renderQueue->namedScope("effects blit");
 						renderQueue->viewport(Vec2i(), data.resolution);
 						renderQueue->bind(texSource, 0);
 						renderQueue->bind(shaderBlitPixels);
 						renderQueue->bind(renderTarget);
 						renderQueue->colorTexture(renderTarget, 0, colorTexture);
+						renderQueue->depthTexture(renderTarget, {});
 						renderQueue->activeAttachments(renderTarget, 1);
 						renderQueue->checkFrameBuffer(renderTarget);
 						renderQueue->draw(modelSquare);
@@ -1155,6 +1157,7 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("final blit");
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
+					renderQueue->bind(data.target, 0); // ensure the texture is properly initialized
 					renderQueue->bind(colorTexture, 0);
 					renderQueue->bind(shaderBlitPixels);
 					renderQueue->bind(renderTarget);
