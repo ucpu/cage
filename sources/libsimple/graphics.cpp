@@ -206,8 +206,7 @@ namespace cage
 
 			void updateDynamicResolution()
 			{
-				// dynamic resolution may update every 4 frames at most
-				if ((frameIndex % 4) != 0 || frameIndex < 100)
+				if (frameIndex < nextAllowedDrFrameIndex)
 					return;
 
 				if (!engineDynamicResolution().enabled)
@@ -226,8 +225,11 @@ namespace cage
 				if (!valid(k))
 					return;
 				k = clamp(k, engineDynamicResolution().minimumScale, 1);
-				if (abs(dynamicResolution - k) > 0.02)
-					dynamicResolution = k;
+				if (abs(dynamicResolution - k) < 0.02)
+					return;
+
+				dynamicResolution = k;
+				nextAllowedDrFrameIndex = frameIndex + 5;
 			}
 
 			void prepareCameras(const RenderPipelineConfig &cfg, Holder<VirtualRealityGraphicsFrame> vrFrame)
@@ -474,11 +476,15 @@ namespace cage
 			void swap() // opengl thread
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
+				engineWindow()->swapBuffers();
+			}
+
+			void frameStart() { timeQueries[0].start(); }
+
+			void frameFinish()
+			{
 				timeQueries[0].finish();
 				std::rotate(timeQueries.begin(), timeQueries.begin() + 1, timeQueries.end());
-				engineWindow()->swapBuffers();
-				// this is where the engine should be waiting for the gpu
-				timeQueries[0].start();
 			}
 
 			Holder<RenderQueue> renderQueue;
@@ -491,6 +497,7 @@ namespace cage
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
 			Real dynamicResolution = 1;
+			uint32 nextAllowedDrFrameIndex = 100; // do not update DR at the very start
 			std::array<TimeQuery, 3> timeQueries = {};
 		};
 
@@ -535,9 +542,19 @@ namespace cage
 		graphics->dispatch();
 	}
 
-	void graphicsSwap(uint64 &gpuTime)
+	void graphicsSwap()
 	{
 		graphics->swap();
+	}
+
+	void graphicsFrameStart()
+	{
+		graphics->frameStart();
+	}
+
+	void graphicsFrameFinish(uint64 &gpuTime)
+	{
+		graphics->frameFinish();
 		gpuTime = graphics->timeQueries[0].time / 1000;
 	}
 

@@ -13,7 +13,9 @@ namespace cage
 	void graphicsEmit(uint64 time); // control thread
 	void graphicsPrepare(uint64 time, uint32 &drawCalls, uint32 &drawPrimitives, Real &dynamicResolution); // prepare thread
 	void graphicsDispatch(); // opengl thread
-	void graphicsSwap(uint64 &gpuTime); // opengl thread
+	void graphicsSwap(); // opengl thread
+	void graphicsFrameStart(); // opengl thread
+	void graphicsFrameFinish(uint64 &gpuTime); // opengl thread
 
 	void soundCreate(const EngineCreateConfig &config);
 	void soundDestroy();

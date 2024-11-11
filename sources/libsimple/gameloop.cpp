@@ -208,6 +208,10 @@ namespace cage
 				ProfilingScope profiling("graphics dispatch", ProfilingFrameTag());
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
+					ProfilingScope profiling("frame start");
+					graphicsFrameStart();
+				}
+				{
 					ProfilingScope profiling("graphics dispatch callback");
 					graphicsDispatchThread().dispatch.dispatch();
 				}
@@ -224,13 +228,10 @@ namespace cage
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				{
-					ProfilingScope profiling("graphics assets");
-					const uint64 start = applicationTime();
-					while (assets->processCustomThread(1))
-					{
-						if (applicationTime() > start + 5'000)
-							break;
-					}
+					ProfilingScope profiling("frame finish");
+					uint64 gpuTime = 0;
+					graphicsFrameFinish(gpuTime);
+					profilingBufferGpuTime.add(gpuTime);
 				}
 				{
 					ProfilingScope profiling("swap callback");
@@ -238,9 +239,16 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("swap");
-					uint64 gpuTime = 0;
-					graphicsSwap(gpuTime);
-					profilingBufferGpuTime.add(gpuTime);
+					graphicsSwap();
+				}
+				{
+					ProfilingScope profiling("graphics assets");
+					const uint64 start = applicationTime();
+					while (assets->processCustomThread(1))
+					{
+						if (applicationTime() > start + 5'000)
+							break;
+					}
 				}
 			}
 
