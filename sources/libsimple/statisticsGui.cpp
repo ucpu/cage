@@ -34,7 +34,9 @@ namespace cage
 						[this](Entity *e)
 						{
 							const uint64 v = engineStatisticsValues(Flags, this->statisticsMode);
-							if constexpr (Flags == StatisticsGuiFlags::CpuUtilization || Flags == StatisticsGuiFlags::DynamicResolution)
+							if constexpr (Flags == StatisticsGuiFlags::DynamicResolution)
+								e->value<GuiTextComponent>().value = engineDynamicResolution().enabled ? (Stringizer() + v + " %") : (Stringizer() + "off");
+							else if constexpr (Flags == StatisticsGuiFlags::CpuUtilization)
 								e->value<GuiTextComponent>().value = Stringizer() + v + " %";
 							else if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
 								e->value<GuiTextComponent>().value = Stringizer() + (v / 1000) + " ms";

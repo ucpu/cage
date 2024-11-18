@@ -124,6 +124,8 @@ vec4 lighting(Material material)
 				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
 					continue;
 				intensity *= egacShadowedIntensity(uni);
+				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
+					continue;
 				res.rgb += egacLightBrdf(material, uni.light) * intensity;
 			}
 		}

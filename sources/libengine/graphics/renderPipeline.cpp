@@ -194,11 +194,12 @@ namespace cage
 			return uni;
 		}
 
-		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc)
+		UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc, const Vec3 &cameraCenter)
 		{
 			CAGE_ASSERT(lc.minDistance > 0 && lc.maxDistance > lc.minDistance);
 			static constexpr Real RoundingOffset = 1e-7;
 			UniLight uni;
+
 			uni.color = Vec4(colorGammaToLinear(lc.color), lc.intensity);
 			{
 				// move as much of the energy from the intensity to the color
@@ -207,20 +208,22 @@ namespace cage
 				c = clamp(c, 0.01, 1);
 				uni.color = Vec4(Vec3(uni.color) / c, uni.color[3] * c);
 			}
+
 			uni.position = model * Vec4(0, 0, 0, 1);
-			uni.direction = model * Vec4(0, 0, -1, 0);
-			if (lc.lightType == LightTypeEnum::Directional)
-			{
-				uni.attenuation = Vec4(0);
-				uni.position[3] = Real::Infinity();
-			}
-			else
+			uni.direction = normalize(model * Vec4(0, 0, -1, 0));
+
+			if (lc.lightType != LightTypeEnum::Directional)
 			{
 				uni.attenuation[0] = (int)lc.attenuation + RoundingOffset;
 				uni.attenuation[1] = lc.minDistance;
 				uni.attenuation[2] = lc.maxDistance;
-				uni.position[3] = lc.maxDistance;
 			}
+
+			if (lc.lightType == LightTypeEnum::Point)
+				uni.position[3] = lc.maxDistance / (distance(Vec3(uni.position), cameraCenter) + 1e-5);
+			else
+				uni.position[3] = Real::Infinity();
+
 			uni.params[0] = [&]() -> Real
 			{
 				switch (lc.lightType)
@@ -238,28 +241,22 @@ namespace cage
 			uni.params[1] = lc.ssaoFactor;
 			uni.params[2] = cos(lc.spotAngle * 0.5);
 			uni.params[3] = lc.spotExponent;
+
 			return uni;
 		}
 
-		void filterLightsOverLimit(std::vector<UniLight> &lights, Vec3 cameraCenter)
+		void filterLightsOverLimit(std::vector<UniLight> &lights, uint32 limit)
 		{
-			std::sort(lights.begin(), lights.end(),
-				[&](const UniLight &a, const UniLight &b)
-				{
-					const Real aa = a.position[3] / (1 + distance(Vec3(a.position), cameraCenter));
-					const Real bb = b.position[3] / (1 + distance(Vec3(b.position), cameraCenter));
-					return aa > bb;
-				});
-			if (lights.size() > CAGE_SHADER_MAX_LIGHTS)
-				lights.resize(CAGE_SHADER_MAX_LIGHTS);
+			std::sort(lights.begin(), lights.end(), [&](const UniLight &a, const UniLight &b) { return a.position[3] > b.position[3]; });
+			limit = min(limit, (uint32)CAGE_SHADER_MAX_LIGHTS);
+			if (lights.size() > limit)
+				lights.resize(limit);
 
 			// fade-out lights close to limit
-			Real intensity = 1;
-			for (uint32 i = CAGE_SHADER_MAX_LIGHTS * 85 / 100; i < lights.size(); i++)
-			{
-				intensity *= 0.9;
-				lights[i].color[3] *= intensity;
-			}
+			const uint32 s = max(limit * 85 / 100, 10u);
+			const Real f = 1.0 / (limit - s + 1);
+			for (uint32 i = s; i < lights.size(); i++)
+				lights[i].color[3] *= saturate(1 - (i - s + 1) * f);
 		}
 
 		void updateShaderRoutinesForTextures(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &textures, UniOptions &options)
@@ -895,13 +892,13 @@ namespace cage
 								return;
 							if (e->has<ShadowmapComponent>())
 								return;
-							UniLight uni = initializeLightUni(modelTransform(e), lc);
+							UniLight uni = initializeLightUni(modelTransform(e), lc, data.transform.position);
 							if (lc.lightType == LightTypeEnum::Point && !intersects(frustum, Sphere(Vec3(uni.position), uni.position[3])))
 								return;
 							lights.push_back(uni);
 						},
 						+scene, false);
-					filterLightsOverLimit(lights, data.transform.position);
+					filterLightsOverLimit(lights, camera.maxLights);
 					data.lightsCount = numeric_cast<uint32>(lights.size());
 					if (!lights.empty())
 						renderQueue->universalUniformArray<UniLight>(lights, CAGE_SHADER_UNIBLOCK_LIGHTS);
@@ -1176,6 +1173,7 @@ namespace cage
 			Holder<AsyncTask> prepareShadowmap(CameraData &camera, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc) const
 			{
 				ShadowmapData &data = camera.shadowmaps[e];
+				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
 				data.name = Stringizer() + camera.name + "_shadowmap_" + e->id();
 				data.camera.sceneMask = camera.camera.sceneMask;
 				data.lightComponent = lc;
@@ -1216,7 +1214,7 @@ namespace cage
 
 				{
 					UniShadowedLight &uni = data.shadowUni;
-					(UniLight &)uni = initializeLightUni(data.model, data.lightComponent);
+					(UniLight &)uni = initializeLightUni(data.model, data.lightComponent, data.transform.position);
 					uni.shadowParams[2] = data.shadowmapComponent.normalOffsetScale;
 					uni.shadowParams[3] = data.shadowmapComponent.shadowFactor;
 					uni.params[0] += 1; // shadowed light type

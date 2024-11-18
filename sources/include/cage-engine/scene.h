@@ -72,11 +72,12 @@ namespace cage
 		TextAlignEnum align = TextAlignEnum::Center;
 	};
 
-	struct CameraCommonProperties
+	struct CAGE_ENGINE_API CameraCommonProperties
 	{
 		Vec3 ambientColor = Vec3(); // sRGB
 		Real ambientIntensity = 1;
 		uint32 sceneMask = 1;
+		uint32 maxLights = 100;
 	};
 
 	struct CAGE_ENGINE_API CameraComponent : public CameraCommonProperties

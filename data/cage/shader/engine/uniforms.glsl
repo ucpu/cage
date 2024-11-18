@@ -70,6 +70,7 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
 {
 	UniLight uniLights[CAGE_SHADER_MAX_LIGHTS];
 };
+
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWEDLIGHTS) uniform ShadowedLightsBlock
 {
 	UniShadowedLight uniShadowedLights[CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D];
