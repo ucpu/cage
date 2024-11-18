@@ -453,27 +453,28 @@ namespace cage
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				{
 					const uint32 n = sh.mesh->textureNames[i];
+					if (n == 0)
+						continue;
 					textures[i] = assets->get<AssetSchemeIndexTexture, Texture>(n);
-					if (textures[i])
+					if (!textures[i])
+						continue;
+					if (i < 3)
 					{
-						if (i < 3)
+						switch (textures[i]->target())
 						{
-							switch (textures[i]->target())
-							{
-								case GL_TEXTURE_2D_ARRAY:
-									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
-									break;
-								case GL_TEXTURE_CUBE_MAP:
-									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
-									break;
-								default:
-									renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i);
-									break;
-							}
+							case GL_TEXTURE_2D_ARRAY:
+								renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
+								break;
+							case GL_TEXTURE_CUBE_MAP:
+								renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i);
+								break;
+							default:
+								renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_ALBEDO + i);
+								break;
 						}
-						else
-							renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_CUSTOM);
 					}
+					else
+						renderQueue->bind(textures[i], CAGE_SHADER_TEXTURE_CUSTOM);
 				}
 				updateShaderRoutinesForTextures(textures, uniOptions);
 

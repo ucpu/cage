@@ -524,6 +524,7 @@ namespace cage
 
 	void AssetsManager::load(uint32 assetId)
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
 		auto &c = impl->privateIndex[assetId];
@@ -538,6 +539,7 @@ namespace cage
 
 	void AssetsManager::unload(uint32 assetId)
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
 		CAGE_ASSERT(impl->privateIndex.count(assetId) == 1);
@@ -555,6 +557,7 @@ namespace cage
 
 	void AssetsManager::reload(uint32 assetId)
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		ScopeLock lock(impl->privateMutex);
 		auto it = impl->privateIndex.find(assetId);
@@ -698,6 +701,7 @@ namespace cage
 
 	void AssetsManager::load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value)
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		ScopeLock lock(impl->privateMutex);
@@ -711,6 +715,7 @@ namespace cage
 
 	void AssetsManager::load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData)
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		CAGE_ASSERT(customScheme.threadIndex == m);
@@ -737,6 +742,7 @@ namespace cage
 
 	Holder<void> AssetsManager::get_(uint32 scheme, uint32 assetId) const
 	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
 		const auto &schemes = impl->schemes;
 		const auto &publicIndex = impl->publicIndex;

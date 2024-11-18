@@ -371,7 +371,8 @@ namespace cage
 	void ImageItem::assign(const GuiImageComponent &value)
 	{
 		image = value;
-		texture = hierarchy->impl->assetOnDemand->get<AssetSchemeIndexTexture, Texture>(value.textureName);
+		if (value.textureName)
+			texture = hierarchy->impl->assetOnDemand->get<AssetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)
