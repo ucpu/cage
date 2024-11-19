@@ -1,37 +1,29 @@
-#include <cstring>
-#include <exception>
+#include <cstring> // std::strlen
+#include <string_view>
 
-#ifdef CAGE_DEBUG
-	#include "utf8/checked.h"
-#else
-	#include "utf8/unchecked.h"
-namespace utf8
-{
-	using namespace unchecked;
-}
-#endif
+#include "uni_algo/conv.h"
 
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/utf.h>
 
-#define TRY_BEGIN \
-	try \
-	{
-#define TRY_END \
-	} \
-	catch (const std::exception &e) \
-	{ \
-		CAGE_LOG_THROW(e.what()); \
-		CAGE_THROW_ERROR(InvalidUtfString, "string with invalid utf encoding"); \
-	}
-
 namespace cage
 {
+	namespace
+	{
+		std::string_view view(PointerRange<const char> buffer)
+		{
+			return std::string_view(buffer.begin(), buffer.end());
+		}
+
+		std::u32string_view view(PointerRange<const uint32> buffer)
+		{
+			return std::u32string_view((const char32_t *)buffer.begin(), (const char32_t *)buffer.end());
+		}
+	}
+
 	bool utfValid(PointerRange<const char> buffer)
 	{
-		TRY_BEGIN
-		return utf8::is_valid(buffer.begin(), buffer.end());
-		TRY_END
+		return una::is_valid_utf8(view(buffer));
 	}
 
 	bool utfValid(const String &str)
@@ -46,9 +38,7 @@ namespace cage
 
 	uint32 utf32Length(PointerRange<const char> buffer)
 	{
-		TRY_BEGIN
-		return numeric_cast<uint32>(utf8::distance(buffer.begin(), buffer.end()));
-		TRY_END
+		return una::utf8to32u(view(buffer)).length();
 	}
 
 	uint32 utf32Length(const String &str)
@@ -63,30 +53,13 @@ namespace cage
 
 	uint32 utf8Length(PointerRange<const uint32> buffer)
 	{
-		TRY_BEGIN
-		const uint32 *b = buffer.begin();
-		const uint32 *e = buffer.end();
-		char tmp[7];
-		uint32 result = 0;
-		while (b != e)
-		{
-			char *d = utf8::utf32to8(b, b + 1, tmp);
-			result += numeric_cast<uint32>(d - tmp);
-			b++;
-		}
-		return result;
-		TRY_END
+		return una::utf32to8u(view(buffer)).length();
 	}
 
-	Holder<PointerRange<uint32>> utf8to32(PointerRange<const char> inBuffer)
+	Holder<PointerRange<uint32>> utf8to32(PointerRange<const char> buffer)
 	{
-		PointerRangeHolder<uint32> result;
-		result.resize(utf32Length(inBuffer));
-		TRY_BEGIN
-		uint32 *end = utf8::utf8to32(inBuffer.begin(), inBuffer.end(), result.data());
-		CAGE_ASSERT(end == result.data() + result.size());
-		return result;
-		TRY_END
+		const auto t = una::utf8to32u(view(buffer));
+		return PointerRangeHolder<uint32>(t.begin(), t.end());
 	}
 
 	Holder<PointerRange<uint32>> utf8to32(const String &str)
@@ -101,11 +74,10 @@ namespace cage
 
 	void utf8to32(PointerRange<uint32> &outBuffer, PointerRange<const char> inBuffer)
 	{
-		CAGE_ASSERT(outBuffer.size() >= utf32Length(inBuffer));
-		TRY_BEGIN
-		uint32 *end = utf8::utf8to32(inBuffer.begin(), inBuffer.end(), outBuffer.begin());
-		outBuffer = { outBuffer.begin(), end };
-		TRY_END
+		const auto t = una::utf8to32u(view(inBuffer));
+		CAGE_ASSERT(outBuffer.size() >= t.size());
+		detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(uint32));
+		outBuffer = PointerRange<uint32>(outBuffer.begin(), outBuffer.begin() + t.size());
 	}
 
 	void utf8to32(PointerRange<uint32> &outBuffer, const String &str)
@@ -120,31 +92,21 @@ namespace cage
 
 	Holder<PointerRange<char>> utf32to8(PointerRange<const uint32> buffer)
 	{
-		PointerRangeHolder<char> result;
-		result.resize(utf8Length(buffer));
-		TRY_BEGIN
-		char *end = utf8::utf32to8(buffer.begin(), buffer.end(), result.data());
-		CAGE_ASSERT(end == result.data() + result.size());
-		return result;
-		TRY_END
+		const auto t = una::utf32to8u(view(buffer));
+		return PointerRangeHolder<char>(t.begin(), t.end());
 	}
 
 	void utf32to8(PointerRange<char> &outBuffer, PointerRange<const uint32> inBuffer)
 	{
-		CAGE_ASSERT(outBuffer.size() >= utf8Length(inBuffer));
-		TRY_BEGIN
-		char *end = utf8::utf32to8(inBuffer.begin(), inBuffer.end(), outBuffer.begin());
-		outBuffer = { outBuffer.begin(), end };
-		TRY_END
+		const auto t = una::utf32to8u(view(inBuffer));
+		CAGE_ASSERT(outBuffer.size() >= t.size());
+		detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(char));
+		outBuffer = PointerRange<char>(outBuffer.begin(), outBuffer.begin() + t.size());
 	}
 
-	String utf32to8string(PointerRange<const uint32> inBuffer)
+	String utf32to8string(PointerRange<const uint32> buffer)
 	{
-		if (utf8Length(inBuffer) > String::MaxLength)
-			CAGE_THROW_ERROR(Exception, "utf string too long");
-		char buff[String::MaxLength];
-		PointerRange<char> pr = { buff, buff + String::MaxLength - 1 };
-		utf32to8(pr, inBuffer);
-		return String(pr);
+		const auto t = una::utf32to8u(view(buffer));
+		return String(PointerRange<const char>((const char *)t.data(), (const char *)t.data() + t.size()));
 	}
 }

@@ -5,11 +5,6 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API InvalidUtfString : public Exception
-	{
-		using Exception::Exception;
-	};
-
 	CAGE_CORE_API bool utfValid(PointerRange<const char> buffer);
 	CAGE_CORE_API bool utfValid(const String &str);
 	CAGE_CORE_API bool utfValid(const char *str);

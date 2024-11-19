@@ -31,9 +31,6 @@
 [submodule "externals/glfw/glfw"]
 	path = externals/glfw/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "externals/utfcpp/utfcpp"]
-	path = externals/utfcpp/utfcpp
-	url = https://github.com/nemtrif/utfcpp.git
 [submodule "externals/jpeg/jpeg"]
 	path = externals/jpeg/jpeg
 	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
@@ -103,3 +100,6 @@
 [submodule "externals/wamr/wamr"]
 	path = externals/wamr/wamr
 	url = https://github.com/bytecodealliance/wasm-micro-runtime.git
+[submodule "externals/uni-algo/uni-algo"]
+	path = externals/uni-algo/uni-algo
+	url = https://github.com/uni-algo/uni-algo
