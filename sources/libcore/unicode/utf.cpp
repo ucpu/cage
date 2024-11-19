@@ -76,7 +76,8 @@ namespace cage
 	{
 		const auto t = una::utf8to32u(view(inBuffer));
 		CAGE_ASSERT(outBuffer.size() >= t.size());
-		detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(uint32));
+		if (t.size())
+			detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(uint32));
 		outBuffer = PointerRange<uint32>(outBuffer.begin(), outBuffer.begin() + t.size());
 	}
 
@@ -100,7 +101,8 @@ namespace cage
 	{
 		const auto t = una::utf32to8u(view(inBuffer));
 		CAGE_ASSERT(outBuffer.size() >= t.size());
-		detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(char));
+		if (t.size())
+			detail::memcpy(outBuffer.data(), t.data(), t.size() * sizeof(char));
 		outBuffer = PointerRange<char>(outBuffer.begin(), outBuffer.begin() + t.size());
 	}
 

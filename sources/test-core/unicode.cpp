@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "main.h"
 
 #include <cage-core/unicode.h>
@@ -13,6 +15,25 @@ namespace
 		CAGE_TEST(a == c);
 		CAGE_TEST(utf32Length(a) == b->size());
 		CAGE_TEST(utf8Length(b) == c.size());
+		CAGE_TEST(utfValid(""));
+		CAGE_TEST(utf8to32("").empty());
+
+		{
+			std::vector<uint32> vec;
+			vec.resize(utf32Length(a) + 5);
+			PointerRange<uint32> range = vec;
+			utf8to32(range, a);
+			CAGE_TEST(range.size() == utf32Length(a));
+			const String d = utf32to8string(range);
+			CAGE_TEST(a == d);
+		}
+
+		{
+			std::vector<uint32> vec;
+			PointerRange<uint32> range = vec;
+			utf8to32(range, "");
+			CAGE_TEST(range.empty());
+		}
 	}
 
 	void testValidation()
