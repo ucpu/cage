@@ -9,6 +9,7 @@ void testExceptions();
 void testNumericTypes();
 void testTypeIndex();
 void testStrings();
+void testUnicode();
 void testPaths();
 void testDelegates();
 void testHolder();
@@ -87,6 +88,7 @@ int main()
 	testNumericTypes();
 	testTypeIndex();
 	testStrings();
+	testUnicode();
 	testPaths();
 	testDelegates();
 	testHolder();
