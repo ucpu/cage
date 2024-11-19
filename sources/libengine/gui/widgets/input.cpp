@@ -2,7 +2,7 @@
 
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
-#include <cage-core/utf.h>
+#include <cage-core/unicode.h>
 
 namespace cage
 {

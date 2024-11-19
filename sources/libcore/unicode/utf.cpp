@@ -4,7 +4,7 @@
 #include "uni_algo/conv.h"
 
 #include <cage-core/pointerRangeHolder.h>
-#include <cage-core/utf.h>
+#include <cage-core/unicode.h>
 
 namespace cage
 {

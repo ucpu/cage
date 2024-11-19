@@ -1,6 +1,7 @@
 #include "processor.h"
 
 #include <cage-core/texts.h>
+#include <cage-core/unicode.h>
 
 namespace
 {
@@ -52,6 +53,7 @@ namespace
 
 		while (f->readLine(l))
 		{
+			l = unicodeTransformString(l, { UnicodeTransformEnum::CanonicalComposition });
 			l = trim(l);
 			if (l.empty())
 			{

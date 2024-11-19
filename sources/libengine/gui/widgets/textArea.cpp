@@ -1,7 +1,7 @@
 #include "../private.h"
 
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/utf.h>
+#include <cage-core/unicode.h>
 
 namespace cage
 {
