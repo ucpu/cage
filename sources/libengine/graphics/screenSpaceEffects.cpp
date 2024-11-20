@@ -150,6 +150,7 @@ namespace cage
 		q->universalUniformStruct(s, 2);
 
 		TextureHandle texDof = provTex(config.provisionals, "dofColor", res, 1, GL_RGB16F);
+		q->bind(texDof, 0); // ensure the texture is properly initialized
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 
 		{ // collect

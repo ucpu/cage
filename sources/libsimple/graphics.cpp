@@ -224,9 +224,11 @@ namespace cage
 				Real k = dynamicResolution * targetTime / avgTime;
 				if (!valid(k))
 					return;
+				if (k > 0.97)
+					k = 1; // snap back to 100 %
 				k = clamp(k, engineDynamicResolution().minimumScale, 1);
 				if (abs(dynamicResolution - k) < 0.02)
-					return;
+					return; // difference of at least 2 percents
 
 				dynamicResolution = k;
 				nextAllowedDrFrameIndex = frameIndex + 5;
