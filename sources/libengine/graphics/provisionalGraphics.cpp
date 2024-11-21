@@ -12,6 +12,8 @@ namespace cage
 {
 	namespace
 	{
+		constexpr uint32 UsageDuration = 3;
+
 		class ProvisionalGraphicsImpl;
 
 		class ProvisionalUniformBufferImpl : public ProvisionalUniformBuffer
@@ -22,7 +24,7 @@ namespace cage
 			Holder<UniformBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = init copied
-			bool used = true;
+			uint32 usage = UsageDuration;
 
 			ProvisionalUniformBufferImpl(const String &name) : name(name) {}
 		};
@@ -34,7 +36,7 @@ namespace cage
 			Holder<FrameBuffer> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
-			bool used = true;
+			uint32 usage = UsageDuration;
 
 			ProvisionalFrameBufferHandleImpl(const String &name) : name(name) {}
 		};
@@ -47,7 +49,7 @@ namespace cage
 			Holder<Texture> result;
 			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 target = m;
-			bool used = true;
+			uint32 usage = UsageDuration;
 
 			ProvisionalTextureHandleImpl(const String &name) : name(name) {}
 		};
@@ -77,9 +79,10 @@ namespace cage
 					std::erase_if(data,
 						[](auto &it)
 						{
-							const bool res = it->used;
-							it->used = false;
-							return !res;
+							if (it->usage == 0)
+								return true;
+							it->usage--;
+							return false;
 						});
 				}
 
@@ -167,7 +170,7 @@ namespace cage
 	Holder<UniformBuffer> ProvisionalUniformBuffer::resolve()
 	{
 		ProvisionalUniformBufferImpl *impl = (ProvisionalUniformBufferImpl *)this;
-		impl->used = true;
+		impl->usage = UsageDuration;
 		if (!impl->result)
 		{
 			impl->result = newUniformBuffer();
@@ -181,7 +184,7 @@ namespace cage
 	Holder<FrameBuffer> ProvisionalFrameBuffer::resolve()
 	{
 		ProvisionalFrameBufferHandleImpl *impl = (ProvisionalFrameBufferHandleImpl *)this;
-		impl->used = true;
+		impl->usage = UsageDuration;
 		if (!impl->result)
 		{
 			switch (impl->type)
@@ -201,7 +204,7 @@ namespace cage
 	Holder<Texture> ProvisionalTexture::resolve()
 	{
 		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
-		impl->used = true;
+		impl->usage = UsageDuration;
 		if (!impl->result)
 		{
 			impl->result = newTexture(impl->target);

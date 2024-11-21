@@ -23,10 +23,7 @@ namespace cage
 					tex->initialize(resolution, mipmapLevels, internalFormat);
 					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					if (mipmapLevels > 1)
-					{
 						tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-						tex->generateMipmaps();
-					}
 					else
 						tex->filters(GL_LINEAR, GL_LINEAR, 0);
 				});

@@ -12,6 +12,7 @@
 #include <cage-core/entitiesCopy.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/hashString.h>
+#include <cage-core/profiling.h>
 #include <cage-core/scopeGuard.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
@@ -220,13 +221,14 @@ namespace cage
 				CAGE_ASSERT(engineDynamicResolution().minimumScale > 0 && engineDynamicResolution().minimumScale <= 1);
 
 				const double targetTime = 1'000'000'000 / engineDynamicResolution().targetFps;
-				const double avgTime = (timeQueries[0].time + timeQueries[0].time + timeQueries[1].time + timeQueries[2].time) / 4; // most recent frame time is more significant
+				const double avgTime = (timeQueries[0].time + timeQueries[1].time + timeQueries[2].time) / 3;
 				Real k = dynamicResolution * targetTime / avgTime;
 				if (!valid(k))
 					return;
+				k = min(k, dynamicResolution + 0.03); // progressive restoration
 				if (k > 0.97)
 					k = 1; // snap back to 100 %
-				k = clamp(k, engineDynamicResolution().minimumScale, 1);
+				k = clamp(k, engineDynamicResolution().minimumScale, 1); // safety clamp
 				if (abs(dynamicResolution - k) < 0.02)
 					return; // difference of at least 2 percents
 
@@ -461,17 +463,20 @@ namespace cage
 			void dispatch() // opengl thread
 			{
 				renderQueue->dispatch();
-				engineProvisionalGraphics()->reset();
 
-				{ // check gl errors (even in release, but do not halt the game)
-					try
-					{
-						checkGlError();
-					}
-					catch (const GraphicsError &)
-					{
-						// nothing
-					}
+				{
+					const auto _ = ProfilingScope("reset provisionals");
+					engineProvisionalGraphics()->reset();
+				}
+
+				// check gl errors (even in release, but do not halt the game)
+				try
+				{
+					checkGlError();
+				}
+				catch (const GraphicsError &)
+				{
+					// nothing
 				}
 			}
 
