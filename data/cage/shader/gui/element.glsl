@@ -18,11 +18,16 @@ layout(std140, binding = 0) uniform Layouts
 	LayoutStruct layouts[128];
 };
 
-layout(location = 0) uniform vec4 posOuter;
-layout(location = 1) uniform vec4 posInner;
-layout(location = 2) uniform uint controlType;
-layout(location = 3) uniform uint layoutMode;
+layout(std140, binding = 2) uniform Element
+{
+	vec4 posOuter;
+	vec4 posInner;
+	vec4 accent;
+	uint controlType; uint layoutMode; uint dummy1; uint dummy2;
+};
+
 layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
+out flat vec4 varAccent;
 out vec2 varUv;
 
 void main()
@@ -67,15 +72,18 @@ void main()
 			varUv.y = layouts[controlType].modes[layoutMode].outer.w;
 		break;
 	}
+	varAccent = accent;
 }
 
 $define shader fragment
 
 layout(binding = 0) uniform sampler2D texSkin;
+in flat vec4 varAccent;
 in vec2 varUv;
 out vec4 outColor;
 
 void main()
 {
 	outColor = texture(texSkin, varUv);
+	outColor.rgb = mix(outColor.rgb, varAccent.rgb, varAccent.a);
 }

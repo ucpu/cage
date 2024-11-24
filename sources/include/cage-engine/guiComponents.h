@@ -72,6 +72,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiWidgetStateComponent
 	{
+		Vec4 accent = Vec4::Nan(); // sRGB, blending factor
 		GuiSkinIndex skin; // inherit by default
 		bool disabled = false;
 	};

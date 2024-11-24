@@ -162,6 +162,12 @@ namespace cage
 			return *this;
 		}
 
+		BuilderItem BuilderItem::accent(Vec4 accent)
+		{
+			(*this)->value<GuiWidgetStateComponent>().accent = accent;
+			return *this;
+		}
+
 		BuilderItem BuilderItem::skin(GuiSkinIndex skin)
 		{
 			(*this)->value<GuiWidgetStateComponent>().skin = skin;

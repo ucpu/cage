@@ -34,6 +34,7 @@ namespace cage
 			BuilderItem image(uint32 textureName);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
 			BuilderItem size(Vec2 size);
+			BuilderItem accent(Vec4 accent);
 			BuilderItem skin(GuiSkinIndex skin);
 			BuilderItem disabled(bool disable = true);
 

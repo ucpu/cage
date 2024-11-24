@@ -220,6 +220,7 @@ namespace cage
 	{
 		Vec4 outer;
 		Vec4 inner;
+		Vec4 accent;
 		const SkinData *skin = nullptr;
 		uint32 element = m;
 		ElementModeEnum mode = m;

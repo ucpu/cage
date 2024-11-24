@@ -49,6 +49,7 @@ namespace cage
 		const Vec4 &border = item->skin->layouts[(uint32)element].border;
 		offset(pos, size, -border);
 		this->inner = item->hierarchy->impl->pointsToNdc(pos, size);
+		this->accent = item->widgetState.accent;
 		this->skin = item->skin;
 	}
 
@@ -60,10 +61,23 @@ namespace cage
 		skin->bind(q);
 		Holder<ShaderProgram> shader = impl->graphicsData.elementShader.share();
 		q->bind(shader);
-		q->uniform(shader, 0, outer);
-		q->uniform(shader, 1, inner);
-		q->uniform(shader, 2, element);
-		q->uniform(shader, 3, (uint32)mode);
+		struct ElementStruct
+		{
+			Vec4 posOuter;
+			Vec4 posInner;
+			Vec4 accent;
+			uint32 controlType = 0;
+			uint32 layoutMode = 0;
+			uint32 dummy1 = 0;
+			uint32 dummy2 = 0;
+		};
+		ElementStruct e;
+		e.posOuter = outer;
+		e.posInner = inner;
+		e.accent = accent;
+		e.controlType = element;
+		e.layoutMode = (uint32)mode;
+		q->universalUniformStruct(e, 2);
 		q->draw(impl->graphicsData.elementModel);
 	}
 

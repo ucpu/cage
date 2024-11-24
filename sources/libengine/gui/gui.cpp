@@ -276,9 +276,11 @@ namespace cage
 
 		void propagateWidgetState(const GuiWidgetStateComponent &from, GuiWidgetStateComponent &to)
 		{
-			to.disabled = to.disabled || from.disabled;
+			if (valid(from.accent))
+				to.accent = from.accent;
 			if (from.skin.index != m)
 				to.skin = from.skin;
+			to.disabled = to.disabled || from.disabled;
 		}
 
 		void propagateWidgetState(HierarchyItem *item, const GuiWidgetStateComponent &wsp)
@@ -331,6 +333,7 @@ namespace cage
 
 		{ // propagate widget state
 			GuiWidgetStateComponent ws;
+			ws.accent = Vec4(0);
 			ws.skin = GuiSkinDefault;
 			propagateWidgetState(+root, ws);
 		}
