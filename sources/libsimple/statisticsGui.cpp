@@ -68,7 +68,7 @@ namespace cage
 				root->value<GuiParentComponent>().order = 9000;
 				Holder<GuiBuilder> g = newGuiBuilder(root);
 				auto _1 = g->alignment(screenPosition);
-				auto _2 = g->panel().skin(2); // compact style
+				auto _2 = g->panel().skin(GuiSkinCompact);
 				auto _3 = g->verticalTable(2);
 
 				switch (statisticsScope)

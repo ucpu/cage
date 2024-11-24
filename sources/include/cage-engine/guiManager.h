@@ -9,6 +9,7 @@ namespace cage
 	class RenderQueue;
 	class ProvisionalGraphics;
 	struct GuiSkinConfig;
+	struct GuiSkinIndex;
 
 	class CAGE_ENGINE_API GuiManager : private Immovable
 	{
@@ -30,8 +31,8 @@ namespace cage
 		void invalidateInputs(); // skip all remaining inputs until next prepare
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from inside handleInput
 
-		GuiSkinConfig &skin(uint32 index = 0);
-		const GuiSkinConfig &skin(uint32 index = 0) const;
+		GuiSkinConfig &skin(GuiSkinIndex index);
+		const GuiSkinConfig &skin(GuiSkinIndex index) const;
 
 		EntityManager *entities();
 	};

@@ -169,7 +169,7 @@ namespace cage
 				CAGE_ASSERT(tt.invoker == ent);
 				CAGE_ASSERT(tt.tooltip == tt.rootTooltip);
 				if (!tt.tooltip->has<GuiWidgetStateComponent>())
-					tt.tooltip->value<GuiWidgetStateComponent>().skinIndex = 3;
+					tt.tooltip->value<GuiWidgetStateComponent>().skin = GuiSkinTooltips;
 				closeAllExceptSequenceWith(this, ent);
 				ttData.push_back(std::move(tt));
 				ttHasMovedSinceLast = false;

@@ -162,9 +162,9 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::skin(uint32 index)
+		BuilderItem BuilderItem::skin(GuiSkinIndex skin)
 		{
-			(*this)->value<GuiWidgetStateComponent>().skinIndex = index;
+			(*this)->value<GuiWidgetStateComponent>().skin = skin;
 			return *this;
 		}
 

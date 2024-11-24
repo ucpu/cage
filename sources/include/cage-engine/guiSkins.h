@@ -159,7 +159,6 @@ namespace cage
 		ScrollbarVerticalPanel,
 		ScrollbarHorizontalDot,
 		ScrollbarVerticalDot,
-		ToolTip, // obsolete
 		PanelBase,
 		PanelCaption,
 		SpoilerBase,
@@ -181,9 +180,6 @@ namespace cage
 		ComboBoxList,
 		ComboBoxItemUnchecked,
 		ComboBoxItemChecked,
-		ListBoxBase, // obsolete
-		ListBoxItemUnchecked, // obsolete
-		ListBoxItemChecked, // obsolete
 		SliderHorizontalPanel,
 		SliderVerticalPanel,
 		SliderHorizontalDot,
@@ -195,6 +191,7 @@ namespace cage
 		ColorPickerSatValPanel,
 		ColorPickerPreviewPanel,
 		TotalElements,
+		UnusedElement = 1'000'000,
 		InvalidElement = m,
 	};
 
@@ -208,7 +205,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(uint32 styleIndex); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
+		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(GuiSkinIndex style); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
 		CAGE_ENGINE_API Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution);
 	}
 }

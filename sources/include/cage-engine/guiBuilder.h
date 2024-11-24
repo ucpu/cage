@@ -34,7 +34,7 @@ namespace cage
 			BuilderItem image(uint32 textureName);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
 			BuilderItem size(Vec2 size);
-			BuilderItem skin(uint32 index = m); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
+			BuilderItem skin(GuiSkinIndex skin);
 			BuilderItem disabled(bool disable = true);
 
 			BuilderItem event(Delegate<bool(const GenericInput &)> ev);

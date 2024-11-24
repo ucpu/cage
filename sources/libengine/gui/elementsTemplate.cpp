@@ -38,10 +38,10 @@ namespace cage
 			for (uint32 type = 0; type < (uint32)GuiElementTypeEnum::TotalElements; type++)
 			{
 				const GuiSkinElementLayout::TextureUv &element = skin.layouts[type].textureUv;
-				renderRectangle(png.get(), element.data[3], Vec3(.4, .4, .4), Vec3(.5, .5, .5), Vec3(.6, .6, .6));
-				renderRectangle(png.get(), element.data[2], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1));
-				renderRectangle(png.get(), element.data[1], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0.66));
-				renderRectangle(png.get(), element.data[0], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0.33));
+				renderRectangle(+png, element.data[0], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0.33)); // normal
+				renderRectangle(+png, element.data[1], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 0.66)); // focus
+				renderRectangle(+png, element.data[2], Vec3(1, 0, 0), Vec3(0, 1, 0), Vec3(0, 0, 1)); // hover
+				renderRectangle(+png, element.data[3], Vec3(.4, .4, .4), Vec3(.5, .5, .5), Vec3(.6, .6, .6)); // disabled
 			}
 			return png;
 		}

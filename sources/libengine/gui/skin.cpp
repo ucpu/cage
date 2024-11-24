@@ -82,15 +82,56 @@ namespace cage
 			consteval LayoutsBase()
 			{
 				std::vector<GuiElementTypeEnum> largeElements = {
-					GuiElementTypeEnum::PanelBase, // overlaps SpoilerBase
+					GuiElementTypeEnum::PanelBase /* overlaps: SpoilerBase */,
 					GuiElementTypeEnum::TextArea,
 				};
 
 				std::vector<GuiElementTypeEnum> smallElements = {
-					GuiElementTypeEnum::ScrollbarHorizontalPanel, GuiElementTypeEnum::ScrollbarVerticalPanel, GuiElementTypeEnum::ScrollbarHorizontalDot, GuiElementTypeEnum::ScrollbarVerticalDot, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ToolTip, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::PanelCaption, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::SpoilerCaption, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::Button, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::Input, GuiElementTypeEnum::InputButtonDecrement, GuiElementTypeEnum::InputButtonIncrement, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::CheckBoxUnchecked, GuiElementTypeEnum::CheckBoxChecked, GuiElementTypeEnum::CheckBoxIndetermined, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::RadioBoxUnchecked, GuiElementTypeEnum::RadioBoxChecked,
-					GuiElementTypeEnum::RadioBoxIndetermined, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ComboBoxBase, GuiElementTypeEnum::ComboBoxList, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxBase, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxItemUnchecked, GuiElementTypeEnum::ComboBoxItemUnchecked, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ListBoxItemChecked, GuiElementTypeEnum::ComboBoxItemChecked, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::SliderHorizontalPanel, GuiElementTypeEnum::SliderVerticalPanel, GuiElementTypeEnum::SliderHorizontalDot, GuiElementTypeEnum::SliderVerticalDot, GuiElementTypeEnum::InvalidElement, GuiElementTypeEnum::ProgressBar, GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ColorPickerCompact, // overlaps: ColorPickerFull
-					GuiElementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
+					GuiElementTypeEnum::ScrollbarHorizontalPanel,
+					GuiElementTypeEnum::ScrollbarVerticalPanel,
+					GuiElementTypeEnum::ScrollbarHorizontalDot,
+					GuiElementTypeEnum::ScrollbarVerticalDot,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::UnusedElement,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::PanelCaption,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::SpoilerCaption,
+					GuiElementTypeEnum::SpoilerIconCollapsed,
+					GuiElementTypeEnum::SpoilerIconShown,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::Button,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::Input,
+					GuiElementTypeEnum::InputButtonDecrement,
+					GuiElementTypeEnum::InputButtonIncrement,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::CheckBoxUnchecked,
+					GuiElementTypeEnum::CheckBoxChecked,
+					GuiElementTypeEnum::CheckBoxIndetermined,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::RadioBoxUnchecked,
+					GuiElementTypeEnum::RadioBoxChecked,
+					GuiElementTypeEnum::RadioBoxIndetermined,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::UnusedElement,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxBase,
+					GuiElementTypeEnum::ComboBoxList,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxItemUnchecked,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxItemChecked,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::SliderHorizontalPanel,
+					GuiElementTypeEnum::SliderVerticalPanel,
+					GuiElementTypeEnum::SliderHorizontalDot,
+					GuiElementTypeEnum::SliderVerticalDot,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ProgressBar,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ColorPickerCompact /* overlaps: ColorPickerFull */,
+					GuiElementTypeEnum::ColorPickerPreviewPanel /* overlaps: ColorPickerHuePanel, ColorPickerSatValPanel */,
 				};
 
 				FlatSet<GuiElementTypeEnum> wideElements = {
@@ -100,12 +141,8 @@ namespace cage
 					GuiElementTypeEnum::Input,
 					GuiElementTypeEnum::ComboBoxBase,
 					GuiElementTypeEnum::ComboBoxList,
-					GuiElementTypeEnum::ListBoxBase,
-					GuiElementTypeEnum::ListBoxItemUnchecked,
 					GuiElementTypeEnum::ComboBoxItemUnchecked,
-					GuiElementTypeEnum::ListBoxItemChecked,
 					GuiElementTypeEnum::ComboBoxItemChecked,
-					GuiElementTypeEnum::ToolTip,
 					GuiElementTypeEnum::ProgressBar,
 				};
 
@@ -131,13 +168,10 @@ namespace cage
 					GuiElementTypeEnum::ComboBoxList,
 					GuiElementTypeEnum::ComboBoxItemUnchecked,
 					GuiElementTypeEnum::ComboBoxItemChecked,
-					GuiElementTypeEnum::ListBoxItemUnchecked,
-					GuiElementTypeEnum::ListBoxItemChecked,
 					GuiElementTypeEnum::ProgressBar,
 					GuiElementTypeEnum::ColorPickerHuePanel,
 					GuiElementTypeEnum::ColorPickerPreviewPanel,
 					GuiElementTypeEnum::ColorPickerSatValPanel,
-					GuiElementTypeEnum::ToolTip,
 				};
 
 				FlatSet<GuiElementTypeEnum> noHover = {
@@ -149,7 +183,6 @@ namespace cage
 					GuiElementTypeEnum::ColorPickerHuePanel,
 					GuiElementTypeEnum::ColorPickerPreviewPanel,
 					GuiElementTypeEnum::ColorPickerSatValPanel,
-					GuiElementTypeEnum::ToolTip,
 				};
 
 				{ // automatic uv construction
@@ -164,6 +197,11 @@ namespace cage
 						if (it == GuiElementTypeEnum::InvalidElement)
 						{
 							packer.newLine();
+							continue;
+						}
+						if (it >= GuiElementTypeEnum::UnusedElement)
+						{
+							packer.next(false);
 							continue;
 						}
 						bool border = noBorder.count(it) == 0;
@@ -182,6 +220,11 @@ namespace cage
 						if (it == GuiElementTypeEnum::InvalidElement)
 						{
 							packer.newLine();
+							continue;
+						}
+						if (it >= GuiElementTypeEnum::UnusedElement)
+						{
+							packer.next(false);
 							continue;
 						}
 						if (wideElements.count(it))
@@ -419,18 +462,18 @@ namespace cage
 
 	namespace detail
 	{
-		GuiSkinConfig guiSkinGenerate(uint32 styleIndex)
+		GuiSkinConfig guiSkinGenerate(GuiSkinIndex style)
 		{
 			GuiSkinConfig skin;
-			switch (styleIndex)
+			switch (style.index)
 			{
-				case 1:
+				case GuiSkinLarge.index:
 					generateLarge(skin);
 					break;
-				case 2:
+				case GuiSkinCompact.index:
 					generateCompact(skin);
 					break;
-				case 3:
+				case GuiSkinTooltips.index:
 					generateCompact(skin);
 					skin.textureName = HashString("cage/texture/tooltips.png");
 					break;

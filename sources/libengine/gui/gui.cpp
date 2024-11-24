@@ -26,7 +26,7 @@ namespace cage
 		for (uint32 i = 0; i < config.skinsCount; i++)
 		{
 			SkinData d;
-			(GuiSkinConfig &)d = detail::guiSkinGenerate(i);
+			(GuiSkinConfig &)d = detail::guiSkinGenerate(GuiSkinIndex(i));
 			skins.push_back(std::move(d));
 		}
 
@@ -121,16 +121,18 @@ namespace cage
 		impl->clearTooltips();
 	}
 
-	GuiSkinConfig &GuiManager::skin(uint32 index)
+	GuiSkinConfig &GuiManager::skin(GuiSkinIndex index)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return impl->skins[index];
+		CAGE_ASSERT(index.index < impl->skins.size());
+		return impl->skins[index.index];
 	}
 
-	const GuiSkinConfig &GuiManager::skin(uint32 index) const
+	const GuiSkinConfig &GuiManager::skin(GuiSkinIndex index) const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
-		return impl->skins[index];
+		CAGE_ASSERT(index.index < impl->skins.size());
+		return impl->skins[index.index];
 	}
 
 	EntityManager *GuiManager::entities()
@@ -275,8 +277,8 @@ namespace cage
 		void propagateWidgetState(const GuiWidgetStateComponent &from, GuiWidgetStateComponent &to)
 		{
 			to.disabled = to.disabled || from.disabled;
-			if (from.skinIndex != m)
-				to.skinIndex = from.skinIndex;
+			if (from.skin.index != m)
+				to.skin = from.skin;
 		}
 
 		void propagateWidgetState(HierarchyItem *item, const GuiWidgetStateComponent &wsp)
@@ -291,8 +293,8 @@ namespace cage
 			{
 				GuiWidgetStateComponent &w = wi->widgetState;
 				w = ws;
-				CAGE_ASSERT(w.skinIndex < item->impl->skins.size());
-				wi->skin = &item->impl->skins[w.skinIndex];
+				CAGE_ASSERT(w.skin.index < item->impl->skins.size());
+				wi->skin = &item->impl->skins[w.skin.index];
 			}
 			for (const auto &it : item->children)
 				propagateWidgetState(+it, ws);
@@ -329,7 +331,7 @@ namespace cage
 
 		{ // propagate widget state
 			GuiWidgetStateComponent ws;
-			ws.skinIndex = 0;
+			ws.skin = GuiSkinDefault;
 			propagateWidgetState(+root, ws);
 		}
 

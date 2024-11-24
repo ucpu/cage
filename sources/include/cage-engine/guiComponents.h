@@ -9,6 +9,19 @@ namespace cage
 	struct MemoryBuffer;
 	class Entity;
 
+	struct CAGE_ENGINE_API GuiSkinIndex
+	{
+		constexpr GuiSkinIndex() = default;
+		constexpr explicit GuiSkinIndex(uint32 index) : index(index){};
+
+		uint32 index = m; // -1 = inherit
+	};
+
+	constexpr GuiSkinIndex GuiSkinDefault = GuiSkinIndex(0);
+	constexpr GuiSkinIndex GuiSkinLarge = GuiSkinIndex(1);
+	constexpr GuiSkinIndex GuiSkinCompact = GuiSkinIndex(2);
+	constexpr GuiSkinIndex GuiSkinTooltips = GuiSkinIndex(3);
+
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
 		uint32 parent = 0;
@@ -59,7 +72,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiWidgetStateComponent
 	{
-		uint32 skinIndex = m; // -1 = inherit
+		GuiSkinIndex skin; // inherit by default
 		bool disabled = false;
 	};
 
