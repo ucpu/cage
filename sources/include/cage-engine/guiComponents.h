@@ -127,11 +127,16 @@ namespace cage
 		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::InvokerCorner;
 	};
 
+	namespace detail
+	{
+		CAGE_ENGINE_API extern uint64 GuiTooltipDelayDefault;
+	}
+
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{
 		using TooltipCallback = Delegate<void(const GuiTooltipConfig &)>;
 		TooltipCallback tooltip;
-		uint64 delay = 500000; // duration to hold cursor over the widget before showing the tooltip
+		uint64 delay = detail::GuiTooltipDelayDefault; // duration to hold cursor over the widget before showing the tooltip
 		bool enableForDisabled = false; // allow showing the tooltip even if the widget is disabled
 	};
 

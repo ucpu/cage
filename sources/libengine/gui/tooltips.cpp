@@ -2,6 +2,11 @@
 
 namespace cage
 {
+	namespace detail
+	{
+		uint64 GuiTooltipDelayDefault = 500'000;
+	}
+
 	void GuiImpl::ttMouseMove(input::MouseMove in)
 	{
 		Vec2 pt;
