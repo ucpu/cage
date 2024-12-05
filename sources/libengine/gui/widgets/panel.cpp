@@ -64,6 +64,12 @@ namespace cage
 				}
 				hierarchy->childrenEmit();
 			}
+
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			{
+				// prevent taking focus
+				return false;
+			}
 		};
 	}
 

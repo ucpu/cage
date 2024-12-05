@@ -43,7 +43,11 @@ namespace cage
 					hierarchy->text->emit(p, s, widgetState.disabled);
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			{
+				// prevent taking focus
+				return false;
+			}
 
 			bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return false; }
 
