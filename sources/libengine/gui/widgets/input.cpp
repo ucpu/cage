@@ -227,7 +227,7 @@ namespace cage
 
 			bool insideButton(Vec2 pos, Vec2 point) { return pointInside(pos, Vec2(skin->defaults.inputBox.buttonsWidth, mainSize[1]), point); }
 
-			void increment(int sign)
+			void increment(int sign, MouseButtonsFlags buttons, ModifiersFlags modifiers)
 			{
 				if (data.value.empty())
 				{
@@ -255,40 +255,34 @@ namespace cage
 				{
 					// do nothing
 				}
-				hierarchy->fireWidgetEvent();
-			}
-
-			void gainFocus()
-			{
-				// update cursor
-				uint32 &cur = data.cursor;
-				const uint32 len = utf32Length(data.value);
-				cur = min(cur, len);
-				if (any(data.style & InputStyleFlags::GoToEndOnFocusGain))
-					cur = len;
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 			}
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				if (!hasFocus())
-					gainFocus();
+				{
+					// update cursor
+					uint32 &cur = data.cursor;
+					const uint32 len = utf32Length(data.value);
+					cur = min(cur, len);
+					if (any(data.style & InputStyleFlags::GoToEndOnFocusGain))
+						cur = len;
+				}
 				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
 
 				// numeric buttons
 				if (data.type == InputTypeEnum::Real || data.type == InputTypeEnum::Integer)
 				{
 					if (insideButton(leftPos, point))
 					{
-						increment(-1);
+						increment(-1, buttons, modifiers);
 						return true;
 					}
 					if (insideButton(rightPos, point))
 					{
-						increment(1);
+						increment(1, buttons, modifiers);
 						return true;
 					}
 				}
@@ -332,7 +326,7 @@ namespace cage
 						utf32.erase(utf32.begin() + cursor);
 						data.value = utf32to8string(utf32);
 						validate();
-						hierarchy->fireWidgetEvent();
+						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
 						break;
 					}
 					case 261: // delete
@@ -342,7 +336,7 @@ namespace cage
 						utf32.erase(utf32.begin() + cursor);
 						data.value = utf32to8string(utf32);
 						validate();
-						hierarchy->fireWidgetEvent();
+						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
 						break;
 					}
 					case 257: // enter
@@ -374,7 +368,7 @@ namespace cage
 				data.value = utf32to8string(utf32);
 				cursor++;
 				validate();
-				hierarchy->fireWidgetEvent();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent });
 				return true;
 			}
 		};

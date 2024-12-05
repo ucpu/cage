@@ -576,7 +576,7 @@ namespace cage
 						else
 							eventsQueue.push_back(input::HeadsetDisconnected{ this });
 					}
-					eventsQueue.push_back(input::HeadsetPose{ headTransform, this });
+					eventsQueue.push_back(input::HeadsetPose{ { this }, headTransform });
 				}
 
 				for (VirtualRealityControllerImpl &cntrl : controllers)
@@ -606,7 +606,7 @@ namespace cage
 						else
 							eventsQueue.push_back(input::ControllerDisconnected{ &cntrl });
 					}
-					eventsQueue.push_back(input::ControllerPose{ cntrl.grip.transform, &cntrl });
+					eventsQueue.push_back(input::ControllerPose{ { &cntrl }, cntrl.grip.transform });
 
 					for (uint32 i = 0; i < cntrl.axes.size(); i++)
 					{
@@ -620,7 +620,7 @@ namespace cage
 						check(xrGetActionStateFloat(session, &info, &state));
 						cntrl.axes[i] = state.currentState;
 						if (state.changedSinceLastSync)
-							eventsQueue.push_back(input::ControllerAxis{ &cntrl, i, state.currentState });
+							eventsQueue.push_back(input::ControllerAxis{ { &cntrl }, i, state.currentState });
 					}
 
 					for (uint32 i = 0; i < cntrl.buts.size(); i++)

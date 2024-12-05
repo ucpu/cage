@@ -166,9 +166,7 @@ namespace cage
 			{
 				if (!move)
 					makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
+				if (buttons == MouseButtonsFlags::None)
 					return true;
 				if (this == large)
 				{
@@ -185,7 +183,7 @@ namespace cage
 						Vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = colorHsvToRgb(hsv);
-						hierarchy->fireWidgetEvent();
+						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 					}
 					else if (hasFocus(4))
 					{
@@ -194,13 +192,17 @@ namespace cage
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = colorHsvToRgb(hsv);
-						hierarchy->fireWidgetEvent();
+						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 					}
 				}
 				return true;
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, false); }
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
+			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
+				return handleMouse(buttons, modifiers, point, false);
+			}
 
 			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, true); }
 		};

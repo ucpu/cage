@@ -60,13 +60,15 @@ namespace cage
 				emitElement(dotElement, mode(), dp, ds);
 			}
 
-			void update(Vec2 point)
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
+				makeFocused();
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -defaults.margin - skin->layouts[(uint32)baseElement].border);
 				if (s[0] == s[1])
-					return;
+					return true;
 				Real ds1 = min(s[0], s[1]);
 				Real mp = point[data.vertical];
 				Real cp = p[data.vertical];
@@ -80,24 +82,14 @@ namespace cage
 					if (data.vertical)
 						f = 1 - f;
 					data.value = f * (data.max - data.min) + data.min;
-					hierarchy->fireWidgetEvent();
+					hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				}
-			}
-
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
-				update(point);
 				return true;
 			}
 
 			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
-				if (hasFocus())
+				if (hasFocus() && buttons != MouseButtonsFlags::None)
 					return mousePress(buttons, modifiers, point);
 				return false;
 			}

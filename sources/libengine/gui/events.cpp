@@ -34,7 +34,7 @@ namespace cage
 		}
 
 		template<class A, bool (WidgetItem::*F)(A, ModifiersFlags, Vec2)>
-		bool passMouseEvent(GuiImpl *impl, A a, ModifiersFlags m, const Vec2 &point)
+		bool passMouseEvent(GuiImpl *impl, A a, ModifiersFlags mods, const Vec2 &point)
 		{
 			Vec2 pt;
 			if (!impl->eventPoint(point, pt))
@@ -43,7 +43,7 @@ namespace cage
 				bool res = false;
 				for (auto f : focused(impl))
 				{
-					if (f->widgetState.disabled || (f->*F)(a, m, pt))
+					if (f->widgetState.disabled || (f->*F)(a, mods, pt))
 						res = true;
 				}
 				if (res)
@@ -54,7 +54,7 @@ namespace cage
 			{
 				if (it.pointInside(pt))
 				{
-					if (it.widget->widgetState.disabled || (it.widget->*F)(a, m, pt))
+					if (it.widget->widgetState.disabled || (it.widget->*F)(a, mods, pt))
 						return true;
 				}
 			}
@@ -62,7 +62,7 @@ namespace cage
 		}
 
 		template<bool (WidgetItem::*F)(uint32, ModifiersFlags)>
-		bool passKeyEvent(GuiImpl *impl, uint32 key, ModifiersFlags m)
+		bool passKeyEvent(GuiImpl *impl, uint32 key, ModifiersFlags mods)
 		{
 			Vec2 dummy;
 			if (!impl->eventPoint(impl->inputMouse, dummy))
@@ -70,7 +70,7 @@ namespace cage
 			bool res = false;
 			for (auto f : focused(impl))
 			{
-				if (f->widgetState.disabled || (f->*F)(key, m))
+				if (f->widgetState.disabled || (f->*F)(key, mods))
 					res = true;
 			}
 			return res;
@@ -175,10 +175,5 @@ namespace cage
 			}
 		}
 		impl->widgetEvent.dispatch(in);
-	}
-
-	void HierarchyItem::fireWidgetEvent() const
-	{
-		fireWidgetEvent(input::GuiValue{ impl, ent });
 	}
 }

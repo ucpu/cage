@@ -89,9 +89,8 @@ namespace cage
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				hierarchy->impl->focusName = 0;
-				if (buttons != MouseButtonsFlags::Left || modifiers != ModifiersFlags::None)
-					return true;
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = Vec2(hierarchy->renderSize[0], skin->defaults.spoiler.captionHeight);
 				offset(p, s, -skin->defaults.spoiler.baseMargin * Vec4(1, 1, 1, 0));

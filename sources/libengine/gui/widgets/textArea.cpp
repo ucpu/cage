@@ -63,25 +63,19 @@ namespace cage
 				hierarchy->text->emit(textPos, textSize, widgetState.disabled);
 			}
 
-			void gainFocus()
-			{
-				// update cursor
-				uint32 &cur = data.cursor;
-				const uint32 len = utf32Length(buffer);
-				cur = min(cur, len);
-				if (any(data.style & InputStyleFlags::GoToEndOnFocusGain))
-					cur = len;
-			}
-
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				if (!hasFocus())
-					gainFocus();
+				{
+					// update cursor
+					uint32 &cur = data.cursor;
+					const uint32 len = utf32Length(buffer);
+					cur = min(cur, len);
+					if (any(data.style & InputStyleFlags::GoToEndOnFocusGain))
+						cur = len;
+				}
 				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
 
 				// update cursor
 				hierarchy->text->updateCursorPosition(textPos, textSize, point, data.cursor);
@@ -95,7 +89,7 @@ namespace cage
 				PointerRange<char> utf8pr = buffer;
 				utf32to8(utf8pr, utf32);
 				CAGE_ASSERT(utf8pr.size() == buffer.size());
-				hierarchy->fireWidgetEvent();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent });
 			}
 
 			bool keyRepeat(uint32 key, ModifiersFlags modifiers) override

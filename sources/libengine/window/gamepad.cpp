@@ -101,7 +101,7 @@ namespace cage
 					if (abs(a) < deadzone)
 						a = 0;
 					if (a != axes2[i])
-						eventsQueue.push(input::GamepadAxis{ this, i, axes1[i] });
+						eventsQueue.push(input::GamepadAxis{ { this }, i, axes1[i] });
 				}
 
 				for (uint32 i = 0; i < buts1.size(); i++)

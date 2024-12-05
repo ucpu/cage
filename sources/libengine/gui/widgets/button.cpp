@@ -42,12 +42,9 @@ namespace cage
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
-				hierarchy->fireWidgetEvent();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}
 		};

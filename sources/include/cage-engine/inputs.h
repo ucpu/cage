@@ -35,14 +35,12 @@ namespace cage
 		{};
 		struct WindowHide : privat::BaseWindow
 		{};
-		struct WindowMove
+		struct WindowMove : privat::BaseWindow
 		{
-			Window *window = nullptr;
 			Vec2i position;
 		};
-		struct WindowResize
+		struct WindowResize : privat::BaseWindow
 		{
-			Window *window = nullptr;
 			Vec2i size;
 		};
 
@@ -124,9 +122,8 @@ namespace cage
 		{};
 		struct GamepadRelease : privat::BaseGamepadKey
 		{};
-		struct GamepadAxis
+		struct GamepadAxis : privat::BaseGamepad
 		{
-			Gamepad *gamepad = nullptr;
 			uint32 axis = 0;
 			Real value;
 		};
@@ -144,10 +141,9 @@ namespace cage
 		{};
 		struct HeadsetDisconnected : privat::BaseHeadset
 		{};
-		struct HeadsetPose
+		struct HeadsetPose : privat::BaseHeadset
 		{
 			Transform pose; // in local space of the virtual reality
-			VirtualReality *headset = nullptr;
 		};
 
 		// controller
@@ -168,18 +164,16 @@ namespace cage
 		{};
 		struct ControllerDisconnected : privat::BaseController
 		{};
-		struct ControllerPose
+		struct ControllerPose : privat::BaseController
 		{
 			Transform pose; // grip pose in local space of the virtual reality
-			VirtualRealityController *controller = nullptr;
 		};
 		struct ControllerPress : privat::BaseControllerKey
 		{};
 		struct ControllerRelease : privat::BaseControllerKey
 		{};
-		struct ControllerAxis
+		struct ControllerAxis : privat::BaseController
 		{
-			VirtualRealityController *controller = nullptr;
 			uint32 axis = 0;
 			Real value;
 		};
@@ -190,6 +184,8 @@ namespace cage
 		{
 			GuiManager *manager = nullptr;
 			Entity *entity = nullptr;
+			MouseButtonsFlags buttons = MouseButtonsFlags::None;
+			ModifiersFlags mods = ModifiersFlags::None;
 		};
 		struct GuiInputConfirm
 		{

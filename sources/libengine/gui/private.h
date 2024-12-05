@@ -79,7 +79,6 @@ namespace cage
 		void moveToWindow(bool horizontal, bool vertical);
 		HierarchyItem *findParentOf(HierarchyItem *item);
 		void fireWidgetEvent(GenericInput in) const;
-		void fireWidgetEvent() const;
 	};
 
 	struct BaseItem : private Immovable

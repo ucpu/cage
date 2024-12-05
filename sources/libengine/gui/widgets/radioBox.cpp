@@ -60,16 +60,13 @@ namespace cage
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
 				HierarchyItem *parent = hierarchy->impl->root->findParentOf(hierarchy);
 				for (const auto &it : parent->children)
 					deselect(+it);
 				data.state = CheckBoxStateEnum::Checked;
-				hierarchy->fireWidgetEvent();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}
 		};

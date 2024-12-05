@@ -195,6 +195,7 @@ namespace cage
 
 		bool ComboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 		{
+			CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 			// does not take focus
 			return true;
 		}
@@ -227,19 +228,16 @@ namespace cage
 
 		bool ComboOptionImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 		{
+			CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 			// does not take focus
-			if (buttons != MouseButtonsFlags::Left)
-				return true;
-			if (modifiers != ModifiersFlags::None)
-				return true;
 			if (!widgetState.disabled && pointInside(hierarchy->renderPos, hierarchy->renderSize, point))
 			{
 				combo->data.selected = index;
 				combo->selected = index;
 				consolidateSelection(combo->list->hierarchy, combo->selected);
 				hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
-				hierarchy->fireWidgetEvent();
-				combo->hierarchy->fireWidgetEvent();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
+				combo->hierarchy->fireWidgetEvent(input::GuiValue{ combo->hierarchy->impl, combo->hierarchy->ent, buttons, modifiers });
 			}
 			return true;
 		}

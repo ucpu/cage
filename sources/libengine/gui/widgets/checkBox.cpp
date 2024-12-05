@@ -52,23 +52,15 @@ namespace cage
 				}
 			}
 
-			void update()
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
+				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
+				makeFocused();
 				if (data.state == CheckBoxStateEnum::Checked)
 					data.state = CheckBoxStateEnum::Unchecked;
 				else
 					data.state = CheckBoxStateEnum::Checked;
-				hierarchy->fireWidgetEvent();
-			}
-
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
-			{
-				makeFocused();
-				if (buttons != MouseButtonsFlags::Left)
-					return true;
-				if (modifiers != ModifiersFlags::None)
-					return true;
-				update();
+				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}
 		};

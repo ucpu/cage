@@ -254,6 +254,10 @@ namespace cage
 	{
 		while (!ttData.empty())
 			detail::guiDestroyEntityRecursively(ttData.front().rootTooltip);
+
+		ttTimestampMouseMove = applicationTime();
+		ttMouseTraveledDistance = 0;
+		ttHasMovedSinceLast = false;
 	}
 
 	bool GuiImpl::tooltipRemoved(Entity *e)

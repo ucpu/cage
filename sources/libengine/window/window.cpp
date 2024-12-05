@@ -391,13 +391,13 @@ namespace cage
 		void windowResizeCallback(GLFWwindow *w, int width, int height)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
-			impl->eventsQueue.push(input::WindowResize{ impl, Vec2i(width, height) });
+			impl->eventsQueue.push(input::WindowResize{ { impl }, Vec2i(width, height) });
 		}
 
 		void windowMoveCallback(GLFWwindow *w, int xpos, int ypos)
 		{
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
-			impl->eventsQueue.push(input::WindowMove{ impl, Vec2i(xpos, ypos) });
+			impl->eventsQueue.push(input::WindowMove{ { impl }, Vec2i(xpos, ypos) });
 		}
 
 		void windowIconifiedCallback(GLFWwindow *w, int iconified)
