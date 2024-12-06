@@ -1,6 +1,9 @@
 #include <cstring>
 #include <vector>
 
+#include <SheenBidi.h>
+#include <hb.h>
+
 #include <cage-core/unicode.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>

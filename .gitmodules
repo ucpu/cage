@@ -103,3 +103,9 @@
 [submodule "externals/uni-algo/uni-algo"]
 	path = externals/uni-algo/uni-algo
 	url = https://github.com/uni-algo/uni-algo
+[submodule "externals/sheenbidi/SheenBidi"]
+	path = externals/sheenbidi/SheenBidi
+	url = https://github.com/Tehreer/SheenBidi.git
+[submodule "externals/harfbuzz/harfbuzz"]
+	path = externals/harfbuzz/harfbuzz
+	url = https://github.com/harfbuzz/harfbuzz.git
