@@ -1,240 +1,147 @@
-#include <cstring>
+#include <algorithm>
 #include <vector>
 
 #include <SheenBidi.h>
-#include <hb.h>
+#include <hb-ft.h>
 
+#include <cage-core/concurrent.h>
+#include <cage-core/image.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
 #include <cage-core/unicode.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
+
+namespace
+{
+	cage::String translateErrorCode(int code)
+	{
+#undef __FTERRORS_H__
+		switch (code)
+#define FT_ERROR_START_LIST {
+#define FT_ERRORDEF(E, V, S) \
+	case V: \
+		return S;
+#define FT_ERROR_END_LIST \
+	} \
+	;
+#include FT_ERRORS_H
+			CAGE_THROW_ERROR(cage::Exception, "unknown freetype error code");
+	}
+}
 
 namespace cage
 {
 	namespace
 	{
-		constexpr uint32 MaxCharacters = 512;
+		FT_Library ftLibrary;
+		Holder<Mutex> ftMutex = newMutex();
+		class FtInitializer
+		{
+		public:
+			FtInitializer()
+			{
+				if (FT_Init_FreeType(&ftLibrary))
+					CAGE_THROW_ERROR(Exception, "failed to initialize FreeType");
+			}
+			~FtInitializer()
+			{
+				ScopeLock _(ftMutex);
+				FT_Done_FreeType(ftLibrary);
+			}
+		} ftInitializer;
 
+		struct BidiAlgorithm : private Noncopyable
+		{
+			explicit BidiAlgorithm(SBCodepointSequence *codepoints) { algorithm = SBAlgorithmCreate(codepoints); }
+			~BidiAlgorithm() { SBAlgorithmRelease(algorithm); }
+			SBAlgorithmRef operator()() const { return algorithm; };
+
+		private:
+			SBAlgorithmRef algorithm = nullptr;
+		};
+
+		struct BidiParagraph : private Noncopyable
+		{
+			explicit BidiParagraph(SBAlgorithmRef bidiAlgorithm, SBUInteger paragraphStart) { paragraph = SBAlgorithmCreateParagraph(bidiAlgorithm, paragraphStart, INT32_MAX, SBLevelDefaultLTR); }
+			~BidiParagraph() { SBParagraphRelease(paragraph); }
+			SBParagraphRef operator()() const { return paragraph; };
+
+		private:
+			SBParagraphRef paragraph = nullptr;
+		};
+
+		struct BidiLine : private Noncopyable
+		{
+			explicit BidiLine(SBParagraphRef paragraph, SBUInteger lineStart, SBUInteger paragraphLength) { paragraphLine = SBParagraphCreateLine(paragraph, lineStart, paragraphLength); }
+			~BidiLine() { SBLineRelease(paragraphLine); }
+			SBLineRef operator()() const { return paragraphLine; };
+
+		private:
+			SBLineRef paragraphLine = nullptr;
+		};
+
+		struct HarfBuffer : private Noncopyable
+		{
+			explicit HarfBuffer() { buffer = hb_buffer_create(); }
+			~HarfBuffer() { hb_buffer_destroy(buffer); }
+			hb_buffer_t *operator()() const { return buffer; };
+
+		private:
+			hb_buffer_t *buffer = nullptr;
+		};
+
+		constexpr uint32 MaxCharacters = 128;
 		struct Instance
 		{
 			Vec4 wrld;
-			Vec4 text;
-
-			Instance(Real x, Real y, const FontHeader::GlyphData &g)
-			{
-				text = g.texUv;
-				wrld[0] = x + g.bearing[0];
-				wrld[1] = y + g.bearing[1] - g.size[1];
-				wrld[2] = g.size[0];
-				wrld[3] = g.size[1];
-			}
+			Vec4 texUv;
 		};
 
-		struct ProcessData
+		struct TextureImage
 		{
-			Holder<Model> model;
-			RenderQueue *renderQueue = nullptr;
-			std::vector<Instance> instances;
-			PointerRange<const uint32> glyphs;
-			Vec2 mousePosition = Vec2::Nan();
-			Vec2 outSize;
-			const FontFormat *format = nullptr;
-			uint32 outCursor = 0;
-			uint32 cursor = m;
+			Holder<Image> img;
+			Holder<Texture> tex;
 		};
 
 		class FontImpl : public Font
 		{
 		public:
-			std::vector<FontHeader::GlyphData> glyphsArray;
-			std::vector<Real> kerning;
-			std::vector<uint32> charmapChars;
-			std::vector<uint32> charmapGlyphs;
+			FontHeader header = {};
+			MemoryBuffer ftFile;
+			std::vector<TextureImage> images;
+			std::vector<FontHeader::GlyphData> glyphs;
+			FT_Face face = nullptr;
+			hb_font_t *font = nullptr;
 
-			Holder<Texture> tex;
-
-			uint32 spaceGlyph = 0;
-			uint32 returnGlyph = 0;
-			uint32 cursorGlyph = m;
-			Real lineHeight = 0;
-			Real firstLineOffset = 0;
-
-			FontImpl() { tex = newTexture(); }
-
-			FontHeader::GlyphData getGlyph(uint32 glyphIndex, Real size) const
+			~FontImpl()
 			{
-				FontHeader::GlyphData r = glyphsArray[glyphIndex];
-				r.advance *= size;
-				r.bearing *= size;
-				r.size *= size;
-				return r;
-			}
-
-			Real findKerning(uint32 L, uint32 R, Real size) const
-			{
-				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size());
-				if (kerning.empty() || glyphsArray.empty())
-					return 0;
-				const uint32 s = numeric_cast<uint32>(glyphsArray.size());
-				return kerning[L * s + R] * size;
-			}
-
-			uint32 findGlyphIndex(uint32 character) const
-			{
-				CAGE_ASSERT(charmapChars.size());
-				auto it = std::lower_bound(charmapChars.begin(), charmapChars.end(), character);
-				if (*it != character)
-					return 0;
-				return charmapGlyphs[it - charmapChars.begin()];
-			}
-
-			void processCursor(ProcessData &data, const uint32 *begin, Real x, Real lineY) const
-			{
-				if (data.renderQueue && begin == data.glyphs.data() + data.cursor)
+				if (font)
 				{
-					FontHeader::GlyphData g = getGlyph(cursorGlyph, data.format->size);
-					data.instances.emplace_back(x, lineY, g);
+					hb_font_destroy(font);
+					font = nullptr;
+				}
+				if (face)
+				{
+					ScopeLock _(ftMutex);
+					FT_Done_Face(face);
+					face = nullptr;
 				}
 			}
 
-			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, Real lineWidth, Real lineY, Real lineYCursor, Real actualLineHeight) const
+			uint32 findArrayIndex(uint32 glyphId) const
 			{
-				Real x;
-				switch (data.format->align)
-				{
-					case TextAlignEnum::Left:
-						break;
-					case TextAlignEnum::Right:
-						x = data.format->wrapWidth - lineWidth;
-						break;
-					case TextAlignEnum::Center:
-						x = (data.format->wrapWidth - lineWidth) / 2;
-						break;
-					default:
-						CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
-				}
-
-				const Vec2 mousePos = data.mousePosition + Vec2(-x, lineYCursor);
-				const bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= actualLineHeight;
-				if (!data.renderQueue && !mouseInLine)
-					return;
-				if (mouseInLine)
-				{
-					if (mousePos[0] < 0)
-						data.outCursor = numeric_cast<uint32>(begin - data.glyphs.data());
-					else if (mousePos[0] >= lineWidth)
-						data.outCursor = numeric_cast<uint32>(end - data.glyphs.data());
-				}
-
-				uint32 prev = 0;
-				while (begin != end)
-				{
-					processCursor(data, begin, x, lineY);
-					const FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
-					const Real k = findKerning(prev, *begin, data.format->size);
-					prev = *begin++;
-					if (data.renderQueue)
-						data.instances.emplace_back(x + k, lineY, g);
-					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] < x + k + g.advance)
-						data.outCursor = numeric_cast<uint32>(begin - data.glyphs.data());
-					x += k + g.advance;
-				}
-				processCursor(data, begin, x, lineY);
-			}
-
-			void processText(ProcessData &data) const
-			{
-				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
-				CAGE_ASSERT(data.format->wrapWidth > 0);
-				CAGE_ASSERT(data.format->size > 0);
-				CAGE_ASSERT(data.format->lineSpacing >= 0);
-				data.instances.reserve(data.glyphs.size() + 1);
-				const uint32 *const totalEnd = data.glyphs.end();
-				const uint32 *it = data.glyphs.begin();
-				const Real actualLineHeight = lineHeight * data.format->lineSpacing * data.format->size;
-				Real lineY = (firstLineOffset - lineHeight * (data.format->lineSpacing - 1) * 0.5) * data.format->size;
-				Real lineYCursor;
-
-				if (data.glyphs.empty())
-				{ // process cursor
-					processLine(data, it, totalEnd, 0, lineY, lineYCursor, actualLineHeight);
-				}
-
-				while (it != totalEnd)
-				{
-					const uint32 *const lineStart = it;
-					const uint32 *lineEnd = it;
-					Real lineWidth = 0;
-					Real itWidth = 0;
-
-					while (true)
-					{
-						if (it == totalEnd)
-						{
-							lineEnd = it;
-							lineWidth = itWidth;
-							break;
-						}
-						if (*it == returnGlyph)
-						{
-							lineEnd = it;
-							lineWidth = itWidth;
-							it++;
-							break;
-						}
-						const Real w = getGlyph(*it, data.format->size).advance + findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
-						if (it != lineStart && itWidth + w > data.format->wrapWidth + (!!data.renderQueue * data.format->size * 1e-5))
-						{ // at this point, the line needs to be wrapped somewhere
-							if (*lineEnd == spaceGlyph)
-							{ // if the line has had a space already, use the space for the wrapping point
-								it = lineEnd + 1;
-							}
-							else
-							{ // otherwise wrap right now
-								lineEnd = it;
-								lineWidth = itWidth;
-							}
-							break;
-						}
-						if (*it == spaceGlyph)
-						{ // remember this position as potential wrapping point
-							lineEnd = it;
-							lineWidth = itWidth;
-						}
-						it++;
-						itWidth += w;
-					}
-
-					processLine(data, lineStart, lineEnd, lineWidth, lineY, lineYCursor, actualLineHeight);
-					data.outSize[0] = max(data.outSize[0], lineWidth);
-					data.outSize[1] += actualLineHeight;
-					lineY -= actualLineHeight;
-					lineYCursor -= actualLineHeight;
-				}
-
-				if (data.renderQueue)
-				{
-					data.renderQueue->bind(tex, 0);
-					const uint32 s = numeric_cast<uint32>(data.instances.size());
-					const uint32 a = s / MaxCharacters;
-					const uint32 b = s - a * MaxCharacters;
-					for (uint32 i = 0; i < a; i++)
-					{
-						const auto p = data.instances.data() + i * MaxCharacters;
-						PointerRange<Instance> r = { p, p + MaxCharacters };
-						data.renderQueue->universalUniformArray<Instance>(r, 2);
-						data.renderQueue->draw(data.model, MaxCharacters);
-					}
-					if (b)
-					{
-						const auto p = data.instances.data() + a * MaxCharacters;
-						PointerRange<Instance> r = { p, p + b };
-						data.renderQueue->universalUniformArray<Instance>(r, 2);
-						data.renderQueue->draw(data.model, b);
-					}
-				}
+				FontHeader::GlyphData g;
+				g.glyphId = glyphId;
+				auto it = std::lower_bound(glyphs.begin(), glyphs.end(), g, [](const FontHeader::GlyphData &a, const FontHeader::GlyphData &b) { return a.glyphId < b.glyphId; });
+				if (it == glyphs.end())
+					return m;
+				if (it->glyphId != glyphId)
+					return m;
+				return it - glyphs.begin();
 			}
 		};
 	}
@@ -244,171 +151,142 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		FontImpl *impl = (FontImpl *)this;
-		impl->tex->setDebugName(name);
 	}
 
-	void Font::setLine(Real lineHeight, Real firstLineOffset)
+	void Font::importBuffer(PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl *)this;
-		impl->lineHeight = lineHeight;
-		impl->firstLineOffset = -firstLineOffset;
-	}
+		CAGE_ASSERT(impl->images.empty());
+		CAGE_ASSERT(impl->glyphs.empty());
 
-	void Font::setImage(Vec2i resolution, PointerRange<const char> buffer)
-	{
-		FontImpl *impl = (FontImpl *)this;
-		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
-		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (resolution[0] * resolution[1]));
-		CAGE_ASSERT(resolution[0] * resolution[1] * bpp == buffer.size());
-		switch (bpp)
+		Deserializer des(buffer);
+		des >> impl->header;
+
+		impl->ftFile.resize(impl->header.ftSize);
+		des.read(impl->ftFile);
+
+		MemoryBuffer tmp;
+		impl->images.reserve(impl->header.imagesCount);
+		for (uint32 i = 0; i < impl->header.imagesCount; i++)
 		{
-			case 1:
-				impl->tex->initialize(resolution, 1, GL_R8);
-				impl->tex->image2d(0, GL_RED, GL_UNSIGNED_BYTE, buffer);
-				break;
-			case 2:
-				impl->tex->initialize(resolution, 1, GL_R16);
-				impl->tex->image2d(0, GL_RED, GL_UNSIGNED_SHORT, buffer);
-				break;
-			case 3:
-				impl->tex->initialize(resolution, 1, GL_RGB8);
-				impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-				break;
-			case 4:
-				impl->tex->initialize(resolution, 1, GL_R32F);
-				impl->tex->image2d(0, GL_RED, GL_FLOAT, buffer);
-				break;
-			case 6:
-				impl->tex->initialize(resolution, 1, GL_RGB16);
-				impl->tex->image2d(0, GL_RGB, GL_UNSIGNED_SHORT, buffer);
-				break;
-			case 12:
-				impl->tex->initialize(resolution, 1, GL_RGB32F);
-				impl->tex->image2d(0, GL_RGB, GL_FLOAT, buffer);
-				break;
-			default:
-				CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");
+			uint32 s = 0;
+			des >> s;
+			tmp.resize(s);
+			des.read(tmp);
+			Holder<Image> img = newImage();
+			img->importBuffer(tmp);
+			Holder<Texture> tex = newTexture();
+			tex->importImage(+img);
+			impl->images.push_back({ std::move(img), std::move(tex) });
 		}
-	}
 
-	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const Real> kerning)
-	{
-		FontImpl *impl = (FontImpl *)this;
-		const uint32 count = numeric_cast<uint32>(buffer.size() / sizeof(FontHeader::GlyphData));
-		CAGE_ASSERT(buffer.size() == count * sizeof(FontHeader::GlyphData));
-		impl->glyphsArray.resize(count);
-		detail::memcpy(impl->glyphsArray.data(), buffer.data(), buffer.size());
-		if (!kerning.empty())
+		impl->glyphs.resize(impl->header.glyphsCount);
+		for (auto &it : impl->glyphs)
+			des >> it;
+
 		{
-			CAGE_ASSERT(kerning.size() == count * count);
-			impl->kerning.resize(count * count);
-			detail::memcpy(impl->kerning.data(), kerning.data(), kerning.size() * sizeof(Real));
+			ScopeLock _(ftMutex);
+			if (auto err = FT_New_Memory_Face(ftLibrary, (FT_Byte *)impl->ftFile.data(), impl->ftFile.size(), 0, &impl->face))
+			{
+				CAGE_LOG_THROW(translateErrorCode(err));
+				CAGE_THROW_ERROR(Exception, "failed loading font with FreeType");
+			}
 		}
-		else
-			impl->kerning.clear();
-		impl->cursorGlyph = count - 1; // last glyph
+		if (auto err = FT_Select_Charmap(impl->face, FT_ENCODING_UNICODE))
+		{
+			CAGE_LOG_THROW(translateErrorCode(err));
+			CAGE_THROW_ERROR(Exception, "failed to select charmap in FreeType");
+		}
+		if (auto err = FT_Set_Pixel_Sizes(impl->face, impl->header.nominalSize, impl->header.nominalSize))
+		{
+			CAGE_LOG_THROW(translateErrorCode(err));
+			CAGE_THROW_ERROR(Exception, "failed to set font size in FreeType");
+		}
+		impl->font = hb_ft_font_create(impl->face, nullptr);
 	}
 
-	void Font::setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs)
-	{
-		FontImpl *impl = (FontImpl *)this;
-		CAGE_ASSERT(chars.size() == glyphs.size());
-		impl->charmapChars.resize(chars.size());
-		impl->charmapGlyphs.resize(chars.size());
-		detail::memcpy(impl->charmapChars.data(), chars.data(), chars.size() * sizeof(uint32));
-		detail::memcpy(impl->charmapGlyphs.data(), glyphs.data(), glyphs.size() * sizeof(uint32));
-		impl->returnGlyph = impl->findGlyphIndex('\n');
-		impl->spaceGlyph = impl->findGlyphIndex(' ');
-	}
-
-	uint32 Font::glyphsCount(const String &text) const
-	{
-		return utf32Length(text);
-	}
-
-	uint32 Font::glyphsCount(const char *text) const
-	{
-		return utf32Length(text);
-	}
-
-	uint32 Font::glyphsCount(PointerRange<const char> text) const
-	{
-		return utf32Length(text);
-	}
-
-	void Font::transcript(const String &text, PointerRange<uint32> glyphs) const
-	{
-		transcript({ text.begin(), text.end() }, glyphs);
-	}
-
-	void Font::transcript(const char *text, PointerRange<uint32> glyphs) const
-	{
-		const uint32 s = numeric_cast<uint32>(std::strlen(text));
-		transcript({ text, text + s }, glyphs);
-	}
-
-	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const
+	FontLayoutResult Font::layout(PointerRange<const char> text, const FontFormat &format) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
-		utf8to32(glyphs, text);
-		for (uint32 &i : glyphs)
-			i = impl->findGlyphIndex(i);
+
+		HarfBuffer hb;
+		hb_buffer_add_utf8(hb(), text.data(), text.size(), 0, text.size());
+		hb_buffer_guess_segment_properties(hb());
+		hb_shape(impl->font, hb(), nullptr, 0);
+
+		uint32 cnt = 0;
+		static_assert(sizeof(cnt) == sizeof(unsigned int));
+		const hb_glyph_info_t *infos = hb_buffer_get_glyph_infos(hb(), &cnt);
+		const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(hb(), &cnt);
+		PointerRangeHolder<FontLayoutGlyph> glyphs;
+		glyphs.reserve(cnt);
+		const Real sc = format.size * 3;
+		const Real scale = impl->header.nominalScale * sc;
+		Vec2 pos = Vec2(0, impl->header.lineOffset * sc);
+		hb_glyph_extents_t extents;
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			const auto gp = positions[i];
+			const uint32 ai = impl->findArrayIndex(infos[i].codepoint);
+			if (ai != m && hb_font_get_glyph_extents(impl->font, infos[i].codepoint, &extents))
+			{
+				const Vec2 s = Vec2(extents.width, -extents.height) * scale;
+				const Vec2 p = Vec2(gp.x_offset + extents.x_bearing, gp.y_offset + extents.y_bearing + extents.height) * scale;
+				glyphs.push_back({ Vec4(pos + p, s), ai });
+			}
+			pos += Vec2(gp.x_advance, gp.y_advance) * scale;
+		}
+
+		Vec2 a, b;
+		for (const auto &it : glyphs)
+		{
+			const Vec2 l = Vec2(it.wrld);
+			const Vec2 r = Vec2(it.wrld) + Vec2(it.wrld[2], it.wrld[3]);
+			a = min(a, min(l, r));
+			b = max(b, max(l, r));
+		}
+
+		FontLayoutResult res;
+		res.glyphs = std::move(glyphs);
+		res.size = b - a;
+		return res;
 	}
 
-	Holder<PointerRange<uint32>> Font::transcript(const String &text) const
+	void Font::render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const
 	{
-		return transcript({ text.begin(), text.end() });
-	}
-
-	Holder<PointerRange<uint32>> Font::transcript(const char *text) const
-	{
-		const uint32 s = numeric_cast<uint32>(std::strlen(text));
-		return transcript({ text, text + s });
-	}
-
-	Holder<PointerRange<uint32>> Font::transcript(PointerRange<const char> text) const
-	{
-		const FontImpl *impl = (const FontImpl *)this;
-		auto glyphs = utf8to32(text);
-		for (uint32 &i : glyphs)
-			i = impl->findGlyphIndex(i);
-		return glyphs;
-	}
-
-	Vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format) const
-	{
-		Vec2 mp;
-		uint32 c;
-		return this->size(glyphs, format, mp, c);
-	}
-
-	Vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format, const Vec2 &mousePosition, uint32 &cursor) const
-	{
-		const FontImpl *impl = (const FontImpl *)this;
-		ProcessData data;
-		data.mousePosition = mousePosition;
-		data.format = &format;
-		data.glyphs = glyphs;
-		data.outCursor = cursor;
-		impl->processText(data);
-		cursor = data.outCursor;
-		return data.outSize;
-	}
-
-	void Font::render(RenderQueue *queue, const Holder<Model> &model, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
-	{
-		if (format.wrapWidth <= 0 || format.size <= 0)
+		if (layout.glyphs.empty())
 			return;
+
 		const FontImpl *impl = (const FontImpl *)this;
-		ProcessData data;
-		data.model = model.share();
-		data.renderQueue = queue;
-		data.format = &format;
-		data.glyphs = glyphs;
-		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
-		impl->processText(data);
+
+		Instance insts[MaxCharacters];
+		uint32 image = impl->glyphs[layout.glyphs[0].index].imageIndex;
+		uint32 i = 0;
+		const auto &dispatch = [&]()
+		{
+			queue->bind(impl->images[image].tex, 0);
+			if (i > 0)
+			{
+				PointerRange<Instance> r(insts, insts + i);
+				queue->universalUniformArray<Instance>(r, 2);
+				queue->draw(model, i);
+			}
+		};
+
+		for (const auto &it : layout.glyphs)
+		{
+			const auto &g = impl->glyphs[it.index];
+			if (g.imageIndex != image || i == MaxCharacters)
+			{
+				dispatch();
+				image = g.imageIndex;
+				i = 0;
+			}
+			insts[i].wrld = it.wrld;
+			insts[i].texUv = g.texUv;
+			i++;
+		}
+		dispatch();
 	}
 
 	Holder<Font> newFont()

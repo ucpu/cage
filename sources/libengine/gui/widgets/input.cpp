@@ -65,11 +65,11 @@ namespace cage
 						hierarchy->text->apply(skin->defaults.inputBox.textInvalidFormat);
 					if (data.type == InputTypeEnum::Password)
 					{
-						hierarchy->text->transcript(String("*"));
-						const uint32 g = hierarchy->text->glyphs[0];
-						hierarchy->text->transcript(data.value);
-						for (uint32 &it : hierarchy->text->glyphs)
-							it = g;
+						const uint32 len = utf32Length(data.value);
+						String str;
+						for (uint32 i = 0; i < len; i++)
+							str += "*";
+						hierarchy->text->transcript(str);
 					}
 					else
 						hierarchy->text->transcript(data.value);

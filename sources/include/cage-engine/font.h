@@ -16,6 +16,18 @@ namespace cage
 		TextAlignEnum align = TextAlignEnum::Left;
 	};
 
+	struct CAGE_ENGINE_API FontLayoutGlyph
+	{
+		Vec4 wrld;
+		uint32 index = 0;
+	};
+
+	struct CAGE_ENGINE_API FontLayoutResult : private Noncopyable
+	{
+		Holder<PointerRange<FontLayoutGlyph>> glyphs;
+		Vec2 size;
+	};
+
 	class CAGE_ENGINE_API Font : private Immovable
 	{
 #ifdef CAGE_DEBUG
@@ -25,26 +37,11 @@ namespace cage
 	public:
 		void setDebugName(const String &name);
 
-		void setLine(Real lineHeight, Real firstLineOffset);
-		void setImage(Vec2i resolution, PointerRange<const char> buffer);
-		void setGlyphs(PointerRange<const char> buffer, PointerRange<const Real> kerning);
-		void setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs);
+		void importBuffer(PointerRange<const char> buffer);
 
-		uint32 glyphsCount(const String &text) const;
-		uint32 glyphsCount(const char *text) const;
-		uint32 glyphsCount(PointerRange<const char> text) const;
+		FontLayoutResult layout(PointerRange<const char> text, const FontFormat &format) const;
 
-		void transcript(const String &text, PointerRange<uint32> glyphs) const;
-		void transcript(const char *text, PointerRange<uint32> glyphs) const;
-		void transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const;
-		Holder<PointerRange<uint32>> transcript(const String &text) const;
-		Holder<PointerRange<uint32>> transcript(const char *text) const;
-		Holder<PointerRange<uint32>> transcript(PointerRange<const char> text) const;
-
-		Vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format) const;
-		Vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format, const Vec2 &mousePosition, uint32 &cursor) const;
-
-		void render(RenderQueue *queue, const Holder<Model> &model, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
+		void render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const;
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();

@@ -152,7 +152,7 @@ namespace cage
 		Mat4 transform;
 		FontFormat format;
 		Holder<Font> font;
-		Holder<PointerRange<uint32>> glyphs;
+		FontLayoutResult layout;
 		Vec3 color = Vec3::Nan();
 		uint32 cursor = m;
 		Real screenPxRange;

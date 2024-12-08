@@ -141,8 +141,7 @@ namespace cage
 		{
 			Mat4 model;
 			Holder<const Font> font;
-			std::vector<uint32> glyphs;
-			FontFormat format;
+			FontLayoutResult layout;
 			Vec3 color;
 		};
 
@@ -498,7 +497,7 @@ namespace cage
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->uniform(shaderText, 0, data.viewProj * text.model);
 				renderQueue->uniform(shaderText, 4, text.color);
-				text.font->render(+renderQueue, modelSquare, text.glyphs, text.format);
+				text.font->render(+renderQueue, modelSquare, text.layout);
 			}
 
 			template<RenderModeEnum RenderMode>
@@ -832,19 +831,16 @@ namespace cage
 							prepare.font = assets->get<AssetSchemeIndexFont, Font>(pt.font);
 							if (!prepare.font)
 								return;
+							FontFormat format;
+							format.size = 1;
+							format.align = pt.align;
+							format.lineSpacing = pt.lineSpacing;
 							const String str = textsGet(pt.textId, pt.value);
-							const uint32 count = prepare.font->glyphsCount(str);
-							if (count == 0)
+							prepare.layout = prepare.font->layout(str, format);
+							if (prepare.layout.glyphs.empty())
 								return;
-							prepare.glyphs.resize(count);
-							prepare.font->transcript(str, prepare.glyphs);
+							prepare.model = modelTransform(e) * Mat4(Vec3(prepare.layout.size * Vec2(-0.5, 0.5), 0));
 							prepare.color = colorGammaToLinear(pt.color) * pt.intensity;
-							prepare.format.size = 1;
-							prepare.format.align = pt.align;
-							prepare.format.lineSpacing = pt.lineSpacing;
-							const Vec2 size = prepare.font->size(prepare.glyphs, prepare.format);
-							prepare.format.wrapWidth = size[0];
-							prepare.model = modelTransform(e) * Mat4(Vec3(size * Vec2(-0.5, 0.5), 0));
 							data.layers[0].texts.push_back(std::move(prepare));
 						},
 						+scene, false);

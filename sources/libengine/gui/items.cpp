@@ -305,27 +305,24 @@ namespace cage
 	void TextItem::transcript()
 	{
 		GUI_COMPONENT(Text, t, hierarchy->ent);
-		String value = textsGet(t.textId, t.value);
+		const String value = textsGet(t.textId, t.value);
 		transcript(value);
 	}
 
 	void TextItem::transcript(const String &value)
 	{
-		if (font)
-			glyphs = font->transcript(value);
+		transcript(PointerRange<const char>(value));
 	}
 
 	void TextItem::transcript(PointerRange<const char> value)
 	{
 		if (font)
-			glyphs = font->transcript(value);
+			layout = font->layout(value, format);
 	}
 
 	Vec2 TextItem::findRequestedSize()
 	{
-		if (font)
-			return font->size(glyphs, format);
-		return Vec2();
+		return layout.size;
 	}
 
 	RenderableText TextItem::emit(Vec2 position, Vec2 size, bool disabled)
@@ -339,7 +336,8 @@ namespace cage
 			return;
 		FontFormat f = format;
 		f.wrapWidth = size[0];
-		font->size(glyphs, f, point - position, cursor);
+		// todo
+		//font->size(glyphs, f, point - position, cursor);
 	}
 
 	void imageCreate(HierarchyItem *item)

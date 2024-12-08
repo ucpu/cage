@@ -23,7 +23,7 @@ void main()
 {
 	InstanceStruct inst = instances[gl_InstanceID];
 	gl_Position = uniMvp * vec4(inPosition.xy * inst.wrld.zw + inst.wrld.xy, 0, 1);
-	varUv = (inPosition.xy * inst.text.zw + inst.text.xy);
+	varUv = inPosition.xy * inst.text.zw + inst.text.xy;
 }
 
 $define shader fragment

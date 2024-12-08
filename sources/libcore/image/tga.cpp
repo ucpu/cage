@@ -206,8 +206,8 @@ namespace cage
 								return rgbaPalette<uint16>(des, colorMap, ser, pixelsCount);
 						}
 					}
+					break;
 				}
-				break;
 				case 2: // uncompressed color
 				{
 					if (head.bits == 24 || head.bits == 32)
@@ -216,13 +216,10 @@ namespace cage
 						swapRB((uint8 *)impl->mem.data(), pixelsCount, pixelSize);
 						return;
 					}
+					break;
 				}
-				break;
 				case 3: // uncompressed mono
-				{
 					return ser.write(des.read(imageSize));
-				}
-				break;
 				case 10: // compressed color
 				{
 					switch (head.bits)
@@ -232,14 +229,14 @@ namespace cage
 						case 32:
 							return rgbaCompressed(des, ser, pixelsCount);
 					}
+					break;
 				}
-				break;
 				case 11: // compressed mono
 				{
 					if (head.bits == 8)
 						return monoCompressed(des, ser, pixelsCount);
+					break;
 				}
-				break;
 			}
 
 			CAGE_THROW_ERROR(Exception, "unsupported format in tga decoding");

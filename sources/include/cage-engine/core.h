@@ -12,7 +12,6 @@ namespace cage
 
 	enum class TextureFlags : uint32;
 	enum class TextureSwizzleEnum : uint8;
-	enum class FontFlags : uint32;
 	enum class SoundCompressionEnum : uint32;
 	enum class ScreenSpaceEffectsFlags : uint32;
 	enum class ImageModeEnum : uint32;
@@ -78,7 +77,6 @@ namespace cage
 	GCHL_ENUM_BITS(ScreenSpaceEffectsFlags);
 	GCHL_ENUM_BITS(InputStyleFlags);
 	GCHL_ENUM_BITS(TextureFlags);
-	GCHL_ENUM_BITS(FontFlags);
 	GCHL_ENUM_BITS(WindowFlags);
 	GCHL_ENUM_BITS(ModifiersFlags);
 	GCHL_ENUM_BITS(MouseButtonsFlags);

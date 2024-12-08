@@ -107,36 +107,27 @@ namespace cage
 		// array of model names, each uint32
 	};
 
-	enum class FontFlags : uint32
-	{
-		None = 0,
-		Kerning = 1 << 0,
-	};
-
 	struct CAGE_ENGINE_API FontHeader
 	{
-		FontFlags flags;
+		uint32 ftSize; // bytes of font file
+		uint32 imagesCount;
+		uint32 glyphsCount;
+		uint32 nominalSize; // used in FT_Set_Pixel_Sizes
+		Real nominalScale; // used to convert font units to 1pt
+		Real lineOffset; // pixels for 1pt
 		Real lineHeight; // pixels for 1pt
-		Real firstLineOffset; // pixels for 1pt
-		uint32 texSize; // bytes
-		Vec2i texResolution;
-		uint32 glyphCount;
-		uint32 charCount;
 
 		struct CAGE_ENGINE_API GlyphData
 		{
 			Vec4 texUv;
-			Vec2 size; // pixels for 1pt
-			Vec2 bearing; // pixels for 1pt
-			Real advance; // pixels for 1pt
+			uint32 imageIndex;
+			uint32 glyphId;
 		};
 
 		// follows:
-		// texture data
+		// font file
+		// array of images
 		// array of GlyphData
-		// array of kerning, each 1 real
-		// array of charset characters, each uint32
-		// array of charset glyphs, each uint32
 	};
 
 	enum class SoundCompressionEnum : uint32

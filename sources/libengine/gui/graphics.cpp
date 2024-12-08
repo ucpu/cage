@@ -89,7 +89,8 @@ namespace cage
 		setClip(item->hierarchy);
 		data.format = item->format;
 		data.font = item->font.share();
-		data.glyphs = item->glyphs.share();
+		data.layout.glyphs = item->layout.glyphs.share();
+		data.layout.size = item->layout.size;
 		data.color = item->color;
 		if (disabled)
 		{
@@ -105,7 +106,6 @@ namespace cage
 		data.transform = transpose(Mat4(2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
 		data.format.size *= pointsScale;
 		data.format.wrapWidth = size[0] * pointsScale;
-		//data.screenPxRange = 2 * pointsScale;
 		data.screenPxRange = data.format.size * 0.13;
 	}
 
@@ -114,7 +114,7 @@ namespace cage
 		if (!prepare())
 			return;
 		CAGE_ASSERT(data.font);
-		if (data.glyphs.empty() && data.cursor != 0)
+		if (data.layout.glyphs.empty() && data.cursor != 0)
 			return;
 		RenderQueue *q = impl->activeQueue;
 		Holder<ShaderProgram> shader = impl->graphicsData.fontShader.share();
@@ -122,7 +122,7 @@ namespace cage
 		q->uniform(shader, 0, data.transform);
 		q->uniform(shader, 4, data.color);
 		q->uniform(shader, 15, data.screenPxRange);
-		data.font->render(q, impl->graphicsData.fontModel, data.glyphs, data.format, data.cursor);
+		data.font->render(q, impl->graphicsData.fontModel, data.layout);
 	}
 
 	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
