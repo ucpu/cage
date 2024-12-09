@@ -12,6 +12,7 @@
 #include <cage-core/unicode.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
 
@@ -175,8 +176,10 @@ namespace cage
 			des.read(tmp);
 			Holder<Image> img = newImage();
 			img->importBuffer(tmp);
+			img->colorConfig.gammaSpace = GammaSpaceEnum::Linear;
 			Holder<Texture> tex = newTexture();
 			tex->importImage(+img);
+			tex->filters(GL_LINEAR, GL_LINEAR, 16);
 			impl->images.push_back({ std::move(img), std::move(tex) });
 		}
 

@@ -13,6 +13,7 @@ layout(std140, binding = 2) uniform Instances
 };
 
 layout(location = 0) uniform mat4 uniMvp;
+layout(location = 14) uniform vec2 uniScreenResolution;
 
 layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
 layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec2 inUv;
@@ -23,6 +24,7 @@ void main()
 {
 	InstanceStruct inst = instances[gl_InstanceID];
 	gl_Position = uniMvp * vec4(inPosition.xy * inst.wrld.zw + inst.wrld.xy, 0, 1);
+	gl_Position = vec4((floor(((gl_Position.xy * 0.5 + 0.5) * uniScreenResolution) + 0.5) / uniScreenResolution - 0.5) * 2, 0, 1);
 	varUv = inPosition.xy * inst.text.zw + inst.text.xy;
 }
 
