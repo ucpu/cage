@@ -1,7 +1,10 @@
 #include <algorithm>
 #include <vector>
 
+extern "C"
+{
 #include <SheenBidi.h>
+}
 #include <hb-ft.h>
 
 #include <cage-core/concurrent.h>
@@ -47,6 +50,7 @@ namespace cage
 			{
 				if (FT_Init_FreeType(&ftLibrary))
 					CAGE_THROW_ERROR(Exception, "failed to initialize FreeType");
+				hb_language_get_default(); // initialize the locale before threads
 			}
 			~FtInitializer()
 			{
@@ -57,7 +61,7 @@ namespace cage
 
 		struct BidiAlgorithm : private Noncopyable
 		{
-			explicit BidiAlgorithm(SBCodepointSequence *codepoints) { algorithm = SBAlgorithmCreate(codepoints); }
+			explicit BidiAlgorithm(SBCodepointSequence codepoints) { algorithm = SBAlgorithmCreate(&codepoints); }
 			~BidiAlgorithm() { SBAlgorithmRelease(algorithm); }
 			SBAlgorithmRef operator()() const { return algorithm; };
 
@@ -77,12 +81,18 @@ namespace cage
 
 		struct BidiLine : private Noncopyable
 		{
-			explicit BidiLine(SBParagraphRef paragraph, SBUInteger lineStart, SBUInteger paragraphLength) { paragraphLine = SBParagraphCreateLine(paragraph, lineStart, paragraphLength); }
-			~BidiLine() { SBLineRelease(paragraphLine); }
-			SBLineRef operator()() const { return paragraphLine; };
+			explicit BidiLine(SBParagraphRef paragraph, SBUInteger lineStart, SBUInteger paragraphLength) { line = SBParagraphCreateLine(paragraph, lineStart, paragraphLength); }
+			~BidiLine() { SBLineRelease(line); }
+			SBLineRef operator()() const { return line; };
+			PointerRange<const SBRun> getRuns() const
+			{
+				SBUInteger runsCount = SBLineGetRunCount(line);
+				const SBRun *runArray = SBLineGetRunsPtr(line);
+				return { runArray, runArray + runsCount };
+			}
 
 		private:
-			SBLineRef paragraphLine = nullptr;
+			SBLineRef line = nullptr;
 		};
 
 		struct HarfBuffer : private Noncopyable
@@ -208,6 +218,23 @@ namespace cage
 		impl->font = hb_ft_font_create(impl->face, nullptr);
 	}
 
+	void shortenLine(PointerRange<const char> text, SBRun &run)
+	{
+		CAGE_ASSERT(run.offset + run.length <= text.size());
+		while (run.length > 0)
+		{
+			switch (text[run.offset + run.length - 1])
+			{
+				case '\n':
+				case '\r':
+					run.length--;
+					break;
+				default:
+					return;
+			}
+		}
+	}
+
 	FontLayoutResult Font::layout(PointerRange<const char> text, const FontFormat &format) const
 	{
 		if (text.empty())
@@ -216,30 +243,66 @@ namespace cage
 		const FontImpl *impl = (const FontImpl *)this;
 
 		HarfBuffer hb;
-		hb_buffer_add_utf8(hb(), text.data(), text.size(), 0, text.size());
-		hb_buffer_guess_segment_properties(hb());
-		hb_shape(impl->font, hb(), nullptr, 0);
-
-		uint32 cnt = 0;
-		static_assert(sizeof(cnt) == sizeof(unsigned int));
-		const hb_glyph_info_t *infos = hb_buffer_get_glyph_infos(hb(), &cnt);
-		const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(hb(), &cnt);
 		PointerRangeHolder<FontLayoutGlyph> glyphs;
-		glyphs.reserve(cnt);
+		glyphs.reserve(text.size() + 10);
 		const Real scale = impl->header.nominalScale * format.size;
-		Vec2 pos = Vec2(0, impl->header.lineOffset * format.size);
-		hb_glyph_extents_t extents;
-		for (uint32 i = 0; i < cnt; i++)
+
+		const BidiAlgorithm bidiAlgorithm(SBCodepointSequence{ SBStringEncodingUTF8, (void *)text.data(), text.size() });
+		SBUInteger paragraphStart = 0;
+		uint32 lineIndex = 0;
+		while (true)
 		{
-			const auto gp = positions[i];
-			const uint32 ai = impl->findArrayIndex(infos[i].codepoint);
-			if (ai != m && hb_font_get_glyph_extents(impl->font, infos[i].codepoint, &extents))
+			const BidiParagraph paragraph(bidiAlgorithm(), paragraphStart);
+			if (!paragraph())
+				break;
+
+			SBUInteger paragraphLength = SBParagraphGetLength(paragraph());
+			SBUInteger lineStart = paragraphStart;
+			paragraphStart += paragraphLength;
+
+			while (true)
 			{
-				const Vec2 s = Vec2(extents.width, -extents.height) * scale;
-				const Vec2 p = Vec2(gp.x_offset + extents.x_bearing, gp.y_offset + extents.y_bearing + extents.height) * scale;
-				glyphs.push_back({ Vec4(pos + p, s), ai });
+				const BidiLine line(paragraph(), lineStart, paragraphLength);
+				if (!line())
+					break;
+
+				SBUInteger lineLength = SBLineGetLength(line());
+				lineStart += lineLength;
+				paragraphLength -= lineLength;
+
+				Vec2 pos = Vec2(0, (impl->header.lineOffset - impl->header.lineHeight * lineIndex * format.lineSpacing) * format.size);
+				for (SBRun run : line.getRuns())
+				{
+					shortenLine(text, run);
+					if (run.length == 0)
+						continue;
+
+					hb_buffer_clear_contents(hb());
+					hb_buffer_add_utf8(hb(), text.data(), text.size(), run.offset, run.length);
+					hb_buffer_set_direction(hb(), (run.level % 2) ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
+					hb_buffer_guess_segment_properties(hb());
+					hb_shape(impl->font, hb(), nullptr, 0);
+
+					uint32 cnt = 0;
+					static_assert(sizeof(cnt) == sizeof(unsigned int));
+					const hb_glyph_info_t *infos = hb_buffer_get_glyph_infos(hb(), &cnt);
+					const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(hb(), &cnt);
+					hb_glyph_extents_t extents;
+					for (uint32 i = 0; i < cnt; i++)
+					{
+						const auto gp = positions[i];
+						const uint32 ai = impl->findArrayIndex(infos[i].codepoint);
+						if (ai != m && hb_font_get_glyph_extents(impl->font, infos[i].codepoint, &extents))
+						{
+							const Vec2 p = Vec2(gp.x_offset + extents.x_bearing, gp.y_offset + extents.y_bearing + extents.height) * scale;
+							const Vec2 s = Vec2(extents.width, -extents.height) * scale;
+							glyphs.push_back({ Vec4(pos + p, s), ai });
+						}
+						pos += Vec2(gp.x_advance, gp.y_advance) * scale;
+					}
+				}
+				lineIndex++;
 			}
-			pos += Vec2(gp.x_advance, gp.y_advance) * scale;
 		}
 
 		Vec2 a, b;
@@ -253,7 +316,7 @@ namespace cage
 
 		FontLayoutResult res;
 		res.glyphs = std::move(glyphs);
-		res.size = Vec2(b[0], impl->header.lineHeight * format.size);
+		res.size = Vec2(b[0], impl->header.lineHeight * max(lineIndex * format.lineSpacing, 1) * format.size);
 		return res;
 	}
 

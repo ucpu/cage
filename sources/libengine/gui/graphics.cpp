@@ -119,7 +119,6 @@ namespace cage
 		q->bind(shader);
 		q->uniform(shader, 0, data.transform);
 		q->uniform(shader, 4, data.color);
-		q->uniform(shader, 14, Vec2(impl->outputResolution));
 		q->uniform(shader, 15, data.screenPxRange);
 		data.font->render(q, impl->graphicsData.fontModel, data.layout);
 	}
