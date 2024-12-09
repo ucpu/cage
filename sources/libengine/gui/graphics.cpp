@@ -103,9 +103,7 @@ namespace cage
 		const Vec2i orr = item->hierarchy->impl->outputResolution;
 		const Real pointsScale = item->hierarchy->impl->pointsScale;
 		position *= pointsScale;
-		data.transform = transpose(Mat4(2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
-		data.format.size *= pointsScale;
-		data.format.wrapWidth = size[0] * pointsScale;
+		data.transform = transpose(Mat4(pointsScale * 2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, pointsScale * 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
 		data.screenPxRange = data.format.size * 0.13;
 	}
 

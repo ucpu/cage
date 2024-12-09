@@ -108,7 +108,6 @@ namespace
 		header.glyphsCount = numeric_cast<uint32>(face->num_glyphs);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "initial glyphs count: " + header.glyphsCount);
 		glyphs.reserve(header.glyphsCount + 10);
-		Real maxAscender, minDescender;
 		msdfgen::FontHandle *handle = msdfgen::adoptFreetypeFont(face);
 		for (uint32 glyphIndex = 0; glyphIndex < header.glyphsCount; glyphIndex++)
 		{
@@ -116,18 +115,10 @@ namespace
 			g.data.glyphId = glyphIndex;
 			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
 			CALL(msdfgen::readFreetypeOutline, g.shape, &face->glyph->outline);
-			if (g.shape.contours.empty())
-				continue;
-			const FT_Glyph_Metrics &glm = face->glyph->metrics;
-			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
-			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
-			glyphs.push_back(std::move(g));
+			if (!g.shape.contours.empty())
+				glyphs.push_back(std::move(g));
 		}
 		msdfgen::destroyFont(handle);
-		header.lineHeight = maxAscender - minDescender;
-		header.lineOffset = (maxAscender + header.lineHeight) * -1;
-		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line offset: " + header.lineOffset);
-		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + header.lineHeight);
 		header.glyphsCount = glyphs.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "non-empty glyphs count: " + header.glyphsCount);
 	}
@@ -194,6 +185,23 @@ namespace
 			imageBlit(+g.png, +image, 0, 0, g.pos[0], g.pos[1], g.png->width(), g.png->height());
 		//imageVerticalFlip(+image);
 		images.push_back(std::move(image));
+	}
+
+	void computeLineProperties()
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "compute line properties");
+		Real maxAscender, minDescender;
+		for (char c : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+		{
+			CALL(FT_Load_Char, face, c, FT_LOAD_DEFAULT);
+			const FT_Glyph_Metrics &glm = face->glyph->metrics;
+			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
+			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
+		}
+		header.lineHeight = maxAscender - minDescender;
+		header.lineOffset = minDescender * 0.5 - maxAscender;
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line offset: " + header.lineOffset);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + header.lineHeight);
 	}
 
 	void exportData()
@@ -281,6 +289,7 @@ void processFont()
 	loadGlyphs();
 	createGlyphsImages();
 	createImage();
+	computeLineProperties();
 	exportData();
 	printDebugData();
 	clearAll();

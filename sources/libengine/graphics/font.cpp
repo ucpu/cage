@@ -207,6 +207,9 @@ namespace cage
 
 	FontLayoutResult Font::layout(PointerRange<const char> text, const FontFormat &format) const
 	{
+		if (text.empty())
+			return {}; // todo cursor
+
 		const FontImpl *impl = (const FontImpl *)this;
 
 		HarfBuffer hb;
@@ -220,9 +223,8 @@ namespace cage
 		const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(hb(), &cnt);
 		PointerRangeHolder<FontLayoutGlyph> glyphs;
 		glyphs.reserve(cnt);
-		const Real sc = format.size * 3;
-		const Real scale = impl->header.nominalScale * sc;
-		Vec2 pos = Vec2(0, impl->header.lineOffset * sc);
+		const Real scale = impl->header.nominalScale * format.size;
+		Vec2 pos = Vec2(0, impl->header.lineOffset * format.size);
 		hb_glyph_extents_t extents;
 		for (uint32 i = 0; i < cnt; i++)
 		{
@@ -248,7 +250,7 @@ namespace cage
 
 		FontLayoutResult res;
 		res.glyphs = std::move(glyphs);
-		res.size = b - a;
+		res.size = Vec2(b[0], impl->header.lineHeight * format.size);
 		return res;
 	}
 

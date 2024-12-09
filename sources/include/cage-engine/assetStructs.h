@@ -44,22 +44,22 @@ namespace cage
 	struct CAGE_ENGINE_API TextureHeader
 	{
 		uint64 animationDuration;
-		TextureFlags flags;
-		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
+		TextureFlags flags = TextureFlags::None;
+		uint32 target = 0; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
-		uint32 mipmapLevels; // number of levels that the texture will have
-		uint32 containedLevels; // number of levels that the asset contains
-		uint32 channels;
-		uint32 internalFormat;
-		uint32 copyFormat;
-		uint32 copyType;
-		uint32 filterMin;
-		uint32 filterMag;
-		uint32 filterAniso;
-		uint32 wrapX;
-		uint32 wrapY;
-		uint32 wrapZ;
-		TextureSwizzleEnum swizzle[4];
+		uint32 mipmapLevels = 0; // number of levels that the texture will have
+		uint32 containedLevels = 0; // number of levels that the asset contains
+		uint32 channels = 0;
+		uint32 internalFormat = 0;
+		uint32 copyFormat = 0;
+		uint32 copyType = 0;
+		uint32 filterMin = 0;
+		uint32 filterMag = 0;
+		uint32 filterAniso = 0;
+		uint32 wrapX = 0;
+		uint32 wrapY = 0;
+		uint32 wrapZ = 0;
+		TextureSwizzleEnum swizzle[4] = {};
 
 		// follows:
 		// for each mipmap level:
@@ -72,12 +72,12 @@ namespace cage
 	{
 		Mat4 importTransform;
 		Aabb box;
-		uint32 textureNames[MaxTexturesCountPerMaterial];
-		uint32 shaderName;
-		MeshRenderFlags renderFlags;
-		sint32 renderLayer;
-		uint32 skeletonBones;
-		uint32 materialSize; // bytes
+		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
+		uint32 shaderName = 0;
+		MeshRenderFlags renderFlags = (MeshRenderFlags)0;
+		sint32 renderLayer = 0;
+		uint32 skeletonBones = 0;
+		uint32 materialSize = 0; // bytes
 
 		// follows:
 		// material (may or may not be the MeshImportMaterial)
@@ -92,14 +92,14 @@ namespace cage
 
 		Real texAnimSpeed;
 		Real texAnimOffset;
-		uint32 skelAnimName;
+		uint32 skelAnimName = 0;
 		Real skelAnimSpeed;
 		Real skelAnimOffset;
 
 		Real worldSize;
 		Real pixelsSize;
-		uint32 lodsCount;
-		uint32 modelsCount;
+		uint32 lodsCount = 0;
+		uint32 modelsCount = 0;
 
 		// follows:
 		// array of thresholds, each float
@@ -109,10 +109,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API FontHeader
 	{
-		uint32 ftSize; // bytes of font file
-		uint32 imagesCount;
-		uint32 glyphsCount;
-		uint32 nominalSize; // used in FT_Set_Pixel_Sizes
+		uint32 ftSize = 0; // bytes of font file
+		uint32 imagesCount = 0;
+		uint32 glyphsCount = 0;
+		uint32 nominalSize = 0; // used in FT_Set_Pixel_Sizes
 		Real nominalScale; // used to convert font units to 1pt
 		Real lineOffset; // pixels for 1pt
 		Real lineHeight; // pixels for 1pt
@@ -120,8 +120,8 @@ namespace cage
 		struct CAGE_ENGINE_API GlyphData
 		{
 			Vec4 texUv;
-			uint32 imageIndex;
-			uint32 glyphId;
+			uint32 imageIndex = 0;
+			uint32 glyphId = 0;
 		};
 
 		// follows:
@@ -139,10 +139,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundSourceHeader
 	{
-		uint64 frames;
-		uint32 channels;
-		uint32 sampleRate;
-		SoundCompressionEnum soundType;
+		uint64 frames = 0;
+		uint32 channels = 0;
+		uint32 sampleRate = 0;
+		SoundCompressionEnum soundType = SoundCompressionEnum::RawRaw;
 
 		// follows (for raw file):
 		// array of frames, each channels * float
