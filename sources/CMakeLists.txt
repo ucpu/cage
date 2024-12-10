@@ -76,7 +76,7 @@ cage_ide_sort_files(cage-core)
 
 file(GLOB_RECURSE cage-engine-sources "libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
-target_link_libraries(cage-engine PRIVATE cubeb glfw openxr_loader freetype harfbuzz SheenBidi)
+target_link_libraries(cage-engine PRIVATE cubeb glfw openxr_loader freetype harfbuzz SheenBidi uni-algo)
 target_link_libraries(cage-engine PUBLIC cage-core glad)
 file(GLOB_RECURSE controller-bindings RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "controller-bindings/*")
 set(index 0)

@@ -1,8 +1,8 @@
 #include <algorithm>
 
-#include "uni_algo/case.h"
-#include "uni_algo/conv.h"
-#include "uni_algo/norm.h"
+#include <uni_algo/case.h>
+#include <uni_algo/conv.h>
+#include <uni_algo/norm.h>
 
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/unicode.h>

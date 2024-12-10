@@ -19,7 +19,7 @@ namespace cage
 	struct CAGE_ENGINE_API FontLayoutGlyph
 	{
 		Vec4 wrld;
-		uint32 index = 0;
+		uint32 index = 0; // glyph info
 	};
 
 	struct CAGE_ENGINE_API FontLayoutResult : private Noncopyable

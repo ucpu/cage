@@ -6,6 +6,7 @@ extern "C"
 #include <SheenBidi.h>
 }
 #include <hb-ft.h>
+#include <uni_algo/prop.h>
 
 #include <cage-core/concurrent.h>
 #include <cage-core/image.h>
@@ -100,6 +101,14 @@ namespace cage
 			explicit HarfBuffer() { buffer = hb_buffer_create(); }
 			~HarfBuffer() { hb_buffer_destroy(buffer); }
 			hb_buffer_t *operator()() const { return buffer; };
+			std::pair<PointerRange<const hb_glyph_info_t>, PointerRange<const hb_glyph_position_t>> getRanges() const
+			{
+				uint32 cnt = 0;
+				static_assert(sizeof(cnt) == sizeof(unsigned int));
+				const hb_glyph_info_t *infos = hb_buffer_get_glyph_infos(buffer, &cnt);
+				const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(buffer, &cnt);
+				return { { infos, infos + cnt }, { positions, positions + cnt } };
+			}
 
 		private:
 			hb_buffer_t *buffer = nullptr;
@@ -155,6 +164,28 @@ namespace cage
 				return it - glyphs.begin();
 			}
 		};
+
+		void shortenLine(PointerRange<const uint32> text, SBRun &run)
+		{
+			CAGE_ASSERT(run.offset + run.length <= text.size());
+			while (run.length > 0)
+			{
+				switch (text[run.offset + run.length - 1])
+				{
+					case '\n':
+					case '\r':
+						run.length--;
+						break;
+					default:
+						return;
+				}
+			}
+		}
+
+		bool allowLineBreak(uint32 a, uint32 b)
+		{
+			return una::codepoint::is_whitespace(a) || b == '\n';
+		}
 	}
 
 	void Font::setDebugName(const String &name)
@@ -189,7 +220,7 @@ namespace cage
 			img->colorConfig.gammaSpace = GammaSpaceEnum::Linear;
 			Holder<Texture> tex = newTexture();
 			tex->importImage(+img);
-			tex->filters(GL_LINEAR, GL_LINEAR, 16);
+			tex->filters(GL_LINEAR, GL_LINEAR, 0);
 			impl->images.push_back({ std::move(img), std::move(tex) });
 		}
 
@@ -218,38 +249,30 @@ namespace cage
 		impl->font = hb_ft_font_create(impl->face, nullptr);
 	}
 
-	void shortenLine(PointerRange<const char> text, SBRun &run)
+	FontLayoutResult Font::layout(PointerRange<const char> text8, const FontFormat &format) const
 	{
-		CAGE_ASSERT(run.offset + run.length <= text.size());
-		while (run.length > 0)
-		{
-			switch (text[run.offset + run.length - 1])
-			{
-				case '\n':
-				case '\r':
-					run.length--;
-					break;
-				default:
-					return;
-			}
-		}
-	}
-
-	FontLayoutResult Font::layout(PointerRange<const char> text, const FontFormat &format) const
-	{
-		if (text.empty())
-			return {}; // todo cursor
-
 		const FontImpl *impl = (const FontImpl *)this;
+		const auto &emptyResult = [&]()
+		{
+			FontLayoutResult res;
+			res.size = Vec2(0, impl->header.lineHeight * max(format.lineSpacing, 1) * format.size);
+			return res;
+		};
+		if (text8.empty())
+			return emptyResult();
+		const auto text32 = utf8to32(text8);
 
 		HarfBuffer hb;
 		PointerRangeHolder<FontLayoutGlyph> glyphs;
-		glyphs.reserve(text.size() + 10);
-		const Real scale = impl->header.nominalScale * format.size;
-
-		const BidiAlgorithm bidiAlgorithm(SBCodepointSequence{ SBStringEncodingUTF8, (void *)text.data(), text.size() });
+		glyphs.reserve(text32.size() + 10);
+		const BidiAlgorithm bidiAlgorithm(SBCodepointSequence{ SBStringEncodingUTF32, (void *)text32.data(), text32.size() });
 		SBUInteger paragraphStart = 0;
-		uint32 lineIndex = 0;
+		std::vector<uint32> glyphsCountsInLines; // glyphs count at the end of each line
+		glyphsCountsInLines.reserve(5);
+		const Real scale = impl->header.nominalScale * format.size;
+		const Real lineAdvance = -impl->header.lineHeight * format.lineSpacing * format.size;
+		Vec2 pos = Vec2(0, impl->header.lineOffset * format.size);
+
 		while (true)
 		{
 			const BidiParagraph paragraph(bidiAlgorithm(), paragraphStart);
@@ -270,25 +293,23 @@ namespace cage
 				lineStart += lineLength;
 				paragraphLength -= lineLength;
 
-				Vec2 pos = Vec2(0, (impl->header.lineOffset - impl->header.lineHeight * lineIndex * format.lineSpacing) * format.size);
+				uint32 wrapIndex = m;
+				Real wrapPos = 0;
 				for (SBRun run : line.getRuns())
 				{
-					shortenLine(text, run);
+					shortenLine(text32, run);
 					if (run.length == 0)
 						continue;
 
 					hb_buffer_clear_contents(hb());
-					hb_buffer_add_utf8(hb(), text.data(), text.size(), run.offset, run.length);
+					hb_buffer_add_utf32(hb(), text32.data(), text32.size(), run.offset, run.length);
 					hb_buffer_set_direction(hb(), (run.level % 2) ? HB_DIRECTION_RTL : HB_DIRECTION_LTR);
 					hb_buffer_guess_segment_properties(hb());
 					hb_shape(impl->font, hb(), nullptr, 0);
 
-					uint32 cnt = 0;
-					static_assert(sizeof(cnt) == sizeof(unsigned int));
-					const hb_glyph_info_t *infos = hb_buffer_get_glyph_infos(hb(), &cnt);
-					const hb_glyph_position_t *positions = hb_buffer_get_glyph_positions(hb(), &cnt);
+					const auto [infos, positions] = hb.getRanges();
 					hb_glyph_extents_t extents;
-					for (uint32 i = 0; i < cnt; i++)
+					for (uint32 i = 0; i < infos.size(); i++)
 					{
 						const auto gp = positions[i];
 						const uint32 ai = impl->findArrayIndex(infos[i].codepoint);
@@ -299,24 +320,71 @@ namespace cage
 							glyphs.push_back({ Vec4(pos + p, s), ai });
 						}
 						pos += Vec2(gp.x_advance, gp.y_advance) * scale;
+
+						// detect possible word wrap
+						if (!glyphs.empty())
+						{
+							const bool differentCluster = i + 1 >= infos.size() || infos[i].cluster != infos[i + 1].cluster;
+							const bool breakingCharacter = allowLineBreak(text32[infos[i].cluster], infos[i].cluster + 1 < text32.size() ? text32[infos[i].cluster + 1] : '\n');
+							if (differentCluster && breakingCharacter)
+							{
+								if (wrapIndex != m && glyphs.back().wrld[0] + glyphs.back().wrld[2] > format.wrapWidth)
+								{
+									const Vec4 off = Vec4(-wrapPos, lineAdvance, 0, 0);
+									for (uint32 i = wrapIndex; i < glyphs.size(); i++)
+										glyphs[i].wrld += off;
+									pos += Vec2(off);
+									glyphsCountsInLines.push_back(wrapIndex);
+								}
+								wrapIndex = glyphs.size();
+								wrapPos = pos[0];
+							}
+						}
 					}
 				}
-				lineIndex++;
+				pos[0] = 0;
+				pos[1] += lineAdvance;
+				glyphsCountsInLines.push_back(glyphs.size());
 			}
 		}
+		if (glyphs.empty())
+			return emptyResult();
 
-		Vec2 a, b;
+		Real width;
 		for (const auto &it : glyphs)
+			width = max(width, it.wrld[0] + it.wrld[2]);
+
+		if (format.wrapWidth != Real::Infinity())
+			width = max(width, format.wrapWidth);
+		if (format.align != TextAlignEnum::Left)
 		{
-			const Vec2 l = Vec2(it.wrld);
-			const Vec2 r = Vec2(it.wrld) + Vec2(it.wrld[2], it.wrld[3]);
-			a = min(a, min(l, r));
-			b = max(b, max(l, r));
+			uint32 lineStart = 0;
+			for (uint32 lineEnd : glyphsCountsInLines)
+			{
+				if (lineEnd > lineStart)
+				{
+					const Real a = glyphs[lineStart].wrld[0];
+					const Real b = glyphs[lineEnd - 1].wrld[0] + glyphs[lineEnd - 1].wrld[2];
+					Real off = 0;
+					switch (format.align)
+					{
+						case TextAlignEnum::Right:
+							off = width - b;
+							break;
+						case TextAlignEnum::Center:
+							off = (width - b + a) * 0.5 - a;
+							break;
+					}
+					for (uint32 i = lineStart; i < lineEnd; i++)
+						glyphs[i].wrld[0] += off;
+				}
+				lineStart = lineEnd;
+			}
 		}
 
 		FontLayoutResult res;
 		res.glyphs = std::move(glyphs);
-		res.size = Vec2(b[0], impl->header.lineHeight * max(lineIndex * format.lineSpacing, 1) * format.size);
+		res.size = Vec2(width, impl->header.lineHeight * max(glyphsCountsInLines.size() * format.lineSpacing, 1) * format.size);
 		return res;
 	}
 
