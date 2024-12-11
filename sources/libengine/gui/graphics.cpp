@@ -91,6 +91,7 @@ namespace cage
 		data.font = item->font.share();
 		data.layout.glyphs = item->layout.glyphs.share();
 		data.layout.size = item->layout.size;
+		data.layout.cursor = item->layout.cursor;
 		data.color = item->color;
 		if (disabled)
 		{
@@ -99,11 +100,10 @@ namespace cage
 			bw = (bw - 0.5) * 0.7 + 0.5; // reduce contrast
 			data.color = Vec3(bw);
 		}
-		data.cursor = item->cursor;
 		const Vec2i orr = item->hierarchy->impl->outputResolution;
 		const Real pointsScale = item->hierarchy->impl->pointsScale;
 		position *= pointsScale;
-		data.transform = transpose(Mat4(pointsScale * 2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, pointsScale * 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
+		transform = transpose(Mat4(pointsScale * 2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, pointsScale * 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
 		data.screenPxRange = data.format.size * pointsScale * 0.12;
 	}
 
@@ -112,12 +112,12 @@ namespace cage
 		if (!prepare())
 			return;
 		CAGE_ASSERT(data.font);
-		if (data.layout.glyphs.empty() && data.cursor != 0)
+		if (data.layout.glyphs.empty())
 			return;
 		RenderQueue *q = impl->activeQueue;
 		Holder<ShaderProgram> shader = impl->graphicsData.fontShader.share();
 		q->bind(shader);
-		q->uniform(shader, 0, data.transform);
+		q->uniform(shader, 0, transform);
 		q->uniform(shader, 4, data.color);
 		q->uniform(shader, 15, data.screenPxRange);
 		data.font->render(q, impl->graphicsData.fontModel, data.layout);

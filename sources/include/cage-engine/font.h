@@ -19,13 +19,15 @@ namespace cage
 	struct CAGE_ENGINE_API FontLayoutGlyph
 	{
 		Vec4 wrld;
-		uint32 index = 0; // glyph info
+		uint32 index = m; // glyph info
+		uint32 cluster = m; // index in utf32 encoded input string
 	};
 
 	struct CAGE_ENGINE_API FontLayoutResult : private Noncopyable
 	{
 		Holder<PointerRange<FontLayoutGlyph>> glyphs;
 		Vec2 size;
+		uint32 cursor = m; // index in utf32 encoded input string
 	};
 
 	class CAGE_ENGINE_API Font : private Immovable
@@ -39,7 +41,10 @@ namespace cage
 
 		void importBuffer(PointerRange<const char> buffer);
 
-		FontLayoutResult layout(PointerRange<const char> text, const FontFormat &format) const;
+		FontLayoutResult layout(PointerRange<const char> text, const FontFormat &format, Vec2 cursorPoint) const;
+		FontLayoutResult layout(PointerRange<const char> text, const FontFormat &format, uint32 cursorIndexUtf32 = m) const;
+		FontLayoutResult layout(PointerRange<const uint32> text, const FontFormat &format, Vec2 cursorPoint) const;
+		FontLayoutResult layout(PointerRange<const uint32> text, const FontFormat &format, uint32 cursorIndexUtf32 = m) const;
 
 		void render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const;
 	};

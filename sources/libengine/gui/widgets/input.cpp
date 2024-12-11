@@ -55,7 +55,7 @@ namespace cage
 				if (data.value.empty() && !hasFocus())
 				{ // placeholder
 					hierarchy->text->apply(skin->defaults.inputBox.placeholderFormat);
-					hierarchy->text->transcript();
+					hierarchy->text->assign();
 				}
 				else
 				{ // actual value
@@ -69,16 +69,16 @@ namespace cage
 						String str;
 						for (uint32 i = 0; i < len; i++)
 							str += "*";
-						hierarchy->text->transcript(str);
+						hierarchy->text->assign(str);
 					}
 					else
-						hierarchy->text->transcript(data.value);
+						hierarchy->text->assign(data.value);
 				}
 
 				if (hasFocus())
 				{
 					data.cursor = min(data.cursor, utf32Length(data.value));
-					hierarchy->text->cursor = data.cursor;
+					hierarchy->text->setCursorPosition(data.cursor);
 				}
 			}
 

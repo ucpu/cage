@@ -4,7 +4,7 @@ font.pack
 
 []
 scheme = font
-ubuntu/regular.ttf
 ubuntu/bold.ttf
 ubuntu/italic.ttf
 ubuntu/monospace.ttf
+ubuntu/regular.ttf

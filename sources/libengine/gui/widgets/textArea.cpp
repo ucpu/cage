@@ -32,12 +32,12 @@ namespace cage
 					GUI_COMPONENT(TextFormat, f, hierarchy->ent);
 					hierarchy->text->apply(f);
 				}
-				hierarchy->text->transcript(buffer);
+				hierarchy->text->assign(buffer);
 
 				if (hasFocus())
 				{
 					data.cursor = min(data.cursor, utf32Length(buffer));
-					hierarchy->text->cursor = data.cursor;
+					hierarchy->text->setCursorPosition(data.cursor);
 				}
 			}
 

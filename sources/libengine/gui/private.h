@@ -149,35 +149,36 @@ namespace cage
 
 	struct CommonTextData
 	{
-		Mat4 transform;
 		FontFormat format;
 		Holder<Font> font;
 		FontLayoutResult layout;
 		Vec3 color = Vec3::Nan();
-		uint32 cursor = m;
 		Real screenPxRange;
 	};
 
-	struct TextItem : private Immovable, public CommonTextData
+	struct TextItem : private Immovable, private CommonTextData
 	{
 		HierarchyItem *const hierarchy;
 		bool skipInitialize = false;
 
 		TextItem(HierarchyItem *hierarchy);
-
-		void initialize();
-
+		void initialize(); // load all data from entity component (text value and format)
+		void assign(); // load from entity
+		void assign(const String &value);
+		void assign(PointerRange<const char> value);
 		void apply(const GuiTextFormatComponent &f);
-
-		void transcript();
-		void transcript(const String &value);
-		void transcript(PointerRange<const char> value);
-
 		Vec2 findRequestedSize();
-
 		RenderableText emit(Vec2 position, Vec2 size, bool disabled);
-
 		void updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor);
+		void setCursorPosition(uint32 cursor);
+
+	private:
+		Holder<PointerRange<uint32>> txt;
+		bool dirty = true;
+		void updateLayout(); // update cached layout if needed
+		void resize(Vec2 size); // update wrap width with new size
+
+		friend struct RenderableText;
 	};
 
 	struct ImageItem : private Immovable
@@ -190,15 +191,11 @@ namespace cage
 		bool skipInitialize = false;
 
 		ImageItem(HierarchyItem *hierarchy);
-
 		void initialize();
-
 		void assign();
 		void assign(const GuiImageComponent &value);
 		void apply(const GuiImageFormatComponent &f);
-
 		Vec2 findRequestedSize();
-
 		RenderableImage emit(Vec2 position, Vec2 size, bool disabled);
 	};
 
@@ -231,6 +228,7 @@ namespace cage
 
 	struct RenderableText : public RenderableBase
 	{
+		Mat4 transform;
 		CommonTextData data;
 
 		RenderableText(TextItem *text, Vec2 position, Vec2 size, bool disabled);

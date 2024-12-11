@@ -38,9 +38,9 @@ namespace cage
 					hierarchy->text->skipInitialize = true;
 					hierarchy->text->apply(skin->defaults.progressBar.textFormat);
 					if (data.showValue)
-						hierarchy->text->transcript(Stringizer() + numeric_cast<uint32>(data.progress * 100));
+						hierarchy->text->assign(Stringizer() + numeric_cast<uint32>(data.progress * 100));
 					else
-						hierarchy->text->transcript();
+						hierarchy->text->assign();
 				}
 			}
 

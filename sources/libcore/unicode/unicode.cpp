@@ -3,12 +3,21 @@
 #include <uni_algo/case.h>
 #include <uni_algo/conv.h>
 #include <uni_algo/norm.h>
+#include <uni_algo/prop.h>
 
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/unicode.h>
 
 namespace cage
 {
+	namespace privat
+	{
+		CAGE_API_EXPORT bool unicodeIsWhitespace(uint32 c)
+		{
+			return una::codepoint::is_whitespace(c);
+		}
+	}
+
 	namespace
 	{
 		std::string_view view(PointerRange<const char> buffer)

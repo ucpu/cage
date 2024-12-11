@@ -90,16 +90,11 @@ namespace
 			CAGE_THROW_ERROR(Exception, "unknown freetype error code");
 	}
 
-	msdfgen::Shape cursorShape()
+	void setSize(uint32 nominalSize)
 	{
-		const msdfgen::Point2 points[4] = { { 0, 0 }, { 0, 10 }, { 1, 10 }, { 1, 0 } };
-		msdfgen::Shape shape;
-		msdfgen::Contour &c = shape.addContour();
-		c.addEdge(msdfgen::EdgeHolder(points[0], points[1]));
-		c.addEdge(msdfgen::EdgeHolder(points[1], points[2]));
-		c.addEdge(msdfgen::EdgeHolder(points[2], points[3]));
-		c.addEdge(msdfgen::EdgeHolder(points[3], points[0]));
-		return shape;
+		CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
+		header.nominalSize = nominalSize;
+		header.nominalScale = 1.0 / nominalSize / 64;
 	}
 
 	void loadGlyphs()
@@ -121,6 +116,45 @@ namespace
 		msdfgen::destroyFont(handle);
 		header.glyphsCount = glyphs.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "non-empty glyphs count: " + header.glyphsCount);
+	}
+
+	void computeLineProperties()
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "compute line properties");
+		Real maxAscender, minDescender;
+		for (char c : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+		{
+			CALL(FT_Load_Char, face, c, FT_LOAD_DEFAULT);
+			const FT_Glyph_Metrics &glm = face->glyph->metrics;
+			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
+			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
+		}
+		header.lineHeight = maxAscender - minDescender;
+		header.lineOffset = minDescender * 0.5 - maxAscender;
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line offset: " + header.lineOffset);
+		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + header.lineHeight);
+	}
+
+	msdfgen::Shape cursorShape()
+	{
+		const msdfgen::Point2 points[4] = { { 0, 0 }, { 0, 10 }, { 1, 10 }, { 1, 0 } };
+		msdfgen::Shape shape;
+		msdfgen::Contour &c = shape.addContour();
+		c.addEdge(msdfgen::EdgeHolder(points[0], points[1]));
+		c.addEdge(msdfgen::EdgeHolder(points[1], points[2]));
+		c.addEdge(msdfgen::EdgeHolder(points[2], points[3]));
+		c.addEdge(msdfgen::EdgeHolder(points[3], points[0]));
+		return shape;
+	}
+
+	void addCursorGlyph()
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "adding cursor glyph");
+		Glyph g;
+		g.data.glyphId = uint32(-2);
+		g.shape = cursorShape();
+		glyphs.push_back(std::move(g));
+		header.glyphsCount++;
 	}
 
 	void createGlyphsImages()
@@ -187,23 +221,6 @@ namespace
 		images.push_back(std::move(image));
 	}
 
-	void computeLineProperties()
-	{
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "compute line properties");
-		Real maxAscender, minDescender;
-		for (char c : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-		{
-			CALL(FT_Load_Char, face, c, FT_LOAD_DEFAULT);
-			const FT_Glyph_Metrics &glm = face->glyph->metrics;
-			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
-			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
-		}
-		header.lineHeight = maxAscender - minDescender;
-		header.lineOffset = minDescender * 0.5 - maxAscender;
-		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line offset: " + header.lineOffset);
-		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + header.lineHeight);
-	}
-
 	void exportData()
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "exporting data");
@@ -265,13 +282,6 @@ namespace
 		glyphs.clear();
 		images.clear();
 	}
-
-	void setSize(uint32 nominalSize)
-	{
-		CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
-		header.nominalSize = nominalSize;
-		header.nominalScale = 1.0 / nominalSize / 64;
-	}
 }
 
 void processFont()
@@ -287,9 +297,10 @@ void processFont()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "units per EM: " + face->units_per_EM);
 	setSize(40);
 	loadGlyphs();
+	computeLineProperties();
+	addCursorGlyph();
 	createGlyphsImages();
 	createImage();
-	computeLineProperties();
 	exportData();
 	printDebugData();
 	clearAll();

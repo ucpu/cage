@@ -3,6 +3,7 @@
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/texts.h>
+#include <cage-core/unicode.h>
 #include <cage-engine/texture.h>
 
 namespace cage
@@ -285,11 +286,30 @@ namespace cage
 			if (valid(s.size[0]))
 				format.wrapWidth = min(format.wrapWidth, s.size[0] - 1e-2);
 		}
-		transcript();
+		assign();
+	}
+
+	void TextItem::assign()
+	{
+		GUI_COMPONENT(Text, t, hierarchy->ent);
+		const String value = textsGet(t.textId, t.value);
+		assign(value);
+	}
+
+	void TextItem::assign(const String &value)
+	{
+		assign(PointerRange<const char>(value));
+	}
+
+	void TextItem::assign(PointerRange<const char> value)
+	{
+		dirty = true;
+		txt = utf8to32(value);
 	}
 
 	void TextItem::apply(const GuiTextFormatComponent &f)
 	{
+		dirty = true;
 		if (f.font)
 			font = hierarchy->impl->assetMgr->get<AssetSchemeIndexFont, Font>(f.font);
 		if (f.size.valid())
@@ -302,42 +322,57 @@ namespace cage
 			format.lineSpacing = f.lineSpacing;
 	}
 
-	void TextItem::transcript()
-	{
-		GUI_COMPONENT(Text, t, hierarchy->ent);
-		const String value = textsGet(t.textId, t.value);
-		transcript(value);
-	}
-
-	void TextItem::transcript(const String &value)
-	{
-		transcript(PointerRange<const char>(value));
-	}
-
-	void TextItem::transcript(PointerRange<const char> value)
-	{
-		if (font)
-			layout = font->layout(value, format);
-	}
-
 	Vec2 TextItem::findRequestedSize()
 	{
+		updateLayout();
 		return layout.size;
 	}
 
 	RenderableText TextItem::emit(Vec2 position, Vec2 size, bool disabled)
 	{
+		resize(size);
+		updateLayout();
 		return RenderableText(this, position, size, disabled);
 	}
 
 	void TextItem::updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor)
 	{
-		if (!font)
+		cursor = layout.cursor = m;
+		if (!font || !pointInside(position, size, point))
 			return;
-		FontFormat f = format;
-		f.wrapWidth = size[0];
-		// todo
-		//font->size(glyphs, f, point - position, cursor);
+		resize(size);
+		layout = font->layout(txt, format, point - position);
+		cursor = layout.cursor;
+		dirty = false;
+	}
+
+	void TextItem::setCursorPosition(uint32 cursor)
+	{
+		dirty = true;
+		layout.cursor = cursor;
+	}
+
+	void TextItem::updateLayout()
+	{
+		if (!dirty)
+			return;
+		if (!font)
+		{
+			layout = {};
+			return;
+		}
+		layout = font->layout(txt, format, layout.cursor);
+		dirty = false;
+	}
+
+	void TextItem::resize(Vec2 size)
+	{
+		const Real v = min(format.wrapWidth, size[0]);
+		if (format.wrapWidth != v)
+		{
+			dirty = true;
+			format.wrapWidth = v;
+		}
 	}
 
 	void imageCreate(HierarchyItem *item)

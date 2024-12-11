@@ -25,7 +25,7 @@ namespace cage
 				hierarchy->requestedSize = skin->defaults.checkBox.size;
 				if (hierarchy->text)
 				{
-					Vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.checkBox.labelOffset;
+					const Vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.checkBox.labelOffset;
 					hierarchy->requestedSize[0] += txtSize[0];
 					hierarchy->requestedSize[1] = max(hierarchy->requestedSize[1], txtSize[1]);
 				}
@@ -34,7 +34,7 @@ namespace cage
 
 			void emit() override
 			{
-				Vec2 sd = skin->defaults.checkBox.size;
+				const Vec2 sd = skin->defaults.checkBox.size;
 				{
 					Vec2 p = hierarchy->renderPos;
 					offsetPosition(p, -skin->defaults.checkBox.margin);
