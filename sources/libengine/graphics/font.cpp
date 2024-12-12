@@ -7,7 +7,9 @@ extern "C"
 }
 #include <hb-ft.h>
 
+#include <cage-core/assetsOnDemand.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/hashString.h>
 #include <cage-core/image.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -15,6 +17,7 @@ extern "C"
 #include <cage-core/unicode.h>
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
+#include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
@@ -48,9 +51,9 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_API_IMPORT bool unicodeIsWhitespace(uint32 c);
+		CAGE_CORE_API bool unicodeIsWhitespace(uint32 c);
 
-		CAGE_API_EXPORT cage::String translateFtErrorCode(FT_Error code)
+		CAGE_ENGINE_API cage::String translateFtErrorCode(FT_Error code)
 		{
 			return translateFtErrorCodeImpl(code);
 		}
@@ -71,7 +74,7 @@ namespace cage
 			~FtInitializer()
 			{
 				ScopeLock _(ftMutex);
-				FT_CALL(FT_Done_FreeType, ftLibrary);
+				FT_Done_FreeType(ftLibrary);
 			}
 		} ftInitializer;
 
@@ -136,18 +139,11 @@ namespace cage
 			Vec4 texUv;
 		};
 
-		struct TextureImage
-		{
-			Holder<Image> img;
-			Holder<Texture> tex;
-		};
-
 		class FontImpl : public Font
 		{
 		public:
 			FontHeader header = {};
 			MemoryBuffer ftFile;
-			std::vector<TextureImage> images;
 			std::vector<FontHeader::GlyphData> glyphs;
 			FT_Face face = nullptr;
 			hb_font_t *font = nullptr;
@@ -162,7 +158,7 @@ namespace cage
 				if (face)
 				{
 					ScopeLock _(ftMutex);
-					FT_CALL(FT_Done_Face, face);
+					FT_Done_Face(face);
 					face = nullptr;
 				}
 			}
@@ -444,36 +440,43 @@ namespace cage
 				else if (cursorIndex <= text32.size())
 					res.cursor = cursorIndex;
 
+				// sort glyphs by image
+				std::sort(glyphs.begin(), glyphs.end(), [this](const FontLayoutGlyph &a, const FontLayoutGlyph &b) { return this->glyphs[a.index].image < this->glyphs[b.index].image; });
+
 				res.glyphs = std::move(glyphs);
 				return res;
 			}
 
-			void render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const
+			void render(RenderQueue *queue, AssetsOnDemand *assets, const FontLayoutResult &layout) const
 			{
 				if (layout.glyphs.empty())
 					return;
-
+				Holder<Model> model = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				if (!model)
+					return;
 				Instance insts[MaxCharacters];
-				uint32 image = glyphs[layout.glyphs[0].index].imageIndex;
+				uint32 image = glyphs[layout.glyphs[0].index].image;
 				uint32 i = 0;
 				const auto &dispatch = [&]()
 				{
-					queue->bind(images[image].tex, 0);
-					if (i > 0)
-					{
-						PointerRange<Instance> r(insts, insts + i);
-						queue->universalUniformArray<Instance>(r, 2);
-						queue->draw(model, i);
-					}
+					if (i == 0)
+						return;
+					Holder<Texture> t = assets->get<AssetSchemeIndexTexture, Texture>(image);
+					if (!t)
+						return;
+					queue->bind(t, 0);
+					PointerRange<Instance> r(insts, insts + i);
+					queue->universalUniformArray<Instance>(r, 2);
+					queue->draw(model, i);
 				};
 
 				for (const auto &it : layout.glyphs)
 				{
 					const auto &g = glyphs[it.index];
-					if (g.imageIndex != image || i == MaxCharacters)
+					if (g.image != image || i == MaxCharacters)
 					{
 						dispatch();
-						image = g.imageIndex;
+						image = g.image;
 						i = 0;
 					}
 					insts[i].wrld = it.wrld;
@@ -495,31 +498,15 @@ namespace cage
 	void Font::importBuffer(PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl *)this;
-		CAGE_ASSERT(impl->images.empty());
 		CAGE_ASSERT(impl->glyphs.empty());
+		CAGE_ASSERT(!impl->face);
+		CAGE_ASSERT(!impl->font);
 
 		Deserializer des(buffer);
 		des >> impl->header;
 
 		impl->ftFile.resize(impl->header.ftSize);
 		des.read(impl->ftFile);
-
-		MemoryBuffer tmp;
-		impl->images.reserve(impl->header.imagesCount);
-		for (uint32 i = 0; i < impl->header.imagesCount; i++)
-		{
-			uint32 s = 0;
-			des >> s;
-			tmp.resize(s);
-			des.read(tmp);
-			Holder<Image> img = newImage();
-			img->importBuffer(tmp);
-			img->colorConfig.gammaSpace = GammaSpaceEnum::Linear;
-			Holder<Texture> tex = newTexture();
-			tex->importImage(+img);
-			tex->filters(GL_LINEAR, GL_LINEAR, 0);
-			impl->images.push_back({ std::move(img), std::move(tex) });
-		}
 
 		impl->glyphs.resize(impl->header.glyphsCount);
 		for (auto &it : impl->glyphs)
@@ -562,10 +549,10 @@ namespace cage
 		return impl->layout(text, format, Vec2::Nan(), cursorIndex);
 	}
 
-	void Font::render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const
+	void Font::render(RenderQueue *queue, AssetsOnDemand *assets, const FontLayoutResult &layout) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
-		impl->render(queue, model, layout);
+		impl->render(queue, assets, layout);
 	}
 
 	Holder<Font> newFont()

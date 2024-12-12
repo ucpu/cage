@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_API_EXPORT bool unicodeIsWhitespace(uint32 c)
+		CAGE_CORE_API bool unicodeIsWhitespace(uint32 c)
 		{
 			return una::codepoint::is_whitespace(c);
 		}
@@ -20,12 +20,6 @@ namespace cage
 
 	namespace
 	{
-		struct EnsureUse
-		{
-			// otherwise linking fails on linux
-			EnsureUse() { privat::unicodeIsWhitespace('\n'); }
-		} ensureUse;
-
 		std::string_view view(PointerRange<const char> buffer)
 		{
 			return std::string_view(buffer.begin(), buffer.end());

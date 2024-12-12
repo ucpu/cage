@@ -5,6 +5,10 @@ font.pack
 []
 scheme = font
 ubuntu/bold.ttf
+ubuntu/bold.ttf?0
 ubuntu/italic.ttf
+ubuntu/italic.ttf?0
 ubuntu/monospace.ttf
+ubuntu/monospace.ttf?0
 ubuntu/regular.ttf
+ubuntu/regular.ttf?0

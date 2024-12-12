@@ -5,8 +5,8 @@
 
 namespace cage
 {
+	class AssetsOnDemand;
 	class RenderQueue;
-	class Model;
 
 	struct CAGE_ENGINE_API FontFormat
 	{
@@ -46,7 +46,7 @@ namespace cage
 		FontLayoutResult layout(PointerRange<const uint32> text, const FontFormat &format, Vec2 cursorPoint) const;
 		FontLayoutResult layout(PointerRange<const uint32> text, const FontFormat &format, uint32 cursorIndexUtf32 = m) const;
 
-		void render(RenderQueue *queue, const Holder<Model> &model, const FontLayoutResult &layout) const;
+		void render(RenderQueue *queue, AssetsOnDemand *assets, const FontLayoutResult &layout) const;
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();

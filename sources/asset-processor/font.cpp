@@ -9,10 +9,13 @@
 #include "processor.h"
 
 #include <cage-core/enumerate.h>
+#include <cage-core/hashString.h>
 #include <cage-core/image.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
 #include <cage-core/tasks.h>
+#include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
 	if (const FT_Error err = FNC(__VA_ARGS__)) \
@@ -25,7 +28,7 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_API_IMPORT cage::String translateFtErrorCode(FT_Error code);
+		CAGE_ENGINE_API cage::String translateFtErrorCode(FT_Error code);
 	}
 }
 
@@ -82,8 +85,18 @@ namespace
 	std::vector<Glyph> glyphs;
 	std::vector<Holder<Image>> images;
 
+	void openFont()
+	{
+		FT_CALL(FT_Init_FreeType, &library);
+		FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
+		if (!FT_IS_SCALABLE(face))
+			CAGE_THROW_ERROR(Exception, "font is not scalable");
+		FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
+	}
+
 	void setSize(uint32 nominalSize)
 	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "units per EM: " + face->units_per_EM);
 		FT_CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
 		header.nominalSize = nominalSize;
 		header.nominalScale = 1.0 / nominalSize / 64;
@@ -169,11 +182,64 @@ namespace
 				img++;
 				area = 0;
 			}
-			g.data.imageIndex = img;
+			g.data.image = img;
 		}
 		CAGE_ASSERT(images.empty());
 		images.resize(img + 1);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "images count: " + images.size());
+	}
+
+	String textureName(uint32 index)
+	{
+		return Stringizer() + inputFile + "?" + index;
+	}
+
+	uint32 textureHash(uint32 index)
+	{
+		return HashString(textureName(index));
+	}
+
+	void saveTexture(uint32 index, const Image *img)
+	{
+		TextureHeader data;
+		detail::memset(&data, 0, sizeof(TextureHeader));
+		data.target = GL_TEXTURE_2D;
+		data.resolution = Vec3i(img->width(), img->height(), 1);
+		data.channels = img->channels();
+		data.filterMin = GL_LINEAR;
+		data.filterMag = GL_LINEAR;
+		data.filterAniso = 0;
+		data.wrapX = GL_CLAMP_TO_EDGE;
+		data.wrapY = GL_CLAMP_TO_EDGE;
+		data.wrapZ = GL_CLAMP_TO_EDGE;
+		data.swizzle[0] = TextureSwizzleEnum::R;
+		data.swizzle[1] = TextureSwizzleEnum::G;
+		data.swizzle[2] = TextureSwizzleEnum::B;
+		data.swizzle[3] = TextureSwizzleEnum::A;
+		data.containedLevels = 1;
+		data.mipmapLevels = 1;
+		data.copyType = GL_UNSIGNED_BYTE;
+		data.internalFormat = GL_RGB8;
+		data.copyFormat = GL_RGB;
+
+		MemoryBuffer inputBuffer;
+		Serializer ser(inputBuffer);
+		ser << data;
+		ser << Vec3i(img->resolution(), 1);
+		ser << numeric_cast<uint32>(img->rawViewU8().size());
+		ser.write(bufferCast(img->rawViewU8()));
+
+		AssetHeader h = initializeAssetHeader();
+		h.scheme = AssetSchemeIndexTexture;
+		h.originalSize = inputBuffer.size();
+		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
+		h.compressedSize = outputBuffer.size();
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture file size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
+
+		Holder<File> f = writeFile(pathJoin(outputDirectory, Stringizer() + textureHash(index)));
+		f->write(bufferView(h));
+		f->write(outputBuffer);
+		f->close();
 	}
 
 	void createImages()
@@ -188,7 +254,7 @@ namespace
 			for (const Glyph &g : glyphs)
 			{
 				CAGE_ASSERT(g.png);
-				if (g.data.imageIndex != imageIndex)
+				if (g.data.image != imageIndex)
 					continue;
 				area += g.png->width() * g.png->height();
 				mgs = max(mgs, max(g.png->width(), g.png->height()));
@@ -199,7 +265,7 @@ namespace
 			packer->reserve(cnt);
 			for (const auto g : enumerate(glyphs))
 			{
-				if (g->data.imageIndex != imageIndex)
+				if (g->data.image != imageIndex)
 					continue;
 				packer->insert(PackingRect{ numeric_cast<uint32>(g.index), g->png->width(), g->png->height() });
 			}
@@ -227,7 +293,7 @@ namespace
 				const uint32 arrayIndex = it.id, x = it.x, y = it.y;
 				CAGE_ASSERT(arrayIndex < glyphs.size());
 				Glyph &g = glyphs[arrayIndex];
-				CAGE_ASSERT(g.data.imageIndex == imageIndex);
+				CAGE_ASSERT(g.data.image == imageIndex);
 				CAGE_ASSERT(x < res);
 				CAGE_ASSERT(y < res);
 				g.pos = Vec2i(x, y);
@@ -238,12 +304,19 @@ namespace
 				cnt--;
 			}
 			CAGE_ASSERT(cnt == 0);
+			saveTexture(imageIndex, +image);
 			CAGE_ASSERT(!images[imageIndex]);
 			images[imageIndex] = std::move(image);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "image index: " + imageIndex + ", completed");
 		};
 
 		tasksRunBlocking("images", processor, images.size());
+	}
+
+	void convertImageNames()
+	{
+		for (auto &g : glyphs)
+			g.data.image = textureHash(g.data.image);
 	}
 
 	void exportData()
@@ -262,13 +335,6 @@ namespace
 			sr.write(fl);
 			fl.clear();
 		}
-		for (const auto &it : images)
-		{
-			fl = it->exportBuffer(".tga"); // will be compressed later anyway
-			sr << uint32(fl.size());
-			sr.write(fl);
-			fl.clear();
-		}
 		for (const Glyph &g : glyphs)
 			sr << g.data;
 
@@ -284,6 +350,9 @@ namespace
 		f->write(bufferView(h));
 		f->write(buf2);
 		f->close();
+
+		for (uint32 i = 0; i < header.imagesCount; i++)
+			writeLine(String("ref=") + textureName(i));
 	}
 
 	void printDebugData()
@@ -312,34 +381,34 @@ namespace
 void processFont()
 {
 	writeLine(String("use=") + inputFile);
-	if (!inputSpec.empty())
-		CAGE_THROW_ERROR(Exception, "input specification must be empty");
-	FT_CALL(FT_Init_FreeType, &library);
-	FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
-	if (!FT_IS_SCALABLE(face))
-		CAGE_THROW_ERROR(Exception, "font is not scalable");
-	FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "units per EM: " + face->units_per_EM);
-	setSize(40);
-	loadGlyphs();
-	computeLineProperties();
-	addCursorGlyph();
-	createGlyphsImages();
-	assignToImages();
-	createImages();
-	exportData();
-	printDebugData();
+	if (inputSpec.empty())
+	{
+		openFont();
+		setSize(40);
+		loadGlyphs();
+		computeLineProperties();
+		addCursorGlyph();
+		createGlyphsImages();
+		assignToImages();
+		createImages();
+		convertImageNames();
+		exportData();
+		printDebugData();
+		FT_CALL(FT_Done_FreeType, library);
+	}
+	else if (!isInteger(inputSpec))
+	{
+		CAGE_THROW_ERROR(Exception, "invalid input specification");
+	}
 	clearAll();
-	FT_CALL(FT_Done_FreeType, library);
 }
 
 void analyzeFont()
 {
 	try
 	{
-		FT_CALL(FT_Init_FreeType, &library);
-		FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
-		FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
+		openFont();
+		FT_CALL(FT_Done_FreeType, library);
 		writeLine("cage-begin");
 		writeLine("scheme=font");
 		writeLine(String() + "asset=" + inputFile);
@@ -349,5 +418,4 @@ void analyzeFont()
 	{
 		// do nothing
 	}
-	FT_CALL(FT_Done_FreeType, library);
 }

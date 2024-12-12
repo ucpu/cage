@@ -502,7 +502,7 @@ namespace cage
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 				renderQueue->uniform(shaderText, 0, data.viewProj * text.model);
 				renderQueue->uniform(shaderText, 4, text.color);
-				text.font->render(+renderQueue, modelSquare, text.layout);
+				text.font->render(+renderQueue, onDemand, text.layout);
 			}
 
 			template<RenderModeEnum RenderMode>

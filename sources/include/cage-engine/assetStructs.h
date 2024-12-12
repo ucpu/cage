@@ -43,7 +43,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API TextureHeader
 	{
-		uint64 animationDuration;
+		uint64 animationDuration = 0;
 		TextureFlags flags = TextureFlags::None;
 		uint32 target = 0; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
@@ -120,13 +120,12 @@ namespace cage
 		struct CAGE_ENGINE_API GlyphData
 		{
 			Vec4 texUv;
-			uint32 imageIndex = 0;
+			uint32 image = 0;
 			uint32 glyphId = 0;
 		};
 
 		// follows:
 		// font file
-		// array of images
 		// array of GlyphData
 	};
 

@@ -311,7 +311,6 @@ namespace cage
 			Holder<MultiShaderProgram> imageShader;
 			Holder<ShaderProgram> colorPickerShader[3]; // H, S, V
 			Holder<Model> elementModel;
-			Holder<Model> fontModel;
 			Holder<Model> imageModel;
 
 			void load(AssetsManager *assetMgr);

@@ -120,7 +120,7 @@ namespace cage
 		q->uniform(shader, 0, transform);
 		q->uniform(shader, 4, data.color);
 		q->uniform(shader, 15, data.screenPxRange);
-		data.font->render(q, impl->graphicsData.fontModel, data.layout);
+		data.font->render(q, +impl->assetOnDemand, data.layout);
 	}
 
 	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
@@ -172,8 +172,7 @@ namespace cage
 		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H")));
 		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S")));
 		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/guiElement.obj"));
-		fontModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-		imageModel = fontModel.share();
+		imageModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 	}
 
 	namespace
