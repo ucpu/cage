@@ -16,7 +16,7 @@ void processRaw()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "original data size: " + data.size() + " bytes");
 	if (data.size() >= toUint32(properties("compressThreshold")))
 	{
-		Holder<PointerRange<char>> data2 = compress(data);
+		Holder<PointerRange<char>> data2 = memoryCompress(data);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compressed data size: " + data2.size() + " bytes");
 		if (data2.size() < data.size())
 		{

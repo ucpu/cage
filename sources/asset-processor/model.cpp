@@ -339,7 +339,7 @@ void processModel()
 	ser << mat;
 	ser.write(part.mesh->exportBuffer());
 	h.originalSize = buffer.size();
-	Holder<PointerRange<char>> compressed = compress(buffer);
+	Holder<PointerRange<char>> compressed = memoryCompress(buffer);
 	h.compressedSize = compressed.size();
 
 	Holder<File> f = writeFile(outputFileName);

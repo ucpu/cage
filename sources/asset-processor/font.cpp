@@ -232,7 +232,7 @@ namespace
 		AssetHeader h = initializeAssetHeader();
 		h.scheme = AssetSchemeIndexTexture;
 		h.originalSize = inputBuffer.size();
-		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
+		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture file size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
@@ -339,7 +339,7 @@ namespace
 			sr << g.data;
 
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buf.size());
-		Holder<PointerRange<char>> buf2 = compress(buf);
+		Holder<PointerRange<char>> buf2 = memoryCompress(buf);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + buf2.size());
 
 		AssetHeader h = initializeAssetHeader();

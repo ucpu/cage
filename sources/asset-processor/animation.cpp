@@ -47,7 +47,7 @@ void processAnimation()
 
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
-	Holder<PointerRange<char>> comp = compress(buff);
+	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();

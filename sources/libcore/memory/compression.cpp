@@ -6,25 +6,25 @@
 
 namespace cage
 {
-	Holder<PointerRange<char>> compress(PointerRange<const char> input, sint32 preference)
+	Holder<PointerRange<char>> memoryCompress(PointerRange<const char> input, sint32 preference)
 	{
 		MemoryBuffer result(compressionBound(input.size()));
 		PointerRange<char> output = result;
-		compress(input, output, preference);
+		memoryCompress(input, output, preference);
 		result.resize(output.size());
 		return std::move(result);
 	}
 
-	Holder<PointerRange<char>> decompress(PointerRange<const char> input, uintPtr outputSize)
+	Holder<PointerRange<char>> memoryDecompress(PointerRange<const char> input, uintPtr outputSize)
 	{
 		MemoryBuffer result(outputSize);
 		PointerRange<char> output = result;
-		decompress(input, output);
+		memoryDecompress(input, output);
 		result.resize(output.size());
 		return std::move(result);
 	}
 
-	void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
+	void memoryCompress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
 	{
 		const int level = clamp(ZSTD_maxCLevel() * preference / 100, ZSTD_minCLevel(), ZSTD_maxCLevel());
 		const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), level);
@@ -34,7 +34,7 @@ namespace cage
 		output = PointerRange<char>(output.data(), output.data() + r);
 	}
 
-	void decompress(PointerRange<const char> input, PointerRange<char> &output)
+	void memoryDecompress(PointerRange<const char> input, PointerRange<char> &output)
 	{
 		const std::size_t r = ZSTD_decompress(output.data(), output.size(), input.data(), input.size());
 		if (ZSTD_isError(r))

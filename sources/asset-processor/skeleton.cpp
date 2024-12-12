@@ -16,7 +16,7 @@ void processSkeleton()
 	Holder<SkeletonRig> rig = result.skeleton.share();
 	Holder<PointerRange<char>> buff = rig->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
-	Holder<PointerRange<char>> comp = compress(buff);
+	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();

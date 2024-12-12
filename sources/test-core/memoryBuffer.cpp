@@ -59,9 +59,9 @@ void testMemoryBuffers()
 			MemoryBuffer b1(1000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8 *)b1.data())[i] = (uint8)i;
-			Holder<PointerRange<char>> b2 = compress(b1);
+			Holder<PointerRange<char>> b2 = memoryCompress(b1);
 			CAGE_TEST(b2.size() < b1.size());
-			Holder<PointerRange<char>> b3 = decompress(b2, 2000);
+			Holder<PointerRange<char>> b3 = memoryDecompress(b2, 2000);
 			CAGE_TEST(b3.size() == b1.size());
 			CAGE_TEST(detail::memcmp(b3.data(), b1.data(), b1.size()) == 0);
 		}
@@ -70,8 +70,8 @@ void testMemoryBuffers()
 			MemoryBuffer b1(128);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8 *)b1.data())[i] = (uint8)i;
-			Holder<PointerRange<char>> b2 = compress(b1);
-			Holder<PointerRange<char>> b3 = decompress(b2, 200);
+			Holder<PointerRange<char>> b2 = memoryCompress(b1);
+			Holder<PointerRange<char>> b3 = memoryDecompress(b2, 200);
 			CAGE_TEST(b3.size() == b1.size());
 			CAGE_TEST(detail::memcmp(b3.data(), b1.data(), b1.size()) == 0);
 		}

@@ -440,7 +440,7 @@ namespace
 
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = inputBuffer.size();
-		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
+		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 

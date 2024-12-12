@@ -841,7 +841,7 @@ namespace cage
 		{
 			if (asset->compressedData.size() == 0)
 				return;
-			decompress(*asset->compressedData, *asset->originalData);
+			memoryDecompress(*asset->compressedData, *asset->originalData);
 		}
 	}
 
