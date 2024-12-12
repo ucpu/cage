@@ -20,6 +20,12 @@ namespace cage
 
 	namespace
 	{
+		struct EnsureUse
+		{
+			// otherwise linking fails on linux
+			EnsureUse() { privat::unicodeIsWhitespace('\n'); }
+		} ensureUse;
+
 		std::string_view view(PointerRange<const char> buffer)
 		{
 			return std::string_view(buffer.begin(), buffer.end());

@@ -8,6 +8,7 @@
 
 #include "processor.h"
 
+#include <cage-core/enumerate.h>
 #include <cage-core/image.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
@@ -151,65 +152,98 @@ namespace
 	void createGlyphsImages()
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "create glyphs images");
-		tasksRunBlocking<Glyph>("glyphs images", glyphs);
+		tasksRunBlocking<Glyph>("glyphs", glyphs);
 	}
 
-	void createImage()
+	void assignToImages()
 	{
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "pack and compute uv coordinates");
-		Holder<RectPacking> packer = newRectPacking();
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "assign glyphs to images");
+		uint32 img = 0;
 		uint32 area = 0;
-		uint32 mgs = 0;
-		for (const Glyph &g : glyphs)
+		for (Glyph &g : glyphs)
 		{
 			CAGE_ASSERT(g.png);
 			area += g.png->width() * g.png->height();
-			mgs = max(mgs, max(g.png->width(), g.png->height()));
+			if (area > 1800 * 1800)
+			{
+				img++;
+				area = 0;
+			}
+			g.data.imageIndex = img;
 		}
-		packer->resize(glyphs.size());
-		uint32 index = 0;
-		for (const Glyph &g : glyphs)
-		{
-			packer->data()[index] = PackingRect{ index, g.png->width(), g.png->height() };
-			index++;
-		}
-		uint32 res = 64;
-		while (res < mgs)
-			res += 32;
-		while (res * res < area)
-			res += 32;
-		while (true)
-		{
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "trying to pack into resolution: " + res);
-			RectPackingSolveConfig cfg;
-			cfg.margin = 1;
-			cfg.width = cfg.height = res;
-			if (packer->solve(cfg))
-				break;
-			res += 32;
-		}
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "final resolution: " + res);
-		for (const auto &it : packer->data())
-		{
-			uint32 arrayIndex = it.id, x = it.x, y = it.y;
-			CAGE_ASSERT(arrayIndex < glyphs.size());
-			Glyph &g = glyphs[arrayIndex];
-			CAGE_ASSERT(x < res);
-			CAGE_ASSERT(y < res);
-			g.pos = Vec2i(x, y);
-			Vec2 to = Vec2(g.pos) / res;
-			Vec2 ts = Vec2(g.png->width(), g.png->height()) / res;
-			//to[1] = 1 - to[1] - ts[1];
-			g.data.texUv = Vec4(to, ts);
-		}
+		CAGE_ASSERT(images.empty());
+		images.resize(img + 1);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "images count: " + images.size());
+	}
 
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "blit glyph images into the atlas");
-		Holder<Image> image = newImage();
-		image->initialize(res, res, 3);
-		for (const Glyph &g : glyphs)
-			imageBlit(+g.png, +image, 0, 0, g.pos[0], g.pos[1], g.png->width(), g.png->height());
-		//imageVerticalFlip(+image);
-		images.push_back(std::move(image));
+	void createImages()
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "pack and compute uv coordinates");
+
+		auto processor = [](uint32 imageIndex)
+		{
+			uint32 area = 0;
+			uint32 mgs = 0;
+			uint32 cnt = 0;
+			for (const Glyph &g : glyphs)
+			{
+				CAGE_ASSERT(g.png);
+				if (g.data.imageIndex != imageIndex)
+					continue;
+				area += g.png->width() * g.png->height();
+				mgs = max(mgs, max(g.png->width(), g.png->height()));
+				cnt++;
+			}
+
+			Holder<RectPacking> packer = newRectPacking();
+			packer->reserve(cnt);
+			for (const auto g : enumerate(glyphs))
+			{
+				if (g->data.imageIndex != imageIndex)
+					continue;
+				packer->insert(PackingRect{ numeric_cast<uint32>(g.index), g->png->width(), g->png->height() });
+			}
+			CAGE_ASSERT(packer->data().size() == cnt);
+
+			uint32 res = 64;
+			while (res < mgs || res * res < area)
+				res += 32;
+
+			while (true)
+			{
+				RectPackingSolveConfig cfg;
+				cfg.margin = 1;
+				cfg.width = cfg.height = res;
+				if (packer->solve(cfg))
+					break;
+				res += 32;
+			}
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "image resolution: " + res);
+
+			Holder<Image> image = newImage();
+			image->initialize(res, res, 3);
+			for (const auto &it : packer->data())
+			{
+				const uint32 arrayIndex = it.id, x = it.x, y = it.y;
+				CAGE_ASSERT(arrayIndex < glyphs.size());
+				Glyph &g = glyphs[arrayIndex];
+				CAGE_ASSERT(g.data.imageIndex == imageIndex);
+				CAGE_ASSERT(x < res);
+				CAGE_ASSERT(y < res);
+				g.pos = Vec2i(x, y);
+				const Vec2 to = Vec2(g.pos) / res;
+				const Vec2 ts = Vec2(g.png->width(), g.png->height()) / res;
+				g.data.texUv = Vec4(to, ts);
+				imageBlit(+g.png, +image, 0, 0, g.pos[0], g.pos[1], g.png->width(), g.png->height());
+				cnt--;
+			}
+			CAGE_ASSERT(cnt == 0);
+			CAGE_ASSERT(!images[imageIndex]);
+			images[imageIndex] = std::move(image);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "image index: " + imageIndex + ", completed");
+		};
+
+		tasksRunBlocking("images", processor, images.size());
 	}
 
 	void exportData()
@@ -291,7 +325,8 @@ void processFont()
 	computeLineProperties();
 	addCursorGlyph();
 	createGlyphsImages();
-	createImage();
+	assignToImages();
+	createImages();
 	exportData();
 	printDebugData();
 	clearAll();

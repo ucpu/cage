@@ -68,10 +68,22 @@ namespace cage
 		};
 	}
 
+	void RectPacking::reserve(uint32 cnt)
+	{
+		RectPackingImpl *impl = (RectPackingImpl *)this;
+		impl->data.reserve(cnt);
+	}
+
 	void RectPacking::resize(uint32 cnt)
 	{
 		RectPackingImpl *impl = (RectPackingImpl *)this;
 		impl->data.resize(cnt);
+	}
+
+	void RectPacking::insert(const PackingRect &r)
+	{
+		RectPackingImpl *impl = (RectPackingImpl *)this;
+		impl->data.push_back(r);
 	}
 
 	PointerRange<PackingRect> RectPacking::data()

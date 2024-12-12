@@ -24,7 +24,9 @@ namespace cage
 	class CAGE_CORE_API RectPacking : private Immovable
 	{
 	public:
+		void reserve(uint32 cnt);
 		void resize(uint32 cnt);
+		void insert(const PackingRect &r);
 		PointerRange<PackingRect> data();
 		PointerRange<const PackingRect> data() const;
 
