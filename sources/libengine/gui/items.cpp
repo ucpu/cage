@@ -2,12 +2,18 @@
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
+#include <cage-core/hashString.h>
 #include <cage-core/texts.h>
 #include <cage-core/unicode.h>
 #include <cage-engine/texture.h>
 
 namespace cage
 {
+	namespace detail
+	{
+		uint64 GuiTextFontDefault = 0;
+	}
+
 	HierarchyItem::HierarchyItem(GuiImpl *impl, Entity *ent) : impl(impl), ent(ent)
 	{
 		CAGE_ASSERT(impl);
@@ -311,7 +317,7 @@ namespace cage
 	{
 		dirty = true;
 		if (f.font)
-			font = hierarchy->impl->assetMgr->get<AssetSchemeIndexFont, Font>(f.font);
+			fontId = f.font;
 		if (f.size.valid())
 			format.size = f.size;
 		if (f.color.valid())
@@ -338,9 +344,12 @@ namespace cage
 	void TextItem::updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor)
 	{
 		cursor = layout.cursor = m;
-		if (!font || !pointInside(position, size, point))
+		if (!pointInside(position, size, point))
 			return;
 		resize(size);
+		updateFont();
+		if (!font)
+			return;
 		layout = font->layout(txt, format, point - position);
 		cursor = layout.cursor;
 		dirty = false;
@@ -352,15 +361,23 @@ namespace cage
 		layout.cursor = cursor;
 	}
 
+	void TextItem::updateFont()
+	{
+		dirty = true;
+		if (fontId == 0)
+			fontId = detail::GuiTextFontDefault;
+		if (fontId == 0)
+			fontId = HashString("cage/font/ubuntu/regular.ttf");
+		font = hierarchy->impl->assetMgr->get<AssetSchemeIndexFont, Font>(fontId);
+	}
+
 	void TextItem::updateLayout()
 	{
 		if (!dirty)
 			return;
+		updateFont();
 		if (!font)
-		{
-			layout = {};
 			return;
-		}
 		layout = font->layout(txt, format, layout.cursor);
 		dirty = false;
 	}

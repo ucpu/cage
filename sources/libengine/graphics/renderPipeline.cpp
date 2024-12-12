@@ -36,6 +36,11 @@
 
 namespace cage
 {
+	namespace detail
+	{
+		extern uint64 GuiTextFontDefault;
+	}
+
 	namespace
 	{
 		const ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
@@ -826,6 +831,8 @@ namespace cage
 								return;
 							TextComponent pt = tc_;
 							TextPrepare prepare;
+							if (!pt.font)
+								pt.font = detail::GuiTextFontDefault;
 							if (!pt.font)
 								pt.font = HashString("cage/font/ubuntu/regular.ttf");
 							prepare.font = assets->get<AssetSchemeIndexFont, Font>(pt.font);

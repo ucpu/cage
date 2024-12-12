@@ -9,6 +9,12 @@ namespace cage
 	struct MemoryBuffer;
 	class Entity;
 
+	namespace detail
+	{
+		CAGE_ENGINE_API extern uint64 GuiTextFontDefault;
+		CAGE_ENGINE_API extern uint64 GuiTooltipDelayDefault;
+	}
+
 	struct CAGE_ENGINE_API GuiSkinIndex
 	{
 		constexpr GuiSkinIndex() = default;
@@ -58,7 +64,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiTextFormatComponent
 	{
 		Vec3 color = Vec3::Nan();
-		uint32 font = 0;
+		uint32 font = detail::GuiTextFontDefault;
 		Real size = Real::Nan();
 		Real lineSpacing = Real::Nan();
 		TextAlignEnum align = (TextAlignEnum)m;
@@ -126,11 +132,6 @@ namespace cage
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
 		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::InvokerCorner;
 	};
-
-	namespace detail
-	{
-		CAGE_ENGINE_API extern uint64 GuiTooltipDelayDefault;
-	}
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{

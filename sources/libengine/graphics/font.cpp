@@ -19,9 +19,16 @@ extern "C"
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/texture.h>
 
+#define FT_CALL(FNC, ...) \
+	if (const FT_Error err = FNC(__VA_ARGS__)) \
+	{ \
+		CAGE_LOG_THROW(::cage::privat::translateFtErrorCode(err)); \
+		CAGE_THROW_ERROR(Exception, "FreeType " #FNC " error"); \
+	}
+
 namespace
 {
-	cage::String translateErrorCode(int code)
+	cage::String translateFtErrorCodeImpl(FT_Error code)
 	{
 #undef __FTERRORS_H__
 		switch (code)
@@ -42,6 +49,11 @@ namespace cage
 	namespace privat
 	{
 		CAGE_API_IMPORT bool unicodeIsWhitespace(uint32 c);
+
+		CAGE_API_EXPORT cage::String translateFtErrorCode(FT_Error code)
+		{
+			return translateFtErrorCodeImpl(code);
+		}
 	}
 
 	namespace
@@ -53,14 +65,13 @@ namespace cage
 		public:
 			FtInitializer()
 			{
-				if (FT_Init_FreeType(&ftLibrary))
-					CAGE_THROW_ERROR(Exception, "failed to initialize FreeType");
+				FT_CALL(FT_Init_FreeType, &ftLibrary);
 				hb_language_get_default(); // initialize the locale before threads
 			}
 			~FtInitializer()
 			{
 				ScopeLock _(ftMutex);
-				FT_Done_FreeType(ftLibrary);
+				FT_CALL(FT_Done_FreeType, ftLibrary);
 			}
 		} ftInitializer;
 
@@ -151,7 +162,7 @@ namespace cage
 				if (face)
 				{
 					ScopeLock _(ftMutex);
-					FT_Done_Face(face);
+					FT_CALL(FT_Done_Face, face);
 					face = nullptr;
 				}
 			}
@@ -514,24 +525,14 @@ namespace cage
 		for (auto &it : impl->glyphs)
 			des >> it;
 
+		CAGE_ASSERT(des.available() == 0);
+
 		{
 			ScopeLock _(ftMutex);
-			if (auto err = FT_New_Memory_Face(ftLibrary, (FT_Byte *)impl->ftFile.data(), impl->ftFile.size(), 0, &impl->face))
-			{
-				CAGE_LOG_THROW(translateErrorCode(err));
-				CAGE_THROW_ERROR(Exception, "failed loading font with FreeType");
-			}
+			FT_CALL(FT_New_Memory_Face, ftLibrary, (FT_Byte *)impl->ftFile.data(), impl->ftFile.size(), 0, &impl->face);
 		}
-		if (auto err = FT_Select_Charmap(impl->face, FT_ENCODING_UNICODE))
-		{
-			CAGE_LOG_THROW(translateErrorCode(err));
-			CAGE_THROW_ERROR(Exception, "failed to select charmap in FreeType");
-		}
-		if (auto err = FT_Set_Pixel_Sizes(impl->face, impl->header.nominalSize, impl->header.nominalSize))
-		{
-			CAGE_LOG_THROW(translateErrorCode(err));
-			CAGE_THROW_ERROR(Exception, "failed to set font size in FreeType");
-		}
+		FT_CALL(FT_Select_Charmap, impl->face, FT_ENCODING_UNICODE);
+		FT_CALL(FT_Set_Pixel_Sizes, impl->face, impl->header.nominalSize, impl->header.nominalSize);
 		impl->font = hb_ft_font_create(impl->face, nullptr);
 
 		CAGE_ASSERT(impl->findArrayIndex(uint32(-2)) != m); // verify that the font contains a glyph for the cursor

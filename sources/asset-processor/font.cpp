@@ -3,15 +3,6 @@
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#define CALL(FNC, ...) \
-	{ \
-		const int err = FNC(__VA_ARGS__); \
-		if (err) \
-		{ \
-			CAGE_LOG_THROW(translateErrorCode(err)); \
-			CAGE_THROW_ERROR(Exception, "FreeType " #FNC " error"); \
-		} \
-	}
 #include <msdfgen/ext/import-font.h>
 #include <msdfgen/msdfgen.h>
 
@@ -21,6 +12,21 @@
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
 #include <cage-core/tasks.h>
+
+#define FT_CALL(FNC, ...) \
+	if (const FT_Error err = FNC(__VA_ARGS__)) \
+	{ \
+		CAGE_LOG_THROW(::cage::privat::translateFtErrorCode(err)); \
+		CAGE_THROW_ERROR(Exception, "FreeType " #FNC " error"); \
+	}
+
+namespace cage
+{
+	namespace privat
+	{
+		CAGE_API_IMPORT cage::String translateFtErrorCode(FT_Error code);
+	}
+}
 
 namespace
 {
@@ -75,24 +81,9 @@ namespace
 	std::vector<Glyph> glyphs;
 	std::vector<Holder<Image>> images;
 
-	String translateErrorCode(int code)
-	{
-#undef __FTERRORS_H__
-		switch (code)
-#define FT_ERROR_START_LIST {
-#define FT_ERRORDEF(E, V, S) \
-	case V: \
-		return S;
-#define FT_ERROR_END_LIST \
-	} \
-	;
-#include FT_ERRORS_H
-			CAGE_THROW_ERROR(Exception, "unknown freetype error code");
-	}
-
 	void setSize(uint32 nominalSize)
 	{
-		CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
+		FT_CALL(FT_Set_Pixel_Sizes, face, nominalSize, nominalSize);
 		header.nominalSize = nominalSize;
 		header.nominalScale = 1.0 / nominalSize / 64;
 	}
@@ -108,8 +99,8 @@ namespace
 		{
 			Glyph g;
 			g.data.glyphId = glyphIndex;
-			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
-			CALL(msdfgen::readFreetypeOutline, g.shape, &face->glyph->outline);
+			FT_CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
+			FT_CALL(msdfgen::readFreetypeOutline, g.shape, &face->glyph->outline);
 			if (!g.shape.contours.empty())
 				glyphs.push_back(std::move(g));
 		}
@@ -124,7 +115,7 @@ namespace
 		Real maxAscender, minDescender;
 		for (char c : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 		{
-			CALL(FT_Load_Char, face, c, FT_LOAD_DEFAULT);
+			FT_CALL(FT_Load_Char, face, c, FT_LOAD_DEFAULT);
 			const FT_Glyph_Metrics &glm = face->glyph->metrics;
 			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
 			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
@@ -289,11 +280,11 @@ void processFont()
 	writeLine(String("use=") + inputFile);
 	if (!inputSpec.empty())
 		CAGE_THROW_ERROR(Exception, "input specification must be empty");
-	CALL(FT_Init_FreeType, &library);
-	CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
+	FT_CALL(FT_Init_FreeType, &library);
+	FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(Exception, "font is not scalable");
-	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
+	FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "units per EM: " + face->units_per_EM);
 	setSize(40);
 	loadGlyphs();
@@ -304,16 +295,16 @@ void processFont()
 	exportData();
 	printDebugData();
 	clearAll();
-	CALL(FT_Done_FreeType, library);
+	FT_CALL(FT_Done_FreeType, library);
 }
 
 void analyzeFont()
 {
 	try
 	{
-		CALL(FT_Init_FreeType, &library);
-		CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
-		CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
+		FT_CALL(FT_Init_FreeType, &library);
+		FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
+		FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 		writeLine("cage-begin");
 		writeLine("scheme=font");
 		writeLine(String() + "asset=" + inputFile);
@@ -323,5 +314,5 @@ void analyzeFont()
 	{
 		// do nothing
 	}
-	CALL(FT_Done_FreeType, library);
+	FT_CALL(FT_Done_FreeType, library);
 }

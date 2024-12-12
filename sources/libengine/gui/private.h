@@ -174,7 +174,9 @@ namespace cage
 
 	private:
 		Holder<PointerRange<uint32>> txt;
+		uint32 fontId = 0;
 		bool dirty = true;
+		void updateFont();
 		void updateLayout(); // update cached layout if needed
 		void resize(Vec2 size); // update wrap width with new size
 

@@ -9,9 +9,9 @@ namespace cage
 	{
 		consteval GuiTextFormatComponent textFormatComponentInit()
 		{
-			GuiTextFormatComponent text;
+			GuiTextFormatComponent text{ .font = 0 };
 			text.color = Vec3(1);
-			text.font = HashString("cage/font/ubuntu/regular.ttf");
+			text.font = 0;
 			text.size = 14;
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 1;
