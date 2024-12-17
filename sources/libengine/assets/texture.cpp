@@ -117,7 +117,7 @@ namespace cage
 	{
 		AssetsScheme s;
 		s.threadIndex = threadIndex;
-		s.load.bind<&processLoad>();
+		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Texture>();
 		return s;
 	}

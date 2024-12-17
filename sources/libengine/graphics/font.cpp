@@ -322,7 +322,6 @@ namespace cage
 							hb_shape(font, hb(), nullptr, 0);
 
 							const auto [infos, positions] = hb.getRanges();
-							hb_glyph_extents_t extents;
 							for (uint32 i = 0; i < infos.size(); i++)
 							{
 								// cursor
@@ -336,10 +335,11 @@ namespace cage
 								// place glyph
 								const auto gp = positions[i];
 								const uint32 ai = findArrayIndex(infos[i].codepoint);
-								if (ai != m && hb_font_get_glyph_extents(font, infos[i].codepoint, &extents))
+								if (ai != m)
 								{
-									const Vec2 p = Vec2(gp.x_offset + extents.x_bearing, gp.y_offset + extents.y_bearing + extents.height) * scale;
-									const Vec2 s = Vec2(extents.width, -extents.height) * scale;
+									const auto extents = this->glyphs[ai];
+									const Vec2 p = Vec2(gp.x_offset, gp.y_offset) * scale + (extents.bearing + Vec2(0, -extents.size[1])) * format.size;
+									const Vec2 s = extents.size * format.size;
 									glyphs.push_back({ Vec4(pos + p, s), ai, infos[i].cluster });
 								}
 

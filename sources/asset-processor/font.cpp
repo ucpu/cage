@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <unordered_map>
 #include <vector>
 
 #include <ft2build.h>
@@ -8,6 +9,7 @@
 
 #include "processor.h"
 
+#include <cage-core/endianness.h>
 #include <cage-core/enumerate.h>
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
@@ -53,17 +55,15 @@ namespace
 		r += .5, t += .5;
 		const Real wf = (r - l);
 		const Real hf = (t - b);
-		const uint32 wi = numeric_cast<uint32>(cage::ceil(wf)) + 1;
-		const uint32 hi = numeric_cast<uint32>(cage::ceil(hf)) + 1;
-		const Real tx = -l + .5 * (wi - wf);
-		const Real ty = -b + .5 * (hi - hf);
+		const uint32 wi = numeric_cast<uint32>(cage::ceil(wf));
+		const uint32 hi = numeric_cast<uint32>(cage::ceil(hf));
 		msdfgen::Bitmap<float, 3> msdf(wi, hi);
-		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1.0, from(Vec2(tx, ty))), 6);
+		msdfgen::generateMSDF(msdf, shape, msdfgen::Projection(1, from(Vec2(-l, -b))), 6);
 
 		Holder<Image> png = newImage();
 		png->initialize(wi, hi, 3);
-		for (uint32 y = 0; y < png->height(); y++)
-			for (uint32 x = 0; x < png->width(); x++)
+		for (uint32 y = 0; y < hi; y++)
+			for (uint32 x = 0; x < wi; x++)
 				for (uint32 c = 0; c < 3; c++)
 					png->value(x, y, c, msdf(x, y)[c]);
 		return png;
@@ -114,6 +114,9 @@ namespace
 			Glyph g;
 			g.data.glyphId = glyphIndex;
 			FT_CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
+			const FT_Glyph_Metrics &glm = face->glyph->metrics;
+			g.data.size = Vec2(float(glm.width), float(glm.height)) * header.nominalScale;
+			g.data.bearing = Vec2(float(glm.horiBearingX), float(glm.horiBearingY)) * header.nominalScale;
 			FT_CALL(msdfgen::readFreetypeOutline, g.shape, &face->glyph->outline);
 			if (!g.shape.contours.empty())
 				glyphs.push_back(std::move(g));
@@ -134,7 +137,7 @@ namespace
 			maxAscender = max(maxAscender, float(glm.horiBearingY) * header.nominalScale);
 			minDescender = min(minDescender, (float(glm.horiBearingY) - float(glm.height)) * header.nominalScale);
 		}
-		header.lineHeight = maxAscender - minDescender;
+		header.lineHeight = (maxAscender - minDescender) * 1.2; // slightly extended by default
 		header.lineOffset = minDescender * 0.5 - maxAscender;
 		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line offset: " + header.lineOffset);
 		CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "line height: " + header.lineHeight);
@@ -319,22 +322,120 @@ namespace
 			g.data.image = textureHash(g.data.image);
 	}
 
+	// https://learn.microsoft.com/en-us/typography/opentype/spec/otff#organization-of-an-opentype-font
+	struct TableDirectory
+	{
+		uint32 sfntVersion;
+		uint16 numTables;
+		uint16 searchRange;
+		uint16 entrySelector;
+		uint16 rangeShift;
+	};
+
+	void endian(TableDirectory &t)
+	{
+		t.sfntVersion = endianness::change(t.sfntVersion);
+		t.numTables = endianness::change(t.numTables);
+		t.searchRange = 0;
+		t.entrySelector = 0;
+		t.rangeShift = 0;
+	}
+
+	struct TableRecord
+	{
+		uint32 tableTag;
+		uint32 checksum;
+		uint32 offset;
+		uint32 length;
+
+		String tag() const { return String(bufferView(tableTag)); }
+	};
+
+	void endian(TableRecord &t)
+	{
+		t.checksum = endianness::change(t.checksum);
+		t.offset = endianness::change(t.offset);
+		t.length = endianness::change(t.length);
+	}
+
+	Holder<PointerRange<char>> readFontFile()
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "reading font file");
+
+		auto srcBuf = readFile(inputFileName)->readAll();
+		Deserializer des(srcBuf);
+
+		TableDirectory dir;
+		des >> dir;
+		endian(dir);
+		if (dir.sfntVersion != 0x00010000 && dir.sfntVersion != 0x4F54544F)
+		{
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "font file not TTF");
+			return srcBuf;
+		}
+
+		std::vector<TableRecord> trs;
+		trs.resize(dir.numTables);
+		for (uint32 i = 0; i < dir.numTables; i++)
+		{
+			TableRecord &r = trs[i];
+			des >> r;
+			endian(r);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "record " + r.tag() + ": " + r.length);
+		}
+
+		// remove some tables
+		std::erase_if(trs, [](const TableRecord &r) { return r.tag() == "glyf"; });
+
+		// read all tables
+		std::unordered_map<uint32, PointerRange<const char>> tables;
+		for (const TableRecord &r : trs)
+		{
+			Deserializer d(srcBuf);
+			d.subview(r.offset); // skip to position
+			tables[r.tableTag] = d.read(r.length);
+		}
+
+		// update offsets
+		{
+			uint32 pos = sizeof(TableDirectory) + trs.size() * sizeof(TableRecord);
+			for (TableRecord &r : trs)
+			{
+				r.offset = pos;
+				pos += r.length;
+			}
+		}
+
+		// serialize modified file
+		dir.numTables = trs.size();
+		MemoryBuffer dstBuf;
+		Serializer ser(dstBuf);
+		endian(dir);
+		ser << dir;
+		for (TableRecord &r : trs)
+		{
+			endian(r);
+			ser << r;
+		}
+		for (const TableRecord &r : trs)
+			ser.write(tables[r.tableTag]);
+		return std::move(dstBuf);
+	}
+
 	void exportData()
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "exporting data");
 		CAGE_ASSERT(glyphs.size() == header.glyphsCount);
 
-		auto fl = readFile(inputFileName)->readAll();
+		auto fl = readFontFile();
 		header.ftSize = fl.size();
 		header.imagesCount = images.size();
 
 		MemoryBuffer buf;
 		Serializer sr(buf);
 		sr << header;
-		{
-			sr.write(fl);
-			fl.clear();
-		}
+		sr.write(fl);
+		fl.clear();
 		for (const Glyph &g : glyphs)
 			sr << g.data;
 

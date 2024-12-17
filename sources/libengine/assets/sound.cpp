@@ -68,8 +68,8 @@ namespace cage
 	AssetsScheme genAssetSchemeSound()
 	{
 		AssetsScheme s;
-		s.decompress.bind<&processDecompress>();
-		s.load.bind<&processLoad>();
+		s.decompress.bind<processDecompress>();
+		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Sound>();
 		return s;
 	}

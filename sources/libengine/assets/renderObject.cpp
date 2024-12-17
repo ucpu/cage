@@ -40,7 +40,7 @@ namespace cage
 	AssetsScheme genAssetSchemeRenderObject()
 	{
 		AssetsScheme s;
-		s.load.bind<&processLoad>();
+		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<RenderObject>();
 		return s;
 	}

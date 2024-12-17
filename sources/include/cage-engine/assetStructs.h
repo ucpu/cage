@@ -120,6 +120,8 @@ namespace cage
 		struct CAGE_ENGINE_API GlyphData
 		{
 			Vec4 texUv;
+			Vec2 bearing;
+			Vec2 size;
 			uint32 image = 0;
 			uint32 glyphId = 0;
 		};

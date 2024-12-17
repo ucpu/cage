@@ -195,7 +195,7 @@ namespace cage
 	AssetsScheme genAssetSchemeTexts()
 	{
 		AssetsScheme s;
-		s.load.bind<&processTextsLoad>();
+		s.load.bind<processTextsLoad>();
 		s.typeHash = detail::typeHash<Texts>();
 		return s;
 	}

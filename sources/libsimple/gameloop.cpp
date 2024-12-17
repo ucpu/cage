@@ -556,7 +556,7 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(1));
 					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(1));
 					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
-					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(1));
+					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont());
 					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound());
 					// cage pack
 					assets->load(HashString("cage/cage.pack"));

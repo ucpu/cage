@@ -15,10 +15,9 @@ namespace cage
 		}
 	}
 
-	AssetsScheme genAssetSchemeFont(uint32 threadIndex)
+	AssetsScheme genAssetSchemeFont()
 	{
 		AssetsScheme s;
-		s.threadIndex = threadIndex;
 		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Font>();
 		return s;
