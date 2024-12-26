@@ -140,7 +140,7 @@ namespace cage
 			{
 				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", "failed parsing environment variable CAGE_FULLSCREEN_DEFAULT");
 			}
-			return false;
+			return true;
 		}
 	}
 

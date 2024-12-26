@@ -1,4 +1,5 @@
 #include <atomic>
+#include <cstdlib> // std::getenv
 #include <exception>
 
 #include "engine.h"
@@ -18,6 +19,7 @@
 #include <cage-core/profiling.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
+#include <cage-core/string.h>
 #include <cage-core/texts.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/variableSmoothingBuffer.h>
@@ -432,6 +434,24 @@ namespace cage
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
+			bool defaultAssetsEnvironment()
+			{
+				const char *env = std::getenv("CAGE_ASSETS_LISTEN");
+				if (!env)
+					return false;
+				try
+				{
+					const bool r = toBool(trim(String(env)));
+					CAGE_LOG(SeverityEnum::Info, "engine", Stringizer() + "using environment variable CAGE_ASSETS_LISTEN, value: " + r);
+					return r;
+				}
+				catch (const Exception &)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "engine", "failed parsing environment variable CAGE_ASSETS_LISTEN");
+				}
+				return false;
+			}
+
 			void initialize(const EngineCreateConfig &config)
 			{
 				CAGE_ASSERT(engineStarted == 0);
@@ -563,7 +583,7 @@ namespace cage
 				}
 
 				{ // initialize assets change listening
-					if (confAutoAssetListen)
+					if (confAutoAssetListen || defaultAssetsEnvironment())
 					{
 						CAGE_LOG(SeverityEnum::Info, "assets", "starting assets updates listening");
 						assets->listen();

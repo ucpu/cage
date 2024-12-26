@@ -406,6 +406,8 @@ namespace cage
 							Real off = 0;
 							switch (format.align)
 							{
+								case TextAlignEnum::Left:
+									break;
 								case TextAlignEnum::Right:
 									off = width - b;
 									break;
