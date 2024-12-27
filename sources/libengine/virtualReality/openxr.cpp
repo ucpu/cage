@@ -678,8 +678,8 @@ namespace cage
 									check(xrBeginSession(session, &info));
 									sessionRunning = true;
 								}
+								break;
 							}
-							break;
 							case XR_SESSION_STATE_STOPPING:
 							{
 								if (sessionRunning)
@@ -688,8 +688,8 @@ namespace cage
 									check(xrEndSession(session));
 									sessionRunning = false;
 								}
+								break;
 							}
-							break;
 							case XR_SESSION_STATE_LOSS_PENDING:
 							case XR_SESSION_STATE_EXITING:
 								stopping = true;
@@ -697,8 +697,8 @@ namespace cage
 							case XR_SESSION_STATE_MAX_ENUM:
 								break;
 						}
+						break;
 					}
-					break;
 					case XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED:
 						break;
 					default:

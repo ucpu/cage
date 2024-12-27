@@ -565,11 +565,9 @@ namespace cage
 		gpuTime = graphics->timeQueries[0].time / 1000;
 	}
 
-	namespace detail
+	AssetsOnDemand *engineAssetsOnDemand()
 	{
-		void enginePurgeAssetsOnDemandCache()
-		{
-			graphics->onDemand->clear();
-		}
+		CAGE_ASSERT(graphics && graphics->onDemand);
+		return +graphics->onDemand;
 	}
 }

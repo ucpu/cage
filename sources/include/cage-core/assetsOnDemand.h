@@ -20,6 +20,8 @@ namespace cage
 			return get_(Scheme, assetId, autoLoad).template cast<T>();
 		}
 
+		void preload(uint32 assetId);
+
 		void process();
 		void clear();
 

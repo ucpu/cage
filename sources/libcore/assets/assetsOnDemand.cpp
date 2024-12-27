@@ -10,17 +10,6 @@ namespace cage
 {
 	namespace
 	{
-		// difference that considers overflows
-		constexpr uint32 diff(uint32 a, uint32 b)
-		{
-			return b - a;
-		}
-		static_assert(diff(13, 13) == 0);
-		static_assert(diff(13, 15) == 2);
-		static_assert(diff(4294967295, 4294967295) == 0);
-		static_assert(diff(4294967295, 0) == 1);
-		static_assert(diff(4294967290, 5) == 11);
-
 		class AssetOnDemandImpl : public AssetsOnDemand
 		{
 		public:
@@ -33,6 +22,7 @@ namespace cage
 
 			~AssetOnDemandImpl()
 			{
+				ScopeLock lock(mut, WriteLockTag());
 				for (const auto &it : lastUse)
 					assets->unload(it.first);
 			}
@@ -84,6 +74,12 @@ namespace cage
 				}
 			}
 		};
+	}
+
+	void AssetsOnDemand::preload(uint32 assetId)
+	{
+		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
+		impl->update(true, assetId, true);
 	}
 
 	void AssetsOnDemand::process()

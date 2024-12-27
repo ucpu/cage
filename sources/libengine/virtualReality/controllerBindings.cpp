@@ -118,7 +118,7 @@ namespace cage
 		void controllerBindingsCheckUnused()
 		{
 			const std::map<String, Holder<Ini>> &bindings = loadBindings();
-			for (auto &it : bindings)
+			for (const auto &it : bindings)
 			{
 				String section, item, value;
 				if (it.second->anyUnused(section, item, value))

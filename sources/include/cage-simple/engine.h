@@ -6,18 +6,19 @@
 
 namespace cage
 {
+	class AssetsOnDemand;
 	class EntityManager;
-	class Scheduler;
-	class Window;
 	class GuiManager;
-	class Speaker;
-	class VoicesMixer;
-	class VirtualReality;
 	class ProvisionalGraphics;
-	struct WindowCreateConfig;
+	class Scheduler;
+	class Speaker;
+	class VirtualReality;
+	class VoicesMixer;
+	class Window;
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
 	struct SpeakerCreateConfig;
+	struct WindowCreateConfig;
 
 	struct EngineControlThread
 	{
@@ -76,6 +77,7 @@ namespace cage
 	void engineFinalize();
 
 	AssetsManager *engineAssets();
+	AssetsOnDemand *engineAssetsOnDemand();
 	EntityManager *engineEntities();
 	Window *engineWindow();
 	EventDispatcher<bool(const GenericInput &)> &engineEvents();
@@ -96,11 +98,6 @@ namespace cage
 		bool enabled = false;
 	};
 	EngineDynamicResolution &engineDynamicResolution();
-
-	namespace detail
-	{
-		void enginePurgeAssetsOnDemandCache();
-	}
 }
 
 #endif // guard_engine_asg4ukio4up897sdr
