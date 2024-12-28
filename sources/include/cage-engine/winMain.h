@@ -28,5 +28,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	const auto cmd = ::cage::privat::winMainParams();
 	return ::main(cmd.first, cmd.second);
 }
+
 #endif
 #endif

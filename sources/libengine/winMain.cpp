@@ -16,8 +16,6 @@ namespace cage
 	{
 		CAGE_API_EXPORT std::pair<int, const char **> winMainParams()
 		{
-			using namespace cage;
-
 			CAGE_LOG(SeverityEnum::Info, "cage-engine", "winMain parsing parameters");
 
 			static int consoleDummy = []()
@@ -40,7 +38,7 @@ namespace cage
 			}
 
 			// convert wide char to multibyte
-			char **argv = new char *[argc];
+			char **argv = new char *[argc]; // intentional leak
 			for (int i = 0; i < argc; i++)
 			{
 				size_t len = wcslen(argvW[i]) + 1;

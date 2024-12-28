@@ -26,6 +26,7 @@ namespace cage
 		Entity *cameraEntity = nullptr; // optional
 		Vec2i resolution = Vec2i(1920, 1080);
 		Real retinaScale = 4;
+		sint32 modelLayer = 0;
 		bool tooltipsEnabled = true;
 	};
 

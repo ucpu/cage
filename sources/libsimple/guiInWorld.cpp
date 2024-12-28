@@ -120,7 +120,7 @@ namespace cage
 					tex = newTexture();
 					tex->initialize(config.resolution, 1, GL_RGBA8);
 					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					tex->filters(GL_LINEAR, GL_LINEAR, 8);
+					tex->filters(GL_LINEAR, GL_LINEAR, 16);
 					tex->setDebugName(Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
 					textureName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
@@ -140,6 +140,7 @@ namespace cage
 					mod->importMesh(+msh, bufferView(material));
 					mod->textureNames[0] = textureName;
 					mod->flags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
+					mod->layer = config.modelLayer;
 					mod->setDebugName(Stringizer() + "gui-in-world-model-" + (uintPtr)this);
 					modelName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);
