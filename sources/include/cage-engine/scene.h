@@ -22,6 +22,13 @@ namespace cage
 		uint32 sceneMask = 1;
 	};
 
+	union CAGE_ENGINE_API ShaderDataComponent
+	{
+		Mat4 matrix;
+		Vec4 data[4];
+		ShaderDataComponent() : data() {}
+	};
+
 	struct CAGE_ENGINE_API TextureAnimationComponent
 	{
 		uint64 startTime = 0;

@@ -53,9 +53,7 @@ namespace cage
 
 	void Texture::setDebugName(const String &name)
 	{
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());

@@ -17,11 +17,13 @@ namespace cage
 			shr->setDebugName(context->textId);
 
 			Deserializer des(context->originalData);
+			ShaderProgramHeader header;
+			des >> header;
+			shr->customDataCount = header.customDataCount;
 			{
 				std::vector<detail::StringBase<20>> keywords;
-				uint32 count;
-				des >> count;
-				for (uint32 i = 0; i < count; i++)
+				keywords.reserve(header.keywordsCount);
+				for (uint32 i = 0; i < header.keywordsCount; i++)
 				{
 					detail::StringBase<20> s;
 					des >> s;
@@ -29,16 +31,12 @@ namespace cage
 				}
 				shr->setKeywords(keywords);
 			}
+			for (uint32 i = 0; i < header.stagesCount; i++)
 			{
-				uint32 count;
-				des >> count;
-				for (uint32 i = 0; i < count; i++)
-				{
-					uint32 type, len;
-					des >> type >> len;
-					PointerRange<const char> pos = des.read(len);
-					shr->setSource(type, pos);
-				}
+				uint32 type, len;
+				des >> type >> len;
+				PointerRange<const char> pos = des.read(len);
+				shr->setSource(type, pos);
 			}
 			CAGE_ASSERT(des.available() == 0);
 

@@ -108,6 +108,7 @@ namespace cage
 		{
 			UniMesh uni;
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
+			std::optional<Mat4> customShaderData;
 		};
 
 		struct ModelTranslucent : public ModelShared, public ModelInstance
@@ -393,7 +394,7 @@ namespace cage
 			}
 
 			template<RenderModeEnum RenderMode>
-			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const UniMesh> uniMeshes, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
+			void renderModelsImpl(const CameraData &data, const ModelShared &sh, const PointerRange<const ModelInstance> instances, const PointerRange<const Mat3x4> uniArmatures, bool translucent) const
 			{
 				const Holder<RenderQueue> &renderQueue = data.renderQueue;
 
@@ -485,12 +486,28 @@ namespace cage
 				renderQueue->universalUniformStruct(uniOptions, CAGE_SHADER_UNIBLOCK_OPTIONS);
 
 				const uint32 limit = sh.skeletal ? min(uint32(CAGE_SHADER_MAX_MESHES), CAGE_SHADER_MAX_BONES / sh.mesh->bones) : CAGE_SHADER_MAX_MESHES;
-				for (uint32 offset = 0; offset < uniMeshes.size(); offset += limit)
+				std::vector<float> customShaderData;
+				std::vector<UniMesh> meshes;
+				for (uint32 offset = 0; offset < instances.size(); offset += limit)
 				{
-					const uint32 count = min(limit, numeric_cast<uint32>(uniMeshes.size()) - offset);
-					renderQueue->universalUniformArray<const UniMesh>(subRange<const UniMesh>(uniMeshes, offset, count), CAGE_SHADER_UNIBLOCK_MESHES);
+					const uint32 count = min(limit, numeric_cast<uint32>(instances.size()) - offset);
+					meshes.resize(count);
+					for (uint32 i = 0; i < count; i++)
+						meshes[i] = instances[offset + i].uni;
+					renderQueue->universalUniformArray<const UniMesh>(meshes, CAGE_SHADER_UNIBLOCK_MESHES);
 					if (sh.skeletal)
 						renderQueue->universalUniformArray<const Mat3x4>(subRange<const Mat3x4>(uniArmatures, offset * sh.mesh->bones, count * sh.mesh->bones), CAGE_SHADER_UNIBLOCK_ARMATURES);
+					if (shader->customDataCount)
+					{
+						CAGE_ASSERT(shader->customDataCount <= 16);
+						customShaderData.resize(shader->customDataCount * count);
+						for (uint32 i = 0; i < count; i++)
+						{
+							if (instances[offset + i].customShaderData)
+								detail::memcpy(customShaderData.data() + i * shader->customDataCount, (float *)&*instances[offset + i].customShaderData, shader->customDataCount * sizeof(float));
+						}
+						renderQueue->universalUniformArray<const float>(customShaderData, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
+					}
 					renderQueue->draw(sh.mesh, count);
 				}
 
@@ -520,10 +537,6 @@ namespace cage
 							if (none(sh.mesh->flags & MeshRenderFlags::DepthWrite))
 								continue;
 						}
-						std::vector<UniMesh> uniMeshes;
-						uniMeshes.reserve(shit.second.size());
-						for (const ModelInstance &inst : shit.second)
-							uniMeshes.push_back(inst.uni);
 						std::vector<Mat3x4> uniArmatures;
 						if (sh.skeletal)
 						{
@@ -536,7 +549,7 @@ namespace cage
 									uniArmatures.push_back(it);
 							}
 						}
-						renderModelsImpl<RenderMode>(data, sh, uniMeshes, uniArmatures, false);
+						renderModelsImpl<RenderMode>(data, sh, shit.second, uniArmatures, false);
 					}
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
@@ -547,14 +560,14 @@ namespace cage
 					const auto graphicsDebugScope = renderQueue->namedScope("translucent");
 					for (const auto &it : layer.translucent)
 					{
-						PointerRange<const UniMesh> uniMeshes = { &it.uni, &it.uni + 1 };
 						PointerRange<const Mat3x4> uniArmatures;
 						if (it.skeletal)
 						{
 							uniArmatures = it.skeletalAnimation->armature();
 							CAGE_ASSERT(uniArmatures.size() == it.mesh->bones);
 						}
-						renderModelsImpl<RenderMode>(data, it, uniMeshes, uniArmatures, true);
+						const ModelInstance &inst = (const ModelInstance &)it;
+						renderModelsImpl<RenderMode>(data, it, PointerRange<const ModelInstance>(&inst, &inst + 1), uniArmatures, true);
 					}
 					renderQueue->resetAllState();
 					renderQueue->viewport(Vec2i(), data.resolution);
@@ -798,6 +811,8 @@ namespace cage
 						prepare.model = modelTransform(e);
 						prepare.uni = initializeMeshUni(data, prepare.model);
 						prepare.frustum = Frustum(prepare.uni.mvpMat);
+						if (e->has<ShaderDataComponent>())
+							prepare.customShaderData = e->value<ShaderDataComponent>().matrix;
 						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
 						{
 							prepareObject<PrepareMode>(data, prepare, std::move(obj));

@@ -492,9 +492,7 @@ namespace cage
 
 	void Font::setDebugName(const String &name)
 	{
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
 	}
 
 	void Font::importBuffer(PointerRange<const char> buffer)

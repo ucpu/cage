@@ -38,6 +38,8 @@ namespace cage
 #undef GCHL_GENERATE
 
 		void compute(const Vec3i &groupsCounts);
+
+		uint32 customDataCount = 0; // number of floats passed from the game to the shader, per instance
 	};
 
 	class CAGE_ENGINE_API MultiShaderProgram : private Immovable
@@ -53,6 +55,8 @@ namespace cage
 		void compile();
 
 		Holder<ShaderProgram> get(uint32 variant); // sum of hashes of keywords
+
+		uint32 customDataCount = 0; // number of floats passed from the game to the shader, per instance
 	};
 
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();

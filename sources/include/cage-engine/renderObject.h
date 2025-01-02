@@ -7,9 +7,8 @@ namespace cage
 {
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
-#ifdef CAGE_DEBUG
+	protected:
 		detail::StringBase<64> debugName;
-#endif // CAGE_DEBUG
 
 	public:
 		void setDebugName(const String &name);

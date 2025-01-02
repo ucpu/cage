@@ -595,6 +595,7 @@ namespace cage
 					entityMgr->defineComponent(TransformComponent());
 					transformHistoryComponent = entityMgr->defineComponent(TransformComponent());
 					entityMgr->defineComponent(RenderComponent());
+					entityMgr->defineComponent(ShaderDataComponent());
 					entityMgr->defineComponent(TextureAnimationComponent());
 					entityMgr->defineComponent(SkeletalAnimationComponent());
 					entityMgr->defineComponent(LightComponent());

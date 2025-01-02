@@ -19,9 +19,7 @@ namespace cage
 
 	void RenderObject::setDebugName(const String &name)
 	{
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
 	}
 
 	void RenderObject::setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)

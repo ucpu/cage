@@ -8,19 +8,25 @@ namespace cage
 {
 	enum class MeshRenderFlags : uint32;
 
-	/*
+	enum class ShaderProgramFlags : uint32
+	{
+		None = 0,
+	};
+
 	struct CAGE_ENGINE_API ShaderProgramHeader
 	{
+		ShaderProgramFlags flags = ShaderProgramFlags::None;
+		uint32 customDataCount = 0; // number of floats passed from the game to the shader, per instance
+		uint32 keywordsCount = 0;
+		uint32 stagesCount = 0;
+
 		// follows:
-		// number of keywords, uint32
 		// array of keywords, each StringBase<20>
-		// number of stages, uint32
 		// for each stage:
-		//   stage name, uint32
+		//   type, uint32
 		//   length, uint32
-		//   stage code, array of chars
+		//   code, array of chars
 	};
-	*/
 
 	enum class TextureFlags : uint32
 	{

@@ -89,6 +89,7 @@ namespace cage
 					const std::string defines_ = defines(checked);
 					Holder<ShaderProgram> prg = newShaderProgram();
 					prg->setDebugName(debugName);
+					prg->customDataCount = customDataCount;
 					for (const auto &it : sources)
 					{
 						const std::string src = enhance(it.second, defines_);

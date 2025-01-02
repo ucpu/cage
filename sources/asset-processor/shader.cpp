@@ -7,6 +7,7 @@
 
 #include <cage-core/hashString.h>
 #include <cage-core/timer.h>
+#include <cage-engine/assetStructs.h>
 #include <cage-engine/opengl.h>
 
 namespace
@@ -16,7 +17,7 @@ namespace
 	std::set<String, StringComparatorFast> onces;
 	std::set<detail::StringBase<20>> keywords;
 
-	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
+	const ConfigBool configShaderPrint("cage-asset-processor/shader/preview", false);
 
 	bool validDefineChar(const char c)
 	{
@@ -478,15 +479,23 @@ void processShader()
 	}
 
 	{
+		ShaderProgramHeader header;
+		header.keywordsCount = keywords.size();
+		header.stagesCount = codes.size();
+		if (defines.count("customDataCount"))
+		{
+			const uint32 cdc = toUint32(defines["customDataCount"]);
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "custom data count: " + cdc);
+			header.customDataCount = cdc;
+		}
 		MemoryBuffer buff;
 		Serializer ser(buff);
-		ser << numeric_cast<uint32>(keywords.size());
+		ser << header;
 		for (const auto &it : keywords)
 		{
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
 			ser << it;
 		}
-		ser << numeric_cast<uint32>(codes.size());
 		for (const auto &it : codes)
 		{
 			ser << (uint32)shaderType(it.first);

@@ -80,9 +80,7 @@ namespace cage
 
 	void Model::setDebugName(const String &name)
 	{
-#ifdef CAGE_DEBUG
 		debugName = name;
-#endif // CAGE_DEBUG
 		ModelImpl *impl = (ModelImpl *)this;
 		CAGE_ASSERT(impl->id);
 		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
