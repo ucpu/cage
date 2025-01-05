@@ -287,7 +287,8 @@ namespace
 				line = trim(line);
 				if (line.empty())
 				{
-					output("");
+					if (stackIsOk(stack))
+						output("");
 					continue;
 				}
 				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
