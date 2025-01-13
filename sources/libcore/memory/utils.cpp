@@ -24,7 +24,7 @@ namespace cage
 	static_assert(sizeof(Holder<uint32>) == 2 * sizeof(uintPtr));
 	static_assert(sizeof(Holder<String>) == 2 * sizeof(uintPtr));
 
-	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept : Exception(location, severity, message), memory(memory){};
+	OutOfMemory::OutOfMemory(const std::source_location &location, SeverityEnum severity, StringPointer message, uintPtr memory) noexcept : Exception(location, severity, message), memory(memory) {};
 
 	void OutOfMemory::log() const
 	{
@@ -40,9 +40,9 @@ namespace cage
 		{
 			const uint32 val =
 #ifdef CAGE_SYSTEM_WINDOWS
-				InterlockedIncrement(&counter);
+				InterlockedIncrementNoFence(&counter);
 #else
-				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_SEQ_CST);
+				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_RELAXED);
 #endif // CAGE_SYSTEM_WINDOWS
 			CAGE_ASSERT(val != m);
 		}
