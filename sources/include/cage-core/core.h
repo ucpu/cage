@@ -781,10 +781,11 @@ namespace cage
 
 			HolderBase &operator=(HolderBase &&other)
 			{
-				HolderBase tmp(other.share());
-				clear();
-				std::swap(data_, tmp.data_);
-				std::swap(control_, tmp.control_);
+				if (&other == this)
+					return *this;
+				std::swap(data_, other.data_);
+				std::swap(control_, other.control_);
+				other.clear();
 				return *this;
 			}
 
