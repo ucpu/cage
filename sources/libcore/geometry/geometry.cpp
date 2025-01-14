@@ -488,6 +488,9 @@ namespace cage
 
 	bool intersects(Sphere sphere, const Frustum &frustum)
 	{
+		return intersects(Aabb(sphere), frustum);
+
+		// the following seems broken
 		// https://www.flipcode.com/archives/Frustum_Culling.shtml modified
 		for (int i = 0; i < 6; i++)
 		{

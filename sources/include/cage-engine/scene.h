@@ -20,6 +20,7 @@ namespace cage
 		Real opacity = Real::Nan();
 		uint32 object = 0;
 		uint32 sceneMask = 1;
+		sint32 layer = 0;
 	};
 
 	union CAGE_ENGINE_API ShaderDataComponent
@@ -74,9 +75,10 @@ namespace cage
 		// real opacity; // todo
 		uint32 textId = 0;
 		uint32 font = 0;
-		uint32 sceneMask = 1;
-		Real lineSpacing = 1;
 		TextAlignEnum align = TextAlignEnum::Center;
+		Real lineSpacing = 1;
+		uint32 sceneMask = 1;
+		sint32 renderLayer = 0;
 	};
 
 	struct CAGE_ENGINE_API CameraCommonProperties
