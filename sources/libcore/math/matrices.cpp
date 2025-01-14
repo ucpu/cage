@@ -180,13 +180,16 @@ namespace cage
 	Mat4 operator*(Mat4 l, Mat4 r)
 	{
 		Mat4 res;
-		for (uint8 x = 0; x < 4; x++)
+		for (int col = 0; col < 4; col++)
 		{
-			for (uint8 y = 0; y < 4; y++)
+			for (int row = 0; row < 4; row++)
 			{
-				res.data[y * 4 + x] = 0;
-				for (uint8 z = 0; z < 4; z++)
-					res.data[y * 4 + x] += l[z * 4 + x] * r[y * 4 + z];
+				Real sum;
+				sum += l.data[row + 0] * r.data[col * 4 + 0];
+				sum += l.data[row + 4] * r.data[col * 4 + 1];
+				sum += l.data[row + 8] * r.data[col * 4 + 2];
+				sum += l.data[row + 12] * r.data[col * 4 + 3];
+				res.data[col * 4 + row] = sum;
 			}
 		}
 		return res;
