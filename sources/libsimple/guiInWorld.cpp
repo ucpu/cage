@@ -140,7 +140,6 @@ namespace cage
 					mod->importMesh(+msh, bufferView(material));
 					mod->textureNames[0] = textureName;
 					mod->flags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
-					mod->layer = config.modelLayer;
 					mod->setDebugName(Stringizer() + "gui-in-world-model-" + (uintPtr)this);
 					modelName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);

@@ -115,8 +115,8 @@ namespace cage
 			Mat4 model;
 			Vec4 color = Vec4::Nan();
 			Entity *e = nullptr;
-			bool translucent = false; // transparent or fade
 			sint32 renderLayer = 0;
+			bool translucent = false; // transparent or fade
 			Real depth; // for sorting transparent objects only
 
 			RenderData() = default;
@@ -142,13 +142,13 @@ namespace cage
 			auto cmp() const noexcept
 			{
 				return std::visit(
-					[this](const auto &r) -> std::tuple<bool, sint32, Real, void *, bool>
+					[this](const auto &r) -> std::tuple<sint32, bool, Real, void *, bool>
 					{
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
-							return { translucent, renderLayer, depth, +r.mesh, !!r.skeletalAnimation };
+							return { renderLayer, translucent, depth, +r.mesh, !!r.skeletalAnimation };
 						if constexpr (std::is_same_v<T, RenderText>)
-							return { translucent, renderLayer, depth, +r.font, false };
+							return { renderLayer, translucent, depth, +r.font, false };
 						return {};
 					},
 					data);
@@ -567,7 +567,6 @@ namespace cage
 				CAGE_ASSERT(!instances.empty());
 				const RenderData &rd = instances[0];
 				CAGE_ASSERT(std::holds_alternative<RenderText>(rd.data));
-				const RenderText &rt = std::get<RenderText>(rd.data);
 
 				renderQueue->depthTest(true);
 				renderQueue->depthWrite(false);
@@ -771,8 +770,8 @@ namespace cage
 						ps.reset();
 				}
 
-				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || render.opacity < 1;
 				rd.renderLayer = render.layer + rm.mesh->layer;
+				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || render.opacity < 1;
 				if (rd.translucent)
 					rd.depth = (mvpMat * Vec4(0, 0, 0, 1))[2] * -1;
 
@@ -859,8 +858,8 @@ namespace cage
 				RenderData rd;
 				rd.model = modelTransform(e) * Mat4(Vec3(rt.layout.size * Vec2(-0.5, 0.5), 0));
 				rd.color = Vec4(colorGammaToLinear(tc.color) * tc.intensity, 1); // todo opacity
-				rd.translucent = true;
 				rd.renderLayer = tc.renderLayer;
+				rd.translucent = true;
 				rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
 				rd.data = std::move(rt);
 				renderData.push_back(std::move(rd));
