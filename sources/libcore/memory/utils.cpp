@@ -8,15 +8,6 @@
 	#include <unistd.h>
 #endif
 
-#if __has_include(<valgrind/helgrind.h>)
-	// see https://valgrind.org/docs/manual/hg-manual.html
-	#include <valgrind/helgrind.h>
-#else
-	#define ANNOTATE_HAPPENS_AFTER(XXX)
-	#define ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(XXX)
-	#define ANNOTATE_HAPPENS_BEFORE(XXX)
-#endif
-
 #include <cage-core/memoryUtils.h>
 
 namespace cage
@@ -58,15 +49,7 @@ namespace cage
 			CAGE_ASSERT(val != m);
 
 			if (val == 0)
-			{
-				ANNOTATE_HAPPENS_AFTER(&counter);
-				ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&counter);
 				deleter(deletee);
-			}
-			else
-			{
-				ANNOTATE_HAPPENS_BEFORE(&counter);
-			}
 		}
 	}
 

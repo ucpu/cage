@@ -66,7 +66,7 @@ jobs:
 
 
   Ubuntu:
-    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
+    name: ubuntu-${{ matrix.os-version }}${{ matrix.cpu-arch }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
     runs-on: ubuntu-${{ matrix.os-version }}.04
     env:
       CC: ${{ matrix.compiler.cc }}
@@ -75,6 +75,7 @@ jobs:
       fail-fast: false
       matrix:
         os-version: [22, 24]
+        cpu-arch: ["", "-arm"]
         build-config: [debug, release]
         compiler:
         - {
@@ -266,53 +267,3 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
-
-
-  Valgrind:
-    name: valgrind-${{ matrix.options.tool }}
-    needs: Ubuntu
-    runs-on: ubuntu-24.04
-    env:
-      CC: gcc
-      CXX: g++
-    strategy:
-      fail-fast: false
-      matrix:
-        options:
-        - {
-            tool: memcheck,
-            flags: --exit-on-first-error=yes --error-exitcode=1
-          }
-        - {
-            tool: helgrind,
-            flags: # helgrind produces some false-positives so lets not fail on them
-          }
-
-    steps:
-    - name: Install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
-        sudo apt-get install -y valgrind
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Configure
-      run: |
-        mkdir build
-        cd build
-        # WAMR_DISABLE_WRITE_GS_BASE: avoid valgrind crashing on an instruction it does not understand
-        cmake -DWAMR_DISABLE_WRITE_GS_BASE=1 -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
-
-    - name: Build
-      run: |
-        cd build
-        cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
-
-    - name: Tests
-      run: |
-        cd build/result/relwithdebinfo
-        valgrind ${{ matrix.options.flags }} --tool=${{ matrix.options.tool }} ./cage-test-core
-

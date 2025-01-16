@@ -153,9 +153,10 @@ namespace cage
 				return std::binary_search(data, data + current, what);
 			}
 
-			uint32 encodeUrlBase(char *pStart, const char *pSrc, uint32 length)
+			uint32 encodeUrlBase(uint8 *pStart, const uint8 *pSrc, uint32 length)
 			{
-				static constexpr bool SAFE[256] = { /*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
+				static constexpr bool SAFE[256] = { //
+					/*      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F */
 					/* 0 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					/* 1 */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					/* 2 */ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, // (, ), +, -, .
@@ -176,26 +177,27 @@ namespace cage
 					/* E */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 					/* F */ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 				};
-				static constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
-				char *pEnd = pStart;
-				const char *const SRC_END = pSrc + length;
+				static constexpr uint8 DEC2HEX[16 + 1] = "0123456789ABCDEF";
+				uint8 *pEnd = pStart;
+				const uint8 *const SRC_END = pSrc + length;
 				for (; pSrc < SRC_END; ++pSrc)
 				{
-					if (SAFE[(unsigned char)*pSrc])
+					if (SAFE[*pSrc])
 						*pEnd++ = *pSrc;
 					else
 					{
 						*pEnd++ = '%';
-						*pEnd++ = DEC2HEX[((unsigned char)*pSrc) >> 4];
-						*pEnd++ = DEC2HEX[((unsigned char)*pSrc) & 0x0F];
+						*pEnd++ = DEC2HEX[(*pSrc) >> 4];
+						*pEnd++ = DEC2HEX[(*pSrc) & 0x0F];
 					}
 				}
 				return numeric_cast<uint32>(pEnd - pStart);
 			}
 
-			uint32 decodeUrlBase(char *pStart, const char *pSrc, uint32 length)
+			uint32 decodeUrlBase(uint8 *pStart, const uint8 *pSrc, uint32 length)
 			{
-				static constexpr char HEX2DEC[256] = { /*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
+				static constexpr sint8 HEX2DEC[256] = { //
+					/*       0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F */
 					/* 0 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 					/* 1 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 					/* 2 */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -216,15 +218,15 @@ namespace cage
 					/* E */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
 					/* F */ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 				};
-				const char *const SRC_END = pSrc + length;
-				const char *const SRC_LAST_DEC = SRC_END - 2;
-				char *pEnd = pStart;
+				const uint8 *const SRC_END = pSrc + length;
+				const uint8 *const SRC_LAST_DEC = SRC_END - 2;
+				uint8 *pEnd = pStart;
 				while (pSrc < SRC_LAST_DEC)
 				{
 					if (*pSrc == '%')
 					{
-						char dec1, dec2;
-						if (-1 != (dec1 = HEX2DEC[(unsigned char)*(pSrc + 1)]) && -1 != (dec2 = HEX2DEC[(unsigned char)*(pSrc + 2)]))
+						uint8 dec1, dec2;
+						if (-1 != (dec1 = HEX2DEC[*(pSrc + 1)]) && -1 != (dec2 = HEX2DEC[*(pSrc + 2)]))
 						{
 							*pEnd++ = (dec1 << 4) + dec2;
 							pSrc += 3;
@@ -468,8 +470,8 @@ namespace cage
 		void stringEncodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what)
 		{
 			// todo this can buffer overflow
-			char tmp[4096];
-			const uint32 len = encodeUrlBase(tmp, what.data(), numeric_cast<uint32>(what.size()));
+			uint8 tmp[4096];
+			const uint32 len = encodeUrlBase(tmp, (uint8 *)what.data(), numeric_cast<uint32>(what.size()));
 			if (len > maxLength)
 				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(data, tmp, len);
@@ -480,7 +482,7 @@ namespace cage
 		void stringDecodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what)
 		{
 			CAGE_ASSERT(maxLength >= what.size());
-			current = decodeUrlBase(data, what.data(), numeric_cast<uint32>(what.size()));
+			current = decodeUrlBase((uint8 *)data, (const uint8 *)what.data(), numeric_cast<uint32>(what.size()));
 			data[current] = 0;
 		}
 

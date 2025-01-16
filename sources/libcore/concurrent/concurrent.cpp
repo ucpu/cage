@@ -21,16 +21,6 @@
 	#include <dispatch/dispatch.h>
 #endif
 
-#if __has_include(<valgrind/helgrind.h>)
-	// https://github.com/fredericgermain/valgrind/blob/master/helgrind/tests/annotate_rwlock.c
-	#include <valgrind/helgrind.h>
-#else
-	#define ANNOTATE_RWLOCK_CREATE(ADDR)
-	#define ANNOTATE_RWLOCK_DESTROY(ADDR)
-	#define ANNOTATE_RWLOCK_ACQUIRED(ADDR, WRT)
-	#define ANNOTATE_RWLOCK_RELEASED(ADDR, WRT)
-#endif
-
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 
@@ -123,10 +113,6 @@ namespace cage
 			std::atomic<uint32> v = 0;
 			static constexpr uint32 YieldAfter = 50;
 			static constexpr uint32 Writer = m;
-
-			RwMutexImpl() { ANNOTATE_RWLOCK_CREATE(this); }
-
-			~RwMutexImpl() { ANNOTATE_RWLOCK_DESTROY(this); }
 		};
 	}
 
@@ -140,10 +126,7 @@ namespace cage
 			if (p == 0)
 			{
 				if (impl->v.compare_exchange_weak(p, RwMutexImpl::Writer))
-				{
-					ANNOTATE_RWLOCK_ACQUIRED(impl, 1);
 					return;
-				}
 			}
 			if (++attempt >= RwMutexImpl::YieldAfter)
 			{
@@ -163,10 +146,7 @@ namespace cage
 			if (p != RwMutexImpl::Writer)
 			{
 				if (impl->v.compare_exchange_weak(p, p + 1))
-				{
-					ANNOTATE_RWLOCK_ACQUIRED(impl, 0);
 					return;
-				}
 			}
 			if (++attempt >= RwMutexImpl::YieldAfter)
 			{
@@ -181,15 +161,9 @@ namespace cage
 		RwMutexImpl *impl = (RwMutexImpl *)this;
 		uint32 p = impl->v;
 		if (p == RwMutexImpl::Writer)
-		{
 			impl->v = 0;
-			ANNOTATE_RWLOCK_RELEASED(impl, 1);
-		}
 		else
-		{
 			impl->v--;
-			ANNOTATE_RWLOCK_RELEASED(impl, 0);
-		}
 	}
 
 	Holder<RwMutex> newRwMutex()

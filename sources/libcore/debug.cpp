@@ -154,6 +154,10 @@ namespace cage
 			__debugbreak();
 #elif defined(__clang__)
 			__builtin_debugtrap();
+#elif defined(__aarch64__)
+			__asm__ volatile("brk #0");
+#elif defined(__ARM_ARCH)
+			__asm__ volatile("bkpt #0");
 #else
 			__asm__ volatile("int $0x03");
 #endif
