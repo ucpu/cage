@@ -17,7 +17,7 @@ namespace cage
 		class SwapBufferGuardImpl : public SwapBufferGuard
 		{
 		public:
-			explicit SwapBufferGuardImpl(const SwapBufferGuardCreateConfig &config) : states{ StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
+			explicit SwapBufferGuardImpl(const SwapBufferGuardCreateConfig &config) : buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
 			{
 				CAGE_ASSERT(buffersCount > 1 && buffersCount < 5);
 				CAGE_ASSERT(buffersCount > 1u + repeatedReads + repeatedWrites);
@@ -118,11 +118,9 @@ namespace cage
 
 			uint32 next(uint32 i) const { return (i + 1) % buffersCount; }
 
-			uint32 prev(uint32 i) const { return (i + buffersCount - 1) % buffersCount; }
-
 			Holder<Mutex> mutex;
-			StateEnum states[4];
-			uint32 ri, wi;
+			StateEnum states[4] = { StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing };
+			uint32 ri = 0, wi = 0;
 			const uint32 buffersCount;
 			const bool repeatedReads, repeatedWrites;
 		};
@@ -178,9 +176,6 @@ namespace cage
 		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl *)this;
 		return impl->write();
 	}
-
-	//SwapBufferGuardCreateConfig::SwapBufferGuardCreateConfig(uint32 buffersCount) : buffersCount(buffersCount)
-	//{}
 
 	Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config)
 	{

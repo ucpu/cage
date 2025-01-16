@@ -35,14 +35,14 @@ namespace cage
 		struct EmitSound
 		{
 			TransformComponent transform, transformHistory;
-			SoundComponent sound = {};
+			SoundComponent sound;
 			uintPtr id = 0;
 		};
 
 		struct EmitListener
 		{
 			TransformComponent transform, transformHistory;
-			ListenerComponent listener = {};
+			ListenerComponent listener;
 			uintPtr id = 0;
 		};
 
