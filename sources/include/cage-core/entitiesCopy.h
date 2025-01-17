@@ -13,6 +13,7 @@ namespace cage
 	{
 		const EntityManager *source = nullptr;
 		EntityManager *destination = nullptr;
+		bool purge = false; // purge destination instead of destroy
 	};
 
 	CAGE_CORE_API void entitiesCopy(const EntitiesCopyConfig &config);

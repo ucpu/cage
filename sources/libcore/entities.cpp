@@ -247,6 +247,20 @@ namespace cage
 			impl->allEntities.unsafeData().back()->destroy();
 	}
 
+	void EntityManager::purge()
+	{
+		EntityManagerImpl *impl = (EntityManagerImpl *)this;
+		impl->namedEntities.clear();
+		impl->allEntities.clear();
+		if (impl->arena)
+			impl->arena->flush();
+		for (const auto &it : impl->components)
+		{
+			it->componentEntities.clear();
+			it->arena->flush();
+		}
+	}
+
 	EntityComponent *EntityManager::defineComponent_(uint32 typeIndex, const void *prototype)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;

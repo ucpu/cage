@@ -1,4 +1,4 @@
-#include <map>
+#include <vector>
 
 #include <cage-core/entities.h>
 #include <cage-core/entitiesCopy.h>
@@ -9,9 +9,17 @@ namespace cage
 {
 	namespace
 	{
-		std::map<EntityComponent *, EntityComponent *> mapping(const EntitiesCopyConfig &config)
+		struct Mapped
 		{
-			std::map<EntityComponent *, EntityComponent *> res;
+			EntityComponent *sc = nullptr;
+			EntityComponent *dc = nullptr;
+			uintPtr size = 0;
+		};
+
+		std::vector<Mapped> mapping(const EntitiesCopyConfig &config)
+		{
+			std::vector<Mapped> res;
+			res.reserve(config.source->components().size());
 			for (EntityComponent *sc : config.source->components())
 			{
 				uint32 idx = 0;
@@ -30,24 +38,29 @@ namespace cage
 						config.destination->defineComponent(sc);
 					cbts = config.destination->componentsByType(sc->typeIndex());
 				}
-				res[sc] = cbts[idx];
+				res.push_back({ sc, cbts[idx] });
 			}
+			for (auto &it : res)
+				it.size = detail::typeSizeByIndex(it.sc->typeIndex());
 			return res;
 		}
 	}
 
 	void entitiesCopy(const EntitiesCopyConfig &config)
 	{
+		if (config.purge)
+			config.destination->purge();
+		else
+			config.destination->destroy();
 		const auto mp = mapping(config);
-		config.destination->destroy();
 		for (Entity *se : config.source->entities())
 		{
 			Entity *de = se->id() ? config.destination->create(se->id()) : config.destination->createAnonymous();
 			for (const auto &it : mp)
 			{
-				if (!se->has(it.first))
+				if (!se->has(it.sc))
 					continue;
-				detail::memcpy(de->unsafeValue(it.second), se->unsafeValue(it.first), detail::typeSizeByIndex(it.first->typeIndex()));
+				detail::memcpy(de->unsafeValue(it.dc), se->unsafeValue(it.sc), it.size);
 			}
 		}
 	}

@@ -45,6 +45,7 @@ namespace cage
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities
+		void purge(); // destroy all entities (without any callbacks)
 
 		EventDispatcher<bool(Entity *)> entityAdded;
 		EventDispatcher<bool(Entity *)> entityRemoved;

@@ -193,6 +193,7 @@ namespace cage
 					EntitiesCopyConfig cfg;
 					cfg.source = engineEntities();
 					cfg.destination = +emitBuffers[lock.index()].scene;
+					cfg.purge = true;
 					entitiesCopy(cfg);
 					emitBuffers[lock.index()].emitTime = emitTime;
 				}
@@ -332,8 +333,7 @@ namespace cage
 
 				if (vrFrame)
 				{
-					renderQueue->customCommand(
-						vrFrame.share(), +[](VirtualRealityGraphicsFrame *f) { f->renderBegin(); });
+					renderQueue->customCommand(vrFrame.share(), +[](VirtualRealityGraphicsFrame *f) { f->renderBegin(); });
 				}
 
 				for (CameraData &cam : cameras)
