@@ -226,7 +226,7 @@ namespace cage
 					if (*pSrc == '%')
 					{
 						uint8 dec1, dec2;
-						if (-1 != (dec1 = HEX2DEC[*(pSrc + 1)]) && -1 != (dec2 = HEX2DEC[*(pSrc + 2)]))
+						if (uint8(-1) != (dec1 = HEX2DEC[*(pSrc + 1)]) && uint8(-1) != (dec2 = HEX2DEC[*(pSrc + 2)]))
 						{
 							*pEnd++ = (dec1 << 4) + dec2;
 							pSrc += 3;

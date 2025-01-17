@@ -382,18 +382,23 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("url encode and decode");
-			CAGE_TEST(encodeUrl(String("for (uint i = 0; i < sts.size (); i++)")) == "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)");
+			{
+				const String a = "for (uint i = 0; i < sts.size (); i++)";
+				const String b = "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)";
+				CAGE_TEST(encodeUrl(a) == b);
+				CAGE_TEST(decodeUrl(b) == a);
+			}
 			for (uint32 i = 0; i < 1000; i++)
 			{
 				String s;
-				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
-				{
-					char c = randomRange(0, 255);
-					s += Stringizer() + c;
-				}
-				String sen = encodeUrl(s);
-				String sde = decodeUrl(sen);
+				s.rawLength() = randomRange(0, 100);
+				for (uint32 j = 0; j < s.length(); j++)
+					s.rawData()[j] = (char)randomRange(0, 255);
+				const String sen = encodeUrl(s);
+				const String sde = decodeUrl(sen);
 				CAGE_TEST(sde == s);
+				const String corrupted = remove(sen, randomRange(0u, sen.length()), 1);
+				decodeUrl(corrupted);
 			}
 		}
 	}
