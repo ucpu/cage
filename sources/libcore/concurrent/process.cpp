@@ -103,6 +103,7 @@ namespace cage
 
 				const String workingDir = pathToAbs(config.workingDirectory);
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
+				pathCreateDirectories(workingDir);
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));

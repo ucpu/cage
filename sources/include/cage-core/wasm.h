@@ -156,7 +156,7 @@ namespace cage
 
 	public:
 		WasmBuffer() = default;
-		WasmBuffer(WasmInstance *);
+		explicit WasmBuffer(WasmInstance *);
 		WasmBuffer(WasmBuffer &&);
 		WasmBuffer &operator=(WasmBuffer &&);
 		~WasmBuffer();

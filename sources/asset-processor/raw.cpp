@@ -2,19 +2,19 @@
 
 void processRaw()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	Holder<PointerRange<char>> data;
 	{ // load file
-		Holder<File> f = readFile(inputFile);
+		Holder<File> f = readFile(processor->inputFile);
 		data = f->readAll();
 	}
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.originalSize = numeric_cast<uint32>(data.size());
 
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "original data size: " + data.size() + " bytes");
-	if (data.size() >= toUint32(properties("compressThreshold")))
+	if (data.size() >= toUint32(processor->property("compressThreshold")))
 	{
 		Holder<PointerRange<char>> data2 = memoryCompress(data);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compressed data size: " + data2.size() + " bytes");
@@ -30,7 +30,7 @@ void processRaw()
 	else
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "data are under compression threshold");
 
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	f->write(data);
 	f->close();

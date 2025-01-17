@@ -58,7 +58,7 @@ namespace
 
 	uint32 convertTarget()
 	{
-		const String f = properties("target");
+		const String f = processor->property("target");
 		if (f == "2d")
 			return GL_TEXTURE_2D;
 		if (f == "2dArray")
@@ -170,7 +170,7 @@ namespace
 		{
 			for (auto &itt : itp.textures)
 			{
-				if (isPattern(itt.name, "", "", String(Stringizer() + "?" + inputSpec)))
+				if (isPattern(itt.name, "", "", String(Stringizer() + "?" + processor->inputSpec)))
 					return &itt;
 			}
 		}
@@ -179,18 +179,18 @@ namespace
 
 	void loadAllFiles()
 	{
-		if (inputSpec.empty())
+		if (processor->inputSpec.empty())
 		{
-			images = imageImportFiles(inputFileName);
+			images = imageImportFiles(processor->inputFileName);
 			for (const auto &it : images.parts)
-				writeLine(String("use=") + pathToRel(it.fileName, inputDirectory));
+				processor->writeLine(String("use=") + pathToRel(it.fileName, processor->inputDirectory));
 		}
 		else
 		{
 			MeshImportConfig config;
-			config.rootPath = inputDirectory;
+			config.rootPath = processor->inputDirectory;
 			config.verbose = true;
-			MeshImportResult res = meshImportFiles(inputFileName, config);
+			MeshImportResult res = meshImportFiles(processor->inputFileName, config);
 
 			//for (const auto &part : res.parts)
 			//	for (const auto &it : part.textures)
@@ -336,7 +336,7 @@ namespace
 		data.flags |= TextureFlags::Compressed;
 		data.internalFormat = findInternalFormatForBcn(data);
 
-		imageImportConvertImagesToBcn(images, toBool(properties("normal")));
+		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const ImageImportRaw *>>> levels;
 		for (const auto &it : images.parts)
@@ -394,23 +394,23 @@ namespace
 		data.target = target;
 		data.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
 		data.channels = images.parts[0].image->channels();
-		data.filterMin = convertFilter(properties("filterMin"));
-		data.filterMag = convertFilter(properties("filterMag"));
-		data.filterAniso = toUint32(properties("filterAniso"));
-		data.wrapX = convertWrap(properties("wrapX"));
-		data.wrapY = convertWrap(properties("wrapY"));
-		data.wrapZ = convertWrap(properties("wrapZ"));
+		data.filterMin = convertFilter(processor->property("filterMin"));
+		data.filterMag = convertFilter(processor->property("filterMag"));
+		data.filterAniso = toUint32(processor->property("filterAniso"));
+		data.wrapX = convertWrap(processor->property("wrapX"));
+		data.wrapY = convertWrap(processor->property("wrapY"));
+		data.wrapZ = convertWrap(processor->property("wrapZ"));
 		data.swizzle[0] = TextureSwizzleEnum::R;
 		data.swizzle[1] = TextureSwizzleEnum::G;
 		data.swizzle[2] = TextureSwizzleEnum::B;
 		data.swizzle[3] = TextureSwizzleEnum::A;
 		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution, target == GL_TEXTURE_3D), 8u) : 1;
 		data.mipmapLevels = data.containedLevels;
-		if (toBool(properties("animationLoop")))
+		if (toBool(processor->property("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
-		if (toBool(properties("srgb")) && !toBool(properties("gamma")))
+		if (toBool(processor->property("srgb")) && !toBool(processor->property("gamma")))
 			data.flags |= TextureFlags::Srgb;
-		data.animationDuration = toUint64(properties("animationDuration"));
+		data.animationDuration = toUint64(processor->property("animationDuration"));
 		data.copyType = GL_UNSIGNED_BYTE;
 
 		// todo
@@ -426,7 +426,7 @@ namespace
 			Serializer ser(inputBuffer);
 			ser << data; // reserve space, will be overridden later
 
-			const String compression = properties("compression");
+			const String compression = processor->property("compression");
 			if (compression == "bcn")
 				exportBcn(data, ser);
 			else
@@ -438,13 +438,13 @@ namespace
 			ser << data;
 		}
 
-		AssetHeader h = initializeAssetHeader();
+		AssetHeader h = processor->initializeAssetHeader();
 		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
-		Holder<File> f = writeFile(outputFileName);
+		Holder<File> f = writeFile(processor->outputFileName);
 		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();
@@ -454,13 +454,13 @@ namespace
 void processTexture()
 {
 	{
-		const bool h2n = properties("convert") == "heightToNormal";
-		const bool s2s = properties("convert") == "specularToSpecial";
-		const bool g2s = properties("convert") == "gltfToSpecial";
-		const bool s2c = toBool(properties("skyboxToCube"));
-		const bool pa = toBool(properties("premultiplyAlpha"));
-		const bool srgb = toBool(properties("srgb"));
-		const bool normal = toBool(properties("normal"));
+		const bool h2n = processor->property("convert") == "heightToNormal";
+		const bool s2s = processor->property("convert") == "specularToSpecial";
+		const bool g2s = processor->property("convert") == "gltfToSpecial";
+		const bool s2c = toBool(processor->property("skyboxToCube"));
+		const bool pa = toBool(processor->property("premultiplyAlpha"));
+		const bool srgb = toBool(processor->property("srgb"));
+		const bool normal = toBool(processor->property("normal"));
 		if ((h2n || s2s || g2s || normal) && pa)
 			CAGE_THROW_ERROR(Exception, "premultiplied alpha is for colors only");
 		if ((h2n || s2s || g2s || normal) && srgb)
@@ -469,9 +469,9 @@ void processTexture()
 			CAGE_THROW_ERROR(Exception, "incompatible options for normal map");
 		if (h2n && !normal)
 			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
-		if (s2c && properties("target") != "cubeMap")
+		if (s2c && processor->property("target") != "cubeMap")
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires target to be cubeMap");
-		if (toBool(properties("gamma")) && !srgb)
+		if (toBool(processor->property("gamma")) && !srgb)
 			CAGE_THROW_ERROR(Exception, "sampling in gamma requires srgb color space");
 	}
 
@@ -481,7 +481,7 @@ void processTexture()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "input channels: " + images.parts[0].image->channels());
 
 	{ // change channels count
-		const uint32 ch = toUint32(properties("channels"));
+		const uint32 ch = toUint32(processor->property("channels"));
 		if (ch != 0 && images.parts[0].image->channels() != ch)
 		{
 			for (auto &p : images.parts)
@@ -491,7 +491,7 @@ void processTexture()
 	}
 
 	{ // convert to srgb
-		if (toBool(properties("srgb")))
+		if (toBool(processor->property("srgb")))
 		{
 			for (auto &it : images.parts)
 				imageConvert(+it.image, GammaSpaceEnum::Gamma);
@@ -505,7 +505,7 @@ void processTexture()
 	}
 
 	{ // vertical flip
-		if (toBool(properties("flip")))
+		if (toBool(processor->property("flip")))
 		{
 			for (auto &it : images.parts)
 				imageVerticalFlip(+it.image);
@@ -514,25 +514,25 @@ void processTexture()
 	}
 
 	{ // invert
-		if (toBool(properties("invertRed")))
+		if (toBool(processor->property("invertRed")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 0);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "red channel inverted");
 		}
-		if (toBool(properties("invertGreen")))
+		if (toBool(processor->property("invertGreen")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 1);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "green channel inverted");
 		}
-		if (toBool(properties("invertBlue")))
+		if (toBool(processor->property("invertBlue")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 2);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "blue channel inverted");
 		}
-		if (toBool(properties("invertAlpha")))
+		if (toBool(processor->property("invertAlpha")))
 		{
 			for (auto &it : images.parts)
 				imageInvertChannel(+it.image, 3);
@@ -541,9 +541,9 @@ void processTexture()
 	}
 
 	{ // convert height to normal map
-		if (properties("convert") == "heightToNormal")
+		if (processor->property("convert") == "heightToNormal")
 		{
-			const float strength = toFloat(properties("normalStrength"));
+			const float strength = toFloat(processor->property("normalStrength"));
 			for (auto &it : images.parts)
 				imageConvertHeigthToNormal(+it.image, strength);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted from height map to normal map with strength of " + strength);
@@ -551,7 +551,7 @@ void processTexture()
 	}
 
 	{ // convert specular to special
-		if (properties("convert") == "specularToSpecial")
+		if (processor->property("convert") == "specularToSpecial")
 		{
 			for (auto &it : images.parts)
 				imageConvertSpecularToSpecial(+it.image);
@@ -560,7 +560,7 @@ void processTexture()
 	}
 
 	{ // convert gltf pbr to special
-		if (properties("convert") == "gltfToSpecial")
+		if (processor->property("convert") == "gltfToSpecial")
 		{
 			for (auto &it : images.parts)
 				imageConvertGltfPbrToSpecial(+it.image);
@@ -569,7 +569,7 @@ void processTexture()
 	}
 
 	{ // skybox to cube
-		if (toBool(properties("skyboxToCube")))
+		if (toBool(processor->property("skyboxToCube")))
 		{
 			performSkyboxToCube();
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converted skybox to cube map");
@@ -580,7 +580,7 @@ void processTexture()
 	checkConsistency(target);
 
 	{ // premultiply alpha
-		if (toBool(properties("premultiplyAlpha")))
+		if (toBool(processor->property("premultiplyAlpha")))
 		{
 			for (auto &it : images.parts)
 			{
@@ -593,7 +593,7 @@ void processTexture()
 	}
 
 	{ // normal map
-		if (toBool(properties("normal")))
+		if (toBool(processor->property("normal")))
 		{
 			for (auto &it : images.parts)
 			{
@@ -613,7 +613,7 @@ void processTexture()
 	}
 
 	{ // downscale
-		const uint32 downscale = toUint32(properties("downscale"));
+		const uint32 downscale = toUint32(processor->property("downscale"));
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
@@ -632,7 +632,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images.parts)
 		{
-			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
+			const String dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "_preview_mip_" + it.mipmapLevel + "_face_" + it.cubeFace + "_layer_" + it.layer + "_index_" + (index++) + ".png");
 			it.image->exportFile(dbgName);
 		}
 	}
@@ -642,13 +642,13 @@ void analyzeTexture()
 {
 	try
 	{
-		ImageImportResult res = imageImportFiles(pathJoin(inputDirectory, inputFile));
+		ImageImportResult res = imageImportFiles(pathJoin(processor->inputDirectory, processor->inputFile));
 		if (res.parts.empty())
 			CAGE_THROW_ERROR(Exception, "no images");
-		writeLine("cage-begin");
-		writeLine("scheme=texture");
-		writeLine(String() + "asset=" + inputFile);
-		writeLine("cage-end");
+		processor->writeLine("cage-begin");
+		processor->writeLine("scheme=texture");
+		processor->writeLine(String() + "asset=" + processor->inputFile);
+		processor->writeLine("cage-end");
 	}
 	catch (...)
 	{

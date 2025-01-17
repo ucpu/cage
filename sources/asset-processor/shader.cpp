@@ -409,8 +409,8 @@ namespace
 						{
 							if (line.empty())
 								CAGE_THROW_ERROR(Exception, "$include expects one parameter");
-							line = convertFilePath(pathIsAbs(line) ? line : pathJoin(filename + "/..", line));
-							const String fn = pathJoin(inputDirectory, line);
+							line = processor->convertFilePath(pathIsAbs(line) ? line : pathJoin(filename + "/..", line));
+							const String fn = pathJoin(processor->inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
 								CAGE_LOG_THROW(Stringizer() + "requested file: " + line);
@@ -420,7 +420,7 @@ namespace
 								output(Stringizer() + "// CAGE: include file: " + line);
 							parse(fn);
 							if (configShaderPrint)
-								output(Stringizer() + "// CAGE: return to file: " + pathToRel(filename, inputDirectory) + ":" + lineNumber);
+								output(Stringizer() + "// CAGE: return to file: " + pathToRel(filename, processor->inputDirectory) + ":" + lineNumber);
 						}
 						else
 						{
@@ -464,17 +464,17 @@ namespace
 
 void processShader()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	defines["cageShaderProcessor"] = "1";
-	defines["inputSpec"] = inputSpec;
+	defines["inputSpec"] = processor->inputSpec;
 
-	parse(inputFileName);
+	parse(processor->inputFileName);
 
 	{
 		std::string prepend = R"foo(#version 450 core
 )foo";
-		prepend += std::string() + "// " + inputName.c_str() + "\n";
+		prepend += std::string() + "// " + processor->inputName.c_str() + "\n";
 		for (auto &it : codes)
 			it.second = prepend + it.second;
 	}
@@ -509,10 +509,10 @@ void processShader()
 		Holder<PointerRange<char>> comp = memoryCompress(buff);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
-		AssetHeader h = initializeAssetHeader();
+		AssetHeader h = processor->initializeAssetHeader();
 		h.originalSize = buff.size();
 		h.compressedSize = comp.size();
-		Holder<File> f = writeFile(outputFileName);
+		Holder<File> f = writeFile(processor->outputFileName);
 		f->write(bufferView(h));
 		f->write(comp);
 		f->close();
@@ -522,7 +522,7 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(processor->inputName) + "_" + it.first + ".glsl");
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);

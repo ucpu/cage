@@ -10,24 +10,24 @@ namespace
 		try
 		{
 			MeshImportConfig cfg;
-			cfg.rootPath = inputDirectory;
+			cfg.rootPath = processor->inputDirectory;
 			cfg.passInvalidVectors = true;
-			MeshImportResult result = meshImportFiles(inputFileName, cfg);
+			MeshImportResult result = meshImportFiles(processor->inputFileName, cfg);
 			meshImportConvertToCageFormats(result);
-			writeLine("cage-begin");
+			processor->writeLine("cage-begin");
 			try
 			{
 				// models
 				if (result.parts.size() == 1)
 				{
-					writeLine("scheme=model");
-					writeLine(Stringizer() + "asset=" + inputFile);
+					processor->writeLine("scheme=model");
+					processor->writeLine(Stringizer() + "asset=" + processor->inputFile);
 				}
 				else
 					for (const auto &part : result.parts)
 					{
-						writeLine("scheme=model");
-						writeLine(Stringizer() + "asset=" + inputFile + "?" + part.objectName + "_" + part.materialName);
+						processor->writeLine("scheme=model");
+						processor->writeLine(Stringizer() + "asset=" + processor->inputFile + "?" + part.objectName + "_" + part.materialName);
 					}
 
 				// textures
@@ -35,29 +35,29 @@ namespace
 				{
 					for (const auto &tex : part.textures)
 					{
-						writeLine("scheme=texture");
-						CAGE_ASSERT(isPattern(tex.name, inputDirectory, "", ""));
-						writeLine(Stringizer() + "asset=" + subString(tex.name, inputDirectory.length() + 1, m));
+						processor->writeLine("scheme=texture");
+						CAGE_ASSERT(isPattern(tex.name, processor->inputDirectory, "", ""));
+						processor->writeLine(Stringizer() + "asset=" + subString(tex.name, processor->inputDirectory.length() + 1, m));
 					}
 				}
 
 				// skeletons
 				if (result.skeleton)
 				{
-					writeLine("scheme=skeleton");
-					writeLine(Stringizer() + "asset=" + inputFile + ";skeleton");
+					processor->writeLine("scheme=skeleton");
+					processor->writeLine(Stringizer() + "asset=" + processor->inputFile + ";skeleton");
 				}
 
 				// animations
 				for (const auto &ani : result.animations)
 				{
-					writeLine("scheme=animation");
-					writeLine(Stringizer() + "asset=" + inputFile + "?" + ani.name);
+					processor->writeLine("scheme=animation");
+					processor->writeLine(Stringizer() + "asset=" + processor->inputFile + "?" + ani.name);
 				}
 			}
 			catch (...)
 			{}
-			writeLine("cage-end");
+			processor->writeLine("cage-end");
 		}
 		catch (...)
 		{
@@ -73,6 +73,6 @@ int processAnalyze()
 	analyzeAssimp();
 	analyzeFont();
 	analyzeSound();
-	writeLine("cage-stop");
+	processor->writeLine("cage-stop");
 	return 0;
 }

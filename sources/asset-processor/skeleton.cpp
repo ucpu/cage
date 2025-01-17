@@ -8,7 +8,7 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processSkeleton()
 {
-	MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
+	MeshImportResult result = meshImportFiles(processor->inputFileName, meshImportConfig());
 	meshImportNotifyUsedFiles(result);
 	if (!result.skeleton)
 		CAGE_THROW_ERROR(Exception, "loaded no skeleton");
@@ -19,10 +19,10 @@ void processSkeleton()
 	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

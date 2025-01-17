@@ -11,7 +11,7 @@ namespace
 		const String n = pathExtractFilenameNoExtension(pth); // -> gui.en_US
 		const String l = subString(pathExtractExtension(n), 1, m); // -> en_US
 		// eg. inputFile = dir/gui.pot
-		const String p = pathExtractFilenameNoExtension(inputFile); // -> gui
+		const String p = pathExtractFilenameNoExtension(processor->inputFile); // -> gui
 		if (p + "." + l == n)
 			return l;
 		return "";
@@ -111,25 +111,25 @@ namespace
 
 void processTexts()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	{
-		const String ext = pathExtractExtension(inputFile);
+		const String ext = pathExtractExtension(processor->inputFile);
 		if (ext != ".pot" && ext != ".po")
 			CAGE_THROW_ERROR(Exception, "input file must have .pot or .po extension");
 	}
 
 	Holder<Texts> txt = newTexts();
 
-	if (toBool(properties("multilingual")))
+	if (toBool(processor->property("multilingual")))
 	{
 		{ // validate template file
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "validating template");
 			Holder<Texts> tmp = newTexts();
-			parsePO(readFile(inputFileName), "", +tmp);
+			parsePO(readFile(processor->inputFileName), "", +tmp);
 		}
 
-		for (const String &pth : pathListDirectory(pathExtractDirectory(inputFileName)))
+		for (const String &pth : pathListDirectory(pathExtractDirectory(processor->inputFileName)))
 		{
 			if (!pathIsFile(pth))
 				continue;
@@ -138,14 +138,14 @@ void processTexts()
 			const LanguageCode lang = extractLanguage(pth);
 			if (lang.empty())
 				continue;
-			writeLine(String("use=") + pathToRel(pth, inputDirectory));
+			processor->writeLine(String("use=") + pathToRel(pth, processor->inputDirectory));
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "loading language: " + lang);
 			parsePO(readFile(pth), lang, +txt);
 		}
 	}
 	else
 	{
-		parsePO(readFile(inputFileName), "", +txt);
+		parsePO(readFile(processor->inputFileName), "", +txt);
 	}
 
 	{
@@ -168,10 +168,10 @@ void processTexts()
 	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

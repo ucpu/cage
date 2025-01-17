@@ -7,13 +7,13 @@
 
 void processSound()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	Holder<Audio> audio = newAudio();
-	audio->importFile(inputFileName);
+	audio->importFile(processor->inputFileName);
 
 	{
-		const bool mono = toBool(properties("mono"));
+		const bool mono = toBool(processor->property("mono"));
 		if (mono && audio->channels() != 1)
 		{
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converting channels from " + audio->channels() + " to mono");
@@ -27,7 +27,7 @@ void processSound()
 	}
 
 	{
-		const uint32 sr = toUint32(properties("sampleRate"));
+		const uint32 sr = toUint32(processor->property("sampleRate"));
 		if (sr != 0 && audio->sampleRate() != sr)
 		{
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
@@ -36,7 +36,7 @@ void processSound()
 	}
 
 	{
-		const Real gain = toFloat(properties("gain"));
+		const Real gain = toFloat(processor->property("gain"));
 		if (abs(gain - 1) > 1e-5)
 		{
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "applying gain " + gain);
@@ -50,9 +50,9 @@ void processSound()
 	sds.sampleRate = audio->sampleRate();
 	const uint64 rawSize = sds.frames * sds.channels * sizeof(float);
 
-	if (rawSize < toUint32(properties("compressThreshold")))
+	if (rawSize < toUint32(processor->property("compressThreshold")))
 		sds.soundType = SoundCompressionEnum::RawRaw;
-	else if (toBool(properties("stream")))
+	else if (toBool(processor->property("stream")))
 		sds.soundType = SoundCompressionEnum::CompressedCompressed;
 	else
 		sds.soundType = SoundCompressionEnum::CompressedRaw;
@@ -81,8 +81,8 @@ void processSound()
 		case SoundCompressionEnum::RawRaw:
 		{
 			audioConvertFormat(+audio, AudioFormatEnum::Float);
-			Holder<File> f = writeFile(outputFileName);
-			AssetHeader h = initializeAssetHeader();
+			Holder<File> f = writeFile(processor->outputFileName);
+			AssetHeader h = processor->initializeAssetHeader();
 			h.originalSize = sizeof(SoundSourceHeader) + rawSize;
 			f->write(bufferView(h));
 			f->write(bufferView(sds));
@@ -99,7 +99,7 @@ void processSound()
 			const uint64 oggSize = buff.size();
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compressed size: " + oggSize + " bytes");
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
-			AssetHeader h = initializeAssetHeader();
+			AssetHeader h = processor->initializeAssetHeader();
 			switch (sds.soundType)
 			{
 				case SoundCompressionEnum::CompressedRaw:
@@ -113,7 +113,7 @@ void processSound()
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid sound compression method");
 			}
-			Holder<File> f = writeFile(outputFileName);
+			Holder<File> f = writeFile(processor->outputFileName);
 			f->write(bufferView(h));
 			f->write(bufferView(sds));
 			f->write(buff);
@@ -127,7 +127,7 @@ void processSound()
 	// preview sound
 	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		const String dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		const String dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + ".ogg");
 		audio->exportFile(dbgName);
 	}
 }
@@ -137,11 +137,11 @@ void analyzeSound()
 	try
 	{
 		Holder<Audio> audio = newAudio();
-		audio->importFile(inputFileName);
-		writeLine("cage-begin");
-		writeLine("scheme=sound");
-		writeLine(String() + "asset=" + inputFile);
-		writeLine("cage-end");
+		audio->importFile(processor->inputFileName);
+		processor->writeLine("cage-begin");
+		processor->writeLine("scheme=sound");
+		processor->writeLine(String() + "asset=" + processor->inputFile);
+		processor->writeLine("cage-end");
 	}
 	catch (...)
 	{

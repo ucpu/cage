@@ -1,4 +1,5 @@
 #include <cage-core/assetHeader.h>
+#include <cage-core/assetProcessor.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/geometry.h>
@@ -11,21 +12,7 @@
 
 using namespace cage;
 
-extern String inputDirectory;
-extern String inputName;
-extern String outputDirectory;
-extern String outputName;
-
-extern String inputFileName;
-extern String outputFileName;
-extern String inputFile;
-extern String inputSpec;
-extern String inputIdentifier;
-
-void writeLine(const String &other);
-String properties(const String &name);
-
-AssetHeader initializeAssetHeader();
+extern Holder<const AssetProcessor> processor;
 
 void processTexture();
 void processShader();
@@ -44,8 +31,3 @@ int processAnalyze();
 void analyzeTexture();
 void analyzeFont();
 void analyzeSound();
-
-// relative path is interpreted relative to the input file (unless specified otherwise)
-// absolute path is interpreted as relative to input root path
-String convertAssetPath(const String &input, const String &relativeTo = "", bool markAsReferenced = true);
-String convertFilePath(const String &input, const String &relativeTo = "", bool markAsUsed = true);

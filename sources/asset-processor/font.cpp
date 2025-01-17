@@ -88,7 +88,7 @@ namespace
 	void openFont()
 	{
 		FT_CALL(FT_Init_FreeType, &library);
-		FT_CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
+		FT_CALL(FT_New_Face, library, processor->inputFileName.c_str(), 0, &face);
 		if (!FT_IS_SCALABLE(face))
 			CAGE_THROW_ERROR(Exception, "font is not scalable");
 		FT_CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
@@ -194,7 +194,7 @@ namespace
 
 	String textureName(uint32 index)
 	{
-		return Stringizer() + inputFile + "?" + index;
+		return Stringizer() + processor->inputFile + "?" + index;
 	}
 
 	uint32 textureHash(uint32 index)
@@ -232,14 +232,14 @@ namespace
 		ser << numeric_cast<uint32>(img->rawViewU8().size());
 		ser.write(bufferCast(img->rawViewU8()));
 
-		AssetHeader h = initializeAssetHeader();
+		AssetHeader h = processor->initializeAssetHeader();
 		h.scheme = AssetSchemeIndexTexture;
 		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture file size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
-		Holder<File> f = writeFile(pathJoin(outputDirectory, Stringizer() + textureHash(index)));
+		Holder<File> f = writeFile(pathJoin(processor->outputDirectory, Stringizer() + textureHash(index)));
 		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();
@@ -362,7 +362,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "reading font file");
 
-		auto srcBuf = readFile(inputFileName)->readAll();
+		auto srcBuf = readFile(processor->inputFileName)->readAll();
 		Deserializer des(srcBuf);
 
 		TableDirectory dir;
@@ -443,17 +443,17 @@ namespace
 		Holder<PointerRange<char>> buf2 = memoryCompress(buf);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + buf2.size());
 
-		AssetHeader h = initializeAssetHeader();
+		AssetHeader h = processor->initializeAssetHeader();
 		h.originalSize = buf.size();
 		h.compressedSize = buf2.size();
 
-		Holder<File> f = writeFile(outputFileName);
+		Holder<File> f = writeFile(processor->outputFileName);
 		f->write(bufferView(h));
 		f->write(buf2);
 		f->close();
 
 		for (uint32 i = 0; i < header.imagesCount; i++)
-			writeLine(String("ref=") + textureName(i));
+			processor->writeLine(String("ref=") + textureName(i));
 	}
 
 	void printDebugData()
@@ -466,7 +466,7 @@ namespace
 		for (auto &it : images)
 		{
 			imageVerticalFlip(+it);
-			it->exportFile(pathJoin(fontPath, Stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + index + ".png"));
+			it->exportFile(pathJoin(fontPath, Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "_" + index + ".png"));
 			index++;
 		}
 	}
@@ -481,8 +481,8 @@ namespace
 
 void processFont()
 {
-	writeLine(String("use=") + inputFile);
-	if (inputSpec.empty())
+	processor->writeLine(String("use=") + processor->inputFile);
+	if (processor->inputSpec.empty())
 	{
 		openFont();
 		setSize(40);
@@ -497,7 +497,7 @@ void processFont()
 		printDebugData();
 		FT_CALL(FT_Done_FreeType, library);
 	}
-	else if (!isInteger(inputSpec))
+	else if (!isInteger(processor->inputSpec))
 	{
 		CAGE_THROW_ERROR(Exception, "invalid input specification");
 	}
@@ -510,10 +510,10 @@ void analyzeFont()
 	{
 		openFont();
 		FT_CALL(FT_Done_FreeType, library);
-		writeLine("cage-begin");
-		writeLine("scheme=font");
-		writeLine(String() + "asset=" + inputFile);
-		writeLine("cage-end");
+		processor->writeLine("cage-begin");
+		processor->writeLine("scheme=font");
+		processor->writeLine(String() + "asset=" + processor->inputFile);
+		processor->writeLine("cage-end");
 	}
 	catch (...)
 	{

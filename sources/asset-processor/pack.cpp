@@ -7,10 +7,10 @@
 
 void processPack()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	Holder<Ini> ini = newIni();
-	ini->importFile(inputFileName);
+	ini->importFile(processor->inputFileName);
 
 	std::set<uint32> assets;
 	for (const String &section : ini->sections())
@@ -20,15 +20,15 @@ void processPack()
 			if (!isDigitsOnly(n))
 				CAGE_THROW_ERROR(Exception, "invalid asset pack definition");
 			String v = ini->get(section, n);
-			v = convertAssetPath(v);
+			v = processor->convertAssetPath(v);
 			assets.insert(HashString(v));
 		}
 	}
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	for (uint32 it : assets)
 		f->write(bufferView(it));

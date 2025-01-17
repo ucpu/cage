@@ -12,8 +12,8 @@
 MeshImportConfig meshImportConfig()
 {
 	MeshImportConfig config;
-	config.rootPath = inputDirectory;
-	config.mergeParts = toBool(properties("bakeModel"));
+	config.rootPath = processor->inputDirectory;
+	config.mergeParts = toBool(processor->property("bakeModel"));
 	config.verticalFlipUv = true;
 	config.verbose = true;
 	return config;
@@ -86,8 +86,8 @@ namespace
 
 Mat4 meshImportTransform(MeshImportResult &result)
 {
-	const Mat3 axes = axesMatrix(toLower(properties("axes")));
-	const Mat3 axesScale = axes * toFloat(properties("scale"));
+	const Mat3 axes = axesMatrix(toLower(processor->property("axes")));
+	const Mat3 axesScale = axes * toFloat(processor->property("scale"));
 	if (axesScale == Mat3())
 		return Mat4();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using axes/scale conversion matrix: " + axesScale);
@@ -102,20 +102,20 @@ Mat4 meshImportTransform(MeshImportResult &result)
 void meshImportNotifyUsedFiles(const MeshImportResult &result)
 {
 	for (const String &p : result.paths)
-		writeLine(cage::String("use = ") + pathToRel(p, inputDirectory));
+		processor->writeLine(cage::String("use = ") + pathToRel(p, processor->inputDirectory));
 }
 
 uint32 meshImportSelectIndex(const MeshImportResult &result)
 {
-	if (result.parts.size() == 1 && inputSpec.empty())
+	if (result.parts.size() == 1 && processor->inputSpec.empty())
 	{
 		CAGE_LOG(SeverityEnum::Note, "assetProcessor", "using the first model, because it is the only model available");
 		return 0;
 	}
 
-	if (isDigitsOnly(inputSpec) && !inputSpec.empty())
+	if (isDigitsOnly(processor->inputSpec) && !processor->inputSpec.empty())
 	{
-		const uint32 n = toUint32(inputSpec);
+		const uint32 n = toUint32(processor->inputSpec);
 		if (n < result.parts.size())
 		{
 			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "using model index " + n + ", because the input specifier is numeric");
@@ -129,19 +129,19 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 	for (uint32 modelIndex = 0; modelIndex < result.parts.size(); modelIndex++)
 	{
 		const String objName = result.parts[modelIndex].objectName;
-		if (objName == inputSpec)
+		if (objName == processor->inputSpec)
 		{
 			candidates.insert(modelIndex);
 			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
 		}
 		const String matName = result.parts[modelIndex].materialName;
-		if (matName == inputSpec)
+		if (matName == processor->inputSpec)
 		{
 			candidates.insert(modelIndex);
 			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the material name matches");
 		}
 		const String comb = objName + "_" + matName;
-		if (comb == inputSpec)
+		if (comb == processor->inputSpec)
 		{
 			candidates.insert(modelIndex);
 			CAGE_LOG(SeverityEnum::Note, "assetProcessor", Stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
@@ -181,7 +181,7 @@ namespace
 {
 	void setFlags(ModelDataFlags &flags, ModelDataFlags idx, bool available, const char *name)
 	{
-		bool requested = toBool(properties(name));
+		bool requested = toBool(processor->property(name));
 		if (requested && !available)
 		{
 			CAGE_LOG_THROW(cage::String("requested feature: ") + name);
@@ -241,12 +241,12 @@ namespace
 void processModel()
 {
 	MeshImportConfig config = meshImportConfig();
-	config.materialPathOverride = properties("material");
-	config.materialNameAlternative = inputSpec;
-	config.generateNormals = toBool(properties("normals"));
-	config.trianglesOnly = toBool(properties("trianglesOnly"));
-	config.passInvalidVectors = toBool(properties("passInvalidNormals"));
-	MeshImportResult result = meshImportFiles(inputFileName, config);
+	config.materialPathOverride = processor->property("material");
+	config.materialNameAlternative = processor->inputSpec;
+	config.generateNormals = toBool(processor->property("normals"));
+	config.trianglesOnly = toBool(processor->property("trianglesOnly"));
+	config.passInvalidVectors = toBool(processor->property("passInvalidNormals"));
+	MeshImportResult result = meshImportFiles(processor->inputFileName, config);
 	const Mat4 importTransform = meshImportTransform(result);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "converting materials to cage format");
 	meshImportConvertToCageFormats(result);
@@ -291,7 +291,7 @@ void processModel()
 
 	for (const auto &t : part.textures)
 	{
-		const String p = convertAssetPath(t.name);
+		const String p = processor->convertAssetPath(t.name);
 		const uint32 n = HashString(p);
 		switch (t.type)
 		{
@@ -313,7 +313,7 @@ void processModel()
 	}
 
 	if (!part.shaderName.empty())
-		dsm.shaderName = HashString(convertAssetPath(part.shaderName));
+		dsm.shaderName = HashString(processor->convertAssetPath(part.shaderName));
 
 	dsm.renderFlags = part.renderFlags;
 	dsm.renderLayer = part.renderLayer;
@@ -327,7 +327,7 @@ void processModel()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "bounding box: " + part.boundingBox);
 
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
@@ -342,7 +342,7 @@ void processModel()
 	Holder<PointerRange<char>> compressed = memoryCompress(buffer);
 	h.compressedSize = compressed.size();
 
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])

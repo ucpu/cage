@@ -9,15 +9,15 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processAnimation()
 {
-	const MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
+	const MeshImportResult result = meshImportFiles(processor->inputFileName, meshImportConfig());
 	meshImportNotifyUsedFiles(result);
 
 	uint32 chosenAnimationIndex = m;
-	if (result.animations.size() > 1 || !inputSpec.empty())
+	if (result.animations.size() > 1 || !processor->inputSpec.empty())
 	{
 		for (uint32 i = 0; i < result.animations.size(); i++)
 		{
-			if (inputSpec == result.animations[i].name)
+			if (processor->inputSpec == result.animations[i].name)
 			{
 				chosenAnimationIndex = i;
 				break;
@@ -34,13 +34,13 @@ void processAnimation()
 
 	const uint32 skeletonName = []()
 	{
-		String n = properties("skeleton");
+		String n = processor->property("skeleton");
 		if (n.empty())
-			n = inputFile + ";skeleton";
+			n = processor->inputFile + ";skeleton";
 		else
-			n = pathJoin(pathExtractDirectory(inputName), n);
+			n = pathJoin(pathExtractDirectory(processor->inputName), n);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using skeleton name: " + n);
-		writeLine(String("ref = ") + n);
+		processor->writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();
 	anim->skeletonName(skeletonName);
@@ -50,11 +50,11 @@ void processAnimation()
 	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
 	h.dependenciesCount = 1;
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	f->write(bufferView(skeletonName));
 	f->write(comp);

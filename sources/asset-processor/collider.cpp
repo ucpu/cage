@@ -11,7 +11,7 @@ uint32 meshImportSelectIndex(const MeshImportResult &result);
 
 void processCollider()
 {
-	MeshImportResult result = meshImportFiles(inputFileName, meshImportConfig());
+	MeshImportResult result = meshImportFiles(processor->inputFileName, meshImportConfig());
 	meshImportTransform(result);
 	meshImportNotifyUsedFiles(result);
 	const uint32 partIndex = meshImportSelectIndex(result);
@@ -33,10 +33,10 @@ void processCollider()
 	Holder<PointerRange<char>> comp = memoryCompress(buff);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.originalSize = buff.size();
 	h.compressedSize = comp.size();
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

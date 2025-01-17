@@ -19,10 +19,10 @@ namespace
 
 void processObject()
 {
-	writeLine(String("use=") + inputFile);
+	processor->writeLine(String("use=") + processor->inputFile);
 
 	Holder<Ini> ini = newIni();
-	ini->importFile(inputFileName);
+	ini->importFile(processor->inputFileName);
 
 	std::vector<Lod> lods;
 	uint32 totalModeles = 0;
@@ -38,7 +38,7 @@ void processObject()
 			String v = ini->getString(section, n);
 			if (!isDigitsOnly(n))
 				continue;
-			v = convertAssetPath(v);
+			v = processor->convertAssetPath(v);
 			uint32 h = HashString(v);
 			ls.models.insert(h);
 		}
@@ -81,7 +81,7 @@ void processObject()
 		String s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
-			s = convertAssetPath(s);
+			s = processor->convertAssetPath(s);
 			o.skelAnimName = HashString(s);
 			deps.insert(o.skelAnimName);
 		}
@@ -95,7 +95,7 @@ void processObject()
 
 	ini->checkUnused();
 
-	AssetHeader h = initializeAssetHeader();
+	AssetHeader h = processor->initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
 	h.originalSize = sizeof(RenderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
@@ -124,7 +124,7 @@ void processObject()
 		for (auto msh : ls.models)
 			ser << msh;
 	}
-	Holder<File> f = writeFile(outputFileName);
+	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(buffer);
 	f->close();
 }
