@@ -40,18 +40,10 @@ set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 0)
 set(WAMR_DISABLE_WAKEUP_BLOCKING_OP 0)
 add_compile_definitions(BUILTIN_LIBC_BUFFERED_PRINTF=1 BUILTIN_LIBC_BUFFERED_PRINT_SIZE=512)
 
-if(MSVC)
-	enable_language(ASM_MASM)
-	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh")
-	endif()
-else()
-	enable_language(ASM)
-endif()
-
 add_compile_definitions("$<$<CONFIG:Debug>:BH_DEBUG=1>")
 
 include("${CMAKE_CURRENT_LIST_DIR}/wamr/build-scripts/runtime_lib.cmake")
+
 file(GLOB_RECURSE iwasm_headers "${CMAKE_CURRENT_LIST_DIR}/wamr/core/*.h")
 add_library(iwasm_static STATIC ${WAMR_RUNTIME_LIB_SOURCE} ${iwasm_headers})
 target_include_directories(iwasm_static INTERFACE "wamr/core/iwasm/include")
@@ -61,6 +53,9 @@ target_compile_definitions(iwasm_static PUBLIC WASM_RUNTIME_API_EXTERN= WASM_API
 if(MSVC)
 	list(FILTER WAMR_RUNTIME_LIB_SOURCE INCLUDE REGEX "asm$")
 	set_source_files_properties(${WAMR_RUNTIME_LIB_SOURCE} PROPERTIES LANGUAGE ASM_MASM)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh")
+	endif()
 endif()
 
 if(WAMR_DISABLE_STACK_OVERFLOW_CHECK)

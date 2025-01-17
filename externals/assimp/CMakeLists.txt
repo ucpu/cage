@@ -26,6 +26,11 @@ add_subdirectory(assimp)
 # assimp/contrib/unzip somehow incorrectly detects zlib(-ng) version and tries to use undefined type
 target_compile_definitions(assimp PRIVATE "ZEXPORT=" "z_crc_t=uint32_t")
 
+# '/utf-8' and '/source-charset:utf-8' command-line options are incompatible
+get_target_property(v assimp COMPILE_OPTIONS)
+string(REGEX REPLACE "/source-charset:utf-8" "" v "${v}")
+set_target_properties(assimp PROPERTIES COMPILE_OPTIONS "${v}")
+
 target_precompile_headers(assimp PRIVATE
 	<limits.h>
 	<math.h>

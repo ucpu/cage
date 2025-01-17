@@ -51,9 +51,9 @@ else()
 	set(FORCE_INLINE "[[gnu::always_inline]]inline")
 endif()
 check_include_files("intrin.h" HAVE_INTRIN_H)
-configure_file("jpeg/jversion.h.in" "jversion.h")
-configure_file("jpeg/jconfig.h.in" "jconfig.h")
-configure_file("jpeg/jconfigint.h.in" "jconfigint.h")
+configure_file("jpeg/src/jversion.h.in" "jversion.h")
+configure_file("jpeg/src/jconfig.h.in" "jconfig.h")
+configure_file("jpeg/src/jconfigint.h.in" "jconfigint.h")
 
 set(JPEG16_SOURCES jcapistd.c jccolor.c jcdiffct.c jclossls.c jcmainct.c
 	jcprepct.c jcsample.c jdapistd.c jdcolor.c jddiffct.c jdlossls.c jdmainct.c
@@ -67,19 +67,19 @@ set(JPEG_SOURCES ${JPEG12_SOURCES} jcapimin.c jchuff.c jcicc.c jcinit.c
 	jdmarker.c jdmaster.c jdphuff.c jdtrans.c jerror.c jfdctflt.c jmemmgr.c
 	jmemnobs.c jpeg_nbits.c)
 
-list(TRANSFORM JPEG16_SOURCES PREPEND "jpeg/")
-list(TRANSFORM JPEG12_SOURCES PREPEND "jpeg/")
-list(TRANSFORM JPEG_SOURCES PREPEND "jpeg/")
+list(TRANSFORM JPEG16_SOURCES PREPEND "jpeg/src/")
+list(TRANSFORM JPEG12_SOURCES PREPEND "jpeg/src/")
+list(TRANSFORM JPEG_SOURCES PREPEND "jpeg/src/")
 
 add_library(cage-jpeg12-static OBJECT ${JPEG12_SOURCES})
 target_compile_definitions(cage-jpeg12-static PRIVATE "BITS_IN_JSAMPLE=12")
 add_library(cage-jpeg16-static OBJECT ${JPEG16_SOURCES})
 target_compile_definitions(cage-jpeg16-static PRIVATE "BITS_IN_JSAMPLE=16")
 add_library(jpeg-static STATIC ${JPEG_SOURCES}
-	"jpeg/jaricom.c" "jpeg/jcarith.c" "jpeg/jdarith.c"
+	"jpeg/src/jaricom.c" "jpeg/src/jcarith.c" "jpeg/src/jdarith.c"
 	$<TARGET_OBJECTS:cage-jpeg12-static> $<TARGET_OBJECTS:cage-jpeg16-static>
 )
-target_include_directories(jpeg-static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/jpeg")
+target_include_directories(jpeg-static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/jpeg/src")
 if(TARGET jpeg-simd)
 	target_link_libraries(jpeg-static PRIVATE jpeg-simd)
 endif()
