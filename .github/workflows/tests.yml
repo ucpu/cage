@@ -201,8 +201,8 @@ jobs:
       CFLAGS: ${{ matrix.sanitizer.flags }}
       CXXFLAGS: ${{ matrix.sanitizer.flags }}
       LDFLAGS: ${{ matrix.sanitizer.flags }}
-      CC: clang
-      CXX: clang++
+      CC: clang-17
+      CXX: clang++-17
     strategy:
       fail-fast: false
       matrix:
