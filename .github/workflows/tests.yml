@@ -74,43 +74,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [22, 24]
+        os-version: [24]
         cpu-arch: ["", "-arm"]
         build-config: [debug, release]
         compiler:
-        - {
-            cc: gcc-12,
-            cxx: g++-12,
-            install: gcc-12 g++-12
-          }
         - {
             cc: gcc-13,
             cxx: g++-13,
             install: gcc-13 g++-13
           }
         - {
-            cc: clang-15,
-            cxx: clang++-15,
-            install: clang-15
+            cc: gcc-14,
+            cxx: g++-14,
+            install: gcc-14 g++-14
+          }
+        - {
+            cc: clang-16,
+            cxx: clang++-16,
+            install: clang-16
           }
         - {
             cc: clang-18,
             cxx: clang++-18,
             install: clang-18
           }
-        exclude:
-        - os-version: 24
-          compiler:
-            cc: gcc-12
-        - os-version: 22
-          compiler:
-            cc: gcc-13
-        - os-version: 24
-          compiler:
-            cc: clang-15
-        - os-version: 22
-          compiler:
-            cc: clang-18
 
     steps:
     - name: Install packages
@@ -214,8 +201,8 @@ jobs:
       CFLAGS: ${{ matrix.sanitizer.flags }}
       CXXFLAGS: ${{ matrix.sanitizer.flags }}
       LDFLAGS: ${{ matrix.sanitizer.flags }}
-      CC: clang-16
-      CXX: clang++-16
+      CC: clang
+      CXX: clang++
     strategy:
       fail-fast: false
       matrix:
