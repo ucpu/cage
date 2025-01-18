@@ -231,7 +231,11 @@ namespace cage
 	struct WasmFunction<R(Ts...)> : private Noncopyable
 	{
 	public:
-		WasmFunction(Holder<privat::WasmFunctionInternal> &&func_) : func(std::move(func_))
+		WasmFunction() = default;
+		//WasmFunction(WasmFunction &&) = default;
+		//WasmFunction &operator=(WasmFunction &&) = default;
+
+		explicit WasmFunction(Holder<privat::WasmFunctionInternal> &&func_) : func(std::move(func_))
 		{
 			using namespace privat;
 			CAGE_ASSERT(func);
@@ -257,8 +261,11 @@ namespace cage
 			}
 		}
 
+		explicit operator bool() const { return !!func; }
+
 		R operator()(Ts... vs)
 		{
+			CAGE_ASSERT(func);
 			PointerRange<uint32> data = func->data();
 
 			uint32 offset = 0;

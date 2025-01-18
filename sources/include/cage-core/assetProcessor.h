@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	class CAGE_CORE_API AssetProcessor : private Noncopyable
+	class CAGE_CORE_API AssetProcessor : private Immovable
 	{
 	public:
 		// provided names
