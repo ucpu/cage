@@ -232,8 +232,6 @@ namespace cage
 	{
 	public:
 		WasmFunction() = default;
-		//WasmFunction(WasmFunction &&) = default;
-		//WasmFunction &operator=(WasmFunction &&) = default;
 
 		explicit WasmFunction(Holder<privat::WasmFunctionInternal> &&func_) : func(std::move(func_))
 		{
@@ -304,6 +302,8 @@ namespace cage
 		{
 			return WasmFunction<T>(function_(name));
 		}
+
+		WasmBuffer temporary; // use for passing data in function calls
 
 	private:
 		Holder<privat::WasmFunctionInternal> function_(const WasmName &name);

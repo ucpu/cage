@@ -193,7 +193,7 @@ namespace cage
 				if (!instance)
 				{
 					err.rawLength() = std::strlen(err.rawData());
-					CAGE_LOG_CONTINUE(SeverityEnum::Note, "wasm", err);
+					CAGE_LOG_THROW(err);
 					CAGE_THROW_ERROR(Exception, "failed instantiating wasm module");
 				}
 				exec = wasm_runtime_get_exec_env_singleton(instance);
@@ -204,6 +204,7 @@ namespace cage
 
 			~WasmInstanceImpl()
 			{
+				temporary = {};
 				if (instance)
 				{
 					wasm_runtime_deinstantiate(instance);
