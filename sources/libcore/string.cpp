@@ -1,21 +1,11 @@
 #include <algorithm>
 #include <cctype> // std::isspace
 #include <cerrno>
+#include <charconv> // to_chars, from_chars
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
-
-// charconv (with FP) is available since:
-// GCC 11
-// Visual Studio 2017 version 15.8
-#if (defined(_MSC_VER) && _MSC_VER >= 1915) || (defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 11)
-	#define GCHL_USE_CHARCONV
-#endif
-
-#ifdef GCHL_USE_CHARCONV
-	#include <charconv> // to_chars, from_chars
-#endif
 
 #include <cage-core/macros.h>
 #include <cage-core/string.h>
@@ -58,89 +48,6 @@ namespace cage
 	{
 		namespace
 		{
-#if not defined(GCHL_USE_CHARCONV)
-
-			template<class T>
-			void genericScan(const char *s, T &value)
-			{
-				errno = 0;
-				char *e = nullptr;
-				if (std::numeric_limits<T>::is_signed)
-				{
-					sint64 v = std::strtoll(s, &e, 10);
-					value = (T)v;
-					if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
-						e = nullptr;
-				}
-				else
-				{
-					uint64 v = std::strtoull(s, &e, 10);
-					value = (T)v;
-					if (*s == '-' || v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
-						e = nullptr;
-				}
-				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
-				{
-					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
-					CAGE_THROW_ERROR(Exception, "fromString failed");
-				}
-			}
-
-			template<>
-			void genericScan<sint64>(const char *s, sint64 &value)
-			{
-				errno = 0;
-				char *e = nullptr;
-				value = std::strtoll(s, &e, 10);
-				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
-				{
-					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
-					CAGE_THROW_ERROR(Exception, "fromString failed");
-				}
-			}
-
-			template<>
-			void genericScan<uint64>(const char *s, uint64 &value)
-			{
-				errno = 0;
-				char *e = nullptr;
-				value = std::strtoull(s, &e, 10);
-				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
-				{
-					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
-					CAGE_THROW_ERROR(Exception, "fromString failed");
-				}
-			}
-
-			template<>
-			void genericScan<double>(const char *s, double &value)
-			{
-				errno = 0;
-				char *e = nullptr;
-				double v = std::strtod(s, &e);
-				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
-				{
-					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
-					CAGE_THROW_ERROR(Exception, "fromString failed");
-				}
-				value = v;
-			}
-
-			template<>
-			void genericScan<float>(const char *s, float &value)
-			{
-				double v;
-				genericScan(s, v);
-				if (v < std::numeric_limits<float>::lowest() || v > std::numeric_limits<float>::max())
-				{
-					CAGE_LOG_THROW(Stringizer() + "input string: " + s);
-					CAGE_THROW_ERROR(Exception, "fromString failed");
-				}
-				value = (float)v;
-			}
-
-#endif // GCHL_USE_CHARCONV
-
 			bool isOrdered(const char *data, uint32 current)
 			{
 				// use adjacent_find to test that there are no duplicates
@@ -241,61 +148,27 @@ namespace cage
 			}
 		}
 
-#if not defined(GCHL_USE_CHARCONV)
-
-	#define GCHL_GENERATE(TYPE, SPEC) \
-		uint32 toString(char *s, uint32, TYPE value) \
+#define GCHL_FROMSTRING(TYPE) \
+	void fromString(const char *s, uint32 n, TYPE &value) \
+	{ \
+		const auto [p, ec] = std::from_chars(s, s + n, value); \
+		if (p != s + n || ec != std::errc()) \
 		{ \
-			sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); \
-			if (ret < 0) \
-				CAGE_THROW_ERROR(Exception, "toString failed"); \
-			s[ret] = 0; \
-			return ret; \
+			CAGE_LOG_THROW(Stringizer() + "input string: " + s); \
+			CAGE_THROW_ERROR(Exception, "failed conversion of string to " CAGE_STRINGIZE(TYPE)); \
 		} \
-		void fromString(const char *s, uint32, TYPE &value) \
-		{ \
-			return genericScan(s, value); \
-		}
-		GCHL_GENERATE(sint8, % hhd);
-		GCHL_GENERATE(sint16, % hd);
-		GCHL_GENERATE(sint32, % d);
-		GCHL_GENERATE(uint8, % hhu);
-		GCHL_GENERATE(uint16, % hu);
-		GCHL_GENERATE(uint32, % u);
-	#ifdef CAGE_SYSTEM_WINDOWS
-		GCHL_GENERATE(sint64, % lld);
-		GCHL_GENERATE(uint64, % llu);
-	#else
-		GCHL_GENERATE(sint64, % ld);
-		GCHL_GENERATE(uint64, % lu);
-	#endif
-		GCHL_GENERATE(float, % f);
-		GCHL_GENERATE(double, % .16lg);
-	#undef GCHL_GENERATE
+	}
 
-#else // GCHL_USE_CHARCONV
-
-	#define GCHL_FROMSTRING(TYPE) \
-		void fromString(const char *s, uint32 n, TYPE &value) \
-		{ \
-			const auto [p, ec] = std::from_chars(s, s + n, value); \
-			if (p != s + n || ec != std::errc()) \
-			{ \
-				CAGE_LOG_THROW(Stringizer() + "input string: " + s); \
-				CAGE_THROW_ERROR(Exception, "failed conversion of string to " CAGE_STRINGIZE(TYPE)); \
-			} \
-		}
-
-	#define GCHL_GENERATE(TYPE) \
-		uint32 toString(char *s, uint32 n, TYPE value) \
-		{ \
-			const auto [p, ec] = std::to_chars(s, s + n, value); \
-			if (ec != std::errc()) \
-				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
-			*p = 0; \
-			return numeric_cast<uint32>(p - s); \
-		} \
-		GCHL_FROMSTRING(TYPE)
+#define GCHL_GENERATE(TYPE) \
+	uint32 toString(char *s, uint32 n, TYPE value) \
+	{ \
+		const auto [p, ec] = std::to_chars(s, s + n, value); \
+		if (ec != std::errc()) \
+			CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+		*p = 0; \
+		return numeric_cast<uint32>(p - s); \
+	} \
+	GCHL_FROMSTRING(TYPE)
 
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
@@ -305,24 +178,22 @@ namespace cage
 		GCHL_GENERATE(uint16);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(uint64);
-	#undef GCHL_GENERATE
+#undef GCHL_GENERATE
 
-	#define GCHL_GENERATE(TYPE) \
-		uint32 toString(char *s, uint32 n, TYPE value) \
-		{ \
-			const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
-			if (ec != std::errc()) \
-				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
-			*p = 0; \
-			return numeric_cast<uint32>(p - s); \
-		} \
-		GCHL_FROMSTRING(TYPE)
+#define GCHL_GENERATE(TYPE) \
+	uint32 toString(char *s, uint32 n, TYPE value) \
+	{ \
+		const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
+		if (ec != std::errc()) \
+			CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+		*p = 0; \
+		return numeric_cast<uint32>(p - s); \
+	} \
+	GCHL_FROMSTRING(TYPE)
 
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
-	#undef GCHL_GENERATE
-
-#endif // GCHL_USE_CHARCONV
+#undef GCHL_GENERATE
 
 		uint32 toString(char *s, uint32 n, bool value)
 		{
