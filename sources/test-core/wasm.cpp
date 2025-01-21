@@ -7,6 +7,7 @@
 PointerRange<const uint8> sums_wasm();
 PointerRange<const uint8> strings_wasm();
 PointerRange<const uint8> natives_wasm();
+PointerRange<const uint8> foo_wasm();
 
 namespace
 {
@@ -147,6 +148,30 @@ void testWasm()
 			CAGE_TESTCASE("invalid memory access inside wasm");
 			CAGE_TEST_THROWN(set_string(1'000'000'000, 32));
 		}
+	}
+
+	{
+		CAGE_TESTCASE("foo (c++ objects lifetime)");
+		Holder<WasmModule> mod = newWasmModule(foo_wasm().cast<const char>());
+		printModuleDetails(+mod);
+		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+		WasmFunction get_foo = inst->function<sint32()>("get_foo");
+		WasmFunction set_foo = inst->function<void(sint32)>("set_foo");
+		WasmFunction get_map = inst->function<sint32(sint32)>("get_map");
+		WasmFunction set_map = inst->function<void(sint32, sint32)>("set_map");
+		CAGE_TEST(get_foo() == 2);
+		set_foo(123);
+		CAGE_TEST(get_foo() == 123);
+		CAGE_TEST(get_map(10) == 2); // previously non-existent key
+		set_map(10, 100);
+		WasmBuffer tmp = inst->allocate(12'000);
+		set_map(20, 400);
+		CAGE_TEST(get_map(10) == 100);
+		CAGE_TEST(get_map(20) == 400);
+		set_map(30, 900);
+		CAGE_TEST(get_map(10) == 100);
+		CAGE_TEST(get_map(20) == 400);
+		CAGE_TEST(get_map(30) == 900);
 	}
 
 	{

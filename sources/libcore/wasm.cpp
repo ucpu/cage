@@ -27,10 +27,11 @@ extern "C"
 
 	void cage_wamr_log(uint32 log_level, const char *file, int line, const char *format, ...)
 	{
+		String str;
 		std::va_list va;
 		va_start(va, format);
-		String str;
 		std::vsnprintf(str.rawData(), str.MaxLength - 100, format, va);
+		va_end(va);
 		str.rawLength() = std::strlen(str.rawData());
 		str = trim(str);
 		SeverityEnum sev = SeverityEnum::Info;
@@ -256,6 +257,15 @@ namespace cage
 				data.resize(std::max(sz, countOfWasmVal(returns)));
 			}
 		};
+
+		template<uint32 A>
+		void strCopyTruncate(detail::StringBase<A> &dst, const char *src)
+		{
+			uint32 len = std::strlen(src);
+			if (len > A)
+				len = A;
+			dst = detail::StringBase<A>(PointerRange<const char>(src, src + len));
+		}
 	}
 
 	namespace privat
@@ -332,7 +342,7 @@ namespace cage
 			wasm_runtime_get_import_type(impl->module, i, &t);
 			WasmSymbol w;
 			w.moduleName = t.module_name;
-			w.name = t.name;
+			strCopyTruncate(w.name, t.name);
 			w.kind = toString(t.kind);
 			w.linked = t.linked;
 			arr.push_back(w);
@@ -351,7 +361,7 @@ namespace cage
 			wasm_export_t t = {};
 			wasm_runtime_get_export_type(impl->module, i, &t);
 			WasmSymbol w;
-			w.name = t.name;
+			strCopyTruncate(w.name, t.name);
 			w.kind = toString(t.kind);
 			w.linked = true;
 			arr.push_back(w);
