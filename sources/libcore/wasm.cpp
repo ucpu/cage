@@ -70,6 +70,13 @@ namespace cage
 				return 0;
 			}();
 			(void)dummy;
+			thread_local int dummy2 = []() -> int
+			{
+				if (!wasm_runtime_init_thread_env())
+					CAGE_THROW_ERROR(Exception, "failed to initialize wasm thread env");
+				return 0;
+			}();
+			(void)dummy2;
 		}
 
 		WasmTypeEnum convert(wasm_valkind_t k)
@@ -188,6 +195,8 @@ namespace cage
 
 			WasmInstanceImpl(Holder<WasmModule> &&module_) : module(std::move(module_).cast<WasmModuleImpl>())
 			{
+				initialize();
+
 				CAGE_ASSERT(module);
 				String err;
 				instance = wasm_runtime_instantiate(module->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
@@ -227,6 +236,8 @@ namespace cage
 
 			WasmFunctionImpl(WasmInstanceImpl *instance, const String &name) : name(name), instance(instance)
 			{
+				CAGE_ASSERT(wasm_runtime_thread_env_inited());
+
 				func = wasm_runtime_lookup_function(instance->instance, name.c_str());
 				if (!func)
 				{
