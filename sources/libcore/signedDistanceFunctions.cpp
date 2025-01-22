@@ -5,19 +5,19 @@
 
 namespace cage
 {
-	Real sdfPlane(const Vec3 &pos, const Plane &pln)
+	Real sdfPlane(Vec3 pos, Plane pln)
 	{
 		CAGE_ASSERT(pln.valid());
 		const Vec3 c = pln.normal * pln.d;
 		return dot(pln.normal, pos - c);
 	}
 
-	Real sdfSphere(const Vec3 &pos, Real radius)
+	Real sdfSphere(Vec3 pos, Real radius)
 	{
 		return length(pos) - radius;
 	}
 
-	Real sdfCapsule(const Vec3 &pos, Real prolong, Real radius)
+	Real sdfCapsule(Vec3 pos, Real prolong, Real radius)
 	{
 		Vec3 p = pos;
 		p[2] += prolong * 0.5;
@@ -25,19 +25,19 @@ namespace cage
 		return length(p) - radius;
 	}
 
-	Real sdfCylinder(const Vec3 &pos, Real halfHeight, Real radius)
+	Real sdfCylinder(Vec3 pos, Real halfHeight, Real radius)
 	{
 		const Vec2 d = abs(Vec2(length(Vec2(pos)), pos[2])) - Vec2(radius, halfHeight);
 		return min(max(d[0], d[1]), 0) + length(max(d, 0));
 	}
 
-	Real sdfBox(const Vec3 &pos, const Vec3 &radius)
+	Real sdfBox(Vec3 pos, Vec3 radius)
 	{
 		const Vec3 p = abs(pos) - radius;
 		return length(max(p, 0)) + min(max(p[0], max(p[1], p[2])), 0);
 	}
 
-	Real sdfTetrahedron(const Vec3 &pos, Real radius)
+	Real sdfTetrahedron(Vec3 pos, Real radius)
 	{
 		static constexpr const Vec3 corners[4] = { Vec3(1, 1, 1), Vec3(1, -1, -1), Vec3(-1, 1, -1), Vec3(-1, -1, 1) };
 		static constexpr const Triangle tris[4] = {
@@ -59,7 +59,7 @@ namespace cage
 		return mad * radius;
 	}
 
-	Real sdfOctahedron(const Vec3 &pos, Real radius)
+	Real sdfOctahedron(Vec3 pos, Real radius)
 	{
 		const Vec3 p = abs(pos);
 		const Real m = p[0] + p[1] + p[2] - radius;
@@ -76,7 +76,7 @@ namespace cage
 		return length(Vec3(q[0], q[1] - radius + k, q[2] - k));
 	}
 
-	Real sdfHexagonalPrism(const Vec3 &pos, Real halfHeight, Real radius)
+	Real sdfHexagonalPrism(Vec3 pos, Real halfHeight, Real radius)
 	{
 		static constexpr Vec3 k = Vec3(-0.8660254, 0.5, 0.57735);
 		Vec3 p = abs(pos);
@@ -85,13 +85,13 @@ namespace cage
 		return min(max(d[0], d[1]), 0.0) + length(max(d, 0.0));
 	}
 
-	Real sdfTorus(const Vec3 &pos, Real major, Real minor)
+	Real sdfTorus(Vec3 pos, Real major, Real minor)
 	{
 		const Vec2 q = Vec2(length(Vec2(pos)) - major, pos[2]);
 		return length(q) - minor;
 	}
 
-	Real sdfKnot(const Vec3 &pos, Real scale, Real k)
+	Real sdfKnot(Vec3 pos, Real scale, Real k)
 	{
 		static constexpr Real TAU = Real::Pi() * 2;
 		static constexpr Real norm = 2 / 14.4;
