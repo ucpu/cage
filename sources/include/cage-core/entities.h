@@ -67,9 +67,6 @@ namespace cage
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 
 		void destroy(); // destroy all entities with this component
-
-		EventDispatcher<bool(Entity *)> entityAdded;
-		EventDispatcher<bool(Entity *)> entityRemoved;
 	};
 
 	class CAGE_CORE_API Entity : private Immovable

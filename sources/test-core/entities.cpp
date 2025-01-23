@@ -164,19 +164,13 @@ namespace
 				addListener.bind([&](Entity *) { added++; });
 				removeListener.bind([&](Entity *) { removed++; });
 			}
-		} manCbs, posCbs, oriCbs;
+		} manCbs;
 
 		Holder<EntityManager> man = newEntityManager();
 		manCbs.addListener.attach(man->entityAdded);
 		manCbs.removeListener.attach(man->entityRemoved);
-
 		EntityComponent *pos = man->defineComponent(Vec3());
-		posCbs.addListener.attach(pos->entityAdded);
-		posCbs.removeListener.attach(pos->entityRemoved);
-
 		EntityComponent *ori = man->defineComponent(Quat());
-		oriCbs.addListener.attach(ori->entityAdded);
-		oriCbs.removeListener.attach(ori->entityRemoved);
 
 		for (uint32 i = 0; i < 100; i++)
 		{
@@ -189,19 +183,11 @@ namespace
 
 		CAGE_TEST(manCbs.added == 100);
 		CAGE_TEST(manCbs.removed == 0);
-		CAGE_TEST(posCbs.added == 34);
-		CAGE_TEST(posCbs.removed == 0);
-		CAGE_TEST(oriCbs.added == 20);
-		CAGE_TEST(oriCbs.removed == 0);
 
 		ori->destroy();
 
 		CAGE_TEST(manCbs.added == 100);
 		CAGE_TEST(manCbs.removed == 20);
-		CAGE_TEST(posCbs.added == 34);
-		CAGE_TEST(posCbs.removed == 7);
-		CAGE_TEST(oriCbs.added == 20);
-		CAGE_TEST(oriCbs.removed == 20);
 	}
 
 	void randomizedTests()

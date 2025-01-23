@@ -32,8 +32,13 @@ namespace cage
 
 		memory = newMemoryAllocatorStream({});
 
-		ttRemovedListener.attach(entityMgr->component<GuiTooltipMarkerComponent>()->entityRemoved);
-		ttRemovedListener.bind([this](Entity *e) { return this->tooltipRemoved(e); });
+		ttRemovedListener.attach(entityMgr->entityRemoved);
+		ttRemovedListener.bind(
+			[this](Entity *e)
+			{
+				if (e->has<GuiTooltipMarkerComponent>())
+					return this->tooltipRemoved(e);
+			});
 	}
 
 	GuiImpl::~GuiImpl()

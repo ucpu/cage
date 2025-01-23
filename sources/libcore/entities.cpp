@@ -342,7 +342,6 @@ namespace cage
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (impl->comp(ci->definitionIndex) == nullptr)
 			return;
-		ci->entityRemoved.dispatch(this);
 		ci->componentEntities.erase(this);
 		ci->desVal(impl->comp(ci->definitionIndex));
 		impl->comp(ci->definitionIndex) = nullptr;
@@ -379,7 +378,6 @@ namespace cage
 			c = ci->newVal();
 			detail::memcpy(c, +ci->prototype, ci->typeSize);
 			ci->componentEntities.insert(this);
-			ci->entityAdded.dispatch(this);
 		}
 		return c;
 	}
