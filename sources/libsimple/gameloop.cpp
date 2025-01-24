@@ -26,6 +26,7 @@
 #include <cage-engine/font.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/guiManager.h>
+#include <cage-engine/keybinds.h>
 #include <cage-engine/model.h>
 #include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/renderObject.h>
@@ -609,6 +610,8 @@ namespace cage
 					entityMgr->defineComponent(VrCameraComponent());
 					entityMgr->defineComponent(VrControllerComponent());
 				}
+
+				keybindsRegisterListeners(engineEvents());
 
 				{
 					ScopeLock l(threadsStateBarier);
