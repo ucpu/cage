@@ -18,7 +18,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiSkinIndex
 	{
 		constexpr GuiSkinIndex() = default;
-		constexpr explicit GuiSkinIndex(uint32 index) : index(index){};
+		constexpr explicit GuiSkinIndex(uint32 index) : index(index) {};
 
 		uint32 index = m; // -1 = inherit
 	};
@@ -235,7 +235,7 @@ namespace cage
 		{
 			Real f;
 			sint32 i = 0;
-			Union(){};
+			Union() {};
 		} min, max, step;
 		uint32 cursor = m; // utf32 characters (not bytes)
 		InputTypeEnum type = InputTypeEnum::Text;
@@ -326,17 +326,10 @@ namespace cage
 		CAGE_ENGINE_API void guiDestroyChildrenRecursively(Entity *e);
 		CAGE_ENGINE_API void guiDestroyEntityRecursively(Entity *e);
 
-		template<StringLiteral Text>
+		template<uint32 TextId, StringLiteral Text = "">
 		GuiTooltipComponent::TooltipCallback guiTooltipText()
 		{
-			static constexpr GuiTextComponent txt{ Text.value, 0 };
-			return privat::guiTooltipText(&txt);
-		}
-
-		template<uint32 TextId>
-		GuiTooltipComponent::TooltipCallback guiTooltipText()
-		{
-			static constexpr GuiTextComponent txt{ "", TextId };
+			static constexpr GuiTextComponent txt{ Text.value, TextId };
 			return privat::guiTooltipText(&txt);
 		}
 	}

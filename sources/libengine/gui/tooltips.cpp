@@ -260,10 +260,9 @@ namespace cage
 		ttHasMovedSinceLast = false;
 	}
 
-	bool GuiImpl::tooltipRemoved(Entity *e)
+	void GuiImpl::tooltipRemoved(Entity *e)
 	{
 		std::erase_if(ttData, [&](const TooltipData &tt) { return tt.tooltip == e; });
-		return false;
 	}
 
 	namespace

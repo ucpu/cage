@@ -2,6 +2,10 @@
 #include <variant>
 #include <vector>
 
+#include <cage-core/hashString.h>
+#include <cage-core/string.h>
+#include <cage-core/texts.h>
+#include <cage-engine/guiBuilder.h>
 #include <cage-engine/keybinds.h>
 
 namespace cage
@@ -10,19 +14,9 @@ namespace cage
 	{
 		std::vector<class KeybindImpl *> global;
 
-		enum class MatchResultEnum
+		CAGE_FORCE_INLINE String finishName(String s)
 		{
-			Unmatched = 0,
-			Matched,
-			Activate,
-			Deactivate,
-		};
-
-		CAGE_FORCE_INLINE MatchResultEnum operator||(MatchResultEnum a, MatchResultEnum b)
-		{
-			if (a != MatchResultEnum::Unmatched)
-				return a;
-			return b;
+			return replace(trim(s), " ", "+");
 		}
 
 		struct MatcherBase
@@ -42,68 +36,74 @@ namespace cage
 		{
 			uint32 key = 0;
 
-			CAGE_FORCE_INLINE MatchResultEnum matchImpl(input::privat::BaseKey k, MatchResultEnum activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseKey k, KeybindModesFlags activation) const
 			{
 				if (k.key == key && checkFlags(k.mods))
 					return activation;
-				return MatchResultEnum::Unmatched;
+				return KeybindModesFlags::None;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE MatchResultEnum match(const GenericInput &input, MatchResultEnum activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input, KeybindModesFlags activation) const
 			{
 				if (input.has<T>())
 					return matchImpl(input.get<T>(), activation);
-				return MatchResultEnum::Unmatched;
+				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE MatchResultEnum match(const GenericInput &input) const { return match<input::KeyPress>(input, MatchResultEnum::Activate) || match<input::KeyRepeat>(input, MatchResultEnum::Activate) || match<input::KeyRelease>(input, MatchResultEnum::Deactivate); }
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::KeyPress>(input, KeybindModesFlags::Press) | match<input::KeyRepeat>(input, KeybindModesFlags::Repeat) | match<input::KeyRelease>(input, KeybindModesFlags::Release); }
+
+			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + getKeyName(key)); }
 		};
 
 		struct MouseMatcher : public MatcherBase
 		{
 			MouseButtonsFlags button = MouseButtonsFlags::None;
 
-			CAGE_FORCE_INLINE MatchResultEnum matchImpl(input::privat::BaseMouse k, MatchResultEnum activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseMouse k, KeybindModesFlags activation) const
 			{
 				if (any(k.buttons & button) && checkFlags(k.mods))
 					return activation;
-				return MatchResultEnum::Unmatched;
+				return KeybindModesFlags::None;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE MatchResultEnum match(const GenericInput &input, MatchResultEnum activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input, KeybindModesFlags activation) const
 			{
 				if (input.has<T>())
 					return matchImpl(input.get<T>(), activation);
-				return MatchResultEnum::Unmatched;
+				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE MatchResultEnum match(const GenericInput &input) const { return match<input::MousePress>(input, MatchResultEnum::Activate) || match<input::MouseDoublePress>(input, MatchResultEnum::Activate) || match<input::MouseRelease>(input, MatchResultEnum::Deactivate); }
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::MousePress>(input, KeybindModesFlags::Press) | match<input::MouseDoublePress>(input, KeybindModesFlags::Double) | match<input::MouseRelease>(input, KeybindModesFlags::Release); }
+
+			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + getButtonsNames(button)); }
 		};
 
 		struct WheelMatcher : public MatcherBase
 		{
-			CAGE_FORCE_INLINE MatchResultEnum match(const GenericInput &input) const
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<input::MouseWheel>())
 				{
 					if (checkFlags(input.get<input::MouseWheel>().mods))
-						return MatchResultEnum::Matched;
+						return KeybindModesFlags::Scroll;
 				}
-				return MatchResultEnum::Unmatched;
+				return KeybindModesFlags::None;
 			}
+
+			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " Scroll"); }
 		};
 
 		using Matcher = std::variant<std::monostate, KeyboardMatcher, MouseMatcher, WheelMatcher>;
 
-		CAGE_FORCE_INLINE MatchResultEnum matches(const GenericInput &input, const Matcher &matcher)
+		CAGE_FORCE_INLINE KeybindModesFlags matches(const GenericInput &input, const Matcher &matcher)
 		{
 			return std::visit(
-				[input](const auto &mt) -> MatchResultEnum
+				[input](const auto &mt) -> KeybindModesFlags
 				{
 					if constexpr (std::is_same_v<std::decay_t<decltype(mt)>, std::monostate>)
-						return MatchResultEnum::Unmatched;
+						return KeybindModesFlags::None;
 					else
 						return mt.match(input);
 				},
@@ -160,7 +160,7 @@ namespace cage
 					makeImpl(input.get<T>());
 			}
 
-			void make(const GenericInput &input)
+			CAGE_FORCE_INLINE void make(const GenericInput &input)
 			{
 				make<input::KeyPress>(input);
 				make<input::KeyRepeat>(input);
@@ -178,7 +178,7 @@ namespace cage
 			maker.make(input);
 			if (!std::holds_alternative<std::monostate>(maker.result))
 			{
-				CAGE_ASSERT(matches(input, maker.result) != MatchResultEnum::Unmatched);
+				CAGE_ASSERT(any(matches(input, maker.result)));
 			}
 			return maker.result;
 		}
@@ -186,12 +186,13 @@ namespace cage
 		class KeybindImpl : public Keybind
 		{
 		public:
-			KeybindImpl(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event) : config(config), defaults(defaults.begin(), defaults.end())
+			KeybindImpl(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event) : config(config), defaults(defaults.begin(), defaults.end()), textId(HashString(config.id))
 			{
 				CAGE_ASSERT(!config.id.empty());
 				CAGE_ASSERT(!findKeybind(config.id)); // must be unique
 				CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
 				CAGE_ASSERT(any(config.devices));
+				CAGE_ASSERT(any(config.modes));
 				reset(); // make matchers from the defaults
 				this->event = event;
 				global.push_back(this);
@@ -213,25 +214,19 @@ namespace cage
 				}
 				if (input.has<input::Tick>())
 				{
-					if (active)
+					if (active && any(config.modes & KeybindModesFlags::Tick))
 						return event(input);
 					return false;
 				}
 				for (const auto &it : matchers)
 				{
-					MatchResultEnum r = matches(input, it);
-					switch (r)
-					{
-						case MatchResultEnum::Unmatched:
-							continue;
-						case MatchResultEnum::Activate:
-							active = true;
-							break;
-						case MatchResultEnum::Deactivate:
-							active = false;
-							break;
-					}
-					return event(input);
+					const KeybindModesFlags r = matches(input, it);
+					if (any(r & (KeybindModesFlags::Press | KeybindModesFlags::Repeat)))
+						active = true;
+					if (any(r & KeybindModesFlags::Release))
+						active = false;
+					if (any(r & config.modes))
+						return event(input);
 				}
 				return false;
 			}
@@ -240,23 +235,36 @@ namespace cage
 			EventListener<bool(const GenericInput &)> listener;
 			const std::vector<GenericInput> defaults;
 			std::vector<Matcher> matchers;
+			const uint32 textId = 0;
 			mutable bool active = false; // allows tick events
 		};
+	}
+
+	const String &Keybind::id() const
+	{
+		const KeybindImpl *impl = (const KeybindImpl *)this;
+		return impl->config.id;
 	}
 
 	String Keybind::name() const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
-		// todo
-		return {};
+		return textsGet(impl->textId, impl->config.id);
 	}
 
 	String Keybind::value(uint32 index) const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
 		CAGE_ASSERT(index < impl->matchers.size());
-		// todo
-		return {};
+		return std::visit(
+			[](const auto &mt) -> String
+			{
+				if constexpr (std::is_same_v<std::decay_t<decltype(mt)>, std::monostate>)
+					return "<nothing>";
+				else
+					return mt.value();
+			},
+			impl->matchers[index]);
 	}
 
 	bool Keybind::process(const GenericInput &input) const
@@ -343,6 +351,31 @@ namespace cage
 		GenericInput g = input::Tick();
 		for (KeybindImpl *it : global)
 			it->process(g);
+	}
+
+	void keybindsGuiWidget(GuiBuilder *g, Keybind *k)
+	{
+		auto _1 = g->leftRowStretchRight();
+		for (uint32 i = 0; i < k->count(); i++)
+			g->button().text(k->value(i));
+		{
+			auto _2 = g->alignment();
+			g->button().image(HashString("cage/texture/keybindAdd.png")).tooltip<HashString("cage/keybinds/add"), "Add">().size(Vec2(28));
+		}
+		auto _3 = g->alignment(Vec2(1, 0.5));
+		g->button().image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
+	}
+
+	void keybindsGuiTable(GuiBuilder *g, const String &filterPrefix)
+	{
+		auto _ = g->verticalTable(2);
+		for (KeybindImpl *k : global)
+		{
+			if (!isPattern(k->config.id, filterPrefix, "", ""))
+				continue;
+			g->label().text(k->textId, k->config.id);
+			keybindsGuiWidget(g, k);
+		}
 	}
 
 	Holder<Ini> keybindsExport()

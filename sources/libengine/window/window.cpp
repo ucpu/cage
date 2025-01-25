@@ -8,6 +8,7 @@
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/string.h>
 #include <cage-engine/window.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -813,6 +814,49 @@ namespace cage
 	{
 		cageGlfwInitializeFunc();
 		return systemMemory().createImpl<Window, WindowImpl>(config);
+	}
+
+	detail::StringBase<27> getKeyName(uint32 key)
+	{
+		switch (key)
+		{
+			case GLFW_KEY_UP:
+				return "UP";
+			case GLFW_KEY_DOWN:
+				return "DOWN";
+			case GLFW_KEY_LEFT:
+				return "LEFT";
+			case GLFW_KEY_RIGHT:
+				return "RIGHT";
+		}
+		const auto s = glfwGetKeyName(key, 0);
+		return s ? toUpper(detail::StringBase<27>(s)) : "";
+	}
+
+	detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons)
+	{
+		String res;
+		if (any(buttons & MouseButtonsFlags::Left))
+			res += "LMB ";
+		if (any(buttons & MouseButtonsFlags::Middle))
+			res += "MMB ";
+		if (any(buttons & MouseButtonsFlags::Right))
+			res += "RMB ";
+		return trim(res);
+	}
+
+	detail::StringBase<27> getModifiersNames(ModifiersFlags mods)
+	{
+		String res;
+		if (any(mods & ModifiersFlags::Ctrl))
+			res += "CTRL ";
+		if (any(mods & ModifiersFlags::Shift))
+			res += "SHIFT ";
+		if (any(mods & ModifiersFlags::Alt))
+			res += "ALT ";
+		if (any(mods & ModifiersFlags::Super))
+			res += "SUPER ";
+		return trim(res);
 	}
 
 	GLFWwindow *getGlfwWindow(Window *w)

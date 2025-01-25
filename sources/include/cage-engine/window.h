@@ -57,6 +57,7 @@ namespace cage
 		Vec2i windowedPosition() const;
 		void windowedPosition(Vec2i pos);
 
+		// opengl
 		void makeCurrent();
 		void makeNotCurrent();
 		void swapBuffers();
@@ -69,6 +70,10 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<Window> newWindow(const WindowCreateConfig &config);
+
+	CAGE_ENGINE_API detail::StringBase<27> getKeyName(uint32 key);
+	CAGE_ENGINE_API detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons);
+	CAGE_ENGINE_API detail::StringBase<27> getModifiersNames(ModifiersFlags mods);
 }
 
 #endif

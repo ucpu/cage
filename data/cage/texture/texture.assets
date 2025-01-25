@@ -5,6 +5,8 @@ srgb = true
 gamma = true
 gui.png
 tooltips.png
+keybindAdd.png
+keybindReset.png
 
 []
 scheme = texture

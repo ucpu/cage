@@ -55,13 +55,13 @@ namespace cage
 			template<StringLiteral Text>
 			BuilderItem tooltip()
 			{
-				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<Text>() };
+				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<0, Text>() };
 				return *this;
 			}
-			template<uint32 TextId>
+			template<uint32 TextId, StringLiteral Text = "">
 			BuilderItem tooltip()
 			{
-				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<TextId>() };
+				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<TextId, Text>() };
 				return *this;
 			}
 

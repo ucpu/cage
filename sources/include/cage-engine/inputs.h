@@ -254,6 +254,10 @@ namespace cage
 		using Param = typename privat::ExtractParam<Func>::Param;
 		return inputFilter<Param>([func](const Param &in) { return func(in); });
 	}
+
+	CAGE_ENGINE_API detail::StringBase<27> getKeyName(uint32 key);
+	CAGE_ENGINE_API detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons);
+	CAGE_ENGINE_API detail::StringBase<27> getModifiersNames(ModifiersFlags mods);
 }
 
 #endif // guard_inputs_juhgf98ser4g

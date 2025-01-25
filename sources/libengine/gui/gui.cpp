@@ -37,7 +37,7 @@ namespace cage
 			[this](Entity *e)
 			{
 				if (e->has<GuiTooltipMarkerComponent>())
-					return this->tooltipRemoved(e);
+					this->tooltipRemoved(e);
 			});
 	}
 

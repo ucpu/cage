@@ -342,7 +342,7 @@ namespace cage
 		void ttMouseMove(input::MouseMove in);
 		void updateTooltips();
 		void clearTooltips();
-		bool tooltipRemoved(Entity *e);
+		void tooltipRemoved(Entity *e);
 
 		explicit GuiImpl(const GuiManagerCreateConfig &config);
 		~GuiImpl();
