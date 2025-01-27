@@ -14,7 +14,11 @@ namespace cage
 {
 	namespace
 	{
-		std::vector<class KeybindImpl *> global;
+		std::vector<class KeybindImpl *> &global()
+		{
+			static std::vector<class KeybindImpl *> g;
+			return g;
+		}
 
 		CAGE_FORCE_INLINE String finishName(String s)
 		{
@@ -40,7 +44,7 @@ namespace cage
 
 			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseKey k, KeybindModesFlags activation) const
 			{
-				if (k.key == key && checkFlags(k.mods))
+				if (k.key == key && (checkFlags(k.mods) || activation == KeybindModesFlags::Release))
 					return activation;
 				return KeybindModesFlags::None;
 			}
@@ -64,7 +68,7 @@ namespace cage
 
 			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseMouse k, KeybindModesFlags activation) const
 			{
-				if (any(k.buttons & button) && checkFlags(k.mods))
+				if (any(k.buttons & button) && (checkFlags(k.mods) || activation == KeybindModesFlags::Release))
 					return activation;
 				return KeybindModesFlags::None;
 			}
@@ -94,7 +98,7 @@ namespace cage
 				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " Scroll"); }
+			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " WHEEL"); }
 		};
 
 		using Matcher = std::variant<std::monostate, KeyboardMatcher, MouseMatcher, WheelMatcher>;
@@ -201,14 +205,14 @@ namespace cage
 				CAGE_ASSERT(any(config.modes));
 				reset(); // make matchers from the defaults
 				this->event = event;
-				global.push_back(this);
+				global().push_back(this);
 			}
 
 			~KeybindImpl()
 			{
-				auto it = std::find(global.begin(), global.end(), this);
-				if (it != global.end())
-					global.erase(it);
+				auto it = std::find(global().begin(), global().end(), this);
+				if (it != global().end())
+					global().erase(it);
 			}
 
 			bool process(const GenericInput &input) const
@@ -234,7 +238,11 @@ namespace cage
 					if (any(r & config.modes))
 					{
 						if (event)
-							return event(input);
+						{
+							const bool p = event(input);
+							if (none(r & KeybindModesFlags::Release)) // release always propagates
+								return p;
+						}
 						return false;
 					}
 				}
@@ -285,7 +293,7 @@ namespace cage
 
 			void cancel()
 			{
-				assignmentListener.clear();
+				assignmentListener.unbind();
 				assigningIndex = m;
 				makeGui();
 			}
@@ -380,7 +388,7 @@ namespace cage
 			[](const auto &mt) -> String
 			{
 				if constexpr (std::is_same_v<std::decay_t<decltype(mt)>, std::monostate>)
-					return "-----";
+					return "";
 				else
 					return mt.value();
 			},
@@ -459,7 +467,7 @@ namespace cage
 
 	Keybind *findKeybind(const String &id)
 	{
-		for (KeybindImpl *it : global)
+		for (KeybindImpl *it : global())
 		{
 			if (it->config.id == id)
 				return it;
@@ -470,9 +478,9 @@ namespace cage
 	void keybindsRegisterListeners(EventDispatcher<bool(const GenericInput &)> &dispatcher)
 	{
 		assignmentListener.attach(dispatcher, -328655984);
-		for (KeybindImpl *it : global)
+		for (KeybindImpl *it : global())
 		{
-			it->listener.clear();
+			it->listener.unbind();
 			it->listener.bind([it](const GenericInput &in) { return it->process(in); });
 			it->listener.attach(dispatcher, it->config.eventOrder);
 		}
@@ -481,7 +489,7 @@ namespace cage
 	void keybindsDispatchTick()
 	{
 		GenericInput g = input::Tick();
-		for (KeybindImpl *it : global)
+		for (KeybindImpl *it : global())
 			it->process(g);
 	}
 
@@ -495,13 +503,19 @@ namespace cage
 
 	void keybindsGuiTable(GuiBuilder *g, const String &filterPrefix)
 	{
-		std::sort(global.begin(), global.end(), [](const KeybindImpl *a, const KeybindImpl *b) -> bool { return std::pair{ a->config.displayOrder, a->config.id } < std::pair{ b->config.displayOrder, b->config.id }; });
-		auto _ = g->verticalTable(2);
-		for (KeybindImpl *k : global)
+		std::vector<KeybindImpl *> tmp;
+		tmp.reserve(global().size());
+		for (KeybindImpl *k : global())
 		{
-			if (!isPattern(k->config.id, filterPrefix, "", ""))
-				continue;
-			g->label().text(k->textId, k->config.id);
+			if (isPattern(k->config.id, filterPrefix, "", ""))
+				tmp.push_back(k);
+		}
+		std::sort(tmp.begin(), tmp.end(), [](const KeybindImpl *a, const KeybindImpl *b) -> bool { return std::tuple{ a->config.displayOrder, textsGet(a->textId), a->config.id } < std::tuple{ b->config.displayOrder, textsGet(b->textId), b->config.id }; });
+
+		auto _ = g->verticalTable(2);
+		for (KeybindImpl *k : tmp)
+		{
+			g->label().update([k](Entity *e) { e->value<GuiTextFormatComponent>().color = k->active ? Vec3(0.5, 0.9, 1) : Vec3::Nan(); }).text(k->textId, k->config.id);
 			keybindsGuiWidget(g, k);
 		}
 	}

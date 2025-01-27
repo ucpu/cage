@@ -63,7 +63,7 @@ namespace cage
 			}
 		}
 
-		CAGE_FORCE_INLINE void clear() { del.b.clear(); }
+		CAGE_FORCE_INLINE void unbind() { del.b.clear(); }
 
 		CAGE_FORCE_INLINE void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0) { privat::EventLinker::attach(&dispatcher, order); }
 
@@ -87,7 +87,7 @@ namespace cage
 		{
 			Delegate<bool(Ts...)> b;
 			Delegate<void(Ts...)> v;
-			CAGE_FORCE_INLINE Del() : b(){};
+			CAGE_FORCE_INLINE Del() : b() {};
 		} del;
 		bool vd = false;
 

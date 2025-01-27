@@ -53,7 +53,7 @@ void testEvents()
 		CAGE_TEST(n == 1);
 		l1.detach();
 		l1.attach(d);
-		l1.clear();
+		l1.unbind();
 	}
 
 	{

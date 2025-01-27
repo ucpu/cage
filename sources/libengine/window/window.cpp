@@ -820,6 +820,8 @@ namespace cage
 	{
 		switch (key)
 		{
+			case GLFW_KEY_SPACE:
+				return "_____";
 			case GLFW_KEY_ESCAPE:
 				return "ESC";
 			case GLFW_KEY_ENTER:
@@ -827,11 +829,11 @@ namespace cage
 			case GLFW_KEY_TAB:
 				return "TAB";
 			case GLFW_KEY_BACKSPACE:
-				return "BACKSPACE";
+				return "BACK";
 			case GLFW_KEY_INSERT:
-				return "INSERT";
+				return "INS";
 			case GLFW_KEY_DELETE:
-				return "DELETE";
+				return "DEL";
 			case GLFW_KEY_RIGHT:
 				return "RIGHT";
 			case GLFW_KEY_LEFT:
@@ -841,21 +843,21 @@ namespace cage
 			case GLFW_KEY_UP:
 				return "UP";
 			case GLFW_KEY_PAGE_UP:
-				return "PAGE_UP";
+				return "PGUP";
 			case GLFW_KEY_PAGE_DOWN:
-				return "PAGE_DOWN";
+				return "PGDN";
 			case GLFW_KEY_HOME:
 				return "HOME";
 			case GLFW_KEY_END:
 				return "END";
 			case GLFW_KEY_CAPS_LOCK:
-				return "CAPS_LOCK";
+				return "CAPS";
 			case GLFW_KEY_SCROLL_LOCK:
-				return "SCROLL_LOCK";
+				return "SCROLL";
 			case GLFW_KEY_NUM_LOCK:
-				return "NUM_LOCK";
+				return "NUM";
 			case GLFW_KEY_PRINT_SCREEN:
-				return "PRINT_SCREEN";
+				return "PRTSC";
 			case GLFW_KEY_PAUSE:
 				return "PAUSE";
 			case GLFW_KEY_F1:
@@ -882,8 +884,34 @@ namespace cage
 				return "F11";
 			case GLFW_KEY_F12:
 				return "F12";
+			case GLFW_KEY_F13:
+				return "F13";
+			case GLFW_KEY_F14:
+				return "F14";
+			case GLFW_KEY_F15:
+				return "F15";
+			case GLFW_KEY_F16:
+				return "F16";
+			case GLFW_KEY_F17:
+				return "F17";
+			case GLFW_KEY_F18:
+				return "F18";
+			case GLFW_KEY_F19:
+				return "F19";
+			case GLFW_KEY_F20:
+				return "F20";
+			case GLFW_KEY_F21:
+				return "F21";
+			case GLFW_KEY_F22:
+				return "F22";
+			case GLFW_KEY_F23:
+				return "F23";
+			case GLFW_KEY_F24:
+				return "F24";
+			case GLFW_KEY_F25:
+				return "F25";
 			case GLFW_KEY_KP_ENTER:
-				return "ENTER2";
+				return "ENT";
 		}
 		const auto s = glfwGetKeyName(key, 0);
 		return s ? toUpper(detail::StringBase<27>(s)) : "???";

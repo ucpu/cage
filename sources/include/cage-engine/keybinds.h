@@ -59,7 +59,7 @@ namespace cage
 		sint32 displayOrder = 0;
 		ModifiersFlags requiredFlags = ModifiersFlags::None;
 		ModifiersFlags forbiddenFlags = ModifiersFlags::Super;
-		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse | KeybindDevicesFlags::Wheel;
+		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse;
 		KeybindModesFlags modes = KeybindModesFlags::Press;
 	};
 
