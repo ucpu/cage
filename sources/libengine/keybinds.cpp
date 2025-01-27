@@ -2,6 +2,8 @@
 #include <variant>
 #include <vector>
 
+#include <GLFW/glfw3.h>
+
 #include <cage-core/hashString.h>
 #include <cage-core/string.h>
 #include <cage-core/texts.h>
@@ -183,6 +185,10 @@ namespace cage
 			return maker.result;
 		}
 
+		bool guiUpdateGlobal(uintPtr ptr, const GenericInput &);
+
+		EventListener<bool(const GenericInput &)> assignmentListener;
+
 		class KeybindImpl : public Keybind
 		{
 		public:
@@ -226,7 +232,11 @@ namespace cage
 					if (any(r & KeybindModesFlags::Release))
 						active = false;
 					if (any(r & config.modes))
-						return event(input);
+					{
+						if (event)
+							return event(input);
+						return false;
+					}
 				}
 				return false;
 			}
@@ -237,7 +247,117 @@ namespace cage
 			std::vector<Matcher> matchers;
 			const uint32 textId = 0;
 			mutable bool active = false; // allows tick events
+
+			Entity *guiEnt = nullptr;
+			uint32 assigningIndex = m;
+
+			void makeGui()
+			{
+				CAGE_ASSERT(guiEnt);
+				detail::guiDestroyChildrenRecursively(guiEnt);
+				Holder<GuiBuilder> g = newGuiBuilder(guiEnt);
+				auto _ = g->leftRowStretchRight();
+				for (uint32 i = 0; i < count(); i++)
+				{
+					auto _ = g->button().event(Delegate<bool(const GenericInput &)>().bind<uintPtr, &guiUpdateGlobal>(uintPtr(this) + i)).text(value(i));
+					if (assigningIndex == i)
+						_.accent(Vec4(50, 230, 255, 100) / 255);
+				}
+				{
+					auto _ = g->row(0.5);
+					g->button().disabled(count() >= 3).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiAdd>(this)).image(HashString("cage/texture/keybindAdd.png")).tooltip<HashString("cage/keybinds/add"), "Add">().size(Vec2(28));
+					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiRemove>(this)).image(HashString("cage/texture/keybindRemove.png")).tooltip<HashString("cage/keybinds/remove"), "Remove">().size(Vec2(28));
+				}
+				{
+					auto _ = g->rightRow(0.5);
+					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiClear>(this)).image(HashString("cage/texture/keybindClear.png")).tooltip<HashString("cage/keybinds/clear"), "Clear">().size(Vec2(28));
+					g->button().event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiReset>(this)).image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
+				}
+			}
+
+			bool guiUpdate(uint32 index, const GenericInput &)
+			{
+				assigningIndex = index;
+				makeGui();
+				assignmentListener.bind(Delegate<bool(const GenericInput &in)>().bind<KeybindImpl, &KeybindImpl::guiAssign>(this));
+				return true;
+			}
+
+			void cancel()
+			{
+				assignmentListener.clear();
+				assigningIndex = m;
+				makeGui();
+			}
+
+			bool guiAssign(const GenericInput &in)
+			{
+				if (in.has<input::WindowFocusLose>())
+				{
+					cancel();
+					return false;
+				}
+				if (in.has<input::KeyRelease>() || in.has<input::KeyRepeat>())
+					return false;
+				if (in.has<input::KeyPress>())
+				{
+					const input::KeyPress k = in.get<input::KeyPress>();
+					switch (k.key)
+					{
+						case GLFW_KEY_LEFT_SHIFT:
+						case GLFW_KEY_LEFT_CONTROL:
+						case GLFW_KEY_LEFT_ALT:
+						case GLFW_KEY_LEFT_SUPER:
+						case GLFW_KEY_RIGHT_SHIFT:
+						case GLFW_KEY_RIGHT_CONTROL:
+						case GLFW_KEY_RIGHT_ALT:
+						case GLFW_KEY_RIGHT_SUPER:
+							return false;
+					}
+				}
+				if (in.has<input::MouseDoublePress>() || in.has<input::MouseRelease>() || in.has<input::MouseMove>() || in.has<input::MouseRelativeMove>())
+					return false;
+				override(assigningIndex, in);
+				cancel();
+				return true;
+			}
+
+			bool guiAdd(const GenericInput &)
+			{
+				add();
+				makeGui();
+				return true;
+			}
+
+			bool guiRemove(const GenericInput &)
+			{
+				remove(count() - 1);
+				makeGui();
+				return true;
+			}
+
+			bool guiClear(const GenericInput &)
+			{
+				clear();
+				makeGui();
+				return true;
+			}
+
+			bool guiReset(const GenericInput &)
+			{
+				reset();
+				makeGui();
+				return true;
+			}
 		};
+
+		bool guiUpdateGlobal(uintPtr ptr, const GenericInput &in)
+		{
+			const uint32 index = ptr % alignof(KeybindImpl);
+			ptr -= index;
+			KeybindImpl *impl = (KeybindImpl *)ptr;
+			return impl->guiUpdate(index, in);
+		}
 	}
 
 	const String &Keybind::id() const
@@ -260,7 +380,7 @@ namespace cage
 			[](const auto &mt) -> String
 			{
 				if constexpr (std::is_same_v<std::decay_t<decltype(mt)>, std::monostate>)
-					return "<nothing>";
+					return "-----";
 				else
 					return mt.value();
 			},
@@ -271,6 +391,12 @@ namespace cage
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
 		return impl->process(input);
+	}
+
+	bool Keybind::active() const
+	{
+		const KeybindImpl *impl = (const KeybindImpl *)this;
+		return impl->active;
 	}
 
 	uint32 Keybind::count() const
@@ -289,9 +415,14 @@ namespace cage
 	void Keybind::add(const GenericInput &input)
 	{
 		KeybindImpl *impl = (KeybindImpl *)this;
-		const auto mt = makeMatcher(impl->config, input);
-		if (!std::holds_alternative<std::monostate>(mt))
-			impl->matchers.push_back(mt);
+		if (input)
+		{
+			const auto mt = makeMatcher(impl->config, input);
+			if (!std::holds_alternative<std::monostate>(mt))
+				impl->matchers.push_back(mt);
+		}
+		else
+			impl->matchers.push_back({});
 	}
 
 	void Keybind::remove(uint32 index)
@@ -338,6 +469,7 @@ namespace cage
 
 	void keybindsRegisterListeners(EventDispatcher<bool(const GenericInput &)> &dispatcher)
 	{
+		assignmentListener.attach(dispatcher, -328655984);
 		for (KeybindImpl *it : global)
 		{
 			it->listener.clear();
@@ -353,21 +485,17 @@ namespace cage
 			it->process(g);
 	}
 
-	void keybindsGuiWidget(GuiBuilder *g, Keybind *k)
+	void keybindsGuiWidget(GuiBuilder *g, Keybind *k_)
 	{
-		auto _1 = g->leftRowStretchRight();
-		for (uint32 i = 0; i < k->count(); i++)
-			g->button().text(k->value(i));
-		{
-			auto _2 = g->alignment();
-			g->button().image(HashString("cage/texture/keybindAdd.png")).tooltip<HashString("cage/keybinds/add"), "Add">().size(Vec2(28));
-		}
-		auto _3 = g->alignment(Vec2(1, 0.5));
-		g->button().image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
+		KeybindImpl *k = (KeybindImpl *)k_;
+		auto _ = g->empty();
+		k->guiEnt = _.entity();
+		k->makeGui();
 	}
 
 	void keybindsGuiTable(GuiBuilder *g, const String &filterPrefix)
 	{
+		std::sort(global.begin(), global.end(), [](const KeybindImpl *a, const KeybindImpl *b) -> bool { return std::pair{ a->config.displayOrder, a->config.id } < std::pair{ b->config.displayOrder, b->config.id }; });
 		auto _ = g->verticalTable(2);
 		for (KeybindImpl *k : global)
 		{

@@ -6,6 +6,8 @@ gamma = true
 gui.png
 tooltips.png
 keybindAdd.png
+keybindClear.png
+keybindRemove.png
 keybindReset.png
 
 []

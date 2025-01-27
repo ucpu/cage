@@ -18,6 +18,7 @@ namespace cage
 		String name() const;
 		String value(uint32 index = 0) const;
 		bool process(const GenericInput &input) const;
+		bool active() const;
 
 		uint32 count() const;
 		void override(uint32 index, const GenericInput &input);
@@ -55,9 +56,10 @@ namespace cage
 	{
 		String id;
 		sint32 eventOrder = 0;
+		sint32 displayOrder = 0;
 		ModifiersFlags requiredFlags = ModifiersFlags::None;
 		ModifiersFlags forbiddenFlags = ModifiersFlags::Super;
-		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse;
+		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse | KeybindDevicesFlags::Wheel;
 		KeybindModesFlags modes = KeybindModesFlags::Press;
 	};
 

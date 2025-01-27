@@ -820,17 +820,73 @@ namespace cage
 	{
 		switch (key)
 		{
-			case GLFW_KEY_UP:
-				return "UP";
-			case GLFW_KEY_DOWN:
-				return "DOWN";
-			case GLFW_KEY_LEFT:
-				return "LEFT";
+			case GLFW_KEY_ESCAPE:
+				return "ESC";
+			case GLFW_KEY_ENTER:
+				return "ENTER";
+			case GLFW_KEY_TAB:
+				return "TAB";
+			case GLFW_KEY_BACKSPACE:
+				return "BACKSPACE";
+			case GLFW_KEY_INSERT:
+				return "INSERT";
+			case GLFW_KEY_DELETE:
+				return "DELETE";
 			case GLFW_KEY_RIGHT:
 				return "RIGHT";
+			case GLFW_KEY_LEFT:
+				return "LEFT";
+			case GLFW_KEY_DOWN:
+				return "DOWN";
+			case GLFW_KEY_UP:
+				return "UP";
+			case GLFW_KEY_PAGE_UP:
+				return "PAGE_UP";
+			case GLFW_KEY_PAGE_DOWN:
+				return "PAGE_DOWN";
+			case GLFW_KEY_HOME:
+				return "HOME";
+			case GLFW_KEY_END:
+				return "END";
+			case GLFW_KEY_CAPS_LOCK:
+				return "CAPS_LOCK";
+			case GLFW_KEY_SCROLL_LOCK:
+				return "SCROLL_LOCK";
+			case GLFW_KEY_NUM_LOCK:
+				return "NUM_LOCK";
+			case GLFW_KEY_PRINT_SCREEN:
+				return "PRINT_SCREEN";
+			case GLFW_KEY_PAUSE:
+				return "PAUSE";
+			case GLFW_KEY_F1:
+				return "F1";
+			case GLFW_KEY_F2:
+				return "F2";
+			case GLFW_KEY_F3:
+				return "F3";
+			case GLFW_KEY_F4:
+				return "F4";
+			case GLFW_KEY_F5:
+				return "F5";
+			case GLFW_KEY_F6:
+				return "F6";
+			case GLFW_KEY_F7:
+				return "F7";
+			case GLFW_KEY_F8:
+				return "F8";
+			case GLFW_KEY_F9:
+				return "F9";
+			case GLFW_KEY_F10:
+				return "F10";
+			case GLFW_KEY_F11:
+				return "F11";
+			case GLFW_KEY_F12:
+				return "F12";
+			case GLFW_KEY_KP_ENTER:
+				return "ENTER2";
 		}
 		const auto s = glfwGetKeyName(key, 0);
-		return s ? toUpper(detail::StringBase<27>(s)) : "";
+		return s ? toUpper(detail::StringBase<27>(s)) : "???";
 	}
 
 	detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons)
