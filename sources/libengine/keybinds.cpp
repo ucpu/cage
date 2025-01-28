@@ -360,6 +360,8 @@ namespace cage
 				makeGui();
 				return true;
 			}
+
+			CAGE_FORCE_INLINE auto cmp() const { return std::tuple<sint32, String, String>(config.displayOrder, textsGet(textId), config.id); }
 		};
 
 		bool guiUpdateGlobal(uintPtr ptr, const GenericInput &in)
@@ -549,7 +551,7 @@ namespace cage
 			if (isPattern(k->config.id, filterPrefix, "", ""))
 				tmp.push_back(k);
 		}
-		std::sort(tmp.begin(), tmp.end(), [](const KeybindImpl *a, const KeybindImpl *b) -> bool { return std::tuple{ a->config.displayOrder, textsGet(a->textId), a->config.id } < std::tuple{ b->config.displayOrder, textsGet(b->textId), b->config.id }; });
+		std::sort(tmp.begin(), tmp.end(), [](const KeybindImpl *a, const KeybindImpl *b) -> bool { return a->cmp() < b->cmp(); });
 
 		auto _ = g->verticalTable(2);
 		for (KeybindImpl *k : tmp)
