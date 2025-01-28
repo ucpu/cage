@@ -18,6 +18,7 @@ namespace cage
 		String name() const;
 		String value(uint32 index = 0) const;
 		bool process(const GenericInput &input) const;
+		void setActive(bool a);
 		bool active() const;
 
 		uint32 count() const;
@@ -43,14 +44,18 @@ namespace cage
 	enum class KeybindModesFlags : uint32
 	{
 		None = 0,
-		Press = 1 << 0,
-		Repeat = 1 << 1,
-		Double = 1 << 2,
-		Release = 1 << 3,
-		Scroll = 1 << 4,
-		Tick = 1 << 5,
+		KeyPress = 1 << 0,
+		KeyRepeat = 1 << 1,
+		KeyRelease = 1 << 2,
+		MousePress = 1 << 3,
+		MouseDouble = 1 << 4,
+		MouseRelease = 1 << 5,
+		WheelScroll = 1 << 6,
+		GameTick = 1 << 7,
+		EngineTick = 1 << 8,
 	};
 	GCHL_ENUM_BITS(KeybindModesFlags);
+	CAGE_ENGINE_API KeybindModesFlags keybindMode(const GenericInput &in);
 
 	struct CAGE_ENGINE_API KeybindCreateConfig
 	{
@@ -59,22 +64,25 @@ namespace cage
 		sint32 displayOrder = 0;
 		ModifiersFlags requiredFlags = ModifiersFlags::None;
 		ModifiersFlags forbiddenFlags = ModifiersFlags::Super;
-		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse;
-		KeybindModesFlags modes = KeybindModesFlags::Press;
+		bool exactFlags = true;
+		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse; // which devices are allowed to bind
+		KeybindModesFlags modes = KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress; // which modes trigger the event (contrary: activation is always with press and release)
 	};
 
 	CAGE_ENGINE_API Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults = {}, Delegate<bool(const GenericInput &)> event = {});
 	CAGE_ENGINE_API Holder<Keybind> newKeybind(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event = {});
 	CAGE_ENGINE_API Keybind *findKeybind(const String &id);
-
 	CAGE_ENGINE_API void keybindsRegisterListeners(EventDispatcher<bool(const GenericInput &)> &dispatcher);
 
 	namespace input
 	{
-		struct CAGE_ENGINE_API Tick
+		struct CAGE_ENGINE_API GameTick
+		{};
+		struct CAGE_ENGINE_API EngineTick
 		{};
 	}
-	CAGE_ENGINE_API void keybindsDispatchTick();
+	CAGE_ENGINE_API void keybindsDispatchGameTick();
+	CAGE_ENGINE_API void keybindsDispatchEngineTick();
 
 	CAGE_ENGINE_API void keybindsGuiWidget(guiBuilder::GuiBuilder *g, Keybind *keybind);
 	CAGE_ENGINE_API void keybindsGuiTable(guiBuilder::GuiBuilder *g, const String &filterPrefix = {});

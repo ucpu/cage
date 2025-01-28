@@ -44,20 +44,20 @@ namespace cage
 
 			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseKey k, KeybindModesFlags activation) const
 			{
-				if (k.key == key && (checkFlags(k.mods) || activation == KeybindModesFlags::Release))
+				if ((k.key == key || k.key == m) && (checkFlags(k.mods) || activation == KeybindModesFlags::KeyRelease))
 					return activation;
 				return KeybindModesFlags::None;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input, KeybindModesFlags activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<T>())
-					return matchImpl(input.get<T>(), activation);
+					return matchImpl(input.get<T>(), keybindMode(input));
 				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::KeyPress>(input, KeybindModesFlags::Press) | match<input::KeyRepeat>(input, KeybindModesFlags::Repeat) | match<input::KeyRelease>(input, KeybindModesFlags::Release); }
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::KeyPress>(input) | match<input::KeyRepeat>(input) | match<input::KeyRelease>(input); }
 
 			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + getKeyName(key)); }
 		};
@@ -68,20 +68,20 @@ namespace cage
 
 			CAGE_FORCE_INLINE KeybindModesFlags matchImpl(input::privat::BaseMouse k, KeybindModesFlags activation) const
 			{
-				if (any(k.buttons & button) && (checkFlags(k.mods) || activation == KeybindModesFlags::Release))
+				if ((any(k.buttons & button) || k.buttons == (MouseButtonsFlags)m) && (checkFlags(k.mods) || activation == KeybindModesFlags::MouseRelease))
 					return activation;
 				return KeybindModesFlags::None;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input, KeybindModesFlags activation) const
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<T>())
-					return matchImpl(input.get<T>(), activation);
+					return matchImpl(input.get<T>(), keybindMode(input));
 				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::MousePress>(input, KeybindModesFlags::Press) | match<input::MouseDoublePress>(input, KeybindModesFlags::Double) | match<input::MouseRelease>(input, KeybindModesFlags::Release); }
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::MousePress>(input) | match<input::MouseDoublePress>(input) | match<input::MouseRelease>(input); }
 
 			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + getButtonsNames(button)); }
 		};
@@ -93,7 +93,7 @@ namespace cage
 				if (input.has<input::MouseWheel>())
 				{
 					if (checkFlags(input.get<input::MouseWheel>().mods))
-						return KeybindModesFlags::Scroll;
+						return KeybindModesFlags::WheelScroll;
 				}
 				return KeybindModesFlags::None;
 			}
@@ -126,6 +126,8 @@ namespace cage
 				MatcherBase r;
 				r.requiredFlags = config.requiredFlags | mods;
 				r.forbiddenFlags = config.forbiddenFlags;
+				if (config.exactFlags)
+					r.forbiddenFlags |= ~r.requiredFlags;
 				CAGE_ASSERT(none(r.requiredFlags & r.forbiddenFlags));
 				return r;
 			}
@@ -222,25 +224,26 @@ namespace cage
 					active = false;
 					return false;
 				}
-				if (input.has<input::Tick>())
+				if (active)
 				{
-					if (active && any(config.modes & KeybindModesFlags::Tick))
+					if (input.has<input::GameTick>() && any(config.modes & KeybindModesFlags::GameTick))
 						return event(input);
-					return false;
+					if (input.has<input::EngineTick>() && any(config.modes & KeybindModesFlags::EngineTick))
+						return event(input);
 				}
 				for (const auto &it : matchers)
 				{
 					const KeybindModesFlags r = matches(input, it);
-					if (any(r & (KeybindModesFlags::Press | KeybindModesFlags::Repeat)))
+					if (any(r & (KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress)))
 						active = true;
-					if (any(r & KeybindModesFlags::Release))
+					if (any(r & (KeybindModesFlags::KeyRelease | KeybindModesFlags::MouseRelease)))
 						active = false;
 					if (any(r & config.modes))
 					{
 						if (event)
 						{
 							const bool p = event(input);
-							if (none(r & KeybindModesFlags::Release)) // release always propagates
+							if (none(r & (KeybindModesFlags::KeyRelease | KeybindModesFlags::MouseRelease))) // release always propagates
 								return p;
 						}
 						return false;
@@ -401,6 +404,12 @@ namespace cage
 		return impl->process(input);
 	}
 
+	void Keybind::setActive(bool a)
+	{
+		KeybindImpl *impl = (KeybindImpl *)this;
+		impl->active = a;
+	}
+
 	bool Keybind::active() const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
@@ -455,6 +464,29 @@ namespace cage
 		CAGE_ASSERT(impl->matchers.size() == impl->defaults.size());
 	}
 
+	KeybindModesFlags keybindMode(const GenericInput &in)
+	{
+		if (in.has<input::KeyPress>())
+			return KeybindModesFlags::KeyPress;
+		if (in.has<input::KeyRepeat>())
+			return KeybindModesFlags::KeyRepeat;
+		if (in.has<input::KeyRelease>())
+			return KeybindModesFlags::KeyRelease;
+		if (in.has<input::MousePress>())
+			return KeybindModesFlags::MousePress;
+		if (in.has<input::MouseDoublePress>())
+			return KeybindModesFlags::MouseDouble;
+		if (in.has<input::MouseRelease>())
+			return KeybindModesFlags::MouseRelease;
+		if (in.has<input::MouseWheel>())
+			return KeybindModesFlags::WheelScroll;
+		if (in.has<input::GameTick>())
+			return KeybindModesFlags::GameTick;
+		if (in.has<input::EngineTick>())
+			return KeybindModesFlags::EngineTick;
+		return KeybindModesFlags::None;
+	}
+
 	Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults, Delegate<bool(const GenericInput &)> event)
 	{
 		return newKeybind(config, PointerRange(&defaults, &defaults + 1), event);
@@ -486,9 +518,16 @@ namespace cage
 		}
 	}
 
-	void keybindsDispatchTick()
+	void keybindsDispatchGameTick()
 	{
-		GenericInput g = input::Tick();
+		GenericInput g = input::GameTick();
+		for (KeybindImpl *it : global())
+			it->process(g);
+	}
+
+	void keybindsDispatchEngineTick()
+	{
+		GenericInput g = input::EngineTick();
 		for (KeybindImpl *it : global())
 			it->process(g);
 	}
