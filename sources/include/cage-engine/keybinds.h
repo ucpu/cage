@@ -81,8 +81,6 @@ namespace cage
 		struct CAGE_ENGINE_API EngineTick
 		{};
 	}
-	CAGE_ENGINE_API void keybindsDispatchGameTick();
-	CAGE_ENGINE_API void keybindsDispatchEngineTick();
 
 	CAGE_ENGINE_API void keybindsGuiWidget(guiBuilder::GuiBuilder *g, Keybind *keybind);
 	CAGE_ENGINE_API void keybindsGuiTable(guiBuilder::GuiBuilder *g, const String &filterPrefix = {});

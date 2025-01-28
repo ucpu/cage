@@ -355,7 +355,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("keybinds engine tick");
-					keybindsDispatchEngineTick();
+					engineEvents().dispatch(input::EngineTick());
 				}
 				{
 					ProfilingScope profiling("control callback");

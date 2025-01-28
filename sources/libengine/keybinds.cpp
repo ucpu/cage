@@ -228,9 +228,17 @@ namespace cage
 				if (active)
 				{
 					if (input.has<input::GameTick>() && any(config.modes & KeybindModesFlags::GameTick))
-						return event(input);
+					{
+						if (event)
+							event(input);
+						return false; // ticks always propagate
+					}
 					if (input.has<input::EngineTick>() && any(config.modes & KeybindModesFlags::EngineTick))
-						return event(input);
+					{
+						if (event)
+							event(input);
+						return false; // ticks always propagate
+					}
 				}
 				for (const auto &it : matchers)
 				{
@@ -519,20 +527,6 @@ namespace cage
 			it->listener.bind([it](const GenericInput &in) { return it->process(in); });
 			it->listener.attach(dispatcher, it->config.eventOrder);
 		}
-	}
-
-	void keybindsDispatchGameTick()
-	{
-		GenericInput g = input::GameTick();
-		for (KeybindImpl *it : global())
-			it->process(g);
-	}
-
-	void keybindsDispatchEngineTick()
-	{
-		GenericInput g = input::EngineTick();
-		for (KeybindImpl *it : global())
-			it->process(g);
 	}
 
 	void keybindsGuiWidget(GuiBuilder *g, Keybind *k_)
