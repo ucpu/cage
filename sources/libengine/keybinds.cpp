@@ -312,6 +312,7 @@ namespace cage
 
 			bool guiAssign(const GenericInput &in)
 			{
+				CAGE_ASSERT(assigningIndex < matchers.size());
 				if (in.has<input::WindowFocusLose>())
 				{
 					cancel();
@@ -336,6 +337,8 @@ namespace cage
 					}
 				}
 				if (in.has<input::MouseDoublePress>() || in.has<input::MouseRelease>() || in.has<input::MouseMove>() || in.has<input::MouseRelativeMove>())
+					return false;
+				if (in.has<input::EngineTick>() || in.has<input::GameTick>())
 					return false;
 				override(assigningIndex, in);
 				cancel();
