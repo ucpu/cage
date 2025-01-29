@@ -89,17 +89,36 @@ namespace cage
 
 		struct WheelMatcher : public MatcherBase
 		{
+			sint32 direction = 0;
+
 			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<input::MouseWheel>())
 				{
-					if (checkFlags(input.get<input::MouseWheel>().mods))
+					const input::MouseWheel w = input.get<input::MouseWheel>();
+					if (!checkFlags(w.mods))
+						return KeybindModesFlags::None;
+					if (direction == 0)
 						return KeybindModesFlags::WheelScroll;
+					if (direction > 0 && w.wheel > 0)
+						return KeybindModesFlags::WheelRoll;
+					if (direction < 0 && w.wheel < 0)
+						return KeybindModesFlags::WheelRoll;
 				}
 				return KeybindModesFlags::None;
 			}
 
-			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " WHEEL"); }
+			CAGE_FORCE_INLINE String value() const
+			{
+				String w;
+				if (direction > 0)
+					w = "WHUP";
+				else if (direction < 0)
+					w = "WHDN";
+				else
+					w = "WHEEL";
+				return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + w);
+			}
 		};
 
 		using Matcher = std::variant<std::monostate, KeyboardMatcher, MouseMatcher, WheelMatcher>;
@@ -153,11 +172,14 @@ namespace cage
 
 			CAGE_FORCE_INLINE void makeImpl(input::MouseWheel k)
 			{
-				if (none(config.devices & KeybindDevicesFlags::Wheel))
-					return;
 				if (any(k.mods & config.forbiddenFlags))
 					return;
-				result = WheelMatcher{ base(k.mods) };
+				if (any(config.devices & KeybindDevicesFlags::WheelScroll))
+					result = WheelMatcher{ base(k.mods), 0 };
+				if (any(config.devices & KeybindDevicesFlags::WheelRoll) && k.wheel > 0)
+					result = WheelMatcher{ base(k.mods), 1 };
+				if (any(config.devices & KeybindDevicesFlags::WheelRoll) && k.wheel < 0)
+					result = WheelMatcher{ base(k.mods), -1 };
 			}
 
 			template<class T>
@@ -205,6 +227,7 @@ namespace cage
 				CAGE_ASSERT(!findKeybind(config.id)); // must be unique
 				CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
 				CAGE_ASSERT(any(config.devices));
+				CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
 				CAGE_ASSERT(any(config.modes));
 				reset(); // make matchers from the defaults
 				this->event = event;
@@ -225,26 +248,33 @@ namespace cage
 					active = false;
 					return false;
 				}
-				if (active)
+				if (input.has<input::GameTick>())
 				{
-					if (input.has<input::GameTick>() && any(config.modes & KeybindModesFlags::GameTick))
+					if (active && any(config.modes & KeybindModesFlags::GameTick) && event)
+						event(input);
+					return false; // ticks always propagate
+				}
+				if (input.has<input::EngineTick>())
+				{
+					if (active && any(config.modes & KeybindModesFlags::EngineTick) && event)
+						event(input);
+					if (autoDeactivate)
 					{
-						if (event)
-							event(input);
-						return false; // ticks always propagate
+						active = false;
+						autoDeactivate = false;
 					}
-					if (input.has<input::EngineTick>() && any(config.modes & KeybindModesFlags::EngineTick))
-					{
-						if (event)
-							event(input);
-						return false; // ticks always propagate
-					}
+					return false; // ticks always propagate
 				}
 				for (const auto &it : matchers)
 				{
 					const KeybindModesFlags r = matches(input, it);
 					if (any(r & (KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress)))
 						active = true;
+					if (any(r & (KeybindModesFlags::WheelRoll | KeybindModesFlags::WheelScroll)))
+					{
+						active = true;
+						autoDeactivate = true;
+					}
 					if (any(r & (KeybindModesFlags::KeyRelease | KeybindModesFlags::MouseRelease)))
 						active = false;
 					if (any(r & config.modes))
@@ -267,6 +297,7 @@ namespace cage
 			std::vector<Matcher> matchers;
 			const uint32 textId = 0;
 			mutable bool active = false; // allows tick events
+			mutable bool autoDeactivate = false; // automatically deactivates after first engine tick
 
 			Entity *guiEnt = nullptr;
 			uint32 assigningIndex = m;
@@ -418,10 +449,11 @@ namespace cage
 		return impl->process(input);
 	}
 
-	void Keybind::setActive(bool a)
+	void Keybind::setActive(bool active, bool autoDeactivate)
 	{
 		KeybindImpl *impl = (KeybindImpl *)this;
-		impl->active = a;
+		impl->active = active;
+		impl->autoDeactivate = autoDeactivate;
 	}
 
 	bool Keybind::active() const

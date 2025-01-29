@@ -354,12 +354,12 @@ namespace cage
 					virtualRealitySceneUpdate(+entities);
 				}
 				{
-					ProfilingScope profiling("keybinds engine tick");
-					engineEvents().dispatch(input::EngineTick());
-				}
-				{
 					ProfilingScope profiling("control callback");
 					controlThread().update.dispatch();
+				}
+				{
+					ProfilingScope profiling("keybinds engine tick");
+					engineEvents().dispatch(input::EngineTick());
 				}
 				{
 					ProfilingScope profiling("sound emit");

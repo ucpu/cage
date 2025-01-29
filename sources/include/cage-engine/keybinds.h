@@ -18,7 +18,7 @@ namespace cage
 		String name() const;
 		String value(uint32 index = 0) const;
 		bool process(const GenericInput &input) const;
-		void setActive(bool a);
+		void setActive(bool active, bool autoDeactivate = false);
 		bool active() const;
 
 		uint32 count() const;
@@ -36,7 +36,8 @@ namespace cage
 		None = 0,
 		Keyboard = 1 << 0,
 		Mouse = 1 << 1,
-		Wheel = 1 << 2,
+		WheelRoll = 1 << 2, // tracks wheel up and down as separate events (as if buttons)
+		WheelScroll = 1 << 3, // tracks wheel uniformly as one event
 		// todo controller
 	};
 	GCHL_ENUM_BITS(KeybindDevicesFlags);
@@ -50,9 +51,10 @@ namespace cage
 		MousePress = 1 << 3,
 		MouseDouble = 1 << 4,
 		MouseRelease = 1 << 5,
-		WheelScroll = 1 << 6,
-		GameTick = 1 << 7,
-		EngineTick = 1 << 8,
+		WheelRoll = 1 << 6,
+		WheelScroll = 1 << 7,
+		GameTick = 1 << 8,
+		EngineTick = 1 << 9,
 	};
 	GCHL_ENUM_BITS(KeybindModesFlags);
 	CAGE_ENGINE_API KeybindModesFlags keybindMode(const GenericInput &in);
@@ -65,8 +67,8 @@ namespace cage
 		ModifiersFlags requiredFlags = ModifiersFlags::None;
 		ModifiersFlags forbiddenFlags = ModifiersFlags::Super;
 		bool exactFlags = true;
-		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse; // which devices are allowed to bind
-		KeybindModesFlags modes = KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress; // which modes trigger the event (contrary: activation is always with press and release)
+		KeybindDevicesFlags devices = KeybindDevicesFlags::Keyboard | KeybindDevicesFlags::Mouse | KeybindDevicesFlags::WheelRoll; // which devices are allowed to bind
+		KeybindModesFlags modes = KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress | KeybindModesFlags::WheelRoll; // which modes trigger the event (contrary: activation is always with press and release)
 	};
 
 	CAGE_ENGINE_API Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults = {}, Delegate<bool(const GenericInput &)> event = {});
