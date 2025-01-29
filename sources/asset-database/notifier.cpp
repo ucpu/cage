@@ -15,7 +15,7 @@ bool isNameIgnored(const String &name);
 
 namespace
 {
-	class Notifier
+	class Notifier : private Immovable
 	{
 	public:
 		Notifier(const uint16 port)
@@ -68,7 +68,7 @@ namespace
 
 void notifierInitialize()
 {
-	notifierInstance = systemMemory().createHolder<Notifier>(configNotifierPort);
+	notifierInstance = systemMemory().createHolder<Notifier>((uint16)configNotifierPort);
 }
 
 void notifierSendNotifications()

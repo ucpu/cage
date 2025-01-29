@@ -39,7 +39,7 @@ namespace cage
 		struct ConfigVariable;
 	}
 
-	struct CAGE_CORE_API ConfigString
+	struct CAGE_CORE_API ConfigString : private Immovable
 	{
 		explicit ConfigString(const String &name);
 		explicit ConfigString(const String &name, const String &default_);
@@ -53,7 +53,7 @@ namespace cage
 	CAGE_CORE_API String configGetString(const String &name, const String &default_ = "");
 
 #define GCHL_CONFIG(T, t) \
-	struct CAGE_CORE_API Config##T \
+	struct CAGE_CORE_API Config##T : private Immovable \
 	{ \
 		explicit Config##T(const String &name); \
 		explicit Config##T(const String &name, t default_); \
