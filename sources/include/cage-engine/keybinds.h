@@ -36,9 +36,10 @@ namespace cage
 	{
 		None = 0,
 		Keyboard = 1 << 0,
-		Mouse = 1 << 1,
-		WheelRoll = 1 << 2, // tracks wheel up and down as separate events (as if buttons)
-		WheelScroll = 1 << 3, // tracks wheel uniformly as one event
+		Modifiers = 1 << 1,
+		Mouse = 1 << 2,
+		WheelRoll = 1 << 3, // tracks wheel up and down as separate events (as if buttons)
+		WheelScroll = 1 << 4, // tracks wheel uniformly as one event
 		// todo controller
 	};
 	GCHL_ENUM_BITS(KeybindDevicesFlags);
@@ -58,7 +59,6 @@ namespace cage
 		EngineTick = 1 << 9,
 	};
 	GCHL_ENUM_BITS(KeybindModesFlags);
-	CAGE_ENGINE_API KeybindModesFlags keybindMode(const GenericInput &in);
 
 	struct CAGE_ENGINE_API KeybindCreateConfig
 	{
@@ -90,6 +90,9 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Ini> keybindsExport();
 	CAGE_ENGINE_API void keybindsImport(const Ini *ini);
+
+	CAGE_ENGINE_API KeybindModesFlags inputKeybindMode(const GenericInput &in);
+	CAGE_ENGINE_API ModifiersFlags inputModifiersFlags(const GenericInput &in);
 }
 
 #endif

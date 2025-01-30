@@ -54,13 +54,25 @@ namespace cage
 			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<T>())
-					return matchImpl(input.get<T>(), keybindMode(input));
+					return matchImpl(input.get<T>(), inputKeybindMode(input));
 				return KeybindModesFlags::None;
 			}
 
 			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const { return match<input::KeyPress>(input) | match<input::KeyRepeat>(input) | match<input::KeyRelease>(input); }
 
 			CAGE_FORCE_INLINE String value() const { return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + getKeyName(key)); }
+		};
+
+		struct ModifiersMatcher : public MatcherBase
+		{
+			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
+			{
+				// todo this is wrong
+				// i need to explicitly check for key press and release of the particular keys
+				return checkFlags(inputModifiersFlags(input)) ? KeybindModesFlags::KeyPress : KeybindModesFlags::KeyRelease;
+			}
+
+			CAGE_FORCE_INLINE String value() const { return finishName(getModifiersNames(requiredFlags)); }
 		};
 
 		struct MouseMatcher : public MatcherBase
@@ -78,7 +90,7 @@ namespace cage
 			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
 				if (input.has<T>())
-					return matchImpl(input.get<T>(), keybindMode(input));
+					return matchImpl(input.get<T>(), inputKeybindMode(input));
 				return KeybindModesFlags::None;
 			}
 
@@ -121,7 +133,7 @@ namespace cage
 			}
 		};
 
-		using Matcher = std::variant<std::monostate, KeyboardMatcher, MouseMatcher, WheelMatcher>;
+		using Matcher = std::variant<std::monostate, KeyboardMatcher, ModifiersMatcher, MouseMatcher, WheelMatcher>;
 
 		CAGE_FORCE_INLINE KeybindModesFlags matches(const GenericInput &input, const Matcher &matcher)
 		{
@@ -193,6 +205,8 @@ namespace cage
 
 			CAGE_FORCE_INLINE void make(const GenericInput &input)
 			{
+				if (config.devices == KeybindDevicesFlags::Modifiers)
+					return makeModifiersMatcher(input);
 				make<input::KeyPress>(input);
 				make<input::KeyRepeat>(input);
 				make<input::KeyRelease>(input);
@@ -200,6 +214,16 @@ namespace cage
 				make<input::MouseDoublePress>(input);
 				make<input::MouseRelease>(input);
 				make<input::MouseWheel>(input);
+			}
+
+			CAGE_FORCE_INLINE void makeModifiersMatcher(const GenericInput &input)
+			{
+				if (input.has<input::KeyPress>())
+				{
+					const input::KeyPress in = input.get<input::KeyPress>();
+					if (none(in.mods & config.forbiddenFlags))
+						result = ModifiersMatcher{ base(in.mods) };
+				}
 			}
 		};
 
@@ -228,6 +252,7 @@ namespace cage
 				CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
 				CAGE_ASSERT(any(config.devices));
 				CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
+				CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::Modifiers) || config.devices == KeybindDevicesFlags::Modifiers); // modifiers is exclusive with all other flags
 				CAGE_ASSERT(any(config.modes));
 				reset(); // make matchers from the defaults
 				this->event = event;
@@ -351,7 +376,7 @@ namespace cage
 				}
 				if (in.has<input::KeyRelease>() || in.has<input::KeyRepeat>())
 					return false;
-				if (in.has<input::KeyPress>())
+				if (in.has<input::KeyPress>() && config.devices != KeybindDevicesFlags::Modifiers)
 				{
 					const input::KeyPress k = in.get<input::KeyPress>();
 					switch (k.key)
@@ -518,29 +543,6 @@ namespace cage
 		CAGE_ASSERT(impl->matchers.size() == impl->defaults.size());
 	}
 
-	KeybindModesFlags keybindMode(const GenericInput &in)
-	{
-		if (in.has<input::KeyPress>())
-			return KeybindModesFlags::KeyPress;
-		if (in.has<input::KeyRepeat>())
-			return KeybindModesFlags::KeyRepeat;
-		if (in.has<input::KeyRelease>())
-			return KeybindModesFlags::KeyRelease;
-		if (in.has<input::MousePress>())
-			return KeybindModesFlags::MousePress;
-		if (in.has<input::MouseDoublePress>())
-			return KeybindModesFlags::MouseDouble;
-		if (in.has<input::MouseRelease>())
-			return KeybindModesFlags::MouseRelease;
-		if (in.has<input::MouseWheel>())
-			return KeybindModesFlags::WheelScroll;
-		if (in.has<input::GameTick>())
-			return KeybindModesFlags::GameTick;
-		if (in.has<input::EngineTick>())
-			return KeybindModesFlags::EngineTick;
-		return KeybindModesFlags::None;
-	}
-
 	Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults, Delegate<bool(const GenericInput &)> event)
 	{
 		return newKeybind(config, PointerRange(&defaults, &defaults + 1), event);
@@ -608,5 +610,44 @@ namespace cage
 	void keybindsImport(const Ini *ini)
 	{
 		// todo
+	}
+
+	KeybindModesFlags inputKeybindMode(const GenericInput &in)
+	{
+		if (in.has<input::KeyPress>())
+			return KeybindModesFlags::KeyPress;
+		if (in.has<input::KeyRepeat>())
+			return KeybindModesFlags::KeyRepeat;
+		if (in.has<input::KeyRelease>())
+			return KeybindModesFlags::KeyRelease;
+		if (in.has<input::MousePress>())
+			return KeybindModesFlags::MousePress;
+		if (in.has<input::MouseDoublePress>())
+			return KeybindModesFlags::MouseDouble;
+		if (in.has<input::MouseRelease>())
+			return KeybindModesFlags::MouseRelease;
+		if (in.has<input::MouseWheel>())
+			return KeybindModesFlags::WheelScroll;
+		if (in.has<input::GameTick>())
+			return KeybindModesFlags::GameTick;
+		if (in.has<input::EngineTick>())
+			return KeybindModesFlags::EngineTick;
+		return KeybindModesFlags::None;
+	}
+
+	namespace
+	{
+		template<class T>
+		CAGE_FORCE_INLINE ModifiersFlags inputModifiersImpl(const GenericInput &input)
+		{
+			if (input.has<T>())
+				return input.get<T>().mods;
+			return ModifiersFlags::None;
+		}
+	}
+
+	ModifiersFlags inputModifiersFlags(const GenericInput &in)
+	{
+		return inputModifiersImpl<input::KeyPress>(in) | inputModifiersImpl<input::KeyRepeat>(in) | inputModifiersImpl<input::KeyRelease>(in) | inputModifiersImpl<input::MousePress>(in) | inputModifiersImpl<input::MouseDoublePress>(in) | inputModifiersImpl<input::MouseRelease>(in) | inputModifiersImpl<input::MouseWheel>(in) | inputModifiersImpl<input::MouseMove>(in) | inputModifiersImpl<input::MouseRelativeMove>(in);
 	}
 }
