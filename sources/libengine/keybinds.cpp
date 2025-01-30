@@ -428,6 +428,14 @@ namespace cage
 		return textsGet(impl->textId, impl->config.id);
 	}
 
+	String Keybind::value() const
+	{
+		const KeybindImpl *impl = (const KeybindImpl *)this;
+		if (!impl->matchers.empty())
+			return value(0);
+		return "???";
+	}
+
 	String Keybind::value(uint32 index) const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;

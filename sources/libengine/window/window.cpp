@@ -9,6 +9,7 @@
 #include <cage-core/files.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/string.h>
+#include <cage-core/unicode.h>
 #include <cage-engine/window.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -914,7 +915,9 @@ namespace cage
 				return "ENT";
 		}
 		const auto s = glfwGetKeyName(key, 0);
-		return s ? toUpper(detail::StringBase<27>(s)) : "???";
+		if (!s)
+			return "???";
+		return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Uppercase });
 	}
 
 	detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons)

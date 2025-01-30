@@ -16,7 +16,8 @@ namespace cage
 	public:
 		const String &id() const;
 		String name() const;
-		String value(uint32 index = 0) const;
+		String value() const;
+		String value(uint32 index) const;
 		bool process(const GenericInput &input) const;
 		void setActive(bool active, bool autoDeactivate = false);
 		bool active() const;
