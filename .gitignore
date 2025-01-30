@@ -6,3 +6,4 @@
 CMakeLists.txt.user
 CMakeSettings.json
 *~
+*.TMP

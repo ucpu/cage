@@ -23,7 +23,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE String finishName(String s)
 		{
-			return replace(trim(s), " ", "+");
+			return replace(trim(s), " ", " + ");
 		}
 
 		struct MatcherBase
@@ -124,11 +124,11 @@ namespace cage
 			{
 				String w;
 				if (direction > 0)
-					w = "WHUP";
+					w = "WhUp";
 				else if (direction < 0)
-					w = "WHDN";
+					w = "WhDn";
 				else
-					w = "WHEEL";
+					w = "Wheel";
 				return finishName(Stringizer() + getModifiersNames(requiredFlags) + " " + w);
 			}
 		};

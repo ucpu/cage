@@ -824,43 +824,43 @@ namespace cage
 			case GLFW_KEY_SPACE:
 				return "_____";
 			case GLFW_KEY_ESCAPE:
-				return "ESC";
+				return "Esc";
 			case GLFW_KEY_ENTER:
-				return "ENTER";
+				return "Enter";
 			case GLFW_KEY_TAB:
-				return "TAB";
+				return "Tab";
 			case GLFW_KEY_BACKSPACE:
-				return "BACK";
+				return "Back";
 			case GLFW_KEY_INSERT:
-				return "INS";
+				return "Ins";
 			case GLFW_KEY_DELETE:
-				return "DEL";
+				return "Del";
 			case GLFW_KEY_RIGHT:
-				return "RIGHT";
+				return "Right";
 			case GLFW_KEY_LEFT:
-				return "LEFT";
+				return "Left";
 			case GLFW_KEY_DOWN:
-				return "DOWN";
+				return "Down";
 			case GLFW_KEY_UP:
-				return "UP";
+				return "Up";
 			case GLFW_KEY_PAGE_UP:
-				return "PGUP";
+				return "PgUp";
 			case GLFW_KEY_PAGE_DOWN:
-				return "PGDN";
+				return "PgDn";
 			case GLFW_KEY_HOME:
-				return "HOME";
+				return "Home";
 			case GLFW_KEY_END:
-				return "END";
+				return "End";
 			case GLFW_KEY_CAPS_LOCK:
-				return "CAPS";
+				return "Caps";
 			case GLFW_KEY_SCROLL_LOCK:
-				return "SCROLL";
+				return "Scroll";
 			case GLFW_KEY_NUM_LOCK:
-				return "NUM";
+				return "Num";
 			case GLFW_KEY_PRINT_SCREEN:
-				return "PRTSC";
+				return "Prtsc";
 			case GLFW_KEY_PAUSE:
-				return "PAUSE";
+				return "Pause";
 			case GLFW_KEY_F1:
 				return "F1";
 			case GLFW_KEY_F2:
@@ -912,23 +912,23 @@ namespace cage
 			case GLFW_KEY_F25:
 				return "F25";
 			case GLFW_KEY_KP_ENTER:
-				return "ENT";
+				return "Ent";
 		}
 		const auto s = glfwGetKeyName(key, 0);
 		if (!s)
 			return "???";
-		return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Uppercase });
+		return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Titlecase });
 	}
 
 	detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons)
 	{
 		String res;
 		if (any(buttons & MouseButtonsFlags::Left))
-			res += "LMB ";
+			res += "Lmb ";
 		if (any(buttons & MouseButtonsFlags::Middle))
-			res += "MMB ";
+			res += "Mmb ";
 		if (any(buttons & MouseButtonsFlags::Right))
-			res += "RMB ";
+			res += "Rmb ";
 		return trim(res);
 	}
 
@@ -936,13 +936,13 @@ namespace cage
 	{
 		String res;
 		if (any(mods & ModifiersFlags::Ctrl))
-			res += "CTRL ";
+			res += "Ctrl ";
 		if (any(mods & ModifiersFlags::Shift))
-			res += "SHIFT ";
+			res += "Shift ";
 		if (any(mods & ModifiersFlags::Alt))
-			res += "ALT ";
+			res += "Alt ";
 		if (any(mods & ModifiersFlags::Super))
-			res += "SUPER ";
+			res += "Super ";
 		return trim(res);
 	}
 
