@@ -644,8 +644,6 @@ namespace cage
 				[](const auto &a) -> String
 				{
 					using T = std::decay_t<decltype(a)>;
-					//if constexpr (std::is_same_v<T, std::monostate>)
-					//	return "";
 					if constexpr (std::is_same_v<T, KeyboardMatcher>)
 						return Stringizer() + "key " + a.key + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
 					if constexpr (std::is_same_v<T, ModifiersMatcher>)
@@ -654,6 +652,7 @@ namespace cage
 						return Stringizer() + "mouse " + (uint32)a.button + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
 					if constexpr (std::is_same_v<T, WheelMatcher>)
 						return Stringizer() + "wheel " + a.direction + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+					return "";
 				},
 				mt);
 		}
