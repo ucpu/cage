@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <cage-core/hashString.h>
+#include <cage-core/ini.h>
 #include <cage-core/string.h>
 #include <cage-core/texts.h>
 #include <cage-engine/guiBuilder.h>
@@ -135,6 +136,26 @@ namespace cage
 
 		using Matcher = std::variant<std::monostate, KeyboardMatcher, ModifiersMatcher, MouseMatcher, WheelMatcher>;
 
+		CAGE_FORCE_INLINE bool operator==(const Matcher &a, const Matcher &b)
+		{
+			if (a.index() != b.index())
+				return false;
+			return std::visit(
+				[](const auto &a, const auto &b) -> bool
+				{
+					using T = std::decay_t<decltype(a)>;
+					if constexpr (std::is_same_v<T, std::monostate>)
+						return true;
+					else
+					{
+						// using operator == leads to stack overflow
+						static_assert(std::is_trivially_copyable_v<T>);
+						return detail::memcmp(&a, &b, sizeof(T)) == 0;
+					}
+				},
+				a, b);
+		}
+
 		CAGE_FORCE_INLINE KeybindModesFlags matches(const GenericInput &input, const Matcher &matcher)
 		{
 			return std::visit(
@@ -238,6 +259,31 @@ namespace cage
 			return maker.result;
 		}
 
+		const KeybindCreateConfig &validateConfig(const KeybindCreateConfig &config)
+		{
+			CAGE_ASSERT(!config.id.empty());
+			CAGE_ASSERT(!findKeybind(config.id)); // must be unique
+			CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
+			CAGE_ASSERT(any(config.devices));
+			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
+			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::Modifiers) || config.devices == KeybindDevicesFlags::Modifiers); // modifiers is exclusive with all other flags
+			CAGE_ASSERT(any(config.modes));
+			return config;
+		}
+
+		std::vector<Matcher> makeDefaults(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults)
+		{
+			std::vector<Matcher> res;
+			for (const auto &it : defaults)
+			{
+				const auto mt = makeMatcher(config, it);
+				if (!std::holds_alternative<std::monostate>(mt))
+					res.push_back(mt);
+			}
+			CAGE_ASSERT(res.size() == defaults.size());
+			return res;
+		}
+
 		bool guiUpdateGlobal(uintPtr ptr, const GenericInput &);
 
 		EventListener<bool(const GenericInput &)> assignmentListener;
@@ -245,17 +291,10 @@ namespace cage
 		class KeybindImpl : public Keybind
 		{
 		public:
-			KeybindImpl(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event) : config(config), defaults(defaults.begin(), defaults.end()), textId(HashString(config.id))
+			KeybindImpl(const KeybindCreateConfig &config_, PointerRange<const GenericInput> defaults_, Delegate<bool(const GenericInput &)> event_) : config(validateConfig(config_)), defaults(makeDefaults(config_, defaults_)), textId(HashString(config.id))
 			{
-				CAGE_ASSERT(!config.id.empty());
-				CAGE_ASSERT(!findKeybind(config.id)); // must be unique
-				CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
-				CAGE_ASSERT(any(config.devices));
-				CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
-				CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::Modifiers) || config.devices == KeybindDevicesFlags::Modifiers); // modifiers is exclusive with all other flags
-				CAGE_ASSERT(any(config.modes));
 				reset(); // make matchers from the defaults
-				this->event = event;
+				this->event = event_;
 				global().push_back(this);
 			}
 
@@ -318,12 +357,11 @@ namespace cage
 
 			const KeybindCreateConfig config;
 			EventListener<bool(const GenericInput &)> listener;
-			const std::vector<GenericInput> defaults;
+			const std::vector<Matcher> defaults;
 			std::vector<Matcher> matchers;
 			const uint32 textId = 0;
 			mutable bool active = false; // allows tick events
 			mutable bool autoDeactivate = false; // automatically deactivates after first engine tick
-
 			Entity *guiEnt = nullptr;
 			uint32 assigningIndex = m;
 
@@ -347,7 +385,7 @@ namespace cage
 				{
 					auto _ = g->rightRow(0.5);
 					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiClear>(this)).image(HashString("cage/texture/keybindClear.png")).tooltip<HashString("cage/keybinds/clear"), "Clear">().size(Vec2(28));
-					g->button().event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiReset>(this)).image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
+					g->button().disabled(defaults == matchers).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiReset>(this)).image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
 				}
 			}
 
@@ -537,10 +575,7 @@ namespace cage
 	void Keybind::reset()
 	{
 		KeybindImpl *impl = (KeybindImpl *)this;
-		clear();
-		for (const auto &it : impl->defaults)
-			add(it);
-		CAGE_ASSERT(impl->matchers.size() == impl->defaults.size());
+		impl->matchers = impl->defaults;
 	}
 
 	Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults, Delegate<bool(const GenericInput &)> event)
@@ -601,15 +636,117 @@ namespace cage
 		}
 	}
 
-	Holder<Ini> keybindsExport()
+	namespace
 	{
-		// todo
-		return {};
+		String toString(const Matcher &mt)
+		{
+			return std::visit(
+				[](const auto &a) -> String
+				{
+					using T = std::decay_t<decltype(a)>;
+					//if constexpr (std::is_same_v<T, std::monostate>)
+					//	return "";
+					if constexpr (std::is_same_v<T, KeyboardMatcher>)
+						return Stringizer() + "key " + a.key + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+					if constexpr (std::is_same_v<T, ModifiersMatcher>)
+						return Stringizer() + "mods " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+					if constexpr (std::is_same_v<T, MouseMatcher>)
+						return Stringizer() + "mouse " + (uint32)a.button + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+					if constexpr (std::is_same_v<T, WheelMatcher>)
+						return Stringizer() + "wheel " + a.direction + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+				},
+				mt);
+		}
+
+		MatcherBase baseFromString(String &s)
+		{
+			const uint32 r = toUint32(split(s));
+			const uint32 f = toUint32(split(s));
+			return MatcherBase{ (ModifiersFlags)r, ~(ModifiersFlags)f };
+		}
+
+		Matcher fromString(const String &str)
+		{
+			if (str.empty())
+				return {};
+			String s = str;
+			const String type = split(s);
+			if (type == "key")
+			{
+				const uint32 k = toUint32(split(s));
+				return KeyboardMatcher{ baseFromString(s), k };
+			}
+			else if (type == "mods")
+			{
+				return ModifiersMatcher{ baseFromString(s) };
+			}
+			else if (type == "mouse")
+			{
+				const uint32 b = toUint32(split(s));
+				return MouseMatcher{ baseFromString(s), (MouseButtonsFlags)b };
+			}
+			else if (type == "wheel")
+			{
+				const sint32 d = toUint32(split(s));
+				return WheelMatcher{ baseFromString(s), d };
+			}
+			else
+				return {};
+		}
 	}
 
-	void keybindsImport(const Ini *ini)
+	Holder<Ini> keybindsExport()
 	{
-		// todo
+		Holder<Ini> ini = newIni();
+		for (KeybindImpl *k : global())
+		{
+			ini->set(k->config.id, "count", Stringizer() + k->matchers.size());
+			uint32 i = 0;
+			for (const Matcher &mt : k->matchers)
+			{
+				ini->set(k->config.id, Stringizer() + i, toString(mt));
+				i++;
+			}
+		}
+		return ini;
+	}
+
+	void keybindsImport(const Ini *ini, bool updateGui)
+	{
+		for (KeybindImpl *k : global())
+		{
+			try
+			{
+				if (ini->sectionExists(k->config.id))
+				{
+					k->clear();
+					for (const String &it : ini->items(k->config.id))
+					{
+						if (it != "count")
+							k->matchers.push_back(fromString(ini->get(k->config.id, it)));
+					}
+				}
+				else
+					k->reset();
+				if (updateGui)
+					k->makeGui();
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "keybinds", Stringizer() + "error importing keybinds for: " + k->config.id);
+				k->reset();
+			}
+		}
+	}
+
+	void keybindsResetAll(bool updateGui)
+	{
+		for (KeybindImpl *k : global())
+		{
+			k->reset();
+			if (updateGui)
+				k->makeGui();
+		}
 	}
 
 	KeybindModesFlags inputKeybindMode(const GenericInput &in)

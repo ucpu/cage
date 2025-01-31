@@ -89,7 +89,8 @@ namespace cage
 	CAGE_ENGINE_API void keybindsGuiTable(guiBuilder::GuiBuilder *g, const String &filterPrefix = {});
 
 	CAGE_ENGINE_API Holder<Ini> keybindsExport();
-	CAGE_ENGINE_API void keybindsImport(const Ini *ini);
+	CAGE_ENGINE_API void keybindsImport(const Ini *ini, bool updateGui = false);
+	CAGE_ENGINE_API void keybindsResetAll(bool updateGui = false);
 
 	CAGE_ENGINE_API KeybindModesFlags inputKeybindMode(const GenericInput &in);
 	CAGE_ENGINE_API ModifiersFlags inputModifiersFlags(const GenericInput &in);
