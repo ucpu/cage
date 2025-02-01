@@ -111,7 +111,7 @@ namespace cage
 		{
 		public:
 			std::atomic<uint32> v = 0;
-			static constexpr uint32 YieldAfter = 50;
+			static constexpr uint32 YieldAfter = 100;
 			static constexpr uint32 Writer = m;
 		};
 	}
@@ -122,17 +122,11 @@ namespace cage
 		uint32 attempt = 0;
 		while (true)
 		{
-			uint32 p = impl->v;
-			if (p == 0)
-			{
-				if (impl->v.compare_exchange_weak(p, RwMutexImpl::Writer))
-					return;
-			}
+			uint32 p = 0;
+			if (impl->v.compare_exchange_weak(p, RwMutexImpl::Writer, std::memory_order_acquire))
+				return;
 			if (++attempt >= RwMutexImpl::YieldAfter)
-			{
 				threadYield();
-				attempt = 0;
-			}
 		}
 	}
 
@@ -142,28 +136,21 @@ namespace cage
 		uint32 attempt = 0;
 		while (true)
 		{
-			uint32 p = impl->v;
-			if (p != RwMutexImpl::Writer)
-			{
-				if (impl->v.compare_exchange_weak(p, p + 1))
-					return;
-			}
+			uint32 p = impl->v.load(std::memory_order_relaxed);
+			if (p != RwMutexImpl::Writer && impl->v.compare_exchange_weak(p, p + 1, std::memory_order_acquire))
+				return;
 			if (++attempt >= RwMutexImpl::YieldAfter)
-			{
 				threadYield();
-				attempt = 0;
-			}
 		}
 	}
 
 	void RwMutex::unlock()
 	{
 		RwMutexImpl *impl = (RwMutexImpl *)this;
-		uint32 p = impl->v;
-		if (p == RwMutexImpl::Writer)
-			impl->v = 0;
+		if (impl->v.load(std::memory_order_relaxed) == RwMutexImpl::Writer)
+			impl->v.store(0, std::memory_order_release);
 		else
-			impl->v--;
+			impl->v.fetch_sub(1, std::memory_order_release);
 	}
 
 	Holder<RwMutex> newRwMutex()
