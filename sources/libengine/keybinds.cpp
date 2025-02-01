@@ -645,13 +645,13 @@ namespace cage
 				{
 					using T = std::decay_t<decltype(a)>;
 					if constexpr (std::is_same_v<T, KeyboardMatcher>)
-						return Stringizer() + "key " + a.key + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+						return Stringizer() + "key " + a.key + " " + (sint32)a.requiredFlags + " " + (sint32)a.forbiddenFlags;
 					if constexpr (std::is_same_v<T, ModifiersMatcher>)
-						return Stringizer() + "mods " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+						return Stringizer() + "mods " + (sint32)a.requiredFlags + " " + (sint32)a.forbiddenFlags;
 					if constexpr (std::is_same_v<T, MouseMatcher>)
-						return Stringizer() + "mouse " + (uint32)a.button + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+						return Stringizer() + "mouse " + (sint32)a.button + " " + (sint32)a.requiredFlags + " " + (sint32)a.forbiddenFlags;
 					if constexpr (std::is_same_v<T, WheelMatcher>)
-						return Stringizer() + "wheel " + a.direction + " " + (uint32)a.requiredFlags + " " + (uint32)~a.forbiddenFlags;
+						return Stringizer() + "wheel " + a.direction + " " + (sint32)a.requiredFlags + " " + (sint32)a.forbiddenFlags;
 					return "";
 				},
 				mt);
@@ -659,9 +659,9 @@ namespace cage
 
 		MatcherBase baseFromString(String &s)
 		{
-			const uint32 r = toUint32(split(s));
-			const uint32 f = toUint32(split(s));
-			return MatcherBase{ (ModifiersFlags)r, ~(ModifiersFlags)f };
+			const sint32 r = toSint32(split(s));
+			const sint32 f = toSint32(split(s));
+			return MatcherBase{ (ModifiersFlags)r, (ModifiersFlags)f };
 		}
 
 		Matcher fromString(const String &str)
@@ -681,12 +681,12 @@ namespace cage
 			}
 			else if (type == "mouse")
 			{
-				const uint32 b = toUint32(split(s));
+				const sint32 b = toSint32(split(s));
 				return MouseMatcher{ baseFromString(s), (MouseButtonsFlags)b };
 			}
 			else if (type == "wheel")
 			{
-				const sint32 d = toUint32(split(s));
+				const sint32 d = toSint32(split(s));
 				return WheelMatcher{ baseFromString(s), d };
 			}
 			else

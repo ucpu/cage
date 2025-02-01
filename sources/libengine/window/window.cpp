@@ -262,6 +262,9 @@ namespace cage
 
 		void windowKeyCallback(GLFWwindow *w, int key, int, int action, int mods)
 		{
+			if (key == GLFW_KEY_UNKNOWN)
+				return;
+
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			ModifiersFlags ms = getKeyModifiers(mods);
 
