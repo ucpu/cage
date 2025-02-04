@@ -260,10 +260,15 @@ namespace cage
 			impl->eventsQueue.push(input::WindowClose{ impl });
 		}
 
-		void windowKeyCallback(GLFWwindow *w, int key, int, int action, int mods)
+		void windowKeyCallback(GLFWwindow *w, int key, int scan, int action, int mods)
 		{
 			if (key == GLFW_KEY_UNKNOWN)
-				return;
+			{
+				if (scan < 0 || scan > 1'000'000)
+					return;
+				static_assert(GLFW_KEY_LAST < 10'000);
+				key = 10'000 + scan;
+			}
 
 			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			ModifiersFlags ms = getKeyModifiers(mods);
@@ -917,10 +922,15 @@ namespace cage
 			case GLFW_KEY_KP_ENTER:
 				return "Ent";
 		}
-		const auto s = glfwGetKeyName(key, 0);
-		if (!s)
-			return "???";
-		return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Titlecase });
+		uint32 scan = 0;
+		if (key >= 10'000)
+		{
+			scan = key - 10'000;
+			key = GLFW_KEY_UNKNOWN;
+		};
+		if (const auto s = glfwGetKeyName(key, scan))
+			return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Titlecase });
+		return Stringizer() + (sint32)key + ":" + (sint32)scan;
 	}
 
 	detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons)

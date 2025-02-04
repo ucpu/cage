@@ -45,8 +45,8 @@ namespace cage
 				detail::StringBase<20> attribute;
 
 				// accessor
-				detail::StringBase<50> min;
-				detail::StringBase<50> max;
+				detail::StringBase<100> min;
+				detail::StringBase<100> max;
 				detail::StringBase<20> type;
 				uint32 componentType = 0;
 				uint32 count = 0;
