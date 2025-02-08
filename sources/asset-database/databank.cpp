@@ -350,7 +350,7 @@ void checkOutputDir()
 {
 	const PathTypeFlags t = pathType(configPathOutput);
 	if (configOutputArchive && any(t & PathTypeFlags::NotFound))
-		return pathCreateArchive(configPathOutput);
+		return pathCreateArchiveCarch(configPathOutput);
 	if (any(t & PathTypeFlags::Archive))
 		return;
 	// the output is not an archive, output to it directly

@@ -69,7 +69,7 @@ namespace cage
 
 	struct CAGE_CORE_API AssetManagerCreateConfig
 	{
-		String assetsFolderName = "assets.zip";
+		String assetsFolderName = "assets.carch";
 		uint32 diskLoadingThreads = 2;
 		uint32 customProcessingThreads = 5;
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game

@@ -16,7 +16,6 @@
 
 #include "files.h"
 
-#include <cage-core/concurrent.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
 
@@ -312,7 +311,7 @@ namespace cage
 		};
 
 		// binary files performs locking on all operations except actual data transfers to/from the drive
-		class FileRealBinary : public FileRealBase
+		class FileRealBinary final : public FileRealBase
 		{
 		public:
 			FileRealBinary(const String &path, const FileMode &mode) : FileRealBase(path, mode) { CAGE_ASSERT(!mode.textual); }
@@ -422,7 +421,7 @@ namespace cage
 		};
 
 		// textual file does not do any locking and does not allow reopening for modification or seeking
-		class FileRealTextual : public FileRealBase
+		class FileRealTextual final : public FileRealBase
 		{
 		public:
 			FileRealTextual(const String &path, const FileMode &mode) : FileRealBase(path, mode) { CAGE_ASSERT(mode.textual); }
@@ -458,7 +457,7 @@ namespace cage
 			}
 		};
 
-		class ArchiveReal : public ArchiveAbstract
+		class ArchiveReal final : public ArchiveAbstract
 		{
 		public:
 			ArchiveReal(const String &path) : ArchiveAbstract(path) {}

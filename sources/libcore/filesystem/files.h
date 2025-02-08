@@ -3,7 +3,9 @@
 
 #include <memory>
 
+#include <cage-core/concurrent.h>
 #include <cage-core/files.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {
@@ -17,7 +19,7 @@ namespace cage
 
 		virtual void reopenForModification();
 		virtual void readAt(PointerRange<char> buffer, uintPtr at);
-		FileMode mode() const override;
+		FileMode mode() const final;
 	};
 
 	class ArchiveAbstract : public std::enable_shared_from_this<ArchiveAbstract>, private Noncopyable
@@ -51,7 +53,9 @@ namespace cage
 	};
 	ArchiveWithPath archiveFindTowardsRoot(const String &path, ArchiveFindModeEnum mode);
 
-	class RecursiveMutex *fsMutex();
+	RecursiveMutex *fsMutex();
+
+	Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

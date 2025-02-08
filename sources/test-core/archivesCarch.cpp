@@ -11,7 +11,7 @@
 
 namespace
 {
-	constexpr const String directories[2] = { "testdir/files", "testdir/archive.zip" };
+	constexpr const String directories[2] = { "testdir/files", "testdir/archive.carch" };
 
 	void testWriteFile(const String &name, PointerRange<const char> data)
 	{
@@ -92,7 +92,7 @@ namespace
 
 	void testListRecursive(const String &name = "")
 	{
-		Listing l = testListDirectory(name);
+		const Listing l = testListDirectory(name);
 		for (const auto &i : l)
 		{
 			if (i.second)
@@ -131,7 +131,7 @@ namespace
 				{
 					ScopeLock lck(barrier);
 				}
-				const String name = Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const String name = Stringizer() + "testdir/concurrent.carch/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
@@ -155,8 +155,8 @@ namespace
 
 		void run()
 		{
-			pathRemove("testdir/concurrent.zip");
-			pathCreateArchive("testdir/concurrent.zip");
+			pathRemove("testdir/concurrent.carch");
+			pathCreateArchiveCarch("testdir/concurrent.carch");
 			threadPool->run();
 		}
 	};
@@ -196,7 +196,7 @@ namespace
 					writeFile(pathJoin(pth, "ccc"))->writeLine("ccc");
 					break;
 				case MovePositionEnum::Archive:
-					pathCreateArchive(pth);
+					pathCreateArchiveCarch(pth);
 					writeFile(pathJoin(pth, "aaa"))->writeLine("123");
 					writeFile(pathJoin(pth, "ddd"))->writeLine("ddd");
 					break;
@@ -336,25 +336,25 @@ namespace
 	}
 }
 
-void testArchives()
+void testArchivesCarch()
 {
-	CAGE_TESTCASE("archives");
+	CAGE_TESTCASE("archives CARCH");
 
 	pathRemove("testdir");
 
 	{
 		CAGE_TESTCASE("create empty archive");
 		pathCreateDirectories(directories[0]);
-		pathCreateArchive(directories[1]);
+		pathCreateArchiveCarch(directories[1]);
 		CAGE_TEST(pathType(directories[1]) == (PathTypeFlags::File | PathTypeFlags::Archive));
 		testListDirectory("");
 	}
 
 	{
 		CAGE_TESTCASE("create archive where name already exists");
-		CAGE_TEST_THROWN(pathCreateArchive(directories[1])); // already existing archive
+		CAGE_TEST_THROWN(pathCreateArchiveCarch(directories[1])); // already existing archive
 		pathCreateDirectories("testdir/archiveplaceholder");
-		CAGE_TEST_THROWN(pathCreateArchive("testdir/archiveplaceholder")); // already existing folder
+		CAGE_TEST_THROWN(pathCreateArchiveCarch("testdir/archiveplaceholder")); // already existing folder
 	}
 
 	Holder<PointerRange<char>> data1, data2, data3;
@@ -607,25 +607,25 @@ void testArchives()
 				pathMove("testdir/g", dir);
 			}
 			testListRecursive();
-			pathCreateArchive("testdir/arch3.zip");
-			writeFile("testdir/arch3.zip/file.txt")->writeLine("haha");
+			pathCreateArchiveCarch("testdir/arch3.carch");
+			writeFile("testdir/arch3.carch/file.txt")->writeLine("haha");
 			pathCreateDirectories("testdir/arch3");
-			pathMove("testdir/arch3.zip", "testdir/arch3");
-			CAGE_TEST(pathType("testdir/arch3.zip") == PathTypeFlags::NotFound);
+			pathMove("testdir/arch3.carch", "testdir/arch3");
+			CAGE_TEST(pathType("testdir/arch3.carch") == PathTypeFlags::NotFound);
 			CAGE_TEST(pathType("testdir/arch3/file.txt") == PathTypeFlags::File);
 		}
 		{
 			CAGE_TESTCASE("move archive into folder");
-			pathCreateArchive("testdir/movingarch.zip");
-			writeFile("testdir/movingarch.zip/file.txt")->writeLine("haha");
+			pathCreateArchiveCarch("testdir/movingarch.carch");
+			writeFile("testdir/movingarch.carch/file.txt")->writeLine("haha");
 			pathCreateDirectories("testdir/movingdest");
-			CAGE_TEST(pathType("testdir/movingarch.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
-			CAGE_TEST(pathType("testdir/movingarch.zip/file.txt") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/movingarch.carch") == (PathTypeFlags::File | PathTypeFlags::Archive));
+			CAGE_TEST(pathType("testdir/movingarch.carch/file.txt") == PathTypeFlags::File);
 			CAGE_TEST(pathType("testdir/movingdest") == PathTypeFlags::Directory);
-			pathMove("testdir/movingarch.zip", "testdir/movingdest/movedarch.zip");
-			CAGE_TEST(pathType("testdir/movingarch.zip") == PathTypeFlags::NotFound);
-			CAGE_TEST(pathType("testdir/movingdest/movedarch.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
-			CAGE_TEST(pathType("testdir/movingdest/movedarch.zip/file.txt") == PathTypeFlags::File);
+			pathMove("testdir/movingarch.carch", "testdir/movingdest/movedarch.carch");
+			CAGE_TEST(pathType("testdir/movingarch.carch") == PathTypeFlags::NotFound);
+			CAGE_TEST(pathType("testdir/movingdest/movedarch.carch") == (PathTypeFlags::File | PathTypeFlags::Archive));
+			CAGE_TEST(pathType("testdir/movingdest/movedarch.carch/file.txt") == PathTypeFlags::File);
 			CAGE_TEST(pathType("testdir/movingdest") == PathTypeFlags::Directory);
 		}
 	}
@@ -648,51 +648,51 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("manipulating a file that is opened as an archive");
-		pathCreateArchive("testdir/arch2.zip");
+		pathCreateArchiveCarch("testdir/arch2.carch");
 		{
 			CAGE_TESTCASE("remove");
 			{
-				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
-				CAGE_TEST_THROWN(pathRemove("testdir/arch2.zip"));
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.carch"); // open the archive
+				CAGE_TEST_THROWN(pathRemove("testdir/arch2.carch"));
 			}
-			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(any(pathType("testdir/arch2.carch") & PathTypeFlags::Archive)); // sanity check
 		}
 		{
 			CAGE_TESTCASE("move from");
 			{
-				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
-				CAGE_TEST_THROWN(pathMove("testdir/arch2.zip", "testdir/arch3.zip"));
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.carch"); // open the archive
+				CAGE_TEST_THROWN(pathMove("testdir/arch2.carch", "testdir/arch3.carch"));
 			}
-			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
-			CAGE_TEST(none(pathType("testdir/arch3.zip") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(any(pathType("testdir/arch2.carch") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(none(pathType("testdir/arch3.carch") & PathTypeFlags::Archive)); // sanity check
 		}
 		{
 			CAGE_TESTCASE("move to");
 			{
-				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
-				CAGE_TEST_THROWN(pathMove("testdir/archive.zip", "testdir/arch2.zip"));
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.carch"); // open the archive
+				CAGE_TEST_THROWN(pathMove("testdir/archive.carch", "testdir/arch2.carch"));
 			}
-			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
-			CAGE_TEST(any(pathType("testdir/archive.zip") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(any(pathType("testdir/arch2.carch") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(any(pathType("testdir/archive.carch") & PathTypeFlags::Archive)); // sanity check
 		}
 		{
 			CAGE_TESTCASE("pathType while the file is in use");
 			{
-				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.zip"); // open the archive
-				CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // try pythType on the archive itself
+				Holder<void> tmp = detail::pathKeepOpen("testdir/arch2.carch"); // open the archive
+				CAGE_TEST(any(pathType("testdir/arch2.carch") & PathTypeFlags::Archive)); // try pythType on the archive itself
 			}
 			{
-				writeFile("testdir/arch2.zip/abc.txt");
-				Holder<File> f = writeFile("testdir/arch2.zip/def.txt");
-				CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // try pythType on the archive itself
-				CAGE_TEST(any(pathType("testdir/arch2.zip/abc.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
-				// todo CAGE_TEST(any(pathType("testdir/arch2.zip/def.txt") & PathTypeFlags::File)); // try pythType on an opened file inside the archive
+				writeFile("testdir/arch2.carch/abc.txt");
+				Holder<File> f = writeFile("testdir/arch2.carch/def.txt");
+				CAGE_TEST(any(pathType("testdir/arch2.carch") & PathTypeFlags::Archive)); // try pythType on the archive itself
+				CAGE_TEST(any(pathType("testdir/arch2.carch/abc.txt") & PathTypeFlags::File)); // try pythType on a file inside the archive
+				// todo CAGE_TEST(any(pathType("testdir/arch2.carch/def.txt") & PathTypeFlags::File)); // try pythType on an opened file inside the archive
 			}
 		}
 		{
 			CAGE_TESTCASE("allowed remove");
-			pathRemove("testdir/arch2.zip"); // finally try to remove the file
-			CAGE_TEST(none(pathType("testdir/arch2.zip") & PathTypeFlags::File)); // sanity check
+			pathRemove("testdir/arch2.carch"); // finally try to remove the file
+			CAGE_TEST(none(pathType("testdir/arch2.carch") & PathTypeFlags::File)); // sanity check
 		}
 	}
 
@@ -700,29 +700,29 @@ void testArchives()
 		CAGE_TESTCASE("keep open");
 		pathCreateDirectories("testdir/keep-open/folder");
 		writeFile("testdir/keep-open/file")->writeLine("haha");
-		pathCreateArchive("testdir/keep-open/archive.zip");
+		pathCreateArchiveCarch("testdir/keep-open/archive.carch");
 		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/folder"));
 		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/file"));
-		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/archive.zip"));
+		CAGE_TEST(detail::pathKeepOpen("testdir/keep-open/archive.carch"));
 		CAGE_TEST_THROWN(detail::pathKeepOpen("testdir/keep-open/non-existent")); // the path must already exist
 		CAGE_TEST(pathType("testdir/keep-open/folder") == (PathTypeFlags::Directory));
 		CAGE_TEST(pathType("testdir/keep-open/file") == (PathTypeFlags::File));
-		CAGE_TEST(pathType("testdir/keep-open/archive.zip") == (PathTypeFlags::File | PathTypeFlags::Archive));
+		CAGE_TEST(pathType("testdir/keep-open/archive.carch") == (PathTypeFlags::File | PathTypeFlags::Archive));
 		CAGE_TEST(pathType("testdir/keep-open/non-existent") == (PathTypeFlags::NotFound)); // the path may not be created
 	}
 
 	{
 		CAGE_TESTCASE("open same file multiple times");
-		pathCreateArchive("testdir/arch5.zip");
+		pathCreateArchiveCarch("testdir/arch5.carch");
 		{
-			Holder<File> f1 = writeFile("testdir/arch5.zip/samefile.txt");
+			Holder<File> f1 = writeFile("testdir/arch5.carch/samefile.txt");
 			CAGE_TEST(f1);
-			CAGE_TEST_THROWN(readFile("testdir/arch5.zip/samefile.txt"));
+			CAGE_TEST_THROWN(readFile("testdir/arch5.carch/samefile.txt"));
 		}
 		{
-			Holder<File> f1 = readFile("testdir/arch5.zip/samefile.txt");
+			Holder<File> f1 = readFile("testdir/arch5.carch/samefile.txt");
 			CAGE_TEST(f1);
-			CAGE_TEST_THROWN(readFile("testdir/arch5.zip/samefile.txt"));
+			CAGE_TEST_THROWN(readFile("testdir/arch5.carch/samefile.txt"));
 		}
 	}
 
@@ -735,6 +735,4 @@ void testArchives()
 			tester.run();
 		}
 	}
-
-	// todo lastChange
 }

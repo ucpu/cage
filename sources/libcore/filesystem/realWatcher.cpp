@@ -12,7 +12,7 @@ namespace cage
 
 	namespace
 	{
-		class FilesystemWatcherImpl : public FilesystemWatcher, private FW::FileWatchListener
+		class FilesystemWatcherImpl final : public FilesystemWatcher, private FW::FileWatchListener
 		{
 		public:
 			FlatSet<String, StringComparatorFast> files;

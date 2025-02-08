@@ -4,80 +4,13 @@
 
 #include "files.h"
 
-#include <cage-core/concurrent.h>
 #include <cage-core/math.h> // min
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h> // bufferView
 #include <cage-core/string.h> // StringComparatorFast
 
 namespace cage
 {
-	namespace
-	{
-		// provides a limited section of a file as another file
-		struct ProxyFile : public FileAbstract
-		{
-			FileAbstract *f = nullptr;
-			const uintPtr start;
-			const uintPtr capacity;
-			uintPtr off = 0;
-
-			ProxyFile(FileAbstract *f, uintPtr start, uintPtr capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity) {}
-
-			~ProxyFile() {}
-
-			void readAt(PointerRange<char> buffer, uintPtr at) override
-			{
-				ScopeLock lock(fsMutex());
-				CAGE_ASSERT(f);
-				CAGE_ASSERT(buffer.size() <= capacity - at);
-				f->readAt(buffer, start + at);
-			}
-
-			void read(PointerRange<char> buffer) override
-			{
-				ScopeLock lock(fsMutex());
-				CAGE_ASSERT(f);
-				CAGE_ASSERT(buffer.size() <= capacity - off);
-				f->seek(start + off);
-				f->read(buffer);
-				off += buffer.size();
-			}
-
-			void seek(uintPtr position) override
-			{
-				ScopeLock lock(fsMutex());
-				CAGE_ASSERT(f);
-				CAGE_ASSERT(position <= capacity);
-				off = position;
-			}
-
-			void close() override
-			{
-				ScopeLock lock(fsMutex());
-				f = nullptr;
-			}
-
-			uintPtr tell() override
-			{
-				ScopeLock lock(fsMutex());
-				return off;
-			}
-
-			uintPtr size() override
-			{
-				ScopeLock lock(fsMutex());
-				return capacity;
-			}
-		};
-
-		Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size)
-		{
-			return systemMemory().createImpl<File, ProxyFile>(class_cast<FileAbstract *>(f), start, size);
-		}
-	}
-
 	namespace
 	{
 		// structures: https://en.wikipedia.org/wiki/Zip_(file_format)
@@ -173,8 +106,10 @@ namespace cage
 			return l;
 		}
 
-		bool isPathSafe(const String &path)
+		bool isPathValid(const String &path)
 		{
+			if (path != pathSimplify(path))
+				return false;
 			if (pathIsAbs(path))
 				return false;
 			if (!path.empty() && path[0] == '.')
@@ -182,14 +117,7 @@ namespace cage
 			return true;
 		}
 
-		bool isPathValid(const String &path)
-		{
-			if (path != pathSimplify(path))
-				return false;
-			return isPathSafe(path);
-		}
-
-		class ArchiveZip : public ArchiveAbstract
+		class ArchiveZip final : public ArchiveAbstract
 		{
 		public:
 			Holder<File> src;
@@ -200,10 +128,11 @@ namespace cage
 			bool isZip = false;
 
 			// create a new empty archive
-			ArchiveZip(const String &path, const String &options) : ArchiveAbstract(path)
+			ArchiveZip(const String &path) : ArchiveAbstract(path)
 			{
 				src = writeFile(path);
 				modified = true;
+				isZip = true;
 			}
 
 			// open existing archive
@@ -248,7 +177,11 @@ namespace cage
 						break;
 					}
 					if (totalFiles == m)
-						return; // isZip remains false
+					{
+						CAGE_ASSERT(modified == false);
+						CAGE_ASSERT(isZip == false);
+						return;
+					}
 				}
 
 				{ // read central directory (populate files)
@@ -289,7 +222,7 @@ namespace cage
 						}
 						e.name = pathSimplify(e.name);
 						e.nameLength = e.name.length();
-						if (!isPathSafe(e.name))
+						if (!isPathValid(e.name))
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 							CAGE_LOG_THROW(Stringizer() + "name: " + e.name);
@@ -347,6 +280,7 @@ namespace cage
 				CAGE_ASSERT(src->mode().write == modified);
 				if (!modified)
 					return;
+				CAGE_ASSERT(isZip);
 
 				{ // overwrite previous CD files list and EOCD record to reduce confusion of some unzip programs
 					src->seek(originalCDFilesPosition);
@@ -410,6 +344,10 @@ namespace cage
 
 				// ensure we wrote to the very end of the file
 				CAGE_ASSERT(src->tell() == src->size());
+
+				// make sure the archive is released while the lock is still held
+				src->close();
+				src.clear();
 			}
 
 			void reopenForModification()
@@ -490,6 +428,8 @@ namespace cage
 						}
 					}
 				}
+				reopenForModification();
+				modified = true;
 				{ // create all parents
 					const String p = pathJoin(path, "..");
 					createDirectoriesNoLock(p);
@@ -505,7 +445,6 @@ namespace cage
 			{
 				CAGE_ASSERT(isPathValid(path));
 				ScopeLock lock(fsMutex());
-				reopenForModification();
 				createDirectoriesNoLock(path);
 			}
 
@@ -555,6 +494,7 @@ namespace cage
 				throwIfFileLocked(index);
 				files.erase(files.begin() + index);
 				modified = true;
+				// todo remove recursively?
 			}
 
 			PathLastChange lastChange(const String &path) const override
@@ -569,7 +509,7 @@ namespace cage
 		};
 
 		// file contained within the zip archive
-		struct FileZip : public FileAbstract
+		struct FileZip final : public FileAbstract
 		{
 			std::shared_ptr<ArchiveZip> a;
 			const String myName; // name inside the archive
@@ -659,13 +599,8 @@ namespace cage
 				a->reopenForModification();
 				const uintPtr pos = src->tell();
 				src->seek(0);
-				{
-					buff.resize(src->size());
-					Holder<PointerRange<char>> tmp = src->readAll();
-					CAGE_ASSERT(tmp.size() == buff.size());
-					if (buff.size() > 0)
-						detail::memcpy(buff.data(), tmp.data(), buff.size());
-				}
+				buff.resize(src->size());
+				src->read(buff);
 				src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				src->seek(pos);
 				modified = true;
@@ -796,13 +731,13 @@ namespace cage
 		}
 	}
 
-	void archiveCreateZip(const String &path, const String &options)
+	void archiveCreateZip(const String &path)
 	{
 		ScopeLock lock(fsMutex());
-		ArchiveZip z(path, options);
+		ArchiveZip z(path);
 	}
 
-	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f)
+	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> f)
 	{
 		ScopeLock lock(fsMutex());
 		ArchiveZip z(std::move(f));

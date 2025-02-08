@@ -12,7 +12,7 @@ namespace cage
 
 	namespace
 	{
-		class TcpConnectionImpl : public TcpConnection
+		class TcpConnectionImpl final : public TcpConnection
 		{
 		public:
 			Sock sock;

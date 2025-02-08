@@ -64,14 +64,14 @@ namespace cage
 		virtual ~File() = default;
 	};
 
-	CAGE_CORE_API Holder<File> newFile(const String &path, const FileMode &mode);
+	CAGE_CORE_API Holder<File> newFile(const String &path, FileMode mode);
 	CAGE_CORE_API Holder<File> readFile(const String &path);
 	CAGE_CORE_API Holder<File> writeFile(const String &path);
 	CAGE_CORE_API Holder<File> newFileBuffer(Holder<PointerRange<const char>> buffer);
-	CAGE_CORE_API Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode = FileMode(true, false));
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, FileMode mode = FileMode(true, false));
 	CAGE_CORE_API Holder<File> newFileBuffer(Holder<const MemoryBuffer> buffer);
-	CAGE_CORE_API Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode = FileMode(true, true));
-	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode = FileMode(true, true));
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, FileMode mode = FileMode(true, true));
+	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, FileMode mode = FileMode(true, true));
 	CAGE_CORE_API Holder<File> newFileBuffer();
 
 	// receive operating system issued notifications about filesystem changes
@@ -136,7 +136,8 @@ namespace cage
 	CAGE_CORE_API void pathCreateDirectories(const String &path);
 
 	// create an empty archive at the specified path, it can be populated afterwards
-	CAGE_CORE_API void pathCreateArchive(const String &path, const String &options = "");
+	CAGE_CORE_API void pathCreateArchiveZip(const String &path);
+	CAGE_CORE_API void pathCreateArchiveCarch(const String &path);
 
 	// moves (renames) or copies a file or directory
 	CAGE_CORE_API void pathMove(const String &from, const String &to);

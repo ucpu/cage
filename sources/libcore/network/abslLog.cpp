@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		class AbslLogSink : public absl::LogSink
+		class AbslLogSink final : public absl::LogSink
 		{
 		public:
 			AbslLogSink()
@@ -26,7 +26,7 @@ namespace cage
 
 			~AbslLogSink() { absl::RemoveLogSink(this); }
 
-			virtual void Send(const absl::LogEntry &entry) override
+			void Send(const absl::LogEntry &entry) override
 			{
 				std::source_location location = std::source_location::current(); // todo copy values from the entry
 				const cage::SeverityEnum severity = [](absl::LogSeverity severity)

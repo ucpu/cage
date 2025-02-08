@@ -1,16 +1,15 @@
 #include "files.h"
 
-#include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
 
 namespace cage
 {
-	void archiveCreateZip(const String &path, const String &options);
+	void archiveCreateZip(const String &path);
+	void archiveCreateCarch(const String &path);
 
 	bool FileMode::valid() const
 	{
@@ -134,7 +133,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "calling mode on an abstract file");
 	}
 
-	Holder<File> newFile(const String &path, const FileMode &mode)
+	Holder<File> newFile(const String &path, FileMode mode)
 	{
 		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusive);
@@ -267,7 +266,7 @@ namespace cage
 		a->createDirectories(p);
 	}
 
-	void pathCreateArchive(const String &path, const String &options)
+	void pathCreateArchiveZip(const String &path)
 	{
 		ScopeLock lock(fsMutex());
 		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
@@ -275,7 +274,18 @@ namespace cage
 			CAGE_LOG_THROW(Stringizer() + "path: " + path);
 			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
 		}
-		archiveCreateZip(path, options);
+		archiveCreateZip(path);
+	}
+
+	void pathCreateArchiveCarch(const String &path)
+	{
+		ScopeLock lock(fsMutex());
+		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
+		{
+			CAGE_LOG_THROW(Stringizer() + "path: " + path);
+			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
+		}
+		archiveCreateCarch(path);
 	}
 
 	namespace

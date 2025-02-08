@@ -31,7 +31,7 @@ namespace
 
 		void threadEntry(uint32 thrId, uint32)
 		{
-			pathCreateArchive(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
+			pathCreateArchiveZip(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{
@@ -62,7 +62,7 @@ namespace
 		void run()
 		{
 			pathRemove("testdir/concurrent.zip");
-			pathCreateArchive("testdir/concurrent.zip");
+			pathCreateArchiveZip("testdir/concurrent.zip");
 			threadPool->run();
 		}
 	};
@@ -80,7 +80,7 @@ void testArchivesRecursion()
 		for (uint32 i = 0; i < 5; i++)
 		{
 			p = pathJoin(p, Stringizer() + i + ".zip");
-			pathCreateArchive(p);
+			pathCreateArchiveZip(p);
 		}
 		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::Archive));
 		CAGE_TEST(any(pathType("testdir") & PathTypeFlags::Directory));

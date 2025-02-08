@@ -5,7 +5,7 @@ namespace cage
 {
 	namespace
 	{
-		class FileBuffer : public File
+		class FileBuffer final : public File
 		{
 		public:
 			const FileMode myMode;
@@ -63,7 +63,7 @@ namespace cage
 			FileMode mode() const override { return myMode; }
 		};
 
-		class FileRange : public File
+		class FileRange final : public File
 		{
 		public:
 			Holder<PointerRange<char>> buf;
@@ -129,7 +129,7 @@ namespace cage
 		return newFileBuffer(std::move(tmp), FileMode(true, false));
 	}
 
-	Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, FileMode mode)
 	{
 		return systemMemory().createImpl<File, FileRange>(std::move(buffer), mode);
 	}
@@ -140,12 +140,12 @@ namespace cage
 		return newFileBuffer(Holder<MemoryBuffer>(b, std::move(buffer)), FileMode(true, false));
 	}
 
-	Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, FileMode mode)
 	{
 		return systemMemory().createImpl<File, FileBuffer>(std::move(buffer), mode);
 	}
 
-	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(MemoryBuffer &&buffer, FileMode mode)
 	{
 		Holder<MemoryBuffer> tmp = systemMemory().createHolder<MemoryBuffer>(std::move(buffer));
 		return newFileBuffer(std::move(tmp), mode);

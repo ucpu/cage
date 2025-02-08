@@ -1,6 +1,6 @@
 
 set(cage_assets_current_list_dir "${CMAKE_CURRENT_LIST_DIR}")
-set(cage_assets_destination_path "${CMAKE_BINARY_DIR}/result/assets.zip" CACHE FILEPATH "Where to save the final archive with all assets.")
+set(cage_assets_destination_path "${CMAKE_BINARY_DIR}/result/assets.carch" CACHE FILEPATH "Where to save the final archive with all assets.")
 set(cage_assets_intermediate_path "${CMAKE_BINARY_DIR}/result/data" CACHE PATH "Directory for assets processing and database.")
 
 function(cage_assets_generate_config)

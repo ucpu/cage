@@ -16,7 +16,7 @@ namespace cage
 
 	namespace
 	{
-		class WebsocketConnectionImpl : public WebsocketConnection
+		class WebsocketConnectionImpl final : public WebsocketConnection
 		{
 		public:
 			Holder<TcpConnection> con;

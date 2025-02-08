@@ -4,16 +4,15 @@
 
 #include "files.h"
 
-#include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/stdHash.h>
 #include <cage-core/string.h>
 
 namespace cage
 {
-	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> &&f);
+	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> f);
+	std::shared_ptr<ArchiveAbstract> archiveOpenCarchTry(Holder<File> f);
 	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path);
 
 	namespace
@@ -73,7 +72,10 @@ namespace cage
 		{
 			CAGE_ASSERT(parent);
 			const String inPath = pathToRel(fullPath, parent->myPath);
-			return archiveOpenZipTry(parent->openFile(inPath, FileMode(true, false)));
+			Holder<File> f = parent->openFile(inPath, FileMode(true, false));
+			if (auto cap = archiveOpenCarchTry(f.share()))
+				return cap;
+			return archiveOpenZipTry(f.share());
 		}
 
 		void walkRight(String &p, String &i)

@@ -323,7 +323,8 @@ void testFiles()
 		CAGE_TEST_THROWN(writeFile(invalidPath));
 		CAGE_TEST_THROWN(pathLastChange(invalidPath));
 		CAGE_TEST_THROWN(pathCreateDirectories(invalidPath));
-		CAGE_TEST_THROWN(pathCreateArchive(invalidPath));
+		CAGE_TEST_THROWN(pathCreateArchiveZip(invalidPath));
+		CAGE_TEST_THROWN(pathCreateArchiveCarch(invalidPath));
 		CAGE_TEST_THROWN(pathListDirectory(invalidPath));
 		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
 	}
