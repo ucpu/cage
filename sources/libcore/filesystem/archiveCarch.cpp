@@ -9,6 +9,7 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h> // bufferView
 #include <cage-core/stdHash.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -103,6 +104,7 @@ namespace cage
 					src->seek(arch.listStart);
 					const auto buff = src->read(arch.listSize);
 					Deserializer des(buff);
+					files.reserve(arch.filesCount);
 					for (uint32 i = 0; i < arch.filesCount; i++)
 					{
 						String n;
@@ -116,6 +118,7 @@ namespace cage
 						}
 						(FileHeader &)files[n] = h;
 					}
+					dirs.reserve(arch.dirsCount);
 					for (uint32 i = 0; i < arch.dirsCount; i++)
 					{
 						String n;
@@ -140,9 +143,10 @@ namespace cage
 
 				// prepare new list
 				std::vector<std::pair<String, FileHeaderEx>> fs;
+				fs.reserve(files.size());
 				for (auto &it : files)
 					fs.emplace_back(it.first, std::move(it.second));
-				std::sort(fs.begin(), fs.end(), [](const auto &a, const auto &b) -> bool { return a.first < b.first; });
+				std::sort(fs.begin(), fs.end(), [](const auto &a, const auto &b) -> bool { return StringComparatorFast()(a.first, b.first); });
 
 				// read previous content
 				// this is inefficient and temporary solution
@@ -178,9 +182,10 @@ namespace cage
 				}
 				{
 					std::vector<String> ds;
+					ds.reserve(dirs.size());
 					for (const auto &it : dirs)
 						ds.push_back(it);
-					std::sort(ds.begin(), ds.end());
+					std::sort(ds.begin(), ds.end(), StringComparatorFast());
 					for (const auto &it : ds)
 						ser << it;
 				}
