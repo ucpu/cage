@@ -322,11 +322,6 @@ namespace cage
 				{
 					if (active && any(config.modes & KeybindModesFlags::EngineTick) && event)
 						event(input);
-					if (autoDeactivate)
-					{
-						active = false;
-						autoDeactivate = false;
-					}
 					return false; // ticks always propagate
 				}
 				for (const auto &it : matchers)
@@ -334,11 +329,6 @@ namespace cage
 					const KeybindModesFlags r = matches(input, it);
 					if (any(r & (KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress)))
 						active = true;
-					if (any(r & (KeybindModesFlags::WheelRoll | KeybindModesFlags::WheelScroll)))
-					{
-						active = true;
-						autoDeactivate = true;
-					}
 					if (any(r & (KeybindModesFlags::KeyRelease | KeybindModesFlags::MouseRelease)))
 						active = false;
 					if (any(r & config.modes))
@@ -361,7 +351,6 @@ namespace cage
 			std::vector<Matcher> matchers;
 			const uint32 textId = 0;
 			mutable bool active = false; // allows tick events
-			mutable bool autoDeactivate = false; // automatically deactivates after first engine tick
 			Entity *guiEnt = nullptr;
 			uint32 assigningIndex = m;
 
@@ -520,11 +509,10 @@ namespace cage
 		return impl->process(input);
 	}
 
-	void Keybind::setActive(bool active, bool autoDeactivate)
+	void Keybind::setActive(bool active)
 	{
 		KeybindImpl *impl = (KeybindImpl *)this;
 		impl->active = active;
-		impl->autoDeactivate = autoDeactivate;
 	}
 
 	bool Keybind::active() const

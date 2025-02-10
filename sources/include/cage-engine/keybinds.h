@@ -19,7 +19,7 @@ namespace cage
 		String value() const;
 		String value(uint32 index) const;
 		bool process(const GenericInput &input) const;
-		void setActive(bool active, bool autoDeactivate = false);
+		void setActive(bool active);
 		bool active() const;
 
 		uint32 count() const;
@@ -38,7 +38,7 @@ namespace cage
 		Keyboard = 1 << 0,
 		Modifiers = 1 << 1,
 		Mouse = 1 << 2,
-		WheelRoll = 1 << 3, // tracks wheel up and down as separate events (as if buttons)
+		WheelRoll = 1 << 3, // tracks wheel up and down as separate events
 		WheelScroll = 1 << 4, // tracks wheel uniformly as one event
 		// todo controller
 	};
