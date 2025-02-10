@@ -18,7 +18,8 @@ namespace cage
 		String name() const;
 		String value() const;
 		String value(uint32 index) const;
-		bool process(const GenericInput &input) const;
+		bool process(const GenericInput &input);
+		bool matches(const GenericInput &input) const;
 		void setActive(bool active);
 		bool active() const;
 

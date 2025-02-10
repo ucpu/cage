@@ -156,7 +156,7 @@ namespace cage
 				a, b);
 		}
 
-		CAGE_FORCE_INLINE KeybindModesFlags matches(const GenericInput &input, const Matcher &matcher)
+		CAGE_FORCE_INLINE KeybindModesFlags matchesInput(const GenericInput &input, const Matcher &matcher)
 		{
 			return std::visit(
 				[input](const auto &mt) -> KeybindModesFlags
@@ -254,7 +254,7 @@ namespace cage
 			maker.make(input);
 			if (!std::holds_alternative<std::monostate>(maker.result))
 			{
-				CAGE_ASSERT(any(matches(input, maker.result)));
+				CAGE_ASSERT(any(matchesInput(input, maker.result)));
 			}
 			return maker.result;
 		}
@@ -305,7 +305,7 @@ namespace cage
 					global().erase(it);
 			}
 
-			bool process(const GenericInput &input) const
+			bool process(const GenericInput &input)
 			{
 				if (input.has<input::WindowFocusLose>())
 				{
@@ -326,7 +326,7 @@ namespace cage
 				}
 				for (const auto &it : matchers)
 				{
-					const KeybindModesFlags r = matches(input, it);
+					const KeybindModesFlags r = matchesInput(input, it);
 					if (any(r & (KeybindModesFlags::KeyPress | KeybindModesFlags::MousePress)))
 						active = true;
 					if (any(r & (KeybindModesFlags::KeyRelease | KeybindModesFlags::MouseRelease)))
@@ -345,12 +345,23 @@ namespace cage
 				return false;
 			}
 
+			bool matches(const GenericInput &input) const
+			{
+				for (const auto &it : matchers)
+				{
+					const KeybindModesFlags r = matchesInput(input, it);
+					if (any(r & config.modes))
+						return true;
+				}
+				return false;
+			}
+
 			const KeybindCreateConfig config;
 			EventListener<bool(const GenericInput &)> listener;
 			const std::vector<Matcher> defaults;
 			std::vector<Matcher> matchers;
 			const uint32 textId = 0;
-			mutable bool active = false; // allows tick events
+			bool active = false; // allows tick events
 			Entity *guiEnt = nullptr;
 			uint32 assigningIndex = m;
 
@@ -503,10 +514,16 @@ namespace cage
 			impl->matchers[index]);
 	}
 
-	bool Keybind::process(const GenericInput &input) const
+	bool Keybind::process(const GenericInput &input)
+	{
+		KeybindImpl *impl = (KeybindImpl *)this;
+		return impl->process(input);
+	}
+
+	bool Keybind::matches(const GenericInput &input) const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
-		return impl->process(input);
+		return impl->matches(input);
 	}
 
 	void Keybind::setActive(bool active)
