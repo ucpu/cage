@@ -587,6 +587,18 @@ namespace cage
 		return name++;
 	}
 
+	bool AssetsManager::check(uint32 assetId) const
+	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
+		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
+		const auto &publicIndex = impl->publicIndex;
+		ScopeLock lock(impl->publicMutex, ReadLockTag());
+		auto it = publicIndex.find(assetId);
+		if (it == publicIndex.end())
+			return false; // not found
+		return !it->second->failed;
+	}
+
 	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
 	{
 		class AssetListenerImpl

@@ -47,6 +47,9 @@ namespace cage
 			return get_(Scheme, assetId).template cast<T>();
 		}
 
+		// returns true if the asset exists and is successfully loaded
+		bool check(uint32 assetId) const;
+
 		// end thread-safe methods
 
 		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
