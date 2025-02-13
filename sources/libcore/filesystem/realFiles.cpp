@@ -2,13 +2,17 @@
 	#include <vector> // wide characters
 	#include "../incWin.h"
 	#include <io.h> // _get_osfhandle
-	#define fseek _fseeki64
-	#define ftell _ftelli64
+	#define fseek64 _fseeki64
+	#define ftell64 _ftelli64
+	#define fseek invalidFunctionFseek
+	#define ftell invalidFunctionFtell
 #else
 	#define _FILE_OFFSET_BITS 64
 	#include <dirent.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
+	#define fseek64 fseeko64
+	#define ftell64 ftello64
 #endif
 #ifdef CAGE_SYSTEM_MAC
 	#include <mach-o/dyld.h>
@@ -179,17 +183,17 @@ namespace cage
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
-			HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
+			const HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
 			uint64 off = 0;
 			uint64 s = buffer.size();
 			while (s > 0)
 			{
 				OVERLAPPED o;
 				detail::memset(&o, 0, sizeof(o));
-				uint64 p = at + off;
+				const uint64 p = at + off;
 				o.Offset = (DWORD)p;
 				o.OffsetHigh = (DWORD)((uint64)p >> 32);
-				uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
+				const uint64 k = min(s, (uint64)1024 * 1024 * 1024); // read in chunks of 1 GB
 				DWORD r = 0;
 				if (!ReadFile(handle, buffer.data() + off, numeric_cast<DWORD>(k), &r, &o) || r != k)
 					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
@@ -197,8 +201,17 @@ namespace cage
 				s -= k;
 			}
 #else
-			if (pread(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
-				CAGE_THROW_ERROR(SystemError, "pread", errno);
+			const int handle = fileno(f);
+			uint64 off = 0;
+			uint64 s = buffer.size();
+			while (s > 0)
+			{
+				const uint64 k = min(s, (uint64)1024 * 1024 * 1024); // read in chunks of 1 GB
+				if (pread64(handle, buffer.data() + off, k, at + off) != k)
+					CAGE_THROW_ERROR(SystemError, "pread", errno);
+				off += k;
+				s -= k;
+			}
 #endif
 		}
 
@@ -206,17 +219,17 @@ namespace cage
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
-			HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
+			const HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
 			uint64 off = 0;
 			uint64 s = buffer.size();
 			while (s > 0)
 			{
 				OVERLAPPED o;
 				detail::memset(&o, 0, sizeof(o));
-				uint64 p = at + off;
+				const uint64 p = at + off;
 				o.Offset = (DWORD)p;
 				o.OffsetHigh = (DWORD)((uint64)p >> 32);
-				uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
+				const uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
 				DWORD r = 0;
 				if (!WriteFile(handle, buffer.data() + off, numeric_cast<DWORD>(k), &r, &o) || r != k)
 					CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
@@ -224,8 +237,17 @@ namespace cage
 				s -= k;
 			}
 #else
-			if (pwrite(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
-				CAGE_THROW_ERROR(SystemError, "pwrite", errno);
+			const int handle = fileno(f);
+			uint64 off = 0;
+			uint64 s = buffer.size();
+			while (s > 0)
+			{
+				const uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
+				if (pwrite64(handle, buffer.data() + off, k, at + off) != k)
+					CAGE_THROW_ERROR(SystemError, "pwrite", errno);
+				off += k;
+				s -= k;
+			}
 #endif
 		}
 
@@ -300,7 +322,7 @@ namespace cage
 			{
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(position <= size());
-				if (fseek(f, position, 0) != 0)
+				if (fseek64(f, position, 0) != 0)
 					CAGE_THROW_ERROR(SystemError, "fseek", errno);
 			}
 
@@ -316,16 +338,16 @@ namespace cage
 			uint64 tell() override
 			{
 				CAGE_ASSERT(f);
-				return ftell(f);
+				return ftell64(f);
 			}
 
 			uint64 size() override
 			{
 				CAGE_ASSERT(f);
-				uint64 pos = ftell(f);
-				fseek(f, 0, 2);
-				uint64 siz = ftell(f);
-				fseek(f, pos, 0);
+				const uint64 pos = ftell64(f);
+				fseek64(f, 0, 2);
+				const uint64 siz = ftell64(f);
+				fseek64(f, pos, 0);
 				return siz;
 			}
 
@@ -381,8 +403,8 @@ namespace cage
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.read);
 					ff = f;
-					at = ftell(f);
-					if (fseek(f, at + buffer.size(), 0) != 0)
+					at = ftell64(f);
+					if (fseek64(f, at + buffer.size(), 0) != 0)
 						CAGE_THROW_ERROR(SystemError, "fseek", errno);
 				}
 				readAtImpl(buffer, at, ff);
@@ -399,8 +421,8 @@ namespace cage
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.write);
 					ff = f;
-					at = ftell(f);
-					if (fseek(f, at + buffer.size(), 0) != 0)
+					at = ftell64(f);
+					if (fseek64(f, at + buffer.size(), 0) != 0)
 						CAGE_THROW_ERROR(SystemError, "fseek", errno);
 				}
 				writeAtImpl(buffer, at, ff);
