@@ -6,6 +6,7 @@
 #include "files.h"
 
 #include <cage-core/flatSet.h>
+#include <cage-core/math.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h> // bufferView
 #include <cage-core/stdHash.h>
@@ -37,6 +38,66 @@ namespace cage
 			MemoryBuffer newContent;
 			bool locked = false;
 			bool modified = false;
+		};
+
+		struct ChunksList
+		{
+			std::vector<FileHeader> chunks; // empty chunks
+			uint64 last = 0;
+
+			void addOccupied(FileHeader range)
+			{
+				auto it = chunks.begin();
+				while (it != chunks.end())
+				{
+					if (range.offset < it->offset + it->size && range.offset + range.size > it->offset)
+					{
+						const uint64 beforeStart = it->offset;
+						const uint64 beforeSize = range.offset > it->offset ? range.offset - it->offset : 0;
+						const uint64 afterStart = range.offset + range.size;
+						const uint64 afterSize = (it->offset + it->size > afterStart) ? (it->offset + it->size - afterStart) : 0;
+						it = chunks.erase(it);
+						if (beforeSize > 0)
+							it = chunks.insert(it, { beforeStart, beforeSize }) + 1;
+						if (afterSize > 0)
+							it = chunks.insert(it, { afterStart, afterSize }) + 1;
+					}
+					else
+						it++;
+				}
+				if (range.offset > last)
+					chunks.push_back({ last, range.offset - last });
+				last = max(last, range.offset + range.size);
+			}
+
+			uint64 findEmpty(uint64 size)
+			{
+				auto bestFit = chunks.end();
+				uint64 minWaste = m;
+				for (auto it = chunks.begin(); it != chunks.end(); it++)
+				{
+					if (it->size >= size && (it->size - size) < minWaste)
+					{
+						bestFit = it;
+						minWaste = it->size - size;
+					}
+				}
+				if (bestFit != chunks.end())
+				{
+					const uint64 start = bestFit->offset;
+					if (bestFit->size == size)
+						chunks.erase(bestFit);
+					else
+					{
+						bestFit->offset += size;
+						bestFit->size -= size;
+					}
+					return start;
+				}
+				const uint64 p = last;
+				last += size;
+				return p;
+			}
 		};
 
 		bool isPathValid(const String &path)
@@ -139,6 +200,19 @@ namespace cage
 				}
 			}
 
+			// seek to the position, and fill the remaining space if the position is beyond the end of the file
+			void seekFill(uint64 pos)
+			{
+				const uint64 s = src->size();
+				if (pos > s)
+				{
+					src->seek(s);
+					writeZeroes(+src, pos - s);
+				}
+				else
+					src->seek(pos);
+			}
+
 			void writeChanges()
 			{
 				if (!src)
@@ -150,73 +224,58 @@ namespace cage
 				CAGE_ASSERT(src->mode().write);
 				CAGE_ASSERT(isCarch);
 
-				// prepare new list
+				// prepare new files list
 				std::vector<std::pair<String, FileHeaderEx>> fs;
 				fs.reserve(files.size());
 				for (auto &it : files)
+				{
+					CAGE_ASSERT(!it.second.modified || it.second.size == it.second.newContent.size());
 					fs.emplace_back(it.first, std::move(it.second));
+				}
 				std::sort(fs.begin(), fs.end(), [](const auto &a, const auto &b) -> bool { return StringComparatorFast()(a.first, b.first); });
 
-				// read previous content
-				// this is inefficient and temporary solution
-				// todo
+				// find space for all files
+				ChunksList chunks;
+				chunks.addOccupied({ 0, sizeof(ArchiveHeader) });
+				for (const auto &it : fs)
+					if (!it.second.modified)
+						chunks.addOccupied(it.second);
+				for (auto &it : fs)
+					if (it.second.modified)
+						it.second.offset = chunks.findEmpty(it.second.size);
+
+				// write new files contents
 				for (auto &it : fs)
 				{
 					if (!it.second.modified)
-					{
-						it.second.newContent.resize(it.second.size);
-						src->seek(it.second.offset);
-						src->read(it.second.newContent);
-					}
+						continue;
+					CAGE_ASSERT(it.second.size == it.second.newContent.size());
+					seekFill(it.second.offset);
+					src->write(it.second.newContent);
 				}
 
-				// write temporary header
+				// files list
 				{
-					src->seek(0);
-					ArchiveHeader a;
-					src->write(bufferView(a));
-				}
-
-				// write files contents
-				{
-					for (auto &it : fs)
-					{
-						CAGE_ASSERT(it.second.size == it.second.newContent.size());
-						it.second.offset = src->tell();
-						src->write(it.second.newContent);
-					}
-				}
-
-				// prepare file list buffer
-				MemoryBuffer buff;
-				buff.reserve(fs.size() * (sizeof(FileHeader) + 100));
-				Serializer ser(buff);
-				{
+					MemoryBuffer buff;
+					buff.reserve(fs.size() * (sizeof(FileHeader) + 100));
+					Serializer ser(buff);
 					for (const auto &it : fs)
 						ser << it.first << (FileHeader)it.second;
-				}
-				{
-					std::vector<String> ds;
-					ds.reserve(dirs.size());
-					for (const auto &it : dirs)
-						ds.push_back(it);
-					std::sort(ds.begin(), ds.end(), StringComparatorFast());
-					for (const auto &it : ds)
-						ser << it;
-				}
-
-				// write file headers
-				arch.listStart = src->tell();
-				arch.listSize = buff.size();
-				arch.filesCount = fs.size();
-				arch.dirsCount = dirs.size();
-				src->write(buff);
-
-				// fill the rest of the file with zeros
-				{
-					writeZeroes(+src, src->size() - src->tell());
-					// ensure we wrote to the very end of the file
-					CAGE_ASSERT(src->tell() == src->size());
+					{
+						std::vector<String> ds;
+						ds.reserve(dirs.size());
+						for (const auto &it : dirs)
+							ds.push_back(it);
+						std::sort(ds.begin(), ds.end(), StringComparatorFast());
+						for (const auto &it : ds)
+							ser << it;
+					}
+					arch.listStart = chunks.findEmpty(buff.size());
+					arch.listSize = buff.size();
+					arch.filesCount = fs.size();
+					arch.dirsCount = dirs.size();
+					seekFill(arch.listStart);
+					src->write(buff);
 				}
 
 				// write the archive header
