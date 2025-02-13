@@ -273,6 +273,20 @@ namespace cage
 
 			~ArchiveZip()
 			{
+				try
+				{
+					writeChanges();
+				}
+				catch (...)
+				{
+					CAGE_LOG_THROW(Stringizer() + "error while writing changes to zip archive");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+					throw;
+				}
+			}
+
+			void writeChanges()
+			{
 				if (!src)
 					return; // already moved-from
 
@@ -291,12 +305,7 @@ namespace cage
 						expectedToWrite += numeric_cast<uint32>(sizeof(CDFileHeader) + f.nameLength + f.newContent.size());
 					const uint32 needToWrite = originalEOCDPosition - originalCDFilesPosition;
 					if (needToWrite > expectedToWrite)
-					{
-						MemoryBuffer buff;
-						buff.resize(needToWrite - expectedToWrite);
-						detail::memset(buff.data(), 0, buff.size());
-						src->write(buff);
-					}
+						writeZeroes(+src, needToWrite - expectedToWrite);
 				}
 
 				// write modified files and update offsets

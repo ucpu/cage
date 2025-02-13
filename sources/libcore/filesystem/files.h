@@ -56,6 +56,8 @@ namespace cage
 	RecursiveMutex *fsMutex();
 
 	Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size);
+
+	void writeZeroes(File *f, uint64 size);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

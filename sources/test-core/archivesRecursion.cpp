@@ -31,13 +31,13 @@ namespace
 
 		void threadEntry(uint32 thrId, uint32)
 		{
-			pathCreateArchiveZip(Stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
+			pathCreateArchiveCarch(Stringizer() + "testdir/concurrent.carch/" + thrId + ".carch");
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{
 					ScopeLock lck(barrier);
 				}
-				const String name = Mode == 0 ? Stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin" : Stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const String name = Mode == 0 ? Stringizer() + "testdir/concurrent.carch/" + ((iter + thrId) % ThreadsCount) + ".carch/" + randomRange(0, 3) + ".bin" : Stringizer() + "testdir/concurrent.carch/" + randomRange(0, 3) + ".carch/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
@@ -61,8 +61,8 @@ namespace
 
 		void run()
 		{
-			pathRemove("testdir/concurrent.zip");
-			pathCreateArchiveZip("testdir/concurrent.zip");
+			pathRemove("testdir/concurrent.carch");
+			pathCreateArchiveCarch("testdir/concurrent.carch");
 			threadPool->run();
 		}
 	};
@@ -79,17 +79,17 @@ void testArchivesRecursion()
 		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, Stringizer() + i + ".zip");
-			pathCreateArchiveZip(p);
+			p = pathJoin(p, Stringizer() + i + ".carch");
+			pathCreateArchiveCarch(p);
 		}
 		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::Archive));
 		CAGE_TEST(any(pathType("testdir") & PathTypeFlags::Directory));
-		CAGE_TEST(any(pathType("testdir/0.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip") & PathTypeFlags::Directory));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip") & PathTypeFlags::Directory));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip") & PathTypeFlags::Directory));
+		CAGE_TEST(any(pathType("testdir/0.carch") & PathTypeFlags::Archive));
+		CAGE_TEST(none(pathType("testdir/0.carch") & PathTypeFlags::Directory));
+		CAGE_TEST(any(pathType("testdir/0.carch/1.carch") & PathTypeFlags::Archive));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch") & PathTypeFlags::Directory));
+		CAGE_TEST(any(pathType("testdir/0.carch/1.carch/2.carch") & PathTypeFlags::Archive));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch/2.carch") & PathTypeFlags::Directory));
 	}
 
 	{
@@ -97,14 +97,14 @@ void testArchivesRecursion()
 		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, Stringizer() + i + ".zip");
+			p = pathJoin(p, Stringizer() + i + ".carch");
 			Holder<File> f = writeFile(pathJoin(p, "welcome"));
 			f->writeLine("hello");
 			f->close();
 		}
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Directory));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::File));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::Archive));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::Directory));
+		CAGE_TEST(any(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::File));
 	}
 
 	{
@@ -112,16 +112,16 @@ void testArchivesRecursion()
 		String p = "testdir";
 		for (uint32 i = 0; i < 5; i++)
 		{
-			p = pathJoin(p, Stringizer() + i + ".zip");
+			p = pathJoin(p, Stringizer() + i + ".carch");
 			Holder<File> f = readFile(pathJoin(p, "welcome"));
 			String l;
 			CAGE_TEST(f->readLine(l));
 			CAGE_TEST(l == "hello");
 			f->close();
 		}
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Directory));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::File));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::Archive));
+		CAGE_TEST(none(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::Directory));
+		CAGE_TEST(any(pathType("testdir/0.carch/1.carch/2.carch/welcome") & PathTypeFlags::File));
 	}
 
 	{
@@ -131,7 +131,7 @@ void testArchivesRecursion()
 			String p = "testdir";
 			for (uint32 i = 0; i < 5; i++)
 			{
-				p = pathJoin(p, Stringizer() + i + ".zip");
+				p = pathJoin(p, Stringizer() + i + ".carch");
 				Holder<void> tmp = detail::pathKeepOpen(p); // ensure the archive is open
 				CAGE_TEST_THROWN(readFile(p));
 			}
@@ -141,7 +141,7 @@ void testArchivesRecursion()
 			String p = "testdir";
 			for (uint32 i = 0; i < 5; i++)
 			{
-				p = pathJoin(p, Stringizer() + i + ".zip");
+				p = pathJoin(p, Stringizer() + i + ".carch");
 				CAGE_TEST(readFile(p));
 			}
 		}

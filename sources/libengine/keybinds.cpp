@@ -259,7 +259,7 @@ namespace cage
 			return maker.result;
 		}
 
-		const KeybindCreateConfig &validateConfig(const KeybindCreateConfig &config)
+		KeybindCreateConfig validateConfig(KeybindCreateConfig config)
 		{
 			CAGE_ASSERT(!config.id.empty());
 			CAGE_ASSERT(!findKeybind(config.id)); // must be unique
@@ -268,6 +268,10 @@ namespace cage
 			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
 			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::Modifiers) || config.devices == KeybindDevicesFlags::Modifiers); // modifiers is exclusive with all other flags
 			CAGE_ASSERT(any(config.modes));
+			if (config.guiTextId == 0)
+				config.guiTextId = HashString(config.id);
+			if (config.guiTextParameter.empty())
+				config.guiTextParameter = config.id;
 			return config;
 		}
 
@@ -291,7 +295,7 @@ namespace cage
 		class KeybindImpl : public Keybind
 		{
 		public:
-			KeybindImpl(const KeybindCreateConfig &config_, PointerRange<const GenericInput> defaults_, Delegate<bool(const GenericInput &)> event_) : config(validateConfig(config_)), defaults(makeDefaults(config_, defaults_)), textId(HashString(config.id))
+			KeybindImpl(const KeybindCreateConfig &config_, PointerRange<const GenericInput> defaults_, Delegate<bool(const GenericInput &)> event_) : config(validateConfig(config_)), defaults(makeDefaults(config, defaults_))
 			{
 				reset(); // make matchers from the defaults
 				this->event = event_;
@@ -360,7 +364,6 @@ namespace cage
 			EventListener<bool(const GenericInput &)> listener;
 			const std::vector<Matcher> defaults;
 			std::vector<Matcher> matchers;
-			const uint32 textId = 0;
 			bool active = false; // allows tick events
 			Entity *guiEnt = nullptr;
 			uint32 assigningIndex = m;
@@ -467,7 +470,9 @@ namespace cage
 				return true;
 			}
 
-			CAGE_FORCE_INLINE auto cmp() const { return std::tuple<sint32, String, String>(config.displayOrder, textsGet(textId), config.id); }
+			String name() const { return textsGet(config.guiTextId, config.guiTextParameter); }
+
+			CAGE_FORCE_INLINE auto cmp() const { return std::tuple<sint32, String, String>(config.displayOrder, name(), config.id); }
 		};
 
 		bool guiUpdateGlobal(uintPtr ptr, const GenericInput &in)
@@ -488,7 +493,7 @@ namespace cage
 	String Keybind::name() const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
-		return textsGet(impl->textId, impl->config.id);
+		return impl->name();
 	}
 
 	String Keybind::value() const
@@ -636,7 +641,7 @@ namespace cage
 		auto _ = g->verticalTable(2);
 		for (KeybindImpl *k : tmp)
 		{
-			g->label().update([k](Entity *e) { e->value<GuiTextFormatComponent>().color = k->active ? Vec3(0.5, 0.9, 1) : Vec3::Nan(); }).text(k->textId, k->config.id);
+			g->label().update([k](Entity *e) { e->value<GuiTextFormatComponent>().color = k->active ? Vec3(0.5, 0.9, 1) : Vec3::Nan(); }).text(k->config.guiTextId, k->config.guiTextParameter);
 			keybindsGuiWidget(g, k);
 		}
 	}

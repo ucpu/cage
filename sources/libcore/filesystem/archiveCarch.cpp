@@ -75,8 +75,9 @@ namespace cage
 			{
 				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
+				const uint64 srcSize = src->size();
 				{ // read header
-					if (src->size() < sizeof(ArchiveHeader))
+					if (srcSize < sizeof(ArchiveHeader))
 						return; // isCarch = false
 					src->seek(0);
 					src->read(bufferView<char>(arch));
@@ -87,20 +88,20 @@ namespace cage
 					isCarch = true;
 				}
 
-				{ // validate content size
-					if (src->size() < arch.contentStart + arch.contentSize)
+				{ // validate sizes
+					if (srcSize < arch.contentStart + arch.contentSize)
 					{
 						CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 						CAGE_THROW_ERROR(Exception, "truncated cage archive (content)");
 					}
-				}
-
-				{ // read files list
-					if (src->size() < arch.listStart + arch.listSize)
+					if (srcSize < arch.listStart + arch.listSize)
 					{
 						CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 						CAGE_THROW_ERROR(Exception, "truncated cage archive (list)");
 					}
+				}
+
+				{ // read files list
 					src->seek(arch.listStart);
 					const auto buff = src->read(arch.listSize);
 					Deserializer des(buff);
@@ -131,6 +132,20 @@ namespace cage
 			ArchiveCarch(ArchiveCarch &&z) = default;
 
 			~ArchiveCarch()
+			{
+				try
+				{
+					writeChanges();
+				}
+				catch (...)
+				{
+					CAGE_LOG_THROW(Stringizer() + "error while writing changes to cage archive");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
+					throw;
+				}
+			}
+
+			void writeChanges()
 			{
 				if (!src)
 					return; // already moved-from
@@ -207,18 +222,8 @@ namespace cage
 					src->write(it.second.newContent);
 				}
 
-				{ // fill the rest of the file with zeros
-					static constexpr uint64 sz = 16 * 1024;
-					static constexpr char zeros[sz] = {};
-					uint64 r = src->size() - src->tell();
-					while (r > sz)
-					{
-						src->write(zeros);
-						r -= sz;
-					}
-					if (r > 0)
-						src->write({ zeros, zeros + sz });
-				}
+				// fill the rest of the file with zeros
+				writeZeroes(+src, src->size() - src->tell());
 
 				// ensure we wrote to the very end of the file
 				CAGE_ASSERT(src->tell() == src->size());
@@ -271,7 +276,7 @@ namespace cage
 				{
 					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 					CAGE_LOG_THROW(Stringizer() + "name: " + path);
-					CAGE_THROW_ERROR(Exception, "cannot create directory inside carch, file already exists");
+					CAGE_THROW_ERROR(Exception, "cannot create directory inside cage archive, file already exists");
 				}
 				if (dirs.count(path))
 					return; // directory already exists
@@ -318,7 +323,7 @@ namespace cage
 				{
 					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 					CAGE_LOG_THROW(Stringizer() + "name: " + from);
-					CAGE_THROW_ERROR(Exception, "source does not exist");
+					CAGE_THROW_ERROR(Exception, "source file does not exist");
 				}
 				if (!copying)
 					remove(from);
@@ -351,7 +356,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
-				CAGE_THROW_CRITICAL(Exception, "reading last modification time of a file inside carch archive is not supported");
+				CAGE_THROW_CRITICAL(Exception, "reading last modification time of a file inside cage archive is not supported");
 			}
 
 			Holder<File> openFile(const String &path, const FileMode &mode) override;
@@ -378,13 +383,13 @@ namespace cage
 				if (mode.write)
 					a->reopenForModification();
 				if (a->dirs.count(name))
-					CAGE_THROW_ERROR(Exception, "cannot open file in carch archive, the path is a directory");
+					CAGE_THROW_ERROR(Exception, "cannot open file in cage archive, the path is a directory");
 				if (a->files.count(name))
 					a->throwIfFileLocked(name);
 				else
 				{
 					if (mode.read)
-						CAGE_THROW_ERROR(Exception, "cannot open file in carch archive, it does not exist");
+						CAGE_THROW_ERROR(Exception, "cannot open file in cage archive, it does not exist");
 					a->createDirectoriesNoLock(pathJoin(name, ".."));
 				}
 
@@ -574,5 +579,18 @@ namespace cage
 		ScopeLock lock(fsMutex());
 		ArchiveCarch z(std::move(f));
 		return z.isCarch ? std::make_shared<ArchiveCarch>(std::move(z)) : std::shared_ptr<ArchiveAbstract>();
+	}
+
+	void writeZeroes(File *f, uint64 size)
+	{
+		static constexpr uint64 sz = 16 * 1024;
+		static constexpr char zeros[sz] = {};
+		while (size > sz)
+		{
+			f->write(zeros);
+			size -= sz;
+		}
+		if (size > 0)
+			f->write({ zeros, zeros + sz });
 	}
 }

@@ -64,6 +64,8 @@ namespace cage
 	struct CAGE_ENGINE_API KeybindCreateConfig
 	{
 		String id;
+		String guiTextParameter;
+		uint32 guiTextId = 0;
 		sint32 eventOrder = 0;
 		sint32 displayOrder = 0;
 		ModifiersFlags requiredFlags = ModifiersFlags::None;
