@@ -16,6 +16,7 @@
 
 #include "files.h"
 
+#include <cage-core/math.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
 
@@ -174,34 +175,54 @@ namespace cage
 			}
 		};
 
-		void readAtImpl(PointerRange<char> buffer, uint64 at, FILE *f)
+		void readAtImpl(PointerRange<char> buffer, const uint64 at, FILE *f)
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
-			OVERLAPPED o;
-			detail::memset(&o, 0, sizeof(o));
-			o.Offset = (DWORD)at;
-			o.OffsetHigh = (DWORD)((uint64)at >> 32);
-			DWORD r = 0;
-			if (!ReadFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
-				CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+			HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
+			uint64 off = 0;
+			uint64 s = buffer.size();
+			while (s > 0)
+			{
+				OVERLAPPED o;
+				detail::memset(&o, 0, sizeof(o));
+				uint64 p = at + off;
+				o.Offset = (DWORD)p;
+				o.OffsetHigh = (DWORD)((uint64)p >> 32);
+				uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
+				DWORD r = 0;
+				if (!ReadFile(handle, buffer.data() + off, numeric_cast<DWORD>(k), &r, &o) || r != k)
+					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+				off += k;
+				s -= k;
+			}
 #else
 			if (pread(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
 				CAGE_THROW_ERROR(SystemError, "pread", errno);
 #endif
 		}
 
-		void writeAtImpl(PointerRange<const char> buffer, uint64 at, FILE *f)
+		void writeAtImpl(PointerRange<const char> buffer, const uint64 at, FILE *f)
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
-			OVERLAPPED o;
-			detail::memset(&o, 0, sizeof(o));
-			o.Offset = (DWORD)at;
-			o.OffsetHigh = (DWORD)((uint64)at >> 32);
-			DWORD r = 0;
-			if (!WriteFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
-				CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
+			HANDLE handle = (HANDLE)_get_osfhandle(_fileno(f));
+			uint64 off = 0;
+			uint64 s = buffer.size();
+			while (s > 0)
+			{
+				OVERLAPPED o;
+				detail::memset(&o, 0, sizeof(o));
+				uint64 p = at + off;
+				o.Offset = (DWORD)p;
+				o.OffsetHigh = (DWORD)((uint64)p >> 32);
+				uint64 k = min(s, (uint64)1024 * 1024 * 1024); // write in chunks of 1 GB
+				DWORD r = 0;
+				if (!WriteFile(handle, buffer.data() + off, numeric_cast<DWORD>(k), &r, &o) || r != k)
+					CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
+				off += k;
+				s -= k;
+			}
 #else
 			if (pwrite(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
 				CAGE_THROW_ERROR(SystemError, "pwrite", errno);
@@ -295,17 +316,17 @@ namespace cage
 			uint64 tell() override
 			{
 				CAGE_ASSERT(f);
-				return numeric_cast<uintPtr>(ftell(f));
+				return ftell(f);
 			}
 
 			uint64 size() override
 			{
 				CAGE_ASSERT(f);
-				auto pos = ftell(f);
+				uint64 pos = ftell(f);
 				fseek(f, 0, 2);
-				auto siz = ftell(f);
+				uint64 siz = ftell(f);
 				fseek(f, pos, 0);
-				return numeric_cast<uintPtr>(siz);
+				return siz;
 			}
 
 			virtual void flush() = 0;
@@ -354,13 +375,13 @@ namespace cage
 				if (buffer.size() == 0)
 					return;
 				FILE *ff = nullptr;
-				uintPtr at = 0;
+				uint64 at = 0;
 				{
 					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.read);
 					ff = f;
-					at = numeric_cast<uintPtr>(ftell(f));
+					at = ftell(f);
 					if (fseek(f, at + buffer.size(), 0) != 0)
 						CAGE_THROW_ERROR(SystemError, "fseek", errno);
 				}
@@ -372,13 +393,13 @@ namespace cage
 				if (buffer.size() == 0)
 					return;
 				FILE *ff = nullptr;
-				uintPtr at = 0;
+				uint64 at = 0;
 				{
 					ScopeLock lock(fsMutex());
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.write);
 					ff = f;
-					at = numeric_cast<uintPtr>(ftell(f));
+					at = ftell(f);
 					if (fseek(f, at + buffer.size(), 0) != 0)
 						CAGE_THROW_ERROR(SystemError, "fseek", errno);
 				}

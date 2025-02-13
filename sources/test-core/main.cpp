@@ -40,6 +40,7 @@ void testFiles();
 void testArchivesZip();
 void testArchivesCarch();
 void testArchivesRecursion();
+void testArchivesBigFiles();
 void testLineReader();
 void testRandom();
 void testConfigIni();
@@ -120,6 +121,7 @@ int main()
 	testArchivesZip();
 	testArchivesCarch();
 	testArchivesRecursion();
+	testArchivesBigFiles();
 	testLineReader();
 	testRandom();
 	testConfigIni();
