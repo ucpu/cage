@@ -103,7 +103,7 @@ namespace cage
 				sock.send(data.data(), data.size());
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				detail::OverrideBreakpoint brk;
 				updateCheck();

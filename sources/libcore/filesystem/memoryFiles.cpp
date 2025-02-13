@@ -45,7 +45,7 @@ namespace cage
 				pos += size;
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				CAGE_ASSERT(position <= buf->size());
 				pos = position;
@@ -56,9 +56,9 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() override { return pos; }
+			uint64 tell() override { return pos; }
 
-			uintPtr size() override { return buf->size(); }
+			uint64 size() override { return buf->size(); }
 
 			FileMode mode() const override { return myMode; }
 		};
@@ -103,7 +103,7 @@ namespace cage
 				pos += size;
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				CAGE_ASSERT(position <= buf.size());
 				pos = position;
@@ -114,9 +114,9 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() override { return pos; }
+			uint64 tell() override { return pos; }
 
-			uintPtr size() override { return buf.size(); }
+			uint64 size() override { return buf.size(); }
 
 			FileMode mode() const override { return myMode; }
 		};

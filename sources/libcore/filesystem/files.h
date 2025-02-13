@@ -18,7 +18,7 @@ namespace cage
 		FileAbstract(const String &path, const FileMode &mode);
 
 		virtual void reopenForModification();
-		virtual void readAt(PointerRange<char> buffer, uintPtr at);
+		virtual void readAt(PointerRange<char> buffer, uint64 at);
 		FileMode mode() const final;
 	};
 
@@ -55,7 +55,7 @@ namespace cage
 
 	RecursiveMutex *fsMutex();
 
-	Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size);
+	Holder<File> newProxyFile(File *f, uint64 start, uint64 size);
 
 	void writeZeroes(File *f, uint64 size);
 }

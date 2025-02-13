@@ -47,7 +47,7 @@ namespace cage
 	{
 	public:
 		virtual void read(PointerRange<char> buffer);
-		virtual Holder<PointerRange<char>> read(uintPtr size);
+		virtual Holder<PointerRange<char>> read(uint64 size);
 		virtual Holder<PointerRange<char>> readAll();
 		virtual String readLine(); // may block or return empty string
 		virtual bool readLine(String &line); // non blocking
@@ -55,9 +55,9 @@ namespace cage
 		virtual void write(PointerRange<const char> buffer);
 		virtual void writeLine(const String &line);
 
-		virtual void seek(uintPtr position);
-		virtual uintPtr tell();
-		virtual uintPtr size();
+		virtual void seek(uint64 position);
+		virtual uint64 tell();
+		virtual uint64 size();
 		virtual FileMode mode() const;
 
 		virtual void close();

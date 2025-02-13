@@ -174,7 +174,7 @@ namespace cage
 			}
 		};
 
-		void readAtImpl(PointerRange<char> buffer, uintPtr at, FILE *f)
+		void readAtImpl(PointerRange<char> buffer, uint64 at, FILE *f)
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -191,7 +191,7 @@ namespace cage
 #endif
 		}
 
-		void writeAtImpl(PointerRange<const char> buffer, uintPtr at, FILE *f)
+		void writeAtImpl(PointerRange<const char> buffer, uint64 at, FILE *f)
 		{
 			CAGE_ASSERT(f);
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -246,7 +246,7 @@ namespace cage
 				}
 			}
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
+			void readAt(PointerRange<char> buffer, uint64 at) override
 			{
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(myMode.read);
@@ -275,9 +275,10 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				CAGE_ASSERT(f);
+				CAGE_ASSERT(position <= size());
 				if (fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(SystemError, "fseek", errno);
 			}
@@ -291,13 +292,13 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fclose", errno);
 			}
 
-			uintPtr tell() override
+			uint64 tell() override
 			{
 				CAGE_ASSERT(f);
 				return numeric_cast<uintPtr>(ftell(f));
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				CAGE_ASSERT(f);
 				auto pos = ftell(f);
@@ -334,7 +335,7 @@ namespace cage
 				}
 			}
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
+			void readAt(PointerRange<char> buffer, uint64 at) override
 			{
 				if (buffer.size() == 0)
 					return;
@@ -384,7 +385,7 @@ namespace cage
 				writeAtImpl(buffer, at, ff);
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				ScopeLock lock(fsMutex());
 				FileRealBase::seek(position);
@@ -396,13 +397,13 @@ namespace cage
 				FileRealBase::close();
 			}
 
-			uintPtr tell() override
+			uint64 tell() override
 			{
 				ScopeLock lock(fsMutex());
 				return FileRealBase::tell();
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				ScopeLock lock(fsMutex());
 				return FileRealBase::size();
@@ -426,7 +427,7 @@ namespace cage
 		public:
 			FileRealTextual(const String &path, const FileMode &mode) : FileRealBase(path, mode) { CAGE_ASSERT(mode.textual); }
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override { CAGE_THROW_ERROR(Exception, "reading with offset in textual file is not allowed"); }
+			void readAt(PointerRange<char> buffer, uint64 at) override { CAGE_THROW_ERROR(Exception, "reading with offset in textual file is not allowed"); }
 
 			void read(PointerRange<char> buffer) override
 			{
@@ -448,7 +449,7 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 
-			void seek(uintPtr position) override { CAGE_THROW_ERROR(Exception, "seeking in textual file is not allowed"); }
+			void seek(uint64 position) override { CAGE_THROW_ERROR(Exception, "seeking in textual file is not allowed"); }
 
 			void flush() override
 			{

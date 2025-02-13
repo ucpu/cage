@@ -56,7 +56,7 @@ namespace cage
 	{
 		CAGE_ASSERT(size == 1 || nmemb == 1);
 		VorbisDecoder *impl = (VorbisDecoder *)datasource;
-		size_t r = size * nmemb;
+		uint64 r = size * nmemb;
 		r = min(r, impl->file->size() - impl->file->tell());
 		if (r > 0)
 			impl->file->read({ (char *)ptr, (char *)ptr + r });

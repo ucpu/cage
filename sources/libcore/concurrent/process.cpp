@@ -219,7 +219,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "data truncated");
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				DWORD sz = 0;
 				if (!PeekNamedPipe(hPipeOutR.handle, nullptr, 0, nullptr, &sz, nullptr))

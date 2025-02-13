@@ -6,15 +6,15 @@ namespace cage
 	struct ProxyFile final : public FileAbstract
 	{
 		FileAbstract *f = nullptr;
-		const uintPtr start = 0;
-		const uintPtr capacity = 0;
-		uintPtr off = 0;
+		const uint64 start = 0;
+		const uint64 capacity = 0;
+		uint64 off = 0;
 
-		ProxyFile(FileAbstract *f, uintPtr start, uintPtr capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity) {}
+		ProxyFile(FileAbstract *f, uint64 start, uint64 capacity) : FileAbstract(f->myPath, FileMode(true, false)), f(f), start(start), capacity(capacity) {}
 
 		~ProxyFile() {}
 
-		void readAt(PointerRange<char> buffer, uintPtr at) override
+		void readAt(PointerRange<char> buffer, uint64 at) override
 		{
 			ScopeLock lock(fsMutex());
 			CAGE_ASSERT(f);
@@ -32,7 +32,7 @@ namespace cage
 			off += buffer.size();
 		}
 
-		void seek(uintPtr position) override
+		void seek(uint64 position) override
 		{
 			ScopeLock lock(fsMutex());
 			CAGE_ASSERT(f);
@@ -46,20 +46,20 @@ namespace cage
 			f = nullptr;
 		}
 
-		uintPtr tell() override
+		uint64 tell() override
 		{
 			ScopeLock lock(fsMutex());
 			return off;
 		}
 
-		uintPtr size() override
+		uint64 size() override
 		{
 			ScopeLock lock(fsMutex());
 			return capacity;
 		}
 	};
 
-	Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size)
+	Holder<File> newProxyFile(File *f, uint64 start, uint64 size)
 	{
 		return systemMemory().createImpl<File, ProxyFile>(class_cast<FileAbstract *>(f), start, size);
 	}

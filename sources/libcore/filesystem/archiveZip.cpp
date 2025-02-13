@@ -281,7 +281,8 @@ namespace cage
 				{
 					CAGE_LOG_THROW(Stringizer() + "error while writing changes to zip archive");
 					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
-					throw;
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception while writing zip archive");
 				}
 			}
 
@@ -582,24 +583,26 @@ namespace cage
 
 			~FileZip()
 			{
-				ScopeLock lock(fsMutex());
-				if (src && modified)
+				try
 				{
-					try
-					{
+					ScopeLock lock(fsMutex());
+					if (src && modified)
 						closeNoLock();
-					}
-					catch (const cage::Exception &)
-					{
-						// do nothing
-					}
+					const uint32 index = a->findRecordIndex(myName);
+					CAGE_ASSERT(index != m);
+					CDFileHeaderEx &h = a->files[index];
+					CAGE_ASSERT(h.locked);
+					h.locked = false;
+					a.reset(); // make sure the archive itself is released while the lock is still held
 				}
-				const uint32 index = a->findRecordIndex(myName);
-				CAGE_ASSERT(index != m);
-				CDFileHeaderEx &h = a->files[index];
-				CAGE_ASSERT(h.locked);
-				h.locked = false;
-				a.reset(); // make sure the archive itself is released while the lock is still held
+				catch (...)
+				{
+					CAGE_LOG_THROW(Stringizer() + "error while writing file to zip archive");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + a->myPath);
+					CAGE_LOG_THROW(Stringizer() + "name: " + myPath);
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception while writing zip archive");
+				}
 			}
 
 			void reopenForModificationInternal()
@@ -625,7 +628,7 @@ namespace cage
 				myMode.write = true;
 			}
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
+			void readAt(PointerRange<char> buffer, uint64 at) override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read);
@@ -651,7 +654,7 @@ namespace cage
 				src->write(buffer);
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
@@ -694,14 +697,14 @@ namespace cage
 					closeNoLock();
 			}
 
-			uintPtr tell() override
+			uint64 tell() override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				return src->tell();
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);

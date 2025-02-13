@@ -170,7 +170,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "reopening abstract file");
 	}
 
-	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
+	void FileAbstract::readAt(PointerRange<char> buffer, uint64 at)
 	{
 		CAGE_THROW_CRITICAL(Exception, "reading with offset from abstract file");
 	}

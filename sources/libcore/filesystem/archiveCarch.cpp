@@ -18,19 +18,17 @@ namespace cage
 		struct ArchiveHeader
 		{
 			char magic[12] = "cageArchive";
-			uint32 version = 0;
+			uint32 version = 1;
 			uint32 filesCount = 0;
 			uint32 dirsCount = 0;
 			uint64 listStart = 0;
 			uint64 listSize = 0;
-			uint64 contentStart = 0;
-			uint64 contentSize = 0;
 		};
 
 		// preceded by name
 		struct FileHeader
 		{
-			uint64 offset = 0; // from the contentStart position
+			uint64 offset = 0;
 			uint64 size = 0;
 		};
 
@@ -88,12 +86,7 @@ namespace cage
 					isCarch = true;
 				}
 
-				{ // validate sizes
-					if (srcSize < arch.contentStart + arch.contentSize)
-					{
-						CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
-						CAGE_THROW_ERROR(Exception, "truncated cage archive (content)");
-					}
+				{ // validate list size
 					if (srcSize < arch.listStart + arch.listSize)
 					{
 						CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
@@ -111,7 +104,7 @@ namespace cage
 						String n;
 						FileHeader h;
 						des >> n >> h;
-						if (arch.contentSize < h.offset + h.size)
+						if (srcSize < h.offset + h.size)
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
 							CAGE_LOG_THROW(Stringizer() + "name: " + n);
@@ -141,7 +134,8 @@ namespace cage
 				{
 					CAGE_LOG_THROW(Stringizer() + "error while writing changes to cage archive");
 					CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);
-					throw;
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception while writing cage archive");
 				}
 			}
 
@@ -171,23 +165,29 @@ namespace cage
 					if (!it.second.modified)
 					{
 						it.second.newContent.resize(it.second.size);
-						src->seek(arch.contentStart + it.second.offset);
+						src->seek(it.second.offset);
 						src->read(it.second.newContent);
 					}
 				}
 
-				// update offsets
+				// write temporary header
 				{
-					uint64 off = 0;
-					for (auto &it : fs)
-					{
-						it.second.offset = off;
-						off += it.second.size;
-					}
-					arch.contentSize = off;
+					src->seek(0);
+					ArchiveHeader a;
+					src->write(bufferView(a));
 				}
 
-				// prepare list buffer
+				// write files contents
+				{
+					for (auto &it : fs)
+					{
+						CAGE_ASSERT(it.second.size == it.second.newContent.size());
+						it.second.offset = src->tell();
+						src->write(it.second.newContent);
+					}
+				}
+
+				// prepare file list buffer
 				MemoryBuffer buff;
 				buff.reserve(fs.size() * (sizeof(FileHeader) + 100));
 				Serializer ser(buff);
@@ -205,28 +205,23 @@ namespace cage
 						ser << it;
 				}
 
-				// write all headers
-				arch.listStart = sizeof(ArchiveHeader);
+				// write file headers
+				arch.listStart = src->tell();
 				arch.listSize = buff.size();
-				arch.contentStart = arch.listStart + arch.listSize;
 				arch.filesCount = fs.size();
 				arch.dirsCount = dirs.size();
-				src->seek(0);
-				src->write(bufferView(arch));
 				src->write(buff);
 
-				// write all content
-				for (const auto &it : fs)
+				// fill the rest of the file with zeros
 				{
-					CAGE_ASSERT(it.second.size == it.second.newContent.size());
-					src->write(it.second.newContent);
+					writeZeroes(+src, src->size() - src->tell());
+					// ensure we wrote to the very end of the file
+					CAGE_ASSERT(src->tell() == src->size());
 				}
 
-				// fill the rest of the file with zeros
-				writeZeroes(+src, src->size() - src->tell());
-
-				// ensure we wrote to the very end of the file
-				CAGE_ASSERT(src->tell() == src->size());
+				// write the archive header
+				src->seek(0);
+				src->write(bufferView(arch));
 
 				// make sure the archive is released while the lock is still held
 				src->close();
@@ -363,7 +358,7 @@ namespace cage
 			Holder<PointerRange<String>> listDirectory(const String &path) const override;
 		};
 
-		// file contained within the zip archive
+		// file contained within the cage archive
 		struct FileCarch final : public FileAbstract
 		{
 			std::shared_ptr<ArchiveCarch> a;
@@ -410,7 +405,7 @@ namespace cage
 					if (r.modified)
 						src = newFileBuffer(systemMemory().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
 					else
-						src = newProxyFile(+a->src, a->arch.contentStart + r.offset, r.size);
+						src = newProxyFile(+a->src, r.offset, r.size);
 				}
 
 				CAGE_ASSERT(src);
@@ -418,23 +413,25 @@ namespace cage
 
 			~FileCarch()
 			{
-				ScopeLock lock(fsMutex());
-				if (src && modified)
+				try
 				{
-					try
-					{
+					ScopeLock lock(fsMutex());
+					if (src && modified)
 						closeNoLock();
-					}
-					catch (const cage::Exception &)
-					{
-						// do nothing
-					}
+					CAGE_ASSERT(a->files.count(myName));
+					auto &r = a->files[myName];
+					CAGE_ASSERT(r.locked);
+					r.locked = false;
+					a.reset(); // make sure the archive itself is released while the lock is still held
 				}
-				CAGE_ASSERT(a->files.count(myName));
-				auto &r = a->files[myName];
-				CAGE_ASSERT(r.locked);
-				r.locked = false;
-				a.reset(); // make sure the archive itself is released while the lock is still held
+				catch (...)
+				{
+					CAGE_LOG_THROW(Stringizer() + "error while writing file to cage archive");
+					CAGE_LOG_THROW(Stringizer() + "archive path: " + a->myPath);
+					CAGE_LOG_THROW(Stringizer() + "name: " + myPath);
+					detail::logCurrentCaughtException();
+					detail::irrecoverableError("exception while writing cage archive");
+				}
 			}
 
 			void reopenForModificationInternal()
@@ -460,7 +457,7 @@ namespace cage
 				myMode.write = true;
 			}
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
+			void readAt(PointerRange<char> buffer, uint64 at) override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read);
@@ -486,7 +483,7 @@ namespace cage
 				src->write(buffer);
 			}
 
-			void seek(uintPtr position) override
+			void seek(uint64 position) override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
@@ -516,14 +513,14 @@ namespace cage
 					closeNoLock();
 			}
 
-			uintPtr tell() override
+			uint64 tell() override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);
 				return src->tell();
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(src);

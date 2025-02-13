@@ -48,7 +48,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "reading from abstract (possibly write-only) file");
 	}
 
-	Holder<PointerRange<char>> File::read(uintPtr size)
+	Holder<PointerRange<char>> File::read(uint64 size)
 	{
 		MemoryBuffer r(size);
 		read(r);
@@ -108,7 +108,7 @@ namespace cage
 		write("\n");
 	}
 
-	void File::seek(uintPtr position)
+	void File::seek(uint64 position)
 	{
 		CAGE_THROW_CRITICAL(Exception, "calling seek on an abstract file");
 	}
@@ -118,12 +118,12 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "calling close on an abstract file");
 	}
 
-	uintPtr File::tell()
+	uint64 File::tell()
 	{
 		CAGE_THROW_CRITICAL(Exception, "calling tell on an abstract file");
 	}
 
-	uintPtr File::size()
+	uint64 File::size()
 	{
 		CAGE_THROW_CRITICAL(Exception, "calling size on an abstract file");
 	}

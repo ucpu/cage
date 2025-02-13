@@ -52,7 +52,7 @@ namespace
 				if (none(pf & PathTypeFlags::File) || randomChance() < 0.3)
 				{
 					Holder<File> f = writeFile(name);
-					f->seek(randomRange((uintPtr)0, f->size()));
+					f->seek(randomRange((uint64)0, f->size()));
 					f->write(data);
 					f->close();
 				}

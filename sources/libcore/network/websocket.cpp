@@ -193,7 +193,7 @@ namespace cage
 				con->write(buff);
 			}
 
-			uintPtr size() override
+			uint64 size() override
 			{
 				update();
 				return working.size();
