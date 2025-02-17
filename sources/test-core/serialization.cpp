@@ -191,4 +191,16 @@ void testSerialization()
 			functionTakingCharPointer(items.data(), items.size());
 		}
 	}
+
+	{
+		CAGE_TESTCASE("inplace buffer");
+		InplaceBuffer b1;
+		Serializer ser(b1);
+		int arr[3] = { 1, 2, 3 };
+		ser << arr;
+		arr[0] = arr[1] = arr[2] = 0;
+		Deserializer des(b1);
+		des >> arr;
+		CAGE_TEST(arr[0] == 1 && arr[1] == 2 && arr[2] == 3);
+	}
 }

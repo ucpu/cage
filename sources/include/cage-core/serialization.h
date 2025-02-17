@@ -1,31 +1,58 @@
 #ifndef guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 #define guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 
-#include <cage-core/core.h>
+#include <cage-core/memoryInplaceBuffer.h>
 
 namespace cage
 {
 	struct MemoryBuffer;
 
+	namespace privat
+	{
+		struct CAGE_CORE_API SerializationInterface
+		{
+		public:
+			SerializationInterface(PointerRange<char> buffer);
+			SerializationInterface(MemoryBuffer &buffer);
+			template<uintPtr Capacity>
+			SerializationInterface(InplaceBuffer<Capacity> &inplace)
+			{
+				origin = &inplace;
+				getData = +[](void *origin) -> char * { return ((InplaceBuffer<Capacity> *)origin)->data; };
+				getSize = +[](void *origin) -> uintPtr { return ((InplaceBuffer<Capacity> *)origin)->size; };
+				setSize = +[](void *origin, uintPtr size) -> void { ((InplaceBuffer<Capacity> *)origin)->size = size; };
+			}
+
+			using GetData = char *(*)(void *);
+			using GetSize = uintPtr (*)(void *);
+			using SetSize = void (*)(void *, uintPtr);
+			GetData getData = nullptr;
+			GetSize getSize = nullptr;
+			SetSize setSize = nullptr;
+			void *origin = nullptr;
+		};
+
+	}
+
 	struct CAGE_CORE_API Serializer : private Noncopyable
 	{
 		explicit Serializer(PointerRange<char> buffer);
-		explicit Serializer(MemoryBuffer &buffer, uintPtr size = m);
+		explicit Serializer(MemoryBuffer &buffer, uintPtr capacity = m);
+		template<uintPtr Capacity>
+		explicit Serializer(InplaceBuffer<Capacity> &inplace) : Serializer(inplace, 0, Capacity)
+		{}
+		explicit Serializer(privat::SerializationInterface interface, uintPtr offset, uintPtr capacity);
 
-		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
+		uintPtr available() const; // number of bytes still available in the buffer (valid only if the capacity was provided in the constructor)
 		void write(PointerRange<const char> buffer);
-		PointerRange<char> write(uintPtr size); // use with care!
+		PointerRange<char> write(uintPtr size); // use with care! - future writes may invalidate the pointer
 		void writeLine(const String &line);
 		Serializer reserve(uintPtr s);
 
 	private:
-		explicit Serializer(MemoryBuffer *buffer, char *data, uintPtr offset, uintPtr size);
-		PointerRange<char> advance(uintPtr s); // future writes may cause the MemoryBuffer to reallocate invalidating the PointerRange
-
-		MemoryBuffer *buffer = nullptr;
-		char *data = nullptr;
+		privat::SerializationInterface interface;
 		uintPtr offset = 0; // current position in the buffer
-		uintPtr size = 0; // max size of the buffer
+		uintPtr capacity = 0; // max size of the buffer
 	};
 
 	struct CAGE_CORE_API Deserializer : private Noncopyable
