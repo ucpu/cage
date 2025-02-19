@@ -1,3 +1,4 @@
+#include <array>
 #include <vector>
 
 #include <cage-core/geometry.h>
@@ -25,6 +26,19 @@ namespace cage
 			Vec3 a = A - O;
 			Vec3 b = B - O;
 			Real denom = 2 * dot(cross(a, b), cross(a, b));
+			if (abs(denom) < 1e-5)
+			{
+				Sphere sph[3] = {
+					MbSphere(O, A),
+					MbSphere(O, B),
+					MbSphere(A, B),
+				};
+				Sphere b = sph[0];
+				for (Sphere s : sph)
+					if (s.radius > b.radius)
+						b = s;
+				return b;
+			}
 			Vec3 o = (dot(b, b) * cross(cross(a, b), a) + dot(a, a) * cross(b, cross(a, b))) / denom;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
@@ -35,6 +49,20 @@ namespace cage
 			Vec3 b = B - O;
 			Vec3 c = C - O;
 			Real denom = 2 * determinant(Mat3(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]));
+			if (abs(denom) < 1e-5)
+			{
+				Sphere sph[4] = {
+					MbSphere(O, A, B),
+					MbSphere(O, A, C),
+					MbSphere(O, B, C),
+					MbSphere(A, B, C),
+				};
+				Sphere b = sph[0];
+				for (Sphere s : sph)
+					if (s.radius > b.radius)
+						b = s;
+				return b;
+			}
 			Vec3 o = (dot(c, c) * cross(a, b) + dot(b, b) * cross(c, a) + dot(a, a) * cross(b, c)) / denom;
 			return Sphere(O + o, length(o) + 1e-5);
 		}
@@ -59,18 +87,15 @@ namespace cage
 					MB = MbSphere(*P[-1], *P[-2], *P[-3]);
 					break;
 				case 4:
-					return MbSphere(*P[-1], *P[-2], *P[-3], *P[-4]);
+					MB = MbSphere(*P[-1], *P[-2], *P[-3], *P[-4]);
+					return MB;
 			}
 			for (uint32 i = 0; i < p; i++)
 			{
 				if (d2(MB, *P[i]) > 0)
 				{
 					for (uint32 j = i; j > 0; j--)
-					{
-						const Vec3 *T = P[j];
-						P[j] = P[j - 1];
-						P[j - 1] = T;
-					}
+						std::swap(P[j], P[j - 1]);
 					MB = recurseMini(P + 1, i, b + 1);
 				}
 			}
@@ -81,11 +106,11 @@ namespace cage
 	Sphere::Sphere(const Frustum &other)
 	{
 		const Frustum::Corners corners = other.corners();
-		const Vec3 *L[8];
+		std::array<const Vec3 *, 8> L;
 		int i = 0;
 		for (const Vec3 &v : corners.data)
 			L[i++] = &v;
-		*this = recurseMini(L, 8, 0);
+		*this = recurseMini(L.data(), 8, 0);
 	}
 
 	Sphere makeSphere(PointerRange<const Vec3> points)
@@ -93,7 +118,7 @@ namespace cage
 		switch (points.size())
 		{
 			case 0:
-				return Sphere();
+				return Sphere(Vec3(), 0);
 			case 1:
 				return Sphere(points[0], 0);
 			case 2:
