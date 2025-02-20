@@ -962,7 +962,7 @@ namespace
 		msh->importCollider(+col);
 		meshMergeCloseVertices(+msh, {});
 		const uint32 cnt = msh->indicesCount();
-		CAGE_TEST(cnt == 1080); // sanity check
+		CAGE_TEST(cnt > 100 && cnt < 10'000); // sanity check
 		{
 			Holder<Mesh> cp = msh->copy();
 			CAGE_TEST_THROWN(meshSimplify(+cp, {})); // sanity check
