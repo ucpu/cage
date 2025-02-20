@@ -17,6 +17,7 @@ namespace cage
 
 	CAGE_CORE_API void meshFlipNormals(Mesh *msh);
 	CAGE_CORE_API void meshDuplicateSides(Mesh *msh);
+	CAGE_CORE_API void meshConsistentWinding(Mesh *msh);
 
 	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{

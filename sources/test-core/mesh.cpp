@@ -951,6 +951,28 @@ namespace
 		meshApplyTransform(+msh, Mat4(Mat3(10, 0, 0, 0, 0, 10, 0, -10, 0)));
 		approxEqual(msh->boundingBox(), Aabb(Vec3(-10, -20, -10), Vec3(10, 20, 10)));
 	}
+
+	void testMeshConsistentWinding()
+	{
+		CAGE_TESTCASE("mesh consistent winding");
+		Holder<Mesh> msh = makeDoubleBalls();
+		Holder<Collider> col = newCollider();
+		col->importMesh(+msh);
+		col->optimize();
+		msh->importCollider(+col);
+		meshMergeCloseVertices(+msh, {});
+		const uint32 cnt = msh->indicesCount();
+		CAGE_TEST(cnt == 1080); // sanity check
+		{
+			Holder<Mesh> cp = msh->copy();
+			CAGE_TEST_THROWN(meshSimplify(+cp, {})); // sanity check
+		}
+		msh->exportFile("meshes/algorithms/consistentWindingBefore.obj");
+		meshConsistentWinding(+msh);
+		msh->exportFile("meshes/algorithms/consistentWindingAfter.obj");
+		CAGE_TEST(msh->indicesCount() == cnt);
+		meshSimplify(+msh, {}); // make sure that the resulting mesh has usable topology
+	}
 }
 
 void testMesh()
@@ -962,4 +984,5 @@ void testMesh()
 	testMeshExports();
 	testMeshRetexture();
 	testMeshLines();
+	testMeshConsistentWinding();
 }

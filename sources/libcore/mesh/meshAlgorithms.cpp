@@ -372,6 +372,95 @@ namespace cage
 		// todo normals and other attributes
 	}
 
+	void meshConsistentWinding(Mesh *msh)
+	{
+		MeshImpl *impl = (MeshImpl *)msh;
+		if (impl->type != MeshTypeEnum::Triangles)
+			return;
+		meshConvertToIndexed(msh);
+		if (impl->indices.empty())
+			return;
+		const uint32 tris = impl->indices.size() / 3;
+		std::vector<bool> finished;
+		finished.resize(tris, false);
+		std::vector<FlatSet<uint32>> adjacent; // vertex -> triangles
+		adjacent.resize(impl->positions.size());
+		for (uint32 t = 0; t < tris; t++)
+		{
+			adjacent[impl->indices[t * 3 + 0]].insert(t);
+			adjacent[impl->indices[t * 3 + 1]].insert(t);
+			adjacent[impl->indices[t * 3 + 2]].insert(t);
+		}
+		std::vector<uint32> queue;
+		queue.reserve(tris / 2);
+		const auto &areNeighbors = [&](uint32 a, uint32 b) -> bool
+		{
+			std::array<uint32, 3> ai = { impl->indices[a * 3 + 0], impl->indices[a * 3 + 1], impl->indices[a * 3 + 2] };
+			std::array<uint32, 3> bi = { impl->indices[b * 3 + 0], impl->indices[b * 3 + 1], impl->indices[b * 3 + 2] };
+			std::sort(ai.begin(), ai.end());
+			std::sort(bi.begin(), bi.end());
+			std::array<uint32, 3> out = {};
+			auto it = std::set_intersection(ai.begin(), ai.end(), bi.begin(), bi.end(), out.begin());
+			return it == out.begin() + 2;
+		};
+		const auto &fixOrientation = [&](uint32 a, uint32 b)
+		{
+			CAGE_ASSERT(finished[a] && !finished[b]);
+			CAGE_ASSERT(areNeighbors(a, b));
+			std::array<uint32 *, 3> ai = { &impl->indices[a * 3 + 0], &impl->indices[a * 3 + 1], &impl->indices[a * 3 + 2] };
+			std::array<uint32 *, 3> bi = { &impl->indices[b * 3 + 0], &impl->indices[b * 3 + 1], &impl->indices[b * 3 + 2] };
+			const auto &contains = [](const std::array<uint32 *, 3> arr, uint32 *v) -> bool { return *arr[0] == *v || *arr[1] == *v || *arr[2] == *v; };
+			CAGE_ASSERT(contains(ai, bi[0]) + contains(ai, bi[1]) + contains(ai, bi[2]) == 2);
+			CAGE_ASSERT(contains(bi, ai[0]) + contains(bi, ai[1]) + contains(bi, ai[2]) == 2);
+			while (contains(bi, ai[0]))
+				turnLeft(ai[0], ai[1], ai[2]);
+			while (contains(ai, bi[0]))
+				turnLeft(bi[0], bi[1], bi[2]);
+			CAGE_ASSERT(*ai[0] != *bi[0]);
+			CAGE_ASSERT(*ai[1] == *bi[1] || *ai[1] == *bi[2]);
+			CAGE_ASSERT(*ai[2] == *bi[2] || *ai[2] == *bi[1]);
+			if (*ai[1] == *bi[1])
+				std::swap(*bi[1], *bi[2]);
+			finished[b] = true;
+		};
+		const auto &fixNeighbors = [&](uint32 tri)
+		{
+			CAGE_ASSERT(finished[tri]);
+			for (uint32 v = 0; v < 3; v++)
+			{
+				for (uint32 adj : adjacent[impl->indices[tri * 3 + v]])
+				{
+					if (finished[adj])
+						continue;
+					if (!areNeighbors(tri, adj))
+						continue;
+					fixOrientation(tri, adj);
+					queue.push_back(adj);
+				}
+			}
+		};
+		const auto &process = [&](uint32 start)
+		{
+			CAGE_ASSERT(queue.empty());
+			queue.push_back(start);
+			while (!queue.empty())
+			{
+				const uint32 t = queue.back();
+				queue.pop_back();
+				fixNeighbors(t);
+			}
+		};
+		for (uint32 t = 0; t < tris; t++)
+		{
+			if (finished[t])
+				continue;
+			finished[t] = true; // start of a component
+			process(t);
+			CAGE_ASSERT(finished[t]);
+		}
+		CAGE_ASSERT(queue.empty());
+	}
+
 	namespace
 	{
 		struct UnionFind
