@@ -15,6 +15,7 @@ namespace cage
 		ToneMapping = 1 << 5,
 		GammaCorrection = 1 << 6,
 		AntiAliasing = 1 << 7,
+		Sharpening = 1 << 8,
 		Default = AmbientOcclusion | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
 	};
 
@@ -24,6 +25,7 @@ namespace cage
 		ScreenSpaceBloom bloom;
 		ScreenSpaceEyeAdaptation eyeAdaptation;
 		ScreenSpaceDepthOfField depthOfField;
+		ScreenSpaceSharpening sharpening;
 		Real gamma = 2.2;
 		ScreenSpaceEffectsFlags effects = ScreenSpaceEffectsFlags::Default;
 	};

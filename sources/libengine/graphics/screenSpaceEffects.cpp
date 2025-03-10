@@ -351,4 +351,27 @@ namespace cage
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/fxaa.glsl"))->get(0));
 		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 	}
+
+	void screenSpaceSharpening(const ScreenSpaceSharpeningConfig &config)
+	{
+		RenderQueue *q = config.queue;
+		const auto graphicsDebugScope = q->namedScope("sharpening");
+
+		q->viewport(Vec2i(), config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
+
+		struct Shader
+		{
+			Vec4 params; // strength
+		} s;
+		s.params[0] = config.strength;
+		q->universalUniformStruct(s, 2);
+
+		q->colorTexture(fb, 0, config.outColor);
+		q->checkFrameBuffer(fb);
+		q->bind(config.inColor, 0);
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/effects/sharpening.glsl"))->get(0));
+		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
+	}
 }

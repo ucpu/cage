@@ -45,6 +45,11 @@ namespace cage
 		uint32 blurPasses = 5;
 		Real threshold = 1;
 	};
+
+	struct CAGE_ENGINE_API ScreenSpaceSharpening
+	{
+		Real strength = 1;
+	};
 }
 
 #endif // guard_screenSpaceEffectsProperties_h_0156sdrf4treth1

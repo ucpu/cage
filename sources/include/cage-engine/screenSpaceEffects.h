@@ -62,6 +62,12 @@ namespace cage
 		TextureHandle outColor;
 	};
 
+	struct CAGE_ENGINE_API ScreenSpaceSharpeningConfig : public ScreenSpaceCommonConfig, public ScreenSpaceSharpening
+	{
+		TextureHandle inColor;
+		TextureHandle outColor;
+	};
+
 	CAGE_ENGINE_API void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config);
 	CAGE_ENGINE_API void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config);
 	CAGE_ENGINE_API void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config);
@@ -69,6 +75,7 @@ namespace cage
 	CAGE_ENGINE_API void screenSpaceEyeAdaptationApply(const ScreenSpaceEyeAdaptationConfig &config);
 	CAGE_ENGINE_API void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config);
 	CAGE_ENGINE_API void screenSpaceFastApproximateAntiAliasing(const ScreenSpaceFastApproximateAntiAliasingConfig &config);
+	CAGE_ENGINE_API void screenSpaceSharpening(const ScreenSpaceSharpeningConfig &config);
 }
 
 #endif // guard_screenSpaceEffects_h_xcfvh241448960sdrt

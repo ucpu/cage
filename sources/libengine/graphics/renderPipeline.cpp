@@ -1199,7 +1199,7 @@ namespace cage
 						std::swap(texSource, texTarget);
 					}
 
-					// final screen effects
+					// tonemap & gamma correction
 					if (any(effects.effects & (ScreenSpaceEffectsFlags::ToneMapping | ScreenSpaceEffectsFlags::GammaCorrection)))
 					{
 						ScreenSpaceTonemapConfig cfg;
@@ -1220,6 +1220,18 @@ namespace cage
 						cfg.inColor = texSource;
 						cfg.outColor = texTarget;
 						screenSpaceFastApproximateAntiAliasing(cfg);
+						std::swap(texSource, texTarget);
+					}
+
+					// sharpening
+					if (any(effects.effects & ScreenSpaceEffectsFlags::Sharpening) && effects.sharpening.strength > 1e-3)
+					{
+						ScreenSpaceSharpeningConfig cfg;
+						(ScreenSpaceCommonConfig &)cfg = commonConfig;
+						cfg.inColor = texSource;
+						cfg.outColor = texTarget;
+						cfg.strength = effects.sharpening.strength;
+						screenSpaceSharpening(cfg);
 						std::swap(texSource, texTarget);
 					}
 

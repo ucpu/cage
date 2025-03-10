@@ -9,6 +9,7 @@ gaussianBlur.glsl
 luminanceApply.glsl
 luminanceCollection.glsl
 luminanceHistogram.glsl
-ssaoResolve.glsl
+sharpening.glsl
 ssaoGenerate.glsl
+ssaoResolve.glsl
 tonemap.glsl
