@@ -228,6 +228,36 @@ namespace cage
 	struct WasmFunction;
 
 	template<privat::WasmParameterConcept R, privat::WasmParameterConcept... Ts>
+	struct WasmFunction<R(Ts...)>;
+
+	class CAGE_CORE_API WasmInstance : private Immovable
+	{
+	public:
+		String instanceName;
+
+		Holder<WasmModule> module() const;
+
+		void *wasm2native(uint32 address, uint32 size = 0);
+		uint32 native2wasm(void *address, uint32 size = 0);
+		uint32 malloc(uint32 size);
+		void free(uint32 wasmAddr);
+		uint32 strLen(uint32 wasmAddr);
+		WasmBuffer allocate(uint32 size, uint32 capacity = 0, bool owned = true);
+		WasmBuffer adapt(uint32 wasmAddr, uint32 size, bool owned = false);
+
+		template<class T>
+		CAGE_FORCE_INLINE WasmFunction<T> function(const WasmName &name)
+		{
+			return WasmFunction<T>(function_(name));
+		}
+
+		WasmBuffer temporary; // use for passing data in function calls
+
+	private:
+		Holder<privat::WasmFunctionInternal> function_(const WasmName &name);
+	};
+
+	template<privat::WasmParameterConcept R, privat::WasmParameterConcept... Ts>
 	struct WasmFunction<R(Ts...)> : private Noncopyable
 	{
 	public:
@@ -254,7 +284,7 @@ namespace cage
 			}
 			catch (...)
 			{
-				CAGE_LOG_THROW(func->name());
+				CAGE_LOG_THROW(Stringizer() + func->instance()->instanceName + ":" + func->name());
 				throw;
 			}
 		}
@@ -264,49 +294,29 @@ namespace cage
 		R operator()(Ts... vs)
 		{
 			CAGE_ASSERT(func);
-			PointerRange<uint32> data = func->data();
-
-			uint32 offset = 0;
-			const auto &fill = [&]<class T>(T v) -> void
+			try
 			{
-				*(T *)(void *)(data.data() + offset) = v;
-				offset += sizeof(T) / 4;
-			};
-			(fill(std::forward<Ts>(vs)), ...);
-
-			func->call();
-
-			if constexpr (!std::is_same_v<R, void>)
-				return *(R *)(void *)data.data();
+				PointerRange<uint32> data = func->data();
+				uint32 offset = 0;
+				const auto &fill = [&]<class T>(T v) -> void
+				{
+					*(T *)(void *)(data.data() + offset) = v;
+					offset += sizeof(T) / 4;
+				};
+				(fill(std::forward<Ts>(vs)), ...);
+				func->call();
+				if constexpr (!std::is_same_v<R, void>)
+					return *(R *)(void *)data.data();
+			}
+			catch (...)
+			{
+				CAGE_LOG_THROW(Stringizer() + func->instance()->instanceName + ":" + func->name());
+				throw;
+			}
 		}
 
 	private:
 		Holder<privat::WasmFunctionInternal> func;
-	};
-
-	class CAGE_CORE_API WasmInstance : private Immovable
-	{
-	public:
-		Holder<WasmModule> module() const;
-
-		void *wasm2native(uint32 address, uint32 size = 0);
-		uint32 native2wasm(void *address, uint32 size = 0);
-		uint32 malloc(uint32 size);
-		void free(uint32 wasmAddr);
-		uint32 strLen(uint32 wasmAddr);
-		WasmBuffer allocate(uint32 size, uint32 capacity = 0, bool owned = true);
-		WasmBuffer adapt(uint32 wasmAddr, uint32 size, bool owned = false);
-
-		template<class T>
-		CAGE_FORCE_INLINE WasmFunction<T> function(const WasmName &name)
-		{
-			return WasmFunction<T>(function_(name));
-		}
-
-		WasmBuffer temporary; // use for passing data in function calls
-
-	private:
-		Holder<privat::WasmFunctionInternal> function_(const WasmName &name);
 	};
 
 	CAGE_CORE_API Holder<WasmInstance> wasmInstantiate(Holder<WasmModule> &&module);

@@ -485,7 +485,6 @@ namespace cage
 			{
 				const String e = wasm_runtime_get_exception(impl->instance->instance);
 				CAGE_LOG_THROW(e);
-				CAGE_LOG_THROW(Stringizer() + "function: " + impl->name);
 				CAGE_THROW_ERROR(Exception, "wasm function call failed");
 			}
 		}
