@@ -134,8 +134,12 @@ namespace cage
 				detail::memcpy(cmd2, config.command.c_str(), config.command.length());
 
 				DWORD flags = 0;
-				if (config.lowerPriority)
+				if (config.priority < 0)
 					flags |= BELOW_NORMAL_PRIORITY_CLASS;
+				else if (config.priority > 0)
+					flags |= ABOVE_NORMAL_PRIORITY_CLASS;
+				if (config.detached)
+					flags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
 
 				if (!CreateProcess(nullptr, cmd2, nullptr, nullptr, TRUE, flags, nullptr, workingDir.c_str(), &siStartInfo, &piProcInfo))
 					CAGE_THROW_ERROR(SystemError, "CreateProcess", GetLastError());
@@ -143,10 +147,18 @@ namespace cage
 				hProcess.handle = piProcInfo.hProcess;
 				hThread.handle = piProcInfo.hThread;
 
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
+
 				hPipeOutW.close();
 				hPipeInR.close();
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
+				if (config.detached)
+				{
+					hPipeOutR.close();
+					hPipeInW.close();
+					hProcess.close();
+					hThread.close();
+				}
 			}
 
 			~ProcessImpl()
@@ -180,6 +192,8 @@ namespace cage
 
 			int wait()
 			{
+				if (hProcess.handle == 0)
+					return 0;
 				if (WaitForSingleObject(hProcess.handle, INFINITE) != WAIT_OBJECT_0)
 					CAGE_THROW_ERROR(Exception, "WaitForSingleObject");
 				DWORD ret = 0;
@@ -286,8 +300,8 @@ namespace cage
 
 				void close()
 				{
-					close(0);
-					close(1);
+					close(PIPE_READ);
+					close(PIPE_WRITE);
 				}
 
 				~AutoPipe() { close(); }
@@ -352,10 +366,17 @@ namespace cage
 						CAGE_THROW_ERROR(SystemError, "failed to change working directory", errno);
 
 					// lower priority
-					if (config.lowerPriority)
+					if (config.priority < 0)
 					{
 						nice(3);
 						// ignore errors here
+					}
+					// higher priority not available on linux
+
+					if (config.detached)
+					{
+						if (setsid() < 0)
+							CAGE_THROW_ERROR(SystemError, "failed to detach process (setsid)", errno);
 					}
 
 					// run child process image
@@ -365,21 +386,25 @@ namespace cage
 					// if we get here, an error occurred, but we are in the child process, so just exit
 					exit(res);
 				}
-				else if (pid > 0)
-				{
-					// parent process
-
-					// close unused file descriptors
-					aStdinPipe.close(PIPE_READ);
-					aStdoutPipe.close(PIPE_WRITE);
-				}
-				else
+				else if (pid < 0)
 				{
 					// failed to create child
 					CAGE_THROW_ERROR(SystemError, "fork failed", errno);
 				}
 
+				// parent process
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
+
+				// close unused file descriptors
+				aStdinPipe.close(PIPE_READ);
+				aStdoutPipe.close(PIPE_WRITE);
+
+				if (config.detached)
+				{
+					aStdinPipe.close(PIPE_WRITE);
+					aStdoutPipe.close(PIPE_READ);
+					pid = -1;
+				}
 			}
 
 			~ProcessImpl()
@@ -507,7 +532,10 @@ namespace cage
 
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
-		return systemMemory().createImpl<Process, ProcessImpl>(config);
+		auto r = systemMemory().createImpl<Process, ProcessImpl>(config);
+		if (config.detached)
+			return {};
+		return r;
 	}
 
 	namespace
