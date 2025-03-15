@@ -824,7 +824,7 @@ namespace cage
 				format.size = 1;
 				format.align = tc.align;
 				format.lineSpacing = tc.lineSpacing;
-				const String str = textsGet(tc.textId, e->getOrDefault<TextValueComponent>());
+				const String str = textsGet(tc.textId, e->getOrDefault<TextValueComponent>().value);
 				rt.layout = rt.font->layout(str, format);
 				if (rt.layout.glyphs.empty())
 					return;

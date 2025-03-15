@@ -257,8 +257,8 @@ namespace cage
 						CameraData data;
 						(RenderPipelineConfig &)data = cfg;
 						data.camera = cam;
-						if (e->has<ScreenSpaceEffectsComponent>())
-							data.effects = e->value<ScreenSpaceEffectsComponent>();
+						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
+						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
 						if (dynamicResolution != 1)
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 						data.effects.gamma = Real(confRenderGamma);

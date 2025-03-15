@@ -77,12 +77,12 @@ namespace cage
 	};
 
 	// list of parameters separated by '|' when formatted, otherwise the string as is
-	struct CAGE_ENGINE_API TextValueComponent : public String
+	struct CAGE_ENGINE_API TextValueComponent
 	{
-		using String::String;
-		TextValueComponent &operator=(const auto &v) requires requires { String(v); }
+		String value;
+		inline TextValueComponent &operator=(const auto &v) requires requires { String(v); }
 		{
-			((String &)*this) = String(v);
+			value = v;
 			return *this;
 		}
 	};
