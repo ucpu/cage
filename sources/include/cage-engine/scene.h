@@ -58,14 +58,12 @@ namespace cage
 		sint32 renderLayer = 0;
 	};
 
-	/*
 	struct CAGE_ENGINE_API IconComponent
 	{
 		uint32 icon = 0;
 		uint32 model = 0; // optional
 		sint32 renderLayer = 0;
 	};
-	*/
 
 	struct CAGE_ENGINE_API TextComponent
 	{

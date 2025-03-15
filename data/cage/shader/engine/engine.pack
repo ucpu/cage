@@ -1,5 +1,6 @@
 []
 blitPixels.glsl
 blitScaled.glsl
+icon.glsl
 standard.glsl
 text.glsl

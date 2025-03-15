@@ -8,6 +8,7 @@ billboard.glsl
 blitPixels.glsl
 blitScaled.glsl
 decal.glsl
+icon.glsl
 skybox.glsl
 standard.glsl
 text.glsl

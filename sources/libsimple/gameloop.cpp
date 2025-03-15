@@ -606,7 +606,7 @@ namespace cage
 					entityMgr->defineComponent(AnimationSpeedComponent());
 					entityMgr->defineComponent(SkeletalAnimationComponent());
 					entityMgr->defineComponent(ModelComponent());
-					//entityMgr->defineComponent(IconComponent());
+					entityMgr->defineComponent(IconComponent());
 					entityMgr->defineComponent(TextComponent());
 					entityMgr->defineComponent(TextValueComponent());
 					entityMgr->defineComponent(LightComponent());

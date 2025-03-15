@@ -100,7 +100,14 @@ namespace cage
 			Vec4 aniTexFrames = Vec4::Nan();
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 			Holder<Model> mesh;
-			//std::optional<AnimationSpeedComponent> animationSpeed;
+		};
+
+		struct RenderIcon : private Noncopyable
+		{
+			Holder<Texture> texture;
+			Holder<Model> mesh;
+
+			CAGE_FORCE_INLINE void *cmpPtr() const { return (void *)((uintPtr)(void *)+texture ^ (uintPtr)(void *)+mesh); }
 		};
 
 		struct RenderText : private Noncopyable
@@ -111,7 +118,7 @@ namespace cage
 
 		struct RenderData : private Noncopyable
 		{
-			std::variant<std::monostate, RenderModel, RenderText> data;
+			std::variant<std::monostate, RenderModel, RenderIcon, RenderText> data;
 			Mat4 model;
 			Vec4 color = Vec4::Nan(); // linear rgb (NOT alpha-premultiplied), opacity
 			Entity *e = nullptr;
@@ -147,6 +154,8 @@ namespace cage
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
 							return { renderLayer, translucent, depth, +r.mesh, !!r.skeletalAnimation };
+						if constexpr (std::is_same_v<T, RenderIcon>)
+							return { renderLayer, translucent, depth, r.cmpPtr(), false };
 						if constexpr (std::is_same_v<T, RenderText>)
 							return { renderLayer, translucent, depth, +r.font, false };
 						return {};
@@ -186,9 +195,11 @@ namespace cage
 
 		struct RenderPipelineImpl : public RenderPipelineConfig
 		{
-			Holder<Model> modelSquare, modelBone;
+			Holder<Model> modelSquare, modelBone, modelIcon;
 			Holder<ShaderProgram> shaderBlitPixels, shaderBlitScaled;
-			Holder<ShaderProgram> shaderDepth, shaderStandard, shaderDepthCutOut, shaderStandardCutOut;
+			Holder<ShaderProgram> shaderDepth, shaderDepthCutOut;
+			Holder<ShaderProgram> shaderStandard, shaderStandardCutOut;
+			Holder<ShaderProgram> shaderIcon, shaderIconCutOut;
 			Holder<ShaderProgram> shaderText;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
@@ -218,16 +229,25 @@ namespace cage
 
 				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
 				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
-				CAGE_ASSERT(modelSquare && modelBone);
+				modelIcon = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/icon.obj"));
+				CAGE_ASSERT(modelSquare && modelBone && modelIcon);
+
 				shaderBlitPixels = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitPixels.glsl"))->get(0);
 				shaderBlitScaled = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitScaled.glsl"))->get(0);
 				CAGE_ASSERT(shaderBlitPixels && shaderBlitScaled);
+
 				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
 				CAGE_ASSERT(standard);
 				shaderDepth = standard->get(HashString("DepthOnly"));
 				shaderDepthCutOut = standard->get(HashString("DepthOnly") + HashString("CutOut"));
 				shaderStandard = standard->get(0);
 				shaderStandardCutOut = standard->get(HashString("CutOut"));
+
+				Holder<MultiShaderProgram> icon = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/icon.glsl"));
+				CAGE_ASSERT(icon);
+				shaderIcon = icon->get(0);
+				shaderIconCutOut = icon->get(HashString("CutOut"));
+
 				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/text.glsl"))->get(0);
 
 				transformComponent = scene->component<TransformComponent>();
@@ -244,12 +264,15 @@ namespace cage
 #define SHARE(NAME) NAME = camera->NAME.share();
 				SHARE(modelSquare);
 				SHARE(modelBone);
+				SHARE(modelIcon);
 				SHARE(shaderBlitPixels);
 				SHARE(shaderBlitScaled);
 				SHARE(shaderDepth);
-				SHARE(shaderStandard);
 				SHARE(shaderDepthCutOut);
+				SHARE(shaderStandard);
 				SHARE(shaderStandardCutOut);
+				SHARE(shaderIcon);
+				SHARE(shaderIconCutOut);
 				SHARE(shaderText);
 				SHARE(skeletonPreparatorCollection);
 #undef SHARE
@@ -570,11 +593,79 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
+			void renderIcons(const RenderModeEnum renderMode, const PointerRange<const RenderData> instances) const
+			{
+				CAGE_ASSERT(!instances.empty());
+				const RenderData &rd = instances[0];
+				CAGE_ASSERT(std::holds_alternative<RenderIcon>(rd.data));
+
+				if (renderMode != RenderModeEnum::Color)
+					return;
+
+				const Holder<Model> mesh = std::get<RenderIcon>(rd.data).mesh.share();
+				const Holder<Texture> texture = std::get<RenderIcon>(rd.data).texture.share();
+
+				Holder<ShaderProgram> shader = [&]()
+				{
+					if (mesh->shaderName)
+					{
+						uint32 variant = 0;
+						if (any(mesh->flags & MeshRenderFlags::CutOut))
+							variant += HashString("CutOut");
+						return assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(mesh->shaderName)->get(variant);
+					}
+					else
+					{
+						if (any(mesh->flags & MeshRenderFlags::CutOut))
+							return shaderIconCutOut.share();
+						else
+							return shaderIcon.share();
+					}
+				}();
+				renderQueue->bind(shader);
+
+				renderQueue->depthTest(true);
+				renderQueue->depthWrite(false);
+				renderQueue->culling(none(mesh->flags & MeshRenderFlags::TwoSided));
+				renderQueue->blending(true);
+				renderQueue->blendFuncAlphaTransparency();
+
+				renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO);
+
+				// separate instances into draw calls by the limit
+				const uint32 limit = CAGE_SHADER_MAX_MESHES;
+				for (uint32 offset = 0; offset < instances.size(); offset += limit)
+				{
+					const uint32 count = min(limit, numeric_cast<uint32>(instances.size()) - offset);
+					uniMeshes.clear();
+					uniMeshes.reserve(count);
+					for (const auto &inst : subRange(instances, offset, count))
+					{
+						CAGE_ASSERT(std::holds_alternative<RenderIcon>(inst.data));
+						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).mesh == +mesh);
+						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).texture == +texture);
+						UniMesh uni;
+						uni.mvpMat = viewProj * rd.model;
+						uni.normalMat = Mat3x4(inverse(Mat3(rd.model)));
+						uni.mMat = Mat3x4(rd.model);
+						uni.color = rd.color;
+						uniMeshes.push_back(uni);
+					}
+					renderQueue->universalUniformArray<const UniMesh>(uniMeshes, CAGE_SHADER_UNIBLOCK_MESHES);
+					renderQueue->draw(mesh, count);
+				}
+
+				renderQueue->checkGlErrorDebug();
+			}
+
 			void renderTexts(const RenderModeEnum renderMode, const PointerRange<const RenderData> instances) const
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderData &rd = instances[0];
 				CAGE_ASSERT(std::holds_alternative<RenderText>(rd.data));
+
+				if (renderMode != RenderModeEnum::Color)
+					return;
 
 				renderQueue->depthTest(true);
 				renderQueue->depthWrite(false);
@@ -607,6 +698,8 @@ namespace cage
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
 							renderModels(renderMode, instances);
+						if constexpr (std::is_same_v<T, RenderIcon>)
+							renderIcons(renderMode, instances);
 						if constexpr (std::is_same_v<T, RenderText>)
 							renderTexts(renderMode, instances);
 					},
@@ -635,6 +728,8 @@ namespace cage
 							using T = std::decay_t<decltype(r)>;
 							if constexpr (std::is_same_v<T, RenderModel>)
 								return { +r.mesh, !!r.skeletalAnimation, d.translucent };
+							if constexpr (std::is_same_v<T, RenderIcon>)
+								return { r.cmpPtr(), false, d.translucent };
 							if constexpr (std::is_same_v<T, RenderText>)
 								return { +r.font, false, d.translucent };
 							return {};
@@ -810,6 +905,26 @@ namespace cage
 				}
 			}
 
+			void prepareIcon(Entity *e, const IconComponent &ic)
+			{
+				RenderIcon ri;
+				ri.texture = assets->get<AssetSchemeIndexTexture, Texture>(ic.icon);
+				if (!ri.texture)
+					return;
+				ri.mesh = ic.model ? assets->get<AssetSchemeIndexModel, Model>(ic.model) : modelIcon.share();
+				if (!ri.mesh)
+					return;
+				CAGE_ASSERT(ri.mesh->bones == 0);
+				RenderData rd;
+				rd.model = modelTransform(e);
+				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
+				rd.renderLayer = ic.renderLayer;
+				rd.translucent = true;
+				rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
+				rd.data = std::move(ri);
+				renderData.push_back(std::move(rd));
+			}
+
 			void prepareText(Entity *e, TextComponent tc)
 			{
 				if (!tc.font)
@@ -849,7 +964,7 @@ namespace cage
 				ProfilingScope profiling("prepare entities");
 				profiling.set(Stringizer() + "entities: " + scene->count());
 
-				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<TextComponent>()->count());
+				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<IconComponent>()->count() + scene->component<TextComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
@@ -880,6 +995,15 @@ namespace cage
 							prepareModel(rd);
 							return;
 						}
+					},
+					+scene, false);
+
+				entitiesVisitor(
+					[&](Entity *e, const IconComponent &ic)
+					{
+						if (failedMask(e))
+							return;
+						prepareIcon(e, ic);
 					},
 					+scene, false);
 
