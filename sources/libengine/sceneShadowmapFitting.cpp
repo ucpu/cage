@@ -65,8 +65,8 @@ namespace cage
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(config.light));
 
 		uint32 mask = config.sceneMask;
-		if (config.camera)
-			mask &= config.camera->value<CameraComponent>().sceneMask;
+		if (config.camera && config.camera->has<SceneComponent>())
+			mask &= config.camera->value<SceneComponent>().sceneMask;
 
 		// todo use camera frustum for fitting the shadowmap
 
@@ -74,10 +74,11 @@ namespace cage
 		boxes.assets = config.assets;
 		Aabb box;
 		entitiesVisitor(
-			[&](Entity *e, const TransformComponent &t, const RenderComponent &r)
+			[&](Entity *e, const TransformComponent &t, const ModelComponent &r)
 			{
-				if (r.sceneMask & mask)
-					box += boxes.asset(r.object) * t;
+				const uint32 c = e->getOrDefault<SceneComponent>().sceneMask;
+				if (c & mask)
+					box += boxes.asset(r.model) * t;
 			},
 			config.light->manager(), false);
 

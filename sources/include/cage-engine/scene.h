@@ -13,16 +13,20 @@ namespace cage
 		using Transform::operator=;
 	};
 
-	struct CAGE_ENGINE_API RenderComponent
+	// used with model/icon/text/light
+	struct CAGE_ENGINE_API ColorComponent
 	{
 		Vec3 color = Vec3::Nan(); // sRGB
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
-		uint32 object = 0;
-		uint32 sceneMask = 1;
-		sint32 layer = 0;
 	};
 
+	struct CAGE_ENGINE_API SceneComponent
+	{
+		uint32 sceneMask = 1;
+	};
+
+	// generic data passed to shader
 	union CAGE_ENGINE_API ShaderDataComponent
 	{
 		Mat4 matrix;
@@ -30,29 +34,64 @@ namespace cage
 		ShaderDataComponent() : data() {}
 	};
 
-	struct CAGE_ENGINE_API TextureAnimationComponent
+	// used by animations and sounds
+	struct CAGE_ENGINE_API SpawnTimeComponent
 	{
-		uint64 startTime = 0;
+		uint64 spawnTime = 0; // automatically initialized by the engine
+	};
+
+	// used by texture arrays and skeletal animations
+	struct CAGE_ENGINE_API AnimationSpeedComponent
+	{
 		Real speed = Real::Nan();
 		Real offset = Real::Nan(); // normalized 0..1
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
-		uint64 startTime = 0;
-		uint32 name = 0;
-		Real speed = Real::Nan();
-		Real offset = Real::Nan(); // normalized 0..1
+		uint32 animation = 0;
+	};
+
+	struct CAGE_ENGINE_API ModelComponent
+	{
+		uint32 model = 0;
+		sint32 renderLayer = 0;
+	};
+
+	/*
+	struct CAGE_ENGINE_API IconComponent
+	{
+		uint32 icon = 0;
+		uint32 model = 0; // optional
+		sint32 renderLayer = 0;
+	};
+	*/
+
+	struct CAGE_ENGINE_API TextComponent
+	{
+		uint32 textId = 0;
+		uint32 font = 0;
+		TextAlignEnum align = TextAlignEnum::Center;
+		Real lineSpacing = 1;
+		sint32 renderLayer = 0;
+	};
+
+	// list of parameters separated by '|' when formatted, otherwise the string as is
+	struct CAGE_ENGINE_API TextValueComponent : public String
+	{
+		using String::String;
+		TextValueComponent &operator=(const auto &v) requires requires { String(v); }
+		{
+			((String &)*this) = String(v);
+			return *this;
+		}
 	};
 
 	struct CAGE_ENGINE_API LightComponent
 	{
-		Vec3 color = Vec3(1); // sRGB
-		Real intensity = 1;
 		Rads spotAngle = Degs(40);
 		Real spotExponent = 80;
 		Real ssaoFactor = 0;
-		uint32 sceneMask = 1;
 		LightTypeEnum lightType = LightTypeEnum::Point;
 		LightAttenuationEnum attenuation = LightAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
@@ -67,25 +106,10 @@ namespace cage
 		uint32 resolution = 1024;
 	};
 
-	struct CAGE_ENGINE_API TextComponent
-	{
-		String value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		Vec3 color = Vec3(1); // sRGB
-		Real intensity = 1;
-		// real opacity; // todo
-		uint32 textId = 0;
-		uint32 font = 0;
-		TextAlignEnum align = TextAlignEnum::Center;
-		Real lineSpacing = 1;
-		uint32 sceneMask = 1;
-		sint32 renderLayer = 0;
-	};
-
 	struct CAGE_ENGINE_API CameraCommonProperties
 	{
-		Vec3 ambientColor = Vec3(); // sRGB
+		Vec3 ambientColor = Vec3(0); // sRGB
 		Real ambientIntensity = 1;
-		uint32 sceneMask = 1;
 		uint32 maxLights = 100;
 	};
 
@@ -100,9 +124,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundComponent
 	{
-		uint64 startTime = 0;
-		uint32 name = 0;
-		uint32 sceneMask = 1;
+		uint32 sound = 0;
 		SoundAttenuationEnum attenuation = SoundAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
 		Real maxDistance = 500;
@@ -112,8 +134,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
-		uint32 sceneMask = 1;
-		uint32 maxActiveVoices = 100;
+		uint32 maxSounds = 100;
 		Real gain = 1; // linear amplitude multiplier
 	};
 }

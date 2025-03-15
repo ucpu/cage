@@ -54,11 +54,6 @@ namespace cage
 			return id;
 		};
 
-		CAGE_CORE_API uintPtr typeSizeByIndex(uint32 index);
-		CAGE_CORE_API uintPtr typeAlignmentByIndex(uint32 index);
-		CAGE_CORE_API uint32 typeHashByIndex(uint32 index);
-		CAGE_CORE_API uint32 typeIndexByHash(uint32 hash);
-
 		// returns unique identifier for each type
 		// works well across DLL boundaries
 		// the hashes may differ between compilers!
@@ -67,6 +62,11 @@ namespace cage
 		{
 			return privat::typeHashInit<T>();
 		};
+
+		CAGE_CORE_API uintPtr typeSizeByIndex(uint32 index);
+		CAGE_CORE_API uintPtr typeAlignmentByIndex(uint32 index);
+		CAGE_CORE_API uint32 typeHashByIndex(uint32 index);
+		CAGE_CORE_API uint32 typeIndexByHash(uint32 hash);
 	}
 }
 

@@ -46,6 +46,12 @@ namespace
 
 		player->remove(position);
 		CAGE_TEST(!player->has(position));
+
+		player->remove(velocity);
+		CAGE_TEST(!player->has(velocity));
+
+		CAGE_TEST(player->getOrDefault<Vec3>(velocity) == Vec3());
+		CAGE_TEST(!player->has(velocity));
 	}
 
 	void deletions()

@@ -44,8 +44,8 @@ namespace cage
 
 	namespace
 	{
-		const ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
-		const ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
+		const ConfigBool confGlobalRenderMissingModels("cage/graphics/renderMissingModels", false);
+		const ConfigBool confGlobalRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 
 		struct UniViewport
 		{
@@ -56,7 +56,7 @@ namespace cage
 			Vec4 eyePos;
 			Vec4 eyeDir;
 			Vec4 viewport; // x, y, w, h
-			Vec4 ambientLight; // color rgb is linear, no alpha
+			Vec4 ambientLight; // linear rgb, unused
 			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 		};
 
@@ -65,13 +65,13 @@ namespace cage
 			Mat4 mvpMat;
 			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
 			Mat3x4 mMat;
-			Vec4 color; // color rgb is linear, and NOT alpha-premultiplied
+			Vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
 			Vec4 aniTexFrames;
 		};
 
 		struct UniLight
 		{
-			Vec4 color; // linear RGB, intensity
+			Vec4 color; // linear rgb, intensity
 			Vec4 position; // xyz, maxDistance
 			Vec4 direction; // xyz, unused
 			Vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
@@ -97,10 +97,10 @@ namespace cage
 
 		struct RenderModel : private Noncopyable
 		{
-			std::optional<TextureAnimationComponent> textureAnimation;
 			Vec4 aniTexFrames = Vec4::Nan();
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 			Holder<Model> mesh;
+			//std::optional<AnimationSpeedComponent> animationSpeed;
 		};
 
 		struct RenderText : private Noncopyable
@@ -113,7 +113,7 @@ namespace cage
 		{
 			std::variant<std::monostate, RenderModel, RenderText> data;
 			Mat4 model;
-			Vec4 color = Vec4::Nan();
+			Vec4 color = Vec4::Nan(); // linear rgb (NOT alpha-premultiplied), opacity
 			Entity *e = nullptr;
 			sint32 renderLayer = 0;
 			bool translucent = false; // transparent or fade
@@ -207,8 +207,8 @@ namespace cage
 			mutable std::vector<Mat3x4> uniArmatures;
 			mutable std::vector<float> uniCustomData;
 			mutable std::vector<Holder<Model>> prepareModels;
-			bool cnfRenderMissingModels = confRenderMissingModels;
-			bool cnfRenderSkeletonBones = confRenderSkeletonBones;
+			bool cnfRenderMissingModels = confGlobalRenderMissingModels;
+			bool cnfRenderSkeletonBones = confGlobalRenderSkeletonBones;
 
 			// create pipeline for regular camera
 			explicit RenderPipelineImpl(const RenderPipelineConfig &config) : RenderPipelineConfig(config)
@@ -286,13 +286,21 @@ namespace cage
 				return uni;
 			}
 
-			static UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc, const Vec3 &cameraCenter)
+			static Vec4 initializeColor(const ColorComponent &cc)
+			{
+				const Vec3 c = valid(cc.color) ? colorGammaToLinear(cc.color) : Vec3(1);
+				const Real i = valid(cc.intensity) ? cc.intensity : 1;
+				const Real o = valid(cc.opacity) ? cc.opacity : 1;
+				return Vec4(c * i, o);
+			}
+
+			static UniLight initializeLightUni(const Mat4 &model, const LightComponent &lc, const ColorComponent &cc, const Vec3 &cameraCenter)
 			{
 				CAGE_ASSERT(lc.minDistance > 0 && lc.maxDistance > lc.minDistance);
 				static constexpr Real RoundingOffset = 1e-7;
 				UniLight uni;
 
-				uni.color = Vec4(colorGammaToLinear(lc.color), lc.intensity);
+				uni.color = Vec4(colorGammaToLinear(valid(cc.color) ? cc.color : Vec3(1)), valid(cc.intensity) ? cc.intensity : 1);
 				{
 					// move as much of the energy from the intensity to the color
 					// minimizing the intensity ensures tighter bounds on fragments that need lighting
@@ -685,93 +693,58 @@ namespace cage
 				if (!intersects(rm.mesh->boundingBox(), Frustum(mvpMat)))
 					return;
 
-				std::optional<TextureAnimationComponent> &pt = rm.textureAnimation;
-				if (rd.e->has<TextureAnimationComponent>())
-					pt = rd.e->value<TextureAnimationComponent>();
-
 				std::optional<SkeletalAnimationComponent> ps;
 				if (rd.e->has<SkeletalAnimationComponent>())
 					ps = rd.e->value<SkeletalAnimationComponent>();
 
-				RenderComponent render = rd.e->value<RenderComponent>();
+				ModelComponent render = rd.e->value<ModelComponent>();
+				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
+				AnimationSpeedComponent anim = rd.e->getOrDefault<AnimationSpeedComponent>();
+				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
+
 				if (parent)
 				{
-					if (!render.color.valid())
-						render.color = parent->color;
-					if (!render.intensity.valid())
-						render.intensity = parent->intensity;
-					if (!render.opacity.valid())
-						render.opacity = parent->opacity;
-
-					if (!pt && (parent->texAnimSpeed.valid() || parent->texAnimOffset.valid()))
-						pt = TextureAnimationComponent();
-					if (pt)
-					{
-						if (!pt->speed.valid())
-							pt->speed = parent->texAnimSpeed;
-						if (!pt->offset.valid())
-							pt->offset = parent->texAnimOffset;
-					}
-
-					if (!ps && parent->skelAnimName)
+					if (!color.color.valid())
+						color.color = parent->color;
+					if (!color.intensity.valid())
+						color.intensity = parent->intensity;
+					if (!color.opacity.valid())
+						color.opacity = parent->opacity;
+					if (!anim.offset.valid())
+						anim.offset = parent->animOffset;
+					if (!anim.speed.valid())
+						anim.speed = parent->animSpeed;
+					if (!ps && parent->skelAnimId)
 						ps = SkeletalAnimationComponent();
-					if (ps)
-					{
-						if (!ps->name)
-							ps->name = parent->skelAnimName;
-						if (!ps->speed.valid())
-							ps->speed = parent->skelAnimSpeed;
-						if (!ps->offset.valid())
-							ps->offset = parent->skelAnimOffset;
-					}
+					if (ps && !ps->animation)
+						ps->animation = parent->skelAnimId;
 				}
 
-				if (!render.color.valid())
-					render.color = Vec3(0);
-				if (!render.intensity.valid())
-					render.intensity = 1;
-				if (!render.opacity.valid())
-					render.opacity = 1;
-				rd.color = Vec4(colorGammaToLinear(render.color) * render.intensity, render.opacity);
+				rd.color = initializeColor(color);
+				if (!anim.speed.valid())
+					anim.speed = 1;
+				if (!anim.offset.valid())
+					anim.offset = 0;
+				if (rm.mesh->textureNames[0])
+					if (Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(rm.mesh->textureNames[0]))
+						rm.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, currentTime, startTime, anim.speed, anim.offset);
 
-				if (pt)
-				{
-					if (!pt->speed.valid())
-						pt->speed = 1;
-					if (!pt->offset.valid())
-						pt->offset = 0;
-					if (rm.mesh->textureNames[0])
-						if (Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(rm.mesh->textureNames[0]))
-							rm.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, currentTime, pt->startTime, pt->speed, pt->offset);
-				}
-
+				if (!rm.mesh->bones)
+					ps.reset();
 				if (ps)
 				{
-					if (ps->name && rm.mesh->bones)
+					if (Holder<SkeletalAnimation> a = assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->animation))
 					{
-						if (!ps->speed.valid())
-							ps->speed = 1;
-						if (!ps->offset.valid())
-							ps->offset = 0;
-					}
-					else
-						ps.reset();
-				}
-
-				if (ps)
-				{
-					if (Holder<SkeletalAnimation> anim = assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->name))
-					{
-						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+anim, currentTime, ps->startTime, ps->speed, ps->offset);
-						rm.skeletalAnimation = skeletonPreparatorCollection->create(rd.e, std::move(anim), coefficient, rm.mesh->importTransform, cnfRenderSkeletonBones);
+						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+a, currentTime, startTime, anim.speed, anim.offset);
+						rm.skeletalAnimation = skeletonPreparatorCollection->create(rd.e, std::move(a), coefficient, rm.mesh->importTransform, cnfRenderSkeletonBones);
 						rm.skeletalAnimation->prepare();
 					}
 					else
 						ps.reset();
 				}
 
-				rd.renderLayer = render.layer + rm.mesh->layer;
-				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || render.opacity < 1;
+				rd.renderLayer = render.renderLayer + rm.mesh->layer;
+				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
 				if (rd.translucent)
 					rd.depth = (mvpMat * Vec4(0, 0, 0, 1))[2] * -1;
 
@@ -851,13 +824,13 @@ namespace cage
 				format.size = 1;
 				format.align = tc.align;
 				format.lineSpacing = tc.lineSpacing;
-				const String str = textsGet(tc.textId, tc.value);
+				const String str = textsGet(tc.textId, e->getOrDefault<TextValueComponent>());
 				rt.layout = rt.font->layout(str, format);
 				if (rt.layout.glyphs.empty())
 					return;
 				RenderData rd;
 				rd.model = modelTransform(e) * Mat4(Vec3(rt.layout.size * Vec2(-0.5, 0.5), 0));
-				rd.color = Vec4(colorGammaToLinear(tc.color) * tc.intensity, 1); // todo opacity
+				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = tc.renderLayer;
 				rd.translucent = true;
 				rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
@@ -865,27 +838,33 @@ namespace cage
 				renderData.push_back(std::move(rd));
 			}
 
+			bool failedMask(Entity *e) const
+			{
+				const uint32 c = e->getOrDefault<SceneComponent>().sceneMask;
+				return (c & cameraSceneMask) == 0;
+			}
+
 			void prepareEntities()
 			{
 				ProfilingScope profiling("prepare entities");
 				profiling.set(Stringizer() + "entities: " + scene->count());
 
-				renderData.reserve(scene->component<RenderComponent>()->count() + scene->component<TextComponent>()->count());
+				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<TextComponent>()->count());
 
 				entitiesVisitor(
-					[&](Entity *e, const RenderComponent &rc)
+					[&](Entity *e, const ModelComponent &rc)
 					{
-						if ((rc.sceneMask & camera.sceneMask) == 0)
+						if (failedMask(e))
 							return;
 						RenderData rd;
 						rd.model = modelTransform(e);
 						rd.e = e;
-						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.object))
+						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.model))
 						{
 							prepareObject(rd, std::move(obj));
 							return;
 						}
-						if (Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(rc.object))
+						if (Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(rc.model))
 						{
 							RenderModel rm;
 							rm.mesh = std::move(mesh);
@@ -907,7 +886,7 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const TextComponent &tc)
 					{
-						if ((tc.sceneMask & camera.sceneMask) == 0)
+						if (failedMask(e))
 							return;
 						prepareText(e, tc);
 					},
@@ -966,11 +945,11 @@ namespace cage
 					entitiesVisitor(
 						[&](Entity *e, const LightComponent &lc)
 						{
-							if ((lc.sceneMask & camera.sceneMask) == 0)
+							if (failedMask(e))
 								return;
 							if (e->has<ShadowmapComponent>())
 								return;
-							UniLight uni = initializeLightUni(modelTransform(e), lc, transform.position);
+							UniLight uni = initializeLightUni(modelTransform(e), lc, e->getOrDefault<ColorComponent>(), transform.position);
 							if (lc.lightType == LightTypeEnum::Point && !intersects(Sphere(Vec3(uni.position), lc.maxDistance), frustum))
 								return;
 							lights.push_back(uni);
@@ -1321,7 +1300,7 @@ namespace cage
 
 				{
 					UniShadowedLight &uni = shadowmap.shadowUni;
-					(UniLight &)uni = initializeLightUni(data->model, lc, transform.position);
+					(UniLight &)uni = initializeLightUni(data->model, lc, e->getOrDefault<ColorComponent>(), transform.position);
 					uni.shadowParams[2] = shadowmap.shadowmapComponent.normalOffsetScale;
 					uni.shadowParams[3] = shadowmap.shadowmapComponent.shadowFactor;
 					uni.params[0] += 1; // shadowed light type
@@ -1340,7 +1319,7 @@ namespace cage
 					entitiesVisitor(
 						[&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
 						{
-							if ((lc.sceneMask & camera.sceneMask) == 0)
+							if (failedMask(e))
 								return;
 							tasks.push_back(prepareShadowmap(e, lc, sc));
 						},

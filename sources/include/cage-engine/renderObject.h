@@ -27,11 +27,9 @@ namespace cage
 		Vec3 color = Vec3::Nan();
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
-		Real texAnimSpeed = Real::Nan();
-		Real texAnimOffset = Real::Nan();
-		uint32 skelAnimName = 0;
-		Real skelAnimSpeed = Real::Nan();
-		Real skelAnimOffset = Real::Nan();
+		Real animSpeed = Real::Nan();
+		Real animOffset = Real::Nan(); // normalized 0..1
+		uint32 skelAnimId = 0;
 	};
 
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();

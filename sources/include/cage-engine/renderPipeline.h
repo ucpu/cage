@@ -37,6 +37,7 @@ namespace cage
 		EntityManager *scene = nullptr;
 		AssetsOnDemand *onDemand = nullptr;
 		uint32 frameIndex = 0;
+		uint32 cameraSceneMask = 1;
 		Real interpolationFactor = 1;
 	};
 

@@ -36,6 +36,8 @@ namespace cage
 		{
 			TransformComponent transform, transformHistory;
 			SoundComponent sound;
+			SpawnTimeComponent time;
+			SceneComponent scene;
 			uintPtr id = 0;
 		};
 
@@ -43,6 +45,7 @@ namespace cage
 		{
 			TransformComponent transform, transformHistory;
 			ListenerComponent listener;
+			SceneComponent scene;
 			uintPtr id = 0;
 		};
 
@@ -107,6 +110,8 @@ namespace cage
 					else
 						c.transformHistory = c.transform;
 					c.listener = e->value<ListenerComponent>();
+					if (e->has<SceneComponent>())
+						c.scene = e->value<SceneComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->listeners.push_back(c);
 				}
@@ -121,6 +126,10 @@ namespace cage
 					else
 						c.transformHistory = c.transform;
 					c.sound = e->value<SoundComponent>();
+					if (e->has<SpawnTimeComponent>())
+						c.time = e->value<SpawnTimeComponent>();
+					if (e->has<SceneComponent>())
+						c.scene = e->value<SceneComponent>();
 					c.id = (uintPtr)e;
 					emitWrite->sounds.push_back(c);
 				}
@@ -128,7 +137,7 @@ namespace cage
 
 			void prepare(PrepareListener &l, Holder<Voice> &v, const EmitSound &e)
 			{
-				Holder<Sound> s = engineAssets()->get<AssetSchemeIndexSound, Sound>(e.sound.name);
+				Holder<Sound> s = engineAssets()->get<AssetSchemeIndexSound, Sound>(e.sound.sound);
 				if (!s)
 				{
 					v.clear();
@@ -141,7 +150,7 @@ namespace cage
 				v->sound = std::move(s);
 				const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
 				v->position = t.position;
-				v->startTime = e.sound.startTime;
+				v->startTime = e.time.spawnTime;
 				v->attenuation = e.sound.attenuation;
 				v->minDistance = e.sound.minDistance;
 				v->maxDistance = e.sound.maxDistance;
@@ -162,7 +171,7 @@ namespace cage
 					const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
 					p.orientation = t.orientation;
 					p.position = t.position;
-					p.maxActiveVoices = e.listener.maxActiveVoices;
+					p.maxActiveVoices = e.listener.maxSounds;
 					p.gain = e.listener.gain;
 				}
 
@@ -170,13 +179,13 @@ namespace cage
 					FlatSet<uintPtr> used;
 					used.reserve(emitRead->sounds.size());
 					for (const EmitSound &s : emitRead->sounds)
-						if (e.listener.sceneMask & s.sound.sceneMask)
+						if (e.scene.sceneMask & s.scene.sceneMask)
 							used.insert(e.id);
 					eraseUnused(l.voicesMapping, used);
 				}
 
 				for (const EmitSound &s : emitRead->sounds)
-					if (e.listener.sceneMask & s.sound.sceneMask)
+					if (e.scene.sceneMask & s.scene.sceneMask)
 						prepare(l, l.voicesMapping[s.id], s);
 			}
 

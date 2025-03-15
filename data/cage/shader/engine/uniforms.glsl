@@ -8,7 +8,7 @@ struct UniViewport
 	vec4 eyePos;
 	vec4 eyeDir;
 	vec4 viewport; // x, y, w, h
-	vec4 ambientLight; // color rgb is linear, no alpha
+	vec4 ambientLight; // linear rgb, unused
 	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
 };
 
@@ -19,8 +19,7 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform ViewportBlock
 
 struct UniMaterial
 {
-	// albedo rgb is linear, and NOT alpha-premultiplied
-	vec4 albedoBase;
+	vec4 albedoBase; // linear rgb (NOT alpha-premultiplied), opacity
 	vec4 specialBase;
 	vec4 albedoMult;
 	vec4 specialMult;
@@ -36,7 +35,7 @@ struct UniMesh
 	mat4 mvpMat;
 	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
 	mat3x4 mMat;
-	vec4 color; // color rgb is linear, and NOT alpha-premultiplied
+	vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
 	vec4 aniTexFrames;
 };
 
@@ -52,7 +51,7 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform ArmaturesBlock
 
 struct UniLight
 {
-	vec4 color; // linear RGB, intensity
+	vec4 color; // linear rgb, intensity
 	vec4 position; // xyz, sortingDistance
 	vec4 direction; // xyz, unused
 	vec4 attenuation; // attenuationType, minDistance, maxDistance, unused

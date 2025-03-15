@@ -82,13 +82,11 @@ void processObject()
 		if (!s.empty())
 		{
 			s = processor->convertAssetPath(s);
-			o.skelAnimName = HashString(s);
-			deps.insert(o.skelAnimName);
+			o.skelAnimId = HashString(s);
+			deps.insert(o.skelAnimId);
 		}
-		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", Real::Nan().value);
-		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", Real::Nan().value);
-		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", Real::Nan().value);
-		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", Real::Nan().value);
+		o.animSpeed = ini->getFloat("animation", "speed", Real::Nan().value);
+		o.animOffset = ini->getFloat("animation", "offset", Real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}

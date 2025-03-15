@@ -20,11 +20,9 @@ namespace cage
 			obj->color = h.color;
 			obj->intensity = h.intensity;
 			obj->opacity = h.opacity;
-			obj->texAnimSpeed = h.texAnimSpeed;
-			obj->texAnimOffset = h.texAnimOffset;
-			obj->skelAnimName = h.skelAnimName;
-			obj->skelAnimSpeed = h.skelAnimSpeed;
-			obj->skelAnimOffset = h.skelAnimOffset;
+			obj->animSpeed = h.animSpeed;
+			obj->animOffset = h.animOffset;
+			obj->skelAnimId = h.skelAnimId;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 

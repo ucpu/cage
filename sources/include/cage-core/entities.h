@@ -109,9 +109,20 @@ namespace cage
 			return *(T *)unsafeValue(component);
 		}
 		template<ComponentConcept T>
+		CAGE_FORCE_INLINE T getOrDefault(EntityComponent *component)
+		{
+			CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>());
+			return has(component) ? *(T *)unsafeValue(component) : T();
+		}
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE T &value()
 		{
 			return value<T>(component_<T>());
+		}
+		template<ComponentConcept T>
+		CAGE_FORCE_INLINE T getOrDefault()
+		{
+			return getOrDefault<T>(component_<T>());
 		}
 		void *unsafeValue(EntityComponent *component);
 
