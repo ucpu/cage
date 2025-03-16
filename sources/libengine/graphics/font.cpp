@@ -453,7 +453,7 @@ namespace cage
 			{
 				if (layout.glyphs.empty())
 					return;
-				Holder<Model> model = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				Holder<Model> model = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
 				if (!model)
 					return;
 				Instance insts[MaxCharacters];

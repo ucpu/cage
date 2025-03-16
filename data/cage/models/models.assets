@@ -22,7 +22,7 @@ guiElement.obj
 
 []
 scheme = pack
-model.pack
+models.pack
 
 []
 scheme = model

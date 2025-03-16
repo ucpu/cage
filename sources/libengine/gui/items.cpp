@@ -367,7 +367,7 @@ namespace cage
 		if (fontId == 0)
 			fontId = detail::GuiTextFontDefault;
 		if (fontId == 0)
-			fontId = HashString("cage/font/ubuntu/regular.ttf");
+			fontId = HashString("cage/fonts/ubuntu/regular.ttf");
 		font = hierarchy->impl->assetMgr->get<AssetSchemeIndexFont, Font>(fontId);
 	}
 

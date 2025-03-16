@@ -165,14 +165,14 @@ namespace cage
 				return multi->get(0);
 			return {};
 		};
-		elementShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/element.glsl")));
-		fontShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/font.glsl")));
-		imageShader = assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/image.glsl"));
-		colorPickerShader[0] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F")));
-		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H")));
-		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S")));
-		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/guiElement.obj"));
-		imageModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+		elementShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/element.glsl")));
+		fontShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/font.glsl")));
+		imageShader = assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/image.glsl"));
+		colorPickerShader[0] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?F")));
+		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?H")));
+		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?S")));
+		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/models/guiElement.obj"));
+		imageModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
 	}
 
 	namespace

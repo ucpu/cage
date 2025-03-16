@@ -47,7 +47,7 @@ function(cage_assets_init)
 	endif()
 	cage_assets_add_schemes_path("${cage_assets_current_list_dir}/../schemes")
 	cage_assets_add_data_path("${cage_assets_current_list_dir}/../data")
-	configure_file("${cage_assets_current_list_dir}/../sources/include/cage-engine/shaderConventions.h" "${cage_assets_intermediate_path}/data/cage/shader" COPYONLY)
+	configure_file("${cage_assets_current_list_dir}/../sources/include/cage-engine/shaderConventions.h" "${cage_assets_intermediate_path}/data/cage/shaders/" COPYONLY)
 	cage_assets_generate_config()
 endfunction(cage_assets_init)
 

@@ -382,13 +382,13 @@ namespace cage
 				}
 				{
 					auto _ = g->row(0.5);
-					g->button().disabled(count() >= 3).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiAdd>(this)).image(HashString("cage/texture/keybindAdd.png")).tooltip<HashString("cage/keybinds/add"), "Add">().size(Vec2(28));
-					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiRemove>(this)).image(HashString("cage/texture/keybindRemove.png")).tooltip<HashString("cage/keybinds/remove"), "Remove">().size(Vec2(28));
+					g->button().disabled(count() >= 3).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiAdd>(this)).image(HashString("cage/textures/keybindAdd.png")).tooltip<HashString("cage/keybinds/add"), "Add">().size(Vec2(28));
+					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiRemove>(this)).image(HashString("cage/textures/keybindRemove.png")).tooltip<HashString("cage/keybinds/remove"), "Remove">().size(Vec2(28));
 				}
 				{
 					auto _ = g->rightRow(0.5);
-					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiClear>(this)).image(HashString("cage/texture/keybindClear.png")).tooltip<HashString("cage/keybinds/clear"), "Clear">().size(Vec2(28));
-					g->button().disabled(defaults == matchers).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiReset>(this)).image(HashString("cage/texture/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
+					g->button().disabled(count() == 0).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiClear>(this)).image(HashString("cage/textures/keybindClear.png")).tooltip<HashString("cage/keybinds/clear"), "Clear">().size(Vec2(28));
+					g->button().disabled(defaults == matchers).event(Delegate<bool(const GenericInput &)>().bind<KeybindImpl, &KeybindImpl::guiReset>(this)).image(HashString("cage/textures/keybindReset.png")).tooltip<HashString("cage/keybinds/reset"), "Reset">().size(Vec2(28));
 				}
 			}
 

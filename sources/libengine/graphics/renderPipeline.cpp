@@ -224,31 +224,31 @@ namespace cage
 			// create pipeline for regular camera
 			explicit RenderPipelineImpl(const RenderPipelineConfig &config) : RenderPipelineConfig(config)
 			{
-				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+				if (!assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shaders/engine/engine.pack")))
 					return;
 
-				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
-				modelIcon = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/icon.obj"));
+				modelSquare = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
+				modelBone = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/bone.obj"));
+				modelIcon = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/icon.obj"));
 				CAGE_ASSERT(modelSquare && modelBone && modelIcon);
 
-				shaderBlitPixels = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitPixels.glsl"))->get(0);
-				shaderBlitScaled = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitScaled.glsl"))->get(0);
+				shaderBlitPixels = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0);
+				shaderBlitScaled = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0);
 				CAGE_ASSERT(shaderBlitPixels && shaderBlitScaled);
 
-				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/standard.glsl"));
+				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/standard.glsl"));
 				CAGE_ASSERT(standard);
 				shaderDepth = standard->get(HashString("DepthOnly"));
 				shaderDepthCutOut = standard->get(HashString("DepthOnly") + HashString("CutOut"));
 				shaderStandard = standard->get(0);
 				shaderStandardCutOut = standard->get(HashString("CutOut"));
 
-				Holder<MultiShaderProgram> icon = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/icon.glsl"));
+				Holder<MultiShaderProgram> icon = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/icon.glsl"));
 				CAGE_ASSERT(icon);
 				shaderIcon = icon->get(0);
 				shaderIconCutOut = icon->get(HashString("CutOut"));
 
-				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/text.glsl"))->get(0);
+				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/text.glsl"))->get(0);
 
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
@@ -930,7 +930,7 @@ namespace cage
 				if (!tc.font)
 					tc.font = detail::GuiTextFontDefault;
 				if (!tc.font)
-					tc.font = HashString("cage/font/ubuntu/regular.ttf");
+					tc.font = HashString("cage/fonts/ubuntu/regular.ttf");
 				RenderText rt;
 				rt.font = assets->get<AssetSchemeIndexFont, Font>(tc.font);
 				if (!rt.font)
@@ -990,7 +990,7 @@ namespace cage
 						if (cnfRenderMissingModels)
 						{
 							RenderModel rm;
-							rm.mesh = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/fake.obj"));
+							rm.mesh = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj"));
 							rd.data = std::move(rm);
 							prepareModel(rd);
 							return;

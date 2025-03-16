@@ -340,7 +340,7 @@ namespace cage
 					if (cam.renderQueue)
 						renderQueue->enqueue(std::move(cam.renderQueue));
 
-				Holder<ShaderProgram> shaderBlit = cfg.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shader/engine/blitScaled.glsl"))->get(0);
+				Holder<ShaderProgram> shaderBlit = cfg.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0);
 				CAGE_ASSERT(shaderBlit);
 				renderQueue->bind(shaderBlit);
 
@@ -352,7 +352,7 @@ namespace cage
 					if (windowTarget)
 					{
 						renderQueue->bind(windowTarget, 0);
-						Holder<Model> modelSquare = cfg.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+						Holder<Model> modelSquare = cfg.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
 						CAGE_ASSERT(modelSquare);
 						renderQueue->draw(modelSquare);
 					}
@@ -373,7 +373,7 @@ namespace cage
 
 						void operator()()
 						{
-							Holder<Model> modelSquare = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+							Holder<Model> modelSquare = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
 							CAGE_ASSERT(modelSquare);
 							modelSquare->bind();
 							Holder<FrameBuffer> renderTarget = engineProvisionalGraphics()->frameBufferDraw("vr_blit")->resolve();
@@ -435,7 +435,7 @@ namespace cage
 					cfg.frameIndex = frameIndex;
 					cfg.resolution = windowResolution;
 
-					if (cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) && cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+					if (cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) && cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shaders/engine/engine.pack")))
 						prepareCameras(cfg, vrFrame.share());
 					else if (vrFrame)
 					{

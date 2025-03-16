@@ -259,7 +259,7 @@ namespace cage
 		constexpr const LayoutsBase layoutsBase;
 	}
 
-	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/texture/gui.png"))
+	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/textures/gui.png"))
 	{
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
@@ -303,7 +303,7 @@ namespace cage
 	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
-		fillingTextureName = HashString("cage/texture/progressbar/$.png");
+		fillingTextureName = HashString("cage/textures/progressbar/$.png");
 	}
 
 	GuiSkinWidgetDefaults::SliderBar::SliderBar()
@@ -475,7 +475,7 @@ namespace cage
 					break;
 				case GuiSkinTooltips.index:
 					generateCompact(skin);
-					skin.textureName = HashString("cage/texture/tooltips.png");
+					skin.textureName = HashString("cage/textures/tooltips.png");
 					break;
 			}
 			return skin;

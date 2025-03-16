@@ -1,6 +1,6 @@
 []
-font/font.pack
-model/model.pack
-shader/shader.pack
-texture/texture.pack
-sound/sound.pack
+fonts/fonts.pack
+models/models.pack
+shaders/shaders.pack
+sounds/sounds.pack
+textures/textures.pack
