@@ -24,6 +24,9 @@ set(CMAKE_DISABLE_FIND_PACKAGE_PythonInterp ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_SndFile ON)
 set(CMAKE_DISABLE_FIND_PACKAGE_liblzma ON)
 
+# speed up repeated cmake runs
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
 # disable installs
 set(CMAKE_SKIP_INSTALL_RULES TRUE) # this is the most awesome addition to cmake ever!
 
