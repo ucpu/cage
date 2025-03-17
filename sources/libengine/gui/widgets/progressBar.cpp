@@ -27,6 +27,7 @@ namespace cage
 					hierarchy->image->assign(i);
 					hierarchy->image->format.animationSpeed = 0;
 					hierarchy->image->format.animationOffset = data.progress;
+					hierarchy->image->format.mode = ImageModeEnum::Stretch;
 				}
 
 				if (data.showValue && !hierarchy->text)

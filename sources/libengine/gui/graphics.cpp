@@ -123,6 +123,60 @@ namespace cage
 		data.font->render(q, +impl->assetOnDemand, data.layout);
 	}
 
+	namespace
+	{
+		void evaluateImageMode(Vec4 &ndc, Vec2i screenSize, Vec4 &uv, Vec2i textureSize, ImageModeEnum mode)
+		{
+			CAGE_ASSERT(mode != ImageModeEnum::None);
+
+			const Vec2 scr = Vec2(ndc[2] - ndc[0], ndc[3] - ndc[1]) * Vec2(screenSize);
+			CAGE_ASSERT(valid(scr));
+			if (scr[0] < 1 || scr[1] < 1)
+				return;
+			const Real st = scr[0] / scr[1];
+			CAGE_ASSERT(valid(st) && st > 0);
+
+			const Vec2 tex = Vec2(uv[2] - uv[0], uv[3] - uv[1]) * Vec2(textureSize);
+			CAGE_ASSERT(valid(tex));
+			const Real at = abs(tex[0] / tex[1]);
+			CAGE_ASSERT(valid(at) && at > 0);
+
+			switch (mode)
+			{
+				case ImageModeEnum::None:
+				case ImageModeEnum::Stretch:
+					break;
+
+				case ImageModeEnum::Fill:
+				{
+					// todo
+					break;
+				}
+
+				case ImageModeEnum::Fit:
+				{
+					if (st > at)
+					{ // preserve height, adjust width
+						Real c = (ndc[2] + ndc[0]) * 0.5;
+						Real w = ndc[2] - ndc[0];
+						w *= 0.5 * at / st;
+						ndc[0] = c - w;
+						ndc[2] = c + w;
+					}
+					else
+					{ // preserve width, adjust height
+						Real c = (ndc[3] + ndc[1]) * 0.5;
+						Real h = ndc[3] - ndc[1];
+						h *= 0.5 * at / st;
+						ndc[1] = c - h;
+						ndc[3] = c + h;
+					}
+					break;
+				}
+			}
+		}
+	}
+
 	RenderableImage::RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
 	{
 		if (!item->texture)
@@ -132,8 +186,15 @@ namespace cage
 		this->ndcPos = item->hierarchy->impl->pointsToNdc(position, size);
 		this->uvClip = Vec4(item->image.textureUvOffset, item->image.textureUvOffset + item->image.textureUvSize);
 		this->disabled = disabled;
-		// todo format mode
-		this->aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, item->format.animationSpeed, item->format.animationOffset);
+		GuiImageFormatComponent format = item->format;
+		if (format.mode == ImageModeEnum::None)
+			format.mode = ImageModeEnum::Fit;
+		if (!valid(format.animationSpeed))
+			format.animationSpeed = 1;
+		if (!valid(format.animationOffset))
+			format.animationOffset = 0;
+		evaluateImageMode(this->ndcPos, impl->outputResolution, this->uvClip, this->texture->resolution(), format.mode);
+		this->aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, format.animationSpeed, format.animationOffset);
 	}
 
 	RenderableImage::~RenderableImage()

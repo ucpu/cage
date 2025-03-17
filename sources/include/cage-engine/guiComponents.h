@@ -44,6 +44,7 @@ namespace cage
 
 	enum class ImageModeEnum : uint32
 	{
+		None,
 		Stretch, // image is resized to fill the area
 		Fill, // preserves aspect ratio, and is scaled to fill the entire area, it may be clipped
 		Fit, // preserves aspect ratio, and is scaled to fit in its entirety into the area, there may be empty areas around
@@ -51,9 +52,9 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiImageFormatComponent
 	{
-		Real animationSpeed = 1;
-		Real animationOffset;
-		ImageModeEnum mode = ImageModeEnum::Fit;
+		Real animationSpeed = Real::Nan();
+		Real animationOffset = Real::Nan();
+		ImageModeEnum mode = ImageModeEnum::None;
 	};
 
 	struct CAGE_ENGINE_API GuiTextComponent

@@ -427,8 +427,12 @@ namespace cage
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)
 	{
-		format = f;
-		// todo inherit only
+		if (valid(f.animationSpeed))
+			format.animationSpeed = f.animationSpeed;
+		if (valid(f.animationOffset))
+			format.animationOffset = f.animationOffset;
+		if (f.mode != ImageModeEnum::None)
+			format.mode = f.mode;
 	}
 
 	Vec2 ImageItem::findRequestedSize()

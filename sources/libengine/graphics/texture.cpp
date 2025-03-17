@@ -77,7 +77,6 @@ namespace cage
 	Vec2i Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		CAGE_ASSERT(impl->resolution[2] <= 1);
 		return Vec2i(impl->resolution);
 	}
 
