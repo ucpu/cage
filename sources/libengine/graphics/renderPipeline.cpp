@@ -439,6 +439,23 @@ namespace cage
 					options[CAGE_SHADER_OPTIONINDEX_MAPNORMAL] = 0;
 			}
 
+			CAGE_FORCE_INLINE void appendShaderCustomData(Entity *e, uint32 customDataCount) const
+			{
+				if (!customDataCount)
+					return;
+				if (e && e->has<ShaderDataComponent>())
+				{
+					const auto sub = subRange(PointerRange<const Real>(e->value<ShaderDataComponent>().matrix.data).cast<const float>(), 0, customDataCount);
+					for (const auto it : sub)
+						uniCustomData.push_back(it);
+				}
+				else
+				{
+					for (uint32 i = 0; i < customDataCount; i++)
+						uniCustomData.push_back({});
+				}
+			}
+
 			void renderModels(const RenderModeEnum renderMode, const PointerRange<const RenderData> instances) const
 			{
 				CAGE_ASSERT(!instances.empty());
@@ -566,20 +583,7 @@ namespace cage
 							for (const auto &b : a)
 								uniArmatures.push_back(b);
 						}
-						if (shader->customDataCount)
-						{
-							if (inst.e && inst.e->has<ShaderDataComponent>())
-							{
-								const auto sub = subRange(PointerRange<const Real>(inst.e->value<ShaderDataComponent>().matrix.data).cast<const float>(), 0, shader->customDataCount);
-								for (const auto it : sub)
-									uniCustomData.push_back(it);
-							}
-							else
-							{
-								for (uint32 i = 0; i < shader->customDataCount; i++)
-									uniCustomData.push_back({});
-							}
-						}
+						appendShaderCustomData(inst.e, shader->customDataCount);
 					}
 
 					renderQueue->universalUniformArray<const UniMesh>(uniMeshes, CAGE_SHADER_UNIBLOCK_MESHES);
@@ -624,11 +628,13 @@ namespace cage
 				}();
 				renderQueue->bind(shader);
 
-				renderQueue->depthTest(true);
-				renderQueue->depthWrite(false);
 				renderQueue->culling(none(mesh->flags & MeshRenderFlags::TwoSided));
-				renderQueue->blending(true);
-				renderQueue->blendFuncAlphaTransparency();
+				renderQueue->depthTest(any(mesh->flags & MeshRenderFlags::DepthTest));
+				renderQueue->depthWrite(any(mesh->flags & MeshRenderFlags::DepthWrite));
+				renderQueue->depthFuncLessEqual();
+				renderQueue->blending(rd.translucent);
+				if (rd.translucent)
+					renderQueue->blendFuncAlphaTransparency();
 
 				renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO);
 
@@ -639,19 +645,28 @@ namespace cage
 					const uint32 count = min(limit, numeric_cast<uint32>(instances.size()) - offset);
 					uniMeshes.clear();
 					uniMeshes.reserve(count);
+					CAGE_ASSERT(shader->customDataCount <= 16);
+					uniCustomData.clear();
+					if (shader->customDataCount)
+						uniCustomData.reserve(shader->customDataCount * count);
+
 					for (const auto &inst : subRange(instances, offset, count))
 					{
 						CAGE_ASSERT(std::holds_alternative<RenderIcon>(inst.data));
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).mesh == +mesh);
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).texture == +texture);
 						UniMesh uni;
-						uni.mvpMat = viewProj * rd.model;
-						uni.normalMat = Mat3x4(inverse(Mat3(rd.model)));
-						uni.mMat = Mat3x4(rd.model);
-						uni.color = rd.color;
+						uni.mvpMat = viewProj * inst.model;
+						uni.normalMat = Mat3x4(inverse(Mat3(inst.model)));
+						uni.mMat = Mat3x4(inst.model);
+						uni.color = inst.color;
 						uniMeshes.push_back(uni);
+						appendShaderCustomData(inst.e, shader->customDataCount);
 					}
+
 					renderQueue->universalUniformArray<const UniMesh>(uniMeshes, CAGE_SHADER_UNIBLOCK_MESHES);
+					if (!uniCustomData.empty())
+						renderQueue->universalUniformArray<const float>(uniCustomData, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 					renderQueue->draw(mesh, count);
 				}
 
@@ -907,6 +922,7 @@ namespace cage
 
 			void prepareIcon(Entity *e, const IconComponent &ic)
 			{
+				CAGE_ASSERT(ic.icon != 0 && ic.icon != m);
 				RenderIcon ri;
 				ri.texture = assets->get<AssetSchemeIndexTexture, Texture>(ic.icon);
 				if (!ri.texture)
@@ -916,6 +932,7 @@ namespace cage
 					return;
 				CAGE_ASSERT(ri.mesh->bones == 0);
 				RenderData rd;
+				rd.e = e;
 				rd.model = modelTransform(e);
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = ic.renderLayer;
@@ -944,6 +961,7 @@ namespace cage
 				if (rt.layout.glyphs.empty())
 					return;
 				RenderData rd;
+				rd.e = e;
 				rd.model = modelTransform(e) * Mat4(Vec3(rt.layout.size * Vec2(-0.5, 0.5), 0));
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = tc.renderLayer;
@@ -969,11 +987,13 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
 					{
+						if (!rc.model)
+							return;
 						if (failedMask(e))
 							return;
 						RenderData rd;
-						rd.model = modelTransform(e);
 						rd.e = e;
+						rd.model = modelTransform(e);
 						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.model))
 						{
 							prepareObject(rd, std::move(obj));
@@ -1001,6 +1021,8 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const IconComponent &ic)
 					{
+						if (!ic.icon)
+							return;
 						if (failedMask(e))
 							return;
 						prepareIcon(e, ic);

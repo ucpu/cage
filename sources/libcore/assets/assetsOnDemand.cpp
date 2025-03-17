@@ -53,15 +53,16 @@ namespace cage
 				tick++;
 			}
 
-			void update(bool valid, uint32 assetId, bool autoLoad)
+			void update(uint32 assetId, bool autoLoad)
 			{
 				{
 					ScopeLock lock(mut, ReadLockTag()); // read lock is sufficient: we update the value _inside_ the map, not the map itself
 					auto it = lastUse.find(assetId);
 					if (it != lastUse.end())
+					{
 						it->second = tick;
-					if (valid)
 						return;
+					}
 				}
 				if (autoLoad)
 				{
@@ -79,7 +80,7 @@ namespace cage
 	void AssetsOnDemand::preload(uint32 assetId)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		impl->update(true, assetId, true);
+		impl->update(assetId, true);
 	}
 
 	void AssetsOnDemand::process()
@@ -99,7 +100,7 @@ namespace cage
 		CAGE_ASSERT(assetId != 0 && assetId != m);
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		auto r = impl->assets->get_(scheme, assetId);
-		impl->update(!!r, assetId, autoLoad);
+		impl->update(assetId, autoLoad && !r);
 		return r;
 	}
 
