@@ -399,6 +399,30 @@ namespace cage
 			CAGE_ASSERT(f >= 0 && f <= 1);
 			return Vec4(i, (i + 1) % frames, f, 0);
 		}
+
+		bool internalFormatIsSrgb(uint32 internalFormat)
+		{
+			switch (internalFormat)
+			{
+				case GL_SRGB8:
+				case GL_SRGB8_ALPHA8:
+				case GL_SRGB:
+				case GL_SRGB_ALPHA:
+				case GL_COMPRESSED_SRGB:
+				case GL_COMPRESSED_SRGB_ALPHA:
+				case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
+				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
+				case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
+				case GL_COMPRESSED_SRGB8_ETC2:
+				case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+				case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+					return true;
+				default:
+					return false;
+			}
+		}
 	}
 
 	namespace privat

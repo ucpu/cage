@@ -408,7 +408,7 @@ namespace
 		data.mipmapLevels = data.containedLevels;
 		if (toBool(processor->property("animationLoop")))
 			data.flags |= TextureFlags::AnimationLoop;
-		if (toBool(processor->property("srgb")) && !toBool(processor->property("gamma")))
+		if (toBool(processor->property("srgb")))
 			data.flags |= TextureFlags::Srgb;
 		data.animationDuration = toUint64(processor->property("animationDuration"));
 		data.copyType = GL_UNSIGNED_BYTE;
@@ -471,8 +471,6 @@ void processTexture()
 			CAGE_THROW_ERROR(Exception, "heightToNormal requires normal=true");
 		if (s2c && processor->property("target") != "cubeMap")
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires target to be cubeMap");
-		if (toBool(processor->property("gamma")) && !srgb)
-			CAGE_THROW_ERROR(Exception, "sampling in gamma requires srgb color space");
 	}
 
 	loadAllFiles();

@@ -85,5 +85,6 @@ out vec4 outColor;
 void main()
 {
 	outColor = texture(texSkin, varUv);
+	outColor.rgb = pow(outColor.rgb, vec3(1.0 / 2.2));
 	outColor.rgb = mix(outColor.rgb, varAccent.rgb, varAccent.a);
 }

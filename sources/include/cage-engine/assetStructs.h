@@ -31,10 +31,10 @@ namespace cage
 	enum class TextureFlags : uint32
 	{
 		None = 0,
-		GenerateMipmaps = 1 << 0,
-		AnimationLoop = 1 << 1,
-		Srgb = 1 << 2,
-		Compressed = 1 << 3,
+		Compressed = 1 << 0,
+		GenerateMipmaps = 1 << 1,
+		AnimationLoop = 1 << 2,
+		Srgb = 1 << 3,
 	};
 
 	enum class TextureSwizzleEnum : uint8

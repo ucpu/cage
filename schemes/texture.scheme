@@ -46,12 +46,6 @@ hint = true for color images, false otherwise
 type = bool
 default = false
 
-[gamma]
-display = sample in gamma space
-hint = true for color images used directly in gamma space, eg. in gui
-type = bool
-default = false
-
 [normal]
 display = normal map
 hint = normal maps are converted to two-channel textures with different compression method

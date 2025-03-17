@@ -146,6 +146,8 @@ namespace cage
 		uint32 hash = 0;
 		if (texture->target() == GL_TEXTURE_2D_ARRAY)
 			hash += HashString("Animated");
+		if (detail::internalFormatIsSrgb(texture->internalFormat()))
+			hash += HashString("Delinearize");
 		if (disabled)
 			hash += HashString("Disabled");
 		Holder<ShaderProgram> shader = impl->graphicsData.imageShader->get(hash);

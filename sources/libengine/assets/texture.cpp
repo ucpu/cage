@@ -67,6 +67,8 @@ namespace cage
 			TextureHeader header;
 			des >> header;
 
+			CAGE_ASSERT(detail::internalFormatIsSrgb(header.internalFormat) == any(header.flags & TextureFlags::Srgb));
+
 			Holder<Texture> tex = newTexture(header.target);
 			tex->setDebugName(context->textId);
 
