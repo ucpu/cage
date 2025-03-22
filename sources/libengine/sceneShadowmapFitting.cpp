@@ -76,6 +76,9 @@ namespace cage
 		entitiesVisitor(
 			[&](Entity *e, const TransformComponent &t, const ModelComponent &r)
 			{
+				if (r.model == 0)
+					return;
+				CAGE_ASSERT(r.model != m);
 				const uint32 c = e->getOrDefault<SceneComponent>().sceneMask;
 				if (c & mask)
 					box += boxes.asset(r.model) * t;

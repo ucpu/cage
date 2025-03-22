@@ -305,13 +305,18 @@ namespace cage
 			// CONTROL
 			//////////////////////////////////////
 
-			void updateHistoryComponents()
+			void updateComponents()
 			{
 				for (Entity *e : engineEntities()->component<TransformComponent>()->entities())
 				{
 					TransformComponent &ts = e->value<TransformComponent>();
 					TransformComponent &hs = e->value<TransformComponent>(transformHistoryComponent);
 					hs = ts;
+				}
+				for (Entity *e : engineEntities()->entities())
+				{
+					if (!e->has<SpawnTimeComponent>())
+						e->value<SpawnTimeComponent>().spawnTime = controlTime;
 				}
 			}
 
@@ -344,8 +349,8 @@ namespace cage
 				}
 				controlTime = controlUpdateSchedule->time();
 				{
-					ProfilingScope profiling("update history components");
-					updateHistoryComponents();
+					ProfilingScope profiling("update components");
+					updateComponents();
 				}
 				if (virtualReality)
 				{
