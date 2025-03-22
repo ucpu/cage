@@ -5,7 +5,7 @@
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-	#include "../incWin.h"
+	#include "../windowsMinimumInclude.h"
 	#include <winsock2.h>
 	#include <ws2tcpip.h>
 

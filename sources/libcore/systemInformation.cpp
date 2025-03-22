@@ -1,5 +1,5 @@
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include "incWin.h" // must be included first
+	#include "windowsMinimumInclude.h" // must be included first
 	#include <Psapi.h> // GetProcessMemoryInfo
 	#include <intrin.h>
 	#include <powerbase.h> // CallNtPowerInformation

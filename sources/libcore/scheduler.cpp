@@ -176,19 +176,7 @@ namespace cage
 				const uint64 mst = minimalScheduleTime();
 				const uint64 s = mst < t ? 0 : min(mst - t, conf.maxSleepDuration);
 				profiling.set(Stringizer() + "requested sleep: " + s + " us");
-				if (conf.spinInsteadOfSleep)
-				{
-					const uint64 begin = realTimer->duration();
-					while (true)
-					{
-						threadYield();
-						const uint64 elapsed = realTimer->duration() - begin;
-						if (elapsed >= s)
-							break;
-					}
-				}
-				else
-					threadSleep(s);
+				threadSleep(s);
 				utilAdd(s, true);
 			}
 

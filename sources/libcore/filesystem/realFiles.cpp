@@ -1,6 +1,6 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include <vector> // wide characters
-	#include "../incWin.h"
+	#include "../windowsMinimumInclude.h"
 	#include <io.h> // _get_osfhandle
 	#define fseek64 _fseeki64
 	#define ftell64 _ftelli64

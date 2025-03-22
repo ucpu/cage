@@ -471,7 +471,6 @@ namespace cage
 
 				{
 					SchedulerCreateConfig cfg;
-					cfg.spinInsteadOfSleep = !!config.virtualReality;
 					controlScheduler = newScheduler(cfg);
 				}
 				{

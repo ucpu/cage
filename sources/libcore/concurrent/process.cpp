@@ -4,7 +4,7 @@
 #include <vector>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include "../incWin.h"
+	#include "../windowsMinimumInclude.h"
 	#include <signal.h>
 	#include <psapi.h>
 #else

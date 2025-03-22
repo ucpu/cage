@@ -5,7 +5,7 @@
 #include <exception>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include "incWin.h" // SetConsoleCP
+	#include "windowsMinimumInclude.h" // SetConsoleCP
 #endif
 
 #include <cage-core/concurrent.h>

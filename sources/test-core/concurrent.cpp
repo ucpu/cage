@@ -1,7 +1,12 @@
+#include <algorithm>
+#include <array>
+#include <numeric>
+
 #include "main.h"
 
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
+#include <cage-core/timer.h>
 
 namespace
 {
@@ -159,5 +164,27 @@ void testConcurrent()
 			thrs->run();
 			CAGE_TEST(counterGlobal == 40);
 		}
+	}
+
+	{
+		CAGE_TESTCASE("sleeping precision");
+		std::array<uint64, 10> frames = {};
+		Holder<Timer> t = newTimer();
+		for (uint64 &frame : frames)
+		{
+			const uint64 a = t->duration();
+			constexpr uint64 period = 1'000'000 / 60;
+			threadSleep(period);
+			const uint64 b = t->duration();
+			frame = b - a;
+			CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "frame: " + frame);
+		}
+		std::sort(frames.begin(), frames.end());
+		uint64 sum = std::accumulate(frames.begin(), frames.end(), uint64(0));
+		sum -= frames[0] + frames[frames.size() - 1]; // exclude extremes
+		sum /= frames.size() - 2;
+		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "average: " + sum);
+		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "minimum: " + frames[1]);
+		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "maximum: " + frames[frames.size() - 2]);
 	}
 }

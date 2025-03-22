@@ -5,7 +5,16 @@
 #include <thread>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include "../incWin.h"
+	//#ifndef WIN32_LEAN_AND_MEAN
+	//	#define WIN32_LEAN_AND_MEAN
+	//#endif
+	#ifndef VC_EXTRALEAN
+		#define VC_EXTRALEAN
+	#endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+	#include "../windowsAutoHandle.h"
 #else
 	#include <pthread.h>
 	#include <semaphore.h>
@@ -23,6 +32,7 @@
 
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
+#include <cage-core/timer.h>
 
 namespace cage
 {
@@ -714,30 +724,106 @@ namespace cage
 		return std::thread::hardware_concurrency();
 	}
 
+	namespace
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+
+		// the perfect sleep function:
+		// https://blog.bearcats.nl/perfect-sleep-function/
+
+		// temporarily changes system scheduler precision
+		struct AutoTimeBeginPeriod : private Immovable
+		{
+			UINT param = 0;
+
+			AutoTimeBeginPeriod(UINT p) : param(p)
+			{
+				CAGE_ASSERT(param != 0);
+				auto err = timeBeginPeriod(p);
+				if (err != TIMERR_NOERROR)
+					param = 0; // disable call to timeEndPeriod
+			}
+
+			~AutoTimeBeginPeriod()
+			{
+				if (param != 0)
+					timeEndPeriod(param);
+			}
+		};
+
+		// provides high precision sleep
+		struct WinTimer : private AutoHandle
+		{
+			Holder<Timer> tmr = newTimer();
+			TIMECAPS caps = {};
+
+			WinTimer()
+			{
+				handle = CreateWaitableTimerEx(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+				if (!handle)
+				{
+					auto err = GetLastError();
+					CAGE_LOG(SeverityEnum::Warning, "threadSleep", Stringizer() + "CreateWaitableTimerEx failed with code: " + (sint64)err + ", thread sleeps will be less accurate");
+				}
+
+				{
+					const MMRESULT err = timeGetDevCaps(&caps, sizeof(caps));
+					if (err != MMSYSERR_NOERROR)
+						CAGE_THROW_ERROR(SystemError, "timeGetDevCaps", err);
+				}
+			}
+
+			void sleep(uint64 micros)
+			{
+				const uint64 start = tmr->duration();
+				const uint64 target = start + micros;
+
+				// increase scheduler precision
+				AutoTimeBeginPeriod timePeriod(caps.wPeriodMin);
+
+				// efficient sleep up until one scheduler period before the target time
+				const uint64 threshold = caps.wPeriodMin * uint64(1'200);
+				if (micros > threshold)
+				{
+					if (handle)
+					{
+						LARGE_INTEGER due;
+						due.QuadPart = -(sint64)((micros - threshold) * 10); // micros -> 100s nanoseconds, negative to make the sleep relative
+						if (!SetWaitableTimerEx(handle, &due, 0, nullptr, nullptr, nullptr, 0))
+						{
+							auto err = GetLastError();
+							CAGE_THROW_ERROR(SystemError, "SetWaitableTimerEx", err);
+						}
+						WaitForSingleObject(handle, INFINITE);
+					}
+					else
+					{ // fallback in case that the high-precision timer is not available
+						const uint64 t = (micros - threshold) / 1000;
+						if (t > 0)
+							Sleep(t);
+					}
+				}
+
+				// spin the rest of the time
+				while (tmr->duration() < target)
+					threadYield();
+			}
+		};
+#endif
+	}
+
 	void threadSleep(uint64 micros)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
+
 		// windows Sleep has millisecond precision only
-		if (micros < 1000)
-		{
-			// we yield the thread and potentially busy wait for the remaining duration
-			static_assert(sizeof(uint64) == sizeof(LARGE_INTEGER));
-			uint64 freq = 0, begin = 0, end = 0;
-			QueryPerformanceFrequency((LARGE_INTEGER *)&freq);
-			QueryPerformanceCounter((LARGE_INTEGER *)&begin);
-			while (true)
-			{
-				Sleep(0); // yields the thread
-				QueryPerformanceCounter((LARGE_INTEGER *)&end);
-				const uint64 elapsed = 1000000 * (end - begin) / freq;
-				if (elapsed >= micros)
-					return;
-			}
-		}
-		else
-			Sleep(numeric_cast<DWORD>(micros / 1000));
+		thread_local WinTimer timer;
+		timer.sleep(micros);
+
 #else
+
 		usleep(micros);
+
 #endif
 	}
 
