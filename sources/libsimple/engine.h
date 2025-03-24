@@ -22,6 +22,7 @@ namespace cage
 	void soundFinalize();
 	void soundEmit(uint64 time);
 	void soundTick(uint64 time);
+	void soundDispatch();
 
 	extern EntityComponent *transformHistoryComponent;
 }

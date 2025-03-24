@@ -60,6 +60,7 @@ namespace cage
 					data.state = CheckBoxStateEnum::Unchecked;
 				else
 					data.state = CheckBoxStateEnum::Checked;
+				play(skin->defaults.checkBox.clickSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}

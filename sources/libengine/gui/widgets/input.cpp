@@ -255,6 +255,7 @@ namespace cage
 				{
 					// do nothing
 				}
+				play(data.valid ? skin->defaults.inputBox.typingValidSound : skin->defaults.inputBox.typingInvalidSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 			}
 
@@ -326,6 +327,7 @@ namespace cage
 						utf32.erase(utf32.begin() + cursor);
 						data.value = utf32to8string(utf32);
 						validate();
+						play(data.valid ? skin->defaults.inputBox.typingValidSound : skin->defaults.inputBox.typingInvalidSound);
 						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
 						break;
 					}
@@ -336,6 +338,7 @@ namespace cage
 						utf32.erase(utf32.begin() + cursor);
 						data.value = utf32to8string(utf32);
 						validate();
+						play(data.valid ? skin->defaults.inputBox.typingValidSound : skin->defaults.inputBox.typingInvalidSound);
 						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
 						break;
 					}
@@ -343,7 +346,10 @@ namespace cage
 					case 335: // numpad enter
 					{
 						if (data.valid)
+						{
+							play(skin->defaults.inputBox.confirmationSound);
 							hierarchy->fireWidgetEvent(input::GuiInputConfirm{ hierarchy->impl, hierarchy->ent });
+						}
 						break;
 					}
 				}
@@ -368,6 +374,7 @@ namespace cage
 				data.value = utf32to8string(utf32);
 				cursor++;
 				validate();
+				play(data.valid ? skin->defaults.inputBox.typingValidSound : skin->defaults.inputBox.typingInvalidSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent });
 				return true;
 			}

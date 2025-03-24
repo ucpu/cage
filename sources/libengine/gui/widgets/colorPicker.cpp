@@ -183,6 +183,7 @@ namespace cage
 						Vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = colorHsvToRgb(hsv);
+						playExclusive(skin->defaults.colorPicker.slidingSound);
 						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 					}
 					else if (hasFocus(4))
@@ -192,6 +193,7 @@ namespace cage
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = colorHsvToRgb(hsv);
+						playExclusive(skin->defaults.colorPicker.slidingSound);
 						hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 					}
 				}

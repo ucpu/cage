@@ -186,6 +186,22 @@ namespace cage
 		return RenderableElement(this, element, mode, pos, size);
 	}
 
+	void WidgetItem::play(uint32 soundName)
+	{
+		CAGE_ASSERT(hierarchy && hierarchy->impl);
+		SoundsQueue *q = hierarchy->impl->soundsQueue;
+		if (q && soundName)
+			q->play(soundName);
+	}
+
+	void WidgetItem::playExclusive(uint32 soundName)
+	{
+		CAGE_ASSERT(hierarchy && hierarchy->impl);
+		SoundsQueue *q = hierarchy->impl->soundsQueue;
+		if (q && !q->playing() && soundName)
+			q->play(soundName);
+	}
+
 	bool WidgetItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 	{
 		makeFocused();

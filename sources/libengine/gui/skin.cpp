@@ -27,8 +27,11 @@ namespace cage
 			return Image;
 		}
 
-		constexpr const GuiTextFormatComponent textInit = textFormatComponentInit();
-		constexpr const GuiImageFormatComponent imageInit = imageFormatComponentInit();
+		constexpr GuiTextFormatComponent TextInit = textFormatComponentInit();
+		constexpr GuiImageFormatComponent ImageInit = imageFormatComponentInit();
+
+		constexpr uint32 ClickSound = HashString("cage/sounds/click.wav");
+		constexpr uint32 SlidingSound = HashString("cage/sounds/sliding.wav");
 	}
 
 	namespace
@@ -264,63 +267,72 @@ namespace cage
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
 
-	GuiSkinWidgetDefaults::Label::Label() : textFormat(textInit), imageFormat(imageInit)
+	GuiSkinWidgetDefaults::Label::Label() : textFormat(TextInit), imageFormat(ImageInit)
 	{
 		textFormat.size = 16;
 	}
 
-	GuiSkinWidgetDefaults::Button::Button() : textFormat(textInit), imageFormat(imageInit)
+	GuiSkinWidgetDefaults::Button::Button() : textFormat(TextInit), imageFormat(ImageInit), clickSound(ClickSound)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit)
+	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(TextInit), textInvalidFormat(TextInit), placeholderFormat(TextInit)
 	{
 		textInvalidFormat.color = Vec3(1, 0, 0);
 		placeholderFormat.color = Vec3(0.5);
+		typingValidSound = HashString("cage/sounds/typing.wav");
+		typingInvalidSound = HashString("cage/sounds/typingInvalid.wav");
+		confirmationSound = HashString("cage/sounds/typingConfirm.wav");
 	}
 
-	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit) {}
+	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(TextInit) {}
 
-	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(textInit)
+	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(TextInit), clickSound(ClickSound)
 	{
 		textFormat.size = GuiSkinWidgetDefaults::Label().textFormat.size;
 	}
 
-	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(textInit)
+	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(TextInit), clickSound(ClickSound)
 	{
 		textFormat.size = GuiSkinWidgetDefaults::Label().textFormat.size;
 	}
 
-	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit)
+	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(TextInit), itemsFormat(TextInit), selectedFormat(TextInit)
 	{
 		placeholderFormat.color = Vec3(0.5);
 		placeholderFormat.align = TextAlignEnum::Center;
 		itemsFormat.align = TextAlignEnum::Center;
 		selectedFormat.align = TextAlignEnum::Center;
+		openSound = HashString("cage/sounds/comboOpen.wav");
+		selectSound = HashString("cage/sounds/comboSelect.wav");
 	}
 
-	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit)
+	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(TextInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
 		fillingTextureName = HashString("cage/textures/progressbar/$.png");
 	}
 
-	GuiSkinWidgetDefaults::SliderBar::SliderBar()
+	GuiSkinWidgetDefaults::SliderBar::SliderBar() : slidingSound(SlidingSound)
 	{
 		horizontal.size = Vec2(150, 28);
 		vertical.size = Vec2(28, 150);
 	}
 
-	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(textInit), imageFormat(imageInit)
+	GuiSkinWidgetDefaults::ColorPicker::ColorPicker() : slidingSound(SlidingSound) {}
+
+	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(TextInit), imageFormat(ImageInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::Spoiler::Spoiler() : textFormat(textInit), imageFormat(imageInit)
+	GuiSkinWidgetDefaults::Spoiler::Spoiler() : textFormat(TextInit), imageFormat(ImageInit), clickSound(ClickSound)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
+
+	GuiSkinWidgetDefaults::Scrollbars::Scrollbars() : slidingSound(SlidingSound) {}
 
 	namespace
 	{

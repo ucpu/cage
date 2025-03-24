@@ -82,6 +82,7 @@ namespace cage
 					if (data.vertical)
 						f = 1 - f;
 					data.value = f * (data.max - data.min) + data.min;
+					playExclusive(skin->defaults.sliderBar.slidingSound);
 					hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				}
 				return true;

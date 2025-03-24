@@ -12,8 +12,8 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sound.h>
+#include <cage-engine/soundsVoices.h>
 #include <cage-engine/speaker.h>
-#include <cage-engine/voices.h>
 
 namespace cage
 {
@@ -58,9 +58,8 @@ namespace cage
 
 		struct PrepareListener
 		{
-			// todo split by sound category (music / voice over / effect)
 			Holder<VoicesMixer> mixer;
-			Holder<Voice> chaining; // register this mixer in the engine effects mixer
+			Holder<Voice> chaining; // register this mixer in the engine scene mixer
 
 			ankerl::unordered_dense::map<uintPtr, Holder<Voice>> voicesMapping;
 		};
@@ -164,15 +163,14 @@ namespace cage
 					if (!l.mixer)
 					{
 						l.mixer = newVoicesMixer();
-						l.chaining = engineEffectsMixer()->newVoice();
+						l.chaining = engineSceneMixer()->newVoice();
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
-					Listener &p = l.mixer->listener();
 					const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
-					p.orientation = t.orientation;
-					p.position = t.position;
-					p.maxActiveVoices = e.listener.maxSounds;
-					p.gain = e.listener.gain;
+					l.mixer->orientation = t.orientation;
+					l.mixer->position = t.position;
+					l.mixer->maxActiveVoices = e.listener.maxSounds;
+					l.mixer->gain = e.listener.gain;
 				}
 
 				{ // remove obsolete
@@ -209,22 +207,17 @@ namespace cage
 				if (!lock)
 					return;
 
-				{
-					ProfilingScope profiling("sound prepare");
-					emitRead = &emitBuffers[lock.index()];
-					ScopeGuard guard([&]() { emitRead = nullptr; });
-					emitTime = emitRead->time;
-					const uint64 period = controlThread().updatePeriod();
-					dispatchTime = itc(emitTime, time, period);
-					interFactor = saturate(Real(dispatchTime - emitTime) / period);
-					prepare();
-				}
-
-				{
-					ProfilingScope profiling("speaker");
-					engineSpeaker()->process(dispatchTime);
-				}
+				ProfilingScope profiling("sound tick");
+				emitRead = &emitBuffers[lock.index()];
+				ScopeGuard guard([&]() { emitRead = nullptr; });
+				emitTime = emitRead->time;
+				const uint64 period = controlThread().updatePeriod();
+				dispatchTime = itc(emitTime, time, period);
+				interFactor = saturate(Real(dispatchTime - emitTime) / period);
+				prepare();
 			}
+
+			void dispatch() { engineSpeaker()->process(dispatchTime); }
 		};
 
 		SoundPrepareImpl *soundPrepare;
@@ -238,6 +231,11 @@ namespace cage
 	void soundTick(uint64 time)
 	{
 		soundPrepare->tick(time);
+	}
+
+	void soundDispatch()
+	{
+		soundPrepare->dispatch();
 	}
 
 	void soundFinalize()

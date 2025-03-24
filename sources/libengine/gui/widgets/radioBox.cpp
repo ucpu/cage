@@ -66,6 +66,7 @@ namespace cage
 				for (const auto &it : parent->children)
 					deselect(+it);
 				data.state = CheckBoxStateEnum::Checked;
+				play(skin->defaults.radioBox.clickSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}

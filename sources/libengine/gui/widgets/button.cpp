@@ -44,6 +44,7 @@ namespace cage
 			{
 				CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 				makeFocused();
+				play(skin->defaults.button.clickSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}

@@ -107,6 +107,7 @@ namespace cage
 							collapse(+it);
 						}
 					}
+					play(skin->defaults.spoiler.clickSound);
 				}
 				return true;
 			}

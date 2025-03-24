@@ -1,45 +1,44 @@
+#include <algorithm>
 #include <vector>
-
-#include <plf_colony.h>
 
 #include <cage-core/audioChannelsConverter.h>
 #include <cage-core/audioDirectionalConverter.h>
 #include <cage-core/sampleRateConverter.h>
 #include <cage-engine/sound.h>
-#include <cage-engine/voices.h>
+#include <cage-engine/soundsVoices.h>
 
 namespace cage
 {
 	namespace
 	{
-		struct VoiceImpl : public Voice
-		{};
+		class VoicesMixerImpl;
+
+		class VoiceImpl : public Voice
+		{
+		public:
+			VoicesMixerImpl *mixer = nullptr;
+
+			VoiceImpl(VoicesMixerImpl *mixer);
+			~VoiceImpl();
+		};
 
 		class VoicesMixerImpl : public VoicesMixer
 		{
 		public:
-			VoicesMixerImpl() {}
-
-			Listener listener;
-			plf::colony<VoiceImpl> voices;
+			std::vector<VoiceImpl *> voices;
 			Holder<SampleRateConverter> rateConv1, rateConvT;
 			Holder<AudioDirectionalConverter> dirConv;
 			Holder<AudioChannelsConverter> chansConv;
 			std::vector<float> tmp1, tmp2;
 
-			Holder<Voice> createVoice()
+			~VoicesMixerImpl()
 			{
-				struct VoiceReference
-				{
-					VoiceImpl *v = nullptr;
-					VoicesMixerImpl *m = nullptr;
-					~VoiceReference() { m->voices.erase(m->voices.get_iterator(v)); }
-				};
-				Holder<VoiceReference> h = systemMemory().createHolder<VoiceReference>();
-				h->v = &*voices.emplace();
-				h->m = this;
-				return Holder<Voice>(h->v, std::move(h));
+				for (auto it : voices)
+					it->mixer = nullptr;
+				voices.clear();
 			}
+
+			Holder<Voice> createVoice() { return systemMemory().createImpl<Voice, VoiceImpl>(this); }
 
 			Real voiceGain(const VoiceImpl &v) const
 			{
@@ -48,7 +47,7 @@ namespace cage
 				{
 					CAGE_ASSERT(v.maxDistance > v.minDistance);
 					CAGE_ASSERT(v.minDistance > 0);
-					const Real dist = clamp(distance(v.position, listener.position), v.minDistance, v.maxDistance);
+					const Real dist = clamp(distance(v.position, this->position), v.minDistance, v.maxDistance);
 					switch (v.attenuation)
 					{
 						case SoundAttenuationEnum::None:
@@ -67,13 +66,15 @@ namespace cage
 					}
 				}
 				CAGE_ASSERT(valid(att) && att >= 0 && att <= 1 + 1e-7);
-				const Real gain = listener.gain * v.gain * att;
+				const Real gain = this->gain * v.gain * att;
 				CAGE_ASSERT(valid(gain) && gain >= 0 && gain.finite());
 				return gain;
 			}
 
 			void processVoice(VoiceImpl &v, const SoundCallbackData &data)
 			{
+				CAGE_ASSERT(!v.callback != !v.sound);
+
 				const Real gain = voiceGain(v);
 				if (gain < 1e-6)
 					return;
@@ -90,11 +91,11 @@ namespace cage
 					d.buffer = tmp1;
 					v.callback(d);
 				}
-				else
+				else if (v.sound)
 				{
 					const uint32 channels = v.sound->channels();
 					const uint32 sampleRate = v.sound->sampleRate();
-					const sintPtr startFrame = numeric_cast<sintPtr>((data.time - v.startTime) * sampleRate / 1000000);
+					const sintPtr startFrame = numeric_cast<sintPtr>((data.time - v.startTime) * sampleRate / 1'000'000);
 					const uintPtr frames = numeric_cast<uintPtr>(uint64(data.frames) * sampleRate / data.sampleRate);
 					tmp1.resize(frames * channels);
 					v.sound->decode(startFrame, tmp1, v.loop);
@@ -130,6 +131,8 @@ namespace cage
 						std::swap(tmp1, tmp2);
 					}
 				}
+				else
+					return;
 
 				// apply spatial conversion
 				if (spatial && data.channels > 1)
@@ -137,8 +140,8 @@ namespace cage
 					CAGE_ASSERT(tmp1.size() == data.frames);
 					tmp2.resize(data.frames * data.channels);
 					AudioDirectionalProcessConfig cfg;
-					cfg.listenerOrientation = listener.orientation;
-					cfg.listenerPosition = listener.position;
+					cfg.listenerOrientation = this->orientation;
+					cfg.listenerPosition = this->position;
 					cfg.sourcePosition = v.position;
 					dirConv->process(tmp1, tmp2, cfg);
 					std::swap(tmp1, tmp2);
@@ -164,27 +167,32 @@ namespace cage
 				if (!chansConv)
 					chansConv = newAudioChannelsConverter();
 
-				for (float &dst : data.buffer)
-					dst = 0;
-				for (VoiceImpl &v : voices)
-				{
-					CAGE_ASSERT(!v.callback != !v.sound);
-					processVoice(v, data);
-				}
+				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
+				for (VoiceImpl *v : voices)
+					processVoice(*v, data);
 			}
 		};
+
+		VoiceImpl::VoiceImpl(VoicesMixerImpl *mixer) : mixer(mixer)
+		{
+			CAGE_ASSERT(mixer);
+			mixer->voices.push_back(this);
+		}
+
+		VoiceImpl::~VoiceImpl()
+		{
+			if (mixer)
+			{
+				std::erase(mixer->voices, this);
+				mixer = nullptr;
+			}
+		}
 	}
 
 	Holder<Voice> VoicesMixer::newVoice()
 	{
 		VoicesMixerImpl *impl = (VoicesMixerImpl *)this;
 		return impl->createVoice();
-	}
-
-	Listener &VoicesMixer::listener()
-	{
-		VoicesMixerImpl *impl = (VoicesMixerImpl *)this;
-		return impl->listener;
 	}
 
 	void VoicesMixer::process(const SoundCallbackData &data)

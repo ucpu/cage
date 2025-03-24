@@ -36,10 +36,11 @@
 #include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/sound.h>
+#include <cage-engine/soundsQueue.h>
+#include <cage-engine/soundsVoices.h>
 #include <cage-engine/speaker.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/virtualReality.h>
-#include <cage-engine/voices.h>
 #include <cage-engine/window.h>
 #include <cage-simple/engine.h>
 #include <cage-simple/statisticsGui.h>
@@ -126,9 +127,9 @@ namespace cage
 			Holder<VirtualReality> virtualReality;
 			Holder<Speaker> speaker;
 			Holder<VoicesMixer> masterBus;
-			Holder<VoicesMixer> effectsBus;
-			Holder<VoicesMixer> guiBus;
-			Holder<Voice> effectsVoice;
+			Holder<VoicesMixer> sceneMixer;
+			Holder<SoundsQueue> guiMixer;
+			Holder<Voice> sceneVoice;
 			Holder<Voice> guiVoice;
 			Holder<GuiManager> gui;
 			ExclusiveHolder<RenderQueue> guiRenderQueue;
@@ -292,6 +293,10 @@ namespace cage
 				{
 					ProfilingScope profiling("sound run");
 					soundTick(soundUpdateSchedule->time());
+				}
+				{
+					ProfilingScope profiling("sound dispatch");
+					soundDispatch();
 				}
 			}
 
@@ -531,14 +536,8 @@ namespace cage
 					provisionalGraphics = newProvisionalGraphics();
 				}
 
-				{ // create sound
+				{ // create sound speaker
 					masterBus = newVoicesMixer();
-					effectsBus = newVoicesMixer();
-					guiBus = newVoicesMixer();
-					effectsVoice = masterBus->newVoice();
-					guiVoice = masterBus->newVoice();
-					effectsVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+effectsBus);
-					guiVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+guiBus);
 					SpeakerCreateConfig cfg;
 					if (config.speaker)
 						cfg = *config.speaker;
@@ -548,12 +547,22 @@ namespace cage
 					speaker = newSpeaker(cfg);
 				}
 
+				{ // create sound mixers
+					sceneMixer = newVoicesMixer();
+					sceneVoice = masterBus->newVoice();
+					sceneVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+sceneMixer);
+					guiMixer = newSoundsQueue(+assets);
+					guiVoice = masterBus->newVoice();
+					guiVoice->callback.bind<SoundsQueue, &SoundsQueue::process>(+guiMixer);
+				}
+
 				{ // create gui
 					GuiManagerCreateConfig cfg;
 					if (config.gui)
 						cfg = *config.gui;
 					cfg.assetManager = +assets;
 					cfg.provisionalGraphics = +provisionalGraphics;
+					cfg.soundsQueue = +guiMixer;
 					gui = newGuiManager(cfg);
 					gui->widgetEvent.merge(engineEvents());
 					windowGuiEventsListener.attach(window->events, -1000);
@@ -689,6 +698,8 @@ namespace cage
 						gui->cleanUp();
 					if (provisionalGraphics)
 						provisionalGraphics->purge();
+					if (guiMixer)
+						guiMixer->purge();
 				}
 
 				if (assets)
@@ -723,11 +734,11 @@ namespace cage
 
 				{ // destroy sound
 					speaker.clear();
-					effectsVoice.clear();
-					guiVoice.clear();
 					masterBus.clear();
-					effectsBus.clear();
-					guiBus.clear();
+					sceneVoice.clear();
+					sceneMixer.clear();
+					guiVoice.clear();
+					guiMixer.clear();
 				}
 
 				{ // destroy graphics
@@ -868,14 +879,14 @@ namespace cage
 		return +engineData->masterBus;
 	}
 
-	VoicesMixer *engineEffectsMixer()
+	VoicesMixer *engineSceneMixer()
 	{
-		return +engineData->effectsBus;
+		return +engineData->sceneMixer;
 	}
 
-	VoicesMixer *engineGuiMixer()
+	SoundsQueue *engineGuiMixer()
 	{
-		return +engineData->guiBus;
+		return +engineData->guiMixer;
 	}
 
 	ProvisionalGraphics *engineProvisionalGraphics()

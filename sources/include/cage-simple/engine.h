@@ -14,6 +14,7 @@ namespace cage
 	class Speaker;
 	class VirtualReality;
 	class VoicesMixer;
+	class SoundsQueue;
 	class Window;
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
@@ -86,8 +87,8 @@ namespace cage
 	GuiManager *engineGuiManager();
 	Speaker *engineSpeaker();
 	VoicesMixer *engineMasterMixer();
-	VoicesMixer *engineEffectsMixer();
-	VoicesMixer *engineGuiMixer();
+	VoicesMixer *engineSceneMixer();
+	SoundsQueue *engineGuiMixer();
 	ProvisionalGraphics *engineProvisionalGraphics();
 	uint64 engineControlTime();
 

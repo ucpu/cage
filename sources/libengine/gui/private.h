@@ -9,6 +9,7 @@
 #include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
 #include <cage-engine/renderQueue.h> // UubRange
+#include <cage-engine/soundsQueue.h>
 #include <cage-engine/window.h> // WindowEventListeners
 
 #define GUI_HAS_COMPONENT(T, E) (E)->has<Gui##T##Component>()
@@ -116,6 +117,9 @@ namespace cage
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
 		RenderableElement emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
+
+		void play(uint32 soundName);
+		void playExclusive(uint32 soundName); // only plays when nothing else is currently playing
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
@@ -293,6 +297,7 @@ namespace cage
 		Holder<AssetsOnDemand> assetOnDemand;
 		AssetsManager *assetMgr = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
+		SoundsQueue *soundsQueue = nullptr;
 
 		Vec2i outputResolution; // resolution of output texture or screen (pixels)
 		Vec2 inputMouse; // last position of mouse (pixels)

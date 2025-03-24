@@ -75,6 +75,7 @@ namespace cage
 					list->widgetState = widgetState;
 					list->skin = skin;
 					hierarchy->impl->root->children.push_back(std::move(item));
+					// play(skin->defaults.comboBox.openSound); // todo
 				}
 			}
 
@@ -236,6 +237,7 @@ namespace cage
 				combo->selected = index;
 				consolidateSelection(combo->list->hierarchy, combo->selected);
 				hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
+				play(skin->defaults.comboBox.selectSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				combo->hierarchy->fireWidgetEvent(input::GuiValue{ combo->hierarchy->impl, combo->hierarchy->ent, buttons, modifiers });
 			}

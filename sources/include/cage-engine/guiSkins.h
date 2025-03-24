@@ -30,6 +30,7 @@ namespace cage
 			Vec4 padding = Vec4(2);
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(150, 28);
+			uint32 clickSound = 0;
 			Button();
 		} button;
 		struct CAGE_ENGINE_API Input
@@ -43,6 +44,10 @@ namespace cage
 			Real buttonsWidth = 28;
 			Real buttonsOffset = 2;
 			InputButtonsPlacementModeEnum buttonsMode = InputButtonsPlacementModeEnum::Sides;
+			uint32 typingValidSound = 0;
+			uint32 typingInvalidSound = 0;
+			uint32 confirmationSound = 0;
+			// uint32 focusGainSound = 0;
 			Input();
 		} inputBox;
 		struct CAGE_ENGINE_API TextArea
@@ -59,6 +64,7 @@ namespace cage
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(28);
 			Vec2 labelOffset = Vec2(4, 6);
+			uint32 clickSound = 0;
 			CheckBox();
 		} checkBox;
 		struct CAGE_ENGINE_API RadioBox
@@ -67,6 +73,7 @@ namespace cage
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(28);
 			Vec2 labelOffset = Vec2(4, 5);
+			uint32 clickSound = 0;
 			RadioBox();
 		} radioBox;
 		struct CAGE_ENGINE_API ComboBox
@@ -81,6 +88,8 @@ namespace cage
 			Vec2 size = Vec2(250, 28);
 			Real listOffset = -2;
 			Real itemSpacing = -2;
+			uint32 openSound = 0;
+			uint32 selectSound = 0;
 			ComboBox();
 		} comboBox;
 		struct CAGE_ENGINE_API ProgressBar
@@ -102,6 +111,7 @@ namespace cage
 				Vec2 size;
 				bool collapsedBar = true;
 			} horizontal, vertical;
+			uint32 slidingSound = 0;
 			SliderBar();
 		} sliderBar;
 		struct CAGE_ENGINE_API ColorPicker
@@ -111,6 +121,8 @@ namespace cage
 			Vec2 fullSize = Vec2(250, 180);
 			Real hueBarPortion = 0.18;
 			Real resultBarPortion = 0.35;
+			uint32 slidingSound = 0;
+			ColorPicker();
 		} colorPicker;
 		struct CAGE_ENGINE_API Panel
 		{
@@ -130,12 +142,15 @@ namespace cage
 			Vec4 contentPadding = Vec4(2);
 			Vec4 captionPadding = Vec4(2);
 			Real captionHeight = 30;
+			uint32 clickSound = 0;
 			Spoiler();
 		} spoiler;
 		struct CAGE_ENGINE_API Scrollbars
 		{
 			Real scrollbarSize = 15;
 			Real contentPadding = 4;
+			uint32 slidingSound = 0;
+			Scrollbars();
 		} scrollbars;
 	};
 

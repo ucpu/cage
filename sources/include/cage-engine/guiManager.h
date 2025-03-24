@@ -8,6 +8,7 @@ namespace cage
 	class EntityManager;
 	class RenderQueue;
 	class ProvisionalGraphics;
+	class SoundsQueue;
 	struct GuiSkinConfig;
 	struct GuiSkinIndex;
 
@@ -41,6 +42,7 @@ namespace cage
 	{
 		AssetsManager *assetManager = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;
+		SoundsQueue *soundsQueue = nullptr;
 		uint32 skinsCount = 4;
 		bool tooltipsEnabled = true;
 	};

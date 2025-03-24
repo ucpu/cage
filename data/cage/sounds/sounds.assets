@@ -1,3 +1,13 @@
 []
+scheme = sound
+click.wav
+comboOpen.wav
+comboSelect.wav
+sliding.wav
+typing.wav
+typingConfirm.wav
+typingInvalid.wav
+
+[]
 scheme = pack
 sounds.pack
