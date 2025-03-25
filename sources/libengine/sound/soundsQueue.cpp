@@ -23,6 +23,7 @@ namespace cage
 			sint64 startTime = m;
 			sint64 endTime = m;
 			uint32 name = 0;
+			Real effectiveGain = 0;
 
 			Event(SoundsQueueImpl *impl);
 			Event(Event &&other) noexcept;
@@ -57,7 +58,7 @@ namespace cage
 
 			SoundsQueueImpl(AssetsManager *assets) : assets(assets), onDemand(newAssetsOnDemand(assets)), swapController(newSwapBufferGuard(SwapBufferGuardCreateConfig{ .buffersCount = 3, .repeatedWrites = true })) {}
 
-			void updateActive(sint64 currentTime)
+			void updateEvents(sint64 currentTime)
 			{
 				// remove finished
 				std::erase_if(active,
@@ -106,19 +107,22 @@ namespace cage
 					remaining.store(rem, std::memory_order_relaxed);
 				}
 
+				// update effective gains
+				for (Event &a : active)
+					a.effectiveGain = a.gain * this->gain;
+
 				// sort by priority
-				// todo
+				std::sort(active.begin(), active.end(), [](const Event &a, const Event &b) -> bool { return std::pair(a.priority, a.effectiveGain) > std::pair(b.priority, b.effectiveGain); });
+				for (uint32 i = maxActiveSounds; i < active.size(); i++)
+					active[i].effectiveGain = 0;
 			}
 
-			void processActive(Event &v, const SoundCallbackData &data)
+			void processEvent(Event &v, const SoundCallbackData &data)
 			{
-				if (v.startTime == m)
+				if (v.startTime == m || v.effectiveGain < 1e-5)
 					return;
 
 				CAGE_ASSERT(v.sound);
-				const Real gain = v.gain * this->gain;
-				if (gain < 1e-6)
-					return;
 
 				// decode source
 				const uint32 channels = v.sound->channels();
@@ -148,21 +152,23 @@ namespace cage
 				// add the result to accumulation buffer
 				CAGE_ASSERT(tmp1.size() == data.buffer.size());
 				auto src = tmp1.begin();
+				const float g = v.effectiveGain.value;
 				for (float &dst : data.buffer)
-					dst += *src++ * gain.value;
+					dst += *src++ * g;
 			}
 
 			void process(const SoundCallbackData &data)
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
-				CAGE_ASSERT(gain.valid() && gain >= 0);
+				CAGE_ASSERT(gain.valid() && gain >= 0 && gain.finite());
+				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 
 				if (purging)
 					return;
 
-				updateActive(data.time);
+				updateEvents(data.time);
 				onDemand->process();
-				if (active.empty())
+				if (active.empty() || gain < 1e-5)
 					return;
 
 				if (!rateConv || rateConv->channels() != data.channels)
@@ -170,9 +176,8 @@ namespace cage
 				if (!chansConv)
 					chansConv = newAudioChannelsConverter();
 
-				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 				for (Event &a : active)
-					processActive(a, data);
+					processEvent(a, data);
 			}
 		};
 

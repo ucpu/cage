@@ -17,9 +17,11 @@ namespace cage
 		{
 		public:
 			VoicesMixerImpl *mixer = nullptr;
+			Real effectiveGain = 0;
 
 			VoiceImpl(VoicesMixerImpl *mixer);
 			~VoiceImpl();
+			void updateGain();
 		};
 
 		class VoicesMixerImpl : public VoicesMixer
@@ -40,43 +42,23 @@ namespace cage
 
 			Holder<Voice> createVoice() { return systemMemory().createImpl<Voice, VoiceImpl>(this); }
 
-			Real voiceGain(const VoiceImpl &v) const
+			void updateVoices()
 			{
-				Real att = 1;
-				if (v.position.valid())
-				{
-					CAGE_ASSERT(v.maxDistance > v.minDistance);
-					CAGE_ASSERT(v.minDistance > 0);
-					const Real dist = clamp(distance(v.position, this->position), v.minDistance, v.maxDistance);
-					switch (v.attenuation)
-					{
-						case SoundAttenuationEnum::None:
-							break;
-						case SoundAttenuationEnum::Linear:
-							att = 1 - (dist - v.minDistance) / (v.maxDistance - v.minDistance);
-							break;
-						case SoundAttenuationEnum::Logarithmic:
-							att = 1 - log(dist - v.minDistance + 1) / log(v.maxDistance - v.minDistance + 1);
-							break;
-						case SoundAttenuationEnum::InverseSquare:
-							att = saturate(2 / (1 + sqr(dist / (v.minDistance + 1))));
-							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "invalid sound attenuation enum");
-					}
-				}
-				CAGE_ASSERT(valid(att) && att >= 0 && att <= 1 + 1e-7);
-				const Real gain = this->gain * v.gain * att;
-				CAGE_ASSERT(valid(gain) && gain >= 0 && gain.finite());
-				return gain;
+				// update effective gains
+				for (VoiceImpl *v : voices)
+					v->updateGain();
+
+				// sort by priority
+				std::sort(voices.begin(), voices.end(), [](const VoiceImpl *a, const VoiceImpl *b) -> bool { return std::pair(a->priority, a->effectiveGain) > std::pair(b->priority, b->effectiveGain); });
+				for (uint32 i = maxActiveVoices; i < voices.size(); i++)
+					voices[i]->effectiveGain = 0;
 			}
 
 			void processVoice(VoiceImpl &v, const SoundCallbackData &data)
 			{
 				CAGE_ASSERT(!v.callback != !v.sound);
 
-				const Real gain = voiceGain(v);
-				if (gain < 1e-6)
+				if (v.effectiveGain < 1e-5)
 					return;
 
 				const bool spatial = v.position.valid();
@@ -150,13 +132,21 @@ namespace cage
 				// add the result to accumulation buffer
 				CAGE_ASSERT(tmp1.size() == data.buffer.size());
 				auto src = tmp1.begin();
+				const float g = v.effectiveGain.value;
 				for (float &dst : data.buffer)
-					dst += *src++ * gain.value;
+					dst += *src++ * g;
 			}
 
 			void process(const SoundCallbackData &data)
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
+				CAGE_ASSERT(gain.valid() && gain >= 0 && gain.finite());
+				CAGE_ASSERT(position.valid() && orientation.valid());
+				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
+
+				updateVoices();
+				if (voices.empty() || gain < 1e-5)
+					return;
 
 				if (!rateConv1)
 					rateConv1 = newSampleRateConverter(1);
@@ -167,7 +157,6 @@ namespace cage
 				if (!chansConv)
 					chansConv = newAudioChannelsConverter();
 
-				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 				for (VoiceImpl *v : voices)
 					processVoice(*v, data);
 			}
@@ -186,6 +175,34 @@ namespace cage
 				std::erase(mixer->voices, this);
 				mixer = nullptr;
 			}
+		}
+
+		void VoiceImpl::updateGain()
+		{
+			Real att = 1;
+			if (position.valid())
+			{
+				CAGE_ASSERT(maxDistance > minDistance);
+				CAGE_ASSERT(minDistance > 0);
+				const Real dist = clamp(distance(position, mixer->position), minDistance, maxDistance);
+				switch (attenuation)
+				{
+					case SoundAttenuationEnum::None:
+						break;
+					case SoundAttenuationEnum::Linear:
+						att = 1 - (dist - minDistance) / (maxDistance - minDistance);
+						break;
+					case SoundAttenuationEnum::Logarithmic:
+						att = 1 - log(dist - minDistance + 1) / log(maxDistance - minDistance + 1);
+						break;
+					case SoundAttenuationEnum::InverseSquare:
+						att = saturate(2 / (1 + sqr(dist / (minDistance + 1))));
+						break;
+				}
+			}
+			CAGE_ASSERT(valid(att) && att >= 0 && att <= 1 + 1e-7);
+			effectiveGain = gain * mixer->gain * att;
+			CAGE_ASSERT(valid(effectiveGain) && effectiveGain >= 0 && effectiveGain.finite());
 		}
 	}
 

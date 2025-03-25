@@ -94,6 +94,7 @@ namespace cage
 		LightAttenuationEnum attenuation = LightAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
 		Real maxDistance = 100;
+		sint32 priority = 0;
 	};
 
 	struct CAGE_ENGINE_API ShadowmapComponent

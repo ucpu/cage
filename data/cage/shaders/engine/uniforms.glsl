@@ -52,8 +52,8 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform ArmaturesBlock
 struct UniLight
 {
 	vec4 color; // linear rgb, intensity
-	vec4 position; // xyz, sortingDistance
-	vec4 direction; // xyz, unused
+	vec4 position; // xyz, sortingIntensity
+	vec4 direction; // xyz, sortingPriority
 	vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
 	vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
 };

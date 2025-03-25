@@ -72,8 +72,8 @@ namespace cage
 		struct UniLight
 		{
 			Vec4 color; // linear rgb, intensity
-			Vec4 position; // xyz, maxDistance
-			Vec4 direction; // xyz, unused
+			Vec4 position; // xyz, sortingIntensity
+			Vec4 direction; // xyz, sortingPriority
 			Vec4 attenuation; // attenuationType, minDistance, maxDistance, unused
 			Vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
 		};
@@ -346,6 +346,7 @@ namespace cage
 					uni.position[3] = lc.maxDistance / (distance(Vec3(uni.position), cameraCenter) + 1e-5);
 				else
 					uni.position[3] = Real::Infinity();
+				uni.direction[3] = lc.priority;
 
 				uni.params[0] = [&]() -> Real
 				{
@@ -370,7 +371,7 @@ namespace cage
 
 			static void filterLightsOverLimit(std::vector<UniLight> &lights, uint32 limit)
 			{
-				std::sort(lights.begin(), lights.end(), [&](const UniLight &a, const UniLight &b) { return a.position[3] > b.position[3]; });
+				std::sort(lights.begin(), lights.end(), [&](const UniLight &a, const UniLight &b) { return std::pair(a.direction[3], a.position[3]) > std::pair(b.direction[3], b.position[3]); });
 				limit = min(limit, (uint32)CAGE_SHADER_MAX_LIGHTS);
 				if (lights.size() > limit)
 					lights.resize(limit);

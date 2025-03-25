@@ -192,9 +192,7 @@ namespace cage
 	{
 		const uint64 originalDuration = snd->duration();
 		audioConvertFrames(snd, numeric_cast<uintPtr>(snd->frames() * uint64(sampleRate) / snd->sampleRate()), quality);
-		CAGE_ASSERT(abs((sint32)(snd->sampleRate() - sampleRate)) < 10);
 		audioSetSampleRate(snd, sampleRate); // in case of rounding errors
-		CAGE_ASSERT(abs((sint64)(snd->duration() - originalDuration)) < 100);
 	}
 
 	void audioConvertFrames(Audio *snd, uintPtr frames, uint32 quality)
