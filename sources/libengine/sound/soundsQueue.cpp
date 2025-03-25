@@ -14,27 +14,25 @@ namespace cage
 {
 	namespace
 	{
-		struct Stop
-		{};
+		class SoundsQueueImpl;
 
-		struct Event
+		struct Event : private Noncopyable, public SoundEventConfig
 		{
-			std::variant<std::monostate, Holder<Sound>, uint32, Stop> data;
-			Real gain;
+			SoundsQueueImpl *impl = nullptr;
+			Holder<Sound> sound;
+			sint64 startTime = m;
+			sint64 endTime = m;
+			uint32 name = 0;
+
+			Event(SoundsQueueImpl *impl);
+			Event(Event &&other) noexcept;
+			~Event();
+			Event &operator=(Event &&ee) noexcept = default;
 		};
 
 		struct Emit
 		{
 			std::vector<Event> data;
-		};
-
-		struct Active
-		{
-			Holder<Sound> sound;
-			sint64 startTime = m;
-			sint64 endTime = m;
-			uint32 name = 0;
-			Real gain = 1;
 		};
 
 		class SoundsQueueImpl : public SoundsQueue
@@ -46,8 +44,11 @@ namespace cage
 			Emit emits[3];
 			Holder<SwapBufferGuard> swapController;
 
-			std::vector<Active> active;
-			std::atomic<bool> playing = false;
+			std::vector<Event> active;
+
+			std::atomic<sint32> counter = 0;
+			std::atomic<uint64> elapsed = 0;
+			std::atomic<uint64> remaining = 0;
 			std::atomic<bool> purging = false;
 
 			Holder<SampleRateConverter> rateConv;
@@ -60,7 +61,7 @@ namespace cage
 			{
 				// remove finished
 				std::erase_if(active,
-					[&](const Active &a) -> bool
+					[&](const Event &a) -> bool
 					{
 						CAGE_ASSERT(a.endTime != m);
 						return a.endTime < currentTime;
@@ -69,44 +70,47 @@ namespace cage
 				// add new
 				if (auto lock = swapController->read())
 				{
-					const sint64 endTime = currentTime + 5'000'000; // implicitly remove sounds that have failed to load in less than 5 second
-					for (auto &it : emits[lock.index()].data)
+					for (Event &it : emits[lock.index()].data)
 					{
-						std::visit(
-							[&](auto &d)
-							{
-								using T = std::decay_t<decltype(d)>;
-								if constexpr (std::is_same_v<T, Holder<Sound>>)
-									active.push_back(Active{ .sound = std::move(d), .endTime = endTime, .gain = it.gain });
-								if constexpr (std::is_same_v<T, uint32>)
-									active.push_back(Active{ .endTime = endTime, .name = d, .gain = it.gain });
-								if constexpr (std::is_same_v<T, Stop>)
-									active.clear();
-							},
-							it.data);
+						it.endTime = currentTime + it.maxDelay;
+						active.push_back(std::move(it));
 					}
 					emits[lock.index()].data.clear();
 				}
 
 				// update times
-				for (Active &a : active)
 				{
-					if (a.startTime != m)
-						continue;
-					if (!a.sound)
-						a.sound = onDemand->get<AssetSchemeIndexSound, Sound>(a.name);
-					if (a.sound)
+					sint64 minStart = 0;
+					sint64 maxEnd = 0;
+					for (Event &a : active)
 					{
-						a.startTime = currentTime;
-						a.endTime = a.startTime + a.sound->duration();
+						if (a.startTime == m)
+						{
+							if (!a.sound)
+								a.sound = onDemand->get<AssetSchemeIndexSound, Sound>(a.name);
+							if (a.sound)
+							{
+								a.startTime = currentTime;
+								a.endTime = a.startTime + a.sound->duration();
+							}
+						}
+						if (a.startTime != m)
+						{
+							minStart = min(minStart, a.startTime);
+							maxEnd = max(maxEnd, a.endTime);
+						}
 					}
+					const uint64 elp = max(currentTime - minStart, sint64(0));
+					elapsed.store(elp, std::memory_order_relaxed);
+					const uint64 rem = max(maxEnd - currentTime, sint64(0));
+					remaining.store(rem, std::memory_order_relaxed);
 				}
 
 				// sort by priority
 				// todo
 			}
 
-			void processActive(Active &v, const SoundCallbackData &data)
+			void processActive(Event &v, const SoundCallbackData &data)
 			{
 				if (v.startTime == m)
 					return;
@@ -151,12 +155,12 @@ namespace cage
 			void process(const SoundCallbackData &data)
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
+				CAGE_ASSERT(gain.valid() && gain >= 0);
 
 				if (purging)
 					return;
 
 				updateActive(data.time);
-				playing = !active.empty();
 				onDemand->process();
 				if (active.empty())
 					return;
@@ -167,38 +171,72 @@ namespace cage
 					chansConv = newAudioChannelsConverter();
 
 				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
-				for (Active &a : active)
+				for (Event &a : active)
 					processActive(a, data);
 			}
 		};
+
+		Event::Event(SoundsQueueImpl *impl) : impl(impl)
+		{
+			CAGE_ASSERT(impl);
+			impl->counter.fetch_add(1, std::memory_order_relaxed);
+		}
+
+		Event::~Event()
+		{
+			impl->counter.fetch_add(-1, std::memory_order_relaxed);
+		}
+
+		Event::Event(Event &&other) noexcept
+		{
+			*this = std::move(other);
+			impl->counter.fetch_add(1, std::memory_order_relaxed);
+		}
 	}
 
-	void SoundsQueue::play(Holder<Sound> sound, Real gain)
+	void SoundsQueue::play(Holder<Sound> sound, const SoundEventConfig &cfg)
 	{
+		CAGE_ASSERT(cfg.gain.valid() && cfg.gain >= 0);
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
 		if (auto lock = impl->swapController->write())
-			impl->emits[lock.index()].data.push_back(Event{ std::move(sound), gain });
+		{
+			Event e(impl);
+			e.sound = std::move(sound);
+			(SoundEventConfig &)e = cfg;
+			impl->emits[lock.index()].data.push_back(std::move(e));
+		}
 	}
 
-	void SoundsQueue::play(uint32 soundId, Real gain)
+	void SoundsQueue::play(uint32 soundId, const SoundEventConfig &cfg)
 	{
+		CAGE_ASSERT(cfg.gain.valid() && cfg.gain >= 0);
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
 		impl->onDemand->preload(soundId);
 		if (auto lock = impl->swapController->write())
-			impl->emits[lock.index()].data.push_back(Event{ soundId, gain });
-	}
-
-	void SoundsQueue::stop()
-	{
-		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
-		if (auto lock = impl->swapController->write())
-			impl->emits[lock.index()].data.push_back(Event{ Stop(), 0 });
+		{
+			Event e(impl);
+			e.name = soundId;
+			(SoundEventConfig &)e = cfg;
+			impl->emits[lock.index()].data.push_back(std::move(e));
+		}
 	}
 
 	bool SoundsQueue::playing() const
 	{
 		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
-		return impl->playing;
+		return impl->counter.load(std::memory_order_relaxed) > 0;
+	}
+
+	uint64 SoundsQueue::elapsedTime() const
+	{
+		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
+		return impl->elapsed.load(std::memory_order_relaxed);
+	}
+
+	uint64 SoundsQueue::remainingTime() const
+	{
+		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
+		return impl->remaining.load(std::memory_order_relaxed);
 	}
 
 	void SoundsQueue::process(const SoundCallbackData &data)
@@ -209,7 +247,6 @@ namespace cage
 
 	void SoundsQueue::purge()
 	{
-		stop();
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
 		impl->purging = true;
 		impl->onDemand->clear();

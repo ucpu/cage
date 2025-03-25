@@ -18,6 +18,7 @@ namespace cage
 		Real minDistance = 1;
 		Real maxDistance = 500;
 		Real gain = 1; // linear amplitude multiplier
+		sint32 priority = 0;
 		bool loop = false;
 	};
 

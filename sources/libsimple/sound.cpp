@@ -154,6 +154,7 @@ namespace cage
 				v->minDistance = e.sound.minDistance;
 				v->maxDistance = e.sound.maxDistance;
 				v->gain = e.sound.gain;
+				v->priority = e.sound.priority;
 				v->loop = e.sound.loop;
 			}
 

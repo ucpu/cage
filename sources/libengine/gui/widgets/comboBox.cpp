@@ -75,7 +75,6 @@ namespace cage
 					list->widgetState = widgetState;
 					list->skin = skin;
 					hierarchy->impl->root->children.push_back(std::move(item));
-					// play(skin->defaults.comboBox.openSound); // todo
 				}
 			}
 
@@ -126,6 +125,13 @@ namespace cage
 					if (!c->children.empty())
 						return false;
 				}
+				return true;
+			}
+
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
+			{
+				makeFocused();
+				play(skin->defaults.comboBox.openSound);
 				return true;
 			}
 		};
