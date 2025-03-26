@@ -190,7 +190,6 @@ namespace cage
 
 	void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality)
 	{
-		const uint64 originalDuration = snd->duration();
 		audioConvertFrames(snd, numeric_cast<uintPtr>(snd->frames() * uint64(sampleRate) / snd->sampleRate()), quality);
 		audioSetSampleRate(snd, sampleRate); // in case of rounding errors
 	}

@@ -128,7 +128,7 @@ namespace cage
 				return true;
 			}
 
-			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				makeFocused();
 				play(skin->defaults.comboBox.openSound);

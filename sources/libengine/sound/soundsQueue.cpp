@@ -226,6 +226,12 @@ namespace cage
 		}
 	}
 
+	void SoundsQueue::preload(uint32 soundId)
+	{
+		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
+		impl->onDemand->preload(soundId);
+	}
+
 	bool SoundsQueue::playing() const
 	{
 		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
