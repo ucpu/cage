@@ -216,6 +216,7 @@ namespace cage
 		GuiSkinWidgetDefaults defaults;
 		uint32 textureName = 0;
 		uint32 hoverSound = 0;
+		uint32 openTooltipSound = 0;
 		GuiSkinConfig();
 	};
 

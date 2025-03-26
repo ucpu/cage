@@ -81,7 +81,7 @@ namespace cage
 			return;
 
 		if (ttData.empty())
-			ttNextOrder = 10000; // reset to reasonable value
+			ttNextOrder = 10'000; // reset to reasonable value
 
 		auto candidate = findTopWidget(this);
 
@@ -188,6 +188,9 @@ namespace cage
 
 			// regenerate hierarchy with the new tooltip
 			prepareImplGeneration();
+
+			CAGE_ASSERT(candidate.first->skin);
+			candidate.first->play(candidate.first->skin->openTooltipSound);
 		}
 
 		// check if the new tooltip needs to update position

@@ -262,7 +262,7 @@ namespace cage
 		constexpr const LayoutsBase layoutsBase;
 	}
 
-	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/textures/gui.png")), hoverSound(HashString("cage/sounds/hover.wav"))
+	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/textures/gui.png")), hoverSound(HashString("cage/sounds/hover.wav")), openTooltipSound(HashString("cage/sounds/tooltipOpen.wav"))
 	{
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
