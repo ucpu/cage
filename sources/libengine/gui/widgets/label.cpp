@@ -43,6 +43,11 @@ namespace cage
 					hierarchy->text->emit(p, s, widgetState.disabled);
 			}
 
+			void playHoverSound() override
+			{
+				// nothing
+			}
+
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override
 			{
 				// prevent taking focus

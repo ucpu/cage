@@ -181,6 +181,12 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
+	void WidgetItem::playHoverSound()
+	{
+		CAGE_ASSERT(skin);
+		play(skin->hoverSound);
+	}
+
 	RenderableElement WidgetItem::emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size)
 	{
 		return RenderableElement(this, element, mode, pos, size);

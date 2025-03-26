@@ -215,6 +215,7 @@ namespace cage
 		GuiSkinElementLayout layouts[(uint32)GuiElementTypeEnum::TotalElements];
 		GuiSkinWidgetDefaults defaults;
 		uint32 textureName = 0;
+		uint32 hoverSound = 0;
 		GuiSkinConfig();
 	};
 

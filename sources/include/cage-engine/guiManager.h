@@ -21,6 +21,7 @@ namespace cage
 		Real outputRetina() const;
 		void zoom(Real zoom); // pixels per point (1D)
 		Real zoom() const;
+		void defocus();
 		void focus(uint32 widget);
 		uint32 focus() const;
 
@@ -32,10 +33,14 @@ namespace cage
 		void invalidateInputs(); // skip all remaining inputs until next prepare
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from inside handleInput
 
+		uint32 skinsCount() const;
 		GuiSkinConfig &skin(GuiSkinIndex index);
 		const GuiSkinConfig &skin(GuiSkinIndex index) const;
 
 		EntityManager *entities();
+		AssetsManager *assets();
+		ProvisionalGraphics *graphics();
+		SoundsQueue *sounds();
 	};
 
 	struct CAGE_ENGINE_API GuiManagerCreateConfig

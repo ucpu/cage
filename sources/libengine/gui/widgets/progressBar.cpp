@@ -74,6 +74,11 @@ namespace cage
 					hierarchy->text->emit(p, s, widgetState.disabled);
 				}
 			}
+
+			void playHoverSound() override
+			{
+				// nothing
+			}
 		};
 	}
 

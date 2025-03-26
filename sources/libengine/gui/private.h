@@ -123,6 +123,7 @@ namespace cage
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
+		virtual void playHoverSound();
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
@@ -307,6 +308,7 @@ namespace cage
 		uint32 focusName = 0; // focused entity name
 		uint32 focusParts = 0; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		WidgetItem *hover = nullptr;
+		uint32 hoverName = 0;
 		Holder<HierarchyItem> root;
 
 		struct GraphicsData

@@ -81,6 +81,11 @@ namespace cage
 				hierarchy->childrenEmit();
 			}
 
+			//void playHoverSound() override
+			//{
+			//	// nothing
+			//}
+
 			static void collapse(HierarchyItem *item)
 			{
 				if (SpoilerImpl *b = dynamic_cast<SpoilerImpl *>(+item->item))

@@ -45,6 +45,7 @@ namespace cage
 	{
 		focusName = 0;
 		hover = nullptr;
+		hoverName = 0;
 	}
 
 	void GuiImpl::scaling()
@@ -106,6 +107,11 @@ namespace cage
 		return impl->zoom;
 	}
 
+	void GuiManager::defocus()
+	{
+		focus(0);
+	}
+
 	void GuiManager::focus(uint32 widget)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
@@ -126,6 +132,12 @@ namespace cage
 		impl->clearTooltips();
 	}
 
+	uint32 GuiManager::skinsCount() const
+	{
+		const GuiImpl *impl = (const GuiImpl *)this;
+		return impl->skins.size();
+	}
+
 	GuiSkinConfig &GuiManager::skin(GuiSkinIndex index)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
@@ -143,7 +155,25 @@ namespace cage
 	EntityManager *GuiManager::entities()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return impl->entityMgr.get();
+		return +impl->entityMgr;
+	}
+
+	AssetsManager *GuiManager::assets()
+	{
+		GuiImpl *impl = (GuiImpl *)this;
+		return +impl->assetMgr;
+	}
+
+	ProvisionalGraphics *GuiManager::graphics()
+	{
+		GuiImpl *impl = (GuiImpl *)this;
+		return +impl->provisionalGraphics;
+	}
+
+	SoundsQueue *GuiManager::sounds()
+	{
+		GuiImpl *impl = (GuiImpl *)this;
+		return +impl->soundsQueue;
 	}
 
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem * item);
@@ -322,9 +352,23 @@ namespace cage
 				if (it.pointInside(impl->outputMouse))
 				{
 					impl->hover = it.widget;
-					return;
+					break;
 				}
 			}
+
+			if (impl->hover)
+			{
+				CAGE_ASSERT(impl->hover->hierarchy);
+				CAGE_ASSERT(impl->hover->hierarchy->ent);
+				if (impl->hover->hierarchy->ent->id() != impl->hoverName)
+				{
+					if (!impl->hover->widgetState.disabled)
+						impl->hover->playHoverSound();
+				}
+				impl->hoverName = impl->hover->hierarchy->ent->id();
+			}
+			else
+				impl->hoverName = 0;
 		}
 	}
 
