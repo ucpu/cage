@@ -928,7 +928,7 @@ namespace cage
 			scan = key - 10'000;
 			key = GLFW_KEY_UNKNOWN;
 		};
-		if (const auto s = glfwGetKeyName(key, scan))
+		if (const char *s = glfwGetKeyName(key, scan))
 			return unicodeTransformString(String(s), UnicodeTransformConfig{ UnicodeTransformEnum::Titlecase });
 		return Stringizer() + (sint32)key + ":" + (sint32)scan;
 	}

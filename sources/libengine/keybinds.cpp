@@ -66,11 +66,35 @@ namespace cage
 
 		struct ModifiersMatcher : public MatcherBase
 		{
+			template<KeybindModesFlags Response>
+			CAGE_FORCE_INLINE KeybindModesFlags match(const input::privat::BaseKey &input) const
+			{
+				switch (input.key)
+				{
+					case 340: // left shift
+					case 344: // right shift
+						return any(requiredFlags & ModifiersFlags::Shift) ? Response : KeybindModesFlags::None;
+					case 341: // left ctrl
+					case 345: // right ctrl
+						return any(requiredFlags & ModifiersFlags::Ctrl) ? Response : KeybindModesFlags::None;
+					case 342: // left alt
+					case 346: // right alt
+						return any(requiredFlags & ModifiersFlags::Alt) ? Response : KeybindModesFlags::None;
+					case 343: // left super
+					case 347: // right super
+						return any(requiredFlags & ModifiersFlags::Super) ? Response : KeybindModesFlags::None;
+				}
+				return KeybindModesFlags::None;
+			}
+
 			CAGE_FORCE_INLINE KeybindModesFlags match(const GenericInput &input) const
 			{
-				// todo this is wrong
-				// i need to explicitly check for key press and release of the particular keys
-				return checkFlags(inputModifiersFlags(input)) ? KeybindModesFlags::KeyPress : KeybindModesFlags::KeyRelease;
+				KeybindModesFlags res = KeybindModesFlags::None;
+				if (input.has<input::KeyPress>())
+					res |= match<KeybindModesFlags::KeyPress>(input.get<input::KeyPress>());
+				if (input.has<input::KeyRelease>())
+					res |= match<KeybindModesFlags::KeyRelease>(input.get<input::KeyRelease>());
+				return res;
 			}
 
 			CAGE_FORCE_INLINE String value() const { return finishName(getModifiersNames(requiredFlags)); }
@@ -254,7 +278,8 @@ namespace cage
 			maker.make(input);
 			if (!std::holds_alternative<std::monostate>(maker.result))
 			{
-				CAGE_ASSERT(any(matchesInput(input, maker.result)));
+				if (config.devices != KeybindDevicesFlags::Modifiers) // modifiers are defined without the actual keys
+					CAGE_ASSERT(any(matchesInput(input, maker.result)));
 			}
 			return maker.result;
 		}
@@ -302,12 +327,7 @@ namespace cage
 				global().push_back(this);
 			}
 
-			~KeybindImpl()
-			{
-				auto it = std::find(global().begin(), global().end(), this);
-				if (it != global().end())
-					global().erase(it);
-			}
+			~KeybindImpl() { std::erase(global(), this); }
 
 			bool process(const GenericInput &input)
 			{
