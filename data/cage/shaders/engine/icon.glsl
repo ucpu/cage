@@ -19,7 +19,7 @@ layout(early_fragment_tests) in;
 
 void main()
 {
-	vec4 albedo = texture2D(texMaterialAlbedo2d, varUv.xy);
+	vec4 albedo = texture(texMaterialAlbedo2d, varUv.xy);
 #ifdef CutOut
 	if (albedo.w < 0.5)
 		discard;
