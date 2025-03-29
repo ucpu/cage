@@ -171,18 +171,13 @@ namespace cage
 				const uint32 n = min(numeric_cast<uint32>(ring.available_read()), data.frames);
 				uint32 r = ring.dequeue(data.buffer.data(), n);
 				CAGE_ASSERT(r == n);
-				if (r == data.frames)
+				if (r >= data.frames)
 					return;
 
 				// sound buffer underflow
 				float *buff = data.buffer.data() + r * channels;
-				while (r < data.frames)
-				{
-					for (uint32 i = 0; i < channels; i++)
-						*buff++ = 0;
-					r++;
-				}
-				CAGE_ASSERT(buff == data.buffer.end());
+				const uint32 remaining = data.frames - r;
+				detail::memset(buff, 0, sizeof(float) * remaining * channels);
 			}
 		};
 

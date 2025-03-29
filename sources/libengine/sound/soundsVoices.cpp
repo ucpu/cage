@@ -58,9 +58,6 @@ namespace cage
 			{
 				CAGE_ASSERT(!v.callback != !v.sound);
 
-				if (v.effectiveGain < 1e-5)
-					return;
-
 				const bool spatial = v.position.valid();
 
 				// decode source
@@ -69,12 +66,22 @@ namespace cage
 					SoundCallbackData d = data;
 					if (spatial)
 						d.channels = 1;
+					if (v.effectiveGain < 1e-5)
+					{
+						// callbacks must be processed even if muted, but do not need the data
+						d.frames = 0;
+					}
 					tmp1.resize(d.frames * d.channels);
 					d.buffer = tmp1;
 					v.callback(d);
+					if (d.frames == 0)
+						return;
 				}
 				else if (v.sound)
 				{
+					if (v.effectiveGain < 1e-5)
+						return;
+
 					const uint32 channels = v.sound->channels();
 					const uint32 sampleRate = v.sound->sampleRate();
 					const sintPtr startFrame = numeric_cast<sintPtr>((data.time - v.startTime) * sampleRate / 1'000'000);
@@ -145,7 +152,7 @@ namespace cage
 				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 
 				updateVoices();
-				if (voices.empty() || gain < 1e-5)
+				if (voices.empty())
 					return;
 
 				if (!rateConv1)
