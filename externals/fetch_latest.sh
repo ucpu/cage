@@ -20,6 +20,3 @@ git submodule update protobuf/protobuf
 
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK
-
-# restore wamr - newer versions are crashing
-git submodule update wamr/wamr
