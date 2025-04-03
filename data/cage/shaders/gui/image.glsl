@@ -45,14 +45,14 @@ vec4 desaturateDisabled(vec4 ca)
 
 #ifdef Animated
 
-layout(location = 2) uniform vec4 aniTexFrames;
+$include ../functions/sampleTextureAnimation.glsl
+
+layout(location = 2) uniform vec4 uniAnimation; // time (seconds), speed, offset (normalized), unused
 layout(binding = 0) uniform sampler2DArray texImg;
 
 void main()
 {
-	vec4 a = texture(texImg, vec3(varUv, aniTexFrames.x));
-	vec4 b = texture(texImg, vec3(varUv, aniTexFrames.y));
-	outColor = mix(a, b, aniTexFrames.z);
+	outColor = sampleTextureAnimation(texImg, varUv, uniAnimation, vec4(1, 1, 0, 0));
 	outColor = delinearize(outColor);
 	outColor = desaturateDisabled(outColor);
 }

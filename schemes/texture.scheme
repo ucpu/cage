@@ -64,17 +64,6 @@ type = enum
 values = raw, bcn
 default = bcn
 
-[animationDuration]
-display = animation duration
-hint = microseconds
-type = uint32
-default = 1000000
-
-[animationLoop]
-display = animation loop
-type = bool
-default = true
-
 [flip]
 display = vertical flip
 type = bool

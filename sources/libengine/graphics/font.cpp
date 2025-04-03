@@ -20,6 +20,7 @@ extern "C"
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
+#include <cage-engine/shaderConventions.h>
 #include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
@@ -468,7 +469,7 @@ namespace cage
 						return;
 					queue->bind(t, 0);
 					PointerRange<Instance> r(insts, insts + i);
-					queue->universalUniformArray<Instance>(r, 2);
+					queue->universalUniformArray<Instance>(r, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 					queue->draw(model, i);
 				};
 

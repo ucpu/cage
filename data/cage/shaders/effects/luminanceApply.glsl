@@ -1,4 +1,6 @@
 
+$include ../shaderConventions.h
+
 $include vertex.glsl
 
 $define shader fragment

@@ -8,14 +8,8 @@ namespace cage
 {
 	enum class MeshRenderFlags : uint32;
 
-	enum class ShaderProgramFlags : uint32
-	{
-		None = 0,
-	};
-
 	struct CAGE_ENGINE_API ShaderProgramHeader
 	{
-		ShaderProgramFlags flags = ShaderProgramFlags::None;
 		uint32 customDataCount = 0; // number of floats passed from the game to the shader, per instance
 		uint32 keywordsCount = 0;
 		uint32 stagesCount = 0;
@@ -33,8 +27,7 @@ namespace cage
 		None = 0,
 		Compressed = 1 << 0,
 		GenerateMipmaps = 1 << 1,
-		AnimationLoop = 1 << 2,
-		Srgb = 1 << 3,
+		Srgb = 1 << 2,
 	};
 
 	enum class TextureSwizzleEnum : uint8
@@ -49,7 +42,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API TextureHeader
 	{
-		uint64 animationDuration = 0;
 		TextureFlags flags = TextureFlags::None;
 		uint32 target = 0; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;

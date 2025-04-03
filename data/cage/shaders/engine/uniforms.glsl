@@ -1,15 +1,13 @@
 
 struct UniViewport
 {
-	mat4 vMat; // view matrix
-	mat4 pMat; // proj matrix
-	mat4 vpMat; // viewProj matrix
-	mat4 vpInv; // viewProj inverse matrix
+	// this matrix is same for shadowmaps and for the camera
+	mat4 viewMat; // camera view matrix
 	vec4 eyePos;
 	vec4 eyeDir;
 	vec4 viewport; // x, y, w, h
 	vec4 ambientLight; // linear rgb, unused
-	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
+	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds), unused
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform ViewportBlock
@@ -17,12 +15,28 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform ViewportBlock
 	UniViewport uniViewport;
 };
 
+struct UniProjection
+{
+	// these matrices are different for each shadowmap and the actual camera
+	mat4 viewMat;
+	mat4 projMat;
+	mat4 vpMat;
+	mat4 vpInv;
+};
+
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_PROJECTION) uniform ProjectionBlock
+{
+	UniProjection uniProjection;
+};
+
 struct UniMaterial
 {
 	vec4 albedoBase; // linear rgb (NOT alpha-premultiplied), opacity
-	vec4 specialBase;
+	vec4 specialBase; // roughness, metallic, emission, mask
 	vec4 albedoMult;
 	vec4 specialMult;
+	vec4 lighting; // lighting enabled, fading transparency, unused, unused
+	vec4 animation; // animation duration, animation loops, unused, unused
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_MATERIAL) uniform MaterialBlock
@@ -32,11 +46,9 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_MATERIAL) uniform MaterialBlock
 
 struct UniMesh
 {
-	mat4 mvpMat;
-	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
-	mat3x4 mMat;
+	mat3x4 modelMat;
 	vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
-	vec4 aniTexFrames;
+	vec4 animation; // time (seconds), speed, offset (normalized), unused
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_MESHES) uniform MeshesBlock

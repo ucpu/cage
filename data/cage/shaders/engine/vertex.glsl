@@ -36,6 +36,6 @@ void updateVertex()
 	varNormal = inNormal;
 	varUv = inUv;
 	skeletalAnimation();
-	gl_Position = uniMeshes[varInstanceId].mvpMat * vec4(varPosition, 1);
-	varPosition = transpose(uniMeshes[varInstanceId].mMat) * vec4(varPosition, 1);
+	gl_Position = uniProjection.vpMat * mat4(transpose(uniMeshes[varInstanceId].modelMat)) * vec4(varPosition, 1);
+	varPosition = transpose(uniMeshes[varInstanceId].modelMat) * vec4(varPosition, 1);
 }

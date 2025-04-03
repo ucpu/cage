@@ -15,9 +15,6 @@ namespace cage
 	public:
 		void setDebugName(const String &name);
 
-		uint64 animationDuration = 0;
-		bool animationLoop = false;
-
 		uint32 id() const;
 		uint32 target() const;
 		uint32 internalFormat() const;
@@ -54,9 +51,6 @@ namespace cage
 
 	namespace detail
 	{
-		// animationOffset = 0..1 normalized offset, independent of animation speed or duration
-		CAGE_ENGINE_API Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
-
 		CAGE_ENGINE_API bool internalFormatIsSrgb(uint32 internalFormat);
 	}
 

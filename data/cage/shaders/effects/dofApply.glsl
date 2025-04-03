@@ -1,9 +1,11 @@
 
+$include ../shaderConventions.h
+
 $include vertex.glsl
 
 $define shader fragment
 
-layout(std140, binding = 2) uniform Dof
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Dof
 {
 	mat4 projInv;
 	vec4 dofNear; // near, far

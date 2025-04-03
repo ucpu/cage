@@ -1,10 +1,13 @@
+
+$include ../shaderConventions.h
+
 $include vertex.glsl
 
 $define shader fragment
 
 layout(binding = 0) uniform sampler2D texColor;
 
-layout(std140, binding = 2) uniform Tonemap
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Tonemap
 {
 	vec4 params; // gamma, tonemapEnabled
 };

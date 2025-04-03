@@ -7,6 +7,7 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-engine/model.h>
 #include <cage-engine/opengl.h> // GL_TEXTURE_2D_ARRAY
+#include <cage-engine/shaderConventions.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
 
@@ -77,7 +78,7 @@ namespace cage
 		e.accent = accent;
 		e.controlType = element;
 		e.layoutMode = (uint32)mode;
-		q->universalUniformStruct(e, 2);
+		q->universalUniformStruct(e, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 		q->draw(impl->graphicsData.elementModel);
 	}
 
@@ -194,7 +195,7 @@ namespace cage
 		if (!valid(format.animationOffset))
 			format.animationOffset = 0;
 		evaluateImageMode(this->ndcPos, impl->outputResolution, this->uvClip, this->texture->resolution(), format.mode);
-		this->aniTexFrames = detail::evalSamplesForTextureAnimation(+item->texture, applicationTime(), item->image.animationStart, format.animationSpeed, format.animationOffset);
+		this->animation = Vec4((double)(sint64)(applicationTime() - item->image.animationStart) / 1'000'000, format.animationSpeed, format.animationOffset, 0);
 	}
 
 	RenderableImage::~RenderableImage()
@@ -216,7 +217,7 @@ namespace cage
 		q->uniform(shader, 0, ndcPos);
 		q->uniform(shader, 1, uvClip);
 		if (texture->target() == GL_TEXTURE_2D_ARRAY)
-			q->uniform(shader, 2, aniTexFrames);
+			q->uniform(shader, 2, animation);
 		q->draw(impl->graphicsData.imageModel);
 	}
 

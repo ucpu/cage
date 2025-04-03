@@ -145,13 +145,13 @@ vec4 egacMatMapImpl(int index)
 	{
 		case 0: return vec4(0, 0, 0, 1);
 		case CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D: return texture(texMaterialAlbedo2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY: return sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY: return sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
 		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE: return texture(texMaterialAlbedoCube, varUv);
 		case CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D: return texture(texMaterialSpecial2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
 		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE: return texture(texMaterialSpecialCube, varUv);
 		case CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D: return texture(texMaterialNormal2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].aniTexFrames);
+		case CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
 		case CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE: return texture(texMaterialNormalCube, varUv);
 		default: return vec4(-100);
 	}
@@ -178,7 +178,7 @@ Material loadMaterial()
 
 	material.albedo = mix(uniMeshes[varInstanceId].color.rgb, material.albedo, special4.a);
 	material.opacity *= uniMeshes[varInstanceId].color.a;
-	material.fade = uniMeshes[varInstanceId].normalMat[1][3];
+	material.fade = uniMaterial.lighting[1];
 
 	return material;
 }
@@ -199,9 +199,11 @@ void updateNormal()
 	if (!gl_FrontFacing)
 		normal *= -1;
 
-	mat3x4 nm = uniMeshes[varInstanceId].normalMat;
-	if (nm[2][3] > 0.5) // is lighting enabled
-		normal = normalize(mat3(nm) * normal);
+	if (uniMaterial.lighting[0] > 0.5) // is lighting enabled
+	{
+		mat3 nm = transpose(mat3(uniMeshes[varInstanceId].modelMat));
+		normal = normalize(nm * normal);
+	}
 	else
 		normal = vec3(0);
 }

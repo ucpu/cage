@@ -248,7 +248,7 @@ namespace cage
 		Holder<Texture> texture;
 		Vec4 ndcPos;
 		Vec4 uvClip;
-		Vec4 aniTexFrames;
+		Vec4 animation; // time (seconds), speed, offset (normalized), unused
 		bool disabled = false;
 
 		RenderableImage(ImageItem *item, Vec2 position, Vec2 size, bool disabled);

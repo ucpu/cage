@@ -8,7 +8,7 @@ void main()
 	varInstanceId = gl_InstanceID;
 	varPosition = inPosition;
 	varUv = inUv;
-	gl_Position = uniMeshes[varInstanceId].mvpMat * vec4(varPosition, 1);
+	gl_Position = uniProjection.vpMat * transpose(mat4(uniMeshes[varInstanceId].modelMat)) * vec4(varPosition, 1);
 }
 
 $include fragment.glsl

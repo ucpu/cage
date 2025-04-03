@@ -19,8 +19,8 @@ void main()
 	varUv = inUv;
 	skeletalAnimation();
 
-	mat4 m = mat4(transpose(uniMeshes[varInstanceId].mMat));
-	mat4 mvp = uniViewport.pMat * removeRotation(uniViewport.vMat * m);
+	mat4 m = transpose(mat4(uniMeshes[varInstanceId].modelMat));
+	mat4 mvp = uniProjection.projMat * removeRotation(uniProjection.viewMat * m);
 	m = removeRotation(m);
 	gl_Position = mvp * vec4(varPosition, 1);
 	varPosition = vec3(m * vec4(varPosition, 1));
@@ -33,7 +33,8 @@ layout(early_fragment_tests) in;
 void main()
 {
 	updateNormal();
-	normal = inverse(mat3(uniMeshes[varInstanceId].normalMat)) * normal; // revert normal rotation
+	mat3 nm = transpose(mat3(uniMeshes[varInstanceId].modelMat));
+	normal = inverse(nm) * normal; // revert normal rotation
 	Material material = loadMaterial();
 	outColor = lighting(material);
 }

@@ -1,4 +1,6 @@
 
+$include ../shaderConventions.h
+
 $define shader compute
 
 $include luminanceParams.glsl

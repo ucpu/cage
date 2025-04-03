@@ -18,7 +18,6 @@ helper.jpg
 scheme = texture
 target = 2dArray
 srgb = true
-animationLoop = false
 progressbar/$.png
 
 []

@@ -18,7 +18,7 @@ layout(std140, binding = 0) uniform Layouts
 	LayoutStruct layouts[128];
 };
 
-layout(std140, binding = 2) uniform Element
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Element
 {
 	vec4 posOuter;
 	vec4 posInner;

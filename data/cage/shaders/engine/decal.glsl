@@ -16,7 +16,7 @@ layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
 
 void main()
 {
-	vec3 prevPos = reconstructPosition(texDepth, uniViewport.vpInv, uniViewport.viewport);
+	vec3 prevPos = reconstructPosition(texDepth, uniProjection.vpInv, uniViewport.viewport);
 	if (length(varPosition - prevPos) > 0.05)
 		discard;
 	updateNormal();

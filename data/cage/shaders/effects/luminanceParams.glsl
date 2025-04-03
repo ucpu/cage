@@ -1,5 +1,5 @@
 
-layout(std140, binding = 0) uniform Luminance
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Luminance
 {
 	vec4 uniLogRange; // min, max range in log2 space
 	vec4 uniAdaptationSpeed; // darker, lighter

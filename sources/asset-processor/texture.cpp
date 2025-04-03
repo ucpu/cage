@@ -406,11 +406,8 @@ namespace
 		data.swizzle[3] = TextureSwizzleEnum::A;
 		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution, target == GL_TEXTURE_3D), 8u) : 1;
 		data.mipmapLevels = data.containedLevels;
-		if (toBool(processor->property("animationLoop")))
-			data.flags |= TextureFlags::AnimationLoop;
 		if (toBool(processor->property("srgb")))
 			data.flags |= TextureFlags::Srgb;
-		data.animationDuration = toUint64(processor->property("animationDuration"));
 		data.copyType = GL_UNSIGNED_BYTE;
 
 		// todo

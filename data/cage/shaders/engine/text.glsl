@@ -7,7 +7,7 @@ struct InstanceStruct
 	vec4 wrld;
 	vec4 text;
 };
-layout(std140, binding = 2) uniform Instances
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Instances
 {
 	InstanceStruct instances[512];
 };

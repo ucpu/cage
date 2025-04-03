@@ -108,9 +108,6 @@ namespace cage
 				CAGE_ASSERT(header.containedLevels == header.mipmapLevels);
 			}
 
-			tex->animationDuration = header.animationDuration;
-			tex->animationLoop = any(header.flags & TextureFlags::AnimationLoop);
-
 			context->assetHolder = std::move(tex).cast<void>();
 		}
 	}

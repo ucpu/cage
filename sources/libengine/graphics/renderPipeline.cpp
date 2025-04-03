@@ -49,24 +49,29 @@ namespace cage
 
 		struct UniViewport
 		{
-			Mat4 vMat; // view matrix
-			Mat4 pMat; // proj matrix
-			Mat4 vpMat; // viewProj matrix
-			Mat4 vpInv; // viewProj inverse matrix
+			// this matrix is same for shadowmaps and for the camera
+			Mat4 viewMat; // camera view matrix
 			Vec4 eyePos;
 			Vec4 eyeDir;
 			Vec4 viewport; // x, y, w, h
 			Vec4 ambientLight; // linear rgb, unused
-			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds)
+			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds), unused
+		};
+
+		struct UniProjection
+		{
+			// these matrices are different for each shadowmap and the actual camera
+			Mat4 viewMat;
+			Mat4 projMat;
+			Mat4 vpMat;
+			Mat4 vpInv;
 		};
 
 		struct UniMesh
 		{
-			Mat4 mvpMat;
-			Mat3x4 normalMat; // [2][3] is 1 if lighting is enabled; [1][3] is 1 if transparent mode is fading
-			Mat3x4 mMat;
+			Mat3x4 modelMat;
 			Vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
-			Vec4 aniTexFrames;
+			Vec4 animation; // time (seconds), speed, offset (normalized), unused
 		};
 
 		struct UniLight
@@ -97,9 +102,9 @@ namespace cage
 
 		struct RenderModel : private Noncopyable
 		{
-			Vec4 aniTexFrames = Vec4::Nan();
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 			Holder<Model> mesh;
+			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
 		};
 
 		struct RenderIcon : private Noncopyable
@@ -299,13 +304,9 @@ namespace cage
 				CAGE_ASSERT(std::holds_alternative<RenderModel>(rd.data));
 				const RenderModel &rm = std::get<RenderModel>(rd.data);
 				UniMesh uni;
-				uni.mvpMat = viewProj * rd.model;
-				uni.normalMat = Mat3x4(inverse(Mat3(rd.model)));
-				uni.normalMat.data[2][3] = any(rm.mesh->flags & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
-				uni.normalMat.data[1][3] = any(rm.mesh->flags & MeshRenderFlags::Fade) ? 1 : 0; // transparent mode is to fade
-				uni.mMat = Mat3x4(rd.model);
+				uni.modelMat = Mat3x4(rd.model);
 				uni.color = rd.color;
-				uni.aniTexFrames = rm.aniTexFrames;
+				uni.animation = rm.animation;
 				return uni;
 			}
 
@@ -657,9 +658,7 @@ namespace cage
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).mesh == +mesh);
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).texture == +texture);
 						UniMesh uni;
-						uni.mvpMat = viewProj * inst.model;
-						uni.normalMat = Mat3x4(inverse(Mat3(inst.model)));
-						uni.mMat = Mat3x4(inst.model);
+						uni.modelMat = Mat3x4(inst.model);
 						uni.color = inst.color;
 						uniMeshes.push_back(uni);
 						appendShaderCustomData(inst.e, shader->customDataCount);
@@ -836,9 +835,7 @@ namespace cage
 					anim.speed = 1;
 				if (!anim.offset.valid())
 					anim.offset = 0;
-				if (rm.mesh->textureNames[0])
-					if (Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(rm.mesh->textureNames[0]))
-						rm.aniTexFrames = detail::evalSamplesForTextureAnimation(+tex, currentTime, startTime, anim.speed, anim.offset);
+				rm.animation = Vec4((double)(sint64)(currentTime - startTime) / 1'000'000, anim.speed, anim.offset, 0);
 
 				if (!rm.mesh->bones)
 					ps.reset();
@@ -1047,6 +1044,16 @@ namespace cage
 				std::sort(renderData.begin(), renderData.end(), [](const RenderData &a, const RenderData &b) { return a.cmp() < b.cmp(); });
 			}
 
+			void prepareProjection()
+			{
+				UniProjection uni;
+				uni.viewMat = view;
+				uni.projMat = projection;
+				uni.vpMat = viewProj;
+				uni.vpInv = inverse(viewProj);
+				renderQueue->universalUniformStruct(uni, CAGE_SHADER_UNIBLOCK_PROJECTION);
+			}
+
 			void taskShadowmap()
 			{
 				CAGE_ASSERT(!data);
@@ -1067,6 +1074,7 @@ namespace cage
 				renderQueue->bind(shaderDepth);
 				renderQueue->checkGlErrorDebug();
 
+				prepareProjection();
 				prepareEntities();
 				orderRenderData();
 
@@ -1159,6 +1167,7 @@ namespace cage
 				view = inverse(model);
 				viewProj = projection * view;
 				frustum = Frustum(viewProj);
+				prepareProjection();
 				prepareEntities();
 				orderRenderData();
 				prepareCameraLights();
@@ -1481,10 +1490,7 @@ namespace cage
 				{
 					// viewport must be dispatched before shadowmaps
 					UniViewport viewport;
-					viewport.vMat = view;
-					viewport.pMat = projection;
-					viewport.vpMat = viewProj;
-					viewport.vpInv = inverse(viewProj);
+					viewport.viewMat = view;
 					viewport.eyePos = model * Vec4(0, 0, 0, 1);
 					viewport.eyeDir = model * Vec4(0, 0, -1, 0);
 					viewport.ambientLight = Vec4(colorGammaToLinear(camera.ambientColor) * camera.ambientIntensity, 0);

@@ -6,6 +6,7 @@
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/screenSpaceEffects.h>
+#include <cage-engine/shaderConventions.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/uniformBuffer.h>
@@ -95,7 +96,7 @@ namespace cage
 		s.params = Vec4(config.strength, config.bias, config.power, config.worldRadius);
 		s.iparams[0] = config.samplesCount;
 		s.iparams[1] = hash(config.frameIndex);
-		q->universalUniformStruct(s, 2);
+		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		// generate
 		config.outAo = provTex(config.provisionals, "ssao", config.resolution, 1, GL_R8);
@@ -144,7 +145,7 @@ namespace cage
 		s.projInv = inverse(config.proj);
 		s.dofNear = Vec4(fd - fr - br, fd - fr, 0, 0);
 		s.dofFar = Vec4(fd + fr, fd + fr + br, 0, 0);
-		q->universalUniformStruct(s, 2);
+		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		TextureHandle texDof = provTex(config.provisionals, "dofColor", res, 1, GL_RGB16F);
 		q->bind(texDof, 0); // ensure the texture is properly initialized
@@ -217,7 +218,7 @@ namespace cage
 
 		const Vec2i res = max(config.resolution / downscale, 1u);
 
-		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
+		q->universalUniformStruct(eyeAdaptationShaderParams(config), CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		q->bindImage(config.inColor, 0, true, false);
 		TextureHandle texHist = provTex(config.provisionals, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
@@ -300,7 +301,7 @@ namespace cage
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
 
-		q->universalUniformStruct(eyeAdaptationShaderParams(config), 0);
+		q->universalUniformStruct(eyeAdaptationShaderParams(config), CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
@@ -327,7 +328,7 @@ namespace cage
 		} s;
 		s.params[0] = 1.0 / config.gamma;
 		s.params[1] = config.tonemapEnabled;
-		q->universalUniformStruct(s, 2);
+		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);
@@ -366,7 +367,7 @@ namespace cage
 			Vec4 params; // strength
 		} s;
 		s.params[0] = config.strength;
-		q->universalUniformStruct(s, 2);
+		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
 		q->colorTexture(fb, 0, config.outColor);
 		q->checkFrameBuffer(fb);

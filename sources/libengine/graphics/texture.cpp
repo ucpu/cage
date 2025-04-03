@@ -380,25 +380,6 @@ namespace cage
 
 	namespace detail
 	{
-		Vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
-		{
-			if (!texture)
-				return Vec4();
-			const uint32 frames = numeric_cast<uint32>(texture->resolution3()[2]);
-			if (frames <= 1)
-				return Vec4();
-			double sample = (((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)texture->animationDuration + (double)animationOffset.value) * (double)frames;
-			if (!texture->animationLoop)
-				sample = clamp(sample, 0.0, (double)(frames - 1));
-			else
-				sample += (-(sint64)sample / frames + 1) * frames;
-			const uint32 i = (uint32)sample % frames;
-			const Real f = sample - (sint32)sample;
-			CAGE_ASSERT(i < frames);
-			CAGE_ASSERT(f >= 0 && f <= 1);
-			return Vec4(i, (i + 1) % frames, f, 0);
-		}
-
 		bool internalFormatIsSrgb(uint32 internalFormat)
 		{
 			switch (internalFormat)

@@ -12,10 +12,12 @@ namespace cage
 
 	struct CAGE_CORE_API MeshImportMaterial
 	{
-		Vec4 albedoBase = Vec4(0); // albedo rgb is linear, and NOT alpha-premultiplied
-		Vec4 specialBase = Vec4(0); // cage material: roughness, metallic, emission, mask
+		Vec4 albedoBase = Vec4(0); // linear rgb (NOT alpha-premultiplied), opacity
+		Vec4 specialBase = Vec4(0); // roughness, metallic, emission, mask
 		Vec4 albedoMult = Vec4(1);
 		Vec4 specialMult = Vec4(1);
+		Vec4 lighting = Vec4(1, 0, 0, 0); // lighting enabled, fading transparency, unused, unused
+		Vec4 animation = Vec4(1, 1, 0, 0); // animation duration, animation loops, unused, unused
 	};
 
 	enum class MeshImportTextureType : uint32

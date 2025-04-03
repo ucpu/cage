@@ -993,6 +993,14 @@ namespace cage
 				return true;
 			}
 
+			void finishMaterial(MeshImportPart &part)
+			{
+				if (none(part.renderFlags & MeshRenderFlags::Lighting))
+					part.material.lighting[0] = 0;
+				if (any(part.renderFlags & MeshRenderFlags::Fade))
+					part.material.lighting[1] = 1;
+			}
+
 			void loadMaterialCage(const String &path, MeshImportPart &part)
 			{
 				CAGE_LOG(SeverityEnum::Info, "meshImport", "overriding material with cage (.cpm) file");
@@ -1092,6 +1100,8 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "render layer: " + part.renderLayer);
 
 				ini->checkUnused();
+
+				finishMaterial(part);
 			}
 
 			void loadMaterialAssimp(const uint32 materialIndex, MeshImportPart &part)
@@ -1235,6 +1245,8 @@ namespace cage
 				}
 
 				part.textures = std::move(textures);
+
+				finishMaterial(part);
 			}
 
 			void loadMaterial(const uint32 materialIndex, MeshImportPart &part)
