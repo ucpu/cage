@@ -85,8 +85,6 @@ void processObject()
 			o.skelAnimId = HashString(s);
 			deps.insert(o.skelAnimId);
 		}
-		o.animSpeed = ini->getFloat("animation", "speed", Real::Nan().value);
-		o.animOffset = ini->getFloat("animation", "offset", Real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}

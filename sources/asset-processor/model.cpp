@@ -200,6 +200,8 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "specialMult: " + mat.specialMult);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "lighting: " + mat.lighting);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "animation: " + mat.animation);
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "cutOut: " + any(dsm.renderFlags & MeshRenderFlags::CutOut));
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "transparent: " + any(dsm.renderFlags & MeshRenderFlags::Transparent));
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "fade: " + any(dsm.renderFlags & MeshRenderFlags::Fade));

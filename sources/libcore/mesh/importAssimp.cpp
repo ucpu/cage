@@ -1099,6 +1099,9 @@ namespace cage
 				if (config.verbose && part.renderLayer != 0)
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "render layer: " + part.renderLayer);
 
+				part.material.animation[0] = ini->getFloat("animation", "duration", 1);
+				part.material.animation[1] = ini->getBool("animation", "loop", true);
+
 				ini->checkUnused();
 
 				finishMaterial(part);

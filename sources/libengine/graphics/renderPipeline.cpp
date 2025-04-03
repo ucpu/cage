@@ -820,10 +820,6 @@ namespace cage
 						color.intensity = parent->intensity;
 					if (!color.opacity.valid())
 						color.opacity = parent->opacity;
-					if (!anim.offset.valid())
-						anim.offset = parent->animOffset;
-					if (!anim.speed.valid())
-						anim.speed = parent->animSpeed;
 					if (!ps && parent->skelAnimId)
 						ps = SkeletalAnimationComponent();
 					if (ps && !ps->animation)
@@ -835,7 +831,7 @@ namespace cage
 					anim.speed = 1;
 				if (!anim.offset.valid())
 					anim.offset = 0;
-				rm.animation = Vec4((double)(sint64)(currentTime - startTime) / 1'000'000, anim.speed, anim.offset, 0);
+				rm.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 
 				if (!rm.mesh->bones)
 					ps.reset();

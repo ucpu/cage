@@ -87,8 +87,6 @@ namespace cage
 		Vec3 color;
 		Real intensity;
 		Real opacity;
-		Real animSpeed = 1;
-		Real animOffset;
 		uint32 skelAnimId = 0;
 
 		Real worldSize;

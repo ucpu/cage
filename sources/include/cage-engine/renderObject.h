@@ -27,8 +27,6 @@ namespace cage
 		Vec3 color = Vec3::Nan();
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
-		Real animSpeed = Real::Nan();
-		Real animOffset = Real::Nan(); // normalized 0..1
 		uint32 skelAnimId = 0;
 	};
 
