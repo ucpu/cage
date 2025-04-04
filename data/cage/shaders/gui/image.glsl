@@ -52,7 +52,7 @@ layout(binding = 0) uniform sampler2DArray texImg;
 
 void main()
 {
-	outColor = sampleTextureAnimation(texImg, varUv, uniAnimation, vec4(1, 1, 0, 0));
+	outColor = sampleTextureAnimation(texImg, varUv, uniAnimation, vec4(1, 0, 0, 0));
 	outColor = delinearize(outColor);
 	outColor = desaturateDisabled(outColor);
 }

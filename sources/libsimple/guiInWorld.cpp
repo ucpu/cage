@@ -87,7 +87,7 @@ namespace cage
 				}
 				else
 				{
-					guiMan->focus(0);
+					guiMan->defocus();
 					guiMan->handleInput(input::MouseMove{ { .position = Vec2(-1) } });
 				}
 
