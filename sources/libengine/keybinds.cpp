@@ -610,7 +610,7 @@ namespace cage
 
 	Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults, Delegate<bool(const GenericInput &)> event)
 	{
-		return newKeybind(config, PointerRange(&defaults, &defaults + 1), event);
+		return newKeybind(config, PointerRange(&defaults, &defaults + !!defaults), event);
 	}
 
 	Holder<Keybind> newKeybind(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event)
