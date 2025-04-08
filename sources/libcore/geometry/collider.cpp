@@ -2,7 +2,7 @@
 #include <vector>
 
 #include <cage-core/collider.h>
-#include <cage-core/flatSet.h>
+//#include <cage-core/flatSet.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
@@ -204,30 +204,32 @@ namespace cage
 
 	void Collider::optimize()
 	{
+		// removes triangles with same vertices, irrespective of their order (eg. removes double-sided triangles)
+		// preserves triangle winding (except when triangles overlap, in which case an unspecified one is preserved)
+
 		ColliderImpl *impl = (ColliderImpl *)this;
 
-		static constexpr const auto &order = [](Triangle t) -> Triangle
+		static constexpr const auto &makeKey = [](Triangle t) -> Triangle
 		{
-			struct Comparator
-			{
-				CAGE_FORCE_INLINE bool operator()(Vec3 a, Vec3 b) const { return detail::memcmp(&a, &b, sizeof(a)) < 0; }
-			};
-			std::sort(std::begin(t.vertices), std::end(t.vertices), Comparator());
+			std::sort(std::begin(t.vertices), std::end(t.vertices), [](Vec3 a, Vec3 b) { return detail::memcmp(&a, &b, sizeof(a)) < 0; });
 			return t;
 		};
 
-		struct Comparator
-		{
-			CAGE_FORCE_INLINE bool operator()(Triangle a, Triangle b) const { return detail::memcmp(&a, &b, sizeof(a)) < 0; }
-		};
+		using PT = std::pair<Triangle, Triangle>;
 
-		std::vector<Triangle> vec;
+		std::vector<PT> vec;
 		vec.reserve(impl->tris.size());
 		for (Triangle t : impl->tris)
 			if (!t.degenerated())
-				vec.push_back(order(t));
-		auto st = makeFlatSet<Triangle, Comparator>(std::move(vec));
-		std::swap(impl->tris, st.unsafeData());
+				vec.push_back({ makeKey(t), t });
+
+		std::sort(vec.begin(), vec.end(), [](const PT &a, const PT &b) { return detail::memcmp(&a, &b, sizeof(a)) < 0; });
+		vec.erase(std::unique(vec.begin(), vec.end(), [](const PT &a, const PT &b) { return detail::memcmp(&a.first, &b.first, sizeof(Triangle)) == 0; }), vec.end());
+
+		impl->tris.clear();
+		for (const auto &it : vec)
+			impl->tris.push_back(it.second);
+
 		impl->dirty = true;
 	}
 

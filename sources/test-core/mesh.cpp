@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <vector>
 
 #include "main.h"
@@ -956,11 +957,15 @@ namespace
 	{
 		CAGE_TESTCASE("mesh consistent winding");
 		Holder<Mesh> msh = makeDoubleBalls();
-		Holder<Collider> col = newCollider();
-		col->importMesh(+msh);
-		col->optimize();
-		msh->importCollider(+col);
-		meshMergeCloseVertices(+msh, {});
+		meshConvertToExpanded(+msh);
+		PointerRange<Vec3> tris = msh->positions();
+		CAGE_ASSERT((tris.size() % 3) == 0);
+		for (uint32 i = 0; i < tris.size(); i += 3)
+		{
+			PointerRange<Vec3> sub = { tris.data() + i, tris.data() + i + 3 };
+			std::sort(sub.begin(), sub.end(), [](const Vec3 &a, const Vec3 &b) { return detail::memcmp(&a, &b, sizeof(Vec3)) < 0; });
+		}
+		meshConvertToIndexed(+msh);
 		const uint32 cnt = msh->indicesCount();
 		CAGE_TEST(cnt > 100 && cnt < 10'000); // sanity check
 		{
