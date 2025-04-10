@@ -320,7 +320,7 @@ namespace cage
 	namespace privat
 	{
 		CAGE_ENGINE_API GuiTooltipComponent::TooltipCallback guiTooltipText(const GuiTextComponent *txt);
-		CAGE_ENGINE_API GuiTooltipComponent::TooltipCallback guiTooltipText(Entity *e, const String &txt);
+		CAGE_ENGINE_API GuiTooltipComponent::TooltipCallback guiTooltipText(Entity *e, uint32 textId, const String &txt);
 	}
 
 	namespace detail

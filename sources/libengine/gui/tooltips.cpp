@@ -285,7 +285,8 @@ namespace cage
 			Entity *e = cfg.tooltip->manager()->createUnique();
 			e->value<GuiParentComponent>().parent = cfg.tooltip->id();
 			e->value<GuiLabelComponent>();
-			e->value<GuiTextComponent>().value = cfg.invoker->value<GuiTooltipStringComponent>().data;
+			e->value<GuiTextComponent>().value = cfg.invoker->value<GuiTooltipStringComponent>().value;
+			e->value<GuiTextComponent>().textId = cfg.invoker->value<GuiTooltipStringComponent>().textId;
 		}
 	}
 
@@ -298,9 +299,10 @@ namespace cage
 			return tt;
 		}
 
-		GuiTooltipComponent::TooltipCallback guiTooltipText(Entity *e, const String &txt)
+		GuiTooltipComponent::TooltipCallback guiTooltipText(Entity *e, uint32 textId, const String &value)
 		{
-			e->value<GuiTooltipStringComponent>().data = txt;
+			e->value<GuiTooltipStringComponent>().value = value;
+			e->value<GuiTooltipStringComponent>().textId = textId;
 			GuiTooltipComponent::TooltipCallback tt;
 			tt.bind<guiTooltipStringImpl>();
 			return tt;

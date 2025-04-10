@@ -286,7 +286,8 @@ namespace cage
 	// this component is used to hold data for text-only tooltips
 	struct GuiTooltipStringComponent
 	{
-		String data;
+		String value;
+		uint32 textId = 0;
 	};
 
 	class GuiImpl : public GuiManager

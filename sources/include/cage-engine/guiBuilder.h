@@ -47,9 +47,14 @@ namespace cage
 			BuilderItem update(Delegate<void(Entity *)> u);
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
-			BuilderItem tooltip(const String &txt)
+			BuilderItem tooltip(const String &text)
 			{
-				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), txt) };
+				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), 0, text) };
+				return *this;
+			}
+			BuilderItem tooltip(uint32 textId, const String &text = "")
+			{
+				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), textId, text) };
 				return *this;
 			}
 			template<StringLiteral Text>
@@ -62,6 +67,12 @@ namespace cage
 			BuilderItem tooltip()
 			{
 				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<TextId, Text>() };
+				return *this;
+			}
+			template<uint32 TextId>
+			BuilderItem tooltip(const String &text)
+			{
+				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), TextId, text) };
 				return *this;
 			}
 
