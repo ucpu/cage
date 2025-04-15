@@ -1491,7 +1491,7 @@ namespace cage
 					viewport.eyeDir = model * Vec4(0, 0, -1, 0);
 					viewport.ambientLight = Vec4(colorGammaToLinear(camera.ambientColor) * camera.ambientIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(resolution));
-					viewport.time = Vec4(frameIndex % 10000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
+					viewport.time = Vec4(frameIndex % 10'000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
 				}
 

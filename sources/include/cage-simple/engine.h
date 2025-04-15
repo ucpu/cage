@@ -51,6 +51,7 @@ namespace cage
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> prepare;
+		bool disableTimePassage = false;
 	};
 	EngineGraphicsPrepareThread &graphicsPrepareThread();
 

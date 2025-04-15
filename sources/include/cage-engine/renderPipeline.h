@@ -30,7 +30,7 @@ namespace cage
 		CameraCommonProperties camera;
 		LodSelection lodSelection;
 		uint64 currentTime = 0;
-		uint64 elapsedTime = 1000000 / 60; // microseconds since last frame
+		uint64 elapsedTime = 1'000'000 / 60; // microseconds since last frame
 		Vec2i resolution;
 		AssetsManager *assets = nullptr;
 		ProvisionalGraphics *provisionalGraphics = nullptr;

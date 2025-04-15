@@ -428,11 +428,14 @@ namespace cage
 					cfg.provisionalGraphics = engineProvisionalGraphics();
 					cfg.scene = +eb.scene;
 					cfg.onDemand = +onDemand;
-					const uint64 period = controlThread().updatePeriod();
-					cfg.currentTime = itc(eb.emitTime, dispatchTime, period);
-					cfg.elapsedTime = dispatchTime - lastDispatchTime;
-					cfg.interpolationFactor = saturate(Real(cfg.currentTime - eb.emitTime) / period);
-					cfg.frameIndex = frameIndex;
+					if (!graphicsPrepareThread().disableTimePassage)
+					{
+						const uint64 period = controlThread().updatePeriod();
+						cfg.currentTime = itc(eb.emitTime, dispatchTime, period);
+						cfg.elapsedTime = dispatchTime - lastDispatchTime;
+						cfg.interpolationFactor = saturate(Real(cfg.currentTime - eb.emitTime) / period);
+						cfg.frameIndex = frameIndex;
+					}
 					cfg.resolution = windowResolution;
 
 					if (cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) && cfg.assets->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shaders/engine/engine.pack")))
