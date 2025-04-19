@@ -446,7 +446,7 @@ namespace cage
 		} \
 		GCHL_GENERATE_CATCH(NAME, finalization(engine)); \
 	}
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
 			bool defaultAssetsEnvironment()

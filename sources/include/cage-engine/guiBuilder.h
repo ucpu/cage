@@ -114,6 +114,9 @@ namespace cage
 
 			BuilderItem empty();
 			BuilderItem label();
+			BuilderItem header();
+			BuilderItem horizontalSeparator();
+			BuilderItem verticalSeparator();
 			BuilderItem button();
 			BuilderItem input(const GuiInputComponent &in);
 			BuilderItem input(const String &txt);

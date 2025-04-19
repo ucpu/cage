@@ -30,7 +30,7 @@ void Scheme::parse(Ini *ini)
 		SchemeField fld;
 		fld.name = section;
 #define GCHL_GENERATE(NAME) fld.NAME = ini->getString(section, CAGE_STRINGIZE(NAME));
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
 #undef GCHL_GENERATE
 		fld.defaul = ini->getString(section, "default");
 		if (fld.valid())

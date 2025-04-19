@@ -7,9 +7,9 @@ namespace cage
 		struct CheckBoxImpl : public WidgetItem
 		{
 			GuiCheckBoxComponent &data;
-			GuiElementTypeEnum element;
+			GuiElementTypeEnum element = GuiElementTypeEnum::InvalidElement;
 
-			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements) {}
+			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)) {}
 
 			void initialize() override
 			{

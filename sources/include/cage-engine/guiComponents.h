@@ -205,6 +205,17 @@ namespace cage
 		// GuiImageComponent defines background of the widget
 	};
 
+	struct CAGE_ENGINE_API GuiHeaderComponent
+	{
+		// GuiTextComponent defines foreground of the widget
+		// GuiImageComponent defines background of the widget
+	};
+
+	struct CAGE_ENGINE_API GuiSeparatorComponent
+	{
+		bool vertical = false;
+	};
+
 	struct CAGE_ENGINE_API GuiButtonComponent
 	{
 		// GuiTextComponent defines foreground

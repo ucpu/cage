@@ -7,7 +7,7 @@ namespace cage
 		struct SpoilerImpl : public WidgetItem
 		{
 			GuiSpoilerComponent &data;
-			bool collapsed = false;
+			bool collapsed = false; // must keep copy of data.collapsed here because data is not accessible while emitting
 
 			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler)) { ensureItemHasLayout(hierarchy); }
 
@@ -16,8 +16,6 @@ namespace cage
 				CAGE_ASSERT(hierarchy->children.size() == 1);
 				CAGE_ASSERT(!hierarchy->image);
 				collapsed = data.collapsed;
-				if (collapsed)
-					hierarchy->children.clear();
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.spoiler.textFormat);
 			}
@@ -29,11 +27,12 @@ namespace cage
 					hierarchy->children[0]->findRequestedSize();
 					hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				}
-				else
-					hierarchy->requestedSize = Vec2();
-
-				if (!hierarchy->children.empty())
-					offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
+				if (collapsed)
+				{
+					hierarchy->children.clear();
+					hierarchy->requestedSize[1] = 0;
+				}
+				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.contentPadding);
 				hierarchy->requestedSize[1] += skin->defaults.spoiler.captionHeight;
 				{
 					Vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : Vec2();
@@ -47,7 +46,7 @@ namespace cage
 
 			void findFinalPosition(const FinalPosition &update) override
 			{
-				if (hierarchy->children.empty())
+				if (collapsed)
 					return;
 				FinalPosition u(update);
 				u.renderPos[1] += skin->defaults.spoiler.captionHeight;
@@ -62,7 +61,7 @@ namespace cage
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.spoiler.baseMargin);
-				if (!hierarchy->children.empty())
+				if (!collapsed)
 					emitElement(GuiElementTypeEnum::SpoilerBase, mode(false), p, s);
 				s[1] = skin->defaults.spoiler.captionHeight;
 				emitElement(GuiElementTypeEnum::SpoilerCaption, mode(p, s), p, s);
@@ -80,11 +79,6 @@ namespace cage
 				}
 				hierarchy->childrenEmit();
 			}
-
-			//void playHoverSound() override
-			//{
-			//	// nothing
-			//}
 
 			static void collapse(HierarchyItem *item)
 			{

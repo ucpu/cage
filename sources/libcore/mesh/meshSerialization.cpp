@@ -33,7 +33,7 @@ namespace cage
 #define GCHL_GENERATE(NAME) \
 	if (!impl->NAME.empty()) \
 		flags |= AttrFlags::NAME;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			return flags;
 		}
@@ -54,7 +54,7 @@ namespace cage
 	{ \
 		ser.write(bufferCast<const char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); \
 	}
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			ser.write(bufferCast<const char, const uint32>(impl->indices));
 			return std::move(buff);
@@ -79,7 +79,7 @@ namespace cage
 		impl->NAME.resize(vs); \
 		des.read(bufferCast<char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); \
 	}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		impl->indices.resize(is);
 		des.read(bufferCast<char, uint32>(impl->indices));

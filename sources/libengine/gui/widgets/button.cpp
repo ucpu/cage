@@ -13,6 +13,8 @@ namespace cage
 				CAGE_ASSERT(hierarchy->children.empty());
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.button.textFormat);
+				if (hierarchy->image)
+					hierarchy->image->apply(skin->defaults.button.imageFormat);
 			}
 
 			void findRequestedSize() override

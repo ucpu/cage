@@ -291,7 +291,7 @@ namespace cage
 
 		for (auto &s : skins)
 		{
-			s.texture = assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureName);
+			s.texture = assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureId);
 			if (!s.texture)
 				return {};
 		}

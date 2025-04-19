@@ -26,7 +26,7 @@ namespace cage
 	void MeshImpl::swap(MeshImpl &other)
 	{
 #define GCHL_GENERATE(NAME) std::swap(NAME, other.NAME);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 
 		std::swap(indices, other.indices);
@@ -38,7 +38,7 @@ namespace cage
 		MeshImpl *impl = (MeshImpl *)this;
 
 #define GCHL_GENERATE(NAME) impl->NAME.clear();
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 
 		impl->indices.clear();
@@ -49,7 +49,7 @@ namespace cage
 	{
 		const MeshImpl *impl = (const MeshImpl *)this;
 #define GCHL_GENERATE(NAME) CAGE_ASSERT(impl->NAME.empty() || impl->NAME.size() == impl->positions.size());
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
 		return numeric_cast<uint32>(impl->positions.size());
@@ -68,7 +68,7 @@ namespace cage
 #define GCHL_GENERATE(NAME) \
 	if (!impl->NAME.empty()) \
 		impl->NAME.push_back({});
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 			impl->positions[impl->positions.size() - 1] = position;
 		}
@@ -272,7 +272,7 @@ namespace cage
 		result->type(impl->type);
 
 #define GCHL_GENERATE(NAME) result->NAME(impl->NAME);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 
 		result->indices(impl->indices);
