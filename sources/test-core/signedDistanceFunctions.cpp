@@ -74,5 +74,5 @@ void testSignedDistanceFunctions()
 {
 	CAGE_TESTCASE("signed distance functions");
 #define GCHL_RUN(NAME) sdfTest(Delegate<Real(const Vec3 &)>().bind<&CAGE_JOIN(tst, NAME)>(), CAGE_STRINGIZE(NAME));
-	CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_RUN, Plane, Sphere, Capsule, Cylinder, Box, Tetrahedron, Octahedron, HexagonalPrism, Torus, Knot));
+	CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_RUN, Plane, Sphere, Capsule, Cylinder, Box, Tetrahedron, Octahedron, HexagonalPrism, Torus, Knot));
 }

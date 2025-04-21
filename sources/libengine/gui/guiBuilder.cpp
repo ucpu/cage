@@ -443,6 +443,27 @@ namespace cage
 			return c;
 		}
 
+		BuilderItem GuiBuilder::header()
+		{
+			BuilderItem c(this);
+			c->value<GuiHeaderComponent>();
+			return c;
+		}
+
+		BuilderItem GuiBuilder::horizontalSeparator()
+		{
+			BuilderItem c(this);
+			c->value<GuiSeparatorComponent>().vertical = false;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::verticalSeparator()
+		{
+			BuilderItem c(this);
+			c->value<GuiSeparatorComponent>().vertical = true;
+			return c;
+		}
+
 		BuilderItem GuiBuilder::button()
 		{
 			BuilderItem c(this);
@@ -547,6 +568,20 @@ namespace cage
 			BuilderItem c(this);
 			c->value<GuiColorPickerComponent>().color = color;
 			c->value<GuiColorPickerComponent>().collapsible = collapsible;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::solidColor(Vec3 color)
+		{
+			BuilderItem c(this);
+			c->value<GuiSolidColorComponent>().color = color;
+			return c;
+		}
+
+		BuilderItem GuiBuilder::frame()
+		{
+			BuilderItem c(this);
+			c->value<GuiFrameComponent>();
 			return c;
 		}
 

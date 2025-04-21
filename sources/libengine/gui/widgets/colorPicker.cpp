@@ -42,7 +42,7 @@ namespace cage
 			GuiColorPickerComponent &data;
 			ColorPickerImpl *small = nullptr, *large = nullptr;
 
-			Vec3 color;
+			Vec3 color; // must keep copy of data.color here because data is not accessible while emitting
 			Vec2 sliderPos, sliderSize;
 			Vec2 resultPos, resultSize;
 			Vec2 rectPos, rectSize;

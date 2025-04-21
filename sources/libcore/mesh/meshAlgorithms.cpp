@@ -93,7 +93,7 @@ namespace cage
 #define GCHL_GENERATE(NAME) \
 	if (!impl->NAME.empty()) \
 		vectorEraseIf(impl->NAME, verticesToRemove);
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		}
 

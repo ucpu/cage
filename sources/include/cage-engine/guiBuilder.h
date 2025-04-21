@@ -114,6 +114,9 @@ namespace cage
 
 			BuilderItem empty();
 			BuilderItem label();
+			BuilderItem header();
+			BuilderItem horizontalSeparator();
+			BuilderItem verticalSeparator();
 			BuilderItem button();
 			BuilderItem input(const GuiInputComponent &in);
 			BuilderItem input(const String &txt);
@@ -127,6 +130,8 @@ namespace cage
 			BuilderItem horizontalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem verticalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem colorPicker(Vec3 color = GuiColorPickerComponent().color, bool collapsible = GuiColorPickerComponent().collapsible);
+			BuilderItem solidColor(Vec3 color = GuiSolidColorComponent().color);
+			BuilderItem frame();
 			BuilderItem panel();
 			BuilderItem spoiler(bool collapsed = GuiSpoilerComponent().collapsed, bool collapsesSiblings = GuiSpoilerComponent().collapsesSiblings);
 		};

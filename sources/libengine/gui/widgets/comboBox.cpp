@@ -50,7 +50,7 @@ namespace cage
 			GuiComboBoxComponent &data;
 			ComboListImpl *list = nullptr;
 			uint32 count = 0;
-			uint32 selected = m; // must keep copy of data.selected here because data may not be access while emitting
+			uint32 selected = m; // must keep copy of data.selected here because data is not accessible while emitting
 
 			ComboBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ComboBox)) {}
 
@@ -91,6 +91,11 @@ namespace cage
 				offset(p, s, -skin->defaults.comboBox.baseMargin);
 				emitElement(GuiElementTypeEnum::ComboBoxBase, mode(), p, s);
 				offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
+				{
+					const Vec2 is = Vec2(s[1], s[1]);
+					const Vec2 ip = Vec2(p[0] + s[0] - is[0], p[1]);
+					emitElement(!list ? GuiElementTypeEnum::ComboBoxIconCollapsed : GuiElementTypeEnum::ComboBoxIconShown, mode(false, 0), ip, is);
+				}
 				if (selected == m)
 				{ // emit placeholder
 					if (hierarchy->text)

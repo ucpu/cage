@@ -205,6 +205,17 @@ namespace cage
 		// GuiImageComponent defines background of the widget
 	};
 
+	struct CAGE_ENGINE_API GuiHeaderComponent
+	{
+		// GuiTextComponent defines foreground of the widget
+		// GuiImageComponent defines background of the widget
+	};
+
+	struct CAGE_ENGINE_API GuiSeparatorComponent
+	{
+		bool vertical = false;
+	};
+
 	struct CAGE_ENGINE_API GuiButtonComponent
 	{
 		// GuiTextComponent defines foreground
@@ -304,6 +315,14 @@ namespace cage
 		Vec3 color = Vec3(1, 0, 0);
 		bool collapsible = false;
 	};
+
+	struct CAGE_ENGINE_API GuiSolidColorComponent
+	{
+		Vec3 color; // sRGB
+	};
+
+	struct CAGE_ENGINE_API GuiFrameComponent
+	{};
 
 	struct CAGE_ENGINE_API GuiPanelComponent
 	{

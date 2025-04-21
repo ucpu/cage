@@ -62,7 +62,7 @@ namespace cage
 		CAGE_ASSERT(res >= min && res < max); \
 		return res; \
 	}
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
+	CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
@@ -73,7 +73,7 @@ namespace cage
 		const TYPE res = interpolate(min, max, c); \
 		return res; \
 	}
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, Real, Rads, Degs, float));
+	CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, Real, Rads, Degs, float));
 #undef GCHL_GENERATE
 
 	double RandomGenerator::randomRange(double min, double max)
@@ -208,7 +208,7 @@ namespace cage
 	{ \
 		return detail::randomGenerator().randomRange(min, max); \
 	}
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, Real, Rads, Degs, float, double));
+	CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, Real, Rads, Degs, float, double));
 #undef GCHL_GENERATE
 
 	Rads randomAngle()

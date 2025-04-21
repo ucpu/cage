@@ -23,7 +23,7 @@ namespace cage
 			GuiImageFormatComponent Image;
 			Image.animationOffset = 0;
 			Image.animationSpeed = 1;
-			Image.mode = ImageModeEnum::Stretch;
+			Image.mode = ImageModeEnum::Fit;
 			return Image;
 		}
 
@@ -85,18 +85,15 @@ namespace cage
 			consteval LayoutsBase()
 			{
 				std::vector<GuiElementTypeEnum> largeElements = {
-					GuiElementTypeEnum::PanelBase /* overlaps: SpoilerBase */,
+					GuiElementTypeEnum::PanelBase,
+					GuiElementTypeEnum::Frame,
+					GuiElementTypeEnum::SpoilerBase,
+					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::TextArea,
+					GuiElementTypeEnum::InvalidElement,
 				};
 
 				std::vector<GuiElementTypeEnum> smallElements = {
-					GuiElementTypeEnum::ScrollbarHorizontalPanel,
-					GuiElementTypeEnum::ScrollbarVerticalPanel,
-					GuiElementTypeEnum::ScrollbarHorizontalDot,
-					GuiElementTypeEnum::ScrollbarVerticalDot,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::UnusedElement,
-					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::PanelCaption,
 					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::SpoilerCaption,
@@ -109,6 +106,15 @@ namespace cage
 					GuiElementTypeEnum::InputButtonDecrement,
 					GuiElementTypeEnum::InputButtonIncrement,
 					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxBase,
+					GuiElementTypeEnum::ComboBoxIconCollapsed,
+					GuiElementTypeEnum::ComboBoxIconShown,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxList,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::ComboBoxItemUnchecked,
+					GuiElementTypeEnum::ComboBoxItemChecked,
+					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::CheckBoxUnchecked,
 					GuiElementTypeEnum::CheckBoxChecked,
 					GuiElementTypeEnum::CheckBoxIndetermined,
@@ -117,14 +123,10 @@ namespace cage
 					GuiElementTypeEnum::RadioBoxChecked,
 					GuiElementTypeEnum::RadioBoxIndetermined,
 					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::UnusedElement,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ComboBoxBase,
-					GuiElementTypeEnum::ComboBoxList,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ComboBoxItemUnchecked,
-					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ComboBoxItemChecked,
+					GuiElementTypeEnum::ScrollbarHorizontalPanel,
+					GuiElementTypeEnum::ScrollbarVerticalPanel,
+					GuiElementTypeEnum::ScrollbarHorizontalDot,
+					GuiElementTypeEnum::ScrollbarVerticalDot,
 					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::SliderHorizontalPanel,
 					GuiElementTypeEnum::SliderVerticalPanel,
@@ -133,8 +135,16 @@ namespace cage
 					GuiElementTypeEnum::InvalidElement,
 					GuiElementTypeEnum::ProgressBar,
 					GuiElementTypeEnum::InvalidElement,
-					GuiElementTypeEnum::ColorPickerCompact /* overlaps: ColorPickerFull */,
-					GuiElementTypeEnum::ColorPickerPreviewPanel /* overlaps: ColorPickerHuePanel, ColorPickerSatValPanel */,
+					GuiElementTypeEnum::ColorPickerCompact,
+					GuiElementTypeEnum::ColorPickerFull,
+					GuiElementTypeEnum::ColorPickerHuePanel,
+					GuiElementTypeEnum::ColorPickerSatValPanel,
+					GuiElementTypeEnum::ColorPickerPreviewPanel,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::Header,
+					GuiElementTypeEnum::InvalidElement,
+					GuiElementTypeEnum::SeparatorHorizontalLine /* overlaps with separator vertical line */,
+					GuiElementTypeEnum::InvalidElement,
 				};
 
 				FlatSet<GuiElementTypeEnum> wideElements = {
@@ -147,11 +157,15 @@ namespace cage
 					GuiElementTypeEnum::ComboBoxItemUnchecked,
 					GuiElementTypeEnum::ComboBoxItemChecked,
 					GuiElementTypeEnum::ProgressBar,
+					GuiElementTypeEnum::Header,
+					GuiElementTypeEnum::SeparatorHorizontalLine,
 				};
 
 				FlatSet<GuiElementTypeEnum> noBorder = {
 					GuiElementTypeEnum::SpoilerIconCollapsed,
 					GuiElementTypeEnum::SpoilerIconShown,
+					GuiElementTypeEnum::ComboBoxIconCollapsed,
+					GuiElementTypeEnum::ComboBoxIconShown,
 					GuiElementTypeEnum::RadioBoxChecked,
 					GuiElementTypeEnum::RadioBoxUnchecked,
 					GuiElementTypeEnum::RadioBoxIndetermined,
@@ -162,6 +176,7 @@ namespace cage
 				FlatSet<GuiElementTypeEnum> noFocus = {
 					GuiElementTypeEnum::PanelBase,
 					GuiElementTypeEnum::PanelCaption,
+					GuiElementTypeEnum::Frame,
 					GuiElementTypeEnum::SpoilerBase,
 					GuiElementTypeEnum::SpoilerCaption,
 					GuiElementTypeEnum::SpoilerIconCollapsed,
@@ -171,21 +186,32 @@ namespace cage
 					GuiElementTypeEnum::ComboBoxList,
 					GuiElementTypeEnum::ComboBoxItemUnchecked,
 					GuiElementTypeEnum::ComboBoxItemChecked,
+					GuiElementTypeEnum::ComboBoxIconCollapsed,
+					GuiElementTypeEnum::ComboBoxIconShown,
 					GuiElementTypeEnum::ProgressBar,
 					GuiElementTypeEnum::ColorPickerHuePanel,
 					GuiElementTypeEnum::ColorPickerPreviewPanel,
 					GuiElementTypeEnum::ColorPickerSatValPanel,
+					GuiElementTypeEnum::Header,
+					GuiElementTypeEnum::SeparatorHorizontalLine,
+					GuiElementTypeEnum::SeparatorVerticalLine,
 				};
 
 				FlatSet<GuiElementTypeEnum> noHover = {
 					GuiElementTypeEnum::PanelBase,
+					GuiElementTypeEnum::Frame,
 					GuiElementTypeEnum::SpoilerBase,
 					GuiElementTypeEnum::SpoilerIconCollapsed,
 					GuiElementTypeEnum::SpoilerIconShown,
 					GuiElementTypeEnum::ComboBoxList,
+					GuiElementTypeEnum::ComboBoxIconCollapsed,
+					GuiElementTypeEnum::ComboBoxIconShown,
 					GuiElementTypeEnum::ColorPickerHuePanel,
 					GuiElementTypeEnum::ColorPickerPreviewPanel,
 					GuiElementTypeEnum::ColorPickerSatValPanel,
+					GuiElementTypeEnum::Header,
+					GuiElementTypeEnum::SeparatorHorizontalLine,
+					GuiElementTypeEnum::SeparatorVerticalLine,
 				};
 
 				{ // automatic uv construction
@@ -200,11 +226,6 @@ namespace cage
 						if (it == GuiElementTypeEnum::InvalidElement)
 						{
 							packer.newLine();
-							continue;
-						}
-						if (it >= GuiElementTypeEnum::UnusedElement)
-						{
-							packer.next(false);
 							continue;
 						}
 						bool border = noBorder.count(it) == 0;
@@ -223,11 +244,6 @@ namespace cage
 						if (it == GuiElementTypeEnum::InvalidElement)
 						{
 							packer.newLine();
-							continue;
-						}
-						if (it >= GuiElementTypeEnum::UnusedElement)
-						{
-							packer.next(false);
 							continue;
 						}
 						if (wideElements.count(it))
@@ -251,10 +267,6 @@ namespace cage
 				}
 
 				{ // overlaps
-					layouts[(uint32)GuiElementTypeEnum::ColorPickerFull].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerCompact].textureUv;
-					layouts[(uint32)GuiElementTypeEnum::ColorPickerHuePanel].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerPreviewPanel].textureUv;
-					layouts[(uint32)GuiElementTypeEnum::ColorPickerSatValPanel].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerPreviewPanel].textureUv;
-					layouts[(uint32)GuiElementTypeEnum::SpoilerBase].textureUv = layouts[(uint32)GuiElementTypeEnum::PanelBase].textureUv;
 				}
 			}
 		};
@@ -262,7 +274,7 @@ namespace cage
 		constexpr const LayoutsBase layoutsBase;
 	}
 
-	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/textures/gui.png")), hoverSound(HashString("cage/sounds/hover.wav")), openTooltipSound(HashString("cage/sounds/tooltipOpen.wav"))
+	GuiSkinConfig::GuiSkinConfig() : textureId(HashString("cage/textures/gui.png")), hoverSound(HashString("cage/sounds/hover.wav")), openTooltipSound(HashString("cage/sounds/tooltipOpen.wav"))
 	{
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
@@ -270,6 +282,18 @@ namespace cage
 	GuiSkinWidgetDefaults::Label::Label() : textFormat(TextInit), imageFormat(ImageInit)
 	{
 		textFormat.size = 16;
+	}
+
+	GuiSkinWidgetDefaults::Header::Header() : textFormat(TextInit), imageFormat(ImageInit)
+	{
+		textFormat.size = 16;
+		textFormat.align = TextAlignEnum::Center;
+	}
+
+	GuiSkinWidgetDefaults::Separator::Separator()
+	{
+		horizontal.size = Vec2(150, 15);
+		vertical.size = Vec2(15, 150);
 	}
 
 	GuiSkinWidgetDefaults::Button::Button() : textFormat(TextInit), imageFormat(ImageInit), clickSound(ClickSound)
@@ -321,6 +345,10 @@ namespace cage
 	}
 
 	GuiSkinWidgetDefaults::ColorPicker::ColorPicker() : slidingSound(SlidingSound) {}
+
+	GuiSkinWidgetDefaults::SolidColor::SolidColor() {}
+
+	GuiSkinWidgetDefaults::Frame::Frame() {}
 
 	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(TextInit), imageFormat(ImageInit)
 	{
@@ -487,7 +515,7 @@ namespace cage
 					break;
 				case GuiSkinTooltips.index:
 					generateCompact(skin);
-					skin.textureName = HashString("cage/textures/tooltips.png");
+					skin.textureId = HashString("cage/textures/tooltips.png");
 					break;
 			}
 			return skin;

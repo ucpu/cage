@@ -10,7 +10,7 @@
 #include <cage-engine/renderQueue.h>
 
 #define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Update, Tooltip, TooltipMarker
-#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Header, Separator, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, SolidColor, Frame, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutSplit, LayoutTable
 
 namespace cage
@@ -18,7 +18,9 @@ namespace cage
 	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetsOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics), soundsQueue(config.soundsQueue), ttEnabled(config.tooltipsEnabled)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 		entityMgr->defineComponent(GuiTooltipStringComponent());
 
@@ -177,7 +179,7 @@ namespace cage
 	}
 
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem * item);
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
+	CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 	void textCreate(HierarchyItem *item);
 	void imageCreate(HierarchyItem *item);
@@ -262,7 +264,7 @@ namespace cage
 	{ \
 		CAGE_JOIN(T, Create)(item); \
 	}
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+				CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 			}
 
@@ -296,7 +298,7 @@ namespace cage
 	{ \
 		CAGE_JOIN(T, Create)(item); \
 	}
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
+				CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 			}
 		}
@@ -443,7 +445,7 @@ namespace cage
 #define GCHL_GENERATE(T) \
 	if (GUI_HAS_COMPONENT(T, e)) \
 		result++;
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 		return result;
 	}
@@ -454,7 +456,7 @@ namespace cage
 #define GCHL_GENERATE(T) \
 	if (GUI_HAS_COMPONENT(T, e)) \
 		result++;
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
+		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 		return result;
 	}

@@ -23,6 +23,24 @@ namespace cage
 			Vec4 margin = Vec4(4);
 			Label();
 		} label;
+		struct CAGE_ENGINE_API Header
+		{
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent imageFormat;
+			Vec4 margin = Vec4(4);
+			Vec4 padding = Vec4(8);
+			Vec2 size = Vec2(150, 42);
+			Header();
+		} header;
+		struct CAGE_ENGINE_API Separator
+		{
+			struct Direction
+			{
+				Vec4 margin = Vec4(4);
+				Vec2 size;
+			} horizontal, vertical;
+			Separator();
+		} separator;
 		struct CAGE_ENGINE_API Button
 		{
 			GuiTextFormatComponent textFormat;
@@ -124,6 +142,18 @@ namespace cage
 			uint32 slidingSound = 0;
 			ColorPicker();
 		} colorPicker;
+		struct CAGE_ENGINE_API SolidColor
+		{
+			Vec4 margin = Vec4(1);
+			Vec2 size = Vec2(20);
+			SolidColor();
+		} solidColor;
+		struct CAGE_ENGINE_API Frame
+		{
+			Vec4 margin = Vec4(1);
+			Vec4 padding = Vec4(2);
+			Frame();
+		} frame;
 		struct CAGE_ENGINE_API Panel
 		{
 			GuiTextFormatComponent textFormat;
@@ -170,12 +200,9 @@ namespace cage
 
 	enum class GuiElementTypeEnum : uint32
 	{
-		ScrollbarHorizontalPanel,
-		ScrollbarVerticalPanel,
-		ScrollbarHorizontalDot,
-		ScrollbarVerticalDot,
 		PanelBase,
 		PanelCaption,
+		Frame,
 		SpoilerBase,
 		SpoilerCaption,
 		SpoilerIconCollapsed,
@@ -185,16 +212,22 @@ namespace cage
 		InputButtonDecrement,
 		InputButtonIncrement,
 		TextArea,
+		ComboBoxBase,
+		ComboBoxList,
+		ComboBoxItemUnchecked,
+		ComboBoxItemChecked,
+		ComboBoxIconCollapsed,
+		ComboBoxIconShown,
 		CheckBoxUnchecked,
 		CheckBoxChecked,
 		CheckBoxIndetermined,
 		RadioBoxUnchecked,
 		RadioBoxChecked,
 		RadioBoxIndetermined,
-		ComboBoxBase,
-		ComboBoxList,
-		ComboBoxItemUnchecked,
-		ComboBoxItemChecked,
+		ScrollbarHorizontalPanel,
+		ScrollbarVerticalPanel,
+		ScrollbarHorizontalDot,
+		ScrollbarVerticalDot,
 		SliderHorizontalPanel,
 		SliderVerticalPanel,
 		SliderHorizontalDot,
@@ -205,8 +238,10 @@ namespace cage
 		ColorPickerHuePanel,
 		ColorPickerSatValPanel,
 		ColorPickerPreviewPanel,
+		Header,
+		SeparatorHorizontalLine,
+		SeparatorVerticalLine,
 		TotalElements,
-		UnusedElement = 1'000'000,
 		InvalidElement = m,
 	};
 
@@ -214,7 +249,7 @@ namespace cage
 	{
 		GuiSkinElementLayout layouts[(uint32)GuiElementTypeEnum::TotalElements];
 		GuiSkinWidgetDefaults defaults;
-		uint32 textureName = 0;
+		uint32 textureId = 0;
 		uint32 hoverSound = 0;
 		uint32 openTooltipSound = 0;
 		GuiSkinConfig();
@@ -222,7 +257,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(GuiSkinIndex style); // 0 = default, 1 = large, 2 = compact, 3 = tooltips
+		CAGE_ENGINE_API GuiSkinConfig guiSkinGenerate(GuiSkinIndex style);
 		CAGE_ENGINE_API Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution);
 	}
 }

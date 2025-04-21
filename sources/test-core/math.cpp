@@ -120,12 +120,12 @@ namespace
 	r = b OPERATOR b; \
 	r = b OPERATOR 5; \
 	r = 5 OPERATOR b;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 	r = a OPERATOR b; \
 	r = a OPERATOR 5;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
 			-b;
 			+b;
@@ -184,12 +184,12 @@ namespace
 	r = 5.5f OPERATOR b; \
 	r = b OPERATOR 5.5; \
 	r = 5.5 OPERATOR b;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 	r = a OPERATOR 5.5f; \
 	r = a OPERATOR 5.f;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
 		}
 
