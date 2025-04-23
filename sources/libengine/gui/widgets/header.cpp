@@ -20,7 +20,12 @@ namespace cage
 
 			void findRequestedSize() override
 			{
-				hierarchy->requestedSize = skin->defaults.header.size;
+				if (hierarchy->text)
+				{
+					hierarchy->requestedSize = hierarchy->text->findRequestedSize() * Vec2(1.5, 1);
+					offsetSize(hierarchy->requestedSize, skin->defaults.header.padding + skin->layouts[(uint32)GuiElementTypeEnum::Header].border);
+				}
+				hierarchy->requestedSize = max(hierarchy->requestedSize, skin->defaults.header.size);
 				offsetSize(hierarchy->requestedSize, skin->defaults.header.margin);
 			}
 

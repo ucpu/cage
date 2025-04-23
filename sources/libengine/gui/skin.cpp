@@ -12,7 +12,7 @@ namespace cage
 			GuiTextFormatComponent text{ .font = 0 };
 			text.color = Vec3(1);
 			text.font = 0;
-			text.size = 14;
+			text.size = 13;
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 1;
 			return text;
@@ -279,10 +279,7 @@ namespace cage
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
 
-	GuiSkinWidgetDefaults::Label::Label() : textFormat(TextInit), imageFormat(ImageInit)
-	{
-		textFormat.size = 16;
-	}
+	GuiSkinWidgetDefaults::Label::Label() : textFormat(TextInit), imageFormat(ImageInit) {}
 
 	GuiSkinWidgetDefaults::Header::Header() : textFormat(TextInit), imageFormat(ImageInit)
 	{
@@ -292,8 +289,8 @@ namespace cage
 
 	GuiSkinWidgetDefaults::Separator::Separator()
 	{
-		horizontal.size = Vec2(150, 15);
-		vertical.size = Vec2(15, 150);
+		horizontal.size = Vec2(150, 20);
+		vertical.size = Vec2(20, 150);
 	}
 
 	GuiSkinWidgetDefaults::Button::Button() : textFormat(TextInit), imageFormat(ImageInit), clickSound(ClickSound)
@@ -312,15 +309,9 @@ namespace cage
 
 	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(TextInit) {}
 
-	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(TextInit), clickSound(ClickSound)
-	{
-		textFormat.size = GuiSkinWidgetDefaults::Label().textFormat.size;
-	}
+	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(TextInit), clickSound(ClickSound) {}
 
-	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(TextInit), clickSound(ClickSound)
-	{
-		textFormat.size = GuiSkinWidgetDefaults::Label().textFormat.size;
-	}
+	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(TextInit), clickSound(ClickSound) {}
 
 	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(TextInit), itemsFormat(TextInit), selectedFormat(TextInit)
 	{
@@ -340,8 +331,8 @@ namespace cage
 
 	GuiSkinWidgetDefaults::SliderBar::SliderBar() : slidingSound(SlidingSound)
 	{
-		horizontal.size = Vec2(150, 28);
-		vertical.size = Vec2(28, 150);
+		horizontal.size = Vec2(150, 24);
+		vertical.size = Vec2(24, 150);
 	}
 
 	GuiSkinWidgetDefaults::ColorPicker::ColorPicker() : slidingSound(SlidingSound) {}
@@ -362,162 +353,13 @@ namespace cage
 
 	GuiSkinWidgetDefaults::Scrollbars::Scrollbars() : slidingSound(SlidingSound) {}
 
-	namespace
-	{
-		void generateLarge(GuiSkinConfig &skin)
-		{
-			GuiSkinWidgetDefaults &d = skin.defaults;
-
-			d.label.margin = Vec4(6);
-			d.label.textFormat.size = 20;
-			d.label.textFormat.lineSpacing = 1.1;
-
-			d.button.padding = Vec4(3);
-			d.button.margin = Vec4(2);
-			d.button.size[1] = 34;
-			d.button.textFormat.size = 18;
-
-			d.inputBox.basePadding = Vec4(3);
-			d.inputBox.margin = Vec4(2);
-			d.inputBox.size[1] = 34;
-			d.inputBox.buttonsWidth = 34;
-			d.inputBox.textValidFormat.size = d.inputBox.textInvalidFormat.size = d.inputBox.placeholderFormat.size = 18;
-
-			d.textArea.margin = Vec4(2);
-			d.textArea.padding = Vec4(3);
-			d.textArea.size *= 34.0 / 28.0;
-			d.textArea.textFormat.size = 18;
-
-			d.checkBox.margin = Vec4(2);
-			d.checkBox.size = Vec2(34);
-			d.checkBox.textFormat.size = 18;
-			d.checkBox.labelOffset = Vec2(5, 8);
-
-			d.radioBox.margin = Vec4(2);
-			d.radioBox.size = Vec2(34);
-			d.radioBox.textFormat.size = 18;
-			d.radioBox.labelOffset = Vec2(5, 7);
-
-			d.comboBox.basePadding = Vec4(3);
-			d.comboBox.baseMargin = Vec4(2);
-			d.comboBox.listPadding = Vec4(-5);
-			d.comboBox.itemPadding = Vec4(2);
-			d.comboBox.size[1] = 34;
-			d.comboBox.listOffset = -2;
-			d.comboBox.itemSpacing = -3;
-			d.comboBox.itemsFormat.size = d.comboBox.selectedFormat.size = d.comboBox.placeholderFormat.size = 18;
-
-			d.progressBar.baseMargin = Vec4(2);
-			d.progressBar.textPadding = Vec4(3);
-			d.progressBar.size[1] = 34;
-			d.progressBar.textFormat.size = 18;
-
-			d.sliderBar.horizontal.padding = Vec4(2);
-			d.sliderBar.vertical.padding = Vec4(2);
-			d.sliderBar.horizontal.margin = Vec4(2);
-			d.sliderBar.vertical.margin = Vec4(2);
-			d.sliderBar.horizontal.size[1] = 34;
-			d.sliderBar.vertical.size[0] = 34;
-
-			d.colorPicker.margin = Vec4(2);
-			d.colorPicker.collapsedSize = Vec2(34);
-			d.colorPicker.fullSize *= 34.0 / 28.0;
-
-			d.panel.baseMargin = Vec4(2);
-			d.panel.contentPadding = Vec4(3);
-			d.panel.captionPadding = Vec4(3);
-			d.panel.captionHeight = 36;
-			d.panel.textFormat.size = 18;
-
-			d.spoiler.baseMargin = Vec4(2);
-			d.spoiler.contentPadding = Vec4(3);
-			d.spoiler.captionPadding = Vec4(3);
-			d.spoiler.captionHeight = 36;
-			d.spoiler.textFormat.size = 18;
-		}
-
-		void generateCompact(GuiSkinConfig &skin)
-		{
-			GuiSkinWidgetDefaults &d = skin.defaults;
-
-			d.label.margin = Vec4(2);
-			d.label.textFormat.size = 13;
-			d.label.textFormat.lineSpacing = 0.9;
-
-			d.button.padding = Vec4();
-			d.button.size[1] = 20;
-			d.button.textFormat.size = 11;
-
-			d.inputBox.basePadding = Vec4();
-			d.inputBox.size[1] = 20;
-			d.inputBox.buttonsWidth = 20;
-			d.inputBox.textValidFormat.size = d.inputBox.textInvalidFormat.size = d.inputBox.placeholderFormat.size = 11;
-			d.inputBox.buttonsOffset = 1;
-
-			d.textArea.padding = Vec4(1);
-			d.textArea.size *= 20.0 / 28.0;
-			d.textArea.textFormat.size = 11;
-
-			d.checkBox.size = Vec2(20);
-			d.checkBox.textFormat.size = 11;
-			d.checkBox.labelOffset = Vec2(2, 5);
-
-			d.radioBox.size = Vec2(20);
-			d.radioBox.textFormat.size = 11;
-			d.radioBox.labelOffset = Vec2(2, 4);
-
-			d.comboBox.basePadding = Vec4();
-			d.comboBox.listPadding = Vec4(-4);
-			d.comboBox.itemPadding = Vec4();
-			d.comboBox.size[1] = 20;
-			d.comboBox.listOffset = -1;
-			d.comboBox.itemSpacing = -2;
-			d.comboBox.itemsFormat.size = d.comboBox.selectedFormat.size = d.comboBox.placeholderFormat.size = 11;
-
-			d.progressBar.textPadding = Vec4();
-			d.progressBar.size[1] = 20;
-			d.progressBar.textFormat.size = 11;
-
-			d.sliderBar.horizontal.padding = Vec4(-1);
-			d.sliderBar.vertical.padding = Vec4(-1);
-			d.sliderBar.horizontal.margin = Vec4(1);
-			d.sliderBar.vertical.margin = Vec4(1);
-			d.sliderBar.horizontal.size[1] = 20;
-			d.sliderBar.vertical.size[0] = 20;
-
-			d.colorPicker.collapsedSize = Vec2(20);
-			d.colorPicker.fullSize *= 20.0 / 28.0;
-
-			d.panel.contentPadding = Vec4(1);
-			d.panel.captionPadding = Vec4(1);
-			d.panel.captionHeight = 22;
-			d.panel.textFormat.size = 11;
-
-			d.spoiler.contentPadding = Vec4(1);
-			d.spoiler.captionPadding = Vec4(1);
-			d.spoiler.captionHeight = 22;
-			d.spoiler.textFormat.size = 11;
-		}
-	}
-
 	namespace detail
 	{
 		GuiSkinConfig guiSkinGenerate(GuiSkinIndex style)
 		{
 			GuiSkinConfig skin;
-			switch (style.index)
-			{
-				case GuiSkinLarge.index:
-					generateLarge(skin);
-					break;
-				case GuiSkinCompact.index:
-					generateCompact(skin);
-					break;
-				case GuiSkinTooltips.index:
-					generateCompact(skin);
-					skin.textureId = HashString("cage/textures/tooltips.png");
-					break;
-			}
+			if (style.index == GuiSkinTooltips.index)
+				skin.textureId = HashString("cage/textures/tooltips.png");
 			return skin;
 		}
 	}

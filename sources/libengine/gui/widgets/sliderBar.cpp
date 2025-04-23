@@ -52,11 +52,9 @@ namespace cage
 				}
 				offset(p, s, -skin->layouts[(uint32)baseElement].border);
 				offset(p, s, -defaults.padding);
-				Real f = normalizedValue;
-				Real ds1 = min(s[0], s[1]);
-				Vec2 ds = Vec2(ds1, ds1);
+				Vec2 ds = Vec2(min(s[0], s[1]));
 				Vec2 inner = s - ds;
-				Vec2 dp = Vec2(interpolate(0, inner[0], f), interpolate(inner[1], 0, f)) + p;
+				Vec2 dp = Vec2(interpolate(0, inner[0], normalizedValue), interpolate(inner[1], 0, normalizedValue)) + p;
 				emitElement(dotElement, mode(), dp, ds);
 			}
 

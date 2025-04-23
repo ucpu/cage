@@ -28,8 +28,8 @@ namespace cage
 			GuiTextFormatComponent textFormat;
 			GuiImageFormatComponent imageFormat;
 			Vec4 margin = Vec4(4);
-			Vec4 padding = Vec4(8);
-			Vec2 size = Vec2(150, 42);
+			Vec4 padding = Vec4(6);
+			Vec2 size = Vec2(150, 38);
 			Header();
 		} header;
 		struct CAGE_ENGINE_API Separator
@@ -47,7 +47,7 @@ namespace cage
 			GuiImageFormatComponent imageFormat;
 			Vec4 padding = Vec4(2);
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(150, 28);
+			Vec2 size = Vec2(150, 26);
 			uint32 clickSound = 0;
 			Button();
 		} button;
@@ -58,8 +58,8 @@ namespace cage
 			GuiTextFormatComponent placeholderFormat;
 			Vec4 basePadding = Vec4(2);
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(300, 28);
-			Real buttonsWidth = 28;
+			Vec2 size = Vec2(300, 26);
+			Real buttonsWidth = 26;
 			Real buttonsOffset = 2;
 			InputButtonsPlacementModeEnum buttonsMode = InputButtonsPlacementModeEnum::Sides;
 			uint32 typingValidSound = 0;
@@ -80,8 +80,8 @@ namespace cage
 		{
 			GuiTextFormatComponent textFormat;
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(28);
-			Vec2 labelOffset = Vec2(4, 6);
+			Vec2 size = Vec2(24);
+			Vec2 labelOffset = Vec2(4, 3);
 			uint32 clickSound = 0;
 			CheckBox();
 		} checkBox;
@@ -89,8 +89,8 @@ namespace cage
 		{
 			GuiTextFormatComponent textFormat;
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(28);
-			Vec2 labelOffset = Vec2(4, 5);
+			Vec2 size = Vec2(24);
+			Vec2 labelOffset = Vec2(4, 3);
 			uint32 clickSound = 0;
 			RadioBox();
 		} radioBox;
@@ -103,7 +103,7 @@ namespace cage
 			Vec4 baseMargin = Vec4(1);
 			Vec4 listPadding = Vec4(-4);
 			Vec4 itemPadding = Vec4(1);
-			Vec2 size = Vec2(250, 28);
+			Vec2 size = Vec2(250, 26);
 			Real listOffset = -2;
 			Real itemSpacing = -2;
 			uint32 openSound = 0;
@@ -116,7 +116,7 @@ namespace cage
 			Vec4 baseMargin = Vec4(1);
 			Vec4 textPadding = Vec4(2);
 			Vec4 fillingPadding = Vec4();
-			Vec2 size = Vec2(300, 28);
+			Vec2 size = Vec2(300, 24);
 			uint32 fillingTextureName = 0;
 			ProgressBar();
 		} progressBar;
@@ -124,7 +124,7 @@ namespace cage
 		{
 			struct Direction
 			{
-				Vec4 padding = Vec4(1);
+				Vec4 padding = Vec4(0.5);
 				Vec4 margin = Vec4(1);
 				Vec2 size;
 				bool collapsedBar = true;
@@ -135,7 +135,7 @@ namespace cage
 		struct CAGE_ENGINE_API ColorPicker
 		{
 			Vec4 margin = Vec4(1);
-			Vec2 collapsedSize = Vec2(28);
+			Vec2 collapsedSize = Vec2(26);
 			Vec2 fullSize = Vec2(250, 180);
 			Real hueBarPortion = 0.18;
 			Real resultBarPortion = 0.35;
@@ -145,7 +145,7 @@ namespace cage
 		struct CAGE_ENGINE_API SolidColor
 		{
 			Vec4 margin = Vec4(1);
-			Vec2 size = Vec2(20);
+			Vec2 size = Vec2(14);
 			SolidColor();
 		} solidColor;
 		struct CAGE_ENGINE_API Frame
@@ -161,7 +161,7 @@ namespace cage
 			Vec4 baseMargin = Vec4(1);
 			Vec4 contentPadding = Vec4(2);
 			Vec4 captionPadding = Vec4(2);
-			Real captionHeight = 30;
+			Real captionHeight = 28;
 			Panel();
 		} panel;
 		struct CAGE_ENGINE_API Spoiler
@@ -171,14 +171,14 @@ namespace cage
 			Vec4 baseMargin = Vec4(1);
 			Vec4 contentPadding = Vec4(2);
 			Vec4 captionPadding = Vec4(2);
-			Real captionHeight = 30;
+			Real captionHeight = 28;
 			uint32 clickSound = 0;
 			Spoiler();
 		} spoiler;
 		struct CAGE_ENGINE_API Scrollbars
 		{
-			Real scrollbarSize = 15;
-			Real contentPadding = 4;
+			Real scrollbarSize = 12;
+			Real contentPadding = 3;
 			uint32 slidingSound = 0;
 			Scrollbars();
 		} scrollbars;

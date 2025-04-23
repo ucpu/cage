@@ -24,9 +24,7 @@ namespace cage
 	};
 
 	constexpr GuiSkinIndex GuiSkinDefault = GuiSkinIndex(0);
-	constexpr GuiSkinIndex GuiSkinLarge = GuiSkinIndex(1);
-	constexpr GuiSkinIndex GuiSkinCompact = GuiSkinIndex(2);
-	constexpr GuiSkinIndex GuiSkinTooltips = GuiSkinIndex(3);
+	constexpr GuiSkinIndex GuiSkinTooltips = GuiSkinIndex(1);
 
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
@@ -130,7 +128,7 @@ namespace cage
 		Vec2 cursorPosition = Vec2::Nan();
 		Vec2 invokerPosition = Vec2::Nan();
 		Vec2 invokerSize = Vec2::Nan();
-		mutable Real extensionBorder = 20;
+		mutable Real extensionBorder = 15;
 		mutable TooltipCloseConditionEnum closeCondition = TooltipCloseConditionEnum::Instant;
 		mutable TooltipPlacementEnum placement = TooltipPlacementEnum::InvokerCorner;
 	};

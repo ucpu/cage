@@ -66,7 +66,7 @@ namespace cage
 				if (hierarchy->text)
 					hierarchy->text->apply(skin->defaults.comboBox.placeholderFormat);
 				for (const auto &c : hierarchy->children)
-					c->text->apply(skin->defaults.comboBox.selectedFormat);
+					c->text->apply(skin->defaults.comboBox.itemsFormat);
 				if (hasFocus())
 				{
 					Holder<HierarchyItem> item = hierarchy->impl->memory->createHolder<HierarchyItem>(hierarchy->impl, hierarchy->ent);
@@ -149,14 +149,21 @@ namespace cage
 			for (const auto &c : combo->hierarchy->children)
 			{
 				Holder<HierarchyItem> h = hierarchy->impl->memory->createHolder<HierarchyItem>(c->impl, c->ent);
-				h->item = hierarchy->impl->memory->createHolder<ComboOptionImpl>(+h, combo, idx++).cast<BaseItem>();
+				h->item = hierarchy->impl->memory->createHolder<ComboOptionImpl>(+h, combo, idx).cast<BaseItem>();
 				auto opt = class_cast<ComboOptionImpl *>(+h->item);
 				opt->widgetState = widgetState;
 				opt->skin = skin;
-				h->text = c->text.share();
+				if (idx == combo->selected)
+				{
+					h->text = hierarchy->impl->memory->createHolder<TextItem>(+h);
+					h->text->assign();
+				}
+				else
+					h->text = c->text.share();
 				const_cast<HierarchyItem *&>(h->text->hierarchy) = +h;
 				const_cast<Entity *&>(c->ent) = nullptr;
 				hierarchy->children.push_back(std::move(h));
+				idx++;
 			}
 		}
 
