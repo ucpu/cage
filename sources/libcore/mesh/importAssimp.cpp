@@ -444,7 +444,9 @@ namespace cage
 
 				try
 				{
-					static constexpr uint32 AssimpDefaultLoadFlags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_LimitBoneWeights | aiProcess_ValidateDataStructure | aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
+					static constexpr uint32 AssimpDefaultLoadFlags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_LimitBoneWeights |
+						//aiProcess_ValidateDataStructure | // still broken for lines
+						aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
 						//aiProcess_FindInvalidData |
 						aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_FindDegenerates | aiProcess_OptimizeGraph |
 						//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
