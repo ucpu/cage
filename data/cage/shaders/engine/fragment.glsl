@@ -25,7 +25,7 @@ struct Material
 	vec3 albedo; // linear, not-premultiplied
 	float opacity;
 	float roughness;
-	float metalness;
+	float metallic;
 	float emissive;
 	float fade;
 };
@@ -39,7 +39,7 @@ vec3 egacLightBrdf(Material material, UniLight light)
 	else
 		L = normalize(light.position.xyz - varPosition);
 	vec3 V = normalize(uniViewport.eyePos.xyz - varPosition);
-	vec3 res = brdf(normal, L, V, material.albedo, material.roughness, material.metalness);
+	vec3 res = brdf(normal, L, V, material.albedo, material.roughness, material.metallic);
 	if (lightType == CAGE_SHADER_OPTIONVALUE_LIGHTSPOT || lightType == CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW)
 	{
 		float d = max(dot(-light.direction.xyz, L), 0);
@@ -88,7 +88,7 @@ float egacLightAmbientOcclusion()
 // it instead adds sky color
 vec3 egacSkyContribution(Material material)
 {
-	vec3 F0 = mix(vec3(0.04), material.albedo, material.metalness);
+	vec3 F0 = mix(vec3(0.04), material.albedo, material.metallic);
 	vec3 V = normalize(uniViewport.eyePos.xyz - varPosition);
 	float NoV = saturate(dot(normal, V));
 	//float reflectDotV = saturate(-1 + 2 * NoV * NoV);
@@ -180,7 +180,7 @@ Material loadMaterial()
 	vec4 specialMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPSPECIAL);
 	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
 	material.roughness = special4.r;
-	material.metalness = special4.g;
+	material.metallic = special4.g;
 	material.emissive = special4.b;
 
 	vec4 albedoMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPALBEDO);

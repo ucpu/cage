@@ -29,7 +29,7 @@ float egacGeometrySmith(float roughness, float NoL, float NoV)
 	return ggx1 * ggx2;
 }
 
-vec3 brdf(vec3 N, vec3 L, vec3 V, vec3 albedo, float roughness, float metalness)
+vec3 brdf(vec3 N, vec3 L, vec3 V, vec3 albedo, float roughness, float metallic)
 {
 	vec3 H = normalize(L + V);
 	float NoL = max(dot(N, L), 0);
@@ -39,9 +39,9 @@ vec3 brdf(vec3 N, vec3 L, vec3 V, vec3 albedo, float roughness, float metalness)
 
 	// https://learnopengl.com/PBR/Lighting
 	// https://github.com/pumexx/pumex/blob/86fda7fa351d00bd5918ad90899ce2d6bb8b1dfe/examples/pumexdeferred/shaders/deferred_composite.frag
-	vec3 F0 = mix(vec3(0.04), albedo, metalness);
+	vec3 F0 = mix(vec3(0.04), albedo, metallic);
 	vec3 F = egacFresnelSchlick(F0, VoH); // VoH or NoV
-	vec3 kD = (vec3(1) - F) * (1 - metalness);
+	vec3 kD = (vec3(1) - F) * (1 - metallic);
 
 	float NDF = egacDistributionGGX(roughness, NoH);
 	float G = egacGeometrySmith(roughness, NoL, NoV);
