@@ -55,6 +55,7 @@ namespace cage
 			Vec4 eyeDir;
 			Vec4 viewport; // x, y, w, h
 			Vec4 ambientLight; // linear rgb, unused
+			Vec4 skyLight; // linear rgb, unused
 			Vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds), unused
 		};
 
@@ -1490,6 +1491,7 @@ namespace cage
 					viewport.eyePos = model * Vec4(0, 0, 0, 1);
 					viewport.eyeDir = model * Vec4(0, 0, -1, 0);
 					viewport.ambientLight = Vec4(colorGammaToLinear(camera.ambientColor) * camera.ambientIntensity, 0);
+					viewport.skyLight = Vec4(colorGammaToLinear(camera.skyColor) * camera.skyIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(resolution));
 					viewport.time = Vec4(frameIndex % 10'000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
 					queue->universalUniformStruct(viewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);

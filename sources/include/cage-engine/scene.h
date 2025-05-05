@@ -109,6 +109,8 @@ namespace cage
 	{
 		Vec3 ambientColor = Vec3(0); // sRGB
 		Real ambientIntensity = 1;
+		Vec3 skyColor = Vec3(0); // sRGB
+		Real skyIntensity = 1;
 		uint32 maxLights = 100;
 	};
 

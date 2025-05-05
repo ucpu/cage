@@ -7,6 +7,7 @@ struct UniViewport
 	vec4 eyeDir;
 	vec4 viewport; // x, y, w, h
 	vec4 ambientLight; // linear rgb, unused
+	vec4 skyLight; // linear rgb, unused
 	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds), unused
 };
 

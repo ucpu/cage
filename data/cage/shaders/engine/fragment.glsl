@@ -84,6 +84,19 @@ float egacLightAmbientOcclusion()
 	return textureLod(texSsao, vec2(gl_FragCoord.xy) / uniViewport.viewport.zw, 0).x;
 }
 
+// this is fake contribution to compensate for missing reflections from light probes
+// it instead adds sky color
+vec3 egacSkyContribution(Material material)
+{
+	vec3 F0 = mix(vec3(0.04), material.albedo, material.metalness);
+	vec3 V = normalize(uniViewport.eyePos.xyz - varPosition);
+	float NoV = saturate(dot(normal, V));
+	//float reflectDotV = saturate(-1 + 2 * NoV * NoV);
+	vec3 fresnel = egacFresnelSchlick(F0, NoV * NoV);
+	float rf = pow(1 - material.roughness, 3) * 0.05; // tweakable parameters
+	return uniViewport.skyLight.rgb * fresnel * rf;
+}
+
 vec4 lighting(Material material)
 {
 	if (material.fade < 0.5)
@@ -102,6 +115,9 @@ vec4 lighting(Material material)
 
 		// ambient
 		res.rgb += material.albedo * uniViewport.ambientLight.rgb * ssao;
+
+		// sky (compensate for lack of IBL)
+		res.rgb += egacSkyContribution(material) * ssao;
 
 		{ // direct unshadowed
 			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
