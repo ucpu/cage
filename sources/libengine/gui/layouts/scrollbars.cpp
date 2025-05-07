@@ -40,16 +40,16 @@ namespace cage
 
 			void findFinalPosition(const FinalPosition &update) override
 			{
+				const Real scw1 = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				const Vec2 requested = hierarchy->children[0]->requestedSize;
 				FinalPosition u(update);
 				for (uint32 a = 0; a < 2; a++)
 				{
 					Scrollbar &s = scrollbars[a];
 					s.shown = data.overflow[a] == OverflowModeEnum::Always;
-					if (data.overflow[a] == OverflowModeEnum::Auto && requested[a] > update.renderSize[a] + 1e-3)
+					if (data.overflow[a] == OverflowModeEnum::Auto && requested[a] > update.renderSize[a] - scw1 + 1e-3)
 						s.shown = true; // the content is larger than the available area
 				}
-				const Real scw1 = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				const Vec2 scw = Vec2(scrollbars[1].shown ? scw1 : 0, scrollbars[0].shown ? scw1 : 0);
 				for (uint32 a = 0; a < 2; a++)
 				{
