@@ -20,11 +20,11 @@ namespace cage
 					hierarchy->text->apply(skin->defaults.spoiler.textFormat);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				if (!hierarchy->children.empty())
 				{
-					hierarchy->children[0]->findRequestedSize();
+					hierarchy->children[0]->findRequestedSize(maxWidth);
 					hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				}
 				if (collapsed)

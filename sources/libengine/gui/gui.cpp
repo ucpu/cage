@@ -398,7 +398,7 @@ namespace cage
 		}
 
 		{ // layouting
-			root->findRequestedSize();
+			root->findRequestedSize(outputSize[0]);
 			FinalPosition u;
 			u.renderPos = u.clipPos = Vec2();
 			u.renderSize = u.clipSize = outputSize;

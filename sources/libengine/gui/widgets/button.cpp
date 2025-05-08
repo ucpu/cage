@@ -17,7 +17,7 @@ namespace cage
 					hierarchy->image->apply(skin->defaults.button.imageFormat);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = skin->defaults.button.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.button.margin);

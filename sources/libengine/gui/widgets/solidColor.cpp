@@ -40,7 +40,7 @@ namespace cage
 				color = data.color;
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = skin->defaults.solidColor.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.solidColor.margin);

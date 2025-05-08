@@ -2,6 +2,8 @@
 
 namespace cage
 {
+	void guiSubtract(Real &maxWidth, const Vec4 &sizes);
+
 	namespace
 	{
 		struct FrameImpl : public WidgetItem
@@ -14,9 +16,12 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->text && !hierarchy->image);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
-				hierarchy->children[0]->findRequestedSize();
+				guiSubtract(maxWidth, skin->defaults.frame.padding);
+				guiSubtract(maxWidth, skin->layouts[(uint32)GuiElementTypeEnum::Frame].border);
+				guiSubtract(maxWidth, skin->defaults.frame.margin);
+				hierarchy->children[0]->findRequestedSize(maxWidth);
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				offsetSize(hierarchy->requestedSize, skin->defaults.frame.padding);
 				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::Frame].border);

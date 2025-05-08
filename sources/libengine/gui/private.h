@@ -71,7 +71,7 @@ namespace cage
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
-		void findRequestedSize(); // fills in the requestedSize
+		void findRequestedSize(Real maxWidth); // fills in the requestedSize
 		void findFinalPosition(const FinalPosition &update); // given position and available space in the FinalPosition, determine actual position and size
 		void childrenEmit();
 		void generateEventReceivers() const;
@@ -90,7 +90,7 @@ namespace cage
 		virtual ~BaseItem() = default;
 
 		virtual void initialize() = 0;
-		virtual void findRequestedSize() = 0;
+		virtual void findRequestedSize(Real maxWidth) = 0;
 		virtual void findFinalPosition(const FinalPosition &update) = 0;
 		virtual void emit() = 0;
 		virtual void generateEventReceivers() = 0;
@@ -172,7 +172,7 @@ namespace cage
 		void assign(const String &value);
 		void assign(PointerRange<const char> value);
 		void apply(const GuiTextFormatComponent &f);
-		Vec2 findRequestedSize();
+		Vec2 findRequestedSize(Real maxWidth = Real::Infinity());
 		RenderableText emit(Vec2 position, Vec2 size, bool disabled);
 		void updateCursorPosition(Vec2 position, Vec2 size, Vec2 point, uint32 &cursor);
 		void setCursorPosition(uint32 cursor);

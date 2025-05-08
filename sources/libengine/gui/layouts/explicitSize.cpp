@@ -17,9 +17,11 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->image);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
-				hierarchy->children[0]->findRequestedSize();
+				if (data.size[0].valid())
+					maxWidth = min(maxWidth, data.size[0]);
+				hierarchy->children[0]->findRequestedSize(maxWidth);
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				for (uint32 i = 0; i < 2; i++)
 				{

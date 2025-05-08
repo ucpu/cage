@@ -2,6 +2,8 @@
 
 namespace cage
 {
+	void guiSubtract(Real &maxWidth, const Vec4 &sizes);
+
 	namespace
 	{
 		struct PanelImpl : public WidgetItem
@@ -16,9 +18,12 @@ namespace cage
 					hierarchy->text->apply(skin->defaults.panel.textFormat);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
-				hierarchy->children[0]->findRequestedSize();
+				guiSubtract(maxWidth, skin->defaults.panel.contentPadding);
+				guiSubtract(maxWidth, skin->layouts[(uint32)GuiElementTypeEnum::PanelBase].border);
+				guiSubtract(maxWidth, skin->defaults.panel.baseMargin);
+				hierarchy->children[0]->findRequestedSize(maxWidth);
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.contentPadding);
 				if (hierarchy->text)

@@ -21,9 +21,9 @@ namespace cage
 				}
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
-				hierarchy->children[0]->findRequestedSize();
+				hierarchy->children[0]->findRequestedSize(maxWidth);
 				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 			}
 

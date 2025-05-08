@@ -167,7 +167,7 @@ namespace cage
 				}
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = skin->defaults.inputBox.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.inputBox.margin);

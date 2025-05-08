@@ -2,6 +2,11 @@
 
 namespace cage
 {
+	void guiSubtract(Real &maxWidth, const Vec4 &sizes)
+	{
+		maxWidth -= sizes[0] + sizes[2];
+	}
+
 	namespace
 	{
 		struct LabelImpl : public WidgetItem
@@ -18,11 +23,12 @@ namespace cage
 					hierarchy->image->apply(skin->defaults.label.imageFormat);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
+				guiSubtract(maxWidth, skin->defaults.label.margin);
 				hierarchy->requestedSize = Vec2();
 				if (hierarchy->text)
-					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->text->findRequestedSize());
+					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->text->findRequestedSize(maxWidth));
 				else if (hierarchy->image)
 					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->image->findRequestedSize());
 				else

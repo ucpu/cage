@@ -17,12 +17,12 @@ namespace cage
 				CAGE_ASSERT((data.first == LineEdgeModeEnum::Spaced) == (data.last == LineEdgeModeEnum::Spaced));
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
 				{
-					c->findRequestedSize();
+					c->findRequestedSize(maxWidth);
 					hierarchy->requestedSize[data.vertical] += c->requestedSize[data.vertical];
 					hierarchy->requestedSize[!data.vertical] = max(hierarchy->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
 				}

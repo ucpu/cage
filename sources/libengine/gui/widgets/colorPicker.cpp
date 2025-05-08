@@ -90,7 +90,7 @@ namespace cage
 				color = data.color;
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				if (this == large)
 					hierarchy->requestedSize = skin->defaults.colorPicker.fullSize;

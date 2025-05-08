@@ -26,7 +26,7 @@ namespace cage
 			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo) {}
 
 			void initialize() override;
-			void findRequestedSize() override;
+			void findRequestedSize(Real maxWidth) override;
 			void findFinalPosition(const FinalPosition &update) override;
 			void emit() override;
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
@@ -40,7 +40,7 @@ namespace cage
 			ComboOptionImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo, uint32 index) : WidgetItem(hierarchy), combo(combo), index(index) {}
 
 			void initialize() override;
-			void findRequestedSize() override;
+			void findRequestedSize(Real maxWidth) override;
 			void emit() override;
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
 		};
@@ -78,7 +78,7 @@ namespace cage
 				}
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = skin->defaults.comboBox.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.comboBox.baseMargin);
@@ -167,13 +167,13 @@ namespace cage
 			}
 		}
 
-		void ComboListImpl::findRequestedSize()
+		void ComboListImpl::findRequestedSize(Real maxWidth)
 		{
 			hierarchy->requestedSize = Vec2();
 			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
 			for (const auto &c : hierarchy->children)
 			{
-				c->findRequestedSize();
+				c->findRequestedSize(maxWidth);
 				hierarchy->requestedSize[1] += c->requestedSize[1];
 			}
 			hierarchy->requestedSize[1] += skin->defaults.comboBox.itemSpacing * (max(combo->count, 1u) - 1);
@@ -228,7 +228,7 @@ namespace cage
 			hierarchy->text->apply(index == combo->selected ? skin->defaults.comboBox.selectedFormat : skin->defaults.comboBox.itemsFormat);
 		}
 
-		void ComboOptionImpl::findRequestedSize()
+		void ComboOptionImpl::findRequestedSize(Real maxWidth)
 		{
 			hierarchy->requestedSize = hierarchy->text->findRequestedSize();
 			const Vec4 itemFrame = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;

@@ -18,7 +18,7 @@ namespace cage
 					hierarchy->image->apply(skin->defaults.header.imageFormat);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				if (hierarchy->text)
 				{

@@ -45,7 +45,7 @@ namespace cage
 				}
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = skin->defaults.progressBar.size;
 				offsetSize(hierarchy->requestedSize, skin->defaults.progressBar.baseMargin);

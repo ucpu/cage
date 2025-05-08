@@ -16,12 +16,12 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->image);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = Vec2();
 				for (const auto &c : hierarchy->children)
 				{
-					c->findRequestedSize();
+					c->findRequestedSize(maxWidth);
 					hierarchy->requestedSize = max(hierarchy->requestedSize, c->requestedSize);
 				}
 				hierarchy->requestedSize[data.vertical] *= hierarchy->children.size();

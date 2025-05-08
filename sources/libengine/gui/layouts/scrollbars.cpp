@@ -30,10 +30,11 @@ namespace cage
 				CAGE_ASSERT(data.scroll.valid() && data.scroll == saturate(data.scroll));
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				const Real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
-				hierarchy->children[0]->findRequestedSize();
+				maxWidth -= scw;
+				hierarchy->children[0]->findRequestedSize(maxWidth);
 				for (uint32 a = 0; a < 2; a++)
 					hierarchy->requestedSize[a] = hierarchy->children[0]->requestedSize[a] + (data.overflow[1 - a] == OverflowModeEnum::Never ? 0 : scw);
 			}

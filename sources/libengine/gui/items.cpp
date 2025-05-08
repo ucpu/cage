@@ -29,20 +29,20 @@ namespace cage
 			image->initialize();
 	}
 
-	void HierarchyItem::findRequestedSize()
+	void HierarchyItem::findRequestedSize(Real maxWidth)
 	{
 		if (item)
-			item->findRequestedSize();
-		else if (text)
-			requestedSize = text->findRequestedSize();
-		else if (image)
-			requestedSize = image->findRequestedSize();
+			item->findRequestedSize(maxWidth);
+		//else if (text)
+		//	requestedSize = text->findRequestedSize(maxWidth);
+		//else if (image)
+		//	requestedSize = image->findRequestedSize();
 		else
 		{
 			requestedSize = Vec2();
 			for (const auto &c : children)
 			{
-				c->findRequestedSize();
+				c->findRequestedSize(maxWidth);
 				requestedSize = max(requestedSize, c->requestedSize);
 			}
 		}
@@ -308,12 +308,14 @@ namespace cage
 			GUI_COMPONENT(TextFormat, f, hierarchy->ent);
 			apply(f);
 		}
+		/*
 		if (GUI_HAS_COMPONENT(ExplicitSize, hierarchy->ent))
 		{
 			GUI_COMPONENT(ExplicitSize, s, hierarchy->ent);
 			if (valid(s.size[0]))
 				format.wrapWidth = min(format.wrapWidth, s.size[0] - 1e-2);
 		}
+		*/
 		assign();
 	}
 
@@ -350,9 +352,15 @@ namespace cage
 			format.lineSpacing = f.lineSpacing;
 	}
 
-	Vec2 TextItem::findRequestedSize()
+	Vec2 TextItem::findRequestedSize(Real maxWidth)
 	{
 		updateLayout();
+		if (layout.size[0] > maxWidth)
+		{
+			format.wrapWidth = min(format.wrapWidth, maxWidth);
+			dirty = true;
+			updateLayout();
+		}
 		return layout.size;
 	}
 

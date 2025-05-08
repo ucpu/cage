@@ -21,7 +21,7 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->image);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				const uint32 childs = numeric_cast<uint32>(hierarchy->children.size());
 
@@ -59,7 +59,7 @@ namespace cage
 				{
 					HierarchyItem *c = +*it;
 					const uint32 idx = numeric_cast<uint32>(it.index);
-					c->findRequestedSize();
+					c->findRequestedSize(maxWidth);
 					m = max(m, c->requestedSize);
 					const uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					const uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);

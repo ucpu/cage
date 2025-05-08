@@ -18,7 +18,7 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->text && !hierarchy->image);
 			}
 
-			void findRequestedSize() override
+			void findRequestedSize(Real maxWidth) override
 			{
 				defaults = data.vertical ? skin->defaults.separator.vertical : skin->defaults.separator.horizontal;
 				baseElement = data.vertical ? GuiElementTypeEnum::SeparatorVerticalLine : GuiElementTypeEnum::SeparatorHorizontalLine;
