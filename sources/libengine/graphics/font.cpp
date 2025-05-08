@@ -354,7 +354,7 @@ namespace cage
 									const bool breakingCharacter = allowLineBreak(text32[infos[i].cluster], infos[i].cluster + 1 < text32.size() ? text32[infos[i].cluster + 1] : '\n');
 									if (differentCluster && breakingCharacter)
 									{
-										if (wrapIndex != m && glyphs.back().wrld[0] + glyphs.back().wrld[2] > format.wrapWidth)
+										if (wrapIndex != m && glyphs.back().wrld[0] + glyphs.back().wrld[2] > format.wrapWidth + 0.1)
 										{
 											const Vec4 off = Vec4(-wrapPos, lineAdvance, 0, 0);
 											for (uint32 i = wrapIndex; i < glyphs.size(); i++)
