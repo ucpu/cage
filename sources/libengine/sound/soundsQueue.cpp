@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <atomic>
 #include <variant>
-#include <vector>
 
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/audioChannelsConverter.h>
@@ -9,6 +7,8 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/soundsQueue.h>
+
+#include "effectiveGain.h"
 
 namespace cage
 {
@@ -107,14 +107,14 @@ namespace cage
 					remaining.store(rem, std::memory_order_relaxed);
 				}
 
-				// update effective gains
-				for (Event &a : active)
-					a.effectiveGain = a.gain * this->gain;
+				if (active.empty())
+					return;
 
-				// sort by priority
-				std::sort(active.begin(), active.end(), [](const Event &a, const Event &b) -> bool { return std::pair(a.priority, a.effectiveGain) > std::pair(b.priority, b.effectiveGain); });
-				for (uint32 i = maxActiveSounds; i < active.size(); i++)
-					active[i].effectiveGain = 0;
+				// reset effective gains
+				for (Event &a : active)
+					a.effectiveGain = a.gain;
+
+				updateEffectiveGains(this, active);
 			}
 
 			void processEvent(Event &v, const SoundCallbackData &data)
@@ -161,6 +161,7 @@ namespace cage
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
 				CAGE_ASSERT(gain.valid() && gain >= 0 && gain.finite());
+				CAGE_ASSERT(maxGainThreshold.valid() && maxGainThreshold >= 0);
 				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 
 				if (purging)

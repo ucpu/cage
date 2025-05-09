@@ -27,7 +27,8 @@ namespace cage
 	public:
 		Quat orientation;
 		Vec3 position;
-		uint32 maxActiveVoices = 100;
+		uint32 maxActiveSounds = 100;
+		Real maxGainThreshold = Real::Infinity(); // all sounds will have proportionally reduced gain when the sum of effective gains reaches this threshold
 		Real gain = 1; // linear amplitude multiplier
 
 		Holder<Voice> newVoice();

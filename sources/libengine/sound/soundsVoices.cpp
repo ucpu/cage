@@ -1,11 +1,10 @@
-#include <algorithm>
-#include <vector>
-
 #include <cage-core/audioChannelsConverter.h>
 #include <cage-core/audioDirectionalConverter.h>
 #include <cage-core/sampleRateConverter.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/soundsVoices.h>
+
+#include "effectiveGain.h"
 
 namespace cage
 {
@@ -21,7 +20,7 @@ namespace cage
 
 			VoiceImpl(VoicesMixerImpl *mixer);
 			~VoiceImpl();
-			void updateGain();
+			void resetGain();
 		};
 
 		class VoicesMixerImpl : public VoicesMixer
@@ -44,14 +43,11 @@ namespace cage
 
 			void updateVoices()
 			{
-				// update effective gains
+				// reset effective gains
 				for (VoiceImpl *v : voices)
-					v->updateGain();
+					v->resetGain();
 
-				// sort by priority
-				std::sort(voices.begin(), voices.end(), [](const VoiceImpl *a, const VoiceImpl *b) -> bool { return std::pair(a->priority, a->effectiveGain) > std::pair(b->priority, b->effectiveGain); });
-				for (uint32 i = maxActiveVoices; i < voices.size(); i++)
-					voices[i]->effectiveGain = 0;
+				updateEffectiveGains(this, voices);
 			}
 
 			void processVoice(VoiceImpl &v, const SoundCallbackData &data)
@@ -148,6 +144,7 @@ namespace cage
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
 				CAGE_ASSERT(gain.valid() && gain >= 0 && gain.finite());
+				CAGE_ASSERT(maxGainThreshold.valid() && maxGainThreshold >= 0);
 				CAGE_ASSERT(position.valid() && orientation.valid());
 				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 
@@ -184,7 +181,7 @@ namespace cage
 			}
 		}
 
-		void VoiceImpl::updateGain()
+		void VoiceImpl::resetGain()
 		{
 			Real att = 1;
 			if (position.valid())
@@ -208,7 +205,7 @@ namespace cage
 				}
 			}
 			CAGE_ASSERT(valid(att) && att >= 0 && att <= 1 + 1e-7);
-			effectiveGain = gain * mixer->gain * att;
+			effectiveGain = gain * att;
 			CAGE_ASSERT(valid(effectiveGain) && effectiveGain >= 0 && effectiveGain.finite());
 		}
 	}

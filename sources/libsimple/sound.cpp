@@ -170,7 +170,8 @@ namespace cage
 					const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
 					l.mixer->orientation = t.orientation;
 					l.mixer->position = t.position;
-					l.mixer->maxActiveVoices = e.listener.maxSounds;
+					l.mixer->maxActiveSounds = e.listener.maxSounds;
+					l.mixer->maxGainThreshold = e.listener.maxGainThreshold;
 					l.mixer->gain = e.listener.gain;
 				}
 

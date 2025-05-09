@@ -19,6 +19,7 @@ namespace cage
 	{
 	public:
 		uint32 maxActiveSounds = 100;
+		Real maxGainThreshold = Real::Infinity(); // all sounds will have proportionally reduced gain when the sum of effective gains reaches this threshold
 		Real gain = 1; // linear amplitude multiplier
 
 		void play(Holder<Sound> sound, const SoundEventConfig &cfg = {});
