@@ -238,8 +238,13 @@ namespace cage
 			CAGE_LOG_CONTINUE(SeverityEnum::Info, "help", h);
 	}
 
-	void Ini::checkUnusedWithHelp() const
+	void Ini::checkUnusedWithHelp()
 	{
+		if (cmdBool('?', "help", false))
+		{
+			logHelp();
+			CAGE_THROW_SILENT(Exception, "showing help");
+		}
 		try
 		{
 			checkUnused();

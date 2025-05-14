@@ -20,7 +20,7 @@ int main(int argc, const char *args[])
 				CAGE_THROW_ERROR(Exception, "asset database failed");
 
 			pathRemove("process-log");
-			pathRemove("../assets.zip");
+			pathRemove("../assets.carch");
 			pathRemove("../data/database");
 
 			// give some time for the filesystem

@@ -16,7 +16,7 @@ void doSplit(const String names[MaxChannels], const String &input)
 	in->importFile(input);
 	CAGE_LOG(SeverityEnum::Info, "image", "splitting");
 	const auto images = imageChannelsSplit(+in);
-	uint32 outputs = 0;
+	uint32 outputsCount = 0;
 	for (uint32 index = 0; index < MaxChannels; index++)
 	{
 		if (names[index].empty())
@@ -29,9 +29,9 @@ void doSplit(const String names[MaxChannels], const String &input)
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving image: " + names[index]);
 		CAGE_ASSERT(images[index]->channels() == 1);
 		images[index]->exportFile(names[index]);
-		outputs++;
+		outputsCount++;
 	}
-	if (outputs == 0)
+	if (outputsCount == 0)
 		CAGE_THROW_ERROR(Exception, "no outputs specified");
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
@@ -56,15 +56,31 @@ Holder<Image> monochromatize(const Image *src)
 
 void doJoin(const String names[MaxChannels], const String &output, const bool mono)
 {
+	const Holder<Image> black = newImage();
+	const Holder<Image> white = newImage();
+
 	Holder<Image> inputs[MaxChannels];
 	uint32 highest = 0;
+	uint32 inputsCount = 0;
 	for (uint32 index = 0; index < MaxChannels; index++)
 	{
 		if (names[index].empty())
 			continue;
 		highest = index;
-		inputs[index] = newImage();
+		if (names[index] == "0" || names[index] == "black")
+		{
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "using zero (black), for " + (index + 1) + "th channel");
+			inputs[index] = black.share();
+			continue;
+		}
+		if (names[index] == "1" || names[index] == "white")
+		{
+			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "using one (white), for " + (index + 1) + "th channel");
+			inputs[index] = white.share();
+			continue;
+		}
 		CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: " + names[index] + ", for " + (index + 1) + "th channel");
+		inputs[index] = newImage();
 		inputs[index]->importFile(names[index]);
 		if (inputs[index]->channels() != 1)
 		{
@@ -73,7 +89,31 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 			CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "monochromatizing");
 			inputs[index] = monochromatize(+inputs[index]);
 		}
+		inputsCount++;
 	}
+	if (inputsCount == 0)
+		CAGE_THROW_ERROR(Exception, "no inputs specified");
+
+	{
+		Vec2i res;
+		for (auto &it : inputs)
+		{
+			if (!it)
+				continue;
+			if (+it == +black || +it == +white)
+				continue;
+			res = it->resolution();
+			break;
+		}
+		if (res != Vec2i())
+		{
+			black->initialize(res, 1);
+			imageFill(+black, 0);
+			white->initialize(res, 1);
+			imageFill(+white, 1);
+		}
+	}
+
 	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "joining");
 	Holder<Image> image = imageChannelsJoin(inputs);
 	imageConvert(+image, highest + 1);
@@ -99,12 +139,13 @@ int main(int argc, const char *args[])
 		{
 			for (uint32 i = 0; i < MaxChannels; i++)
 				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
-			String input = cmd->cmdString('i', "input", "input.png");
+			String input = cmd->cmdString('i', "input");
 
 			if (!help)
 			{
 				cmd->checkUnusedWithHelp();
 				doSplit(names, input);
+				return 0;
 			}
 		}
 
@@ -112,13 +153,14 @@ int main(int argc, const char *args[])
 		{
 			for (uint32 i = 0; i < MaxChannels; i++)
 				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
-			const String output = cmd->cmdString('o', "output", "output.png");
+			const String output = cmd->cmdString('o', "output");
 			const bool mono = cmd->cmdBool('m', "mono", false);
 
 			if (!help)
 			{
 				cmd->checkUnusedWithHelp();
 				doJoin(names, output, mono);
+				return 0;
 			}
 		}
 
@@ -128,13 +170,11 @@ int main(int argc, const char *args[])
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
 			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
+			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "predefined 'black' and 'white' images can be used for joining");
 			return 0;
 		}
 
-		if (join == split)
-			CAGE_THROW_ERROR(Exception, "exactly one of --split (-s) and --join (-j) has to be specified");
-
-		return 0;
+		CAGE_THROW_ERROR(Exception, "exactly one of --split (-s) or --join (-j) has to be specified");
 	}
 	catch (...)
 	{

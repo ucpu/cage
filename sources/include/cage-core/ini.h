@@ -66,7 +66,7 @@ namespace cage
 		bool anyUnused(String &section, String &item, String &value) const;
 		void checkUnused() const;
 		void logHelp() const; // log help based on all cmd* methods so far
-		void checkUnusedWithHelp() const; // logs help and rethrows the exception, if any
+		void checkUnusedWithHelp(); // logs help and rethrows the exception, if any
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
 	void set##NAME(const String &section, const String &item, const TYPE &value); \
