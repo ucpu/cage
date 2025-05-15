@@ -202,7 +202,7 @@ namespace cage
 		struct RenderPipelineImpl : public RenderPipelineConfig
 		{
 			Holder<Model> modelSquare, modelBone, modelIcon;
-			Holder<ShaderProgram> shaderBlitPixels, shaderBlitScaled;
+			Holder<ShaderProgram> shaderBlitPixels;
 			Holder<ShaderProgram> shaderDepth, shaderDepthCutOut;
 			Holder<ShaderProgram> shaderStandard, shaderStandardCutOut;
 			Holder<ShaderProgram> shaderIcon, shaderIconCutOut;
@@ -239,8 +239,7 @@ namespace cage
 				CAGE_ASSERT(modelSquare && modelBone && modelIcon);
 
 				shaderBlitPixels = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0);
-				shaderBlitScaled = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0);
-				CAGE_ASSERT(shaderBlitPixels && shaderBlitScaled);
+				CAGE_ASSERT(shaderBlitPixels);
 
 				Holder<MultiShaderProgram> standard = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/standard.glsl"));
 				CAGE_ASSERT(standard);
@@ -255,6 +254,7 @@ namespace cage
 				shaderIconCutOut = icon->get(HashString("CutOut"));
 
 				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/text.glsl"))->get(0);
+				CAGE_ASSERT(shaderText);
 
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
@@ -272,7 +272,6 @@ namespace cage
 				SHARE(modelBone);
 				SHARE(modelIcon);
 				SHARE(shaderBlitPixels);
-				SHARE(shaderBlitScaled);
 				SHARE(shaderDepth);
 				SHARE(shaderDepthCutOut);
 				SHARE(shaderStandard);
@@ -1199,40 +1198,11 @@ namespace cage
 
 				if (any(effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion))
 				{
-					const Vec2i ssaoResolution = resolution / 3;
-
-					TextureHandle depthTextureLowRes = [&]()
-					{
-						const auto graphicsDebugScope = renderQueue->namedScope("lowResDepth");
-						TextureHandle t = provisionalGraphics->texture(Stringizer() + "depthTextureLowRes_" + name + "_" + resolution,
-							[ssaoResolution](Texture *t)
-							{
-								t->initialize(ssaoResolution, 1, GL_R32F);
-								t->filters(GL_NEAREST, GL_NEAREST, 0);
-								t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-							});
-
-						FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw(Stringizer() + "depthTargetLowRes_" + name);
-						renderQueue->bind(renderTarget);
-						renderQueue->colorTexture(renderTarget, 0, t);
-						renderQueue->depthTexture(renderTarget, {});
-						renderQueue->activeAttachments(renderTarget, 1);
-						renderQueue->checkFrameBuffer(renderTarget);
-						renderQueue->viewport(Vec2i(), ssaoResolution);
-						renderQueue->bind(shaderBlitScaled);
-						renderQueue->bind(depthTexture, 0);
-						renderQueue->draw(modelSquare);
-						renderQueue->resetAllState();
-						renderQueue->resetFrameBuffer();
-						return t;
-					}();
-
 					ScreenSpaceAmbientOcclusionConfig cfg;
 					(ScreenSpaceCommonConfig &)cfg = commonConfig;
 					(ScreenSpaceAmbientOcclusion &)cfg = effects.ssao;
-					cfg.resolution = ssaoResolution;
 					cfg.proj = projection;
-					cfg.inDepth = depthTextureLowRes;
+					cfg.inDepth = depthTexture;
 					cfg.frameIndex = frameIndex;
 					screenSpaceAmbientOcclusion(cfg);
 

@@ -1,4 +1,3 @@
-
 []
 bloomApply.glsl
 bloomGenerate.glsl
@@ -10,6 +9,7 @@ luminanceApply.glsl
 luminanceCollection.glsl
 luminanceHistogram.glsl
 sharpening.glsl
+ssaoDownscaleDepth.glsl
 ssaoGenerate.glsl
 ssaoResolve.glsl
 tonemap.glsl

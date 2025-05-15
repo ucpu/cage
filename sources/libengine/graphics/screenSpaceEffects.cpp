@@ -72,18 +72,14 @@ namespace cage
 		PointerRange<const char> pointsForSsaoShader();
 	}
 
-	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config)
+	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config_)
 	{
-		RenderQueue *q = config.queue;
+		RenderQueue *q = config_.queue;
 		const auto graphicsDebugScope = q->namedScope("ssao");
+		ScreenSpaceAmbientOcclusionConfig config = config_;
+		config.resolution /= 3;
 
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
-
-		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints", [](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(), GL_STATIC_DRAW); });
-		q->bind(ssaoPoints, 3);
-
+		// params
 		struct Shader
 		{
 			Mat4 proj;
@@ -98,14 +94,36 @@ namespace cage
 		s.iparams[1] = hash(config.frameIndex);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
 
-		// generate
-		config.outAo = provTex(config.provisionals, "ssao", config.resolution, 1, GL_R8);
-		q->colorTexture(fb, 0, config.outAo);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inDepth, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoGenerate.glsl"))->get(0));
+		// framebuffer
+		q->viewport(Vec2i(), config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
-		q->draw(model);
+
+		// low res depth
+		TextureHandle depthTextureLowRes = provTex(config.provisionals, "ssaoDepthLowRes", config.resolution, 1, GL_R32F);
+		{
+			const auto graphicsDebugScope = q->namedScope("lowResDepth");
+			q->colorTexture(fb, 0, depthTextureLowRes);
+			q->checkFrameBuffer(fb);
+			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoDownscaleDepth.glsl"))->get(0));
+			q->bind(config.inDepth, 0);
+			q->draw(model);
+		}
+
+		// points
+		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints", [](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(), GL_STATIC_DRAW); });
+		q->bind(ssaoPoints, 3);
+
+		{ // generate
+			const auto graphicsDebugScope = q->namedScope("generate");
+			config.outAo = provTex(config.provisionals, "ssao", config.resolution, 1, GL_R8);
+			q->colorTexture(fb, 0, config.outAo);
+			q->checkFrameBuffer(fb);
+			q->bind(depthTextureLowRes, 0);
+			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoGenerate.glsl"))->get(0));
+			q->draw(model);
+		}
 
 		// blur
 		GfGaussianBlurConfig gb;
@@ -115,10 +133,14 @@ namespace cage
 		for (uint32 i = 0; i < config.blurPasses; i++)
 			gfGaussianBlur(gb);
 
-		// resolve - update outAo inplace
-		q->bind(config.outAo, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoResolve.glsl"))->get(0));
-		q->draw(model);
+		{ // resolve - update outAo inplace
+			const auto graphicsDebugScope = q->namedScope("resolve");
+			q->bind(config.outAo, 0);
+			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoResolve.glsl"))->get(0));
+			q->draw(model);
+		}
+
+		config_.outAo = config.outAo;
 	}
 
 	void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config)

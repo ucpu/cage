@@ -1,4 +1,3 @@
-
 []
 scheme = pack
 effects.pack
@@ -15,6 +14,7 @@ luminanceApply.glsl
 luminanceCollection.glsl
 luminanceHistogram.glsl
 sharpening.glsl
+ssaoDownscaleDepth.glsl
 ssaoGenerate.glsl
 ssaoResolve.glsl
 tonemap.glsl
