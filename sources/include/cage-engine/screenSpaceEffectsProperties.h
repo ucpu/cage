@@ -7,12 +7,12 @@ namespace cage
 {
 	struct CAGE_ENGINE_API ScreenSpaceAmbientOcclusion
 	{
-		Real worldRadius = 0.5;
-		Real bias = 0.03;
+		Real worldRadius = 0.1;
+		Real bias = 0.01;
 		Real power = 1.3;
 		Real strength = 3;
 		// ao = pow(ao - bias, power) * strength
-		uint32 samplesCount = 16;
+		uint32 samplesCount = 32;
 		uint32 blurPasses = 3;
 	};
 

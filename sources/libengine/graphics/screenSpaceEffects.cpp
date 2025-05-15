@@ -69,7 +69,7 @@ namespace cage
 
 	namespace privat
 	{
-		PointerRange<const char> pointsForSsaoShader();
+		PointerRange<const char> pointsForSsaoShader(uint32 count);
 	}
 
 	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config_)
@@ -112,7 +112,7 @@ namespace cage
 		}
 
 		// points
-		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints", [](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(), GL_STATIC_DRAW); });
+		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer(Stringizer() + "ssaoPoints_" + config.samplesCount, [count = config.samplesCount](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(count), GL_STATIC_DRAW); });
 		q->bind(ssaoPoints, 3);
 
 		{ // generate

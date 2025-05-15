@@ -6,23 +6,12 @@ $include vertex.glsl
 $define shader fragment
 
 $include ../functions/common.glsl
-$include ../functions/hash.glsl
-//$include ssaoParams.glsl
-
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Ssao
-{
-	mat4 proj;
-	mat4 projInv;
-	vec4 params; // strength, bias, power, radius
-	ivec4 iparams; // sampleCount, hashSeed
-};
-
+$include ../functions/randomFunc.glsl
+$include ssaoParams.glsl
 
 layout(std140, binding = 3) uniform SsaoPoints
 {
-	// unit sphere samples; .w is [0,1] random scalar
-	vec4 pointsOnSphere[256];
+	vec4 ssaoPoints[256];
 };
 
 layout(binding = 0) uniform sampler2D texDepth; // NDC depth [0,1]
@@ -43,6 +32,20 @@ vec3 reconstructNormal(vec3 position)
 	return normalize(cross(dFdx(position), dFdy(position)));
 }
 
+mat3 makeTbn(vec3 myNormal)
+{
+	//float angle = 2.0 * 3.14159265 * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+	uint n = hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ uint(iparams[1])); // per-pixel seed
+	float angle = 2.0 * 3.14159265 * egacIntToFloat(n);
+	float ca = cos(angle);
+	float sa = sin(angle);
+	vec3 t = normalize(myNormal.yzx); // arbitrary orthogonal vector
+	vec3 b = cross(myNormal, t);
+	vec3 tangent = ca * t + sa * b;
+	vec3 bitangent = -sa * t + ca * b;
+	return mat3(tangent, bitangent, myNormal);
+}
+
 void main()
 {
 	vec2 resolution = vec2(textureSize(texDepth, 0));
@@ -57,25 +60,24 @@ void main()
 	vec3 myNormal = reconstructNormal(myPos); // view-space normal
 
 	// sampling
-	uint n = hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ uint(iparams[1])); // per-pixel seed
+	mat3 tbn = makeTbn(myNormal);
 	float ssaoRadius = params[3];
 	float occ = 0;
 	float total = 0;
 	for (int i = 0; i < iparams[0]; i++)
 	{
 		// view-space ray direction
-		vec3 rayDir = pointsOnSphere[hash(uint(n * 17 + i)) % 256].xyz;
-		float d = dot(myNormal, rayDir);
-		if (abs(d) < 0.1)
-			continue; // the direction is close to the surface and susceptible to noise
-		rayDir = sign(d) * rayDir; // move the direction into front hemisphere
-		rayDir *= (sqr(pointsOnSphere[hash(uint(n * 13 + i)) % 256].w) * 0.9 + 0.1) * ssaoRadius;
+		vec3 rayDir = ssaoPoints[i].xyz;
+		rayDir = tbn * rayDir;
+		rayDir *= ssaoRadius;
 
-		vec3 rayPos = myPos + rayDir; // view-space ray position
+		// view-space ray position
+		vec3 rayPos = myPos + rayDir;
 		vec4 r4 = proj * vec4(rayPos, 1); // clip space
 		vec3 rayNdc = r4.xyz / r4.w; // NDC [-1,1]
 
-		float sampleDepth = textureLod(texDepth, rayNdc.xy * 0.5 + 0.5, 0).x * 2 - 1; // NDC depth [-1,1]
+		vec2 sampleUv = saturate(rayNdc.xy * 0.5 + 0.5);
+		float sampleDepth = textureLod(texDepth, sampleUv, 0).x * 2 - 1; // NDC depth [-1,1]
 		if (sampleDepth < rayNdc.z)
 		{
 			vec3 samplePos = ndcToView(rayNdc.xy, sampleDepth); // view-space sample position
