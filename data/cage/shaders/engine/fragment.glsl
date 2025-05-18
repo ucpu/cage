@@ -56,17 +56,20 @@ float egacShadowedIntensity(UniShadowedLight uni)
 {
 	float normalOffsetScale = uni.shadowParams[2];
 	int shadowmapSamplerIndex = int(uni.shadowParams[0]);
+	int cascade = 0; // todo calculate cascade
 	vec3 p3 = varPosition + normal * normalOffsetScale;
-	vec4 shadowPos4 = uni.shadowMat * vec4(p3, 1);
+	vec4 shadowPos4 = uni.shadowMat[cascade] * vec4(p3, 1);
+	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
 	float intensity = 1;
 	switch (int(uni.light.params[0]))
 	{
 	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW:
-		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], vec3(shadowPos4));
-	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW:
-		intensity = sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], vec3(shadowPos4));
 	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW:
-		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], shadowPos4.xyz / shadowPos4.w);
+		intensity = sampleShadowMap2dArrayFast(texShadows2d[shadowmapSamplerIndex], shadowPos, cascade);
+		break;
+	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW:
+		intensity = sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], shadowPos);
+		break;
 	}
 	return mix(1, intensity, uni.shadowParams[3]);
 }
@@ -91,7 +94,6 @@ vec3 egacSkyContribution(Material material)
 	vec3 F0 = mix(vec3(0.04), material.albedo, material.metallic);
 	vec3 V = normalize(uniViewport.eyePos.xyz - varPosition);
 	float NoV = saturate(dot(normal, V));
-	//float reflectDotV = saturate(-1 + 2 * NoV * NoV);
 	vec3 fresnel = egacFresnelSchlick(F0, NoV * NoV);
 	float rf = pow(1 - material.roughness, 3) * 0.05; // tweakable parameters
 	return uniViewport.skyLight.rgb * fresnel * rf;

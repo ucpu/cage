@@ -60,11 +60,26 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
+	void FrameBuffer::depthTexture(Texture *tex, uint32 layer)
+	{
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
+		glNamedFramebufferTextureLayer(impl->id, GL_DEPTH_ATTACHMENT, tex ? tex->id() : 0, 0, layer);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
 	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel)
 	{
 		CAGE_ASSERT(!tex || mipmapLevel < tex->mipmapLevels());
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		glNamedFramebufferTexture(impl->id, GL_COLOR_ATTACHMENT0 + index, tex ? tex->id() : 0, mipmapLevel);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel, uint32 layer)
+	{
+		CAGE_ASSERT(!tex || mipmapLevel < tex->mipmapLevels());
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
+		glNamedFramebufferTextureLayer(impl->id, GL_COLOR_ATTACHMENT0 + index, tex ? tex->id() : 0, mipmapLevel, layer);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

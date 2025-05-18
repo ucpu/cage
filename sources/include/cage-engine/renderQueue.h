@@ -64,7 +64,9 @@ namespace cage
 
 		void bind(FrameBufferHandle frameBuffer);
 		void depthTexture(FrameBufferHandle frameBuffer, TextureHandle texture); // attach depth texture
+		void depthTexture(FrameBufferHandle frameBuffer, TextureHandle texture, uint32 layer); // attach depth texture
 		void colorTexture(FrameBufferHandle frameBuffer, uint32 index, TextureHandle texture, uint32 mipmapLevel = 0); // attach color texture
+		void colorTexture(FrameBufferHandle frameBuffer, uint32 index, TextureHandle texture, uint32 mipmapLevel, uint32 layer); // attach color texture
 		void activeAttachments(FrameBufferHandle frameBuffer, uint32 mask); // bitmask of active color textures
 		void clearFrameBuffer(FrameBufferHandle frameBuffer); // detach all textures from the frame buffer
 		void checkFrameBuffer(FrameBufferHandle frameBuffer); // check the frame buffer for completeness

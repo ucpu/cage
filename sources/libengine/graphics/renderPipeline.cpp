@@ -86,8 +86,10 @@ namespace cage
 
 		struct UniShadowedLight : public UniLight
 		{
-			Mat4 shadowMat;
-			Vec4 shadowParams; // shadowmapSamplerIndex, shadowedLightIndex (unused?), normalOffsetScale, shadowFactor
+			// UniLight is inherited
+			Mat4 shadowMat[CAGE_SHADER_MAX_SHADOWMAPSCASCADES];
+			Vec4 shadowParams; // shadowmapSamplerIndex, unused, normalOffsetScale, shadowFactor
+			Vec4 cascadesDepths;
 		};
 
 		struct UniOptions
@@ -1058,30 +1060,32 @@ namespace cage
 				renderQueue = newRenderQueue(name, provisionalGraphics);
 				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
 
-				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
-				renderQueue->bind(renderTarget);
-				renderQueue->clearFrameBuffer(renderTarget);
-				renderQueue->depthTexture(renderTarget, shadowmap->shadowTexture);
-				renderQueue->activeAttachments(renderTarget, 0);
-				renderQueue->checkFrameBuffer(renderTarget);
-				renderQueue->viewport(Vec2i(), resolution);
-				renderQueue->colorWrite(false);
-				renderQueue->clear(false, true);
-				renderQueue->bind(shaderDepth);
-				renderQueue->checkGlErrorDebug();
-
-				prepareProjection();
-				prepareEntities();
-				orderRenderData();
-
+				for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
 				{
-					const auto graphicsDebugScope = renderQueue->namedScope("shadowmap pass");
-					renderPass(RenderModeEnum::Shadowmap);
-				}
+					FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
+					renderQueue->bind(renderTarget);
+					renderQueue->clearFrameBuffer(renderTarget);
+					renderQueue->depthTexture(renderTarget, shadowmap->shadowTexture, cascade);
+					renderQueue->activeAttachments(renderTarget, 0);
+					renderQueue->checkFrameBuffer(renderTarget);
+					renderQueue->viewport(Vec2i(), resolution);
+					renderQueue->colorWrite(false);
+					renderQueue->clear(false, true);
+					renderQueue->checkGlErrorDebug();
 
-				renderQueue->resetFrameBuffer();
-				renderQueue->resetAllTextures();
-				renderQueue->checkGlErrorDebug();
+					prepareProjection();
+					prepareEntities();
+					orderRenderData();
+
+					{
+						const auto graphicsDebugScope = renderQueue->namedScope("shadowmap pass");
+						renderPass(RenderModeEnum::Shadowmap);
+					}
+
+					renderQueue->resetFrameBuffer();
+					renderQueue->resetAllTextures();
+					renderQueue->checkGlErrorDebug();
+				}
 			}
 
 			void prepareCameraLights()
@@ -1114,35 +1118,31 @@ namespace cage
 
 				{ // add shadowed lights
 					std::vector<UniShadowedLight> shadows;
-					PointerRangeHolder<TextureHandle> tex2d, texCube;
+					uint32 tex2dCount = 0, texCubeCount = 0;
 					shadows.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D);
-					tex2d.reserve(CAGE_SHADER_MAX_SHADOWMAPS2D);
-					texCube.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE);
 					for (auto &[e, sh_] : data->shadowmaps)
 					{
 						CAGE_ASSERT(sh_->shadowmap);
 						ShadowmapData &sh = *sh_->shadowmap;
 						if (sh.lightComponent.lightType == LightTypeEnum::Point)
 						{
-							if (texCube.size() == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
+							if (texCubeCount == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
-							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCube.size());
-							sh.shadowUni.shadowParams[0] = texCube.size();
-							sh.shadowUni.shadowParams[1] = shadows.size();
-							texCube.push_back(sh.shadowTexture);
+							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0 + texCubeCount);
+							sh.shadowUni.shadowParams[0] = texCubeCount;
+							texCubeCount++;
 						}
 						else
 						{
-							if (tex2d.size() == CAGE_SHADER_MAX_SHADOWMAPS2D)
+							if (tex2dCount == CAGE_SHADER_MAX_SHADOWMAPS2D)
 								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
-							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2d.size());
-							sh.shadowUni.shadowParams[0] = tex2d.size();
-							sh.shadowUni.shadowParams[1] = shadows.size();
-							tex2d.push_back(sh.shadowTexture);
+							renderQueue->bind(sh.shadowTexture, CAGE_SHADER_TEXTURE_SHADOWMAP2D0 + tex2dCount);
+							sh.shadowUni.shadowParams[0] = tex2dCount;
+							tex2dCount++;
 						}
 						shadows.push_back(sh.shadowUni);
 					}
-					CAGE_ASSERT(shadows.size() == tex2d.size() + texCube.size());
+					CAGE_ASSERT(shadows.size() == tex2dCount + texCubeCount);
 					data->shadowedLightsCount = numeric_cast<uint32>(shadows.size());
 					if (!shadows.empty())
 						renderQueue->universalUniformArray<UniShadowedLight>(shadows, CAGE_SHADER_UNIBLOCK_SHADOWEDLIGHTS);
@@ -1407,17 +1407,20 @@ namespace cage
 				}();
 				data->viewProj = data->projection * data->view;
 				data->frustum = Frustum(data->viewProj);
-				static constexpr Mat4 bias = Mat4(0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 1.0);
-				shadowmap.shadowUni.shadowMat = bias * data->viewProj;
+				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
+				shadowmap.shadowUni.shadowMat[0] = bias * data->viewProj;
 
 				{
 					const String name = Stringizer() + data->name + "_" + data->resolution;
-					shadowmap.shadowTexture = provisionalGraphics->texture(name, shadowmap.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D,
-						[resolution = data->resolution, format = shadowmap.lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t)
+					shadowmap.shadowTexture = provisionalGraphics->texture(name, shadowmap.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D_ARRAY,
+						[resolution = data->resolution, lightType = shadowmap.lightComponent.lightType](Texture *t)
 						{
-							t->initialize(resolution, 1, format);
+							if (lightType == LightTypeEnum::Point)
+								t->initialize(Vec3i(resolution, 1), 1, GL_DEPTH_COMPONENT16);
+							else
+								t->initialize(Vec3i(resolution, CAGE_SHADER_MAX_SHADOWMAPSCASCADES), 1, GL_DEPTH_COMPONENT24);
 							t->filters(GL_LINEAR, GL_LINEAR, 16);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 						});
 				}
 

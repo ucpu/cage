@@ -451,6 +451,25 @@ namespace cage
 		cmd.texture = std::move(texture);
 	}
 
+	void RenderQueue::depthTexture(FrameBufferHandle frameBuffer, TextureHandle texture, uint32 layer)
+	{
+		CAGE_ASSERT(frameBuffer);
+
+		struct Cmd : public CmdBase
+		{
+			FrameBufferHandle frameBuffer;
+			TextureHandle texture;
+			uint32 layer = 0;
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->depthTexture(+texture.resolve(), layer); }
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.frameBuffer = std::move(frameBuffer);
+		cmd.texture = std::move(texture);
+		cmd.layer = layer;
+	}
+
 	void RenderQueue::colorTexture(FrameBufferHandle frameBuffer, uint32 index, TextureHandle texture, uint32 mipmapLevel)
 	{
 		CAGE_ASSERT(frameBuffer);
@@ -470,6 +489,29 @@ namespace cage
 		cmd.texture = std::move(texture);
 		cmd.index = index;
 		cmd.mipmapLevel = mipmapLevel;
+	}
+
+	void RenderQueue::colorTexture(FrameBufferHandle frameBuffer, uint32 index, TextureHandle texture, uint32 mipmapLevel, uint32 layer)
+	{
+		CAGE_ASSERT(frameBuffer);
+
+		struct Cmd : public CmdBase
+		{
+			FrameBufferHandle frameBuffer;
+			TextureHandle texture;
+			uint32 index = 0;
+			uint32 mipmapLevel = 0;
+			uint32 layer = 0;
+			void dispatch(RenderQueueImpl *impl) const override { frameBuffer.resolve()->colorTexture(index, +texture.resolve(), mipmapLevel, layer); }
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.frameBuffer = std::move(frameBuffer);
+		cmd.texture = std::move(texture);
+		cmd.index = index;
+		cmd.mipmapLevel = mipmapLevel;
+		cmd.layer = layer;
 	}
 
 	void RenderQueue::activeAttachments(FrameBufferHandle frameBuffer, uint32 mask)

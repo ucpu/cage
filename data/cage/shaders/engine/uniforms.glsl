@@ -74,8 +74,9 @@ struct UniLight
 struct UniShadowedLight
 {
 	UniLight light;
-	mat4 shadowMat;
-	vec4 shadowParams; // shadowmapSamplerIndex, shadowedLightIndex (unused?), normalOffsetScale, shadowFactor
+	mat4 shadowMat[CAGE_SHADER_MAX_SHADOWMAPSCASCADES];
+	vec4 shadowParams; // shadowmapSamplerIndex, unused, normalOffsetScale, shadowFactor
+	vec4 cascadesDepths;
 };
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
@@ -108,5 +109,5 @@ layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texMaterialNormal
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_ARRAY) uniform sampler2DArray texMaterialNormalArray;
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMaterialNormalCube;
 layout(binding = CAGE_SHADER_TEXTURE_SSAO) uniform sampler2D texSsao;
-layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAP2D0) uniform sampler2D texShadows2d[CAGE_SHADER_MAX_SHADOWMAPS2D];
+layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAP2D0) uniform sampler2DArray texShadows2d[CAGE_SHADER_MAX_SHADOWMAPS2D];
 layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0) uniform samplerCube texShadowsCube[CAGE_SHADER_MAX_SHADOWMAPSCUBE];
