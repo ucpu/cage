@@ -188,7 +188,7 @@ namespace cage
 
 		struct CameraData : private Noncopyable
 		{
-			std::map<Entity *, Holder<struct RenderPipelineImpl>> shadowmaps;
+			std::vector<Holder<struct RenderPipelineImpl>> shadowmaps;
 			uint32 lightsCount = 0;
 			uint32 shadowedLightsCount = 0;
 		};
@@ -199,6 +199,7 @@ namespace cage
 			Holder<ProvisionalTexture> shadowTexture;
 			LightComponent lightComponent;
 			ShadowmapComponent shadowmapComponent;
+			uint32 cascade = 0;
 		};
 
 		struct RenderPipelineImpl : public RenderPipelineConfig
@@ -1052,42 +1053,6 @@ namespace cage
 				renderQueue->universalUniformStruct(uni, CAGE_SHADER_UNIBLOCK_PROJECTION);
 			}
 
-			void taskShadowmap()
-			{
-				CAGE_ASSERT(!data);
-				CAGE_ASSERT(shadowmap);
-
-				renderQueue = newRenderQueue(name, provisionalGraphics);
-				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
-
-				for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
-				{
-					FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
-					renderQueue->bind(renderTarget);
-					renderQueue->clearFrameBuffer(renderTarget);
-					renderQueue->depthTexture(renderTarget, shadowmap->shadowTexture, cascade);
-					renderQueue->activeAttachments(renderTarget, 0);
-					renderQueue->checkFrameBuffer(renderTarget);
-					renderQueue->viewport(Vec2i(), resolution);
-					renderQueue->colorWrite(false);
-					renderQueue->clear(false, true);
-					renderQueue->checkGlErrorDebug();
-
-					prepareProjection();
-					prepareEntities();
-					orderRenderData();
-
-					{
-						const auto graphicsDebugScope = renderQueue->namedScope("shadowmap pass");
-						renderPass(RenderModeEnum::Shadowmap);
-					}
-
-					renderQueue->resetFrameBuffer();
-					renderQueue->resetAllTextures();
-					renderQueue->checkGlErrorDebug();
-				}
-			}
-
 			void prepareCameraLights()
 			{
 				ProfilingScope profiling("prepare lights");
@@ -1120,10 +1085,12 @@ namespace cage
 					std::vector<UniShadowedLight> shadows;
 					uint32 tex2dCount = 0, texCubeCount = 0;
 					shadows.reserve(CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D);
-					for (auto &[e, sh_] : data->shadowmaps)
+					for (auto &sh_ : data->shadowmaps)
 					{
 						CAGE_ASSERT(sh_->shadowmap);
 						ShadowmapData &sh = *sh_->shadowmap;
+						if (sh.cascade != 0)
+							continue;
 						if (sh.lightComponent.lightType == LightTypeEnum::Point)
 						{
 							if (texCubeCount == CAGE_SHADER_MAX_SHADOWMAPSCUBE)
@@ -1375,66 +1342,6 @@ namespace cage
 				}
 			}
 
-			Holder<AsyncTask> prepareShadowmap(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
-			{
-				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
-
-				Holder<RenderPipelineImpl> data = systemMemory().createHolder<RenderPipelineImpl>(this);
-				this->data->shadowmaps[e] = data.share();
-
-				data->name = Stringizer() + name + "_shadowmap_" + e->id();
-				data->shadowmap = ShadowmapData();
-				ShadowmapData &shadowmap = *data->shadowmap;
-				shadowmap.lightComponent = lc;
-				shadowmap.shadowmapComponent = sc;
-				data->resolution = Vec2i(sc.resolution);
-				data->model = modelTransform(e);
-				data->transform = Transform(Vec3(data->model * Vec4(0, 0, 0, 1)));
-				data->view = inverse(data->model);
-				data->projection = [&]()
-				{
-					switch (lc.lightType)
-					{
-						case LightTypeEnum::Directional:
-							return orthographicProjection(-sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize);
-						case LightTypeEnum::Spot:
-							return perspectiveProjection(lc.spotAngle, 1, lc.minDistance, lc.maxDistance);
-						case LightTypeEnum::Point:
-							return perspectiveProjection(Degs(90), 1, lc.minDistance, lc.maxDistance);
-						default:
-							CAGE_THROW_CRITICAL(Exception, "invalid light type");
-					}
-				}();
-				data->viewProj = data->projection * data->view;
-				data->frustum = Frustum(data->viewProj);
-				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
-				shadowmap.shadowUni.shadowMat[0] = bias * data->viewProj;
-
-				{
-					const String name = Stringizer() + data->name + "_" + data->resolution;
-					shadowmap.shadowTexture = provisionalGraphics->texture(name, shadowmap.lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D_ARRAY,
-						[resolution = data->resolution, lightType = shadowmap.lightComponent.lightType](Texture *t)
-						{
-							if (lightType == LightTypeEnum::Point)
-								t->initialize(Vec3i(resolution, 1), 1, GL_DEPTH_COMPONENT16);
-							else
-								t->initialize(Vec3i(resolution, CAGE_SHADER_MAX_SHADOWMAPSCASCADES), 1, GL_DEPTH_COMPONENT24);
-							t->filters(GL_LINEAR, GL_LINEAR, 16);
-							t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-						});
-				}
-
-				{
-					UniShadowedLight &uni = shadowmap.shadowUni;
-					(UniLight &)uni = initializeLightUni(data->model, lc, e->getOrDefault<ColorComponent>(), transform.position);
-					uni.shadowParams[2] = shadowmap.shadowmapComponent.normalOffsetScale;
-					uni.shadowParams[3] = shadowmap.shadowmapComponent.shadowFactor;
-					uni.params[0] += 1; // shadowed light type
-				}
-
-				return tasksRunAsync<RenderPipelineImpl>("render shadowmap task", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data));
-			}
-
 			Holder<RenderQueue> prepareCamera()
 			{
 				CAGE_ASSERT(!name.empty());
@@ -1447,7 +1354,7 @@ namespace cage
 						{
 							if (failedMask(e))
 								return;
-							tasks.push_back(prepareShadowmap(e, lc, sc));
+							prepareShadowmap(tasks, e, lc, sc);
 						},
 						+scene, false);
 					tasks.push_back(tasksRunAsync("render camera task", Delegate<void(uint32)>().bind<RenderPipelineImpl, &RenderPipelineImpl::taskCamera>(this)));
@@ -1472,10 +1379,165 @@ namespace cage
 
 				// ensure that shadowmaps are rendered before the camera
 				for (auto &shm : data->shadowmaps)
-					queue->enqueue(std::move(shm.second->renderQueue));
+					queue->enqueue(std::move(shm->renderQueue));
 
 				queue->enqueue(std::move(renderQueue));
 				return queue;
+			}
+
+			void taskShadowmap()
+			{
+				CAGE_ASSERT(!data);
+				CAGE_ASSERT(shadowmap);
+
+				renderQueue = newRenderQueue(name, provisionalGraphics);
+				const auto graphicsDebugScope = renderQueue->namedScope("shadowmap");
+
+				FrameBufferHandle renderTarget = provisionalGraphics->frameBufferDraw("renderTarget");
+				renderQueue->bind(renderTarget);
+				renderQueue->clearFrameBuffer(renderTarget);
+				renderQueue->depthTexture(renderTarget, shadowmap->shadowTexture, shadowmap->cascade);
+				renderQueue->activeAttachments(renderTarget, 0);
+				renderQueue->checkFrameBuffer(renderTarget);
+				renderQueue->viewport(Vec2i(), resolution);
+				renderQueue->colorWrite(false);
+				renderQueue->clear(false, true);
+				renderQueue->checkGlErrorDebug();
+
+				prepareProjection();
+				prepareEntities();
+				orderRenderData();
+
+				{
+					const auto graphicsDebugScope = renderQueue->namedScope("shadowmap pass");
+					renderPass(RenderModeEnum::Shadowmap);
+				}
+
+				renderQueue->resetFrameBuffer();
+				renderQueue->resetAllTextures();
+				renderQueue->checkGlErrorDebug();
+			}
+
+			Holder<RenderPipelineImpl> initializeShadowmapCommon(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+			{
+				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
+
+				Holder<RenderPipelineImpl> data = systemMemory().createHolder<RenderPipelineImpl>(this);
+				this->data->shadowmaps.push_back(data.share());
+
+				data->name = Stringizer() + name + "_shadowmap_" + e->id();
+				data->shadowmap = ShadowmapData();
+				ShadowmapData &shadowmap = *data->shadowmap;
+				shadowmap.lightComponent = lc;
+				shadowmap.shadowmapComponent = sc;
+				data->resolution = Vec2i(sc.resolution);
+				data->model = modelTransform(e);
+				data->transform = Transform(Vec3(data->model * Vec4(0, 0, 0, 1)));
+
+				{
+					UniShadowedLight &uni = shadowmap.shadowUni;
+					(UniLight &)uni = initializeLightUni(data->model, lc, e->getOrDefault<ColorComponent>(), transform.position);
+					uni.shadowParams[2] = sc.normalOffsetScale;
+					uni.shadowParams[3] = sc.shadowFactor;
+					uni.params[0] += 1; // shadowed light type
+				}
+
+				return data;
+			}
+
+			void finalizeShadowmapCascade()
+			{
+				CAGE_ASSERT(shadowmap->lightComponent.lightType == LightTypeEnum::Directional);
+
+				// todo modify for individual cascades
+				view = inverse(model);
+
+				{
+					const auto sc = shadowmap->shadowmapComponent;
+					projection = orthographicProjection(-sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize);
+				}
+
+				viewProj = projection * view;
+				frustum = Frustum(viewProj);
+				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
+				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
+			}
+
+			void finalizeShadowmapSingle()
+			{
+				CAGE_ASSERT(shadowmap->cascade == 0);
+
+				view = inverse(model);
+
+				projection = [&]()
+				{
+					const auto lc = shadowmap->lightComponent;
+					switch (lc.lightType)
+					{
+						case LightTypeEnum::Spot:
+							return perspectiveProjection(lc.spotAngle, 1, lc.minDistance, lc.maxDistance);
+						case LightTypeEnum::Point:
+							return perspectiveProjection(Degs(90), 1, lc.minDistance, lc.maxDistance);
+						case LightTypeEnum::Directional:
+						default:
+							CAGE_THROW_CRITICAL(Exception, "invalid light type");
+					}
+				}();
+
+				viewProj = projection * view;
+				frustum = Frustum(viewProj);
+				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
+				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
+			}
+
+			void prepareShadowmap(std::vector<Holder<AsyncTask>> &outputTasks, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+			{
+				switch (lc.lightType)
+				{
+					case LightTypeEnum::Directional:
+					{
+						Holder<ProvisionalTexture> tex;
+						{
+							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_cascades_" + resolution;
+							tex = provisionalGraphics->texture(name, GL_TEXTURE_2D_ARRAY,
+								[resolution = sc.resolution](Texture *t)
+								{
+									t->initialize(Vec3i(resolution, resolution, CAGE_SHADER_MAX_SHADOWMAPSCASCADES), 1, GL_DEPTH_COMPONENT24);
+									t->filters(GL_LINEAR, GL_LINEAR, 16);
+									t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+								});
+						}
+						for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
+						{
+							auto data = initializeShadowmapCommon(e, lc, sc);
+							data->shadowmap->cascade = cascade;
+							data->shadowmap->shadowTexture = tex.share();
+							data->finalizeShadowmapCascade();
+							outputTasks.push_back(tasksRunAsync<RenderPipelineImpl>("render shadowmap cascade", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
+						}
+						break;
+					}
+					case LightTypeEnum::Spot:
+					case LightTypeEnum::Point:
+					{
+						auto data = initializeShadowmapCommon(e, lc, sc);
+						data->finalizeShadowmapSingle();
+						{
+							const String name = Stringizer() + data->name + "_" + resolution;
+							data->shadowmap->shadowTexture = provisionalGraphics->texture(name, data->shadowmap->lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D_ARRAY,
+								[resolution = data->resolution, internalFormat = data->shadowmap->lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t)
+								{
+									t->initialize(Vec3i(resolution, 1), 1, internalFormat);
+									t->filters(GL_LINEAR, GL_LINEAR, 16);
+									t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+								});
+						}
+						outputTasks.push_back(tasksRunAsync<RenderPipelineImpl>("render shadowmap single", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
+						break;
+					}
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid light type");
+				}
 			}
 		};
 	}

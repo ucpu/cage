@@ -65,7 +65,7 @@ float egacShadowedIntensity(UniShadowedLight uni)
 	{
 	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW:
 	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW:
-		intensity = sampleShadowMap2dArrayFast(texShadows2d[shadowmapSamplerIndex], shadowPos, cascade);
+		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], shadowPos, cascade);
 		break;
 	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW:
 		intensity = sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], shadowPos);
