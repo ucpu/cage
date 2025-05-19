@@ -55,11 +55,24 @@ vec3 egacLightBrdf(Material material, UniLight light)
 float egacShadowedIntensity(UniShadowedLight uni)
 {
 	float normalOffsetScale = uni.shadowParams[2];
-	int shadowmapSamplerIndex = int(uni.shadowParams[0]);
-	int cascade = 0; // todo calculate cascade
 	vec3 p3 = varPosition + normal * normalOffsetScale;
+
+	float viewDepth = -(uniProjection.viewMat * vec4(p3, 1)).z;
+	int cascade = 0;
+	for (int i = 0; i < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; i++)
+	{
+		if (viewDepth < uni.cascadesDepths[i])
+		{
+			cascade = i;
+			break;
+		}
+	}
+	// return float(cascade) / float(CAGE_SHADER_MAX_SHADOWMAPSCASCADES); // debug
+
 	vec4 shadowPos4 = uni.shadowMat[cascade] * vec4(p3, 1);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
+
+	int shadowmapSamplerIndex = int(uni.shadowParams[0]);
 	float intensity = 1;
 	switch (int(uni.light.params[0]))
 	{

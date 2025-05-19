@@ -1487,31 +1487,38 @@ namespace cage
 					const Vec4 a = invVP * Vec4(p, 1);
 					return Vec3(a) / a[3];
 				};
-				Aabb box; // initially in world-space
+				Aabb worldBox;
 				for (Vec3 ndcP : { Vec3(-1, -1, splitNearNdc), Vec3(1, -1, splitNearNdc), Vec3(1, 1, splitNearNdc), Vec3(-1, 1, splitNearNdc), Vec3(-1, -1, splitFarNdc), Vec3(1, -1, splitFarNdc), Vec3(1, 1, splitFarNdc), Vec3(-1, 1, splitFarNdc) })
 				{
 					const Vec3 wP = getPoint(ndcP);
-					box += Aabb(wP);
+					worldBox += Aabb(wP);
 				}
 
 				const Vec3 lightDir = Vec3(model * Vec4(0, 0, -1, 0));
 				const Vec3 lightUp = abs(dot(lightDir, Vec3(0, 1, 0))) > 0.99 ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
-				const Vec3 eye = box.center() - lightDir * box.diagonal() * 0.5 * 1.5;
+				const Vec3 eye = worldBox.center();
 				view = Mat4(eye, Quat(lightDir, lightUp));
+				//view = Mat4(Transform(eye, Quat(lightDir, lightUp)));
 
-				// transform box from worlds-space to light-space
-				for (Vec3 corner : box.corners().data)
-					box += Aabb(Vec3(view * Vec4(corner, 1)));
+				Aabb shadowBox;
+				for (Vec3 corner : worldBox.corners().data)
+					shadowBox += Aabb(Vec3(view * Vec4(corner, 1)));
 
-				projection = orthographicProjection(box.a[0], box.b[0], box.a[1], box.b[1], -box.b[2], -box.a[2]);
+				// adjust the shadow near plane to include the light source origin
+				//const Vec3 lightPosShadow = Vec3(view * model * Vec4(0, 0, 0, 1));
+				//shadowBox.a[2] = min(shadowBox.a[2], lightPosShadow[2]);
+
+				// adjust the shadow near and far planes to not exclude preceding shadow casters
+				shadowBox.a[2] -= 1000;
+				shadowBox.b[2] += 1000;
+
+				projection = orthographicProjection(shadowBox.a[0], shadowBox.b[0], shadowBox.a[1], shadowBox.b[1], -shadowBox.b[2], -shadowBox.a[2]);
 
 				viewProj = projection * view;
 				frustum = Frustum(viewProj);
 				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
 				shadowmap->shadowUni.cascadesDepths[shadowmap->cascade] = splitFar;
-
-				transform = Transform(Vec3(model * Vec4(0, 0, 0, 1)));
 			}
 
 			void finalizeShadowmapSingle()
@@ -1538,8 +1545,6 @@ namespace cage
 				frustum = Frustum(viewProj);
 				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
-
-				transform = Transform(Vec3(model * Vec4(0, 0, 0, 1)));
 			}
 
 			void prepareShadowmap(std::vector<Holder<AsyncTask>> &outputTasks, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
