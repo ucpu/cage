@@ -1432,7 +1432,6 @@ namespace cage
 				shadowmap.shadowmapComponent = sc;
 				data->resolution = Vec2i(sc.resolution);
 				data->model = modelTransform(e);
-				data->transform = Transform(Vec3(data->model * Vec4(0, 0, 0, 1)));
 
 				{
 					UniShadowedLight &uni = shadowmap.shadowUni;
@@ -1448,19 +1447,71 @@ namespace cage
 			void finalizeShadowmapCascade()
 			{
 				CAGE_ASSERT(shadowmap->lightComponent.lightType == LightTypeEnum::Directional);
+				CAGE_ASSERT(camera.shadowmapFrustumDepthFraction > 0 && camera.shadowmapFrustumDepthFraction <= 1);
 
-				// todo modify for individual cascades
-				view = inverse(model);
+				const auto sc = shadowmap->shadowmapComponent;
+				CAGE_ASSERT(sc.cascadesSplitLogFactor >= 0 && sc.cascadesSplitLogFactor <= 1);
+				CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= CAGE_SHADER_MAX_SHADOWMAPSCASCADES);
 
+				const Mat4 invP = inverse(projection);
+				const auto &getPlane = [&](Real ndcZ) -> Real
 				{
-					const auto sc = shadowmap->shadowmapComponent;
-					projection = orthographicProjection(-sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize, -sc.directionalWorldSize, sc.directionalWorldSize);
+					const Vec4 a = invP * Vec4(0, 0, ndcZ, 1);
+					return -a[2] / a[3];
+				};
+				const Real cameraNear = getPlane(-1);
+				const Real cameraFar = getPlane(1) * camera.shadowmapFrustumDepthFraction;
+				CAGE_ASSERT(cameraNear > 0 && cameraFar > cameraNear);
+
+				const auto &getSplit = [&](Real f) -> Real
+				{
+					const Real uniform = cameraNear + (cameraFar - cameraNear) * f;
+					const Real log = cameraNear * pow(cameraFar / cameraNear, f);
+					return interpolate(uniform, log, sc.cascadesSplitLogFactor);
+				};
+				const Real splitNear = getSplit(Real(shadowmap->cascade + 0) / sc.cascadesCount);
+				const Real splitFar = getSplit(Real(shadowmap->cascade + 1) / sc.cascadesCount);
+				CAGE_ASSERT(splitNear > 0 && splitFar > splitNear);
+
+				const auto viewZtoNdcZ = [&](Real viewZ) -> Real
+				{
+					const Vec4 a = projection * Vec4(0, 0, -viewZ, 1);
+					return a[2] / a[3];
+				};
+				const Real splitNearNdc = viewZtoNdcZ(splitNear);
+				const Real splitFarNdc = viewZtoNdcZ(splitFar);
+
+				const Mat4 invVP = inverse(projection * Mat4(inverse(transform)));
+				const auto &getPoint = [&](Vec3 p) -> Vec3
+				{
+					const Vec4 a = invVP * Vec4(p, 1);
+					return Vec3(a) / a[3];
+				};
+				Aabb box; // initially in world-space
+				for (Vec3 ndcP : { Vec3(-1, -1, splitNearNdc), Vec3(1, -1, splitNearNdc), Vec3(1, 1, splitNearNdc), Vec3(-1, 1, splitNearNdc), Vec3(-1, -1, splitFarNdc), Vec3(1, -1, splitFarNdc), Vec3(1, 1, splitFarNdc), Vec3(-1, 1, splitFarNdc) })
+				{
+					const Vec3 wP = getPoint(ndcP);
+					box += Aabb(wP);
 				}
+
+				const Vec3 lightDir = Vec3(model * Vec4(0, 0, -1, 0));
+				const Vec3 lightUp = abs(dot(lightDir, Vec3(0, 1, 0))) > 0.99 ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
+				const Vec3 eye = box.center() - lightDir * box.diagonal() * 0.5 * 1.5;
+				view = Mat4(eye, Quat(lightDir, lightUp));
+
+				// transform box from worlds-space to light-space
+				for (Vec3 corner : box.corners().data)
+					box += Aabb(Vec3(view * Vec4(corner, 1)));
+
+				projection = orthographicProjection(box.a[0], box.b[0], box.a[1], box.b[1], -box.b[2], -box.a[2]);
 
 				viewProj = projection * view;
 				frustum = Frustum(viewProj);
 				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
+				shadowmap->shadowUni.cascadesDepths[shadowmap->cascade] = splitFar;
+
+				transform = Transform(Vec3(model * Vec4(0, 0, 0, 1)));
 			}
 
 			void finalizeShadowmapSingle()
@@ -1468,7 +1519,6 @@ namespace cage
 				CAGE_ASSERT(shadowmap->cascade == 0);
 
 				view = inverse(model);
-
 				projection = [&]()
 				{
 					const auto lc = shadowmap->lightComponent;
@@ -1488,6 +1538,8 @@ namespace cage
 				frustum = Frustum(viewProj);
 				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
+
+				transform = Transform(Vec3(model * Vec4(0, 0, 0, 1)));
 			}
 
 			void prepareShadowmap(std::vector<Holder<AsyncTask>> &outputTasks, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
@@ -1507,12 +1559,20 @@ namespace cage
 									t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 								});
 						}
+						ShadowmapData *first = nullptr;
 						for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
 						{
 							auto data = initializeShadowmapCommon(e, lc, sc);
 							data->shadowmap->cascade = cascade;
 							data->shadowmap->shadowTexture = tex.share();
 							data->finalizeShadowmapCascade();
+							if (cascade == 0)
+								first = &*data->shadowmap;
+							else
+							{
+								first->shadowUni.cascadesDepths[cascade] = data->shadowmap->shadowUni.cascadesDepths[cascade];
+								first->shadowUni.shadowMat[cascade] = data->shadowmap->shadowUni.shadowMat[cascade];
+							}
 							outputTasks.push_back(tasksRunAsync<RenderPipelineImpl>("render shadowmap cascade", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
 						}
 						break;

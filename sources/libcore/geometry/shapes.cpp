@@ -310,6 +310,20 @@ namespace cage
 		return (wx * wy + wx * wz + wy * wz) * 2;
 	}
 
+	Aabb::Corners Aabb::corners() const
+	{
+		return {
+			Vec3(a[0], a[1], a[2]),
+			Vec3(a[0], a[1], b[2]),
+			Vec3(a[0], b[1], a[2]),
+			Vec3(a[0], b[1], b[2]),
+			Vec3(b[0], a[1], a[2]),
+			Vec3(b[0], a[1], b[2]),
+			Vec3(b[0], b[1], a[2]),
+			Vec3(b[0], b[1], b[2]),
+		};
+	}
+
 	Cone Cone::operator*(Mat4 other) const
 	{
 		CAGE_THROW_CRITICAL(Exception, "not implemented Cone::operator*(Mat4)");

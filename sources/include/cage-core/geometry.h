@@ -193,6 +193,12 @@ namespace cage
 		Vec3 size() const { return empty() ? Vec3() : b - a; }
 		Real diagonal() const { return empty() ? 0 : distance(a, b); }
 
+		struct Corners
+		{
+			Vec3 data[8];
+		};
+		Corners corners() const;
+
 		// constants
 		static constexpr Aabb Universe() { return Aabb(Vec3(-Real::Infinity()), Vec3(Real::Infinity())); }
 	};

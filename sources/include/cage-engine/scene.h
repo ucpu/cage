@@ -99,10 +99,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API ShadowmapComponent
 	{
-		Real directionalWorldSize = Real::Nan();
 		Real normalOffsetScale = 0.2;
 		Real shadowFactor = 1;
 		uint32 resolution = 1024;
+		Real cascadesSplitLogFactor = 0.5; // fraction of log vs uniform scales used for depth splits for cascades
+		uint32 cascadesCount = 4;
 	};
 
 	struct CAGE_ENGINE_API CameraCommonProperties
@@ -112,6 +113,7 @@ namespace cage
 		Vec3 skyColor = Vec3(0); // sRGB
 		Real skyIntensity = 1;
 		uint32 maxLights = 100;
+		Real shadowmapFrustumDepthFraction = 1; // maximum depth (linear) of the frustum that will be covered by directional light shadowmaps
 	};
 
 	struct CAGE_ENGINE_API CameraComponent : public CameraCommonProperties
