@@ -1452,6 +1452,7 @@ namespace cage
 				const auto sc = shadowmap->shadowmapComponent;
 				CAGE_ASSERT(sc.cascadesSplitLogFactor >= 0 && sc.cascadesSplitLogFactor <= 1);
 				CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= CAGE_SHADER_MAX_SHADOWMAPSCASCADES);
+				CAGE_ASSERT(sc.cascadesPaddingDistance >= 0);
 
 				const Mat4 invP = inverse(projection);
 				const auto &getPlane = [&](Real ndcZ) -> Real
@@ -1497,20 +1498,19 @@ namespace cage
 				const Vec3 lightDir = Vec3(model * Vec4(0, 0, -1, 0));
 				const Vec3 lightUp = abs(dot(lightDir, Vec3(0, 1, 0))) > 0.99 ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
 				const Vec3 eye = worldBox.center();
-				view = Mat4(eye, Quat(lightDir, lightUp));
-				//view = Mat4(Transform(eye, Quat(lightDir, lightUp)));
+				view = Mat4(inverse(Transform(eye, Quat(lightDir, lightUp))));
 
 				Aabb shadowBox;
 				for (Vec3 corner : worldBox.corners().data)
 					shadowBox += Aabb(Vec3(view * Vec4(corner, 1)));
 
-				// adjust the shadow near plane to include the light source origin
-				//const Vec3 lightPosShadow = Vec3(view * model * Vec4(0, 0, 0, 1));
-				//shadowBox.a[2] = min(shadowBox.a[2], lightPosShadow[2]);
-
 				// adjust the shadow near and far planes to not exclude preceding shadow casters
-				shadowBox.a[2] -= 1000;
-				shadowBox.b[2] += 1000;
+				shadowBox.a[2] -= sc.cascadesPaddingDistance;
+				shadowBox.b[2] += sc.cascadesPaddingDistance;
+
+				// move far plane much further, to improve precision
+				const Real currentDepth = -shadowBox.a[2] + shadowBox.b[2];
+				shadowBox.a[2] -= currentDepth * 5;
 
 				projection = orthographicProjection(shadowBox.a[0], shadowBox.b[0], shadowBox.a[1], shadowBox.b[1], -shadowBox.b[2], -shadowBox.a[2]);
 

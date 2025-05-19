@@ -99,9 +99,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API ShadowmapComponent
 	{
-		Real normalOffsetScale = 0.2;
-		Real shadowFactor = 1;
 		uint32 resolution = 1024;
+		Real shadowFactor = 1;
+		Real normalOffsetScale = 0.2;
+		Real cascadesPaddingDistance = 20; // distance by which the bounding box is expanded to avoid excluding shadow casters in front of it
 		Real cascadesSplitLogFactor = 0.5; // fraction of log vs uniform scales used for depth splits for cascades
 		uint32 cascadesCount = 4;
 	};
