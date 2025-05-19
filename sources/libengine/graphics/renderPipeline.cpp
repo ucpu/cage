@@ -1488,21 +1488,59 @@ namespace cage
 					const Vec4 a = invVP * Vec4(p, 1);
 					return Vec3(a) / a[3];
 				};
-				Aabb worldBox;
-				for (Vec3 ndcP : { Vec3(-1, -1, splitNearNdc), Vec3(1, -1, splitNearNdc), Vec3(1, 1, splitNearNdc), Vec3(-1, 1, splitNearNdc), Vec3(-1, -1, splitFarNdc), Vec3(1, -1, splitFarNdc), Vec3(1, 1, splitFarNdc), Vec3(-1, 1, splitFarNdc) })
-				{
-					const Vec3 wP = getPoint(ndcP);
-					worldBox += Aabb(wP);
-				}
+				// world-space corners of the camera frustum slice
+				const std::array<Vec3, 8> corners = { getPoint(Vec3(-1, -1, splitNearNdc)), getPoint(Vec3(1, -1, splitNearNdc)), getPoint(Vec3(1, 1, splitNearNdc)), getPoint(Vec3(-1, 1, splitNearNdc)), getPoint(Vec3(-1, -1, splitFarNdc)), getPoint(Vec3(1, -1, splitFarNdc)), getPoint(Vec3(1, 1, splitFarNdc)), getPoint(Vec3(-1, 1, splitFarNdc)) };
 
 				const Vec3 lightDir = Vec3(model * Vec4(0, 0, -1, 0));
 				const Vec3 lightUp = abs(dot(lightDir, Vec3(0, 1, 0))) > 0.99 ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
-				const Vec3 eye = worldBox.center();
+
+#if (0)
+
+				Sphere sph = makeSphere(corners);
+				view = Mat4(inverse(Transform(sph.center, Quat(lightDir, lightUp))));
+
+				{ // stabilization
+					const Real texelSize = sph.radius * 2 / sc.resolution;
+					Vec3 snapOrigin = Vec3(view * Vec4(sph.center, 1));
+					snapOrigin /= texelSize;
+					for (uint32 i = 0; i < 3; i++)
+						snapOrigin[i] = floor(snapOrigin[i]);
+					snapOrigin *= texelSize;
+					sph.center = Vec3(inverse(view) * Vec4(snapOrigin, 1));
+					view = Mat4(inverse(Transform(sph.center, Quat(lightDir, lightUp))));
+				}
+
+				Aabb shadowBox = Aabb(Sphere(Vec3(), sph.radius));
+
+#else
+
+				Aabb worldBox;
+				for (Vec3 wp : corners)
+					worldBox += Aabb(wp);
+
+				Vec3 eye = worldBox.center();
 				view = Mat4(inverse(Transform(eye, Quat(lightDir, lightUp))));
 
 				Aabb shadowBox;
-				for (Vec3 corner : worldBox.corners().data)
-					shadowBox += Aabb(Vec3(view * Vec4(corner, 1)));
+				for (Vec3 wp : corners)
+					shadowBox += Aabb(Vec3(view * Vec4(wp, 1)));
+
+				{ // stabilization
+					const Real texelSize = (shadowBox.b[0] - shadowBox.a[0]) / sc.resolution;
+					Vec3 snapOrigin = Vec3(view * Vec4(worldBox.center(), 1));
+					snapOrigin /= texelSize;
+					for (uint32 i = 0; i < 3; i++)
+						snapOrigin[i] = floor(snapOrigin[i]);
+					snapOrigin *= texelSize;
+					eye = Vec3(inverse(view) * Vec4(snapOrigin, 1));
+					view = Mat4(inverse(Transform(eye, Quat(lightDir, lightUp))));
+
+					shadowBox = Aabb();
+					for (Vec3 wp : corners)
+						shadowBox += Aabb(Vec3(view * Vec4(wp, 1)));
+				}
+
+#endif
 
 				// adjust the shadow near and far planes to not exclude preceding shadow casters
 				shadowBox.a[2] -= sc.cascadesPaddingDistance;
@@ -1510,7 +1548,7 @@ namespace cage
 
 				// move far plane much further, to improve precision
 				const Real currentDepth = -shadowBox.a[2] + shadowBox.b[2];
-				shadowBox.a[2] -= currentDepth * 5;
+				shadowBox.a[2] -= currentDepth * 10;
 
 				projection = orthographicProjection(shadowBox.a[0], shadowBox.b[0], shadowBox.a[1], shadowBox.b[1], -shadowBox.b[2], -shadowBox.a[2]);
 
