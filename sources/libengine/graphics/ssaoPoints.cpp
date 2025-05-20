@@ -28,6 +28,12 @@ namespace cage
 			return Vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
 		}
 
+		Vec3 pushForward(Vec3 v)
+		{
+			// prevents sampling near original plane, to reduce fake occlusion
+			return normalize(v + Vec3(0, 0, 0.2));
+		}
+
 		struct Sequence
 		{
 			Vec4 data[256];
@@ -37,7 +43,7 @@ namespace cage
 			{
 				CAGE_ASSERT(size <= array_size(data));
 				for (uint32 i = 0; i < size; i++)
-					data[i] = Vec4(hemisphereSample(hammersley(i, size)), 0);
+					data[i] = Vec4(pushForward(hemisphereSample(hammersley(i, size))), 0);
 			}
 		};
 	}
