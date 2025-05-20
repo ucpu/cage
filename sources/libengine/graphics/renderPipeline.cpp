@@ -1595,7 +1595,7 @@ namespace cage
 					{
 						Holder<ProvisionalTexture> tex;
 						{
-							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_cascades_" + resolution;
+							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_cascades_" + sc.resolution;
 							tex = provisionalGraphics->texture(name, GL_TEXTURE_2D_ARRAY,
 								[resolution = sc.resolution](Texture *t)
 								{
@@ -1628,7 +1628,7 @@ namespace cage
 						auto data = createShadowmapPipeline(e, lc, sc);
 						data->initializeShadowmapSingle();
 						{
-							const String name = Stringizer() + data->name + "_" + resolution;
+							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_" + sc.resolution;
 							data->shadowmap->shadowTexture = provisionalGraphics->texture(name, data->shadowmap->lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D_ARRAY,
 								[resolution = data->resolution, internalFormat = data->shadowmap->lightComponent.lightType == LightTypeEnum::Point ? GL_DEPTH_COMPONENT16 : GL_DEPTH_COMPONENT24](Texture *t)
 								{

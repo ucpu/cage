@@ -29,7 +29,7 @@ vec3 ndcToView(vec2 p, float d)
 // all view-space
 vec3 reconstructNormal(vec3 position)
 {
-	return normalize(cross(dFdx(position), dFdy(position)));
+	return normalize(cross(dFdxFine(position), dFdyFine(position)));
 }
 
 mat3 makeTbn(vec3 myNormal)
@@ -82,7 +82,7 @@ void main()
 		{
 			vec3 samplePos = ndcToView(rayNdc.xy, sampleDepth); // view-space sample position
 			float diff = length(rayPos - samplePos);
-			occ += smoothstep(1, 0, diff / raysLength);
+			occ += smoothstep(1, 0, saturate(diff / raysLength));
 		}
 		total += 1;
 	}

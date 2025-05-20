@@ -14,8 +14,6 @@ out float outAo;
 void main()
 {
 	float ao = texelFetch(texAo, ivec2(gl_FragCoord.xy), 0).x;
-	if (ao < params[1])
-		ao = 0;
-	ao = pow(max(ao, 0), params[2]) * params[0];
+	ao = pow(max(ao - params[1], 0), params[2]) * params[0];
 	outAo = clamp(1 - ao, 0, 1);
 }
