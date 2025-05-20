@@ -84,12 +84,12 @@ namespace cage
 		{
 			Mat4 proj;
 			Mat4 projInv;
-			Vec4 params; // strength, bias, power, radius
+			Vec4 params; // strength, threshold, power, raysLength
 			Vec4i iparams; // sampleCount, hashSeed
 		} s;
 		s.proj = config.proj;
 		s.projInv = inverse(config.proj);
-		s.params = Vec4(config.strength, config.bias, config.power, config.worldRadius);
+		s.params = Vec4(config.strength, config.threshold, config.power, config.raysLength);
 		s.iparams[0] = config.samplesCount;
 		s.iparams[1] = hash(config.frameIndex);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);

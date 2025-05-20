@@ -1163,6 +1163,7 @@ namespace cage
 				commonConfig.queue = +renderQueue;
 				commonConfig.resolution = resolution;
 
+				// ssao
 				if (any(effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion))
 				{
 					ScreenSpaceAmbientOcclusionConfig cfg;
@@ -1177,6 +1178,7 @@ namespace cage
 					renderQueue->bind(cfg.outAo, CAGE_SHADER_TEXTURE_SSAO);
 				}
 
+				// standard pass target
 				TextureHandle colorTexture = provisionalGraphics->texture(Stringizer() + "colorTarget_" + name + "_" + resolution,
 					[resolution = resolution](Texture *t)
 					{
@@ -1418,7 +1420,7 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			Holder<RenderPipelineImpl> initializeShadowmapCommon(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+			Holder<RenderPipelineImpl> createShadowmapPipeline(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
 			{
 				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
 
@@ -1444,7 +1446,7 @@ namespace cage
 				return data;
 			}
 
-			void finalizeShadowmapCascade()
+			void initializeShadowmapCascade()
 			{
 				CAGE_ASSERT(shadowmap->lightComponent.lightType == LightTypeEnum::Directional);
 				CAGE_ASSERT(camera.shadowmapFrustumDepthFraction > 0 && camera.shadowmapFrustumDepthFraction <= 1);
@@ -1559,7 +1561,7 @@ namespace cage
 				shadowmap->shadowUni.cascadesDepths[shadowmap->cascade] = splitFar;
 			}
 
-			void finalizeShadowmapSingle()
+			void initializeShadowmapSingle()
 			{
 				CAGE_ASSERT(shadowmap->cascade == 0);
 
@@ -1605,10 +1607,10 @@ namespace cage
 						ShadowmapData *first = nullptr;
 						for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
 						{
-							auto data = initializeShadowmapCommon(e, lc, sc);
+							auto data = createShadowmapPipeline(e, lc, sc);
 							data->shadowmap->cascade = cascade;
 							data->shadowmap->shadowTexture = tex.share();
-							data->finalizeShadowmapCascade();
+							data->initializeShadowmapCascade();
 							if (cascade == 0)
 								first = &*data->shadowmap;
 							else
@@ -1623,8 +1625,8 @@ namespace cage
 					case LightTypeEnum::Spot:
 					case LightTypeEnum::Point:
 					{
-						auto data = initializeShadowmapCommon(e, lc, sc);
-						data->finalizeShadowmapSingle();
+						auto data = createShadowmapPipeline(e, lc, sc);
+						data->initializeShadowmapSingle();
 						{
 							const String name = Stringizer() + data->name + "_" + resolution;
 							data->shadowmap->shadowTexture = provisionalGraphics->texture(name, data->shadowmap->lightComponent.lightType == LightTypeEnum::Point ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D_ARRAY,

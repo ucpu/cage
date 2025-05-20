@@ -61,7 +61,7 @@ void main()
 
 	// sampling
 	mat3 tbn = makeTbn(myNormal);
-	float ssaoRadius = params[3];
+	float raysLength = params[3];
 	float occ = 0;
 	float total = 0;
 	for (int i = 0; i < iparams[0]; i++)
@@ -69,7 +69,7 @@ void main()
 		// view-space ray direction
 		vec3 rayDir = ssaoPoints[i].xyz;
 		rayDir = tbn * rayDir;
-		rayDir *= ssaoRadius;
+		rayDir *= raysLength;
 
 		// view-space ray position
 		vec3 rayPos = myPos + rayDir;
@@ -82,7 +82,7 @@ void main()
 		{
 			vec3 samplePos = ndcToView(rayNdc.xy, sampleDepth); // view-space sample position
 			float diff = length(rayPos - samplePos);
-			occ += smoothstep(1, 0, diff / ssaoRadius);
+			occ += smoothstep(1, 0, diff / raysLength);
 		}
 		total += 1;
 	}
