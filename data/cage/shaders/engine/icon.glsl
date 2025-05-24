@@ -19,10 +19,16 @@ layout(early_fragment_tests) in;
 
 void main()
 {
+#ifdef Animated
+	vec4 albedo = sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
+#else
 	vec4 albedo = texture(texMaterialAlbedo2d, varUv.xy);
+#endif
+
 #ifdef CutOut
 	if (albedo.w < 0.5)
 		discard;
 #endif // CutOut
+
 	outColor = albedo;
 }

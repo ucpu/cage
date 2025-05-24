@@ -107,7 +107,6 @@ namespace cage
 		{
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
 			Holder<Model> mesh;
-			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
 		};
 
 		struct RenderIcon : private Noncopyable
@@ -129,6 +128,7 @@ namespace cage
 			std::variant<std::monostate, RenderModel, RenderIcon, RenderText> data;
 			Mat4 model;
 			Vec4 color = Vec4::Nan(); // linear rgb (NOT alpha-premultiplied), opacity
+			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
 			Entity *e = nullptr;
 			sint32 renderLayer = 0;
 			bool translucent = false; // transparent or fade
@@ -208,7 +208,7 @@ namespace cage
 			Holder<ShaderProgram> shaderBlitPixels;
 			Holder<ShaderProgram> shaderDepth, shaderDepthCutOut;
 			Holder<ShaderProgram> shaderStandard, shaderStandardCutOut;
-			Holder<ShaderProgram> shaderIcon, shaderIconCutOut;
+			Holder<ShaderProgram> shaderIcon, shaderIconCutOut, shaderIconAnimated, shaderIconCutOutAnimated;
 			Holder<ShaderProgram> shaderText;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
@@ -255,6 +255,8 @@ namespace cage
 				CAGE_ASSERT(icon);
 				shaderIcon = icon->get(0);
 				shaderIconCutOut = icon->get(HashString("CutOut"));
+				shaderIconAnimated = icon->get(HashString("Animated"));
+				shaderIconCutOutAnimated = icon->get(HashString("CutOut") + HashString("Animated"));
 
 				shaderText = assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/engine/text.glsl"))->get(0);
 				CAGE_ASSERT(shaderText);
@@ -281,6 +283,8 @@ namespace cage
 				SHARE(shaderStandardCutOut);
 				SHARE(shaderIcon);
 				SHARE(shaderIconCutOut);
+				SHARE(shaderIconAnimated);
+				SHARE(shaderIconCutOutAnimated);
 				SHARE(shaderText);
 				SHARE(skeletonPreparatorCollection);
 #undef SHARE
@@ -304,12 +308,10 @@ namespace cage
 
 			UniMesh makeMeshUni(const RenderData &rd) const
 			{
-				CAGE_ASSERT(std::holds_alternative<RenderModel>(rd.data));
-				const RenderModel &rm = std::get<RenderModel>(rd.data);
 				UniMesh uni;
 				uni.modelMat = Mat3x4(rd.model);
 				uni.color = rd.color;
-				uni.animation = rm.animation;
+				uni.animation = rd.animation;
 				return uni;
 			}
 
@@ -625,10 +627,20 @@ namespace cage
 					}
 					else
 					{
-						if (any(mesh->flags & MeshRenderFlags::CutOut))
-							return shaderIconCutOut.share();
+						if (texture->target() == GL_TEXTURE_2D_ARRAY)
+						{
+							if (any(mesh->flags & MeshRenderFlags::CutOut))
+								return shaderIconCutOutAnimated.share();
+							else
+								return shaderIconAnimated.share();
+						}
 						else
-							return shaderIcon.share();
+						{
+							if (any(mesh->flags & MeshRenderFlags::CutOut))
+								return shaderIconCutOut.share();
+							else
+								return shaderIcon.share();
+						}
 					}
 				}();
 				renderQueue->bind(shader);
@@ -641,7 +653,18 @@ namespace cage
 				if (rd.translucent)
 					renderQueue->blendFuncAlphaTransparency();
 
-				renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO);
+				switch (texture->target())
+				{
+					case GL_TEXTURE_2D_ARRAY:
+						renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO_ARRAY);
+						break;
+					case GL_TEXTURE_CUBE_MAP:
+						renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO_CUBE);
+						break;
+					default:
+						renderQueue->bind(texture, CAGE_SHADER_TEXTURE_ALBEDO);
+						break;
+				}
 
 				// separate instances into draw calls by the limit
 				const uint32 limit = CAGE_SHADER_MAX_MESHES;
@@ -660,10 +683,7 @@ namespace cage
 						CAGE_ASSERT(std::holds_alternative<RenderIcon>(inst.data));
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).mesh == +mesh);
 						CAGE_ASSERT(+std::get<RenderIcon>(inst.data).texture == +texture);
-						UniMesh uni;
-						uni.modelMat = Mat3x4(inst.model);
-						uni.color = inst.color;
-						uniMeshes.push_back(uni);
+						uniMeshes.push_back(makeMeshUni(inst));
 						appendShaderCustomData(inst.e, shader->customDataCount);
 					}
 
@@ -829,12 +849,10 @@ namespace cage
 						ps->animation = parent->skelAnimId;
 				}
 
-				rd.color = initializeColor(color);
 				if (!anim.speed.valid())
 					anim.speed = 1;
 				if (!anim.offset.valid())
 					anim.offset = 0;
-				rm.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 
 				if (!rm.mesh->bones)
 					ps.reset();
@@ -850,6 +868,8 @@ namespace cage
 						ps.reset();
 				}
 
+				rd.color = initializeColor(color);
+				rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->layer;
 				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
 				if (rd.translucent)
@@ -932,7 +952,9 @@ namespace cage
 				rd.e = e;
 				rd.model = modelTransform(e);
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
-				rd.renderLayer = ic.renderLayer;
+				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
+				rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
+				rd.renderLayer = ic.renderLayer + ri.mesh->layer;
 				rd.translucent = true;
 				rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
 				rd.data = std::move(ri);
