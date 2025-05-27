@@ -30,31 +30,28 @@ namespace cage
 				CAGE_ASSERT(path == pathSimplify(path));
 				CAGE_ASSERT(path == pathToAbs(path));
 				auto it = map.find(path);
-				if (it == map.end())
+				if (it != map.end())
 				{
-					std::shared_ptr<ArchiveAbstract> a = ctor(path); // this may call _erase_
-					if (!a)
-						return {};
-					map[path] = a;
-					return { a, false };
+					std::shared_ptr<ArchiveAbstract> a = it->second.lock();
+					if (a)
+						return { a, true };
+					map.erase(path);
 				}
-				return { it->second.lock(), true };
-			}
-
-			bool validErase(ArchiveAbstract *a) const
-			{
-				if (map.count(a->myPath) == 0)
-					return true;
-				const auto l = map.at(a->myPath).lock();
-				if (!l)
-					return true;
-				return l.get() == a;
+				std::shared_ptr<ArchiveAbstract> a = ctor(path); // this may call _erase_
+				if (!a)
+					return {};
+				map[path] = a;
+				return { a, false };
 			}
 
 			void erase(ArchiveAbstract *a)
 			{
-				// make sure that the element being removed is actually the same
-				CAGE_ASSERT(validErase(a));
+				auto it = map.find(a->myPath);
+				if (it == map.end())
+					return; // already erased
+				auto b = it->second.lock();
+				if (b && b.get() != a)
+					return; // the stored archive is different
 				map.erase(a->myPath);
 			}
 

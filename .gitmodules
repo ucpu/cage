@@ -9,7 +9,7 @@
 	url = https://github.com/glennrp/libpng.git
 [submodule "externals/libtiff/libtiff"]
 	path = externals/tiff/tiff
-	url = https://gitlab.com/libtiff/libtiff.git
+	url = https://github.com/libsdl-org/libtiff.git
 [submodule "externals/freetype/freetype"]
 	path = externals/freetype/freetype
 	url = https://github.com/ucpu/freetype.git
