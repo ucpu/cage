@@ -109,3 +109,6 @@
 [submodule "externals/harfbuzz/harfbuzz"]
 	path = externals/harfbuzz/harfbuzz
 	url = https://github.com/harfbuzz/harfbuzz.git
+[submodule "externals/cpr/cpr"]
+	path = externals/cpr/cpr
+	url = https://github.com/libcpr/cpr.git
