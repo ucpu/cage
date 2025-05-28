@@ -72,6 +72,7 @@ void testNetworkWebsocket();
 void testNetworkGinnel();
 void testNetworkSteam();
 void testNetworkDiscovery();
+void testNetworkHttp();
 void testProcess();
 void testLogger();
 void testSystemInformation();
@@ -153,6 +154,7 @@ int main()
 	testNetworkGinnel();
 	testNetworkSteam();
 	testNetworkDiscovery();
+	testNetworkHttp();
 	testProcess();
 	testLogger();
 	testSystemInformation();
