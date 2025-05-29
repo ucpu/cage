@@ -22,6 +22,7 @@ namespace cage
 		bool matches(const GenericInput &input) const;
 		void setActive(bool active);
 		bool active() const;
+		bool isDefault() const;
 
 		uint32 count() const;
 		void override(uint32 index, const GenericInput &input);
@@ -78,6 +79,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Keybind> newKeybind(const KeybindCreateConfig &config, const GenericInput &defaults = {}, Delegate<bool(const GenericInput &)> event = {});
 	CAGE_ENGINE_API Holder<Keybind> newKeybind(const KeybindCreateConfig &config, PointerRange<const GenericInput> defaults, Delegate<bool(const GenericInput &)> event = {});
 	CAGE_ENGINE_API Keybind *findKeybind(const String &id);
+	CAGE_ENGINE_API PointerRange<Keybind *> allKeybinds();
 	CAGE_ENGINE_API void keybindsRegisterListeners(EventDispatcher<bool(const GenericInput &)> &dispatcher);
 
 	namespace input

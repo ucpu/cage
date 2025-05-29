@@ -18,8 +18,6 @@ namespace cage
 {
 	PathTypeFlags realType(const String &path);
 	Holder<File> realNewFile(const String &path, const FileMode &mode);
-	using privat::ConfigVariable;
-
 	StringPointer configTypeToString(const ConfigTypeEnum type)
 	{
 		switch (type)
@@ -47,14 +45,19 @@ namespace cage
 		}
 	}
 
+	using privat::ConfigVariable;
+
 	// variables and storage
 
 	namespace privat
 	{
-		struct ConfigVariable
+		struct ConfigVariable : private Immovable
 		{
 			std::variant<std::monostate, bool, sint32, uint32, sint64, uint64, float, double, String> data;
+			String name;
 			ConfigTypeEnum type = ConfigTypeEnum::Undefined;
+
+			ConfigVariable(const String &name) : name(name) {}
 		};
 	}
 
@@ -68,7 +71,17 @@ namespace cage
 			return +*m;
 		}
 
-		using ConfigStorage = ankerl::unordered_dense::map<String, ConfigVariable *>;
+		struct Hasher
+		{
+			auto operator()(const ConfigVariable *const ptr) const { return ankerl::unordered_dense::hash<String>()(ptr->name); }
+		};
+
+		struct Comparator
+		{
+			auto operator()(const ConfigVariable *const a, const ConfigVariable *const b) const { return a->name == b->name; }
+		};
+
+		using ConfigStorage = ankerl::unordered_dense::set<ConfigVariable *, Hasher, Comparator>;
 
 		ConfigStorage &storageAlreadyLocked()
 		{
@@ -79,11 +92,11 @@ namespace cage
 		ConfigVariable *cfgVarAlreadyLocked(const String &name)
 		{
 			ConfigStorage &s = storageAlreadyLocked();
-			auto it = s.find(name);
+			ConfigVariable tmp(name);
+			auto it = s.find(&tmp);
 			if (it != s.end())
-				return it->second;
-			s[name] = new ConfigVariable(); // this leak is intentional
-			return s[name];
+				return *it;
+			return *s.insert(new ConfigVariable(name)).first; // this leak is intentional
 		}
 
 		ConfigVariable *cfgVar(const String &name)
@@ -343,6 +356,10 @@ namespace cage
 		cfgSet(data, value);
 		return *this;
 	}
+	const String &ConfigString::name() const
+	{
+		return data->name;
+	}
 	ConfigString::operator String() const
 	{
 		return cfgGet<String>(data);
@@ -373,6 +390,10 @@ namespace cage
 	{ \
 		cfgSet(data, value); \
 		return *this; \
+	} \
+	const String &CAGE_JOIN(Config, T)::name() const \
+	{ \
+		return data->name; \
 	} \
 	CAGE_JOIN(Config, T)::operator t() const \
 	{ \
@@ -475,7 +496,7 @@ namespace cage
 					const auto &s = storageAlreadyLocked();
 					names.reserve(s.size());
 					for (const auto &it : s)
-						names.push_back(it.first);
+						names.push_back(it->name);
 				}
 				valid = !names.empty();
 				if (valid)

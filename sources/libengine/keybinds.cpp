@@ -7,6 +7,7 @@
 
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/string.h>
 #include <cage-core/texts.h>
 #include <cage-engine/guiBuilder.h>
@@ -563,6 +564,12 @@ namespace cage
 		return impl->active;
 	}
 
+	bool Keybind::isDefault() const
+	{
+		const KeybindImpl *impl = (const KeybindImpl *)this;
+		return impl->defaults == impl->matchers;
+	}
+
 	uint32 Keybind::count() const
 	{
 		const KeybindImpl *impl = (const KeybindImpl *)this;
@@ -626,6 +633,11 @@ namespace cage
 				return it;
 		}
 		return nullptr;
+	}
+
+	PointerRange<Keybind *> allKeybinds()
+	{
+		return PointerRange<KeybindImpl *>(global().data(), global().data() + global().size()).cast<Keybind *>();
 	}
 
 	void keybindsRegisterListeners(EventDispatcher<bool(const GenericInput &)> &dispatcher)

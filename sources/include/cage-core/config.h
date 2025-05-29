@@ -45,6 +45,7 @@ namespace cage
 		explicit ConfigString(const String &name, const String &default_);
 		operator String() const;
 		ConfigString &operator=(const String &value);
+		const String &name() const;
 
 	private:
 		privat::ConfigVariable *data = nullptr;
@@ -59,6 +60,7 @@ namespace cage
 		explicit Config##T(const String &name, t default_); \
 		operator t() const; \
 		Config##T &operator=(t value); \
+		const String &name() const; \
 \
 	private: \
 		privat::ConfigVariable *data = nullptr; \
