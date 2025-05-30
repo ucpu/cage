@@ -112,3 +112,9 @@
 [submodule "externals/cpr/cpr"]
 	path = externals/cpr/cpr
 	url = https://github.com/libcpr/cpr.git
+[submodule "externals/mbedtls/mbedtls"]
+	path = externals/mbedtls/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
+[submodule "externals/curl/curl"]
+	path = externals/curl/curl
+	url = https://github.com/curl/curl.git

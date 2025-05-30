@@ -19,5 +19,12 @@ target_include_directories(libzstd_static PUBLIC zstd/lib zstd/lib/common)
 
 cage_gen_module(Zstd $<TARGET_LINKER_FILE:libzstd_static> $<TARGET_PROPERTY:libzstd_static,INTERFACE_INCLUDE_DIRECTORIES>)
 
+include(GetZstdLibraryVersion)
+GetZstdLibraryVersion(${CMAKE_CURRENT_SOURCE_DIR}/zstd/lib/zstd.h zstd_VERSION_MAJOR zstd_VERSION_MINOR zstd_VERSION_PATCH)
+set(ZSTD_FULL_VERSION "${zstd_VERSION_MAJOR}.${zstd_VERSION_MINOR}.${zstd_VERSION_PATCH}")
+message(STATUS "zstd version: ${ZSTD_FULL_VERSION}")
+set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindZSTD.cmake")
+file(APPEND ${filename} "set(ZSTD_VERSION ${ZSTD_FULL_VERSION})\n")
+
 add_library(Zstd::Zstd ALIAS libzstd_static)
 add_library(ZSTD::ZSTD ALIAS libzstd_static)

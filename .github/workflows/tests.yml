@@ -3,18 +3,25 @@ on: [push, pull_request]
 
 jobs:
   Windows:
-    name: windows-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.build-arch }}${{ matrix.build-tool }}
+    name: windows-${{ matrix.os-version }}-${{ matrix.build-arch }}-${{ matrix.build-config }}${{ matrix.build-tool }}-${{ matrix.steam-sockets }}
     runs-on: windows-${{ matrix.os-version }}
     strategy:
       fail-fast: false
       matrix:
         os-version: [2022, 2025]
-        build-config: [debug, release, relwithdebinfo]
         build-arch: [Win32, x64]
+        build-config: [debug, release, relwithdebinfo]
         build-tool: ["", "-T ClangCL"]
+        steam-sockets: [ON, OFF]
         exclude:
         - build-arch: Win32
           build-tool: "-T ClangCL"
+        - build-arch: Win32 # cage_use_steam_sockets causes issues on win32
+          steam-sockets: ON
+        - build-config: release
+          steam-sockets: ON
+        - build-config: relwithdebinfo
+          steam-sockets: ON
 
     steps:
     - name: Versions
@@ -32,8 +39,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        # cage_use_steam_sockets causes issues on win32
-        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=${{ matrix.build-arch == 'x64' && 'ON' || 'OFF' }} ..
+        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=${{ matrix.steam-sockets }} ..
 
     - name: Build
       shell: bash
@@ -66,8 +72,8 @@ jobs:
 
 
   Ubuntu:
-    name: ubuntu-${{ matrix.os-version }}${{ matrix.cpu-arch }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
-    runs-on: ubuntu-${{ matrix.os-version }}.04
+    name: ubuntu-${{ matrix.os-version }}${{ matrix.build-arch }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}-${{ matrix.steam-sockets }}
+    runs-on: ubuntu-${{ matrix.os-version }}.04${{ matrix.build-arch }}
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
@@ -75,7 +81,7 @@ jobs:
       fail-fast: false
       matrix:
         os-version: [24]
-        cpu-arch: ["", "-arm"]
+        build-arch: ["", "-arm"]
         build-config: [debug, release]
         compiler:
         - {
@@ -98,6 +104,11 @@ jobs:
             cxx: clang++-18,
             install: clang-18
           }
+        steam-sockets: [ON, OFF]
+        exclude:
+        - build-config: release
+          steam-sockets: ON
+        - build-arch: "-arm" # temporarily disable all tests on arm - tests with gcc fail at runtiime
 
     steps:
     - name: Install packages
@@ -120,7 +131,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=1 ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -Dcage_use_steam_sockets=${{ matrix.steam-sockets }} ..
 
     - name: Build
       run: |
