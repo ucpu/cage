@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.22)
-
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "wamr")
 message(STATUS "----------------------------------------------------------------")
@@ -41,6 +39,7 @@ set(WAMR_DISABLE_STACK_HW_BOUND_CHECK 0)
 set(WAMR_DISABLE_WAKEUP_BLOCKING_OP 0)
 add_compile_definitions(BUILTIN_LIBC_BUFFERED_PRINTF=1 BUILTIN_LIBC_BUFFERED_PRINT_SIZE=512)
 add_compile_definitions("$<$<CONFIG:Debug>:BH_DEBUG=1>")
+cmake_policy(SET CMP0169 OLD) # allow FetchContent_Populate
 
 include("${CMAKE_CURRENT_LIST_DIR}/wamr/build-scripts/runtime_lib.cmake")
 

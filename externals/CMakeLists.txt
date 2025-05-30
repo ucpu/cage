@@ -1,7 +1,5 @@
-cmake_minimum_required(VERSION 3.22)
-
 # override cmake minimum version for dependencies
-set(CMAKE_POLICY_VERSION_MINIMUM 3.22)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.31)
 
 # make cmake find our own provided libraries
 # the libraries provided here have higher priority than system libraries

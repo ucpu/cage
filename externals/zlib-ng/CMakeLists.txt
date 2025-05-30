@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.22)
-
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "zlib-ng")
 message(STATUS "----------------------------------------------------------------")

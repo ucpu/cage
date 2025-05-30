@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.20)
-
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "quickhull")
 message(STATUS "----------------------------------------------------------------")
