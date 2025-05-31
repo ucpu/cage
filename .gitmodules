@@ -118,3 +118,6 @@
 [submodule "externals/curl/curl"]
 	path = externals/curl/curl
 	url = https://github.com/curl/curl.git
+[submodule "externals/wamr/zydis"]
+	path = externals/wamr/zydis
+	url = https://github.com/zyantific/zydis.git
