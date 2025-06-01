@@ -14,7 +14,12 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void defineScheme(const AssetsScheme &value)
 		{
-			defineScheme_(detail::typeHash<T>(), Scheme, value);
+			defineScheme_(detail::typeHash<T>(), Scheme, value, false);
+		}
+		template<uint32 Scheme, class T>
+		void defineSchemeOverride(const AssetsScheme &value)
+		{
+			defineScheme_(detail::typeHash<T>(), Scheme, value, true);
 		}
 
 		// begin thread-safe methods
@@ -62,7 +67,7 @@ namespace cage
 		EventDispatcher<bool(uint32 requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
-		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value);
+		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride);
 		void load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value);
 		void load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
 		Holder<void> get_(uint32 scheme, uint32 assetId) const;

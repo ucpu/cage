@@ -700,14 +700,17 @@ namespace cage
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetsManager::defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value)
+	void AssetsManager::defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride)
 	{
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(typeHash != m);
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		CAGE_ASSERT(value.typeHash == typeHash);
 		CAGE_ASSERT(value.threadIndex == m || value.threadIndex < impl->customProcessingQueues.size());
-		CAGE_ASSERT(impl->schemes[scheme].typeHash == m); // the scheme was not defined previously
+		if (!allowOverride)
+		{
+			CAGE_ASSERT(impl->schemes[scheme].typeHash == m); // the scheme was not defined previously
+		}
 		impl->schemes[scheme] = value;
 	}
 

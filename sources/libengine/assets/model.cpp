@@ -12,7 +12,7 @@ namespace cage
 	{
 		void processLoad(AssetContext *context)
 		{
-			Holder<Model> msh = newModel();
+			Holder<Model> model = newModel();
 
 			Deserializer des(context->originalData);
 			ModelHeader data;
@@ -22,23 +22,23 @@ namespace cage
 			mat.resize(data.materialSize);
 			des.read(mat);
 
-			Holder<Mesh> poly = newMesh();
-			poly->importBuffer(des.read(des.available()));
+			Holder<Mesh> mesh = newMesh();
+			mesh->importBuffer(des.read(des.available()));
 
-			msh->importMesh(+poly, mat);
-			msh->setBoundingBox(data.box);
+			model->importMesh(+mesh, mat);
+			model->setBoundingBox(data.box);
 
-			msh->importTransform = data.importTransform;
+			model->importTransform = data.importTransform;
 			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
-				msh->textureNames[i] = data.textureNames[i];
-			msh->shaderName = data.shaderName;
-			msh->flags = data.renderFlags;
-			msh->layer = data.renderLayer;
-			msh->bones = data.skeletonBones;
+				model->textureNames[i] = data.textureNames[i];
+			model->shaderName = data.shaderName;
+			model->flags = data.renderFlags;
+			model->layer = data.renderLayer;
+			model->bones = data.skeletonBones;
 
-			msh->setDebugName(context->textId); // last command to apply it to all subresources
+			model->setDebugName(context->textId); // last command to apply it to all subresources
 
-			context->assetHolder = std::move(msh).cast<void>();
+			context->assetHolder = std::move(model).cast<void>();
 		}
 	}
 
@@ -46,7 +46,7 @@ namespace cage
 	{
 		AssetsScheme s;
 		s.threadIndex = threadIndex;
-		s.load.bind<&processLoad>();
+		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Model>();
 		return s;
 	}
