@@ -293,17 +293,17 @@ namespace cage
 				prevTransformComponent = camera->prevTransformComponent;
 			}
 
-			Mat4 modelTransform(Entity *e) const
+			Transform modelTransform(Entity *e) const
 			{
 				CAGE_ASSERT(e->has(transformComponent));
 				if (e->has(prevTransformComponent))
 				{
 					const Transform c = e->value<TransformComponent>(transformComponent);
 					const Transform p = e->value<TransformComponent>(prevTransformComponent);
-					return Mat4(interpolate(p, c, interpolationFactor));
+					return interpolate(p, c, interpolationFactor);
 				}
 				else
-					return Mat4(e->value<TransformComponent>(transformComponent));
+					return e->value<TransformComponent>(transformComponent);
 			}
 
 			UniMesh makeMeshUni(const RenderData &rd) const
@@ -950,7 +950,7 @@ namespace cage
 				CAGE_ASSERT(ri.mesh->bones == 0);
 				RenderData rd;
 				rd.e = e;
-				rd.model = modelTransform(e);
+				rd.model = Mat4(modelTransform(e));
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
 				rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
@@ -981,7 +981,7 @@ namespace cage
 					return;
 				RenderData rd;
 				rd.e = e;
-				rd.model = modelTransform(e) * Mat4(Vec3(rt.layout.size * Vec2(-0.5, 0.5), 0));
+				rd.model = Mat4(modelTransform(e)) * Mat4(Vec3(rt.layout.size * Vec2(-0.5, 0.5), 0));
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = tc.renderLayer;
 				rd.translucent = true;
@@ -1012,7 +1012,7 @@ namespace cage
 							return;
 						RenderData rd;
 						rd.e = e;
-						rd.model = modelTransform(e);
+						rd.model = Mat4(modelTransform(e));
 						if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(rc.model))
 						{
 							prepareObject(rd, std::move(obj));
@@ -1091,7 +1091,7 @@ namespace cage
 								return;
 							if (e->has<ShadowmapComponent>())
 								return;
-							UniLight uni = initializeLightUni(modelTransform(e), lc, e->getOrDefault<ColorComponent>(), transform.position);
+							UniLight uni = initializeLightUni(Mat4(modelTransform(e)), lc, e->getOrDefault<ColorComponent>(), transform.position);
 							if (lc.lightType == LightTypeEnum::Point && !intersects(Sphere(Vec3(uni.position), lc.maxDistance), frustum))
 								return;
 							lights.push_back(uni);
@@ -1455,7 +1455,17 @@ namespace cage
 				shadowmap.lightComponent = lc;
 				shadowmap.shadowmapComponent = sc;
 				data->resolution = Vec2i(sc.resolution);
-				data->model = modelTransform(e);
+
+				{ // quantize light direction - reduces shimmering of slowly rotating lights
+					Transform src = modelTransform(e);
+					Vec3 f = src.orientation * Vec3(0, 0, -1);
+					f *= 300;
+					for (uint32 i = 0; i < 3; i++)
+						f[i] = round(f[i]);
+					f = normalize(f);
+					src.orientation = Quat(f, src.orientation * Vec3(0, 1, 0));
+					data->model = Mat4(src);
+				}
 
 				{
 					UniShadowedLight &uni = shadowmap.shadowUni;
