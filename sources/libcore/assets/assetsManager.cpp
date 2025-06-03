@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <atomic>
+#include <cstdlib> // std::getenv
 #include <functional>
 #include <vector>
 
@@ -28,6 +29,27 @@
 
 namespace cage
 {
+	namespace detail
+	{
+		CAGE_API_EXPORT bool assetsListenDefault()
+		{
+			const char *env = std::getenv("CAGE_ASSETS_LISTEN");
+			if (!env)
+				return false;
+			try
+			{
+				const bool r = toBool(trim(String(env)));
+				CAGE_LOG(SeverityEnum::Info, "assetsManager", Stringizer() + "using environment variable CAGE_ASSETS_LISTEN, value: " + r);
+				return r;
+			}
+			catch (const Exception &)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "assetsManager", "failed parsing environment variable CAGE_ASSETS_LISTEN");
+			}
+			return false;
+		}
+	}
+
 	namespace
 	{
 		class AssetsManagerImpl;
@@ -601,18 +623,18 @@ namespace cage
 
 	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
 	{
-		class AssetListenerImpl
+		class AssetListenerImpl : private Immovable
 		{
 		public:
-			AssetsManager *const man = nullptr;
 			String address;
-			uint64 period = 0;
-			uint16 port = 0;
-			std::atomic<bool> stopping = false;
+			AssetsManager *const man = nullptr;
 			Holder<TcpConnection> tcp;
 			Holder<Thread> thread;
+			const uint64 period = 0;
+			const uint16 port = 0;
+			std::atomic<bool> stopping = false;
 
-			AssetListenerImpl(AssetsManager *man, const String &address, uint64 period, uint32 port) : man(man), address(address), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
+			AssetListenerImpl(AssetsManager *man, const String &address, uint64 period, uint32 port) : address(address), man(man), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
 
 			~AssetListenerImpl()
 			{

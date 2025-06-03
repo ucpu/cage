@@ -259,6 +259,8 @@ namespace cage
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
 				SteamNetworkingIPAddr sa = parseAddress(address, port);
 				sock = sockets->ConnectByIPAddress(sa, array_size(cfg), cfg);
+				if (sock == 0)
+					CAGE_THROW_ERROR(Exception, "ConnectByIPAddress returned invalid socket");
 				handleResult(sockets->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 
@@ -270,7 +272,12 @@ namespace cage
 				cfg[1].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, (void *)&statusChangedCallback);
 				SteamNetworkingIdentity id;
 				id.SetSteamID64(steamId);
-				sock = sockets->ConnectP2P(id, 0, array_size(cfg), cfg);
+				{
+					detail::OverrideBreakpoint ob; // this function often complains that the provided id was invalid, even if it works correctly
+					sock = sockets->ConnectP2P(id, 0, array_size(cfg), cfg);
+				}
+				if (sock == 0)
+					CAGE_THROW_ERROR(Exception, "ConnectP2P returned invalid socket");
 				handleResult(sockets->ConfigureConnectionLanes(sock, LanesCount, nullptr, nullptr));
 			}
 

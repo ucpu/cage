@@ -1,5 +1,4 @@
 #include <atomic>
-#include <cstdlib> // std::getenv
 #include <exception>
 
 #include "engine.h"
@@ -47,6 +46,11 @@
 
 namespace cage
 {
+	namespace detail
+	{
+		CAGE_API_IMPORT bool assetsListenDefault();
+	}
+
 	namespace
 	{
 		const ConfigBool confAutoAssetListen("cage/assets/listen", false);
@@ -449,24 +453,6 @@ namespace cage
 			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
-			bool defaultAssetsEnvironment()
-			{
-				const char *env = std::getenv("CAGE_ASSETS_LISTEN");
-				if (!env)
-					return false;
-				try
-				{
-					const bool r = toBool(trim(String(env)));
-					CAGE_LOG(SeverityEnum::Info, "engine", Stringizer() + "using environment variable CAGE_ASSETS_LISTEN, value: " + r);
-					return r;
-				}
-				catch (const Exception &)
-				{
-					CAGE_LOG(SeverityEnum::Warning, "engine", "failed parsing environment variable CAGE_ASSETS_LISTEN");
-				}
-				return false;
-			}
-
 			void initialize(const EngineCreateConfig &config)
 			{
 				CAGE_ASSERT(engineStarted == 0);
@@ -601,7 +587,7 @@ namespace cage
 				}
 
 				{ // initialize assets change listening
-					if (confAutoAssetListen || defaultAssetsEnvironment())
+					if (confAutoAssetListen || detail::assetsListenDefault())
 					{
 						CAGE_LOG(SeverityEnum::Info, "assets", "starting assets updates listening");
 						assets->listen();
