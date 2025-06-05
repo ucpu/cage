@@ -31,6 +31,7 @@ namespace cage
 
 		bool handleInput(const GenericInput &);
 		void invalidateInputs(); // skip all remaining inputs until next prepare
+		bool coversCursor() const; // returns whether the cursor is over a visible part of the gui
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from inside handleInput
 
 		uint32 skinsCount() const;

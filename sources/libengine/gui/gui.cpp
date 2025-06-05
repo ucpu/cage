@@ -134,6 +134,12 @@ namespace cage
 		impl->clearTooltips();
 	}
 
+	bool GuiManager::coversCursor() const
+	{
+		const GuiImpl *impl = (const GuiImpl *)this;
+		return impl->testMouseCovered();
+	}
+
 	uint32 GuiManager::skinsCount() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;

@@ -332,6 +332,7 @@ namespace cage
 		bool keyPress(input::KeyPress);
 		bool keyRepeat(input::KeyRepeat);
 		bool keyChar(input::Character);
+		bool testMouseCovered() const;
 		// no release events -> always propagate release events to all listeners
 
 		std::vector<EventReceiver> mouseEventReceivers;

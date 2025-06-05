@@ -33,8 +33,8 @@ namespace cage
 			return result;
 		}
 
-		template<class A, bool (WidgetItem::*F)(A, ModifiersFlags, Vec2)>
-		bool passMouseEvent(GuiImpl *impl, A a, ModifiersFlags mods, const Vec2 &point)
+		template<bool (WidgetItem::*F)(MouseButtonsFlags, ModifiersFlags, Vec2)>
+		bool passMouseEvent(GuiImpl *impl, MouseButtonsFlags a, ModifiersFlags mods, const Vec2 &point)
 		{
 			Vec2 pt;
 			if (!impl->eventPoint(point, pt))
@@ -109,18 +109,18 @@ namespace cage
 	bool GuiImpl::mousePress(input::MousePress in)
 	{
 		focusName = 0;
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
+		return passMouseEvent<&WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
 	}
 
 	bool GuiImpl::mouseDoublePress(input::MouseDoublePress in)
 	{
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseDouble>(this, in.buttons, in.mods, in.position);
+		return passMouseEvent<&WidgetItem::mouseDouble>(this, in.buttons, in.mods, in.position);
 	}
 
 	bool GuiImpl::mouseMove(input::MouseMove in)
 	{
 		ttMouseMove(in);
-		return passMouseEvent<MouseButtonsFlags, &WidgetItem::mouseMove>(this, in.buttons, in.mods, in.position);
+		return passMouseEvent<&WidgetItem::mouseMove>(this, in.buttons, in.mods, in.position);
 	}
 
 	bool GuiImpl::mouseWheel(input::MouseWheel in)
@@ -161,6 +161,17 @@ namespace cage
 				res = true;
 		}
 		return res;
+	}
+
+	bool GuiImpl::testMouseCovered() const
+	{
+		if (!eventsEnabled)
+			return true;
+		const Vec2 pt = inputMouse / pointsScale;
+		for (const auto &it : mouseEventReceivers)
+			if (it.pointInside(pt))
+				return true;
+		return false;
 	}
 
 	void HierarchyItem::fireWidgetEvent(GenericInput in) const
