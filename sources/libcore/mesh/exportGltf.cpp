@@ -17,8 +17,8 @@ namespace cage
 		Holder<PointerRange<char>> exportImpl(const String &filename, const MeshExportGltfConfig &config)
 		{
 			CAGE_ASSERT(config.mesh);
-			if (config.mesh->type() != MeshTypeEnum::Triangles)
-				CAGE_THROW_ERROR(Exception, "exporting gltf requires triangle mesh");
+			if (config.mesh->type() != MeshTypeEnum::Triangles && config.mesh->type() != MeshTypeEnum::Lines)
+				CAGE_THROW_ERROR(Exception, "exporting gltf requires triangle or line mesh");
 			if (config.mesh->verticesCount() > 0 && config.mesh->indicesCount() == 0)
 				CAGE_THROW_ERROR(Exception, "exporting gltf requires indexed mesh");
 
@@ -289,7 +289,8 @@ namespace cage
 				if (!textures.empty())
 					tiJson = std::string() + ", \"textures\":[" + texturesJson + "],\"images\":[" + imagesJson + "]";
 
-				json = std::string() + "{\"scene\":0,\"scenes\":[{\"nodes\":[0]}],\"nodes\":[{\"mesh\":0,\"name\":\"" + config.name.c_str() + "\"}],\"meshes\":[{\"primitives\":[{\"attributes\":{" + attributesJson + "},\"indices\":" + (Stringizer() + indicesIndex).value.c_str() + ",\"material\":0}],\"name\":\"" + config.name.c_str() + "\"}],\"materials\":[{" + materialJson + "}]" + tiJson + ",\"buffers\":[{\"byteLength\":" + (Stringizer() + buffer.size()).value.c_str() + "}],\"bufferViews\":[" + viewsJson + "],\"accessors\":[" + accessorsJson + "],\"asset\":{\"version\":\"2.0\"}}";
+				const uint32 primitiveMode = (config.mesh->type() == MeshTypeEnum::Lines) ? 1 : 4; // 1=LINES, 4=TRIANGLES
+				json = std::string() + "{\"scene\":0,\"scenes\":[{\"nodes\":[0]}],\"nodes\":[{\"mesh\":0,\"name\":\"" + config.name.c_str() + "\"}],\"meshes\":[{\"primitives\":[{\"attributes\":{" + attributesJson + "},\"indices\":" + (Stringizer() + indicesIndex).value.c_str() + ",\"material\":0,\"mode\":" + (Stringizer() + primitiveMode).value.c_str() + "}],\"name\":\"" + config.name.c_str() + "\"}],\"materials\":[{" + materialJson + "}]" + tiJson + ",\"buffers\":[{\"byteLength\":" + (Stringizer() + buffer.size()).value.c_str() + "}],\"bufferViews\":[" + viewsJson + "],\"accessors\":[" + accessorsJson + "],\"asset\":{\"version\":\"2.0\"}}";
 
 				while ((json.length() % 4) != 0)
 					json += ' ';

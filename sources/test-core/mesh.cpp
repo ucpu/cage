@@ -951,6 +951,23 @@ namespace
 		approxEqual(msh->boundingBox(), Aabb(Vec3(-1, -1, -2), Vec3(1, 1, 2)));
 		meshApplyTransform(+msh, Mat4(Mat3(10, 0, 0, 0, 0, 10, 0, -10, 0)));
 		approxEqual(msh->boundingBox(), Aabb(Vec3(-10, -20, -10), Vec3(10, 20, 10)));
+
+		{
+			CAGE_TESTCASE("export gltf");
+			MeshExportGltfConfig cfg;
+			cfg.mesh = +msh;
+			meshExportFiles("meshes/exports/lines.glb", cfg);
+		}
+
+		{
+			CAGE_TESTCASE("import gltf");
+			const auto imp = meshImportFiles("meshes/exports/lines.glb");
+			CAGE_TEST(imp.parts.size() == 1);
+			CAGE_TEST(imp.parts[0].mesh->type() == MeshTypeEnum::Lines);
+			approxEqual(imp.parts[0].mesh->boundingBox(), Aabb(Vec3(-10, -20, -10), Vec3(10, 20, 10)));
+			CAGE_TEST(imp.parts[0].mesh->verticesCount() == msh->verticesCount());
+			CAGE_TEST(imp.parts[0].mesh->indicesCount() == msh->indicesCount());
+		}
 	}
 
 	void testMeshConsistentWinding()
