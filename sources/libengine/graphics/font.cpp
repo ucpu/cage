@@ -3,7 +3,7 @@
 
 extern "C"
 {
-#include <SheenBidi.h>
+#include <SheenBidi/SheenBidi.h>
 }
 #include <hb-ft.h>
 
