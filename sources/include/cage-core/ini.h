@@ -37,7 +37,8 @@ namespace cage
 	{
 	public:
 		void clear();
-		void merge(const Ini *source); // items in this are overridden by items in source
+		void cleanUp();
+		void merge(const Ini *source, bool replaceLists = false); // items in this are overridden by items in source
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
 		void importBuffer(PointerRange<const char> buffer); // clears this before loading
 		void importFile(const String &filename); // clears this before loading

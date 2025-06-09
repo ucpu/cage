@@ -263,14 +263,33 @@ namespace cage
 		impl->helps.clear();
 	}
 
-	void Ini::merge(const Ini *source)
+	void Ini::cleanUp()
+	{
+		for (const String &s : sections())
+		{
+			for (const String &i : items(s))
+				if (get(s, i).empty())
+					itemRemove(s, i);
+			if (itemsCount(s) == 0)
+				sectionRemove(s);
+		}
+	}
+
+	void Ini::merge(const Ini *source, bool replaceLists)
 	{
 		for (const String &s : source->sections())
 		{
+			if (replaceLists && source->sectionExists(s))
+			{
+				for (const String &i : items(s))
+					if (isDigitsOnly(i))
+						itemRemove(s, i);
+			}
+
 			for (const String &i : source->items(s))
 			{
 				const String v = source->get(s, i);
-				if (v.empty())
+				if (!replaceLists && v.empty())
 					itemRemove(s, i);
 				else
 					set(s, i, v);

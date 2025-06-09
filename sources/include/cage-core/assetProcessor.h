@@ -32,7 +32,7 @@ namespace cage
 		static void initializeSecondaryLog(const String &path);
 
 		// relative path is interpreted relative to the input file (unless specified otherwise)
-		// absolute path is interpreted as relative to input root path
+		// absolute path is interpreted as relative to root of all assets
 		String convertAssetPath(const String &input, const String &relativeTo = "", bool markAsReferenced = true) const;
 		String convertFilePath(const String &input, const String &relativeTo = "", bool markAsUsed = true) const;
 
