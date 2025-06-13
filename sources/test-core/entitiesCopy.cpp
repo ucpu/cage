@@ -3,7 +3,6 @@
 #include "main.h"
 
 #include <cage-core/entities.h>
-#include <cage-core/entitiesCopy.h>
 #include <cage-core/math.h>
 
 namespace
@@ -138,6 +137,13 @@ void testEntitiesCopy()
 	{
 		changeEntities(+am);
 		entitiesCopy({ +am, +bm });
+		check(+am, +bm);
+	}
+
+	for (uint32 round = 0; round < 20; round++)
+	{
+		changeEntities(+am);
+		entitiesCopy({ +am, +bm, true, true });
 		check(+am, +bm);
 	}
 }

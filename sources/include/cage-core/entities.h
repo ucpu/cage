@@ -135,6 +135,16 @@ namespace cage
 			return manager()->component<T>();
 		}
 	};
+
+	struct CAGE_CORE_API EntitiesCopyConfig
+	{
+		const EntityManager *source = nullptr;
+		EntityManager *destination = nullptr;
+		bool purge = true; // faster destroy previous entities, but does not call any callbacks
+		bool linearAllocator = false; // replace allocators in destination, which allows faster copy, but forbids removing entities or components
+	};
+
+	CAGE_CORE_API void entitiesCopy(const EntitiesCopyConfig &config);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

@@ -45,7 +45,7 @@ namespace cage
 				return allocate(size, alignment);
 			}
 
-			void deallocate(void *ptr) { CAGE_THROW_CRITICAL(Exception, "linear memory allocator does not support individual deallocations"); }
+			void deallocate(void *ptr) { CAGE_THROW_ERROR(Exception, "linear memory allocator does not support individual deallocations"); }
 
 			void flush()
 			{

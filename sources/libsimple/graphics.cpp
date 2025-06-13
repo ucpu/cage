@@ -9,7 +9,6 @@
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/entitiesCopy.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/hashString.h>
 #include <cage-core/profiling.h>
@@ -193,7 +192,7 @@ namespace cage
 					EntitiesCopyConfig cfg;
 					cfg.source = engineEntities();
 					cfg.destination = +emitBuffers[lock.index()].scene;
-					cfg.purge = true;
+					cfg.linearAllocator = true;
 					entitiesCopy(cfg);
 					emitBuffers[lock.index()].emitTime = emitTime;
 				}

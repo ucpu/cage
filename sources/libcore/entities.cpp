@@ -38,6 +38,7 @@ namespace cage
 			FlatBag<Entity *> allEntities;
 			uint32 generateId = 0;
 			uint32 entSize = 0;
+			bool linearArena = false;
 
 			~EntityManagerImpl()
 			{
@@ -243,8 +244,13 @@ namespace cage
 	void EntityManager::destroy()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		while (!impl->allEntities.empty())
-			impl->allEntities.unsafeData().back()->destroy();
+		if (impl->linearArena)
+			impl->purge();
+		else
+		{
+			while (!impl->allEntities.empty())
+				impl->allEntities.unsafeData().back()->destroy();
+		}
 	}
 
 	void EntityManager::purge()
@@ -340,11 +346,12 @@ namespace cage
 	{
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		if (impl->comp(ci->definitionIndex) == nullptr)
+		void *&ptr = impl->comp(ci->definitionIndex);
+		if (ptr == nullptr)
 			return;
 		ci->componentEntities.erase(this);
-		ci->desVal(impl->comp(ci->definitionIndex));
-		impl->comp(ci->definitionIndex) = nullptr;
+		ci->desVal(ptr);
+		ptr = nullptr;
 	}
 
 	bool Entity::has(const EntityComponent *component) const
@@ -372,14 +379,14 @@ namespace cage
 		CAGE_ASSERT(component->manager() == manager());
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		void *&c = impl->comp(ci->definitionIndex);
-		if (c == nullptr)
+		void *&ptr = impl->comp(ci->definitionIndex);
+		if (ptr == nullptr)
 		{
-			c = ci->newVal();
-			detail::memcpy(c, +ci->prototype, ci->typeSize);
+			ptr = ci->newVal();
+			detail::memcpy(ptr, +ci->prototype, ci->typeSize);
 			ci->componentEntities.insert(this);
 		}
-		return c;
+		return ptr;
 	}
 
 	void Entity::destroy()
@@ -387,5 +394,105 @@ namespace cage
 		CAGE_ASSERT(this); // calling free/delete on null is ok, but calling the destroy METHOD is not, and some compilers totally ignored that issue
 		EntityManagerImpl *man = (EntityManagerImpl *)(manager());
 		man->desEnt((EntityImpl *)this);
+	}
+
+	namespace
+	{
+		struct ComponnentMapping
+		{
+			EntityComponent *sc = nullptr;
+			EntityComponent *dc = nullptr;
+		};
+
+		std::vector<ComponnentMapping> componnentMapping(const EntitiesCopyConfig &config)
+		{
+			std::vector<ComponnentMapping> res;
+			res.reserve(config.source->components().size());
+			for (EntityComponent *sc : config.source->components())
+			{
+				uint32 idx = 0;
+				for (EntityComponent *dc : config.source->componentsByType(sc->typeIndex()))
+				{
+					if (sc == dc)
+						break;
+					else
+						idx++;
+				}
+				auto cbts = config.destination->componentsByType(sc->typeIndex());
+				if (idx >= cbts.size())
+				{
+					const uint32 k = idx - cbts.size() + 1;
+					for (uint32 i = 0; i < k; i++)
+						config.destination->defineComponent(sc);
+					cbts = config.destination->componentsByType(sc->typeIndex());
+				}
+				res.push_back({ sc, cbts[idx] });
+			}
+			return res;
+		}
+	}
+
+	void entitiesCopy(const EntitiesCopyConfig &config)
+	{
+		const EntityManagerImpl *src = (const EntityManagerImpl *)config.source;
+		EntityManagerImpl *dst = (EntityManagerImpl *)config.destination;
+
+		CAGE_ASSERT(!config.linearAllocator || config.purge); // linear arena must purge
+		if (config.purge)
+			dst->purge();
+		else
+			dst->destroy();
+
+		// must define components before changing the allocators
+		const auto mp = componnentMapping(config);
+
+		CAGE_ASSERT(!dst->linearArena || config.linearAllocator); // cannot take back
+		if (config.linearAllocator && !dst->linearArena)
+		{
+			dst->linearArena = true;
+			for (const auto &it : dst->components)
+			{
+				it->arena.clear();
+				it->arena = newMemoryAllocatorLinear({});
+			}
+			dst->arena.clear();
+			dst->arena = newMemoryAllocatorLinear({});
+		}
+
+		ankerl::unordered_dense::map<Entity *, EntityImpl *> ents; // old -> new
+		ents.reserve(src->count());
+		dst->allEntities.unsafeData().reserve(src->allEntities.size());
+		for (Entity *se : src->allEntities)
+		{
+			EntityImpl *n = (EntityImpl *)dst->arena->allocate(dst->entSize, alignof(EntityImpl));
+			detail::memset(n, 0, dst->entSize);
+			const_cast<EntityManagerImpl *&>(n->manager) = dst;
+			const_cast<uint32 &>(n->id) = se->id();
+			dst->allEntities.unsafeData().push_back(n);
+			ents[se] = n;
+		}
+		if (!config.linearAllocator)
+			dst->allEntities.unsafeRebuildIndex();
+		for (Entity *e : dst->allEntities)
+		{
+			if (e->id())
+				dst->namedEntities.emplace(e->id(), e);
+		}
+
+		for (const auto &it : mp)
+		{
+			const auto sz = detail::typeSizeByIndex(it.sc->typeIndex());
+			const uint32 si = it.sc->definitionIndex();
+			const uint32 di = it.dc->definitionIndex();
+			ComponentImpl *dc = ((ComponentImpl *)it.dc);
+			for (EntityImpl *se : it.sc->entities().cast<EntityImpl *const>())
+			{
+				EntityImpl *de = ents[se];
+				detail::memcpy(de->comp(di) = dc->newVal(), se->comp(si), sz);
+				dc->componentEntities.unsafeData().push_back(de);
+			}
+			if (!config.linearAllocator)
+				dc->componentEntities.unsafeRebuildIndex();
+		}
 	}
 }

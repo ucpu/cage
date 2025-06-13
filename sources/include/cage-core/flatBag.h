@@ -76,6 +76,15 @@ namespace cage
 
 		constexpr std::vector<Value> &unsafeData() { return data_; }
 
+		constexpr void unsafeRebuildIndex()
+		{
+			indices.clear();
+			indices.reserve(data_.size());
+			uintPtr i = 0;
+			for (const Value &v : data_)
+				indices[v] = i++;
+		}
+
 	private:
 		ankerl::unordered_dense::map<Value, uintPtr> indices;
 		std::vector<Value> data_;
