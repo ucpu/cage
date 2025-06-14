@@ -84,12 +84,27 @@ namespace cage
 		return glfwGetPrimaryMonitor();
 	}
 
-	void setClipboard(const String &str)
+	void setClipboard(const char *str)
+	{
+		glfwSetClipboardString(nullptr, str);
+	}
+
+	void setClipboardString(const String &str)
 	{
 		glfwSetClipboardString(nullptr, str.c_str());
 	}
 
-	String getClipboard()
+	PointerRange<const char> getClipboard()
+	{
+		if (const char *tmp = glfwGetClipboardString(nullptr))
+		{
+			const auto len = std::strlen(tmp);
+			return PointerRange(tmp, tmp + len);
+		}
+		return {};
+	}
+
+	String getClipboardString()
 	{
 		if (const char *tmp = glfwGetClipboardString(nullptr))
 		{
