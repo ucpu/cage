@@ -15,7 +15,6 @@
 	#include <cage-core/process.h>
 	#include <cage-core/profiling.h>
 	#include <cage-core/stdHash.h>
-	#include <cage-core/string.h>
 
 cage::PointerRange<const cage::uint8> profiling_htm();
 
@@ -23,17 +22,10 @@ namespace cage
 {
 	namespace
 	{
-	#ifdef CAGE_SYSTEM_WINDOWS
-		constexpr String DefaultBrowser = "\"C:/Program Files/Mozilla Firefox/firefox.exe\" --new-window";
-	#else
-		constexpr String DefaultBrowser = "firefox";
-	#endif // CAGE_SYSTEM_WINDOWS
-
 		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
 
 		ConfigBool confEnabled("cage/profiling/enabled", false);
 		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
-		const ConfigString confBrowser("cage/profiling/browser", DefaultBrowser);
 
 		uint64 timestamp()
 		{
@@ -101,7 +93,6 @@ namespace cage
 				std::unordered_map<uint64, String> threadNames;
 				Holder<WebsocketServer> server;
 				Holder<WebsocketConnection> connection;
-				Holder<Process> client;
 
 				void eraseQueue()
 				{
@@ -217,9 +208,7 @@ namespace cage
 								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
 								const String baseUrl = pathWorkingDir() + "/profiling.htm";
 								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
-								ProcessCreateConfig cfg(Stringizer() + (String)confBrowser + " \"" + url + "\"");
-								cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
-								client = newProcess(cfg);
+								openUrl(url);
 							}
 							catch (const cage::Exception &)
 							{
@@ -235,7 +224,6 @@ namespace cage
 					const ProfilingScope profiling("disabled");
 					server.clear();
 					connection.clear();
-					client.clear();
 					eraseQueue();
 				}
 
