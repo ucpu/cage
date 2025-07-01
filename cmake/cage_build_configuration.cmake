@@ -82,6 +82,9 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 
+		# prevent requiring executable stack
+		add_link_options(-Wl,-z,noexecstack)
+
 		# disable some warnings
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-abi")
