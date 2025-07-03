@@ -11,7 +11,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API extern uint64 GuiTextFontDefault;
+		CAGE_ENGINE_API extern uint32 GuiTextFontDefault;
 		CAGE_ENGINE_API extern uint64 GuiTooltipDelayDefault;
 	}
 

@@ -11,7 +11,7 @@ namespace cage
 {
 	namespace detail
 	{
-		uint64 GuiTextFontDefault = 0;
+		uint32 GuiTextFontDefault = 0;
 	}
 
 	HierarchyItem::HierarchyItem(GuiImpl *impl, Entity *ent) : impl(impl), ent(ent)

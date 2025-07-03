@@ -39,7 +39,7 @@ namespace cage
 {
 	namespace detail
 	{
-		extern uint64 GuiTextFontDefault;
+		extern uint32 GuiTextFontDefault;
 	}
 
 	namespace
