@@ -113,8 +113,6 @@ namespace cage
 		{
 			Holder<Texture> texture;
 			Holder<Model> mesh;
-
-			CAGE_FORCE_INLINE void *cmpPtr() const { return (void *)((uintPtr)(void *)+texture ^ (uintPtr)(void *)+mesh); }
 		};
 
 		struct RenderText : private Noncopyable
@@ -157,15 +155,15 @@ namespace cage
 			auto cmp() const noexcept
 			{
 				return std::visit(
-					[this](const auto &r) -> std::tuple<sint32, bool, Real, void *, bool>
+					[this](const auto &r) -> std::tuple<sint32, bool, Real, void *, void *, bool>
 					{
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
-							return { renderLayer, translucent, depth, +r.mesh, !!r.skeletalAnimation };
+							return { renderLayer, translucent, depth, +r.mesh, nullptr, !!r.skeletalAnimation };
 						if constexpr (std::is_same_v<T, RenderIcon>)
-							return { renderLayer, translucent, depth, r.cmpPtr(), false };
+							return { renderLayer, translucent, depth, +r.mesh, +r.texture, false };
 						if constexpr (std::is_same_v<T, RenderText>)
-							return { renderLayer, translucent, depth, +r.font, false };
+							return { renderLayer, translucent, depth, +r.font, nullptr, false };
 						return {};
 					},
 					data);
@@ -761,15 +759,15 @@ namespace cage
 				const auto &mark = [](const RenderData &d)
 				{
 					return std::visit(
-						[&](const auto &r) -> std::tuple<void *, bool, bool>
+						[&](const auto &r) -> std::tuple<void *, void *, bool, bool>
 						{
 							using T = std::decay_t<decltype(r)>;
 							if constexpr (std::is_same_v<T, RenderModel>)
-								return { +r.mesh, !!r.skeletalAnimation, d.translucent };
+								return { +r.mesh, nullptr, !!r.skeletalAnimation, d.translucent };
 							if constexpr (std::is_same_v<T, RenderIcon>)
-								return { r.cmpPtr(), false, d.translucent };
+								return { +r.mesh, +r.texture, false, d.translucent };
 							if constexpr (std::is_same_v<T, RenderText>)
-								return { +r.font, false, d.translucent };
+								return { +r.font, nullptr, false, d.translucent };
 							return {};
 						},
 						d.data);
