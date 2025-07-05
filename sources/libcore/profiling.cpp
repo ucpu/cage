@@ -106,8 +106,6 @@ namespace cage
 
 				void updateConnected()
 				{
-					const ProfilingScope profiling("connected");
-
 					struct NamesMap
 					{
 						std::unordered_map<String, uint32> data;
@@ -184,8 +182,6 @@ namespace cage
 
 				void updateConnecting()
 				{
-					const ProfilingScope profiling("connecting");
-
 					if (server)
 					{
 						connection = server->accept();
@@ -221,7 +217,6 @@ namespace cage
 
 				void updateDisabled()
 				{
-					const ProfilingScope profiling("disabled");
 					server.clear();
 					connection.clear();
 					eraseQueue();
@@ -240,12 +235,12 @@ namespace cage
 									updateConnected();
 								else
 									updateConnecting();
-								threadSleep(50000);
+								threadSleep(50'000);
 							}
 							else
 							{
 								updateDisabled();
-								threadSleep(200000);
+								threadSleep(200'000);
 							}
 						}
 						catch (...)
@@ -253,7 +248,7 @@ namespace cage
 							if (enabled)
 							{
 								confEnabled = false;
-								CAGE_LOG(SeverityEnum::Warning, "profiling", "disabling profiling due to error");
+								CAGE_LOG(SeverityEnum::Warning, "profiling", "disabling profiling due to an error");
 							}
 						}
 					}

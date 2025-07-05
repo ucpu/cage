@@ -7,14 +7,19 @@
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/debug.h>
 #include <cage-core/profiling.h>
+#include <cage-core/scopeGuard.h>
 #include <cage-core/tasks.h>
 
 namespace cage
 {
 	namespace
 	{
+		std::atomic<uint64> globalNextTaskId = 1;
+		static_assert(std::atomic<uint64>::is_always_lock_free);
+
 		struct ThreadData
 		{
+			uint64 currentTaskId = 0;
 			bool taskingThread = false;
 		};
 
@@ -23,6 +28,8 @@ namespace cage
 		struct TaskImpl : public AsyncTask
 		{
 			const privat::TaskCreateConfig config;
+			const uint64 parentTaskId = threadData.currentTaskId;
+			const uint64 myTaskId = globalNextTaskId.fetch_add(1, std::memory_order_relaxed);
 			std::mutex exceptionMutex;
 			std::exception_ptr storedException;
 			std::atomic<uint32> enqueued = 0; // number of times pushed into the queue
@@ -60,6 +67,10 @@ namespace cage
 				profiling.set(Stringizer() + "task invocation: " + idx + " / " + config.invocations);
 				try
 				{
+					uint64 prevTaskId = myTaskId;
+					std::swap(prevTaskId, threadData.currentTaskId);
+					const ScopeGuard scopeGuard([&] { std::swap(prevTaskId, threadData.currentTaskId); });
+
 					config.runner(config, idx);
 				}
 				catch (...)
@@ -105,12 +116,14 @@ namespace cage
 		{
 			bool tryPopFilter(Holder<TaskImpl> &value)
 			{
+				const uint64 filterId = threadData.currentTaskId;
 				ScopeLock sl(mut);
 				if (stop)
 					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "tasks concurrent queue terminated");
 				for (auto it = items.begin(); it != items.end(); it++)
 				{
-					// todo add filters here
+					if ((*it)->parentTaskId != filterId)
+						continue; // prevent the parent task from being blocked by potentially long-lasting unrelated task
 					value = std::move(*it);
 					items.erase(it);
 					writer->signal();

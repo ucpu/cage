@@ -34,6 +34,7 @@ namespace cage
 		struct Emit
 		{
 			std::vector<Event> data;
+			bool stopping = false;
 		};
 
 		class SoundsQueueImpl : public SoundsQueue
@@ -71,12 +72,18 @@ namespace cage
 				// add new
 				if (auto lock = swapController->read())
 				{
-					for (Event &it : emits[lock.index()].data)
+					Emit &em = emits[lock.index()];
+					if (em.stopping)
+					{
+						active.clear();
+						em.stopping = false;
+					}
+					for (Event &it : em.data)
 					{
 						it.endTime = currentTime + it.maxDelay;
 						active.push_back(std::move(it));
 					}
-					emits[lock.index()].data.clear();
+					em.data.clear();
 				}
 
 				// update times
@@ -231,6 +238,17 @@ namespace cage
 	{
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
 		impl->onDemand->preload(soundId);
+	}
+
+	void SoundsQueue::stop()
+	{
+		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
+		if (auto lock = impl->swapController->write())
+		{
+			Emit &em = impl->emits[lock.index()];
+			em.stopping = true;
+			em.data.clear();
+		}
 	}
 
 	bool SoundsQueue::playing() const

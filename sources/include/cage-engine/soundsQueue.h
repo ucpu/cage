@@ -24,8 +24,8 @@ namespace cage
 
 		void play(Holder<Sound> sound, const SoundEventConfig &cfg = {});
 		void play(uint32 soundId, const SoundEventConfig &cfg = {});
-
 		void preload(uint32 soundId);
+		void stop();
 
 		bool playing() const;
 		uint64 elapsedTime() const;
