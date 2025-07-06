@@ -237,7 +237,7 @@ namespace cage
 
 	RecursiveMutex *fsMutex()
 	{
-		static Holder<RecursiveMutex> *m = new Holder<RecursiveMutex>(newRecursiveMutex()); // this leak is intentional
-		return m->get();
+		static Holder<RecursiveMutex> *mut = new Holder<RecursiveMutex>(newRecursiveMutex()); // this leak is intentional
+		return +*mut;
 	}
 }

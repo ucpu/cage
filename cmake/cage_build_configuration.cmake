@@ -45,6 +45,9 @@ macro(cage_build_configuration)
 		set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
 		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 
+		# compatibility hack
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")
+
 		# disable some warnings
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd26812") # The enum type ___ is unscoped. Prefer 'enum class' over 'enum'

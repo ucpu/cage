@@ -1,6 +1,5 @@
 #include <atomic>
 #include <exception>
-#include <mutex>
 #include <vector>
 
 #include <cage-core/concurrent.h>
@@ -25,12 +24,17 @@ namespace cage
 
 		thread_local ThreadData threadData;
 
+		Mutex *exceptionsMutex()
+		{
+			static Holder<Mutex> *mut = new Holder<Mutex>(newMutex()); // this leak is intentional
+			return +*mut;
+		}
+
 		struct TaskImpl : public AsyncTask
 		{
 			const privat::TaskCreateConfig config;
 			const uint64 parentTaskId = threadData.currentTaskId;
 			const uint64 myTaskId = globalNextTaskId.fetch_add(1, std::memory_order_relaxed);
-			std::mutex exceptionMutex;
 			std::exception_ptr storedException;
 			std::atomic<uint32> enqueued = 0; // number of times pushed into the queue
 			std::atomic<uint32> executing = 0; // number of times the task started executing (this is the next invocation index)
@@ -76,7 +80,7 @@ namespace cage
 				catch (...)
 				{
 					{
-						std::scoped_lock lock(exceptionMutex);
+						ScopeLock lock(exceptionsMutex());
 						storedException = std::current_exception();
 					}
 					complete();
@@ -105,7 +109,7 @@ namespace cage
 				}
 				catch (...)
 				{
-					std::scoped_lock lock(exceptionMutex);
+					ScopeLock lock(exceptionsMutex());
 					storedException = std::current_exception();
 				}
 				complete();
@@ -172,7 +176,7 @@ namespace cage
 			}
 
 			CAGE_ASSERT(completed);
-			std::scoped_lock lock(exceptionMutex);
+			ScopeLock lock(exceptionsMutex());
 			if (storedException)
 				std::rethrow_exception(storedException);
 			else

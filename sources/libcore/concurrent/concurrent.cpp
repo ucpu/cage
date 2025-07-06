@@ -170,10 +170,76 @@ namespace cage
 
 	namespace
 	{
+#ifdef CAGE_SYSTEM_WINDOWS
+
+		// this implementation does not depend on crt
+		class RecursiveMutexImplWindows : private Immovable
+		{
+		public:
+			RecursiveMutexImplWindows() { InitializeSRWLock(&srw); }
+
+			bool try_lock()
+			{
+				const DWORD currentId = GetCurrentThreadId();
+				if (currentId == ownerThreadId)
+				{
+					recursionCount++;
+					return true;
+				}
+				if (TryAcquireSRWLockExclusive(&srw))
+				{
+					ownerThreadId = currentId;
+					recursionCount = 1;
+					return true;
+				}
+				return false;
+			}
+
+			void lock()
+			{
+				const DWORD currentId = GetCurrentThreadId();
+				if (currentId == ownerThreadId)
+				{
+					recursionCount++;
+					return;
+				}
+				AcquireSRWLockExclusive(&srw);
+				ownerThreadId = currentId;
+				recursionCount = 1;
+			}
+
+			void unlock()
+			{
+				const DWORD currentId = GetCurrentThreadId();
+				if (currentId != ownerThreadId)
+				{
+					CAGE_THROW_CRITICAL(Exception, "unlocking recursive mutex from different thread");
+				}
+				if (--recursionCount == 0)
+				{
+					ownerThreadId = 0;
+					ReleaseSRWLockExclusive(&srw);
+				}
+			}
+
+		private:
+			SRWLOCK srw;
+			DWORD ownerThreadId = 0;
+			sint32 recursionCount = 0;
+		};
+
+#endif // CAGE_SYSTEM_WINDOWS
+
 		class RecursiveMutexImpl : public RecursiveMutex
 		{
 		public:
+			// the std::recursive_mutex gets internally corrupted on some computers
+			// it happened to me after installing intel graphics profiler (likely causes a dll injection, or some similar stuff)
+#ifdef CAGE_SYSTEM_WINDOWS
+			RecursiveMutexImplWindows mut;
+#else
 			std::recursive_mutex mut;
+#endif // CAGE_SYSTEM_WINDOWS
 		};
 	}
 
