@@ -10,7 +10,7 @@ layout(binding = 1) uniform sampler2D texBloom;
 
 layout(location = 0) uniform int uniLodLevel;
 
-out vec3 outColor;
+out vec4 outColor;
 
 void main()
 {
@@ -19,5 +19,5 @@ void main()
 	vec2 uv = vec2(gl_FragCoord) / textureSize(texColor, 0).xy;
 	for (int i = 0; i < uniLodLevel; i++)
 		bloom += textureLod(texBloom, uv, i).rgb;
-	outColor = color + bloom / uniLodLevel; // additive mixing
+	outColor = vec4(color + bloom / uniLodLevel, 1); // additive mixing
 }

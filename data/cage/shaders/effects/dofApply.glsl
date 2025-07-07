@@ -38,7 +38,7 @@ layout(binding = 0) uniform sampler2D texColor;
 layout(binding = 1) uniform sampler2D texDepth;
 layout(binding = 2) uniform sampler2D texDof;
 
-out vec3 outColor;
+out vec4 outColor;
 
 void main()
 {
@@ -48,12 +48,12 @@ void main()
 	float depth = texelFetch(texDepth, ivec2(gl_FragCoord), 0).x;
 	if (depth > 1 - 1e-7)
 	{ // skybox
-		outColor = color;
+		outColor = vec4(color, 1);
 		return;
 	}
 	vec3 colorDof = textureLod(texDof, uv, 0).rgb;
 	float near;
 	float far;
 	dofContribution(uv, depth, near, far);
-	outColor = color * (1 - near - far) + colorDof * (near + far);
+	outColor = vec4(color * (1 - near - far) + colorDof * (near + far), 1);
 }

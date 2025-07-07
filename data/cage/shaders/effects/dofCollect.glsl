@@ -7,7 +7,7 @@ $define shader fragment
 
 layout(binding = 0) uniform sampler2D texColor;
 
-out vec3 outDof;
+out vec4 outDof;
 
 const int downscale = 3;
 
@@ -21,5 +21,5 @@ void main()
 		for (int x = 0; x < downscale; x++)
 			color += texelFetch(texColor, ivec2(gl_FragCoord) * downscale + ivec2(x, y) - downscale / 2, 0).rgb;
 	color /= float(downscale * downscale);
-	outDof = color;
+	outDof = vec4(color, 1);
 }

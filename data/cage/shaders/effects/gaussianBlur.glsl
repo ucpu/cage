@@ -19,7 +19,7 @@ layout(location = 1) uniform int uniLodLevel;
 
 void main()
 {
-	vec2 texelSize = 1.0 / textureSize(texInput, uniLodLevel).xy;
+	vec2 texelSize = 1 / vec2(textureSize(texInput, uniLodLevel));
 	vec2 center = gl_FragCoord.xy;
 	vec4 val = textureLod(texInput, center * texelSize, uniLodLevel) * weights[0];
 	for(int i = 1; i < 3; i++)

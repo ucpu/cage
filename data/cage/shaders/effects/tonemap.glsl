@@ -12,7 +12,7 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Tonemap
 	vec4 params; // gamma, tonemapEnabled
 };
 
-out vec3 outColor;
+out vec4 outColor;
 
 // https://github.com/KhronosGroup/ToneMapping/blob/main/PBR_Neutral/pbrNeutral.glsl
 vec3 neutralToneMapping(vec3 color)
@@ -42,5 +42,5 @@ void main()
 	// gamma correction
 	color = pow(color, vec3(params[0]));
 
-	outColor = color;
+	outColor = vec4(color, 1);
 }

@@ -9,7 +9,7 @@ layout(location = 0) uniform vec4 uniBloomParams; // threshold
 
 layout(binding = 0) uniform sampler2D texColor;
 
-out vec3 outBloom;
+out vec4 outBloom;
 
 const int downscale = 3;
 
@@ -32,7 +32,7 @@ void main()
 		}
 	}
 	if (cnt > 0)
-		outBloom = acc / float(cnt);
+		outBloom = vec4(acc / float(cnt), 1);
 	else
-		outBloom = vec3(0.0);
+		outBloom = vec4(0, 0, 0, 1);
 }
