@@ -1,5 +1,6 @@
 #include "image.h"
 
+#include <cage-core/debug.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/serialization.h>
 
@@ -144,7 +145,7 @@ namespace cage
 			uint8 imageDescriptor;
 		};
 
-		void tgaDecodeImpl(PointerRange<const char> inBuffer, ImageImpl *impl)
+		void tgaDecodeImpl(PointerRange<const char> inBuffer, ImageImpl *impl, bool experimental)
 		{
 			Deserializer des(inBuffer);
 
@@ -164,6 +165,45 @@ namespace cage
 
 			// skip
 			des.read(head.idLength);
+
+			if (experimental)
+			{
+				if (head.width == 0 || head.height == 0)
+					CAGE_THROW_ERROR(Exception, "experimental tga with zero resolution");
+				if (head.colorMapLength != 0 || head.colorMapType != 0)
+					CAGE_THROW_ERROR(Exception, "experimental tga with a colormap");
+				switch (head.imageType)
+				{
+					case 2: // uncompressed color
+					{
+						switch (head.bits)
+						{
+							case 24:
+								if (des.available() != (uint32)head.width * head.height * 3)
+									CAGE_THROW_ERROR(Exception, "experimental tga (uncompressed color) with wrong buffer size");
+								break;
+							case 32:
+								if (des.available() != (uint32)head.width * head.height * 4)
+									CAGE_THROW_ERROR(Exception, "experimental tga (uncompressed color) with wrong buffer size");
+								break;
+							default:
+								CAGE_THROW_ERROR(Exception, "experimental tga (uncompressed color) with invalid bits");
+						}
+						break;
+					}
+					case 3: // uncompressed mono
+					{
+
+						if (head.bits != 8)
+							CAGE_THROW_ERROR(Exception, "experimental tga (uncompressed mono) with invalid bits");
+						if (des.available() != (uint32)head.width * head.height)
+							CAGE_THROW_ERROR(Exception, "experimental tga (uncompressed mono) with wrong buffer size");
+						break;
+					}
+					default:
+						CAGE_THROW_ERROR(Exception, "experimental tga with unsupported image type");
+				}
+			}
 
 			const uint32 colorMapElementSize = head.colorMapEntrySize / 8;
 			const uint32 pixelSize = head.colorMapLength == 0 ? (head.bits / 8) : colorMapElementSize;
@@ -219,7 +259,11 @@ namespace cage
 					break;
 				}
 				case 3: // uncompressed mono
-					return ser.write(des.read(imageSize));
+				{
+					if (head.bits == 8)
+						return ser.write(des.read(imageSize));
+					break;
+				}
 				case 10: // compressed color
 				{
 					switch (head.bits)
@@ -245,16 +289,33 @@ namespace cage
 
 	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		tgaDecodeImpl(inBuffer, impl);
+		tgaDecodeImpl(inBuffer, impl, false);
 		imageVerticalFlip(impl);
 		impl->colorConfig = defaultConfig(impl->channels);
+	}
+
+	bool experimentalTgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
+	{
+		try
+		{
+			detail::OverrideException ex;
+			tgaDecodeImpl(inBuffer, impl, true);
+			imageVerticalFlip(impl);
+			impl->colorConfig = defaultConfig(impl->channels);
+			return true;
+		}
+		catch (...)
+		{
+			impl->clear();
+			return false;
+		}
 	}
 
 	MemoryBuffer tgaEncode(const ImageImpl *impl)
 	{
 		if (impl->format != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "unsupported image format for tga encoding");
-		if (impl->width >= 65536 || impl->height >= 65536)
+		if (impl->width >= 65'536 || impl->height >= 65'536)
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for tga encoding");
 
 		MemoryBuffer buf;

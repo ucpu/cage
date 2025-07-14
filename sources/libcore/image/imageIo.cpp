@@ -11,30 +11,31 @@ namespace cage
 	void pngDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void jpegDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void tiffDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
-	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	bool experimentalTgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	ImageImportResult ddsDecode(PointerRange<const char> inBuffer);
 
 	MemoryBuffer pngEncode(const ImageImpl *impl);
 	MemoryBuffer jpegEncode(const ImageImpl *impl);
 	MemoryBuffer tiffEncode(const ImageImpl *impl);
-	MemoryBuffer tgaEncode(const ImageImpl *impl);
 	MemoryBuffer psdEncode(const ImageImpl *impl);
 	MemoryBuffer ddsEncode(const ImageImpl *impl);
 	MemoryBuffer exrEncode(const ImageImpl *impl);
+	MemoryBuffer tgaEncode(const ImageImpl *impl);
 
 	namespace
 	{
 		constexpr const uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 		constexpr const uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
 		constexpr const uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
-		constexpr const uint8 tgaSignature1[18] = "TRUEVISION-XFILE.";
-		constexpr const uint8 tgaSignature2[17] = { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.' }; // no terminal zero
 		constexpr const uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
 		constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
 		constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
+		constexpr const uint8 tgaSignature1[18] = "TRUEVISION-XFILE.";
+		constexpr const uint8 tgaSignature2[17] = { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.' }; // no terminal zero
 
 		template<uint32 N>
 		bool compare(PointerRange<const char> buffer, const uint8 (&signature)[N])
@@ -56,22 +57,26 @@ namespace cage
 		{
 			if (buffer.size() < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
+
 			if (compare(buffer, pngSignature))
 				pngDecode(buffer, impl);
 			else if (compare(buffer, jpegSignature))
 				jpegDecode(buffer, impl);
 			else if (compare(buffer, tiffSignature))
 				tiffDecode(buffer, impl);
-			else if (compare(buffEnd(buffer, sizeof(tgaSignature1)), tgaSignature1) || compare(buffEnd(buffer, sizeof(tgaSignature2)), tgaSignature2))
-				tgaDecode(buffer, impl);
 			else if (compare(buffer, psdSignature))
 				psdDecode(buffer, impl);
 			else if (compare(buffer, ddsSignature))
 				ddsDecode(buffer, impl);
 			else if (compare(buffer, exrSignature))
 				exrDecode(buffer, impl);
+			else if (compare(buffEnd(buffer, sizeof(tgaSignature1)), tgaSignature1) || compare(buffEnd(buffer, sizeof(tgaSignature2)), tgaSignature2))
+				tgaDecode(buffer, impl);
+			else if (experimentalTgaDecode(buffer, impl))
+				CAGE_LOG(SeverityEnum::Warning, "cage", "decoded image with EXPERIMENTAL tga codec");
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
+
 			if (channels != m)
 				imageConvert(this, channels);
 			if (format != ImageFormatEnum::Default)
@@ -103,14 +108,14 @@ namespace cage
 			return jpegEncode((const ImageImpl *)this);
 		if (ext == ".tiff" || ext == ".tif")
 			return tiffEncode((const ImageImpl *)this);
-		if (ext == ".tga")
-			return tgaEncode((const ImageImpl *)this);
 		if (ext == ".psd" || ext == ".psb")
 			return psdEncode((const ImageImpl *)this);
 		if (ext == ".dds")
 			return ddsEncode((const ImageImpl *)this);
 		if (ext == ".exr")
 			return exrEncode((const ImageImpl *)this);
+		if (ext == ".tga")
+			return tgaEncode((const ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 

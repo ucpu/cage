@@ -53,9 +53,8 @@ namespace cage
 				return "mask";
 			case MeshImportTextureType::Bump:
 				return "bump";
-			default:
-				return "unknown";
 		}
+		return "unknown";
 	}
 
 	namespace privat

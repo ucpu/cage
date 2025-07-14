@@ -13,15 +13,15 @@ void convert(String src, const String &format, bool preserveOriginal)
 	src = pathSimplify(src);
 	const String path = pathExtractDirectory(src);
 	const String dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "converting: " + src + ", to " + dst);
+	CAGE_LOG(SeverityEnum::Info, "imageConvert", Stringizer() + "converting: " + src + ", to " + dst);
 	if (src == dst)
 	{
-		CAGE_LOG(SeverityEnum::Info, "image", "no conversion required");
+		CAGE_LOG(SeverityEnum::Info, "imageConvert", "no conversion required");
 		return;
 	}
 	Holder<Image> img = newImage();
 	img->importFile(src);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + img->width() + "x" + img->height() + ", channels: " + img->channels());
+	CAGE_LOG(SeverityEnum::Info, "imageConvert", Stringizer() + "resolution: " + img->width() + "x" + img->height() + ", channels: " + img->channels());
 	img->exportFile(dst);
 	if (!preserveOriginal)
 		pathRemove(src);
@@ -51,7 +51,7 @@ int main(int argc, const char *args[])
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)
 			convert(path, format, preserveOriginal);
-		CAGE_LOG(SeverityEnum::Info, "image", "done");
+		CAGE_LOG(SeverityEnum::Info, "imageConvert", "done");
 		return 0;
 	}
 	catch (...)

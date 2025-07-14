@@ -10,7 +10,7 @@ using namespace cage;
 
 void info(const String &src, int format)
 {
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "opening file: " + src);
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "opening file: " + src);
 	MeshImportResult msh;
 	try
 	{
@@ -18,11 +18,11 @@ void info(const String &src, int format)
 		switch (format)
 		{
 			case 1:
-				CAGE_LOG(SeverityEnum::Info, "mesh", "normalizing format");
+				CAGE_LOG(SeverityEnum::Info, "meshInfo", "normalizing format");
 				meshImportNormalizeFormats(msh);
 				break;
 			case 2:
-				CAGE_LOG(SeverityEnum::Info, "mesh", "converting to cage format");
+				CAGE_LOG(SeverityEnum::Info, "meshInfo", "converting to cage format");
 				meshImportConvertToCageFormats(msh);
 				break;
 		}
@@ -32,69 +32,69 @@ void info(const String &src, int format)
 		return;
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "contains " + msh.parts.size() + " parts");
-	CAGE_LOG(SeverityEnum::Info, "mesh", "");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "contains " + msh.parts.size() + " parts");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 	Aabb overallBox;
 	for (const auto &pt : msh.parts)
 	{
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "part name: " + pt.objectName);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "mesh type: " + meshTypeToString(pt.mesh->type()));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "indices count: " + pt.mesh->indicesCount());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "vertices count: " + pt.mesh->verticesCount());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has uvs: " + !pt.mesh->uvs().empty());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has uvs 3D: " + !pt.mesh->uvs3().empty());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has normals: " + !pt.mesh->normals().empty());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "has bones: " + !pt.mesh->boneIndices().empty());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "part name: " + pt.objectName);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "mesh type: " + meshTypeToString(pt.mesh->type()));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "indices count: " + pt.mesh->indicesCount());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "vertices count: " + pt.mesh->verticesCount());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "has uvs: " + !pt.mesh->uvs().empty());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "has uvs 3D: " + !pt.mesh->uvs3().empty());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "has normals: " + !pt.mesh->normals().empty());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "has bones: " + !pt.mesh->boneIndices().empty());
 		const Aabb box = pt.mesh->boundingBox();
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "bounding box: " + box);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "bounding box: " + box);
 		overallBox += box;
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "material name: " + pt.materialName);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "albedo base: " + pt.material.albedoBase);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "albedo mult: " + pt.material.albedoMult);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "special base: " + pt.material.specialBase);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "special mult: " + pt.material.specialMult);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "cutOut: " + any(pt.renderFlags & MeshRenderFlags::CutOut));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "transparent: " + any(pt.renderFlags & MeshRenderFlags::Transparent));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "fade: " + any(pt.renderFlags & MeshRenderFlags::Fade));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "two sided: " + any(pt.renderFlags & MeshRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth test: " + any(pt.renderFlags & MeshRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "depth write: " + any(pt.renderFlags & MeshRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "shadow cast: " + any(pt.renderFlags & MeshRenderFlags::ShadowCast));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "lighting: " + any(pt.renderFlags & MeshRenderFlags::Lighting));
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "uses " + pt.textures.size() + " textures");
-		CAGE_LOG(SeverityEnum::Info, "mesh", "");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "material name: " + pt.materialName);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "albedo base: " + pt.material.albedoBase);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "albedo mult: " + pt.material.albedoMult);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "special base: " + pt.material.specialBase);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "special mult: " + pt.material.specialMult);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "cutOut: " + any(pt.renderFlags & MeshRenderFlags::CutOut));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "transparent: " + any(pt.renderFlags & MeshRenderFlags::Transparent));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "fade: " + any(pt.renderFlags & MeshRenderFlags::Fade));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "two sided: " + any(pt.renderFlags & MeshRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "depth test: " + any(pt.renderFlags & MeshRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "depth write: " + any(pt.renderFlags & MeshRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "shadow cast: " + any(pt.renderFlags & MeshRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "lighting: " + any(pt.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "uses " + pt.textures.size() + " textures");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 		for (const auto &tx : pt.textures)
 		{
-			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture name: " + tx.name);
-			CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "texture type: " + meshImportTextureTypeToString(tx.type));
+			CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "texture name: " + tx.name);
+			CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "texture type: " + meshImportTextureTypeToString(tx.type));
 			imageInfo(tx.images);
-			CAGE_LOG(SeverityEnum::Info, "mesh", "");
+			CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 		}
 	}
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "overall bounding box: " + overallBox);
-	CAGE_LOG(SeverityEnum::Info, "mesh", "");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "overall bounding box: " + overallBox);
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 
 	if (msh.skeleton)
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "skeleton bones: " + msh.skeleton->bonesCount());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "skeleton bones: " + msh.skeleton->bonesCount());
 	else
-		CAGE_LOG(SeverityEnum::Info, "mesh", "no skeleton");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", "no skeleton");
 
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "contains " + msh.animations.size() + " animations");
-	CAGE_LOG(SeverityEnum::Info, "mesh", "");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "contains " + msh.animations.size() + " animations");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 	for (const auto &ani : msh.animations)
 	{
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "animation name: " + ani.name);
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "bones count: " + ani.animation->bonesCount());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "channels count: " + ani.animation->channelsCount());
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "duration: " + ani.animation->duration() + " us");
-		CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "duration: " + (ani.animation->duration() * 1e-6) + " s");
-		CAGE_LOG(SeverityEnum::Info, "mesh", "");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "animation name: " + ani.name);
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "bones count: " + ani.animation->bonesCount());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "channels count: " + ani.animation->channelsCount());
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + ani.animation->duration() + " us");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + (ani.animation->duration() * 1e-6) + " s");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "mesh", Stringizer() + "accessed " + msh.paths.size() + " files");
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "accessed " + msh.paths.size() + " files");
 	for (const auto &pth : msh.paths)
-		CAGE_LOG(SeverityEnum::Info, "mesh", pth);
-	CAGE_LOG(SeverityEnum::Info, "mesh", "");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", pth);
+	CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 }
 
 bool logFilter(const detail::LoggerInfo &i)
@@ -129,7 +129,7 @@ int main(int argc, const char *args[])
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)
 			info(path, convertToCage ? 2 : normalizeFormats ? 1 : 0);
-		CAGE_LOG(SeverityEnum::Info, "mesh", "done");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", "done");
 		return 0;
 	}
 	catch (...)

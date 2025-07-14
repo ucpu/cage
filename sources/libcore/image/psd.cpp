@@ -18,8 +18,8 @@ namespace cage
 						for (uint32 y = 0; y < impl->height; y++)
 							for (uint32 x = 0; x < impl->width; x++)
 								des >> dst[(y * impl->width + x) * impl->channels + ch];
+					break;
 				}
-				break;
 				case ImageFormatEnum::U16:
 				{
 					uint16 *dst = (uint16 *)impl->mem.data();
@@ -35,8 +35,8 @@ namespace cage
 							}
 						}
 					}
+					break;
 				}
-				break;
 				default:
 					CAGE_THROW_ERROR(Exception, "unsupported image format in psd decoding");
 			}
@@ -101,8 +101,8 @@ namespace cage
 						for (uint32 y = 0; y < impl->height; y++)
 							for (uint32 x = 0; x < impl->width; x++)
 								ser << src[(y * impl->width + x) * impl->channels + ch];
+					break;
 				}
-				break;
 				case ImageFormatEnum::U16:
 				{
 					const uint16 *src = (uint16 *)impl->mem.data();
@@ -110,8 +110,8 @@ namespace cage
 						for (uint32 y = 0; y < impl->height; y++)
 							for (uint32 x = 0; x < impl->width; x++)
 								ser << endianness::change<uint16>(src[(y * impl->width + x) * impl->channels + ch]);
+					break;
 				}
-				break;
 				default:
 					CAGE_THROW_ERROR(Exception, "unsupported image format for psd encoding");
 			}

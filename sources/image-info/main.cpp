@@ -11,7 +11,7 @@ using namespace cage;
 
 void info(const String &src)
 {
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "opening image: " + src);
+	CAGE_LOG(SeverityEnum::Info, "imageInfo", Stringizer() + "opening image: " + src);
 	ImageImportResult result;
 	try
 	{
@@ -45,9 +45,9 @@ int main(int argc, const char *args[])
 		for (const String &path : paths)
 		{
 			info(path);
-			CAGE_LOG(SeverityEnum::Info, "image", "");
+			CAGE_LOG(SeverityEnum::Info, "imageInfo", "");
 		}
-		CAGE_LOG(SeverityEnum::Info, "image", "done");
+		CAGE_LOG(SeverityEnum::Info, "imageInfo", "done");
 		return 0;
 	}
 	catch (...)

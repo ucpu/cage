@@ -9,10 +9,10 @@ using namespace cage;
 
 void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, const String &name)
 {
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "cutting image at: " + x + ", " + y);
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", Stringizer() + "cutting image at: " + x + ", " + y);
 	Holder<Image> out = newImage();
 	imageBlit(in.get(), out.get(), x, y, 0, 0, w, h);
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "saving to: " + name);
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", Stringizer() + "saving to: " + name);
 	out->exportFile(name);
 }
 
@@ -21,18 +21,18 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 	if (w == 0 || h == 0)
 		CAGE_THROW_ERROR(Exception, "width and height may not be zero");
 
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "loading image: " + input);
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", Stringizer() + "loading image: " + input);
 	Holder<Image> in = newImage();
 	in->importFile(input);
 	const uint32 inw = in->width();
 	const uint32 inh = in->height();
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "resolution: " + inw + "x" + inh + ", channels: " + in->channels());
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", Stringizer() + "resolution: " + inw + "x" + inh + ", channels: " + in->channels());
 
 	if (x >= inw || y >= inh)
 		CAGE_THROW_ERROR(Exception, "x or y offsets are outside the image");
 	const uint32 cx = (inw - x) / w;
 	const uint32 cy = (inh - y) / h;
-	CAGE_LOG(SeverityEnum::Info, "image", Stringizer() + "output counts: " + cx + "x" + cy);
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", Stringizer() + "output counts: " + cx + "x" + cy);
 	if (cx == 0 || cy == 0)
 		CAGE_THROW_ERROR(Exception, "no output images");
 
@@ -71,7 +71,7 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "image", "ok");
+	CAGE_LOG(SeverityEnum::Info, "imageUntile", "done");
 }
 
 int main(int argc, const char *args[])

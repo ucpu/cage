@@ -55,8 +55,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Roughness:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -72,8 +72,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Metallic:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -89,8 +89,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Emission:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -100,8 +100,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Opacity:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -117,8 +117,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Normal:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -136,8 +136,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for normal texture");
 					}
+					break;
 				}
-				break;
 				case MeshImportTextureType::Bump:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -153,8 +153,8 @@ namespace cage
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
 					}
+					break;
 				}
-				break;
 				default:
 					break;
 			}
@@ -305,7 +305,15 @@ namespace cage
 				{
 					if (find(it.name, '?') != m || find(it.name, ';') != m)
 						continue;
-					it.images = imageImportFiles(it.name);
+					try
+					{
+						it.images = imageImportFiles(it.name);
+					}
+					catch (...)
+					{
+						CAGE_LOG_THROW(Stringizer() + "error while loading image: " + it.name);
+						throw;
+					}
 				}
 				imageImportConvertRawToImages(it.images);
 				splitChannels(it);
