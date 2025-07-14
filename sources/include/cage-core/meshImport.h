@@ -23,19 +23,28 @@ namespace cage
 	enum class MeshImportTextureType : uint32
 	{
 		None = 0,
+
+		// textures used by the engine
 		Albedo,
-		Special, // cage material texture: roughness, metallic, emission, mask
 		Normal,
+		Special, // cage material texture: roughness, metallic, emission, mask
 		Custom,
+
+		// other textures loaded by assimp
+		AmbientOcclusion,
+		Anisotropy,
+		Bump,
+		Clearcoat,
+		Emission,
+		GltfPbr, // gltf material texture: (ambient occlusion), roughness, metallic, (mask)
+		Mask, // cage mask -> white = use albedo from texture, black = use albedo from instance
+		Metallic,
 		Opacity,
 		Roughness,
-		Metallic,
-		Emission,
-		Specular,
+		Sheen,
 		Shininess,
-		AmbientOcclusion,
-		Mask, // cage mask -> white = use albedo from texture, black = use albedo from instance
-		Bump,
+		Specular,
+		Transmission,
 	};
 	CAGE_CORE_API StringPointer meshImportTextureTypeToString(MeshImportTextureType type);
 

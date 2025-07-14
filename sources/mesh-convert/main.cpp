@@ -12,7 +12,7 @@
 using namespace cage;
 
 // these contain paths relative to output
-std::vector<String> texsAlbedo, texsAlbedoPremultiplied, texsNormal, texsSpecial;
+std::vector<String> texsAlbedo, texsAlbedoPremultiplied, texsNormal, texsBump, texsSpecial;
 std::vector<std::pair<String, String>> outModels;
 
 Real scale = 1;
@@ -38,6 +38,7 @@ void convertTexture(const MeshImportTexture &tex, MeshExportGltfConfig &cfg, con
 	{
 		case MeshImportTextureType::Albedo:
 		{
+			CAGE_ASSERT(cfg.albedo.filename.empty());
 			cfg.albedo.filename = meshName + "_albedo.png";
 			if (exportTexture(tex, pathJoin(output, cfg.albedo.filename)) > 3)
 				texsAlbedoPremultiplied.push_back(cfg.albedo.filename);
@@ -47,19 +48,33 @@ void convertTexture(const MeshImportTexture &tex, MeshExportGltfConfig &cfg, con
 		}
 		case MeshImportTextureType::Normal:
 		{
+			CAGE_ASSERT(cfg.normal.filename.empty());
 			cfg.normal.filename = meshName + "_normal.png";
 			exportTexture(tex, pathJoin(output, cfg.normal.filename));
 			texsNormal.push_back(cfg.normal.filename);
 			break;
 		}
+		case MeshImportTextureType::Bump:
+		{
+			CAGE_ASSERT(cfg.normal.filename.empty());
+			cfg.normal.filename = meshName + "_bump.png";
+			exportTexture(tex, pathJoin(output, cfg.normal.filename));
+			texsBump.push_back(cfg.normal.filename);
+			break;
+		}
 		case MeshImportTextureType::Special:
 		{
-			if (convertToCage)
-				cfg.pbr.filename = meshName + "_special.png";
-			else
-				cfg.pbr.filename = meshName + "_pbr.png";
+			CAGE_ASSERT(cfg.pbr.filename.empty());
+			cfg.pbr.filename = meshName + "_special.png";
 			exportTexture(tex, pathJoin(output, cfg.pbr.filename));
 			texsSpecial.push_back(cfg.pbr.filename);
+			break;
+		}
+		case MeshImportTextureType::GltfPbr:
+		{
+			CAGE_ASSERT(cfg.pbr.filename.empty());
+			cfg.pbr.filename = meshName + "_pbr.png";
+			exportTexture(tex, pathJoin(output, cfg.pbr.filename));
 			break;
 		}
 		default:
@@ -70,7 +85,7 @@ void convertTexture(const MeshImportTexture &tex, MeshExportGltfConfig &cfg, con
 			}
 			else
 			{
-				CAGE_LOG(SeverityEnum::Warning, "meshConv", Stringizer() + "unused texture: " + tex.name + ", " + meshImportTextureTypeToString(tex.type));
+				CAGE_LOG(SeverityEnum::Warning, "meshConv", Stringizer() + "unused texture: " + tex.name + ", type: " + meshImportTextureTypeToString(tex.type));
 				exportTexture(tex, pathJoin(output, Stringizer() + meshName + "_" + meshImportTextureTypeToString(tex.type) + ".png"));
 			}
 			break;
@@ -247,6 +262,17 @@ void generateConfiguration(const String &output)
 		f->writeLine("scheme = texture");
 		f->writeLine("normal = true");
 		for (const String &it : texsNormal)
+			f->writeLine(it);
+		f->writeLine("");
+	}
+
+	if (!texsBump.empty())
+	{
+		f->writeLine("[]");
+		f->writeLine("scheme = texture");
+		f->writeLine("convert = heightToNormal");
+		f->writeLine("normal = true");
+		for (const String &it : texsBump)
 			f->writeLine(it);
 		f->writeLine("");
 	}

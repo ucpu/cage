@@ -29,30 +29,40 @@ namespace cage
 				return "none";
 			case MeshImportTextureType::Albedo:
 				return "albedo";
-			case MeshImportTextureType::Special:
-				return "special";
 			case MeshImportTextureType::Normal:
 				return "normal";
+			case MeshImportTextureType::Special:
+				return "special";
 			case MeshImportTextureType::Custom:
 				return "custom";
+			case MeshImportTextureType::AmbientOcclusion:
+				return "ambient occlusion";
+			case MeshImportTextureType::Anisotropy:
+				return "anisotropy";
+			case MeshImportTextureType::Bump:
+				return "bump";
+			case MeshImportTextureType::Clearcoat:
+				return "clearcoat";
+			case MeshImportTextureType::Emission:
+				return "emission";
+			case MeshImportTextureType::GltfPbr:
+				return "gltf pbr";
+			case MeshImportTextureType::Mask:
+				return "mask";
+			case MeshImportTextureType::Metallic:
+				return "metallic";
 			case MeshImportTextureType::Opacity:
 				return "opacity";
 			case MeshImportTextureType::Roughness:
 				return "roughness";
-			case MeshImportTextureType::Metallic:
-				return "metallic";
-			case MeshImportTextureType::Emission:
-				return "emission";
-			case MeshImportTextureType::Specular:
-				return "specular";
+			case MeshImportTextureType::Sheen:
+				return "sheen";
 			case MeshImportTextureType::Shininess:
 				return "shininess";
-			case MeshImportTextureType::AmbientOcclusion:
-				return "ambient occlusion";
-			case MeshImportTextureType::Mask:
-				return "mask";
-			case MeshImportTextureType::Bump:
-				return "bump";
+			case MeshImportTextureType::Specular:
+				return "specular";
+			case MeshImportTextureType::Transmission:
+				return "transmission";
 		}
 		return "unknown";
 	}
@@ -1118,27 +1128,12 @@ namespace cage
 
 				Textures textures;
 
-				// material textures
-				if (mat->GetTextureCount(aiTextureType_UNKNOWN) > 0)
-				{
-					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::AmbientOcclusion>(mat, textures);
-					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::Metallic>(mat, textures);
-					loadTextureAssimp<aiTextureType_UNKNOWN, MeshImportTextureType::Roughness>(mat, textures);
-				}
-				else
-				{
-					loadTextureAssimp<aiTextureType_AMBIENT_OCCLUSION, MeshImportTextureType::AmbientOcclusion>(mat, textures);
-					loadTextureAssimp<aiTextureType_METALNESS, MeshImportTextureType::Metallic>(mat, textures);
-					loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, MeshImportTextureType::Roughness>(mat, textures);
-				}
+				// roughness/metallic textures
+				loadTextureAssimp<aiTextureType_GLTF_METALLIC_ROUGHNESS, MeshImportTextureType::GltfPbr>(mat, textures);
+				loadTextureAssimp<aiTextureType_METALNESS, MeshImportTextureType::Metallic>(mat, textures);
+				loadTextureAssimp<aiTextureType_DIFFUSE_ROUGHNESS, MeshImportTextureType::Roughness>(mat, textures);
 				loadTextureAssimp<aiTextureType_SPECULAR, MeshImportTextureType::Specular>(mat, textures);
 				loadTextureAssimp<aiTextureType_SHININESS, MeshImportTextureType::Shininess>(mat, textures);
-				if (loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures))
-				{
-					if (config.verbose)
-						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to opacity texture");
-					part.renderFlags |= MeshRenderFlags::Transparent;
-				}
 
 				// factors
 				{
@@ -1172,7 +1167,21 @@ namespace cage
 					}
 				}
 
+				// two sided
+				{
+					int twosided = false;
+					mat->Get(AI_MATKEY_TWOSIDED, twosided);
+					if (twosided)
+						part.renderFlags |= MeshRenderFlags::TwoSided;
+				}
+
 				// opacity
+				if (loadTextureAssimp<aiTextureType_OPACITY, MeshImportTextureType::Opacity>(mat, textures))
+				{
+					if (config.verbose)
+						CAGE_LOG(SeverityEnum::Info, "meshImport", "enabling transparent flag due to opacity texture");
+					part.renderFlags |= MeshRenderFlags::Transparent;
+				}
 				Real opacity = 1;
 				mat->Get(AI_MATKEY_OPACITY, opacity.value);
 				if (config.verbose)
@@ -1234,17 +1243,20 @@ namespace cage
 				if (opacity > 0)
 					part.material.albedoMult[3] = opacity;
 
-				// normal map
+				// bump/normal map
 				loadTextureAssimp<aiTextureType_HEIGHT, MeshImportTextureType::Bump>(mat, textures);
+				loadTextureAssimp<aiTextureType_DISPLACEMENT, MeshImportTextureType::Bump>(mat, textures);
 				loadTextureAssimp<aiTextureType_NORMALS, MeshImportTextureType::Normal>(mat, textures);
+				loadTextureAssimp<aiTextureType_NORMAL_CAMERA, MeshImportTextureType::Normal>(mat, textures);
 
-				// two sided
-				{
-					int twosided = false;
-					mat->Get(AI_MATKEY_TWOSIDED, twosided);
-					if (twosided)
-						part.renderFlags |= MeshRenderFlags::TwoSided;
-				}
+				// extra textures
+				loadTextureAssimp<aiTextureType_AMBIENT_OCCLUSION, MeshImportTextureType::AmbientOcclusion>(mat, textures);
+				loadTextureAssimp<aiTextureType_ANISOTROPY, MeshImportTextureType::Anisotropy>(mat, textures);
+				loadTextureAssimp<aiTextureType_CLEARCOAT, MeshImportTextureType::Clearcoat>(mat, textures);
+				loadTextureAssimp<aiTextureType_EMISSION_COLOR, MeshImportTextureType::Emission>(mat, textures);
+				loadTextureAssimp<aiTextureType_EMISSIVE, MeshImportTextureType::Emission>(mat, textures);
+				loadTextureAssimp<aiTextureType_SHEEN, MeshImportTextureType::Sheen>(mat, textures);
+				loadTextureAssimp<aiTextureType_TRANSMISSION, MeshImportTextureType::Transmission>(mat, textures);
 
 				part.textures = std::move(textures);
 

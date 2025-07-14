@@ -1,5 +1,6 @@
 #include <algorithm>
 
+#include <cage-core/color.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshImport.h>
@@ -36,10 +37,78 @@ namespace cage
 				textures.name += Stringizer() + "_lch" + channels;
 		}
 
-		void splitChannels(MeshImportTexture &it)
+		void averageChannels3To1(MeshImportTexture &textures)
 		{
+			for (auto &it : textures.images.parts)
+			{
+				Holder<Image> img = newImage();
+				const Vec2i res = it.image->resolution();
+				img->initialize(res, 1, it.image->format());
+				for (uint32 y = 0; y < res[1]; y++)
+				{
+					for (uint32 x = 0; x < res[0]; x++)
+					{
+						const Vec3 c = it.image->get3(x, y);
+						const Real v = (c[0] + c[1] + c[2]) / 3;
+						img->set(x, y, v);
+					}
+				}
+				it.image = std::move(img);
+			}
+			if (find(textures.name, '?') != m)
+				textures.name += Stringizer() + "_avg";
+		}
+
+		void expandChannels1To3(MeshImportTexture &textures)
+		{
+			for (auto &it : textures.images.parts)
+			{
+				const Image *arr[3] = { +it.image, +it.image, +it.image };
+				it.image = imageChannelsJoin(arr);
+			}
+			if (find(textures.name, '?') != m)
+				textures.name += Stringizer() + "_exp";
+		}
+
+		void normalizeChannels(MeshImportTexture &it)
+		{
+			if (it.images.parts[0].image->channels() == 0)
+				CAGE_THROW_ERROR(Exception, "texture with zero channels");
 			switch (it.type)
 			{
+				case MeshImportTextureType::Albedo:
+				{
+					if (it.images.parts[0].image->channels() > 4)
+						CAGE_THROW_ERROR(Exception, "too many channels for albedo texture");
+					break;
+				}
+				case MeshImportTextureType::Normal:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							it.type = MeshImportTextureType::Bump;
+							break;
+						case 2:
+							break;
+						case 3:
+							break;
+						case 4:
+							limitChannels(it, 3);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "too many channels for normal texture");
+					}
+					break;
+				}
+				case MeshImportTextureType::Special:
+				{
+					if (it.images.parts[0].image->channels() > 4)
+						CAGE_THROW_ERROR(Exception, "too many channels for special texture");
+					break;
+				}
+				case MeshImportTextureType::Custom:
+					break; // no limits
 				case MeshImportTextureType::AmbientOcclusion:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -57,7 +126,12 @@ namespace cage
 					}
 					break;
 				}
-				case MeshImportTextureType::Roughness:
+				case MeshImportTextureType::Anisotropy:
+				{
+					// unknown
+					break;
+				}
+				case MeshImportTextureType::Bump:
 				{
 					switch (it.images.parts[0].image->channels())
 					{
@@ -70,7 +144,43 @@ namespace cage
 							pickChannel(it, 1);
 							break;
 						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
+					}
+					break;
+				}
+				case MeshImportTextureType::Clearcoat:
+				{
+					// unknown
+					break;
+				}
+				case MeshImportTextureType::Emission:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 3:
+							averageChannels3To1(it);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
+					}
+					break;
+				}
+				case MeshImportTextureType::GltfPbr:
+				{
+					if (it.images.parts[0].image->channels() > 4)
+						CAGE_THROW_ERROR(Exception, "too many channels for gltf pbr texture");
+					break;
+				}
+				case MeshImportTextureType::Mask:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for mask texture");
 					}
 					break;
 				}
@@ -91,17 +201,6 @@ namespace cage
 					}
 					break;
 				}
-				case MeshImportTextureType::Emission:
-				{
-					switch (it.images.parts[0].image->channels())
-					{
-						case 1:
-							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
-					}
-					break;
-				}
 				case MeshImportTextureType::Opacity:
 				{
 					switch (it.images.parts[0].image->channels())
@@ -119,14 +218,45 @@ namespace cage
 					}
 					break;
 				}
-				case MeshImportTextureType::Normal:
+				case MeshImportTextureType::Roughness:
 				{
 					switch (it.images.parts[0].image->channels())
 					{
 						case 1:
-							it.type = MeshImportTextureType::Bump;
 							break;
-						case 2:
+						case 3:
+							pickChannel(it, 1);
+							break;
+						case 4:
+							pickChannel(it, 1);
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
+					}
+					break;
+				}
+				case MeshImportTextureType::Sheen:
+				{
+					// unknown
+					break;
+				}
+				case MeshImportTextureType::Shininess:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						default:
+							CAGE_THROW_ERROR(Exception, "unexpected channels count for shininess texture");
+					}
+					break;
+				}
+				case MeshImportTextureType::Specular:
+				{
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							expandChannels1To3(it);
 							break;
 						case 3:
 							break;
@@ -134,30 +264,24 @@ namespace cage
 							limitChannels(it, 3);
 							break;
 						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for normal texture");
+							CAGE_THROW_ERROR(Exception, "too many channels for specular texture");
 					}
 					break;
 				}
-				case MeshImportTextureType::Bump:
+				case MeshImportTextureType::Transmission:
 				{
-					switch (it.images.parts[0].image->channels())
-					{
-						case 1:
-							break;
-						case 3:
-							pickChannel(it, 1);
-							break;
-						case 4:
-							pickChannel(it, 1);
-							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
-					}
+					// unknown
 					break;
 				}
-				default:
-					break;
 			}
+		}
+
+		uint32 count(PointerRange<const MeshImportTexture> textures, MeshImportTextureType type)
+		{
+			uint32 res = 0;
+			for (const auto &it : textures)
+				res += it.type == type;
+			return res;
 		}
 
 		void composeAlbedoOpacity(PointerRangeHolder<MeshImportTexture> &textures)
@@ -221,8 +345,115 @@ namespace cage
 			textures.push_back(std::move(res));
 		}
 
+		void convertGltfToSpecial(PointerRangeHolder<MeshImportTexture> &textures)
+		{
+			if (count(textures, MeshImportTextureType::Special) > 0)
+				return;
+
+			const auto &find = [&](MeshImportTextureType type) -> MeshImportTexture *
+			{
+				for (auto &it : textures)
+					if (it.type == type)
+						return &it;
+				return nullptr;
+			};
+
+			MeshImportTexture *gltf = find(MeshImportTextureType::GltfPbr);
+			if (!gltf)
+				return;
+
+			Holder<Image> channels[4];
+			{
+				auto ch = imageChannelsSplit(+gltf->images.parts[0].image);
+				if (ch.size() > 1)
+					channels[0] = std::move(ch[1]);
+				if (ch.size() > 2)
+					channels[1] = std::move(ch[2]);
+				if (ch.size() > 3)
+					channels[3] = std::move(ch[3]);
+			}
+
+			if (MeshImportTexture *em = find(MeshImportTextureType::Emission))
+				channels[2] = std::move(em->images.parts[0].image);
+
+			if (!channels[3])
+			{
+				if (MeshImportTexture *em = find(MeshImportTextureType::Mask))
+					channels[3] = std::move(em->images.parts[0].image);
+			}
+
+			{
+				ImageImportPart p;
+				p.image = imageChannelsJoin(channels);
+				PointerRangeHolder<ImageImportPart> ps;
+				ps.push_back(std::move(p));
+				gltf->images.parts = std::move(ps);
+				gltf->type = MeshImportTextureType::Special;
+			}
+		}
+
+		void convertSpecularToRoughnessMetallic(PointerRangeHolder<MeshImportTexture> &textures)
+		{
+			if (count(textures, MeshImportTextureType::Special) > 0)
+				return;
+
+			const auto &find = [&](MeshImportTextureType type) -> MeshImportTexture *
+			{
+				for (auto &it : textures)
+					if (it.type == type)
+						return &it;
+				return nullptr;
+			};
+
+			MeshImportTexture *spec = find(MeshImportTextureType::Specular);
+			if (!spec)
+				return;
+			const Image *src = +spec->images.parts[0].image;
+			const Vec2i res = src->resolution();
+
+			Holder<Image> ri = newImage();
+			ri->initialize(res, 1, src->format());
+			Holder<Image> mi = newImage();
+			mi->initialize(res, 1, src->format());
+
+			for (uint32 y = 0; y < res[1]; y++)
+			{
+				for (uint32 x = 0; x < res[0]; x++)
+				{
+					const Vec2 rm = colorSpecularToRoughnessMetallic(src->get3(x, y));
+					ri->set(x, y, rm[0]);
+					mi->set(x, y, rm[1]);
+				}
+			}
+
+			{
+				ImageImportPart p;
+				p.image = std::move(ri);
+				PointerRangeHolder<ImageImportPart> ps;
+				ps.push_back(std::move(p));
+				MeshImportTexture res;
+				res.images.parts = std::move(ps);
+				res.type = MeshImportTextureType::Roughness;
+				textures.push_back(std::move(res));
+			}
+
+			{
+				ImageImportPart p;
+				p.image = std::move(mi);
+				PointerRangeHolder<ImageImportPart> ps;
+				ps.push_back(std::move(p));
+				MeshImportTexture res;
+				res.images.parts = std::move(ps);
+				res.type = MeshImportTextureType::Metallic;
+				textures.push_back(std::move(res));
+			}
+		}
+
 		void composeSpecial(PointerRangeHolder<MeshImportTexture> &textures)
 		{
+			if (count(textures, MeshImportTextureType::Special) > 0)
+				return;
+
 			Holder<Image> channels[4];
 			uint32 top = 0;
 			String base;
@@ -232,6 +463,7 @@ namespace cage
 			{
 				if (channels[index])
 					return;
+				CAGE_ASSERT(in.images.parts[0].image->channels() == 1);
 				channels[index] = in.images.parts[0].image.share();
 				String n = in.name;
 				String b = split(n, "?");
@@ -267,21 +499,6 @@ namespace cage
 			if (top == 0)
 				return;
 
-			std::erase_if(textures,
-				[](const MeshImportTexture &it)
-				{
-					switch (it.type)
-					{
-						case MeshImportTextureType::Roughness:
-						case MeshImportTextureType::Metallic:
-						case MeshImportTextureType::Emission:
-						case MeshImportTextureType::Mask:
-							return true;
-						default:
-							return false;
-					}
-				});
-
 			ImageImportPart part;
 			part.image = imageChannelsJoin({ channels, channels + top });
 			PointerRangeHolder<ImageImportPart> parts;
@@ -291,6 +508,33 @@ namespace cage
 			res.name = Stringizer() + base + "?special_" + names;
 			res.type = MeshImportTextureType::Special;
 			textures.push_back(std::move(res));
+		}
+
+		void filterTextures(PointerRangeHolder<MeshImportTexture> &textures)
+		{
+			std::erase_if(textures,
+				[](const MeshImportTexture &it)
+				{
+					switch (it.type)
+					{
+						case MeshImportTextureType::Albedo:
+						case MeshImportTextureType::Special:
+						case MeshImportTextureType::Normal:
+						case MeshImportTextureType::Bump:
+						case MeshImportTextureType::Custom:
+							return false;
+						default:
+							return true;
+					}
+				});
+
+			// remove duplicate textures (preserves the first one of each type)
+			std::stable_sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) { return a.type < b.type; });
+			textures.erase(std::unique(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) { return a.type == b.type; }), textures.end());
+
+			// remove bump map if normal map is present
+			if (count(textures, MeshImportTextureType::Normal) > 0)
+				std::erase_if(textures, [](const MeshImportTexture &it) { return it.type == MeshImportTextureType::Bump; });
 		}
 	}
 
@@ -316,7 +560,7 @@ namespace cage
 					}
 				}
 				imageImportConvertRawToImages(it.images);
-				splitChannels(it);
+				normalizeChannels(it);
 			}
 		}
 
@@ -324,40 +568,26 @@ namespace cage
 		{
 			meshImportNormalizeFormats(part);
 
-			std::vector<MeshImportTexture> unloadable;
+			std::vector<MeshImportTexture> inaccessible;
 			PointerRangeHolder<MeshImportTexture> textures;
 			textures.reserve(part.textures.size());
 			for (auto &it : part.textures)
 			{
 				if (it.images.parts.empty())
-					unloadable.push_back(std::move(it));
+					inaccessible.push_back(std::move(it));
 				else
 					textures.push_back(std::move(it));
 			}
-
 			std::stable_sort(textures.begin(), textures.end(), [](const MeshImportTexture &a, const MeshImportTexture &b) { return a.type < b.type; });
 
 			composeAlbedoOpacity(textures);
+			convertGltfToSpecial(textures);
+			convertSpecularToRoughnessMetallic(textures);
 			composeSpecial(textures);
 
-			for (auto &it : unloadable)
+			for (auto &it : inaccessible)
 				textures.push_back(std::move(it));
-
-			std::erase_if(textures,
-				[](const MeshImportTexture &it)
-				{
-					switch (it.type)
-					{
-						case MeshImportTextureType::Albedo:
-						case MeshImportTextureType::Special:
-						case MeshImportTextureType::Normal:
-						case MeshImportTextureType::Bump:
-						case MeshImportTextureType::Custom:
-							return false;
-						default:
-							return true;
-					}
-				});
+			filterTextures(textures);
 
 			for (auto &it : textures)
 			{
