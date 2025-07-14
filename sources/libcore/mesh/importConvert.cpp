@@ -76,6 +76,10 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "texture with zero channels");
 			switch (it.type)
 			{
+				case MeshImportTextureType::None:
+				{
+					CAGE_THROW_ERROR(Exception, "invalid texture type");
+				}
 				case MeshImportTextureType::Albedo:
 				{
 					if (it.images.parts[0].image->channels() > 4)

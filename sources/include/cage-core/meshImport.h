@@ -87,6 +87,7 @@ namespace cage
 		String rootPath = "/";
 		String materialPathOverride; // enforce cage (cpm) material
 		String materialNameAlternative; // prefer cage (cpm) material with this name if it exists
+		bool discardSkeleton = false; // discard skeleton and animations to better merge parts together
 		bool mergeParts = false; // merge compatible parts to reduce draw calls (ignores material names)
 		bool generateNormals = false;
 		bool renormalizeVectors = true;

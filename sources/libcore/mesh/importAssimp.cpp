@@ -450,32 +450,14 @@ namespace cage
 
 				//imp.SetPropertyBool(AI_CONFIG_PP_DB_ALL_OR_NONE, true);
 				imp.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, 30);
+				if (config.trianglesOnly)
+					imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
 
+				// initial import
 				try
 				{
-					static constexpr uint32 AssimpDefaultLoadFlags = aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_LimitBoneWeights |
-						//aiProcess_ValidateDataStructure | // still broken for lines
-						aiProcess_ImproveCacheLocality | aiProcess_SortByPType |
-						//aiProcess_FindInvalidData |
-						aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_FindDegenerates | aiProcess_OptimizeGraph |
-						//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
-						//aiProcess_SplitLargeModeles |
-						0;
-
-					static constexpr uint32 AssimpBakeLoadFlags = aiProcess_RemoveRedundantMaterials |
-						//aiProcess_FindInstances |
-						aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | 0;
-
-					uint32 flags = AssimpDefaultLoadFlags;
-					if (config.mergeParts)
-						flags |= AssimpBakeLoadFlags;
-					if (config.generateNormals)
-						flags |= aiProcess_GenSmoothNormals;
-					if (config.trianglesOnly)
-						imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
-
 					imp.SetIOHandler(&this->ioSystem);
-					if (!imp.ReadFile(inputFile.c_str(), flags))
+					if (!imp.ReadFile(inputFile.c_str(), 0))
 					{
 						CAGE_LOG_THROW(cage::String(imp.GetErrorString()));
 						CAGE_THROW_ERROR(Exception, "assimp loading failed");
@@ -490,10 +472,54 @@ namespace cage
 
 				const aiScene *scene = imp.GetScene();
 
+				// discard skeleton and animations
+				if (config.discardSkeleton)
+				{
+					aiScene *sc = const_cast<aiScene *>(scene);
+
+					// remove animations
+					sc->mNumAnimations = 0;
+					sc->mAnimations = nullptr;
+
+					// remove bones
+					for (uint32 i = 0; i < scene->mNumMeshes; i++)
+					{
+						aiMesh *mesh = scene->mMeshes[i];
+						mesh->mNumBones = 0;
+						mesh->mBones = nullptr;
+					}
+				}
+
+				// apply post-processing
+				{
+					static constexpr uint32 DefaultFlags = aiProcess_FindDegenerates | aiProcess_GenUVCoords | aiProcess_ImproveCacheLocality | aiProcess_JoinIdenticalVertices | aiProcess_LimitBoneWeights | aiProcess_OptimizeGraph | aiProcess_SortByPType | aiProcess_TransformUVCoords | aiProcess_Triangulate;
+					uint32 flags = DefaultFlags;
+					if (config.mergeParts)
+					{
+						//	flags |= aiProcess_FindInstances | aiProcess_OptimizeMeshes | aiProcess_RemoveRedundantMaterials;
+						flags |= aiProcess_OptimizeMeshes | aiProcess_RemoveRedundantMaterials;
+					}
+					if (config.generateNormals)
+						flags |= aiProcess_GenSmoothNormals;
+					scene = imp.ApplyPostProcessing(flags);
+				}
+
+				// validate
 				if (!scene)
 					CAGE_THROW_ERROR(Exception, "scene is null");
 				if ((scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == AI_SCENE_FLAGS_INCOMPLETE)
 					CAGE_THROW_ERROR(Exception, "the scene is incomplete");
+				if (config.discardSkeleton)
+				{
+					CAGE_ASSERT(scene->mNumAnimations == 0);
+					CAGE_ASSERT(!scene->mAnimations);
+					for (uint32 i = 0; i < scene->mNumMeshes; i++)
+					{
+						const aiMesh *mesh = scene->mMeshes[i];
+						CAGE_ASSERT(mesh->mNumBones == 0);
+						CAGE_ASSERT(!mesh->mBones);
+					}
+				}
 
 				if (config.verbose)
 				{

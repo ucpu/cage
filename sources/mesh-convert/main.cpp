@@ -15,8 +15,9 @@ using namespace cage;
 std::vector<String> texsAlbedo, texsAlbedoPremultiplied, texsNormal, texsBump, texsSpecial;
 std::vector<std::pair<String, String>> outModels;
 
-Real scale = 1;
+bool mergeParts = false;
 bool convertToCage = false;
+Real scale = 1;
 
 uint32 exportTexture(const MeshImportTexture &tex, const String &path)
 {
@@ -168,7 +169,10 @@ void convertMaterial(const MeshImportPart &part, const MeshExportGltfConfig &cfg
 void convertFile(const String &input, const String &output)
 {
 	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "converting file: " + input);
-	MeshImportResult mr = meshImportFiles(input);
+	MeshImportConfig impConf;
+	impConf.discardSkeleton = mergeParts; // this should help merge more parts
+	impConf.mergeParts = mergeParts;
+	MeshImportResult mr = meshImportFiles(input, impConf);
 
 	if (convertToCage)
 		meshImportConvertToCageFormats(mr);
@@ -321,8 +325,9 @@ int main(int argc, const char *args[])
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const String outPath = cmd->cmdString('o', "output", "converted-meshes");
-		scale = cmd->cmdFloat('s', "scale", scale.value);
+		mergeParts = cmd->cmdBool('m', "merge", mergeParts);
 		convertToCage = cmd->cmdBool('c', "cage", convertToCage);
+		scale = cmd->cmdFloat('s', "scale", scale.value);
 		const auto &inPaths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false))
 		{

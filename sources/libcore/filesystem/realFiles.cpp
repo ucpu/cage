@@ -559,13 +559,13 @@ namespace cage
 					{
 						CAGE_LOG_THROW(Stringizer() + "path: " + from_);
 						CAGE_THROW_ERROR(Exception, "path to move/copy does not exist");
+						break;
 					}
-					break;
 					case PathTypeFlags::File:
 					{
 						moveImpl(from_, to_, copying);
+						break;
 					}
-					break;
 					case PathTypeFlags::Directory:
 					{
 						if (!copying && type(to_) == PathTypeFlags::NotFound)
@@ -579,8 +579,8 @@ namespace cage
 								move(pathJoin(from_, n), pathJoin(to_, n), copying);
 							}
 						}
+						break;
 					}
-					break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid path type flags");
 				}
