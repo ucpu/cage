@@ -571,7 +571,7 @@ namespace cage
 				Vec3 p;
 				for (uint32 j : it)
 					p += ps[j];
-				p /= it.size();
+				p /= (uintPtr)it.size();
 				for (uint32 j : it)
 					impl->positions[j] = p;
 			}

@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <cctype> // std::isspace
 #include <cerrno>
-#include <charconv> // to_chars, from_chars
+#ifndef CAGE_SYSTEM_MACOS
+	#include <charconv> // to_chars, from_chars
+#endif
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -180,6 +182,68 @@ namespace cage
 		GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
 
+#ifdef CAGE_SYSTEM_MACOS
+		// macOS doesn't support from_chars for floating point yet
+		void fromString(const char *s, uint32 n, float &value)
+		{
+			char buffer[256];
+			if (n >= sizeof(buffer))
+				CAGE_THROW_ERROR(Exception, "string too long for float conversion");
+			std::memcpy(buffer, s, n);
+			buffer[n] = '\0';
+			char *endptr;
+			errno = 0;
+			value = std::strtof(buffer, &endptr);
+			if (errno != 0 || endptr != buffer + n)
+			{
+				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
+				CAGE_THROW_ERROR(Exception, "failed conversion of string to float");
+			}
+		}
+
+		void fromString(const char *s, uint32 n, double &value)
+		{
+			char buffer[256];
+			if (n >= sizeof(buffer))
+				CAGE_THROW_ERROR(Exception, "string too long for double conversion");
+			std::memcpy(buffer, s, n);
+			buffer[n] = '\0';
+			char *endptr;
+			errno = 0;
+			value = std::strtod(buffer, &endptr);
+			if (errno != 0 || endptr != buffer + n)
+			{
+				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
+				CAGE_THROW_ERROR(Exception, "failed conversion of string to double");
+			}
+		}
+
+		uint32 toString(char *s, uint32 n, float value)
+		{
+			int result = std::snprintf(s, n, "%f", value);
+			if (result < 0 || (uint32)result >= n)
+				CAGE_THROW_ERROR(Exception, "failed conversion of float to string");
+			// Remove trailing zeros
+			char *p = s + result - 1;
+			while (p > s && *p == '0') p--;
+			if (*p == '.') p--;
+			*(++p) = '\0';
+			return numeric_cast<uint32>(p - s);
+		}
+
+		uint32 toString(char *s, uint32 n, double value)
+		{
+			int result = std::snprintf(s, n, "%f", value);
+			if (result < 0 || (uint32)result >= n)
+				CAGE_THROW_ERROR(Exception, "failed conversion of double to string");
+			// Remove trailing zeros
+			char *p = s + result - 1;
+			while (p > s && *p == '0') p--;
+			if (*p == '.') p--;
+			*(++p) = '\0';
+			return numeric_cast<uint32>(p - s);
+		}
+#else // CAGE_SYSTEM_MACOS
 #define GCHL_GENERATE(TYPE) \
 	uint32 toString(char *s, uint32 n, TYPE value) \
 	{ \
@@ -193,6 +257,7 @@ namespace cage
 
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
+#endif // CAGE_SYSTEM_MACOS
 #undef GCHL_GENERATE
 
 		uint32 toString(char *s, uint32 n, bool value)

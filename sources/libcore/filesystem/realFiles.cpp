@@ -11,11 +11,16 @@
 	#include <dirent.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
-	#define fseek64 fseeko64
-	#define ftell64 ftello64
-#endif
-#ifdef CAGE_SYSTEM_MAC
-	#include <mach-o/dyld.h>
+	#ifdef CAGE_SYSTEM_MAC
+		#define fseek64 fseeko
+		#define ftell64 ftello
+		#define pread64 pread
+		#define pwrite64 pwrite
+		#include <mach-o/dyld.h>
+	#else
+		#define fseek64 fseeko64
+		#define ftell64 ftello64
+	#endif
 #endif
 
 #include "files.h"
@@ -711,7 +716,7 @@ namespace cage
 			uint32 len = sizeof(buffer);
 			if (_NSGetExecutablePath(buffer, &len) != 0)
 				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
-			len = detail::strlen(buffer);
+			len = std::strlen(buffer);
 			return pathSimplify(String({ buffer, buffer + len }));
 #else
 	#error This operating system is not supported

@@ -26,8 +26,10 @@ target_compile_definitions(assimp PRIVATE "ZEXPORT=" "z_crc_t=uint32_t")
 
 # '/utf-8' and '/source-charset:utf-8' command-line options are incompatible
 get_target_property(v assimp COMPILE_OPTIONS)
-string(REGEX REPLACE "/source-charset:utf-8" "" v "${v}")
-set_target_properties(assimp PROPERTIES COMPILE_OPTIONS "${v}")
+if(v)
+	string(REGEX REPLACE "/source-charset:utf-8" "" v "${v}")
+	set_target_properties(assimp PROPERTIES COMPILE_OPTIONS "${v}")
+endif()
 
 target_precompile_headers(assimp PRIVATE
 	<limits.h>
