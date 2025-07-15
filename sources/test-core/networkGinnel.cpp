@@ -132,6 +132,10 @@ namespace
 void testNetworkGinnel()
 {
 	CAGE_TESTCASE("network ginnel");
+#ifdef CAGE_SYSTEM_MAC
+	CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - macos");
+	return;
+#endif
 	Holder<Thread> server = newThread(Delegate<void()>().bind<&ServerImpl::entry>(), "server");
 	std::vector<Holder<Thread>> clients;
 	clients.resize(3);

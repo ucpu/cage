@@ -41,7 +41,13 @@ namespace cage
 				return res;
 			}
 
-			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override { files.insert(pathJoin(dir.c_str(), filename.c_str())); }
+			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
+			{
+				if (pathIsAbs(filename.c_str()))
+					files.insert(filename.c_str());
+				else
+					files.insert(pathJoin(dir.c_str(), filename.c_str()));
+			}
 
 			void registerPath(const String &path)
 			{

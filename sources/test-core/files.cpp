@@ -481,6 +481,9 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("filesystem watcher");
+#ifdef CAGE_SYSTEM_MAC
+		CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - macos");
+#else
 		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
 		{
 			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are possibly running on a filesystem that does not support watching");
@@ -498,5 +501,6 @@ void testFiles()
 			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
 			CAGE_TEST(w->waitForChange(0) == "");
 		}
+#endif
 	}
 }

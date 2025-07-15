@@ -187,6 +187,16 @@ namespace cage
 		// macOS doesn't support from_chars for floating point yet
 		void fromString(const char *s, uint32 n, float &value)
 		{
+			if (n == 0)
+				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to float");
+
+			// Check for leading or trailing whitespace
+			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n-1])))
+			{
+				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
+				CAGE_THROW_ERROR(Exception, "string with leading or trailing whitespace cannot be converted to float");
+			}
+
 			char buffer[256];
 			if (n >= sizeof(buffer))
 				CAGE_THROW_ERROR(Exception, "string too long for float conversion");
@@ -204,6 +214,16 @@ namespace cage
 
 		void fromString(const char *s, uint32 n, double &value)
 		{
+			if (n == 0)
+				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to double");
+
+			// Check for leading or trailing whitespace
+			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n-1])))
+			{
+				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
+				CAGE_THROW_ERROR(Exception, "string with leading or trailing whitespace cannot be converted to double");
+			}
+
 			char buffer[256];
 			if (n >= sizeof(buffer))
 				CAGE_THROW_ERROR(Exception, "string too long for double conversion");
@@ -221,6 +241,9 @@ namespace cage
 
 		uint32 toString(char *s, uint32 n, float value)
 		{
+			if (n == 0)
+				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to float");
+
 			int result = std::snprintf(s, n, "%f", value);
 			if (result < 0 || (uint32)result >= n)
 				CAGE_THROW_ERROR(Exception, "failed conversion of float to string");
@@ -234,7 +257,10 @@ namespace cage
 
 		uint32 toString(char *s, uint32 n, double value)
 		{
-			int result = std::snprintf(s, n, "%f", value);
+			if (n == 0)
+				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to double");
+
+			int result = std::snprintf(s, n, "%.15f", value);
 			if (result < 0 || (uint32)result >= n)
 				CAGE_THROW_ERROR(Exception, "failed conversion of double to string");
 			// Remove trailing zeros

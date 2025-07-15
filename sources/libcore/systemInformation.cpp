@@ -10,6 +10,13 @@
 	#include <cstdlib> // getenv
 	#include <sstream>
 	#include <string>
+	#ifdef CAGE_SYSTEM_MAC
+		#include <mach/mach.h>
+		#include <mach/vm_statistics.h>
+		#include <mach/mach_host.h>
+		#include <sys/sysctl.h>
+		#include <unistd.h> // gethostname
+	#endif
 #endif
 
 #include <cage-core/concurrent.h> // currentProcessId
@@ -91,6 +98,29 @@ namespace cage
 				return res;
 			};
 			return Stringizer() + readString("ProductName") + " " + readString("DisplayVersion") + " (" + readString("CurrentVersion") + ", " + readUint("CurrentMajorVersionNumber") + "." + readUint("CurrentMinorVersionNumber") + ", " + readString("CurrentBuildNumber") + ", " + readString("EditionID") + ", " + readString("InstallationType") + ")";
+#elif defined(CAGE_SYSTEM_MAC)
+			// Get macOS version using sysctlbyname
+			char versionStr[256] = {0};
+			size_t size = sizeof(versionStr);
+			sysctlbyname("kern.osproductversion", versionStr, &size, nullptr, 0);
+
+			// Get build version
+			char buildStr[256] = {0};
+			size = sizeof(buildStr);
+			sysctlbyname("kern.osversion", buildStr, &size, nullptr, 0);
+
+			// Get kernel version
+			char kernelStr[256] = {0};
+			size = sizeof(kernelStr);
+			sysctlbyname("kern.version", kernelStr, &size, nullptr, 0);
+
+			// Extract kernel version number from the full string
+			String kernel = kernelStr;
+			uint32 end = find(kernel, ":");
+			if (end != m)
+				kernel = subString(kernel, 0, end);
+
+			return Stringizer() + "macOS " + versionStr + " (" + buildStr + "), kernel: " + kernel;
 #else
 			std::string name = getFile("/etc/os-release");
 			name = grepLine(name, "PRETTY_NAME");
@@ -142,6 +172,12 @@ namespace cage
 			if (!GetComputerName(buf, &siz))
 				CAGE_THROW_ERROR(SystemError, "GetComputerName", GetLastError());
 			return buf;
+#elif defined(CAGE_SYSTEM_MAC)
+			// Use gethostname on macOS
+			char buf[String::MaxLength];
+			if (gethostname(buf, sizeof(buf)) != 0)
+				return "";
+			return buf;
 #else
 			return trim(String(getFile("/proc/sys/kernel/hostname").c_str()));
 #endif
@@ -171,6 +207,13 @@ namespace cage
 				memcpy(CPUBrandString + (16 * i), CPUInfo, sizeof(CPUInfo));
 			}
 			return CPUBrandString;
+#elif defined(CAGE_SYSTEM_MAC)
+			// Use sysctlbyname to get CPU brand string on macOS
+			char buf[String::MaxLength];
+			size_t size = sizeof(buf);
+			if (sysctlbyname("machdep.cpu.brand_string", buf, &size, nullptr, 0) != 0)
+				return "";
+			return buf;
 #else
 			std::string cpu = getFile("/proc/cpuinfo");
 			cpu = grepLine(cpu, "model name");
@@ -206,6 +249,9 @@ namespace cage
 			if (ret != 0)
 				CAGE_THROW_ERROR(SystemError, "CallNtPowerInformation", ret);
 			return ppi[0].MaxMhz * uint64(1000000);
+#elif defined(CAGE_SYSTEM_MAC)
+			// CPU frequency not available on Apple Silicon
+			return 0;
 #else
 			std::string cpu = getFile("/proc/cpuinfo");
 			cpu = grepLine(cpu, "cpu MHz");
@@ -231,6 +277,13 @@ namespace cage
 			if (!GlobalMemoryStatusEx(&m))
 				CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 			return m.ullTotalPhys;
+#elif defined(CAGE_SYSTEM_MAC)
+			// Use sysctlbyname to get total memory on macOS
+			uint64 mem = 0;
+			size_t size = sizeof(mem);
+			if (sysctlbyname("hw.memsize", &mem, &size, nullptr, 0) != 0)
+				return 0;
+			return mem;
 #else
 			std::string mem = getFile("/proc/meminfo");
 			mem = grepLine(mem, "MemTotal");
@@ -258,6 +311,15 @@ namespace cage
 			if (!GlobalMemoryStatusEx(&m))
 				CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 			return m.ullAvailPhys;
+#elif defined(CAGE_SYSTEM_MAC)
+			// Get available memory on macOS using vm_stat
+			vm_size_t page_size;
+			host_page_size(mach_host_self(), &page_size);
+			vm_statistics64_data_t vm_stat;
+			mach_msg_type_number_t host_size = sizeof(vm_stat) / sizeof(natural_t);
+			if (host_statistics64(mach_host_self(), HOST_VM_INFO, (host_info64_t)&vm_stat, &host_size) != KERN_SUCCESS)
+				return 0;
+			return (uint64)(vm_stat.free_count + vm_stat.inactive_count) * page_size;
 #else
 			std::string mem = getFile("/proc/meminfo");
 			mem = grepLine(mem, "MemAvailable");
@@ -284,6 +346,13 @@ namespace cage
 			if (GetProcessMemoryInfo(GetCurrentProcess(), &m, sizeof(m)) == 0)
 				CAGE_THROW_ERROR(SystemError, "GetProcessMemoryInfo", GetLastError());
 			return m.WorkingSetSize;
+#elif defined(CAGE_SYSTEM_MAC)
+			// macOS doesn't have /proc, use mach task_info instead
+			struct task_basic_info t_info;
+			mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+			if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&t_info, &t_info_count) != KERN_SUCCESS)
+				return 0;
+			return t_info.resident_size;
 #else
 			std::string mem = getFile(Stringizer() + "/proc/" + currentProcessId() + "/status");
 			mem = grepLine(mem, "VmRSS");
