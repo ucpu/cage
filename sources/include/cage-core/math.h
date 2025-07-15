@@ -24,6 +24,9 @@ namespace cage
 		GCHL_GENERATE(uint64);
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
+#ifdef CAGE_SYSTEM_MAC
+		GCHL_GENERATE(std::size_t);
+#endif
 #undef GCHL_GENERATE
 		explicit constexpr Real(Rads other);
 		explicit constexpr Real(Degs other);

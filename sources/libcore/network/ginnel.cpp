@@ -342,7 +342,7 @@ namespace cage
 			{
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(Exception, "failed to connect (no sockets available)");
-				UDP_LOG(2, "created " + (uintPtr)sockGroup->socks.size() + " sockets");
+				UDP_LOG(2, "created " + sockGroup->socks.size() + " sockets");
 				sockGroup->applyBufferSizes();
 
 				sockReceiver = std::make_shared<SockGroup::Receiver>();
@@ -1214,7 +1214,7 @@ namespace cage
 				sockGroup->applyBufferSizes();
 				accepting = std::make_shared<std::vector<std::shared_ptr<SockGroup::Receiver>>>();
 				sockGroup->accepting = accepting;
-				UDP_LOG(2, "listening on " + (uintPtr)sockGroup->socks.size() + " sockets");
+				UDP_LOG(2, "listening on " + sockGroup->socks.size() + " sockets");
 			}
 
 			~GinnelServerImpl() { UDP_LOG(2, "destroying server"); }

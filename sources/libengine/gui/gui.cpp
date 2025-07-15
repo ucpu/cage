@@ -200,7 +200,7 @@ namespace cage
 #ifdef CAGE_DEBUG
 			{ // randomize the order to explicitly reveal issues where the order is not correctly defined
 				for (auto &it : item->children)
-					std::swap(it, item->children[randomRange(std::size_t(), item->children.size())]);
+					std::swap(it, item->children[randomRange(uintPtr(), (uintPtr)item->children.size())]);
 			}
 #endif // CAGE_DEBUG
 			std::sort(item->children.begin(), item->children.end(), [](const Holder<HierarchyItem> &a, const Holder<HierarchyItem> &b) { return a->order < b->order; });

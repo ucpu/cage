@@ -1,9 +1,7 @@
 #include <algorithm>
 #include <cctype> // std::isspace
 #include <cerrno>
-#ifndef CAGE_SYSTEM_MACOS
-	#include <charconv> // to_chars, from_chars
-#endif
+#include <charconv> // to_chars, from_chars
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -180,9 +178,12 @@ namespace cage
 		GCHL_GENERATE(uint16);
 		GCHL_GENERATE(uint32);
 		GCHL_GENERATE(uint64);
+#ifdef CAGE_SYSTEM_MAC
+		GCHL_GENERATE(std::size_t);
+#endif
 #undef GCHL_GENERATE
 
-#ifdef CAGE_SYSTEM_MACOS
+#ifdef CAGE_SYSTEM_MAC
 		// macOS doesn't support from_chars for floating point yet
 		void fromString(const char *s, uint32 n, float &value)
 		{
@@ -243,7 +244,7 @@ namespace cage
 			*(++p) = '\0';
 			return numeric_cast<uint32>(p - s);
 		}
-#else // CAGE_SYSTEM_MACOS
+#else // CAGE_SYSTEM_MAC
 #define GCHL_GENERATE(TYPE) \
 	uint32 toString(char *s, uint32 n, TYPE value) \
 	{ \
@@ -257,7 +258,7 @@ namespace cage
 
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
-#endif // CAGE_SYSTEM_MACOS
+#endif // CAGE_SYSTEM_MAC
 #undef GCHL_GENERATE
 
 		uint32 toString(char *s, uint32 n, bool value)
