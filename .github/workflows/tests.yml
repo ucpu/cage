@@ -271,10 +271,12 @@ jobs:
     name: macos-${{ matrix.build-config }}
     runs-on: macos-latest
     env:
+      AR: "/opt/homebrew/opt/llvm/bin/llvm-ar"
+      RANLIB: "/opt/homebrew/opt/llvm/bin/llvm-ranlib"
       LDFLAGS: "-L/opt/homebrew/opt/llvm/lib"
       CPPFLAGS: "-I/opt/homebrew/opt/llvm/include"
-      CC: /opt/homebrew/opt/llvm/bin/clang
-      CXX: /opt/homebrew/opt/llvm/bin/clang++
+      CC: "/opt/homebrew/opt/llvm/bin/clang"
+      CXX: "/opt/homebrew/opt/llvm/bin/clang++"
     strategy:
       fail-fast: false
       matrix:
