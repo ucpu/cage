@@ -452,6 +452,7 @@ namespace cage
 
 	String Window::title() const
 	{
+#if GLFW_VERSION_MAJOR * 1000 + GLFW_VERSION_MINOR >= 3'005
 		const WindowImpl *impl = (const WindowImpl *)this;
 		if (const char *tmp = glfwGetWindowTitle(impl->window))
 		{
@@ -459,6 +460,7 @@ namespace cage
 			if (len < String::MaxLength)
 				return String(PointerRange(tmp, tmp + len));
 		}
+#endif
 		return {};
 	}
 

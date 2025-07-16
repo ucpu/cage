@@ -121,3 +121,6 @@
 [submodule "externals/wamr/zydis"]
 	path = externals/wamr/zydis
 	url = https://github.com/zyantific/zydis.git
+[submodule "externals/mgl/mgl"]
+	path = externals/mgl/mgl
+	url = https://github.com/ucpu/mgl.git

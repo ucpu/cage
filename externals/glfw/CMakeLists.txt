@@ -2,6 +2,11 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "glfw")
 message(STATUS "----------------------------------------------------------------")
 
+if(APPLE)
+	message(STATUS "skipping on macos - it is provided with mgl")
+	return()
+endif()
+
 set(GLFW_BUILD_EXAMPLES OFF CACHE INTERNAL "Build the GLFW example programs")
 set(GLFW_BUILD_TESTS OFF CACHE INTERNAL "Build the GLFW test programs")
 set(GLFW_BUILD_DOCS OFF CACHE INTERNAL "Build the GLFW documentation")

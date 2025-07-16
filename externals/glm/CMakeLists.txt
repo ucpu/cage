@@ -2,6 +2,11 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "glm")
 message(STATUS "----------------------------------------------------------------")
 
+if(APPLE)
+	message(STATUS "skipping on macos - it is provided with mgl")
+	return()
+endif()
+
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/glm")
 
