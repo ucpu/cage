@@ -273,7 +273,7 @@ jobs:
     env:
       AR: "/opt/homebrew/opt/llvm/bin/llvm-ar"
       RANLIB: "/opt/homebrew/opt/llvm/bin/llvm-ranlib"
-      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib -L/opt/homebrew/opt/llvm/lib/c++"
+      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib -L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++"
       CPPFLAGS: "-I/opt/homebrew/opt/llvm/include -stdlib=libc++ -arch arm64"
       CC: "/opt/homebrew/opt/llvm/bin/clang"
       CXX: "/opt/homebrew/opt/llvm/bin/clang++"
