@@ -265,3 +265,49 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
+
+
+  MacOS:
+    name: macos-${{ matrix.build-config }}
+    runs-on: macos-latest
+    env:
+      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib"
+      CPPFLAGS: "-I/opt/homebrew/opt/llvm/include"
+      CC: /opt/homebrew/opt/llvm/bin/clang
+      CXX: /opt/homebrew/opt/llvm/bin/clang++
+    strategy:
+      fail-fast: false
+      matrix:
+        build-config: [debug, release]
+
+    steps:
+    - name: Install packages
+      run: |
+        brew install nasm llvm
+
+    - name: Versions
+      run: |
+        cmake --version
+        git --version
+        ${CC} --version
+        ${CXX} --version
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . -- -j$(( `sysctl -n hw.ncpu` + 1 ))
+
+    - name: Tests
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
