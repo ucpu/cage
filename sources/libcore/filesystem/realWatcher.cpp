@@ -84,6 +84,9 @@ namespace cage
 
 	Holder<FilesystemWatcher> newFilesystemWatcher()
 	{
+#ifdef CAGE_SYSTEM_MAC
+		CAGE_LOG(SeverityEnum::Warning, "filesystemWatcher", "filesystem watcher on macos reports paths that are inconsistent with other platforms, and might be broken - it is excluded from tests");
+#endif // CAGE_SYSTEM_MAC
 		return systemMemory().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
 	}
 }

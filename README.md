@@ -107,7 +107,8 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Image info - print information about an image
 - Image resize - batch resizing of images
 - Image untile - slices a single image with tiled sections into a sequence of individual images
-- Mesh info - print information about a mesh
+- Mesh convert - converts models from several interchange formats to glb + png, and optionally creates configuration for Cage assets
+- Mesh info - print information about a 3D model
 
 # Building
 

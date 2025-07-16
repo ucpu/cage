@@ -1365,11 +1365,17 @@ namespace cage
 
 	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout)
 	{
+#ifdef CAGE_SYSTEM_MAC
+		CAGE_LOG(SeverityEnum::Warning, "ginnel", "ginnel on macos might be broken - it is excluded from tests");
+#endif // CAGE_SYSTEM_MAC
 		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
 	}
 
 	Holder<GinnelServer> newGinnelServer(uint16 port)
 	{
+#ifdef CAGE_SYSTEM_MAC
+		CAGE_LOG(SeverityEnum::Warning, "ginnel", "ginnel on macos might be broken - it is excluded from tests");
+#endif // CAGE_SYSTEM_MAC
 		return systemMemory().createImpl<GinnelServer, GinnelServerImpl>(port);
 	}
 }

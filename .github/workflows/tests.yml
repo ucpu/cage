@@ -108,7 +108,7 @@ jobs:
         exclude:
         - build-config: release
           steam-sockets: ON
-        - build-arch: "-arm" # temporarily disable all tests on arm - tests with gcc fail at runtiime
+        - build-arch: "-arm" # temporarily disable all tests on arm - tests with gcc fail at runtime
 
     steps:
     - name: Install packages

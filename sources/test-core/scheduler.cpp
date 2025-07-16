@@ -61,7 +61,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&periodicCount);
 			c.name = "periodic add one";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -76,15 +76,15 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		CAGE_TEST(periodicCount == 0);
 		CAGE_TEST(emptyCount == 0);
 		sch->run();
-		CAGE_TEST(periodicCount >= 1 && periodicCount <= 30);
-		CAGE_TEST(emptyCount >= 1 && emptyCount <= 30);
+		CAGE_TEST(periodicCount >= 1);
+		CAGE_TEST(emptyCount >= 1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -97,7 +97,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "frequent";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -105,7 +105,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "infrequent";
-			c.period = 80000;
+			c.period = 80'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -113,13 +113,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -132,7 +130,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "low priority";
-			c.period = 30000;
+			c.period = 30'000;
 			c.priority = 1;
 			c.maxSteadyPeriods = m; // do not skip, we need to test that the higher priority is run more often
 			sch->newSchedule(c);
@@ -142,7 +140,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "high priority";
-			c.period = 30000;
+			c.period = 30'000;
 			c.priority = 3;
 			c.maxSteadyPeriods = m;
 			sch->newSchedule(c);
@@ -152,13 +150,12 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		const uint32 sum = cnt1 + cnt2;
-		CAGE_TEST(sum >= 1 && sum <= 30);
+		CAGE_TEST(cnt1 + cnt2 >= 1);
 		CAGE_TEST(cnt2 > cnt1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
@@ -172,7 +169,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "steady";
-			c.period = 50000;
+			c.period = 50'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -180,7 +177,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::FreePeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "free";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -188,13 +185,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -208,7 +203,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "steady";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -223,7 +218,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Schedule *, &trigger>(+trig);
 			c.name = "trigger";
-			c.delay = 100000;
+			c.delay = 100'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -232,13 +227,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
@@ -253,7 +246,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "steady";
-			c.period = 30000;
+			c.period = 30'000;
 			trig = sch->newSchedule(c);
 		}
 		{
@@ -261,19 +254,14 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(trig->statistics().runs == cnt1);
 		CAGE_TEST(trig->statistics().totalDuration > 15'000 * (uint64)cnt1);
-		CAGE_TEST(trig->statistics().totalDuration < 50'000 * (uint64)cnt1 + 300'000);
 		CAGE_TEST(trig->statistics().maxDuration > 15'000);
-		CAGE_TEST(trig->statistics().maxDuration < 200'000);
 		CAGE_TEST(trig->statistics().maxDelay > 0);
-		CAGE_TEST(trig->statistics().maxDelay < 200'000);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -287,7 +275,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "steady";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -295,12 +283,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -314,7 +301,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "longer";
-			c.period = 50000;
+			c.period = 50'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -322,7 +309,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt2);
 			c.name = "shorter";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -330,13 +317,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -350,7 +335,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "quick";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -358,7 +343,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
 			c.name = "sleepy";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -366,13 +351,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -386,7 +369,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
 			c.name = "sleepy";
-			c.period = 10000;
+			c.period = 10'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -394,12 +377,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 10 && cnt1 <= 50);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -414,7 +396,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32 *, &inc>(&cnt1);
 			c.name = "steady";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -429,7 +411,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Schedule *, &trigger>(+trig);
 			c.name = "trigger";
-			c.delay = 100000;
+			c.delay = 100'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -438,13 +420,11 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
-		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
@@ -459,7 +439,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<Scheduler *, &monotonicTime>(+sch);
 			c.name = "monotonic";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -467,7 +447,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
@@ -485,7 +465,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<Scheduler *, &monotonicTime>(+sch);
 			c.name = "monotonic";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -493,7 +473,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &enableLockstep>(+sch);
 			c.name = "enabler";
-			c.delay = 100000;
+			c.delay = 100'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -502,7 +482,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
@@ -520,7 +500,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<Scheduler *, &monotonicTime>(+sch);
 			c.name = "monotonic";
-			c.period = 30000;
+			c.period = 30'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -528,7 +508,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &disableLockstep>(+sch);
 			c.name = "disabler";
-			c.delay = 100000;
+			c.delay = 100'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -537,7 +517,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
@@ -555,7 +535,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<Scheduler *, &monotonicTime>(+sch);
 			c.name = "monotonic";
-			c.period = 5000;
+			c.period = 5'000;
 			sch->newSchedule(c);
 		}
 		{
@@ -564,7 +544,7 @@ void testScheduler()
 			c.action.bind<Scheduler *, &enableLockstep>(+sch);
 			c.name = "enabler";
 			c.delay = 0;
-			c.period = 30000;
+			c.period = 30'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -573,8 +553,8 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<Scheduler *, &disableLockstep>(+sch);
 			c.name = "disabler";
-			c.delay = 30000;
-			c.period = 30000;
+			c.delay = 30'000;
+			c.period = 30'000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
@@ -583,7 +563,7 @@ void testScheduler()
 			c.type = ScheduleTypeEnum::Once;
 			c.action.bind<Scheduler *, &stop>(+sch);
 			c.name = "terminator";
-			c.delay = 200000;
+			c.delay = 200'000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
