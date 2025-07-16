@@ -241,9 +241,9 @@ jobs:
     - name: Versions
       run: |
         cmake --version
+        git --version
         clang --version
         clang++ --version
-        git --version
 
     - uses: actions/checkout@v4
       with:
@@ -268,29 +268,25 @@ jobs:
 
 
   MacOS:
-    name: macos-${{ matrix.build-config }}
-    runs-on: macos-latest
-    env:
-      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib"
-      CPPFLAGS: "-I/opt/homebrew/opt/llvm/include"
-      CC: /opt/homebrew/opt/llvm/bin/clang
-      CXX: /opt/homebrew/opt/llvm/bin/clang++
+    name: macos-${{ matrix.os-version }}-${{ matrix.build-config }}
+    runs-on: macos-${{ matrix.os-version }}
     strategy:
       fail-fast: false
       matrix:
+        os-version: [14, 15]
         build-config: [debug, release]
 
     steps:
     - name: Install packages
       run: |
-        brew install nasm llvm
+        brew install nasm
 
     - name: Versions
       run: |
         cmake --version
         git --version
-        ${CC} --version
-        ${CXX} --version
+        clang --version
+        clang++ --version
 
     - uses: actions/checkout@v4
       with:
@@ -311,3 +307,11 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
+
+    - name: List dependencies
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        echo "cage-core:"
+        otool -L libcage-core.dylib
+        echo "cage-engine:"
+        otool -L libcage-engine.dylib

@@ -85,17 +85,24 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 
-		# prevent requiring executable stack (Linux only)
-		if(NOT APPLE)
-			add_link_options(-Wl,-z,noexecstack)
-		endif()
-
 		# disable some warnings
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-abi")
 	endif()
 
+	if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		# prevent requiring executable stack
+		add_link_options(-Wl,-z,noexecstack)
+	endif()
+
+	if(APPLE)
+		# disable more warnings
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
+	endif()
+
 	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-assume") # __builtin_assume has side effects that are discarded
+		# __builtin_assume has side effects that are discarded
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-assume")
 	endif()
 endmacro(cage_build_configuration)

@@ -5,18 +5,25 @@
 	#include <powerbase.h> // CallNtPowerInformation
 	#pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
 	#pragma comment(lib, "Advapi32.lib") // RegGetValue
-#else
+#endif
+
+#ifdef CAGE_SYSTEM_LINUX
 	#include <algorithm>
 	#include <cstdlib> // getenv
 	#include <sstream>
 	#include <string>
-	#ifdef CAGE_SYSTEM_MAC
-		#include <mach/mach.h>
-		#include <mach/vm_statistics.h>
-		#include <mach/mach_host.h>
-		#include <sys/sysctl.h>
-		#include <unistd.h> // gethostname
-	#endif
+#endif
+
+#ifdef CAGE_SYSTEM_MAC
+	#include <algorithm>
+	#include <cstdlib> // getenv
+	#include <sstream>
+	#include <string>
+	#include <mach/mach.h>
+	#include <mach/vm_statistics.h>
+	#include <mach/mach_host.h>
+	#include <sys/sysctl.h>
+	#include <unistd.h> // gethostname
 #endif
 
 #include <cage-core/concurrent.h> // currentProcessId
@@ -100,17 +107,17 @@ namespace cage
 			return Stringizer() + readString("ProductName") + " " + readString("DisplayVersion") + " (" + readString("CurrentVersion") + ", " + readUint("CurrentMajorVersionNumber") + "." + readUint("CurrentMinorVersionNumber") + ", " + readString("CurrentBuildNumber") + ", " + readString("EditionID") + ", " + readString("InstallationType") + ")";
 #elif defined(CAGE_SYSTEM_MAC)
 			// Get macOS version using sysctlbyname
-			char versionStr[256] = {0};
+			char versionStr[256] = { 0 };
 			size_t size = sizeof(versionStr);
 			sysctlbyname("kern.osproductversion", versionStr, &size, nullptr, 0);
 
 			// Get build version
-			char buildStr[256] = {0};
+			char buildStr[256] = { 0 };
 			size = sizeof(buildStr);
 			sysctlbyname("kern.osversion", buildStr, &size, nullptr, 0);
 
 			// Get kernel version
-			char kernelStr[256] = {0};
+			char kernelStr[256] = { 0 };
 			size = sizeof(kernelStr);
 			sysctlbyname("kern.version", kernelStr, &size, nullptr, 0);
 

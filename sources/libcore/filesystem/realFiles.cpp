@@ -6,21 +6,27 @@
 	#define ftell64 _ftelli64
 	#define fseek invalidFunctionFseek
 	#define ftell invalidFunctionFtell
-#else
+#endif
+
+#ifdef CAGE_SYSTEM_LINUX
 	#define _FILE_OFFSET_BITS 64
 	#include <dirent.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
-	#ifdef CAGE_SYSTEM_MAC
-		#define fseek64 fseeko
-		#define ftell64 ftello
-		#define pread64 pread
-		#define pwrite64 pwrite
-		#include <mach-o/dyld.h>
-	#else
-		#define fseek64 fseeko64
-		#define ftell64 ftello64
-	#endif
+	#define fseek64 fseeko64
+	#define ftell64 ftello64
+#endif
+
+#ifdef CAGE_SYSTEM_MAC
+	#define _FILE_OFFSET_BITS 64
+	#include <dirent.h>
+	#include <sys/stat.h>
+	#include <unistd.h>
+	#include <mach-o/dyld.h>
+	#define fseek64 fseeko
+	#define ftell64 ftello
+	#define pread64 pread
+	#define pwrite64 pwrite
 #endif
 
 #include "files.h"

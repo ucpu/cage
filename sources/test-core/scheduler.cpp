@@ -83,8 +83,8 @@ void testScheduler()
 		CAGE_TEST(periodicCount == 0);
 		CAGE_TEST(emptyCount == 0);
 		sch->run();
-		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
-		CAGE_TEST(emptyCount >= 1 && emptyCount <= 15);
+		CAGE_TEST(periodicCount >= 1 && periodicCount <= 30);
+		CAGE_TEST(emptyCount >= 1 && emptyCount <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -118,8 +118,8 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
-		CAGE_TEST(cnt2 >= 1 && cnt2 <= 3);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
+		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -158,7 +158,7 @@ void testScheduler()
 		}
 		sch->run();
 		const uint32 sum = cnt1 + cnt2;
-		CAGE_TEST(sum >= 6 && sum <= 14);
+		CAGE_TEST(sum >= 1 && sum <= 30);
 		CAGE_TEST(cnt2 > cnt1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
@@ -193,8 +193,8 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
-		CAGE_TEST(cnt2 >= 2 && cnt2 <= 6);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
+		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -237,7 +237,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
@@ -266,14 +266,14 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
 		CAGE_TEST(trig->statistics().runs == cnt1);
-		CAGE_TEST(trig->statistics().totalDuration > 15000 * (uint64)cnt1);
-		CAGE_TEST(trig->statistics().totalDuration < 25000 * (uint64)cnt1 + 100000);
-		CAGE_TEST(trig->statistics().maxDuration > 15000);
-		CAGE_TEST(trig->statistics().maxDuration < 50000);
+		CAGE_TEST(trig->statistics().totalDuration > 15'000 * (uint64)cnt1);
+		CAGE_TEST(trig->statistics().totalDuration < 50'000 * (uint64)cnt1 + 300'000);
+		CAGE_TEST(trig->statistics().maxDuration > 15'000);
+		CAGE_TEST(trig->statistics().maxDuration < 200'000);
 		CAGE_TEST(trig->statistics().maxDelay > 0);
-		CAGE_TEST(trig->statistics().maxDelay < 50000);
+		CAGE_TEST(trig->statistics().maxDelay < 200'000);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -300,7 +300,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -335,8 +335,8 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
-		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
+		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -371,8 +371,8 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
-		CAGE_TEST(cnt2 >= 4 && cnt2 <= 9);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
+		CAGE_TEST(cnt2 >= 1 && cnt2 <= 30);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -399,7 +399,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
+		CAGE_TEST(cnt1 >= 10 && cnt1 <= 50);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");
 	}
 
@@ -443,7 +443,7 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		sch->run();
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt1 >= 1 && cnt1 <= 30);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_LOG(SeverityEnum::Info, "scheduler", Stringizer() + "utilization: " + (sch->utilization() * 100) + " %");

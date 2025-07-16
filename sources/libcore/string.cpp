@@ -185,13 +185,14 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_MAC
 		// macOS doesn't support from_chars for floating point yet
+
 		void fromString(const char *s, uint32 n, float &value)
 		{
 			if (n == 0)
 				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to float");
 
 			// Check for leading or trailing whitespace
-			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n-1])))
+			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n - 1])))
 			{
 				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 				CAGE_THROW_ERROR(Exception, "string with leading or trailing whitespace cannot be converted to float");
@@ -218,7 +219,7 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "empty string cannot be converted to double");
 
 			// Check for leading or trailing whitespace
-			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n-1])))
+			if (n > 0 && (std::isspace(s[0]) || std::isspace(s[n - 1])))
 			{
 				CAGE_LOG_THROW(Stringizer() + "input string: " + s);
 				CAGE_THROW_ERROR(Exception, "string with leading or trailing whitespace cannot be converted to double");
@@ -249,8 +250,10 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "failed conversion of float to string");
 			// Remove trailing zeros
 			char *p = s + result - 1;
-			while (p > s && *p == '0') p--;
-			if (*p == '.') p--;
+			while (p > s && *p == '0')
+				p--;
+			if (*p == '.')
+				p--;
 			*(++p) = '\0';
 			return numeric_cast<uint32>(p - s);
 		}
@@ -265,27 +268,32 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "failed conversion of double to string");
 			// Remove trailing zeros
 			char *p = s + result - 1;
-			while (p > s && *p == '0') p--;
-			if (*p == '.') p--;
+			while (p > s && *p == '0')
+				p--;
+			if (*p == '.')
+				p--;
 			*(++p) = '\0';
 			return numeric_cast<uint32>(p - s);
 		}
+
 #else // CAGE_SYSTEM_MAC
-#define GCHL_GENERATE(TYPE) \
-	uint32 toString(char *s, uint32 n, TYPE value) \
-	{ \
-		const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
-		if (ec != std::errc()) \
-			CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
-		*p = 0; \
-		return numeric_cast<uint32>(p - s); \
-	} \
-	GCHL_FROMSTRING(TYPE)
+
+	#define GCHL_GENERATE(TYPE) \
+		uint32 toString(char *s, uint32 n, TYPE value) \
+		{ \
+			const auto [p, ec] = std::to_chars(s, s + n, value, std::chars_format::fixed); \
+			if (ec != std::errc()) \
+				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+			*p = 0; \
+			return numeric_cast<uint32>(p - s); \
+		} \
+		GCHL_FROMSTRING(TYPE)
 
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
+	#undef GCHL_GENERATE
+
 #endif // CAGE_SYSTEM_MAC
-#undef GCHL_GENERATE
 
 		uint32 toString(char *s, uint32 n, bool value)
 		{
