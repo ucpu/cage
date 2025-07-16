@@ -271,7 +271,6 @@ jobs:
     name: macos-${{ matrix.build-config }}
     runs-on: macos-latest
     env:
-      PATH: "/opt/homebrew/opt/llvm/bin:${{ env.PATH }}"
       AR: "/opt/homebrew/opt/llvm/bin/llvm-ar"
       RANLIB: "/opt/homebrew/opt/llvm/bin/llvm-ranlib"
       LDFLAGS: "-L/opt/homebrew/opt/llvm/lib -L/opt/homebrew/opt/llvm/lib/c++"
@@ -301,12 +300,14 @@ jobs:
 
     - name: Configure
       run: |
+        export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -DCMAKE_AR=/opt/homebrew/opt/llvm/bin/llvm-ar -DCMAKE_RANLIB=/opt/homebrew/opt/llvm/bin/llvm-ranlib ..
 
     - name: Build
       run: |
+        export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
         cd build
         cmake --build . -- -j$(( `sysctl -n hw.ncpu` + 1 ))
 
