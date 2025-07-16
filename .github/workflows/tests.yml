@@ -273,8 +273,8 @@ jobs:
     env:
       AR: "/opt/homebrew/opt/llvm/bin/llvm-ar"
       RANLIB: "/opt/homebrew/opt/llvm/bin/llvm-ranlib"
-      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib"
-      CPPFLAGS: "-I/opt/homebrew/opt/llvm/include"
+      LDFLAGS: "-L/opt/homebrew/opt/llvm/lib -L/opt/homebrew/opt/llvm/lib/c++"
+      CPPFLAGS: "-I/opt/homebrew/opt/llvm/include -stdlib=libc++ -arch arm64"
       CC: "/opt/homebrew/opt/llvm/bin/clang"
       CXX: "/opt/homebrew/opt/llvm/bin/clang++"
     strategy:
@@ -313,3 +313,11 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
+
+    - name: List dependencies
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        echo "cage-core:"
+        otool -L libcage-core.dylib
+        echo "cage-engine:"
+        otool -L libcage-engine.dylib
