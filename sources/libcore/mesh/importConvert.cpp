@@ -41,6 +41,7 @@ namespace cage
 		{
 			for (auto &it : textures.images.parts)
 			{
+				CAGE_ASSERT(it.image->channels() == 3);
 				Holder<Image> img = newImage();
 				const Vec2i res = it.image->resolution();
 				img->initialize(res, 1, it.image->format());
@@ -59,11 +60,25 @@ namespace cage
 				textures.name += Stringizer() + "_avg";
 		}
 
-		void expandChannels1To3(MeshImportTexture &textures)
+		void duplicateChannels1To3(MeshImportTexture &textures)
 		{
 			for (auto &it : textures.images.parts)
 			{
+				CAGE_ASSERT(it.image->channels() == 1);
 				const Image *arr[3] = { +it.image, +it.image, +it.image };
+				it.image = imageChannelsJoin(arr);
+			}
+			if (find(textures.name, '?') != m)
+				textures.name += Stringizer() + "_dup";
+		}
+
+		void expandChannels2To3(MeshImportTexture &textures)
+		{
+			for (auto &it : textures.images.parts)
+			{
+				CAGE_ASSERT(it.image->channels() == 2);
+				const auto split = imageChannelsSplit(+it.image);
+				const Image *arr[3] = { +split[0], +split[1], nullptr };
 				it.image = imageChannelsJoin(arr);
 			}
 			if (find(textures.name, '?') != m)
@@ -74,16 +89,29 @@ namespace cage
 		{
 			if (it.images.parts[0].image->channels() == 0)
 				CAGE_THROW_ERROR(Exception, "texture with zero channels");
+			if (it.images.parts[0].image->channels() > 4)
+				CAGE_THROW_ERROR(Exception, "texture with too many channels");
 			switch (it.type)
 			{
 				case MeshImportTextureType::None:
 				{
 					CAGE_THROW_ERROR(Exception, "invalid texture type");
+					break;
 				}
 				case MeshImportTextureType::Albedo:
 				{
-					if (it.images.parts[0].image->channels() > 4)
-						CAGE_THROW_ERROR(Exception, "too many channels for albedo texture");
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "albedo cannot have 2 channels");
+							break;
+						case 3:
+							break;
+						case 4:
+							break;
+					}
 					break;
 				}
 				case MeshImportTextureType::Normal:
@@ -98,35 +126,47 @@ namespace cage
 						case 3:
 							break;
 						case 4:
-							limitChannels(it, 3);
+							limitChannels(it, 3); // strip alpha
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "too many channels for normal texture");
 					}
 					break;
 				}
 				case MeshImportTextureType::Special:
 				{
-					if (it.images.parts[0].image->channels() > 4)
-						CAGE_THROW_ERROR(Exception, "too many channels for special texture");
+					switch (it.images.parts[0].image->channels())
+					{
+						case 1:
+							break;
+						case 2:
+							expandChannels2To3(it); // prevent confusing RG with intensity+alpha
+							break;
+						case 3:
+							break;
+						case 4:
+							break;
+					}
 					break;
 				}
 				case MeshImportTextureType::Custom:
-					break; // no limits
+				{
+					// no limits
+					break;
+				}
 				case MeshImportTextureType::AmbientOcclusion:
 				{
 					switch (it.images.parts[0].image->channels())
 					{
 						case 1:
 							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "ambient occlusion texture cannot have 2 channels");
+							break;
 						case 3:
-							pickChannel(it, 0);
+							pickChannel(it, 0); // extract from unreal texture
 							break;
 						case 4:
-							pickChannel(it, 0);
+							pickChannel(it, 0); // extract from unreal texture
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for ambient occlusion texture");
 					}
 					break;
 				}
@@ -141,14 +181,15 @@ namespace cage
 					{
 						case 1:
 							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "bump texture cannot have 2 channels");
+							break;
 						case 3:
 							pickChannel(it, 1);
 							break;
 						case 4:
 							pickChannel(it, 1);
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for bump texture");
 					}
 					break;
 				}
@@ -164,7 +205,7 @@ namespace cage
 						case 1:
 							break;
 						case 3:
-							averageChannels3To1(it);
+							averageChannels3To1(it); // color to intensity
 							break;
 						default:
 							CAGE_THROW_ERROR(Exception, "unexpected channels count for emission texture");
@@ -173,8 +214,7 @@ namespace cage
 				}
 				case MeshImportTextureType::GltfPbr:
 				{
-					if (it.images.parts[0].image->channels() > 4)
-						CAGE_THROW_ERROR(Exception, "too many channels for gltf pbr texture");
+					// all ok
 					break;
 				}
 				case MeshImportTextureType::Mask:
@@ -194,14 +234,15 @@ namespace cage
 					{
 						case 1:
 							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "metallic texture cannot have 2 channels");
+							break;
 						case 3:
-							pickChannel(it, 2);
+							pickChannel(it, 2); // extract from unreal texture
 							break;
 						case 4:
-							pickChannel(it, 2);
+							pickChannel(it, 2); // extract from unreal texture
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for metallic texture");
 					}
 					break;
 				}
@@ -212,13 +253,14 @@ namespace cage
 						case 1:
 							break;
 						case 2:
-							pickChannel(it, 1);
+							pickChannel(it, 1); // extract from intensity+alpha texture
+							break;
+						case 3:
+							CAGE_THROW_ERROR(Exception, "opacity texture cannot have 3 channels");
 							break;
 						case 4:
-							pickChannel(it, 3);
+							pickChannel(it, 3); // extract from color+alpha texture
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for opacity texture");
 					}
 					break;
 				}
@@ -228,14 +270,15 @@ namespace cage
 					{
 						case 1:
 							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "roughness texture cannot have 2 channels");
+							break;
 						case 3:
-							pickChannel(it, 1);
+							pickChannel(it, 1); // extract from unreal texture
 							break;
 						case 4:
-							pickChannel(it, 1);
+							pickChannel(it, 1); // extract from unreal texture
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "unexpected channels count for roughness texture");
 					}
 					break;
 				}
@@ -260,15 +303,16 @@ namespace cage
 					switch (it.images.parts[0].image->channels())
 					{
 						case 1:
-							expandChannels1To3(it);
+							duplicateChannels1To3(it); // intensity to color
+							break;
+						case 2:
+							CAGE_THROW_ERROR(Exception, "specular texture cannot have 2 channels");
 							break;
 						case 3:
 							break;
 						case 4:
-							limitChannels(it, 3);
+							limitChannels(it, 3); // strip alpha
 							break;
-						default:
-							CAGE_THROW_ERROR(Exception, "too many channels for specular texture");
 					}
 					break;
 				}
@@ -286,6 +330,19 @@ namespace cage
 			for (const auto &it : textures)
 				res += it.type == type;
 			return res;
+		}
+
+		uint32 composingChannelsTop(PointerRange<Holder<Image>> channels)
+		{
+			uint32 top = 0;
+			for (uint32 i = 0; i < channels.size(); i++)
+			{
+				if (channels[i])
+					top = i + 1;
+			}
+			if (top == 2)
+				top = 3; // prevent confusing RG with intensity+alpha
+			return top;
 		}
 
 		void composeAlbedoOpacity(PointerRangeHolder<MeshImportTexture> &textures)
@@ -386,9 +443,12 @@ namespace cage
 					channels[3] = std::move(em->images.parts[0].image);
 			}
 
+			const uint32 top = composingChannelsTop(channels);
+			CAGE_ASSERT(top > 0);
+
 			{
 				ImageImportPart p;
-				p.image = imageChannelsJoin(channels);
+				p.image = imageChannelsJoin({ channels, channels + top });
 				PointerRangeHolder<ImageImportPart> ps;
 				ps.push_back(std::move(p));
 				gltf->images.parts = std::move(ps);
@@ -414,6 +474,7 @@ namespace cage
 				return;
 			const Image *src = +spec->images.parts[0].image;
 			const Vec2i res = src->resolution();
+			CAGE_ASSERT(src->channels() == 3);
 
 			Holder<Image> ri = newImage();
 			ri->initialize(res, 1, src->format());
@@ -459,7 +520,6 @@ namespace cage
 				return;
 
 			Holder<Image> channels[4];
-			uint32 top = 0;
 			String base;
 			String names;
 
@@ -476,7 +536,6 @@ namespace cage
 				if (!names.empty())
 					names += "_";
 				names += n;
-				top = cage::max(top, index + 1);
 			};
 
 			for (auto &it : textures)
@@ -500,18 +559,21 @@ namespace cage
 				}
 			}
 
+			const uint32 top = composingChannelsTop(channels);
 			if (top == 0)
 				return;
 
-			ImageImportPart part;
-			part.image = imageChannelsJoin({ channels, channels + top });
-			PointerRangeHolder<ImageImportPart> parts;
-			parts.push_back(std::move(part));
-			MeshImportTexture res;
-			res.images.parts = std::move(parts);
-			res.name = Stringizer() + base + "?special_" + names;
-			res.type = MeshImportTextureType::Special;
-			textures.push_back(std::move(res));
+			{
+				ImageImportPart part;
+				part.image = imageChannelsJoin({ channels, channels + top });
+				PointerRangeHolder<ImageImportPart> parts;
+				parts.push_back(std::move(part));
+				MeshImportTexture res;
+				res.images.parts = std::move(parts);
+				res.name = Stringizer() + base + "?special_" + names;
+				res.type = MeshImportTextureType::Special;
+				textures.push_back(std::move(res));
+			}
 		}
 
 		void filterTextures(PointerRangeHolder<MeshImportTexture> &textures)
