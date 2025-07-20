@@ -72,7 +72,7 @@ namespace cage
 				if (isPattern(input, inputDirectory, "", ""))
 					input = subString(input, inputDirectory.length(), m);
 				if (input.empty())
-					CAGE_THROW_ERROR(Exception, "input cannot be empty");
+					CAGE_THROW_ERROR(Exception, "input path cannot be empty");
 				if (pathIsAbs(input))
 				{
 					if (input[0] != '/')
@@ -86,7 +86,7 @@ namespace cage
 					input = pathJoin(relativeTo, input);
 				}
 				if (input.empty())
-					CAGE_THROW_ERROR(Exception, "input cannot be empty");
+					CAGE_THROW_ERROR(Exception, "input path cannot be empty");
 				return input;
 			}
 

@@ -17,6 +17,7 @@ std::vector<std::pair<String, String>> outModels;
 
 bool mergeParts = false;
 bool convertToCage = false;
+bool generateObject = false;
 Real scale = 1;
 
 uint32 exportTexture(const MeshImportTexture &tex, const String &path)
@@ -26,7 +27,10 @@ uint32 exportTexture(const MeshImportTexture &tex, const String &path)
 		if (part.cubeFace != 0 || part.layer != 0 || part.mipmapLevel != 0)
 			continue;
 		if (part.image->channels() == 2)
-			imageConvert(+part.image, 3); // avoid confusing alpha with other types
+		{
+			CAGE_THROW_ERROR(Exception, "saving png with 2 channels is discouraged");
+			//imageConvert(+part.image, 3); // avoid confusing alpha with other types
+		}
 		part.image->exportFile(path);
 		return part.image->channels();
 	}
@@ -168,12 +172,13 @@ void convertMaterial(const MeshImportPart &part, const MeshExportGltfConfig &cfg
 
 void convertFile(const String &input, const String &output)
 {
-	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "converting file: " + input);
+	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "loading file: " + input);
 	MeshImportConfig impConf;
 	impConf.discardSkeleton = mergeParts; // this should help merge more parts
 	impConf.mergeParts = mergeParts;
 	MeshImportResult mr = meshImportFiles(input, impConf);
 
+	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "converting");
 	if (convertToCage)
 		meshImportConvertToCageFormats(mr);
 	else
@@ -195,6 +200,7 @@ void convertFile(const String &input, const String &output)
 			meshApplyTransform(+part.mesh, Transform(Vec3(), Quat(), scale));
 	}
 
+	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "exporting");
 	const String baseName = pathExtractFilenameNoExtension(input);
 	uint32 partIndex = 0;
 	for (const MeshImportPart &part : mr.parts)
@@ -226,6 +232,7 @@ void convertFile(const String &input, const String &output)
 
 void generateConfiguration(const String &output)
 {
+	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "generating cage assets configuration");
 	const String name = pathExtractFilename(output);
 	Holder<File> f = writeFile(pathJoin(output, Stringizer() + name + ".assets"));
 
@@ -290,7 +297,7 @@ void generateConfiguration(const String &output)
 		f->writeLine("");
 	}
 
-	if (outModels.size() > 1)
+	if (generateObject)
 	{
 		const String objName = Stringizer() + name + ".object";
 
@@ -327,6 +334,7 @@ int main(int argc, const char *args[])
 		const String outPath = cmd->cmdString('o', "output", "converted-meshes");
 		mergeParts = cmd->cmdBool('m', "merge", mergeParts);
 		convertToCage = cmd->cmdBool('c', "cage", convertToCage);
+		generateObject = cmd->cmdBool('O', "objects", generateObject);
 		scale = cmd->cmdFloat('s', "scale", scale.value);
 		const auto &inPaths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false))
