@@ -293,6 +293,7 @@ void processModel()
 
 	for (const auto &t : part.textures)
 	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "looking at texture: " + t.name + ", type: " + meshImportTextureTypeToString(t.type));
 		const String p = processor->convertAssetPath(t.name);
 		const uint32 n = HashString(p);
 		switch (t.type)
@@ -315,7 +316,10 @@ void processModel()
 	}
 
 	if (!part.shaderName.empty())
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "looking at shader: " + part.shaderName);
 		dsm.shaderName = HashString(processor->convertAssetPath(part.shaderName));
+	}
 
 	dsm.renderFlags = part.renderFlags;
 	dsm.renderLayer = part.renderLayer;

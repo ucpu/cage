@@ -453,6 +453,7 @@ namespace cage
 				ps.push_back(std::move(p));
 				gltf->images.parts = std::move(ps);
 				gltf->type = MeshImportTextureType::Special;
+				gltf->name = Stringizer() + split(gltf->name, "?") + "?gltfPbr";
 			}
 		}
 
@@ -491,6 +492,9 @@ namespace cage
 				}
 			}
 
+			const String rn = Stringizer() + split(spec->name, "?") + "?spec_rough"; // names must be computed before spec is invalidated
+			const String mn = Stringizer() + split(spec->name, "?") + "?spec_metal";
+
 			{
 				ImageImportPart p;
 				p.image = std::move(ri);
@@ -499,6 +503,7 @@ namespace cage
 				MeshImportTexture res;
 				res.images.parts = std::move(ps);
 				res.type = MeshImportTextureType::Roughness;
+				res.name = rn;
 				textures.push_back(std::move(res));
 			}
 
@@ -510,6 +515,7 @@ namespace cage
 				MeshImportTexture res;
 				res.images.parts = std::move(ps);
 				res.type = MeshImportTextureType::Metallic;
+				res.name = mn;
 				textures.push_back(std::move(res));
 			}
 		}
