@@ -1597,14 +1597,16 @@ namespace cage
 
 		Aabb clippingBox(const Aabb &box, uint32 axis, Real position, bool second)
 		{
+			CAGE_ASSERT(position == saturate(position));
 			const Vec3 c = box.center();
-			const Vec3 hs = box.size() * 0.6; // slightly larger box to avoid clipping due to floating point imprecisions
+			const Vec3 hs = box.size() + 1; // slightly larger box to avoid clipping due to floating point imprecisions
 			Aabb r = Aabb(c - hs, c + hs);
-			const Real s = interpolate(r.a[axis], r.b[axis], position);
+			const Real s = interpolate(box.a[axis], box.b[axis], position);
 			if (second)
 				r.a[axis] = s;
 			else
 				r.b[axis] = s;
+			CAGE_ASSERT(r.valid());
 			return r;
 		}
 

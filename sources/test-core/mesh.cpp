@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <array>
 #include <vector>
 
 #include "main.h"
@@ -187,6 +188,64 @@ namespace
 		Holder<Mesh> msh = newMesh();
 		msh->positions(p);
 		msh->indices(is);
+		return msh;
+	}
+
+	Holder<Mesh> makeLargeGrid()
+	{
+		std::vector<Vec3> p;
+		p.reserve(1000);
+		for (uint32 y = 0; y < 101; y++)
+			for (uint32 x = 0; x < 101; x++)
+				p.push_back(Vec3(Real(x) - 50, Real(y) - 50, 0));
+		std::vector<uint32> is;
+		is.reserve(1000);
+		for (uint32 y = 0; y < 100; y++)
+		{
+			for (uint32 x = 0; x < 100; x++)
+			{
+				const uint32 a = y * 101 + x;
+				static constexpr uint32 o[6] = { 0, 1, 101, 1, 102, 101 };
+				for (uint32 b : o)
+					is.push_back(a + b);
+			}
+		}
+		Holder<Mesh> msh = newMesh();
+		msh->positions(p);
+		msh->indices(is);
+		return msh;
+	}
+
+	Holder<Mesh> makeCube()
+	{
+		static constexpr Vec3 verts[] = {
+			Vec3(-1, -1, -1), // 0
+			Vec3(1, -1, -1), // 1
+			Vec3(1, 1, -1), // 2
+			Vec3(-1, 1, -1), // 3
+			Vec3(-1, -1, 1), // 4
+			Vec3(1, -1, 1), // 5
+			Vec3(1, 1, 1), // 6
+			Vec3(-1, 1, 1) // 7
+		};
+
+		static constexpr uint32 faces[] = { // Back face
+			0, 1, 2, 2, 3, 0,
+			// Front face
+			4, 5, 6, 6, 7, 4,
+			// Left face
+			0, 3, 7, 7, 4, 0,
+			// Right face
+			1, 5, 6, 6, 2, 1,
+			// Bottom face
+			0, 1, 5, 5, 4, 0,
+			// Top face
+			3, 2, 6, 6, 7, 3
+		};
+
+		Holder<Mesh> msh = newMesh();
+		msh->positions(verts);
+		msh->indices(faces);
 		return msh;
 	}
 
@@ -995,6 +1054,76 @@ namespace
 		CAGE_TEST(msh->indicesCount() == cnt);
 		meshSimplify(+msh, {}); // make sure that the resulting mesh has usable topology
 	}
+
+	void testMeshClipping()
+	{
+		CAGE_TESTCASE("mesh clipping");
+
+		for (Real offset : { Real(-2), Real(-1.5), Real(0), Real(0.5), Real(1.33) })
+		{
+			Holder<Mesh> grid = makeGrid();
+			meshApplyTransform(+grid, Transform(Vec3(), Quat(), 0.5));
+			Holder<Mesh> box = makeCube();
+			meshApplyTransform(+box, Transform(Vec3(offset, 0, 0), Quat(), 1));
+			Aabb aabb = box->boundingBox();
+			meshClip(+grid, aabb);
+
+			{ // merge the box with the grid for better visual check
+				const auto inds = box->indices();
+				const auto poss = box->positions();
+				const uint32 tris = numeric_cast<uint32>(inds.size() / 3);
+				for (uint32 tri = 0; tri < tris; tri++)
+				{
+					const uint32 *ids = inds.data() + tri * 3;
+					const Vec3 &a = poss[ids[0]];
+					const Vec3 &b = poss[ids[1]];
+					const Vec3 &c = poss[ids[2]];
+					const Triangle t = Triangle(a, b, c);
+					grid->addTriangle(t);
+				}
+			}
+			grid->exportFile(Stringizer() + "meshes/algorithms/testClipping/" + offset + ".obj");
+		}
+	}
+
+	Real meshSurfaceArea(const Mesh *mesh)
+	{
+		const auto inds = mesh->indices();
+		const auto poss = mesh->positions();
+		const uint32 cnt = numeric_cast<uint32>(inds.size() / 3);
+		Real result = 0;
+		for (uint32 ti = 0; ti < cnt; ti++)
+		{
+			const Triangle t = Triangle(poss[inds[ti * 3 + 0]], poss[inds[ti * 3 + 1]], poss[inds[ti * 3 + 2]]);
+			result += t.area();
+		}
+		return result;
+	}
+
+	void testMeshChunking()
+	{
+		CAGE_TESTCASE("mesh chunking");
+
+		Holder<Mesh> grid = makeLargeGrid();
+		const Aabb initialBox = grid->boundingBox();
+		approxEqual(initialBox, Aabb(Vec3(-50, -50, 0), Vec3(50, 50, 0)));
+		const Real initialArea = meshSurfaceArea(+grid);
+		CAGE_TEST(abs(initialArea - 10'000) < 1);
+		MeshChunkingConfig cfg;
+		cfg.maxSurfaceArea = 10'000 / randomRange(10, 30);
+		auto r = meshChunking(+grid, cfg);
+		Real sum = 0;
+		Aabb box;
+		uint32 i = 0;
+		for (const auto &it : r)
+		{
+			sum += meshSurfaceArea(+it);
+			box += it->boundingBox();
+			it->exportFile(Stringizer() + "meshes/algorithms/testChunking/" + (i++) + ".obj");
+		}
+		CAGE_TEST(abs(sum - initialArea) < 1);
+		approxEqual(box, initialBox);
+	}
 }
 
 void testMesh()
@@ -1007,4 +1136,6 @@ void testMesh()
 	testMeshRetexture();
 	testMeshLines();
 	testMeshConsistentWinding();
+	testMeshClipping();
+	testMeshChunking();
 }
