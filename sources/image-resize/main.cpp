@@ -26,7 +26,7 @@ int main(int argc, const char *args[])
 	{
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto &paths = cmd->cmdArray(0, "--");
+		const auto paths = cmd->cmdArray(0, "--");
 		Vec2i resolution;
 		resolution[0] = cmd->cmdUint32('w', "width");
 		resolution[1] = cmd->cmdUint32('h', "height");

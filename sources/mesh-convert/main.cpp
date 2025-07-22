@@ -339,7 +339,7 @@ int main(int argc, const char *args[])
 		convertToCage = cmd->cmdBool('c', "cage", convertToCage);
 		generateObject = cmd->cmdBool('O', "objects", generateObject);
 		scale = cmd->cmdFloat('s', "scale", scale.value);
-		const auto &inPaths = cmd->cmdArray(0, "--");
+		const auto inPaths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false))
 		{
 			cmd->logHelp();

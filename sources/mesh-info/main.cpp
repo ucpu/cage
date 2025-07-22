@@ -110,7 +110,7 @@ int main(int argc, const char *args[])
 	{
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto &paths = cmd->cmdArray(0, "--");
+		const auto paths = cmd->cmdArray(0, "--");
 		const bool normalizeFormats = cmd->cmdBool('n', "normalize", false);
 		const bool convertToCage = cmd->cmdBool('c', "cage", false);
 		if (cmd->cmdBool('?', "help", false))

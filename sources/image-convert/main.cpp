@@ -34,7 +34,7 @@ int main(int argc, const char *args[])
 	{
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto &paths = cmd->cmdArray(0, "--");
+		const auto paths = cmd->cmdArray(0, "--");
 		const bool preserveOriginal = cmd->cmdBool('p', "preserve", false);
 		const String format = cmd->cmdString('f', "format", ".png");
 		if (cmd->cmdBool('?', "help", false))

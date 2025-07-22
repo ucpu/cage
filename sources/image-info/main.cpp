@@ -31,7 +31,7 @@ int main(int argc, const char *args[])
 	{
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto &paths = cmd->cmdArray(0, "--");
+		const auto paths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false))
 		{
 			cmd->logHelp();
