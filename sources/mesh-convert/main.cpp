@@ -16,8 +16,9 @@ std::vector<String> texsAlbedo, texsAlbedoPremultiplied, texsNormal, texsBump, t
 std::vector<std::pair<String, String>> outModels;
 
 bool mergeParts = false;
+bool trianglesOnly = true;
 bool convertToCage = false;
-bool generateObject = false;
+bool generateObject = true;
 Real scale = 1;
 
 uint32 exportTexture(const MeshImportTexture &tex, const String &path)
@@ -176,6 +177,7 @@ void convertFile(const String &input, const String &output)
 	MeshImportConfig impConf;
 	impConf.discardSkeleton = mergeParts; // this should help merge more parts
 	impConf.mergeParts = mergeParts;
+	impConf.trianglesOnly = trianglesOnly;
 	MeshImportResult mr = meshImportFiles(input, impConf);
 
 	CAGE_LOG(SeverityEnum::Info, "meshConv", Stringizer() + "converting");
@@ -333,6 +335,7 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		const String outPath = cmd->cmdString('o', "output", "converted-meshes");
 		mergeParts = cmd->cmdBool('m', "merge", mergeParts);
+		trianglesOnly = cmd->cmdBool('t', "triangles", trianglesOnly);
 		convertToCage = cmd->cmdBool('c', "cage", convertToCage);
 		generateObject = cmd->cmdBool('O', "objects", generateObject);
 		scale = cmd->cmdFloat('s', "scale", scale.value);

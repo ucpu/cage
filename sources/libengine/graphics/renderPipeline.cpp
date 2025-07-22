@@ -1457,7 +1457,7 @@ namespace cage
 				{ // quantize light direction - reduces shimmering of slowly rotating lights
 					Transform src = modelTransform(e);
 					Vec3 f = src.orientation * Vec3(0, 0, -1);
-					f *= 300;
+					f *= 1'000;
 					for (uint32 i = 0; i < 3; i++)
 						f[i] = round(f[i]);
 					f = normalize(f);
