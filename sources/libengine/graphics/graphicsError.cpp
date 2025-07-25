@@ -2,6 +2,9 @@
 #include <cstring>
 #include <map>
 
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
@@ -207,7 +210,7 @@ namespace cage
 	{
 		void initializeOpengl()
 		{
-			if (gladLoadGL() != 1)
+			if (gladLoadGLLoader((GLADloadproc)glfwGetProcAddress) != 1)
 				CAGE_THROW_ERROR(Exception, "failed to initialize OpenGL loader");
 		}
 
