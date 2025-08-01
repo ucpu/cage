@@ -34,6 +34,7 @@ void configParseCmd(int argc, const char *args[])
 	configIgnoreExtensions.insert(".blend2");
 	configIgnoreExtensions.insert(".blend3");
 	configIgnoreExtensions.insert(".blend@");
+	configIgnoreExtensions.insert(".log");
 	configIgnorePaths.insert(".svn");
 	configIgnorePaths.insert(".git");
 	configIgnorePaths.insert(".vs");

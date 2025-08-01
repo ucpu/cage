@@ -30,6 +30,18 @@ struct Material
 	float fade;
 };
 
+Material defaultMaterial()
+{
+	Material m;
+	m.albedo = vec3(1);
+	m.opacity = 1;
+	m.roughness = 1;
+	m.metallic = 0;
+	m.emissive = 0;
+	m.fade = 0;
+	return m;
+}
+
 vec3 egacLightBrdf(Material material, UniLight light)
 {
 	int lightType = int(light.params[0]);
