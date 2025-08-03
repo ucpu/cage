@@ -97,7 +97,7 @@ namespace cage
 			{
 				case CameraTypeEnum::Orthographic:
 				{
-					const Vec2 &os = data.orthographicSize;
+					const Vec2 os = data.orthographicSize * 0.5;
 					return orthographicProjection(-os[0], os[0], -os[1], os[1], data.near, data.far);
 				}
 				case CameraTypeEnum::Perspective:

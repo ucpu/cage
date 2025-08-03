@@ -53,7 +53,7 @@ namespace cage
 		virtual bool readLine(String &line); // non blocking
 
 		virtual void write(PointerRange<const char> buffer);
-		virtual void writeLine(const String &line);
+		virtual void writeLine(const String &line = "");
 
 		virtual void seek(uint64 position);
 		virtual uint64 tell();
