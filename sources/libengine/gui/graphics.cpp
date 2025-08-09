@@ -105,7 +105,6 @@ namespace cage
 		const Real pointsScale = item->hierarchy->impl->pointsScale;
 		position *= pointsScale;
 		transform = transpose(Mat4(pointsScale * 2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0, 0, pointsScale * 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1], 0, 0, 1, 0, 0, 0, 0, 1));
-		data.screenPxRange = data.format.size * pointsScale * 0.13;
 	}
 
 	RenderableText::~RenderableText()
@@ -120,7 +119,6 @@ namespace cage
 		q->bind(shader);
 		q->uniform(shader, 0, transform);
 		q->uniform(shader, 4, data.color);
-		q->uniform(shader, 15, data.screenPxRange);
 		data.font->render(q, +impl->assetOnDemand, data.layout);
 	}
 

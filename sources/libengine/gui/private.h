@@ -158,7 +158,6 @@ namespace cage
 		Holder<Font> font;
 		FontLayoutResult layout;
 		Vec3 color = Vec3::Nan();
-		Real screenPxRange;
 	};
 
 	struct TextItem : private Immovable, private CommonTextData

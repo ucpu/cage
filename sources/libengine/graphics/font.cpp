@@ -18,7 +18,6 @@ extern "C"
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/font.h>
 #include <cage-engine/model.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/texture.h>
