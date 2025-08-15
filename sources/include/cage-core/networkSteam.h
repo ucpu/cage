@@ -10,7 +10,7 @@ namespace cage
 		uint64 sendingBytesPerSecond = 0;
 		uint64 receivingBytesPerSecond = 0;
 		uint64 estimatedBandwidth = 0; // bytes per second
-		uint64 ping = 0;
+		uint64 ping = 0; // microseconds (round-trip)
 		float quality = 0; // 0 = bad, 1 = good
 	};
 

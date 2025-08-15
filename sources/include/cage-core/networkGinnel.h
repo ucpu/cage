@@ -9,7 +9,7 @@ namespace cage
 	//   Northern English: A narrow passage between buildings; an alley.
 	//   Origin: Early 17th century perhaps from French chenel ‘channel’.
 
-	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
+	// low latency, connection-oriented, sequenced, and optionally reliable, datagram protocol on top of udp
 	// messages are sequenced within each channel only; reliable and unreliable messages are not sequenced with each other
 
 	struct CAGE_CORE_API GinnelStatistics

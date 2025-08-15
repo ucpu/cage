@@ -21,6 +21,8 @@ namespace cage
 	namespace
 	{
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Msg);
+		const ConfigFloat confSimulatedPacketLoss("cage/steamsocks/simulatedPacketLoss", 0); // 0 .. 1
+		const ConfigFloat confSimulatedPacketDelay("cage/steamsocks/simulatedPacketDelay", 0); // ms
 
 		constexpr uint32 LanesCount = 4;
 
@@ -144,11 +146,18 @@ namespace cage
 				CAGE_ASSERT(utils);
 			}
 
-			struct InitializerDebugOutput
+			struct InitializerConfiguration
 			{
-				InitializerDebugOutput() { utils->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler); }
+				InitializerConfiguration()
+				{
+					utils->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
+					float packetLoss = confSimulatedPacketLoss * 100;
+					utils->SetConfigValue(k_ESteamNetworkingConfig_FakePacketLoss_Send, k_ESteamNetworkingConfig_Global, 0, k_ESteamNetworkingConfig_Float, &packetLoss);
+					sint32 packetDelay = confSimulatedPacketDelay;
+					utils->SetConfigValue(k_ESteamNetworkingConfig_FakePacketLag_Send, k_ESteamNetworkingConfig_Global, 0, k_ESteamNetworkingConfig_Int32, &packetDelay);
+				}
 			};
-			static InitializerDebugOutput initializerDebugOutput;
+			static InitializerConfiguration initializerConfiguration;
 
 	#if defined(CAGE_USE_STEAM_SDK)
 			struct InitializerSdk
@@ -159,7 +168,7 @@ namespace cage
 						ESteamNetworkingAvailability a = sockets->InitAuthentication();
 						while (!networkingAvailable(a))
 						{
-							threadSleep(5000);
+							threadSleep(5'000);
 							SteamAPI_RunCallbacks();
 							SteamGameServer_RunCallbacks();
 							a = sockets->GetAuthenticationStatus(nullptr);
@@ -183,7 +192,7 @@ namespace cage
 							ESteamNetworkingAvailability a = utils->GetRelayNetworkStatus(nullptr);
 							if (networkingAvailable(a))
 								break;
-							threadSleep(5000);
+							threadSleep(5'000);
 							SteamAPI_RunCallbacks();
 						}
 					}
