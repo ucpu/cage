@@ -54,7 +54,12 @@ namespace cage
 		EntityComponent *defineComponent_(uint32 typeIndex, const void *prototype);
 	};
 
-	CAGE_CORE_API Holder<EntityManager> newEntityManager();
+	struct CAGE_CORE_API EntityManagerCreateConfig
+	{
+		bool linearAllocators = false; // much faster purge, but destroying entities or components will keep the memory allocated until purged
+	};
+
+	CAGE_CORE_API Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config = {});
 
 	class CAGE_CORE_API EntityComponent : private Immovable
 	{
@@ -141,7 +146,7 @@ namespace cage
 		const EntityManager *source = nullptr;
 		EntityManager *destination = nullptr;
 		bool purge = true; // faster destroy previous entities, but does not call any callbacks
-		bool linearAllocator = false; // replace allocators in destination, which allows faster copy, but forbids removing entities or components
+		bool rebuildIndices = false; // allows correctly removing entities/components
 	};
 
 	CAGE_CORE_API void entitiesCopy(const EntitiesCopyConfig &config);

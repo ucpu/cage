@@ -151,14 +151,15 @@ namespace cage
 
 			void addBlock(MemoryBuffer &b)
 			{
-				char *begin = b.data();
-				char *end = b.data() + b.size();
-				char *p = (char *)detail::roundDownTo((uintPtr)end, config.itemAlignment) - config.itemSize;
-				while (p >= begin)
+				char *p = (char *)detail::roundUpTo((uintPtr)b.data(), config.itemAlignment);
+				freeList = p;
+				char *e = b.data() + b.size() - config.itemSize * 2;
+				while (p < e)
 				{
-					deallocate(p);
-					p -= config.itemSize; // form the free list in reverse so that consecutive allocations have increasing addresses
+					*(void **)p = p + config.itemSize;
+					p += config.itemSize;
 				}
+				*(void **)p = nullptr;
 			}
 
 			void newBlock()

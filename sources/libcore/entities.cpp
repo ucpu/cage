@@ -31,6 +31,7 @@ namespace cage
 		class EntityManagerImpl : public EntityManager
 		{
 		public:
+			const EntityManagerCreateConfig config;
 			Holder<MemoryArena> arena;
 			std::vector<Holder<ComponentImpl>> components;
 			std::vector<EntityComponent *> componentsByTypes;
@@ -38,11 +39,12 @@ namespace cage
 			FlatBag<Entity *> allEntities;
 			uint32 generateId = 0;
 			uint32 entSize = 0;
-			bool linearArena = false;
+
+			EntityManagerImpl(const EntityManagerCreateConfig &config) : config(config) {}
 
 			~EntityManagerImpl()
 			{
-				destroy();
+				purge();
 				components.clear();
 			}
 
@@ -66,12 +68,19 @@ namespace cage
 				}
 				catch (...)
 				{
-					arena->deallocate(ptr);
+					if (!config.linearAllocators)
+						arena->deallocate(ptr);
 					throw;
 				}
 			}
 
-			void desEnt(EntityImpl *e) { arena->destroy<EntityImpl>(e); }
+			void desEnt(EntityImpl *e)
+			{
+				if (config.linearAllocators)
+					e->~EntityImpl();
+				else
+					arena->destroy<EntityImpl>(e);
+			}
 		};
 
 		class ComponentImpl : public EntityComponent
@@ -91,12 +100,19 @@ namespace cage
 				CAGE_ASSERT(typeSize > 0);
 				prototype = systemMemory().createBuffer(typeSize, typeAlignment).cast<void>();
 				detail::memcpy(+prototype, prototype_, typeSize);
-				arena = newMemoryAllocatorPool({ std::max(typeSize, uint32(sizeof(uintPtr))), typeAlignment });
+				if (manager->config.linearAllocators)
+					arena = newMemoryAllocatorLinear({});
+				else
+					arena = newMemoryAllocatorPool({ std::max(typeSize, uint32(sizeof(uintPtr))), typeAlignment });
 			}
 
 			void *newVal() { return arena->allocate(typeSize, typeAlignment); }
 
-			void desVal(void *v) { arena->deallocate(v); }
+			void desVal(void *v)
+			{
+				if (!manager->config.linearAllocators)
+					arena->deallocate(v);
+			}
 		};
 
 		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 id) : manager(manager), id(id)
@@ -244,13 +260,11 @@ namespace cage
 	void EntityManager::destroy()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		if (impl->linearArena)
-			impl->purge();
-		else
-		{
-			while (!impl->allEntities.empty())
-				impl->allEntities.unsafeData().back()->destroy();
-		}
+		// first call all callbacks
+		while (!impl->allEntities.empty())
+			impl->allEntities.unsafeData().back()->destroy();
+		// second free the memory
+		impl->purge();
 	}
 
 	void EntityManager::purge()
@@ -285,7 +299,10 @@ namespace cage
 		ComponentImpl *c = +h;
 		impl->components.push_back(std::move(h));
 		impl->entSize = sizeof(EntityImpl) + impl->components.size() * sizeof(void *);
-		impl->arena = newMemoryAllocatorPool({ impl->entSize, alignof(EntityImpl) });
+		if (impl->config.linearAllocators)
+			impl->arena = newMemoryAllocatorLinear({});
+		else
+			impl->arena = newMemoryAllocatorPool({ impl->entSize, alignof(EntityImpl) });
 		return c;
 	}
 
@@ -294,9 +311,9 @@ namespace cage
 		return defineComponent_(source->typeIndex(), +((ComponentImpl *)source)->prototype);
 	}
 
-	Holder<EntityManager> newEntityManager()
+	Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config)
 	{
-		return systemMemory().createImpl<EntityManager, EntityManagerImpl>();
+		return systemMemory().createImpl<EntityManager, EntityManagerImpl>(config);
 	}
 
 	EntityManager *EntityComponent::manager() const
@@ -437,7 +454,6 @@ namespace cage
 		const EntityManagerImpl *src = (const EntityManagerImpl *)config.source;
 		EntityManagerImpl *dst = (EntityManagerImpl *)config.destination;
 
-		CAGE_ASSERT(!config.linearAllocator || config.purge); // linear arena must purge
 		if (config.purge)
 			dst->purge();
 		else
@@ -445,19 +461,6 @@ namespace cage
 
 		// must define components before changing the allocators
 		const auto mp = componnentMapping(config);
-
-		CAGE_ASSERT(!dst->linearArena || config.linearAllocator); // cannot take back
-		if (config.linearAllocator && !dst->linearArena)
-		{
-			dst->linearArena = true;
-			for (const auto &it : dst->components)
-			{
-				it->arena.clear();
-				it->arena = newMemoryAllocatorLinear({});
-			}
-			dst->arena.clear();
-			dst->arena = newMemoryAllocatorLinear({});
-		}
 
 		ankerl::unordered_dense::map<Entity *, EntityImpl *> ents; // old -> new
 		ents.reserve(src->count());
@@ -471,7 +474,7 @@ namespace cage
 			dst->allEntities.unsafeData().push_back(n);
 			ents[se] = n;
 		}
-		if (!config.linearAllocator)
+		if (config.rebuildIndices)
 			dst->allEntities.unsafeRebuildIndex();
 		for (Entity *e : dst->allEntities)
 		{
@@ -491,7 +494,7 @@ namespace cage
 				detail::memcpy(de->comp(di) = dc->newVal(), se->comp(si), sz);
 				dc->componentEntities.unsafeData().push_back(de);
 			}
-			if (!config.linearAllocator)
+			if (config.rebuildIndices)
 				dc->componentEntities.unsafeRebuildIndex();
 		}
 	}

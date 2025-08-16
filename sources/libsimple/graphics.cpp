@@ -62,7 +62,7 @@ namespace cage
 
 		struct EmitBuffer : private Immovable
 		{
-			Holder<EntityManager> scene = newEntityManager();
+			Holder<EntityManager> scene = newEntityManager({ .linearAllocators = true });
 			uint64 emitTime = 0;
 		};
 
@@ -192,7 +192,6 @@ namespace cage
 					EntitiesCopyConfig cfg;
 					cfg.source = engineEntities();
 					cfg.destination = +emitBuffers[lock.index()].scene;
-					cfg.linearAllocator = true;
 					entitiesCopy(cfg);
 					emitBuffers[lock.index()].emitTime = emitTime;
 				}
