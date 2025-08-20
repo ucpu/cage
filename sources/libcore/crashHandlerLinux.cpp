@@ -15,11 +15,40 @@
 
 namespace cage
 {
+	String currentThreadName();
+
 	int crashHandlerLogFileFd = STDERR_FILENO;
+
+	void crashHandlerInstallAltStack()
+	{
+		static constexpr size_t AltStackSize = 128 * 1024; // bigger than SIGSTKSZ for safety
+
+		{
+			stack_t ss = {};
+			if (sigaltstack(nullptr, &ss) == 0)
+			{
+				if ((ss.ss_flags & SS_DISABLE) == 0 && ss.ss_size >= AltStackSize)
+					return; // already installed and sufficient
+			}
+		}
+
+		void *altStackMem = mmap(nullptr, AltStackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+		if (altStackMem == MAP_FAILED)
+			altStackMem = std::malloc(AltStackSize); // fallback to malloc
+
+		stack_t ss{};
+		ss.ss_sp = altStackMem;
+		ss.ss_size = AltStackSize;
+		ss.ss_flags = 0;
+		if (sigaltstack(&ss, nullptr) != 0)
+		{
+			CAGE_LOG(SeverityEnum::Note, "crash-handler", strerror(errno));
+			CAGE_LOG(SeverityEnum::Warning, "crash-handler", "failed to install alt stack");
+		}
+	}
 
 	namespace
 	{
-		void *altStackMem = nullptr;
 		constexpr int OldHandlersCount = 16;
 		struct sigaction prevHandlers[OldHandlersCount] = {};
 
@@ -56,29 +85,36 @@ namespace cage
 		void safeWrite(const String &s)
 		{
 			write(crashHandlerLogFileFd, s.c_str(), s.length());
+			if (crashHandlerLogFileFd != STDERR_FILENO)
+				write(STDERR_FILENO, s.c_str(), s.length());
 		}
 
 		void printStackTrace()
 		{
 			// backtrace (best-effort; not strictly async-signal-safe)
-			static constexpr int kMaxFrames = 256;
-			void *frames[kMaxFrames];
-			int n = backtrace(frames, kMaxFrames);
+			static constexpr int MaxFrames = 256;
+			void *frames[MaxFrames];
+			int n = backtrace(frames, MaxFrames);
 			safeWrite(Stringizer() + "stack trace:\n");
-			backtrace_symbols_fd(frames, n, crashHandlerLogFileFd); // writes directly to fd
+			backtrace_symbols_fd(frames, n, crashHandlerLogFileFd);
+			if (crashHandlerLogFileFd != STDERR_FILENO)
+				backtrace_symbols_fd(frames, n, STDERR_FILENO);
+			safeWrite("\n");
 		}
 
 		void crashHandler(int sig, siginfo_t *si, void *uctx)
 		{
-			safeWrite(Stringizer() + "signal caught: " + sigToStr(sig) + " (" + sig + ")\n");
+			safeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
 
 			if (si)
 				safeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
 
+			safeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
 			printStackTrace();
 
 			if (struct sigaction *prev = prevHandler(sig))
 			{
+				safeWrite("calling previous handler\n");
 				if (prev->sa_flags & SA_SIGINFO)
 				{
 					// previous handler expects 3 arguments
@@ -96,33 +132,17 @@ namespace cage
 					prev->sa_handler(sig);
 				}
 			}
-
-			// re-raise to trigger default handler (and core dump, if enabled)
-			signal(sig, SIG_DFL);
-			raise(sig);
-		}
-
-		void installAltStack()
-		{
-			static constexpr size_t kAltStackSz = 128 * 1024; // bigger than SIGSTKSZ for safety
-			altStackMem = mmap(nullptr, kAltStackSz, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-			if (altStackMem == MAP_FAILED)
-				altStackMem = std::malloc(kAltStackSz); // fallback to malloc
-			stack_t ss{};
-			ss.ss_sp = altStackMem;
-			ss.ss_size = kAltStackSz;
-			ss.ss_flags = 0;
-			if (sigaltstack(&ss, nullptr) != 0)
+			else
 			{
-				CAGE_LOG(SeverityEnum::Info, "crash-handler", strerror(errno));
-				CAGE_THROW_ERROR(Exception, "sigaltstack")
+				safeWrite("calling default handler\n");
+				signal(sig, SIG_DFL);
+				raise(sig);
 			}
 		}
 
 		void installHandler(int sig)
 		{
-			struct sigaction sa
-			{};
+			struct sigaction sa = {};
 			sa.sa_sigaction = &crashHandler;
 			sigemptyset(&sa.sa_mask);
 			sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
@@ -137,7 +157,7 @@ namespace cage
 		{
 			SetupHandlers()
 			{
-				installAltStack();
+				crashHandlerInstallAltStack();
 				int signals[] = { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS, SIGTRAP };
 				for (int s : signals)
 					installHandler(s);

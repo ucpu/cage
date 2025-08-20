@@ -36,6 +36,10 @@
 
 namespace cage
 {
+#ifdef CAGE_SYSTEM_LINUX
+	void crashHandlerInstallAltStack();
+#endif
+
 	namespace
 	{
 		class MutexImpl : public Mutex
@@ -679,6 +683,10 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			currentThreadStackGuardLimit();
 #endif
+#ifdef CAGE_SYSTEM_LINUX
+			crashHandlerInstallAltStack();
+#endif
+
 			currentThreadName(impl->threadName);
 			try
 			{
