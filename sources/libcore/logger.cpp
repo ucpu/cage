@@ -20,6 +20,11 @@
 
 namespace cage
 {
+#ifdef CAGE_SYSTEM_LINUX
+	extern int crashHandlerLogFileFd;
+	int realFileGetFd(File *f);
+#endif
+
 	Holder<File> realNewFile(const String &path, const FileMode &mode);
 	void realTryFlushFile(File *f);
 
@@ -305,7 +310,12 @@ namespace cage
 				fm.textual = true;
 				fm.append = append;
 				if (realFilesystemOnly)
+				{
 					f = realNewFile(path, fm);
+#ifdef CAGE_SYSTEM_LINUX
+					crashHandlerLogFileFd = realFileGetFd(+f);
+#endif
+				}
 				else
 					f = newFile(path, fm);
 			}

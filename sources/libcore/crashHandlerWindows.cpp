@@ -1,7 +1,9 @@
 #ifdef CAGE_SYSTEM_WINDOWS
+
 	#include <mutex>
 	#include "windowsMinimumInclude.h"
 	#include <DbgHelp.h>
+
 	#pragma comment(lib, "DbgHelp.lib")
 	#define EXCEPTION_CPP 0xE06D7363
 	#define EXCEPTION_DOTNET 0xE0434352

@@ -794,4 +794,12 @@ namespace cage
 #endif
 		}
 	}
+
+#ifdef CAGE_SYSTEM_LINUX
+	int realFileGetFd(File *f)
+	{
+		FileRealBase *base = class_cast<FileRealBase *>(f);
+		return fileno(base->f);
+	}
+#endif
 }
