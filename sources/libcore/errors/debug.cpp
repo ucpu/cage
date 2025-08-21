@@ -23,7 +23,7 @@ static_assert(CAGE_DEBUG_BOOL == false);
 #include <string> // std::getline
 
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include "windowsMinimumInclude.h"
+	#include "../windowsMinimumInclude.h"
 	#include <intrin.h> // __debugbreak
 #endif
 

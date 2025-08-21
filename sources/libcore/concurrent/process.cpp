@@ -27,6 +27,15 @@ extern "C"
 {
 	CAGE_API_EXPORT DWORD WINAPI CageRemoteThreadEntryPointToRaiseSignalTerm(_In_ LPVOID)
 	{
+		try
+		{
+			using namespace cage;
+			CAGE_LOG(SeverityEnum::Warning, "process", "raising SIGTERM");
+		}
+		catch (...)
+		{
+			// nothing
+		}
 		raise(SIGTERM);
 		return 0;
 	}

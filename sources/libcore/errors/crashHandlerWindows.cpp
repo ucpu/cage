@@ -1,7 +1,6 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 
-	#include <mutex>
-	#include "windowsMinimumInclude.h"
+	#include "../windowsMinimumInclude.h"
 	#include <DbgHelp.h>
 
 	#pragma comment(lib, "DbgHelp.lib")
@@ -10,9 +9,17 @@
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
 
 	#include <cage-core/core.h>
+	#include <cage-core/concurrent.h>
 
 namespace cage
 {
+	void crashHandlerThreadInit()
+	{
+		// reserve safe memory on the stack for handling EXCEPTION_STACK_OVERFLOW
+		ULONG v = 128 * 1024;
+		SetThreadStackGuarantee(&v);
+	}
+
 	namespace
 	{
 		String exceptionCodeToString(uint64 code)
@@ -112,6 +119,25 @@ namespace cage
 			}
 		}
 
+		String consoleCodeToString(uint64 code)
+		{
+			switch (code)
+			{
+				case CTRL_C_EVENT:
+					return "CTRL_C_EVENT";
+				case CTRL_BREAK_EVENT:
+					return "CTRL_BREAK_EVENT";
+				case CTRL_CLOSE_EVENT:
+					return "CTRL_CLOSE_EVENT";
+				case CTRL_LOGOFF_EVENT:
+					return "CTRL_LOGOFF_EVENT";
+				case CTRL_SHUTDOWN_EVENT:
+					return "CTRL_SHUTDOWN_EVENT";
+				default:
+					return Stringizer() + "unknown console code: " + code;
+			}
+		}
+
 		bool ignoredExceptionCodes(uint64 code)
 		{
 			switch (code)
@@ -200,12 +226,17 @@ namespace cage
 			}
 		}
 
+		RecursiveMutex *handlerMutex()
+		{
+			static Holder<RecursiveMutex> *mut = new Holder<RecursiveMutex>(newRecursiveMutex()); // this leak is intentional
+			return +*mut;
+		}
+
 		void commonHandler(PEXCEPTION_POINTERS ex)
 		{
 			if (IsDebuggerPresent())
 				return;
-			static std::mutex mutex;
-			std::scoped_lock lock(mutex);
+			ScopeLock lock(handlerMutex());
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_DOTNET)
 				return;
@@ -221,6 +252,7 @@ namespace cage
 				for (uint32 i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
 					CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "parameter[" + i + "]: " + ex->ExceptionRecord->ExceptionInformation);
 			}
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
 			printStackTrace(ex);
 		}
 
@@ -241,13 +273,25 @@ namespace cage
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
+		BOOL WINAPI consoleHandler(DWORD code)
+		{
+			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + consoleCodeToString(code));
+			return FALSE; // let other handlers process it
+		}
+
 		struct SetupHandlers
 		{
 			SetupHandlers()
 			{
-				AddVectoredExceptionHandler(1, &vectoredHandler);
-				AddVectoredContinueHandler(1, &vectoredHandler);
+				handlerMutex(); // allocate the mutex upfront
+				crashHandlerThreadInit();
+				if (!AddVectoredExceptionHandler(1, &vectoredHandler))
+					CAGE_THROW_ERROR(SystemError, "AddVectoredExceptionHandler", GetLastError());
+				if (!AddVectoredContinueHandler(1, &vectoredHandler))
+					CAGE_THROW_ERROR(SystemError, "AddVectoredContinueHandler", GetLastError());
 				previous = SetUnhandledExceptionFilter(&unhandledHandler);
+				if (!SetConsoleCtrlHandler(&consoleHandler, TRUE))
+					CAGE_THROW_ERROR(SystemError, "SetConsoleCtrlHandler", GetLastError());
 			}
 		} setupHandlers;
 	}

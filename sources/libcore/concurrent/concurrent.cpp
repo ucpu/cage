@@ -1,7 +1,6 @@
 #include <atomic>
 #include <cerrno>
 #include <exception>
-#include <mutex>
 #include <thread>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -20,6 +19,7 @@
 	#include <semaphore.h>
 	#include <sys/types.h>
 	#include <unistd.h>
+	#include <mutex>
 #endif
 
 #ifdef CAGE_SYSTEM_LINUX
@@ -36,10 +36,6 @@
 
 namespace cage
 {
-#ifdef CAGE_SYSTEM_LINUX
-	void crashHandlerInstallAltStack();
-#endif
-
 	namespace
 	{
 		class MutexImpl : public Mutex
@@ -658,21 +654,10 @@ namespace cage
 		return systemMemory().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
 
+	void crashHandlerThreadInit();
+
 	namespace
 	{
-#ifdef CAGE_SYSTEM_WINDOWS
-		void currentThreadStackGuardLimit()
-		{
-			ULONG v = 128 * 1024;
-			SetThreadStackGuarantee(&v);
-		}
-
-		struct SetupStackGuardLimit
-		{
-			SetupStackGuardLimit() { currentThreadStackGuardLimit(); }
-		} setupStackGuardLimit;
-#endif
-
 #ifdef CAGE_SYSTEM_WINDOWS
 		DWORD WINAPI threadFunctionImpl(LPVOID params)
 #else
@@ -680,14 +665,8 @@ namespace cage
 #endif
 		{
 			ThreadImpl *impl = (ThreadImpl *)params;
-#ifdef CAGE_SYSTEM_WINDOWS
-			currentThreadStackGuardLimit();
-#endif
-#ifdef CAGE_SYSTEM_LINUX
-			crashHandlerInstallAltStack();
-#endif
-
 			currentThreadName(impl->threadName);
+			crashHandlerThreadInit();
 			try
 			{
 				impl->function();

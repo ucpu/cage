@@ -19,8 +19,10 @@ namespace cage
 
 	int crashHandlerLogFileFd = STDERR_FILENO;
 
-	void crashHandlerInstallAltStack()
+	void crashHandlerThreadInit()
 	{
+		// install alternative stack memory for handling signals
+
 		static constexpr size_t AltStackSize = 128 * 1024; // bigger than SIGSTKSZ for safety
 
 		{
@@ -43,18 +45,19 @@ namespace cage
 		if (sigaltstack(&ss, nullptr) != 0)
 		{
 			CAGE_LOG(SeverityEnum::Note, "crash-handler", strerror(errno));
-			CAGE_LOG(SeverityEnum::Warning, "crash-handler", "failed to install alt stack");
+			CAGE_LOG(SeverityEnum::Warning, "crash-handler", "failed to install thread alt stack");
+			// most signals can be handled on regular stack memory, so we continue
 		}
 	}
 
 	namespace
 	{
-		constexpr int OldHandlersCount = 16;
-		struct sigaction prevHandlers[OldHandlersCount] = {};
+		constexpr int PrevHandlersCount = 16;
+		struct sigaction prevHandlers[PrevHandlersCount] = {};
 
 		struct sigaction *prevHandler(int sig)
 		{
-			if (sig >= 0 && sig < OldHandlersCount)
+			if (sig >= 0 && sig < PrevHandlersCount)
 				return &prevHandlers[sig];
 			return nullptr;
 		}
@@ -77,6 +80,8 @@ namespace cage
 					return "SIGTRAP";
 				case SIGTERM:
 					return "SIGTERM";
+				case SIGINT:
+					return "SIGINT";
 				default:
 					return "UNKNOWN";
 			}
@@ -102,35 +107,20 @@ namespace cage
 			safeWrite("\n");
 		}
 
-		void crashHandler(int sig, siginfo_t *si, void *uctx)
+		void performPreviousHandler(int sig, siginfo_t *si, void *uctx)
 		{
-			safeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
-
-			if (si)
-				safeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
-
-			safeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
-			printStackTrace();
-
 			if (struct sigaction *prev = prevHandler(sig))
 			{
 				safeWrite("calling previous handler\n");
 				if (prev->sa_flags & SA_SIGINFO)
-				{
-					// previous handler expects 3 arguments
 					prev->sa_sigaction(sig, si, uctx);
-				}
 				else if (prev->sa_handler == SIG_DFL || prev->sa_handler == SIG_IGN)
 				{
-					// default or ignore: you can reset signal to default and raise
 					signal(sig, prev->sa_handler);
 					raise(sig);
 				}
 				else
-				{
-					// simple handler with 1 argument
 					prev->sa_handler(sig);
-				}
 			}
 			else
 			{
@@ -140,10 +130,27 @@ namespace cage
 			}
 		}
 
+		void crashHandler(int sig, siginfo_t *si, void *uctx)
+		{
+			safeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
+			if (si)
+				safeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
+			safeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
+			printStackTrace();
+			performPreviousHandler(sig, si, uctx);
+		}
+
+		void intHandler(int sig, siginfo_t *si, void *uctx)
+		{
+			safeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
+			performPreviousHandler(sig, si, uctx);
+		}
+
+		template<auto Handler>
 		void installHandler(int sig)
 		{
 			struct sigaction sa = {};
-			sa.sa_sigaction = &crashHandler;
+			sa.sa_sigaction = Handler;
 			sigemptyset(&sa.sa_mask);
 			sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
 			if (sigaction(sig, &sa, prevHandler(sig)) != 0)
@@ -157,10 +164,11 @@ namespace cage
 		{
 			SetupHandlers()
 			{
-				crashHandlerInstallAltStack();
-				int signals[] = { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS, SIGTRAP };
-				for (int s : signals)
-					installHandler(s);
+				crashHandlerThreadInit();
+				for (int s : { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS, SIGTRAP })
+					installHandler<&crashHandler>(s);
+				for (int s : { SIGTERM, SIGINT })
+					installHandler<&intHandler>(s);
 			}
 		} setupHandlers;
 	}
