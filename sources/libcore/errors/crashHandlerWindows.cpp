@@ -1,6 +1,7 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 
 	#include "../windowsMinimumInclude.h"
+	#include <csignal>
 	#include <DbgHelp.h>
 
 	#pragma comment(lib, "DbgHelp.lib")
@@ -8,8 +9,8 @@
 	#define EXCEPTION_DOTNET 0xE0434352
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
 
-	#include <cage-core/core.h>
 	#include <cage-core/concurrent.h>
+	#include <cage-core/process.h> // installSigTermHandler
 
 namespace cage
 {
@@ -294,6 +295,35 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "SetConsoleCtrlHandler", GetLastError());
 			}
 		} setupHandlers;
+	}
+
+	namespace
+	{
+		Delegate<void()> sigTermHandler;
+		void sigTermHandlerEntry(int)
+		{
+			if (sigTermHandler)
+				sigTermHandler();
+		}
+
+		Delegate<void()> sigIntHandler;
+		void sigIntHandlerEntry(int)
+		{
+			if (sigIntHandler)
+				sigIntHandler();
+		}
+	}
+
+	void installSigTermHandler(Delegate<void()> handler)
+	{
+		sigTermHandler = handler;
+		signal(SIGTERM, &sigTermHandlerEntry);
+	}
+
+	void installSigIntHandler(Delegate<void()> handler)
+	{
+		sigIntHandler = handler;
+		signal(SIGINT, &sigIntHandlerEntry);
 	}
 }
 

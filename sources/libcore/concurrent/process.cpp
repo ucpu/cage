@@ -5,11 +5,11 @@
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "../windowsMinimumInclude.h"
-	#include <signal.h>
+	#include <csignal>
 	#include <psapi.h>
 #else
 	#include <fcntl.h>
-	#include <signal.h>
+	#include <csignal>
 	#include <sys/ioctl.h>
 	#include <sys/stat.h>
 	#include <sys/types.h>
@@ -545,34 +545,5 @@ namespace cage
 		if (config.detached)
 			return {};
 		return r;
-	}
-
-	namespace
-	{
-		Delegate<void()> sigTermHandler;
-		void sigTermHandlerEntry(int)
-		{
-			if (sigTermHandler)
-				sigTermHandler();
-		}
-
-		Delegate<void()> sigIntHandler;
-		void sigIntHandlerEntry(int)
-		{
-			if (sigIntHandler)
-				sigIntHandler();
-		}
-	}
-
-	void installSigTermHandler(Delegate<void()> handler)
-	{
-		sigTermHandler = handler;
-		signal(SIGTERM, &sigTermHandlerEntry);
-	}
-
-	void installSigIntHandler(Delegate<void()> handler)
-	{
-		sigIntHandler = handler;
-		signal(SIGINT, &sigIntHandlerEntry);
 	}
 }

@@ -11,7 +11,7 @@
 	#include <ucontext.h>
 	#include <unistd.h>
 
-	#include <cage-core/core.h>
+	#include <cage-core/process.h> // installSigTermHandler
 
 namespace cage
 {
@@ -140,9 +140,25 @@ namespace cage
 			performPreviousHandler(sig, si, uctx);
 		}
 
+		Delegate<void()> sigTermHandler;
+		Delegate<void()> sigIntHandler;
+
 		void intHandler(int sig, siginfo_t *si, void *uctx)
 		{
 			safeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
+
+			switch (sig)
+			{
+				case SIGTERM:
+					if (sigTermHandler)
+						sigTermHandler();
+					break;
+				case SIGINT:
+					if (sigIntHandler)
+						sigIntHandler();
+					break;
+			}
+
 			performPreviousHandler(sig, si, uctx);
 		}
 
@@ -171,6 +187,16 @@ namespace cage
 					installHandler<&intHandler>(s);
 			}
 		} setupHandlers;
+	}
+
+	void installSigTermHandler(Delegate<void()> handler)
+	{
+		sigTermHandler = handler;
+	}
+
+	void installSigIntHandler(Delegate<void()> handler)
+	{
+		sigIntHandler = handler;
 	}
 }
 
