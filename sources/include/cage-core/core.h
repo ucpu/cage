@@ -8,14 +8,6 @@
 #include <type_traits>
 #include <utility>
 
-#if defined(_MSC_VER)
-	#define CAGE_ASSUME_TRUE(EXPR) __assume((bool)(EXPR))
-#elif defined(__clang__)
-	#define CAGE_ASSUME_TRUE(EXPR) __builtin_assume((bool)(EXPR))
-#else
-	#define CAGE_ASSUME_TRUE(EXPR)
-#endif
-
 #ifdef CAGE_ASSERT_ENABLED
 	#define CAGE_ASSERT(EXPR) \
 		{ \
@@ -25,13 +17,9 @@
 				int i_ = 42; \
 				(void)i_; \
 			} \
-			CAGE_ASSUME_TRUE(EXPR); \
 		}
 #else
-	#define CAGE_ASSERT(EXPR) \
-		{ \
-			CAGE_ASSUME_TRUE(EXPR); \
-		}
+	#define CAGE_ASSERT(EXPR) {}
 #endif
 
 #define CAGE_THROW_SILENT(EXCEPTION, ...) \

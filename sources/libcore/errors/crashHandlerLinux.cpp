@@ -151,11 +151,17 @@ namespace cage
 			{
 				case SIGTERM:
 					if (sigTermHandler)
+					{
 						sigTermHandler();
+						return; // already handled, do not call default handler
+					}
 					break;
 				case SIGINT:
 					if (sigIntHandler)
+					{
 						sigIntHandler();
+						return; // already handled, do not call default handler
+					}
 					break;
 			}
 

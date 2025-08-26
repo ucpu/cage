@@ -100,9 +100,4 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-declarations")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 	endif()
-
-	if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-		# __builtin_assume has side effects that are discarded
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-assume")
-	endif()
 endmacro(cage_build_configuration)
