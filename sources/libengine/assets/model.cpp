@@ -1,4 +1,5 @@
 #include <cage-core/assetContext.h>
+#include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
 #include <cage-core/serialization.h>
@@ -23,12 +24,22 @@ namespace cage
 			des.read(mat);
 
 			Holder<Mesh> mesh = newMesh();
-			mesh->importBuffer(des.read(des.available()));
-
+			mesh->importBuffer(des.read(data.meshSize));
 			model->importMesh(+mesh, mat);
-			model->setBoundingBox(data.box);
+			model->mesh = std::move(mesh);
+
+			if (data.colliderSize)
+			{
+				Holder<Collider> col = newCollider();
+				col->importBuffer(des.read(data.colliderSize));
+				col->rebuild();
+				model->collider = std::move(col);
+			}
+
+			CAGE_ASSERT(des.available() == 0);
 
 			model->importTransform = data.importTransform;
+			model->boundingBox = data.box;
 			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
 				model->textureNames[i] = data.textureNames[i];
 			model->shaderName = data.shaderName;

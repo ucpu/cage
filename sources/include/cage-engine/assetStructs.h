@@ -76,10 +76,13 @@ namespace cage
 		sint32 renderLayer = 0;
 		uint32 skeletonBones = 0;
 		uint32 materialSize = 0; // bytes
+		uint32 meshSize = 0; // bytes
+		uint32 colliderSize = 0; // bytes
 
 		// follows:
 		// material (may or may not be the MeshImportMaterial)
 		// serialized mesh
+		// serialized collider (may be absent)
 	};
 
 	struct CAGE_ENGINE_API RenderObjectHeader

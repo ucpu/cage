@@ -31,6 +31,7 @@
 #include <cage-engine/renderObject.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/scenePicking.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/shaderProgram.h>
@@ -468,7 +469,7 @@ namespace cage
 					ScheduleCreateConfig cfg;
 					cfg.name = "control schedule";
 					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-					cfg.period = 1000000 / 20;
+					cfg.period = 1'000'000 / 20;
 					cfg.type = ScheduleTypeEnum::SteadyPeriodic;
 					controlUpdateSchedule = controlScheduler->newSchedule(cfg);
 				}
@@ -476,7 +477,7 @@ namespace cage
 					ScheduleCreateConfig cfg;
 					cfg.name = "inputs schedule";
 					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-					cfg.period = 1000000 / 60;
+					cfg.period = 1'000'000 / 60;
 					cfg.type = ScheduleTypeEnum::FreePeriodic;
 					controlInputSchedule = controlScheduler->newSchedule(cfg);
 				}
@@ -486,7 +487,7 @@ namespace cage
 					ScheduleCreateConfig c;
 					c.name = "sound schedule";
 					c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
-					c.period = 1000000 / 20;
+					c.period = 1'000'000 / 20;
 					c.type = ScheduleTypeEnum::SteadyPeriodic;
 					soundUpdateSchedule = soundScheduler->newSchedule(c);
 				}
@@ -614,6 +615,7 @@ namespace cage
 					entityMgr->defineComponent(ScreenSpaceEffectsComponent());
 					entityMgr->defineComponent(SoundComponent());
 					entityMgr->defineComponent(ListenerComponent());
+					entityMgr->defineComponent(PickableComponent());
 					entityMgr->defineComponent(VrOriginComponent());
 					entityMgr->defineComponent(VrCameraComponent());
 					entityMgr->defineComponent(VrControllerComponent());

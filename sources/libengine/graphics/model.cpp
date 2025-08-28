@@ -22,7 +22,6 @@ namespace cage
 		class ModelImpl : public Model
 		{
 		public:
-			Aabb box = Aabb::Universe();
 			uint32 id = 0;
 			uint32 vbo = 0;
 			uint32 verticesCount = 0;
@@ -213,7 +212,7 @@ namespace cage
 		for (const Attr &a : attrs)
 			setAttribute(a.index, a.count, a.type, a.stride, a.offset);
 
-		setBoundingBox(poly->boundingBox());
+		boundingBox = poly->boundingBox();
 	}
 
 	void Model::setPrimitiveType(uint32 type)
@@ -223,15 +222,10 @@ namespace cage
 		impl->updatePrimitivesCount();
 	}
 
-	void Model::setBoundingBox(const Aabb &box)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		impl->box = box;
-	}
-
 	void Model::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
+		impl->mesh.clear();
 		{
 			if (impl->vbo)
 			{
@@ -327,12 +321,6 @@ namespace cage
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->primitivesCount;
-	}
-
-	Aabb Model::boundingBox() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->box;
 	}
 
 	void Model::dispatch() const

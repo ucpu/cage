@@ -2,6 +2,7 @@
 
 #include "processor.h"
 
+#include <cage-core/collider.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/hashString.h>
 #include <cage-core/mesh.h>
@@ -332,6 +333,21 @@ void processModel()
 
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "bounding box: " + part.boundingBox);
 
+	Holder<PointerRange<const char>> serMesh = part.mesh->exportBuffer();
+	dsm.meshSize = serMesh.size();
+
+	Holder<PointerRange<const char>> serCol;
+	if (part.mesh->type() == MeshTypeEnum::Triangles)
+	{
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "building collider");
+		Holder<Collider> collider = newCollider();
+		collider->importMesh(+part.mesh);
+		collider->optimize();
+		collider->rebuild();
+		serCol = collider->exportBuffer();
+		dsm.colliderSize = serCol.size();
+	}
+
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
 	AssetHeader h = processor->initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -343,7 +359,9 @@ void processModel()
 	Serializer ser(buffer);
 	ser << dsm;
 	ser << mat;
-	ser.write(part.mesh->exportBuffer());
+	ser.write(serMesh);
+	if (serMesh)
+		ser.write(serCol);
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = memoryCompress(buffer);
 	h.compressedSize = compressed.size();

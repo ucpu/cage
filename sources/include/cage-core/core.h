@@ -19,7 +19,10 @@
 			} \
 		}
 #else
-	#define CAGE_ASSERT(EXPR) {}
+	#define CAGE_ASSERT(EXPR) \
+		{ \
+			(void)(true ? (void)0 : (void)(EXPR)); \
+		}
 #endif
 
 #define CAGE_THROW_SILENT(EXCEPTION, ...) \

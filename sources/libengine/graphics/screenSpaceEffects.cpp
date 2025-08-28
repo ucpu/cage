@@ -145,7 +145,7 @@ namespace cage
 
 	void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config)
 	{
-		const int downscale = 3;
+		static constexpr int downscale = 3;
 
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("depth of field");
@@ -233,7 +233,7 @@ namespace cage
 
 	void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config)
 	{
-		const int downscale = 4;
+		static constexpr int downscale = 4;
 
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("eye adaptation prepare");
@@ -261,7 +261,7 @@ namespace cage
 
 	void screenSpaceBloom(const ScreenSpaceBloomConfig &config)
 	{
-		const int downscale = 3;
+		static constexpr int downscale = 3;
 
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("bloom");

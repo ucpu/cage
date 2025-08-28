@@ -821,7 +821,7 @@ namespace cage
 					return;
 
 				const Mat4 mvpMat = viewProj * rd.model;
-				if (!intersects(rm.mesh->boundingBox(), Frustum(mvpMat)))
+				if (!intersects(rm.mesh->boundingBox, Frustum(mvpMat)))
 					return;
 
 				std::optional<SkeletalAnimationComponent> ps;
