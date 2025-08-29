@@ -70,6 +70,7 @@ namespace cage
 
 	CAGE_CORE_API bool collisionDetection(CollisionDetectionConfig &params);
 
+	CAGE_CORE_API Real distance(Vec3 shape, const Collider *collider, Transform t);
 	CAGE_CORE_API Real distance(Line shape, const Collider *collider, Transform t);
 	CAGE_CORE_API Real distance(Triangle shape, const Collider *collider, Transform t);
 	CAGE_CORE_API Real distance(Plane shape, const Collider *collider, Transform t);

@@ -4,10 +4,9 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
 
-void testColliders()
+namespace
 {
-	CAGE_TESTCASE("colliders");
-
+	void basicCollisions()
 	{
 		CAGE_TESTCASE("basic collisions");
 		{
@@ -108,6 +107,7 @@ void testColliders()
 		}
 	}
 
+	void dynamicCollisions()
 	{
 		CAGE_TESTCASE("dynamic collisions");
 		Holder<Collider> c1 = newCollider();
@@ -224,6 +224,7 @@ void testColliders()
 		}
 	}
 
+	void moreCollisions()
 	{
 		CAGE_TESTCASE("more collisions");
 		Holder<Collider> c1 = newCollider();
@@ -282,8 +283,78 @@ void testColliders()
 				CAGE_TEST(collisionDetection(p));
 			}
 		}
+		{
+			CAGE_TESTCASE("intersects with transformations");
+			{
+				// the c1 is centered at (10,0,0)
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(), Quat(), 1));
+				CAGE_TEST(p.valid() && distance(p, Vec3(10, 0, 0)) < 1);
+			}
+			{
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(10, 0, 0), Quat(), 1));
+				CAGE_TEST(p.valid() && distance(p, Vec3(20, 0, 0)) < 1);
+			}
+			{
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(0, 10, 0), Quat(), 1));
+				CAGE_TEST(!p.valid());
+			}
+			{
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(), Quat(), 5)); // the tetrahedron is 5 times as big, and is offset 5 times as far
+				CAGE_TEST(p.valid() && distance(p, Vec3(45, 0, 0)) < 5);
+			}
+			{
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(0, 10, 0), Quat(), 5));
+				CAGE_TEST(!p.valid());
+			}
+			{
+				const Vec3 p = intersection(makeRay(Vec3(), Vec3(1, 0, 0)), +c1, Transform(Vec3(100, 0, 0), Quat(), 5));
+				CAGE_TEST(p.valid() && distance(p, Vec3(145, 0, 0)) < 5);
+			}
+		}
 	}
 
+	void distances()
+	{
+		/* todo distances are currently broken
+		CAGE_TESTCASE("distances");
+		Holder<Collider> c1 = newCollider();
+		{ // tetrahedron 1
+			const Vec3 a(0, -0.7, 1);
+			const Vec3 b(+0.86603, -0.7, -0.5);
+			const Vec3 c(-0.86603, -0.7, -0.5);
+			const Vec3 d(0, 0.7, 0);
+			const Mat4 off = Mat4(Vec3(10, 0, 0));
+			c1->addTriangle(Triangle(c, b, a) * off);
+			c1->addTriangle(Triangle(a, b, d) * off);
+			c1->addTriangle(Triangle(b, c, d) * off);
+			c1->addTriangle(Triangle(c, a, d) * off);
+			c1->rebuild();
+		}
+		Holder<Collider> c2 = newCollider();
+		{ // tetrahedron 2
+			const Vec3 a(0, -0.7, 1);
+			const Vec3 b(+0.86603, -0.7, -0.5);
+			const Vec3 c(-0.86603, -0.7, -0.5);
+			const Vec3 d(0, 0.7, 0);
+			const Mat4 off = Mat4(Vec3(0, 10, 0));
+			c2->addTriangle(Triangle(c, b, a) * off);
+			c2->addTriangle(Triangle(a, b, d) * off);
+			c2->addTriangle(Triangle(b, c, d) * off);
+			c2->addTriangle(Triangle(c, a, d) * off);
+			c2->rebuild();
+		}
+		{
+			CAGE_TESTCASE("distances with transformations");
+			CAGE_TEST(distance(Vec3(10, 0, 0), +c1, Transform()) < 1); // the c1 is centered at (10,0,0)
+			CAGE_TEST(abs(distance(Vec3(100, 0, 0), +c1, Transform()) - 90) < 1);
+			CAGE_TEST(abs(distance(Vec3(-100, 0, 0), +c1, Transform()) - 110) < 1);
+			CAGE_TEST(abs(distance(Vec3(100, 0, 0), +c1, Transform(Vec3(), Quat(), 30)) - 60) < 1);
+			CAGE_TEST(abs(distance(Vec3(-100, 0, 0), +c1, Transform(Vec3(), Quat(), 30)) - 80) < 1);
+		}
+		*/
+	}
+
+	void randomizedCollisionsWithTriangles()
 	{
 		CAGE_TESTCASE("randomized tests with triangles");
 
@@ -333,6 +404,7 @@ void testColliders()
 		}
 	}
 
+	void randomizedTestsWithLines()
 	{
 		CAGE_TESTCASE("randomized tests with lines");
 
@@ -381,4 +453,15 @@ void testColliders()
 			}
 		}
 	}
+}
+
+void testColliders()
+{
+	CAGE_TESTCASE("colliders");
+	basicCollisions();
+	dynamicCollisions();
+	moreCollisions();
+	distances();
+	randomizedCollisionsWithTriangles();
+	randomizedTestsWithLines();
 }

@@ -881,46 +881,9 @@ namespace cage
 
 			void prepareObject(const RenderData &rd, Holder<RenderObject> object)
 			{
-				CAGE_ASSERT(object->lodsCount() > 0);
 				CAGE_ASSERT(std::holds_alternative<std::monostate>(rd.data));
 
-				uint32 preferredLod = 0;
-				if (object->lodsCount() > 1)
-				{
-					Real d = 1;
-					if (!lodSelection.orthographic)
-					{
-						const Vec4 ep4 = rd.model * Vec4(0, 0, 0, 1);
-						CAGE_ASSERT(abs(ep4[3] - 1) < 1e-4);
-						d = distance(Vec3(ep4), lodSelection.center);
-					}
-					const Real f = lodSelection.screenSize * object->worldSize / (d * object->pixelsSize);
-					preferredLod = object->lodSelect(f);
-				}
-
-				// try load the preferred lod
-				bool ok = true;
-				const auto &fetch = [&](uint32 lod, bool load)
-				{
-					prepareModels.clear();
-					ok = true;
-					for (uint32 it : object->models(lod))
-					{
-						if (auto md = onDemand->get<AssetSchemeIndexModel, Model>(it, load))
-							prepareModels.push_back(std::move(md));
-						else
-							ok = false;
-					}
-				};
-				fetch(preferredLod, true);
-
-				// try acquire one level coarser
-				if (!ok && preferredLod + 1 < object->lodsCount())
-					fetch(preferredLod + 1, false);
-
-				// try acquire one level finer
-				if (!ok && preferredLod > 0)
-					fetch(preferredLod - 1, false);
+				lodSelection.selectModels(prepareModels, Vec3(rd.model * Vec4(0, 0, 0, 1)), +object, +onDemand);
 
 				// render selected lod
 				for (auto &it : prepareModels)

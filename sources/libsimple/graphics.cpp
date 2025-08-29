@@ -107,6 +107,7 @@ namespace cage
 			}
 		}
 
+		/*
 		Real perspectiveScreenSize(Rads vFov, sint32 screenHeight)
 		{
 			return tan(vFov * 0.5) * 2 * screenHeight;
@@ -121,8 +122,8 @@ namespace cage
 				{
 					res.screenSize = data.orthographicSize[1] * screenHeight;
 					res.orthographic = true;
+					break;
 				}
-				break;
 				case CameraTypeEnum::Perspective:
 					res.screenSize = perspectiveScreenSize(data.perspectiveFov, screenHeight);
 					break;
@@ -131,6 +132,7 @@ namespace cage
 			}
 			return res;
 		}
+		*/
 
 		TextureHandle initializeTarget(const String &prefix, Vec2i resolution)
 		{
@@ -264,8 +266,7 @@ namespace cage
 						data.resolution = cam.target ? cam.target->resolution() : applyDynamicResolution(cfg.resolution);
 						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
-						data.lodSelection = initializeLodSelection(cam, data.resolution[1]);
-						data.lodSelection.center = data.transform.position;
+						data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
 						if (cam.target)
 							data.target = TextureHandle(Holder<Texture>(cam.target, nullptr));
 						else
@@ -316,8 +317,7 @@ namespace cage
 						data.resolution = applyDynamicResolution(it.resolution);
 						data.transform = transformByVrOrigin(cfg.scene, it.transform, cfg.interpolationFactor);
 						data.projection = it.projection;
-						data.lodSelection.screenSize = perspectiveScreenSize(it.verticalFov, data.resolution[1]);
-						data.lodSelection.center = it.primary ? vrFrame->pose().position : it.transform.position;
+						data.lodSelection = LodSelection(it.primary ? vrFrame->pose().position : it.transform.position, CameraComponent{ .perspectiveFov = it.verticalFov }, data.resolution[1]);
 						data.target = initializeTarget(Stringizer() + "vrTarget_" + data.name, data.resolution);
 						data.finalProduct = true;
 						vrTargets.push_back(data.target);

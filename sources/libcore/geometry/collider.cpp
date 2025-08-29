@@ -2,7 +2,6 @@
 #include <vector>
 
 #include <cage-core/collider.h>
-//#include <cage-core/flatSet.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
@@ -430,6 +429,7 @@ namespace cage
 
 			CollisionDetector(const ColliderImpl *ao, const ColliderImpl *bo, Transform am, Transform bm, Holder<PointerRange<CollisionPair>> &outputBuffer) : ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm), abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm), ao(ao), bo(bo), outputBuffer(outputBuffer) {}
 
+		private:
 			void process(uint32 a, uint32 b)
 			{
 				CAGE_ASSERT(a < ao->nodes.size());
@@ -483,6 +483,7 @@ namespace cage
 				}
 			}
 
+		public:
 			void process()
 			{
 				process(0, 0);
@@ -528,6 +529,7 @@ namespace cage
 
 			IntersectionDetector(const ColliderImpl *collider, Transform m) : col(collider), m(m) { CAGE_ASSERT(!collider->dirty); }
 
+		private:
 			template<class T>
 			Real distance(const T &l, uint32 nodeIdx)
 			{
@@ -561,12 +563,16 @@ namespace cage
 				}
 			}
 
+		public:
 			template<class T>
 			Real distance(const T &shape)
 			{
-				return distance(shape * inverse(m), 0);
+				CAGE_THROW_CRITICAL(Exception, "distance to collider is untested and broken");
+				// the result is in the original space of the collider and must be converted back to the space of the shape
+				return distance(shape * inverse(m), 0) * m.scale;
 			}
 
+		private:
 			template<class T>
 			bool intersects(const T &l, uint32 nodeIdx)
 			{
@@ -590,12 +596,14 @@ namespace cage
 				}
 			}
 
+		public:
 			template<class T>
 			bool intersects(const T &shape)
 			{
 				return intersects(shape * inverse(m), 0);
 			}
 
+		private:
 			bool intersection(Line l, uint32 nodeIdx, Vec3 &point, uint32 &triangleIndex)
 			{
 				const Aabb b = col->boxes[nodeIdx];
@@ -664,14 +672,15 @@ namespace cage
 				}
 			}
 
+		public:
 			bool intersection(Line l, Vec3 &point, uint32 &triangleIndex)
 			{
+				// p is in the original space of the collider and must be converted back to the space of the shape
 				Vec3 pt;
 				uint32 ti = 0;
 				if (intersection(l * inverse(m), 0, pt, ti))
 				{
-					const Vec4 r4 = Vec4(pt, 1) * Mat4(m);
-					point = Vec3(r4) / r4[3];
+					point = pt * m;
 					triangleIndex = ti;
 					return true;
 				}
@@ -789,6 +798,12 @@ namespace cage
 		}
 	}
 
+	Real distance(Vec3 shape, const Collider *collider, Transform t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.distance(shape);
+	}
+
 	Real distance(Line shape, const Collider *collider, Transform t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
@@ -892,7 +907,6 @@ namespace cage
 
 	Vec3 intersection(Line shape, const Collider *collider, Transform t, uint32 &triangleIndex)
 	{
-		// todo
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		Vec3 p;
 		if (d.intersection(shape, p, triangleIndex))

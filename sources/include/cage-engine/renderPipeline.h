@@ -1,6 +1,7 @@
 #ifndef guard_renderPipeline_h_4hg1s8596drfh4
 #define guard_renderPipeline_h_4hg1s8596drfh4
 
+#include <cage-engine/lodSelection.h>
 #include <cage-engine/provisionalHandles.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
@@ -8,17 +9,9 @@
 namespace cage
 {
 	class EntityManager;
-	class ShaderProgram;
 	class RenderQueue;
 	class ProvisionalGraphics;
 	class AssetsOnDemand;
-
-	struct CAGE_ENGINE_API LodSelection
-	{
-		Vec3 center; // center of camera
-		Real screenSize = 0; // vertical size of screen in pixels, one meter in front of the camera
-		bool orthographic = false;
-	};
 
 	struct CAGE_ENGINE_API RenderPipelineConfig
 	{

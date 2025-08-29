@@ -6,6 +6,7 @@
 #include <cage-core/flatSet.h>
 #include <cage-core/hashString.h>
 #include <cage-core/mesh.h>
+#include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-engine/shaderConventions.h>
@@ -239,6 +240,47 @@ namespace
 		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no normals");
 	}
+
+	Holder<PointerRange<const char>> generateAndSerializeCollider(const MeshImportPart &part, const MeshImportResult &result)
+	{
+		if (part.mesh->type() != MeshTypeEnum::Triangles)
+			return {};
+		if (part.mesh->indicesCount() == 0)
+			return {}; // indexed mesh only
+
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "building collider");
+
+		Holder<Mesh> mesh = newMesh();
+		const auto &append = [&](const Mesh *tmp)
+		{
+			PointerRange<const Vec3> poss = tmp->positions();
+			PointerRange<const uint32> inds = tmp->indices();
+			for (uint32 i = 0; i < inds.size(); i += 3)
+				mesh->addTriangle(Triangle(poss[inds[i]], poss[inds[i + 1]], poss[inds[i + 2]]));
+		};
+		append(+part.mesh);
+
+		if (!part.mesh->boneIndices().empty())
+		{
+			for (const MeshImportAnimation &ani : result.animations)
+			{
+				for (Real t = 0; t <= 1; t += 0.05) // sample the animation at 20 positions
+				{
+					Holder<Mesh> tmp = part.mesh->copy();
+					animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+					append(+tmp);
+				}
+			}
+		}
+
+		Holder<Mesh> convex = meshConvexHull(+mesh, {});
+
+		Holder<Collider> collider = newCollider();
+		collider->importMesh(+convex);
+		collider->optimize();
+		collider->rebuild();
+		return collider->exportBuffer();
+	}
 }
 
 void processModel()
@@ -336,17 +378,8 @@ void processModel()
 	Holder<PointerRange<const char>> serMesh = part.mesh->exportBuffer();
 	dsm.meshSize = serMesh.size();
 
-	Holder<PointerRange<const char>> serCol;
-	if (part.mesh->type() == MeshTypeEnum::Triangles)
-	{
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "building collider");
-		Holder<Collider> collider = newCollider();
-		collider->importMesh(+part.mesh);
-		collider->optimize();
-		collider->rebuild();
-		serCol = collider->exportBuffer();
-		dsm.colliderSize = serCol.size();
-	}
+	Holder<PointerRange<const char>> serCol = generateAndSerializeCollider(part, result);
+	dsm.colliderSize = serCol.size();
 
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
 	AssetHeader h = processor->initializeAssetHeader();
@@ -360,8 +393,7 @@ void processModel()
 	ser << dsm;
 	ser << mat;
 	ser.write(serMesh);
-	if (serMesh)
-		ser.write(serCol);
+	ser.write(serCol);
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = memoryCompress(buffer);
 	h.compressedSize = compressed.size();
