@@ -34,9 +34,7 @@ namespace cage
 		void dispatch() const;
 		void dispatch(uint32 instances) const;
 
-		Holder<const Mesh> mesh;
 		Holder<const Collider> collider;
-
 		Mat4 importTransform;
 		Aabb boundingBox = Aabb::Universe();
 		uint32 textureNames[MaxTexturesCountPerMaterial] = {};

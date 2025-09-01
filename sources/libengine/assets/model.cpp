@@ -26,7 +26,6 @@ namespace cage
 			Holder<Mesh> mesh = newMesh();
 			mesh->importBuffer(des.read(data.meshSize));
 			model->importMesh(+mesh, mat);
-			model->mesh = std::move(mesh);
 
 			if (data.colliderSize)
 			{

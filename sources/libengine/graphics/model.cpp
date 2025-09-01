@@ -225,7 +225,6 @@ namespace cage
 	void Model::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
-		impl->mesh.clear();
 		{
 			if (impl->vbo)
 			{

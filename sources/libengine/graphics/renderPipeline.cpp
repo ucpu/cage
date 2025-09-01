@@ -611,8 +611,8 @@ namespace cage
 				if (renderMode != RenderModeEnum::Color)
 					return;
 
-				const Holder<Model> mesh = std::get<RenderIcon>(rd.data).mesh.share();
-				const Holder<Texture> texture = std::get<RenderIcon>(rd.data).texture.share();
+				const Holder<Model> &mesh = std::get<RenderIcon>(rd.data).mesh;
+				const Holder<Texture> &texture = std::get<RenderIcon>(rd.data).texture;
 
 				Holder<ShaderProgram> shader = [&]()
 				{
