@@ -1441,6 +1441,24 @@ namespace cage
 				return data;
 			}
 
+			bool allowShadowmapCacheReuse(const ShadowmapData &shadowmap, const UniShadowedLight &cache) const
+			{
+				if ((frameIndex % shadowmap.shadowmapComponent.cascadesCount) == shadowmap.cascade)
+					return false;
+
+				const auto &get = [&](const UniShadowedLight &l) -> std::pair<Vec3, Vec3>
+				{
+					const Mat4 &m = l.shadowMat[shadowmap.cascade];
+					const Vec3 f = Vec3(m * Vec4(0, 0, 0, 1)); // origin
+					const Vec3 s = Vec3(m * Vec4(0, 0, -1, 0)); // forward
+					return { f, s };
+				};
+
+				const auto c = get(shadowmap.shadowUni);
+				const auto d = get(cache);
+				return distance(c.first, d.first) < 0.1 && distance(c.second, d.second) < 0.01;
+			}
+
 			void initializeShadowmapCascade()
 			{
 				CAGE_ASSERT(shadowmap->lightComponent.lightType == LightTypeEnum::Directional);
@@ -1557,16 +1575,16 @@ namespace cage
 
 				// progressive rendering
 				Holder<UniShadowedLight> cache = provisionalGraphics->cpuBuffer<UniShadowedLight>(Stringizer() + name + "_cache_" + shadowmap->cascade);
-				if ((frameIndex % sc.cascadesCount) == shadowmap->cascade)
-				{
-					// render the cascade
-					*cache = shadowmap->shadowUni;
-				}
-				else
+				if (allowShadowmapCacheReuse(*shadowmap, *cache))
 				{
 					// reuse from earlier
 					shadowmap->shadowUni = *cache;
 					shadowmap->doesRendering = false;
+				}
+				else
+				{
+					// render the cascade
+					*cache = shadowmap->shadowUni;
 				}
 			}
 
