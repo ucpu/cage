@@ -18,9 +18,9 @@ namespace cage
 		String name;
 		ScreenSpaceEffectsComponent effects;
 		Mat4 projection;
+		CameraCommonProperties camera;
 		Transform transform;
 		TextureHandle target;
-		CameraCommonProperties camera;
 		LodSelection lodSelection;
 		uint64 currentTime = 0;
 		uint64 elapsedTime = 1'000'000 / 60; // microseconds since last frame

@@ -198,6 +198,7 @@ namespace cage
 			LightComponent lightComponent;
 			ShadowmapComponent shadowmapComponent;
 			uint32 cascade = 0;
+			bool doesRendering = true;
 		};
 
 		struct RenderPipelineImpl : public RenderPipelineConfig
@@ -1364,7 +1365,8 @@ namespace cage
 
 				// ensure that shadowmaps are rendered before the camera
 				for (auto &shm : data->shadowmaps)
-					queue->enqueue(std::move(shm->renderQueue));
+					if (shm->renderQueue)
+						queue->enqueue(std::move(shm->renderQueue));
 
 				queue->enqueue(std::move(renderQueue));
 				return queue;
@@ -1552,6 +1554,20 @@ namespace cage
 				static constexpr Mat4 bias = Mat4(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 				shadowmap->shadowUni.shadowMat[shadowmap->cascade] = bias * viewProj;
 				shadowmap->shadowUni.cascadesDepths[shadowmap->cascade] = splitFar;
+
+				// progressive rendering
+				Holder<UniShadowedLight> cache = provisionalGraphics->cpuBuffer<UniShadowedLight>(Stringizer() + name + "_cache_" + shadowmap->cascade);
+				if ((frameIndex % sc.cascadesCount) == shadowmap->cascade)
+				{
+					// render the cascade
+					*cache = shadowmap->shadowUni;
+				}
+				else
+				{
+					// reuse from earlier
+					shadowmap->shadowUni = *cache;
+					shadowmap->doesRendering = false;
+				}
 			}
 
 			void initializeShadowmapSingle()
@@ -1586,19 +1602,20 @@ namespace cage
 				{
 					case LightTypeEnum::Directional:
 					{
+						CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= CAGE_SHADER_MAX_SHADOWMAPSCASCADES);
 						Holder<ProvisionalTexture> tex;
 						{
-							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_cascades_" + sc.resolution;
+							const String name = Stringizer() + this->name + "_shadowmap_" + e->id() + "_cascades_" + sc.resolution + "_" + sc.cascadesCount;
 							tex = provisionalGraphics->texture(name, GL_TEXTURE_2D_ARRAY,
-								[resolution = sc.resolution](Texture *t)
+								[resolution = sc.resolution, cascadesCount = sc.cascadesCount](Texture *t)
 								{
-									t->initialize(Vec3i(resolution, resolution, CAGE_SHADER_MAX_SHADOWMAPSCASCADES), 1, GL_DEPTH_COMPONENT24);
+									t->initialize(Vec3i(resolution, resolution, cascadesCount), 1, GL_DEPTH_COMPONENT24);
 									t->filters(GL_LINEAR, GL_LINEAR, 16);
 									t->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 								});
 						}
 						ShadowmapData *first = nullptr;
-						for (uint32 cascade = 0; cascade < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; cascade++)
+						for (uint32 cascade = 0; cascade < sc.cascadesCount; cascade++)
 						{
 							auto data = createShadowmapPipeline(e, lc, sc);
 							data->shadowmap->cascade = cascade;
@@ -1611,7 +1628,8 @@ namespace cage
 								first->shadowUni.cascadesDepths[cascade] = data->shadowmap->shadowUni.cascadesDepths[cascade];
 								first->shadowUni.shadowMat[cascade] = data->shadowmap->shadowUni.shadowMat[cascade];
 							}
-							outputTasks.push_back(tasksRunAsync<RenderPipelineImpl>("render shadowmap cascade", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
+							if (data->shadowmap->doesRendering)
+								outputTasks.push_back(tasksRunAsync<RenderPipelineImpl>("render shadowmap cascade", [](RenderPipelineImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
 						}
 						break;
 					}

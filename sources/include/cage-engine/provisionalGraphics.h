@@ -42,10 +42,22 @@ namespace cage
 		Holder<ProvisionalTexture> texture(const String &name, std::function<void(Texture *)> &&init = {});
 		Holder<ProvisionalTexture> texture(const String &name, uint32 target, std::function<void(Texture *)> &&init = {});
 
+		template<class T>
+		requires(std::is_default_constructible_v<T> && std::is_trivially_destructible_v<T> && std::is_same_v<std::remove_cvref_t<T>, T>)
+		Holder<T> cpuBuffer(const String &name)
+		{
+			auto h = cpuBuffer_(name, sizeof(T), [](void *ptr) -> void { new (ptr, privat::OperatorNewTrait()) T(); });
+			T *ptr = (T *)+h;
+			return Holder<T>(ptr, std::move(h));
+		}
+
 		// section: thread-safe, requires opengl context
 
-		void reset(); // erase data not used (resolved) since last reset
+		void update(); // erase data not used (resolved) since last update
 		void purge(); // erase all data unconditionally
+
+	private:
+		Holder<void> cpuBuffer_(const String &name, uintPtr size, Delegate<void(void *)> &&init);
 	};
 
 	CAGE_ENGINE_API Holder<ProvisionalGraphics> newProvisionalGraphics();

@@ -466,8 +466,8 @@ namespace cage
 				renderQueue->dispatch();
 
 				{
-					const auto _ = ProfilingScope("reset provisionals");
-					engineProvisionalGraphics()->reset();
+					const auto _ = ProfilingScope("update provisionals");
+					engineProvisionalGraphics()->update();
 				}
 
 				// check gl errors (even in release, but do not halt the game)

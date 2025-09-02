@@ -1,6 +1,7 @@
 #include <set>
 
 #include <cage-core/concurrent.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/string.h>
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/opengl.h>
@@ -54,6 +55,17 @@ namespace cage
 			ProvisionalTextureHandleImpl(const String &name) : name(name) {}
 		};
 
+		class ProvisionalCpuBufferImpl
+		{
+		public:
+			const String name;
+			MemoryBuffer result;
+			ProvisionalGraphicsImpl *impl = nullptr;
+			uint32 usage = UsageDuration;
+
+			ProvisionalCpuBufferImpl(const String &name) : name(name) {}
+		};
+
 		class ProvisionalGraphicsImpl : public ProvisionalGraphics
 		{
 		public:
@@ -73,7 +85,7 @@ namespace cage
 					return it->share();
 				}
 
-				void reset()
+				void update()
 				{
 					ScopeLock lock(mutex);
 					std::erase_if(data,
@@ -119,6 +131,7 @@ namespace cage
 			Container<ProvisionalUniformBufferImpl> uniformBuffers;
 			Container<ProvisionalFrameBufferHandleImpl> frameBuffers;
 			Container<ProvisionalTextureHandleImpl> textures;
+			Container<ProvisionalCpuBufferImpl> cpuBuffers;
 
 			Holder<ProvisionalUniformBuffer> uniformBuffer(const String &name, std::function<void(UniformBuffer *)> &&init)
 			{
@@ -151,11 +164,27 @@ namespace cage
 				return std::move(t).cast<ProvisionalTexture>();
 			}
 
-			void reset()
+			Holder<void> cpuBuffer(const String &name, uintPtr size, Delegate<void(void *)> &&init)
 			{
-				uniformBuffers.reset();
-				textures.reset();
-				frameBuffers.reset();
+				CAGE_ASSERT(size > 0);
+				auto t = cpuBuffers.acquire(name);
+				if (t->result.size() == 0)
+				{
+					t->result.allocate(size);
+					init(t->result.data());
+				}
+				CAGE_ASSERT(t->result.size() == size);
+				t->usage = UsageDuration;
+				void *ptr = t->result.data();
+				return Holder<void>(ptr, std::move(t));
+			}
+
+			void update()
+			{
+				uniformBuffers.update();
+				textures.update();
+				frameBuffers.update();
+				cpuBuffers.update();
 			}
 
 			void purge()
@@ -163,6 +192,7 @@ namespace cage
 				uniformBuffers.purge();
 				textures.purge();
 				frameBuffers.purge();
+				cpuBuffers.purge();
 			}
 		};
 	}
@@ -244,16 +274,22 @@ namespace cage
 		return impl->texture(name, std::move(init), target);
 	}
 
-	void ProvisionalGraphics::reset()
+	void ProvisionalGraphics::update()
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
-		impl->reset();
+		impl->update();
 	}
 
 	void ProvisionalGraphics::purge()
 	{
 		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		impl->purge();
+	}
+
+	Holder<void> ProvisionalGraphics::cpuBuffer_(const String &name, uintPtr size, Delegate<void(void *)> &&init)
+	{
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
+		return impl->cpuBuffer(name, size, std::move(init));
 	}
 
 	Holder<ProvisionalGraphics> newProvisionalGraphics()
