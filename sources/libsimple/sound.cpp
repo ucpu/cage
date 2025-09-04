@@ -2,14 +2,12 @@
 #include <vector>
 
 #include "engine.h"
-#include "interpolationTimingCorrector.h"
 
 #include <cage-core/assetsManager.h>
-#include <cage-core/entities.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/entitiesVisitor.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/profiling.h>
-#include <cage-core/scopeGuard.h>
-#include <cage-core/swapBufferGuard.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/soundsVoices.h>
@@ -49,13 +47,6 @@ namespace cage
 			uintPtr id = 0;
 		};
 
-		struct Emit
-		{
-			std::vector<EmitListener> listeners;
-			std::vector<EmitSound> sounds;
-			uint64 time = 0;
-		};
-
 		struct PrepareListener
 		{
 			Holder<VoicesMixer> mixer;
@@ -66,72 +57,62 @@ namespace cage
 
 		struct SoundPrepareImpl
 		{
-			Emit emitBuffers[3];
-			Emit *emitRead = nullptr, *emitWrite = nullptr;
-			Holder<SwapBufferGuard> swapController;
-
-			InterpolationTimingCorrector itc;
-			uint64 emitTime = 0;
-			uint64 dispatchTime = 0;
-			Real interFactor;
-
+			Holder<Mutex> mut = newMutex();
+			std::vector<EmitListener> listeners;
+			std::vector<EmitSound> sounds;
 			ankerl::unordered_dense::map<uintPtr, PrepareListener> listenersMapping;
 
-			explicit SoundPrepareImpl(const EngineCreateConfig &config)
-			{
-				SwapBufferGuardCreateConfig cfg;
-				cfg.buffersCount = 3;
-				cfg.repeatedReads = true;
-				swapController = newSwapBufferGuard(cfg);
-			}
+			explicit SoundPrepareImpl(const EngineCreateConfig &config) {}
 
 			void finalize() { listenersMapping.clear(); }
 
-			void emit(uint64 time)
+			void emit()
 			{
-				auto lock = swapController->write();
-				if (!lock)
-					return;
+				auto lock = ScopeLock(mut);
 
-				emitWrite = &emitBuffers[lock.index()];
-				ScopeGuard guard([&]() { emitWrite = nullptr; });
-				emitWrite->listeners.clear();
-				emitWrite->sounds.clear();
-				emitWrite->time = time;
+				listeners.clear();
+				sounds.clear();
+
+				EntityComponent *sceneComponent = engineEntities()->component<SceneComponent>();
+				EntityComponent *spawnTimeComponent = engineEntities()->component<SpawnTimeComponent>();
 
 				// emit listeners
-				for (Entity *e : engineEntities()->component<ListenerComponent>()->entities())
-				{
-					EmitListener c;
-					c.transform = e->value<TransformComponent>();
-					if (e->has(transformHistoryComponent))
-						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
-					else
-						c.transformHistory = c.transform;
-					c.listener = e->value<ListenerComponent>();
-					if (e->has<SceneComponent>())
-						c.scene = e->value<SceneComponent>();
-					c.id = (uintPtr)e;
-					emitWrite->listeners.push_back(c);
-				}
+				entitiesVisitor(
+					[&](Entity *e, const TransformComponent &tr, const ListenerComponent &ls)
+					{
+						EmitListener c;
+						c.transform = tr;
+						if (e->has(transformHistoryComponent))
+							c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
+						else
+							c.transformHistory = c.transform;
+						c.listener = ls;
+						if (e->has(sceneComponent))
+							c.scene = e->value<SceneComponent>(sceneComponent);
+						c.id = (uintPtr)e;
+						listeners.push_back(c);
+					},
+					engineEntities(), false);
 
 				// emit sounds
-				for (Entity *e : engineEntities()->component<SoundComponent>()->entities())
-				{
-					EmitSound c;
-					c.transform = e->value<TransformComponent>();
-					if (e->has(transformHistoryComponent))
-						c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
-					else
-						c.transformHistory = c.transform;
-					c.sound = e->value<SoundComponent>();
-					if (e->has<SpawnTimeComponent>())
-						c.time = e->value<SpawnTimeComponent>();
-					if (e->has<SceneComponent>())
-						c.scene = e->value<SceneComponent>();
-					c.id = (uintPtr)e;
-					emitWrite->sounds.push_back(c);
-				}
+				entitiesVisitor(
+					[&](Entity *e, const TransformComponent &tr, const SoundComponent &snd)
+					{
+						EmitSound c;
+						c.transform = tr;
+						if (e->has(transformHistoryComponent))
+							c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
+						else
+							c.transformHistory = c.transform;
+						c.sound = snd;
+						if (e->has(spawnTimeComponent))
+							c.time = e->value<SpawnTimeComponent>(spawnTimeComponent);
+						if (e->has(sceneComponent))
+							c.scene = e->value<SceneComponent>(sceneComponent);
+						c.id = (uintPtr)e;
+						sounds.push_back(c);
+					},
+					engineEntities(), false);
 			}
 
 			void prepare(PrepareListener &l, Holder<Voice> &v, const EmitSound &e)
@@ -147,8 +128,7 @@ namespace cage
 					v = l.mixer->newVoice();
 
 				v->sound = std::move(s);
-				const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
-				v->position = t.position;
+				v->position = e.transform.position;
 				v->startTime = e.time.spawnTime;
 				v->attenuation = e.sound.attenuation;
 				v->minDistance = e.sound.minDistance;
@@ -167,9 +147,8 @@ namespace cage
 						l.chaining = engineSceneMixer()->newVoice();
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
-					const Transform t = interpolate(e.transformHistory, e.transform, interFactor);
-					l.mixer->orientation = t.orientation;
-					l.mixer->position = t.position;
+					l.mixer->orientation = e.transform.orientation;
+					l.mixer->position = e.transform.position;
 					l.mixer->maxActiveSounds = e.listener.maxSounds;
 					l.mixer->maxGainThreshold = e.listener.maxGainThreshold;
 					l.mixer->gain = e.listener.gain;
@@ -177,67 +156,51 @@ namespace cage
 
 				{ // remove obsolete
 					FlatSet<uintPtr> used;
-					used.reserve(emitRead->sounds.size());
-					for (const EmitSound &s : emitRead->sounds)
+					used.reserve(sounds.size());
+					for (const EmitSound &s : sounds)
 						if (e.scene.sceneMask & s.scene.sceneMask)
 							used.insert(e.id);
 					eraseUnused(l.voicesMapping, used);
 				}
 
-				for (const EmitSound &s : emitRead->sounds)
+				for (const EmitSound &s : sounds)
 					if (e.scene.sceneMask & s.scene.sceneMask)
 						prepare(l, l.voicesMapping[s.id], s);
 			}
 
-			void prepare()
+			void dispatch(uint64 time)
 			{
+				auto lock = ScopeLock(mut);
+
 				{ // remove obsolete
 					FlatSet<uintPtr> used;
-					used.reserve(emitRead->listeners.size());
-					for (const EmitListener &e : emitRead->listeners)
+					used.reserve(listeners.size());
+					for (const EmitListener &e : listeners)
 						used.insert(e.id);
 					eraseUnused(listenersMapping, used);
 				}
 
-				for (const EmitListener &e : emitRead->listeners)
+				for (const EmitListener &e : listeners)
 					prepare(listenersMapping[e.id], e);
+
+				{
+					ProfilingScope profiling("speaker process");
+					engineSpeaker()->process(time, controlThread().updatePeriod());
+				}
 			}
-
-			void tick(uint64 time)
-			{
-				auto lock = swapController->read();
-				if (!lock)
-					return;
-
-				ProfilingScope profiling("sound tick");
-				emitRead = &emitBuffers[lock.index()];
-				ScopeGuard guard([&]() { emitRead = nullptr; });
-				emitTime = emitRead->time;
-				const uint64 period = controlThread().updatePeriod();
-				dispatchTime = itc(emitTime, time, period);
-				interFactor = saturate(Real(dispatchTime - emitTime) / period);
-				prepare();
-			}
-
-			void dispatch() { engineSpeaker()->process(dispatchTime); }
 		};
 
 		SoundPrepareImpl *soundPrepare;
 	}
 
-	void soundEmit(uint64 time)
+	void soundEmit()
 	{
-		soundPrepare->emit(time);
+		soundPrepare->emit();
 	}
 
-	void soundTick(uint64 time)
+	void soundDispatch(uint64 time)
 	{
-		soundPrepare->tick(time);
-	}
-
-	void soundDispatch()
-	{
-		soundPrepare->dispatch();
+		soundPrepare->dispatch(time);
 	}
 
 	void soundFinalize()

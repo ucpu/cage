@@ -20,9 +20,8 @@ namespace cage
 	void soundCreate(const EngineCreateConfig &config);
 	void soundDestroy();
 	void soundFinalize();
-	void soundEmit(uint64 time);
-	void soundTick(uint64 time);
-	void soundDispatch();
+	void soundEmit(); // control thread
+	void soundDispatch(uint64 time); // sound thread
 
 	extern EntityComponent *transformHistoryComponent;
 }

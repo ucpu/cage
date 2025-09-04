@@ -296,12 +296,8 @@ namespace cage
 					soundThread().sound.dispatch();
 				}
 				{
-					ProfilingScope profiling("sound run");
-					soundTick(soundUpdateSchedule->time());
-				}
-				{
 					ProfilingScope profiling("sound dispatch");
-					soundDispatch();
+					soundDispatch(soundUpdateSchedule->time());
 				}
 			}
 
@@ -378,7 +374,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("sound emit");
-					soundEmit(controlTime);
+					soundEmit();
 				}
 				{
 					ProfilingScope profiling("graphics emit");
