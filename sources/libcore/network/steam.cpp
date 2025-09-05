@@ -151,33 +151,12 @@ namespace cage
 				InitializerConfiguration()
 				{
 					utils->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
-					float packetLoss = confSimulatedPacketLoss * 100;
-					utils->SetConfigValue(k_ESteamNetworkingConfig_FakePacketLoss_Send, k_ESteamNetworkingConfig_Global, 0, k_ESteamNetworkingConfig_Float, &packetLoss);
-					sint32 packetDelay = confSimulatedPacketDelay;
-					utils->SetConfigValue(k_ESteamNetworkingConfig_FakePacketLag_Send, k_ESteamNetworkingConfig_Global, 0, k_ESteamNetworkingConfig_Int32, &packetDelay);
+					utils->SetGlobalConfigValueFloat(k_ESteamNetworkingConfig_FakePacketLoss_Send, confSimulatedPacketLoss * 100);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_FakePacketLag_Send, (sint32)confSimulatedPacketDelay);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
 				}
 			};
 			static InitializerConfiguration initializerConfiguration;
-
-	#if defined(CAGE_USE_STEAM_SDK)
-			struct InitializerSdk
-			{
-				InitializerSdk()
-				{
-					{
-						ESteamNetworkingAvailability a = sockets->InitAuthentication();
-						while (!networkingAvailable(a))
-						{
-							threadSleep(5'000);
-							SteamAPI_RunCallbacks();
-							SteamGameServer_RunCallbacks();
-							a = sockets->GetAuthenticationStatus(nullptr);
-						}
-					}
-				}
-			};
-			static InitializerSdk initializerSdk;
-	#endif
 
 			if (useRelay)
 			{
@@ -194,6 +173,7 @@ namespace cage
 								break;
 							threadSleep(5'000);
 							SteamAPI_RunCallbacks();
+							SteamGameServer_RunCallbacks();
 						}
 					}
 				};
