@@ -51,8 +51,24 @@ namespace cage
 		{
 			Holder<VoicesMixer> mixer;
 			Holder<Voice> chaining; // register this mixer in the engine scene mixer
+			ankerl::unordered_dense::map<uintPtr, Holder<Voice>> voicesMapping; // must be destroyed before the mixer
+			sint64 lastTime = 0;
+			sint64 dispatchTime = 0;
 
-			ankerl::unordered_dense::map<uintPtr, Holder<Voice>> voicesMapping;
+			void process(const SoundCallbackData &data)
+			{
+				CAGE_ASSERT(mixer);
+				// correction for time drift
+				const sint64 period = controlThread().updatePeriod();
+				const sint64 duration = sint64(data.frames) * 1'000'000 / data.sampleRate;
+				if (abs(lastTime - dispatchTime) > period)
+					lastTime = dispatchTime; // reset time
+				SoundCallbackData clb = data;
+				clb.time = lastTime;
+				lastTime += duration;
+				dispatchTime += duration;
+				mixer->process(clb);
+			}
 		};
 
 		struct SoundPrepareImpl
@@ -60,7 +76,7 @@ namespace cage
 			Holder<Mutex> mut = newMutex();
 			std::vector<EmitListener> listeners;
 			std::vector<EmitSound> sounds;
-			ankerl::unordered_dense::map<uintPtr, PrepareListener> listenersMapping;
+			ankerl::unordered_dense::map<uintPtr, Holder<PrepareListener>> listenersMapping; // requires stable pointers
 
 			explicit SoundPrepareImpl(const EngineCreateConfig &config) {}
 
@@ -138,20 +154,21 @@ namespace cage
 				v->loop = e.sound.loop;
 			}
 
-			void prepare(PrepareListener &l, const EmitListener &e)
+			void prepare(PrepareListener &l, const EmitListener &e, uint64 dispatchTime)
 			{
 				{ // listener
 					if (!l.mixer)
 					{
 						l.mixer = newVoicesMixer();
 						l.chaining = engineSceneMixer()->newVoice();
-						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
+						l.chaining->callback.bind<PrepareListener, &PrepareListener::process>(&l);
 					}
 					l.mixer->orientation = e.transform.orientation;
 					l.mixer->position = e.transform.position;
 					l.mixer->maxActiveSounds = e.listener.maxSounds;
 					l.mixer->maxGainThreshold = e.listener.maxGainThreshold;
 					l.mixer->gain = e.listener.gain;
+					l.dispatchTime = dispatchTime;
 				}
 
 				{ // remove obsolete
@@ -168,7 +185,7 @@ namespace cage
 						prepare(l, l.voicesMapping[s.id], s);
 			}
 
-			void dispatch(uint64 time)
+			void dispatch(uint64 dispatchTime)
 			{
 				auto lock = ScopeLock(mut);
 
@@ -181,11 +198,16 @@ namespace cage
 				}
 
 				for (const EmitListener &e : listeners)
-					prepare(listenersMapping[e.id], e);
+				{
+					Holder<PrepareListener> &h = listenersMapping[e.id];
+					if (!h)
+						h = systemMemory().createHolder<PrepareListener>();
+					prepare(*h, e, dispatchTime);
+				}
 
 				{
 					ProfilingScope profiling("speaker process");
-					engineSpeaker()->process(time, controlThread().updatePeriod());
+					engineSpeaker()->process(controlThread().updatePeriod());
 				}
 			}
 		};
@@ -198,9 +220,9 @@ namespace cage
 		soundPrepare->emit();
 	}
 
-	void soundDispatch(uint64 time)
+	void soundDispatch(uint64 dispatchTime)
 	{
-		soundPrepare->dispatch(time);
+		soundPrepare->dispatch(dispatchTime);
 	}
 
 	void soundFinalize()

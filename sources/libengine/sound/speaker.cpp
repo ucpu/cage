@@ -128,43 +128,23 @@ namespace cage
 			lock_free_audio_ring_buffer<float> ring;
 			Delegate<void(const SoundCallbackData &)> callback;
 			std::vector<float> buffer;
-			uint64 lastTime = m;
+			uint64 playbackTime = applicationTime();
 			const uint32 channels = 0;
 			const uint32 sampleRate = 0;
 
 			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SoundCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate) {}
 
-			void process(uint64 currentTime, uint64 expectedPeriod)
+			void process(uint64 expectedPeriod)
 			{
-				if (currentTime <= lastTime)
-				{
-					lastTime = currentTime;
-					return;
-				}
-
-				uint32 request = numeric_cast<uint32>((currentTime - lastTime) * sampleRate / 1'000'000);
-
-				{ // maintain more consistent delay
-					const uint32 assumedOccupied = ring.capacity() - ring.available_write();
-					const uint32 intendedOccupied = expectedPeriod * 2 * sampleRate / 1'000'000;
-					const uint32 toFill = intendedOccupied > assumedOccupied ? intendedOccupied - assumedOccupied : 0;
-					const uint32 threshold = expectedPeriod * 2 / 3 * sampleRate / 1'000'000;
-					const uint32 diff = request > toFill ? request - toFill : toFill - request;
-					if (diff > threshold)
-					{
-						// reset timing
-#ifdef GCHL_RINGBUFFER_LOGGING
-						CAGE_LOG(SeverityEnum::Warning, "speaker", "sound ringbuffer resets timing");
-#endif // GCHL_RINGBUFFER_LOGGING
-						request = toFill;
-						lastTime = currentTime - request * 1'000'000 / sampleRate;
-					}
-				}
+				// maintain consistent delay
+				const uint32 assumedOccupied = ring.capacity() - ring.available_write();
+				const uint32 intendedOccupied = expectedPeriod * 2 * sampleRate / 1'000'000;
+				const uint32 request = intendedOccupied > assumedOccupied ? intendedOccupied - assumedOccupied : 0;
 
 				SoundCallbackData data;
 				data.frames = min(request, numeric_cast<uint32>(ring.available_write()));
-				data.time = lastTime; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
-				lastTime += request * 1'000'000 / sampleRate;
+				data.time = playbackTime; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
+				playbackTime += request * 1'000'000 / sampleRate;
 				if (request > data.frames)
 				{
 					// sound buffer overflow
@@ -315,10 +295,10 @@ namespace cage
 				cageCheckCubebError(cubeb_stream_stop(stream));
 			}
 
-			void process(uint64 currentTime, uint64 expectedPeriod)
+			void process(uint64 expectedPeriod)
 			{
 				if (ringBuffer)
-					ringBuffer->process(currentTime, expectedPeriod);
+					ringBuffer->process(expectedPeriod);
 			}
 
 			void dataCallback(float *output_buffer, uint32 nframes)
@@ -391,10 +371,10 @@ namespace cage
 		return impl->started;
 	}
 
-	void Speaker::process(uint64 timeStamp, uint64 expectedPeriod)
+	void Speaker::process(uint64 expectedPeriod)
 	{
 		SpeakerImpl *impl = (SpeakerImpl *)this;
-		impl->process(timeStamp, expectedPeriod);
+		impl->process(expectedPeriod);
 	}
 
 	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config)
