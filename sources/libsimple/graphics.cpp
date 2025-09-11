@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "engine.h"
-#include "interpolationTimingCorrector.h"
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
@@ -11,10 +10,12 @@
 #include <cage-core/config.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/hashString.h>
+#include <cage-core/math.h>
 #include <cage-core/profiling.h>
 #include <cage-core/scopeGuard.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
+#include <cage-core/variableSmoothingBuffer.h>
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/model.h>
@@ -35,6 +36,19 @@ namespace cage
 	namespace
 	{
 		const ConfigFloat confRenderGamma("cage/graphics/gamma", 2.2);
+
+		struct InterpolationTimingCorrector
+		{
+			uint64 operator()(uint64 emit, uint64 dispatch, uint64 step)
+			{
+				CAGE_ASSERT(step > 0);
+				corrections.add((sint64)emit - (sint64)dispatch);
+				const sint64 c = corrections.smooth();
+				return max(emit, dispatch + c + step / 2);
+			}
+
+			VariableSmoothingBuffer<sint64, 60> corrections;
+		};
 
 		struct TimeQuery : Noncopyable
 		{
