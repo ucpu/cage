@@ -11,6 +11,7 @@
 	#include "net.h"
 
 	#include <cage-core/concurrent.h>
+	#include <cage-core/math.h>
 	#include <cage-core/concurrentQueue.h>
 	#include <cage-core/endianness.h>
 	#include <cage-core/networkSteam.h>
@@ -95,7 +96,9 @@ namespace cage
 						return SeverityEnum::Note;
 				}
 			}();
-			CAGE_LOG(level, "steamsocks", pszMsg);
+			const uint32 len = min((uint32)std::strlen(pszMsg), (uint32)500);
+			const String msg = String(PointerRange<const char>(pszMsg, pszMsg + len));
+			CAGE_LOG(level, "steamsocks", msg);
 		}
 
 	#if defined(CAGE_USE_STEAM_SDK)
@@ -153,7 +156,7 @@ namespace cage
 					utils->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
 					utils->SetGlobalConfigValueFloat(k_ESteamNetworkingConfig_FakePacketLoss_Send, confSimulatedPacketLoss * 100);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_FakePacketLag_Send, (sint32)confSimulatedPacketDelay);
-					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
+					//utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
 				}
 			};
 			static InitializerConfiguration initializerConfiguration;

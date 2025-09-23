@@ -12,7 +12,7 @@ vec4 sampleTextureAnimation(sampler2DArray tex, vec2 uv, vec4 anim, vec4 mat)
 	else
 		sampl = clamp(sampl, 0, float(frames) - 1);
 	int i = int(sampl) % frames;
-	float f = sampl - float(int(sampl));	
+	float f = sampl - float(int(sampl));
 	vec4 a = texture(tex, vec3(uv, float(i)));
 	vec4 b = texture(tex, vec3(uv, float((i + 1) % frames)));
 	return mix(a, b, f);
