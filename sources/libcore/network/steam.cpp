@@ -161,6 +161,24 @@ namespace cage
 			};
 			static InitializerConfiguration initializerConfiguration;
 
+	#if defined(CAGE_USE_STEAM_SDK)
+			struct InitializerAuthentication
+			{
+				InitializerAuthentication()
+				{
+					ESteamNetworkingAvailability a = sockets->InitAuthentication();
+					while (!networkingAvailable(a))
+					{
+						threadSleep(5'000);
+						SteamAPI_RunCallbacks();
+						SteamGameServer_RunCallbacks();
+						a = sockets->GetAuthenticationStatus(nullptr);
+					}
+				}
+			};
+			static InitializerAuthentication initializerAuthentication;
+	#endif
+
 			if (useRelay)
 			{
 	#if defined(CAGE_USE_STEAM_SDK)
