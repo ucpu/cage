@@ -68,7 +68,7 @@ namespace cage
 	CAGE_CORE_API Holder<SteamServer> newSteamServer(const SteamServerCreateConfig &config);
 
 	// requires steam sdk
-	// permanently switches implementation to the dedicated server api
+	// permanently switches implementation to the dedicated server
 	// must be used before any other functions in this api
 	// the dedicated server must already be initialized
 	// cannot mix client api with dedicated server api
