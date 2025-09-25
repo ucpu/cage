@@ -38,11 +38,13 @@ namespace cage
 
 	void openUrl(const String &url)
 	{
+		CAGE_LOG(SeverityEnum::Info, "openUrl", Stringizer() + "opening browser with url: " + url);
 #ifdef CAGE_SYSTEM_WINDOWS
 		if (!windowsTryFile(url))
 			ShellExecute(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #else
-		std::system((Stringizer() + "xdg-open " + url).value.c_str());
+		const String s = replace(url, "\"", "\\\"");
+		std::system((Stringizer() + "xdg-open \"" + s + "\"").value.c_str());
 #endif
 	}
 }

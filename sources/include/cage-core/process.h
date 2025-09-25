@@ -36,6 +36,8 @@ namespace cage
 	CAGE_CORE_API void installSigTermHandler(Delegate<void()> handler);
 	CAGE_CORE_API void installSigIntHandler(Delegate<void()> handler);
 
+	// the url may need some preparation (replace spaces with %20)
+	// the function may silently fail
 	CAGE_CORE_API void openUrl(const String &url);
 }
 
