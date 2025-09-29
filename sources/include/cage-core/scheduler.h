@@ -67,6 +67,7 @@ namespace cage
 	{
 	public:
 		void run();
+		void resume();
 		void stop(); // can be called from any thread
 
 		Holder<Schedule> newSchedule(const ScheduleCreateConfig &config);

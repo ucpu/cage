@@ -257,6 +257,11 @@ namespace cage
 			void run()
 			{
 				reset();
+				resume();
+			}
+
+			void resume()
+			{
 				checkNewSchedules();
 				stopping = false;
 				while (!stopping && !scheds.empty())
@@ -353,6 +358,12 @@ namespace cage
 	{
 		SchedulerImpl *impl = (SchedulerImpl *)this;
 		impl->run();
+	}
+
+	void Scheduler::resume()
+	{
+		SchedulerImpl *impl = (SchedulerImpl *)this;
+		impl->resume();
 	}
 
 	void Scheduler::stop()
