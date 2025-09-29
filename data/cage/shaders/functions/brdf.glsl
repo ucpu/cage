@@ -29,6 +29,14 @@ float egacGeometrySmith(float roughness, float NoL, float NoV)
 	return ggx1 * ggx2;
 }
 
+float egacDiffuseBurley(float roughness, float NoV, float NoL, float VoH)
+{
+	float FD90 = 0.5 + 2 * VoH * VoH * roughness;
+	float lightScatter = 1 + (FD90 - 1) * pow(1 - NoL, 5);
+	float viewScatter  = 1 + (FD90 - 1) * pow(1 - NoV, 5);
+	return (lightScatter * viewScatter) / PI;
+}
+
 vec3 brdf(vec3 N, vec3 L, vec3 V, vec3 albedo, float roughness, float metallic)
 {
 	vec3 H = normalize(L + V);
@@ -37,16 +45,23 @@ vec3 brdf(vec3 N, vec3 L, vec3 V, vec3 albedo, float roughness, float metallic)
 	float NoH = max(dot(N, H), 0); 
 	float VoH = max(dot(V, H), 0);
 
+	// frenel
 	// https://learnopengl.com/PBR/Lighting
 	// https://github.com/pumexx/pumex/blob/86fda7fa351d00bd5918ad90899ce2d6bb8b1dfe/examples/pumexdeferred/shaders/deferred_composite.frag
 	vec3 F0 = mix(vec3(0.04), albedo, metallic);
 	vec3 F = egacFresnelSchlick(F0, VoH); // VoH or NoV
 	vec3 kD = (vec3(1) - F) * (1 - metallic);
 
+	// diffuse (Burley)
+	float diffuseTerm = egacDiffuseBurley(roughness, NoV, NoL, VoH);
+	vec3  diffuse = kD * albedo * diffuseTerm;
+
+	// specular (Cook-Torrance GGX)
 	float NDF = egacDistributionGGX(roughness, NoH);
 	float G = egacGeometrySmith(roughness, NoL, NoV);
-
 	vec3 nominator = NDF * G * F;
 	float denominator = 4 * NoV * NoL + 0.001;
-	return min(kD * albedo / PI + nominator / denominator, 1) * NoL;
+	vec3 specular = nominator / denominator;
+
+	return min(diffuse + specular, 1) * NoL;
 }
