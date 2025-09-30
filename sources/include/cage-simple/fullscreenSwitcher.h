@@ -14,16 +14,22 @@ namespace cage
 		ModifiersFlags keyModifiers = ModifiersFlags::None;
 
 		void update(bool fullscreen);
+		void toggle();
+		void restoreFromConfig();
 	};
+
+	namespace detail
+	{
+		bool defaultFullscreenSettingFromEnvironment();
+	}
 
 	struct FullscreenSwitcherCreateConfig
 	{
 		String configPrefix;
 		Window *window = nullptr;
-		bool defaultFullscreen = true;
+		bool defaultFullscreen = detail::defaultFullscreenSettingFromEnvironment();
 
 		FullscreenSwitcherCreateConfig();
-		explicit FullscreenSwitcherCreateConfig(bool defaultFullscreen);
 	};
 
 	Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config);

@@ -109,7 +109,7 @@ namespace cage
 			{
 				if (in.mods == keyModifiers && in.key == keyToggleFullscreen)
 				{
-					update(!window->isFullscreen());
+					toggle();
 					return true;
 				}
 				return false;
@@ -123,9 +123,21 @@ namespace cage
 		impl->update(fullscreen);
 	}
 
-	namespace
+	void FullscreenSwitcher::toggle()
 	{
-		bool defaultFullscreenEnvironment()
+		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl *)this;
+		update(!impl->window->isFullscreen());
+	}
+
+	void FullscreenSwitcher::restoreFromConfig()
+	{
+		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl *)this;
+		impl->update(impl->confFullscreenEnabled);
+	}
+
+	namespace detail
+	{
+		bool defaultFullscreenSettingFromEnvironment()
 		{
 			const char *env = std::getenv("CAGE_FULLSCREEN_DEFAULT");
 			if (!env)
@@ -144,9 +156,7 @@ namespace cage
 		}
 	}
 
-	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig() : FullscreenSwitcherCreateConfig(defaultFullscreenEnvironment()) {}
-
-	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : defaultFullscreen(defaultFullscreen)
+	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig()
 	{
 		configPrefix = detail::globalConfigPrefix();
 		window = cage::engineWindow();
