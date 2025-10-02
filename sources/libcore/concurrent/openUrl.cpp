@@ -18,33 +18,35 @@ namespace cage
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		bool windowsTryFile(const String &url)
+		void windowsOpenUrl(const String &url)
 		{
-			if (!isPattern(toLower(url), "file:/", "", ""))
-				return false;
-			String file = subString(url, 0, find(url, '?'));
-			file = trim(subString(file, 5, m), true, false, "/");
-			char tmp[MAX_PATH + 1] = {};
-			auto res = FindExecutable(file.c_str(), NULL, tmp); // find default browser
-			if (res > (HINSTANCE)32)
+			const String esc = Stringizer() + "\"" + url + "\"";
+			if (isPattern(toLower(url), "file:/", "", ""))
 			{
-				res = ShellExecute(NULL, "open", tmp, url.c_str(), NULL, SW_SHOWNORMAL);
-				return res > (HINSTANCE)32;
+				String file = subString(url, 0, find(url, '?'));
+				file = trim(subString(file, 5, m), true, false, "/");
+				char tmp[MAX_PATH + 1] = {};
+				auto res = FindExecutable(file.c_str(), NULL, tmp); // find default browser
+				if (res > (HINSTANCE)32)
+				{
+					res = ShellExecute(NULL, "open", tmp, esc.c_str(), NULL, SW_SHOWNORMAL);
+					if (res > (HINSTANCE)32)
+						return;
+				}
 			}
-			return false;
+			ShellExecute(NULL, "open", (Stringizer() + "\"" + url + "\"").value.c_str(), NULL, NULL, SW_SHOWNORMAL);
 		}
 #endif
 	}
 
-	void openUrl(const String &url)
+	void openUrl(const String &url_)
 	{
+		const String url = replace(url_, "\"", "\\\"");
 		CAGE_LOG(SeverityEnum::Info, "openUrl", Stringizer() + "opening browser with url: " + url);
 #ifdef CAGE_SYSTEM_WINDOWS
-		if (!windowsTryFile(url))
-			ShellExecute(NULL, "open", url.c_str(), NULL, NULL, SW_SHOWNORMAL);
+		windowsOpenUrl(url);
 #else
-		const String s = replace(url, "\"", "\\\"");
-		std::system((Stringizer() + "xdg-open \"" + s + "\"").value.c_str());
+		std::system((Stringizer() + "xdg-open \"" + url + "\"").value.c_str());
 #endif
 	}
 }

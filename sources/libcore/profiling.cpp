@@ -8,7 +8,6 @@
 	#include <cage-core/concurrent.h>
 	#include <cage-core/concurrentQueue.h>
 	#include <cage-core/config.h>
-	#include <cage-core/string.h>
 	#include <cage-core/files.h>
 	#include <cage-core/math.h>
 	#include <cage-core/networkWebsocket.h>
@@ -203,7 +202,7 @@ namespace cage
 							try
 							{
 								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
-								const String baseUrl = replace(pathWorkingDir(), " ", "%20") + "/profiling.htm";
+								const String baseUrl = pathWorkingDir() + "/profiling.htm";
 								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
 								openUrl(url);
 							}
