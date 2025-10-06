@@ -31,8 +31,6 @@ jobs:
         git --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       shell: bash
@@ -124,8 +122,6 @@ jobs:
         ${{ matrix.compiler.cxx }} --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -184,8 +180,6 @@ jobs:
         sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -246,8 +240,6 @@ jobs:
         clang++ --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -289,8 +281,6 @@ jobs:
         clang++ --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |

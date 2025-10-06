@@ -1,0 +1,43 @@
+
+set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
+
+set(DAWN_ENABLE_INSTALL ON CACHE INTERNAL "Enable install step for Dawn libraries" FORCE)
+set(DAWN_ENABLE_D3D11 OFF CACHE INTERNAL "Enable compilation of the D3D11 backend" FORCE)
+set(DAWN_ENABLE_D3D12 OFF CACHE INTERNAL "Enable compilation of the D3D12 backend" FORCE)
+set(DAWN_ENABLE_METAL OFF CACHE INTERNAL "Enable compilation of the Metal backend" FORCE)
+set(DAWN_ENABLE_NULL OFF CACHE INTERNAL "Enable compilation of the Null backend" FORCE)
+set(DAWN_ENABLE_WEBGPU_ON_WEBGPU OFF CACHE INTERNAL "Enable compilation of the WebGPU backend" FORCE)
+set(DAWN_ENABLE_DESKTOP_GL OFF CACHE INTERNAL "Enable compilation of the OpenGL backend" FORCE)
+set(DAWN_ENABLE_OPENGLES OFF CACHE INTERNAL "Enable compilation of the OpenGL ES backend" FORCE)
+set(DAWN_ENABLE_VULKAN ON CACHE INTERNAL "Enable compilation of the Vulkan backend" FORCE)
+set(DAWN_USE_WAYLAND OFF CACHE INTERNAL "Enable support for Wayland surface" FORCE)
+set(DAWN_USE_X11 OFF CACHE INTERNAL "Enable support for X11 surface" FORCE)
+set(DAWN_USE_GLFW OFF CACHE INTERNAL "Enable compilation of the GLFW windowing utils" FORCE)
+set(DAWN_USE_WINDOWS_UI OFF CACHE INTERNAL "Enable support for Windows UI surface" FORCE)
+set(DAWN_BUILD_SAMPLES OFF CACHE INTERNAL "Enables building Dawn's samples" FORCE)
+set(DAWN_BUILD_TESTS OFF CACHE INTERNAL "Enables building Dawn's tests" FORCE)
+set(DAWN_BUILD_PROTOBUF OFF CACHE INTERNAL "Build the protobuf dependencies" FORCE)
+set(DAWN_ENABLE_PIC ON CACHE INTERNAL "Build with Position-Independent-Code enabled" FORCE)
+set(DAWN_BUILD_MONOLITHIC_LIBRARY "STATIC" CACHE INTERNAL "Build monolithic library: SHARED, STATIC, or OFF." FORCE)
+
+set(TINT_BUILD_SPV_READER ON CACHE INTERNAL "Build the SPIR-V input reader" FORCE)
+set(TINT_BUILD_WGSL_READER ON CACHE INTERNAL "Build the WGSL input reader" FORCE)
+set(TINT_BUILD_GLSL_WRITER OFF CACHE INTERNAL "Build the GLSL output writer" FORCE)
+set(TINT_BUILD_GLSL_VALIDATOR OFF CACHE INTERNAL "Build the GLSL output validator" FORCE)
+set(TINT_BUILD_HLSL_WRITER OFF CACHE INTERNAL "Build the HLSL output writer" FORCE)
+set(TINT_BUILD_MSL_WRITER OFF CACHE INTERNAL "Build the MSL output writer" FORCE)
+set(TINT_BUILD_SPV_WRITER ON CACHE INTERNAL "Build the SPIR-V output writer" FORCE)
+set(TINT_BUILD_WGSL_WRITER ON CACHE INTERNAL "Build the WGSL output writer" FORCE)
+
+set(TINT_ENABLE_INSTALL OFF CACHE INTERNAL "Enable install step for Tint libraries" FORCE)
+set(TINT_BUILD_CMD_TOOLS OFF CACHE INTERNAL "Build the Tint command line tools" FORCE)
+set(TINT_BUILD_IR_BINARY OFF CACHE INTERNAL "Build IR binary format support" FORCE)
+set(TINT_BUILD_TESTS OFF CACHE INTERNAL "Build tests" FORCE)
+set(TINT_ENABLE_IR_VALIDATION ON CACHE INTERNAL "Enable IR validation for backend codegen" FORCE)
+
+add_subdirectory(dawn)
+
+set_target_properties(webgpu_dawn PROPERTIES PREFIX cage-)
+set_target_properties(webgpu_dawn PROPERTIES DEBUG_POSTFIX _debug)
+
+add_library(webgpu::dawn ALIAS webgpu_dawn)

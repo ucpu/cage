@@ -1,3 +1,4 @@
+
 # override cmake minimum version for dependencies
 set(CMAKE_POLICY_VERSION_MINIMUM 3.31)
 
@@ -92,18 +93,20 @@ add_subdirectory(mbedtls)
 add_subdirectory(curl)
 add_subdirectory(cpr)
 
-add_subdirectory(fastnoise)
+add_subdirectory(dawn)
 add_subdirectory(glad)
 add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(openxr-sdk)
+
+add_subdirectory(fastnoise)
 add_subdirectory(plf)
 add_subdirectory(simplefilewatcher)
 add_subdirectory(stb)
 add_subdirectory(unordered_dense)
 add_subdirectory(wamr)
 
-if (cage_use_steam_sockets)
+if(cage_use_steam_sockets)
 	add_subdirectory(protobuf)
 	add_subdirectory(gamenetworkingsockets)
 endif()
