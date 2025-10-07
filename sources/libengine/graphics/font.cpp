@@ -81,7 +81,11 @@ namespace cage
 		struct BidiAlgorithm : private Noncopyable
 		{
 			explicit BidiAlgorithm(SBCodepointSequence codepoints) { algorithm = SBAlgorithmCreate(&codepoints); }
-			~BidiAlgorithm() { SBAlgorithmRelease(algorithm); }
+			~BidiAlgorithm()
+			{
+				if (algorithm)
+					SBAlgorithmRelease(algorithm);
+			}
 			SBAlgorithmRef operator()() const { return algorithm; };
 
 		private:
@@ -91,7 +95,11 @@ namespace cage
 		struct BidiParagraph : private Noncopyable
 		{
 			explicit BidiParagraph(SBAlgorithmRef bidiAlgorithm, SBUInteger paragraphStart) { paragraph = SBAlgorithmCreateParagraph(bidiAlgorithm, paragraphStart, INT32_MAX, SBLevelDefaultLTR); }
-			~BidiParagraph() { SBParagraphRelease(paragraph); }
+			~BidiParagraph()
+			{
+				if (paragraph)
+					SBParagraphRelease(paragraph);
+			}
 			SBParagraphRef operator()() const { return paragraph; };
 
 		private:
@@ -101,7 +109,11 @@ namespace cage
 		struct BidiLine : private Noncopyable
 		{
 			explicit BidiLine(SBParagraphRef paragraph, SBUInteger lineStart, SBUInteger paragraphLength) { line = SBParagraphCreateLine(paragraph, lineStart, paragraphLength); }
-			~BidiLine() { SBLineRelease(line); }
+			~BidiLine()
+			{
+				if (line)
+					SBLineRelease(line);
+			}
 			SBLineRef operator()() const { return line; };
 			PointerRange<const SBRun> getRuns() const
 			{
@@ -117,7 +129,11 @@ namespace cage
 		struct HarfBuffer : private Noncopyable
 		{
 			explicit HarfBuffer() { buffer = hb_buffer_create(); }
-			~HarfBuffer() { hb_buffer_destroy(buffer); }
+			~HarfBuffer()
+			{
+				if (buffer)
+					hb_buffer_destroy(buffer);
+			}
 			hb_buffer_t *operator()() const { return buffer; };
 			std::pair<PointerRange<const hb_glyph_info_t>, PointerRange<const hb_glyph_position_t>> getRanges() const
 			{
