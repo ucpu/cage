@@ -1,3 +1,6 @@
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "dawn")
+message(STATUS "----------------------------------------------------------------")
 
 set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
 
@@ -16,7 +19,7 @@ set(DAWN_USE_GLFW OFF CACHE INTERNAL "Enable compilation of the GLFW windowing u
 set(DAWN_USE_WINDOWS_UI OFF CACHE INTERNAL "Enable support for Windows UI surface" FORCE)
 set(DAWN_BUILD_SAMPLES OFF CACHE INTERNAL "Enables building Dawn's samples" FORCE)
 set(DAWN_BUILD_TESTS OFF CACHE INTERNAL "Enables building Dawn's tests" FORCE)
-set(DAWN_BUILD_PROTOBUF OFF CACHE INTERNAL "Build the protobuf dependencies" FORCE)
+set(DAWN_BUILD_PROTOBUF ${cage_use_steam_sockets} CACHE INTERNAL "Build the protobuf dependencies" FORCE)
 set(DAWN_ENABLE_PIC ON CACHE INTERNAL "Build with Position-Independent-Code enabled" FORCE)
 set(DAWN_BUILD_MONOLITHIC_LIBRARY "STATIC" CACHE INTERNAL "Build monolithic library: SHARED, STATIC, or OFF." FORCE)
 
@@ -35,9 +38,29 @@ set(TINT_BUILD_IR_BINARY OFF CACHE INTERNAL "Build IR binary format support" FOR
 set(TINT_BUILD_TESTS OFF CACHE INTERNAL "Build tests" FORCE)
 set(TINT_ENABLE_IR_VALIDATION ON CACHE INTERNAL "Enable IR validation for backend codegen" FORCE)
 
+add_library(libprotobuf-mutator INTERFACE) # subvert unnecessary dependencies
+
 add_subdirectory(dawn)
 
-set_target_properties(webgpu_dawn PROPERTIES PREFIX cage-)
-set_target_properties(webgpu_dawn PROPERTIES DEBUG_POSTFIX _debug)
-
 add_library(webgpu::dawn ALIAS webgpu_dawn)
+
+
+
+# make protobuf available to steam sockets
+if(cage_use_steam_sockets)
+	set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindProtobuf.cmake")
+	file(WRITE ${filename} "\n")
+	macro(append_lib varname libname)
+		set(lib $<TARGET_LINKER_FILE:${libname}>)
+		set(inc $<TARGET_PROPERTY:${libname},INTERFACE_INCLUDE_DIRECTORIES>)
+		cage_gen_module_helper(${filename} ${varname} "${lib}" "${inc}")
+	endmacro()
+	append_lib(Protobuf protobuf)
+	append_lib(Protobuf_LITE protobuf-lite)
+	append_lib(Protobuf_PROTOC protoc)
+	file(APPEND "${filename}" "set(Protobuf_PROTOC_EXECUTABLE protobuf::protoc)\n")
+	configure_file("${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/protobuf/cmake/protobuf-generate.cmake" "${CAGE_EXTERNALS_MODULE_PATH}/dawn/third_party/protobuf/protobuf-generate.cmake" COPYONLY)
+	file(APPEND "${filename}" "include(\${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/protobuf/protobuf-generate.cmake)\n")
+	configure_file("${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/protobuf/cmake/protobuf-module.cmake.in" "${CAGE_EXTERNALS_MODULE_PATH}/dawn/third_party/protobuf/protobuf-module.cmake" COPYONLY)
+	file(APPEND "${filename}" "include(\${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/protobuf/protobuf-module.cmake)\n")
+endif()
