@@ -16,8 +16,7 @@
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
 #include <cage-core/tasks.h>
-#include <cage-engine/opengl.h>
-#include <cage-engine/texture.h>
+//#include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
 	if (const FT_Error err = FNC(__VA_ARGS__)) \
@@ -30,7 +29,11 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_ENGINE_API cage::String translateFtErrorCode(FT_Error code);
+		//CAGE_ENGINE_API cage::String translateFtErrorCode(FT_Error code);
+		cage::String translateFtErrorCode(FT_Error code)
+		{
+			throw;
+		}
 	}
 }
 
@@ -206,6 +209,7 @@ namespace
 	{
 		TextureHeader data;
 		detail::memset(&data, 0, sizeof(TextureHeader));
+		/*
 		data.target = GL_TEXTURE_2D;
 		data.resolution = Vec3i(img->width(), img->height(), 1);
 		data.channels = img->channels();
@@ -224,6 +228,7 @@ namespace
 		data.copyType = GL_UNSIGNED_BYTE;
 		data.internalFormat = GL_RGB8;
 		data.copyFormat = GL_RGB;
+		*/
 
 		MemoryBuffer inputBuffer;
 		Serializer ser(inputBuffer);
@@ -233,7 +238,7 @@ namespace
 		ser.write(bufferCast(img->rawViewU8()));
 
 		AssetHeader h = processor->initializeAssetHeader();
-		h.scheme = AssetSchemeIndexTexture;
+		//h.scheme = AssetSchemeIndexTexture;
 		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);
 		h.compressedSize = outputBuffer.size();

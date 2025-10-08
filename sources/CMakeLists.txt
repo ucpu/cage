@@ -74,7 +74,7 @@ cage_ide_sort_files(cage-core)
 file(GLOB_RECURSE cage-engine-sources "libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
 target_link_libraries(cage-engine PRIVATE cubeb glfw webgpu::dawn openxr_loader freetype harfbuzz SheenBidi)
-target_link_libraries(cage-engine PUBLIC cage-core glad)
+target_link_libraries(cage-engine PUBLIC cage-core)
 file(GLOB_RECURSE controller-bindings RELATIVE "${CMAKE_CURRENT_LIST_DIR}" "controller-bindings/*")
 set(index 0)
 foreach(cb IN ITEMS ${controller-bindings})
@@ -92,11 +92,13 @@ cage_ide_sort_files(cage-engine)
 # SIMPLE
 ########
 
-file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
-add_library(cage-simple STATIC ${cage-simple-sources})
-target_link_libraries(cage-simple PUBLIC cage-engine)
-cage_ide_category(cage-simple cage/libs)
-cage_ide_sort_files(cage-simple)
+# temporarily disabled
+
+#file(GLOB_RECURSE cage-simple-sources "libsimple/*" "include/cage-simple/*")
+#add_library(cage-simple STATIC ${cage-simple-sources})
+#target_link_libraries(cage-simple PUBLIC cage-engine)
+#cage_ide_category(cage-simple cage/libs)
+#cage_ide_sort_files(cage-simple)
 
 ########
 # DATA
@@ -122,9 +124,7 @@ cage_ide_sort_files(cage-test-core)
 cage_ide_working_dir_in_place(cage-test-core)
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 	target_compile_options(cage-test-core PRIVATE "-Wno-unused-variable")
-	if ((NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang") OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)) # clang-12 does not have this warning yet
-		target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
-	endif()
+	target_compile_options(cage-test-core PRIVATE "-Wno-unused-but-set-variable")
 endif()
 file(GLOB_RECURSE wasm-files RELATIVE "${CMAKE_CURRENT_LIST_DIR}/test-core/wasm" "*.wasm")
 foreach(wf IN ITEMS ${wasm-files})
@@ -184,21 +184,3 @@ target_link_libraries(cage-asset-processor cage-engine freetype lib_msdfgen)
 
 add_dependencies(cage-asset-database cage-asset-processor)
 add_dependencies(cage-asset-analyze cage-asset-processor)
-
-########
-# INSTALL
-########
-
-option(cage_install_enabled "enable installing cage" ON)
-include(GNUInstallDirs)
-if (cage_install_enabled)
-	install(TARGETS unordered_dense plf glad EXPORT CageConfig)
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/unordered_dense/unordered_dense/include/ankerl/unordered_dense.h" DESTINATION include)
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_colony/plf_colony.h" DESTINATION include)
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_list/plf_list.h" DESTINATION include)
-	install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../externals/plf/plf_stack/plf_stack.h" DESTINATION include)
-	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../externals/glad/glad/include" DESTINATION .)
-	install(TARGETS cage-core cage-engine cage-simple ${cage_tools_targets_list} EXPORT CageConfig)
-	install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include" DESTINATION .)
-	install(EXPORT CageConfig DESTINATION cmake)
-endif()

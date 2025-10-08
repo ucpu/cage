@@ -18,12 +18,6 @@
 
 namespace cage
 {
-	namespace detail
-	{
-		void initializeOpengl();
-		void configureOpengl(Window *w);
-	}
-
 	namespace
 	{
 		const ConfigBool confDebugContext("cage/graphics/debugContext", CAGE_DEBUG_BOOL);
@@ -72,10 +66,6 @@ namespace cage
 			bool mouseIntendVisible = true;
 			bool mouseIntendRelative = false;
 
-#ifdef CAGE_DEBUG
-			uint64 currentThreadIdGlBound = 0;
-#endif
-
 #ifdef GCHL_WINDOWS_THREAD
 			Holder<Thread> windowThread;
 			Holder<Semaphore> windowSemaphore;
@@ -121,17 +111,12 @@ namespace cage
 				initializeWindow();
 #endif
 
-				// initialize opengl
-				makeCurrent();
-				detail::initializeOpengl();
-				detail::configureOpengl(this);
 				if (vsync >= 0)
 					glfwSwapInterval(vsync > 0 ? 1 : 0);
 			}
 
 			~WindowImpl()
 			{
-				makeNotCurrent();
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = true;
 				if (windowThread)
@@ -780,44 +765,6 @@ namespace cage
 		Holder<Mutex> mutex = newMutex();
 	}
 #endif
-
-	void Window::makeCurrent()
-	{
-		WindowImpl *impl = (WindowImpl *)this;
-#ifdef CAGE_DEBUG
-		{
-			ScopeLock _(mutex);
-			CAGE_ASSERT(impl->currentThreadIdGlBound == 0);
-			impl->currentThreadIdGlBound = currentThreadId();
-		}
-#endif
-		glfwMakeContextCurrent(impl->window);
-	}
-
-	void Window::makeNotCurrent()
-	{
-#ifdef CAGE_DEBUG
-		{
-			WindowImpl *impl = (WindowImpl *)this;
-			ScopeLock _(mutex);
-			CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
-			impl->currentThreadIdGlBound = 0;
-		}
-#endif
-		glfwMakeContextCurrent(nullptr);
-	}
-
-	void Window::swapBuffers()
-	{
-		WindowImpl *impl = (WindowImpl *)this;
-#ifdef CAGE_DEBUG
-		{
-			ScopeLock _(mutex);
-			CAGE_ASSERT(impl->currentThreadIdGlBound == currentThreadId());
-		}
-#endif
-		glfwSwapBuffers(impl->window);
-	}
 
 	Holder<Window> newWindow(const WindowCreateConfig &config)
 	{

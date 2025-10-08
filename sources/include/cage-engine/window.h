@@ -56,11 +56,6 @@ namespace cage
 		void windowedSize(Vec2i size);
 		Vec2i windowedPosition() const;
 		void windowedPosition(Vec2i pos);
-
-		// opengl
-		void makeCurrent();
-		void makeNotCurrent();
-		void swapBuffers();
 	};
 
 	struct CAGE_ENGINE_API WindowCreateConfig

@@ -8,7 +8,6 @@
 #include <cage-core/hashString.h>
 #include <cage-core/timer.h>
 #include <cage-engine/assetStructs.h>
-#include <cage-engine/opengl.h>
 
 namespace
 {
@@ -243,6 +242,7 @@ namespace
 
 	uint32 shaderType(const String &name)
 	{
+		/*
 		if (name == "vertex")
 			return GL_VERTEX_SHADER;
 		if (name == "fragment")
@@ -255,6 +255,7 @@ namespace
 			return GL_TESS_EVALUATION_SHADER;
 		if (name == "compute")
 			return GL_COMPUTE_SHADER;
+		*/
 		return 0;
 	}
 

@@ -6,7 +6,6 @@
 #include <cage-core/imageImport.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
-#include <cage-engine/opengl.h>
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
@@ -14,6 +13,7 @@ namespace
 {
 	uint32 convertFilter(const String &f)
 	{
+		/*
 		if (f == "nearestMipmapNearest")
 			return GL_NEAREST_MIPMAP_NEAREST;
 		if (f == "linearMipmapNearest")
@@ -26,11 +26,13 @@ namespace
 			return GL_NEAREST;
 		if (f == "linear")
 			return GL_LINEAR;
+		*/
 		return 0;
 	}
 
 	bool requireMipmaps(const uint32 f)
 	{
+		/*
 		switch (f)
 		{
 			case GL_NEAREST_MIPMAP_NEAREST:
@@ -41,10 +43,13 @@ namespace
 			default:
 				return false;
 		}
+		*/
+		return true;
 	}
 
 	uint32 convertWrap(const String &f)
 	{
+		/*
 		if (f == "clampToEdge")
 			return GL_CLAMP_TO_EDGE;
 		if (f == "clampToBorder")
@@ -53,12 +58,14 @@ namespace
 			return GL_MIRRORED_REPEAT;
 		if (f == "repeat")
 			return GL_REPEAT;
+		*/
 		return 0;
 	}
 
 	uint32 convertTarget()
 	{
 		const String f = processor->property("target");
+		/*
 		if (f == "2d")
 			return GL_TEXTURE_2D;
 		if (f == "2dArray")
@@ -67,11 +74,13 @@ namespace
 			return GL_TEXTURE_CUBE_MAP;
 		if (f == "3d")
 			return GL_TEXTURE_3D;
+		*/
 		return 0;
 	}
 
 	uint32 findInternalFormatForBcn(const TextureHeader &data)
 	{
+		/*
 		if (any(data.flags & TextureFlags::Srgb))
 		{
 			switch (data.channels)
@@ -96,11 +105,13 @@ namespace
 					return GL_COMPRESSED_RGBA_BPTC_UNORM;
 			}
 		}
+		*/
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
 	uint32 findInternalFormatForRaw(const TextureHeader &data)
 	{
+		/*
 		if (any(data.flags & TextureFlags::Srgb))
 		{
 			switch (data.channels)
@@ -125,11 +136,13 @@ namespace
 					return GL_RGBA8;
 			}
 		}
+		*/
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
 	uint32 findCopyFormatForRaw(const TextureHeader &data)
 	{
+		/*
 		switch (data.channels)
 		{
 			case 1:
@@ -141,6 +154,7 @@ namespace
 			case 4:
 				return GL_RGBA;
 		}
+		*/
 		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
 	}
 
@@ -227,6 +241,7 @@ namespace
 
 	void performDownscale(const uint32 downscale, const uint32 target)
 	{
+		/*
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaling whole image (3D)");
@@ -238,6 +253,7 @@ namespace
 			for (auto &it : images.parts)
 				imageResize(+it.image, max(it.image->width() / downscale, 1u), max(it.image->height() / downscale, 1u));
 		}
+		*/
 	}
 
 	void performSkyboxToCube()
@@ -301,6 +317,7 @@ namespace
 
 	void checkConsistency(const uint32 target)
 	{
+		/*
 		const uint32 frames = numeric_cast<uint32>(images.parts.size());
 		if (frames == 0)
 			CAGE_THROW_ERROR(Exception, "no images were loaded");
@@ -327,6 +344,7 @@ namespace
 		}
 		if (target == GL_TEXTURE_CUBE_MAP && im0->width() != im0->height())
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
+		*/
 	}
 
 	void exportBcn(TextureHeader &data, Serializer &ser)
@@ -389,6 +407,7 @@ namespace
 
 	void exportTexture(const uint32 target)
 	{
+		/*
 		TextureHeader data;
 		detail::memset(&data, 0, sizeof(TextureHeader));
 		data.target = target;
@@ -445,6 +464,7 @@ namespace
 		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();
+		*/
 	}
 }
 

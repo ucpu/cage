@@ -13,6 +13,7 @@ macro(cage_build_configuration)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_CXX_STANDARD 20)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+	set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 	# default visibility hidden
 	set(CMAKE_C_VISIBILITY_PRESET hidden)

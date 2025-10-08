@@ -13,9 +13,6 @@
 [submodule "externals/freetype/freetype"]
 	path = externals/freetype/freetype
 	url = https://github.com/ucpu/freetype.git
-[submodule "externals/glad/glad"]
-	path = externals/glad/glad
-	url = https://github.com/ucpu/glad.git
 [submodule "externals/glm/glm"]
 	path = externals/glm/glm
 	url = https://github.com/g-truc/glm.git

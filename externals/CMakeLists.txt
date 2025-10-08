@@ -101,7 +101,6 @@ add_subdirectory(unordered_dense)
 add_subdirectory(wamr)
 
 add_subdirectory(dawn)
-add_subdirectory(glad)
 add_subdirectory(glfw)
 add_subdirectory(glm)
 add_subdirectory(openxr-sdk)

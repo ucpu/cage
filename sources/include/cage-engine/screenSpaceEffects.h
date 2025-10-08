@@ -1,11 +1,12 @@
 #ifndef guard_screenSpaceEffects_h_xcfvh241448960sdrt
 #define guard_screenSpaceEffects_h_xcfvh241448960sdrt
 
-#include <cage-engine/provisionalHandles.h>
+//#include <cage-engine/provisionalHandles.h>
 #include <cage-engine/screenSpaceEffectsProperties.h>
 
 namespace cage
 {
+	/*
 	class RenderQueue;
 	class AssetsManager;
 	class ProvisionalGraphics;
@@ -76,6 +77,7 @@ namespace cage
 	CAGE_ENGINE_API void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config);
 	CAGE_ENGINE_API void screenSpaceFastApproximateAntiAliasing(const ScreenSpaceFastApproximateAntiAliasingConfig &config);
 	CAGE_ENGINE_API void screenSpaceSharpening(const ScreenSpaceSharpeningConfig &config);
+	*/
 }
 
 #endif // guard_screenSpaceEffects_h_xcfvh241448960sdrt
