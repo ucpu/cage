@@ -37,3 +37,10 @@ set_source_files_properties(
 	TARGET_DIRECTORY GameNetworkingSockets_s
 	PROPERTIES COMPILE_DEFINITIONS "WIN32_LEAN_AND_MEAN;VC_EXTRALEAN;NOMINMAX"
 )
+
+# avoid propagating unwanted flags
+add_library(GameNetworkingSockets STATIC dummy.cpp)
+target_link_libraries(GameNetworkingSockets PRIVATE GameNetworkingSockets_s)
+target_include_directories(GameNetworkingSockets INTERFACE $<TARGET_PROPERTY:GameNetworkingSockets_s,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_definitions(GameNetworkingSockets INTERFACE STEAMNETWORKINGSOCKETS_STATIC_LINK)
+add_library(GameNetworkingSockets::GameNetworkingSockets ALIAS GameNetworkingSockets)
