@@ -13,6 +13,7 @@ set(DAWN_ENABLE_WEBGPU_ON_WEBGPU OFF CACHE INTERNAL "Enable compilation of the W
 set(DAWN_ENABLE_DESKTOP_GL OFF CACHE INTERNAL "Enable compilation of the OpenGL backend" FORCE)
 set(DAWN_ENABLE_OPENGLES OFF CACHE INTERNAL "Enable compilation of the OpenGL ES backend" FORCE)
 set(DAWN_ENABLE_VULKAN ON CACHE INTERNAL "Enable compilation of the Vulkan backend" FORCE)
+set(DAWN_FORCE_SYSTEM_COMPONENT_LOAD ON CACHE INTERNAL "Allow system component fallback" FORCE)
 set(DAWN_USE_WAYLAND OFF CACHE INTERNAL "Enable support for Wayland surface" FORCE)
 set(DAWN_USE_X11 OFF CACHE INTERNAL "Enable support for X11 surface" FORCE)
 set(DAWN_USE_GLFW OFF CACHE INTERNAL "Enable compilation of the GLFW windowing utils" FORCE)
