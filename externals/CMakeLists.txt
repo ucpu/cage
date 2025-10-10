@@ -98,6 +98,8 @@ add_subdirectory(curl)
 add_subdirectory(cpr)
 
 add_subdirectory(fastnoise)
+add_subdirectory(glfw)
+add_subdirectory(glm)
 add_subdirectory(plf)
 add_subdirectory(simplefilewatcher)
 add_subdirectory(stb)
@@ -105,8 +107,7 @@ add_subdirectory(unordered_dense)
 add_subdirectory(wamr)
 
 add_subdirectory(dawn)
-add_subdirectory(glfw)
-add_subdirectory(glm)
+add_subdirectory(glslang)
 add_subdirectory(openxr-sdk)
 
 if(cage_use_steam_sockets)

@@ -4,9 +4,13 @@
 
 namespace cage
 {
+	class Window;
+	struct GraphicsContext;
+
 	void cageGlfwInitializeFunc();
 	class Mutex *cageGlfwMutex();
 	String getMonitorId(GLFWmonitor *monitor);
 	GLFWmonitor *getMonitorById(const String &id);
-	GLFWwindow *getGlfwWindow(class Window *w);
+	GLFWwindow *getGlfwWindow(Window *w);
+	Holder<GraphicsContext> &getGlfwContext(Window *w);
 }

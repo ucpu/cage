@@ -16,7 +16,6 @@ namespace cage
 	{
 	public:
 		EventDispatcher<bool(const GenericInput &)> events;
-		Delegate<void(uint32, uint32, uint32, uint32, const char *)> debugOpenglErrorCallback;
 
 		void processEvents();
 
@@ -59,10 +58,7 @@ namespace cage
 	};
 
 	struct CAGE_ENGINE_API WindowCreateConfig
-	{
-		Window *shareContext = nullptr;
-		int vsync = -1; // -1 = use system default, 0 = disable, 1 = true
-	};
+	{};
 
 	CAGE_ENGINE_API Holder<Window> newWindow(const WindowCreateConfig &config);
 

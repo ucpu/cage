@@ -5,7 +5,6 @@
 
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
-#include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/string.h>
@@ -18,11 +17,10 @@
 
 namespace cage
 {
+	struct GraphicsContext;
+
 	namespace
 	{
-		const ConfigBool confDebugContext("cage/graphics/debugContext", CAGE_DEBUG_BOOL);
-		const ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
-
 		ModifiersFlags getKeyModifiers(int mods)
 		{
 			return ModifiersFlags::None | ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? ModifiersFlags::Shift : ModifiersFlags::None) | ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? ModifiersFlags::Ctrl : ModifiersFlags::None) | ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? ModifiersFlags::Alt : ModifiersFlags::None) | ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? ModifiersFlags::Super : ModifiersFlags::None);
@@ -53,15 +51,14 @@ namespace cage
 			Vec2 lastMouseButtonPressPositions[5] = {};
 			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
 
+			Holder<GraphicsContext> graphicsContext;
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
 			Vec2 stateMousePosition;
 			Vec2 lastRelativePosition;
-			Window *const shareContext = nullptr;
 			GLFWwindow *window = nullptr;
-			const int vsync = -1;
 			bool focus = true;
 			bool mouseIntendVisible = true;
 			bool mouseIntendRelative = false;
@@ -95,7 +92,7 @@ namespace cage
 			}
 #endif
 
-			explicit WindowImpl(const WindowCreateConfig &config) : shareContext(config.shareContext), vsync(config.vsync)
+			explicit WindowImpl(const WindowCreateConfig &config)
 			{
 				ScopeLock l(cageGlfwMutex());
 
@@ -110,9 +107,6 @@ namespace cage
 #else
 				initializeWindow();
 #endif
-
-				if (vsync >= 0)
-					glfwSwapInterval(vsync > 0 ? 1 : 0);
 			}
 
 			~WindowImpl()
@@ -131,23 +125,9 @@ namespace cage
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 				//glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // GLFW_FALSE is useful for multiple simultaneous fullscreen windows but breaks alt-tabbing out of the application
-				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, confDebugContext ? GLFW_TRUE : GLFW_FALSE);
-				if (confDebugContext)
-					CAGE_LOG(SeverityEnum::Info, "graphics", "creating DEBUG opengl context");
-				const bool noErr = confNoErrorContext && !confDebugContext;
-				glfwWindowHint(GLFW_CONTEXT_NO_ERROR, noErr ? GLFW_TRUE : GLFW_FALSE);
-				if (noErr)
-					CAGE_LOG(SeverityEnum::Info, "graphics", "creating NO-ERROR opengl context");
-				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
-				glfwWindowHint(GLFW_DEPTH_BITS, 0);
-				glfwWindowHint(GLFW_STENCIL_BITS, 0);
+				glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 				const String name = pathExtractFilename(detail::executableFullPathNoExe());
-				window = glfwCreateWindow(1, 1, name.c_str(), NULL, shareContext ? ((WindowImpl *)shareContext)->window : NULL);
+				window = glfwCreateWindow(1, 1, name.c_str(), nullptr, nullptr);
 				if (!window)
 					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
@@ -759,13 +739,6 @@ namespace cage
 		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);
 	}
 
-#ifdef CAGE_DEBUG
-	namespace
-	{
-		Holder<Mutex> mutex = newMutex();
-	}
-#endif
-
 	Holder<Window> newWindow(const WindowCreateConfig &config)
 	{
 		cageGlfwInitializeFunc();
@@ -911,5 +884,12 @@ namespace cage
 		CAGE_ASSERT(w);
 		WindowImpl *impl = (WindowImpl *)w;
 		return impl->window;
+	}
+
+	Holder<GraphicsContext> &getGlfwContext(Window *w)
+	{
+		CAGE_ASSERT(w);
+		WindowImpl *impl = (WindowImpl *)w;
+		return impl->graphicsContext;
 	}
 }

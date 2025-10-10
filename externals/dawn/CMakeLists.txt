@@ -4,6 +4,7 @@ message(STATUS "----------------------------------------------------------------
 
 set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
 
+# dawn
 set(DAWN_ENABLE_INSTALL ON CACHE INTERNAL "Enable install step for Dawn libraries" FORCE)
 set(DAWN_ENABLE_D3D11 OFF CACHE INTERNAL "Enable compilation of the D3D11 backend" FORCE)
 set(DAWN_ENABLE_D3D12 OFF CACHE INTERNAL "Enable compilation of the D3D12 backend" FORCE)
@@ -16,7 +17,7 @@ set(DAWN_ENABLE_VULKAN ON CACHE INTERNAL "Enable compilation of the Vulkan backe
 set(DAWN_FORCE_SYSTEM_COMPONENT_LOAD ON CACHE INTERNAL "Allow system component fallback" FORCE)
 set(DAWN_USE_WAYLAND OFF CACHE INTERNAL "Enable support for Wayland surface" FORCE)
 set(DAWN_USE_X11 OFF CACHE INTERNAL "Enable support for X11 surface" FORCE)
-set(DAWN_USE_GLFW OFF CACHE INTERNAL "Enable compilation of the GLFW windowing utils" FORCE)
+set(DAWN_USE_GLFW ON CACHE INTERNAL "Enable compilation of the GLFW windowing utils" FORCE)
 set(DAWN_USE_WINDOWS_UI OFF CACHE INTERNAL "Enable support for Windows UI surface" FORCE)
 set(DAWN_BUILD_SAMPLES OFF CACHE INTERNAL "Enables building Dawn's samples" FORCE)
 set(DAWN_BUILD_TESTS OFF CACHE INTERNAL "Enables building Dawn's tests" FORCE)
@@ -24,6 +25,7 @@ set(DAWN_BUILD_PROTOBUF ${cage_use_steam_sockets} CACHE INTERNAL "Build the prot
 set(DAWN_ENABLE_PIC ON CACHE INTERNAL "Build with Position-Independent-Code enabled" FORCE)
 set(DAWN_BUILD_MONOLITHIC_LIBRARY "STATIC" CACHE INTERNAL "Build monolithic library: SHARED, STATIC, or OFF." FORCE)
 
+# tint
 set(TINT_BUILD_SPV_READER ON CACHE INTERNAL "Build the SPIR-V input reader" FORCE)
 set(TINT_BUILD_WGSL_READER ON CACHE INTERNAL "Build the WGSL input reader" FORCE)
 set(TINT_BUILD_GLSL_WRITER OFF CACHE INTERNAL "Build the GLSL output writer" FORCE)
@@ -32,22 +34,26 @@ set(TINT_BUILD_HLSL_WRITER OFF CACHE INTERNAL "Build the HLSL output writer" FOR
 set(TINT_BUILD_MSL_WRITER OFF CACHE INTERNAL "Build the MSL output writer" FORCE)
 set(TINT_BUILD_SPV_WRITER ON CACHE INTERNAL "Build the SPIR-V output writer" FORCE)
 set(TINT_BUILD_WGSL_WRITER ON CACHE INTERNAL "Build the WGSL output writer" FORCE)
-
 set(TINT_ENABLE_INSTALL OFF CACHE INTERNAL "Enable install step for Tint libraries" FORCE)
 set(TINT_BUILD_CMD_TOOLS OFF CACHE INTERNAL "Build the Tint command line tools" FORCE)
 set(TINT_BUILD_IR_BINARY OFF CACHE INTERNAL "Build IR binary format support" FORCE)
 set(TINT_BUILD_TESTS OFF CACHE INTERNAL "Build tests" FORCE)
 set(TINT_ENABLE_IR_VALIDATION ON CACHE INTERNAL "Enable IR validation for backend codegen" FORCE)
 
+# protobuf
 add_library(libprotobuf-mutator INTERFACE) # subvert unnecessary dependencies
 
+# add the externals
 add_subdirectory(dawn)
 
-add_library(webgpu::dawn ALIAS webgpu_dawn)
+# dawn
+add_library(cage_dawn INTERFACE)
+target_link_libraries(cage_dawn INTERFACE $<TARGET_LINKER_FILE:webgpu_dawn> $<TARGET_LINKER_FILE:webgpu_glfw>)
+target_include_directories(cage_dawn INTERFACE $<TARGET_PROPERTY:webgpu_dawn,INTERFACE_INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:webgpu_glfw,INTERFACE_INCLUDE_DIRECTORIES>)
+add_dependencies(cage_dawn webgpu_dawn webgpu_glfw)
+add_library(cage::dawn ALIAS cage_dawn)
 
-
-
-# make protobuf available to steam sockets
+# protobuf
 if(cage_use_steam_sockets)
 	set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindProtobuf.cmake")
 	file(WRITE ${filename} "\n")
