@@ -3,6 +3,7 @@
 #include <unordered_dense.h>
 
 #include <cage-core/assetsManager.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/skeletalAnimation.h>

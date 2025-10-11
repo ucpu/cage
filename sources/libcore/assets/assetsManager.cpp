@@ -811,7 +811,7 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint32 CurrentAssetVersion = 2;
+		constexpr uint32 CurrentAssetVersion = 3;
 
 		void defaultFetch(AssetContext *asset)
 		{
@@ -838,13 +838,13 @@ namespace cage
 
 			AssetHeader h;
 			file->read(bufferView<char>(h));
-			if (detail::memcmp(h.cageName, "cageAss", 8) != 0)
+			if (detail::memcmp(h.cageName.data(), "cageAss", 8) != 0)
 				CAGE_THROW_ERROR(Exception, "file is not a cage asset");
 			if (h.version != CurrentAssetVersion)
 				CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
 			if (h.textId[sizeof(h.textId) - 1] != 0)
 				CAGE_THROW_ERROR(Exception, "cage asset text id not bounded");
-			asset->textId = h.textId;
+			asset->textId = h.textId.data();
 			if (h.scheme >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;
@@ -897,7 +897,8 @@ namespace cage
 			name = String() + ".." + subString(name, name.length() - MaxTexName + 2, m);
 		CAGE_ASSERT(name.length() <= MaxTexName);
 		CAGE_ASSERT(name.length() > 0);
-		detail::memcpy(textId, name.c_str(), name.length());
+		detail::memset(textId.data(), 0, sizeof(textId));
+		detail::memcpy(textId.data(), name.c_str(), name.length());
 		scheme = schemeIndex;
 	}
 }

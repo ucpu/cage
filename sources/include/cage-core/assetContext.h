@@ -11,12 +11,13 @@ namespace cage
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
-		detail::StringBase<64> textId;
+		detail::StringBase<128> textId;
 		Holder<void> customData;
 		Holder<PointerRange<uint32>> dependencies;
 		Holder<PointerRange<char>> compressedData;
 		Holder<PointerRange<char>> originalData;
 		Holder<void> assetHolder;
+		void *device = nullptr;
 		const uint32 assetId = 0;
 		uint32 scheme = m;
 
@@ -28,6 +29,7 @@ namespace cage
 		AssetDelegate fetch;
 		AssetDelegate decompress;
 		AssetDelegate load;
+		void *device = nullptr;
 		uint32 threadIndex = m;
 		uint32 typeHash = m;
 

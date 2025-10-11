@@ -7,7 +7,6 @@
 
 #include <cage-core/hashString.h>
 #include <cage-core/timer.h>
-#include <cage-engine/assetStructs.h>
 
 namespace
 {
@@ -242,20 +241,12 @@ namespace
 
 	uint32 shaderType(const String &name)
 	{
-		/*
 		if (name == "vertex")
-			return GL_VERTEX_SHADER;
+			return 1;
 		if (name == "fragment")
-			return GL_FRAGMENT_SHADER;
-		if (name == "geometry")
-			return GL_GEOMETRY_SHADER;
-		if (name == "control")
-			return GL_TESS_CONTROL_SHADER;
-		if (name == "evaluation")
-			return GL_TESS_EVALUATION_SHADER;
+			return 2;
 		if (name == "compute")
-			return GL_COMPUTE_SHADER;
-		*/
+			return 3;
 		return 0;
 	}
 
@@ -265,13 +256,6 @@ namespace
 			if (it != 1)
 				return false;
 		return true;
-	}
-
-	bool allowParsingHash()
-	{
-		if (defines.count("allowParsingHash") == 0)
-			return false;
-		return toBool(defines["allowParsingHash"]);
 	}
 
 	void parse(const String &filename)
@@ -292,7 +276,7 @@ namespace
 						output("");
 					continue;
 				}
-				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
+				if (line[0] == '$')
 				{
 					line = trim(subString(line, 1, m));
 					String cmd = split(line);
@@ -481,9 +465,8 @@ void processShader()
 	}
 
 	{
-		ShaderProgramHeader header;
-		header.keywordsCount = keywords.size();
-		header.stagesCount = codes.size();
+		MultiShaderHeader header;
+		header.variantsCount = codes.size();
 		if (defines.count("customDataCount"))
 		{
 			const uint32 cdc = toUint32(defines["customDataCount"]);
@@ -493,11 +476,13 @@ void processShader()
 		MemoryBuffer buff;
 		Serializer ser(buff);
 		ser << header;
+		/*
 		for (const auto &it : keywords)
 		{
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
 			ser << it;
 		}
+		*/
 		for (const auto &it : codes)
 		{
 			ser << (uint32)shaderType(it.first);

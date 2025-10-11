@@ -2,6 +2,7 @@
 
 #include <cage-core/assetContext.h>
 #include <cage-core/assetsManager.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>

@@ -16,7 +16,6 @@ helper.jpg
 
 []
 scheme = texture
-target = 2dArray
 srgb = true
 progressbar/$.png
 

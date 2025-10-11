@@ -93,4 +93,19 @@ namespace cage
 
 		return mod;
 	}
+
+	MeshComponentsFlags meshComponentsFlags(const Mesh *mesh)
+	{
+		MeshComponentsFlags flags = MeshComponentsFlags::None;
+		if (!mesh->normals().empty())
+			flags |= MeshComponentsFlags::Normals;
+		CAGE_ASSERT(mesh->boneWeights().empty() == mesh->boneIndices().empty());
+		if (!mesh->boneWeights().empty())
+			flags |= MeshComponentsFlags::Bones;
+		if (!mesh->uvs().empty())
+			flags |= MeshComponentsFlags::Uvs2;
+		if (!mesh->uvs3().empty())
+			flags |= MeshComponentsFlags::Uvs3;
+		return flags;
+	}
 }

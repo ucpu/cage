@@ -1,5 +1,7 @@
-#ifndef guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
-#define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
+#ifndef guard_assetsStructs_sdrz4gdftujaw
+#define guard_assetsStructs_sdrz4gdftujaw
+
+#include <array>
 
 #include <cage-core/geometry.h>
 #include <cage-engine/core.h>
@@ -8,80 +10,60 @@ namespace cage
 {
 	enum class MeshRenderFlags : uint32;
 
-	struct CAGE_ENGINE_API ShaderProgramHeader
+	struct CAGE_ENGINE_API MultiShaderHeader
 	{
 		uint32 customDataCount = 0; // number of floats passed from the game to the shader, per instance
-		uint32 keywordsCount = 0;
-		uint32 stagesCount = 0;
+		uint32 variantsCount = 0;
 
 		// follows:
-		// array of keywords, each StringBase<20>
-		// for each stage:
-		//   type, uint32
-		//   length, uint32
-		//   code, array of chars
+		// for each variant:
+		//   name: String
+		//   serialized spirv
 	};
 
 	enum class TextureFlags : uint32
 	{
 		None = 0,
-		Compressed = 1 << 0,
-		GenerateMipmaps = 1 << 1,
-		Srgb = 1 << 2,
-	};
-
-	enum class TextureSwizzleEnum : uint8
-	{
-		Zero,
-		One,
-		R,
-		G,
-		B,
-		A,
+		Volume3D = 1 << 0,
+		Cubemap = 1 << 1,
+		Normals = 1 << 2,
+		Srgb = 1 << 3,
+		Compressed = 1 << 4,
 	};
 
 	struct CAGE_ENGINE_API TextureHeader
 	{
 		TextureFlags flags = TextureFlags::None;
-		uint32 target = 0; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		Vec3i resolution;
-		uint32 mipmapLevels = 0; // number of levels that the texture will have
-		uint32 containedLevels = 0; // number of levels that the asset contains
 		uint32 channels = 0;
-		uint32 internalFormat = 0;
-		uint32 copyFormat = 0;
-		uint32 copyType = 0;
-		uint32 filterMin = 0;
-		uint32 filterMag = 0;
-		uint32 filterAniso = 0;
-		uint32 wrapX = 0;
-		uint32 wrapY = 0;
-		uint32 wrapZ = 0;
-		TextureSwizzleEnum swizzle[4] = {};
+		uint32 mipLevels = 0;
+		uint64 usage = 0; // wgpu::TextureUsage
+		uint32 format = 0; // wgpu::TextureFormat
 
 		// follows:
 		// for each mipmap level:
 		//   resolution, Vec3i
 		//   size, uint32
-		//   array of texels
+		//   array of bytes
 	};
 
 	struct CAGE_ENGINE_API ModelHeader
 	{
 		Mat4 importTransform;
 		Aabb box;
-		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
+		std::array<uint32, MaxTexturesCountPerMaterial> textureNames = {};
 		uint32 shaderName = 0;
 		MeshRenderFlags renderFlags = (MeshRenderFlags)0;
 		sint32 renderLayer = 0;
 		uint32 skeletonBones = 0;
-		uint32 materialSize = 0; // bytes
+		uint32 meshName = 0; // share geometry data (and collider) from the named model (this model contains no geometry)
 		uint32 meshSize = 0; // bytes
+		uint32 materialSize = 0; // bytes
 		uint32 colliderSize = 0; // bytes
 
 		// follows:
-		// material (may or may not be the MeshImportMaterial)
 		// serialized mesh
+		// material (may or may not be the MeshImportMaterial)
 		// serialized collider (may be absent)
 	};
 
@@ -150,4 +132,4 @@ namespace cage
 	};
 }
 
-#endif // guard_assets_h_5aade310_996b_42c7_8684_2100f6625d36_
+#endif // guard_assetsStructs_sdrz4gdftujaw

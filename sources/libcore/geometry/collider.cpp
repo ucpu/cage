@@ -1,7 +1,9 @@
 #include <algorithm>
+#include <array>
 #include <vector>
 
 #include <cage-core/collider.h>
+#include <cage-core/containerSerialization.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
@@ -236,6 +238,8 @@ namespace cage
 	{
 		ColliderImpl *impl = (ColliderImpl *)this;
 		impl->tris.clear();
+		impl->boxes.clear();
+		impl->nodes.clear();
 		impl->dirty = true;
 	}
 
@@ -270,46 +274,28 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint16 currentVersion = 2;
-		constexpr char currentMagic[] = "colid";
-
-		struct CollisionModelHeader
+		struct ColliderHeader
 		{
-			char magic[6]; // colid\0
-			uint16 version;
-			uint32 trisCount;
-			uint32 nodesCount;
+			std::array<char, 12> cageName = { "cageColider" };
+			uint32 version = 3;
 			bool dirty;
 		};
-
-		template<class T>
-		void writeVector(Serializer &ser, const std::vector<T> &v)
-		{
-			ser.write(bufferCast<const char, const T>(v));
-		}
-
-		template<class T>
-		void readVector(Deserializer &des, std::vector<T> &v, uint32 count)
-		{
-			v.resize(count);
-			des.read(bufferCast<char, T>(v));
-		}
 	}
 
 	void Collider::importBuffer(PointerRange<const char> buffer)
 	{
 		ColliderImpl *impl = (ColliderImpl *)this;
+		impl->clear();
 		Deserializer des(buffer);
-		CollisionModelHeader header;
+		ColliderHeader header;
 		des >> header;
-		if (detail::memcmp(header.magic, currentMagic, sizeof(currentMagic)) != 0)
-			CAGE_THROW_ERROR(Exception, "Cannot deserialize collision object: wrong magic");
-		if (header.version != currentVersion)
-			CAGE_THROW_ERROR(Exception, "Cannot deserialize collision object: wrong version");
+		if (header.cageName != ColliderHeader().cageName || header.version != ColliderHeader().version)
+			CAGE_THROW_ERROR(Exception, "invalid magic or version in collider deserialization");
 		impl->dirty = header.dirty;
-		readVector(des, impl->tris, header.trisCount);
-		readVector(des, impl->boxes, header.nodesCount);
-		readVector(des, impl->nodes, header.nodesCount);
+		des >> impl->tris;
+		des >> impl->boxes;
+		des >> impl->nodes;
+		CAGE_ASSERT(des.available() == 0);
 	}
 
 	void Collider::importMesh(const Mesh *msh)
@@ -340,22 +326,17 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Collider::exportBuffer(bool includeAdditionalData) const
+	Holder<PointerRange<char>> Collider::exportBuffer() const
 	{
 		const ColliderImpl *impl = (const ColliderImpl *)this;
-		CollisionModelHeader header;
-		detail::memset(&header, 0, sizeof(header));
-		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
-		header.version = currentVersion;
-		header.trisCount = numeric_cast<uint32>(impl->tris.size());
-		header.nodesCount = numeric_cast<uint32>(impl->nodes.size());
-		header.dirty = impl->dirty;
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
+		ColliderHeader header;
+		header.dirty = impl->dirty;
 		ser << header;
-		writeVector(ser, impl->tris);
-		writeVector(ser, impl->boxes);
-		writeVector(ser, impl->nodes);
+		ser << impl->tris;
+		ser << impl->boxes;
+		ser << impl->nodes;
 		return std::move(buffer);
 	}
 

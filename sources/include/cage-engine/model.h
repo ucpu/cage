@@ -14,6 +14,16 @@ namespace cage
 	class GpuBuffer;
 	enum class MeshRenderFlags : uint32;
 
+	enum class MeshComponentsFlags : uint32
+	{
+		None = 0,
+		Normals = 1 << 0,
+		Bones = 1 << 1,
+		Uvs2 = 1 << 2,
+		Uvs3 = 1 << 3,
+	};
+	GCHL_ENUM_BITS(MeshComponentsFlags);
+
 	class CAGE_ENGINE_API Model : private Immovable
 	{
 	protected:
@@ -47,8 +57,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Model> newModel();
 	CAGE_ENGINE_API Holder<Model> newModel(GraphicsDevice *device, const Mesh *mesh, PointerRange<const char> material);
 
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeModel(uint32 threadIndex);
-	constexpr uint32 AssetSchemeIndexModel = 12;
+	CAGE_ENGINE_API MeshComponentsFlags meshComponentsFlags(const Mesh *mesh);
 }
 
 #endif // guard_model_dthu41r5df

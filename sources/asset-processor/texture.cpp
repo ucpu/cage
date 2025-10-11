@@ -1,5 +1,7 @@
 #include <map>
 
+#include <webgpu/webgpu_cpp.h>
+
 #include "processor.h"
 
 #include <cage-core/imageAlgorithms.h>
@@ -11,84 +13,32 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
-	uint32 convertFilter(const String &f)
+	TextureFlags convertTarget()
 	{
-		/*
-		if (f == "nearestMipmapNearest")
-			return GL_NEAREST_MIPMAP_NEAREST;
-		if (f == "linearMipmapNearest")
-			return GL_LINEAR_MIPMAP_NEAREST;
-		if (f == "nearestMipmapLinear")
-			return GL_NEAREST_MIPMAP_LINEAR;
-		if (f == "linearMipmapLinear")
-			return GL_LINEAR_MIPMAP_LINEAR;
-		if (f == "nearest")
-			return GL_NEAREST;
-		if (f == "linear")
-			return GL_LINEAR;
-		*/
-		return 0;
+		TextureFlags result = TextureFlags::None;
+		String target = processor->property("target");
+		if (target == "cubeMap")
+			result |= TextureFlags::Cubemap;
+		if (target == "volume")
+			result |= TextureFlags::Volume3D;
+		if (toBool(processor->property("srgb")))
+			result |= TextureFlags::Srgb;
+		if (toBool(processor->property("normal")))
+			result |= TextureFlags::Normals;
+		if (processor->property("compression") != "raw")
+			result |= TextureFlags::Compressed;
+		return result;
 	}
 
-	bool requireMipmaps(const uint32 f)
+	wgpu::TextureFormat findInternalFormatForBcn(const TextureHeader &data)
 	{
-		/*
-		switch (f)
-		{
-			case GL_NEAREST_MIPMAP_NEAREST:
-			case GL_LINEAR_MIPMAP_NEAREST:
-			case GL_NEAREST_MIPMAP_LINEAR:
-			case GL_LINEAR_MIPMAP_LINEAR:
-				return true;
-			default:
-				return false;
-		}
-		*/
-		return true;
-	}
-
-	uint32 convertWrap(const String &f)
-	{
-		/*
-		if (f == "clampToEdge")
-			return GL_CLAMP_TO_EDGE;
-		if (f == "clampToBorder")
-			return GL_CLAMP_TO_BORDER;
-		if (f == "mirroredRepeat")
-			return GL_MIRRORED_REPEAT;
-		if (f == "repeat")
-			return GL_REPEAT;
-		*/
-		return 0;
-	}
-
-	uint32 convertTarget()
-	{
-		const String f = processor->property("target");
-		/*
-		if (f == "2d")
-			return GL_TEXTURE_2D;
-		if (f == "2dArray")
-			return GL_TEXTURE_2D_ARRAY;
-		if (f == "cubeMap")
-			return GL_TEXTURE_CUBE_MAP;
-		if (f == "3d")
-			return GL_TEXTURE_3D;
-		*/
-		return 0;
-	}
-
-	uint32 findInternalFormatForBcn(const TextureHeader &data)
-	{
-		/*
 		if (any(data.flags & TextureFlags::Srgb))
 		{
 			switch (data.channels)
 			{
 				case 3:
-					return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
 				case 4:
-					return GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM;
+					return wgpu::TextureFormat::BC7RGBAUnormSrgb;
 			}
 		}
 		else
@@ -96,30 +46,26 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return GL_COMPRESSED_RED_RGTC1;
+					return wgpu::TextureFormat::BC4RUnorm;
 				case 2:
-					return GL_COMPRESSED_RG_RGTC2;
+					return wgpu::TextureFormat::BC5RGUnorm;
 				case 3:
-					return GL_COMPRESSED_RGBA_BPTC_UNORM;
 				case 4:
-					return GL_COMPRESSED_RGBA_BPTC_UNORM;
+					return wgpu::TextureFormat::BC7RGBAUnorm;
 			}
 		}
-		*/
-		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for compressed texture format");
 	}
 
-	uint32 findInternalFormatForRaw(const TextureHeader &data)
+	wgpu::TextureFormat findInternalFormatForRaw(const TextureHeader &data)
 	{
-		/*
 		if (any(data.flags & TextureFlags::Srgb))
 		{
 			switch (data.channels)
 			{
 				case 3:
-					return GL_SRGB8;
 				case 4:
-					return GL_SRGB8_ALPHA8;
+					return wgpu::TextureFormat::RGBA8UnormSrgb;
 			}
 		}
 		else
@@ -127,41 +73,21 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return GL_R8;
+					return wgpu::TextureFormat::R8Unorm;
 				case 2:
-					return GL_RG8;
+					return wgpu::TextureFormat::RG8Unorm;
 				case 3:
-					return GL_RGB8;
 				case 4:
-					return GL_RGBA8;
+					return wgpu::TextureFormat::RGBA8Unorm;
 			}
 		}
-		*/
-		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
+		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for non-compressed texture format");
 	}
 
-	uint32 findCopyFormatForRaw(const TextureHeader &data)
-	{
-		/*
-		switch (data.channels)
-		{
-			case 1:
-				return GL_RED;
-			case 2:
-				return GL_RG;
-			case 3:
-				return GL_RGB;
-			case 4:
-				return GL_RGBA;
-		}
-		*/
-		CAGE_THROW_ERROR(Exception, "invalid number of channels in texture");
-	}
-
-	constexpr uint32 findContainedMipmapLevels(Vec3i res, bool is3d)
+	constexpr uint32 findContainedMipmapLevels(Vec3i res, bool volume3D)
 	{
 		uint32 lvl = 1;
-		while (res[0] > 1 || res[1] > 1 || (res[2] > 1 && is3d))
+		while (res[0] > 1 || res[1] > 1 || (res[2] > 1 && volume3D))
 		{
 			res /= 2;
 			lvl++;
@@ -239,13 +165,12 @@ namespace
 			it.image->colorConfig = cfg;
 	}
 
-	void performDownscale(const uint32 downscale, const uint32 target)
+	void performDownscale(const uint32 downscale, bool volume3D)
 	{
-		/*
-		if (target == GL_TEXTURE_3D)
+		if (volume3D)
 		{ // downscale image as a whole
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaling whole image (3D)");
-			CAGE_THROW_ERROR(Exception, "3D texture downscale is not yet implemented");
+			CAGE_THROW_ERROR(Exception, "volume 3D texture downscale is not yet implemented");
 		}
 		else
 		{ // downscale each image separately
@@ -253,7 +178,6 @@ namespace
 			for (auto &it : images.parts)
 				imageResize(+it.image, max(it.image->width() / downscale, 1u), max(it.image->height() / downscale, 1u));
 		}
-		*/
 	}
 
 	void performSkyboxToCube()
@@ -315,21 +239,13 @@ namespace
 		images.parts = std::move(parts);
 	}
 
-	void checkConsistency(const uint32 target)
+	void checkConsistency(const TextureFlags target)
 	{
-		/*
 		const uint32 frames = numeric_cast<uint32>(images.parts.size());
 		if (frames == 0)
 			CAGE_THROW_ERROR(Exception, "no images were loaded");
-		if (target == GL_TEXTURE_2D && frames > 1)
-		{
-			CAGE_LOG_THROW("did you forgot to set texture target?");
-			CAGE_THROW_ERROR(Exception, "images have too many frames for a 2D texture");
-		}
-		if (target == GL_TEXTURE_CUBE_MAP && frames != 6)
+		if (any(target & TextureFlags::Cubemap) && frames != 6)
 			CAGE_THROW_ERROR(Exception, "cube texture requires exactly 6 images");
-		if (target != GL_TEXTURE_2D && frames == 1)
-			CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "texture has only one frame. consider setting target to 2d");
 		const Holder<Image> &im0 = images.parts[0].image;
 		if (im0->width() == 0 || im0->height() == 0)
 			CAGE_THROW_ERROR(Exception, "image has zero resolution");
@@ -342,24 +258,22 @@ namespace
 			if (imi.image->channels() != im0->channels())
 				CAGE_THROW_ERROR(Exception, "frames has inconsistent bpp");
 		}
-		if (target == GL_TEXTURE_CUBE_MAP && im0->width() != im0->height())
+		if (any(target & TextureFlags::Cubemap) && im0->width() != im0->height())
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
-		*/
 	}
 
 	void exportBcn(TextureHeader &data, Serializer &ser)
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using bcn encoding");
 
-		data.flags |= TextureFlags::Compressed;
-		data.internalFormat = findInternalFormatForBcn(data);
+		data.format = (uint32)findInternalFormatForBcn(data);
 
 		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const ImageImportRaw *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.raw;
-		CAGE_ASSERT(levels.size() >= data.containedLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevels);
 
 		for (const auto &level : levels)
 		{
@@ -381,13 +295,12 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
-		data.internalFormat = findInternalFormatForRaw(data);
-		data.copyFormat = findCopyFormatForRaw(data);
+		data.format = (uint32)findInternalFormatForRaw(data);
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.image;
-		CAGE_ASSERT(levels.size() >= data.containedLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevels);
 
 		for (const auto &level : levels)
 		{
@@ -405,53 +318,37 @@ namespace
 		}
 	}
 
-	void exportTexture(const uint32 target)
+	void exportTexture(const TextureFlags target)
 	{
-		/*
-		TextureHeader data;
-		detail::memset(&data, 0, sizeof(TextureHeader));
-		data.target = target;
-		data.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
-		data.channels = images.parts[0].image->channels();
-		data.filterMin = convertFilter(processor->property("filterMin"));
-		data.filterMag = convertFilter(processor->property("filterMag"));
-		data.filterAniso = toUint32(processor->property("filterAniso"));
-		data.wrapX = convertWrap(processor->property("wrapX"));
-		data.wrapY = convertWrap(processor->property("wrapY"));
-		data.wrapZ = convertWrap(processor->property("wrapZ"));
-		data.swizzle[0] = TextureSwizzleEnum::R;
-		data.swizzle[1] = TextureSwizzleEnum::G;
-		data.swizzle[2] = TextureSwizzleEnum::B;
-		data.swizzle[3] = TextureSwizzleEnum::A;
-		data.containedLevels = requireMipmaps(data.filterMin) ? min(findContainedMipmapLevels(data.resolution, target == GL_TEXTURE_3D), 8u) : 1;
-		data.mipmapLevels = data.containedLevels;
-		if (toBool(processor->property("srgb")))
-			data.flags |= TextureFlags::Srgb;
-		data.copyType = GL_UNSIGNED_BYTE;
+		TextureHeader header;
+		header.flags = target;
+		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
+		header.channels = images.parts[0].image->channels();
+		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D)), 8u) : 1;
 
 		// todo
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "8-bit precision only for now");
 
-		if (data.containedLevels > 1)
+		if (header.mipLevels > 1)
 			imageImportGenerateMipmaps(images);
 
 		MemoryBuffer inputBuffer;
 
 		{
 			Serializer ser(inputBuffer);
-			ser << data; // reserve space, will be overridden later
+			ser << header; // reserve space, will be overridden later
 
 			const String compression = processor->property("compression");
 			if (compression == "bcn")
-				exportBcn(data, ser);
+				exportBcn(header, ser);
 			else
-				exportRaw(data, ser);
+				exportRaw(header, ser);
 		}
 
 		{ // overwrite the initial header
 			Serializer ser(inputBuffer);
-			ser << data;
+			ser << header;
 		}
 
 		AssetHeader h = processor->initializeAssetHeader();
@@ -464,7 +361,6 @@ namespace
 		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();
-		*/
 	}
 }
 
@@ -478,6 +374,7 @@ void processTexture()
 		const bool pa = toBool(processor->property("premultiplyAlpha"));
 		const bool srgb = toBool(processor->property("srgb"));
 		const bool normal = toBool(processor->property("normal"));
+		const bool mips = toBool(processor->property("mipmaps"));
 		if ((h2n || s2s || g2s || normal) && pa)
 			CAGE_THROW_ERROR(Exception, "premultiplied alpha is for colors only");
 		if ((h2n || s2s || g2s || normal) && srgb)
@@ -528,33 +425,6 @@ void processTexture()
 		}
 	}
 
-	{ // invert
-		if (toBool(processor->property("invertRed")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 0);
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "red channel inverted");
-		}
-		if (toBool(processor->property("invertGreen")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 1);
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "green channel inverted");
-		}
-		if (toBool(processor->property("invertBlue")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 2);
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "blue channel inverted");
-		}
-		if (toBool(processor->property("invertAlpha")))
-		{
-			for (auto &it : images.parts)
-				imageInvertChannel(+it.image, 3);
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "alpha channel inverted");
-		}
-	}
-
 	{ // convert height to normal map
 		if (processor->property("convert") == "heightToNormal")
 		{
@@ -591,7 +461,7 @@ void processTexture()
 		}
 	}
 
-	const uint32 target = convertTarget();
+	const TextureFlags target = convertTarget();
 	checkConsistency(target);
 
 	{ // premultiply alpha
@@ -631,7 +501,7 @@ void processTexture()
 		const uint32 downscale = toUint32(processor->property("downscale"));
 		if (downscale > 1)
 		{
-			performDownscale(downscale, target);
+			performDownscale(downscale, any(target & TextureFlags::Volume3D));
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "downscaled: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
 		}
 	}

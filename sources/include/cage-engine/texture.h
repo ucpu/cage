@@ -43,9 +43,6 @@ namespace cage
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const TextureCreateConfig &config);
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const Image *image);
 	CAGE_ENGINE_API Holder<Texture> newTexture(wgpu::Texture texture);
-
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeTexture(uint32 threadIndex);
-	constexpr uint32 AssetSchemeIndexTexture = 11;
 }
 
 #endif

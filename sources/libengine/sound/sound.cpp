@@ -114,11 +114,9 @@ namespace cage
 		};
 	}
 
-	void Sound::setDebugName(const String &name)
+	void Sound::setLabel(const String &name)
 	{
-#ifdef CAGE_DEBUG
-		debugName = name;
-#endif // CAGE_DEBUG
+		label = name;
 	}
 
 	void Sound::importAudio(Holder<Audio> &&audio)

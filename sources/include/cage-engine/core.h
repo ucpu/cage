@@ -11,7 +11,6 @@ namespace cage
 	struct GenericInput;
 
 	enum class TextureFlags : uint32;
-	enum class TextureSwizzleEnum : uint8;
 	enum class SoundCompressionEnum : uint32;
 	enum class ScreenSpaceEffectsFlags : uint32;
 	enum class ImageModeEnum : uint32;
@@ -83,7 +82,7 @@ namespace cage
 
 	// constants
 
-	constexpr uint32 MaxTexturesCountPerMaterial = 4;
+	constexpr uint32 MaxTexturesCountPerMaterial = 4; // albedo, special, normal, custom
 }
 
 #endif // guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632

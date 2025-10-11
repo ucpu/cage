@@ -5,6 +5,7 @@
 #include <cage-core/audioChannelsConverter.h>
 #include <cage-core/sampleRateConverter.h>
 #include <cage-core/swapBufferGuard.h>
+#include <cage-engine/assetsSchemes.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/soundsQueue.h>
 

@@ -84,14 +84,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config);
-
-	struct CAGE_CORE_API AssetPack
-	{};
-	CAGE_CORE_API AssetsScheme genAssetSchemePack();
-	constexpr uint32 AssetSchemeIndexPack = 0;
-
-	CAGE_CORE_API AssetsScheme genAssetSchemeRaw();
-	constexpr uint32 AssetSchemeIndexRaw = 1;
 }
 
 #endif // guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t

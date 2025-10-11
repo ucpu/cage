@@ -47,4 +47,17 @@ namespace cage
 	{
 		return systemMemory().createImpl<Shader, ShaderImpl>(device, spirv);
 	}
+
+	namespace
+	{
+		class MultiShaderImpl : public MultiShader
+		{
+		public:
+		};
+	}
+
+	Holder<MultiShader> newMultiShader()
+	{
+		return systemMemory().createImpl<MultiShader, MultiShaderImpl>();
+	}
 }

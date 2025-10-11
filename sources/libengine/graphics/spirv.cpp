@@ -1,17 +1,26 @@
+#include <array>
 #include <vector>
 
 #include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/DirStackFileIncluder.h>
 #include <glslang/Public/ResourceLimits.h>
 #include <glslang/Public/ShaderLang.h>
 
+#include <cage-core/containerSerialization.h>
 #include <cage-core/lineReader.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-engine/spirv.h>
 
 namespace cage
 {
 	namespace
 	{
+		struct SpirvHeader
+		{
+			std::array<char, 12> cageName = { "cageSpirv" };
+			uint32 version = 1;
+		};
+
 		class SpirvImpl : public Spirv
 		{
 		public:
@@ -48,14 +57,26 @@ namespace cage
 
 			void importBuffer(PointerRange<const char> buffer)
 			{
-				CAGE_THROW_CRITICAL(Exception, "spirv import buffer not yet implemented");
-				// todo
+				clear();
+				Deserializer des(buffer);
+				SpirvHeader header;
+				des >> header;
+				if (header.cageName != SpirvHeader().cageName || header.version != SpirvHeader().version)
+					CAGE_THROW_ERROR(Exception, "invalid magic or version in spir-v deserialization");
+				des >> vertex;
+				des >> fragment;
+				CAGE_ASSERT(des.available() == 0);
 			}
 
 			Holder<PointerRange<char>> exportBuffer() const
 			{
-				CAGE_THROW_CRITICAL(Exception, "spirv export buffer not yet implemented");
-				// todo
+				MemoryBuffer buf;
+				Serializer ser(buf);
+				SpirvHeader header;
+				ser << header;
+				ser << vertex;
+				ser << fragment;
+				return std::move(buf);
 			}
 
 		private:
@@ -78,8 +99,7 @@ namespace cage
 				shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
 
 				const EShMessages messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
-				DirStackFileIncluder includer;
-				const bool parsed = shader.parse(GetDefaultResources(), 0, true, messages, includer);
+				const bool parsed = shader.parse(GetDefaultResources(), 0, true, messages);
 				logInfo(shader.getInfoLog());
 				if (!parsed)
 					CAGE_THROW_ERROR(Exception, "shader parsing failed");
