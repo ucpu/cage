@@ -21,6 +21,9 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<Shader> newShader(GraphicsDevice *device, const Spirv *spirv);
+
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeShaderProgram(uint32 threadIndex);
+	constexpr uint32 AssetSchemeIndexShaderProgram = 10;
 }
 
 #endif

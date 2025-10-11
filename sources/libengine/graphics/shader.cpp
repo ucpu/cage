@@ -21,10 +21,10 @@ namespace cage
 
 			wgpu::ShaderModule makeShader(GraphicsDevice *device, PointerRange<const uint32> code)
 			{
-				wgpu::ShaderModuleSPIRVDescriptor s;
+				wgpu::ShaderModuleSPIRVDescriptor s = {};
 				s.codeSize = code.size();
 				s.code = code.data();
-				wgpu::ShaderModuleDescriptor desc;
+				wgpu::ShaderModuleDescriptor desc = {};
 				desc.nextInChain = &s;
 				return device->nativeDevice().CreateShaderModule(&desc);
 			}

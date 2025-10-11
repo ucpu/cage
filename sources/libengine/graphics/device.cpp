@@ -7,14 +7,14 @@
 
 #include "../window/private.h"
 
+#include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 #include <cage-engine/graphicsDevice.h>
+#include <cage-engine/texture.h>
 #include <cage-engine/window.h>
 
 namespace cage
 {
-	Holder<Texture> adaptWgpuTexture(wgpu::Texture texture);
-
 	struct GraphicsContext
 	{
 		wgpu::Surface surface;
@@ -73,6 +73,7 @@ namespace cage
 		class GraphicsDeviceImpl : public GraphicsDevice
 		{
 		public:
+			Holder<Mutex> mutex = newMutex();
 			wgpu::Instance instance;
 			wgpu::Device device;
 			wgpu::Queue queue;
@@ -80,9 +81,9 @@ namespace cage
 			GraphicsDeviceImpl(const GraphicsDeviceCreateConfig &config)
 			{
 				{
-					dawn::native::DawnInstanceDescriptor ex;
+					dawn::native::DawnInstanceDescriptor ex = {};
 					ex.SetLoggingCallback(logFromInstance);
-					wgpu::InstanceDescriptor desc;
+					wgpu::InstanceDescriptor desc = {};
 					desc.nextInChain = &ex;
 					std::array<wgpu::InstanceFeatureName, 2> features = { wgpu::InstanceFeatureName::TimedWaitAny, wgpu::InstanceFeatureName::ShaderSourceSPIRV };
 					desc.requiredFeatureCount = features.size();
@@ -95,7 +96,7 @@ namespace cage
 
 				wgpu::Adapter adapter;
 				{
-					wgpu::RequestAdapterOptions opts;
+					wgpu::RequestAdapterOptions opts = {};
 					opts.backendType = wgpu::BackendType::Vulkan;
 					opts.powerPreference = wgpu::PowerPreference::HighPerformance;
 					if (config.compatibility)
@@ -111,7 +112,7 @@ namespace cage
 					if (!adapter)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu adapter");
 
-					wgpu::AdapterInfo info;
+					wgpu::AdapterInfo info = {};
 					adapter.GetInfo(&info);
 					CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "adapter vendor: " + conv(info.vendor));
 					CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "adapter device: " + conv(info.device));
@@ -119,7 +120,7 @@ namespace cage
 				}
 
 				{
-					wgpu::DeviceDescriptor desc;
+					wgpu::DeviceDescriptor desc = {};
 					desc.SetDeviceLostCallback(wgpu::CallbackMode::AllowProcessEvents, lostFromDevice);
 					desc.SetUncapturedErrorCallback(errorFromDevice);
 
@@ -163,7 +164,7 @@ namespace cage
 				if (res != context->resolution)
 				{
 					context->presentable = false;
-					wgpu::SurfaceConfiguration cfg;
+					wgpu::SurfaceConfiguration cfg = {};
 					cfg.device = device;
 					cfg.width = res[0];
 					cfg.height = res[1];
@@ -177,7 +178,7 @@ namespace cage
 				if (context->presentable)
 					context->surface.Present();
 
-				wgpu::SurfaceTexture tex;
+				wgpu::SurfaceTexture tex = {};
 				context->surface.GetCurrentTexture(&tex);
 				switch (tex.status)
 				{
@@ -192,7 +193,7 @@ namespace cage
 
 				CAGE_ASSERT(tex.texture);
 				context->presentable = true;
-				return adaptWgpuTexture(tex.texture);
+				return newTexture(tex.texture);
 			}
 		};
 	}
@@ -220,9 +221,17 @@ namespace cage
 		return impl->device;
 	}
 
-	wgpu::Queue GraphicsDevice::nativeQueue()
+	Holder<wgpu::Queue> GraphicsDevice::nativeQueue()
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
-		return impl->queue;
+		struct LockedQueue : private Noncopyable
+		{
+			ScopeLock<Mutex> lock;
+			wgpu::Queue queue;
+
+			LockedQueue(ScopeLock<Mutex> &&l, wgpu::Queue &&q) : lock(std::move(l)), queue(std::move(q)) {}
+		};
+		Holder<LockedQueue> l = systemMemory().createHolder<LockedQueue>(ScopeLock(impl->mutex), impl->queue);
+		return Holder<wgpu::Queue>(&l->queue, std::move(l));
 	}
 }

@@ -11,6 +11,7 @@ namespace wgpu
 
 namespace cage
 {
+	class Image;
 	class GraphicsDevice;
 
 	class CAGE_ENGINE_API Texture : private Immovable
@@ -34,11 +35,17 @@ namespace cage
 	struct CAGE_ENGINE_API TextureCreateConfig
 	{
 		Vec3i resolution = Vec3i(0, 0, 1);
+		uint32 channels = 3;
 		uint32 mipLevels = 1;
-		bool volume3D = false; // true = 3D texture; false = layers, cube
+		bool srgb = false;
 	};
 
-	CAGE_ENGINE_API Holder<Texture> newGraphicsTexture(GraphicsDevice *device, const TextureCreateConfig &config);
+	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const TextureCreateConfig &config);
+	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const Image *image);
+	CAGE_ENGINE_API Holder<Texture> newTexture(wgpu::Texture texture);
+
+	CAGE_ENGINE_API AssetsScheme genAssetSchemeTexture(uint32 threadIndex);
+	constexpr uint32 AssetSchemeIndexTexture = 11;
 }
 
 #endif

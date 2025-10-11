@@ -22,7 +22,7 @@ namespace cage
 		Holder<Texture> nextFrame(Window *window);
 
 		wgpu::Device nativeDevice();
-		wgpu::Queue nativeQueue();
+		Holder<wgpu::Queue> nativeQueue(); // locks the queue for thread-safe access
 	};
 
 	struct CAGE_CORE_API GraphicsDeviceCreateConfig
