@@ -16,3 +16,8 @@ cage_gen_module(MbedTLS "$<TARGET_LINKER_FILE:mbedtls>;$<TARGET_LINKER_FILE:mbed
 set(filename "${CAGE_EXTERNALS_MODULE_PATH}/FindMBEDTLS.cmake")
 cage_gen_module_helper(${filename} MBEDX509 $<TARGET_LINKER_FILE:mbedx509> "")
 cage_gen_module_helper(${filename} MBEDCRYPTO $<TARGET_LINKER_FILE:mbedcrypto> "")
+
+get_directory_property(MBEDTLS_VERSION DIRECTORY mbedtls DEFINITION "Mbed TLS_VERSION")
+file(APPEND ${filename} "set(MbedTLS_VERSION \"${MBEDTLS_VERSION}\")\n")
+file(APPEND ${filename} "set(MBEDTLS_VERSION \"${MBEDTLS_VERSION}\")\n")
+file(APPEND ${filename} "set(mbedtls_VERSION \"${MBEDTLS_VERSION}\")\n")

@@ -9,6 +9,7 @@ else()
 		# steam sockets use openssl already, so use it here too
 		find_package(OpenSSL REQUIRED)
 		set(CURL_USE_OpenSSL ON CACHE INTERNAL "")
+		set(HAVE_DES_ECB_ENCRYPT OFF CACHE INTERNAL "") # bypass a check that would otherwise fail
 		set(HAVE_SSL_SET0_WBIO OFF CACHE INTERNAL "") # bypass a check that would otherwise fail
 		set(CURL_DISABLE_SRP ON CACHE INTERNAL "") # bypass a check that would otherwise fail
 	else()
