@@ -9,7 +9,7 @@ function pbranch {
 	git checkout master
 	git branch --set-upstream-to=origin/HEAD master
 	git pull --ff-only
-	git submodule update --init --recursive
+	#git submodule update --init
 }
 export -f pbranch
 git submodule foreach pbranch

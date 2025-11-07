@@ -31,6 +31,9 @@ update_submodule "externals/dawn/dawn" "third_party/spirv-headers/src"
 update_submodule "externals/dawn/dawn" "third_party/spirv-tools/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-headers/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-utility-libraries/src"
+#update_submodule "externals/mbedtls/mbedtls" "framework"
+#update_submodule "externals/mbedtls/mbedtls" "tf-psa-crypto"
+#update_submodule "externals/mbedtls/mbedtls/tf-psa-crypto" "framework"
 update_submodule "externals/wamr/zydis" "dependencies/zycore"
 
 ignore_file()
