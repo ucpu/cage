@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "zstd")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 set(ZSTD_BUILD_STATIC ON CACHE INTERNAL "ZSTD_BUILD_STATIC")
 set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "ZSTD_BUILD_SHARED")
 

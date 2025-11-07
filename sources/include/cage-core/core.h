@@ -94,6 +94,7 @@ namespace cage
 	}
 	using String = detail::StringBase<1019>;
 	using Stringizer = detail::StringizerBase<1019>;
+	using AssetLabel = detail::StringBase<123>;
 
 	struct Real;
 	struct Rads;
@@ -339,6 +340,12 @@ namespace cage
 			static_assert(sizeof(T) == sizeof(M));
 			static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_copyable_v<M>);
 			return PointerRange<M>((M *)begin_, (M *)end_);
+		}
+
+		CAGE_FORCE_INLINE PointerRange<T> subRange(size_type offset, size_type size) const
+		{
+			CAGE_ASSERT(offset + size <= this->size());
+			return PointerRange<T>(begin_ + offset, begin_ + offset + size);
 		}
 	};
 

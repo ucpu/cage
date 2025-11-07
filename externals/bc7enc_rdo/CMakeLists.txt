@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "bc7enc_rdo")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 add_library(bc7enc_rdo STATIC
 	bc7enc_rdo/bc7decomp.cpp bc7enc_rdo/bc7decomp.h
 	bc7enc_rdo/bc7enc.cpp bc7enc_rdo/bc7enc.h

@@ -1,11 +1,9 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Dof
+layout(std430, set = 2, binding = 0) readonly buffer Params
 {
 	mat4 projInv;
 	vec4 dofNear; // near, far
@@ -28,17 +26,17 @@ float interpFactor(float a, float b, float d)
 
 void dofContribution(vec2 uv, float depth, out float near, out float far)
 {
-	vec3 wp = s2w(uv * 2.0 - 1.0, depth * 2.0 - 1.0);
+	vec3 wp = s2w(uv * 2.0 - 1.0, depth);
 	float d = length(wp);
 	near = 1.0 - interpFactor(dofNear[0], dofNear[1], d);
 	far = interpFactor(dofFar[0], dofFar[1], d);
 }
 
-layout(binding = 0) uniform sampler2D texColor;
-layout(binding = 1) uniform sampler2D texDepth;
-layout(binding = 2) uniform sampler2D texDof;
+layout(set = 2, binding = 1) uniform sampler2D texColor;
+layout(set = 2, binding = 3) uniform sampler2D texDepth;
+layout(set = 2, binding = 5) uniform sampler2D texDof;
 
-out vec4 outColor;
+layout(location = 0) out vec4 outColor;
 
 void main()
 {

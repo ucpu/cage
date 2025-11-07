@@ -9,7 +9,7 @@
 #include <cage-core/meshAlgorithms.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/skeletalAnimation.h>
-#include <cage-engine/shaderConventions.h>
+#include <cage-engine/model.h>
 
 MeshImportConfig meshImportConfig()
 {
@@ -164,26 +164,9 @@ uint32 meshImportSelectIndex(const MeshImportResult &result)
 
 namespace
 {
-	enum class ModelDataFlags : uint32
+	void setFlags(MeshComponentsFlags &flags, MeshComponentsFlags idx, bool available, const char *name)
 	{
-		None = 0,
-		Normals = 1 << 0,
-		Bones = 1 << 1,
-		Uvs2 = 1 << 2,
-		Uvs3 = 1 << 3,
-	};
-}
-
-namespace cage
-{
-	GCHL_ENUM_BITS(ModelDataFlags);
-}
-
-namespace
-{
-	void setFlags(ModelDataFlags &flags, ModelDataFlags idx, bool available, const char *name)
-	{
-		bool requested = toBool(processor->property(name));
+		const bool requested = toBool(processor->property(name));
 		if (requested && !available)
 		{
 			CAGE_LOG_THROW(cage::String("requested feature: ") + name);
@@ -219,13 +202,13 @@ namespace
 		}
 	}
 
-	void validateFlags(const ModelHeader &dsm, const ModelDataFlags flags, const MeshRenderFlags renderFlags, const MeshImportMaterial &mat)
+	void validateFlags(const ModelHeader &dsm, const MeshComponentsFlags flags, const MeshRenderFlags renderFlags, const MeshImportMaterial &mat)
 	{
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
-			if (texCount && none(flags & (ModelDataFlags::Uvs2 | ModelDataFlags::Uvs3)))
+			if (texCount && none(flags & (MeshComponentsFlags::Uvs2 | MeshComponentsFlags::Uvs3)))
 			{
 				if (dsm.shaderName)
 					CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "material has a texture but no uvs");
@@ -237,7 +220,7 @@ namespace
 		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
 			CAGE_THROW_ERROR(Exception, "material has multiple transparency flags (cutOut, transparent, fade)");
 
-		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & ModelDataFlags::Normals))
+		if (dsm.textureNames[2] != 0 && none(flags & MeshComponentsFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no normals");
 	}
 
@@ -301,29 +284,29 @@ void processModel()
 	if (part.mesh->verticesCount() == 0)
 		CAGE_THROW_ERROR(Exception, "the mesh is empty");
 
-	ModelDataFlags flags = ModelDataFlags::None;
-	setFlags(flags, ModelDataFlags::Uvs2, !part.mesh->uvs().empty() || !part.mesh->uvs3().empty(), "uvs");
-	setFlags(flags, ModelDataFlags::Normals, !part.mesh->normals().empty(), "normals");
-	setFlags(flags, ModelDataFlags::Bones, !part.mesh->boneIndices().empty(), "bones");
+	MeshComponentsFlags flags = MeshComponentsFlags::None;
+	setFlags(flags, MeshComponentsFlags::Uvs2, !part.mesh->uvs().empty() || !part.mesh->uvs3().empty(), "uvs");
+	setFlags(flags, MeshComponentsFlags::Normals, !part.mesh->normals().empty(), "normals");
+	setFlags(flags, MeshComponentsFlags::Bones, !part.mesh->boneIndices().empty(), "bones");
 
 	if (!part.mesh->uvs3().empty())
 	{
 		CAGE_ASSERT(part.mesh->uvs().empty());
-		flags &= ~ModelDataFlags::Uvs2;
-		flags |= ModelDataFlags::Uvs3;
+		flags &= ~MeshComponentsFlags::Uvs2;
+		flags |= MeshComponentsFlags::Uvs3;
 	}
-	if (any(flags & ModelDataFlags::Uvs2))
+	if (any(flags & MeshComponentsFlags::Uvs2))
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using 2D uvs");
-	if (any(flags & ModelDataFlags::Uvs3))
+	if (any(flags & MeshComponentsFlags::Uvs3))
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using 3D uvs");
 
-	if (none(flags & ModelDataFlags::Uvs2))
+	if (none(flags & MeshComponentsFlags::Uvs2))
 		part.mesh->uvs({});
-	if (none(flags & ModelDataFlags::Uvs3))
+	if (none(flags & MeshComponentsFlags::Uvs3))
 		part.mesh->uvs3({});
-	if (none(flags & ModelDataFlags::Normals))
+	if (none(flags & MeshComponentsFlags::Normals))
 		part.mesh->normals({});
-	if (none(flags & ModelDataFlags::Bones))
+	if (none(flags & MeshComponentsFlags::Bones))
 	{
 		part.mesh->boneIndices(PointerRange<Vec4i>());
 		part.mesh->boneWeights(PointerRange<Vec4>());
@@ -342,13 +325,13 @@ void processModel()
 		switch (t.type)
 		{
 			case MeshImportTextureType::Albedo:
-				dsm.textureNames[CAGE_SHADER_TEXTURE_ALBEDO] = n;
+				dsm.textureNames[0] = n;
 				break;
 			case MeshImportTextureType::Special:
-				dsm.textureNames[CAGE_SHADER_TEXTURE_SPECIAL] = n;
+				dsm.textureNames[1] = n;
 				break;
 			case MeshImportTextureType::Normal:
-				dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] = n;
+				dsm.textureNames[2] = n;
 				break;
 			case MeshImportTextureType::Custom:
 				dsm.textureNames[3] = n;
@@ -388,11 +371,11 @@ void processModel()
 			h.dependenciesCount++;
 	h.dependenciesCount += !!dsm.shaderName;
 
-	cage::MemoryBuffer buffer;
+	MemoryBuffer buffer;
 	Serializer ser(buffer);
 	ser << dsm;
-	ser << mat;
 	ser.write(serMesh);
+	ser << mat;
 	ser.write(serCol);
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = memoryCompress(buffer);

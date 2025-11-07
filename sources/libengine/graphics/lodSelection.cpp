@@ -55,7 +55,7 @@ namespace cage
 			ok = true;
 			for (uint32 it : object->models(lod))
 			{
-				if (auto md = assets->get<AssetSchemeIndexModel, Model>(it, load))
+				if (auto md = assets->get<Model>(it, load))
 					outModels.push_back(std::move(md));
 				else
 					ok = false;
@@ -87,7 +87,7 @@ namespace cage
 			ok = true;
 			for (uint32 it : object->models(lod))
 			{
-				if (auto md = assets->get<AssetSchemeIndexModel, Model>(it))
+				if (auto md = assets->get<Model>(it))
 					outModels.push_back(std::move(md));
 				else
 					ok = false;

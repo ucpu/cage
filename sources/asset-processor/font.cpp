@@ -6,6 +6,7 @@
 #include FT_FREETYPE_H
 #include <msdfgen/ext/import-font.h>
 #include <msdfgen/msdfgen.h>
+#include <webgpu/webgpu_cpp.h>
 
 #include "processor.h"
 
@@ -16,7 +17,6 @@
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
 #include <cage-core/tasks.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
@@ -202,28 +202,16 @@ namespace
 		return HashString(textureName(index));
 	}
 
-	void saveTexture(uint32 index, const Image *img)
+	void saveTexture(uint32 index, Image *img)
 	{
+		imageConvert(img, 4);
+
 		TextureHeader data;
-		detail::memset(&data, 0, sizeof(TextureHeader));
-		data.target = GL_TEXTURE_2D;
 		data.resolution = Vec3i(img->width(), img->height(), 1);
 		data.channels = img->channels();
-		data.filterMin = GL_LINEAR;
-		data.filterMag = GL_LINEAR;
-		data.filterAniso = 0;
-		data.wrapX = GL_CLAMP_TO_EDGE;
-		data.wrapY = GL_CLAMP_TO_EDGE;
-		data.wrapZ = GL_CLAMP_TO_EDGE;
-		data.swizzle[0] = TextureSwizzleEnum::R;
-		data.swizzle[1] = TextureSwizzleEnum::G;
-		data.swizzle[2] = TextureSwizzleEnum::B;
-		data.swizzle[3] = TextureSwizzleEnum::A;
-		data.containedLevels = 1;
-		data.mipmapLevels = 1;
-		data.copyType = GL_UNSIGNED_BYTE;
-		data.internalFormat = GL_RGB8;
-		data.copyFormat = GL_RGB;
+		data.mipLevels = 1;
+		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
+		data.format = (uint32)wgpu::TextureFormat::RGBA8Unorm;
 
 		MemoryBuffer inputBuffer;
 		Serializer ser(inputBuffer);

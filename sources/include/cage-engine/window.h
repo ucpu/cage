@@ -16,7 +16,6 @@ namespace cage
 	{
 	public:
 		EventDispatcher<bool(const GenericInput &)> events;
-		Delegate<void(uint32, uint32, uint32, uint32, const char *)> debugOpenglErrorCallback;
 
 		void processEvents();
 
@@ -56,18 +55,10 @@ namespace cage
 		void windowedSize(Vec2i size);
 		Vec2i windowedPosition() const;
 		void windowedPosition(Vec2i pos);
-
-		// opengl
-		void makeCurrent();
-		void makeNotCurrent();
-		void swapBuffers();
 	};
 
 	struct CAGE_ENGINE_API WindowCreateConfig
-	{
-		Window *shareContext = nullptr;
-		int vsync = -1; // -1 = use system default, 0 = disable, 1 = true
-	};
+	{};
 
 	CAGE_ENGINE_API Holder<Window> newWindow(const WindowCreateConfig &config);
 

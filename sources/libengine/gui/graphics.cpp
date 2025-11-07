@@ -3,22 +3,20 @@
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/hashString.h>
-#include <cage-core/serialization.h>
-#include <cage-core/swapBufferGuard.h>
+#include <cage-core/memoryAllocators.h>
+#include <cage-core/profiling.h>
+#include <cage-core/scopeGuard.h>
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsBindings.h> // prepareModelBindings
+#include <cage-engine/graphicsBuffer.h>
+#include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/model.h>
-#include <cage-engine/opengl.h> // GL_TEXTURE_2D_ARRAY
-#include <cage-engine/shaderConventions.h>
-#include <cage-engine/shaderProgram.h>
+#include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
 namespace cage
 {
-	void SkinData::bind(RenderQueue *queue) const
-	{
-		CAGE_ASSERT(texture);
-		queue->bind(uubRange, 0);
-		queue->bind(texture, 0);
-	}
+	struct AssetPack;
 
 	void RenderableBase::setClip(const HierarchyItem *item)
 	{
@@ -30,8 +28,9 @@ namespace cage
 	{
 		if (clipSize[0] >= 1 && clipSize[1] >= 1)
 		{
-			const Vec2i pos = Vec2i(Vec2(clipPos[0], impl->outputResolution[1] - clipPos[1] - clipSize[1]));
-			impl->activeQueue->scissors(pos, Vec2i(clipSize));
+			//const Vec2i pos = Vec2i(Vec2(clipPos[0], impl->outputResolution[1] - clipPos[1] - clipSize[1]));
+			//const Vec2i siz = Vec2i(clipSize);
+			//impl->activeQueue->nativeRenderEncoder().SetScissorRect(pos[0], pos[1], siz[0], siz[1]); // todo
 			return true;
 		}
 		return false;
@@ -42,7 +41,6 @@ namespace cage
 		CAGE_ASSERT(element < GuiElementTypeEnum::TotalElements);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());
-		CAGE_ASSERT(item->skin->texture);
 		setClip(item->hierarchy);
 		this->element = (uint32)element;
 		this->mode = mode;
@@ -58,28 +56,58 @@ namespace cage
 	{
 		if (!prepare())
 			return;
-		RenderQueue *q = impl->activeQueue;
-		skin->bind(q);
-		Holder<ShaderProgram> shader = impl->graphicsData.elementShader.share();
-		q->bind(shader);
-		struct ElementStruct
+
+		class Command : public GuiRenderCommandBase
 		{
-			Vec4 posOuter;
-			Vec4 posInner;
-			Vec4 accent;
-			uint32 controlType = 0;
-			uint32 layoutMode = 0;
-			uint32 dummy1 = 0;
-			uint32 dummy2 = 0;
+		public:
+			struct ElementStruct
+			{
+				Vec4 posOuter;
+				Vec4 posInner;
+				Vec4 accent;
+				uint32 controlType = 0;
+				uint32 layoutMode = 0;
+				uint32 dummy1 = 0;
+				uint32 dummy2 = 0;
+			};
+			ElementStruct e;
+			DrawConfig drw;
+			const GuiRenderImpl::SkinData *skin = nullptr;
+
+			Command(RenderableElement *base)
+			{
+				GuiRenderImpl *activeQueue = base->impl->activeQueue;
+				skin = &activeQueue->findSkin(base->skin);
+
+				e.posOuter = base->outer;
+				e.posInner = base->inner;
+				e.accent = base->accent;
+				e.controlType = base->element;
+				e.layoutMode = (uint32)base->mode;
+
+				drw.shader = +activeQueue->elementShader;
+				drw.model = +activeQueue->elementModel;
+				drw.depthTest = DepthTestEnum::Always;
+				drw.depthWrite = false;
+				drw.blending = BlendingEnum::AlphaTransparency;
+			}
+
+			void draw(const GuiRenderConfig &config) override
+			{
+				const auto ab = config.aggregate->writeStruct(e, 0);
+				GraphicsBindingsCreateConfig bind;
+				bind.buffers.push_back(ab);
+				bind.buffers.push_back(skin->uvsBinding);
+				bind.textures.push_back({ +skin->texture, 2 });
+				drw.dynamicOffsets.clear();
+				drw.dynamicOffsets.push_back(ab);
+				drw.dynamicOffsets.push_back(skin->uvsBinding);
+				drw.bindings = newGraphicsBindings(config.device, bind);
+				config.encoder->draw(drw);
+			}
 		};
-		ElementStruct e;
-		e.posOuter = outer;
-		e.posInner = inner;
-		e.accent = accent;
-		e.controlType = element;
-		e.layoutMode = (uint32)mode;
-		q->universalUniformStruct(e, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
-		q->draw(impl->graphicsData.elementModel);
+
+		impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(this));
 	}
 
 	RenderableText::RenderableText(TextItem *item, Vec2 position, Vec2 size, bool disabled) : RenderableBase(item->hierarchy->impl)
@@ -114,12 +142,31 @@ namespace cage
 		CAGE_ASSERT(data.font);
 		if (data.layout.glyphs.empty())
 			return;
-		RenderQueue *q = impl->activeQueue;
-		Holder<ShaderProgram> shader = impl->graphicsData.fontShader.share();
-		q->bind(shader);
-		q->uniform(shader, 0, transform);
-		q->uniform(shader, 4, data.color);
-		data.font->render(q, +impl->assetOnDemand, data.layout);
+
+		class Command : public GuiRenderCommandBase
+		{
+		public:
+			CommonTextData data;
+			FontRenderConfig cfg;
+
+			Command(RenderableText *base) : data(std::move(base->data))
+			{
+				cfg.transform = base->transform;
+				cfg.color = Vec4(data.color, 1);
+				cfg.assets = +base->impl->assetOnDemand;
+				cfg.depthTest = false;
+			}
+
+			void draw(const GuiRenderConfig &config) override
+			{
+				auto &c = const_cast<FontRenderConfig &>(cfg);
+				c.encoder = config.encoder;
+				c.aggregate = config.aggregate;
+				data.font->render(data.layout, cfg);
+			}
+		};
+
+		impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(this));
 	}
 
 	namespace
@@ -200,41 +247,57 @@ namespace cage
 	{
 		if (!prepare())
 			return;
-		CAGE_ASSERT(texture);
-		RenderQueue *q = impl->activeQueue;
-		q->bind(texture, 0);
-		uint32 hash = 0;
-		if (texture->target() == GL_TEXTURE_2D_ARRAY)
-			hash += HashString("Animated");
-		if (detail::internalFormatIsSrgb(texture->internalFormat()))
-			hash += HashString("Delinearize");
-		if (disabled)
-			hash += HashString("Disabled");
-		Holder<ShaderProgram> shader = impl->graphicsData.imageShader->get(hash);
-		q->bind(shader);
-		q->uniform(shader, 0, ndcPos);
-		q->uniform(shader, 1, uvClip);
-		if (texture->target() == GL_TEXTURE_2D_ARRAY)
-			q->uniform(shader, 2, animation);
-		q->draw(impl->graphicsData.imageModel);
-	}
 
-	void GuiImpl::GraphicsData::load(AssetsManager *assetMgr)
-	{
-		const auto &defaultProgram = [](const Holder<MultiShaderProgram> &multi) -> Holder<ShaderProgram>
+		class Command : public GuiRenderCommandBase
 		{
-			if (multi)
-				return multi->get(0);
-			return {};
+		public:
+			struct UniData
+			{
+				Vec4 pos; // x1, y1, x2, y2
+				Vec4 uv; // x1, y1, x2, y2
+				Vec4 animation; // time (seconds), speed, offset (normalized), unused
+			};
+			UniData data;
+			Holder<Texture> texture;
+			DrawConfig drw;
+
+			Command(RenderableImage *base) : texture(std::move(base->texture))
+			{
+				GuiRenderImpl *activeQueue = base->impl->activeQueue;
+
+				data.pos = base->ndcPos;
+				data.uv = base->uvClip;
+				data.animation = base->animation;
+
+				uint32 hash = 0;
+				if (any(texture->flags & TextureFlags::Array))
+					hash += HashString("Animated");
+				if (any(texture->flags & TextureFlags::Srgb))
+					hash += HashString("Delinearize");
+				if (base->disabled)
+					hash += HashString("Disabled");
+
+				drw.shader = +activeQueue->imageShader->get(hash);
+				drw.model = +activeQueue->imageModel;
+				drw.depthTest = DepthTestEnum::Always;
+				drw.depthWrite = false;
+				drw.blending = BlendingEnum::AlphaTransparency;
+			}
+
+			void draw(const GuiRenderConfig &config) override
+			{
+				const auto ab = config.aggregate->writeStruct(data, 0);
+				GraphicsBindingsCreateConfig bind;
+				bind.buffers.push_back(ab);
+				bind.textures.push_back({ +texture, 1 });
+				drw.dynamicOffsets.clear();
+				drw.dynamicOffsets.push_back(ab);
+				drw.bindings = newGraphicsBindings(config.device, bind);
+				config.encoder->draw(drw);
+			}
 		};
-		elementShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/element.glsl")));
-		fontShader = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/font.glsl")));
-		imageShader = assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/image.glsl"));
-		colorPickerShader[0] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?F")));
-		colorPickerShader[1] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?H")));
-		colorPickerShader[2] = defaultProgram(assetMgr->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/gui/colorPicker.glsl?S")));
-		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/models/guiElement.obj"));
-		imageModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
+
+		impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(this));
 	}
 
 	namespace
@@ -258,68 +321,94 @@ namespace cage
 			for (int i = 0; i < 4; i++)
 				copyTextureUv(source.data[i], target.data[i]);
 		}
-
-		struct GraphicsDataCleaner : private Immovable
-		{
-			GuiImpl *impl = nullptr;
-
-			GraphicsDataCleaner(GuiImpl *impl) : impl(impl) {}
-
-			~GraphicsDataCleaner()
-			{
-				impl->activeQueue = nullptr;
-				impl->graphicsData = GuiImpl::GraphicsData();
-				for (auto &it : impl->skins)
-					it.texture.clear();
-			}
-		};
 	}
 
-	Holder<RenderQueue> GuiImpl::emit()
+	GuiRenderImpl::GuiRenderImpl(GuiImpl *impl) : impl(impl)
+	{
+		ProfilingScope profiling("GuiRenderImpl");
+
+		AssetsManager *assetMgr = +impl->assetMgr;
+
+		skins.reserve(impl->skins.size());
+		for (uint32 i = 0; i < impl->skins.size(); i++)
+		{
+			SkinData sd;
+			sd.texture = assetMgr->get<Texture>(impl->skins[i].textureId);
+			if (!sd.texture)
+				return;
+
+			// write skins uv coordinates
+			for (uint32 e = 0; e < (uint32)GuiElementTypeEnum::TotalElements; e++)
+				copyTextureUv(impl->skins[i].layouts[e].textureUv, sd.textureUvs[e]);
+
+			skins.push_back(std::move(sd));
+		}
+
+		const auto &defaultProgram = [](const Holder<MultiShader> &multi) -> Holder<Shader>
+		{
+			if (multi)
+				return multi->get(0);
+			return {};
+		};
+		elementShader = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/element.glsl")));
+		elementModel = assetMgr->get<Model>(HashString("cage/models/guiElement.obj"));
+		imageShader = assetMgr->get<MultiShader>(HashString("cage/shaders/gui/image.glsl"));
+		imageModel = assetMgr->get<Model>(HashString("cage/models/square.obj"));
+		colorPickerShader[0] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?F")));
+		colorPickerShader[1] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?H")));
+		colorPickerShader[2] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?S")));
+
+		prepareModelBindings(+impl->graphicsDevice, assetMgr, +elementModel); // todo remove
+		prepareModelBindings(+impl->graphicsDevice, assetMgr, +imageModel);
+
+		memory = newMemoryAllocatorStream({});
+
+		commands.reserve(impl->entities()->count() * 2);
+	}
+
+	const GuiRenderImpl::SkinData &GuiRenderImpl::findSkin(const GuiSkinConfig *s) const
+	{
+		auto idx = s - impl->skins.data();
+		CAGE_ASSERT(idx < skins.size());
+		return skins[idx];
+	}
+
+	Holder<GuiRender> GuiImpl::emit()
 	{
 		assetOnDemand->process();
 
 		if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
 			return {};
 
-		if (!assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
+		if (!assetMgr->get<AssetPack>(HashString("cage/cage.pack")))
 			return {};
 
-		GraphicsDataCleaner graphicsDataCleaner(this);
+		ScopeGuard guard([&]() { activeQueue = nullptr; });
 
-		for (auto &s : skins)
+		Holder<GuiRenderImpl> render = systemMemory().createHolder<GuiRenderImpl>(this);
+		if (!render->elementShader)
+			return {};
+
+		activeQueue = +render;
+
 		{
-			s.texture = assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureId);
-			if (!s.texture)
-				return {};
+			ProfilingScope profiling("gui record");
+			root->childrenEmit();
+			profiling.set(Stringizer() + "commands: " + activeQueue->commands.size());
 		}
 
-		graphicsData.load(assetMgr);
+		render->impl = nullptr; // it shall no longer access the gui
 
-		Holder<RenderQueue> q = newRenderQueue(Stringizer() + "gui_" + this, provisionalGraphics);
+		return std::move(render).cast<GuiRender>();
+	}
 
-		activeQueue = +q;
-		auto namedScope = q->namedScope("gui");
-
-		// write skins uv coordinates
-		for (auto &s : skins)
-		{
-			GuiSkinElementLayout::TextureUv textureUvs[(uint32)GuiElementTypeEnum::TotalElements];
-			for (uint32 i = 0; i < (uint32)GuiElementTypeEnum::TotalElements; i++)
-				copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
-			s.uubRange = q->universalUniformArray<GuiSkinElementLayout::TextureUv>(textureUvs);
-		}
-
-		// render all
-		q->scissors(true);
-		q->blending(true);
-		q->blendFuncAlphaTransparency();
-		q->depthTest(false);
-		q->viewport(Vec2i(), outputResolution);
-		root->childrenEmit();
-		q->blending(false);
-		q->scissors(false);
-
-		return q;
+	void GuiRender::draw(const GuiRenderConfig &config) const
+	{
+		const ProfilingScope proifiling("gui dispatch");
+		GuiRenderImpl *impl = (GuiRenderImpl *)this;
+		for (auto &it : impl->skins)
+			it.uvsBinding = config.aggregate->writeArray<GuiSkinElementLayout::TextureUv>(it.textureUvs, 1);
+		for (const auto &it : impl->commands)
+			it->draw(config);
 	}
 }

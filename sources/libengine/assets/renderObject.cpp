@@ -2,7 +2,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
-#include <cage-engine/assetStructs.h>
+#include <cage-engine/assetsSchemes.h>
+#include <cage-engine/assetsStructs.h>
 #include <cage-engine/renderObject.h>
 
 namespace cage
@@ -12,7 +13,7 @@ namespace cage
 		void processLoad(AssetContext *context)
 		{
 			Holder<RenderObject> obj = newRenderObject();
-			obj->setDebugName(context->textId);
+			obj->setLabel(context->textId);
 
 			Deserializer des(context->originalData);
 			RenderObjectHeader h;

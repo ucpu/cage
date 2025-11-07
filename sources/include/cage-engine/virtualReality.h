@@ -25,7 +25,7 @@ namespace cage
 		Transform transform;
 		Vec2i resolution;
 		Texture *colorTexture = nullptr;
-		Real nearPlane = 0.2, farPlane = 10000; // fill in and call updateProjections
+		Real nearPlane = 0.2, farPlane = 10'000; // fill in and call updateProjections
 		Rads verticalFov; // for lod selection
 		bool primary = false;
 	};
@@ -81,7 +81,6 @@ namespace cage
 		uint64 targetFrameTiming() const;
 	};
 
-	// opengl context must be bound in the current thread (for both constructing and destroying the object)
 	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality();
 
 	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene);

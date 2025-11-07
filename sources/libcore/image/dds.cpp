@@ -161,6 +161,7 @@ namespace cage
 		parts.push_back(std::move(part));
 		ImageImportResult result;
 		result.parts = std::move(parts);
+		result.sort();
 		return result;
 	}
 

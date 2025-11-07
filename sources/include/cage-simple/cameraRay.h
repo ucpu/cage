@@ -2,6 +2,7 @@
 #define guard_cameraRay_as6erz4gt891edf
 
 #include <cage-core/geometry.h>
+#include <cage-engine/core.h>
 
 namespace cage
 {

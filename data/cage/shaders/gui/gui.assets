@@ -1,13 +1,12 @@
-
 []
 scheme = pack
 gui.pack
 
 []
 scheme = shader
-font.glsl
-element.glsl
-image.glsl
 colorPicker.glsl?F # Flat
 colorPicker.glsl?H # Hue
 colorPicker.glsl?S # Saturation & Value
+element.glsl
+font.glsl
+image.glsl

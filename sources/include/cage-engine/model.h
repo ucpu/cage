@@ -1,53 +1,64 @@
-#ifndef guard_model_h_sdx54gfgh24jksd5f4
-#define guard_model_h_sdx54gfgh24jksd5f4
+#ifndef guard_model_dthu41r5df
+#define guard_model_dthu41r5df
+
+#include <array>
 
 #include <cage-core/geometry.h>
 #include <cage-engine/core.h>
+
+namespace wgpu
+{
+	struct VertexBufferLayout;
+}
 
 namespace cage
 {
 	class Mesh;
 	class Collider;
+	class GraphicsDevice;
+	class GraphicsBuffer;
 	enum class MeshRenderFlags : uint32;
+	struct GraphicsBindings;
 
 	class CAGE_ENGINE_API Model : private Immovable
 	{
 	protected:
-		detail::StringBase<64> debugName;
+		AssetLabel label;
 
 	public:
-		void setDebugName(const String &name);
+		AssetLabel getLabel() const;
 
-		uint32 id() const;
-		void bind() const;
+		void updateLayout();
+		const wgpu::VertexBufferLayout &getLayout() const;
+		GraphicsBindings &bindings();
 
-		void importMesh(const Mesh *mesh, PointerRange<const char> materialBuffer);
-
-		void setPrimitiveType(uint32 type);
-		void setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer);
-		void setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset);
-
-		uint32 verticesCount() const;
-		uint32 indicesCount() const;
-		uint32 primitivesCount() const;
-
-		void dispatch() const;
-		void dispatch(uint32 instances) const;
-
-		Holder<const Collider> collider;
+		// general
 		Mat4 importTransform;
 		Aabb boundingBox = Aabb::Universe();
-		uint32 textureNames[MaxTexturesCountPerMaterial] = {};
+		Holder<const Collider> collider;
+
+		// geometry
+		Holder<GraphicsBuffer> geometryBuffer;
+		uint32 verticesCount = 0;
+		uint32 bonesCount = 0;
+		uint32 indicesCount = 0;
+		uint32 indicesOffset = 0;
+		uint32 primitivesCount = 0;
+		uint32 primitiveType = 0;
+		MeshComponentsFlags components = MeshComponentsFlags::None;
+
+		// material
+		Holder<GraphicsBuffer> materialBuffer;
+		std::array<uint32, MaxTexturesCountPerMaterial> textureNames = {};
 		uint32 shaderName = 0;
-		MeshRenderFlags flags = {};
 		sint32 layer = 0;
-		uint32 bones = 0;
+		MeshRenderFlags flags = {};
 	};
 
-	CAGE_ENGINE_API Holder<Model> newModel();
+	CAGE_ENGINE_API Holder<Model> newModel(const AssetLabel &label);
+	CAGE_ENGINE_API Holder<Model> newModel(GraphicsDevice *device, const Mesh *mesh, PointerRange<const char> material, const AssetLabel &label);
 
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeModel(uint32 threadIndex);
-	constexpr uint32 AssetSchemeIndexModel = 12;
+	CAGE_ENGINE_API MeshComponentsFlags meshComponentsFlags(const Mesh *mesh);
 }
 
-#endif // guard_model_h_sdx54gfgh24jksd5f4
+#endif // guard_model_dthu41r5df

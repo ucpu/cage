@@ -13,9 +13,6 @@
 [submodule "externals/freetype/freetype"]
 	path = externals/freetype/freetype
 	url = https://github.com/ucpu/freetype.git
-[submodule "externals/glad/glad"]
-	path = externals/glad/glad
-	url = https://github.com/ucpu/glad.git
 [submodule "externals/glm/glm"]
 	path = externals/glm/glm
 	url = https://github.com/g-truc/glm.git
@@ -91,9 +88,6 @@
 [submodule "externals/gamenetworkingsockets/GameNetworkingSockets"]
 	path = externals/gamenetworkingsockets/GameNetworkingSockets
 	url = https://github.com/ValveSoftware/GameNetworkingSockets.git
-[submodule "externals/protobuf/protobuf"]
-	path = externals/protobuf/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
 [submodule "externals/quickhull/quickhull"]
 	path = externals/quickhull/quickhull
 	url = https://github.com/akuukka/quickhull.git
@@ -121,3 +115,12 @@
 [submodule "externals/wamr/zydis"]
 	path = externals/wamr/zydis
 	url = https://github.com/zyantific/zydis.git
+[submodule "externals/dawn/dawn"]
+	path = externals/dawn/dawn
+	url = https://dawn.googlesource.com/dawn
+[submodule "externals/glslang/glslang"]
+	path = externals/glslang/glslang
+	url = https://github.com/KhronosGroup/glslang.git
+[submodule "externals/svector/svector"]
+	path = externals/svector/svector
+	url = https://github.com/martinus/svector.git

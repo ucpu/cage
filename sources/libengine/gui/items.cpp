@@ -5,6 +5,7 @@
 #include <cage-core/hashString.h>
 #include <cage-core/texts.h>
 #include <cage-core/unicode.h>
+#include <cage-engine/soundsQueue.h>
 #include <cage-engine/texture.h>
 
 namespace cage
@@ -398,7 +399,7 @@ namespace cage
 			fontId = detail::GuiTextFontDefault;
 		if (fontId == 0)
 			fontId = HashString("cage/fonts/ubuntu/regular.ttf");
-		font = hierarchy->impl->assetMgr->get<AssetSchemeIndexFont, Font>(fontId);
+		font = hierarchy->impl->assetMgr->get<Font>(fontId);
 	}
 
 	void TextItem::updateLayout()
@@ -452,7 +453,7 @@ namespace cage
 	{
 		image = value;
 		if (value.textureName)
-			texture = hierarchy->impl->assetOnDemand->get<AssetSchemeIndexTexture, Texture>(value.textureName);
+			texture = hierarchy->impl->assetOnDemand->get<Texture>(value.textureName);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)

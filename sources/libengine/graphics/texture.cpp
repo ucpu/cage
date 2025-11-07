@@ -1,415 +1,215 @@
+#include <webgpu/webgpu_cpp.h>
+
 #include <cage-core/image.h>
-#include <cage-core/macros.h>
-#include <cage-core/serialization.h>
-#include <cage-engine/graphicsError.h>
-#include <cage-engine/opengl.h>
+#include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
 
 namespace cage
 {
+	namespace privat
+	{
+		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags)
+		{
+			if (any(flags & TextureFlags::Volume3D))
+				return wgpu::TextureViewDimension::e3D;
+			if (any(flags & TextureFlags::Cubemap))
+				return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::CubeArray : wgpu::TextureViewDimension::Cube;
+			return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::e2DArray : wgpu::TextureViewDimension::e2D;
+		}
+	}
+
 	namespace
 	{
+		wgpu::TextureFormat findFormat(ImageFormatEnum format, uint32 channels, bool srgb)
+		{
+			using F = wgpu::TextureFormat;
+
+			if (srgb)
+			{
+				if (format == ImageFormatEnum::U8)
+				{
+					switch (channels)
+					{
+						case 3:
+						case 4:
+							return F::RGBA8UnormSrgb;
+					}
+				}
+			}
+			else
+			{
+				switch (format)
+				{
+					case ImageFormatEnum::U8:
+					{
+						switch (channels)
+						{
+							case 1:
+								return F::R8Unorm;
+							case 2:
+								return F::RG8Unorm;
+							case 3:
+							case 4:
+								return F::RGBA8Unorm;
+						}
+						break;
+					}
+					case ImageFormatEnum::U16:
+					{
+						switch (channels)
+						{
+							case 1:
+								return F::R16Unorm;
+							case 2:
+								return F::RG16Unorm;
+							case 3:
+							case 4:
+								return F::RGBA16Unorm;
+						}
+						break;
+					}
+					case ImageFormatEnum::Float:
+					{
+						switch (channels)
+						{
+							case 1:
+								return F::R32Float;
+							case 2:
+								return F::RG32Float;
+							case 3:
+							case 4:
+								return F::RGBA32Float;
+						}
+						break;
+					}
+					case ImageFormatEnum::Default:
+						break;
+				}
+			}
+
+			CAGE_THROW_ERROR(Exception, "image format/channels/srgb combination not supported as a texture");
+		}
+
 		class TextureImpl : public Texture
 		{
 		public:
-			const uint32 target = 0;
-			uint32 id = 0;
-			const bool owning = true;
+			wgpu::Texture texture;
+			wgpu::TextureView view;
+			wgpu::Sampler sampler;
 
-			Vec3i resolution;
-			uint32 mipmapLevels = 0;
-			uint32 internalFormat = 0;
-			sint32 residentCounter = 0;
-
-			TextureImpl(uint32 target) : target(target)
+			TextureImpl(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label_)
 			{
-				glCreateTextures(target, 1, &id);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-				bind(0);
+				this->label = label_;
+				this->flags = config.flags;
+				wgpu::TextureDescriptor desc = {};
+				desc.usage = wgpu::TextureUsage::CopyDst;
+				if (config.sampling)
+					desc.usage |= wgpu::TextureUsage::TextureBinding;
+				if (config.renderable)
+					desc.usage |= wgpu::TextureUsage::RenderAttachment;
+				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? wgpu::TextureDimension::e3D : wgpu::TextureDimension::e2D;
+				desc.size.width = config.resolution[0];
+				desc.size.height = config.resolution[1];
+				desc.size.depthOrArrayLayers = config.resolution[2];
+				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
+				desc.mipLevelCount = config.mipLevels;
+				desc.label = label.c_str();
+				Holder<wgpu::Device> dev = device->nativeDevice();
+				texture = dev->CreateTexture(&desc);
+				wgpu::TextureViewDescriptor twd = {};
+				twd.dimension = privat::textureViewDimension(config.flags);
+				view = texture.CreateView(&twd);
+				sampler = dev->CreateSampler();
 			}
 
-			// createTextureForOpenXr
-			TextureImpl(uint32 id, uint32 internalFormat, Vec2i resolution) : target(GL_TEXTURE_2D), id(id), owning(false), resolution(resolution, 1), mipmapLevels(1), internalFormat(internalFormat) {}
-
-			~TextureImpl()
-			{
-				try
-				{
-					CAGE_ASSERT(residentCounter == 0);
-				}
-				catch (...)
-				{}
-				if (owning)
-					glDeleteTextures(1, &id);
-			}
+			TextureImpl(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label_) : texture(texture), view(view), sampler(sampler) { this->label = label_; }
 
 			Vec3i mipRes(uint32 mip) const
 			{
-				CAGE_ASSERT(mip < mipmapLevels);
-				return Vec3i(max(resolution[0] >> mip, 1), max(resolution[1] >> mip, 1), max(resolution[2] >> (target == GL_TEXTURE_2D_ARRAY ? 0 : mip), 1));
+				CAGE_ASSERT(mip < texture.GetMipLevelCount());
+				const Vec3i r = resolution3();
+				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.GetDimension() == wgpu::TextureDimension::e3D ? mip : 0), 1));
 			}
 		};
-	}
-
-	void Texture::setDebugName(const String &name)
-	{
-		debugName = name;
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->id);
-		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());
-	}
-
-	uint32 Texture::id() const
-	{
-		return ((TextureImpl *)this)->id;
-	}
-
-	uint32 Texture::target() const
-	{
-		return ((TextureImpl *)this)->target;
-	}
-
-	uint32 Texture::internalFormat() const
-	{
-		return ((TextureImpl *)this)->internalFormat;
 	}
 
 	Vec2i Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return Vec2i(impl->resolution);
+		return Vec2i(impl->texture.GetWidth(), impl->texture.GetHeight());
 	}
 
 	Vec3i Texture::resolution3() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->resolution;
+		return Vec3i(impl->texture.GetWidth(), impl->texture.GetHeight(), impl->texture.GetDepthOrArrayLayers());
 	}
 
-	uint32 Texture::mipmapLevels() const
+	uint32 Texture::mipLevels() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->mipmapLevels;
+		return impl->texture.GetMipLevelCount();
 	}
 
-	Vec2i Texture::mipmapResolution(uint32 mipmapLevel) const
+	Vec2i Texture::mipResolution(uint32 mipmapLevel) const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
 		return Vec2i(impl->mipRes(mipmapLevel));
 	}
 
-	Vec3i Texture::mipmapResolution3(uint32 mipmapLevel) const
+	Vec3i Texture::mipResolution3(uint32 mipmapLevel) const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
 		return impl->mipRes(mipmapLevel);
 	}
 
-	void Texture::bind(uint32 bindingPoint) const
-	{
-		const TextureImpl *impl = (const TextureImpl *)this;
-		glActiveTexture(GL_TEXTURE0 + bindingPoint);
-		glBindTexture(impl->target, impl->id);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::bindImage(uint32 bindingPoint, bool read, bool write) const
-	{
-		CAGE_ASSERT(read || write);
-		const TextureImpl *impl = (const TextureImpl *)this;
-		const uint32 access = read && write ? GL_READ_WRITE : write ? GL_WRITE_ONLY : GL_READ_ONLY;
-		glBindImageTexture(bindingPoint, impl->id, 0, GL_FALSE, 0, access, impl->internalFormat);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::filters(uint32 mig, uint32 mag, uint32 aniso)
+	const wgpu::Texture &Texture::nativeTexture()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		glTextureParameteri(impl->id, GL_TEXTURE_MIN_FILTER, mig);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		glTextureParameteri(impl->id, GL_TEXTURE_MAG_FILTER, mag);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		glTextureParameterf(impl->id, GL_TEXTURE_MAX_ANISOTROPY_EXT, float(max(aniso, 1u)));
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		return impl->texture;
 	}
 
-	void Texture::wraps(uint32 s, uint32 t)
-	{
-		wraps(s, t, GL_REPEAT);
-	}
-
-	void Texture::wraps(uint32 s, uint32 t, uint32 r)
+	const wgpu::TextureView &Texture::nativeView()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_S, s);
-		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_T, t);
-		glTextureParameteri(impl->id, GL_TEXTURE_WRAP_R, r);
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		return impl->view;
 	}
 
-	void Texture::swizzle(const uint32 values[4])
+	const wgpu::Sampler &Texture::nativeSampler()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
-		static_assert(sizeof(uint32) == sizeof(GLint));
-		glTextureParameteriv(impl->id, GL_TEXTURE_SWIZZLE_RGBA, (const GLint *)values);
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		return impl->sampler;
 	}
 
-	void Texture::initialize(Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
+	Holder<Texture> newTexture(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label)
 	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE || impl->target == GL_TEXTURE_CUBE_MAP);
-		CAGE_ASSERT(mipmapLevels > 0);
-		CAGE_ASSERT(internalFormat != 0);
-		CAGE_ASSERT(impl->internalFormat == 0); // cannot reinitialize
-		impl->resolution = Vec3i(resolution, 1);
-		impl->mipmapLevels = mipmapLevels;
-		impl->internalFormat = internalFormat;
-		glTextureStorage2D(impl->id, mipmapLevels, internalFormat, resolution[0], resolution[1]);
-		glTextureParameteri(impl->id, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		return systemMemory().createImpl<Texture, TextureImpl>(device, config, label);
 	}
 
-	void Texture::initialize(Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat)
+	Holder<Texture> newTexture(GraphicsDevice *device, const Image *image, const AssetLabel &label)
 	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		CAGE_ASSERT(mipmapLevels > 0);
-		CAGE_ASSERT(internalFormat != 0);
-		CAGE_ASSERT(impl->internalFormat == 0); // cannot reinitialize
-		impl->resolution = resolution;
-		impl->mipmapLevels = mipmapLevels;
-		impl->internalFormat = internalFormat;
-		glTextureStorage3D(impl->id, mipmapLevels, internalFormat, resolution[0], resolution[1], resolution[2]);
-		glTextureParameteri(impl->id, GL_TEXTURE_MAX_LEVEL, mipmapLevels - 1);
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		if (image->format() != ImageFormatEnum::U8)
+			CAGE_THROW_ERROR(Exception, "unsupported image format for texture (not U8)");
+		ColorTextureCreateConfig conf;
+		conf.resolution = Vec3i(image->resolution(), 1);
+		conf.channels = image->channels();
+		if (image->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
+			conf.flags = TextureFlags::Srgb;
+		Holder<Texture> tex = newTexture(device, conf, label);
+		wgpu::TexelCopyTextureInfo dest = {};
+		dest.texture = tex->nativeTexture();
+		dest.aspect = wgpu::TextureAspect::All;
+		wgpu::TexelCopyBufferLayout layout = {};
+		layout.bytesPerRow = image->width() * image->channels();
+		layout.rowsPerImage = image->height();
+		const wgpu::Extent3D extents = { image->width(), image->height(), 1 };
+		const auto data = image->rawViewU8();
+		device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+		return tex;
 	}
 
-	void Texture::importImage(const Image *img)
+	Holder<Texture> newTexture(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label)
 	{
-		const uint32 w = img->width();
-		const uint32 h = img->height();
-		const Vec2i res = Vec2i(w, h);
-		if (img->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
-		{
-			switch (img->format())
-			{
-				case ImageFormatEnum::U8:
-				{
-					switch (img->channels())
-					{
-						case 3:
-							initialize(res, 1, GL_SRGB8);
-							image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-						case 4:
-							initialize(res, 1, GL_SRGB8_ALPHA8);
-							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-					}
-					break;
-				}
-				default:
-					// pass
-					break;
-			}
-		}
-		else
-		{
-			switch (img->format())
-			{
-				case ImageFormatEnum::U8:
-				{
-					switch (img->channels())
-					{
-						case 1:
-							initialize(res, 1, GL_R8);
-							image2d(0, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-						case 2:
-							initialize(res, 1, GL_RG8);
-							image2d(0, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-						case 3:
-							initialize(res, 1, GL_RGB8);
-							image2d(0, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-						case 4:
-							initialize(res, 1, GL_RGBA8);
-							image2d(0, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-							return;
-					}
-					break;
-				}
-				case ImageFormatEnum::U16:
-				{
-					switch (img->channels())
-					{
-						case 1:
-							initialize(res, 1, GL_R16);
-							image2d(0, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-							return;
-						case 2:
-							initialize(res, 1, GL_RG16);
-							image2d(0, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-							return;
-						case 3:
-							initialize(res, 1, GL_RGB16);
-							image2d(0, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-							return;
-						case 4:
-							initialize(res, 1, GL_RGBA16);
-							image2d(0, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-							return;
-					}
-					break;
-				}
-				case ImageFormatEnum::Float:
-				{
-					switch (img->channels())
-					{
-						case 1:
-							initialize(res, 1, GL_R32F);
-							image2d(0, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-							return;
-						case 2:
-							initialize(res, 1, GL_RG32F);
-							image2d(0, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-							return;
-						case 3:
-							initialize(res, 1, GL_RGB32F);
-							image2d(0, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-							return;
-						case 4:
-							initialize(res, 1, GL_RGBA32F);
-							image2d(0, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-							return;
-					}
-					break;
-				}
-				default:
-					// pass
-					break;
-			}
-		}
-		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");
-	}
-
-	void Texture::image2d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glTextureSubImage2D(impl->id, mipmapLevel, 0, 0, res[0], res[1], format, type, buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::image2dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_2D);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glCompressedTextureSubImage2D(impl->id, mipmapLevel, 0, 0, res[0], res[1], impl->internalFormat, buffer.size(), buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::image2dSlice(uint32 mipmapLevel, uint32 sliceIndex, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP || impl->target == GL_TEXTURE_2D_ARRAY);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, sliceIndex, res[0], res[1], 1, format, type, buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::image2dSliceCompressed(uint32 mipmapLevel, uint32 sliceIndex, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP || impl->target == GL_TEXTURE_2D_ARRAY);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, sliceIndex, res[0], res[1], 1, impl->internalFormat, buffer.size(), buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::image3d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glTextureSubImage3D(impl->id, mipmapLevel, 0, 0, 0, res[0], res[1], res[2], format, type, buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer)
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		CAGE_ASSERT(impl->internalFormat != 0);
-		CAGE_ASSERT(!buffer.empty());
-		const Vec3i res = impl->mipRes(mipmapLevel);
-		glCompressedTextureSubImage3D(impl->id, mipmapLevel, 0, 0, 0, res[0], res[1], res[2], impl->internalFormat, buffer.size(), buffer.data());
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	void Texture::generateMipmaps()
-	{
-		TextureImpl *impl = (TextureImpl *)this;
-		glGenerateTextureMipmap(impl->id);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
-	Holder<Texture> newTexture()
-	{
-		return newTexture(GL_TEXTURE_2D);
-	}
-
-	Holder<Texture> newTexture(uint32 target)
-	{
-		CAGE_ASSERT(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
-		return systemMemory().createImpl<Texture, TextureImpl>(target);
-	}
-
-	namespace detail
-	{
-		bool internalFormatIsSrgb(uint32 internalFormat)
-		{
-			switch (internalFormat)
-			{
-				case GL_SRGB8:
-				case GL_SRGB8_ALPHA8:
-				case GL_SRGB:
-				case GL_SRGB_ALPHA:
-				case GL_COMPRESSED_SRGB:
-				case GL_COMPRESSED_SRGB_ALPHA:
-				case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-				case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
-				case GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM:
-				case GL_COMPRESSED_SRGB8_ETC2:
-				case GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-				case GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-					return true;
-				default:
-					return false;
-			}
-		}
-	}
-
-	namespace privat
-	{
-		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution)
-		{
-			return systemMemory().createImpl<Texture, TextureImpl>(id, internalFormat, resolution);
-		}
+		return systemMemory().createImpl<Texture, TextureImpl>(texture, view, sampler, label);
 	}
 }

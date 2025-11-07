@@ -1,69 +1,71 @@
 #include <cage-core/assetsManager.h>
 #include <cage-core/hashString.h>
-#include <cage-engine/model.h>
-#include <cage-engine/opengl.h>
-#include <cage-engine/provisionalGraphics.h>
-#include <cage-engine/renderQueue.h>
-#include <cage-engine/sceneScreenSpaceEffects.h>
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsBindings.h>
+#include <cage-engine/graphicsBuffer.h>
+#include <cage-engine/graphicsDevice.h>
+#include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/screenSpaceEffects.h>
-#include <cage-engine/shaderConventions.h>
-#include <cage-engine/shaderProgram.h>
+#include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
-#include <cage-engine/uniformBuffer.h>
 
 namespace cage
 {
 	namespace
 	{
-		TextureHandle provTex(ProvisionalGraphics *prov, const String &prefix, Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat)
+		struct GaussianBlurConfig : public ScreenSpaceCommonConfig
 		{
-			const String name = Stringizer() + prefix + "_" + resolution + "_" + mipmapLevels + "_" + internalFormat;
-			TextureHandle tex = prov->texture(name,
-				[resolution, mipmapLevels, internalFormat](Texture *tex)
-				{
-					tex->initialize(resolution, mipmapLevels, internalFormat);
-					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					if (mipmapLevels > 1)
-						tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-					else
-						tex->filters(GL_LINEAR, GL_LINEAR, 0);
-				});
-			return tex;
-		}
-
-		struct GfGaussianBlurConfig : public ScreenSpaceCommonConfig
-		{
-			TextureHandle texture;
-			uint32 internalFormat = 0;
-			uint32 mipmapLevel = 0;
-			uint32 mipmapsCount = 1;
+			Texture *inTex = nullptr;
+			Texture *tmpTex = nullptr;
 		};
 
-		void gfGaussianBlur(const GfGaussianBlurConfig &config)
+		void gaussianBlur(const GaussianBlurConfig &config)
 		{
-			RenderQueue *q = config.queue;
-			const auto graphicsDebugScope = q->namedScope("blur");
+			Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/gaussianBlur.glsl"));
 
-			const Vec2i res = max(config.resolution / numeric_cast<uint32>(cage::pow2(config.mipmapLevel)), 1);
-			q->viewport(Vec2i(), res);
-			FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-			q->bind(fb);
-			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/gaussianBlur.glsl"))->get(0);
-			q->bind(shader);
-			q->uniform(shader, 1, (int)config.mipmapLevel);
-			TextureHandle tex = provTex(config.provisionals, "blur", config.resolution, config.mipmapsCount, config.internalFormat);
-			Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
-
-			const auto &blur = [&](const TextureHandle &texIn, const TextureHandle &texOut, const Vec2 &direction)
+			const auto &blur = [&](Texture *texIn, Texture *texOut, uint32 variant)
 			{
-				q->colorTexture(fb, 0, texOut, config.mipmapLevel);
-				q->checkFrameBuffer(fb);
-				q->bind(texIn, 0);
-				q->uniform(shader, 0, direction);
-				q->draw(model);
+				RenderPassConfig pass;
+				pass.colorTargets.push_back({ texOut });
+				config.encoder->nextPass(pass);
+				const auto scope = config.encoder->namedScope("gaussian blur");
+
+				GraphicsBindingsCreateConfig bind;
+				bind.textures.push_back({ texIn, 0 });
+
+				DrawConfig draw;
+				draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
+				draw.model = +model;
+				draw.shader = +ms->get(variant);
+				config.encoder->draw(draw);
 			};
-			blur(config.texture, tex, Vec2(1, 0));
-			blur(tex, config.texture, Vec2(0, 1));
+			blur(config.inTex, config.tmpTex, 0);
+			blur(config.tmpTex, config.inTex, HashString("Vertical"));
+		}
+
+		std::vector<Holder<Texture>> generateMipsViews(GraphicsDevice *device, Holder<Texture> tex, uint32 mips)
+		{
+			std::vector<Holder<Texture>> mipTexs;
+			mipTexs.reserve(mips);
+
+			wgpu::SamplerDescriptor sd = {};
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
+			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
+			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+			sd.label = "mip sampler";
+			wgpu::Sampler samp = device->nativeDevice()->CreateSampler(&sd);
+
+			for (uint32 i = 0; i < mips; i++)
+			{
+				wgpu::TextureViewDescriptor tvd = {};
+				tvd.baseMipLevel = i;
+				tvd.mipLevelCount = 1;
+				wgpu::TextureView view = tex->nativeTexture().CreateView(&tvd);
+				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
+			}
+
+			return mipTexs;
 		}
 	}
 
@@ -72,14 +74,43 @@ namespace cage
 		PointerRange<const char> pointsForSsaoShader(uint32 count);
 	}
 
-	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config_)
+	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config)
 	{
-		RenderQueue *q = config_.queue;
-		const auto graphicsDebugScope = q->namedScope("ssao");
-		ScreenSpaceAmbientOcclusionConfig config = config_;
-		config.resolution /= 3;
+		static constexpr int downscale = 3;
 
-		// params
+		GraphicsEncoder *q = config.encoder;
+		GraphicsDevice *d = q->getDevice();
+
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+
+		// prepare
+
+		const Vec2i res = max(config.resolution / downscale, 1u);
+		Holder<Texture> depthLowRes = [&]()
+		{
+			wgpu::TextureDescriptor desc = {};
+			desc.size.width = res[0];
+			desc.size.height = res[1];
+			desc.format = wgpu::TextureFormat::R32Float;
+			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+			desc.label = "ssao depth target";
+			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+			wgpu::Sampler samp = d->nativeDevice()->CreateSampler();
+			return newTexture(tex, tex.CreateView(), samp, "ssao depth target");
+		}();
+		Holder<Texture> ssaoLowRes = [&]()
+		{
+			wgpu::TextureDescriptor desc = {};
+			desc.size.width = res[0];
+			desc.size.height = res[1];
+			desc.format = wgpu::TextureFormat::R16Float;
+			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+			desc.label = "ssao lowres target";
+			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+			wgpu::Sampler samp = d->nativeDevice()->CreateSampler();
+			return newTexture(tex, tex.CreateView(), samp, "ssao lowres target");
+		}();
+
 		struct Shader
 		{
 			Mat4 proj;
@@ -92,68 +123,121 @@ namespace cage
 		s.params = Vec4(config.strength, config.bias, config.power, config.raysLength);
 		s.iparams[0] = config.samplesCount;
 		s.iparams[1] = hash(config.frameIndex);
-		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
+		const AggregatedBinding buffUni = config.aggregate->writeStruct(s, 0);
 
-		// framebuffer
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
-		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
+		const AggregatedBinding buffPoints = config.aggregate->writeBuffer(privat::pointsForSsaoShader(config.samplesCount), 1);
 
-		// low res depth
-		TextureHandle depthTextureLowRes = provTex(config.provisionals, "ssaoDepthLowRes", config.resolution, 1, GL_R32F);
-		{
-			const auto graphicsDebugScope = q->namedScope("lowResDepth");
-			q->colorTexture(fb, 0, depthTextureLowRes);
-			q->checkFrameBuffer(fb);
-			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoDownscaleDepth.glsl"))->get(0));
-			q->bind(config.inDepth, 0);
-			q->draw(model);
+		{ // low-res depth
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +depthLowRes });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("ssao depth");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.textures.push_back({ config.inDepth, 0 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoDownscaleDepth.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
 		}
-
-		// points
-		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer(Stringizer() + "ssaoPoints_" + config.samplesCount, [count = config.samplesCount](UniformBuffer *ub) { ub->writeWhole(privat::pointsForSsaoShader(count), GL_STATIC_DRAW); });
-		q->bind(ssaoPoints, 3);
 
 		{ // generate
-			const auto graphicsDebugScope = q->namedScope("generate");
-			config.outAo = provTex(config.provisionals, "ssao", config.resolution, 1, GL_R8);
-			q->colorTexture(fb, 0, config.outAo);
-			q->checkFrameBuffer(fb);
-			q->bind(depthTextureLowRes, 0);
-			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoGenerate.glsl"))->get(0));
-			q->draw(model);
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +ssaoLowRes });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("ssao generate");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.buffers.push_back(buffUni);
+			bind.buffers.push_back(buffPoints);
+			bind.textures.push_back({ +depthLowRes, 2 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoGenerate.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.dynamicOffsets.push_back(buffUni);
+			draw.dynamicOffsets.push_back(buffPoints);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
 		}
 
-		// blur
-		GfGaussianBlurConfig gb;
-		(ScreenSpaceCommonConfig &)gb = config;
-		gb.texture = config.outAo;
-		gb.internalFormat = GL_R8;
-		for (uint32 i = 0; i < config.blurPasses; i++)
-			gfGaussianBlur(gb);
+		{ // blur
+			Holder<Texture> tmp = [&]()
+			{
+				wgpu::TextureDescriptor desc = {};
+				desc.size.width = res[0];
+				desc.size.height = res[1];
+				desc.format = wgpu::TextureFormat::R16Float;
+				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.label = "ssao blur temporary";
+				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+				return newTexture(tex, tex.CreateView(), d->nativeDevice()->CreateSampler(), "ssao blur temporary");
+			}();
 
-		{ // resolve - update outAo inplace
-			const auto graphicsDebugScope = q->namedScope("resolve");
-			q->bind(config.outAo, 0);
-			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/ssaoResolve.glsl"))->get(0));
-			q->draw(model);
+			GaussianBlurConfig gb;
+			(ScreenSpaceCommonConfig &)gb = config;
+			gb.inTex = +ssaoLowRes;
+			gb.tmpTex = +tmp;
+			for (uint32 i = 0; i < config.blurPasses; i++)
+				gaussianBlur(gb);
 		}
 
-		config_.outAo = config.outAo;
+		{ // resolve
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +config.outAo });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("ssao resolve");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.buffers.push_back(buffUni);
+			bind.textures.push_back({ +ssaoLowRes, 1 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoResolve.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.dynamicOffsets.push_back(buffUni);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
+		}
 	}
 
 	void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config)
 	{
 		static constexpr int downscale = 3;
 
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("depth of field");
+		GraphicsEncoder *q = config.encoder;
+		GraphicsDevice *d = q->getDevice();
+
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+
+		// prepare
 
 		const Vec2i res = max(config.resolution / downscale, 1u);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
-		q->viewport(Vec2i(), res);
+		Holder<Texture> texDof = [&]()
+		{
+			wgpu::TextureDescriptor desc = {};
+			desc.size.width = res[0];
+			desc.size.height = res[1];
+			desc.format = wgpu::TextureFormat::RGBA16Float;
+			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+			desc.label = "dof color target";
+			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+			wgpu::SamplerDescriptor sd = {};
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
+			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
+			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+			sd.label = "dof color sampler";
+			wgpu::Sampler samp = d->nativeDevice()->CreateSampler(&sd);
+			return newTexture(tex, tex.CreateView(), samp, "dof color target");
+		}();
 
 		struct Shader
 		{
@@ -167,182 +251,205 @@ namespace cage
 		s.projInv = inverse(config.proj);
 		s.dofNear = Vec4(fd - fr - br, fd - fr, 0, 0);
 		s.dofFar = Vec4(fd + fr, fd + fr + br, 0, 0);
-		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
-
-		TextureHandle texDof = provTex(config.provisionals, "dofColor", res, 1, GL_RGB16F);
-		q->bind(texDof, 0); // ensure the texture is properly initialized
-		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
 
 		{ // collect
-			q->bind(config.inColor, 0);
-			q->bind(config.inDepth, 1);
-			Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/dofCollect.glsl"))->get(0);
-			q->bind(shader);
-			q->colorTexture(fb, 0, texDof);
-			q->checkFrameBuffer(fb);
-			q->draw(model);
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +texDof });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("dof collect");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.textures.push_back({ config.inColor, 0 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofCollect.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
 		}
 
 		{ // blur
-			GfGaussianBlurConfig gb;
+			Holder<Texture> tmp = [&]()
+			{
+				wgpu::TextureDescriptor desc = {};
+				desc.size.width = res[0];
+				desc.size.height = res[1];
+				desc.format = wgpu::TextureFormat::RGBA16Float;
+				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.label = "dof blur temporary";
+				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+				return newTexture(tex, tex.CreateView(), d->nativeDevice()->CreateSampler(), "dof blur temporary");
+			}();
+
+			GaussianBlurConfig gb;
 			(ScreenSpaceCommonConfig &)gb = config;
-			gb.resolution = res;
-			gb.internalFormat = GL_RGB16F;
-			gb.texture = texDof;
+			gb.inTex = +texDof;
+			gb.tmpTex = +tmp;
 			for (uint32 i = 0; i < config.blurPasses; i++)
-				gfGaussianBlur(gb);
+				gaussianBlur(gb);
 		}
 
 		{ // apply
-			q->viewport(Vec2i(), config.resolution);
-			q->colorTexture(fb, 0, config.outColor);
-			q->checkFrameBuffer(fb);
-			q->bind(config.inColor, 0);
-			q->bind(config.inDepth, 1);
-			q->bind(texDof, 2);
-			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/dofApply.glsl"))->get(0));
-			q->draw(model);
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +config.outColor });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("dof apply");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.buffers.push_back(buff);
+			bind.textures.push_back({ config.inColor, 1 });
+			bind.textures.push_back({ config.inDepth, 3 });
+			bind.textures.push_back({ +texDof, 5 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofApply.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.dynamicOffsets.push_back(buff);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
 		}
-	}
-
-	namespace
-	{
-		struct EyeAdaptationParams
-		{
-			Vec4 logRange; // min, max range in log2 space
-			Vec4 adaptationSpeed; // darker, lighter
-			Vec4 nightParams; // nightOffset, nightDesaturation, nightContrast
-			Vec4 applyParams; // key, strength
-		};
-
-		EyeAdaptationParams eyeAdaptationShaderParams(const ScreenSpaceEyeAdaptationConfig &config)
-		{
-			EyeAdaptationParams s;
-			s.logRange = Vec4(config.lowLogLum, config.highLogLum, 0, 0);
-			s.adaptationSpeed = Vec4(config.darkerSpeed, config.lighterSpeed, 0, 0) * config.elapsedTime;
-			s.nightParams = Vec4(config.nightOffset, config.nightDesaturate, config.nightContrast, 0);
-			s.applyParams = Vec4(config.key, config.strength, 0, 0);
-			return s;
-		}
-
-		uint32 roundUpTo16(uint32 x)
-		{
-			return x / 16 + ((x % 16) > 0 ? 1 : 0);
-		}
-	}
-
-	void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config)
-	{
-		static constexpr int downscale = 4;
-
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("eye adaptation prepare");
-
-		const Vec2i res = max(config.resolution / downscale, 1u);
-
-		q->universalUniformStruct(eyeAdaptationShaderParams(config), CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
-
-		q->bindImage(config.inColor, 0, true, false);
-		TextureHandle texHist = provTex(config.provisionals, Stringizer() + "luminanceHistogram", Vec2i(256, 1), 1, GL_R32UI);
-		q->bindImage(texHist, 1, true, true);
-		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation_" + config.cameraId, Vec2i(1), 1, GL_R32F);
-		q->bindImage(texAccum, 2, true, true);
-
-		// collection
-		Holder<ShaderProgram> shaderCollection = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/luminanceCollection.glsl"))->get(0);
-		q->compute(shaderCollection, Vec3i(roundUpTo16(res[0]), roundUpTo16(res[1]), 1));
-		q->memoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-		// histogram and accumulation
-		Holder<ShaderProgram> shaderHistogram = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/luminanceHistogram.glsl"))->get(0);
-		q->compute(shaderHistogram, Vec3i(1));
-		q->memoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_TEXTURE_FETCH_BARRIER_BIT); // which one?
 	}
 
 	void screenSpaceBloom(const ScreenSpaceBloomConfig &config)
 	{
 		static constexpr int downscale = 3;
 
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("bloom");
+		GraphicsEncoder *q = config.encoder;
+		GraphicsDevice *d = q->getDevice();
+
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+
+		// prepare
 
 		const Vec2i res = max(config.resolution / downscale, 1u);
-		q->viewport(Vec2i(), res);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
-
-		// generate
 		const uint32 mips = max(config.blurPasses, 1u);
-		TextureHandle tex = provTex(config.provisionals, "bloom", res, mips, GL_RGB16F);
-		q->colorTexture(fb, 0, tex);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		Holder<ShaderProgram> shaderGenerate = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/bloomGenerate.glsl"))->get(0);
-		q->bind(shaderGenerate);
-		q->uniform(shaderGenerate, 0, Vec4(config.threshold, 0, 0, 0));
-		Holder<Model> model = config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
-		q->draw(model);
-
-		// prepare mipmaps
-		q->bind(tex, 0);
-		q->filters(tex, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-		q->generateMipmaps(tex);
-
-		// blur
-		GfGaussianBlurConfig gb;
-		(ScreenSpaceCommonConfig &)gb = config;
-		gb.texture = tex;
-		gb.resolution = res;
-		gb.internalFormat = GL_RGB16F;
-		gb.mipmapsCount = mips;
-		for (uint32 i = 0; i < config.blurPasses; i++)
+		Holder<Texture> tex = [&]()
 		{
-			gb.mipmapLevel = i;
-			gfGaussianBlur(gb);
+			wgpu::TextureDescriptor desc = {};
+			desc.size.width = res[0];
+			desc.size.height = res[1];
+			desc.mipLevelCount = mips;
+			desc.format = wgpu::TextureFormat::RGBA16Float;
+			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+			desc.label = "bloom target";
+			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+			wgpu::SamplerDescriptor sd = {};
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
+			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
+			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+			sd.label = "bloom sampler";
+			wgpu::Sampler samp = d->nativeDevice()->CreateSampler(&sd);
+			return newTexture(tex, tex.CreateView(), samp, "bloom target");
+		}();
+		std::vector<Holder<Texture>> mipViews = generateMipsViews(d, tex.share(), mips);
+
+		struct Shader
+		{
+			Vec4 params; // threshold, blur passes
+		} s;
+		s.params[0] = config.threshold;
+		s.params[1] = max(config.blurPasses, 1u) + 1e-5;
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
+
+		{ // generate
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ +mipViews[0] });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("bloom generate");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.buffers.push_back(buff);
+			bind.textures.push_back({ config.inColor, 1 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomGenerate.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.dynamicOffsets.push_back(buff);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
 		}
 
-		// apply
-		q->viewport(Vec2i(), config.resolution);
-		q->bind(fb);
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(tex, 1);
-		Holder<ShaderProgram> shaderApply = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/bloomApply.glsl"))->get(0);
-		q->bind(shaderApply);
-		q->uniform(shaderApply, 0, (int)max(config.blurPasses, 1u));
-		q->draw(model);
-	}
+		{ // generate mipmaps
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/makeMip.glsl"));
 
-	void screenSpaceEyeAdaptationApply(const ScreenSpaceEyeAdaptationConfig &config)
-	{
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("eye adaptation apply");
+			for (uint32 i = 1; i < mips; i++)
+			{
+				RenderPassConfig pass;
+				pass.colorTargets.push_back({ +mipViews[i] });
+				q->nextPass(pass);
+				const auto scope = config.encoder->namedScope("bloom gen mip");
 
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
+				GraphicsBindingsCreateConfig bind;
+				bind.textures.push_back({ +mipViews[i - 1], 0 });
 
-		q->universalUniformStruct(eyeAdaptationShaderParams(config), CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
+				DrawConfig draw;
+				draw.bindings = newGraphicsBindings(d, bind);
+				draw.model = +model;
+				draw.shader = +ms->get(0);
+				q->draw(draw);
+			}
+		}
 
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		TextureHandle texAccum = provTex(config.provisionals, Stringizer() + "luminanceAccumulation_" + config.cameraId, Vec2i(1), 1, GL_R32F);
-		q->bind(texAccum, 1);
-		Holder<ShaderProgram> shader = config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/luminanceApply.glsl"))->get(0);
-		q->bind(shader);
-		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj")));
+		{ // blur
+			Holder<Texture> tmp = [&]()
+			{
+				wgpu::TextureDescriptor desc = {};
+				desc.size.width = res[0];
+				desc.size.height = res[1];
+				desc.mipLevelCount = mips;
+				desc.format = wgpu::TextureFormat::RGBA16Float;
+				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.label = "bloom blur temporary";
+				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
+				return newTexture(tex, nullptr, nullptr, "bloom blur temporary");
+			}();
+			std::vector<Holder<Texture>> tmpViews = generateMipsViews(d, tmp.share(), mips);
+
+			for (uint32 i = 0; i < mips; i++)
+			{
+				GaussianBlurConfig gb;
+				(ScreenSpaceCommonConfig &)gb = config;
+				gb.inTex = +mipViews[i];
+				gb.tmpTex = +tmpViews[i];
+				gaussianBlur(gb);
+			}
+		}
+
+		{ // apply
+			RenderPassConfig pass;
+			pass.colorTargets.push_back({ config.outColor });
+			q->nextPass(pass);
+			const auto scope = config.encoder->namedScope("bloom apply");
+
+			GraphicsBindingsCreateConfig bind;
+			bind.buffers.push_back(buff);
+			bind.textures.push_back({ config.inColor, 1 });
+			bind.textures.push_back({ +tex, 3 });
+
+			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomApply.glsl"));
+
+			DrawConfig draw;
+			draw.bindings = newGraphicsBindings(d, bind);
+			draw.dynamicOffsets.push_back(buff);
+			draw.model = +model;
+			draw.shader = +ms->get(0);
+			q->draw(draw);
+		}
 	}
 
 	void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config)
 	{
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("tonemap");
-
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
+		RenderPassConfig pass;
+		pass.colorTargets.push_back({ +config.outColor });
+		config.encoder->nextPass(pass);
+		const auto scope = config.encoder->namedScope("tonemap");
 
 		struct Shader
 		{
@@ -350,51 +457,69 @@ namespace cage
 		} s;
 		s.params[0] = 1.0 / config.gamma;
 		s.params[1] = config.tonemapEnabled;
-		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
 
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/tonemap.glsl"))->get(0));
-		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj")));
+		GraphicsBindingsCreateConfig bind;
+		bind.buffers.push_back(buff);
+		bind.textures.push_back({ config.inColor, 1 });
+
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/tonemap.glsl"));
+
+		DrawConfig draw;
+		draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
+		draw.dynamicOffsets.push_back(buff);
+		draw.model = +model;
+		draw.shader = +ms->get(0);
+		config.encoder->draw(draw);
 	}
 
 	void screenSpaceFastApproximateAntiAliasing(const ScreenSpaceFastApproximateAntiAliasingConfig &config)
 	{
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("fxaa");
+		RenderPassConfig pass;
+		pass.colorTargets.push_back({ +config.outColor });
+		config.encoder->nextPass(pass);
+		const auto scope = config.encoder->namedScope("fxaa");
 
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
+		GraphicsBindingsCreateConfig bind;
+		bind.textures.push_back({ config.inColor, 0 });
 
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/fxaa.glsl"))->get(0));
-		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj")));
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/fxaa.glsl"));
+
+		DrawConfig draw;
+		draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
+		draw.model = +model;
+		draw.shader = +ms->get(0);
+		config.encoder->draw(draw);
 	}
 
 	void screenSpaceSharpening(const ScreenSpaceSharpeningConfig &config)
 	{
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->namedScope("sharpening");
-
-		q->viewport(Vec2i(), config.resolution);
-		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
-		q->bind(fb);
+		RenderPassConfig pass;
+		pass.colorTargets.push_back({ +config.outColor });
+		config.encoder->nextPass(pass);
+		const auto scope = config.encoder->namedScope("sharpening");
 
 		struct Shader
 		{
 			Vec4 params; // strength
 		} s;
 		s.params[0] = config.strength;
-		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
 
-		q->colorTexture(fb, 0, config.outColor);
-		q->checkFrameBuffer(fb);
-		q->bind(config.inColor, 0);
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, MultiShaderProgram>(HashString("cage/shaders/effects/sharpening.glsl"))->get(0));
-		q->draw(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj")));
+		GraphicsBindingsCreateConfig bind;
+		bind.buffers.push_back(buff);
+		bind.textures.push_back({ config.inColor, 1 });
+
+		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
+		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/sharpening.glsl"));
+
+		DrawConfig draw;
+		draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
+		draw.dynamicOffsets.push_back(buff);
+		draw.model = +model;
+		draw.shader = +ms->get(0);
+		config.encoder->draw(draw);
 	}
 }

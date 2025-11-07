@@ -9,29 +9,31 @@ namespace cage
 
 	using AssetDelegate = Delegate<void(AssetContext *)>;
 
-	struct CAGE_CORE_API AssetContext : private Immovable
-	{
-		detail::StringBase<64> textId;
-		Holder<void> customData;
-		Holder<PointerRange<uint32>> dependencies;
-		Holder<PointerRange<char>> compressedData;
-		Holder<PointerRange<char>> originalData;
-		Holder<void> assetHolder;
-		const uint32 assetId = 0;
-		uint32 scheme = m;
-
-		AssetContext(uint32 assetId) : assetId(assetId) {}
-	};
-
 	struct CAGE_CORE_API AssetsScheme
 	{
 		AssetDelegate fetch;
 		AssetDelegate decompress;
 		AssetDelegate load;
+		void *device = nullptr;
 		uint32 threadIndex = m;
 		uint32 typeHash = m;
 
 		AssetsScheme();
+	};
+
+	struct CAGE_CORE_API AssetContext : public AssetsScheme, private Immovable
+	{
+		AssetLabel textId;
+		Holder<void> customData;
+		Holder<PointerRange<uint32>> dependencies;
+		Holder<PointerRange<char>> compressedData;
+		Holder<PointerRange<char>> originalData;
+		Holder<void> assetHolder;
+		const AssetsManager *const assetsManager = nullptr;
+		const uint32 assetId = 0;
+		uint32 scheme = m;
+
+		AssetContext(AssetsManager *assetsManager, uint32 assetId) : assetsManager(assetsManager), assetId(assetId) {}
 	};
 }
 

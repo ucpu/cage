@@ -1,15 +1,13 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
 
 $include ssaoParams.glsl
 
-layout(binding = 0) uniform sampler2D texAo;
+layout(set = 2, binding = 1) uniform sampler2D texAo;
 
-out float outAo;
+layout(location = 0) out float outAo;
 
 void main()
 {

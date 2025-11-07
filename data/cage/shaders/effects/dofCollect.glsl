@@ -1,13 +1,11 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D texColor;
+layout(set = 2, binding = 0) uniform sampler2D texColor;
 
-out vec4 outDof;
+layout(location = 0) out vec4 outDof;
 
 const int downscale = 3;
 

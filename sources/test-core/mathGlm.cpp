@@ -69,7 +69,7 @@ void testMathGlm()
 		{
 			Mat3 m;
 			for (uint32 i = 0; i < 9; i++)
-				m[i] = randomChance();
+				m[i] = randomChance() * 100;
 			glm::mat3 mg = c2g(m);
 			test(m, g2c(mg));
 			CAGE_TEST(detail::memcmp(&m, glm::value_ptr(mg), sizeof(m)) == 0);
@@ -78,7 +78,7 @@ void testMathGlm()
 		{
 			Mat4 m;
 			for (uint32 i = 0; i < 16; i++)
-				m[i] = randomChance();
+				m[i] = randomChance() * 100;
 			glm::mat4 mg = c2g(m);
 			test(m, g2c(mg));
 			CAGE_TEST(detail::memcmp(&m, glm::value_ptr(mg), sizeof(m)) == 0);
@@ -290,6 +290,20 @@ void testMathGlm()
 				Mat4 c = perspectiveProjection(fov, aspect, n, f);
 				Mat4 g = g2c(glm::perspective(Real(fov).value, aspect.value, n.value, f.value));
 				test(c, g);
+				/*
+				for (uint32 step = 0; step < 10; step++)
+				{
+					Vec3 a = randomRange3(-100, 100);
+					const auto &proj = [&](Mat4 pr, Vec3 pt)
+					{
+						Vec4 k = pr * Vec4(pt, 1);
+						return Vec3(k) / k[3];
+					};
+					Vec3 ac = proj(c, a);
+					Vec3 ag = proj(g, a);
+					test(ac, ag);
+				}
+				*/
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{

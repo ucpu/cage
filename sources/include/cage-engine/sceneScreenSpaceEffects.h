@@ -10,12 +10,11 @@ namespace cage
 		None = 0,
 		AmbientOcclusion = 1 << 0,
 		DepthOfField = 1 << 1,
-		Bloom = 1 << 3,
-		EyeAdaptation = 1 << 4,
-		ToneMapping = 1 << 5,
-		GammaCorrection = 1 << 6,
-		AntiAliasing = 1 << 7,
-		Sharpening = 1 << 8,
+		Bloom = 1 << 2,
+		ToneMapping = 1 << 3,
+		GammaCorrection = 1 << 4,
+		AntiAliasing = 1 << 5,
+		Sharpening = 1 << 6,
 		Default = AmbientOcclusion | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
 	};
 
@@ -23,7 +22,6 @@ namespace cage
 	{
 		ScreenSpaceAmbientOcclusion ssao;
 		ScreenSpaceBloom bloom;
-		ScreenSpaceEyeAdaptation eyeAdaptation;
 		ScreenSpaceDepthOfField depthOfField;
 		ScreenSpaceSharpening sharpening;
 		Real gamma = 2.2;

@@ -1,12 +1,10 @@
-#ifdef CAGE_USE_STEAM_SOCKETS
+#include <absl/log/globals.h>
+#include <absl/log/initialize.h>
+#include <absl/log/log.h>
+#include <absl/log/log_sink.h>
+#include <absl/log/log_sink_registry.h>
 
-	#include <absl/log/globals.h>
-	#include <absl/log/initialize.h>
-	#include <absl/log/log.h>
-	#include <absl/log/log_sink.h>
-	#include <absl/log/log_sink_registry.h>
-
-	#include <cage-core/core.h>
+#include <cage-core/core.h>
 
 namespace cage
 {
@@ -20,7 +18,7 @@ namespace cage
 				absl::EnableLogPrefix(false);
 				absl::SetStderrThreshold(absl::LogSeverity::kFatal);
 				absl::AddLogSink(this);
-				absl::InitializeLog();
+				//absl::InitializeLog();
 				//LOG(INFO) << "absl logging redirected to cage";
 			}
 
@@ -51,8 +49,11 @@ namespace cage
 				const String msg = String(PointerRange<const char>(msgView.data(), msgView.data() + msgView.length()));
 				cage::privat::makeLog(location, severity, "absl", msg, false, false);
 			}
-		} abslLogSinkInstance;
+		};
+	}
+
+	CAGE_API_EXPORT void initializeAbslLogSink()
+	{
+		static AbslLogSink logSink;
 	}
 }
-
-#endif // CAGE_USE_STEAM_SOCKETS

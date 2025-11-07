@@ -1,3 +1,5 @@
+/*
+
 #include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/entities.h>
@@ -8,9 +10,6 @@
 #include <cage-core/serialization.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/model.h>
-#include <cage-engine/opengl.h>
-#include <cage-engine/provisionalGraphics.h>
-#include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
@@ -238,5 +237,47 @@ namespace cage
 	Holder<GuiInWorld> newGuiInWorld(const GuiInWorldCreateConfig &config)
 	{
 		return systemMemory().createImpl<GuiInWorld, GuiInWorldImpl>(config);
+	}
+}
+
+*/
+
+#include <cage-simple/guiInWorld.h>
+
+namespace cage
+{
+	bool GuiInWorld::intersects(const Line &ray) const
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	Vec3 GuiInWorld::intersection(const Line &ray) const
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	void GuiInWorld::update(const Line &ray, bool interact)
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	void GuiInWorld::cleanUp()
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	GuiManager *GuiInWorld::guiManager()
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	EntityManager *GuiInWorld::guiEntities()
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
+	}
+
+	Holder<GuiInWorld> newGuiInWorld(const GuiInWorldCreateConfig &config)
+	{
+		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
 	}
 }

@@ -4,7 +4,9 @@
 #include <cage-core/mesh.h>
 #include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
-#include <cage-engine/assetStructs.h>
+#include <cage-engine/assetsSchemes.h>
+#include <cage-engine/assetsStructs.h>
+#include <cage-engine/graphicsBindings.h>
 #include <cage-engine/model.h>
 
 namespace cage
@@ -13,49 +15,50 @@ namespace cage
 	{
 		void processLoad(AssetContext *context)
 		{
-			Holder<Model> model = newModel();
-
 			Deserializer des(context->originalData);
-			ModelHeader data;
-			des >> data;
+			ModelHeader header;
+			des >> header;
 
-			MemoryBuffer mat;
-			mat.resize(data.materialSize);
-			des.read(mat);
+			// todo handle mesh name
+			CAGE_ASSERT(header.meshName == 0); // do not use for now
 
 			Holder<Mesh> mesh = newMesh();
-			mesh->importBuffer(des.read(data.meshSize));
-			model->importMesh(+mesh, mat);
+			mesh->importBuffer(des.read(header.meshSize));
 
-			if (data.colliderSize)
+			MemoryBuffer mat;
+			mat.resize(header.materialSize);
+			des.read(mat);
+
+			Holder<Model> model = newModel((GraphicsDevice *)context->device, +mesh, mat, context->textId);
+
+			if (header.colliderSize)
 			{
 				Holder<Collider> col = newCollider();
-				col->importBuffer(des.read(data.colliderSize));
+				col->importBuffer(des.read(header.colliderSize));
 				col->rebuild();
 				model->collider = std::move(col);
 			}
 
 			CAGE_ASSERT(des.available() == 0);
 
-			model->importTransform = data.importTransform;
-			model->boundingBox = data.box;
-			for (int i = 0; i < MaxTexturesCountPerMaterial; i++)
-				model->textureNames[i] = data.textureNames[i];
-			model->shaderName = data.shaderName;
-			model->flags = data.renderFlags;
-			model->layer = data.renderLayer;
-			model->bones = data.skeletonBones;
+			model->importTransform = header.importTransform;
+			model->boundingBox = header.box;
+			model->textureNames = header.textureNames;
+			model->shaderName = header.shaderName;
+			model->flags = header.renderFlags;
+			model->layer = header.renderLayer;
+			model->bonesCount = header.skeletonBones;
 
-			model->setDebugName(context->textId); // last command to apply it to all subresources
+			//prepareModelBindings((GraphicsDevice *)context->device, context->assetsManager, +model);
 
 			context->assetHolder = std::move(model).cast<void>();
 		}
 	}
 
-	AssetsScheme genAssetSchemeModel(uint32 threadIndex)
+	AssetsScheme genAssetSchemeModel(GraphicsDevice *device)
 	{
 		AssetsScheme s;
-		s.threadIndex = threadIndex;
+		s.device = device;
 		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Model>();
 		return s;

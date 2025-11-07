@@ -1,6 +1,8 @@
 #include "../private.h"
 
 #include <cage-core/color.h>
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsEncoder.h>
 
 namespace cage
 {
@@ -20,20 +22,44 @@ namespace cage
 			{
 				if (!prepare())
 					return;
-				RenderQueue *q = impl->activeQueue;
-				Holder<ShaderProgram> shader = impl->graphicsData.colorPickerShader[mode].share();
-				q->bind(shader);
-				q->uniform(shader, 0, pos);
-				switch (mode)
+
+				class Command : public GuiRenderCommandBase
 				{
-					case 0:
-						q->uniform(shader, 1, rgb);
-						break;
-					case 2:
-						q->uniform(shader, 1, colorRgbToHsv(rgb)[0]);
-						break;
-				}
-				q->draw(impl->graphicsData.imageModel.share());
+				public:
+					struct UniData
+					{
+						Vec4 pos;
+						Vec4 colorAndHue; // rgb, hue
+					};
+					UniData data;
+					DrawConfig drw;
+
+					Command(ColorPickerRenderable *base)
+					{
+						GuiRenderImpl *activeQueue = base->impl->activeQueue;
+
+						data.pos = base->pos;
+						data.colorAndHue = Vec4(base->rgb, colorRgbToHsv(base->rgb)[0]);
+
+						drw.shader = +activeQueue->colorPickerShader[base->mode];
+						drw.model = +activeQueue->imageModel;
+						drw.depthTest = DepthTestEnum::Always;
+						drw.depthWrite = false;
+					}
+
+					void draw(const GuiRenderConfig &config) override
+					{
+						const auto ab = config.aggregate->writeStruct(data, 0);
+						GraphicsBindingsCreateConfig bind;
+						bind.buffers.push_back(ab);
+						drw.dynamicOffsets.clear();
+						drw.dynamicOffsets.push_back(ab);
+						drw.bindings = newGraphicsBindings(config.device, bind);
+						config.encoder->draw(drw);
+					}
+				};
+
+				impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(this));
 			}
 		};
 

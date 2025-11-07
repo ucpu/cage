@@ -71,17 +71,13 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Provides low-level/generic engine functionality
 - Scene description with entities
 - Window and input management
-- Objective layer on top of OpenGL
-  - Long term plan is to switch to Vulkan only
+- Uses native webgpu, the dawn implementation
 - Roughness/metallic workflow
 - Graphics effects:
   - hdr, bloom, tonemapping, gamma correction
   - depth of field
   - ssao
   - fxaa
-- Pipeline-like processing using multiple threads
-  - *50 000 objects* at 30 fps (cpu-bound)
-  - All objects go through automatic instancing
 - Automatic shadowmaps
 - Sound
 - Gui

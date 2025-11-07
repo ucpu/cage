@@ -1,121 +1,138 @@
+#include <webgpu/webgpu_cpp.h>
+
 #include <cage-core/assetContext.h>
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
-#include <cage-engine/assetStructs.h>
-#include <cage-engine/opengl.h>
+#include <cage-engine/assetsSchemes.h>
+#include <cage-engine/assetsStructs.h>
+#include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
 
 namespace cage
 {
+	namespace privat
+	{
+		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags);
+	}
+
+	namespace detail
+	{
+		CAGE_API_EXPORT void textureLoadLevel(wgpu::Queue &queue, wgpu::Texture &tex, const TextureHeader &header, const Vec3i &resolution, const uint32 mipLevel, PointerRange<const char> data)
+		{
+			CAGE_ASSERT(mipLevel > 0 || Vec2i(resolution) == Vec2i(header.resolution));
+			CAGE_ASSERT(header.channels == 1 || header.channels == 2 || header.channels == 4);
+
+			wgpu::TexelCopyTextureInfo dest = {};
+			dest.texture = tex;
+			dest.mipLevel = mipLevel;
+			dest.aspect = wgpu::TextureAspect::All;
+
+			uint32 blockWidth = 1;
+			uint32 blockBytes = header.channels; // for uncompressed formats
+			switch ((wgpu::TextureFormat)header.format)
+			{
+				case wgpu::TextureFormat::BC1RGBAUnorm:
+				case wgpu::TextureFormat::BC1RGBAUnormSrgb:
+				case wgpu::TextureFormat::BC4RUnorm:
+				case wgpu::TextureFormat::BC4RSnorm:
+					blockWidth = 4;
+					blockBytes = 8;
+					break;
+				case wgpu::TextureFormat::BC2RGBAUnorm:
+				case wgpu::TextureFormat::BC2RGBAUnormSrgb:
+				case wgpu::TextureFormat::BC3RGBAUnorm:
+				case wgpu::TextureFormat::BC3RGBAUnormSrgb:
+				case wgpu::TextureFormat::BC5RGUnorm:
+				case wgpu::TextureFormat::BC5RGSnorm:
+				case wgpu::TextureFormat::BC6HRGBUfloat:
+				case wgpu::TextureFormat::BC6HRGBFloat:
+				case wgpu::TextureFormat::BC7RGBAUnorm:
+				case wgpu::TextureFormat::BC7RGBAUnormSrgb:
+					blockWidth = 4;
+					blockBytes = 16;
+					break;
+				default:
+					break;
+			}
+			CAGE_ASSERT((resolution[0] % blockWidth) == 0);
+			CAGE_ASSERT((resolution[1] % blockWidth) == 0);
+
+			wgpu::TexelCopyBufferLayout layout = {};
+			layout.bytesPerRow = ((resolution[0] + blockWidth - 1) / blockWidth) * blockBytes;
+			layout.rowsPerImage = (resolution[1] + blockWidth - 1) / blockWidth;
+
+			const uint32 copyWidth = max(blockWidth, (uint32)resolution[0]);
+			const uint32 copyHeight = max(blockWidth, (uint32)resolution[1]);
+			wgpu::Extent3D extents = { copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]) };
+
+			queue.WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+		}
+	}
+
 	namespace
 	{
-		uint32 convertSwizzle(TextureSwizzleEnum s)
-		{
-			switch (s)
-			{
-				case TextureSwizzleEnum::Zero:
-					return GL_ZERO;
-				case TextureSwizzleEnum::One:
-					return GL_ONE;
-				case TextureSwizzleEnum::R:
-					return GL_RED;
-				case TextureSwizzleEnum::G:
-					return GL_GREEN;
-				case TextureSwizzleEnum::B:
-					return GL_BLUE;
-				case TextureSwizzleEnum::A:
-					return GL_ALPHA;
-				default:
-					CAGE_THROW_ERROR(Exception, "invalid TextureSwizzleEnum value");
-			}
-		}
-
-		void textureLoadLevel(Texture *tex, const TextureHeader &header, uint32 mipmapLevel, PointerRange<const char> values)
-		{
-			if (any(header.flags & TextureFlags::Compressed))
-			{
-				if (header.target == GL_TEXTURE_3D || header.target == GL_TEXTURE_2D_ARRAY)
-					tex->image3dCompressed(mipmapLevel, values);
-				else if (header.target == GL_TEXTURE_CUBE_MAP)
-				{
-					const uint32 stride = values.size() / 6;
-					for (uint32 f = 0; f < 6; f++)
-						tex->image2dSliceCompressed(mipmapLevel, f, { values.data() + f * stride, values.data() + (f + 1) * stride });
-				}
-				else
-					tex->image2dCompressed(mipmapLevel, values);
-			}
-			else
-			{
-				if (header.target == GL_TEXTURE_3D || header.target == GL_TEXTURE_2D_ARRAY)
-					tex->image3d(mipmapLevel, header.copyFormat, header.copyType, values);
-				else if (header.target == GL_TEXTURE_CUBE_MAP)
-				{
-					const uint32 stride = values.size() / 6;
-					for (uint32 f = 0; f < 6; f++)
-						tex->image2dSlice(mipmapLevel, f, header.copyFormat, header.copyType, { values.data() + f * stride, values.data() + (f + 1) * stride });
-				}
-				else
-					tex->image2d(mipmapLevel, header.copyFormat, header.copyType, values);
-			}
-		}
-
 		void processLoad(AssetContext *context)
 		{
 			Deserializer des(context->originalData);
 			TextureHeader header;
 			des >> header;
 
-			CAGE_ASSERT(detail::internalFormatIsSrgb(header.internalFormat) == any(header.flags & TextureFlags::Srgb));
+			Holder<wgpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
-			Holder<Texture> tex = newTexture(header.target);
-			tex->setDebugName(context->textId);
+			wgpu::TextureDescriptor desc = {};
+			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? wgpu::TextureDimension::e3D : wgpu::TextureDimension::e2D;
+			static_assert(sizeof(desc.usage) == sizeof(header.usage));
+			desc.usage = (wgpu::TextureUsage)header.usage;
+			static_assert(sizeof(desc.format) == sizeof(header.format));
+			desc.format = (wgpu::TextureFormat)header.format;
+			desc.mipLevelCount = header.mipLevels;
+			desc.size = { numeric_cast<uint32>(header.resolution[0]), numeric_cast<uint32>(header.resolution[1]), numeric_cast<uint32>(header.resolution[2]) };
+			desc.label = context->textId.c_str();
+			wgpu::Texture wtex = dev->CreateTexture(&desc);
 
-			tex->filters(header.filterMin, header.filterMag, header.filterAniso);
-			tex->wraps(header.wrapX, header.wrapY, header.wrapZ);
-			{
-				uint32 s[4] = {};
-				for (uint32 i = 0; i < 4; i++)
-					s[i] = convertSwizzle(header.swizzle[i]);
-				tex->swizzle(s);
-			}
+			wgpu::TextureViewDescriptor twd = {};
+			twd.dimension = privat::textureViewDimension(header.flags);
+			twd.label = context->textId.c_str();
+			wgpu::TextureView view = wtex.CreateView(&twd);
 
-			if (header.target == GL_TEXTURE_3D || header.target == GL_TEXTURE_2D_ARRAY)
-				tex->initialize(header.resolution, header.mipmapLevels, header.internalFormat);
-			else
-				tex->initialize(Vec2i(header.resolution[0], header.resolution[1]), header.mipmapLevels, header.internalFormat);
+			wgpu::SamplerDescriptor sd = {};
+			static_assert(sizeof(sd.magFilter) == sizeof(header.sampleFilter));
+			sd.magFilter = (wgpu::FilterMode)header.sampleFilter;
+			sd.minFilter = (wgpu::FilterMode)header.sampleFilter;
+			static_assert(sizeof(sd.mipmapFilter) == sizeof(header.mipmapFilter));
+			sd.mipmapFilter = (wgpu::MipmapFilterMode)header.mipmapFilter;
+			sd.maxAnisotropy = header.anisoFilter;
+			static_assert(sizeof(sd.addressModeU) == sizeof(header.wrapX));
+			sd.addressModeU = (wgpu::AddressMode)header.wrapX;
+			sd.addressModeV = (wgpu::AddressMode)header.wrapY;
+			sd.addressModeW = (wgpu::AddressMode)header.wrapZ;
+			sd.label = context->textId.c_str();
+			wgpu::Sampler samp = dev->CreateSampler(&sd);
 
-			CAGE_ASSERT(header.mipmapLevels >= header.containedLevels);
-			CAGE_ASSERT(header.containedLevels > 0);
-			for (uint32 mip = 0; mip < header.containedLevels; mip++)
+			dev.clear();
+			Holder<Texture> tex = newTexture(wtex, view, samp, context->textId);
+			tex->flags = header.flags;
+
+			Holder<wgpu::Queue> queue = ((GraphicsDevice *)context->device)->nativeQueue();
+			CAGE_ASSERT(header.mipLevels > 0);
+			for (uint32 mip = 0; mip < header.mipLevels; mip++)
 			{
 				Vec3i resolution;
 				uint32 size = 0;
 				des >> resolution >> size;
-				CAGE_ASSERT(mip > 0 || Vec2i(resolution) == Vec2i(header.resolution));
-				textureLoadLevel(+tex, header, mip, des.read(size));
+				detail::textureLoadLevel(*queue, wtex, header, resolution, mip, des.read(size));
 			}
 
-			if (any(header.flags & TextureFlags::GenerateMipmaps))
-			{
-				CAGE_ASSERT(header.containedLevels == 1);
-				CAGE_ASSERT(header.mipmapLevels > 1);
-				tex->generateMipmaps();
-			}
-			else
-			{
-				CAGE_ASSERT(header.containedLevels == header.mipmapLevels);
-			}
+			CAGE_ASSERT(des.available() == 0);
 
 			context->assetHolder = std::move(tex).cast<void>();
 		}
 	}
 
-	AssetsScheme genAssetSchemeTexture(uint32 threadIndex)
+	AssetsScheme genAssetSchemeTexture(GraphicsDevice *device)
 	{
 		AssetsScheme s;
-		s.threadIndex = threadIndex;
+		s.device = device;
 		s.load.bind<processLoad>();
 		s.typeHash = detail::typeHash<Texture>();
 		return s;

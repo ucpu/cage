@@ -15,11 +15,13 @@ extern "C"
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/unicode.h>
-#include <cage-engine/assetStructs.h>
+#include <cage-engine/assetsStructs.h>
 #include <cage-engine/font.h>
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsBindings.h> // prepareModelBindings
+#include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/model.h>
-#include <cage-engine/renderQueue.h>
-#include <cage-engine/shaderConventions.h>
+#include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
@@ -78,30 +80,42 @@ namespace cage
 			}
 		} ftInitializer;
 
-		struct BidiAlgorithm : private Noncopyable
+		struct BidiAlgorithm : private Immovable
 		{
 			explicit BidiAlgorithm(SBCodepointSequence codepoints) { algorithm = SBAlgorithmCreate(&codepoints); }
-			~BidiAlgorithm() { SBAlgorithmRelease(algorithm); }
+			~BidiAlgorithm()
+			{
+				if (algorithm)
+					SBAlgorithmRelease(algorithm);
+			}
 			SBAlgorithmRef operator()() const { return algorithm; };
 
 		private:
 			SBAlgorithmRef algorithm = nullptr;
 		};
 
-		struct BidiParagraph : private Noncopyable
+		struct BidiParagraph : private Immovable
 		{
 			explicit BidiParagraph(SBAlgorithmRef bidiAlgorithm, SBUInteger paragraphStart) { paragraph = SBAlgorithmCreateParagraph(bidiAlgorithm, paragraphStart, INT32_MAX, SBLevelDefaultLTR); }
-			~BidiParagraph() { SBParagraphRelease(paragraph); }
+			~BidiParagraph()
+			{
+				if (paragraph)
+					SBParagraphRelease(paragraph);
+			}
 			SBParagraphRef operator()() const { return paragraph; };
 
 		private:
 			SBParagraphRef paragraph = nullptr;
 		};
 
-		struct BidiLine : private Noncopyable
+		struct BidiLine : private Immovable
 		{
 			explicit BidiLine(SBParagraphRef paragraph, SBUInteger lineStart, SBUInteger paragraphLength) { line = SBParagraphCreateLine(paragraph, lineStart, paragraphLength); }
-			~BidiLine() { SBLineRelease(line); }
+			~BidiLine()
+			{
+				if (line)
+					SBLineRelease(line);
+			}
 			SBLineRef operator()() const { return line; };
 			PointerRange<const SBRun> getRuns() const
 			{
@@ -114,10 +128,14 @@ namespace cage
 			SBLineRef line = nullptr;
 		};
 
-		struct HarfBuffer : private Noncopyable
+		struct HarfBuffer : private Immovable
 		{
 			explicit HarfBuffer() { buffer = hb_buffer_create(); }
-			~HarfBuffer() { hb_buffer_destroy(buffer); }
+			~HarfBuffer()
+			{
+				if (buffer)
+					hb_buffer_destroy(buffer);
+			}
 			hb_buffer_t *operator()() const { return buffer; };
 			std::pair<PointerRange<const hb_glyph_info_t>, PointerRange<const hb_glyph_position_t>> getRanges() const
 			{
@@ -147,6 +165,8 @@ namespace cage
 			std::vector<FontHeader::GlyphData> glyphs;
 			FT_Face face = nullptr;
 			hb_font_t *font = nullptr;
+
+			FontImpl(const AssetLabel &label_) { this->label = label_; }
 
 			~FontImpl()
 			{
@@ -449,13 +469,24 @@ namespace cage
 				return res;
 			}
 
-			void render(RenderQueue *queue, AssetsOnDemand *assets, const FontLayoutResult &layout) const
+			void render(const FontLayoutResult &layout, const FontRenderConfig &config) const
 			{
 				if (layout.glyphs.empty())
 					return;
-				Holder<Model> model = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/square.obj"));
+				Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 				if (!model)
 					return;
+				prepareModelBindings(config.encoder->getDevice(), config.assets->assetsManager(), +model); // todo remove
+				Holder<MultiShader> shader = config.assets->get<MultiShader>(config.guiShader ? HashString("cage/shaders/gui/font.glsl") : HashString("cage/shaders/engine/text.glsl"));
+				if (!shader)
+					return;
+
+				struct Global
+				{
+					Mat4 uniMvp;
+					Vec4 uniColor;
+				} global = { config.transform, config.color };
+
 				Instance insts[MaxCharacters];
 				uint32 image = glyphs[layout.glyphs[0].index].image;
 				uint32 i = 0;
@@ -463,13 +494,34 @@ namespace cage
 				{
 					if (i == 0)
 						return;
-					Holder<Texture> t = assets->get<AssetSchemeIndexTexture, Texture>(image);
+					Holder<Texture> t = config.assets->get<Texture>(image);
 					if (!t)
 						return;
-					queue->bind(t, 0);
-					PointerRange<Instance> r(insts, insts + i);
-					queue->universalUniformArray<Instance>(r, CAGE_SHADER_UNIBLOCK_CUSTOMDATA);
-					queue->draw(model, i);
+
+					DrawConfig drw;
+
+					GraphicsBindingsCreateConfig bind;
+					{
+						const auto ab0 = config.aggregate->writeStruct(global, 0);
+						bind.buffers.push_back(ab0);
+						drw.dynamicOffsets.push_back(ab0);
+					}
+					{
+						const auto ab1 = config.aggregate->writeArray(PointerRange<const Instance>(insts, insts + i), 1);
+						bind.buffers.push_back(ab1);
+						drw.dynamicOffsets.push_back(ab1);
+					}
+					bind.textures.push_back({ +t, 2 });
+
+					drw.model = +model;
+					drw.shader = +shader->get(0);
+					drw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
+					drw.instances = i;
+					if (!config.depthTest)
+						drw.depthTest = DepthTestEnum::Always;
+					drw.depthWrite = false;
+					drw.blending = BlendingEnum::AlphaTransparency;
+					config.encoder->draw(drw);
 				};
 
 				for (const auto &it : layout.glyphs)
@@ -488,11 +540,6 @@ namespace cage
 				dispatch();
 			}
 		};
-	}
-
-	void Font::setDebugName(const String &name)
-	{
-		debugName = name;
 	}
 
 	void Font::importBuffer(PointerRange<const char> buffer)
@@ -549,14 +596,14 @@ namespace cage
 		return impl->layout(text, format, Vec2::Nan(), cursorIndex);
 	}
 
-	void Font::render(RenderQueue *queue, AssetsOnDemand *assets, const FontLayoutResult &layout) const
+	void Font::render(const FontLayoutResult &layout, const FontRenderConfig &config) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
-		impl->render(queue, assets, layout);
+		impl->render(layout, config);
 	}
 
-	Holder<Font> newFont()
+	Holder<Font> newFont(const AssetLabel &label)
 	{
-		return systemMemory().createImpl<Font, FontImpl>();
+		return systemMemory().createImpl<Font, FontImpl>(label);
 	}
 }

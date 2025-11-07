@@ -1,20 +1,12 @@
 
 $define shader fragment
 
-$include ../functions/common.glsl
 $include ../functions/attenuation.glsl
 $include ../functions/brdf.glsl
 $include ../functions/makeTangentSpace.glsl
 $include ../functions/restoreNormalMap.glsl
 $include ../functions/sampleShadowMap.glsl
 $include ../functions/sampleTextureAnimation.glsl
-
-$include uniforms.glsl
-
-in vec3 varPosition; // world space
-in vec3 varNormal; // object space
-in vec3 varUv;
-flat in int varInstanceId;
 
 layout(location = 0) out vec4 outColor;
 
@@ -46,13 +38,13 @@ vec3 egacLightBrdf(Material material, UniLight light)
 {
 	int lightType = int(light.params[0]);
 	vec3 L;
-	if (lightType == CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONAL || lightType == CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW)
+	if (lightType == 11 || lightType == 12)
 		L = -light.direction.xyz;
 	else
 		L = normalize(light.position.xyz - varPosition);
 	vec3 V = normalize(uniViewport.eyePos.xyz - varPosition);
 	vec3 res = brdf(normal, L, V, material.albedo, material.roughness, material.metallic);
-	if (lightType == CAGE_SHADER_OPTIONVALUE_LIGHTSPOT || lightType == CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW)
+	if (lightType == 13 || lightType == 14)
 	{
 		float d = max(dot(-light.direction.xyz, L), 0);
 		if (d < light.params[2])
@@ -64,6 +56,38 @@ vec3 egacLightBrdf(Material material, UniLight light)
 	return res * light.color.rgb;
 }
 
+float egacSampleShadowmap2d(int index, vec3 shadowPos, int cascade)
+{
+	switch (index)
+	{
+		case 0: return sampleShadowMap2d(texShadows2d_0, shadowPos, cascade);
+		case 1: return sampleShadowMap2d(texShadows2d_1, shadowPos, cascade);
+		case 2: return sampleShadowMap2d(texShadows2d_2, shadowPos, cascade);
+		case 3: return sampleShadowMap2d(texShadows2d_3, shadowPos, cascade);
+		case 4: return sampleShadowMap2d(texShadows2d_4, shadowPos, cascade);
+		case 5: return sampleShadowMap2d(texShadows2d_5, shadowPos, cascade);
+		case 6: return sampleShadowMap2d(texShadows2d_6, shadowPos, cascade);
+		case 7: return sampleShadowMap2d(texShadows2d_7, shadowPos, cascade);
+	}
+	return 0;
+}
+
+float egacSampleShadowmapCube(int index, vec3 shadowPos)
+{
+	switch (index)
+	{
+		case 0: return sampleShadowMapCube(texShadowsCube_0, shadowPos);
+		case 1: return sampleShadowMapCube(texShadowsCube_1, shadowPos);
+		case 2: return sampleShadowMapCube(texShadowsCube_2, shadowPos);
+		case 3: return sampleShadowMapCube(texShadowsCube_3, shadowPos);
+		case 4: return sampleShadowMapCube(texShadowsCube_4, shadowPos);
+		case 5: return sampleShadowMapCube(texShadowsCube_5, shadowPos);
+		case 6: return sampleShadowMapCube(texShadowsCube_6, shadowPos);
+		case 7: return sampleShadowMapCube(texShadowsCube_7, shadowPos);
+	}
+	return 0;
+}
+
 float egacShadowedIntensity(UniShadowedLight uni)
 {
 	float normalOffsetScale = uni.shadowParams[2];
@@ -71,7 +95,7 @@ float egacShadowedIntensity(UniShadowedLight uni)
 
 	float viewDepth = -(uniProjection.viewMat * vec4(p3, 1)).z;
 	int cascade = 0;
-	for (int i = 0; i < CAGE_SHADER_MAX_SHADOWMAPSCASCADES; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		if (viewDepth < uni.cascadesDepths[i])
 		{
@@ -79,7 +103,7 @@ float egacShadowedIntensity(UniShadowedLight uni)
 			break;
 		}
 	}
-	// return float(cascade) / float(CAGE_SHADER_MAX_SHADOWMAPSCASCADES); // debug
+	// return float(cascade) / float(3); // debug
 
 	vec4 shadowPos4 = uni.shadowMat[cascade] * vec4(p3, 1);
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
@@ -88,12 +112,12 @@ float egacShadowedIntensity(UniShadowedLight uni)
 	float intensity = 1;
 	switch (int(uni.light.params[0]))
 	{
-	case CAGE_SHADER_OPTIONVALUE_LIGHTDIRECTIONALSHADOW:
-	case CAGE_SHADER_OPTIONVALUE_LIGHTSPOTSHADOW:
-		intensity = sampleShadowMap2d(texShadows2d[shadowmapSamplerIndex], shadowPos, cascade);
+	case 12:
+	case 14:
+		intensity = egacSampleShadowmap2d(shadowmapSamplerIndex, shadowPos, cascade);
 		break;
-	case CAGE_SHADER_OPTIONVALUE_LIGHTPOINTSHADOW:
-		intensity = sampleShadowMapCube(texShadowsCube[shadowmapSamplerIndex], shadowPos);
+	case 16:
+		intensity = egacSampleShadowmapCube(shadowmapSamplerIndex, shadowPos);
 		break;
 	}
 	return mix(1, intensity, uni.shadowParams[3]);
@@ -134,10 +158,11 @@ vec4 lighting(Material material)
 	// emissive
 	res.rgb += material.albedo * material.emissive;
 
+#ifdef Normals
 	if (dot(normal, normal) > 0.5) // lighting enabled
 	{
 		float ssao = 1;
-		if (getOption(CAGE_SHADER_OPTIONINDEX_AMBIENTOCCLUSION) > 0)
+		if (uniOptsLights[2] > 0.5)
 			ssao = egacLightAmbientOcclusion();
 
 		// ambient
@@ -147,32 +172,33 @@ vec4 lighting(Material material)
 		res.rgb += egacSkyContribution(material) * ssao;
 
 		{ // direct unshadowed
-			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_LIGHTSCOUNT);
+			int lightsCount = uniOptsLights[0];
 			for (int i = 0; i < lightsCount; i++)
 			{
 				UniLight light = uniLights[i];
 				float intensity = egacLightInitialIntensity(light, ssao);
-				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
+				if (intensity < 0.05)
 					continue;
 				res.rgb += egacLightBrdf(material, light) * intensity;
 			}
 		}
 
 		{ // direct shadowed
-			int lightsCount = getOption(CAGE_SHADER_OPTIONINDEX_SHADOWEDLIGHTSCOUNT);
+			int lightsCount = uniOptsLights[1];
 			for (int i = 0; i < lightsCount; i++)
 			{
 				UniShadowedLight uni = uniShadowedLights[i];
 				float intensity = egacLightInitialIntensity(uni.light, ssao);
-				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
+				if (intensity < 0.05)
 					continue;
 				intensity *= egacShadowedIntensity(uni);
-				if (intensity < CAGE_SHADER_MAX_LIGHTINTENSITYTHRESHOLD)
+				if (intensity < 0.05)
 					continue;
 				res.rgb += egacLightBrdf(material, uni.light) * intensity;
 			}
 		}
 	}
+#endif // Normals
 
 	if (material.fade < 0.5)
 		res.a = material.opacity;
@@ -182,35 +208,53 @@ vec4 lighting(Material material)
 	return res;
 }
 
-vec4 egacMatMapImpl(int index)
+vec4 loadAlbedo()
 {
-	switch (getOption(index))
-	{
-		case 0: return vec4(0, 0, 0, 1);
-		case CAGE_SHADER_OPTIONVALUE_MAPALBEDO2D: return texture(texMaterialAlbedo2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOARRAY: return sampleTextureAnimation(texMaterialAlbedoArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
-		case CAGE_SHADER_OPTIONVALUE_MAPALBEDOCUBE: return texture(texMaterialAlbedoCube, varUv);
-		case CAGE_SHADER_OPTIONVALUE_MAPSPECIAL2D: return texture(texMaterialSpecial2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALARRAY: return sampleTextureAnimation(texMaterialSpecialArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
-		case CAGE_SHADER_OPTIONVALUE_MAPSPECIALCUBE: return texture(texMaterialSpecialCube, varUv);
-		case CAGE_SHADER_OPTIONVALUE_MAPNORMAL2D: return texture(texMaterialNormal2d, varUv.xy);
-		case CAGE_SHADER_OPTIONVALUE_MAPNORMALARRAY: return sampleTextureAnimation(texMaterialNormalArray, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
-		case CAGE_SHADER_OPTIONVALUE_MAPNORMALCUBE: return texture(texMaterialNormalCube, varUv);
-		default: return vec4(-100);
-	}
+#ifdef MaterialTexRegular
+	return texture(texMaterialAlbedo, varUv.xy);
+#endif // MaterialTexRegular
+#ifdef MaterialTexArray
+	return sampleTextureAnimation(texMaterialAlbedo, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
+#endif // MaterialTexArray
+#ifdef MaterialTexCube
+	return texture(texMaterialAlbedo, varUv);
+#endif // MaterialTexCube
+	return vec4(0, 0, 0, 1);
+}
+
+vec4 loadSpecial()
+{
+#ifdef MaterialTexRegular
+	return texture(texMaterialSpecial, varUv.xy);
+#endif // MaterialTexRegular
+#ifdef MaterialTexArray
+	return sampleTextureAnimation(texMaterialSpecial, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
+#endif // MaterialTexArray
+#ifdef MaterialTexCube
+	return texture(texMaterialSpecial, varUv);
+#endif // MaterialTexCube
+	return vec4(0, 0, 0, 1);
+}
+
+vec4 loadNormalMap()
+{
+#ifdef MaterialTexRegular
+	return texture(texMaterialNormal, varUv.xy);
+#endif // MaterialTexRegular
+#ifdef MaterialTexArray
+	return sampleTextureAnimation(texMaterialNormal, varUv.xy, uniMeshes[varInstanceId].animation, uniMaterial.animation);
+#endif // MaterialTexArray
+#ifdef MaterialTexCube
+	return texture(texMaterialNormal, varUv);
+#endif // MaterialTexCube
+	return vec4(0, 0, 0, 1);
 }
 
 Material loadMaterial()
 {
 	Material material;
 
-	vec4 specialMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPSPECIAL);
-	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
-	material.roughness = special4.r;
-	material.metallic = special4.g;
-	material.emissive = special4.b;
-
-	vec4 albedoMap = egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPALBEDO);
+	vec4 albedoMap = loadAlbedo();
 	if (albedoMap.a > 1e-6)
 		albedoMap.rgb /= albedoMap.a; // depremultiply albedo texture
 	else
@@ -218,6 +262,12 @@ Material loadMaterial()
 	vec4 albedo4 = uniMaterial.albedoBase + albedoMap * uniMaterial.albedoMult;
 	material.albedo = albedo4.rgb;
 	material.opacity = albedo4.a;
+
+	vec4 specialMap = loadSpecial();
+	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
+	material.roughness = special4.r;
+	material.metallic = special4.g;
+	material.emissive = special4.b;
 
 	material.albedo = mix(uniMeshes[varInstanceId].color.rgb, material.albedo, special4.a);
 	material.opacity *= uniMeshes[varInstanceId].color.a;
@@ -230,14 +280,18 @@ Material loadMaterial()
 // additionally applies normal map
 void updateNormal()
 {
+#ifdef Normals
+
 	normal = normalize(varNormal);
 
-	if (getOption(CAGE_SHADER_OPTIONINDEX_MAPNORMAL) != 0)
+#if defined(MaterialTexRegular) || defined(MaterialTexArray) || defined(MaterialTexCube)
+	if (uniOptsLights[3] > 0.5)
 	{
-		vec3 normalMap = restoreNormalMap(egacMatMapImpl(CAGE_SHADER_OPTIONINDEX_MAPNORMAL));
+		vec3 normalMap = restoreNormalMap(loadNormalMap());
 		mat3 tbn = makeTangentSpace(normal, varPosition - uniViewport.eyePos.xyz, varUv.xy);
 		normal = tbn * normalMap;
 	}
+#endif
 
 	if (!gl_FrontFacing)
 		normal *= -1;
@@ -249,4 +303,10 @@ void updateNormal()
 	}
 	else
 		normal = vec3(0);
+
+#else
+
+	normal = vec3(0);
+
+#endif // Normals
 }

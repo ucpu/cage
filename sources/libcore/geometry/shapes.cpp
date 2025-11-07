@@ -342,8 +342,12 @@ namespace cage
 		planes[1] = c3 - c0;
 		planes[2] = c3 + c1;
 		planes[3] = c3 - c1;
-		planes[4] = c3 + c2;
+		planes[4] = c2;
 		planes[5] = c3 - c2;
+
+		// normalization
+		//for (Vec4 &p : planes)
+		//	p /= length(Vec3(p));
 	}
 
 	Frustum Frustum::operator*(Mat4 other) const
@@ -355,13 +359,13 @@ namespace cage
 	{
 		const Mat4 invVP = inverse(viewProj);
 		static constexpr const Vec3 clipCorners[8] = {
-			Vec3(-1, -1, -1),
+			Vec3(-1, -1, 0),
 			Vec3(-1, -1, +1),
-			Vec3(-1, +1, -1),
+			Vec3(-1, +1, 0),
 			Vec3(-1, +1, +1),
-			Vec3(+1, -1, -1),
+			Vec3(+1, -1, 0),
 			Vec3(+1, -1, +1),
-			Vec3(+1, +1, -1),
+			Vec3(+1, +1, 0),
 			Vec3(+1, +1, +1),
 		};
 		Frustum::Corners res;

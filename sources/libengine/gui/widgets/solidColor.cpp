@@ -1,5 +1,8 @@
 #include "../private.h"
 
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsEncoder.h>
+
 namespace cage
 {
 	namespace
@@ -17,12 +20,44 @@ namespace cage
 			{
 				if (!prepare())
 					return;
-				RenderQueue *q = impl->activeQueue;
-				Holder<ShaderProgram> shader = impl->graphicsData.colorPickerShader[0].share();
-				q->bind(shader);
-				q->uniform(shader, 0, pos);
-				q->uniform(shader, 1, rgb);
-				q->draw(impl->graphicsData.imageModel.share());
+
+				class Command : public GuiRenderCommandBase
+				{
+				public:
+					struct UniData
+					{
+						Vec4 pos;
+						Vec4 colorAndHue; // rgb, hue
+					};
+					UniData data;
+					DrawConfig drw;
+
+					Command(SolidColorRenderable *base)
+					{
+						GuiRenderImpl *activeQueue = base->impl->activeQueue;
+
+						data.pos = base->pos;
+						data.colorAndHue = Vec4(base->rgb, 0);
+
+						drw.shader = +activeQueue->colorPickerShader[0];
+						drw.model = +activeQueue->imageModel;
+						drw.depthTest = DepthTestEnum::Always;
+						drw.depthWrite = false;
+					}
+
+					void draw(const GuiRenderConfig &config) override
+					{
+						const auto ab = config.aggregate->writeStruct(data, 0);
+						GraphicsBindingsCreateConfig bind;
+						bind.buffers.push_back(ab);
+						drw.dynamicOffsets.clear();
+						drw.dynamicOffsets.push_back(ab);
+						drw.bindings = newGraphicsBindings(config.device, bind);
+						config.encoder->draw(drw);
+					}
+				};
+
+				impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(this));
 			}
 		};
 

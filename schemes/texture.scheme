@@ -5,8 +5,8 @@ index = 11
 [target]
 display = texture type
 type = enum
-values = 2d, 3d, 2dArray, cubeMap
-default = 2d
+values = regular, array, cubeMap, cubeMapArray, volume
+default = regular
 
 [channels]
 display = change channels count
@@ -15,6 +15,11 @@ type = uint32
 min = 0
 max = 4
 default = 0
+
+[mipmaps]
+display = generate mipmaps
+type = bool
+default = true
 
 [convert]
 display = re-purpose the texture
@@ -69,39 +74,13 @@ display = vertical flip
 type = bool
 default = false
 
-[invertRed]
-display = invert red channel
-type = bool
-default = false
-
-[invertGreen]
-display = invert green channel
-type = bool
-default = false
-
-[invertBlue]
-display = invert blue channel
-type = bool
-default = false
-
-[invertAlpha]
-display = invert alpha channel
-type = bool
-default = false
-
-[filterMin]
-display = minification filter
-type = enum
-values = nearestMipmapNearest, linearMipmapNearest, nearestMipmapLinear, linearMipmapLinear, nearest, linear
-default = linearMipmapLinear
-
-[filterMag]
-display = magnification filter
+[sampleFilter]
+display = sampling filter
 type = enum
 values = nearest, linear
 default = linear
 
-[filterAniso]
+[anisoFilter]
 display = anisotropic filter
 type = enum
 values = 0, 2, 4, 8, 16, 32, 64
@@ -110,17 +89,17 @@ default = 16
 [wrapX]
 display = wrap x
 type = enum
-values = clampToEdge, clampToBorder, mirroredRepeat, repeat
+values = clamp, repeat, mirror
 default = repeat
 
 [wrapY]
 display = wrap y
 type = enum
-values = clampToEdge, clampToBorder, mirroredRepeat, repeat
+values = clamp, repeat, mirror
 default = repeat
 
 [wrapZ]
 display = wrap z
 type = enum
-values = clampToEdge, clampToBorder, mirroredRepeat, repeat
+values = clamp, repeat, mirror
 default = repeat

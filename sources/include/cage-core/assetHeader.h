@@ -1,6 +1,8 @@
 #ifndef guard_assetHeader_h_k1i7178asdvujhz89jhg14j
 #define guard_assetHeader_h_k1i7178asdvujhz89jhg14j
 
+#include <array>
+
 #include <cage-core/core.h>
 
 namespace cage
@@ -9,18 +11,17 @@ namespace cage
 	{
 		// this is the first header found in every asset file
 
-		char cageName[8] = "cageAss";
+		std::array<char, 8> cageName = { "cageAss" };
 		uint32 version = 0;
 		uint32 flags = 0;
-		char textId[64] = {};
+		AssetLabel textId;
 		uint64 compressedSize = 0;
 		uint64 originalSize = 0;
-		uint32 unused_ = 0;
 		uint16 scheme = m;
 		uint16 dependenciesCount = 0;
 
 		AssetHeader() = default;
-		explicit AssetHeader(const String &textId, uint16 schemeIndex);
+		explicit AssetHeader(const String &textId, uint16 schemeIndex); // this will convert too long name to fit in the label
 
 		// follows:
 		// array of dependency names, each uint32

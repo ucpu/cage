@@ -16,7 +16,7 @@ namespace cage
 		void importBuffer(PointerRange<const char> buffer);
 		void importMesh(const Mesh *mesh);
 
-		Holder<PointerRange<char>> exportBuffer(bool includeAdditionalData = true) const;
+		Holder<PointerRange<char>> exportBuffer() const;
 		Holder<Mesh> exportMesh() const;
 
 		PointerRange<const Triangle> triangles() const;
@@ -91,9 +91,6 @@ namespace cage
 
 	CAGE_CORE_API Vec3 intersection(Line shape, const Collider *collider, Transform t);
 	CAGE_CORE_API Vec3 intersection(Line shape, const Collider *collider, Transform t, uint32 &triangleIndex);
-
-	CAGE_CORE_API AssetsScheme genAssetSchemeCollider();
-	constexpr uint32 AssetSchemeIndexCollider = 3;
 }
 
 #endif // guard_collider_h_qeqwdrwuegfoixwoihediuzerw456

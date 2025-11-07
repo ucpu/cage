@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "assimp")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
 set(ASSIMP_BUILD_ZLIB OFF CACHE INTERNAL "Build your own zlib")

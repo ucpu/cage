@@ -1,7 +1,8 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/audioAlgorithms.h>
 #include <cage-core/serialization.h>
-#include <cage-engine/assetStructs.h>
+#include <cage-engine/assetsSchemes.h>
+#include <cage-engine/assetsStructs.h>
 #include <cage-engine/sound.h>
 
 namespace cage
@@ -59,7 +60,7 @@ namespace cage
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
-			source->setDebugName(context->textId);
+			source->setLabel(context->textId);
 			source->importAudio(std::move(poly));
 			context->assetHolder = std::move(source).cast<void>();
 		}

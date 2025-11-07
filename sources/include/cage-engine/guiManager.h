@@ -6,11 +6,25 @@
 namespace cage
 {
 	class EntityManager;
-	class RenderQueue;
-	class ProvisionalGraphics;
+	class GraphicsDevice;
+	class GraphicsEncoder;
+	class GraphicsAggregateBuffer;
 	class SoundsQueue;
 	struct GuiSkinConfig;
 	struct GuiSkinIndex;
+
+	struct CAGE_ENGINE_API GuiRenderConfig
+	{
+		GraphicsDevice *device = nullptr;
+		GraphicsEncoder *encoder = nullptr;
+		GraphicsAggregateBuffer *aggregate = nullptr;
+	};
+
+	class CAGE_ENGINE_API GuiRender : private Immovable
+	{
+	public:
+		void draw(const GuiRenderConfig &config) const;
+	};
 
 	class CAGE_ENGINE_API GuiManager : private Immovable
 	{
@@ -26,7 +40,7 @@ namespace cage
 		uint32 focus() const;
 
 		void prepare(); // prepare the gui for handling events
-		Holder<RenderQueue> finish(); // finish handling events, generate rendering commands, and release resources
+		Holder<GuiRender> finish(); // finish handling events, generate rendering commands, and release resources
 		void cleanUp();
 
 		bool handleInput(const GenericInput &);
@@ -40,14 +54,14 @@ namespace cage
 
 		EntityManager *entities();
 		AssetsManager *assets();
-		ProvisionalGraphics *graphics();
+		GraphicsDevice *graphics();
 		SoundsQueue *sounds();
 	};
 
 	struct CAGE_ENGINE_API GuiManagerCreateConfig
 	{
 		AssetsManager *assetManager = nullptr;
-		ProvisionalGraphics *provisionalGraphics = nullptr;
+		GraphicsDevice *graphicsDevice = nullptr;
 		SoundsQueue *soundsQueue = nullptr;
 		uint32 skinsCount = 4;
 		bool tooltipsEnabled = true;

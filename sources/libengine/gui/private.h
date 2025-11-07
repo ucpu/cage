@@ -5,12 +5,10 @@
 
 #include <cage-core/entities.h>
 #include <cage-engine/font.h> // FontFormat
+#include <cage-engine/graphicsAggregateBuffer.h>
 #include <cage-engine/guiComponents.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/guiSkins.h>
-#include <cage-engine/renderQueue.h> // UubRange
-#include <cage-engine/soundsQueue.h>
-#include <cage-engine/window.h> // WindowEventListeners
 
 #define GUI_HAS_COMPONENT(T, E) (E)->has<Gui##T##Component>()
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()
@@ -19,7 +17,13 @@
 namespace cage
 {
 	class AssetsOnDemand;
-	class MultiShaderProgram;
+	class GraphicsBuffer;
+	class GraphicsEncoder;
+	class GraphicsAggregateBuffer;
+	class MultiShader;
+	class Shader;
+	class Texture;
+	class Model;
 	class GuiImpl;
 	struct HierarchyItem;
 	struct RenderableElement;
@@ -32,14 +36,6 @@ namespace cage
 		Focus = 1,
 		Hover = 2,
 		Disabled = 3,
-	};
-
-	struct SkinData : public GuiSkinConfig
-	{
-		Holder<Texture> texture;
-		UubRange uubRange;
-
-		void bind(RenderQueue *queue) const;
 	};
 
 	struct FinalPosition
@@ -108,7 +104,7 @@ namespace cage
 	struct WidgetItem : public BaseItem
 	{
 		GuiWidgetStateComponent widgetState;
-		const SkinData *skin = nullptr;
+		const GuiSkinConfig *skin = nullptr;
 
 		WidgetItem(HierarchyItem *hierarchy);
 
@@ -223,7 +219,7 @@ namespace cage
 		Vec4 outer;
 		Vec4 inner;
 		Vec4 accent;
-		const SkinData *skin = nullptr;
+		const GuiSkinConfig *skin = nullptr;
 		uint32 element = m;
 		ElementModeEnum mode = m;
 
@@ -289,6 +285,40 @@ namespace cage
 		uint32 textId = 0;
 	};
 
+	class GuiRenderCommandBase : private Immovable
+	{
+	public:
+		virtual ~GuiRenderCommandBase() {}
+		virtual void draw(const GuiRenderConfig &config) = 0;
+	};
+
+	class GuiRenderImpl : public GuiRender
+	{
+	public:
+		Holder<MemoryArena> memory; // must be last to destroy
+		std::vector<Holder<GuiRenderCommandBase>> commands;
+
+		Holder<Shader> elementShader;
+		Holder<Model> elementModel;
+		Holder<MultiShader> imageShader;
+		Holder<Model> imageModel;
+		Holder<Shader> colorPickerShader[3]; // 0 = flat, 1 = hue, 2 = saturation & value
+
+		struct SkinData
+		{
+			Holder<Texture> texture;
+			GuiSkinElementLayout::TextureUv textureUvs[(uint32)GuiElementTypeEnum::TotalElements];
+			AggregatedBinding uvsBinding;
+		};
+		std::vector<SkinData> skins;
+
+		GuiImpl *impl = nullptr;
+
+		GuiRenderImpl(GuiImpl *impl);
+
+		const SkinData &findSkin(const GuiSkinConfig *s) const;
+	};
+
 	class GuiImpl : public GuiManager
 	{
 	public:
@@ -297,7 +327,7 @@ namespace cage
 		Holder<EntityManager> entityMgr = newEntityManager();
 		Holder<AssetsOnDemand> assetOnDemand;
 		AssetsManager *assetMgr = nullptr;
-		ProvisionalGraphics *provisionalGraphics = nullptr;
+		GraphicsDevice *graphicsDevice = nullptr;
 		SoundsQueue *soundsQueue = nullptr;
 
 		Vec2i outputResolution; // resolution of output texture or screen (pixels)
@@ -310,19 +340,6 @@ namespace cage
 		WidgetItem *hover = nullptr;
 		uint32 hoverName = 0;
 		Holder<HierarchyItem> root;
-
-		struct GraphicsData
-		{
-			Holder<ShaderProgram> elementShader;
-			Holder<ShaderProgram> fontShader;
-			Holder<MultiShaderProgram> imageShader;
-			Holder<ShaderProgram> colorPickerShader[3]; // H, S, V
-			Holder<Model> elementModel;
-			Holder<Model> imageModel;
-
-			void load(AssetsManager *assetMgr);
-		} graphicsData;
-		RenderQueue *activeQueue = nullptr;
 
 		bool mouseMove(input::MouseMove);
 		bool mousePress(input::MousePress);
@@ -337,7 +354,8 @@ namespace cage
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;
 
-		std::vector<SkinData> skins;
+		std::vector<GuiSkinConfig> skins;
+		GuiRenderImpl *activeQueue = nullptr;
 
 		bool ttEnabled = false;
 		Vec2 ttLastMousePos; // points
@@ -357,7 +375,7 @@ namespace cage
 		void scaling(); // update outputSize and outputMouse
 		Vec4 pointsToNdc(Vec2 position, Vec2 size) const;
 		bool eventPoint(Vec2 ptIn, Vec2 &ptOut);
-		Holder<RenderQueue> emit();
+		Holder<GuiRender> emit();
 		void prepareImplGeneration();
 	};
 

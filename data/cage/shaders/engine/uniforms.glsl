@@ -1,4 +1,8 @@
 
+////////////////////////////////////////////////////////////////////////////////
+// set = 0
+////////////////////////////////////////////////////////////////////////////////
+
 struct UniViewport
 {
 	// this matrix is same for shadowmaps and for the camera
@@ -11,7 +15,7 @@ struct UniViewport
 	vec4 time; // frame index (loops at 10000), time (loops every second), time (loops every 1000 seconds), unused
 };
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform ViewportBlock
+layout(std140, set = 0, binding = 0) uniform ViewportBlock
 {
 	UniViewport uniViewport;
 };
@@ -25,41 +29,9 @@ struct UniProjection
 	mat4 vpInv;
 };
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_PROJECTION) uniform ProjectionBlock
+layout(std140, set = 0, binding = 1) uniform ProjectionBlock
 {
 	UniProjection uniProjection;
-};
-
-struct UniMaterial
-{
-	vec4 albedoBase; // linear rgb (NOT alpha-premultiplied), opacity
-	vec4 specialBase; // roughness, metallic, emission, mask
-	vec4 albedoMult;
-	vec4 specialMult;
-	vec4 lighting; // lighting enabled, fading transparency, unused, unused
-	vec4 animation; // animation duration, animation loops, unused, unused
-};
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_MATERIAL) uniform MaterialBlock
-{
-	UniMaterial uniMaterial;
-};
-
-struct UniMesh
-{
-	mat3x4 modelMat;
-	vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
-	vec4 animation; // time (seconds), speed, offset (normalized), unused
-};
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_MESHES) uniform MeshesBlock
-{
-	UniMesh uniMeshes[CAGE_SHADER_MAX_MESHES];
-};
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform ArmaturesBlock
-{
-	mat3x4 uniArmatures[CAGE_SHADER_MAX_BONES];
 };
 
 struct UniLight
@@ -71,43 +43,112 @@ struct UniLight
 	vec4 params; // lightType, ssaoFactor, spotAngle, spotExponent
 };
 
+layout(std430, set = 0, binding = 2) readonly buffer LightsBlock
+{
+	UniLight uniLights[];
+};
+
 struct UniShadowedLight
 {
 	UniLight light;
-	mat4 shadowMat[CAGE_SHADER_MAX_SHADOWMAPSCASCADES];
+	mat4 shadowMat[4];
 	vec4 shadowParams; // shadowmapSamplerIndex, unused, normalOffsetScale, shadowFactor
 	vec4 cascadesDepths;
 };
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform LightsBlock
+layout(std430, set = 0, binding = 3) readonly buffer ShadowedLightsBlock
 {
-	UniLight uniLights[CAGE_SHADER_MAX_LIGHTS];
+	UniShadowedLight uniShadowedLights[];
 };
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_SHADOWEDLIGHTS) uniform ShadowedLightsBlock
+layout(set = 0, binding = 4) uniform sampler2D texSsao;
+layout(set = 0, binding = 6) uniform sampler2D texDepth;
+
+
+layout(set = 0, binding = 15) uniform sampler samplerShadows;
+
+layout(set = 0, binding = 16) uniform texture2DArray texShadows2d_0;
+layout(set = 0, binding = 17) uniform texture2DArray texShadows2d_1;
+layout(set = 0, binding = 18) uniform texture2DArray texShadows2d_2;
+layout(set = 0, binding = 19) uniform texture2DArray texShadows2d_3;
+layout(set = 0, binding = 20) uniform texture2DArray texShadows2d_4;
+layout(set = 0, binding = 21) uniform texture2DArray texShadows2d_5;
+layout(set = 0, binding = 22) uniform texture2DArray texShadows2d_6;
+layout(set = 0, binding = 23) uniform texture2DArray texShadows2d_7;
+
+layout(set = 0, binding = 24) uniform textureCube texShadowsCube_0;
+layout(set = 0, binding = 25) uniform textureCube texShadowsCube_1;
+layout(set = 0, binding = 26) uniform textureCube texShadowsCube_2;
+layout(set = 0, binding = 27) uniform textureCube texShadowsCube_3;
+layout(set = 0, binding = 28) uniform textureCube texShadowsCube_4;
+layout(set = 0, binding = 29) uniform textureCube texShadowsCube_5;
+layout(set = 0, binding = 30) uniform textureCube texShadowsCube_6;
+layout(set = 0, binding = 31) uniform textureCube texShadowsCube_7;
+
+////////////////////////////////////////////////////////////////////////////////
+// set = 1
+////////////////////////////////////////////////////////////////////////////////
+
+struct UniMaterial
 {
-	UniShadowedLight uniShadowedLights[CAGE_SHADER_MAX_SHADOWMAPSCUBE + CAGE_SHADER_MAX_SHADOWMAPS2D];
+	vec4 albedoBase; // linear rgb (NOT alpha-premultiplied), opacity
+	vec4 specialBase; // roughness, metallic, emission, mask
+	vec4 albedoMult;
+	vec4 specialMult;
+	vec4 lighting; // lighting enabled, fading transparency, unused, unused
+	vec4 animation; // animation duration, animation loops, unused, unused
 };
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_OPTIONS) uniform OptionsBlock
+layout(std140, set = 1, binding = 0) uniform MaterialBlock
 {
-	ivec4 uniOptions[(CAGE_SHADER_MAX_OPTIONS + 3) / 4];
+	UniMaterial uniMaterial;
 };
 
-int getOption(int index)
-{
-	return uniOptions[index / 4][index % 4];
-}
+#if (defined(MaterialTexRegular) && defined(MaterialTexArray)) || (defined(MaterialTexRegular) && defined(MaterialTexCube)) || (defined(MaterialTexArray) && defined(MaterialTexCube))
+#error "unintended combination of keywords"
+#endif
 
-layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texMaterialAlbedo2d;
-layout(binding = CAGE_SHADER_TEXTURE_ALBEDO_ARRAY) uniform sampler2DArray texMaterialAlbedoArray;
-layout(binding = CAGE_SHADER_TEXTURE_ALBEDO_CUBE) uniform samplerCube texMaterialAlbedoCube;
-layout(binding = CAGE_SHADER_TEXTURE_SPECIAL) uniform sampler2D texMaterialSpecial2d;
-layout(binding = CAGE_SHADER_TEXTURE_SPECIAL_ARRAY) uniform sampler2DArray texMaterialSpecialArray;
-layout(binding = CAGE_SHADER_TEXTURE_SPECIAL_CUBE) uniform samplerCube texMaterialSpecialCube;
-layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texMaterialNormal2d;
-layout(binding = CAGE_SHADER_TEXTURE_NORMAL_ARRAY) uniform sampler2DArray texMaterialNormalArray;
-layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMaterialNormalCube;
-layout(binding = CAGE_SHADER_TEXTURE_SSAO) uniform sampler2D texSsao;
-layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAP2D0) uniform sampler2DArray texShadows2d[CAGE_SHADER_MAX_SHADOWMAPS2D];
-layout(binding = CAGE_SHADER_TEXTURE_SHADOWMAPCUBE0) uniform samplerCube texShadowsCube[CAGE_SHADER_MAX_SHADOWMAPSCUBE];
+#ifdef MaterialTexRegular
+layout(set = 1, binding = 1) uniform sampler2D texMaterialAlbedo;
+layout(set = 1, binding = 3) uniform sampler2D texMaterialSpecial;
+layout(set = 1, binding = 5) uniform sampler2D texMaterialNormal;
+#endif // MaterialTexRegular
+
+#ifdef MaterialTexArray
+layout(set = 1, binding = 1) uniform sampler2DArray texMaterialAlbedo;
+layout(set = 1, binding = 3) uniform sampler2DArray texMaterialSpecial;
+layout(set = 1, binding = 5) uniform sampler2DArray texMaterialNormal;
+#endif // MaterialTexArray
+
+#ifdef MaterialTexCube
+layout(set = 1, binding = 1) uniform samplerCube texMaterialAlbedo;
+layout(set = 1, binding = 3) uniform samplerCube texMaterialSpecial;
+layout(set = 1, binding = 5) uniform samplerCube texMaterialNormal;
+#endif // MaterialTexCube
+
+////////////////////////////////////////////////////////////////////////////////
+// set = 2
+////////////////////////////////////////////////////////////////////////////////
+
+layout(std430, set = 2, binding = 0) readonly buffer OptionsBlock
+{
+	ivec4 uniOptsLights; // unshadowed lights count, shadowed lights count, enable ambient occlusion, enable normal map
+	ivec4 uniOptsSkeleton; // bones count, unused, unused, unused
+};
+
+struct UniMesh
+{
+	mat3x4 modelMat;
+	vec4 color; // linear rgb (NOT alpha-premultiplied), opacity
+	vec4 animation; // time (seconds), speed, offset (normalized), unused
+};
+
+layout(std430, set = 2, binding = 1) readonly buffer MeshesBlock
+{
+	UniMesh uniMeshes[];
+};
+
+layout(std430, set = 2, binding = 2) readonly buffer ArmaturesBlock
+{
+	mat3x4 uniArmatures[];
+};

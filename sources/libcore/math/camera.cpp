@@ -33,8 +33,8 @@ namespace cage
 		CAGE_ASSERT(fov > Rads(0));
 		CAGE_ASSERT(aspectRatio > 0);
 		CAGE_ASSERT(sign(near) == sign(far) && near != far);
-		Real f = 1 / tan(fov / 2);
-		return Mat4(f / aspectRatio, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) / (near - far), -1, 0, 0, far * near * 2.0 / (near - far), 0);
+		const Real f = 1 / tan(fov / 2);
+		return Mat4(f / aspectRatio, 0, 0, 0, 0, f, 0, 0, 0, 0, far / (near - far), -1, 0, 0, (far * near) / (near - far), 0);
 	}
 
 	Mat4 perspectiveProjection(Rads fov, Real aspectRatio, Real near, Real far, Real zeroParallaxDistance, Real eyeSeparation)
@@ -56,7 +56,7 @@ namespace cage
 		CAGE_ASSERT(left != right);
 		CAGE_ASSERT(bottom != top);
 		CAGE_ASSERT(sign(near) == sign(far) && near != far);
-		return Mat4(near * 2.0 / (right - left), 0, 0, 0, 0, near * 2.0 / (top - bottom), 0, 0, (right + left) / (right - left), (top + bottom) / (top - bottom), (far + near) / (near - far), -1, 0, 0, 2 * far * near / (near - far), 0);
+		return Mat4((2 * near) / (right - left), 0, 0, 0, 0, (2 * near) / (top - bottom), 0, 0, (right + left) / (right - left), (top + bottom) / (top - bottom), far / (near - far), -1, 0, 0, (far * near) / (near - far), 0);
 	}
 
 	Mat4 orthographicProjection(Real left, Real right, Real bottom, Real top, Real near, Real far)
@@ -64,7 +64,7 @@ namespace cage
 		CAGE_ASSERT(left != right);
 		CAGE_ASSERT(bottom != top);
 		CAGE_ASSERT(near != far);
-		return transpose(Mat4(2 / (right - left), 0, 0, -(right + left) / (right - left), 0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom), 0, 0, -2 / (far - near), -(far + near) / (far - near), 0, 0, 0, 1));
+		return Mat4(2 / (right - left), 0, 0, 0, 0, 2 / (top - bottom), 0, 0, 0, 0, 1 / (near - far), 0, -(right + left) / (right - left), -(top + bottom) / (top - bottom), near / (near - far), 1);
 	}
 
 	StringPointer stereoModeToString(StereoModeEnum mode)

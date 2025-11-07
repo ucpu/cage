@@ -12,12 +12,19 @@ namespace cage
 	public:
 		// begin thread-safe methods
 
-		// returns null if the asset is not yet loaded or has different scheme
+		// returns null if the asset is not yet loaded, failed to load, or has different scheme
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetId, bool autoLoad = true)
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetId, autoLoad).template cast<T>();
+			return get1_(Scheme, assetId, autoLoad).template cast<T>();
+		}
+
+		// returns null if the asset is not yet loaded, failed to load, or has different type
+		template<class T>
+		Holder<T> get(uint32 assetId, bool autoLoad = true)
+		{
+			return get2_(detail::typeHash<T>(), assetId, autoLoad).template cast<T>();
 		}
 
 		void preload(uint32 assetId);
@@ -25,10 +32,13 @@ namespace cage
 		void process();
 		void clear();
 
+		AssetsManager *assetsManager() const;
+
 		// end thread-safe methods
 
 	private:
-		Holder<void> get_(uint32 scheme, uint32 assetId, bool autoLoad);
+		Holder<void> get1_(uint32 scheme, uint32 assetId, bool autoLoad);
+		Holder<void> get2_(uint32 typeHash, uint32 assetId, bool autoLoad);
 		uint32 schemeTypeHash_(uint32 scheme) const;
 	};
 

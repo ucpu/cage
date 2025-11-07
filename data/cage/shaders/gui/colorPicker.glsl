@@ -1,48 +1,45 @@
 
-$include ../shaderConventions.h
+$include ../functions/common.glsl
+$include ../functions/hsvToRgb.glsl
+
+layout(std430, set = 2, binding = 0) readonly buffer Global
+{
+	vec4 uniPos;
+	vec4 uniColorAndHue; // rgb, hue
+};
+
+
+layout(location = 0) varying vec2 varUv;
+
 
 $define shader vertex
 
-$include ../functions/common.glsl
-
-layout(location = 0) uniform vec4 pos;
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
-layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec2 inUv;
-out vec2 varUv;
+layout(location = 0) in vec3 inPosition;
+layout(location = 4) in vec2 inUv;
 
 void main()
 {
 	gl_Position.z = 0;
 	gl_Position.w = 1;
-	gl_Position.xy = pos.xy + (pos.zw - pos.xy) * inUv;
-	varUv = inUv;
+	gl_Position.xy = uniPos.xy + (uniPos.zw - uniPos.xy) * inPosition.xy;
+	varUv.x = inUv.x;
+	varUv.y = 1 - inUv.y;
 }
+
 
 $define shader fragment
 
-$include ../functions/common.glsl
-$include ../functions/hsvToRgb.glsl
-
-$if inputSpec ^ 0 = F
-	layout(location = 1) uniform vec3  uniColor;
-$else
-$if inputSpec ^ 0 = H
-$else
-	layout(location = 1) uniform float uniHue;
-$end
-$end
-in vec2 varUv;
-out vec4 outColor;
+layout(location = 0) out vec4 outColor;
 
 void main()
 {
 $if inputSpec ^ 0 = F
-	outColor = vec4(uniColor, 1);
+	outColor = vec4(uniColorAndHue.rgb, 1);
 $else
 $if inputSpec ^ 0 = H
 	outColor = vec4(hsvToRgb(vec3(varUv.x, 1, 1)), 1);
 $else
-	outColor = vec4(hsvToRgb(vec3(uniHue, varUv)), 1);
+	outColor = vec4(hsvToRgb(vec3(uniColorAndHue.a, varUv)), 1);
 $end
 $end
 }

@@ -7,7 +7,6 @@
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/macros.h>
 #include <cage-core/memoryAllocators.h>
-#include <cage-engine/renderQueue.h>
 
 #define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Update, Tooltip, TooltipMarker
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Header, Separator, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, SolidColor, Frame, Panel, Spoiler
@@ -15,7 +14,7 @@
 
 namespace cage
 {
-	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetsOnDemand(config.assetManager)), assetMgr(config.assetManager), provisionalGraphics(config.provisionalGraphics), soundsQueue(config.soundsQueue), ttEnabled(config.tooltipsEnabled)
+	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetsOnDemand(config.assetManager)), assetMgr(config.assetManager), graphicsDevice(config.graphicsDevice), soundsQueue(config.soundsQueue), ttEnabled(config.tooltipsEnabled)
 	{
 #define GCHL_GENERATE(T) entityMgr->defineComponent(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))());
 		CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
@@ -26,11 +25,7 @@ namespace cage
 
 		skins.reserve(config.skinsCount);
 		for (uint32 i = 0; i < config.skinsCount; i++)
-		{
-			SkinData d;
-			(GuiSkinConfig &)d = detail::guiSkinGenerate(GuiSkinIndex(i));
-			skins.push_back(std::move(d));
-		}
+			skins.push_back(detail::guiSkinGenerate(GuiSkinIndex(i)));
 
 		memory = newMemoryAllocatorStream({});
 
@@ -169,19 +164,19 @@ namespace cage
 	AssetsManager *GuiManager::assets()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return +impl->assetMgr;
+		return impl->assetMgr;
 	}
 
-	ProvisionalGraphics *GuiManager::graphics()
+	GraphicsDevice *GuiManager::graphics()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return +impl->provisionalGraphics;
+		return impl->graphicsDevice;
 	}
 
 	SoundsQueue *GuiManager::sounds()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		return +impl->soundsQueue;
+		return impl->soundsQueue;
 	}
 
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem * item);
@@ -422,15 +417,15 @@ namespace cage
 		impl->updateTooltips();
 	}
 
-	Holder<RenderQueue> GuiManager::finish()
+	Holder<GuiRender> GuiManager::finish()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		entitiesVisitor([&](Entity *e, const GuiUpdateComponent &u) { u.update(e); }, entities(), true);
 		impl->prepareImplGeneration(); // entities may have been changed -> regenerate our cache
 		findHover(impl);
-		Holder<RenderQueue> q = impl->emit();
+		Holder<GuiRender> gr = impl->emit();
 		impl->root.clear();
-		return q;
+		return gr;
 	}
 
 	void GuiManager::cleanUp()

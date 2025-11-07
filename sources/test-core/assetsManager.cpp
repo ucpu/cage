@@ -5,6 +5,7 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/assetHeader.h>
 #include <cage-core/assetsManager.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
@@ -536,10 +537,10 @@ void testAssetManager()
 
 		{
 			AssetHeader ass("abcdefghijklmnopqrstuvwxyz", 42);
-			CAGE_TEST(String(ass.cageName) == "cageAss");
+			CAGE_TEST(String(ass.cageName.data()) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textId) == "abcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(ass.textId == "abcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 42);
@@ -547,11 +548,11 @@ void testAssetManager()
 		}
 
 		{
-			AssetHeader ass("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 13);
-			CAGE_TEST(String(ass.cageName) == "cageAss");
+			AssetHeader ass("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
+			CAGE_TEST(String(ass.cageName.data()) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
-			CAGE_TEST(String(ass.textId) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(ass.textId == "..jklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
 			CAGE_TEST(ass.scheme == 13);

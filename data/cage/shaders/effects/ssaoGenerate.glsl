@@ -1,6 +1,4 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
@@ -9,16 +7,16 @@ $include ../functions/common.glsl
 $include ../functions/randomFunc.glsl
 $include ssaoParams.glsl
 
-layout(std140, binding = 3) uniform SsaoPoints
+layout(std430, set = 2, binding = 1) readonly buffer SsaoPoints
 {
 	vec4 ssaoPoints[256];
 };
 
-layout(binding = 0) uniform sampler2D texDepth; // NDC depth [0,1]
+layout(set = 2, binding = 2) uniform sampler2D texDepth; // NDC depth [0..1]
 
-out float outAo;
+layout(location = 0) out float outAo;
 
-// inputs in NDC [-1,1]
+// inputs in NDC [p: -1..1, d: 0..1]
 vec3 ndcToView(vec2 p, float d)
 {
 	vec4 p4 = vec4(p, d, 1);
@@ -34,7 +32,6 @@ vec3 reconstructNormal(vec3 position)
 
 mat3 makeTbn(vec3 myNormal)
 {
-	//float angle = 2.0 * 3.14159265 * fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
 	uint n = hash(uint(gl_FragCoord.x) ^ hash(uint(gl_FragCoord.y)) ^ uint(iparams[1])); // per-pixel seed
 	float angle = 2.0 * 3.14159265 * egacIntToFloat(n);
 	float ca = cos(angle);
@@ -49,15 +46,16 @@ mat3 makeTbn(vec3 myNormal)
 void main()
 {
 	vec2 resolution = vec2(textureSize(texDepth, 0));
-	vec2 myUv = gl_FragCoord.xy / resolution; // screen-space [0,1]
-	float myDepth = textureLod(texDepth, myUv, 0).x * 2 - 1; // NDC depth [-1,1]
-	if (myDepth > 0.999)
+	vec2 myUv = gl_FragCoord.xy / resolution; // screen-space [0..1]
+	float myDepth = textureLod(texDepth, myUv, 0).x; // NDC depth [0..1]
+	vec3 myPos = ndcToView(myUv * 2 - 1, myDepth); // view-space position
+	vec3 myNormal = reconstructNormal(myPos); // view-space normal
+
+	if (myDepth > 0.999) // non-uniform control flow must come after derivatives in the reconstructNormal
 	{ // no occlusion on skybox
 		outAo = 0;
 		return;
 	}
-	vec3 myPos = ndcToView(myUv * 2 - 1, myDepth); // view-space position
-	vec3 myNormal = reconstructNormal(myPos); // view-space normal
 
 	// sampling
 	mat3 tbn = makeTbn(myNormal);
@@ -74,10 +72,10 @@ void main()
 		// view-space ray position
 		vec3 rayPos = myPos + rayDir;
 		vec4 r4 = proj * vec4(rayPos, 1); // clip space
-		vec3 rayNdc = r4.xyz / r4.w; // NDC [-1,1]
+		vec3 rayNdc = r4.xyz / r4.w; // NDC [xy: -1..1, z: 0..1]
 
 		vec2 sampleUv = saturate(rayNdc.xy * 0.5 + 0.5);
-		float sampleDepth = textureLod(texDepth, sampleUv, 0).x * 2 - 1; // NDC depth [-1,1]
+		float sampleDepth = textureLod(texDepth, sampleUv, 0).x; // NDC depth [0,1]
 		if (sampleDepth < rayNdc.z)
 		{
 			vec3 samplePos = ndcToView(rayNdc.xy, sampleDepth); // view-space sample position

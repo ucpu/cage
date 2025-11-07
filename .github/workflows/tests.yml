@@ -31,8 +31,6 @@ jobs:
         git --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       shell: bash
@@ -59,17 +57,6 @@ jobs:
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
 
-    - name: Install
-      shell: bash
-      run: |
-        cd build
-        cmake --install . --config ${{ matrix.build-config }} --prefix "C:/cage"
-        cd ../sources/test-install
-        mkdir build
-        cd build
-        cmake -A${{ matrix.build-arch }} ${{ matrix.build-tool }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} -DCage_DIR="C:/cage/cmake" ..
-        cmake --build . --config ${{ matrix.build-config }}
-
 
   Ubuntu:
     name: ubuntu-${{ matrix.os-version }}${{ matrix.build-arch }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}-${{ matrix.steam-sockets }}
@@ -84,11 +71,6 @@ jobs:
         build-arch: ["", "-arm"]
         build-config: [debug, release]
         compiler:
-        - {
-            cc: gcc-13,
-            cxx: g++-13,
-            install: gcc-13 g++-13
-          }
         - {
             cc: gcc-14,
             cxx: g++-14,
@@ -124,8 +106,6 @@ jobs:
         ${{ matrix.compiler.cxx }} --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -148,16 +128,6 @@ jobs:
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
 
-    - name: Install
-      run: |
-        cd build
-        sudo cmake --install .
-        cd ../sources/test-install
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
-        cmake --build . -- -j$(( `nproc` + 1 ))
-
     - name: List dependencies
       run: |
         cd build/result/${{ matrix.build-config }}
@@ -165,6 +135,59 @@ jobs:
         ldd libcage-core.so
         echo "cage-engine:"
         ldd libcage-engine.so
+
+
+  MacOS:
+    name: macos-${{ matrix.os-version }}-${{ matrix.build-config }}
+    runs-on: macos-${{ matrix.os-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os-version: [15]
+        build-config: [debug, release]
+
+    steps:
+    - name: Install packages
+      run: |
+        brew install nasm
+
+    - name: Versions
+      run: |
+        cmake --version
+        git --version
+        clang --version
+        clang++ --version
+
+    - uses: actions/checkout@v4
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . -- -j$(( `sysctl -n hw.ncpu` + 1 ))
+
+    - name: Tests
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
+
+    - name: Assets
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-asset-database
+
+    - name: List dependencies
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        echo "cage-core:"
+        otool -L libcage-core.dylib
+        echo "cage-engine:"
+        otool -L libcage-engine.dylib
 
 
   NoProfiler:
@@ -184,8 +207,6 @@ jobs:
         sudo apt-get install -y xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -246,8 +267,6 @@ jobs:
         clang++ --version
 
     - uses: actions/checkout@v4
-      with:
-        submodules: recursive
 
     - name: Configure
       run: |
@@ -265,53 +284,3 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
-
-
-  MacOS:
-    name: macos-${{ matrix.os-version }}-${{ matrix.build-config }}
-    runs-on: macos-${{ matrix.os-version }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os-version: [14, 15]
-        build-config: [debug, release]
-
-    steps:
-    - name: Install packages
-      run: |
-        brew install nasm
-
-    - name: Versions
-      run: |
-        cmake --version
-        git --version
-        clang --version
-        clang++ --version
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Configure
-      run: |
-        mkdir build
-        cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
-
-    - name: Build
-      run: |
-        cd build
-        cmake --build . -- -j$(( `sysctl -n hw.ncpu` + 1 ))
-
-    - name: Tests
-      run: |
-        cd build/result/${{ matrix.build-config }}
-        ./cage-test-core
-
-    - name: List dependencies
-      run: |
-        cd build/result/${{ matrix.build-config }}
-        echo "cage-core:"
-        otool -L libcage-core.dylib
-        echo "cage-engine:"
-        otool -L libcage-engine.dylib

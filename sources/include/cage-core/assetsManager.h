@@ -49,7 +49,14 @@ namespace cage
 		Holder<T> get(uint32 assetId) const
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
-			return get_(Scheme, assetId).template cast<T>();
+			return get1_(Scheme, assetId).template cast<T>();
+		}
+
+		// returns null if the asset is not yet loaded, failed to load, or has different type
+		template<class T>
+		Holder<T> get(uint32 assetId) const
+		{
+			return get2_(detail::typeHash<T>(), assetId).template cast<T>();
 		}
 
 		// returns true if the asset exists and is successfully loaded
@@ -70,7 +77,8 @@ namespace cage
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride);
 		void load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value);
 		void load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
-		Holder<void> get_(uint32 scheme, uint32 assetId) const;
+		Holder<void> get1_(uint32 scheme, uint32 assetId) const;
+		Holder<void> get2_(uint32 typeHash, uint32 assetId) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
 		friend class AssetsOnDemand;
 	};
@@ -84,14 +92,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config);
-
-	struct CAGE_CORE_API AssetPack
-	{};
-	CAGE_CORE_API AssetsScheme genAssetSchemePack();
-	constexpr uint32 AssetSchemeIndexPack = 0;
-
-	CAGE_CORE_API AssetsScheme genAssetSchemeRaw();
-	constexpr uint32 AssetSchemeIndexRaw = 1;
 }
 
 #endif // guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t

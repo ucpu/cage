@@ -71,16 +71,17 @@ namespace cage
 			}
 		};
 
-		struct SoundPrepareImpl
+		class EnginePrivateSoundImpl : public EnginePrivateSound
 		{
+		public:
 			Holder<Mutex> mut = newMutex();
 			std::vector<EmitListener> listeners;
 			std::vector<EmitSound> sounds;
 			ankerl::unordered_dense::map<uintPtr, Holder<PrepareListener>> listenersMapping; // requires stable pointers
 
-			explicit SoundPrepareImpl(const EngineCreateConfig &config) {}
+			// control thread ---------------------------------------------------------------------
 
-			void finalize() { listenersMapping.clear(); }
+			explicit EnginePrivateSoundImpl(const EngineCreateConfig &config) {}
 
 			void emit()
 			{
@@ -91,6 +92,7 @@ namespace cage
 
 				EntityComponent *sceneComponent = engineEntities()->component<SceneComponent>();
 				EntityComponent *spawnTimeComponent = engineEntities()->component<SpawnTimeComponent>();
+				EntityComponent *prevComponent = engineEntities()->componentsByType(detail::typeIndex<TransformComponent>())[1];
 
 				// emit listeners
 				entitiesVisitor(
@@ -98,8 +100,8 @@ namespace cage
 					{
 						EmitListener c;
 						c.transform = tr;
-						if (e->has(transformHistoryComponent))
-							c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
+						if (e->has(prevComponent))
+							c.transformHistory = e->value<TransformComponent>(prevComponent);
 						else
 							c.transformHistory = c.transform;
 						c.listener = ls;
@@ -116,8 +118,8 @@ namespace cage
 					{
 						EmitSound c;
 						c.transform = tr;
-						if (e->has(transformHistoryComponent))
-							c.transformHistory = e->value<TransformComponent>(transformHistoryComponent);
+						if (e->has(prevComponent))
+							c.transformHistory = e->value<TransformComponent>(prevComponent);
 						else
 							c.transformHistory = c.transform;
 						c.sound = snd;
@@ -131,9 +133,15 @@ namespace cage
 					engineEntities(), false);
 			}
 
+			// sound thread ---------------------------------------------------------------------
+
+			void initialize() {}
+
+			void finalize() { listenersMapping.clear(); }
+
 			void prepare(PrepareListener &l, Holder<Voice> &v, const EmitSound &e)
 			{
-				Holder<Sound> s = engineAssets()->get<AssetSchemeIndexSound, Sound>(e.sound.sound);
+				Holder<Sound> s = engineAssets()->get<Sound>(e.sound.sound);
 				if (!s)
 				{
 					v.clear();
@@ -212,32 +220,34 @@ namespace cage
 			}
 		};
 
-		SoundPrepareImpl *soundPrepare;
 	}
 
-	void soundEmit()
+	void EnginePrivateSound::emit()
 	{
-		soundPrepare->emit();
+		EnginePrivateSoundImpl *impl = (EnginePrivateSoundImpl *)this;
+		impl->emit();
 	}
 
-	void soundDispatch(uint64 dispatchTime)
+	void EnginePrivateSound::initialize()
 	{
-		soundPrepare->dispatch(dispatchTime);
+		EnginePrivateSoundImpl *impl = (EnginePrivateSoundImpl *)this;
+		impl->initialize();
 	}
 
-	void soundFinalize()
+	void EnginePrivateSound::finalize()
 	{
-		soundPrepare->finalize();
+		EnginePrivateSoundImpl *impl = (EnginePrivateSoundImpl *)this;
+		impl->finalize();
 	}
 
-	void soundCreate(const EngineCreateConfig &config)
+	void EnginePrivateSound::dispatch(uint64 time)
 	{
-		soundPrepare = systemMemory().createObject<SoundPrepareImpl>(config);
+		EnginePrivateSoundImpl *impl = (EnginePrivateSoundImpl *)this;
+		impl->dispatch(time);
 	}
 
-	void soundDestroy()
+	Holder<EnginePrivateSound> newEnginePrivateSound(const EngineCreateConfig &config)
 	{
-		systemMemory().destroy<SoundPrepareImpl>(soundPrepare);
-		soundPrepare = nullptr;
+		return systemMemory().createImpl<EnginePrivateSound, EnginePrivateSoundImpl>(config);
 	}
 }

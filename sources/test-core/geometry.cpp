@@ -2365,14 +2365,25 @@ namespace
 			CAGE_TESTCASE("point-frustum intersections");
 			const Mat4 proj = perspectiveProjection(Degs(90), 1, 10, 20);
 			const Frustum frustum = Frustum(Transform(Vec3(13, 42, 5), Quat(Degs(), Degs(180), Degs())), proj);
-			CAGE_TEST(intersects(frustum, Vec3(5, 40, 20)));
-			CAGE_TEST(intersects(Vec3(5, 40, 20), frustum));
-			CAGE_TEST(!intersects(frustum, Vec3(5, 40, 10)));
-			CAGE_TEST(!intersects(frustum, Vec3(5, 40, 30)));
-			CAGE_TEST(!intersects(frustum, Vec3(-10, 40, 20)));
-			CAGE_TEST(!intersects(frustum, Vec3(30, 40, 20)));
-			CAGE_TEST(!intersects(frustum, Vec3(5, 20, 20)));
-			CAGE_TEST(!intersects(frustum, Vec3(5, 70, 20)));
+			CAGE_TEST(intersects(frustum, Vec3(5, 40, 20)) == true);
+			CAGE_TEST(intersects(Vec3(5, 40, 20), frustum) == true);
+			CAGE_TEST(intersects(frustum, Vec3(5, 40, 10)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(5, 40, 30)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(-10, 40, 20)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(30, 40, 20)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(5, 20, 20)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(5, 70, 20)) == false);
+		}
+
+		{
+			CAGE_TESTCASE("point-frustum intersections (precise depth)");
+			const Mat4 proj = perspectiveProjection(Degs(90), 1, 10, 20);
+			const Frustum frustum = Frustum(Transform(Vec3(), Quat(Degs(), Degs(180), Degs())), proj);
+			CAGE_TEST(intersects(frustum, Vec3(0, 0, 0)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(0, 0, 9)) == false);
+			CAGE_TEST(intersects(frustum, Vec3(0, 0, 11)) == true);
+			CAGE_TEST(intersects(frustum, Vec3(0, 0, 19)) == true);
+			CAGE_TEST(intersects(frustum, Vec3(0, 0, 21)) == false);
 		}
 
 		{
@@ -2390,6 +2401,17 @@ namespace
 			CAGE_TEST(intersects(a, Frustum(Transform(Vec3(0, 3, 0)), proj)) == true);
 			CAGE_TEST(intersects(a, Frustum(Transform(Vec3(5, 3, 0)), proj)) == true);
 			CAGE_TEST(intersects(a, Frustum(Transform(Vec3(15, 3, 0)), proj)) == false);
+		}
+
+		{
+			CAGE_TESTCASE("aabb-frustum intersections (precise depth)");
+			const Mat4 proj = perspectiveProjection(Degs(90), 1, 10, 20);
+			const Frustum frustum = Frustum(Transform(Vec3(), Quat(Degs(), Degs(180), Degs())), proj);
+			CAGE_TEST(intersects(frustum, Aabb(Vec3(0, 0, 0))) == false);
+			CAGE_TEST(intersects(frustum, Aabb(Vec3(0, 0, 9))) == false);
+			CAGE_TEST(intersects(frustum, Aabb(Vec3(0, 0, 11))) == true);
+			CAGE_TEST(intersects(frustum, Aabb(Vec3(0, 0, 19))) == true);
+			CAGE_TEST(intersects(frustum, Aabb(Vec3(0, 0, 21))) == false);
 		}
 	}
 

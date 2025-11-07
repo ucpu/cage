@@ -9,12 +9,10 @@ namespace cage
 
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
-#ifdef CAGE_DEBUG
-		detail::StringBase<64> debugName;
-#endif // CAGE_DEBUG
+		detail::StringBase<128> label;
 
 	public:
-		void setDebugName(const String &name);
+		void setLabel(const String &name);
 
 		void importAudio(Holder<Audio> &&audio);
 
@@ -30,9 +28,6 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<Sound> newSound();
-
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeSound();
-	constexpr uint32 AssetSchemeIndexSound = 20;
 }
 
 #endif // guard_sound_h_8EF0985E04CD4714B530EA7D605E92EC

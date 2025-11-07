@@ -4,6 +4,7 @@
 #include <unordered_dense.h>
 
 #include <cage-core/assetContext.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/containerSerialization.h>
 #include <cage-core/flatSet.h>

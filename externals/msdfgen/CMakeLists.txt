@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "msdfgen")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 file(GLOB_RECURSE msdfgen-sources "msdfgen/msdfgen.h" "msdfgen/core/*" "msdfgen/ext/import-font.*")
 add_library(lib_msdfgen ${msdfgen-sources})
 target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_USE_CPP11 MSDFGEN_PUBLIC=)

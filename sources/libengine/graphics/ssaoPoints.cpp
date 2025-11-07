@@ -1,3 +1,5 @@
+#include <array>
+
 #include <cage-core/math.h>
 #include <cage-core/serialization.h>
 
@@ -36,12 +38,12 @@ namespace cage
 
 		struct Sequence
 		{
-			Vec4 data[256];
+			std::array<Vec4, 256> data;
 			uint32 size = 0;
 
 			void generate()
 			{
-				CAGE_ASSERT(size <= array_size(data));
+				CAGE_ASSERT(size <= data.size());
 				for (uint32 i = 0; i < size; i++)
 					data[i] = Vec4(pushForward(hemisphereSample(hammersley(i, size))), 0);
 			}

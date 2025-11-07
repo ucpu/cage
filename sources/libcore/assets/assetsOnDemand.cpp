@@ -95,11 +95,24 @@ namespace cage
 		impl->clear();
 	}
 
-	Holder<void> AssetsOnDemand::get_(uint32 scheme, uint32 assetId, bool autoLoad)
+	AssetsManager *AssetsOnDemand::assetsManager() const
 	{
-		CAGE_ASSERT(assetId != 0 && assetId != m);
+		const AssetOnDemandImpl *impl = (const AssetOnDemandImpl *)this;
+		return impl->assets;
+	}
+
+	Holder<void> AssetsOnDemand::get1_(uint32 scheme, uint32 assetId, bool autoLoad)
+	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		auto r = impl->assets->get_(scheme, assetId);
+		auto r = impl->assets->get1_(scheme, assetId);
+		impl->update(assetId, autoLoad && !r);
+		return r;
+	}
+
+	Holder<void> AssetsOnDemand::get2_(uint32 typeHash, uint32 assetId, bool autoLoad)
+	{
+		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
+		auto r = impl->assets->get2_(typeHash, assetId);
 		impl->update(assetId, autoLoad && !r);
 		return r;
 	}

@@ -36,13 +36,13 @@ namespace cage
 		{
 			if (id == 0)
 				return;
-			if (Holder<Model> md = config.assets->get<AssetSchemeIndexModel, Model>(id))
+			if (Holder<Model> md = config.assets->get<Model>(id))
 			{
 				if (intersects(md->boundingBox * tr, config.picker))
 					candidates.push_back({ tr, std::move(md), e });
 				return;
 			}
-			if (Holder<RenderObject> o = config.assets->get<AssetSchemeIndexRenderObject, RenderObject>(id))
+			if (Holder<RenderObject> o = config.assets->get<RenderObject>(id))
 			{
 				config.lodSelection.selectModels(tmpLod, tr.position, +o, config.assets);
 				for (auto &it : tmpLod)

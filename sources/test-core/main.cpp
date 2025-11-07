@@ -66,7 +66,6 @@ void testCopyAndMove();
 void testAssetManager();
 void testAssetOnDemand();
 void testSwapBufferGuard();
-void testScheduler();
 void testNetworkTcp();
 void testNetworkWebsocket();
 void testNetworkGinnel();
@@ -148,7 +147,6 @@ int main()
 	testAssetManager();
 	testAssetOnDemand();
 	testSwapBufferGuard();
-	testScheduler();
 	testNetworkTcp();
 	testNetworkWebsocket();
 	testNetworkGinnel();

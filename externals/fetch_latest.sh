@@ -15,9 +15,6 @@ export -f pbranch
 git submodule foreach pbranch
 
 
-# restore protobuf - newer versions are incompatible with the protoc compiler
-git submodule update protobuf/protobuf
-
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK
 

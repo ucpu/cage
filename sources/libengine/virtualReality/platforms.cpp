@@ -1,3 +1,5 @@
+/*
+
 #ifdef CAGE_SYSTEM_WINDOWS
 	#ifndef NOMINMAX
 		#define NOMINMAX
@@ -103,3 +105,5 @@ namespace cage
 		}
 	}
 }
+
+*/

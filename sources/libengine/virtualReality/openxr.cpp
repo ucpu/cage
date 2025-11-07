@@ -1,3 +1,5 @@
+/*
+
 #include <array>
 #include <atomic>
 #include <cmath> // tan
@@ -1046,3 +1048,5 @@ namespace cage
 		return systemMemory().createImpl<VirtualReality, VirtualRealityImpl>();
 	}
 }
+
+*/

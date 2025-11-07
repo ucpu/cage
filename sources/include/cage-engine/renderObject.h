@@ -8,10 +8,10 @@ namespace cage
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
 	protected:
-		detail::StringBase<64> debugName;
+		detail::StringBase<128> label;
 
 	public:
-		void setDebugName(const String &name);
+		void setLabel(const String &name);
 
 		// lod selection properties
 
@@ -31,9 +31,6 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();
-
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeRenderObject();
-	constexpr uint32 AssetSchemeIndexRenderObject = 13;
 }
 
 #endif // guard_renderObject_h_sd54fgh1ikuj187j4kuj8i

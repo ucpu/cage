@@ -79,9 +79,8 @@ namespace cage
 					case StatisticsGuiScopeEnum::Full:
 						generate<StatisticsGuiFlags::CpuUtilization>(+g, "CPU utilization: ");
 						generate<StatisticsGuiFlags::DynamicResolution>(+g, "Dyn. resolution: ");
-						generate<StatisticsGuiFlags::ControlThreadTime>(+g, "Control time: ");
-						generate<StatisticsGuiFlags::SoundThreadTime>(+g, "Sound time: ");
-						generate<StatisticsGuiFlags::PrepareThreadTime>(+g, "Prepare time: ");
+						generate<StatisticsGuiFlags::ControlTime>(+g, "Control time: ");
+						generate<StatisticsGuiFlags::SoundTime>(+g, "Sound time: ");
 						generate<StatisticsGuiFlags::GpuTime>(+g, "GPU time: ");
 						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
 						generate<StatisticsGuiFlags::DrawCalls>(+g, "Draw calls: ");

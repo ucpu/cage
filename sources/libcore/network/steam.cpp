@@ -19,6 +19,8 @@
 
 namespace cage
 {
+	void initializeAbslLogSink();
+
 	namespace
 	{
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Msg);
@@ -122,6 +124,8 @@ namespace cage
 
 		void initialize(bool useAuth, bool useRelay)
 		{
+			initializeAbslLogSink();
+
 	#if defined(CAGE_USE_STEAM_SOCKETS)
 			struct InitializerSockets
 			{

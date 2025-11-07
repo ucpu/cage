@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "jpeg")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/jpeg")
 
 if(CMAKE_C_COMPILER_TARGET MATCHES "x86_64" AND CMAKE_SIZEOF_VOID_P EQUAL 8)

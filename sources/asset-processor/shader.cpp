@@ -1,21 +1,28 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "processor.h"
 
+#include <cage-core/containerSerialization.h>
 #include <cage-core/hashString.h>
-#include <cage-core/timer.h>
-#include <cage-engine/assetStructs.h>
-#include <cage-engine/opengl.h>
+#include <cage-engine/spirv.h>
 
 namespace
 {
-	std::map<String, std::string> codes;
-	std::map<String, String> defines;
-	std::set<String, StringComparatorFast> onces;
+	struct Variant
+	{
+		Holder<Spirv> spirv;
+		uint32 id = 0;
+	};
+
+	std::unordered_map<uint32, std::string> codes;
+	std::map<String, String, StringComparatorFast> defines;
+	std::set<String> onces;
 	std::set<detail::StringBase<20>> keywords;
+	std::vector<Variant> variants;
 
 	const ConfigBool configShaderPrint("cage-asset-processor/shader/preview", false);
 
@@ -228,34 +235,22 @@ namespace
 		return evalExp(l);
 	}
 
-	void output(const String &s)
-	{
-		if (defines["shader"].empty())
-		{
-			if (!s.empty())
-			{
-				CAGE_LOG_DEBUG(SeverityEnum::Warning, "assetProcessor", Stringizer() + "output to unspecified shader: " + s);
-			}
-			return;
-		}
-		codes[defines["shader"]] += std::string(s.c_str(), s.length()) + "\n";
-	}
-
 	uint32 shaderType(const String &name)
 	{
+		if (name == "")
+			return 0;
 		if (name == "vertex")
-			return GL_VERTEX_SHADER;
+			return 1;
 		if (name == "fragment")
-			return GL_FRAGMENT_SHADER;
-		if (name == "geometry")
-			return GL_GEOMETRY_SHADER;
-		if (name == "control")
-			return GL_TESS_CONTROL_SHADER;
-		if (name == "evaluation")
-			return GL_TESS_EVALUATION_SHADER;
+			return 2;
 		if (name == "compute")
-			return GL_COMPUTE_SHADER;
-		return 0;
+			return 3;
+		CAGE_THROW_ERROR(Exception, "unknwon shader stage name");
+	}
+
+	void output(const String &s)
+	{
+		codes[shaderType(defines["shader"])] += std::string(s.c_str(), s.length()) + "\n";
 	}
 
 	bool stackIsOk(const std::vector<sint32> &stack)
@@ -264,13 +259,6 @@ namespace
 			if (it != 1)
 				return false;
 		return true;
-	}
-
-	bool allowParsingHash()
-	{
-		if (defines.count("allowParsingHash") == 0)
-			return false;
-		return toBool(defines["allowParsingHash"]);
 	}
 
 	void parse(const String &filename)
@@ -291,7 +279,7 @@ namespace
 						output("");
 					continue;
 				}
-				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
+				if (line[0] == '$')
 				{
 					line = trim(subString(line, 1, m));
 					String cmd = split(line);
@@ -460,6 +448,48 @@ namespace
 			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting $end");
 		}
 	}
+
+	std::vector<bool> selectedKeys;
+	void generateVariants(uint32 keyIndex)
+	{
+		if (keyIndex == keywords.size())
+		{
+			std::string preamble = "";
+			uint32 id = 0;
+			for (uint32 i = 0; i < keywords.size(); i++)
+			{
+				if (selectedKeys[i])
+				{
+					auto it = keywords.begin();
+					std::advance(it, i);
+					const detail::StringBase<20> k = *it;
+					preamble += std::string("#define ") + k.c_str() + " 1\n";
+					id += HashString(k);
+				}
+			}
+			try
+			{
+				static constexpr const char *VertexBuiltin = "out gl_PerVertex { vec4 gl_Position; };\n\n";
+				const std::string vertex = std::string() + "#version 450 core\n" + "#define varying out\n" + preamble + "// " + processor->inputName.c_str() + "\n" + VertexBuiltin + codes[0] + codes[1];
+				const std::string fragment = std::string() + "#version 450 core\n" + "#define varying in\n" + preamble + "// " + processor->inputName.c_str() + "\n" + codes[0] + codes[2];
+				const std::array<SpirvGlslImportConfig, 2> imports = { SpirvGlslImportConfig{ vertex, ShaderStageEnum::Vertex }, SpirvGlslImportConfig{ fragment, ShaderStageEnum::Fragment } };
+				Holder<Spirv> sp = newSpirv();
+				sp->importGlsl(imports);
+				variants.push_back({ std::move(sp), id });
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "failed to build shader variant");
+			}
+		}
+		else
+		{
+			selectedKeys[keyIndex] = true;
+			generateVariants(keyIndex + 1);
+			selectedKeys[keyIndex] = false;
+			generateVariants(keyIndex + 1);
+		}
+	}
 }
 
 void processShader()
@@ -471,38 +501,43 @@ void processShader()
 
 	parse(processor->inputFileName);
 
+	for (const auto &it : keywords)
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
+
+	selectedKeys.resize(keywords.size(), false);
+	generateVariants(0);
+	if (variants.empty())
 	{
-		std::string prepend = R"foo(#version 450 core
-)foo";
-		prepend += std::string() + "// " + processor->inputName.c_str() + "\n";
-		for (auto &it : codes)
-			it.second = prepend + it.second;
+		CAGE_THROW_ERROR(Exception, "generated no shader variants");
 	}
+	else
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "generated variants: " + variants.size());
 
 	{
-		ShaderProgramHeader header;
-		header.keywordsCount = keywords.size();
-		header.stagesCount = codes.size();
+		MultiShaderHeader header;
 		if (defines.count("customDataCount"))
 		{
 			const uint32 cdc = toUint32(defines["customDataCount"]);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "custom data count: " + cdc);
+			if ((cdc % 4) != 0)
+				CAGE_THROW_ERROR(Exception, "customDataCount must be divisible by 4");
 			header.customDataCount = cdc;
 		}
+		header.variantsCount = variants.size();
+
 		MemoryBuffer buff;
 		Serializer ser(buff);
 		ser << header;
-		for (const auto &it : keywords)
 		{
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
-			ser << it;
+			std::vector<detail::StringBase<20>> ks(keywords.begin(), keywords.end());
+			ser << ks;
 		}
-		for (const auto &it : codes)
+		for (const Variant &v : variants)
 		{
-			ser << (uint32)shaderType(it.first);
-			ser << numeric_cast<uint32>(it.second.length());
-			ser.write(it.second);
-			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "stage: " + it.first + ", length: " + it.second.size());
+			const auto b = v.spirv->exportBuffer();
+			ser << v.id;
+			ser << numeric_cast<uint32>(b.size());
+			ser.write(b);
 		}
 
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());
@@ -522,12 +557,30 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(processor->inputName) + "_" + it.first + ".glsl");
+			const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/code_" + it.first + ".glsl");
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);
 			f->write(it.second);
 			f->close();
+		}
+
+		for (const auto &it : variants)
+		{
+			for (ShaderStageEnum stage : { ShaderStageEnum::Vertex, ShaderStageEnum::Fragment, ShaderStageEnum::Compute })
+			{
+				if (!it.spirv->hasStage(stage))
+					continue;
+				for (const auto &segment : { std::pair(".glsl", it.spirv->exportSource(stage)), std::pair(".spirvasm", it.spirv->exportDisassembly(stage)) })
+				{
+					const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/variant_" + it.id + "_" + toString(stage) + segment.first);
+					FileMode fm(false, true);
+					fm.textual = true;
+					Holder<File> f = newFile(name, fm);
+					f->write(segment.second);
+					f->close();
+				}
+			}
 		}
 	}
 }

@@ -1,21 +1,19 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
 
 // https://github.com/McNopper/OpenGL/blob/master/Example42/shader/fxaa.frag.glsl
 
-layout(binding = 0) uniform sampler2D texColor;
-
-out vec4 outColor;
-
 const float lumaThreshold = 0.5;
 const float mulReduce = 1 / 8.0;
 const float minReduce = 1 / 128.0;
 const float maxSpan = 8;
 const vec3 toLuma = vec3(0.299, 0.587, 0.114);
+
+layout(set = 2, binding = 0) uniform sampler2D texColor;
+
+layout(location = 0) out vec4 outColor;
 
 void main()
 {

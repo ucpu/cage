@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "image.h"
 
 #include <cage-core/files.h>
@@ -149,5 +151,15 @@ namespace cage
 		if (compare(buffer, ddsSignature))
 			return ddsDecode(buffer);
 		return decodeSingle(buffer);
+	}
+
+	void ImageImportResult::sort()
+	{
+		std::sort(parts.begin(), parts.end(),
+			[](const ImageImportPart &a, const ImageImportPart &b)
+			{
+				const auto &cmp = [](const ImageImportPart &p) { return std::tuple(p.mipmapLevel, p.cubeFace, p.layer, p.fileName); };
+				return cmp(a) < cmp(b);
+			});
 	}
 }

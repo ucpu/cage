@@ -5,6 +5,8 @@
 
 #include <cage-core/assetContext.h>
 #include <cage-core/assetsManager.h>
+#include <cage-core/assetsOnDemand.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/camera.h>
 #include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/concurrent.h>
@@ -22,19 +24,20 @@
 #include <cage-core/texts.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/variableSmoothingBuffer.h>
+#include <cage-engine/assetsSchemes.h>
 #include <cage-engine/font.h>
-#include <cage-engine/graphicsError.h>
+#include <cage-engine/graphicsDevice.h>
+#include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/keybinds.h>
 #include <cage-engine/model.h>
-#include <cage-engine/provisionalGraphics.h>
 #include <cage-engine/renderObject.h>
-#include <cage-engine/renderQueue.h>
 #include <cage-engine/scene.h>
+#include <cage-engine/sceneCustomDraw.h>
 #include <cage-engine/scenePicking.h>
 #include <cage-engine/sceneScreenSpaceEffects.h>
 #include <cage-engine/sceneVirtualReality.h>
-#include <cage-engine/shaderProgram.h>
+#include <cage-engine/shader.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/soundsQueue.h>
 #include <cage-engine/soundsVoices.h>
@@ -56,20 +59,6 @@ namespace cage
 	{
 		const ConfigBool confAutoAssetListen("cage/assets/listen", false);
 
-		struct ScopedSemaphores : private Immovable
-		{
-			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(+unlock)
-			{
-				ProfilingScope profiling("semaphore waiting");
-				lock->lock();
-			}
-
-			~ScopedSemaphores() { sem->unlock(); }
-
-		private:
-			Semaphore *sem = nullptr;
-		};
-
 		template<uint32 N>
 		struct ScopedTimer : private Immovable
 		{
@@ -85,49 +74,25 @@ namespace cage
 			}
 		};
 
-		template<class T>
-		struct ExclusiveHolder : private Immovable
-		{
-			void assign(Holder<T> &&value)
-			{
-				ScopeLock lock(mut);
-				data = std::move(value);
-			}
-
-			Holder<T> get() const
-			{
-				ScopeLock lock(mut);
-				if (data)
-					return data.share();
-				return {};
-			}
-
-			void clear()
-			{
-				Holder<T> tmp;
-				{
-					ScopeLock lock(mut);
-					std::swap(tmp, data); // swap under lock
-				}
-				tmp.clear(); // clear outside lock
-			}
-
-		private:
-			Holder<T> data;
-			Holder<Mutex> mut = newMutex();
-		};
-
 		struct EngineData
 		{
+			std::atomic<uint32> engineStarted = 0;
+			std::atomic<bool> stopping = false;
+			uint64 controlTime = 0;
+
 			VariableSmoothingBuffer<Real, 60> profilingBufferDynamicResolution;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferPrepareTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
 			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
 
+			Holder<EnginePrivateGraphics> privateGraphics;
+			Holder<EnginePrivateSound> privateSound;
+
 			Holder<AssetsManager> assets;
+			Holder<AssetsOnDemand> onDemand;
+			Holder<GraphicsDevice> device;
 			Holder<Window> window;
 			Holder<VirtualReality> virtualReality;
 			Holder<Speaker> speaker;
@@ -137,20 +102,10 @@ namespace cage
 			Holder<Voice> sceneVoice;
 			Holder<Voice> guiVoice;
 			Holder<GuiManager> gui;
-			ExclusiveHolder<RenderQueue> guiRenderQueue;
+			ExclusiveHolder<GuiRender> guiBundle;
 			Holder<EntityManager> entities;
-			Holder<ProvisionalGraphics> provisionalGraphics;
 
-			Holder<Semaphore> graphicsSemaphore1;
-			Holder<Semaphore> graphicsSemaphore2;
-			Holder<Barrier> threadsStateBarier;
-			Holder<Thread> graphicsDispatchThreadHolder;
-			Holder<Thread> graphicsPrepareThreadHolder;
-			Holder<Thread> soundThreadHolder;
-
-			std::atomic<uint32> engineStarted = 0;
-			std::atomic<bool> stopping = false;
-			uint64 controlTime = 0;
+			EventListener<bool(const GenericInput &)> windowGuiEventsListener;
 
 			Holder<Scheduler> controlScheduler;
 			Holder<Schedule> controlUpdateSchedule;
@@ -158,129 +113,53 @@ namespace cage
 			Holder<Scheduler> soundScheduler;
 			Holder<Schedule> soundUpdateSchedule;
 
-			EventListener<bool(const GenericInput &)> windowGuiEventsListener;
-
-			EngineData(const EngineCreateConfig &config);
-
-			~EngineData();
+			Holder<Barrier> threadsStateBarier;
+			Holder<Thread> graphicsThreadHolder;
+			Holder<Thread> soundThreadHolder;
 
 			//////////////////////////////////////
-			// graphics PREPARE
+			// GRAPHICS
 			//////////////////////////////////////
 
-			void graphicsPrepareInitializeStage() {}
+			void graphicsInitializeStage() { privateGraphics->initialize(); }
 
-			void graphicsPrepareStep()
+			void graphicsUpdate()
 			{
-				ProfilingScope profiling("graphics prepare", ProfilingFrameTag());
-				{
-					ProfilingScope profiling("graphics prepare callback");
-					graphicsPrepareThread().prepare.dispatch();
-				}
-				{
-					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-					if (stopping)
-						return; // prevent getting stuck in virtual reality waiting for previous (already terminated) frame dispatch
-					ProfilingScope profiling("graphics prepare run");
-					ScopedTimer timing(profilingBufferPrepareTime);
-					uint32 drawCalls = 0, drawPrimitives = 0;
-					Real dynamicResolution;
-					graphicsPrepare(applicationTime(), drawCalls, drawPrimitives, dynamicResolution);
-					profilingBufferDrawCalls.add(drawCalls);
-					profilingBufferDrawPrimitives.add(drawPrimitives);
-					profilingBufferDynamicResolution.add(dynamicResolution);
-				}
-			}
-
-			void graphicsPrepareGameloopStage()
-			{
-				while (!stopping)
-					graphicsPrepareStep();
-			}
-
-			void graphicsPrepareStopStage() { graphicsSemaphore2->unlock(); }
-
-			void graphicsPrepareFinalizeStage() {}
-
-			//////////////////////////////////////
-			// graphics DISPATCH
-			//////////////////////////////////////
-
-			void graphicsDispatchInitializeStage()
-			{
-				window->makeCurrent();
-				graphicsInitialize();
-			}
-
-			void graphicsDispatchStep()
-			{
-				ProfilingScope profiling("graphics dispatch", ProfilingFrameTag());
+				const ProfilingScope profiling("graphics", ProfilingFrameTag());
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
-					ProfilingScope profiling("frame start");
-					graphicsFrameStart();
+					const ProfilingScope profiling("graphics callback");
+					graphicsThread().graphics.dispatch();
 				}
 				{
-					ProfilingScope profiling("graphics dispatch callback");
-					graphicsDispatchThread().dispatch.dispatch();
+					const ProfilingScope profiling("graphics dispatch");
+					privateGraphics->dispatch(applicationTime(), guiBundle.get());
 				}
-				{
-					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
-					ProfilingScope profiling("graphics dispatch run");
-					graphicsDispatch();
-				}
-				{
-					ProfilingScope profiling("dispatch gui");
-					Holder<RenderQueue> grq = guiRenderQueue.get();
-					if (grq)
-						grq->dispatch();
-					CAGE_CHECK_GL_ERROR_DEBUG();
-				}
-				{
-					ProfilingScope profiling("frame finish");
-					uint64 gpuTime = 0;
-					graphicsFrameFinish(gpuTime);
-					profilingBufferGpuTime.add(gpuTime);
-				}
-				{
-					ProfilingScope profiling("swap callback");
-					graphicsDispatchThread().swap.dispatch();
-				}
-				{
-					ProfilingScope profiling("swap");
-					graphicsSwap();
-				}
-				{
-					ProfilingScope profiling("graphics assets");
-					const uint64 start = applicationTime();
-					while (assets->processCustomThread(1))
-					{
-						if (applicationTime() > start + 5'000)
-							break;
-					}
-				}
+				profilingBufferGpuTime.add(privateGraphics->gpuTime);
+				profilingBufferDrawCalls.add(privateGraphics->drawCalls);
+				profilingBufferDrawPrimitives.add(privateGraphics->drawPrimitives);
+				profilingBufferDynamicResolution.add(privateGraphics->dynamicResolution);
 			}
 
-			void graphicsDispatchGameloopStage()
+			void graphicsGameloopStage()
 			{
 				while (!stopping)
-					graphicsDispatchStep();
+					graphicsUpdate();
 			}
 
-			void graphicsDispatchStopStage() { graphicsSemaphore1->unlock(); }
+			void graphicsStopStage() {}
 
-			void graphicsDispatchFinalizeStage()
-			{
-				graphicsFinalize();
-				assets->unloadCustomThread(1);
-				window->makeNotCurrent();
-			}
+			void graphicsFinalizeStage() { privateGraphics->finalize(); }
 
 			//////////////////////////////////////
 			// SOUND
 			//////////////////////////////////////
 
-			void soundInitializeStage() { speaker->start(); }
+			void soundInitializeStage()
+			{
+				privateSound->initialize();
+				speaker->start();
+			}
 
 			void soundUpdate()
 			{
@@ -297,7 +176,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("sound dispatch");
-					soundDispatch(soundUpdateSchedule->time());
+					privateSound->dispatch(soundUpdateSchedule->time());
 				}
 			}
 
@@ -305,7 +184,7 @@ namespace cage
 
 			void soundStopStage() { speaker->stop(); }
 
-			void soundFinalizeStage() { soundFinalize(); }
+			void soundFinalizeStage() { privateSound->finalize(); }
 
 			//////////////////////////////////////
 			// CONTROL
@@ -313,12 +192,10 @@ namespace cage
 
 			void updateComponents()
 			{
+				EntityComponent *curr = entities->component<TransformComponent>();
+				EntityComponent *prev = entities->componentsByType(detail::typeIndex<TransformComponent>())[1];
 				for (Entity *e : engineEntities()->component<TransformComponent>()->entities())
-				{
-					TransformComponent &ts = e->value<TransformComponent>();
-					TransformComponent &hs = e->value<TransformComponent>(transformHistoryComponent);
-					hs = ts;
-				}
+					e->value<TransformComponent>(prev) = e->value<TransformComponent>(curr);
 				for (Entity *e : engineEntities()->entities())
 				{
 					if (!e->has<SpawnTimeComponent>())
@@ -341,7 +218,7 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("gui finish");
-					guiRenderQueue.assign(gui->finish());
+					guiBundle.assign(gui->finish());
 				}
 			}
 
@@ -374,16 +251,17 @@ namespace cage
 				}
 				{
 					ProfilingScope profiling("sound emit");
-					soundEmit();
+					privateSound->emit();
 				}
 				{
 					ProfilingScope profiling("graphics emit");
-					graphicsEmit(controlTime);
+					privateGraphics->emit(controlTime);
 				}
 				profilingBufferEntities.add(entities->count());
 				{
 					ProfilingScope profiling("control assets");
 					const uint64 start = applicationTime();
+					onDemand->process();
 					while (assets->processCustomThread(0))
 					{
 						if (applicationTime() > start + 5'000)
@@ -412,7 +290,7 @@ namespace cage
 		{ \
 			CAGE_JOIN(NAME, InitializeStage)(); \
 		} \
-		GCHL_GENERATE_CATCH(NAME, initialization(engine)); \
+		GCHL_GENERATE_CATCH(NAME, initialization - engine); \
 		{ \
 			ScopeLock l(threadsStateBarier); \
 		} \
@@ -423,7 +301,7 @@ namespace cage
 		{ \
 			CAGE_JOIN(NAME, Thread)().initialize.dispatch(); \
 		} \
-		GCHL_GENERATE_CATCH(NAME, initialization(application)); \
+		GCHL_GENERATE_CATCH(NAME, initialization - application); \
 		{ \
 			ScopeLock l(threadsStateBarier); \
 		} \
@@ -440,15 +318,19 @@ namespace cage
 		{ \
 			CAGE_JOIN(NAME, Thread)().finalize.dispatch(); \
 		} \
-		GCHL_GENERATE_CATCH(NAME, finalization(application)); \
+		GCHL_GENERATE_CATCH(NAME, finalization - application); \
 		try \
 		{ \
 			CAGE_JOIN(NAME, FinalizeStage)(); \
 		} \
-		GCHL_GENERATE_CATCH(NAME, finalization(engine)); \
+		GCHL_GENERATE_CATCH(NAME, finalization - engine); \
 	}
-			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphics, sound));
 #undef GCHL_GENERATE_ENTRY
+
+			//////////////////////////////////////
+			// INITIALIZATION & finalization
+			//////////////////////////////////////
 
 			void initialize(const EngineCreateConfig &config)
 			{
@@ -457,39 +339,66 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "initializing engine");
 
-				{
-					SchedulerCreateConfig cfg;
-					controlScheduler = newScheduler(cfg);
-				}
-				{
-					ScheduleCreateConfig cfg;
-					cfg.name = "control schedule";
-					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-					cfg.period = 1'000'000 / 20;
-					cfg.type = ScheduleTypeEnum::SteadyPeriodic;
-					controlUpdateSchedule = controlScheduler->newSchedule(cfg);
-				}
-				{
-					ScheduleCreateConfig cfg;
-					cfg.name = "inputs schedule";
-					cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-					cfg.period = 1'000'000 / 60;
-					cfg.type = ScheduleTypeEnum::FreePeriodic;
-					controlInputSchedule = controlScheduler->newSchedule(cfg);
+				{ // create private
+					privateGraphics = newEnginePrivateGraphics(config);
+					privateSound = newEnginePrivateSound(config);
 				}
 
-				soundScheduler = newScheduler({});
-				{
-					ScheduleCreateConfig c;
-					c.name = "sound schedule";
-					c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
-					c.period = 1'000'000 / 20;
-					c.type = ScheduleTypeEnum::SteadyPeriodic;
-					soundUpdateSchedule = soundScheduler->newSchedule(c);
+				{ // create schedules
+					controlScheduler = newScheduler({});
+					soundScheduler = newScheduler({});
+					{
+						ScheduleCreateConfig cfg;
+						cfg.name = "control schedule";
+						cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
+						cfg.period = 1'000'000 / 20;
+						cfg.type = ScheduleTypeEnum::SteadyPeriodic;
+						controlUpdateSchedule = controlScheduler->newSchedule(cfg);
+					}
+					{
+						ScheduleCreateConfig cfg;
+						cfg.name = "inputs schedule";
+						cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
+						cfg.period = 1'000'000 / 60;
+						cfg.type = ScheduleTypeEnum::FreePeriodic;
+						controlInputSchedule = controlScheduler->newSchedule(cfg);
+					}
+					{
+						ScheduleCreateConfig c;
+						c.name = "sound schedule";
+						c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
+						c.period = 1'000'000 / 20;
+						c.type = ScheduleTypeEnum::SteadyPeriodic;
+						soundUpdateSchedule = soundScheduler->newSchedule(c);
+					}
 				}
 
 				{ // create entities
 					entities = newEntityManager();
+					EntityManager *entityMgr = +entities;
+					entityMgr->defineComponent(TransformComponent());
+					entityMgr->defineComponent(TransformComponent());
+					entityMgr->defineComponent(ColorComponent());
+					entityMgr->defineComponent(SceneComponent());
+					entityMgr->defineComponent(ShaderDataComponent());
+					entityMgr->defineComponent(SpawnTimeComponent());
+					entityMgr->defineComponent(AnimationSpeedComponent());
+					entityMgr->defineComponent(SkeletalAnimationComponent());
+					entityMgr->defineComponent(ModelComponent());
+					entityMgr->defineComponent(IconComponent());
+					entityMgr->defineComponent(TextComponent());
+					entityMgr->defineComponent(TextValueComponent());
+					entityMgr->defineComponent(LightComponent());
+					entityMgr->defineComponent(ShadowmapComponent());
+					entityMgr->defineComponent(CameraComponent());
+					entityMgr->defineComponent(ScreenSpaceEffectsComponent());
+					entityMgr->defineComponent(SoundComponent());
+					entityMgr->defineComponent(ListenerComponent());
+					entityMgr->defineComponent(PickableComponent());
+					entityMgr->defineComponent(CustomDrawComponent());
+					entityMgr->defineComponent(VrOriginComponent());
+					entityMgr->defineComponent(VrCameraComponent());
+					entityMgr->defineComponent(VrControllerComponent());
 				}
 
 				{ // create assets manager
@@ -499,24 +408,33 @@ namespace cage
 					cfg.schemesMaxCount = max(cfg.schemesMaxCount, 30u);
 					cfg.customProcessingThreads = max(cfg.customProcessingThreads, 5u);
 					assets = newAssetsManager(cfg);
+					onDemand = newAssetsOnDemand(+assets);
 				}
 
-				{ // create graphics
+				{ // create window
 					WindowCreateConfig cfg;
 					if (config.window)
 						cfg = *config.window;
-					if (config.virtualReality)
-						cfg.vsync = 0; // explicitly disable vsync for the window when virtual reality controls frame rate
 					window = newWindow(cfg);
 					window->events.merge(engineEvents());
+				}
+
+				{ // create device
+					GraphicsDeviceCreateConfig cfg;
+					cfg.compatibility = +window;
+					cfg.vsync = config.vsync;
+					if (config.virtualReality)
+						cfg.vsync = false; // explicitly disable vsync for the window when virtual reality controls frame rate
+					device = newGraphicsDevice(cfg);
+				}
+
+				{ // create virtual reality
 					if (config.virtualReality)
 					{
 						virtualReality = newVirtualReality();
 						virtualReality->events.merge(engineEvents());
 						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
-					window->makeNotCurrent();
-					provisionalGraphics = newProvisionalGraphics();
 				}
 
 				{ // create sound speaker
@@ -525,7 +443,7 @@ namespace cage
 					if (config.speaker)
 						cfg = *config.speaker;
 					if (cfg.sampleRate == 0)
-						cfg.sampleRate = 48000; // minimize sample rate conversions
+						cfg.sampleRate = 48'000; // minimize sample rate conversions
 					cfg.callback = Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus);
 					speaker = newSpeaker(cfg);
 				}
@@ -544,24 +462,12 @@ namespace cage
 					if (config.gui)
 						cfg = *config.gui;
 					cfg.assetManager = +assets;
-					cfg.provisionalGraphics = +provisionalGraphics;
+					cfg.graphicsDevice = +device;
 					cfg.soundsQueue = +guiMixer;
 					gui = newGuiManager(cfg);
 					gui->widgetEvent.merge(engineEvents());
-					windowGuiEventsListener.attach(window->events, -1000);
+					windowGuiEventsListener.attach(window->events, -1'000);
 					windowGuiEventsListener.bind([gui = +gui](const GenericInput &in) { return gui->handleInput(in); });
-				}
-
-				{ // create sync objects
-					threadsStateBarier = newBarrier(4);
-					graphicsSemaphore1 = newSemaphore(1, 1);
-					graphicsSemaphore2 = newSemaphore(0, 1);
-				}
-
-				{ // create threads
-					graphicsDispatchThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsDispatchEntry>(this), "engine graphics dispatch");
-					graphicsPrepareThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsPrepareEntry>(this), "engine graphics prepare");
-					soundThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::soundEntry>(this), "engine sound");
 				}
 
 				{ // initialize asset schemes
@@ -573,9 +479,9 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
 					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
 					// engine assets
-					assets->defineScheme<AssetSchemeIndexShaderProgram, MultiShaderProgram>(genAssetSchemeShaderProgram(1));
-					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(1));
-					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(1));
+					assets->defineScheme<AssetSchemeIndexShader, MultiShader>(genAssetSchemeShader(+device));
+					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(+device));
+					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(+device));
 					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
 					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont());
 					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound());
@@ -591,30 +497,10 @@ namespace cage
 					}
 				}
 
-				{ // initialize entity components
-					EntityManager *entityMgr = +entities;
-					entityMgr->defineComponent(TransformComponent());
-					transformHistoryComponent = entityMgr->defineComponent(TransformComponent());
-					entityMgr->defineComponent(ColorComponent());
-					entityMgr->defineComponent(SceneComponent());
-					entityMgr->defineComponent(ShaderDataComponent());
-					entityMgr->defineComponent(SpawnTimeComponent());
-					entityMgr->defineComponent(AnimationSpeedComponent());
-					entityMgr->defineComponent(SkeletalAnimationComponent());
-					entityMgr->defineComponent(ModelComponent());
-					entityMgr->defineComponent(IconComponent());
-					entityMgr->defineComponent(TextComponent());
-					entityMgr->defineComponent(TextValueComponent());
-					entityMgr->defineComponent(LightComponent());
-					entityMgr->defineComponent(ShadowmapComponent());
-					entityMgr->defineComponent(CameraComponent());
-					entityMgr->defineComponent(ScreenSpaceEffectsComponent());
-					entityMgr->defineComponent(SoundComponent());
-					entityMgr->defineComponent(ListenerComponent());
-					entityMgr->defineComponent(PickableComponent());
-					entityMgr->defineComponent(VrOriginComponent());
-					entityMgr->defineComponent(VrCameraComponent());
-					entityMgr->defineComponent(VrControllerComponent());
+				{ // create threads
+					threadsStateBarier = newBarrier(3);
+					graphicsThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsEntry>(this), "engine graphics");
+					soundThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::soundEntry>(this), "engine sound");
 				}
 
 				keybindsRegisterListeners(engineEvents());
@@ -628,7 +514,7 @@ namespace cage
 				engineStarted = 2;
 			}
 
-			void start()
+			void run()
 			{
 				CAGE_ASSERT(engineStarted == 2);
 				engineStarted = 3;
@@ -637,7 +523,7 @@ namespace cage
 				{
 					controlThread().initialize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, initialization(application));
+				GCHL_GENERATE_CATCH(control, initialization - application);
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
@@ -660,7 +546,7 @@ namespace cage
 				{
 					controlThread().finalize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, finalization(application));
+				GCHL_GENERATE_CATCH(control, finalization - application);
 
 				CAGE_ASSERT(engineStarted == 3);
 				engineStarted = 4;
@@ -677,17 +563,16 @@ namespace cage
 				}
 
 				{ // release resources held by gui
-					guiRenderQueue.clear();
 					if (gui)
 						gui->cleanUp();
-					if (provisionalGraphics)
-						provisionalGraphics->purge();
 					if (guiMixer)
 						guiMixer->purge();
+					guiBundle.clear();
 				}
 
 				if (assets)
 				{ // unload assets
+					onDemand->clear();
 					assets->unload(HashString("cage/cage.pack"));
 					while (!assets->empty())
 					{
@@ -703,8 +588,7 @@ namespace cage
 				}
 
 				{ // wait for threads to finish
-					graphicsPrepareThreadHolder->wait();
-					graphicsDispatchThreadHolder->wait();
+					graphicsThreadHolder->wait();
 					soundThreadHolder->wait();
 				}
 
@@ -726,15 +610,19 @@ namespace cage
 				}
 
 				{ // destroy graphics
-					if (window)
-						window->makeCurrent();
 					virtualReality.clear();
-					provisionalGraphics.clear();
 					window.clear();
+					device.clear();
 				}
 
 				{ // destroy assets
+					onDemand.clear();
 					assets.clear();
+				}
+
+				{ // destroy private
+					privateGraphics.clear();
+					privateSound.clear();
 				}
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "engine finalized");
@@ -745,22 +633,6 @@ namespace cage
 		};
 
 		Holder<EngineData> engineData;
-
-		EngineData::EngineData(const EngineCreateConfig &config)
-		{
-			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
-			graphicsCreate(config);
-			soundCreate(config);
-			CAGE_LOG(SeverityEnum::Info, "engine", "engine created");
-		}
-
-		EngineData::~EngineData()
-		{
-			CAGE_LOG(SeverityEnum::Info, "engine", "destroying engine");
-			soundDestroy();
-			graphicsDestroy();
-			CAGE_LOG(SeverityEnum::Info, "engine", "engine destroyed");
-		}
 	}
 
 	Scheduler *EngineControlThread::scheduler()
@@ -796,14 +668,14 @@ namespace cage
 	void engineInitialize(const EngineCreateConfig &config)
 	{
 		CAGE_ASSERT(!engineData);
-		engineData = systemMemory().createHolder<EngineData>(config);
+		engineData = systemMemory().createHolder<EngineData>();
 		engineData->initialize(config);
 	}
 
 	void engineRun()
 	{
 		CAGE_ASSERT(engineData);
-		engineData->start();
+		engineData->run();
 	}
 
 	void engineStop()
@@ -827,9 +699,20 @@ namespace cage
 		return +engineData->assets;
 	}
 
+	AssetsOnDemand *engineAssetsOnDemand()
+	{
+		return +engineData->onDemand;
+	}
+
 	EntityManager *engineEntities()
 	{
 		return +engineData->entities;
+	}
+
+	GraphicsDevice *engineGraphicsDevice()
+	{
+		CAGE_ASSERT(engineData && engineData->device);
+		return +engineData->device;
 	}
 
 	Window *engineWindow()
@@ -873,14 +756,14 @@ namespace cage
 		return +engineData->guiMixer;
 	}
 
-	ProvisionalGraphics *engineProvisionalGraphics()
-	{
-		return +engineData->provisionalGraphics;
-	}
-
 	uint64 engineControlTime()
 	{
 		return engineData->controlTime;
+	}
+
+	Holder<Image> engineScreenshot()
+	{
+		return engineData->privateGraphics->screenshot();
 	}
 
 	uint64 engineStatisticsValues(StatisticsGuiFlags flags, StatisticsGuiModeEnum mode)
@@ -898,7 +781,7 @@ namespace cage
 					result += numeric_cast<uint32>(100 * engineData->profilingBufferDynamicResolution.smooth());
 					break;
 				case StatisticsGuiModeEnum::Maximum:
-					// maximum/worts time corresponds to minimum dynamic resolution
+					// maximum/worst time corresponds to minimum dynamic resolution
 					result += numeric_cast<uint32>(100 * engineData->profilingBufferDynamicResolution.min());
 					break;
 				case StatisticsGuiModeEnum::Latest:
@@ -928,10 +811,10 @@ namespace cage
 				}
 			};
 
-			if (any(flags & StatisticsGuiFlags::ControlThreadTime))
+			if (any(flags & StatisticsGuiFlags::ControlTime))
 				add(engineData->controlUpdateSchedule->statistics());
 
-			if (any(flags & StatisticsGuiFlags::SoundThreadTime))
+			if (any(flags & StatisticsGuiFlags::SoundTime))
 				add(engineData->soundUpdateSchedule->statistics());
 		}
 
@@ -954,8 +837,6 @@ namespace cage
 				}
 			};
 
-			if (any(flags & StatisticsGuiFlags::PrepareThreadTime))
-				add(engineData->profilingBufferPrepareTime);
 			if (any(flags & StatisticsGuiFlags::GpuTime))
 				add(engineData->profilingBufferGpuTime);
 			if (any(flags & StatisticsGuiFlags::FrameTime))

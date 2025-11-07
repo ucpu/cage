@@ -1,18 +1,16 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D texColor;
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Tonemap
+layout(std430, set = 2, binding = 0) readonly buffer Tonemap
 {
 	vec4 params; // gamma, tonemapEnabled
 };
 
-out vec4 outColor;
+layout(set = 2, binding = 1) uniform sampler2D texColor;
+
+layout(location = 0) out vec4 outColor;
 
 // https://github.com/KhronosGroup/ToneMapping/blob/main/PBR_Neutral/pbrNeutral.glsl
 vec3 neutralToneMapping(vec3 color)

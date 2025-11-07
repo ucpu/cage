@@ -1,11 +1,11 @@
 
-$include ../shaderConventions.h
+layout(location = 0) varying vec2 varUv;
+
 
 $define shader vertex
 
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
-layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec3 inUv;
-out vec2 varUv;
+layout(location = 0) in vec3 inPosition;
+layout(location = 4) in vec3 inUv;
 
 void main()
 {
@@ -14,11 +14,12 @@ void main()
 	varUv.y = 1 - varUv.y;
 }
 
+
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D texColor;
-in vec2 varUv;
-out vec4 outColor;
+layout(set = 2, binding = 0) uniform sampler2D texColor;
+
+layout(location = 0) out vec4 outColor;
 
 void main()
 {

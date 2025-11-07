@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "zlib-ng")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 set(CMAKE_C_STANDARD 11)
 
 set(ZLIB_COMPAT ON CACHE INTERNAL "Compile with zlib compatible API")

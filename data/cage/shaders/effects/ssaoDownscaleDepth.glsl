@@ -1,26 +1,16 @@
 
-$include ../shaderConventions.h
-
-$define shader vertex
-
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
-layout(location = CAGE_SHADER_ATTRIB_IN_UV) in vec3 inUv;
-out vec2 varUv;
-
-void main()
-{
-	gl_Position = vec4(inPosition.xy * 2 - 1, inPosition.z, 1);
-	varUv = inUv.xy;
-	varUv.y = 1 - varUv.y;
-}
+$include vertex.glsl
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D texDepth;
-in vec2 varUv;
-out float outDepth;
+layout(set = 2, binding = 0) uniform sampler2D texDepth;
+
+layout(location = 0) out float outDepth;
+
+const int downscale = 3;
 
 void main()
 {
-	outDepth = textureLod(texDepth, varUv, 0).x;
+	vec2 uv = downscale * vec2(gl_FragCoord) / vec2(textureSize(texDepth, 0));
+	outDepth = textureLod(texDepth, uv, 0).x;
 }

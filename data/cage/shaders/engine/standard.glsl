@@ -1,17 +1,18 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
 
 void main()
 {
-	updateVertex();
+	propagateInputs();
+	skeletalAnimation();
+	computePosition();
 }
+
 
 $include fragment.glsl
 
 #ifndef CutOut
-layout(early_fragment_tests) in;
+// layout(early_fragment_tests) in; // not yet supported in tint
 #endif
 
 void main()

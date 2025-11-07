@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "png")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 unset(CMAKE_C_STANDARD)
 unset(CMAKE_CXX_STANDARD)
 

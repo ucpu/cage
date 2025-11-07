@@ -5,9 +5,7 @@ dofApply.glsl
 dofCollect.glsl
 fxaa.glsl
 gaussianBlur.glsl
-luminanceApply.glsl
-luminanceCollection.glsl
-luminanceHistogram.glsl
+makeMip.glsl
 sharpening.glsl
 ssaoDownscaleDepth.glsl
 ssaoGenerate.glsl

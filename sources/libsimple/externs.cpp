@@ -3,25 +3,15 @@
 
 namespace cage
 {
-	class EntityComponent;
-
-	EntityComponent *transformHistoryComponent;
-
 	EngineControlThread &controlThread()
 	{
 		static EngineControlThread instance;
 		return instance;
 	}
 
-	EngineGraphicsDispatchThread &graphicsDispatchThread()
+	EngineGraphicsThread &graphicsThread()
 	{
-		static EngineGraphicsDispatchThread instance;
-		return instance;
-	}
-
-	EngineGraphicsPrepareThread &graphicsPrepareThread()
-	{
-		static EngineGraphicsPrepareThread instance;
+		static EngineGraphicsThread instance;
 		return instance;
 	}
 

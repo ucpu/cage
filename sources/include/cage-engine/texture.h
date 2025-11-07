@@ -1,61 +1,63 @@
-#ifndef guard_texture_h_ds54ghlkj89s77e4g
-#define guard_texture_h_ds54ghlkj89s77e4g
+#ifndef guard_graphicsTexture_sdrfgh4d5g
+#define guard_graphicsTexture_sdrfgh4d5g
 
 #include <cage-engine/core.h>
+
+namespace wgpu
+{
+	class Texture;
+	class TextureView;
+	class Sampler;
+}
 
 namespace cage
 {
 	class Image;
+	class GraphicsDevice;
+
+	enum class TextureFlags : uint32
+	{
+		None = 0,
+		Volume3D = 1 << 0,
+		Array = 1 << 1,
+		Cubemap = 1 << 2,
+		Normals = 1 << 3,
+		Srgb = 1 << 4,
+		Compressed = 1 << 5,
+	};
 
 	class CAGE_ENGINE_API Texture : private Immovable
 	{
 	protected:
-		detail::StringBase<64> debugName;
+		AssetLabel label;
 
 	public:
-		void setDebugName(const String &name);
-
-		uint32 id() const;
-		uint32 target() const;
-		uint32 internalFormat() const;
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
-		uint32 mipmapLevels() const; // 1 is just base level
-		Vec2i mipmapResolution(uint32 mipmapLevel) const;
-		Vec3i mipmapResolution3(uint32 mipmapLevel) const;
+		uint32 mipLevels() const; // 1 is just base level
+		Vec2i mipResolution(uint32 mipmapLevel) const;
+		Vec3i mipResolution3(uint32 mipmapLevel) const;
 
-		void bind(uint32 bindingPoint) const;
-		void bindImage(uint32 bindingPoint, bool read, bool write) const; // for use in compute shaders
+		const wgpu::Texture &nativeTexture();
+		const wgpu::TextureView &nativeView();
+		const wgpu::Sampler &nativeSampler();
 
-		void filters(uint32 mig, uint32 mag, uint32 aniso);
-		void wraps(uint32 s, uint32 t);
-		void wraps(uint32 s, uint32 t, uint32 r);
-		void swizzle(const uint32 values[4]);
-
-		void initialize(Vec2i resolution, uint32 mipmapLevels, uint32 internalFormat); // 2D or Cube
-		void initialize(Vec3i resolution, uint32 mipmapLevels, uint32 internalFormat); // 3D or 2D array
-
-		void importImage(const Image *img);
-		void image2d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer); // 2D or Rectangle
-		void image2dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer); // 2D
-		void image2dSlice(uint32 mipmapLevel, uint32 sliceIndex, uint32 format, uint32 type, PointerRange<const char> buffer); // 3D slice or 2D layer or Cube face
-		void image2dSliceCompressed(uint32 mipmapLevel, uint32 sliceIndex, PointerRange<const char> buffer); // 3D slice or 2D layer or Cube face
-		void image3d(uint32 mipmapLevel, uint32 format, uint32 type, PointerRange<const char> buffer); // 3D or 2D array
-		void image3dCompressed(uint32 mipmapLevel, PointerRange<const char> buffer); // 3D or 2D array
-
-		void generateMipmaps();
+		TextureFlags flags = TextureFlags::None;
 	};
 
-	CAGE_ENGINE_API Holder<Texture> newTexture();
-	CAGE_ENGINE_API Holder<Texture> newTexture(uint32 target);
-
-	namespace detail
+	struct CAGE_ENGINE_API ColorTextureCreateConfig
 	{
-		CAGE_ENGINE_API bool internalFormatIsSrgb(uint32 internalFormat);
-	}
+		Vec3i resolution = Vec3i(0, 0, 1);
+		uint32 channels = 4;
+		uint32 mipLevels = 1;
+		TextureFlags flags = TextureFlags::None;
+		bool sampling = true;
+		bool renderable = false;
+	};
 
-	CAGE_ENGINE_API AssetsScheme genAssetSchemeTexture(uint32 threadIndex);
-	constexpr uint32 AssetSchemeIndexTexture = 11;
+	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const Image *image, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<Texture> newTexture(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label);
 }
 
-#endif // guard_texture_h_ds54ghlkj89s77e4g
+#endif

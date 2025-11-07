@@ -9,13 +9,14 @@ namespace cage
 	class AssetsOnDemand;
 	class EntityManager;
 	class GuiManager;
-	class ProvisionalGraphics;
 	class Scheduler;
 	class Speaker;
 	class VirtualReality;
 	class VoicesMixer;
 	class SoundsQueue;
 	class Window;
+	class GraphicsDevice;
+	class Image;
 	struct AssetManagerCreateConfig;
 	struct GuiManagerCreateConfig;
 	struct SpeakerCreateConfig;
@@ -36,24 +37,14 @@ namespace cage
 	};
 	EngineControlThread &controlThread();
 
-	struct EngineGraphicsDispatchThread
+	struct EngineGraphicsThread
 	{
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
-		EventDispatcher<bool()> dispatch;
-		EventDispatcher<bool()> swap;
-		// assets processing thread index: 1
-	};
-	EngineGraphicsDispatchThread &graphicsDispatchThread();
-
-	struct EngineGraphicsPrepareThread
-	{
-		EventDispatcher<bool()> initialize;
-		EventDispatcher<bool()> finalize;
-		EventDispatcher<bool()> prepare;
+		EventDispatcher<bool()> graphics;
 		bool disableTimePassage = false;
 	};
-	EngineGraphicsPrepareThread &graphicsPrepareThread();
+	EngineGraphicsThread &graphicsThread();
 
 	struct EngineSoundThread
 	{
@@ -71,6 +62,7 @@ namespace cage
 		GuiManagerCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;
 		bool virtualReality = false;
+		bool vsync = true;
 	};
 
 	void engineInitialize(const EngineCreateConfig &config);
@@ -81,6 +73,7 @@ namespace cage
 	AssetsManager *engineAssets();
 	AssetsOnDemand *engineAssetsOnDemand();
 	EntityManager *engineEntities();
+	GraphicsDevice *engineGraphicsDevice();
 	Window *engineWindow();
 	EventDispatcher<bool(const GenericInput &)> &engineEvents();
 	VirtualReality *engineVirtualReality();
@@ -90,7 +83,6 @@ namespace cage
 	VoicesMixer *engineMasterMixer();
 	VoicesMixer *engineSceneMixer();
 	SoundsQueue *engineGuiMixer();
-	ProvisionalGraphics *engineProvisionalGraphics();
 	uint64 engineControlTime();
 
 	struct EngineDynamicResolution
@@ -100,6 +92,8 @@ namespace cage
 		bool enabled = false;
 	};
 	EngineDynamicResolution &engineDynamicResolution();
+
+	Holder<Image> engineScreenshot();
 }
 
 #endif // guard_engine_asg4ukio4up897sdr

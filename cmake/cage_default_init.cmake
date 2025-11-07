@@ -1,5 +1,6 @@
 
 macro(cage_default_init)
+	cage_fetch_cage_externals()
 	cage_disable_source_build()
 	cage_build_configuration()
 	cage_build_destination()

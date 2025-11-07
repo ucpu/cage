@@ -1,7 +1,9 @@
 
-$include ../shaderConventions.h
-
 $include vertex.glsl
+
+#ifdef SkeletalAnimation
+#error "unintended combination of keywords"
+#endif
 
 mat4 removeRotation(mat4 m)
 {
@@ -13,12 +15,7 @@ mat4 removeRotation(mat4 m)
 
 void main()
 {
-	varInstanceId = gl_InstanceID;
-	varPosition = inPosition;
-	varNormal = inNormal;
-	varUv = inUv;
-	skeletalAnimation();
-
+	propagateInputs();
 	mat4 m = transpose(mat4(uniMeshes[varInstanceId].modelMat));
 	mat4 mvp = uniProjection.projMat * removeRotation(uniProjection.viewMat * m);
 	m = removeRotation(m);
@@ -26,9 +23,10 @@ void main()
 	varPosition = vec3(m * vec4(varPosition, 1));
 }
 
+
 $include fragment.glsl
 
-layout(early_fragment_tests) in;
+// layout(early_fragment_tests) in; // not yet supported in tint
 
 void main()
 {

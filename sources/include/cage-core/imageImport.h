@@ -28,6 +28,8 @@ namespace cage
 	struct CAGE_CORE_API ImageImportResult
 	{
 		Holder<PointerRange<ImageImportPart>> parts;
+
+		void sort();
 	};
 
 	CAGE_CORE_API ImageImportResult imageImportBuffer(PointerRange<const char> buffer);

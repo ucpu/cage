@@ -1,5 +1,5 @@
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_CUSTOMDATA) uniform Ssao
+layout(std430, set = 2, binding = 0) readonly buffer Ssao
 {
 	mat4 proj;
 	mat4 projInv;

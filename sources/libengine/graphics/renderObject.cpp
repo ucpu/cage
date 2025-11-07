@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <vector>
 
-#include <cage-engine/graphicsError.h>
 #include <cage-engine/renderObject.h>
 
 namespace cage
@@ -17,9 +16,9 @@ namespace cage
 		};
 	}
 
-	void RenderObject::setDebugName(const String &name)
+	void RenderObject::setLabel(const String &name)
 	{
-		debugName = name;
+		label = name;
 	}
 
 	void RenderObject::setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)
@@ -47,7 +46,6 @@ namespace cage
 	uint32 RenderObject::lodSelect(Real threshold) const
 	{
 		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
-		// todo rewrite to binary search
 		uint32 cnt = numeric_cast<uint32>(impl->thresholds.size());
 		uint32 lod = 0;
 		while (lod + 1 < cnt && threshold < impl->thresholds[lod + 1])
