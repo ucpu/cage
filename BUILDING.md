@@ -36,7 +36,7 @@ It may work on other distributions with little changes.
 
 Install required packages.
 ```bash
-sudo apt install xorg-dev libwayland-dev libxkbcommon-dev libpulse-dev libasound2-dev nasm libssl-dev
+sudo apt install xorg-dev libx11-xcb-dev libxkbcommon-dev libwayland-dev libpulse-dev libasound2-dev nasm libssl-dev
 ```
 
 Prepare build directory.

@@ -6,12 +6,18 @@ cage_heavily_optimized()
 
 set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
 
-if(APPLE)
+if(WIN32)
+	set(metal OFF)
+	set(vulkan ON)
+	set(linux OFF)
+elseif(APPLE)
 	set(metal ON)
 	set(vulkan OFF)
+	set(linux OFF)
 else()
 	set(metal OFF)
 	set(vulkan ON)
+	set(linux ON)
 endif()
 
 # dawn
@@ -26,8 +32,8 @@ set(DAWN_ENABLE_OPENGLES OFF CACHE INTERNAL "Enable compilation of the OpenGL ES
 set(DAWN_ENABLE_VULKAN ${vulkan} CACHE INTERNAL "Enable compilation of the Vulkan backend" FORCE)
 set(DAWN_ENABLE_SPIRV_VALIDATION ${cage_validate_graphics} CACHE INTERNAL "Enable validation of SPIR-V" FORCE)
 set(DAWN_FORCE_SYSTEM_COMPONENT_LOAD ON CACHE INTERNAL "Allow system component fallback" FORCE)
-set(DAWN_USE_WAYLAND OFF CACHE INTERNAL "Enable support for Wayland surface" FORCE)
-set(DAWN_USE_X11 OFF CACHE INTERNAL "Enable support for X11 surface" FORCE)
+set(DAWN_USE_WAYLAND ${linux} CACHE INTERNAL "Enable support for Wayland surface" FORCE)
+set(DAWN_USE_X11 ${linux} CACHE INTERNAL "Enable support for X11 surface" FORCE)
 set(DAWN_USE_GLFW ON CACHE INTERNAL "Enable compilation of the GLFW windowing utils" FORCE)
 set(DAWN_USE_WINDOWS_UI OFF CACHE INTERNAL "Enable support for Windows UI surface" FORCE)
 set(DAWN_BUILD_SAMPLES OFF CACHE INTERNAL "Enables building Dawn's samples" FORCE)
@@ -53,6 +59,7 @@ set(TINT_ENABLE_IR_VALIDATION ${cage_validate_graphics} CACHE INTERNAL "Enable I
 
 unset(metal)
 unset(vulkan)
+unset(linux)
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "RELEASE")
