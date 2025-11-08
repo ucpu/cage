@@ -27,32 +27,12 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - MIT license lets you use Cage for personal and commercial products alike, for free, forever.
 - All 3rd-party licenses are copied to single redistributable directory during build configuration.
 
-# Examples
+# Games using Cage
 
-## MazeTD
+## Unnatural Worlds
 
-![MazeTD](https://raw.githubusercontent.com/ucpu/mazetd/master/screenshots/1.png)
-[MazeTD](https://github.com/ucpu/mazetd) - almost complete tower defence game with unique mechanics, procedurally generated terrain, and mana powered towers.
-
-## Degrid
-
-![Degrid](https://raw.githubusercontent.com/ucpu/degrid/master/screenshots/1.png)
-[Degrid](https://github.com/ucpu/degrid) - simple and mostly complete game with birds-eye-view of a spaceship fighting against hundreds of geometrical enemies.
-
-## Cragsman
-
-![Cragsman](https://raw.githubusercontent.com/ucpu/cragsman/master/screenshots/1.png)
-[Cragsman](https://github.com/ucpu/cragsman) - a game demo with procedurally generated terrain and simple physics
-
-## Space Ants
-
-![Space-ants](https://raw.githubusercontent.com/ucpu/space-ants/master/screenshots/2.png)
-[Space-ants](https://github.com/ucpu/space-ants) - visual simulation of thousands little spaceships at war
-
-## Cage Examples
-
-![Cage-examples](https://raw.githubusercontent.com/ucpu/cage-examples/master/screenshots/3.png)
-[Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
+[![Watch video](https://img.youtube.com/vi/YKbZlvBLprc/maxresdefault.jpg)](https://www.youtube.com/watch?v=YKbZlvBLprc)
+[Unnatural Worlds](https://unnaturalworlds.com/) - Grand-scale RTS game played on maps/planets of any 3D shape. It emphasizes strategy, base building, logistics, and reduces micro-management of individual units.
 
 # Contents
 
@@ -113,4 +93,4 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 # Contributing
 
 - Contributions are welcome!
-- Questions, bug reports and feature requests are best done on github issues tracker and pull requests.
+- Questions, bug reports, and feature requests are best done on github issues tracker and pull requests.

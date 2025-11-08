@@ -1,15 +1,17 @@
-#ifdef CAGE_SYSTEM_LINUX
+#if defined(CAGE_SYSTEM_LINUX) || defined(CAGE_SYSTEM_MAC)
 
+	#include <cerrno>
 	#include <csignal>
 	#include <cstddef>
 	#include <cstdio>
 	#include <cstdlib>
 	#include <cstring>
-	#include <cerrno>
 	#include <execinfo.h>
+	#include <signal.h>
 	#include <sys/mman.h>
-	#include <ucontext.h>
+	#include <sys/types.h>
 	#include <unistd.h>
+//#include <ucontext.h>
 
 	#include <cage-core/process.h> // installSigTermHandler
 
@@ -34,8 +36,11 @@ namespace cage
 			}
 		}
 
-		void *altStackMem = mmap(nullptr, AltStackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-		if (altStackMem == MAP_FAILED)
+		void *altStackMem = nullptr;
+	#ifdef CAGE_SYSTEM_LINUX
+		altStackMem = mmap(nullptr, AltStackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+	#endif
+		if (altStackMem == nullptr || altStackMem == MAP_FAILED)
 			altStackMem = std::malloc(AltStackSize); // fallback to malloc
 
 		stack_t ss{};
@@ -206,4 +211,4 @@ namespace cage
 	}
 }
 
-#endif // CAGE_SYSTEM_LINUX
+#endif // CAGE_SYSTEM_LINUX || CAGE_SYSTEM_MAC
