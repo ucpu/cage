@@ -61,6 +61,7 @@ namespace cage
 			ModifiersFlags stateMods = ModifiersFlags::None;
 			Vec2 stateMousePosition;
 			Vec2 lastRelativePosition;
+			Vec2 mouseScale;
 			GLFWwindow *window = nullptr;
 			bool focus = true;
 			bool mouseIntendVisible = true;
@@ -157,6 +158,16 @@ namespace cage
 				if (mouseIntendRelative)
 					intent = GLFW_CURSOR_DISABLED;
 				glfwSetInputMode(window, GLFW_CURSOR, intent);
+
+				mouseScale = Vec2(1);
+				int fbw = 0, fbh = 0, ww = 0, wh = 0;
+				glfwGetFramebufferSize(window, &fbw, &fbh);
+				glfwGetWindowSize(window, &ww, &wh);
+				if (fbw > 0 && fbh > 0 && ww > 0 && wh > 0)
+				{
+					mouseScale[0] = double(fbw) / double(ww);
+					mouseScale[1] = double(fbh) / double(wh);
+				}
 			}
 
 			template<class T>
@@ -199,7 +210,7 @@ namespace cage
 				glfwGetCursorPos(window, &xpos, &ypos);
 				pos[0] = xpos;
 				pos[1] = ypos;
-				return pos;
+				return pos * mouseScale;
 			}
 
 			bool determineMouseDoubleClick(MouseButtonsFlags buttons, Vec2 cp)
@@ -208,7 +219,7 @@ namespace cage
 				const uint64 ct = applicationTime();
 				uint64 &lt = lastMouseButtonPressTimes[(uint32)buttons];
 				Vec2 &lp = lastMouseButtonPressPositions[(uint32)buttons];
-				if (ct - lt < 300000 && distance(cp, lp) < 5)
+				if (ct - lt < 300'000 && distance(cp, lp) < 5)
 				{
 					lt = 0;
 					return true;
@@ -306,6 +317,7 @@ namespace cage
 			e.mods = getKeyModifiers(w);
 			e.position[0] = xpos;
 			e.position[1] = ypos;
+			e.position *= impl->mouseScale;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
 				e.buttons |= MouseButtonsFlags::Left;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT))

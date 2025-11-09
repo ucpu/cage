@@ -150,7 +150,11 @@ namespace cage
 			{
 				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", "failed parsing environment variable CAGE_FULLSCREEN_DEFAULT");
 			}
+#ifdef CAGE_SYSTEM_MAC
+			return false;
+#else
 			return true;
+#endif
 		}
 	}
 
