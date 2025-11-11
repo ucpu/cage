@@ -43,6 +43,8 @@ namespace cage
 		PointerRange<const uint32> exportSpirv(ShaderStageEnum stage) const;
 		std::string exportSource(ShaderStageEnum stage) const;
 		std::string exportDisassembly(ShaderStageEnum stage) const;
+
+		void stripSources();
 	};
 
 	CAGE_ENGINE_API Holder<Spirv> newSpirv();

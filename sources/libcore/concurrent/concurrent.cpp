@@ -272,7 +272,7 @@ namespace cage
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
-			HANDLE sem;
+			HANDLE sem = nullptr;
 #elif defined(CAGE_SYSTEM_MAC)
 			dispatch_semaphore_t sem;
 #else

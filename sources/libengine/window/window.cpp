@@ -90,7 +90,7 @@ namespace cage
 						ScopeLock l(cageGlfwMutex());
 						glfwPollEvents();
 					}
-					threadSleep(5000);
+					threadSleep(5'000);
 				}
 				finalizeWindow();
 			}

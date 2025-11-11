@@ -370,8 +370,9 @@ namespace cage
 							return ShaderStageEnum::Fragment;
 						case spv::ExecutionModel::GLCompute:
 							return ShaderStageEnum::Compute;
+						default:
+							return ShaderStageEnum::None;
 					}
-					return ShaderStageEnum::None;
 				};
 
 				auto context = spvtools::BuildModule(TargetEnv, messageConsumer, input.data(), input.size());
@@ -542,6 +543,19 @@ namespace cage
 	{
 		const SpirvImpl *impl = (const SpirvImpl *)this;
 		return impl->get(stage).disassembly;
+	}
+
+	void Spirv::stripSources()
+	{
+		SpirvImpl *impl = (SpirvImpl *)this;
+		const auto &strip = [](Stage &s)
+		{
+			s.source = {};
+			s.disassembly = {};
+		};
+		strip(impl->vertex);
+		strip(impl->fragment);
+		strip(impl->compute);
 	}
 
 	Holder<Spirv> newSpirv()

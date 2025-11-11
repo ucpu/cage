@@ -454,6 +454,7 @@ namespace
 	{
 		if (keyIndex == keywords.size())
 		{
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "---------------------------------------------------------------------------");
 			std::string preamble = "";
 			uint32 id = 0;
 			for (uint32 i = 0; i < keywords.size(); i++)
@@ -463,10 +464,13 @@ namespace
 					auto it = keywords.begin();
 					std::advance(it, i);
 					const detail::StringBase<20> k = *it;
+					const uint32 h = HashString(k);
+					CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + k + ", hash: " + h);
 					preamble += std::string("#define ") + k.c_str() + " 1\n";
-					id += HashString(k);
+					id += h;
 				}
 			}
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "variant: " + id);
 			try
 			{
 				static constexpr const char *VertexBuiltin = "out gl_PerVertex { vec4 gl_Position; };\n\n";
@@ -481,6 +485,7 @@ namespace
 			{
 				CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "failed to build shader variant");
 			}
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "---------------------------------------------------------------------------");
 		}
 		else
 		{
@@ -502,7 +507,7 @@ void processShader()
 	parse(processor->inputFileName);
 
 	for (const auto &it : keywords)
-		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "keyword: " + it);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "available keyword: " + it + ", hash: " + HashString(it));
 
 	selectedKeys.resize(keywords.size(), false);
 	generateVariants(0);
@@ -512,6 +517,9 @@ void processShader()
 	}
 	else
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "generated variants: " + variants.size());
+
+	for (auto &it : variants)
+		it.spirv->stripSources();
 
 	{
 		MultiShaderHeader header;

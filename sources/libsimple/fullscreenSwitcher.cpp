@@ -139,7 +139,13 @@ namespace cage
 		{
 			const char *env = std::getenv("CAGE_FULLSCREEN_DEFAULT");
 			if (!env)
+			{
+#ifdef CAGE_SYSTEM_WINDOWS
 				return true;
+#else
+				return false;
+#endif
+			}
 			try
 			{
 				const bool r = toBool(trim(String(env)));
@@ -150,11 +156,7 @@ namespace cage
 			{
 				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", "failed parsing environment variable CAGE_FULLSCREEN_DEFAULT");
 			}
-#ifdef CAGE_SYSTEM_MAC
 			return false;
-#else
-			return true;
-#endif
 		}
 	}
 

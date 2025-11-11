@@ -1,191 +1,191 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
-  <Type Name="cage::StringLiteral">
-    <DisplayString>{str,s8}</DisplayString>
-    <StringView>str,s8</StringView>
-    <Expand>
-      <Item Name="length">strlen(str)</Item>
-      <ArrayItems>
-        <Size>strlen(str)</Size>
-        <ValuePointer>str</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::StringLiteral">
+		<DisplayString>{str,s8}</DisplayString>
+		<StringView>str,s8</StringView>
+		<Expand>
+			<Item Name="length">strlen(str)</Item>
+			<ArrayItems>
+				<Size>strlen(str)</Size>
+				<ValuePointer>str</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::detail::StringBase&lt;*&gt;">
-    <DisplayString>{value,s8}</DisplayString>
-    <StringView>value,s8</StringView>
-    <Expand>
-      <Synthetic Name="warning" Condition="strlen(value) &gt; current">
-        <DisplayString>string is missing terminal zero</DisplayString>
-      </Synthetic>
-      <Synthetic Name="warning" Condition="strlen(value) &lt; current">
-        <DisplayString>string contains literal zero</DisplayString>
-      </Synthetic>
-      <Item Name="length">current</Item>
-      <ArrayItems>
-        <Size>current</Size>
-        <ValuePointer>value</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::detail::StringBase&lt;*&gt;">
+		<DisplayString>{value,s8}</DisplayString>
+		<StringView>value,s8</StringView>
+		<Expand>
+			<Synthetic Name="warning" Condition="strlen(value) &gt; current">
+				<DisplayString>string is missing terminal zero</DisplayString>
+			</Synthetic>
+			<Synthetic Name="warning" Condition="strlen(value) &lt; current">
+				<DisplayString>string contains literal zero</DisplayString>
+			</Synthetic>
+			<Item Name="length">current</Item>
+			<ArrayItems>
+				<Size>current</Size>
+				<ValuePointer>value</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::PointerRange&lt;*&gt;">
-    <DisplayString Condition="end_ != begin_">{{ size={end_ - begin_} first={{ {*begin_} }} }}</DisplayString>
-    <DisplayString>{{ empty }}</DisplayString>
-    <Expand>
-      <Item Name="size">end_ - begin_</Item>
-      <ArrayItems>
-        <Size>end_ - begin_</Size>
-        <ValuePointer>begin_</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::PointerRange&lt;*&gt;">
+		<DisplayString Condition="end_ != begin_">{{ size={end_ - begin_} first={{ {*begin_} }} }}</DisplayString>
+		<DisplayString>{{ empty }}</DisplayString>
+		<Expand>
+			<Item Name="size">end_ - begin_</Item>
+			<ArrayItems>
+				<Size>end_ - begin_</Size>
+				<ValuePointer>begin_</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::privat::HolderBase&lt;*&gt;">
-    <DisplayString Condition="data_">{{ {*data_} }}</DisplayString>
-    <DisplayString>{{ empty }}</DisplayString>
-    <Expand>
-      <ExpandedItem Condition="data_">*data_</ExpandedItem>
-      <Synthetic Name="data" Condition="!data_">
-        <DisplayString>empty</DisplayString>
-      </Synthetic>
-    </Expand>
-  </Type>
+	<Type Name="cage::privat::HolderBase&lt;*&gt;">
+		<DisplayString Condition="data_">{{ {*data_} }}</DisplayString>
+		<DisplayString>{{ empty }}</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="data_">*data_</ExpandedItem>
+			<Synthetic Name="data" Condition="!data_">
+				<DisplayString>empty</DisplayString>
+			</Synthetic>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Real">
-    <DisplayString>{value}</DisplayString>
-  </Type>
+	<Type Name="cage::Real">
+		<DisplayString>{value}</DisplayString>
+	</Type>
 
-  <Type Name="cage::Degs">
-    <DisplayString>{value} degs</DisplayString>
-    <Expand>
-      <Item Name="radians">value.value * 3.141592653589793 / 180</Item>
-    </Expand>
-  </Type>
+	<Type Name="cage::Degs">
+		<DisplayString>{value} degs</DisplayString>
+		<Expand>
+			<Item Name="radians">value.value * 3.141592653589793 / 180</Item>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Rads">
-    <DisplayString>{value} rads</DisplayString>
-    <Expand>
-      <Item Name="degrees">value.value * 180 / 3.141592653589793</Item>
-    </Expand>
-  </Type>
+	<Type Name="cage::Rads">
+		<DisplayString>{value} rads</DisplayString>
+		<Expand>
+			<Item Name="degrees">value.value * 180 / 3.141592653589793</Item>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Vec2">
-    <Expand>
-      <ArrayItems>
-        <Size>2</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="cage::Vec3">
-    <Expand>
-      <ArrayItems>
-        <Size>3</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="cage::Vec4">
-    <Expand>
-      <ArrayItems>
-        <Size>4</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::Vec2">
+		<Expand>
+			<ArrayItems>
+				<Size>2</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="cage::Vec3">
+		<Expand>
+			<ArrayItems>
+				<Size>3</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="cage::Vec4">
+		<Expand>
+			<ArrayItems>
+				<Size>4</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Vec2i">
-    <Expand>
-      <ArrayItems>
-        <Size>2</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="cage::Vec3i">
-    <Expand>
-      <ArrayItems>
-        <Size>3</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="cage::Vec4i">
-    <Expand>
-      <ArrayItems>
-        <Size>4</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::Vec2i">
+		<Expand>
+			<ArrayItems>
+				<Size>2</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="cage::Vec3i">
+		<Expand>
+			<ArrayItems>
+				<Size>3</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="cage::Vec4i">
+		<Expand>
+			<ArrayItems>
+				<Size>4</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Quat">
-    <Expand>
-      <ArrayItems>
-        <Size>4</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::Quat">
+		<Expand>
+			<ArrayItems>
+				<Size>4</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Mat3">
-    <Expand>
-      <ArrayItems>
-        <Size>9</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
-  <Type Name="cage::Mat4">
-    <Expand>
-      <ArrayItems>
-        <Size>16</Size>
-        <ValuePointer>data</ValuePointer>
-      </ArrayItems>
-    </Expand>
-  </Type>
+	<Type Name="cage::Mat3">
+		<Expand>
+			<ArrayItems>
+				<Size>9</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="cage::Mat4">
+		<Expand>
+			<ArrayItems>
+				<Size>16</Size>
+				<ValuePointer>data</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 
-  <Type Name="cage::Transform">
-    <DisplayString>{position}, {orientation}, {scale}</DisplayString>
-    <Expand>
-      <Item Name="position">position</Item>
-      <Item Name="orientation">orientation</Item>
-      <Item Name="scale">scale</Item>
-    </Expand>
-  </Type>
+	<Type Name="cage::Transform">
+		<DisplayString>{position}, {orientation}, {scale}</DisplayString>
+		<Expand>
+			<Item Name="position">position</Item>
+			<Item Name="orientation">orientation</Item>
+			<Item Name="scale">scale</Item>
+		</Expand>
+	</Type>
 
-  <Type Name="std::source_location">
-    <DisplayString>{_File,s8} {_Function,s8}</DisplayString>
-  </Type>
+	<Type Name="std::source_location">
+		<DisplayString>{_File,s8} {_Function,s8}</DisplayString>
+	</Type>
 
-  <Type Name="cage::privat::EventLinker">
-    <DisplayString>{order} {location}</DisplayString>
-    <Expand>
-      <Item Name="order">order</Item>
-      <Item Name="location">location</Item>
-      <Synthetic Name="listeners">
-        <Expand>
-          <CustomListItems MaxItemsPerView="100">
-            <Variable Name="node" InitialValue="this" />
-            <Loop>
-              <Break Condition="!node->p" />
-              <Exec>node = node->p</Exec>
-            </Loop>
-            <Loop>
-              <Break Condition="!node" />
-              <If Condition="node == this">
-                <Item>"here:"</Item>
-              </If>
-              <Item>*node</Item>
-              <Exec>node = node->n</Exec>
-            </Loop>
-          </CustomListItems>
-        </Expand>
-      </Synthetic>
-    </Expand>
-  </Type>
+	<Type Name="cage::privat::EventLinker">
+		<DisplayString>{order} {location}</DisplayString>
+		<Expand>
+			<Item Name="order">order</Item>
+			<Item Name="location">location</Item>
+			<Synthetic Name="listeners">
+				<Expand>
+					<CustomListItems MaxItemsPerView="100">
+						<Variable Name="node" InitialValue="this" />
+						<Loop>
+							<Break Condition="!node->p" />
+							<Exec>node = node->p</Exec>
+						</Loop>
+						<Loop>
+							<Break Condition="!node" />
+							<If Condition="node == this">
+								<Item>"here:"</Item>
+							</If>
+							<Item>*node</Item>
+							<Exec>node = node->n</Exec>
+						</Loop>
+					</CustomListItems>
+				</Expand>
+			</Synthetic>
+		</Expand>
+	</Type>
 
 </AutoVisualizer>

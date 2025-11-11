@@ -11,7 +11,6 @@
 	#include <sys/mman.h>
 	#include <sys/types.h>
 	#include <unistd.h>
-//#include <ucontext.h>
 
 	#include <cage-core/process.h> // installSigTermHandler
 
