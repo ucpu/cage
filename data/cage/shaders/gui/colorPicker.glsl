@@ -22,8 +22,7 @@ void main()
 	gl_Position.z = 0;
 	gl_Position.w = 1;
 	gl_Position.xy = uniPos.xy + (uniPos.zw - uniPos.xy) * inPosition.xy;
-	varUv.x = inUv.x;
-	varUv.y = 1 - inUv.y;
+	varUv = vec2(inUv.x, 1 - inUv.y);
 }
 
 
