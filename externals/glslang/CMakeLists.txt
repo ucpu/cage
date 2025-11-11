@@ -2,10 +2,17 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "glslang")
 message(STATUS "----------------------------------------------------------------")
 
-set(BUILD_EXTERNAL OFF CACHE INTERNAL "Build external dependencies in /External" FORCE)
-set(GLSLANG_TESTS OFF CACHE INTERNAL  "Enable glslang testing" FORCE)
-set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "Builds glslang" FORCE)
-set(ENABLE_HLSL OFF CACHE INTERNAL "Enables HLSL input support" FORCE)
+cage_heavily_optimized()
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RELEASE")
+endif()
+
+set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
+
+set(BUILD_EXTERNAL OFF CACHE INTERNAL "")
+set(GLSLANG_TESTS OFF CACHE INTERNAL  "")
+set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "")
+set(ENABLE_HLSL OFF CACHE INTERNAL "")
 
 add_subdirectory(glslang)
 

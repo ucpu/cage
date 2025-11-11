@@ -134,9 +134,11 @@ add_subdirectory(svector)
 add_subdirectory(unordered_dense)
 add_subdirectory(wamr)
 
-add_subdirectory(dawn)
+add_subdirectory(spvheaders)
+add_subdirectory(spvtools)
 add_subdirectory(glslang)
 add_subdirectory(openxr-sdk)
+add_subdirectory(dawn) # order is important here
 
 if(cage_use_steam_sockets)
 	add_subdirectory(gamenetworkingsockets) # uses protobuf from dawn

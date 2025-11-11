@@ -24,7 +24,7 @@ namespace
 	std::set<detail::StringBase<20>> keywords;
 	std::vector<Variant> variants;
 
-	const ConfigBool configShaderPrint("cage-asset-processor/shader/preview", false);
+	const ConfigBool configShaderPrint("cage-asset-processor/shader/preview", true);
 
 	bool validDefineChar(const char c)
 	{

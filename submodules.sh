@@ -23,20 +23,14 @@ git config --file .gitmodules --get-regexp path | awk '{print $2}' | while read 
 done
 
 update_submodule "externals/dawn/dawn" "third_party/abseil-cpp"
-update_submodule "externals/dawn/dawn" "third_party/glslang/src"
 update_submodule "externals/dawn/dawn" "third_party/jinja2"
 update_submodule "externals/dawn/dawn" "third_party/markupsafe"
 update_submodule "externals/dawn/dawn" "third_party/protobuf"
-update_submodule "externals/dawn/dawn" "third_party/spirv-headers/src"
-update_submodule "externals/dawn/dawn" "third_party/spirv-tools/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-headers/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-utility-libraries/src"
-#update_submodule "externals/mbedtls/mbedtls" "framework"
-#update_submodule "externals/mbedtls/mbedtls" "tf-psa-crypto"
-#update_submodule "externals/mbedtls/mbedtls/tf-psa-crypto" "framework"
 update_submodule "externals/wamr/zydis" "dependencies/zycore"
 
-ignore_file()
+git_ignore_file()
 {
 	local repo_path="$1"
 	local sub_path="$2"
@@ -45,4 +39,4 @@ ignore_file()
 	popd >/dev/null
 }
 
-ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"
+git_ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"

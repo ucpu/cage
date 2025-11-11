@@ -3,6 +3,9 @@ message(STATUS "dawn")
 message(STATUS "----------------------------------------------------------------")
 
 cage_heavily_optimized()
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RELEASE")
+endif()
 
 set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
 
@@ -19,6 +22,11 @@ else()
 	set(vulkan ON)
 	set(linux ON)
 endif()
+
+# update directories
+set(DAWN_SPIRV_TOOLS_DIR "${CMAKE_CURRENT_LIST_DIR}/../spvtools/spvtools")
+set(DAWN_SPIRV_HEADERS_DIR "${CMAKE_CURRENT_LIST_DIR}/../spvheaders/spvheaders")
+set(DAWN_GLSLANG_DIR "${CMAKE_CURRENT_LIST_DIR}/../glslang/glslang")
 
 # dawn
 set(DAWN_ENABLE_INSTALL ON CACHE INTERNAL "Enable install step for Dawn libraries" FORCE)
@@ -61,16 +69,11 @@ unset(metal)
 unset(vulkan)
 unset(linux)
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "RELEASE")
-endif()
-
 # replace constants header
 set(constants_path "${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/patches")
 file(READ "${constants_path}" constants_content)
 string(REPLACE "kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;" constants_content "${constants_content}")
-#string(REPLACE "kMaxSamplersPerShaderStage = 16;" "kMaxSamplersPerShaderStage = 32;" constants_content "${constants_content}")
 set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
 file(CONFIGURE OUTPUT "${constants_path}" CONTENT "${constants_content}" @ONLY)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
