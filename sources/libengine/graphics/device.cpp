@@ -35,14 +35,17 @@ namespace cage
 		struct DeviceBindingsCache;
 		struct DevicePipelinesCache;
 		struct DeviceBuffersCache;
+		struct DeviceTexturesCache;
 
 		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device);
 		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device);
 		Holder<DeviceBuffersCache> newDeviceBuffersCache(GraphicsDevice *device);
+		Holder<DeviceTexturesCache> newDeviceTexturesCache(GraphicsDevice *device);
 
 		void deviceCacheNextFrame(DeviceBindingsCache *);
 		void deviceCacheNextFrame(DevicePipelinesCache *);
 		void deviceCacheNextFrame(DeviceBuffersCache *);
+		void deviceCacheNextFrame(DeviceTexturesCache *);
 
 		struct GraphicsContext : private Immovable
 		{
@@ -170,90 +173,9 @@ namespace cage
 			Holder<privat::DeviceBindingsCache> bindingsCache;
 			Holder<privat::DevicePipelinesCache> pipelinesCache;
 			Holder<privat::DeviceBuffersCache> buffersCache;
-			Holder<Texture> texDummy2d, texDummyArray, texDummyCube, texShadowsSampler;
-			Holder<GraphicsBuffer> bufDummyUniform, bufDummyStorage;
+			Holder<privat::DeviceTexturesCache> texturesCache;
 			std::vector<wgpu::CommandBuffer> commands;
 			GraphicsFrameStatistics statistics;
-
-			void generateDummyTextures()
-			{
-				ColorTextureCreateConfig cfg;
-				cfg.resolution = Vec3i(1);
-				cfg.channels = 4;
-				cfg.mipLevels = 1;
-				texDummy2d = newTexture(this, cfg, "dummy2d");
-				cfg.flags = TextureFlags::Array;
-				texDummyArray = newTexture(this, cfg, "dummyArray");
-				cfg.resolution[2] = 6;
-				cfg.flags = TextureFlags::Cubemap;
-				texDummyCube = newTexture(this, cfg, "dummyCube");
-
-				wgpu::TexelCopyTextureInfo dest = {};
-				dest.texture = texDummy2d->nativeTexture();
-				dest.mipLevel = 0;
-				dest.aspect = wgpu::TextureAspect::All;
-				wgpu::TexelCopyBufferLayout layout = {};
-				layout.bytesPerRow = 4;
-				layout.rowsPerImage = 1;
-				wgpu::Extent3D extents = { 1, 1, 1 };
-				static constexpr std::array<unsigned char, 4 * 6> data = {
-					0,
-					0,
-					0,
-					255,
-					0,
-					0,
-					0,
-					255,
-					0,
-					0,
-					0,
-					255,
-					0,
-					0,
-					0,
-					255,
-					0,
-					0,
-					0,
-					255,
-					0,
-					0,
-					0,
-					255,
-				};
-				queue.WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
-				dest.texture = texDummyArray->nativeTexture();
-				queue.WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
-				dest.texture = texDummyCube->nativeTexture();
-				extents.depthOrArrayLayers = 6;
-				queue.WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
-			}
-
-			void generateShadowsSampler()
-			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = 1;
-				desc.size.height = 1;
-				desc.size.depthOrArrayLayers = 1;
-				desc.format = wgpu::TextureFormat::Depth32Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "dummy shadowmap target";
-				wgpu::Texture tex = device.CreateTexture(&desc);
-				wgpu::TextureViewDescriptor vd = {};
-				vd.dimension = wgpu::TextureViewDimension::e2DArray;
-				wgpu::TextureView view = tex.CreateView(&vd);
-				wgpu::Sampler samp = device.CreateSampler();
-				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
-				t->flags = TextureFlags::Array;
-				texShadowsSampler = std::move(t);
-			}
-
-			void generateDummyBuffers()
-			{
-				bufDummyUniform = newGraphicsBufferUniform(this, 256, "dummyUniform");
-				bufDummyStorage = newGraphicsBufferStorage(this, 256, "dummyStorage");
-			}
 
 			void createInstance()
 			{
@@ -373,30 +295,13 @@ namespace cage
 				bindingsCache = privat::newDeviceBindingsCache(this);
 				pipelinesCache = privat::newDevicePipelinesCache(this);
 				buffersCache = privat::newDeviceBuffersCache(this);
-				generateDummyTextures();
-				generateShadowsSampler();
-				generateDummyBuffers();
+				texturesCache = privat::newDeviceTexturesCache(this);
 				frameTimer = systemMemory().createHolder<GpuFrameTimer>(this, instance);
 
 				CAGE_LOG(SeverityEnum::Info, "graphics", "wgpu initialized");
 			}
 
 			~GraphicsDeviceImpl() { CAGE_LOG(SeverityEnum::Info, "graphics", "destroying wgpu device and instance"); }
-
-			privat::GraphicsContext *getContext(Window *window)
-			{
-				Holder<privat::GraphicsContext> &context = privat::getGlfwContext(window);
-				if (!context)
-					context = systemMemory().createHolder<privat::GraphicsContext>();
-				if (!context->surface)
-				{
-					CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu surface");
-					context->surface = wgpu::glfw::CreateSurfaceForWindow(instance, getGlfwWindow(window));
-					if (!context->surface)
-						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
-				}
-				return +context;
-			}
 
 			void processEvents()
 			{
@@ -421,6 +326,21 @@ namespace cage
 				commands.clear();
 				std::swap(stats, statistics); // propagate statistics and clear
 				return stats;
+			}
+
+			privat::GraphicsContext *getContext(Window *window)
+			{
+				Holder<privat::GraphicsContext> &context = privat::getGlfwContext(window);
+				if (!context)
+					context = systemMemory().createHolder<privat::GraphicsContext>();
+				if (!context->surface)
+				{
+					CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu surface");
+					context->surface = wgpu::glfw::CreateSurfaceForWindow(instance, getGlfwWindow(window));
+					if (!context->surface)
+						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
+				}
+				return +context;
 			}
 
 			void configureSurface(privat::GraphicsContext *context, Vec2i resolution)
@@ -463,6 +383,7 @@ namespace cage
 					deviceCacheNextFrame(+bindingsCache);
 					deviceCacheNextFrame(+pipelinesCache);
 					deviceCacheNextFrame(+buffersCache);
+					deviceCacheNextFrame(+texturesCache);
 				}
 
 				const Vec2i res = window->resolution();
@@ -606,40 +527,10 @@ namespace cage
 			return +impl->buffersCache;
 		}
 
-		Texture *getTextureDummy2d(GraphicsDevice *device)
+		DeviceTexturesCache *getDeviceTexturesCache(GraphicsDevice *device)
 		{
 			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->texDummy2d;
-		}
-
-		Texture *getTextureDummyArray(GraphicsDevice *device)
-		{
-			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->texDummyArray;
-		}
-
-		Texture *getTextureDummyCube(GraphicsDevice *device)
-		{
-			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->texDummyCube;
-		}
-
-		Texture *getTextureShadowsSampler(GraphicsDevice *device)
-		{
-			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->texShadowsSampler;
-		}
-
-		GraphicsBuffer *getBufferDummyUniform(GraphicsDevice *device)
-		{
-			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->bufDummyUniform;
-		}
-
-		GraphicsBuffer *getBufferDummyStorage(GraphicsDevice *device)
-		{
-			GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)device;
-			return +impl->bufDummyStorage;
+			return +impl->texturesCache;
 		}
 	}
 

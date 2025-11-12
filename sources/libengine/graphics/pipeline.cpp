@@ -98,7 +98,7 @@ namespace cage
 					hashCombine((uint32)depthFormat);
 				}
 
-				bool operator==(const Key &other) const = default;
+				bool operator==(const Key &) const = default;
 			};
 
 			struct Hash

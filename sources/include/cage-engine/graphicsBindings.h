@@ -45,8 +45,6 @@ namespace cage
 
 	CAGE_ENGINE_API GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config);
 
-	CAGE_ENGINE_API GraphicsBindings getEmptyBindings(GraphicsDevice *device);
-
 	// material buffer: 0
 	// albedo: image: 1 (sampler: 2)
 	// special: 3 (4)

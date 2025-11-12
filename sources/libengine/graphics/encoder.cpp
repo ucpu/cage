@@ -9,6 +9,11 @@
 
 namespace cage
 {
+	namespace privat
+	{
+		GraphicsBindings getEmptyBindings(GraphicsDevice *device);
+	}
+
 	namespace
 	{
 		struct PassData : public RenderPassConfig
@@ -45,7 +50,7 @@ namespace cage
 				{
 					passData = PassData{ config };
 					if (!passData.bindings)
-						passData.bindings = getEmptyBindings(device);
+						passData.bindings = privat::getEmptyBindings(device);
 
 					ankerl::svector<wgpu::RenderPassColorAttachment, 1> atts;
 					atts.reserve(passData.colorTargets.size());
@@ -90,7 +95,7 @@ namespace cage
 				CAGE_ASSERT(config.model);
 				CAGE_ASSERT(config.model->bindings());
 				if (!config.bindings)
-					config.bindings = getEmptyBindings(device);
+					config.bindings = privat::getEmptyBindings(device);
 
 				wgpu::RenderPipeline pip = newGraphicsPipeline(device, convertPipelineConfig(passData, config));
 				if (!pip)

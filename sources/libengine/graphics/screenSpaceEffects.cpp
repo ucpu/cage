@@ -88,27 +88,19 @@ namespace cage
 		const Vec2i res = max(config.resolution / downscale, 1u);
 		Holder<Texture> depthLowRes = [&]()
 		{
-			wgpu::TextureDescriptor desc = {};
-			desc.size.width = res[0];
-			desc.size.height = res[1];
-			desc.format = wgpu::TextureFormat::R32Float;
-			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-			desc.label = "ssao depth target";
-			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-			wgpu::Sampler samp = d->nativeDevice()->CreateSampler();
-			return newTexture(tex, tex.CreateView(), samp, "ssao depth target");
+			TransientTextureCreateConfig conf;
+			conf.name = "ssao depth target";
+			conf.resolution = Vec3i(res, 1);
+			conf.format = wgpu::TextureFormat::R32Float;
+			return newTexture(d, conf);
 		}();
 		Holder<Texture> ssaoLowRes = [&]()
 		{
-			wgpu::TextureDescriptor desc = {};
-			desc.size.width = res[0];
-			desc.size.height = res[1];
-			desc.format = wgpu::TextureFormat::R16Float;
-			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-			desc.label = "ssao lowres target";
-			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-			wgpu::Sampler samp = d->nativeDevice()->CreateSampler();
-			return newTexture(tex, tex.CreateView(), samp, "ssao lowres target");
+			TransientTextureCreateConfig conf;
+			conf.name = "ssao lowres target";
+			conf.resolution = Vec3i(res, 1);
+			conf.format = wgpu::TextureFormat::R16Float;
+			return newTexture(d, conf);
 		}();
 
 		struct Shader
@@ -170,14 +162,11 @@ namespace cage
 		{ // blur
 			Holder<Texture> tmp = [&]()
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = res[0];
-				desc.size.height = res[1];
-				desc.format = wgpu::TextureFormat::R16Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "ssao blur temporary";
-				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-				return newTexture(tex, tex.CreateView(), d->nativeDevice()->CreateSampler(), "ssao blur temporary");
+				TransientTextureCreateConfig conf;
+				conf.name = "ssao blur temporary";
+				conf.resolution = Vec3i(res, 1);
+				conf.format = wgpu::TextureFormat::R16Float;
+				return newTexture(d, conf);
 			}();
 
 			GaussianBlurConfig gb;
@@ -223,20 +212,12 @@ namespace cage
 		const Vec2i res = max(config.resolution / downscale, 1u);
 		Holder<Texture> texDof = [&]()
 		{
-			wgpu::TextureDescriptor desc = {};
-			desc.size.width = res[0];
-			desc.size.height = res[1];
-			desc.format = wgpu::TextureFormat::RGBA16Float;
-			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-			desc.label = "dof color target";
-			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-			wgpu::SamplerDescriptor sd = {};
-			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
-			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
-			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
-			sd.label = "dof color sampler";
-			wgpu::Sampler samp = d->nativeDevice()->CreateSampler(&sd);
-			return newTexture(tex, tex.CreateView(), samp, "dof color target");
+			TransientTextureCreateConfig conf;
+			conf.name = "dof color target";
+			conf.resolution = Vec3i(res, 1);
+			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.samplerVariant = true;
+			return newTexture(d, conf);
 		}();
 
 		struct Shader
@@ -274,14 +255,11 @@ namespace cage
 		{ // blur
 			Holder<Texture> tmp = [&]()
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = res[0];
-				desc.size.height = res[1];
-				desc.format = wgpu::TextureFormat::RGBA16Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "dof blur temporary";
-				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-				return newTexture(tex, tex.CreateView(), d->nativeDevice()->CreateSampler(), "dof blur temporary");
+				TransientTextureCreateConfig conf;
+				conf.name = "dof blur temporary";
+				conf.resolution = Vec3i(res, 1);
+				conf.format = wgpu::TextureFormat::RGBA16Float;
+				return newTexture(d, conf);
 			}();
 
 			GaussianBlurConfig gb;
@@ -330,21 +308,13 @@ namespace cage
 		const uint32 mips = max(config.blurPasses, 1u);
 		Holder<Texture> tex = [&]()
 		{
-			wgpu::TextureDescriptor desc = {};
-			desc.size.width = res[0];
-			desc.size.height = res[1];
-			desc.mipLevelCount = mips;
-			desc.format = wgpu::TextureFormat::RGBA16Float;
-			desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-			desc.label = "bloom target";
-			wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-			wgpu::SamplerDescriptor sd = {};
-			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
-			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
-			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
-			sd.label = "bloom sampler";
-			wgpu::Sampler samp = d->nativeDevice()->CreateSampler(&sd);
-			return newTexture(tex, tex.CreateView(), samp, "bloom target");
+			TransientTextureCreateConfig conf;
+			conf.name = "bloom target";
+			conf.resolution = Vec3i(res, 1);
+			conf.mipLevelCount = mips;
+			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.samplerVariant = true;
+			return newTexture(d, conf);
 		}();
 		std::vector<Holder<Texture>> mipViews = generateMipsViews(d, tex.share(), mips);
 
@@ -400,15 +370,12 @@ namespace cage
 		{ // blur
 			Holder<Texture> tmp = [&]()
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = res[0];
-				desc.size.height = res[1];
-				desc.mipLevelCount = mips;
-				desc.format = wgpu::TextureFormat::RGBA16Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "bloom blur temporary";
-				wgpu::Texture tex = d->nativeDevice()->CreateTexture(&desc);
-				return newTexture(tex, nullptr, nullptr, "bloom blur temporary");
+				TransientTextureCreateConfig conf;
+				conf.name = "bloom blur temporary";
+				conf.resolution = Vec3i(res, 1);
+				conf.mipLevelCount = mips;
+				conf.format = wgpu::TextureFormat::RGBA16Float;
+				return newTexture(d, conf);
 			}();
 			std::vector<Holder<Texture>> tmpViews = generateMipsViews(d, tmp.share(), mips);
 

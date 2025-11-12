@@ -1,5 +1,9 @@
+#include <array>
+
 #include <webgpu/webgpu_cpp.h>
 
+#include <cage-core/concurrent.h>
+#include <cage-core/hashString.h>
 #include <cage-core/image.h>
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
@@ -15,6 +19,224 @@ namespace cage
 			if (any(flags & TextureFlags::Cubemap))
 				return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::CubeArray : wgpu::TextureViewDimension::Cube;
 			return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::e2DArray : wgpu::TextureViewDimension::e2D;
+		}
+
+		struct DeviceTexturesCache : private Immovable
+		{
+		public:
+			Holder<RwMutex> mutex = newRwMutex();
+			Holder<Texture> dummy2d, dummyArray, dummyCube, shadowsSampler;
+			GraphicsDevice *device = nullptr;
+			uint32 currentFrame = 1;
+
+			struct Key : TransientTextureCreateConfig
+			{
+				std::size_t hash = 0;
+
+				Key(const TransientTextureCreateConfig &config) : TransientTextureCreateConfig(config)
+				{
+					auto hashCombine = [&](std::unsigned_integral auto v) { hash ^= std::hash<std::decay_t<decltype(v)>>{}(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2); };
+					hashCombine((uint32)HashString(name));
+					hashCombine((uint32)config.resolution[0]);
+					hashCombine((uint32)config.resolution[1]);
+					hashCombine((uint32)config.resolution[2]);
+					hashCombine(config.mipLevelCount);
+					hashCombine((uint32)config.format);
+					hashCombine((uint64)config.flags);
+					hashCombine(config.entityId);
+					hashCombine(config.samplerVariant);
+				}
+
+				bool operator==(const Key &) const = default;
+			};
+
+			struct Hash
+			{
+				std::size_t operator()(const Key &key) const { return key.hash; }
+			};
+
+			struct Value
+			{
+				Holder<Texture> texture;
+				uint32 lastUsedFrame = 0;
+			};
+
+			std::unordered_map<Key, Value, Hash> cache;
+
+			void generateDummyTextures()
+			{
+				ColorTextureCreateConfig cfg;
+				cfg.resolution = Vec3i(1);
+				cfg.channels = 4;
+				cfg.mipLevels = 1;
+				dummy2d = newTexture(device, cfg, "dummy2d");
+				cfg.flags = TextureFlags::Array;
+				dummyArray = newTexture(device, cfg, "dummyArray");
+				cfg.resolution[2] = 6;
+				cfg.flags = TextureFlags::Cubemap;
+				dummyCube = newTexture(device, cfg, "dummyCube");
+
+				wgpu::TexelCopyTextureInfo dest = {};
+				dest.texture = dummy2d->nativeTexture();
+				dest.mipLevel = 0;
+				dest.aspect = wgpu::TextureAspect::All;
+				wgpu::TexelCopyBufferLayout layout = {};
+				layout.bytesPerRow = 4;
+				layout.rowsPerImage = 1;
+				wgpu::Extent3D extents = { 1, 1, 1 };
+				static constexpr std::array<unsigned char, 4 * 6> data = {
+					0,
+					0,
+					0,
+					255,
+					0,
+					0,
+					0,
+					255,
+					0,
+					0,
+					0,
+					255,
+					0,
+					0,
+					0,
+					255,
+					0,
+					0,
+					0,
+					255,
+					0,
+					0,
+					0,
+					255,
+				};
+				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+				dest.texture = dummyArray->nativeTexture();
+				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+				dest.texture = dummyCube->nativeTexture();
+				extents.depthOrArrayLayers = 6;
+				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+			}
+
+			void generateShadowsSampler()
+			{
+				wgpu::TextureDescriptor desc = {};
+				desc.size.width = 1;
+				desc.size.height = 1;
+				desc.size.depthOrArrayLayers = 1;
+				desc.format = wgpu::TextureFormat::Depth32Float;
+				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.label = "dummy shadowmap target";
+				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
+				wgpu::TextureViewDescriptor vd = {};
+				vd.dimension = wgpu::TextureViewDimension::e2DArray;
+				wgpu::TextureView view = tex.CreateView(&vd);
+				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
+				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
+				t->flags = TextureFlags::Array;
+				shadowsSampler = std::move(t);
+			}
+
+			DeviceTexturesCache(GraphicsDevice *device) : device(device)
+			{
+				generateDummyTextures();
+				generateShadowsSampler();
+			}
+
+			~DeviceTexturesCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics textures cache size: " + cache.size()); }
+
+			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
+			{
+				wgpu::TextureDescriptor desc = {};
+				desc.size.width = config.resolution[0];
+				desc.size.height = config.resolution[1];
+				desc.size.depthOrArrayLayers = config.resolution[2];
+				desc.mipLevelCount = config.mipLevelCount;
+				desc.format = config.format;
+				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.label = config.name.c_str();
+				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
+				wgpu::TextureViewDescriptor vd = {};
+				vd.dimension = textureViewDimension(config.flags);
+				wgpu::TextureView view = tex.CreateView(&vd);
+				wgpu::SamplerDescriptor sd = {};
+				if (config.samplerVariant)
+				{
+					sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
+					sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
+					sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+					sd.label = config.name.c_str();
+				}
+				wgpu::Sampler samp = device->nativeDevice()->CreateSampler(&sd);
+				Holder<Texture> t = newTexture(tex, view, samp, config.name);
+				t->flags = config.flags;
+				return t;
+			}
+
+			Holder<Texture> getTexture(const TransientTextureCreateConfig &config)
+			{
+				//return createTexture(config);
+
+				const Key key(config);
+
+				{
+					ScopeLock lock(mutex, ReadLockTag());
+					const auto it = cache.find(key);
+					if (it != cache.end())
+					{
+						it->second.lastUsedFrame = currentFrame;
+						return it->second.texture.share();
+					}
+				}
+
+				{
+					ScopeLock lock(mutex, WriteLockTag());
+					auto &it = cache[key];
+					it.lastUsedFrame = currentFrame;
+					if (!it.texture) // must check again after relocking
+						it.texture = createTexture(config);
+					return it.texture.share();
+				}
+			}
+
+			void nextFrame()
+			{
+				ScopeLock lock(mutex, WriteLockTag());
+				currentFrame++;
+				std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 2 < currentFrame; });
+			}
+		};
+
+		Holder<DeviceTexturesCache> newDeviceTexturesCache(GraphicsDevice *device)
+		{
+			return systemMemory().createHolder<DeviceTexturesCache>(device);
+		}
+
+		void deviceCacheNextFrame(DeviceTexturesCache *cache)
+		{
+			cache->nextFrame();
+		}
+
+		DeviceTexturesCache *getDeviceTexturesCache(GraphicsDevice *device);
+
+		Texture *getTextureDummy2d(GraphicsDevice *device)
+		{
+			return +getDeviceTexturesCache(device)->dummy2d;
+		}
+
+		Texture *getTextureDummyArray(GraphicsDevice *device)
+		{
+			return +getDeviceTexturesCache(device)->dummyArray;
+		}
+
+		Texture *getTextureDummyCube(GraphicsDevice *device)
+		{
+			return +getDeviceTexturesCache(device)->dummyCube;
+		}
+
+		Texture *getTextureShadowsSampler(GraphicsDevice *device)
+		{
+			return +getDeviceTexturesCache(device)->shadowsSampler;
 		}
 	}
 
@@ -184,6 +406,11 @@ namespace cage
 	Holder<Texture> newTexture(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label)
 	{
 		return systemMemory().createImpl<Texture, TextureImpl>(device, config, label);
+	}
+
+	Holder<Texture> newTexture(GraphicsDevice *device, const TransientTextureCreateConfig &config)
+	{
+		return privat::getDeviceTexturesCache(device)->getTexture(config);
 	}
 
 	Holder<Texture> newTexture(GraphicsDevice *device, const Image *image, const AssetLabel &label)

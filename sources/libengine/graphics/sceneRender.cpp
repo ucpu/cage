@@ -1103,55 +1103,40 @@ namespace cage
 
 			Holder<Texture> createDepthTextureTarget()
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution[0];
-				desc.size.height = resolution[1];
-				desc.format = wgpu::TextureFormat::Depth32Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "depth target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				return newTexture(tex, tex.CreateView(), samp, "depth target");
+				TransientTextureCreateConfig conf;
+				conf.name = "depth target";
+				conf.resolution = Vec3i(resolution, 1);
+				conf.format = wgpu::TextureFormat::Depth32Float;
+				return newTexture(device, conf);
 			}
 
 			Holder<Texture> createDepthSamplingTexture()
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution[0];
-				desc.size.height = resolution[1];
-				desc.format = wgpu::TextureFormat::R32Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "depth sampling";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				return newTexture(tex, tex.CreateView(), samp, "depth sampling");
+				TransientTextureCreateConfig conf;
+				conf.name = "depth sampling";
+				conf.resolution = Vec3i(resolution, 1);
+				conf.format = wgpu::TextureFormat::R32Float;
+				return newTexture(device, conf);
 			}
 
-			Holder<Texture> createColorTextureTarget()
+			Holder<Texture> createColorTextureTarget(const AssetLabel &name)
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution[0];
-				desc.size.height = resolution[1];
-				desc.format = wgpu::TextureFormat::RGBA16Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "color target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				return newTexture(tex, tex.CreateView(), samp, "color target");
+				TransientTextureCreateConfig conf;
+				conf.name = name;
+				conf.resolution = Vec3i(resolution, 1);
+				conf.format = wgpu::TextureFormat::RGBA16Float;
+				return newTexture(device, conf);
 			}
 
 			Holder<Texture> createSsaoTextureTarget()
 			{
 				static constexpr int downscale = 3;
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution[0] / downscale;
-				desc.size.height = resolution[1] / downscale;
-				desc.format = wgpu::TextureFormat::R16Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "ssao target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				return newTexture(tex, tex.CreateView(), samp, "ssao target");
+				TransientTextureCreateConfig conf;
+				conf.name = "ssao target";
+				conf.resolution = Vec3i(resolution, 0) / downscale;
+				conf.resolution[2] = 1;
+				conf.format = wgpu::TextureFormat::R16Float;
+				return newTexture(device, conf);
 			}
 
 			void taskCamera(uint32)
@@ -1168,7 +1153,7 @@ namespace cage
 
 				Holder<Texture> depthTexture = createDepthTextureTarget();
 				Holder<Texture> depthSampling = createDepthSamplingTexture();
-				Holder<Texture> colorTexture = createColorTextureTarget();
+				Holder<Texture> colorTexture = createColorTextureTarget("color target");
 				Holder<Texture> ssaoTexture = createSsaoTextureTarget();
 
 				GraphicsBindings globalBindings;
@@ -1219,12 +1204,6 @@ namespace cage
 
 					// shadowmap sampler
 					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = privat::getTextureShadowsSampler(device), .binding = 15, .bindTexture = false });
-
-					//for (uint32 i = 0; i < 8; i++)
-					//{
-					//	bind.textures.push_back({ sh2d[i], 8 + i * 2 });
-					//	bind.textures.push_back({ shCube[i], 24 + i * 2 });
-					//}
 
 					globalBindings = newGraphicsBindings(device, bind);
 				}
@@ -1288,7 +1267,7 @@ namespace cage
 					const ProfilingScope profiling("effects");
 
 					Holder<Texture> texSource = colorTexture.share();
-					Holder<Texture> texTarget = createColorTextureTarget();
+					Holder<Texture> texTarget = createColorTextureTarget("effects target");
 
 					// depth of field
 					if (any(effects.effects & ScreenSpaceEffectsFlags::DepthOfField))
@@ -1675,42 +1654,26 @@ namespace cage
 				shadowmapData->shadowUni.shadowMat[shadowmapData->cascade] = bias * viewProj;
 			}
 
-			Holder<Texture> createShadowmap2D(uint32 resolution, uint32 cascades)
+			Holder<Texture> createShadowmap2D(uint32 entityId, uint32 resolution, uint32 cascades)
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution;
-				desc.size.height = resolution;
-				desc.size.depthOrArrayLayers = cascades;
-				desc.format = wgpu::TextureFormat::Depth32Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "shadowmap target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::TextureViewDescriptor vd = {};
-				vd.dimension = wgpu::TextureViewDimension::e2DArray;
-				wgpu::TextureView view = tex.CreateView(&vd);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				Holder<Texture> t = newTexture(tex, view, samp, "shadowmap target");
-				t->flags = TextureFlags::Array;
-				return t;
+				TransientTextureCreateConfig conf;
+				conf.name = "shadowmap target";
+				conf.resolution = Vec3i(resolution, resolution, cascades);
+				conf.format = wgpu::TextureFormat::Depth32Float;
+				conf.flags = TextureFlags::Array;
+				conf.entityId = entityId;
+				return newTexture(device, conf);
 			}
 
-			Holder<Texture> createShadowmapCube(uint32 resolution)
+			Holder<Texture> createShadowmapCube(uint32 entityId, uint32 resolution)
 			{
-				wgpu::TextureDescriptor desc = {};
-				desc.size.width = resolution;
-				desc.size.height = resolution;
-				desc.size.depthOrArrayLayers = 6;
-				desc.format = wgpu::TextureFormat::Depth16Unorm;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
-				desc.label = "shadowmap target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::TextureViewDescriptor vd = {};
-				vd.dimension = wgpu::TextureViewDimension::Cube;
-				wgpu::TextureView view = tex.CreateView(&vd);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
-				Holder<Texture> t = newTexture(tex, view, samp, "shadowmap target");
-				t->flags = TextureFlags::Cubemap;
-				return t;
+				TransientTextureCreateConfig conf;
+				conf.name = "shadowmap target";
+				conf.resolution = Vec3i(resolution, resolution, 6);
+				conf.format = wgpu::TextureFormat::Depth16Unorm;
+				conf.flags = TextureFlags::Cubemap;
+				conf.entityId = entityId;
+				return newTexture(device, conf);
 			}
 
 			void prepareShadowmap(std::vector<Holder<AsyncTask>> &outputTasks, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
@@ -1720,7 +1683,7 @@ namespace cage
 					case LightTypeEnum::Directional:
 					{
 						CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= 4);
-						Holder<Texture> tex = createShadowmap2D(sc.resolution, sc.cascadesCount);
+						Holder<Texture> tex = createShadowmap2D(e->id(), sc.resolution, sc.cascadesCount);
 						ShadowmapData *first = nullptr;
 						for (uint32 cascade = 0; cascade < sc.cascadesCount; cascade++)
 						{
@@ -1745,9 +1708,9 @@ namespace cage
 						Holder<SceneRenderImpl> data = createShadowmapPipeline(e, lc, sc);
 						data->initializeShadowmapSingle();
 						if (lc.lightType == LightTypeEnum::Point)
-							data->shadowmapData->shadowTexture = createShadowmapCube(sc.resolution);
+							data->shadowmapData->shadowTexture = createShadowmapCube(e->id(), sc.resolution);
 						else
-							data->shadowmapData->shadowTexture = createShadowmap2D(sc.resolution, 1);
+							data->shadowmapData->shadowTexture = createShadowmap2D(e->id(), sc.resolution, 1);
 						outputTasks.push_back(tasksRunAsync<SceneRenderImpl>("render shadowmap single", [](SceneRenderImpl &impl, uint32) { impl.taskShadowmap(); }, std::move(data)));
 						break;
 					}

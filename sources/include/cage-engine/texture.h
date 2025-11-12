@@ -8,6 +8,7 @@ namespace wgpu
 	class Texture;
 	class TextureView;
 	class Sampler;
+	enum class TextureFormat : uint32_t;
 }
 
 namespace cage
@@ -55,7 +56,21 @@ namespace cage
 		bool renderable = false;
 	};
 
+	struct CAGE_ENGINE_API TransientTextureCreateConfig
+	{
+		AssetLabel name;
+		Vec3i resolution = Vec3i(0, 0, 1);
+		uint32 mipLevelCount = 1;
+		wgpu::TextureFormat format = (wgpu::TextureFormat)0;
+		TextureFlags flags = TextureFlags::None;
+		uint32 entityId = 0;
+		bool samplerVariant = false;
+
+		bool operator==(const TransientTextureCreateConfig &) const = default;
+	};
+
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const TransientTextureCreateConfig &config);
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const Image *image, const AssetLabel &label);
 	CAGE_ENGINE_API Holder<Texture> newTexture(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label);
 }

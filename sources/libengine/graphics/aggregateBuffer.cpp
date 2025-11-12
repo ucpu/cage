@@ -20,6 +20,7 @@ namespace cage
 		{
 		public:
 			Holder<Mutex> mutex = newMutex();
+			Holder<GraphicsBuffer> dummyUniform, dummyStorage;
 			GraphicsDevice *device = nullptr;
 
 			struct Cache
@@ -27,7 +28,7 @@ namespace cage
 				Holder<GraphicsBuffer> buffer;
 				uint32 frameIndex = 0;
 
-				Cache(GraphicsDevice *device) { buffer = newGraphicsBufferStorage(device, 2'000'000, "transient buffer"); }
+				Cache(GraphicsDevice *device) { buffer = newGraphicsBufferStorage(device, 5'000'000, "transient buffer"); }
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
@@ -35,7 +36,13 @@ namespace cage
 			std::atomic<uint32> finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
-			DeviceBuffersCache(GraphicsDevice *device) : device(device) {}
+			void generateDummyBuffers()
+			{
+				dummyUniform = newGraphicsBufferUniform(device, 256, "dummyUniform");
+				dummyStorage = newGraphicsBufferStorage(device, 256, "dummyStorage");
+			}
+
+			DeviceBuffersCache(GraphicsDevice *device) : device(device) { generateDummyBuffers(); }
 
 			~DeviceBuffersCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics buffers cache size: " + createdBuffers); }
 
@@ -81,8 +88,6 @@ namespace cage
 			}
 		};
 
-		DeviceBuffersCache *getDeviceBuffersCache(GraphicsDevice *device);
-
 		Holder<DeviceBuffersCache> newDeviceBuffersCache(GraphicsDevice *device)
 		{
 			return systemMemory().createHolder<DeviceBuffersCache>(device);
@@ -91,6 +96,18 @@ namespace cage
 		void deviceCacheNextFrame(DeviceBuffersCache *cache)
 		{
 			cache->nextFrame();
+		}
+
+		DeviceBuffersCache *getDeviceBuffersCache(GraphicsDevice *device);
+
+		GraphicsBuffer *getBufferDummyUniform(GraphicsDevice *device)
+		{
+			return +getDeviceBuffersCache(device)->dummyUniform;
+		}
+
+		GraphicsBuffer *getBufferDummyStorage(GraphicsDevice *device)
+		{
+			return +getDeviceBuffersCache(device)->dummyStorage;
 		}
 	}
 

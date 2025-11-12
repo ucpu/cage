@@ -13,9 +13,6 @@ namespace cage
 {
 	namespace privat
 	{
-		Texture *getTextureDummy2d(GraphicsDevice *device);
-		Texture *getTextureDummyArray(GraphicsDevice *device);
-		Texture *getTextureDummyCube(GraphicsDevice *device);
 		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags);
 
 		namespace
@@ -171,8 +168,8 @@ namespace cage
 		{
 		public:
 			Holder<RwMutex> mutex = newRwMutex();
+			GraphicsBindings bindingDummy;
 			GraphicsDevice *device = nullptr;
-			GraphicsBindings emptyBinding;
 			uint32 currentFrame = 0;
 
 			struct Key
@@ -205,7 +202,7 @@ namespace cage
 						hashCombine(k);
 				}
 
-				bool operator==(const Key &other) const = default;
+				bool operator==(const Key &) const = default;
 			};
 
 			struct Hash
@@ -221,13 +218,15 @@ namespace cage
 
 			std::unordered_map<Key, Value, Hash> cache;
 
-			DeviceBindingsCache(GraphicsDevice *device) : device(device)
+			void generateDummyBindings()
 			{
-				emptyBinding.layout = getLayout({});
-				emptyBinding.layout.SetLabel("emptyBinding");
-				emptyBinding.group = createGroup(device, emptyBinding.layout, {});
-				emptyBinding.group.SetLabel("emptyBinding");
+				bindingDummy.layout = getLayout({});
+				bindingDummy.layout.SetLabel("emptyBinding");
+				bindingDummy.group = createGroup(device, bindingDummy.layout, {});
+				bindingDummy.group.SetLabel("emptyBinding");
 			}
+
+			DeviceBindingsCache(GraphicsDevice *device) : device(device) { generateDummyBindings(); }
 
 			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings cache size: " + cache.size()); }
 
@@ -263,8 +262,6 @@ namespace cage
 			}
 		};
 
-		DeviceBindingsCache *getDeviceBindingsCache(GraphicsDevice *device);
-
 		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device)
 		{
 			return systemMemory().createHolder<DeviceBindingsCache>(device);
@@ -273,6 +270,13 @@ namespace cage
 		void deviceCacheNextFrame(DeviceBindingsCache *cache)
 		{
 			cache->nextFrame();
+		}
+
+		DeviceBindingsCache *getDeviceBindingsCache(GraphicsDevice *device);
+
+		GraphicsBindings getEmptyBindings(GraphicsDevice *device)
+		{
+			return privat::getDeviceBindingsCache(device)->bindingDummy;
 		}
 	}
 
@@ -287,9 +291,11 @@ namespace cage
 		return binding;
 	}
 
-	GraphicsBindings getEmptyBindings(GraphicsDevice *device)
+	namespace privat
 	{
-		return privat::getDeviceBindingsCache(device)->emptyBinding;
+		Texture *getTextureDummy2d(GraphicsDevice *device);
+		Texture *getTextureDummyArray(GraphicsDevice *device);
+		Texture *getTextureDummyCube(GraphicsDevice *device);
 	}
 
 	void prepareModelBindings(GraphicsDevice *device, const AssetsManager *assets, Model *model)
