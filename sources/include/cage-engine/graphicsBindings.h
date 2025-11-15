@@ -43,7 +43,7 @@ namespace cage
 		ankerl::svector<TextureBindingConfig, 1> textures;
 	};
 
-	CAGE_ENGINE_API GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config);
+	CAGE_ENGINE_API GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, const AssetLabel &label = "");
 
 	// material buffer: 0
 	// albedo: image: 1 (sampler: 2)

@@ -56,7 +56,7 @@ namespace cage
 				}
 			}
 
-			wgpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config)
+			wgpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
 				ankerl::svector<wgpu::BindGroupLayoutEntry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
@@ -112,12 +112,13 @@ namespace cage
 				wgpu::BindGroupLayoutDescriptor desc = {};
 				desc.entryCount = entries.size();
 				desc.entries = entries.data();
-				String lbl = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
-				desc.label = lbl.c_str();
+				if (label.empty())
+					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
+				desc.label = label.c_str();
 				return device->nativeDevice()->CreateBindGroupLayout(&desc);
 			}
 
-			wgpu::BindGroup createGroup(GraphicsDevice *device, const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
+			wgpu::BindGroup createGroup(GraphicsDevice *device, const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
 				ankerl::svector<wgpu::BindGroupEntry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
@@ -160,6 +161,8 @@ namespace cage
 				bgd.layout = layout;
 				bgd.entryCount = entries.size();
 				bgd.entries = entries.data();
+				if (!label.empty())
+					bgd.label = label.c_str();
 				return device->nativeDevice()->CreateBindGroup(&bgd);
 			}
 		}
@@ -220,17 +223,15 @@ namespace cage
 
 			void generateDummyBindings()
 			{
-				bindingDummy.layout = getLayout({});
-				bindingDummy.layout.SetLabel("emptyBinding");
-				bindingDummy.group = createGroup(device, bindingDummy.layout, {});
-				bindingDummy.group.SetLabel("emptyBinding");
+				bindingDummy.layout = getLayout({}, "emptyBinding");
+				bindingDummy.group = createGroup(device, bindingDummy.layout, {}, "emptyBinding");
 			}
 
 			DeviceBindingsCache(GraphicsDevice *device) : device(device) { generateDummyBindings(); }
 
 			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings cache size: " + cache.size()); }
 
-			wgpu::BindGroupLayout getLayout(const GraphicsBindingsCreateConfig &config)
+			wgpu::BindGroupLayout getLayout(const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
 				const Key key(config);
 
@@ -249,7 +250,7 @@ namespace cage
 					auto &it = cache[key];
 					it.lastUsedFrame = currentFrame;
 					if (!it.layout) // must check again after relocking
-						it.layout = createLayout(device, config);
+						it.layout = createLayout(device, config, label);
 					return it.layout;
 				}
 			}
@@ -280,12 +281,12 @@ namespace cage
 		}
 	}
 
-	GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config)
+	GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 	{
 		GraphicsBindings binding;
-		binding.layout = privat::getDeviceBindingsCache(device)->getLayout(config);
-		//binding.layout = privat::createLayout(device, config);
-		binding.group = privat::createGroup(device, binding.layout, config);
+		binding.layout = privat::getDeviceBindingsCache(device)->getLayout(config, label);
+		//binding.layout = privat::createLayout(device, config, label);
+		binding.group = privat::createGroup(device, binding.layout, config, label);
 		for (const auto &it : config.buffers)
 			binding.dynamicBuffersCount += it.dynamic;
 		return binding;
@@ -347,8 +348,6 @@ namespace cage
 					t.texture = dummy;
 		}
 
-		b = newGraphicsBindings(device, config);
-		b.layout.SetLabel(model->getLabel().c_str());
-		b.group.SetLabel(model->getLabel().c_str());
+		b = newGraphicsBindings(device, config, model->getLabel());
 	}
 }

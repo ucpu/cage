@@ -36,6 +36,7 @@ namespace cage
 		GraphicsFrameData nextFrame(Window *window);
 		void wait(const wgpu::Future &future);
 
+		Holder<wgpu::Device> nativeDeviceNoLock();
 		Holder<wgpu::Device> nativeDevice(); // locks the queue for thread-safe access
 		Holder<wgpu::Queue> nativeQueue(); // locks the queue for thread-safe access
 	};
