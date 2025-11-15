@@ -71,12 +71,15 @@ namespace cage
 
 	namespace privat
 	{
+		void logImpl(SeverityEnum severity, wgpu::StringView message);
+
 		struct DevicePipelinesCache : private Immovable
 		{
 		public:
 			Holder<RwMutex> mutex = newRwMutex();
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 0;
+			bool automaticFlushes = false;
 
 			struct Key : public PipelineConfig
 			{
@@ -110,15 +113,16 @@ namespace cage
 			{
 				wgpu::RenderPipeline pipeline;
 				uint32 lastUsedFrame = 0;
+				bool creating = false;
 			};
 
 			std::unordered_map<Key, Value, Hash> cache;
 
-			DevicePipelinesCache(GraphicsDevice *device) : device(device) {}
+			DevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes) : device(device), automaticFlushes(automaticFlushes) {}
 
 			~DevicePipelinesCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics pipelines cache size: " + cache.size()); }
 
-			wgpu::RenderPipeline createPipeline(const PipelineConfig &config)
+			void createPipeline(const PipelineConfig &config, Value *target)
 			{
 				wgpu::DepthStencilState dss = {};
 				if (config.depthFormat != wgpu::TextureFormat::Undefined)
@@ -160,7 +164,21 @@ namespace cage
 				pld.bindGroupLayouts = config.bindingsLayouts.data();
 				Holder<wgpu::Device> dev = device->nativeDevice();
 				rpd.layout = dev->CreatePipelineLayout(&pld);
-				return dev->CreateRenderPipeline(&rpd);
+				dev->CreateRenderPipelineAsync(&rpd, wgpu::CallbackMode::AllowProcessEvents,
+					[this, target](wgpu::CreatePipelineAsyncStatus status, wgpu::RenderPipeline pipeline, wgpu::StringView message)
+					{
+						if (status == wgpu::CreatePipelineAsyncStatus::Success)
+						{
+							ScopeLock lock(mutex, WriteLockTag());
+							target->pipeline = pipeline;
+							target->creating = false;
+						}
+						else
+						{
+							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating wgpu pipeline");
+							logImpl(SeverityEnum::Note, message);
+						}
+					});
 			}
 
 			wgpu::RenderPipeline getPipeline(const PipelineConfig &config)
@@ -181,8 +199,11 @@ namespace cage
 					ScopeLock lock(mutex, WriteLockTag());
 					auto &it = cache[key];
 					it.lastUsedFrame = currentFrame;
-					if (!it.pipeline) // must check again after relocking
-						it.pipeline = createPipeline(config); // todo make it asynchronous
+					if (!it.pipeline && !it.creating) // must check again after relocking
+					{
+						it.creating = true;
+						createPipeline(config, &it);
+					}
 					return it.pipeline;
 				}
 			}
@@ -191,21 +212,33 @@ namespace cage
 			{
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
-				std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+				if (automaticFlushes)
+					std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+			}
+
+			void flush()
+			{
+				ScopeLock lock(mutex, WriteLockTag());
+				std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 5 < currentFrame; });
 			}
 		};
 
-		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device);
-
-		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device)
+		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes)
 		{
-			return systemMemory().createHolder<DevicePipelinesCache>(device);
+			return systemMemory().createHolder<DevicePipelinesCache>(device, automaticFlushes);
 		}
 
 		void deviceCacheNextFrame(DevicePipelinesCache *cache)
 		{
 			cache->nextFrame();
 		}
+
+		void flushCache(DevicePipelinesCache *cache)
+		{
+			cache->flush();
+		}
+
+		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device);
 	}
 
 	wgpu::RenderPipeline newGraphicsPipeline(GraphicsDevice *device, const PipelineConfig &config)

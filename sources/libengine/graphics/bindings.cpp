@@ -174,6 +174,7 @@ namespace cage
 			GraphicsBindings bindingDummy;
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 0;
+			bool automaticFlushes = false;
 
 			struct Key
 			{
@@ -227,7 +228,7 @@ namespace cage
 				bindingDummy.group = createGroup(device, bindingDummy.layout, {}, "emptyBinding");
 			}
 
-			DeviceBindingsCache(GraphicsDevice *device) : device(device) { generateDummyBindings(); }
+			DeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes) : device(device), automaticFlushes(automaticFlushes) { generateDummyBindings(); }
 
 			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings cache size: " + cache.size()); }
 
@@ -259,18 +260,30 @@ namespace cage
 			{
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
-				std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+				if (automaticFlushes)
+					std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+			}
+
+			void flush()
+			{
+				ScopeLock lock(mutex, WriteLockTag());
+				std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
 			}
 		};
 
-		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device)
+		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes)
 		{
-			return systemMemory().createHolder<DeviceBindingsCache>(device);
+			return systemMemory().createHolder<DeviceBindingsCache>(device, automaticFlushes);
 		}
 
 		void deviceCacheNextFrame(DeviceBindingsCache *cache)
 		{
 			cache->nextFrame();
+		}
+
+		void flushCache(DeviceBindingsCache *cache)
+		{
+			cache->flush();
 		}
 
 		DeviceBindingsCache *getDeviceBindingsCache(GraphicsDevice *device);

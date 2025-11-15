@@ -37,8 +37,8 @@ namespace cage
 		struct DeviceBuffersCache;
 		struct DeviceTexturesCache;
 
-		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device);
-		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device);
+		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes);
+		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes);
 		Holder<DeviceBuffersCache> newDeviceBuffersCache(GraphicsDevice *device);
 		Holder<DeviceTexturesCache> newDeviceTexturesCache(GraphicsDevice *device);
 
@@ -46,6 +46,22 @@ namespace cage
 		void deviceCacheNextFrame(DevicePipelinesCache *);
 		void deviceCacheNextFrame(DeviceBuffersCache *);
 		void deviceCacheNextFrame(DeviceTexturesCache *);
+
+		void flushCache(DeviceBindingsCache *cache);
+		void flushCache(DevicePipelinesCache *cache);
+
+		void logImpl(SeverityEnum severity, wgpu::StringView message)
+		{
+			uint32 len = message.length;
+			if (message.length == wgpu::kStrlen)
+				len = std::strlen(message.data);
+			Holder<LineReader> lr = newLineReader(PointerRange(message.data, message.data + len));
+			String l;
+			while (lr->readLine(l))
+			{
+				CAGE_LOG(severity, "wgpu", l);
+			}
+		}
 
 		struct GraphicsContext : private Immovable
 		{
@@ -124,40 +140,27 @@ namespace cage
 			}
 		}
 
-		void logImpl(SeverityEnum severity, wgpu::StringView message)
-		{
-			uint32 len = message.length;
-			if (message.length == wgpu::kStrlen)
-				len = std::strlen(message.data);
-			Holder<LineReader> lr = newLineReader(PointerRange(message.data, message.data + len));
-			String l;
-			while (lr->readLine(l))
-			{
-				CAGE_LOG(severity, "wgpu", l);
-			}
-		}
-
 		void logFromInstance(wgpu::LoggingType type, wgpu::StringView message)
 		{
-			logImpl(conv(type), message);
+			privat::logImpl(conv(type), message);
 		}
 
 		void lostFromDevice(const wgpu::Device &device, wgpu::DeviceLostReason reason, wgpu::StringView message)
 		{
 			CAGE_LOG(SeverityEnum::Warning, "graphics", "wgpu device lost:");
-			logImpl(SeverityEnum::Note, message);
+			privat::logImpl(SeverityEnum::Note, message);
 		}
 
 		void errorFromDevice(const wgpu::Device &device, wgpu::ErrorType error, wgpu::StringView message)
 		{
 			CAGE_LOG(SeverityEnum::Error, "graphics", "wgpu device error:");
-			logImpl(SeverityEnum::Error, message);
+			privat::logImpl(SeverityEnum::Error, message);
 			detail::debugBreakpoint();
 		}
 
 		void logFromDevice(wgpu::LoggingType type, wgpu::StringView message)
 		{
-			logImpl(conv(type), message);
+			privat::logImpl(conv(type), message);
 		}
 
 		class GraphicsDeviceImpl : public GraphicsDevice
@@ -261,9 +264,9 @@ namespace cage
 				if (!config.vsync)
 					toggles.push_back("turn_off_vsync");
 #ifdef CAGE_DEPLOY
-				toggles.push_back("enable_immediate_error_handling");
 				toggles.push_back("skip_validation");
 #else
+				toggles.push_back("enable_immediate_error_handling");
 				toggles.push_back("disable_blob_cache");
 #endif // CAGE_DEPLOY
 
@@ -292,8 +295,8 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed to create wgpu queue");
 
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing caches");
-				bindingsCache = privat::newDeviceBindingsCache(this);
-				pipelinesCache = privat::newDevicePipelinesCache(this);
+				bindingsCache = privat::newDeviceBindingsCache(this, config.automaticCachesFlushes);
+				pipelinesCache = privat::newDevicePipelinesCache(this, config.automaticCachesFlushes);
 				buffersCache = privat::newDeviceBuffersCache(this);
 				texturesCache = privat::newDeviceTexturesCache(this);
 				frameTimer = systemMemory().createHolder<GpuFrameTimer>(this, instance);
@@ -308,6 +311,7 @@ namespace cage
 				const ProfilingScope profiling("graphics process events");
 				ScopeLock lock(mutex);
 				device.Tick();
+				instance.ProcessEvents();
 			}
 
 			void insertCommandBuffer(wgpu::CommandBuffer &&cmds, const GraphicsFrameStatistics &statistics_)
@@ -567,6 +571,13 @@ namespace cage
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		impl->instance.WaitAny(future, m);
+	}
+
+	void GraphicsDevice::flushCaches()
+	{
+		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
+		privat::flushCache(+impl->bindingsCache);
+		privat::flushCache(+impl->pipelinesCache);
 	}
 
 	Holder<wgpu::Device> GraphicsDevice::nativeDeviceNoLock()

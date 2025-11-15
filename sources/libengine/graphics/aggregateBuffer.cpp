@@ -1,4 +1,3 @@
-#include <array>
 #include <atomic>
 #include <vector>
 
@@ -33,7 +32,7 @@ namespace cage
 			std::vector<Holder<Cache>> available, waiting;
 
 			uint32 currentFrame = 1;
-			std::atomic<uint32> finishedFrame = 0;
+			uint32 finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
 			void generateDummyBuffers()
@@ -79,7 +78,7 @@ namespace cage
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
 
-				device->nativeQueue()->OnSubmittedWorkDone(wgpu::CallbackMode::AllowSpontaneous, // AllowProcessEvents is preffered but never triggers the callback
+				device->nativeQueue()->OnSubmittedWorkDone(wgpu::CallbackMode::AllowProcessEvents,
 					[&, expected = currentFrame](wgpu::QueueWorkDoneStatus status, wgpu::StringView message)
 					{
 						if (status == wgpu::QueueWorkDoneStatus::Success)
