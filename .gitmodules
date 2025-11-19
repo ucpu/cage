@@ -118,15 +118,6 @@
 [submodule "externals/dawn/dawn"]
 	path = externals/dawn/dawn
 	url = https://dawn.googlesource.com/dawn
-[submodule "externals/glslang/glslang"]
-	path = externals/glslang/glslang
-	url = https://github.com/KhronosGroup/glslang.git
 [submodule "externals/svector/svector"]
 	path = externals/svector/svector
 	url = https://github.com/martinus/svector.git
-[submodule "externals/spvtools/spvtools"]
-	path = externals/spvtools/spvtools
-	url = https://github.com/KhronosGroup/SPIRV-Tools.git
-[submodule "externals/spvheaders/spvheaders"]
-	path = externals/spvheaders/spvheaders
-	url = https://github.com/KhronosGroup/SPIRV-Headers.git

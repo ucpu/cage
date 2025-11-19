@@ -88,6 +88,10 @@ macro(cage_heavily_optimized)
 	endif()
 endmacro(cage_heavily_optimized)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "RELEASE")
+endif()
+
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "starting cage external subdirectories")
 message(STATUS "----------------------------------------------------------------")
@@ -134,9 +138,6 @@ add_subdirectory(svector)
 add_subdirectory(unordered_dense)
 add_subdirectory(wamr)
 
-add_subdirectory(spvheaders)
-add_subdirectory(spvtools)
-add_subdirectory(glslang)
 add_subdirectory(openxr-sdk)
 add_subdirectory(dawn) # order is important here
 
