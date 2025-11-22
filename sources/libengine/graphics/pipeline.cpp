@@ -1,6 +1,7 @@
 #include <webgpu/webgpu_cpp.h>
 
 #include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/graphicsPipeline.h>
@@ -177,6 +178,7 @@ namespace cage
 						{
 							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating wgpu pipeline");
 							logImpl(SeverityEnum::Note, message);
+							detail::debugBreakpoint();
 						}
 					});
 			}

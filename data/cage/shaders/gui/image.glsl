@@ -1,5 +1,5 @@
 
-layout(std430, set = 2, binding = 0) readonly buffer Global
+layout(std140, set = 2, binding = 0) uniform Global
 {
 	vec4 uniPos; // x1, y1, x2, y2
 	vec4 uniUv; // x1, y1, x2, y2

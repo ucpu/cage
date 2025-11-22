@@ -1,5 +1,5 @@
 
-layout(std430, set = 2, binding = 0) readonly buffer Global
+layout(std140, set = 2, binding = 0) uniform Global
 {
 	mat4 uniMvp;
 	vec4 uniColor;

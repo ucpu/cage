@@ -3,7 +3,7 @@ $include vertex.glsl
 
 $define shader fragment
 
-layout(std430, set = 2, binding = 0) readonly buffer Params
+layout(std140, set = 2, binding = 0) uniform Params
 {
 	vec4 uniBloomParams; // threshold, blur passes
 };

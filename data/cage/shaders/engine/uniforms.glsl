@@ -130,7 +130,7 @@ layout(set = 1, binding = 5) uniform samplerCube texMaterialNormal;
 // set = 2
 ////////////////////////////////////////////////////////////////////////////////
 
-layout(std430, set = 2, binding = 0) readonly buffer OptionsBlock
+layout(std140, set = 2, binding = 0) uniform OptionsBlock
 {
 	ivec4 uniOptsLights; // unshadowed lights count, shadowed lights count, enable ambient occlusion, enable normal map
 	ivec4 uniOptsSkeleton; // bones count, unused, unused, unused

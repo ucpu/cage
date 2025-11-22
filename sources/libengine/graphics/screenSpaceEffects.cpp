@@ -115,9 +115,9 @@ namespace cage
 		s.params = Vec4(config.strength, config.bias, config.power, config.raysLength);
 		s.iparams[0] = config.samplesCount;
 		s.iparams[1] = hash(config.frameIndex);
-		const AggregatedBinding buffUni = config.aggregate->writeStruct(s, 0);
+		const AggregatedBinding buffUni = config.aggregate->writeStruct(s, 0, true);
 
-		const AggregatedBinding buffPoints = config.aggregate->writeBuffer(privat::pointsForSsaoShader(config.samplesCount), 1);
+		const AggregatedBinding buffPoints = config.aggregate->writeBuffer(privat::pointsForSsaoShader(config.samplesCount), 1, true);
 
 		{ // low-res depth
 			RenderPassConfig pass;
@@ -232,7 +232,7 @@ namespace cage
 		s.projInv = inverse(config.proj);
 		s.dofNear = Vec4(fd - fr - br, fd - fr, 0, 0);
 		s.dofFar = Vec4(fd + fr, fd + fr + br, 0, 0);
-		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 
 		{ // collect
 			RenderPassConfig pass;
@@ -324,7 +324,7 @@ namespace cage
 		} s;
 		s.params[0] = config.threshold;
 		s.params[1] = max(config.blurPasses, 1u) + 1e-5;
-		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 
 		{ // generate
 			RenderPassConfig pass;
@@ -424,7 +424,7 @@ namespace cage
 		} s;
 		s.params[0] = 1.0 / config.gamma;
 		s.params[1] = config.tonemapEnabled;
-		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);
@@ -473,7 +473,7 @@ namespace cage
 			Vec4 params; // strength
 		} s;
 		s.params[0] = config.strength;
-		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0);
+		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);

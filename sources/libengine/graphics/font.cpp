@@ -502,12 +502,12 @@ namespace cage
 
 					GraphicsBindingsCreateConfig bind;
 					{
-						const auto ab0 = config.aggregate->writeStruct(global, 0);
+						const auto ab0 = config.aggregate->writeStruct(global, 0, true);
 						bind.buffers.push_back(ab0);
 						drw.dynamicOffsets.push_back(ab0);
 					}
 					{
-						const auto ab1 = config.aggregate->writeArray(PointerRange<const Instance>(insts, insts + i), 1);
+						const auto ab1 = config.aggregate->writeArray(PointerRange<const Instance>(insts, insts + i), 1, false);
 						bind.buffers.push_back(ab1);
 						drw.dynamicOffsets.push_back(ab1);
 					}

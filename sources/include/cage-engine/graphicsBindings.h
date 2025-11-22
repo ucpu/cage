@@ -28,6 +28,7 @@ namespace cage
 			GraphicsBuffer *buffer = nullptr;
 			uint32 binding = m;
 			uint32 size = m;
+			bool uniform = false;
 			bool dynamic = false;
 		};
 

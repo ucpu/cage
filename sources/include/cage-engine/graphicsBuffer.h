@@ -35,13 +35,11 @@ namespace cage
 		}
 
 		uintPtr size() const;
-		uint32 type() const;
 
 		const wgpu::Buffer &nativeBuffer();
 	};
 
-	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferUniform(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
-	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferStorage(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
 	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
 }
 

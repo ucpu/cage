@@ -2,7 +2,7 @@
 $include ../functions/common.glsl
 $include ../functions/hsvToRgb.glsl
 
-layout(std430, set = 2, binding = 0) readonly buffer Global
+layout(std140, set = 2, binding = 0) uniform Global
 {
 	vec4 uniPos;
 	vec4 uniColorAndHue; // rgb, hue

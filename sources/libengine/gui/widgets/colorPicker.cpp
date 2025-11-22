@@ -49,7 +49,7 @@ namespace cage
 
 					void draw(const GuiRenderConfig &config) override
 					{
-						const auto ab = config.aggregate->writeStruct(data, 0);
+						const auto ab = config.aggregate->writeStruct(data, 0, true);
 						GraphicsBindingsCreateConfig bind;
 						bind.buffers.push_back(ab);
 						drw.dynamicOffsets.clear();

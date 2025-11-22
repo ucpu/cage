@@ -19,7 +19,7 @@ namespace cage
 		{
 		public:
 			Holder<Mutex> mutex = newMutex();
-			Holder<GraphicsBuffer> dummyUniform, dummyStorage;
+			Holder<GraphicsBuffer> dummyBuffer;
 			GraphicsDevice *device = nullptr;
 
 			struct Cache
@@ -27,7 +27,7 @@ namespace cage
 				Holder<GraphicsBuffer> buffer;
 				uint32 frameIndex = 0;
 
-				Cache(GraphicsDevice *device) { buffer = newGraphicsBufferStorage(device, 5'000'000, "transient buffer"); }
+				Cache(GraphicsDevice *device) { buffer = newGraphicsBuffer(device, 5'000'000, "transient buffer"); }
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
@@ -35,11 +35,7 @@ namespace cage
 			uint32 finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
-			void generateDummyBuffers()
-			{
-				dummyUniform = newGraphicsBufferUniform(device, 256, "dummyUniform");
-				dummyStorage = newGraphicsBufferStorage(device, 256, "dummyStorage");
-			}
+			void generateDummyBuffers() { dummyBuffer = newGraphicsBuffer(device, 256, "dummyBuffer"); }
 
 			DeviceBuffersCache(GraphicsDevice *device) : device(device) { generateDummyBuffers(); }
 
@@ -99,14 +95,9 @@ namespace cage
 
 		DeviceBuffersCache *getDeviceBuffersCache(GraphicsDevice *device);
 
-		GraphicsBuffer *getBufferDummyUniform(GraphicsDevice *device)
+		GraphicsBuffer *getBufferDummy(GraphicsDevice *device)
 		{
-			return +getDeviceBuffersCache(device)->dummyUniform;
-		}
-
-		GraphicsBuffer *getBufferDummyStorage(GraphicsDevice *device)
-		{
-			return +getDeviceBuffersCache(device)->dummyStorage;
+			return +getDeviceBuffersCache(device)->dummyBuffer;
 		}
 	}
 
@@ -145,7 +136,7 @@ namespace cage
 				ser.write(PointerRange<const char>(nothing).subRange(0, sz));
 			}
 
-			AggregatedBinding writeBuffer(PointerRange<const char> data, uint32 binding)
+			AggregatedBinding writeBuffer(PointerRange<const char> data, uint32 binding, bool uniform)
 			{
 				if (memory.size() + detail::roundUpTo(data.size(), 256) > capacity)
 				{
@@ -157,6 +148,7 @@ namespace cage
 				res.buffer = +cache->buffer;
 				res.binding = binding;
 				res.size = data.size();
+				res.uniform = uniform;
 				res.dynamic = true;
 				res.dynamicOffset = memory.size();
 				ser.write(data);
@@ -181,10 +173,10 @@ namespace cage
 		};
 	}
 
-	AggregatedBinding GraphicsAggregateBuffer::writeBuffer(PointerRange<const char> data, uint32 binding)
+	AggregatedBinding GraphicsAggregateBuffer::writeBuffer(PointerRange<const char> data, uint32 binding, bool uniform)
 	{
 		GraphicsAggregateBufferImpl *impl = (GraphicsAggregateBufferImpl *)this;
-		return impl->writeBuffer(data, binding);
+		return impl->writeBuffer(data, binding, uniform);
 	}
 
 	void GraphicsAggregateBuffer::submit()

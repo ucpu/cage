@@ -47,8 +47,7 @@ namespace cage
 		Texture *getTextureDummyArray(GraphicsDevice *device);
 		Texture *getTextureDummyCube(GraphicsDevice *device);
 		Texture *getTextureShadowsSampler(GraphicsDevice *device);
-		GraphicsBuffer *getBufferDummyUniform(GraphicsDevice *device);
-		GraphicsBuffer *getBufferDummyStorage(GraphicsDevice *device);
+		GraphicsBuffer *getBufferDummy(GraphicsDevice *device);
 	}
 
 	namespace detail
@@ -517,22 +516,22 @@ namespace cage
 				DrawConfig draw;
 				GraphicsBindingsCreateConfig bind;
 				{
-					const auto ab = aggregate->writeStruct(uniOptions, 0);
+					const auto ab = aggregate->writeStruct(uniOptions, 0, true);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					const auto ab = aggregate->writeArray<UniMesh>(uniMeshes, 1);
+					const auto ab = aggregate->writeArray<UniMesh>(uniMeshes, 1, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					const auto ab = aggregate->writeArray<Mat3x4>(uniArmatures, 2);
+					const auto ab = aggregate->writeArray<Mat3x4>(uniArmatures, 2, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					const auto ab = aggregate->writeArray<float>(uniCustomData, 3);
+					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
@@ -627,20 +626,20 @@ namespace cage
 				DrawConfig draw;
 				GraphicsBindingsCreateConfig bind;
 				{
-					const auto ab = aggregate->writeStruct(uniOptions, 0);
+					const auto ab = aggregate->writeStruct(uniOptions, 0, true);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					const auto ab = aggregate->writeArray<UniMesh>(uniMeshes, 1);
+					const auto ab = aggregate->writeArray<UniMesh>(uniMeshes, 1, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					bind.buffers.push_back({ privat::getBufferDummyStorage(device), 2 });
+					bind.buffers.push_back({ privat::getBufferDummy(device), 2 });
 				}
 				{
-					const auto ab = aggregate->writeArray<float>(uniCustomData, 3);
+					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
@@ -1060,7 +1059,7 @@ namespace cage
 					cameraData->lightsCount = numeric_cast<uint32>(lights.size());
 					if (lights.empty())
 						lights.resize(1); // must ensure non-empty buffer
-					buffLights = newGraphicsBufferStorage(device, lights.size() * sizeof(UniLight), "UniLight");
+					buffLights = newGraphicsBuffer(device, lights.size() * sizeof(UniLight), "UniLight");
 					buffLights->writeArray<UniLight>(lights);
 				}
 
@@ -1094,7 +1093,7 @@ namespace cage
 					cameraData->shadowedLightsCount = numeric_cast<uint32>(shadows.size());
 					if (shadows.empty())
 						shadows.resize(1); // must ensure non-empty buffer
-					buffShadowedLights = newGraphicsBufferStorage(device, shadows.size() * sizeof(UniShadowedLight), "UniShadowedLight");
+					buffShadowedLights = newGraphicsBuffer(device, shadows.size() * sizeof(UniShadowedLight), "UniShadowedLight");
 					buffShadowedLights->writeArray<UniShadowedLight>(shadows);
 				}
 
@@ -1159,8 +1158,8 @@ namespace cage
 				GraphicsBindings globalBindings;
 				{
 					GraphicsBindingsCreateConfig bind;
-					bind.buffers.push_back({ +buffViewport, 0 });
-					bind.buffers.push_back({ +buffProjection, 1 });
+					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
+					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
 					bind.buffers.push_back({ +buffLights, 2 });
 					bind.buffers.push_back({ +buffShadowedLights, 3 });
 					bind.textures.push_back({ +ssaoTexture, 4 });
@@ -1375,7 +1374,7 @@ namespace cage
 					viewport.skyLight = Vec4(colorGammaToLinear(camera.skyColor) * camera.skyIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(resolution));
 					viewport.time = Vec4(frameIndex % 10'000, (currentTime % uint64(1e6)) / 1e6, (currentTime % uint64(1e9)) / 1e9, 0);
-					buffViewport = newGraphicsBufferUniform(+device, sizeof(viewport), "UniViewport");
+					buffViewport = newGraphicsBuffer(+device, sizeof(viewport), "UniViewport");
 					buffViewport->writeStruct(viewport);
 				}
 
@@ -1385,7 +1384,7 @@ namespace cage
 					uni.projMat = projection;
 					uni.vpMat = viewProj;
 					uni.vpInv = inverse(viewProj);
-					buffProjection = newGraphicsBufferUniform(+device, sizeof(uni), "UniProjection");
+					buffProjection = newGraphicsBuffer(+device, sizeof(uni), "UniProjection");
 					buffProjection->writeStruct(uni);
 				}
 
@@ -1441,17 +1440,17 @@ namespace cage
 					uni.projMat = projection;
 					uni.vpMat = viewProj;
 					uni.vpInv = inverse(viewProj);
-					buffProjection = newGraphicsBufferUniform(+device, sizeof(uni), "UniProjection");
+					buffProjection = newGraphicsBuffer(+device, sizeof(uni), "UniProjection");
 					buffProjection->writeStruct(uni);
 				}
 
 				GraphicsBindings globalBindings;
 				{
-					GraphicsBuffer *dummyStorage = privat::getBufferDummyStorage(device);
+					GraphicsBuffer *dummyStorage = privat::getBufferDummy(device);
 					Texture *dummyRegular = privat::getTextureDummy2d(device);
 					GraphicsBindingsCreateConfig bind;
-					bind.buffers.push_back({ +buffViewport, 0 });
-					bind.buffers.push_back({ +buffProjection, 1 });
+					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
+					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
 					bind.buffers.push_back({ dummyStorage, 2 });
 					bind.buffers.push_back({ dummyStorage, 3 });
 					bind.textures.push_back({ dummyRegular, 4 });

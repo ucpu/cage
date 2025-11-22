@@ -1,5 +1,5 @@
 
-layout(std430, set = 2, binding = 0) readonly buffer Element
+layout(std140, set = 2, binding = 0) uniform Element
 {
 	vec4 posOuter;
 	vec4 posInner;

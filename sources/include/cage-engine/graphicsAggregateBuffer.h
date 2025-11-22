@@ -19,20 +19,20 @@ namespace cage
 	class CAGE_ENGINE_API GraphicsAggregateBuffer : private Immovable
 	{
 	public:
-		[[nodiscard]] AggregatedBinding writeBuffer(PointerRange<const char> data, uint32 binding);
+		[[nodiscard]] AggregatedBinding writeBuffer(PointerRange<const char> data, uint32 binding, bool uniform);
 
 		template<class T>
 		requires(privat::GraphicsBufferWritable<T>)
-		[[nodiscard]] AggregatedBinding writeStruct(const T &data, uint32 binding)
+		[[nodiscard]] AggregatedBinding writeStruct(const T &data, uint32 binding, bool uniform)
 		{
-			return writeBuffer({ (const char *)&data, (const char *)(&data + 1) }, binding);
+			return writeBuffer({ (const char *)&data, (const char *)(&data + 1) }, binding, uniform);
 		}
 
 		template<class T>
 		requires(privat::GraphicsBufferWritable<T>)
-		[[nodiscard]] AggregatedBinding writeArray(PointerRange<const T> data, uint32 binding)
+		[[nodiscard]] AggregatedBinding writeArray(PointerRange<const T> data, uint32 binding, bool uniform)
 		{
-			return writeBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, binding);
+			return writeBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, binding, uniform);
 		}
 
 		void submit();

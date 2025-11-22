@@ -67,20 +67,7 @@ namespace cage
 					wgpu::BindGroupLayoutEntry e = {};
 					e.binding = b.binding;
 					e.visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
-					e.buffer.type = [type = b.buffer->type()]() -> wgpu::BufferBindingType
-					{
-						switch (type)
-						{
-							case 0:
-								return wgpu::BufferBindingType::Uniform;
-							case 1:
-								return wgpu::BufferBindingType::ReadOnlyStorage;
-							case 2:
-								return wgpu::BufferBindingType::Undefined;
-							default:
-								return wgpu::BufferBindingType::Undefined;
-						}
-					}();
+					e.buffer.type = b.uniform ? wgpu::BufferBindingType::Uniform : wgpu::BufferBindingType::ReadOnlyStorage;
 					e.buffer.hasDynamicOffset = b.dynamic;
 					entries.push_back(e);
 				}
@@ -187,9 +174,9 @@ namespace cage
 					keys.reserve(config.buffers.size() + 1 + config.textures.size());
 					for (const auto &b : config.buffers)
 					{
-						const uint32 dyn = (uint32)b.dynamic << 10;
-						const uint32 type = (uint32)b.buffer->type() << 11;
-						keys.push_back(b.binding + dyn + type);
+						const uint32 unif = (uint32)b.uniform << 10;
+						const uint32 dyn = (uint32)b.dynamic << 11;
+						keys.push_back(b.binding + unif + dyn);
 					}
 					keys.push_back(75431564); // separator
 					for (const auto &t : config.textures)
@@ -326,6 +313,7 @@ namespace cage
 			GraphicsBindingsCreateConfig::BufferBindingConfig bc;
 			bc.buffer = +model->materialBuffer;
 			bc.binding = 0;
+			bc.uniform = true;
 			config.buffers.push_back(std::move(bc));
 		}
 

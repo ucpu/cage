@@ -7,7 +7,7 @@ $include ../functions/common.glsl
 $include ../functions/randomFunc.glsl
 $include ssaoParams.glsl
 
-layout(std430, set = 2, binding = 1) readonly buffer SsaoPoints
+layout(std140, set = 2, binding = 1) uniform SsaoPoints
 {
 	vec4 ssaoPoints[256];
 };

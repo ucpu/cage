@@ -3,7 +3,7 @@ $include vertex.glsl
 
 $define shader fragment
 
-layout(std430, set = 2, binding = 0) readonly buffer Tonemap
+layout(std140, set = 2, binding = 0) uniform Tonemap
 {
 	vec4 params; // gamma, tonemapEnabled
 };

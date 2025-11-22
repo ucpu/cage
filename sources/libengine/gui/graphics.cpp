@@ -94,7 +94,7 @@ namespace cage
 
 			void draw(const GuiRenderConfig &config) override
 			{
-				const auto ab = config.aggregate->writeStruct(e, 0);
+				const auto ab = config.aggregate->writeStruct(e, 0, true);
 				GraphicsBindingsCreateConfig bind;
 				bind.buffers.push_back(ab);
 				bind.buffers.push_back(skin->uvsBinding);
@@ -286,7 +286,7 @@ namespace cage
 
 			void draw(const GuiRenderConfig &config) override
 			{
-				const auto ab = config.aggregate->writeStruct(data, 0);
+				const auto ab = config.aggregate->writeStruct(data, 0, true);
 				GraphicsBindingsCreateConfig bind;
 				bind.buffers.push_back(ab);
 				bind.textures.push_back({ +texture, 1 });
@@ -407,7 +407,7 @@ namespace cage
 		const ProfilingScope proifiling("gui dispatch");
 		GuiRenderImpl *impl = (GuiRenderImpl *)this;
 		for (auto &it : impl->skins)
-			it.uvsBinding = config.aggregate->writeArray<GuiSkinElementLayout::TextureUv>(it.textureUvs, 1);
+			it.uvsBinding = config.aggregate->writeArray<GuiSkinElementLayout::TextureUv>(it.textureUvs, 1, false);
 		for (const auto &it : impl->commands)
 			it->draw(config);
 	}

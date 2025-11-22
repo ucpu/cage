@@ -1,5 +1,5 @@
 
-layout(std430, set = 2, binding = 0) readonly buffer Ssao
+layout(std140, set = 2, binding = 0) uniform Ssao
 {
 	mat4 proj;
 	mat4 projInv;
