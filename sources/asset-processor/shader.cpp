@@ -450,6 +450,7 @@ namespace
 	}
 
 	std::vector<bool> selectedKeys;
+	std::set<detail::StringBase<20>> applicableKeywords;
 	void generateVariants(uint32 keyIndex)
 	{
 		if (keyIndex == keywords.size())
@@ -480,6 +481,17 @@ namespace
 				Holder<Spirv> sp = newSpirv();
 				sp->importGlsl(imports);
 				variants.push_back({ std::move(sp), id });
+
+				for (uint32 i = 0; i < keywords.size(); i++)
+				{
+					if (selectedKeys[i])
+					{
+						auto it = keywords.begin();
+						std::advance(it, i);
+						const detail::StringBase<20> k = *it;
+						applicableKeywords.insert(k);
+					}
+				}
 			}
 			catch (...)
 			{
@@ -516,7 +528,10 @@ void processShader()
 		CAGE_THROW_ERROR(Exception, "generated no shader variants");
 	}
 	else
+	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "generated variants: " + variants.size());
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "applicable keywords: " + applicableKeywords.size() + ", out of: " + keywords.size());
+	}
 
 	for (auto &it : variants)
 		it.spirv->stripSources();
@@ -537,7 +552,7 @@ void processShader()
 		Serializer ser(buff);
 		ser << header;
 		{
-			std::vector<detail::StringBase<20>> ks(keywords.begin(), keywords.end());
+			std::vector<detail::StringBase<20>> ks(applicableKeywords.begin(), applicableKeywords.end());
 			ser << ks;
 		}
 		for (const Variant &v : variants)
