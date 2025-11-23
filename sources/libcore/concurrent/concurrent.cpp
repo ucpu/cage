@@ -3,6 +3,10 @@
 #include <exception>
 #include <thread>
 
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86))
+	#include <immintrin.h> // _mm_pause
+#endif
+
 #ifdef CAGE_SYSTEM_WINDOWS
 	//#ifndef WIN32_LEAN_AND_MEAN
 	//	#define WIN32_LEAN_AND_MEAN
@@ -120,47 +124,84 @@ namespace cage
 		class RwMutexImpl : public RwMutex
 		{
 		public:
-			std::atomic<uint32> v = 0;
-			static constexpr uint32 YieldAfter = 100;
-			static constexpr uint32 Writer = m;
+			// bit 31: writer holds lock
+			// bit 30: writer is waiting (prevents new readers from starving writer)
+			// bits 0-29: reader count
+			static constexpr uint32 WriterLockedBit = 1 << 31;
+			static constexpr uint32 WriterWaitingBit = 1 << 30;
+			std::atomic<uint32> state = 0;
+
+			void writeLock()
+			{
+				uint32 expected = state.load(std::memory_order_relaxed);
+				while (true)
+				{
+					if (expected & WriterLockedBit)
+					{
+						threadPause();
+						expected = state.load(std::memory_order_relaxed);
+						continue;
+					}
+					if (!(expected & WriterWaitingBit))
+					{
+						if (!state.compare_exchange_weak(expected, expected | WriterWaitingBit, std::memory_order_relaxed))
+							continue;
+						expected |= WriterWaitingBit;
+					}
+					if (expected != WriterWaitingBit)
+					{
+						threadPause();
+						expected = state.load(std::memory_order_relaxed);
+						continue;
+					}
+					if (state.compare_exchange_weak(expected, WriterLockedBit, std::memory_order_acquire))
+						return; // succesfully locked
+				}
+			}
+
+			void readLock()
+			{
+				uint32 expected = state.load(std::memory_order_relaxed);
+				while (true)
+				{
+					if (expected & (WriterLockedBit | WriterWaitingBit))
+					{
+						threadPause();
+						expected = state.load(std::memory_order_relaxed);
+						continue;
+					}
+					if (state.compare_exchange_weak(expected, expected + 1, std::memory_order_acquire))
+						return; // succesfully locked
+				}
+			}
+
+			void unlock()
+			{
+				uint32 prev = state.load(std::memory_order_relaxed);
+				if (prev & WriterLockedBit)
+					state.fetch_and(~WriterLockedBit, std::memory_order_release);
+				else
+					state.fetch_sub(1, std::memory_order_release);
+			}
 		};
 	}
 
 	void RwMutex::writeLock()
 	{
 		RwMutexImpl *impl = (RwMutexImpl *)this;
-		uint32 attempt = 0;
-		while (true)
-		{
-			uint32 p = 0;
-			if (impl->v.compare_exchange_weak(p, RwMutexImpl::Writer, std::memory_order_acquire))
-				return;
-			if (++attempt >= RwMutexImpl::YieldAfter)
-				threadYield();
-		}
+		impl->writeLock();
 	}
 
 	void RwMutex::readLock()
 	{
 		RwMutexImpl *impl = (RwMutexImpl *)this;
-		uint32 attempt = 0;
-		while (true)
-		{
-			uint32 p = impl->v.load(std::memory_order_relaxed);
-			if (p != RwMutexImpl::Writer && impl->v.compare_exchange_weak(p, p + 1, std::memory_order_acquire))
-				return;
-			if (++attempt >= RwMutexImpl::YieldAfter)
-				threadYield();
-		}
+		impl->readLock();
 	}
 
 	void RwMutex::unlock()
 	{
 		RwMutexImpl *impl = (RwMutexImpl *)this;
-		if (impl->v.load(std::memory_order_relaxed) == RwMutexImpl::Writer)
-			impl->v.store(0, std::memory_order_release);
-		else
-			impl->v.fetch_sub(1, std::memory_order_release);
+		impl->unlock();
 	}
 
 	Holder<RwMutex> newRwMutex()
@@ -859,7 +900,7 @@ namespace cage
 
 				// spin the rest of the time
 				while (tmr->duration() < target)
-					threadYield();
+					threadPause();
 			}
 		};
 #endif
@@ -883,5 +924,22 @@ namespace cage
 	void threadYield()
 	{
 		std::this_thread::yield();
+	}
+
+	void threadPause()
+	{
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64) || defined(_M_IX86))
+		_mm_pause();
+#elif (defined(__clang__) || defined(__GNUC__)) && (defined(__x86_64__) || defined(__i386__))
+		__builtin_ia32_pause();
+#elif defined(__aarch64__) || defined(_M_ARM64) || defined(__arm__) || defined(_M_ARM)
+		__asm__ __volatile__("yield");
+#else
+	#warning "unknwon compiler/architecture"
+		__asm__ __volatile__("nop");
+		__asm__ __volatile__("nop");
+		__asm__ __volatile__("nop");
+		__asm__ __volatile__("nop");
+#endif
 	}
 }

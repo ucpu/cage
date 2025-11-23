@@ -28,6 +28,7 @@ namespace cage
 		}
 
 		void preload(uint32 assetId);
+		void preload(PointerRange<const uint32> assetsIds);
 
 		void process();
 		void clear();

@@ -83,6 +83,14 @@ namespace cage
 		impl->update(assetId, true);
 	}
 
+	void AssetsOnDemand::preload(PointerRange<const uint32> assetsIds)
+	{
+		//AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
+		// todo optimize
+		for (uint32 id : assetsIds)
+			preload(id);
+	}
+
 	void AssetsOnDemand::process()
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;

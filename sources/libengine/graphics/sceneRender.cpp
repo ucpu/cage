@@ -564,6 +564,7 @@ namespace cage
 					GraphicsBindingsCreateConfig::BufferBindingConfig bc;
 					bc.buffer = +model->materialBuffer;
 					bc.binding = 0;
+					bc.uniform = true;
 					bind.buffers.push_back(std::move(bc));
 				}
 				bind.textures.reserve(MaxTexturesCountPerMaterial);

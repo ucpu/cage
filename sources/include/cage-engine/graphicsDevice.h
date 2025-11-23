@@ -38,8 +38,8 @@ namespace cage
 		void flushCaches();
 
 		Holder<wgpu::Device> nativeDeviceNoLock();
-		Holder<wgpu::Device> nativeDevice(); // locks the queue for thread-safe access
-		Holder<wgpu::Queue> nativeQueue(); // locks the queue for thread-safe access
+		Holder<wgpu::Device> nativeDevice(); // locks the device for thread-safe access
+		Holder<wgpu::Queue> nativeQueue(); // locks the device for thread-safe access
 	};
 
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig

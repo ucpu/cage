@@ -12,7 +12,9 @@ namespace
 {
 	uint32 counterGlobal;
 	thread_local uint32 counterLocal;
+	volatile uint32 volatileGlobal;
 	Mutex *mutexGlobal;
+	RwMutex *rwMutexGlobal;
 	Semaphore *semaphoreGlobal;
 	Barrier *barrierGlobal;
 
@@ -32,6 +34,21 @@ namespace
 	{
 		ScopeLock l(mutexGlobal);
 		counterGlobal += idx;
+	}
+
+	void rwMutexTest(uint32 idx, uint32)
+	{
+		if (idx < 4)
+		{ // writer
+
+			ScopeLock l(rwMutexGlobal, WriteLockTag());
+			counterGlobal += idx;
+		}
+		else
+		{ // reader
+			ScopeLock l(rwMutexGlobal, ReadLockTag());
+			volatileGlobal += counterGlobal;
+		}
 	}
 
 	void semaphoreTest(uint32 idx, uint32)
@@ -80,9 +97,11 @@ void testConcurrent()
 	CAGE_TESTCASE("concurrent");
 	Holder<Barrier> barrier = newBarrier(4);
 	Holder<Mutex> mutex = newMutex();
+	Holder<RwMutex> rwMutex = newRwMutex();
 	Holder<Semaphore> semaphore = newSemaphore(1, 1);
 	barrierGlobal = barrier.get();
 	mutexGlobal = mutex.get();
+	rwMutexGlobal = rwMutex.get();
 	semaphoreGlobal = semaphore.get();
 
 	{
@@ -130,6 +149,15 @@ void testConcurrent()
 			counterGlobal = 0;
 			Holder<ThreadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&mutexTest>();
+			for (uint32 i = 0; i < 100; i++)
+				thrs->run();
+			CAGE_TEST(counterGlobal == 600);
+		}
+		{
+			CAGE_TESTCASE("global variable (rw-mutex)");
+			counterGlobal = 0;
+			Holder<ThreadPool> thrs = newThreadPool("worker_", 6);
+			thrs->function.bind<&rwMutexTest>();
 			for (uint32 i = 0; i < 100; i++)
 				thrs->run();
 			CAGE_TEST(counterGlobal == 600);
