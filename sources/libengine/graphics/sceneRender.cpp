@@ -206,6 +206,23 @@ namespace cage
 			uint32 cascade = 0;
 		};
 
+		template<class T, class Mark, class Output>
+		void partition(PointerRange<T> inputRange, Mark &&mark, Output &&output)
+		{
+			auto it = inputRange.begin();
+			const auto et = inputRange.end();
+			while (it != et)
+			{
+				const auto mk = mark(*it);
+				auto i = it + 1;
+				while (i != et && mark(*i) == mk)
+					i++;
+				PointerRange<T> instances = { &*it, &*i };
+				output(instances);
+				it = i;
+			}
+		}
+
 		struct SceneRenderImpl : public SceneRenderConfig
 		{
 			Holder<Model> modelSquare, modelBone, modelIcon;
@@ -759,18 +776,8 @@ namespace cage
 						},
 						d.data);
 				};
-				auto it = renderData.begin();
-				const auto et = renderData.end();
-				while (it != et)
-				{
-					const auto mk = mark(*it);
-					auto i = it + 1;
-					while (i != et && mark(*i) == mk)
-						i++;
-					PointerRange<const RenderData> instances = { &*it, &*i };
-					renderInstances(renderMode, instances);
-					it = i;
-				}
+				const auto &render = [&](PointerRange<const RenderData> instances) { renderInstances(renderMode, instances); };
+				partition(PointerRange<const RenderData>(renderData), mark, render);
 			}
 
 			void prepareModelBones(const RenderData &rd)
@@ -863,49 +870,6 @@ namespace cage
 					renderData.push_back(std::move(rd));
 			}
 
-			void prepareObject(const RenderData &rd, Holder<RenderObject> object)
-			{
-				CAGE_ASSERT(std::holds_alternative<std::monostate>(rd.data));
-
-				lodSelection.selectModels(prepareModels, Vec3(rd.model * Vec4(0, 0, 0, 1)), +object, +onDemand);
-
-				// render selected lod
-				for (auto &it : prepareModels)
-				{
-					RenderData d;
-					d.model = rd.model;
-					d.e = rd.e;
-					RenderModel r;
-					r.mesh = std::move(it);
-					d.data = std::move(r);
-					prepareModel(d, +object);
-				}
-			}
-
-			void prepareIcon(Entity *e, const IconComponent &ic)
-			{
-				CAGE_ASSERT(ic.icon != 0 && ic.icon != m);
-				RenderIcon ri;
-				ri.texture = assets->get<Texture>(ic.icon);
-				if (!ri.texture)
-					return;
-				ri.mesh = ic.model ? assets->get<Model>(ic.model) : modelIcon.share();
-				if (!ri.mesh)
-					return;
-				CAGE_ASSERT(ri.mesh->bonesCount == 0);
-				RenderData rd;
-				rd.e = e;
-				rd.model = Mat4(modelTransform(e));
-				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
-				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
-				rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
-				rd.renderLayer = ic.renderLayer + ri.mesh->layer;
-				rd.translucent = true;
-				rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
-				rd.data = std::move(ri);
-				renderData.push_back(std::move(rd));
-			}
-
 			void prepareText(Entity *e, TextComponent tc)
 			{
 				if (!tc.font)
@@ -956,12 +920,17 @@ namespace cage
 				return (c & cameraSceneMask) == 0;
 			}
 
-			void prepareEntities()
+			void prepareEntitiesModels()
 			{
-				ProfilingScope profiling("prepare entities");
-				profiling.set(Stringizer() + "entities: " + scene->count());
+				ProfilingScope profiling("models");
 
-				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<IconComponent>()->count() + scene->component<TextComponent>()->count());
+				struct Data
+				{
+					Entity *e = nullptr;
+					uint32 id = 0;
+				};
+				std::vector<Data> data;
+				data.reserve(scene->component<ModelComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
@@ -970,32 +939,113 @@ namespace cage
 							return;
 						if (failedMask(e))
 							return;
-						RenderData rd;
-						rd.e = e;
-						rd.model = Mat4(modelTransform(e));
-						if (Holder<RenderObject> obj = assets->get<RenderObject>(rc.model))
-						{
-							prepareObject(rd, std::move(obj));
-							return;
-						}
-						if (Holder<Model> mesh = assets->get<Model>(rc.model))
-						{
-							RenderModel rm;
-							rm.mesh = std::move(mesh);
-							rd.data = std::move(rm);
-							prepareModel(rd);
-							return;
-						}
-						if (cnfRenderMissingModels)
-						{
-							RenderModel rm;
-							rm.mesh = assets->get<Model>(HashString("cage/models/fake.obj"));
-							rd.data = std::move(rm);
-							prepareModel(rd);
-							return;
-						}
+						data.push_back({ e, rc.model });
 					},
 					+scene, false);
+				profiling.set(Stringizer() + "models: " + data.size());
+				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return a.id < b.id; });
+
+				const auto &mark = [](const Data &data) { return data.id; };
+				const auto &output = [&](PointerRange<const Data> data)
+				{
+					CAGE_ASSERT(data.size() > 0);
+
+					if (Holder<RenderObject> obj = assets->get<RenderObject>(data[0].id))
+					{
+						CAGE_ASSERT(obj->lodsCount() > 0);
+						if (obj->lodsCount() == 1)
+						{
+							prepareModels.clear();
+							for (uint32 id : obj->models(0))
+							{
+								if (Holder<Model> mesh = onDemand->get<Model>(id))
+									prepareModels.push_back(std::move(mesh));
+							}
+							if (prepareModels.empty())
+								return;
+							for (const auto &it : data)
+							{
+								const Mat4 mm = Mat4(modelTransform(it.e));
+								for (const auto &mesh : prepareModels)
+								{
+									RenderModel rm;
+									rm.mesh = mesh.share();
+									RenderData rd;
+									rd.e = it.e;
+									rd.model = mm;
+									rd.data = std::move(rm);
+									prepareModel(rd);
+								}
+							}
+							return;
+						}
+
+						for (const auto &it : data)
+						{
+							RenderData rd;
+							rd.e = it.e;
+							rd.model = Mat4(modelTransform(it.e));
+							lodSelection.selectModels(prepareModels, Vec3(rd.model * Vec4(0, 0, 0, 1)), +obj, +onDemand);
+							for (auto &it : prepareModels)
+							{
+								RenderData d;
+								d.model = rd.model;
+								d.e = rd.e;
+								RenderModel r;
+								r.mesh = std::move(it);
+								d.data = std::move(r);
+								prepareModel(d, +obj);
+							}
+						}
+						return;
+					}
+
+					if (Holder<Model> mesh = assets->get<Model>(data[0].id))
+					{
+						for (const auto &it : data)
+						{
+							RenderModel rm;
+							rm.mesh = mesh.share();
+							RenderData rd;
+							rd.e = it.e;
+							rd.model = Mat4(modelTransform(it.e));
+							rd.data = std::move(rm);
+							prepareModel(rd);
+						}
+						return;
+					}
+
+					if (cnfRenderMissingModels)
+					{
+						Holder<Model> mesh = assets->get<Model>(HashString("cage/models/fake.obj"));
+						if (!mesh)
+							return;
+						for (const auto &it : data)
+						{
+							RenderModel rm;
+							rm.mesh = mesh.share();
+							RenderData rd;
+							rd.e = it.e;
+							rd.model = Mat4(modelTransform(it.e));
+							rd.data = std::move(rm);
+							prepareModel(rd);
+						}
+					}
+				};
+				partition(PointerRange<const Data>(data), mark, output);
+			}
+
+			void prepareEntitiesIcons()
+			{
+				ProfilingScope profiling("icons");
+
+				struct Data
+				{
+					IconComponent ic;
+					Entity *e = nullptr;
+				};
+				std::vector<Data> data;
+				data.reserve(scene->component<IconComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const IconComponent &ic)
@@ -1004,9 +1054,54 @@ namespace cage
 							return;
 						if (failedMask(e))
 							return;
-						prepareIcon(e, ic);
+						data.push_back({ ic, e });
 					},
 					+scene, false);
+				profiling.set(Stringizer() + "icons: " + data.size());
+				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.icon, a.ic.model } < std::pair{ b.ic.icon, b.ic.model }; });
+
+				const auto &mark = [](const Data &data) { return std::pair{ data.ic.icon, data.ic.model }; };
+				const auto &output = [&](PointerRange<const Data> data)
+				{
+					CAGE_ASSERT(data.size() > 0);
+					Holder<Texture> tex = assets->get<Texture>(data[0].ic.icon);
+					if (!tex)
+						return;
+					Holder<Model> mod = data[0].ic.model ? assets->get<Model>(data[0].ic.model) : modelIcon.share();
+					if (!mod)
+						return;
+					for (const auto &it : data)
+					{
+						const IconComponent &ic = it.e->value<IconComponent>();
+						RenderIcon ri;
+						ri.texture = tex.share();
+						ri.mesh = mod.share();
+						CAGE_ASSERT(ri.mesh->bonesCount == 0);
+						RenderData rd;
+						rd.e = it.e;
+						rd.model = Mat4(modelTransform(it.e));
+						rd.color = initializeColor(it.e->getOrDefault<ColorComponent>());
+						const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
+						rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
+						rd.renderLayer = ic.renderLayer + ri.mesh->layer;
+						rd.translucent = true;
+						rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
+						rd.data = std::move(ri);
+						renderData.push_back(std::move(rd));
+					}
+				};
+				partition(PointerRange<const Data>(data), mark, output);
+			}
+
+			void prepareEntities()
+			{
+				ProfilingScope profiling("prepare entities");
+				profiling.set(Stringizer() + "entities: " + scene->count());
+
+				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<IconComponent>()->count() + scene->component<TextComponent>()->count());
+
+				prepareEntitiesModels();
+				prepareEntitiesIcons();
 
 				entitiesVisitor(
 					[&](Entity *e, const TextComponent &tc)

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <numeric>
 
 #include "main.h"
@@ -10,9 +11,9 @@
 
 namespace
 {
-	uint32 counterGlobal;
-	thread_local uint32 counterLocal;
-	volatile uint32 volatileGlobal;
+	uint32 counterGlobal = 0;
+	thread_local uint32 counterLocal = 0;
+	std::atomic<uint32> atomicGlobal = 0;
 	Mutex *mutexGlobal;
 	RwMutex *rwMutexGlobal;
 	Semaphore *semaphoreGlobal;
@@ -47,7 +48,7 @@ namespace
 		else
 		{ // reader
 			ScopeLock l(rwMutexGlobal, ReadLockTag());
-			volatileGlobal += counterGlobal;
+			atomicGlobal += counterGlobal;
 		}
 	}
 
@@ -161,6 +162,7 @@ void testConcurrent()
 			for (uint32 i = 0; i < 100; i++)
 				thrs->run();
 			CAGE_TEST(counterGlobal == 600);
+			// do not check atomicGlobal. its value cannot be determined due to order of threads
 		}
 		{
 			CAGE_TESTCASE("global variable (semaphore)");
