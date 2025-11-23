@@ -35,7 +35,7 @@ namespace cage
 
 			ColliderImpl() { ((Collider *)this)->rebuild(); }
 
-			void builLeaf(std::vector<Triangle> &ts)
+			void buildLeaf(std::vector<Triangle> &ts)
 			{
 				Node n;
 				n.left = numeric_cast<uint32>(tris.size());
@@ -55,7 +55,7 @@ namespace cage
 				// primitive nodes form leaves
 				if (ts.size() <= 10)
 				{
-					builLeaf(ts);
+					buildLeaf(ts);
 					return;
 				}
 
@@ -123,7 +123,7 @@ namespace cage
 
 				if (axis == m) // found no split
 				{
-					builLeaf(ts);
+					buildLeaf(ts);
 					return;
 				}
 

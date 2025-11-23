@@ -1,13 +1,12 @@
 #include <plf_colony.h>
+#include <svector.h>
 #include <unordered_dense.h>
 
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 
 #ifdef CAGE_ENGINE_API
-	#include <cage-engine/inputs.h>
-	#include <cage-engine/opengl.h>
-	#include <cage-engine/window.h>
+	#include <cage-engine/core.h>
 #endif // !CAGE_ENGINE_API
 
 using namespace cage;
@@ -24,7 +23,13 @@ namespace
 		colony.insert(Vec3(42));
 	}
 
-	void testRobinHood()
+	void testSvector()
+	{
+		ankerl::svector<Vec3, 4> vec;
+		vec.push_back(Vec3(1, 2, 3));
+	}
+
+	void testUnorderedDense()
 	{
 		ankerl::unordered_dense::map<uint32, Vec3> um;
 		um[13] = Vec3(42);
@@ -34,30 +39,10 @@ namespace
 void testCageInstallConsistentPaths()
 {
 	testColony();
-	testRobinHood();
+	testSvector();
+	testUnorderedDense();
 
 #ifdef CAGE_ENGINE_API
-	CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "creating window");
-	Holder<Window> window = newWindow({});
-	const auto closeListener = window->events.listen(inputFilter([](input::WindowClose) { closing = true; }));
-	window->setWindowed();
-	window->windowedSize(Vec2i(400, 300));
-	window->title("cage-test-install");
-	detail::initializeOpengl();
-
-	CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "starting loop");
-	while (!closing)
-	{
-		window->processEvents();
-		Vec2i resolution = window->resolution();
-		glViewport(0, 0, resolution[0], resolution[1]);
-		Vec3 color = Vec3(1, 0, 0);
-		glClearColor(color[0].value, color[1].value, color[2].value, 0);
-		glClear(GL_COLOR_BUFFER_BIT);
-		window->swapBuffers();
-		threadSleep(5000);
-	}
-
-	CAGE_LOG(SeverityEnum::Info, "test", Stringizer() + "finishing");
+	static_assert(MaxTexturesCountPerMaterial > 0);
 #endif // !CAGE_ENGINE_API
 }

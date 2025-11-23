@@ -70,13 +70,17 @@ set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
 file(CONFIGURE OUTPUT "${constants_path}" CONTENT "${constants_content}" @ONLY)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 
+# absl
+set(ABSL_PROPAGATE_CXX_STD OFF CACHE INTERNAL "Use CMake C++ standard meta features (e.g. cxx_std_17) that propagate to targets that link to Abseil")
+set(ABSL_USE_SYSTEM_INCLUDES ON CACHE INTERNAL "Use CMake C++ standard meta features (e.g. cxx_std_17) that propagate to targets that link to Abseil")
+
+
 # protobuf
 add_library(libprotobuf-mutator INTERFACE) # subvert unnecessary dependencies
 
-# add the externals
+# dawn
 add_subdirectory(dawn)
 
-# dawn
 add_library(cage_dawn INTERFACE)
 target_link_libraries(cage_dawn INTERFACE $<TARGET_LINKER_FILE:webgpu_dawn> $<TARGET_LINKER_FILE:webgpu_glfw>)
 if(APPLE)

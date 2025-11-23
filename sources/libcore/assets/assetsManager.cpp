@@ -4,6 +4,7 @@
 #include <functional>
 #include <vector>
 
+#include <svector.h>
 #include <unordered_dense.h>
 
 #include <cage-core/assetContext.h>
@@ -72,7 +73,7 @@ namespace cage
 		// container for all versions of a single asset name
 		struct Collection : private Noncopyable
 		{
-			std::vector<Holder<Asset>> versions; // todo replace with a small vector
+			ankerl::svector<Holder<Asset>, 1> versions;
 			sint32 references = 0; // how many times was the asset added in the api
 			bool fabricated = false; // once a fabricated asset is added to the collection, all future requests for reload are ignored
 		};

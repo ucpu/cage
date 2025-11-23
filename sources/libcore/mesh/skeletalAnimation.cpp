@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <vector>
 
+#include <cage-core/containerSerialization.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryAlloca.h>
 #include <cage-core/memoryBuffer.h>
@@ -114,28 +115,6 @@ namespace cage
 
 	namespace
 	{
-		template<class T>
-		CAGE_FORCE_INLINE Deserializer &operator>>(Deserializer &des, std::vector<T> &vec)
-		{
-			uint32 cnt = 0;
-			des >> cnt;
-			std::vector<T> tmp;
-			tmp.resize(cnt);
-			for (T &it : tmp)
-				des >> it;
-			std::swap(vec, tmp);
-			return des;
-		}
-
-		template<class T>
-		CAGE_FORCE_INLINE Serializer &operator<<(Serializer &ser, std::vector<T> &vec)
-		{
-			ser << numeric_cast<uint32>(vec.size());
-			for (T &it : vec)
-				ser << it;
-			return ser;
-		}
-
 		template<class T>
 		CAGE_FORCE_INLINE Deserializer &operator<<(Deserializer &des, T &other)
 		{

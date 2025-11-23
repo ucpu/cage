@@ -120,4 +120,4 @@
 	url = https://dawn.googlesource.com/dawn
 [submodule "externals/svector/svector"]
 	path = externals/svector/svector
-	url = https://github.com/martinus/svector.git
+	url = https://github.com/ucpu/svector.git
