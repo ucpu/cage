@@ -297,6 +297,7 @@ namespace cage
 	public:
 		Holder<MemoryArena> memory; // must be last to destroy
 		std::vector<Holder<GuiRenderCommandBase>> commands;
+		Vec2i resolution;
 
 		Holder<Shader> elementShader;
 		Holder<Model> elementModel;

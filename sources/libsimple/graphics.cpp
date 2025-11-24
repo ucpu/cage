@@ -250,13 +250,7 @@ namespace cage
 				drawPrimitives = frameData.primitives;
 				dynamicResolution = 1;
 
-				if (!frameData.targetTexture)
-				{
-					sharedTargetTexture.clear();
-					return;
-				}
-
-				if (!engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
+				if (!frameData.targetTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
 					sharedTargetTexture.clear();
 					return;
@@ -296,7 +290,7 @@ namespace cage
 					enc->nextPass(passcfg);
 					{
 						const auto scope = enc->namedScope("gui");
-						guiBundle->draw({ engineGraphicsDevice(), +enc, +agg });
+						guiBundle->draw({ frameData.targetTexture->resolution(), engineGraphicsDevice(), +enc, +agg });
 					}
 					agg->submit();
 					enc->submit();

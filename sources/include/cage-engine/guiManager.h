@@ -15,6 +15,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiRenderConfig
 	{
+		Vec2i resolution;
 		GraphicsDevice *device = nullptr;
 		GraphicsEncoder *encoder = nullptr;
 		GraphicsAggregateBuffer *aggregate = nullptr;

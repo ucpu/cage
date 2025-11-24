@@ -28,9 +28,18 @@ namespace cage
 	{
 		if (clipSize[0] >= 1 && clipSize[1] >= 1)
 		{
-			//const Vec2i pos = Vec2i(Vec2(clipPos[0], impl->outputResolution[1] - clipPos[1] - clipSize[1]));
-			//const Vec2i siz = Vec2i(clipSize);
-			//impl->activeQueue->nativeRenderEncoder().SetScissorRect(pos[0], pos[1], siz[0], siz[1]); // todo
+			class Command : public GuiRenderCommandBase
+			{
+			public:
+				Vec4i scissors;
+
+				Command(Vec4i scissors) : scissors(scissors) {}
+
+				void draw(const GuiRenderConfig &config) override { config.encoder->nativeRenderEncoder().SetScissorRect(scissors[0], scissors[1], scissors[2], scissors[3]); }
+			};
+
+			const Vec4i scissors = Vec4i(Vec2i(clipPos), Vec2i(clipSize));
+			impl->activeQueue->commands.push_back(impl->activeQueue->memory->createImpl<GuiRenderCommandBase, Command>(scissors));
 			return true;
 		}
 		return false;
@@ -323,7 +332,7 @@ namespace cage
 		}
 	}
 
-	GuiRenderImpl::GuiRenderImpl(GuiImpl *impl) : impl(impl)
+	GuiRenderImpl::GuiRenderImpl(GuiImpl *impl) : resolution(impl->outputResolution), impl(impl)
 	{
 		ProfilingScope profiling("GuiRenderImpl");
 
@@ -404,8 +413,10 @@ namespace cage
 
 	void GuiRender::draw(const GuiRenderConfig &config) const
 	{
-		const ProfilingScope proifiling("gui dispatch");
+		const ProfilingScope profiling("gui dispatch");
 		GuiRenderImpl *impl = (GuiRenderImpl *)this;
+		if (impl->resolution != config.resolution)
+			return;
 		for (auto &it : impl->skins)
 			it.uvsBinding = config.aggregate->writeArray<GuiSkinElementLayout::TextureUv>(it.textureUvs, 1, false);
 		for (const auto &it : impl->commands)
