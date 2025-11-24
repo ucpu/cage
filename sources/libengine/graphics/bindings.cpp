@@ -107,6 +107,8 @@ namespace cage
 
 			wgpu::BindGroup createGroup(GraphicsDevice *device, const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
+				CAGE_ASSERT(layout);
+
 				ankerl::svector<wgpu::BindGroupEntry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
@@ -163,28 +165,28 @@ namespace cage
 			uint32 currentFrame = 0;
 			bool automaticFlushes = false;
 
-			struct Key
+			struct LayoutKey
 			{
-				ankerl::svector<uint32, 5> keys;
+				ankerl::svector<uint32, 6> keys;
 
 				std::size_t hash = 0;
 
-				Key(const GraphicsBindingsCreateConfig &config)
+				LayoutKey(const GraphicsBindingsCreateConfig &config)
 				{
 					keys.reserve(config.buffers.size() + 1 + config.textures.size());
 					for (const auto &b : config.buffers)
 					{
-						const uint32 unif = (uint32)b.uniform << 10;
-						const uint32 dyn = (uint32)b.dynamic << 11;
+						const uint32 unif = (uint32)b.uniform << 30;
+						const uint32 dyn = (uint32)b.dynamic << 31;
 						keys.push_back(b.binding + unif + dyn);
 					}
 					keys.push_back(75431564); // separator
 					for (const auto &t : config.textures)
 					{
-						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().GetFormat()) << 10;
-						const uint32 bindTexture = (uint32)t.bindTexture << 11;
-						const uint32 bindSampler = (uint32)t.bindSampler << 12;
-						const uint32 flags = (uint32)t.texture->flags << 13;
+						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().GetFormat()) << 17;
+						const uint32 bindTexture = (uint32)t.bindTexture << 18;
+						const uint32 bindSampler = (uint32)t.bindSampler << 19;
+						const uint32 flags = (uint32)t.texture->flags << 20;
 						keys.push_back(t.binding + filterable + bindTexture + bindSampler + flags);
 					}
 
@@ -193,54 +195,119 @@ namespace cage
 						hashCombine(k);
 				}
 
-				bool operator==(const Key &) const = default;
+				bool operator==(const LayoutKey &) const = default;
 			};
 
-			struct Hash
-			{
-				std::size_t operator()(const Key &key) const { return key.hash; }
-			};
-
-			struct Value
+			struct LayoutValue
 			{
 				wgpu::BindGroupLayout layout;
 				uint32 lastUsedFrame = 0;
 			};
 
-			std::unordered_map<Key, Value, Hash> cache;
-
-			void generateDummyBindings()
+			struct GroupKey
 			{
-				bindingDummy.layout = getLayout({}, "emptyBinding");
-				bindingDummy.group = createGroup(device, bindingDummy.layout, {}, "emptyBinding");
-			}
+				ankerl::svector<uint64, 10> keys;
+
+				std::size_t hash = 0;
+
+				GroupKey(const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
+				{
+					keys.reserve(1 + config.buffers.size() + config.textures.size() * 2);
+					keys.push_back((uint64)layout.Get());
+					for (const auto &b : config.buffers)
+					{
+						const uint64 ptr = (uint64)b.buffer->nativeBuffer().Get() << 4;
+						const uint64 size = (uint64)b.size << 40;
+						keys.push_back(b.binding + ptr + size);
+					}
+					for (const auto &t : config.textures)
+					{
+						if (t.bindTexture)
+						{
+							const uint64 ptr = (uint64)t.texture->nativeView().Get() << 4;
+							keys.push_back(t.binding + ptr);
+						}
+						if (t.bindSampler)
+						{
+							const uint64 ptr = (uint64)t.texture->nativeSampler().Get() << 4;
+							keys.push_back(t.binding + ptr);
+						}
+					}
+
+					auto hashCombine = [&](std::unsigned_integral auto v) { hash ^= std::hash<std::decay_t<decltype(v)>>{}(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2); };
+					for (uint64 k : keys)
+						hashCombine(k);
+				}
+
+				bool operator==(const GroupKey &) const = default;
+			};
+
+			struct GroupValue
+			{
+				wgpu::BindGroup group;
+				uint32 lastUsedFrame = 0;
+			};
+
+			struct Hash
+			{
+				std::size_t operator()(const LayoutKey &key) const { return key.hash; }
+				std::size_t operator()(const GroupKey &key) const { return key.hash; }
+			};
+
+			std::unordered_map<LayoutKey, LayoutValue, Hash> layoutsCache;
+			std::unordered_map<GroupKey, GroupValue, Hash> groupsCache;
+
+			void generateDummyBindings() { bindingDummy = getBindings({}, "emptyBinding"); }
 
 			DeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes) : device(device), automaticFlushes(automaticFlushes) { generateDummyBindings(); }
 
-			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings cache size: " + cache.size()); }
+			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings layouts cache size: " + layoutsCache.size() + ", groups cache size: " + groupsCache.size()); }
 
-			wgpu::BindGroupLayout getLayout(const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
+			GraphicsBindings getBindings(const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
-				const Key key(config);
-
+				GraphicsBindings binding;
+				const LayoutKey lk(config);
 				{
 					ScopeLock lock(mutex, ReadLockTag());
-					const auto it = cache.find(key);
-					if (it != cache.end())
+					const auto lit = layoutsCache.find(lk);
+					if (lit != layoutsCache.end())
 					{
-						it->second.lastUsedFrame = currentFrame;
-						return it->second.layout;
+						lit->second.lastUsedFrame = currentFrame;
+						binding.layout = lit->second.layout;
+
+						const GroupKey gk(binding.layout, config);
+						const auto git = groupsCache.find(gk);
+						if (git != groupsCache.end())
+						{
+							git->second.lastUsedFrame = currentFrame;
+							binding.group = git->second.group;
+						}
 					}
 				}
-
+				if (!binding.group)
 				{
 					ScopeLock lock(mutex, WriteLockTag());
-					auto &it = cache[key];
-					it.lastUsedFrame = currentFrame;
-					if (!it.layout) // must check again after relocking
-						it.layout = createLayout(device, config, label);
-					return it.layout;
+					if (!binding.layout)
+					{
+						auto &it = layoutsCache[lk];
+						it.lastUsedFrame = currentFrame;
+						if (!it.layout) // must check again after relocking
+							it.layout = createLayout(device, config, label);
+						binding.layout = it.layout;
+					}
+					{
+						const GroupKey gk(binding.layout, config);
+						auto &it = groupsCache[gk];
+						it.lastUsedFrame = currentFrame;
+						if (!it.group) // must check again after relocking
+							it.group = createGroup(device, binding.layout, config, label);
+						binding.group = it.group;
+					}
 				}
+				CAGE_ASSERT(binding.layout && binding.group);
+				for (const auto &it : config.buffers)
+					binding.dynamicBuffersCount += it.dynamic;
+				return binding;
 			}
 
 			void nextFrame()
@@ -248,13 +315,15 @@ namespace cage
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
 				if (automaticFlushes)
-					std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+					std::erase_if(layoutsCache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+				std::erase_if(groupsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
 			}
 
 			void flush()
 			{
 				ScopeLock lock(mutex, WriteLockTag());
-				std::erase_if(cache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
+				std::erase_if(layoutsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
+				std::erase_if(groupsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
 			}
 		};
 
@@ -283,13 +352,7 @@ namespace cage
 
 	GraphicsBindings newGraphicsBindings(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 	{
-		GraphicsBindings binding;
-		binding.layout = privat::getDeviceBindingsCache(device)->getLayout(config, label);
-		//binding.layout = privat::createLayout(device, config, label);
-		binding.group = privat::createGroup(device, binding.layout, config, label);
-		for (const auto &it : config.buffers)
-			binding.dynamicBuffersCount += it.dynamic;
-		return binding;
+		return privat::getDeviceBindingsCache(device)->getBindings(config, label);
 	}
 
 	namespace privat
