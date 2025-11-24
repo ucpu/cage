@@ -284,25 +284,24 @@ namespace cage
 						}
 					}
 				}
-				if (!binding.group)
+				if (!binding.layout)
 				{
 					ScopeLock lock(mutex, WriteLockTag());
-					if (!binding.layout)
-					{
-						auto &it = layoutsCache[lk];
-						it.lastUsedFrame = currentFrame;
-						if (!it.layout) // must check again after relocking
-							it.layout = createLayout(device, config, label);
-						binding.layout = it.layout;
-					}
-					{
-						const GroupKey gk(binding.layout, config);
-						auto &it = groupsCache[gk];
-						it.lastUsedFrame = currentFrame;
-						if (!it.group) // must check again after relocking
-							it.group = createGroup(device, binding.layout, config, label);
-						binding.group = it.group;
-					}
+					auto &it = layoutsCache[lk];
+					it.lastUsedFrame = currentFrame;
+					if (!it.layout) // must check again after relocking
+						it.layout = createLayout(device, config, label); // layout created within lock - it is used as part of key for pipelines, so avoid duplication
+					binding.layout = it.layout;
+				}
+				if (!binding.group)
+				{
+					const GroupKey gk(binding.layout, config);
+					binding.group = createGroup(device, binding.layout, config, label); // create the group outside lock - potential duplicates will be eliminated next frame
+					ScopeLock lock(mutex, WriteLockTag());
+					auto &it = groupsCache[gk];
+					it.lastUsedFrame = currentFrame;
+					if (!it.group) // must check again after relocking
+						it.group = binding.group;
 				}
 				CAGE_ASSERT(binding.layout && binding.group);
 				for (const auto &it : config.buffers)
