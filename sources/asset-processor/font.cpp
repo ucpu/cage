@@ -212,6 +212,7 @@ namespace
 		data.mipLevels = 1;
 		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
 		data.format = (uint32)wgpu::TextureFormat::RGBA8Unorm;
+		data.sampleFilter = (uint32)wgpu::FilterMode::Linear;
 
 		MemoryBuffer inputBuffer;
 		Serializer ser(inputBuffer);

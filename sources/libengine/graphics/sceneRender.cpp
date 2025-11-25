@@ -7,6 +7,7 @@
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
+#include <cage-core/assetsSchemes.h>
 #include <cage-core/camera.h>
 #include <cage-core/color.h>
 #include <cage-core/config.h>
@@ -21,6 +22,7 @@
 #include <cage-core/skeletalAnimationPreparator.h>
 #include <cage-core/tasks.h>
 #include <cage-core/texts.h>
+#include <cage-engine/assetsSchemes.h>
 #include <cage-engine/font.h>
 #include <cage-engine/graphicsAggregateBuffer.h>
 #include <cage-engine/graphicsBindings.h>
@@ -477,11 +479,11 @@ namespace cage
 					const uint32 n = rm.mesh->textureNames[i];
 					if (n == 0)
 						continue;
-					textures[i] = assets->get<Texture>(n);
+					textures[i] = assets->get<AssetSchemeIndexTexture, Texture>(n);
 				}
 				Texture *first = firstTexture(textures);
 
-				Holder<MultiShader> multiShader = rm.mesh->shaderName ? assets->get<MultiShader>(rm.mesh->shaderName) : shaderStandard.share();
+				Holder<MultiShader> multiShader = rm.mesh->shaderName ? assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : shaderStandard.share();
 				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(first), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
@@ -847,7 +849,7 @@ namespace cage
 					ps.reset();
 				if (ps)
 				{
-					if (Holder<SkeletalAnimation> a = assets->get<SkeletalAnimation>(ps->animation))
+					if (Holder<SkeletalAnimation> a = assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->animation))
 					{
 						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+a, currentTime, startTime, anim.speed, anim.offset);
 						rm.skeletalAnimation = skeletonPreparatorCollection->create(rd.e, std::move(a), coefficient, rm.mesh->importTransform, cnfRenderSkeletonBones);
@@ -877,7 +879,7 @@ namespace cage
 				if (!tc.font)
 					tc.font = HashString("cage/fonts/ubuntu/regular.ttf");
 				RenderText rt;
-				rt.font = assets->get<Font>(tc.font);
+				rt.font = assets->get<AssetSchemeIndexFont, Font>(tc.font);
 				if (!rt.font)
 					return;
 				FontFormat format;
@@ -950,7 +952,7 @@ namespace cage
 				{
 					CAGE_ASSERT(data.size() > 0);
 
-					if (Holder<RenderObject> obj = assets->get<RenderObject>(data[0].id))
+					if (Holder<RenderObject> obj = assets->get<AssetSchemeIndexRenderObject, RenderObject>(data[0].id))
 					{
 						CAGE_ASSERT(obj->lodsCount() > 0);
 						if (obj->lodsCount() == 1)
@@ -958,7 +960,7 @@ namespace cage
 							prepareModels.clear();
 							for (uint32 id : obj->models(0))
 							{
-								if (Holder<Model> mesh = onDemand->get<Model>(id))
+								if (Holder<Model> mesh = onDemand->get<AssetSchemeIndexModel, Model>(id))
 									prepareModels.push_back(std::move(mesh));
 							}
 							if (prepareModels.empty())
@@ -1000,7 +1002,7 @@ namespace cage
 						return;
 					}
 
-					if (Holder<Model> mesh = assets->get<Model>(data[0].id))
+					if (Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(data[0].id))
 					{
 						for (const auto &it : data)
 						{
@@ -1017,7 +1019,7 @@ namespace cage
 
 					if (cnfRenderMissingModels)
 					{
-						Holder<Model> mesh = assets->get<Model>(HashString("cage/models/fake.obj"));
+						Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj"));
 						if (!mesh)
 							return;
 						for (const auto &it : data)
@@ -1064,10 +1066,10 @@ namespace cage
 				const auto &output = [&](PointerRange<const Data> data)
 				{
 					CAGE_ASSERT(data.size() > 0);
-					Holder<Texture> tex = assets->get<Texture>(data[0].ic.icon);
+					Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.icon);
 					if (!tex)
 						return;
-					Holder<Model> mod = data[0].ic.model ? assets->get<Model>(data[0].ic.model) : modelIcon.share();
+					Holder<Model> mod = data[0].ic.model ? assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model) : modelIcon.share();
 					if (!mod)
 						return;
 					for (const auto &it : data)

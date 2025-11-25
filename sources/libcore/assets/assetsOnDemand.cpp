@@ -74,6 +74,22 @@ namespace cage
 					}
 				}
 			}
+
+			void preload(PointerRange<const uint32> assetsIds)
+			{
+				ScopeLock lock(mut, WriteLockTag());
+				for (uint32 id : assetsIds)
+				{
+					auto it = lastUse.find(id);
+					if (it != lastUse.end())
+						it->second = tick;
+					else
+					{
+						lastUse[id] = tick;
+						assets->load(id);
+					}
+				}
+			}
 		};
 	}
 
@@ -85,10 +101,8 @@ namespace cage
 
 	void AssetsOnDemand::preload(PointerRange<const uint32> assetsIds)
 	{
-		//AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
-		// todo optimize
-		for (uint32 id : assetsIds)
-			preload(id);
+		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
+		impl->preload(assetsIds);
 	}
 
 	void AssetsOnDemand::process()

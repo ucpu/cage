@@ -29,6 +29,7 @@ namespace cage
 			wgpu::RenderPassEncoder renderEnc;
 			PassData passData;
 			GraphicsFrameStatistics statistics;
+			ankerl::svector<StringPointer, 4> debugScopes;
 
 			GraphicsEncoderImpl(GraphicsDevice *device, const AssetLabel &label_) : device(device) { this->label = label_; }
 
@@ -37,6 +38,12 @@ namespace cage
 				const ProfilingScope profiling("encoder next pass");
 				if (renderEnc)
 				{
+					for (const auto it : debugScopes)
+					{
+						(void)it;
+						renderEnc.PopDebugGroup();
+					}
+
 					renderEnc.End();
 					renderEnc = nullptr;
 					passData = {};
@@ -82,6 +89,9 @@ namespace cage
 						rpd.depthStencilAttachment = &rpdsa;
 					rpd.label = label.c_str();
 					renderEnc = cmdEnc.BeginRenderPass(&rpd);
+
+					for (const auto it : debugScopes)
+						renderEnc.PushDebugGroup((const char *)it);
 				}
 				statistics.passes++;
 			}
@@ -137,6 +147,20 @@ namespace cage
 				device->insertCommandBuffer(std::move(b), statistics);
 				statistics = {};
 			}
+
+			void pushScope(StringPointer name)
+			{
+				CAGE_ASSERT(renderEnc);
+				debugScopes.push_back(name);
+				renderEnc.PushDebugGroup((const char *)name);
+			}
+
+			void popScope()
+			{
+				CAGE_ASSERT(renderEnc);
+				debugScopes.pop_back();
+				renderEnc.PopDebugGroup();
+			}
 		};
 	}
 
@@ -145,13 +169,13 @@ namespace cage
 		RenderEncoderNamedScope::RenderEncoderNamedScope(GraphicsEncoder *queue, StringPointer name) : queue(queue)
 		{
 			GraphicsEncoderImpl *impl = (GraphicsEncoderImpl *)queue;
-			impl->renderEnc.PushDebugGroup((const char *)name);
+			impl->pushScope(name);
 		}
 
 		RenderEncoderNamedScope::~RenderEncoderNamedScope()
 		{
 			GraphicsEncoderImpl *impl = (GraphicsEncoderImpl *)queue;
-			impl->renderEnc.PopDebugGroup();
+			impl->popScope();
 		}
 	}
 

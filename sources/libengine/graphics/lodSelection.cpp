@@ -1,5 +1,6 @@
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
+#include <cage-engine/assetsSchemes.h>
 #include <cage-engine/lodSelection.h>
 #include <cage-engine/model.h>
 #include <cage-engine/renderObject.h>
@@ -55,7 +56,7 @@ namespace cage
 			ok = true;
 			for (uint32 it : object->models(lod))
 			{
-				if (auto md = assets->get<Model>(it, load))
+				if (auto md = assets->get<AssetSchemeIndexModel, Model>(it, load))
 					outModels.push_back(std::move(md));
 				else
 					ok = false;
@@ -87,7 +88,7 @@ namespace cage
 			ok = true;
 			for (uint32 it : object->models(lod))
 			{
-				if (auto md = assets->get<Model>(it))
+				if (auto md = assets->get<AssetSchemeIndexModel, Model>(it))
 					outModels.push_back(std::move(md));
 				else
 					ok = false;
