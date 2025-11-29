@@ -100,7 +100,9 @@ namespace cage
 
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
-			//uint32 nextAllowedDrFrameIndex = 100; // do not update DR at the very start
+
+			std::array<uint64, 3> gpuTimes = {};
+			uint32 nextAllowedDrFrameIndex = 100; // do not update DR at the very start
 
 		public:
 			// control thread ---------------------------------------------------------------------
@@ -202,9 +204,52 @@ namespace cage
 
 			void finalize() { sharedTargetTexture.clear(); }
 
+			Vec2i applyDynamicResolution(Vec2i in) const
+			{
+				Vec2i res = Vec2i(Vec2(in) * dynamicResolution);
+				CAGE_ASSERT(res[0] > 0 && res[1] > 0);
+				return res;
+			}
+
+			void updateDynamicResolution()
+			{
+				std::swap(gpuTimes[0], gpuTimes[1]);
+				std::swap(gpuTimes[1], gpuTimes[2]);
+				gpuTimes[2] = gpuTime;
+
+				if (frameIndex < nextAllowedDrFrameIndex)
+					return;
+
+				if (!engineDynamicResolution().enabled)
+				{
+					dynamicResolution = 1;
+					return;
+				}
+
+				CAGE_ASSERT(engineDynamicResolution().targetFps > 0);
+				CAGE_ASSERT(valid(engineDynamicResolution().minimumScale));
+				CAGE_ASSERT(engineDynamicResolution().minimumScale > 0 && engineDynamicResolution().minimumScale <= 1);
+
+				const double targetTime = 1'000'000 / engineDynamicResolution().targetFps;
+				const double avgTime = (gpuTimes[0] + gpuTimes[1] + gpuTimes[2]) / 3;
+				Real k = dynamicResolution * targetTime / avgTime;
+				if (!valid(k))
+					return;
+				k = min(k, dynamicResolution + 0.03); // progressive restoration
+				if (k > 0.97)
+					k = 1; // snap back to 100 %
+				k = clamp(k, engineDynamicResolution().minimumScale, 1); // safety clamp
+				if (abs(dynamicResolution - k) < 0.02)
+					return; // difference of at least 2 percents
+
+				dynamicResolution = k;
+				nextAllowedDrFrameIndex = frameIndex + 5;
+			}
+
 			void renderCameras(const SceneRenderConfig &cfg)
 			{
 				std::vector<CameraData> cameras;
+				cameras.reserve(cfg.scene->component<CameraComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const CameraComponent &cam)
@@ -214,17 +259,16 @@ namespace cage
 						data.camera = cam;
 						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
 						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
-						//if (dynamicResolution != 1)
-						//	data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 						data.effects.gamma = Real(confRenderGamma);
 						if (cam.target)
 						{
 							data.target = cam.target;
 							data.resolution = cam.target->resolution();
 						}
-						else
+						if (dynamicResolution != 1)
 						{
-							//data.resolution = applyDynamicResolution(cfg.resolution);
+							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
+							data.resolution = applyDynamicResolution(cfg.resolution);
 						}
 						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
@@ -248,7 +292,6 @@ namespace cage
 				gpuTime = frameData.frameExecution;
 				drawCalls = frameData.drawCalls;
 				drawPrimitives = frameData.primitives;
-				dynamicResolution = 1;
 
 				if (!frameData.targetTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
@@ -258,7 +301,7 @@ namespace cage
 
 				if (auto lock = emitBuffersGuard->read())
 				{
-					//updateDynamicResolution();
+					updateDynamicResolution();
 					const EmitBuffer &eb = emitBuffers[lock.index()];
 					SceneRenderConfig cfg;
 					cfg.device = engineGraphicsDevice();
