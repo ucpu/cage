@@ -178,7 +178,7 @@ namespace cage
 						{
 							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating wgpu pipeline");
 							logImpl(SeverityEnum::Note, message);
-							detail::debugBreakpoint();
+							//detail::debugBreakpoint();
 						}
 					});
 			}

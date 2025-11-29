@@ -63,7 +63,6 @@ unset(linux)
 
 # replace constants header
 set(constants_path "${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h")
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/patches")
 file(READ "${constants_path}" constants_content)
 string(REPLACE "kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;" constants_content "${constants_content}")
 set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
