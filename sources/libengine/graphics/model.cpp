@@ -175,7 +175,7 @@ namespace cage
 			mod->materialBuffer = newGraphicsBuffer(device, material.size(), label);
 			mod->materialBuffer->writeBuffer(material);
 		}
-		mod->flags = MeshRenderFlags::Default;
+		mod->renderFlags = MeshRenderFlags::Default;
 
 		return mod;
 	}

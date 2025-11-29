@@ -418,21 +418,13 @@ namespace cage
 				}
 			}
 
-			CAGE_FORCE_INLINE static Texture *firstTexture(const std::array<Holder<Texture>, MaxTexturesCountPerMaterial> &texs)
+			CAGE_FORCE_INLINE static uint32 textureShaderVariant(const TextureFlags flags)
 			{
-				for (auto &it : texs)
-					if (it)
-						return +it;
-				return nullptr;
-			}
-
-			CAGE_FORCE_INLINE static uint32 textureShaderVariant(const Texture *tex)
-			{
-				if (!tex)
+				if (flags == TextureFlags::None)
 					return 0;
-				if (any(tex->flags & TextureFlags::Cubemap))
+				if (any(flags & TextureFlags::Cubemap))
 					return HashString("MaterialTexCube");
-				if (any(tex->flags & TextureFlags::Array))
+				if (any(flags & TextureFlags::Array))
 					return HashString("MaterialTexArray");
 				return HashString("MaterialTexRegular");
 			}
@@ -449,7 +441,7 @@ namespace cage
 				v(textureVariant);
 				if (renderMode != RenderModeEnum::Color)
 					v(HashString("DepthOnly"));
-				if (any(model->flags & MeshRenderFlags::CutOut))
+				if (any(model->renderFlags & MeshRenderFlags::CutOut))
 					v(HashString("CutOut"));
 				if (any(model->components & MeshComponentsFlags::Normals))
 					v(HashString("Normals"));
@@ -467,24 +459,13 @@ namespace cage
 
 				if (renderMode != RenderModeEnum::Color && rd.translucent)
 					return;
-				if (renderMode == RenderModeEnum::DepthPrepass && none(rm.mesh->flags & MeshRenderFlags::DepthWrite))
+				if (renderMode == RenderModeEnum::DepthPrepass && none(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite))
 					return;
 
 				prepareModelBindings(device, assets, +rm.mesh); // todo remove
 
-				// todo fix loading textures is unnecessary
-				std::array<Holder<Texture>, MaxTexturesCountPerMaterial> textures = {};
-				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-				{
-					const uint32 n = rm.mesh->textureNames[i];
-					if (n == 0)
-						continue;
-					textures[i] = assets->get<AssetSchemeIndexTexture, Texture>(n);
-				}
-				Texture *first = firstTexture(textures);
-
 				Holder<MultiShader> multiShader = rm.mesh->shaderName ? assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : shaderStandard.share();
-				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(first), renderMode, !!rm.skeletalAnimation);
+				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(rm.mesh->texturesFlags), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
 				{
@@ -494,7 +475,7 @@ namespace cage
 						uniOptions.optsLights[0] = cameraData->lightsCount;
 						uniOptions.optsLights[1] = cameraData->shadowedLightsCount;
 					}
-					const bool ssao = !rd.translucent && any(rm.mesh->flags & MeshRenderFlags::DepthWrite) && any(effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
+					const bool ssao = !rd.translucent && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 					uniOptions.optsLights[2] = ssao ? 1 : 0;
 					uniOptions.optsLights[3] = !!rm.mesh->textureNames[2];
 					uniOptions.optsSkeleton[0] = rm.mesh->bonesCount;
@@ -557,17 +538,17 @@ namespace cage
 
 				if (renderMode == RenderModeEnum::Color)
 				{
-					draw.depthTest = any(rm.mesh->flags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
-					draw.depthWrite = any(rm.mesh->flags & MeshRenderFlags::DepthWrite);
+					draw.depthTest = any(rm.mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
+					draw.depthWrite = any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite);
 					draw.blending = rd.translucent ? BlendingEnum::PremultipliedTransparency : BlendingEnum::None;
 				}
 				else
 				{
-					draw.depthTest = any(rm.mesh->flags & MeshRenderFlags::DepthTest) ? DepthTestEnum::Less : DepthTestEnum::Always;
+					draw.depthTest = any(rm.mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::Less : DepthTestEnum::Always;
 					draw.depthWrite = true;
 					draw.blending = BlendingEnum::None;
 				}
-				draw.backFaceCulling = none(rm.mesh->flags & MeshRenderFlags::TwoSided);
+				draw.backFaceCulling = none(rm.mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +rm.mesh;
 				draw.shader = +shader;
 				draw.bindings = newGraphicsBindings(device, bind);
@@ -619,7 +600,7 @@ namespace cage
 				prepareModelBindings(device, assets, +mesh); // todo remove
 
 				Holder<MultiShader> multiShader = mesh->shaderName ? assets->get<MultiShader>(mesh->shaderName) : shaderIcon.share();
-				Holder<Shader> shader = pickShaderVariant(+multiShader, +mesh, textureShaderVariant(+texture), renderMode, false);
+				Holder<Shader> shader = pickShaderVariant(+multiShader, +mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;
 
@@ -664,10 +645,10 @@ namespace cage
 					draw.dynamicOffsets.push_back(ab);
 				}
 
-				draw.depthTest = any(mesh->flags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
-				draw.depthWrite = any(mesh->flags & MeshRenderFlags::DepthWrite);
+				draw.depthTest = any(mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
+				draw.depthWrite = any(mesh->renderFlags & MeshRenderFlags::DepthWrite);
 				draw.blending = rd.translucent ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
-				draw.backFaceCulling = none(mesh->flags & MeshRenderFlags::TwoSided);
+				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
 				draw.materialOverride = newGraphicsBindings(device, iconsMaterialBinding(+mesh, +texture));
@@ -810,7 +791,7 @@ namespace cage
 				if (!rm.mesh)
 					return;
 
-				if (shadowmapData && none(rm.mesh->flags & MeshRenderFlags::ShadowCast))
+				if (shadowmapData && none(rm.mesh->renderFlags & MeshRenderFlags::ShadowCast))
 					return;
 
 				const Mat4 mvpMat = viewProj * rd.model;
@@ -861,8 +842,8 @@ namespace cage
 
 				rd.color = initializeColor(color);
 				rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
-				rd.renderLayer = render.renderLayer + rm.mesh->layer;
-				rd.translucent = any(rm.mesh->flags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
+				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
+				rd.translucent = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
 				if (rd.translucent)
 					rd.depth = (mvpMat * Vec4(0, 0, 0, 1))[2] * -1;
 
@@ -1085,7 +1066,7 @@ namespace cage
 						rd.color = initializeColor(it.e->getOrDefault<ColorComponent>());
 						const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
 						rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
-						rd.renderLayer = ic.renderLayer + ri.mesh->layer;
+						rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
 						rd.translucent = true;
 						rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;
 						rd.data = std::move(ri);

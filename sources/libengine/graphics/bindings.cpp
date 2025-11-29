@@ -379,6 +379,7 @@ namespace cage
 			config.buffers.push_back(std::move(bc));
 		}
 
+		TextureFlags flags = TextureFlags::None;
 		config.textures.reserve(MaxTexturesCountPerMaterial);
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
@@ -387,17 +388,13 @@ namespace cage
 			{
 				tc.texture = +assets->get<Texture>(model->textureNames[i]);
 				CAGE_ASSERT(tc.texture);
+				flags |= tc.texture->flags | (TextureFlags)(1u << 31); // distinguish no textures from a regular texture
 			}
 			tc.binding = i * 2 + 1;
 			config.textures.push_back(std::move(tc));
 		}
 
 		{ // figure out empty textures
-			TextureFlags flags = TextureFlags::None;
-			for (const auto &t : config.textures)
-				if (t.texture)
-					flags |= t.texture->flags;
-
 			Texture *dummy = nullptr;
 			if (any(flags & TextureFlags::Cubemap))
 				dummy = privat::getTextureDummyCube(device);
@@ -411,6 +408,17 @@ namespace cage
 					t.texture = dummy;
 		}
 
-		b = newGraphicsBindings(device, config, model->getLabel());
+		// create outside lock
+		GraphicsBindings newBindings = newGraphicsBindings(device, config, model->getLabel());
+
+		// this is a temporary fix until this whole method is moved to when the model is loaded inside asset manager, where race conditions cannot happen
+		static Holder<Mutex> mutex = newMutex();
+		ScopeLock mut(mutex);
+		if (b)
+			return; // check again after locking
+
+		// assign inside lock
+		b = std::move(newBindings);
+		model->texturesFlags = flags;
 	}
 }

@@ -45,8 +45,8 @@ namespace cage
 			model->boundingBox = header.box;
 			model->textureNames = header.textureNames;
 			model->shaderName = header.shaderName;
-			model->flags = header.renderFlags;
-			model->layer = header.renderLayer;
+			model->renderFlags = header.renderFlags;
+			model->renderLayer = header.renderLayer;
 			model->bonesCount = header.skeletonBones;
 
 			//prepareModelBindings((GraphicsDevice *)context->device, context->assetsManager, +model);

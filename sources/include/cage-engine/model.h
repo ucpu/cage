@@ -18,6 +18,7 @@ namespace cage
 	class GraphicsDevice;
 	class GraphicsBuffer;
 	enum class MeshRenderFlags : uint32;
+	enum class TextureFlags : uint32;
 	struct GraphicsBindings;
 
 	class CAGE_ENGINE_API Model : private Immovable
@@ -51,8 +52,9 @@ namespace cage
 		Holder<GraphicsBuffer> materialBuffer;
 		std::array<uint32, MaxTexturesCountPerMaterial> textureNames = {};
 		uint32 shaderName = 0;
-		sint32 layer = 0;
-		MeshRenderFlags flags = {};
+		sint32 renderLayer = 0;
+		MeshRenderFlags renderFlags = {};
+		TextureFlags texturesFlags = {};
 	};
 
 	CAGE_ENGINE_API Holder<Model> newModel(const AssetLabel &label);
