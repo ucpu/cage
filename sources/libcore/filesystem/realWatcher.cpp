@@ -8,8 +8,6 @@
 
 namespace cage
 {
-	PathTypeFlags realType(const String &path);
-
 	namespace
 	{
 		class FilesystemWatcherImpl final : public FilesystemWatcher, private FW::FileWatchListener
@@ -55,7 +53,7 @@ namespace cage
 				auto names = pathListDirectory(path);
 				for (const String &p : names)
 				{
-					const PathTypeFlags type = realType(p);
+					const PathTypeFlags type = detail::realFsPathType(p);
 					if (any(type & PathTypeFlags::Directory))
 						registerPath(p);
 				}
@@ -67,7 +65,7 @@ namespace cage
 	{
 		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
 		const String path = pathToAbs(path_);
-		const PathTypeFlags type = realType(path); // FilesystemWatcher works with real filesystem only!
+		const PathTypeFlags type = detail::realFsPathType(path); // FilesystemWatcher works with real filesystem only!
 		if (none(type & PathTypeFlags::Directory))
 		{
 			CAGE_LOG_THROW(Stringizer() + "path: " + path);

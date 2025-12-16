@@ -37,9 +37,6 @@
 
 namespace cage
 {
-	Holder<File> realNewFile(const String &path, const FileMode &mode);
-	PathTypeFlags realType(const String &path);
-
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -87,7 +84,7 @@ namespace cage
 				if (pos)
 				{
 					const String p = subString(pth, 0, pos);
-					if (any(realType(p) & PathTypeFlags::Directory))
+					if (any(detail::realFsPathType(p) & PathTypeFlags::Directory))
 						continue;
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -520,7 +517,7 @@ namespace cage
 			PathTypeFlags type(const String &path) const override
 			{
 				ScopeLock lock(fsMutex());
-				return realType(pathJoin(myPath, path));
+				return detail::realFsPathType(pathJoin(myPath, path));
 			}
 
 			void createDirectories(const String &path) override
@@ -668,7 +665,7 @@ namespace cage
 			Holder<File> openFile(const String &path, const FileMode &mode) override
 			{
 				ScopeLock lock(fsMutex());
-				return realNewFile(pathJoin(myPath, path), mode);
+				return detail::newRealFsFile(pathJoin(myPath, path), mode);
 			}
 
 			Holder<PointerRange<String>> listDirectory(const String &path) const override
@@ -730,37 +727,40 @@ namespace cage
 		}
 	}
 
-	Holder<File> realNewFile(const String &path, const FileMode &mode)
+	namespace detail
 	{
-		return mode.textual ? systemMemory().createImpl<File, FileRealTextual>(path, mode) : systemMemory().createImpl<File, FileRealBinary>(path, mode);
-	}
+		Holder<File> newRealFsFile(const String &path, FileMode mode)
+		{
+			return mode.textual ? systemMemory().createImpl<File, FileRealTextual>(path, mode) : systemMemory().createImpl<File, FileRealBinary>(path, mode);
+		}
 
-	PathTypeFlags realType(const String &path)
-	{
+		void realFsAttemptFlush(File *file)
+		{
+			if (FileRealBase *f = dynamic_cast<FileRealBase *>(file))
+				f->flush();
+		}
+
+		PathTypeFlags realFsPathType(const String &path)
+		{
 #ifdef CAGE_SYSTEM_WINDOWS
-		auto a = GetFileAttributesW(Widen(path));
-		if (a == INVALID_FILE_ATTRIBUTES)
-			return PathTypeFlags::NotFound;
-		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-			return PathTypeFlags::Directory;
-		else
-			return PathTypeFlags::File;
+			auto a = GetFileAttributesW(Widen(path));
+			if (a == INVALID_FILE_ATTRIBUTES)
+				return PathTypeFlags::NotFound;
+			if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+				return PathTypeFlags::Directory;
+			else
+				return PathTypeFlags::File;
 #else
-		struct stat st;
-		if (stat(path.c_str(), &st) != 0)
-			return PathTypeFlags::NotFound;
-		if ((st.st_mode & S_IFDIR) == S_IFDIR)
-			return PathTypeFlags::Directory;
-		if ((st.st_mode & S_IFREG) == S_IFREG)
-			return PathTypeFlags::File;
-		return PathTypeFlags::None;
+			struct stat st;
+			if (stat(path.c_str(), &st) != 0)
+				return PathTypeFlags::NotFound;
+			if ((st.st_mode & S_IFDIR) == S_IFDIR)
+				return PathTypeFlags::Directory;
+			if ((st.st_mode & S_IFREG) == S_IFREG)
+				return PathTypeFlags::File;
+			return PathTypeFlags::None;
 #endif
-	}
-
-	void realTryFlushFile(File *f_)
-	{
-		if (FileRealBase *f = dynamic_cast<FileRealBase *>(f_))
-			f->flush();
+		}
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const String &path)

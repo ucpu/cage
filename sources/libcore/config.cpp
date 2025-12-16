@@ -16,8 +16,6 @@
 
 namespace cage
 {
-	PathTypeFlags realType(const String &path);
-	Holder<File> realNewFile(const String &path, const FileMode &mode);
 	StringPointer configTypeToString(const ConfigTypeEnum type)
 	{
 		switch (type)
@@ -577,7 +575,7 @@ namespace cage
 		void loadGlobalConfigFile(const String &filename, const String &prefix)
 		{
 			CAGE_LOG_DEBUG(SeverityEnum::Info, "config", Stringizer() + "trying to load configuration file: " + filename);
-			if (any(realType(filename) & PathTypeFlags::File))
+			if (any(detail::realFsPathType(filename) & PathTypeFlags::File))
 			{
 				CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "loading configuration file: " + filename);
 				try
@@ -588,7 +586,7 @@ namespace cage
 						pref += "/";
 					Holder<Ini> ini = newIni();
 					// real files only to reduce chances of failures
-					ini->importBuffer(realNewFile(filename, FileMode(true, false))->readAll());
+					ini->importBuffer(detail::newRealFsFile(filename, FileMode(true, false))->readAll());
 					for (const String &section : ini->sections())
 					{
 						for (const String &name : ini->items(section))

@@ -25,9 +25,6 @@ namespace cage
 	int realFileGetFd(File *f);
 #endif
 
-	Holder<File> realNewFile(const String &path, const FileMode &mode);
-	void realTryFlushFile(File *f);
-
 	namespace
 	{
 		const ConfigBool confDetailedInfo("cage/log/systemInfo", false);
@@ -311,7 +308,7 @@ namespace cage
 				fm.append = append;
 				if (realFilesystemOnly)
 				{
-					f = realNewFile(path, fm);
+					f = detail::newRealFsFile(path, fm);
 #ifdef CAGE_SYSTEM_LINUX
 					crashHandlerLogFileFd = realFileGetFd(+f);
 #endif
@@ -330,7 +327,7 @@ namespace cage
 	{
 		const LoggerOutputFileImpl *impl = (const LoggerOutputFileImpl *)this;
 		impl->f->writeLine(message);
-		realTryFlushFile(+impl->f);
+		detail::realFsAttemptFlush(+impl->f);
 	}
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const String &path, bool append, bool realFilesystemOnly)

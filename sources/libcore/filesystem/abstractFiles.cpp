@@ -133,19 +133,23 @@ namespace cage
 							switch (mode)
 							{
 								case ArchiveFindModeEnum::FileExclusive:
+								{
 									if (b.existing)
 									{
 										CAGE_LOG_THROW(Stringizer() + "path: " + pathJoin(parent->myPath, path));
 										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 									}
 									return { parent, path };
+								}
 								case ArchiveFindModeEnum::ArchiveExclusive:
+								{
 									if (b.existing)
 									{
 										CAGE_LOG_THROW(Stringizer() + "path: " + pathJoin(parent->myPath, path));
 										CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
 									}
 									return { b.archive };
+								}
 								case ArchiveFindModeEnum::ArchiveShared:
 									return { b.archive };
 							}

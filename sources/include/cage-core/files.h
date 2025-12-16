@@ -155,6 +155,11 @@ namespace cage
 
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);
+
+		// uses real filesystem directly, bypassing cage archives detection
+		CAGE_CORE_API Holder<File> newRealFsFile(const String &path, FileMode mode);
+		CAGE_CORE_API void realFsAttemptFlush(File *file);
+		CAGE_CORE_API PathTypeFlags realFsPathType(const String &path);
 	}
 }
 
