@@ -228,7 +228,7 @@ namespace cage
 		struct SceneRenderImpl : public SceneRenderConfig
 		{
 			Holder<Model> modelSquare, modelBone, modelIcon;
-			Holder<Shader> shaderBlitPixels;
+			Holder<Shader> shaderBlitPixels, shaderBlitScaled;
 			Holder<MultiShader> shaderStandard, shaderIcon;
 			Holder<Shader> shaderText;
 
@@ -268,6 +268,9 @@ namespace cage
 				shaderBlitPixels = assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0);
 				CAGE_ASSERT(shaderBlitPixels);
 
+				shaderBlitScaled = assets->get<MultiShader>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0);
+				CAGE_ASSERT(shaderBlitScaled);
+
 				shaderStandard = assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl"));
 				CAGE_ASSERT(shaderStandard);
 
@@ -293,6 +296,7 @@ namespace cage
 				SHARE(modelBone);
 				SHARE(modelIcon);
 				SHARE(shaderBlitPixels);
+				SHARE(shaderBlitScaled);
 				SHARE(shaderStandard);
 				SHARE(shaderIcon);
 				SHARE(shaderText);
@@ -1423,7 +1427,10 @@ namespace cage
 					DrawConfig drawcfg;
 					prepareModelBindings(device, assets, +modelSquare); // todo remove
 					drawcfg.model = +modelSquare;
-					drawcfg.shader = +shaderBlitPixels;
+					if (resolution == target->resolution())
+						drawcfg.shader = +shaderBlitPixels;
+					else
+						drawcfg.shader = +shaderBlitScaled;
 					GraphicsBindingsCreateConfig bind;
 					bind.textures.push_back({ +colorTexture, 0 });
 					drawcfg.bindings = newGraphicsBindings(device, bind);
