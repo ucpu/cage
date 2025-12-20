@@ -105,6 +105,7 @@ add_subdirectory(tinyexr)
 add_subdirectory(bc7enc_rdo)
 add_subdirectory(avir)
 add_subdirectory(hsluv)
+add_subdirectory(webp)
 
 add_subdirectory(cubeb)
 add_subdirectory(dr_libs)

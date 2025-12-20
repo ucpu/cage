@@ -249,7 +249,7 @@ namespace cage
 	{
 		if (impl->channels > 56)
 			CAGE_THROW_ERROR(Exception, "unsupported image channels count for psd encoding");
-		if (impl->width > 300000 || impl->height > 300000)
+		if (impl->width > 300'000 || impl->height > 300'000)
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for psd encoding");
 
 		MemoryBuffer buf;

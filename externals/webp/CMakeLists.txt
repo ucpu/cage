@@ -1,0 +1,23 @@
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "webp")
+message(STATUS "----------------------------------------------------------------")
+
+cage_heavily_optimized()
+
+set(WEBP_LINK_STATIC ON CACHE INTERNAL "Link using static libraries. If OFF, use dynamic libraries.")
+set(WEBP_ENABLE_SIMD ON CACHE INTERNAL "Enable any SIMD optimization.")
+set(WEBP_BUILD_ANIM_UTILS OFF CACHE INTERNAL "Build animation utilities.")
+set(WEBP_BUILD_CWEBP OFF CACHE INTERNAL "Build the cwebp command line tool.")
+set(WEBP_BUILD_DWEBP OFF CACHE INTERNAL "Build the dwebp command line tool.")
+set(WEBP_BUILD_GIF2WEBP OFF CACHE INTERNAL "Build the gif2webp conversion tool.")
+set(WEBP_BUILD_IMG2WEBP OFF CACHE INTERNAL "Build the img2webp animation tool.")
+set(WEBP_BUILD_VWEBP OFF CACHE INTERNAL "Build the vwebp viewer tool.")
+set(WEBP_BUILD_WEBPINFO OFF CACHE INTERNAL "Build the webpinfo command line tool.")
+set(WEBP_BUILD_LIBWEBPMUX OFF CACHE INTERNAL "Build the libwebpmux library.")
+set(WEBP_BUILD_WEBPMUX OFF CACHE INTERNAL "Build the webpmux command line tool.")
+set(WEBP_BUILD_EXTRAS OFF CACHE INTERNAL "Build extras.")
+set(WEBP_BUILD_WEBP_JS OFF CACHE INTERNAL "Emscripten build of webp.js.")
+set(WEBP_BUILD_FUZZTEST OFF CACHE INTERNAL "Build the fuzztest tests.")
+set(WEBP_USE_THREAD OFF CACHE INTERNAL "Enable threading support")
+
+add_subdirectory(webp)

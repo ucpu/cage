@@ -197,14 +197,14 @@ namespace
 		{
 			CAGE_TESTCASE(Stringizer() + ch);
 			imageConvert(+img, ch);
-			for (const auto &fmt_ : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds" })
+			for (const auto &fmt_ : { ".png", ".jpeg", ".tiff", ".tga", ".psd", ".dds", ".webp" })
 			{
 				const String fmt = fmt_;
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
 				if (ch == 2 && fmt == ".tga")
 					continue; // unsupported
-				if (ch < 3 && fmt == ".dds")
+				if (ch < 3 && (fmt == ".dds" || fmt == ".webp"))
 					continue; // unsupported
 				CAGE_TESTCASE(fmt);
 				const String name = Stringizer() + "images/channels/" + ch + fmt;

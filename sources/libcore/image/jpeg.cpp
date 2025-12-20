@@ -146,7 +146,7 @@ namespace cage
 		if (impl->channels != 1 && impl->channels != 3)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for jpeg encoding");
 		if (impl->format != ImageFormatEnum::U8)
-			CAGE_THROW_ERROR(Exception, "unsupported image format for tga encoding");
+			CAGE_THROW_ERROR(Exception, "unsupported image format for jpeg encoding");
 
 		MemoryBuffer res;
 		res.reserve(impl->width * impl->height * impl->channels + 100);

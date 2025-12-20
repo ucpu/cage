@@ -6,7 +6,7 @@ using namespace cage;
 	{ \
 		if (!std::is_constant_evaluated()) \
 		{ \
-			CAGE_LOG(SeverityEnum::Info, "testcase", NAME); \
+			CAGE_LOG(SeverityEnum::Info, "testcase", Stringizer() + "TESTCASE: " + NAME); \
 		} \
 	}
 #define CAGE_TEST(COND, ...) \

@@ -121,3 +121,6 @@
 [submodule "externals/svector/svector"]
 	path = externals/svector/svector
 	url = https://github.com/ucpu/svector.git
+[submodule "externals/webp/webp"]
+	path = externals/webp/webp
+	url = https://github.com/webmproject/libwebp.git

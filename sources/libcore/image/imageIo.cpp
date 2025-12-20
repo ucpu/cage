@@ -16,6 +16,7 @@ namespace cage
 	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void webpDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	bool experimentalTgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	ImageImportResult ddsDecode(PointerRange<const char> inBuffer);
@@ -26,6 +27,7 @@ namespace cage
 	MemoryBuffer psdEncode(const ImageImpl *impl);
 	MemoryBuffer ddsEncode(const ImageImpl *impl);
 	MemoryBuffer exrEncode(const ImageImpl *impl);
+	MemoryBuffer webpEncode(const ImageImpl *impl);
 	MemoryBuffer tgaEncode(const ImageImpl *impl);
 
 	namespace
@@ -36,6 +38,8 @@ namespace cage
 		constexpr const uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
 		constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
 		constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
+		constexpr const uint8 webpSignature1[4] = { 'R', 'I', 'F', 'F' }; // RIFF????WEBP
+		constexpr const uint8 webpSignature2[4] = { 'W', 'E', 'B', 'P' };
 		constexpr const uint8 tgaSignature1[18] = "TRUEVISION-XFILE.";
 		constexpr const uint8 tgaSignature2[17] = { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.' }; // no terminal zero
 
@@ -72,6 +76,8 @@ namespace cage
 				ddsDecode(buffer, impl);
 			else if (compare(buffer, exrSignature))
 				exrDecode(buffer, impl);
+			else if (compare(buffer, webpSignature1) && compare(buffer.subRange(8, 4), webpSignature2))
+				webpDecode(buffer, impl);
 			else if (compare(buffEnd(buffer, sizeof(tgaSignature1)), tgaSignature1) || compare(buffEnd(buffer, sizeof(tgaSignature2)), tgaSignature2))
 				tgaDecode(buffer, impl);
 			else if (experimentalTgaDecode(buffer, impl))
@@ -116,6 +122,8 @@ namespace cage
 			return ddsEncode((const ImageImpl *)this);
 		if (ext == ".exr")
 			return exrEncode((const ImageImpl *)this);
+		if (ext == ".webp")
+			return webpEncode((const ImageImpl *)this);
 		if (ext == ".tga")
 			return tgaEncode((const ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
@@ -147,7 +155,8 @@ namespace cage
 	{
 		if (buffer.size() < 32)
 			CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
-		// todo tiff
+		// todo tiff with multiple images
+		// todo webp with multiple images
 		if (compare(buffer, ddsSignature))
 			return ddsDecode(buffer);
 		return decodeSingle(buffer);
