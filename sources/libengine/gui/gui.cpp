@@ -8,8 +8,8 @@
 #include <cage-core/macros.h>
 #include <cage-core/memoryAllocators.h>
 
-#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Update, Tooltip, TooltipMarker
-#define GCHL_GUI_WIDGET_COMPONENTS Label, Header, Separator, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, SolidColor, Frame, Panel, Spoiler
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, TextSelection, WidgetState, SelectedItem, LayoutScrollbars, LayoutAlignment, ExplicitSize, Event, Update, Tooltip, TooltipMarker
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Header, Separator, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, SolidColor, Frame, Panel, Spoiler, CustomElement
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutSplit, LayoutTable
 
 namespace cage

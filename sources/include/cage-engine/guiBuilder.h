@@ -12,7 +12,8 @@ namespace cage
 
 		struct CAGE_ENGINE_API BuilderItem
 		{
-			BuilderItem(GuiBuilder *g);
+			BuilderItem();
+			explicit BuilderItem(GuiBuilder *g);
 			BuilderItem(BuilderItem &&);
 			BuilderItem(BuilderItem &);
 			BuilderItem &operator=(BuilderItem &);
@@ -30,6 +31,7 @@ namespace cage
 			BuilderItem textColor(Vec3 color);
 			BuilderItem textSize(Real size);
 			BuilderItem textAlign(TextAlignEnum align);
+			BuilderItem textFont(uint32 font);
 			BuilderItem image(const GuiImageComponent &img);
 			BuilderItem image(uint32 textureName);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
@@ -102,8 +104,8 @@ namespace cage
 			[[nodiscard]] BuilderItem bottomColumnStretchTop(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem middleColumn(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem middleColumnStretchBoth(Real horizontalAlign = GuiLayoutLineComponent().crossAlign);
-			[[nodiscard]] BuilderItem horizontalSplit(Real verticalAlign = GuiLayoutSplitComponent().crossAlign);
-			[[nodiscard]] BuilderItem verticalSplit(Real horizontalAlign = GuiLayoutSplitComponent().crossAlign);
+			[[nodiscard]] BuilderItem horizontalSplit(Real split = GuiLayoutSplitComponent().split, Real verticalAlign = GuiLayoutSplitComponent().crossAlign);
+			[[nodiscard]] BuilderItem verticalSplit(Real split = GuiLayoutSplitComponent().split, Real horizontalAlign = GuiLayoutSplitComponent().crossAlign);
 			[[nodiscard]] BuilderItem horizontalTable(uint32 rows = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem verticalTable(uint32 columns = GuiLayoutTableComponent().sections, bool grid = GuiLayoutTableComponent().grid);
 			[[nodiscard]] BuilderItem alignment(Vec2 align = GuiLayoutAlignmentComponent().alignment);
@@ -113,7 +115,7 @@ namespace cage
 			[[nodiscard]] BuilderItem verticalScrollbar(bool alwaysShown = false);
 
 			BuilderItem empty();
-			BuilderItem label();
+			BuilderItem label(bool margin = GuiLabelComponent().margin);
 			BuilderItem header();
 			BuilderItem horizontalSeparator();
 			BuilderItem verticalSeparator();
@@ -134,6 +136,7 @@ namespace cage
 			BuilderItem frame();
 			BuilderItem panel();
 			BuilderItem spoiler(bool collapsed = GuiSpoilerComponent().collapsed, bool collapsesSiblings = GuiSpoilerComponent().collapsesSiblings);
+			BuilderItem customElement(GuiElementTypeEnum element, Vec4 margin = Vec4(), Vec4 padding = Vec4());
 		};
 	}
 

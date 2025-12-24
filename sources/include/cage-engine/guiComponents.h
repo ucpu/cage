@@ -44,6 +44,7 @@ namespace cage
 	{
 		None,
 		Stretch, // image is resized to fill the area
+		Repeat, // preserves aspect ratio and scale, and repeats the pattern to fill the area
 		Fill, // preserves aspect ratio, and is scaled to fill the entire area, it may be clipped
 		Fit, // preserves aspect ratio, and is scaled to fit in its entirety into the area, there may be empty areas around
 	};
@@ -70,7 +71,7 @@ namespace cage
 		TextAlignEnum align = (TextAlignEnum)m;
 	};
 
-	struct CAGE_ENGINE_API GuiSelectionComponent
+	struct CAGE_ENGINE_API GuiTextSelectionComponent
 	{
 		uint32 start = m; // utf32 characters (not bytes)
 		uint32 length = 0; // utf32 characters (not bytes)
@@ -159,6 +160,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiLayoutSplitComponent
 	{
+		Real split = Real::Nan(); // use nan to equaly split any number of elements, or a value between 0..1 to split two elements
 		Real crossAlign = Real::Nan(); // applied to items individually in the secondary axis, nan = fill the space, 0 = left/top, 1 = right/bottom
 		bool vertical = false;
 	};
@@ -199,6 +201,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiLabelComponent
 	{
+		bool margin = true;
 		// GuiTextComponent defines foreground of the widget
 		// GuiImageComponent defines background of the widget
 	};
@@ -254,7 +257,7 @@ namespace cage
 		bool valid = false;
 		// GuiTextComponent defines placeholder
 		// GuiTextFormatComponent defines format
-		// GuiSelectionComponent defines selected text
+		// GuiTextSelectionComponent defines selected text
 	};
 
 	struct CAGE_ENGINE_API GuiTextAreaComponent
@@ -263,7 +266,7 @@ namespace cage
 		uint32 cursor = m; // utf32 characters (not bytes)
 		uint32 maxLength = 1024 * 1024; // bytes
 		InputStyleFlags style = InputStyleFlags::None;
-		// GuiSelectionComponent defines selected text
+		// GuiTextSelectionComponent defines selected text
 	};
 
 	enum class CheckBoxStateEnum : uint32
@@ -332,6 +335,13 @@ namespace cage
 		bool collapsed = true;
 		bool collapsesSiblings = true;
 		// GuiTextComponent defines caption
+	};
+
+	struct CAGE_ENGINE_API GuiCustomElementComponent
+	{
+		Vec4 margin;
+		Vec4 padding;
+		GuiElementTypeEnum element = (GuiElementTypeEnum)m;
 	};
 
 	namespace privat

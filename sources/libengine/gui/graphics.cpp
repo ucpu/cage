@@ -180,7 +180,7 @@ namespace cage
 
 	namespace
 	{
-		void evaluateImageMode(Vec4 &ndc, Vec2i screenSize, Vec4 &uv, Vec2i textureSize, ImageModeEnum mode)
+		void evaluateImageMode(Vec4 &ndc, Vec2i screenSize, Vec4 &uv, Vec2i textureSize, ImageModeEnum mode, Real pointsScale)
 		{
 			CAGE_ASSERT(mode != ImageModeEnum::None);
 
@@ -202,6 +202,15 @@ namespace cage
 				case ImageModeEnum::Stretch:
 					break;
 
+				case ImageModeEnum::Repeat:
+				{
+					CAGE_ASSERT(uv == Vec4(0, 0, 1, 1));
+					const Real w = (ndc[2] - ndc[0]) * screenSize[0] / textureSize[0] / pointsScale;
+					const Real h = (ndc[3] - ndc[1]) * screenSize[1] / textureSize[1] / pointsScale;
+					uv = Vec4(-w, -h, w, h) * 0.5;
+					break;
+				}
+
 				case ImageModeEnum::Fill:
 				{
 					// todo
@@ -212,7 +221,7 @@ namespace cage
 				{
 					if (st > at)
 					{ // preserve height, adjust width
-						Real c = (ndc[2] + ndc[0]) * 0.5;
+						const Real c = (ndc[2] + ndc[0]) * 0.5;
 						Real w = ndc[2] - ndc[0];
 						w *= 0.5 * at / st;
 						ndc[0] = c - w;
@@ -220,7 +229,7 @@ namespace cage
 					}
 					else
 					{ // preserve width, adjust height
-						Real c = (ndc[3] + ndc[1]) * 0.5;
+						const Real c = (ndc[3] + ndc[1]) * 0.5;
 						Real h = ndc[3] - ndc[1];
 						h *= 0.5 * at / st;
 						ndc[1] = c - h;
@@ -248,7 +257,7 @@ namespace cage
 			format.animationSpeed = 1;
 		if (!valid(format.animationOffset))
 			format.animationOffset = 0;
-		evaluateImageMode(this->ndcPos, impl->outputResolution, this->uvClip, this->texture->resolution(), format.mode);
+		evaluateImageMode(this->ndcPos, impl->outputResolution, this->uvClip, this->texture->resolution(), format.mode, impl->pointsScale);
 		this->animation = Vec4((double)(sint64)(applicationTime() - item->image.animationStart) / 1'000'000, format.animationSpeed, format.animationOffset, 0);
 	}
 

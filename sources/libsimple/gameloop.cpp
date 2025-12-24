@@ -554,7 +554,7 @@ namespace cage
 
 			void finalize()
 			{
-				CAGE_ASSERT(engineStarted == 4);
+				CAGE_ASSERT(engineStarted >= 2 && engineStarted <= 4);
 				engineStarted = 5;
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");

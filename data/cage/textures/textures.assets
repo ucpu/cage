@@ -2,12 +2,12 @@
 scheme = texture
 premultiplyAlpha = true
 srgb = true
-gui.png
-tooltips.png
 keybindAdd.png
 keybindClear.png
 keybindRemove.png
 keybindReset.png
+skinDefault.png
+skinTooltips.png
 
 []
 scheme = texture

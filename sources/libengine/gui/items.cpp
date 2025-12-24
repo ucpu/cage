@@ -34,10 +34,6 @@ namespace cage
 	{
 		if (item)
 			item->findRequestedSize(maxWidth);
-		//else if (text)
-		//	requestedSize = text->findRequestedSize(maxWidth);
-		//else if (image)
-		//	requestedSize = image->findRequestedSize();
 		else
 		{
 			requestedSize = Vec2();

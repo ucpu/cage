@@ -11,7 +11,9 @@ namespace cage
 	{
 		struct LabelImpl : public WidgetItem
 		{
-			LabelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy) {}
+			const GuiLabelComponent &data;
+
+			LabelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Label)) {}
 
 			void initialize() override
 			{
@@ -25,7 +27,7 @@ namespace cage
 
 			void findRequestedSize(Real maxWidth) override
 			{
-				guiSubtract(maxWidth, skin->defaults.label.margin);
+				guiSubtract(maxWidth, skin->defaults.label.margin * data.margin);
 				hierarchy->requestedSize = Vec2();
 				if (hierarchy->text)
 					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->text->findRequestedSize(maxWidth));
@@ -35,14 +37,14 @@ namespace cage
 				{
 					CAGE_ASSERT(false);
 				}
-				offsetSize(hierarchy->requestedSize, skin->defaults.label.margin);
+				offsetSize(hierarchy->requestedSize, skin->defaults.label.margin * data.margin);
 			}
 
 			void emit() override
 			{
 				Vec2 p = hierarchy->renderPos;
 				Vec2 s = hierarchy->renderSize;
-				offset(p, s, -skin->defaults.label.margin);
+				offset(p, s, -skin->defaults.label.margin * data.margin);
 				if (hierarchy->image)
 					hierarchy->image->emit(p, s, widgetState.disabled);
 				if (hierarchy->text)

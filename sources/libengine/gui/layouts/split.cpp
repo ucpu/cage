@@ -19,12 +19,26 @@ namespace cage
 			void findRequestedSize(Real maxWidth) override
 			{
 				hierarchy->requestedSize = Vec2();
-				for (const auto &c : hierarchy->children)
+				if (data.split.valid())
 				{
-					c->findRequestedSize(maxWidth);
-					hierarchy->requestedSize = max(hierarchy->requestedSize, c->requestedSize);
+					CAGE_ASSERT(data.split > 0 && data.split < 1);
+					CAGE_ASSERT(hierarchy->children.size() == 2);
+					for (const auto &c : hierarchy->children)
+					{
+						c->findRequestedSize(maxWidth);
+						hierarchy->requestedSize[data.vertical] += c->requestedSize[data.vertical];
+						hierarchy->requestedSize[!data.vertical] = max(hierarchy->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
+					}
 				}
-				hierarchy->requestedSize[data.vertical] *= hierarchy->children.size();
+				else
+				{
+					for (const auto &c : hierarchy->children)
+					{
+						c->findRequestedSize(maxWidth);
+						hierarchy->requestedSize = max(hierarchy->requestedSize, c->requestedSize);
+					}
+					hierarchy->requestedSize[data.vertical] *= hierarchy->children.size();
+				}
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
@@ -32,23 +46,45 @@ namespace cage
 			{
 				if (hierarchy->children.empty())
 					return;
-				const uint32 h = data.vertical ? 1 : hierarchy->children.size();
-				const uint32 v = data.vertical ? hierarchy->children.size() : 1;
-				const Vec2 s = update.renderSize / Vec2(h, v);
-				CAGE_ASSERT(s.valid());
-				Real offset = 0;
-				for (const auto &c : hierarchy->children)
+				if (data.split.valid())
 				{
-					FinalPosition u(update);
-					u.renderSize = s;
-					u.renderPos[data.vertical] += offset;
-					if (data.crossAlign.valid())
+					CAGE_ASSERT(data.split > 0 && data.split < 1);
+					CAGE_ASSERT(hierarchy->children.size() == 2);
+					for (uint32 i = 0; i < 2; i++)
 					{
-						u.renderSize[!data.vertical] = min(c->requestedSize[!data.vertical], u.renderSize[!data.vertical]);
-						u.renderPos[!data.vertical] += (update.renderSize[!data.vertical] - u.renderSize[!data.vertical]) * data.crossAlign;
+						const Real f = i == 0 ? data.split : 1 - data.split;
+						const auto &c = hierarchy->children[i];
+						FinalPosition u(update);
+						u.renderSize[data.vertical] = update.renderSize[data.vertical] * f;
+						u.renderPos[data.vertical] += update.renderSize[data.vertical] * data.split * i;
+						if (data.crossAlign.valid())
+						{
+							u.renderSize[!data.vertical] = min(c->requestedSize[!data.vertical], u.renderSize[!data.vertical]);
+							u.renderPos[!data.vertical] += (update.renderSize[!data.vertical] - u.renderSize[!data.vertical]) * data.crossAlign;
+						}
+						c->findFinalPosition(u);
 					}
-					c->findFinalPosition(u);
-					offset += s[data.vertical];
+				}
+				else
+				{
+					const uint32 h = data.vertical ? 1 : hierarchy->children.size();
+					const uint32 v = data.vertical ? hierarchy->children.size() : 1;
+					const Vec2 s = update.renderSize / Vec2(h, v);
+					CAGE_ASSERT(s.valid());
+					Real offset = 0;
+					for (const auto &c : hierarchy->children)
+					{
+						FinalPosition u(update);
+						u.renderSize = s;
+						u.renderPos[data.vertical] += offset;
+						if (data.crossAlign.valid())
+						{
+							u.renderSize[!data.vertical] = min(c->requestedSize[!data.vertical], u.renderSize[!data.vertical]);
+							u.renderPos[!data.vertical] += (update.renderSize[!data.vertical] - u.renderSize[!data.vertical]) * data.crossAlign;
+						}
+						c->findFinalPosition(u);
+						offset += s[data.vertical];
+					}
 				}
 			}
 		};
