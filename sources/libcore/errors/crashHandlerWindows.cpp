@@ -2,6 +2,8 @@
 
 	#include "../windowsMinimumInclude.h"
 	#include <csignal>
+	#include <cstdlib>
+	#include <exception>
 	#include <DbgHelp.h>
 
 	#pragma comment(lib, "DbgHelp.lib")
@@ -10,6 +12,7 @@
 	#define EXCEPTION_RENAME_THREAD 0x406D1388
 
 	#include <cage-core/concurrent.h>
+	#include <cage-core/debug.h>
 	#include <cage-core/process.h> // installSigTermHandler
 
 namespace cage
@@ -241,7 +244,7 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_DOTNET)
 				return;
-			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
+			//CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION || ex->ExceptionRecord->ExceptionCode == EXCEPTION_IN_PAGE_ERROR)
 			{
 				const uint64 mode = ex->ExceptionRecord->ExceptionInformation[0];
@@ -264,13 +267,13 @@ namespace cage
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
-		LPTOP_LEVEL_EXCEPTION_FILTER previous = nullptr;
+		LPTOP_LEVEL_EXCEPTION_FILTER previousExceptionFilter = nullptr;
 
 		LONG WINAPI unhandledHandler(PEXCEPTION_POINTERS ex)
 		{
 			commonHandler(ex);
-			if (previous)
-				return previous(ex);
+			if (previousExceptionFilter)
+				return previousExceptionFilter(ex);
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
@@ -278,6 +281,54 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + consoleCodeToString(code));
 			return FALSE; // let other handlers process it
+		}
+
+		String narrow(const wchar_t *wstr)
+		{
+			String data;
+			if (wstr)
+			{
+				auto wlen = 0;
+				auto res = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, wstr, wlen, data.rawData(), String::MaxLength - 1, nullptr, nullptr);
+				if (res == 0)
+					CAGE_THROW_ERROR(cage::SystemError, "WideCharToMultiByte", GetLastError());
+				data.rawData()[res] = 0;
+				data.rawLength() = res;
+			}
+			return data;
+		}
+
+		_invalid_parameter_handler previousInvalidParameter = nullptr;
+
+		void invalidParameterHandler(const wchar_t *expression, const wchar_t *function, const wchar_t *file, unsigned int line, uintptr_t pReserved)
+		{
+			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: invalid parameter");
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "expression: " + narrow(expression) + ", function: " + narrow(function));
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
+			detail::debugBreakpoint();
+			if (previousInvalidParameter)
+				previousInvalidParameter(expression, function, file, line, pReserved);
+			std::terminate();
+		}
+
+		_purecall_handler previousPurecall = nullptr;
+
+		void purecallHandler()
+		{
+			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: purecall");
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
+			detail::debugBreakpoint();
+			if (previousPurecall)
+				previousPurecall();
+			std::terminate();
+		}
+
+		void sigAbrtHandler(int)
+		{
+			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: abort signal");
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
+			detail::debugBreakpoint();
+			std::terminate();
 		}
 
 		struct SetupHandlers
@@ -290,9 +341,12 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "AddVectoredExceptionHandler", GetLastError());
 				if (!AddVectoredContinueHandler(1, &vectoredHandler))
 					CAGE_THROW_ERROR(SystemError, "AddVectoredContinueHandler", GetLastError());
-				previous = SetUnhandledExceptionFilter(&unhandledHandler);
+				previousExceptionFilter = SetUnhandledExceptionFilter(&unhandledHandler);
 				if (!SetConsoleCtrlHandler(&consoleHandler, TRUE))
 					CAGE_THROW_ERROR(SystemError, "SetConsoleCtrlHandler", GetLastError());
+				previousInvalidParameter = _set_invalid_parameter_handler(&invalidParameterHandler);
+				previousPurecall = _set_purecall_handler(&purecallHandler);
+				signal(SIGABRT, &sigAbrtHandler);
 			}
 		} setupHandlers;
 	}

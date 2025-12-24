@@ -262,8 +262,8 @@ namespace
 						CAGE_TEST(readFile(pathJoin(target, "ddd"))->readLine() == "ddd");
 						break;
 				}
+				break;
 			}
-			break;
 			case MoveResultEnum::Merge:
 			{
 				CAGE_TEST(any(pathType(target) & (PathTypeFlags::Archive | PathTypeFlags::Directory)));
@@ -299,8 +299,8 @@ namespace
 				}
 				if (Source != Target)
 					CAGE_TEST(count(target) == 4); // aaa, bbb, ccc, ddd
+				break;
 			}
-			break;
 		}
 	}
 
