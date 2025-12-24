@@ -202,6 +202,15 @@ namespace cage
 				case ImageModeEnum::Stretch:
 					break;
 
+				case ImageModeEnum::Repeat:
+				{
+					CAGE_ASSERT(uv == Vec4(0, 0, 1, 1));
+					const Real w = (ndc[2] - ndc[0]) * screenSize[0] / textureSize[0];
+					const Real h = (ndc[3] - ndc[1]) * screenSize[1] / textureSize[1];
+					uv = Vec4(-w, -h, w, h) * 0.5;
+					break;
+				}
+
 				case ImageModeEnum::Fill:
 				{
 					// todo

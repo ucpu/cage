@@ -8,7 +8,9 @@ namespace cage
 	{
 		struct FrameImpl : public WidgetItem
 		{
-			FrameImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy) { ensureItemHasLayout(hierarchy); }
+			const GuiFrameComponent &data;
+
+			FrameImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Frame)) { ensureItemHasLayout(hierarchy); }
 
 			void initialize() override
 			{

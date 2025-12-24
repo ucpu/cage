@@ -13,14 +13,14 @@ namespace cage
 		struct InputImpl : public WidgetItem
 		{
 			GuiInputComponent &data;
-			GuiSelectionComponent &selection;
+			GuiTextSelectionComponent &selection;
 			bool showArrows = false;
 
 			Vec2 leftPos, rightPos;
 			Vec2 mainPos, mainSize;
 			Vec2 textPos, textSize;
 
-			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection)) {}
+			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(TextSelection)) {}
 
 			void initialize() override
 			{

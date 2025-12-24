@@ -44,6 +44,8 @@ namespace cage
 			impl->stack.push_back({ e });
 		}
 
+		BuilderItem::BuilderItem() {}
+
 		BuilderItem::BuilderItem(BuilderItem &&other)
 		{
 			std::swap(g, other.g);
@@ -135,6 +137,12 @@ namespace cage
 		BuilderItem BuilderItem::textAlign(TextAlignEnum align)
 		{
 			(*this)->value<GuiTextFormatComponent>().align = align;
+			return *this;
+		}
+
+		BuilderItem BuilderItem::textFont(uint32 font)
+		{
+			(*this)->value<GuiTextFormatComponent>().font = font;
 			return *this;
 		}
 
@@ -358,18 +366,20 @@ namespace cage
 			return c;
 		}
 
-		BuilderItem GuiBuilder::horizontalSplit(Real verticalAlign)
+		BuilderItem GuiBuilder::horizontalSplit(Real split, Real verticalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutSplitComponent &l = c->value<GuiLayoutSplitComponent>();
+			l.split = split;
 			l.crossAlign = verticalAlign;
 			return c;
 		}
 
-		BuilderItem GuiBuilder::verticalSplit(Real horizontalAlign)
+		BuilderItem GuiBuilder::verticalSplit(Real split, Real horizontalAlign)
 		{
 			BuilderItem c(this);
 			GuiLayoutSplitComponent &l = c->value<GuiLayoutSplitComponent>();
+			l.split = split;
 			l.crossAlign = horizontalAlign;
 			l.vertical = true;
 			return c;

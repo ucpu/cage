@@ -982,6 +982,7 @@ namespace cage
 	{
 		return Vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]);
 	}
+	CAGE_CORE_API Vec2 dominantAxis(Vec2 x);
 	CAGE_CORE_API Vec3 dominantAxis(Vec3 x);
 	CAGE_CORE_API Quat lerp(Quat a, Quat b, Real f);
 	CAGE_CORE_API Quat slerp(Quat a, Quat b, Real f);

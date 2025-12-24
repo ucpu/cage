@@ -302,6 +302,13 @@ namespace cage
 		return { axis, angle };
 	}
 
+	Vec2 dominantAxis(Vec2 x)
+	{
+		if (abs(x[0]) > abs(x[1]))
+			return Vec2(sign(x[0]), 0);
+		return Vec2(0, sign(x[1]));
+	}
+
 	Vec3 dominantAxis(Vec3 x)
 	{
 		if (abs(x[0]) > abs(x[1]) && abs(x[0]) > abs(x[2]))
