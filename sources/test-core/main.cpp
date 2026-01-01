@@ -77,6 +77,7 @@ void testLogger();
 void testSystemInformation();
 void testWasm();
 void testCageInstallConsistentPaths();
+void testCrypto();
 void generatePointsOnSphere();
 
 int main()
@@ -158,6 +159,7 @@ int main()
 	testSystemInformation();
 	testWasm();
 	testCageInstallConsistentPaths();
+	testCrypto();
 
 	{
 		CAGE_TESTCASE("removing testdir");
