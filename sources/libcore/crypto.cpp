@@ -5,26 +5,26 @@
 
 namespace cage
 {
-	namespace signing
+	namespace
 	{
-		namespace
+		void checkPsa(psa_status_t status, StringPointer msg)
 		{
-			void checkPsa(psa_status_t status, StringPointer msg)
+			if (status != PSA_SUCCESS)
 			{
-				if (status != PSA_SUCCESS)
-				{
-					CAGE_LOG_THROW(Stringizer() + "status: " + status);
-					CAGE_THROW_ERROR(Exception, msg);
-				}
-			}
-
-			void initPsa()
-			{
-				static psa_status_t status = psa_crypto_init();
-				checkPsa(status, "failed to initialize crypto");
+				CAGE_LOG_THROW(Stringizer() + "status: " + status);
+				CAGE_THROW_ERROR(Exception, msg);
 			}
 		}
 
+		void initPsa()
+		{
+			static psa_status_t status = psa_crypto_init();
+			checkPsa(status, "failed to initialize crypto");
+		}
+	}
+
+	namespace signing
+	{
 		KeyPair generateKeyPair()
 		{
 			initPsa();
