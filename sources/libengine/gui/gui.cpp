@@ -104,6 +104,12 @@ namespace cage
 		return impl->zoom;
 	}
 
+	Vec2 GuiManager::guiResolution() const
+	{
+		const GuiImpl *impl = (const GuiImpl *)this;
+		return impl->outputSize;
+	}
+
 	void GuiManager::defocus()
 	{
 		focus(0);

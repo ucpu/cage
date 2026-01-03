@@ -36,6 +36,8 @@ namespace cage
 		Real outputRetina() const;
 		void zoom(Real zoom); // pixels per point (1D)
 		Real zoom() const;
+		Vec2 guiResolution() const; // points
+
 		void defocus();
 		void focus(uint32 widget);
 		uint32 focus() const;
