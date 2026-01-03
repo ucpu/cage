@@ -65,6 +65,8 @@ namespace cage
 	CAGE_ENGINE_API detail::StringBase<27> getKeyName(uint32 key);
 	CAGE_ENGINE_API detail::StringBase<27> getButtonsNames(MouseButtonsFlags buttons);
 	CAGE_ENGINE_API detail::StringBase<27> getModifiersNames(ModifiersFlags mods);
+
+	CAGE_ENGINE_API uint32 findKeyWithCharacter(uint32 utf32character);
 }
 
 #endif

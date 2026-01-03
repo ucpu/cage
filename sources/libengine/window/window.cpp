@@ -1,3 +1,4 @@
+#include <array>
 #include <atomic>
 #include <vector>
 
@@ -892,6 +893,23 @@ namespace cage
 		if (any(mods & ModifiersFlags::Super))
 			res += "Super ";
 		return trim(res);
+	}
+
+	uint32 findKeyWithCharacter(uint32 utf32character)
+	{
+		std::array<uint32, 10> underlaying = {};
+		for (uint32 key = 1; key < 500; key++)
+		{
+			const auto s8 = glfwGetKeyName(key, 0);
+			if (!s8)
+				continue;
+			const auto sUp = unicodeTransformString(String(s8), UnicodeTransformConfig{ UnicodeTransformEnum::Titlecase });
+			PointerRange<uint32> s32 = underlaying;
+			utf8to32(s32, sUp);
+			if (s32.size() == 1 && s32[0] == utf32character)
+				return key;
+		}
+		return 0;
 	}
 
 	GLFWwindow *getGlfwWindow(Window *w)
