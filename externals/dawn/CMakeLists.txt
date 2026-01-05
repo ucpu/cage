@@ -61,12 +61,20 @@ unset(metal)
 unset(vulkan)
 unset(linux)
 
+set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
+
 # replace constants header
 set(constants_path "${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h")
 file(READ "${constants_path}" constants_content)
 string(REPLACE "kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;" constants_content "${constants_content}")
-set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
 file(CONFIGURE OUTPUT "${constants_path}" CONTENT "${constants_content}" @ONLY)
+
+# replace CMAKE_DEBUG_POSTFIX
+set(cmkdebug_path "${CMAKE_CURRENT_LIST_DIR}/dawn/CMakeLists.txt")
+file(READ "${cmkdebug_path}" cmkdebug_content)
+string(REPLACE "set(CMAKE_DEBUG_POSTFIX" "set(_CMAKE_DEBUG_POSTFIX" cmkdebug_content "${cmkdebug_content}")
+file(CONFIGURE OUTPUT "${cmkdebug_path}" CONTENT "${cmkdebug_content}" @ONLY)
+
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 
 # absl
