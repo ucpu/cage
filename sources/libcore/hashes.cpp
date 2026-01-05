@@ -1,6 +1,7 @@
-#include <algorithm>
-#include <array>
-#include <vector>
+#include <mbedtls/sha1.h>
+#include <mbedtls/sha256.h>
+#include <mbedtls/sha3.h>
+#include <mbedtls/sha512.h>
 
 #include <cage-core/hashes.h>
 
@@ -8,99 +9,47 @@ namespace cage
 {
 	std::array<uint8, 20> hashSha1(PointerRange<const char> data)
 	{
-		// https://thealgorithms.github.io/C-Plus-Plus/d8/d7a/sha1_8cpp.html
-		// modified
+		std::array<uint8, 20> res = {};
+		auto status = mbedtls_sha1((const uint8 *)data.data(), data.size(), res.data());
+		if (status != 0)
+			CAGE_THROW_ERROR(Exception, "sha1 failure");
+		return res;
+	}
 
-		const auto &leftRotate32bits = [](uint32 n, uint32 rotate) -> uint32 { return (n << rotate) | (n >> (32 - rotate)); };
+	std::array<uint8, 32> hashSha2_256(PointerRange<const char> data)
+	{
+		std::array<uint8, 32> res = {};
+		auto status = mbedtls_sha256((const uint8 *)data.data(), data.size(), res.data(), 0);
+		if (status != 0)
+			CAGE_THROW_ERROR(Exception, "sha2_256 failure");
+		return res;
+	}
 
-		uint32 h0 = 0x67452301, a = 0;
-		uint32 h1 = 0xEFCDAB89, b = 0;
-		uint32 h2 = 0x98BADCFE, c = 0;
-		uint32 h3 = 0x10325476, d = 0;
-		uint32 h4 = 0xC3D2E1F0, e = 0;
+	std::array<uint8, 64> hashSha2_512(PointerRange<const char> data)
+	{
+		std::array<uint8, 64> res = {};
+		auto status = mbedtls_sha512((const uint8 *)data.data(), data.size(), res.data(), 0);
+		if (status != 0)
+			CAGE_THROW_ERROR(Exception, "sha2_512 failure");
+		return res;
+	}
 
-		const uint32 input_size = numeric_cast<uint32>(data.size());
-		const uint64 padded_message_size = input_size % 64 < 56 ? input_size + 64 - (input_size % 64) : input_size + 128 - (input_size % 64);
-		std::vector<uint8> padded_message;
-		padded_message.resize(padded_message_size);
-		std::copy((const uint8 *)data.begin(), (const uint8 *)data.end(), padded_message.begin());
-		padded_message[input_size] = 1 << 7; // 10000000
-		for (uint64 i = input_size; i % 64 != 56; i++)
-		{
-			if (i == input_size)
-				continue;
-			padded_message[i] = 0;
-		}
-		for (uint8 i = 0; i < 8; i++)
-			padded_message[padded_message_size - 8 + i] = (uint64(input_size * 8) >> (56 - 8 * i)) & 0xFF;
+	std::array<uint8, 32> hashSha3_256(PointerRange<const char> data)
+	{
+		std::array<uint8, 32> res = {};
+		auto status = mbedtls_sha3(MBEDTLS_SHA3_256, (const uint8 *)data.data(), data.size(), res.data(), res.size());
+		if (status != 0)
+			CAGE_THROW_ERROR(Exception, "sha3_256 failure");
+		return res;
+	}
 
-		std::array<uint32, 80> blocks = {};
-		for (uint64 chunk = 0; chunk * 64 < padded_message_size; chunk++)
-		{
-			for (uint8 bid = 0; bid < 16; bid++)
-			{
-				blocks[bid] = 0;
-				for (uint8 cid = 0; cid < 4; cid++)
-					blocks[bid] = (blocks[bid] << 8) + padded_message[chunk * 64 + bid * 4 + cid];
-				for (uint8 i = 16; i < 80; i++)
-					blocks[i] = leftRotate32bits(blocks[i - 3] ^ blocks[i - 8] ^ blocks[i - 14] ^ blocks[i - 16], 1);
-			}
-
-			a = h0;
-			b = h1;
-			c = h2;
-			d = h3;
-			e = h4;
-
-			for (uint8 i = 0; i < 80; i++)
-			{
-				uint32 F = 0, g = 0;
-				if (i < 20)
-				{
-					F = (b & c) | ((~b) & d);
-					g = 0x5A827999;
-				}
-				else if (i < 40)
-				{
-					F = b ^ c ^ d;
-					g = 0x6ED9EBA1;
-				}
-				else if (i < 60)
-				{
-					F = (b & c) | (b & d) | (c & d);
-					g = 0x8F1BBCDC;
-				}
-				else
-				{
-					F = b ^ c ^ d;
-					g = 0xCA62C1D6;
-				}
-
-				const uint32 temp = leftRotate32bits(a, 5) + F + e + g + blocks[i];
-				e = d;
-				d = c;
-				c = leftRotate32bits(b, 30);
-				b = a;
-				a = temp;
-			}
-
-			h0 += a;
-			h1 += b;
-			h2 += c;
-			h3 += d;
-			h4 += e;
-		}
-
-		std::array<uint8, 20> sig = {};
-		for (uint8 i = 0; i < 4; i++)
-		{
-			sig[i] = (h0 >> (24 - 8 * i)) & 0xFF;
-			sig[i + 4] = (h1 >> (24 - 8 * i)) & 0xFF;
-			sig[i + 8] = (h2 >> (24 - 8 * i)) & 0xFF;
-			sig[i + 12] = (h3 >> (24 - 8 * i)) & 0xFF;
-			sig[i + 16] = (h4 >> (24 - 8 * i)) & 0xFF;
-		}
-		return sig;
+	std::array<uint8, 64> hashSha3_512(PointerRange<const char> data)
+	{
+		std::array<uint8, 64> res = {};
+		auto status = mbedtls_sha3(MBEDTLS_SHA3_512, (const uint8 *)data.data(), data.size(), res.data(), res.size());
+		if (status != 0)
+			CAGE_THROW_ERROR(Exception, "sha3_512 failure");
+		return res;
 	}
 
 	String hashToHexadecimal(PointerRange<const uint8> data)
@@ -113,6 +62,30 @@ namespace cage
 			hex += String(hexChars[d & 0xF]);
 		}
 		return hex;
+	}
+
+	void hexadecimalToHash(const String &inputHexadecimal, PointerRange<uint8> outputHash)
+	{
+		if (outputHash.size() * 2 != inputHexadecimal.size())
+			CAGE_THROW_ERROR(Exception, "size mismatch for hexadecimal hash");
+
+		const auto &hexValue = [](char c) -> uint8
+		{
+			if (c >= '0' && c <= '9')
+				return uint8(c - '0');
+			if (c >= 'a' && c <= 'f')
+				return uint8(c - 'a' + 10);
+			if (c >= 'A' && c <= 'F')
+				return uint8(c - 'A' + 10);
+			CAGE_THROW_ERROR(Exception, "invalid hexadecimal character");
+		};
+
+		for (uint32 i = 0; i < outputHash.size(); ++i)
+		{
+			uint8 high = hexValue(inputHexadecimal[i * 2]);
+			uint8 low = hexValue(inputHexadecimal[i * 2 + 1]);
+			outputHash[i] = uint8((high << 4) | low);
+		}
 	}
 
 	String hashToBase64(PointerRange<const uint8> data)
