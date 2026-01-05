@@ -20,11 +20,10 @@ void testCrypto()
 		const auto signature = signing::sign(buffer, pair.privateKey);
 		CAGE_TEST(signing::verify(buffer, pair.publicKey, signature));
 
-		buffer.data()[13]++;
+		buffer.data()[13]++; // modify random byte
 		CAGE_TEST(!signing::verify(buffer, pair.publicKey, signature));
 	}
 
-	/*
 	{
 		CAGE_TESTCASE("encryption");
 
@@ -38,6 +37,8 @@ void testCrypto()
 		MemoryBuffer enc = encryption::encrypt(buffer, pair.publicKey);
 		MemoryBuffer dec = encryption::decrypt(enc, pair.privateKey);
 		CAGE_TEST(dec.size() == buffer.size() && detail::memcmp(dec.data(), buffer.data(), buffer.size()) == 0);
+
+		enc.data()[enc.size() / 2]++; // modify random byte
+		CAGE_TEST_THROWN(encryption::decrypt(enc, pair.privateKey));
 	}
-	*/
 }
