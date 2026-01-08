@@ -28,6 +28,11 @@ namespace cage
 					pmp::VertexProperty<pmp::Normal> normals = res->add_vertex_property<pmp::Normal>("v:normal");
 					normals.vector() = std::vector((pmp::Normal *)model->normals().data(), (pmp::Normal *)model->normals().data() + model->normals().size());
 				}
+				if (!model->uvs().empty())
+				{
+					pmp::VertexProperty<pmp::TexCoord> uvs = res->add_vertex_property<pmp::TexCoord>("v:uv");
+					uvs.vector() = std::vector((pmp::TexCoord *)model->uvs().data(), (pmp::TexCoord *)model->uvs().data() + model->uvs().size());
+				}
 			}
 			{ // indices
 				const auto &inds = model->indices();
@@ -75,6 +80,12 @@ namespace cage
 					static_assert(sizeof(pmp::Normal) == sizeof(Vec3), "pmp normal size mismatch");
 					const auto &ns = pm->get_vertex_property<pmp::Normal>("v:normal").vector();
 					model->normals({ (Vec3 *)ns.data(), (Vec3 *)ns.data() + ns.size() });
+				}
+				if (pm->has_vertex_property("v:uv"))
+				{
+					static_assert(sizeof(pmp::TexCoord) == sizeof(Vec2), "pmp texcoord size mismatch");
+					const auto &ns = pm->get_vertex_property<pmp::TexCoord>("v:uv").vector();
+					model->uvs({ (Vec2 *)ns.data(), (Vec2 *)ns.data() + ns.size() });
 				}
 			}
 			const uint32 vc = model->verticesCount();
