@@ -634,6 +634,41 @@ namespace
 			p->exportFile("meshes/algorithms/generatedNormals_smooth.obj");
 		}
 
+		{
+			CAGE_TESTCASE("regularize with normals");
+			auto p = makeSphere();
+
+			meshGenerateNormals(+p, {});
+			CAGE_TEST(p->normals().size() == p->positions().size());
+
+			MeshRegularizeConfig cfg;
+#ifdef CAGE_DEBUG
+			cfg.iterations = 1;
+			cfg.targetEdgeLength = 3;
+#endif
+			meshRegularize(+p, cfg);
+			p->exportFile("meshes/algorithms/regularize_with_normals.obj");
+		}
+
+		{
+			CAGE_TESTCASE("regularize with uvs");
+			auto p = makeSphere();
+
+			std::vector<Vec2> uvs;
+			uvs.reserve(p->verticesCount());
+			for (Vec3 v : p->positions())
+				uvs.push_back(Vec2(v[0], v[2]));
+			p->uvs(uvs);
+
+			MeshRegularizeConfig cfg;
+#ifdef CAGE_DEBUG
+			cfg.iterations = 1;
+			cfg.targetEdgeLength = 3;
+#endif
+			meshRegularize(+p, cfg);
+			p->exportFile("meshes/algorithms/regularize_with_uvs.obj");
+		}
+
 		/*
 		{
 			CAGE_TESTCASE("mesh merge");

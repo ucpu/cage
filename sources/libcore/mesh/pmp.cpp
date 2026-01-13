@@ -14,6 +14,8 @@ namespace cage
 {
 	namespace
 	{
+		using TexCoord3 = pmp::Vector<pmp::Scalar, 3>;
+
 		Holder<pmp::SurfaceMesh> toPmp(const Mesh *model, bool ignoreInvalid)
 		{
 			CAGE_ASSERT(model->type() == MeshTypeEnum::Triangles);
@@ -26,12 +28,20 @@ namespace cage
 				if (!model->normals().empty())
 				{
 					pmp::VertexProperty<pmp::Normal> normals = res->add_vertex_property<pmp::Normal>("v:normal");
-					normals.vector() = std::vector((pmp::Normal *)model->normals().data(), (pmp::Normal *)model->normals().data() + model->normals().size());
+					const auto src = model->normals().cast<const pmp::Normal>();
+					normals.vector() = std::vector(src.begin(), src.end());
 				}
 				if (!model->uvs().empty())
 				{
 					pmp::VertexProperty<pmp::TexCoord> uvs = res->add_vertex_property<pmp::TexCoord>("v:uv");
-					uvs.vector() = std::vector((pmp::TexCoord *)model->uvs().data(), (pmp::TexCoord *)model->uvs().data() + model->uvs().size());
+					const auto src = model->uvs().cast<const pmp::TexCoord>();
+					uvs.vector() = std::vector(src.begin(), src.end());
+				}
+				if (!model->uvs3().empty())
+				{
+					pmp::VertexProperty<TexCoord3> uvs = res->add_vertex_property<TexCoord3>("v:uv3");
+					const auto src = model->uvs3().cast<const TexCoord3>();
+					uvs.vector() = std::vector(src.begin(), src.end());
 				}
 			}
 			{ // indices
@@ -78,7 +88,9 @@ namespace cage
 				if (pm->has_vertex_property("v:normal"))
 				{
 					static_assert(sizeof(pmp::Normal) == sizeof(Vec3), "pmp normal size mismatch");
-					const auto &ns = pm->get_vertex_property<pmp::Normal>("v:normal").vector();
+					auto &ns = pm->get_vertex_property<pmp::Normal>("v:normal").vector();
+					for (auto &v : ns)
+						v = pmp::normalize(v);
 					model->normals({ (Vec3 *)ns.data(), (Vec3 *)ns.data() + ns.size() });
 				}
 				if (pm->has_vertex_property("v:uv"))
@@ -86,6 +98,12 @@ namespace cage
 					static_assert(sizeof(pmp::TexCoord) == sizeof(Vec2), "pmp texcoord size mismatch");
 					const auto &ns = pm->get_vertex_property<pmp::TexCoord>("v:uv").vector();
 					model->uvs({ (Vec2 *)ns.data(), (Vec2 *)ns.data() + ns.size() });
+				}
+				if (pm->has_vertex_property("v:uv3"))
+				{
+					static_assert(sizeof(TexCoord3) == sizeof(Vec3), "pmp texcoord3 size mismatch");
+					const auto &ns = pm->get_vertex_property<TexCoord3>("v:uv3").vector();
+					model->uvs3({ (Vec3 *)ns.data(), (Vec3 *)ns.data() + ns.size() });
 				}
 			}
 			const uint32 vc = model->verticesCount();
