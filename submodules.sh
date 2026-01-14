@@ -42,6 +42,7 @@ git_ignore_file()
 	popd >/dev/null
 }
 
-git_ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"
 git_ignore_file "externals/dawn/dawn" "CMakeLists.txt"
+git_ignore_file "externals/dawn/dawn" "third_party/CMakeLists.txt"
+git_ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"
 git_ignore_file "externals/quickhull/quickhull" "QuickHull.cpp"

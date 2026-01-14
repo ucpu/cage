@@ -4,7 +4,39 @@ message(STATUS "----------------------------------------------------------------
 
 cage_heavily_optimized()
 
+function(replace_in_file target_file)
+	# remaining arguments must be pairs: PATTERN REPLACEMENT
+	set(pairs ${ARGN})
+	list(LENGTH pairs pair_len)
+	file(READ "${target_file}" _content)
+	math(EXPR last "${pair_len} - 1")
+	foreach(i RANGE 0 ${last} 2)
+		math(EXPR j "${i} + 1")
+		list(GET pairs ${i} pattern)
+		list(GET pairs ${j} replacement)
+		string(REGEX REPLACE "${pattern}" "${replacement}" _content "${_content}")
+	endforeach()
+	set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
+	file(CONFIGURE OUTPUT "${target_file}" CONTENT "${_content}" @ONLY)
+	set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+endfunction()
+replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/CMakeLists.txt"
+	"set\\(CMAKE_DEBUG_POSTFIX" "set(_CMAKE_DEBUG_POSTFIX"
+	"set\\(IS_DEBUG_BUILD 1\\)" "set(IS_DEBUG_BUILD 0)"
+)
+replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/CMakeLists.txt"
+	"NOT TARGET glslang AND \\(TINT_BUILD_GLSL_WRITER OR TINT_BUILD_GLSL_VALIDATOR\\) AND TINT_BUILD_CMD_TOOLS" "ON"
+)
+replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h"
+	"kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;"
+)
+
+
 set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
+
 
 if(WIN32)
 	set(metal OFF)
@@ -21,7 +53,7 @@ else()
 endif()
 
 # dawn
-set(DAWN_ENABLE_INSTALL ON CACHE INTERNAL "Enable install step for Dawn libraries")
+set(DAWN_ENABLE_INSTALL OFF CACHE INTERNAL "Enable install step for Dawn libraries")
 set(DAWN_ENABLE_D3D11 OFF CACHE INTERNAL "Enable compilation of the D3D11 backend")
 set(DAWN_ENABLE_D3D12 OFF CACHE INTERNAL "Enable compilation of the D3D12 backend")
 set(DAWN_ENABLE_METAL ${metal} CACHE INTERNAL "Enable compilation of the Metal backend")
@@ -46,13 +78,13 @@ set(DAWN_BUILD_MONOLITHIC_LIBRARY "STATIC" CACHE INTERNAL "Build monolithic libr
 set(TINT_BUILD_SPV_READER ON CACHE INTERNAL "Build the SPIR-V input reader")
 set(TINT_BUILD_WGSL_READER ON CACHE INTERNAL "Build the WGSL input reader")
 set(TINT_BUILD_GLSL_WRITER OFF CACHE INTERNAL "Build the GLSL output writer")
-set(TINT_BUILD_GLSL_VALIDATOR ON CACHE INTERNAL "Build the GLSL output validator") # required for glslang
+set(TINT_BUILD_GLSL_VALIDATOR OFF CACHE INTERNAL "Build the GLSL output validator") # required for glslang
 set(TINT_BUILD_HLSL_WRITER OFF CACHE INTERNAL "Build the HLSL output writer")
 set(TINT_BUILD_MSL_WRITER ${metal} CACHE INTERNAL "Build the MSL output writer")
 set(TINT_BUILD_SPV_WRITER ${vulkan} CACHE INTERNAL "Build the SPIR-V output writer")
 set(TINT_BUILD_WGSL_WRITER ON CACHE INTERNAL "Build the WGSL output writer")
 set(TINT_ENABLE_INSTALL OFF CACHE INTERNAL "Enable install step for Tint libraries")
-set(TINT_BUILD_CMD_TOOLS ON CACHE INTERNAL "Build the Tint command line tools") # required for glslang
+set(TINT_BUILD_CMD_TOOLS OFF CACHE INTERNAL "Build the Tint command line tools") # required for glslang
 set(TINT_BUILD_IR_BINARY OFF CACHE INTERNAL "Build IR binary format support")
 set(TINT_BUILD_TESTS OFF CACHE INTERNAL "Build tests")
 set(TINT_ENABLE_IR_VALIDATION ${cage_validate_graphics} CACHE INTERNAL "Enable IR validation for backend codegen")
@@ -61,21 +93,6 @@ unset(metal)
 unset(vulkan)
 unset(linux)
 
-set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
-
-# replace constants header
-set(constants_path "${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h")
-file(READ "${constants_path}" constants_content)
-string(REPLACE "kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;" constants_content "${constants_content}")
-file(CONFIGURE OUTPUT "${constants_path}" CONTENT "${constants_content}" @ONLY)
-
-# replace CMAKE_DEBUG_POSTFIX
-set(cmkdebug_path "${CMAKE_CURRENT_LIST_DIR}/dawn/CMakeLists.txt")
-file(READ "${cmkdebug_path}" cmkdebug_content)
-string(REPLACE "set(CMAKE_DEBUG_POSTFIX" "set(_CMAKE_DEBUG_POSTFIX" cmkdebug_content "${cmkdebug_content}")
-file(CONFIGURE OUTPUT "${cmkdebug_path}" CONTENT "${cmkdebug_content}" @ONLY)
-
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 
 # absl
 set(ABSL_PROPAGATE_CXX_STD OFF CACHE INTERNAL "Use CMake C++ standard meta features (e.g. cxx_std_17) that propagate to targets that link to Abseil")
@@ -84,10 +101,14 @@ set(ABSL_USE_SYSTEM_INCLUDES ON CACHE INTERNAL "Use CMake C++ standard meta feat
 
 # protobuf
 add_library(libprotobuf-mutator INTERFACE) # subvert unnecessary dependencies
+set(protobuf_BUILD_SHARED_LIBS OFF CACHE INTERNAL "Build Shared Libraries")
+set(protobuf_MSVC_STATIC_RUNTIME OFF CACHE INTERNAL "Link static runtime libraries")
+
 
 # dawn
 add_subdirectory(dawn)
 
+# cage-dawn
 add_library(cage_dawn INTERFACE)
 target_link_libraries(cage_dawn INTERFACE $<TARGET_LINKER_FILE:webgpu_dawn> $<TARGET_LINKER_FILE:webgpu_glfw>)
 if(APPLE)

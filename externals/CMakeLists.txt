@@ -47,6 +47,7 @@ set(CMAKE_STATIC_LIBRARY_PREFIX "${CMAKE_STATIC_LIBRARY_PREFIX}cage-")
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_LIBRARY_PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_MODULE_PREFIX "${CMAKE_SHARED_MODULE_PREFIX}cage-")
+set(CMAKE_DEBUG_POSTFIX "d")
 
 # no compilation warnings level
 if(MSVC)
@@ -90,6 +91,7 @@ endmacro(cage_heavily_optimized)
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "RELEASE")
+	set(CMAKE_BUILD_TYPE RELEASE CACHE INTERNAL "")
 endif()
 
 message(STATUS "----------------------------------------------------------------")
