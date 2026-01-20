@@ -20,12 +20,14 @@ namespace cage
 			return abs(dot(dir1, dir2)) <= 1e-5;
 		}
 
+		/*
 		CAGE_FORCE_INLINE Rads angle(Vec3 a, Vec3 b)
 		{
 			CAGE_ASSERT(abs(lengthSquared(a) - 1) < 1e-4);
 			CAGE_ASSERT(abs(lengthSquared(b) - 1) < 1e-4);
 			return acos(dot(a, b));
 		}
+		*/
 	}
 
 	Rads angle(Line a, Line b)

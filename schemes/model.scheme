@@ -47,3 +47,8 @@ default = false
 display = triangles only
 type = bool
 default = false
+
+[collider]
+display = include collider
+type = bool
+default = true

@@ -988,6 +988,8 @@ namespace cage
 	CAGE_CORE_API Quat slerp(Quat a, Quat b, Real f);
 	CAGE_CORE_API Quat slerpPrecise(Quat a, Quat b, Real f);
 	CAGE_CORE_API Quat rotate(Quat from, Quat toward, Rads maxTurn);
+	CAGE_CORE_API Rads angle(Vec2 a, Vec2 b);
+	CAGE_CORE_API Rads angle(Vec3 a, Vec3 b);
 	CAGE_CORE_API Rads angle(Quat a, Quat b);
 	CAGE_CORE_API Rads pitch(Quat q);
 	CAGE_CORE_API Rads yaw(Quat q);
@@ -1019,6 +1021,7 @@ namespace cage
 	GCHL_GENERATE(Quat);
 	GCHL_GENERATE(Mat3);
 	GCHL_GENERATE(Mat4);
+	GCHL_GENERATE(Transform);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
