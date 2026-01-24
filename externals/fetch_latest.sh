@@ -3,8 +3,13 @@
 # update freetype from upstream
 (cd freetype/freetype && git fetch upstream HEAD && git reset --hard upstream/master && git push)
 
+echo
+echo
 
 function pbranch {
+	echo
+	pwd
+	echo
 	git checkout -b master
 	git checkout master
 	git branch --set-upstream-to=origin/HEAD master
@@ -14,6 +19,8 @@ function pbranch {
 export -f pbranch
 git submodule foreach pbranch
 
+echo
+echo
 
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK

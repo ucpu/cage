@@ -4,32 +4,16 @@ message(STATUS "----------------------------------------------------------------
 
 cage_heavily_optimized()
 
-function(replace_in_file target_file)
-	# remaining arguments must be pairs: PATTERN REPLACEMENT
-	set(pairs ${ARGN})
-	list(LENGTH pairs pair_len)
-	file(READ "${target_file}" _content)
-	math(EXPR last "${pair_len} - 1")
-	foreach(i RANGE 0 ${last} 2)
-		math(EXPR j "${i} + 1")
-		list(GET pairs ${i} pattern)
-		list(GET pairs ${j} replacement)
-		string(REGEX REPLACE "${pattern}" "${replacement}" _content "${_content}")
-	endforeach()
-	set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
-	file(CONFIGURE OUTPUT "${target_file}" CONTENT "${_content}" @ONLY)
-	set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-endfunction()
-replace_in_file(
+cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/CMakeLists.txt"
 	"set\\(CMAKE_DEBUG_POSTFIX" "set(_CMAKE_DEBUG_POSTFIX"
 	"set\\(IS_DEBUG_BUILD 1\\)" "set(IS_DEBUG_BUILD 0)"
 )
-replace_in_file(
+cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/CMakeLists.txt"
 	"NOT TARGET glslang AND \\(TINT_BUILD_GLSL_WRITER OR TINT_BUILD_GLSL_VALIDATOR\\) AND TINT_BUILD_CMD_TOOLS" "ON"
 )
-replace_in_file(
+cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h"
 	"kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;"
 )

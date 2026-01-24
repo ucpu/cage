@@ -34,7 +34,7 @@ namespace cage
 				if (!spirv->hasStage(stage))
 					return {};
 				const auto code = spirv->exportSpirv(stage);
-				wgpu::ShaderModuleSPIRVDescriptor s = {};
+				wgpu::ShaderSourceSPIRV s = {};
 				s.codeSize = code.size();
 				s.code = code.data();
 				wgpu::ShaderModuleDescriptor desc = {};

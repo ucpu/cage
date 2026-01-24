@@ -8,9 +8,9 @@ update_submodule()
 	local sub_path="$2"
 	pushd "$repo_path" >/dev/null
 	if [ -d "$sub_path/.git" ] || [ -f "$sub_path/.git" ]; then
-		echo "Skipping $repo_path/$sub_path"
+		echo "skipping $repo_path/$sub_path"
 	else
-		echo "Initializing $repo_path/$sub_path"
+		echo "initializing $repo_path/$sub_path"
 		git submodule update --init "$sub_path"
 	fi
 	popd >/dev/null
@@ -31,6 +31,10 @@ update_submodule "externals/dawn/dawn" "third_party/spirv-headers/src"
 update_submodule "externals/dawn/dawn" "third_party/spirv-tools/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-headers/src"
 update_submodule "externals/dawn/dawn" "third_party/vulkan-utility-libraries/src"
+update_submodule "externals/dawn/dawn" "third_party/webgpu-headers/src"
+#update_submodule "externals/mbedtls/mbedtls" "framework"
+#update_submodule "externals/mbedtls/mbedtls" "tf-psa-crypto"
+#update_submodule "externals/mbedtls/mbedtls/tf-psa-crypto" "framework"
 update_submodule "externals/wamr/zydis" "dependencies/zycore"
 
 git_ignore_file()
@@ -43,6 +47,6 @@ git_ignore_file()
 }
 
 git_ignore_file "externals/dawn/dawn" "CMakeLists.txt"
-git_ignore_file "externals/dawn/dawn" "third_party/CMakeLists.txt"
 git_ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"
+git_ignore_file "externals/dawn/dawn" "third_party/CMakeLists.txt"
 git_ignore_file "externals/quickhull/quickhull" "QuickHull.cpp"
