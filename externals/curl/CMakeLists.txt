@@ -15,6 +15,7 @@ else()
 	else()
 		find_package(MBEDTLS REQUIRED)
 		set(CURL_USE_MBEDTLS ON CACHE INTERNAL "")
+		set(HAVE_MBEDTLS_DES_CRYPT_ECB OFF CACHE INTERNAL "") # bypass a check that would otherwise fail
 	endif()
 endif()
 
