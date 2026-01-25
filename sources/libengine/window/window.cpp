@@ -1,5 +1,6 @@
 #include <array>
 #include <atomic>
+#include <cstring>
 #include <vector>
 
 #include "private.h"

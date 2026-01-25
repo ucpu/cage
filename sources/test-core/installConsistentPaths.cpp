@@ -1,4 +1,3 @@
-#include <plf_colony.h>
 #include <svector.h>
 #include <unordered_dense.h>
 
@@ -15,14 +14,6 @@ namespace
 {
 	bool closing = false;
 
-	void testColony()
-	{
-		plf::colony<Vec3> colony;
-		colony.reserve(100);
-		colony.insert(Vec3(13));
-		colony.insert(Vec3(42));
-	}
-
 	void testSvector()
 	{
 		ankerl::svector<Vec3, 4> vec;
@@ -38,7 +29,6 @@ namespace
 
 void testCageInstallConsistentPaths()
 {
-	testColony();
 	testSvector();
 	testUnorderedDense();
 

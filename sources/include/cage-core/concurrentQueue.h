@@ -1,7 +1,7 @@
 #ifndef guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 #define guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 
-#include <plf_list.h>
+#include <vector>
 
 #include <cage-core/concurrent.h>
 
@@ -99,7 +99,7 @@ namespace cage
 				else
 				{
 					value = std::move(items.front());
-					items.pop_front();
+					items.erase(items.begin());
 					writer->signal();
 					return;
 				}
@@ -114,7 +114,7 @@ namespace cage
 			if (!items.empty())
 			{
 				value = std::move(items.front());
-				items.pop_front();
+				items.erase(items.begin());
 				writer->signal();
 				return true;
 			}
@@ -142,7 +142,7 @@ namespace cage
 		Holder<Mutex> mut = newMutex();
 		Holder<ConditionalVariable> writer = newConditionalVariable();
 		Holder<ConditionalVariable> reader = newConditionalVariable();
-		plf::list<T> items;
+		std::vector<T> items;
 		uint32 maxItems = m;
 		bool stop = false;
 	};

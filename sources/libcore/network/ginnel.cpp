@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include <plf_list.h>
 #include <unordered_dense.h>
 
 #include "net.h"
@@ -491,8 +490,8 @@ namespace cage
 					sint8 priority = 0;
 				};
 
-				plf::list<std::shared_ptr<ReliableMsg>> relMsgs;
-				plf::list<Command> cmds;
+				std::vector<std::shared_ptr<ReliableMsg>> relMsgs;
+				std::vector<Command> cmds;
 				ankerl::unordered_dense::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
 				FlatSet<uint16> seqnToAck; // packets seqn to be acked
@@ -745,7 +744,7 @@ namespace cage
 				generateAckCommands(0);
 				resendReliableMessages();
 
-				sending.cmds.sort(
+				std::sort(sending.cmds.begin(), sending.cmds.end(),
 					[](const Sending::Command &a, const Sending::Command &b)
 					{
 						return a.priority > b.priority; // higher priority first
@@ -793,7 +792,7 @@ namespace cage
 
 				std::array<ankerl::unordered_dense::map<uint16, Msg>, 256> staging = {};
 				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
-				plf::list<Msg> messages;
+				std::vector<Msg> messages;
 				FlatSet<PackAck> ackPacks;
 				uint16 packetSeqn = 0; // minimum expected packet seqn
 			} receiving;
@@ -1147,7 +1146,7 @@ namespace cage
 				if (receiving.messages.empty())
 					return {};
 				auto tmp = std::move(receiving.messages.front());
-				receiving.messages.pop_front();
+				receiving.messages.erase(receiving.messages.begin());
 				channel = tmp.channel & 127; // strip reliability bit
 				reliable = tmp.channel > 127;
 				return std::move(tmp.data);
