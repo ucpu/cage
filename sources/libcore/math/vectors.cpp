@@ -246,6 +246,24 @@ namespace cage
 			return toward;
 	}
 
+	Rads angle(Vec2 a, Vec2 b)
+	{
+		a = normalize(a);
+		b = normalize(b);
+		Real c = dot(a, b);
+		c = clamp(c, -1.0f, 1.0f);
+		return acos(c);
+	}
+
+	Rads angle(Vec3 a, Vec3 b)
+	{
+		a = normalize(a);
+		b = normalize(b);
+		Real c = dot(a, b);
+		c = clamp(c, -1.0f, 1.0f);
+		return acos(c);
+	}
+
 	Rads angle(Quat a, Quat b)
 	{
 		Quat q = conjugate(a) * b;

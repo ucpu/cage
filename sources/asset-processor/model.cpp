@@ -226,6 +226,8 @@ namespace
 
 	Holder<PointerRange<const char>> generateAndSerializeCollider(const MeshImportPart &part, const MeshImportResult &result)
 	{
+		if (!toBool(processor->property("collider")))
+			return {};
 		if (part.mesh->type() != MeshTypeEnum::Triangles)
 			return {};
 		if (part.mesh->indicesCount() == 0)
@@ -376,7 +378,8 @@ void processModel()
 	ser << dsm;
 	ser.write(serMesh);
 	ser << mat;
-	ser.write(serCol);
+	if (dsm.colliderSize)
+		ser.write(serCol);
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = memoryCompress(buffer);
 	h.compressedSize = compressed.size();

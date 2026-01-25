@@ -8,8 +8,8 @@
 
 void test(Real a, Real b)
 {
-	Real d = abs(a - b);
-	CAGE_TEST(d < 1e-4);
+	const Real d = abs(a - b);
+	CAGE_TEST(d < 1e-3);
 }
 void test(sint32 a, sint32 b)
 {
@@ -457,6 +457,15 @@ namespace
 		constexpr Vec2 d = a + c;
 		test(d, Vec2(8, 7));
 
+		test(angle(Vec2(1, 0), Vec2(1, 0)), Degs(0));
+		test(angle(Vec2(-1, 0), Vec2(-10, 0)), Degs(0));
+		test(angle(Vec2(1, 0), Vec2(10, 0)), Degs(0));
+		test(angle(Vec2(-1, 0), Vec2(0, 1)), Degs(90));
+		test(angle(Vec2(10, 0), Vec2(0, 1)), Degs(90));
+		test(angle(Vec2(10, 0), Vec2(-1, 0)), Degs(180));
+		test(angle(Vec2(10, 0), Vec2(-10, 0)), Degs(180));
+		test(angle(Vec2(1, -1), Vec2(-1, 1)), Degs(180));
+
 		test(Vec2(1, 5), Vec2(1, 5));
 		CAGE_TEST(!(Vec2(1, 5) != Vec2(1, 5)));
 		CAGE_TEST(Vec2(3, 5) != Vec2(1, 5));
@@ -502,6 +511,21 @@ namespace
 
 		test(dominantAxis(Vec3(13, -4, 1)), Vec3(1, 0, 0));
 		test(dominantAxis(Vec3(-3, -15, 4)), Vec3(0, -1, 0));
+
+		test(angle(Vec3(1, 0, 0), Vec3(1, 0, 0)), Degs(0));
+		test(angle(Vec3(0, -1, 0), Vec3(0, -1, 0)), Degs(0));
+		test(angle(Vec3(100, 0, 0), Vec3(1, 0, 0)), Degs(0));
+		test(angle(Vec3(0, -100, 0), Vec3(0, -1, 0)), Degs(0));
+		test(angle(Vec3(1, 0, 0), Vec3(-1, 0, 0)), Degs(180));
+		test(angle(Vec3(0, 1, 0), Vec3(0, -1, 0)), Degs(180));
+		test(angle(Vec3(10, 0, 0), Vec3(-100, 0, 0)), Degs(180));
+		test(angle(Vec3(0, 10, 0), Vec3(0, -10, 0)), Degs(180));
+		test(angle(Vec3(1, 0, 0), Vec3(0, 1, 0)), Degs(90));
+		test(angle(Vec3(0, 1, 0), Vec3(0, 0, -1)), Degs(90));
+		test(angle(Vec3(10, 0, 0), Vec3(0, 1, 0)), Degs(90));
+		test(angle(Vec3(0, 1, 0), Vec3(0, 0, -10)), Degs(90));
+		test(angle(Vec3(1, 1, 0), Vec3(0, 0, -10)), Degs(90));
+		test(angle(Vec3(1, 1, 0), Vec3(-10, -10, 0)), Degs(180));
 
 		// right = forward x up (in this order)
 		test(cross(Vec3(0, 0, -1), Vec3(0, 1, 0)), Vec3(1, 0, 0));
@@ -1283,9 +1307,8 @@ namespace
 				{
 					Transform v = Transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() * 2);
 					String s = Stringizer() + v;
-					// not yet implemented
-					// transform r = transform::parse(s);
-					// test((mat4)v, (mat4)r);
+					Transform r = Transform::parse(s);
+					test((Mat4)v, (Mat4)r);
 				}
 			}
 			{

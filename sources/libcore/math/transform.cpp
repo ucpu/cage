@@ -2,9 +2,56 @@
 
 namespace cage
 {
+	namespace
+	{
+		uint32 findCommaIgnoreInsideParetheses(const String &s)
+		{
+			uint32 p = 0;
+			for (uint32 i = 0; i < s.length(); i++)
+			{
+				switch (s[i])
+				{
+					case '(':
+					{
+						p++;
+						break;
+					}
+					case ')':
+					{
+						if (p == 0)
+							CAGE_THROW_ERROR(Exception, "mismatched ')'");
+						p--;
+						break;
+					}
+					case ',':
+					{
+						if (p == 0)
+							return i;
+						break;
+					}
+				}
+			}
+			return m;
+		}
+	}
+
 	Transform Transform::parse(const String &str)
 	{
-		CAGE_THROW_CRITICAL(Exception, "transform::parse");
+		// ((x,y,z),(a,b,c,d),s)
+		String s = str;
+		if (s.length() < 21)
+			CAGE_THROW_ERROR(Exception, "cannot parse transform: string too short");
+		if (s[0] != '(' || s[s.length() - 1] != ')')
+			CAGE_THROW_ERROR(Exception, "cannot parse transform: missing parentheses");
+		s = subString(s, 1, s.length() - 2);
+		const uint32 c1 = findCommaIgnoreInsideParetheses(s);
+		const Vec3 p = Vec3::parse(subString(s, 0, c1));
+		s = subString(s, c1 + 1, m);
+		const uint32 c2 = findCommaIgnoreInsideParetheses(s);
+		const Quat r = Quat::parse(subString(s, 0, c2));
+		s = subString(s, c2 + 1, m);
+		const Real sc = Real::parse(s);
+		return Transform(p, r, sc);
 	}
 
 	bool Transform::valid() const
