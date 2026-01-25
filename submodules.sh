@@ -50,6 +50,7 @@ update_submodule "externals/dawn/dawn" "third_party/vulkan-utility-libraries/src
 update_submodule "externals/dawn/dawn" "third_party/webgpu-headers/src"
 update_submodule "externals/wamr/zydis" "dependencies/zycore"
 
+git_ignore_file "externals/curl/curl" "CMakeLists.txt"
 git_ignore_file "externals/dawn/dawn" "CMakeLists.txt"
 git_ignore_file "externals/dawn/dawn" "src/dawn/common/Constants.h"
 git_ignore_file "externals/dawn/dawn" "third_party/CMakeLists.txt"
