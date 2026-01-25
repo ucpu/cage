@@ -402,7 +402,7 @@ namespace cage
 				}
 
 				{ // create assets manager
-					AssetManagerCreateConfig cfg;
+					AssetsManagerCreateConfig cfg;
 					if (config.assets)
 						cfg = *config.assets;
 					cfg.schemesMaxCount = max(cfg.schemesMaxCount, 30u);

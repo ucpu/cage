@@ -51,7 +51,7 @@ namespace cage
 	// special: 3 (4)
 	// normal: 5 (6)
 	// custom: 7 (8)
-	CAGE_ENGINE_API void prepareModelBindings(GraphicsDevice *device, const AssetsManager *assets, Model *model);
+	CAGE_ENGINE_API std::pair<GraphicsBindings, TextureFlags> newGraphicsBindings(GraphicsDevice *device, const AssetsManager *assets, const Model *model);
 }
 
 #endif

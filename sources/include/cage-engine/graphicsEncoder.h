@@ -31,10 +31,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API DrawConfig : public GraphicsPipelineCommonConfig
 	{
-		std::optional<GraphicsBindings> materialOverride; // binds to set = 1
+		GraphicsBindings material; // binds to set = 1 (optional, must match layout for the model)
 		GraphicsBindings bindings; // binds to set = 2
 		ankerl::svector<uint32, 5> dynamicOffsets = {}; // applies to buffers in set = 2
-		Model *model = nullptr; // material binds to set = 1
+		const Model *model = nullptr;
 		uint32 instances = 1;
 	};
 

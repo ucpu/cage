@@ -104,12 +104,6 @@ namespace cage
 		return impl->layout;
 	}
 
-	GraphicsBindings &Model::bindings()
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		return impl->bindings;
-	}
-
 	Holder<Model> newModel(const AssetLabel &label)
 	{
 		return systemMemory().createImpl<Model, ModelImpl>(label);

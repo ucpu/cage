@@ -19,7 +19,6 @@ namespace cage
 	class GraphicsBuffer;
 	enum class MeshRenderFlags : uint32;
 	enum class TextureFlags : uint32;
-	struct GraphicsBindings;
 
 	class CAGE_ENGINE_API Model : private Immovable
 	{
@@ -31,7 +30,6 @@ namespace cage
 
 		void updateLayout();
 		const wgpu::VertexBufferLayout &getLayout() const;
-		GraphicsBindings &bindings();
 
 		// general
 		Mat4 importTransform;
@@ -54,7 +52,6 @@ namespace cage
 		uint32 shaderName = 0;
 		sint32 renderLayer = 0;
 		MeshRenderFlags renderFlags = {};
-		TextureFlags texturesFlags = {};
 	};
 
 	CAGE_ENGINE_API Holder<Model> newModel(const AssetLabel &label);

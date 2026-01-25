@@ -376,9 +376,6 @@ namespace cage
 		colorPickerShader[1] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?H")));
 		colorPickerShader[2] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?S")));
 
-		prepareModelBindings(+impl->graphicsDevice, assetMgr, +elementModel); // todo remove
-		prepareModelBindings(+impl->graphicsDevice, assetMgr, +imageModel);
-
 		memory = newMemoryAllocatorStream({});
 
 		commands.reserve(impl->entities()->count() * 2);

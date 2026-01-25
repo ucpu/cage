@@ -31,7 +31,11 @@ namespace cage
 			GraphicsFrameStatistics statistics;
 			ankerl::svector<StringPointer, 4> debugScopes;
 
-			GraphicsEncoderImpl(GraphicsDevice *device, const AssetLabel &label_) : device(device) { this->label = label_; }
+			GraphicsEncoderImpl(GraphicsDevice *device, const AssetLabel &label_) : device(device)
+			{
+				this->label = label_;
+				CAGE_ASSERT(device);
+			}
 
 			void nextPass(const RenderPassConfig &config)
 			{
@@ -103,7 +107,8 @@ namespace cage
 				CAGE_ASSERT(cmdEnc && renderEnc);
 				CAGE_ASSERT(config.shader);
 				CAGE_ASSERT(config.model);
-				CAGE_ASSERT(config.model->bindings());
+				if (!config.material)
+					config.material = newGraphicsBindings(device, nullptr, config.model).first;
 				if (!config.bindings)
 					config.bindings = privat::getEmptyBindings(device);
 
@@ -119,7 +124,7 @@ namespace cage
 					statistics.pipelineSwitches++;
 				}
 
-				renderEnc.SetBindGroup(1, config.materialOverride ? config.materialOverride->group : config.model->bindings().group);
+				renderEnc.SetBindGroup(1, config.material.group);
 				CAGE_ASSERT(config.bindings.dynamicBuffersCount <= config.dynamicOffsets.size());
 				renderEnc.SetBindGroup(2, config.bindings.group, config.bindings.dynamicBuffersCount, config.dynamicOffsets.data());
 

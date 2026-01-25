@@ -91,7 +91,7 @@ namespace
 		CAGE_TEST(AssetCounter::counter == 0);
 		pathRemove(AssetsPath);
 		pathCreateDirectories(AssetsPath);
-		AssetManagerCreateConfig cfg;
+		AssetsManagerCreateConfig cfg;
 		cfg.assetsFolderName = AssetsPath;
 		Holder<AssetsManager> man = newAssetsManager(cfg);
 		man->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());

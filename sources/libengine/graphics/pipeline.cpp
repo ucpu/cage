@@ -250,10 +250,14 @@ namespace cage
 
 	PipelineConfig convertPipelineConfig(const RenderPassConfig &pass, const DrawConfig &draw)
 	{
+		CAGE_ASSERT(pass.bindings);
+		CAGE_ASSERT(draw.material);
+		CAGE_ASSERT(draw.bindings);
+		CAGE_ASSERT(draw.model);
 		PipelineConfig result;
 		result.bindingsLayouts.resize(3);
 		result.bindingsLayouts[0] = pass.bindings.layout;
-		result.bindingsLayouts[1] = draw.materialOverride ? draw.materialOverride->layout : draw.model->bindings().layout;
+		result.bindingsLayouts[1] = draw.material.layout;
 		result.bindingsLayouts[2] = draw.bindings.layout;
 		for (const auto &it : pass.colorTargets)
 			result.colorTargets.push_back(it.texture->nativeTexture().GetFormat());

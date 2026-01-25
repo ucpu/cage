@@ -466,10 +466,10 @@ namespace cage
 				if (renderMode == RenderModeEnum::DepthPrepass && none(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite))
 					return;
 
-				prepareModelBindings(device, assets, +rm.mesh); // todo remove
+				const auto material = newGraphicsBindings(device, assets, +rm.mesh);
 
 				Holder<MultiShader> multiShader = rm.mesh->shaderName ? assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : shaderStandard.share();
-				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(rm.mesh->texturesFlags), renderMode, !!rm.skeletalAnimation);
+				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
 				{
@@ -555,6 +555,7 @@ namespace cage
 				draw.backFaceCulling = none(rm.mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +rm.mesh;
 				draw.shader = +shader;
+				draw.material = material.first;
 				draw.bindings = newGraphicsBindings(device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
@@ -600,8 +601,6 @@ namespace cage
 
 				const Holder<Model> &mesh = std::get<RenderIcon>(rd.data).mesh;
 				const Holder<Texture> &texture = std::get<RenderIcon>(rd.data).texture;
-
-				prepareModelBindings(device, assets, +mesh); // todo remove
 
 				Holder<MultiShader> multiShader = mesh->shaderName ? assets->get<MultiShader>(mesh->shaderName) : shaderIcon.share();
 				Holder<Shader> shader = pickShaderVariant(+multiShader, +mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
@@ -655,7 +654,7 @@ namespace cage
 				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
-				draw.materialOverride = newGraphicsBindings(device, iconsMaterialBinding(+mesh, +texture));
+				draw.material = newGraphicsBindings(device, iconsMaterialBinding(+mesh, +texture));
 				draw.bindings = newGraphicsBindings(device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
@@ -1306,7 +1305,6 @@ namespace cage
 					encoder->nextPass(passcfg);
 					const auto scope = encoder->namedScope("copy depth");
 					DrawConfig drawcfg;
-					prepareModelBindings(device, assets, +modelSquare); // todo remove
 					drawcfg.model = +modelSquare;
 					drawcfg.shader = +shaderBlitPixels;
 					GraphicsBindingsCreateConfig bind;
@@ -1425,7 +1423,6 @@ namespace cage
 					encoder->nextPass(passcfg);
 					const auto scope = encoder->namedScope("final blit");
 					DrawConfig drawcfg;
-					prepareModelBindings(device, assets, +modelSquare); // todo remove
 					drawcfg.model = +modelSquare;
 					if (resolution == target->resolution())
 						drawcfg.shader = +shaderBlitPixels;

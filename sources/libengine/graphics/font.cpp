@@ -476,7 +476,6 @@ namespace cage
 				Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 				if (!model)
 					return;
-				prepareModelBindings(config.encoder->getDevice(), config.assets->assetsManager(), +model); // todo remove
 				Holder<MultiShader> shader = config.assets->get<MultiShader>(config.guiShader ? HashString("cage/shaders/gui/font.glsl") : HashString("cage/shaders/engine/text.glsl"));
 				if (!shader)
 					return;

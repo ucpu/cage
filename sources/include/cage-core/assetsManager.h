@@ -83,7 +83,7 @@ namespace cage
 		friend class AssetsOnDemand;
 	};
 
-	struct CAGE_CORE_API AssetManagerCreateConfig
+	struct CAGE_CORE_API AssetsManagerCreateConfig
 	{
 		String assetsFolderName = "assets.carch";
 		uint32 diskLoadingThreads = 2;
@@ -91,7 +91,7 @@ namespace cage
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
 	};
 
-	CAGE_CORE_API Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config);
+	CAGE_CORE_API Holder<AssetsManager> newAssetsManager(const AssetsManagerCreateConfig &config);
 }
 
 #endif // guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t

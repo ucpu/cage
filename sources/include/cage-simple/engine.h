@@ -17,7 +17,7 @@ namespace cage
 	class Window;
 	class GraphicsDevice;
 	class Image;
-	struct AssetManagerCreateConfig;
+	struct AssetsManagerCreateConfig;
 	struct GuiManagerCreateConfig;
 	struct SpeakerCreateConfig;
 	struct WindowCreateConfig;
@@ -57,7 +57,7 @@ namespace cage
 
 	struct EngineCreateConfig
 	{
-		AssetManagerCreateConfig *assets = nullptr;
+		AssetsManagerCreateConfig *assets = nullptr;
 		WindowCreateConfig *window = nullptr;
 		GuiManagerCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;

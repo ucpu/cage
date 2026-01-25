@@ -29,7 +29,7 @@ void testAssetOnDemand()
 	CAGE_TESTCASE("assets on demand");
 
 	pathCreateDirectories(AssetsPath);
-	AssetManagerCreateConfig cfg;
+	AssetsManagerCreateConfig cfg;
 	cfg.assetsFolderName = AssetsPath;
 	Holder<AssetsManager> man = newAssetsManager(cfg);
 	man->defineScheme<AssetSchemeIndexRaw, PointerRange<const char>>(genAssetSchemeRaw());

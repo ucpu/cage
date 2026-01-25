@@ -132,7 +132,7 @@ namespace cage
 			}
 		};
 
-		String findAssetsFolderPath(const AssetManagerCreateConfig &config)
+		String findAssetsFolderPath(const AssetsManagerCreateConfig &config)
 		{
 			try
 			{
@@ -178,7 +178,7 @@ namespace cage
 			std::vector<Holder<Thread>> fetchThreads;
 			Holder<void> listener;
 
-			AssetsManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config))
+			AssetsManagerImpl(const AssetsManagerCreateConfig &config) : path(findAssetsFolderPath(config))
 			{
 				CAGE_LOG(SeverityEnum::Info, "assetsManager", Stringizer() + "using assets path: " + path);
 				schemes.resize(config.schemesMaxCount);
@@ -824,7 +824,7 @@ namespace cage
 		return impl->schemes[scheme].typeHash;
 	}
 
-	Holder<AssetsManager> newAssetsManager(const AssetManagerCreateConfig &config)
+	Holder<AssetsManager> newAssetsManager(const AssetsManagerCreateConfig &config)
 	{
 		return systemMemory().createImpl<AssetsManager, AssetsManagerImpl>(config);
 	}
