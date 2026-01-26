@@ -1,107 +1,79 @@
 #include <vector>
 
-#include "database.h"
-
-#include <cage-core/concurrent.h>
+#include <cage-core/assetsDatabase.h>
+#include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/networkTcp.h>
 
-extern ConfigString configPathInput;
-extern ConfigSint32 configNotifierPort;
-extern std::map<String, Holder<Asset>, StringComparatorFast> assets;
+using namespace cage;
 
-void checkAssets();
-bool isNameIgnored(const String &name);
+extern ConfigSint32 configNotifierPort;
+extern Holder<AssetsDatabase> database;
 
 namespace
 {
-	class Notifier : private Immovable
+	Holder<TcpServer> server;
+	std::vector<Holder<TcpConnection>> connections;
+
+	void accept()
 	{
-	public:
-		Notifier(const uint16 port)
-		{
-			server = newTcpServer(port);
-			mut = newMutex();
-		}
+		Holder<TcpConnection> tmp = server->accept();
+		if (tmp)
+			connections.push_back(std::move(tmp));
+	}
 
-		void accept()
+	void notify(const String &str)
+	{
+		detail::OverrideBreakpoint OverrideBreakpoint;
+		auto it = connections.begin();
+		while (it != connections.end())
 		{
-			ScopeLock lck(mut);
-			Holder<TcpConnection> tmp = server->accept();
-			if (tmp)
-				connections.push_back(std::move(tmp));
-		}
-
-		void notify(const String &str)
-		{
-			detail::OverrideBreakpoint OverrideBreakpoint;
-			ScopeLock lck(mut);
-			auto it = connections.begin();
-			while (it != connections.end())
+			try
 			{
-				try
-				{
-					(*it)->writeLine(str);
-					it++;
-				}
-				catch (const Exception &)
-				{
-					it = connections.erase(it);
-				}
+				(*it)->writeLine(str);
+				it++;
+			}
+			catch (const Exception &)
+			{
+				it = connections.erase(it);
 			}
 		}
-
-	private:
-		Holder<TcpServer> server;
-		std::vector<Holder<TcpConnection>> connections;
-		Holder<Mutex> mut;
-	};
-
-	Holder<Notifier> notifierInstance;
-
-	void notifierAcceptConnections()
-	{
-		if (notifierInstance)
-			notifierInstance->accept();
 	}
-}
 
-void notifierInitialize()
-{
-	notifierInstance = systemMemory().createHolder<Notifier>((uint16)configNotifierPort);
-}
-
-void notifierSendNotifications()
-{
-	for (auto &it : assets)
+	void notifyAll()
 	{
-		if (it.second->needNotify)
+		if (database->status().modifiedAssets == 0)
+			return;
+
+		for (const auto &it : database->modifiedAssets())
 		{
-			CAGE_ASSERT(!it.second->corrupted);
-			if (notifierInstance)
-				notifierInstance->notify(it.first);
-			it.second->needNotify = false;
+			if (database->asset(it)->corrupted)
+				continue;
+			notify(it);
 		}
+
+		database->markAllModified(false);
 	}
 }
 
 void listen()
 {
-	CAGE_LOG(SeverityEnum::Info, "database", "initializing listening for changes");
-	notifierInitialize();
+	server = newTcpServer(configNotifierPort);
+
 	Holder<FilesystemWatcher> changes = newFilesystemWatcher();
-	changes->registerPath(configPathInput);
+	changes->registerPath(database->config().inputPath);
+
 	uint32 cycles = 0;
 	bool changed = false;
 	while (true)
 	{
-		notifierAcceptConnections();
+		accept();
 		{
 			String path = changes->waitForChange(1000 * 200);
 			if (!path.empty())
 			{
-				path = pathToRel(path, configPathInput);
-				if (isNameIgnored(path))
+				path = pathToRel(path, database->config().inputPath);
+				if (database->isIgnored(path))
 					continue;
 				cycles = 0;
 				changed = true;
@@ -111,7 +83,8 @@ void listen()
 			continue;
 		if (cycles >= 3)
 		{
-			checkAssets();
+			database->convertAssets();
+			notifyAll();
 			changed = false;
 			cycles = 0;
 		}
