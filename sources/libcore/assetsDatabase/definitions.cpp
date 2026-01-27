@@ -22,7 +22,6 @@ namespace cage
 	void AssetsDatabaseImpl::updateStatus()
 	{
 		status = {};
-
 		status.corruptedDefinitions = corruptedDefinitions.size();
 		status.totalAssets = assets.size();
 		for (const auto &it : assets)

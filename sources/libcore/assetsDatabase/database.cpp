@@ -1,5 +1,6 @@
 #include "database.h"
 
+#include <cage-core/hashString.h>
 #include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
 
@@ -64,7 +65,7 @@ namespace cage
 		PointerRangeHolder<std::pair<String, String>> result;
 		for (const auto &it : impl->assets)
 			for (const auto &ref : it.second->references)
-				if (!impl->assets.count(ref))
+				if (!impl->assets.count(ref) && !impl->injectedNames.count(HashString(ref)))
 					result.push_back({ it.first, ref });
 		return result;
 	}
@@ -135,7 +136,7 @@ namespace cage
 
 	void AssetsDatabase::assetConfiguration(const String &name, const String &key, const String &value)
 	{
-		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
+		// AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
 		// todo
 		CAGE_THROW_CRITICAL(Exception, "assetConfiguration not implemented");
 	}
@@ -186,7 +187,10 @@ namespace cage
 		impl->processAssets();
 		impl->saveDatabase();
 		if (!impl->status.ok)
+		{
+			printIssues();
 			CAGE_THROW_ERROR(Exception, "converting assets failed");
+		}
 	}
 
 	Holder<PointerRange<String>> AssetsDatabase::allSchemes() const

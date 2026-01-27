@@ -168,7 +168,7 @@ namespace cage
 			for (const auto &it : items)
 			{
 				const DatabaseAssetImpl &ass = *it.second;
-				f->writeLine(Stringizer() + fill((Stringizer() + it.first).value, 11) + (ass.corrupted ? "CORRUPTED " : "") + fill(ass.name, 101) + fill(ass.scheme, 16) + fill(ass.definitionPath, 31));
+				f->writeLine(Stringizer() + fill((Stringizer() + it.second->id).value, 11) + (ass.corrupted ? "CORRUPTED " : "") + fill(ass.name, 101) + fill(ass.scheme, 16) + fill(ass.definitionPath, 31));
 			}
 			f->close();
 		}

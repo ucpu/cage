@@ -83,7 +83,14 @@ void listen()
 			continue;
 		if (cycles >= 3)
 		{
-			database->convertAssets();
+			try
+			{
+				database->convertAssets();
+			}
+			catch (...)
+			{
+				// nothing
+			}
 			notifyAll();
 			changed = false;
 			cycles = 0;

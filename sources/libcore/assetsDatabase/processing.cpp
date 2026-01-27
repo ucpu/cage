@@ -41,7 +41,7 @@ namespace cage
 					if (!scheme->applyOnAsset(ass))
 						CAGE_THROW_ERROR(Exception, "asset has invalid configuration");
 
-					Holder<Process> prg = newProcess(scheme->processor);
+					Holder<Process> prg = newProcess(ProcessCreateConfig(scheme->processor, impl->config.processorWorkingDir));
 					prg->writeLine(Stringizer() + "inputDirectory=" + pathToAbs(impl->config.inputPath)); // inputDirectory
 					prg->writeLine(Stringizer() + "inputName=" + ass.name); // inputName
 					prg->writeLine(Stringizer() + "outputDirectory=" + pathToAbs(impl->config.intermediatePath.empty() ? impl->config.outputPath : impl->config.intermediatePath)); // outputDirectory

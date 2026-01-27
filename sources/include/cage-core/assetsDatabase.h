@@ -76,6 +76,7 @@ namespace cage
 
 	struct CAGE_CORE_API AssetsDatabaseCreateConfig
 	{
+		String processorWorkingDir;
 		String databasePath = "database";
 		String inputPath = "data";
 		String intermediatePath = "assetsTmp";

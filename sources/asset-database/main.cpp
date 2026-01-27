@@ -84,7 +84,7 @@ int main(int argc, const char *args[])
 		}
 		catch (...)
 		{
-			database->printIssues();
+			// nothing
 		}
 
 		if (configListening)
