@@ -37,8 +37,8 @@ namespace cage
 		struct DeviceBuffersCache;
 		struct DeviceTexturesCache;
 
-		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes);
-		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes);
+		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device);
+		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device);
 		Holder<DeviceBuffersCache> newDeviceBuffersCache(GraphicsDevice *device);
 		Holder<DeviceTexturesCache> newDeviceTexturesCache(GraphicsDevice *device);
 
@@ -46,9 +46,6 @@ namespace cage
 		void deviceCacheNextFrame(DevicePipelinesCache *);
 		void deviceCacheNextFrame(DeviceBuffersCache *);
 		void deviceCacheNextFrame(DeviceTexturesCache *);
-
-		void flushCache(DeviceBindingsCache *cache);
-		void flushCache(DevicePipelinesCache *cache);
 
 		void logImpl(SeverityEnum severity, wgpu::StringView message)
 		{
@@ -295,8 +292,8 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed to create wgpu queue");
 
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing caches");
-				bindingsCache = privat::newDeviceBindingsCache(this, config.automaticCachesFlushes);
-				pipelinesCache = privat::newDevicePipelinesCache(this, config.automaticCachesFlushes);
+				bindingsCache = privat::newDeviceBindingsCache(this);
+				pipelinesCache = privat::newDevicePipelinesCache(this);
 				buffersCache = privat::newDeviceBuffersCache(this);
 				texturesCache = privat::newDeviceTexturesCache(this);
 				frameTimer = systemMemory().createHolder<GpuFrameTimer>(this, instance);
@@ -571,13 +568,6 @@ namespace cage
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		impl->instance.WaitAny(future, m);
-	}
-
-	void GraphicsDevice::flushCaches()
-	{
-		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
-		privat::flushCache(+impl->bindingsCache);
-		privat::flushCache(+impl->pipelinesCache);
 	}
 
 	Holder<wgpu::Device> GraphicsDevice::nativeDeviceNoLock()

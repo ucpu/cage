@@ -80,7 +80,6 @@ namespace cage
 			Holder<RwMutex> mutex = newRwMutex();
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 0;
-			bool automaticFlushes = false;
 
 			struct Key : public PipelineConfig
 			{
@@ -119,7 +118,7 @@ namespace cage
 
 			std::unordered_map<Key, Value, Hash> cache;
 
-			DevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes) : device(device), automaticFlushes(automaticFlushes) {}
+			DevicePipelinesCache(GraphicsDevice *device) : device(device) {}
 
 			~DevicePipelinesCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics pipelines cache size: " + cache.size()); }
 
@@ -214,30 +213,18 @@ namespace cage
 			{
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
-				if (automaticFlushes)
-					std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 60 * 60 < currentFrame; });
-			}
-
-			void flush()
-			{
-				ScopeLock lock(mutex, WriteLockTag());
-				std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 5 < currentFrame; });
+				std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 60 * 60 < currentFrame; });
 			}
 		};
 
-		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device, bool automaticFlushes)
+		Holder<DevicePipelinesCache> newDevicePipelinesCache(GraphicsDevice *device)
 		{
-			return systemMemory().createHolder<DevicePipelinesCache>(device, automaticFlushes);
+			return systemMemory().createHolder<DevicePipelinesCache>(device);
 		}
 
 		void deviceCacheNextFrame(DevicePipelinesCache *cache)
 		{
 			cache->nextFrame();
-		}
-
-		void flushCache(DevicePipelinesCache *cache)
-		{
-			cache->flush();
 		}
 
 		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device);

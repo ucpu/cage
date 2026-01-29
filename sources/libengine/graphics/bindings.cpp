@@ -163,7 +163,6 @@ namespace cage
 			GraphicsBindings bindingDummy;
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 0;
-			bool automaticFlushes = false;
 
 			struct LayoutKey
 			{
@@ -257,9 +256,7 @@ namespace cage
 			std::unordered_map<LayoutKey, LayoutValue, Hash> layoutsCache;
 			std::unordered_map<GroupKey, GroupValue, Hash> groupsCache;
 
-			void generateDummyBindings() { bindingDummy = getBindings({}, "emptyBinding"); }
-
-			DeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes) : device(device), automaticFlushes(automaticFlushes) { generateDummyBindings(); }
+			DeviceBindingsCache(GraphicsDevice *device) : device(device) { bindingDummy = getBindings({}, "emptyBinding"); }
 
 			~DeviceBindingsCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics bindings layouts cache size: " + layoutsCache.size() + ", groups cache size: " + groupsCache.size()); }
 
@@ -313,32 +310,19 @@ namespace cage
 			{
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
-				if (automaticFlushes)
-					std::erase_if(layoutsCache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
-				std::erase_if(groupsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
-			}
-
-			void flush()
-			{
-				ScopeLock lock(mutex, WriteLockTag());
-				std::erase_if(layoutsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
+				std::erase_if(layoutsCache, [&](const auto &it) { return it.second.lastUsedFrame + 60 * 60 < currentFrame; });
 				std::erase_if(groupsCache, [&](const auto &it) { return it.second.lastUsedFrame + 5 < currentFrame; });
 			}
 		};
 
-		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device, bool automaticFlushes)
+		Holder<DeviceBindingsCache> newDeviceBindingsCache(GraphicsDevice *device)
 		{
-			return systemMemory().createHolder<DeviceBindingsCache>(device, automaticFlushes);
+			return systemMemory().createHolder<DeviceBindingsCache>(device);
 		}
 
 		void deviceCacheNextFrame(DeviceBindingsCache *cache)
 		{
 			cache->nextFrame();
-		}
-
-		void flushCache(DeviceBindingsCache *cache)
-		{
-			cache->flush();
 		}
 
 		DeviceBindingsCache *getDeviceBindingsCache(GraphicsDevice *device);

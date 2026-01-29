@@ -35,7 +35,6 @@ namespace cage
 		void submitCommandBuffers();
 		GraphicsFrameData nextFrame(Window *window);
 		void wait(const wgpu::Future &future);
-		void flushCaches();
 
 		Holder<wgpu::Device> nativeDeviceNoLock();
 		Holder<wgpu::Device> nativeDevice(); // locks the device for thread-safe access
@@ -45,7 +44,6 @@ namespace cage
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig
 	{
 		Window *compatibility = nullptr;
-		bool automaticCachesFlushes = false;
 		bool vsync = true;
 	};
 
