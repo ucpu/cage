@@ -960,7 +960,7 @@ namespace cage
 									rd.e = it.e;
 									rd.model = mm;
 									rd.data = std::move(rm);
-									prepareModel(rd);
+									prepareModel(rd, +obj);
 								}
 							}
 							return;
