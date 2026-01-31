@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # update freetype from upstream
-(cd freetype/freetype && git fetch upstream HEAD && git reset --hard upstream/master && git push)
+(cd freetype/freetype && git fetch upstream HEAD && (git checkout -b master || git checkout master) && git reset --hard upstream/master && git push)
 
 echo
 echo
@@ -10,11 +10,10 @@ function pbranch {
 	echo
 	pwd
 	echo
-	git checkout -b master
-	git checkout master
+	git checkout . # clear local changes
+	git checkout -b master || git checkout master
 	git branch --set-upstream-to=origin/HEAD master
 	git pull --ff-only
-	#git submodule update --init
 }
 export -f pbranch
 git submodule foreach pbranch

@@ -7,12 +7,12 @@
 namespace
 {
 	constexpr uint64 MB = 1024 * 1024;
+	uint64 tmp[751]; // not a multiple of 1024
 
-	MemoryBuffer generateBuffer(uint64 size, uint64 seed = 42)
+	MemoryBuffer generateBuffer(uint64 size, uint64 seed)
 	{
 		MemoryBuffer buff;
 		buff.resize(size);
-		uint64 tmp[751]; // not a multiple of 1024
 		for (uint64 &t : tmp)
 			t = seed++;
 		uint64 p = 0;
@@ -28,10 +28,9 @@ namespace
 		return buff;
 	}
 
-	void compareBuffer(PointerRange<const char> buff, uint64 size, uint64 seed = 42)
+	void compareBuffer(PointerRange<const char> buff, uint64 size, uint64 seed)
 	{
 		CAGE_TEST(buff.size() == size);
-		uint64 tmp[751]; // not a multiple of 1024
 		for (uint64 &t : tmp)
 			t = seed++;
 		uint64 p = 0;
@@ -83,8 +82,8 @@ void testArchivesBigFiles()
 		CAGE_TESTCASE("big file in one pass");
 #ifdef CAGE_ARCHITECTURE_64
 		{
-			MemoryBuffer buff = generateBuffer(6 * 1024 * MB, 123456);
-			compareBuffer(buff, 6 * 1024 * MB, 123456); // sanity test
+			MemoryBuffer buff = generateBuffer(6 * 1024 * MB, 123'456);
+			compareBuffer(buff, 6 * 1024 * MB, 123'456); // sanity test
 			Holder<File> f = writeFile("testdir/bigfileonepass");
 			f->write(buff);
 			CAGE_TEST(f->size() == 6 * 1024 * MB);
@@ -98,7 +97,7 @@ void testArchivesBigFiles()
 			CAGE_TEST(f->size() == 6 * 1024 * MB);
 			CAGE_TEST(f->tell() == 6 * 1024 * MB);
 			f->close();
-			compareBuffer(buff, 6 * 1024 * MB, 123456);
+			compareBuffer(buff, 6 * 1024 * MB, 123'456);
 		}
 		pathRemove("testdir");
 #else
