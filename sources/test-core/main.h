@@ -54,3 +54,31 @@ using namespace cage;
 	#define CAGE_TEST_ASSERTED(COND, ...) \
 		{}
 #endif
+
+#ifdef __SANITIZE_UNDEFINED__
+	#define CAGE_SANITIZE_UNDEFINED 1
+#else
+	#ifdef __has_feature
+		#if __has_feature(undefined_behavior_sanitizer)
+			#define CAGE_SANITIZE_UNDEFINED 1
+		#endif
+	#endif
+#endif
+#ifdef __SANITIZE_ADDRESS__
+	#define CAGE_SANITIZE_ADDRESS 1
+#else
+	#ifdef __has_feature
+		#if __has_feature(address_sanitizer)
+			#define CAGE_SANITIZE_ADDRESS 1
+		#endif
+	#endif
+#endif
+#ifdef __SANITIZE_THREAD__
+	#define CAGE_SANITIZE_THREAD 1
+#else
+	#ifdef __has_feature
+		#if __has_feature(thread_sanitizer)
+			#define CAGE_SANITIZE_THREAD 1
+		#endif
+	#endif
+#endif

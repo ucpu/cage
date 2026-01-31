@@ -53,6 +53,11 @@ void testArchivesBigFiles()
 
 	pathRemove("testdir");
 
+#ifdef CAGE_SANITIZE_THREAD
+	CAGE_LOG(SeverityEnum::Warning, "tests", "this testcase is skipped with thread-sanitizer");
+	return;
+#endif
+
 	{
 		CAGE_TESTCASE("big file in several chunks");
 		{

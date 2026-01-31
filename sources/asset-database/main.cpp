@@ -100,7 +100,6 @@ int main(int argc, const char *args[])
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "database", database->status().print());
 		return database->status().ok ? 0 : -1;
 	}
 	catch (...)

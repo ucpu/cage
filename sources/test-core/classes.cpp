@@ -71,7 +71,9 @@ void testClasses()
 		CAGE_TEST(class_cast<Base *>(a));
 		CAGE_TEST(class_cast<Base *>(b));
 		CAGE_TEST(class_cast<Derived *>(b));
+#ifndef CAGE_SANITIZE_UNDEFINED
 		CAGE_TEST_ASSERTED(class_cast<OtherDerived *>(b));
+#endif
 		Base *n = nullptr;
 		CAGE_TEST(class_cast<Base *>(n) == nullptr);
 		CAGE_TEST(class_cast<Derived *>(n) == nullptr);

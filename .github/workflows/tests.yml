@@ -45,14 +45,6 @@ jobs:
         cd build
         cmake --build . --config ${{ matrix.build-config }}
 
-    - name: Clean build dir
-      shell: bash
-      run: |
-        mv build/result .
-        rm -R build
-        mkdir build
-        mv result build
-
     - name: Tests
       shell: bash
       run: |
@@ -126,14 +118,6 @@ jobs:
         cd build
         cmake --build . -- -j$(( `nproc` + 1 ))
 
-    - name: Clean build dir
-      shell: bash
-      run: |
-        mv build/result .
-        rm -R build
-        mkdir build
-        mv result build
-
     - name: Tests
       run: |
         cd build/result/${{ matrix.build-config }}
@@ -187,14 +171,6 @@ jobs:
         cd build
         cmake --build . -- -j$(( `sysctl -n hw.ncpu` + 1 ))
 
-    - name: Clean build dir
-      shell: bash
-      run: |
-        mv build/result .
-        rm -R build
-        mkdir build
-        mv result build
-
     - name: Tests
       run: |
         cd build/result/${{ matrix.build-config }}
@@ -242,14 +218,6 @@ jobs:
       run: |
         cd build
         cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
-
-    - name: Clean build dir
-      shell: bash
-      run: |
-        mv build/result .
-        rm -R build
-        mkdir build
-        mv result build
 
     - name: Tests
       run: |
@@ -311,14 +279,6 @@ jobs:
       run: |
         cd build
         cmake --build . --target cage-test-core -- -j$(( `nproc` + 1 ))
-
-    - name: Clean build dir
-      shell: bash
-      run: |
-        mv build/result .
-        rm -R build
-        mkdir build
-        mv result build
 
     - name: Tests
       run: |

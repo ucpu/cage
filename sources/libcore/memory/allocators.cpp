@@ -32,6 +32,7 @@ namespace cage
 
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
+				CAGE_ASSERT(detail::isPowerOf2(alignment));
 				size = max(size, uintPtr(1));
 				CAGE_ASSERT(size + alignment <= config.blockSize);
 				const uintPtr p = detail::roundUpTo(where, alignment);
@@ -70,7 +71,7 @@ namespace cage
 			{
 				using MemoryBuffer::MemoryBuffer;
 
-				sint32 cnt = 0;
+				sintPtr cnt = 0; // number of allocations in this block
 			};
 
 			explicit MemoryAllocatorStreamImpl(const MemoryAllocatorStreamCreateConfig &config) : config(config) {}
@@ -95,15 +96,17 @@ namespace cage
 
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
+				CAGE_ASSERT(detail::isPowerOf2(alignment));
 				size = max(size, uintPtr(1));
+				alignment = max(alignment, sizeof(uintPtr));
 				CAGE_ASSERT(size + alignment + sizeof(uintPtr) <= config.blockSize);
 				const uintPtr p = detail::roundUpTo(where + sizeof(uintPtr), alignment);
 				const uintPtr e = p + size;
 				if (e <= end)
 				{
-					sint32 &cnt = blocks[index]->cnt;
+					sintPtr &cnt = blocks[index]->cnt;
 					cnt++; // increase number of allocations in this block
-					sint32 **pp = (sint32 **)(p - sizeof(uintPtr));
+					sintPtr **pp = (sintPtr **)(p - sizeof(sintPtr));
 					*pp = &cnt; // store a pointer to the counter just before the resulting pointer
 					where = e; // update position for next allocation
 					return (void *)p;
@@ -115,7 +118,7 @@ namespace cage
 			void deallocate(void *ptr)
 			{
 				const uintPtr p = (uintPtr)ptr;
-				sint32 **pp = (sint32 **)(p - sizeof(uintPtr));
+				sintPtr **pp = (sintPtr **)(p - sizeof(sintPtr));
 				(**pp)--; // decrement the number of allocations in this block
 				CAGE_ASSERT(**pp >= 0); // detect double deallocations
 			}
@@ -141,13 +144,19 @@ namespace cage
 
 		struct MemoryAllocatorPoolImpl : private Immovable
 		{
-			explicit MemoryAllocatorPoolImpl(const MemoryAllocatorPoolCreateConfig &config) : config(config)
+			static MemoryAllocatorPoolCreateConfig convertConfig(MemoryAllocatorPoolCreateConfig config)
 			{
-				CAGE_ASSERT(config.itemSize >= sizeof(uintPtr));
+				CAGE_ASSERT(config.itemSize > 0);
+				config.itemSize = std::max(config.itemSize, (uintPtr)sizeof(uintPtr));
 				CAGE_ASSERT(config.itemAlignment > 0);
-				CAGE_ASSERT((config.itemSize % config.itemAlignment) == 0);
+				CAGE_ASSERT(detail::isPowerOf2(config.itemAlignment));
+				config.itemAlignment = std::max(config.itemAlignment, (uintPtr)sizeof(uintPtr));
+				config.itemSize = detail::roundUpTo(config.itemSize, config.itemAlignment);
 				CAGE_ASSERT(config.itemSize + config.itemAlignment + sizeof(uintPtr) <= config.blockSize);
+				return config;
 			}
+
+			explicit MemoryAllocatorPoolImpl(const MemoryAllocatorPoolCreateConfig &config_) : config(convertConfig(config_)) {}
 
 			void addBlock(MemoryBuffer &b)
 			{
@@ -170,6 +179,7 @@ namespace cage
 
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
+				CAGE_ASSERT(detail::isPowerOf2(alignment));
 				CAGE_ASSERT(size <= config.itemSize);
 				CAGE_ASSERT((config.itemAlignment % alignment) == 0);
 				if (!freeList)

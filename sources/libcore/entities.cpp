@@ -103,7 +103,7 @@ namespace cage
 				if (manager->config.linearAllocators)
 					arena = newMemoryAllocatorLinear({});
 				else
-					arena = newMemoryAllocatorPool({ std::max(typeSize, uint32(sizeof(uintPtr))), typeAlignment });
+					arena = newMemoryAllocatorPool({ typeSize, typeAlignment });
 			}
 
 			void *newVal() { return arena->allocate(typeSize, typeAlignment); }

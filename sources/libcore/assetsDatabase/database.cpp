@@ -186,6 +186,7 @@ namespace cage
 		impl->detectChanges();
 		impl->processAssets();
 		impl->saveDatabase();
+		CAGE_LOG(SeverityEnum::Info, "database", impl->status.print());
 		if (!impl->status.ok)
 		{
 			printIssues();
