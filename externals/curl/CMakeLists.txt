@@ -2,10 +2,10 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "curl")
 message(STATUS "----------------------------------------------------------------")
 
-cage_replace_in_file(
-	"${CMAKE_CURRENT_LIST_DIR}/curl/CMakeLists.txt"
-	"Hack to add some libraries to the end of the library[^\r\n]*(\r?\n[^\r\n]+)*" "hack from cage"
-)
+#cage_replace_in_file(
+#	"${CMAKE_CURRENT_LIST_DIR}/curl/CMakeLists.txt"
+#	"Hack to add some libraries to the end of the library[^\r\n]*(\r?\n[^\r\n]+)*" "hack from cage"
+#)
 
 if (WIN32)
 	set(CURL_USE_SCHANNEL ON CACHE INTERNAL "")

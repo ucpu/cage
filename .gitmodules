@@ -102,7 +102,8 @@
 	url = https://github.com/Mbed-TLS/mbedtls.git
 [submodule "externals/curl/curl"]
 	path = externals/curl/curl
-	url = https://github.com/curl/curl.git
+	#url = https://github.com/curl/curl.git
+	url = https://github.com/vszakats/curl.git
 [submodule "externals/wamr/zydis"]
 	path = externals/wamr/zydis
 	url = https://github.com/zyantific/zydis.git
