@@ -191,13 +191,18 @@ namespace cage
 				desc.requiredFeatureCount = requiredFeatures.size();
 				desc.requiredFeatures = requiredFeatures.data();
 
-				static constexpr std::array<const char *, 2> toggles = {
+				static constexpr std::array<const char *, 2> enabledToggles = {
 					"allow_unsafe_apis", //
 					"expose_wgsl_experimental_features", //
 				};
+				static constexpr std::array<const char *, 1> disabledToggles = {
+					"timestamp_quantization", //
+				};
 				wgpu::DawnTogglesDescriptor togglesDesc;
-				togglesDesc.enabledToggles = toggles.data();
-				togglesDesc.enabledToggleCount = toggles.size();
+				togglesDesc.enabledToggles = enabledToggles.data();
+				togglesDesc.enabledToggleCount = enabledToggles.size();
+				togglesDesc.disabledToggles = disabledToggles.data();
+				togglesDesc.disabledToggleCount = disabledToggles.size();
 				desc.nextInChain = &togglesDesc;
 
 				instance = wgpu::CreateInstance(&desc);
@@ -253,18 +258,21 @@ namespace cage
 				desc.requiredLimits = &requiredLimits;
 
 				std::vector<const char *> toggles = {
-					"disable_symbol_renaming", // preserve variable names in shaders
-					"dump_shaders_on_failure", //
-					"use_user_defined_labels_in_backend", // show my names for textures etc in nsight
+					"vulkan_use_dynamic_rendering", //
 					"wait_is_thread_safe", // just to be sure
 				};
 				if (!config.vsync)
 					toggles.push_back("turn_off_vsync");
 #ifdef CAGE_DEPLOY
+				toggles.push_back("disable_robustness");
 				toggles.push_back("skip_validation");
 #else
-				toggles.push_back("enable_immediate_error_handling");
 				toggles.push_back("disable_blob_cache");
+				toggles.push_back("disable_symbol_renaming"); // preserve variable names in shaders
+				toggles.push_back("dump_shaders_on_failure");
+				toggles.push_back("enable_immediate_error_handling");
+				toggles.push_back("enable_renderdoc_process_injection");
+				toggles.push_back("use_user_defined_labels_in_backend"); // show my names for textures etc in nsight
 #endif // CAGE_DEPLOY
 
 				wgpu::DawnTogglesDescriptor togglesDesc;
