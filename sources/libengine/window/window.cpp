@@ -899,7 +899,7 @@ namespace cage
 	uint32 findKeyWithCharacter(uint32 utf32character)
 	{
 		std::array<uint32, 10> underlaying = {};
-		for (uint32 key = 1; key < 500; key++)
+		for (uint32 key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST; key++)
 		{
 			const auto s8 = glfwGetKeyName(key, 0);
 			if (!s8)
