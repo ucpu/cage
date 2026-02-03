@@ -60,6 +60,29 @@ endif()
 if(MSVC)
 	set_source_files_properties(libcore/mesh/marchingCubes.cpp PROPERTIES COMPILE_FLAGS "/wd4244 /wd4267") # it includes file with weird extension which does not honor warnings disabled by pragma
 endif()
+if(APPLE)
+	execute_process(
+		COMMAND xcrun --sdk macosx --show-sdk-path
+		OUTPUT_VARIABLE MACOS_SDK_PATH
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	message(STATUS "MACOS_SDK_PATH: ${MACOS_SDK_PATH}")
+	set(MACH_EXC_DEFS "${MACOS_SDK_PATH}/usr/include/mach/mach_exc.defs")
+	set(MACH_EXC_GEN_DIR "${CMAKE_CURRENT_BINARY_DIR}/mach_exc")
+	file(MAKE_DIRECTORY "${MACH_EXC_GEN_DIR}")
+	set(MACH_EXC_SERVER_C "${MACH_EXC_GEN_DIR}/mach_excServer.c")
+	set(MACH_EXC_SERVER_H "${MACH_EXC_GEN_DIR}/mach_excServer.h")
+	add_custom_command(
+		OUTPUT "${MACH_EXC_SERVER_C}" "${MACH_EXC_SERVER_H}"
+		COMMAND mig -server "${MACH_EXC_SERVER_C}" -header "${MACH_EXC_SERVER_H}" "${MACH_EXC_DEFS}"
+		DEPENDS "${MACH_EXC_DEFS}"
+		COMMENT "Generating Mach exception server (mach_exc_server)"
+		VERBATIM
+	)
+	target_sources(cage-core PRIVATE "${MACH_EXC_SERVER_C}")
+	target_include_directories(cage-core PRIVATE "${MACH_EXC_GEN_DIR}")
+	set_source_files_properties("${MACH_EXC_SERVER_C}" PROPERTIES SKIP_PRECOMPILE_HEADERS ON) # precompiled headers cannot be mixed between C and C++ sources
+endif()
 target_precompile_headers(cage-core PRIVATE "<cage-core/core.h>")
 target_precompile_headers(cage-core INTERFACE "$<$<COMPILE_LANGUAGE:CXX>:$<BUILD_INTERFACE:<cage-core/core.h$<ANGLE-R>>>")
 cage_target_api_macro(cage-core CAGE_CORE_API)

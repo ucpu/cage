@@ -331,9 +331,9 @@ namespace cage
 			std::terminate();
 		}
 
-		struct SetupHandlers
+		struct SetupHandlersWindows
 		{
-			SetupHandlers()
+			SetupHandlersWindows()
 			{
 				handlerMutex(); // allocate the mutex upfront
 				crashHandlerThreadInit();
@@ -348,7 +348,7 @@ namespace cage
 				previousPurecall = _set_purecall_handler(&purecallHandler);
 				signal(SIGABRT, &sigAbrtHandler);
 			}
-		} setupHandlers;
+		} setupHandlersWindows;
 	}
 
 	namespace
