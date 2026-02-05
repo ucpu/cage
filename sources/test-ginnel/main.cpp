@@ -23,7 +23,7 @@ namespace
 
 		void thrEntry()
 		{
-			Holder<Process> prg = newProcess(cmd);
+			Holder<Process> prg = newProcess({ cmd });
 			{
 				while (true)
 				{

@@ -33,7 +33,7 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "analyze", String() + "analyzing file: " + path);
 		try
 		{
-			Holder<Process> prg = newProcess(String() + "cage-asset-processor analyze " + path);
+			Holder<Process> prg = newProcess({ String() + "cage-asset-processor analyze " + path });
 
 			AssetsLists assets;
 			bool ignore = true;

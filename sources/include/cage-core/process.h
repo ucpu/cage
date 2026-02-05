@@ -15,12 +15,8 @@ namespace cage
 		String command;
 		String workingDirectory;
 		sint32 priority = 0; // 0 = normal, -1 = lower priority, 1 = higher priority
-		bool discardStdIn = false;
-		bool discardStdOut = false;
-		bool discardStdErr = false;
-		bool detached = false;
-
-		ProcessCreateConfig(const String &command, const String &workingDirectory = "");
+		bool discardIo = false; // the stdio/out/err will not be piped
+		bool detached = false; // create new independent process group
 	};
 
 	class CAGE_CORE_API Process : public File

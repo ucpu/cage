@@ -44,8 +44,6 @@ extern "C"
 
 namespace cage
 {
-	ProcessCreateConfig::ProcessCreateConfig(const String &command, const String &workingDirectory) : command(command), workingDirectory(workingDirectory) {}
-
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -111,7 +109,7 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process: " + config.command);
 
 				const String workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
+				//CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
 				pathCreateDirectories(workingDir);
 
 				SECURITY_ATTRIBUTES saAttr;
@@ -121,10 +119,8 @@ namespace cage
 
 				if (!CreatePipe(&hPipeOutR.handle, &hPipeOutW.handle, &saAttr, 0))
 					CAGE_THROW_ERROR(SystemError, "CreatePipe", GetLastError());
-
 				if (!CreatePipe(&hPipeInR.handle, &hPipeInW.handle, &saAttr, 0))
 					CAGE_THROW_ERROR(SystemError, "CreatePipe", GetLastError());
-
 				hFileNull.handle = CreateFile("nul:", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL);
 
 				PROCESS_INFORMATION piProcInfo;
@@ -133,9 +129,9 @@ namespace cage
 				STARTUPINFO siStartInfo;
 				detail::memset(&siStartInfo, 0, sizeof(STARTUPINFO));
 				siStartInfo.cb = sizeof(STARTUPINFO);
-				siStartInfo.hStdError = config.discardStdErr ? hFileNull.handle : hPipeOutW.handle;
-				siStartInfo.hStdOutput = config.discardStdOut ? hFileNull.handle : hPipeOutW.handle;
-				siStartInfo.hStdInput = config.discardStdIn ? hFileNull.handle : hPipeInR.handle;
+				siStartInfo.hStdError = config.discardIo ? hFileNull.handle : hPipeOutW.handle;
+				siStartInfo.hStdOutput = config.discardIo ? hFileNull.handle : hPipeOutW.handle;
+				siStartInfo.hStdInput = config.discardIo ? hFileNull.handle : hPipeInR.handle;
 				siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 				char cmd2[String::MaxLength];
@@ -149,6 +145,8 @@ namespace cage
 					flags |= ABOVE_NORMAL_PRIORITY_CLASS;
 				if (config.detached)
 					flags |= DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+				else
+					flags |= CREATE_NO_WINDOW;
 
 				if (!CreateProcess(nullptr, cmd2, nullptr, nullptr, TRUE, flags, nullptr, workingDir.c_str(), &siStartInfo, &piProcInfo))
 					CAGE_THROW_ERROR(SystemError, "CreateProcess", GetLastError());
@@ -156,7 +154,7 @@ namespace cage
 				hProcess.handle = piProcInfo.hProcess;
 				hThread.handle = piProcInfo.hThread;
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
+				//CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 
 				hPipeOutW.close();
 				hPipeInR.close();
@@ -330,13 +328,12 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "process", Stringizer() + "launching process: " + config.command);
 
 				const String workingDir = pathToAbs(config.workingDirectory);
-				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
+				//CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", Stringizer() + "working directory: " + workingDir);
 
 				if (pipe(aStdinPipe.handles) < 0)
 					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);
 				if (pipe(aStdoutPipe.handles) < 0)
 					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);
-
 				aFileNull.handles[0] = open("/dev/null", O_RDWR);
 				if (aFileNull.handles[0] < 0)
 					CAGE_THROW_ERROR(SystemError, "failed to open null device file", errno);
@@ -348,15 +345,15 @@ namespace cage
 					// child process
 
 					// redirect stdin
-					if (dup2(config.discardStdIn ? aFileNull.handles[0] : aStdinPipe.handles[PIPE_READ], STDIN_FILENO) == -1)
+					if (dup2(config.discardIo ? aFileNull.handles[0] : aStdinPipe.handles[PIPE_READ], STDIN_FILENO) == -1)
 						CAGE_THROW_ERROR(SystemError, "failed to duplicate stdin pipe", errno);
 
 					// redirect stdout
-					if (dup2(config.discardStdOut ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDOUT_FILENO) == -1)
+					if (dup2(config.discardIo ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDOUT_FILENO) == -1)
 						CAGE_THROW_ERROR(SystemError, "failed to duplicate stdout pipe", errno);
 
 					// redirect stderr
-					if (dup2(config.discardStdErr ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDERR_FILENO) == -1)
+					if (dup2(config.discardIo ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDERR_FILENO) == -1)
 						CAGE_THROW_ERROR(SystemError, "failed to duplicate stderr pipe", errno);
 
 					// close unused file descriptors
@@ -402,7 +399,7 @@ namespace cage
 				}
 
 				// parent process
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
+				//CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", Stringizer() + "process id: " + pid);
 
 				// close unused file descriptors
 				aStdinPipe.close(PIPE_READ);

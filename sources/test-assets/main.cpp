@@ -13,7 +13,7 @@ int main(int argc, const char *args[])
 		while (true)
 		{
 			ProcessCreateConfig cfg("cage-asset-database");
-			cfg.discardStdErr = cfg.discardStdIn = cfg.discardStdOut = true;
+			cfg.discardIo = true;
 			Holder<Process> proc = newProcess(cfg);
 			const auto res = proc->wait();
 			if (res != 0)
