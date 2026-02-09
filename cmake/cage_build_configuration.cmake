@@ -39,21 +39,26 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /permissive-")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
 
-		# whole program optimizations
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /GL")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
-		set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
-		set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
-		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
-
 		# compatibility hack
 		set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR")
+		
+		# 8 MB default stack size
+		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
 
+		# multi-process compilation
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+		
 		# disable some warnings
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_CRT_SECURE_NO_WARNINGS /D_ENABLE_EXTENDED_ALIGNED_STORAGE")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd26812") # The enum type ___ is unscoped. Prefer 'enum class' over 'enum'
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd26451") # Arithmetic overflow: Using operator ___ on a 4 byte value and then casting the result to a 8 byte value.
+
+		# enable simd
+		if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+			add_compile_options(/arch:AVX2)
+		endif()
 
 		# optionally improve runtime performance in debug builds (basic inlining)
 		if(cage_faster_debug)
@@ -72,23 +77,28 @@ macro(cage_build_configuration)
 			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ob3")
 		endif()
 
-		# 8 MB default stack size
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
-
-		# multi-process compilation
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+		# whole program optimizations
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /GL")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /GL")
+		set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG")
+		set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "${CMAKE_STATIC_LINKER_FLAGS_RELEASE} /LTCG")
+		set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG")
 	else()
 		# make runtime loader look for local symbols first
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Bsymbolic")
 
-		# link time optimizations
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-
 		# disable some warnings
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -Wno-abi")
+
+		# enable simd etc.
+		if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64|i[3-9]86")
+			add_compile_options(-mavx2 -mfma)
+		endif()
+
+		# link time optimizations
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 	endif()
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

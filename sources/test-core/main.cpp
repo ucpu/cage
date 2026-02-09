@@ -78,11 +78,14 @@ void testSystemInformation();
 void testWasm();
 void testCageInstallConsistentPaths();
 void testCrypto();
+void testSimdPerformance();
 void generatePointsOnSphere();
 
 int main()
 {
 	initializeConsoleLogger();
+
+	testSimdPerformance(); // todo remove
 
 	//generatePointsOnSphere();
 	testMacros();
@@ -160,6 +163,7 @@ int main()
 	testWasm();
 	testCageInstallConsistentPaths();
 	testCrypto();
+	testSimdPerformance();
 
 	{
 		CAGE_TESTCASE("removing testdir");
