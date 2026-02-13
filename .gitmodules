@@ -115,3 +115,6 @@
 [submodule "externals/webp/webp"]
 	path = externals/webp/webp
 	url = https://github.com/webmproject/libwebp.git
+[submodule "externals/mimalloc/mimalloc"]
+	path = externals/mimalloc/mimalloc
+	url = https://github.com/microsoft/mimalloc.git

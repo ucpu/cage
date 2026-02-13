@@ -1,4 +1,4 @@
-#include <cstdlib>
+#include <mimalloc.h>
 
 #include <cage-core/memoryArena.h>
 #include <cage-core/memoryUtils.h> // isPowerOf2
@@ -44,35 +44,12 @@ namespace cage
 
 	namespace
 	{
-		void *malloca(uintPtr size, uintPtr alignment)
-		{
-			CAGE_ASSERT(size > 0);
-			CAGE_ASSERT(detail::isPowerOf2(alignment));
-			const uintPtr s = detail::roundUpTo(size, alignment);
-#ifdef _MSC_VER
-			void *p = _aligned_malloc(s, alignment);
-#else
-			void *p = std::aligned_alloc(alignment, s);
-#endif // _MSC_VER
-			CAGE_ASSERT(uintPtr(p) % alignment == 0);
-			return p;
-		}
-
-		void freea(void *ptr)
-		{
-#ifdef _MSC_VER
-			_aligned_free(ptr);
-#else
-			::free(ptr);
-#endif // _MSC_VER
-		}
-
 		class SystemMemoryArenaImpl : private Immovable
 		{
 		public:
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
-				void *tmp = malloca(size, alignment);
+				void *tmp = mi_malloc_aligned(size, alignment);
 				if (!tmp)
 					CAGE_THROW_ERROR(OutOfMemory, "system memory arena out of memory", size);
 				return tmp;
@@ -82,10 +59,10 @@ namespace cage
 			{
 				if (!ptr)
 					return;
-				freea(ptr);
+				mi_free(ptr);
 			}
 
-			void flush() { CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used"); }
+			void flush() { CAGE_THROW_CRITICAL(Exception, "invalid operation (flush on system memory arena), deallocate must be used instead"); }
 
 			MemoryArena arena = MemoryArena(this);
 		};

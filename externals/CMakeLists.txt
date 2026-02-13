@@ -149,6 +149,7 @@ add_subdirectory(mbedtls)
 add_subdirectory(curl)
 add_subdirectory(cpr)
 
+add_subdirectory(mimalloc)
 add_subdirectory(fastnoise)
 add_subdirectory(glfw)
 add_subdirectory(glm)
