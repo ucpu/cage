@@ -787,6 +787,16 @@ namespace cage
 				}
 			}
 
+			CAGE_FORCE_INLINE static AnimationSpeedComponent getAnimSpeed(Entity *e)
+			{
+				AnimationSpeedComponent anim = e->getOrDefault<AnimationSpeedComponent>();
+				if (!anim.speed.valid())
+					anim.speed = 1;
+				if (!anim.offset.valid())
+					anim.offset = 0;
+				return anim;
+			}
+
 			void prepareModel(RenderData &rd, const RenderObject *parent = {})
 			{
 				CAGE_ASSERT(std::holds_alternative<RenderModel>(rd.data));
@@ -807,7 +817,7 @@ namespace cage
 
 				ModelComponent render = rd.e->value<ModelComponent>();
 				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
-				AnimationSpeedComponent anim = rd.e->getOrDefault<AnimationSpeedComponent>();
+				const AnimationSpeedComponent anim = getAnimSpeed(rd.e);
 				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
 
 				if (parent)
@@ -823,11 +833,6 @@ namespace cage
 					if (ps && !ps->animation)
 						ps->animation = parent->skelAnimId;
 				}
-
-				if (!anim.speed.valid())
-					anim.speed = 1;
-				if (!anim.offset.valid())
-					anim.offset = 0;
 
 				if (!rm.mesh->bonesCount)
 					ps.reset();
@@ -1068,7 +1073,8 @@ namespace cage
 						rd.model = Mat4(modelTransform(it.e));
 						rd.color = initializeColor(it.e->getOrDefault<ColorComponent>());
 						const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
-						rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, 1, 0, 0);
+						const AnimationSpeedComponent anim = getAnimSpeed(rd.e);
+						rd.animation = Vec4((double)(sint64)(currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 						rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
 						rd.translucent = true;
 						rd.depth = (viewProj * (rd.model * Vec4(0, 0, 0, 1)))[2] * -1;

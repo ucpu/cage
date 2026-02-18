@@ -120,6 +120,12 @@ namespace cage
 			return has(component) ? *(T *)unsafeValue(component) : T();
 		}
 		template<ComponentConcept T>
+		CAGE_FORCE_INLINE T getOrAssert(EntityComponent *component)
+		{
+			CAGE_ASSERT(has(component));
+			return value<T>(component);
+		}
+		template<ComponentConcept T>
 		CAGE_FORCE_INLINE T &value()
 		{
 			return value<T>(component_<T>());
@@ -129,6 +135,12 @@ namespace cage
 		{
 			return getOrDefault<T>(component_<T>());
 		}
+		template<ComponentConcept T>
+		CAGE_FORCE_INLINE T getOrAssert()
+		{
+			CAGE_ASSERT(has(component_<T>()));
+			return value<T>(component_<T>());
+		}
 		void *unsafeValue(EntityComponent *component);
 
 		void destroy();
@@ -137,6 +149,7 @@ namespace cage
 		template<ComponentConcept T>
 		CAGE_FORCE_INLINE EntityComponent *component_() const
 		{
+			CAGE_ASSERT(this);
 			return manager()->component<T>();
 		}
 	};
