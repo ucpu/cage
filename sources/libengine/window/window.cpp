@@ -19,11 +19,6 @@
 
 namespace cage
 {
-	namespace privat
-	{
-		struct GraphicsContext;
-	}
-
 	namespace
 	{
 		ModifiersFlags getKeyModifiers(int mods)
@@ -45,29 +40,24 @@ namespace cage
 			return r;
 		}
 
-		struct MouseOffset
-		{
-			Vec2 off;
-		};
-
 		class WindowImpl : public Window
 		{
 		public:
-			Vec2 lastMouseButtonPressPositions[5] = {};
-			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
-
 			Holder<privat::GraphicsContext> graphicsContext;
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
+			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
+			Vec2 lastMouseButtonPressPositions[5] = {};
+			Vec2 lastRelativePosition;
+			Vec2 stateMousePosition;
+			Vec2 stateMouseScale;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;
-			Vec2 stateMousePosition;
-			Vec2 lastRelativePosition;
-			Vec2 mouseScale;
 			GLFWwindow *window = nullptr;
 			bool focus = true;
 			bool mouseIntendVisible = true;
 			bool mouseIntendRelative = false;
+			bool mouseAllowRelativeMovement = false; // prevent mouse jumping shortly after switching from absolute to relative movement
 
 #ifdef GCHL_WINDOWS_THREAD
 			Holder<Thread> windowThread;
@@ -152,23 +142,34 @@ namespace cage
 
 			void initializeEvents();
 
-			void updateMouseMode()
-			{
-				int intent = GLFW_CURSOR_NORMAL;
-				if (!mouseIntendVisible)
-					intent = GLFW_CURSOR_HIDDEN;
-				if (mouseIntendRelative)
-					intent = GLFW_CURSOR_DISABLED;
-				glfwSetInputMode(window, GLFW_CURSOR, intent);
+			bool getRelative() const { return glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED; }
 
-				mouseScale = Vec2(1);
-				int fbw = 0, fbh = 0, ww = 0, wh = 0;
-				glfwGetFramebufferSize(window, &fbw, &fbh);
-				glfwGetWindowSize(window, &ww, &wh);
-				if (fbw > 0 && fbh > 0 && ww > 0 && wh > 0)
+			Vec2 getPosition()
+			{
+				Vec2 pos;
+				double xpos, ypos;
+				glfwGetCursorPos(window, &xpos, &ypos);
+				pos[0] = xpos;
+				pos[1] = ypos;
+				return pos * stateMouseScale;
+			}
+
+			bool determineMouseDoubleClick(MouseButtonsFlags buttons, Vec2 cp)
+			{
+				CAGE_ASSERT((uint32)buttons < array_size(lastMouseButtonPressTimes));
+				const uint64 ct = applicationTime();
+				uint64 &lt = lastMouseButtonPressTimes[(uint32)buttons];
+				Vec2 &lp = lastMouseButtonPressPositions[(uint32)buttons];
+				if (ct - lt < 300'000 && distance(cp, lp) < 10)
 				{
-					mouseScale[0] = double(fbw) / double(ww);
-					mouseScale[1] = double(fbh) / double(wh);
+					lt = 0;
+					return true;
+				}
+				else
+				{
+					lt = ct;
+					lp = cp;
+					return false;
 				}
 			}
 
@@ -188,6 +189,8 @@ namespace cage
 				if constexpr (std::is_same_v<T, input::MouseRelativeMove>)
 				{
 					CAGE_ASSERT(i.relative);
+					if (!mouseAllowRelativeMovement)
+						return;
 					const Vec2 n = i.position;
 					if (valid(lastRelativePosition))
 						i.position = n - lastRelativePosition;
@@ -203,35 +206,97 @@ namespace cage
 				events.dispatch(i);
 			}
 
-			bool getRelative() const { return glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED; }
-
-			Vec2 getPosition()
+			void updateMouseMode()
 			{
-				Vec2 pos;
-				double xpos, ypos;
-				glfwGetCursorPos(window, &xpos, &ypos);
-				pos[0] = xpos;
-				pos[1] = ypos;
-				return pos * mouseScale;
+				int intent = GLFW_CURSOR_NORMAL;
+				if (!mouseIntendVisible)
+					intent = GLFW_CURSOR_HIDDEN;
+				if (mouseIntendRelative)
+					intent = GLFW_CURSOR_DISABLED;
+				glfwSetInputMode(window, GLFW_CURSOR, intent);
+
+				stateMouseScale = Vec2(1);
+				int fbw = 0, fbh = 0, ww = 0, wh = 0;
+				glfwGetFramebufferSize(window, &fbw, &fbh);
+				glfwGetWindowSize(window, &ww, &wh);
+				if (fbw > 0 && fbh > 0 && ww > 0 && wh > 0)
+				{
+					stateMouseScale[0] = double(fbw) / double(ww);
+					stateMouseScale[1] = double(fbh) / double(wh);
+				}
 			}
 
-			bool determineMouseDoubleClick(MouseButtonsFlags buttons, Vec2 cp)
+			void processEvents()
 			{
-				CAGE_ASSERT((uint32)buttons < array_size(lastMouseButtonPressTimes));
-				const uint64 ct = applicationTime();
-				uint64 &lt = lastMouseButtonPressTimes[(uint32)buttons];
-				Vec2 &lp = lastMouseButtonPressPositions[(uint32)buttons];
-				if (ct - lt < 300'000 && distance(cp, lp) < 5)
+#ifndef GCHL_WINDOWS_THREAD
+				updateMouseMode();
 				{
-					lt = 0;
-					return true;
+					ScopeLock l(cageGlfwMutex());
+					glfwPollEvents();
 				}
-				else
+#endif
+
+				GenericInput e;
+				while (eventsQueue.tryPop(e))
 				{
-					lt = ct;
-					lp = cp;
-					return false;
+					switch (e.typeHash())
+					{
+						case detail::typeHash<input::MouseMove>():
+							updateMouseStateAndDispatch<input::MouseMove>(e);
+							break;
+						case detail::typeHash<input::MouseRelativeMove>():
+							updateMouseStateAndDispatch<input::MouseRelativeMove>(e);
+							break;
+						case detail::typeHash<input::MousePress>():
+							updateMouseStateAndDispatch<input::MousePress>(e);
+							break;
+						case detail::typeHash<input::MouseDoublePress>():
+							updateMouseStateAndDispatch<input::MouseDoublePress>(e);
+							break;
+						case detail::typeHash<input::MouseRelease>():
+							updateMouseStateAndDispatch<input::MouseRelease>(e);
+							break;
+						case detail::typeHash<input::MouseWheel>():
+							updateMouseStateAndDispatch<input::MouseWheel>(e);
+							break;
+						case detail::typeHash<input::KeyPress>():
+						{
+							stateKeys.insert(e.get<input::KeyPress>().key);
+							stateMods = e.get<input::KeyPress>().mods;
+							events.dispatch(e);
+							const input::KeyPress p = e.get<input::KeyPress>();
+							events.dispatch(input::KeyRepeat{ p.window, p.key, p.mods });
+							break;
+						}
+						case detail::typeHash<input::KeyRelease>():
+							stateKeys.erase(e.get<input::KeyRelease>().key);
+							stateMods = e.get<input::KeyRelease>().mods;
+							events.dispatch(e);
+							break;
+						case detail::typeHash<input::KeyRepeat>():
+							stateKeys.insert(e.get<input::KeyRepeat>().key);
+							stateMods = e.get<input::KeyRepeat>().mods;
+							events.dispatch(e);
+							break;
+						case detail::typeHash<input::Character>():
+							stateMods = e.get<input::Character>().mods;
+							events.dispatch(e);
+							break;
+						case detail::typeHash<input::WindowFocusGain>():
+							focus = true;
+							events.dispatch(e);
+							break;
+						case detail::typeHash<input::WindowFocusLose>():
+							focus = false;
+							events.dispatch(e);
+							break;
+						default:
+							events.dispatch(e);
+							break;
+					}
 				}
+
+				mouseAllowRelativeMovement = true;
 			}
 		};
 
@@ -319,7 +384,7 @@ namespace cage
 			e.mods = getKeyModifiers(w);
 			e.position[0] = xpos;
 			e.position[1] = ypos;
-			e.position *= impl->mouseScale;
+			e.position *= impl->stateMouseScale;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
 				e.buttons |= MouseButtonsFlags::Left;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT))
@@ -579,6 +644,7 @@ namespace cage
 		if (impl->mouseIntendRelative != relative)
 			impl->lastRelativePosition = Vec2::Nan();
 		impl->mouseIntendRelative = relative;
+		impl->mouseAllowRelativeMovement = false;
 	}
 
 	Vec2 Window::mousePosition() const
@@ -615,72 +681,7 @@ namespace cage
 	void Window::processEvents()
 	{
 		WindowImpl *impl = (WindowImpl *)this;
-#ifndef GCHL_WINDOWS_THREAD
-		impl->updateMouseMode();
-		{
-			ScopeLock l(cageGlfwMutex());
-			glfwPollEvents();
-		}
-#endif
-		GenericInput e;
-		while (impl->eventsQueue.tryPop(e))
-		{
-			switch (e.typeHash())
-			{
-				case detail::typeHash<input::MouseMove>():
-					impl->updateMouseStateAndDispatch<input::MouseMove>(e);
-					break;
-				case detail::typeHash<input::MouseRelativeMove>():
-					impl->updateMouseStateAndDispatch<input::MouseRelativeMove>(e);
-					break;
-				case detail::typeHash<input::MousePress>():
-					impl->updateMouseStateAndDispatch<input::MousePress>(e);
-					break;
-				case detail::typeHash<input::MouseDoublePress>():
-					impl->updateMouseStateAndDispatch<input::MouseDoublePress>(e);
-					break;
-				case detail::typeHash<input::MouseRelease>():
-					impl->updateMouseStateAndDispatch<input::MouseRelease>(e);
-					break;
-				case detail::typeHash<input::MouseWheel>():
-					impl->updateMouseStateAndDispatch<input::MouseWheel>(e);
-					break;
-				case detail::typeHash<input::KeyPress>():
-				{
-					impl->stateKeys.insert(e.get<input::KeyPress>().key);
-					impl->stateMods = e.get<input::KeyPress>().mods;
-					events.dispatch(e);
-					const input::KeyPress p = e.get<input::KeyPress>();
-					events.dispatch(input::KeyRepeat{ p.window, p.key, p.mods });
-					break;
-				}
-				case detail::typeHash<input::KeyRelease>():
-					impl->stateKeys.erase(e.get<input::KeyRelease>().key);
-					impl->stateMods = e.get<input::KeyRelease>().mods;
-					events.dispatch(e);
-					break;
-				case detail::typeHash<input::KeyRepeat>():
-					impl->stateKeys.insert(e.get<input::KeyRepeat>().key);
-					impl->stateMods = e.get<input::KeyRepeat>().mods;
-					events.dispatch(e);
-					break;
-				case detail::typeHash<input::Character>():
-					impl->stateMods = e.get<input::Character>().mods;
-					events.dispatch(e);
-					break;
-				case detail::typeHash<input::WindowFocusGain>():
-					impl->focus = true;
-					events.dispatch(e);
-					break;
-				case detail::typeHash<input::WindowFocusLose>():
-					impl->focus = false;
-					events.dispatch(e);
-					break;
-				default:
-					events.dispatch(e);
-					break;
-			}
-		}
+		impl->processEvents();
 	}
 
 	Vec2i Window::resolution() const
