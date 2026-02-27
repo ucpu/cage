@@ -358,6 +358,10 @@ namespace cage
 	{
 		return data->name;
 	}
+	String ConfigString::value() const
+	{
+		return *this;
+	}
 	ConfigString::operator String() const
 	{
 		return cfgGet<String>(data);
@@ -392,6 +396,10 @@ namespace cage
 	const String &CAGE_JOIN(Config, T)::name() const \
 	{ \
 		return data->name; \
+	} \
+	t CAGE_JOIN(Config, T)::value() const \
+	{ \
+		return *this; \
 	} \
 	CAGE_JOIN(Config, T)::operator t() const \
 	{ \

@@ -43,6 +43,7 @@ namespace cage
 	{
 		explicit ConfigString(const String &name);
 		explicit ConfigString(const String &name, const String &default_);
+		String value() const;
 		operator String() const;
 		ConfigString &operator=(const String &value);
 		const String &name() const;
@@ -58,6 +59,7 @@ namespace cage
 	{ \
 		explicit Config##T(const String &name); \
 		explicit Config##T(const String &name, t default_); \
+		t value() const; \
 		operator t() const; \
 		Config##T &operator=(t value); \
 		const String &name() const; \

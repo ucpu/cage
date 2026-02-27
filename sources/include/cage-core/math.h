@@ -12,22 +12,13 @@ namespace cage
 		value_type value = 0;
 
 		CAGE_FORCE_INLINE constexpr Real() {}
-#define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr Real(TYPE other) : value((value_type)other) {}
-		GCHL_GENERATE(sint8);
-		GCHL_GENERATE(sint16);
-		GCHL_GENERATE(sint32);
-		GCHL_GENERATE(sint64);
-		GCHL_GENERATE(uint8);
-		GCHL_GENERATE(uint16);
-		GCHL_GENERATE(uint32);
-		GCHL_GENERATE(uint64);
-		GCHL_GENERATE(float);
-		GCHL_GENERATE(double);
-#ifdef CAGE_SYSTEM_MAC
-		GCHL_GENERATE(std::size_t);
-#endif
-#undef GCHL_GENERATE
+		CAGE_FORCE_INLINE constexpr Real(float other) : value((value_type)other) {}
+		CAGE_FORCE_INLINE constexpr Real(double other) : value((value_type)other) {}
+		template<class T>
+		requires(std::is_integral_v<T>)
+		CAGE_FORCE_INLINE constexpr Real(T other) : value((value_type)other)
+		{}
+
 		explicit constexpr Real(Rads other);
 		explicit constexpr Real(Degs other);
 

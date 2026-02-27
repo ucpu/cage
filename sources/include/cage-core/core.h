@@ -431,9 +431,6 @@ namespace cage
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
 		GCHL_GENERATE(bool);
-#ifdef CAGE_SYSTEM_MAC
-		GCHL_GENERATE(std::size_t);
-#endif
 #undef GCHL_GENERATE
 		CAGE_CORE_API uint32 toStringImpl(char *s, uint32 n, const char *src);
 		CAGE_CORE_API int stringComparisonImpl(const char *ad, uint32 al, const char *bd, uint32 bl);
@@ -632,10 +629,18 @@ namespace cage
 			GCHL_GENERATE(float, 50);
 			GCHL_GENERATE(double, 350);
 			GCHL_GENERATE(bool, 5);
-#ifdef CAGE_SYSTEM_MAC
-			GCHL_GENERATE(std::size_t, 21);
-#endif
 #undef GCHL_GENERATE
+
+			// extra overloads for apple clang (macos)
+			template<class T>
+			requires(std::is_integral_v<T> && !std::is_same_v<std::remove_cv_t<T>, bool> && !std::is_same_v<std::remove_cv_t<T>, char>)
+			CAGE_FORCE_INLINE StringizerBase<N> &operator+(const T &value)
+			{
+				if constexpr (std::is_signed_v<T>)
+					return *this + (sint64)value;
+				else
+					return *this + (uint64)value;
+			}
 
 			// allow to use l-value-reference operator overloads with r-value-reference Stringizer
 			template<class T>
