@@ -2,12 +2,15 @@
 #include <cctype> // std::isspace
 #include <cerrno>
 #include <charconv> // to_chars, from_chars
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string_view>
 #include <vector>
 
 #include <cage-core/macros.h>
+#include <cage-core/math.h>
 #include <cage-core/string.h>
 
 namespace cage
@@ -588,5 +591,59 @@ namespace cage
 				j++;
 			}
 		}
+	}
+
+	String prettyPrint(Real val)
+	{
+		return prettyPrint(val.value);
+	}
+
+	String prettyPrint(float val)
+	{
+		return prettyPrint((double)val);
+	}
+
+	String prettyPrint(double v)
+	{
+		if (std::isnan(v))
+			return "nan"; // all types of nan
+		if (v == 0)
+			return "0";
+
+		const double absV = std::abs((double)v);
+		int precision = 0;
+
+		// determine precision based on magnitude
+		if (absV >= 9.95) // rounds to 10+
+			precision = 0;
+		else if (absV >= 0.995) // rounds to 1.0+
+			precision = 1;
+		else
+		{
+			int exponent = std::floor(std::log10(absV));
+			precision = -exponent + 1;
+		}
+
+		// convert floating point to fixed-point string
+		char buffer[128];
+		auto [p, ec] = std::to_chars(buffer, buffer + sizeof(buffer), (double)v, std::chars_format::fixed, precision);
+		if (ec != std::errc{})
+			CAGE_THROW_ERROR(Exception, "failed converting float to string (prettyPrint)");
+		std::string_view sv(buffer, p - buffer);
+
+		// trim trailing zeros and decimal point
+		if (sv.find('.') != std::string_view::npos)
+		{
+			while (sv.back() == '0')
+				sv.remove_suffix(1);
+			if (sv.back() == '.')
+				sv.remove_suffix(1);
+		}
+
+		// handle "-0" case if rounding results in zero
+		if (sv == "-0")
+			return "0";
+
+		return String(PointerRange<const char>(sv));
 	}
 }

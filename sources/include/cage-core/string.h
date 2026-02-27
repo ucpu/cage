@@ -248,6 +248,16 @@ namespace cage
 
 	using StringComparatorFast = detail::StringComparatorFastBase<995>;
 	using StringComparatorNatural = detail::StringComparatorNaturalBase<995>;
+
+	template<class T>
+	requires(std::is_integral_v<T>)
+	String prettyPrint(T val)
+	{
+		return Stringizer() + val;
+	}
+	CAGE_CORE_API String prettyPrint(Real val);
+	CAGE_CORE_API String prettyPrint(float val);
+	CAGE_CORE_API String prettyPrint(double val);
 }
 
 #endif // guard_string_h_sdrgh4s6ert4gzh6r5t4sedg48s9

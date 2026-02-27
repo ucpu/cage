@@ -984,6 +984,109 @@ namespace
 			textsSetLanguages(original);
 		}
 	}
+
+	void testPrettyPrint()
+	{
+		CAGE_TESTCASE("pretty print");
+		{
+			CAGE_TESTCASE("integers");
+			CAGE_TEST(prettyPrint(0) == "0");
+			CAGE_TEST(prettyPrint(-0) == "0");
+			CAGE_TEST(prettyPrint(42) == "42");
+			CAGE_TEST(prettyPrint(-42) == "-42");
+			CAGE_TEST(prettyPrint(123456789123) == "123456789123");
+			CAGE_TEST(prettyPrint(-123456789123) == "-123456789123");
+		}
+		{
+			CAGE_TESTCASE("positive floats");
+			CAGE_TEST(prettyPrint(0.0) == "0");
+			CAGE_TEST(prettyPrint(123.456) == "123");
+			CAGE_TEST(prettyPrint(12.34) == "12");
+			CAGE_TEST(prettyPrint(1.234) == "1.2");
+			CAGE_TEST(prettyPrint(0.1234) == "0.12");
+			CAGE_TEST(prettyPrint(9.6) == "9.6");
+			CAGE_TEST(prettyPrint(9.96) == "10");
+			CAGE_TEST(prettyPrint(0.96) == "0.96");
+			CAGE_TEST(prettyPrint(0.996) == "1");
+			CAGE_TEST(prettyPrint(0.096) == "0.096");
+			CAGE_TEST(prettyPrint(0.0996) == "0.1");
+			CAGE_TEST(prettyPrint(0.0012345) == "0.0012");
+			CAGE_TEST(prettyPrint(0.0015) == "0.0015");
+			CAGE_TEST(prettyPrint(0.00100001) == "0.001");
+			CAGE_TEST(prettyPrint(0.0019999) == "0.002");
+			CAGE_TEST(prettyPrint(0.00999) == "0.01");
+			CAGE_TEST(prettyPrint(234.123) == "234"); // correct rounding
+			CAGE_TEST(prettyPrint(234.567) == "235"); // correct rounding
+			CAGE_TEST(prettyPrint(345.123) == "345"); // correct rounding
+			CAGE_TEST(prettyPrint(345.678) == "346"); // correct rounding
+			CAGE_TEST(prettyPrint(0.01234) == "0.012"); // correct rounding
+			CAGE_TEST(prettyPrint(0.04567) == "0.046"); // correct rounding
+			CAGE_TEST(prettyPrint(1e-20) == "0.00000000000000000001");
+			CAGE_TEST(prettyPrint(1000000000000000000) == "1000000000000000000");
+			CAGE_TEST(prettyPrint(10000000000.00000000) == "10000000000");
+		}
+		{
+			CAGE_TESTCASE("negative floats");
+			CAGE_TEST(prettyPrint(-0.0) == "0"); // no negative zero
+			CAGE_TEST(prettyPrint(-123.456) == "-123");
+			CAGE_TEST(prettyPrint(-12.34) == "-12");
+			CAGE_TEST(prettyPrint(-1.234) == "-1.2");
+			CAGE_TEST(prettyPrint(-0.1234) == "-0.12");
+			CAGE_TEST(prettyPrint(-9.6) == "-9.6");
+			CAGE_TEST(prettyPrint(-9.96) == "-10");
+			CAGE_TEST(prettyPrint(-0.96) == "-0.96");
+			CAGE_TEST(prettyPrint(-0.996) == "-1");
+			CAGE_TEST(prettyPrint(-0.096) == "-0.096");
+			CAGE_TEST(prettyPrint(-0.0996) == "-0.1");
+			CAGE_TEST(prettyPrint(-0.0012345) == "-0.0012");
+			CAGE_TEST(prettyPrint(-0.0015) == "-0.0015");
+			CAGE_TEST(prettyPrint(-0.00100001) == "-0.001");
+			CAGE_TEST(prettyPrint(-0.0019999) == "-0.002");
+			CAGE_TEST(prettyPrint(-234.123) == "-234"); // correct rounding
+			CAGE_TEST(prettyPrint(-234.567) == "-235"); // correct rounding
+			CAGE_TEST(prettyPrint(-345.123) == "-345"); // correct rounding
+			CAGE_TEST(prettyPrint(-345.678) == "-346"); // correct rounding
+			CAGE_TEST(prettyPrint(-0.01234) == "-0.012"); // correct rounding
+			CAGE_TEST(prettyPrint(-0.04567) == "-0.046"); // correct rounding
+			CAGE_TEST(prettyPrint(-1e-20) == "-0.00000000000000000001");
+			CAGE_TEST(prettyPrint(-1000000000000000000) == "-1000000000000000000");
+			CAGE_TEST(prettyPrint(-10000000000.00000000) == "-10000000000");
+		}
+		{
+			CAGE_TESTCASE("nan, inf");
+			CAGE_TEST(prettyPrint(Real::Nan()) == "nan");
+			CAGE_TEST(prettyPrint(-Real::Nan()) == "nan");
+			CAGE_TEST(prettyPrint(Real::Infinity()) == "inf");
+			CAGE_TEST(prettyPrint(-Real::Infinity()) == "-inf");
+		}
+		{
+			CAGE_TESTCASE("random numbers");
+			for (uint32 i = 0; i < 3; i++)
+			{
+				const Real r = randomRange(-10'000.0, 10'000.0);
+				const String s = prettyPrint(r);
+				CAGE_LOG(SeverityEnum::Info, "prettyPrint", Stringizer() + r + " -> " + s);
+			}
+			for (uint32 i = 0; i < 3; i++)
+			{
+				const Real r = randomRange(-100.0, 100.0);
+				const String s = prettyPrint(r);
+				CAGE_LOG(SeverityEnum::Info, "prettyPrint", Stringizer() + r + " -> " + s);
+			}
+			for (uint32 i = 0; i < 3; i++)
+			{
+				const Real r = randomRange(-10.0, 10.0);
+				const String s = prettyPrint(r);
+				CAGE_LOG(SeverityEnum::Info, "prettyPrint", Stringizer() + r + " -> " + s);
+			}
+			for (uint32 i = 0; i < 3; i++)
+			{
+				const Real r = randomRange(-1.0, 1.0);
+				const String s = prettyPrint(r);
+				CAGE_LOG(SeverityEnum::Info, "prettyPrint", Stringizer() + r + " -> " + s);
+			}
+		}
+	}
 }
 
 void testStrings()
@@ -1004,4 +1107,5 @@ void testStrings()
 	testNaturalSortBasics();
 	testNaturalSortRandom();
 	testTextsFormat();
+	testPrettyPrint();
 }

@@ -103,6 +103,11 @@ namespace cage
 			return impl->keyRepeat(in.get<input::KeyRepeat>());
 		if (in.has<input::Character>())
 			return impl->keyChar(in.get<input::Character>());
+		if (in.has<input::WindowFocusLose>())
+		{
+			impl->clearTooltips();
+			return false;
+		}
 		return false;
 	}
 
