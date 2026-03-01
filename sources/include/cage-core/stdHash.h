@@ -25,21 +25,24 @@ namespace std
 	template<class T>
 	struct hash<cage::Holder<T>>
 	{
-		std::size_t operator()(const cage::Holder<T> &v) const { return impl(v, 0); }
-
-	private:
-		template<class M>
-		auto impl(const cage::Holder<M> &v, int) const -> decltype(std::hash<M>()(*v), std::size_t())
+		std::size_t operator()(const cage::Holder<T> &v) const
 		{
-			if (v)
-				return std::hash<M>()(*v);
-			return 0;
-		}
-
-		template<class M>
-		auto impl(const cage::Holder<M> &v, float) const -> std::size_t
-		{
-			return std::hash<M *>()(+v);
+			if (!v)
+				return 0;
+			if constexpr (std::is_same_v<std::remove_cv_t<T>, void>)
+			{
+				return std::hash<std::size_t>{}(std::size_t(+v));
+			}
+			else if constexpr (requires(const T &v) {
+								   { std::hash<T>{}(v) } -> std::convertible_to<std::size_t>;
+							   })
+			{
+				return std::hash<T>{}(*v);
+			}
+			else
+			{
+				return std::hash<T *>{}(+v);
+			}
 		}
 	};
 }

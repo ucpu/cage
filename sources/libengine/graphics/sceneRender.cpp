@@ -5,6 +5,8 @@
 #include <variant>
 #include <vector>
 
+#include <unordered_dense.h>
+
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/assetsSchemes.h>
@@ -20,6 +22,7 @@
 #include <cage-core/scopeGuard.h>
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/skeletalAnimationPreparator.h>
+#include <cage-core/stdHash.h>
 #include <cage-core/tasks.h>
 #include <cage-core/texts.h>
 #include <cage-engine/assetsSchemes.h>
@@ -116,19 +119,19 @@ namespace cage
 		struct RenderModel : private Noncopyable
 		{
 			Holder<SkeletalAnimationPreparatorInstance> skeletalAnimation;
-			Holder<Model> mesh;
+			Model *mesh = nullptr;
 		};
 
 		struct RenderSprite : private Noncopyable
 		{
-			Holder<Texture> texture;
-			Holder<Model> mesh;
+			Texture *texture = nullptr;
+			Model *mesh = nullptr;
 		};
 
 		struct RenderText : private Noncopyable
 		{
 			FontLayoutResult layout;
-			Holder<Font> font;
+			Font *font = nullptr;
 		};
 
 		struct RenderCustom : private Noncopyable
@@ -227,10 +230,10 @@ namespace cage
 
 		struct SceneRenderImpl : public SceneRenderConfig
 		{
-			Holder<Model> modelSquare, modelBone, modelSprite;
-			Holder<Shader> shaderBlitPixels, shaderBlitScaled;
-			Holder<MultiShader> shaderStandard, shaderSprite;
-			Holder<Shader> shaderText;
+			Model *modelSquare = nullptr, *modelBone = nullptr, *modelSprite = nullptr;
+			Shader *shaderBlitPixels = nullptr, *shaderBlitScaled = nullptr;
+			MultiShader *shaderStandard = nullptr, *shaderSprite = nullptr;
+			Shader *shaderText = nullptr;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
 			EntityComponent *transformComponent = nullptr;
@@ -252,61 +255,62 @@ namespace cage
 			mutable std::vector<UniMesh> uniMeshes;
 			mutable std::vector<Mat3x4> uniArmatures;
 			mutable std::vector<float> uniCustomData;
-			mutable std::vector<Holder<Model>> prepareModels;
+			mutable std::vector<Holder<Model>> prepareModelsHolder;
+			mutable std::vector<Model *> prepareModelsRaw;
+			mutable ankerl::unordered_dense::set<Holder<void>> sharedAssetsCache;
 
 			// create pipeline for regular camera
 			explicit SceneRenderImpl(const SceneRenderConfig &config) : SceneRenderConfig(config)
 			{
 				if (!assets->get<AssetPack>(HashString("cage/cage.pack")) || !assets->get<AssetPack>(HashString("cage/shaders/engine/engine.pack")))
 					return;
-
-				modelSquare = assets->get<Model>(HashString("cage/models/square.obj"));
-				modelBone = assets->get<Model>(HashString("cage/models/bone.obj"));
-				modelSprite = assets->get<Model>(HashString("cage/models/icon.obj"));
-				CAGE_ASSERT(modelSquare && modelBone && modelSprite);
-
-				shaderBlitPixels = assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0);
-				CAGE_ASSERT(shaderBlitPixels);
-
-				shaderBlitScaled = assets->get<MultiShader>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0);
-				CAGE_ASSERT(shaderBlitScaled);
-
-				shaderStandard = assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl"));
-				CAGE_ASSERT(shaderStandard);
-
-				shaderSprite = assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl"));
-				CAGE_ASSERT(shaderSprite);
-
-				shaderText = assets->get<MultiShader>(HashString("cage/shaders/engine/text.glsl"))->get(0);
-				CAGE_ASSERT(shaderText);
-
+				loadBasicAssets();
+				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
 				transformComponent = scene->component<TransformComponent>();
 				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
-
-				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
 			}
 
 			// create pipeline for shadowmap
 			explicit SceneRenderImpl(const SceneRenderImpl *camera) : SceneRenderConfig(*camera)
 			{
 				CAGE_ASSERT(camera->skeletonPreparatorCollection);
-
-#define SHARE(NAME) NAME = camera->NAME.share();
-				SHARE(modelSquare);
-				SHARE(modelBone);
-				SHARE(modelSprite);
-				SHARE(shaderBlitPixels);
-				SHARE(shaderBlitScaled);
-				SHARE(shaderStandard);
-				SHARE(shaderSprite);
-				SHARE(shaderText);
-				SHARE(skeletonPreparatorCollection);
-#undef SHARE
-
+				loadBasicAssets();
+				skeletonPreparatorCollection = camera->skeletonPreparatorCollection.share();
 				transformComponent = camera->transformComponent;
 				prevTransformComponent = camera->prevTransformComponent;
-
 				buffViewport = camera->buffViewport.share();
+			}
+
+			void loadBasicAssets()
+			{
+				modelSquare = shareAsset(assets->get<Model>(HashString("cage/models/square.obj")));
+				modelBone = shareAsset(assets->get<Model>(HashString("cage/models/bone.obj")));
+				modelSprite = shareAsset(assets->get<Model>(HashString("cage/models/icon.obj")));
+				CAGE_ASSERT(modelSquare && modelBone && modelSprite);
+
+				shaderBlitPixels = shareAsset(assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0));
+				CAGE_ASSERT(shaderBlitPixels);
+
+				shaderBlitScaled = shareAsset(assets->get<MultiShader>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0));
+				CAGE_ASSERT(shaderBlitScaled);
+
+				shaderStandard = shareAsset(assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl")));
+				CAGE_ASSERT(shaderStandard);
+
+				shaderSprite = shareAsset(assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl")));
+				CAGE_ASSERT(shaderSprite);
+
+				shaderText = shareAsset(assets->get<MultiShader>(HashString("cage/shaders/engine/text.glsl"))->get(0));
+				CAGE_ASSERT(shaderText);
+			}
+
+			template<class T>
+			CAGE_FORCE_INLINE T *shareAsset(Holder<T> &&asset) const
+			{
+				T *ret = +asset;
+				if (asset)
+					sharedAssetsCache.insert(std::move(asset).cast<void>());
+				return ret;
 			}
 
 			CAGE_FORCE_INLINE Transform modelTransform(Entity *e) const
@@ -468,8 +472,8 @@ namespace cage
 
 				const auto material = newGraphicsBindings(device, assets, +rm.mesh);
 
-				Holder<MultiShader> multiShader = rm.mesh->shaderName ? assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : shaderStandard.share();
-				Holder<Shader> shader = pickShaderVariant(+multiShader, +rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
+				MultiShader *multiShader = rm.mesh->shaderName ? shareAsset(assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName)) : shaderStandard;
+				Holder<Shader> shader = pickShaderVariant(multiShader, rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
 				{
@@ -599,11 +603,11 @@ namespace cage
 				if (renderMode != RenderModeEnum::Color)
 					return;
 
-				const Holder<Model> &mesh = std::get<RenderSprite>(rd.data).mesh;
-				const Holder<Texture> &texture = std::get<RenderSprite>(rd.data).texture;
+				Model *mesh = std::get<RenderSprite>(rd.data).mesh;
+				Texture *texture = std::get<RenderSprite>(rd.data).texture;
 
-				Holder<MultiShader> multiShader = mesh->shaderName ? assets->get<MultiShader>(mesh->shaderName) : shaderSprite.share();
-				Holder<Shader> shader = pickShaderVariant(+multiShader, +mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
+				MultiShader *multiShader = mesh->shaderName ? shareAsset(assets->get<MultiShader>(mesh->shaderName)) : shaderSprite;
+				Holder<Shader> shader = pickShaderVariant(multiShader, mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;
 
@@ -654,7 +658,7 @@ namespace cage
 				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
-				draw.material = newGraphicsBindings(device, spritesMaterialBinding(+mesh, +texture));
+				draw.material = newGraphicsBindings(device, spritesMaterialBinding(mesh, texture));
 				draw.bindings = newGraphicsBindings(device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
@@ -781,7 +785,7 @@ namespace cage
 					d.e = rd.e;
 					d.renderLayer = rd.renderLayer;
 					RenderModel r;
-					r.mesh = modelBone.share();
+					r.mesh = modelBone;
 					d.data = std::move(r);
 					renderData.push_back(std::move(d));
 				}
@@ -868,7 +872,7 @@ namespace cage
 				if (!tc.font)
 					tc.font = HashString("cage/fonts/ubuntu/regular.ttf");
 				RenderText rt;
-				rt.font = assets->get<AssetSchemeIndexFont, Font>(tc.font);
+				rt.font = shareAsset(assets->get<AssetSchemeIndexFont, Font>(tc.font));
 				if (!rt.font)
 					return;
 				FontFormat format;
@@ -946,21 +950,21 @@ namespace cage
 						CAGE_ASSERT(obj->lodsCount() > 0);
 						if (obj->lodsCount() == 1)
 						{
-							prepareModels.clear();
+							prepareModelsRaw.clear();
 							for (uint32 id : obj->models(0))
 							{
-								if (Holder<Model> mesh = onDemand->get<AssetSchemeIndexModel, Model>(id))
-									prepareModels.push_back(std::move(mesh));
+								if (Model *mesh = shareAsset(onDemand->get<AssetSchemeIndexModel, Model>(id)))
+									prepareModelsRaw.push_back(std::move(mesh));
 							}
-							if (prepareModels.empty())
+							if (prepareModelsRaw.empty())
 								return;
 							for (const auto &it : data)
 							{
 								const Mat4 mm = Mat4(modelTransform(it.e));
-								for (const auto &mesh : prepareModels)
+								for (const auto &mesh : prepareModelsRaw)
 								{
 									RenderModel rm;
-									rm.mesh = mesh.share();
+									rm.mesh = mesh;
 									RenderData rd;
 									rd.e = it.e;
 									rd.model = mm;
@@ -976,14 +980,14 @@ namespace cage
 							RenderData rd;
 							rd.e = it.e;
 							rd.model = Mat4(modelTransform(it.e));
-							lodSelection.selectModels(prepareModels, Vec3(rd.model * Vec4(0, 0, 0, 1)), +obj, +onDemand);
-							for (auto &it : prepareModels)
+							lodSelection.selectModels(prepareModelsHolder, Vec3(rd.model * Vec4(0, 0, 0, 1)), +obj, +onDemand);
+							for (auto &it : prepareModelsHolder)
 							{
 								RenderData d;
 								d.model = rd.model;
 								d.e = rd.e;
 								RenderModel r;
-								r.mesh = std::move(it);
+								r.mesh = shareAsset(std::move(it));
 								d.data = std::move(r);
 								prepareModel(d, +obj);
 							}
@@ -991,12 +995,12 @@ namespace cage
 						return;
 					}
 
-					if (Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(data[0].id))
+					if (Model *mesh = shareAsset(assets->get<AssetSchemeIndexModel, Model>(data[0].id)))
 					{
 						for (const auto &it : data)
 						{
 							RenderModel rm;
-							rm.mesh = mesh.share();
+							rm.mesh = mesh;
 							RenderData rd;
 							rd.e = it.e;
 							rd.model = Mat4(modelTransform(it.e));
@@ -1008,13 +1012,13 @@ namespace cage
 
 					if (cnfRenderMissingModels)
 					{
-						Holder<Model> mesh = assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj"));
+						Model *mesh = shareAsset(assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj")));
 						if (!mesh)
 							return;
 						for (const auto &it : data)
 						{
 							RenderModel rm;
-							rm.mesh = mesh.share();
+							rm.mesh = mesh;
 							RenderData rd;
 							rd.e = it.e;
 							rd.model = Mat4(modelTransform(it.e));
@@ -1055,18 +1059,18 @@ namespace cage
 				const auto &output = [&](PointerRange<const Data> data)
 				{
 					CAGE_ASSERT(data.size() > 0);
-					Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.sprite);
+					Texture *tex = shareAsset(assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.sprite));
 					if (!tex)
 						return;
-					Holder<Model> mod = data[0].ic.model ? assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model) : modelSprite.share();
+					Model *mod = data[0].ic.model ? shareAsset(assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model)) : modelSprite;
 					if (!mod)
 						return;
 					for (const auto &it : data)
 					{
 						const SpriteComponent &ic = it.e->value<SpriteComponent>();
 						RenderSprite ri;
-						ri.texture = tex.share();
-						ri.mesh = mod.share();
+						ri.texture = tex;
+						ri.mesh = mod;
 						CAGE_ASSERT(ri.mesh->bonesCount == 0);
 						RenderData rd;
 						rd.e = it.e;
