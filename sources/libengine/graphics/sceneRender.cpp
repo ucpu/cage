@@ -119,7 +119,7 @@ namespace cage
 			Holder<Model> mesh;
 		};
 
-		struct RenderIcon : private Noncopyable
+		struct RenderSprite : private Noncopyable
 		{
 			Holder<Texture> texture;
 			Holder<Model> mesh;
@@ -136,7 +136,7 @@ namespace cage
 
 		struct RenderData : private Noncopyable
 		{
-			std::variant<std::monostate, RenderModel, RenderIcon, RenderText, RenderCustom> data;
+			std::variant<std::monostate, RenderModel, RenderSprite, RenderText, RenderCustom> data;
 			Mat4 model;
 			Vec4 color = Vec4::Nan(); // linear rgb (NOT alpha-premultiplied), opacity
 			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
@@ -173,7 +173,7 @@ namespace cage
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
 							return { renderLayer, translucent, depth, +r.mesh, nullptr, !!r.skeletalAnimation };
-						if constexpr (std::is_same_v<T, RenderIcon>)
+						if constexpr (std::is_same_v<T, RenderSprite>)
 							return { renderLayer, translucent, depth, +r.mesh, +r.texture, false };
 						if constexpr (std::is_same_v<T, RenderText>)
 							return { renderLayer, translucent, depth, +r.font, nullptr, false };
@@ -227,9 +227,9 @@ namespace cage
 
 		struct SceneRenderImpl : public SceneRenderConfig
 		{
-			Holder<Model> modelSquare, modelBone, modelIcon;
+			Holder<Model> modelSquare, modelBone, modelSprite;
 			Holder<Shader> shaderBlitPixels, shaderBlitScaled;
-			Holder<MultiShader> shaderStandard, shaderIcon;
+			Holder<MultiShader> shaderStandard, shaderSprite;
 			Holder<Shader> shaderText;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
@@ -262,8 +262,8 @@ namespace cage
 
 				modelSquare = assets->get<Model>(HashString("cage/models/square.obj"));
 				modelBone = assets->get<Model>(HashString("cage/models/bone.obj"));
-				modelIcon = assets->get<Model>(HashString("cage/models/icon.obj"));
-				CAGE_ASSERT(modelSquare && modelBone && modelIcon);
+				modelSprite = assets->get<Model>(HashString("cage/models/icon.obj"));
+				CAGE_ASSERT(modelSquare && modelBone && modelSprite);
 
 				shaderBlitPixels = assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0);
 				CAGE_ASSERT(shaderBlitPixels);
@@ -274,8 +274,8 @@ namespace cage
 				shaderStandard = assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl"));
 				CAGE_ASSERT(shaderStandard);
 
-				shaderIcon = assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl"));
-				CAGE_ASSERT(shaderIcon);
+				shaderSprite = assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl"));
+				CAGE_ASSERT(shaderSprite);
 
 				shaderText = assets->get<MultiShader>(HashString("cage/shaders/engine/text.glsl"))->get(0);
 				CAGE_ASSERT(shaderText);
@@ -294,11 +294,11 @@ namespace cage
 #define SHARE(NAME) NAME = camera->NAME.share();
 				SHARE(modelSquare);
 				SHARE(modelBone);
-				SHARE(modelIcon);
+				SHARE(modelSprite);
 				SHARE(shaderBlitPixels);
 				SHARE(shaderBlitScaled);
 				SHARE(shaderStandard);
-				SHARE(shaderIcon);
+				SHARE(shaderSprite);
 				SHARE(shaderText);
 				SHARE(skeletonPreparatorCollection);
 #undef SHARE
@@ -561,7 +561,7 @@ namespace cage
 				encoder->draw(draw);
 			}
 
-			CAGE_FORCE_INLINE GraphicsBindingsCreateConfig iconsMaterialBinding(Model *model, Texture *texture) const
+			CAGE_FORCE_INLINE GraphicsBindingsCreateConfig spritesMaterialBinding(Model *model, Texture *texture) const
 			{
 				GraphicsBindingsCreateConfig bind;
 				if (model->materialBuffer && model->materialBuffer->size() > 0)
@@ -590,19 +590,19 @@ namespace cage
 				return bind;
 			}
 
-			void renderIcons(const RenderModeEnum renderMode, const PointerRange<const RenderData> instances) const
+			void renderSprites(const RenderModeEnum renderMode, const PointerRange<const RenderData> instances) const
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderData &rd = instances[0];
-				CAGE_ASSERT(std::holds_alternative<RenderIcon>(rd.data));
+				CAGE_ASSERT(std::holds_alternative<RenderSprite>(rd.data));
 
 				if (renderMode != RenderModeEnum::Color)
 					return;
 
-				const Holder<Model> &mesh = std::get<RenderIcon>(rd.data).mesh;
-				const Holder<Texture> &texture = std::get<RenderIcon>(rd.data).texture;
+				const Holder<Model> &mesh = std::get<RenderSprite>(rd.data).mesh;
+				const Holder<Texture> &texture = std::get<RenderSprite>(rd.data).texture;
 
-				Holder<MultiShader> multiShader = mesh->shaderName ? assets->get<MultiShader>(mesh->shaderName) : shaderIcon.share();
+				Holder<MultiShader> multiShader = mesh->shaderName ? assets->get<MultiShader>(mesh->shaderName) : shaderSprite.share();
 				Holder<Shader> shader = pickShaderVariant(+multiShader, +mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;
@@ -616,9 +616,9 @@ namespace cage
 
 				for (const auto &inst : instances)
 				{
-					CAGE_ASSERT(std::holds_alternative<RenderIcon>(inst.data));
-					CAGE_ASSERT(+std::get<RenderIcon>(inst.data).mesh == +mesh);
-					CAGE_ASSERT(+std::get<RenderIcon>(inst.data).texture == +texture);
+					CAGE_ASSERT(std::holds_alternative<RenderSprite>(inst.data));
+					CAGE_ASSERT(+std::get<RenderSprite>(inst.data).mesh == +mesh);
+					CAGE_ASSERT(+std::get<RenderSprite>(inst.data).texture == +texture);
 					uniMeshes.push_back(makeMeshUni(inst));
 					appendShaderCustomData(inst.e, multiShader->customDataCount);
 				}
@@ -654,7 +654,7 @@ namespace cage
 				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
-				draw.material = newGraphicsBindings(device, iconsMaterialBinding(+mesh, +texture));
+				draw.material = newGraphicsBindings(device, spritesMaterialBinding(+mesh, +texture));
 				draw.bindings = newGraphicsBindings(device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
@@ -720,8 +720,8 @@ namespace cage
 						using T = std::decay_t<decltype(r)>;
 						if constexpr (std::is_same_v<T, RenderModel>)
 							renderModels(renderMode, instances);
-						if constexpr (std::is_same_v<T, RenderIcon>)
-							renderIcons(renderMode, instances);
+						if constexpr (std::is_same_v<T, RenderSprite>)
+							renderSprites(renderMode, instances);
 						if constexpr (std::is_same_v<T, RenderText>)
 							renderTexts(renderMode, instances);
 						if constexpr (std::is_same_v<T, RenderCustom>)
@@ -752,7 +752,7 @@ namespace cage
 							using T = std::decay_t<decltype(r)>;
 							if constexpr (std::is_same_v<T, RenderModel>)
 								return { +r.mesh, nullptr, !!r.skeletalAnimation, d.translucent };
-							if constexpr (std::is_same_v<T, RenderIcon>)
+							if constexpr (std::is_same_v<T, RenderSprite>)
 								return { +r.mesh, +r.texture, false, d.translucent };
 							if constexpr (std::is_same_v<T, RenderText>)
 								return { +r.font, nullptr, false, d.translucent };
@@ -1026,45 +1026,45 @@ namespace cage
 				partition(PointerRange<const Data>(data), mark, output);
 			}
 
-			void prepareEntitiesIcons()
+			void prepareEntitiesSprites()
 			{
-				ProfilingScope profiling("icons");
+				ProfilingScope profiling("sprites");
 
 				struct Data
 				{
-					IconComponent ic;
+					SpriteComponent ic;
 					Entity *e = nullptr;
 				};
 				std::vector<Data> data;
-				data.reserve(scene->component<IconComponent>()->count());
+				data.reserve(scene->component<SpriteComponent>()->count());
 
 				entitiesVisitor(
-					[&](Entity *e, const IconComponent &ic)
+					[&](Entity *e, const SpriteComponent &ic)
 					{
-						if (!ic.icon)
+						if (!ic.sprite)
 							return;
 						if (failedMask(e))
 							return;
 						data.push_back({ ic, e });
 					},
 					+scene, false);
-				profiling.set(Stringizer() + "icons: " + data.size());
-				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.icon, a.ic.model } < std::pair{ b.ic.icon, b.ic.model }; });
+				profiling.set(Stringizer() + "sprites: " + data.size());
+				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.sprite, a.ic.model } < std::pair{ b.ic.sprite, b.ic.model }; });
 
-				const auto &mark = [](const Data &data) { return std::pair{ data.ic.icon, data.ic.model }; };
+				const auto &mark = [](const Data &data) { return std::pair{ data.ic.sprite, data.ic.model }; };
 				const auto &output = [&](PointerRange<const Data> data)
 				{
 					CAGE_ASSERT(data.size() > 0);
-					Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.icon);
+					Holder<Texture> tex = assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.sprite);
 					if (!tex)
 						return;
-					Holder<Model> mod = data[0].ic.model ? assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model) : modelIcon.share();
+					Holder<Model> mod = data[0].ic.model ? assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model) : modelSprite.share();
 					if (!mod)
 						return;
 					for (const auto &it : data)
 					{
-						const IconComponent &ic = it.e->value<IconComponent>();
-						RenderIcon ri;
+						const SpriteComponent &ic = it.e->value<SpriteComponent>();
+						RenderSprite ri;
 						ri.texture = tex.share();
 						ri.mesh = mod.share();
 						CAGE_ASSERT(ri.mesh->bonesCount == 0);
@@ -1090,10 +1090,10 @@ namespace cage
 				ProfilingScope profiling("prepare entities");
 				profiling.set(Stringizer() + "entities: " + scene->count());
 
-				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<IconComponent>()->count() + scene->component<TextComponent>()->count());
+				renderData.reserve(scene->component<ModelComponent>()->count() + scene->component<SpriteComponent>()->count() + scene->component<TextComponent>()->count());
 
 				prepareEntitiesModels();
-				prepareEntitiesIcons();
+				prepareEntitiesSprites();
 
 				entitiesVisitor(
 					[&](Entity *e, const TextComponent &tc)

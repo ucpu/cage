@@ -56,7 +56,7 @@ namespace cage
 
 		// icons
 		static constexpr uint32 defaultIcon = HashString("cage/models/icon.obj");
-		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const IconComponent &ic, const PickableComponent &) { findCandidates(e, tr, ic.model ? ic.model : defaultIcon); }, config.entities, false);
+		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const SpriteComponent &ic, const PickableComponent &) { findCandidates(e, tr, ic.model ? ic.model : defaultIcon); }, config.entities, false);
 
 		// test candidates
 		PointerRangeHolder<ScenePickingResult> results;
