@@ -236,8 +236,8 @@ namespace cage
 			Shader *shaderText = nullptr;
 
 			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
-			EntityComponent *transformComponent = nullptr;
-			EntityComponent *prevTransformComponent = nullptr;
+			using ModelMatricesCahceType = ankerl::unordered_dense::map<Entity *, Mat4>;
+			Holder<const ModelMatricesCahceType> modelMatricesCache;
 			const bool cnfRenderMissingModels = confGlobalRenderMissingModels;
 			const bool cnfRenderSkeletonBones = confGlobalRenderSkeletonBones;
 
@@ -266,8 +266,7 @@ namespace cage
 					return;
 				loadBasicAssets();
 				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(assets);
-				transformComponent = scene->component<TransformComponent>();
-				prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
+				precomputeModelMatrices();
 			}
 
 			// create pipeline for shadowmap
@@ -276,8 +275,7 @@ namespace cage
 				CAGE_ASSERT(camera->skeletonPreparatorCollection);
 				loadBasicAssets();
 				skeletonPreparatorCollection = camera->skeletonPreparatorCollection.share();
-				transformComponent = camera->transformComponent;
-				prevTransformComponent = camera->prevTransformComponent;
+				modelMatricesCache = camera->modelMatricesCache.share();
 				buffViewport = camera->buffViewport.share();
 			}
 
@@ -304,6 +302,26 @@ namespace cage
 				CAGE_ASSERT(shaderText);
 			}
 
+			void precomputeModelMatrices()
+			{
+				EntityComponent *transformComponent = scene->component<TransformComponent>();
+				EntityComponent *prevTransformComponent = scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
+				Holder<ModelMatricesCahceType> cache = systemMemory().createHolder<ModelMatricesCahceType>();
+				cache->reserve(transformComponent->count());
+				for (Entity *e : transformComponent->entities())
+				{
+					if (e->has(prevTransformComponent))
+					{
+						const Transform c = e->value<TransformComponent>(transformComponent);
+						const Transform p = e->value<TransformComponent>(prevTransformComponent);
+						(*cache)[e] = Mat4(interpolate(p, c, interpolationFactor));
+					}
+					else
+						(*cache)[e] = Mat4(e->value<TransformComponent>(transformComponent));
+				}
+				modelMatricesCache = std::move(cache);
+			}
+
 			template<class T>
 			CAGE_FORCE_INLINE T *shareAsset(Holder<T> &&asset) const
 			{
@@ -313,17 +331,10 @@ namespace cage
 				return ret;
 			}
 
-			CAGE_FORCE_INLINE Transform modelTransform(Entity *e) const
+			CAGE_FORCE_INLINE Mat4 modelTransform(Entity *e) const
 			{
-				CAGE_ASSERT(e->has(transformComponent));
-				if (e->has(prevTransformComponent))
-				{
-					const Transform c = e->value<TransformComponent>(transformComponent);
-					const Transform p = e->value<TransformComponent>(prevTransformComponent);
-					return interpolate(p, c, interpolationFactor);
-				}
-				else
-					return e->value<TransformComponent>(transformComponent);
+				CAGE_ASSERT(modelMatricesCache->count(e));
+				return modelMatricesCache->at(e);
 			}
 
 			CAGE_FORCE_INLINE UniMesh makeMeshUni(const RenderData &rd) const
@@ -1584,7 +1595,8 @@ namespace cage
 				data->resolution = Vec2i(sc.resolution);
 
 				{ // quantize light direction - reduces shimmering of slowly rotating lights
-					Transform src = modelTransform(e);
+					Mat4 mod = modelTransform(e);
+					Transform src = Transform(Vec3(mod * Vec4(0, 0, 0, 1)), Quat(Mat3(mod)));
 					Vec3 f = src.orientation * Vec3(0, 0, -1);
 					f *= 1'000;
 					for (uint32 i = 0; i < 3; i++)
