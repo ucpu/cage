@@ -44,7 +44,7 @@ namespace cage
 		WheelScroll = 1 << 4, // tracks wheel uniformly as one event
 		// todo controller
 	};
-	GCHL_ENUM_BITS(KeybindDevicesFlags);
+	CAGE_ENUM_BITS(KeybindDevicesFlags);
 
 	enum class KeybindModesFlags : uint32
 	{
@@ -60,7 +60,7 @@ namespace cage
 		GameTick = 1 << 8,
 		EngineTick = 1 << 9,
 	};
-	GCHL_ENUM_BITS(KeybindModesFlags);
+	CAGE_ENUM_BITS(KeybindModesFlags);
 
 	struct CAGE_ENGINE_API KeybindCreateConfig
 	{

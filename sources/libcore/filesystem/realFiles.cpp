@@ -1,7 +1,12 @@
+#include <cstdlib>
+#include <filesystem>
+#include <string>
+#include <vector>
+
 #ifdef CAGE_SYSTEM_WINDOWS
-	#include <vector> // wide characters
 	#include "../windowsMinimumInclude.h"
 	#include <io.h> // _get_osfhandle
+	#include <shlobj.h>
 	#define fseek64 _fseeki64
 	#define ftell64 _ftelli64
 	#define fseek invalidFunctionFseek
@@ -792,6 +797,49 @@ namespace cage
 #else
 			return executableFullPath();
 #endif
+		}
+
+		String usersWritablePath()
+		{
+			static const String pth = []()
+			{
+				namespace fs = std::filesystem;
+				fs::path basePath;
+#ifdef CAGE_SYSTEM_WINDOWS
+				// %LOCALAPPDATA%
+				PWSTR pathTmp = nullptr;
+				if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &pathTmp)))
+				{
+					basePath = pathTmp;
+					CoTaskMemFree(pathTmp);
+				}
+				else
+					basePath = std::getenv("LOCALAPPDATA");
+#elif defined(CAGE_SYSTEM_MAC)
+				// ~/Library/Application Support
+				const char *home = std::getenv("HOME");
+				basePath = fs::path(home ? home : "") / "Library" / "Application Support";
+#else
+				// $XDG_DATA_HOME or ~/.local/share
+				const char *xdg = std::getenv("XDG_DATA_HOME");
+				if (xdg && *xdg)
+					basePath = xdg;
+				else
+				{
+					const char *home = std::getenv("HOME");
+					basePath = fs::path(home ? home : "") / ".local" / "share";
+				}
+#endif
+				return String(basePath.string());
+			}();
+
+			return pth;
+		}
+
+		String tempPath()
+		{
+			static const String pth = String(std::filesystem::temp_directory_path().string());
+			return pth;
 		}
 	}
 

@@ -13,7 +13,7 @@ namespace cage
 		using Transform::operator=;
 	};
 
-	// used with model/icon/text/light
+	// used with model/sprite/text/light
 	struct CAGE_ENGINE_API ColorComponent
 	{
 		Vec3 color = Vec3::Nan(); // sRGB

@@ -357,6 +357,15 @@ namespace
 			CAGE_TEST(pathToAbs("/abc/def") == pathJoin(root, "abc/def"));
 		}
 	}
+
+	void testSystemPaths()
+	{
+		CAGE_TESTCASE("system paths");
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "users writable path: " + detail::usersWritablePath());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "temp path: " + detail::tempPath());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path: " + detail::executableFullPath());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path (no exe): " + detail::executableFullPathNoExe());
+	}
 }
 
 void testPaths()
@@ -368,4 +377,5 @@ void testPaths()
 	sectionJoin();
 	sectionRelative();
 	sectionAbsolute();
+	testSystemPaths();
 }

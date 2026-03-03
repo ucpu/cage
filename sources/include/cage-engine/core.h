@@ -100,13 +100,13 @@ namespace cage
 
 	// enums flags
 
-	GCHL_ENUM_BITS(MeshComponentsFlags);
-	GCHL_ENUM_BITS(ScreenSpaceEffectsFlags);
-	GCHL_ENUM_BITS(InputStyleFlags);
-	GCHL_ENUM_BITS(TextureFlags);
-	GCHL_ENUM_BITS(WindowFlags);
-	GCHL_ENUM_BITS(ModifiersFlags);
-	GCHL_ENUM_BITS(MouseButtonsFlags);
+	CAGE_ENUM_BITS(MeshComponentsFlags);
+	CAGE_ENUM_BITS(ScreenSpaceEffectsFlags);
+	CAGE_ENUM_BITS(InputStyleFlags);
+	CAGE_ENUM_BITS(TextureFlags);
+	CAGE_ENUM_BITS(WindowFlags);
+	CAGE_ENUM_BITS(ModifiersFlags);
+	CAGE_ENUM_BITS(MouseButtonsFlags);
 
 	// constants
 

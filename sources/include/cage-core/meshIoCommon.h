@@ -19,7 +19,7 @@ namespace cage
 		Lighting = 1 << 7,
 		Default = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::ShadowCast | MeshRenderFlags::Lighting,
 	};
-	GCHL_ENUM_BITS(MeshRenderFlags);
+	CAGE_ENUM_BITS(MeshRenderFlags);
 }
 
 #endif // guard_meshIoCommon_h_nbv1ec9rt7zh

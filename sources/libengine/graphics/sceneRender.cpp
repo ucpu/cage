@@ -309,7 +309,7 @@ namespace cage
 			{
 				T *ret = +asset;
 				if (asset)
-					sharedAssetsCache.insert(std::move(asset).cast<void>());
+					sharedAssetsCache.insert(std::move(asset).template cast<void>());
 				return ret;
 			}
 

@@ -96,7 +96,7 @@ namespace cage
 		File = 1 << 3,
 		Archive = 1 << 4,
 	};
-	GCHL_ENUM_BITS(PathTypeFlags);
+	CAGE_ENUM_BITS(PathTypeFlags);
 
 	CAGE_CORE_API PathTypeFlags pathType(const String &path);
 	CAGE_CORE_API bool pathIsFile(const String &path);
@@ -152,6 +152,8 @@ namespace cage
 	{
 		CAGE_CORE_API String executableFullPath();
 		CAGE_CORE_API String executableFullPathNoExe();
+		CAGE_CORE_API String usersWritablePath(); // eg. c:/users/<name>/appData/local
+		CAGE_CORE_API String tempPath();
 
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);

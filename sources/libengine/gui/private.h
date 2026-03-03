@@ -257,7 +257,7 @@ namespace cage
 		Wheel = 1u << 1,
 		Tooltips = 1u << 2,
 	};
-	GCHL_ENUM_BITS(GuiEventsTypesFlags);
+	CAGE_ENUM_BITS(GuiEventsTypesFlags);
 
 	struct EventReceiver
 	{

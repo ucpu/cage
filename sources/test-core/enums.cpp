@@ -22,7 +22,7 @@ namespace
 
 namespace cage
 {
-	GCHL_ENUM_BITS(TestFlags);
+	CAGE_ENUM_BITS(TestFlags);
 }
 
 void testEnums()

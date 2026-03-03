@@ -18,7 +18,7 @@ namespace cage
 		DrawPrimitives = 1 << 7,
 		Entities = 1 << 8,
 	};
-	GCHL_ENUM_BITS(StatisticsGuiFlags);
+	CAGE_ENUM_BITS(StatisticsGuiFlags);
 
 	enum class StatisticsGuiModeEnum : uint8
 	{

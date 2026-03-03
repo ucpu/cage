@@ -525,7 +525,7 @@ namespace cage
 				}
 				GCHL_GENERATE_CATCH(control, initialization - application);
 
-				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
+				CAGE_LOG(SeverityEnum::Info, "engine", "running engine");
 
 				{
 					ScopeLock l(threadsStateBarier);

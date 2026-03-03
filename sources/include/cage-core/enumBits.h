@@ -68,8 +68,9 @@ namespace cage
 		return static_cast<std::underlying_type_t<T>>(lhs) == 0;
 	}
 
-	// this macro has to be used inside namespace cage
-#define GCHL_ENUM_BITS(TYPE) \
+	// enable bit-flags operations on an enum class
+	// this macro must be used inside namespace cage
+#define CAGE_ENUM_BITS(TYPE) \
 	template<> \
 	struct enable_bitmask_operators<TYPE> \
 	{ \
