@@ -9,11 +9,15 @@ namespace cage
 	RandomGenerator::RandomGenerator()
 	{
 		privat::generateRandomData((uint8 *)s, sizeof(s));
+		next();
+		next();
 	}
 
 	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{ s1, s2 }
 	{
 		CAGE_ASSERT(s1 != 0 && s2 != 0);
+		next();
+		next();
 	}
 
 	namespace
