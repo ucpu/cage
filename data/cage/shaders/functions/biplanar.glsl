@@ -13,12 +13,14 @@ struct Biplanar
 	vec2 w;
 };
 
-Biplanar biplanarPrepare(vec3 p, vec3 n, float k)
+Biplanar biplanarPrepare(vec3 position_world, vec3 normal_world, vec3 normal_object, float k)
 {
 	Biplanar bip;
-	bip.normal = n;
+	bip.normal = normal_object;
+	vec3 p = position_world;
 	vec3 dpdx = dFdx(p);
 	vec3 dpdy = dFdy(p);
+	vec3 n = normal_world;
 	n = abs(n);
 	bip.a1 = (n.x > n.y && n.x > n.z) ? ivec3(0, 1, 2) : (n.y > n.z) ? ivec3(1, 2, 0) : ivec3(2, 0, 1);
 	bip.a3 = (n.x < n.y && n.x < n.z) ? ivec3(0, 1, 2) : (n.y < n.z) ? ivec3(1, 2, 0) : ivec3(2, 0, 1);

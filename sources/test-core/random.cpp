@@ -48,32 +48,32 @@ void testRandom()
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec2i v = g.randomRange2i(10, 1000);
-			CAGE_TEST(v == Vec2i(730, 955));
+			CAGE_TEST(v == Vec2i(866, 863));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec3i v = g.randomRange3i(10, 1000);
-			CAGE_TEST(v == Vec3i(730, 955, 866));
+			CAGE_TEST(v == Vec3i(866, 863, 541));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec4i v = g.randomRange4i(10, 1000);
-			CAGE_TEST(v == Vec4i(730, 955, 866, 863));
+			CAGE_TEST(v == Vec4i(866, 863, 541, 625));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec2 v = g.randomRange2(10, 1000);
-			test(v, Vec2(10.4162464, 931.966248));
+			test(v, Vec2(645.401428, 848.857239));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec3 v = g.randomRange3(10, 1000);
-			test(v, Vec3(10.4162464, 931.966248, 645.401428));
+			test(v, Vec3(645.401428, 848.857239, 989.154602));
 		}
 		{
 			RandomGenerator g(1346519564496, 42245614964156);
 			const Vec4 v = g.randomRange4(10, 1000);
-			test(v, Vec4(10.4162464, 931.966248, 645.401428, 848.857239));
+			test(v, Vec4(645.401428, 848.857239, 989.154602, 961.857483));
 		}
 	}
 

@@ -85,6 +85,8 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Image untile - slices a single image with tiled sections into a sequence of individual images
 - Mesh convert - converts models from several interchange formats to glb + png, and optionally creates configuration for Cage assets
 - Mesh info - print information about a 3D model
+- Sound convert - batch format conversion for sounds
+- Files - reading and writing cage archives
 
 # Building
 
