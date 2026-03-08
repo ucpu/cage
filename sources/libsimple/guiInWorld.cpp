@@ -1,5 +1,3 @@
-/*
-
 #include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/entities.h>
@@ -8,6 +6,9 @@
 #include <cage-core/meshImport.h>
 #include <cage-core/profiling.h>
 #include <cage-core/serialization.h>
+#include <cage-engine/assetsSchemes.h>
+#include <cage-engine/graphicsAggregateBuffer.h>
+#include <cage-engine/graphicsEncoder.h>
 #include <cage-engine/guiManager.h>
 #include <cage-engine/model.h>
 #include <cage-engine/scene.h>
@@ -31,7 +32,7 @@ namespace cage
 				{
 					GuiManagerCreateConfig cfg;
 					cfg.assetManager = engineAssets();
-					cfg.provisionalGraphics = +engineProvisionalGraphics();
+					// todo sound
 					cfg.tooltipsEnabled = config.tooltipsEnabled;
 					guiMan = newGuiManager(cfg);
 					guiMan->outputResolution(config.resolution);
@@ -48,7 +49,7 @@ namespace cage
 				bool intersects = false;
 			};
 
-			CAGE_FORCE_INLINE Intersection detect(const Line &ray) const
+			Intersection detect(const Line &ray) const
 			{
 				Intersection res;
 				if (!ray.valid())
@@ -116,32 +117,28 @@ namespace cage
 				{
 					firstFrame = false;
 
-					tex = newTexture();
-					tex->initialize(config.resolution, 1, GL_RGBA8);
-					tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					tex->filters(GL_LINEAR, GL_LINEAR, 16);
-					tex->setDebugName(Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
+					const AssetLabel texLabel = Stringizer() + "gui-in-world-texture-" + (uintPtr)this;
+					tex = newTexture(engineGraphicsDevice(), ColorTextureCreateConfig{ .resolution = Vec3i(config.resolution[0], config.resolution[1], 1), .renderable = true }, texLabel);
 					textureName = engineAssets()->generateUniqueId();
-					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), Stringizer() + "gui-in-world-texture-" + (uintPtr)this);
+					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), texLabel);
 
 					Holder<Mesh> msh = newMesh();
 					const Real h = Real(config.resolution[1]) / Real(config.resolution[0]);
-					msh->addVertex(Vec3(-1, -h, 0), Vec3(0, 0, -1), Vec2(1, 0));
-					msh->addVertex(Vec3(-1, +h, 0), Vec3(0, 0, -1), Vec2(1, 1));
-					msh->addVertex(Vec3(+1, +h, 0), Vec3(0, 0, -1), Vec2(0, 1));
-					msh->addVertex(Vec3(+1, -h, 0), Vec3(0, 0, -1), Vec2(0, 0));
+					msh->addVertex(Vec3(-1, -h, 0), Vec3(0, 0, -1), Vec2(1, 1));
+					msh->addVertex(Vec3(-1, +h, 0), Vec3(0, 0, -1), Vec2(1, 0));
+					msh->addVertex(Vec3(+1, +h, 0), Vec3(0, 0, -1), Vec2(0, 0));
+					msh->addVertex(Vec3(+1, -h, 0), Vec3(0, 0, -1), Vec2(0, 1));
 					msh->indices({ { 0, 1, 2, 0, 2, 3 } });
 					MeshImportMaterial material;
 					material.specialBase[0] = 1;
 					material.specialBase[2] = 1;
 
-					Holder<Model> mod = newModel();
-					mod->importMesh(+msh, bufferView(material));
+					const AssetLabel mshLabel = Stringizer() + "gui-in-world-model-" + (uintPtr)this;
+					Holder<Model> mod = newModel(engineGraphicsDevice(), +msh, bufferView(material), mshLabel);
 					mod->textureNames[0] = textureName;
-					mod->flags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
-					mod->setDebugName(Stringizer() + "gui-in-world-model-" + (uintPtr)this);
+					mod->renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
 					modelName = engineAssets()->generateUniqueId();
-					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), Stringizer() + "gui-in-world-model-" + (uintPtr)this);
+					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), mshLabel);
 				}
 				else
 				{
@@ -150,29 +147,25 @@ namespace cage
 						return;
 				}
 
-				// retrieve this every frame so that it is not removed
-				auto fb = engineProvisionalGraphics()->frameBufferDraw(Stringizer() + "gui-in-world-framebuffer-" + (uintPtr)this);
-
-				Holder<RenderQueue> qq;
+				Holder<GuiRender> qq;
 				{
 					ScopeLock l(mut);
-					qq = std::move(renderQueue);
+					qq = std::move(renderQueue); // update the texture once is suficient
 				}
 				if (!qq)
 					return;
 
-				Holder<RenderQueue> q = newRenderQueue("gui in world", engineProvisionalGraphics());
+				Holder<GraphicsEncoder> enc = newGraphicsEncoder(engineGraphicsDevice(), "gui-in-world");
+				Holder<GraphicsAggregateBuffer> agg = newGraphicsAggregateBuffer({ engineGraphicsDevice() });
+				RenderPassConfig passcfg;
+				passcfg.colorTargets.push_back({ +tex });
+				enc->nextPass(passcfg);
 				{
-					auto name = q->namedScope("gui in world");
-					q->bind(fb);
-					q->colorTexture(fb, 0, tex);
-					q->viewport(Vec2i(), config.resolution);
-					q->clear(true, false);
-					q->enqueue(std::move(qq));
-					q->resetAllState();
-					q->resetFrameBuffer();
+					const auto scope = enc->namedScope("gui-in-world");
+					qq->draw({ config.resolution, engineGraphicsDevice(), +enc, +agg });
 				}
-				q->dispatch();
+				agg->submit();
+				enc->submit();
 			}
 
 			void update()
@@ -187,13 +180,13 @@ namespace cage
 
 			const GuiInWorldCreateConfig config;
 			Holder<Mutex> mut = newMutex();
-			Holder<RenderQueue> renderQueue; // protected by mutex
+			Holder<GuiRender> renderQueue; // protected by mutex
 			Holder<GuiManager> guiMan;
 			uint32 textureName = 0;
 			uint32 modelName = 0;
 			bool firstFrame = true;
 
-			const EventListener<bool()> graphicsDispatchListener = graphicsDispatchThread().dispatch.listen([this]() { return this->dispatchEntry(); });
+			const EventListener<bool()> graphicsDispatchListener = graphicsThread().graphics.listen([this]() { return this->dispatchEntry(); });
 			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
 		};
 	}
@@ -237,47 +230,5 @@ namespace cage
 	Holder<GuiInWorld> newGuiInWorld(const GuiInWorldCreateConfig &config)
 	{
 		return systemMemory().createImpl<GuiInWorld, GuiInWorldImpl>(config);
-	}
-}
-
-*/
-
-#include <cage-simple/guiInWorld.h>
-
-namespace cage
-{
-	bool GuiInWorld::intersects(const Line &ray) const
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	Vec3 GuiInWorld::intersection(const Line &ray) const
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	void GuiInWorld::update(const Line &ray, bool interact)
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	void GuiInWorld::cleanUp()
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	GuiManager *GuiInWorld::guiManager()
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	EntityManager *GuiInWorld::guiEntities()
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
-	}
-
-	Holder<GuiInWorld> newGuiInWorld(const GuiInWorldCreateConfig &config)
-	{
-		CAGE_THROW_CRITICAL(Exception, "GuiInWorld currently not implemented");
 	}
 }
