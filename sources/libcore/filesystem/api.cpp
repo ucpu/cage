@@ -10,6 +10,7 @@ namespace cage
 {
 	void archiveCreateZip(const String &path);
 	void archiveCreateCarch(const String &path);
+	Holder<PointerRange<String>> fixupDirectoryListingRedirections(Holder<PointerRange<String>> &&list, const String &originalPath);
 
 	bool FileMode::valid() const
 	{
@@ -187,7 +188,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "cannot list path that is not directory");
 		}
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
-		return a->listDirectory(p);
+		return fixupDirectoryListingRedirections(a->listDirectory(p), path);
 	}
 
 	String pathSearchTowardsRoot(const String &name, PathTypeFlags type)

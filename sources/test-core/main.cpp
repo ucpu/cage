@@ -37,10 +37,11 @@ void testLruCache();
 void testFlatSet();
 void testFlatBag();
 void testFiles();
-void testArchivesZip();
-void testArchivesCarch();
-void testArchivesRecursion();
-void testArchivesBigFiles();
+void testFilesZip();
+void testFilesCarch();
+void testFilesRecursion();
+void testFilesBigFiles();
+void testFilesRedirects();
 void testLineReader();
 void testRandom();
 void testConfigIni();
@@ -84,6 +85,8 @@ int main()
 {
 	initializeConsoleLogger();
 
+	testFilesRedirects(); // todo remove
+
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();
@@ -119,10 +122,11 @@ int main()
 	testFlatSet();
 	testFlatBag();
 	testFiles();
-	testArchivesZip();
-	testArchivesCarch();
-	testArchivesRecursion();
-	testArchivesBigFiles();
+	testFilesZip();
+	testFilesCarch();
+	testFilesRecursion();
+	testFilesBigFiles();
+	testFilesRedirects();
 	testLineReader();
 	testRandom();
 	testConfigIni();
