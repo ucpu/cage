@@ -68,9 +68,9 @@ namespace
 	};
 }
 
-void testArchivesRecursion()
+void testFilesRecursion()
 {
-	CAGE_TESTCASE("archives recursion");
+	CAGE_TESTCASE("files recursion");
 
 	pathRemove("testdir");
 

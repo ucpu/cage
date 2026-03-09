@@ -201,7 +201,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
 
-		const String path = pathToAbs(path_);
+		const String path = pathToAbs(pathResolveRedirects(path_));
 		CAGE_ASSERT(pathSimplify(path) == path);
 
 		String rootPath, inside;

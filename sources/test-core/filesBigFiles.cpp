@@ -47,9 +47,9 @@ namespace
 	}
 }
 
-void testArchivesBigFiles()
+void testFilesBigFiles()
 {
-	CAGE_TESTCASE("archives big files");
+	CAGE_TESTCASE("big files");
 
 	pathRemove("testdir");
 

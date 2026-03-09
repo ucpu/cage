@@ -76,6 +76,8 @@ namespace cage
 
 	// receive operating system issued notifications about filesystem changes
 	// use registerPath to add a folder (and all of its subdirectories) to the watch list
+	// (has limited support for virtual file redirections)
+	// (does not work on macos)
 	class CAGE_CORE_API FilesystemWatcher : private Immovable
 	{
 	public:
@@ -113,6 +115,7 @@ namespace cage
 	CAGE_CORE_API PathLastChange pathLastChange(const String &path);
 
 	// enumerate all files and folders in a directory
+	// returns absolute paths
 	CAGE_CORE_API Holder<PointerRange<String>> pathListDirectory(const String &path);
 
 	// example, name = logo.png, whereToStart = /abc/def/ghi will look for files at these paths (in order):
@@ -134,6 +137,12 @@ namespace cage
 
 	// create all parent folders for the entire path
 	CAGE_CORE_API void pathCreateDirectories(const String &path);
+
+	// creates a virtual redirect (similar to symlink, but exists only in memory, not on real fs)
+	CAGE_CORE_API void pathCreateRedirect(const String &virtualPath, const String &redirectsTo);
+	CAGE_CORE_API void pathRemoveRedirect(const String &virtualPath);
+	CAGE_CORE_API String pathResolveRedirects(const String &path); // resolves virtual redirects only, does not resolve real fs symlinks
+	CAGE_CORE_API Holder<PointerRange<std::pair<String, String>>> pathListRedirects();
 
 	// create an empty archive at the specified path, it can be populated afterwards
 	CAGE_CORE_API void pathCreateArchiveZip(const String &path);
@@ -158,7 +167,7 @@ namespace cage
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);
 
-		// uses real filesystem directly, bypassing cage archives detection
+		// uses real filesystem directly, bypassing cage archives detection and virtual redirects
 		CAGE_CORE_API Holder<File> newRealFsFile(const String &path, FileMode mode);
 		CAGE_CORE_API void realFsAttemptFlush(File *file);
 		CAGE_CORE_API PathTypeFlags realFsPathType(const String &path);
