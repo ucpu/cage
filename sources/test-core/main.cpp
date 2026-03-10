@@ -85,8 +85,6 @@ int main()
 {
 	initializeConsoleLogger();
 
-	testFilesRedirects(); // todo remove
-
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();

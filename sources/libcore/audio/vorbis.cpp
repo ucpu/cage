@@ -104,7 +104,7 @@ namespace cage
 		if (vorbis_encode_init_vbr(&vi, channels, sampleRate, compressQuality) != 0)
 			CAGE_THROW_ERROR(Exception, "vorbis_encode_init_vbr");
 		vorbis_comment_init(&vc);
-		vorbis_comment_add_tag(&vc, "ENCODER", "cage-asset-processor");
+		vorbis_comment_add_tag(&vc, "ENCODER", "cage");
 		if (vorbis_analysis_init(&v, &vi) != 0)
 			CAGE_THROW_ERROR(Exception, "vorbis_analysis_init");
 		if (vorbis_block_init(&v, &vb) != 0)

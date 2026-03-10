@@ -15,7 +15,7 @@ namespace
 {
 	constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
 
-	void generateMono(Audio *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
+	void generateMono(Audio *snd, uint32 pitch, uint32 frames = 480'000, uint32 sampleRate = 48'000)
 	{
 		const double step = twoPi * pitch / (double)sampleRate;
 		std::vector<Real> samples;
@@ -29,7 +29,7 @@ namespace
 		snd->importRaw(bufferCast<const char, Real>(samples), frames, 1, sampleRate, AudioFormatEnum::Float);
 	}
 
-	void generateStereo(Audio *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
+	void generateStereo(Audio *snd, uint32 pitch, uint32 frames = 480'000, uint32 sampleRate = 48'000)
 	{
 		const double stepTone = twoPi * pitch / (double)sampleRate;
 		const double stepDir = twoPi * 0.5 / (double)sampleRate;
@@ -55,11 +55,11 @@ void testAudio()
 	{
 		CAGE_TESTCASE("pure tones");
 		Holder<Audio> snd = newAudio();
-		generateMono(+snd, 55, 480000, 48000);
+		generateMono(+snd, 55, 480'000, 48'000);
 		snd->exportFile("sounds/tone_A1_55_mono.wav");
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 1);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Float);
 		generateMono(+snd, 110);
 		snd->exportFile("sounds/tone_A2_110_mono.wav");
@@ -124,13 +124,13 @@ void testAudio()
 	}
 
 	{
-		CAGE_TESTCASE("panning tone at 44100");
+		CAGE_TESTCASE("panning tone at 44'100");
 		Holder<Audio> snd = newAudio();
-		generateStereo(+snd, 440, 441000, 44100);
+		generateStereo(+snd, 440, 441'000, 44'100);
 		snd->exportFile("sounds/panning_440_stereo_44100.wav");
-		CAGE_TEST(snd->frames() == 441000);
+		CAGE_TEST(snd->frames() == 441'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 44100);
+		CAGE_TEST(snd->sampleRate() == 44'100);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Float);
 	}
 
@@ -139,9 +139,9 @@ void testAudio()
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
 		snd->exportFile("sounds/panning_440_stereo_48000.wav");
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Float);
 	}
 
@@ -149,24 +149,24 @@ void testAudio()
 		CAGE_TESTCASE("format conversions");
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Float);
 		audioConvertFormat(+snd, AudioFormatEnum::S16);
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::S16);
 		audioConvertFormat(+snd, AudioFormatEnum::Vorbis);
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Vorbis);
 		audioConvertFormat(+snd, AudioFormatEnum::Float);
-		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->frames() == 480'000);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->sampleRate() == 48'000);
 		CAGE_TEST(snd->format() == AudioFormatEnum::Float);
 		snd->exportFile("sounds/conversions_440_stereo.wav");
 	}
@@ -186,9 +186,10 @@ void testAudio()
 		for (const auto &format : { ".ogg", ".wav" })
 		{
 			snd->importFile(Stringizer() + "sounds/formats/sample" + format);
-			CAGE_TEST(snd->frames() == 480000);
+			CAGE_TEST(snd->frames() == 480'000);
 			CAGE_TEST(snd->channels() == 2);
-			CAGE_TEST(snd->sampleRate() == 48000);
+			CAGE_TEST(snd->sampleRate() == 48'000);
+			snd->exportFile(Stringizer() + "sounds/formats/sample_reexport" + format);
 			snd->clear();
 		}
 	}
@@ -199,7 +200,7 @@ void testAudio()
 		generateStereo(+src, 440);
 		Holder<Audio> dst = newAudio();
 		generateStereo(+dst, 220);
-		audioBlit(+src, +dst, 120000, 120000, 240000);
+		audioBlit(+src, +dst, 120'000, 120'000, 240'000);
 		dst->exportFile("sounds/blit_same_format.wav");
 	}
 
@@ -210,7 +211,7 @@ void testAudio()
 		audioConvertFormat(+src, AudioFormatEnum::S16);
 		Holder<Audio> dst = newAudio();
 		generateStereo(+dst, 220);
-		audioBlit(+src, +dst, 120000, 120000, 240000);
+		audioBlit(+src, +dst, 120'000, 120'000, 240'000);
 		dst->exportFile("sounds/blit_format_s16_float.wav");
 	}
 
@@ -222,7 +223,7 @@ void testAudio()
 		Holder<Audio> dst = newAudio();
 		generateStereo(+dst, 220);
 		audioConvertFormat(+dst, AudioFormatEnum::S16);
-		audioBlit(+src, +dst, 120000, 120000, 240000);
+		audioBlit(+src, +dst, 120'000, 120'000, 240'000);
 		dst->exportFile("sounds/blit_format_vorbis_s16.wav");
 	}
 
@@ -233,16 +234,16 @@ void testAudio()
 		Holder<Audio> dst = newAudio();
 		generateStereo(+dst, 220);
 		audioConvertFormat(+dst, AudioFormatEnum::Vorbis);
-		CAGE_TEST_THROWN(audioBlit(+src, +dst, 120000, 120000, 240000));
+		CAGE_TEST_THROWN(audioBlit(+src, +dst, 120'000, 120'000, 240'000));
 	}
 
 	{
 		CAGE_TESTCASE("sample rate conversion to 44100");
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
-		audioConvertSampleRate(+snd, 44100, 2);
+		audioConvertSampleRate(+snd, 44'100, 2);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 44100);
+		CAGE_TEST(snd->sampleRate() == 44'100);
 		snd->exportFile("sounds/sample_rate_44100.wav");
 	}
 
@@ -250,9 +251,9 @@ void testAudio()
 		CAGE_TESTCASE("sample rate conversion to 96000");
 		Holder<Audio> snd = newAudio();
 		generateStereo(+snd, 440);
-		audioConvertSampleRate(+snd, 96000, 2);
+		audioConvertSampleRate(+snd, 96'000, 2);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->sampleRate() == 96000);
+		CAGE_TEST(snd->sampleRate() == 96'000);
 		snd->exportFile("sounds/sample_rate_96000.wav");
 	}
 
@@ -262,7 +263,7 @@ void testAudio()
 		generateStereo(+snd, 440);
 		audioConvertFrames(+snd, snd->frames() / 2, 2);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->frames() == 240000);
+		CAGE_TEST(snd->frames() == 240'000);
 		snd->exportFile("sounds/sample_rate_half_frames.wav");
 	}
 
@@ -272,7 +273,7 @@ void testAudio()
 		generateStereo(+snd, 440);
 		audioConvertFrames(+snd, snd->frames() * 2, 2);
 		CAGE_TEST(snd->channels() == 2);
-		CAGE_TEST(snd->frames() == 960000);
+		CAGE_TEST(snd->frames() == 960'000);
 		snd->exportFile("sounds/sample_rate_double_frames.wav");
 	}
 

@@ -43,6 +43,7 @@ namespace cage
 		class WindowImpl : public Window
 		{
 		public:
+			Holder<Cursor> currentCursor;
 			Holder<privat::GraphicsContext> graphicsContext;
 			ConcurrentQueue<GenericInput> eventsQueue;
 			FlatSet<uint32> stateKeys;
@@ -664,6 +665,16 @@ namespace cage
 	{
 		const WindowImpl *impl = (const WindowImpl *)this;
 		return impl->stateButtons;
+	}
+
+	void Window::cursor(Holder<Cursor> &&c)
+	{
+		WindowImpl *impl = (WindowImpl *)this;
+		if (c)
+			glfwSetCursor(impl->window, getCursor(+c));
+		else
+			glfwSetCursor(impl->window, nullptr);
+		impl->currentCursor = std::move(c);
 	}
 
 	ModifiersFlags Window::keyboardModifiers() const

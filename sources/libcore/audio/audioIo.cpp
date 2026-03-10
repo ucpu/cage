@@ -75,7 +75,7 @@ namespace cage
 	Holder<PointerRange<char>> Audio::exportBuffer(const String &format) const
 	{
 		if (channels() == 0)
-			CAGE_THROW_ERROR(Exception, "cannot export invalid audio");
+			CAGE_THROW_ERROR(Exception, "cannot export audio with 0 channels");
 		const String ext = toLower(pathExtractExtension(format));
 		if (ext == ".wav")
 			return wavEncode((const AudioImpl *)this);

@@ -5,6 +5,8 @@
 
 namespace cage
 {
+	class Cursor;
+
 	enum class WindowFlags : uint32
 	{
 		None = 0,
@@ -43,6 +45,7 @@ namespace cage
 		Vec2 mousePosition() const;
 		void mousePosition(Vec2 pos);
 		MouseButtonsFlags mouseButtons() const;
+		void cursor(Holder<Cursor> &&c);
 
 		ModifiersFlags keyboardModifiers() const;
 		bool keyboardKey(uint32 key) const;

@@ -126,7 +126,7 @@ namespace cage
 
 	uint64 Audio::duration() const
 	{
-		return uint64(1000000) * frames() / sampleRate();
+		return uint64(1'000'000) * frames() / sampleRate();
 	}
 
 	float Audio::value(uintPtr f, uint32 c) const
@@ -203,7 +203,7 @@ namespace cage
 		SampleRateConverterCreateConfig cfg(snd->channels());
 		cfg.quality = quality;
 		Holder<SampleRateConverter> cnv = newSampleRateConverter(cfg);
-		const uint32 targetSampleRate = numeric_cast<uint32>(uint64(1000000) * frames / snd->duration());
+		const uint32 targetSampleRate = numeric_cast<uint32>(uint64(1'000'000) * frames / snd->duration());
 		cnv->convert(snd->rawViewFloat(), bufferCast<float, char>(tmp), targetSampleRate / (double)snd->sampleRate());
 		std::swap(impl->mem, tmp);
 		impl->sampleRate = targetSampleRate;

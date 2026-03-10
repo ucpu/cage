@@ -5,6 +5,7 @@
 namespace cage
 {
 	class Window;
+	class Cursor;
 
 	namespace privat
 	{
@@ -18,4 +19,5 @@ namespace cage
 	String getMonitorId(GLFWmonitor *monitor);
 	GLFWmonitor *getMonitorById(const String &id);
 	GLFWwindow *getGlfwWindow(Window *w);
+	GLFWcursor *getCursor(Cursor *c);
 }
