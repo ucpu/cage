@@ -183,7 +183,8 @@ namespace cage
 		// semantically: return a < b
 		constexpr bool comp(uint16 a, uint16 b)
 		{
-			return (a < b && b - a < 32768) || (a > b && a - b > 32768);
+			//return (a < b && b - a < 32768) || (a > b && a - b > 32768);
+			return (sint16)(b - a) > 0;
 		}
 
 		static_assert(comp(5, 10));

@@ -27,7 +27,7 @@ namespace cage
 		ConfigBool confEnabled("cage/profiling/enabled", false);
 		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
 
-		uint64 timestamp()
+		uint64 timestamp() noexcept
 		{
 			try
 			{
@@ -201,9 +201,9 @@ namespace cage
 						{
 							try
 							{
-								writeFile("profiling.htm")->write(profiling_htm().cast<const char>());
-								const String baseUrl = pathWorkingDir() + "/profiling.htm";
-								const String url = Stringizer() + "file://" + baseUrl + "?port=" + server->port();
+								const String pth = detail::tempPath() + "cage_profiling.html";
+								writeFile(pth)->write(profiling_htm().cast<const char>());
+								const String url = Stringizer() + "file://" + pth + "?port=" + server->port();
 								openUrl(url);
 							}
 							catch (const cage::Exception &)
@@ -304,7 +304,7 @@ namespace cage
 		this->data = data;
 	}
 
-	ProfilingEvent profilingEventBegin(StringPointer name)
+	ProfilingEvent profilingEventBegin(StringPointer name) noexcept
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -313,7 +313,7 @@ namespace cage
 		return ev;
 	}
 
-	ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag)
+	ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept
 	{
 		ProfilingEvent ev;
 		ev.name = name;
@@ -322,7 +322,7 @@ namespace cage
 		return ev;
 	}
 
-	void profilingEventEnd(ProfilingEvent &ev)
+	void profilingEventEnd(ProfilingEvent &ev) noexcept
 	{
 		if (ev.startTime == m)
 			return;
@@ -359,12 +359,12 @@ namespace cage
 		event = profilingEventBegin(name, ProfilingFrameTag());
 	}
 
-	ProfilingScope::ProfilingScope(ProfilingScope &&other)
+	ProfilingScope::ProfilingScope(ProfilingScope &&other) noexcept
 	{
 		*this = std::move(other);
 	}
 
-	ProfilingScope &ProfilingScope::operator=(ProfilingScope &&other)
+	ProfilingScope &ProfilingScope::operator=(ProfilingScope &&other) noexcept
 	{
 		profilingEventEnd(event);
 		event = {};
