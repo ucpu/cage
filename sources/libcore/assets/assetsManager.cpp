@@ -612,7 +612,7 @@ namespace cage
 		return name++;
 	}
 
-	bool AssetsManager::check(uint32 assetId) const
+	AssetStateEnum AssetsManager::state(uint32 assetId) const
 	{
 		CAGE_ASSERT(assetId != 0 && assetId != m);
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
@@ -620,8 +620,15 @@ namespace cage
 		ScopeLock lock(impl->publicMutex, ReadLockTag());
 		auto it = publicIndex.find(assetId);
 		if (it == publicIndex.end())
-			return false; // not found
-		return !it->second->failed;
+		{
+			lock.clear();
+			ScopeLock lock2(impl->privateMutex);
+			return impl->privateIndex.count(assetId) ? AssetStateEnum::Loading : AssetStateEnum::None;
+		}
+		const auto &a = it->second;
+		if (a->failed)
+			return AssetStateEnum::Error;
+		return AssetStateEnum::Ready;
 	}
 
 	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)

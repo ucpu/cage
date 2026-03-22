@@ -80,6 +80,7 @@ namespace cage
 			Holder<RwMutex> mutex = newRwMutex();
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 0;
+			uint32 outstandingCreating = 0;
 
 			struct Key : public PipelineConfig
 			{
@@ -203,17 +204,26 @@ namespace cage
 					if (!it.pipeline && !it.creating) // must check again after relocking
 					{
 						it.creating = true;
+						outstandingCreating++; // make sure that every new pipeline is reported in at least one frame
 						createPipeline(config, &it);
 					}
 					return it.pipeline;
 				}
 			}
 
-			void nextFrame()
+			uint32 nextFrame()
 			{
 				ScopeLock lock(mutex, WriteLockTag());
 				currentFrame++;
-				std::erase_if(cache, [&](const auto &it) { return !it.second.creating && it.second.lastUsedFrame + 60 * 60 < currentFrame; });
+				uint32 tmpCreating = outstandingCreating;
+				outstandingCreating = 0;
+				std::erase_if(cache,
+					[&](const auto &it)
+					{
+						tmpCreating += it.second.creating;
+						return !it.second.creating && it.second.lastUsedFrame + 60 * 60 < currentFrame;
+					});
+				return tmpCreating;
 			}
 		};
 
@@ -222,9 +232,9 @@ namespace cage
 			return systemMemory().createHolder<DevicePipelinesCache>(device);
 		}
 
-		void deviceCacheNextFrame(DevicePipelinesCache *cache)
+		uint32 deviceCacheNextFrame(DevicePipelinesCache *cache)
 		{
-			cache->nextFrame();
+			return cache->nextFrame();
 		}
 
 		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device);

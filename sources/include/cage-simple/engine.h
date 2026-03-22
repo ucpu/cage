@@ -85,6 +85,9 @@ namespace cage
 	SoundsQueue *engineGuiMixer();
 	uint64 engineControlTime();
 
+	// returns true if any assets are still loading (or shader pipelines compiling)
+	bool engineProcessing();
+
 	struct EngineDynamicResolution
 	{
 		uint32 targetFps = 30;

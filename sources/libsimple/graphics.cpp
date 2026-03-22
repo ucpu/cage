@@ -215,7 +215,7 @@ namespace cage
 			{
 				std::swap(gpuTimes[0], gpuTimes[1]);
 				std::swap(gpuTimes[1], gpuTimes[2]);
-				gpuTimes[2] = gpuTime;
+				gpuTimes[2] = frameStatistics.frameExecution;
 
 				if (frameIndex < nextAllowedDrFrameIndex)
 					return;
@@ -289,9 +289,7 @@ namespace cage
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
 				const GraphicsFrameData frameData = engineGraphicsDevice()->nextFrame(engineWindow());
-				gpuTime = frameData.frameExecution;
-				drawCalls = frameData.drawCalls;
-				drawPrimitives = frameData.primitives;
+				frameStatistics = frameData;
 
 				if (!frameData.targetTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{

@@ -152,7 +152,6 @@ namespace cage
 		void findFiles(AssetsDatabaseImpl *impl, std::map<String, PathLastChange, StringComparatorFast> &files, const String &path)
 		{
 			const String pth = pathJoin(impl->config.inputPath, path);
-			//CAGE_LOG(SeverityEnum::Info, "database", Stringizer() + "checking path: " + pth);
 			const auto list = pathListDirectory(pth);
 			for (const String &p : list)
 			{
@@ -176,6 +175,8 @@ namespace cage
 	void AssetsDatabaseImpl::detectChanges()
 	{
 		status = {};
+
+		CAGE_LOG(SeverityEnum::Info, "database", "searching changed assets");
 
 		std::map<String, PathLastChange, StringComparatorFast> files;
 		findFiles(this, files, "");

@@ -20,9 +20,9 @@ namespace cage
 {
 	CAGE_API_IMPORT void initializeAbslLogSink();
 
-	GraphicsFrameStatistics operator+(const GraphicsFrameStatistics &a, const GraphicsFrameStatistics &b)
+	GraphicsCommandBufferStatistics operator+(const GraphicsCommandBufferStatistics &a, const GraphicsCommandBufferStatistics &b)
 	{
-		GraphicsFrameStatistics r = a;
+		GraphicsCommandBufferStatistics r = a;
 		r.passes += b.passes;
 		r.pipelineSwitches += b.pipelineSwitches;
 		r.drawCalls += b.drawCalls;
@@ -43,7 +43,7 @@ namespace cage
 		Holder<DeviceTexturesCache> newDeviceTexturesCache(GraphicsDevice *device);
 
 		void deviceCacheNextFrame(DeviceBindingsCache *);
-		void deviceCacheNextFrame(DevicePipelinesCache *);
+		uint32 deviceCacheNextFrame(DevicePipelinesCache *);
 		void deviceCacheNextFrame(DeviceBuffersCache *);
 		void deviceCacheNextFrame(DeviceTexturesCache *);
 
@@ -319,11 +319,11 @@ namespace cage
 				instance.ProcessEvents();
 			}
 
-			void insertCommandBuffer(wgpu::CommandBuffer &&cmds, const GraphicsFrameStatistics &statistics_)
+			void insertCommandBuffer(wgpu::CommandBuffer &&cmds, const GraphicsCommandBufferStatistics &statistics_)
 			{
 				ScopeLock lock(mutex);
 				commands.push_back(std::move(cmds));
-				this->statistics = this->statistics + statistics_;
+				(GraphicsCommandBufferStatistics &)this->statistics = (GraphicsCommandBufferStatistics &)this->statistics + statistics_;
 			}
 
 			GraphicsFrameStatistics submitCommandBuffers()
@@ -385,12 +385,13 @@ namespace cage
 
 				processEvents();
 
-				const GraphicsFrameStatistics stats = submitCommandBuffers();
+				GraphicsFrameData frameData;
+				(GraphicsFrameStatistics &)frameData = submitCommandBuffers();
 
 				{
 					const ProfilingScope profiling("caches maintenance");
 					deviceCacheNextFrame(+bindingsCache);
-					deviceCacheNextFrame(+pipelinesCache);
+					frameData.pipelinesCompiling = deviceCacheNextFrame(+pipelinesCache);
 					deviceCacheNextFrame(+buffersCache);
 					deviceCacheNextFrame(+texturesCache);
 				}
@@ -430,13 +431,11 @@ namespace cage
 				CAGE_ASSERT(tex.texture);
 				context->presentable = true;
 
-				GraphicsFrameData fd;
-				(GraphicsFrameStatistics &)fd = stats;
-				fd.targetTexture = newTexture(tex.texture, tex.texture.CreateView(), nullptr, "surface texture");
-				fd.frameExecution = frameTimer->execution();
-				fd.frameDuration = frameTimer->duration();
+				frameData.targetTexture = newTexture(tex.texture, tex.texture.CreateView(), nullptr, "surface texture");
+				frameData.frameExecution = frameTimer->execution();
+				frameData.frameDuration = frameTimer->duration();
 				frameTimer->beginFrame();
-				return fd;
+				return frameData;
 			}
 		};
 	}
@@ -554,7 +553,7 @@ namespace cage
 		impl->processEvents();
 	}
 
-	void GraphicsDevice::insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsFrameStatistics &statistics)
+	void GraphicsDevice::insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		impl->insertCommandBuffer(std::move(commands), statistics);

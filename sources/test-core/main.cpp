@@ -3,6 +3,7 @@
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
 
+void generatePointsOnSphere();
 void testMacros();
 void testEnums();
 void testExceptions();
@@ -40,7 +41,6 @@ void testFiles();
 void testFilesZip();
 void testFilesCarch();
 void testFilesRecursion();
-void testFilesBigFiles();
 void testFilesRedirects();
 void testLineReader();
 void testRandom();
@@ -79,7 +79,7 @@ void testSystemInformation();
 void testWasm();
 void testCageInstallConsistentPaths();
 void testCrypto();
-void generatePointsOnSphere();
+void testFilesBigFiles();
 
 int main()
 {
@@ -123,7 +123,6 @@ int main()
 	testFilesZip();
 	testFilesCarch();
 	testFilesRecursion();
-	testFilesBigFiles();
 	testFilesRedirects();
 	testLineReader();
 	testRandom();
@@ -162,6 +161,7 @@ int main()
 	testWasm();
 	testCageInstallConsistentPaths();
 	testCrypto();
+	testFilesBigFiles();
 
 	{
 		CAGE_TESTCASE("removing testdir");

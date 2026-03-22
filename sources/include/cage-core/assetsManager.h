@@ -8,6 +8,14 @@ namespace cage
 {
 	class File;
 
+	enum class AssetStateEnum
+	{
+		None, // asset does not exist
+		Loading,
+		Ready,
+		Error,
+	};
+
 	class CAGE_CORE_API AssetsManager : private Immovable
 	{
 	public:
@@ -59,12 +67,11 @@ namespace cage
 			return get2_(detail::typeHash<T>(), assetId).template cast<T>();
 		}
 
-		// returns true if the asset exists and is successfully loaded
-		bool check(uint32 assetId) const;
+		AssetStateEnum state(uint32 assetId) const;
 
 		// end thread-safe methods
 
-		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100000);
+		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100'000);
 		bool processCustomThread(uint32 threadIndex);
 		void unloadCustomThread(uint32 threadIndex);
 		void waitTillEmpty();

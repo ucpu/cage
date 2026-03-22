@@ -3,6 +3,7 @@
 
 #include <cage-core/concurrent.h>
 #include <cage-core/entities.h>
+#include <cage-engine/graphicsCommon.h>
 #include <cage-simple/engine.h>
 
 namespace cage
@@ -23,9 +24,7 @@ namespace cage
 		void dispatch(uint64 time, Holder<GuiRender> guiBundle);
 
 		// statistics
-		uint64 gpuTime = 0;
-		uint32 drawCalls = 0;
-		uint32 drawPrimitives = 0;
+		GraphicsFrameStatistics frameStatistics;
 		Real dynamicResolution = 1;
 	};
 

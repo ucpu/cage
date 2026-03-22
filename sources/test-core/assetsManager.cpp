@@ -141,11 +141,14 @@ void testAssetManager()
 		makeAssetCounter(10);
 		makeAssetCounter(20);
 		makeAssetCounter(30);
+		CAGE_TEST(man->state(10) == AssetStateEnum::None);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->load(10);
 		man->load(20);
 		man->load(30);
+		CAGE_TEST(man->state(10) != AssetStateEnum::None);
 		waitProcessing(man);
+		CAGE_TEST(man->state(10) == AssetStateEnum::Ready);
 		CAGE_TEST(AssetCounter::counter == 3);
 		{
 			Holder<AssetCounter> a = man->get<AssetSchemeIndexCounter, AssetCounter>(10);
@@ -156,6 +159,7 @@ void testAssetManager()
 		man->unload(20);
 		man->unload(30);
 		waitProcessing(man);
+		CAGE_TEST(man->state(10) == AssetStateEnum::None);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->waitTillEmpty();
 	}
@@ -379,6 +383,7 @@ void testAssetManager()
 		man->load(10);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
+		CAGE_TEST(man->state(10) == AssetStateEnum::Error);
 		man->unload(10);
 		man->waitTillEmpty();
 	}

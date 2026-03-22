@@ -23,12 +23,22 @@ namespace cage
 		bool operator==(const GraphicsPipelineCommonConfig &) const = default;
 	};
 
-	struct CAGE_ENGINE_API GraphicsFrameStatistics
+	struct CAGE_ENGINE_API GraphicsCommandBufferStatistics
 	{
 		uint32 passes = 0;
 		uint32 pipelineSwitches = 0;
 		uint32 drawCalls = 0;
 		uint32 primitives = 0;
+	};
+
+	struct CAGE_ENGINE_API GraphicsFrameStatistics : public GraphicsCommandBufferStatistics
+	{
+		// previous frames (microseconds, multiple frames ago)
+		uint64 frameExecution = 0; // time spent processing the frame
+		uint64 frameDuration = 0; // time elapsed start-to-start
+
+		// outstanding pipelines waiting for compilation
+		uint32 pipelinesCompiling = 0;
 	};
 
 	namespace privat

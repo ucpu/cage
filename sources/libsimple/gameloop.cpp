@@ -86,6 +86,7 @@ namespace cage
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
 			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
+			uint32 pipelinesCompilingCountdown = 0;
 
 			Holder<EnginePrivateGraphics> privateGraphics;
 			Holder<EnginePrivateSound> privateSound;
@@ -135,10 +136,14 @@ namespace cage
 					const ProfilingScope profiling("graphics dispatch");
 					privateGraphics->dispatch(applicationTime(), guiBundle.get());
 				}
-				profilingBufferGpuTime.add(privateGraphics->gpuTime);
-				profilingBufferDrawCalls.add(privateGraphics->drawCalls);
-				profilingBufferDrawPrimitives.add(privateGraphics->drawPrimitives);
+				profilingBufferGpuTime.add(privateGraphics->frameStatistics.frameExecution);
+				profilingBufferDrawCalls.add(privateGraphics->frameStatistics.drawCalls);
+				profilingBufferDrawPrimitives.add(privateGraphics->frameStatistics.primitives);
 				profilingBufferDynamicResolution.add(privateGraphics->dynamicResolution);
+				if (privateGraphics->frameStatistics.pipelinesCompiling > 0)
+					pipelinesCompilingCountdown = 30;
+				else if (pipelinesCompilingCountdown > 0)
+					pipelinesCompilingCountdown--;
 			}
 
 			void graphicsGameloopStage()
@@ -231,6 +236,16 @@ namespace cage
 					return;
 				}
 				controlTime = controlUpdateSchedule->time();
+				{
+					switch (assets->state(HashString("cage/cage.pack")))
+					{
+						case AssetStateEnum::None:
+						case AssetStateEnum::Error:
+							CAGE_THROW_ERROR(Exception, "basic cage engine assets pack failed to load");
+						default:
+							break;
+					}
+				}
 				{
 					ProfilingScope profiling("update components");
 					updateComponents();
@@ -759,6 +774,11 @@ namespace cage
 	uint64 engineControlTime()
 	{
 		return engineData->controlTime;
+	}
+
+	bool engineProcessing()
+	{
+		return engineAssets()->processing() || engineData->pipelinesCompilingCountdown > 0;
 	}
 
 	Holder<Image> engineScreenshot()
