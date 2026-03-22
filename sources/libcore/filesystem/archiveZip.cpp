@@ -4,6 +4,7 @@
 
 #include "files.h"
 
+#include <cage-core/config.h>
 #include <cage-core/math.h> // min
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h> // bufferView
@@ -13,6 +14,8 @@ namespace cage
 {
 	namespace
 	{
+		const ConfigBool confZipEnabled("cage/files/enableZip", false);
+
 		// structures: https://en.wikipedia.org/wiki/Zip_(file_format)
 		// full description: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
 		// external file attributes: https://docs.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
@@ -745,12 +748,16 @@ namespace cage
 
 	void archiveCreateZip(const String &path)
 	{
+		if (!confZipEnabled)
+			CAGE_THROW_ERROR(Exception, "cannot create zip archive, it is disabled");
 		ScopeLock lock(fsMutex());
 		ArchiveZip z(path);
 	}
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenZipTry(Holder<File> f)
 	{
+		if (!confZipEnabled)
+			return {};
 		ScopeLock lock(fsMutex());
 		ArchiveZip z(std::move(f));
 		return z.isZip ? std::make_shared<ArchiveZip>(std::move(z)) : std::shared_ptr<ArchiveAbstract>();

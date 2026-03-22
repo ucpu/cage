@@ -3,6 +3,7 @@
 #include "main.h"
 
 #include <cage-core/concurrent.h>
+#include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
@@ -341,6 +342,8 @@ void testFilesZip()
 	CAGE_TESTCASE("archives ZIP");
 
 	pathRemove("testdir");
+
+	configSetBool("cage/files/enableZip", true);
 
 	{
 		CAGE_TESTCASE("create empty archive");
@@ -737,4 +740,6 @@ void testFilesZip()
 	}
 
 	// todo lastChange
+
+	configSetBool("cage/files/enableZip", false);
 }
