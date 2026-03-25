@@ -41,13 +41,13 @@ void testAssetOnDemand()
 		threadYield();
 	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(13))); // 13 loaded, refreshed
 	CAGE_TEST(!(cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(42))); // 42 not yet loaded, requested now
-	for (uint32 i = 0; i < 12; i++)
+	for (uint32 i = 0; i < 3 * 60; i++)
 		cache->process(); // few initial processing does not release any assets
 	while (man->processing())
 		threadYield();
 	// 13 not refreshed
 	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(42))); // 42 loaded, refreshed
-	for (uint32 i = 0; i < 12; i++)
+	for (uint32 i = 0; i < 3 * 60; i++)
 		cache->process(); // several more processing releases 13 but keeps 42
 	while (man->processing())
 		threadYield();
