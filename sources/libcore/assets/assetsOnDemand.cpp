@@ -33,7 +33,7 @@ namespace cage
 				auto it = lastUse.begin();
 				while (it != lastUse.end())
 				{
-					if (tick - it->second > 20)
+					if (tick - it->second > 60 * 5) // 5 seconds at 60 fps
 					{
 						assets->unload(it->first);
 						it = lastUse.erase(it);

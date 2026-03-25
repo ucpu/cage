@@ -222,6 +222,7 @@ namespace
 		ser.write(bufferCast(img->rawViewU8()));
 
 		AssetHeader h = processor->initializeAssetHeader();
+		h.textId += Stringizer() + "?" + index;
 		h.scheme = AssetSchemeIndexTexture;
 		h.originalSize = inputBuffer.size();
 		Holder<PointerRange<char>> outputBuffer = memoryCompress(inputBuffer);

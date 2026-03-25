@@ -242,6 +242,7 @@ namespace cage
 				if (abs(dynamicResolution - k) < 0.02)
 					return; // difference of at least 2 percents
 
+				CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "changing dynamic resolution from: " + dynamicResolution + ", to: " + k);
 				dynamicResolution = k;
 				nextAllowedDrFrameIndex = frameIndex + 5;
 			}
