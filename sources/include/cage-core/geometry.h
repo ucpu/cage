@@ -179,7 +179,7 @@ namespace cage
 		// binary operators
 		Aabb operator+(Aabb other) const;
 		Aabb operator*(Mat4 other) const;
-		Aabb operator*(Transform other) const { return *this * Mat4(other); }
+		Aabb operator*(Transform other) const;
 
 		// comparison operators
 		bool operator==(const Aabb &other) const { return (empty() && other.empty()) || (a == other.a && b == other.b); }

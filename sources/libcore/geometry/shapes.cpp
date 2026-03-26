@@ -1,3 +1,7 @@
+//#include <emmintrin.h>
+//#include <smmintrin.h>
+//#include <xmmintrin.h>
+
 #include <cage-core/geometry.h>
 
 namespace cage
@@ -295,6 +299,73 @@ namespace cage
 			res += Aabb(Vec3(r) * (1.0 / r.data[3]));
 		}
 		return res;
+	}
+
+	// requires sse4.1
+	/*
+	namespace
+	{
+		CAGE_FORCE_INLINE __m128 abs_ps(__m128 v)
+		{
+			const __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
+			return _mm_and_ps(v, mask);
+		}
+	}
+	Aabb Aabb::operator*(Transform other) const
+	{
+		const Vec3 c = (a + b) * Real(0.5);
+		const Vec3 e = (b - a) * Real(0.5);
+		const Vec3 newCenter = other.orientation * (c * other.scale) + other.position;
+		const Vec3 se = e * abs(other.scale);
+		const __m128 ext = _mm_set_ps(0.0f, se[2].value, se[1].value, se[0].value);
+		const Quat q = other.orientation;
+		const float x2 = (q[0] + q[0]).value;
+		const float y2 = (q[1] + q[1]).value;
+		const float z2 = (q[2] + q[2]).value;
+		const float xx = (q[0] * x2).value;
+		const float yy = (q[1] * y2).value;
+		const float zz = (q[2] * z2).value;
+		const float xy = (q[0] * y2).value;
+		const float xz = (q[0] * z2).value;
+		const float yz = (q[1] * z2).value;
+		const float wx = (q[3] * x2).value;
+		const float wy = (q[3] * y2).value;
+		const float wz = (q[3] * z2).value;
+		__m128 r0 = _mm_set_ps(0.0f, 2 * (xz + wy), 2 * (xy - wz), 1 - (yy + zz));
+		__m128 r1 = _mm_set_ps(0.0f, 2 * (yz - wx), 1 - (xx + zz), 2 * (xy + wz));
+		__m128 r2 = _mm_set_ps(0.0f, 1 - (xx + yy), 2 * (yz + wx), 2 * (xz - wy));
+		r0 = abs_ps(r0);
+		r1 = abs_ps(r1);
+		r2 = abs_ps(r2);
+		float ex = _mm_cvtss_f32(_mm_dp_ps(r0, ext, 0x71));
+		float ey = _mm_cvtss_f32(_mm_dp_ps(r1, ext, 0x71));
+		float ez = _mm_cvtss_f32(_mm_dp_ps(r2, ext, 0x71));
+		const Vec3 newExtents(ex, ey, ez);
+		return Aabb(newCenter - newExtents, newCenter + newExtents);
+	}
+	*/
+
+	Aabb Aabb::operator*(Transform other) const
+	{
+		const Vec3 c = (a + b) * Real(0.5);
+		const Vec3 e = (b - a) * Real(0.5);
+		const Vec3 newCenter = other.orientation * (c * other.scale) + other.position;
+		const Vec3 scaledExtents = e * abs(other.scale);
+		const Quat q = other.orientation;
+		const Real xx = q[0] * q[0];
+		const Real yy = q[1] * q[1];
+		const Real zz = q[2] * q[2];
+		const Real xy = q[0] * q[1];
+		const Real xz = q[0] * q[2];
+		const Real yz = q[1] * q[2];
+		const Real wx = q[3] * q[0];
+		const Real wy = q[3] * q[1];
+		const Real wz = q[3] * q[2];
+		const Vec3 r0 = Vec3(abs(1 - 2 * (yy + zz)), abs(2 * (xy - wz)), abs(2 * (xz + wy)));
+		const Vec3 r1 = Vec3(abs(2 * (xy + wz)), abs(1 - 2 * (xx + zz)), abs(2 * (yz - wx)));
+		const Vec3 r2 = Vec3(abs(2 * (xz - wy)), abs(2 * (yz + wx)), abs(1 - 2 * (xx + yy)));
+		const Vec3 newExtents(dot(r0, scaledExtents), dot(r1, scaledExtents), dot(r2, scaledExtents));
+		return Aabb(newCenter - newExtents, newCenter + newExtents);
 	}
 
 	Real Aabb::volume() const

@@ -279,8 +279,15 @@ namespace cage
 					},
 					cfg.scene, false);
 
-				std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
-				tasksRunBlocking<CameraData>("render scene", cameras);
+				if (cameras.size() == 1)
+				{
+					cameras[0]();
+				}
+				else
+				{
+					std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
+					tasksRunBlocking<CameraData>("render scene", cameras);
+				}
 
 				for (const auto &cam : cameras)
 					for (const auto &it : cam.encoders)
