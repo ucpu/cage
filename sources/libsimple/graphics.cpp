@@ -12,6 +12,7 @@
 #include <cage-core/image.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/memoryUtils.h>
+#include <cage-core/profiling.h>
 #include <cage-core/scopeGuard.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/tasks.h>
@@ -119,6 +120,7 @@ namespace cage
 			{
 				if (auto lock = emitBuffersGuard->write())
 				{
+					ProfilingScope profiling("copying entities");
 					EntitiesCopyConfig cfg;
 					cfg.source = engineEntities();
 					cfg.destination = +emitBuffers[lock.index()].scene;
@@ -307,6 +309,7 @@ namespace cage
 
 				if (auto lock = emitBuffersGuard->read())
 				{
+					ProfilingScope profiling("scene dispatch");
 					updateDynamicResolution();
 					const EmitBuffer &eb = emitBuffers[lock.index()];
 					SceneRenderConfig cfg;
@@ -331,6 +334,7 @@ namespace cage
 
 				if (guiBundle)
 				{
+					ProfilingScope profiling("gui dispatch");
 					Holder<GraphicsEncoder> enc = newGraphicsEncoder(engineGraphicsDevice(), "gui");
 					Holder<GraphicsAggregateBuffer> agg = newGraphicsAggregateBuffer({ engineGraphicsDevice() });
 					RenderPassConfig passcfg;
