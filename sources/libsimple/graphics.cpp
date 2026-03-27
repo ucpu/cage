@@ -49,16 +49,18 @@ namespace cage
 
 		struct EmitBuffer : private Immovable
 		{
-			Holder<EntityManager> scene = newEntityManager({ .linearAllocators = true });
+			Holder<EntityManager> entities;
 			uint64 emitTime = 0;
+			bool fresh = false;
 		};
 
-		struct CameraData : SceneRenderConfig
+		struct CameraData : SceneCameraConfig
 		{
 			Holder<PointerRange<Holder<GraphicsEncoder>>> encoders;
+			const PreparedScene *scene = nullptr;
 			bool finalProduct = false; // ensure render-to-texture before render-to-window
 
-			void operator()() { encoders = sceneRender(*this); }
+			void operator()() { encoders = sceneRender(scene, *this); }
 
 			bool operator<(const CameraData &other) const { return finalProduct < other.finalProduct; }
 		};
@@ -98,6 +100,11 @@ namespace cage
 			std::array<EmitBuffer, 3> emitBuffers;
 			InterpolationTimingCorrector itc;
 			ExclusiveHolder<Texture> sharedTargetTexture;
+			GraphicsFrameData frameData;
+
+			Holder<EntityManager> entitiesPreparation, entitiesRendering; // make sure that entities outlive their usage
+			Holder<EntityManager> returning1, returning2; // recycle entities that are no longer needed, but make sure they outlive usage (both preparation and rendering)
+			Holder<PreparedScene> preparedScene;
 
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
@@ -121,11 +128,15 @@ namespace cage
 				if (auto lock = emitBuffersGuard->write())
 				{
 					ProfilingScope profiling("copying entities");
+					EmitBuffer &eb = emitBuffers[lock.index()];
+					if (!eb.entities)
+						eb.entities = newEntityManager({ .linearAllocators = true });
 					EntitiesCopyConfig cfg;
 					cfg.source = engineEntities();
-					cfg.destination = +emitBuffers[lock.index()].scene;
+					cfg.destination = +eb.entities;
 					entitiesCopy(cfg);
-					emitBuffers[lock.index()].emitTime = emitTime;
+					eb.emitTime = emitTime;
+					eb.fresh = true;
 				}
 			}
 
@@ -204,13 +215,11 @@ namespace cage
 
 			void initialize() {}
 
-			void finalize() { sharedTargetTexture.clear(); }
-
-			Vec2i applyDynamicResolution(Vec2i in) const
+			void finalize()
 			{
-				Vec2i res = Vec2i(Vec2(in) * dynamicResolution);
-				CAGE_ASSERT(res[0] > 0 && res[1] > 0);
-				return res;
+				sharedTargetTexture.clear();
+				frameData = {};
+				preparedScene.clear();
 			}
 
 			void updateDynamicResolution()
@@ -249,17 +258,28 @@ namespace cage
 				nextAllowedDrFrameIndex = frameIndex + 5;
 			}
 
-			void renderCameras(const SceneRenderConfig &cfg)
+			Vec2i applyDynamicResolution(Vec2i in) const
 			{
+				Vec2i res = Vec2i(Vec2(in) * dynamicResolution);
+				CAGE_ASSERT(res[0] > 0 && res[1] > 0);
+				return res;
+			}
+
+			void renderCameras() const
+			{
+				if (!preparedScene)
+					return;
+
 				std::vector<CameraData> cameras;
-				cameras.reserve(cfg.scene->component<CameraComponent>()->count());
+				cameras.reserve(preparedScene->config.scene->component<CameraComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const CameraComponent &cam)
 					{
 						CameraData data;
-						(SceneRenderConfig &)data = cfg;
 						data.camera = cam;
+						data.target = +frameData.targetTexture;
+						data.resolution = frameData.targetTexture->resolution();
 						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
 						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
 						data.effects.gamma = Real(confRenderGamma);
@@ -271,15 +291,16 @@ namespace cage
 						if (dynamicResolution != 1)
 						{
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
-							data.resolution = applyDynamicResolution(cfg.resolution);
+							data.resolution = applyDynamicResolution(data.resolution);
 						}
-						data.transform = modelTransform(e, cfg.interpolationFactor);
+						data.transform = modelTransform(e, preparedScene->config.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
 						data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
 						data.finalProduct = !cam.target;
+						data.scene = +preparedScene;
 						cameras.push_back(std::move(data));
 					},
-					cfg.scene, false);
+					preparedScene->config.scene, false);
 
 				if (cameras.size() == 1)
 				{
@@ -298,27 +319,36 @@ namespace cage
 
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
-				const GraphicsFrameData frameData = engineGraphicsDevice()->nextFrame(engineWindow());
+				ScopeGuard scopeExit([this]() { frameData = {}; });
+				frameData = engineGraphicsDevice()->nextFrame(engineWindow());
 				frameStatistics = frameData;
+				updateDynamicResolution();
 
 				if (!frameData.targetTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
 					sharedTargetTexture.clear();
+					preparedScene = {};
 					return;
 				}
 
+				ScenePrepareConfig cfg;
 				if (auto lock = emitBuffersGuard->read())
 				{
-					ProfilingScope profiling("scene dispatch");
-					updateDynamicResolution();
-					const EmitBuffer &eb = emitBuffers[lock.index()];
-					SceneRenderConfig cfg;
+					EmitBuffer &eb = emitBuffers[lock.index()];
+					if (eb.fresh)
+					{
+						eb.fresh = false;
+						Holder<EntityManager> tmp = std::move(entitiesPreparation);
+						entitiesPreparation = std::move(eb.entities);
+						eb.entities = std::move(returning2);
+						returning2 = std::move(returning1);
+						returning1 = std::move(tmp);
+					}
+
 					cfg.device = engineGraphicsDevice();
 					cfg.assets = engineAssets();
 					cfg.onDemand = engineAssetsOnDemand();
-					cfg.scene = +eb.scene;
-					cfg.target = +frameData.targetTexture;
-					cfg.resolution = frameData.targetTexture->resolution();
+					cfg.scene = +entitiesPreparation;
 					if (!graphicsThread().disableTimePassage)
 					{
 						const uint64 period = controlThread().updatePeriod();
@@ -327,10 +357,23 @@ namespace cage
 						cfg.interpolationFactor = saturate(Real(cfg.currentTime - eb.emitTime) / period);
 						cfg.frameIndex = frameIndex;
 					}
-					renderCameras(cfg);
+
 					frameIndex++;
 					lastDispatchTime = dispatchTime;
 				}
+
+				if (cfg.device)
+				{
+					ProfilingScope profiling("scene prepare & render");
+					Holder<AsyncTask> task = tasksRunAsync("render cameras", [this](uint32) { renderCameras(); });
+					Holder<PreparedScene> nextScene = scenePrepare(cfg); // this runs in parallel with the rendering task
+					task->wait();
+					task.clear();
+					entitiesRendering = entitiesPreparation.share(); // these must update after the rendering task has completed
+					preparedScene = std::move(nextScene);
+				}
+				else
+					preparedScene.clear();
 
 				if (guiBundle)
 				{

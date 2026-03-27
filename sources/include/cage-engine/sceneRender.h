@@ -12,27 +12,37 @@ namespace cage
 	class AssetsOnDemand;
 	class EntityManager;
 
-	struct CAGE_ENGINE_API SceneRenderConfig
+	struct CAGE_ENGINE_API ScenePrepareConfig
 	{
-		ScreenSpaceEffectsComponent effects;
-		Mat4 projection;
-		CameraCommonProperties camera;
-		Transform transform;
-		LodSelection lodSelection;
 		uint64 currentTime = 0;
 		uint64 elapsedTime = 1'000'000 / 60; // microseconds since last frame
-		Vec2i resolution;
 		GraphicsDevice *device = nullptr;
 		AssetsManager *assets = nullptr;
 		AssetsOnDemand *onDemand = nullptr;
 		EntityManager *scene = nullptr;
-		Texture *target = nullptr;
 		uint32 frameIndex = 0;
-		uint32 cameraSceneMask = 1;
 		Real interpolationFactor = 1;
 	};
 
-	CAGE_ENGINE_API Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const SceneRenderConfig &config);
+	struct CAGE_ENGINE_API SceneCameraConfig
+	{
+		Mat4 projection;
+		ScreenSpaceEffectsComponent effects;
+		CameraCommonProperties camera;
+		Transform transform;
+		LodSelection lodSelection;
+		Vec2i resolution;
+		Texture *target = nullptr;
+		uint32 cameraSceneMask = 1;
+	};
+
+	struct CAGE_ENGINE_API PreparedScene
+	{
+		const ScenePrepareConfig config;
+	};
+
+	CAGE_ENGINE_API Holder<PreparedScene> scenePrepare(const ScenePrepareConfig &config);
+	CAGE_ENGINE_API Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const PreparedScene *scene, const SceneCameraConfig &config);
 }
 
 #endif // guard_sceneRender_h_4hg1s8596drfh4

@@ -261,8 +261,8 @@ namespace cage
 					"vulkan_use_dynamic_rendering", //
 					"wait_is_thread_safe", // just to be sure
 				};
-				if (!config.vsync)
-					toggles.push_back("turn_off_vsync");
+				//if (!config.vsync)
+				//	toggles.push_back("turn_off_vsync");
 #ifdef CAGE_DEPLOY
 				toggles.push_back("disable_robustness");
 				toggles.push_back("skip_validation");
@@ -361,16 +361,27 @@ namespace cage
 				if (!context->surface.GetCapabilities(adapter, &capabilities))
 					CAGE_THROW_ERROR(Exception, "failed to retrieve surface capabilities");
 
-				bool relaxed = false;
+				//bool relaxed = false;
+				bool mailbox = false;
+				bool immediate = false;
 				for (uint32 i = 0; i < capabilities.presentModeCount; i++)
-					if (capabilities.presentModes[i] == wgpu::PresentMode::FifoRelaxed)
-						relaxed = true;
+				{
+					//if (capabilities.presentModes[i] == wgpu::PresentMode::FifoRelaxed)
+					//	relaxed = true;
+					if (capabilities.presentModes[i] == wgpu::PresentMode::Mailbox)
+						mailbox = true;
+					if (capabilities.presentModes[i] == wgpu::PresentMode::Immediate)
+						immediate = true;
+				}
 
 				wgpu::SurfaceConfiguration cfg = {};
 				cfg.device = device;
 				cfg.width = resolution[0];
 				cfg.height = resolution[1];
-				cfg.presentMode = relaxed ? wgpu::PresentMode::FifoRelaxed : wgpu::PresentMode::Fifo;
+				if (config.vsync)
+					cfg.presentMode = wgpu::PresentMode::Fifo;
+				else
+					cfg.presentMode = mailbox ? wgpu::PresentMode::Mailbox : immediate ? wgpu::PresentMode::Immediate : wgpu::PresentMode::Fifo;
 				cfg.format = wgpu::TextureFormat::BGRA8Unorm; // this should be guaranteed to work everywhere
 				cfg.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
 				context->surface.Configure(&cfg);
