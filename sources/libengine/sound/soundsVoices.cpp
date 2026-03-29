@@ -54,7 +54,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!v.callback != !v.sound);
 
-				const bool spatial = v.position.valid();
+				const bool spatial = v.position.valid() && v.spatial;
 
 				// decode source
 				if (v.callback)

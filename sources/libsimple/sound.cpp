@@ -160,6 +160,7 @@ namespace cage
 				v->gain = e.sound.gain;
 				v->priority = e.sound.priority;
 				v->loop = e.sound.loop;
+				v->spatial = e.sound.spatial;
 			}
 
 			void prepare(PrepareListener &l, const EmitListener &e, uint64 dispatchTime)

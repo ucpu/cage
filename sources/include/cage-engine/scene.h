@@ -94,7 +94,7 @@ namespace cage
 		LightAttenuationEnum attenuation = LightAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
 		Real maxDistance = 100;
-		sint32 priority = 0;
+		sint32 priority = 0; // higher number is more important
 	};
 
 	struct CAGE_ENGINE_API ShadowmapComponent
@@ -133,8 +133,9 @@ namespace cage
 		Real minDistance = 1;
 		Real maxDistance = 500;
 		Real gain = 1; // linear amplitude multiplier
-		sint32 priority = 0;
+		sint32 priority = 0; // higher number is more important
 		bool loop = false;
+		bool spatial = true; // true -> listener direction is considered; false -> listener direction is ignored (but attentuation still applies)
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
