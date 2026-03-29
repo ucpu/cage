@@ -1,4 +1,6 @@
 
+include(cage_options)
+
 include(cage_assets)
 include(cage_build_configuration)
 include(cage_build_destination)

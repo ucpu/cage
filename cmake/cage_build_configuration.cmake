@@ -62,6 +62,7 @@ macro(cage_build_configuration)
 			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Ob1")
 			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ob1 /D_ITERATOR_DEBUG_LEVEL=0")
 			add_compile_definitions(_ITERATOR_DEBUG_LEVEL=0)
+			#set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
 		endif()
 
 		# optionally improve runtime performance in release builds (more aggressive inlining)

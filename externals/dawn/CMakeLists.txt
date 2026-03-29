@@ -14,6 +14,10 @@ cage_replace_in_file(
 	"NOT TARGET glslang AND \\(TINT_BUILD_GLSL_WRITER OR TINT_BUILD_GLSL_VALIDATOR\\) AND TINT_BUILD_CMD_TOOLS" "ON"
 )
 cage_replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/abseil-cpp/CMakeLists.txt"
+	"set\\(CMAKE_MSVC_RUNTIME_LIBRARY[^\\\n]*\\)" "# code removed by cage"
+)
+cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h"
 	"kMaxSampledTexturesPerShaderStage = 16;" "kMaxSampledTexturesPerShaderStage = 32;"
 )
@@ -80,7 +84,7 @@ unset(linux)
 
 # absl
 set(ABSL_PROPAGATE_CXX_STD OFF CACHE INTERNAL "Use CMake C++ standard meta features (e.g. cxx_std_17) that propagate to targets that link to Abseil")
-set(ABSL_USE_SYSTEM_INCLUDES ON CACHE INTERNAL "Use CMake C++ standard meta features (e.g. cxx_std_17) that propagate to targets that link to Abseil")
+set(ABSL_USE_SYSTEM_INCLUDES ON CACHE INTERNAL "Silence warnings in Abseil headers by marking them as SYSTEM includes")
 
 
 # protobuf

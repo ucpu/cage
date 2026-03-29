@@ -6,10 +6,13 @@ cage_heavily_optimized()
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 set(ASSIMP_INSTALL OFF CACHE INTERNAL "Disable this if you want to use assimp as a submodule.")
+set(ASSIMP_INSTALL_PDB OFF CACHE INTERNAL "Create MSVC debug symbol files and add to Install target.")
 set(ASSIMP_BUILD_ZLIB OFF CACHE INTERNAL "Build your own zlib")
 set(ASSIMP_NO_EXPORT ON CACHE INTERNAL "Disable Assimp's export functionality.")
 set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE INTERNAL "If the supplementary tools for Assimp are built in addition to the library.")
 set(ASSIMP_BUILD_TESTS OFF CACHE INTERNAL "If the test suite for Assimp is built in addition to the library.")
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE INTERNAL "Treat all warnings as errors.")
+set(LIBRARY_SUFFIX "" CACHE INTERNAL "")
 
 # disable some formats to speed up build
 # one may enable them in the cache or by setting the default before including this cmake
