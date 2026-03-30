@@ -4,6 +4,7 @@
 
 namespace cage
 {
+	class Mutex;
 	class Window;
 	class Cursor;
 
@@ -11,13 +12,14 @@ namespace cage
 	{
 		struct GraphicsContext;
 
-		Holder<GraphicsContext> &getGlfwContext(Window *w);
+		Holder<GraphicsContext> &getGraphicsContext(Window *w);
+		void glfwInitializeFunc();
+		void glfwInitializeGamepads();
+		Mutex *glfwMutex();
+		void glfwPokeCursor(Window *w);
+		String getMonitorId(GLFWmonitor *monitor);
+		GLFWmonitor *getMonitorById(const String &id);
+		GLFWwindow *getGlfwWindow(Window *w);
+		GLFWcursor *getCursor(Cursor *c);
 	}
-
-	void cageGlfwInitializeFunc();
-	class Mutex *cageGlfwMutex();
-	String getMonitorId(GLFWmonitor *monitor);
-	GLFWmonitor *getMonitorById(const String &id);
-	GLFWwindow *getGlfwWindow(Window *w);
-	GLFWcursor *getCursor(Cursor *c);
 }

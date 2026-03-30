@@ -25,7 +25,7 @@ namespace cage
 		if (!result)
 			CAGE_THROW_ERROR(Exception, "webp decode failed");
 
-		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig = privat::defaultConfig(impl->channels);
 	}
 
 	MemoryBuffer webpEncode(const ImageImpl *impl)

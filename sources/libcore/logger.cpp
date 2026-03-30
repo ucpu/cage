@@ -6,6 +6,8 @@
 
 #ifdef CAGE_SYSTEM_WINDOWS
 	#include "windowsMinimumInclude.h" // SetConsoleCP
+#else
+	#include <unistd.h> // STDERR_FILENO
 #endif
 
 #include <cage-core/concurrent.h>
@@ -20,10 +22,16 @@
 
 namespace cage
 {
-#ifdef CAGE_SYSTEM_LINUX
-	extern int crashHandlerLogFileFd;
-	int realFileGetFd(File *f);
-#endif
+	namespace privat
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+		int crashHandlerLogFileFd = _fileno(stderr);
+#else
+		int crashHandlerLogFileFd = STDERR_FILENO;
+#endif // CAGE_SYSTEM_WINDOWS
+
+		int realFileGetFd(File *f);
+	}
 
 	namespace
 	{
@@ -81,82 +89,6 @@ namespace cage
 	Holder<Logger> newLogger()
 	{
 		return systemMemory().createImpl<Logger, LoggerImpl>();
-	}
-
-	namespace detail
-	{
-		Logger *globalLogger()
-		{
-			class GlobalLogger : private Immovable
-			{
-			public:
-				GlobalLogger()
-				{
-#ifdef CAGE_SYSTEM_WINDOWS
-					SetConsoleCP(CP_UTF8);
-					SetConsoleOutputCP(CP_UTF8);
-#endif
-
-					if (detail::isDebugging())
-					{
-						loggerDebug = newLogger();
-						loggerDebug->format.bind<logFormatConsole>();
-						loggerDebug->output.bind<logOutputDebug>();
-					}
-
-					loggerFile = newLogger();
-					loggerFile->format.bind<logFormatFileShort>();
-
-					try
-					{
-						detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
-						loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
-						loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
-					}
-					catch (const cage::SystemError &)
-					{
-						// do nothing
-					}
-				}
-
-				Holder<Logger> loggerDebug;
-				Holder<LoggerOutputFile> loggerOutputFile;
-				Holder<Logger> loggerFile;
-			};
-
-			static GlobalLogger *appLoggerInstance = new GlobalLogger(); // this leak is intentional
-			return +appLoggerInstance->loggerFile;
-		}
-
-		void logCurrentCaughtException() noexcept
-		{
-			if (std::uncaught_exceptions() == 0)
-				return;
-			try
-			{
-				throw;
-			}
-			catch (const cage::Exception &e)
-			{
-				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "cage exception: " + e.message);
-			}
-			catch (const std::exception &e)
-			{
-				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "std exception: " + e.what());
-			}
-			catch (const char *e)
-			{
-				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "c string exception: " + e);
-			}
-			catch (int e)
-			{
-				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "int exception: " + e);
-			}
-			catch (...)
-			{
-				CAGE_LOG(SeverityEnum::Info, "exception", "unknown exception type");
-			}
-		}
 	}
 
 	StringPointer severityToString(SeverityEnum severity)
@@ -307,12 +239,7 @@ namespace cage
 				fm.textual = true;
 				fm.append = append;
 				if (realFilesystemOnly)
-				{
 					f = detail::newRealFsFile(path, fm);
-#ifdef CAGE_SYSTEM_LINUX
-					crashHandlerLogFileFd = realFileGetFd(+f);
-#endif
-				}
 				else
 					f = newFile(path, fm);
 			}
@@ -480,5 +407,82 @@ namespace cage
 	{
 		static ConsoleLogger *inst = new ConsoleLogger(); // intentional leak
 		return +inst->conLog;
+	}
+
+	namespace detail
+	{
+		Logger *globalLogger()
+		{
+			class GlobalLogger : private Immovable
+			{
+			public:
+				GlobalLogger()
+				{
+#ifdef CAGE_SYSTEM_WINDOWS
+					SetConsoleCP(CP_UTF8);
+					SetConsoleOutputCP(CP_UTF8);
+#endif
+
+					if (detail::isDebugging())
+					{
+						loggerDebug = newLogger();
+						loggerDebug->format.bind<logFormatConsole>();
+						loggerDebug->output.bind<logOutputDebug>();
+					}
+
+					loggerFile = newLogger();
+					loggerFile->format.bind<logFormatFileShort>();
+
+					try
+					{
+						detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
+						loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
+						loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
+						privat::crashHandlerLogFileFd = privat::realFileGetFd(+((LoggerOutputFileImpl *)+loggerOutputFile)->f);
+					}
+					catch (const cage::SystemError &)
+					{
+						// do nothing
+					}
+				}
+
+				Holder<Logger> loggerDebug;
+				Holder<LoggerOutputFile> loggerOutputFile;
+				Holder<Logger> loggerFile;
+			};
+
+			static GlobalLogger *appLoggerInstance = new GlobalLogger(); // this leak is intentional
+			return +appLoggerInstance->loggerFile;
+		}
+
+		void logCurrentCaughtException() noexcept
+		{
+			if (std::uncaught_exceptions() == 0)
+				return;
+			try
+			{
+				throw;
+			}
+			catch (const cage::Exception &e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "cage exception: " + e.message);
+			}
+			catch (const std::exception &e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "std exception: " + e.what());
+			}
+			catch (const char *e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "c string exception: " + e);
+			}
+			catch (int e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", Stringizer() + "int exception: " + e);
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", "unknown exception type");
+			}
+		}
 	}
 }

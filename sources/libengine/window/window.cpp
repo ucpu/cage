@@ -80,7 +80,7 @@ namespace cage
 				{
 					updateMouseMode();
 					{
-						ScopeLock l(cageGlfwMutex());
+						ScopeLock l(privat::glfwMutex());
 						glfwPollEvents();
 					}
 					threadSleep(5'000);
@@ -91,7 +91,7 @@ namespace cage
 
 			explicit WindowImpl(const WindowCreateConfig &config)
 			{
-				ScopeLock l(cageGlfwMutex());
+				ScopeLock l(privat::glfwMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
 				windowSemaphore = newSemaphore(0, 1);
@@ -136,7 +136,7 @@ namespace cage
 
 			void finalizeWindow()
 			{
-				ScopeLock lock(cageGlfwMutex());
+				ScopeLock lock(privat::glfwMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -232,7 +232,7 @@ namespace cage
 #ifndef GCHL_WINDOWS_THREAD
 				updateMouseMode();
 				{
-					ScopeLock l(cageGlfwMutex());
+					ScopeLock l(privat::glfwMutex());
 					glfwPollEvents();
 				}
 #endif
@@ -262,10 +262,10 @@ namespace cage
 							break;
 						case detail::typeHash<input::KeyPress>():
 						{
-							stateKeys.insert(e.get<input::KeyPress>().key);
-							stateMods = e.get<input::KeyPress>().mods;
-							events.dispatch(e);
 							const input::KeyPress p = e.get<input::KeyPress>();
+							stateKeys.insert(p.key);
+							stateMods = p.mods;
+							events.dispatch(e);
 							events.dispatch(input::KeyRepeat{ p.window, p.key, p.mods });
 							break;
 						}
@@ -587,7 +587,7 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None, true);
-		GLFWmonitor *m = getMonitorById(deviceId);
+		GLFWmonitor *m = privat::getMonitorById(deviceId);
 		CAGE_ASSERT(m);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
 		CAGE_ASSERT(v);
@@ -670,11 +670,17 @@ namespace cage
 	void Window::cursor(Holder<Cursor> &&c)
 	{
 		WindowImpl *impl = (WindowImpl *)this;
+		if (+impl->currentCursor == +c)
+			return;
+
 		if (c)
-			glfwSetCursor(impl->window, getCursor(+c));
+			glfwSetCursor(impl->window, privat::getCursor(+c));
 		else
 			glfwSetCursor(impl->window, nullptr);
 		impl->currentCursor = std::move(c);
+
+		// force glfw to update the cursor
+		privat::glfwPokeCursor(this);
 	}
 
 	ModifiersFlags Window::keyboardModifiers() const
@@ -717,7 +723,7 @@ namespace cage
 		{
 			auto m = glfwGetWindowMonitor(impl->window);
 			if (m)
-				return getMonitorId(m);
+				return privat::getMonitorId(m);
 		}
 		const Vec2 center = Vec2(windowedPosition() + windowedSize() / 2);
 		int cnt = 0;
@@ -737,7 +743,7 @@ namespace cage
 			}
 		}
 		CAGE_ASSERT(bestIndex != m);
-		return getMonitorId(ms[bestIndex]);
+		return privat::getMonitorId(ms[bestIndex]);
 	}
 
 	Vec2i Window::windowedSize() const
@@ -770,12 +776,13 @@ namespace cage
 
 	Holder<Window> newWindow(const WindowCreateConfig &config)
 	{
-		cageGlfwInitializeFunc();
+		privat::glfwInitializeFunc();
 		return systemMemory().createImpl<Window, WindowImpl>(config);
 	}
 
 	detail::StringBase<27> getKeyName(uint32 key)
 	{
+		privat::glfwInitializeFunc();
 		switch (key)
 		{
 			case GLFW_KEY_SPACE:
@@ -910,6 +917,7 @@ namespace cage
 
 	uint32 findKeyWithCharacter(uint32 utf32character)
 	{
+		privat::glfwInitializeFunc();
 		std::array<uint32, 10> underlaying = {};
 		for (uint32 key = GLFW_KEY_SPACE; key < GLFW_KEY_LAST; key++)
 		{
@@ -925,16 +933,16 @@ namespace cage
 		return 0;
 	}
 
-	GLFWwindow *getGlfwWindow(Window *w)
-	{
-		CAGE_ASSERT(w);
-		WindowImpl *impl = (WindowImpl *)w;
-		return impl->window;
-	}
-
 	namespace privat
 	{
-		Holder<GraphicsContext> &getGlfwContext(Window *w)
+		GLFWwindow *getGlfwWindow(Window *w)
+		{
+			CAGE_ASSERT(w);
+			WindowImpl *impl = (WindowImpl *)w;
+			return impl->window;
+		}
+
+		Holder<GraphicsContext> &getGraphicsContext(Window *w)
 		{
 			CAGE_ASSERT(w);
 			WindowImpl *impl = (WindowImpl *)w;

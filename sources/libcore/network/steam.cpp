@@ -19,7 +19,10 @@
 
 namespace cage
 {
-	void initializeAbslLogSink();
+	namespace privat
+	{
+		void initializeAbslLogSink();
+	}
 
 	namespace
 	{
@@ -124,7 +127,7 @@ namespace cage
 
 		void initialize(bool useAuth, bool useRelay)
 		{
-			initializeAbslLogSink();
+			privat::initializeAbslLogSink();
 
 	#if defined(CAGE_USE_STEAM_SOCKETS)
 			struct InitializerSockets

@@ -17,11 +17,14 @@
 
 namespace cage
 {
-	void crashHandlerThreadInit()
+	namespace privat
 	{
-		// reserve safe memory on the stack for handling EXCEPTION_STACK_OVERFLOW
-		ULONG v = 128 * 1024;
-		SetThreadStackGuarantee(&v);
+		void crashHandlerThreadInit()
+		{
+			// reserve safe memory on the stack for handling EXCEPTION_STACK_OVERFLOW
+			ULONG v = 128 * 1024;
+			SetThreadStackGuarantee(&v);
+		}
 	}
 
 	namespace
@@ -336,7 +339,7 @@ namespace cage
 			SetupHandlersWindows()
 			{
 				handlerMutex(); // allocate the mutex upfront
-				crashHandlerThreadInit();
+				privat::crashHandlerThreadInit();
 				if (!AddVectoredExceptionHandler(1, &vectoredHandler))
 					CAGE_THROW_ERROR(SystemError, "AddVectoredExceptionHandler", GetLastError());
 				if (!AddVectoredContinueHandler(1, &vectoredHandler))

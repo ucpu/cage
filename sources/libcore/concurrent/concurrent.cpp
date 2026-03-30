@@ -695,7 +695,10 @@ namespace cage
 		return systemMemory().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
 
-	void crashHandlerThreadInit();
+	namespace privat
+	{
+		void crashHandlerThreadInit();
+	}
 
 	namespace
 	{
@@ -707,7 +710,7 @@ namespace cage
 		{
 			ThreadImpl *impl = (ThreadImpl *)params;
 			currentThreadName(impl->threadName);
-			crashHandlerThreadInit();
+			privat::crashHandlerThreadInit();
 			try
 			{
 				impl->function();
@@ -733,9 +736,12 @@ namespace cage
 		}
 	}
 
+	namespace privat
+	{
 #ifdef CAGE_PROFILING_ENABLED
-	void profilingThreadName();
+		void updateThreadNameInProfiling();
 #endif
+	}
 
 	void currentThreadName(const String &name)
 	{
@@ -780,7 +786,7 @@ namespace cage
 		}
 
 #ifdef CAGE_PROFILING_ENABLED
-		profilingThreadName();
+		privat::updateThreadNameInProfiling();
 #endif
 
 		CAGE_LOG_DEBUG(SeverityEnum::Info, "thread", Stringizer() + "renamed thread id: " + currentThreadId() + (oldName.empty() ? Stringizer() : Stringizer() + ", from: " + oldName) + ", to: " + name);

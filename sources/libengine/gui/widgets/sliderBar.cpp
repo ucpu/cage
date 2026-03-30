@@ -92,6 +92,8 @@ namespace cage
 					return mousePress(buttons, modifiers, point);
 				return false;
 			}
+
+			bool interactive() const override { return true; }
 		};
 	}
 

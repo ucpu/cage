@@ -12,8 +12,6 @@
 
 namespace cage
 {
-	void cageGlfwInitializeGamepads();
-
 	namespace
 	{
 		void handleGlfwError(int, const char *message)
@@ -41,47 +39,67 @@ namespace cage
 		}
 	}
 
-	void cageGlfwInitializeFunc()
+	namespace privat
 	{
-		static int init = []()
+		void glfwInitializeFunc()
 		{
-			CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "initializing glfw");
-			glfwSetErrorCallback(&handleGlfwError);
-			if (!glfwInit())
-				CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
-			CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "glfw platform: " + platformToString(glfwGetPlatform()));
-			cageGlfwInitializeGamepads();
-			return 0;
-		}();
-		(void)init;
-	}
+			static int init = []()
+			{
+				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "initializing glfw");
+				glfwSetErrorCallback(&handleGlfwError);
+				if (!glfwInit())
+					CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
+				CAGE_LOG(SeverityEnum::Info, "glfw", Stringizer() + "glfw platform: " + platformToString(glfwGetPlatform()));
+				privat::glfwInitializeGamepads();
+				return 0;
+			}();
+			(void)init;
+		}
 
-	Mutex *cageGlfwMutex()
-	{
-		static Holder<Mutex> *mut = new Holder<Mutex>(newMutex()); // intentional leak
-		return +*mut;
-	}
+		Mutex *glfwMutex()
+		{
+			static Holder<Mutex> *mut = new Holder<Mutex>(newMutex()); // intentional leak
+			return +*mut;
+		}
 
-	String getMonitorId(GLFWmonitor *monitor)
-	{
+		String getMonitorId(GLFWmonitor *monitor)
+		{
 #ifdef CAGE_SYSTEM_WINDOWS
-		return glfwGetWin32Monitor(monitor);
+			return glfwGetWin32Monitor(monitor);
 #endif // CAGE_SYSTEM_WINDOWS
 
-		// this fallback solution will work for as long as the monitor is valid
-		return Stringizer() + monitor;
-	}
-
-	GLFWmonitor *getMonitorById(const String &id)
-	{
-		int cnt = 0;
-		GLFWmonitor **ms = glfwGetMonitors(&cnt);
-		for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
-		{
-			if (getMonitorId(ms[i]) == id)
-				return ms[i];
+			// this fallback solution will work for as long as the monitor is valid
+			return Stringizer() + monitor;
 		}
-		return glfwGetPrimaryMonitor();
+
+		GLFWmonitor *getMonitorById(const String &id)
+		{
+			int cnt = 0;
+			GLFWmonitor **ms = glfwGetMonitors(&cnt);
+			for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
+			{
+				if (getMonitorId(ms[i]) == id)
+					return ms[i];
+			}
+			return glfwGetPrimaryMonitor();
+		}
+
+#ifdef CAGE_SYSTEM_WINDOWS
+		CAGE_ENGINE_API HWND getWindowHwnd(Window *w)
+		{
+			GLFWwindow *g = getGlfwWindow(w);
+			return glfwGetWin32Window(g);
+		}
+#endif // CAGE_SYSTEM_WINDOWS
+
+		void glfwPokeCursor(Window *w)
+		{
+#ifdef _WIN32
+			// force glfw to update the cursor
+			HWND hwnd = getWindowHwnd(w);
+			SendMessage(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
+#endif
+		}
 	}
 
 	void setClipboard(const char *str)
@@ -114,12 +132,4 @@ namespace cage
 		}
 		return {};
 	}
-
-#ifdef CAGE_SYSTEM_WINDOWS
-	CAGE_ENGINE_API HWND getWindowHwnd(Window *w)
-	{
-		GLFWwindow *g = getGlfwWindow(w);
-		return glfwGetWin32Window(g);
-	}
-#endif // CAGE_SYSTEM_WINDOWS
 }

@@ -11,9 +11,12 @@ namespace cage
 		ImageFormatEnum format = ImageFormatEnum::Default;
 	};
 
-	uint32 formatBytes(ImageFormatEnum format);
+	namespace privat
+	{
+		uint32 formatBytes(ImageFormatEnum format);
 
-	ImageColorConfig defaultConfig(uint32 channels);
+		ImageColorConfig defaultConfig(uint32 channels);
 
-	void swapAll(ImageImpl *a, ImageImpl *b);
+		void swapAll(ImageImpl *a, ImageImpl *b);
+	}
 }

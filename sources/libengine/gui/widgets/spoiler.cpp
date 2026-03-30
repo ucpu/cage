@@ -110,6 +110,14 @@ namespace cage
 				}
 				return true;
 			}
+
+			bool interactive() const override
+			{
+				Vec2 p = hierarchy->renderPos;
+				Vec2 s = Vec2(hierarchy->renderSize[0], skin->defaults.spoiler.captionHeight);
+				offset(p, s, -skin->defaults.spoiler.baseMargin * Vec4(1, 1, 1, 0));
+				return pointInside(p, s, hierarchy->impl->outputMouse);
+			}
 		};
 	}
 

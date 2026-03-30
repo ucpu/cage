@@ -94,7 +94,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "unsupported format in tiff decoding");
 			}
 			const uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
-			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
+			CAGE_ASSERT(stride == impl->width * impl->channels * privat::formatBytes(impl->format));
 			impl->mem.resize(impl->height * stride);
 			for (uint32 row = 0; row < impl->height; row++)
 			{
@@ -121,7 +121,7 @@ namespace cage
 		try
 		{
 			MemoryBuffer res;
-			res.resize(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100); // preallocate and fill, instead of reserve
+			res.resize(impl->width * impl->height * impl->channels * privat::formatBytes(impl->format) + 100); // preallocate and fill, instead of reserve
 			detail::memset(res.data(), 0, res.size()); // avoid storing uninitialized memory from the tiff library
 			res.resize(0);
 			BufferOStream stream(res);
@@ -153,7 +153,7 @@ namespace cage
 			setExtraSamples(t, impl);
 			TIFFSetField(t, TIFFTAG_SOFTWARE, "CageEngine");
 			const uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
-			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
+			CAGE_ASSERT(stride == impl->width * impl->channels * privat::formatBytes(impl->format));
 			for (uint32 row = 0; row < impl->height; row++)
 			{
 				const char *src = impl->mem.data() + row * stride;

@@ -40,7 +40,7 @@ namespace cage
 			GamepadImpl()
 			{
 				{
-					ScopeLock l(cageGlfwMutex());
+					ScopeLock l(privat::glfwMutex());
 					glfwPollEvents();
 				}
 				GamepadsData &d = gamepadsData();
@@ -119,7 +119,7 @@ namespace cage
 			void processEvents()
 			{
 				{
-					ScopeLock l(cageGlfwMutex());
+					ScopeLock l(privat::glfwMutex());
 					glfwPollEvents();
 				}
 				processEventsImpl();
@@ -165,14 +165,17 @@ namespace cage
 		}
 	}
 
-	void cageGlfwInitializeGamepads()
+	namespace privat
 	{
-		glfwSetJoystickCallback(&gamepadCallback);
-		GamepadsData &d = gamepadsData();
-		for (int i = GLFW_JOYSTICK_1; i <= GLFW_JOYSTICK_LAST; i++)
+		void glfwInitializeGamepads()
 		{
-			if (glfwJoystickPresent(i))
-				d.available.insert(i);
+			glfwSetJoystickCallback(&gamepadCallback);
+			GamepadsData &d = gamepadsData();
+			for (int i = GLFW_JOYSTICK_1; i <= GLFW_JOYSTICK_LAST; i++)
+			{
+				if (glfwJoystickPresent(i))
+					d.available.insert(i);
+			}
 		}
 	}
 
@@ -214,15 +217,15 @@ namespace cage
 
 	Holder<Gamepad> newGamepad()
 	{
-		cageGlfwInitializeFunc();
+		privat::glfwInitializeFunc();
 		return systemMemory().createImpl<Gamepad, GamepadImpl>();
 	}
 
 	uint32 gamepadsAvailable()
 	{
-		cageGlfwInitializeFunc();
+		privat::glfwInitializeFunc();
 		{
-			ScopeLock l(cageGlfwMutex());
+			ScopeLock l(privat::glfwMutex());
 			glfwPollEvents();
 		}
 		GamepadsData &d = gamepadsData();

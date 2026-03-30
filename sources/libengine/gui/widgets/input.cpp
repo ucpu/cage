@@ -378,6 +378,8 @@ namespace cage
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent });
 				return true;
 			}
+
+			bool interactive() const override { return true; }
 		};
 	}
 

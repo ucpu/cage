@@ -135,10 +135,16 @@ namespace cage
 		impl->clearTooltips();
 	}
 
-	bool GuiManager::coversCursor() const
+	GuiCursorInfo GuiManager::cursorInfo() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
-		return impl->testMouseCovered();
+		return impl->cursorInfo();
+	}
+
+	Vec2 GuiManager::cursorPosition() const
+	{
+		const GuiImpl *impl = (const GuiImpl *)this;
+		return impl->inputMouse / impl->pointsScale;
 	}
 
 	uint32 GuiManager::skinsCount() const

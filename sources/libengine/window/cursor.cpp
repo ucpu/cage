@@ -42,9 +42,12 @@ namespace cage
 		return systemMemory().createImpl<Cursor, CursorImpl>(config);
 	}
 
-	GLFWcursor *getCursor(Cursor *c)
+	namespace privat
 	{
-		const CursorImpl *impl = (const CursorImpl *)c;
-		return impl->data;
+		GLFWcursor *getCursor(Cursor *c)
+		{
+			const CursorImpl *impl = (const CursorImpl *)c;
+			return impl->data;
+		}
 	}
 }

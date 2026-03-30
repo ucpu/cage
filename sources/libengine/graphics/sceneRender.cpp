@@ -1998,7 +1998,7 @@ namespace cage
 
 				{ // quantize light direction - reduces shimmering of slowly rotating lights
 					CAGE_ASSERT(e->has<TransformComponent>());
-					Transform src = e->value<TransformComponent>(scene->transformComponent);
+					Transform src = scene->modelTransform(e);
 					Vec3 f = src.orientation * Vec3(0, 0, -1);
 					f *= 1'000;
 					for (uint32 i = 0; i < 3; i++)

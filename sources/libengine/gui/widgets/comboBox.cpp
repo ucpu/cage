@@ -43,6 +43,8 @@ namespace cage
 			void findRequestedSize(Real maxWidth) override;
 			void emit() override;
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+
+			bool interactive() const override { return true; }
 		};
 
 		struct ComboBoxImpl : public WidgetItem
@@ -139,6 +141,8 @@ namespace cage
 				play(skin->defaults.comboBox.openSound);
 				return true;
 			}
+
+			bool interactive() const override { return true; }
 		};
 
 		// list

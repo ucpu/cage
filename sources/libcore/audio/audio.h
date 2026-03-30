@@ -12,5 +12,8 @@ namespace cage
 		AudioFormatEnum format = AudioFormatEnum::Default;
 	};
 
-	uintPtr formatBytes(AudioFormatEnum format);
+	namespace privat
+	{
+		uintPtr formatBytes(AudioFormatEnum format);
+	}
 }

@@ -12,9 +12,14 @@ extern "C"
 	#include "mach_excServer.h"
 }
 
+	#include <cage-core/core.h>
+
 namespace cage
 {
-	void crashHandlerSafeWrite(const String &s);
+	namespace privat
+	{
+		void crashHandlerSafeWrite(const String &s);
+	}
 
 	namespace
 	{
@@ -46,7 +51,7 @@ namespace cage
 			pthread_t pt = pthread_from_mach_thread_np(thread);
 			uint64 tid = 0;
 			pthread_threadid_np(pt, &tid);
-			crashHandlerSafeWrite(Stringizer() + "thread id: " + tid + "\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "thread id: " + tid + "\n");
 
 			// best-effort thread name (unsafe if crashing)
 			char name[64] = {};
@@ -54,7 +59,7 @@ namespace cage
 			if (name[0])
 			{
 				name[sizeof(name) - 1] = 0;
-				crashHandlerSafeWrite(Stringizer() + "thread name: " + name + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "thread name: " + name + "\n");
 			}
 		}
 
@@ -65,18 +70,18 @@ namespace cage
 			mach_msg_type_number_t count = x86_THREAD_STATE64_COUNT;
 			if (thread_get_state(thread, x86_THREAD_STATE64, (thread_state_t)&state, &count) == KERN_SUCCESS)
 			{
-				crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__rip + "\n");
-				crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__rsp + "\n");
-				crashHandlerSafeWrite(Stringizer() + "bp: " + (void *)state.__rbp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__rip + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__rsp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "bp: " + (void *)state.__rbp + "\n");
 			}
 	#elif defined(__arm64__)
 			arm_thread_state64_t state;
 			mach_msg_type_number_t count = ARM_THREAD_STATE64_COUNT;
 			if (thread_get_state(thread, ARM_THREAD_STATE64, (thread_state_t)&state, &count) == KERN_SUCCESS)
 			{
-				crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__pc + "\n");
-				crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__sp + "\n");
-				crashHandlerSafeWrite(Stringizer() + "fp: " + (void *)state.__fp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__pc + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__sp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "fp: " + (void *)state.__fp + "\n");
 			}
 	#else
 		#error "unknwon cpu architecture"
@@ -90,11 +95,11 @@ extern "C"
 	kern_return_t catch_mach_exception_raise(mach_port_t exception_port, mach_port_t thread, mach_port_t task, exception_type_t exception, exception_data_t code, mach_msg_type_number_t code_count)
 	{
 		using namespace cage;
-		crashHandlerSafeWrite(Stringizer() + "mach exception: " + excToStr(exception) + " (" + exception + ")\n");
+		privat::crashHandlerSafeWrite(Stringizer() + "mach exception: " + excToStr(exception) + " (" + exception + ")\n");
 		if (code_count > 0)
-			crashHandlerSafeWrite(Stringizer() + "code[0]: " + code[0] + "\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "code[0]: " + code[0] + "\n");
 		if (code_count > 1)
-			crashHandlerSafeWrite(Stringizer() + "code[1]: " + code[1] + "\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "code[1]: " + code[1] + "\n");
 		writeThreadInfo(thread);
 		writeRegisters(thread);
 		// let the system continue propagating the exception
@@ -129,7 +134,7 @@ namespace cage
 				kern_return_t kr = mach_msg_server(mach_exc_server, MachMsgSize, exceptionPort, 0);
 				if (kr != KERN_SUCCESS)
 				{
-					crashHandlerSafeWrite("mach_msg_server failure, stopping the exception-handling thread\n");
+					privat::crashHandlerSafeWrite("mach_msg_server failure, stopping the exception-handling thread\n");
 					break;
 				}
 			}

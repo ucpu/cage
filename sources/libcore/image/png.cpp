@@ -205,7 +205,7 @@ namespace cage
 			default:
 				CAGE_THROW_ERROR(Exception, "unsupported png image bpp");
 		}
-		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig = privat::defaultConfig(impl->channels);
 	}
 
 	MemoryBuffer pngEncode(const ImageImpl *impl)
@@ -214,7 +214,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for png encoding");
 
 		MemoryBuffer res;
-		res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
+		res.reserve(impl->width * impl->height * impl->channels * privat::formatBytes(impl->format) + 100);
 		switch (impl->format)
 		{
 			case ImageFormatEnum::U8:

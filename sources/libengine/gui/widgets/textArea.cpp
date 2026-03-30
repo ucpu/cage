@@ -155,6 +155,8 @@ namespace cage
 				store(utf32);
 				return true;
 			}
+
+			bool interactive() const override { return true; }
 		};
 	}
 

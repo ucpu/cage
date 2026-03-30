@@ -72,7 +72,7 @@ namespace cage
 					*out_rgba++ = ((float **)exr_image.images)[impl->channels - c - 1][y * impl->width + x];
 		CAGE_ASSERT((char *)out_rgba == impl->mem.data() + impl->mem.size());
 
-		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig = privat::defaultConfig(impl->channels);
 		impl->colorConfig.gammaSpace = exr_header.channels[exr_header.num_channels - 1].p_linear ? GammaSpaceEnum::Linear : GammaSpaceEnum::Gamma;
 	}
 

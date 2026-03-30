@@ -18,51 +18,54 @@ namespace cage
 {
 	String currentThreadName();
 
-	// this is updated when the logging system is initialized
-	int crashHandlerLogFileFd = STDERR_FILENO;
-
-	void crashHandlerSafeWrite(const String &s)
+	namespace privat
 	{
-		write(crashHandlerLogFileFd, s.c_str(), s.length());
-		fsync(crashHandlerLogFileFd);
-		if (crashHandlerLogFileFd != STDERR_FILENO)
+		// this is updated when the logging system is initialized
+		extern int crashHandlerLogFileFd;
+
+		void crashHandlerSafeWrite(const String &s)
 		{
-			write(STDERR_FILENO, s.c_str(), s.length());
-			fsync(STDERR_FILENO);
-		}
-	}
-
-	void crashHandlerThreadInit()
-	{
-		// install alternative stack memory for handling signals
-
-		static constexpr size_t AltStackSize = 128 * 1024; // bigger than SIGSTKSZ for safety
-
-		{
-			stack_t ss = {};
-			if (sigaltstack(nullptr, &ss) == 0)
+			write(crashHandlerLogFileFd, s.c_str(), s.length());
+			fsync(crashHandlerLogFileFd);
+			if (crashHandlerLogFileFd != STDERR_FILENO)
 			{
-				if ((ss.ss_flags & SS_DISABLE) == 0 && ss.ss_size >= AltStackSize)
-					return; // already installed and sufficient
+				write(STDERR_FILENO, s.c_str(), s.length());
+				fsync(STDERR_FILENO);
 			}
 		}
 
-		void *altStackMem = nullptr;
-	#ifdef CAGE_SYSTEM_LINUX
-		altStackMem = mmap(nullptr, AltStackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
-	#endif
-		if (altStackMem == nullptr || altStackMem == MAP_FAILED)
-			altStackMem = std::malloc(AltStackSize); // fallback to malloc
-
-		stack_t ss{};
-		ss.ss_sp = altStackMem;
-		ss.ss_size = AltStackSize;
-		ss.ss_flags = 0;
-		if (sigaltstack(&ss, nullptr) != 0)
+		void crashHandlerThreadInit()
 		{
-			CAGE_LOG(SeverityEnum::Note, "crash-handler", strerror(errno));
-			CAGE_LOG(SeverityEnum::Warning, "crash-handler", "failed to install thread alt stack");
-			// most signals can be handled on regular stack memory, so we continue
+			// install alternative stack memory for handling signals
+
+			static constexpr size_t AltStackSize = 128 * 1024; // bigger than SIGSTKSZ for safety
+
+			{
+				stack_t ss = {};
+				if (sigaltstack(nullptr, &ss) == 0)
+				{
+					if ((ss.ss_flags & SS_DISABLE) == 0 && ss.ss_size >= AltStackSize)
+						return; // already installed and sufficient
+				}
+			}
+
+			void *altStackMem = nullptr;
+	#ifdef CAGE_SYSTEM_LINUX
+			altStackMem = mmap(nullptr, AltStackSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+	#endif
+			if (altStackMem == nullptr || altStackMem == MAP_FAILED)
+				altStackMem = std::malloc(AltStackSize); // fallback to malloc
+
+			stack_t ss{};
+			ss.ss_sp = altStackMem;
+			ss.ss_size = AltStackSize;
+			ss.ss_flags = 0;
+			if (sigaltstack(&ss, nullptr) != 0)
+			{
+				CAGE_LOG(SeverityEnum::Note, "crash-handler", strerror(errno));
+				CAGE_LOG(SeverityEnum::Warning, "crash-handler", "failed to install thread alt stack");
+				// most signals can be handled on regular stack memory, so we continue
+			}
 		}
 	}
 
@@ -94,8 +97,8 @@ namespace cage
 					return "SIGCHLD";
 	#endif
 					// #ifdef SIGCLD
-					// 			case SIGCLD:
-					// 				return "SIGCLD"; // duplicate of SIGCHLD
+					// 	case SIGCLD:
+					// 		return "SIGCLD"; // duplicate of SIGCHLD
 					// #endif
 				case SIGCONT:
 					return "SIGCONT";
@@ -120,8 +123,8 @@ namespace cage
 					return "SIGIO";
 	#endif
 					// #ifdef SIGIOT
-					// 			case SIGIOT:
-					// 				return "SIGIOT"; // duplicate of SIGABRT
+					// 	case SIGIOT:
+					// 		return "SIGIOT"; // duplicate of SIGABRT
 					// #endif
 				case SIGKILL:
 					return "SIGKILL";
@@ -132,8 +135,8 @@ namespace cage
 				case SIGPIPE:
 					return "SIGPIPE";
 					// #ifdef SIGPOLL
-					// 			case SIGPOLL:
-					// 				return "SIGPOLL"; // duplicate of SIGIO
+					// 	case SIGPOLL:
+					// 		return "SIGPOLL"; // duplicate of SIGIO
 					// #endif
 				case SIGPROF:
 					return "SIGPROF";
@@ -192,18 +195,18 @@ namespace cage
 			static constexpr int MaxFrames = 256;
 			void *frames[MaxFrames];
 			int n = backtrace(frames, MaxFrames);
-			crashHandlerSafeWrite(Stringizer() + "stack trace:\n");
-			backtrace_symbols_fd(frames, n, crashHandlerLogFileFd);
-			if (crashHandlerLogFileFd != STDERR_FILENO)
+			privat::crashHandlerSafeWrite(Stringizer() + "stack trace:\n");
+			backtrace_symbols_fd(frames, n, privat::crashHandlerLogFileFd);
+			if (privat::crashHandlerLogFileFd != STDERR_FILENO)
 				backtrace_symbols_fd(frames, n, STDERR_FILENO);
-			crashHandlerSafeWrite("\n");
+			privat::crashHandlerSafeWrite("\n");
 		}
 
 		void performPreviousHandler(int sig, siginfo_t *si, void *uctx)
 		{
 			if (struct sigaction *prev = prevHandler(sig))
 			{
-				crashHandlerSafeWrite("calling previous signal handler\n");
+				privat::crashHandlerSafeWrite("calling previous signal handler\n");
 				if (prev->sa_flags & SA_SIGINFO)
 					prev->sa_sigaction(sig, si, uctx);
 				else if (prev->sa_handler == SIG_DFL || prev->sa_handler == SIG_IGN)
@@ -216,7 +219,7 @@ namespace cage
 			}
 			else
 			{
-				crashHandlerSafeWrite("calling default signal handler\n");
+				privat::crashHandlerSafeWrite("calling default signal handler\n");
 				signal(sig, SIG_DFL);
 				raise(sig);
 			}
@@ -224,10 +227,10 @@ namespace cage
 
 		void crashHandler(int sig, siginfo_t *si, void *uctx)
 		{
-			crashHandlerSafeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
 			if (si)
-				crashHandlerSafeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
-			crashHandlerSafeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
 			printStackTrace();
 			performPreviousHandler(sig, si, uctx);
 		}
@@ -237,7 +240,7 @@ namespace cage
 
 		void intHandler(int sig, siginfo_t *si, void *uctx)
 		{
-			crashHandlerSafeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
+			privat::crashHandlerSafeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
 
 			switch (sig)
 			{
@@ -282,7 +285,7 @@ namespace cage
 		{
 			SetupHandlersSignals()
 			{
-				crashHandlerThreadInit();
+				privat::crashHandlerThreadInit();
 				// https://man7.org/linux/man-pages/man7/signal.7.html
 				for (int s : {
 						 SIGABRT, // Abort signal from abort()

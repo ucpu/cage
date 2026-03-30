@@ -49,7 +49,7 @@ namespace cage
 			Serializer ser(buf);
 
 			uint32 scanlines = impl->height * impl->channels;
-			uint32 linewidth = impl->width * formatBytes(impl->format);
+			uint32 linewidth = impl->width * privat::formatBytes(impl->format);
 			des.read(scanlines * 2);
 
 			for (uint32 line = 0; line < scanlines; line++)
@@ -217,7 +217,7 @@ namespace cage
 		}
 
 		// image data section
-		impl->mem.allocate(impl->width * impl->height * impl->channels * formatBytes(impl->format));
+		impl->mem.allocate(impl->width * impl->height * impl->channels * privat::formatBytes(impl->format));
 
 		// compression method
 		uint16 compression;
@@ -253,7 +253,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for psd encoding");
 
 		MemoryBuffer buf;
-		buf.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
+		buf.reserve(impl->width * impl->height * impl->channels * privat::formatBytes(impl->format) + 100);
 		Serializer ser(buf);
 
 		// file header section

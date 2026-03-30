@@ -17,7 +17,7 @@ namespace cage
 		class ScreenDeviceImpl : public ScreenDevice
 		{
 		public:
-			ScreenDeviceImpl(GLFWmonitor *m) : name_(glfwGetMonitorName(m)), id_(getMonitorId(m)), current_(cage::m)
+			ScreenDeviceImpl(GLFWmonitor *m) : name_(glfwGetMonitorName(m)), id_(privat::getMonitorId(m)), current_(cage::m)
 			{
 				int cnt = 0;
 				const GLFWvidmode *ms = glfwGetVideoModes(m, &cnt);
@@ -105,7 +105,7 @@ namespace cage
 
 	Holder<ScreenList> newScreenList()
 	{
-		cageGlfwInitializeFunc();
+		privat::glfwInitializeFunc();
 		return systemMemory().createImpl<ScreenList, ScreenListImpl>();
 	}
 }

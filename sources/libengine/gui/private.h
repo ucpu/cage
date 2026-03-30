@@ -129,6 +129,8 @@ namespace cage
 		virtual bool keyRepeat(uint32 key, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
 		// no release events -> always propagate release events to all listeners
+
+		virtual bool interactive() const; // used for cursor info
 	};
 
 	struct LayoutItem : public BaseItem
@@ -349,7 +351,7 @@ namespace cage
 		bool keyPress(input::KeyPress);
 		bool keyRepeat(input::KeyRepeat);
 		bool keyChar(input::Character);
-		bool testMouseCovered() const;
+		GuiCursorInfo cursorInfo() const;
 		// no release events -> always propagate release events to all listeners
 
 		std::vector<EventReceiver> mouseEventReceivers;

@@ -18,7 +18,10 @@
 
 namespace cage
 {
-	CAGE_API_IMPORT void initializeAbslLogSink();
+	namespace privat
+	{
+		CAGE_API_IMPORT void initializeAbslLogSink();
+	}
 
 	GraphicsCommandBufferStatistics operator+(const GraphicsCommandBufferStatistics &a, const GraphicsCommandBufferStatistics &b)
 	{
@@ -289,7 +292,7 @@ namespace cage
 
 			GraphicsDeviceImpl(const GraphicsDeviceCreateConfig &config) : config(config)
 			{
-				initializeAbslLogSink();
+				privat::initializeAbslLogSink();
 				createInstance();
 				createAdapter();
 				createDevice();
@@ -339,13 +342,13 @@ namespace cage
 
 			privat::GraphicsContext *getContext(Window *window)
 			{
-				Holder<privat::GraphicsContext> &context = privat::getGlfwContext(window);
+				Holder<privat::GraphicsContext> &context = privat::getGraphicsContext(window);
 				if (!context)
 					context = systemMemory().createHolder<privat::GraphicsContext>();
 				if (!context->surface)
 				{
 					CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu surface");
-					context->surface = wgpu::glfw::CreateSurfaceForWindow(instance, getGlfwWindow(window));
+					context->surface = wgpu::glfw::CreateSurfaceForWindow(instance, privat::getGlfwWindow(window));
 					if (!context->surface)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
 				}

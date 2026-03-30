@@ -71,7 +71,7 @@ namespace cage
 			case makeFourCC("DXT1"):
 			{
 				auto res = imageBc1Decode(des.read(header.width * header.height / 2), Vec2i(header.width, header.height));
-				swapAll(impl, (ImageImpl *)+res);
+				privat::swapAll(impl, (ImageImpl *)+res);
 				break;
 			}
 			case makeFourCC("DXT2"):
@@ -80,7 +80,7 @@ namespace cage
 			case makeFourCC("DXT3"):
 			{
 				auto res = imageBc2Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
-				swapAll(impl, (ImageImpl *)+res);
+				privat::swapAll(impl, (ImageImpl *)+res);
 				break;
 			}
 			case makeFourCC("DXT4"):
@@ -89,13 +89,13 @@ namespace cage
 			case makeFourCC("DXT5"):
 			{
 				auto res = imageBc3Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
-				swapAll(impl, (ImageImpl *)+res);
+				privat::swapAll(impl, (ImageImpl *)+res);
 				break;
 			}
 			default:
 				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
-		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig = privat::defaultConfig(impl->channels);
 		if (premultiplied)
 			impl->colorConfig.alphaMode = AlphaModeEnum::PremultipliedOpacity;
 	}
@@ -144,7 +144,7 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
 		CAGE_ASSERT(bufferSize > 0);
-		raw.colorConfig = defaultConfig(raw.channels);
+		raw.colorConfig = privat::defaultConfig(raw.channels);
 		if (premultiplied)
 			raw.colorConfig.alphaMode = AlphaModeEnum::PremultipliedOpacity;
 

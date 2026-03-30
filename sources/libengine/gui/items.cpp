@@ -241,6 +241,11 @@ namespace cage
 		return true;
 	}
 
+	bool WidgetItem::interactive() const
+	{
+		return false;
+	}
+
 	LayoutItem::LayoutItem(HierarchyItem *hierarchy) : BaseItem(hierarchy) {}
 
 	bool LayoutItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)

@@ -283,19 +283,22 @@ namespace cage
 		};
 	}
 
-	void profilingThreadName()
+	namespace privat
 	{
-		try
+		void updateThreadNameInProfiling()
 		{
-			QueueItem qi;
-			qi.data = currentThreadName();
-			qi.threadId = currentThreadId();
-			qi.startTime = qi.endTime = ThreadNameSpecifier;
-			queue().push(qi);
-		}
-		catch (...)
-		{
-			// nothing
+			try
+			{
+				QueueItem qi;
+				qi.data = currentThreadName();
+				qi.threadId = currentThreadId();
+				qi.startTime = qi.endTime = ThreadNameSpecifier;
+				queue().push(qi);
+			}
+			catch (...)
+			{
+				// nothing
+			}
 		}
 	}
 

@@ -52,8 +52,11 @@ namespace cage
 		};
 	}
 
-	CAGE_API_EXPORT void initializeAbslLogSink()
+	namespace privat
 	{
-		static AbslLogSink logSink;
+		CAGE_API_EXPORT void initializeAbslLogSink()
+		{
+			static AbslLogSink logSink;
+		}
 	}
 }

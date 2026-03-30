@@ -10,7 +10,6 @@
 
 namespace cage
 {
-
 	namespace
 	{
 		struct ScheduleStatisticsImpl : public ScheduleStatistics

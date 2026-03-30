@@ -233,6 +233,8 @@ namespace cage
 			}
 
 			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override { return handleMouse(buttons, modifiers, point, true); }
+
+			bool interactive() const override { return true; }
 		};
 
 		ColorPickerRenderable::ColorPickerRenderable(const ColorPickerImpl *item) : RenderableBase(item->hierarchy->impl) {}

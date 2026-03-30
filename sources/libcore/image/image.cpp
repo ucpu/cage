@@ -6,6 +6,58 @@
 
 namespace cage
 {
+	namespace privat
+	{
+		uint32 formatBytes(ImageFormatEnum format)
+		{
+			switch (format)
+			{
+				case ImageFormatEnum::U8:
+					return sizeof(uint8);
+				case ImageFormatEnum::U16:
+					return sizeof(uint16);
+				case ImageFormatEnum::Float:
+					return sizeof(float);
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid image format");
+			}
+		}
+
+		ImageColorConfig defaultConfig(uint32 channels)
+		{
+			ImageColorConfig c;
+			switch (channels)
+			{
+				case 1:
+					c.gammaSpace = GammaSpaceEnum::Gamma;
+					break;
+				case 2:
+					c.alphaChannelIndex = 1;
+					c.alphaMode = AlphaModeEnum::Opacity;
+					c.gammaSpace = GammaSpaceEnum::Gamma;
+					break;
+				case 3:
+					c.gammaSpace = GammaSpaceEnum::Gamma;
+					break;
+				case 4:
+					c.alphaChannelIndex = 3;
+					c.alphaMode = AlphaModeEnum::Opacity;
+					c.gammaSpace = GammaSpaceEnum::Gamma;
+					break;
+			}
+			return c;
+		}
+
+		void swapAll(ImageImpl *a, ImageImpl *b)
+		{
+			std::swap(a->width, b->width);
+			std::swap(a->height, b->height);
+			std::swap(a->channels, b->channels);
+			std::swap(a->format, b->format);
+			std::swap(a->colorConfig, b->colorConfig);
+			std::swap(a->mem, b->mem);
+		}
+	}
 
 	StringPointer imageFormatToString(ImageFormatEnum format)
 	{
@@ -54,56 +106,6 @@ namespace cage
 		}
 	}
 
-	uint32 formatBytes(ImageFormatEnum format)
-	{
-		switch (format)
-		{
-			case ImageFormatEnum::U8:
-				return sizeof(uint8);
-			case ImageFormatEnum::U16:
-				return sizeof(uint16);
-			case ImageFormatEnum::Float:
-				return sizeof(float);
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid image format");
-		}
-	}
-
-	ImageColorConfig defaultConfig(uint32 channels)
-	{
-		ImageColorConfig c;
-		switch (channels)
-		{
-			case 1:
-				c.gammaSpace = GammaSpaceEnum::Gamma;
-				break;
-			case 2:
-				c.alphaChannelIndex = 1;
-				c.alphaMode = AlphaModeEnum::Opacity;
-				c.gammaSpace = GammaSpaceEnum::Gamma;
-				break;
-			case 3:
-				c.gammaSpace = GammaSpaceEnum::Gamma;
-				break;
-			case 4:
-				c.alphaChannelIndex = 3;
-				c.alphaMode = AlphaModeEnum::Opacity;
-				c.gammaSpace = GammaSpaceEnum::Gamma;
-				break;
-		}
-		return c;
-	}
-
-	void swapAll(ImageImpl *a, ImageImpl *b)
-	{
-		std::swap(a->width, b->width);
-		std::swap(a->height, b->height);
-		std::swap(a->channels, b->channels);
-		std::swap(a->format, b->format);
-		std::swap(a->colorConfig, b->colorConfig);
-		std::swap(a->mem, b->mem);
-	}
-
 	void Image::clear()
 	{
 		ImageImpl *impl = (ImageImpl *)this;
@@ -127,9 +129,9 @@ namespace cage
 		impl->channels = c;
 		impl->format = f;
 		impl->mem.resize(0); // avoid unnecessary copies without deallocating the memory
-		impl->mem.resize(w * h * c * formatBytes(f));
+		impl->mem.resize(w * h * c * privat::formatBytes(f));
 		impl->mem.zero();
-		colorConfig = defaultConfig(c);
+		colorConfig = privat::defaultConfig(c);
 	}
 
 	void Image::initialize(const Vec2i &r, uint32 c, ImageFormatEnum f)
@@ -155,7 +157,7 @@ namespace cage
 
 	void Image::importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
-		if (buffer.size() < (uintPtr)width * height * channels * formatBytes(format))
+		if (buffer.size() < (uintPtr)width * height * channels * privat::formatBytes(format))
 			CAGE_THROW_ERROR(Exception, "image raw import with insufficient buffer");
 		ImageImpl *impl = (ImageImpl *)this;
 		initialize(0, 0, channels, format);
@@ -173,7 +175,7 @@ namespace cage
 
 	void Image::importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
-		if (buffer.size() < (uintPtr)width * height * channels * formatBytes(format))
+		if (buffer.size() < (uintPtr)width * height * channels * privat::formatBytes(format))
 			CAGE_THROW_ERROR(Exception, "image raw import with insufficient buffer");
 		ImageImpl *impl = (ImageImpl *)this;
 		initialize(width, height, channels, format);

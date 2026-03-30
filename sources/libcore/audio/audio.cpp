@@ -7,20 +7,23 @@
 
 namespace cage
 {
-	uintPtr formatBytes(AudioFormatEnum format)
+	namespace privat
 	{
-		switch (format)
+		uintPtr formatBytes(AudioFormatEnum format)
 		{
-			case AudioFormatEnum::S16:
-				return sizeof(sint16);
-			case AudioFormatEnum::S32:
-				return sizeof(sint32);
-			case AudioFormatEnum::Float:
-				return sizeof(float);
-			case AudioFormatEnum::Vorbis:
-				CAGE_THROW_ERROR(Exception, "vorbis encoding has variable bitrate");
-			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid audio format");
+			switch (format)
+			{
+				case AudioFormatEnum::S16:
+					return sizeof(sint16);
+				case AudioFormatEnum::S32:
+					return sizeof(sint32);
+				case AudioFormatEnum::Float:
+					return sizeof(float);
+				case AudioFormatEnum::Vorbis:
+					CAGE_THROW_ERROR(Exception, "vorbis encoding has variable bitrate");
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid audio format");
+			}
 		}
 	}
 
@@ -46,7 +49,7 @@ namespace cage
 		impl->sampleRate = sampleRate;
 		impl->format = format;
 		impl->mem.resize(0); // avoid unnecessary copies without deallocating the memory
-		impl->mem.resize(frames * channels * formatBytes(format));
+		impl->mem.resize(frames * channels * privat::formatBytes(format));
 		impl->mem.zero();
 	}
 
@@ -65,7 +68,7 @@ namespace cage
 
 	void Audio::importRaw(PointerRange<const char> buffer, uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
 	{
-		if (buffer.size() < (uintPtr)frames * channels * formatBytes(format))
+		if (buffer.size() < (uintPtr)frames * channels * privat::formatBytes(format))
 			CAGE_THROW_ERROR(Exception, "audio raw import with insufficient buffer");
 		AudioImpl *impl = (AudioImpl *)this;
 		initialize(frames, channels, sampleRate, format);
@@ -283,7 +286,7 @@ namespace cage
 		}
 		else if (s->format == t->format)
 		{
-			const uintPtr fb = s->channels * formatBytes(s->format);
+			const uintPtr fb = s->channels * privat::formatBytes(s->format);
 			detail::memcpy((char *)t->mem.data() + targetFrameOffset * fb, (char *)s->mem.data() + sourceFrameOffset * fb, frames * fb);
 		}
 		else

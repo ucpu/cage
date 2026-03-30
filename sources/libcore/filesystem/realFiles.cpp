@@ -843,11 +843,16 @@ namespace cage
 		}
 	}
 
-#ifdef CAGE_SYSTEM_LINUX
-	int realFileGetFd(File *f)
+	namespace privat
 	{
-		FileRealBase *base = class_cast<FileRealBase *>(f);
-		return fileno(base->f);
+		int realFileGetFd(File *f)
+		{
+			FileRealBase *base = class_cast<FileRealBase *>(f);
+#ifdef CAGE_SYSTEM_WINDOWS
+			return _fileno(base->f);
+#else
+			return fileno(base->f);
+#endif // CAGE_SYSTEM_WINDOWS
+		}
 	}
-#endif
 }

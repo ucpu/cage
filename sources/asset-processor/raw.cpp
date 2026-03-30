@@ -6,12 +6,12 @@ void processRaw()
 
 	Holder<PointerRange<char>> data;
 	{ // load file
-		Holder<File> f = readFile(processor->inputFile);
+		Holder<File> f = readFile(processor->inputFileName);
 		data = f->readAll();
 	}
 
 	AssetHeader h = processor->initializeAssetHeader();
-	h.originalSize = numeric_cast<uint32>(data.size());
+	h.originalSize = data.size();
 
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "original data size: " + data.size() + " bytes");
 	if (data.size() >= toUint32(processor->property("compressThreshold")))
@@ -22,7 +22,7 @@ void processRaw()
 		{
 			std::swap(data, data2);
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using the compressed data");
-			h.compressedSize = numeric_cast<uint32>(data2.size());
+			h.compressedSize = data.size();
 		}
 		else
 			CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using the data without compression");

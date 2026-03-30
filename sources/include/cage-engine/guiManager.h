@@ -13,6 +13,15 @@ namespace cage
 	struct GuiSkinConfig;
 	struct GuiSkinIndex;
 
+	struct CAGE_ENGINE_API GuiCursorInfo
+	{
+		Vec2 position = Vec2::Nan(); // points
+		Entity *e = nullptr;
+		bool interactive = false;
+		bool disabled = false;
+		bool tooltip = false;
+	};
+
 	struct CAGE_ENGINE_API GuiRenderConfig
 	{
 		Vec2i resolution;
@@ -48,7 +57,8 @@ namespace cage
 
 		bool handleInput(const GenericInput &);
 		void invalidateInputs(); // skip all remaining inputs until next prepare
-		bool coversCursor() const; // returns whether the cursor is over a visible part of the gui
+		GuiCursorInfo cursorInfo() const;
+		Vec2 cursorPosition() const; // points
 		EventDispatcher<bool(const GenericInput &)> widgetEvent; // called from inside handleInput
 
 		uint32 skinsCount() const;

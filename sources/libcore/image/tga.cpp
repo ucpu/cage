@@ -291,7 +291,7 @@ namespace cage
 	{
 		tgaDecodeImpl(inBuffer, impl, false);
 		imageVerticalFlip(impl);
-		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig = privat::defaultConfig(impl->channels);
 	}
 
 	bool experimentalTgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
@@ -301,7 +301,7 @@ namespace cage
 			detail::OverrideException ex;
 			tgaDecodeImpl(inBuffer, impl, true);
 			imageVerticalFlip(impl);
-			impl->colorConfig = defaultConfig(impl->channels);
+			impl->colorConfig = privat::defaultConfig(impl->channels);
 			return true;
 		}
 		catch (...)

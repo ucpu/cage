@@ -58,7 +58,7 @@ namespace cage
 	void imageVerticalFlip(Image *img)
 	{
 		ImageImpl *impl = (ImageImpl *)img;
-		uint32 lineSize = formatBytes(impl->format) * impl->channels * impl->width;
+		uint32 lineSize = privat::formatBytes(impl->format) * impl->channels * impl->width;
 		uint32 swapsCount = impl->height / 2;
 		MemoryBuffer tmp;
 		tmp.allocate(lineSize);
@@ -290,7 +290,7 @@ namespace cage
 		auto chs = imageChannelsSplit(img);
 		const Image *arr[2] = { +chs[1], +chs[2] };
 		auto tmp = imageChannelsJoin(arr);
-		swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
+		privat::swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
 	}
 
 	void imageConvertSpecialToGltfPbr(Image *img)
@@ -298,7 +298,7 @@ namespace cage
 		auto chs = imageChannelsSplit(img);
 		const Image *arr[3] = { nullptr, +chs[0], +chs[1] };
 		auto tmp = imageChannelsJoin(arr);
-		swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
+		privat::swapAll((ImageImpl *)img, (ImageImpl *)+tmp);
 	}
 
 	void imageResize(Image *img, uint32 w, uint32 h, bool useColorConfig)
@@ -698,7 +698,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "region outside image resolution");
 		if (s->format == t->format)
 		{
-			const uint32 ps = formatBytes(s->format) * s->channels;
+			const uint32 ps = privat::formatBytes(s->format) * s->channels;
 			const uint32 sl = s->width * ps;
 			const uint32 tl = t->width * ps;
 			const char *ss = s->mem.data();

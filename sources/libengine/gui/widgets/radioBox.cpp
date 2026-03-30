@@ -70,6 +70,8 @@ namespace cage
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				return true;
 			}
+
+			bool interactive() const override { return true; }
 		};
 	}
 
