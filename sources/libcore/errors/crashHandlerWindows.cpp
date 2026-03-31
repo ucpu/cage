@@ -17,8 +17,30 @@
 
 namespace cage
 {
+	namespace
+	{
+		void printStackTrace(PEXCEPTION_POINTERS ex);
+	}
+
 	namespace privat
 	{
+		void crashHandlerPrintThread()
+		{
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
+		}
+
+		void crashHandlerPrintStack()
+		{
+			CONTEXT ctx = {};
+			RtlCaptureContext(&ctx); // manual context  capture
+			EXCEPTION_RECORD rec = {};
+			rec.ExceptionCode = 0xDEAD; // custom marker
+			EXCEPTION_POINTERS ptrs = {};
+			ptrs.ContextRecord = &ctx;
+			ptrs.ExceptionRecord = &rec;
+			printStackTrace(&ptrs);
+		}
+
 		void crashHandlerThreadInit()
 		{
 			// reserve safe memory on the stack for handling EXCEPTION_STACK_OVERFLOW
@@ -222,10 +244,11 @@ namespace cage
 						str + symbol->Name;
 					}
 					CAGE_LOG_CONTINUE(SeverityEnum::Info, "crash-handler", str.value.empty() ? String("unknown-frame") : str);
-					if (++iteration == 50)
+					if (++iteration >= 100)
 						break;
 				}
 				SymCleanup(process);
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "crash-handler", "");
 			}
 			else
 			{
@@ -259,7 +282,7 @@ namespace cage
 				for (uint32 i = 0; i < ex->ExceptionRecord->NumberParameters; i++)
 					CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "parameter[" + i + "]: " + ex->ExceptionRecord->ExceptionInformation);
 			}
-			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
+			privat::crashHandlerPrintThread();
 			printStackTrace(ex);
 		}
 
@@ -276,7 +299,10 @@ namespace cage
 		{
 			commonHandler(ex);
 			if (previousExceptionFilter)
+			{
+				CAGE_LOG(SeverityEnum::Info, "crash-handler", "calling previous handler");
 				return previousExceptionFilter(ex);
+			}
 			return EXCEPTION_CONTINUE_SEARCH;
 		}
 
@@ -301,37 +327,31 @@ namespace cage
 			return data;
 		}
 
-		_invalid_parameter_handler previousInvalidParameter = nullptr;
+		void commonHandler()
+		{
+			privat::crashHandlerPrintThread();
+			privat::crashHandlerPrintStack();
+			CAGE_LOG(SeverityEnum::Info, "crash-handler", "calling abort");
+			std::abort();
+		}
 
 		void invalidParameterHandler(const wchar_t *expression, const wchar_t *function, const wchar_t *file, unsigned int line, uintptr_t pReserved)
 		{
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: invalid parameter");
 			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "expression: " + narrow(expression) + ", function: " + narrow(function));
-			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
-			detail::debugBreakpoint();
-			if (previousInvalidParameter)
-				previousInvalidParameter(expression, function, file, line, pReserved);
-			std::terminate();
+			commonHandler();
 		}
-
-		_purecall_handler previousPurecall = nullptr;
 
 		void purecallHandler()
 		{
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: purecall");
-			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
-			detail::debugBreakpoint();
-			if (previousPurecall)
-				previousPurecall();
-			std::terminate();
+			commonHandler();
 		}
 
 		void sigAbrtHandler(int)
 		{
 			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: abort signal");
-			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "in thread: " + currentThreadName());
-			detail::debugBreakpoint();
-			std::terminate();
+			commonHandler();
 		}
 
 		struct SetupHandlersWindows
@@ -347,8 +367,8 @@ namespace cage
 				previousExceptionFilter = SetUnhandledExceptionFilter(&unhandledHandler);
 				if (!SetConsoleCtrlHandler(&consoleHandler, TRUE))
 					CAGE_THROW_ERROR(SystemError, "SetConsoleCtrlHandler", GetLastError());
-				previousInvalidParameter = _set_invalid_parameter_handler(&invalidParameterHandler);
-				previousPurecall = _set_purecall_handler(&purecallHandler);
+				_set_invalid_parameter_handler(&invalidParameterHandler);
+				_set_purecall_handler(&purecallHandler);
 				signal(SIGABRT, &sigAbrtHandler);
 			}
 		} setupHandlersWindows;

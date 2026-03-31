@@ -32,13 +32,19 @@ static_assert(CAGE_DEBUG_BOOL == false);
 
 namespace cage
 {
+	namespace privat
+	{
+		void crashHandlerPrintThread();
+		void crashHandlerPrintStack();
+	}
+
 	namespace
 	{
 		std::terminate_handler previousTerminateHandler;
 
 		[[noreturn]] void terminateHandler()
 		{
-			CAGE_LOG(SeverityEnum::Critical, "terminate", "terminate handler was invoked");
+			CAGE_LOG(SeverityEnum::Critical, "terminate", "terminate handler is invoked");
 			try
 			{
 				if (std::exception_ptr eptr = std::current_exception())
@@ -48,8 +54,13 @@ namespace cage
 			{
 				detail::logCurrentCaughtException();
 			}
+			privat::crashHandlerPrintThread();
+			privat::crashHandlerPrintStack();
 			detail::debugBreakpoint();
-			previousTerminateHandler();
+			//CAGE_LOG(SeverityEnum::Info, "terminate", "calling previous terminate handler");
+			//previousTerminateHandler();
+			CAGE_LOG(SeverityEnum::Info, "terminate", "calling abort");
+			std::abort();
 			throw;
 		}
 

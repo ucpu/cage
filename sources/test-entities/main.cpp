@@ -511,6 +511,7 @@ int main(int argc, const char *args[])
 	try
 	{
 		performanceLoop();
+		return 0;
 	}
 	catch (...)
 	{

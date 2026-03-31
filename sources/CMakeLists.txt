@@ -173,6 +173,13 @@ cage_ide_category(cage-test-entities cage/tests)
 cage_ide_sort_files(cage-test-entities)
 cage_ide_working_dir_in_place(cage-test-entities)
 
+file(GLOB_RECURSE cage-test-crash-sources "test-crash/*")
+add_executable(cage-test-crash ${cage-test-crash-sources})
+target_link_libraries(cage-test-crash cage-core)
+cage_ide_category(cage-test-crash cage/tests)
+cage_ide_sort_files(cage-test-crash)
+cage_ide_working_dir_in_place(cage-test-crash)
+
 ########
 # TOOLS
 ########

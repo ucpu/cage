@@ -1,5 +1,6 @@
 #ifdef CAGE_SYSTEM_MAC
 
+	#include <dlfcn.h>
 	#include <mach/exception_types.h>
 	#include <mach/mach.h>
 	#include <mach/task.h>
@@ -48,7 +49,13 @@ namespace cage
 
 		void writeThreadInfo(mach_port_t thread)
 		{
-			pthread_t pt = pthread_from_mach_thread_np(thread);
+			const pthread_t pt = pthread_from_mach_thread_np(thread);
+			if (!pt)
+			{
+				privat::crashHandlerSafeWrite("thread id: unknown\n");
+				return;
+			}
+
 			uint64 tid = 0;
 			pthread_threadid_np(pt, &tid);
 			privat::crashHandlerSafeWrite(Stringizer() + "thread id: " + tid + "\n");
@@ -63,16 +70,17 @@ namespace cage
 			}
 		}
 
-		void writeRegisters(mach_port_t thread)
+		std::pair<uint64, uint64> writeRegisters(mach_port_t thread)
 		{
 	#if defined(__x86_64__)
 			x86_thread_state64_t state;
 			mach_msg_type_number_t count = x86_THREAD_STATE64_COUNT;
 			if (thread_get_state(thread, x86_THREAD_STATE64, (thread_state_t)&state, &count) == KERN_SUCCESS)
 			{
-				privat::crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__rip + "\n");
-				privat::crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__rsp + "\n");
-				privat::crashHandlerSafeWrite(Stringizer() + "bp: " + (void *)state.__rbp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "rip: " + (void *)state.__rip + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "rsp: " + (void *)state.__rsp + "\n");
+				privat::crashHandlerSafeWrite(Stringizer() + "rbp: " + (void *)state.__rbp + "\n");
+				return { (uint64)state.__rbp, (uint64)state.__rip };
 			}
 	#elif defined(__arm64__)
 			arm_thread_state64_t state;
@@ -82,10 +90,53 @@ namespace cage
 				privat::crashHandlerSafeWrite(Stringizer() + "pc: " + (void *)state.__pc + "\n");
 				privat::crashHandlerSafeWrite(Stringizer() + "sp: " + (void *)state.__sp + "\n");
 				privat::crashHandlerSafeWrite(Stringizer() + "fp: " + (void *)state.__fp + "\n");
+				return { (uint64)state.__fp, (uint64)state.__pc };
 			}
 	#else
 		#error "unknwon cpu architecture"
 	#endif
+			return {};
+		}
+
+		void printStack(uint64 fp, uint64 pc, mach_port_t thread)
+		{
+			privat::crashHandlerSafeWrite("stack trace:\n");
+
+			const auto &printFrame = [](uint64 addr)
+			{
+				Dl_info info = {};
+				if (dladdr((void *)addr, &info) && info.dli_sname)
+					privat::crashHandlerSafeWrite(Stringizer() + info.dli_sname + " + " + (uint64)((char *)addr - (char *)info.dli_saddr) + "\n");
+				else
+					privat::crashHandlerSafeWrite(Stringizer() + (void *)addr + "\n");
+			};
+
+			if (pc)
+				printFrame(pc);
+
+			const pthread_t pt = pthread_from_mach_thread_np(thread);
+			if (!pt)
+			{
+				privat::crashHandlerSafeWrite("unknown thread id\n");
+				return;
+			}
+
+			const uint64 top = (uint64)pthread_get_stackaddr_np(pt);
+			const uint64 bottom = top - (uint64)pthread_get_stacksize_np(pt);
+
+			for (uint32 i = 0; i < 100; i++)
+			{
+				if (fp < bottom || fp + 2 * sizeof(uint64) > top)
+					break;
+				if (fp % alignof(void *) != 0)
+					break;
+				const uint64_t *frame = (uint64_t *)fp;
+				if (frame[1] == 0)
+					break;
+				printFrame(frame[1]);
+				fp = frame[0];
+			}
+			privat::crashHandlerSafeWrite("\n");
 		}
 	}
 }
@@ -95,13 +146,16 @@ extern "C"
 	kern_return_t catch_mach_exception_raise(mach_port_t exception_port, mach_port_t thread, mach_port_t task, exception_type_t exception, exception_data_t code, mach_msg_type_number_t code_count)
 	{
 		using namespace cage;
+		thread_suspend(thread);
 		privat::crashHandlerSafeWrite(Stringizer() + "mach exception: " + excToStr(exception) + " (" + exception + ")\n");
 		if (code_count > 0)
 			privat::crashHandlerSafeWrite(Stringizer() + "code[0]: " + code[0] + "\n");
 		if (code_count > 1)
 			privat::crashHandlerSafeWrite(Stringizer() + "code[1]: " + code[1] + "\n");
 		writeThreadInfo(thread);
-		writeRegisters(thread);
+		const auto regs = writeRegisters(thread);
+		printStack(regs.first, regs.second, thread);
+		thread_resume(thread);
 		// let the system continue propagating the exception
 		return KERN_FAILURE;
 	}

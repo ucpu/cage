@@ -282,7 +282,7 @@ namespace cage
 			if (l > String::MaxLength / 2)
 				l = String::MaxLength / 2;
 			return String(PointerRange(p, p + l));
-#else
+#elif defined(CAGE_SYSTEM_LINUX)
 			FILE *fp = fopen("/proc/self/cmdline", "r");
 			if (!fp)
 				return "";
@@ -300,6 +300,10 @@ namespace cage
 				res += String(c);
 			}
 			return res;
+#elif defined(CAGE_SYSTEM_MAC)
+			return ""; // todo
+#else
+	#error unknown platform
 #endif // CAGE_SYSTEM_WINDOWS
 		}
 

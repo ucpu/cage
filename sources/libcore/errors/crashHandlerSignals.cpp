@@ -34,6 +34,29 @@ namespace cage
 			}
 		}
 
+		void crashHandlerPrintThread()
+		{
+			privat::crashHandlerSafeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
+		}
+
+		void crashHandlerPrintStack()
+		{
+			// backtrace (best-effort; not strictly async-signal-safe)
+			static constexpr int MaxFrames = 256;
+			void *frames[MaxFrames];
+			int n = backtrace(frames, MaxFrames);
+			if (n <= 0)
+			{
+				crashHandlerSafeWrite("stack trace: <empty>\n");
+				return;
+			}
+			crashHandlerSafeWrite(Stringizer() + "stack trace:\n");
+			backtrace_symbols_fd(frames, n, crashHandlerLogFileFd);
+			if (crashHandlerLogFileFd != STDERR_FILENO)
+				backtrace_symbols_fd(frames, n, STDERR_FILENO);
+			crashHandlerSafeWrite("\n");
+		}
+
 		void crashHandlerThreadInit()
 		{
 			// install alternative stack memory for handling signals
@@ -80,6 +103,7 @@ namespace cage
 				return &prevHandlers[sig];
 			return nullptr;
 		}
+
 		const char *sigToStr(int sig)
 		{
 			switch (sig)
@@ -189,19 +213,6 @@ namespace cage
 			}
 		}
 
-		void printStackTrace()
-		{
-			// backtrace (best-effort; not strictly async-signal-safe)
-			static constexpr int MaxFrames = 256;
-			void *frames[MaxFrames];
-			int n = backtrace(frames, MaxFrames);
-			privat::crashHandlerSafeWrite(Stringizer() + "stack trace:\n");
-			backtrace_symbols_fd(frames, n, privat::crashHandlerLogFileFd);
-			if (privat::crashHandlerLogFileFd != STDERR_FILENO)
-				backtrace_symbols_fd(frames, n, STDERR_FILENO);
-			privat::crashHandlerSafeWrite("\n");
-		}
-
 		void performPreviousHandler(int sig, siginfo_t *si, void *uctx)
 		{
 			if (struct sigaction *prev = prevHandler(sig))
@@ -230,8 +241,8 @@ namespace cage
 			privat::crashHandlerSafeWrite(Stringizer() + "signal handler: " + sigToStr(sig) + " (" + sig + ")\n");
 			if (si)
 				privat::crashHandlerSafeWrite(Stringizer() + "fault addr: " + (uintptr_t)si->si_addr + ", code: " + si->si_code + "\n");
-			privat::crashHandlerSafeWrite(Stringizer() + "in thread: " + currentThreadName() + "\n");
-			printStackTrace();
+			privat::crashHandlerPrintThread();
+			privat::crashHandlerPrintStack();
 			performPreviousHandler(sig, si, uctx);
 		}
 

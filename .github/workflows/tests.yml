@@ -51,6 +51,14 @@ jobs:
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
 
+    - name: Crash handler
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-crash write-to-null || true
+        echo "log:"
+        cat cage-test-crash.log
+
     - name: Assets
       shell: bash
       run: |
@@ -127,6 +135,14 @@ jobs:
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
 
+    - name: Crash handler
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-crash write-to-null || true
+        echo "log:"
+        cat cage-test-crash.log
+
     - name: Assets
       run: |
         cd build/result/${{ matrix.build-config }}
@@ -179,6 +195,14 @@ jobs:
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
+
+    - name: Crash handler
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-crash write-to-null || true
+        echo "log:"
+        cat cage-test-crash.log
 
     - name: Assets
       run: |
