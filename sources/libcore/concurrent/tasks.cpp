@@ -7,6 +7,7 @@
 #include <cage-core/debug.h>
 #include <cage-core/profiling.h>
 #include <cage-core/scopeGuard.h>
+#include <cage-core/slidingBuffer.h>
 #include <cage-core/tasks.h>
 
 namespace cage
@@ -116,7 +117,7 @@ namespace cage
 			}
 		};
 
-		struct TasksQueue : public ConcurrentQueue<Holder<TaskImpl>>
+		struct TasksQueue : public ConcurrentQueue<Holder<TaskImpl>, SlidingBuffer>
 		{
 			bool tryPopFilter(Holder<TaskImpl> &value)
 			{

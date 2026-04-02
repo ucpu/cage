@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryCompression.h>
 #include <cage-core/stdBufferStream.h>
+
+#include "main.h"
 
 void testMemoryBuffers()
 {

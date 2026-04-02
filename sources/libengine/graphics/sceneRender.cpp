@@ -1377,6 +1377,8 @@ namespace cage
 				{
 					if (it.translucent)
 						continue;
+					if (failedMask(it.e))
+						continue;
 
 					switch (it.data.index)
 					{
@@ -1615,6 +1617,8 @@ namespace cage
 				{
 					if (it.data.index != VariantEnum::Object)
 						continue;
+					if (failedMask(it.e))
+						continue;
 					prepareModelsHolders.clear();
 					config.lodSelection.selectModels(prepareModelsHolders, it.transform.position, it.data.object().object, scene->config.onDemand);
 					for (auto &mesh : prepareModelsHolders)
@@ -1645,6 +1649,9 @@ namespace cage
 				items.reserve(scene->items.size());
 				for (const auto &it : scene->items)
 				{
+					if (failedMask(it.e))
+						continue;
+
 					switch (it.data.index)
 					{
 						case VariantEnum::Model:

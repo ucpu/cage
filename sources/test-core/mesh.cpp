@@ -2,8 +2,6 @@
 #include <array>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/collider.h>
 #include <cage-core/files.h>
 #include <cage-core/geometry.h>
@@ -13,6 +11,8 @@
 #include <cage-core/meshExport.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/meshShapes.h>
+
+#include "main.h"
 
 namespace
 {

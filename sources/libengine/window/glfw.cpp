@@ -16,6 +16,8 @@ namespace cage
 	{
 		void handleGlfwError(int, const char *message)
 		{
+			if (String(message) == "Invalid scancode -1")
+				return;
 			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
 

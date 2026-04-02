@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/marchingCubes.h>
 #include <cage-core/meshAlgorithms.h>
+
+#include "main.h"
 
 void test(Real a, Real b);
 

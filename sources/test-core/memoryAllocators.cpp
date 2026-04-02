@@ -2,10 +2,10 @@
 #include <utility>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/math.h>
 #include <cage-core/memoryAllocators.h>
+
+#include "main.h"
 
 namespace
 {

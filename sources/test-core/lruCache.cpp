@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <cage-core/lruCache.h>
+
+#include "main.h"
 
 namespace
 {

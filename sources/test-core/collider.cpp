@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/collider.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memoryBuffer.h>
+
+#include "main.h"
 
 namespace
 {

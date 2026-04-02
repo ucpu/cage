@@ -2,12 +2,12 @@
 #include <atomic>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkSteam.h>
+
+#include "main.h"
 
 namespace
 {

@@ -383,8 +383,8 @@ namespace cage
 			~InitialLog()
 			{
 				uint64 duration = applicationTime();
-				uint32 micros = numeric_cast<uint32>(duration % 1000000);
-				duration /= 1000000;
+				uint32 micros = numeric_cast<uint32>(duration % 1'000'000);
+				duration /= 1'000'000;
 				uint32 secs = numeric_cast<uint32>(duration % 60);
 				duration /= 60;
 				uint32 mins = numeric_cast<uint32>(duration % 60);

@@ -1,10 +1,10 @@
 #include <cstring> // strcmp
 
-#include "main.h"
-
 #include <cage-core/concurrent.h>
 #include <cage-core/scopeGuard.h>
 #include <cage-core/string.h>
+
+#include "main.h"
 
 namespace
 {

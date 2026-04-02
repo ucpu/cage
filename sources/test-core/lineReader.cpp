@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/files.h>
 #include <cage-core/lineReader.h>
+
+#include "main.h"
 
 void testLineReader()
 {

@@ -72,7 +72,7 @@ namespace cage
 			if (severity < getExceptionSilenceSeverity())
 				return;
 			log();
-			::cage::detail::debugBreakpoint();
+			detail::debugBreakpoint();
 		}
 		catch (...)
 		{
@@ -83,7 +83,7 @@ namespace cage
 
 	void Exception::log() const
 	{
-		::cage::privat::makeLog(location, severity, "exception", +message, false, false);
+		privat::makeLog(location, severity, "exception", +message, false, false);
 	}
 
 	// SystemError
@@ -92,7 +92,7 @@ namespace cage
 
 	void SystemError::log() const
 	{
-		::cage::privat::makeLog(location, SeverityEnum::Note, "exception", Stringizer() + "code: " + code, false, false);
-		::cage::privat::makeLog(location, severity, "exception", +message, false, false);
+		privat::makeLog(location, SeverityEnum::Note, "exception", Stringizer() + "code: " + code, false, false);
+		privat::makeLog(location, severity, "exception", +message, false, false);
 	}
 }

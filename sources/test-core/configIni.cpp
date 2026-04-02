@@ -1,10 +1,10 @@
 #include <algorithm>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
+
+#include "main.h"
 
 namespace
 {

@@ -1,10 +1,10 @@
 #include <array>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
+
+#include "main.h"
 
 void test(Real a, Real b);
 void test(Rads a, Rads b);

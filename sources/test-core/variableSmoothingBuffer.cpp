@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/math.h>
 #include <cage-core/variableSmoothingBuffer.h>
+
+#include "main.h"
 
 void testVariableSmoothingBuffer()
 {

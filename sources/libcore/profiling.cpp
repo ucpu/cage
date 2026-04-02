@@ -15,6 +15,7 @@
 	#include <cage-core/process.h>
 	#include <cage-core/profiling.h>
 	#include <cage-core/stdHash.h>
+	#include <cage-core/ringBuffer.h>
 
 cage::PointerRange<const cage::uint8> profiling_htm();
 
@@ -58,7 +59,7 @@ namespace cage
 			bool framing = false;
 		};
 
-		using QueueType = ConcurrentQueue<QueueItem>;
+		using QueueType = ConcurrentQueue<QueueItem, RingBuffer>;
 
 		QueueType &queue()
 		{

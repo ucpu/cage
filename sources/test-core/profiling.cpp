@@ -1,9 +1,9 @@
 #include <atomic>
 
-#include "main.h"
-
 #include <cage-core/config.h>
 #include <cage-core/profiling.h>
+
+#include "main.h"
 
 namespace
 {

@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/guid.h>
 #include <cage-core/math.h>
 #include <cage-core/random.h>
+
+#include "main.h"
 
 void test(const Vec2 &a, const Vec2 &b);
 void test(const Vec3 &a, const Vec3 &b);

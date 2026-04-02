@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <cage-core/hashes.h>
+
+#include "main.h"
 
 void testHashes()
 {

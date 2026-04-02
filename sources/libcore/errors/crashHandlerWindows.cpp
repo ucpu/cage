@@ -243,7 +243,7 @@ namespace cage
 							str + ": ";
 						str + symbol->Name;
 					}
-					CAGE_LOG_CONTINUE(SeverityEnum::Info, "crash-handler", str.value.empty() ? String("unknown-frame") : str);
+					CAGE_LOG_CONTINUE(SeverityEnum::Warning, "crash-handler", str.value.empty() ? String("unknown-frame") : str);
 					if (++iteration >= 100)
 						break;
 				}
@@ -252,7 +252,7 @@ namespace cage
 			}
 			else
 			{
-				CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "cannot print stack trace - SymInitialize failed: " + (uint64)GetLastError());
+				CAGE_LOG(SeverityEnum::Warning, "crash-handler", Stringizer() + "cannot print stack trace - SymInitialize failed: " + (uint64)GetLastError());
 			}
 		}
 
@@ -267,7 +267,7 @@ namespace cage
 			if (IsDebuggerPresent())
 				return;
 			ScopeLock lock(handlerMutex());
-			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
+			CAGE_LOG(SeverityEnum::Critical, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_DOTNET)
 				return;
 			//CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
@@ -308,7 +308,7 @@ namespace cage
 
 		BOOL WINAPI consoleHandler(DWORD code)
 		{
-			CAGE_LOG(SeverityEnum::Error, "crash-handler", Stringizer() + "crash handler: " + consoleCodeToString(code));
+			CAGE_LOG(SeverityEnum::Critical, "crash-handler", Stringizer() + "crash handler: " + consoleCodeToString(code));
 			return FALSE; // let other handlers process it
 		}
 
@@ -337,20 +337,20 @@ namespace cage
 
 		void invalidParameterHandler(const wchar_t *expression, const wchar_t *function, const wchar_t *file, unsigned int line, uintptr_t pReserved)
 		{
-			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: invalid parameter");
+			CAGE_LOG(SeverityEnum::Critical, "crash-handler", "crash handler: invalid parameter");
 			CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "expression: " + narrow(expression) + ", function: " + narrow(function));
 			commonHandler();
 		}
 
 		void purecallHandler()
 		{
-			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: purecall");
+			CAGE_LOG(SeverityEnum::Critical, "crash-handler", "crash handler: purecall");
 			commonHandler();
 		}
 
 		void sigAbrtHandler(int)
 		{
-			CAGE_LOG(SeverityEnum::Error, "crash-handler", "crash handler: abort signal");
+			CAGE_LOG(SeverityEnum::Critical, "crash-handler", "crash handler: abort signal");
 			commonHandler();
 		}
 

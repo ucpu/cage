@@ -3,13 +3,13 @@
 #include <random>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/hashString.h>
 #include <cage-core/math.h>
 #include <cage-core/string.h>
 #include <cage-core/stringLiteral.h>
 #include <cage-core/texts.h>
+
+#include "main.h"
 
 void test(Real a, Real b);
 

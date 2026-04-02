@@ -7,6 +7,7 @@
 	#endif
 
 	#include <cstring>
+	#include <vector>
 
 	#include "net.h"
 
@@ -375,7 +376,7 @@ namespace cage
 		{
 		public:
 			std::array<HSteamListenSocket, 2> socks = {};
-			ConcurrentQueue<Holder<SteamConnection>> waiting;
+			ConcurrentQueue<Holder<SteamConnection>, std::vector> waiting;
 
 			SteamServerImpl(const SteamServerCreateConfig &config)
 			{

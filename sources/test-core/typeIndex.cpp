@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/timer.h>
 #include <cage-core/typeIndex.h>
+
+#include "main.h"
 
 namespace
 {

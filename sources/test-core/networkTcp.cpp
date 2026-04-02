@@ -1,10 +1,10 @@
-#include "main.h"
-
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/networkTcp.h>
 #include <cage-core/serialization.h>
+
+#include "main.h"
 
 namespace
 {

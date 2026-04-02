@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <cage-core/enumBits.h>
+
+#include "main.h"
 
 namespace
 {

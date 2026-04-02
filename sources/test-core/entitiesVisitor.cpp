@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
+
+#include "main.h"
 
 namespace
 {

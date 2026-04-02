@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+
+#include "main.h"
 
 namespace
 {

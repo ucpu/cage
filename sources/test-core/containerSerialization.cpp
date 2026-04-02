@@ -6,12 +6,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/containerSerialization.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdHash.h>
+
+#include "main.h"
 
 void testContainerSerialization()
 {

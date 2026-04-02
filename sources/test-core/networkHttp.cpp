@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <algorithm>
 
 #include <cage-core/networkHttp.h>
+
+#include "main.h"
 
 void testNetworkHttp()
 {

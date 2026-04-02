@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <cage-core/macros.h>
+
+#include "main.h"
 
 void testMacros()
 {

@@ -3,10 +3,10 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "main.h"
-
 #include <cage-core/camera.h>
 #include <cage-core/math.h>
+
+#include "main.h"
 
 void test(Real a, Real b);
 void test(Rads a, Rads b);

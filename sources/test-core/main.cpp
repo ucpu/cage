@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
+
+#include "main.h"
 
 void generatePointsOnSphere();
 void testMacros();
@@ -28,6 +28,8 @@ void testMemoryAllocators();
 void testStdHash();
 void testHashes();
 void testBlockContainer();
+void testRingBuffer();
+void testSlidingBuffer();
 void testSerialization();
 void testContainerSerialization();
 void testConcurrent();
@@ -110,6 +112,8 @@ int main()
 	testStdHash();
 	testHashes();
 	testBlockContainer();
+	testRingBuffer();
+	testSlidingBuffer();
 	testSerialization();
 	testContainerSerialization();
 	testConcurrent();

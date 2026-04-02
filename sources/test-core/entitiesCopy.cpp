@@ -1,9 +1,9 @@
 #include <map>
 
-#include "main.h"
-
 #include <cage-core/entities.h>
 #include <cage-core/math.h>
+
+#include "main.h"
 
 namespace
 {

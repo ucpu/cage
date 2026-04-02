@@ -1,9 +1,9 @@
-#include "main.h"
-
 #include <cage-core/flatBag.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
 #include <cage-core/stdHash.h>
+
+#include "main.h"
 
 void testFlatBag()
 {

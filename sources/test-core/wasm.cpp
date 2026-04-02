@@ -1,8 +1,8 @@
 #include <cmath>
 
-#include "main.h"
-
 #include <cage-core/wasm.h>
+
+#include "main.h"
 
 PointerRange<const uint8> sums_wasm();
 PointerRange<const uint8> strings_wasm();

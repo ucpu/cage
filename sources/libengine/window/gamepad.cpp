@@ -6,6 +6,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/ringBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-engine/gamepad.h>
 
@@ -30,7 +31,7 @@ namespace cage
 		{
 		public:
 			String name;
-			ConcurrentQueue<GenericInput> eventsQueue;
+			ConcurrentQueue<GenericInput, RingBuffer> eventsQueue;
 			std::vector<Real> axes1, axes2;
 			std::vector<char> buts1, buts2;
 			int jid = m;

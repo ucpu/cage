@@ -1,10 +1,13 @@
 #include <atomic>
-
-#include "main.h"
+#include <vector>
 
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/ringBuffer.h>
+#include <cage-core/slidingBuffer.h>
 #include <cage-core/threadPool.h>
+
+#include "main.h"
 
 namespace
 {
@@ -13,30 +16,41 @@ namespace
 	class Task
 	{
 	public:
-		Task(uint32 id, bool final = false) : id(id), final(final) { itemsCounter++; }
+		Task() {}
 
-		Task(const Task &other) : id(other.id), final(other.final) { itemsCounter++; }
+		Task(uint32 id, bool final = false) : id(id), final(final), alive(true) { itemsCounter++; }
 
-		Task(Task &&other) : id(other.id), final(other.final) { itemsCounter++; }
+		Task(const Task &other) : id(other.id), final(other.final), alive(true) { itemsCounter++; }
+
+		Task(Task &&other) : id(other.id), final(other.final), alive(other.alive) { other.alive = false; }
 
 		Task &operator=(const Task &other)
 		{
+			if (alive)
+				itemsCounter--;
 			id = other.id;
 			final = other.final;
-			// items count does not change
+			alive = other.alive;
+			if (alive)
+				itemsCounter++;
 			return *this;
 		}
 
 		Task &operator=(Task &&other)
 		{
+			if (alive)
+				itemsCounter--;
 			id = other.id;
 			final = other.final;
-			// items count does not change
+			alive = other.alive;
+			other.alive = false;
 			return *this;
 		}
 
 		~Task()
 		{
+			if (!alive)
+				return;
 			try
 			{
 				CAGE_TEST(itemsCounter > 0);
@@ -48,10 +62,12 @@ namespace
 			itemsCounter--;
 		}
 
-		uint32 id;
-		bool final;
+		uint32 id = 0;
+		bool final = false;
+		bool alive = false;
 	};
 
+	template<template<class...> class Container>
 	class Tester
 	{
 	public:
@@ -167,74 +183,92 @@ namespace
 
 		const uint32 produceItems;
 		const uint32 produceFinals;
-		ConcurrentQueue<Task> queue;
+		ConcurrentQueue<Task, Container> queue;
 	};
+
+	template<template<class...> class Container>
+	void testQueue()
+	{
+		CAGE_TEST(itemsCounter == 0); // sanity check
+
+		{
+			CAGE_TESTCASE("single producer single consumer (blocking)");
+			Tester<Container> t;
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumeBlocking>(&t), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::produceBlocking>(&t), "producer");
+			t1->wait();
+			t2->wait();
+		}
+		CAGE_TEST(itemsCounter == 0);
+
+		{
+			CAGE_TESTCASE("single producer single consumer (polling)");
+			Tester<Container> t;
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumePolling>(&t), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::producePolling>(&t), "producer");
+			t1->wait();
+			t2->wait();
+		}
+		CAGE_TEST(itemsCounter == 0);
+
+		{
+			CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
+			Tester<Container> t;
+			Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
+			t1->function = Delegate<void(uint32, uint32)>().bind<Tester<Container>, &Tester<Container>::poolBlocking>(&t);
+			t1->run();
+		}
+		CAGE_TEST(itemsCounter == 0);
+
+		{
+			CAGE_TESTCASE("multiple producers multiple consumers (polling)");
+			Tester<Container> t;
+			Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
+			t1->function = Delegate<void(uint32, uint32)>().bind<Tester<Container>, &Tester<Container>::poolPolling>(&t);
+			t1->run();
+		}
+		CAGE_TEST(itemsCounter == 0);
+
+		{
+			CAGE_TESTCASE("termination (blocking)");
+			Tester<Container> t;
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumeBlocking>(&t), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::produceBlocking>(&t), "producer");
+			threadSleep(10);
+			t.queue.terminate();
+			t1->wait();
+			t2->wait();
+		}
+		CAGE_TEST(itemsCounter == 0);
+
+		{
+			CAGE_TESTCASE("termination (polling)");
+			Tester<Container> t;
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumePolling>(&t), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::producePolling>(&t), "producer");
+			threadSleep(10);
+			t.queue.terminate();
+			t1->wait();
+			t2->wait();
+		}
+		CAGE_TEST(itemsCounter == 0);
+	}
 }
 
 void testConcurrentQueue()
 {
-	CAGE_TESTCASE("ConcurrentQueue");
-	CAGE_TEST(itemsCounter == 0); // sanity check
+	CAGE_TESTCASE("concurrent queue");
 
 	{
-		CAGE_TESTCASE("single producer single consumer (blocking)");
-		Tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::produceBlocking>(&t), "producer");
-		t1->wait();
-		t2->wait();
+		CAGE_TESTCASE("with vector");
+		testQueue<std::vector>();
 	}
-	CAGE_TEST(itemsCounter == 0);
-
 	{
-		CAGE_TESTCASE("single producer single consumer (polling)");
-		Tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumePolling>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::producePolling>(&t), "producer");
-		t1->wait();
-		t2->wait();
+		CAGE_TESTCASE("with ring buffer");
+		testQueue<RingBuffer>();
 	}
-	CAGE_TEST(itemsCounter == 0);
-
 	{
-		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
-		Tester t;
-		Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
-		t1->function = Delegate<void(uint32, uint32)>().bind<Tester, &Tester::poolBlocking>(&t);
-		t1->run();
+		CAGE_TESTCASE("with sliding buffer");
+		testQueue<SlidingBuffer>();
 	}
-	CAGE_TEST(itemsCounter == 0);
-
-	{
-		CAGE_TESTCASE("multiple producers multiple consumers (polling)");
-		Tester t;
-		Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
-		t1->function = Delegate<void(uint32, uint32)>().bind<Tester, &Tester::poolPolling>(&t);
-		t1->run();
-	}
-	CAGE_TEST(itemsCounter == 0);
-
-	{
-		CAGE_TESTCASE("termination (blocking)");
-		Tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::produceBlocking>(&t), "producer");
-		threadSleep(10);
-		t.queue.terminate();
-		t1->wait();
-		t2->wait();
-	}
-	CAGE_TEST(itemsCounter == 0);
-
-	{
-		CAGE_TESTCASE("termination (polling)");
-		Tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumePolling>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::producePolling>(&t), "producer");
-		threadSleep(10);
-		t.queue.terminate();
-		t1->wait();
-		t2->wait();
-	}
-	CAGE_TEST(itemsCounter == 0);
 }

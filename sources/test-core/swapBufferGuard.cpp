@@ -1,11 +1,11 @@
 #include <atomic>
 
-#include "main.h"
-
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/threadPool.h>
+
+#include "main.h"
 
 namespace
 {

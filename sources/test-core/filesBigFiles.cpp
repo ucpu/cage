@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/files.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
+
+#include "main.h"
 
 namespace
 {

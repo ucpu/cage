@@ -1,9 +1,9 @@
 #include <algorithm>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/files.h>
+
+#include "main.h"
 
 namespace
 {

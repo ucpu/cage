@@ -22,6 +22,7 @@
 #include <cage-core/networkTcp.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/profiling.h>
+#include <cage-core/ringBuffer.h>
 #include <cage-core/scopeGuard.h>
 #include <cage-core/serialization.h>
 #include <cage-core/stdHash.h>
@@ -172,9 +173,9 @@ namespace cage
 			ankerl::unordered_dense::map<uint32, Collection> privateIndex;
 			ankerl::unordered_dense::map<uint32, Holder<Asset>> publicIndex;
 			ankerl::unordered_dense::map<uint32, std::vector<Holder<Waiting>>> waitingIndex;
-			std::vector<Holder<ConcurrentQueue<Work>>> customProcessingQueues;
-			ConcurrentQueue<Holder<AsyncTask>> tasksCleanupQueue;
-			ConcurrentQueue<Work> fetchQueue;
+			std::vector<Holder<ConcurrentQueue<Work, RingBuffer>>> customProcessingQueues;
+			ConcurrentQueue<Holder<AsyncTask>, RingBuffer> tasksCleanupQueue;
+			ConcurrentQueue<Work, RingBuffer> fetchQueue;
 			std::vector<Holder<Thread>> fetchThreads;
 			Holder<void> listener;
 
@@ -184,7 +185,7 @@ namespace cage
 				schemes.resize(config.schemesMaxCount);
 				customProcessingQueues.resize(config.customProcessingThreads);
 				for (auto &it : customProcessingQueues)
-					it = systemMemory().createHolder<ConcurrentQueue<Work>>();
+					it = systemMemory().createHolder<ConcurrentQueue<Work, RingBuffer>>();
 				fetchThreads.reserve(config.diskLoadingThreads);
 				for (uint32 i = 0; i < config.diskLoadingThreads; i++)
 					fetchThreads.push_back(newThread(Delegate<void()>().bind<AssetsManagerImpl, &AssetsManagerImpl::diskLoadingEntry>(this), Stringizer() + "asset disk loading " + i));

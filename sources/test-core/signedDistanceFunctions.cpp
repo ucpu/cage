@@ -1,9 +1,9 @@
-#include "main.h"
-
 #include <cage-core/macros.h>
 #include <cage-core/marchingCubes.h>
 #include <cage-core/mesh.h>
 #include <cage-core/signedDistanceFunctions.h>
+
+#include "main.h"
 
 namespace
 {

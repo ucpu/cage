@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/flatSet.h>
 #include <cage-core/string.h>
+
+#include "main.h"
 
 namespace
 {

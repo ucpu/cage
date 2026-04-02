@@ -12,7 +12,7 @@ namespace cage
 	{
 		BlockContainer() = default;
 
-		CAGE_FORCE_INLINE explicit BlockContainer(uint32 maxBlockSize) : blockSize(maxBlockSize) {}
+		explicit BlockContainer(uint32 maxBlockSize) : blockSize(maxBlockSize) {}
 
 		struct Iterator
 		{
@@ -48,35 +48,35 @@ namespace cage
 			CAGE_FORCE_INLINE PointerRange<T> operator->() const { return const_cast<BlockContainer *>(collection)->blocks.at(index); }
 			CAGE_FORCE_INLINE PointerRange<T> operator*() const { return const_cast<BlockContainer *>(collection)->blocks.at(index); }
 
-		private:
+		protected:
 			const BlockContainer *collection = nullptr;
 			uint32 index = m;
 		};
 
 		CAGE_FORCE_INLINE Iterator begin() const { return Iterator(this, 0); }
 		CAGE_FORCE_INLINE Iterator end() const { return Iterator(this, numeric_cast<uint32>(blocks.size())); }
-		CAGE_FORCE_INLINE bool empty() const { return size_ == 0; }
-		CAGE_FORCE_INLINE uint32 size() const { return size_; }
+		CAGE_FORCE_INLINE bool empty() const noexcept { return size_ == 0; }
+		CAGE_FORCE_INLINE uint32 size() const noexcept { return size_; }
 
-		CAGE_FORCE_INLINE void push_back(const T &val)
+		void push_back(const T &val)
 		{
 			inserting().push_back(val);
 			size_++;
 		}
 
-		CAGE_FORCE_INLINE void push_back(T &&val)
+		void push_back(T &&val)
 		{
 			inserting().push_back(std::move(val));
 			size_++;
 		}
 
-		CAGE_FORCE_INLINE void clear()
+		void clear()
 		{
 			blocks.clear();
 			size_ = 0;
 		}
 
-	private:
+	protected:
 		std::vector<std::vector<T>> blocks;
 		uint32 size_ = 0;
 		uint32 blockSize = 200;

@@ -1,11 +1,11 @@
 #include <initializer_list>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/image.h>
 #include <cage-core/math.h>
 #include <cage-core/noiseFunction.h>
+
+#include "main.h"
 
 namespace
 {

@@ -241,7 +241,7 @@ namespace cage
 				std::terminate();
 			else
 			{
-				auto e = Exception(location, ::cage::SeverityEnum::Critical, "assert failure");
+				auto e = Exception(location, SeverityEnum::Critical, "assert failure");
 				e.makeLog();
 				throw e;
 			}

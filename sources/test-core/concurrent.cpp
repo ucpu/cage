@@ -3,11 +3,11 @@
 #include <atomic>
 #include <numeric>
 
-#include "main.h"
-
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 #include <cage-core/timer.h>
+
+#include "main.h"
 
 namespace
 {

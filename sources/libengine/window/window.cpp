@@ -9,6 +9,7 @@
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/files.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/ringBuffer.h>
 #include <cage-core/string.h>
 #include <cage-core/unicode.h>
 #include <cage-engine/window.h>
@@ -45,7 +46,7 @@ namespace cage
 		public:
 			Holder<Cursor> currentCursor;
 			Holder<privat::GraphicsContext> graphicsContext;
-			ConcurrentQueue<GenericInput> eventsQueue;
+			ConcurrentQueue<GenericInput, RingBuffer> eventsQueue;
 			FlatSet<uint32> stateKeys;
 			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
 			Vec2 lastMouseButtonPressPositions[5] = {};

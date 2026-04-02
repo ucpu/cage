@@ -1,8 +1,8 @@
 #include <unordered_set>
 
-#include "main.h"
-
 #include <cage-core/stdHash.h>
+
+#include "main.h"
 
 namespace
 {

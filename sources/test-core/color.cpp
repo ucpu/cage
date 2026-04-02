@@ -1,7 +1,7 @@
-#include "main.h"
-
 #include <cage-core/color.h>
 #include <cage-core/image.h>
+
+#include "main.h"
 
 void test(const Vec3 &a, const Vec3 &b);
 

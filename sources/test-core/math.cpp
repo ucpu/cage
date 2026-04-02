@@ -1,10 +1,10 @@
 #include <cmath>
 
-#include "main.h"
-
 #include <cage-core/camera.h>
 #include <cage-core/macros.h>
 #include <cage-core/timer.h>
+
+#include "main.h"
 
 void test(Real a, Real b)
 {

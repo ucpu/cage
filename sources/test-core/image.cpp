@@ -1,13 +1,13 @@
 #include <initializer_list>
 
-#include "main.h"
-
 #include <cage-core/color.h>
 #include <cage-core/image.h>
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageBlocks.h>
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
+
+#include "main.h"
 
 void test(Real, Real);
 void test(const Vec2 &, const Vec2 &);

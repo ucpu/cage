@@ -2,13 +2,13 @@
 #include <set>
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/config.h>
 #include <cage-core/geometry.h>
 #include <cage-core/math.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/timer.h>
+
+#include "main.h"
 
 namespace
 {

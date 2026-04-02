@@ -1,6 +1,6 @@
-#include "main.h"
-
 #include <cage-core/files.h>
+
+#include "main.h"
 
 namespace
 {

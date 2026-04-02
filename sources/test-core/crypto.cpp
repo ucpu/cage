@@ -1,8 +1,8 @@
-#include "main.h"
-
 #include <cage-core/crypto.h>
 #include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
+
+#include "main.h"
 
 void testCrypto()
 {

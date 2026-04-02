@@ -1,8 +1,8 @@
 #include <vector>
 
-#include "main.h"
-
 #include <cage-core/unicode.h>
+
+#include "main.h"
 
 namespace
 {

@@ -209,7 +209,7 @@ namespace cage
 				case SIGXFSZ:
 					return "SIGXFSZ";
 				default:
-					return "UNKNOWN";
+					return "unknown";
 			}
 		}
 

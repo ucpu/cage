@@ -1,8 +1,6 @@
 #ifndef guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 #define guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 
-#include <vector>
-
 #include <cage-core/concurrent.h>
 
 namespace cage
@@ -12,7 +10,7 @@ namespace cage
 		using Exception::Exception;
 	};
 
-	template<class T>
+	template<class T, template<class...> class Container>
 	class ConcurrentQueue : private Immovable
 	{
 	public:
@@ -99,7 +97,7 @@ namespace cage
 				else
 				{
 					value = std::move(items.front());
-					items.erase(items.begin());
+					internalPopFront();
 					writer->signal();
 					return;
 				}
@@ -114,7 +112,7 @@ namespace cage
 			if (!items.empty())
 			{
 				value = std::move(items.front());
-				items.erase(items.begin());
+				internalPopFront();
 				writer->signal();
 				return true;
 			}
@@ -130,21 +128,29 @@ namespace cage
 			reader->broadcast();
 		}
 
-		bool stopped() const
+		CAGE_FORCE_INLINE bool stopped() const
 		{
 			ScopeLock sl(mut); // mandate memory barriers
 			return stop;
 		}
 
-		uint32 estimatedSize() const { return numeric_cast<uint32>(items.size()); }
+		CAGE_FORCE_INLINE uint32 estimatedSize() const noexcept { return numeric_cast<uint32>(items.size()); }
 
 	protected:
 		Holder<Mutex> mut = newMutex();
 		Holder<ConditionalVariable> writer = newConditionalVariable();
 		Holder<ConditionalVariable> reader = newConditionalVariable();
-		std::vector<T> items;
+		Container<T> items;
 		uint32 maxItems = m;
 		bool stop = false;
+
+		CAGE_FORCE_INLINE void internalPopFront()
+		{
+			if constexpr (requires(Container<T> c) { c.pop_front(); })
+				items.pop_front();
+			else
+				items.erase(items.begin());
+		}
 	};
 }
 
