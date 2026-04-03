@@ -295,6 +295,7 @@ namespace cage
 		{
 			SceneItemVariant data;
 			Transform transform;
+			Aabb box = Aabb::Universe();
 			Vec4 color = Vec4::Nan(); // linear rgb (NOT alpha-premultiplied), opacity
 			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
 			Entity *e = nullptr;
@@ -695,6 +696,7 @@ namespace cage
 				{
 					SceneItem d;
 					d.transform = rd.transform * approximateMatrix(Mat4(armature[i]));
+					d.box = modelBone->boundingBox * d.transform;
 					d.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
 					d.e = rd.e;
 					d.renderLayer = rd.renderLayer;
@@ -751,6 +753,7 @@ namespace cage
 				rd.animation = Vec4((double)(sint64)(config.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
 				rd.translucent = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
+				rd.box = rm.mesh->boundingBox * rd.transform;
 
 				if (rm.skeletalAnimation && cnfRenderSkeletonBones)
 					prepareModelBones(output, rd);
@@ -768,6 +771,7 @@ namespace cage
 				SceneItem rd;
 				rd.e = e;
 				rd.transform = modelTransform(e);
+				rd.box = mesh->boundingBox * rd.transform;
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				const uint64 startTime = e->getOrDefault<SpawnTimeComponent>().spawnTime;
 				const AnimationSpeedComponent anim = getAnimSpeed(e);
@@ -1338,13 +1342,13 @@ namespace cage
 				std::erase_if(items,
 					[this](const RenderItem &it) -> bool
 					{
-						const auto &mod = it.base->data.model();
 						if constexpr (std::is_same_v<CrtpDerived, ShadowRender>)
 						{
+							const auto &mod = it.base->data.model();
 							if (none(mod.mesh->renderFlags & MeshRenderFlags::ShadowCast))
 								return true;
 						}
-						if (!intersects(mod.mesh->boundingBox * it.base->transform, frustum))
+						if (!intersects(it.base->box, frustum))
 							return true;
 						return false;
 					});
@@ -1379,15 +1383,12 @@ namespace cage
 						continue;
 					if (failedMask(it.e))
 						continue;
-
 					switch (it.data.index)
 					{
 						case VariantEnum::Model:
 						{
 							const auto &mod = it.data.model();
 							if (none(mod.mesh->renderFlags & MeshRenderFlags::ShadowCast))
-								continue;
-							if (!intersects(mod.mesh->boundingBox * it.transform, frustum))
 								continue;
 							break;
 						}
@@ -1396,6 +1397,8 @@ namespace cage
 						default:
 							break;
 					}
+					if (!intersects(it.box, frustum))
+						continue;
 
 					RenderItem r;
 					r.base = &it;
@@ -1651,21 +1654,10 @@ namespace cage
 				{
 					if (failedMask(it.e))
 						continue;
-
-					switch (it.data.index)
-					{
-						case VariantEnum::Model:
-						{
-							const auto &mod = it.data.model();
-							if (!intersects(mod.mesh->boundingBox * it.transform, frustum))
-								continue;
-							break;
-						}
-						case VariantEnum::Object:
-							continue; // already converted to models
-						default:
-							break;
-					}
+					if (it.data.index == VariantEnum::Object)
+						continue; // already converted to models
+					if (!intersects(it.box, frustum))
+						continue;
 
 					RenderItem r;
 					r.base = &it;
