@@ -265,14 +265,13 @@ namespace cage
 				return res;
 			}
 
-			void renderCameras() const
+			std::vector<CameraData> generateCameras() const
 			{
-				if (!preparedScene)
-					return;
-
 				std::vector<CameraData> cameras;
-				cameras.reserve(preparedScene->config.scene->component<CameraComponent>()->count());
+				if (!preparedScene)
+					return cameras;
 
+				cameras.reserve(preparedScene->config.scene->component<CameraComponent>()->count());
 				entitiesVisitor(
 					[&](Entity *e, const CameraComponent &cam)
 					{
@@ -302,19 +301,8 @@ namespace cage
 					},
 					preparedScene->config.scene, false);
 
-				if (cameras.size() == 1)
-				{
-					cameras[0]();
-				}
-				else
-				{
-					std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
-					tasksRunBlocking<CameraData>("render scene", cameras);
-				}
-
-				for (const auto &cam : cameras)
-					for (const auto &it : cam.encoders)
-						it->submit();
+				std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
+				return cameras;
 			}
 
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
@@ -365,10 +353,14 @@ namespace cage
 				if (cfg.device)
 				{
 					ProfilingScope profiling("scene prepare & render");
-					Holder<AsyncTask> task = tasksRunAsync("render cameras", [this](uint32) { renderCameras(); });
-					Holder<PreparedScene> nextScene = scenePrepare(cfg); // this runs in parallel with the rendering task
+					std::vector<CameraData> cameras = generateCameras();
+					PointerRange<CameraData> camerasRange = cameras;
+					Holder<AsyncTask> task = tasksRunAsync<CameraData>("render scene", Holder<PointerRange<CameraData>>(&camerasRange, nullptr));
+					Holder<PreparedScene> nextScene = scenePrepare(cfg); // this runs in parallel with the cameras rendering
 					task->wait();
-					task.clear();
+					for (const auto &cam : cameras)
+						for (const auto &it : cam.encoders)
+							it->submit();
 					entitiesRendering = entitiesPreparation.share(); // these must update after the rendering task has completed
 					preparedScene = std::move(nextScene);
 				}
