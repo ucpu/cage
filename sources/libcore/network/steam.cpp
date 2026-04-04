@@ -135,14 +135,12 @@ namespace cage
 			{
 				InitializerSockets()
 				{
+					SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
+					SteamNetworkingErrMsg msg;
+					if (!GameNetworkingSockets_Init(nullptr, msg))
 					{
-						SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
-						SteamNetworkingErrMsg msg;
-						if (!GameNetworkingSockets_Init(nullptr, msg))
-						{
-							CAGE_LOG_THROW(msg);
-							CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets networking library");
-						}
+						CAGE_LOG_THROW(msg);
+						CAGE_THROW_ERROR(Exception, "failed to initialize steam sockets networking library");
 					}
 				}
 				~InitializerSockets() { GameNetworkingSockets_Kill(); }
@@ -156,6 +154,11 @@ namespace cage
 				sockets = SteamNetworkingSockets();
 				utils = SteamNetworkingUtils();
 			}
+			if (!sockets || !utils)
+			{
+				CAGE_LOG(SeverityEnum::Note, "steamsocks", Stringizer() + "sockets: " + sockets + ", utils: " + utils);
+				CAGE_THROW_ERROR(Exception, "steam sockets api pointer is invalid");
+			}
 			CAGE_ASSERT(sockets);
 			CAGE_ASSERT(utils);
 
@@ -164,8 +167,12 @@ namespace cage
 				InitializerConfiguration()
 				{
 					utils->SetDebugOutputFunction((ESteamNetworkingSocketsDebugOutputType)(sint32)confDebugLogLevel, &debugOutputHandler);
-					utils->SetGlobalConfigValueFloat(k_ESteamNetworkingConfig_FakePacketLoss_Send, confSimulatedPacketLoss * 100);
-					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_FakePacketLag_Send, (sint32)confSimulatedPacketDelay);
+					const float packetLoss = confSimulatedPacketLoss * 100;
+					const sint32 packetDelay = (sint32)confSimulatedPacketDelay;
+					if (packetLoss != 0 || packetDelay != 0)
+						CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "setting packet loss: " + packetLoss + " %, packet delay: " + packetDelay + " ms");
+					utils->SetGlobalConfigValueFloat(k_ESteamNetworkingConfig_FakePacketLoss_Send, packetLoss);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_FakePacketLag_Send, packetDelay);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
 				}
 			};

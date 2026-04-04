@@ -146,7 +146,6 @@ extern "C"
 	kern_return_t catch_mach_exception_raise(mach_port_t exception_port, mach_port_t thread, mach_port_t task, exception_type_t exception, exception_data_t code, mach_msg_type_number_t code_count)
 	{
 		using namespace cage;
-		thread_suspend(thread);
 		privat::crashHandlerSafeWrite(Stringizer() + "mach exception: " + excToStr(exception) + " (" + exception + ")\n");
 		if (code_count > 0)
 			privat::crashHandlerSafeWrite(Stringizer() + "code[0]: " + code[0] + "\n");
@@ -155,7 +154,7 @@ extern "C"
 		writeThreadInfo(thread);
 		const auto regs = writeRegisters(thread);
 		printStack(regs.first, regs.second, thread);
-		thread_resume(thread);
+		privat::crashHandlerSafeWrite("mach exception handler done\n");
 		// let the system continue propagating the exception
 		return KERN_FAILURE;
 	}

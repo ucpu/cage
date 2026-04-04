@@ -42,7 +42,7 @@ namespace cage
 		void crashHandlerPrintStack()
 		{
 			// backtrace (best-effort; not strictly async-signal-safe)
-			static constexpr int MaxFrames = 256;
+			static constexpr int MaxFrames = 100;
 			void *frames[MaxFrames];
 			int n = backtrace(frames, MaxFrames);
 			if (n <= 0)

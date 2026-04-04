@@ -778,10 +778,12 @@ namespace cage
 			__except (EXCEPTION_EXECUTE_HANDLER)
 			{}
 	#pragma warning(pop)
-#endif
 
-#ifdef CAGE_SYSTEM_LINUX
+#elif defined(CAGE_SYSTEM_LINUX)
 			prctl(PR_SET_NAME, name.c_str(), 0, 0, 0);
+
+#elif defined(CAGE_SYSTEM_MAC)
+			pthread_setname_np(name.c_str());
 #endif
 		}
 
