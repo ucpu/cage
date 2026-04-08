@@ -73,9 +73,9 @@ namespace
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
 		if (argc == 1)
 		{
 			initializeSecondaryLog("ginnel-test-manager.log");
@@ -85,26 +85,24 @@ int main(int argc, const char *args[])
 
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		ConfigString address("address", "localhost");
-		ConfigUint32 port("port", 42789);
-		ConfigUint64 maxBytesPerSecond("maxBytesPerSecond");
 		const bool modeServer = cmd->cmdBool('s', "server", false);
 		const bool modeClient = cmd->cmdBool('c', "client", false);
 		const String name = cmd->cmdString('n', "name", "");
+		ConfigString address("address", "localhost");
 		address = cmd->cmdString('a', "address", address);
+		ConfigUint32 port("port", 42789);
 		port = cmd->cmdUint32('p', "port", port);
+		ConfigUint64 maxBytesPerSecond("maxBytesPerSecond");
+		maxBytesPerSecond = cmd->cmdUint64('l', "limit", MaxBytesPerSecond);
+		cmd->checkCmd();
+
 		if (port <= 1024 || port >= 65536)
 			CAGE_THROW_ERROR(Exception, "invalid port");
-		maxBytesPerSecond = cmd->cmdUint64('l', "limit", MaxBytesPerSecond);
-		cmd->checkUnusedWithHelp();
-		cmd.clear();
-
 		if (modeServer == modeClient)
 			CAGE_THROW_ERROR(Exception, "invalid mode (exactly one of -s or -c must be set)");
 
 		if (!name.empty())
 			initializeSecondaryLog(name + ".log");
-
 		if (modeServer)
 			runServer();
 		if (modeClient)

@@ -105,24 +105,22 @@ bool logFilter(const detail::LoggerInfo &i)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger()->filter.bind<logFilter>();
 	try
 	{
+		initializeConsoleLogger()->filter.bind<logFilter>();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto paths = cmd->cmdArray(0, "--");
+		cmd->addHelp(Stringizer() + "example:");
+		cmd->addHelp(Stringizer() + args[0] + " -c -- mesh.glb");
+		cmd->addHelp(Stringizer() + "--normalize: loads external textures and converts them to appropriate number of channels");
+		cmd->addHelp(Stringizer() + "--cage: convert to cage specific formats");
+		cmd->addHelp("");
 		const bool normalizeFormats = cmd->cmdBool('n', "normalize", false);
 		const bool convertToCage = cmd->cmdBool('c', "cage", false);
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -c -- mesh.glb");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--normalize: loads external textures and converts them to appropriate number of channels");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--cage: convert to cage specific formats");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		const auto paths = cmd->cmdArray(0, "--");
+		cmd->checkCmd();
+
 		if (normalizeFormats && convertToCage)
 			CAGE_THROW_ERROR(Exception, "at most one of --normalize and --cage is allowed");
 		if (paths.empty())

@@ -16,7 +16,7 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 
 ## Portable
 
-- Cage runs on Windows and Linux.
+- Cage runs on Windows and Linux, with experimental support for Macos.
 - It is mostly self-contained.
   - Most dependencies are accessed as git submodules and compiled in.
   - There are just few packages required on linux, none on windows.
@@ -61,7 +61,7 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Automatic shadowmaps
 - Sound
 - Gui
-- Virtual reality
+- ~Virtual reality~ (vr has been disabled when transitioning from opengl to webgpu)
 
 ## Simple library
 

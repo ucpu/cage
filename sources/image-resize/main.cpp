@@ -21,25 +21,25 @@ void resize(String name, const Vec2i resolution)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto paths = cmd->cmdArray(0, "--");
+		cmd->addHelp(Stringizer() + "example:");
+		cmd->addHelp(Stringizer() + args[0] + " -w 512 -h 1024 -- a.png b.tiff");
+		cmd->addHelp("");
 		Vec2i resolution;
-		resolution[0] = cmd->cmdUint32('w', "width");
-		resolution[1] = cmd->cmdUint32('h', "height");
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "example:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -w 512 -h 1024 -- a.png b.tiff");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		resolution[0] = cmd->cmdUint32('w', "width", 0);
+		resolution[1] = cmd->cmdUint32('h', "height", 0);
+		const auto paths = cmd->cmdArray(0, "--");
+		cmd->checkCmd();
+
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
+		if (resolution[0] <= 0 || resolution[1] <= 0)
+			CAGE_THROW_ERROR(Exception, "invalid resolution");
 		for (const String &path : paths)
 			resize(path, resolution);
 		CAGE_LOG(SeverityEnum::Info, "imageResize", "done");

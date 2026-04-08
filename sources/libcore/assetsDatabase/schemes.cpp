@@ -40,7 +40,7 @@ namespace cage
 			}
 		}
 
-		ini->checkUnused();
+		ini->checkUnusedOnly();
 	}
 
 	bool Scheme::applyOnAsset(DatabaseAssetImpl &ass)

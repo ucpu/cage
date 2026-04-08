@@ -124,57 +124,48 @@ void doJoin(const String names[MaxChannels], const String &output, const bool mo
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
+		cmd->addHelp(Stringizer() + "examples:");
+		cmd->addHelp(Stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
+		cmd->addHelp(Stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
+		cmd->addHelp(Stringizer() + "predefined 'black' and 'white' images can be used for joining");
+		cmd->addHelp("");
 		const bool split = cmd->cmdBool('s', "split", false);
 		const bool join = cmd->cmdBool('j', "join", false);
-		const bool help = cmd->cmdBool('?', "help", false);
 
 		String names[MaxChannels] = {};
+		for (uint32 i = 0; i < MaxChannels; i++)
+			names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
 
 		if (split && !join)
 		{
-			for (uint32 i = 0; i < MaxChannels; i++)
-				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
-			String input = cmd->cmdString('i', "input");
-
-			if (!help)
-			{
-				cmd->checkUnusedWithHelp();
-				doSplit(names, input);
-				return 0;
-			}
+			const String input = cmd->cmdString('i', "input", "");
+			cmd->checkCmd();
+			if (input.empty())
+				CAGE_THROW_ERROR(Exception, "input must be specified");
+			doSplit(names, input);
+			return 0;
 		}
 
 		if (join && !split)
 		{
-			for (uint32 i = 0; i < MaxChannels; i++)
-				names[i] = cmd->cmdString(0, Stringizer() + (i + 1), names[i]);
-			const String output = cmd->cmdString('o', "output");
+			const String output = cmd->cmdString('o', "output", "");
 			const bool mono = cmd->cmdBool('m', "mono", false);
-
-			if (!help)
-			{
-				cmd->checkUnusedWithHelp();
-				doJoin(names, output, mono);
-				return 0;
-			}
-		}
-
-		if (help)
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "predefined 'black' and 'white' images can be used for joining");
+			cmd->checkCmd();
+			if (output.empty())
+				CAGE_THROW_ERROR(Exception, "output must be specified");
+			doJoin(names, output, mono);
 			return 0;
 		}
 
-		CAGE_THROW_ERROR(Exception, "exactly one of --split (-s) or --join (-j) has to be specified");
+		if (cmd->requestsHelp())
+			cmd->printHelp();
+		CAGE_THROW_ERROR(Exception, "exactly one of --split (-s) or --join (-j) must be specified");
 	}
 	catch (...)
 	{

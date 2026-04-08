@@ -30,15 +30,16 @@ bool logFilter(const cage::detail::LoggerInfo &info)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger()->filter.bind<logFilter>();
 	try
 	{
+		initializeConsoleLogger()->filter.bind<logFilter>();
+
 		{
 			Holder<Ini> ini = newIni();
 			ini->parseCmd(argc, args);
 			configFromScratch = ini->cmdBool('s', "scratch", configFromScratch);
 			configListening = ini->cmdBool('l', "listen", configListening);
-			ini->checkUnusedWithHelp();
+			ini->checkCmd();
 		}
 
 		if (configFromScratch)

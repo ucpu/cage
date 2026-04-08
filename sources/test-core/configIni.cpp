@@ -151,30 +151,30 @@ namespace
 			Holder<Ini> ini = newIni();
 			const char *const cmd[] = { "appName", "pos1", "-abc", "very", "nice", "-n", "42", "--ccc", "indeed", "--long", "--", "pos2" };
 			ini->parseCmd(sizeof(cmd) / sizeof(char *), cmd);
-			CAGE_TEST(ini->cmdBool('a', "aaa")); // required option
+			CAGE_TEST(ini->cmdBool('a', "aaa", RequiredCmdOption())); // required option
 			CAGE_TEST(ini->cmdBool('a', "aaa", false)); // optional option
 			CAGE_TEST(ini->cmdBool('a', "aaa", true));
-			CAGE_TEST(ini->cmdBool('a', ""));
+			CAGE_TEST(ini->cmdBool('a', "", RequiredCmdOption()));
 			CAGE_TEST(ini->cmdBool('a', "", false));
 			{
 				String s, i;
 				CAGE_TEST(ini->anyUnused(s, i));
 			}
 			testVectors(vectorize(ini->cmdArray('a', "aaa")), { "true" });
-			CAGE_TEST(ini->cmdBool('b', "bbb"));
+			CAGE_TEST(ini->cmdBool('b', "bbb", RequiredCmdOption()));
 			testVectors(vectorize(ini->cmdArray('c', "")), { "very", "nice" });
 			testVectors(vectorize(ini->cmdArray('c', "ccc")), { "very", "nice", "indeed" });
 			testVectors(vectorize(ini->cmdArray(0, "ccc")), { "indeed" });
-			CAGE_TEST(ini->cmdBool('l', "long"));
-			CAGE_TEST(ini->cmdBool(0, "long"));
-			CAGE_TEST(ini->cmdUint32('n', "num") == 42);
+			CAGE_TEST(ini->cmdBool('l', "long", RequiredCmdOption()));
+			CAGE_TEST(ini->cmdBool(0, "long", RequiredCmdOption()));
+			CAGE_TEST(ini->cmdUint32('n', "num", RequiredCmdOption()) == 42);
 			testVectors(vectorize(ini->cmdArray(0, "--")), { "pos1", "pos2" });
 			CAGE_TEST(ini->cmdBool('d', "ddd", true));
 			CAGE_TEST(!ini->cmdBool('d', "ddd", false));
 			testVectors(vectorize(ini->cmdArray('d', "ddd")), {});
-			CAGE_TEST_THROWN(ini->cmdBool('l', "")); // missing required option
-			CAGE_TEST_THROWN(ini->cmdBool('c', "ccc")); // contains multiple values
-			CAGE_TEST_THROWN(ini->cmdBool('d', "ddd")); // missing required option
+			CAGE_TEST_THROWN(ini->cmdBool('l', "", RequiredCmdOption())); // missing required option
+			CAGE_TEST_THROWN(ini->cmdBool('c', "ccc", RequiredCmdOption())); // contains multiple values
+			CAGE_TEST_THROWN(ini->cmdBool('d', "ddd", RequiredCmdOption())); // missing required option
 			{
 				String s, i;
 				CAGE_TEST(!ini->anyUnused(s, i));
@@ -198,7 +198,7 @@ namespace
 				testVectors(vectorize(ini->sections()), { "a", "--" });
 				testVectors(vectorize(ini->values("a")), { "" });
 				testVectors(vectorize(ini->values("--")), { "pos1", "pos2" });
-				CAGE_TEST(ini->cmdString('a', "aaa") == "");
+				CAGE_TEST(ini->cmdString('a', "aaa", RequiredCmdOption()) == "");
 			}
 		}
 
@@ -210,7 +210,7 @@ namespace
 			testVectors(vectorize(ini->sections()), { "a", "--" });
 			testVectors(vectorize(ini->values("a")), { "-" });
 			testVectors(vectorize(ini->values("--")), { "pos1", "pos2" });
-			CAGE_TEST(ini->cmdString('a', "aaa") == "-");
+			CAGE_TEST(ini->cmdString('a', "aaa", RequiredCmdOption()) == "-");
 		}
 	}
 

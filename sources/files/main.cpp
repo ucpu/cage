@@ -76,29 +76,27 @@ void performArchive(PointerRange<const String> paths)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto paths = cmd->cmdArray(0, "--");
+		cmd->addHelp(Stringizer() + "examples:");
+		cmd->addHelp(Stringizer() + args[0] + " -l -- .");
+		cmd->addHelp(Stringizer() + args[0] + " -c -- assets.carch/source_file.txt extracted/target_file.txt");
+		cmd->addHelp(Stringizer() + args[0] + " -e -- source.carch target_folder");
+		cmd->addHelp(Stringizer() + args[0] + " -a -- source_folder target.carch");
+		cmd->addHelp("");
 		const bool list = cmd->cmdBool('l', "list", false);
 		const bool move = cmd->cmdBool('m', "move", false);
 		const bool copy = cmd->cmdBool('c', "copy", false);
 		const bool remove = cmd->cmdBool('r', "remove", false);
 		const bool extract = cmd->cmdBool('e', "extract", false);
 		const bool archive = cmd->cmdBool('a', "archive", false);
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -l -- .");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -c -- assets.carch/source_file.txt extracted/target_file.txt");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -e -- source.carch target_folder");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -a -- source_folder target.carch");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		const auto paths = cmd->cmdArray(0, "--");
+		cmd->checkCmd();
+
 		if ((list + move + copy + remove + extract + archive) != 1)
 			CAGE_THROW_ERROR(Exception, "exactly one operation is required");
 		if (paths.empty())

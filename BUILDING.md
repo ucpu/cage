@@ -1,18 +1,11 @@
 
-# Git submodules
-
-Make sure that git submodules are loaded too.
-```bash
-git pull
-git submodule sync
-git submodule update --init
-```
-
 # Building
 
 ## Windows
 
-These instructions assume using bash that comes with "git for windows", but is not mandatory to the build itself.
+Python must be installed and available in the path.
+
+The following instructions uses bash that comes with "git for windows" (mingw based).
 
 Prepare build directory.
 ```bash
@@ -56,5 +49,5 @@ cmake --build . -- -j8 # 8 is number of processor cores
 
 # Converting Assets
 
-Run `cage-asset-database`. You may find it in build/result/relwithdebinfo.
+Run `cage-asset-database`. You will find it in build/result/relwithdebinfo.
 

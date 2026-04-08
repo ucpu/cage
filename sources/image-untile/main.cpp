@@ -76,25 +76,22 @@ void untile(const String &input, const String &output, uint32 x, uint32 y, uint3
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
+		cmd->addHelp(Stringizer() + "example:");
+		cmd->addHelp(Stringizer() + args[0] + " -i atlas.png -x 13 -y 42 -w 32 -h 32 -o frame-\\$\\$.png");
+		cmd->addHelp("");
 		const String input = cmd->cmdString('i', "input", "input.png");
 		const String output = cmd->cmdString('o', "output", "output-$$$$.png");
 		const uint32 x = cmd->cmdUint32('x', "offset-x", 0);
 		const uint32 y = cmd->cmdUint32('y', "offset-y", 0);
 		const uint32 w = cmd->cmdUint32('w', "width", 0);
 		const uint32 h = cmd->cmdUint32('h', "height", 0);
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -i atlas.png -x 13 -y 42 -w 32 -h 32 -o frame-$$.png");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		cmd->checkCmd();
 
 		untile(input, output, x, y, w, h);
 		return 0;

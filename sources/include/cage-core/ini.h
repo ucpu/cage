@@ -33,6 +33,9 @@
 
 namespace cage
 {
+	struct RequiredCmdOption
+	{};
+
 	class CAGE_CORE_API Ini : private Immovable
 	{
 	public:
@@ -65,15 +68,19 @@ namespace cage
 		bool isUsed(const String &section, const String &item) const;
 		bool anyUnused(String &section, String &item) const;
 		bool anyUnused(String &section, String &item, String &value) const;
-		void checkUnused() const;
-		void logHelp() const; // log help based on all cmd* methods so far
-		void checkUnusedWithHelp(); // logs help and rethrows the exception, if any
+
+		void addHelp(const String &hlp);
+		void printHelp() const; // log all previously added help messages and cmd* options
+		bool requestsHelp();
+		void checkCmd(); // if help is requested, print it and throw, otherwise if any cmd option is unused, print it and throw
+		void checkUnusedOnly() const; // if any option is unused, print it and throw exception
+		void checkHelpOnly(); // if help is requested, print it and throw exception
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
 	void set##NAME(const String &section, const String &item, const TYPE &value); \
 	TYPE get##NAME(const String &section, const String &item, const TYPE &defaul = DEF) const; \
 	TYPE cmd##NAME(char shortName, const String &longName, const TYPE &defaul); \
-	TYPE cmd##NAME(char shortName, const String &longName);
+	TYPE cmd##NAME(char shortName, const String &longName, RequiredCmdOption required);
 		GCHL_GENERATE(bool, Bool, false);
 		GCHL_GENERATE(sint32, Sint32, 0);
 		GCHL_GENERATE(uint32, Uint32, 0);

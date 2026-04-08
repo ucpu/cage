@@ -220,7 +220,39 @@ namespace cage
 		return false;
 	}
 
-	void Ini::checkUnused() const
+	void Ini::addHelp(const String &hlp)
+	{
+		IniImpl *impl = (IniImpl *)this;
+		impl->helps.push_back(hlp);
+	}
+
+	void Ini::printHelp() const
+	{
+		const IniImpl *impl = (const IniImpl *)this;
+		for (const String &h : impl->helps)
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "help", h);
+	}
+
+	bool Ini::requestsHelp()
+	{
+		return cmdBool('?', "help", false);
+	}
+
+	void Ini::checkCmd()
+	{
+		checkHelpOnly();
+		try
+		{
+			checkUnusedOnly();
+		}
+		catch (...)
+		{
+			printHelp();
+			throw;
+		}
+	}
+
+	void Ini::checkUnusedOnly() const
 	{
 		String section, item, value;
 		if (anyUnused(section, item, value))
@@ -230,29 +262,12 @@ namespace cage
 		}
 	}
 
-	void Ini::logHelp() const
+	void Ini::checkHelpOnly()
 	{
-		const IniImpl *impl = (const IniImpl *)this;
-		CAGE_LOG(SeverityEnum::Info, "help", "command line options:");
-		for (const String &h : impl->helps)
-			CAGE_LOG_CONTINUE(SeverityEnum::Info, "help", h);
-	}
-
-	void Ini::checkUnusedWithHelp()
-	{
-		if (cmdBool('?', "help", false))
+		if (requestsHelp())
 		{
-			logHelp();
+			printHelp();
 			CAGE_THROW_SILENT(Exception, "showing help");
-		}
-		try
-		{
-			checkUnused();
-		}
-		catch (const Exception &)
-		{
-			logHelp();
-			throw;
 		}
 	}
 
@@ -479,15 +494,15 @@ namespace cage
 			return shortName.empty() ? Stringizer() + "--" + longName : Stringizer() + "--" + longName + " (-" + shortName + ")";
 		}
 
-		void addHelp(Ini *ini, const String &shortName, const String &longName, const char *typeName)
+		void addHelp(Ini *ini, const String &shortName, const String &longName, const char *typeName, const String &defaul)
 		{
-			const String h = Stringizer() + formatOptionNames(shortName, longName) + ": " + typeName;
+			const String h = Stringizer() + formatOptionNames(shortName, longName) + ": " + typeName + (defaul.empty() ? String() : Stringizer() + " = " + defaul);
 			((IniImpl *)ini)->helps.push_back(h);
 		}
 
-		std::optional<String> getCmd(Ini *ini, const String &shortName, const String &longName, const char *typeName)
+		std::optional<String> getCmd(Ini *ini, const String &shortName, const String &longName, const char *typeName, const String &defaul)
 		{
-			addHelp(ini, shortName, longName, typeName);
+			addHelp(ini, shortName, longName, typeName, defaul);
 			const uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
 			if (cnt > 1)
 			{
@@ -527,15 +542,15 @@ namespace cage
 	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, const TYPE &defaul) \
 	{ \
 		const String sn = toShortName(shortName); \
-		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE), Stringizer() + defaul); \
 		if (!tmp) \
 			return defaul; \
 		return TO(*tmp); \
 	} \
-	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName) \
+	TYPE Ini::CAGE_JOIN(cmd, NAME)(char shortName, const String &longName, RequiredCmdOption required) \
 	{ \
 		const String sn = toShortName(shortName); \
-		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		const auto tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE), ""); \
 		if (!tmp) \
 		{ \
 			CAGE_LOG_THROW(Stringizer() + "option name: " + formatOptionNames(sn, longName)); \

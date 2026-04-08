@@ -29,24 +29,21 @@ void convert(String src, const String &format, bool preserveOriginal)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto paths = cmd->cmdArray(0, "--");
+		cmd->addHelp(Stringizer() + "example:");
+		cmd->addHelp(Stringizer() + args[0] + " --preserve --format .ogg -- a.wav b.flac");
+		cmd->addHelp(Stringizer() + "--preserve: keep original files too");
+		cmd->addHelp("");
 		const bool preserveOriginal = cmd->cmdBool('p', "preserve", false);
-		const String format = cmd->cmdString('f', "format", ".png");
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "example:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --preserve --format .ogg -- a.wav b.flac");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "  to convert a.wav to a.ogg and b.flac to b.ogg");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "--preserve: keep original files too");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		const String format = cmd->cmdString('f', "format", ".ogg");
+		const auto paths = cmd->cmdArray(0, "--");
+		cmd->checkCmd();
+
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const String &path : paths)

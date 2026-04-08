@@ -1137,7 +1137,7 @@ namespace cage
 				part.material.animation[0] = ini->getFloat("animation", "duration", 1);
 				part.material.animation[1] = ini->getBool("animation", "loop", true);
 
-				ini->checkUnused();
+				ini->checkUnusedOnly();
 
 				finishMaterial(part);
 			}

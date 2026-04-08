@@ -328,26 +328,24 @@ bool logFilter(const detail::LoggerInfo &i)
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger()->filter.bind<logFilter>();
 	try
 	{
+		initializeConsoleLogger()->filter.bind<logFilter>();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const String outPath = cmd->cmdString('o', "output", "converted-meshes");
+		cmd->addHelp(Stringizer() + "example:");
+		cmd->addHelp(Stringizer() + args[0] + " -o output -- mesh1.fbx mesh2.fbx");
+		cmd->addHelp("");
 		mergeParts = cmd->cmdBool('m', "merge", mergeParts);
 		trianglesOnly = cmd->cmdBool('t', "triangles", trianglesOnly);
 		convertToCage = cmd->cmdBool('c', "cage", convertToCage);
 		generateObject = cmd->cmdBool('O', "objects", generateObject);
 		scale = cmd->cmdFloat('s', "scale", scale.value);
+		const String outPath = cmd->cmdString('o', "output", "converted-meshes");
 		const auto inPaths = cmd->cmdArray(0, "--");
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " -o output -- mesh1.fbx mesh2.fbx");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		cmd->checkCmd();
+
 		if (inPaths.empty())
 			CAGE_THROW_ERROR(Exception, "no inputs");
 		if (pathIsFile(outPath))

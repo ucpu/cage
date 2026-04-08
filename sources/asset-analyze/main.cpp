@@ -143,26 +143,18 @@ namespace
 
 int main(int argc, const char *args[])
 {
-	initializeConsoleLogger();
 	try
 	{
+		initializeConsoleLogger();
+
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		const auto &paths = cmd->cmdArray(0, "--");
 		recursive = cmd->cmdBool('r', "recursive", false);
 		generateObjects = cmd->cmdBool('o', "objects", false);
 		generatePacks = cmd->cmdBool('p', "packs", false);
-		if (cmd->cmdBool('?', "help", false))
-		{
-			cmd->logHelp();
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " path1 path2 path3");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --recursive -- path");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --objects -- path");
-			CAGE_LOG(SeverityEnum::Info, "help", Stringizer() + args[0] + " --packs -- path");
-			return 0;
-		}
-		cmd->checkUnusedWithHelp();
+		const auto paths = cmd->cmdArray(0, "--");
+		cmd->checkCmd();
+
 		if (paths.empty())
 			CAGE_THROW_ERROR(Exception, "no input");
 		for (const String &path : paths)

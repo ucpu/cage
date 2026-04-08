@@ -89,7 +89,7 @@ void processObject()
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}
 
-	ini->checkUnused();
+	ini->checkUnusedOnly();
 
 	AssetHeader h = processor->initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
