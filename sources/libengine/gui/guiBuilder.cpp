@@ -441,6 +441,14 @@ namespace cage
 			return c;
 		}
 
+		BuilderItem GuiBuilder::spacer(Vec2 size)
+		{
+			BuilderItem c(this);
+			c->value<GuiSpacerComponent>();
+			c->value<GuiExplicitSizeComponent>().size = size;
+			return c;
+		}
+
 		BuilderItem GuiBuilder::empty()
 		{
 			return BuilderItem(this);

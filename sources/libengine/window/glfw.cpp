@@ -18,6 +18,8 @@ namespace cage
 		{
 			if (String(message) == "Invalid scancode -1")
 				return;
+			if (String(message) == "Cocoa: Failed to retrieve string from pasteboard")
+				return;
 			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
 

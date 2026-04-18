@@ -114,6 +114,7 @@ namespace cage
 			[[nodiscard]] BuilderItem horizontalScrollbar(bool alwaysShown = false);
 			[[nodiscard]] BuilderItem verticalScrollbar(bool alwaysShown = false);
 
+			BuilderItem spacer(Vec2 size);
 			BuilderItem empty();
 			BuilderItem label(bool margin = GuiLabelComponent().margin);
 			BuilderItem header();

@@ -199,6 +199,9 @@ namespace cage
 		OverflowModeEnum overflow[2] = { OverflowModeEnum::Auto, OverflowModeEnum::Auto };
 	};
 
+	struct CAGE_ENGINE_API GuiSpacerComponent
+	{};
+
 	struct CAGE_ENGINE_API GuiLabelComponent
 	{
 		bool margin = true;
