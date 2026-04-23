@@ -67,7 +67,8 @@ namespace cage
 		const String dst = pathToAbs(redirectsTo);
 		if (src == dst)
 			return;
-		CAGE_LOG(SeverityEnum::Info, "fileRedirects", Stringizer() + "creating file redirect from: " + src + ", to: " + dst);
+		CAGE_LOG(SeverityEnum::Info, "fileRedirects", Stringizer() + "creating file redirect from: " + src);
+		CAGE_LOG(SeverityEnum::Note, "fileRedirects", Stringizer() + "creating file redirect to: " + dst); // split into two messages to avoid too long strings
 		if (find(src) != mapping().end())
 			CAGE_THROW_ERROR(Exception, "redirect already exists");
 		if (isPathPrefix(src, dst) || isPathPrefix(dst, src))
@@ -89,7 +90,8 @@ namespace cage
 		auto it = find(src);
 		if (it == mapping().end())
 			return;
-		CAGE_LOG(SeverityEnum::Info, "fileRedirects", Stringizer() + "removing file redirect from: " + src + ", to: " + it->second);
+		CAGE_LOG(SeverityEnum::Info, "fileRedirects", Stringizer() + "removing file redirect from: " + src);
+		CAGE_LOG(SeverityEnum::Note, "fileRedirects", Stringizer() + "removing file redirect to: " + it->second); // split into two messages to avoid too long strings
 		mapping().erase(it);
 	}
 

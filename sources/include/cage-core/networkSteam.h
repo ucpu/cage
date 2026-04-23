@@ -30,9 +30,6 @@ namespace cage
 
 		void write(PointerRange<const char> buffer, uint32 channel, bool reliable);
 
-		// suggested capacity for writing, in bytes
-		sint64 capacity() const;
-
 		// update will check for received packets and flush packets pending for send
 		// update also manages timeouts and resending, therefore it should be called periodically even if you wrote nothing
 		void update();

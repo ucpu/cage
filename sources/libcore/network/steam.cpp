@@ -349,12 +349,6 @@ namespace cage
 				sockets->SendMessages(1, &msg, nullptr);
 			}
 
-			sint64 capacity() const
-			{
-				// todo
-				return 0;
-			}
-
 			void update()
 			{
 				sockets->RunCallbacks();
@@ -504,12 +498,6 @@ namespace cage
 	{
 		SteamConnectionImpl *impl = (SteamConnectionImpl *)this;
 		impl->write(buffer, channel, reliable);
-	}
-
-	sint64 SteamConnection::capacity() const
-	{
-		const SteamConnectionImpl *impl = (const SteamConnectionImpl *)this;
-		return impl->capacity();
 	}
 
 	void SteamConnection::update()
