@@ -76,6 +76,7 @@ namespace cage
 	GraphicsDevice *engineGraphicsDevice();
 	Window *engineWindow();
 	EventDispatcher<bool(const GenericInput &)> &engineEvents();
+	EventDispatcher<bool()> &engineControlException();
 	VirtualReality *engineVirtualReality();
 	EntityManager *engineGuiEntities();
 	GuiManager *engineGuiManager();

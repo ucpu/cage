@@ -27,6 +27,12 @@ namespace cage
 		return instance;
 	}
 
+	EventDispatcher<bool()> &engineControlException()
+	{
+		static EventDispatcher<bool()> instance;
+		return instance;
+	}
+
 	EngineDynamicResolution &engineDynamicResolution()
 	{
 		static EngineDynamicResolution instance;

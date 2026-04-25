@@ -211,19 +211,27 @@ namespace cage
 			void controlInputs()
 			{
 				ProfilingScope profiling("inputs");
+				try
 				{
-					ProfilingScope profiling("gui prepare");
-					gui->outputResolution(window->resolution());
-					gui->outputRetina(window->contentScaling());
-					gui->prepare();
+					{
+						ProfilingScope profiling("gui prepare");
+						gui->outputResolution(window->resolution());
+						gui->outputRetina(window->contentScaling());
+						gui->prepare();
+					}
+					{
+						ProfilingScope profiling("window events");
+						window->processEvents();
+					}
+					{
+						ProfilingScope profiling("gui finish");
+						guiBundle.assign(gui->finish());
+					}
 				}
+				catch (...)
 				{
-					ProfilingScope profiling("window events");
-					window->processEvents();
-				}
-				{
-					ProfilingScope profiling("gui finish");
-					guiBundle.assign(gui->finish());
+					if (!engineControlException().dispatch())
+						throw;
 				}
 			}
 
@@ -246,31 +254,39 @@ namespace cage
 							break;
 					}
 				}
+				try
 				{
-					ProfilingScope profiling("update components");
-					updateComponents();
+					{
+						ProfilingScope profiling("update components");
+						updateComponents();
+					}
+					if (virtualReality)
+					{
+						ProfilingScope profiling("virtual reality events");
+						virtualReality->processEvents();
+						virtualRealitySceneUpdate(+entities);
+					}
+					{
+						ProfilingScope profiling("control callback");
+						controlThread().update.dispatch();
+					}
+					{
+						ProfilingScope profiling("keybinds engine tick");
+						engineEvents().dispatch(input::EngineTick());
+					}
+					{
+						ProfilingScope profiling("sound emit");
+						privateSound->emit();
+					}
+					{
+						ProfilingScope profiling("graphics emit");
+						privateGraphics->emit(controlTime);
+					}
 				}
-				if (virtualReality)
+				catch (...)
 				{
-					ProfilingScope profiling("virtual reality events");
-					virtualReality->processEvents();
-					virtualRealitySceneUpdate(+entities);
-				}
-				{
-					ProfilingScope profiling("control callback");
-					controlThread().update.dispatch();
-				}
-				{
-					ProfilingScope profiling("keybinds engine tick");
-					engineEvents().dispatch(input::EngineTick());
-				}
-				{
-					ProfilingScope profiling("sound emit");
-					privateSound->emit();
-				}
-				{
-					ProfilingScope profiling("graphics emit");
-					privateGraphics->emit(controlTime);
+					if (!engineControlException().dispatch())
+						throw;
 				}
 				profilingBufferEntities.add(entities->count());
 				{

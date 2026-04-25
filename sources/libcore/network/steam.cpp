@@ -30,6 +30,7 @@ namespace cage
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Msg);
 		const ConfigFloat confSimulatedPacketLoss("cage/steamsocks/simulatedPacketLoss", 0); // 0 .. 1
 		const ConfigFloat confSimulatedPacketDelay("cage/steamsocks/simulatedPacketDelay", 0); // ms
+		const ConfigUint32 confMessageSizeWarningThreshold("cage/steamsocks/messageSizeWarningThreshold", 16 * 1024); // bytes
 
 		constexpr uint32 LanesCount = 4;
 
@@ -339,6 +340,8 @@ namespace cage
 			{
 				CAGE_ASSERT(!buffer.empty());
 				CAGE_ASSERT(channel < LanesCount);
+				if (buffer.size() >= confMessageSizeWarningThreshold)
+					CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
 				SteamNetworkingMessage_t *msg = utils->AllocateMessage(buffer.size());
 				if (!msg)
 					CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
