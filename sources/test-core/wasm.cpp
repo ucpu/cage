@@ -1,5 +1,6 @@
 #include <cmath>
 
+#include <cage-core/concurrent.h>
 #include <cage-core/wasm.h>
 
 #include "main.h"
@@ -38,12 +39,8 @@ namespace
 		WasmBuffer buf = inst->adapt(wasmAddr, inst->strLen(wasmAddr) + 1);
 		return buf.read() == s;
 	}
-}
 
-void testWasm()
-{
-	CAGE_TESTCASE("wasm");
-
+	void testSimpleFunctions()
 	{
 		CAGE_TESTCASE("simple functions");
 		Holder<WasmModule> mod = newWasmModule(sums_wasm().cast<const char>());
@@ -112,6 +109,7 @@ void testWasm()
 		}
 	}
 
+	void testFunctionsWithBuffers()
 	{
 		CAGE_TESTCASE("functions with buffers");
 		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
@@ -150,8 +148,9 @@ void testWasm()
 		}
 	}
 
+	void testCppObjectsLifetimes()
 	{
-		CAGE_TESTCASE("foo (c++ objects lifetime)");
+		CAGE_TESTCASE("c++ objects lifetime");
 		Holder<WasmModule> mod = newWasmModule(foo_wasm().cast<const char>());
 		printModuleDetails(+mod);
 		Holder<WasmInstance> inst = wasmInstantiate(mod.share());
@@ -174,6 +173,7 @@ void testWasm()
 		CAGE_TEST(get_map(30) == 900);
 	}
 
+	void testMultipleInstantiations()
 	{
 		CAGE_TESTCASE("multiple instantiations of same module");
 		Holder<WasmModule> mod = newWasmModule(strings_wasm().cast<const char>());
@@ -191,6 +191,7 @@ void testWasm()
 		CAGE_TEST(testStr(+inst2, get2(), "ABCDEFGHIJ"));
 	}
 
+	void testUnlinkedNativeFunction()
 	{
 		CAGE_TESTCASE("unlinked native functions");
 		Holder<WasmModule> mod = newWasmModule(natives_wasm().cast<const char>());
@@ -200,9 +201,10 @@ void testWasm()
 		CAGE_TEST_THROWN(call1());
 	}
 
+	void testLinkedNativeFunctions()
 	{
 		CAGE_TESTCASE("linked native functions");
-		uint32 fnc1cnt = 0, fnc2cnt = 0, fnc3cnt = 0;
+		static uint32 fnc1cnt = 0, fnc2cnt = 0, fnc3cnt = 0;
 		{
 			Holder<WasmNatives> nats = newWasmNatives();
 			nats->add(Delegate<void()>([&]() { fnc1cnt++; }), "cage_test_func1");
@@ -250,8 +252,52 @@ void testWasm()
 		CAGE_TEST(fnc3cnt == 1);
 	}
 
+	void testEmptyModule()
 	{
 		CAGE_TESTCASE("empty module");
 		CAGE_TEST_THROWN(newWasmModule({}));
 	}
+
+	void testInThreads()
+	{
+		CAGE_TESTCASE("wasm in threads");
+
+		struct Context
+		{
+			Holder<WasmModule> mod;
+			Holder<WasmInstance> inst;
+			WasmFunction<void()> call;
+		};
+		Context context;
+
+		{
+			Holder<Thread> t1 = newThread([&]() { context.mod = newWasmModule(natives_wasm().cast<const char>()); }, "t1");
+			t1->wait();
+		}
+		{
+			Holder<Thread> t2 = newThread([&]() { context.inst = wasmInstantiate(context.mod.share()); }, "t2");
+			t2->wait();
+		}
+		{
+			Holder<Thread> t3 = newThread([&]() { context.call = context.inst->function<void()>("cage_test_call1"); }, "t3");
+			t3->wait();
+		}
+		{
+			Holder<Thread> t4 = newThread([&]() { context.call(); }, "t4");
+			t4->wait();
+		}
+	}
+}
+
+void testWasm()
+{
+	CAGE_TESTCASE("wasm");
+	testSimpleFunctions();
+	testFunctionsWithBuffers();
+	testCppObjectsLifetimes();
+	testMultipleInstantiations();
+	testUnlinkedNativeFunction();
+	testLinkedNativeFunctions();
+	testEmptyModule();
+	testInThreads();
 }

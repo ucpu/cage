@@ -233,7 +233,7 @@ namespace cage
 	class CAGE_CORE_API WasmInstance : private Immovable
 	{
 	public:
-		String instanceName;
+		AssetLabel instanceName;
 
 		Holder<WasmModule> module() const;
 

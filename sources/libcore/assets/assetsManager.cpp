@@ -12,7 +12,6 @@
 #include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
-#include <cage-core/config.h>
 #include <cage-core/debug.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
@@ -355,9 +354,17 @@ namespace cage
 			fetch = defaultFetch;
 		}
 
+		AssetLabel convert(const String &name)
+		{
+			if (name.length() <= AssetLabel::MaxLength)
+				return name;
+			const uint32 start = name.length() - AssetLabel::MaxLength + 5;
+			return Stringizer() + "..." + subString(name, start, m);
+		}
+
 		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, uint32 assetId, const String &textId_, Holder<void> &&value_) : AssetContext(impl, assetId)
 		{
-			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with value") : textId_;
+			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with value") : convert(textId_);
 			scheme = scheme_;
 			impl->existsCounter++;
 			*(AssetsScheme *)this = impl->schemes[scheme];
@@ -366,7 +373,7 @@ namespace cage
 
 		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, uint32 assetId, const String &textId_, const AssetsScheme &customScheme_, Holder<void> &&customData_) : AssetContext(impl, assetId)
 		{
-			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with custom scheme") : textId_;
+			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with custom scheme") : convert(textId_);
 			scheme = scheme_;
 			impl->existsCounter++;
 			*(AssetsScheme *)this = customScheme_;
@@ -870,7 +877,7 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "file is not a cage asset");
 			if (h.version != CurrentAssetVersion)
 				CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
-			asset->textId = h.textId.data();
+			asset->textId = h.textId;
 			if (h.scheme >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;

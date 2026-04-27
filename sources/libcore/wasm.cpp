@@ -236,7 +236,7 @@ namespace cage
 
 			WasmFunctionImpl(WasmInstanceImpl *instance, const String &name) : name(name), instance(instance)
 			{
-				CAGE_ASSERT(wasm_runtime_thread_env_inited());
+				initialize();
 
 				func = wasm_runtime_lookup_function(instance->instance, name.c_str());
 				if (!func)
@@ -480,6 +480,7 @@ namespace cage
 
 		void WasmFunctionInternal::call()
 		{
+			initialize();
 			WasmFunctionImpl *impl = (WasmFunctionImpl *)this;
 			if (!wasm_runtime_call_wasm(impl->instance->exec, impl->func, impl->data.size(), impl->data.data()))
 			{

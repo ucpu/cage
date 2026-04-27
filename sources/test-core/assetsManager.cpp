@@ -133,8 +133,6 @@ void testAssetManager()
 {
 	CAGE_TESTCASE("asset manager");
 
-	//configSetUint32("cage/assets/logLevel", 2);
-
 	{
 		CAGE_TESTCASE("basics");
 		Holder<AssetsManager> man = instantiate();
@@ -362,6 +360,22 @@ void testAssetManager()
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 1);
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)).get() == ptr);
+		man->unload(10);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->waitTillEmpty();
+	}
+
+	{
+		CAGE_TESTCASE("fabricated with long name");
+		Holder<AssetsManager> man = instantiate();
+		{
+			Holder<AssetCounter> f = systemMemory().createHolder<AssetCounter>();
+			man->loadValue<AssetSchemeIndexCounter, AssetCounter>(10, std::move(f), "really very very much very long long long name with a lot of text here to make sure it does not fit in the asset id string which is shorter than the string limit");
+		}
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 1);
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
 		man->unload(10);
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
