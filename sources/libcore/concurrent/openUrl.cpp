@@ -45,8 +45,12 @@ namespace cage
 		CAGE_LOG(SeverityEnum::Info, "openUrl", Stringizer() + "opening browser with url: " + url);
 #ifdef CAGE_SYSTEM_WINDOWS
 		windowsOpenUrl(url);
-#else
+#elif defined(CAGE_SYSTEM_MAC)
+		std::system((Stringizer() + "open \"" + url + "\"").value.c_str());
+#elif defined(CAGE_SYSTEM_LINUX)
 		std::system((Stringizer() + "xdg-open \"" + url + "\"").value.c_str());
+#else
+	#error "unknown platform"
 #endif
 	}
 }
