@@ -24,6 +24,8 @@ echo
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK
 
-# restore wamr & zydis
-git submodule update --init --recursive wamr/wamr
-git submodule update --init --recursive wamr/zydis
+# restore dawn
+git submodule update dawn/dawn
+
+# restore mbedtls
+git submodule update --init --recursive mbedtls/mbedtls

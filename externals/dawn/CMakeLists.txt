@@ -12,6 +12,7 @@ cage_replace_in_file(
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/CMakeLists.txt"
 	"NOT TARGET glslang AND \\(TINT_BUILD_GLSL_WRITER OR TINT_BUILD_GLSL_VALIDATOR\\) AND TINT_BUILD_CMD_TOOLS" "ON"
+	"set\\(ABSL_PROPAGATE_CXX_STD" "set(_ABSL_PROPAGATE_CXX_STD"
 )
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/abseil-cpp/CMakeLists.txt"
@@ -50,7 +51,7 @@ set(DAWN_ENABLE_WEBGPU_ON_WEBGPU OFF CACHE INTERNAL "Enable compilation of the W
 set(DAWN_ENABLE_DESKTOP_GL OFF CACHE INTERNAL "Enable compilation of the OpenGL backend")
 set(DAWN_ENABLE_OPENGLES OFF CACHE INTERNAL "Enable compilation of the OpenGL ES backend")
 set(DAWN_ENABLE_VULKAN ${vulkan} CACHE INTERNAL "Enable compilation of the Vulkan backend")
-set(DAWN_ENABLE_SPIRV_VALIDATION ${cage_validate_graphics} CACHE INTERNAL "Enable validation of SPIR-V")
+set(DAWN_ENABLE_SPIRV_VALIDATION ON CACHE INTERNAL "Enable validation of SPIR-V")
 set(DAWN_FORCE_SYSTEM_COMPONENT_LOAD ON CACHE INTERNAL "Allow system component fallback")
 set(DAWN_USE_WAYLAND ${linux} CACHE INTERNAL "Enable support for Wayland surface")
 set(DAWN_USE_X11 ${linux} CACHE INTERNAL "Enable support for X11 surface")
@@ -66,16 +67,16 @@ set(DAWN_BUILD_MONOLITHIC_LIBRARY "STATIC" CACHE INTERNAL "Build monolithic libr
 set(TINT_BUILD_SPV_READER ON CACHE INTERNAL "Build the SPIR-V input reader")
 set(TINT_BUILD_WGSL_READER ON CACHE INTERNAL "Build the WGSL input reader")
 set(TINT_BUILD_GLSL_WRITER OFF CACHE INTERNAL "Build the GLSL output writer")
-set(TINT_BUILD_GLSL_VALIDATOR OFF CACHE INTERNAL "Build the GLSL output validator") # required for glslang
+set(TINT_BUILD_GLSL_VALIDATOR OFF CACHE INTERNAL "Build the GLSL output validator")
 set(TINT_BUILD_HLSL_WRITER OFF CACHE INTERNAL "Build the HLSL output writer")
 set(TINT_BUILD_MSL_WRITER ${metal} CACHE INTERNAL "Build the MSL output writer")
 set(TINT_BUILD_SPV_WRITER ${vulkan} CACHE INTERNAL "Build the SPIR-V output writer")
 set(TINT_BUILD_WGSL_WRITER ON CACHE INTERNAL "Build the WGSL output writer")
 set(TINT_ENABLE_INSTALL OFF CACHE INTERNAL "Enable install step for Tint libraries")
-set(TINT_BUILD_CMD_TOOLS OFF CACHE INTERNAL "Build the Tint command line tools") # required for glslang
+set(TINT_BUILD_CMD_TOOLS OFF CACHE INTERNAL "Build the Tint command line tools")
 set(TINT_BUILD_IR_BINARY OFF CACHE INTERNAL "Build IR binary format support")
 set(TINT_BUILD_TESTS OFF CACHE INTERNAL "Build tests")
-set(TINT_ENABLE_IR_VALIDATION ${cage_validate_graphics} CACHE INTERNAL "Enable IR validation for backend codegen")
+set(TINT_ENABLE_IR_VALIDATION ON CACHE INTERNAL "Enable IR validation for backend codegen")
 
 unset(metal)
 unset(vulkan)
