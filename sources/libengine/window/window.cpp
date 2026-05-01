@@ -59,7 +59,7 @@ namespace cage
 			bool focus = true;
 			bool mouseIntendVisible = true;
 			bool mouseIntendRelative = false;
-			bool mouseAllowRelativeMovement = false; // prevent mouse jumping shortly after switching from absolute to relative movement
+			uint8 mouseSupressRelativeMovement = 0; // prevent mouse jumping shortly after switching from absolute to relative movement
 
 #ifdef GCHL_WINDOWS_THREAD
 			Holder<Thread> windowThread;
@@ -191,7 +191,7 @@ namespace cage
 				if constexpr (std::is_same_v<T, input::MouseRelativeMove>)
 				{
 					CAGE_ASSERT(i.relative);
-					if (!mouseAllowRelativeMovement)
+					if (mouseSupressRelativeMovement > 0)
 						return;
 					const Vec2 n = i.position;
 					if (valid(lastRelativePosition))
@@ -298,7 +298,8 @@ namespace cage
 					}
 				}
 
-				mouseAllowRelativeMovement = true;
+				if (mouseSupressRelativeMovement > 0)
+					mouseSupressRelativeMovement--;
 			}
 		};
 
@@ -646,7 +647,7 @@ namespace cage
 		if (impl->mouseIntendRelative != relative)
 			impl->lastRelativePosition = Vec2::Nan();
 		impl->mouseIntendRelative = relative;
-		impl->mouseAllowRelativeMovement = false;
+		impl->mouseSupressRelativeMovement = 2;
 	}
 
 	Vec2 Window::mousePosition() const
