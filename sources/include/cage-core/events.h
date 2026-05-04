@@ -101,12 +101,13 @@ namespace cage
 
 		bool dispatch(Ts... vs) const
 		{
-			const privat::EventLinker *l = firstListener();
+			const privat::EventLinker *l = firstListener(), *n = nullptr;
 			while (l)
 			{
+				n = l->n;
 				if (static_cast<const EventListener<bool(Ts...)> *>(l)->invoke(vs...))
 					return true;
-				l = l->n;
+				l = n;
 			}
 			return false;
 		}

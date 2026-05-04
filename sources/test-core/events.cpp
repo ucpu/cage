@@ -32,6 +32,28 @@ namespace
 	{
 		return retval;
 	}
+
+	void testDetachFromInside()
+	{
+		CAGE_TESTCASE("detach from inside");
+		static uint32 counterA = 0, counterB = 0, counterC = 0; // static so that the listeners do not need a pointer
+		EventDispatcher<bool()> dispatcher;
+		const auto listenerA = dispatcher.listen([]() { counterA++; });
+		EventListener<bool()> listenerB;
+		listenerB.bind(
+			[&]()
+			{
+				counterB++;
+				listenerB.detach(); // detaches itself while the dispatcher is running
+			});
+		listenerB.attach(dispatcher);
+		const auto listenerC = dispatcher.listen([]() { counterC++; });
+		CAGE_TEST(counterA == 0 && counterB == 0 && counterC == 0); // sanity check
+		dispatcher.dispatch();
+		CAGE_TEST(counterA == 1 && counterB == 1 && counterC == 1); // make sure that C has also been run after the B has detached itself
+		dispatcher.dispatch();
+		CAGE_TEST(counterA == 2 && counterB == 1 && counterC == 2); // sanity check
+	}
 }
 
 void testEvents()
@@ -253,4 +275,6 @@ void testEvents()
 		CAGE_TEST(d.dispatch(13) == false);
 		CAGE_TEST(tmp.b == 13);
 	}
+
+	testDetachFromInside();
 }
