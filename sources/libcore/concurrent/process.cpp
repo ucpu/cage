@@ -209,6 +209,18 @@ namespace cage
 				return ret;
 			}
 
+			bool done()
+			{
+				if (hProcess.handle == 0)
+					return true;
+				const DWORD res = WaitForSingleObject(hProcess.handle, 0);
+				if (res == WAIT_OBJECT_0)
+					return true;
+				if (res == WAIT_TIMEOUT)
+					return false;
+				CAGE_THROW_ERROR(SystemError, "WaitForSingleObject", GetLastError());
+			}
+
 			void error(StringPointer msg)
 			{
 				const DWORD err = GetLastError();
@@ -319,6 +331,8 @@ namespace cage
 			AutoPipe aStdoutPipe;
 			AutoPipe aFileNull;
 			pid_t pid = -1;
+			int exitStatus = 0;
+			bool hasExitStatus = false; // method done will consume the return code from the process if it already finished, so we need to cache it
 
 			explicit ProcessImpl(const ProcessCreateConfig &config)
 			{
@@ -433,30 +447,51 @@ namespace cage
 
 			int wait()
 			{
+				if (hasExitStatus)
+					return exitStatus;
 				if (pid <= 0)
 					return 0;
 				int status = 0;
-				try
+				while (true)
 				{
-					while (true)
+					errno = 0;
+					const int res = waitpid(pid, &status, 0);
+					const int err = errno;
+					if (res < 0 && err == EINTR)
+						continue;
+					if (res != pid)
 					{
-						errno = 0;
-						const int res = waitpid(pid, &status, 0);
-						const int err = errno;
-						if (res < 0 && err == EINTR)
-							continue;
-						if (res != pid)
-							CAGE_THROW_ERROR(SystemError, "waitpid", err);
-						break;
+						pid = 0;
+						CAGE_THROW_ERROR(SystemError, "waitpid", err);
 					}
-				}
-				catch (...)
-				{
 					pid = 0;
-					throw;
+					return status;
 				}
-				pid = 0;
-				return status;
+			}
+
+			bool done()
+			{
+				if (hasExitStatus)
+					return true;
+				if (pid <= 0)
+					return true;
+				int status = 0;
+				while (true)
+				{
+					errno = 0;
+					const int res = waitpid(pid, &status, WNOHANG);
+					const int err = errno;
+					if (res < 0 && err == EINTR)
+						continue;
+					if (res == 0)
+						return false;
+					if (res != pid)
+						CAGE_THROW_ERROR(SystemError, "waitpid", err);
+					exitStatus = status;
+					hasExitStatus = true;
+					pid = 0;
+					return true;
+				}
 			}
 
 			void read(PointerRange<char> buffer) override
@@ -534,6 +569,12 @@ namespace cage
 	{
 		ProcessImpl *impl = (ProcessImpl *)this;
 		return impl->wait();
+	}
+
+	bool Process::done()
+	{
+		ProcessImpl *impl = (ProcessImpl *)this;
+		return impl->done();
 	}
 
 	Holder<Process> newProcess(const ProcessCreateConfig &config)

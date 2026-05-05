@@ -25,6 +25,7 @@ namespace cage
 		void requestTerminate(); // SIGTERM
 		void terminate(); // SIGKILL
 		sint32 wait();
+		bool done();
 	};
 
 	CAGE_CORE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
