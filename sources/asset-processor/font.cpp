@@ -113,7 +113,7 @@ namespace
 		{
 			Glyph g;
 			g.data.glyphId = glyphIndex;
-			FT_CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
+			FT_CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_NO_HINTING);
 			const FT_Glyph_Metrics &glm = face->glyph->metrics;
 			g.data.size = Vec2(float(glm.width), float(glm.height)) * header.nominalScale;
 			g.data.bearing = Vec2(float(glm.horiBearingX), float(glm.horiBearingY)) * header.nominalScale;
@@ -475,7 +475,7 @@ void processFont()
 	if (processor->inputSpec.empty())
 	{
 		openFont();
-		setSize(40);
+		setSize(64);
 		loadGlyphs();
 		computeLineProperties();
 		addCursorGlyph();
