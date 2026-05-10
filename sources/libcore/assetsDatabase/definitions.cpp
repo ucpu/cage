@@ -176,7 +176,7 @@ namespace cage
 	{
 		status = {};
 
-		CAGE_LOG(SeverityEnum::Info, "database", "searching changed assets");
+		CAGE_LOG(SeverityEnum::Info, "database", "searching for modified assets");
 
 		std::map<String, PathLastChange, StringComparatorFast> files;
 		findFiles(this, files, "");

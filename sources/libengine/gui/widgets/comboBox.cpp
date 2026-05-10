@@ -193,6 +193,7 @@ namespace cage
 			const Vec4 margin = skin->defaults.comboBox.baseMargin;
 			hierarchy->renderPos[0] += margin[0];
 			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - margin[3];
+			hierarchy->moveToWindow(false, true);
 			CAGE_ASSERT(hierarchy->renderSize.valid());
 			CAGE_ASSERT(hierarchy->renderPos.valid());
 

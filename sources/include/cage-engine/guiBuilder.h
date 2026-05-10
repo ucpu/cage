@@ -45,6 +45,18 @@ namespace cage
 			{
 				return event(inputFilter([fnc](input::GuiValue) { fnc(); }));
 			}
+			template<auto Callable>
+			requires(std::is_convertible_v<decltype(Callable), void (*)()>)
+			BuilderItem event()
+			{
+				return event(inputFilter([](input::GuiValue) { Callable(); }));
+			}
+			template<auto Callable, class T>
+			requires(std::is_trivially_copyable_v<T> && std::is_convertible_v<decltype(Callable), void (*)(T)>)
+			BuilderItem event(T payload)
+			{
+				return event(inputFilter([payload](input::GuiValue) { Callable(payload); }));
+			}
 
 			BuilderItem update(Delegate<void(Entity *)> u);
 
