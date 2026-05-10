@@ -25,9 +25,9 @@
 #ifdef CAGE_SYSTEM_MAC
 	#define _FILE_OFFSET_BITS 64
 	#include <dirent.h>
+	#include <mach-o/dyld.h>
 	#include <sys/stat.h>
 	#include <unistd.h>
-	#include <mach-o/dyld.h>
 	#define fseek64 fseeko
 	#define ftell64 ftello
 	#define pread64 pread
@@ -546,15 +546,27 @@ namespace cage
 				if (copying)
 				{
 					Holder<PointerRange<char>> buff = openFile(from_, FileMode(true, false))->readAll();
-					openFile(to_, FileMode(false, true))->write(buff);
+					Holder<File> tf = openFile(to_, FileMode(false, true));
+					tf->write(buff);
+					tf->close();
 				}
 				else
 				{
 					auto res = rename(from.c_str(), to.c_str());
 					if (res != 0)
 					{
-						CAGE_LOG_THROW(Stringizer() + "path from: " + from + ", to: " + to);
-						CAGE_THROW_ERROR(SystemError, "rename", errno);
+						const int code = errno;
+						if (code == EXDEV)
+						{
+							// rename does not work between different filesystems, do copy+remove instead
+							moveImpl(from_, to_, true);
+							remove(from_);
+						}
+						else
+						{
+							CAGE_LOG_THROW(Stringizer() + "path from: " + from + ", to: " + to);
+							CAGE_THROW_ERROR(SystemError, "rename", code);
+						}
 					}
 				}
 #endif

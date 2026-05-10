@@ -26,6 +26,301 @@ namespace
 		CAGE_TEST(f->tell() == BLOCK_SIZE - 10);
 		CAGE_TEST_THROWN(f->read(11));
 	}
+
+	void testRename()
+	{
+		CAGE_TESTCASE("move (rename)");
+
+		{
+			CAGE_TESTCASE("simple move");
+			static constexpr const String source = "testdir/files/1";
+			static constexpr const String dest = "testdir/moved/1";
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
+			pathMove(source, dest);
+			CAGE_TEST(!pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("rename file");
+			static constexpr const String source = "testdir/files/2";
+			static constexpr const String dest = "testdir/files/renamed";
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
+			pathMove(source, dest);
+			CAGE_TEST(!pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("rename folder");
+			writeFile("testdir/rename1/1")->writeLine("haha");
+			writeFile("testdir/rename1/2")->writeLine("haha");
+			CAGE_TEST(pathIsDirectory("testdir/rename1"));
+			CAGE_TEST(!pathIsDirectory("testdir/rename2"));
+			pathMove("testdir/rename1", "testdir/rename2");
+			CAGE_TEST(!pathIsDirectory("testdir/rename1"));
+			CAGE_TEST(pathIsDirectory("testdir/rename2"));
+		}
+
+		{
+			CAGE_TESTCASE("move to non-existing directory");
+			pathMove("testdir/moved/1", "testdir/moved/non-exist/1");
+		}
+
+		{
+			CAGE_TESTCASE("move non-existing file");
+			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
+		}
+
+		{
+			CAGE_TESTCASE("move folder");
+			writeFile("testdir/moved/2")->writeLine("haha");
+			writeFile("testdir/moved/3")->writeLine("haha");
+			CAGE_TEST(pathListDirectory("testdir/moved").size() == 3);
+			pathMove("testdir/moved", "testdir/moved2");
+			CAGE_TEST(!pathIsDirectory("testdir/moved"));
+			CAGE_TEST(pathIsDirectory("testdir/moved2"));
+			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("move to itself");
+			writeFile("testdir/moving")->writeLine("haha");
+			pathMove("testdir/moving", "testdir/moving");
+			CAGE_TEST(pathIsFile("testdir/moving"));
+			CAGE_TEST(readFile("testdir/moving")->readLine() == "haha");
+		}
+
+		{
+			CAGE_TESTCASE("merge move folder");
+			writeFile("testdir/ttt/5")->writeLine("haha");
+			writeFile("testdir/ttt/6")->writeLine("haha");
+			pathMove("testdir/ttt", "testdir/moved2");
+			CAGE_TEST(!pathIsDirectory("testdir/ttt"));
+			CAGE_TEST(pathIsDirectory("testdir/moved2"));
+			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 5);
+		}
+
+		{
+			CAGE_TESTCASE("move inside itself");
+			CAGE_TEST_THROWN(pathMove("testdir", "testdir/moved2"));
+		}
+	}
+
+	void testCopy()
+	{
+		CAGE_TESTCASE("copy");
+
+		{
+			CAGE_TESTCASE("simple copy");
+			static constexpr const String source = "testdir/files/3";
+			static constexpr const String dest = "testdir/copied/3";
+			writeFile(source)->writeLine("haha");
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
+			pathCopy(source, dest);
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
+		}
+
+		{
+			CAGE_TESTCASE("copy to non-existing directory");
+			writeFile("testdir/files/4")->writeLine("haha");
+			pathCopy("testdir/files/4", "testdir/copied/non-exist2/4");
+		}
+
+		{
+			CAGE_TESTCASE("copy non-existing file");
+			CAGE_TEST_THROWN(pathCopy("testdir/copied/non-existing-file2", "testdir/copied/2"));
+		}
+
+		{
+			CAGE_TESTCASE("copy folder");
+			writeFile("testdir/copied/2")->writeLine("haha");
+			writeFile("testdir/copied/3")->writeLine("haha");
+			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
+			pathCopy("testdir/copied", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/copied"));
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("copy to itself");
+			pathCopy("testdir/copied2", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
+		}
+
+		{
+			CAGE_TESTCASE("merge copy folder");
+			writeFile("testdir/ttt/7")->writeLine("haha");
+			writeFile("testdir/ttt/8")->writeLine("haha");
+			pathCopy("testdir/ttt", "testdir/copied2");
+			CAGE_TEST(pathIsDirectory("testdir/ttt"));
+			CAGE_TEST(pathListDirectory("testdir/ttt").size() == 2);
+			CAGE_TEST(pathIsDirectory("testdir/copied2"));
+			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 5);
+		}
+	}
+
+	void testUnicodeNames()
+	{
+		CAGE_TESTCASE("unicode names");
+
+		{
+			CAGE_TESTCASE("create files");
+			// http://www.madore.org/~david/misc/unitest/
+			writeFile("testdir/unicode/1-Пооживлённымберегам");
+			writeFile("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
+			writeFile("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्");
+			writeFile("testdir/unicode/4-子曰「學而時習之不亦說乎");
+			writeFile("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
+			writeFile("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
+			writeFile("testdir/unicode/7-По/оживлённым/берегам");
+		}
+
+		{
+			CAGE_TESTCASE("test files");
+			CAGE_TEST(pathType("testdir/unicode/1-Пооживлённымберегам") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/4-子曰「學而時習之不亦說乎") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым/берегам") == PathTypeFlags::File);
+			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым") == PathTypeFlags::Directory);
+			CAGE_TEST(pathType("testdir/unicode/42-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::NotFound);
+		}
+
+		{
+			CAGE_TESTCASE("list files");
+			const auto list = pathListDirectory("testdir/unicode");
+			CAGE_TEST(list);
+			for (const String &n : list)
+				CAGE_LOG(SeverityEnum::Info, "unicode-test", n);
+		}
+
+		{
+			CAGE_TESTCASE("move files");
+			pathMove("testdir/unicode/1-Пооживлённымберегам", "testdir/unicode/1_Пооживлённымберегам");
+			pathMove("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ", "testdir/unicode/2_Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
+			pathMove("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्", "testdir/unicode/3_पशुपतिरपितान्यहानिकृच्छ्राद्");
+			pathMove("testdir/unicode/4-子曰「學而時習之不亦說乎", "testdir/unicode/4_子曰「學而時習之不亦說乎");
+			pathMove("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்", "testdir/unicode/5_ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
+			pathMove("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ", "testdir/unicode/6_بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
+			pathMove("testdir/unicode/7-По/оживлённым/берегам", "testdir/unicode/7_По/оживлённым/берегам");
+		}
+
+		{
+			CAGE_TESTCASE("remove files");
+			pathRemove("testdir/unicode/4_子曰「學而時習之不亦說乎");
+			pathRemove("testdir/unicode/7_По");
+		}
+	}
+
+	void testPathsFindSequence()
+	{
+		CAGE_TESTCASE("paths find sequence");
+
+		writeFile("testdir/sequence/001.txt");
+		writeFile("testdir/sequence/002.txt");
+		writeFile("testdir/sequence/003.txt");
+		writeFile("testdir/sequence/004.txt");
+		writeFile("testdir/sequence/005.txt");
+		writeFile("testdir/sequence/006.txt");
+		writeFile("testdir/sequence/007.txt");
+		writeFile("testdir/sequence/008.txt");
+		writeFile("testdir/sequence/009.txt");
+		writeFile("testdir/sequence/010.txt");
+		writeFile("testdir/sequence/011.txt");
+		writeFile("testdir/sequence/012.txt");
+		writeFile("testdir/sequence/013.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 13);
+			CAGE_TEST(res[0] == "testdir/sequence/001.txt");
+			CAGE_TEST(res[12] == "testdir/sequence/013.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+
+		writeFile("testdir/sequence/000.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 14);
+			CAGE_TEST(res[0] == "testdir/sequence/000.txt");
+			CAGE_TEST(res[13] == "testdir/sequence/013.txt");
+		}
+
+		pathRemove("testdir/sequence");
+
+		writeFile("testdir/sequence/1.txt");
+		writeFile("testdir/sequence/2.txt");
+		writeFile("testdir/sequence/3.txt");
+		writeFile("testdir/sequence/4.txt");
+		writeFile("testdir/sequence/5.txt");
+		writeFile("testdir/sequence/6.txt");
+		writeFile("testdir/sequence/7.txt");
+		writeFile("testdir/sequence/8.txt");
+		writeFile("testdir/sequence/9.txt");
+		writeFile("testdir/sequence/10.txt");
+		writeFile("testdir/sequence/11.txt");
+		writeFile("testdir/sequence/12.txt");
+		writeFile("testdir/sequence/13.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 13);
+			CAGE_TEST(res[0] == "testdir/sequence/1.txt");
+			CAGE_TEST(res[12] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+
+		writeFile("testdir/sequence/0.txt");
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/$.txt");
+			CAGE_TEST(res.size() == 14);
+			CAGE_TEST(res[0] == "testdir/sequence/0.txt");
+			CAGE_TEST(res[13] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/13.txt");
+			CAGE_TEST(res.size() == 1);
+			CAGE_TEST(res[0] == "testdir/sequence/13.txt");
+		}
+
+		{
+			const auto res = pathSearchSequence("testdir/sequence/42.txt");
+			CAGE_TEST(res.size() == 0);
+		}
+	}
+
+	void testMoveAcrossSystems()
+	{
+		// on linux, /tmp might be mounted on separate filesystem, which breaks moving files/folders
+		// use the following to make a temporary filesystem for testing
+		// sudo mount -t tmpfs -o size=1G tmpfs /tmp
+		CAGE_TESTCASE("move from temporary path");
+		const String a = pathJoin(detail::tempPath(), "sourceFolder");
+		const String b = "testdir/renameTest/target";
+		writeFile(a + "/greetings.txt")->writeLine("hello there");
+		pathMove(a, b);
+	}
 }
 
 void testFiles()
@@ -152,143 +447,8 @@ void testFiles()
 		}
 	}
 
-	{
-		CAGE_TESTCASE("move (rename)");
-
-		{
-			CAGE_TESTCASE("simple move");
-			static constexpr const String source = "testdir/files/1";
-			static constexpr const String dest = "testdir/moved/1";
-			CAGE_TEST(pathIsFile(source));
-			CAGE_TEST(!pathIsFile(dest));
-			pathMove(source, dest);
-			CAGE_TEST(!pathIsFile(source));
-			CAGE_TEST(pathIsFile(dest));
-		}
-
-		{
-			CAGE_TESTCASE("rename file");
-			static constexpr const String source = "testdir/files/2";
-			static constexpr const String dest = "testdir/files/renamed";
-			CAGE_TEST(pathIsFile(source));
-			CAGE_TEST(!pathIsFile(dest));
-			pathMove(source, dest);
-			CAGE_TEST(!pathIsFile(source));
-			CAGE_TEST(pathIsFile(dest));
-		}
-
-		{
-			CAGE_TESTCASE("rename folder");
-			writeFile("testdir/rename1/1")->writeLine("haha");
-			writeFile("testdir/rename1/2")->writeLine("haha");
-			CAGE_TEST(pathIsDirectory("testdir/rename1"));
-			CAGE_TEST(!pathIsDirectory("testdir/rename2"));
-			pathMove("testdir/rename1", "testdir/rename2");
-			CAGE_TEST(!pathIsDirectory("testdir/rename1"));
-			CAGE_TEST(pathIsDirectory("testdir/rename2"));
-		}
-
-		{
-			CAGE_TESTCASE("move to non-existing directory");
-			pathMove("testdir/moved/1", "testdir/moved/non-exist/1");
-		}
-
-		{
-			CAGE_TESTCASE("move non-existing file");
-			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
-		}
-
-		{
-			CAGE_TESTCASE("move folder");
-			writeFile("testdir/moved/2")->writeLine("haha");
-			writeFile("testdir/moved/3")->writeLine("haha");
-			CAGE_TEST(pathListDirectory("testdir/moved").size() == 3);
-			pathMove("testdir/moved", "testdir/moved2");
-			CAGE_TEST(!pathIsDirectory("testdir/moved"));
-			CAGE_TEST(pathIsDirectory("testdir/moved2"));
-			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 3);
-		}
-
-		{
-			CAGE_TESTCASE("move to itself");
-			writeFile("testdir/moving")->writeLine("haha");
-			pathMove("testdir/moving", "testdir/moving");
-			CAGE_TEST(pathIsFile("testdir/moving"));
-			CAGE_TEST(readFile("testdir/moving")->readLine() == "haha");
-		}
-
-		{
-			CAGE_TESTCASE("merge move folder");
-			writeFile("testdir/ttt/5")->writeLine("haha");
-			writeFile("testdir/ttt/6")->writeLine("haha");
-			pathMove("testdir/ttt", "testdir/moved2");
-			CAGE_TEST(!pathIsDirectory("testdir/ttt"));
-			CAGE_TEST(pathIsDirectory("testdir/moved2"));
-			CAGE_TEST(pathListDirectory("testdir/moved2").size() == 5);
-		}
-
-		{
-			CAGE_TESTCASE("move inside itself");
-			CAGE_TEST_THROWN(pathMove("testdir", "testdir/moved2"));
-		}
-	}
-
-	{
-		CAGE_TESTCASE("copy");
-
-		{
-			CAGE_TESTCASE("simple copy");
-			static constexpr const String source = "testdir/files/3";
-			static constexpr const String dest = "testdir/copied/3";
-			writeFile(source)->writeLine("haha");
-			CAGE_TEST(pathIsFile(source));
-			CAGE_TEST(!pathIsFile(dest));
-			pathCopy(source, dest);
-			CAGE_TEST(pathIsFile(source));
-			CAGE_TEST(pathIsFile(dest));
-		}
-
-		{
-			CAGE_TESTCASE("copy to non-existing directory");
-			writeFile("testdir/files/4")->writeLine("haha");
-			pathCopy("testdir/files/4", "testdir/copied/non-exist2/4");
-		}
-
-		{
-			CAGE_TESTCASE("copy non-existing file");
-			CAGE_TEST_THROWN(pathCopy("testdir/copied/non-existing-file2", "testdir/copied/2"));
-		}
-
-		{
-			CAGE_TESTCASE("copy folder");
-			writeFile("testdir/copied/2")->writeLine("haha");
-			writeFile("testdir/copied/3")->writeLine("haha");
-			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
-			pathCopy("testdir/copied", "testdir/copied2");
-			CAGE_TEST(pathIsDirectory("testdir/copied"));
-			CAGE_TEST(pathIsDirectory("testdir/copied2"));
-			CAGE_TEST(pathListDirectory("testdir/copied").size() == 3);
-			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
-		}
-
-		{
-			CAGE_TESTCASE("copy to itself");
-			pathCopy("testdir/copied2", "testdir/copied2");
-			CAGE_TEST(pathIsDirectory("testdir/copied2"));
-			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 3);
-		}
-
-		{
-			CAGE_TESTCASE("merge copy folder");
-			writeFile("testdir/ttt/7")->writeLine("haha");
-			writeFile("testdir/ttt/8")->writeLine("haha");
-			pathCopy("testdir/ttt", "testdir/copied2");
-			CAGE_TEST(pathIsDirectory("testdir/ttt"));
-			CAGE_TEST(pathListDirectory("testdir/ttt").size() == 2);
-			CAGE_TEST(pathIsDirectory("testdir/copied2"));
-			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 5);
-		}
-	}
+	testRename();
+	testCopy();
 
 	{
 		CAGE_TESTCASE("in-memory files");
@@ -338,146 +498,8 @@ void testFiles()
 		CAGE_TEST(writeFile(s));
 	}
 
-	{
-		CAGE_TESTCASE("unicode names");
-
-		{
-			CAGE_TESTCASE("create files");
-			// http://www.madore.org/~david/misc/unitest/
-			writeFile("testdir/unicode/1-Пооживлённымберегам");
-			writeFile("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
-			writeFile("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्");
-			writeFile("testdir/unicode/4-子曰「學而時習之不亦說乎");
-			writeFile("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
-			writeFile("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
-			writeFile("testdir/unicode/7-По/оживлённым/берегам");
-		}
-
-		{
-			CAGE_TESTCASE("test files");
-			CAGE_TEST(pathType("testdir/unicode/1-Пооживлённымберегам") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/4-子曰「學而時習之不亦說乎") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым/берегам") == PathTypeFlags::File);
-			CAGE_TEST(pathType("testdir/unicode/7-По/оживлённым") == PathTypeFlags::Directory);
-			CAGE_TEST(pathType("testdir/unicode/42-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ") == PathTypeFlags::NotFound);
-		}
-
-		{
-			CAGE_TESTCASE("list files");
-			const auto list = pathListDirectory("testdir/unicode");
-			CAGE_TEST(list);
-			for (const String &n : list)
-				CAGE_LOG(SeverityEnum::Info, "unicode-test", n);
-		}
-
-		{
-			CAGE_TESTCASE("move files");
-			pathMove("testdir/unicode/1-Пооживлённымберегам", "testdir/unicode/1_Пооживлённымберегам");
-			pathMove("testdir/unicode/2-Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ", "testdir/unicode/2_Ἰοὺἰού·τὰπάντʼἂνἐξήκοισαφῆ");
-			pathMove("testdir/unicode/3-पशुपतिरपितान्यहानिकृच्छ्राद्", "testdir/unicode/3_पशुपतिरपितान्यहानिकृच्छ्राद्");
-			pathMove("testdir/unicode/4-子曰「學而時習之不亦說乎", "testdir/unicode/4_子曰「學而時習之不亦說乎");
-			pathMove("testdir/unicode/5-ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்", "testdir/unicode/5_ஸ்றீனிவாஸராமானுஜன்ஐயங்கார்");
-			pathMove("testdir/unicode/6-بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ", "testdir/unicode/6_بِسْمِٱللّٰهِٱلرَّحْمـَبنِٱلرَّحِيمِ");
-			pathMove("testdir/unicode/7-По/оживлённым/берегам", "testdir/unicode/7_По/оживлённым/берегам");
-		}
-
-		{
-			CAGE_TESTCASE("remove files");
-			pathRemove("testdir/unicode/4_子曰「學而時習之不亦說乎");
-			pathRemove("testdir/unicode/7_По");
-		}
-	}
-
-	{
-		CAGE_TESTCASE("paths find sequence");
-
-		writeFile("testdir/sequence/001.txt");
-		writeFile("testdir/sequence/002.txt");
-		writeFile("testdir/sequence/003.txt");
-		writeFile("testdir/sequence/004.txt");
-		writeFile("testdir/sequence/005.txt");
-		writeFile("testdir/sequence/006.txt");
-		writeFile("testdir/sequence/007.txt");
-		writeFile("testdir/sequence/008.txt");
-		writeFile("testdir/sequence/009.txt");
-		writeFile("testdir/sequence/010.txt");
-		writeFile("testdir/sequence/011.txt");
-		writeFile("testdir/sequence/012.txt");
-		writeFile("testdir/sequence/013.txt");
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
-			CAGE_TEST(res.size() == 13);
-			CAGE_TEST(res[0] == "testdir/sequence/001.txt");
-			CAGE_TEST(res[12] == "testdir/sequence/013.txt");
-		}
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$.txt");
-			CAGE_TEST(res.size() == 0);
-		}
-
-		writeFile("testdir/sequence/000.txt");
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
-			CAGE_TEST(res.size() == 14);
-			CAGE_TEST(res[0] == "testdir/sequence/000.txt");
-			CAGE_TEST(res[13] == "testdir/sequence/013.txt");
-		}
-
-		pathRemove("testdir/sequence");
-
-		writeFile("testdir/sequence/1.txt");
-		writeFile("testdir/sequence/2.txt");
-		writeFile("testdir/sequence/3.txt");
-		writeFile("testdir/sequence/4.txt");
-		writeFile("testdir/sequence/5.txt");
-		writeFile("testdir/sequence/6.txt");
-		writeFile("testdir/sequence/7.txt");
-		writeFile("testdir/sequence/8.txt");
-		writeFile("testdir/sequence/9.txt");
-		writeFile("testdir/sequence/10.txt");
-		writeFile("testdir/sequence/11.txt");
-		writeFile("testdir/sequence/12.txt");
-		writeFile("testdir/sequence/13.txt");
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$.txt");
-			CAGE_TEST(res.size() == 13);
-			CAGE_TEST(res[0] == "testdir/sequence/1.txt");
-			CAGE_TEST(res[12] == "testdir/sequence/13.txt");
-		}
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$$$.txt");
-			CAGE_TEST(res.size() == 0);
-		}
-
-		writeFile("testdir/sequence/0.txt");
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/$.txt");
-			CAGE_TEST(res.size() == 14);
-			CAGE_TEST(res[0] == "testdir/sequence/0.txt");
-			CAGE_TEST(res[13] == "testdir/sequence/13.txt");
-		}
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/13.txt");
-			CAGE_TEST(res.size() == 1);
-			CAGE_TEST(res[0] == "testdir/sequence/13.txt");
-		}
-
-		{
-			const auto res = pathSearchSequence("testdir/sequence/42.txt");
-			CAGE_TEST(res.size() == 0);
-		}
-	}
+	testUnicodeNames();
+	testPathsFindSequence();
 
 	{
 		CAGE_TESTCASE("filesystem watcher");
@@ -486,7 +508,7 @@ void testFiles()
 #else
 		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
 		{
-			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are possibly running on a filesystem that does not support watching");
+			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are running in /mnt/, which may not support fs watching");
 		}
 		else
 		{
@@ -503,4 +525,6 @@ void testFiles()
 		}
 #endif
 	}
+
+	testMoveAcrossSystems();
 }
