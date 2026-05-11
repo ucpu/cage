@@ -142,6 +142,54 @@ namespace cage
 				return true;
 			}
 
+			bool keyRepeat(uint32 key, ModifiersFlags modifiers) override
+			{
+				if (count == 0 || widgetState.disabled)
+					return false;
+				switch (key)
+				{
+					case 264: // down
+					{
+						if (data.selected + 1 < count)
+						{
+							data.selected++;
+							selected = data.selected;
+							consolidateSelection(list->hierarchy, selected);
+							play(skin->defaults.comboBox.selectSound);
+							hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
+						}
+						return true;
+					}
+					case 265: // up
+					{
+						if (data.selected > 0)
+						{
+							if (data.selected == m)
+								data.selected = count - 1;
+							else
+								data.selected--;
+							selected = data.selected;
+							consolidateSelection(list->hierarchy, selected);
+							play(skin->defaults.comboBox.selectSound);
+							hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
+						}
+						return true;
+					}
+					case 257: // enter
+					case 335: // numpad enter
+					{
+						hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
+						if (data.selected != m)
+						{
+							play(skin->defaults.comboBox.selectSound);
+							hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, MouseButtonsFlags::None, modifiers });
+						}
+						return true;
+					}
+				}
+				return false;
+			}
+
 			bool interactive() const override { return true; }
 		};
 

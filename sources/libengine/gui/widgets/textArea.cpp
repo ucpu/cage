@@ -108,14 +108,14 @@ namespace cage
 					{
 						if (cursor > 0)
 							cursor--;
+						break;
 					}
-					break;
 					case 262: // right
 					{
 						if (cursor < len)
 							cursor++;
+						break;
 					}
-					break;
 					case 259: // backspace
 					{
 						if (len == 0 || cursor == 0)
@@ -123,16 +123,16 @@ namespace cage
 						cursor--;
 						utf32.erase(utf32.begin() + cursor);
 						store(utf32);
+						break;
 					}
-					break;
 					case 261: // delete
 					{
 						if (cursor == len)
 							break;
 						utf32.erase(utf32.begin() + cursor);
 						store(utf32);
+						break;
 					}
-					break;
 				}
 				return true;
 			}
