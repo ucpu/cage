@@ -310,6 +310,58 @@ namespace
 		}
 	}
 
+	void testFilesInTemp()
+	{
+		CAGE_TESTCASE("files in temp");
+		const String temp = detail::tempPath();
+
+		MemoryBuffer data(BLOCK_SIZE);
+		for (uint32 i = 0; i < BLOCK_SIZE; i++)
+			data.data()[i] = (char)((i + 5) % 26 + 'A');
+
+		{
+			CAGE_TESTCASE("write to file");
+			Holder<File> f = writeFile(pathJoin(temp, "testdir/files/1"));
+			CAGE_TEST(f);
+			for (uint32 i = 0; i < FILE_BLOCKS; i++)
+				f->write(data);
+		}
+
+		{
+			CAGE_TESTCASE("read from file");
+			Holder<File> f = readFile(pathJoin(temp, "testdir/files/1"));
+			CAGE_TEST(f);
+			CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+			MemoryBuffer tmp(BLOCK_SIZE);
+			for (uint32 i = 0; i < FILE_BLOCKS; i++)
+			{
+				f->read(tmp);
+				CAGE_TEST(detail::memcmp(tmp.data(), data.data(), BLOCK_SIZE) == 0);
+			}
+		}
+
+		{
+			CAGE_TESTCASE("readAll from file");
+			Holder<File> f = readFile(pathJoin(temp, "testdir/files/1"));
+			CAGE_TEST(f);
+			CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+			auto tmp = f->readAll();
+			CAGE_TEST(tmp.size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+		}
+
+		{
+			CAGE_TESTCASE("list directory");
+			const auto list = pathListDirectory(pathJoin(temp, "testdir/files"));
+			CAGE_TEST(list);
+			std::set<String> mp;
+			for (const String &n : list)
+				mp.insert(pathExtractFilename(n));
+			CAGE_TEST(mp.size() == 1);
+			CAGE_TEST(pathType(pathJoin(temp, "testdir/files/1")) == PathTypeFlags::File);
+			CAGE_TEST_THROWN(pathListDirectory(pathJoin(temp, "testdir/files/1")));
+		}
+	}
+
 	void testMoveAcrossSystems()
 	{
 		// on linux, /tmp might be mounted on separate filesystem, which breaks moving files/folders
@@ -526,5 +578,6 @@ void testFiles()
 #endif
 	}
 
+	testFilesInTemp();
 	testMoveAcrossSystems();
 }

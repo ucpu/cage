@@ -59,6 +59,7 @@ namespace cage
 	Holder<PointerRange<char>> File::readAll()
 	{
 		const uintPtr s = size();
+		CAGE_ASSERT(s < uintPtr(m) / 2);
 		if (!s)
 			return {};
 		MemoryBuffer r(s);

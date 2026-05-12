@@ -331,12 +331,17 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 
-			void seek(uint64 position) override
+			void seekAnywhere(uint64 position)
 			{
 				CAGE_ASSERT(f);
-				CAGE_ASSERT(position <= size());
 				if (fseek64(f, position, 0) != 0)
 					CAGE_THROW_ERROR(SystemError, "fseek", errno);
+			}
+
+			void seek(uint64 position) override
+			{
+				CAGE_ASSERT(position <= size()); // allow seek to position one past the size
+				seekAnywhere(position);
 			}
 
 			void close() override
@@ -351,16 +356,21 @@ namespace cage
 			uint64 tell() override
 			{
 				CAGE_ASSERT(f);
-				return ftell64(f);
+				const sint64 v = ftell64(f);
+				if (v < 0)
+					CAGE_THROW_ERROR(SystemError, "ftell64", errno);
+				return v;
 			}
 
 			uint64 size() override
 			{
 				CAGE_ASSERT(f);
-				const uint64 pos = ftell64(f);
-				fseek64(f, 0, 2);
-				const uint64 siz = ftell64(f);
-				fseek64(f, pos, 0);
+				const uint64 orig = tell();
+				if (fseek64(f, 0, 2) != 0)
+					CAGE_THROW_ERROR(SystemError, "fseek64", errno);
+				const uint64 siz = tell();
+				seekAnywhere(orig);
+				CAGE_ASSERT(siz < uint64(m) / 2);
 				return siz;
 			}
 
@@ -378,17 +388,20 @@ namespace cage
 				ScopeLock lock(fsMutex());
 				CAGE_ASSERT(myMode.read && !myMode.write);
 				CAGE_ASSERT(f);
-				myMode.write = true;
+				FileMode newMode = myMode;
+				newMode.write = true;
 #ifdef CAGE_SYSTEM_WINDOWS
-				f = _wfreopen(Widen(myPath), Widen(myMode.mode()), f);
+				FILE *ff = _wfreopen(Widen(myPath), Widen(newMode.mode()), f);
 #else
-				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
+				FILE *ff = freopen(myPath.c_str(), newMode.mode().c_str(), f);
 #endif
-				if (!f)
+				if (!ff)
 				{
 					CAGE_LOG_THROW(Stringizer() + "path: " + myPath);
 					CAGE_THROW_ERROR(SystemError, "freopen", errno);
 				}
+				f = ff;
+				myMode = newMode;
 			}
 
 			void readAt(PointerRange<char> buffer, uint64 at) override
@@ -416,9 +429,8 @@ namespace cage
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.read);
 					ff = f;
-					at = ftell64(f);
-					if (fseek64(f, at + buffer.size(), 0) != 0)
-						CAGE_THROW_ERROR(SystemError, "fseek", errno);
+					at = tell();
+					seekAnywhere(at + buffer.size());
 				}
 				readAtImpl(buffer, at, ff);
 			}
@@ -434,9 +446,8 @@ namespace cage
 					CAGE_ASSERT(f);
 					CAGE_ASSERT(myMode.write);
 					ff = f;
-					at = ftell64(f);
-					if (fseek64(f, at + buffer.size(), 0) != 0)
-						CAGE_THROW_ERROR(SystemError, "fseek", errno);
+					at = tell();
+					seekAnywhere(at + buffer.size());
 				}
 				writeAtImpl(buffer, at, ff);
 			}
@@ -473,7 +484,8 @@ namespace cage
 					CAGE_ASSERT(f);
 					ff = f;
 				}
-				fflush(ff);
+				if (fflush(ff) != 0)
+					CAGE_THROW_ERROR(SystemError, "fflush", errno);
 			}
 		};
 
@@ -510,9 +522,30 @@ namespace cage
 			void flush() override
 			{
 				CAGE_ASSERT(f);
-				fflush(f);
+				if (fflush(f) != 0)
+					CAGE_THROW_ERROR(SystemError, "fflush", errno);
 			}
 		};
+
+		bool linuxSameDevice(const String &pa, const String &pb)
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			return true;
+#else
+			struct stat sa, sb;
+			if (stat(pa.c_str(), &sa) != 0)
+			{
+				CAGE_LOG_THROW(Stringizer() + "path: " + pa);
+				CAGE_THROW_ERROR(SystemError, "stat", errno);
+			}
+			if (stat(pb.c_str(), &sb) != 0)
+			{
+				CAGE_LOG_THROW(Stringizer() + "path: " + pb);
+				CAGE_THROW_ERROR(SystemError, "stat", errno);
+			}
+			return sa.st_dev == sb.st_dev;
+#endif
+		}
 
 		class ArchiveReal final : public ArchiveAbstract
 		{
@@ -552,8 +585,7 @@ namespace cage
 				}
 				else
 				{
-					auto res = rename(from.c_str(), to.c_str());
-					if (res != 0)
+					if (rename(from.c_str(), to.c_str()) != 0)
 					{
 						const int code = errno;
 						if (code == EXDEV)
@@ -593,7 +625,7 @@ namespace cage
 					}
 					case PathTypeFlags::Directory:
 					{
-						if (!copying && type(to_) == PathTypeFlags::NotFound)
+						if (!copying && type(to_) == PathTypeFlags::NotFound && linuxSameDevice(pathJoin(myPath, from_), pathJoin(myPath, pathJoin(to_, ".."))))
 							moveImpl(from_, to_, false);
 						else
 						{

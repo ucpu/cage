@@ -19,6 +19,7 @@ namespace cage
 
 		virtual void reopenForModification();
 		virtual void readAt(PointerRange<char> buffer, uint64 at);
+		Holder<PointerRange<char>> readAll() override; // override with additional check
 		FileMode mode() const final;
 	};
 

@@ -176,6 +176,13 @@ namespace cage
 		CAGE_THROW_CRITICAL(Exception, "reading with offset from abstract file");
 	}
 
+	Holder<PointerRange<char>> FileAbstract::readAll()
+	{
+		ScopeLock lock(fsMutex());
+		CAGE_ASSERT(tell() == 0);
+		return File::readAll();
+	}
+
 	FileMode FileAbstract::mode() const
 	{
 		ScopeLock lock(fsMutex());
