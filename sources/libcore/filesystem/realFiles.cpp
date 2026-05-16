@@ -285,6 +285,7 @@ namespace cage
 					CAGE_LOG_THROW(Stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(SystemError, "fopen", errno);
 				}
+				CAGE_ASSERT(detail::realFsPathType(path) == PathTypeFlags::File);
 			}
 
 			~FileRealBase()
@@ -578,6 +579,7 @@ namespace cage
 #else
 				if (copying)
 				{
+					CAGE_ASSERT(detail::realFsPathType(from) == PathTypeFlags::File);
 					Holder<PointerRange<char>> buff = openFile(from_, FileMode(true, false))->readAll();
 					Holder<File> tf = openFile(to_, FileMode(false, true));
 					tf->write(buff);
@@ -591,7 +593,7 @@ namespace cage
 						if (code == EXDEV)
 						{
 							// rename does not work between different filesystems, do copy+remove instead
-							moveImpl(from_, to_, true);
+							move(from_, to_, true);
 							remove(from_);
 						}
 						else
