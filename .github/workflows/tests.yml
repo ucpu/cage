@@ -212,10 +212,18 @@ jobs:
     - name: List dependencies
       run: |
         cd build/result/${{ matrix.build-config }}
-        echo "cage-core:"
+        echo "cage-core dependencies:"
         otool -L libcage-core.dylib
-        echo "cage-engine:"
+        echo "cage-core rpaths:"
+        otool -l libcage-core.dylib | grep -A2 LC_RPATH
+        echo "cage-engine dependencies:"
         otool -L libcage-engine.dylib
+        echo "cage-engine rpaths:"
+        otool -l libcage-engine.dylib | grep -A2 LC_RPATH
+        echo "cage-test-core dependencies:"
+        otool -L cage-test-core
+        echo "cage-test-core rpaths:"
+        otool -l cage-test-core | grep -A2 LC_RPATH
 
 
   NoProfiler:
