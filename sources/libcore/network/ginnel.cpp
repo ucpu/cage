@@ -976,7 +976,7 @@ namespace cage
 						else
 						{
 							msg.data.resize(size);
-							d.read(msg.data);
+							d.readInto(msg.data);
 							receiving.staging[msg.channel][msg.msgSeqn] = std::move(msg);
 						}
 						break;
@@ -1009,7 +1009,7 @@ namespace cage
 							else if (msg.data.size() != totalSize)
 								CAGE_THROW_ERROR(Exception, "inconsistent message total size");
 							msg.parts[index] = true;
-							d.read({ msg.data.data() + index * LongSize, msg.data.data() + index * LongSize + size });
+							d.readInto({ msg.data.data() + index * LongSize, msg.data.data() + index * LongSize + size });
 						}
 						break;
 					}

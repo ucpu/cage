@@ -210,7 +210,7 @@ namespace cage
 							CAGE_THROW_ERROR(Exception, "zip file record name length is too large");
 						}
 						e.name.rawLength() = e.nameLength;
-						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
+						d.readInto({ e.name.rawData(), e.name.rawData() + e.nameLength });
 						if (e.diskNumberWhereFileStarts != 0)
 						{
 							CAGE_LOG_THROW(Stringizer() + "archive path: " + myPath);

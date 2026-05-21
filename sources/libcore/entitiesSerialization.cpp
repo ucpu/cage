@@ -57,7 +57,7 @@ namespace cage
 				CAGE_THROW_ERROR(Exception, "cannot import anonymous entity");
 			Entity *e = manager->getOrCreate(id);
 			char *u = (char *)e->unsafeValue(component);
-			des.read({ u, u + typeSize });
+			des.readInto({ u, u + typeSize });
 		}
 	}
 }

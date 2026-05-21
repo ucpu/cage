@@ -45,7 +45,7 @@ namespace cage
 
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the capacity was provided in the constructor)
 		void write(PointerRange<const char> buffer);
-		PointerRange<char> write(uintPtr size); // use with care! - future writes may invalidate the pointer
+		PointerRange<char> writeAhead(uintPtr size); // use with care! - future writes may invalidate the pointer
 		void writeLine(const String &line);
 		Serializer reserve(uintPtr s);
 
@@ -60,8 +60,8 @@ namespace cage
 		explicit Deserializer(PointerRange<const char> buffer);
 
 		uintPtr available() const; // number of bytes still available in the buffer
-		void read(PointerRange<char> buffer);
 		PointerRange<const char> read(uintPtr size);
+		void readInto(PointerRange<char> buffer);
 		bool readLine(PointerRange<const char> &line);
 		bool readLine(String &line);
 		Deserializer subview(uintPtr s);
@@ -105,31 +105,57 @@ namespace cage
 	namespace privat
 	{
 		template<class>
-		struct IsPointerRangeConcept : std::false_type
+		struct IsPointerRange : std::false_type
 		{};
 		template<class V>
-		struct IsPointerRangeConcept<PointerRange<V>> : std::true_type
+		struct IsPointerRange<PointerRange<V>> : std::true_type
 		{};
-		template<class T>
-		concept SerializableConcept = std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !IsPointerRangeConcept<T>::value;
+
+		template<class>
+		struct IsStdVariant : std::false_type
+		{};
+		template<class... Ts>
+		struct IsStdVariant<std::variant<Ts...>> : std::true_type
+		{};
 	}
 
-	Serializer &operator<<(Serializer &s, const privat::SerializableConcept auto &v)
+	namespace serialization
+	{
+		template<class T>
+		struct Writable : std::bool_constant<std::is_trivially_copyable_v<T> && !std::is_pointer_v<T> && !privat::IsPointerRange<T>::value && !privat::IsStdVariant<T>::value>
+		{};
+	}
+
+	namespace privat
+	{
+		template<class T>
+		concept WritableConcept = serialization::Writable<T>::value;
+	}
+
+	Serializer &operator<<(Serializer &s, const privat::WritableConcept auto &v)
 	{
 		s.write(bufferView<const char>(v));
 		return s;
 	}
 
-	Deserializer &operator>>(Deserializer &s, privat::SerializableConcept auto &v)
+	Deserializer &operator>>(Deserializer &s, privat::WritableConcept auto &v)
 	{
-		s.read(bufferView<char>(v));
+		s.readInto(bufferView<char>(v));
 		return s;
+	}
+
+	namespace privat
+	{
+		template<class T>
+		concept SerializableConcept = requires(Serializer s, Deserializer d, T v) {
+			d >> v;
+			s << v;
+		};
 	}
 
 	// r-value deserializer
 
-	template<class T>
-	Deserializer &&operator>>(Deserializer &&s, T &v)
+	Deserializer &&operator>>(Deserializer &&s, privat::SerializableConcept auto &v)
 	{
 		s >> v;
 		return std::move(s);
@@ -138,6 +164,7 @@ namespace cage
 	// overloads for c array
 
 	template<class T, uintPtr N>
+	requires(privat::SerializableConcept<T>)
 	Serializer &operator<<(Serializer &s, const T (&v)[N])
 	{
 		for (auto &it : v)
@@ -146,6 +173,7 @@ namespace cage
 	}
 
 	template<class T, uintPtr N>
+	requires(privat::SerializableConcept<T>)
 	Deserializer &operator>>(Deserializer &s, T (&v)[N])
 	{
 		for (auto &it : v)
@@ -153,7 +181,7 @@ namespace cage
 		return s;
 	}
 
-	// overloads for strings
+	// overloads for StringBase
 
 	template<uint32 N>
 	Serializer &operator<<(Serializer &s, const detail::StringBase<N> &v)
@@ -171,6 +199,29 @@ namespace cage
 		v = detail::StringBase<N>(s.read(size));
 		return s;
 	}
+
+	// overloads for std::pair
+
+	template<class A, class B>
+	requires(privat::SerializableConcept<A> && privat::SerializableConcept<B>)
+	Serializer &operator<<(Serializer &s, const std::pair<A, B> &p)
+	{
+		s << p.first << p.second;
+		return s;
+	}
+
+	template<class A, class B>
+	requires(privat::SerializableConcept<std::remove_const_t<A>> && privat::SerializableConcept<B>)
+	Deserializer &operator>>(Deserializer &s, std::pair<A, B> &p)
+	{
+		s >> const_cast<std::remove_const_t<A> &>(p.first) >> p.second;
+		return s;
+	}
+
+	// overloads for MemoryBuffer
+
+	CAGE_CORE_API Serializer &operator<<(Serializer &s, const MemoryBuffer &b);
+	CAGE_CORE_API Deserializer &operator>>(Deserializer &d, MemoryBuffer &b);
 }
 
 #endif

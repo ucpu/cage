@@ -27,7 +27,7 @@ namespace cage
 
 			MemoryBuffer mat;
 			mat.resize(header.materialSize);
-			des.read(mat);
+			des.readInto(mat);
 
 			Holder<Model> model = newModel((GraphicsDevice *)context->device, +mesh, mat, context->textId);
 

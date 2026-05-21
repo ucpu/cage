@@ -186,7 +186,7 @@ namespace cage
 				{
 					const uint32 mask = randomRange(uint32(1), uint32(m));
 					ser << mask;
-					copyWithMask(ser.write(data.size()), data, mask);
+					copyWithMask(ser.writeAhead(data.size()), data, mask);
 				}
 				else
 					ser.write(data);

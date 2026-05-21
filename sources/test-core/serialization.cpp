@@ -25,6 +25,17 @@ void testSerialization()
 	CAGE_TESTCASE("serialization");
 
 	{
+		static_assert(privat::WritableConcept<uint32>);
+		static_assert(!privat::WritableConcept<PointerRange<uint32>>);
+		static_assert(!privat::WritableConcept<PointerRange<const uint32>>);
+		static_assert(!privat::WritableConcept<PointerRange<String>>);
+		static_assert(privat::SerializableConcept<uint32>);
+		static_assert(privat::SerializableConcept<String>);
+		static_assert(privat::SerializableConcept<std::pair<String, uint32>>);
+		static_assert(privat::SerializableConcept<std::pair<const String, uint32>>); // used in std::map
+	}
+
+	{
 		CAGE_TESTCASE("basics");
 		MemoryBuffer b1;
 		Serializer s(b1);
@@ -37,6 +48,7 @@ void testSerialization()
 		CAGE_TEST(i42 == 42);
 		CAGE_TEST(i13 == 13);
 		CAGE_TEST(hi == "hi there");
+		CAGE_TEST(b1.size() == sizeof(int) + sizeof(uint32) + hi.length() + sizeof(int));
 	}
 
 	{
@@ -145,6 +157,19 @@ void testSerialization()
 		Deserializer des(b1);
 		des >> arr;
 		CAGE_TEST(arr[0] == 1 && arr[1] == 2 && arr[2] == 3);
+	}
+
+	{
+		CAGE_TESTCASE("strings");
+		MemoryBuffer b1;
+		Serializer ser(b1);
+		const String s1("hello there");
+		ser << s1;
+		Deserializer des(b1);
+		String s2;
+		des >> s2;
+		CAGE_TEST(s1 == s2);
+		CAGE_TEST(b1.size() < sizeof(String));
 	}
 
 	{

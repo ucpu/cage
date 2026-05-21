@@ -37,11 +37,11 @@ namespace cage
 	{
 		if (buffer.empty())
 			return;
-		auto dst = write(buffer.size());
+		auto dst = writeAhead(buffer.size());
 		detail::memcpy(dst.data(), buffer.data(), buffer.size());
 	}
 
-	PointerRange<char> Serializer::write(uintPtr size)
+	PointerRange<char> Serializer::writeAhead(uintPtr size)
 	{
 		if (available() < size)
 			CAGE_THROW_ERROR(Exception, "serialization beyond available space");
@@ -64,7 +64,7 @@ namespace cage
 	Serializer Serializer::reserve(uintPtr s)
 	{
 		const uintPtr o = offset;
-		write(s);
+		writeAhead(s);
 		return Serializer(interface, o, offset);
 	}
 
@@ -78,13 +78,6 @@ namespace cage
 		return size - offset;
 	}
 
-	void Deserializer::read(PointerRange<char> buffer)
-	{
-		auto src = read(buffer.size());
-		if (!buffer.empty())
-			detail::memcpy(buffer.data(), src.data(), buffer.size());
-	}
-
 	PointerRange<const char> Deserializer::read(uintPtr s)
 	{
 		if (available() < s)
@@ -92,6 +85,13 @@ namespace cage
 		const char *dst = data + offset;
 		offset += s;
 		return { dst, dst + s };
+	}
+
+	void Deserializer::readInto(PointerRange<char> buffer)
+	{
+		auto src = read(buffer.size());
+		if (!buffer.empty())
+			detail::memcpy(buffer.data(), src.data(), buffer.size());
 	}
 
 	bool Deserializer::readLine(PointerRange<const char> &line)
@@ -130,5 +130,21 @@ namespace cage
 	Deserializer Deserializer::copy() const
 	{
 		return Deserializer(data, offset, size);
+	}
+
+	Serializer &operator<<(Serializer &s, const MemoryBuffer &b)
+	{
+		s << numeric_cast<uint64>(b.size());
+		s.write(b);
+		return s;
+	}
+
+	Deserializer &operator>>(Deserializer &d, MemoryBuffer &b)
+	{
+		uint64 s = 0;
+		d >> s;
+		b.resize(s);
+		d.readInto(b);
+		return d;
 	}
 }

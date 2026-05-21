@@ -552,7 +552,7 @@ namespace cage
 		des >> impl->header;
 
 		impl->ftFile.resize(impl->header.ftSize);
-		des.read(impl->ftFile);
+		des.readInto(impl->ftFile);
 
 		impl->glyphs.resize(impl->header.glyphsCount);
 		for (auto &it : impl->glyphs)

@@ -4,12 +4,15 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <variant>
 #include <vector>
 
 #include <cage-core/containerSerialization.h>
 #include <cage-core/flatSet.h>
+#include <cage-core/math.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdHash.h>
+#include <cage-core/variantSerialization.h>
 
 #include "main.h"
 
@@ -18,20 +21,21 @@ void testContainerSerialization()
 	CAGE_TESTCASE("container serialization");
 
 	{
-		static_assert(privat::ContainerConcept<std::vector<uint32>>);
-		static_assert(privat::ReservableContainerConcept<std::vector<String>>);
-		static_assert(!privat::ReservableContainerConcept<std::set<String>>);
-		static_assert(privat::InsertableContainerConcept<std::vector<String>>);
-		static_assert(!privat::InsertableContainerConcept<const std::vector<String>>);
-		static_assert(privat::IsCageString<String>);
-		static_assert(privat::IsCageString<detail::StringBase<110>>);
-		static_assert(!privat::IsCageString<uint32>);
+		static_assert(!privat::WritableContainerConcept<uint32>);
+		static_assert(!privat::WritableContainerConcept<String>);
+		static_assert(privat::WritableContainerConcept<std::vector<uint32>>);
+		static_assert(privat::WritableContainerConcept<std::vector<String>>);
+		static_assert(privat::WritableContainerConcept<std::set<uint32>>);
+		static_assert(privat::WritableContainerConcept<std::set<String>>);
+		static_assert(privat::WritableContainerConcept<std::map<String, uint32>>);
+		static_assert(privat::WritableContainerConcept<std::map<uint32, String>>);
+		static_assert(privat::WritableContainerConcept<std::vector<std::vector<uint32>>>);
+
+		static_assert(privat::MemcpyContainerConcept<std::vector<char>>);
 		static_assert(privat::MemcpyContainerConcept<std::vector<uint32>>);
-		static_assert(!privat::MemcpyContainerConcept<std::list<uint32>>);
 		static_assert(!privat::MemcpyContainerConcept<std::vector<String>>);
-		static_assert(!privat::MemcpyContainerConcept<std::vector<detail::StringBase<110>>>);
-		static_assert(!privat::MemcpyContainerConcept<std::vector<std::string>>);
-		static_assert(privat::MemcpyWritableContainerConcept<std::vector<uint32>>);
+		static_assert(privat::MemcpyContainerConcept<std::vector<Real>>);
+		static_assert(privat::MemcpyContainerConcept<std::vector<Vec3>>);
 	}
 
 	{
@@ -214,7 +218,7 @@ void testContainerSerialization()
 	}
 
 	{
-		CAGE_TESTCASE("pointer range");
+		CAGE_TESTCASE("pointer range (string)");
 		std::vector<String> cont;
 		cont.push_back("hello");
 		cont.push_back("darling");
@@ -229,6 +233,24 @@ void testContainerSerialization()
 		CAGE_TEST(cont[0] == "hello");
 		CAGE_TEST(cont[1] == "darling");
 		CAGE_TEST(buf.size() == 8 + 4 + 5 + 4 + 7);
+	}
+
+	{
+		CAGE_TESTCASE("pointer range (uint32)");
+		std::vector<uint32> cont;
+		cont.push_back(13);
+		cont.push_back(42);
+		PointerRange<const uint32> range = cont;
+		MemoryBuffer buf;
+		Serializer ser(buf);
+		ser << range;
+		cont.clear();
+		Deserializer des(buf);
+		des >> cont;
+		CAGE_TEST(cont.size() == 2);
+		CAGE_TEST(cont[0] == 13);
+		CAGE_TEST(cont[1] == 42);
+		CAGE_TEST(buf.size() == 8 + 4 + 4);
 	}
 
 	{
@@ -286,5 +308,23 @@ void testContainerSerialization()
 		des >> cont2;
 		CAGE_TEST(cont == cont2);
 		CAGE_TEST(buf.size() < size / 8 + 10);
+	}
+
+	{
+		CAGE_TESTCASE("variant");
+		using Var = std::variant<std::monostate, String, uint32, Vec3>;
+		Var a = "hello there";
+		Var b = (uint32)42;
+		MemoryBuffer buf;
+		Serializer ser(buf);
+		ser << a << b;
+		Var c, d;
+		Deserializer des(buf);
+		des >> c >> d;
+		CAGE_TEST(std::holds_alternative<String>(c));
+		CAGE_TEST(std::holds_alternative<uint32>(d));
+		CAGE_TEST(std::get<String>(c) == "hello there");
+		CAGE_TEST(std::get<uint32>(d) == 42);
+		CAGE_TEST(buf.size() < sizeof(String));
 	}
 }

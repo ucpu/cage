@@ -7,6 +7,7 @@
 #include <source_location>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 #ifdef CAGE_ASSERT_ENABLED
 	#define CAGE_ASSERT(EXPR) \
