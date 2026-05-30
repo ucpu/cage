@@ -112,6 +112,28 @@ namespace cage
 				}
 				return false;
 			}
+
+			void restoreFromConfig()
+			{
+				bool modified = false;
+				if (window->isFullscreen() != confFullscreenEnabled)
+					modified = true;
+				else if (confFullscreenEnabled)
+				{
+					modified |= (window->resolution() != Vec2i(confFullscreenWidth, confFullscreenHeight));
+					// todo frequency
+					modified |= (window->screenId() != confScreen);
+				}
+				else if (window->isMaximized() != confWindowMaximized)
+					modified = true;
+				else if (!confWindowMaximized)
+				{
+					modified |= (window->windowedSize() != Vec2i(confWindowWidth, confWindowHeight));
+					modified |= (window->windowedPosition() != Vec2i(confWindowLeft, confWindowTop));
+				}
+				if (modified)
+					update(confFullscreenEnabled);
+			}
 		};
 	}
 
@@ -130,7 +152,7 @@ namespace cage
 	void FullscreenSwitcher::restoreFromConfig()
 	{
 		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl *)this;
-		impl->update(impl->confFullscreenEnabled);
+		impl->restoreFromConfig();
 	}
 
 	namespace detail
