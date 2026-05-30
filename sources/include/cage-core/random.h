@@ -53,6 +53,22 @@ namespace cage
 		// thread-local random generator used by all the global random functions
 		CAGE_CORE_API RandomGenerator &randomGenerator();
 	}
+
+	template<class Cont>
+	auto &randomPick(Cont &cont, RandomGenerator &randomGen = detail::randomGenerator())
+	{
+		CAGE_ASSERT(!cont.empty());
+		const uintPtr k = randomGen.randomRange(uintPtr(0), numeric_cast<uintPtr>(cont.size()));
+		return cont[k];
+	}
+
+	template<class Cont>
+	void randomShuffle(Cont &cont, RandomGenerator &randomGen = detail::randomGenerator())
+	{
+		for (uint32 round = 0; round < 2; round++)
+			for (uintPtr i = 0; i < cont.size(); i++)
+				std::swap(cont[i], randomPick(cont, randomGen));
+	}
 }
 
 #endif // guard_random_h_623364ED17804404AAC89652473FEBAC

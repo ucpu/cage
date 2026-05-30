@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <cage-core/guid.h>
 #include <cage-core/math.h>
 #include <cage-core/random.h>
@@ -98,5 +100,20 @@ void testRandom()
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<32>(true));
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<32>(true));
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<8>(true));
+	}
+
+	{
+		CAGE_TESTCASE("randomShuffle");
+
+		std::vector<uint32> vec;
+		vec.push_back(5);
+		vec.push_back(13);
+		vec.push_back(42);
+		vec.push_back(128);
+		vec.push_back(1024);
+		randomShuffle(vec);
+
+		PointerRange<uint32> range(vec);
+		randomShuffle(range);
 	}
 }
