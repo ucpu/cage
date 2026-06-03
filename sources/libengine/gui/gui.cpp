@@ -392,6 +392,9 @@ namespace cage
 		mouseEventReceivers.clear();
 		root.clear();
 
+		if (!valid(outputSize) || !outputSize[0].finite() || outputSize[0] < 1 || outputSize[1] < 1)
+			return;
+
 		generateHierarchy(this);
 		generateItems(+root);
 

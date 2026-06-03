@@ -392,9 +392,8 @@ namespace cage
 	{
 		assetOnDemand->process();
 
-		if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
+		if (outputResolution[0] <= 0 || outputResolution[1] <= 0 || !root)
 			return {};
-
 		if (!assetMgr->get<AssetPack>(HashString("cage/cage.pack")))
 			return {};
 
