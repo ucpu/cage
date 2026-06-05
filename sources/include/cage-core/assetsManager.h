@@ -35,6 +35,7 @@ namespace cage
 		void load(uint32 assetId);
 		void unload(uint32 assetId);
 		void reload(uint32 assetId);
+		void reloadAll();
 
 		uint32 generateUniqueId();
 

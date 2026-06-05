@@ -597,11 +597,25 @@ namespace cage
 		if (it == impl->privateIndex.end())
 			return;
 		auto &c = it->second;
-		if (!c.fabricated)
+		if (!c.fabricated && c.references > 0)
 		{
 			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, assetId);
 			c.versions.insert(c.versions.begin(), asset.share());
 			lock.clear();
+			impl->fetchQueue.push(std::move(asset));
+		}
+	}
+
+	void AssetsManager::reloadAll()
+	{
+		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
+		ScopeLock lock(impl->privateMutex);
+		for (auto &it : impl->privateIndex)
+		{
+			if (it.second.fabricated || it.second.references <= 0)
+				continue;
+			Holder<Asset> asset = systemMemory().createHolder<Asset>(impl, it.first);
+			it.second.versions.insert(it.second.versions.begin(), asset.share());
 			impl->fetchQueue.push(std::move(asset));
 		}
 	}
