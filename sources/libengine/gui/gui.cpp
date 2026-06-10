@@ -362,6 +362,9 @@ namespace cage
 		void findHover(GuiImpl *impl)
 		{
 			impl->hover = nullptr;
+			if (!impl->root)
+				return;
+
 			for (const auto &it : impl->mouseEventReceivers)
 			{
 				if (it.pointInside(impl->outputMouse))

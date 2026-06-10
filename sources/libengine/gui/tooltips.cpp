@@ -80,6 +80,9 @@ namespace cage
 		if (!ttEnabled)
 			return;
 
+		if (!root)
+			return;
+
 		if (ttData.empty())
 			ttNextOrder = 10'000; // reset to reasonable value
 
