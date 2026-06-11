@@ -79,7 +79,6 @@ namespace cage
 	{
 		if (!ttEnabled)
 			return;
-
 		if (!root)
 			return;
 

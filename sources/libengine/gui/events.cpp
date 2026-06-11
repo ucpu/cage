@@ -13,6 +13,7 @@ namespace cage
 	{
 		void findWidgets(HierarchyItem *item, uint32 name, std::vector<WidgetItem *> &result)
 		{
+			CAGE_ASSERT(item);
 			if (item->ent && item->ent->id() == name)
 			{
 				if (WidgetItem *w = dynamic_cast<WidgetItem *>(+item->item))
@@ -24,6 +25,7 @@ namespace cage
 
 		std::vector<WidgetItem *> focused(GuiImpl *impl)
 		{
+			CAGE_ASSERT(impl->root);
 			std::vector<WidgetItem *> result;
 			if (impl->focusName)
 			{
@@ -80,7 +82,7 @@ namespace cage
 	bool GuiImpl::eventPoint(Vec2 ptIn, Vec2 &ptOut)
 	{
 		inputMouse = ptIn;
-		if (!eventsEnabled)
+		if (!eventsEnabled || !root)
 			return false;
 		outputMouse = ptOut = ptIn / pointsScale;
 		return true;
@@ -105,6 +107,8 @@ namespace cage
 			return impl->keyChar(in.get<input::Character>());
 		if (in.has<input::WindowFocusLose>())
 		{
+			impl->focusName = 0;
+			impl->focusParts = 0;
 			impl->clearTooltips();
 			return false;
 		}
@@ -114,6 +118,7 @@ namespace cage
 	bool GuiImpl::mousePress(input::MousePress in)
 	{
 		focusName = 0;
+		focusParts = 0;
 		return passMouseEvent<&WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
 	}
 
@@ -170,7 +175,7 @@ namespace cage
 
 	GuiCursorInfo GuiImpl::cursorInfo() const
 	{
-		if (!eventsEnabled)
+		if (!eventsEnabled || !root)
 			return {};
 		const Vec2 pt = inputMouse / pointsScale;
 		for (const auto &it : mouseEventReceivers)

@@ -396,7 +396,11 @@ namespace cage
 		root.clear();
 
 		if (!valid(outputSize) || !outputSize[0].finite() || outputSize[0] < 1 || outputSize[1] < 1)
+		{
+			eventsEnabled = false;
+			clearTooltips();
 			return;
+		}
 
 		generateHierarchy(this);
 		generateItems(+root);
@@ -441,9 +445,7 @@ namespace cage
 		entitiesVisitor([&](Entity *e, const GuiUpdateComponent &u) { u.update(e); }, entities(), true);
 		impl->prepareImplGeneration(); // entities may have been changed -> regenerate our cache
 		findHover(impl);
-		Holder<GuiRender> gr = impl->emit();
-		impl->root.clear();
-		return gr;
+		return impl->emit();
 	}
 
 	void GuiManager::cleanUp()
