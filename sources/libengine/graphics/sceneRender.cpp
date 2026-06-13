@@ -579,6 +579,20 @@ namespace cage
 			return Transform(center, Quat(forward - center, up - center), distance(center, forward));
 		}
 
+		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalNormalize(SkeletalAnimationComponent src)
+		{
+			Real sum = 0;
+			for (const auto &it : src.animations)
+				if (it.animation)
+					sum += it.weight;
+			if (!sum.valid() || sum <= 0)
+				return {};
+			for (auto &it : src.animations)
+				if (it.animation)
+					it.weight /= sum;
+			return src;
+		}
+
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
 		{
 			wgpu::TextureViewDescriptor desc = {};
@@ -705,14 +719,39 @@ namespace cage
 				}
 			}
 
-			void prepareModel(std::vector<SceneItem> &output, SceneItem &rd, const RenderObject *parent = {}) const
+			CAGE_FORCE_INLINE Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(SharedCommon *sharedCommon, void *object, const SkeletalAnimationComponent &ps, const AnimationSpeedComponent &anim, const uint64 startTime, const Mat4 &importTransform) const
+			{
+				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
+
+				SkeletalAnimationPreparatorConfig cnf;
+				for (uint32 i = 0; i < std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)>; i++)
+				{
+					if (!ps.animations[i].animation)
+						continue;
+					cnf.animations[i].animation = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps.animations[i].animation));
+					if (!cnf.animations[i].animation)
+						return {};
+					const uint64 time = ps.animations[i].spawnTimeOverride ? ps.animations[i].spawnTimeOverride : startTime;
+					cnf.animations[i].coefficient = detail::evalCoefficientForSkeletalAnimation(+cnf.animations[i].animation, config.currentTime, time, anim.speed, anim.offset);
+					cnf.animations[i].weight = ps.animations[i].weight;
+				}
+
+				cnf.modelImportTransform = importTransform;
+				cnf.object = object;
+				cnf.animateSkeletonsInsteadOfSkins = cnfRenderSkeletonBones;
+				Holder<SkeletalAnimationPreparatorInstance> res = skeletonPreparatorCollection->create(std::move(cnf));
+				res->prepare();
+				return res;
+			}
+
+			void prepareModel(SharedCommon *sharedCommon, std::vector<SceneItem> &output, SceneItem &rd, const RenderObject *parent = {}) const
 			{
 				SceneModel &rm = rd.data.model();
 				CAGE_ASSERT(rm.mesh);
 
 				std::optional<SkeletalAnimationComponent> ps;
 				if (rd.e->has<SkeletalAnimationComponent>())
-					ps = rd.e->value<SkeletalAnimationComponent>();
+					ps = skeletalNormalize(rd.e->value<SkeletalAnimationComponent>());
 
 				ModelComponent render = rd.e->value<ModelComponent>();
 				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
@@ -728,22 +767,15 @@ namespace cage
 					if (!color.opacity.valid())
 						color.opacity = parent->opacity;
 					if (!ps && parent->skelAnimId)
-						ps = SkeletalAnimationComponent();
-					if (ps && !ps->animation)
-						ps->animation = parent->skelAnimId;
+						ps = SkeletalAnimationComponent().add({ .animation = parent->skelAnimId });
 				}
 
 				if (!rm.mesh->bonesCount)
 					ps.reset();
 				if (ps)
 				{
-					if (Holder<SkeletalAnimation> a = config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps->animation))
-					{
-						const Real coefficient = detail::evalCoefficientForSkeletalAnimation(+a, config.currentTime, startTime, anim.speed, anim.offset);
-						rm.skeletalAnimation = skeletonPreparatorCollection->create(rd.e, std::move(a), coefficient, rm.mesh->importTransform, cnfRenderSkeletonBones);
-						rm.skeletalAnimation->prepare();
-					}
-					else
+					rm.skeletalAnimation = prepareSkeleton(sharedCommon, rd.e, *ps, anim, startTime, rm.mesh->importTransform);
+					if (!rm.skeletalAnimation)
 						ps.reset();
 				}
 
@@ -874,7 +906,7 @@ namespace cage
 									rd.e = it.e;
 									rd.transform = tr;
 									rd.data.assign(std::move(rm));
-									prepareModel(items, rd, +obj);
+									prepareModel(this, items, rd, +obj);
 								}
 							}
 							return;
@@ -906,7 +938,7 @@ namespace cage
 							rd.e = it.e;
 							rd.transform = modelTransform(it.e);
 							rd.data.assign(std::move(rm));
-							prepareModel(items, rd);
+							prepareModel(this, items, rd);
 						}
 						return;
 					}
@@ -924,7 +956,7 @@ namespace cage
 							rd.e = it.e;
 							rd.transform = modelTransform(it.e);
 							rd.data.assign(std::move(rm));
-							prepareModel(items, rd);
+							prepareModel(this, items, rd);
 						}
 					}
 				};
@@ -1629,7 +1661,7 @@ namespace cage
 						rd.e = it.e;
 						rd.transform = it.transform;
 						rd.data.assign(std::move(rm));
-						scene->prepareModel(objectsLods, rd, it.data.object().object);
+						scene->prepareModel(this, objectsLods, rd, it.data.object().object);
 					}
 				}
 
@@ -2166,5 +2198,37 @@ namespace cage
 		Holder<CameraRender> camera = systemMemory().createHolder<CameraRender>(config, static_cast<const SceneImpl *>(scene));
 		camera->prepareObjectsLods();
 		return camera->runEntry();
+	}
+
+	void SkeletalAnimationComponent::clear()
+	{
+		for (auto &it : animations)
+			it = {};
+	}
+
+	SkeletalAnimationComponent &SkeletalAnimationComponent::add(SkeletalAnimationLayer layer)
+	{
+		for (auto &it : animations)
+		{
+			if (!it.animation)
+			{
+				it = layer;
+				return *this;
+			}
+		}
+
+		uint32 li = m;
+		Real lw = Real::Infinity();
+		for (const auto &it : animations)
+		{
+			if (it.weight < lw)
+			{
+				li = &it - animations;
+				lw = it.weight;
+			}
+		}
+		if (lw < layer.weight)
+			animations[li] = layer;
+		return *this;
 	}
 }

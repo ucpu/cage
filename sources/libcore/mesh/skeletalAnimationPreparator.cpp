@@ -27,7 +27,7 @@ namespace cage
 		class SkeletalAnimationPreparatorInstanceImpl : public SkeletalAnimationPreparatorInstance
 		{
 		public:
-			explicit SkeletalAnimationPreparatorInstanceImpl(Holder<SkeletalAnimation> animation, Real coefficient, const Mat4 &modelImportTransform, bool animateSkeletonsInsteadOfSkins, SkeletalAnimationPreparatorCollectionImpl *impl) : modelImportTransform(modelImportTransform), animation(std::move(animation)), coefficient(coefficient), animateSkeletonsInsteadOfSkins(animateSkeletonsInsteadOfSkins), impl(impl) {}
+			explicit SkeletalAnimationPreparatorInstanceImpl(SkeletalAnimationPreparatorConfig &&config, SkeletalAnimationPreparatorCollectionImpl *impl) : config(std::move(config)), impl(impl) {}
 
 			void prepare()
 			{
@@ -42,29 +42,80 @@ namespace cage
 			void operator()(uint32)
 			{
 				CAGE_ASSERT(armature.empty());
-				Holder<SkeletonRig> skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(animation->skeletonName());
+				Holder<SkeletonRig> skeleton;
+				for (const auto &it : config.animations)
+				{
+					if (it.animation)
+					{
+						skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(it.animation->skeletonName());
+						break;
+					}
+				}
+				if (!skeleton)
+					CAGE_THROW_ERROR(Exception, "cannot prepare animations without skeleton");
 				const uint32 bonesCount = skeleton->bonesCount();
 				CAGE_ASSERT(bonesCount > 0);
-				CAGE_ASSERT(animation->bonesCount() == bonesCount);
+
 				Mat4 *tmpArmature = (Mat4 *)CAGE_ALLOCA(sizeof(Mat4) * bonesCount);
-				if (animateSkeletonsInsteadOfSkins)
-					animateSkeleton(+skeleton, +animation, coefficient, { tmpArmature, tmpArmature + bonesCount });
+				PointerRange<Mat4> tmpRange = { tmpArmature, tmpArmature + bonesCount };
+				if (config.animateSkeletonsInsteadOfSkins)
+					animateSkeleton(+skeleton, config.animations, tmpRange);
 				else
-					animateSkin(+skeleton, +animation, coefficient, { tmpArmature, tmpArmature + bonesCount });
+					animateSkin(+skeleton, config.animations, tmpRange);
+
 				armature.reserve(bonesCount);
-				const Mat4 inv = animateSkeletonsInsteadOfSkins ? Mat4() : inverse(modelImportTransform);
+				const Mat4 inv = config.animateSkeletonsInsteadOfSkins ? Mat4() : inverse(config.modelImportTransform);
 				for (uint32 i = 0; i < bonesCount; i++)
-					armature.emplace_back(modelImportTransform * tmpArmature[i] * inv);
+					armature.emplace_back(config.modelImportTransform * tmpArmature[i] * inv);
 			}
 
-			Mat4 modelImportTransform;
+			SkeletalAnimationPreparatorConfig config;
 			std::vector<Mat3x4> armature;
 			Holder<AsyncTask> task;
-			Holder<SkeletalAnimation> animation;
-			Real coefficient = Real::Nan();
-			bool animateSkeletonsInsteadOfSkins = false;
 			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 		};
+
+		[[maybe_unused]]
+		bool skeletalAnimationConfigSimilarity(const SkeletalAnimationPreparatorConfig &a, const SkeletalAnimationPreparatorConfig &b)
+		{
+			bool ok = a.animateSkeletonsInsteadOfSkins == b.animateSkeletonsInsteadOfSkins && a.modelImportTransform == b.modelImportTransform;
+			for (uint32 i = 0; i < std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)>; i++)
+			{
+				ok &= +a.animations[i].animation == +b.animations[i].animation;
+				ok &= a.animations[i].coefficient == b.animations[i].coefficient;
+				ok &= a.animations[i].weight == b.animations[i].weight;
+			}
+			return ok;
+		}
+
+		[[maybe_unused]]
+		bool validateSkeletalAnimationConfig(const SkeletalAnimationPreparatorConfig &a)
+		{
+			uint32 skeletonName = 0;
+			for (const auto &it : a.animations)
+			{
+				if (it.animation)
+					skeletonName = it.animation->skeletonName();
+			}
+			if (!skeletonName)
+				return false; // at least one animation is present
+			for (const auto &it : a.animations)
+			{
+				if (it.animation && it.animation->skeletonName() != skeletonName)
+					return false; // all animations must use the same skeleton
+			}
+			for (const auto &it : a.animations)
+			{
+				if (it.animation)
+				{
+					if (!it.coefficient.valid() || it.coefficient != saturate(it.coefficient))
+						return false; // coefficient out of range
+					if (!it.weight.valid() || it.weight != saturate(it.weight))
+						return false; // weight out of range
+				}
+			}
+			return true;
+		}
 	}
 
 	void SkeletalAnimationPreparatorInstance::prepare()
@@ -76,27 +127,25 @@ namespace cage
 	PointerRange<const Mat3x4> SkeletalAnimationPreparatorInstance::armature()
 	{
 		SkeletalAnimationPreparatorInstanceImpl *impl = (SkeletalAnimationPreparatorInstanceImpl *)this;
-		prepare();
+		impl->prepare();
 		CAGE_ASSERT(impl->task);
 		impl->task->wait();
 		return impl->armature;
 	}
 
-	Holder<SkeletalAnimationPreparatorInstance> SkeletalAnimationPreparatorCollection::create(void *object, Holder<SkeletalAnimation> animation, Real coefficient, const Mat4 &modelImportTransform, bool animateSkeletonsInsteadOfSkins)
+	Holder<SkeletalAnimationPreparatorInstance> SkeletalAnimationPreparatorCollection::create(SkeletalAnimationPreparatorConfig &&config)
 	{
 		SkeletalAnimationPreparatorCollectionImpl *impl = (SkeletalAnimationPreparatorCollectionImpl *)this;
 		ScopeLock lock(impl->mutex);
-		auto it = impl->objects.find(object);
+		auto it = impl->objects.find(config.object);
 		if (it != impl->objects.end())
 		{
-			CAGE_ASSERT(+it->second->animation == +animation);
-			CAGE_ASSERT(it->second->coefficient == coefficient);
-			CAGE_ASSERT(it->second->animateSkeletonsInsteadOfSkins == animateSkeletonsInsteadOfSkins);
-			CAGE_ASSERT(it->second->modelImportTransform == modelImportTransform);
+			CAGE_ASSERT(skeletalAnimationConfigSimilarity(it->second->config, config));
 			return it->second.share().cast<SkeletalAnimationPreparatorInstance>();
 		}
-		Holder<SkeletalAnimationPreparatorInstanceImpl> inst = systemMemory().createHolder<SkeletalAnimationPreparatorInstanceImpl>(std::move(animation), coefficient, modelImportTransform, animateSkeletonsInsteadOfSkins, impl);
-		impl->objects[object] = inst.share();
+		CAGE_ASSERT(validateSkeletalAnimationConfig(config));
+		Holder<SkeletalAnimationPreparatorInstanceImpl> inst = systemMemory().createHolder<SkeletalAnimationPreparatorInstanceImpl>(std::move(config), impl);
+		impl->objects[config.object] = inst.share();
 		return std::move(inst).cast<SkeletalAnimationPreparatorInstance>();
 	}
 

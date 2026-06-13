@@ -995,6 +995,8 @@ namespace cage
 	CAGE_CORE_API Mat4 normalize(Mat4 x);
 	CAGE_CORE_API Real determinant(Mat4 x);
 	CAGE_CORE_API Transform inverse(Transform x);
+	CAGE_CORE_API Transform decompose(Mat4 x);
+	CAGE_CORE_API void decompose(Mat4 x, Vec3 &t, Quat &r, Vec3 &s);
 
 	CAGE_CORE_API bool valid(float a);
 	CAGE_CORE_API bool valid(double a);

@@ -1030,6 +1030,41 @@ namespace
 			a *= Mat4(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2);
 			CAGE_TEST(a == Vec4(4, 6, 8, 10));
 		}
+
+		{
+			CAGE_TESTCASE("decomposition");
+
+			// uniform
+			for (uint32 round = 0; round < 10; round++)
+			{
+				Vec3 pos = randomDirection3() * randomRange(Real(0.1), 10);
+				Quat rot = randomDirectionQuat();
+				test(rot, Quat(Mat3(rot))); // sanity check
+				test(determinant(Mat3(rot)), Real(1));
+				Real scl = randomRange(Real(0.1), 10);
+				Mat4 m1 = Mat4(pos, rot, Vec3(scl));
+				Transform tr = decompose(m1);
+				test(determinant(Mat3(tr.orientation)), Real(1)); // check for no mirroring
+				test(pos, tr.position);
+				test(rot, tr.orientation);
+				test(scl, tr.scale);
+			}
+
+			// non-uniform
+			for (uint32 round = 0; round < 10; round++)
+			{
+				Vec3 pos = randomDirection3() * randomRange(Real(0.1), 10);
+				Quat rot = randomDirectionQuat();
+				Vec3 scl = randomRange3(Real(0.1), 10);
+				Mat4 m1 = Mat4(pos, rot, scl);
+				Vec3 pos2, scl2;
+				Quat rot2;
+				decompose(m1, pos2, rot2, scl2);
+				test(pos, pos2);
+				test(rot, rot2);
+				test(scl, scl2);
+			}
+		}
 	}
 
 	void testMathTransform()

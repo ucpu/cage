@@ -243,6 +243,52 @@ namespace cage
 		return x * (1 / len);
 	}
 
+	Transform decompose(Mat4 x)
+	{
+		Transform res;
+		res.position = Vec3(x[12], x[13], x[14]);
+
+		const Vec3 c0(x[0], x[1], x[2]);
+		const Vec3 c1(x[4], x[5], x[6]);
+		const Vec3 c2(x[8], x[9], x[10]);
+		const Real sx = sqrt(dot(c0, c0));
+		const Real sy = sqrt(dot(c1, c1));
+		const Real sz = sqrt(dot(c2, c2));
+		res.scale = (sx + sy + sz) / 3;
+
+		if (abs(res.scale) > 1e-6)
+		{
+			const Mat3 r = Mat3(x) * (1 / res.scale);
+			res.orientation = Quat(r);
+		}
+		return res;
+	}
+
+	void decompose(Mat4 x, Vec3 &t, Quat &r, Vec3 &s)
+	{
+		t = Vec3(x[12], x[13], x[14]);
+
+		const Vec3 c0(x[0], x[1], x[2]);
+		const Vec3 c1(x[4], x[5], x[6]);
+		const Vec3 c2(x[8], x[9], x[10]);
+		s = Vec3(sqrt(dot(c0, c0)), sqrt(dot(c1, c1)), sqrt(dot(c2, c2)));
+
+		const Vec3 ic0 = (abs(s[0]) > 1e-6) ? (c0 / s[0]) : Vec3(1, 0, 0);
+		const Vec3 ic1 = (abs(s[1]) > 1e-6) ? (c1 / s[1]) : Vec3(0, 1, 0);
+		const Vec3 ic2 = (abs(s[2]) > 1e-6) ? (c2 / s[2]) : Vec3(0, 0, 1);
+		Mat3 rot;
+		rot[0] = ic0[0];
+		rot[3] = ic1[0];
+		rot[6] = ic2[0];
+		rot[1] = ic0[1];
+		rot[4] = ic1[1];
+		rot[7] = ic2[1];
+		rot[2] = ic0[2];
+		rot[5] = ic1[2];
+		rot[8] = ic2[2];
+		r = Quat(rot);
+	}
+
 	Mat3x4::Mat3x4() : Mat3x4(Mat4()) {}
 
 	Mat3x4::Mat3x4(Mat3 in)

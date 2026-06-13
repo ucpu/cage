@@ -1,7 +1,7 @@
 #ifndef guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 #define guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 
-#include <cage-core/core.h>
+#include <cage-core/math.h>
 
 namespace cage
 {
@@ -47,17 +47,22 @@ namespace cage
 		uint32 bonesCount() const;
 		Mat4 globalInverse() const;
 		PointerRange<const uint16> parents() const;
-		PointerRange<const Mat4> bases() const;
-		PointerRange<const Mat4> invRests() const;
 
 		// todo sockets
 	};
 
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();
 
-	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes
-	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, PointerRange<Mat4> output); // provides transformation matrices for individual bones for debug visualization
-	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, Real coef, Mesh *mesh);
+	struct CAGE_CORE_API SkeletalAnimationBlendingLayer
+	{
+		const SkeletalAnimation *animation = nullptr;
+		Real coefficient;
+		Real weight = 1;
+	};
+
+	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes
+	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for individual bones for debug visualization
+	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, Mesh *mesh);
 
 	namespace detail
 	{

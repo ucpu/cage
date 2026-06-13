@@ -1410,7 +1410,10 @@ namespace cage
 						for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
 						{
 							Holder<Mesh> tmp = part.mesh->copy();
-							animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+							SkeletalAnimationBlendingLayer layer;
+							layer.animation = +ani.animation;
+							layer.coefficient = t;
+							animateMesh(+result.skeleton, { &layer, &layer + 1 }, +tmp);
 							Aabb box = tmp->boundingBox();
 							box = enlarge(box);
 							part.boundingBox += box;

@@ -252,7 +252,10 @@ namespace
 				for (Real t = 0; t <= 1; t += 0.05) // sample the animation at 20 positions
 				{
 					Holder<Mesh> tmp = part.mesh->copy();
-					animateMesh(+result.skeleton, +ani.animation, t, +tmp);
+					SkeletalAnimationBlendingLayer layer;
+					layer.animation = +ani.animation;
+					layer.coefficient = t;
+					animateMesh(+result.skeleton, { &layer, &layer + 1 }, +tmp);
 					append(+tmp);
 				}
 			}

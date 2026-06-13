@@ -31,7 +31,7 @@ namespace cage
 	{
 		Mat4 matrix;
 		Vec4 data[4];
-		ShaderDataComponent() : data() {}
+		ShaderDataComponent() : data() {} // initialize the union
 	};
 
 	// used by animations and sounds
@@ -47,9 +47,19 @@ namespace cage
 		Real offset = Real::Nan(); // normalized 0..1
 	};
 
+	struct CAGE_ENGINE_API SkeletalAnimationLayer
+	{
+		uint64 spawnTimeOverride = 0;
+		uint32 animation = 0;
+		Real weight = 1;
+	};
+
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
-		uint32 animation = 0;
+		SkeletalAnimationLayer animations[4];
+
+		void clear();
+		SkeletalAnimationComponent &add(SkeletalAnimationLayer layer); // finds empty slot, or replaces the one with lowest weight, or discards the new one if it itself is the lowest
 	};
 
 	struct CAGE_ENGINE_API ModelComponent
