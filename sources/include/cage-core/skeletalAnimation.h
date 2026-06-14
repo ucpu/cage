@@ -7,6 +7,15 @@ namespace cage
 {
 	class Mesh;
 
+	enum class SkeletalAnimationBlendingModeEnum
+	{
+		Default = 0,
+		Override,
+		Additive,
+	};
+
+	using SkeletalAnimationMaskLabel = detail::StringBase<26>;
+
 	class CAGE_CORE_API SkeletalAnimation : private Immovable
 	{
 	public:
@@ -24,11 +33,10 @@ namespace cage
 		uint32 bonesCount() const;
 		uint32 channelsCount() const;
 
-		void duration(uint64 duration);
-		uint64 duration() const;
-
-		void skeletonName(uint32 name);
-		uint32 skeletonName() const;
+		uint64 duration = 0;
+		uint32 skeletonName = 0;
+		SkeletalAnimationMaskLabel defaultMaskName;
+		SkeletalAnimationBlendingModeEnum defaultBlendingMode = SkeletalAnimationBlendingModeEnum::Override;
 	};
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
@@ -42,22 +50,24 @@ namespace cage
 		void importBuffer(PointerRange<const char> buffer);
 		Holder<PointerRange<char>> exportBuffer() const;
 
-		void skeletonData(const Mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests);
+		void skeletonData(PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests);
+		void namedMask(const SkeletalAnimationMaskLabel &name, PointerRange<const Real> mask);
 
 		uint32 bonesCount() const;
-		Mat4 globalInverse() const;
-		PointerRange<const uint16> parents() const;
+		PointerRange<const Real> namedMask(const SkeletalAnimationMaskLabel &name) const;
 
-		// todo sockets
+		Mat4 globalInverse;
 	};
 
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();
 
 	struct CAGE_CORE_API SkeletalAnimationBlendingLayer
 	{
+		PointerRange<const Real> mask;
 		const SkeletalAnimation *animation = nullptr;
 		Real coefficient;
 		Real weight = 1;
+		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Override;
 	};
 
 	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes

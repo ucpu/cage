@@ -9,10 +9,10 @@ namespace cage
 
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
-		detail::StringBase<128> label;
+		AssetLabel label;
 
 	public:
-		void setLabel(const String &name);
+		void setLabel(const AssetLabel &name);
 
 		void importAudio(Holder<Audio> &&audio);
 

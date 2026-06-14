@@ -8,10 +8,10 @@ namespace cage
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
 	protected:
-		detail::StringBase<128> label;
+		AssetLabel label;
 
 	public:
-		void setLabel(const String &name);
+		void setLabel(const AssetLabel &name);
 
 		// lod selection properties
 

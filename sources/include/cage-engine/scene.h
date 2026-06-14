@@ -6,6 +6,7 @@
 namespace cage
 {
 	class Texture;
+	enum class SkeletalAnimationBlendingModeEnum;
 
 	struct CAGE_ENGINE_API TransformComponent : public Transform
 	{
@@ -19,11 +20,23 @@ namespace cage
 		Vec3 color = Vec3::Nan(); // sRGB
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
+
+		inline ColorComponent &operator=(const Vec3 v)
+		{
+			color = v;
+			return *this;
+		}
 	};
 
 	struct CAGE_ENGINE_API SceneComponent
 	{
 		uint32 sceneMask = 1;
+
+		inline SceneComponent &operator=(const uint32 v)
+		{
+			sceneMask = v;
+			return *this;
+		}
 	};
 
 	// generic data passed to shader
@@ -31,6 +44,7 @@ namespace cage
 	{
 		Mat4 matrix;
 		Vec4 data[4];
+
 		ShaderDataComponent() : data() {} // initialize the union
 	};
 
@@ -38,6 +52,12 @@ namespace cage
 	struct CAGE_ENGINE_API SpawnTimeComponent
 	{
 		uint64 spawnTime = 0; // automatically initialized by the engine
+
+		inline SpawnTimeComponent &operator=(const uint32 v)
+		{
+			spawnTime = v;
+			return *this;
+		}
 	};
 
 	// used by texture arrays and skeletal animations
@@ -49,45 +69,69 @@ namespace cage
 
 	struct CAGE_ENGINE_API SkeletalAnimationLayer
 	{
+		detail::StringBase<26> maskName;
 		uint64 spawnTimeOverride = 0;
 		uint32 animation = 0;
 		Real weight = 1;
+		SkeletalAnimationBlendingModeEnum blendingMode = (SkeletalAnimationBlendingModeEnum)0;
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
 		SkeletalAnimationLayer animations[4];
 
-		void clear();
+		SkeletalAnimationComponent &clear();
 		SkeletalAnimationComponent &add(SkeletalAnimationLayer layer); // finds empty slot, or replaces the one with lowest weight, or discards the new one if it itself is the lowest
+		SkeletalAnimationComponent &set(uint32 animation);
+
+		inline SkeletalAnimationComponent &operator=(const uint32 v) { return set(v); }
 	};
 
 	struct CAGE_ENGINE_API ModelComponent
 	{
-		uint32 model = 0;
+		uint32 modelId = 0;
 		sint32 renderLayer = 0;
+
+		inline ModelComponent &operator=(const uint32 v)
+		{
+			modelId = v;
+			return *this;
+		}
 	};
 
 	struct CAGE_ENGINE_API SpriteComponent
 	{
-		uint32 sprite = 0;
-		uint32 model = 0; // optional
+		uint32 spriteId = 0;
+		uint32 modelId = 0; // optional
 		sint32 renderLayer = 0;
+
+		inline SpriteComponent &operator=(const uint32 v)
+		{
+			spriteId = v;
+			return *this;
+		}
 	};
 
 	struct CAGE_ENGINE_API TextComponent
 	{
 		uint32 textId = 0;
-		uint32 font = 0;
+		uint32 fontId = 0;
 		TextAlignEnum align = TextAlignEnum::Center;
 		Real lineSpacing = 1;
 		sint32 renderLayer = 0;
+
+		inline TextComponent &operator=(const uint32 v)
+		{
+			textId = v;
+			return *this;
+		}
 	};
 
 	// list of parameters separated by '|' when formatted, otherwise the string as is
 	struct CAGE_ENGINE_API TextValueComponent
 	{
 		String value;
+
 		inline TextValueComponent &operator=(const auto &v) requires requires { String(v); }
 		{
 			value = v;
@@ -138,7 +182,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundComponent
 	{
-		uint32 sound = 0;
+		uint32 soundId = 0;
 		SoundAttenuationEnum attenuation = SoundAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
 		Real maxDistance = 500;
@@ -146,6 +190,12 @@ namespace cage
 		sint32 priority = 0; // higher number is more important
 		bool loop = false;
 		bool spatial = true; // true -> listener direction is considered; false -> listener direction is ignored (but attentuation still applies)
+
+		inline SoundComponent &operator=(const uint32 v)
+		{
+			soundId = v;
+			return *this;
+		}
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent

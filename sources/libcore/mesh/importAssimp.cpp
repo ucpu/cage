@@ -606,7 +606,8 @@ namespace cage
 				}
 
 				Holder<SkeletonRig> rig = newSkeletonRig();
-				rig->skeletonData(globalInverse, ps, bs, is);
+				rig->skeletonData(ps, bs, is);
+				rig->globalInverse = globalInverse;
 				return rig;
 			}
 
@@ -694,7 +695,7 @@ namespace cage
 				}
 
 				Holder<SkeletalAnimation> anim = newSkeletalAnimation();
-				anim->duration(duration);
+				anim->duration = duration;
 				{
 					std::vector<uint16> mapping;
 					mapping.resize(skeletonBonesCount, m);

@@ -16,7 +16,7 @@ namespace cage
 		};
 	}
 
-	void RenderObject::setLabel(const String &name)
+	void RenderObject::setLabel(const AssetLabel &name)
 	{
 		label = name;
 	}

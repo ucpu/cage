@@ -579,18 +579,13 @@ namespace cage
 			return Transform(center, Quat(forward - center, up - center), distance(center, forward));
 		}
 
-		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalNormalize(SkeletalAnimationComponent src)
+		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalOptional(SkeletalAnimationComponent src)
 		{
-			Real sum = 0;
+			uint32 count = 0;
 			for (const auto &it : src.animations)
 				if (it.animation)
-					sum += it.weight;
-			if (!sum.valid() || sum <= 0)
-				return {};
-			for (auto &it : src.animations)
-				if (it.animation)
-					it.weight /= sum;
-			return src;
+					return src;
+			return {};
 		}
 
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
@@ -722,7 +717,9 @@ namespace cage
 			CAGE_FORCE_INLINE Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(SharedCommon *sharedCommon, void *object, const SkeletalAnimationComponent &ps, const AnimationSpeedComponent &anim, const uint64 startTime, const Mat4 &importTransform) const
 			{
 				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
+				static_assert(decltype(SkeletalAnimationLayer::maskName)::MaxLength == SkeletalAnimationMaskLabel::MaxLength);
 
+				SkeletonRig *skeleton = nullptr;
 				SkeletalAnimationPreparatorConfig cnf;
 				for (uint32 i = 0; i < std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)>; i++)
 				{
@@ -734,6 +731,14 @@ namespace cage
 					const uint64 time = ps.animations[i].spawnTimeOverride ? ps.animations[i].spawnTimeOverride : startTime;
 					cnf.animations[i].coefficient = detail::evalCoefficientForSkeletalAnimation(+cnf.animations[i].animation, config.currentTime, time, anim.speed, anim.offset);
 					cnf.animations[i].weight = ps.animations[i].weight;
+					cnf.animations[i].blendingMode = ps.animations[i].blendingMode;
+					if (!ps.animations[i].maskName.empty())
+					{
+						if (!skeleton)
+							skeleton = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(cnf.animations[i].animation->skeletonName));
+						CAGE_ASSERT(skeleton);
+						cnf.animations[i].mask = skeleton->namedMask(ps.animations[i].maskName);
+					}
 				}
 
 				cnf.modelImportTransform = importTransform;
@@ -751,7 +756,7 @@ namespace cage
 
 				std::optional<SkeletalAnimationComponent> ps;
 				if (rd.e->has<SkeletalAnimationComponent>())
-					ps = skeletalNormalize(rd.e->value<SkeletalAnimationComponent>());
+					ps = skeletalOptional(rd.e->value<SkeletalAnimationComponent>());
 
 				ModelComponent render = rd.e->value<ModelComponent>();
 				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
@@ -812,12 +817,12 @@ namespace cage
 
 			void prepareText(Entity *e, TextComponent tc)
 			{
-				if (!tc.font)
-					tc.font = detail::GuiTextFontDefault;
-				if (!tc.font)
-					tc.font = HashString("cage/fonts/ubuntu/regular.ttf");
+				if (!tc.fontId)
+					tc.fontId = detail::GuiTextFontDefault;
+				if (!tc.fontId)
+					tc.fontId = HashString("cage/fonts/ubuntu/regular.ttf");
 				SceneText rt;
-				rt.font = shareAsset(config.assets->get<AssetSchemeIndexFont, Font>(tc.font));
+				rt.font = shareAsset(config.assets->get<AssetSchemeIndexFont, Font>(tc.fontId));
 				if (!rt.font)
 					return;
 				FontFormat format;
@@ -867,11 +872,11 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
 					{
-						if (!rc.model)
+						if (!rc.modelId)
 							return;
 						if (emptyMask(e))
 							return;
-						data.push_back({ e, rc.model });
+						data.push_back({ e, rc.modelId });
 					},
 					+config.scene, false);
 				profiling.set(Stringizer() + "models: " + data.size());
@@ -978,7 +983,7 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const SpriteComponent &ic)
 					{
-						if (!ic.sprite)
+						if (!ic.spriteId)
 							return;
 						if (emptyMask(e))
 							return;
@@ -986,16 +991,16 @@ namespace cage
 					},
 					+config.scene, false);
 				profiling.set(Stringizer() + "sprites: " + data.size());
-				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.sprite, a.ic.model } < std::pair{ b.ic.sprite, b.ic.model }; });
+				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.spriteId, a.ic.modelId } < std::pair{ b.ic.spriteId, b.ic.modelId }; });
 
-				const auto &mark = [](const Data &data) { return std::pair{ data.ic.sprite, data.ic.model }; };
+				const auto &mark = [](const Data &data) { return std::pair{ data.ic.spriteId, data.ic.modelId }; };
 				const auto &output = [&](PointerRange<const Data> data)
 				{
 					CAGE_ASSERT(data.size() > 0);
-					Texture *tex = shareAsset(config.assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.sprite));
+					Texture *tex = shareAsset(config.assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.spriteId));
 					if (!tex)
 						return;
-					Model *mesh = data[0].ic.model ? shareAsset(config.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.model)) : modelSprite;
+					Model *mesh = data[0].ic.modelId ? shareAsset(config.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.modelId)) : modelSprite;
 					if (!mesh)
 						return;
 					for (const auto &it : data)
@@ -2200,10 +2205,11 @@ namespace cage
 		return camera->runEntry();
 	}
 
-	void SkeletalAnimationComponent::clear()
+	SkeletalAnimationComponent &SkeletalAnimationComponent::clear()
 	{
 		for (auto &it : animations)
 			it = {};
+		return *this;
 	}
 
 	SkeletalAnimationComponent &SkeletalAnimationComponent::add(SkeletalAnimationLayer layer)
@@ -2229,6 +2235,13 @@ namespace cage
 		}
 		if (lw < layer.weight)
 			animations[li] = layer;
+		return *this;
+	}
+
+	SkeletalAnimationComponent &SkeletalAnimationComponent::set(uint32 animation)
+	{
+		clear();
+		animations[0].animation = animation;
 		return *this;
 	}
 }

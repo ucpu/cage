@@ -109,12 +109,12 @@ namespace cage
 			{
 				if (data.channels != channels || data.sampleRate != sampleRate)
 					CAGE_THROW_ERROR(Exception, "unmatched channels or sample rate");
-				resolveLooping(data.buffer, numeric_cast<sintPtr>(data.time * sampleRate / 1000000), data.frames, loop);
+				resolveLooping(data.buffer, numeric_cast<sintPtr>(data.time * sampleRate / 1'000'000), data.frames, loop);
 			}
 		};
 	}
 
-	void Sound::setLabel(const String &name)
+	void Sound::setLabel(const AssetLabel &name)
 	{
 		label = name;
 	}
@@ -145,7 +145,7 @@ namespace cage
 
 	uint64 Sound::duration() const
 	{
-		return (uint64)1000000 * frames() / sampleRate();
+		return (uint64)1'000'000 * frames() / sampleRate();
 	}
 
 	void Sound::decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const

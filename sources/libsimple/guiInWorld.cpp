@@ -170,7 +170,7 @@ namespace cage
 
 			void update()
 			{
-				config.renderEntity->value<ModelComponent>().model = modelName;
+				config.renderEntity->value<ModelComponent>() = modelName;
 				if (config.cameraEntity)
 				{
 					const Line ray = cameraMouseRay(config.cameraEntity);

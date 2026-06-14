@@ -47,7 +47,7 @@ namespace cage
 				{
 					if (it.animation)
 					{
-						skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(it.animation->skeletonName());
+						skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(it.animation->skeletonName);
 						break;
 					}
 				}
@@ -75,7 +75,6 @@ namespace cage
 			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 		};
 
-		[[maybe_unused]]
 		bool skeletalAnimationConfigSimilarity(const SkeletalAnimationPreparatorConfig &a, const SkeletalAnimationPreparatorConfig &b)
 		{
 			bool ok = a.animateSkeletonsInsteadOfSkins == b.animateSkeletonsInsteadOfSkins && a.modelImportTransform == b.modelImportTransform;
@@ -88,20 +87,19 @@ namespace cage
 			return ok;
 		}
 
-		[[maybe_unused]]
 		bool validateSkeletalAnimationConfig(const SkeletalAnimationPreparatorConfig &a)
 		{
 			uint32 skeletonName = 0;
 			for (const auto &it : a.animations)
 			{
 				if (it.animation)
-					skeletonName = it.animation->skeletonName();
+					skeletonName = it.animation->skeletonName;
 			}
 			if (!skeletonName)
 				return false; // at least one animation is present
 			for (const auto &it : a.animations)
 			{
-				if (it.animation && it.animation->skeletonName() != skeletonName)
+				if (it.animation && it.animation->skeletonName != skeletonName)
 					return false; // all animations must use the same skeleton
 			}
 			for (const auto &it : a.animations)

@@ -86,8 +86,8 @@ void info(const String &src, int format)
 		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "animation name: " + ani.name);
 		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "bones count: " + ani.animation->bonesCount());
 		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "channels count: " + ani.animation->channelsCount());
-		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + ani.animation->duration() + " us");
-		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + (ani.animation->duration() * 1e-6) + " s");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + ani.animation->duration + " us");
+		CAGE_LOG(SeverityEnum::Info, "meshInfo", Stringizer() + "duration: " + (ani.animation->duration * 1e-6) + " s");
 		CAGE_LOG(SeverityEnum::Info, "meshInfo", "");
 	}
 

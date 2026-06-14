@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <unordered_map>
 #include <vector>
 
 #include <cage-core/containerSerialization.h>
@@ -9,6 +10,7 @@
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
+#include <cage-core/stdHash.h>
 
 namespace cage
 {
@@ -39,9 +41,6 @@ namespace cage
 			// channels represent a subset of bones that have actual animation data
 			std::vector<uint16> channelsMapping; // channelsMapping[bone] = channel
 			std::vector<Channel> channels;
-
-			uint64 duration = 0;
-			uint32 skeletonName = 0;
 
 			CAGE_FORCE_INLINE static uint16 findFrameIndex(Real coef, const std::vector<Real> &times)
 			{
@@ -113,6 +112,10 @@ namespace cage
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		impl->channelsMapping.clear();
 		impl->channels.clear();
+		impl->duration = 0;
+		impl->skeletonName = 0;
+		impl->defaultMaskName = {};
+		impl->defaultBlendingMode = SkeletalAnimationBlendingModeEnum::Override;
 	}
 
 	Holder<SkeletalAnimation> SkeletalAnimation::copy() const
@@ -161,6 +164,8 @@ namespace cage
 			ser << impl->channels;
 			ser << impl->duration;
 			ser << impl->skeletonName;
+			ser << impl->defaultMaskName;
+			ser << impl->defaultBlendingMode;
 		}
 	}
 
@@ -242,30 +247,6 @@ namespace cage
 		return numeric_cast<uint32>(impl->channels.size());
 	}
 
-	void SkeletalAnimation::duration(uint64 duration)
-	{
-		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
-		impl->duration = duration;
-	}
-
-	uint64 SkeletalAnimation::duration() const
-	{
-		const SkeletalAnimationImpl *impl = (const SkeletalAnimationImpl *)this;
-		return impl->duration;
-	}
-
-	void SkeletalAnimation::skeletonName(uint32 name)
-	{
-		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
-		impl->skeletonName = name;
-	}
-
-	uint32 SkeletalAnimation::skeletonName() const
-	{
-		const SkeletalAnimationImpl *impl = (const SkeletalAnimationImpl *)this;
-		return impl->skeletonName;
-	}
-
 	Holder<SkeletalAnimation> newSkeletalAnimation()
 	{
 		return systemMemory().createImpl<SkeletalAnimation, SkeletalAnimationImpl>();
@@ -276,10 +257,10 @@ namespace cage
 		class SkeletonRigImpl : public SkeletonRig
 		{
 		public:
-			Mat4 globalInverse;
 			std::vector<uint16> boneParents;
 			std::vector<Trs3> baseMatrices;
 			std::vector<Mat4> invRestMatrices;
+			std::unordered_map<SkeletalAnimationMaskLabel, std::vector<Real>> masksMapping;
 		};
 	}
 
@@ -289,6 +270,8 @@ namespace cage
 		impl->boneParents.clear();
 		impl->baseMatrices.clear();
 		impl->invRestMatrices.clear();
+		impl->masksMapping.clear();
+		impl->globalInverse = {};
 	}
 
 	Holder<SkeletonRig> SkeletonRig::copy() const
@@ -303,10 +286,11 @@ namespace cage
 		template<class T>
 		CAGE_FORCE_INLINE void serialize(SkeletonRigImpl *impl, T &ser)
 		{
-			ser << impl->globalInverse;
 			ser << impl->boneParents;
 			ser << impl->baseMatrices;
 			ser << impl->invRestMatrices;
+			ser << impl->masksMapping;
+			ser << impl->globalInverse;
 		}
 	}
 
@@ -340,18 +324,23 @@ namespace cage
 		}
 	}
 
-	void SkeletonRig::skeletonData(const Mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests)
+	void SkeletonRig::skeletonData(PointerRange<const uint16> parents, PointerRange<const Mat4> bases, PointerRange<const Mat4> invRests)
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
 		impl->clear();
 		CAGE_ASSERT(parents.size() == bases.size());
 		CAGE_ASSERT(parents.size() == invRests.size());
-		impl->globalInverse = globalInverse;
 		impl->boneParents = std::vector(parents.begin(), parents.end());
 		impl->baseMatrices.reserve(bases.size());
 		for (const Mat4 &b : bases)
 			impl->baseMatrices.push_back(decompose3(b));
 		impl->invRestMatrices = std::vector(invRests.begin(), invRests.end());
+	}
+
+	void SkeletonRig::namedMask(const SkeletalAnimationMaskLabel &name, PointerRange<const Real> mask)
+	{
+		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
+		// todo
 	}
 
 	uint32 SkeletonRig::bonesCount() const
@@ -360,16 +349,11 @@ namespace cage
 		return numeric_cast<uint32>(impl->boneParents.size());
 	}
 
-	Mat4 SkeletonRig::globalInverse() const
+	PointerRange<const Real> SkeletonRig::namedMask(const SkeletalAnimationMaskLabel &name) const
 	{
-		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
-		return impl->globalInverse;
-	}
-
-	PointerRange<const uint16> SkeletonRig::parents() const
-	{
-		const SkeletonRigImpl *impl = (const SkeletonRigImpl *)this;
-		return impl->boneParents;
+		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
+		// todo
+		return {};
 	}
 
 	Holder<SkeletonRig> newSkeletonRig()
@@ -495,7 +479,7 @@ namespace cage
 		{
 			if (!animation)
 				return 0;
-			const uint64 duration = max(animation->duration(), uint64(1));
+			const uint64 duration = max(animation->duration, uint64(1));
 			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
 			// assume that the animation should loop
 			return saturate(Real(sample - sint64(sample)));

@@ -30,7 +30,7 @@ void processAnimation()
 		CAGE_THROW_ERROR(Exception, "no animation name matches the specifier");
 
 	Holder<SkeletalAnimation> anim = result.animations[chosenAnimationIndex].animation.share();
-	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "duration: " + anim->duration() + " microseconds");
+	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "duration: " + anim->duration + " microseconds");
 
 	const uint32 skeletonName = []()
 	{
@@ -43,7 +43,7 @@ void processAnimation()
 		processor->writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();
-	anim->skeletonName(skeletonName);
+	anim->skeletonName = skeletonName;
 
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());

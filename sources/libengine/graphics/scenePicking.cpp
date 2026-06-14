@@ -52,11 +52,11 @@ namespace cage
 		};
 
 		// models
-		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const ModelComponent &md, const PickableComponent &) { findCandidates(e, tr, md.model); }, config.entities, false);
+		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const ModelComponent &md, const PickableComponent &) { findCandidates(e, tr, md.modelId); }, config.entities, false);
 
 		// icons
 		static constexpr uint32 defaultIcon = HashString("cage/models/icon.obj");
-		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const SpriteComponent &ic, const PickableComponent &) { findCandidates(e, tr, ic.model ? ic.model : defaultIcon); }, config.entities, false);
+		entitiesVisitor([&](Entity *e, const TransformComponent &tr, const SpriteComponent &ic, const PickableComponent &) { findCandidates(e, tr, ic.modelId ? ic.modelId : defaultIcon); }, config.entities, false);
 
 		// test candidates
 		PointerRangeHolder<ScenePickingResult> results;

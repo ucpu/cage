@@ -141,7 +141,7 @@ namespace cage
 
 			void prepare(PrepareListener &l, Holder<Voice> &v, const EmitSound &e)
 			{
-				Holder<Sound> s = engineAssets()->get<Sound>(e.sound.sound);
+				Holder<Sound> s = engineAssets()->get<Sound>(e.sound.soundId);
 				if (!s)
 				{
 					v.clear();
