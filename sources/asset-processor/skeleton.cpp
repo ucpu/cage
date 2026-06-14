@@ -8,7 +8,9 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 void processSkeleton()
 {
-	MeshImportResult result = meshImportFiles(processor->inputFileName, meshImportConfig());
+	MeshImportConfig config = meshImportConfig();
+	config.masksConfigPath = processor->property("masks");
+	MeshImportResult result = meshImportFiles(processor->inputFileName, config);
 	meshImportNotifyUsedFiles(result);
 	if (!result.skeleton)
 		CAGE_THROW_ERROR(Exception, "loaded no skeleton");

@@ -11,3 +11,14 @@ default = false
 display = path to skeleton
 hint = leave empty to automatically deduce the name from the name of this file
 type = string
+
+[blending]
+display = blending mode
+type = enum
+values = override, additive
+default = override
+
+[mask]
+display = name of mask from the masks configuration file
+hint = leave empty for no masking
+type = string

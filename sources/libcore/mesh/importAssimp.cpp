@@ -322,7 +322,7 @@ namespace cage
 
 			void validate()
 			{
-				uint32 num = numeric_cast<uint32>(bones.size());
+				const uint32 num = numeric_cast<uint32>(bones.size());
 				CAGE_ASSERT(num == nodes.size());
 				CAGE_ASSERT(num == parents.size());
 				for (uint32 i = 0; i < num; i++)
@@ -469,7 +469,6 @@ namespace cage
 					imp.SetIOHandler(nullptr);
 					throw;
 				}
-
 				const aiScene *scene = imp.GetScene();
 
 				// discard skeleton and animations
@@ -575,6 +574,90 @@ namespace cage
 						skeleton = systemMemory().createHolder<AssimpSkeleton>(scene);
 				}
 			};
+
+			void loadMasksConfigFile(SkeletonRig *rig, const String &path)
+			{
+				CAGE_LOG(SeverityEnum::Info, "meshImport", "loading masks config file");
+				CAGE_ASSERT(pathIsAbs(path));
+				ioSystem.paths.insert(path);
+
+				CAGE_ASSERT(rig);
+				CAGE_ASSERT(skeleton);
+
+				Holder<Ini> ini = newIni();
+				ini->importFile(path);
+
+				for (const auto &section : ini->sections())
+				{
+					std::unordered_map<uint16, Real> mask;
+					Real def = 1;
+					for (const auto &name : ini->items(section))
+					{
+						if (name == "__default__")
+						{
+							def = ini->getFloat(section, name);
+							if (def != saturate(def))
+							{
+								CAGE_LOG_THROW(Stringizer() + "mask: " + section + ", bone: " + name);
+								CAGE_THROW_ERROR(Exception, "invalid value");
+							}
+							continue;
+						}
+						const uint32 index = skeleton->index(aiString(name.c_str()));
+						if (index == m)
+						{
+							CAGE_LOG_THROW(Stringizer() + "mask: " + section + ", bone: " + name);
+							CAGE_THROW_ERROR(Exception, "bone not found");
+						}
+						CAGE_ASSERT(index < rig->bonesCount());
+						if (mask.count(index))
+						{
+							CAGE_LOG_THROW(Stringizer() + "mask: " + section + ", bone: " + name);
+							CAGE_THROW_ERROR(Exception, "duplicate bone index");
+						}
+						const Real v = ini->getFloat(section, name);
+						if (v != saturate(v))
+						{
+							CAGE_LOG_THROW(Stringizer() + "mask: " + section + ", bone: " + name);
+							CAGE_THROW_ERROR(Exception, "invalid value");
+						}
+						mask[index] = v;
+					}
+					std::vector<Real> vec;
+					vec.reserve(rig->bonesCount());
+					for (uint32 i = 0; i < rig->bonesCount(); i++)
+					{
+						if (mask.count(i))
+							vec.push_back(mask[i]);
+						else
+							vec.push_back(def);
+					}
+					rig->namedMask(section, vec);
+				}
+
+				ini->checkUnusedOnly();
+			}
+
+			void loadMasksConfigFile(SkeletonRig *rig)
+			{
+				String path = config.masksConfigPath;
+				if (!path.empty())
+				{
+					path = pathJoin(pathExtractDirectory(inputFile), path);
+					loadMasksConfigFile(rig, path);
+					return;
+				}
+
+				path = inputFile;
+				path += ".masks";
+				path = pathToAbs(path);
+
+				if (config.verbose)
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit masks config: " + path);
+
+				if (pathIsFile(path))
+					loadMasksConfigFile(rig, path);
+			}
 
 			Holder<SkeletonRig> skeletonRig() const
 			{
@@ -1314,7 +1397,7 @@ namespace cage
 				path = pathToAbs(path);
 
 				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material at " + path);
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "looking for implicit material: " + path);
 
 				if (pathIsFile(path))
 					loadMaterialCage(path, part);
@@ -1388,6 +1471,7 @@ namespace cage
 		if (context.skeleton)
 		{
 			result.skeleton = context.skeletonRig();
+			context.loadMasksConfigFile(+result.skeleton);
 			PointerRangeHolder<MeshImportAnimation> anims;
 			for (uint32 i = 0; i < scene->mNumAnimations; i++)
 			{

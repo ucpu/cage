@@ -732,6 +732,8 @@ namespace cage
 					cnf.animations[i].coefficient = detail::evalCoefficientForSkeletalAnimation(+cnf.animations[i].animation, config.currentTime, time, anim.speed, anim.offset);
 					cnf.animations[i].weight = ps.animations[i].weight;
 					cnf.animations[i].blendingMode = ps.animations[i].blendingMode;
+					if (cnf.animations[i].blendingMode == SkeletalAnimationBlendingModeEnum::Default)
+						cnf.animations[i].blendingMode = cnf.animations[i].animation->blendingMode;
 					if (!ps.animations[i].maskName.empty())
 					{
 						if (!skeleton)

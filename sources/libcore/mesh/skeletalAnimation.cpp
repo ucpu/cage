@@ -112,10 +112,10 @@ namespace cage
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		impl->channelsMapping.clear();
 		impl->channels.clear();
+		impl->maskName = {};
 		impl->duration = 0;
 		impl->skeletonName = 0;
-		impl->defaultMaskName = {};
-		impl->defaultBlendingMode = SkeletalAnimationBlendingModeEnum::Override;
+		impl->blendingMode = SkeletalAnimationBlendingModeEnum::Override;
 	}
 
 	Holder<SkeletalAnimation> SkeletalAnimation::copy() const
@@ -162,10 +162,10 @@ namespace cage
 		{
 			ser << impl->channelsMapping;
 			ser << impl->channels;
+			ser << impl->maskName;
 			ser << impl->duration;
 			ser << impl->skeletonName;
-			ser << impl->defaultMaskName;
-			ser << impl->defaultBlendingMode;
+			ser << impl->blendingMode;
 		}
 	}
 
@@ -340,7 +340,8 @@ namespace cage
 	void SkeletonRig::namedMask(const SkeletalAnimationMaskLabel &name, PointerRange<const Real> mask)
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
-		// todo
+		CAGE_ASSERT(mask.size() == bonesCount());
+		impl->masksMapping[name].assign(mask.begin(), mask.end());
 	}
 
 	uint32 SkeletonRig::bonesCount() const
@@ -352,7 +353,9 @@ namespace cage
 	PointerRange<const Real> SkeletonRig::namedMask(const SkeletalAnimationMaskLabel &name) const
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
-		// todo
+		const auto it = impl->masksMapping.find(name);
+		if (it != impl->masksMapping.end())
+			return it->second;
 		return {};
 	}
 
@@ -363,12 +366,21 @@ namespace cage
 
 	namespace
 	{
-		CAGE_FORCE_INLINE Trs3 blend(const Trs3 &a, const Trs3 &b, Real w)
+		CAGE_FORCE_INLINE Trs3 overrideBlending(const Trs3 &a, const Trs3 &b, Real w)
 		{
 			Trs3 r;
 			r.r = interpolate(a.r, b.r, w);
 			r.t = interpolate(a.t, b.t, w);
 			r.s = interpolate(a.s, b.s, w);
+			return r;
+		}
+
+		CAGE_FORCE_INLINE Trs3 additiveBlending(const Trs3 &base, const Trs3 &sample, const Trs3 &reference, Real w)
+		{
+			Trs3 r;
+			r.r = base.r * interpolate(Quat(), conjugate(reference.r) * sample.r, w);
+			r.t = base.t + (sample.t - reference.t) * w;
+			r.s = base.s + (sample.s - reference.s) * w;
 			return r;
 		}
 
@@ -395,11 +407,26 @@ namespace cage
 					continue;
 				CAGE_ASSERT(layer.coefficient == saturate(layer.coefficient));
 				CAGE_ASSERT(layer.weight == saturate(layer.weight));
+				CAGE_ASSERT(layer.mask.empty() || layer.mask.size() == totalBones);
 				const SkeletalAnimationImpl *anim = (const SkeletalAnimationImpl *)layer.animation;
 				for (uint32 i = 0; i < totalBones; i++)
 				{
 					const Trs3 src = anim->evaluateBone(numeric_cast<uint16>(i), layer.coefficient, impl->baseMatrices[i]);
-					local[i] = blend(local[i], src, layer.weight);
+					const Real mask = (layer.mask.empty() ? 1 : layer.mask[i]) * layer.weight;
+					switch (layer.blendingMode)
+					{
+						case SkeletalAnimationBlendingModeEnum::Default:
+						case SkeletalAnimationBlendingModeEnum::Override:
+						{
+							local[i] = overrideBlending(local[i], src, mask);
+							break;
+						}
+						case SkeletalAnimationBlendingModeEnum::Additive:
+						{
+							local[i] = additiveBlending(local[i], src, impl->baseMatrices[i], mask);
+							break;
+						}
+					}
 				}
 			}
 

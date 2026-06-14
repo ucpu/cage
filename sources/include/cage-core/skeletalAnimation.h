@@ -33,10 +33,10 @@ namespace cage
 		uint32 bonesCount() const;
 		uint32 channelsCount() const;
 
+		SkeletalAnimationMaskLabel maskName;
 		uint64 duration = 0;
 		uint32 skeletonName = 0;
-		SkeletalAnimationMaskLabel defaultMaskName;
-		SkeletalAnimationBlendingModeEnum defaultBlendingMode = SkeletalAnimationBlendingModeEnum::Override;
+		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Override;
 	};
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
@@ -67,7 +67,7 @@ namespace cage
 		const SkeletalAnimation *animation = nullptr;
 		Real coefficient;
 		Real weight = 1;
-		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Override;
+		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Default;
 	};
 
 	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes

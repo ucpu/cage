@@ -7,6 +7,19 @@
 MeshImportConfig meshImportConfig();
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
+namespace
+{
+	SkeletalAnimationBlendingModeEnum convertBlending(const String &v)
+	{
+		if (v == "override")
+			return SkeletalAnimationBlendingModeEnum::Override;
+		if (v == "additive")
+			return SkeletalAnimationBlendingModeEnum::Additive;
+		CAGE_LOG_THROW(Stringizer() + "blending: " + v);
+		CAGE_THROW_ERROR(Exception, "unknown blending mode name");
+	}
+}
+
 void processAnimation()
 {
 	const MeshImportResult result = meshImportFiles(processor->inputFileName, meshImportConfig());
@@ -44,6 +57,9 @@ void processAnimation()
 		return HashString(n);
 	}();
 	anim->skeletonName = skeletonName;
+
+	anim->blendingMode = convertBlending(processor->property("blending"));
+	anim->maskName = processor->property("mask");
 
 	Holder<PointerRange<char>> buff = anim->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "buffer size (before compression): " + buff.size());

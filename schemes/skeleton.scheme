@@ -6,3 +6,8 @@ index = 5
 display = bake model
 type = bool
 default = false
+
+[masks]
+display = path to masks configuration file
+hint = leave empty to attempt to load file with implicitly deduced name
+type = string
