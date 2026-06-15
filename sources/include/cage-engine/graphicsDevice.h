@@ -24,7 +24,6 @@ namespace cage
 		Holder<Texture> nextWindow(Window *window);
 		GraphicsFrameStatistics nextFrame();
 
-		Holder<wgpu::Device> nativeDeviceNoLock();
 		Holder<wgpu::Device> nativeDevice(); // locks the device for thread-safe access
 		Holder<wgpu::Queue> nativeQueue(); // locks the device for thread-safe access
 	};

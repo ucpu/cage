@@ -1,5 +1,6 @@
 #include <array>
 #include <cstring> // std::strlen
+#include <memory>
 
 #include <dawn/native/DawnNative.h>
 #include <webgpu/webgpu_cpp.h>
@@ -19,23 +20,20 @@
 
 namespace cage
 {
+	namespace
+	{
+		struct GraphicsContextData : private Immovable
+		{
+			wgpu::Surface surface;
+			Vec2i resolution;
+			bool presentable = false;
+		};
+	}
+
 	namespace privat
 	{
 		CAGE_API_IMPORT void initializeAbslLogSink();
-	}
 
-	GraphicsCommandBufferStatistics operator+(const GraphicsCommandBufferStatistics &a, const GraphicsCommandBufferStatistics &b)
-	{
-		GraphicsCommandBufferStatistics r = a;
-		r.passes += b.passes;
-		r.pipelineSwitches += b.pipelineSwitches;
-		r.drawCalls += b.drawCalls;
-		r.primitives += b.primitives;
-		return r;
-	}
-
-	namespace privat
-	{
 		struct DeviceBindingsCache;
 		struct DevicePipelinesCache;
 		struct DeviceBuffersCache;
@@ -66,10 +64,19 @@ namespace cage
 
 		struct GraphicsContext : private Immovable
 		{
-			wgpu::Surface surface;
-			Vec2i resolution;
-			bool presentable = false;
+			// the window owns its surface, but the device can destroy all the surfaces in its destructor
+			std::shared_ptr<GraphicsContextData> data;
 		};
+	}
+
+	GraphicsCommandBufferStatistics operator+(const GraphicsCommandBufferStatistics &a, const GraphicsCommandBufferStatistics &b)
+	{
+		GraphicsCommandBufferStatistics r = a;
+		r.passes += b.passes;
+		r.pipelineSwitches += b.pipelineSwitches;
+		r.drawCalls += b.drawCalls;
+		r.primitives += b.primitives;
+		return r;
 	}
 
 	namespace
@@ -167,6 +174,7 @@ namespace cage
 			Holder<GpuFrameTimer> gpuTimer;
 			Holder<Timer> cpuTimer;
 			GraphicsFrameStatistics statistics;
+			std::vector<std::weak_ptr<GraphicsContextData>> surfacesCollection;
 
 			void createInstance()
 			{
@@ -301,7 +309,21 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "graphics", "wgpu initialized");
 			}
 
-			~GraphicsDeviceImpl() { CAGE_LOG(SeverityEnum::Info, "graphics", "destroying wgpu device and instance"); }
+			~GraphicsDeviceImpl()
+			{
+				CAGE_LOG(SeverityEnum::Info, "graphics", "destroying wgpu device and instance");
+
+				// destroy all window surfaces
+				for (auto &it : surfacesCollection)
+				{
+					if (auto s = it.lock())
+					{
+						s->surface = {};
+						s->resolution = {};
+						s->presentable = false;
+					}
+				}
+			}
 
 			void insertCommandBuffer(wgpu::CommandBuffer &&cmds, const GraphicsCommandBufferStatistics &statistics_)
 			{
@@ -310,22 +332,25 @@ namespace cage
 				(GraphicsCommandBufferStatistics &)this->statistics = (GraphicsCommandBufferStatistics &)this->statistics + statistics_;
 			}
 
-			privat::GraphicsContext *getContext(Window *window)
+			GraphicsContextData *getContext(Window *window)
 			{
 				Holder<privat::GraphicsContext> &context = privat::getGraphicsContext(window);
 				if (!context)
-					context = systemMemory().createHolder<privat::GraphicsContext>();
-				if (!context->surface)
 				{
+					ScopeLock lock(mutex);
 					CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu surface");
-					context->surface = wgpu::glfw::CreateSurfaceForWindow(instance, privat::getGlfwWindow(window));
-					if (!context->surface)
+					auto s = std::make_shared<GraphicsContextData>();
+					s->surface = wgpu::glfw::CreateSurfaceForWindow(instance, privat::getGlfwWindow(window));
+					if (!s->surface)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
+					surfacesCollection.push_back(s);
+					context = systemMemory().createHolder<privat::GraphicsContext>();
+					context->data = s;
 				}
-				return +context;
+				return context->data.get();
 			}
 
-			void configureSurface(privat::GraphicsContext *context, Vec2i resolution)
+			void configureSurface(GraphicsContextData *context, Vec2i resolution)
 			{
 				ScopeLock lock(mutex);
 				context->presentable = false;
@@ -369,7 +394,7 @@ namespace cage
 				if (res[0] <= 0 || res[1] <= 0)
 					return {};
 
-				privat::GraphicsContext *context = getContext(window);
+				GraphicsContextData *context = getContext(window);
 				if (res != context->resolution)
 					configureSurface(context, res);
 
@@ -567,12 +592,6 @@ namespace cage
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		return impl->nextFrame();
-	}
-
-	Holder<wgpu::Device> GraphicsDevice::nativeDeviceNoLock()
-	{
-		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
-		return Holder<wgpu::Device>(&impl->device, nullptr);
 	}
 
 	Holder<wgpu::Device> GraphicsDevice::nativeDevice()
