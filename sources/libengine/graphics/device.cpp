@@ -79,18 +79,19 @@ namespace cage
 		class GpuFrameTimer : private Immovable
 		{
 		public:
-			GpuFrameTimer(GraphicsDeviceImpl *device, const wgpu::Instance &instance);
+			GpuFrameTimer(GraphicsDeviceImpl *device);
 
-			uint64 frameStart(); // returns microseconds
+			void frameStart();
 			void frameEnd();
 
+			uint64 time = 0; // microseconds
+
 		private:
-			static constexpr uint32 Frames = 5;
+			static constexpr uint32 Frames = 8;
 			GraphicsDeviceImpl *device = nullptr;
-			wgpu::Instance instance;
-			wgpu::Buffer buffResolve, buffRead;
-			wgpu::QuerySet querySet;
-			std::array<uint64, Frames> execution = {};
+			wgpu::QuerySet querySet = {};
+			wgpu::Buffer buffResolve = {};
+			std::array<wgpu::Buffer, Frames> buffRead = {};
 			uint32 frameIndex = 0;
 		};
 	}
@@ -294,7 +295,7 @@ namespace cage
 				pipelinesCache = privat::newDevicePipelinesCache(this);
 				buffersCache = privat::newDeviceBuffersCache(this);
 				texturesCache = privat::newDeviceTexturesCache(this);
-				gpuTimer = systemMemory().createHolder<GpuFrameTimer>(this, instance);
+				gpuTimer = systemMemory().createHolder<GpuFrameTimer>(this);
 				cpuTimer = newTimer();
 
 				CAGE_LOG(SeverityEnum::Info, "graphics", "wgpu initialized");
@@ -430,7 +431,8 @@ namespace cage
 					commands.clear();
 					std::swap(stats, statistics); // propagate statistics and clear
 				}
-				stats.gpuTime = gpuTimer->frameStart();
+				gpuTimer->frameStart();
+				stats.gpuTime = gpuTimer->time;
 				stats.frameTime = cpuTimer->elapsed();
 				{
 					const ProfilingScope profiling("caches maintenance");
@@ -446,7 +448,7 @@ namespace cage
 
 	namespace
 	{
-		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device, const wgpu::Instance &instance) : device(device), instance(instance)
+		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
 			{
 				wgpu::QuerySetDescriptor qsDesc = {};
@@ -460,58 +462,53 @@ namespace cage
 				resolveDesc.usage = wgpu::BufferUsage::QueryResolve | wgpu::BufferUsage::CopySrc;
 				buffResolve = device->device.CreateBuffer(&resolveDesc);
 			}
+			for (uint32 i = 0; i < Frames; i++)
 			{
 				wgpu::BufferDescriptor readbackDesc = {};
-				readbackDesc.size = Frames * 256;
+				readbackDesc.size = 2 * sizeof(uint64);
 				readbackDesc.usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
-				buffRead = device->device.CreateBuffer(&readbackDesc);
+				buffRead[i] = device->device.CreateBuffer(&readbackDesc);
 			}
 		}
 
-		uint64 GpuFrameTimer::frameStart()
+		void GpuFrameTimer::frameStart()
 		{
-			const ProfilingScope profiling("gpu frame start");
+			const ProfilingScope profiling("gpu timer start");
+			ScopeLock lock(device->mutex);
 			const uint32 current = frameIndex % Frames;
-			const uint32 oldest = (frameIndex + 1) % Frames;
-			uint64 result = execution[oldest];
-			if (frameIndex >= Frames)
-			{
-				const uint64 offset = oldest * 256;
-				wgpu::Future future;
-				{
-					ScopeLock lock(device->mutex);
-					future = buffRead.MapAsync(wgpu::MapMode::Read, offset, 2 * sizeof(uint64), wgpu::CallbackMode::WaitAnyOnly,
-						[this, offset, oldest](wgpu::MapAsyncStatus status, wgpu::StringView)
-						{
-							if (status != wgpu::MapAsyncStatus::Success)
-								return;
-							const uint64 *ts = static_cast<const uint64 *>(buffRead.GetConstMappedRange(offset, 2 * sizeof(uint64)));
-							execution[oldest] = (ts[1] - ts[0]) / 1000; // ns -> us
-							buffRead.Unmap();
-						});
-				}
-				instance.WaitAny(future, m);
-			}
-			{
-				ScopeLock lock(device->mutex);
-				auto ce = device->device.CreateCommandEncoder({});
-				ce.WriteTimestamp(querySet, current * 2 + 0);
-				device->commands.push_back(ce.Finish());
-			}
-			return result;
+			auto ce = device->device.CreateCommandEncoder({});
+			ce.WriteTimestamp(querySet, current * 2 + 0);
+			device->commands.push_back(ce.Finish());
 		}
 
 		void GpuFrameTimer::frameEnd()
 		{
-			const ProfilingScope profiling("gpu frame end");
+			const ProfilingScope profiling("gpu timer end");
 			ScopeLock lock(device->mutex);
-			const uint32 current = frameIndex % Frames;
-			const uint64 offset = current * 256;
-			auto ce = device->device.CreateCommandEncoder({});
-			ce.WriteTimestamp(querySet, current * 2 + 1);
-			ce.ResolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
-			ce.CopyBufferToBuffer(buffResolve, offset, buffRead, offset, 2 * sizeof(uint64));
-			device->commands.push_back(ce.Finish());
+			{
+				const uint32 current = frameIndex % Frames;
+				if (buffRead[current].GetMapState() != wgpu::BufferMapState::Unmapped)
+					return;
+				const uint64 offset = current * 256;
+				auto ce = device->device.CreateCommandEncoder({});
+				ce.WriteTimestamp(querySet, current * 2 + 1);
+				ce.ResolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
+				ce.CopyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
+				device->commands.push_back(ce.Finish()); // this enques the cmdbuf to be submitted, but does not submit it yet
+			}
+			if (frameIndex >= Frames)
+			{
+				const uint32 prev = (frameIndex + Frames - 1) % Frames;
+				buffRead[prev].MapAsync(wgpu::MapMode::Read, 0, 2 * sizeof(uint64), wgpu::CallbackMode::AllowProcessEvents,
+					[this, prev](wgpu::MapAsyncStatus status, wgpu::StringView)
+					{
+						if (status != wgpu::MapAsyncStatus::Success)
+							return;
+						const uint64 *ts = static_cast<const uint64 *>(buffRead[prev].GetConstMappedRange(0, 2 * sizeof(uint64)));
+						time = (ts[1] - ts[0]) / 1000; // ns -> us
+						buffRead[prev].Unmap();
+					});
+			}
 			frameIndex++;
 		}
 	}
