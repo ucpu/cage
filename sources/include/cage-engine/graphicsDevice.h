@@ -16,21 +16,13 @@ namespace cage
 	class Window;
 	class Texture;
 
-	struct GraphicsFrameData : public GraphicsFrameStatistics
-	{
-		// next frame
-		Holder<Texture> targetTexture;
-	};
-
 	class CAGE_ENGINE_API GraphicsDevice : private Immovable
 	{
 	public:
-		void processEvents();
-
-		void insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
-		void submitCommandBuffers();
-		GraphicsFrameData nextFrame(Window *window);
 		void wait(const wgpu::Future &future);
+		void insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
+		Holder<Texture> nextWindow(Window *window);
+		GraphicsFrameStatistics nextFrame();
 
 		Holder<wgpu::Device> nativeDeviceNoLock();
 		Holder<wgpu::Device> nativeDevice(); // locks the device for thread-safe access

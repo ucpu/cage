@@ -100,7 +100,7 @@ namespace cage
 			std::array<EmitBuffer, 3> emitBuffers;
 			InterpolationTimingCorrector itc;
 			ExclusiveHolder<Texture> sharedTargetTexture;
-			GraphicsFrameData frameData;
+			Holder<Texture> windowTexture;
 
 			Holder<EntityManager> entitiesPreparation, entitiesRendering; // make sure that entities outlive their usage
 			Holder<EntityManager> returning1, returning2; // recycle entities that are no longer needed, but make sure they outlive usage (both preparation and rendering)
@@ -174,7 +174,7 @@ namespace cage
 				wgpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder();
 				encoder.CopyTextureToBuffer(&srcView, &dstBuffer, &copySize);
 				engineGraphicsDevice()->insertCommandBuffer(encoder.Finish(), {});
-				engineGraphicsDevice()->submitCommandBuffers();
+				engineGraphicsDevice()->nextFrame();
 
 				wgpu::Future future = readbackBuffer.MapAsync(wgpu::MapMode::Read, 0, readbackDesc.size, wgpu::CallbackMode::WaitAnyOnly,
 					[&](wgpu::MapAsyncStatus status, wgpu::StringView message)
@@ -218,7 +218,7 @@ namespace cage
 			void finalize()
 			{
 				sharedTargetTexture.clear();
-				frameData = {};
+				windowTexture.clear();
 				preparedScene.clear();
 			}
 
@@ -226,7 +226,7 @@ namespace cage
 			{
 				std::swap(gpuTimes[0], gpuTimes[1]);
 				std::swap(gpuTimes[1], gpuTimes[2]);
-				gpuTimes[2] = frameStatistics.frameExecution;
+				gpuTimes[2] = frameStatistics.gpuTime;
 
 				if (frameIndex < nextAllowedDrFrameIndex)
 					return;
@@ -277,8 +277,8 @@ namespace cage
 					{
 						CameraData data;
 						data.camera = cam;
-						data.target = +frameData.targetTexture;
-						data.resolution = frameData.targetTexture->resolution();
+						data.target = +windowTexture;
+						data.resolution = windowTexture->resolution();
 						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
 						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
 						data.effects.gamma = Real(confRenderGamma);
@@ -307,15 +307,16 @@ namespace cage
 
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
-				ScopeGuard scopeExit([this]() { frameData = {}; });
-				frameData = engineGraphicsDevice()->nextFrame(engineWindow());
-				frameStatistics = frameData;
+				frameStatistics = engineGraphicsDevice()->nextFrame();
+
+				ScopeGuard scopeExit([this]() { windowTexture.clear(); });
+				windowTexture = engineGraphicsDevice()->nextWindow(engineWindow());
 				updateDynamicResolution();
 
-				if (!frameData.targetTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
+				if (!windowTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
 					sharedTargetTexture.clear();
-					preparedScene = {};
+					preparedScene.clear();
 					return;
 				}
 
@@ -373,19 +374,19 @@ namespace cage
 					Holder<GraphicsEncoder> enc = newGraphicsEncoder(engineGraphicsDevice(), "gui");
 					Holder<GraphicsAggregateBuffer> agg = newGraphicsAggregateBuffer({ engineGraphicsDevice() });
 					RenderPassConfig passcfg;
-					passcfg.colorTargets.push_back({ +frameData.targetTexture });
+					passcfg.colorTargets.push_back({ +windowTexture });
 					passcfg.colorTargets[0].clear = false;
 					enc->nextPass(passcfg);
 					{
 						const auto scope = enc->namedScope("gui");
-						guiBundle->draw({ frameData.targetTexture->resolution(), engineGraphicsDevice(), +enc, +agg });
+						guiBundle->draw({ windowTexture->resolution(), engineGraphicsDevice(), +enc, +agg });
 					}
 					agg->submit();
 					enc->submit();
 				}
 
 				// purposufully make the target texture available only after the whole frame has been submitted
-				sharedTargetTexture.assign(frameData.targetTexture.share());
+				sharedTargetTexture.assign(windowTexture.share());
 			}
 		};
 	}

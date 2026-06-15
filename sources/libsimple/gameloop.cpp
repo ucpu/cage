@@ -136,7 +136,7 @@ namespace cage
 					const ProfilingScope profiling("graphics dispatch");
 					privateGraphics->dispatch(applicationTime(), guiBundle.get());
 				}
-				profilingBufferGpuTime.add(privateGraphics->frameStatistics.frameExecution);
+				profilingBufferGpuTime.add(privateGraphics->frameStatistics.gpuTime);
 				profilingBufferDrawCalls.add(privateGraphics->frameStatistics.drawCalls);
 				profilingBufferDrawPrimitives.add(privateGraphics->frameStatistics.primitives);
 				profilingBufferDynamicResolution.add(privateGraphics->dynamicResolution);

@@ -33,9 +33,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsFrameStatistics : public GraphicsCommandBufferStatistics
 	{
-		// previous frames (microseconds, multiple frames ago)
-		uint64 frameExecution = 0; // time spent processing the frame
-		uint64 frameDuration = 0; // time elapsed start-to-start
+		// frame duration measured on gpu, few frames ago
+		uint64 gpuTime = 0;
+
+		// last frame duration measured on cpu
+		uint64 frameTime = 0;
 
 		// outstanding pipelines waiting for compilation
 		uint32 pipelinesCompiling = 0;
