@@ -828,24 +828,24 @@ namespace cage
 
 	namespace detail
 	{
-		String executableFullPath()
+		String pathExecutable()
 		{
 			static const String pth = executableFullPathImpl();
 			return pth;
 		}
 
-		String executableFullPathNoExe()
+		String pathExecutableNoExe()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			String p = executableFullPath();
+			String p = pathExecutable();
 			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
 			return subString(p, 0, p.length() - 4);
 #else
-			return executableFullPath();
+			return pathExecutable();
 #endif
 		}
 
-		String usersWritablePath()
+		String pathUsersWritable()
 		{
 			static const String pth = []()
 			{
@@ -876,15 +876,15 @@ namespace cage
 					basePath = fs::path(home ? home : "") / ".local" / "share";
 				}
 #endif
-				return String(basePath.string());
+				return pathSimplify(String(basePath.string()));
 			}();
 
 			return pth;
 		}
 
-		String tempPath()
+		String pathTemp()
 		{
-			static const String pth = String(std::filesystem::temp_directory_path().string());
+			static const String pth = pathSimplify(String(std::filesystem::temp_directory_path().string()));
 			return pth;
 		}
 	}

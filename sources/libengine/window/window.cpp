@@ -124,7 +124,7 @@ namespace cage
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 				//glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE); // GLFW_FALSE is useful for multiple simultaneous fullscreen windows but breaks alt-tabbing out of the application
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-				const String name = pathExtractFilename(detail::executableFullPathNoExe());
+				const String name = pathExtractFilename(detail::pathExecutableNoExe());
 				window = glfwCreateWindow(1, 1, name.c_str(), nullptr, nullptr);
 				if (!window)
 					CAGE_THROW_ERROR(Exception, "failed to create window");

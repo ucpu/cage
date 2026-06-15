@@ -572,7 +572,7 @@ namespace cage
 	{
 		String globalConfigPrefix()
 		{
-			return pathExtractFilename(detail::executableFullPathNoExe());
+			return pathExtractFilename(detail::pathExecutableNoExe());
 		}
 	}
 
@@ -615,7 +615,7 @@ namespace cage
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 			const String pr = detail::globalConfigPrefix();
-			const String ep = pathExtractDirectory(detail::executableFullPath());
+			const String ep = pathExtractDirectory(detail::pathExecutable());
 			const String wp = pathWorkingDir();
 			const bool same = ep == wp;
 			if (!same)
@@ -637,7 +637,7 @@ namespace cage
 				{
 					try
 					{
-						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::globalConfigPrefix());
+						configExportIni(pathExtractFilename(detail::pathExecutableNoExe()) + ".ini", detail::globalConfigPrefix());
 					}
 					catch (...)
 					{

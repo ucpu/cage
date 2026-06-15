@@ -354,7 +354,7 @@ namespace cage
 				}
 
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "command line: " + fullCommandLineImpl());
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::executableFullPath());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::pathExecutable());
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
@@ -377,7 +377,7 @@ namespace cage
 					}
 				}
 
-				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
+				currentThreadName(pathExtractFilename(detail::pathExecutableNoExe()));
 			}
 
 			~InitialLog()
@@ -440,7 +440,7 @@ namespace cage
 					try
 					{
 						detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
-						loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
+						loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::pathExecutableNoExe()) + ".log", false, true);
 						loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
 						privat::crashHandlerLogFileFd = privat::realFileGetFd(+((LoggerOutputFileImpl *)+loggerOutputFile)->f);
 					}

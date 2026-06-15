@@ -581,7 +581,6 @@ namespace cage
 
 		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalOptional(SkeletalAnimationComponent src)
 		{
-			uint32 count = 0;
 			for (const auto &it : src.animations)
 				if (it.animation)
 					return src;

@@ -195,14 +195,14 @@ namespace cage
 					}
 					else
 					{
-						server = newWebsocketServer(randomRange(10000u, 65000u));
-						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port " + server->port());
+						server = newWebsocketServer(randomRange(10'000u, 65'000u));
+						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port: " + server->port());
 
 						if (confAutoStartClient)
 						{
 							try
 							{
-								const String pth = detail::tempPath() + "cage_profiling.html";
+								const String pth = pathJoin(detail::pathTemp(), "cage_profiling.html");
 								writeFile(pth)->write(profiling_htm().cast<const char>());
 								const String url = Stringizer() + "file://" + pth + "?port=" + server->port();
 								openUrl(url);

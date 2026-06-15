@@ -376,7 +376,7 @@ namespace cage
 
 					{ // alter environment PATH
 						const std::string p = getenv("PATH");
-						const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::executableFullPath()).c_str();
+						const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::pathExecutable()).c_str();
 						if (setenv("PATH", n.c_str(), 1) != 0)
 							CAGE_THROW_ERROR(SystemError, "failed to change environment PATH variable", errno);
 					}

@@ -159,10 +159,10 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API String executableFullPath();
-		CAGE_CORE_API String executableFullPathNoExe();
-		CAGE_CORE_API String usersWritablePath(); // eg. c:/users/<name>/appData/local
-		CAGE_CORE_API String tempPath();
+		CAGE_CORE_API String pathExecutable();
+		CAGE_CORE_API String pathExecutableNoExe();
+		CAGE_CORE_API String pathUsersWritable(); // eg. c:/users/<name>/appData/local
+		CAGE_CORE_API String pathTemp();
 
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);

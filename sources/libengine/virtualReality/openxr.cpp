@@ -12,7 +12,7 @@
 #include <openxr/openxr_platform.h>
 
 #include <cage-core/config.h>
-#include <cage-core/files.h> // pathExtractFilename, executableFullPathNoExe
+#include <cage-core/files.h> // pathExtractFilename, pathExecutableNoExe
 #include <cage-core/profiling.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>
@@ -281,7 +281,7 @@ namespace cage
 					info.enabledApiLayerCount = layers.size();
 					info.enabledApiLayerNames = layers.data();
 					info.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
-					std::strcpy(info.applicationInfo.applicationName, pathExtractFilename(detail::executableFullPathNoExe()).c_str());
+					std::strcpy(info.applicationInfo.applicationName, pathExtractFilename(detail::pathExecutableNoExe()).c_str());
 					std::strcpy(info.applicationInfo.engineName, "Cage");
 					check(xrCreateInstance(&info, &instance));
 				}

@@ -27,6 +27,147 @@ namespace
 		CAGE_TEST_THROWN(f->read(11));
 	}
 
+	void testBasics()
+	{
+		MemoryBuffer data(BLOCK_SIZE);
+		for (uint32 i = 0; i < BLOCK_SIZE; i++)
+			data.data()[i] = (char)(i % 26 + 'A');
+
+		{
+			CAGE_TESTCASE("write to file");
+			Holder<File> f = writeFile("testdir/files/1");
+			CAGE_TEST(f);
+			for (uint32 i = 0; i < FILE_BLOCKS; i++)
+				f->write(data);
+		}
+
+		{
+			CAGE_TESTCASE("read from file");
+			Holder<File> f = readFile("testdir/files/1");
+			CAGE_TEST(f);
+			CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+			MemoryBuffer tmp(BLOCK_SIZE);
+			for (uint32 i = 0; i < FILE_BLOCKS; i++)
+			{
+				f->read(tmp);
+				CAGE_TEST(detail::memcmp(tmp.data(), data.data(), BLOCK_SIZE) == 0);
+			}
+		}
+
+		{
+			CAGE_TESTCASE("readAll from file");
+			Holder<File> f = readFile("testdir/files/1");
+			CAGE_TEST(f);
+			CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+			auto tmp = f->readAll();
+			CAGE_TEST(tmp.size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+		}
+
+		{
+			CAGE_TESTCASE("create several files");
+			for (uint32 i = 2; i <= 32; i++)
+				writeFile(pathJoin("testdir/files", Stringizer() + i));
+		}
+
+		{
+			CAGE_TESTCASE("list directory");
+			const auto list = pathListDirectory("testdir/files");
+			CAGE_TEST(list);
+			std::set<String> mp;
+			for (const String &n : list)
+				mp.insert(pathExtractFilename(n));
+			CAGE_TEST(mp.size() == 32);
+			for (uint32 i = 1; i <= 32; i++)
+				CAGE_TEST(mp.count(Stringizer() + i));
+			CAGE_TEST(pathType("testdir/files/1") == PathTypeFlags::File);
+			CAGE_TEST_THROWN(pathListDirectory("testdir/files/1"));
+		}
+
+		{
+			CAGE_TESTCASE("create files in subsequent folders");
+			for (char a = 'a'; a < 'e'; a++)
+			{
+				String sa({ &a, &a + 1 });
+				for (char b = 'a'; b < 'e'; b++)
+				{
+					String sb({ &b, &b + 1 });
+					for (char c = 'a'; c < a; c++)
+					{
+						String sc({ &c, &c + 1 });
+						writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)));
+					}
+					writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")));
+				}
+				for (char b = 'e'; b < 'h'; b++)
+				{
+					String sb({ &b, &b + 1 });
+					writeFile(pathJoin(pathJoin("testdir/files", sa), sb));
+				}
+			}
+		}
+
+		{
+			CAGE_TESTCASE("list files in subsequent directory");
+			const auto list = pathListDirectory("testdir/files/d/b");
+			CAGE_TEST(list->size() == 4);
+		}
+
+		{
+			CAGE_TESTCASE("non-existing file");
+			CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound);
+			CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound); // sanity check - the first pathType may not create it
+			CAGE_TEST_THROWN(readFile("testdir/files/non-existing-file"));
+			CAGE_TEST_THROWN(pathListDirectory("testdir/files/non-existing-file"));
+		}
+
+		{
+			CAGE_TESTCASE("lines");
+
+			const String data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+
+			{
+				Holder<File> f = writeFile("testdir/files/lines");
+				String s = data;
+				while (!s.empty())
+					f->writeLine(split(s, "/"));
+				f->close();
+			}
+
+			{
+				Holder<File> f = readFile("testdir/files/lines");
+				String s;
+				uint32 cnt = 0;
+				for (String line; f->readLine(line);)
+				{
+					s += line + "/";
+					cnt++;
+				}
+				CAGE_TEST(s == data + "/");
+				CAGE_TEST(cnt == 6);
+			}
+		}
+
+		{
+			CAGE_TESTCASE("in-memory files");
+			{
+				Holder<File> f = newFileBuffer(Holder<MemoryBuffer>(&data, nullptr), FileMode(true, false));
+				readInMemoryFile(f);
+			}
+			{
+				auto pr = PointerRange<char>(data);
+				Holder<File> f = newFileBuffer(Holder<PointerRange<char>>(&pr, nullptr)); // not good practice - the pointer to pr is dangerous
+				readInMemoryFile(f);
+			}
+			{
+				Holder<File> f = newFileBuffer();
+				f->write(data);
+				CAGE_TEST(f->tell() == BLOCK_SIZE);
+				f->seek(0);
+				readInMemoryFile(f);
+			}
+		}
+	}
+
 	void testRename()
 	{
 		CAGE_TESTCASE("move (rename)");
@@ -165,6 +306,36 @@ namespace
 			CAGE_TEST(pathIsDirectory("testdir/copied2"));
 			CAGE_TEST(pathListDirectory("testdir/copied2").size() == 5);
 		}
+	}
+
+	void testInvalidPaths()
+	{
+		CAGE_TESTCASE("invalid file paths");
+		String invalidPath = "invalid-path";
+		invalidPath[3] = 0;
+		CAGE_TEST(pathType(invalidPath) == PathTypeFlags::Invalid);
+		CAGE_TEST(!pathIsFile(invalidPath));
+		CAGE_TEST_THROWN(pathRemove(invalidPath));
+		CAGE_TEST_THROWN(pathMove(invalidPath, "valid-path"));
+		CAGE_TEST_THROWN(pathMove("valid-path", invalidPath));
+		CAGE_TEST_THROWN(readFile(invalidPath));
+		CAGE_TEST_THROWN(writeFile(invalidPath));
+		CAGE_TEST_THROWN(pathLastChange(invalidPath));
+		CAGE_TEST_THROWN(pathCreateDirectories(invalidPath));
+		CAGE_TEST_THROWN(pathCreateArchiveZip(invalidPath));
+		CAGE_TEST_THROWN(pathCreateArchiveCarch(invalidPath));
+		CAGE_TEST_THROWN(pathListDirectory(invalidPath));
+		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
+	}
+
+	void testSanitizePaths()
+	{
+		CAGE_TESTCASE("sanitize file path");
+		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def\7gжяhi.bin";
+		CAGE_TEST_THROWN(writeFile(d));
+		const String s = pathReplaceInvalidCharacters(d, "_", true);
+		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: " + s);
+		CAGE_TEST(writeFile(s));
 	}
 
 	void testUnicodeNames()
@@ -310,10 +481,46 @@ namespace
 		}
 	}
 
+	void testFsWatcher()
+	{
+		CAGE_TESTCASE("filesystem watcher");
+#ifdef CAGE_SYSTEM_MAC
+		CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - macos");
+#else
+		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
+		{
+			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are running in /mnt/, which may not support fs watching");
+		}
+		else
+		{
+			Holder<FilesystemWatcher> w = newFilesystemWatcher();
+			pathCreateDirectories("testdir/watch/dir");
+			w->registerPath("testdir/watch");
+			CAGE_TEST(w->waitForChange(0) == "");
+			writeFile("testdir/watch/1");
+			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
+			CAGE_TEST(w->waitForChange(0) == "");
+			writeFile("testdir/watch/dir/2");
+			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
+			CAGE_TEST(w->waitForChange(0) == "");
+		}
+#endif
+	}
+
+	void testSystemPaths()
+	{
+		CAGE_TESTCASE("system paths");
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "working dir: " + pathWorkingDir());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "executable: " + detail::pathExecutable());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "executable no exe: " + detail::pathExecutableNoExe());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "users writable: " + detail::pathUsersWritable());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "temp: " + detail::pathTemp());
+	}
+
 	void testFilesInTemp()
 	{
 		CAGE_TESTCASE("files in temp");
-		const String temp = detail::tempPath();
+		const String temp = detail::pathTemp();
 
 		MemoryBuffer data(BLOCK_SIZE);
 		for (uint32 i = 0; i < BLOCK_SIZE; i++)
@@ -368,7 +575,7 @@ namespace
 		// use the following to make a temporary filesystem for testing
 		// sudo mount -t tmpfs -o size=1G tmpfs /tmp
 		CAGE_TESTCASE("move from temporary path");
-		const String a = pathJoin(detail::tempPath(), "sourceFolder");
+		const String a = pathJoin(detail::pathTemp(), "sourceFolder");
 		const String b = "testdir/renameTest/target";
 		writeFile(a + "/greetings.txt")->writeLine("hello there");
 		pathMove(a, b);
@@ -378,206 +585,16 @@ namespace
 void testFiles()
 {
 	CAGE_TESTCASE("files");
-
 	pathRemove("testdir");
-
-	MemoryBuffer data(BLOCK_SIZE);
-	for (uint32 i = 0; i < BLOCK_SIZE; i++)
-		data.data()[i] = (char)(i % 26 + 'A');
-
-	{
-		CAGE_TESTCASE("write to file");
-		Holder<File> f = writeFile("testdir/files/1");
-		CAGE_TEST(f);
-		for (uint32 i = 0; i < FILE_BLOCKS; i++)
-			f->write(data);
-	}
-
-	{
-		CAGE_TESTCASE("read from file");
-		Holder<File> f = readFile("testdir/files/1");
-		CAGE_TEST(f);
-		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
-		MemoryBuffer tmp(BLOCK_SIZE);
-		for (uint32 i = 0; i < FILE_BLOCKS; i++)
-		{
-			f->read(tmp);
-			CAGE_TEST(detail::memcmp(tmp.data(), data.data(), BLOCK_SIZE) == 0);
-		}
-	}
-
-	{
-		CAGE_TESTCASE("readAll from file");
-		Holder<File> f = readFile("testdir/files/1");
-		CAGE_TEST(f);
-		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
-		auto tmp = f->readAll();
-		CAGE_TEST(tmp.size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
-	}
-
-	{
-		CAGE_TESTCASE("create several files");
-		for (uint32 i = 2; i <= 32; i++)
-			writeFile(pathJoin("testdir/files", Stringizer() + i));
-	}
-
-	{
-		CAGE_TESTCASE("list directory");
-		const auto list = pathListDirectory("testdir/files");
-		CAGE_TEST(list);
-		std::set<String> mp;
-		for (const String &n : list)
-			mp.insert(pathExtractFilename(n));
-		CAGE_TEST(mp.size() == 32);
-		for (uint32 i = 1; i <= 32; i++)
-			CAGE_TEST(mp.count(Stringizer() + i));
-		CAGE_TEST(pathType("testdir/files/1") == PathTypeFlags::File);
-		CAGE_TEST_THROWN(pathListDirectory("testdir/files/1"));
-	}
-
-	{
-		CAGE_TESTCASE("create files in subsequent folders");
-		for (char a = 'a'; a < 'e'; a++)
-		{
-			String sa({ &a, &a + 1 });
-			for (char b = 'a'; b < 'e'; b++)
-			{
-				String sb({ &b, &b + 1 });
-				for (char c = 'a'; c < a; c++)
-				{
-					String sc({ &c, &c + 1 });
-					writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)));
-				}
-				writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")));
-			}
-			for (char b = 'e'; b < 'h'; b++)
-			{
-				String sb({ &b, &b + 1 });
-				writeFile(pathJoin(pathJoin("testdir/files", sa), sb));
-			}
-		}
-	}
-
-	{
-		CAGE_TESTCASE("list files in subsequent directory");
-		const auto list = pathListDirectory("testdir/files/d/b");
-		CAGE_TEST(list->size() == 4);
-	}
-
-	{
-		CAGE_TESTCASE("non-existing file");
-		CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound);
-		CAGE_TEST(pathType("testdir/files/non-existing-file") == PathTypeFlags::NotFound); // sanity check - the first pathType may not create it
-		CAGE_TEST_THROWN(readFile("testdir/files/non-existing-file"));
-		CAGE_TEST_THROWN(pathListDirectory("testdir/files/non-existing-file"));
-	}
-
-	{
-		CAGE_TESTCASE("lines");
-
-		const String data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-
-		{
-			Holder<File> f = writeFile("testdir/files/lines");
-			String s = data;
-			while (!s.empty())
-				f->writeLine(split(s, "/"));
-			f->close();
-		}
-
-		{
-			Holder<File> f = readFile("testdir/files/lines");
-			String s;
-			uint32 cnt = 0;
-			for (String line; f->readLine(line);)
-			{
-				s += line + "/";
-				cnt++;
-			}
-			CAGE_TEST(s == data + "/");
-			CAGE_TEST(cnt == 6);
-		}
-	}
-
+	testBasics();
 	testRename();
 	testCopy();
-
-	{
-		CAGE_TESTCASE("in-memory files");
-		{
-			Holder<File> f = newFileBuffer(Holder<MemoryBuffer>(&data, nullptr), FileMode(true, false));
-			readInMemoryFile(f);
-		}
-		{
-			auto pr = PointerRange<char>(data);
-			Holder<File> f = newFileBuffer(Holder<PointerRange<char>>(&pr, nullptr)); // not good practice - the pointer to pr is dangerous
-			readInMemoryFile(f);
-		}
-		{
-			Holder<File> f = newFileBuffer();
-			f->write(data);
-			CAGE_TEST(f->tell() == BLOCK_SIZE);
-			f->seek(0);
-			readInMemoryFile(f);
-		}
-	}
-
-	{
-		CAGE_TESTCASE("invalid file paths");
-		String invalidPath = "invalid-path";
-		invalidPath[3] = 0;
-		CAGE_TEST(pathType(invalidPath) == PathTypeFlags::Invalid);
-		CAGE_TEST(!pathIsFile(invalidPath));
-		CAGE_TEST_THROWN(pathRemove(invalidPath));
-		CAGE_TEST_THROWN(pathMove(invalidPath, "valid-path"));
-		CAGE_TEST_THROWN(pathMove("valid-path", invalidPath));
-		CAGE_TEST_THROWN(readFile(invalidPath));
-		CAGE_TEST_THROWN(writeFile(invalidPath));
-		CAGE_TEST_THROWN(pathLastChange(invalidPath));
-		CAGE_TEST_THROWN(pathCreateDirectories(invalidPath));
-		CAGE_TEST_THROWN(pathCreateArchiveZip(invalidPath));
-		CAGE_TEST_THROWN(pathCreateArchiveCarch(invalidPath));
-		CAGE_TEST_THROWN(pathListDirectory(invalidPath));
-		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
-	}
-
-	{
-		CAGE_TESTCASE("sanitize file path");
-		const String d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def\7gжяhi.bin";
-		CAGE_TEST_THROWN(writeFile(d));
-		const String s = pathReplaceInvalidCharacters(d, "_", true);
-		CAGE_LOG(SeverityEnum::Info, "tests", Stringizer() + "sanitized path: " + s);
-		CAGE_TEST(writeFile(s));
-	}
-
+	testInvalidPaths();
+	testSanitizePaths();
 	testUnicodeNames();
 	testPathsFindSequence();
-
-	{
-		CAGE_TESTCASE("filesystem watcher");
-#ifdef CAGE_SYSTEM_MAC
-		CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - macos");
-#else
-		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
-		{
-			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are running in /mnt/, which may not support fs watching");
-		}
-		else
-		{
-			Holder<FilesystemWatcher> w = newFilesystemWatcher();
-			pathCreateDirectories("testdir/watch/dir");
-			w->registerPath("testdir/watch");
-			CAGE_TEST(w->waitForChange(0) == "");
-			writeFile("testdir/watch/1");
-			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
-			CAGE_TEST(w->waitForChange(0) == "");
-			writeFile("testdir/watch/dir/2");
-			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
-			CAGE_TEST(w->waitForChange(0) == "");
-		}
-#endif
-	}
-
+	testFsWatcher();
+	testSystemPaths();
 	testFilesInTemp();
 	testMoveAcrossSystems();
 }

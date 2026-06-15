@@ -361,10 +361,10 @@ namespace
 	void testSystemPaths()
 	{
 		CAGE_TESTCASE("system paths");
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "users writable path: " + detail::usersWritablePath());
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "temp path: " + detail::tempPath());
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path: " + detail::executableFullPath());
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path (no exe): " + detail::executableFullPathNoExe());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "users writable path: " + detail::pathUsersWritable());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "temp path: " + detail::pathTemp());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path: " + detail::pathExecutable());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path (no exe): " + detail::pathExecutableNoExe());
 	}
 }
 
