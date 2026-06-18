@@ -8,6 +8,7 @@
 #include <GLFW/glfw3native.h>
 
 #include <cage-core/concurrent.h>
+#include <cage-core/string.h>
 #include <cage-engine/clipboard.h>
 
 namespace cage
@@ -16,11 +17,13 @@ namespace cage
 	{
 		void handleGlfwError(int, const char *message)
 		{
-			if (String(message) == "Invalid scancode -1")
+			if (isPattern(String(message), "", "", "Invalid scancode -1"))
 				return;
-			if (String(message) == "Win32: Failed to convert clipboard to string: The operation completed successfully.")
+			if (isPattern(String(message), "", "", "Failed to encode keysym as UTF-8"))
 				return;
-			if (String(message) == "Cocoa: Failed to retrieve string from pasteboard")
+			if (isPattern(String(message), "", "", "Failed to convert clipboard to string: The operation completed successfully."))
+				return;
+			if (isPattern(String(message), "", "", "Failed to retrieve string from pasteboard"))
 				return;
 			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
