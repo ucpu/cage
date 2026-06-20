@@ -106,7 +106,7 @@ namespace cage
 			{
 				if (it.animation)
 				{
-					if (!it.coefficient.valid() || it.coefficient != saturate(it.coefficient))
+					if (!it.coefficient.valid())
 						return false; // coefficient out of range
 					if (!it.weight.valid() || it.weight != saturate(it.weight))
 						return false; // weight out of range

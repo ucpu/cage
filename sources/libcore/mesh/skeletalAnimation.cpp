@@ -115,7 +115,7 @@ namespace cage
 		impl->maskName = {};
 		impl->duration = 0;
 		impl->skeletonName = 0;
-		impl->blendingMode = SkeletalAnimationBlendingModeEnum::Override;
+		impl->blendingMode = SkeletalAnimationBlendingModeFlags::Default;
 	}
 
 	Holder<SkeletalAnimation> SkeletalAnimation::copy() const
@@ -405,28 +405,26 @@ namespace cage
 			{
 				if (!layer.animation)
 					continue;
-				CAGE_ASSERT(layer.coefficient == saturate(layer.coefficient));
+				CAGE_ASSERT(valid(layer.coefficient));
 				CAGE_ASSERT(layer.weight == saturate(layer.weight));
 				CAGE_ASSERT(layer.mask.empty() || layer.mask.size() == totalBones);
 				const SkeletalAnimationImpl *anim = (const SkeletalAnimationImpl *)layer.animation;
+				SkeletalAnimationBlendingModeFlags flags = layer.blendingMode;
+				if (any(flags & SkeletalAnimationBlendingModeFlags::Default))
+					flags |= anim->blendingMode;
+				Real coeff = layer.coefficient;
+				if (any(flags & SkeletalAnimationBlendingModeFlags::Loop))
+					coeff = coeff - floor(coeff);
+				coeff = saturate(coeff);
+				const auto additive = any(flags & SkeletalAnimationBlendingModeFlags::Additive);
 				for (uint32 i = 0; i < totalBones; i++)
 				{
-					const Trs3 src = anim->evaluateBone(numeric_cast<uint16>(i), layer.coefficient, impl->baseMatrices[i]);
+					const Trs3 src = anim->evaluateBone(numeric_cast<uint16>(i), coeff, impl->baseMatrices[i]);
 					const Real mask = (layer.mask.empty() ? 1 : layer.mask[i]) * layer.weight;
-					switch (layer.blendingMode)
-					{
-						case SkeletalAnimationBlendingModeEnum::Default:
-						case SkeletalAnimationBlendingModeEnum::Override:
-						{
-							local[i] = overrideBlending(local[i], src, mask);
-							break;
-						}
-						case SkeletalAnimationBlendingModeEnum::Additive:
-						{
-							local[i] = additiveBlending(local[i], src, impl->baseMatrices[i], mask);
-							break;
-						}
-					}
+					if (additive)
+						local[i] = additiveBlending(local[i], src, impl->baseMatrices[i], mask);
+					else
+						local[i] = overrideBlending(local[i], src, mask);
 				}
 			}
 
@@ -498,18 +496,5 @@ namespace cage
 		Mat4 *tmp = (Mat4 *)CAGE_ALLOCA(sizeof(Mat4) * totalBones);
 		animateSkin(skeleton, animations, { tmp, tmp + totalBones });
 		meshApplyAnimation(mesh, { tmp, tmp + totalBones });
-	}
-
-	namespace detail
-	{
-		Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
-		{
-			if (!animation)
-				return 0;
-			const uint64 duration = max(animation->duration, uint64(1));
-			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
-			// assume that the animation should loop
-			return saturate(Real(sample - sint64(sample)));
-		}
 	}
 }

@@ -12,11 +12,15 @@ display = path to skeleton
 hint = leave empty to automatically deduce the name from the name of this file
 type = string
 
-[blending]
-display = blending mode
-type = enum
-values = override, additive
-default = override
+[additive]
+display = additive blending
+type = bool
+default = false
+
+[loop]
+display = loop
+type = bool
+default = true
 
 [mask]
 display = name of mask from the masks configuration file

@@ -562,6 +562,15 @@ namespace cage
 			return anim;
 		}
 
+		CAGE_FORCE_INLINE Real animCoefficient(uint64 duration, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
+		{
+			duration = max(duration, uint64(1));
+			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
+			if (sample >= 0 && sample <= 1)
+				return sample; // already has sufficient precision and preservers looping or not
+			return (sample - std::floor(sample)) + sign(sample); // improve precision and ensure that the value stays outside looping range
+		}
+
 		CAGE_FORCE_INLINE UniMesh makeMeshUni(const SceneItem &rd)
 		{
 			UniMesh uni;
@@ -722,23 +731,23 @@ namespace cage
 				SkeletalAnimationPreparatorConfig cnf;
 				for (uint32 i = 0; i < std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)>; i++)
 				{
-					if (!ps.animations[i].animation)
+					const auto &input = ps.animations[i];
+					auto &output = cnf.animations[i];
+					if (!input.animation)
 						continue;
-					cnf.animations[i].animation = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ps.animations[i].animation));
-					if (!cnf.animations[i].animation)
+					output.animation = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
+					if (!output.animation)
 						return {};
-					const uint64 time = ps.animations[i].spawnTimeOverride ? ps.animations[i].spawnTimeOverride : startTime;
-					cnf.animations[i].coefficient = detail::evalCoefficientForSkeletalAnimation(+cnf.animations[i].animation, config.currentTime, time, anim.speed, anim.offset);
-					cnf.animations[i].weight = ps.animations[i].weight;
-					cnf.animations[i].blendingMode = ps.animations[i].blendingMode;
-					if (cnf.animations[i].blendingMode == SkeletalAnimationBlendingModeEnum::Default)
-						cnf.animations[i].blendingMode = cnf.animations[i].animation->blendingMode;
-					if (!ps.animations[i].maskName.empty())
+					const uint64 time = input.spawnTimeOverride ? input.spawnTimeOverride : startTime;
+					output.coefficient = animCoefficient(output.animation->duration, config.currentTime, time, anim.speed * input.speed, anim.offset + input.offset);
+					output.weight = input.weight;
+					output.blendingMode = input.blendingMode;
+					if (!input.maskName.empty())
 					{
 						if (!skeleton)
-							skeleton = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(cnf.animations[i].animation->skeletonName));
+							skeleton = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(output.animation->skeletonName));
 						CAGE_ASSERT(skeleton);
-						cnf.animations[i].mask = skeleton->namedMask(ps.animations[i].maskName);
+						output.mask = skeleton->namedMask(input.maskName);
 					}
 				}
 

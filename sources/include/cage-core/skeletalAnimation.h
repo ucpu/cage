@@ -1,18 +1,21 @@
 #ifndef guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 #define guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
 
+#include <cage-core/enumBits.h>
 #include <cage-core/math.h>
 
 namespace cage
 {
 	class Mesh;
 
-	enum class SkeletalAnimationBlendingModeEnum
+	enum class SkeletalAnimationBlendingModeFlags
 	{
-		Default = 0,
-		Override,
-		Additive,
+		None = 0,
+		Default = 1 << 0, // load the flags from the animation itself
+		Additive = 1 << 1,
+		Loop = 1 << 2,
 	};
+	CAGE_ENUM_BITS(SkeletalAnimationBlendingModeFlags);
 
 	using SkeletalAnimationMaskLabel = detail::StringBase<26>;
 
@@ -36,7 +39,7 @@ namespace cage
 		SkeletalAnimationMaskLabel maskName;
 		uint64 duration = 0;
 		uint32 skeletonName = 0;
-		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Override;
+		SkeletalAnimationBlendingModeFlags blendingMode = SkeletalAnimationBlendingModeFlags::Loop;
 	};
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
@@ -67,18 +70,12 @@ namespace cage
 		const SkeletalAnimation *animation = nullptr;
 		Real coefficient;
 		Real weight = 1;
-		SkeletalAnimationBlendingModeEnum blendingMode = SkeletalAnimationBlendingModeEnum::Default;
+		SkeletalAnimationBlendingModeFlags blendingMode = SkeletalAnimationBlendingModeFlags::Default;
 	};
 
 	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for skinning meshes
 	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, PointerRange<Mat4> output); // provides transformation matrices for individual bones for debug visualization
 	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, PointerRange<const SkeletalAnimationBlendingLayer> animations, Mesh *mesh);
-
-	namespace detail
-	{
-		// animationOffset = 0..1 normalized offset, independent of animation speed or duration
-		CAGE_CORE_API Real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset);
-	}
 }
 
 #endif // guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr

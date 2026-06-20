@@ -6,7 +6,7 @@
 namespace cage
 {
 	class Texture;
-	enum class SkeletalAnimationBlendingModeEnum;
+	enum class SkeletalAnimationBlendingModeFlags;
 
 	struct CAGE_ENGINE_API TransformComponent : public Transform
 	{
@@ -73,7 +73,9 @@ namespace cage
 		uint64 spawnTimeOverride = 0;
 		uint32 animation = 0;
 		Real weight = 1;
-		SkeletalAnimationBlendingModeEnum blendingMode = (SkeletalAnimationBlendingModeEnum)0;
+		Real speed = 1;
+		Real offset = 0;
+		SkeletalAnimationBlendingModeFlags blendingMode = (SkeletalAnimationBlendingModeFlags)1; // default
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
@@ -85,6 +87,7 @@ namespace cage
 		SkeletalAnimationComponent &set(uint32 animation);
 
 		inline SkeletalAnimationComponent &operator=(const uint32 v) { return set(v); }
+		inline SkeletalAnimationLayer &operator[](uint32 index) { return animations[index]; }
 	};
 
 	struct CAGE_ENGINE_API ModelComponent
