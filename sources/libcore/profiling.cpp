@@ -202,7 +202,12 @@ namespace cage
 						{
 							try
 							{
-								const String pth = pathJoin(detail::pathTemp(), "cage_profiling.html");
+	#ifdef CAGE_SYSTEM_WINDOWS
+								const String basePath = detail::pathTemp();
+	#else
+								const String basePath = detail::pathUsersWritable(); // browser on linux does not allow to open html from tmp folder
+	#endif // CAGE_SYSTEM_WINDOWS
+								const String pth = pathJoin(basePath, "cage_profiling.html");
 								writeFile(pth)->write(profiling_htm().cast<const char>());
 								const String url = Stringizer() + "file://" + pth + "?port=" + server->port();
 								openUrl(url);

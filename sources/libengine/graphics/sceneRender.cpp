@@ -552,9 +552,9 @@ namespace cage
 			return multiShader->get(variant);
 		}
 
-		CAGE_FORCE_INLINE AnimationSpeedComponent getAnimSpeed(Entity *e)
+		CAGE_FORCE_INLINE ShaderAnimationComponent getAnimSpeed(Entity *e)
 		{
-			AnimationSpeedComponent anim = e->getOrDefault<AnimationSpeedComponent>();
+			ShaderAnimationComponent anim = e->getOrDefault<ShaderAnimationComponent>();
 			if (!anim.speed.valid())
 				anim.speed = 1;
 			if (!anim.offset.valid())
@@ -722,7 +722,7 @@ namespace cage
 				}
 			}
 
-			CAGE_FORCE_INLINE Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(SharedCommon *sharedCommon, void *object, const SkeletalAnimationComponent &ps, const AnimationSpeedComponent &anim, const uint64 startTime, const Mat4 &importTransform) const
+			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(SharedCommon *sharedCommon, void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Mat4 &importTransform) const
 			{
 				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
 				static_assert(decltype(SkeletalAnimationLayer::maskName)::MaxLength == SkeletalAnimationMaskLabel::MaxLength);
@@ -738,8 +738,8 @@ namespace cage
 					output.animation = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
 					if (!output.animation)
 						return {};
-					const uint64 time = input.spawnTimeOverride ? input.spawnTimeOverride : startTime;
-					output.coefficient = animCoefficient(output.animation->duration, config.currentTime, time, anim.speed * input.speed, anim.offset + input.offset);
+					const uint64 time = input.startTime ? input.startTime : startTime;
+					output.coefficient = animCoefficient(output.animation->duration, config.currentTime, time, input.speed, input.offset);
 					output.weight = input.weight;
 					output.blendingMode = input.blendingMode;
 					if (!input.maskName.empty())
@@ -770,7 +770,6 @@ namespace cage
 
 				ModelComponent render = rd.e->value<ModelComponent>();
 				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
-				const AnimationSpeedComponent anim = getAnimSpeed(rd.e);
 				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
 
 				if (parent)
@@ -789,11 +788,12 @@ namespace cage
 					ps.reset();
 				if (ps)
 				{
-					rm.skeletalAnimation = prepareSkeleton(sharedCommon, rd.e, *ps, anim, startTime, rm.mesh->importTransform);
+					rm.skeletalAnimation = prepareSkeleton(sharedCommon, rd.e, startTime, *ps, rm.mesh->importTransform);
 					if (!rm.skeletalAnimation)
 						ps.reset();
 				}
 
+				const ShaderAnimationComponent anim = getAnimSpeed(rd.e);
 				rd.color = initializeColor(color);
 				rd.animation = Vec4((double)(sint64)(config.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
@@ -817,7 +817,7 @@ namespace cage
 				rd.transform = modelTransform(e);
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				const uint64 startTime = e->getOrDefault<SpawnTimeComponent>().spawnTime;
-				const AnimationSpeedComponent anim = getAnimSpeed(e);
+				const ShaderAnimationComponent anim = getAnimSpeed(e);
 				rd.animation = Vec4((double)(sint64)(config.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
 				rd.translucent = true;

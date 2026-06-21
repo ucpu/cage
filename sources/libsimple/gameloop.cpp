@@ -408,12 +408,12 @@ namespace cage
 					entities = newEntityManager();
 					EntityManager *entityMgr = +entities;
 					entityMgr->defineComponent(TransformComponent());
-					entityMgr->defineComponent(TransformComponent());
-					entityMgr->defineComponent(ColorComponent());
+					entityMgr->defineComponent(TransformComponent()); // history
 					entityMgr->defineComponent(SceneComponent());
-					entityMgr->defineComponent(ShaderDataComponent());
+					entityMgr->defineComponent(ColorComponent());
 					entityMgr->defineComponent(SpawnTimeComponent());
-					entityMgr->defineComponent(AnimationSpeedComponent());
+					entityMgr->defineComponent(ShaderDataComponent());
+					entityMgr->defineComponent(ShaderAnimationComponent());
 					entityMgr->defineComponent(SkeletalAnimationComponent());
 					entityMgr->defineComponent(ModelComponent());
 					entityMgr->defineComponent(SpriteComponent());

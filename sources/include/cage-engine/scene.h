@@ -14,6 +14,17 @@ namespace cage
 		using Transform::operator=;
 	};
 
+	struct CAGE_ENGINE_API SceneComponent
+	{
+		uint32 sceneMask = 1;
+
+		inline SceneComponent &operator=(const uint32 v)
+		{
+			sceneMask = v;
+			return *this;
+		}
+	};
+
 	// used with model/sprite/text/light
 	struct CAGE_ENGINE_API ColorComponent
 	{
@@ -28,13 +39,14 @@ namespace cage
 		}
 	};
 
-	struct CAGE_ENGINE_API SceneComponent
+	// used by animations and sounds
+	struct CAGE_ENGINE_API SpawnTimeComponent
 	{
-		uint32 sceneMask = 1;
+		uint64 spawnTime = 0; // automatically initialized by the engine
 
-		inline SceneComponent &operator=(const uint32 v)
+		inline SpawnTimeComponent &operator=(const uint32 v)
 		{
-			sceneMask = v;
+			spawnTime = v;
 			return *this;
 		}
 	};
@@ -48,20 +60,9 @@ namespace cage
 		ShaderDataComponent() : data() {} // initialize the union
 	};
 
-	// used by animations and sounds
-	struct CAGE_ENGINE_API SpawnTimeComponent
-	{
-		uint64 spawnTime = 0; // automatically initialized by the engine
-
-		inline SpawnTimeComponent &operator=(const uint32 v)
-		{
-			spawnTime = v;
-			return *this;
-		}
-	};
-
-	// used by texture arrays and skeletal animations
-	struct CAGE_ENGINE_API AnimationSpeedComponent
+	// used by texture arrays and shader animations
+	// NOT used by skeletal animation
+	struct CAGE_ENGINE_API ShaderAnimationComponent
 	{
 		Real speed = Real::Nan();
 		Real offset = Real::Nan(); // normalized 0..1
@@ -70,11 +71,11 @@ namespace cage
 	struct CAGE_ENGINE_API SkeletalAnimationLayer
 	{
 		detail::StringBase<26> maskName;
-		uint64 spawnTimeOverride = 0;
+		uint64 startTime = 0; // defaults to the spawn time
 		uint32 animation = 0;
 		Real weight = 1;
 		Real speed = 1;
-		Real offset = 0;
+		Real offset = 0; // normalized 0..1
 		SkeletalAnimationBlendingModeFlags blendingMode = (SkeletalAnimationBlendingModeFlags)1; // default
 	};
 

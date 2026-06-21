@@ -19,15 +19,21 @@ namespace cage
 		public:
 			explicit SkeletalAnimationPreparatorCollectionImpl(AssetsManager *assets) : assets(assets) {}
 
-			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 			Holder<Mutex> mutex = newMutex();
 			AssetsManager *assets = nullptr;
+			ankerl::unordered_dense::map<void *, Holder<class SkeletalAnimationPreparatorInstanceImpl>> objects;
 		};
 
 		class SkeletalAnimationPreparatorInstanceImpl : public SkeletalAnimationPreparatorInstance
 		{
 		public:
 			explicit SkeletalAnimationPreparatorInstanceImpl(SkeletalAnimationPreparatorConfig &&config, SkeletalAnimationPreparatorCollectionImpl *impl) : config(std::move(config)), impl(impl) {}
+
+			~SkeletalAnimationPreparatorInstanceImpl()
+			{
+				if (task)
+					task->wait();
+			}
 
 			void prepare()
 			{
@@ -69,10 +75,10 @@ namespace cage
 					armature.emplace_back(config.modelImportTransform * tmpArmature[i] * inv);
 			}
 
+			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 			SkeletalAnimationPreparatorConfig config;
 			std::vector<Mat3x4> armature;
 			Holder<AsyncTask> task;
-			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 		};
 
 		bool skeletalAnimationConfigSimilarity(const SkeletalAnimationPreparatorConfig &a, const SkeletalAnimationPreparatorConfig &b)
