@@ -51,18 +51,6 @@ namespace cage
 		{
 			Holder<EntityManager> entities;
 			uint64 emitTime = 0;
-			bool fresh = false;
-		};
-
-		struct CameraData : SceneCameraConfig
-		{
-			Holder<PointerRange<Holder<GraphicsEncoder>>> encoders;
-			const PreparedScene *scene = nullptr;
-			bool finalProduct = false; // ensure render-to-texture before render-to-window
-
-			void operator()() { encoders = sceneRender(scene, *this); }
-
-			bool operator<(const CameraData &other) const { return finalProduct < other.finalProduct; }
 		};
 
 		Transform modelTransform(Entity *e, Real interpolationFactor)
@@ -102,10 +90,6 @@ namespace cage
 			ExclusiveHolder<Texture> sharedTargetTexture;
 			Holder<Texture> windowTexture;
 
-			Holder<EntityManager> entitiesPreparation, entitiesRendering; // make sure that entities outlive their usage
-			Holder<EntityManager> returning1, returning2; // recycle entities that are no longer needed, but make sure they outlive usage (both preparation and rendering)
-			Holder<PreparedScene> preparedScene;
-
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
 
@@ -136,7 +120,6 @@ namespace cage
 					cfg.destination = +eb.entities;
 					entitiesCopy(cfg);
 					eb.emitTime = emitTime;
-					eb.fresh = true;
 				}
 			}
 
@@ -219,7 +202,6 @@ namespace cage
 			{
 				sharedTargetTexture.clear();
 				windowTexture.clear();
-				preparedScene.clear();
 			}
 
 			void updateDynamicResolution()
@@ -265,17 +247,17 @@ namespace cage
 				return res;
 			}
 
-			std::vector<CameraData> generateCameras() const
+			std::vector<SceneRenderCamera> generateCameras(const SceneRenderShared &cfg) const
 			{
-				std::vector<CameraData> cameras;
-				if (!preparedScene)
+				std::vector<SceneRenderCamera> cameras;
+				if (!cfg.scene)
 					return cameras;
 
-				cameras.reserve(preparedScene->config.scene->component<CameraComponent>()->count());
+				cameras.reserve(cfg.scene->component<CameraComponent>()->count());
 				entitiesVisitor(
 					[&](Entity *e, const CameraComponent &cam)
 					{
-						CameraData data;
+						SceneRenderCamera data;
 						data.camera = cam;
 						data.target = +windowTexture;
 						data.resolution = windowTexture->resolution();
@@ -292,16 +274,15 @@ namespace cage
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 							data.resolution = applyDynamicResolution(data.resolution);
 						}
-						data.transform = modelTransform(e, preparedScene->config.interpolationFactor);
+						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
 						data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
-						data.finalProduct = !cam.target;
-						data.scene = +preparedScene;
 						cameras.push_back(std::move(data));
 					},
-					preparedScene->config.scene, false);
+					cfg.scene, false);
 
-				std::stable_sort(cameras.begin(), cameras.end()); // ensure render-to-texture before render-to-window
+				// ensure render-to-texture before render-to-window
+				std::stable_sort(cameras.begin(), cameras.end(), [](const SceneRenderCamera &a, const SceneRenderCamera &b) { return !!a.target < !!b.target; });
 				return cameras;
 			}
 
@@ -316,57 +297,35 @@ namespace cage
 				if (!windowTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
 					sharedTargetTexture.clear();
-					preparedScene.clear();
 					return;
 				}
 
-				ScenePrepareConfig cfg;
-				if (auto lock = emitBuffersGuard->read())
-				{
-					EmitBuffer &eb = emitBuffers[lock.index()];
-					if (eb.fresh)
-					{
-						eb.fresh = false;
-						Holder<EntityManager> tmp = std::move(entitiesPreparation);
-						entitiesPreparation = std::move(eb.entities);
-						eb.entities = std::move(returning2);
-						returning2 = std::move(returning1);
-						returning1 = std::move(tmp);
-					}
+				auto lock = emitBuffersGuard->read();
+				if (!lock)
+					return;
+				EmitBuffer &eb = emitBuffers[lock.index()];
 
-					cfg.device = engineGraphicsDevice();
-					cfg.assets = engineAssets();
-					cfg.onDemand = engineAssetsOnDemand();
-					cfg.scene = +entitiesPreparation;
+				{
+					ProfilingScope profiling("scene prepare & render");
+					SceneRenderConfig cfg;
+					cfg.shared.device = engineGraphicsDevice();
+					cfg.shared.assets = engineAssets();
+					cfg.shared.onDemand = engineAssetsOnDemand();
+					cfg.shared.scene = +eb.entities;
 					if (!graphicsThread().disableTimePassage)
 					{
 						const uint64 period = controlThread().updatePeriod();
-						cfg.currentTime = itc(eb.emitTime, dispatchTime, period);
-						cfg.elapsedTime = dispatchTime - lastDispatchTime;
-						cfg.interpolationFactor = saturate(Real(cfg.currentTime - eb.emitTime) / period);
-						cfg.frameIndex = frameIndex;
+						cfg.shared.currentTime = itc(eb.emitTime, dispatchTime, period);
+						cfg.shared.elapsedTime = dispatchTime - lastDispatchTime;
+						cfg.shared.interpolationFactor = saturate(Real(cfg.shared.currentTime - eb.emitTime) / period);
+						cfg.shared.frameIndex = frameIndex;
 					}
-
-					frameIndex++;
-					lastDispatchTime = dispatchTime;
+					std::vector<SceneRenderCamera> cameras = generateCameras(cfg.shared);
+					cfg.cameras = cameras;
+					const auto commands = sceneRender(cfg);
+					for (const auto &cmd : commands)
+						cmd->submit();
 				}
-
-				if (cfg.device)
-				{
-					ProfilingScope profiling("scene prepare & render");
-					std::vector<CameraData> cameras = generateCameras();
-					PointerRange<CameraData> camerasRange = cameras;
-					Holder<AsyncTask> task = tasksRunAsync<CameraData>("render scene", Holder<PointerRange<CameraData>>(&camerasRange, nullptr));
-					Holder<PreparedScene> nextScene = scenePrepare(cfg); // this runs in parallel with the cameras rendering
-					task->wait();
-					for (const auto &cam : cameras)
-						for (const auto &it : cam.encoders)
-							it->submit();
-					entitiesRendering = entitiesPreparation.share(); // these must update after the rendering task has completed
-					preparedScene = std::move(nextScene);
-				}
-				else
-					preparedScene.clear();
 
 				if (guiBundle)
 				{
@@ -387,6 +346,9 @@ namespace cage
 
 				// purposufully make the target texture available only after the whole frame has been submitted
 				sharedTargetTexture.assign(windowTexture.share());
+
+				frameIndex++;
+				lastDispatchTime = dispatchTime;
 			}
 		};
 	}

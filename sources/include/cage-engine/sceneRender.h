@@ -12,7 +12,7 @@ namespace cage
 	class AssetsOnDemand;
 	class EntityManager;
 
-	struct CAGE_ENGINE_API ScenePrepareConfig
+	struct CAGE_ENGINE_API SceneRenderShared
 	{
 		uint64 currentTime = 0;
 		uint64 elapsedTime = 1'000'000 / 60; // microseconds since last frame
@@ -24,7 +24,7 @@ namespace cage
 		Real interpolationFactor = 1;
 	};
 
-	struct CAGE_ENGINE_API SceneCameraConfig
+	struct CAGE_ENGINE_API SceneRenderCamera
 	{
 		Mat4 projection;
 		ScreenSpaceEffectsComponent effects;
@@ -36,13 +36,13 @@ namespace cage
 		uint32 cameraSceneMask = 1;
 	};
 
-	struct CAGE_ENGINE_API PreparedScene
+	struct CAGE_ENGINE_API SceneRenderConfig
 	{
-		const ScenePrepareConfig config;
+		SceneRenderShared shared;
+		PointerRange<const SceneRenderCamera> cameras;
 	};
 
-	CAGE_ENGINE_API Holder<PreparedScene> scenePrepare(const ScenePrepareConfig &config);
-	CAGE_ENGINE_API Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const PreparedScene *scene, const SceneCameraConfig &config);
+	CAGE_ENGINE_API Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const SceneRenderConfig &config);
 }
 
 #endif // guard_sceneRender_h_4hg1s8596drfh4

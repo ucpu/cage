@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <map>
 #include <vector>
 
@@ -135,11 +136,6 @@ namespace cage
 		struct SceneCustom : private Noncopyable
 		{};
 
-		struct SceneObject : private Noncopyable
-		{
-			RenderObject *object = nullptr;
-		};
-
 		enum class VariantEnum : uint8
 		{
 			None,
@@ -147,7 +143,6 @@ namespace cage
 			Sprite,
 			Text,
 			Custom,
-			Object,
 		};
 
 		struct SceneItemVariant : private Immovable
@@ -158,7 +153,6 @@ namespace cage
 				SceneSprite sprite;
 				SceneText text;
 				SceneCustom custom;
-				SceneObject object;
 				Variants() {}
 				~Variants() {}
 			};
@@ -214,58 +208,39 @@ namespace cage
 				return variants.custom;
 			}
 
-			CAGE_FORCE_INLINE SceneObject &object()
-			{
-				CAGE_ASSERT(index == VariantEnum::Object);
-				return variants.object;
-			}
+			CAGE_FORCE_INLINE SceneItemVariant() {}
 
-			CAGE_FORCE_INLINE const SceneObject &object() const
-			{
-				CAGE_ASSERT(index == VariantEnum::Object);
-				return variants.object;
-			}
+			CAGE_FORCE_INLINE ~SceneItemVariant() { destroy(); }
 
-			SceneItemVariant() {}
-
-			~SceneItemVariant() { destroy(); }
-
-			void assign(SceneModel &&v)
+			CAGE_FORCE_INLINE void assign(SceneModel &&v)
 			{
 				destroy();
 				new (&variants.model) SceneModel(std::move(v));
 				index = VariantEnum::Model;
 			}
 
-			void assign(SceneSprite &&v)
+			CAGE_FORCE_INLINE void assign(SceneSprite &&v)
 			{
 				destroy();
 				new (&variants.sprite) SceneSprite(std::move(v));
 				index = VariantEnum::Sprite;
 			}
 
-			void assign(SceneText &&v)
+			CAGE_FORCE_INLINE void assign(SceneText &&v)
 			{
 				destroy();
 				new (&variants.text) SceneText(std::move(v));
 				index = VariantEnum::Text;
 			}
 
-			void assign(SceneCustom &&v)
+			CAGE_FORCE_INLINE void assign(SceneCustom &&v)
 			{
 				destroy();
 				new (&variants.custom) SceneCustom(std::move(v));
 				index = VariantEnum::Custom;
 			}
 
-			void assign(SceneObject &&v)
-			{
-				destroy();
-				new (&variants.object) SceneObject(std::move(v));
-				index = VariantEnum::Object;
-			}
-
-			void destroy() noexcept
+			CAGE_FORCE_INLINE void destroy() noexcept
 			{
 				switch (index)
 				{
@@ -282,9 +257,6 @@ namespace cage
 						break;
 					case VariantEnum::Custom:
 						variants.custom.~SceneCustom();
-						break;
-					case VariantEnum::Object:
-						variants.object.~SceneObject();
 						break;
 				}
 				index = VariantEnum::None;
@@ -305,43 +277,18 @@ namespace cage
 
 			SceneItem(SceneItem &&other) noexcept
 			{
-				// performance hack
-				detail::memcpy(this, &other, sizeof(SceneItem));
-				//detail::memset(&other, 0, sizeof(SceneItem));
+				detail::memcpy(this, &other, sizeof(SceneItem)); // performance hack
 				other.data.index = VariantEnum::None;
 			}
 
 			SceneItem &operator=(SceneItem &&other) noexcept
 			{
-				// performance hack
 				if (&other == this)
 					return *this;
 				this->~SceneItem();
-				detail::memcpy(this, &other, sizeof(SceneItem));
-				//detail::memset(&other, 0, sizeof(SceneItem));
+				detail::memcpy(this, &other, sizeof(SceneItem)); // performance hack
 				other.data.index = VariantEnum::None;
 				return *this;
-			}
-
-			// approximate order to improve cache locality while rendering
-			std::tuple<sint32, bool, void *, void *, bool> cmp() const noexcept
-			{
-				switch (data.index)
-				{
-					case VariantEnum::None:
-						return {};
-					case VariantEnum::Model:
-						return { renderLayer, translucent, data.model().mesh, nullptr, !!data.model().skeletalAnimation };
-					case VariantEnum::Sprite:
-						return { renderLayer, translucent, data.sprite().mesh, data.sprite().texture, false };
-					case VariantEnum::Text:
-						return { renderLayer, translucent, data.text().font, nullptr, false };
-					case VariantEnum::Custom:
-						return { renderLayer, translucent, nullptr, nullptr, false };
-					case VariantEnum::Object:
-						return {}; // objects will be converted into models
-				}
-				return {};
 			}
 		};
 
@@ -349,6 +296,8 @@ namespace cage
 		{
 			const SceneItem *base = nullptr;
 			Real depth;
+
+			const SceneItem *operator->() const { return base; }
 
 			// exact order for correct rendering
 			std::tuple<sint32, bool, Real, void *, void *, bool> cmp() const noexcept
@@ -365,8 +314,6 @@ namespace cage
 						return { base->renderLayer, base->translucent, depth, base->data.text().font, nullptr, false };
 					case VariantEnum::Custom:
 						return { base->renderLayer, base->translucent, depth, nullptr, nullptr, false };
-					case VariantEnum::Object:
-						return {}; // objects are already converted into models
 				}
 				return {};
 			}
@@ -387,8 +334,6 @@ namespace cage
 						return { d.data.text().font, nullptr, false, d.translucent };
 					case VariantEnum::Custom:
 						return { d.e, nullptr, false, d.translucent };
-					case VariantEnum::Object:
-						return {}; // objects are already converted into models
 				}
 				return {};
 			};
@@ -399,6 +344,49 @@ namespace cage
 			Shadowmap,
 			DepthPrepass,
 			Color,
+		};
+
+		std::atomic<uintPtr> ItemsContainerReservation = 0;
+
+		// container with stable pointers to items
+		template<class T>
+		struct ItemsContainer : private std::vector<T>, Immovable
+		{
+			ItemsContainer() { reserve(ItemsContainerReservation); }
+
+			~ItemsContainer() { ItemsContainerReservation = std::max((uintPtr)ItemsContainerReservation, (uintPtr)capacity()); }
+
+			using typename std::vector<T>::value_type;
+			using std::vector<T>::operator[];
+			using std::vector<T>::begin;
+			using std::vector<T>::end;
+			using std::vector<T>::data;
+			using std::vector<T>::size;
+			using std::vector<T>::capacity;
+
+			template<class U>
+			CAGE_FORCE_INLINE T *push_back(U &&v)
+			{
+				if (size() == capacity())
+				{
+					ItemsContainerReservation++;
+					return nullptr;
+				}
+				std::vector<T>::push_back(std::forward<U>(v));
+				return &std::vector<T>::back();
+			}
+
+			CAGE_FORCE_INLINE void reserve(uintPtr v)
+			{
+				if (std::vector<T>::empty() && v > capacity())
+					std::vector<T>::reserve(v);
+			}
+
+			template<class Tst>
+			CAGE_FORCE_INLINE void erase_if(Tst tst)
+			{
+				std::erase_if(*this, tst);
+			}
 		};
 
 		template<class T, class Mark, class Output>
@@ -571,12 +559,12 @@ namespace cage
 			return (sample - std::floor(sample)) + sign(sample); // improve precision and ensure that the value stays outside looping range
 		}
 
-		CAGE_FORCE_INLINE UniMesh makeMeshUni(const SceneItem &rd)
+		CAGE_FORCE_INLINE UniMesh makeMeshUni(const RenderItem &rd)
 		{
 			UniMesh uni;
-			uni.modelMat = Mat3x4(Mat4(rd.transform));
-			uni.color = rd.color;
-			uni.animation = rd.animation;
+			uni.modelMat = Mat3x4(Mat4(rd->transform));
+			uni.color = rd->color;
+			uni.animation = rd->animation;
 			return uni;
 		}
 
@@ -594,6 +582,11 @@ namespace cage
 				if (it.animation)
 					return src;
 			return {};
+		}
+
+		CAGE_FORCE_INLINE bool emptyMask(Entity *e)
+		{
+			return e->getOrDefault<SceneComponent>().sceneMask == 0;
 		}
 
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
@@ -628,9 +621,37 @@ namespace cage
 			return newTexture(device, conf);
 		}
 
-		struct SharedCommon : private Noncopyable
+		struct RenderBaseBase;
+
+		struct SceneImpl : private Immovable
 		{
+			const SceneRenderConfig &config;
+
+			Model *modelSquare = nullptr, *modelBone = nullptr, *modelSprite = nullptr;
+			Shader *shaderBlitPixels = nullptr, *shaderBlitScaled = nullptr;
+			MultiShader *shaderStandard = nullptr, *shaderSprite = nullptr;
+			Shader *shaderText = nullptr;
+			EntityComponent *transformComponent = nullptr;
+			EntityComponent *prevTransformComponent = nullptr;
+
 			ankerl::unordered_dense::set<Holder<void>> sharedAssetsCache;
+			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
+			std::vector<Holder<RenderBaseBase>> renderers;
+			ItemsContainer<SceneItem> items; // ensure that this does not reallocate once
+			RenderBaseBase *distOverride = nullptr;
+			const bool cnfRenderMissingModels = confGlobalRenderMissingModels;
+			const bool cnfRenderSkeletonBones = confGlobalRenderSkeletonBones;
+
+			// temporary caches
+			std::vector<Model *> prepareModelsRaw;
+			std::vector<Holder<Model>> prepareModelsHolders;
+
+			SceneImpl(const SceneRenderConfig &config) : config(config)
+			{
+				transformComponent = config.shared.scene->component<TransformComponent>();
+				prevTransformComponent = config.shared.scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
+				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(config.shared.assets);
+			}
 
 			template<class T>
 			CAGE_FORCE_INLINE T *shareAsset(Holder<T> &&asset)
@@ -640,35 +661,6 @@ namespace cage
 					sharedAssetsCache.insert(std::move(asset).template cast<void>());
 				return ret;
 			}
-		};
-
-		struct SceneImpl : public PreparedScene, public SharedCommon
-		{
-			Model *modelSquare = nullptr, *modelBone = nullptr, *modelSprite = nullptr;
-			Shader *shaderBlitPixels = nullptr, *shaderBlitScaled = nullptr;
-			MultiShader *shaderStandard = nullptr, *shaderSprite = nullptr;
-			Shader *shaderText = nullptr;
-
-			EntityComponent *transformComponent = nullptr;
-			EntityComponent *prevTransformComponent = nullptr;
-
-			Holder<SkeletalAnimationPreparatorCollection> skeletonPreparatorCollection;
-			const bool cnfRenderMissingModels = confGlobalRenderMissingModels;
-			const bool cnfRenderSkeletonBones = confGlobalRenderSkeletonBones;
-
-			std::vector<SceneItem> items;
-
-			// temporary caches
-			std::vector<Model *> prepareModelsRaw;
-
-			SceneImpl(const ScenePrepareConfig &config) : PreparedScene{ config }
-			{
-				skeletonPreparatorCollection = newSkeletalAnimationPreparatorCollection(config.assets);
-				transformComponent = config.scene->component<TransformComponent>();
-				prevTransformComponent = config.scene->componentsByType(detail::typeIndex<TransformComponent>())[1];
-			}
-
-			CAGE_FORCE_INLINE bool emptyMask(Entity *e) const { return e->getOrDefault<SceneComponent>().sceneMask == 0; }
 
 			CAGE_FORCE_INLINE Transform modelTransform(Entity *e) const
 			{
@@ -677,7 +669,7 @@ namespace cage
 				{
 					const Transform c = e->value<TransformComponent>(transformComponent);
 					const Transform p = e->value<TransformComponent>(prevTransformComponent);
-					return interpolate(p, c, config.interpolationFactor);
+					return interpolate(p, c, config.shared.interpolationFactor);
 				}
 				else
 					return e->value<TransformComponent>(transformComponent);
@@ -685,24 +677,24 @@ namespace cage
 
 			void loadBasicAssets()
 			{
-				modelSquare = shareAsset(config.assets->get<Model>(HashString("cage/models/square.obj")));
-				modelBone = shareAsset(config.assets->get<Model>(HashString("cage/models/bone.obj")));
-				modelSprite = shareAsset(config.assets->get<Model>(HashString("cage/models/icon.obj")));
+				modelSquare = shareAsset(config.shared.assets->get<Model>(HashString("cage/models/square.obj")));
+				modelBone = shareAsset(config.shared.assets->get<Model>(HashString("cage/models/bone.obj")));
+				modelSprite = shareAsset(config.shared.assets->get<Model>(HashString("cage/models/icon.obj")));
 				CAGE_ASSERT(modelSquare && modelBone && modelSprite);
 
-				shaderBlitPixels = shareAsset(config.assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0));
-				shaderBlitScaled = shareAsset(config.assets->get<MultiShader>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0));
+				shaderBlitPixels = shareAsset(config.shared.assets->get<MultiShader>(HashString("cage/shaders/engine/blitPixels.glsl"))->get(0));
+				shaderBlitScaled = shareAsset(config.shared.assets->get<MultiShader>(HashString("cage/shaders/engine/blitScaled.glsl"))->get(0));
 				CAGE_ASSERT(shaderBlitPixels && shaderBlitScaled);
 
-				shaderStandard = shareAsset(config.assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl")));
-				shaderSprite = shareAsset(config.assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl")));
+				shaderStandard = shareAsset(config.shared.assets->get<MultiShader>(HashString("cage/shaders/engine/standard.glsl")));
+				shaderSprite = shareAsset(config.shared.assets->get<MultiShader>(HashString("cage/shaders/engine/icon.glsl")));
 				CAGE_ASSERT(shaderStandard && shaderSprite);
 
-				shaderText = shareAsset(config.assets->get<MultiShader>(HashString("cage/shaders/engine/text.glsl"))->get(0));
+				shaderText = shareAsset(config.shared.assets->get<MultiShader>(HashString("cage/shaders/engine/text.glsl"))->get(0));
 				CAGE_ASSERT(shaderText);
 			}
 
-			void prepareModelBones(std::vector<SceneItem> &output, const SceneItem &rd) const
+			void prepareModelBones(const SceneItem &rd)
 			{
 				const SceneModel &rm = rd.data.model();
 				CAGE_ASSERT(rm.mesh);
@@ -718,11 +710,11 @@ namespace cage
 					SceneModel r;
 					r.mesh = modelBone;
 					d.data.assign(std::move(r));
-					output.push_back(std::move(d));
+					distribute(std::move(d));
 				}
 			}
 
-			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(SharedCommon *sharedCommon, void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Mat4 &importTransform) const
+			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Mat4 &importTransform)
 			{
 				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
 				static_assert(decltype(SkeletalAnimationLayer::maskName)::MaxLength == SkeletalAnimationMaskLabel::MaxLength);
@@ -735,17 +727,17 @@ namespace cage
 					auto &output = cnf.animations[i];
 					if (!input.animation)
 						continue;
-					output.animation = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
+					output.animation = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
 					if (!output.animation)
 						return {};
 					const uint64 time = input.startTime ? input.startTime : startTime;
-					output.coefficient = animCoefficient(output.animation->duration, config.currentTime, time, input.speed, input.offset);
+					output.coefficient = animCoefficient(output.animation->duration, config.shared.currentTime, time, input.speed, input.offset);
 					output.weight = input.weight;
 					output.blendingMode = input.blendingMode;
 					if (!input.maskName.empty())
 					{
 						if (!skeleton)
-							skeleton = sharedCommon->shareAsset(config.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(output.animation->skeletonName));
+							skeleton = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(output.animation->skeletonName));
 						CAGE_ASSERT(skeleton);
 						output.mask = skeleton->namedMask(input.maskName);
 					}
@@ -754,12 +746,10 @@ namespace cage
 				cnf.modelImportTransform = importTransform;
 				cnf.object = object;
 				cnf.animateSkeletonsInsteadOfSkins = cnfRenderSkeletonBones;
-				Holder<SkeletalAnimationPreparatorInstance> res = skeletonPreparatorCollection->create(std::move(cnf));
-				res->prepare();
-				return res;
+				return skeletonPreparatorCollection->create(std::move(cnf));
 			}
 
-			void prepareModel(SharedCommon *sharedCommon, std::vector<SceneItem> &output, SceneItem &rd, const RenderObject *parent = {}) const
+			void prepareModel(SceneItem &rd, const RenderObject *parent = {})
 			{
 				SceneModel &rm = rd.data.model();
 				CAGE_ASSERT(rm.mesh);
@@ -788,21 +778,21 @@ namespace cage
 					ps.reset();
 				if (ps)
 				{
-					rm.skeletalAnimation = prepareSkeleton(sharedCommon, rd.e, startTime, *ps, rm.mesh->importTransform);
+					rm.skeletalAnimation = prepareSkeleton(rd.e, startTime, *ps, rm.mesh->importTransform);
 					if (!rm.skeletalAnimation)
 						ps.reset();
 				}
 
 				const ShaderAnimationComponent anim = getAnimSpeed(rd.e);
 				rd.color = initializeColor(color);
-				rd.animation = Vec4((double)(sint64)(config.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
+				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
 				rd.translucent = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
 
 				if (rm.skeletalAnimation && cnfRenderSkeletonBones)
-					prepareModelBones(output, rd);
+					prepareModelBones(rd);
 				else
-					output.push_back(std::move(rd));
+					distribute(std::move(rd));
 			}
 
 			void prepareSprite(Entity *e, Texture *tex, Model *mesh)
@@ -818,11 +808,11 @@ namespace cage
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				const uint64 startTime = e->getOrDefault<SpawnTimeComponent>().spawnTime;
 				const ShaderAnimationComponent anim = getAnimSpeed(e);
-				rd.animation = Vec4((double)(sint64)(config.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
+				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
 				rd.translucent = true;
 				rd.data.assign(std::move(ri));
-				items.push_back(std::move(rd));
+				distribute(std::move(rd));
 			}
 
 			void prepareText(Entity *e, TextComponent tc)
@@ -832,7 +822,7 @@ namespace cage
 				if (!tc.fontId)
 					tc.fontId = HashString("cage/fonts/ubuntu/regular.ttf");
 				SceneText rt;
-				rt.font = shareAsset(config.assets->get<AssetSchemeIndexFont, Font>(tc.fontId));
+				rt.font = shareAsset(config.shared.assets->get<AssetSchemeIndexFont, Font>(tc.fontId));
 				if (!rt.font)
 					return;
 				FontFormat format;
@@ -850,7 +840,7 @@ namespace cage
 				rd.renderLayer = tc.renderLayer;
 				rd.translucent = true;
 				rd.data.assign(std::move(rt));
-				items.push_back(std::move(rd));
+				distribute(std::move(rd));
 			}
 
 			void prepareCustomDraw(Entity *e, const CustomDrawComponent &cdc)
@@ -864,7 +854,7 @@ namespace cage
 				rd.renderLayer = cdc.renderLayer;
 				rd.translucent = true;
 				rd.data.assign(std::move(rc));
-				items.push_back(std::move(rd));
+				distribute(std::move(rd));
 			}
 
 			void prepareEntitiesModels()
@@ -877,18 +867,16 @@ namespace cage
 					uint32 id = 0;
 				};
 				std::vector<Data> data;
-				data.reserve(config.scene->component<ModelComponent>()->count());
+				data.reserve(config.shared.scene->component<ModelComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
 					{
-						if (!rc.modelId)
-							return;
-						if (emptyMask(e))
+						if (!rc.modelId || emptyMask(e))
 							return;
 						data.push_back({ e, rc.modelId });
 					},
-					+config.scene, false);
+					+config.shared.scene, false);
 				profiling.set(Stringizer() + "models: " + data.size());
 				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return a.id < b.id; });
 
@@ -897,7 +885,7 @@ namespace cage
 				{
 					CAGE_ASSERT(data.size() > 0);
 
-					if (Holder<RenderObject> obj = config.assets->get<AssetSchemeIndexRenderObject, RenderObject>(data[0].id))
+					if (Holder<RenderObject> obj = config.shared.assets->get<AssetSchemeIndexRenderObject, RenderObject>(data[0].id))
 					{
 						CAGE_ASSERT(obj->lodsCount() > 0);
 						if (obj->lodsCount() == 1)
@@ -905,7 +893,7 @@ namespace cage
 							prepareModelsRaw.clear();
 							for (uint32 id : obj->models(0))
 							{
-								if (Model *mesh = shareAsset(config.onDemand->get<AssetSchemeIndexModel, Model>(id)))
+								if (Model *mesh = shareAsset(config.shared.onDemand->get<AssetSchemeIndexModel, Model>(id)))
 									prepareModelsRaw.push_back(std::move(mesh));
 							}
 							if (prepareModelsRaw.empty())
@@ -921,29 +909,20 @@ namespace cage
 									rd.e = it.e;
 									rd.transform = tr;
 									rd.data.assign(std::move(rm));
-									prepareModel(this, items, rd, +obj);
+									prepareModel(rd, +obj);
 								}
 							}
 							return;
 						}
 
-						// these objects cannot be fully prepared now, we do not have lod selection yet,
-						// so we copy the objects as is, and resolve them later in the camera
+						// we must direct the objects individually into all cameras/shadowmaps
 						RenderObject *o = shareAsset(std::move(obj));
 						for (const auto &it : data)
-						{
-							SceneObject rm;
-							rm.object = o;
-							SceneItem rd;
-							rd.transform = modelTransform(it.e);
-							rd.e = it.e;
-							rd.data.assign(std::move(rm));
-							items.push_back(std::move(rd));
-						}
+							prepareEntitiesModelsLod(it.e, o);
 						return;
 					}
 
-					if (Model *mesh = shareAsset(config.assets->get<AssetSchemeIndexModel, Model>(data[0].id)))
+					if (Model *mesh = shareAsset(config.shared.assets->get<AssetSchemeIndexModel, Model>(data[0].id)))
 					{
 						for (const auto &it : data)
 						{
@@ -953,14 +932,14 @@ namespace cage
 							rd.e = it.e;
 							rd.transform = modelTransform(it.e);
 							rd.data.assign(std::move(rm));
-							prepareModel(this, items, rd);
+							prepareModel(rd);
 						}
 						return;
 					}
 
 					if (cnfRenderMissingModels)
 					{
-						Model *mesh = shareAsset(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj")));
+						Model *mesh = shareAsset(config.shared.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/models/fake.obj")));
 						if (!mesh)
 							return;
 						for (const auto &it : data)
@@ -971,7 +950,7 @@ namespace cage
 							rd.e = it.e;
 							rd.transform = modelTransform(it.e);
 							rd.data.assign(std::move(rm));
-							prepareModel(this, items, rd);
+							prepareModel(rd);
 						}
 					}
 				};
@@ -988,18 +967,16 @@ namespace cage
 					Entity *e = nullptr;
 				};
 				std::vector<Data> data;
-				data.reserve(config.scene->component<SpriteComponent>()->count());
+				data.reserve(config.shared.scene->component<SpriteComponent>()->count());
 
 				entitiesVisitor(
 					[&](Entity *e, const SpriteComponent &ic)
 					{
-						if (!ic.spriteId)
-							return;
-						if (emptyMask(e))
+						if (!ic.spriteId || emptyMask(e))
 							return;
 						data.push_back({ ic, e });
 					},
-					+config.scene, false);
+					+config.shared.scene, false);
 				profiling.set(Stringizer() + "sprites: " + data.size());
 				std::sort(data.begin(), data.end(), [](const Data &a, const Data &b) { return std::pair{ a.ic.spriteId, a.ic.modelId } < std::pair{ b.ic.spriteId, b.ic.modelId }; });
 
@@ -1007,10 +984,10 @@ namespace cage
 				const auto &output = [&](PointerRange<const Data> data)
 				{
 					CAGE_ASSERT(data.size() > 0);
-					Texture *tex = shareAsset(config.assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.spriteId));
+					Texture *tex = shareAsset(config.shared.assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.spriteId));
 					if (!tex)
 						return;
-					Model *mesh = data[0].ic.modelId ? shareAsset(config.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.modelId)) : modelSprite;
+					Model *mesh = data[0].ic.modelId ? shareAsset(config.shared.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.modelId)) : modelSprite;
 					if (!mesh)
 						return;
 					for (const auto &it : data)
@@ -1022,9 +999,7 @@ namespace cage
 			void prepareEntities()
 			{
 				ProfilingScope profiling("prepare entities");
-				profiling.set(Stringizer() + "entities: " + config.scene->count());
-
-				items.reserve(config.scene->component<ModelComponent>()->count() + config.scene->component<SpriteComponent>()->count() + config.scene->component<TextComponent>()->count());
+				profiling.set(Stringizer() + "entities: " + config.shared.scene->count());
 
 				prepareEntitiesModels();
 				prepareEntitiesSprites();
@@ -1036,7 +1011,7 @@ namespace cage
 							return;
 						prepareText(e, tc);
 					},
-					+config.scene, false);
+					+config.shared.scene, false);
 
 				entitiesVisitor(
 					[&](Entity *e, const CustomDrawComponent &cdc)
@@ -1045,24 +1020,23 @@ namespace cage
 							return;
 						prepareCustomDraw(e, cdc);
 					},
-					+config.scene, false);
+					+config.shared.scene, false);
 			}
 
-			void orderSceneData()
-			{
-				ProfilingScope profiling("order scene data");
-				profiling.set(Stringizer() + "count: " + items.size());
-				std::sort(items.begin(), items.end(), [](const SceneItem &a, const SceneItem &b) { return a.cmp() < b.cmp(); });
-			}
+			void prepareEntitiesModelsLod(Entity *e, RenderObject *object);
+			void distribute(SceneItem &&item);
+			void generateRenderers();
+			void dispatchRenders();
 		};
 
 		struct ShadowRender;
 		struct CameraRender;
 
-		template<class CrtpDerived>
-		struct RenderBase : public SharedCommon
+		struct RenderBaseBase : private Immovable
 		{
-			const SceneCameraConfig config;
+			const SceneImpl &scene;
+			const SceneRenderCamera &camera;
+			bool isShadowmap = false;
 
 			Mat4 model;
 			Mat4 view;
@@ -1072,22 +1046,23 @@ namespace cage
 			Holder<GraphicsAggregateBuffer> aggregate;
 			Holder<GraphicsBuffer> buffViewport, buffProjection;
 
-			const SceneImpl *scene = nullptr;
-			std::vector<RenderItem> items;
+			ItemsContainer<RenderItem> items;
 
 			// temporary caches
 			std::vector<UniMesh> uniMeshes;
 			std::vector<Mat3x4> uniArmatures;
 			std::vector<float> uniCustomData;
 
-			RenderBase(const SceneCameraConfig &config, const SceneImpl *scene) : config(config), scene(scene) {}
+			RenderBaseBase(const SceneImpl &scene, const SceneRenderCamera &camera) : scene(scene), camera(camera) {}
 
-			CAGE_FORCE_INLINE CrtpDerived *derived() { return static_cast<CrtpDerived *>(this); }
+			virtual ~RenderBaseBase() {}
+
+			virtual void entry() = 0;
 
 			CAGE_FORCE_INLINE bool failedMask(Entity *e) const
 			{
 				const uint32 c = e->getOrDefault<SceneComponent>().sceneMask;
-				return (c & config.cameraSceneMask) == 0;
+				return (c & camera.cameraSceneMask) == 0;
 			}
 
 			CAGE_FORCE_INLINE void appendShaderCustomData(Entity *e, uint32 customDataCount)
@@ -1108,11 +1083,46 @@ namespace cage
 				}
 			}
 
+			void frustumCullItems()
+			{
+				ProfilingScope profiling("frustum cull items");
+				items.erase_if(
+					[this](const RenderItem &it) -> bool
+					{
+						if (it->data.index != VariantEnum::Model)
+							return false;
+						const auto &mod = it->data.model();
+						return !intersects(mod.mesh->boundingBox * it->transform, frustum);
+					});
+			}
+
+			void orderItems()
+			{
+				ProfilingScope profiling("order items");
+				profiling.set(Stringizer() + "count: " + items.size());
+
+				for (RenderItem &it : items)
+				{
+					if (it->translucent)
+						it.depth = (viewProj * Vec4(it->transform.position, 1))[2] * -1;
+				}
+
+				std::sort(items.begin(), items.end(), [](const RenderItem &a, const RenderItem &b) { return a.cmp() < b.cmp(); });
+			}
+		};
+
+		template<class CrtpDerived>
+		struct RenderBase : RenderBaseBase
+		{
+			RenderBase(const SceneImpl &scene, const SceneRenderCamera &camera) : RenderBaseBase(scene, camera) {}
+
+			CAGE_FORCE_INLINE CrtpDerived *derived() { return static_cast<CrtpDerived *>(this); }
+
 			void renderModels(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
-				const SceneItem &rd = *instances[0].base;
-				const SceneModel &rm = rd.data.model();
+				const RenderItem &rd = instances[0];
+				const SceneModel &rm = rd->data.model();
 
 				if constexpr (std::is_same_v<CrtpDerived, CameraRender>)
 				{
@@ -1120,10 +1130,10 @@ namespace cage
 						return;
 				}
 
-				const auto material = newGraphicsBindings(scene->config.device, scene->config.assets, +rm.mesh);
+				const auto material = newGraphicsBindings(scene.config.shared.device, scene.config.shared.assets, +rm.mesh);
 
-				MultiShader *multiShader = rm.mesh->shaderName ? shareAsset(scene->config.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName)) : scene->shaderStandard;
-				Holder<Shader> shader = pickShaderVariant(multiShader, rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
+				Holder<MultiShader> multiShader = rm.mesh->shaderName ? scene.config.shared.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : Holder<MultiShader>(scene.shaderStandard, nullptr);
+				Holder<Shader> shader = pickShaderVariant(+multiShader, rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
 				{
@@ -1135,7 +1145,7 @@ namespace cage
 							uniOptions.optsLights[1] = derived()->shadowedLightsCount;
 						}
 					}
-					const bool ssao = !rd.translucent && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(config.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
+					const bool ssao = !rd->translucent && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 					uniOptions.optsLights[2] = ssao ? 1 : 0;
 					uniOptions.optsLights[3] = !!rm.mesh->textureNames[2];
 					uniOptions.optsSkeleton[0] = rm.mesh->bonesCount;
@@ -1153,9 +1163,9 @@ namespace cage
 
 				for (const auto &inst : instances)
 				{
-					const SceneModel &r = inst.base->data.model();
+					const SceneModel &r = inst->data.model();
 					CAGE_ASSERT(+r.mesh == +rm.mesh);
-					uniMeshes.push_back(makeMeshUni(*inst.base));
+					uniMeshes.push_back(makeMeshUni(inst));
 					if (rm.skeletalAnimation)
 					{
 						const auto a = r.skeletalAnimation->armature();
@@ -1163,7 +1173,7 @@ namespace cage
 						for (const auto &b : a)
 							uniArmatures.push_back(b);
 					}
-					appendShaderCustomData(inst.base->e, multiShader->customDataCount);
+					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
 				// webgpu does not accept empty buffers
@@ -1199,7 +1209,7 @@ namespace cage
 				{
 					draw.depthTest = any(rm.mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
 					draw.depthWrite = any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite);
-					draw.blending = rd.translucent ? BlendingEnum::PremultipliedTransparency : BlendingEnum::None;
+					draw.blending = rd->translucent ? BlendingEnum::PremultipliedTransparency : BlendingEnum::None;
 				}
 				else
 				{
@@ -1211,7 +1221,7 @@ namespace cage
 				draw.model = +rm.mesh;
 				draw.shader = +shader;
 				draw.material = material.first;
-				draw.bindings = newGraphicsBindings(scene->config.device, bind);
+				draw.bindings = newGraphicsBindings(scene.config.shared.device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
 			}
@@ -1219,7 +1229,7 @@ namespace cage
 			void renderSprites(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
-				const SceneItem &rd = *instances[0].base;
+				const RenderItem &rd = instances[0];
 
 				if constexpr (std::is_same_v<CrtpDerived, CameraRender>)
 				{
@@ -1227,11 +1237,11 @@ namespace cage
 						return;
 				}
 
-				Model *mesh = rd.data.sprite().mesh;
-				Texture *texture = rd.data.sprite().texture;
+				Model *mesh = rd->data.sprite().mesh;
+				Texture *texture = rd->data.sprite().texture;
 
-				MultiShader *multiShader = mesh->shaderName ? shareAsset(scene->config.assets->get<MultiShader>(mesh->shaderName)) : scene->shaderSprite;
-				Holder<Shader> shader = pickShaderVariant(multiShader, mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
+				Holder<MultiShader> multiShader = mesh->shaderName ? scene.config.shared.assets->get<MultiShader>(mesh->shaderName) : Holder<MultiShader>(scene.shaderSprite, nullptr);
+				Holder<Shader> shader = pickShaderVariant(+multiShader, mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;
 
@@ -1244,10 +1254,10 @@ namespace cage
 
 				for (const auto &inst : instances)
 				{
-					CAGE_ASSERT(inst.base->data.sprite().mesh == mesh);
-					CAGE_ASSERT(inst.base->data.sprite().texture == texture);
-					uniMeshes.push_back(makeMeshUni(*inst.base));
-					appendShaderCustomData(inst.base->e, multiShader->customDataCount);
+					CAGE_ASSERT(inst->data.sprite().mesh == mesh);
+					CAGE_ASSERT(inst->data.sprite().texture == texture);
+					uniMeshes.push_back(makeMeshUni(inst));
+					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
 				// webgpu does not accept empty buffers
@@ -1267,7 +1277,7 @@ namespace cage
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					bind.buffers.push_back({ privat::getBufferDummy(scene->config.device), 2 });
+					bind.buffers.push_back({ privat::getBufferDummy(scene.config.shared.device), 2 });
 				}
 				{
 					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
@@ -1277,12 +1287,12 @@ namespace cage
 
 				draw.depthTest = any(mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
 				draw.depthWrite = any(mesh->renderFlags & MeshRenderFlags::DepthWrite);
-				draw.blending = rd.translucent ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
+				draw.blending = rd->translucent ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
 				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
-				draw.material = newGraphicsBindings(scene->config.device, spritesMaterialBinding(mesh, texture, scene->config.device));
-				draw.bindings = newGraphicsBindings(scene->config.device, bind);
+				draw.material = newGraphicsBindings(scene.config.shared.device, spritesMaterialBinding(mesh, texture, scene.config.shared.device));
+				draw.bindings = newGraphicsBindings(scene.config.shared.device, bind);
 				draw.instances = instances.size();
 				encoder->draw(draw);
 			}
@@ -1297,17 +1307,17 @@ namespace cage
 						return;
 				}
 
-				for (const auto &it : instances)
+				for (const RenderItem &it : instances)
 				{
 					FontRenderConfig cfg;
-					cfg.transform = viewProj * Mat4(it.base->transform);
-					cfg.color = it.base->color;
+					cfg.transform = viewProj * Mat4(it->transform);
+					cfg.color = it->color;
 					cfg.encoder = +encoder;
 					cfg.aggregate = +aggregate;
-					cfg.assets = scene->config.onDemand;
+					cfg.assets = scene.config.shared.onDemand;
 					cfg.depthTest = true;
 					cfg.guiShader = false;
-					const SceneText &t = it.base->data.text();
+					const SceneText &t = it->data.text();
 					t.font->render(*t.layout, cfg);
 				}
 			}
@@ -1315,8 +1325,8 @@ namespace cage
 			void renderCustom(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
-				const SceneItem &rd = *instances[0].base;
-				rd.data.custom(); // assert the type
+				const RenderItem &rd = instances[0];
+				rd->data.custom(); // assert the type
 
 				if constexpr (std::is_same_v<CrtpDerived, CameraRender>)
 				{
@@ -1324,33 +1334,33 @@ namespace cage
 						return;
 				}
 
-				for (const auto &it : instances)
+				for (const RenderItem &it : instances)
 				{
 					const ProfilingScope profiling("custom draw");
-					it.base->data.custom(); // assert type
+					it->data.custom(); // assert type
 					CustomDrawConfig cfg;
-					cfg.sceneConfig = &scene->config;
-					cfg.cameraConfig = &config;
-					cfg.entity = it.base->e;
+					cfg.sceneConfig = &scene.config.shared;
+					cfg.cameraConfig = &camera;
+					cfg.entity = it->e;
 					cfg.encoder = +encoder;
 					cfg.aggregate = +aggregate;
-					CAGE_ASSERT(it.base->e->has<CustomDrawComponent>());
-					it.base->e->value<CustomDrawComponent>().callback(cfg);
+					CAGE_ASSERT(it->e->has<CustomDrawComponent>());
+					it->e->value<CustomDrawComponent>().callback(cfg);
 				}
 			}
 
 			void renderInstances(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
-				const SceneItem &rd = *instances[0].base;
+				const RenderItem &rd = instances[0];
 
 				if constexpr (std::is_same_v<CrtpDerived, CameraRender>)
 				{
-					if (renderMode == RenderModeEnum::DepthPrepass && rd.translucent)
+					if (renderMode == RenderModeEnum::DepthPrepass && rd->translucent)
 						return;
 				}
 
-				switch (rd.data.index)
+				switch (rd->data.index)
 				{
 					case VariantEnum::None:
 						break;
@@ -1366,8 +1376,6 @@ namespace cage
 					case VariantEnum::Custom:
 						renderCustom(renderMode, instances);
 						break;
-					case VariantEnum::Object:
-						break; // already converted into models
 				}
 			}
 
@@ -1376,32 +1384,6 @@ namespace cage
 				CAGE_ASSERT((std::is_same_v<CrtpDerived, ShadowRender> == (renderMode == RenderModeEnum::Shadowmap)));
 				const auto &render = [&](PointerRange<const RenderItem> instances) { renderInstances(renderMode, instances); };
 				partition(PointerRange<const RenderItem>(items), [](const RenderItem &r) { return r.mark(); }, render);
-			}
-
-			// used for models converted from objects
-			void frustumCullRenderData()
-			{
-				ProfilingScope profiling("frustum cull objects");
-				std::erase_if(items,
-					[this](const RenderItem &it) -> bool
-					{
-						const auto &mod = it.base->data.model();
-						if constexpr (std::is_same_v<CrtpDerived, ShadowRender>)
-						{
-							if (none(mod.mesh->renderFlags & MeshRenderFlags::ShadowCast))
-								return true;
-						}
-						if (!intersects(mod.mesh->boundingBox * it.base->transform, frustum))
-							return true;
-						return false;
-					});
-			}
-
-			void orderRenderData()
-			{
-				ProfilingScope profiling("order render data");
-				profiling.set(Stringizer() + "count: " + items.size());
-				std::sort(items.begin(), items.end(), [](const RenderItem &a, const RenderItem &b) { return a.cmp() < b.cmp(); });
 			}
 		};
 
@@ -1414,60 +1396,28 @@ namespace cage
 			Holder<Texture> shadowTexture;
 			uint32 cascade = 0;
 
-			ShadowRender(const SceneCameraConfig &config, const SceneImpl *scene) : RenderBase(config, scene) {}
-
-			void prepareRenderData()
-			{
-				ProfilingScope profiling("prepare render data");
-				items.reserve(scene->items.size());
-				for (const auto &it : scene->items)
-				{
-					if (it.translucent)
-						continue;
-					if (failedMask(it.e))
-						continue;
-
-					switch (it.data.index)
-					{
-						case VariantEnum::Model:
-						{
-							const auto &mod = it.data.model();
-							if (none(mod.mesh->renderFlags & MeshRenderFlags::ShadowCast))
-								continue;
-							if (!intersects(mod.mesh->boundingBox * it.transform, frustum))
-								continue;
-							break;
-						}
-						case VariantEnum::Object:
-							continue; // already converted to models
-						default:
-							break;
-					}
-
-					RenderItem r;
-					r.base = &it;
-					items.push_back(r);
-				}
-			}
+			ShadowRender(const SceneImpl &scene, const SceneRenderCamera &camera) : RenderBase(scene, camera) { isShadowmap = true; }
 
 			void initializeShadowmapCascade()
 			{
 				CAGE_ASSERT(lightComponent.lightType == LightTypeEnum::Directional);
-				CAGE_ASSERT(config.camera.shadowmapFrustumDepthFraction > 0 && config.camera.shadowmapFrustumDepthFraction <= 1);
+				CAGE_ASSERT(camera.camera.shadowmapFrustumDepthFraction > 0 && camera.camera.shadowmapFrustumDepthFraction <= 1);
 
 				const auto &sc = shadowmapComponent;
 				CAGE_ASSERT(sc.cascadesSplitLogFactor >= 0 && sc.cascadesSplitLogFactor <= 1);
 				CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= 4);
 				CAGE_ASSERT(sc.cascadesPaddingDistance >= 0);
 
-				const Mat4 invP = inverse(config.projection);
+				// split the frustum of the original camera to find the slice for this cascade
+
+				const Mat4 invP = inverse(camera.projection);
 				const auto &getPlane = [&](Real ndcZ) -> Real
 				{
 					const Vec4 a = invP * Vec4(0, 0, ndcZ, 1);
 					return -a[2] / a[3];
 				};
 				const Real cameraNear = getPlane(0);
-				const Real cameraFar = getPlane(1) * config.camera.shadowmapFrustumDepthFraction;
+				const Real cameraFar = getPlane(1) * camera.camera.shadowmapFrustumDepthFraction;
 				CAGE_ASSERT(cameraNear > 0 && cameraFar > cameraNear);
 
 				const auto &getSplit = [&](Real f) -> Real
@@ -1482,13 +1432,13 @@ namespace cage
 
 				const auto viewZtoNdcZ = [&](Real viewZ) -> Real
 				{
-					const Vec4 a = config.projection * Vec4(0, 0, -viewZ, 1);
+					const Vec4 a = camera.projection * Vec4(0, 0, -viewZ, 1);
 					return a[2] / a[3];
 				};
 				const Real splitNearNdc = viewZtoNdcZ(splitNear);
 				const Real splitFarNdc = viewZtoNdcZ(splitFar);
 
-				const Mat4 invVP = inverse(config.projection * Mat4(inverse(config.transform)));
+				const Mat4 invVP = inverse(camera.projection * Mat4(inverse(camera.transform)));
 				const auto &getPoint = [&](Vec3 p) -> Vec3
 				{
 					const Vec4 a = invVP * Vec4(p, 1);
@@ -1500,32 +1450,14 @@ namespace cage
 				const Vec3 lightDir = Vec3(model * Vec4(0, 0, -1, 0));
 				const Vec3 lightUp = abs(dot(lightDir, Vec3(0, 1, 0))) > 0.99 ? Vec3(0, 0, 1) : Vec3(0, 1, 0);
 
-#if (0)
-
-				Sphere sph = makeSphere(corners);
-				view = Mat4(inverse(Transform(sph.center, Quat(lightDir, lightUp))));
-
-				{ // stabilization
-					const Real texelSize = sph.radius * 2 / sc.resolution;
-					Vec3 snapOrigin = Vec3(view * Vec4(sph.center, 1));
-					snapOrigin /= texelSize;
-					for (uint32 i = 0; i < 3; i++)
-						snapOrigin[i] = floor(snapOrigin[i]);
-					snapOrigin *= texelSize;
-					sph.center = Vec3(inverse(view) * Vec4(snapOrigin, 1));
-					view = Mat4(inverse(Transform(sph.center, Quat(lightDir, lightUp))));
-				}
-
-				Aabb shadowBox = Aabb(Sphere(Vec3(), sph.radius));
-
-#else
-
 				Aabb worldBox;
 				for (Vec3 wp : corners)
 					worldBox += Aabb(wp);
 
 				Vec3 eye = worldBox.center();
 				view = Mat4(inverse(Transform(eye, Quat(lightDir, lightUp))));
+
+				// determine the bounding box of the shadow volume
 
 				Aabb shadowBox;
 				for (Vec3 wp : corners)
@@ -1545,8 +1477,6 @@ namespace cage
 					for (Vec3 wp : corners)
 						shadowBox += Aabb(Vec3(view * Vec4(wp, 1)));
 				}
-
-#endif
 
 				// adjust the shadow near and far planes to not exclude preceding shadow casters
 				shadowBox.a[2] -= sc.cascadesPaddingDistance;
@@ -1590,14 +1520,13 @@ namespace cage
 				shadowUni.shadowMat[cascade] = bias * viewProj;
 			}
 
-			void taskEntry()
+			void entry() override
 			{
-				frustumCullRenderData();
-				prepareRenderData();
-				orderRenderData();
+				frustumCullItems();
+				orderItems();
 
-				encoder = newGraphicsEncoder(scene->config.device, "scene render shadowmap");
-				aggregate = newGraphicsAggregateBuffer({ scene->config.device });
+				encoder = newGraphicsEncoder(scene.config.shared.device, "scene render shadowmap");
+				aggregate = newGraphicsAggregateBuffer({ scene.config.shared.device });
 
 				{
 					UniProjection uni;
@@ -1605,14 +1534,14 @@ namespace cage
 					uni.projMat = shadowProjection;
 					uni.vpMat = viewProj;
 					uni.vpInv = inverse(viewProj);
-					buffProjection = newGraphicsBuffer(scene->config.device, sizeof(uni), "UniProjection");
+					buffProjection = newGraphicsBuffer(scene.config.shared.device, sizeof(uni), "UniProjection");
 					buffProjection->writeStruct(uni);
 				}
 
 				GraphicsBindings globalBindings;
 				{
-					GraphicsBuffer *dummyStorage = privat::getBufferDummy(scene->config.device);
-					Texture *dummyRegular = privat::getTextureDummy2d(scene->config.device);
+					GraphicsBuffer *dummyStorage = privat::getBufferDummy(scene.config.shared.device);
+					Texture *dummyRegular = privat::getTextureDummy2d(scene.config.shared.device);
 					GraphicsBindingsCreateConfig bind;
 					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
 					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
@@ -1620,7 +1549,7 @@ namespace cage
 					bind.buffers.push_back({ dummyStorage, 3 });
 					bind.textures.push_back({ dummyRegular, 4 });
 					bind.textures.push_back({ dummyRegular, 6 });
-					globalBindings = newGraphicsBindings(scene->config.device, bind);
+					globalBindings = newGraphicsBindings(scene.config.shared.device, bind);
 				}
 
 				Holder<Texture> target = createShadowmapCascadeView(+shadowTexture, cascade);
@@ -1647,192 +1576,125 @@ namespace cage
 			uint32 lightsCount = 0;
 			uint32 shadowedLightsCount = 0;
 
-			std::vector<SceneItem> objectsLods;
+			CameraRender(const SceneImpl &scene, const SceneRenderCamera &camera) : RenderBase(scene, camera) {}
 
-			// temporary caches
-			std::vector<Holder<Model>> prepareModelsHolders;
-
-			CameraRender(const SceneCameraConfig &config, const SceneImpl *scene) : RenderBase(config, scene) {}
-
-			void prepareObjectsLods()
+			// must be executed before creating shadowmap renderers
+			void initialize()
 			{
-				ProfilingScope profiling("prepare objects lods");
-				items.reserve(scene->items.size());
-				objectsLods.reserve(scene->items.size() / 10);
+				model = Mat4(camera.transform);
+				view = inverse(model);
+				viewProj = camera.projection * view;
 
-				for (const auto &it : scene->items)
 				{
-					if (it.data.index != VariantEnum::Object)
-						continue;
-					if (failedMask(it.e))
-						continue;
-					prepareModelsHolders.clear();
-					config.lodSelection.selectModels(prepareModelsHolders, it.transform.position, it.data.object().object, scene->config.onDemand);
-					for (auto &mesh : prepareModelsHolders)
-					{
-						SceneModel rm;
-						rm.mesh = shareAsset(std::move(mesh));
-						SceneItem rd;
-						rd.e = it.e;
-						rd.transform = it.transform;
-						rd.data.assign(std::move(rm));
-						scene->prepareModel(this, objectsLods, rd, it.data.object().object);
-					}
+					UniViewport viewport;
+					viewport.viewMat = view;
+					viewport.eyePos = model * Vec4(0, 0, 0, 1);
+					viewport.eyeDir = model * Vec4(0, 0, -1, 0);
+					viewport.ambientLight = Vec4(colorGammaToLinear(camera.camera.ambientColor) * camera.camera.ambientIntensity, 0);
+					viewport.skyLight = Vec4(colorGammaToLinear(camera.camera.skyColor) * camera.camera.skyIntensity, 0);
+					viewport.viewport = Vec4(Vec2(), Vec2(camera.resolution));
+					viewport.time = Vec4(scene.config.shared.frameIndex % 10'000, (scene.config.shared.currentTime % uint64(1e6)) / 1e6, (scene.config.shared.currentTime % uint64(1e9)) / 1e9, 0);
+					buffViewport = newGraphicsBuffer(scene.config.shared.device, sizeof(viewport), "UniViewport");
+					buffViewport->writeStruct(viewport);
 				}
 
-				for (const auto &it : objectsLods)
 				{
-					RenderItem r;
-					r.base = &it;
-					if (it.translucent)
-						r.depth = (viewProj * Vec4(it.transform.position, 1))[2] * -1;
-					items.push_back(r);
+					UniProjection uni;
+					uni.viewMat = view;
+					uni.projMat = camera.projection;
+					uni.vpMat = viewProj;
+					uni.vpInv = inverse(viewProj);
+					buffProjection = newGraphicsBuffer(scene.config.shared.device, sizeof(uni), "UniProjection");
+					buffProjection->writeStruct(uni);
 				}
 			}
 
-			void prepareRenderData()
+			Holder<ShadowRender> createShadowRenderBase(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
 			{
-				ProfilingScope profiling("prepare render data");
-				items.reserve(scene->items.size());
-				for (const auto &it : scene->items)
-				{
-					if (failedMask(it.e))
-						continue;
+				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
 
-					switch (it.data.index)
-					{
-						case VariantEnum::Model:
-						{
-							const auto &mod = it.data.model();
-							if (!intersects(mod.mesh->boundingBox * it.transform, frustum))
-								continue;
-							break;
-						}
-						case VariantEnum::Object:
-							continue; // already converted to models
-						default:
-							break;
-					}
+				Holder<ShadowRender> data = systemMemory().createHolder<ShadowRender>(scene, camera);
 
-					RenderItem r;
-					r.base = &it;
-					if (it.translucent)
-						r.depth = (viewProj * Vec4(it.transform.position, 1))[2] * -1;
-					items.push_back(r);
+				data->lightComponent = lc;
+				data->shadowmapComponent = sc;
+				data->buffViewport = buffViewport.share();
+
+				{ // quantize light direction - reduces shimmering of slowly rotating lights
+					CAGE_ASSERT(e->has<TransformComponent>());
+					Transform src = scene.modelTransform(e);
+					Vec3 f = src.orientation * Vec3(0, 0, -1);
+					f *= 1'000;
+					for (uint32 i = 0; i < 3; i++)
+						f[i] = round(f[i]);
+					f = normalize(f);
+					src.orientation = Quat(f, src.orientation * Vec3(0, 1, 0));
+					data->model = Mat4(src);
 				}
+
+				{
+					UniShadowedLight &uni = data->shadowUni;
+					(UniLight &)uni = initializeLightUni(data->model, lc, e->getOrDefault<ColorComponent>(), data->camera.transform.position);
+					uni.shadowParams[2] = sc.normalOffsetScale;
+					uni.shadowParams[3] = sc.shadowFactor;
+					uni.params[0] += 1; // shadowed light type
+				}
+
+				shadowmaps.push_back(data.share());
+				return data;
 			}
 
-			void prepareLights()
+			void createShadowRender(std::vector<Holder<RenderBaseBase>> &output, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
 			{
-				ProfilingScope profiling("prepare lights");
-
-				{ // add unshadowed lights
-					std::vector<UniLight> lights;
-					lights.reserve(100);
-					entitiesVisitor(
-						[&](Entity *e, const LightComponent &lc)
-						{
-							if (failedMask(e))
-								return;
-							if (e->has<ShadowmapComponent>())
-								return;
-							UniLight uni = initializeLightUni(Mat4(scene->modelTransform(e)), lc, e->getOrDefault<ColorComponent>(), config.transform.position);
-							if (lc.lightType == LightTypeEnum::Point && !intersects(Sphere(Vec3(uni.position), lc.maxDistance), frustum))
-								return;
-							lights.push_back(uni);
-						},
-						scene->config.scene, false);
-					filterLightsOverLimit(lights, config.camera.maxLights);
-					lightsCount = numeric_cast<uint32>(lights.size());
-					if (lights.empty())
-						lights.resize(1); // must ensure non-empty buffer
-					buffLights = newGraphicsBuffer(scene->config.device, lights.size() * sizeof(UniLight), "UniLight");
-					buffLights->writeArray<UniLight>(lights);
-				}
-
-				{ // add shadowed lights
-					std::vector<UniShadowedLight> shadows;
-					uint32 tex2dCount = 0, texCubeCount = 0;
-					shadows.reserve(10);
-					for (auto &sh : shadowmaps)
+				switch (lc.lightType)
+				{
+					case LightTypeEnum::Directional:
 					{
-						if (sh->cascade != 0)
-							continue;
-						if (sh->lightComponent.lightType == LightTypeEnum::Point)
+						CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= 4);
+						Holder<Texture> tex = createShadowmap2D(e->id(), sc.resolution, sc.cascadesCount, scene.config.shared.device);
+						ShadowRender *first = nullptr;
+						for (uint32 cascade = 0; cascade < sc.cascadesCount; cascade++)
 						{
-							if (texCubeCount >= 8)
-								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
-							sh->shadowUni.shadowParams[0] = texCubeCount;
-							texCubeCount++;
+							Holder<ShadowRender> data = createShadowRenderBase(e, lc, sc);
+							data->cascade = cascade;
+							data->shadowTexture = tex.share();
+							data->initializeShadowmapCascade();
+							if (cascade == 0)
+								first = +data;
+							else
+							{
+								first->shadowUni.cascadesDepths[cascade] = data->shadowUni.cascadesDepths[cascade];
+								first->shadowUni.shadowMat[cascade] = data->shadowUni.shadowMat[cascade];
+							}
+							output.push_back(std::move(data).cast<RenderBaseBase>());
 						}
+						break;
+					}
+					case LightTypeEnum::Spot:
+					case LightTypeEnum::Point:
+					{
+						Holder<ShadowRender> data = createShadowRenderBase(e, lc, sc);
+						data->initializeShadowmapSingle();
+						if (lc.lightType == LightTypeEnum::Point)
+							data->shadowTexture = createShadowmapCube(e->id(), sc.resolution, scene.config.shared.device);
 						else
-						{
-							if (tex2dCount >= 8)
-								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
-							sh->shadowUni.shadowParams[0] = tex2dCount;
-							tex2dCount++;
-						}
-						shadows.push_back(sh->shadowUni);
+							data->shadowTexture = createShadowmap2D(e->id(), sc.resolution, 1, scene.config.shared.device);
+						output.push_back(std::move(data).cast<RenderBaseBase>());
+						break;
 					}
-					CAGE_ASSERT(shadows.size() == tex2dCount + texCubeCount);
-					shadowedLightsCount = numeric_cast<uint32>(shadows.size());
-					if (shadows.empty())
-						shadows.resize(1); // must ensure non-empty buffer
-					buffShadowedLights = newGraphicsBuffer(scene->config.device, shadows.size() * sizeof(UniShadowedLight), "UniShadowedLight");
-					buffShadowedLights->writeArray<UniShadowedLight>(shadows);
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid light type");
 				}
-
-				profiling.set(Stringizer() + "count: " + lightsCount + ", shadowed: " + shadowedLightsCount);
 			}
 
-			Holder<Texture> createDepthTextureTarget()
-			{
-				TransientTextureCreateConfig conf;
-				conf.name = "depth target";
-				conf.resolution = Vec3i(config.resolution, 1);
-				conf.format = wgpu::TextureFormat::Depth32Float;
-				return newTexture(scene->config.device, conf);
-			}
-
-			Holder<Texture> createDepthSamplingTexture()
-			{
-				TransientTextureCreateConfig conf;
-				conf.name = "depth sampling";
-				conf.resolution = Vec3i(config.resolution, 1);
-				conf.format = wgpu::TextureFormat::R32Float;
-				return newTexture(scene->config.device, conf);
-			}
-
-			Holder<Texture> createColorTextureTarget(const AssetLabel &name)
-			{
-				TransientTextureCreateConfig conf;
-				conf.name = name;
-				conf.resolution = Vec3i(config.resolution, 1);
-				conf.format = wgpu::TextureFormat::RGBA16Float;
-				return newTexture(scene->config.device, conf);
-			}
-
-			Holder<Texture> createSsaoTextureTarget()
-			{
-				static constexpr int downscale = 3;
-				TransientTextureCreateConfig conf;
-				conf.name = "ssao target";
-				conf.resolution = Vec3i(config.resolution, 0) / downscale;
-				conf.resolution[2] = 1;
-				conf.format = wgpu::TextureFormat::R16Float;
-				return newTexture(scene->config.device, conf);
-			}
-
-			void taskEntry()
+			void entry() override
 			{
 				frustum = Frustum(viewProj);
-				frustumCullRenderData();
-				prepareRenderData();
-				orderRenderData();
+				frustumCullItems();
+				orderItems();
 				prepareLights();
 
-				encoder = newGraphicsEncoder(scene->config.device, "scene render camera");
-				aggregate = newGraphicsAggregateBuffer({ scene->config.device });
+				encoder = newGraphicsEncoder(scene.config.shared.device, "scene render camera");
+				aggregate = newGraphicsAggregateBuffer({ scene.config.shared.device });
 
 				Holder<Texture> depthTexture = createDepthTextureTarget();
 				Holder<Texture> depthSampling = createDepthSamplingTexture();
@@ -1872,9 +1734,9 @@ namespace cage
 					for (uint32 i = 0; i < 8; i++)
 					{
 						if (!sh2d[i])
-							sh2d[i] = privat::getTextureDummyArray(scene->config.device);
+							sh2d[i] = privat::getTextureDummyArray(scene.config.shared.device);
 						if (!shCube[i])
-							shCube[i] = privat::getTextureDummyCube(scene->config.device);
+							shCube[i] = privat::getTextureDummyCube(scene.config.shared.device);
 					}
 
 					for (uint32 i = 0; i < 8; i++)
@@ -1884,9 +1746,9 @@ namespace cage
 					}
 
 					// shadowmap sampler
-					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = privat::getTextureShadowsSampler(scene->config.device), .binding = 15, .bindTexture = false });
+					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = privat::getTextureShadowsSampler(scene.config.shared.device), .binding = 15, .bindTexture = false });
 
-					globalBindings = newGraphicsBindings(scene->config.device, bind);
+					globalBindings = newGraphicsBindings(scene.config.shared.device, bind);
 				}
 
 				{ // depth prepass
@@ -1905,30 +1767,30 @@ namespace cage
 					encoder->nextPass(passcfg);
 					const auto scope = encoder->namedScope("copy depth");
 					DrawConfig drawcfg;
-					drawcfg.model = +scene->modelSquare;
-					drawcfg.shader = +scene->shaderBlitPixels;
+					drawcfg.model = scene.modelSquare;
+					drawcfg.shader = scene.shaderBlitPixels;
 					GraphicsBindingsCreateConfig bind;
 					bind.textures.push_back({ +depthTexture, 0 });
-					drawcfg.bindings = newGraphicsBindings(scene->config.device, bind);
+					drawcfg.bindings = newGraphicsBindings(scene.config.shared.device, bind);
 					encoder->draw(drawcfg);
 				}
 
 				ScreenSpaceCommonConfig commonConfig; // helper to simplify initialization
-				commonConfig.assets = scene->config.assets;
+				commonConfig.assets = scene.config.shared.assets;
 				commonConfig.encoder = +encoder;
 				commonConfig.aggregate = +aggregate;
-				commonConfig.resolution = config.resolution;
+				commonConfig.resolution = camera.resolution;
 
 				// ssao
-				if (any(config.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion))
+				if (any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion))
 				{
 					ScreenSpaceAmbientOcclusionConfig cfg;
 					(ScreenSpaceCommonConfig &)cfg = commonConfig;
-					(ScreenSpaceAmbientOcclusion &)cfg = config.effects.ssao;
-					cfg.proj = config.projection;
+					(ScreenSpaceAmbientOcclusion &)cfg = camera.effects.ssao;
+					cfg.proj = camera.projection;
 					cfg.inDepth = +depthSampling;
 					cfg.outAo = +ssaoTexture;
-					cfg.frameIndex = scene->config.frameIndex;
+					cfg.frameIndex = scene.config.shared.frameIndex;
 					screenSpaceAmbientOcclusion(cfg);
 				}
 
@@ -1950,12 +1812,12 @@ namespace cage
 					Holder<Texture> texTarget = createColorTextureTarget("effects target");
 
 					// depth of field
-					if (any(config.effects.effects & ScreenSpaceEffectsFlags::DepthOfField))
+					if (any(camera.effects.effects & ScreenSpaceEffectsFlags::DepthOfField))
 					{
 						ScreenSpaceDepthOfFieldConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceDepthOfField &)cfg = config.effects.depthOfField;
-						cfg.proj = config.projection;
+						(ScreenSpaceDepthOfField &)cfg = camera.effects.depthOfField;
+						cfg.proj = camera.projection;
 						cfg.inDepth = +depthTexture;
 						cfg.inColor = +texSource;
 						cfg.outColor = +texTarget;
@@ -1964,11 +1826,11 @@ namespace cage
 					}
 
 					// bloom
-					if (any(config.effects.effects & ScreenSpaceEffectsFlags::Bloom))
+					if (any(camera.effects.effects & ScreenSpaceEffectsFlags::Bloom))
 					{
 						ScreenSpaceBloomConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
-						(ScreenSpaceBloom &)cfg = config.effects.bloom;
+						(ScreenSpaceBloom &)cfg = camera.effects.bloom;
 						cfg.inColor = +texSource;
 						cfg.outColor = +texTarget;
 						screenSpaceBloom(cfg);
@@ -1976,20 +1838,20 @@ namespace cage
 					}
 
 					// tonemap & gamma correction
-					if (any(config.effects.effects & (ScreenSpaceEffectsFlags::ToneMapping | ScreenSpaceEffectsFlags::GammaCorrection)))
+					if (any(camera.effects.effects & (ScreenSpaceEffectsFlags::ToneMapping | ScreenSpaceEffectsFlags::GammaCorrection)))
 					{
 						ScreenSpaceTonemapConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
 						cfg.inColor = +texSource;
 						cfg.outColor = +texTarget;
-						cfg.gamma = any(config.effects.effects & ScreenSpaceEffectsFlags::GammaCorrection) ? config.effects.gamma : 1;
-						cfg.tonemapEnabled = any(config.effects.effects & ScreenSpaceEffectsFlags::ToneMapping);
+						cfg.gamma = any(camera.effects.effects & ScreenSpaceEffectsFlags::GammaCorrection) ? camera.effects.gamma : 1;
+						cfg.tonemapEnabled = any(camera.effects.effects & ScreenSpaceEffectsFlags::ToneMapping);
 						screenSpaceTonemap(cfg);
 						std::swap(texSource, texTarget);
 					}
 
 					// fxaa
-					if (any(config.effects.effects & ScreenSpaceEffectsFlags::AntiAliasing))
+					if (any(camera.effects.effects & ScreenSpaceEffectsFlags::AntiAliasing))
 					{
 						ScreenSpaceFastApproximateAntiAliasingConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
@@ -2000,13 +1862,13 @@ namespace cage
 					}
 
 					// sharpening
-					if (any(config.effects.effects & ScreenSpaceEffectsFlags::Sharpening) && config.effects.sharpening.strength > 1e-3)
+					if (any(camera.effects.effects & ScreenSpaceEffectsFlags::Sharpening) && camera.effects.sharpening.strength > 1e-3)
 					{
 						ScreenSpaceSharpeningConfig cfg;
 						(ScreenSpaceCommonConfig &)cfg = commonConfig;
 						cfg.inColor = +texSource;
 						cfg.outColor = +texTarget;
-						cfg.strength = config.effects.sharpening.strength;
+						cfg.strength = camera.effects.sharpening.strength;
 						screenSpaceSharpening(cfg);
 						std::swap(texSource, texTarget);
 					}
@@ -2019,18 +1881,18 @@ namespace cage
 				{
 					const ProfilingScope profiling("final blit");
 					RenderPassConfig passcfg;
-					passcfg.colorTargets.push_back({ config.target });
+					passcfg.colorTargets.push_back({ camera.target });
 					encoder->nextPass(passcfg);
 					const auto scope = encoder->namedScope("final blit");
 					DrawConfig drawcfg;
-					drawcfg.model = +scene->modelSquare;
-					if (config.resolution == config.target->resolution())
-						drawcfg.shader = +scene->shaderBlitPixels;
+					drawcfg.model = scene.modelSquare;
+					if (camera.resolution == camera.target->resolution())
+						drawcfg.shader = scene.shaderBlitPixels;
 					else
-						drawcfg.shader = +scene->shaderBlitScaled;
+						drawcfg.shader = scene.shaderBlitScaled;
 					GraphicsBindingsCreateConfig bind;
 					bind.textures.push_back({ +colorTexture, 0 });
-					drawcfg.bindings = newGraphicsBindings(scene->config.device, bind);
+					drawcfg.bindings = newGraphicsBindings(scene.config.shared.device, bind);
 					encoder->draw(drawcfg);
 				}
 
@@ -2038,181 +1900,222 @@ namespace cage
 				aggregate.clear();
 			}
 
-			Holder<ShadowRender> createShadowRender(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+			void prepareLights()
 			{
-				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
+				ProfilingScope profiling("prepare lights");
 
-				Holder<ShadowRender> data = systemMemory().createHolder<ShadowRender>(config, scene);
-
-				data->items = items; // copy prepared object lods
-
-				data->lightComponent = lc;
-				data->shadowmapComponent = sc;
-				data->buffViewport = buffViewport.share();
-
-				{ // quantize light direction - reduces shimmering of slowly rotating lights
-					CAGE_ASSERT(e->has<TransformComponent>());
-					Transform src = scene->modelTransform(e);
-					Vec3 f = src.orientation * Vec3(0, 0, -1);
-					f *= 1'000;
-					for (uint32 i = 0; i < 3; i++)
-						f[i] = round(f[i]);
-					f = normalize(f);
-					src.orientation = Quat(f, src.orientation * Vec3(0, 1, 0));
-					data->model = Mat4(src);
-				}
-
-				{
-					UniShadowedLight &uni = data->shadowUni;
-					(UniLight &)uni = initializeLightUni(data->model, lc, e->getOrDefault<ColorComponent>(), data->config.transform.position);
-					uni.shadowParams[2] = sc.normalOffsetScale;
-					uni.shadowParams[3] = sc.shadowFactor;
-					uni.params[0] += 1; // shadowed light type
-				}
-
-				shadowmaps.push_back(data.share());
-				return data;
-			}
-
-			void prepareShadowmap(std::vector<Holder<AsyncTask>> &outputTasks, Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
-			{
-				switch (lc.lightType)
-				{
-					case LightTypeEnum::Directional:
-					{
-						CAGE_ASSERT(sc.cascadesCount > 0 && sc.cascadesCount <= 4);
-						Holder<Texture> tex = createShadowmap2D(e->id(), sc.resolution, sc.cascadesCount, scene->config.device);
-						ShadowRender *first = nullptr;
-						for (uint32 cascade = 0; cascade < sc.cascadesCount; cascade++)
-						{
-							Holder<ShadowRender> data = createShadowRender(e, lc, sc);
-							data->cascade = cascade;
-							data->shadowTexture = tex.share();
-							data->initializeShadowmapCascade();
-							if (cascade == 0)
-								first = +data;
-							else
-							{
-								first->shadowUni.cascadesDepths[cascade] = data->shadowUni.cascadesDepths[cascade];
-								first->shadowUni.shadowMat[cascade] = data->shadowUni.shadowMat[cascade];
-							}
-							outputTasks.push_back(tasksRunAsync<ShadowRender>("render shadowmap cascade", [](ShadowRender &impl, uint32) { impl.taskEntry(); }, std::move(data)));
-						}
-						break;
-					}
-					case LightTypeEnum::Spot:
-					case LightTypeEnum::Point:
-					{
-						Holder<ShadowRender> data = createShadowRender(e, lc, sc);
-						data->initializeShadowmapSingle();
-						if (lc.lightType == LightTypeEnum::Point)
-							data->shadowTexture = createShadowmapCube(e->id(), sc.resolution, scene->config.device);
-						else
-							data->shadowTexture = createShadowmap2D(e->id(), sc.resolution, 1, scene->config.device);
-						outputTasks.push_back(tasksRunAsync<ShadowRender>("render shadowmap single", [](ShadowRender &impl, uint32) { impl.taskEntry(); }, std::move(data)));
-						break;
-					}
-					default:
-						CAGE_THROW_CRITICAL(Exception, "invalid light type");
-				}
-			}
-
-			PointerRangeHolder<Holder<GraphicsEncoder>> runEntry()
-			{
-				PointerRangeHolder<Holder<GraphicsEncoder>> result;
-
-				model = Mat4(config.transform);
-				view = inverse(model);
-				viewProj = config.projection * view;
-
-				{
-					UniViewport viewport;
-					viewport.viewMat = view;
-					viewport.eyePos = model * Vec4(0, 0, 0, 1);
-					viewport.eyeDir = model * Vec4(0, 0, -1, 0);
-					viewport.ambientLight = Vec4(colorGammaToLinear(config.camera.ambientColor) * config.camera.ambientIntensity, 0);
-					viewport.skyLight = Vec4(colorGammaToLinear(config.camera.skyColor) * config.camera.skyIntensity, 0);
-					viewport.viewport = Vec4(Vec2(), Vec2(config.resolution));
-					viewport.time = Vec4(scene->config.frameIndex % 10'000, (scene->config.currentTime % uint64(1e6)) / 1e6, (scene->config.currentTime % uint64(1e9)) / 1e9, 0);
-					buffViewport = newGraphicsBuffer(scene->config.device, sizeof(viewport), "UniViewport");
-					buffViewport->writeStruct(viewport);
-				}
-
-				{
-					UniProjection uni;
-					uni.viewMat = view;
-					uni.projMat = config.projection;
-					uni.vpMat = viewProj;
-					uni.vpInv = inverse(viewProj);
-					buffProjection = newGraphicsBuffer(scene->config.device, sizeof(uni), "UniProjection");
-					buffProjection->writeStruct(uni);
-				}
-
-				{
-					std::vector<Holder<AsyncTask>> tasks;
+				{ // add unshadowed lights
+					std::vector<UniLight> lights;
+					lights.reserve(100);
 					entitiesVisitor(
-						[&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+						[&](Entity *e, const LightComponent &lc)
 						{
 							if (failedMask(e))
 								return;
-							prepareShadowmap(tasks, e, lc, sc);
+							if (e->has<ShadowmapComponent>())
+								return;
+							UniLight uni = initializeLightUni(Mat4(scene.modelTransform(e)), lc, e->getOrDefault<ColorComponent>(), camera.transform.position);
+							if (lc.lightType == LightTypeEnum::Point && !intersects(Sphere(Vec3(uni.position), lc.maxDistance), frustum))
+								return;
+							lights.push_back(uni);
 						},
-						scene->config.scene, false);
-					{
-						const ProfilingScope profiling("execute camera");
-						taskEntry();
-					}
-					{
-						const ProfilingScope profiling("waiting for shadowmaps");
-						for (const auto &it : tasks)
-							it->wait();
-					}
+						scene.config.shared.scene, false);
+					filterLightsOverLimit(lights, camera.camera.maxLights);
+					lightsCount = numeric_cast<uint32>(lights.size());
+					if (lights.empty())
+						lights.resize(1); // must ensure non-empty buffer
+					buffLights = newGraphicsBuffer(scene.config.shared.device, lights.size() * sizeof(UniLight), "UniLight");
+					buffLights->writeArray<UniLight>(lights);
 				}
 
-				for (const auto &it : shadowmaps)
-					result.push_back(std::move(it->encoder));
-				result.push_back(std::move(encoder));
-				return result;
+				{ // add shadowed lights
+					std::vector<UniShadowedLight> shadows;
+					uint32 tex2dCount = 0, texCubeCount = 0;
+					shadows.reserve(10);
+					for (auto &sh : shadowmaps)
+					{
+						if (sh->cascade != 0)
+							continue;
+						if (sh->lightComponent.lightType == LightTypeEnum::Point)
+						{
+							if (texCubeCount >= 8)
+								CAGE_THROW_ERROR(Exception, "too many shadowmaps (cube shadows)");
+							sh->shadowUni.shadowParams[0] = texCubeCount;
+							texCubeCount++;
+						}
+						else
+						{
+							if (tex2dCount >= 8)
+								CAGE_THROW_ERROR(Exception, "too many shadowmaps (2D shadows)");
+							sh->shadowUni.shadowParams[0] = tex2dCount;
+							tex2dCount++;
+						}
+						shadows.push_back(sh->shadowUni);
+					}
+					CAGE_ASSERT(shadows.size() == tex2dCount + texCubeCount);
+					shadowedLightsCount = numeric_cast<uint32>(shadows.size());
+					if (shadows.empty())
+						shadows.resize(1); // must ensure non-empty buffer
+					buffShadowedLights = newGraphicsBuffer(scene.config.shared.device, shadows.size() * sizeof(UniShadowedLight), "UniShadowedLight");
+					buffShadowedLights->writeArray<UniShadowedLight>(shadows);
+				}
+
+				profiling.set(Stringizer() + "count: " + lightsCount + ", shadowed: " + shadowedLightsCount);
+			}
+
+			Holder<Texture> createDepthTextureTarget()
+			{
+				TransientTextureCreateConfig conf;
+				conf.name = "depth target";
+				conf.resolution = Vec3i(camera.resolution, 1);
+				conf.format = wgpu::TextureFormat::Depth32Float;
+				return newTexture(scene.config.shared.device, conf);
+			}
+
+			Holder<Texture> createDepthSamplingTexture()
+			{
+				TransientTextureCreateConfig conf;
+				conf.name = "depth sampling";
+				conf.resolution = Vec3i(camera.resolution, 1);
+				conf.format = wgpu::TextureFormat::R32Float;
+				return newTexture(scene.config.shared.device, conf);
+			}
+
+			Holder<Texture> createColorTextureTarget(const AssetLabel &name)
+			{
+				TransientTextureCreateConfig conf;
+				conf.name = name;
+				conf.resolution = Vec3i(camera.resolution, 1);
+				conf.format = wgpu::TextureFormat::RGBA16Float;
+				return newTexture(scene.config.shared.device, conf);
+			}
+
+			Holder<Texture> createSsaoTextureTarget()
+			{
+				static constexpr int downscale = 3;
+				TransientTextureCreateConfig conf;
+				conf.name = "ssao target";
+				conf.resolution = Vec3i(camera.resolution, 0) / downscale;
+				conf.resolution[2] = 1;
+				conf.format = wgpu::TextureFormat::R16Float;
+				return newTexture(scene.config.shared.device, conf);
 			}
 		};
+
+		void SceneImpl::prepareEntitiesModelsLod(Entity *e, RenderObject *object)
+		{
+			const Transform transform = modelTransform(e);
+			for (Holder<RenderBaseBase> &renderer : renderers)
+			{
+				distOverride = +renderer;
+				prepareModelsHolders.clear();
+				renderer->camera.lodSelection.selectModels(prepareModelsHolders, transform.position, object, config.shared.onDemand);
+				for (auto &mesh : prepareModelsHolders)
+				{
+					SceneModel rm;
+					rm.mesh = shareAsset(std::move(mesh));
+					SceneItem rd;
+					rd.e = e;
+					rd.transform = transform;
+					rd.data.assign(std::move(rm));
+					prepareModel(rd, object);
+				}
+			}
+			distOverride = nullptr;
+		}
+
+		void SceneImpl::distribute(SceneItem &&item)
+		{
+			const auto msk = item.e->getOrDefault<SceneComponent>().sceneMask;
+			const bool shadowCast = item.data.index != VariantEnum::Model || any(item.data.model().mesh->renderFlags & MeshRenderFlags::ShadowCast);
+			const bool noShadow = !shadowCast || item.translucent;
+			RenderItem rd{ .base = items.push_back(std::move(item)) };
+			if (!rd.base)
+				return; // exhausted capacity
+
+			const auto &put = [&](RenderBaseBase *r)
+			{
+				if (r->isShadowmap && noShadow)
+					return;
+				if ((r->camera.cameraSceneMask & msk) == 0)
+					return;
+				r->items.push_back(rd);
+			};
+
+			if (distOverride)
+			{
+				put(distOverride);
+			}
+			else
+			{
+				for (auto &r : renderers)
+					put(+r);
+			}
+		}
+
+		void SceneImpl::generateRenderers()
+		{
+			const ProfilingScope profiling("generate renderers");
+
+			const uint32 reservation = (config.shared.scene->component<ModelComponent>()->count() + config.shared.scene->component<SpriteComponent>()->count() + config.shared.scene->component<TextComponent>()->count()) * 3 / 2 + 512;
+			items.reserve(reservation);
+			renderers.reserve(16);
+
+			for (const auto &it : config.cameras)
+			{
+				Holder<CameraRender> c = systemMemory().createHolder<CameraRender>(*this, it);
+				c->items.reserve(reservation);
+				c->initialize();
+				entitiesVisitor(
+					[&](Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
+					{
+						if (c->failedMask(e))
+							return;
+						c->createShadowRender(renderers, e, lc, sc);
+					},
+					config.shared.scene, false);
+				renderers.push_back(std::move(c).cast<RenderBaseBase>());
+			}
+		}
+
+		void SceneImpl::dispatchRenders()
+		{
+			tasksRunBlocking<Holder<RenderBaseBase>>("scene render", [](Holder<RenderBaseBase> &it) { it->entry(); }, renderers);
+		}
 	}
 
-	Holder<PreparedScene> scenePrepare(const ScenePrepareConfig &config)
+	Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const SceneRenderConfig &config)
 	{
-		CAGE_ASSERT(config.device);
-		CAGE_ASSERT(config.assets);
-		CAGE_ASSERT(config.onDemand);
-		CAGE_ASSERT(config.scene);
-		CAGE_ASSERT(valid(config.interpolationFactor));
+		CAGE_ASSERT(config.shared.device);
+		CAGE_ASSERT(config.shared.assets);
+		CAGE_ASSERT(config.shared.onDemand);
+		CAGE_ASSERT(config.shared.scene);
+		CAGE_ASSERT(valid(config.shared.interpolationFactor));
 
-		if (!config.assets->get<AssetPack>(HashString("cage/cage.pack")) || !config.assets->get<AssetPack>(HashString("cage/shaders/engine/engine.pack")))
+		if (!config.shared.assets->get<AssetPack>(HashString("cage/cage.pack")) || !config.shared.assets->get<AssetPack>(HashString("cage/shaders/engine/engine.pack")))
 			return {};
 
-		ProfilingScope profiling("scene prepare");
-		Holder<SceneImpl> scene = systemMemory().createHolder<SceneImpl>(config);
-		scene->loadBasicAssets();
-		scene->prepareEntities();
-		scene->orderSceneData();
-		return std::move(scene).cast<PreparedScene>();
-	}
+		for (const auto &it : config.cameras)
+		{
+			CAGE_ASSERT(it.target);
+			CAGE_ASSERT(it.resolution[0] > 0);
+			CAGE_ASSERT(it.resolution[1] > 0);
+			CAGE_ASSERT(valid(it.projection));
+			CAGE_ASSERT(valid(it.transform));
+			CAGE_ASSERT(valid(it.lodSelection.center));
+			CAGE_ASSERT(valid(it.lodSelection.screenSize));
+		}
 
-	Holder<PointerRange<Holder<GraphicsEncoder>>> sceneRender(const PreparedScene *scene, const SceneCameraConfig &config)
-	{
-		CAGE_ASSERT(config.target);
-		CAGE_ASSERT(config.resolution[0] > 0);
-		CAGE_ASSERT(config.resolution[1] > 0);
-		CAGE_ASSERT(valid(config.projection));
-		CAGE_ASSERT(valid(config.transform));
-		CAGE_ASSERT(valid(config.lodSelection.center));
-		CAGE_ASSERT(valid(config.lodSelection.screenSize));
+		SceneImpl impl(config);
+		impl.loadBasicAssets();
+		impl.generateRenderers();
+		impl.prepareEntities();
+		impl.dispatchRenders();
 
-		if (!scene)
-			return {};
-
-		ProfilingScope profiling("scene render");
-		Holder<CameraRender> camera = systemMemory().createHolder<CameraRender>(config, static_cast<const SceneImpl *>(scene));
-		camera->prepareObjectsLods();
-		return camera->runEntry();
+		PointerRangeHolder<Holder<GraphicsEncoder>> res;
+		for (auto &it : impl.renderers)
+			res.push_back(std::move(it->encoder));
+		return res;
 	}
 
 	SkeletalAnimationComponent &SkeletalAnimationComponent::clear()

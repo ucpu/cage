@@ -35,16 +35,6 @@ namespace cage
 					task->wait();
 			}
 
-			void prepare()
-			{
-				if (task)
-					return;
-				ScopeLock lock(impl->mutex);
-				if (task)
-					return;
-				task = tasksRunAsync("skeletal-animation", Holder<SkeletalAnimationPreparatorInstanceImpl>(this, nullptr));
-			}
-
 			void operator()(uint32)
 			{
 				CAGE_ASSERT(armature.empty());
@@ -75,8 +65,8 @@ namespace cage
 					armature.emplace_back(config.modelImportTransform * tmpArmature[i] * inv);
 			}
 
-			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 			SkeletalAnimationPreparatorConfig config;
+			SkeletalAnimationPreparatorCollectionImpl *impl = nullptr;
 			std::vector<Mat3x4> armature;
 			Holder<AsyncTask> task;
 		};
@@ -122,16 +112,9 @@ namespace cage
 		}
 	}
 
-	void SkeletalAnimationPreparatorInstance::prepare()
-	{
-		SkeletalAnimationPreparatorInstanceImpl *impl = (SkeletalAnimationPreparatorInstanceImpl *)this;
-		impl->prepare();
-	}
-
 	PointerRange<const Mat3x4> SkeletalAnimationPreparatorInstance::armature()
 	{
 		SkeletalAnimationPreparatorInstanceImpl *impl = (SkeletalAnimationPreparatorInstanceImpl *)this;
-		impl->prepare();
 		CAGE_ASSERT(impl->task);
 		impl->task->wait();
 		return impl->armature;
@@ -149,6 +132,7 @@ namespace cage
 		}
 		CAGE_ASSERT(validateSkeletalAnimationConfig(config));
 		Holder<SkeletalAnimationPreparatorInstanceImpl> inst = systemMemory().createHolder<SkeletalAnimationPreparatorInstanceImpl>(std::move(config), impl);
+		inst->task = tasksRunAsync("skeletal-animation", Holder<SkeletalAnimationPreparatorInstanceImpl>(+inst, nullptr)); // avoid recursive holder
 		impl->objects[config.object] = inst.share();
 		return std::move(inst).cast<SkeletalAnimationPreparatorInstance>();
 	}

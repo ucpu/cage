@@ -19,7 +19,6 @@ namespace cage
 	class CAGE_CORE_API SkeletalAnimationPreparatorInstance : private Immovable
 	{
 	public:
-		void prepare(); // thread safe (launches asynchronous task to compute the armature)
 		PointerRange<const Mat3x4> armature(); // thread safe, blocking
 	};
 

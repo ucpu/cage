@@ -627,7 +627,7 @@ namespace cage
 			wgpu::Device device;
 			//ProfilingScope profiling;
 
-			LockedDevice(ScopeLock<Mutex> &&l, wgpu::Device &&d) : lock(std::move(l)), device(std::move(d)) /*, profiling("native device lock") */ {}
+			LockedDevice(ScopeLock<Mutex> &&l, wgpu::Device d) : lock(std::move(l)), device(std::move(d)) /*, profiling("native device lock") */ {}
 		};
 		Holder<LockedDevice> l = systemMemory().createHolder<LockedDevice>(ScopeLock(impl->mutex), impl->device);
 		return Holder<wgpu::Device>(&l->device, std::move(l));
@@ -642,7 +642,7 @@ namespace cage
 			wgpu::Queue queue;
 			//ProfilingScope profiling;
 
-			LockedQueue(ScopeLock<Mutex> &&l, wgpu::Queue &&q) : lock(std::move(l)), queue(std::move(q)) /*, profiling("native queue lock") */ {}
+			LockedQueue(ScopeLock<Mutex> &&l, wgpu::Queue q) : lock(std::move(l)), queue(std::move(q)) /*, profiling("native queue lock") */ {}
 		};
 		Holder<LockedQueue> l = systemMemory().createHolder<LockedQueue>(ScopeLock(impl->mutex), impl->queue);
 		return Holder<wgpu::Queue>(&l->queue, std::move(l));

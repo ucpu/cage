@@ -964,7 +964,7 @@ namespace cage
 
 		template<class T, class... Ts>
 		requires(std::is_constructible_v<T, Ts...>)
-		[[nodiscard]] CAGE_FORCE_INLINE T *createObject(Ts... vs)
+		[[nodiscard]] CAGE_FORCE_INLINE T *createObject(Ts &&...vs)
 		{
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try
@@ -980,7 +980,7 @@ namespace cage
 
 		template<class T, class... Ts>
 		requires(std::is_constructible_v<T, Ts...>)
-		CAGE_FORCE_INLINE Holder<T> createHolder(Ts... vs)
+		CAGE_FORCE_INLINE Holder<T> createHolder(Ts &&...vs)
 		{
 			using Ctrl = privat::HolderControlMixin<T, Ts...>;
 			Ctrl *p = createObject<Ctrl>(std::forward<Ts>(vs)...);
@@ -991,7 +991,7 @@ namespace cage
 
 		template<class Interface, class Impl, class... Ts>
 		requires(std::is_constructible_v<Impl, Ts...>)
-		CAGE_FORCE_INLINE Holder<Interface> createImpl(Ts... vs)
+		CAGE_FORCE_INLINE Holder<Interface> createImpl(Ts &&...vs)
 		{
 			return createHolder<Impl>(std::forward<Ts>(vs)...).template cast<Interface>();
 		};

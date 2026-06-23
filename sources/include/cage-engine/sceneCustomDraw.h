@@ -8,13 +8,13 @@ namespace cage
 	class Entity;
 	class GraphicsEncoder;
 	class GraphicsAggregateBuffer;
-	struct ScenePrepareConfig;
-	struct SceneCameraConfig;
+	struct SceneRenderShared;
+	struct SceneRenderCamera;
 
 	struct CAGE_ENGINE_API CustomDrawConfig
 	{
-		const ScenePrepareConfig *sceneConfig = nullptr;
-		const SceneCameraConfig *cameraConfig = nullptr;
+		const SceneRenderShared *sceneConfig = nullptr;
+		const SceneRenderCamera *cameraConfig = nullptr;
 		GraphicsEncoder *encoder = nullptr;
 		GraphicsAggregateBuffer *aggregate = nullptr;
 		Entity *entity = nullptr;
