@@ -1,0 +1,5 @@
+[flags]
+cutOut
+orderIndependent
+noShadowCast
+noLighting

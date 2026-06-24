@@ -271,7 +271,9 @@ namespace cage
 			Vec4 animation = Vec4::Nan(); // time (seconds), speed, offset (normalized), unused
 			Entity *e = nullptr;
 			sint32 renderLayer = 0;
-			bool translucent = false; // transparent or fade
+			bool shadowCast = false;
+			bool orderDependent = false;
+			bool blending = false;
 
 			SceneItem() = default;
 
@@ -307,13 +309,13 @@ namespace cage
 					case VariantEnum::None:
 						return {};
 					case VariantEnum::Model:
-						return { base->renderLayer, base->translucent, depth, base->data.model().mesh, nullptr, !!base->data.model().skeletalAnimation };
+						return { base->renderLayer, base->orderDependent, depth, base->data.model().mesh, nullptr, !!base->data.model().skeletalAnimation };
 					case VariantEnum::Sprite:
-						return { base->renderLayer, base->translucent, depth, base->data.sprite().mesh, base->data.sprite().texture, false };
+						return { base->renderLayer, base->orderDependent, depth, base->data.sprite().mesh, base->data.sprite().texture, false };
 					case VariantEnum::Text:
-						return { base->renderLayer, base->translucent, depth, base->data.text().font, nullptr, false };
+						return { base->renderLayer, base->orderDependent, depth, base->data.text().font, nullptr, false };
 					case VariantEnum::Custom:
-						return { base->renderLayer, base->translucent, depth, nullptr, nullptr, false };
+						return { base->renderLayer, base->orderDependent, depth, nullptr, nullptr, false };
 				}
 				return {};
 			}
@@ -327,13 +329,13 @@ namespace cage
 					case VariantEnum::None:
 						return {};
 					case VariantEnum::Model:
-						return { d.data.model().mesh, nullptr, !!d.data.model().skeletalAnimation, d.translucent };
+						return { d.data.model().mesh, nullptr, !!d.data.model().skeletalAnimation, d.orderDependent };
 					case VariantEnum::Sprite:
-						return { d.data.sprite().mesh, d.data.sprite().texture, false, d.translucent };
+						return { d.data.sprite().mesh, d.data.sprite().texture, false, d.orderDependent };
 					case VariantEnum::Text:
-						return { d.data.text().font, nullptr, false, d.translucent };
+						return { d.data.text().font, nullptr, false, d.orderDependent };
 					case VariantEnum::Custom:
-						return { d.e, nullptr, false, d.translucent };
+						return { d.e, nullptr, false, d.orderDependent };
 				}
 				return {};
 			};
@@ -392,6 +394,8 @@ namespace cage
 		template<class T, class Mark, class Output>
 		void partition(PointerRange<T> inputRange, Mark &&mark, Output &&output)
 		{
+			ProfilingScope profiling("partition");
+			uint32 parts = 0;
 			auto it = inputRange.begin();
 			const auto et = inputRange.end();
 			while (it != et)
@@ -403,7 +407,9 @@ namespace cage
 				PointerRange<T> instances = { &*it, &*i };
 				output(instances);
 				it = i;
+				parts++;
 			}
+			profiling.set(Stringizer() + parts + " / " + inputRange.size());
 		}
 
 		CAGE_FORCE_INLINE Vec4 initializeColor(const ColorComponent &cc)
@@ -707,6 +713,9 @@ namespace cage
 					d.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
 					d.e = rd.e;
 					d.renderLayer = rd.renderLayer;
+					d.shadowCast = false;
+					d.orderDependent = false;
+					d.blending = false;
 					SceneModel r;
 					r.mesh = modelBone;
 					d.data.assign(std::move(r));
@@ -787,7 +796,9 @@ namespace cage
 				rd.color = initializeColor(color);
 				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
-				rd.translucent = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
+				rd.shadowCast = any(rm.mesh->renderFlags & MeshRenderFlags::ShadowCast);
+				rd.orderDependent = rd.blending = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
+				rd.orderDependent &= none(rm.mesh->renderFlags & MeshRenderFlags::OrderIndependent);
 
 				if (rm.skeletalAnimation && cnfRenderSkeletonBones)
 					prepareModelBones(rd);
@@ -810,7 +821,9 @@ namespace cage
 				const ShaderAnimationComponent anim = getAnimSpeed(e);
 				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
-				rd.translucent = true;
+				rd.shadowCast = any(ri.mesh->renderFlags & MeshRenderFlags::ShadowCast);
+				rd.orderDependent = rd.blending = any(ri.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
+				rd.orderDependent &= none(ri.mesh->renderFlags & MeshRenderFlags::OrderIndependent);
 				rd.data.assign(std::move(ri));
 				distribute(std::move(rd));
 			}
@@ -838,7 +851,9 @@ namespace cage
 				rd.transform = modelTransform(e) * Transform(Vec3(rt.layout->size * Vec2(-0.5, 0.5), 0));
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = tc.renderLayer;
-				rd.translucent = true;
+				rd.shadowCast = false;
+				rd.orderDependent = true;
+				rd.blending = true;
 				rd.data.assign(std::move(rt));
 				distribute(std::move(rd));
 			}
@@ -852,7 +867,9 @@ namespace cage
 				rd.transform = modelTransform(e);
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
 				rd.renderLayer = cdc.renderLayer;
-				rd.translucent = true;
+				rd.shadowCast = false;
+				rd.orderDependent = true;
+				rd.blending = false;
 				rd.data.assign(std::move(rc));
 				distribute(std::move(rd));
 			}
@@ -1103,11 +1120,18 @@ namespace cage
 
 				for (RenderItem &it : items)
 				{
-					if (it->translucent)
+					if (it->orderDependent)
 						it.depth = (viewProj * Vec4(it->transform.position, 1))[2] * -1;
 				}
 
 				std::sort(items.begin(), items.end(), [](const RenderItem &a, const RenderItem &b) { return a.cmp() < b.cmp(); });
+			}
+
+			void orderInstances(PointerRange<RenderItem> insts)
+			{
+				for (RenderItem &it : insts)
+					it.depth = (viewProj * Vec4(it->transform.position, 1))[2] * -1;
+				std::sort(insts.begin(), insts.end(), [](const RenderItem &a, const RenderItem &b) { return a.depth < b.depth; });
 			}
 		};
 
@@ -1118,7 +1142,7 @@ namespace cage
 
 			CAGE_FORCE_INLINE CrtpDerived *derived() { return static_cast<CrtpDerived *>(this); }
 
-			void renderModels(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
+			void renderModels(const RenderModeEnum renderMode, PointerRange<RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderItem &rd = instances[0];
@@ -1128,6 +1152,9 @@ namespace cage
 				{
 					if (renderMode == RenderModeEnum::DepthPrepass && none(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite))
 						return;
+
+					if (rd->blending && !rd->orderDependent)
+						orderInstances(instances);
 				}
 
 				const auto material = newGraphicsBindings(scene.config.shared.device, scene.config.shared.assets, +rm.mesh);
@@ -1145,7 +1172,7 @@ namespace cage
 							uniOptions.optsLights[1] = derived()->shadowedLightsCount;
 						}
 					}
-					const bool ssao = !rd->translucent && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
+					const bool ssao = !rd->blending && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 					uniOptions.optsLights[2] = ssao ? 1 : 0;
 					uniOptions.optsLights[3] = !!rm.mesh->textureNames[2];
 					uniOptions.optsSkeleton[0] = rm.mesh->bonesCount;
@@ -1209,7 +1236,7 @@ namespace cage
 				{
 					draw.depthTest = any(rm.mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
 					draw.depthWrite = any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite);
-					draw.blending = rd->translucent ? BlendingEnum::PremultipliedTransparency : BlendingEnum::None;
+					draw.blending = rd->blending ? BlendingEnum::PremultipliedTransparency : BlendingEnum::None;
 				}
 				else
 				{
@@ -1226,7 +1253,7 @@ namespace cage
 				encoder->draw(draw);
 			}
 
-			void renderSprites(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
+			void renderSprites(const RenderModeEnum renderMode, PointerRange<RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderItem &rd = instances[0];
@@ -1235,6 +1262,9 @@ namespace cage
 				{
 					if (renderMode != RenderModeEnum::Color)
 						return;
+
+					if (rd->blending && !rd->orderDependent)
+						orderInstances(instances);
 				}
 
 				Model *mesh = rd->data.sprite().mesh;
@@ -1287,7 +1317,7 @@ namespace cage
 
 				draw.depthTest = any(mesh->renderFlags & MeshRenderFlags::DepthTest) ? DepthTestEnum::LessEqual : DepthTestEnum::Always;
 				draw.depthWrite = any(mesh->renderFlags & MeshRenderFlags::DepthWrite);
-				draw.blending = rd->translucent ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
+				draw.blending = rd->blending ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
 				draw.backFaceCulling = none(mesh->renderFlags & MeshRenderFlags::TwoSided);
 				draw.model = +mesh;
 				draw.shader = +shader;
@@ -1297,7 +1327,7 @@ namespace cage
 				encoder->draw(draw);
 			}
 
-			void renderTexts(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
+			void renderTexts(const RenderModeEnum renderMode, PointerRange<RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
 
@@ -1322,7 +1352,7 @@ namespace cage
 				}
 			}
 
-			void renderCustom(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
+			void renderCustom(const RenderModeEnum renderMode, PointerRange<RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderItem &rd = instances[0];
@@ -1349,14 +1379,14 @@ namespace cage
 				}
 			}
 
-			void renderInstances(const RenderModeEnum renderMode, const PointerRange<const RenderItem> instances)
+			void renderInstances(const RenderModeEnum renderMode, PointerRange<RenderItem> instances)
 			{
 				CAGE_ASSERT(!instances.empty());
 				const RenderItem &rd = instances[0];
 
 				if constexpr (std::is_same_v<CrtpDerived, CameraRender>)
 				{
-					if (renderMode == RenderModeEnum::DepthPrepass && rd->translucent)
+					if (renderMode == RenderModeEnum::DepthPrepass && rd->blending)
 						return;
 				}
 
@@ -1382,8 +1412,8 @@ namespace cage
 			void renderPass(const RenderModeEnum renderMode)
 			{
 				CAGE_ASSERT((std::is_same_v<CrtpDerived, ShadowRender> == (renderMode == RenderModeEnum::Shadowmap)));
-				const auto &render = [&](PointerRange<const RenderItem> instances) { renderInstances(renderMode, instances); };
-				partition(PointerRange<const RenderItem>(items), [](const RenderItem &r) { return r.mark(); }, render);
+				const auto &render = [&](PointerRange<RenderItem> instances) { renderInstances(renderMode, instances); };
+				partition(PointerRange<RenderItem>(items), [](const RenderItem &r) { return r.mark(); }, render);
 			}
 		};
 
@@ -2027,15 +2057,13 @@ namespace cage
 		void SceneImpl::distribute(SceneItem &&item)
 		{
 			const auto msk = item.e->getOrDefault<SceneComponent>().sceneMask;
-			const bool shadowCast = item.data.index != VariantEnum::Model || any(item.data.model().mesh->renderFlags & MeshRenderFlags::ShadowCast);
-			const bool noShadow = !shadowCast || item.translucent;
 			RenderItem rd{ .base = items.push_back(std::move(item)) };
 			if (!rd.base)
 				return; // exhausted capacity
 
 			const auto &put = [&](RenderBaseBase *r)
 			{
-				if (r->isShadowmap && noShadow)
+				if (r->isShadowmap && !item.shadowCast)
 					return;
 				if ((r->camera.cameraSceneMask & msk) == 0)
 					return;

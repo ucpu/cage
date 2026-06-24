@@ -1176,6 +1176,11 @@ namespace cage
 						part.renderFlags |= MeshRenderFlags::Fade;
 						continue;
 					}
+					if (v == "orderIndependent")
+					{
+						part.renderFlags |= MeshRenderFlags::OrderIndependent;
+						continue;
+					}
 					if (v == "twoSided")
 					{
 						part.renderFlags |= MeshRenderFlags::TwoSided;
