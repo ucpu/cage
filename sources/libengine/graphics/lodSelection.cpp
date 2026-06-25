@@ -19,8 +19,10 @@ namespace cage
 				break;
 			}
 			case CameraTypeEnum::Perspective:
+			{
 				screenSize = tan(cam.perspectiveFov * 0.5) * 2 * screenHeightPx;
 				break;
+			}
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid camera type");
 		}
