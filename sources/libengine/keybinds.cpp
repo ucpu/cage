@@ -85,6 +85,8 @@ namespace cage
 					case 347: // right super
 						return any(requiredFlags & ModifiersFlags::Super) ? Response : KeybindModesFlags::None;
 				}
+				if (input.key == 0 && any(input.mods & requiredFlags))
+					return Response;
 				return KeybindModesFlags::None;
 			}
 
@@ -251,8 +253,12 @@ namespace cage
 
 			CAGE_FORCE_INLINE void make(const GenericInput &input)
 			{
-				if (config.devices == KeybindDevicesFlags::Modifiers)
-					return makeModifiersMatcher(input);
+				if (any(config.devices & KeybindDevicesFlags::Modifiers) && input.has<input::KeyPress>())
+				{
+					const input::KeyPress in = input.get<input::KeyPress>();
+					if (any(in.mods) && none(in.mods & config.forbiddenFlags))
+						result = ModifiersMatcher{ base(in.mods) };
+				}
 				make<input::KeyPress>(input);
 				make<input::KeyRepeat>(input);
 				make<input::KeyRelease>(input);
@@ -260,16 +266,6 @@ namespace cage
 				make<input::MouseDoublePress>(input);
 				make<input::MouseRelease>(input);
 				make<input::MouseWheel>(input);
-			}
-
-			CAGE_FORCE_INLINE void makeModifiersMatcher(const GenericInput &input)
-			{
-				if (input.has<input::KeyPress>())
-				{
-					const input::KeyPress in = input.get<input::KeyPress>();
-					if (none(in.mods & config.forbiddenFlags))
-						result = ModifiersMatcher{ base(in.mods) };
-				}
 			}
 		};
 
@@ -279,8 +275,7 @@ namespace cage
 			maker.make(input);
 			if (!std::holds_alternative<std::monostate>(maker.result))
 			{
-				if (config.devices != KeybindDevicesFlags::Modifiers) // modifiers are defined without the actual keys
-					CAGE_ASSERT(any(matchesInput(input, maker.result)));
+				CAGE_ASSERT(any(matchesInput(input, maker.result)));
 			}
 			return maker.result;
 		}
@@ -292,7 +287,6 @@ namespace cage
 			CAGE_ASSERT(none(config.requiredFlags & config.forbiddenFlags));
 			CAGE_ASSERT(any(config.devices));
 			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::WheelRoll) || none(config.devices & KeybindDevicesFlags::WheelScroll)); // these two flags are mutually exclusive
-			CAGE_ASSERT(none(config.devices & KeybindDevicesFlags::Modifiers) || config.devices == KeybindDevicesFlags::Modifiers); // modifiers is exclusive with all other flags
 			CAGE_ASSERT(any(config.modes));
 			if (config.guiTextId == 0)
 				config.guiTextId = HashString(config.id);
@@ -438,7 +432,7 @@ namespace cage
 				}
 				if (in.has<input::KeyRelease>() || in.has<input::KeyRepeat>())
 					return false;
-				if (in.has<input::KeyPress>() && config.devices != KeybindDevicesFlags::Modifiers)
+				if (in.has<input::KeyPress>() && none(config.devices & KeybindDevicesFlags::Modifiers))
 				{
 					const input::KeyPress k = in.get<input::KeyPress>();
 					switch (k.key)
@@ -761,9 +755,15 @@ namespace cage
 				if (ini->sectionExists(k->config.id))
 				{
 					k->clear();
-					for (const String &it : ini->items(k->config.id))
+					if (ini->itemExists(k->config.id, "count"))
 					{
-						if (it != "count")
+						const uint32 cnt = ini->getUint32(k->config.id, "count");
+						for (uint32 i = 0; i < cnt; i++)
+							k->matchers.push_back(fromString(ini->get(k->config.id, Stringizer() + i)));
+					}
+					else
+					{
+						for (const String &it : ini->items(k->config.id))
 							k->matchers.push_back(fromString(ini->get(k->config.id, it)));
 					}
 				}
