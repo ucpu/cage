@@ -30,6 +30,7 @@ namespace cage
 	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name) noexcept GCHL_PROFILING_BODY(return {};);
 	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(return {};);
 	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev, uint64 duration) noexcept GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{

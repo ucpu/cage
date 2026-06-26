@@ -135,6 +135,8 @@ namespace cage
 					discardBytes(rd);
 				return rd;
 			}
+
+			void close() override { sock.close(); }
 		};
 
 		class TcpServerImpl : public TcpServer

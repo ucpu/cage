@@ -8,19 +8,46 @@
 	#include <cage-core/concurrent.h>
 	#include <cage-core/concurrentQueue.h>
 	#include <cage-core/config.h>
+	#include <cage-core/networkTcp.h>
 	#include <cage-core/files.h>
 	#include <cage-core/math.h>
 	#include <cage-core/networkWebsocket.h>
-	#include <cage-core/networkTcp.h>
 	#include <cage-core/process.h>
 	#include <cage-core/profiling.h>
 	#include <cage-core/stdHash.h>
 	#include <cage-core/ringBuffer.h>
 
-cage::PointerRange<const cage::uint8> profiling_htm();
+cage::PointerRange<const cage::uint8> profiling_html();
 
 namespace cage
 {
+	namespace
+	{
+		// an http server for the profiling.html file
+		struct Provider : private Immovable
+		{
+			Holder<TcpServer> s;
+
+			Provider()
+			{
+				s = newTcpServer(randomRange(10'000u, 65'000u));
+				CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling http server listens on port: " + s->port());
+			}
+
+			void process()
+			{
+				Holder<TcpConnection> c = s->accept();
+				if (!c)
+					return;
+				std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(profiling_html().size()) + "\r\nConnection: close\r\n\r\n";
+				response.append((const char *)profiling_html().data(), profiling_html().size());
+				c->write(response);
+				threadSleep(20'000);
+				c->close();
+			}
+		};
+	}
+
 	namespace
 	{
 		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
@@ -92,6 +119,7 @@ namespace cage
 			struct Runner : private Immovable
 			{
 				std::unordered_map<uint64, String> threadNames;
+				Holder<Provider> provider;
 				Holder<WebsocketServer> server;
 				Holder<WebsocketConnection> connection;
 
@@ -143,7 +171,7 @@ namespace cage
 					{
 						std::string events;
 
-						ThreadData() { events.reserve(50000); }
+						ThreadData() { events.reserve(50'000); }
 					};
 					std::unordered_map<uint64, ThreadData> data;
 
@@ -183,33 +211,32 @@ namespace cage
 
 				void updateConnecting()
 				{
+					if (provider)
+						provider->process();
+					else
+						provider = systemMemory().createHolder<Provider>();
+
 					if (server)
 					{
 						connection = server->accept();
 						if (connection)
 						{
 							const auto info = connection->remoteInfo();
-							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling client connected: " + info.address + ":" + info.port);
+							CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling ws client connected: " + info.address + ":" + info.port);
+							provider.clear();
 							server.clear();
 						}
 					}
 					else
 					{
 						server = newWebsocketServer(randomRange(10'000u, 65'000u));
-						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling server listens on port: " + server->port());
+						CAGE_LOG(SeverityEnum::Info, "profiling", Stringizer() + "profiling ws server listens on port: " + server->port());
 
 						if (confAutoStartClient)
 						{
 							try
 							{
-	#ifdef CAGE_SYSTEM_WINDOWS
-								const String basePath = detail::pathTemp();
-	#else
-								const String basePath = detail::pathUsersWritable(); // browser on linux does not allow to open html from tmp folder
-	#endif // CAGE_SYSTEM_WINDOWS
-								const String pth = pathJoin(basePath, "cage_profiling.html");
-								writeFile(pth)->write(profiling_htm().cast<const char>());
-								const String url = Stringizer() + "file://" + pth + "?port=" + server->port();
+								const String url = Stringizer() + "http://localhost:" + provider->s->port() + "?port=" + server->port();
 								openUrl(url);
 							}
 							catch (const cage::Exception &)
@@ -223,6 +250,7 @@ namespace cage
 
 				void updateDisabled()
 				{
+					provider.clear();
 					server.clear();
 					connection.clear();
 					eraseQueue();
@@ -241,13 +269,10 @@ namespace cage
 									updateConnected();
 								else
 									updateConnecting();
-								threadSleep(50'000);
 							}
 							else
-							{
 								updateDisabled();
-								threadSleep(200'000);
-							}
+							threadSleep(100'000);
 						}
 						catch (...)
 						{
@@ -287,6 +312,12 @@ namespace cage
 				}
 			}
 		};
+
+		Dispatcher *dispatcher()
+		{
+			static Dispatcher *d = new Dispatcher(); // intentional memory leak
+			return d;
+		}
 	}
 
 	namespace privat
@@ -339,13 +370,38 @@ namespace cage
 		{
 			if (!confEnabled)
 				return;
-			static Dispatcher dispatcher;
+			dispatcher();
 			QueueItem qi;
 			qi.name = ev.name;
 			qi.data = ev.data;
 			qi.startTime = ev.startTime;
 			qi.endTime = timestamp();
 			qi.threadId = currentThreadId();
+			qi.framing = ev.framing;
+			queue().push(qi);
+		}
+		catch (...)
+		{
+			// nothing
+		}
+		ev.startTime = m;
+	}
+
+	void profilingEventEnd(ProfilingEvent &ev, uint64 duration) noexcept
+	{
+		if (ev.startTime == m)
+			return;
+		try
+		{
+			if (!confEnabled)
+				return;
+			dispatcher();
+			QueueItem qi;
+			qi.name = ev.name;
+			qi.data = ev.data;
+			qi.startTime = ev.startTime;
+			qi.endTime = ev.startTime + duration;
+			qi.threadId = 0;
 			qi.framing = ev.framing;
 			queue().push(qi);
 		}

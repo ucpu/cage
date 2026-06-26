@@ -498,28 +498,19 @@ namespace cage
 
 		void GpuFrameTimer::frameStart()
 		{
+#ifndef CAGE_SYSTEM_MAC
 			const ProfilingScope profiling("gpu timer start");
 			ScopeLock lock(device->mutex);
 			const uint32 current = frameIndex % Frames;
 			auto ce = device->device.CreateCommandEncoder({});
-#ifdef CAGE_SYSTEM_MAC
-			{
-				wgpu::PassTimestampWrites ptw = {};
-				ptw.querySet = querySet;
-				ptw.beginningOfPassWriteIndex = wgpu::kQuerySetIndexUndefined;
-				ptw.endOfPassWriteIndex = current * 2 + 0;
-				wgpu::ComputePassDescriptor cpd = {};
-				cpd.timestampWrites = &ptw;
-				ce.BeginComputePass(&cpd).End();
-			}
-#else
 			ce.WriteTimestamp(querySet, current * 2 + 0);
-#endif // CAGE_SYSTEM_MAC
 			device->commands.push_back(ce.Finish());
+#endif // CAGE_SYSTEM_MAC
 		}
 
 		void GpuFrameTimer::frameEnd()
 		{
+#ifndef CAGE_SYSTEM_MAC
 			const ProfilingScope profiling("gpu timer end");
 			ScopeLock lock(device->mutex);
 			{
@@ -528,19 +519,7 @@ namespace cage
 					return;
 				const uint64 offset = current * 256;
 				auto ce = device->device.CreateCommandEncoder({});
-#ifdef CAGE_SYSTEM_MAC
-				{
-					wgpu::PassTimestampWrites ptw = {};
-					ptw.querySet = querySet;
-					ptw.beginningOfPassWriteIndex = wgpu::kQuerySetIndexUndefined;
-					ptw.endOfPassWriteIndex = current * 2 + 1;
-					wgpu::ComputePassDescriptor cpd = {};
-					cpd.timestampWrites = &ptw;
-					ce.BeginComputePass(&cpd).End();
-				}
-#else
 				ce.WriteTimestamp(querySet, current * 2 + 1);
-#endif // CAGE_SYSTEM_MAC
 				ce.ResolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
 				ce.CopyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
 				device->commands.push_back(ce.Finish()); // this enques the cmdbuf to be submitted, but does not submit it yet
@@ -556,8 +535,11 @@ namespace cage
 						const uint64 *ts = static_cast<const uint64 *>(buffRead[prev].GetConstMappedRange(0, 2 * sizeof(uint64)));
 						time = (ts[1] - ts[0]) / 1000; // ns -> us
 						buffRead[prev].Unmap();
+						ProfilingEvent ev = profilingEventBegin("gpu", ProfilingFrameTag());
+						profilingEventEnd(ev, time);
 					});
 			}
+#endif // CAGE_SYSTEM_MAC
 			frameIndex++;
 		}
 	}

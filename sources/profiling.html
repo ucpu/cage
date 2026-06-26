@@ -206,8 +206,9 @@
 				let c = (d.endTime + d.prevTime) / 2
 				let r = d.endTime - d.prevTime
 				filteredDomain = [c - r, c + r]
-				for (const thr of Object.values(threads)) {
-					tasksRedraw(thr)
+				for (const [idx, thr] of Object.entries(threads)) {
+					if (idx > 0)
+						tasksRedraw(thr)
 				}
 			}
 
