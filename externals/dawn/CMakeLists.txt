@@ -6,17 +6,30 @@ cage_heavily_optimized()
 
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/CMakeLists.txt"
-	"set\\(CMAKE_DEBUG_POSTFIX" "set(_CMAKE_DEBUG_POSTFIX"
+	"set\\(CMAKE_DEBUG_POSTFIX" "set(__CMAKE_DEBUG_POSTFIX__"
 	"set\\(IS_DEBUG_BUILD 1\\)" "set(IS_DEBUG_BUILD 0)"
 )
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/CMakeLists.txt"
 	"NOT TARGET glslang AND \\(TINT_BUILD_GLSL_WRITER OR TINT_BUILD_GLSL_VALIDATOR\\) AND TINT_BUILD_CMD_TOOLS" "ON"
-	"set\\(ABSL_PROPAGATE_CXX_STD" "set(_ABSL_PROPAGATE_CXX_STD"
+	"set\\(ABSL_PROPAGATE_CXX_STD" "set(__ABSL_PROPAGATE_CXX_STD__"
+)
+cage_replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/protobuf.cmake"
+	"target_compile_options\\(libprotobuf PUBLIC -fno-exceptions\\)" "# code removed by cage"
+	"target_compile_options\\(libprotobuf PUBLIC -fno-rtti\\)" "# code removed by cage"
 )
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/abseil-cpp/CMakeLists.txt"
 	"set\\(CMAKE_MSVC_RUNTIME_LIBRARY[^\\\n]*\\)" "# code removed by cage"
+)
+cage_replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/third_party/abseil-cpp/absl/strings/CMakeLists.txt"
+	" absl::strings\r?\n" "#absl::strings\n"
+)
+cage_replace_in_file(
+	"${CMAKE_CURRENT_LIST_DIR}/dawn/src/cmake/DawnCompilerChecks.cmake"
+	" DAWN_SUPPORTS_CXX_MODULES\\)" " __DAWN_SUPPORTS_CXX_MODULES__)"
 )
 cage_replace_in_file(
 	"${CMAKE_CURRENT_LIST_DIR}/dawn/src/dawn/common/Constants.h"

@@ -336,6 +336,16 @@ namespace cage
 				return systemMemory().createImpl<PointerRange<char>, Data>(msg);
 			}
 
+			template<class T = decltype(sockets)>
+			static void SocketSendMessages(SteamNetworkingMessage_t *msg)
+			{
+				auto s = static_cast<T>(sockets); // s is dependant type
+				if constexpr (requires { s->SendMessages(1, &msg, nullptr, true); })
+					s->SendMessages(1, &msg, nullptr, true);
+				else
+					s->SendMessages(1, &msg, nullptr);
+			}
+
 			void write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 			{
 				CAGE_ASSERT(!buffer.empty());
@@ -349,7 +359,7 @@ namespace cage
 				msg->m_conn = sock;
 				msg->m_idxLane = channel;
 				msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
-				sockets->SendMessages(1, &msg, nullptr);
+				SocketSendMessages(msg);
 			}
 
 			void update()

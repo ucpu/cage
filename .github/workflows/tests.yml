@@ -85,11 +85,6 @@ jobs:
             install: gcc-14 g++-14
           }
         - {
-            cc: clang-16,
-            cxx: clang++-16,
-            install: clang-16
-          }
-        - {
             cc: clang-18,
             cxx: clang++-18,
             install: clang-18
@@ -269,8 +264,8 @@ jobs:
       CFLAGS: ${{ matrix.sanitizer.flags }}
       CXXFLAGS: ${{ matrix.sanitizer.flags }}
       LDFLAGS: ${{ matrix.sanitizer.flags }}
-      CC: clang-16
-      CXX: clang++-16
+      CC: clang-18
+      CXX: clang++-18
     strategy:
       fail-fast: false
       matrix:

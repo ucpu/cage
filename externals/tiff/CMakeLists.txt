@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "tiff")
 message(STATUS "----------------------------------------------------------------")
 
+find_package(jpeg)
+
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 set(ZSTD_HAVE_DECOMPRESS_STREAM ON) # avoid check that would have failed - we know we have sufficient version of zstd
 set(HAVE_JPEGTURBO_DUAL_MODE_8_12 OFF) # avoid check that would have failed

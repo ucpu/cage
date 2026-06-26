@@ -28,6 +28,7 @@ set_source_files_properties(
 	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_certs.pb.cc"
 	"${CMAKE_CURRENT_BINARY_DIR}/GameNetworkingSockets/src/steamnetworkingsockets_messages_udp.pb.cc"
 	"GameNetworkingSockets/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_lowlevel.cpp"
+	"GameNetworkingSockets/src/steamnetworkingsockets/clientlib/steamnetworkingsockets_socketthread.cpp"
 	TARGET_DIRECTORY GameNetworkingSockets_s
 	PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON
 )

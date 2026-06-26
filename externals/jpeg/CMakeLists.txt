@@ -109,5 +109,6 @@ endif()
 
 add_library(cage-jpeg INTERFACE)
 target_link_libraries(cage-jpeg INTERFACE jpeg-static)
-cage_gen_module(JPEG $<TARGET_LINKER_FILE:cage-jpeg> $<TARGET_PROPERTY:cage-jpeg,INTERFACE_INCLUDE_DIRECTORIES>)
+#cage_gen_module(JPEG $<TARGET_LINKER_FILE:cage-jpeg> $<TARGET_PROPERTY:cage-jpeg,INTERFACE_INCLUDE_DIRECTORIES>)
+cage_gen_module(JPEG cage-jpeg "")
 add_library(JPEG::JPEG ALIAS cage-jpeg)
