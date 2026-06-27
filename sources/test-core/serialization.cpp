@@ -29,10 +29,6 @@ void testSerialization()
 		static_assert(!privat::WritableConcept<PointerRange<uint32>>);
 		static_assert(!privat::WritableConcept<PointerRange<const uint32>>);
 		static_assert(!privat::WritableConcept<PointerRange<String>>);
-		static_assert(privat::SerializableConcept<uint32>);
-		static_assert(privat::SerializableConcept<String>);
-		static_assert(privat::SerializableConcept<std::pair<String, uint32>>);
-		static_assert(privat::SerializableConcept<std::pair<const String, uint32>>); // used in std::map
 	}
 
 	{

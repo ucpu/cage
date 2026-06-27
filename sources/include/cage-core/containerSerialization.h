@@ -84,7 +84,7 @@ namespace cage
 			c.empty();
 			typename C::value_type;
 			c.insert(c.end(), *c.begin());
-		} && SerializableConcept<typename C::value_type>;
+		};
 
 		template<class C>
 		concept MemcpyContainerConcept = WritableContainerConcept<C> && requires(C c) { c.data(); } && MemcpyableConcept<typename C::value_type>;
@@ -177,7 +177,6 @@ namespace cage
 	// overload for pointer range
 
 	template<class T>
-	requires requires(Serializer s, T v) { s << v; } // requires <<, but not >>
 	Serializer &operator<<(Serializer &s, PointerRange<T> c)
 	{
 		s << numeric_cast<uint64>(c.size());

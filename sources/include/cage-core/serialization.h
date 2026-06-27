@@ -144,18 +144,10 @@ namespace cage
 		return s;
 	}
 
-	namespace privat
-	{
-		template<class T>
-		concept SerializableConcept = requires(Serializer s, Deserializer d, T v) {
-			d >> v;
-			s << v;
-		};
-	}
-
 	// r-value deserializer
 
-	Deserializer &&operator>>(Deserializer &&s, privat::SerializableConcept auto &v)
+	template<class T>
+	Deserializer &&operator>>(Deserializer &&s, T &v)
 	{
 		s >> v;
 		return std::move(s);
@@ -164,7 +156,7 @@ namespace cage
 	// overloads for c array
 
 	template<class T, uintPtr N>
-	requires(privat::SerializableConcept<T>)
+	requires(privat::WritableConcept<T>)
 	Serializer &operator<<(Serializer &s, const T (&v)[N])
 	{
 		for (auto &it : v)
@@ -173,7 +165,7 @@ namespace cage
 	}
 
 	template<class T, uintPtr N>
-	requires(privat::SerializableConcept<T>)
+	requires(privat::WritableConcept<T>)
 	Deserializer &operator>>(Deserializer &s, T (&v)[N])
 	{
 		for (auto &it : v)
@@ -203,7 +195,6 @@ namespace cage
 	// overloads for std::pair
 
 	template<class A, class B>
-	requires(privat::SerializableConcept<A> && privat::SerializableConcept<B>)
 	Serializer &operator<<(Serializer &s, const std::pair<A, B> &p)
 	{
 		s << p.first << p.second;
@@ -211,7 +202,6 @@ namespace cage
 	}
 
 	template<class A, class B>
-	requires(privat::SerializableConcept<std::remove_const_t<A>> && privat::SerializableConcept<B>)
 	Deserializer &operator>>(Deserializer &s, std::pair<A, B> &p)
 	{
 		s >> const_cast<std::remove_const_t<A> &>(p.first) >> p.second;
