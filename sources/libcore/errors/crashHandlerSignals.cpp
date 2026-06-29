@@ -314,7 +314,7 @@ namespace cage
 						 // SIGIOT, // IOT trap.  A synonym for SIGABRT
 						 // SIGKILL, // Kill signal
 						 // SIGLOST, // File lock lost
-						 // SIGPIPE, // Broken pipe
+						 SIGPIPE, // Broken pipe
 						 // SIGPOLL, // Pollable event
 						 // SIGPROF, // Profiling timer expired
 						 // SIGPWR, // Power failure

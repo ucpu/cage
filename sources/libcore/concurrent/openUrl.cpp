@@ -6,8 +6,6 @@
 		#define NOMINMAX
 	#endif
 	#include <windows.h> // ShellExecute
-#else
-	#include <cstdlib> // std::system
 #endif
 
 #include <cage-core/process.h>
@@ -36,6 +34,15 @@ namespace cage
 			}
 			ShellExecute(NULL, "open", (Stringizer() + "\"" + url + "\"").value.c_str(), NULL, NULL, SW_SHOWNORMAL);
 		}
+#else
+		void unixOpenUrl(const String &cmd)
+		{
+			ProcessCreateConfig cfg;
+			cfg.command = cmd;
+			cfg.discardIo = true;
+			cfg.detached = true;
+			newProcess(cfg);
+		}
 #endif
 	}
 
@@ -46,9 +53,9 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		windowsOpenUrl(url);
 #elif defined(CAGE_SYSTEM_MAC)
-		std::system((Stringizer() + "open \"" + url + "\"").value.c_str());
+		unixOpenUrl(Stringizer() + "open \"" + url + "\"");
 #elif defined(CAGE_SYSTEM_LINUX)
-		std::system((Stringizer() + "xdg-open \"" + url + "\"").value.c_str());
+		unixOpenUrl(Stringizer() + "xdg-open \"" + url + "\"");
 #else
 	#error "unknown platform"
 #endif

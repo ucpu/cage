@@ -4,6 +4,10 @@
 #include <cage-core/serialization.h>
 #include <cage-core/string.h>
 
+#ifndef MSG_NOSIGNAL
+	#define MSG_NOSIGNAL 0
+#endif
+
 namespace cage
 {
 	namespace
@@ -252,6 +256,9 @@ namespace cage
 			descriptor = socket(family, type, protocol);
 			// FD_CLOEXEC -> close the socket on exec
 			fcntl(descriptor, F_SETFD, FD_CLOEXEC);
+			// SO_NOSIGPIPE -> similar to MSG_NOSIGNAL, prevents SIGPIPE
+			int set = 1;
+			setsockopt(descriptor, SOL_SOCKET, SO_NOSIGPIPE, &set, sizeof(set));
 #else
 	#error This operating system is not supported
 #endif
@@ -430,7 +437,7 @@ namespace cage
 		void Sock::send(const void *buffer, uintPtr bufferSize)
 		{
 			CAGE_ASSERT(connected);
-			if (::send(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
+			if (::send(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), MSG_NOSIGNAL) != bufferSize)
 				CAGE_THROW_ERROR(SystemError, "send failed (send)", WSAGetLastError());
 		}
 
@@ -438,7 +445,7 @@ namespace cage
 		{
 			CAGE_ASSERT(!connected);
 			CAGE_ASSERT(remoteAddress.getFamily() == family);
-			if (::sendto(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr *)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
+			if (::sendto(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), MSG_NOSIGNAL, (sockaddr *)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(SystemError, "send failed (sendto)", WSAGetLastError());
 		}
 
