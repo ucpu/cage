@@ -31,6 +31,8 @@ namespace cage
 		const ConfigFloat confSimulatedPacketLoss("cage/steamsocks/simulatedPacketLoss", 0); // 0 .. 1
 		const ConfigFloat confSimulatedPacketDelay("cage/steamsocks/simulatedPacketDelay", 0); // ms
 		const ConfigUint32 confMessageSizeWarningThreshold("cage/steamsocks/messageSizeWarningThreshold", 16 * 1024); // bytes
+		const ConfigUint32 confTimeoutInitial("cage/steamsocks/timeoutInitial", 15'000); // ms
+		const ConfigUint32 confTimeoutConnected("cage/steamsocks/timeoutConnected", 60'000); // ms
 
 		constexpr uint32 LanesCount = 4;
 
@@ -175,6 +177,8 @@ namespace cage
 					utils->SetGlobalConfigValueFloat(k_ESteamNetworkingConfig_FakePacketLoss_Send, packetLoss);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_FakePacketLag_Send, packetDelay);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutInitial, confTimeoutInitial);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutConnected, confTimeoutConnected);
 				}
 			};
 			static InitializerConfiguration initializerConfiguration;
