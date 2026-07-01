@@ -351,6 +351,8 @@ namespace cage
 		std::atomic<uintPtr> ItemsContainerReservation = 0;
 
 		// container with stable pointers to items
+		// never realocates
+		// voids inserted items when full
 		template<class T>
 		struct ItemsContainer : private std::vector<T>, Immovable
 		{
@@ -723,7 +725,7 @@ namespace cage
 				}
 			}
 
-			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Mat4 &importTransform)
+			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Model *mesh)
 			{
 				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
 				static_assert(decltype(SkeletalAnimationLayer::maskName)::MaxLength == SkeletalAnimationMaskLabel::MaxLength);
@@ -739,6 +741,7 @@ namespace cage
 					output.animation = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
 					if (!output.animation)
 						return {};
+					CAGE_ASSERT(output.animation->bonesCount() == mesh->bonesCount);
 					const uint64 time = input.startTime ? input.startTime : startTime;
 					output.coefficient = animCoefficient(output.animation->duration, config.shared.currentTime, time, input.speed, input.offset);
 					output.weight = input.weight;
@@ -752,7 +755,22 @@ namespace cage
 					}
 				}
 
-				cnf.modelImportTransform = importTransform;
+				const auto &checkSkeletonIdsAreSame = [&]() -> bool
+				{
+					std::optional<uint32> id;
+					for (const auto &ani : cnf.animations)
+					{
+						if (!ani.animation)
+							continue;
+						if (id && *id != ani.animation->skeletonName)
+							return false;
+						id = ani.animation->skeletonName;
+					}
+					return true;
+				};
+				CAGE_ASSERT(checkSkeletonIdsAreSame());
+
+				cnf.modelImportTransform = mesh->importTransform;
 				cnf.object = object;
 				cnf.animateSkeletonsInsteadOfSkins = cnfRenderSkeletonBones;
 				return skeletonPreparatorCollection->create(std::move(cnf));
@@ -787,7 +805,7 @@ namespace cage
 					ps.reset();
 				if (ps)
 				{
-					rm.skeletalAnimation = prepareSkeleton(rd.e, startTime, *ps, rm.mesh->importTransform);
+					rm.skeletalAnimation = prepareSkeleton(rd.e, startTime, *ps, rm.mesh);
 					if (!rm.skeletalAnimation)
 						ps.reset();
 				}
@@ -1192,6 +1210,7 @@ namespace cage
 				{
 					const SceneModel &r = inst->data.model();
 					CAGE_ASSERT(+r.mesh == +rm.mesh);
+					CAGE_ASSERT(!!r.skeletalAnimation == !!rm.skeletalAnimation);
 					uniMeshes.push_back(makeMeshUni(inst));
 					if (rm.skeletalAnimation)
 					{

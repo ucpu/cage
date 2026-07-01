@@ -354,7 +354,7 @@ void processModel()
 
 	dsm.renderFlags = part.renderFlags;
 	dsm.renderLayer = part.renderLayer;
-	dsm.skeletonBones = result.skeleton ? result.skeleton->bonesCount() : 0;
+	dsm.skeletonBones = any(flags & MeshComponentsFlags::Bones) && result.skeleton ? result.skeleton->bonesCount() : 0;
 	dsm.materialSize = sizeof(MeshImportMaterial);
 
 	const MeshImportMaterial &mat = part.material;
