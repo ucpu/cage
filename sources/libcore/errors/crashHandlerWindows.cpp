@@ -143,6 +143,8 @@ namespace cage
 					return "EXCEPTION_DOTNET";
 				case EXCEPTION_RENAME_THREAD:
 					return "EXCEPTION_RENAME_THREAD";
+				case RPC_S_INVALID_BINDING:
+					return "RPC_S_INVALID_BINDING";
 				default:
 					return Stringizer() + "unknown exception code: " + code;
 			}
@@ -175,6 +177,18 @@ namespace cage
 				case DBG_PRINTEXCEPTION_WIDE_C: // OutputDebugStringW
 				case EXCEPTION_CPP: // regular c++ exception
 				case EXCEPTION_RENAME_THREAD: // exception raised to rename current thread
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		bool insignificantExceptionCodes(uint64 code)
+		{
+			switch (code)
+			{
+				case EXCEPTION_DOTNET:
+				case RPC_S_INVALID_BINDING: // when steam is detecting dual wifi
 					return true;
 				default:
 					return false;
@@ -266,10 +280,13 @@ namespace cage
 		{
 			if (IsDebuggerPresent())
 				return;
+			if (insignificantExceptionCodes(ex->ExceptionRecord->ExceptionCode))
+			{
+				CAGE_LOG(SeverityEnum::Warning, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode) + " (ignoring)");
+				return;
+			}
 			ScopeLock lock(handlerMutex());
 			CAGE_LOG(SeverityEnum::Critical, "crash-handler", Stringizer() + "crash handler: " + exceptionCodeToString(ex->ExceptionRecord->ExceptionCode));
-			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_DOTNET)
-				return;
 			//CAGE_LOG(SeverityEnum::Info, "crash-handler", Stringizer() + "address: " + ex->ExceptionRecord->ExceptionAddress);
 			if (ex->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION || ex->ExceptionRecord->ExceptionCode == EXCEPTION_IN_PAGE_ERROR)
 			{
