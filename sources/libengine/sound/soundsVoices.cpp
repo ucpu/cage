@@ -144,7 +144,7 @@ namespace cage
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
 				CAGE_ASSERT(gain.valid() && gain >= 0 && gain.finite());
-				CAGE_ASSERT(maxGainThreshold.valid() && maxGainThreshold >= 0);
+				CAGE_ASSERT(maxGain.valid() && maxGain >= 0);
 				CAGE_ASSERT(position.valid() && orientation.valid());
 				detail::memset(data.buffer.data(), 0, data.buffer.size() * sizeof(float));
 

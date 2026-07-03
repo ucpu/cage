@@ -174,8 +174,8 @@ namespace cage
 					}
 					l.mixer->orientation = e.transform.orientation;
 					l.mixer->position = e.transform.position;
-					l.mixer->maxActiveSounds = e.listener.maxSounds;
-					l.mixer->maxGainThreshold = e.listener.maxGainThreshold;
+					l.mixer->maxSounds = e.listener.maxSounds;
+					l.mixer->maxGain = e.listener.maxGain;
 					l.mixer->gain = e.listener.gain;
 					l.dispatchTime = dispatchTime;
 				}

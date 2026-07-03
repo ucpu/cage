@@ -204,8 +204,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
-		uint32 maxSounds = 100;
-		Real maxGainThreshold = Real::Infinity(); // all sounds will have proportionally reduced gain when the sum of effective gains reaches this threshold
+		uint32 maxSounds = 30;
+		Real maxGain = Real::Infinity(); // all sounds will have proportionally reduced gain when number of sounds reaches this threshold
 		Real gain = 1; // linear amplitude multiplier
 	};
 }
