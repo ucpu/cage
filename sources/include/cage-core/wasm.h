@@ -111,7 +111,8 @@ namespace cage
 				catch (...)
 				{
 					wasmCallbackException(ctx);
-					return {};
+					if constexpr (!std::is_same_v<R, void>)
+						return {};
 				}
 			};
 			add_(f);
@@ -136,7 +137,8 @@ namespace cage
 				catch (...)
 				{
 					wasmCallbackException(ctx);
-					return {};
+					if constexpr (!std::is_same_v<R, void>)
+						return {};
 				}
 			};
 			add_(f);
