@@ -293,6 +293,13 @@ namespace cage
 		{
 			return (WasmInstance *)wasm_runtime_get_user_data((wasm_exec_env_t)ctx);
 		}
+
+		void wasmCallbackException(void *ctx)
+		{
+			cage::detail::logCurrentCaughtException();
+			WasmInstanceImpl *impl = (WasmInstanceImpl *)wasm_runtime_get_user_data((wasm_exec_env_t)ctx);
+			wasm_runtime_set_exception(impl->instance, "wasm exception in callback");
+		}
 	}
 
 	void WasmNatives::commit(const WasmName &moduleName_)

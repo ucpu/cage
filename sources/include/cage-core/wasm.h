@@ -85,6 +85,7 @@ namespace cage
 
 		CAGE_CORE_API const WasmTypelessDelegate *wasmCallbackAttachment(void *ctx);
 		CAGE_CORE_API WasmInstance *wasmCallbackInstance(void *ctx);
+		CAGE_CORE_API void wasmCallbackException(void *ctx);
 	}
 
 	class CAGE_CORE_API WasmNatives : private Immovable
@@ -103,7 +104,15 @@ namespace cage
 			{
 				Delegate<R(WasmInstance *, Ts...)> function = *(const Delegate<R(WasmInstance *, Ts...)> *)wasmCallbackAttachment(ctx);
 				WasmInstance *instance = wasmCallbackInstance(ctx);
-				return function(instance, std::forward<Ts>(vs)...);
+				try
+				{
+					return function(instance, std::forward<Ts>(vs)...);
+				}
+				catch (...)
+				{
+					wasmCallbackException(ctx);
+					return {};
+				}
 			};
 			add_(f);
 		}
@@ -120,7 +129,15 @@ namespace cage
 			f.funcPtr = (void *)+[](void *ctx, Ts... vs) -> R
 			{
 				Delegate<R(Ts...)> function = *(const Delegate<R(Ts...)> *)wasmCallbackAttachment(ctx);
-				return function(std::forward<Ts>(vs)...);
+				try
+				{
+					return function(std::forward<Ts>(vs)...);
+				}
+				catch (...)
+				{
+					wasmCallbackException(ctx);
+					return {};
+				}
 			};
 			add_(f);
 		}

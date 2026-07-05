@@ -5,3 +5,4 @@ clang --target=wasm32 -Wl,--allow-undefined -Wl,--export-all -Wl,--no-entry -nos
 clang --target=wasm32 -Wl,--allow-undefined -Wl,--export-all -Wl,--no-entry -nostdlib -o natives.wasm natives.c
 #clang++ --target=wasm32 -Wl,--allow-undefined -Wl,--export-all -Wl,--no-entry -nostdlib -nostartfiles -o foo.wasm foo.cpp
 em++ --target=wasm32 -Wl,--allow-undefined -Wl,--export-all -Wl,--no-entry -nostartfiles -O2 -o foo.wasm foo.cpp
+em++ --target=wasm32 -Wl,--allow-undefined -Wl,--export-all -Wl,--no-entry -nostartfiles -O2 -o exceptions.wasm exceptions.cpp

@@ -9,6 +9,7 @@ PointerRange<const uint8> sums_wasm();
 PointerRange<const uint8> strings_wasm();
 PointerRange<const uint8> natives_wasm();
 PointerRange<const uint8> foo_wasm();
+PointerRange<const uint8> exceptions_wasm();
 
 namespace
 {
@@ -287,6 +288,60 @@ namespace
 			t4->wait();
 		}
 	}
+
+	void testExceptions()
+	{
+		CAGE_TESTCASE("wasm and exceptions");
+
+		{
+			Holder<WasmNatives> nats = newWasmNatives();
+			nats->add(Delegate<void(WasmInstance *)>(
+						  [&](WasmInstance *inst)
+						  {
+							  CAGE_TEST(inst);
+							  CAGE_THROW_ERROR(Exception, "exception in first");
+						  }),
+				"callback_first");
+			nats->commit();
+		}
+
+		Holder<WasmModule> mod = newWasmModule(exceptions_wasm().cast<const char>());
+
+		{
+			CAGE_TESTCASE("sanity_sum (1)");
+			Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+			WasmFunction sanity_sum = inst->function<sint32(sint32, sint32)>("sanity_sum");
+			CAGE_TEST(sanity_sum(13, 42) == (13 + 42));
+		}
+
+		{
+			CAGE_TESTCASE("call_first");
+			Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+			WasmFunction call_first = inst->function<void()>("call_first");
+			CAGE_TEST_THROWN(call_first());
+		}
+
+		{
+			CAGE_TESTCASE("print_msg");
+			Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+			WasmFunction print_msg = inst->function<void(uint32)>("print_msg");
+			CAGE_TEST_THROWN(print_msg(0));
+		}
+
+		{
+			CAGE_TESTCASE("throwing");
+			Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+			WasmFunction throwing = inst->function<void()>("throwing");
+			CAGE_TEST_THROWN(throwing());
+		}
+
+		{
+			CAGE_TESTCASE("sanity_sum (2)");
+			Holder<WasmInstance> inst = wasmInstantiate(mod.share());
+			WasmFunction sanity_sum = inst->function<sint32(sint32, sint32)>("sanity_sum");
+			CAGE_TEST(sanity_sum(13, 42) == (13 + 42));
+		}
+	}
 }
 
 void testWasm()
@@ -300,4 +355,5 @@ void testWasm()
 	testLinkedNativeFunctions();
 	testEmptyModule();
 	testInThreads();
+	testExceptions();
 }
