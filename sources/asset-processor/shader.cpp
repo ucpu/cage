@@ -533,6 +533,37 @@ void processShader()
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "applicable keywords: " + applicableKeywords.size() + ", out of: " + keywords.size());
 	}
 
+	if (configShaderPrint)
+	{
+		for (const auto &it : codes)
+		{
+			const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/code_" + it.first + ".glsl");
+			FileMode fm(false, true);
+			fm.textual = true;
+			Holder<File> f = newFile(name, fm);
+			f->write(it.second);
+			f->close();
+		}
+
+		for (const auto &it : variants)
+		{
+			for (ShaderStageEnum stage : { ShaderStageEnum::Vertex, ShaderStageEnum::Fragment, ShaderStageEnum::Compute })
+			{
+				if (!it.spirv->hasStage(stage))
+					continue;
+				for (const auto &segment : { std::pair(".glsl", it.spirv->exportSource(stage)), std::pair(".spirvasm", it.spirv->exportDisassembly(stage)) })
+				{
+					const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/variant_" + it.id + "_" + toString(stage) + segment.first);
+					FileMode fm(false, true);
+					fm.textual = true;
+					Holder<File> f = newFile(name, fm);
+					f->write(segment.second);
+					f->close();
+				}
+			}
+		}
+	}
+
 	for (auto &it : variants)
 		it.spirv->stripSources();
 
@@ -574,36 +605,5 @@ void processShader()
 		f->write(bufferView(h));
 		f->write(comp);
 		f->close();
-	}
-
-	if (configShaderPrint)
-	{
-		for (const auto &it : codes)
-		{
-			const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/code_" + it.first + ".glsl");
-			FileMode fm(false, true);
-			fm.textual = true;
-			Holder<File> f = newFile(name, fm);
-			f->write(it.second);
-			f->close();
-		}
-
-		for (const auto &it : variants)
-		{
-			for (ShaderStageEnum stage : { ShaderStageEnum::Vertex, ShaderStageEnum::Fragment, ShaderStageEnum::Compute })
-			{
-				if (!it.spirv->hasStage(stage))
-					continue;
-				for (const auto &segment : { std::pair(".glsl", it.spirv->exportSource(stage)), std::pair(".spirvasm", it.spirv->exportDisassembly(stage)) })
-				{
-					const String name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), Stringizer() + pathReplaceInvalidCharacters(processor->inputName) + "/variant_" + it.id + "_" + toString(stage) + segment.first);
-					FileMode fm(false, true);
-					fm.textual = true;
-					Holder<File> f = newFile(name, fm);
-					f->write(segment.second);
-					f->close();
-				}
-			}
-		}
 	}
 }
