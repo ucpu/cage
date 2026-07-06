@@ -2,9 +2,6 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "wamr")
 message(STATUS "----------------------------------------------------------------")
 
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
-endif()
 string(TOLOWER ${CMAKE_HOST_SYSTEM_NAME} WAMR_BUILD_PLATFORM)
 set(CMAKE_DISABLE_SOURCE_CHANGES OFF)
 set(WAMR_BH_LOG cage_wamr_log)
