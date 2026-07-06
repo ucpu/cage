@@ -136,3 +136,9 @@
 [submodule "externals/spirv/glslang"]
 	path = externals/spirv/glslang
 	url = https://github.com/KhronosGroup/glslang
+[submodule "externals/protobuf/protobuf"]
+	path = externals/protobuf/protobuf
+	url = https://github.com/protocolbuffers/protobuf
+[submodule "externals/abseil/abseil-cpp"]
+	path = externals/abseil/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp
