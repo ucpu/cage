@@ -3,14 +3,6 @@
 
 #include <cage-engine/graphicsCommon.h>
 
-namespace wgpu
-{
-	class Device;
-	class Queue;
-	class CommandBuffer;
-	struct Future;
-}
-
 namespace cage
 {
 	class Window;
@@ -19,13 +11,13 @@ namespace cage
 	class CAGE_ENGINE_API GraphicsDevice : private Immovable
 	{
 	public:
-		void wait(const wgpu::Future &future);
-		void insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
+		void wait(const gpu::Future &future);
+		void insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
 		Holder<Texture> nextWindow(Window *window);
 		GraphicsFrameStatistics nextFrame();
 
-		Holder<wgpu::Device> nativeDevice(); // locks the device for thread-safe access
-		Holder<wgpu::Queue> nativeQueue(); // locks the device for thread-safe access
+		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
+		Holder<gpu::Queue> nativeQueue(); // locks the device for thread-safe access
 	};
 
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig

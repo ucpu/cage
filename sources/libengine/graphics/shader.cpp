@@ -2,14 +2,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/hashString.h>
 #include <cage-core/lineReader.h>
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/shader.h>
 #include <cage-engine/spirv.h>
 
+/*
 namespace cage
 {
 	namespace
@@ -134,3 +133,4 @@ namespace cage
 		return systemMemory().createImpl<MultiShader, MultiShaderImpl>(label);
 	}
 }
+*/

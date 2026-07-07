@@ -1,37 +1,36 @@
 #include <map>
 
-#include <webgpu/webgpu_cpp.h>
-
 #include "processor.h"
 
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-engine/gpuCore.h>
 #include <cage-engine/texture.h>
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
-	wgpu::FilterMode convertFilter(const String &f)
+	gpu::FilterMode convertFilter(const String &f)
 	{
 		if (f == "nearest")
-			return wgpu::FilterMode::Nearest;
+			return gpu::FilterMode::Nearest;
 		if (f == "linear")
-			return wgpu::FilterMode::Linear;
-		return wgpu::FilterMode::Undefined;
+			return gpu::FilterMode::Linear;
+		return gpu::FilterMode::Undefined;
 	}
 
-	wgpu::AddressMode convertWrap(const String &f)
+	gpu::AddressMode convertWrap(const String &f)
 	{
 		if (f == "clamp")
-			return wgpu::AddressMode::ClampToEdge;
+			return gpu::AddressMode::ClampToEdge;
 		if (f == "repeat")
-			return wgpu::AddressMode::Repeat;
+			return gpu::AddressMode::Repeat;
 		if (f == "mirror")
-			return wgpu::AddressMode::MirrorRepeat;
-		return wgpu::AddressMode::Undefined;
+			return gpu::AddressMode::MirrorRepeat;
+		return gpu::AddressMode::Undefined;
 	}
 
 	TextureFlags convertTarget()
@@ -61,7 +60,7 @@ namespace
 		return result;
 	}
 
-	wgpu::TextureFormat findInternalFormatForBcn(const TextureHeader &data)
+	gpu::TextureFormat findInternalFormatForBcn(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -69,7 +68,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::BC7RGBAUnormSrgb;
+					return gpu::TextureFormat::BC7RGBAUnormSrgb;
 			}
 		}
 		else
@@ -77,18 +76,18 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return wgpu::TextureFormat::BC4RUnorm;
+					return gpu::TextureFormat::BC4RUnorm;
 				case 2:
-					return wgpu::TextureFormat::BC5RGUnorm;
+					return gpu::TextureFormat::BC5RGUnorm;
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::BC7RGBAUnorm;
+					return gpu::TextureFormat::BC7RGBAUnorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for compressed texture format");
 	}
 
-	wgpu::TextureFormat findInternalFormatForRaw(const TextureHeader &data)
+	gpu::TextureFormat findInternalFormatForRaw(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -96,7 +95,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::RGBA8UnormSrgb;
+					return gpu::TextureFormat::RGBA8UnormSrgb;
 			}
 		}
 		else
@@ -104,12 +103,12 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return wgpu::TextureFormat::R8Unorm;
+					return gpu::TextureFormat::R8Unorm;
 				case 2:
-					return wgpu::TextureFormat::RG8Unorm;
+					return gpu::TextureFormat::RG8Unorm;
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::RGBA8Unorm;
+					return gpu::TextureFormat::RGBA8Unorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for non-compressed texture format");
@@ -338,7 +337,7 @@ namespace
 		if ((data.resolution[0] % 4) != 0 || (data.resolution[1] % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "base image resolution for bcn encoding must be divisible by 4");
 
-		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
+		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
 		data.format = (uint32)findInternalFormatForBcn(data);
 
 		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
@@ -372,7 +371,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
-		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
+		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
 		data.format = (uint32)findInternalFormatForRaw(data);
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
@@ -408,9 +407,9 @@ namespace
 		header.channels = images.parts[0].image->channels();
 		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
 		header.sampleFilter = (uint32)convertFilter(processor->property("sampleFilter"));
-		header.mipmapFilter = (uint32)(header.mipLevels > 1 ? wgpu::MipmapFilterMode::Linear : wgpu::MipmapFilterMode::Nearest);
+		header.mipmapFilter = (uint32)(header.mipLevels > 1 ? gpu::MipmapFilterMode::Linear : gpu::MipmapFilterMode::Nearest);
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
-		if (header.sampleFilter != (uint32)wgpu::FilterMode::Linear || header.mipmapFilter != (uint32)wgpu::MipmapFilterMode::Linear)
+		if (header.sampleFilter != (uint32)gpu::FilterMode::Linear || header.mipmapFilter != (uint32)gpu::MipmapFilterMode::Linear)
 			header.anisoFilter = 1;
 		header.wrapX = (uint32)convertWrap(processor->property("wrapX"));
 		header.wrapY = (uint32)convertWrap(processor->property("wrapY"));

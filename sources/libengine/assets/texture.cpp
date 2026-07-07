@@ -1,13 +1,13 @@
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/typeIndex.h>
 #include <cage-engine/assetsSchemes.h>
 #include <cage-engine/assetsStructs.h>
+#include <cage-engine/gpuCore.h>
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
 
+/*
 namespace cage
 {
 	namespace privat
@@ -138,3 +138,4 @@ namespace cage
 		return s;
 	}
 }
+*/

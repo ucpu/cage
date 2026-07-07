@@ -41,6 +41,7 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
 
+/*
 namespace cage
 {
 	struct AssetPack;
@@ -2205,3 +2206,4 @@ namespace cage
 		return *this;
 	}
 }
+*/

@@ -9,6 +9,7 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
+/*
 namespace cage
 {
 	namespace
@@ -490,3 +491,4 @@ namespace cage
 		config.encoder->draw(draw);
 	}
 }
+*/

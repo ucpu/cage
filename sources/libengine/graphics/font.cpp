@@ -49,6 +49,7 @@ namespace
 	}
 }
 
+/*
 namespace cage
 {
 	namespace privat
@@ -606,3 +607,4 @@ namespace cage
 		return systemMemory().createImpl<Font, FontImpl>(label);
 	}
 }
+*/

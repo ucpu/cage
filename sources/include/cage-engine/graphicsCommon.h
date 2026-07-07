@@ -1,7 +1,7 @@
 #ifndef guard_graphicsCommon_sdr5yx4tgftzu
 #define guard_graphicsCommon_sdr5yx4tgftzu
 
-#include <cage-engine/core.h>
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {

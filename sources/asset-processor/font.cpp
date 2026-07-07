@@ -6,7 +6,6 @@
 #include FT_FREETYPE_H
 #include <msdfgen/ext/import-font.h>
 #include <msdfgen/msdfgen.h>
-#include <webgpu/webgpu_cpp.h>
 
 #include "processor.h"
 
@@ -17,6 +16,7 @@
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/rectPacking.h>
 #include <cage-core/tasks.h>
+#include <cage-engine/gpuCore.h>
 #include <cage-engine/texture.h>
 
 #define FT_CALL(FNC, ...) \
@@ -210,9 +210,9 @@ namespace
 		data.resolution = Vec3i(img->width(), img->height(), 1);
 		data.channels = img->channels();
 		data.mipLevels = 1;
-		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
-		data.format = (uint32)wgpu::TextureFormat::RGBA8Unorm;
-		data.sampleFilter = (uint32)wgpu::FilterMode::Linear;
+		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
+		data.format = (uint32)gpu::TextureFormat::RGBA8Unorm;
+		data.sampleFilter = (uint32)gpu::FilterMode::Linear;
 
 		MemoryBuffer inputBuffer;
 		Serializer ser(inputBuffer);

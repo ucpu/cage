@@ -2,7 +2,6 @@
 #define guard_graphicsBindings_esdr41ttzu
 
 #include <svector.h>
-#include <webgpu/webgpu_cpp.h>
 
 #include <cage-engine/graphicsCommon.h>
 
@@ -10,15 +9,17 @@ namespace cage
 {
 	struct CAGE_ENGINE_API GraphicsBindings
 	{
-		wgpu::BindGroupLayout layout = {};
-		wgpu::BindGroup group = {};
+		gpu::BindGroupLayout layout = {};
+		gpu::BindGroup group = {};
 		uint32 dynamicBuffersCount = 0;
 
+		/*
 		operator bool() const
 		{
 			CAGE_ASSERT(!!layout == !!group);
 			return !!layout;
 		}
+		*/
 	};
 
 	struct CAGE_ENGINE_API GraphicsBindingsCreateConfig

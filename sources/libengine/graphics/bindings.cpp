@@ -9,6 +9,7 @@
 #include <cage-engine/model.h>
 #include <cage-engine/texture.h>
 
+/*
 namespace cage
 {
 	namespace privat
@@ -393,3 +394,4 @@ namespace cage
 		return { newGraphicsBindings(device, config, model->getLabel()), flags };
 	}
 }
+*/

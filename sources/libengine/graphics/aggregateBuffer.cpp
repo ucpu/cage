@@ -11,6 +11,7 @@
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/graphicsDevice.h>
 
+/*
 namespace cage
 {
 	namespace privat
@@ -190,3 +191,4 @@ namespace cage
 		return systemMemory().createImpl<GraphicsAggregateBuffer, GraphicsAggregateBufferImpl>(config);
 	}
 }
+*/

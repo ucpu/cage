@@ -1,13 +1,12 @@
 #include <array>
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
 
+/*
 namespace cage
 {
 	namespace privat
@@ -440,3 +439,4 @@ namespace cage
 		return systemMemory().createImpl<Texture, TextureImpl>(texture, view, sampler, label);
 	}
 }
+*/

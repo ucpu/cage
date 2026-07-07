@@ -1,5 +1,3 @@
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 #include <cage-engine/graphicsDevice.h>
@@ -9,6 +7,7 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
+/*
 namespace cage
 {
 	namespace
@@ -267,3 +266,4 @@ namespace cage
 		return result;
 	}
 }
+*/

@@ -1,9 +1,8 @@
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/profiling.h>
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/graphicsDevice.h>
 
+/*
 namespace cage
 {
 	namespace
@@ -77,3 +76,4 @@ namespace cage
 		return systemMemory().createImpl<GraphicsBuffer, GraphicsBufferImpl>(device, size, label, true);
 	}
 }
+*/

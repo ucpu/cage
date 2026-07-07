@@ -3,11 +3,6 @@
 
 #include <cage-engine/graphicsCommon.h>
 
-namespace wgpu
-{
-	class Buffer;
-}
-
 namespace cage
 {
 	class GraphicsDevice;
@@ -36,7 +31,7 @@ namespace cage
 
 		uintPtr size() const;
 
-		const wgpu::Buffer &nativeBuffer();
+		const gpu::Buffer &nativeBuffer();
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uintPtr size, const AssetLabel &label);

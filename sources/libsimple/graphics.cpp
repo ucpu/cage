@@ -125,6 +125,9 @@ namespace cage
 
 			Holder<Image> screenshot()
 			{
+				return {};
+
+				/*
 				Holder<Texture> texture = sharedTargetTexture.get();
 				if (!texture)
 					return {};
@@ -139,30 +142,30 @@ namespace cage
 				Holder<Image> img = newImage();
 				img->initialize(res, 4);
 
-				wgpu::BufferDescriptor readbackDesc{};
-				readbackDesc.usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
+				gpu::BufferDescriptor readbackDesc{};
+				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
 				readbackDesc.size = res[0] * res[1] * 4;
-				wgpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->CreateBuffer(&readbackDesc);
+				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->CreateBuffer(&readbackDesc);
 
-				wgpu::TexelCopyTextureInfo srcView = {};
+				gpu::TexelCopyTextureInfo srcView = {};
 				srcView.texture = texture->nativeTexture();
 
-				wgpu::TexelCopyBufferInfo dstBuffer = {};
+				gpu::TexelCopyBufferInfo dstBuffer = {};
 				dstBuffer.buffer = readbackBuffer;
 				dstBuffer.layout.bytesPerRow = res[0] * 4; // must be multiple of 256
 				dstBuffer.layout.rowsPerImage = res[1];
 
-				wgpu::Extent3D copySize = { (uint32)actualResolution[0], (uint32)actualResolution[1], 1 };
+				gpu::Extent3D copySize = { (uint32)actualResolution[0], (uint32)actualResolution[1], 1 };
 
-				wgpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder();
+				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder();
 				encoder.CopyTextureToBuffer(&srcView, &dstBuffer, &copySize);
 				engineGraphicsDevice()->insertCommandBuffer(encoder.Finish(), {});
 				engineGraphicsDevice()->nextFrame();
 
-				wgpu::Future future = readbackBuffer.MapAsync(wgpu::MapMode::Read, 0, readbackDesc.size, wgpu::CallbackMode::WaitAnyOnly,
-					[&](wgpu::MapAsyncStatus status, wgpu::StringView message)
+				gpu::Future future = readbackBuffer.MapAsync(gpu::MapMode::Read, 0, readbackDesc.size, gpu::CallbackMode::WaitAnyOnly,
+					[&](gpu::MapAsyncStatus status, gpu::StringView message)
 					{
-						if (status == wgpu::MapAsyncStatus::Success)
+						if (status == gpu::MapAsyncStatus::Success)
 						{
 							const void *data = readbackBuffer.GetConstMappedRange();
 							detail::memcpy((void *)img->rawViewU8().data(), data, readbackDesc.size);
@@ -192,6 +195,7 @@ namespace cage
 				}
 
 				return img;
+				*/
 			}
 
 			// graphics thread ---------------------------------------------------------------------

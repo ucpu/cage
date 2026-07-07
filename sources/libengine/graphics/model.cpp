@@ -1,7 +1,5 @@
 #include <array>
 
-#include <webgpu/webgpu_cpp.h>
-
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
 #include <cage-core/mesh.h>
@@ -11,6 +9,7 @@
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/model.h>
 
+/*
 namespace cage
 {
 	namespace
@@ -189,3 +188,4 @@ namespace cage
 		return flags;
 	}
 }
+*/
