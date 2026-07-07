@@ -38,13 +38,8 @@ done
 #update_submodule "externals/mbedtls/mbedtls" "framework"
 #update_submodule "externals/mbedtls/mbedtls" "tf-psa-crypto"
 #update_submodule "externals/mbedtls/mbedtls/tf-psa-crypto" "framework"
-#update_submodule "externals/dawn/dawn" "third_party/abseil-cpp"
-#update_submodule "externals/dawn/dawn" "third_party/glslang/src" "a57276bf558f5cf94d3a9854ebdf5a2236849a5a"
-#update_submodule "externals/dawn/dawn" "third_party/protobuf"
 update_submodule "externals/wamr/zydis" "dependencies/zycore"
 
 git_ignore_file "externals/curl/curl" "CMakeLists.txt"
-#git_ignore_file "externals/dawn/dawn/third_party/abseil-cpp" "CMakeLists.txt"
-#git_ignore_file "externals/dawn/dawn/third_party/abseil-cpp" "absl/strings/CMakeLists.txt"
 git_ignore_file "externals/openxr-sdk/OpenXR-SDK" "src/loader/CMakeLists.txt"
 git_ignore_file "externals/quickhull/quickhull" "QuickHull.cpp"

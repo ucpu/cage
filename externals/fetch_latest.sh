@@ -21,8 +21,11 @@ git submodule foreach pbranch
 echo
 echo
 
+# restore mbedtls
+git submodule update --init --recursive mbedtls/mbedtls
+
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK
 
-# restore mbedtls
-git submodule update --init --recursive mbedtls/mbedtls
+# restore glslang
+git submodule update spirv/glslang

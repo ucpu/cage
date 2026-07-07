@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cmath> // std::floor
 #include <map>
 #include <vector>
 
