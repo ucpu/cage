@@ -29,14 +29,14 @@ namespace cage
 		Vec3i resolution;
 		uint32 channels = 0;
 		uint32 mipLevels = 0;
-		uint64 usage = 0; // wgpu::TextureUsage
-		uint32 format = 0; // wgpu::TextureFormat
-		uint32 sampleFilter = 0; // wgpu::FilterMode
-		uint32 mipmapFilter = 0; // wgpu::MipmapFilterMode
+		uint32 usage = 0; // gpu::TextureUsage
+		uint32 format = 0; // gpu::TextureFormat
+		uint32 sampleFilter = 0; // gpu::FilterMode
+		uint32 mipmapFilter = 0; // gpu::MipmapFilterMode
 		uint32 anisoFilter = 1;
-		uint32 wrapX = 0; // wgpu::AddressMode
-		uint32 wrapY = 0; // wgpu::AddressMode
-		uint32 wrapZ = 0; // wgpu::AddressMode
+		uint32 wrapX = 0; // gpu::AddressMode
+		uint32 wrapY = 0; // gpu::AddressMode
+		uint32 wrapZ = 0; // gpu::AddressMode
 
 		// follows:
 		// for each mipmap level:

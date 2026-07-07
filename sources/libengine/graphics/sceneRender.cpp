@@ -41,7 +41,6 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/window.h>
 
-/*
 namespace cage
 {
 	struct AssetPack;
@@ -600,12 +599,12 @@ namespace cage
 
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
 		{
-			wgpu::TextureViewDescriptor desc = {};
+			gpu::TextureViewDescriptor desc = {};
 			desc.baseArrayLayer = cascade;
 			desc.arrayLayerCount = 1;
 			desc.label = "shadowmap cascade view";
-			wgpu::TextureView view = tex->nativeTexture().CreateView(&desc);
-			return newTexture(tex->nativeTexture(), view, nullptr, "shadowmap cascade view");
+			gpu::TextureView view = tex->nativeTexture().CreateView(desc);
+			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");
 		}
 
 		Holder<Texture> createShadowmap2D(uint32 entityId, uint32 resolution, uint32 cascades, GraphicsDevice *device)
@@ -613,7 +612,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, cascades);
-			conf.format = wgpu::TextureFormat::Depth32Float;
+			conf.format = gpu::TextureFormat::Depth32Float;
 			conf.flags = TextureFlags::Array;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -624,7 +623,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 6);
-			conf.format = wgpu::TextureFormat::Depth16Unorm;
+			conf.format = gpu::TextureFormat::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -2018,7 +2017,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth target";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::Depth32Float;
+				conf.format = gpu::TextureFormat::Depth32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2027,7 +2026,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth sampling";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::R32Float;
+				conf.format = gpu::TextureFormat::R32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2036,7 +2035,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = name;
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormat::RGBA16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2047,7 +2046,7 @@ namespace cage
 				conf.name = "ssao target";
 				conf.resolution = Vec3i(camera.resolution, 0) / downscale;
 				conf.resolution[2] = 1;
-				conf.format = wgpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormat::R16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 		};
@@ -2206,4 +2205,3 @@ namespace cage
 		return *this;
 	}
 }
-*/

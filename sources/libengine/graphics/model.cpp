@@ -9,7 +9,6 @@
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/model.h>
 
-/*
 namespace cage
 {
 	namespace
@@ -17,8 +16,8 @@ namespace cage
 		class ModelImpl : public Model
 		{
 		public:
-			std::array<wgpu::VertexAttribute, 5> attrs;
-			wgpu::VertexBufferLayout layout = {};
+			std::array<gpu::VertexAttribute, 5> attrs;
+			gpu::VertexBufferLayout layout = {};
 			GraphicsBindings bindings;
 
 			ModelImpl(const AssetLabel &label_) { this->label = label_; }
@@ -31,7 +30,7 @@ namespace cage
 				uint32 index = 0;
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormat::Float32x3;
 					attrs[index].shaderLocation = 0;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -39,7 +38,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Normals))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormat::Float32x3;
 					attrs[index].shaderLocation = 1;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -47,7 +46,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Bones))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Uint32x4;
+					attrs[index].format = gpu::VertexFormat::Uint32x4;
 					attrs[index].shaderLocation = 2;
 					index++;
 					layout.arrayStride += sizeof(Vec4i);
@@ -55,7 +54,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Bones))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Float32x4;
+					attrs[index].format = gpu::VertexFormat::Float32x4;
 					attrs[index].shaderLocation = 3;
 					index++;
 					layout.arrayStride += sizeof(Vec4);
@@ -64,7 +63,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Uvs3))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormat::Float32x3;
 					attrs[index].shaderLocation = 4;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -72,16 +71,15 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Uvs2))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = wgpu::VertexFormat::Float32x2;
+					attrs[index].format = gpu::VertexFormat::Float32x2;
 					attrs[index].shaderLocation = 4;
 					index++;
 					layout.arrayStride += sizeof(Vec2);
 				}
 				CAGE_ASSERT(index <= attrs.size());
 
-				layout.attributeCount = index;
-				layout.attributes = attrs.data();
-				layout.stepMode = wgpu::VertexStepMode::Vertex;
+				layout.attributes = PointerRange<const gpu::VertexAttribute>(attrs).subRange(0, index);
+				layout.stepMode = gpu::VertexStepMode::Vertex;
 			}
 		};
 	}
@@ -97,7 +95,7 @@ namespace cage
 		impl->updateLayout();
 	}
 
-	const wgpu::VertexBufferLayout &Model::getLayout() const
+	const gpu::VertexBufferLayout &Model::getLayout() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->layout;
@@ -188,4 +186,3 @@ namespace cage
 		return flags;
 	}
 }
-*/

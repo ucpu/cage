@@ -2,7 +2,6 @@
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/graphicsDevice.h>
 
-/*
 namespace cage
 {
 	namespace
@@ -10,7 +9,7 @@ namespace cage
 		class GraphicsBufferImpl : public GraphicsBuffer
 		{
 		public:
-			wgpu::Buffer buffer = {};
+			gpu::Buffer buffer = {};
 			GraphicsDevice *device = nullptr;
 			uintPtr size = 0;
 			bool geometry = false;
@@ -23,21 +22,21 @@ namespace cage
 
 				if (!geometry)
 					size = ((max(size, uintPtr(256)) + 15) / 16) * 16;
-				wgpu::BufferDescriptor desc = {};
+				gpu::BufferDescriptor desc = {};
 				desc.size = size;
 				desc.usage = usage();
 				desc.label = label.c_str();
 
 				const ProfilingScope profiling("buffer create");
-				buffer = device->nativeDevice()->CreateBuffer(&desc);
+				buffer = device->nativeDevice()->CreateBuffer(desc);
 			}
 
-			wgpu::BufferUsage usage() const
+			gpu::BufferUsage usage() const
 			{
 				if (geometry)
-					return wgpu::BufferUsage::Vertex | wgpu::BufferUsage::Index | wgpu::BufferUsage::CopyDst;
+					return gpu::BufferUsage::Vertex | gpu::BufferUsage::Index | gpu::BufferUsage::CopyDst;
 				else
-					return wgpu::BufferUsage::Uniform | wgpu::BufferUsage::Storage | wgpu::BufferUsage::CopyDst;
+					return gpu::BufferUsage::Uniform | gpu::BufferUsage::Storage | gpu::BufferUsage::CopyDst;
 			}
 		};
 	}
@@ -51,7 +50,7 @@ namespace cage
 		CAGE_ASSERT(offset + buffer.size() <= impl->size);
 
 		const ProfilingScope profiling("buffer write");
-		impl->device->nativeQueue()->WriteBuffer(impl->buffer, offset, buffer.data(), buffer.size());
+		impl->device->nativeQueue()->WriteBuffer(impl->buffer, offset, buffer);
 	}
 
 	uintPtr GraphicsBuffer::size() const
@@ -60,7 +59,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->buffer.GetSize());
 	}
 
-	const wgpu::Buffer &GraphicsBuffer::nativeBuffer()
+	const gpu::Buffer &GraphicsBuffer::nativeBuffer()
 	{
 		GraphicsBufferImpl *impl = (GraphicsBufferImpl *)this;
 		return impl->buffer;
@@ -76,4 +75,3 @@ namespace cage
 		return systemMemory().createImpl<GraphicsBuffer, GraphicsBufferImpl>(device, size, label, true);
 	}
 }
-*/

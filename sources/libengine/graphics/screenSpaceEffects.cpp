@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <cage-core/assetsManager.h>
 #include <cage-core/hashString.h>
 #include <cage-engine/graphicsAggregateBuffer.h>
@@ -9,7 +11,6 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
-/*
 namespace cage
 {
 	namespace
@@ -50,19 +51,19 @@ namespace cage
 			std::vector<Holder<Texture>> mipTexs;
 			mipTexs.reserve(mips);
 
-			wgpu::SamplerDescriptor sd = {};
-			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
-			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
-			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+			gpu::SamplerDescriptor sd = {};
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
+			sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
+			sd.mipmapFilter = gpu::MipmapFilterMode::Nearest;
 			sd.label = "mip sampler";
-			wgpu::Sampler samp = device->nativeDevice()->CreateSampler(&sd);
+			gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);
 
 			for (uint32 i = 0; i < mips; i++)
 			{
-				wgpu::TextureViewDescriptor tvd = {};
+				gpu::TextureViewDescriptor tvd = {};
 				tvd.baseMipLevel = i;
 				tvd.mipLevelCount = 1;
-				wgpu::TextureView view = tex->nativeTexture().CreateView(&tvd);
+				gpu::TextureView view = tex->nativeTexture().CreateView(tvd);
 				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
 			}
 
@@ -92,7 +93,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao depth target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::R32Float;
+			conf.format = gpu::TextureFormat::R32Float;
 			return newTexture(d, conf);
 		}();
 		Holder<Texture> ssaoLowRes = [&]()
@@ -100,7 +101,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao lowres target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::R16Float;
+			conf.format = gpu::TextureFormat::R16Float;
 			return newTexture(d, conf);
 		}();
 
@@ -166,7 +167,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "ssao blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = wgpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormat::R16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -216,7 +217,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "dof color target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.format = gpu::TextureFormat::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
@@ -259,7 +260,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "dof blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormat::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -313,7 +314,7 @@ namespace cage
 			conf.name = "bloom target";
 			conf.resolution = Vec3i(res, 1);
 			conf.mipLevelCount = mips;
-			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.format = gpu::TextureFormat::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
@@ -375,7 +376,7 @@ namespace cage
 				conf.name = "bloom blur temporary";
 				conf.resolution = Vec3i(res, 1);
 				conf.mipLevelCount = mips;
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormat::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 			std::vector<Holder<Texture>> tmpViews = generateMipsViews(d, tmp.share(), mips);
@@ -491,4 +492,3 @@ namespace cage
 		config.encoder->draw(draw);
 	}
 }
-*/

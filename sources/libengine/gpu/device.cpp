@@ -1,1 +1,3 @@
-#include <cage-engine/gpuDevice.h>
+#include <vulkan/vulkan.hpp>
+
+#include <cage-engine/gpuCore.h>

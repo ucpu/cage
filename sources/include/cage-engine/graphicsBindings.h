@@ -13,13 +13,11 @@ namespace cage
 		gpu::BindGroup group = {};
 		uint32 dynamicBuffersCount = 0;
 
-		/*
 		operator bool() const
 		{
 			CAGE_ASSERT(!!layout == !!group);
 			return !!layout;
 		}
-		*/
 	};
 
 	struct CAGE_ENGINE_API GraphicsBindingsCreateConfig

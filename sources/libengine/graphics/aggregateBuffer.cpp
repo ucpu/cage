@@ -11,7 +11,6 @@
 #include <cage-engine/graphicsBuffer.h>
 #include <cage-engine/graphicsDevice.h>
 
-/*
 namespace cage
 {
 	namespace privat
@@ -75,10 +74,10 @@ namespace cage
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
 
-				device->nativeQueue()->OnSubmittedWorkDone(wgpu::CallbackMode::AllowProcessEvents,
-					[&, expected = currentFrame](wgpu::QueueWorkDoneStatus status, wgpu::StringView message)
+				device->nativeQueue()->OnSubmittedWorkDone(gpu::CallbackMode::AllowProcessEvents,
+					[&, expected = currentFrame](gpu::QueueWorkDoneStatus status, gpu::StringView message)
 					{
-						if (status == wgpu::QueueWorkDoneStatus::Success)
+						if (status == gpu::QueueWorkDoneStatus::Success)
 							finishedFrame = max(finishedFrame, expected);
 					});
 			}
@@ -191,4 +190,3 @@ namespace cage
 		return systemMemory().createImpl<GraphicsAggregateBuffer, GraphicsAggregateBufferImpl>(config);
 	}
 }
-*/

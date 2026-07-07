@@ -1,4 +1,5 @@
 #include <svector.h>
+#include <unordered_map>
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
@@ -9,66 +10,65 @@
 #include <cage-engine/model.h>
 #include <cage-engine/texture.h>
 
-/*
 namespace cage
 {
 	namespace privat
 	{
-		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureViewDimension textureViewDimension(TextureFlags flags);
 
 		namespace
 		{
-			bool isFormatFilterable(wgpu::TextureFormat format)
+			bool isFormatFilterable(gpu::TextureFormat format)
 			{
 				switch (format)
 				{
 					// depth/stencil
-					case wgpu::TextureFormat::Depth16Unorm:
-					case wgpu::TextureFormat::Depth24Plus:
-					case wgpu::TextureFormat::Depth24PlusStencil8:
-					case wgpu::TextureFormat::Depth32Float:
-					case wgpu::TextureFormat::Depth32FloatStencil8:
+					case gpu::TextureFormat::Depth16Unorm:
+					case gpu::TextureFormat::Depth24Plus:
+					case gpu::TextureFormat::Depth24PlusStencil8:
+					case gpu::TextureFormat::Depth32Float:
+					case gpu::TextureFormat::Depth32FloatStencil8:
 					// high-p floats
-					case wgpu::TextureFormat::R32Float:
-					case wgpu::TextureFormat::RG32Float:
-					case wgpu::TextureFormat::RGBA32Float:
+					case gpu::TextureFormat::R32Float:
+					case gpu::TextureFormat::RG32Float:
+					case gpu::TextureFormat::RGBA32Float:
 					// integers
-					case wgpu::TextureFormat::R8Sint:
-					case wgpu::TextureFormat::R8Uint:
-					case wgpu::TextureFormat::RG8Sint:
-					case wgpu::TextureFormat::RG8Uint:
-					case wgpu::TextureFormat::RGBA8Sint:
-					case wgpu::TextureFormat::RGBA8Uint:
-					case wgpu::TextureFormat::R16Sint:
-					case wgpu::TextureFormat::R16Uint:
-					case wgpu::TextureFormat::RG16Sint:
-					case wgpu::TextureFormat::RG16Uint:
-					case wgpu::TextureFormat::RGBA16Sint:
-					case wgpu::TextureFormat::RGBA16Uint:
-					case wgpu::TextureFormat::R32Sint:
-					case wgpu::TextureFormat::R32Uint:
-					case wgpu::TextureFormat::RG32Sint:
-					case wgpu::TextureFormat::RG32Uint:
-					case wgpu::TextureFormat::RGBA32Sint:
-					case wgpu::TextureFormat::RGBA32Uint:
+					case gpu::TextureFormat::R8Sint:
+					case gpu::TextureFormat::R8Uint:
+					case gpu::TextureFormat::RG8Sint:
+					case gpu::TextureFormat::RG8Uint:
+					case gpu::TextureFormat::RGBA8Sint:
+					case gpu::TextureFormat::RGBA8Uint:
+					case gpu::TextureFormat::R16Sint:
+					case gpu::TextureFormat::R16Uint:
+					case gpu::TextureFormat::RG16Sint:
+					case gpu::TextureFormat::RG16Uint:
+					case gpu::TextureFormat::RGBA16Sint:
+					case gpu::TextureFormat::RGBA16Uint:
+					case gpu::TextureFormat::R32Sint:
+					case gpu::TextureFormat::R32Uint:
+					case gpu::TextureFormat::RG32Sint:
+					case gpu::TextureFormat::RG32Uint:
+					case gpu::TextureFormat::RGBA32Sint:
+					case gpu::TextureFormat::RGBA32Uint:
 						return false;
 					default:
 						return true;
 				}
 			}
 
-			wgpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
+			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
-				ankerl::svector<wgpu::BindGroupLayoutEntry, 10> entries;
+				ankerl::svector<gpu::BindGroupLayoutEntry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer && b.buffer->nativeBuffer());
-					wgpu::BindGroupLayoutEntry e = {};
+					gpu::BindGroupLayoutEntry e = {};
 					e.binding = b.binding;
-					e.visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
-					e.buffer.type = b.uniform ? wgpu::BufferBindingType::Uniform : wgpu::BufferBindingType::ReadOnlyStorage;
+					e.visibility = gpu::ShaderStage::Vertex | gpu::ShaderStage::Fragment;
+					e.buffer.type = b.uniform ? gpu::BufferBindingType::Uniform : gpu::BufferBindingType::ReadOnlyStorage;
 					e.buffer.hasDynamicOffset = b.dynamic;
 					entries.push_back(e);
 				}
@@ -80,48 +80,47 @@ namespace cage
 					const bool filterable = isFormatFilterable(t.texture->nativeTexture().GetFormat());
 					if (t.bindTexture)
 					{
-						wgpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutEntry e = {};
 						e.binding = t.binding;
-						e.visibility = wgpu::ShaderStage::Fragment;
-						e.texture.sampleType = filterable ? wgpu::TextureSampleType::Float : wgpu::TextureSampleType::UnfilterableFloat;
+						e.visibility = gpu::ShaderStage::Fragment;
+						e.texture.sampleType = filterable ? gpu::TextureSampleType::Float : gpu::TextureSampleType::UnfilterableFloat;
 						e.texture.viewDimension = textureViewDimension(t.texture->flags);
 						entries.push_back(e);
 					}
 					if (t.bindSampler)
 					{
-						wgpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutEntry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.visibility = wgpu::ShaderStage::Fragment;
-						e.sampler.type = filterable ? wgpu::SamplerBindingType::Filtering : wgpu::SamplerBindingType::NonFiltering;
+						e.visibility = gpu::ShaderStage::Fragment;
+						e.sampler.type = filterable ? gpu::SamplerBindingType::Filtering : gpu::SamplerBindingType::NonFiltering;
 						entries.push_back(e);
 					}
 				}
 
-				wgpu::BindGroupLayoutDescriptor desc = {};
-				desc.entryCount = entries.size();
-				desc.entries = entries.data();
+				gpu::BindGroupLayoutDescriptor desc = {};
+				desc.entries = entries;
 				if (label.empty())
 					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
 				desc.label = label.c_str();
-				return device->nativeDevice()->CreateBindGroupLayout(&desc);
+				return device->nativeDevice()->CreateBindGroupLayout(desc);
 			}
 
-			wgpu::BindGroup createGroup(GraphicsDevice *device, const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
+			gpu::BindGroup createGroup(GraphicsDevice *device, const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
 				CAGE_ASSERT(layout);
 
-				ankerl::svector<wgpu::BindGroupEntry, 10> entries;
+				ankerl::svector<gpu::BindGroupEntry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer);
-					wgpu::BindGroupEntry e = {};
+					gpu::BindGroupEntry e = {};
 					e.binding = b.binding;
 					e.buffer = b.buffer->nativeBuffer();
 					CAGE_ASSERT(e.buffer);
 					e.offset = 0;
-					e.size = b.size == m ? wgpu::kWholeSize : b.size;
+					e.size = b.size;
 					entries.push_back(e);
 				}
 
@@ -131,7 +130,7 @@ namespace cage
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
 					if (t.bindTexture)
 					{
-						wgpu::BindGroupEntry e = {};
+						gpu::BindGroupEntry e = {};
 						e.binding = t.binding;
 						e.textureView = t.texture->nativeView();
 						CAGE_ASSERT(e.textureView);
@@ -139,7 +138,7 @@ namespace cage
 					}
 					if (t.bindSampler)
 					{
-						wgpu::BindGroupEntry e = {};
+						gpu::BindGroupEntry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
 						e.sampler = t.texture->nativeSampler();
 						CAGE_ASSERT(e.sampler);
@@ -147,13 +146,12 @@ namespace cage
 					}
 				}
 
-				wgpu::BindGroupDescriptor bgd = {};
+				gpu::BindGroupDescriptor bgd = {};
 				bgd.layout = layout;
-				bgd.entryCount = entries.size();
-				bgd.entries = entries.data();
+				bgd.entries = entries;
 				if (!label.empty())
 					bgd.label = label.c_str();
-				return device->nativeDevice()->CreateBindGroup(&bgd);
+				return device->nativeDevice()->CreateBindGroup(bgd);
 			}
 		}
 
@@ -200,7 +198,7 @@ namespace cage
 
 			struct LayoutValue
 			{
-				wgpu::BindGroupLayout layout;
+				gpu::BindGroupLayout layout;
 				uint32 lastUsedFrame = 0;
 			};
 
@@ -210,7 +208,7 @@ namespace cage
 
 				std::size_t hash = 0;
 
-				GroupKey(const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
+				GroupKey(const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
 				{
 					keys.reserve(1 + config.buffers.size() + config.textures.size() * 2);
 					keys.push_back((uint64)layout.Get());
@@ -244,7 +242,7 @@ namespace cage
 
 			struct GroupValue
 			{
-				wgpu::BindGroup group;
+				gpu::BindGroup group;
 				uint32 lastUsedFrame = 0;
 			};
 
@@ -394,4 +392,3 @@ namespace cage
 		return { newGraphicsBindings(device, config, model->getLabel()), flags };
 	}
 }
-*/

@@ -67,8 +67,8 @@ namespace cage
 		GraphicsDevice *getDevice() const;
 		const RenderPassConfig &getCurrentPass() const;
 
-		const gpu::CommandEncoder &nativeCommandEncoder();
-		const gpu::RenderPassEncoder &nativeRenderEncoder();
+		gpu::CommandEncoder &nativeCommandEncoder();
+		gpu::RenderPassEncoder &nativeRenderEncoder();
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsEncoder> newGraphicsEncoder(GraphicsDevice *device, const AssetLabel &label);

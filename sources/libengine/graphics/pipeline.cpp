@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 #include <cage-engine/graphicsDevice.h>
@@ -7,71 +9,70 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
-/*
 namespace cage
 {
 	namespace
 	{
-		wgpu::BlendState convertBlending(BlendingEnum blending)
+		gpu::BlendState convertBlending(BlendingEnum blending)
 		{
-			wgpu::BlendState bs = {};
-			bs.color.operation = wgpu::BlendOperation::Add;
-			bs.alpha.operation = wgpu::BlendOperation::Add;
+			gpu::BlendState bs = {};
+			bs.color.operation = gpu::BlendOperation::Add;
+			bs.alpha.operation = gpu::BlendOperation::Add;
 			switch (blending)
 			{
 				case cage::BlendingEnum::None:
-					bs.color.srcFactor = bs.alpha.srcFactor = wgpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = wgpu::BlendFactor::Zero;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::Zero;
 					break;
 				case cage::BlendingEnum::Additive:
-					bs.color.srcFactor = bs.alpha.srcFactor = wgpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = wgpu::BlendFactor::One;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::One;
 					break;
 				case cage::BlendingEnum::AlphaTransparency:
-					bs.color.srcFactor = wgpu::BlendFactor::SrcAlpha;
-					bs.alpha.srcFactor = wgpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
+					bs.color.srcFactor = gpu::BlendFactor::SrcAlpha;
+					bs.alpha.srcFactor = gpu::BlendFactor::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::OneMinusSrcAlpha;
 					break;
 				case cage::BlendingEnum::PremultipliedTransparency:
-					bs.color.srcFactor = bs.alpha.srcFactor = wgpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::OneMinusSrcAlpha;
 					break;
 			}
 			return bs;
 		}
 
-		wgpu::PrimitiveTopology convertTopology(const Model *model)
+		gpu::PrimitiveTopology convertTopology(const Model *model)
 		{
 			switch (model->primitiveType)
 			{
 				case 1:
-					return wgpu::PrimitiveTopology::PointList;
+					return gpu::PrimitiveTopology::PointList;
 				case 2:
-					return wgpu::PrimitiveTopology::LineList;
+					return gpu::PrimitiveTopology::LineList;
 				case 3:
 				default:
-					return wgpu::PrimitiveTopology::TriangleList;
+					return gpu::PrimitiveTopology::TriangleList;
 			}
 		}
 
-		wgpu::CompareFunction convertDepthTest(const DepthTestEnum &dt)
+		gpu::CompareFunction convertDepthTest(const DepthTestEnum &dt)
 		{
-			static_assert((uint32)wgpu::CompareFunction::Undefined == (uint32)DepthTestEnum::None);
-			static_assert((uint32)wgpu::CompareFunction::Never == (uint32)DepthTestEnum::Never);
-			static_assert((uint32)wgpu::CompareFunction::Less == (uint32)DepthTestEnum::Less);
-			static_assert((uint32)wgpu::CompareFunction::Equal == (uint32)DepthTestEnum::Equal);
-			static_assert((uint32)wgpu::CompareFunction::LessEqual == (uint32)DepthTestEnum::LessEqual);
-			static_assert((uint32)wgpu::CompareFunction::Greater == (uint32)DepthTestEnum::Greater);
-			static_assert((uint32)wgpu::CompareFunction::NotEqual == (uint32)DepthTestEnum::NotEqual);
-			static_assert((uint32)wgpu::CompareFunction::GreaterEqual == (uint32)DepthTestEnum::GreaterEqual);
-			static_assert((uint32)wgpu::CompareFunction::Always == (uint32)DepthTestEnum::Always);
-			return (wgpu::CompareFunction)(uint32)dt;
+			static_assert((uint32)gpu::CompareFunction::Undefined == (uint32)DepthTestEnum::None);
+			static_assert((uint32)gpu::CompareFunction::Never == (uint32)DepthTestEnum::Never);
+			static_assert((uint32)gpu::CompareFunction::Less == (uint32)DepthTestEnum::Less);
+			static_assert((uint32)gpu::CompareFunction::Equal == (uint32)DepthTestEnum::Equal);
+			static_assert((uint32)gpu::CompareFunction::LessEqual == (uint32)DepthTestEnum::LessEqual);
+			static_assert((uint32)gpu::CompareFunction::Greater == (uint32)DepthTestEnum::Greater);
+			static_assert((uint32)gpu::CompareFunction::NotEqual == (uint32)DepthTestEnum::NotEqual);
+			static_assert((uint32)gpu::CompareFunction::GreaterEqual == (uint32)DepthTestEnum::GreaterEqual);
+			static_assert((uint32)gpu::CompareFunction::Always == (uint32)DepthTestEnum::Always);
+			return (gpu::CompareFunction)(uint32)dt;
 		}
 	}
 
 	namespace privat
 	{
-		void logImpl(SeverityEnum severity, wgpu::StringView message);
+		void logImpl(SeverityEnum severity, gpu::StringView message);
 
 		struct DevicePipelinesCache : private Immovable
 		{
@@ -94,7 +95,7 @@ namespace cage
 					hashCombine((uint32(depthWrite) << 1) + uint32(backFaceCulling));
 					for (const auto &it : bindingsLayouts)
 						hashCombine((uintPtr)it.Get());
-					for (wgpu::TextureFormat f : colorTargets)
+					for (gpu::TextureFormat f : colorTargets)
 						hashCombine((uint32)f);
 					hashCombine((uint32)meshComponents); // replacement for vertexBufferLayout for the purpose of the key/hash
 					hashCombine((uint32)primitiveTopology);
@@ -111,7 +112,7 @@ namespace cage
 
 			struct Value
 			{
-				wgpu::RenderPipeline pipeline;
+				gpu::RenderPipeline pipeline;
 				uint32 lastUsedFrame = 0;
 				bool creating = false;
 			};
@@ -124,50 +125,47 @@ namespace cage
 
 			void createPipeline(const PipelineConfig &config, Value *target)
 			{
-				wgpu::DepthStencilState dss = {};
-				if (config.depthFormat != wgpu::TextureFormat::Undefined)
+				gpu::DepthStencilState dss = {};
+				if (config.depthFormat != gpu::TextureFormat::Undefined)
 				{
 					dss.format = config.depthFormat;
 					dss.depthCompare = convertDepthTest(config.depthTest);
 					dss.depthWriteEnabled = config.depthWrite;
 				}
 
-				wgpu::BlendState blendState = convertBlending(config.blending);
-				ankerl::svector<wgpu::ColorTargetState, 1> colors;
+				gpu::BlendState blendState = convertBlending(config.blending);
+				ankerl::svector<gpu::ColorTargetState, 1> colors;
 				colors.reserve(config.colorTargets.size());
-				for (wgpu::TextureFormat ct : config.colorTargets)
+				for (gpu::TextureFormat ct : config.colorTargets)
 				{
-					wgpu::ColorTargetState cts = {};
+					gpu::ColorTargetState cts = {};
 					cts.format = ct;
 					if (config.blending != BlendingEnum::None)
 						cts.blend = &blendState;
 					colors.push_back(cts);
 				}
 
-				wgpu::FragmentState fs = {};
+				gpu::FragmentState fs = {};
 				fs.module = config.shader->nativeFragment();
-				fs.targetCount = colors.size();
-				fs.targets = colors.data();
+				fs.targets = colors;
 
-				wgpu::RenderPipelineDescriptor rpd = {};
+				gpu::RenderPipelineDescriptor rpd = {};
 				rpd.vertex.module = config.shader->nativeVertex();
-				rpd.vertex.bufferCount = 1;
-				rpd.vertex.buffers = &config.vertexBufferLayout;
-				rpd.primitive.cullMode = config.backFaceCulling ? wgpu::CullMode::Back : wgpu::CullMode::None;
+				rpd.vertex.buffers = PointerRange<const gpu::VertexBufferLayout>(&config.vertexBufferLayout, &config.vertexBufferLayout + 1);
+				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullMode::Back : gpu::CullMode::None;
 				rpd.primitive.topology = config.primitiveTopology;
-				if (config.depthFormat != wgpu::TextureFormat::Undefined)
+				if (config.depthFormat != gpu::TextureFormat::Undefined)
 					rpd.depthStencil = &dss;
 				rpd.fragment = &fs;
 
-				wgpu::PipelineLayoutDescriptor pld = {};
-				pld.bindGroupLayoutCount = config.bindingsLayouts.size();
-				pld.bindGroupLayouts = config.bindingsLayouts.data();
-				Holder<wgpu::Device> dev = device->nativeDevice();
-				rpd.layout = dev->CreatePipelineLayout(&pld);
-				dev->CreateRenderPipelineAsync(&rpd, wgpu::CallbackMode::AllowProcessEvents,
-					[this, target](wgpu::CreatePipelineAsyncStatus status, wgpu::RenderPipeline pipeline, wgpu::StringView message)
+				gpu::PipelineLayoutDescriptor pld = {};
+				pld.bindGroupLayouts = config.bindingsLayouts;
+				Holder<gpu::Device> dev = device->nativeDevice();
+				rpd.layout = dev->CreatePipelineLayout(pld);
+				dev->CreateRenderPipelineAsync(rpd, gpu::CallbackMode::AllowProcessEvents,
+					[this, target](gpu::CreatePipelineAsyncStatus status, gpu::RenderPipeline pipeline, gpu::StringView message)
 					{
-						if (status == wgpu::CreatePipelineAsyncStatus::Success)
+						if (status == gpu::CreatePipelineAsyncStatus::Success)
 						{
 							ScopeLock lock(mutex, WriteLockTag());
 							target->pipeline = pipeline;
@@ -182,7 +180,7 @@ namespace cage
 					});
 			}
 
-			wgpu::RenderPipeline getPipeline(const PipelineConfig &config)
+			gpu::RenderPipeline getPipeline(const PipelineConfig &config)
 			{
 				const Key key(config);
 
@@ -239,7 +237,7 @@ namespace cage
 		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device);
 	}
 
-	wgpu::RenderPipeline newGraphicsPipeline(GraphicsDevice *device, const PipelineConfig &config)
+	gpu::RenderPipeline newGraphicsPipeline(GraphicsDevice *device, const PipelineConfig &config)
 	{
 		return privat::getDevicePipelinesCache(device)->getPipeline(config);
 	}
@@ -266,4 +264,3 @@ namespace cage
 		return result;
 	}
 }
-*/

@@ -14,7 +14,6 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/texture.h>
 
-/*
 namespace cage
 {
 	struct AssetPack;
@@ -429,4 +428,3 @@ namespace cage
 			it->draw(config);
 	}
 }
-*/

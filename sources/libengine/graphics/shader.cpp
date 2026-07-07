@@ -8,7 +8,6 @@
 #include <cage-engine/shader.h>
 #include <cage-engine/spirv.h>
 
-/*
 namespace cage
 {
 	namespace
@@ -16,7 +15,7 @@ namespace cage
 		class ShaderImpl : public Shader
 		{
 		public:
-			wgpu::ShaderModule vertex, fragment, compute;
+			gpu::ShaderModule vertex, fragment, compute;
 
 			ShaderImpl(GraphicsDevice *device, const Spirv *spirv, const AssetLabel &label_, uint32 variant_)
 			{
@@ -28,18 +27,15 @@ namespace cage
 				compute = makeShader(device, spirv, ShaderStageEnum::Compute);
 			}
 
-			wgpu::ShaderModule makeShader(GraphicsDevice *device, const Spirv *spirv, ShaderStageEnum stage)
+			gpu::ShaderModule makeShader(GraphicsDevice *device, const Spirv *spirv, ShaderStageEnum stage)
 			{
 				if (!spirv->hasStage(stage))
 					return {};
 				const auto code = spirv->exportSpirv(stage);
-				wgpu::ShaderSourceSPIRV s = {};
-				s.codeSize = code.size();
-				s.code = code.data();
-				wgpu::ShaderModuleDescriptor desc = {};
-				desc.nextInChain = &s;
+				gpu::ShaderModuleDescriptor desc = {};
+				desc.spirvCode = code;
 				desc.label = label.c_str();
-				return device->nativeDevice()->CreateShaderModule(&desc);
+				return device->nativeDevice()->CreateShaderModule(desc);
 			}
 
 			void logMultilineString(const std::string &str)
@@ -54,13 +50,13 @@ namespace cage
 		};
 	}
 
-	const wgpu::ShaderModule &Shader::nativeVertex()
+	gpu::ShaderModule &Shader::nativeVertex()
 	{
 		ShaderImpl *impl = (ShaderImpl *)this;
 		return impl->vertex;
 	}
 
-	const wgpu::ShaderModule &Shader::nativeFragment()
+	gpu::ShaderModule &Shader::nativeFragment()
 	{
 		ShaderImpl *impl = (ShaderImpl *)this;
 		return impl->fragment;
@@ -133,4 +129,3 @@ namespace cage
 		return systemMemory().createImpl<MultiShader, MultiShaderImpl>(label);
 	}
 }
-*/

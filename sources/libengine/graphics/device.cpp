@@ -21,7 +21,7 @@ namespace cage
 	{
 		struct GraphicsContextData : private Immovable
 		{
-			wgpu::Surface surface;
+			gpu::Surface surface;
 			Vec2i resolution;
 			bool presentable = false;
 		};
@@ -46,10 +46,10 @@ namespace cage
 		void deviceCacheNextFrame(DeviceBuffersCache *);
 		void deviceCacheNextFrame(DeviceTexturesCache *);
 
-		void logImpl(SeverityEnum severity, wgpu::StringView message)
+		void logImpl(SeverityEnum severity, gpu::StringView message)
 		{
 			uint32 len = message.length;
-			if (message.length == wgpu::kStrlen)
+			if (message.length == gpu::kStrlen)
 				len = std::strlen(message.data);
 			Holder<LineReader> lr = newLineReader(PointerRange(message.data, message.data + len));
 			String l;
@@ -93,63 +93,63 @@ namespace cage
 		private:
 			static constexpr uint32 Frames = 8;
 			GraphicsDeviceImpl *device = nullptr;
-			wgpu::QuerySet querySet = {};
-			wgpu::Buffer buffResolve = {};
-			std::array<wgpu::Buffer, Frames> buffRead = {};
+			gpu::QuerySet querySet = {};
+			gpu::Buffer buffResolve = {};
+			std::array<gpu::Buffer, Frames> buffRead = {};
 			uint32 frameIndex = 0;
 		};
 	}
 
 	namespace
 	{
-		String conv(wgpu::StringView v)
+		String conv(gpu::StringView v)
 		{
 			if (!v.data)
 				return {};
 			uint32 len = v.length;
-			if (v.length == wgpu::kStrlen)
+			if (v.length == gpu::kStrlen)
 				len = std::strlen(v.data);
 			if (len > 800)
 				len = 800;
 			return String({ v.data, v.data + len });
 		}
 
-		SeverityEnum conv(wgpu::LoggingType type)
+		SeverityEnum conv(gpu::LoggingType type)
 		{
 			switch (type)
 			{
-				case wgpu::LoggingType::Verbose:
+				case gpu::LoggingType::Verbose:
 					return SeverityEnum::Note;
-				case wgpu::LoggingType::Info:
+				case gpu::LoggingType::Info:
 					return SeverityEnum::Info;
-				case wgpu::LoggingType::Warning:
+				case gpu::LoggingType::Warning:
 					return SeverityEnum::Warning;
-				case wgpu::LoggingType::Error:
+				case gpu::LoggingType::Error:
 					return SeverityEnum::Error;
 				default:
 					return SeverityEnum::Critical;
 			}
 		}
 
-		void logFromInstance(wgpu::LoggingType type, wgpu::StringView message)
+		void logFromInstance(gpu::LoggingType type, gpu::StringView message)
 		{
 			privat::logImpl(conv(type), message);
 		}
 
-		void lostFromDevice(const wgpu::Device &device, wgpu::DeviceLostReason reason, wgpu::StringView message)
+		void lostFromDevice(const gpu::Device &device, gpu::DeviceLostReason reason, gpu::StringView message)
 		{
 			CAGE_LOG(SeverityEnum::Warning, "graphics", "wgpu device lost:");
 			privat::logImpl(SeverityEnum::Note, message);
 		}
 
-		void errorFromDevice(const wgpu::Device &device, wgpu::ErrorType error, wgpu::StringView message)
+		void errorFromDevice(const gpu::Device &device, gpu::ErrorType error, gpu::StringView message)
 		{
 			CAGE_LOG(SeverityEnum::Error, "graphics", "wgpu device error:");
 			privat::logImpl(SeverityEnum::Error, message);
 			detail::debugBreakpoint();
 		}
 
-		void logFromDevice(wgpu::LoggingType type, wgpu::StringView message)
+		void logFromDevice(gpu::LoggingType type, gpu::StringView message)
 		{
 			privat::logImpl(conv(type), message);
 		}
@@ -159,15 +159,15 @@ namespace cage
 		public:
 			Holder<Mutex> mutex = newMutex(); // used for the device and queue
 			GraphicsDeviceCreateConfig config;
-			wgpu::Instance instance;
-			wgpu::Adapter adapter;
-			wgpu::Device device;
-			wgpu::Queue queue;
+			gpu::Instance instance;
+			gpu::Adapter adapter;
+			gpu::Device device;
+			gpu::Queue queue;
 			Holder<privat::DeviceBindingsCache> bindingsCache;
 			Holder<privat::DevicePipelinesCache> pipelinesCache;
 			Holder<privat::DeviceBuffersCache> buffersCache;
 			Holder<privat::DeviceTexturesCache> texturesCache;
-			std::vector<wgpu::CommandBuffer> commands;
+			std::vector<gpu::CommandBuffer> commands;
 			Holder<GpuFrameTimer> gpuTimer;
 			Holder<Timer> cpuTimer;
 			GraphicsFrameStatistics statistics;
@@ -178,11 +178,11 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu instance");
 				dawn::native::DawnInstanceDescriptor ex = {};
 				ex.SetLoggingCallback(logFromInstance);
-				wgpu::InstanceDescriptor desc = {};
+				gpu::InstanceDescriptor desc = {};
 				desc.nextInChain = &ex;
-				static constexpr std::array<wgpu::InstanceFeatureName, 2> requiredFeatures = {
-					wgpu::InstanceFeatureName::TimedWaitAny,
-					wgpu::InstanceFeatureName::ShaderSourceSPIRV,
+				static constexpr std::array<gpu::InstanceFeatureName, 2> requiredFeatures = {
+					gpu::InstanceFeatureName::TimedWaitAny,
+					gpu::InstanceFeatureName::ShaderSourceSPIRV,
 				};
 				desc.requiredFeatureCount = requiredFeatures.size();
 				desc.requiredFeatures = requiredFeatures.data();
@@ -194,14 +194,14 @@ namespace cage
 				static constexpr std::array<const char *, 1> disabledToggles = {
 					"timestamp_quantization", //
 				};
-				wgpu::DawnTogglesDescriptor togglesDesc;
+				gpu::DawnTogglesDescriptor togglesDesc;
 				togglesDesc.enabledToggles = enabledToggles.data();
 				togglesDesc.enabledToggleCount = enabledToggles.size();
 				togglesDesc.disabledToggles = disabledToggles.data();
 				togglesDesc.disabledToggleCount = disabledToggles.size();
 				desc.nextInChain = &togglesDesc;
 
-				instance = wgpu::CreateInstance(&desc);
+				instance = gpu::CreateInstance(&desc);
 				if (!instance)
 					CAGE_THROW_ERROR(Exception, "failed to create wgpu instance");
 			}
@@ -209,13 +209,13 @@ namespace cage
 			void createAdapter()
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu adapter");
-				wgpu::RequestAdapterOptions opts = {};
-				opts.powerPreference = wgpu::PowerPreference::HighPerformance;
+				gpu::RequestAdapterOptions opts = {};
+				opts.powerPreference = gpu::PowerPreference::HighPerformance;
 				if (config.compatibility)
 					opts.compatibleSurface = getContext(config.compatibility)->surface;
 
-				wgpu::Future future = instance.RequestAdapter(&opts, wgpu::CallbackMode::WaitAnyOnly,
-					[&](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter_, wgpu::StringView message)
+				gpu::Future future = instance.RequestAdapter(&opts, gpu::CallbackMode::WaitAnyOnly,
+					[&](gpu::RequestAdapterStatus status, gpu::Adapter adapter_, gpu::StringView message)
 					{
 						adapter = adapter_;
 						CAGE_LOG(SeverityEnum::Info, "wgpu", conv(message));
@@ -224,31 +224,31 @@ namespace cage
 				if (!adapter)
 					CAGE_THROW_ERROR(Exception, "failed to create wgpu adapter");
 
-				wgpu::AdapterInfo info = {};
+				gpu::AdapterInfo info = {};
 				adapter.GetInfo(&info);
 				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "adapter vendor: " + conv(info.vendor));
 				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "adapter device: " + conv(info.device));
 				CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "adapter description: " + conv(info.description));
 
-				wgpu::Limits limits = {};
+				gpu::Limits limits = {};
 				adapter.GetLimits(&limits);
 			}
 
 			void createDevice()
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu device");
-				wgpu::DeviceDescriptor desc = {};
-				desc.SetDeviceLostCallback(wgpu::CallbackMode::AllowSpontaneous, lostFromDevice);
+				gpu::DeviceDescriptor desc = {};
+				desc.SetDeviceLostCallback(gpu::CallbackMode::AllowSpontaneous, lostFromDevice);
 				desc.SetUncapturedErrorCallback(errorFromDevice);
 
-				static constexpr std::array<wgpu::FeatureName, 2> requiredFeatures = {
-					wgpu::FeatureName::TextureCompressionBC,
-					wgpu::FeatureName::TimestampQuery,
+				static constexpr std::array<gpu::FeatureName, 2> requiredFeatures = {
+					gpu::FeatureName::TextureCompressionBC,
+					gpu::FeatureName::TimestampQuery,
 				};
 				desc.requiredFeatures = requiredFeatures.data();
 				desc.requiredFeatureCount = requiredFeatures.size();
 
-				wgpu::Limits requiredLimits = {};
+				gpu::Limits requiredLimits = {};
 				requiredLimits.maxSampledTexturesPerShaderStage = 32;
 				requiredLimits.maxSamplersPerShaderStage = 16;
 				desc.requiredLimits = &requiredLimits;
@@ -271,7 +271,7 @@ namespace cage
 				toggles.push_back("use_user_defined_labels_in_backend"); // show my names for textures etc in nsight
 #endif // CAGE_DEPLOY
 
-				wgpu::DawnTogglesDescriptor togglesDesc;
+				gpu::DawnTogglesDescriptor togglesDesc;
 				togglesDesc.enabledToggles = toggles.data();
 				togglesDesc.enabledToggleCount = toggles.size();
 				desc.nextInChain = &togglesDesc;
@@ -322,7 +322,7 @@ namespace cage
 				}
 			}
 
-			void insertCommandBuffer(wgpu::CommandBuffer &&cmds, const GraphicsCommandBufferStatistics &statistics_)
+			void insertCommandBuffer(gpu::CommandBuffer &&cmds, const GraphicsCommandBufferStatistics &statistics_)
 			{
 				ScopeLock lock(mutex);
 				commands.push_back(std::move(cmds));
@@ -337,7 +337,7 @@ namespace cage
 					ScopeLock lock(mutex);
 					CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu surface");
 					auto s = std::make_shared<GraphicsContextData>();
-					s->surface = wgpu::glfw::CreateSurfaceForWindow(instance, privat::getGlfwWindow(window));
+					s->surface = gpu::glfw::CreateSurfaceForWindow(instance, privat::getGlfwWindow(window));
 					if (!s->surface)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
 					surfacesCollection.push_back(s);
@@ -352,7 +352,7 @@ namespace cage
 				ScopeLock lock(mutex);
 				context->presentable = false;
 
-				wgpu::SurfaceCapabilities capabilities;
+				gpu::SurfaceCapabilities capabilities;
 				if (!context->surface.GetCapabilities(adapter, &capabilities))
 					CAGE_THROW_ERROR(Exception, "failed to retrieve surface capabilities");
 
@@ -361,24 +361,24 @@ namespace cage
 				bool immediate = false;
 				for (uint32 i = 0; i < capabilities.presentModeCount; i++)
 				{
-					//if (capabilities.presentModes[i] == wgpu::PresentMode::FifoRelaxed)
+					//if (capabilities.presentModes[i] == gpu::PresentMode::FifoRelaxed)
 					//	relaxed = true;
-					if (capabilities.presentModes[i] == wgpu::PresentMode::Mailbox)
+					if (capabilities.presentModes[i] == gpu::PresentMode::Mailbox)
 						mailbox = true;
-					if (capabilities.presentModes[i] == wgpu::PresentMode::Immediate)
+					if (capabilities.presentModes[i] == gpu::PresentMode::Immediate)
 						immediate = true;
 				}
 
-				wgpu::SurfaceConfiguration cfg = {};
+				gpu::SurfaceConfiguration cfg = {};
 				cfg.device = device;
 				cfg.width = resolution[0];
 				cfg.height = resolution[1];
 				if (config.vsync)
-					cfg.presentMode = wgpu::PresentMode::Fifo;
+					cfg.presentMode = gpu::PresentMode::Fifo;
 				else
-					cfg.presentMode = mailbox ? wgpu::PresentMode::Mailbox : immediate ? wgpu::PresentMode::Immediate : wgpu::PresentMode::Fifo;
-				cfg.format = wgpu::TextureFormat::BGRA8Unorm; // this should be guaranteed to work everywhere
-				cfg.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::CopySrc;
+					cfg.presentMode = mailbox ? gpu::PresentMode::Mailbox : immediate ? gpu::PresentMode::Immediate : gpu::PresentMode::Fifo;
+				cfg.format = gpu::TextureFormat::BGRA8Unorm; // this should be guaranteed to work everywhere
+				cfg.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::CopySrc;
 				context->surface.Configure(&cfg);
 				context->resolution = resolution;
 			}
@@ -402,7 +402,7 @@ namespace cage
 					context->surface.Present();
 				}
 
-				wgpu::SurfaceTexture tex = {};
+				gpu::SurfaceTexture tex = {};
 				{
 					const ProfilingScope profiling("get texture");
 					//ScopeLock lock(mutex); // this lock seems to be unnecessary
@@ -410,20 +410,20 @@ namespace cage
 				}
 				switch (tex.status)
 				{
-					case wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal:
+					case gpu::SurfaceGetCurrentTextureStatus::SuccessOptimal:
 					{
 						// todo
 						break;
 					}
-					case wgpu::SurfaceGetCurrentTextureStatus::SuccessSuboptimal:
-					case wgpu::SurfaceGetCurrentTextureStatus::Timeout:
-					case wgpu::SurfaceGetCurrentTextureStatus::Outdated:
+					case gpu::SurfaceGetCurrentTextureStatus::SuccessSuboptimal:
+					case gpu::SurfaceGetCurrentTextureStatus::Timeout:
+					case gpu::SurfaceGetCurrentTextureStatus::Outdated:
 					{
 						// todo
 						break;
 					}
-					case wgpu::SurfaceGetCurrentTextureStatus::Lost:
-					case wgpu::SurfaceGetCurrentTextureStatus::Error:
+					case gpu::SurfaceGetCurrentTextureStatus::Lost:
+					case gpu::SurfaceGetCurrentTextureStatus::Error:
 					{
 						context->presentable = false;
 						CAGE_THROW_ERROR(Exception, "surface lost/error");
@@ -473,22 +473,22 @@ namespace cage
 		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
 			{
-				wgpu::QuerySetDescriptor qsDesc = {};
-				qsDesc.type = wgpu::QueryType::Timestamp;
+				gpu::QuerySetDescriptor qsDesc = {};
+				qsDesc.type = gpu::QueryType::Timestamp;
 				qsDesc.count = Frames * 2;
 				querySet = device->device.CreateQuerySet(&qsDesc);
 			}
 			{
-				wgpu::BufferDescriptor resolveDesc = {};
+				gpu::BufferDescriptor resolveDesc = {};
 				resolveDesc.size = Frames * 256; // alignment requirements
-				resolveDesc.usage = wgpu::BufferUsage::QueryResolve | wgpu::BufferUsage::CopySrc;
+				resolveDesc.usage = gpu::BufferUsage::QueryResolve | gpu::BufferUsage::CopySrc;
 				buffResolve = device->device.CreateBuffer(&resolveDesc);
 			}
 			for (uint32 i = 0; i < Frames; i++)
 			{
-				wgpu::BufferDescriptor readbackDesc = {};
+				gpu::BufferDescriptor readbackDesc = {};
 				readbackDesc.size = 2 * sizeof(uint64);
-				readbackDesc.usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
+				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
 				buffRead[i] = device->device.CreateBuffer(&readbackDesc);
 			}
 		}
@@ -512,7 +512,7 @@ namespace cage
 			ScopeLock lock(device->mutex);
 			{
 				const uint32 current = frameIndex % Frames;
-				if (buffRead[current].GetMapState() != wgpu::BufferMapState::Unmapped)
+				if (buffRead[current].GetMapState() != gpu::BufferMapState::Unmapped)
 					return;
 				const uint64 offset = current * 256;
 				auto ce = device->device.CreateCommandEncoder({});
@@ -524,10 +524,10 @@ namespace cage
 			if (frameIndex >= Frames)
 			{
 				const uint32 prev = (frameIndex + Frames - 1) % Frames;
-				buffRead[prev].MapAsync(wgpu::MapMode::Read, 0, 2 * sizeof(uint64), wgpu::CallbackMode::AllowProcessEvents,
-					[this, prev](wgpu::MapAsyncStatus status, wgpu::StringView)
+				buffRead[prev].MapAsync(gpu::MapMode::Read, 0, 2 * sizeof(uint64), gpu::CallbackMode::AllowProcessEvents,
+					[this, prev](gpu::MapAsyncStatus status, gpu::StringView)
 					{
-						if (status != wgpu::MapAsyncStatus::Success)
+						if (status != gpu::MapAsyncStatus::Success)
 							return;
 						const uint64 *ts = static_cast<const uint64 *>(buffRead[prev].GetConstMappedRange(0, 2 * sizeof(uint64)));
 						time = (ts[1] - ts[0]) / 1000; // ns -> us
@@ -573,13 +573,13 @@ namespace cage
 		return systemMemory().createImpl<GraphicsDevice, GraphicsDeviceImpl>(config);
 	}
 
-	void GraphicsDevice::wait(const wgpu::Future &future)
+	void GraphicsDevice::wait(const gpu::Future &future)
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		impl->instance.WaitAny(future, m);
 	}
 
-	void GraphicsDevice::insertCommandBuffer(wgpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)
+	void GraphicsDevice::insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		impl->insertCommandBuffer(std::move(commands), statistics);
@@ -597,36 +597,102 @@ namespace cage
 		return impl->nextFrame();
 	}
 
-	Holder<wgpu::Device> GraphicsDevice::nativeDevice()
+	Holder<gpu::Device> GraphicsDevice::nativeDevice()
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		struct LockedDevice : private Noncopyable
 		{
 			ScopeLock<Mutex> lock;
-			wgpu::Device device;
+			gpu::Device device;
 			//ProfilingScope profiling;
 
-			LockedDevice(ScopeLock<Mutex> &&l, wgpu::Device d) : lock(std::move(l)), device(std::move(d)) //, profiling("native device lock")
+			LockedDevice(ScopeLock<Mutex> &&l, gpu::Device d) : lock(std::move(l)), device(std::move(d)) //, profiling("native device lock")
 			{}
 		};
 		Holder<LockedDevice> l = systemMemory().createHolder<LockedDevice>(ScopeLock(impl->mutex), impl->device);
-		return Holder<wgpu::Device>(&l->device, std::move(l));
+		return Holder<gpu::Device>(&l->device, std::move(l));
 	}
 
-	Holder<wgpu::Queue> GraphicsDevice::nativeQueue()
+	Holder<gpu::Queue> GraphicsDevice::nativeQueue()
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
 		struct LockedQueue : private Noncopyable
 		{
 			ScopeLock<Mutex> lock;
-			wgpu::Queue queue;
+			gpu::Queue queue;
 			//ProfilingScope profiling;
 
-			LockedQueue(ScopeLock<Mutex> &&l, wgpu::Queue q) : lock(std::move(l)), queue(std::move(q)) //, profiling("native queue lock")
+			LockedQueue(ScopeLock<Mutex> &&l, gpu::Queue q) : lock(std::move(l)), queue(std::move(q)) //, profiling("native queue lock")
 			{}
 		};
 		Holder<LockedQueue> l = systemMemory().createHolder<LockedQueue>(ScopeLock(impl->mutex), impl->queue);
-		return Holder<wgpu::Queue>(&l->queue, std::move(l));
+		return Holder<gpu::Queue>(&l->queue, std::move(l));
 	}
 }
 */
+
+namespace cage
+{
+	namespace privat
+	{
+		struct DeviceBindingsCache;
+		struct DevicePipelinesCache;
+		struct DeviceBuffersCache;
+		struct DeviceTexturesCache;
+
+		DeviceBindingsCache *getDeviceBindingsCache(GraphicsDevice *device)
+		{
+			return {}; // todo
+		}
+
+		DevicePipelinesCache *getDevicePipelinesCache(GraphicsDevice *device)
+		{
+			return {}; // todo
+		}
+
+		DeviceBuffersCache *getDeviceBuffersCache(GraphicsDevice *device)
+		{
+			return {}; // todo
+		}
+
+		DeviceTexturesCache *getDeviceTexturesCache(GraphicsDevice *device)
+		{
+			return {}; // todo
+		}
+	}
+
+	void GraphicsDevice::wait(const gpu::Future &future)
+	{
+		// todo
+	}
+
+	void GraphicsDevice::insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)
+	{
+		// todo
+	}
+
+	Holder<Texture> GraphicsDevice::nextWindow(Window *window)
+	{
+		return {}; // todo
+	}
+
+	GraphicsFrameStatistics GraphicsDevice::nextFrame()
+	{
+		return {}; // todo
+	}
+
+	Holder<gpu::Device> GraphicsDevice::nativeDevice()
+	{
+		return {}; // todo
+	}
+
+	Holder<gpu::Queue> GraphicsDevice::nativeQueue()
+	{
+		return {}; // todo
+	}
+
+	Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config)
+	{
+		return {}; // todo
+	}
+}

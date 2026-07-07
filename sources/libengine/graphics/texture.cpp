@@ -1,4 +1,5 @@
 #include <array>
+#include <unordered_map>
 
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
@@ -6,18 +7,17 @@
 #include <cage-engine/graphicsDevice.h>
 #include <cage-engine/texture.h>
 
-/*
 namespace cage
 {
 	namespace privat
 	{
-		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags)
+		gpu::TextureViewDimension textureViewDimension(TextureFlags flags)
 		{
 			if (any(flags & TextureFlags::Volume3D))
-				return wgpu::TextureViewDimension::e3D;
+				return gpu::TextureViewDimension::e3D;
 			if (any(flags & TextureFlags::Cubemap))
-				return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::CubeArray : wgpu::TextureViewDimension::Cube;
-			return any(flags & TextureFlags::Array) ? wgpu::TextureViewDimension::e2DArray : wgpu::TextureViewDimension::e2D;
+				return any(flags & TextureFlags::Array) ? gpu::TextureViewDimension::CubeArray : gpu::TextureViewDimension::Cube;
+			return any(flags & TextureFlags::Array) ? gpu::TextureViewDimension::e2DArray : gpu::TextureViewDimension::e2D;
 		}
 
 		struct DeviceTexturesCache : private Immovable
@@ -75,15 +75,15 @@ namespace cage
 				cfg.flags = TextureFlags::Cubemap;
 				dummyCube = newTexture(device, cfg, "dummyCube");
 
-				wgpu::TexelCopyTextureInfo dest = {};
+				gpu::TexelCopyTextureInfo dest = {};
 				dest.texture = dummy2d->nativeTexture();
 				dest.mipLevel = 0;
-				dest.aspect = wgpu::TextureAspect::All;
-				wgpu::TexelCopyBufferLayout layout = {};
+				dest.aspect = gpu::TextureAspect::All;
+				gpu::TexelCopyBufferLayout layout = {};
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
-				wgpu::Extent3D extents = { 1, 1, 1 };
-				static constexpr std::array<unsigned char, 4 * 6> data = {
+				gpu::Extent3D extents = { 1, 1, 1 };
+				static constexpr std::array<uint8, 4 * 6> data = {
 					0,
 					0,
 					0,
@@ -109,28 +109,28 @@ namespace cage
 					0,
 					255,
 				};
-				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 				dest.texture = dummyArray->nativeTexture();
-				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
 				extents.depthOrArrayLayers = 6;
-				device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 			}
 
 			void generateShadowsSampler()
 			{
-				wgpu::TextureDescriptor desc = {};
+				gpu::TextureDescriptor desc = {};
 				desc.size.width = 1;
 				desc.size.height = 1;
 				desc.size.depthOrArrayLayers = 1;
-				desc.format = wgpu::TextureFormat::Depth32Float;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.format = gpu::TextureFormat::Depth32Float;
+				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
 				desc.label = "dummy shadowmap target";
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::TextureViewDescriptor vd = {};
-				vd.dimension = wgpu::TextureViewDimension::e2DArray;
-				wgpu::TextureView view = tex.CreateView(&vd);
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler();
+				gpu::Texture tex = device->nativeDevice()->CreateTexture(desc);
+				gpu::TextureViewDescriptor vd = {};
+				vd.dimension = gpu::TextureViewDimension::e2DArray;
+				gpu::TextureView view = tex.CreateView(vd);
+				gpu::Sampler samp = device->nativeDevice()->CreateSampler({});
 				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
 				t->flags = TextureFlags::Array;
 				shadowsSampler = std::move(t);
@@ -146,27 +146,27 @@ namespace cage
 
 			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
 			{
-				wgpu::TextureDescriptor desc = {};
+				gpu::TextureDescriptor desc = {};
 				desc.size.width = config.resolution[0];
 				desc.size.height = config.resolution[1];
 				desc.size.depthOrArrayLayers = config.resolution[2];
 				desc.mipLevelCount = config.mipLevelCount;
 				desc.format = config.format;
-				desc.usage = wgpu::TextureUsage::RenderAttachment | wgpu::TextureUsage::TextureBinding;
+				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
 				desc.label = config.name.c_str();
-				wgpu::Texture tex = device->nativeDevice()->CreateTexture(&desc);
-				wgpu::TextureViewDescriptor vd = {};
+				gpu::Texture tex = device->nativeDevice()->CreateTexture(desc);
+				gpu::TextureViewDescriptor vd = {};
 				vd.dimension = textureViewDimension(config.flags);
-				wgpu::TextureView view = tex.CreateView(&vd);
-				wgpu::SamplerDescriptor sd = {};
+				gpu::TextureView view = tex.CreateView(vd);
+				gpu::SamplerDescriptor sd = {};
 				if (config.samplerVariant)
 				{
-					sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
-					sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
-					sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
+					sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
+					sd.mipmapFilter = gpu::MipmapFilterMode::Nearest;
 					sd.label = config.name.c_str();
 				}
-				wgpu::Sampler samp = device->nativeDevice()->CreateSampler(&sd);
+				gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);
 				Holder<Texture> t = newTexture(tex, view, samp, config.name);
 				t->flags = config.flags;
 				return t;
@@ -174,8 +174,6 @@ namespace cage
 
 			Holder<Texture> getTexture(const TransientTextureCreateConfig &config)
 			{
-				//return createTexture(config);
-
 				const Key key(config);
 
 				{
@@ -241,9 +239,9 @@ namespace cage
 
 	namespace
 	{
-		wgpu::TextureFormat findFormat(ImageFormatEnum format, uint32 channels, bool srgb)
+		gpu::TextureFormat findFormat(ImageFormatEnum format, uint32 channels, bool srgb)
 		{
-			using F = wgpu::TextureFormat;
+			using F = gpu::TextureFormat;
 
 			if (srgb)
 			{
@@ -314,42 +312,42 @@ namespace cage
 		class TextureImpl : public Texture
 		{
 		public:
-			wgpu::Texture texture;
-			wgpu::TextureView view;
-			wgpu::Sampler sampler;
+			gpu::Texture texture;
+			gpu::TextureView view;
+			gpu::Sampler sampler;
 
 			TextureImpl(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label_)
 			{
 				this->label = label_;
 				this->flags = config.flags;
-				wgpu::TextureDescriptor desc = {};
-				desc.usage = wgpu::TextureUsage::CopyDst;
+				gpu::TextureDescriptor desc = {};
+				desc.usage = gpu::TextureUsage::CopyDst;
 				if (config.sampling)
-					desc.usage |= wgpu::TextureUsage::TextureBinding;
+					desc.usage |= gpu::TextureUsage::TextureBinding;
 				if (config.renderable)
-					desc.usage |= wgpu::TextureUsage::RenderAttachment;
-				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? wgpu::TextureDimension::e3D : wgpu::TextureDimension::e2D;
+					desc.usage |= gpu::TextureUsage::RenderAttachment;
+				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? gpu::TextureDimension::e3D : gpu::TextureDimension::e2D;
 				desc.size.width = config.resolution[0];
 				desc.size.height = config.resolution[1];
 				desc.size.depthOrArrayLayers = config.resolution[2];
 				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
 				desc.mipLevelCount = config.mipLevels;
 				desc.label = label.c_str();
-				Holder<wgpu::Device> dev = device->nativeDevice();
-				texture = dev->CreateTexture(&desc);
-				wgpu::TextureViewDescriptor twd = {};
+				Holder<gpu::Device> dev = device->nativeDevice();
+				texture = dev->CreateTexture(desc);
+				gpu::TextureViewDescriptor twd = {};
 				twd.dimension = privat::textureViewDimension(config.flags);
-				view = texture.CreateView(&twd);
-				sampler = dev->CreateSampler();
+				view = texture.CreateView(twd);
+				sampler = dev->CreateSampler({});
 			}
 
-			TextureImpl(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label_) : texture(texture), view(view), sampler(sampler) { this->label = label_; }
+			TextureImpl(gpu::Texture texture, gpu::TextureView view, gpu::Sampler sampler, const AssetLabel &label_) : texture(texture), view(view), sampler(sampler) { this->label = label_; }
 
 			Vec3i mipRes(uint32 mip) const
 			{
 				CAGE_ASSERT(mip < texture.GetMipLevelCount());
 				const Vec3i r = resolution3();
-				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.GetDimension() == wgpu::TextureDimension::e3D ? mip : 0), 1));
+				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.GetDimension() == gpu::TextureDimension::e3D ? mip : 0), 1));
 			}
 		};
 	}
@@ -384,19 +382,19 @@ namespace cage
 		return impl->mipRes(mipmapLevel);
 	}
 
-	const wgpu::Texture &Texture::nativeTexture()
+	gpu::Texture &Texture::nativeTexture()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		return impl->texture;
 	}
 
-	const wgpu::TextureView &Texture::nativeView()
+	gpu::TextureView &Texture::nativeView()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		return impl->view;
 	}
 
-	const wgpu::Sampler &Texture::nativeSampler()
+	gpu::Sampler &Texture::nativeSampler()
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		return impl->sampler;
@@ -422,21 +420,20 @@ namespace cage
 		if (image->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
 			conf.flags = TextureFlags::Srgb;
 		Holder<Texture> tex = newTexture(device, conf, label);
-		wgpu::TexelCopyTextureInfo dest = {};
+		gpu::TexelCopyTextureInfo dest = {};
 		dest.texture = tex->nativeTexture();
-		dest.aspect = wgpu::TextureAspect::All;
-		wgpu::TexelCopyBufferLayout layout = {};
+		dest.aspect = gpu::TextureAspect::All;
+		gpu::TexelCopyBufferLayout layout = {};
 		layout.bytesPerRow = image->width() * image->channels();
 		layout.rowsPerImage = image->height();
-		const wgpu::Extent3D extents = { image->width(), image->height(), 1 };
+		const gpu::Extent3D extents = { image->width(), image->height(), 1 };
 		const auto data = image->rawViewU8();
-		device->nativeQueue()->WriteTexture(&dest, data.data(), data.size(), &layout, &extents);
+		device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 		return tex;
 	}
 
-	Holder<Texture> newTexture(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label)
+	Holder<Texture> newTexture(gpu::Texture texture, gpu::TextureView view, gpu::Sampler sampler, const AssetLabel &label)
 	{
 		return systemMemory().createImpl<Texture, TextureImpl>(texture, view, sampler, label);
 	}
 }
-*/

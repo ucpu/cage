@@ -125,9 +125,6 @@ namespace cage
 
 			Holder<Image> screenshot()
 			{
-				return {};
-
-				/*
 				Holder<Texture> texture = sharedTargetTexture.get();
 				if (!texture)
 					return {};
@@ -145,7 +142,7 @@ namespace cage
 				gpu::BufferDescriptor readbackDesc{};
 				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
 				readbackDesc.size = res[0] * res[1] * 4;
-				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->CreateBuffer(&readbackDesc);
+				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->CreateBuffer(readbackDesc);
 
 				gpu::TexelCopyTextureInfo srcView = {};
 				srcView.texture = texture->nativeTexture();
@@ -157,8 +154,8 @@ namespace cage
 
 				gpu::Extent3D copySize = { (uint32)actualResolution[0], (uint32)actualResolution[1], 1 };
 
-				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder();
-				encoder.CopyTextureToBuffer(&srcView, &dstBuffer, &copySize);
+				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder({});
+				encoder.CopyTextureToBuffer(srcView, dstBuffer, copySize);
 				engineGraphicsDevice()->insertCommandBuffer(encoder.Finish(), {});
 				engineGraphicsDevice()->nextFrame();
 
@@ -195,7 +192,6 @@ namespace cage
 				}
 
 				return img;
-				*/
 			}
 
 			// graphics thread ---------------------------------------------------------------------
