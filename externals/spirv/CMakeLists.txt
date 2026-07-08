@@ -26,7 +26,7 @@ add_subdirectory(glslang)
 
 add_library(cage_spirv INTERFACE)
 target_link_libraries(cage_spirv INTERFACE $<TARGET_LINKER_FILE:glslang> $<TARGET_LINKER_FILE:glslang-default-resource-limits>)
-target_link_libraries(cage_spirv INTERFACE $<TARGET_LINKER_FILE:SPIRV-Tools> $<TARGET_LINKER_FILE:SPIRV-Tools-opt> $<TARGET_LINKER_FILE:SPIRV-Tools-link>)
+target_link_libraries(cage_spirv INTERFACE $<TARGET_LINKER_FILE:SPIRV-Tools-link> $<TARGET_LINKER_FILE:SPIRV-Tools-opt> $<TARGET_LINKER_FILE:SPIRV-Tools>)
 target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/glslang")
 target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/headers/include")
 target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/tools")

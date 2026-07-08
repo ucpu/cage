@@ -110,6 +110,21 @@ cage_target_api_macro(cage-engine CAGE_ENGINE_API)
 cage_ide_category(cage-engine cage/libs)
 cage_ide_sort_files(cage-engine)
 
+# make the build fail if any symbols are missing
+string(FIND "${CMAKE_CXX_FLAGS}" "-fsanitize" sanitize_pos)
+if(sanitize_pos EQUAL -1)
+	if(WIN32)
+	elseif(APPLE)
+		target_link_options(cage-core PRIVATE -Wl,-undefined,error)
+		target_link_options(cage-engine PRIVATE -Wl,-undefined,error)
+	else()
+		target_link_options(cage-core PRIVATE -Wl,--no-undefined)
+		target_link_options(cage-engine PRIVATE -Wl,--no-undefined)
+	endif()
+else()
+	message(STATUS "detected sanitizers, not applying --no-undefined")
+endif()
+
 ########
 # SIMPLE
 ########
