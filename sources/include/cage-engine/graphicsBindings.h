@@ -3,14 +3,15 @@
 
 #include <svector.h>
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
 
 namespace cage
 {
 	struct CAGE_ENGINE_API GraphicsBindings
 	{
-		gpu::BindGroupLayout layout = {};
-		gpu::BindGroup group = {};
+		gpu::BindGroupLayout layout;
+		gpu::BindGroup group;
 		uint32 dynamicBuffersCount = 0;
 
 		operator bool() const

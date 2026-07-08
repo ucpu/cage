@@ -63,11 +63,11 @@ namespace cage
 					if (!passData.bindings)
 						passData.bindings = privat::getEmptyBindings(device);
 
-					ankerl::svector<gpu::RenderPassColorAttachment, 1> atts;
+					ankerl::svector<gpu::RenderPassDescriptor::ColorAttachment, 1> atts;
 					atts.reserve(passData.colorTargets.size());
 					for (const auto &it : passData.colorTargets)
 					{
-						gpu::RenderPassColorAttachment rpca = {};
+						gpu::RenderPassDescriptor::ColorAttachment rpca = {};
 						rpca.clearValue = it.clearValue;
 						rpca.loadOp = it.clear ? gpu::LoadOp::Clear : gpu::LoadOp::Load;
 						rpca.storeOp = gpu::StoreOp::Store;
@@ -76,7 +76,7 @@ namespace cage
 						atts.push_back(std::move(rpca));
 					}
 
-					gpu::RenderPassDepthStencilAttachment rpdsa = {};
+					gpu::RenderPassDescriptor::DepthStencilAttachment rpdsa = {};
 					if (passData.depthTarget)
 					{
 						CAGE_ASSERT(passData.depthTarget->texture->nativeView());
@@ -89,7 +89,7 @@ namespace cage
 					gpu::RenderPassDescriptor rpd = {};
 					rpd.colorAttachments = atts;
 					if (passData.depthTarget)
-						rpd.depthStencilAttachment = &rpdsa;
+						rpd.depthStencilAttachment = std::move(rpdsa);
 					rpd.label = label.c_str();
 					renderEnc = cmdEnc.BeginRenderPass(rpd);
 
@@ -125,7 +125,7 @@ namespace cage
 
 				renderEnc.SetBindGroup(1, config.material.group);
 				CAGE_ASSERT(config.bindings.dynamicBuffersCount <= config.dynamicOffsets.size());
-				renderEnc.SetBindGroup(2, config.bindings.group, config.bindings.dynamicBuffersCount, config.dynamicOffsets);
+				renderEnc.SetBindGroup(2, config.bindings.group, PointerRange<const uint32>(config.dynamicOffsets).subRange(0, config.bindings.dynamicBuffersCount));
 
 				renderEnc.SetVertexBuffer(0, config.model->geometryBuffer->nativeBuffer());
 				if (config.model->indicesCount)

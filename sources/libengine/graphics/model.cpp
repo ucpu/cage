@@ -16,7 +16,7 @@ namespace cage
 		class ModelImpl : public Model
 		{
 		public:
-			std::array<gpu::VertexAttribute, 5> attrs;
+			std::array<gpu::VertexBufferLayout::VertexAttribute, 5> attrs;
 			gpu::VertexBufferLayout layout = {};
 			GraphicsBindings bindings;
 
@@ -78,7 +78,7 @@ namespace cage
 				}
 				CAGE_ASSERT(index <= attrs.size());
 
-				layout.attributes = PointerRange<const gpu::VertexAttribute>(attrs).subRange(0, index);
+				layout.attributes = PointerRange<const gpu::VertexBufferLayout::VertexAttribute>(attrs).subRange(0, index);
 				layout.stepMode = gpu::VertexStepMode::Vertex;
 			}
 		};

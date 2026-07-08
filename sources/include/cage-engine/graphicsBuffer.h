@@ -1,6 +1,7 @@
 #ifndef guard_graphicsBuffer_s54dtau4kfesas
 #define guard_graphicsBuffer_s54dtau4kfesas
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
 
 namespace cage

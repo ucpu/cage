@@ -5,6 +5,7 @@
 
 #include <svector.h>
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsBindings.h>
 
 namespace cage

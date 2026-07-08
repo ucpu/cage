@@ -62,7 +62,7 @@ namespace cage
 
 			const uint32 copyWidth = max(blockWidth, (uint32)resolution[0]);
 			const uint32 copyHeight = max(blockWidth, (uint32)resolution[1]);
-			gpu::Extent3D extents = { copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]) };
+			const Vec3i extents = Vec3i(copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]));
 
 			queue.WriteTexture(dest, data, layout, extents);
 		}
@@ -85,7 +85,7 @@ namespace cage
 			static_assert(sizeof(desc.format) == sizeof(header.format));
 			desc.format = (gpu::TextureFormat)header.format;
 			desc.mipLevelCount = header.mipLevels;
-			desc.size = { numeric_cast<uint32>(header.resolution[0]), numeric_cast<uint32>(header.resolution[1]), numeric_cast<uint32>(header.resolution[2]) };
+			desc.size = header.resolution;
 			desc.label = context->textId.c_str();
 			gpu::Texture wtex = dev->CreateTexture(desc);
 

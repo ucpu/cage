@@ -59,18 +59,18 @@ namespace cage
 
 			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
-				ankerl::svector<gpu::BindGroupLayoutEntry, 10> entries;
+				ankerl::svector<gpu::BindGroupLayoutDescriptor::Entry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer && b.buffer->nativeBuffer());
-					gpu::BindGroupLayoutEntry e = {};
+					gpu::BindGroupLayoutDescriptor::Entry e = {};
 					e.binding = b.binding;
 					e.visibility = gpu::ShaderStage::Vertex | gpu::ShaderStage::Fragment;
 					e.buffer.type = b.uniform ? gpu::BufferBindingType::Uniform : gpu::BufferBindingType::ReadOnlyStorage;
 					e.buffer.hasDynamicOffset = b.dynamic;
-					entries.push_back(e);
+					entries.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
@@ -80,20 +80,20 @@ namespace cage
 					const bool filterable = isFormatFilterable(t.texture->nativeTexture().GetFormat());
 					if (t.bindTexture)
 					{
-						gpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding;
 						e.visibility = gpu::ShaderStage::Fragment;
 						e.texture.sampleType = filterable ? gpu::TextureSampleType::Float : gpu::TextureSampleType::UnfilterableFloat;
 						e.texture.viewDimension = textureViewDimension(t.texture->flags);
-						entries.push_back(e);
+						entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
-						gpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
 						e.visibility = gpu::ShaderStage::Fragment;
 						e.sampler.type = filterable ? gpu::SamplerBindingType::Filtering : gpu::SamplerBindingType::NonFiltering;
-						entries.push_back(e);
+						entries.push_back(std::move(e));
 					}
 				}
 
@@ -109,19 +109,19 @@ namespace cage
 			{
 				CAGE_ASSERT(layout);
 
-				ankerl::svector<gpu::BindGroupEntry, 10> entries;
+				ankerl::svector<gpu::BindGroupDescriptor::Entry, 10> entries;
 				entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer);
-					gpu::BindGroupEntry e = {};
+					gpu::BindGroupDescriptor::Entry e = {};
 					e.binding = b.binding;
 					e.buffer = b.buffer->nativeBuffer();
 					CAGE_ASSERT(e.buffer);
 					e.offset = 0;
 					e.size = b.size;
-					entries.push_back(e);
+					entries.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
@@ -130,19 +130,19 @@ namespace cage
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
 					if (t.bindTexture)
 					{
-						gpu::BindGroupEntry e = {};
+						gpu::BindGroupDescriptor::Entry e = {};
 						e.binding = t.binding;
 						e.textureView = t.texture->nativeView();
 						CAGE_ASSERT(e.textureView);
-						entries.push_back(e);
+						entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
-						gpu::BindGroupEntry e = {};
+						gpu::BindGroupDescriptor::Entry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
 						e.sampler = t.texture->nativeSampler();
 						CAGE_ASSERT(e.sampler);
-						entries.push_back(e);
+						entries.push_back(std::move(e));
 					}
 				}
 

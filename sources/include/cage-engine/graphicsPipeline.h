@@ -3,6 +3,7 @@
 
 #include <svector.h>
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
 
 namespace cage

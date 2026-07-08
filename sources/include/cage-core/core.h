@@ -310,7 +310,11 @@ namespace cage
 		using value_type = T;
 
 		constexpr PointerRange() = default;
-		constexpr PointerRange(const PointerRange<T> &other) = default;
+		constexpr PointerRange(const PointerRange<T> &) = default;
+		constexpr PointerRange(PointerRange<T> &&) = default;
+		constexpr PointerRange<T> &operator=(const PointerRange<T> &) = default;
+		constexpr PointerRange<T> &operator=(PointerRange<T> &&) = default;
+
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
 		CAGE_FORCE_INLINE constexpr PointerRange(T *data, size_type size) : begin_(data), end_(data + size) {}
 		template<size_type N>

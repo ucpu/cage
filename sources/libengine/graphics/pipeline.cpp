@@ -13,9 +13,9 @@ namespace cage
 {
 	namespace
 	{
-		gpu::BlendState convertBlending(BlendingEnum blending)
+		gpu::RenderPipelineDescriptor::BlendState convertBlending(BlendingEnum blending)
 		{
-			gpu::BlendState bs = {};
+			gpu::RenderPipelineDescriptor::BlendState bs = {};
 			bs.color.operation = gpu::BlendOperation::Add;
 			bs.alpha.operation = gpu::BlendOperation::Add;
 			switch (blending)
@@ -125,7 +125,7 @@ namespace cage
 
 			void createPipeline(const PipelineConfig &config, Value *target)
 			{
-				gpu::DepthStencilState dss = {};
+				gpu::RenderPipelineDescriptor::DepthStencilState dss = {};
 				if (config.depthFormat != gpu::TextureFormat::Undefined)
 				{
 					dss.format = config.depthFormat;
@@ -133,19 +133,19 @@ namespace cage
 					dss.depthWriteEnabled = config.depthWrite;
 				}
 
-				gpu::BlendState blendState = convertBlending(config.blending);
-				ankerl::svector<gpu::ColorTargetState, 1> colors;
+				const gpu::RenderPipelineDescriptor::BlendState blendState = convertBlending(config.blending);
+				ankerl::svector<gpu::RenderPipelineDescriptor::ColorTargetState, 1> colors;
 				colors.reserve(config.colorTargets.size());
 				for (gpu::TextureFormat ct : config.colorTargets)
 				{
-					gpu::ColorTargetState cts = {};
+					gpu::RenderPipelineDescriptor::ColorTargetState cts = {};
 					cts.format = ct;
 					if (config.blending != BlendingEnum::None)
-						cts.blend = &blendState;
-					colors.push_back(cts);
+						cts.blend = blendState;
+					colors.push_back(std::move(cts));
 				}
 
-				gpu::FragmentState fs = {};
+				gpu::RenderPipelineDescriptor::FragmentState fs = {};
 				fs.module = config.shader->nativeFragment();
 				fs.targets = colors;
 
@@ -155,17 +155,17 @@ namespace cage
 				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullMode::Back : gpu::CullMode::None;
 				rpd.primitive.topology = config.primitiveTopology;
 				if (config.depthFormat != gpu::TextureFormat::Undefined)
-					rpd.depthStencil = &dss;
-				rpd.fragment = &fs;
+					rpd.depthStencil = std::move(dss);
+				rpd.fragment = std::move(fs);
 
 				gpu::PipelineLayoutDescriptor pld = {};
 				pld.bindGroupLayouts = config.bindingsLayouts;
 				Holder<gpu::Device> dev = device->nativeDevice();
 				rpd.layout = dev->CreatePipelineLayout(pld);
 				dev->CreateRenderPipelineAsync(rpd, gpu::CallbackMode::AllowProcessEvents,
-					[this, target](gpu::CreatePipelineAsyncStatus status, gpu::RenderPipeline pipeline, gpu::StringView message)
+					[this, target](gpu::Status status, gpu::RenderPipeline pipeline, gpu::StringView message)
 					{
-						if (status == gpu::CreatePipelineAsyncStatus::Success)
+						if (status == gpu::Status::Success)
 						{
 							ScopeLock lock(mutex, WriteLockTag());
 							target->pipeline = pipeline;

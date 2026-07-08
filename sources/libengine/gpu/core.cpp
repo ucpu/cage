@@ -1,6 +1,6 @@
 #include <vulkan/vulkan.hpp>
 
-#include <cage-engine/gpuCore.h>
+#include <cage-engine/gpuInterface.h>
 
 namespace cage
 {
@@ -13,14 +13,19 @@ namespace cage
 			// todo
 		}
 
-		uintPtr Buffer::GetSize() const
+		uint64 Buffer::GetSize() const
 		{
 			return 0; // todo
 		}
 
-		void *Buffer::GetConstMappedRange()
+		BufferUsage Buffer::GetUsage() const
 		{
-			return 0; // todo
+			return {}; // todo
+		}
+
+		PointerRange<char> Buffer::GetMappedRange()
+		{
+			return {}; // todo
 		}
 
 		void Buffer::Unmap()
@@ -73,7 +78,7 @@ namespace cage
 			return {}; // todo
 		}
 
-		void CommandEncoder::CopyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, const Extent3D &copySize)
+		void CommandEncoder::CopyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			// todo
 		}
@@ -93,42 +98,42 @@ namespace cage
 			// todo
 		}
 
-		void RenderPassEncoder::SetScissorRect(Real x, Real y, Real w, Real h)
+		void RenderPassEncoder::SetScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::SetPipeline(RenderPipeline pipeline)
+		void RenderPassEncoder::SetPipeline(const RenderPipeline &pipeline)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::SetBindGroup(uint32 binding, BindGroup group)
+		void RenderPassEncoder::SetBindGroup(uint32 binding, const BindGroup &group)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::SetBindGroup(uint32 binding, BindGroup group, uint32 dynamicBuffersCount, PointerRange<const uint32> dynamicOffsets)
+		void RenderPassEncoder::SetBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::SetVertexBuffer(uint32 index, Buffer buffer)
+		void RenderPassEncoder::SetVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::SetIndexBuffer(Buffer buffer, IndexFormat format, uint32 indicesOffset)
+		void RenderPassEncoder::SetIndexBuffer(const Buffer &buffer, IndexFormat format, uint64 offset, uint64 size)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::DrawIndexed(uint32 indicesCount, uint32 instancesCount)
+		void RenderPassEncoder::DrawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
 		{
 			// todo
 		}
 
-		void RenderPassEncoder::Draw(uint32 verticesCount, uint32 instancesCount)
+		void RenderPassEncoder::Draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
 		{
 			// todo
 		}
@@ -168,22 +173,22 @@ namespace cage
 			return {}; // todo
 		}
 
-		RenderPipelineLayout Device::CreatePipelineLayout(const PipelineLayoutDescriptor &desc)
+		PipelineLayout Device::CreatePipelineLayout(const PipelineLayoutDescriptor &desc)
 		{
 			return {}; // todo
 		}
 
-		void Queue::WriteBuffer(Buffer buffer, uintPtr offset, PointerRange<const char> data)
+		void Queue::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
 			// todo
 		}
 
-		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, const Extent3D &extents)
+		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			// todo
 		}
 
-		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, const Extent3D &extents)
+		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			return WriteTexture(dest, data.cast<const char>(), layout, extents);
 		}

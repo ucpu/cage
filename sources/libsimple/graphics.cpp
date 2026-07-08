@@ -152,7 +152,7 @@ namespace cage
 				dstBuffer.layout.bytesPerRow = res[0] * 4; // must be multiple of 256
 				dstBuffer.layout.rowsPerImage = res[1];
 
-				gpu::Extent3D copySize = { (uint32)actualResolution[0], (uint32)actualResolution[1], 1 };
+				const Vec3i copySize = Vec3i((uint32)actualResolution[0], (uint32)actualResolution[1], 1);
 
 				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder({});
 				encoder.CopyTextureToBuffer(srcView, dstBuffer, copySize);
@@ -160,12 +160,12 @@ namespace cage
 				engineGraphicsDevice()->nextFrame();
 
 				gpu::Future future = readbackBuffer.MapAsync(gpu::MapMode::Read, 0, readbackDesc.size, gpu::CallbackMode::WaitAnyOnly,
-					[&](gpu::MapAsyncStatus status, gpu::StringView message)
+					[&](gpu::Status status, gpu::StringView message)
 					{
-						if (status == gpu::MapAsyncStatus::Success)
+						if (status == gpu::Status::Success)
 						{
-							const void *data = readbackBuffer.GetConstMappedRange();
-							detail::memcpy((void *)img->rawViewU8().data(), data, readbackDesc.size);
+							const auto data = readbackBuffer.GetMappedRange();
+							detail::memcpy((void *)img->rawViewU8().data(), data.data(), data.size());
 							readbackBuffer.Unmap();
 						}
 					});

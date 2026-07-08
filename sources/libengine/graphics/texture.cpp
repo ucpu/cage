@@ -82,7 +82,7 @@ namespace cage
 				gpu::TexelCopyBufferLayout layout = {};
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
-				gpu::Extent3D extents = { 1, 1, 1 };
+				Vec3i extents = Vec3i(1, 1, 1);
 				static constexpr std::array<uint8, 4 * 6> data = {
 					0,
 					0,
@@ -113,16 +113,14 @@ namespace cage
 				dest.texture = dummyArray->nativeTexture();
 				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
-				extents.depthOrArrayLayers = 6;
+				extents[2] = 6;
 				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 			}
 
 			void generateShadowsSampler()
 			{
 				gpu::TextureDescriptor desc = {};
-				desc.size.width = 1;
-				desc.size.height = 1;
-				desc.size.depthOrArrayLayers = 1;
+				desc.size = Vec3i(1, 1, 1);
 				desc.format = gpu::TextureFormat::Depth32Float;
 				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
 				desc.label = "dummy shadowmap target";
@@ -147,9 +145,7 @@ namespace cage
 			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
 			{
 				gpu::TextureDescriptor desc = {};
-				desc.size.width = config.resolution[0];
-				desc.size.height = config.resolution[1];
-				desc.size.depthOrArrayLayers = config.resolution[2];
+				desc.size = config.resolution;
 				desc.mipLevelCount = config.mipLevelCount;
 				desc.format = config.format;
 				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
@@ -327,9 +323,7 @@ namespace cage
 				if (config.renderable)
 					desc.usage |= gpu::TextureUsage::RenderAttachment;
 				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? gpu::TextureDimension::e3D : gpu::TextureDimension::e2D;
-				desc.size.width = config.resolution[0];
-				desc.size.height = config.resolution[1];
-				desc.size.depthOrArrayLayers = config.resolution[2];
+				desc.size = config.resolution;
 				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
 				desc.mipLevelCount = config.mipLevels;
 				desc.label = label.c_str();
@@ -426,7 +420,7 @@ namespace cage
 		gpu::TexelCopyBufferLayout layout = {};
 		layout.bytesPerRow = image->width() * image->channels();
 		layout.rowsPerImage = image->height();
-		const gpu::Extent3D extents = { image->width(), image->height(), 1 };
+		const Vec3i extents = Vec3i(image->width(), image->height(), 1);
 		const auto data = image->rawViewU8();
 		device->nativeQueue()->WriteTexture(dest, data, layout, extents);
 		return tex;

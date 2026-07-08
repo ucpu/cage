@@ -1,6 +1,7 @@
 #ifndef guard_graphicsDevice_erzgukm78ndf
 #define guard_graphicsDevice_erzgukm78ndf
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
 
 namespace cage
