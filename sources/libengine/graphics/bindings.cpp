@@ -101,7 +101,7 @@ namespace cage
 				desc.entries = entries;
 				if (label.empty())
 					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
-				desc.label = label.c_str();
+				desc.label = label;
 				return device->nativeDevice()->CreateBindGroupLayout(desc);
 			}
 
@@ -150,7 +150,7 @@ namespace cage
 				bgd.layout = layout;
 				bgd.entries = entries;
 				if (!label.empty())
-					bgd.label = label.c_str();
+					bgd.label = label;
 				return device->nativeDevice()->CreateBindGroup(bgd);
 			}
 		}

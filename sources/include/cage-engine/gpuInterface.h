@@ -7,6 +7,25 @@
 
 namespace cage
 {
+	class Window;
+
+	namespace gpuImpl
+	{
+		class BindGroup;
+		class BindGroupLayout;
+		class Buffer;
+		class CommandBuffer;
+		class CommandEncoder;
+		class Device;
+		class RenderPassEncoder;
+		class RenderPipeline;
+		class Sampler;
+		class ShaderModule;
+		class PipelineLayout;
+		class Texture;
+		class TextureView;
+	}
+
 	namespace gpu
 	{
 		///////////////////////////////////////////////////////////////////
@@ -17,8 +36,10 @@ namespace cage
 		{
 			PointerRange<const char> str;
 
-			StringView();
+			StringView() {}
 			StringView(const char *ptr);
+			StringView(const String &ptr) : str(ptr) {}
+			StringView(const AssetLabel &ptr) : str(ptr) {}
 		};
 
 		struct CAGE_ENGINE_API Future
@@ -28,28 +49,44 @@ namespace cage
 		// gpu resource handles
 		///////////////////////////////////////////////////////////////////
 
-		template<class CRTP>
-		class GpuResource
+		template<class Crtp, class Impl>
+		class GpuResourceHandle
 		{
 		public:
-			operator bool() const { return !!ptr; }
-			void *Get() const { return ptr; }
+			CAGE_FORCE_INLINE GpuResourceHandle() noexcept {}
+			CAGE_FORCE_INLINE GpuResourceHandle(Holder<Impl> &&impl) : ptr(std::move(impl)) {}
+			CAGE_FORCE_INLINE GpuResourceHandle(const GpuResourceHandle &other) : ptr(other.ptr.share()) {}
+			CAGE_FORCE_INLINE GpuResourceHandle(GpuResourceHandle &&other) noexcept : ptr(std::move(other.ptr)) {}
+			CAGE_FORCE_INLINE GpuResourceHandle &operator=(const GpuResourceHandle &other)
+			{
+				ptr = other.ptr.share();
+				return *this;
+			}
+			CAGE_FORCE_INLINE GpuResourceHandle &operator=(GpuResourceHandle &&other) noexcept
+			{
+				ptr = std::move(other.ptr);
+				return *this;
+			}
+
+			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!ptr; }
+			CAGE_FORCE_INLINE Impl *Get() const { return +ptr; }
 
 		private:
-			void *ptr = nullptr;
+			Holder<Impl> ptr;
+			friend Crtp;
 		};
 
-		class CAGE_ENGINE_API BindGroup : public GpuResource<BindGroup>
+		class CAGE_ENGINE_API BindGroup : public GpuResourceHandle<BindGroup, gpuImpl::BindGroup>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API BindGroupLayout : public GpuResource<BindGroupLayout>
+		class CAGE_ENGINE_API BindGroupLayout : public GpuResourceHandle<BindGroupLayout, gpuImpl::BindGroupLayout>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Buffer : public GpuResource<Buffer>
+		class CAGE_ENGINE_API Buffer : public GpuResourceHandle<Buffer, gpuImpl::Buffer>
 		{
 		public:
 			uint64 GetSize() const;
@@ -61,12 +98,12 @@ namespace cage
 			void Unmap();
 		};
 
-		class CAGE_ENGINE_API CommandBuffer : public GpuResource<CommandBuffer>
+		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, gpuImpl::CommandBuffer>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API CommandEncoder : public GpuResource<CommandEncoder>
+		class CAGE_ENGINE_API CommandEncoder : public GpuResourceHandle<CommandEncoder, gpuImpl::CommandEncoder>
 		{
 		public:
 			RenderPassEncoder BeginRenderPass(const RenderPassDescriptor &descriptor);
@@ -85,7 +122,7 @@ namespace cage
 			CommandBuffer Finish();
 		};
 
-		class CAGE_ENGINE_API Device : public GpuResource<Device>
+		class CAGE_ENGINE_API Device : public GpuResourceHandle<Device, gpuImpl::Device>
 		{
 		public:
 			BindGroup CreateBindGroup(const BindGroupDescriptor &descriptor);
@@ -100,13 +137,8 @@ namespace cage
 			Sampler CreateSampler(const SamplerDescriptor &descriptor);
 			ShaderModule CreateShaderModule(const ShaderModuleDescriptor &descriptor);
 			Texture CreateTexture(const TextureDescriptor &descriptor);
-			//Queue GetQueue();
 			//void Tick();
-		};
 
-		class CAGE_ENGINE_API Queue : public GpuResource<Queue>
-		{
-		public:
 			template<class Callable>
 			Future OnSubmittedWorkDone(CallbackMode callbackMode, Callable callable);
 			//void Submit(PointerRange<const CommandBuffer> commands);
@@ -115,7 +147,7 @@ namespace cage
 			void WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 		};
 
-		class CAGE_ENGINE_API RenderPassEncoder : public GpuResource<RenderPassEncoder>
+		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, gpuImpl::RenderPassEncoder>
 		{
 		public:
 			void Draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
@@ -141,28 +173,28 @@ namespace cage
 			//void WriteTimestamp(const QuerySet &querySet, uint32 queryIndex);
 		};
 
-		class CAGE_ENGINE_API RenderPipeline : public GpuResource<RenderPipeline>
+		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, gpuImpl::RenderPipeline>
 		{
 		public:
 			//BindGroupLayout GetBindGroupLayout(uint32 groupIndex);
 		};
 
-		class CAGE_ENGINE_API Sampler : public GpuResource<Sampler>
+		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, gpuImpl::Sampler>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API ShaderModule : public GpuResource<ShaderModule>
+		class CAGE_ENGINE_API ShaderModule : public GpuResourceHandle<ShaderModule, gpuImpl::ShaderModule>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API PipelineLayout : public GpuResource<PipelineLayout>
+		class CAGE_ENGINE_API PipelineLayout : public GpuResourceHandle<PipelineLayout, gpuImpl::PipelineLayout>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Texture : public GpuResource<Texture>
+		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, gpuImpl::Texture>
 		{
 		public:
 			TextureView CreateView(const TextureViewDescriptor &desc);
@@ -179,7 +211,7 @@ namespace cage
 			//void Unpin();
 		};
 
-		class CAGE_ENGINE_API TextureView : public GpuResource<TextureView>
+		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, gpuImpl::TextureView>
 		{
 		public:
 		};
@@ -453,10 +485,12 @@ namespace cage
 		}
 
 		template<class Callable>
-		Future Queue::OnSubmittedWorkDone(CallbackMode callbackMode, Callable callable)
+		Future Device::OnSubmittedWorkDone(CallbackMode callbackMode, Callable callable)
 		{
 			return {}; // todo
 		}
+
+		CAGE_ENGINE_API Device newGpuDevice(Window *window);
 	}
 }
 

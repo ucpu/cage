@@ -817,7 +817,7 @@ namespace cage
 				}
 			}
 
-			CAGE_FORCE_INLINE explicit operator bool() const { return !!data_; }
+			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!data_; }
 
 			CAGE_FORCE_INLINE T *operator->() const
 			{

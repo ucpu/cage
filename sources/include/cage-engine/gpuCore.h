@@ -376,7 +376,6 @@ namespace cage
 		class CommandBuffer;
 		class CommandEncoder;
 		class Device;
-		class Queue;
 		class RenderPassEncoder;
 		class RenderPipeline;
 		class Sampler;

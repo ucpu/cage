@@ -1,16 +1,15 @@
-#include <vulkan/vulkan.hpp>
+#include <cstring>
 
-#include <cage-engine/gpuInterface.h>
+#include "gpu.h"
 
 namespace cage
 {
 	namespace gpu
 	{
-		StringView::StringView() {}
-
 		StringView::StringView(const char *ptr)
 		{
-			// todo
+			if (ptr)
+				str = PointerRange<const char>(ptr, ptr + std::strlen(ptr));
 		}
 
 		uint64 Buffer::GetSize() const
@@ -178,17 +177,17 @@ namespace cage
 			return {}; // todo
 		}
 
-		void Queue::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
+		void Device::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
 			// todo
 		}
 
-		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			// todo
 		}
 
-		void Queue::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			return WriteTexture(dest, data.cast<const char>(), layout, extents);
 		}

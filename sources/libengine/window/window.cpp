@@ -45,7 +45,7 @@ namespace cage
 		{
 		public:
 			Holder<Cursor> currentCursor;
-			Holder<privat::GraphicsContext> graphicsContext;
+			Holder<privat::GpuSurface> graphicsContext;
 			ConcurrentQueue<GenericInput, RingBuffer> eventsQueue;
 			FlatSet<uint32> stateKeys;
 			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
@@ -944,7 +944,7 @@ namespace cage
 			return impl->window;
 		}
 
-		Holder<GraphicsContext> &getGraphicsContext(Window *w)
+		Holder<GpuSurface> &getWindowGpuSurface(Window *w)
 		{
 			CAGE_ASSERT(w);
 			WindowImpl *impl = (WindowImpl *)w;

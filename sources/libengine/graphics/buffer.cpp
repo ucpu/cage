@@ -25,7 +25,7 @@ namespace cage
 				gpu::BufferDescriptor desc = {};
 				desc.size = size;
 				desc.usage = usage();
-				desc.label = label.c_str();
+				desc.label = label;
 
 				const ProfilingScope profiling("buffer create");
 				buffer = device->nativeDevice()->CreateBuffer(desc);
@@ -50,7 +50,7 @@ namespace cage
 		CAGE_ASSERT(offset + buffer.size() <= impl->size);
 
 		const ProfilingScope profiling("buffer write");
-		impl->device->nativeQueue()->WriteBuffer(impl->buffer, offset, buffer);
+		impl->device->nativeDevice()->WriteBuffer(impl->buffer, offset, buffer);
 	}
 
 	uintPtr GraphicsBuffer::size() const

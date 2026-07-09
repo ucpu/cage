@@ -109,12 +109,12 @@ namespace cage
 					0,
 					255,
 				};
-				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
 				dest.texture = dummyArray->nativeTexture();
-				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
 				extents[2] = 6;
-				device->nativeQueue()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
 			}
 
 			void generateShadowsSampler()
@@ -422,7 +422,7 @@ namespace cage
 		layout.rowsPerImage = image->height();
 		const Vec3i extents = Vec3i(image->width(), image->height(), 1);
 		const auto data = image->rawViewU8();
-		device->nativeQueue()->WriteTexture(dest, data, layout, extents);
+		device->nativeDevice()->WriteTexture(dest, data, layout, extents);
 		return tex;
 	}
 

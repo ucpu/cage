@@ -16,7 +16,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API_EXPORT void textureLoadLevel(gpu::Queue &queue, gpu::Texture &tex, const TextureHeader &header, const Vec3i &resolution, const uint32 mipLevel, PointerRange<const char> data)
+		CAGE_API_EXPORT void textureLoadLevel(gpu::Device &device, gpu::Texture &tex, const TextureHeader &header, const Vec3i &resolution, const uint32 mipLevel, PointerRange<const char> data)
 		{
 			CAGE_ASSERT(mipLevel > 0 || Vec2i(resolution) == Vec2i(header.resolution));
 			CAGE_ASSERT(header.channels == 1 || header.channels == 2 || header.channels == 4);
@@ -64,7 +64,7 @@ namespace cage
 			const uint32 copyHeight = max(blockWidth, (uint32)resolution[1]);
 			const Vec3i extents = Vec3i(copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]));
 
-			queue.WriteTexture(dest, data, layout, extents);
+			device.WriteTexture(dest, data, layout, extents);
 		}
 	}
 
@@ -86,12 +86,12 @@ namespace cage
 			desc.format = (gpu::TextureFormat)header.format;
 			desc.mipLevelCount = header.mipLevels;
 			desc.size = header.resolution;
-			desc.label = context->textId.c_str();
+			desc.label = context->textId;
 			gpu::Texture wtex = dev->CreateTexture(desc);
 
 			gpu::TextureViewDescriptor twd = {};
 			twd.dimension = privat::textureViewDimension(header.flags);
-			twd.label = context->textId.c_str();
+			twd.label = context->textId;
 			gpu::TextureView view = wtex.CreateView(twd);
 
 			gpu::SamplerDescriptor sd = {};
@@ -105,21 +105,19 @@ namespace cage
 			sd.addressModeU = (gpu::AddressMode)header.wrapX;
 			sd.addressModeV = (gpu::AddressMode)header.wrapY;
 			sd.addressModeW = (gpu::AddressMode)header.wrapZ;
-			sd.label = context->textId.c_str();
+			sd.label = context->textId;
 			gpu::Sampler samp = dev->CreateSampler(sd);
 
-			dev.clear();
 			Holder<Texture> tex = newTexture(wtex, view, samp, context->textId);
 			tex->flags = header.flags;
 
-			Holder<gpu::Queue> queue = ((GraphicsDevice *)context->device)->nativeQueue();
 			CAGE_ASSERT(header.mipLevels > 0);
 			for (uint32 mip = 0; mip < header.mipLevels; mip++)
 			{
 				Vec3i resolution;
 				uint32 size = 0;
 				des >> resolution >> size;
-				detail::textureLoadLevel(*queue, wtex, header, resolution, mip, des.read(size));
+				detail::textureLoadLevel(*dev, wtex, header, resolution, mip, des.read(size));
 			}
 
 			CAGE_ASSERT(des.available() == 0);

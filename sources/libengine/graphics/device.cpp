@@ -59,7 +59,7 @@ namespace cage
 			}
 		}
 
-		struct GraphicsContext : private Immovable
+		struct GpuSurface : private Immovable
 		{
 			// the window owns its surface, but the device can destroy all the surfaces in its destructor
 			std::shared_ptr<GraphicsContextData> data;
@@ -331,7 +331,7 @@ namespace cage
 
 			GraphicsContextData *getContext(Window *window)
 			{
-				Holder<privat::GraphicsContext> &context = privat::getGraphicsContext(window);
+				Holder<privat::GpuSurface> &context = privat::getWindowGpuSurface(window);
 				if (!context)
 				{
 					ScopeLock lock(mutex);
@@ -341,7 +341,7 @@ namespace cage
 					if (!s->surface)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
 					surfacesCollection.push_back(s);
-					context = systemMemory().createHolder<privat::GraphicsContext>();
+					context = systemMemory().createHolder<privat::GpuSurface>();
 					context->data = s;
 				}
 				return context->data.get();
@@ -686,13 +686,15 @@ namespace cage
 		return {}; // todo
 	}
 
-	Holder<gpu::Queue> GraphicsDevice::nativeQueue()
-	{
-		return {}; // todo
-	}
-
 	Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config)
 	{
-		return {}; // todo
+		struct DummyDevice : public GraphicsDevice
+		{
+			gpu::Device dev;
+
+			DummyDevice(const GraphicsDeviceCreateConfig &config) { dev = gpu::newGpuDevice(config.compatibility); }
+		};
+
+		return systemMemory().createImpl<GraphicsDevice, DummyDevice>(config);
 	}
 }

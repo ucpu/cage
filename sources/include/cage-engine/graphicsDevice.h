@@ -18,7 +18,6 @@ namespace cage
 		GraphicsFrameStatistics nextFrame();
 
 		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
-		Holder<gpu::Queue> nativeQueue(); // locks the device for thread-safe access
 	};
 
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig

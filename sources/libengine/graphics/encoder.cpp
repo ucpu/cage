@@ -55,7 +55,7 @@ namespace cage
 				if (!cmdEnc)
 				{
 					gpu::CommandEncoderDescriptor desc = {};
-					desc.label = label.c_str();
+					desc.label = label;
 					cmdEnc = device->nativeDevice()->CreateCommandEncoder(desc);
 				}
 				{
@@ -90,7 +90,7 @@ namespace cage
 					rpd.colorAttachments = atts;
 					if (passData.depthTarget)
 						rpd.depthStencilAttachment = std::move(rpdsa);
-					rpd.label = label.c_str();
+					rpd.label = label;
 					renderEnc = cmdEnc.BeginRenderPass(rpd);
 
 					for (const auto it : debugScopes)
