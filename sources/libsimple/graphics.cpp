@@ -142,7 +142,7 @@ namespace cage
 				gpu::BufferDescriptor readbackDesc{};
 				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
 				readbackDesc.size = res[0] * res[1] * 4;
-				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->CreateBuffer(readbackDesc);
+				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->createBuffer(readbackDesc);
 
 				gpu::TexelCopyTextureInfo srcView = {};
 				srcView.texture = texture->nativeTexture();
@@ -154,19 +154,19 @@ namespace cage
 
 				const Vec3i copySize = Vec3i((uint32)actualResolution[0], (uint32)actualResolution[1], 1);
 
-				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->CreateCommandEncoder({});
-				encoder.CopyTextureToBuffer(srcView, dstBuffer, copySize);
-				engineGraphicsDevice()->insertCommandBuffer(encoder.Finish(), {});
+				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->createCommandEncoder({});
+				encoder.copyTextureToBuffer(srcView, dstBuffer, copySize);
+				engineGraphicsDevice()->insertCommandBuffer(encoder.finish(), {});
 				engineGraphicsDevice()->nextFrame();
 
-				gpu::Future future = readbackBuffer.MapAsync(gpu::MapMode::Read, 0, readbackDesc.size, gpu::CallbackMode::WaitAnyOnly,
+				gpu::Future future = readbackBuffer.mapAsync(gpu::MapMode::Read, 0, readbackDesc.size, gpu::CallbackMode::WaitAnyOnly,
 					[&](gpu::Status status, gpu::StringView message)
 					{
 						if (status == gpu::Status::Success)
 						{
-							const auto data = readbackBuffer.GetMappedRange();
+							const auto data = readbackBuffer.getMappedRange();
 							detail::memcpy((void *)img->rawViewU8().data(), data.data(), data.size());
-							readbackBuffer.Unmap();
+							readbackBuffer.unmap();
 						}
 					});
 				engineGraphicsDevice()->wait(future);

@@ -2,6 +2,7 @@
 #define guard_gpuInterface_sdrzuij4rt5e
 
 #include <optional>
+#include <variant>
 
 #include <cage-engine/gpuCore.h>
 
@@ -69,7 +70,12 @@ namespace cage
 			}
 
 			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!ptr; }
-			CAGE_FORCE_INLINE Impl *Get() const
+			CAGE_FORCE_INLINE Impl *get() const
+			{
+				CAGE_ASSERT(ptr);
+				return +ptr;
+			}
+			CAGE_FORCE_INLINE Impl *operator->() const
 			{
 				CAGE_ASSERT(ptr);
 				return +ptr;
@@ -93,13 +99,13 @@ namespace cage
 		class CAGE_ENGINE_API Buffer : public GpuResourceHandle<Buffer, gpuImpl::Buffer>
 		{
 		public:
-			uint64 GetSize() const;
-			BufferUsage GetUsage() const;
-			//BufferMapState GetMapState() const;
-			PointerRange<char> GetMappedRange();
+			uint64 getSize() const;
+			BufferUsage getUsage() const;
+			//BufferMapState getMapState() const;
+			PointerRange<char> getMappedRange();
 			template<class Callable>
-			Future MapAsync(MapMode mapMode, uint64 offset, uint64 size, CallbackMode callbackMode, Callable callable);
-			void Unmap();
+			Future mapAsync(MapMode mapMode, uint64 offset, uint64 size, CallbackMode callbackMode, Callable callable);
+			void unmap();
 		};
 
 		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, gpuImpl::CommandBuffer>
@@ -110,77 +116,77 @@ namespace cage
 		class CAGE_ENGINE_API CommandEncoder : public GpuResourceHandle<CommandEncoder, gpuImpl::CommandEncoder>
 		{
 		public:
-			RenderPassEncoder BeginRenderPass(const RenderPassDescriptor &descriptor);
+			RenderPassEncoder beginRenderPass(const RenderPassDescriptor &descriptor);
 
-			//void ClearBuffer(const Buffer &buffer, uint64 offset = 0, uint64 size = m);
-			//void WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
+			//void clearBuffer(const Buffer &buffer, uint64 offset = 0, uint64 size = m);
+			//void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 
-			//void CopyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
-			//void CopyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
-			void CopyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
-			//void CopyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
+			//void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
+			//void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
+			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
+			//void copyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 
-			//void ResolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
-			//void WriteTimestamp(const QuerySet &querySet, uint32 queryIndex);
+			//void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
+			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
-			CommandBuffer Finish();
+			CommandBuffer finish();
 		};
 
 		class CAGE_ENGINE_API Device : public GpuResourceHandle<Device, gpuImpl::Device>
 		{
 		public:
-			BindGroup CreateBindGroup(const BindGroupDescriptor &descriptor);
-			BindGroupLayout CreateBindGroupLayout(const BindGroupLayoutDescriptor &descriptor);
-			Buffer CreateBuffer(const BufferDescriptor &descriptor);
-			CommandEncoder CreateCommandEncoder(const CommandEncoderDescriptor &descriptor);
-			PipelineLayout CreatePipelineLayout(const PipelineLayoutDescriptor &descriptor);
-			//QuerySet CreateQuerySet(const QuerySetDescriptor &descriptor);
-			//RenderPipeline CreateRenderPipeline(const RenderPipelineDescriptor &descriptor);
+			BindGroup createBindGroup(const BindGroupDescriptor &descriptor);
+			BindGroupLayout createBindGroupLayout(const BindGroupLayoutDescriptor &descriptor);
+			Buffer createBuffer(const BufferDescriptor &descriptor);
+			CommandEncoder createCommandEncoder(const CommandEncoderDescriptor &descriptor);
+			PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor &descriptor);
+			//QuerySet createQuerySet(const QuerySetDescriptor &descriptor);
+			//RenderPipeline createRenderPipeline(const RenderPipelineDescriptor &descriptor);
 			template<class Callable>
-			RenderPipeline CreateRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackMode callbackMode, Callable callable);
-			Sampler CreateSampler(const SamplerDescriptor &descriptor);
-			ShaderModule CreateShaderModule(const ShaderModuleDescriptor &descriptor);
-			Texture CreateTexture(const TextureDescriptor &descriptor);
-			//void Tick();
+			RenderPipeline createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackMode callbackMode, Callable callable);
+			Sampler createSampler(const SamplerDescriptor &descriptor);
+			ShaderModule createShaderModule(const ShaderModuleDescriptor &descriptor);
+			Texture createTexture(const TextureDescriptor &descriptor);
+			//void tick();
 
 			template<class Callable>
-			Future OnSubmittedWorkDone(CallbackMode callbackMode, Callable callable);
-			//void Submit(PointerRange<const CommandBuffer> commands);
-			void WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
-			void WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
-			void WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
+			Future onSubmittedWorkDone(CallbackMode callbackMode, Callable callable);
+			//void submit(PointerRange<const CommandBuffer> commands);
+			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
+			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
+			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 		};
 
 		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, gpuImpl::RenderPassEncoder>
 		{
 		public:
-			void Draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
-			void DrawIndexed(uint32 indicesCount, uint32 instancesCount = 1, uint32 firstIndex = 0, sint32 baseVertex = 0, uint32 firstInstance = 0);
-			//void DrawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
-			//void DrawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
-			void End();
-			//void MultiDrawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
-			//void MultiDrawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
-			//void PixelLocalStorageBarrier();
-			void PopDebugGroup();
-			void PushDebugGroup(StringView label);
-			void SetBindGroup(uint32 binding, const BindGroup &group = {});
-			void SetBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
-			//void SetBlendConstant(Vec4 color);
-			//void SetImmediates(uint32 offset, PointerRange<const char> data);
-			void SetIndexBuffer(const Buffer &buffer, IndexFormat format, uint64 offset = 0, uint64 size = m);
-			void SetPipeline(const RenderPipeline &pipeline);
-			void SetScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
-			//void SetStencilReference(uint32 reference);
-			void SetVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
-			//void SetViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth);
-			//void WriteTimestamp(const QuerySet &querySet, uint32 queryIndex);
+			void draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
+			void drawIndexed(uint32 indicesCount, uint32 instancesCount = 1, uint32 firstIndex = 0, sint32 baseVertex = 0, uint32 firstInstance = 0);
+			//void drawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
+			//void drawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
+			void end();
+			//void multiDrawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
+			//void multiDrawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
+			//void pixelLocalStorageBarrier();
+			void popDebugGroup();
+			void pushDebugGroup(StringView label);
+			void setBindGroup(uint32 binding, const BindGroup &group = {});
+			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
+			//void setBlendConstant(Vec4 color);
+			//void setImmediates(uint32 offset, PointerRange<const char> data);
+			void setIndexBuffer(const Buffer &buffer, IndexFormat format, uint64 offset = 0, uint64 size = m);
+			void setPipeline(const RenderPipeline &pipeline);
+			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
+			//void setStencilReference(uint32 reference);
+			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
+			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth);
+			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 		};
 
 		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, gpuImpl::RenderPipeline>
 		{
 		public:
-			//BindGroupLayout GetBindGroupLayout(uint32 groupIndex);
+			//BindGroupLayout getBindGroupLayout(uint32 groupIndex);
 		};
 
 		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, gpuImpl::Sampler>
@@ -201,18 +207,18 @@ namespace cage
 		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, gpuImpl::Texture>
 		{
 		public:
-			TextureView CreateView(const TextureViewDescriptor &desc);
-			uint32 GetDepthOrArrayLayers() const;
-			TextureDimension GetDimension() const;
-			TextureFormat GetFormat() const;
-			uint32 GetHeight() const;
-			uint32 GetMipLevelCount() const;
-			//uint32 GetSampleCount() const;
-			//TextureViewDimension GetTextureBindingViewDimension() const;
-			//TextureUsage GetUsage() const;
-			uint32 GetWidth() const;
-			//void Pin(TextureUsage usage);
-			//void Unpin();
+			TextureView createView(const TextureViewDescriptor &desc);
+			uint32 getDepthOrArrayLayers() const;
+			TextureDimension getDimension() const;
+			TextureFormat getFormat() const;
+			uint32 getHeight() const;
+			uint32 getMipLevelCount() const;
+			//uint32 getSampleCount() const;
+			//TextureViewDimension getTextureBindingViewDimension() const;
+			//TextureUsage getUsage() const;
+			uint32 getWidth() const;
+			//void pin(TextureUsage usage);
+			//void unpin();
 		};
 
 		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, gpuImpl::TextureView>
@@ -228,13 +234,24 @@ namespace cage
 		{
 			StringView label;
 
-			struct Entry
+			struct BufferEntry
 			{
 				Buffer buffer;
-				TextureView textureView;
-				Sampler sampler;
 				uint64 offset = 0;
 				uint64 size = 0; // use -1 to use the whole buffer
+			};
+			struct SamplerEntry
+			{
+				Sampler sampler;
+			};
+			struct TextureEntry
+			{
+				TextureView textureView;
+			};
+
+			struct Entry
+			{
+				std::variant<std::monostate, BufferEntry, SamplerEntry, TextureEntry> data;
 				uint32 binding = 0;
 			};
 			PointerRange<const Entry> entries;
@@ -246,29 +263,25 @@ namespace cage
 		{
 			StringView label;
 
+			struct BufferEntry
+			{
+				BufferBindingType type = BufferBindingType::Undefined;
+				bool hasDynamicOffset = false;
+			};
+			struct SamplerEntry
+			{
+				SamplerBindingType type = SamplerBindingType::Undefined;
+			};
+			struct TextureEntry
+			{
+				TextureSampleType sampleType = TextureSampleType::Undefined;
+				TextureDimension viewDimension = TextureDimension::Undefined;
+				//bool multisampled = false;
+			};
+
 			struct Entry
 			{
-				struct BufferEntry
-				{
-					BufferBindingType type = BufferBindingType::Undefined;
-					bool hasDynamicOffset = false;
-				};
-				BufferEntry buffer;
-
-				struct SamplerEntry
-				{
-					SamplerBindingType type = SamplerBindingType::Undefined;
-				};
-				SamplerEntry sampler;
-
-				struct TextureEntry
-				{
-					TextureSampleType sampleType = TextureSampleType::Undefined;
-					TextureDimension viewDimension = TextureDimension::Undefined;
-					//bool multisampled = false;
-				};
-				TextureEntry texture;
-
+				std::variant<std::monostate, BufferEntry, SamplerEntry, TextureEntry> data;
 				uint32 binding = 0;
 				ShaderStage visibility = ShaderStage::Undefined;
 			};
@@ -483,19 +496,19 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 
 		template<class Callable>
-		Future Buffer::MapAsync(MapMode mapMode, uint64 offset, uint64 size, CallbackMode callbackMode, Callable callable)
+		Future Buffer::mapAsync(MapMode mapMode, uint64 offset, uint64 size, CallbackMode callbackMode, Callable callable)
 		{
 			return {}; // todo
 		}
 
 		template<class Callable>
-		RenderPipeline Device::CreateRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackMode callbackMode, Callable callable)
+		RenderPipeline Device::createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackMode callbackMode, Callable callable)
 		{
 			return {}; // todo
 		}
 
 		template<class Callable>
-		Future Device::OnSubmittedWorkDone(CallbackMode callbackMode, Callable callable)
+		Future Device::onSubmittedWorkDone(CallbackMode callbackMode, Callable callable)
 		{
 			return {}; // todo
 		}

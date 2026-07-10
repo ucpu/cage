@@ -28,7 +28,7 @@ namespace cage
 				desc.label = label;
 
 				const ProfilingScope profiling("buffer create");
-				buffer = device->nativeDevice()->CreateBuffer(desc);
+				buffer = device->nativeDevice()->createBuffer(desc);
 			}
 
 			gpu::BufferUsage usage() const
@@ -50,13 +50,13 @@ namespace cage
 		CAGE_ASSERT(offset + buffer.size() <= impl->size);
 
 		const ProfilingScope profiling("buffer write");
-		impl->device->nativeDevice()->WriteBuffer(impl->buffer, offset, buffer);
+		impl->device->nativeDevice()->writeBuffer(impl->buffer, offset, buffer);
 	}
 
 	uintPtr GraphicsBuffer::size() const
 	{
 		const GraphicsBufferImpl *impl = (const GraphicsBufferImpl *)this;
-		return numeric_cast<uint32>(impl->buffer.GetSize());
+		return numeric_cast<uint32>(impl->buffer.getSize());
 	}
 
 	const gpu::Buffer &GraphicsBuffer::nativeBuffer()

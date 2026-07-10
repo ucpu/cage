@@ -35,7 +35,7 @@ namespace cage
 				gpu::ShaderModuleDescriptor desc = {};
 				desc.spirvCode = code;
 				desc.label = label.c_str();
-				return device->nativeDevice()->CreateShaderModule(desc);
+				return device->nativeDevice()->createShaderModule(desc);
 			}
 
 			void logMultilineString(const std::string &str)

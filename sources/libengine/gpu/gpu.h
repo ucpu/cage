@@ -9,18 +9,46 @@
 
 namespace cage
 {
+	namespace gpuImpl
+	{
+		struct WindowGpuContextData;
+	}
+
 	namespace privat
 	{
-		struct GpuSurface;
+		struct WindowGpuContext : private Immovable
+		{
+			// the window owns its surface, but the device can destroy all the surfaces in its destructor
+			std::shared_ptr<gpuImpl::WindowGpuContextData> data;
+		};
 	}
 
 	namespace gpuImpl
 	{
-		struct GpuSurfaceData;
+		struct WindowGpuContextData : private Immovable
+		{
+			vkb::Swapchain swapchain;
+			std::vector<vk::Image> images;
+			std::vector<vk::ImageView> views;
+			Vec2i resolution;
+			vk::Instance instance;
+			vk::SurfaceKHR surface;
+			vk::Semaphore imageAvailable;
+			vk::Semaphore renderFinished;
+			vk::Fence inFlight;
+
+			WindowGpuContextData(vk::Instance instance);
+			~WindowGpuContextData();
+
+			void init();
+			void clear();
+		};
 
 		class BindGroup : private Immovable
 		{
 		public:
+			vk::UniqueDescriptorSet set;
+
 			BindGroup(const Device &device, const gpu::BindGroupDescriptor &desc);
 			~BindGroup();
 		};
@@ -28,6 +56,8 @@ namespace cage
 		class BindGroupLayout : private Immovable
 		{
 		public:
+			vk::UniqueDescriptorSetLayout layout;
+
 			BindGroupLayout(const Device &device, const gpu::BindGroupLayoutDescriptor &desc);
 			~BindGroupLayout();
 		};
@@ -36,6 +66,7 @@ namespace cage
 		{
 		public:
 			vk::UniqueBuffer buffer;
+
 			uint64 size = 0;
 			gpu::BufferUsage usage = gpu::BufferUsage::Undefined;
 
@@ -74,7 +105,7 @@ namespace cage
 			};
 			Bootstrap bootstrap;
 
-			std::vector<std::shared_ptr<GpuSurfaceData>> surfacesCollection;
+			std::vector<std::shared_ptr<WindowGpuContextData>> surfacesCollection;
 
 		public:
 			vk::Instance instance;
@@ -84,12 +115,14 @@ namespace cage
 			vk::Queue queueGraphics;
 			vk::Queue queuePresent;
 			VmaAllocator allocator = nullptr;
+			vk::UniqueDescriptorPool descriptorPool;
 
 			Device(const gpu::GpuDeviceDescriptor &desc);
 			~Device();
 
 			void bootstrapInit(const gpu::GpuDeviceDescriptor &desc);
-			Holder<privat::GpuSurface> getWindowGpuSurface(Window *window);
+			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
+			gpu::Texture getWindowSurfaceTexture(Window *window);
 		};
 
 		class RenderPassEncoder : private Immovable
@@ -102,6 +135,8 @@ namespace cage
 		class RenderPipeline : private Immovable
 		{
 		public:
+			vk::UniquePipeline pipeline;
+
 			RenderPipeline(const Device &device, const gpu::RenderPipelineDescriptor &desc);
 			~RenderPipeline();
 		};
@@ -127,6 +162,8 @@ namespace cage
 		class PipelineLayout : private Immovable
 		{
 		public:
+			vk::UniquePipelineLayout layout;
+
 			PipelineLayout(const Device &device, const gpu::PipelineLayoutDescriptor &desc);
 			~PipelineLayout();
 		};
@@ -134,6 +171,8 @@ namespace cage
 		class Texture : private Immovable
 		{
 		public:
+			vk::UniqueImage image;
+
 			Vec3i resolution;
 			uint32 mipLevels = 0;
 			gpu::TextureDimension dimension = gpu::TextureDimension::Undefined;
@@ -146,6 +185,8 @@ namespace cage
 		class TextureView : private Immovable
 		{
 		public:
+			vk::UniqueImageView view;
+
 			TextureView(const Texture &texture, const gpu::TextureViewDescriptor &desc);
 			~TextureView();
 		};
@@ -153,6 +194,12 @@ namespace cage
 		CAGE_FORCE_INLINE void check(const char *what, VkResult result)
 		{
 			vk::detail::resultCheck(vk::Result(result), what);
+		}
+
+		template<class T, class Src>
+		CAGE_FORCE_INLINE vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> makeUnique(Src &src)
+		{
+			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
 		}
 	}
 }

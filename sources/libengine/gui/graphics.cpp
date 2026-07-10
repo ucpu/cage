@@ -35,7 +35,7 @@ namespace cage
 
 				Command(Vec4i scissors) : scissors(scissors) {}
 
-				void draw(const GuiRenderConfig &config) override { config.encoder->nativeRenderEncoder().SetScissorRect(scissors[0], scissors[1], scissors[2], scissors[3]); }
+				void draw(const GuiRenderConfig &config) override { config.encoder->nativeRenderEncoder().setScissorRect(scissors[0], scissors[1], scissors[2], scissors[3]); }
 			};
 
 			const Vec4i scissors = Vec4i(Vec2i(clipPos), Vec2i(clipSize));

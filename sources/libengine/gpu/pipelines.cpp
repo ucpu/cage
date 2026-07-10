@@ -16,7 +16,6 @@ namespace cage
 
 		ShaderModule::ShaderModule(const Device &device, const gpu::ShaderModuleDescriptor &desc)
 		{
-
 			// todo
 		}
 

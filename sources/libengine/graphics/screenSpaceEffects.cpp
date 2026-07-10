@@ -56,14 +56,14 @@ namespace cage
 			sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
 			sd.mipmapFilter = gpu::FilterMode::Nearest;
 			sd.label = "mip sampler";
-			gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);
+			gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 
 			for (uint32 i = 0; i < mips; i++)
 			{
 				gpu::TextureViewDescriptor tvd = {};
 				tvd.baseMipLevel = i;
 				tvd.mipLevelCount = 1;
-				gpu::TextureView view = tex->nativeTexture().CreateView(tvd);
+				gpu::TextureView view = tex->nativeTexture().createView(tvd);
 				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
 			}
 

@@ -68,8 +68,10 @@ namespace cage
 					gpu::BindGroupLayoutDescriptor::Entry e = {};
 					e.binding = b.binding;
 					e.visibility = gpu::ShaderStage::Vertex | gpu::ShaderStage::Fragment;
-					e.buffer.type = b.uniform ? gpu::BufferBindingType::Uniform : gpu::BufferBindingType::ReadOnlyStorage;
-					e.buffer.hasDynamicOffset = b.dynamic;
+					gpu::BindGroupLayoutDescriptor::BufferEntry be;
+					be.type = b.uniform ? gpu::BufferBindingType::Uniform : gpu::BufferBindingType::ReadOnlyStorage;
+					be.hasDynamicOffset = b.dynamic;
+					e.data = be;
 					entries.push_back(std::move(e));
 				}
 
@@ -77,14 +79,16 @@ namespace cage
 				{
 					CAGE_ASSERT(t.texture && t.texture->nativeTexture() && t.texture->nativeView() && t.texture->nativeSampler());
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
-					const bool filterable = isFormatFilterable(t.texture->nativeTexture().GetFormat());
+					const bool filterable = isFormatFilterable(t.texture->nativeTexture().getFormat());
 					if (t.bindTexture)
 					{
 						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding;
 						e.visibility = gpu::ShaderStage::Fragment;
-						e.texture.sampleType = filterable ? gpu::TextureSampleType::Float : gpu::TextureSampleType::UnfilterableFloat;
-						e.texture.viewDimension = textureViewDimension(t.texture->flags);
+						gpu::BindGroupLayoutDescriptor::TextureEntry te;
+						te.sampleType = filterable ? gpu::TextureSampleType::Float : gpu::TextureSampleType::UnfilterableFloat;
+						te.viewDimension = textureViewDimension(t.texture->flags);
+						e.data = te;
 						entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
@@ -92,7 +96,9 @@ namespace cage
 						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
 						e.visibility = gpu::ShaderStage::Fragment;
-						e.sampler.type = filterable ? gpu::SamplerBindingType::Filtering : gpu::SamplerBindingType::NonFiltering;
+						gpu::BindGroupLayoutDescriptor::SamplerEntry se;
+						se.type = filterable ? gpu::SamplerBindingType::Filtering : gpu::SamplerBindingType::NonFiltering;
+						e.data = se;
 						entries.push_back(std::move(e));
 					}
 				}
@@ -102,7 +108,7 @@ namespace cage
 				if (label.empty())
 					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
 				desc.label = label;
-				return device->nativeDevice()->CreateBindGroupLayout(desc);
+				return device->nativeDevice()->createBindGroupLayout(desc);
 			}
 
 			gpu::BindGroup createGroup(GraphicsDevice *device, const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
@@ -117,10 +123,12 @@ namespace cage
 					CAGE_ASSERT(b.buffer);
 					gpu::BindGroupDescriptor::Entry e = {};
 					e.binding = b.binding;
-					e.buffer = b.buffer->nativeBuffer();
-					CAGE_ASSERT(e.buffer);
-					e.offset = 0;
-					e.size = b.size;
+					gpu::BindGroupDescriptor::BufferEntry be;
+					be.buffer = b.buffer->nativeBuffer();
+					CAGE_ASSERT(be.buffer);
+					be.offset = 0;
+					be.size = b.size;
+					e.data = std::move(be);
 					entries.push_back(std::move(e));
 				}
 
@@ -132,16 +140,20 @@ namespace cage
 					{
 						gpu::BindGroupDescriptor::Entry e = {};
 						e.binding = t.binding;
-						e.textureView = t.texture->nativeView();
-						CAGE_ASSERT(e.textureView);
+						gpu::BindGroupDescriptor::TextureEntry te;
+						te.textureView = t.texture->nativeView();
+						CAGE_ASSERT(te.textureView);
+						e.data = std::move(te);
 						entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
 						gpu::BindGroupDescriptor::Entry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.sampler = t.texture->nativeSampler();
-						CAGE_ASSERT(e.sampler);
+						gpu::BindGroupDescriptor::SamplerEntry se;
+						se.sampler = t.texture->nativeSampler();
+						CAGE_ASSERT(se.sampler);
+						e.data = std::move(se);
 						entries.push_back(std::move(e));
 					}
 				}
@@ -151,7 +163,7 @@ namespace cage
 				bgd.entries = entries;
 				if (!label.empty())
 					bgd.label = label;
-				return device->nativeDevice()->CreateBindGroup(bgd);
+				return device->nativeDevice()->createBindGroup(bgd);
 			}
 		}
 
@@ -181,7 +193,7 @@ namespace cage
 					keys.push_back(75431564); // separator
 					for (const auto &t : config.textures)
 					{
-						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().GetFormat()) << 17;
+						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().getFormat()) << 17;
 						const uint32 bindTexture = (uint32)t.bindTexture << 18;
 						const uint32 bindSampler = (uint32)t.bindSampler << 19;
 						const uint32 flags = (uint32)t.texture->flags << 20;
@@ -211,10 +223,10 @@ namespace cage
 				GroupKey(const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
 				{
 					keys.reserve(1 + config.buffers.size() + config.textures.size() * 2);
-					keys.push_back((uint64)layout.Get());
+					keys.push_back((uint64)layout.get());
 					for (const auto &b : config.buffers)
 					{
-						const uint64 ptr = (uint64)b.buffer->nativeBuffer().Get() << 4;
+						const uint64 ptr = (uint64)b.buffer->nativeBuffer().get() << 4;
 						const uint64 size = (uint64)b.size << 40;
 						keys.push_back(b.binding + ptr + size);
 					}
@@ -222,12 +234,12 @@ namespace cage
 					{
 						if (t.bindTexture)
 						{
-							const uint64 ptr = (uint64)t.texture->nativeView().Get() << 4;
+							const uint64 ptr = (uint64)t.texture->nativeView().get() << 4;
 							keys.push_back(t.binding + ptr);
 						}
 						if (t.bindSampler)
 						{
-							const uint64 ptr = (uint64)t.texture->nativeSampler().Get() << 4;
+							const uint64 ptr = (uint64)t.texture->nativeSampler().get() << 4;
 							keys.push_back(t.binding + ptr);
 						}
 					}

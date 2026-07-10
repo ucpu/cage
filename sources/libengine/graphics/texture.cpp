@@ -109,12 +109,12 @@ namespace cage
 					0,
 					255,
 				};
-				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 				dest.texture = dummyArray->nativeTexture();
-				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
 				extents[2] = 6;
-				device->nativeDevice()->WriteTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 			}
 
 			void generateShadowsSampler()
@@ -124,11 +124,11 @@ namespace cage
 				desc.format = gpu::TextureFormat::Depth32Float;
 				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
 				desc.label = "dummy shadowmap target";
-				gpu::Texture tex = device->nativeDevice()->CreateTexture(desc);
+				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 				gpu::TextureViewDescriptor vd = {};
 				vd.dimension = gpu::TextureDimension::e2DArray;
-				gpu::TextureView view = tex.CreateView(vd);
-				gpu::Sampler samp = device->nativeDevice()->CreateSampler({});
+				gpu::TextureView view = tex.createView(vd);
+				gpu::Sampler samp = device->nativeDevice()->createSampler({});
 				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
 				t->flags = TextureFlags::Array;
 				shadowsSampler = std::move(t);
@@ -150,10 +150,10 @@ namespace cage
 				desc.format = config.format;
 				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
 				desc.label = config.name.c_str();
-				gpu::Texture tex = device->nativeDevice()->CreateTexture(desc);
+				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 				gpu::TextureViewDescriptor vd = {};
 				vd.dimension = textureViewDimension(config.flags);
-				gpu::TextureView view = tex.CreateView(vd);
+				gpu::TextureView view = tex.createView(vd);
 				gpu::SamplerDescriptor sd = {};
 				if (config.samplerVariant)
 				{
@@ -162,7 +162,7 @@ namespace cage
 					sd.mipmapFilter = gpu::FilterMode::Nearest;
 					sd.label = config.name.c_str();
 				}
-				gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);
+				gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 				Holder<Texture> t = newTexture(tex, view, samp, config.name);
 				t->flags = config.flags;
 				return t;
@@ -328,20 +328,20 @@ namespace cage
 				desc.mipLevelCount = config.mipLevels;
 				desc.label = label.c_str();
 				Holder<gpu::Device> dev = device->nativeDevice();
-				texture = dev->CreateTexture(desc);
+				texture = dev->createTexture(desc);
 				gpu::TextureViewDescriptor twd = {};
 				twd.dimension = privat::textureViewDimension(config.flags);
-				view = texture.CreateView(twd);
-				sampler = dev->CreateSampler({});
+				view = texture.createView(twd);
+				sampler = dev->createSampler({});
 			}
 
 			TextureImpl(gpu::Texture texture, gpu::TextureView view, gpu::Sampler sampler, const AssetLabel &label_) : texture(texture), view(view), sampler(sampler) { this->label = label_; }
 
 			Vec3i mipRes(uint32 mip) const
 			{
-				CAGE_ASSERT(mip < texture.GetMipLevelCount());
+				CAGE_ASSERT(mip < texture.getMipLevelCount());
 				const Vec3i r = resolution3();
-				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.GetDimension() == gpu::TextureDimension::e3D ? mip : 0), 1));
+				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.getDimension() == gpu::TextureDimension::e3D ? mip : 0), 1));
 			}
 		};
 	}
@@ -349,19 +349,19 @@ namespace cage
 	Vec2i Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return Vec2i(impl->texture.GetWidth(), impl->texture.GetHeight());
+		return Vec2i(impl->texture.getWidth(), impl->texture.getHeight());
 	}
 
 	Vec3i Texture::resolution3() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return Vec3i(impl->texture.GetWidth(), impl->texture.GetHeight(), impl->texture.GetDepthOrArrayLayers());
+		return Vec3i(impl->texture.getWidth(), impl->texture.getHeight(), impl->texture.getDepthOrArrayLayers());
 	}
 
 	uint32 Texture::mipLevels() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->texture.GetMipLevelCount();
+		return impl->texture.getMipLevelCount();
 	}
 
 	Vec2i Texture::mipResolution(uint32 mipmapLevel) const
@@ -422,7 +422,7 @@ namespace cage
 		layout.rowsPerImage = image->height();
 		const Vec3i extents = Vec3i(image->width(), image->height(), 1);
 		const auto data = image->rawViewU8();
-		device->nativeDevice()->WriteTexture(dest, data, layout, extents);
+		device->nativeDevice()->writeTexture(dest, data, layout, extents);
 		return tex;
 	}
 

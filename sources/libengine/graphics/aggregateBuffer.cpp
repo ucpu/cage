@@ -74,7 +74,7 @@ namespace cage
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
 
-				device->nativeDevice()->OnSubmittedWorkDone(gpu::CallbackMode::AllowProcessEvents,
+				device->nativeDevice()->onSubmittedWorkDone(gpu::CallbackMode::AllowProcessEvents,
 					[&, expected = currentFrame](gpu::Status status, gpu::StringView message)
 					{
 						if (status == gpu::Status::Success)

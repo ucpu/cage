@@ -45,10 +45,10 @@ namespace cage
 					for (const auto it : debugScopes)
 					{
 						(void)it;
-						renderEnc.PopDebugGroup();
+						renderEnc.popDebugGroup();
 					}
 
-					renderEnc.End();
+					renderEnc.end();
 					renderEnc = {};
 					passData = {};
 				}
@@ -56,7 +56,7 @@ namespace cage
 				{
 					gpu::CommandEncoderDescriptor desc = {};
 					desc.label = label;
-					cmdEnc = device->nativeDevice()->CreateCommandEncoder(desc);
+					cmdEnc = device->nativeDevice()->createCommandEncoder(desc);
 				}
 				{
 					passData = PassData{ config };
@@ -91,15 +91,15 @@ namespace cage
 					if (passData.depthTarget)
 						rpd.depthStencilAttachment = std::move(rpdsa);
 					rpd.label = label;
-					renderEnc = cmdEnc.BeginRenderPass(rpd);
+					renderEnc = cmdEnc.beginRenderPass(rpd);
 
 					for (const auto it : debugScopes)
-						renderEnc.PushDebugGroup((const char *)it);
+						renderEnc.pushDebugGroup((const char *)it);
 				}
 				statistics.passes++;
 			}
 
-			void scissors(Vec2i origin, Vec2i size) { renderEnc.SetScissorRect(origin[0], origin[1], size[0], size[1]); }
+			void scissors(Vec2i origin, Vec2i size) { renderEnc.setScissorRect(origin[0], origin[1], size[0], size[1]); }
 
 			void draw(DrawConfig config)
 			{
@@ -115,26 +115,26 @@ namespace cage
 				if (!pip)
 					return; // pipeline not ready
 
-				if (passData.pipeline.Get() != pip.Get())
+				if (passData.pipeline.get() != pip.get())
 				{
-					renderEnc.SetPipeline(pip);
-					renderEnc.SetBindGroup(0, passData.bindings.group);
+					renderEnc.setPipeline(pip);
+					renderEnc.setBindGroup(0, passData.bindings.group);
 					passData.pipeline = pip;
 					statistics.pipelineSwitches++;
 				}
 
-				renderEnc.SetBindGroup(1, config.material.group);
+				renderEnc.setBindGroup(1, config.material.group);
 				CAGE_ASSERT(config.bindings.dynamicBuffersCount <= config.dynamicOffsets.size());
-				renderEnc.SetBindGroup(2, config.bindings.group, PointerRange<const uint32>(config.dynamicOffsets).subRange(0, config.bindings.dynamicBuffersCount));
+				renderEnc.setBindGroup(2, config.bindings.group, PointerRange<const uint32>(config.dynamicOffsets).subRange(0, config.bindings.dynamicBuffersCount));
 
-				renderEnc.SetVertexBuffer(0, config.model->geometryBuffer->nativeBuffer());
+				renderEnc.setVertexBuffer(0, config.model->geometryBuffer->nativeBuffer());
 				if (config.model->indicesCount)
-					renderEnc.SetIndexBuffer(config.model->geometryBuffer->nativeBuffer(), gpu::IndexFormat::Uint32, config.model->indicesOffset);
+					renderEnc.setIndexBuffer(config.model->geometryBuffer->nativeBuffer(), gpu::IndexFormat::Uint32, config.model->indicesOffset);
 
 				if (config.model->indicesCount)
-					renderEnc.DrawIndexed(config.model->indicesCount, config.instances);
+					renderEnc.drawIndexed(config.model->indicesCount, config.instances);
 				else
-					renderEnc.Draw(config.model->verticesCount, config.instances);
+					renderEnc.draw(config.model->verticesCount, config.instances);
 
 				statistics.drawCalls++;
 				statistics.primitives += config.model->primitivesCount * config.instances;
@@ -144,9 +144,9 @@ namespace cage
 			{
 				const ProfilingScope profiling("encoder submit");
 				CAGE_ASSERT(cmdEnc && renderEnc);
-				renderEnc.End();
+				renderEnc.end();
 				renderEnc = {};
-				gpu::CommandBuffer b = cmdEnc.Finish();
+				gpu::CommandBuffer b = cmdEnc.finish();
 				cmdEnc = {};
 				device->insertCommandBuffer(std::move(b), statistics);
 				statistics = {};
@@ -156,14 +156,14 @@ namespace cage
 			{
 				CAGE_ASSERT(renderEnc);
 				debugScopes.push_back(name);
-				renderEnc.PushDebugGroup((const char *)name);
+				renderEnc.pushDebugGroup((const char *)name);
 			}
 
 			void popScope()
 			{
 				CAGE_ASSERT(renderEnc);
 				debugScopes.pop_back();
-				renderEnc.PopDebugGroup();
+				renderEnc.popDebugGroup();
 			}
 		};
 	}

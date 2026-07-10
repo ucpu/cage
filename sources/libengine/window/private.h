@@ -10,9 +10,9 @@ namespace cage
 
 	namespace privat
 	{
-		struct GpuSurface;
+		struct WindowGpuContext;
 
-		Holder<GpuSurface> &getWindowGpuSurface(Window *w);
+		Holder<WindowGpuContext> &getWindowGpuContext(Window *w);
 		void glfwInitializeFunc();
 		void glfwInitializeGamepads();
 		Mutex *glfwMutex();

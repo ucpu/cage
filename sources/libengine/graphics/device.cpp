@@ -59,7 +59,7 @@ namespace cage
 			}
 		}
 
-		struct GpuSurface : private Immovable
+		struct WindowGpuContext : private Immovable
 		{
 			// the window owns its surface, but the device can destroy all the surfaces in its destructor
 			std::shared_ptr<GraphicsContextData> data;
@@ -331,7 +331,7 @@ namespace cage
 
 			GraphicsContextData *getContext(Window *window)
 			{
-				Holder<privat::GpuSurface> &context = privat::getWindowGpuSurface(window);
+				Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
 				if (!context)
 				{
 					ScopeLock lock(mutex);
@@ -341,7 +341,7 @@ namespace cage
 					if (!s->surface)
 						CAGE_THROW_ERROR(Exception, "failed to create wgpu surface from window");
 					surfacesCollection.push_back(s);
-					context = systemMemory().createHolder<privat::GpuSurface>();
+					context = systemMemory().createHolder<privat::WindowGpuContext>();
 					context->data = s;
 				}
 				return context->data.get();
@@ -432,7 +432,7 @@ namespace cage
 				CAGE_ASSERT(tex.texture);
 				context->presentable = true;
 
-				return newTexture(tex.texture, tex.texture.CreateView(), nullptr, "window surface texture");
+				return newTexture(tex.texture, tex.texture.createView(), nullptr, "window surface texture");
 			}
 
 			GraphicsFrameStatistics nextFrame()
@@ -482,14 +482,14 @@ namespace cage
 				gpu::BufferDescriptor resolveDesc = {};
 				resolveDesc.size = Frames * 256; // alignment requirements
 				resolveDesc.usage = gpu::BufferUsage::QueryResolve | gpu::BufferUsage::CopySrc;
-				buffResolve = device->device.CreateBuffer(&resolveDesc);
+				buffResolve = device->device.createBuffer(&resolveDesc);
 			}
 			for (uint32 i = 0; i < Frames; i++)
 			{
 				gpu::BufferDescriptor readbackDesc = {};
 				readbackDesc.size = 2 * sizeof(uint64);
 				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
-				buffRead[i] = device->device.CreateBuffer(&readbackDesc);
+				buffRead[i] = device->device.createBuffer(&readbackDesc);
 			}
 		}
 
@@ -499,9 +499,9 @@ namespace cage
 			const ProfilingScope profiling("gpu timer start");
 			ScopeLock lock(device->mutex);
 			const uint32 current = frameIndex % Frames;
-			auto ce = device->device.CreateCommandEncoder({});
+			auto ce = device->device.createCommandEncoder({});
 			ce.WriteTimestamp(querySet, current * 2 + 0);
-			device->commands.push_back(ce.Finish());
+			device->commands.push_back(ce.finish());
 #endif // CAGE_SYSTEM_MAC
 		}
 
@@ -515,23 +515,23 @@ namespace cage
 				if (buffRead[current].GetMapState() != gpu::BufferMapState::Unmapped)
 					return;
 				const uint64 offset = current * 256;
-				auto ce = device->device.CreateCommandEncoder({});
+				auto ce = device->device.createCommandEncoder({});
 				ce.WriteTimestamp(querySet, current * 2 + 1);
 				ce.ResolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
 				ce.CopyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
-				device->commands.push_back(ce.Finish()); // this enques the cmdbuf to be submitted, but does not submit it yet
+				device->commands.push_back(ce.finish()); // this enques the cmdbuf to be submitted, but does not submit it yet
 			}
 			if (frameIndex >= Frames)
 			{
 				const uint32 prev = (frameIndex + Frames - 1) % Frames;
-				buffRead[prev].MapAsync(gpu::MapMode::Read, 0, 2 * sizeof(uint64), gpu::CallbackMode::AllowProcessEvents,
+				buffRead[prev].mapAsync(gpu::MapMode::Read, 0, 2 * sizeof(uint64), gpu::CallbackMode::AllowProcessEvents,
 					[this, prev](gpu::MapAsyncStatus status, gpu::StringView)
 					{
 						if (status != gpu::MapAsyncStatus::Success)
 							return;
 						const uint64 *ts = static_cast<const uint64 *>(buffRead[prev].GetConstMappedRange(0, 2 * sizeof(uint64)));
 						time = (ts[1] - ts[0]) / 1000; // ns -> us
-						buffRead[prev].Unmap();
+						buffRead[prev].unmap();
 						ProfilingEvent ev = profilingEventBegin("gpu", ProfilingFrameTag());
 						profilingEventEnd(ev, time);
 					});

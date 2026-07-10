@@ -94,7 +94,7 @@ namespace cage
 					hashCombine((uint32)depthTest);
 					hashCombine((uint32(depthWrite) << 1) + uint32(backFaceCulling));
 					for (const auto &it : bindingsLayouts)
-						hashCombine((uintPtr)it.Get());
+						hashCombine((uintPtr)it.get());
 					for (gpu::TextureFormat f : colorTargets)
 						hashCombine((uint32)f);
 					hashCombine((uint32)meshComponents); // replacement for vertexBufferLayout for the purpose of the key/hash
@@ -161,8 +161,8 @@ namespace cage
 				gpu::PipelineLayoutDescriptor pld = {};
 				pld.bindGroupLayouts = config.bindingsLayouts;
 				Holder<gpu::Device> dev = device->nativeDevice();
-				rpd.layout = dev->CreatePipelineLayout(pld);
-				dev->CreateRenderPipelineAsync(rpd, gpu::CallbackMode::AllowProcessEvents,
+				rpd.layout = dev->createPipelineLayout(pld);
+				dev->createRenderPipelineAsync(rpd, gpu::CallbackMode::AllowProcessEvents,
 					[this, target](gpu::Status status, gpu::RenderPipeline pipeline, gpu::StringView message)
 					{
 						if (status == gpu::Status::Success)
@@ -254,11 +254,11 @@ namespace cage
 		result.bindingsLayouts[1] = draw.material.layout;
 		result.bindingsLayouts[2] = draw.bindings.layout;
 		for (const auto &it : pass.colorTargets)
-			result.colorTargets.push_back(it.texture->nativeTexture().GetFormat());
+			result.colorTargets.push_back(it.texture->nativeTexture().getFormat());
 		result.vertexBufferLayout = draw.model->getLayout();
 		result.primitiveTopology = convertTopology(draw.model);
 		if (pass.depthTarget)
-			result.depthFormat = pass.depthTarget->texture->nativeTexture().GetFormat();
+			result.depthFormat = pass.depthTarget->texture->nativeTexture().getFormat();
 		result.meshComponents = draw.model->components;
 		(GraphicsPipelineCommonConfig &)result = (const GraphicsPipelineCommonConfig &)draw;
 		return result;

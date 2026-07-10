@@ -7,6 +7,7 @@
 #include "gpu.h"
 
 #include <cage-core/debug.h>
+#include <cage-engine/window.h>
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
@@ -65,23 +66,26 @@ namespace cage
 		}
 	}
 
-	namespace privat
-	{
-		struct GpuSurface : private Immovable
-		{
-			// the window owns its surface, but the device can destroy all the surfaces in its destructor
-			std::shared_ptr<gpuImpl::GpuSurfaceData> data;
-		};
-	}
-
 	namespace gpuImpl
 	{
-		struct GpuSurfaceData : private Immovable
+		WindowGpuContextData::WindowGpuContextData(vk::Instance instance_) : instance(instance_) {}
+
+		WindowGpuContextData::~WindowGpuContextData() {}
+
+		void WindowGpuContextData::init()
 		{
-			vk::SurfaceKHR surface;
-			Vec2i resolution;
-			bool presentable = false;
-		};
+			// todo
+			// create semaphores and fences, if needed
+			// update images and image views
+		}
+
+		void WindowGpuContextData::clear()
+		{
+			instance.destroySurfaceKHR(surface);
+			surface = nullptr;
+			// todo
+			// destroy semaphores and fences
+		}
 
 		Device::Bootstrap::~Bootstrap()
 		{
@@ -122,7 +126,6 @@ namespace cage
 			}
 
 			{
-
 				const vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
 				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device name: " + props.deviceName);
 				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device type: " + vk::to_string(props.deviceType).c_str());
@@ -143,6 +146,27 @@ namespace cage
 				}
 			}
 
+			{
+				std::array<vk::DescriptorPoolSize, 6> sizes = {};
+				sizes[0].type = vk::DescriptorType::eUniformBuffer;
+				sizes[0].descriptorCount = 2'000;
+				sizes[1].type = vk::DescriptorType::eUniformBufferDynamic;
+				sizes[1].descriptorCount = 100;
+				sizes[2].type = vk::DescriptorType::eStorageBuffer;
+				sizes[2].descriptorCount = 2'000;
+				sizes[3].type = vk::DescriptorType::eStorageBufferDynamic;
+				sizes[3].descriptorCount = 100;
+				sizes[4].type = vk::DescriptorType::eSampler;
+				sizes[4].descriptorCount = 4'000;
+				sizes[5].type = vk::DescriptorType::eSampledImage;
+				sizes[5].descriptorCount = 4'000;
+				vk::DescriptorPoolCreateInfo ci;
+				ci.poolSizeCount = sizes.size();
+				ci.pPoolSizes = sizes.data();
+				ci.maxSets = 2'000;
+				descriptorPool = device.createDescriptorPoolUnique(ci);
+			}
+
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
 		}
 
@@ -152,11 +176,8 @@ namespace cage
 
 			{
 				for (const auto &it : surfacesCollection)
-				{
-					if (it->surface)
-						instance.destroySurfaceKHR(it->surface);
-					it->surface = nullptr;
-				}
+					it->clear();
+				surfacesCollection.clear();
 			}
 
 			{
@@ -173,7 +194,7 @@ namespace cage
 			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
 			bootstrap.inst = handleResult(vkb::InstanceBuilder().require_api_version(1, 3).set_debug_callback(debugCallback).enable_extensions(extsCnt, extsArr).request_validation_layers().set_engine_name("cage").set_app_name(desc.label.str.data()).build());
 
-			auto surf = getWindowGpuSurface(desc.window);
+			auto surf = getWindowGpuContext(desc.window);
 			vk::PhysicalDeviceFeatures features10;
 			features10.samplerAnisotropy = true;
 			vk::PhysicalDeviceVulkan12Features features12;
@@ -194,13 +215,13 @@ namespace cage
 			bootstrap.qp = handleResult(bootstrap.dev.get_queue(vkb::QueueType::present));
 		}
 
-		Holder<privat::GpuSurface> Device::getWindowGpuSurface(Window *window)
+		Holder<privat::WindowGpuContext> Device::getWindowGpuContext(Window *window)
 		{
-			Holder<privat::GpuSurface> &context = privat::getWindowGpuSurface(window);
+			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
 			if (!context)
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "creating window gpu surface");
-				auto s = std::make_shared<GpuSurfaceData>();
+				auto s = std::make_shared<WindowGpuContextData>(bootstrap.inst.instance);
 				VkSurfaceKHR rawSurface;
 				const auto res = glfwCreateWindowSurface(bootstrap.inst.instance, privat::getGlfwWindow(window), nullptr, &rawSurface);
 				if (res != VkResult::VK_SUCCESS)
@@ -210,10 +231,26 @@ namespace cage
 				}
 				s->surface = vk::SurfaceKHR(rawSurface);
 				surfacesCollection.push_back(s);
-				context = systemMemory().createHolder<privat::GpuSurface>();
+				context = systemMemory().createHolder<privat::WindowGpuContext>();
 				context->data = s;
 			}
 			return context.share();
+		}
+
+		gpu::Texture Device::getWindowSurfaceTexture(Window *window)
+		{
+			const Vec2i res = window->resolution();
+			if (res[0] <= 0 || res[1] <= 0)
+				return {};
+			auto ctx = getWindowGpuContext(window);
+			if (ctx->data->resolution != res)
+			{
+				ctx->data->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)ctx->data->surface).set_old_swapchain(ctx->data->swapchain).set_desired_min_image_count(2).set_desired_extent(res[0], res[1]).build());
+				ctx->data->resolution = res;
+				ctx->data->init();
+			}
+			// todo acquire texture
+			return {};
 		}
 	}
 

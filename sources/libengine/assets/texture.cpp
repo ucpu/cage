@@ -64,7 +64,7 @@ namespace cage
 			const uint32 copyHeight = max(blockWidth, (uint32)resolution[1]);
 			const Vec3i extents = Vec3i(copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]));
 
-			device.WriteTexture(dest, data, layout, extents);
+			device.writeTexture(dest, data, layout, extents);
 		}
 	}
 
@@ -85,12 +85,12 @@ namespace cage
 			desc.mipLevelCount = header.mipLevels;
 			desc.size = header.resolution;
 			desc.label = context->textId;
-			gpu::Texture wtex = dev->CreateTexture(desc);
+			gpu::Texture wtex = dev->createTexture(desc);
 
 			gpu::TextureViewDescriptor twd = {};
 			twd.dimension = privat::textureViewDimension(header.flags);
 			twd.label = context->textId;
-			gpu::TextureView view = wtex.CreateView(twd);
+			gpu::TextureView view = wtex.createView(twd);
 
 			gpu::SamplerDescriptor sd = {};
 			sd.magFilter = header.sampleFilter;
@@ -101,7 +101,7 @@ namespace cage
 			sd.addressModeV = header.wrapY;
 			sd.addressModeW = header.wrapZ;
 			sd.label = context->textId;
-			gpu::Sampler samp = dev->CreateSampler(sd);
+			gpu::Sampler samp = dev->createSampler(sd);
 
 			Holder<Texture> tex = newTexture(wtex, view, samp, context->textId);
 			tex->flags = header.flags;

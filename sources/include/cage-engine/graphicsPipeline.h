@@ -18,7 +18,7 @@ namespace cage
 
 		inline bool operator==(const BindGroupLayout &a, const BindGroupLayout &b)
 		{
-			return a.Get() == b.Get();
+			return a.get() == b.get();
 		}
 	}
 
