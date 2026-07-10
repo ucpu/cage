@@ -6,14 +6,14 @@ namespace cage
 {
 	namespace
 	{
-		vk::ShaderStageFlags convertVisibility(gpu::ShaderStage visibility)
+		vk::ShaderStageFlags convertVisibility(gpu::ShaderStagesFlags visibility)
 		{
 			vk::ShaderStageFlags r = {};
-			if (any(visibility & gpu::ShaderStage::Vertex))
+			if (any(visibility & gpu::ShaderStagesFlags::Vertex))
 				r |= vk::ShaderStageFlagBits::eVertex;
-			if (any(visibility & gpu::ShaderStage::Fragment))
+			if (any(visibility & gpu::ShaderStagesFlags::Fragment))
 				r |= vk::ShaderStageFlagBits::eFragment;
-			if (any(visibility & gpu::ShaderStage::Compute))
+			if (any(visibility & gpu::ShaderStagesFlags::Compute))
 				r |= vk::ShaderStageFlagBits::eCompute;
 			return r;
 		}
@@ -98,11 +98,11 @@ namespace cage
 						{
 							switch (e.type)
 							{
-								case gpu::BufferBindingType::Uniform:
+								case gpu::BufferBindingTypeEnum::Uniform:
 									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
 									break;
-								case gpu::BufferBindingType::Storage:
-								case gpu::BufferBindingType::ReadOnlyStorage:
+								case gpu::BufferBindingTypeEnum::Storage:
+								case gpu::BufferBindingTypeEnum::ReadOnlyStorage:
 									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eStorageBufferDynamic : vk::DescriptorType::eStorageBuffer;
 									break;
 							}

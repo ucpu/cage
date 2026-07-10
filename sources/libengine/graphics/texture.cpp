@@ -11,13 +11,13 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureDimension textureViewDimension(TextureFlags flags)
+		gpu::TextureDimensionEnum textureViewDimension(TextureFlags flags)
 		{
 			if (any(flags & TextureFlags::Volume3D))
-				return gpu::TextureDimension::e3D;
+				return gpu::TextureDimensionEnum::e3D;
 			if (any(flags & TextureFlags::Cubemap))
-				return any(flags & TextureFlags::Array) ? gpu::TextureDimension::CubeArray : gpu::TextureDimension::Cube;
-			return any(flags & TextureFlags::Array) ? gpu::TextureDimension::e2DArray : gpu::TextureDimension::e2D;
+				return any(flags & TextureFlags::Array) ? gpu::TextureDimensionEnum::CubeArray : gpu::TextureDimensionEnum::Cube;
+			return any(flags & TextureFlags::Array) ? gpu::TextureDimensionEnum::e2DArray : gpu::TextureDimensionEnum::e2D;
 		}
 
 		struct DeviceTexturesCache : private Immovable
@@ -78,7 +78,7 @@ namespace cage
 				gpu::TexelCopyTextureInfo dest = {};
 				dest.texture = dummy2d->nativeTexture();
 				dest.mipLevel = 0;
-				dest.aspect = gpu::TextureAspect::All;
+				dest.aspect = gpu::TextureAspectEnum::All;
 				gpu::TexelCopyBufferLayout layout = {};
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
@@ -121,12 +121,12 @@ namespace cage
 			{
 				gpu::TextureDescriptor desc = {};
 				desc.size = Vec3i(1, 1, 1);
-				desc.format = gpu::TextureFormat::Depth32Float;
-				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
+				desc.format = gpu::TextureFormatEnum::Depth32Float;
+				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
 				desc.label = "dummy shadowmap target";
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 				gpu::TextureViewDescriptor vd = {};
-				vd.dimension = gpu::TextureDimension::e2DArray;
+				vd.dimension = gpu::TextureDimensionEnum::e2DArray;
 				gpu::TextureView view = tex.createView(vd);
 				gpu::Sampler samp = device->nativeDevice()->createSampler({});
 				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
@@ -148,7 +148,7 @@ namespace cage
 				desc.size = config.resolution;
 				desc.mipLevelCount = config.mipLevelCount;
 				desc.format = config.format;
-				desc.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::TextureBinding;
+				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
 				desc.label = config.name.c_str();
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 				gpu::TextureViewDescriptor vd = {};
@@ -157,9 +157,9 @@ namespace cage
 				gpu::SamplerDescriptor sd = {};
 				if (config.samplerVariant)
 				{
-					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
-					sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
-					sd.mipmapFilter = gpu::FilterMode::Nearest;
+					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
+					sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
+					sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
 					sd.label = config.name.c_str();
 				}
 				gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
@@ -235,9 +235,9 @@ namespace cage
 
 	namespace
 	{
-		gpu::TextureFormat findFormat(ImageFormatEnum format, uint32 channels, bool srgb)
+		gpu::TextureFormatEnum findFormat(ImageFormatEnum format, uint32 channels, bool srgb)
 		{
-			using F = gpu::TextureFormat;
+			using F = gpu::TextureFormatEnum;
 
 			if (srgb)
 			{
@@ -317,12 +317,12 @@ namespace cage
 				this->label = label_;
 				this->flags = config.flags;
 				gpu::TextureDescriptor desc = {};
-				desc.usage = gpu::TextureUsage::CopyDst;
+				desc.usage = gpu::TextureUsageFlags::CopyDst;
 				if (config.sampling)
-					desc.usage |= gpu::TextureUsage::TextureBinding;
+					desc.usage |= gpu::TextureUsageFlags::TextureBinding;
 				if (config.renderable)
-					desc.usage |= gpu::TextureUsage::RenderAttachment;
-				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? gpu::TextureDimension::e3D : gpu::TextureDimension::e2D;
+					desc.usage |= gpu::TextureUsageFlags::RenderAttachment;
+				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
 				desc.size = config.resolution;
 				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
 				desc.mipLevelCount = config.mipLevels;
@@ -341,7 +341,7 @@ namespace cage
 			{
 				CAGE_ASSERT(mip < texture.getMipLevelCount());
 				const Vec3i r = resolution3();
-				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.getDimension() == gpu::TextureDimension::e3D ? mip : 0), 1));
+				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.getDimension() == gpu::TextureDimensionEnum::e3D ? mip : 0), 1));
 			}
 		};
 	}
@@ -416,7 +416,7 @@ namespace cage
 		Holder<Texture> tex = newTexture(device, conf, label);
 		gpu::TexelCopyTextureInfo dest = {};
 		dest.texture = tex->nativeTexture();
-		dest.aspect = gpu::TextureAspect::All;
+		dest.aspect = gpu::TextureAspectEnum::All;
 		gpu::TexelCopyBufferLayout layout = {};
 		layout.bytesPerRow = image->width() * image->channels();
 		layout.rowsPerImage = image->height();

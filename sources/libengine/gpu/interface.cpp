@@ -17,7 +17,7 @@ namespace cage
 			return get()->size;
 		}
 
-		BufferUsage Buffer::getUsage() const
+		BufferUsageFlags Buffer::getUsage() const
 		{
 			return get()->usage;
 		}
@@ -37,7 +37,7 @@ namespace cage
 			return RenderPassEncoder(systemMemory().createHolder<gpuImpl::RenderPassEncoder>(*get(), desc));
 		}
 
-		CommandBuffer CommandEncoder::finish()
+		CommandBuffer CommandEncoder::finishEncoding()
 		{
 			return CommandBuffer(systemMemory().createHolder<gpuImpl::CommandBuffer>(*get()));
 		}
@@ -112,7 +112,7 @@ namespace cage
 			// todo
 		}
 
-		void RenderPassEncoder::end()
+		void RenderPassEncoder::endPass()
 		{
 			// todo
 		}
@@ -142,7 +142,7 @@ namespace cage
 			// todo
 		}
 
-		void RenderPassEncoder::setIndexBuffer(const Buffer &buffer, IndexFormat format, uint64 offset, uint64 size)
+		void RenderPassEncoder::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
 			// todo
 		}
@@ -157,7 +157,7 @@ namespace cage
 			// todo
 		}
 
-		TextureFormat Texture::getFormat() const
+		TextureFormatEnum Texture::getFormat() const
 		{
 			return get()->format;
 		}
@@ -187,7 +187,7 @@ namespace cage
 			return get()->mipLevels;
 		}
 
-		TextureDimension Texture::getDimension() const
+		TextureDimensionEnum Texture::getDimension() const
 		{
 			return get()->dimension;
 		}

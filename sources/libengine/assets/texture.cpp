@@ -11,7 +11,7 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureDimensionEnum textureViewDimension(TextureFlags flags);
 	}
 
 	namespace detail
@@ -24,29 +24,29 @@ namespace cage
 			gpu::TexelCopyTextureInfo dest = {};
 			dest.texture = tex;
 			dest.mipLevel = mipLevel;
-			dest.aspect = gpu::TextureAspect::All;
+			dest.aspect = gpu::TextureAspectEnum::All;
 
 			uint32 blockWidth = 1;
 			uint32 blockBytes = header.channels; // for uncompressed formats
-			switch ((gpu::TextureFormat)header.format)
+			switch ((gpu::TextureFormatEnum)header.format)
 			{
-				case gpu::TextureFormat::BC1RGBAUnorm:
-				case gpu::TextureFormat::BC1RGBAUnormSrgb:
-				case gpu::TextureFormat::BC4RUnorm:
-				case gpu::TextureFormat::BC4RSnorm:
+				case gpu::TextureFormatEnum::BC1RGBAUnorm:
+				case gpu::TextureFormatEnum::BC1RGBAUnormSrgb:
+				case gpu::TextureFormatEnum::BC4RUnorm:
+				case gpu::TextureFormatEnum::BC4RSnorm:
 					blockWidth = 4;
 					blockBytes = 8;
 					break;
-				case gpu::TextureFormat::BC2RGBAUnorm:
-				case gpu::TextureFormat::BC2RGBAUnormSrgb:
-				case gpu::TextureFormat::BC3RGBAUnorm:
-				case gpu::TextureFormat::BC3RGBAUnormSrgb:
-				case gpu::TextureFormat::BC5RGUnorm:
-				case gpu::TextureFormat::BC5RGSnorm:
-				case gpu::TextureFormat::BC6HRGBUfloat:
-				case gpu::TextureFormat::BC6HRGBFloat:
-				case gpu::TextureFormat::BC7RGBAUnorm:
-				case gpu::TextureFormat::BC7RGBAUnormSrgb:
+				case gpu::TextureFormatEnum::BC2RGBAUnorm:
+				case gpu::TextureFormatEnum::BC2RGBAUnormSrgb:
+				case gpu::TextureFormatEnum::BC3RGBAUnorm:
+				case gpu::TextureFormatEnum::BC3RGBAUnormSrgb:
+				case gpu::TextureFormatEnum::BC5RGUnorm:
+				case gpu::TextureFormatEnum::BC5RGSnorm:
+				case gpu::TextureFormatEnum::BC6HRGBUfloat:
+				case gpu::TextureFormatEnum::BC6HRGBFloat:
+				case gpu::TextureFormatEnum::BC7RGBAUnorm:
+				case gpu::TextureFormatEnum::BC7RGBAUnormSrgb:
 					blockWidth = 4;
 					blockBytes = 16;
 					break;
@@ -79,7 +79,7 @@ namespace cage
 			Holder<gpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
 			gpu::TextureDescriptor desc = {};
-			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimension::e3D : gpu::TextureDimension::e2D;
+			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
 			desc.usage = header.usage;
 			desc.format = header.format;
 			desc.mipLevelCount = header.mipLevels;

@@ -28,10 +28,10 @@ namespace cage
 	struct CAGE_ENGINE_API PipelineConfig : public GraphicsPipelineCommonConfig
 	{
 		ankerl::svector<gpu::BindGroupLayout, 3> bindingsLayouts;
-		ankerl::svector<gpu::TextureFormat, 1> colorTargets;
+		ankerl::svector<gpu::TextureFormatEnum, 1> colorTargets;
 		gpu::VertexBufferLayout vertexBufferLayout = {};
-		gpu::PrimitiveTopology primitiveTopology = gpu::PrimitiveTopology::Undefined;
-		gpu::TextureFormat depthFormat = gpu::TextureFormat::Undefined;
+		gpu::PrimitiveTopologyEnum primitiveTopology = gpu::PrimitiveTopologyEnum::Undefined;
+		gpu::TextureFormatEnum depthFormat = gpu::TextureFormatEnum::Undefined;
 		MeshComponentsFlags meshComponents = MeshComponentsFlags::None;
 
 		bool operator==(const PipelineConfig &) const = default;

@@ -53,7 +53,7 @@ namespace cage
 		AssetLabel name;
 		Vec3i resolution = Vec3i(0, 0, 1);
 		uint32 mipLevelCount = 1;
-		gpu::TextureFormat format = gpu::TextureFormat::Undefined;
+		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 		TextureFlags flags = TextureFlags::None;
 		uint32 entityId = 0;
 		bool samplerVariant = false;

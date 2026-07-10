@@ -31,12 +31,12 @@ namespace cage
 				buffer = device->nativeDevice()->createBuffer(desc);
 			}
 
-			gpu::BufferUsage usage() const
+			gpu::BufferUsageFlags usage() const
 			{
 				if (geometry)
-					return gpu::BufferUsage::Vertex | gpu::BufferUsage::Index | gpu::BufferUsage::CopyDst;
+					return gpu::BufferUsageFlags::Vertex | gpu::BufferUsageFlags::Index | gpu::BufferUsageFlags::CopyDst;
 				else
-					return gpu::BufferUsage::Uniform | gpu::BufferUsage::Storage | gpu::BufferUsage::CopyDst;
+					return gpu::BufferUsageFlags::Uniform | gpu::BufferUsageFlags::Storage | gpu::BufferUsageFlags::CopyDst;
 			}
 		};
 	}

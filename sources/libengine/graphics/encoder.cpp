@@ -48,7 +48,7 @@ namespace cage
 						renderEnc.popDebugGroup();
 					}
 
-					renderEnc.end();
+					renderEnc.endPass();
 					renderEnc = {};
 					passData = {};
 				}
@@ -69,8 +69,8 @@ namespace cage
 					{
 						gpu::RenderPassDescriptor::ColorAttachment rpca = {};
 						rpca.clearValue = it.clearValue;
-						rpca.loadOp = it.clear ? gpu::LoadOp::Clear : gpu::LoadOp::Load;
-						rpca.storeOp = gpu::StoreOp::Store;
+						rpca.loadOp = it.clear ? gpu::LoadOpEnum::Clear : gpu::LoadOpEnum::Load;
+						rpca.storeOp = gpu::StoreOpEnum::Store;
 						CAGE_ASSERT(it.texture->nativeView());
 						rpca.view = it.texture->nativeView();
 						atts.push_back(std::move(rpca));
@@ -81,8 +81,8 @@ namespace cage
 					{
 						CAGE_ASSERT(passData.depthTarget->texture->nativeView());
 						rpdsa.view = passData.depthTarget->texture->nativeView();
-						rpdsa.depthLoadOp = passData.depthTarget->clear ? gpu::LoadOp::Clear : gpu::LoadOp::Load;
-						rpdsa.depthStoreOp = gpu::StoreOp::Store;
+						rpdsa.depthLoadOp = passData.depthTarget->clear ? gpu::LoadOpEnum::Clear : gpu::LoadOpEnum::Load;
+						rpdsa.depthStoreOp = gpu::StoreOpEnum::Store;
 						rpdsa.depthClearValue = 1;
 					}
 
@@ -129,7 +129,7 @@ namespace cage
 
 				renderEnc.setVertexBuffer(0, config.model->geometryBuffer->nativeBuffer());
 				if (config.model->indicesCount)
-					renderEnc.setIndexBuffer(config.model->geometryBuffer->nativeBuffer(), gpu::IndexFormat::Uint32, config.model->indicesOffset);
+					renderEnc.setIndexBuffer(config.model->geometryBuffer->nativeBuffer(), gpu::IndexFormatEnum::Uint32, config.model->indicesOffset);
 
 				if (config.model->indicesCount)
 					renderEnc.drawIndexed(config.model->indicesCount, config.instances);
@@ -144,9 +144,9 @@ namespace cage
 			{
 				const ProfilingScope profiling("encoder submit");
 				CAGE_ASSERT(cmdEnc && renderEnc);
-				renderEnc.end();
+				renderEnc.endPass();
 				renderEnc = {};
-				gpu::CommandBuffer b = cmdEnc.finish();
+				gpu::CommandBuffer b = cmdEnc.finishEncoding();
 				cmdEnc = {};
 				device->insertCommandBuffer(std::move(b), statistics);
 				statistics = {};

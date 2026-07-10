@@ -30,7 +30,7 @@ namespace cage
 				uint32 index = 0;
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
 					attrs[index].shaderLocation = 0;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -38,7 +38,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Normals))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
 					attrs[index].shaderLocation = 1;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -46,7 +46,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Bones))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Uint32x4;
+					attrs[index].format = gpu::VertexFormatEnum::Uint32x4;
 					attrs[index].shaderLocation = 2;
 					index++;
 					layout.arrayStride += sizeof(Vec4i);
@@ -54,7 +54,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Bones))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Float32x4;
+					attrs[index].format = gpu::VertexFormatEnum::Float32x4;
 					attrs[index].shaderLocation = 3;
 					index++;
 					layout.arrayStride += sizeof(Vec4);
@@ -63,7 +63,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Uvs3))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Float32x3;
+					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
 					attrs[index].shaderLocation = 4;
 					index++;
 					layout.arrayStride += sizeof(Vec3);
@@ -71,7 +71,7 @@ namespace cage
 				if (any(components & MeshComponentsFlags::Uvs2))
 				{
 					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormat::Float32x2;
+					attrs[index].format = gpu::VertexFormatEnum::Float32x2;
 					attrs[index].shaderLocation = 4;
 					index++;
 					layout.arrayStride += sizeof(Vec2);
@@ -79,7 +79,7 @@ namespace cage
 				CAGE_ASSERT(index <= attrs.size());
 
 				layout.attributes = PointerRange<const gpu::VertexBufferLayout::VertexAttribute>(attrs).subRange(0, index);
-				layout.stepMode = gpu::VertexStepMode::Vertex;
+				layout.stepMode = gpu::VertexStepModeEnum::Vertex;
 			}
 		};
 	}

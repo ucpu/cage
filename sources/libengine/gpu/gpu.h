@@ -68,7 +68,7 @@ namespace cage
 			vk::UniqueBuffer buffer;
 
 			uint64 size = 0;
-			gpu::BufferUsage usage = gpu::BufferUsage::Undefined;
+			gpu::BufferUsageFlags usage = gpu::BufferUsageFlags::Undefined;
 
 			Buffer(const Device &device, const gpu::BufferDescriptor &desc);
 			~Buffer();
@@ -175,8 +175,8 @@ namespace cage
 
 			Vec3i resolution;
 			uint32 mipLevels = 0;
-			gpu::TextureDimension dimension = gpu::TextureDimension::Undefined;
-			gpu::TextureFormat format = gpu::TextureFormat::Undefined;
+			gpu::TextureDimensionEnum dimension = gpu::TextureDimensionEnum::Undefined;
+			gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 
 			Texture(const Device &device, const gpu::TextureDescriptor &desc);
 			~Texture();
@@ -199,7 +199,7 @@ namespace cage
 		template<class T, class Src>
 		CAGE_FORCE_INLINE vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> makeUnique(Src &src)
 		{
-			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
+			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), typename vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
 		}
 	}
 }

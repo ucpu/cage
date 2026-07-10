@@ -11,7 +11,7 @@ namespace cage
 		// enums
 		///////////////////////////////////////////////////////////////////
 
-		enum class AddressMode
+		enum class AddressModeEnum
 		{
 			Undefined = 0,
 			ClampToEdge,
@@ -19,7 +19,7 @@ namespace cage
 			Repeat,
 		};
 
-		enum class BlendFactor
+		enum class BlendFactorEnum
 		{
 			Undefined = 0,
 			Zero,
@@ -41,7 +41,7 @@ namespace cage
 			//OneMinusSrc1Alpha,
 		};
 
-		enum class BlendOperation
+		enum class BlendOperationEnum
 		{
 			Undefined = 0,
 			Add,
@@ -51,7 +51,7 @@ namespace cage
 			//Max,
 		};
 
-		enum class BufferBindingType
+		enum class BufferBindingTypeEnum
 		{
 			Undefined = 0,
 			ReadOnlyStorage,
@@ -59,7 +59,7 @@ namespace cage
 			Uniform,
 		};
 
-		//enum class BufferMapState
+		//enum class BufferMapStateEnum
 		//{
 		//	Undefined = 0,
 		//	Unmapped,
@@ -67,7 +67,7 @@ namespace cage
 		//	Mapped,
 		//};
 
-		enum class BufferUsage
+		enum class BufferUsageFlags
 		{
 			Undefined = 0,
 			CopyDst = 1u << 0,
@@ -83,7 +83,7 @@ namespace cage
 			Vertex = 1u << 10,
 		};
 
-		enum class CallbackMode
+		enum class CallbackModeEnum
 		{
 			Undefined = 0,
 			AllowProcessEvents,
@@ -91,7 +91,7 @@ namespace cage
 			WaitAnyOnly,
 		};
 
-		enum class CompareFunction
+		enum class CompareFunctionEnum
 		{
 			Undefined = 0,
 			Never,
@@ -104,7 +104,7 @@ namespace cage
 			Always,
 		};
 
-		enum class CullMode
+		enum class CullModeEnum
 		{
 			Undefined = 0,
 			None,
@@ -112,28 +112,28 @@ namespace cage
 			Back,
 		};
 
-		enum class FilterMode
+		enum class FilterModeEnum
 		{
 			Undefined = 0,
 			Linear,
 			Nearest,
 		};
 
-		//enum class FrontFace
+		//enum class FrontFaceEnum
 		//{
 		//	Undefined = 0,
 		//	CCW,
 		//	CW,
 		//};
 
-		enum class IndexFormat
+		enum class IndexFormatEnum
 		{
 			Undefined = 0,
 			Uint16,
 			Uint32,
 		};
 
-		enum class LoadOp
+		enum class LoadOpEnum
 		{
 			Undefined = 0,
 			Load,
@@ -141,14 +141,14 @@ namespace cage
 			//ExpandResolveTexture,
 		};
 
-		enum class MapMode
+		enum class MapModeEnum
 		{
 			Undefined = 0,
 			Read,
 			Write,
 		};
 
-		enum class PrimitiveTopology
+		enum class PrimitiveTopologyEnum
 		{
 			Undefined = 0,
 			PointList,
@@ -158,7 +158,7 @@ namespace cage
 			//TriangleStrip,
 		};
 
-		enum class SamplerBindingType
+		enum class SamplerBindingTypeEnum
 		{
 			Undefined = 0,
 			Filtering,
@@ -166,7 +166,7 @@ namespace cage
 			//Comparison,
 		};
 
-		enum class ShaderStage
+		enum class ShaderStagesFlags
 		{
 			Undefined = 0,
 			Fragment = 1u << 0,
@@ -174,7 +174,7 @@ namespace cage
 			Compute = 1u << 2,
 		};
 
-		enum class Status
+		enum class StatusEnum
 		{
 			Undefined = 0,
 			Success,
@@ -183,14 +183,14 @@ namespace cage
 			Error,
 		};
 
-		enum class StoreOp
+		enum class StoreOpEnum
 		{
 			Undefined = 0,
 			Store,
 			Discard,
 		};
 
-		enum class TextureAspect
+		enum class TextureAspectEnum
 		{
 			Undefined = 0,
 			All,
@@ -201,7 +201,7 @@ namespace cage
 			//Plane2Only,
 		};
 
-		enum class TextureDimension
+		enum class TextureDimensionEnum
 		{
 			Undefined = 0,
 			Cube,
@@ -212,7 +212,7 @@ namespace cage
 			e3D,
 		};
 
-		enum class TextureFormat
+		enum class TextureFormatEnum
 		{
 			Undefined = 0,
 			R8Unorm,
@@ -287,7 +287,7 @@ namespace cage
 			R10X6BG10X6Biplanar444Unorm,
 		};
 
-		enum class TextureSampleType
+		enum class TextureSampleTypeEnum
 		{
 			Undefined = 0,
 			Float,
@@ -297,7 +297,7 @@ namespace cage
 			//Uint,
 		};
 
-		enum class TextureUsage
+		enum class TextureUsageFlags
 		{
 			Undefined = 0,
 			CopyDst = 1u << 0,
@@ -309,7 +309,7 @@ namespace cage
 			TransientAttachment = 1u << 6,
 		};
 
-		enum class VertexFormat
+		enum class VertexFormatEnum
 		{
 			Undefined = 0,
 			Uint8,
@@ -355,7 +355,7 @@ namespace cage
 			Unorm8x4BGRA,
 		};
 
-		enum class VertexStepMode
+		enum class VertexStepModeEnum
 		{
 			Undefined = 0,
 			Vertex,
@@ -397,9 +397,9 @@ namespace cage
 		struct VertexBufferLayout;
 	}
 
-	CAGE_ENUM_BITS(gpu::BufferUsage);
-	CAGE_ENUM_BITS(gpu::ShaderStage);
-	CAGE_ENUM_BITS(gpu::TextureUsage);
+	CAGE_ENUM_BITS(gpu::BufferUsageFlags);
+	CAGE_ENUM_BITS(gpu::ShaderStagesFlags);
+	CAGE_ENUM_BITS(gpu::TextureUsageFlags);
 }
 
 #endif

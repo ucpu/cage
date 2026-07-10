@@ -140,7 +140,7 @@ namespace cage
 				img->initialize(res, 4);
 
 				gpu::BufferDescriptor readbackDesc{};
-				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
+				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
 				readbackDesc.size = res[0] * res[1] * 4;
 				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->createBuffer(readbackDesc);
 
@@ -156,13 +156,13 @@ namespace cage
 
 				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->createCommandEncoder({});
 				encoder.copyTextureToBuffer(srcView, dstBuffer, copySize);
-				engineGraphicsDevice()->insertCommandBuffer(encoder.finish(), {});
+				engineGraphicsDevice()->insertCommandBuffer(encoder.finishEncoding(), {});
 				engineGraphicsDevice()->nextFrame();
 
-				gpu::Future future = readbackBuffer.mapAsync(gpu::MapMode::Read, 0, readbackDesc.size, gpu::CallbackMode::WaitAnyOnly,
-					[&](gpu::Status status, gpu::StringView message)
+				gpu::Future future = readbackBuffer.mapAsync(gpu::MapModeEnum::Read, 0, readbackDesc.size, gpu::CallbackModeEnum::WaitAnyOnly,
+					[&](gpu::StatusEnum status, gpu::StringView message)
 					{
-						if (status == gpu::Status::Success)
+						if (status == gpu::StatusEnum::Success)
 						{
 							const auto data = readbackBuffer.getMappedRange();
 							detail::memcpy((void *)img->rawViewU8().data(), data.data(), data.size());

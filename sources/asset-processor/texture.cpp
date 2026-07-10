@@ -13,24 +13,24 @@ void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
-	gpu::FilterMode convertFilter(const String &f)
+	gpu::FilterModeEnum convertFilter(const String &f)
 	{
 		if (f == "nearest")
-			return gpu::FilterMode::Nearest;
+			return gpu::FilterModeEnum::Nearest;
 		if (f == "linear")
-			return gpu::FilterMode::Linear;
-		return gpu::FilterMode::Undefined;
+			return gpu::FilterModeEnum::Linear;
+		return gpu::FilterModeEnum::Undefined;
 	}
 
-	gpu::AddressMode convertWrap(const String &f)
+	gpu::AddressModeEnum convertWrap(const String &f)
 	{
 		if (f == "clamp")
-			return gpu::AddressMode::ClampToEdge;
+			return gpu::AddressModeEnum::ClampToEdge;
 		if (f == "repeat")
-			return gpu::AddressMode::Repeat;
+			return gpu::AddressModeEnum::Repeat;
 		if (f == "mirror")
-			return gpu::AddressMode::MirrorRepeat;
-		return gpu::AddressMode::Undefined;
+			return gpu::AddressModeEnum::MirrorRepeat;
+		return gpu::AddressModeEnum::Undefined;
 	}
 
 	TextureFlags convertTarget()
@@ -60,7 +60,7 @@ namespace
 		return result;
 	}
 
-	gpu::TextureFormat findInternalFormatForBcn(const TextureHeader &data)
+	gpu::TextureFormatEnum findInternalFormatForBcn(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -68,7 +68,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return gpu::TextureFormat::BC7RGBAUnormSrgb;
+					return gpu::TextureFormatEnum::BC7RGBAUnormSrgb;
 			}
 		}
 		else
@@ -76,18 +76,18 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return gpu::TextureFormat::BC4RUnorm;
+					return gpu::TextureFormatEnum::BC4RUnorm;
 				case 2:
-					return gpu::TextureFormat::BC5RGUnorm;
+					return gpu::TextureFormatEnum::BC5RGUnorm;
 				case 3:
 				case 4:
-					return gpu::TextureFormat::BC7RGBAUnorm;
+					return gpu::TextureFormatEnum::BC7RGBAUnorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for compressed texture format");
 	}
 
-	gpu::TextureFormat findInternalFormatForRaw(const TextureHeader &data)
+	gpu::TextureFormatEnum findInternalFormatForRaw(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -95,7 +95,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return gpu::TextureFormat::RGBA8UnormSrgb;
+					return gpu::TextureFormatEnum::RGBA8UnormSrgb;
 			}
 		}
 		else
@@ -103,12 +103,12 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return gpu::TextureFormat::R8Unorm;
+					return gpu::TextureFormatEnum::R8Unorm;
 				case 2:
-					return gpu::TextureFormat::RG8Unorm;
+					return gpu::TextureFormatEnum::RG8Unorm;
 				case 3:
 				case 4:
-					return gpu::TextureFormat::RGBA8Unorm;
+					return gpu::TextureFormatEnum::RGBA8Unorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for non-compressed texture format");
@@ -337,7 +337,7 @@ namespace
 		if ((data.resolution[0] % 4) != 0 || (data.resolution[1] % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "base image resolution for bcn encoding must be divisible by 4");
 
-		data.usage = gpu::TextureUsage::CopyDst | gpu::TextureUsage::TextureBinding;
+		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
 		data.format = findInternalFormatForBcn(data);
 
 		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
@@ -371,7 +371,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
-		data.usage = gpu::TextureUsage::CopyDst | gpu::TextureUsage::TextureBinding;
+		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
 		data.format = findInternalFormatForRaw(data);
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
@@ -407,9 +407,9 @@ namespace
 		header.channels = images.parts[0].image->channels();
 		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
 		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
-		header.mipmapFilter = header.mipLevels > 1 ? gpu::FilterMode::Linear : gpu::FilterMode::Nearest;
+		header.mipmapFilter = header.mipLevels > 1 ? gpu::FilterModeEnum::Linear : gpu::FilterModeEnum::Nearest;
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
-		if (header.sampleFilter != gpu::FilterMode::Linear || header.mipmapFilter != gpu::FilterMode::Linear)
+		if (header.sampleFilter != gpu::FilterModeEnum::Linear || header.mipmapFilter != gpu::FilterModeEnum::Linear)
 			header.anisoFilter = 1;
 		header.wrapX = convertWrap(processor->property("wrapX"));
 		header.wrapY = convertWrap(processor->property("wrapY"));

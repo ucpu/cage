@@ -214,7 +214,7 @@ namespace cage
 				if (config.compatibility)
 					opts.compatibleSurface = getContext(config.compatibility)->surface;
 
-				gpu::Future future = instance.RequestAdapter(&opts, gpu::CallbackMode::WaitAnyOnly,
+				gpu::Future future = instance.RequestAdapter(&opts, gpu::CallbackModeEnum::WaitAnyOnly,
 					[&](gpu::RequestAdapterStatus status, gpu::Adapter adapter_, gpu::StringView message)
 					{
 						adapter = adapter_;
@@ -238,7 +238,7 @@ namespace cage
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing wgpu device");
 				gpu::DeviceDescriptor desc = {};
-				desc.SetDeviceLostCallback(gpu::CallbackMode::AllowSpontaneous, lostFromDevice);
+				desc.SetDeviceLostCallback(gpu::CallbackModeEnum::AllowSpontaneous, lostFromDevice);
 				desc.SetUncapturedErrorCallback(errorFromDevice);
 
 				static constexpr std::array<gpu::FeatureName, 2> requiredFeatures = {
@@ -377,8 +377,8 @@ namespace cage
 					cfg.presentMode = gpu::PresentMode::Fifo;
 				else
 					cfg.presentMode = mailbox ? gpu::PresentMode::Mailbox : immediate ? gpu::PresentMode::Immediate : gpu::PresentMode::Fifo;
-				cfg.format = gpu::TextureFormat::BGRA8Unorm; // this should be guaranteed to work everywhere
-				cfg.usage = gpu::TextureUsage::RenderAttachment | gpu::TextureUsage::CopySrc;
+				cfg.format = gpu::TextureFormatEnum::BGRA8Unorm; // this should be guaranteed to work everywhere
+				cfg.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::CopySrc;
 				context->surface.Configure(&cfg);
 				context->resolution = resolution;
 			}
@@ -481,14 +481,14 @@ namespace cage
 			{
 				gpu::BufferDescriptor resolveDesc = {};
 				resolveDesc.size = Frames * 256; // alignment requirements
-				resolveDesc.usage = gpu::BufferUsage::QueryResolve | gpu::BufferUsage::CopySrc;
+				resolveDesc.usage = gpu::BufferUsageFlags::QueryResolve | gpu::BufferUsageFlags::CopySrc;
 				buffResolve = device->device.createBuffer(&resolveDesc);
 			}
 			for (uint32 i = 0; i < Frames; i++)
 			{
 				gpu::BufferDescriptor readbackDesc = {};
 				readbackDesc.size = 2 * sizeof(uint64);
-				readbackDesc.usage = gpu::BufferUsage::MapRead | gpu::BufferUsage::CopyDst;
+				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
 				buffRead[i] = device->device.createBuffer(&readbackDesc);
 			}
 		}
@@ -524,7 +524,7 @@ namespace cage
 			if (frameIndex >= Frames)
 			{
 				const uint32 prev = (frameIndex + Frames - 1) % Frames;
-				buffRead[prev].mapAsync(gpu::MapMode::Read, 0, 2 * sizeof(uint64), gpu::CallbackMode::AllowProcessEvents,
+				buffRead[prev].mapAsync(gpu::MapModeEnum::Read, 0, 2 * sizeof(uint64), gpu::CallbackModeEnum::AllowProcessEvents,
 					[this, prev](gpu::MapAsyncStatus status, gpu::StringView)
 					{
 						if (status != gpu::MapAsyncStatus::Success)

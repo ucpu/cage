@@ -74,10 +74,10 @@ namespace cage
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
 
-				device->nativeDevice()->onSubmittedWorkDone(gpu::CallbackMode::AllowProcessEvents,
-					[&, expected = currentFrame](gpu::Status status, gpu::StringView message)
+				device->nativeDevice()->onSubmittedWorkDone(gpu::CallbackModeEnum::AllowProcessEvents,
+					[&, expected = currentFrame](gpu::StatusEnum status, gpu::StringView message)
 					{
-						if (status == gpu::Status::Success)
+						if (status == gpu::StatusEnum::Success)
 							finishedFrame = max(finishedFrame, expected);
 					});
 			}

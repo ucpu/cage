@@ -613,7 +613,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, cascades);
-			conf.format = gpu::TextureFormat::Depth32Float;
+			conf.format = gpu::TextureFormatEnum::Depth32Float;
 			conf.flags = TextureFlags::Array;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -624,7 +624,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 6);
-			conf.format = gpu::TextureFormat::Depth16Unorm;
+			conf.format = gpu::TextureFormatEnum::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -2018,7 +2018,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth target";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = gpu::TextureFormat::Depth32Float;
+				conf.format = gpu::TextureFormatEnum::Depth32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2027,7 +2027,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth sampling";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = gpu::TextureFormat::R32Float;
+				conf.format = gpu::TextureFormatEnum::R32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2036,7 +2036,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = name;
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = gpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2047,7 +2047,7 @@ namespace cage
 				conf.name = "ssao target";
 				conf.resolution = Vec3i(camera.resolution, 0) / downscale;
 				conf.resolution[2] = 1;
-				conf.format = gpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormatEnum::R16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 		};

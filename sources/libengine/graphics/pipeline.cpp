@@ -16,57 +16,57 @@ namespace cage
 		gpu::RenderPipelineDescriptor::BlendState convertBlending(BlendingEnum blending)
 		{
 			gpu::RenderPipelineDescriptor::BlendState bs = {};
-			bs.color.operation = gpu::BlendOperation::Add;
-			bs.alpha.operation = gpu::BlendOperation::Add;
+			bs.color.operation = gpu::BlendOperationEnum::Add;
+			bs.alpha.operation = gpu::BlendOperationEnum::Add;
 			switch (blending)
 			{
 				case cage::BlendingEnum::None:
-					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::Zero;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactorEnum::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactorEnum::Zero;
 					break;
 				case cage::BlendingEnum::Additive:
-					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::One;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactorEnum::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactorEnum::One;
 					break;
 				case cage::BlendingEnum::AlphaTransparency:
-					bs.color.srcFactor = gpu::BlendFactor::SrcAlpha;
-					bs.alpha.srcFactor = gpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::OneMinusSrcAlpha;
+					bs.color.srcFactor = gpu::BlendFactorEnum::SrcAlpha;
+					bs.alpha.srcFactor = gpu::BlendFactorEnum::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactorEnum::OneMinusSrcAlpha;
 					break;
 				case cage::BlendingEnum::PremultipliedTransparency:
-					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactor::One;
-					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactor::OneMinusSrcAlpha;
+					bs.color.srcFactor = bs.alpha.srcFactor = gpu::BlendFactorEnum::One;
+					bs.color.dstFactor = bs.alpha.dstFactor = gpu::BlendFactorEnum::OneMinusSrcAlpha;
 					break;
 			}
 			return bs;
 		}
 
-		gpu::PrimitiveTopology convertTopology(const Model *model)
+		gpu::PrimitiveTopologyEnum convertTopology(const Model *model)
 		{
 			switch (model->primitiveType)
 			{
 				case 1:
-					return gpu::PrimitiveTopology::PointList;
+					return gpu::PrimitiveTopologyEnum::PointList;
 				case 2:
-					return gpu::PrimitiveTopology::LineList;
+					return gpu::PrimitiveTopologyEnum::LineList;
 				case 3:
 				default:
-					return gpu::PrimitiveTopology::TriangleList;
+					return gpu::PrimitiveTopologyEnum::TriangleList;
 			}
 		}
 
-		gpu::CompareFunction convertDepthTest(const DepthTestEnum &dt)
+		gpu::CompareFunctionEnum convertDepthTest(const DepthTestEnum &dt)
 		{
-			static_assert((uint32)gpu::CompareFunction::Undefined == (uint32)DepthTestEnum::None);
-			static_assert((uint32)gpu::CompareFunction::Never == (uint32)DepthTestEnum::Never);
-			static_assert((uint32)gpu::CompareFunction::Less == (uint32)DepthTestEnum::Less);
-			static_assert((uint32)gpu::CompareFunction::Equal == (uint32)DepthTestEnum::Equal);
-			static_assert((uint32)gpu::CompareFunction::LessEqual == (uint32)DepthTestEnum::LessEqual);
-			static_assert((uint32)gpu::CompareFunction::Greater == (uint32)DepthTestEnum::Greater);
-			static_assert((uint32)gpu::CompareFunction::NotEqual == (uint32)DepthTestEnum::NotEqual);
-			static_assert((uint32)gpu::CompareFunction::GreaterEqual == (uint32)DepthTestEnum::GreaterEqual);
-			static_assert((uint32)gpu::CompareFunction::Always == (uint32)DepthTestEnum::Always);
-			return (gpu::CompareFunction)(uint32)dt;
+			static_assert((uint32)gpu::CompareFunctionEnum::Undefined == (uint32)DepthTestEnum::None);
+			static_assert((uint32)gpu::CompareFunctionEnum::Never == (uint32)DepthTestEnum::Never);
+			static_assert((uint32)gpu::CompareFunctionEnum::Less == (uint32)DepthTestEnum::Less);
+			static_assert((uint32)gpu::CompareFunctionEnum::Equal == (uint32)DepthTestEnum::Equal);
+			static_assert((uint32)gpu::CompareFunctionEnum::LessEqual == (uint32)DepthTestEnum::LessEqual);
+			static_assert((uint32)gpu::CompareFunctionEnum::Greater == (uint32)DepthTestEnum::Greater);
+			static_assert((uint32)gpu::CompareFunctionEnum::NotEqual == (uint32)DepthTestEnum::NotEqual);
+			static_assert((uint32)gpu::CompareFunctionEnum::GreaterEqual == (uint32)DepthTestEnum::GreaterEqual);
+			static_assert((uint32)gpu::CompareFunctionEnum::Always == (uint32)DepthTestEnum::Always);
+			return (gpu::CompareFunctionEnum)(uint32)dt;
 		}
 	}
 
@@ -95,7 +95,7 @@ namespace cage
 					hashCombine((uint32(depthWrite) << 1) + uint32(backFaceCulling));
 					for (const auto &it : bindingsLayouts)
 						hashCombine((uintPtr)it.get());
-					for (gpu::TextureFormat f : colorTargets)
+					for (gpu::TextureFormatEnum f : colorTargets)
 						hashCombine((uint32)f);
 					hashCombine((uint32)meshComponents); // replacement for vertexBufferLayout for the purpose of the key/hash
 					hashCombine((uint32)primitiveTopology);
@@ -126,7 +126,7 @@ namespace cage
 			void createPipeline(const PipelineConfig &config, Value *target)
 			{
 				gpu::RenderPipelineDescriptor::DepthStencilState dss = {};
-				if (config.depthFormat != gpu::TextureFormat::Undefined)
+				if (config.depthFormat != gpu::TextureFormatEnum::Undefined)
 				{
 					dss.format = config.depthFormat;
 					dss.depthCompare = convertDepthTest(config.depthTest);
@@ -136,7 +136,7 @@ namespace cage
 				const gpu::RenderPipelineDescriptor::BlendState blendState = convertBlending(config.blending);
 				ankerl::svector<gpu::RenderPipelineDescriptor::ColorTargetState, 1> colors;
 				colors.reserve(config.colorTargets.size());
-				for (gpu::TextureFormat ct : config.colorTargets)
+				for (gpu::TextureFormatEnum ct : config.colorTargets)
 				{
 					gpu::RenderPipelineDescriptor::ColorTargetState cts = {};
 					cts.format = ct;
@@ -152,9 +152,9 @@ namespace cage
 				gpu::RenderPipelineDescriptor rpd = {};
 				rpd.vertex.module = config.shader->nativeVertex();
 				rpd.vertex.buffers = PointerRange<const gpu::VertexBufferLayout>(&config.vertexBufferLayout, &config.vertexBufferLayout + 1);
-				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullMode::Back : gpu::CullMode::None;
+				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullModeEnum::Back : gpu::CullModeEnum::None;
 				rpd.primitive.topology = config.primitiveTopology;
-				if (config.depthFormat != gpu::TextureFormat::Undefined)
+				if (config.depthFormat != gpu::TextureFormatEnum::Undefined)
 					rpd.depthStencil = std::move(dss);
 				rpd.fragment = std::move(fs);
 
@@ -162,10 +162,10 @@ namespace cage
 				pld.bindGroupLayouts = config.bindingsLayouts;
 				Holder<gpu::Device> dev = device->nativeDevice();
 				rpd.layout = dev->createPipelineLayout(pld);
-				dev->createRenderPipelineAsync(rpd, gpu::CallbackMode::AllowProcessEvents,
-					[this, target](gpu::Status status, gpu::RenderPipeline pipeline, gpu::StringView message)
+				dev->createRenderPipelineAsync(rpd, gpu::CallbackModeEnum::AllowProcessEvents,
+					[this, target](gpu::StatusEnum status, gpu::RenderPipeline pipeline, gpu::StringView message)
 					{
-						if (status == gpu::Status::Success)
+						if (status == gpu::StatusEnum::Success)
 						{
 							ScopeLock lock(mutex, WriteLockTag());
 							target->pipeline = pipeline;

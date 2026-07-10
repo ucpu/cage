@@ -14,43 +14,43 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureDimensionEnum textureViewDimension(TextureFlags flags);
 
 		namespace
 		{
-			bool isFormatFilterable(gpu::TextureFormat format)
+			bool isFormatFilterable(gpu::TextureFormatEnum format)
 			{
 				switch (format)
 				{
 					// depth/stencil
-					case gpu::TextureFormat::Depth16Unorm:
-					case gpu::TextureFormat::Depth24Plus:
-					case gpu::TextureFormat::Depth24PlusStencil8:
-					case gpu::TextureFormat::Depth32Float:
-					case gpu::TextureFormat::Depth32FloatStencil8:
+					case gpu::TextureFormatEnum::Depth16Unorm:
+					case gpu::TextureFormatEnum::Depth24Plus:
+					case gpu::TextureFormatEnum::Depth24PlusStencil8:
+					case gpu::TextureFormatEnum::Depth32Float:
+					case gpu::TextureFormatEnum::Depth32FloatStencil8:
 					// high-p floats
-					case gpu::TextureFormat::R32Float:
-					case gpu::TextureFormat::RG32Float:
-					case gpu::TextureFormat::RGBA32Float:
+					case gpu::TextureFormatEnum::R32Float:
+					case gpu::TextureFormatEnum::RG32Float:
+					case gpu::TextureFormatEnum::RGBA32Float:
 					// integers
-					case gpu::TextureFormat::R8Sint:
-					case gpu::TextureFormat::R8Uint:
-					case gpu::TextureFormat::RG8Sint:
-					case gpu::TextureFormat::RG8Uint:
-					case gpu::TextureFormat::RGBA8Sint:
-					case gpu::TextureFormat::RGBA8Uint:
-					case gpu::TextureFormat::R16Sint:
-					case gpu::TextureFormat::R16Uint:
-					case gpu::TextureFormat::RG16Sint:
-					case gpu::TextureFormat::RG16Uint:
-					case gpu::TextureFormat::RGBA16Sint:
-					case gpu::TextureFormat::RGBA16Uint:
-					case gpu::TextureFormat::R32Sint:
-					case gpu::TextureFormat::R32Uint:
-					case gpu::TextureFormat::RG32Sint:
-					case gpu::TextureFormat::RG32Uint:
-					case gpu::TextureFormat::RGBA32Sint:
-					case gpu::TextureFormat::RGBA32Uint:
+					case gpu::TextureFormatEnum::R8Sint:
+					case gpu::TextureFormatEnum::R8Uint:
+					case gpu::TextureFormatEnum::RG8Sint:
+					case gpu::TextureFormatEnum::RG8Uint:
+					case gpu::TextureFormatEnum::RGBA8Sint:
+					case gpu::TextureFormatEnum::RGBA8Uint:
+					case gpu::TextureFormatEnum::R16Sint:
+					case gpu::TextureFormatEnum::R16Uint:
+					case gpu::TextureFormatEnum::RG16Sint:
+					case gpu::TextureFormatEnum::RG16Uint:
+					case gpu::TextureFormatEnum::RGBA16Sint:
+					case gpu::TextureFormatEnum::RGBA16Uint:
+					case gpu::TextureFormatEnum::R32Sint:
+					case gpu::TextureFormatEnum::R32Uint:
+					case gpu::TextureFormatEnum::RG32Sint:
+					case gpu::TextureFormatEnum::RG32Uint:
+					case gpu::TextureFormatEnum::RGBA32Sint:
+					case gpu::TextureFormatEnum::RGBA32Uint:
 						return false;
 					default:
 						return true;
@@ -67,9 +67,9 @@ namespace cage
 					CAGE_ASSERT(b.buffer && b.buffer->nativeBuffer());
 					gpu::BindGroupLayoutDescriptor::Entry e = {};
 					e.binding = b.binding;
-					e.visibility = gpu::ShaderStage::Vertex | gpu::ShaderStage::Fragment;
+					e.visibility = gpu::ShaderStagesFlags::Vertex | gpu::ShaderStagesFlags::Fragment;
 					gpu::BindGroupLayoutDescriptor::BufferEntry be;
-					be.type = b.uniform ? gpu::BufferBindingType::Uniform : gpu::BufferBindingType::ReadOnlyStorage;
+					be.type = b.uniform ? gpu::BufferBindingTypeEnum::Uniform : gpu::BufferBindingTypeEnum::ReadOnlyStorage;
 					be.hasDynamicOffset = b.dynamic;
 					e.data = be;
 					entries.push_back(std::move(e));
@@ -84,9 +84,9 @@ namespace cage
 					{
 						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding;
-						e.visibility = gpu::ShaderStage::Fragment;
+						e.visibility = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::TextureEntry te;
-						te.sampleType = filterable ? gpu::TextureSampleType::Float : gpu::TextureSampleType::UnfilterableFloat;
+						te.sampleType = filterable ? gpu::TextureSampleTypeEnum::Float : gpu::TextureSampleTypeEnum::UnfilterableFloat;
 						te.viewDimension = textureViewDimension(t.texture->flags);
 						e.data = te;
 						entries.push_back(std::move(e));
@@ -95,9 +95,9 @@ namespace cage
 					{
 						gpu::BindGroupLayoutDescriptor::Entry e = {};
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.visibility = gpu::ShaderStage::Fragment;
+						e.visibility = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::SamplerEntry se;
-						se.type = filterable ? gpu::SamplerBindingType::Filtering : gpu::SamplerBindingType::NonFiltering;
+						se.type = filterable ? gpu::SamplerBindingTypeEnum::Filtering : gpu::SamplerBindingTypeEnum::NonFiltering;
 						e.data = se;
 						entries.push_back(std::move(e));
 					}

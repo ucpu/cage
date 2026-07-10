@@ -52,9 +52,9 @@ namespace cage
 			mipTexs.reserve(mips);
 
 			gpu::SamplerDescriptor sd = {};
-			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
-			sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
-			sd.mipmapFilter = gpu::FilterMode::Nearest;
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
+			sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
+			sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
 			sd.label = "mip sampler";
 			gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 
@@ -93,7 +93,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao depth target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = gpu::TextureFormat::R32Float;
+			conf.format = gpu::TextureFormatEnum::R32Float;
 			return newTexture(d, conf);
 		}();
 		Holder<Texture> ssaoLowRes = [&]()
@@ -101,7 +101,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao lowres target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = gpu::TextureFormat::R16Float;
+			conf.format = gpu::TextureFormatEnum::R16Float;
 			return newTexture(d, conf);
 		}();
 
@@ -167,7 +167,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "ssao blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = gpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormatEnum::R16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -217,7 +217,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "dof color target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = gpu::TextureFormat::RGBA16Float;
+			conf.format = gpu::TextureFormatEnum::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
@@ -260,7 +260,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "dof blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = gpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -314,7 +314,7 @@ namespace cage
 			conf.name = "bloom target";
 			conf.resolution = Vec3i(res, 1);
 			conf.mipLevelCount = mips;
-			conf.format = gpu::TextureFormat::RGBA16Float;
+			conf.format = gpu::TextureFormatEnum::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
@@ -376,7 +376,7 @@ namespace cage
 				conf.name = "bloom blur temporary";
 				conf.resolution = Vec3i(res, 1);
 				conf.mipLevelCount = mips;
-				conf.format = gpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 			std::vector<Holder<Texture>> tmpViews = generateMipsViews(d, tmp.share(), mips);
