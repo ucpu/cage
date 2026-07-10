@@ -24,8 +24,7 @@ namespace cage
 				{
 					// depth/stencil
 					case gpu::TextureFormatEnum::Depth16Unorm:
-					case gpu::TextureFormatEnum::Depth24Plus:
-					case gpu::TextureFormatEnum::Depth24PlusStencil8:
+					case gpu::TextureFormatEnum::Depth24Stencil8:
 					case gpu::TextureFormatEnum::Depth32Float:
 					case gpu::TextureFormatEnum::Depth32FloatStencil8:
 					// high-p floats

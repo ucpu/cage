@@ -1,6 +1,8 @@
 #include <memory>
 #include <vector>
 
+#include <svector.h>
+
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
@@ -201,5 +203,15 @@ namespace cage
 		{
 			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), typename vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
 		}
+
+		vk::ShaderStageFlags convertShaderStages(gpu::ShaderStagesFlags visibility);
+		vk::PrimitiveTopology convertPrimitiveTopology(gpu::PrimitiveTopologyEnum topology);
+		vk::CullModeFlags convertCullMode(gpu::CullModeEnum mode);
+		vk::CompareOp convertCompareFunction(gpu::CompareFunctionEnum comp);
+		vk::VertexInputRate convertVertexStepMode(gpu::VertexStepModeEnum mode);
+		vk::Format convertVertexFormat(gpu::VertexFormatEnum format);
+		vk::BlendFactor convertBlendFactor(gpu::BlendFactorEnum factor);
+		vk::BlendOp convertBlendOperation(gpu::BlendOperationEnum op);
+		vk::Format convertTextureFormat(gpu::TextureFormatEnum format);
 	}
 }

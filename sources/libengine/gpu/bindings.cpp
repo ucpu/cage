@@ -1,24 +1,7 @@
-#include <svector.h>
-
 #include "gpu.h"
 
 namespace cage
 {
-	namespace
-	{
-		vk::ShaderStageFlags convertVisibility(gpu::ShaderStagesFlags visibility)
-		{
-			vk::ShaderStageFlags r = {};
-			if (any(visibility & gpu::ShaderStagesFlags::Vertex))
-				r |= vk::ShaderStageFlagBits::eVertex;
-			if (any(visibility & gpu::ShaderStagesFlags::Fragment))
-				r |= vk::ShaderStageFlagBits::eFragment;
-			if (any(visibility & gpu::ShaderStagesFlags::Compute))
-				r |= vk::ShaderStageFlagBits::eCompute;
-			return r;
-		}
-	}
-
 	namespace gpuImpl
 	{
 		BindGroup::BindGroup(const Device &device, const gpu::BindGroupDescriptor &desc)
@@ -89,7 +72,7 @@ namespace cage
 				vk::DescriptorSetLayoutBinding b;
 				b.binding = entry.binding;
 				b.descriptorCount = 1;
-				b.stageFlags = convertVisibility(entry.visibility);
+				b.stageFlags = convertShaderStages(entry.visibility);
 				std::visit(
 					[&](auto &e)
 					{

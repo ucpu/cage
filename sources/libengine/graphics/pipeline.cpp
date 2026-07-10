@@ -41,7 +41,7 @@ namespace cage
 			return bs;
 		}
 
-		gpu::PrimitiveTopologyEnum convertTopology(const Model *model)
+		gpu::PrimitiveTopologyEnum convertPrimitiveTopology(const Model *model)
 		{
 			switch (model->primitiveType)
 			{
@@ -256,7 +256,7 @@ namespace cage
 		for (const auto &it : pass.colorTargets)
 			result.colorTargets.push_back(it.texture->nativeTexture().getFormat());
 		result.vertexBufferLayout = draw.model->getLayout();
-		result.primitiveTopology = convertTopology(draw.model);
+		result.primitiveTopology = convertPrimitiveTopology(draw.model);
 		if (pass.depthTarget)
 			result.depthFormat = pass.depthTarget->texture->nativeTexture().getFormat();
 		result.meshComponents = draw.model->components;

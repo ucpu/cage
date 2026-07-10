@@ -369,7 +369,7 @@ namespace cage
 				//Real depthBiasClamp = 0;
 				TextureFormatEnum format = TextureFormatEnum::Undefined;
 				CompareFunctionEnum depthCompare = CompareFunctionEnum::Undefined;
-				std::optional<bool> depthWriteEnabled;
+				bool depthWriteEnabled = false;
 			};
 			std::optional<DepthStencilState> depthStencil;
 
