@@ -210,9 +210,9 @@ namespace
 		data.resolution = Vec3i(img->width(), img->height(), 1);
 		data.channels = img->channels();
 		data.mipLevels = 1;
-		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
-		data.format = (uint32)gpu::TextureFormat::RGBA8Unorm;
-		data.sampleFilter = (uint32)gpu::FilterMode::Linear;
+		data.usage = gpu::TextureUsage::CopyDst | gpu::TextureUsage::TextureBinding;
+		data.format = gpu::TextureFormat::RGBA8Unorm;
+		data.sampleFilter = gpu::FilterMode::Linear;
 
 		MemoryBuffer inputBuffer;
 		Serializer ser(inputBuffer);

@@ -260,7 +260,7 @@ namespace cage
 				struct TextureEntry
 				{
 					TextureSampleType sampleType = TextureSampleType::Undefined;
-					TextureViewDimension viewDimension = TextureViewDimension::Undefined;
+					TextureDimension viewDimension = TextureDimension::Undefined;
 					//bool multisampled = false;
 				};
 				TextureEntry texture;
@@ -399,7 +399,7 @@ namespace cage
 			AddressMode addressModeW = AddressMode::Undefined;
 			FilterMode magFilter = FilterMode::Undefined;
 			FilterMode minFilter = FilterMode::Undefined;
-			MipmapFilterMode mipmapFilter = MipmapFilterMode::Undefined;
+			FilterMode mipmapFilter = FilterMode::Undefined;
 			//CompareFunction compare = CompareFunction::Undefined;
 		};
 
@@ -449,7 +449,7 @@ namespace cage
 			uint32 baseArrayLayer = 0;
 			uint32 arrayLayerCount = m;
 			//TextureFormat format = TextureFormat::Undefined;
-			TextureViewDimension dimension = TextureViewDimension::Undefined;
+			TextureDimension dimension = TextureDimension::Undefined;
 			//TextureAspect aspect = TextureAspect::Undefined;
 			//TextureUsage usage = TextureUsage::Undefined;
 		};
@@ -466,6 +466,12 @@ namespace cage
 
 			uint32 arrayStride = 0;
 			VertexStepMode stepMode = VertexStepMode::Undefined;
+		};
+
+		struct CAGE_ENGINE_API GpuDeviceDescriptor
+		{
+			StringView label;
+			Window *window = nullptr;
 		};
 
 		///////////////////////////////////////////////////////////////////
@@ -490,7 +496,7 @@ namespace cage
 			return {}; // todo
 		}
 
-		CAGE_ENGINE_API Device newGpuDevice(Window *window);
+		CAGE_ENGINE_API Device newGpuDevice(const GpuDeviceDescriptor &desc);
 	}
 }
 

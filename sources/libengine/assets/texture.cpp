@@ -11,7 +11,7 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureViewDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureDimension textureViewDimension(TextureFlags flags);
 	}
 
 	namespace detail
@@ -80,10 +80,8 @@ namespace cage
 
 			gpu::TextureDescriptor desc = {};
 			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimension::e3D : gpu::TextureDimension::e2D;
-			static_assert(sizeof(desc.usage) == sizeof(header.usage));
-			desc.usage = (gpu::TextureUsage)header.usage;
-			static_assert(sizeof(desc.format) == sizeof(header.format));
-			desc.format = (gpu::TextureFormat)header.format;
+			desc.usage = header.usage;
+			desc.format = header.format;
 			desc.mipLevelCount = header.mipLevels;
 			desc.size = header.resolution;
 			desc.label = context->textId;
@@ -95,16 +93,13 @@ namespace cage
 			gpu::TextureView view = wtex.CreateView(twd);
 
 			gpu::SamplerDescriptor sd = {};
-			static_assert(sizeof(sd.magFilter) == sizeof(header.sampleFilter));
-			sd.magFilter = (gpu::FilterMode)header.sampleFilter;
-			sd.minFilter = (gpu::FilterMode)header.sampleFilter;
-			static_assert(sizeof(sd.mipmapFilter) == sizeof(header.mipmapFilter));
-			sd.mipmapFilter = (gpu::MipmapFilterMode)header.mipmapFilter;
+			sd.magFilter = header.sampleFilter;
+			sd.minFilter = header.sampleFilter;
+			sd.mipmapFilter = header.mipmapFilter;
 			sd.maxAnisotropy = header.anisoFilter;
-			static_assert(sizeof(sd.addressModeU) == sizeof(header.wrapX));
-			sd.addressModeU = (gpu::AddressMode)header.wrapX;
-			sd.addressModeV = (gpu::AddressMode)header.wrapY;
-			sd.addressModeW = (gpu::AddressMode)header.wrapZ;
+			sd.addressModeU = header.wrapX;
+			sd.addressModeV = header.wrapY;
+			sd.addressModeW = header.wrapZ;
 			sd.label = context->textId;
 			gpu::Sampler samp = dev->CreateSampler(sd);
 

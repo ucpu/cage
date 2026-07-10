@@ -2,12 +2,13 @@
 
 #define GLFW_INCLUDE_VULKAN 1
 #include <GLFW/glfw3.h>
-//#define VK_NO_PROTOTYPES
 
 #include "../window/private.h"
 #include "gpu.h"
 
 #include <cage-core/debug.h>
+
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 namespace cage
 {
@@ -68,12 +69,6 @@ namespace cage
 		//{
 		//	return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
 		//}
-
-		template<class T, class S>
-		T makeHppHandle(S &s)
-		{
-			return T(s);
-		}
 	}
 
 	namespace privat
@@ -100,37 +95,60 @@ namespace cage
 			vkb::destroy_instance(inst);
 		}
 
-		Device::Device(Window *window)
+		Device::Device(const gpu::GpuDeviceDescriptor &desc)
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
-			bootstrapInit(window);
-			instance = makeHppHandle<vk::Instance>(bootstrap.inst.instance);
-			physicalDevice = makeHppHandle<vk::PhysicalDevice>(bootstrap.phys.physical_device);
-			device = makeHppHandle<vk::Device>(bootstrap.dev.device);
-			queueTransfer = makeHppHandle<vk::Queue>(bootstrap.qt);
-			queueGraphics = makeHppHandle<vk::Queue>(bootstrap.qg);
-			queuePresent = makeHppHandle<vk::Queue>(bootstrap.qp);
+			bootstrapInit(desc);
+			instance = bootstrap.inst.instance;
+			physicalDevice = bootstrap.phys.physical_device;
+			device = bootstrap.dev.device;
+			queueTransfer = bootstrap.qt;
+			queueGraphics = bootstrap.qg;
+			queuePresent = bootstrap.qp;
+			VULKAN_HPP_DEFAULT_DISPATCHER.init(instance, device);
+			{
+
+				const vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device name: " + props.deviceName);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device type: " + vk::to_string(props.deviceType).c_str());
+			}
+			{
+				vk::PhysicalDeviceDriverProperties driverProps;
+				vk::PhysicalDeviceProperties2 props2;
+				props2.pNext = &driverProps;
+				physicalDevice.getProperties2(&props2);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu driver name: " + driverProps.driverName);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu driver info: " + driverProps.driverInfo);
+			}
+			{
+				const vk::PhysicalDeviceMemoryProperties mem = physicalDevice.getMemoryProperties();
+				for (uint32 i = 0; i < mem.memoryHeapCount; i++)
+				{
+					CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu memory heap type: " + vk::to_string(mem.memoryHeaps[i].flags).c_str() + ", capacity: " + (mem.memoryHeaps[i].size / 1024 / 1024) + " MB");
+				}
+			}
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
 		}
 
 		Device::~Device()
 		{
+			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
 			for (const auto &it : surfacesCollection)
 			{
-				// todo destroy the surface
-				//if (it->surface)
-				//	vkDestroySurfaceKHR(instance, it->surface, nullptr);
+				if (it->surface)
+					instance.destroySurfaceKHR(it->surface);
 				it->surface = nullptr;
 			}
+			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
 		}
 
-		void Device::bootstrapInit(Window *window)
+		void Device::bootstrapInit(const gpu::GpuDeviceDescriptor &desc)
 		{
 			uint32 extsCnt = 0;
 			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
-			bootstrap.inst = handleResult(vkb::InstanceBuilder().require_api_version(1, 3).set_debug_callback(debugCallback).enable_extensions(extsCnt, extsArr).enable_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME).request_validation_layers().build());
-			auto surf = getWindowGpuSurface(window);
-			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst).set_surface((VkSurfaceKHR)surf->data->surface).select());
+			bootstrap.inst = handleResult(vkb::InstanceBuilder().require_api_version(1, 3).set_debug_callback(debugCallback).enable_extensions(extsCnt, extsArr).request_validation_layers().set_engine_name("cage").set_app_name(desc.label.str.data()).build());
+			auto surf = getWindowGpuSurface(desc.window);
+			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst).set_minimum_version(1, 3).set_surface((VkSurfaceKHR)surf->data->surface).add_required_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME).select());
 			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
 			bootstrap.qt = handleResult(bootstrap.dev.get_queue(vkb::QueueType::transfer));
 			bootstrap.qg = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
@@ -162,9 +180,9 @@ namespace cage
 
 	namespace gpu
 	{
-		Device newGpuDevice(Window *window)
+		Device newGpuDevice(const gpu::GpuDeviceDescriptor &desc)
 		{
-			return Device(systemMemory().createHolder<gpuImpl::Device>(window));
+			return Device(systemMemory().createHolder<gpuImpl::Device>(desc));
 		}
 	}
 }

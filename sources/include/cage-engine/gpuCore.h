@@ -148,8 +148,6 @@ namespace cage
 			Write,
 		};
 
-		using MipmapFilterMode = FilterMode;
-
 		enum class PrimitiveTopology
 		{
 			Undefined = 0,
@@ -213,8 +211,6 @@ namespace cage
 			e2DArray,
 			e3D,
 		};
-
-		using TextureViewDimension = TextureDimension;
 
 		enum class TextureFormat
 		{

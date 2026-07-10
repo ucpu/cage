@@ -4,7 +4,7 @@
 #include <array>
 
 #include <cage-core/geometry.h>
-#include <cage-engine/core.h>
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {
@@ -29,14 +29,14 @@ namespace cage
 		Vec3i resolution;
 		uint32 channels = 0;
 		uint32 mipLevels = 0;
-		uint32 usage = 0; // gpu::TextureUsage
-		uint32 format = 0; // gpu::TextureFormat
-		uint32 sampleFilter = 0; // gpu::FilterMode
-		uint32 mipmapFilter = 0; // gpu::MipmapFilterMode
+		gpu::TextureUsage usage = gpu::TextureUsage::Undefined;
+		gpu::TextureFormat format = gpu::TextureFormat::Undefined;
+		gpu::FilterMode sampleFilter = gpu::FilterMode::Undefined;
+		gpu::FilterMode mipmapFilter = gpu::FilterMode::Undefined;
 		uint32 anisoFilter = 1;
-		uint32 wrapX = 0; // gpu::AddressMode
-		uint32 wrapY = 0; // gpu::AddressMode
-		uint32 wrapZ = 0; // gpu::AddressMode
+		gpu::AddressMode wrapX = gpu::AddressMode::Undefined;
+		gpu::AddressMode wrapY = gpu::AddressMode::Undefined;
+		gpu::AddressMode wrapZ = gpu::AddressMode::Undefined;
 
 		// follows:
 		// for each mipmap level:

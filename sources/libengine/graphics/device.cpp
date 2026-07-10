@@ -633,6 +633,21 @@ namespace cage
 
 namespace cage
 {
+	namespace
+	{
+		struct DummyDevice : public GraphicsDevice
+		{
+			gpu::Device dev;
+
+			DummyDevice(const GraphicsDeviceCreateConfig &config)
+			{
+				gpu::GpuDeviceDescriptor desc;
+				desc.window = config.compatibility;
+				dev = gpu::newGpuDevice(desc);
+			}
+		};
+	}
+
 	namespace privat
 	{
 		struct DeviceBindingsCache;
@@ -683,18 +698,12 @@ namespace cage
 
 	Holder<gpu::Device> GraphicsDevice::nativeDevice()
 	{
-		return {}; // todo
+		DummyDevice *impl = (DummyDevice *)this;
+		return Holder<gpu::Device>(&impl->dev, nullptr);
 	}
 
 	Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config)
 	{
-		struct DummyDevice : public GraphicsDevice
-		{
-			gpu::Device dev;
-
-			DummyDevice(const GraphicsDeviceCreateConfig &config) { dev = gpu::newGpuDevice(config.compatibility); }
-		};
-
 		return systemMemory().createImpl<GraphicsDevice, DummyDevice>(config);
 	}
 }

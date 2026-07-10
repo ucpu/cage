@@ -337,8 +337,8 @@ namespace
 		if ((data.resolution[0] % 4) != 0 || (data.resolution[1] % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "base image resolution for bcn encoding must be divisible by 4");
 
-		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
-		data.format = (uint32)findInternalFormatForBcn(data);
+		data.usage = gpu::TextureUsage::CopyDst | gpu::TextureUsage::TextureBinding;
+		data.format = findInternalFormatForBcn(data);
 
 		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
 
@@ -371,8 +371,8 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
-		data.usage = (uint64)gpu::TextureUsage::CopyDst | (uint64)gpu::TextureUsage::TextureBinding;
-		data.format = (uint32)findInternalFormatForRaw(data);
+		data.usage = gpu::TextureUsage::CopyDst | gpu::TextureUsage::TextureBinding;
+		data.format = findInternalFormatForRaw(data);
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
 		for (const auto &it : images.parts)
@@ -406,14 +406,14 @@ namespace
 		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
 		header.channels = images.parts[0].image->channels();
 		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
-		header.sampleFilter = (uint32)convertFilter(processor->property("sampleFilter"));
-		header.mipmapFilter = (uint32)(header.mipLevels > 1 ? gpu::MipmapFilterMode::Linear : gpu::MipmapFilterMode::Nearest);
+		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
+		header.mipmapFilter = header.mipLevels > 1 ? gpu::FilterMode::Linear : gpu::FilterMode::Nearest;
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
-		if (header.sampleFilter != (uint32)gpu::FilterMode::Linear || header.mipmapFilter != (uint32)gpu::MipmapFilterMode::Linear)
+		if (header.sampleFilter != gpu::FilterMode::Linear || header.mipmapFilter != gpu::FilterMode::Linear)
 			header.anisoFilter = 1;
-		header.wrapX = (uint32)convertWrap(processor->property("wrapX"));
-		header.wrapY = (uint32)convertWrap(processor->property("wrapY"));
-		header.wrapZ = (uint32)convertWrap(processor->property("wrapZ"));
+		header.wrapX = convertWrap(processor->property("wrapX"));
+		header.wrapY = convertWrap(processor->property("wrapY"));
+		header.wrapZ = convertWrap(processor->property("wrapZ"));
 
 		// todo
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)

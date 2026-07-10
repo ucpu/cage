@@ -54,7 +54,7 @@ namespace cage
 			gpu::SamplerDescriptor sd = {};
 			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
 			sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
-			sd.mipmapFilter = gpu::MipmapFilterMode::Nearest;
+			sd.mipmapFilter = gpu::FilterMode::Nearest;
 			sd.label = "mip sampler";
 			gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);
 

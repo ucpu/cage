@@ -39,7 +39,7 @@ namespace cage
 
 		TextureView Texture::CreateView(const TextureViewDescriptor &desc)
 		{
-			return {}; // todo
+			return TextureView(systemMemory().createHolder<gpuImpl::TextureView>(*Get(), desc));
 		}
 
 		uint32 Texture::GetWidth() const
@@ -69,12 +69,12 @@ namespace cage
 
 		RenderPassEncoder CommandEncoder::BeginRenderPass(const RenderPassDescriptor &desc)
 		{
-			return {}; // todo
+			return RenderPassEncoder(systemMemory().createHolder<gpuImpl::RenderPassEncoder>(*Get(), desc));
 		}
 
 		CommandBuffer CommandEncoder::Finish()
 		{
-			return {}; // todo
+			return CommandBuffer(systemMemory().createHolder<gpuImpl::CommandBuffer>(*Get()));
 		}
 
 		void CommandEncoder::CopyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
@@ -139,42 +139,42 @@ namespace cage
 
 		Buffer Device::CreateBuffer(const BufferDescriptor &desc)
 		{
-			return {}; // todo
+			return Buffer(systemMemory().createHolder<gpuImpl::Buffer>(desc));
 		}
 
 		Texture Device::CreateTexture(const TextureDescriptor &desc)
 		{
-			return {}; // todo
+			return Texture(systemMemory().createHolder<gpuImpl::Texture>(desc));
 		}
 
 		Sampler Device::CreateSampler(const SamplerDescriptor &desc)
 		{
-			return {}; // todo
+			return Sampler(systemMemory().createHolder<gpuImpl::Sampler>(desc));
 		}
 
 		BindGroupLayout Device::CreateBindGroupLayout(const BindGroupLayoutDescriptor &desc)
 		{
-			return {}; // todo
+			return BindGroupLayout(systemMemory().createHolder<gpuImpl::BindGroupLayout>(desc));
 		}
 
 		BindGroup Device::CreateBindGroup(const BindGroupDescriptor &desc)
 		{
-			return {}; // todo
+			return BindGroup(systemMemory().createHolder<gpuImpl::BindGroup>(desc));
 		}
 
 		CommandEncoder Device::CreateCommandEncoder(const CommandEncoderDescriptor &desc)
 		{
-			return {}; // todo
+			return CommandEncoder(systemMemory().createHolder<gpuImpl::CommandEncoder>(desc));
 		}
 
 		ShaderModule Device::CreateShaderModule(const ShaderModuleDescriptor &desc)
 		{
-			return {}; // todo
+			return ShaderModule(systemMemory().createHolder<gpuImpl::ShaderModule>(desc));
 		}
 
 		PipelineLayout Device::CreatePipelineLayout(const PipelineLayoutDescriptor &desc)
 		{
-			return {}; // todo
+			return PipelineLayout(systemMemory().createHolder<gpuImpl::PipelineLayout>(desc));
 		}
 
 		void Device::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)

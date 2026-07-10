@@ -11,13 +11,13 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureViewDimension textureViewDimension(TextureFlags flags)
+		gpu::TextureDimension textureViewDimension(TextureFlags flags)
 		{
 			if (any(flags & TextureFlags::Volume3D))
-				return gpu::TextureViewDimension::e3D;
+				return gpu::TextureDimension::e3D;
 			if (any(flags & TextureFlags::Cubemap))
-				return any(flags & TextureFlags::Array) ? gpu::TextureViewDimension::CubeArray : gpu::TextureViewDimension::Cube;
-			return any(flags & TextureFlags::Array) ? gpu::TextureViewDimension::e2DArray : gpu::TextureViewDimension::e2D;
+				return any(flags & TextureFlags::Array) ? gpu::TextureDimension::CubeArray : gpu::TextureDimension::Cube;
+			return any(flags & TextureFlags::Array) ? gpu::TextureDimension::e2DArray : gpu::TextureDimension::e2D;
 		}
 
 		struct DeviceTexturesCache : private Immovable
@@ -126,7 +126,7 @@ namespace cage
 				desc.label = "dummy shadowmap target";
 				gpu::Texture tex = device->nativeDevice()->CreateTexture(desc);
 				gpu::TextureViewDescriptor vd = {};
-				vd.dimension = gpu::TextureViewDimension::e2DArray;
+				vd.dimension = gpu::TextureDimension::e2DArray;
 				gpu::TextureView view = tex.CreateView(vd);
 				gpu::Sampler samp = device->nativeDevice()->CreateSampler({});
 				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
@@ -159,7 +159,7 @@ namespace cage
 				{
 					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressMode::ClampToEdge;
 					sd.magFilter = sd.minFilter = gpu::FilterMode::Linear;
-					sd.mipmapFilter = gpu::MipmapFilterMode::Nearest;
+					sd.mipmapFilter = gpu::FilterMode::Nearest;
 					sd.label = config.name.c_str();
 				}
 				gpu::Sampler samp = device->nativeDevice()->CreateSampler(sd);

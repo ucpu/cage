@@ -14,7 +14,7 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureViewDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureDimension textureViewDimension(TextureFlags flags);
 
 		namespace
 		{
