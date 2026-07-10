@@ -14,12 +14,12 @@ namespace cage
 
 		uint64 Buffer::GetSize() const
 		{
-			return 0; // todo
+			return Get()->size;
 		}
 
 		BufferUsage Buffer::GetUsage() const
 		{
-			return {}; // todo
+			return Get()->usage;
 		}
 
 		PointerRange<char> Buffer::GetMappedRange()
@@ -30,41 +30,6 @@ namespace cage
 		void Buffer::Unmap()
 		{
 			// todo
-		}
-
-		TextureFormat Texture::GetFormat() const
-		{
-			return TextureFormat::Undefined; // todo
-		}
-
-		TextureView Texture::CreateView(const TextureViewDescriptor &desc)
-		{
-			return TextureView(systemMemory().createHolder<gpuImpl::TextureView>(*Get(), desc));
-		}
-
-		uint32 Texture::GetWidth() const
-		{
-			return 0; // todo
-		}
-
-		uint32 Texture::GetHeight() const
-		{
-			return 0; // todo
-		}
-
-		uint32 Texture::GetDepthOrArrayLayers() const
-		{
-			return 0; // todo
-		}
-
-		uint32 Texture::GetMipLevelCount() const
-		{
-			return 0; // todo
-		}
-
-		TextureDimension Texture::GetDimension() const
-		{
-			return TextureDimension::Undefined; // todo
 		}
 
 		RenderPassEncoder CommandEncoder::BeginRenderPass(const RenderPassDescriptor &desc)
@@ -80,6 +45,61 @@ namespace cage
 		void CommandEncoder::CopyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			// todo
+		}
+
+		Buffer Device::CreateBuffer(const BufferDescriptor &desc)
+		{
+			return Buffer(systemMemory().createHolder<gpuImpl::Buffer>(*Get(), desc));
+		}
+
+		Texture Device::CreateTexture(const TextureDescriptor &desc)
+		{
+			return Texture(systemMemory().createHolder<gpuImpl::Texture>(*Get(), desc));
+		}
+
+		Sampler Device::CreateSampler(const SamplerDescriptor &desc)
+		{
+			return Sampler(systemMemory().createHolder<gpuImpl::Sampler>(*Get(), desc));
+		}
+
+		BindGroupLayout Device::CreateBindGroupLayout(const BindGroupLayoutDescriptor &desc)
+		{
+			return BindGroupLayout(systemMemory().createHolder<gpuImpl::BindGroupLayout>(*Get(), desc));
+		}
+
+		BindGroup Device::CreateBindGroup(const BindGroupDescriptor &desc)
+		{
+			return BindGroup(systemMemory().createHolder<gpuImpl::BindGroup>(*Get(), desc));
+		}
+
+		CommandEncoder Device::CreateCommandEncoder(const CommandEncoderDescriptor &desc)
+		{
+			return CommandEncoder(systemMemory().createHolder<gpuImpl::CommandEncoder>(*Get(), desc));
+		}
+
+		ShaderModule Device::CreateShaderModule(const ShaderModuleDescriptor &desc)
+		{
+			return ShaderModule(systemMemory().createHolder<gpuImpl::ShaderModule>(*Get(), desc));
+		}
+
+		PipelineLayout Device::CreatePipelineLayout(const PipelineLayoutDescriptor &desc)
+		{
+			return PipelineLayout(systemMemory().createHolder<gpuImpl::PipelineLayout>(*Get(), desc));
+		}
+
+		void Device::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
+		{
+			// todo
+		}
+
+		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		{
+			// todo
+		}
+
+		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		{
+			return WriteTexture(dest, data.cast<const char>(), layout, extents);
 		}
 
 		void RenderPassEncoder::PushDebugGroup(StringView label)
@@ -137,59 +157,39 @@ namespace cage
 			// todo
 		}
 
-		Buffer Device::CreateBuffer(const BufferDescriptor &desc)
+		TextureFormat Texture::GetFormat() const
 		{
-			return Buffer(systemMemory().createHolder<gpuImpl::Buffer>(desc));
+			return Get()->format;
 		}
 
-		Texture Device::CreateTexture(const TextureDescriptor &desc)
+		TextureView Texture::CreateView(const TextureViewDescriptor &desc)
 		{
-			return Texture(systemMemory().createHolder<gpuImpl::Texture>(desc));
+			return TextureView(systemMemory().createHolder<gpuImpl::TextureView>(*Get(), desc));
 		}
 
-		Sampler Device::CreateSampler(const SamplerDescriptor &desc)
+		uint32 Texture::GetWidth() const
 		{
-			return Sampler(systemMemory().createHolder<gpuImpl::Sampler>(desc));
+			return Get()->resolution[0];
 		}
 
-		BindGroupLayout Device::CreateBindGroupLayout(const BindGroupLayoutDescriptor &desc)
+		uint32 Texture::GetHeight() const
 		{
-			return BindGroupLayout(systemMemory().createHolder<gpuImpl::BindGroupLayout>(desc));
+			return Get()->resolution[1];
 		}
 
-		BindGroup Device::CreateBindGroup(const BindGroupDescriptor &desc)
+		uint32 Texture::GetDepthOrArrayLayers() const
 		{
-			return BindGroup(systemMemory().createHolder<gpuImpl::BindGroup>(desc));
+			return Get()->resolution[2];
 		}
 
-		CommandEncoder Device::CreateCommandEncoder(const CommandEncoderDescriptor &desc)
+		uint32 Texture::GetMipLevelCount() const
 		{
-			return CommandEncoder(systemMemory().createHolder<gpuImpl::CommandEncoder>(desc));
+			return Get()->mipLevels;
 		}
 
-		ShaderModule Device::CreateShaderModule(const ShaderModuleDescriptor &desc)
+		TextureDimension Texture::GetDimension() const
 		{
-			return ShaderModule(systemMemory().createHolder<gpuImpl::ShaderModule>(desc));
-		}
-
-		PipelineLayout Device::CreatePipelineLayout(const PipelineLayoutDescriptor &desc)
-		{
-			return PipelineLayout(systemMemory().createHolder<gpuImpl::PipelineLayout>(desc));
-		}
-
-		void Device::WriteBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
-		{
-			// todo
-		}
-
-		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
-		{
-			// todo
-		}
-
-		void Device::WriteTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
-		{
-			return WriteTexture(dest, data.cast<const char>(), layout, extents);
+			return Get()->dimension;
 		}
 	}
 }

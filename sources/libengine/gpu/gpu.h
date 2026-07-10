@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <VkBootstrap.h>
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
 #include <cage-engine/gpuInterface.h>
@@ -20,21 +21,26 @@ namespace cage
 		class BindGroup : private Immovable
 		{
 		public:
-			BindGroup(const gpu::BindGroupDescriptor &desc) {}
+			BindGroup(const Device &device, const gpu::BindGroupDescriptor &desc);
+			~BindGroup();
 		};
 
 		class BindGroupLayout : private Immovable
 		{
 		public:
-			BindGroupLayout(const gpu::BindGroupLayoutDescriptor &desc) {}
+			BindGroupLayout(const Device &device, const gpu::BindGroupLayoutDescriptor &desc);
+			~BindGroupLayout();
 		};
 
 		class Buffer : private Immovable
 		{
 		public:
 			vk::UniqueBuffer buffer;
+			uint64 size = 0;
+			gpu::BufferUsage usage = gpu::BufferUsage::Undefined;
 
-			Buffer(const gpu::BufferDescriptor &desc) {}
+			Buffer(const Device &device, const gpu::BufferDescriptor &desc);
+			~Buffer();
 		};
 
 		class CommandBuffer : private Immovable
@@ -42,13 +48,15 @@ namespace cage
 		public:
 			vk::UniqueCommandBuffer buffer;
 
-			CommandBuffer(const CommandEncoder &commandEncoder) {}
+			CommandBuffer(const CommandEncoder &commandEncoder);
+			~CommandBuffer();
 		};
 
 		class CommandEncoder : private Immovable
 		{
 		public:
-			CommandEncoder(const gpu::CommandEncoderDescriptor &desc) {}
+			CommandEncoder(const Device &device, const gpu::CommandEncoderDescriptor &desc);
+			~CommandEncoder();
 		};
 
 		class Device : private Immovable
@@ -75,6 +83,7 @@ namespace cage
 			vk::Queue queueTransfer;
 			vk::Queue queueGraphics;
 			vk::Queue queuePresent;
+			VmaAllocator allocator = nullptr;
 
 			Device(const gpu::GpuDeviceDescriptor &desc);
 			~Device();
@@ -86,13 +95,15 @@ namespace cage
 		class RenderPassEncoder : private Immovable
 		{
 		public:
-			RenderPassEncoder(const CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc) {}
+			RenderPassEncoder(const CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc);
+			~RenderPassEncoder();
 		};
 
 		class RenderPipeline : private Immovable
 		{
 		public:
-			RenderPipeline(const gpu::RenderPipelineDescriptor &desc) {}
+			RenderPipeline(const Device &device, const gpu::RenderPipelineDescriptor &desc);
+			~RenderPipeline();
 		};
 
 		class Sampler : private Immovable
@@ -100,7 +111,8 @@ namespace cage
 		public:
 			vk::UniqueSampler sampler;
 
-			Sampler(const gpu::SamplerDescriptor &desc) {}
+			Sampler(const Device &device, const gpu::SamplerDescriptor &desc);
+			~Sampler();
 		};
 
 		class ShaderModule : private Immovable
@@ -108,25 +120,39 @@ namespace cage
 		public:
 			vk::UniqueShaderModule shader;
 
-			ShaderModule(const gpu::ShaderModuleDescriptor &desc) {}
+			ShaderModule(const Device &device, const gpu::ShaderModuleDescriptor &desc);
+			~ShaderModule();
 		};
 
 		class PipelineLayout : private Immovable
 		{
 		public:
-			PipelineLayout(const gpu::PipelineLayoutDescriptor &desc) {}
+			PipelineLayout(const Device &device, const gpu::PipelineLayoutDescriptor &desc);
+			~PipelineLayout();
 		};
 
 		class Texture : private Immovable
 		{
 		public:
-			Texture(const gpu::TextureDescriptor &desc) {}
+			Vec3i resolution;
+			uint32 mipLevels = 0;
+			gpu::TextureDimension dimension = gpu::TextureDimension::Undefined;
+			gpu::TextureFormat format = gpu::TextureFormat::Undefined;
+
+			Texture(const Device &device, const gpu::TextureDescriptor &desc);
+			~Texture();
 		};
 
 		class TextureView : private Immovable
 		{
 		public:
-			TextureView(const Texture &texture, const gpu::TextureViewDescriptor &desc) {}
+			TextureView(const Texture &texture, const gpu::TextureViewDescriptor &desc);
+			~TextureView();
 		};
+
+		CAGE_FORCE_INLINE void check(const char *what, VkResult result)
+		{
+			vk::detail::resultCheck(vk::Result(result), what);
+		}
 	}
 }

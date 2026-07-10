@@ -118,9 +118,6 @@
 [submodule "externals/vulkan/hpp"]
 	path = externals/vulkan/hpp
 	url = https://github.com/KhronosGroup/Vulkan-Hpp
-[submodule "externals/vulkan/volk"]
-	path = externals/vulkan/volk
-	url = https://github.com/zeux/volk
 [submodule "externals/vulkan/vma"]
 	path = externals/vulkan/vma
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator

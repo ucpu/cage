@@ -32,7 +32,7 @@ namespace cage
 
 			if (sev >= SeverityEnum::Error)
 			{
-				//detail::debugBreakpoint();
+				detail::debugBreakpoint();
 			}
 
 			return VK_FALSE;
@@ -63,12 +63,6 @@ namespace cage
 			}
 			return std::move(r.value());
 		}
-
-		//template<class T, class Src>
-		//CAGE_FORCE_INLINE vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> makeUnique(Src &src)
-		//{
-		//	return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
-		//}
 	}
 
 	namespace privat
@@ -98,14 +92,35 @@ namespace cage
 		Device::Device(const gpu::GpuDeviceDescriptor &desc)
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
-			bootstrapInit(desc);
-			instance = bootstrap.inst.instance;
-			physicalDevice = bootstrap.phys.physical_device;
-			device = bootstrap.dev.device;
-			queueTransfer = bootstrap.qt;
-			queueGraphics = bootstrap.qg;
-			queuePresent = bootstrap.qp;
-			VULKAN_HPP_DEFAULT_DISPATCHER.init(instance, device);
+
+			{
+				bootstrapInit(desc);
+				instance = bootstrap.inst.instance;
+				physicalDevice = bootstrap.phys.physical_device;
+				device = bootstrap.dev.device;
+				queueTransfer = bootstrap.qt;
+				queueGraphics = bootstrap.qg;
+				queuePresent = bootstrap.qp;
+			}
+
+			{
+				VULKAN_HPP_DEFAULT_DISPATCHER.init(instance, device);
+			}
+
+			{
+				VmaVulkanFunctions funcs = {};
+				funcs.vkGetInstanceProcAddr = bootstrap.inst.fp_vkGetInstanceProcAddr;
+				funcs.vkGetDeviceProcAddr = bootstrap.inst.fp_vkGetDeviceProcAddr;
+				VmaAllocatorCreateInfo info = {};
+				info.pVulkanFunctions = &funcs;
+				info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+				info.instance = (VkInstance)instance;
+				info.physicalDevice = (VkPhysicalDevice)physicalDevice;
+				info.device = (VkDevice)device;
+				info.vulkanApiVersion = VK_API_VERSION_1_3;
+				check("vmaCreateAllocator", vmaCreateAllocator(&info, &allocator));
+			}
+
 			{
 
 				const vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
@@ -127,18 +142,28 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu memory heap type: " + vk::to_string(mem.memoryHeaps[i].flags).c_str() + ", capacity: " + (mem.memoryHeaps[i].size / 1024 / 1024) + " MB");
 				}
 			}
+
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
 		}
 
 		Device::~Device()
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
-			for (const auto &it : surfacesCollection)
+
 			{
-				if (it->surface)
-					instance.destroySurfaceKHR(it->surface);
-				it->surface = nullptr;
+				for (const auto &it : surfacesCollection)
+				{
+					if (it->surface)
+						instance.destroySurfaceKHR(it->surface);
+					it->surface = nullptr;
+				}
 			}
+
+			{
+				vmaDestroyAllocator(allocator);
+				allocator = nullptr;
+			}
+
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
 		}
 
@@ -147,9 +172,23 @@ namespace cage
 			uint32 extsCnt = 0;
 			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
 			bootstrap.inst = handleResult(vkb::InstanceBuilder().require_api_version(1, 3).set_debug_callback(debugCallback).enable_extensions(extsCnt, extsArr).request_validation_layers().set_engine_name("cage").set_app_name(desc.label.str.data()).build());
+
 			auto surf = getWindowGpuSurface(desc.window);
-			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst).set_minimum_version(1, 3).set_surface((VkSurfaceKHR)surf->data->surface).add_required_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME).select());
+			vk::PhysicalDeviceFeatures features10;
+			features10.samplerAnisotropy = true;
+			vk::PhysicalDeviceVulkan12Features features12;
+			features12.descriptorIndexing = true;
+			features12.shaderSampledImageArrayNonUniformIndexing = true;
+			features12.descriptorBindingVariableDescriptorCount = true;
+			features12.runtimeDescriptorArray = true;
+			features12.bufferDeviceAddress = true;
+			vk::PhysicalDeviceVulkan13Features features13;
+			features13.synchronization2 = true;
+			features13.dynamicRendering = true;
+			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst).set_minimum_version(1, 3).set_surface((VkSurfaceKHR)surf->data->surface).set_required_features(features10).set_required_features_12(features12).set_required_features_13(features13).select());
+
 			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
+
 			bootstrap.qt = handleResult(bootstrap.dev.get_queue(vkb::QueueType::transfer));
 			bootstrap.qg = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
 			bootstrap.qp = handleResult(bootstrap.dev.get_queue(vkb::QueueType::present));

@@ -69,7 +69,11 @@ namespace cage
 			}
 
 			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!ptr; }
-			CAGE_FORCE_INLINE Impl *Get() const { return +ptr; }
+			CAGE_FORCE_INLINE Impl *Get() const
+			{
+				CAGE_ASSERT(ptr);
+				return +ptr;
+			}
 
 		private:
 			Holder<Impl> ptr;
