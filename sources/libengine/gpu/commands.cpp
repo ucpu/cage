@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace gpu
 	{
-		CommandBufferImpl::CommandBufferImpl(vk::Device device) : device(device) {}
+		CommandBufferImpl::CommandBufferImpl(const DeviceImpl &device_) : device(device_.device) {}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
 
@@ -25,7 +25,7 @@ namespace cage
 
 		CommandEncoderImpl::CommandEncoderImpl(const DeviceImpl &device, const CommandEncoderDescriptor &desc)
 		{
-			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device.device));
+			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device));
 			cmd = buffer->newBuffer();
 
 			vk::CommandBufferBeginInfo info;

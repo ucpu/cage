@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace gpu
 	{
-		RenderPipelineImpl::RenderPipelineImpl(const DeviceImpl &device, const RenderPipelineDescriptor &desc)
+		RenderPipelineImpl::RenderPipelineImpl(const DeviceImpl &device, const RenderPipelineDescriptor &desc) : layout(desc.layout)
 		{
 			ankerl::svector<vk::PipelineShaderStageCreateInfo, 2> stages;
 			{
@@ -130,12 +130,11 @@ namespace cage
 			ci.pColorBlendState = &blend;
 			ci.pDynamicState = &dynamic;
 			ci.pNext = &rendering;
-			ci.layout = *desc.layout->layout;
+			ci.layout = *layout->layout;
 			auto r = device.device.createGraphicsPipelineUnique({}, ci);
 			check("createGraphicsPipelineUnique", r.result);
 			CAGE_ASSERT(r.has_value());
 			pipeline = std::move(r.value);
-			layout = desc.layout;
 		}
 
 		RenderPipelineImpl::~RenderPipelineImpl() {}

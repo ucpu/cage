@@ -16,9 +16,9 @@ namespace cage
 			allocInfo.usage = any(desc.usage & (BufferUsageFlags::MapRead | BufferUsageFlags::MapWrite)) ? VMA_MEMORY_USAGE_AUTO_PREFER_HOST : VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 
 			VkBuffer buff;
-			check("vmaCreateBuffer", vmaCreateBuffer(device->allocator, &(VkBufferCreateInfo &)bufferInfo, &allocInfo, &buff, &allocation, &allocatedInfo));
-
+			check("vmaCreateBuffer", vmaCreateBuffer(device->allocator, (VkBufferCreateInfo *)&bufferInfo, &allocInfo, &buff, &allocation, &allocatedInfo));
 			buffer = (vk::Buffer)buff;
+
 			if (allocatedInfo.pMappedData)
 				mappedRange = PointerRange((char *)allocatedInfo.pMappedData, (char *)allocatedInfo.pMappedData + size);
 		}

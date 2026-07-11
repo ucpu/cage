@@ -408,9 +408,9 @@ namespace cage
 			return vk::AttachmentStoreOp::eNoneKHR;
 		}
 
-		vk::BufferUsageFlagBits convertBufferUsage(BufferUsageFlags flags)
+		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags)
 		{
-			vk::BufferUsageFlags bits = (vk::BufferUsageFlagBits)0;
+			vk::BufferUsageFlags bits = {};
 			if (any(flags & BufferUsageFlags::CopyDst))
 				bits |= vk::BufferUsageFlagBits::eTransferDst;
 			if (any(flags & BufferUsageFlags::CopySrc))
@@ -429,7 +429,80 @@ namespace cage
 				bits |= vk::BufferUsageFlagBits::eUniformBuffer;
 			if (any(flags & BufferUsageFlags::Vertex))
 				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
-			return (vk::BufferUsageFlagBits)(vk::BufferUsageFlags::MaskType)bits;
+			return bits;
+		}
+
+		vk::Filter convertFilter(FilterModeEnum filter)
+		{
+			switch (filter)
+			{
+				case FilterModeEnum::Nearest:
+					return vk::Filter::eNearest;
+				case FilterModeEnum::Linear:
+					return vk::Filter::eLinear;
+			}
+			return vk::Filter::eNearest;
+		}
+
+		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter)
+		{
+			switch (filter)
+			{
+				case FilterModeEnum::Nearest:
+					return vk::SamplerMipmapMode::eNearest;
+				case FilterModeEnum::Linear:
+					return vk::SamplerMipmapMode::eLinear;
+			}
+			return vk::SamplerMipmapMode::eNearest;
+		}
+
+		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode)
+		{
+			switch (mode)
+			{
+				case AddressModeEnum::ClampToEdge:
+					return vk::SamplerAddressMode::eClampToEdge;
+				case AddressModeEnum::Repeat:
+					return vk::SamplerAddressMode::eRepeat;
+				case AddressModeEnum::MirrorRepeat:
+					return vk::SamplerAddressMode::eMirroredRepeat;
+			}
+			return vk::SamplerAddressMode::eClampToEdge;
+		}
+
+		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags)
+		{
+			vk::ImageUsageFlags bits = {};
+			if (any(flags & TextureUsageFlags::CopyDst))
+				bits |= vk::ImageUsageFlagBits::eTransferDst;
+			if (any(flags & TextureUsageFlags::CopySrc))
+				bits |= vk::ImageUsageFlagBits::eTransferSrc;
+			if (any(flags & TextureUsageFlags::TextureBinding))
+				bits |= vk::ImageUsageFlagBits::eSampled;
+			if (any(flags & TextureUsageFlags::StorageBinding))
+				bits |= vk::ImageUsageFlagBits::eStorage;
+			if (any(flags & TextureUsageFlags::RenderAttachment))
+				bits |= vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eDepthStencilAttachment;
+			if (any(flags & TextureUsageFlags::TransientAttachment))
+				bits |= vk::ImageUsageFlagBits::eTransientAttachment;
+			return bits;
+		}
+
+		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
+		{
+			switch (format)
+			{
+				case TextureFormatEnum::Stencil8:
+					return vk::ImageAspectFlagBits::eStencil;
+				case TextureFormatEnum::Depth16Unorm:
+				case TextureFormatEnum::Depth32Float:
+					return vk::ImageAspectFlagBits::eDepth;
+				case TextureFormatEnum::Depth32FloatStencil8:
+				case TextureFormatEnum::Depth24Stencil8:
+					return vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+				default:
+					return vk::ImageAspectFlagBits::eColor;
+			}
 		}
 	}
 }

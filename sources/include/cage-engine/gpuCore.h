@@ -293,11 +293,10 @@ namespace cage
 			Undefined = 0,
 			CopyDst = 1u << 0,
 			CopySrc = 1u << 1,
-			RenderAttachment = 1u << 2,
-			StorageAttachment = 1u << 3,
-			StorageBinding = 1u << 4,
-			TextureBinding = 1u << 5,
-			TransientAttachment = 1u << 6,
+			TextureBinding = 1u << 2,
+			StorageBinding = 1u << 3,
+			RenderAttachment = 1u << 4,
+			TransientAttachment = 1u << 5,
 		};
 
 		enum class VertexFormatEnum

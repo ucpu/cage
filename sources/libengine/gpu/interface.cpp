@@ -189,7 +189,7 @@ namespace cage
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
 		{
-			return TextureView(systemMemory().createHolder<TextureViewImpl>(*get(), desc));
+			return TextureView(systemMemory().createHolder<TextureViewImpl>(*this, desc));
 		}
 
 		uint32 Texture::getWidth() const

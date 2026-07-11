@@ -75,7 +75,7 @@ namespace cage
 		public:
 			const DeviceImpl *device = nullptr;
 			vk::Buffer buffer;
-			VmaAllocationInfo allocatedInfo;
+			VmaAllocationInfo allocatedInfo = {};
 			VmaAllocation allocation = nullptr;
 
 			PointerRange<char> mappedRange;
@@ -95,7 +95,7 @@ namespace cage
 			std::vector<vk::UniqueCommandBuffer> buffers;
 			vk::Device device;
 
-			CommandBufferImpl(vk::Device device);
+			CommandBufferImpl(const DeviceImpl &device);
 			~CommandBufferImpl();
 
 			vk::UniqueCommandBuffer newBuffer();
@@ -213,7 +213,10 @@ namespace cage
 		class TextureImpl : private Immovable
 		{
 		public:
-			vk::UniqueImage image;
+			const DeviceImpl *device = nullptr;
+			vk::Image image;
+			VmaAllocationInfo allocatedInfo = {};
+			VmaAllocation allocation = nullptr;
 
 			Vec3i resolution;
 			uint32 mipLevels = 0;
@@ -228,8 +231,9 @@ namespace cage
 		{
 		public:
 			vk::UniqueImageView view;
+			Texture texture; // ensure the texture outlives the view
 
-			TextureViewImpl(const TextureImpl &texture, const TextureViewDescriptor &desc);
+			TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc);
 			~TextureViewImpl();
 		};
 
@@ -261,6 +265,11 @@ namespace cage
 		vk::IndexType convertIndexFormat(IndexFormatEnum format);
 		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op);
 		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op);
-		vk::BufferUsageFlagBits convertBufferUsage(BufferUsageFlags flags);
+		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags);
+		vk::Filter convertFilter(FilterModeEnum filter);
+		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
+		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode);
+		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags);
+		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format);
 	}
 }
