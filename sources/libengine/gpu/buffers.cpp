@@ -2,19 +2,19 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		Buffer::Buffer(const Device &device, const gpu::BufferDescriptor &desc)
+		BufferImpl::BufferImpl(const DeviceImpl &device, const BufferDescriptor &desc)
 		{
 			// todo
 		}
 
-		Buffer::~Buffer()
+		BufferImpl::~BufferImpl()
 		{
 			// todo
 		}
 
-		void Buffer::unmap()
+		void BufferImpl::unmap()
 		{
 			// todo
 		}

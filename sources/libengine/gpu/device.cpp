@@ -66,13 +66,13 @@ namespace cage
 		}
 	}
 
-	namespace gpuImpl
+	namespace gpu
 	{
-		WindowGpuContextData::WindowGpuContextData(vk::Instance instance_) : instance(instance_) {}
+		WindowGpuContextImpl::WindowGpuContextImpl(vk::Instance instance_) : instance(instance_) {}
 
-		WindowGpuContextData::~WindowGpuContextData() {}
+		WindowGpuContextImpl::~WindowGpuContextImpl() {}
 
-		void WindowGpuContextData::init(vk::Device device)
+		void WindowGpuContextImpl::init(vk::Device device)
 		{
 			std::vector<VkImage> images = handleResult(swapchain.get_images());
 			if (frames.size() == images.size())
@@ -98,20 +98,20 @@ namespace cage
 			index = 0;
 		}
 
-		void WindowGpuContextData::clear()
+		void WindowGpuContextImpl::clear()
 		{
 			frames.clear();
 			instance.destroySurfaceKHR(surface);
 			surface = nullptr;
 		}
 
-		Device::Bootstrap::~Bootstrap()
+		DeviceImpl::Bootstrap::~Bootstrap()
 		{
 			vkb::destroy_device(dev);
 			vkb::destroy_instance(inst);
 		}
 
-		Device::Device(const gpu::GpuDeviceDescriptor &desc)
+		DeviceImpl::DeviceImpl(const GpuDeviceDescriptor &desc)
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
 
@@ -186,7 +186,7 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
 		}
 
-		Device::~Device()
+		DeviceImpl::~DeviceImpl()
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
 
@@ -204,7 +204,7 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
 		}
 
-		void Device::bootstrapInit(const gpu::GpuDeviceDescriptor &desc)
+		void DeviceImpl::bootstrapInit(const GpuDeviceDescriptor &desc)
 		{
 			uint32 extsCnt = 0;
 			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
@@ -229,18 +229,18 @@ namespace cage
 			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
 		}
 
-		void Device::tick()
+		void DeviceImpl::tick()
 		{
 			// todo
 		}
 
-		Holder<privat::WindowGpuContext> Device::getWindowGpuContext(Window *window)
+		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)
 		{
 			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
 			if (!context)
 			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "creating window gpu surface");
-				auto s = std::make_shared<WindowGpuContextData>(bootstrap.inst.instance);
+				auto s = std::make_shared<WindowGpuContextImpl>(bootstrap.inst.instance);
 				VkSurfaceKHR rawSurface;
 				const auto res = glfwCreateWindowSurface(bootstrap.inst.instance, privat::getGlfwWindow(window), nullptr, &rawSurface);
 				if (res != VkResult::VK_SUCCESS)
@@ -256,14 +256,14 @@ namespace cage
 			return context.share();
 		}
 
-		gpu::Texture Device::acquireWindowSurfaceTexture(Window *window)
+		Texture DeviceImpl::acquireWindowSurfaceTexture(Window *window)
 		{
 			const Vec2i res = window->resolution();
 			if (res[0] <= 0 || res[1] <= 0)
 				return {};
 
 			auto ctx = getWindowGpuContext(window);
-			WindowGpuContextData &data = *ctx->data;
+			WindowGpuContextImpl &data = *ctx->data;
 			if (data.resolution != res)
 			{
 				data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface).set_old_swapchain(data.swapchain).set_desired_min_image_count(2).set_desired_extent(res[0], res[1]).build());
@@ -277,10 +277,10 @@ namespace cage
 			return data.frames[data.index].texture;
 		}
 
-		void Device::windowPresent(Window *window)
+		void DeviceImpl::windowPresent(Window *window)
 		{
 			auto ctx = getWindowGpuContext(window);
-			WindowGpuContextData &data = *ctx->data;
+			WindowGpuContextImpl &data = *ctx->data;
 			if (data.frames.empty())
 				return;
 
@@ -292,10 +292,10 @@ namespace cage
 			check("presentKHR", queue.presentKHR(info));
 		}
 
-		void Device::windowWaitFence(Window *window)
+		void DeviceImpl::windowWaitFence(Window *window)
 		{
 			auto ctx = getWindowGpuContext(window);
-			WindowGpuContextData &data = *ctx->data;
+			WindowGpuContextImpl &data = *ctx->data;
 			if (data.frames.empty())
 				return;
 
@@ -304,25 +304,22 @@ namespace cage
 			check("resetFences", device.resetFences(1, &f));
 		}
 
-		void Device::writeBuffer(const gpu::Buffer &buffer, uint64 offset, PointerRange<const char> data)
+		void DeviceImpl::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
 			// todo
 		}
 
-		void Device::writeTexture(const gpu::TexelCopyTextureInfo &dest, PointerRange<const char> data, const gpu::TexelCopyBufferLayout &layout, Vec3i extents)
+		void DeviceImpl::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			// todo
 		}
-	}
 
-	namespace gpu
-	{
-		Device newGpuDevice(const gpu::GpuDeviceDescriptor &desc)
+		Device newGpuDevice(const GpuDeviceDescriptor &desc)
 		{
-			return Device(systemMemory().createHolder<gpuImpl::Device>(desc));
+			return Device(systemMemory().createHolder<DeviceImpl>(desc));
 		}
 
-		void logGpuMessage(SeverityEnum severity, gpu::StringView message)
+		void logGpuMessage(SeverityEnum severity, StringView message)
 		{
 			uint32 len = message.str.size();
 			len = min(len, String::MaxLength / 2);

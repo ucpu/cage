@@ -11,9 +11,9 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		struct WindowGpuContextData;
+		struct WindowGpuContextImpl;
 	}
 
 	namespace privat
@@ -21,13 +21,13 @@ namespace cage
 		struct WindowGpuContext : private Immovable
 		{
 			// the window owns its surface, but the device can destroy all the surfaces in its destructor
-			std::shared_ptr<gpuImpl::WindowGpuContextData> data;
+			std::shared_ptr<gpu::WindowGpuContextImpl> data;
 		};
 	}
 
-	namespace gpuImpl
+	namespace gpu
 	{
-		struct WindowGpuContextData : private Immovable
+		struct WindowGpuContextImpl : private Immovable
 		{
 			struct Frame
 			{
@@ -35,7 +35,7 @@ namespace cage
 				vk::UniqueSemaphore imageAcquiredSemaphore;
 				vk::UniqueSemaphore renderCompleteSemaphore;
 				vk::UniqueFence fence;
-				gpu::Texture texture;
+				Texture texture;
 			};
 
 			vkb::Swapchain swapchain;
@@ -45,73 +45,73 @@ namespace cage
 			vk::SurfaceKHR surface;
 			uint32 index = 0;
 
-			WindowGpuContextData(vk::Instance instance);
-			~WindowGpuContextData();
+			WindowGpuContextImpl(vk::Instance instance);
+			~WindowGpuContextImpl();
 
 			void init(vk::Device device);
 			void clear();
 		};
 
-		class BindGroup : private Immovable
+		class BindGroupImpl : private Immovable
 		{
 		public:
 			vk::UniqueDescriptorSet set;
 
-			BindGroup(const Device &device, const gpu::BindGroupDescriptor &desc);
-			~BindGroup();
+			BindGroupImpl(const DeviceImpl &device, const BindGroupDescriptor &desc);
+			~BindGroupImpl();
 		};
 
-		class BindGroupLayout : private Immovable
+		class BindGroupLayoutImpl : private Immovable
 		{
 		public:
 			vk::UniqueDescriptorSetLayout layout;
 
-			BindGroupLayout(const Device &device, const gpu::BindGroupLayoutDescriptor &desc);
-			~BindGroupLayout();
+			BindGroupLayoutImpl(const DeviceImpl &device, const BindGroupLayoutDescriptor &desc);
+			~BindGroupLayoutImpl();
 		};
 
-		class Buffer : private Immovable
+		class BufferImpl : private Immovable
 		{
 		public:
 			vk::UniqueBuffer buffer;
 
 			PointerRange<char> mappedRange;
 			uint64 size = 0;
-			gpu::BufferUsageFlags usage = gpu::BufferUsageFlags::Undefined;
+			BufferUsageFlags usage = BufferUsageFlags::Undefined;
 
-			Buffer(const Device &device, const gpu::BufferDescriptor &desc);
-			~Buffer();
+			BufferImpl(const DeviceImpl &device, const BufferDescriptor &desc);
+			~BufferImpl();
 
 			void unmap();
 		};
 
-		class CommandBuffer : private Immovable
+		class CommandBufferImpl : private Immovable
 		{
 		public:
 			std::vector<vk::UniqueCommandBuffer> buffers;
 			vk::Device device;
 
-			CommandBuffer(vk::Device device);
-			~CommandBuffer();
+			CommandBufferImpl(vk::Device device);
+			~CommandBufferImpl();
 
 			vk::UniqueCommandBuffer newBuffer();
 		};
 
-		class CommandEncoder : private Immovable
+		class CommandEncoderImpl : private Immovable
 		{
 		public:
-			gpu::CommandBuffer buffer;
+			CommandBuffer buffer;
 			vk::UniqueCommandBuffer cmd;
 
-			CommandEncoder(const Device &device, const gpu::CommandEncoderDescriptor &desc);
-			~CommandEncoder();
+			CommandEncoderImpl(const DeviceImpl &device, const CommandEncoderDescriptor &desc);
+			~CommandEncoderImpl();
 
-			void copyTextureToBuffer(const gpu::TexelCopyTextureInfo &source, const gpu::TexelCopyBufferInfo &destination, Vec3i copySize);
+			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 
-			gpu::CommandBuffer finishEncoding();
+			CommandBuffer finishEncoding();
 		};
 
-		class Device : private Immovable
+		class DeviceImpl : private Immovable
 		{
 			struct Bootstrap
 			{
@@ -124,7 +124,7 @@ namespace cage
 			};
 			Bootstrap bootstrap;
 
-			std::vector<std::shared_ptr<WindowGpuContextData>> surfacesCollection;
+			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
 
 		public:
 			vk::Instance instance;
@@ -134,99 +134,99 @@ namespace cage
 			VmaAllocator allocator = nullptr;
 			vk::UniqueDescriptorPool descriptorPool;
 
-			Device(const gpu::GpuDeviceDescriptor &desc);
-			~Device();
+			DeviceImpl(const GpuDeviceDescriptor &desc);
+			~DeviceImpl();
 
-			void bootstrapInit(const gpu::GpuDeviceDescriptor &desc);
+			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			void tick();
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
-			gpu::Texture acquireWindowSurfaceTexture(Window *window);
+			Texture acquireWindowSurfaceTexture(Window *window);
 			void windowPresent(Window *window);
 			void windowWaitFence(Window *window);
 
-			void writeBuffer(const gpu::Buffer &buffer, uint64 offset, PointerRange<const char> data);
-			void writeTexture(const gpu::TexelCopyTextureInfo &dest, PointerRange<const char> data, const gpu::TexelCopyBufferLayout &layout, Vec3i extents);
+			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
+			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 		};
 
-		class RenderPassEncoder : private Immovable
+		class RenderPassEncoderImpl : private Immovable
 		{
 		public:
-			gpu::CommandEncoder encoder;
+			CommandEncoder encoder;
 			vk::PipelineLayout layout;
 
-			RenderPassEncoder(const gpu::CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc);
-			~RenderPassEncoder();
+			RenderPassEncoderImpl(const CommandEncoder &commandEncoder, const RenderPassDescriptor &desc);
+			~RenderPassEncoderImpl();
 
 			void draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance);
 			void drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance);
 			void endPass();
 			void popDebugGroup();
-			void pushDebugGroup(gpu::StringView label);
-			void setBindGroup(uint32 binding, const gpu::BindGroup &group, PointerRange<const uint32> dynamicOffsets);
-			void setIndexBuffer(const gpu::Buffer &buffer, gpu::IndexFormatEnum format, uint64 offset, uint64 size);
-			void setPipeline(const gpu::RenderPipeline &pipeline);
+			void pushDebugGroup(StringView label);
+			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
+			void setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size);
+			void setPipeline(const RenderPipeline &pipeline);
 			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
-			void setVertexBuffer(uint32 slot, const gpu::Buffer &buffer, uint64 offset, uint64 size);
+			void setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size);
 		};
 
-		class RenderPipeline : private Immovable
+		class RenderPipelineImpl : private Immovable
 		{
 		public:
 			vk::UniquePipeline pipeline;
-			gpu::PipelineLayout layout;
+			PipelineLayout layout;
 
-			RenderPipeline(const Device &device, const gpu::RenderPipelineDescriptor &desc);
-			~RenderPipeline();
+			RenderPipelineImpl(const DeviceImpl &device, const RenderPipelineDescriptor &desc);
+			~RenderPipelineImpl();
 		};
 
-		class Sampler : private Immovable
+		class SamplerImpl : private Immovable
 		{
 		public:
 			vk::UniqueSampler sampler;
 
-			Sampler(const Device &device, const gpu::SamplerDescriptor &desc);
-			~Sampler();
+			SamplerImpl(const DeviceImpl &device, const SamplerDescriptor &desc);
+			~SamplerImpl();
 		};
 
-		class ShaderModule : private Immovable
+		class ShaderModuleImpl : private Immovable
 		{
 		public:
 			vk::UniqueShaderModule shader;
 
-			ShaderModule(const Device &device, const gpu::ShaderModuleDescriptor &desc);
-			~ShaderModule();
+			ShaderModuleImpl(const DeviceImpl &device, const ShaderModuleDescriptor &desc);
+			~ShaderModuleImpl();
 		};
 
-		class PipelineLayout : private Immovable
+		class PipelineLayoutImpl : private Immovable
 		{
 		public:
 			vk::UniquePipelineLayout layout;
 
-			PipelineLayout(const Device &device, const gpu::PipelineLayoutDescriptor &desc);
-			~PipelineLayout();
+			PipelineLayoutImpl(const DeviceImpl &device, const PipelineLayoutDescriptor &desc);
+			~PipelineLayoutImpl();
 		};
 
-		class Texture : private Immovable
+		class TextureImpl : private Immovable
 		{
 		public:
 			vk::UniqueImage image;
 
 			Vec3i resolution;
 			uint32 mipLevels = 0;
-			gpu::TextureDimensionEnum dimension = gpu::TextureDimensionEnum::Undefined;
-			gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
+			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
+			TextureFormatEnum format = TextureFormatEnum::Undefined;
 
-			Texture(const Device &device, const gpu::TextureDescriptor &desc);
-			~Texture();
+			TextureImpl(const DeviceImpl &device, const TextureDescriptor &desc);
+			~TextureImpl();
 		};
 
-		class TextureView : private Immovable
+		class TextureViewImpl : private Immovable
 		{
 		public:
 			vk::UniqueImageView view;
 
-			TextureView(const Texture &texture, const gpu::TextureViewDescriptor &desc);
-			~TextureView();
+			TextureViewImpl(const TextureImpl &texture, const TextureViewDescriptor &desc);
+			~TextureViewImpl();
 		};
 
 		CAGE_FORCE_INLINE void check(const char *what, VkResult result)
@@ -245,17 +245,17 @@ namespace cage
 			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), typename vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
 		}
 
-		vk::ShaderStageFlags convertShaderStages(gpu::ShaderStagesFlags visibility);
-		vk::PrimitiveTopology convertPrimitiveTopology(gpu::PrimitiveTopologyEnum topology);
-		vk::CullModeFlags convertCullMode(gpu::CullModeEnum mode);
-		vk::CompareOp convertCompareFunction(gpu::CompareFunctionEnum comp);
-		vk::VertexInputRate convertVertexStepMode(gpu::VertexStepModeEnum mode);
-		vk::Format convertVertexFormat(gpu::VertexFormatEnum format);
-		vk::BlendFactor convertBlendFactor(gpu::BlendFactorEnum factor);
-		vk::BlendOp convertBlendOperation(gpu::BlendOperationEnum op);
-		vk::Format convertTextureFormat(gpu::TextureFormatEnum format);
-		vk::IndexType convertIndexFormat(gpu::IndexFormatEnum format);
-		vk::AttachmentLoadOp convertLoadOperation(gpu::LoadOpEnum op);
-		vk::AttachmentStoreOp convertStoreOperation(gpu::StoreOpEnum op);
+		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
+		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology);
+		vk::CullModeFlags convertCullMode(CullModeEnum mode);
+		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp);
+		vk::VertexInputRate convertVertexStepMode(VertexStepModeEnum mode);
+		vk::Format convertVertexFormat(VertexFormatEnum format);
+		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor);
+		vk::BlendOp convertBlendOperation(BlendOperationEnum op);
+		vk::Format convertTextureFormat(TextureFormatEnum format);
+		vk::IndexType convertIndexFormat(IndexFormatEnum format);
+		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op);
+		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op);
 	}
 }

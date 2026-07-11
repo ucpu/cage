@@ -2,34 +2,34 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		Sampler::Sampler(const Device &device, const gpu::SamplerDescriptor &desc)
+		SamplerImpl::SamplerImpl(const DeviceImpl &device, const SamplerDescriptor &desc)
 		{
 			// todo
 		}
 
-		Sampler::~Sampler()
+		SamplerImpl::~SamplerImpl()
 		{
 			// todo
 		}
 
-		Texture::Texture(const Device &device, const gpu::TextureDescriptor &desc)
+		TextureImpl::TextureImpl(const DeviceImpl &device, const TextureDescriptor &desc)
 		{
 			// todo
 		}
 
-		Texture::~Texture()
+		TextureImpl::~TextureImpl()
 		{
 			// todo
 		}
 
-		TextureView::TextureView(const Texture &texture, const gpu::TextureViewDescriptor &desc)
+		TextureViewImpl::TextureViewImpl(const TextureImpl &texture, const TextureViewDescriptor &desc)
 		{
 			// todo
 		}
 
-		TextureView::~TextureView()
+		TextureViewImpl::~TextureViewImpl()
 		{
 			// todo
 		}

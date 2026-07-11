@@ -2,9 +2,9 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		RenderPipeline::RenderPipeline(const Device &device, const gpu::RenderPipelineDescriptor &desc)
+		RenderPipelineImpl::RenderPipelineImpl(const DeviceImpl &device, const RenderPipelineDescriptor &desc)
 		{
 			ankerl::svector<vk::PipelineShaderStageCreateInfo, 2> stages;
 			{
@@ -138,9 +138,9 @@ namespace cage
 			layout = desc.layout;
 		}
 
-		RenderPipeline::~RenderPipeline() {}
+		RenderPipelineImpl::~RenderPipelineImpl() {}
 
-		ShaderModule::ShaderModule(const Device &device, const gpu::ShaderModuleDescriptor &desc)
+		ShaderModuleImpl::ShaderModuleImpl(const DeviceImpl &device, const ShaderModuleDescriptor &desc)
 		{
 			vk::ShaderModuleCreateInfo ci;
 			ci.codeSize = desc.spirvCode.size() * sizeof(uint32);
@@ -148,9 +148,9 @@ namespace cage
 			shader = device.device.createShaderModuleUnique(ci);
 		}
 
-		ShaderModule::~ShaderModule() {}
+		ShaderModuleImpl::~ShaderModuleImpl() {}
 
-		PipelineLayout::PipelineLayout(const Device &device, const gpu::PipelineLayoutDescriptor &desc)
+		PipelineLayoutImpl::PipelineLayoutImpl(const DeviceImpl &device, const PipelineLayoutDescriptor &desc)
 		{
 			ankerl::svector<vk::DescriptorSetLayout, 5> ls;
 			ls.reserve(desc.bindGroupLayouts.size());
@@ -162,6 +162,6 @@ namespace cage
 			layout = device.device.createPipelineLayoutUnique(ci);
 		}
 
-		PipelineLayout::~PipelineLayout() {}
+		PipelineLayoutImpl::~PipelineLayoutImpl() {}
 	}
 }

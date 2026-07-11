@@ -10,25 +10,26 @@ namespace cage
 {
 	class Window;
 
-	namespace gpuImpl
-	{
-		class BindGroup;
-		class BindGroupLayout;
-		class Buffer;
-		class CommandBuffer;
-		class CommandEncoder;
-		class Device;
-		class RenderPassEncoder;
-		class RenderPipeline;
-		class Sampler;
-		class ShaderModule;
-		class PipelineLayout;
-		class Texture;
-		class TextureView;
-	}
-
 	namespace gpu
 	{
+		///////////////////////////////////////////////////////////////////
+		// forward declare implementation
+		///////////////////////////////////////////////////////////////////
+
+		class BindGroupImpl;
+		class BindGroupLayoutImpl;
+		class BufferImpl;
+		class CommandBufferImpl;
+		class CommandEncoderImpl;
+		class DeviceImpl;
+		class RenderPassEncoderImpl;
+		class RenderPipelineImpl;
+		class SamplerImpl;
+		class ShaderModuleImpl;
+		class PipelineLayoutImpl;
+		class TextureImpl;
+		class TextureViewImpl;
+
 		///////////////////////////////////////////////////////////////////
 		// basic primitives
 		///////////////////////////////////////////////////////////////////
@@ -47,7 +48,7 @@ namespace cage
 		{};
 
 		///////////////////////////////////////////////////////////////////
-		// gpu resource handles
+		// GpuResourceHandle
 		///////////////////////////////////////////////////////////////////
 
 		template<class Crtp, class Impl>
@@ -86,17 +87,21 @@ namespace cage
 			friend Crtp;
 		};
 
-		class CAGE_ENGINE_API BindGroup : public GpuResourceHandle<BindGroup, gpuImpl::BindGroup>
+		///////////////////////////////////////////////////////////////////
+		// gpu resources
+		///////////////////////////////////////////////////////////////////
+
+		class CAGE_ENGINE_API BindGroup : public GpuResourceHandle<BindGroup, BindGroupImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API BindGroupLayout : public GpuResourceHandle<BindGroupLayout, gpuImpl::BindGroupLayout>
+		class CAGE_ENGINE_API BindGroupLayout : public GpuResourceHandle<BindGroupLayout, BindGroupLayoutImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Buffer : public GpuResourceHandle<Buffer, gpuImpl::Buffer>
+		class CAGE_ENGINE_API Buffer : public GpuResourceHandle<Buffer, BufferImpl>
 		{
 		public:
 			uint64 getSize() const;
@@ -108,12 +113,12 @@ namespace cage
 			void unmap();
 		};
 
-		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, gpuImpl::CommandBuffer>
+		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, CommandBufferImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API CommandEncoder : public GpuResourceHandle<CommandEncoder, gpuImpl::CommandEncoder>
+		class CAGE_ENGINE_API CommandEncoder : public GpuResourceHandle<CommandEncoder, CommandEncoderImpl>
 		{
 		public:
 			RenderPassEncoder beginRenderPass(const RenderPassDescriptor &descriptor);
@@ -132,7 +137,7 @@ namespace cage
 			CommandBuffer finishEncoding();
 		};
 
-		class CAGE_ENGINE_API Device : public GpuResourceHandle<Device, gpuImpl::Device>
+		class CAGE_ENGINE_API Device : public GpuResourceHandle<Device, DeviceImpl>
 		{
 		public:
 			BindGroup createBindGroup(const BindGroupDescriptor &descriptor);
@@ -161,7 +166,7 @@ namespace cage
 			void windowWaitFence(Window *window);
 		};
 
-		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, gpuImpl::RenderPassEncoder>
+		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, RenderPassEncoderImpl>
 		{
 		public:
 			void draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
@@ -183,32 +188,32 @@ namespace cage
 			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
 			//void setStencilReference(uint32 reference);
 			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
-			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth);
+			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
 			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 		};
 
-		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, gpuImpl::RenderPipeline>
+		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, RenderPipelineImpl>
 		{
 		public:
 			//BindGroupLayout getBindGroupLayout(uint32 groupIndex);
 		};
 
-		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, gpuImpl::Sampler>
+		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, SamplerImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API ShaderModule : public GpuResourceHandle<ShaderModule, gpuImpl::ShaderModule>
+		class CAGE_ENGINE_API ShaderModule : public GpuResourceHandle<ShaderModule, ShaderModuleImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API PipelineLayout : public GpuResourceHandle<PipelineLayout, gpuImpl::PipelineLayout>
+		class CAGE_ENGINE_API PipelineLayout : public GpuResourceHandle<PipelineLayout, PipelineLayoutImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, gpuImpl::Texture>
+		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, TextureImpl>
 		{
 		public:
 			TextureView createView(const TextureViewDescriptor &desc);
@@ -225,7 +230,7 @@ namespace cage
 			//void unpin();
 		};
 
-		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, gpuImpl::TextureView>
+		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, TextureViewImpl>
 		{
 		public:
 		};

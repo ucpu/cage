@@ -2,9 +2,9 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		BindGroup::BindGroup(const Device &device, const gpu::BindGroupDescriptor &desc)
+		BindGroupImpl::BindGroupImpl(const DeviceImpl &device, const BindGroupDescriptor &desc)
 		{
 			vk::DescriptorSetAllocateInfo allocInfo;
 			allocInfo.descriptorPool = *device.descriptorPool;
@@ -30,7 +30,7 @@ namespace cage
 					[&](auto &e)
 					{
 						using T = std::decay_t<decltype(e)>;
-						if constexpr (std::is_same_v<T, gpu::BindGroupDescriptor::BufferEntry>)
+						if constexpr (std::is_same_v<T, BindGroupDescriptor::BufferEntry>)
 						{
 							vk::DescriptorBufferInfo &bufferInfo = infosBuffers.emplace_back(); // make sure the struct outlives its use
 							bufferInfo.buffer = *e.buffer->buffer;
@@ -39,14 +39,14 @@ namespace cage
 							// write.descriptorType = vk::DescriptorType::eUniformBuffer; // todo
 							write.pBufferInfo = &bufferInfo;
 						}
-						else if constexpr (std::is_same_v<T, gpu::BindGroupDescriptor::SamplerEntry>)
+						else if constexpr (std::is_same_v<T, BindGroupDescriptor::SamplerEntry>)
 						{
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
 							imageInfo.sampler = *e.sampler->sampler;
 							write.descriptorType = vk::DescriptorType::eSampler;
 							write.pImageInfo = &imageInfo;
 						}
-						else if constexpr (std::is_same_v<T, gpu::BindGroupDescriptor::TextureEntry>)
+						else if constexpr (std::is_same_v<T, BindGroupDescriptor::TextureEntry>)
 						{
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
 							imageInfo.imageView = *e.textureView->view;
@@ -61,9 +61,9 @@ namespace cage
 			device.device.updateDescriptorSets(writes, {});
 		}
 
-		BindGroup::~BindGroup() {}
+		BindGroupImpl::~BindGroupImpl() {}
 
-		BindGroupLayout::BindGroupLayout(const Device &device, const gpu::BindGroupLayoutDescriptor &desc)
+		BindGroupLayoutImpl::BindGroupLayoutImpl(const DeviceImpl &device, const BindGroupLayoutDescriptor &desc)
 		{
 			ankerl::svector<vk::DescriptorSetLayoutBinding, 10> bindings;
 			bindings.reserve(desc.entries.size());
@@ -77,24 +77,24 @@ namespace cage
 					[&](auto &e)
 					{
 						using T = std::decay_t<decltype(e)>;
-						if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::BufferEntry>)
+						if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::BufferEntry>)
 						{
 							switch (e.type)
 							{
-								case gpu::BufferBindingTypeEnum::Uniform:
+								case BufferBindingTypeEnum::Uniform:
 									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
 									break;
-								case gpu::BufferBindingTypeEnum::Storage:
-								case gpu::BufferBindingTypeEnum::ReadOnlyStorage:
+								case BufferBindingTypeEnum::Storage:
+								case BufferBindingTypeEnum::ReadOnlyStorage:
 									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eStorageBufferDynamic : vk::DescriptorType::eStorageBuffer;
 									break;
 							}
 						}
-						else if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::SamplerEntry>)
+						else if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::SamplerEntry>)
 						{
 							b.descriptorType = vk::DescriptorType::eSampler;
 						}
-						else if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::TextureEntry>)
+						else if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::TextureEntry>)
 						{
 							b.descriptorType = vk::DescriptorType::eSampledImage;
 						}
@@ -109,6 +109,6 @@ namespace cage
 			layout = device.device.createDescriptorSetLayoutUnique(ci);
 		}
 
-		BindGroupLayout::~BindGroupLayout() {}
+		BindGroupLayoutImpl::~BindGroupLayoutImpl() {}
 	}
 }

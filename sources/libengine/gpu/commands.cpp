@@ -2,13 +2,13 @@
 
 namespace cage
 {
-	namespace gpuImpl
+	namespace gpu
 	{
-		CommandBuffer::CommandBuffer(vk::Device device) : device(device) {}
+		CommandBufferImpl::CommandBufferImpl(vk::Device device) : device(device) {}
 
-		CommandBuffer::~CommandBuffer() {}
+		CommandBufferImpl::~CommandBufferImpl() {}
 
-		vk::UniqueCommandBuffer CommandBuffer::newBuffer()
+		vk::UniqueCommandBuffer CommandBufferImpl::newBuffer()
 		{
 			thread_local vk::UniqueCommandPool pool;
 			if (!pool)
@@ -23,9 +23,9 @@ namespace cage
 			return std::move(device.allocateCommandBuffersUnique(info)[0]);
 		}
 
-		CommandEncoder::CommandEncoder(const Device &device, const gpu::CommandEncoderDescriptor &desc)
+		CommandEncoderImpl::CommandEncoderImpl(const DeviceImpl &device, const CommandEncoderDescriptor &desc)
 		{
-			buffer = gpu::CommandBuffer(systemMemory().createHolder<CommandBuffer>(device.device));
+			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device.device));
 			cmd = buffer->newBuffer();
 
 			vk::CommandBufferBeginInfo info;
@@ -33,21 +33,21 @@ namespace cage
 			cmd->begin(info);
 		}
 
-		CommandEncoder::~CommandEncoder() {}
+		CommandEncoderImpl::~CommandEncoderImpl() {}
 
-		void CommandEncoder::copyTextureToBuffer(const gpu::TexelCopyTextureInfo &source, const gpu::TexelCopyBufferInfo &destination, Vec3i copySize)
+		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			// todo
 		}
 
-		gpu::CommandBuffer CommandEncoder::finishEncoding()
+		CommandBuffer CommandEncoderImpl::finishEncoding()
 		{
 			cmd->end();
 			buffer->buffers.push_back(std::move(cmd));
 			return std::move(buffer);
 		}
 
-		RenderPassEncoder::RenderPassEncoder(const gpu::CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc)
+		RenderPassEncoderImpl::RenderPassEncoderImpl(const CommandEncoder &commandEncoder, const RenderPassDescriptor &desc)
 		{
 			encoder = commandEncoder;
 
@@ -81,58 +81,58 @@ namespace cage
 			encoder->cmd->beginRendering(info);
 		}
 
-		RenderPassEncoder::~RenderPassEncoder() {}
+		RenderPassEncoderImpl::~RenderPassEncoderImpl() {}
 
-		void RenderPassEncoder::pushDebugGroup(gpu::StringView label)
+		void RenderPassEncoderImpl::pushDebugGroup(StringView label)
 		{
 			vk::DebugMarkerMarkerInfoEXT info;
 			info.pMarkerName = label.str.data();
 			encoder->cmd->debugMarkerBeginEXT(info);
 		}
 
-		void RenderPassEncoder::popDebugGroup()
+		void RenderPassEncoderImpl::popDebugGroup()
 		{
 			encoder->cmd->debugMarkerEndEXT();
 		}
 
-		void RenderPassEncoder::endPass()
+		void RenderPassEncoderImpl::endPass()
 		{
 			encoder->cmd->endRendering();
 		}
 
-		void RenderPassEncoder::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
+		void RenderPassEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
 			vk::Rect2D rect = vk::Rect2D({ (sint32)x, (sint32)y }, { w, h });
 			encoder->cmd->setScissor(0, rect);
 		}
 
-		void RenderPassEncoder::setPipeline(const gpu::RenderPipeline &pipeline)
+		void RenderPassEncoderImpl::setPipeline(const RenderPipeline &pipeline)
 		{
 			encoder->cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline->pipeline);
 			layout = *pipeline->layout->layout;
 		}
 
-		void RenderPassEncoder::setBindGroup(uint32 binding, const gpu::BindGroup &group, PointerRange<const uint32> dynamicOffsets)
+		void RenderPassEncoderImpl::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
 		{
 			encoder->cmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, binding, *group->set, dynamicOffsets);
 		}
 
-		void RenderPassEncoder::setVertexBuffer(uint32 slot, const gpu::Buffer &buffer, uint64 offset, uint64 size)
+		void RenderPassEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
 			encoder->cmd->bindVertexBuffers(slot, *buffer->buffer, offset);
 		}
 
-		void RenderPassEncoder::setIndexBuffer(const gpu::Buffer &buffer, gpu::IndexFormatEnum format, uint64 offset, uint64 size)
+		void RenderPassEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
 			encoder->cmd->bindIndexBuffer(*buffer->buffer, offset, convertIndexFormat(format));
 		}
 
-		void RenderPassEncoder::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
+		void RenderPassEncoderImpl::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
 		{
 			encoder->cmd->drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
 		}
 
-		void RenderPassEncoder::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
+		void RenderPassEncoderImpl::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
 		{
 			encoder->cmd->draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}

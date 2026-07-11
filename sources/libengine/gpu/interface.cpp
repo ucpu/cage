@@ -34,7 +34,7 @@ namespace cage
 
 		RenderPassEncoder CommandEncoder::beginRenderPass(const RenderPassDescriptor &desc)
 		{
-			return RenderPassEncoder(systemMemory().createHolder<gpuImpl::RenderPassEncoder>(*this, desc));
+			return RenderPassEncoder(systemMemory().createHolder<RenderPassEncoderImpl>(*this, desc));
 		}
 
 		CommandBuffer CommandEncoder::finishEncoding()
@@ -49,47 +49,47 @@ namespace cage
 
 		Buffer Device::createBuffer(const BufferDescriptor &desc)
 		{
-			return Buffer(systemMemory().createHolder<gpuImpl::Buffer>(*get(), desc));
+			return Buffer(systemMemory().createHolder<BufferImpl>(*get(), desc));
 		}
 
 		Texture Device::createTexture(const TextureDescriptor &desc)
 		{
-			return Texture(systemMemory().createHolder<gpuImpl::Texture>(*get(), desc));
+			return Texture(systemMemory().createHolder<TextureImpl>(*get(), desc));
 		}
 
 		Sampler Device::createSampler(const SamplerDescriptor &desc)
 		{
-			return Sampler(systemMemory().createHolder<gpuImpl::Sampler>(*get(), desc));
+			return Sampler(systemMemory().createHolder<SamplerImpl>(*get(), desc));
 		}
 
 		BindGroupLayout Device::createBindGroupLayout(const BindGroupLayoutDescriptor &desc)
 		{
-			return BindGroupLayout(systemMemory().createHolder<gpuImpl::BindGroupLayout>(*get(), desc));
+			return BindGroupLayout(systemMemory().createHolder<BindGroupLayoutImpl>(*get(), desc));
 		}
 
 		BindGroup Device::createBindGroup(const BindGroupDescriptor &desc)
 		{
-			return BindGroup(systemMemory().createHolder<gpuImpl::BindGroup>(*get(), desc));
+			return BindGroup(systemMemory().createHolder<BindGroupImpl>(*get(), desc));
 		}
 
 		CommandEncoder Device::createCommandEncoder(const CommandEncoderDescriptor &desc)
 		{
-			return CommandEncoder(systemMemory().createHolder<gpuImpl::CommandEncoder>(*get(), desc));
+			return CommandEncoder(systemMemory().createHolder<CommandEncoderImpl>(*get(), desc));
 		}
 
 		ShaderModule Device::createShaderModule(const ShaderModuleDescriptor &desc)
 		{
-			return ShaderModule(systemMemory().createHolder<gpuImpl::ShaderModule>(*get(), desc));
+			return ShaderModule(systemMemory().createHolder<ShaderModuleImpl>(*get(), desc));
 		}
 
 		PipelineLayout Device::createPipelineLayout(const PipelineLayoutDescriptor &desc)
 		{
-			return PipelineLayout(systemMemory().createHolder<gpuImpl::PipelineLayout>(*get(), desc));
+			return PipelineLayout(systemMemory().createHolder<PipelineLayoutImpl>(*get(), desc));
 		}
 
 		RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor &desc)
 		{
-			return RenderPipeline(systemMemory().createHolder<gpuImpl::RenderPipeline>(*get(), desc));
+			return RenderPipeline(systemMemory().createHolder<RenderPipelineImpl>(*get(), desc));
 		}
 
 		void Device::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
@@ -184,7 +184,7 @@ namespace cage
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
 		{
-			return TextureView(systemMemory().createHolder<gpuImpl::TextureView>(*get(), desc));
+			return TextureView(systemMemory().createHolder<TextureViewImpl>(*get(), desc));
 		}
 
 		uint32 Texture::getWidth() const
