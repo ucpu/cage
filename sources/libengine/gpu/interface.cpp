@@ -27,9 +27,14 @@ namespace cage
 			return get()->mappedRange;
 		}
 
-		void Buffer::unmap()
+		void Buffer::flush()
 		{
-			get()->unmap();
+			get()->flush();
+		}
+
+		void Buffer::invalidate()
+		{
+			get()->invalidate();
 		}
 
 		RenderPassEncoder CommandEncoder::beginRenderPass(const RenderPassDescriptor &desc)

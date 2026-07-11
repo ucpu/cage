@@ -73,7 +73,10 @@ namespace cage
 		class BufferImpl : private Immovable
 		{
 		public:
-			vk::UniqueBuffer buffer;
+			const DeviceImpl *device = nullptr;
+			vk::Buffer buffer;
+			VmaAllocationInfo allocatedInfo;
+			VmaAllocation allocation = nullptr;
 
 			PointerRange<char> mappedRange;
 			uint64 size = 0;
@@ -82,7 +85,8 @@ namespace cage
 			BufferImpl(const DeviceImpl &device, const BufferDescriptor &desc);
 			~BufferImpl();
 
-			void unmap();
+			void flush();
+			void invalidate();
 		};
 
 		class CommandBufferImpl : private Immovable
@@ -257,5 +261,6 @@ namespace cage
 		vk::IndexType convertIndexFormat(IndexFormatEnum format);
 		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op);
 		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op);
+		vk::BufferUsageFlagBits convertBufferUsage(BufferUsageFlags flags);
 	}
 }

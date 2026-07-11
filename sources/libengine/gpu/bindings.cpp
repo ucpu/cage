@@ -33,7 +33,7 @@ namespace cage
 						if constexpr (std::is_same_v<T, BindGroupDescriptor::BufferEntry>)
 						{
 							vk::DescriptorBufferInfo &bufferInfo = infosBuffers.emplace_back(); // make sure the struct outlives its use
-							bufferInfo.buffer = *e.buffer->buffer;
+							bufferInfo.buffer = e.buffer->buffer;
 							bufferInfo.offset = e.offset;
 							bufferInfo.range = e.size;
 							// write.descriptorType = vk::DescriptorType::eUniformBuffer; // todo

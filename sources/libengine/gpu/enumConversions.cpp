@@ -407,5 +407,29 @@ namespace cage
 			}
 			return vk::AttachmentStoreOp::eNoneKHR;
 		}
+
+		vk::BufferUsageFlagBits convertBufferUsage(BufferUsageFlags flags)
+		{
+			vk::BufferUsageFlags bits = (vk::BufferUsageFlagBits)0;
+			if (any(flags & BufferUsageFlags::CopyDst))
+				bits |= vk::BufferUsageFlagBits::eTransferDst;
+			if (any(flags & BufferUsageFlags::CopySrc))
+				bits |= vk::BufferUsageFlagBits::eTransferSrc;
+			if (any(flags & BufferUsageFlags::Index))
+				bits |= vk::BufferUsageFlagBits::eIndexBuffer;
+			if (any(flags & BufferUsageFlags::Indirect))
+				bits |= vk::BufferUsageFlagBits::eIndirectBuffer;
+			//if (any(flags & BufferUsageFlags::QueryResolve))
+			//	bits |= vk::BufferUsageFlagBits::;
+			if (any(flags & BufferUsageFlags::Storage))
+				bits |= vk::BufferUsageFlagBits::eStorageBuffer;
+			if (any(flags & BufferUsageFlags::TexelBuffer))
+				bits |= vk::BufferUsageFlagBits::eStorageTexelBuffer | vk::BufferUsageFlagBits::eUniformTexelBuffer;
+			if (any(flags & BufferUsageFlags::Uniform))
+				bits |= vk::BufferUsageFlagBits::eUniformBuffer;
+			if (any(flags & BufferUsageFlags::Vertex))
+				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
+			return (vk::BufferUsageFlagBits)(vk::BufferUsageFlags::MaskType)bits;
+		}
 	}
 }

@@ -119,12 +119,12 @@ namespace cage
 
 		void RenderPassEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
-			encoder->cmd->bindVertexBuffers(slot, *buffer->buffer, offset);
+			encoder->cmd->bindVertexBuffers(slot, buffer->buffer, offset);
 		}
 
 		void RenderPassEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
-			encoder->cmd->bindIndexBuffer(*buffer->buffer, offset, convertIndexFormat(format));
+			encoder->cmd->bindIndexBuffer(buffer->buffer, offset, convertIndexFormat(format));
 		}
 
 		void RenderPassEncoderImpl::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)

@@ -59,14 +59,6 @@ namespace cage
 			Uniform,
 		};
 
-		//enum class BufferMapStateEnum
-		//{
-		//	Undefined = 0,
-		//	Unmapped,
-		//	Pending,
-		//	Mapped,
-		//};
-
 		enum class BufferUsageFlags
 		{
 			Undefined = 0,

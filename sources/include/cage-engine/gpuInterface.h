@@ -106,11 +106,10 @@ namespace cage
 		public:
 			uint64 getSize() const;
 			BufferUsageFlags getUsage() const;
-			//BufferMapState getMapState() const;
 			PointerRange<char> getMappedRange();
-			template<class Callable>
-			Future mapAsync(MapModeEnum mapMode, uint64 offset, uint64 size, CallbackModeEnum callbackMode, Callable callable);
-			void unmap();
+
+			void flush(); // makes cpu writes visible to gpu
+			void invalidate(); // makes gpu data visible to cpu for reading
 		};
 
 		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, CommandBufferImpl>
@@ -302,7 +301,6 @@ namespace cage
 			StringView label;
 			uint64 size = 0;
 			BufferUsageFlags usage = BufferUsageFlags::Undefined;
-			//bool mappedAtCreation = false;
 		};
 
 		struct CAGE_ENGINE_API CommandEncoderDescriptor
@@ -503,12 +501,6 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 		// implementation
 		///////////////////////////////////////////////////////////////////
-
-		template<class Callable>
-		Future Buffer::mapAsync(MapModeEnum mapMode, uint64 offset, uint64 size, CallbackModeEnum callbackMode, Callable callable)
-		{
-			return {}; // todo
-		}
 
 		template<class Callable>
 		Future Device::createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable)

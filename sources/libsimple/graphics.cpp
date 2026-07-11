@@ -159,6 +159,7 @@ namespace cage
 				engineGraphicsDevice()->insertCommandBuffer(encoder.finishEncoding(), {});
 				engineGraphicsDevice()->nextFrame();
 
+				/*
 				gpu::Future future = readbackBuffer.mapAsync(gpu::MapModeEnum::Read, 0, readbackDesc.size, gpu::CallbackModeEnum::WaitAnyOnly,
 					[&](gpu::StatusEnum status, gpu::StringView message)
 					{
@@ -170,6 +171,7 @@ namespace cage
 						}
 					});
 				engineGraphicsDevice()->wait(future);
+				*/
 
 				// crop padding
 				if (res != actualResolution)
