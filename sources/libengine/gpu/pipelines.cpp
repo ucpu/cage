@@ -135,6 +135,7 @@ namespace cage
 			check("createGraphicsPipelineUnique", r.result);
 			CAGE_ASSERT(r.has_value());
 			pipeline = std::move(r.value);
+			layout = desc.layout;
 		}
 
 		RenderPipeline::~RenderPipeline() {}

@@ -34,12 +34,12 @@ namespace cage
 
 		RenderPassEncoder CommandEncoder::beginRenderPass(const RenderPassDescriptor &desc)
 		{
-			return RenderPassEncoder(systemMemory().createHolder<gpuImpl::RenderPassEncoder>(*get(), desc));
+			return RenderPassEncoder(systemMemory().createHolder<gpuImpl::RenderPassEncoder>(*this, desc));
 		}
 
 		CommandBuffer CommandEncoder::finishEncoding()
 		{
-			return CommandBuffer(systemMemory().createHolder<gpuImpl::CommandBuffer>(*get()));
+			return get()->finishEncoding();
 		}
 
 		void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
@@ -149,7 +149,7 @@ namespace cage
 
 		void RenderPassEncoder::setBindGroup(uint32 binding, const BindGroup &group)
 		{
-			get()->setBindGroup(binding, group);
+			get()->setBindGroup(binding, group, {});
 		}
 
 		void RenderPassEncoder::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)

@@ -371,5 +371,41 @@ namespace cage
 
 			return vk::Format::eUndefined;
 		}
+
+		vk::IndexType convertIndexFormat(gpu::IndexFormatEnum format)
+		{
+			switch (format)
+			{
+				case gpu::IndexFormatEnum::Uint16:
+					return vk::IndexType::eUint16;
+				case gpu::IndexFormatEnum::Uint32:
+					return vk::IndexType::eUint32;
+			}
+			return vk::IndexType::eNoneKHR;
+		}
+
+		vk::AttachmentLoadOp convertLoadOperation(gpu::LoadOpEnum op)
+		{
+			switch (op)
+			{
+				case gpu::LoadOpEnum::Clear:
+					return vk::AttachmentLoadOp::eClear;
+				case gpu::LoadOpEnum::Load:
+					return vk::AttachmentLoadOp::eLoad;
+			}
+			return vk::AttachmentLoadOp::eNoneKHR;
+		}
+
+		vk::AttachmentStoreOp convertStoreOperation(gpu::StoreOpEnum op)
+		{
+			switch (op)
+			{
+				case gpu::StoreOpEnum::Discard:
+					return vk::AttachmentStoreOp::eDontCare;
+				case gpu::StoreOpEnum::Store:
+					return vk::AttachmentStoreOp::eStore;
+			}
+			return vk::AttachmentStoreOp::eNoneKHR;
+		}
 	}
 }

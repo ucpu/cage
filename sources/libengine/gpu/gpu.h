@@ -89,18 +89,26 @@ namespace cage
 		{
 		public:
 			std::vector<vk::UniqueCommandBuffer> buffers;
+			vk::Device device;
 
-			CommandBuffer(const CommandEncoder &commandEncoder);
+			CommandBuffer(vk::Device device);
 			~CommandBuffer();
+
+			vk::UniqueCommandBuffer newBuffer();
 		};
 
 		class CommandEncoder : private Immovable
 		{
 		public:
+			gpu::CommandBuffer buffer;
+			vk::UniqueCommandBuffer cmd;
+
 			CommandEncoder(const Device &device, const gpu::CommandEncoderDescriptor &desc);
 			~CommandEncoder();
 
 			void copyTextureToBuffer(const gpu::TexelCopyTextureInfo &source, const gpu::TexelCopyBufferInfo &destination, Vec3i copySize);
+
+			gpu::CommandBuffer finishEncoding();
 		};
 
 		class Device : private Immovable
@@ -143,7 +151,10 @@ namespace cage
 		class RenderPassEncoder : private Immovable
 		{
 		public:
-			RenderPassEncoder(const CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc);
+			gpu::CommandEncoder encoder;
+			vk::PipelineLayout layout;
+
+			RenderPassEncoder(const gpu::CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc);
 			~RenderPassEncoder();
 
 			void draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance);
@@ -151,7 +162,6 @@ namespace cage
 			void endPass();
 			void popDebugGroup();
 			void pushDebugGroup(gpu::StringView label);
-			void setBindGroup(uint32 binding, const gpu::BindGroup &group);
 			void setBindGroup(uint32 binding, const gpu::BindGroup &group, PointerRange<const uint32> dynamicOffsets);
 			void setIndexBuffer(const gpu::Buffer &buffer, gpu::IndexFormatEnum format, uint64 offset, uint64 size);
 			void setPipeline(const gpu::RenderPipeline &pipeline);
@@ -163,6 +173,7 @@ namespace cage
 		{
 		public:
 			vk::UniquePipeline pipeline;
+			gpu::PipelineLayout layout;
 
 			RenderPipeline(const Device &device, const gpu::RenderPipelineDescriptor &desc);
 			~RenderPipeline();
@@ -243,5 +254,8 @@ namespace cage
 		vk::BlendFactor convertBlendFactor(gpu::BlendFactorEnum factor);
 		vk::BlendOp convertBlendOperation(gpu::BlendOperationEnum op);
 		vk::Format convertTextureFormat(gpu::TextureFormatEnum format);
+		vk::IndexType convertIndexFormat(gpu::IndexFormatEnum format);
+		vk::AttachmentLoadOp convertLoadOperation(gpu::LoadOpEnum op);
+		vk::AttachmentStoreOp convertStoreOperation(gpu::StoreOpEnum op);
 	}
 }
