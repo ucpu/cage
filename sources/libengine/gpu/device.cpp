@@ -72,19 +72,37 @@ namespace cage
 
 		WindowGpuContextData::~WindowGpuContextData() {}
 
-		void WindowGpuContextData::init()
+		void WindowGpuContextData::init(vk::Device device)
 		{
-			// todo
-			// create semaphores and fences, if needed
-			// update images and image views
+			std::vector<VkImage> images = handleResult(swapchain.get_images());
+			if (frames.size() == images.size())
+				return;
+
+			frames.clear();
+			frames.resize(images.size());
+			for (uint32 i = 0; i < images.size(); i++)
+			{
+				auto &f = frames[i];
+				f.image = vk::Image(images[i]);
+
+				vk::SemaphoreCreateInfo sci;
+				f.imageAcquiredSemaphore = device.createSemaphoreUnique(sci);
+				f.renderCompleteSemaphore = device.createSemaphoreUnique(sci);
+
+				vk::FenceCreateInfo fci;
+				fci.flags = vk::FenceCreateFlagBits::eSignaled;
+				f.fence = device.createFenceUnique(fci);
+
+				// todo create texture
+			}
+			index = 0;
 		}
 
 		void WindowGpuContextData::clear()
 		{
+			frames.clear();
 			instance.destroySurfaceKHR(surface);
 			surface = nullptr;
-			// todo
-			// destroy semaphores and fences
 		}
 
 		Device::Bootstrap::~Bootstrap()
@@ -102,9 +120,7 @@ namespace cage
 				instance = bootstrap.inst.instance;
 				physicalDevice = bootstrap.phys.physical_device;
 				device = bootstrap.dev.device;
-				queueTransfer = bootstrap.qt;
-				queueGraphics = bootstrap.qg;
-				queuePresent = bootstrap.qp;
+				queue = bootstrap.q;
 			}
 
 			{
@@ -210,9 +226,12 @@ namespace cage
 
 			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
 
-			bootstrap.qt = handleResult(bootstrap.dev.get_queue(vkb::QueueType::transfer));
-			bootstrap.qg = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
-			bootstrap.qp = handleResult(bootstrap.dev.get_queue(vkb::QueueType::present));
+			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
+		}
+
+		void Device::tick()
+		{
+			// todo
 		}
 
 		Holder<privat::WindowGpuContext> Device::getWindowGpuContext(Window *window)
@@ -237,20 +256,62 @@ namespace cage
 			return context.share();
 		}
 
-		gpu::Texture Device::getWindowSurfaceTexture(Window *window)
+		gpu::Texture Device::acquireWindowSurfaceTexture(Window *window)
 		{
 			const Vec2i res = window->resolution();
 			if (res[0] <= 0 || res[1] <= 0)
 				return {};
+
 			auto ctx = getWindowGpuContext(window);
-			if (ctx->data->resolution != res)
+			WindowGpuContextData &data = *ctx->data;
+			if (data.resolution != res)
 			{
-				ctx->data->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)ctx->data->surface).set_old_swapchain(ctx->data->swapchain).set_desired_min_image_count(2).set_desired_extent(res[0], res[1]).build());
-				ctx->data->resolution = res;
-				ctx->data->init();
+				data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface).set_old_swapchain(data.swapchain).set_desired_min_image_count(2).set_desired_extent(res[0], res[1]).build());
+				data.resolution = res;
+				data.init(device);
 			}
-			// todo acquire texture
-			return {};
+
+			auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, *data.frames[data.index].imageAcquiredSemaphore);
+			check("acquireNextImageKHR", r.result);
+			data.index = r.value;
+			return data.frames[data.index].texture;
+		}
+
+		void Device::windowPresent(Window *window)
+		{
+			auto ctx = getWindowGpuContext(window);
+			WindowGpuContextData &data = *ctx->data;
+			if (data.frames.empty())
+				return;
+
+			vk::PresentInfoKHR info;
+			info.waitSemaphoreCount = 1;
+			info.pWaitSemaphores = &*data.frames[data.index].renderCompleteSemaphore;
+			info.swapchainCount = 1;
+			info.pImageIndices = &data.index;
+			check("presentKHR", queue.presentKHR(info));
+		}
+
+		void Device::windowWaitFence(Window *window)
+		{
+			auto ctx = getWindowGpuContext(window);
+			WindowGpuContextData &data = *ctx->data;
+			if (data.frames.empty())
+				return;
+
+			vk::Fence f = *data.frames[data.index].fence;
+			check("waitForFences", device.waitForFences(1, &f, true, m));
+			check("resetFences", device.resetFences(1, &f));
+		}
+
+		void Device::writeBuffer(const gpu::Buffer &buffer, uint64 offset, PointerRange<const char> data)
+		{
+			// todo
+		}
+
+		void Device::writeTexture(const gpu::TexelCopyTextureInfo &dest, PointerRange<const char> data, const gpu::TexelCopyBufferLayout &layout, Vec3i extents)
+		{
+			// todo
 		}
 	}
 
@@ -259,6 +320,13 @@ namespace cage
 		Device newGpuDevice(const gpu::GpuDeviceDescriptor &desc)
 		{
 			return Device(systemMemory().createHolder<gpuImpl::Device>(desc));
+		}
+
+		void logGpuMessage(SeverityEnum severity, gpu::StringView message)
+		{
+			uint32 len = message.str.size();
+			len = min(len, String::MaxLength / 2);
+			CAGE_LOG(severity, "gpu message", String(PointerRange(message.str.data(), message.str.data() + len)));
 		}
 	}
 }

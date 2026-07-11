@@ -13,5 +13,10 @@ namespace cage
 		{
 			// todo
 		}
+
+		void Buffer::unmap()
+		{
+			// todo
+		}
 	}
 }

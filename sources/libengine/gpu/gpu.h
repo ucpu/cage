@@ -29,20 +29,26 @@ namespace cage
 	{
 		struct WindowGpuContextData : private Immovable
 		{
+			struct Frame
+			{
+				vk::Image image;
+				vk::UniqueSemaphore imageAcquiredSemaphore;
+				vk::UniqueSemaphore renderCompleteSemaphore;
+				vk::UniqueFence fence;
+				gpu::Texture texture;
+			};
+
 			vkb::Swapchain swapchain;
-			std::vector<vk::Image> images;
-			std::vector<vk::ImageView> views;
+			std::vector<Frame> frames;
 			Vec2i resolution;
 			vk::Instance instance;
 			vk::SurfaceKHR surface;
-			vk::Semaphore imageAvailable;
-			vk::Semaphore renderFinished;
-			vk::Fence inFlight;
+			uint32 index = 0;
 
 			WindowGpuContextData(vk::Instance instance);
 			~WindowGpuContextData();
 
-			void init();
+			void init(vk::Device device);
 			void clear();
 		};
 
@@ -69,17 +75,20 @@ namespace cage
 		public:
 			vk::UniqueBuffer buffer;
 
+			PointerRange<char> mappedRange;
 			uint64 size = 0;
 			gpu::BufferUsageFlags usage = gpu::BufferUsageFlags::Undefined;
 
 			Buffer(const Device &device, const gpu::BufferDescriptor &desc);
 			~Buffer();
+
+			void unmap();
 		};
 
 		class CommandBuffer : private Immovable
 		{
 		public:
-			vk::UniqueCommandBuffer buffer;
+			std::vector<vk::UniqueCommandBuffer> buffers;
 
 			CommandBuffer(const CommandEncoder &commandEncoder);
 			~CommandBuffer();
@@ -90,6 +99,8 @@ namespace cage
 		public:
 			CommandEncoder(const Device &device, const gpu::CommandEncoderDescriptor &desc);
 			~CommandEncoder();
+
+			void copyTextureToBuffer(const gpu::TexelCopyTextureInfo &source, const gpu::TexelCopyBufferInfo &destination, Vec3i copySize);
 		};
 
 		class Device : private Immovable
@@ -99,9 +110,7 @@ namespace cage
 				vkb::Instance inst;
 				vkb::PhysicalDevice phys;
 				vkb::Device dev;
-				VkQueue qt = nullptr;
-				VkQueue qg = nullptr;
-				VkQueue qp = nullptr;
+				VkQueue q = nullptr;
 
 				~Bootstrap();
 			};
@@ -113,9 +122,7 @@ namespace cage
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
 			vk::Device device;
-			vk::Queue queueTransfer;
-			vk::Queue queueGraphics;
-			vk::Queue queuePresent;
+			vk::Queue queue;
 			VmaAllocator allocator = nullptr;
 			vk::UniqueDescriptorPool descriptorPool;
 
@@ -123,8 +130,14 @@ namespace cage
 			~Device();
 
 			void bootstrapInit(const gpu::GpuDeviceDescriptor &desc);
+			void tick();
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
-			gpu::Texture getWindowSurfaceTexture(Window *window);
+			gpu::Texture acquireWindowSurfaceTexture(Window *window);
+			void windowPresent(Window *window);
+			void windowWaitFence(Window *window);
+
+			void writeBuffer(const gpu::Buffer &buffer, uint64 offset, PointerRange<const char> data);
+			void writeTexture(const gpu::TexelCopyTextureInfo &dest, PointerRange<const char> data, const gpu::TexelCopyBufferLayout &layout, Vec3i extents);
 		};
 
 		class RenderPassEncoder : private Immovable
@@ -132,6 +145,18 @@ namespace cage
 		public:
 			RenderPassEncoder(const CommandEncoder &commandEncoder, const gpu::RenderPassDescriptor &desc);
 			~RenderPassEncoder();
+
+			void draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance);
+			void drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance);
+			void endPass();
+			void popDebugGroup();
+			void pushDebugGroup(gpu::StringView label);
+			void setBindGroup(uint32 binding, const gpu::BindGroup &group);
+			void setBindGroup(uint32 binding, const gpu::BindGroup &group, PointerRange<const uint32> dynamicOffsets);
+			void setIndexBuffer(const gpu::Buffer &buffer, gpu::IndexFormatEnum format, uint64 offset, uint64 size);
+			void setPipeline(const gpu::RenderPipeline &pipeline);
+			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
+			void setVertexBuffer(uint32 slot, const gpu::Buffer &buffer, uint64 offset, uint64 size);
 		};
 
 		class RenderPipeline : private Immovable
@@ -196,6 +221,11 @@ namespace cage
 		CAGE_FORCE_INLINE void check(const char *what, VkResult result)
 		{
 			vk::detail::resultCheck(vk::Result(result), what);
+		}
+
+		CAGE_FORCE_INLINE void check(const char *what, vk::Result result)
+		{
+			check(what, (VkResult)result);
 		}
 
 		template<class T, class Src>

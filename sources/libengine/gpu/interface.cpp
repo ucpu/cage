@@ -24,12 +24,12 @@ namespace cage
 
 		PointerRange<char> Buffer::getMappedRange()
 		{
-			return {}; // todo
+			return get()->mappedRange;
 		}
 
 		void Buffer::unmap()
 		{
-			// todo
+			get()->unmap();
 		}
 
 		RenderPassEncoder CommandEncoder::beginRenderPass(const RenderPassDescriptor &desc)
@@ -44,7 +44,7 @@ namespace cage
 
 		void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
-			// todo
+			get()->copyTextureToBuffer(source, destination, copySize);
 		}
 
 		Buffer Device::createBuffer(const BufferDescriptor &desc)
@@ -87,14 +87,19 @@ namespace cage
 			return PipelineLayout(systemMemory().createHolder<gpuImpl::PipelineLayout>(*get(), desc));
 		}
 
+		RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor &desc)
+		{
+			return RenderPipeline(systemMemory().createHolder<gpuImpl::RenderPipeline>(*get(), desc));
+		}
+
 		void Device::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
-			// todo
+			get()->writeBuffer(buffer, offset, data);
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
-			// todo
+			get()->writeTexture(dest, data, layout, extents);
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
@@ -102,59 +107,74 @@ namespace cage
 			return writeTexture(dest, data.cast<const char>(), layout, extents);
 		}
 
+		Texture Device::windowAcquireTexture(Window *window)
+		{
+			return get()->acquireWindowSurfaceTexture(window);
+		}
+
+		void Device::windowPresent(Window *window)
+		{
+			get()->windowPresent(window);
+		}
+
+		void Device::windowWaitFence(Window *window)
+		{
+			get()->windowWaitFence(window);
+		}
+
 		void RenderPassEncoder::pushDebugGroup(StringView label)
 		{
-			// todo
+			get()->pushDebugGroup(label);
 		}
 
 		void RenderPassEncoder::popDebugGroup()
 		{
-			// todo
+			get()->popDebugGroup();
 		}
 
 		void RenderPassEncoder::endPass()
 		{
-			// todo
+			get()->endPass();
 		}
 
 		void RenderPassEncoder::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
-			// todo
+			get()->setScissorRect(x, y, w, h);
 		}
 
 		void RenderPassEncoder::setPipeline(const RenderPipeline &pipeline)
 		{
-			// todo
+			get()->setPipeline(pipeline);
 		}
 
 		void RenderPassEncoder::setBindGroup(uint32 binding, const BindGroup &group)
 		{
-			// todo
+			get()->setBindGroup(binding, group);
 		}
 
 		void RenderPassEncoder::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
 		{
-			// todo
+			get()->setBindGroup(binding, group, dynamicOffsets);
 		}
 
 		void RenderPassEncoder::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
-			// todo
+			get()->setVertexBuffer(slot, buffer, offset, size);
 		}
 
 		void RenderPassEncoder::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
-			// todo
+			get()->setIndexBuffer(buffer, format, offset, size);
 		}
 
 		void RenderPassEncoder::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
 		{
-			// todo
+			get()->drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
 		}
 
 		void RenderPassEncoder::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
 		{
-			// todo
+			get()->draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}
 
 		TextureFormatEnum Texture::getFormat() const

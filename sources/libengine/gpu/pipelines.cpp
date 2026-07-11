@@ -132,7 +132,7 @@ namespace cage
 			ci.pNext = &rendering;
 			ci.layout = *desc.layout->layout;
 			auto r = device.device.createGraphicsPipelineUnique({}, ci);
-			check("createGraphicsPipelineUnique", (VkResult)r.result);
+			check("createGraphicsPipelineUnique", r.result);
 			CAGE_ASSERT(r.has_value());
 			pipeline = std::move(r.value);
 		}

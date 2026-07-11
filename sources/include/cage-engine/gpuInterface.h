@@ -141,13 +141,12 @@ namespace cage
 			CommandEncoder createCommandEncoder(const CommandEncoderDescriptor &descriptor);
 			PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor &descriptor);
 			//QuerySet createQuerySet(const QuerySetDescriptor &descriptor);
-			//RenderPipeline createRenderPipeline(const RenderPipelineDescriptor &descriptor);
+			RenderPipeline createRenderPipeline(const RenderPipelineDescriptor &descriptor);
 			template<class Callable>
-			RenderPipeline createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable);
+			Future createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable);
 			Sampler createSampler(const SamplerDescriptor &descriptor);
 			ShaderModule createShaderModule(const ShaderModuleDescriptor &descriptor);
 			Texture createTexture(const TextureDescriptor &descriptor);
-			//void tick();
 
 			template<class Callable>
 			Future onSubmittedWorkDone(CallbackModeEnum callbackMode, Callable callable);
@@ -155,6 +154,11 @@ namespace cage
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
+
+			void tick();
+			Texture windowAcquireTexture(Window *window);
+			void windowPresent(Window *window);
+			void windowWaitFence(Window *window);
 		};
 
 		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, gpuImpl::RenderPassEncoder>
@@ -502,8 +506,11 @@ namespace cage
 		}
 
 		template<class Callable>
-		RenderPipeline Device::createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable)
+		Future Device::createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable)
 		{
+			// todo make actually async
+			auto r = createRenderPipeline(descriptor);
+			callable(StatusEnum::Success, std::move(r), "");
 			return {}; // todo
 		}
 
@@ -514,6 +521,8 @@ namespace cage
 		}
 
 		CAGE_ENGINE_API Device newGpuDevice(const GpuDeviceDescriptor &desc);
+
+		CAGE_ENGINE_API void logGpuMessage(SeverityEnum severity, StringView message);
 	}
 }
 

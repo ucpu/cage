@@ -72,8 +72,6 @@ namespace cage
 
 	namespace privat
 	{
-		void logImpl(SeverityEnum severity, gpu::StringView message);
-
 		struct DevicePipelinesCache : private Immovable
 		{
 		public:
@@ -173,8 +171,8 @@ namespace cage
 						}
 						else
 						{
-							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating wgpu pipeline");
-							logImpl(SeverityEnum::Note, message);
+							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating gpu pipeline");
+							gpu::logGpuMessage(SeverityEnum::Note, message);
 							//detail::debugBreakpoint();
 						}
 					});
