@@ -62,7 +62,7 @@ namespace cage
 			{
 				gpu::TextureViewDescriptor tvd = {};
 				tvd.baseMipLevel = i;
-				tvd.mipLevelCount = 1;
+				tvd.mipLevels = 1;
 				gpu::TextureView view = tex->nativeTexture().createView(tvd);
 				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
 			}
@@ -313,7 +313,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "bloom target";
 			conf.resolution = Vec3i(res, 1);
-			conf.mipLevelCount = mips;
+			conf.mipLevels = mips;
 			conf.format = gpu::TextureFormatEnum::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
@@ -375,7 +375,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "bloom blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.mipLevelCount = mips;
+				conf.mipLevels = mips;
 				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(d, conf);
 			}();

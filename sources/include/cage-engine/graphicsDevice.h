@@ -9,15 +9,21 @@ namespace cage
 	class Window;
 	class Texture;
 
+	struct CAGE_ENGINE_API GraphicsWindowPresentation
+	{
+		// in
+		Window *window = nullptr;
+		// out
+		Holder<Texture> texture;
+	};
+
 	class CAGE_ENGINE_API GraphicsDevice : private Immovable
 	{
 	public:
+		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
 		void wait(const gpu::Future &future);
 		void insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
-		Holder<Texture> nextWindow(Window *window);
-		GraphicsFrameStatistics nextFrame();
-
-		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
+		GraphicsFrameStatistics nextFrame(PointerRange<GraphicsWindowPresentation> windows);
 	};
 
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig

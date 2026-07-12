@@ -112,19 +112,19 @@ namespace cage
 			return writeTexture(dest, data.cast<const char>(), layout, extents);
 		}
 
-		Texture Device::windowAcquireTexture(Window *window)
+		void Device::tick()
 		{
-			return get()->acquireWindowSurfaceTexture(window);
+			get()->tick();
 		}
 
-		void Device::windowPresent(Window *window)
+		void Device::wait(const Future &future)
 		{
-			get()->windowPresent(window);
+			get()->wait(future);
 		}
 
-		void Device::windowWaitFence(Window *window)
+		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
-			get()->windowWaitFence(window);
+			get()->submitAndPresentWindows(buffers, windows);
 		}
 
 		void RenderPassEncoder::pushDebugGroup(StringView label)
@@ -182,9 +182,9 @@ namespace cage
 			get()->draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}
 
-		TextureFormatEnum Texture::getFormat() const
+		TextureView Texture::createView()
 		{
-			return get()->format;
+			return createView({});
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
@@ -192,22 +192,17 @@ namespace cage
 			return TextureView(systemMemory().createHolder<TextureViewImpl>(*this, desc));
 		}
 
-		uint32 Texture::getWidth() const
+		Vec3i Texture::getResolution() const
 		{
-			return get()->resolution[0];
+			return get()->resolution;
 		}
 
-		uint32 Texture::getHeight() const
+		uint32 Texture::getArrayLayers() const
 		{
-			return get()->resolution[1];
+			return get()->arrayLayers;
 		}
 
-		uint32 Texture::getDepthOrArrayLayers() const
-		{
-			return get()->resolution[2];
-		}
-
-		uint32 Texture::getMipLevelCount() const
+		uint32 Texture::getMipLevels() const
 		{
 			return get()->mipLevels;
 		}
@@ -215,6 +210,21 @@ namespace cage
 		TextureDimensionEnum Texture::getDimension() const
 		{
 			return get()->dimension;
+		}
+
+		TextureFormatEnum Texture::getFormat() const
+		{
+			return get()->format;
+		}
+
+		TextureUsageFlags Texture::getUsage() const
+		{
+			return get()->usage;
+		}
+
+		Texture TextureView::getTexture() const
+		{
+			return get()->texture;
 		}
 	}
 }

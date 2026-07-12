@@ -34,7 +34,7 @@ namespace cage
 				vk::Image image;
 				vk::UniqueSemaphore imageAcquiredSemaphore;
 				vk::UniqueSemaphore renderCompleteSemaphore;
-				vk::UniqueFence fence;
+				vk::UniqueFence renderCompleteFence;
 				Texture texture;
 			};
 
@@ -50,6 +50,9 @@ namespace cage
 
 			void init(vk::Device device);
 			void clear();
+
+			Frame &frame() { return frames[index]; }
+			Frame *operator->() { return &frames[index]; }
 		};
 
 		class BindGroupImpl : private Immovable
@@ -142,14 +145,14 @@ namespace cage
 			~DeviceImpl();
 
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
-			void tick();
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
-			Texture acquireWindowSurfaceTexture(Window *window);
-			void windowPresent(Window *window);
-			void windowWaitFence(Window *window);
 
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
+
+			void tick();
+			void wait(const Future &future);
+			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
 		class RenderPassEncoderImpl : private Immovable
@@ -219,9 +222,11 @@ namespace cage
 			VmaAllocation allocation = nullptr;
 
 			Vec3i resolution;
+			uint32 arrayLayers = 0;
 			uint32 mipLevels = 0;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
+			TextureUsageFlags usage = TextureUsageFlags::Undefined;
 
 			TextureImpl(const DeviceImpl &device, const TextureDescriptor &desc);
 			~TextureImpl();
@@ -247,17 +252,10 @@ namespace cage
 			check(what, (VkResult)result);
 		}
 
-		template<class T, class Src>
-		CAGE_FORCE_INLINE vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE> makeUnique(Src &src)
-		{
-			return vk::UniqueHandle<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>(T(src), typename vk::UniqueHandleTraits<T, VULKAN_HPP_DEFAULT_DISPATCHER_TYPE>::deleter());
-		}
-
 		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
 		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology);
 		vk::CullModeFlags convertCullMode(CullModeEnum mode);
 		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp);
-		vk::VertexInputRate convertVertexStepMode(VertexStepModeEnum mode);
 		vk::Format convertVertexFormat(VertexFormatEnum format);
 		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor);
 		vk::BlendOp convertBlendOperation(BlendOperationEnum op);
@@ -269,7 +267,8 @@ namespace cage
 		vk::Filter convertFilter(FilterModeEnum filter);
 		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
 		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode);
-		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags);
+		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format);
 		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format);
+		vk::FrontFace convertFrontFace(FrontFaceEnum face);
 	}
 }

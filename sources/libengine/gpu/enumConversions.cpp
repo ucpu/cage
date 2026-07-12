@@ -70,18 +70,6 @@ namespace cage
 			return vk::CompareOp::eNever;
 		}
 
-		vk::VertexInputRate convertVertexStepMode(VertexStepModeEnum mode)
-		{
-			switch (mode)
-			{
-				case VertexStepModeEnum::Vertex:
-					return vk::VertexInputRate::eVertex;
-				case VertexStepModeEnum::Instance:
-					return vk::VertexInputRate::eInstance;
-			}
-			return vk::VertexInputRate::eVertex;
-		}
-
 		vk::Format convertVertexFormat(VertexFormatEnum format)
 		{
 			switch (format)
@@ -470,7 +458,7 @@ namespace cage
 			return vk::SamplerAddressMode::eClampToEdge;
 		}
 
-		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags)
+		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format)
 		{
 			vk::ImageUsageFlags bits = {};
 			if (any(flags & TextureUsageFlags::CopyDst))
@@ -482,7 +470,21 @@ namespace cage
 			if (any(flags & TextureUsageFlags::StorageBinding))
 				bits |= vk::ImageUsageFlagBits::eStorage;
 			if (any(flags & TextureUsageFlags::RenderAttachment))
-				bits |= vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eDepthStencilAttachment;
+			{
+				switch (format)
+				{
+					case TextureFormatEnum::Stencil8:
+					case TextureFormatEnum::Depth16Unorm:
+					case TextureFormatEnum::Depth32Float:
+					case TextureFormatEnum::Depth32FloatStencil8:
+					case TextureFormatEnum::Depth24Stencil8:
+						bits |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+						break;
+					default:
+						bits |= vk::ImageUsageFlagBits::eColorAttachment;
+						break;
+				}
+			}
 			if (any(flags & TextureUsageFlags::TransientAttachment))
 				bits |= vk::ImageUsageFlagBits::eTransientAttachment;
 			return bits;
@@ -503,6 +505,18 @@ namespace cage
 				default:
 					return vk::ImageAspectFlagBits::eColor;
 			}
+		}
+
+		vk::FrontFace convertFrontFace(FrontFaceEnum face)
+		{
+			switch (face)
+			{
+				case FrontFaceEnum::CCW:
+					return vk::FrontFace::eCounterClockwise;
+				case FrontFaceEnum::CW:
+					return vk::FrontFace::eClockwise;
+			}
+			return vk::FrontFace::eCounterClockwise;
 		}
 	}
 }

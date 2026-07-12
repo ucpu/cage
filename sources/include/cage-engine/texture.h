@@ -41,8 +41,9 @@ namespace cage
 	struct CAGE_ENGINE_API ColorTextureCreateConfig
 	{
 		Vec3i resolution = Vec3i(0, 0, 1);
-		uint32 channels = 4;
+		uint32 arrayLayers = 1;
 		uint32 mipLevels = 1;
+		uint32 channels = 4;
 		TextureFlags flags = TextureFlags::None;
 		bool sampling = true;
 		bool renderable = false;
@@ -52,7 +53,8 @@ namespace cage
 	{
 		AssetLabel name;
 		Vec3i resolution = Vec3i(0, 0, 1);
-		uint32 mipLevelCount = 1;
+		uint32 arrayLayers = 1;
+		uint32 mipLevels = 1;
 		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 		TextureFlags flags = TextureFlags::None;
 		uint32 entityId = 0;

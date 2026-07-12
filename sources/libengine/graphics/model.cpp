@@ -79,7 +79,6 @@ namespace cage
 				CAGE_ASSERT(index <= attrs.size());
 
 				layout.attributes = PointerRange<const gpu::VertexBufferLayout::VertexAttribute>(attrs).subRange(0, index);
-				layout.stepMode = gpu::VertexStepModeEnum::Vertex;
 			}
 		};
 	}

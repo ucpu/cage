@@ -208,10 +208,11 @@ namespace
 
 		TextureHeader data;
 		data.resolution = Vec3i(img->width(), img->height(), 1);
-		data.channels = img->channels();
+		data.arrayLayers = 1;
 		data.mipLevels = 1;
-		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
+		data.channels = img->channels();
 		data.format = gpu::TextureFormatEnum::RGBA8Unorm;
+		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
 		data.sampleFilter = gpu::FilterModeEnum::Linear;
 
 		MemoryBuffer inputBuffer;

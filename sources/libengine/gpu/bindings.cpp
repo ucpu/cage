@@ -10,8 +10,8 @@ namespace cage
 			allocInfo.descriptorPool = *device.descriptorPool;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &*desc.layout->layout;
-			auto sets = device.device.allocateDescriptorSets(allocInfo);
-			set = makeUnique<vk::DescriptorSet>(sets[0]);
+			auto sets = device.device.allocateDescriptorSetsUnique(allocInfo);
+			set = std::move(sets[0]);
 
 			ankerl::svector<vk::WriteDescriptorSet, 10> writes;
 			ankerl::svector<vk::DescriptorBufferInfo, 10> infosBuffers;

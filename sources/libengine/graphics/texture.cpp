@@ -39,7 +39,7 @@ namespace cage
 					hashCombine((uint32)config.resolution[0]);
 					hashCombine((uint32)config.resolution[1]);
 					hashCombine((uint32)config.resolution[2]);
-					hashCombine(config.mipLevelCount);
+					hashCombine(config.mipLevels);
 					hashCombine((uint32)config.format);
 					hashCombine((uint64)config.flags);
 					hashCombine(config.entityId);
@@ -66,19 +66,19 @@ namespace cage
 			{
 				ColorTextureCreateConfig cfg;
 				cfg.resolution = Vec3i(1);
-				cfg.channels = 4;
+				cfg.arrayLayers = 1;
 				cfg.mipLevels = 1;
+				cfg.channels = 4;
 				dummy2d = newTexture(device, cfg, "dummy2d");
 				cfg.flags = TextureFlags::Array;
 				dummyArray = newTexture(device, cfg, "dummyArray");
-				cfg.resolution[2] = 6;
+				cfg.arrayLayers = 6;
 				cfg.flags = TextureFlags::Cubemap;
 				dummyCube = newTexture(device, cfg, "dummyCube");
 
 				gpu::TexelCopyTextureInfo dest = {};
 				dest.texture = dummy2d->nativeTexture();
 				dest.mipLevel = 0;
-				dest.aspect = gpu::TextureAspectEnum::All;
 				gpu::TexelCopyBufferLayout layout = {};
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
@@ -113,22 +113,28 @@ namespace cage
 				dest.texture = dummyArray->nativeTexture();
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
-				extents[2] = 6;
+				//extents[2] = 6;
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 			}
 
 			void generateShadowsSampler()
 			{
-				gpu::TextureDescriptor desc = {};
-				desc.size = Vec3i(1, 1, 1);
+				gpu::TextureDescriptor desc;
+				desc.label = "dummy shadowmap target";
+				desc.resolution = Vec3i(1, 1, 1);
+				desc.arrayLayers = 1;
+				desc.mipLevels = 1;
+				desc.dimension = gpu::TextureDimensionEnum::e2DArray;
 				desc.format = gpu::TextureFormatEnum::Depth32Float;
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
-				desc.label = "dummy shadowmap target";
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
+
 				gpu::TextureViewDescriptor vd = {};
 				vd.dimension = gpu::TextureDimensionEnum::e2DArray;
 				gpu::TextureView view = tex.createView(vd);
+
 				gpu::Sampler samp = device->nativeDevice()->createSampler({});
+
 				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
 				t->flags = TextureFlags::Array;
 				shadowsSampler = std::move(t);
@@ -145,24 +151,29 @@ namespace cage
 			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
 			{
 				gpu::TextureDescriptor desc = {};
-				desc.size = config.resolution;
-				desc.mipLevelCount = config.mipLevelCount;
+				desc.label = config.name;
+				desc.resolution = config.resolution;
+				desc.arrayLayers = config.arrayLayers;
+				desc.mipLevels = config.mipLevels;
+				desc.dimension = textureViewDimension(config.flags);
 				desc.format = config.format;
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
-				desc.label = config.name.c_str();
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
+
 				gpu::TextureViewDescriptor vd = {};
 				vd.dimension = textureViewDimension(config.flags);
 				gpu::TextureView view = tex.createView(vd);
+
 				gpu::SamplerDescriptor sd = {};
 				if (config.samplerVariant)
 				{
+					sd.label = config.name;
 					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
 					sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
 					sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
-					sd.label = config.name.c_str();
 				}
 				gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
+
 				Holder<Texture> t = newTexture(tex, view, samp, config.name);
 				t->flags = config.flags;
 				return t;
@@ -316,22 +327,26 @@ namespace cage
 			{
 				this->label = label_;
 				this->flags = config.flags;
-				gpu::TextureDescriptor desc = {};
+
+				gpu::TextureDescriptor desc;
+				desc.label = label.c_str();
+				desc.dimension = privat::textureViewDimension(config.flags);
+				desc.resolution = config.resolution;
+				desc.arrayLayers = config.arrayLayers;
+				desc.mipLevels = config.mipLevels;
+				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
 				desc.usage = gpu::TextureUsageFlags::CopyDst;
 				if (config.sampling)
 					desc.usage |= gpu::TextureUsageFlags::TextureBinding;
 				if (config.renderable)
 					desc.usage |= gpu::TextureUsageFlags::RenderAttachment;
-				desc.dimension = any(config.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
-				desc.size = config.resolution;
-				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
-				desc.mipLevelCount = config.mipLevels;
-				desc.label = label.c_str();
 				Holder<gpu::Device> dev = device->nativeDevice();
 				texture = dev->createTexture(desc);
-				gpu::TextureViewDescriptor twd = {};
+
+				gpu::TextureViewDescriptor twd;
 				twd.dimension = privat::textureViewDimension(config.flags);
 				view = texture.createView(twd);
+
 				sampler = dev->createSampler({});
 			}
 
@@ -339,7 +354,7 @@ namespace cage
 
 			Vec3i mipRes(uint32 mip) const
 			{
-				CAGE_ASSERT(mip < texture.getMipLevelCount());
+				CAGE_ASSERT(mip < texture.getMipLevels());
 				const Vec3i r = resolution3();
 				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.getDimension() == gpu::TextureDimensionEnum::e3D ? mip : 0), 1));
 			}
@@ -349,19 +364,19 @@ namespace cage
 	Vec2i Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return Vec2i(impl->texture.getWidth(), impl->texture.getHeight());
+		return Vec2i(impl->texture.getResolution());
 	}
 
 	Vec3i Texture::resolution3() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return Vec3i(impl->texture.getWidth(), impl->texture.getHeight(), impl->texture.getDepthOrArrayLayers());
+		return impl->texture.getResolution();
 	}
 
 	uint32 Texture::mipLevels() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->texture.getMipLevelCount();
+		return impl->texture.getMipLevels();
 	}
 
 	Vec2i Texture::mipResolution(uint32 mipmapLevel) const
@@ -416,7 +431,6 @@ namespace cage
 		Holder<Texture> tex = newTexture(device, conf, label);
 		gpu::TexelCopyTextureInfo dest = {};
 		dest.texture = tex->nativeTexture();
-		dest.aspect = gpu::TextureAspectEnum::All;
 		gpu::TexelCopyBufferLayout layout = {};
 		layout.bytesPerRow = image->width() * image->channels();
 		layout.rowsPerImage = image->height();

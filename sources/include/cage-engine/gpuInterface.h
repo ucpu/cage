@@ -22,6 +22,7 @@ namespace cage
 		class CommandBufferImpl;
 		class CommandEncoderImpl;
 		class DeviceImpl;
+		class FutureImpl;
 		class RenderPassEncoderImpl;
 		class RenderPipelineImpl;
 		class SamplerImpl;
@@ -31,7 +32,7 @@ namespace cage
 		class TextureViewImpl;
 
 		///////////////////////////////////////////////////////////////////
-		// basic primitives
+		// StringView
 		///////////////////////////////////////////////////////////////////
 
 		struct CAGE_ENGINE_API StringView
@@ -42,10 +43,10 @@ namespace cage
 			StringView(const char *ptr);
 			StringView(const String &ptr) : str(ptr) {}
 			StringView(const AssetLabel &ptr) : str(ptr) {}
-		};
 
-		struct CAGE_ENGINE_API Future
-		{};
+			StringView(const StringView &) noexcept = default;
+			StringView &operator=(const StringView &) noexcept = default;
+		};
 
 		///////////////////////////////////////////////////////////////////
 		// GpuResourceHandle
@@ -154,15 +155,20 @@ namespace cage
 
 			template<class Callable>
 			Future onSubmittedWorkDone(CallbackModeEnum callbackMode, Callable callable);
-			//void submit(PointerRange<const CommandBuffer> commands);
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
 			void tick();
-			Texture windowAcquireTexture(Window *window);
-			void windowPresent(Window *window);
-			void windowWaitFence(Window *window);
+			void wait(const Future &future);
+			//void waitAny(PointerRange<const Future> futures);
+			//void waitAll(PointerRange<const Future> futures);
+			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+		};
+
+		struct CAGE_ENGINE_API Future : public GpuResourceHandle<Future, FutureImpl>
+		{
+		public:
 		};
 
 		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, RenderPassEncoderImpl>
@@ -194,7 +200,6 @@ namespace cage
 		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, RenderPipelineImpl>
 		{
 		public:
-			//BindGroupLayout getBindGroupLayout(uint32 groupIndex);
 		};
 
 		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, SamplerImpl>
@@ -215,16 +220,17 @@ namespace cage
 		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, TextureImpl>
 		{
 		public:
+			TextureView createView();
 			TextureView createView(const TextureViewDescriptor &desc);
-			uint32 getDepthOrArrayLayers() const;
+
+			Vec3i getResolution() const;
+			uint32 getArrayLayers() const;
+			uint32 getMipLevels() const;
+			//uint32 getSampleCount() const;
 			TextureDimensionEnum getDimension() const;
 			TextureFormatEnum getFormat() const;
-			uint32 getHeight() const;
-			uint32 getMipLevelCount() const;
-			//uint32 getSampleCount() const;
-			//TextureViewDimension getTextureBindingViewDimension() const;
-			//TextureUsageFlags getUsage() const;
-			uint32 getWidth() const;
+			TextureUsageFlags getUsage() const;
+
 			//void pin(TextureUsageFlags usage);
 			//void unpin();
 		};
@@ -232,6 +238,7 @@ namespace cage
 		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, TextureViewImpl>
 		{
 		public:
+			Texture getTexture() const;
 		};
 
 		///////////////////////////////////////////////////////////////////
@@ -323,7 +330,6 @@ namespace cage
 				TextureView view;
 				//TextureView resolveTarget;
 				Vec4 clearValue;
-				//uint32 depthSlice = m;
 				LoadOpEnum loadOp = LoadOpEnum::Undefined;
 				StoreOpEnum storeOp = StoreOpEnum::Undefined;
 			};
@@ -358,12 +364,18 @@ namespace cage
 			struct PrimitiveState
 			{
 				PrimitiveTopologyEnum topology = PrimitiveTopologyEnum::Undefined;
-				//IndexFormatEnum stripIndexFormat = IndexFormatEnum::Undefined;
-				//FrontFace frontFace = FrontFace::Undefined;
+				FrontFaceEnum frontFace = FrontFaceEnum::Undefined;
 				CullModeEnum cullMode = CullModeEnum::Undefined;
-				//bool unclippedDepth = false;
 			};
 			PrimitiveState primitive;
+
+			//struct MultisampleState
+			//{
+			//	uint32 count = 1;
+			//	uint32 mask = 0xFFFFFFFF;
+			//	bool alphaToCoverageEnabled = false;
+			//};
+			//std::optional<MultisampleState> multisample;
 
 			struct DepthStencilState
 			{
@@ -379,14 +391,6 @@ namespace cage
 				bool depthWriteEnabled = false;
 			};
 			std::optional<DepthStencilState> depthStencil;
-
-			//struct MultisampleState
-			//{
-			//	uint32 count = 1;
-			//	uint32 mask = 0xFFFFFFFF;
-			//	bool alphaToCoverageEnabled = false;
-			//};
-			//std::optional<MultisampleState> multisample;
 
 			struct BlendState
 			{
@@ -451,30 +455,29 @@ namespace cage
 			Texture texture;
 			//Vec3i origin;
 			uint32 mipLevel = 0;
-			TextureAspectEnum aspect = TextureAspectEnum::Undefined;
 		};
 
 		struct CAGE_ENGINE_API TextureDescriptor
 		{
 			StringView label;
-			Vec3i size;
-			uint32 mipLevelCount = 1;
-			//uint32 sampleCount = 1;
-			TextureUsageFlags usage = TextureUsageFlags::Undefined;
+			Vec3i resolution;
+			uint32 arrayLayers = 1;
+			uint32 mipLevels = 1;
+			//uint32 samplesCount = 1;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
+			TextureUsageFlags usage = TextureUsageFlags::Undefined;
 		};
 
 		struct CAGE_ENGINE_API TextureViewDescriptor
 		{
 			StringView label;
-			uint32 baseMipLevel = 0;
-			uint32 mipLevelCount = m;
 			uint32 baseArrayLayer = 0;
-			uint32 arrayLayerCount = m;
-			//TextureFormatEnum format = TextureFormatEnum::Undefined;
+			uint32 arrayLayers = m;
+			uint32 baseMipLevel = 0;
+			uint32 mipLevels = m;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
-			//TextureAspectEnum aspect = TextureAspectEnum::Undefined;
+			//TextureFormatEnum format = TextureFormatEnum::Undefined;
 			//TextureUsageFlags usage = TextureUsageFlags::Undefined;
 		};
 
@@ -489,7 +492,14 @@ namespace cage
 			PointerRange<const VertexAttribute> attributes;
 
 			uint32 arrayStride = 0;
-			VertexStepModeEnum stepMode = VertexStepModeEnum::Undefined;
+		};
+
+		struct CAGE_ENGINE_API WindowPresentationDescriptor
+		{
+			// in
+			Window *window = nullptr;
+			// out
+			Texture texture;
 		};
 
 		struct CAGE_ENGINE_API GpuDeviceDescriptor

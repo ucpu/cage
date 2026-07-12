@@ -403,12 +403,18 @@ namespace
 	{
 		TextureHeader header;
 		header.flags = target;
-		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
-		header.channels = images.parts[0].image->channels();
+		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), 1);
+		header.arrayLayers = images.parts.size();
+		if (any(target & TextureFlags::Volume3D))
+		{
+			header.resolution[2] = header.arrayLayers;
+			header.arrayLayers = 1;
+		}
 		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
+		header.channels = images.parts[0].image->channels();
+		header.anisoFilter = toUint32(processor->property("anisoFilter"));
 		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
 		header.mipmapFilter = header.mipLevels > 1 ? gpu::FilterModeEnum::Linear : gpu::FilterModeEnum::Nearest;
-		header.anisoFilter = toUint32(processor->property("anisoFilter"));
 		if (header.sampleFilter != gpu::FilterModeEnum::Linear || header.mipmapFilter != gpu::FilterModeEnum::Linear)
 			header.anisoFilter = 1;
 		header.wrapX = convertWrap(processor->property("wrapX"));

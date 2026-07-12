@@ -125,6 +125,9 @@ namespace cage
 
 			Holder<Image> screenshot()
 			{
+				return {}; // todo
+
+				/*
 				Holder<Texture> texture = sharedTargetTexture.get();
 				if (!texture)
 					return {};
@@ -159,7 +162,6 @@ namespace cage
 				engineGraphicsDevice()->insertCommandBuffer(encoder.finishEncoding(), {});
 				engineGraphicsDevice()->nextFrame();
 
-				/*
 				gpu::Future future = readbackBuffer.mapAsync(gpu::MapModeEnum::Read, 0, readbackDesc.size, gpu::CallbackModeEnum::WaitAnyOnly,
 					[&](gpu::StatusEnum status, gpu::StringView message)
 					{
@@ -171,7 +173,6 @@ namespace cage
 						}
 					});
 				engineGraphicsDevice()->wait(future);
-				*/
 
 				// crop padding
 				if (res != actualResolution)
@@ -194,6 +195,7 @@ namespace cage
 				}
 
 				return img;
+				*/
 			}
 
 			// graphics thread ---------------------------------------------------------------------
@@ -290,10 +292,11 @@ namespace cage
 
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
-				frameStatistics = engineGraphicsDevice()->nextFrame();
-
 				ScopeGuard scopeExit([this]() { windowTexture.clear(); });
-				windowTexture = engineGraphicsDevice()->nextWindow(engineWindow());
+				GraphicsWindowPresentation gwp;
+				gwp.window = engineWindow();
+				frameStatistics = engineGraphicsDevice()->nextFrame(PointerRange(gwp));
+				windowTexture = std::move(gwp.texture);
 				updateDynamicResolution();
 
 				if (!windowTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))

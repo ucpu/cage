@@ -111,12 +111,12 @@ namespace cage
 			Nearest,
 		};
 
-		//enum class FrontFaceEnum
-		//{
-		//	Undefined = 0,
-		//	CCW,
-		//	CW,
-		//};
+		enum class FrontFaceEnum
+		{
+			Undefined = 0,
+			CCW,
+			CW,
+		};
 
 		enum class IndexFormatEnum
 		{
@@ -130,14 +130,6 @@ namespace cage
 			Undefined = 0,
 			Load,
 			Clear,
-			//ExpandResolveTexture,
-		};
-
-		enum class MapModeEnum
-		{
-			Undefined = 0,
-			Read,
-			Write,
 		};
 
 		enum class PrimitiveTopologyEnum
@@ -180,17 +172,6 @@ namespace cage
 			Undefined = 0,
 			Store,
 			Discard,
-		};
-
-		enum class TextureAspectEnum
-		{
-			Undefined = 0,
-			All,
-			//StencilOnly,
-			//DepthOnly,
-			//Plane0Only,
-			//Plane1Only,
-			//Plane2Only,
 		};
 
 		enum class TextureDimensionEnum
@@ -345,13 +326,6 @@ namespace cage
 			Unorm8x4BGRA,
 		};
 
-		enum class VertexStepModeEnum
-		{
-			Undefined = 0,
-			Vertex,
-			Instance,
-		};
-
 		///////////////////////////////////////////////////////////////////
 		// forward declarations
 		///////////////////////////////////////////////////////////////////
@@ -362,6 +336,7 @@ namespace cage
 		class CommandBuffer;
 		class CommandEncoder;
 		class Device;
+		class Future;
 		class RenderPassEncoder;
 		class RenderPipeline;
 		class Sampler;
@@ -385,6 +360,7 @@ namespace cage
 		struct TextureDescriptor;
 		struct TextureViewDescriptor;
 		struct VertexBufferLayout;
+		struct WindowPresentationDescriptor;
 	}
 
 	CAGE_ENUM_BITS(gpu::BufferUsageFlags);

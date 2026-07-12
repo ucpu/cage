@@ -24,7 +24,6 @@ namespace cage
 			gpu::TexelCopyTextureInfo dest = {};
 			dest.texture = tex;
 			dest.mipLevel = mipLevel;
-			dest.aspect = gpu::TextureAspectEnum::All;
 
 			uint32 blockWidth = 1;
 			uint32 blockBytes = header.channels; // for uncompressed formats
@@ -79,12 +78,13 @@ namespace cage
 			Holder<gpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
 			gpu::TextureDescriptor desc = {};
-			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
-			desc.usage = header.usage;
-			desc.format = header.format;
-			desc.mipLevelCount = header.mipLevels;
-			desc.size = header.resolution;
 			desc.label = context->textId;
+			desc.resolution = header.resolution;
+			desc.arrayLayers = header.arrayLayers;
+			desc.mipLevels = header.mipLevels;
+			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
+			desc.format = header.format;
+			desc.usage = header.usage;
 			gpu::Texture wtex = dev->createTexture(desc);
 
 			gpu::TextureViewDescriptor twd = {};

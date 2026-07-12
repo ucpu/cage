@@ -317,6 +317,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
 		CAGE_FORCE_INLINE constexpr PointerRange(T *data, size_type size) : begin_(data), end_(data + size) {}
+		CAGE_FORCE_INLINE constexpr explicit PointerRange(T &one) : begin_(&one), end_(&one + 1) {}
 		template<size_type N>
 		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value)
 		{}

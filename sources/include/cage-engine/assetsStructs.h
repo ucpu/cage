@@ -27,13 +27,14 @@ namespace cage
 	{
 		TextureFlags flags = (TextureFlags)0;
 		Vec3i resolution;
-		uint32 channels = 0;
+		uint32 arrayLayers = 0;
 		uint32 mipLevels = 0;
-		gpu::TextureUsageFlags usage = gpu::TextureUsageFlags::Undefined;
+		uint32 channels = 0;
+		uint32 anisoFilter = 1;
 		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
+		gpu::TextureUsageFlags usage = gpu::TextureUsageFlags::Undefined;
 		gpu::FilterModeEnum sampleFilter = gpu::FilterModeEnum::Undefined;
 		gpu::FilterModeEnum mipmapFilter = gpu::FilterModeEnum::Undefined;
-		uint32 anisoFilter = 1;
 		gpu::AddressModeEnum wrapX = gpu::AddressModeEnum::Undefined;
 		gpu::AddressModeEnum wrapY = gpu::AddressModeEnum::Undefined;
 		gpu::AddressModeEnum wrapZ = gpu::AddressModeEnum::Undefined;

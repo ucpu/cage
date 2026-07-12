@@ -30,7 +30,7 @@ namespace cage
 			{
 				vk::VertexInputBindingDescription bd;
 				bd.binding = binding;
-				bd.inputRate = convertVertexStepMode(b.stepMode);
+				bd.inputRate = vk::VertexInputRate::eVertex;
 				bd.stride = b.arrayStride;
 				for (const auto &a : b.attributes)
 				{
@@ -58,8 +58,8 @@ namespace cage
 			viewport.scissorCount = 1;
 
 			vk::PipelineRasterizationStateCreateInfo raster;
+			raster.frontFace = convertFrontFace(desc.primitive.frontFace);
 			raster.cullMode = convertCullMode(desc.primitive.cullMode);
-			raster.frontFace = vk::FrontFace::eCounterClockwise;
 			raster.polygonMode = vk::PolygonMode::eFill;
 			raster.lineWidth = 1;
 

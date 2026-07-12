@@ -20,15 +20,8 @@ namespace cage
 
 		SamplerImpl::~SamplerImpl() {}
 
-		TextureImpl::TextureImpl(const DeviceImpl &device_, const TextureDescriptor &desc) : device(&device_), resolution(desc.size), mipLevels(desc.mipLevelCount), dimension(desc.dimension), format(desc.format)
+		TextureImpl::TextureImpl(const DeviceImpl &device_, const TextureDescriptor &desc) : device(&device_), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
 		{
-			bool isArray = false;
-			switch (dimension)
-			{
-				case TextureDimensionEnum::e2DArray:
-				case TextureDimensionEnum::CubeArray:
-					isArray = true;
-			}
 			bool isCube = false;
 			switch (dimension)
 			{
@@ -36,7 +29,6 @@ namespace cage
 				case TextureDimensionEnum::CubeArray:
 					isCube = true;
 			}
-			bool is3d = dimension == TextureDimensionEnum::e3D;
 
 			vk::ImageCreateInfo imageInfo;
 			switch (dimension)
@@ -58,14 +50,14 @@ namespace cage
 			if (isCube)
 				imageInfo.flags |= vk::ImageCreateFlagBits::eCubeCompatible;
 			imageInfo.format = convertTextureFormat(format);
-			imageInfo.extent.width = desc.size[0];
-			imageInfo.extent.height = desc.size[1];
-			imageInfo.extent.depth = is3d ? desc.size[2] : 1;
+			imageInfo.extent.width = resolution[0];
+			imageInfo.extent.height = resolution[1];
+			imageInfo.extent.depth = resolution[2];
+			imageInfo.arrayLayers = arrayLayers;
 			imageInfo.mipLevels = mipLevels;
-			imageInfo.arrayLayers = (isArray ? desc.size[2] : 1) * (isCube ? 6 : 1);
 			imageInfo.samples = vk::SampleCountFlagBits::e1;
 			imageInfo.tiling = vk::ImageTiling::eOptimal;
-			imageInfo.usage = convertTextureUsage(desc.usage);
+			imageInfo.usage = convertTextureUsage(usage, format);
 			imageInfo.sharingMode = vk::SharingMode::eExclusive;
 			imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
@@ -108,9 +100,9 @@ namespace cage
 			viewInfo.format = convertTextureFormat(texture->format);
 			viewInfo.subresourceRange.aspectMask = convertAspectMask(texture->format);
 			viewInfo.subresourceRange.baseMipLevel = desc.baseMipLevel;
-			viewInfo.subresourceRange.levelCount = desc.mipLevelCount;
+			viewInfo.subresourceRange.levelCount = desc.mipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = desc.baseArrayLayer;
-			viewInfo.subresourceRange.layerCount = desc.arrayLayerCount;
+			viewInfo.subresourceRange.layerCount = desc.arrayLayers;
 			view = texture->device->device.createImageViewUnique(viewInfo);
 		}
 
