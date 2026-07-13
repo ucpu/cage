@@ -4,160 +4,28 @@ namespace cage
 {
 	namespace gpu
 	{
-		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility)
+		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op)
 		{
-			vk::ShaderStageFlags r = {};
-			if (any(visibility & ShaderStagesFlags::Vertex))
-				r |= vk::ShaderStageFlagBits::eVertex;
-			if (any(visibility & ShaderStagesFlags::Fragment))
-				r |= vk::ShaderStageFlagBits::eFragment;
-			if (any(visibility & ShaderStagesFlags::Compute))
-				r |= vk::ShaderStageFlagBits::eCompute;
-			return r;
+			switch (op)
+			{
+				case LoadOpEnum::Clear:
+					return vk::AttachmentLoadOp::eClear;
+				case LoadOpEnum::Load:
+					return vk::AttachmentLoadOp::eLoad;
+			}
+			return vk::AttachmentLoadOp::eNoneKHR;
 		}
 
-		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology)
+		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op)
 		{
-			switch (topology)
+			switch (op)
 			{
-				case PrimitiveTopologyEnum::PointList:
-					return vk::PrimitiveTopology::ePointList;
-				case PrimitiveTopologyEnum::LineList:
-					return vk::PrimitiveTopology::eLineList;
-				case PrimitiveTopologyEnum::LineStrip:
-					return vk::PrimitiveTopology::eLineStrip;
-				case PrimitiveTopologyEnum::TriangleList:
-					return vk::PrimitiveTopology::eTriangleList;
-				case PrimitiveTopologyEnum::TriangleStrip:
-					return vk::PrimitiveTopology::eTriangleStrip;
+				case StoreOpEnum::Discard:
+					return vk::AttachmentStoreOp::eDontCare;
+				case StoreOpEnum::Store:
+					return vk::AttachmentStoreOp::eStore;
 			}
-			return vk::PrimitiveTopology::ePointList;
-		}
-
-		vk::CullModeFlags convertCullMode(CullModeEnum mode)
-		{
-			switch (mode)
-			{
-				case CullModeEnum::Back:
-					return vk::CullModeFlagBits::eBack;
-				case CullModeEnum::Front:
-					return vk::CullModeFlagBits::eFront;
-			}
-			return vk::CullModeFlagBits::eNone;
-		}
-
-		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp)
-		{
-			switch (comp)
-			{
-				case CompareFunctionEnum::Never:
-					return vk::CompareOp::eNever;
-				case CompareFunctionEnum::Less:
-					return vk::CompareOp::eLess;
-				case CompareFunctionEnum::Equal:
-					return vk::CompareOp::eEqual;
-				case CompareFunctionEnum::LessEqual:
-					return vk::CompareOp::eLessOrEqual;
-				case CompareFunctionEnum::Greater:
-					return vk::CompareOp::eGreater;
-				case CompareFunctionEnum::NotEqual:
-					return vk::CompareOp::eNotEqual;
-				case CompareFunctionEnum::GreaterEqual:
-					return vk::CompareOp::eGreaterOrEqual;
-				case CompareFunctionEnum::Always:
-					return vk::CompareOp::eAlways;
-			}
-			return vk::CompareOp::eNever;
-		}
-
-		vk::Format convertVertexFormat(VertexFormatEnum format)
-		{
-			switch (format)
-			{
-				case VertexFormatEnum::Uint8:
-					return vk::Format::eR8Uint;
-				case VertexFormatEnum::Uint8x2:
-					return vk::Format::eR8G8Uint;
-				case VertexFormatEnum::Uint8x4:
-					return vk::Format::eR8G8B8A8Uint;
-				case VertexFormatEnum::Sint8:
-					return vk::Format::eR8Sint;
-				case VertexFormatEnum::Sint8x2:
-					return vk::Format::eR8G8Sint;
-				case VertexFormatEnum::Sint8x4:
-					return vk::Format::eR8G8B8A8Sint;
-				case VertexFormatEnum::Unorm8:
-					return vk::Format::eR8Unorm;
-				case VertexFormatEnum::Unorm8x2:
-					return vk::Format::eR8G8Unorm;
-				case VertexFormatEnum::Unorm8x4:
-					return vk::Format::eR8G8B8A8Unorm;
-				case VertexFormatEnum::Unorm8x4BGRA:
-					return vk::Format::eB8G8R8A8Unorm;
-				case VertexFormatEnum::Snorm8:
-					return vk::Format::eR8Snorm;
-				case VertexFormatEnum::Snorm8x2:
-					return vk::Format::eR8G8Snorm;
-				case VertexFormatEnum::Snorm8x4:
-					return vk::Format::eR8G8B8A8Snorm;
-				case VertexFormatEnum::Uint16:
-					return vk::Format::eR16Uint;
-				case VertexFormatEnum::Uint16x2:
-					return vk::Format::eR16G16Uint;
-				case VertexFormatEnum::Uint16x4:
-					return vk::Format::eR16G16B16A16Uint;
-				case VertexFormatEnum::Sint16:
-					return vk::Format::eR16Sint;
-				case VertexFormatEnum::Sint16x2:
-					return vk::Format::eR16G16Sint;
-				case VertexFormatEnum::Sint16x4:
-					return vk::Format::eR16G16B16A16Sint;
-				case VertexFormatEnum::Unorm16:
-					return vk::Format::eR16Unorm;
-				case VertexFormatEnum::Unorm16x2:
-					return vk::Format::eR16G16Unorm;
-				case VertexFormatEnum::Unorm16x4:
-					return vk::Format::eR16G16B16A16Unorm;
-				case VertexFormatEnum::Snorm16:
-					return vk::Format::eR16Snorm;
-				case VertexFormatEnum::Snorm16x2:
-					return vk::Format::eR16G16Snorm;
-				case VertexFormatEnum::Snorm16x4:
-					return vk::Format::eR16G16B16A16Snorm;
-				case VertexFormatEnum::Float16:
-					return vk::Format::eR16Sfloat;
-				case VertexFormatEnum::Float16x2:
-					return vk::Format::eR16G16Sfloat;
-				case VertexFormatEnum::Float16x4:
-					return vk::Format::eR16G16B16A16Sfloat;
-				case VertexFormatEnum::Uint32:
-					return vk::Format::eR32Uint;
-				case VertexFormatEnum::Uint32x2:
-					return vk::Format::eR32G32Uint;
-				case VertexFormatEnum::Uint32x3:
-					return vk::Format::eR32G32B32Uint;
-				case VertexFormatEnum::Uint32x4:
-					return vk::Format::eR32G32B32A32Uint;
-				case VertexFormatEnum::Sint32:
-					return vk::Format::eR32Sint;
-				case VertexFormatEnum::Sint32x2:
-					return vk::Format::eR32G32Sint;
-				case VertexFormatEnum::Sint32x3:
-					return vk::Format::eR32G32B32Sint;
-				case VertexFormatEnum::Sint32x4:
-					return vk::Format::eR32G32B32A32Sint;
-				case VertexFormatEnum::Float32:
-					return vk::Format::eR32Sfloat;
-				case VertexFormatEnum::Float32x2:
-					return vk::Format::eR32G32Sfloat;
-				case VertexFormatEnum::Float32x3:
-					return vk::Format::eR32G32B32Sfloat;
-				case VertexFormatEnum::Float32x4:
-					return vk::Format::eR32G32B32A32Sfloat;
-				case VertexFormatEnum::Unorm10_10_10_2:
-					return vk::Format::eA2B10G10R10UnormPack32;
-			}
-			return vk::Format::eUndefined;
+			return vk::AttachmentStoreOp::eNoneKHR;
 		}
 
 		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor)
@@ -196,6 +64,78 @@ namespace cage
 					return vk::BlendOp::eMax;
 			}
 			return vk::BlendOp::eAdd;
+		}
+
+		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags)
+		{
+			vk::BufferUsageFlags bits = {};
+			if (any(flags & BufferUsageFlags::CopyDst))
+				bits |= vk::BufferUsageFlagBits::eTransferDst;
+			if (any(flags & BufferUsageFlags::CopySrc))
+				bits |= vk::BufferUsageFlagBits::eTransferSrc;
+			if (any(flags & BufferUsageFlags::Index))
+				bits |= vk::BufferUsageFlagBits::eIndexBuffer;
+			if (any(flags & BufferUsageFlags::Indirect))
+				bits |= vk::BufferUsageFlagBits::eIndirectBuffer;
+			//if (any(flags & BufferUsageFlags::QueryResolve))
+			//	bits |= vk::BufferUsageFlagBits::;
+			if (any(flags & BufferUsageFlags::Storage))
+				bits |= vk::BufferUsageFlagBits::eStorageBuffer;
+			if (any(flags & BufferUsageFlags::TexelBuffer))
+				bits |= vk::BufferUsageFlagBits::eStorageTexelBuffer | vk::BufferUsageFlagBits::eUniformTexelBuffer;
+			if (any(flags & BufferUsageFlags::Uniform))
+				bits |= vk::BufferUsageFlagBits::eUniformBuffer;
+			if (any(flags & BufferUsageFlags::Vertex))
+				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
+			return bits;
+		}
+
+		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp)
+		{
+			switch (comp)
+			{
+				case CompareFunctionEnum::Never:
+					return vk::CompareOp::eNever;
+				case CompareFunctionEnum::Less:
+					return vk::CompareOp::eLess;
+				case CompareFunctionEnum::Equal:
+					return vk::CompareOp::eEqual;
+				case CompareFunctionEnum::LessEqual:
+					return vk::CompareOp::eLessOrEqual;
+				case CompareFunctionEnum::Greater:
+					return vk::CompareOp::eGreater;
+				case CompareFunctionEnum::NotEqual:
+					return vk::CompareOp::eNotEqual;
+				case CompareFunctionEnum::GreaterEqual:
+					return vk::CompareOp::eGreaterOrEqual;
+				case CompareFunctionEnum::Always:
+					return vk::CompareOp::eAlways;
+			}
+			return vk::CompareOp::eNever;
+		}
+
+		vk::CullModeFlags convertCullMode(CullModeEnum mode)
+		{
+			switch (mode)
+			{
+				case CullModeEnum::Back:
+					return vk::CullModeFlagBits::eBack;
+				case CullModeEnum::Front:
+					return vk::CullModeFlagBits::eFront;
+			}
+			return vk::CullModeFlagBits::eNone;
+		}
+
+		vk::Filter convertFilter(FilterModeEnum filter)
+		{
+			switch (filter)
+			{
+				case FilterModeEnum::Nearest:
+					return vk::Filter::eNearest;
+				case FilterModeEnum::Linear:
+					return vk::Filter::eLinear;
+			}
+			return vk::Filter::eNearest;
 		}
 
 		vk::Format convertTextureFormat(TextureFormatEnum format)
@@ -360,102 +300,123 @@ namespace cage
 			return vk::Format::eUndefined;
 		}
 
-		vk::IndexType convertIndexFormat(IndexFormatEnum format)
+		vk::Format convertVertexFormat(VertexFormatEnum format)
 		{
 			switch (format)
 			{
-				case IndexFormatEnum::Uint16:
-					return vk::IndexType::eUint16;
-				case IndexFormatEnum::Uint32:
-					return vk::IndexType::eUint32;
+				case VertexFormatEnum::Uint8:
+					return vk::Format::eR8Uint;
+				case VertexFormatEnum::Uint8x2:
+					return vk::Format::eR8G8Uint;
+				case VertexFormatEnum::Uint8x4:
+					return vk::Format::eR8G8B8A8Uint;
+				case VertexFormatEnum::Sint8:
+					return vk::Format::eR8Sint;
+				case VertexFormatEnum::Sint8x2:
+					return vk::Format::eR8G8Sint;
+				case VertexFormatEnum::Sint8x4:
+					return vk::Format::eR8G8B8A8Sint;
+				case VertexFormatEnum::Unorm8:
+					return vk::Format::eR8Unorm;
+				case VertexFormatEnum::Unorm8x2:
+					return vk::Format::eR8G8Unorm;
+				case VertexFormatEnum::Unorm8x4:
+					return vk::Format::eR8G8B8A8Unorm;
+				case VertexFormatEnum::Unorm8x4BGRA:
+					return vk::Format::eB8G8R8A8Unorm;
+				case VertexFormatEnum::Snorm8:
+					return vk::Format::eR8Snorm;
+				case VertexFormatEnum::Snorm8x2:
+					return vk::Format::eR8G8Snorm;
+				case VertexFormatEnum::Snorm8x4:
+					return vk::Format::eR8G8B8A8Snorm;
+				case VertexFormatEnum::Uint16:
+					return vk::Format::eR16Uint;
+				case VertexFormatEnum::Uint16x2:
+					return vk::Format::eR16G16Uint;
+				case VertexFormatEnum::Uint16x4:
+					return vk::Format::eR16G16B16A16Uint;
+				case VertexFormatEnum::Sint16:
+					return vk::Format::eR16Sint;
+				case VertexFormatEnum::Sint16x2:
+					return vk::Format::eR16G16Sint;
+				case VertexFormatEnum::Sint16x4:
+					return vk::Format::eR16G16B16A16Sint;
+				case VertexFormatEnum::Unorm16:
+					return vk::Format::eR16Unorm;
+				case VertexFormatEnum::Unorm16x2:
+					return vk::Format::eR16G16Unorm;
+				case VertexFormatEnum::Unorm16x4:
+					return vk::Format::eR16G16B16A16Unorm;
+				case VertexFormatEnum::Snorm16:
+					return vk::Format::eR16Snorm;
+				case VertexFormatEnum::Snorm16x2:
+					return vk::Format::eR16G16Snorm;
+				case VertexFormatEnum::Snorm16x4:
+					return vk::Format::eR16G16B16A16Snorm;
+				case VertexFormatEnum::Float16:
+					return vk::Format::eR16Sfloat;
+				case VertexFormatEnum::Float16x2:
+					return vk::Format::eR16G16Sfloat;
+				case VertexFormatEnum::Float16x4:
+					return vk::Format::eR16G16B16A16Sfloat;
+				case VertexFormatEnum::Uint32:
+					return vk::Format::eR32Uint;
+				case VertexFormatEnum::Uint32x2:
+					return vk::Format::eR32G32Uint;
+				case VertexFormatEnum::Uint32x3:
+					return vk::Format::eR32G32B32Uint;
+				case VertexFormatEnum::Uint32x4:
+					return vk::Format::eR32G32B32A32Uint;
+				case VertexFormatEnum::Sint32:
+					return vk::Format::eR32Sint;
+				case VertexFormatEnum::Sint32x2:
+					return vk::Format::eR32G32Sint;
+				case VertexFormatEnum::Sint32x3:
+					return vk::Format::eR32G32B32Sint;
+				case VertexFormatEnum::Sint32x4:
+					return vk::Format::eR32G32B32A32Sint;
+				case VertexFormatEnum::Float32:
+					return vk::Format::eR32Sfloat;
+				case VertexFormatEnum::Float32x2:
+					return vk::Format::eR32G32Sfloat;
+				case VertexFormatEnum::Float32x3:
+					return vk::Format::eR32G32B32Sfloat;
+				case VertexFormatEnum::Float32x4:
+					return vk::Format::eR32G32B32A32Sfloat;
+				case VertexFormatEnum::Unorm10_10_10_2:
+					return vk::Format::eA2B10G10R10UnormPack32;
 			}
-			return vk::IndexType::eNoneKHR;
+			return vk::Format::eUndefined;
 		}
 
-		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op)
+		vk::FrontFace convertFrontFace(FrontFaceEnum face)
 		{
-			switch (op)
+			switch (face)
 			{
-				case LoadOpEnum::Clear:
-					return vk::AttachmentLoadOp::eClear;
-				case LoadOpEnum::Load:
-					return vk::AttachmentLoadOp::eLoad;
+				case FrontFaceEnum::CCW:
+					return vk::FrontFace::eCounterClockwise;
+				case FrontFaceEnum::CW:
+					return vk::FrontFace::eClockwise;
 			}
-			return vk::AttachmentLoadOp::eNoneKHR;
+			return vk::FrontFace::eCounterClockwise;
 		}
 
-		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op)
+		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
 		{
-			switch (op)
+			switch (format)
 			{
-				case StoreOpEnum::Discard:
-					return vk::AttachmentStoreOp::eDontCare;
-				case StoreOpEnum::Store:
-					return vk::AttachmentStoreOp::eStore;
+				case TextureFormatEnum::Stencil8:
+					return vk::ImageAspectFlagBits::eStencil;
+				case TextureFormatEnum::Depth16Unorm:
+				case TextureFormatEnum::Depth32Float:
+					return vk::ImageAspectFlagBits::eDepth;
+				case TextureFormatEnum::Depth32FloatStencil8:
+				case TextureFormatEnum::Depth24Stencil8:
+					return vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+				default:
+					return vk::ImageAspectFlagBits::eColor;
 			}
-			return vk::AttachmentStoreOp::eNoneKHR;
-		}
-
-		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags)
-		{
-			vk::BufferUsageFlags bits = {};
-			if (any(flags & BufferUsageFlags::CopyDst))
-				bits |= vk::BufferUsageFlagBits::eTransferDst;
-			if (any(flags & BufferUsageFlags::CopySrc))
-				bits |= vk::BufferUsageFlagBits::eTransferSrc;
-			if (any(flags & BufferUsageFlags::Index))
-				bits |= vk::BufferUsageFlagBits::eIndexBuffer;
-			if (any(flags & BufferUsageFlags::Indirect))
-				bits |= vk::BufferUsageFlagBits::eIndirectBuffer;
-			//if (any(flags & BufferUsageFlags::QueryResolve))
-			//	bits |= vk::BufferUsageFlagBits::;
-			if (any(flags & BufferUsageFlags::Storage))
-				bits |= vk::BufferUsageFlagBits::eStorageBuffer;
-			if (any(flags & BufferUsageFlags::TexelBuffer))
-				bits |= vk::BufferUsageFlagBits::eStorageTexelBuffer | vk::BufferUsageFlagBits::eUniformTexelBuffer;
-			if (any(flags & BufferUsageFlags::Uniform))
-				bits |= vk::BufferUsageFlagBits::eUniformBuffer;
-			if (any(flags & BufferUsageFlags::Vertex))
-				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
-			return bits;
-		}
-
-		vk::Filter convertFilter(FilterModeEnum filter)
-		{
-			switch (filter)
-			{
-				case FilterModeEnum::Nearest:
-					return vk::Filter::eNearest;
-				case FilterModeEnum::Linear:
-					return vk::Filter::eLinear;
-			}
-			return vk::Filter::eNearest;
-		}
-
-		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter)
-		{
-			switch (filter)
-			{
-				case FilterModeEnum::Nearest:
-					return vk::SamplerMipmapMode::eNearest;
-				case FilterModeEnum::Linear:
-					return vk::SamplerMipmapMode::eLinear;
-			}
-			return vk::SamplerMipmapMode::eNearest;
-		}
-
-		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode)
-		{
-			switch (mode)
-			{
-				case AddressModeEnum::ClampToEdge:
-					return vk::SamplerAddressMode::eClampToEdge;
-				case AddressModeEnum::Repeat:
-					return vk::SamplerAddressMode::eRepeat;
-				case AddressModeEnum::MirrorRepeat:
-					return vk::SamplerAddressMode::eMirroredRepeat;
-			}
-			return vk::SamplerAddressMode::eClampToEdge;
 		}
 
 		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format)
@@ -490,33 +451,133 @@ namespace cage
 			return bits;
 		}
 
-		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
+		vk::IndexType convertIndexFormat(IndexFormatEnum format)
 		{
 			switch (format)
 			{
-				case TextureFormatEnum::Stencil8:
-					return vk::ImageAspectFlagBits::eStencil;
-				case TextureFormatEnum::Depth16Unorm:
-				case TextureFormatEnum::Depth32Float:
-					return vk::ImageAspectFlagBits::eDepth;
-				case TextureFormatEnum::Depth32FloatStencil8:
-				case TextureFormatEnum::Depth24Stencil8:
-					return vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
-				default:
-					return vk::ImageAspectFlagBits::eColor;
+				case IndexFormatEnum::Uint16:
+					return vk::IndexType::eUint16;
+				case IndexFormatEnum::Uint32:
+					return vk::IndexType::eUint32;
 			}
+			return vk::IndexType::eNoneKHR;
 		}
 
-		vk::FrontFace convertFrontFace(FrontFaceEnum face)
+		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology)
 		{
-			switch (face)
+			switch (topology)
 			{
-				case FrontFaceEnum::CCW:
-					return vk::FrontFace::eCounterClockwise;
-				case FrontFaceEnum::CW:
-					return vk::FrontFace::eClockwise;
+				case PrimitiveTopologyEnum::PointList:
+					return vk::PrimitiveTopology::ePointList;
+				case PrimitiveTopologyEnum::LineList:
+					return vk::PrimitiveTopology::eLineList;
+				case PrimitiveTopologyEnum::LineStrip:
+					return vk::PrimitiveTopology::eLineStrip;
+				case PrimitiveTopologyEnum::TriangleList:
+					return vk::PrimitiveTopology::eTriangleList;
+				case PrimitiveTopologyEnum::TriangleStrip:
+					return vk::PrimitiveTopology::eTriangleStrip;
 			}
-			return vk::FrontFace::eCounterClockwise;
+			return vk::PrimitiveTopology::ePointList;
+		}
+
+		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode)
+		{
+			switch (mode)
+			{
+				case AddressModeEnum::ClampToEdge:
+					return vk::SamplerAddressMode::eClampToEdge;
+				case AddressModeEnum::Repeat:
+					return vk::SamplerAddressMode::eRepeat;
+				case AddressModeEnum::MirrorRepeat:
+					return vk::SamplerAddressMode::eMirroredRepeat;
+			}
+			return vk::SamplerAddressMode::eClampToEdge;
+		}
+
+		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter)
+		{
+			switch (filter)
+			{
+				case FilterModeEnum::Nearest:
+					return vk::SamplerMipmapMode::eNearest;
+				case FilterModeEnum::Linear:
+					return vk::SamplerMipmapMode::eLinear;
+			}
+			return vk::SamplerMipmapMode::eNearest;
+		}
+
+		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility)
+		{
+			vk::ShaderStageFlags r = {};
+			if (any(visibility & ShaderStagesFlags::Vertex))
+				r |= vk::ShaderStageFlagBits::eVertex;
+			if (any(visibility & ShaderStagesFlags::Fragment))
+				r |= vk::ShaderStageFlagBits::eFragment;
+			if (any(visibility & ShaderStagesFlags::Compute))
+				r |= vk::ShaderStageFlagBits::eCompute;
+			return r;
+		}
+
+		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout)
+		{
+			switch (state)
+			{
+				default:
+				case ImageStateEnum::Undefined:
+					stageMask = vk::PipelineStageFlagBits2::eNone;
+					accessMask = vk::AccessFlagBits2::eNone;
+					imageLayout = vk::ImageLayout::eUndefined;
+					break;
+
+				case ImageStateEnum::ColorAttachment:
+					stageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+					accessMask = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite;
+					imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
+					break;
+
+				case ImageStateEnum::DepthAttachment:
+					stageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests;
+					accessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
+					imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+					break;
+
+				case ImageStateEnum::Sampled:
+					stageMask = vk::PipelineStageFlagBits2::eFragmentShader;
+					accessMask = vk::AccessFlagBits2::eShaderSampledRead;
+					imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+					break;
+
+				case ImageStateEnum::StorageRead:
+					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
+					accessMask = vk::AccessFlagBits2::eShaderStorageRead;
+					imageLayout = vk::ImageLayout::eGeneral;
+					break;
+
+				case ImageStateEnum::StorageWrite:
+					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
+					accessMask = vk::AccessFlagBits2::eShaderStorageWrite;
+					imageLayout = vk::ImageLayout::eGeneral;
+					break;
+
+				case ImageStateEnum::TransferSrc:
+					stageMask = vk::PipelineStageFlagBits2::eTransfer;
+					accessMask = vk::AccessFlagBits2::eTransferRead;
+					imageLayout = vk::ImageLayout::eTransferSrcOptimal;
+					break;
+
+				case ImageStateEnum::TransferDst:
+					stageMask = vk::PipelineStageFlagBits2::eTransfer;
+					accessMask = vk::AccessFlagBits2::eTransferWrite;
+					imageLayout = vk::ImageLayout::eTransferDstOptimal;
+					break;
+
+				case ImageStateEnum::Present:
+					stageMask = vk::PipelineStageFlagBits2::eBottomOfPipe;
+					accessMask = vk::AccessFlagBits2::eNone;
+					imageLayout = vk::ImageLayout::ePresentSrcKHR;
+					break;
+			}
 		}
 	}
 }

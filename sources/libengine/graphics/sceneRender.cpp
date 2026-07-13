@@ -612,7 +612,8 @@ namespace cage
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
-			conf.resolution = Vec3i(resolution, resolution, cascades);
+			conf.resolution = Vec3i(resolution, resolution, 1);
+			conf.arrayLayers = cascades;
 			conf.format = gpu::TextureFormatEnum::Depth32Float;
 			conf.flags = TextureFlags::Array;
 			conf.entityId = entityId;
@@ -623,7 +624,8 @@ namespace cage
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
-			conf.resolution = Vec3i(resolution, resolution, 6);
+			conf.resolution = Vec3i(resolution, resolution, 1);
+			conf.arrayLayers = 6;
 			conf.format = gpu::TextureFormatEnum::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
 			conf.entityId = entityId;

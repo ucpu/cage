@@ -1,4 +1,5 @@
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 #include <svector.h>
@@ -27,15 +28,34 @@ namespace cage
 
 	namespace gpu
 	{
+		enum class ImageStateEnum
+		{
+			Undefined = 0,
+			ColorAttachment,
+			DepthAttachment,
+			Sampled,
+			StorageRead,
+			StorageWrite,
+			TransferSrc,
+			TransferDst,
+			Present,
+		};
+
+		struct Hasher
+		{
+			auto operator()(const Texture &t) const noexcept { return std::hash<void *>()(t.get()); }
+			auto operator()(const Texture &a, const Texture &b) const noexcept { return a.get() == b.get(); }
+		};
+
 		struct WindowGpuContextImpl : private Immovable
 		{
 			struct Frame
 			{
-				vk::Image image;
 				vk::UniqueSemaphore imageAcquiredSemaphore;
 				vk::UniqueSemaphore renderCompleteSemaphore;
-				vk::UniqueFence renderCompleteFence;
 				Texture texture;
+				vk::Image image;
+				//vk::UniqueFence renderCompleteFence;
 			};
 
 			vkb::Swapchain swapchain;
@@ -48,7 +68,7 @@ namespace cage
 			WindowGpuContextImpl(vk::Instance instance);
 			~WindowGpuContextImpl();
 
-			void init(vk::Device device);
+			void init(DeviceImpl &device);
 			void clear();
 
 			Frame &frame() { return frames[index]; }
@@ -60,7 +80,7 @@ namespace cage
 		public:
 			vk::UniqueDescriptorSet set;
 
-			BindGroupImpl(const DeviceImpl &device, const BindGroupDescriptor &desc);
+			BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc);
 			~BindGroupImpl();
 		};
 
@@ -69,7 +89,7 @@ namespace cage
 		public:
 			vk::UniqueDescriptorSetLayout layout;
 
-			BindGroupLayoutImpl(const DeviceImpl &device, const BindGroupLayoutDescriptor &desc);
+			BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc);
 			~BindGroupLayoutImpl();
 		};
 
@@ -85,7 +105,7 @@ namespace cage
 			uint64 size = 0;
 			BufferUsageFlags usage = BufferUsageFlags::Undefined;
 
-			BufferImpl(const DeviceImpl &device, const BufferDescriptor &desc);
+			BufferImpl(DeviceImpl &device, const BufferDescriptor &desc);
 			~BufferImpl();
 
 			void flush();
@@ -95,13 +115,10 @@ namespace cage
 		class CommandBufferImpl : private Immovable
 		{
 		public:
-			std::vector<vk::UniqueCommandBuffer> buffers;
-			vk::Device device;
+			vk::UniqueCommandBuffer buffer;
 
-			CommandBufferImpl(const DeviceImpl &device);
+			CommandBufferImpl();
 			~CommandBufferImpl();
-
-			vk::UniqueCommandBuffer newBuffer();
 		};
 
 		class CommandEncoderImpl : private Immovable
@@ -109,9 +126,15 @@ namespace cage
 		public:
 			CommandBuffer buffer;
 			vk::UniqueCommandBuffer cmd;
+			std::unordered_map<Texture, ImageStateEnum, Hasher, Hasher> transitionedImages;
 
-			CommandEncoderImpl(const DeviceImpl &device, const CommandEncoderDescriptor &desc);
+			CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc);
 			~CommandEncoderImpl();
+
+			// records a barrier with layout transition (if needed)
+			// permanent = false: keeps track of the changed state to automatically revert it to the default layout at the end
+			// permanent = true: updates the default layout of the image - the image must not be used concurrently in any other command encoders - used for initialization only
+			void imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent = false);
 
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 
@@ -131,8 +154,6 @@ namespace cage
 			};
 			Bootstrap bootstrap;
 
-			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
-
 		public:
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
@@ -140,12 +161,15 @@ namespace cage
 			vk::Queue queue;
 			VmaAllocator allocator = nullptr;
 			vk::UniqueDescriptorPool descriptorPool;
+			std::vector<CommandBuffer> additionalCommands;
+			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
 
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
+			vk::UniqueCommandBuffer newCommandBuffer();
 
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
@@ -182,7 +206,7 @@ namespace cage
 			vk::UniquePipeline pipeline;
 			PipelineLayout layout;
 
-			RenderPipelineImpl(const DeviceImpl &device, const RenderPipelineDescriptor &desc);
+			RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc);
 			~RenderPipelineImpl();
 		};
 
@@ -191,7 +215,7 @@ namespace cage
 		public:
 			vk::UniqueSampler sampler;
 
-			SamplerImpl(const DeviceImpl &device, const SamplerDescriptor &desc);
+			SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc);
 			~SamplerImpl();
 		};
 
@@ -200,7 +224,7 @@ namespace cage
 		public:
 			vk::UniqueShaderModule shader;
 
-			ShaderModuleImpl(const DeviceImpl &device, const ShaderModuleDescriptor &desc);
+			ShaderModuleImpl(DeviceImpl &device, const ShaderModuleDescriptor &desc);
 			~ShaderModuleImpl();
 		};
 
@@ -209,7 +233,7 @@ namespace cage
 		public:
 			vk::UniquePipelineLayout layout;
 
-			PipelineLayoutImpl(const DeviceImpl &device, const PipelineLayoutDescriptor &desc);
+			PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc);
 			~PipelineLayoutImpl();
 		};
 
@@ -220,6 +244,7 @@ namespace cage
 			vk::Image image;
 			VmaAllocationInfo allocatedInfo = {};
 			VmaAllocation allocation = nullptr;
+			ImageStateEnum defaultState = ImageStateEnum::Undefined;
 
 			Vec3i resolution;
 			uint32 arrayLayers = 0;
@@ -228,7 +253,8 @@ namespace cage
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
 			TextureUsageFlags usage = TextureUsageFlags::Undefined;
 
-			TextureImpl(const DeviceImpl &device, const TextureDescriptor &desc);
+			TextureImpl(DeviceImpl &device, vk::Image image);
+			TextureImpl(DeviceImpl &device, const TextureDescriptor &desc);
 			~TextureImpl();
 		};
 
@@ -252,23 +278,24 @@ namespace cage
 			check(what, (VkResult)result);
 		}
 
-		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
-		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology);
-		vk::CullModeFlags convertCullMode(CullModeEnum mode);
-		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp);
-		vk::Format convertVertexFormat(VertexFormatEnum format);
-		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor);
-		vk::BlendOp convertBlendOperation(BlendOperationEnum op);
-		vk::Format convertTextureFormat(TextureFormatEnum format);
-		vk::IndexType convertIndexFormat(IndexFormatEnum format);
 		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op);
 		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op);
+		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor);
+		vk::BlendOp convertBlendOperation(BlendOperationEnum op);
 		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags);
+		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp);
+		vk::CullModeFlags convertCullMode(CullModeEnum mode);
 		vk::Filter convertFilter(FilterModeEnum filter);
-		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
-		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode);
-		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format);
-		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format);
+		vk::Format convertTextureFormat(TextureFormatEnum format);
+		vk::Format convertVertexFormat(VertexFormatEnum format);
 		vk::FrontFace convertFrontFace(FrontFaceEnum face);
+		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format);
+		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format);
+		vk::IndexType convertIndexFormat(IndexFormatEnum format);
+		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology);
+		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode);
+		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
+		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
+		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
 	}
 }

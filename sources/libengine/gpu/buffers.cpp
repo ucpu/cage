@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace gpu
 	{
-		BufferImpl::BufferImpl(const DeviceImpl &device_, const BufferDescriptor &desc) : device(&device_), size(desc.size), usage(desc.usage)
+		BufferImpl::BufferImpl(DeviceImpl &device_, const BufferDescriptor &desc) : device(&device_), size(desc.size), usage(desc.usage)
 		{
 			vk::BufferCreateInfo bufferInfo;
 			bufferInfo.size = desc.size;

@@ -4,29 +4,13 @@ namespace cage
 {
 	namespace gpu
 	{
-		CommandBufferImpl::CommandBufferImpl(const DeviceImpl &device_) : device(device_.device) {}
+		CommandBufferImpl::CommandBufferImpl() {}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
 
-		vk::UniqueCommandBuffer CommandBufferImpl::newBuffer()
+		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc)
 		{
-			thread_local vk::UniqueCommandPool pool;
-			if (!pool)
-			{
-				vk::CommandPoolCreateInfo info;
-				pool = device.createCommandPoolUnique(info);
-			}
-
-			vk::CommandBufferAllocateInfo info;
-			info.commandBufferCount = 1;
-			info.commandPool = *pool;
-			return std::move(device.allocateCommandBuffersUnique(info)[0]);
-		}
-
-		CommandEncoderImpl::CommandEncoderImpl(const DeviceImpl &device, const CommandEncoderDescriptor &desc)
-		{
-			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device));
-			cmd = buffer->newBuffer();
+			cmd = device.newCommandBuffer();
 
 			vk::CommandBufferBeginInfo info;
 			info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -35,6 +19,49 @@ namespace cage
 
 		CommandEncoderImpl::~CommandEncoderImpl() {}
 
+		void CommandEncoderImpl::imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent)
+		{
+			ImageStateEnum sourceState = ImageStateEnum::Undefined;
+			{
+				auto it = transitionedImages.find(texture);
+				if (it == transitionedImages.end())
+					sourceState = texture->defaultState;
+				else
+					sourceState = it->second;
+				if (sourceState == targetState)
+				{ // already in the correct state
+					if (permanent)
+					{
+						texture->defaultState = targetState;
+						transitionedImages.erase(texture);
+					}
+					return;
+				}
+			}
+
+			{
+				vk::ImageMemoryBarrier2 imgBar;
+				imgBar.image = texture->image;
+				imgBar.subresourceRange.aspectMask = convertAspectMask(texture->format);
+				imgBar.subresourceRange.layerCount = texture->arrayLayers;
+				imgBar.subresourceRange.levelCount = texture->mipLevels;
+				assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
+				assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
+
+				vk::DependencyInfo barInfo;
+				barInfo.imageMemoryBarrierCount = 1;
+				barInfo.pImageMemoryBarriers = &imgBar;
+				cmd->pipelineBarrier2(&barInfo);
+			}
+
+			if (permanent)
+				texture->defaultState = targetState;
+			if (texture->defaultState == targetState)
+				transitionedImages.erase(texture);
+			else
+				transitionedImages[texture] = targetState;
+		}
+
 		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			// todo
@@ -42,8 +69,17 @@ namespace cage
 
 		CommandBuffer CommandEncoderImpl::finishEncoding()
 		{
+			// transition images back to default state
+			while (!transitionedImages.empty())
+			{
+				const Texture t = transitionedImages.begin()->first;
+				imageTransition(t, t->defaultState);
+			}
+
 			cmd->end();
-			buffer->buffers.push_back(std::move(cmd));
+
+			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>());
+			buffer->buffer = std::move(cmd);
 			return std::move(buffer);
 		}
 

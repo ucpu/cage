@@ -99,7 +99,7 @@ namespace cage
 
 		WindowGpuContextImpl::~WindowGpuContextImpl() {}
 
-		void WindowGpuContextImpl::init(vk::Device device)
+		void WindowGpuContextImpl::init(DeviceImpl &device)
 		{
 			std::vector<VkImage> images = handleResult(swapchain.get_images());
 			if (frames.size() == images.size())
@@ -113,21 +113,34 @@ namespace cage
 				f.image = vk::Image(images[i]);
 
 				vk::SemaphoreCreateInfo sci;
-				f.imageAcquiredSemaphore = device.createSemaphoreUnique(sci);
-				f.renderCompleteSemaphore = device.createSemaphoreUnique(sci);
+				f.imageAcquiredSemaphore = device.device.createSemaphoreUnique(sci);
+				f.renderCompleteSemaphore = device.device.createSemaphoreUnique(sci);
 
-				vk::FenceCreateInfo fci;
-				fci.flags = vk::FenceCreateFlagBits::eSignaled;
-				f.renderCompleteFence = device.createFenceUnique(fci);
+				//vk::FenceCreateInfo fci;
+				//fci.flags = vk::FenceCreateFlagBits::eSignaled;
+				//f.renderCompleteFence = device.createFenceUnique(fci);
 
-				// todo create texture
+				f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
+				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
+				f.texture->arrayLayers = f.texture->mipLevels = 1;
+				f.texture->dimension = TextureDimensionEnum::e2D;
+				f.texture->format = TextureFormatEnum::BGRA8UnormSrgb; //swapchain.image_format; // todo convert
+				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
 			}
 			index = 0;
+
+			{ // transition all images
+				CommandEncoderImpl enc(device, { .label = "init swapchain images" });
+				for (const auto &it : frames)
+					enc.imageTransition(it.texture, ImageStateEnum::Present, true);
+				device.additionalCommands.push_back(enc.finishEncoding());
+			}
 		}
 
 		void WindowGpuContextImpl::clear()
 		{
 			frames.clear();
+			vkb::destroy_swapchain(swapchain);
 			instance.destroySurfaceKHR(surface);
 			surface = nullptr;
 		}
@@ -299,6 +312,21 @@ namespace cage
 			return context.share();
 		}
 
+		vk::UniqueCommandBuffer DeviceImpl::newCommandBuffer()
+		{
+			thread_local vk::UniqueCommandPool pool;
+			if (!pool)
+			{
+				vk::CommandPoolCreateInfo info;
+				pool = device.createCommandPoolUnique(info);
+			}
+
+			vk::CommandBufferAllocateInfo info;
+			info.commandBufferCount = 1;
+			info.commandPool = *pool;
+			return std::move(device.allocateCommandBuffersUnique(info)[0]);
+		}
+
 		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			struct WindowEntry
@@ -332,20 +360,26 @@ namespace cage
 					}
 				}
 				ankerl::svector<vk::CommandBuffer, 16> cmds;
-				for (auto &it1 : buffers)
-					for (auto &it2 : it1->buffers)
-						cmds.push_back(*it2);
+				for (auto &it : additionalCommands)
+					cmds.push_back(*it->buffer);
+				//for (auto &it : buffers) // todo enable
+				//	cmds.push_back(*it->buffer);
 
-				vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-				vk::SubmitInfo submitInfo;
-				submitInfo.waitSemaphoreCount = ias.size();
-				submitInfo.pWaitSemaphores = ias.data();
-				submitInfo.pWaitDstStageMask = &waitStages;
-				submitInfo.commandBufferCount = cmds.size();
-				submitInfo.pCommandBuffers = cmds.data();
-				submitInfo.signalSemaphoreCount = rcs.size();
-				submitInfo.pSignalSemaphores = rcs.data();
-				check("submit", queue.submit(1, &submitInfo, {})); // todo fence
+				if (!cmds.empty())
+				{
+					vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+					vk::SubmitInfo submitInfo;
+					submitInfo.waitSemaphoreCount = ias.size();
+					submitInfo.pWaitSemaphores = ias.data();
+					submitInfo.pWaitDstStageMask = &waitStages;
+					submitInfo.commandBufferCount = cmds.size();
+					submitInfo.pCommandBuffers = cmds.data();
+					submitInfo.signalSemaphoreCount = rcs.size();
+					submitInfo.pSignalSemaphores = rcs.data();
+					check("submit", queue.submit(1, &submitInfo, {})); // todo fence
+				}
+
+				additionalCommands.clear();
 			}
 
 			// present
@@ -400,7 +434,7 @@ namespace cage
 						const ProfilingScope profiling("swapchain");
 						data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface).set_old_swapchain(data.swapchain).set_desired_min_image_count(2).set_desired_extent(res[0], res[1]).build());
 						data.resolution = res;
-						data.init(device);
+						data.init(*this);
 					}
 
 					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, *data->imageAcquiredSemaphore);

@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace gpu
 	{
-		SamplerImpl::SamplerImpl(const DeviceImpl &device, const SamplerDescriptor &desc)
+		SamplerImpl::SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc)
 		{
 			vk::SamplerCreateInfo info;
 			info.magFilter = convertFilter(desc.magFilter);
@@ -20,7 +20,9 @@ namespace cage
 
 		SamplerImpl::~SamplerImpl() {}
 
-		TextureImpl::TextureImpl(const DeviceImpl &device_, const TextureDescriptor &desc) : device(&device_), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
+		TextureImpl::TextureImpl(DeviceImpl &device_, vk::Image image) : device(&device_), image(image) {}
+
+		TextureImpl::TextureImpl(DeviceImpl &device_, const TextureDescriptor &desc) : device(&device_), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
 		{
 			bool isCube = false;
 			switch (dimension)
@@ -71,7 +73,8 @@ namespace cage
 
 		TextureImpl::~TextureImpl()
 		{
-			vmaDestroyImage(device->allocator, (VkImage)image, allocation);
+			if (allocation)
+				vmaDestroyImage(device->allocator, (VkImage)image, allocation);
 		}
 
 		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : texture(texture)

@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace gpu
 	{
-		BindGroupImpl::BindGroupImpl(const DeviceImpl &device, const BindGroupDescriptor &desc)
+		BindGroupImpl::BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc)
 		{
 			vk::DescriptorSetAllocateInfo allocInfo;
 			allocInfo.descriptorPool = *device.descriptorPool;
@@ -63,7 +63,7 @@ namespace cage
 
 		BindGroupImpl::~BindGroupImpl() {}
 
-		BindGroupLayoutImpl::BindGroupLayoutImpl(const DeviceImpl &device, const BindGroupLayoutDescriptor &desc)
+		BindGroupLayoutImpl::BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc)
 		{
 			ankerl::svector<vk::DescriptorSetLayoutBinding, 10> bindings;
 			bindings.reserve(desc.entries.size());
