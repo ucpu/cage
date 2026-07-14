@@ -52,7 +52,7 @@ void processObject()
 	for (Lod &ls : lods)
 	{
 		if (!valid(ls.threshold))
-			ls.threshold = Real(lods.size() - ls.index) / lods.size();
+			ls.threshold = 1.0 / pow2(ls.index);
 	}
 
 	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) { return a.threshold > b.threshold; });

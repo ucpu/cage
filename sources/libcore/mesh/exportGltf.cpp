@@ -253,22 +253,22 @@ namespace cage
 							if (!materialPbrJson.empty())
 								materialPbrJson += ",";
 							materialPbrJson += (Stringizer() + "\"baseColorTexture\":{\"index\":" + index + "}").value.c_str();
+							break;
 						}
-						break;
 						case 2: // roughness metallic
 						{
 							if (!materialPbrJson.empty())
 								materialPbrJson += ",";
 							materialPbrJson += (Stringizer() + "\"metallicRoughnessTexture\":{\"index\":" + index + "}").value.c_str();
+							break;
 						}
-						break;
 						case 3: // normal
 						{
 							if (!materialJson.empty())
 								materialJson += ",";
 							materialJson += (Stringizer() + "\"normalTexture\":{\"index\":" + index + "}").value.c_str();
+							break;
 						}
-						break;
 					}
 
 					index++;
