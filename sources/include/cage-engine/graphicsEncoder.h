@@ -57,9 +57,10 @@ namespace cage
 		AssetLabel label;
 
 	public:
+		[[nodiscard]] detail::RenderEncoderNamedScope namedScope(StringPointer name);
+
 		void nextPass(const RenderPassConfig &config);
 
-		[[nodiscard]] detail::RenderEncoderNamedScope namedScope(StringPointer name);
 		void scissors(Vec2i origin, Vec2i size);
 		void draw(const DrawConfig &config);
 
@@ -68,8 +69,7 @@ namespace cage
 		GraphicsDevice *getDevice() const;
 		const RenderPassConfig &getCurrentPass() const;
 
-		gpu::CommandEncoder &nativeCommandEncoder();
-		gpu::RenderPassEncoder &nativeRenderEncoder();
+		gpu::CommandEncoder &nativeEncoder();
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsEncoder> newGraphicsEncoder(GraphicsDevice *device, const AssetLabel &label);

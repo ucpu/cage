@@ -104,6 +104,14 @@ namespace cage
 			Back,
 		};
 
+		enum class EncoderModeEnum
+		{
+			Undefined = 0,
+			Generic,
+			Rendering,
+			Compute,
+		};
+
 		enum class FilterModeEnum
 		{
 			Undefined = 0,
@@ -337,7 +345,6 @@ namespace cage
 		class CommandEncoder;
 		class Device;
 		class Future;
-		class RenderPassEncoder;
 		class RenderPipeline;
 		class Sampler;
 		class ShaderModule;

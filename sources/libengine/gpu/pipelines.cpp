@@ -4,12 +4,30 @@ namespace cage
 {
 	namespace gpu
 	{
+		template<>
+		void deferredDestructor(ResourceHandle<vk::Pipeline, Nothing> &handle)
+		{
+			handle.device->device.destroyPipeline(handle.value);
+		}
+
+		template<>
+		void deferredDestructor(ResourceHandle<vk::ShaderModule, Nothing> &handle)
+		{
+			handle.device->device.destroyShaderModule(handle.value);
+		}
+
+		template<>
+		void deferredDestructor(ResourceHandle<vk::PipelineLayout, Nothing> &handle)
+		{
+			handle.device->device.destroyPipelineLayout(handle.value);
+		}
+
 		RenderPipelineImpl::RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc) : layout(desc.layout)
 		{
 			ankerl::svector<vk::PipelineShaderStageCreateInfo, 2> stages;
 			{
 				vk::PipelineShaderStageCreateInfo ci;
-				ci.module = *desc.vertex.module->shader;
+				ci.module = desc.vertex.module->shader;
 				ci.stage = vk::ShaderStageFlagBits::eVertex;
 				ci.pName = "main";
 				stages.push_back(std::move(ci));
@@ -17,7 +35,7 @@ namespace cage
 			if (desc.fragment)
 			{
 				vk::PipelineShaderStageCreateInfo ci;
-				ci.module = *desc.fragment->module->shader;
+				ci.module = desc.fragment->module->shader;
 				ci.stage = vk::ShaderStageFlagBits::eFragment;
 				ci.pName = "main";
 				stages.push_back(std::move(ci));
@@ -130,11 +148,13 @@ namespace cage
 			ci.pColorBlendState = &blend;
 			ci.pDynamicState = &dynamic;
 			ci.pNext = &rendering;
-			ci.layout = *layout->layout;
-			auto r = device.device.createGraphicsPipelineUnique({}, ci);
-			check("createGraphicsPipelineUnique", r.result);
+			ci.layout = layout->layout;
+			auto r = device.device.createGraphicsPipeline({}, ci);
+			check("createGraphicsPipeline", r.result);
 			CAGE_ASSERT(r.has_value());
-			pipeline = std::move(r.value);
+			pipeline.device = &device;
+			pipeline.value = r.value;
+			pipeline.setLabel(desc.label);
 		}
 
 		RenderPipelineImpl::~RenderPipelineImpl() {}
@@ -144,7 +164,9 @@ namespace cage
 			vk::ShaderModuleCreateInfo ci;
 			ci.codeSize = desc.spirvCode.size() * sizeof(uint32);
 			ci.pCode = desc.spirvCode.data();
-			shader = device.device.createShaderModuleUnique(ci);
+			shader.device = &device;
+			shader.value = device.device.createShaderModule(ci);
+			shader.setLabel(desc.label);
 		}
 
 		ShaderModuleImpl::~ShaderModuleImpl() {}
@@ -154,11 +176,13 @@ namespace cage
 			ankerl::svector<vk::DescriptorSetLayout, 5> ls;
 			ls.reserve(desc.bindGroupLayouts.size());
 			for (const auto &it : desc.bindGroupLayouts)
-				ls.push_back(*it->layout);
+				ls.push_back(it->layout);
 			vk::PipelineLayoutCreateInfo ci;
 			ci.setLayoutCount = ls.size();
 			ci.pSetLayouts = ls.data();
-			layout = device.device.createPipelineLayoutUnique(ci);
+			layout.device = &device;
+			layout.value = device.device.createPipelineLayout(ci);
+			layout.setLabel(desc.label);
 		}
 
 		PipelineLayoutImpl::~PipelineLayoutImpl() {}

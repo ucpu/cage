@@ -23,7 +23,6 @@ namespace cage
 		class CommandEncoderImpl;
 		class DeviceImpl;
 		class FutureImpl;
-		class RenderPassEncoderImpl;
 		class RenderPipelineImpl;
 		class SamplerImpl;
 		class ShaderModuleImpl;
@@ -49,23 +48,23 @@ namespace cage
 		};
 
 		///////////////////////////////////////////////////////////////////
-		// GpuResourceHandle
+		// GpuInterfaceHandle
 		///////////////////////////////////////////////////////////////////
 
 		template<class Crtp, class Impl>
-		class GpuResourceHandle
+		class GpuInterfaceHandle
 		{
 		public:
-			CAGE_FORCE_INLINE GpuResourceHandle() noexcept {}
-			CAGE_FORCE_INLINE GpuResourceHandle(Holder<Impl> &&impl) : ptr(std::move(impl)) {}
-			CAGE_FORCE_INLINE GpuResourceHandle(const GpuResourceHandle &other) : ptr(other.ptr.share()) {}
-			CAGE_FORCE_INLINE GpuResourceHandle(GpuResourceHandle &&other) noexcept : ptr(std::move(other.ptr)) {}
-			CAGE_FORCE_INLINE GpuResourceHandle &operator=(const GpuResourceHandle &other)
+			CAGE_FORCE_INLINE GpuInterfaceHandle() noexcept {}
+			CAGE_FORCE_INLINE GpuInterfaceHandle(Holder<Impl> &&impl) : ptr(std::move(impl)) {}
+			CAGE_FORCE_INLINE GpuInterfaceHandle(const GpuInterfaceHandle &other) : ptr(other.ptr.share()) {}
+			CAGE_FORCE_INLINE GpuInterfaceHandle(GpuInterfaceHandle &&other) noexcept : ptr(std::move(other.ptr)) {}
+			CAGE_FORCE_INLINE GpuInterfaceHandle &operator=(const GpuInterfaceHandle &other)
 			{
 				ptr = other.ptr.share();
 				return *this;
 			}
-			CAGE_FORCE_INLINE GpuResourceHandle &operator=(GpuResourceHandle &&other) noexcept
+			CAGE_FORCE_INLINE GpuInterfaceHandle &operator=(GpuInterfaceHandle &&other) noexcept
 			{
 				ptr = std::move(other.ptr);
 				return *this;
@@ -92,17 +91,17 @@ namespace cage
 		// gpu resources
 		///////////////////////////////////////////////////////////////////
 
-		class CAGE_ENGINE_API BindGroup : public GpuResourceHandle<BindGroup, BindGroupImpl>
+		class CAGE_ENGINE_API BindGroup : public GpuInterfaceHandle<BindGroup, BindGroupImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API BindGroupLayout : public GpuResourceHandle<BindGroupLayout, BindGroupLayoutImpl>
+		class CAGE_ENGINE_API BindGroupLayout : public GpuInterfaceHandle<BindGroupLayout, BindGroupLayoutImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Buffer : public GpuResourceHandle<Buffer, BufferImpl>
+		class CAGE_ENGINE_API Buffer : public GpuInterfaceHandle<Buffer, BufferImpl>
 		{
 		public:
 			uint64 getSize() const;
@@ -113,31 +112,58 @@ namespace cage
 			void invalidate(); // makes gpu data visible to cpu for reading
 		};
 
-		class CAGE_ENGINE_API CommandBuffer : public GpuResourceHandle<CommandBuffer, CommandBufferImpl>
+		class CAGE_ENGINE_API CommandBuffer : public GpuInterfaceHandle<CommandBuffer, CommandBufferImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API CommandEncoder : public GpuResourceHandle<CommandEncoder, CommandEncoderImpl>
+		class CAGE_ENGINE_API CommandEncoder : public GpuInterfaceHandle<CommandEncoder, CommandEncoderImpl>
 		{
 		public:
-			RenderPassEncoder beginRenderPass(const RenderPassDescriptor &descriptor);
+			EncoderModeEnum mode() const;
+			void pushDebugGroup(StringView label);
+			void popDebugGroup();
+			CommandBuffer finishEncoding();
+
+			// generic encoder
 
 			//void clearBuffer(const Buffer &buffer, uint64 offset = 0, uint64 size = m);
 			//void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
-
 			//void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
 			//void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 			//void copyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
-
 			//void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
 			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
-			CommandBuffer finishEncoding();
+			// render pass encoder
+
+			void beginRenderPass(const RenderPassDescriptor &descriptor);
+			void endRenderPass();
+
+			void draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
+			void drawIndexed(uint32 indicesCount, uint32 instancesCount = 1, uint32 firstIndex = 0, sint32 baseVertex = 0, uint32 firstInstance = 0);
+			//void drawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
+			//void drawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
+			//void multiDrawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
+			//void multiDrawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
+			//void pixelLocalStorageBarrier();
+			void setBindGroup(uint32 binding, const BindGroup &group = {});
+			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
+			//void setBlendConstant(Vec4 color);
+			//void setImmediates(uint32 offset, PointerRange<const char> data);
+			void setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset = 0, uint64 size = m);
+			void setPipeline(const RenderPipeline &pipeline);
+			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
+			//void setStencilReference(uint32 reference);
+			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
+			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
+			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
+
+			// compute pass encoder
 		};
 
-		class CAGE_ENGINE_API Device : public GpuResourceHandle<Device, DeviceImpl>
+		class CAGE_ENGINE_API Device : public GpuInterfaceHandle<Device, DeviceImpl>
 		{
 		public:
 			BindGroup createBindGroup(const BindGroupDescriptor &descriptor);
@@ -166,58 +192,32 @@ namespace cage
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
-		struct CAGE_ENGINE_API Future : public GpuResourceHandle<Future, FutureImpl>
+		struct CAGE_ENGINE_API Future : public GpuInterfaceHandle<Future, FutureImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API RenderPassEncoder : public GpuResourceHandle<RenderPassEncoder, RenderPassEncoderImpl>
-		{
-		public:
-			void draw(uint32 verticesCount, uint32 instancesCount = 1, uint32 firstVertex = 0, uint32 firstInstance = 0);
-			void drawIndexed(uint32 indicesCount, uint32 instancesCount = 1, uint32 firstIndex = 0, sint32 baseVertex = 0, uint32 firstInstance = 0);
-			//void drawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
-			//void drawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset);
-			void endPass();
-			//void multiDrawIndexedIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
-			//void multiDrawIndirect(const Buffer &indirectBuffer, uint64 indirectOffset, uint32 maxDrawCount, const Buffer &drawCountBuffer = {}, uint64 drawCountBufferOffset = 0);
-			//void pixelLocalStorageBarrier();
-			void popDebugGroup();
-			void pushDebugGroup(StringView label);
-			void setBindGroup(uint32 binding, const BindGroup &group = {});
-			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
-			//void setBlendConstant(Vec4 color);
-			//void setImmediates(uint32 offset, PointerRange<const char> data);
-			void setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset = 0, uint64 size = m);
-			void setPipeline(const RenderPipeline &pipeline);
-			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
-			//void setStencilReference(uint32 reference);
-			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
-			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
-			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
-		};
-
-		class CAGE_ENGINE_API RenderPipeline : public GpuResourceHandle<RenderPipeline, RenderPipelineImpl>
+		class CAGE_ENGINE_API RenderPipeline : public GpuInterfaceHandle<RenderPipeline, RenderPipelineImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Sampler : public GpuResourceHandle<Sampler, SamplerImpl>
+		class CAGE_ENGINE_API Sampler : public GpuInterfaceHandle<Sampler, SamplerImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API ShaderModule : public GpuResourceHandle<ShaderModule, ShaderModuleImpl>
+		class CAGE_ENGINE_API ShaderModule : public GpuInterfaceHandle<ShaderModule, ShaderModuleImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API PipelineLayout : public GpuResourceHandle<PipelineLayout, PipelineLayoutImpl>
+		class CAGE_ENGINE_API PipelineLayout : public GpuInterfaceHandle<PipelineLayout, PipelineLayoutImpl>
 		{
 		public:
 		};
 
-		class CAGE_ENGINE_API Texture : public GpuResourceHandle<Texture, TextureImpl>
+		class CAGE_ENGINE_API Texture : public GpuInterfaceHandle<Texture, TextureImpl>
 		{
 		public:
 			TextureView createView();
@@ -235,7 +235,7 @@ namespace cage
 			//void unpin();
 		};
 
-		class CAGE_ENGINE_API TextureView : public GpuResourceHandle<TextureView, TextureViewImpl>
+		class CAGE_ENGINE_API TextureView : public GpuInterfaceHandle<TextureView, TextureViewImpl>
 		{
 		public:
 			Texture getTexture() const;
@@ -317,6 +317,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API PipelineLayoutDescriptor
 		{
+			StringView label;
 			PointerRange<const BindGroupLayout> bindGroupLayouts;
 			//uint32 immediateSize = 0;
 		};
@@ -352,6 +353,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API RenderPipelineDescriptor
 		{
+			StringView label;
 			PipelineLayout layout;
 
 			struct VertexState

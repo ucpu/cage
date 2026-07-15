@@ -312,7 +312,7 @@ namespace cage
 			return context.share();
 		}
 
-		vk::UniqueCommandBuffer DeviceImpl::newCommandBuffer()
+		vk::CommandBuffer DeviceImpl::newCommandBuffer()
 		{
 			thread_local vk::UniqueCommandPool pool;
 			if (!pool)
@@ -324,7 +324,7 @@ namespace cage
 			vk::CommandBufferAllocateInfo info;
 			info.commandBufferCount = 1;
 			info.commandPool = *pool;
-			return std::move(device.allocateCommandBuffersUnique(info)[0]);
+			return device.allocateCommandBuffers(info)[0];
 		}
 
 		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
@@ -361,7 +361,7 @@ namespace cage
 				}
 				ankerl::svector<vk::CommandBuffer, 16> cmds;
 				for (auto &it : additionalCommands)
-					cmds.push_back(*it->buffer);
+					cmds.push_back(it->buffer);
 				//for (auto &it : buffers) // todo enable
 				//	cmds.push_back(*it->buffer);
 

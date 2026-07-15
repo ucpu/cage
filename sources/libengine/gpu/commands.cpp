@@ -4,13 +4,21 @@ namespace cage
 {
 	namespace gpu
 	{
+		template<>
+		void deferredDestructor(ResourceHandle<vk::CommandBuffer, Nothing> &handle)
+		{
+			// todo
+		}
+
 		CommandBufferImpl::CommandBufferImpl() {}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
 
 		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc)
 		{
-			cmd = device.newCommandBuffer();
+			cmd.device = &device;
+			cmd.value = device.newCommandBuffer();
+			cmd.setLabel(desc.label);
 
 			vk::CommandBufferBeginInfo info;
 			info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
@@ -62,13 +70,23 @@ namespace cage
 				transitionedImages[texture] = targetState;
 		}
 
-		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
+		void CommandEncoderImpl::pushDebugGroup(StringView label)
 		{
-			// todo
+			vk::DebugUtilsLabelEXT info;
+			info.pLabelName = label.str.data();
+			cmd->beginDebugUtilsLabelEXT(info);
+		}
+
+		void CommandEncoderImpl::popDebugGroup()
+		{
+			cmd->endDebugUtilsLabelEXT();
 		}
 
 		CommandBuffer CommandEncoderImpl::finishEncoding()
 		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			currentMode = EncoderModeEnum::Undefined;
+
 			// transition images back to default state
 			while (!transitionedImages.empty())
 			{
@@ -78,21 +96,29 @@ namespace cage
 
 			cmd->end();
 
-			buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>());
+			CommandBuffer buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>());
 			buffer->buffer = std::move(cmd);
-			return std::move(buffer);
+			return buffer;
 		}
 
-		RenderPassEncoderImpl::RenderPassEncoderImpl(const CommandEncoder &commandEncoder, const RenderPassDescriptor &desc)
+		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
-			encoder = commandEncoder;
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+
+			// todo
+		}
+
+		void CommandEncoderImpl::beginRenderPass(const RenderPassDescriptor &desc)
+		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			currentMode = EncoderModeEnum::Rendering;
 
 			ankerl::svector<vk::RenderingAttachmentInfo, 4> attachments;
 			for (const auto &it : desc.colorAttachments)
 			{
 				vk::RenderingAttachmentInfo info;
 				// todo info.clearValue;
-				info.imageView = *it.view->view;
+				info.imageView = it.view->view;
 				info.loadOp = convertLoadOperation(it.loadOp);
 				info.storeOp = convertStoreOperation(it.storeOp);
 				attachments.push_back(std::move(info));
@@ -103,7 +129,7 @@ namespace cage
 			if (desc.depthStencilAttachment)
 			{
 				// todo depth.clearValue;
-				depth.imageView = *desc.depthStencilAttachment->view->view;
+				depth.imageView = desc.depthStencilAttachment->view->view;
 				depth.loadOp = convertLoadOperation(desc.depthStencilAttachment->depthLoadOp);
 				depth.storeOp = convertStoreOperation(desc.depthStencilAttachment->depthStoreOp);
 			}
@@ -114,63 +140,59 @@ namespace cage
 			info.pDepthAttachment = &depth;
 			info.pStencilAttachment = &stencil;
 			info.renderArea = vk::Rect2D(); // todo
-			encoder->cmd->beginRendering(info);
+			cmd->beginRendering(info);
 		}
 
-		RenderPassEncoderImpl::~RenderPassEncoderImpl() {}
-
-		void RenderPassEncoderImpl::pushDebugGroup(StringView label)
+		void CommandEncoderImpl::endRenderPass()
 		{
-			vk::DebugMarkerMarkerInfoEXT info;
-			info.pMarkerName = label.str.data();
-			encoder->cmd->debugMarkerBeginEXT(info);
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			currentMode = EncoderModeEnum::Generic;
+
+			cmd->endRendering();
 		}
 
-		void RenderPassEncoderImpl::popDebugGroup()
+		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
-			encoder->cmd->debugMarkerEndEXT();
-		}
-
-		void RenderPassEncoderImpl::endPass()
-		{
-			encoder->cmd->endRendering();
-		}
-
-		void RenderPassEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
-		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			vk::Rect2D rect = vk::Rect2D({ (sint32)x, (sint32)y }, { w, h });
-			encoder->cmd->setScissor(0, rect);
+			cmd->setScissor(0, rect);
 		}
 
-		void RenderPassEncoderImpl::setPipeline(const RenderPipeline &pipeline)
+		void CommandEncoderImpl::setPipeline(const RenderPipeline &pipeline)
 		{
-			encoder->cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline->pipeline);
-			layout = *pipeline->layout->layout;
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->pipeline);
+			currentPipelineLayout = pipeline->layout->layout;
 		}
 
-		void RenderPassEncoderImpl::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
+		void CommandEncoderImpl::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
 		{
-			encoder->cmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, binding, *group->set, dynamicOffsets);
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipelineLayout, binding, group->set.value, dynamicOffsets);
 		}
 
-		void RenderPassEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
+		void CommandEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
-			encoder->cmd->bindVertexBuffers(slot, buffer->buffer, offset);
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->bindVertexBuffers(slot, buffer->buffer.value, offset);
 		}
 
-		void RenderPassEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
+		void CommandEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
-			encoder->cmd->bindIndexBuffer(buffer->buffer, offset, convertIndexFormat(format));
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->bindIndexBuffer(buffer->buffer, offset, convertIndexFormat(format));
 		}
 
-		void RenderPassEncoderImpl::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
+		void CommandEncoderImpl::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
 		{
-			encoder->cmd->drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
 		}
 
-		void RenderPassEncoderImpl::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
+		void CommandEncoderImpl::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
 		{
-			encoder->cmd->draw(verticesCount, instancesCount, firstVertex, firstInstance);
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			cmd->draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}
 	}
 }

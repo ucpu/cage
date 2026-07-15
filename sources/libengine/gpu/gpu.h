@@ -8,6 +8,7 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
 
+#include <cage-core/concurrent.h>
 #include <cage-engine/gpuInterface.h>
 
 namespace cage
@@ -47,6 +48,58 @@ namespace cage
 			auto operator()(const Texture &a, const Texture &b) const noexcept { return a.get() == b.get(); }
 		};
 
+		struct Nothing
+		{};
+
+		struct DeferredDestruction : private Noncopyable
+		{
+			using Destructor = void (*)(void *ptr);
+			char data[32] = {};
+			Destructor destructor = nullptr;
+
+			DeferredDestruction() {}
+			DeferredDestruction(DeferredDestruction &&) = default;
+			~DeferredDestruction()
+			{
+				if (destructor)
+					destructor(data);
+			}
+		};
+
+		template<class T, class Extra = Nothing>
+		struct ResourceHandle : private Noncopyable
+		{
+			DeviceImpl *device = nullptr;
+			T value = nullptr;
+			[[no_unique_address]] Extra extra = {};
+
+			ResourceHandle() {}
+			ResourceHandle(ResourceHandle &&other) { *this = other; }
+			~ResourceHandle() { destroy(); }
+			ResourceHandle &operator=(ResourceHandle &&other)
+			{
+				if (this == &other)
+					return *this;
+				destroy();
+				device = nullptr;
+				value = nullptr; // make sure the moved-from object becomes empty
+				extra = {};
+				std::swap(device, other.device);
+				std::swap(value, other.value);
+				std::swap(extra, other.extra);
+				return *this;
+			}
+
+			operator T &() { return value; }
+			T *operator->() { return &value; }
+
+			void setLabel(StringView label);
+			void destroy();
+		};
+
+		template<class T, class Extra>
+		void deferredDestructor(ResourceHandle<T, Extra> &);
+
 		struct WindowGpuContextImpl : private Immovable
 		{
 			struct Frame
@@ -78,7 +131,7 @@ namespace cage
 		class BindGroupImpl : private Immovable
 		{
 		public:
-			vk::UniqueDescriptorSet set;
+			ResourceHandle<vk::DescriptorSet> set;
 
 			BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc);
 			~BindGroupImpl();
@@ -87,7 +140,7 @@ namespace cage
 		class BindGroupLayoutImpl : private Immovable
 		{
 		public:
-			vk::UniqueDescriptorSetLayout layout;
+			ResourceHandle<vk::DescriptorSetLayout> layout;
 
 			BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc);
 			~BindGroupLayoutImpl();
@@ -96,10 +149,8 @@ namespace cage
 		class BufferImpl : private Immovable
 		{
 		public:
-			const DeviceImpl *device = nullptr;
-			vk::Buffer buffer;
+			ResourceHandle<vk::Buffer, VmaAllocation> buffer;
 			VmaAllocationInfo allocatedInfo = {};
-			VmaAllocation allocation = nullptr;
 
 			PointerRange<char> mappedRange;
 			uint64 size = 0;
@@ -115,7 +166,7 @@ namespace cage
 		class CommandBufferImpl : private Immovable
 		{
 		public:
-			vk::UniqueCommandBuffer buffer;
+			ResourceHandle<vk::CommandBuffer> buffer;
 
 			CommandBufferImpl();
 			~CommandBufferImpl();
@@ -124,9 +175,10 @@ namespace cage
 		class CommandEncoderImpl : private Immovable
 		{
 		public:
-			CommandBuffer buffer;
-			vk::UniqueCommandBuffer cmd;
+			ResourceHandle<vk::CommandBuffer> cmd;
 			std::unordered_map<Texture, ImageStateEnum, Hasher, Hasher> transitionedImages;
+			vk::PipelineLayout currentPipelineLayout;
+			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
 
 			CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc);
 			~CommandEncoderImpl();
@@ -136,9 +188,29 @@ namespace cage
 			// permanent = true: updates the default layout of the image - the image must not be used concurrently in any other command encoders - used for initialization only
 			void imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent = false);
 
+			// encoder
+
+			void popDebugGroup();
+			void pushDebugGroup(StringView label);
+			CommandBuffer finishEncoding();
+
+			// generic encoder
+
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 
-			CommandBuffer finishEncoding();
+			// render pass ecnoder
+
+			void beginRenderPass(const RenderPassDescriptor &descriptor);
+			void endRenderPass();
+			void draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance);
+			void drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance);
+			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
+			void setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size);
+			void setPipeline(const RenderPipeline &pipeline);
+			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
+			void setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size);
+
+			// compute pass encoder
 		};
 
 		class DeviceImpl : private Immovable
@@ -155,6 +227,7 @@ namespace cage
 			Bootstrap bootstrap;
 
 		public:
+			Holder<Mutex> mutex = newMutex();
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
 			vk::Device device;
@@ -163,13 +236,18 @@ namespace cage
 			vk::UniqueDescriptorPool descriptorPool;
 			std::vector<CommandBuffer> additionalCommands;
 			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
+			std::vector<DeferredDestruction> currentDefferedDestructions;
+			std::vector<DeferredDestruction> nextDefferedDestructions;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
 
+			template<class T>
+			void setLabel(const T &object, StringView label);
+
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
-			vk::UniqueCommandBuffer newCommandBuffer();
+			vk::CommandBuffer newCommandBuffer();
 
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
@@ -179,31 +257,10 @@ namespace cage
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
-		class RenderPassEncoderImpl : private Immovable
-		{
-		public:
-			CommandEncoder encoder;
-			vk::PipelineLayout layout;
-
-			RenderPassEncoderImpl(const CommandEncoder &commandEncoder, const RenderPassDescriptor &desc);
-			~RenderPassEncoderImpl();
-
-			void draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance);
-			void drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance);
-			void endPass();
-			void popDebugGroup();
-			void pushDebugGroup(StringView label);
-			void setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets);
-			void setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size);
-			void setPipeline(const RenderPipeline &pipeline);
-			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
-			void setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size);
-		};
-
 		class RenderPipelineImpl : private Immovable
 		{
 		public:
-			vk::UniquePipeline pipeline;
+			ResourceHandle<vk::Pipeline> pipeline;
 			PipelineLayout layout;
 
 			RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc);
@@ -213,7 +270,7 @@ namespace cage
 		class SamplerImpl : private Immovable
 		{
 		public:
-			vk::UniqueSampler sampler;
+			ResourceHandle<vk::Sampler> sampler;
 
 			SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc);
 			~SamplerImpl();
@@ -222,7 +279,7 @@ namespace cage
 		class ShaderModuleImpl : private Immovable
 		{
 		public:
-			vk::UniqueShaderModule shader;
+			ResourceHandle<vk::ShaderModule> shader;
 
 			ShaderModuleImpl(DeviceImpl &device, const ShaderModuleDescriptor &desc);
 			~ShaderModuleImpl();
@@ -231,7 +288,7 @@ namespace cage
 		class PipelineLayoutImpl : private Immovable
 		{
 		public:
-			vk::UniquePipelineLayout layout;
+			ResourceHandle<vk::PipelineLayout> layout;
 
 			PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc);
 			~PipelineLayoutImpl();
@@ -240,11 +297,8 @@ namespace cage
 		class TextureImpl : private Immovable
 		{
 		public:
-			const DeviceImpl *device = nullptr;
-			vk::Image image;
+			ResourceHandle<vk::Image, VmaAllocation> image;
 			VmaAllocationInfo allocatedInfo = {};
-			VmaAllocation allocation = nullptr;
-			ImageStateEnum defaultState = ImageStateEnum::Undefined;
 
 			Vec3i resolution;
 			uint32 arrayLayers = 0;
@@ -252,6 +306,7 @@ namespace cage
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
 			TextureUsageFlags usage = TextureUsageFlags::Undefined;
+			ImageStateEnum defaultState = ImageStateEnum::Undefined;
 
 			TextureImpl(DeviceImpl &device, vk::Image image);
 			TextureImpl(DeviceImpl &device, const TextureDescriptor &desc);
@@ -261,7 +316,7 @@ namespace cage
 		class TextureViewImpl : private Immovable
 		{
 		public:
-			vk::UniqueImageView view;
+			ResourceHandle<vk::ImageView> view;
 			Texture texture; // ensure the texture outlives the view
 
 			TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc);
@@ -297,5 +352,49 @@ namespace cage
 		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
 		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
+
+		template<class T, class Extra>
+		void ResourceHandle<T, Extra>::destroy()
+		{
+			static_assert(sizeof(*this) <= sizeof(DeferredDestruction::data));
+			if (!value)
+				return;
+			CAGE_ASSERT(device);
+			DeferredDestruction dd;
+			detail::memcpy(dd.data, this, sizeof(*this));
+			detail::memset(this, 0, sizeof(*this));
+			dd.destructor = +[](void *ptr) { deferredDestructor(*reinterpret_cast<ResourceHandle<T, Extra> *>(ptr)); };
+			device->nextDefferedDestructions.push_back(std::move(dd));
+		}
+
+		template<class T, class Extra>
+		void ResourceHandle<T, Extra>::setLabel(StringView label)
+		{
+			device->setLabel(value, label);
+		}
+
+		template<class T>
+		void DeviceImpl::setLabel(const T &object, StringView label)
+		{
+			if (label.str.empty())
+				return;
+			vk::DebugUtilsObjectNameInfoEXT info;
+			if constexpr (requires { object->objectType; })
+			{
+				info.objectType = object->objectType;
+				info.objectHandle = reinterpret_cast<uint64>(static_cast<const typename T::element_type::CType>(*object));
+			}
+			else if constexpr (requires { object.objectType; })
+			{
+				info.objectType = object.objectType;
+				info.objectHandle = reinterpret_cast<uint64>(static_cast<const typename T::CType>(object));
+			}
+			else
+			{
+				static_assert([] { return false; }(), "unknown vulkan object type");
+			}
+			info.pObjectName = label.str.data();
+			device.setDebugUtilsObjectNameEXT(info);
+		}
 	}
 }

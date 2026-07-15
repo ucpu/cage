@@ -4,14 +4,28 @@ namespace cage
 {
 	namespace gpu
 	{
+		template<>
+		void deferredDestructor(ResourceHandle<vk::DescriptorSet, Nothing> &handle)
+		{
+			// todo
+		}
+
+		template<>
+		void deferredDestructor(ResourceHandle<vk::DescriptorSetLayout, Nothing> &handle)
+		{
+			handle.device->device.destroyDescriptorSetLayout(handle.value);
+		}
+
 		BindGroupImpl::BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc)
 		{
 			vk::DescriptorSetAllocateInfo allocInfo;
 			allocInfo.descriptorPool = *device.descriptorPool;
 			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &*desc.layout->layout;
-			auto sets = device.device.allocateDescriptorSetsUnique(allocInfo);
-			set = std::move(sets[0]);
+			allocInfo.pSetLayouts = &desc.layout->layout.value;
+			auto sets = device.device.allocateDescriptorSets(allocInfo);
+			set.device = &device;
+			set.value = sets[0];
+			set.setLabel(desc.label);
 
 			ankerl::svector<vk::WriteDescriptorSet, 10> writes;
 			ankerl::svector<vk::DescriptorBufferInfo, 10> infosBuffers;
@@ -22,7 +36,7 @@ namespace cage
 			for (const auto &entry : desc.entries)
 			{
 				vk::WriteDescriptorSet write;
-				write.dstSet = *set;
+				write.dstSet = set;
 				write.dstBinding = entry.binding;
 				write.dstArrayElement = 0;
 				write.descriptorCount = 1;
@@ -30,7 +44,11 @@ namespace cage
 					[&](auto &e)
 					{
 						using T = std::decay_t<decltype(e)>;
-						if constexpr (std::is_same_v<T, BindGroupDescriptor::BufferEntry>)
+						if constexpr (std::is_same_v<T, std::monostate>)
+						{
+							CAGE_ASSERT(!"empty BindGroupDescriptor entry");
+						}
+						else if constexpr (std::is_same_v<T, BindGroupDescriptor::BufferEntry>)
 						{
 							vk::DescriptorBufferInfo &bufferInfo = infosBuffers.emplace_back(); // make sure the struct outlives its use
 							bufferInfo.buffer = e.buffer->buffer;
@@ -42,16 +60,20 @@ namespace cage
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::SamplerEntry>)
 						{
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
-							imageInfo.sampler = *e.sampler->sampler;
+							imageInfo.sampler = e.sampler->sampler;
 							write.descriptorType = vk::DescriptorType::eSampler;
 							write.pImageInfo = &imageInfo;
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::TextureEntry>)
 						{
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
-							imageInfo.imageView = *e.textureView->view;
+							imageInfo.imageView = e.textureView->view;
 							write.descriptorType = vk::DescriptorType::eSampledImage;
 							write.pImageInfo = &imageInfo;
+						}
+						else
+						{
+							static_assert([] { return false; }(), "unknown BindGroupDescriptor entry type");
 						}
 					},
 					entry.data);
@@ -77,7 +99,11 @@ namespace cage
 					[&](auto &e)
 					{
 						using T = std::decay_t<decltype(e)>;
-						if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::BufferEntry>)
+						if constexpr (std::is_same_v<T, std::monostate>)
+						{
+							CAGE_ASSERT(!"empty BindGroupLayoutDescriptor entry");
+						}
+						else if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::BufferEntry>)
 						{
 							switch (e.type)
 							{
@@ -98,6 +124,10 @@ namespace cage
 						{
 							b.descriptorType = vk::DescriptorType::eSampledImage;
 						}
+						else
+						{
+							static_assert([] { return false; }(), "unknown BindGroupLayoutDescriptor entry type");
+						}
 					},
 					entry.data);
 				bindings.push_back(std::move(b));
@@ -106,7 +136,9 @@ namespace cage
 			vk::DescriptorSetLayoutCreateInfo ci;
 			ci.bindingCount = static_cast<uint32_t>(bindings.size());
 			ci.pBindings = bindings.data();
-			layout = device.device.createDescriptorSetLayoutUnique(ci);
+			layout.device = &device;
+			layout.value = device.device.createDescriptorSetLayout(ci);
+			layout.setLabel(desc.label);
 		}
 
 		BindGroupLayoutImpl::~BindGroupLayoutImpl() {}
