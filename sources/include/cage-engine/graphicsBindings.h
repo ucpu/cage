@@ -26,8 +26,8 @@ namespace cage
 		struct BufferBindingConfig
 		{
 			GraphicsBuffer *buffer = nullptr;
+			uint64 size = m;
 			uint32 binding = m;
-			uint32 size = m;
 			bool uniform = false;
 			bool dynamic = false;
 		};

@@ -366,7 +366,7 @@ namespace cage
 			struct PrimitiveState
 			{
 				PrimitiveTopologyEnum topology = PrimitiveTopologyEnum::Undefined;
-				FrontFaceEnum frontFace = FrontFaceEnum::Undefined;
+				FrontFaceEnum frontFace = FrontFaceEnum::CCW;
 				CullModeEnum cullMode = CullModeEnum::Undefined;
 			};
 			PrimitiveState primitive;

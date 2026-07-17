@@ -113,6 +113,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			currentMode = EncoderModeEnum::Rendering;
 
+			vk::Rect2D rect;
 			ankerl::svector<vk::RenderingAttachmentInfo, 4> attachments;
 			for (const auto &it : desc.colorAttachments)
 			{
@@ -121,7 +122,11 @@ namespace cage
 				info.imageView = it.view->view;
 				info.loadOp = convertLoadOperation(it.loadOp);
 				info.storeOp = convertStoreOperation(it.storeOp);
+				info.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 				attachments.push_back(std::move(info));
+				const auto res = it.view->texture.getResolution();
+				rect.extent.width = res[0];
+				rect.extent.height = res[1];
 			}
 
 			vk::RenderingAttachmentInfo depth;
@@ -132,6 +137,10 @@ namespace cage
 				depth.imageView = desc.depthStencilAttachment->view->view;
 				depth.loadOp = convertLoadOperation(desc.depthStencilAttachment->depthLoadOp);
 				depth.storeOp = convertStoreOperation(desc.depthStencilAttachment->depthStoreOp);
+				depth.imageLayout = vk::ImageLayout::eDepthAttachmentOptimal;
+				const auto res = desc.depthStencilAttachment->view->texture.getResolution();
+				rect.extent.width = res[0];
+				rect.extent.height = res[1];
 			}
 
 			vk::RenderingInfo info;
@@ -139,7 +148,8 @@ namespace cage
 			info.pColorAttachments = attachments.data();
 			info.pDepthAttachment = &depth;
 			info.pStencilAttachment = &stencil;
-			info.renderArea = vk::Rect2D(); // todo
+			info.renderArea = rect;
+			info.layerCount = 1;
 			cmd->beginRendering(info);
 		}
 

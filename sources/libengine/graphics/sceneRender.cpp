@@ -601,9 +601,10 @@ namespace cage
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
 		{
 			gpu::TextureViewDescriptor desc = {};
+			desc.label = "shadowmap cascade view";
 			desc.baseArrayLayer = cascade;
 			desc.arrayLayers = 1;
-			desc.label = "shadowmap cascade view";
+			desc.dimension = gpu::TextureDimensionEnum::e2DArray;
 			gpu::TextureView view = tex->nativeTexture().createView(desc);
 			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");
 		}
@@ -1597,10 +1598,10 @@ namespace cage
 					GraphicsBindingsCreateConfig bind;
 					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
 					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
-					bind.buffers.push_back({ dummyStorage, 2 });
-					bind.buffers.push_back({ dummyStorage, 3 });
-					bind.textures.push_back({ dummyRegular, 4 });
-					bind.textures.push_back({ dummyRegular, 6 });
+					bind.buffers.push_back({ .buffer = dummyStorage, .binding = 2 });
+					bind.buffers.push_back({ .buffer = dummyStorage, .binding = 3 });
+					bind.textures.push_back({ .texture = dummyRegular, .binding = 4 });
+					bind.textures.push_back({ .texture = dummyRegular, .binding = 6 });
 					globalBindings = newGraphicsBindings(scene.config.shared.device, bind);
 				}
 
@@ -1758,10 +1759,10 @@ namespace cage
 					GraphicsBindingsCreateConfig bind;
 					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
 					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
-					bind.buffers.push_back({ +buffLights, 2 });
-					bind.buffers.push_back({ +buffShadowedLights, 3 });
-					bind.textures.push_back({ +ssaoTexture, 4 });
-					bind.textures.push_back({ +depthSampling, 6 });
+					bind.buffers.push_back({ .buffer = +buffLights, .binding = 2 });
+					bind.buffers.push_back({ .buffer = +buffShadowedLights, .binding = 3 });
+					bind.textures.push_back({ .texture = +ssaoTexture, .binding = 4 });
+					bind.textures.push_back({ .texture = +depthSampling, .binding = 6 });
 
 					std::array<Texture *, 8> sh2d = {}, shCube = {};
 					for (const auto &sh : shadowmaps)

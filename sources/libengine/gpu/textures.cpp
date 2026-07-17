@@ -49,6 +49,8 @@ namespace cage
 
 		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
 		{
+			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
+
 			bool isCube = false;
 			switch (dimension)
 			{
@@ -102,6 +104,8 @@ namespace cage
 
 		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : texture(texture)
 		{
+			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
+
 			vk::ImageViewCreateInfo viewInfo;
 			switch (desc.dimension)
 			{

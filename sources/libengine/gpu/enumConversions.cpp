@@ -6,6 +6,7 @@ namespace cage
 	{
 		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op)
 		{
+			CAGE_ASSERT(op != LoadOpEnum::Undefined);
 			switch (op)
 			{
 				case LoadOpEnum::Clear:
@@ -18,6 +19,7 @@ namespace cage
 
 		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op)
 		{
+			CAGE_ASSERT(op != StoreOpEnum::Undefined);
 			switch (op)
 			{
 				case StoreOpEnum::Discard:
@@ -30,6 +32,7 @@ namespace cage
 
 		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor)
 		{
+			CAGE_ASSERT(factor != BlendFactorEnum::Undefined);
 			switch (factor)
 			{
 				case BlendFactorEnum::Zero:
@@ -50,6 +53,7 @@ namespace cage
 
 		vk::BlendOp convertBlendOperation(BlendOperationEnum op)
 		{
+			CAGE_ASSERT(op != BlendOperationEnum::Undefined);
 			switch (op)
 			{
 				case BlendOperationEnum::Add:
@@ -68,6 +72,7 @@ namespace cage
 
 		vk::BufferUsageFlags convertBufferUsage(BufferUsageFlags flags)
 		{
+			CAGE_ASSERT(flags != BufferUsageFlags::Undefined);
 			vk::BufferUsageFlags bits = {};
 			if (any(flags & BufferUsageFlags::CopyDst))
 				bits |= vk::BufferUsageFlagBits::eTransferDst;
@@ -92,6 +97,7 @@ namespace cage
 
 		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp)
 		{
+			CAGE_ASSERT(comp != CompareFunctionEnum::Undefined);
 			switch (comp)
 			{
 				case CompareFunctionEnum::Never:
@@ -116,6 +122,7 @@ namespace cage
 
 		vk::CullModeFlags convertCullMode(CullModeEnum mode)
 		{
+			CAGE_ASSERT(mode != CullModeEnum::Undefined);
 			switch (mode)
 			{
 				case CullModeEnum::Back:
@@ -128,6 +135,7 @@ namespace cage
 
 		vk::Filter convertFilter(FilterModeEnum filter)
 		{
+			//CAGE_ASSERT(filter != FilterModeEnum::Undefined);
 			switch (filter)
 			{
 				case FilterModeEnum::Nearest:
@@ -140,6 +148,7 @@ namespace cage
 
 		vk::Format convertTextureFormat(TextureFormatEnum format)
 		{
+			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
 			switch (format)
 			{
 				case TextureFormatEnum::R8Unorm:
@@ -302,6 +311,7 @@ namespace cage
 
 		vk::Format convertVertexFormat(VertexFormatEnum format)
 		{
+			CAGE_ASSERT(format != VertexFormatEnum::Undefined);
 			switch (format)
 			{
 				case VertexFormatEnum::Uint8:
@@ -392,6 +402,7 @@ namespace cage
 
 		vk::FrontFace convertFrontFace(FrontFaceEnum face)
 		{
+			CAGE_ASSERT(face != FrontFaceEnum::Undefined);
 			switch (face)
 			{
 				case FrontFaceEnum::CCW:
@@ -404,6 +415,7 @@ namespace cage
 
 		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
 		{
+			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
 			switch (format)
 			{
 				case TextureFormatEnum::Stencil8:
@@ -421,6 +433,8 @@ namespace cage
 
 		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format)
 		{
+			CAGE_ASSERT(flags != TextureUsageFlags::Undefined);
+			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
 			vk::ImageUsageFlags bits = {};
 			if (any(flags & TextureUsageFlags::CopyDst))
 				bits |= vk::ImageUsageFlagBits::eTransferDst;
@@ -453,6 +467,7 @@ namespace cage
 
 		vk::IndexType convertIndexFormat(IndexFormatEnum format)
 		{
+			CAGE_ASSERT(format != IndexFormatEnum::Undefined);
 			switch (format)
 			{
 				case IndexFormatEnum::Uint16:
@@ -465,6 +480,7 @@ namespace cage
 
 		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology)
 		{
+			CAGE_ASSERT(topology != PrimitiveTopologyEnum::Undefined);
 			switch (topology)
 			{
 				case PrimitiveTopologyEnum::PointList:
@@ -483,6 +499,7 @@ namespace cage
 
 		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode)
 		{
+			//CAGE_ASSERT(mode != AddressModeEnum::Undefined);
 			switch (mode)
 			{
 				case AddressModeEnum::ClampToEdge:
@@ -497,6 +514,7 @@ namespace cage
 
 		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter)
 		{
+			//CAGE_ASSERT(filter != FilterModeEnum::Undefined);
 			switch (filter)
 			{
 				case FilterModeEnum::Nearest:
@@ -509,6 +527,7 @@ namespace cage
 
 		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility)
 		{
+			CAGE_ASSERT(visibility != ShaderStagesFlags::Undefined);
 			vk::ShaderStageFlags r = {};
 			if (any(visibility & ShaderStagesFlags::Vertex))
 				r |= vk::ShaderStageFlagBits::eVertex;
@@ -517,6 +536,20 @@ namespace cage
 			if (any(visibility & ShaderStagesFlags::Compute))
 				r |= vk::ShaderStageFlagBits::eCompute;
 			return r;
+		}
+
+		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset)
+		{
+			CAGE_ASSERT(type != BufferBindingTypeEnum::Undefined);
+			switch (type)
+			{
+				case BufferBindingTypeEnum::Uniform:
+					return hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
+				case BufferBindingTypeEnum::Storage:
+				case BufferBindingTypeEnum::ReadOnlyStorage:
+					return hasDynamicOffset ? vk::DescriptorType::eStorageBufferDynamic : vk::DescriptorType::eStorageBuffer;
+			}
+			return {};
 		}
 
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout)

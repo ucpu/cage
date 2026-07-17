@@ -1,3 +1,4 @@
+#include <array>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -58,7 +59,20 @@ namespace cage
 			Destructor destructor = nullptr;
 
 			DeferredDestruction() {}
-			DeferredDestruction(DeferredDestruction &&) = default;
+			DeferredDestruction(DeferredDestruction &&other) noexcept
+			{
+				detail::memcpy(this, &other, sizeof(*this));
+				other.destructor = nullptr;
+			}
+			DeferredDestruction &operator=(DeferredDestruction &&other) noexcept
+			{
+				if (this == &other)
+					return *this;
+				if (destructor)
+					destructor(data);
+				detail::memcpy(this, &other, sizeof(*this));
+				other.destructor = nullptr;
+			}
 			~DeferredDestruction()
 			{
 				if (destructor)
@@ -74,9 +88,9 @@ namespace cage
 			[[no_unique_address]] Extra extra = {};
 
 			ResourceHandle() {}
-			ResourceHandle(ResourceHandle &&other) { *this = other; }
+			ResourceHandle(ResourceHandle &&other) noexcept { *this = other; }
 			~ResourceHandle() { destroy(); }
-			ResourceHandle &operator=(ResourceHandle &&other)
+			ResourceHandle &operator=(ResourceHandle &&other) noexcept
 			{
 				if (this == &other)
 					return *this;
@@ -102,21 +116,26 @@ namespace cage
 
 		struct WindowGpuContextImpl : private Immovable
 		{
-			struct Frame
+			struct SwpImage
 			{
-				vk::UniqueSemaphore imageAcquiredSemaphore;
-				vk::UniqueSemaphore renderCompleteSemaphore;
 				Texture texture;
 				vk::Image image;
-				//vk::UniqueFence renderCompleteFence;
+				vk::UniqueSemaphore renderComplete;
+			};
+			struct FrameInFlight
+			{
+				vk::UniqueSemaphore imageAcquired;
+				vk::Fence fence;
 			};
 
 			vkb::Swapchain swapchain;
-			std::vector<Frame> frames;
+			std::vector<SwpImage> swpImages;
+			std::array<FrameInFlight, 2> framesInFlight = {};
 			Vec2i resolution;
 			vk::Instance instance;
 			vk::SurfaceKHR surface;
-			uint32 index = 0;
+			uint32 imageIndex = m;
+			uint32 frameIndex = 0;
 
 			WindowGpuContextImpl(vk::Instance instance);
 			~WindowGpuContextImpl();
@@ -124,8 +143,16 @@ namespace cage
 			void init(DeviceImpl &device);
 			void clear();
 
-			Frame &frame() { return frames[index]; }
-			Frame *operator->() { return &frames[index]; }
+			SwpImage &img()
+			{
+				CAGE_ASSERT(imageIndex < swpImages.size());
+				return swpImages[imageIndex];
+			}
+			FrameInFlight &frm()
+			{
+				CAGE_ASSERT(frameIndex < framesInFlight.size());
+				return framesInFlight[frameIndex];
+			}
 		};
 
 		class BindGroupImpl : private Immovable
@@ -141,6 +168,7 @@ namespace cage
 		{
 		public:
 			ResourceHandle<vk::DescriptorSetLayout> layout;
+			ankerl::svector<BindGroupLayoutDescriptor::Entry, 10> entries;
 
 			BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc);
 			~BindGroupLayoutImpl();
@@ -236,6 +264,7 @@ namespace cage
 			vk::UniqueDescriptorPool descriptorPool;
 			std::vector<CommandBuffer> additionalCommands;
 			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
+			std::array<vk::UniqueFence, 2> framesFences;
 			std::vector<DeferredDestruction> currentDefferedDestructions;
 			std::vector<DeferredDestruction> nextDefferedDestructions;
 
@@ -351,6 +380,7 @@ namespace cage
 		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode);
 		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter);
 		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
+		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset);
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
 
 		template<class T, class Extra>
@@ -362,9 +392,9 @@ namespace cage
 			CAGE_ASSERT(device);
 			DeferredDestruction dd;
 			detail::memcpy(dd.data, this, sizeof(*this));
-			detail::memset(this, 0, sizeof(*this));
 			dd.destructor = +[](void *ptr) { deferredDestructor(*reinterpret_cast<ResourceHandle<T, Extra> *>(ptr)); };
 			device->nextDefferedDestructions.push_back(std::move(dd));
+			detail::memset(this, 0, sizeof(*this));
 		}
 
 		template<class T, class Extra>

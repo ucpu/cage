@@ -16,6 +16,19 @@ namespace cage
 			handle.device->device.destroyDescriptorSetLayout(handle.value);
 		}
 
+		namespace
+		{
+			const BindGroupLayoutDescriptor::Entry &findBinding(const BindGroupLayout &layout, uint32 binding)
+			{
+				for (const auto &it : layout->entries)
+				{
+					if (it.binding == binding)
+						return it;
+				}
+				CAGE_THROW_ERROR(Exception, "missing binding layout entry");
+			}
+		}
+
 		BindGroupImpl::BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc)
 		{
 			vk::DescriptorSetAllocateInfo allocInfo;
@@ -27,14 +40,15 @@ namespace cage
 			set.value = sets[0];
 			set.setLabel(desc.label);
 
-			ankerl::svector<vk::WriteDescriptorSet, 10> writes;
-			ankerl::svector<vk::DescriptorBufferInfo, 10> infosBuffers;
-			ankerl::svector<vk::DescriptorImageInfo, 10> infosImages;
+			ankerl::svector<vk::WriteDescriptorSet, 32> writes;
+			ankerl::svector<vk::DescriptorBufferInfo, 24> infosBuffers;
+			ankerl::svector<vk::DescriptorImageInfo, 24> infosImages;
 			writes.reserve(desc.entries.size());
 			infosBuffers.reserve(desc.entries.size());
 			infosImages.reserve(desc.entries.size());
 			for (const auto &entry : desc.entries)
 			{
+				CAGE_ASSERT(entry.binding != m);
 				vk::WriteDescriptorSet write;
 				write.dstSet = set;
 				write.dstBinding = entry.binding;
@@ -50,11 +64,16 @@ namespace cage
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::BufferEntry>)
 						{
+							CAGE_ASSERT(e.offset <= e.buffer.getSize());
+							CAGE_ASSERT(e.size == m || e.offset + e.size <= e.buffer.getSize());
 							vk::DescriptorBufferInfo &bufferInfo = infosBuffers.emplace_back(); // make sure the struct outlives its use
 							bufferInfo.buffer = e.buffer->buffer;
 							bufferInfo.offset = e.offset;
-							bufferInfo.range = e.size;
-							// write.descriptorType = vk::DescriptorType::eUniformBuffer; // todo
+							bufferInfo.range = e.size == m ? e.buffer.getSize() - e.offset : e.size;
+							const auto l = findBinding(desc.layout, entry.binding);
+							CAGE_ASSERT(std::holds_alternative<BindGroupLayoutDescriptor::BufferEntry>(l.data));
+							const auto &lb = std::get<BindGroupLayoutDescriptor::BufferEntry>(l.data);
+							write.descriptorType = convertBindingBufferType(lb.type, lb.hasDynamicOffset);
 							write.pBufferInfo = &bufferInfo;
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::SamplerEntry>)
@@ -68,6 +87,7 @@ namespace cage
 						{
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
 							imageInfo.imageView = e.textureView->view;
+							imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 							write.descriptorType = vk::DescriptorType::eSampledImage;
 							write.pImageInfo = &imageInfo;
 						}
@@ -87,10 +107,11 @@ namespace cage
 
 		BindGroupLayoutImpl::BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc)
 		{
-			ankerl::svector<vk::DescriptorSetLayoutBinding, 10> bindings;
+			ankerl::svector<vk::DescriptorSetLayoutBinding, 32> bindings;
 			bindings.reserve(desc.entries.size());
 			for (const auto &entry : desc.entries)
 			{
+				CAGE_ASSERT(entry.binding != m);
 				vk::DescriptorSetLayoutBinding b;
 				b.binding = entry.binding;
 				b.descriptorCount = 1;
@@ -105,16 +126,7 @@ namespace cage
 						}
 						else if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::BufferEntry>)
 						{
-							switch (e.type)
-							{
-								case BufferBindingTypeEnum::Uniform:
-									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
-									break;
-								case BufferBindingTypeEnum::Storage:
-								case BufferBindingTypeEnum::ReadOnlyStorage:
-									b.descriptorType = e.hasDynamicOffset ? vk::DescriptorType::eStorageBufferDynamic : vk::DescriptorType::eStorageBuffer;
-									break;
-							}
+							b.descriptorType = convertBindingBufferType(e.type, e.hasDynamicOffset);
 						}
 						else if constexpr (std::is_same_v<T, BindGroupLayoutDescriptor::SamplerEntry>)
 						{
@@ -134,11 +146,15 @@ namespace cage
 			}
 
 			vk::DescriptorSetLayoutCreateInfo ci;
-			ci.bindingCount = static_cast<uint32_t>(bindings.size());
+			ci.bindingCount = bindings.size();
 			ci.pBindings = bindings.data();
 			layout.device = &device;
 			layout.value = device.device.createDescriptorSetLayout(ci);
 			layout.setLabel(desc.label);
+
+			entries.reserve(desc.entries.size());
+			for (auto &it : desc.entries)
+				entries.push_back(it);
 		}
 
 		BindGroupLayoutImpl::~BindGroupLayoutImpl() {}

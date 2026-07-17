@@ -11,17 +11,17 @@ namespace cage
 		public:
 			gpu::Buffer buffer = {};
 			GraphicsDevice *device = nullptr;
-			uintPtr size = 0;
+			uint64 size = 0;
 			bool geometry = false;
 
-			explicit GraphicsBufferImpl(GraphicsDevice *device, uintPtr size, const AssetLabel &label_, bool geometry) : device(device), size(size), geometry(geometry)
+			explicit GraphicsBufferImpl(GraphicsDevice *device, uint64 size, const AssetLabel &label_, bool geometry) : device(device), size(size), geometry(geometry)
 			{
 				this->label = label_;
 
 				CAGE_ASSERT((size % 4) == 0);
 
 				if (!geometry)
-					size = ((max(size, uintPtr(256)) + 15) / 16) * 16;
+					size = ((max(size, uint64(256)) + 15) / 16) * 16;
 				gpu::BufferDescriptor desc = {};
 				desc.size = size;
 				desc.usage = usage();
@@ -41,7 +41,7 @@ namespace cage
 		};
 	}
 
-	void GraphicsBuffer::writeBuffer(PointerRange<const char> buffer, uintPtr offset)
+	void GraphicsBuffer::writeBuffer(PointerRange<const char> buffer, uint64 offset)
 	{
 		GraphicsBufferImpl *impl = (GraphicsBufferImpl *)this;
 
@@ -53,7 +53,7 @@ namespace cage
 		impl->device->nativeDevice()->writeBuffer(impl->buffer, offset, buffer);
 	}
 
-	uintPtr GraphicsBuffer::size() const
+	uint64 GraphicsBuffer::size() const
 	{
 		const GraphicsBufferImpl *impl = (const GraphicsBufferImpl *)this;
 		return numeric_cast<uint32>(impl->buffer.getSize());
@@ -65,12 +65,12 @@ namespace cage
 		return impl->buffer;
 	}
 
-	Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uintPtr size, const AssetLabel &label)
+	Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uint64 size, const AssetLabel &label)
 	{
 		return systemMemory().createImpl<GraphicsBuffer, GraphicsBufferImpl>(device, size, label, false);
 	}
 
-	Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uintPtr size, const AssetLabel &label)
+	Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uint64 size, const AssetLabel &label)
 	{
 		return systemMemory().createImpl<GraphicsBuffer, GraphicsBufferImpl>(device, size, label, true);
 	}
