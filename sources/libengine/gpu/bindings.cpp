@@ -5,9 +5,9 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::DescriptorSet, Nothing> &handle)
+		void deferredDestructor(ResourceHandle<vk::DescriptorSet, vk::DescriptorPool> &handle)
 		{
-			// todo
+			handle.device->device.freeDescriptorSets(handle.extra, handle.value);
 		}
 
 		template<>
@@ -29,16 +29,16 @@ namespace cage
 			}
 		}
 
-		BindGroupImpl::BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc)
+		BindGroupImpl::BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc) : set(device), rtka(device)
 		{
 			vk::DescriptorSetAllocateInfo allocInfo;
 			allocInfo.descriptorPool = *device.descriptorPool;
 			allocInfo.descriptorSetCount = 1;
 			allocInfo.pSetLayouts = &desc.layout->layout.value;
 			auto sets = device.device.allocateDescriptorSets(allocInfo);
-			set.device = &device;
 			set.value = sets[0];
 			set.setLabel(desc.label);
+			set.extra = *device.descriptorPool;
 
 			ankerl::svector<vk::WriteDescriptorSet, 32> writes;
 			ankerl::svector<vk::DescriptorBufferInfo, 24> infosBuffers;
@@ -75,6 +75,7 @@ namespace cage
 							const auto &lb = std::get<BindGroupLayoutDescriptor::BufferEntry>(l.data);
 							write.descriptorType = convertBindingBufferType(lb.type, lb.hasDynamicOffset);
 							write.pBufferInfo = &bufferInfo;
+							rtka.keepAlive(e.buffer);
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::SamplerEntry>)
 						{
@@ -82,6 +83,7 @@ namespace cage
 							imageInfo.sampler = e.sampler->sampler;
 							write.descriptorType = vk::DescriptorType::eSampler;
 							write.pImageInfo = &imageInfo;
+							rtka.keepAlive(e.sampler);
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::TextureEntry>)
 						{
@@ -90,6 +92,7 @@ namespace cage
 							imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 							write.descriptorType = vk::DescriptorType::eSampledImage;
 							write.pImageInfo = &imageInfo;
+							rtka.keepAlive(e.textureView);
 						}
 						else
 						{
@@ -105,7 +108,7 @@ namespace cage
 
 		BindGroupImpl::~BindGroupImpl() {}
 
-		BindGroupLayoutImpl::BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc)
+		BindGroupLayoutImpl::BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc) : layout(device)
 		{
 			ankerl::svector<vk::DescriptorSetLayoutBinding, 32> bindings;
 			bindings.reserve(desc.entries.size());
@@ -148,7 +151,6 @@ namespace cage
 			vk::DescriptorSetLayoutCreateInfo ci;
 			ci.bindingCount = bindings.size();
 			ci.pBindings = bindings.data();
-			layout.device = &device;
 			layout.value = device.device.createDescriptorSetLayout(ci);
 			layout.setLabel(desc.label);
 

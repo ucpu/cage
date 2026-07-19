@@ -11,7 +11,7 @@ namespace cage
 				vmaDestroyBuffer(handle.device->allocator, (VkBuffer)handle.value, handle.extra);
 		}
 
-		BufferImpl::BufferImpl(DeviceImpl &device, const BufferDescriptor &desc) : size(desc.size), usage(desc.usage)
+		BufferImpl::BufferImpl(DeviceImpl &device, const BufferDescriptor &desc) : buffer(device), size(desc.size), usage(desc.usage)
 		{
 			vk::BufferCreateInfo bufferInfo;
 			bufferInfo.size = desc.size;
@@ -24,7 +24,6 @@ namespace cage
 
 			VkBuffer buff;
 			check("vmaCreateBuffer", vmaCreateBuffer(device.allocator, (VkBufferCreateInfo *)&bufferInfo, &allocInfo, &buff, &buffer.extra, &allocatedInfo));
-			buffer.device = &device;
 			buffer.value = (vk::Buffer)buff;
 			buffer.setLabel(desc.label);
 

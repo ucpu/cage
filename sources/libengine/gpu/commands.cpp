@@ -5,24 +5,44 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::CommandBuffer, Nothing> &handle)
+		void deferredDestructor(ResourceHandle<std::vector<Holder<void>>, Nothing> &handle)
 		{
-			// todo
+			handle.value.clear();
 		}
 
-		CommandBufferImpl::CommandBufferImpl() {}
+		template<>
+		void deferredDestructor(ResourceHandle<vk::CommandPool, Nothing> &handle)
+		{
+			handle.device->device.destroyCommandPool(handle.value);
+		}
+
+		template<>
+		void deferredDestructor(ResourceHandle<vk::CommandBuffer, vk::CommandPool> &handle)
+		{
+			handle.device->device.freeCommandBuffers(handle.extra, handle.value);
+		}
+
+		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : pool(device), buffer(device), rtka(device)
+		{
+			vk::CommandPoolCreateInfo info1;
+			pool.value = device.device.createCommandPool(info1);
+
+			vk::CommandBufferAllocateInfo info2;
+			info2.commandBufferCount = 1;
+			info2.commandPool = pool.value;
+			buffer.value = device.device.allocateCommandBuffers(info2)[0];
+			buffer.extra = pool.value;
+		}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
 
-		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc)
+		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc) : buffer(CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device))), cmd(buffer->buffer.value)
 		{
-			cmd.device = &device;
-			cmd.value = device.newCommandBuffer();
-			cmd.setLabel(desc.label);
+			buffer->buffer.setLabel(desc.label);
 
 			vk::CommandBufferBeginInfo info;
 			info.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-			cmd->begin(info);
+			cmd.begin(info);
 		}
 
 		CommandEncoderImpl::~CommandEncoderImpl() {}
@@ -59,7 +79,7 @@ namespace cage
 				vk::DependencyInfo barInfo;
 				barInfo.imageMemoryBarrierCount = 1;
 				barInfo.pImageMemoryBarriers = &imgBar;
-				cmd->pipelineBarrier2(&barInfo);
+				cmd.pipelineBarrier2(&barInfo);
 			}
 
 			if (permanent)
@@ -74,12 +94,12 @@ namespace cage
 		{
 			vk::DebugUtilsLabelEXT info;
 			info.pLabelName = label.str.data();
-			cmd->beginDebugUtilsLabelEXT(info);
+			cmd.beginDebugUtilsLabelEXT(info);
 		}
 
 		void CommandEncoderImpl::popDebugGroup()
 		{
-			cmd->endDebugUtilsLabelEXT();
+			cmd.endDebugUtilsLabelEXT();
 		}
 
 		CommandBuffer CommandEncoderImpl::finishEncoding()
@@ -94,11 +114,9 @@ namespace cage
 				imageTransition(t, t->defaultState);
 			}
 
-			cmd->end();
+			cmd.end();
 
-			CommandBuffer buffer = CommandBuffer(systemMemory().createHolder<CommandBufferImpl>());
-			buffer->buffer = std::move(cmd);
-			return buffer;
+			return std::move(buffer);
 		}
 
 		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
@@ -127,6 +145,7 @@ namespace cage
 				const auto res = it.view->texture.getResolution();
 				rect.extent.width = res[0];
 				rect.extent.height = res[1];
+				keepAlive(it.view);
 			}
 
 			vk::RenderingAttachmentInfo depth;
@@ -141,6 +160,7 @@ namespace cage
 				const auto res = desc.depthStencilAttachment->view->texture.getResolution();
 				rect.extent.width = res[0];
 				rect.extent.height = res[1];
+				keepAlive(desc.depthStencilAttachment->view);
 			}
 
 			vk::RenderingInfo info;
@@ -150,7 +170,7 @@ namespace cage
 			info.pStencilAttachment = &stencil;
 			info.renderArea = rect;
 			info.layerCount = 1;
-			cmd->beginRendering(info);
+			cmd.beginRendering(info);
 		}
 
 		void CommandEncoderImpl::endRenderPass()
@@ -158,33 +178,36 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			currentMode = EncoderModeEnum::Generic;
 
-			cmd->endRendering();
+			cmd.endRendering();
 		}
 
 		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			vk::Rect2D rect = vk::Rect2D({ (sint32)x, (sint32)y }, { w, h });
-			cmd->setScissor(0, rect);
+			cmd.setScissor(0, rect);
 		}
 
 		void CommandEncoderImpl::setPipeline(const RenderPipeline &pipeline)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->pipeline);
+			keepAlive(pipeline);
+			cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->pipeline);
 			currentPipelineLayout = pipeline->layout->layout;
 		}
 
 		void CommandEncoderImpl::setBindGroup(uint32 binding, const BindGroup &group, PointerRange<const uint32> dynamicOffsets)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipelineLayout, binding, group->set.value, dynamicOffsets);
+			keepAlive(group);
+			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipelineLayout, binding, group->set.value, dynamicOffsets);
 		}
 
 		void CommandEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->bindVertexBuffers(slot, buffer->buffer.value, offset);
+			keepAlive(buffer);
+			cmd.bindVertexBuffers(slot, buffer->buffer.value, offset);
 		}
 
 		void CommandEncoderImpl::setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth)
@@ -196,25 +219,26 @@ namespace cage
 			vp.height = -height.value;
 			vp.minDepth = minDepth.value;
 			vp.maxDepth = maxDepth.value;
-			cmd->setViewport(0, 1, &vp);
+			cmd.setViewport(0, 1, &vp);
 		}
 
 		void CommandEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->bindIndexBuffer(buffer->buffer, offset, convertIndexFormat(format));
+			keepAlive(buffer);
+			cmd.bindIndexBuffer(buffer->buffer, offset, convertIndexFormat(format));
 		}
 
 		void CommandEncoderImpl::drawIndexed(uint32 indicesCount, uint32 instancesCount, uint32 firstIndex, sint32 baseVertex, uint32 firstInstance)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
+			cmd.drawIndexed(indicesCount, instancesCount, firstIndex, baseVertex, firstInstance);
 		}
 
 		void CommandEncoderImpl::draw(uint32 verticesCount, uint32 instancesCount, uint32 firstVertex, uint32 firstInstance)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
-			cmd->draw(verticesCount, instancesCount, firstVertex, firstInstance);
+			cmd.draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}
 	}
 }

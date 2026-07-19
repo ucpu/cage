@@ -22,7 +22,7 @@ namespace cage
 			handle.device->device.destroyPipelineLayout(handle.value);
 		}
 
-		RenderPipelineImpl::RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc) : layout(desc.layout)
+		RenderPipelineImpl::RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc) : pipeline(device), layout(desc.layout)
 		{
 			ankerl::svector<vk::PipelineShaderStageCreateInfo, 2> stages;
 			{
@@ -152,26 +152,24 @@ namespace cage
 			auto r = device.device.createGraphicsPipeline({}, ci);
 			check("createGraphicsPipeline", r.result);
 			CAGE_ASSERT(r.has_value());
-			pipeline.device = &device;
 			pipeline.value = r.value;
 			pipeline.setLabel(desc.label);
 		}
 
 		RenderPipelineImpl::~RenderPipelineImpl() {}
 
-		ShaderModuleImpl::ShaderModuleImpl(DeviceImpl &device, const ShaderModuleDescriptor &desc)
+		ShaderModuleImpl::ShaderModuleImpl(DeviceImpl &device, const ShaderModuleDescriptor &desc) : shader(device)
 		{
 			vk::ShaderModuleCreateInfo ci;
 			ci.codeSize = desc.spirvCode.size() * sizeof(uint32);
 			ci.pCode = desc.spirvCode.data();
-			shader.device = &device;
 			shader.value = device.device.createShaderModule(ci);
 			shader.setLabel(desc.label);
 		}
 
 		ShaderModuleImpl::~ShaderModuleImpl() {}
 
-		PipelineLayoutImpl::PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc)
+		PipelineLayoutImpl::PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc) : layout(device)
 		{
 			ankerl::svector<vk::DescriptorSetLayout, 5> ls;
 			ls.reserve(desc.bindGroupLayouts.size());
@@ -180,7 +178,6 @@ namespace cage
 			vk::PipelineLayoutCreateInfo ci;
 			ci.setLayoutCount = ls.size();
 			ci.pSetLayouts = ls.data();
-			layout.device = &device;
 			layout.value = device.device.createPipelineLayout(ci);
 			layout.setLabel(desc.label);
 		}

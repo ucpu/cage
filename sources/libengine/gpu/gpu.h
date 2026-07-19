@@ -31,6 +31,10 @@ namespace cage
 
 	namespace gpu
 	{
+		///////////////////////////////////////////////////////////////////
+		// implementation utilities
+		///////////////////////////////////////////////////////////////////
+
 		enum class ImageStateEnum
 		{
 			Undefined = 0,
@@ -56,7 +60,7 @@ namespace cage
 		struct DeferredDestruction : private Noncopyable
 		{
 			using Destructor = void (*)(void *ptr);
-			char data[32] = {};
+			alignas(8) char data[40] = {};
 			Destructor destructor = nullptr;
 
 			DeferredDestruction() {}
@@ -85,10 +89,10 @@ namespace cage
 		struct ResourceHandle : private Noncopyable
 		{
 			DeviceImpl *device = nullptr;
-			T value = nullptr;
+			T value = {};
 			[[no_unique_address]] Extra extra = {};
 
-			ResourceHandle() {}
+			ResourceHandle(DeviceImpl &device) : device(&device) {}
 			ResourceHandle(ResourceHandle &&other) noexcept { *this = other; }
 			~ResourceHandle() { destroy(); }
 			ResourceHandle &operator=(ResourceHandle &&other) noexcept
@@ -97,7 +101,7 @@ namespace cage
 					return *this;
 				destroy();
 				device = nullptr;
-				value = nullptr; // make sure the moved-from object becomes empty
+				value = {}; // make sure the moved-from object becomes empty
 				extra = {};
 				std::swap(device, other.device);
 				std::swap(value, other.value);
@@ -114,6 +118,19 @@ namespace cage
 
 		template<class T, class Extra>
 		void deferredDestructor(ResourceHandle<T, Extra> &);
+
+		struct ResourcesToKeepAlive : private Noncopyable
+		{
+			ResourceHandle<std::vector<Holder<void>>> resourcesToKeepAlive;
+
+			ResourcesToKeepAlive(DeviceImpl &device) : resourcesToKeepAlive(device) {}
+
+			template<class Crtp, class Impl>
+			void keepAlive(const GpuInterfaceHandle<Crtp, Impl> &v)
+			{
+				resourcesToKeepAlive.value.push_back(v.getVoidHolder());
+			}
+		};
 
 		struct WindowGpuContextImpl : private Immovable
 		{
@@ -156,10 +173,15 @@ namespace cage
 			}
 		};
 
+		///////////////////////////////////////////////////////////////////
+		// classes implementation
+		///////////////////////////////////////////////////////////////////
+
 		class BindGroupImpl : private Immovable
 		{
 		public:
-			ResourceHandle<vk::DescriptorSet> set;
+			ResourceHandle<vk::DescriptorSet, vk::DescriptorPool> set;
+			ResourcesToKeepAlive rtka;
 
 			BindGroupImpl(DeviceImpl &device, const BindGroupDescriptor &desc);
 			~BindGroupImpl();
@@ -195,22 +217,31 @@ namespace cage
 		class CommandBufferImpl : private Immovable
 		{
 		public:
-			ResourceHandle<vk::CommandBuffer> buffer;
+			ResourceHandle<vk::CommandPool> pool;
+			ResourceHandle<vk::CommandBuffer, vk::CommandPool> buffer;
+			ResourcesToKeepAlive rtka;
 
-			CommandBufferImpl();
+			CommandBufferImpl(DeviceImpl &device);
 			~CommandBufferImpl();
 		};
 
 		class CommandEncoderImpl : private Immovable
 		{
 		public:
-			ResourceHandle<vk::CommandBuffer> cmd;
+			CommandBuffer buffer;
 			std::unordered_map<Texture, ImageStateEnum, Hasher, Hasher> transitionedImages;
+			vk::CommandBuffer cmd;
 			vk::PipelineLayout currentPipelineLayout;
 			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
 
 			CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc);
 			~CommandEncoderImpl();
+
+			template<class Crtp, class Impl>
+			void keepAlive(const GpuInterfaceHandle<Crtp, Impl> &v)
+			{
+				buffer->rtka.keepAlive(v);
+			}
 
 			// records a barrier with layout transition (if needed)
 			// permanent = false: keeps track of the changed state to automatically revert it to the default layout at the end
@@ -266,9 +297,8 @@ namespace cage
 			vk::UniqueDescriptorPool descriptorPool;
 			std::vector<CommandBuffer> additionalCommands;
 			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
-			std::array<vk::UniqueFence, 2> framesFences;
-			std::vector<DeferredDestruction> currentDefferedDestructions;
-			std::vector<DeferredDestruction> nextDefferedDestructions;
+			std::array<vk::UniqueFence, 2> framesFences = {};
+			std::array<std::vector<DeferredDestruction>, 3> deferredDestructions = {}; // insert into [0]
 			std::vector<Holder<AsyncTask>> disposingTasks;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
@@ -279,12 +309,10 @@ namespace cage
 
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
-			vk::CommandBuffer newCommandBuffer();
 
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
-			void tick();
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
@@ -354,6 +382,10 @@ namespace cage
 			~TextureViewImpl();
 		};
 
+		///////////////////////////////////////////////////////////////////
+		// extra functions
+		///////////////////////////////////////////////////////////////////
+
 		CAGE_FORCE_INLINE void check(const char *what, VkResult result)
 		{
 			vk::detail::resultCheck(vk::Result(result), what);
@@ -385,17 +417,35 @@ namespace cage
 		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset);
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
 
+		///////////////////////////////////////////////////////////////////
+		// inline implementations
+		///////////////////////////////////////////////////////////////////
+
 		template<class T, class Extra>
 		void ResourceHandle<T, Extra>::destroy()
 		{
 			static_assert(sizeof(*this) <= sizeof(DeferredDestruction::data));
-			if (!value)
-				return;
+			if constexpr (requires() { !value; })
+			{
+				if (!value)
+					return;
+			}
+			if constexpr (requires() { value.empty(); })
+			{
+				if (value.empty())
+					return;
+			}
 			CAGE_ASSERT(device);
 			DeferredDestruction dd;
 			detail::memcpy(dd.data, this, sizeof(*this));
-			dd.destructor = +[](void *ptr) { deferredDestructor(*reinterpret_cast<ResourceHandle<T, Extra> *>(ptr)); };
-			device->nextDefferedDestructions.push_back(std::move(dd));
+			dd.destructor = +[](void *ptr)
+			{
+				ResourceHandle<T, Extra> h(*(DeviceImpl *)nullptr);
+				detail::memcpy(&h, ptr, sizeof(h));
+				deferredDestructor(h);
+				detail::memset(&h, 0, sizeof(h));
+			};
+			device->deferredDestructions[0].push_back(std::move(dd));
 			detail::memset(this, 0, sizeof(*this));
 		}
 

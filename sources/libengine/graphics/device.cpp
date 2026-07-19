@@ -115,11 +115,6 @@ namespace cage
 			GraphicsFrameStatistics nextFrame(PointerRange<GraphicsWindowPresentation> windows)
 			{
 				const ProfilingScope profiling("next frame");
-				{
-					const ProfilingScope profiling("process events");
-					ScopeLock lock(mutex);
-					device.tick();
-				}
 				//gpuTimer->frameEnd();
 				GraphicsFrameStatistics stats;
 				{

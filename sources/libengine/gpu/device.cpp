@@ -1,5 +1,7 @@
 #include <cstring>
 
+#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS 1
+
 #define GLFW_INCLUDE_VULKAN 1
 #include <GLFW/glfw3.h>
 
@@ -293,11 +295,6 @@ namespace cage
 			// todo
 		}
 
-		void DeviceImpl::tick()
-		{
-			// todo
-		}
-
 		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)
 		{
 			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
@@ -320,23 +317,10 @@ namespace cage
 			return context.share();
 		}
 
-		vk::CommandBuffer DeviceImpl::newCommandBuffer()
-		{
-			thread_local vk::UniqueCommandPool pool;
-			if (!pool)
-			{
-				vk::CommandPoolCreateInfo info;
-				pool = device.createCommandPoolUnique(info);
-			}
-
-			vk::CommandBufferAllocateInfo info;
-			info.commandBufferCount = 1;
-			info.commandPool = *pool;
-			return device.allocateCommandBuffers(info)[0];
-		}
-
 		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
 		{
+			CAGE_LOG_DEBUG(SeverityEnum::Info, "gpu", Stringizer() + "submitAndPresentWindows");
+
 			struct WindowEntry
 			{
 				Window *window = nullptr;
@@ -420,8 +404,33 @@ namespace cage
 					info.swapchainCount = sws.size();
 					info.pSwapchains = sws.data();
 					info.pImageIndices = ids.data();
-					check("presentKHR", queue.presentKHR(info));
+					auto r = queue.presentKHR(info);
+					switch (r)
+					{
+						case vk::Result::eSuccess:
+							break;
+						case vk::Result::eSuboptimalKHR:
+						case vk::Result::eErrorOutOfDateKHR:
+						{
+							for (auto &it : windows)
+								if (it.ctx)
+									it.ctx->resolution = {}; // refresh next frame
+							break;
+						}
+						default:
+						{
+							check("presentKHR", r);
+							break;
+						}
+					}
 				}
+			}
+
+			// destroy pending destructions
+			{
+				deferredDestructions.back().clear();
+				std::swap(deferredDestructions[2], deferredDestructions[1]);
+				std::swap(deferredDestructions[1], deferredDestructions[0]);
 			}
 
 			// wait fence
@@ -449,9 +458,32 @@ namespace cage
 					}
 
 					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, *data.frm().imageAcquired);
-					check("acquireNextImageKHR", r.result);
-					data.imageIndex = r.value;
-					*w.texture = data.img().texture;
+					switch (vk::Result(r.result))
+					{
+						case vk::Result::eSuccess:
+						{
+							data.imageIndex = r.value;
+							*w.texture = data.img().texture;
+							break;
+						}
+						case vk::Result::eSuboptimalKHR:
+						{
+							data.imageIndex = r.value;
+							*w.texture = data.img().texture;
+							data.resolution = {}; // refresh next frame
+							break;
+						}
+						case vk::Result::eErrorOutOfDateKHR:
+						{
+							data.resolution = {}; // refresh next frame
+							break;
+						}
+						default:
+						{
+							check("acquireNextImageKHR", r.result);
+							break;
+						}
+					}
 				}
 			}
 		}

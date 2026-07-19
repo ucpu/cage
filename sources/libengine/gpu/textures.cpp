@@ -23,7 +23,7 @@ namespace cage
 			handle.device->device.destroyImageView(handle.value);
 		}
 
-		SamplerImpl::SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc)
+		SamplerImpl::SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc) : sampler(device)
 		{
 			vk::SamplerCreateInfo info;
 			info.magFilter = convertFilter(desc.magFilter);
@@ -34,20 +34,18 @@ namespace cage
 			info.addressModeW = convertAddressMode(desc.addressModeW);
 			info.anisotropyEnable = desc.maxAnisotropy > 1;
 			info.maxAnisotropy = desc.maxAnisotropy;
-			sampler.device = &device;
 			sampler.value = device.device.createSampler(info);
 			sampler.setLabel(desc.label);
 		}
 
 		SamplerImpl::~SamplerImpl() {}
 
-		TextureImpl::TextureImpl(DeviceImpl &device, vk::Image image_)
+		TextureImpl::TextureImpl(DeviceImpl &device, vk::Image image_) : image(device)
 		{
-			image.device = &device;
 			image.value = image_;
 		}
 
-		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
+		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : image(device), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
@@ -95,14 +93,13 @@ namespace cage
 
 			VkImage img;
 			check("vmaCreateImage", vmaCreateImage(device.allocator, (VkImageCreateInfo *)&imageInfo, &allocInfo, &img, &image.extra, &allocatedInfo));
-			image.device = &device;
 			image.value = (vk::Image)img;
 			image.setLabel(desc.label);
 		}
 
 		TextureImpl::~TextureImpl() {}
 
-		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : texture(texture)
+		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device), texture(texture)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
@@ -133,7 +130,6 @@ namespace cage
 			viewInfo.subresourceRange.levelCount = desc.mipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = desc.baseArrayLayer;
 			viewInfo.subresourceRange.layerCount = desc.arrayLayers;
-			view.device = texture->image.device;
 			view.value = texture->image.device->device.createImageView(viewInfo);
 			view.setLabel(desc.label);
 		}

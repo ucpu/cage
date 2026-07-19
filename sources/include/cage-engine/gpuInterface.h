@@ -82,6 +82,8 @@ namespace cage
 				return +ptr;
 			}
 
+			CAGE_FORCE_INLINE Holder<void> getVoidHolder() const { return ptr.share().cast<void>(); }
+
 		private:
 			Holder<Impl> ptr;
 			friend Crtp;
@@ -188,7 +190,6 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
-			void tick();
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 
 		private:

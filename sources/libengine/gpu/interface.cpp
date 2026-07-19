@@ -58,7 +58,6 @@ namespace cage
 
 		CommandBuffer CommandEncoder::finishEncoding()
 		{
-			ScopeLock lock(get()->cmd.device->mutex);
 			return get()->finishEncoding();
 		}
 
@@ -254,12 +253,6 @@ namespace cage
 		{
 			// no lock
 			return writeTexture(dest, data.cast<const char>(), layout, extents);
-		}
-
-		void Device::tick()
-		{
-			ScopeLock lock(get()->mutex);
-			get()->tick();
 		}
 
 		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
