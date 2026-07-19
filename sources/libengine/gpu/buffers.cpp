@@ -5,10 +5,10 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::Buffer, VmaAllocation> &handle)
+		ResourceInternal<vk::Buffer, VmaAllocation>::~ResourceInternal()
 		{
-			if (handle.extra)
-				vmaDestroyBuffer(handle.device->allocator, (VkBuffer)handle.value, handle.extra);
+			if (extra)
+				vmaDestroyBuffer(device->allocator, (VkBuffer)value, extra);
 		}
 
 		BufferImpl::BufferImpl(DeviceImpl &device, const BufferDescriptor &desc) : buffer(device), size(desc.size), usage(desc.usage)
@@ -23,8 +23,8 @@ namespace cage
 			allocInfo.usage = any(desc.usage & (BufferUsageFlags::MapRead | BufferUsageFlags::MapWrite)) ? VMA_MEMORY_USAGE_AUTO_PREFER_HOST : VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 
 			VkBuffer buff;
-			check("vmaCreateBuffer", vmaCreateBuffer(device.allocator, (VkBufferCreateInfo *)&bufferInfo, &allocInfo, &buff, &buffer.extra, &allocatedInfo));
-			buffer.value = (vk::Buffer)buff;
+			check("vmaCreateBuffer", vmaCreateBuffer(device.allocator, (VkBufferCreateInfo *)&bufferInfo, &allocInfo, &buff, &buffer.holder->extra, &allocatedInfo));
+			buffer = (vk::Buffer)buff;
 			buffer.setLabel(desc.label);
 
 			if (allocatedInfo.pMappedData)
@@ -35,12 +35,12 @@ namespace cage
 
 		void BufferImpl::flush()
 		{
-			check("vmaFlushAllocation", vmaFlushAllocation(buffer.device->allocator, buffer.extra, 0, size));
+			check("vmaFlushAllocation", vmaFlushAllocation(buffer.device()->allocator, buffer.holder->extra, 0, size));
 		}
 
 		void BufferImpl::invalidate()
 		{
-			check("vmaInvalidateAllocation", vmaInvalidateAllocation(buffer.device->allocator, buffer.extra, 0, size));
+			check("vmaInvalidateAllocation", vmaInvalidateAllocation(buffer.device()->allocator, buffer.holder->extra, 0, size));
 		}
 	}
 }

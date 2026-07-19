@@ -5,38 +5,38 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<std::vector<Holder<void>>, Nothing> &handle)
+		ResourceInternal<std::vector<Holder<void>>, Nothing>::~ResourceInternal()
 		{
-			handle.value.clear();
+			value.clear();
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::CommandPool, Nothing> &handle)
+		ResourceInternal<vk::CommandPool, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyCommandPool(handle.value);
+			device->device.destroyCommandPool(value);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::CommandBuffer, vk::CommandPool> &handle)
+		ResourceInternal<vk::CommandBuffer, vk::CommandPool>::~ResourceInternal()
 		{
-			handle.device->device.freeCommandBuffers(handle.extra, handle.value);
+			device->device.freeCommandBuffers(extra, value);
 		}
 
 		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : pool(device), buffer(device), rtka(device)
 		{
 			vk::CommandPoolCreateInfo info1;
-			pool.value = device.device.createCommandPool(info1);
+			pool = device.device.createCommandPool(info1);
 
 			vk::CommandBufferAllocateInfo info2;
 			info2.commandBufferCount = 1;
-			info2.commandPool = pool.value;
-			buffer.value = device.device.allocateCommandBuffers(info2)[0];
-			buffer.extra = pool.value;
+			info2.commandPool = pool;
+			buffer = std::move(device.device.allocateCommandBuffers(info2)[0]);
+			buffer = (vk::CommandPool)pool;
 		}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
 
-		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc) : buffer(CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device))), cmd(buffer->buffer.value)
+		CommandEncoderImpl::CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc) : buffer(CommandBuffer(systemMemory().createHolder<CommandBufferImpl>(device))), cmd(buffer->buffer)
 		{
 			buffer->buffer.setLabel(desc.label);
 
@@ -200,14 +200,14 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			keepAlive(group);
-			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipelineLayout, binding, group->set.value, dynamicOffsets);
+			cmd.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, currentPipelineLayout, binding, (vk::DescriptorSet)group->set, dynamicOffsets);
 		}
 
 		void CommandEncoderImpl::setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			keepAlive(buffer);
-			cmd.bindVertexBuffers(slot, buffer->buffer.value, offset);
+			cmd.bindVertexBuffers(slot, (vk::Buffer)buffer->buffer, offset);
 		}
 
 		void CommandEncoderImpl::setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth)

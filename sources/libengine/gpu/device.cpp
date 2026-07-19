@@ -97,6 +97,12 @@ namespace cage
 
 	namespace gpu
 	{
+		template<>
+		ResourceInternal<vk::Semaphore, Nothing>::~ResourceInternal()
+		{
+			device->device.destroySemaphore(value);
+		}
+
 		WindowGpuContextImpl::WindowGpuContextImpl(vk::Instance instance_) : instance(instance_) {}
 
 		WindowGpuContextImpl::~WindowGpuContextImpl() {}
@@ -106,11 +112,9 @@ namespace cage
 			std::vector<VkImage> images = handleResult(swapchain.get_images());
 
 			swpImages.clear();
-			swpImages.resize(images.size());
 			for (uint32 i = 0; i < images.size(); i++)
 			{
-				auto &f = swpImages[i];
-				f = {};
+				auto &f = swpImages.emplace_back(device);
 				f.image = vk::Image(images[i]);
 				f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
 				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
@@ -120,18 +124,18 @@ namespace cage
 				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
 				f.texture->image.setLabel((Stringizer() + "swapchainImage[" + i + "]").value);
 				vk::SemaphoreCreateInfo sci;
-				f.renderComplete = device.device.createSemaphoreUnique(sci);
-				device.setLabel(f.renderComplete, (Stringizer() + "renderComplete[" + i + "]").value);
+				f.renderComplete = device.device.createSemaphore(sci);
+				f.renderComplete.setLabel((Stringizer() + "renderComplete[" + i + "]").value);
 			}
 			imageIndex = 0;
 
-			for (uint32 i = 0; i < framesInFlight.size(); i++)
+			framesInFlight.clear();
+			for (uint32 i = 0; i < 2; i++)
 			{
-				auto &f = framesInFlight[i];
-				f = {};
+				auto &f = framesInFlight.emplace_back(device);
 				vk::SemaphoreCreateInfo sci;
-				f.imageAcquired = device.device.createSemaphoreUnique(sci);
-				device.setLabel(f.imageAcquired, (Stringizer() + "imageAcquired[" + i + "]").value);
+				f.imageAcquired = device.device.createSemaphore(sci);
+				f.imageAcquired.setLabel((Stringizer() + "imageAcquired[" + i + "]").value);
 			}
 			frameIndex = 0;
 
@@ -146,8 +150,7 @@ namespace cage
 		void WindowGpuContextImpl::clear()
 		{
 			swpImages.clear();
-			for (auto &it : framesInFlight)
-				it = {};
+			framesInFlight.clear();
 			vkb::destroy_swapchain(swapchain);
 			instance.destroySurfaceKHR(surface);
 			surface = nullptr;
@@ -355,8 +358,8 @@ namespace cage
 				{
 					if (w.ctx && !w.ctx->swpImages.empty())
 					{
-						ias.push_back(*w.ctx->frm().imageAcquired);
-						rcs.push_back(*w.ctx->img().renderComplete);
+						ias.push_back(w.ctx->frm().imageAcquired);
+						rcs.push_back(w.ctx->img().renderComplete);
 					}
 				}
 
@@ -391,7 +394,7 @@ namespace cage
 					if (w.ctx && !w.ctx->swpImages.empty())
 					{
 						sws.push_back((vk::SwapchainKHR)w.ctx->swapchain.swapchain);
-						rcs.push_back(*w.ctx->img().renderComplete);
+						rcs.push_back(w.ctx->img().renderComplete);
 						ids.push_back(w.ctx->imageIndex);
 					}
 				}
@@ -457,7 +460,7 @@ namespace cage
 						data.init(*this);
 					}
 
-					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, *data.frm().imageAcquired);
+					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, data.frm().imageAcquired);
 					switch (vk::Result(r.result))
 					{
 						case vk::Result::eSuccess:

@@ -57,67 +57,37 @@ namespace cage
 		struct Nothing
 		{};
 
-		struct DeferredDestruction : private Noncopyable
+		template<class T, class Extra = Nothing>
+		struct ResourceInternal : private Immovable
 		{
-			using Destructor = void (*)(void *ptr);
-			alignas(8) char data[40] = {};
-			Destructor destructor = nullptr;
-
-			DeferredDestruction() {}
-			DeferredDestruction(DeferredDestruction &&other) noexcept
-			{
-				detail::memcpy(this, &other, sizeof(*this));
-				other.destructor = nullptr;
-			}
-			DeferredDestruction &operator=(DeferredDestruction &&other) noexcept
-			{
-				if (this == &other)
-					return *this;
-				if (destructor)
-					destructor(data);
-				detail::memcpy(this, &other, sizeof(*this));
-				other.destructor = nullptr;
-			}
-			~DeferredDestruction()
-			{
-				if (destructor)
-					destructor(data);
-			}
+			DeviceImpl *device = nullptr;
+			T value = {};
+			[[no_unique_address]] Extra extra = {};
+			~ResourceInternal();
 		};
 
 		template<class T, class Extra = Nothing>
 		struct ResourceHandle : private Noncopyable
 		{
-			DeviceImpl *device = nullptr;
-			T value = {};
-			[[no_unique_address]] Extra extra = {};
+			Holder<ResourceInternal<T, Extra>> holder;
 
-			ResourceHandle(DeviceImpl &device) : device(&device) {}
-			ResourceHandle(ResourceHandle &&other) noexcept { *this = other; }
-			~ResourceHandle() { destroy(); }
-			ResourceHandle &operator=(ResourceHandle &&other) noexcept
+			ResourceHandle(DeviceImpl &device)
 			{
-				if (this == &other)
-					return *this;
-				destroy();
-				device = nullptr;
-				value = {}; // make sure the moved-from object becomes empty
-				extra = {};
-				std::swap(device, other.device);
-				std::swap(value, other.value);
-				std::swap(extra, other.extra);
-				return *this;
+				holder = systemMemory().createHolder<ResourceInternal<T, Extra>>();
+				holder->device = &device;
 			}
+			ResourceHandle(ResourceHandle &&) = default;
+			~ResourceHandle();
+			ResourceHandle &operator=(ResourceHandle &&) = default;
 
-			operator T &() { return value; }
-			T *operator->() { return &value; }
+			operator T &() { return holder->value; }
+			T *operator->() { return &holder->value; }
+			DeviceImpl *device() { return holder->device; }
 
+			void operator=(T &&v) { holder->value = std::move(v); }
+			void operator=(Extra &&e) { holder->extra = std::move(e); }
 			void setLabel(StringView label);
-			void destroy();
 		};
-
-		template<class T, class Extra>
-		void deferredDestructor(ResourceHandle<T, Extra> &);
 
 		struct ResourcesToKeepAlive : private Noncopyable
 		{
@@ -128,7 +98,7 @@ namespace cage
 			template<class Crtp, class Impl>
 			void keepAlive(const GpuInterfaceHandle<Crtp, Impl> &v)
 			{
-				resourcesToKeepAlive.value.push_back(v.getVoidHolder());
+				resourcesToKeepAlive->push_back(v.getVoidHolder());
 			}
 		};
 
@@ -136,19 +106,23 @@ namespace cage
 		{
 			struct SwpImage
 			{
+				ResourceHandle<vk::Semaphore> renderComplete;
 				Texture texture;
 				vk::Image image;
-				vk::UniqueSemaphore renderComplete;
+
+				SwpImage(DeviceImpl &device) : renderComplete(device) {}
 			};
 			struct FrameInFlight
 			{
-				vk::UniqueSemaphore imageAcquired;
+				ResourceHandle<vk::Semaphore> imageAcquired;
 				vk::Fence fence;
+
+				FrameInFlight(DeviceImpl &device) : imageAcquired(device) {}
 			};
 
 			vkb::Swapchain swapchain;
-			std::vector<SwpImage> swpImages;
-			std::array<FrameInFlight, 2> framesInFlight = {};
+			std::vector<SwpImage> swpImages; // N images
+			std::vector<FrameInFlight> framesInFlight; // always two there are
 			Vec2i resolution;
 			vk::Instance instance;
 			vk::SurfaceKHR surface;
@@ -298,7 +272,7 @@ namespace cage
 			std::vector<CommandBuffer> additionalCommands;
 			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
 			std::array<vk::UniqueFence, 2> framesFences = {};
-			std::array<std::vector<DeferredDestruction>, 3> deferredDestructions = {}; // insert into [0]
+			std::array<std::vector<Holder<void>>, 3> deferredDestructions = {}; // insert into [0]
 			std::vector<Holder<AsyncTask>> disposingTasks;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
@@ -422,37 +396,28 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 
 		template<class T, class Extra>
-		void ResourceHandle<T, Extra>::destroy()
+		ResourceHandle<T, Extra>::~ResourceHandle()
 		{
-			static_assert(sizeof(*this) <= sizeof(DeferredDestruction::data));
-			if constexpr (requires() { !value; })
+			if (!holder)
+				return;
+			if constexpr (requires() { !holder->value; })
 			{
-				if (!value)
+				if (!holder->value)
 					return;
 			}
-			if constexpr (requires() { value.empty(); })
+			if constexpr (requires() { holder->value.empty(); })
 			{
-				if (value.empty())
+				if (holder->value.empty())
 					return;
 			}
-			CAGE_ASSERT(device);
-			DeferredDestruction dd;
-			detail::memcpy(dd.data, this, sizeof(*this));
-			dd.destructor = +[](void *ptr)
-			{
-				ResourceHandle<T, Extra> h(*(DeviceImpl *)nullptr);
-				detail::memcpy(&h, ptr, sizeof(h));
-				deferredDestructor(h);
-				detail::memset(&h, 0, sizeof(h));
-			};
-			device->deferredDestructions[0].push_back(std::move(dd));
-			detail::memset(this, 0, sizeof(*this));
+			CAGE_ASSERT(holder->device);
+			holder->device->deferredDestructions[0].push_back(std::move(holder).cast<void>());
 		}
 
 		template<class T, class Extra>
 		void ResourceHandle<T, Extra>::setLabel(StringView label)
 		{
-			device->setLabel(value, label);
+			holder->device->setLabel(holder->value, label);
 		}
 
 		template<class T>

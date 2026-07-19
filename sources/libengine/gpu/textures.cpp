@@ -5,22 +5,22 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::Sampler, Nothing> &handle)
+		ResourceInternal<vk::Sampler, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroySampler(handle.value);
+			device->device.destroySampler(value);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::Image, VmaAllocation> &handle)
+		ResourceInternal<vk::Image, VmaAllocation>::~ResourceInternal()
 		{
-			if (handle.extra)
-				vmaDestroyImage(handle.device->allocator, (VkImage)handle.value, handle.extra);
+			if (extra)
+				vmaDestroyImage(device->allocator, (VkImage)value, extra);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::ImageView, Nothing> &handle)
+		ResourceInternal<vk::ImageView, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyImageView(handle.value);
+			device->device.destroyImageView(value);
 		}
 
 		SamplerImpl::SamplerImpl(DeviceImpl &device, const SamplerDescriptor &desc) : sampler(device)
@@ -34,7 +34,7 @@ namespace cage
 			info.addressModeW = convertAddressMode(desc.addressModeW);
 			info.anisotropyEnable = desc.maxAnisotropy > 1;
 			info.maxAnisotropy = desc.maxAnisotropy;
-			sampler.value = device.device.createSampler(info);
+			sampler = device.device.createSampler(info);
 			sampler.setLabel(desc.label);
 		}
 
@@ -42,7 +42,7 @@ namespace cage
 
 		TextureImpl::TextureImpl(DeviceImpl &device, vk::Image image_) : image(device)
 		{
-			image.value = image_;
+			image = std::move(image_);
 		}
 
 		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : image(device), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
@@ -92,14 +92,14 @@ namespace cage
 			allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
 
 			VkImage img;
-			check("vmaCreateImage", vmaCreateImage(device.allocator, (VkImageCreateInfo *)&imageInfo, &allocInfo, &img, &image.extra, &allocatedInfo));
-			image.value = (vk::Image)img;
+			check("vmaCreateImage", vmaCreateImage(device.allocator, (VkImageCreateInfo *)&imageInfo, &allocInfo, &img, &image.holder->extra, &allocatedInfo));
+			image = (vk::Image)img;
 			image.setLabel(desc.label);
 		}
 
 		TextureImpl::~TextureImpl() {}
 
-		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device), texture(texture)
+		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
@@ -130,7 +130,7 @@ namespace cage
 			viewInfo.subresourceRange.levelCount = desc.mipLevels;
 			viewInfo.subresourceRange.baseArrayLayer = desc.baseArrayLayer;
 			viewInfo.subresourceRange.layerCount = desc.arrayLayers;
-			view.value = texture->image.device->device.createImageView(viewInfo);
+			view = texture->image.device()->device.createImageView(viewInfo);
 			view.setLabel(desc.label);
 		}
 

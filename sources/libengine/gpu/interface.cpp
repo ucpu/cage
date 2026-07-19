@@ -31,13 +31,13 @@ namespace cage
 
 		void Buffer::flush()
 		{
-			ScopeLock lock(get()->buffer.device->mutex);
+			ScopeLock lock(get()->buffer.device()->mutex);
 			get()->flush();
 		}
 
 		void Buffer::invalidate()
 		{
-			ScopeLock lock(get()->buffer.device->mutex);
+			ScopeLock lock(get()->buffer.device()->mutex);
 			get()->invalidate();
 		}
 
@@ -263,7 +263,7 @@ namespace cage
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
 		{
-			ScopeLock lock(get()->image.device->mutex);
+			ScopeLock lock(get()->image.device()->mutex);
 			return TextureView(systemMemory().createHolder<TextureViewImpl>(*this, desc));
 		}
 

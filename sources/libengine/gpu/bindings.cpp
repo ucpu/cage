@@ -5,15 +5,15 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::DescriptorSet, vk::DescriptorPool> &handle)
+		ResourceInternal<vk::DescriptorSet, vk::DescriptorPool>::~ResourceInternal()
 		{
-			handle.device->device.freeDescriptorSets(handle.extra, handle.value);
+			device->device.freeDescriptorSets(extra, value);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::DescriptorSetLayout, Nothing> &handle)
+		ResourceInternal<vk::DescriptorSetLayout, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyDescriptorSetLayout(handle.value);
+			device->device.destroyDescriptorSetLayout(value);
 		}
 
 		namespace
@@ -34,11 +34,11 @@ namespace cage
 			vk::DescriptorSetAllocateInfo allocInfo;
 			allocInfo.descriptorPool = *device.descriptorPool;
 			allocInfo.descriptorSetCount = 1;
-			allocInfo.pSetLayouts = &desc.layout->layout.value;
+			allocInfo.pSetLayouts = &(vk::DescriptorSetLayout &)desc.layout->layout;
 			auto sets = device.device.allocateDescriptorSets(allocInfo);
-			set.value = sets[0];
+			set = std::move(sets[0]);
 			set.setLabel(desc.label);
-			set.extra = *device.descriptorPool;
+			set = (vk::DescriptorPool)*device.descriptorPool;
 
 			ankerl::svector<vk::WriteDescriptorSet, 32> writes;
 			ankerl::svector<vk::DescriptorBufferInfo, 24> infosBuffers;
@@ -151,7 +151,7 @@ namespace cage
 			vk::DescriptorSetLayoutCreateInfo ci;
 			ci.bindingCount = bindings.size();
 			ci.pBindings = bindings.data();
-			layout.value = device.device.createDescriptorSetLayout(ci);
+			layout = device.device.createDescriptorSetLayout(ci);
 			layout.setLabel(desc.label);
 
 			entries.reserve(desc.entries.size());

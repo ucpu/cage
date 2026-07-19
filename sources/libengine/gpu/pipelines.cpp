@@ -5,21 +5,21 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		void deferredDestructor(ResourceHandle<vk::Pipeline, Nothing> &handle)
+		ResourceInternal<vk::Pipeline, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyPipeline(handle.value);
+			device->device.destroyPipeline(value);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::ShaderModule, Nothing> &handle)
+		ResourceInternal<vk::ShaderModule, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyShaderModule(handle.value);
+			device->device.destroyShaderModule(value);
 		}
 
 		template<>
-		void deferredDestructor(ResourceHandle<vk::PipelineLayout, Nothing> &handle)
+		ResourceInternal<vk::PipelineLayout, Nothing>::~ResourceInternal()
 		{
-			handle.device->device.destroyPipelineLayout(handle.value);
+			device->device.destroyPipelineLayout(value);
 		}
 
 		RenderPipelineImpl::RenderPipelineImpl(DeviceImpl &device, const RenderPipelineDescriptor &desc) : pipeline(device), layout(desc.layout)
@@ -152,7 +152,7 @@ namespace cage
 			auto r = device.device.createGraphicsPipeline({}, ci);
 			check("createGraphicsPipeline", r.result);
 			CAGE_ASSERT(r.has_value());
-			pipeline.value = r.value;
+			pipeline = std::move(r.value);
 			pipeline.setLabel(desc.label);
 		}
 
@@ -163,7 +163,7 @@ namespace cage
 			vk::ShaderModuleCreateInfo ci;
 			ci.codeSize = desc.spirvCode.size() * sizeof(uint32);
 			ci.pCode = desc.spirvCode.data();
-			shader.value = device.device.createShaderModule(ci);
+			shader = device.device.createShaderModule(ci);
 			shader.setLabel(desc.label);
 		}
 
@@ -178,7 +178,7 @@ namespace cage
 			vk::PipelineLayoutCreateInfo ci;
 			ci.setLayoutCount = ls.size();
 			ci.pSetLayouts = ls.data();
-			layout.value = device.device.createPipelineLayout(ci);
+			layout = device.device.createPipelineLayout(ci);
 			layout.setLabel(desc.label);
 		}
 
