@@ -160,11 +160,12 @@ namespace cage
 				pld.bindGroupLayouts = config.bindingsLayouts;
 				Holder<gpu::Device> dev = device->nativeDevice();
 				rpd.layout = dev->createPipelineLayout(pld);
-				dev->createRenderPipelineAsync(rpd, gpu::CallbackModeEnum::AllowProcessEvents,
+				dev->createRenderPipelineAsync(rpd,
 					[this, target](gpu::StatusEnum status, gpu::RenderPipeline pipeline, gpu::StringView message)
 					{
 						if (status == gpu::StatusEnum::Success)
 						{
+							CAGE_ASSERT(pipeline);
 							ScopeLock lock(mutex, WriteLockTag());
 							target->pipeline = pipeline;
 							target->creating = false;

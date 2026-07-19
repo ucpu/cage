@@ -31,7 +31,7 @@ namespace cage
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
-			uint32 currentFrame = 1;
+			uint32 currentFrame = 5;
 			uint32 finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
@@ -66,20 +66,13 @@ namespace cage
 			void nextFrame()
 			{
 				ScopeLock lock(mutex);
-
 				for (auto &it : waiting)
 				{
 					if (it && it->frameIndex <= finishedFrame)
 						available.push_back(std::move(it));
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
-
-				device->nativeDevice()->onSubmittedWorkDone(gpu::CallbackModeEnum::AllowProcessEvents,
-					[&, expected = currentFrame](gpu::StatusEnum status, gpu::StringView message)
-					{
-						if (status == gpu::StatusEnum::Success)
-							finishedFrame = max(finishedFrame, expected);
-					});
+				finishedFrame++; // todo is this sufficient?
 			}
 		};
 

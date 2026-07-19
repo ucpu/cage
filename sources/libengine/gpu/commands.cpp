@@ -187,6 +187,18 @@ namespace cage
 			cmd->bindVertexBuffers(slot, buffer->buffer.value, offset);
 		}
 
+		void CommandEncoderImpl::setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth)
+		{
+			vk::Viewport vp;
+			vp.x = x.value;
+			vp.y = y.value;
+			vp.width = width.value;
+			vp.height = -height.value;
+			vp.minDepth = minDepth.value;
+			vp.maxDepth = maxDepth.value;
+			cmd->setViewport(0, 1, &vp);
+		}
+
 		void CommandEncoderImpl::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);

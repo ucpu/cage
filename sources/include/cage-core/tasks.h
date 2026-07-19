@@ -159,11 +159,13 @@ namespace cage
 
 	// invoke operator()() once for each element of the range
 	template<class T, uint32 Aggregation = 1>
+	requires(std::is_invocable_r_v<void, T>)
 	CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, PointerRange<T> data)
 	{
 		return privat::tasksRunImpl<T, Aggregation, false>(name, Holder<PointerRange<T>>(&data, nullptr));
 	}
 	template<class T, uint32 Aggregation = 1>
+	requires(std::is_invocable_r_v<void, T>)
 	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<PointerRange<T>> data)
 	{
 		return privat::tasksRunImpl<T, Aggregation, true>(name, std::move(data));
@@ -183,11 +185,13 @@ namespace cage
 
 	// invoke operator()(uint32) invocations time, each time with the same data
 	template<class T>
+	requires(std::is_invocable_r_v<void, T, uint32>)
 	CAGE_FORCE_INLINE void tasksRunBlocking(StringPointer name, T &data, uint32 invocations)
 	{
 		return privat::tasksRunImpl<T, false>(name, Holder<T>(&data, nullptr), invocations);
 	}
 	template<class T>
+	requires(std::is_invocable_r_v<void, T, uint32>)
 	[[nodiscard]] CAGE_FORCE_INLINE Holder<AsyncTask> tasksRunAsync(StringPointer name, Holder<T> data, uint32 invocations = 1)
 	{
 		return privat::tasksRunImpl<T, true>(name, std::move(data), invocations);

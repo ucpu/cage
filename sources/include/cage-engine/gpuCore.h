@@ -75,14 +75,6 @@ namespace cage
 			Vertex = 1u << 10,
 		};
 
-		enum class CallbackModeEnum
-		{
-			Undefined = 0,
-			AllowProcessEvents,
-			AllowSpontaneous,
-			WaitAnyOnly,
-		};
-
 		enum class CompareFunctionEnum
 		{
 			Undefined = 0,
@@ -344,7 +336,6 @@ namespace cage
 		class CommandBuffer;
 		class CommandEncoder;
 		class Device;
-		class Future;
 		class RenderPipeline;
 		class Sampler;
 		class ShaderModule;

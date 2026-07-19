@@ -2,6 +2,8 @@
 
 #include "gpu.h"
 
+#include <cage-core/tasks.h>
+
 namespace cage
 {
 	namespace gpu
@@ -100,6 +102,11 @@ namespace cage
 			get()->setVertexBuffer(slot, buffer, offset, size);
 		}
 
+		void CommandEncoder::setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth)
+		{
+			get()->setViewport(x, y, width, height, minDepth, maxDepth);
+		}
+
 		void CommandEncoder::setIndexBuffer(const Buffer &buffer, IndexFormatEnum format, uint64 offset, uint64 size)
 		{
 			get()->setIndexBuffer(buffer, format, offset, size);
@@ -169,6 +176,68 @@ namespace cage
 			return RenderPipeline(systemMemory().createHolder<RenderPipelineImpl>(*get(), desc));
 		}
 
+		namespace
+		{
+			struct SerializedRenderPipeline : private Immovable
+			{
+				Device device;
+				ankerl::svector<VertexBufferLayout::VertexAttribute, 4> vas;
+				ankerl::svector<VertexBufferLayout, 1> vbls;
+				ankerl::svector<RenderPipelineDescriptor::ColorTargetState, 1> ctss;
+				RenderPipelineDescriptor desc;
+				std::function<void(StatusEnum, RenderPipeline, StringView)> callback;
+
+				SerializedRenderPipeline(const RenderPipelineDescriptor &src) : desc(src)
+				{
+					uint32 attrCnt = 0;
+					for (const auto &it : src.vertex.buffers)
+						attrCnt += it.attributes.size();
+					vas.reserve(attrCnt);
+					vbls.reserve(src.vertex.buffers.size());
+					for (const auto &it : src.vertex.buffers)
+					{
+						const uint32 off = vas.size();
+						for (const auto &a : it.attributes)
+							vas.push_back(a);
+						vbls.push_back(it);
+						vbls.back().attributes = PointerRange<VertexBufferLayout::VertexAttribute>(vas).subRange(off, vas.size() - off);
+					}
+					desc.vertex.buffers = vbls;
+					if (src.fragment)
+					{
+						ctss.reserve(src.fragment->targets.size());
+						for (const auto &it : src.fragment->targets)
+							ctss.push_back(it);
+						desc.fragment->targets = ctss;
+					}
+				}
+
+				void operator()(uint32)
+				{
+					RenderPipeline rp;
+					try
+					{
+						rp = RenderPipeline(systemMemory().createHolder<RenderPipelineImpl>(*device.get(), desc));
+					}
+					catch (...)
+					{
+						callback(StatusEnum::Error, {}, {});
+					}
+					callback(StatusEnum::Success, std::move(rp), {});
+				}
+			};
+		}
+
+		void Device::createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback)
+		{
+			Holder<SerializedRenderPipeline> data = systemMemory().createHolder<SerializedRenderPipeline>(descriptor);
+			data->device = *this;
+			data->callback = std::move(callback);
+			Holder<AsyncTask> t = tasksRunAsync<SerializedRenderPipeline>("render pipeline async", std::move(data));
+			ScopeLock lock(get()->mutex);
+			get()->disposingTasks.push_back(std::move(t));
+		}
+
 		void Device::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
 			ScopeLock lock(get()->mutex);
@@ -193,22 +262,10 @@ namespace cage
 			get()->tick();
 		}
 
-		void Device::wait(const Future &future)
-		{
-			// no lock
-			get()->wait(future);
-		}
-
 		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			ScopeLock lock(get()->mutex);
 			get()->submitAndPresentWindows(buffers, windows);
-		}
-
-		TextureView Texture::createView()
-		{
-			// no lock
-			return createView({});
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)

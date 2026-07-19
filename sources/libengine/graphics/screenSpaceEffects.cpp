@@ -63,6 +63,9 @@ namespace cage
 				gpu::TextureViewDescriptor tvd = {};
 				tvd.baseMipLevel = i;
 				tvd.mipLevels = 1;
+				tvd.baseArrayLayer = 0;
+				tvd.arrayLayers = 1;
+				tvd.dimension = gpu::TextureDimensionEnum::e2D;
 				gpu::TextureView view = tex->nativeTexture().createView(tvd);
 				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
 			}

@@ -298,11 +298,6 @@ namespace cage
 			// todo
 		}
 
-		void DeviceImpl::wait(const Future &future)
-		{
-			// todo
-		}
-
 		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)
 		{
 			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);

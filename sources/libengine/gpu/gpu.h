@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <cage-core/concurrent.h>
+#include <cage-core/tasks.h>
 #include <cage-engine/gpuInterface.h>
 
 namespace cage
@@ -237,6 +238,7 @@ namespace cage
 			void setPipeline(const RenderPipeline &pipeline);
 			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
 			void setVertexBuffer(uint32 slot, const Buffer &buffer, uint64 offset, uint64 size);
+			void setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth);
 
 			// compute pass encoder
 		};
@@ -267,6 +269,7 @@ namespace cage
 			std::array<vk::UniqueFence, 2> framesFences;
 			std::vector<DeferredDestruction> currentDefferedDestructions;
 			std::vector<DeferredDestruction> nextDefferedDestructions;
+			std::vector<Holder<AsyncTask>> disposingTasks;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
@@ -282,7 +285,6 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
 			void tick();
-			void wait(const Future &future);
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
@@ -412,12 +414,12 @@ namespace cage
 			if constexpr (requires { object->objectType; })
 			{
 				info.objectType = object->objectType;
-				info.objectHandle = reinterpret_cast<uint64>(static_cast<const typename T::element_type::CType>(*object));
+				info.objectHandle = (uint64) static_cast<const typename T::element_type::CType>(*object);
 			}
 			else if constexpr (requires { object.objectType; })
 			{
 				info.objectType = object.objectType;
-				info.objectHandle = reinterpret_cast<uint64>(static_cast<const typename T::CType>(object));
+				info.objectHandle = (uint64) static_cast<const typename T::CType>(object);
 			}
 			else
 			{

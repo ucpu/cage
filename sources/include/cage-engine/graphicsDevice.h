@@ -21,7 +21,6 @@ namespace cage
 	{
 	public:
 		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
-		void wait(const gpu::Future &future);
 		void insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
 		GraphicsFrameStatistics nextFrame(PointerRange<GraphicsWindowPresentation> windows);
 	};

@@ -1,6 +1,7 @@
 #ifndef guard_gpuInterface_sdrzuij4rt5e
 #define guard_gpuInterface_sdrzuij4rt5e
 
+#include <functional>
 #include <optional>
 #include <variant>
 
@@ -22,7 +23,6 @@ namespace cage
 		class CommandBufferImpl;
 		class CommandEncoderImpl;
 		class DeviceImpl;
-		class FutureImpl;
 		class RenderPipelineImpl;
 		class SamplerImpl;
 		class ShaderModuleImpl;
@@ -157,7 +157,7 @@ namespace cage
 			void setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h);
 			//void setStencilReference(uint32 reference);
 			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
-			//void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
+			void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
 			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
 			// compute pass encoder
@@ -173,28 +173,26 @@ namespace cage
 			PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor &descriptor);
 			//QuerySet createQuerySet(const QuerySetDescriptor &descriptor);
 			RenderPipeline createRenderPipeline(const RenderPipelineDescriptor &descriptor);
-			template<class Callable>
-			Future createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable);
 			Sampler createSampler(const SamplerDescriptor &descriptor);
 			ShaderModule createShaderModule(const ShaderModuleDescriptor &descriptor);
 			Texture createTexture(const TextureDescriptor &descriptor);
 
 			template<class Callable>
-			Future onSubmittedWorkDone(CallbackModeEnum callbackMode, Callable callable);
+			requires(std::is_invocable_r_v<void, Callable, StatusEnum, RenderPipeline, StringView>)
+			void createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, Callable callable)
+			{
+				createRenderPipelineAsyncTypeErased(descriptor, { callable });
+			}
+
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
 			void tick();
-			void wait(const Future &future);
-			//void waitAny(PointerRange<const Future> futures);
-			//void waitAll(PointerRange<const Future> futures);
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
-		};
 
-		struct CAGE_ENGINE_API Future : public GpuInterfaceHandle<Future, FutureImpl>
-		{
-		public:
+		private:
+			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);
 		};
 
 		class CAGE_ENGINE_API RenderPipeline : public GpuInterfaceHandle<RenderPipeline, RenderPipelineImpl>
@@ -220,7 +218,6 @@ namespace cage
 		class CAGE_ENGINE_API Texture : public GpuInterfaceHandle<Texture, TextureImpl>
 		{
 		public:
-			TextureView createView();
 			TextureView createView(const TextureViewDescriptor &desc);
 
 			Vec3i getResolution() const;
@@ -513,21 +510,6 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 		// implementation
 		///////////////////////////////////////////////////////////////////
-
-		template<class Callable>
-		Future Device::createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, CallbackModeEnum callbackMode, Callable callable)
-		{
-			// todo make actually async
-			auto r = createRenderPipeline(descriptor);
-			callable(StatusEnum::Success, std::move(r), "");
-			return {}; // todo
-		}
-
-		template<class Callable>
-		Future Device::onSubmittedWorkDone(CallbackModeEnum callbackMode, Callable callable)
-		{
-			return {}; // todo
-		}
 
 		CAGE_ENGINE_API Device newGpuDevice(const GpuDeviceDescriptor &desc);
 

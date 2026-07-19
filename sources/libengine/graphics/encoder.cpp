@@ -50,6 +50,8 @@ namespace cage
 					if (!passData.bindings)
 						passData.bindings = privat::getEmptyBindings(device);
 
+					Vec2i res;
+
 					ankerl::svector<gpu::RenderPassDescriptor::ColorAttachment, 1> atts;
 					atts.reserve(passData.colorTargets.size());
 					for (const auto &it : passData.colorTargets)
@@ -61,6 +63,7 @@ namespace cage
 						CAGE_ASSERT(it.texture->nativeView());
 						rpca.view = it.texture->nativeView();
 						atts.push_back(std::move(rpca));
+						res = it.texture->resolution();
 					}
 
 					gpu::RenderPassDescriptor::DepthStencilAttachment rpdsa = {};
@@ -71,6 +74,7 @@ namespace cage
 						rpdsa.depthLoadOp = passData.depthTarget->clear ? gpu::LoadOpEnum::Clear : gpu::LoadOpEnum::Load;
 						rpdsa.depthStoreOp = gpu::StoreOpEnum::Store;
 						rpdsa.depthClearValue = 1;
+						res = passData.depthTarget->texture->resolution();
 					}
 
 					gpu::RenderPassDescriptor rpd = {};
@@ -79,6 +83,9 @@ namespace cage
 						rpd.depthStencilAttachment = std::move(rpdsa);
 					rpd.label = label;
 					encoder.beginRenderPass(rpd);
+
+					encoder.setViewport(0, 0, res[0], res[1]);
+					encoder.setScissorRect(0, 0, res[0], res[1]);
 				}
 				statistics.passes++;
 			}
@@ -103,7 +110,7 @@ namespace cage
 				if (!pip)
 					return; // pipeline not ready
 
-				if (passData.pipeline.get() != pip.get())
+				if (!passData.pipeline || passData.pipeline.get() != pip.get())
 				{
 					encoder.setPipeline(pip);
 					encoder.setBindGroup(0, passData.bindings.group);

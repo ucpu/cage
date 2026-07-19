@@ -138,7 +138,12 @@ namespace cage
 					{
 						gpu::Texture &t = wpds[i].texture;
 						if (t)
-							windows[i].texture = t ? newTexture(std::move(t), {}, {}, "window surface texture") : Holder<Texture>();
+						{
+							gpu::TextureViewDescriptor tvd;
+							tvd.dimension = gpu::TextureDimensionEnum::e2D;
+							gpu::TextureView v = t.createView(tvd);
+							windows[i].texture = newTexture(std::move(t), v, {}, "window surface texture");
+						}
 					}
 				}
 				//gpuTimer->frameStart();
@@ -274,12 +279,6 @@ namespace cage
 		};
 		Holder<LockedDevice> l = systemMemory().createHolder<LockedDevice>(ScopeLock(impl->mutex), impl->device);
 		return Holder<gpu::Device>(&l->device, std::move(l));
-	}
-
-	void GraphicsDevice::wait(const gpu::Future &future)
-	{
-		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
-		impl->device.wait(future);
 	}
 
 	void GraphicsDevice::insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)
