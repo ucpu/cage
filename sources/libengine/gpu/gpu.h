@@ -219,6 +219,8 @@ namespace cage
 				buffer->rtka.keepAlive(v);
 			}
 
+			void imageTransitionImpl(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState);
+
 			// records a barrier with layout transition (if needed)
 			// permanent = false: keeps track of the changed state to automatically revert it to the default layout at the end
 			// permanent = true: updates the default layout of the image - the image must not be used concurrently in any other command encoders - used for initialization only

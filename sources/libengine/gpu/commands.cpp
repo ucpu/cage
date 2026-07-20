@@ -47,6 +47,22 @@ namespace cage
 
 		CommandEncoderImpl::~CommandEncoderImpl() {}
 
+		void CommandEncoderImpl::imageTransitionImpl(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState)
+		{
+			vk::ImageMemoryBarrier2 imgBar;
+			imgBar.image = texture->image;
+			imgBar.subresourceRange.aspectMask = convertAspectMask(texture->format);
+			imgBar.subresourceRange.layerCount = texture->arrayLayers;
+			imgBar.subresourceRange.levelCount = texture->mipLevels;
+			assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
+			assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
+
+			vk::DependencyInfo barInfo;
+			barInfo.imageMemoryBarrierCount = 1;
+			barInfo.pImageMemoryBarriers = &imgBar;
+			cmd.pipelineBarrier2(&barInfo);
+		}
+
 		void CommandEncoderImpl::imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent)
 		{
 			ImageStateEnum sourceState = ImageStateEnum::Undefined;
@@ -67,20 +83,7 @@ namespace cage
 				}
 			}
 
-			{
-				vk::ImageMemoryBarrier2 imgBar;
-				imgBar.image = texture->image;
-				imgBar.subresourceRange.aspectMask = convertAspectMask(texture->format);
-				imgBar.subresourceRange.layerCount = texture->arrayLayers;
-				imgBar.subresourceRange.levelCount = texture->mipLevels;
-				assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
-				assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
-
-				vk::DependencyInfo barInfo;
-				barInfo.imageMemoryBarrierCount = 1;
-				barInfo.pImageMemoryBarriers = &imgBar;
-				cmd.pipelineBarrier2(&barInfo);
-			}
+			imageTransitionImpl(texture, sourceState, targetState);
 
 			if (permanent)
 				texture->defaultState = targetState;

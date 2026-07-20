@@ -284,7 +284,17 @@ namespace cage
 		{
 			uint32 extsCnt = 0;
 			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
-			bootstrap.inst = handleResult(vkb::InstanceBuilder().require_api_version(1, 3).set_debug_callback(debugCallback).enable_extensions(extsCnt, extsArr).request_validation_layers().set_engine_name("cage").set_app_name(desc.label.str.data()).build());
+			bootstrap.inst = handleResult(vkb::InstanceBuilder() //
+											  .require_api_version(1, 3)
+											  .set_debug_callback(debugCallback)
+											  .enable_extensions(extsCnt, extsArr)
+											  .request_validation_layers()
+											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
+											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
+											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
+											  .set_engine_name("cage")
+											  .set_app_name(desc.label.str.data())
+											  .build());
 
 			auto surf = getWindowGpuContext(desc.window);
 			vk::PhysicalDeviceFeatures features10;
@@ -298,7 +308,13 @@ namespace cage
 			vk::PhysicalDeviceVulkan13Features features13;
 			features13.synchronization2 = true;
 			features13.dynamicRendering = true;
-			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst).set_minimum_version(1, 3).set_surface((VkSurfaceKHR)surf->data->surface).set_required_features(features10).set_required_features_12(features12).set_required_features_13(features13).select());
+			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst) //
+											  .set_minimum_version(1, 3)
+											  .set_surface((VkSurfaceKHR)surf->data->surface)
+											  .set_required_features(features10)
+											  .set_required_features_12(features12)
+											  .set_required_features_13(features13)
+											  .select());
 
 			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
 
@@ -367,8 +383,8 @@ namespace cage
 				ankerl::svector<vk::CommandBuffer, 16> cmds;
 				for (auto &it : additionalCommands)
 					cmds.push_back(it->buffer);
-				//for (auto &it : buffers) // todo enable
-				//	cmds.push_back(*it->buffer);
+				//for (auto &it : buffers_)
+				//	cmds.push_back(it->buffer);
 
 				ankerl::svector<vk::Semaphore, 2> ias, rcs;
 				for (auto &w : windows)
@@ -380,7 +396,7 @@ namespace cage
 					}
 				}
 
-				vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+				vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eAllCommands;
 				vk::SubmitInfo submitInfo;
 				submitInfo.waitSemaphoreCount = ias.size();
 				submitInfo.pWaitSemaphores = ias.data();
@@ -468,7 +484,11 @@ namespace cage
 					if (data.resolution != res)
 					{
 						const ProfilingScope profiling("swapchain");
-						data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface).set_old_swapchain(data.swapchain).set_desired_min_image_count(3).set_desired_extent(res[0], res[1]).build());
+						data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface) //
+														  .set_old_swapchain(data.swapchain)
+														  .set_desired_min_image_count(3)
+														  .set_desired_extent(res[0], res[1])
+														  .build());
 						data.resolution = res;
 						data.init(*this);
 					}

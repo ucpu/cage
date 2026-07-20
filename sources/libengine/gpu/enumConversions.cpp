@@ -606,7 +606,7 @@ namespace cage
 					break;
 
 				case ImageStateEnum::Present:
-					stageMask = vk::PipelineStageFlagBits2::eBottomOfPipe;
+					stageMask = vk::PipelineStageFlagBits2::eNone;
 					accessMask = vk::AccessFlagBits2::eNone;
 					imageLayout = vk::ImageLayout::ePresentSrcKHR;
 					break;
