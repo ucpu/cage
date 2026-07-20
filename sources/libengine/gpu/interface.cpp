@@ -130,7 +130,25 @@ namespace cage
 		Texture Device::createTexture(const TextureDescriptor &desc)
 		{
 			ScopeLock lock(get()->mutex);
-			return Texture(systemMemory().createHolder<TextureImpl>(*get(), desc));
+			Texture t = Texture(systemMemory().createHolder<TextureImpl>(*get(), desc));
+
+			{ // initial image layout transition
+				CommandEncoderImpl enc(*get(), { .label = "init texture image layout" });
+				// transition from undefined directly to sampled is forbidden
+				ImageStateEnum intermediate = ImageStateEnum::TransferDst;
+				if (any(desc.usage & TextureUsageFlags::RenderAttachment))
+				{
+					if (convertAspectMask(desc.format) == vk::ImageAspectFlagBits::eColor)
+						intermediate = ImageStateEnum::ColorAttachment;
+					else
+						intermediate = ImageStateEnum::DepthAttachment;
+				}
+				enc.imageTransitionPermanent(t, ImageStateEnum::Undefined, intermediate);
+				enc.imageTransitionPermanent(t, intermediate, ImageStateEnum::Sampled);
+				get()->additionalCommands.push_back(enc.finishEncoding());
+			}
+
+			return t;
 		}
 
 		Sampler Device::createSampler(const SamplerDescriptor &desc)
@@ -300,6 +318,31 @@ namespace cage
 		Texture TextureView::getTexture() const
 		{
 			return get()->texture;
+		}
+
+		uint32 TextureView::getBaseArrayLayer() const
+		{
+			return get()->baseArrayLayer;
+		}
+
+		uint32 TextureView::getArrayLayers() const
+		{
+			return get()->arrayLayers;
+		}
+
+		uint32 TextureView::getBaseMipLevel() const
+		{
+			return get()->baseMipLevel;
+		}
+
+		uint32 TextureView::getMipLevels() const
+		{
+			return get()->mipLevels;
+		}
+
+		TextureDimensionEnum TextureView::getDimension() const
+		{
+			return get()->dimension;
 		}
 	}
 }

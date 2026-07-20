@@ -562,49 +562,41 @@ namespace cage
 					accessMask = vk::AccessFlagBits2::eNone;
 					imageLayout = vk::ImageLayout::eUndefined;
 					break;
-
 				case ImageStateEnum::ColorAttachment:
 					stageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 					accessMask = vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite;
 					imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 					break;
-
 				case ImageStateEnum::DepthAttachment:
 					stageMask = vk::PipelineStageFlagBits2::eEarlyFragmentTests | vk::PipelineStageFlagBits2::eLateFragmentTests;
 					accessMask = vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite;
 					imageLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 					break;
-
 				case ImageStateEnum::Sampled:
 					stageMask = vk::PipelineStageFlagBits2::eFragmentShader;
 					accessMask = vk::AccessFlagBits2::eShaderSampledRead;
 					imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 					break;
-
 				case ImageStateEnum::StorageRead:
 					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
 					accessMask = vk::AccessFlagBits2::eShaderStorageRead;
 					imageLayout = vk::ImageLayout::eGeneral;
 					break;
-
 				case ImageStateEnum::StorageWrite:
 					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
 					accessMask = vk::AccessFlagBits2::eShaderStorageWrite;
 					imageLayout = vk::ImageLayout::eGeneral;
 					break;
-
 				case ImageStateEnum::TransferSrc:
 					stageMask = vk::PipelineStageFlagBits2::eTransfer;
 					accessMask = vk::AccessFlagBits2::eTransferRead;
 					imageLayout = vk::ImageLayout::eTransferSrcOptimal;
 					break;
-
 				case ImageStateEnum::TransferDst:
 					stageMask = vk::PipelineStageFlagBits2::eTransfer;
 					accessMask = vk::AccessFlagBits2::eTransferWrite;
 					imageLayout = vk::ImageLayout::eTransferDstOptimal;
 					break;
-
 				case ImageStateEnum::Present:
 					stageMask = vk::PipelineStageFlagBits2::eNone;
 					accessMask = vk::AccessFlagBits2::eNone;

@@ -99,7 +99,7 @@ namespace cage
 
 		TextureImpl::~TextureImpl() {}
 
-		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture)
+		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture), baseMipLevel(desc.baseMipLevel), mipLevels(desc.mipLevels), baseArrayLayer(desc.baseArrayLayer), arrayLayers(desc.arrayLayers), dimension(desc.dimension)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 

@@ -48,10 +48,17 @@ namespace cage
 			Present,
 		};
 
+		struct TransitionedImageSubresource
+		{
+			Texture texture;
+			uint32 mip = 0;
+			uint32 layer = 0;
+		};
+
 		struct Hasher
 		{
-			auto operator()(const Texture &t) const noexcept { return std::hash<void *>()(t.get()); }
-			auto operator()(const Texture &a, const Texture &b) const noexcept { return a.get() == b.get(); }
+			auto operator()(const TransitionedImageSubresource &t) const noexcept { return std::hash<void *>()(t.texture.get()) ^ t.mip ^ (t.layer << 4); }
+			auto operator()(const TransitionedImageSubresource &a, const TransitionedImageSubresource &b) const noexcept { return a.texture.get() == b.texture.get() && a.mip == b.mip && a.layer == b.layer; }
 		};
 
 		struct Nothing
@@ -142,6 +149,7 @@ namespace cage
 				CAGE_ASSERT(imageIndex < swpImages.size());
 				return swpImages[imageIndex];
 			}
+
 			FrameInFlight &frm()
 			{
 				CAGE_ASSERT(frameIndex < framesInFlight.size());
@@ -205,7 +213,7 @@ namespace cage
 		{
 		public:
 			CommandBuffer buffer;
-			std::unordered_map<Texture, ImageStateEnum, Hasher, Hasher> transitionedImages;
+			std::unordered_map<TransitionedImageSubresource, ImageStateEnum, Hasher, Hasher> transitionedImages;
 			vk::CommandBuffer cmd;
 			vk::PipelineLayout currentPipelineLayout;
 			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
@@ -219,12 +227,10 @@ namespace cage
 				buffer->rtka.keepAlive(v);
 			}
 
-			void imageTransitionImpl(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState);
-
-			// records a barrier with layout transition (if needed)
-			// permanent = false: keeps track of the changed state to automatically revert it to the default layout at the end
-			// permanent = true: updates the default layout of the image - the image must not be used concurrently in any other command encoders - used for initialization only
-			void imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent = false);
+			void imageTransitionPermanent(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState);
+			void imageTransitionSubresource(const TransitionedImageSubresource &subres, ImageStateEnum targetState);
+			void imageTransitionSubresource(const TextureView &view, ImageStateEnum targetState);
+			void resetImageTransitions();
 
 			// encoder
 
@@ -356,7 +362,13 @@ namespace cage
 		{
 		public:
 			ResourceHandle<vk::ImageView> view;
+
 			Texture texture; // ensure the texture outlives the view
+			uint32 baseArrayLayer = 0;
+			uint32 arrayLayers = 0;
+			uint32 baseMipLevel = 0;
+			uint32 mipLevels = 0;
+			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 
 			TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc);
 			~TextureViewImpl();

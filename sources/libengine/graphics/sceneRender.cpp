@@ -603,7 +603,6 @@ namespace cage
 			gpu::TextureViewDescriptor desc = {};
 			desc.label = "shadowmap cascade view";
 			desc.baseArrayLayer = cascade;
-			desc.arrayLayers = 1;
 			desc.dimension = gpu::TextureDimensionEnum::e2DArray;
 			gpu::TextureView view = tex->nativeTexture().createView(desc);
 			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");

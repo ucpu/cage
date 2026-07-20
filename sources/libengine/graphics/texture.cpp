@@ -344,6 +344,8 @@ namespace cage
 				texture = dev->createTexture(desc);
 
 				gpu::TextureViewDescriptor twd;
+				twd.arrayLayers = desc.arrayLayers;
+				twd.mipLevels = desc.mipLevels;
 				twd.dimension = privat::textureViewDimension(config.flags);
 				view = texture.createView(twd);
 

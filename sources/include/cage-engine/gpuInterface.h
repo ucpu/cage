@@ -237,6 +237,11 @@ namespace cage
 		{
 		public:
 			Texture getTexture() const;
+			uint32 getBaseArrayLayer() const;
+			uint32 getArrayLayers() const;
+			uint32 getBaseMipLevel() const;
+			uint32 getMipLevels() const;
+			TextureDimensionEnum getDimension() const;
 		};
 
 		///////////////////////////////////////////////////////////////////
@@ -460,7 +465,7 @@ namespace cage
 		struct CAGE_ENGINE_API TextureDescriptor
 		{
 			StringView label;
-			Vec3i resolution;
+			Vec3i resolution = Vec3i(0, 0, 1);
 			uint32 arrayLayers = 1;
 			uint32 mipLevels = 1;
 			//uint32 samplesCount = 1;
@@ -473,9 +478,9 @@ namespace cage
 		{
 			StringView label;
 			uint32 baseArrayLayer = 0;
-			uint32 arrayLayers = m;
+			uint32 arrayLayers = 1;
 			uint32 baseMipLevel = 0;
-			uint32 mipLevels = m;
+			uint32 mipLevels = 1;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			//TextureFormatEnum format = TextureFormatEnum::Undefined;
 			//TextureUsageFlags usage = TextureUsageFlags::Undefined;

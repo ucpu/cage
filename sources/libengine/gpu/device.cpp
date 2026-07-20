@@ -142,7 +142,7 @@ namespace cage
 			{ // transition all images
 				CommandEncoderImpl enc(device, { .label = "init swapchain images" });
 				for (const auto &it : swpImages)
-					enc.imageTransition(it.texture, ImageStateEnum::Present, true);
+					enc.imageTransitionPermanent(it.texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
 				device.additionalCommands.push_back(enc.finishEncoding());
 			}
 		}
@@ -383,8 +383,8 @@ namespace cage
 				ankerl::svector<vk::CommandBuffer, 16> cmds;
 				for (auto &it : additionalCommands)
 					cmds.push_back(it->buffer);
-				//for (auto &it : buffers_)
-				//	cmds.push_back(it->buffer);
+				for (auto &it : buffers_)
+					cmds.push_back(it->buffer);
 
 				ankerl::svector<vk::Semaphore, 2> ias, rcs;
 				for (auto &w : windows)

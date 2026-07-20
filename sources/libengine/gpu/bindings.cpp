@@ -87,6 +87,7 @@ namespace cage
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::TextureEntry>)
 						{
+							CAGE_ASSERT(e.textureView->texture->defaultState == ImageStateEnum::Sampled);
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
 							imageInfo.imageView = e.textureView->view;
 							imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;

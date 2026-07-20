@@ -47,7 +47,7 @@ namespace cage
 
 		CommandEncoderImpl::~CommandEncoderImpl() {}
 
-		void CommandEncoderImpl::imageTransitionImpl(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState)
+		void CommandEncoderImpl::imageTransitionPermanent(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState)
 		{
 			vk::ImageMemoryBarrier2 imgBar;
 			imgBar.image = texture->image;
@@ -61,36 +61,63 @@ namespace cage
 			barInfo.imageMemoryBarrierCount = 1;
 			barInfo.pImageMemoryBarriers = &imgBar;
 			cmd.pipelineBarrier2(&barInfo);
+
+			texture->defaultState = targetState;
 		}
 
-		void CommandEncoderImpl::imageTransition(const Texture &texture, ImageStateEnum targetState, bool permanent)
+		void CommandEncoderImpl::imageTransitionSubresource(const TransitionedImageSubresource &subres, ImageStateEnum targetState)
 		{
 			ImageStateEnum sourceState = ImageStateEnum::Undefined;
 			{
-				auto it = transitionedImages.find(texture);
+				auto it = transitionedImages.find(subres);
 				if (it == transitionedImages.end())
-					sourceState = texture->defaultState;
+					sourceState = subres.texture->defaultState;
 				else
 					sourceState = it->second;
 				if (sourceState == targetState)
-				{ // already in the correct state
-					if (permanent)
-					{
-						texture->defaultState = targetState;
-						transitionedImages.erase(texture);
-					}
-					return;
-				}
+					return; // already in the correct state
 			}
 
-			imageTransitionImpl(texture, sourceState, targetState);
+			{
+				vk::ImageMemoryBarrier2 imgBar;
+				imgBar.image = subres.texture->image;
+				imgBar.subresourceRange.aspectMask = convertAspectMask(subres.texture->format);
+				imgBar.subresourceRange.baseArrayLayer = subres.layer;
+				imgBar.subresourceRange.layerCount = 1;
+				imgBar.subresourceRange.baseMipLevel = subres.mip;
+				imgBar.subresourceRange.levelCount = 1;
+				assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
+				assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
 
-			if (permanent)
-				texture->defaultState = targetState;
-			if (texture->defaultState == targetState)
-				transitionedImages.erase(texture);
+				vk::DependencyInfo barInfo;
+				barInfo.imageMemoryBarrierCount = 1;
+				barInfo.pImageMemoryBarriers = &imgBar;
+				cmd.pipelineBarrier2(&barInfo);
+			}
+
+			if (subres.texture->defaultState == targetState)
+				transitionedImages.erase(subres);
 			else
-				transitionedImages[texture] = targetState;
+				transitionedImages[subres] = targetState;
+		}
+
+		void CommandEncoderImpl::imageTransitionSubresource(const TextureView &view, ImageStateEnum targetState)
+		{
+			CAGE_ASSERT(view->arrayLayers == 1 && view->mipLevels == 1);
+			TransitionedImageSubresource s;
+			s.texture = view->texture;
+			s.mip = view->baseMipLevel;
+			s.layer = view->baseArrayLayer;
+			imageTransitionSubresource(std::move(s), targetState);
+		}
+
+		void CommandEncoderImpl::resetImageTransitions()
+		{
+			while (!transitionedImages.empty())
+			{
+				const TransitionedImageSubresource t = transitionedImages.begin()->first; // make a copy, it will be erased from the array
+				imageTransitionSubresource(t, t.texture->defaultState);
+			}
 		}
 
 		void CommandEncoderImpl::pushDebugGroup(StringView label)
@@ -110,13 +137,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			currentMode = EncoderModeEnum::Undefined;
 
-			// transition images back to default state
-			while (!transitionedImages.empty())
-			{
-				const Texture t = transitionedImages.begin()->first;
-				imageTransition(t, t->defaultState);
-			}
-
+			resetImageTransitions();
 			cmd.end();
 
 			return std::move(buffer);
@@ -134,6 +155,8 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			currentMode = EncoderModeEnum::Rendering;
 
+			resetImageTransitions();
+
 			vk::Rect2D rect;
 			ankerl::svector<vk::RenderingAttachmentInfo, 4> attachments;
 			for (const auto &it : desc.colorAttachments)
@@ -149,6 +172,7 @@ namespace cage
 				rect.extent.width = res[0];
 				rect.extent.height = res[1];
 				keepAlive(it.view);
+				imageTransitionSubresource(it.view, ImageStateEnum::ColorAttachment);
 			}
 
 			vk::RenderingAttachmentInfo depth;
@@ -164,6 +188,7 @@ namespace cage
 				rect.extent.width = res[0];
 				rect.extent.height = res[1];
 				keepAlive(desc.depthStencilAttachment->view);
+				imageTransitionSubresource(desc.depthStencilAttachment->view, ImageStateEnum::DepthAttachment);
 			}
 
 			vk::RenderingInfo info;
@@ -182,6 +207,7 @@ namespace cage
 			currentMode = EncoderModeEnum::Generic;
 
 			cmd.endRendering();
+			resetImageTransitions();
 		}
 
 		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
