@@ -5,13 +5,13 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<vk::DescriptorSet, vk::DescriptorPool>::~ResourceInternal()
+		void ResourceInternal<vk::DescriptorSet, vk::DescriptorPool>::destroy()
 		{
 			device->device.freeDescriptorSets(extra, value);
 		}
 
 		template<>
-		ResourceInternal<vk::DescriptorSetLayout, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::DescriptorSetLayout, Nothing>::destroy()
 		{
 			device->device.destroyDescriptorSetLayout(value);
 		}

@@ -63,7 +63,9 @@ namespace cage
 			DeviceImpl *device = nullptr;
 			T value = {};
 			[[no_unique_address]] Extra extra = {};
+
 			~ResourceInternal();
+			void destroy();
 		};
 
 		template<class T, class Extra = Nothing>
@@ -262,7 +264,7 @@ namespace cage
 			Bootstrap bootstrap;
 
 		public:
-			Holder<Mutex> mutex = newMutex();
+			Holder<RecursiveMutex> mutex = newRecursiveMutex();
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
 			vk::Device device;
@@ -280,6 +282,8 @@ namespace cage
 
 			template<class T>
 			void setLabel(const T &object, StringView label);
+
+			void applyDeferredDestructions();
 
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
@@ -396,6 +400,14 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 
 		template<class T, class Extra>
+		ResourceInternal<T, Extra>::~ResourceInternal()
+		{
+			CAGE_ASSERT(device);
+			ScopeLock lock(device->mutex);
+			destroy();
+		}
+
+		template<class T, class Extra>
 		ResourceHandle<T, Extra>::~ResourceHandle()
 		{
 			if (!holder)
@@ -410,8 +422,10 @@ namespace cage
 				if (holder->value.empty())
 					return;
 			}
-			CAGE_ASSERT(holder->device);
-			holder->device->deferredDestructions[0].push_back(std::move(holder).cast<void>());
+			DeviceImpl *dev = device();
+			CAGE_ASSERT(dev);
+			ScopeLock lock(dev->mutex);
+			dev->deferredDestructions[0].push_back(std::move(holder).template cast<void>());
 		}
 
 		template<class T, class Extra>

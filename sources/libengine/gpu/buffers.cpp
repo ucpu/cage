@@ -5,7 +5,7 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<vk::Buffer, VmaAllocation>::~ResourceInternal()
+		void ResourceInternal<vk::Buffer, VmaAllocation>::destroy()
 		{
 			if (extra)
 				vmaDestroyBuffer(device->allocator, (VkBuffer)value, extra);

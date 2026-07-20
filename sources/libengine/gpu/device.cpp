@@ -98,7 +98,7 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<vk::Semaphore, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::Semaphore, Nothing>::destroy()
 		{
 			device->device.destroySemaphore(value);
 		}
@@ -249,10 +249,17 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
 
+			device.waitIdle();
+
 			{
 				for (const auto &it : surfacesCollection)
 					it->clear();
 				surfacesCollection.clear();
+			}
+
+			{
+				for (uint32 i = 0; i < 10; i++)
+					applyDeferredDestructions();
 			}
 
 			{
@@ -261,6 +268,16 @@ namespace cage
 			}
 
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
+		}
+
+		void DeviceImpl::applyDeferredDestructions()
+		{
+			deferredDestructions.back().clear();
+			std::swap(deferredDestructions[2], deferredDestructions[1]);
+			std::swap(deferredDestructions[1], deferredDestructions[0]);
+
+			while (!disposingTasks.empty() && disposingTasks[0]->done())
+				disposingTasks.erase(disposingTasks.begin());
 		}
 
 		void DeviceImpl::bootstrapInit(const GpuDeviceDescriptor &desc)
@@ -430,11 +447,7 @@ namespace cage
 			}
 
 			// destroy pending destructions
-			{
-				deferredDestructions.back().clear();
-				std::swap(deferredDestructions[2], deferredDestructions[1]);
-				std::swap(deferredDestructions[1], deferredDestructions[0]);
-			}
+			applyDeferredDestructions();
 
 			// wait fence
 			{

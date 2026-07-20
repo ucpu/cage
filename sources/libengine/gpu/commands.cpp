@@ -5,19 +5,19 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<std::vector<Holder<void>>, Nothing>::~ResourceInternal()
+		void ResourceInternal<std::vector<Holder<void>>, Nothing>::destroy()
 		{
 			value.clear();
 		}
 
 		template<>
-		ResourceInternal<vk::CommandPool, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::CommandPool, Nothing>::destroy()
 		{
 			device->device.destroyCommandPool(value);
 		}
 
 		template<>
-		ResourceInternal<vk::CommandBuffer, vk::CommandPool>::~ResourceInternal()
+		void ResourceInternal<vk::CommandBuffer, vk::CommandPool>::destroy()
 		{
 			device->device.freeCommandBuffers(extra, value);
 		}

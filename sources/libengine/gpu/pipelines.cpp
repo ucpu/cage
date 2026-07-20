@@ -5,19 +5,19 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<vk::Pipeline, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::Pipeline, Nothing>::destroy()
 		{
 			device->device.destroyPipeline(value);
 		}
 
 		template<>
-		ResourceInternal<vk::ShaderModule, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::ShaderModule, Nothing>::destroy()
 		{
 			device->device.destroyShaderModule(value);
 		}
 
 		template<>
-		ResourceInternal<vk::PipelineLayout, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::PipelineLayout, Nothing>::destroy()
 		{
 			device->device.destroyPipelineLayout(value);
 		}

@@ -5,20 +5,20 @@ namespace cage
 	namespace gpu
 	{
 		template<>
-		ResourceInternal<vk::Sampler, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::Sampler, Nothing>::destroy()
 		{
 			device->device.destroySampler(value);
 		}
 
 		template<>
-		ResourceInternal<vk::Image, VmaAllocation>::~ResourceInternal()
+		void ResourceInternal<vk::Image, VmaAllocation>::destroy()
 		{
 			if (extra)
 				vmaDestroyImage(device->allocator, (VkImage)value, extra);
 		}
 
 		template<>
-		ResourceInternal<vk::ImageView, Nothing>::~ResourceInternal()
+		void ResourceInternal<vk::ImageView, Nothing>::destroy()
 		{
 			device->device.destroyImageView(value);
 		}

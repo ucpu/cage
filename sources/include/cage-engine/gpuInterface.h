@@ -82,7 +82,7 @@ namespace cage
 				return +ptr;
 			}
 
-			CAGE_FORCE_INLINE Holder<void> getVoidHolder() const { return ptr.share().cast<void>(); }
+			CAGE_FORCE_INLINE Holder<void> getVoidHolder() const { return ptr.share().template cast<void>(); }
 
 		private:
 			Holder<Impl> ptr;
