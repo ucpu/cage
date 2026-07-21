@@ -118,7 +118,7 @@ namespace cage
 				f.image = vk::Image(images[i]);
 				f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
 				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
-				f.texture->arrayLayers = f.texture->mipLevels = 1;
+				f.texture->arrayLayersCount = f.texture->mipLevelsCount = 1;
 				f.texture->dimension = TextureDimensionEnum::e2D;
 				f.texture->format = TextureFormatEnum::BGRA8UnormSrgb; //swapchain.image_format; // todo convert
 				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
@@ -319,16 +319,6 @@ namespace cage
 			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
 
 			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
-		}
-
-		void DeviceImpl::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
-		{
-			// todo
-		}
-
-		void DeviceImpl::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
-		{
-			// todo
 		}
 
 		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)

@@ -602,7 +602,7 @@ namespace cage
 		{
 			gpu::TextureViewDescriptor desc = {};
 			desc.label = "shadowmap cascade view";
-			desc.baseArrayLayer = cascade;
+			desc.arrayLayersOffset = cascade;
 			desc.dimension = gpu::TextureDimensionEnum::e2DArray;
 			gpu::TextureView view = tex->nativeTexture().createView(desc);
 			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");
@@ -613,7 +613,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 1);
-			conf.arrayLayers = cascades;
+			conf.arrayLayersCount = cascades;
 			conf.format = gpu::TextureFormatEnum::Depth32Float;
 			conf.flags = TextureFlags::Array;
 			conf.entityId = entityId;
@@ -625,7 +625,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 1);
-			conf.arrayLayers = 6;
+			conf.arrayLayersCount = 6;
 			conf.format = gpu::TextureFormatEnum::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
 			conf.entityId = entityId;

@@ -49,28 +49,33 @@ namespace cage
 
 		void CommandEncoderImpl::imageTransitionPermanent(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState)
 		{
-			vk::ImageMemoryBarrier2 imgBar;
-			imgBar.image = texture->image;
-			imgBar.subresourceRange.aspectMask = convertAspectMask(texture->format);
-			imgBar.subresourceRange.layerCount = texture->arrayLayers;
-			imgBar.subresourceRange.levelCount = texture->mipLevels;
-			assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
-			assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+			CAGE_ASSERT(targetState != ImageStateEnum::Undefined);
 
-			vk::DependencyInfo barInfo;
-			barInfo.imageMemoryBarrierCount = 1;
-			barInfo.pImageMemoryBarriers = &imgBar;
-			cmd.pipelineBarrier2(&barInfo);
+			vk::ImageMemoryBarrier2 barrier;
+			barrier.image = texture->image;
+			barrier.subresourceRange.aspectMask = convertAspectMask(texture->format);
+			barrier.subresourceRange.layerCount = texture->arrayLayersCount;
+			barrier.subresourceRange.levelCount = texture->mipLevelsCount;
+			assignImageStateBarrierFlags(sourceState, barrier.srcStageMask, barrier.srcAccessMask, barrier.oldLayout);
+			assignImageStateBarrierFlags(targetState, barrier.dstStageMask, barrier.dstAccessMask, barrier.newLayout);
+			vk::DependencyInfo dependency;
+			dependency.imageMemoryBarrierCount = 1;
+			dependency.pImageMemoryBarriers = &barrier;
+			cmd.pipelineBarrier2(&dependency);
 
 			texture->defaultState = targetState;
 		}
 
-		void CommandEncoderImpl::imageTransitionSubresource(const TransitionedImageSubresource &subres, ImageStateEnum targetState)
+		void CommandEncoderImpl::imageTransitionSubresource(const ImageTransitionSubresource &subres, ImageStateEnum targetState)
 		{
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+			CAGE_ASSERT(targetState != ImageStateEnum::Undefined);
+
 			ImageStateEnum sourceState = ImageStateEnum::Undefined;
 			{
-				auto it = transitionedImages.find(subres);
-				if (it == transitionedImages.end())
+				auto it = synchronizedImages.find(subres);
+				if (it == synchronizedImages.end())
 					sourceState = subres.texture->defaultState;
 				else
 					sourceState = it->second;
@@ -79,49 +84,113 @@ namespace cage
 			}
 
 			{
-				vk::ImageMemoryBarrier2 imgBar;
-				imgBar.image = subres.texture->image;
-				imgBar.subresourceRange.aspectMask = convertAspectMask(subres.texture->format);
-				imgBar.subresourceRange.baseArrayLayer = subres.layer;
-				imgBar.subresourceRange.layerCount = 1;
-				imgBar.subresourceRange.baseMipLevel = subres.mip;
-				imgBar.subresourceRange.levelCount = 1;
-				assignImageStateBarrierFlags(sourceState, imgBar.srcStageMask, imgBar.srcAccessMask, imgBar.oldLayout);
-				assignImageStateBarrierFlags(targetState, imgBar.dstStageMask, imgBar.dstAccessMask, imgBar.newLayout);
-
-				vk::DependencyInfo barInfo;
-				barInfo.imageMemoryBarrierCount = 1;
-				barInfo.pImageMemoryBarriers = &imgBar;
-				cmd.pipelineBarrier2(&barInfo);
+				vk::ImageMemoryBarrier2 barrier;
+				barrier.image = subres.texture->image;
+				barrier.subresourceRange.aspectMask = convertAspectMask(subres.texture->format);
+				barrier.subresourceRange.baseArrayLayer = subres.layer;
+				barrier.subresourceRange.layerCount = 1;
+				barrier.subresourceRange.baseMipLevel = subres.mip;
+				barrier.subresourceRange.levelCount = 1;
+				assignImageStateBarrierFlags(sourceState, barrier.srcStageMask, barrier.srcAccessMask, barrier.oldLayout);
+				assignImageStateBarrierFlags(targetState, barrier.dstStageMask, barrier.dstAccessMask, barrier.newLayout);
+				vk::DependencyInfo dependency;
+				dependency.imageMemoryBarrierCount = 1;
+				dependency.pImageMemoryBarriers = &barrier;
+				cmd.pipelineBarrier2(&dependency);
 			}
 
 			if (subres.texture->defaultState == targetState)
-				transitionedImages.erase(subres);
+				synchronizedImages.erase(subres);
 			else
-				transitionedImages[subres] = targetState;
+				synchronizedImages[subres] = targetState;
 		}
 
 		void CommandEncoderImpl::imageTransitionSubresource(const TextureView &view, ImageStateEnum targetState)
 		{
-			CAGE_ASSERT(view->arrayLayers == 1 && view->mipLevels == 1);
-			TransitionedImageSubresource s;
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+			CAGE_ASSERT(targetState != ImageStateEnum::Undefined);
+			CAGE_ASSERT(view->arrayLayersCount == 1 && view->mipLevelsCount == 1);
+			ImageTransitionSubresource s;
 			s.texture = view->texture;
-			s.mip = view->baseMipLevel;
-			s.layer = view->baseArrayLayer;
+			s.mip = view->mipLevelsOffset;
+			s.layer = view->arrayLayersOffset;
 			imageTransitionSubresource(std::move(s), targetState);
 		}
 
-		void CommandEncoderImpl::resetImageTransitions()
+		void CommandEncoderImpl::bufferSynchronizationPermanent(const Buffer &buffer, BufferStateEnum sourceState, BufferStateEnum targetState)
 		{
-			while (!transitionedImages.empty())
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+			CAGE_ASSERT(targetState != BufferStateEnum::Undefined);
+
+			vk::BufferMemoryBarrier2 barrier;
+			barrier.buffer = buffer->buffer;
+			barrier.offset = 0;
+			barrier.size = VK_WHOLE_SIZE;
+			assignBufferStateBarrierFlags(sourceState, barrier.srcStageMask, barrier.srcAccessMask);
+			assignBufferStateBarrierFlags(targetState, barrier.dstStageMask, barrier.dstAccessMask);
+			vk::DependencyInfo dependency;
+			dependency.bufferMemoryBarrierCount = 1;
+			dependency.pBufferMemoryBarriers = &barrier;
+			cmd.pipelineBarrier2(dependency);
+
+			buffer->defaultState = targetState;
+		}
+
+		void CommandEncoderImpl::bufferSynchronization(const Buffer &buffer, BufferStateEnum targetState)
+		{
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+			CAGE_ASSERT(targetState != BufferStateEnum::Undefined);
+
+			BufferStateEnum sourceState = BufferStateEnum::Undefined;
 			{
-				const TransitionedImageSubresource t = transitionedImages.begin()->first; // make a copy, it will be erased from the array
+				auto it = synchronizedBuffers.find(buffer);
+				if (it == synchronizedBuffers.end())
+					sourceState = buffer->defaultState;
+				else
+					sourceState = it->second;
+				if (sourceState == targetState)
+					return; // already in the correct state
+			}
+
+			{
+				vk::BufferMemoryBarrier2 barrier;
+				barrier.buffer = buffer->buffer;
+				barrier.offset = 0;
+				barrier.size = VK_WHOLE_SIZE;
+				assignBufferStateBarrierFlags(sourceState, barrier.srcStageMask, barrier.srcAccessMask);
+				assignBufferStateBarrierFlags(targetState, barrier.dstStageMask, barrier.dstAccessMask);
+				vk::DependencyInfo dependency;
+				dependency.bufferMemoryBarrierCount = 1;
+				dependency.pBufferMemoryBarriers = &barrier;
+				cmd.pipelineBarrier2(dependency);
+			}
+
+			if (buffer->defaultState == targetState)
+				synchronizedBuffers.erase(buffer);
+			else
+				synchronizedBuffers[buffer] = targetState;
+		}
+
+		void CommandEncoderImpl::resetSynchronization()
+		{
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
+
+			while (!synchronizedImages.empty())
+			{
+				const ImageTransitionSubresource t = synchronizedImages.begin()->first; // make a copy, it will be erased from the array
 				imageTransitionSubresource(t, t.texture->defaultState);
+			}
+
+			while (!synchronizedBuffers.empty())
+			{
+				Buffer b = synchronizedBuffers.begin()->first; // make a copy, it will be erased from the array
+				bufferSynchronization(b, b->defaultState);
 			}
 		}
 
 		void CommandEncoderImpl::pushDebugGroup(StringView label)
 		{
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
 			vk::DebugUtilsLabelEXT info;
 			info.pLabelName = label.str.data();
 			cmd.beginDebugUtilsLabelEXT(info);
@@ -129,18 +198,72 @@ namespace cage
 
 		void CommandEncoderImpl::popDebugGroup()
 		{
+			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
 			cmd.endDebugUtilsLabelEXT();
 		}
 
 		CommandBuffer CommandEncoderImpl::finishEncoding()
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			resetSynchronization();
 			currentMode = EncoderModeEnum::Undefined;
-
-			resetImageTransitions();
 			cmd.end();
-
 			return std::move(buffer);
+		}
+
+		void CommandEncoderImpl::copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size)
+		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+
+			bufferSynchronization(source, BufferStateEnum::TransferSrc);
+			bufferSynchronization(destination, BufferStateEnum::TransferDst);
+
+			vk::BufferCopy2 region;
+			region.srcOffset = sourceOffset;
+			region.dstOffset = destinationOffset;
+			region.size = size;
+			vk::CopyBufferInfo2 info;
+			info.srcBuffer = source->buffer;
+			info.dstBuffer = destination->buffer;
+			info.regionCount = 1;
+			info.pRegions = &region;
+			cmd.copyBuffer2(info);
+		}
+
+		void CommandEncoderImpl::copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize)
+		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+
+			for (uint32 i = 0; i < destination.arrayLayersCount; i++)
+			{
+				ImageTransitionSubresource subres;
+				subres.texture = destination.texture;
+				subres.mip = destination.mipLevel;
+				subres.layer = destination.arrayLayersOffset + i;
+				imageTransitionSubresource(subres, ImageStateEnum::TransferDst);
+			}
+
+			vk::BufferImageCopy2 region;
+			region.bufferOffset = source.layout.offset;
+			region.bufferRowLength = copySize[0];
+			region.bufferImageHeight = copySize[1];
+			region.imageOffset.x = destination.origin[0];
+			region.imageOffset.y = destination.origin[1];
+			region.imageOffset.z = destination.origin[2];
+			region.imageExtent.width = copySize[0];
+			region.imageExtent.height = copySize[1];
+			region.imageExtent.depth = copySize[2];
+			region.imageSubresource.aspectMask = convertAspectMask(destination.texture.getFormat());
+			region.imageSubresource.baseArrayLayer = destination.arrayLayersOffset;
+			region.imageSubresource.layerCount = destination.arrayLayersCount;
+			region.imageSubresource.mipLevel = destination.mipLevel;
+			vk::CopyBufferToImageInfo2 info;
+			info.srcBuffer = source.buffer->buffer;
+			info.dstImage = destination.texture->image;
+			info.dstImageLayout = vk::ImageLayout::eTransferDstOptimal;
+			info.regionCount = 1;
+			info.pRegions = &region;
+			cmd.copyBufferToImage2(info);
 		}
 
 		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
@@ -155,7 +278,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			currentMode = EncoderModeEnum::Rendering;
 
-			resetImageTransitions();
+			resetSynchronization();
 
 			vk::Rect2D rect;
 			ankerl::svector<vk::RenderingAttachmentInfo, 4> attachments;
@@ -205,9 +328,8 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			currentMode = EncoderModeEnum::Generic;
-
 			cmd.endRendering();
-			resetImageTransitions();
+			resetSynchronization();
 		}
 
 		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
@@ -241,6 +363,7 @@ namespace cage
 
 		void CommandEncoderImpl::setViewport(Real x, Real y, Real width, Real height, Real minDepth, Real maxDepth)
 		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			vk::Viewport vp;
 			vp.x = x.value;
 			vp.y = y.value;

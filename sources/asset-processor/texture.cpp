@@ -345,11 +345,11 @@ namespace
 		std::map<uint32, std::map<uint32, std::map<uint32, const ImageImportRaw *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.raw;
-		CAGE_ASSERT(levels.size() >= data.mipLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevelsCount);
 
 		for (const auto &level : levels)
 		{
-			if (level.first >= data.mipLevels)
+			if (level.first >= data.mipLevelsCount)
 				continue;
 
 			uint32 size = 0;
@@ -359,7 +359,8 @@ namespace
 
 			const uint32 faces = level.second.size();
 			const uint32 layers = level.second.at(0).size();
-			ser << Vec3i(level.second.at(0).at(0)->resolution, faces * layers);
+			ser << Vec3i(level.second.at(0).at(0)->resolution, 1);
+			ser << uint32(faces * layers);
 			ser << size;
 			for (const auto &face : level.second)
 				for (const auto &layer : face.second)
@@ -377,11 +378,11 @@ namespace
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.image;
-		CAGE_ASSERT(levels.size() >= data.mipLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevelsCount);
 
 		for (const auto &level : levels)
 		{
-			if (level.first >= data.mipLevels)
+			if (level.first >= data.mipLevelsCount)
 				continue;
 
 			uint32 size = 0;
@@ -391,7 +392,8 @@ namespace
 
 			const uint32 faces = level.second.size();
 			const uint32 layers = level.second.at(0).size();
-			ser << Vec3i(level.second.at(0).at(0)->resolution(), faces * layers);
+			ser << Vec3i(level.second.at(0).at(0)->resolution(), 1);
+			ser << uint32(faces * layers);
 			ser << size;
 			for (const auto &face : level.second)
 				for (const auto &layer : face.second)
@@ -404,17 +406,17 @@ namespace
 		TextureHeader header;
 		header.flags = target;
 		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), 1);
-		header.arrayLayers = images.parts.size();
+		header.arrayLayersCount = images.parts.size();
 		if (any(target & TextureFlags::Volume3D))
 		{
-			header.resolution[2] = header.arrayLayers;
-			header.arrayLayers = 1;
+			header.resolution[2] = header.arrayLayersCount;
+			header.arrayLayersCount = 1;
 		}
-		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
+		header.mipLevelsCount = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
 		header.channels = images.parts[0].image->channels();
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
 		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
-		header.mipmapFilter = header.mipLevels > 1 ? gpu::FilterModeEnum::Linear : gpu::FilterModeEnum::Nearest;
+		header.mipmapFilter = header.mipLevelsCount > 1 ? gpu::FilterModeEnum::Linear : gpu::FilterModeEnum::Nearest;
 		if (header.sampleFilter != gpu::FilterModeEnum::Linear || header.mipmapFilter != gpu::FilterModeEnum::Linear)
 			header.anisoFilter = 1;
 		header.wrapX = convertWrap(processor->property("wrapX"));
@@ -425,7 +427,7 @@ namespace
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "8-bit precision only for now");
 
-		if (header.mipLevels > 1)
+		if (header.mipLevelsCount > 1)
 			imageImportGenerateMipmaps(images);
 
 		MemoryBuffer inputBuffer;

@@ -16,7 +16,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API_EXPORT void textureLoadLevel(gpu::Device &device, gpu::Texture &tex, const TextureHeader &header, const Vec3i &resolution, const uint32 mipLevel, PointerRange<const char> data)
+		CAGE_API_EXPORT void textureLoadLevel(gpu::Device &device, gpu::Texture &tex, const TextureHeader &header, const Vec3i &resolution, const uint32 arrayLayersOffset, const uint32 arrayLayersCount, const uint32 mipLevel, PointerRange<const char> data)
 		{
 			CAGE_ASSERT(mipLevel > 0 || Vec2i(resolution) == Vec2i(header.resolution));
 			CAGE_ASSERT(header.channels == 1 || header.channels == 2 || header.channels == 4);
@@ -24,6 +24,8 @@ namespace cage
 			gpu::TexelCopyTextureInfo dest = {};
 			dest.texture = tex;
 			dest.mipLevel = mipLevel;
+			dest.arrayLayersOffset = arrayLayersOffset;
+			dest.arrayLayersCount = arrayLayersCount;
 
 			uint32 blockWidth = 1;
 			uint32 blockBytes = header.channels; // for uncompressed formats
@@ -55,7 +57,7 @@ namespace cage
 			CAGE_ASSERT((resolution[0] % blockWidth) == 0);
 			CAGE_ASSERT((resolution[1] % blockWidth) == 0);
 
-			gpu::TexelCopyBufferLayout layout = {};
+			gpu::TexelCopyBufferLayout layout;
 			layout.bytesPerRow = ((resolution[0] + blockWidth - 1) / blockWidth) * blockBytes;
 			layout.rowsPerImage = (resolution[1] + blockWidth - 1) / blockWidth;
 
@@ -77,22 +79,23 @@ namespace cage
 
 			Holder<gpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
-			gpu::TextureDescriptor desc = {};
+			gpu::TextureDescriptor desc;
 			desc.label = context->textId;
 			desc.resolution = header.resolution;
-			desc.arrayLayers = header.arrayLayers;
-			desc.mipLevels = header.mipLevels;
+			desc.arrayLayersCount = header.arrayLayersCount;
+			desc.mipLevelsCount = header.mipLevelsCount;
 			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
 			desc.format = header.format;
 			desc.usage = header.usage;
 			gpu::Texture wtex = dev->createTexture(desc);
 
-			gpu::TextureViewDescriptor twd = {};
-			twd.dimension = privat::textureViewDimension(header.flags);
+			gpu::TextureViewDescriptor twd;
 			twd.label = context->textId;
+			twd.dimension = privat::textureViewDimension(header.flags);
 			gpu::TextureView view = wtex.createView(twd);
 
-			gpu::SamplerDescriptor sd = {};
+			gpu::SamplerDescriptor sd;
+			sd.label = context->textId;
 			sd.magFilter = header.sampleFilter;
 			sd.minFilter = header.sampleFilter;
 			sd.mipmapFilter = header.mipmapFilter;
@@ -100,19 +103,19 @@ namespace cage
 			sd.addressModeU = header.wrapX;
 			sd.addressModeV = header.wrapY;
 			sd.addressModeW = header.wrapZ;
-			sd.label = context->textId;
 			gpu::Sampler samp = dev->createSampler(sd);
 
 			Holder<Texture> tex = newTexture(wtex, view, samp, context->textId);
 			tex->flags = header.flags;
 
-			CAGE_ASSERT(header.mipLevels > 0);
-			for (uint32 mip = 0; mip < header.mipLevels; mip++)
+			CAGE_ASSERT(header.mipLevelsCount > 0);
+			for (uint32 mip = 0; mip < header.mipLevelsCount; mip++)
 			{
 				Vec3i resolution;
+				uint32 arrayLayersCount = 0;
 				uint32 size = 0;
-				des >> resolution >> size;
-				detail::textureLoadLevel(*dev, wtex, header, resolution, mip, des.read(size));
+				des >> resolution >> arrayLayersCount >> size;
+				detail::textureLoadLevel(*dev, wtex, header, resolution, 0, arrayLayersCount, mip, des.read(size));
 			}
 
 			CAGE_ASSERT(des.available() == 0);

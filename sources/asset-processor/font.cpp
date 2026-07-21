@@ -208,8 +208,8 @@ namespace
 
 		TextureHeader data;
 		data.resolution = Vec3i(img->width(), img->height(), 1);
-		data.arrayLayers = 1;
-		data.mipLevels = 1;
+		data.arrayLayersCount = 1;
+		data.mipLevelsCount = 1;
 		data.channels = img->channels();
 		data.format = gpu::TextureFormatEnum::RGBA8Unorm;
 		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
@@ -219,6 +219,7 @@ namespace
 		Serializer ser(inputBuffer);
 		ser << data;
 		ser << Vec3i(img->resolution(), 1);
+		ser << uint32(1);
 		ser << numeric_cast<uint32>(img->rawViewU8().size());
 		ser.write(bufferCast(img->rawViewU8()));
 

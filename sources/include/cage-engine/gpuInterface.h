@@ -131,8 +131,8 @@ namespace cage
 
 			//void clearBuffer(const Buffer &buffer, uint64 offset = 0, uint64 size = m);
 			//void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
-			//void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
-			//void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
+			void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
+			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 			//void copyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			//void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
@@ -444,7 +444,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API TexelCopyBufferLayout
 		{
-			//uint64 offset = 0;
+			uint64 offset = 0;
 			uint32 bytesPerRow = 0;
 			uint32 rowsPerImage = 0;
 		};
@@ -458,7 +458,9 @@ namespace cage
 		struct CAGE_ENGINE_API TexelCopyTextureInfo
 		{
 			Texture texture;
-			//Vec3i origin;
+			Vec3i origin;
+			uint32 arrayLayersOffset = 0;
+			uint32 arrayLayersCount = 1;
 			uint32 mipLevel = 0;
 		};
 
@@ -466,8 +468,8 @@ namespace cage
 		{
 			StringView label;
 			Vec3i resolution = Vec3i(0, 0, 1);
-			uint32 arrayLayers = 1;
-			uint32 mipLevels = 1;
+			uint32 arrayLayersCount = 1;
+			uint32 mipLevelsCount = 1;
 			//uint32 samplesCount = 1;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
@@ -477,10 +479,10 @@ namespace cage
 		struct CAGE_ENGINE_API TextureViewDescriptor
 		{
 			StringView label;
-			uint32 baseArrayLayer = 0;
-			uint32 arrayLayers = 1;
-			uint32 baseMipLevel = 0;
-			uint32 mipLevels = 1;
+			uint32 arrayLayersOffset = 0;
+			uint32 arrayLayersCount = 1;
+			uint32 mipLevelsOffset = 0;
+			uint32 mipLevelsCount = 1;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			//TextureFormatEnum format = TextureFormatEnum::Undefined;
 			//TextureUsageFlags usage = TextureUsageFlags::Undefined;

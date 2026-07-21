@@ -39,7 +39,7 @@ namespace cage
 					hashCombine((uint32)config.resolution[0]);
 					hashCombine((uint32)config.resolution[1]);
 					hashCombine((uint32)config.resolution[2]);
-					hashCombine(config.mipLevels);
+					hashCombine(config.mipLevelsCount);
 					hashCombine((uint32)config.format);
 					hashCombine((uint64)config.flags);
 					hashCombine(config.entityId);
@@ -66,13 +66,13 @@ namespace cage
 			{
 				ColorTextureCreateConfig cfg;
 				cfg.resolution = Vec3i(1);
-				cfg.arrayLayers = 1;
-				cfg.mipLevels = 1;
+				cfg.arrayLayersCount = 1;
+				cfg.mipLevelsCount = 1;
 				cfg.channels = 4;
 				dummy2d = newTexture(device, cfg, "dummy2d");
 				cfg.flags = TextureFlags::Array;
 				dummyArray = newTexture(device, cfg, "dummyArray");
-				cfg.arrayLayers = 6;
+				cfg.arrayLayersCount = 6;
 				cfg.flags = TextureFlags::Cubemap;
 				dummyCube = newTexture(device, cfg, "dummyCube");
 
@@ -122,8 +122,8 @@ namespace cage
 				gpu::TextureDescriptor desc;
 				desc.label = "dummy shadowmap target";
 				desc.resolution = Vec3i(1, 1, 1);
-				desc.arrayLayers = 1;
-				desc.mipLevels = 1;
+				desc.arrayLayersCount = 1;
+				desc.mipLevelsCount = 1;
 				desc.dimension = gpu::TextureDimensionEnum::e2DArray;
 				desc.format = gpu::TextureFormatEnum::Depth32Float;
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
@@ -153,8 +153,8 @@ namespace cage
 				gpu::TextureDescriptor desc = {};
 				desc.label = config.name;
 				desc.resolution = config.resolution;
-				desc.arrayLayers = config.arrayLayers;
-				desc.mipLevels = config.mipLevels;
+				desc.arrayLayersCount = config.arrayLayersCount;
+				desc.mipLevelsCount = config.mipLevelsCount;
 				desc.dimension = textureViewDimension(config.flags);
 				desc.format = config.format;
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
@@ -332,8 +332,8 @@ namespace cage
 				desc.label = label.c_str();
 				desc.dimension = privat::textureViewDimension(config.flags);
 				desc.resolution = config.resolution;
-				desc.arrayLayers = config.arrayLayers;
-				desc.mipLevels = config.mipLevels;
+				desc.arrayLayersCount = config.arrayLayersCount;
+				desc.mipLevelsCount = config.mipLevelsCount;
 				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
 				desc.usage = gpu::TextureUsageFlags::CopyDst;
 				if (config.sampling)
@@ -344,8 +344,8 @@ namespace cage
 				texture = dev->createTexture(desc);
 
 				gpu::TextureViewDescriptor twd;
-				twd.arrayLayers = desc.arrayLayers;
-				twd.mipLevels = desc.mipLevels;
+				twd.arrayLayersCount = desc.arrayLayersCount;
+				twd.mipLevelsCount = desc.mipLevelsCount;
 				twd.dimension = privat::textureViewDimension(config.flags);
 				view = texture.createView(twd);
 
@@ -375,7 +375,7 @@ namespace cage
 		return impl->texture.getResolution();
 	}
 
-	uint32 Texture::mipLevels() const
+	uint32 Texture::mipLevelsCount() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
 		return impl->texture.getMipLevels();

@@ -48,7 +48,20 @@ namespace cage
 			Present,
 		};
 
-		struct TransitionedImageSubresource
+		enum class BufferStateEnum
+		{
+			Undefined = 0,
+			TransferSrc,
+			TransferDst,
+			Vertex,
+			Index,
+			Uniform,
+			StorageRead,
+			StorageWrite,
+			Indirect
+		};
+
+		struct ImageTransitionSubresource
 		{
 			Texture texture;
 			uint32 mip = 0;
@@ -57,8 +70,10 @@ namespace cage
 
 		struct Hasher
 		{
-			auto operator()(const TransitionedImageSubresource &t) const noexcept { return std::hash<void *>()(t.texture.get()) ^ t.mip ^ (t.layer << 4); }
-			auto operator()(const TransitionedImageSubresource &a, const TransitionedImageSubresource &b) const noexcept { return a.texture.get() == b.texture.get() && a.mip == b.mip && a.layer == b.layer; }
+			auto operator()(const ImageTransitionSubresource &v) const noexcept { return std::hash<void *>()(v.texture.get()) ^ v.mip ^ (v.layer << 4); }
+			auto operator()(const ImageTransitionSubresource &a, const ImageTransitionSubresource &b) const noexcept { return a.texture.get() == b.texture.get() && a.mip == b.mip && a.layer == b.layer; }
+			auto operator()(const Buffer &v) const noexcept { return std::hash<void *>()(v.get()); }
+			auto operator()(const Buffer &a, const Buffer &b) const noexcept { return a.get() == b.get(); }
 		};
 
 		struct Nothing
@@ -190,6 +205,7 @@ namespace cage
 			PointerRange<char> mappedRange;
 			uint64 size = 0;
 			BufferUsageFlags usage = BufferUsageFlags::Undefined;
+			BufferStateEnum defaultState = BufferStateEnum::Undefined;
 
 			BufferImpl(DeviceImpl &device, const BufferDescriptor &desc);
 			~BufferImpl();
@@ -213,7 +229,8 @@ namespace cage
 		{
 		public:
 			CommandBuffer buffer;
-			std::unordered_map<TransitionedImageSubresource, ImageStateEnum, Hasher, Hasher> transitionedImages;
+			std::unordered_map<ImageTransitionSubresource, ImageStateEnum, Hasher, Hasher> synchronizedImages;
+			std::unordered_map<Buffer, BufferStateEnum, Hasher, Hasher> synchronizedBuffers;
 			vk::CommandBuffer cmd;
 			vk::PipelineLayout currentPipelineLayout;
 			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
@@ -228,9 +245,11 @@ namespace cage
 			}
 
 			void imageTransitionPermanent(const Texture &texture, ImageStateEnum sourceState, ImageStateEnum targetState);
-			void imageTransitionSubresource(const TransitionedImageSubresource &subres, ImageStateEnum targetState);
+			void imageTransitionSubresource(const ImageTransitionSubresource &subres, ImageStateEnum targetState);
 			void imageTransitionSubresource(const TextureView &view, ImageStateEnum targetState);
-			void resetImageTransitions();
+			void bufferSynchronizationPermanent(const Buffer &buffer, BufferStateEnum sourceState, BufferStateEnum targetState);
+			void bufferSynchronization(const Buffer &buffer, BufferStateEnum targetState);
+			void resetSynchronization();
 
 			// encoder
 
@@ -240,6 +259,8 @@ namespace cage
 
 			// generic encoder
 
+			void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
+			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 
 			// render pass ecnoder
@@ -296,9 +317,6 @@ namespace cage
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
-			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
-			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
-
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 		};
 
@@ -346,8 +364,8 @@ namespace cage
 			VmaAllocationInfo allocatedInfo = {};
 
 			Vec3i resolution;
-			uint32 arrayLayers = 0;
-			uint32 mipLevels = 0;
+			uint32 arrayLayersCount = 0;
+			uint32 mipLevelsCount = 0;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			TextureFormatEnum format = TextureFormatEnum::Undefined;
 			TextureUsageFlags usage = TextureUsageFlags::Undefined;
@@ -364,10 +382,10 @@ namespace cage
 			ResourceHandle<vk::ImageView> view;
 
 			Texture texture; // ensure the texture outlives the view
-			uint32 baseArrayLayer = 0;
-			uint32 arrayLayers = 0;
-			uint32 baseMipLevel = 0;
-			uint32 mipLevels = 0;
+			uint32 arrayLayersOffset = 0;
+			uint32 arrayLayersCount = 0;
+			uint32 mipLevelsOffset = 0;
+			uint32 mipLevelsCount = 0;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 
 			TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc);
@@ -408,6 +426,7 @@ namespace cage
 		vk::ShaderStageFlags convertShaderStages(ShaderStagesFlags visibility);
 		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset);
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
+		void assignBufferStateBarrierFlags(BufferStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask);
 
 		///////////////////////////////////////////////////////////////////
 		// inline implementations

@@ -27,8 +27,8 @@ namespace cage
 	{
 		TextureFlags flags = (TextureFlags)0;
 		Vec3i resolution;
-		uint32 arrayLayers = 0;
-		uint32 mipLevels = 0;
+		uint32 arrayLayersCount = 0;
+		uint32 mipLevelsCount = 0;
 		uint32 channels = 0;
 		uint32 anisoFilter = 1;
 		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
@@ -42,6 +42,7 @@ namespace cage
 		// follows:
 		// for each mipmap level:
 		//   resolution, Vec3i
+		//   arrayLayersCount, uint32
 		//   size, uint32
 		//   array of bytes
 	};

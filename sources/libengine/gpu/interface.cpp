@@ -61,6 +61,16 @@ namespace cage
 			return get()->finishEncoding();
 		}
 
+		void CommandEncoder::copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size)
+		{
+			get()->copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size);
+		}
+
+		void CommandEncoder::copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize)
+		{
+			get()->copyBufferToTexture(source, destination, copySize);
+		}
+
 		void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			get()->copyTextureToBuffer(source, destination, copySize);
@@ -124,7 +134,9 @@ namespace cage
 		Buffer Device::createBuffer(const BufferDescriptor &desc)
 		{
 			ScopeLock lock(get()->mutex);
-			return Buffer(systemMemory().createHolder<BufferImpl>(*get(), desc));
+			Buffer b = Buffer(systemMemory().createHolder<BufferImpl>(*get(), desc));
+			b->defaultState = BufferStateEnum::Uniform;
+			return b;
 		}
 
 		Texture Device::createTexture(const TextureDescriptor &desc)
@@ -257,14 +269,36 @@ namespace cage
 
 		void Device::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
+			CAGE_ASSERT(buffer.getSize() >= offset + data.size());
 			ScopeLock lock(get()->mutex);
-			get()->writeBuffer(buffer, offset, data);
+			BufferDescriptor desc;
+			desc.label = "staging buffer";
+			desc.size = data.size();
+			desc.usage = BufferUsageFlags::MapWrite | BufferUsageFlags::CopySrc;
+			Buffer staging = createBuffer(desc);
+			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
+			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
+			CommandEncoderImpl cmd(*get(), { .label = "copy staging buffer" });
+			cmd.copyBufferToBuffer(staging, 0, buffer, offset, data.size());
+			get()->additionalCommands.push_back(cmd.finishEncoding());
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
 		{
 			ScopeLock lock(get()->mutex);
-			get()->writeTexture(dest, data, layout, extents);
+			BufferDescriptor desc;
+			desc.label = "staging buffer";
+			desc.size = data.size();
+			desc.usage = BufferUsageFlags::MapWrite | BufferUsageFlags::CopySrc;
+			Buffer staging = createBuffer(desc);
+			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
+			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
+			CommandEncoderImpl cmd(*get(), { .label = "copy staging buffer" });
+			TexelCopyBufferInfo src;
+			src.buffer = staging;
+			src.layout = layout;
+			cmd.copyBufferToTexture(src, dest, extents);
+			get()->additionalCommands.push_back(cmd.finishEncoding());
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
@@ -292,12 +326,12 @@ namespace cage
 
 		uint32 Texture::getArrayLayers() const
 		{
-			return get()->arrayLayers;
+			return get()->arrayLayersCount;
 		}
 
 		uint32 Texture::getMipLevels() const
 		{
-			return get()->mipLevels;
+			return get()->mipLevelsCount;
 		}
 
 		TextureDimensionEnum Texture::getDimension() const
@@ -322,22 +356,22 @@ namespace cage
 
 		uint32 TextureView::getBaseArrayLayer() const
 		{
-			return get()->baseArrayLayer;
+			return get()->arrayLayersOffset;
 		}
 
 		uint32 TextureView::getArrayLayers() const
 		{
-			return get()->arrayLayers;
+			return get()->arrayLayersCount;
 		}
 
 		uint32 TextureView::getBaseMipLevel() const
 		{
-			return get()->baseMipLevel;
+			return get()->mipLevelsOffset;
 		}
 
 		uint32 TextureView::getMipLevels() const
 		{
-			return get()->mipLevels;
+			return get()->mipLevelsCount;
 		}
 
 		TextureDimensionEnum TextureView::getDimension() const

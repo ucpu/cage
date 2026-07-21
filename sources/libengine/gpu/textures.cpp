@@ -45,7 +45,7 @@ namespace cage
 			image = std::move(image_);
 		}
 
-		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : image(device), resolution(desc.resolution), arrayLayers(desc.arrayLayers), mipLevels(desc.mipLevels), dimension(desc.dimension), format(desc.format), usage(desc.usage)
+		TextureImpl::TextureImpl(DeviceImpl &device, const TextureDescriptor &desc) : image(device), resolution(desc.resolution), arrayLayersCount(desc.arrayLayersCount), mipLevelsCount(desc.mipLevelsCount), dimension(desc.dimension), format(desc.format), usage(desc.usage)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
@@ -80,8 +80,8 @@ namespace cage
 			imageInfo.extent.width = resolution[0];
 			imageInfo.extent.height = resolution[1];
 			imageInfo.extent.depth = resolution[2];
-			imageInfo.arrayLayers = arrayLayers;
-			imageInfo.mipLevels = mipLevels;
+			imageInfo.arrayLayers = arrayLayersCount;
+			imageInfo.mipLevels = mipLevelsCount;
 			imageInfo.samples = vk::SampleCountFlagBits::e1;
 			imageInfo.tiling = vk::ImageTiling::eOptimal;
 			imageInfo.usage = convertTextureUsage(usage, format);
@@ -99,7 +99,7 @@ namespace cage
 
 		TextureImpl::~TextureImpl() {}
 
-		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture), baseMipLevel(desc.baseMipLevel), mipLevels(desc.mipLevels), baseArrayLayer(desc.baseArrayLayer), arrayLayers(desc.arrayLayers), dimension(desc.dimension)
+		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture), mipLevelsOffset(desc.mipLevelsOffset), mipLevelsCount(desc.mipLevelsCount), arrayLayersOffset(desc.arrayLayersOffset), arrayLayersCount(desc.arrayLayersCount), dimension(desc.dimension)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
@@ -126,10 +126,10 @@ namespace cage
 			viewInfo.image = texture->image;
 			viewInfo.format = convertTextureFormat(texture->format);
 			viewInfo.subresourceRange.aspectMask = convertAspectMask(texture->format);
-			viewInfo.subresourceRange.baseMipLevel = desc.baseMipLevel;
-			viewInfo.subresourceRange.levelCount = desc.mipLevels;
-			viewInfo.subresourceRange.baseArrayLayer = desc.baseArrayLayer;
-			viewInfo.subresourceRange.layerCount = desc.arrayLayers;
+			viewInfo.subresourceRange.baseMipLevel = desc.mipLevelsOffset;
+			viewInfo.subresourceRange.levelCount = desc.mipLevelsCount;
+			viewInfo.subresourceRange.baseArrayLayer = desc.arrayLayersOffset;
+			viewInfo.subresourceRange.layerCount = desc.arrayLayersCount;
 			view = texture->image.device()->device.createImageView(viewInfo);
 			view.setLabel(desc.label);
 		}
