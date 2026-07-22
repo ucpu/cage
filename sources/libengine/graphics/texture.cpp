@@ -76,10 +76,10 @@ namespace cage
 				cfg.flags = TextureFlags::Cubemap;
 				dummyCube = newTexture(device, cfg, "dummyCube");
 
-				gpu::TexelCopyTextureInfo dest = {};
+				gpu::TexelCopyTextureInfo dest;
 				dest.texture = dummy2d->nativeTexture();
 				dest.mipLevel = 0;
-				gpu::TexelCopyBufferLayout layout = {};
+				gpu::TexelCopyBufferLayout layout;
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
 				Vec3i extents = Vec3i(1, 1, 1);
@@ -129,7 +129,7 @@ namespace cage
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 
-				gpu::TextureViewDescriptor vd = {};
+				gpu::TextureViewDescriptor vd;
 				vd.dimension = gpu::TextureDimensionEnum::e2DArray;
 				gpu::TextureView view = tex.createView(vd);
 
@@ -150,7 +150,7 @@ namespace cage
 
 			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
 			{
-				gpu::TextureDescriptor desc = {};
+				gpu::TextureDescriptor desc;
 				desc.label = config.name;
 				desc.resolution = config.resolution;
 				desc.arrayLayersCount = config.arrayLayersCount;
@@ -160,11 +160,11 @@ namespace cage
 				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
 				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 
-				gpu::TextureViewDescriptor vd = {};
+				gpu::TextureViewDescriptor vd;
 				vd.dimension = textureViewDimension(config.flags);
 				gpu::TextureView view = tex.createView(vd);
 
-				gpu::SamplerDescriptor sd = {};
+				gpu::SamplerDescriptor sd;
 				if (config.samplerVariant)
 				{
 					sd.label = config.name;
@@ -431,9 +431,9 @@ namespace cage
 		if (image->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
 			conf.flags = TextureFlags::Srgb;
 		Holder<Texture> tex = newTexture(device, conf, label);
-		gpu::TexelCopyTextureInfo dest = {};
+		gpu::TexelCopyTextureInfo dest;
 		dest.texture = tex->nativeTexture();
-		gpu::TexelCopyBufferLayout layout = {};
+		gpu::TexelCopyBufferLayout layout;
 		layout.bytesPerRow = image->width() * image->channels();
 		layout.rowsPerImage = image->height();
 		const Vec3i extents = Vec3i(image->width(), image->height(), 1);

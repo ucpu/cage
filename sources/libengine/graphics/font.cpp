@@ -510,7 +510,7 @@ namespace cage
 						bind.buffers.push_back(ab1);
 						drw.dynamicOffsets.push_back(ab1);
 					}
-					bind.textures.push_back({ +t, 2 });
+					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = +t, .binding = 2 });
 
 					drw.model = +model;
 					drw.shader = +shader->get(0);

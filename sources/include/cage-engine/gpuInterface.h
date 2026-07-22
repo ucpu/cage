@@ -5,6 +5,8 @@
 #include <optional>
 #include <variant>
 
+#include <svector.h>
+
 #include <cage-engine/gpuCore.h>
 
 namespace cage
@@ -248,6 +250,19 @@ namespace cage
 		// descriptors
 		///////////////////////////////////////////////////////////////////
 
+		struct CAGE_ENGINE_API VertexBufferLayout
+		{
+			struct VertexAttribute
+			{
+				uint64 offset = 0;
+				uint32 shaderLocation = 0;
+				VertexFormatEnum format = VertexFormatEnum::Undefined;
+			};
+			ankerl::svector<VertexAttribute, 5> attributes;
+
+			uint32 arrayStride = 0;
+		};
+
 		struct CAGE_ENGINE_API BindGroupDescriptor
 		{
 			StringView label;
@@ -272,7 +287,7 @@ namespace cage
 				std::variant<std::monostate, BufferEntry, SamplerEntry, TextureEntry> data;
 				uint32 binding = 0;
 			};
-			PointerRange<const Entry> entries;
+			ankerl::svector<Entry, 10> entries;
 
 			BindGroupLayout layout;
 		};
@@ -303,7 +318,7 @@ namespace cage
 				uint32 binding = 0;
 				ShaderStagesFlags visibility = ShaderStagesFlags::Undefined;
 			};
-			PointerRange<const Entry> entries;
+			ankerl::svector<Entry, 10> entries;
 		};
 
 		struct CAGE_ENGINE_API BufferDescriptor
@@ -321,7 +336,7 @@ namespace cage
 		struct CAGE_ENGINE_API PipelineLayoutDescriptor
 		{
 			StringView label;
-			PointerRange<const BindGroupLayout> bindGroupLayouts;
+			ankerl::svector<BindGroupLayout, 3> bindGroupLayouts;
 			//uint32 immediateSize = 0;
 		};
 
@@ -337,7 +352,7 @@ namespace cage
 				LoadOpEnum loadOp = LoadOpEnum::Undefined;
 				StoreOpEnum storeOp = StoreOpEnum::Undefined;
 			};
-			PointerRange<const ColorAttachment> colorAttachments;
+			ankerl::svector<ColorAttachment, 1> colorAttachments;
 
 			struct DepthStencilAttachment
 			{
@@ -362,7 +377,7 @@ namespace cage
 			struct VertexState
 			{
 				ShaderModule module;
-				PointerRange<const VertexBufferLayout> buffers;
+				ankerl::svector<VertexBufferLayout, 1> buffers;
 			};
 			VertexState vertex;
 
@@ -416,7 +431,7 @@ namespace cage
 			struct FragmentState
 			{
 				ShaderModule module;
-				PointerRange<const ColorTargetState> targets;
+				ankerl::svector<ColorTargetState, 1> targets;
 			};
 			std::optional<FragmentState> fragment;
 		};
@@ -486,19 +501,6 @@ namespace cage
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
 			//TextureFormatEnum format = TextureFormatEnum::Undefined;
 			//TextureUsageFlags usage = TextureUsageFlags::Undefined;
-		};
-
-		struct CAGE_ENGINE_API VertexBufferLayout
-		{
-			struct VertexAttribute
-			{
-				uint64 offset = 0;
-				uint32 shaderLocation = 0;
-				VertexFormatEnum format = VertexFormatEnum::Undefined;
-			};
-			PointerRange<const VertexAttribute> attributes;
-
-			uint32 arrayStride = 0;
 		};
 
 		struct CAGE_ENGINE_API WindowPresentationDescriptor

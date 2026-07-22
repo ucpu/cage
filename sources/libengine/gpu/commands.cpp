@@ -215,8 +215,8 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 
-			bufferSynchronization(source, BufferStateEnum::TransferSrc);
-			bufferSynchronization(destination, BufferStateEnum::TransferDst);
+			bufferSynchronization(source, BufferStateEnum::Read);
+			bufferSynchronization(destination, BufferStateEnum::Write);
 
 			vk::BufferCopy2 region;
 			region.srcOffset = sourceOffset;
@@ -234,6 +234,7 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 
+			bufferSynchronization(source.buffer, BufferStateEnum::Read);
 			for (uint32 i = 0; i < destination.arrayLayersCount; i++)
 			{
 				ImageTransitionSubresource subres;

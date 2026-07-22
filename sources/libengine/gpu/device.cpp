@@ -218,11 +218,11 @@ namespace cage
 				sizes[0].type = vk::DescriptorType::eUniformBuffer;
 				sizes[0].descriptorCount = 2'000;
 				sizes[1].type = vk::DescriptorType::eUniformBufferDynamic;
-				sizes[1].descriptorCount = 100;
+				sizes[1].descriptorCount = 1'000;
 				sizes[2].type = vk::DescriptorType::eStorageBuffer;
 				sizes[2].descriptorCount = 2'000;
 				sizes[3].type = vk::DescriptorType::eStorageBufferDynamic;
-				sizes[3].descriptorCount = 100;
+				sizes[3].descriptorCount = 1'000;
 				sizes[4].type = vk::DescriptorType::eSampler;
 				sizes[4].descriptorCount = 4'000;
 				sizes[5].type = vk::DescriptorType::eSampledImage;

@@ -16,69 +16,64 @@ namespace cage
 		class ModelImpl : public Model
 		{
 		public:
-			std::array<gpu::VertexBufferLayout::VertexAttribute, 5> attrs;
-			gpu::VertexBufferLayout layout = {};
+			gpu::VertexBufferLayout layout;
 			GraphicsBindings bindings;
 
 			ModelImpl(const AssetLabel &label_) { this->label = label_; }
 
 			void updateLayout()
 			{
-				attrs = {};
+				layout.attributes.clear();
 				layout = {};
 
-				uint32 index = 0;
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
-					attrs[index].shaderLocation = 0;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Float32x3;
+					a.shaderLocation = 0;
 					layout.arrayStride += sizeof(Vec3);
 				}
 				if (any(components & MeshComponentsFlags::Normals))
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
-					attrs[index].shaderLocation = 1;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Float32x3;
+					a.shaderLocation = 1;
 					layout.arrayStride += sizeof(Vec3);
 				}
 				if (any(components & MeshComponentsFlags::Bones))
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Uint32x4;
-					attrs[index].shaderLocation = 2;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Uint32x4;
+					a.shaderLocation = 2;
 					layout.arrayStride += sizeof(Vec4i);
 				}
 				if (any(components & MeshComponentsFlags::Bones))
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Float32x4;
-					attrs[index].shaderLocation = 3;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Float32x4;
+					a.shaderLocation = 3;
 					layout.arrayStride += sizeof(Vec4);
 				}
 				CAGE_ASSERT(any(components & MeshComponentsFlags::Uvs3) + any(components & MeshComponentsFlags::Uvs2) < 2)
 				if (any(components & MeshComponentsFlags::Uvs3))
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Float32x3;
-					attrs[index].shaderLocation = 4;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Float32x3;
+					a.shaderLocation = 4;
 					layout.arrayStride += sizeof(Vec3);
 				}
 				if (any(components & MeshComponentsFlags::Uvs2))
 				{
-					attrs[index].offset = layout.arrayStride;
-					attrs[index].format = gpu::VertexFormatEnum::Float32x2;
-					attrs[index].shaderLocation = 4;
-					index++;
+					gpu::VertexBufferLayout::VertexAttribute &a = layout.attributes.emplace_back();
+					a.offset = layout.arrayStride;
+					a.format = gpu::VertexFormatEnum::Float32x2;
+					a.shaderLocation = 4;
 					layout.arrayStride += sizeof(Vec2);
 				}
-				CAGE_ASSERT(index <= attrs.size());
-
-				layout.attributes = PointerRange<const gpu::VertexBufferLayout::VertexAttribute>(attrs).subRange(0, index);
 			}
 		};
 	}

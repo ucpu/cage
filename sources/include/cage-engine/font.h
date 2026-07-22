@@ -33,7 +33,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API FontRenderConfig : private Noncopyable
 	{
-		Mat4 transform = {};
+		Mat4 transform;
 		Vec4 color = Vec4(1);
 		GraphicsEncoder *encoder = nullptr;
 		GraphicsAggregateBuffer *aggregate = nullptr;

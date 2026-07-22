@@ -51,39 +51,35 @@ namespace cage
 						passData.bindings = privat::getEmptyBindings(device);
 
 					Vec2i res;
+					gpu::RenderPassDescriptor rpd;
+					rpd.label = label;
 
-					ankerl::svector<gpu::RenderPassDescriptor::ColorAttachment, 1> atts;
-					atts.reserve(passData.colorTargets.size());
+					rpd.colorAttachments.reserve(passData.colorTargets.size());
 					for (const auto &it : passData.colorTargets)
 					{
-						gpu::RenderPassDescriptor::ColorAttachment rpca = {};
+						gpu::RenderPassDescriptor::ColorAttachment rpca;
 						rpca.clearValue = it.clearValue;
 						rpca.loadOp = it.clear ? gpu::LoadOpEnum::Clear : gpu::LoadOpEnum::Load;
 						rpca.storeOp = gpu::StoreOpEnum::Store;
 						CAGE_ASSERT(it.texture->nativeView());
 						rpca.view = it.texture->nativeView();
-						atts.push_back(std::move(rpca));
+						rpd.colorAttachments.push_back(std::move(rpca));
 						res = it.texture->resolution();
 					}
 
-					gpu::RenderPassDescriptor::DepthStencilAttachment rpdsa = {};
 					if (passData.depthTarget)
 					{
 						CAGE_ASSERT(passData.depthTarget->texture->nativeView());
+						gpu::RenderPassDescriptor::DepthStencilAttachment rpdsa;
 						rpdsa.view = passData.depthTarget->texture->nativeView();
 						rpdsa.depthLoadOp = passData.depthTarget->clear ? gpu::LoadOpEnum::Clear : gpu::LoadOpEnum::Load;
 						rpdsa.depthStoreOp = gpu::StoreOpEnum::Store;
 						rpdsa.depthClearValue = 1;
+						rpd.depthStencilAttachment = std::move(rpdsa);
 						res = passData.depthTarget->texture->resolution();
 					}
 
-					gpu::RenderPassDescriptor rpd = {};
-					rpd.colorAttachments = atts;
-					if (passData.depthTarget)
-						rpd.depthStencilAttachment = std::move(rpdsa);
-					rpd.label = label;
 					encoder.beginRenderPass(rpd);
-
 					encoder.setViewport(0, 0, res[0], res[1]);
 					encoder.setScissorRect(0, 0, res[0], res[1]);
 				}

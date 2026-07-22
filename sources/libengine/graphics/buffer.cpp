@@ -9,7 +9,7 @@ namespace cage
 		class GraphicsBufferImpl : public GraphicsBuffer
 		{
 		public:
-			gpu::Buffer buffer = {};
+			gpu::Buffer buffer;
 			GraphicsDevice *device = nullptr;
 			uint64 size = 0;
 			bool geometry = false;
@@ -22,7 +22,7 @@ namespace cage
 
 				if (!geometry)
 					size = ((max(size, uint64(256)) + 15) / 16) * 16;
-				gpu::BufferDescriptor desc = {};
+				gpu::BufferDescriptor desc;
 				desc.size = size;
 				desc.usage = usage();
 				desc.label = label;

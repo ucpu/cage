@@ -135,7 +135,7 @@ namespace cage
 		{
 			ScopeLock lock(get()->mutex);
 			Buffer b = Buffer(systemMemory().createHolder<BufferImpl>(*get(), desc));
-			b->defaultState = BufferStateEnum::Uniform;
+			b->defaultState = BufferStateEnum::Read;
 			return b;
 		}
 
@@ -207,39 +207,11 @@ namespace cage
 
 		namespace
 		{
-			struct SerializedRenderPipeline : private Immovable
+			struct RenderPipelineTask : private Immovable
 			{
 				Device device;
-				ankerl::svector<VertexBufferLayout::VertexAttribute, 4> vas;
-				ankerl::svector<VertexBufferLayout, 1> vbls;
-				ankerl::svector<RenderPipelineDescriptor::ColorTargetState, 1> ctss;
 				RenderPipelineDescriptor desc;
 				std::function<void(StatusEnum, RenderPipeline, StringView)> callback;
-
-				SerializedRenderPipeline(const RenderPipelineDescriptor &src) : desc(src)
-				{
-					uint32 attrCnt = 0;
-					for (const auto &it : src.vertex.buffers)
-						attrCnt += it.attributes.size();
-					vas.reserve(attrCnt);
-					vbls.reserve(src.vertex.buffers.size());
-					for (const auto &it : src.vertex.buffers)
-					{
-						const uint32 off = vas.size();
-						for (const auto &a : it.attributes)
-							vas.push_back(a);
-						vbls.push_back(it);
-						vbls.back().attributes = PointerRange<VertexBufferLayout::VertexAttribute>(vas).subRange(off, vas.size() - off);
-					}
-					desc.vertex.buffers = vbls;
-					if (src.fragment)
-					{
-						ctss.reserve(src.fragment->targets.size());
-						for (const auto &it : src.fragment->targets)
-							ctss.push_back(it);
-						desc.fragment->targets = ctss;
-					}
-				}
 
 				void operator()(uint32)
 				{
@@ -259,10 +231,11 @@ namespace cage
 
 		void Device::createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback)
 		{
-			Holder<SerializedRenderPipeline> data = systemMemory().createHolder<SerializedRenderPipeline>(descriptor);
+			Holder<RenderPipelineTask> data = systemMemory().createHolder<RenderPipelineTask>();
 			data->device = *this;
+			data->desc = descriptor; // make a copy
 			data->callback = std::move(callback);
-			Holder<AsyncTask> t = tasksRunAsync<SerializedRenderPipeline>("render pipeline async", std::move(data));
+			Holder<AsyncTask> t = tasksRunAsync<RenderPipelineTask>("render pipeline async", std::move(data));
 			ScopeLock lock(get()->mutex);
 			get()->disposingTasks.push_back(std::move(t));
 		}

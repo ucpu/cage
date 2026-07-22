@@ -614,37 +614,13 @@ namespace cage
 					stageMask = vk::PipelineStageFlagBits2::eNone;
 					accessMask = vk::AccessFlagBits2::eNone;
 					break;
-				case BufferStateEnum::TransferSrc:
-					stageMask = vk::PipelineStageFlagBits2::eTransfer;
-					accessMask = vk::AccessFlagBits2::eTransferRead;
+				case BufferStateEnum::Read:
+					stageMask = vk::PipelineStageFlagBits2::eTransfer | vk::PipelineStageFlagBits2::eAllGraphics;
+					accessMask = vk::AccessFlagBits2::eTransferRead | vk::AccessFlagBits2::eVertexAttributeRead | vk::AccessFlagBits2::eIndexRead | vk::AccessFlagBits2::eUniformRead;
 					break;
-				case BufferStateEnum::TransferDst:
+				case BufferStateEnum::Write:
 					stageMask = vk::PipelineStageFlagBits2::eTransfer;
 					accessMask = vk::AccessFlagBits2::eTransferWrite;
-					break;
-				case BufferStateEnum::Vertex:
-					stageMask = vk::PipelineStageFlagBits2::eVertexAttributeInput;
-					accessMask = vk::AccessFlagBits2::eVertexAttributeRead;
-					break;
-				case BufferStateEnum::Index:
-					stageMask = vk::PipelineStageFlagBits2::eVertexInput;
-					accessMask = vk::AccessFlagBits2::eIndexRead;
-					break;
-				case BufferStateEnum::Uniform:
-					stageMask = vk::PipelineStageFlagBits2::eAllGraphics;
-					accessMask = vk::AccessFlagBits2::eUniformRead;
-					break;
-				case BufferStateEnum::StorageRead:
-					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
-					accessMask = vk::AccessFlagBits2::eShaderStorageRead;
-					break;
-				case BufferStateEnum::StorageWrite:
-					stageMask = vk::PipelineStageFlagBits2::eComputeShader;
-					accessMask = vk::AccessFlagBits2::eShaderStorageWrite;
-					break;
-				case BufferStateEnum::Indirect:
-					stageMask = vk::PipelineStageFlagBits2::eDrawIndirect;
-					accessMask = vk::AccessFlagBits2::eIndirectCommandRead;
 					break;
 			}
 		}

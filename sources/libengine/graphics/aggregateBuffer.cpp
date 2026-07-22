@@ -1,8 +1,6 @@
 #include <atomic>
 #include <vector>
 
-#include <svector.h>
-
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>

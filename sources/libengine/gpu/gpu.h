@@ -51,14 +51,8 @@ namespace cage
 		enum class BufferStateEnum
 		{
 			Undefined = 0,
-			TransferSrc,
-			TransferDst,
-			Vertex,
-			Index,
-			Uniform,
-			StorageRead,
-			StorageWrite,
-			Indirect
+			Read,
+			Write,
 		};
 
 		struct ImageTransitionSubresource

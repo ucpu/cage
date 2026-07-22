@@ -21,7 +21,7 @@ namespace cage
 			CAGE_ASSERT(mipLevel > 0 || Vec2i(resolution) == Vec2i(header.resolution));
 			CAGE_ASSERT(header.channels == 1 || header.channels == 2 || header.channels == 4);
 
-			gpu::TexelCopyTextureInfo dest = {};
+			gpu::TexelCopyTextureInfo dest;
 			dest.texture = tex;
 			dest.mipLevel = mipLevel;
 			dest.arrayLayersOffset = arrayLayersOffset;

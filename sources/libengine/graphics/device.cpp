@@ -58,8 +58,8 @@ namespace cage
 		private:
 			static constexpr uint32 Frames = 8;
 			GraphicsDeviceImpl *device = nullptr;
-			gpu::QuerySet querySet = {};
-			gpu::Buffer buffResolve = {};
+			gpu::QuerySet querySet;
+			gpu::Buffer buffResolve;
 			std::array<gpu::Buffer, Frames> buffRead = {};
 			uint32 frameIndex = 0;
 		};
@@ -162,20 +162,20 @@ namespace cage
 		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
 			{
-				gpu::QuerySetDescriptor qsDesc = {};
+				gpu::QuerySetDescriptor qsDesc;
 				qsDesc.type = gpu::QueryType::Timestamp;
 				qsDesc.count = Frames * 2;
 				querySet = device->device.CreateQuerySet(&qsDesc);
 			}
 			{
-				gpu::BufferDescriptor resolveDesc = {};
+				gpu::BufferDescriptor resolveDesc;
 				resolveDesc.size = Frames * 256; // alignment requirements
 				resolveDesc.usage = gpu::BufferUsageFlags::QueryResolve | gpu::BufferUsageFlags::CopySrc;
 				buffResolve = device->device.createBuffer(&resolveDesc);
 			}
 			for (uint32 i = 0; i < Frames; i++)
 			{
-				gpu::BufferDescriptor readbackDesc = {};
+				gpu::BufferDescriptor readbackDesc;
 				readbackDesc.size = 2 * sizeof(uint64);
 				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
 				buffRead[i] = device->device.createBuffer(&readbackDesc);

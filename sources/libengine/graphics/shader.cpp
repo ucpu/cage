@@ -32,7 +32,7 @@ namespace cage
 				if (!spirv->hasStage(stage))
 					return {};
 				const auto code = spirv->exportSpirv(stage);
-				gpu::ShaderModuleDescriptor desc = {};
+				gpu::ShaderModuleDescriptor desc;
 				desc.spirvCode = code;
 				desc.label = label.c_str();
 				return device->nativeDevice()->createShaderModule(desc);

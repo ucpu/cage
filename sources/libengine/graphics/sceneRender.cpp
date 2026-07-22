@@ -600,7 +600,7 @@ namespace cage
 
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
 		{
-			gpu::TextureViewDescriptor desc = {};
+			gpu::TextureViewDescriptor desc;
 			desc.label = "shadowmap cascade view";
 			desc.arrayLayersOffset = cascade;
 			desc.dimension = gpu::TextureDimensionEnum::e2DArray;

@@ -29,7 +29,7 @@ namespace cage
 	{
 		ankerl::svector<gpu::BindGroupLayout, 3> bindingsLayouts;
 		ankerl::svector<gpu::TextureFormatEnum, 1> colorTargets;
-		gpu::VertexBufferLayout vertexBufferLayout = {};
+		gpu::VertexBufferLayout vertexBufferLayout;
 		gpu::PrimitiveTopologyEnum primitiveTopology = gpu::PrimitiveTopologyEnum::Undefined;
 		gpu::TextureFormatEnum depthFormat = gpu::TextureFormatEnum::Undefined;
 		MeshComponentsFlags meshComponents = MeshComponentsFlags::None;

@@ -34,7 +34,7 @@ namespace cage
 	{
 		GraphicsBindings material; // binds to set = 1 (optional, must match layout for the model)
 		GraphicsBindings bindings; // binds to set = 2
-		ankerl::svector<uint32, 5> dynamicOffsets = {}; // applies to buffers in set = 2
+		ankerl::svector<uint32, 5> dynamicOffsets; // applies to buffers in set = 2
 		const Model *model = nullptr;
 		uint32 instances = 1;
 	};

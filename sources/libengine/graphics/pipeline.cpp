@@ -15,7 +15,7 @@ namespace cage
 	{
 		gpu::RenderPipelineDescriptor::BlendState convertBlending(BlendingEnum blending)
 		{
-			gpu::RenderPipelineDescriptor::BlendState bs = {};
+			gpu::RenderPipelineDescriptor::BlendState bs;
 			bs.color.operation = gpu::BlendOperationEnum::Add;
 			bs.alpha.operation = gpu::BlendOperationEnum::Add;
 			switch (blending)
@@ -123,41 +123,40 @@ namespace cage
 
 			void createPipeline(const PipelineConfig &config, Value *target)
 			{
-				gpu::RenderPipelineDescriptor::DepthStencilState dss = {};
+				gpu::RenderPipelineDescriptor rpd;
+				rpd.vertex.module = config.shader->nativeVertex();
+				rpd.vertex.buffers.push_back(config.vertexBufferLayout);
+				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullModeEnum::Back : gpu::CullModeEnum::None;
+				rpd.primitive.topology = config.primitiveTopology;
+
 				if (config.depthFormat != gpu::TextureFormatEnum::Undefined)
 				{
+					gpu::RenderPipelineDescriptor::DepthStencilState dss;
 					dss.format = config.depthFormat;
 					dss.depthCompare = convertDepthTest(config.depthTest);
 					dss.depthWriteEnabled = config.depthWrite;
-				}
-
-				const gpu::RenderPipelineDescriptor::BlendState blendState = convertBlending(config.blending);
-				ankerl::svector<gpu::RenderPipelineDescriptor::ColorTargetState, 1> colors;
-				colors.reserve(config.colorTargets.size());
-				for (gpu::TextureFormatEnum ct : config.colorTargets)
-				{
-					gpu::RenderPipelineDescriptor::ColorTargetState cts = {};
-					cts.format = ct;
-					if (config.blending != BlendingEnum::None)
-						cts.blend = blendState;
-					colors.push_back(std::move(cts));
-				}
-
-				gpu::RenderPipelineDescriptor::FragmentState fs = {};
-				fs.module = config.shader->nativeFragment();
-				fs.targets = colors;
-
-				gpu::RenderPipelineDescriptor rpd = {};
-				rpd.vertex.module = config.shader->nativeVertex();
-				rpd.vertex.buffers = PointerRange<const gpu::VertexBufferLayout>(&config.vertexBufferLayout, &config.vertexBufferLayout + 1);
-				rpd.primitive.cullMode = config.backFaceCulling ? gpu::CullModeEnum::Back : gpu::CullModeEnum::None;
-				rpd.primitive.topology = config.primitiveTopology;
-				if (config.depthFormat != gpu::TextureFormatEnum::Undefined)
 					rpd.depthStencil = std::move(dss);
-				rpd.fragment = std::move(fs);
+				}
 
-				gpu::PipelineLayoutDescriptor pld = {};
+				{
+					gpu::RenderPipelineDescriptor::FragmentState fs;
+					fs.module = config.shader->nativeFragment();
+					const gpu::RenderPipelineDescriptor::BlendState blendState = convertBlending(config.blending);
+					fs.targets.reserve(config.colorTargets.size());
+					for (gpu::TextureFormatEnum ct : config.colorTargets)
+					{
+						gpu::RenderPipelineDescriptor::ColorTargetState cts;
+						cts.format = ct;
+						if (config.blending != BlendingEnum::None)
+							cts.blend = blendState;
+						fs.targets.push_back(std::move(cts));
+					}
+					rpd.fragment = std::move(fs);
+				}
+
+				gpu::PipelineLayoutDescriptor pld;
 				pld.bindGroupLayouts = config.bindingsLayouts;
+
 				Holder<gpu::Device> dev = device->nativeDevice();
 				rpd.layout = dev->createPipelineLayout(pld);
 				dev->createRenderPipelineAsync(rpd,

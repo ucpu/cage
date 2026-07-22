@@ -51,7 +51,7 @@ namespace cage
 			std::vector<Holder<Texture>> mipTexs;
 			mipTexs.reserve(mips);
 
-			gpu::SamplerDescriptor sd = {};
+			gpu::SamplerDescriptor sd;
 			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
 			sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
 			sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
@@ -60,7 +60,7 @@ namespace cage
 
 			for (uint32 i = 0; i < mips; i++)
 			{
-				gpu::TextureViewDescriptor tvd = {};
+				gpu::TextureViewDescriptor tvd;
 				tvd.mipLevelsOffset = i;
 				tvd.arrayLayersOffset = 0;
 				tvd.dimension = gpu::TextureDimensionEnum::e2D;
