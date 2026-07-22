@@ -323,6 +323,8 @@ namespace cage
 			info.renderArea = rect;
 			info.layerCount = 1;
 			cmd.beginRendering(info);
+
+			framebufferHeight = rect.extent.height;
 		}
 
 		void CommandEncoderImpl::endRenderPass()
@@ -331,6 +333,7 @@ namespace cage
 			currentMode = EncoderModeEnum::Generic;
 			cmd.endRendering();
 			resetSynchronization();
+			framebufferHeight = 0;
 		}
 
 		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
@@ -367,7 +370,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			vk::Viewport vp;
 			vp.x = x.value;
-			vp.y = y.value;
+			vp.y = framebufferHeight - y.value;
 			vp.width = width.value;
 			vp.height = -height.value;
 			vp.minDepth = minDepth.value;

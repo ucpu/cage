@@ -103,6 +103,16 @@ namespace cage
 			device->device.destroySemaphore(value);
 		}
 
+		void WindowGpuContextImpl::SwpImage::init()
+		{
+			if (initialized)
+				return;
+			CommandEncoderImpl enc(*texture->image.device(), { .label = "init swapchain images" });
+			enc.imageTransitionPermanent(texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
+			texture->image.device()->additionalCommands.push_back(enc.finishEncoding());
+			initialized = true;
+		}
+
 		WindowGpuContextImpl::WindowGpuContextImpl(vk::Instance instance_) : instance(instance_) {}
 
 		WindowGpuContextImpl::~WindowGpuContextImpl() {}
@@ -138,13 +148,6 @@ namespace cage
 				f.imageAcquired.setLabel((Stringizer() + "imageAcquired[" + i + "]").value);
 			}
 			frameIndex = 0;
-
-			{ // transition all images
-				CommandEncoderImpl enc(device, { .label = "init swapchain images" });
-				for (const auto &it : swpImages)
-					enc.imageTransitionPermanent(it.texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
-				device.additionalCommands.push_back(enc.finishEncoding());
-			}
 		}
 
 		void WindowGpuContextImpl::clear()
@@ -258,6 +261,7 @@ namespace cage
 			}
 
 			{
+				additionalCommands.clear();
 				for (uint32 i = 0; i < 10; i++)
 					applyDeferredDestructions();
 			}
@@ -510,6 +514,7 @@ namespace cage
 							break;
 						}
 					}
+					data.img().init();
 				}
 			}
 		}

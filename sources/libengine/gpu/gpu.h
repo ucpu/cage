@@ -127,8 +127,11 @@ namespace cage
 				ResourceHandle<vk::Semaphore> renderComplete;
 				Texture texture;
 				vk::Image image;
+				bool initialized = false;
 
 				SwpImage(DeviceImpl &device) : renderComplete(device) {}
+
+				void init();
 			};
 			struct FrameInFlight
 			{
@@ -228,6 +231,7 @@ namespace cage
 			vk::CommandBuffer cmd;
 			vk::PipelineLayout currentPipelineLayout;
 			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
+			uint32 framebufferHeight = 0;
 
 			CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc);
 			~CommandEncoderImpl();
