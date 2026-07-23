@@ -272,6 +272,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 
 			// todo
+			CAGE_ASSERT(!"not yet implemented");
 		}
 
 		void CommandEncoderImpl::beginRenderPass(const RenderPassDescriptor &desc)
@@ -286,7 +287,12 @@ namespace cage
 			for (const auto &it : desc.colorAttachments)
 			{
 				vk::RenderingAttachmentInfo info;
-				// todo info.clearValue;
+				info.clearValue.color = {
+					it.clearValue[0].value,
+					it.clearValue[1].value,
+					it.clearValue[2].value,
+					it.clearValue[3].value,
+				};
 				info.imageView = it.view->view;
 				info.loadOp = convertLoadOperation(it.loadOp);
 				info.storeOp = convertStoreOperation(it.storeOp);
@@ -303,7 +309,7 @@ namespace cage
 			vk::RenderingAttachmentInfo stencil;
 			if (desc.depthStencilAttachment)
 			{
-				// todo depth.clearValue;
+				depth.clearValue.depthStencil.depth = desc.depthStencilAttachment->depthClearValue.value;
 				depth.imageView = desc.depthStencilAttachment->view->view;
 				depth.loadOp = convertLoadOperation(desc.depthStencilAttachment->depthLoadOp);
 				depth.storeOp = convertStoreOperation(desc.depthStencilAttachment->depthStoreOp);

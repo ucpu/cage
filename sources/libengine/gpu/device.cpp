@@ -187,7 +187,7 @@ namespace cage
 				funcs.vkGetDeviceProcAddr = bootstrap.inst.fp_vkGetDeviceProcAddr;
 				VmaAllocatorCreateInfo info = {};
 				info.pVulkanFunctions = &funcs;
-				info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+				//info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 				info.instance = (VkInstance)instance;
 				info.physicalDevice = (VkPhysicalDevice)physicalDevice;
 				info.device = (VkDevice)device;
@@ -252,23 +252,45 @@ namespace cage
 		{
 			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
 
-			device.waitIdle();
+			try
+			{
+				device.waitIdle();
+			}
+			catch (...)
+			{
+				// nothing
+			}
 
+			try
 			{
 				for (const auto &it : surfacesCollection)
 					it->clear();
 				surfacesCollection.clear();
 			}
+			catch (...)
+			{
+				// nothing
+			}
 
+			try
 			{
 				additionalCommands.clear();
 				for (uint32 i = 0; i < 10; i++)
 					applyDeferredDestructions();
 			}
+			catch (...)
+			{
+				// nothing
+			}
 
+			try
 			{
 				vmaDestroyAllocator(allocator);
 				allocator = nullptr;
+			}
+			catch (...)
+			{
+				// nothing
 			}
 
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
@@ -292,10 +314,12 @@ namespace cage
 											  .require_api_version(1, 3)
 											  .set_debug_callback(debugCallback)
 											  .enable_extensions(extsCnt, extsArr)
+#ifdef CAGE_DEBUG
 											  .request_validation_layers()
-											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
+											  //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
 											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
 											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
+#endif // CAGE_DEBUG
 											  .set_engine_name("cage")
 											  .set_app_name(desc.label.str.data())
 											  .build());
@@ -304,11 +328,11 @@ namespace cage
 			vk::PhysicalDeviceFeatures features10;
 			features10.samplerAnisotropy = true;
 			vk::PhysicalDeviceVulkan12Features features12;
-			features12.descriptorIndexing = true;
-			features12.shaderSampledImageArrayNonUniformIndexing = true;
-			features12.descriptorBindingVariableDescriptorCount = true;
-			features12.runtimeDescriptorArray = true;
-			features12.bufferDeviceAddress = true;
+			//features12.descriptorIndexing = true;
+			//features12.shaderSampledImageArrayNonUniformIndexing = true;
+			//features12.descriptorBindingVariableDescriptorCount = true;
+			//features12.runtimeDescriptorArray = true;
+			//features12.bufferDeviceAddress = true;
 			vk::PhysicalDeviceVulkan13Features features13;
 			features13.synchronization2 = true;
 			features13.dynamicRendering = true;

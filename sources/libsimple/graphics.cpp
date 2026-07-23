@@ -281,6 +281,7 @@ namespace cage
 						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);
 						data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
+						data.effects.effects &= ~ScreenSpaceEffectsFlags::Bloom; // todo remove debug
 						cameras.push_back(std::move(data));
 					},
 					cfg.scene, false);
