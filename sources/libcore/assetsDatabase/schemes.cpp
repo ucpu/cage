@@ -43,6 +43,21 @@ namespace cage
 		ini->checkUnusedOnly();
 	}
 
+	Holder<Ini> Scheme::getIni() const
+	{
+		Holder<Ini> ini = newIni();
+		ini->setString("scheme", "processor", processor);
+		ini->setUint32("scheme", "index", schemeIndex);
+		for (const auto &fld : schemeFields)
+		{
+#define GCHL_GENERATE(NAME) ini->setString(fld.first, CAGE_STRINGIZE(NAME), fld.second.NAME);
+			CAGE_EVAL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
+#undef GCHL_GENERATE
+			ini->setString(fld.first, "default", fld.second.defaul);
+		}
+		return ini;
+	}
+
 	bool Scheme::applyOnAsset(DatabaseAssetImpl &ass)
 	{
 		bool ok = true;

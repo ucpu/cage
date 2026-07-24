@@ -41,6 +41,7 @@ namespace cage
 		uint32 schemeIndex = m;
 
 		void parse(const Ini *ini);
+		Holder<Ini> getIni() const;
 		bool applyOnAsset(DatabaseAssetImpl &ass);
 
 		friend Serializer &operator<<(Serializer &ser, const Scheme &s);
