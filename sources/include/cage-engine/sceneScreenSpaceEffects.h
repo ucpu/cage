@@ -24,7 +24,7 @@ namespace cage
 		ScreenSpaceBloom bloom;
 		ScreenSpaceDepthOfField depthOfField;
 		ScreenSpaceSharpening sharpening;
-		Real gamma = 2.2;
+		Real gamma = 1;
 		ScreenSpaceEffectsFlags effects = ScreenSpaceEffectsFlags::Default;
 	};
 }

@@ -3,7 +3,7 @@ layout(std140, set = 2, binding = 0) uniform Element
 {
 	vec4 posOuter;
 	vec4 posInner;
-	vec4 accent;
+	vec4 accent; // linear
 	uint controlType; uint layoutMode; uint dummy1; uint dummy2;
 };
 
@@ -82,6 +82,5 @@ layout(location = 0) out vec4 outColor;
 void main()
 {
 	outColor = texture(texSkin, varUv);
-	outColor.rgb = pow(outColor.rgb, vec3(1.0 / 2.2));
 	outColor.rgb = mix(outColor.rgb, accent.rgb, accent.a);
 }

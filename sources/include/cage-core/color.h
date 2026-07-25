@@ -18,7 +18,10 @@ namespace cage
 
 	CAGE_CORE_API Vec3 colorGammaToLinear(const Vec3 &rgb); // fast approximate for gamma = 2.2
 	CAGE_CORE_API Vec3 colorGammaToLinear(const Vec3 &rgb, Real gamma);
+	CAGE_CORE_API Vec4 colorGammaToLinear(const Vec4 &rgba); // fast approximate for gamma = 2.2; alpha is unchanged
+	CAGE_CORE_API Vec4 colorGammaToLinear(const Vec4 &rgba, Real gamma); // alpha is unchanged
 	CAGE_CORE_API Vec3 colorLinearToGamma(const Vec3 &rgb, Real gamma = 2.2);
+	CAGE_CORE_API Vec4 colorLinearToGamma(const Vec4 &rgba, Real gamma = 2.2); // alpha is unchanged
 
 	CAGE_CORE_API Real distanceColor(const Vec3 &rgb1, const Vec3 &rgb2);
 	CAGE_CORE_API Vec3 interpolateColor(const Vec3 &rgb1, const Vec3 &rgb2, Real factor);

@@ -43,7 +43,7 @@ namespace cage
 	{
 		Texture *inColor = nullptr;
 		Texture *outColor = nullptr;
-		Real gamma = 2.2;
+		Real gamma = 1;
 		bool tonemapEnabled = true;
 	};
 

@@ -2,7 +2,7 @@
 layout(std140, set = 2, binding = 0) uniform Global
 {
 	mat4 uniMvp;
-	vec4 uniColor;
+	vec4 uniColor; // linear
 };
 
 struct InstanceStruct

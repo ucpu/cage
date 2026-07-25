@@ -162,6 +162,8 @@ namespace cage
 
 				gpu::TextureViewDescriptor vd;
 				vd.dimension = textureViewDimension(config.flags);
+				vd.arrayLayersCount = config.arrayLayersCount;
+				vd.mipLevelsCount = config.mipLevelsCount;
 				gpu::TextureView view = tex.createView(vd);
 
 				gpu::SamplerDescriptor sd;

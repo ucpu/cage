@@ -425,7 +425,7 @@ namespace cage
 		{
 			Vec4 params; // gamma, tonemapEnabled
 		} s;
-		s.params[0] = 1.0 / config.gamma;
+		s.params[0] = config.gamma;
 		s.params[1] = config.tonemapEnabled;
 		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 

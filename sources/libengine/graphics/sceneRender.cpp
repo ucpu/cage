@@ -1329,7 +1329,7 @@ namespace cage
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					bind.buffers.push_back({ privat::getBufferDummy(scene.config.shared.device), 2 });
+					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 2 });
 				}
 				{
 					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);

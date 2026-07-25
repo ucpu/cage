@@ -32,7 +32,7 @@ namespace cage
 
 	namespace
 	{
-		const ConfigFloat confRenderGamma("cage/graphics/gamma", 2.2);
+		const ConfigFloat confRenderGamma("cage/graphics/gamma", 1.0);
 
 		struct InterpolationTimingCorrector
 		{

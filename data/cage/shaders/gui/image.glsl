@@ -30,15 +30,6 @@ $include ../functions/sampleTextureAnimation.glsl
 
 layout(location = 0) out vec4 outColor;
 
-vec4 delinearize(vec4 ca)
-{
-#ifdef Delinearize
-    return vec4(pow(ca.rgb, vec3(1.0 / 2.2)), ca.a);
-#else
-	return ca;
-#endif
-}
-
 vec4 desaturateDisabled(vec4 ca)
 {
 #ifdef Disabled
@@ -58,7 +49,6 @@ layout(set = 2, binding = 1) uniform sampler2DArray texImg;
 void main()
 {
 	outColor = sampleTextureAnimation(texImg, varUv, uniAnimation, vec4(1, 0, 0, 0));
-	outColor = delinearize(outColor);
 	outColor = desaturateDisabled(outColor);
 }
 
@@ -69,7 +59,6 @@ layout(set = 2, binding = 1) uniform sampler2D texImg;
 void main()
 {
 	outColor = texture(texImg, varUv);
-	outColor = delinearize(outColor);
 	outColor = desaturateDisabled(outColor);
 }
 

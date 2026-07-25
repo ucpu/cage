@@ -64,7 +64,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiTextFormatComponent
 	{
-		Vec3 color = Vec3::Nan();
+		Vec3 color = Vec3::Nan(); // sRGB
 		uint32 font = detail::GuiTextFontDefault;
 		Real size = Real::Nan();
 		Real lineSpacing = Real::Nan();

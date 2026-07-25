@@ -8,6 +8,7 @@ extern "C"
 #include <hb-ft.h>
 
 #include <cage-core/assetsOnDemand.h>
+#include <cage-core/color.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
@@ -483,8 +484,8 @@ namespace cage
 				struct Global
 				{
 					Mat4 uniMvp;
-					Vec4 uniColor;
-				} global = { config.transform, config.color };
+					Vec4 uniColor; // linear
+				} global = { config.transform, colorGammaToLinear(config.color) };
 
 				Instance insts[MaxCharacters];
 				uint32 image = glyphs[layout.glyphs[0].index].image;
