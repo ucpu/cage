@@ -49,8 +49,6 @@ namespace cage
 			model->renderLayer = header.renderLayer;
 			model->bonesCount = header.skeletonBones;
 
-			//prepareModelBindings((GraphicsDevice *)context->device, context->assetsManager, +model);
-
 			context->assetHolder = std::move(model).cast<void>();
 		}
 	}

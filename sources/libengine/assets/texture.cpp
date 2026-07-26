@@ -79,20 +79,22 @@ namespace cage
 
 			Holder<gpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
-			gpu::TextureDescriptor desc;
-			desc.label = context->textId;
-			desc.resolution = header.resolution;
-			desc.arrayLayersCount = header.arrayLayersCount;
-			desc.mipLevelsCount = header.mipLevelsCount;
-			desc.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
-			desc.format = header.format;
-			desc.usage = header.usage;
-			gpu::Texture wtex = dev->createTexture(desc);
+			gpu::TextureDescriptor td;
+			td.label = context->textId;
+			td.resolution = header.resolution;
+			td.arrayLayersCount = header.arrayLayersCount;
+			td.mipLevelsCount = header.mipLevelsCount;
+			td.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
+			td.format = header.format;
+			td.usage = header.usage;
+			gpu::Texture wtex = dev->createTexture(td);
 
-			gpu::TextureViewDescriptor twd;
-			twd.label = context->textId;
-			twd.dimension = privat::textureViewDimension(header.flags);
-			gpu::TextureView view = wtex.createView(twd);
+			gpu::TextureViewDescriptor vd;
+			vd.label = context->textId;
+			vd.arrayLayersCount = header.arrayLayersCount;
+			vd.mipLevelsCount = header.mipLevelsCount;
+			vd.dimension = privat::textureViewDimension(header.flags);
+			gpu::TextureView view = wtex.createView(vd);
 
 			gpu::SamplerDescriptor sd;
 			sd.label = context->textId;

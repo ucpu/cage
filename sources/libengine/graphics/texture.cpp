@@ -150,26 +150,27 @@ namespace cage
 
 			Holder<Texture> createTexture(const TransientTextureCreateConfig &config)
 			{
-				gpu::TextureDescriptor desc;
-				desc.label = config.name;
-				desc.resolution = config.resolution;
-				desc.arrayLayersCount = config.arrayLayersCount;
-				desc.mipLevelsCount = config.mipLevelsCount;
-				desc.dimension = textureViewDimension(config.flags);
-				desc.format = config.format;
-				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
-				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
+				gpu::TextureDescriptor td;
+				td.label = config.name;
+				td.resolution = config.resolution;
+				td.arrayLayersCount = config.arrayLayersCount;
+				td.mipLevelsCount = config.mipLevelsCount;
+				td.dimension = textureViewDimension(config.flags);
+				td.format = config.format;
+				td.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
+				gpu::Texture tex = device->nativeDevice()->createTexture(td);
 
 				gpu::TextureViewDescriptor vd;
-				vd.dimension = textureViewDimension(config.flags);
+				vd.label = config.name;
 				vd.arrayLayersCount = config.arrayLayersCount;
 				vd.mipLevelsCount = config.mipLevelsCount;
+				vd.dimension = textureViewDimension(config.flags);
 				gpu::TextureView view = tex.createView(vd);
 
 				gpu::SamplerDescriptor sd;
+				sd.label = config.name;
 				if (config.samplerVariant)
 				{
-					sd.label = config.name;
 					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
 					sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
 					sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
@@ -330,28 +331,31 @@ namespace cage
 				this->label = label_;
 				this->flags = config.flags;
 
-				gpu::TextureDescriptor desc;
-				desc.label = label.c_str();
-				desc.dimension = privat::textureViewDimension(config.flags);
-				desc.resolution = config.resolution;
-				desc.arrayLayersCount = config.arrayLayersCount;
-				desc.mipLevelsCount = config.mipLevelsCount;
-				desc.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
-				desc.usage = gpu::TextureUsageFlags::CopyDst;
+				gpu::TextureDescriptor td;
+				td.label = label;
+				td.resolution = config.resolution;
+				td.arrayLayersCount = config.arrayLayersCount;
+				td.mipLevelsCount = config.mipLevelsCount;
+				td.dimension = privat::textureViewDimension(config.flags);
+				td.format = findFormat(ImageFormatEnum::U8, config.channels, any(config.flags & TextureFlags::Srgb));
+				td.usage = gpu::TextureUsageFlags::CopyDst;
 				if (config.sampling)
-					desc.usage |= gpu::TextureUsageFlags::TextureBinding;
+					td.usage |= gpu::TextureUsageFlags::TextureBinding;
 				if (config.renderable)
-					desc.usage |= gpu::TextureUsageFlags::RenderAttachment;
+					td.usage |= gpu::TextureUsageFlags::RenderAttachment;
 				Holder<gpu::Device> dev = device->nativeDevice();
-				texture = dev->createTexture(desc);
+				texture = dev->createTexture(td);
 
-				gpu::TextureViewDescriptor twd;
-				twd.arrayLayersCount = desc.arrayLayersCount;
-				twd.mipLevelsCount = desc.mipLevelsCount;
-				twd.dimension = privat::textureViewDimension(config.flags);
-				view = texture.createView(twd);
+				gpu::TextureViewDescriptor vd;
+				vd.label = label;
+				vd.arrayLayersCount = td.arrayLayersCount;
+				vd.mipLevelsCount = td.mipLevelsCount;
+				vd.dimension = privat::textureViewDimension(config.flags);
+				view = texture.createView(vd);
 
-				sampler = dev->createSampler({});
+				gpu::SamplerDescriptor sd;
+				sd.label = label;
+				sampler = dev->createSampler(sd);
 			}
 
 			TextureImpl(gpu::Texture texture, gpu::TextureView view, gpu::Sampler sampler, const AssetLabel &label_) : texture(texture), view(view), sampler(sampler) { this->label = label_; }
