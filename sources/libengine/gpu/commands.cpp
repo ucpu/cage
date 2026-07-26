@@ -282,7 +282,6 @@ namespace cage
 
 			resetSynchronization();
 
-			vk::Rect2D rect;
 			ankerl::svector<vk::RenderingAttachmentInfo, 4> attachments;
 			for (const auto &it : desc.colorAttachments)
 			{
@@ -298,9 +297,6 @@ namespace cage
 				info.storeOp = convertStoreOperation(it.storeOp);
 				info.imageLayout = vk::ImageLayout::eColorAttachmentOptimal;
 				attachments.push_back(std::move(info));
-				const auto res = it.view->texture.getResolution();
-				rect.extent.width = res[0];
-				rect.extent.height = res[1];
 				keepAlive(it.view);
 				imageTransitionSubresource(it.view, ImageStateEnum::ColorAttachment);
 			}
@@ -314,23 +310,22 @@ namespace cage
 				depth.loadOp = convertLoadOperation(desc.depthStencilAttachment->depthLoadOp);
 				depth.storeOp = convertStoreOperation(desc.depthStencilAttachment->depthStoreOp);
 				depth.imageLayout = vk::ImageLayout::eDepthAttachmentOptimal;
-				const auto res = desc.depthStencilAttachment->view->texture.getResolution();
-				rect.extent.width = res[0];
-				rect.extent.height = res[1];
 				keepAlive(desc.depthStencilAttachment->view);
 				imageTransitionSubresource(desc.depthStencilAttachment->view, ImageStateEnum::DepthAttachment);
 			}
+
+			const auto res = desc.targetResolution();
 
 			vk::RenderingInfo info;
 			info.colorAttachmentCount = attachments.size();
 			info.pColorAttachments = attachments.data();
 			info.pDepthAttachment = &depth;
 			info.pStencilAttachment = &stencil;
-			info.renderArea = rect;
+			info.renderArea = vk::Rect2D({}, vk::Extent2D(res[0], res[1]));
 			info.layerCount = 1;
 			cmd.beginRendering(info);
 
-			framebufferHeight = rect.extent.height;
+			frameBufferResolution = res;
 		}
 
 		void CommandEncoderImpl::endRenderPass()
@@ -339,12 +334,28 @@ namespace cage
 			currentMode = EncoderModeEnum::Generic;
 			cmd.endRendering();
 			resetSynchronization();
-			framebufferHeight = 0;
+			frameBufferResolution = {};
+
+			/*
+			{ // debug barrier
+				vk::MemoryBarrier2 barrier;
+				barrier.srcStageMask = vk::PipelineStageFlagBits2::eAllCommands;
+				barrier.srcAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+				barrier.dstStageMask = vk::PipelineStageFlagBits2::eAllCommands;
+				barrier.dstAccessMask = vk::AccessFlagBits2::eMemoryRead | vk::AccessFlagBits2::eMemoryWrite;
+				vk::DependencyInfo dependency;
+				dependency.memoryBarrierCount = 1;
+				dependency.pMemoryBarriers = &barrier;
+				cmd.pipelineBarrier2(dependency);
+			}
+			*/
 		}
 
 		void CommandEncoderImpl::setScissorRect(uint32 x, uint32 y, uint32 w, uint32 h)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
+			CAGE_ASSERT(x + w <= frameBufferResolution[0]);
+			CAGE_ASSERT(y + h <= frameBufferResolution[1]);
 			vk::Rect2D rect = vk::Rect2D({ (sint32)x, (sint32)y }, { w, h });
 			cmd.setScissor(0, rect);
 		}
@@ -376,7 +387,7 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			vk::Viewport vp;
 			vp.x = x.value;
-			vp.y = framebufferHeight - y.value;
+			vp.y = frameBufferResolution[1] - y.value;
 			vp.width = width.value;
 			vp.height = -height.value;
 			vp.minDepth = minDepth.value;

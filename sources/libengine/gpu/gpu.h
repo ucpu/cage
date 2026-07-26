@@ -231,7 +231,7 @@ namespace cage
 			vk::CommandBuffer cmd;
 			vk::PipelineLayout currentPipelineLayout;
 			EncoderModeEnum currentMode = EncoderModeEnum::Generic;
-			uint32 framebufferHeight = 0;
+			Vec2i frameBufferResolution;
 
 			CommandEncoderImpl(DeviceImpl &device, const CommandEncoderDescriptor &desc);
 			~CommandEncoderImpl();

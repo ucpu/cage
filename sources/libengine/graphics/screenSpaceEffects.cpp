@@ -34,7 +34,7 @@ namespace cage
 				const auto scope = config.encoder->namedScope("gaussian blur");
 
 				GraphicsBindingsCreateConfig bind;
-				bind.textures.push_back({ texIn, 0 });
+				bind.textures.push_back({ .texture = texIn, .binding = 0 });
 
 				DrawConfig draw;
 				draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
@@ -129,7 +129,7 @@ namespace cage
 			const auto scope = config.encoder->namedScope("ssao depth");
 
 			GraphicsBindingsCreateConfig bind;
-			bind.textures.push_back({ config.inDepth, 0 });
+			bind.textures.push_back({ .texture = config.inDepth, .binding = 0 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoDownscaleDepth.glsl"));
 
@@ -149,7 +149,7 @@ namespace cage
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buffUni);
 			bind.buffers.push_back(buffPoints);
-			bind.textures.push_back({ +depthLowRes, 2 });
+			bind.textures.push_back({ .texture = +depthLowRes, .binding = 2 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoGenerate.glsl"));
 
@@ -188,7 +188,7 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buffUni);
-			bind.textures.push_back({ +ssaoLowRes, 1 });
+			bind.textures.push_back({ .texture = +ssaoLowRes, .binding = 1 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoResolve.glsl"));
 
@@ -244,7 +244,7 @@ namespace cage
 			const auto scope = config.encoder->namedScope("dof collect");
 
 			GraphicsBindingsCreateConfig bind;
-			bind.textures.push_back({ config.inColor, 0 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 0 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofCollect.glsl"));
 
@@ -281,9 +281,9 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
-			bind.textures.push_back({ config.inDepth, 3 });
-			bind.textures.push_back({ +texDof, 5 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
+			bind.textures.push_back({ .texture = config.inDepth, .binding = 3 });
+			bind.textures.push_back({ .texture = +texDof, .binding = 5 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofApply.glsl"));
 
@@ -320,6 +320,7 @@ namespace cage
 			return newTexture(d, conf);
 		}();
 		std::vector<Holder<Texture>> mipViews = generateMipsViews(d, tex.share(), mips);
+		CAGE_ASSERT(mipViews.size() == mips);
 
 		struct Shader
 		{
@@ -337,7 +338,7 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomGenerate.glsl"));
 
@@ -360,7 +361,7 @@ namespace cage
 				const auto scope = config.encoder->namedScope("bloom gen mip");
 
 				GraphicsBindingsCreateConfig bind;
-				bind.textures.push_back({ +mipViews[i - 1], 0 });
+				bind.textures.push_back({ .texture = +mipViews[i - 1], .binding = 0 });
 
 				DrawConfig draw;
 				draw.bindings = newGraphicsBindings(d, bind);
@@ -400,8 +401,8 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
-			bind.textures.push_back({ +tex, 3 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
+			bind.textures.push_back({ .texture = +tex, .binding = 3 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomApply.glsl"));
 
@@ -431,7 +432,7 @@ namespace cage
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);
-		bind.textures.push_back({ config.inColor, 1 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/tonemap.glsl"));
@@ -452,7 +453,7 @@ namespace cage
 		const auto scope = config.encoder->namedScope("fxaa");
 
 		GraphicsBindingsCreateConfig bind;
-		bind.textures.push_back({ config.inColor, 0 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 0 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/fxaa.glsl"));
@@ -480,7 +481,7 @@ namespace cage
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);
-		bind.textures.push_back({ config.inColor, 1 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/sharpening.glsl"));

@@ -224,8 +224,8 @@ namespace cage
 			TextureView createView(const TextureViewDescriptor &desc);
 
 			Vec3i getResolution() const;
-			uint32 getArrayLayers() const;
-			uint32 getMipLevels() const;
+			uint32 getArrayLayersCount() const;
+			uint32 getMipLevelsCount() const;
 			//uint32 getSampleCount() const;
 			TextureDimensionEnum getDimension() const;
 			TextureFormatEnum getFormat() const;
@@ -239,10 +239,10 @@ namespace cage
 		{
 		public:
 			Texture getTexture() const;
-			uint32 getBaseArrayLayer() const;
-			uint32 getArrayLayers() const;
-			uint32 getBaseMipLevel() const;
-			uint32 getMipLevels() const;
+			uint32 getArrayLayersOffset() const;
+			uint32 getArrayLayersCount() const;
+			uint32 getMipLevelsOffset() const;
+			uint32 getMipLevelsCount() const;
 			TextureDimensionEnum getDimension() const;
 		};
 
@@ -367,6 +367,8 @@ namespace cage
 				//bool stencilReadOnly = false;
 			};
 			std::optional<DepthStencilAttachment> depthStencilAttachment;
+
+			Vec2i targetResolution() const;
 		};
 
 		struct CAGE_ENGINE_API RenderPipelineDescriptor

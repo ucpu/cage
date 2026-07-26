@@ -39,6 +39,7 @@ namespace cage
 					hashCombine((uint32)config.resolution[0]);
 					hashCombine((uint32)config.resolution[1]);
 					hashCombine((uint32)config.resolution[2]);
+					hashCombine(config.arrayLayersCount);
 					hashCombine(config.mipLevelsCount);
 					hashCombine((uint32)config.format);
 					hashCombine((uint64)config.flags);
@@ -113,7 +114,6 @@ namespace cage
 				dest.texture = dummyArray->nativeTexture();
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
-				//extents[2] = 6;
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 			}
 
@@ -358,7 +358,7 @@ namespace cage
 
 			Vec3i mipRes(uint32 mip) const
 			{
-				CAGE_ASSERT(mip < texture.getMipLevels());
+				CAGE_ASSERT(mip < texture.getMipLevelsCount());
 				const Vec3i r = resolution3();
 				return Vec3i(max(r[0] >> mip, 1), max(r[1] >> mip, 1), max(r[2] >> (texture.getDimension() == gpu::TextureDimensionEnum::e3D ? mip : 0), 1));
 			}
@@ -380,7 +380,7 @@ namespace cage
 	uint32 Texture::mipLevelsCount() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return impl->texture.getMipLevels();
+		return impl->texture.getMipLevelsCount();
 	}
 
 	Vec2i Texture::mipResolution(uint32 mipmapLevel) const

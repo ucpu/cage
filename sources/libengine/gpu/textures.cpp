@@ -34,6 +34,7 @@ namespace cage
 			info.addressModeW = convertAddressMode(desc.addressModeW);
 			info.anisotropyEnable = desc.maxAnisotropy > 1;
 			info.maxAnisotropy = desc.maxAnisotropy;
+			info.maxLod = VK_LOD_CLAMP_NONE;
 			sampler = device.device.createSampler(info);
 			sampler.setLabel(desc.label);
 		}

@@ -297,12 +297,12 @@ namespace cage
 			return get()->resolution;
 		}
 
-		uint32 Texture::getArrayLayers() const
+		uint32 Texture::getArrayLayersCount() const
 		{
 			return get()->arrayLayersCount;
 		}
 
-		uint32 Texture::getMipLevels() const
+		uint32 Texture::getMipLevelsCount() const
 		{
 			return get()->mipLevelsCount;
 		}
@@ -327,22 +327,22 @@ namespace cage
 			return get()->texture;
 		}
 
-		uint32 TextureView::getBaseArrayLayer() const
+		uint32 TextureView::getArrayLayersOffset() const
 		{
 			return get()->arrayLayersOffset;
 		}
 
-		uint32 TextureView::getArrayLayers() const
+		uint32 TextureView::getArrayLayersCount() const
 		{
 			return get()->arrayLayersCount;
 		}
 
-		uint32 TextureView::getBaseMipLevel() const
+		uint32 TextureView::getMipLevelsOffset() const
 		{
 			return get()->mipLevelsOffset;
 		}
 
-		uint32 TextureView::getMipLevels() const
+		uint32 TextureView::getMipLevelsCount() const
 		{
 			return get()->mipLevelsCount;
 		}
@@ -350,6 +350,30 @@ namespace cage
 		TextureDimensionEnum TextureView::getDimension() const
 		{
 			return get()->dimension;
+		}
+
+		Vec2i RenderPassDescriptor::targetResolution() const
+		{
+			Vec2i res;
+			const auto &update = [&](const TextureView &v)
+			{
+				Vec2i r = Vec2i(v->texture.getResolution());
+				for (uint32 i = 0; i < v->mipLevelsOffset; i++)
+					r /= 2;
+				if (res == Vec2i())
+					res = r;
+				else
+					res = min(res, r);
+			};
+			for (const auto &it : colorAttachments)
+			{
+				update(it.view);
+			}
+			if (depthStencilAttachment)
+			{
+				update(depthStencilAttachment->view);
+			}
+			return res;
 		}
 	}
 }

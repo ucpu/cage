@@ -50,7 +50,6 @@ namespace cage
 					if (!passData.bindings)
 						passData.bindings = privat::getEmptyBindings(device);
 
-					Vec2i res;
 					gpu::RenderPassDescriptor rpd;
 					rpd.label = label;
 
@@ -64,7 +63,6 @@ namespace cage
 						CAGE_ASSERT(it.texture->nativeView());
 						rpca.view = it.texture->nativeView();
 						rpd.colorAttachments.push_back(std::move(rpca));
-						res = it.texture->resolution();
 					}
 
 					if (passData.depthTarget)
@@ -76,10 +74,10 @@ namespace cage
 						rpdsa.depthStoreOp = gpu::StoreOpEnum::Store;
 						rpdsa.depthClearValue = 1;
 						rpd.depthStencilAttachment = std::move(rpdsa);
-						res = passData.depthTarget->texture->resolution();
 					}
 
 					encoder.beginRenderPass(rpd);
+					const auto res = rpd.targetResolution();
 					encoder.setViewport(0, 0, res[0], res[1]);
 					encoder.setScissorRect(0, 0, res[0], res[1]);
 				}

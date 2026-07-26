@@ -314,12 +314,9 @@ namespace cage
 											  .require_api_version(1, 3)
 											  .set_debug_callback(debugCallback)
 											  .enable_extensions(extsCnt, extsArr)
-#ifdef CAGE_DEBUG
+#ifndef CAGE_DEPLOY
 											  .request_validation_layers()
-											  //.add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT)
-											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT)
-											  .add_validation_feature_enable(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT)
-#endif // CAGE_DEBUG
+#endif // !CAGE_DEPLOY
 											  .set_engine_name("cage")
 											  .set_app_name(desc.label.str.data())
 											  .build());
@@ -398,33 +395,31 @@ namespace cage
 			// submit
 			{
 				const ProfilingScope profiling("submit");
-				ankerl::svector<vk::CommandBuffer, 16> cmds;
+				ankerl::svector<vk::CommandBufferSubmitInfo, 16> cmds;
 				for (auto &it : additionalCommands)
-					cmds.push_back(it->buffer);
+					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 				for (auto &it : buffers_)
-					cmds.push_back(it->buffer);
+					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 
-				ankerl::svector<vk::Semaphore, 2> ias, rcs;
+				ankerl::svector<vk::SemaphoreSubmitInfo, 2> ias, rcs;
 				for (auto &w : windows)
 				{
 					if (w.ctx && !w.ctx->swpImages.empty())
 					{
-						ias.push_back(w.ctx->frm().imageAcquired);
-						rcs.push_back(w.ctx->img().renderComplete);
+						ias.push_back(vk::SemaphoreSubmitInfo(w.ctx->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eAllCommands));
+						rcs.push_back(vk::SemaphoreSubmitInfo(w.ctx->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllCommands));
 					}
 				}
 
-				vk::PipelineStageFlags waitStages = vk::PipelineStageFlagBits::eAllCommands;
-				vk::SubmitInfo submitInfo;
-				submitInfo.waitSemaphoreCount = ias.size();
-				submitInfo.pWaitSemaphores = ias.data();
-				submitInfo.pWaitDstStageMask = &waitStages;
-				submitInfo.commandBufferCount = cmds.size();
-				submitInfo.pCommandBuffers = cmds.data();
-				submitInfo.signalSemaphoreCount = rcs.size();
-				submitInfo.pSignalSemaphores = rcs.data();
+				vk::SubmitInfo2 submitInfo;
+				submitInfo.waitSemaphoreInfoCount = ias.size();
+				submitInfo.pWaitSemaphoreInfos = ias.data();
+				submitInfo.commandBufferInfoCount = cmds.size();
+				submitInfo.pCommandBufferInfos = cmds.data();
+				submitInfo.signalSemaphoreInfoCount = rcs.size();
+				submitInfo.pSignalSemaphoreInfos = rcs.data();
 				check("resetFences", device.resetFences(1, &*framesFences[0]));
-				check("submit", queue.submit(1, &submitInfo, *framesFences[0]));
+				check("submit", queue.submit2(1, &submitInfo, *framesFences[0]));
 
 				additionalCommands.clear();
 
