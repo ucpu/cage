@@ -11,15 +11,10 @@ namespace cage
 		}
 
 		template<>
-		void ResourceInternal<vk::CommandPool, Nothing>::destroy()
-		{
-			device->device.destroyCommandPool(value);
-		}
-
-		template<>
 		void ResourceInternal<vk::CommandBuffer, vk::CommandPool>::destroy()
 		{
 			device->device.freeCommandBuffers(extra, value);
+			device->device.destroyCommandPool(extra);
 		}
 
 		template<>
@@ -28,16 +23,15 @@ namespace cage
 			device->device.destroyQueryPool(value);
 		}
 
-		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : pool(device), buffer(device), rtka(device)
+		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : buffer(device), rtka(device)
 		{
 			vk::CommandPoolCreateInfo info1;
-			pool = device.device.createCommandPool(info1);
+			buffer = device.device.createCommandPool(info1);
 
 			vk::CommandBufferAllocateInfo info2;
 			info2.commandBufferCount = 1;
-			info2.commandPool = pool;
+			info2.commandPool = buffer.holder->extra;
 			buffer = std::move(device.device.allocateCommandBuffers(info2)[0]);
-			buffer = (vk::CommandPool)pool;
 		}
 
 		CommandBufferImpl::~CommandBufferImpl() {}
@@ -285,15 +279,21 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			CAGE_ASSERT(destination->size >= destinationOffset + queryCount * sizeof(uint64));
-			bufferSynchronization(destination, BufferStateEnum::Write);
-			cmd.copyQueryPoolResults(querySet->queries, firstQuery, queryCount, destination->buffer, destinationOffset, sizeof(uint64), vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+			if (querySet->queries.device()->capabilities.timestampsAvailable)
+			{
+				bufferSynchronization(destination, BufferStateEnum::Write);
+				cmd.copyQueryPoolResults(querySet->queries, firstQuery, queryCount, destination->buffer, destinationOffset, sizeof(uint64), vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+			}
 		}
 
 		void CommandEncoderImpl::writeTimestamp(const QuerySet &querySet, uint32 queryIndex)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
-			cmd.resetQueryPool(querySet->queries, queryIndex, 1);
-			cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eAllCommands, querySet->queries, queryIndex);
+			if (querySet->queries.device()->capabilities.timestampsAvailable)
+			{
+				cmd.resetQueryPool(querySet->queries, queryIndex, 1);
+				cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eAllCommands, querySet->queries, queryIndex);
+			}
 		}
 
 		void CommandEncoderImpl::beginRenderPass(const RenderPassDescriptor &desc)

@@ -28,7 +28,6 @@ namespace cage
 	struct CAGE_ENGINE_API GraphicsDeviceCreateConfig
 	{
 		Window *compatibility = nullptr;
-		bool vsync = true;
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config);

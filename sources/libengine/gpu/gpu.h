@@ -3,8 +3,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <svector.h>
-
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.hpp>
@@ -214,7 +212,6 @@ namespace cage
 		class CommandBufferImpl : private Immovable
 		{
 		public:
-			ResourceHandle<vk::CommandPool> pool;
 			ResourceHandle<vk::CommandBuffer, vk::CommandPool> buffer;
 			ResourcesToKeepAlive rtka;
 
@@ -281,6 +278,7 @@ namespace cage
 
 		class DeviceImpl : private Immovable
 		{
+		public:
 			struct Bootstrap
 			{
 				vkb::Instance inst;
@@ -292,7 +290,14 @@ namespace cage
 			};
 			Bootstrap bootstrap;
 
-		public:
+			struct Capabilities
+			{
+				float maxAnisotropy = 0;
+				float timestampsConvert = 0;
+				bool timestampsAvailable = false;
+			};
+			Capabilities capabilities;
+
 			Holder<RecursiveMutex> mutex = newRecursiveMutex();
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
@@ -305,6 +310,7 @@ namespace cage
 			std::array<vk::UniqueFence, 2> framesFences = {};
 			std::array<std::vector<Holder<void>>, 3> deferredDestructions = {}; // insert into [0]
 			std::vector<Holder<AsyncTask>> disposingTasks;
+			vk::PresentModeKHR preferredPresentation = vk::PresentModeKHR::eFifo;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
@@ -317,8 +323,8 @@ namespace cage
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
+			void setVsyncPreference(bool vsync);
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
-
 			double getTimestampConversion() const;
 		};
 

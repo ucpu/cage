@@ -245,6 +245,14 @@ namespace cage
 				framesFences[1] = device.createFenceUnique(info);
 			}
 
+			{
+				const auto queueFamilyIndex = handleResult(bootstrap.dev.get_queue_index(vkb::QueueType::graphics));
+				capabilities.timestampsAvailable = bootstrap.dev.queue_families[queueFamilyIndex].timestampValidBits > 0;
+				if (capabilities.timestampsAvailable)
+					capabilities.timestampsConvert = bootstrap.phys.properties.limits.timestampPeriod;
+				capabilities.maxAnisotropy = bootstrap.phys.properties.limits.maxSamplerAnisotropy;
+			}
+
 			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
 		}
 
@@ -368,10 +376,18 @@ namespace cage
 			return context.share();
 		}
 
+		void DeviceImpl::setVsyncPreference(bool vsync)
+		{
+			const vk::PresentModeKHR pm = vsync ? vk::PresentModeKHR::eFifoRelaxed : vk::PresentModeKHR::eImmediate;
+			if (preferredPresentation == pm)
+				return; // no change needed
+			preferredPresentation = pm;
+			for (auto &it : surfacesCollection)
+				it->resolution = {}; // refresh the swapchain next frame
+		}
+
 		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
 		{
-			CAGE_LOG_DEBUG(SeverityEnum::Info, "gpu", Stringizer() + "submitAndPresentWindows");
-
 			struct WindowEntry
 			{
 				Window *window = nullptr;
@@ -501,6 +517,7 @@ namespace cage
 														  .set_old_swapchain(data.swapchain)
 														  .set_desired_min_image_count(3)
 														  .set_desired_extent(res[0], res[1])
+														  .set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
 														  .build());
 						data.resolution = res;
 						data.init(*this);
@@ -540,7 +557,7 @@ namespace cage
 
 		double DeviceImpl::getTimestampConversion() const
 		{
-			return bootstrap.phys.properties.limits.timestampPeriod;
+			return capabilities.timestampsConvert;
 		}
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)

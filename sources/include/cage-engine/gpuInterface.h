@@ -192,8 +192,8 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
+			void setVsyncPreference(bool vsync);
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
-
 			double getTimestampConversion() const;
 
 		private:

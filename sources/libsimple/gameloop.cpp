@@ -453,10 +453,9 @@ namespace cage
 				{ // create device
 					GraphicsDeviceCreateConfig cfg;
 					cfg.compatibility = +window;
-					cfg.vsync = config.vsync;
-					if (config.virtualReality)
-						cfg.vsync = false; // explicitly disable vsync for the window when virtual reality controls frame rate
 					device = newGraphicsDevice(cfg);
+					// explicitly disable vsync for the window when virtual reality controls frame rate
+					device->nativeDevice()->setVsyncPreference(!config.virtualReality);
 				}
 
 				{ // create virtual reality

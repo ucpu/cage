@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <cage-core/concurrent.h>
+#include <cage-core/files.h>
 #include <cage-core/profiling.h>
 #include <cage-core/timer.h>
 #include <cage-engine/graphicsDevice.h>
@@ -85,6 +86,7 @@ namespace cage
 			GraphicsDeviceImpl(const GraphicsDeviceCreateConfig &config) : config(config)
 			{
 				gpu::GpuDeviceDescriptor desc;
+				desc.label = pathExtractFilenameNoExtension(detail::pathExecutable());
 				desc.window = config.compatibility;
 				device = gpu::newGpuDevice(desc);
 

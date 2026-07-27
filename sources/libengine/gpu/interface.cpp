@@ -296,6 +296,12 @@ namespace cage
 			return writeTexture(dest, data.cast<const char>(), layout, extents);
 		}
 
+		void Device::setVsyncPreference(bool vsync)
+		{
+			ScopeLock lock(get()->mutex);
+			get()->setVsyncPreference(vsync);
+		}
+
 		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			ScopeLock lock(get()->mutex);
