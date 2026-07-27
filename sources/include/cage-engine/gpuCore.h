@@ -68,11 +68,10 @@ namespace cage
 			Indirect = 1u << 3,
 			MapRead = 1u << 4,
 			MapWrite = 1u << 5,
-			QueryResolve = 1u << 6,
-			Storage = 1u << 7,
-			TexelBuffer = 1u << 8,
-			Uniform = 1u << 9,
-			Vertex = 1u << 10,
+			Storage = 1u << 6,
+			TexelBuffer = 1u << 7,
+			Uniform = 1u << 8,
+			Vertex = 1u << 9,
 		};
 
 		enum class CompareFunctionEnum
@@ -336,10 +335,11 @@ namespace cage
 		class CommandBuffer;
 		class CommandEncoder;
 		class Device;
+		class PipelineLayout;
+		class QuerySet;
 		class RenderPipeline;
 		class Sampler;
 		class ShaderModule;
-		class PipelineLayout;
 		class Texture;
 		class TextureView;
 
@@ -348,6 +348,7 @@ namespace cage
 		struct BufferDescriptor;
 		struct CommandEncoderDescriptor;
 		struct PipelineLayoutDescriptor;
+		struct QuerySetDescriptor;
 		struct RenderPassDescriptor;
 		struct RenderPipelineDescriptor;
 		struct SamplerDescriptor;

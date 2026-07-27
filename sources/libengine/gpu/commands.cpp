@@ -22,6 +22,12 @@ namespace cage
 			device->device.freeCommandBuffers(extra, value);
 		}
 
+		template<>
+		void ResourceInternal<vk::QueryPool, Nothing>::destroy()
+		{
+			device->device.destroyQueryPool(value);
+		}
+
 		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : pool(device), buffer(device), rtka(device)
 		{
 			vk::CommandPoolCreateInfo info1;
@@ -275,6 +281,21 @@ namespace cage
 			CAGE_ASSERT(!"not yet implemented");
 		}
 
+		void CommandEncoderImpl::resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset)
+		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			CAGE_ASSERT(destination->size >= destinationOffset + queryCount * sizeof(uint64));
+			bufferSynchronization(destination, BufferStateEnum::Write);
+			cmd.copyQueryPoolResults(querySet->queries, firstQuery, queryCount, destination->buffer, destinationOffset, sizeof(uint64), vk::QueryResultFlagBits::e64 | vk::QueryResultFlagBits::eWait);
+		}
+
+		void CommandEncoderImpl::writeTimestamp(const QuerySet &querySet, uint32 queryIndex)
+		{
+			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			cmd.resetQueryPool(querySet->queries, queryIndex, 1);
+			cmd.writeTimestamp2(vk::PipelineStageFlagBits2::eAllCommands, querySet->queries, queryIndex);
+		}
+
 		void CommandEncoderImpl::beginRenderPass(const RenderPassDescriptor &desc)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
@@ -413,5 +434,16 @@ namespace cage
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Rendering);
 			cmd.draw(verticesCount, instancesCount, firstVertex, firstInstance);
 		}
+
+		QuerySetImpl::QuerySetImpl(DeviceImpl &device, const QuerySetDescriptor &desc) : queries(device)
+		{
+			vk::QueryPoolCreateInfo info;
+			info.queryType = vk::QueryType::eTimestamp;
+			info.queryCount = desc.count;
+			queries = device.device.createQueryPool(info);
+			queries.setLabel(desc.label);
+		}
+
+		QuerySetImpl::~QuerySetImpl() {}
 	}
 }

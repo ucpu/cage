@@ -82,8 +82,6 @@ namespace cage
 				bits |= vk::BufferUsageFlagBits::eIndexBuffer;
 			if (any(flags & BufferUsageFlags::Indirect))
 				bits |= vk::BufferUsageFlagBits::eIndirectBuffer;
-			//if (any(flags & BufferUsageFlags::QueryResolve))
-			//	bits |= vk::BufferUsageFlagBits::;
 			if (any(flags & BufferUsageFlags::Storage))
 				bits |= vk::BufferUsageFlagBits::eStorageBuffer;
 			if (any(flags & BufferUsageFlags::TexelBuffer))

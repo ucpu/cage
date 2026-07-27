@@ -260,6 +260,8 @@ namespace cage
 			void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
 			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
+			void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
+			void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
 			// render pass ecnoder
 
@@ -316,6 +318,26 @@ namespace cage
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+
+			double getTimestampConversion() const;
+		};
+
+		class PipelineLayoutImpl : private Immovable
+		{
+		public:
+			ResourceHandle<vk::PipelineLayout> layout;
+
+			PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc);
+			~PipelineLayoutImpl();
+		};
+
+		class QuerySetImpl : private Immovable
+		{
+		public:
+			ResourceHandle<vk::QueryPool> queries;
+
+			QuerySetImpl(DeviceImpl &device, const QuerySetDescriptor &desc);
+			~QuerySetImpl();
 		};
 
 		class RenderPipelineImpl : private Immovable
@@ -344,15 +366,6 @@ namespace cage
 
 			ShaderModuleImpl(DeviceImpl &device, const ShaderModuleDescriptor &desc);
 			~ShaderModuleImpl();
-		};
-
-		class PipelineLayoutImpl : private Immovable
-		{
-		public:
-			ResourceHandle<vk::PipelineLayout> layout;
-
-			PipelineLayoutImpl(DeviceImpl &device, const PipelineLayoutDescriptor &desc);
-			~PipelineLayoutImpl();
 		};
 
 		class TextureImpl : private Immovable

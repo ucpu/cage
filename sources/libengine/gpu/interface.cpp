@@ -76,6 +76,16 @@ namespace cage
 			get()->copyTextureToBuffer(source, destination, copySize);
 		}
 
+		void CommandEncoder::resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset)
+		{
+			get()->resolveQuerySet(querySet, firstQuery, queryCount, destination, destinationOffset);
+		}
+
+		void CommandEncoder::writeTimestamp(const QuerySet &querySet, uint32 queryIndex)
+		{
+			get()->writeTimestamp(querySet, queryIndex);
+		}
+
 		void CommandEncoder::beginRenderPass(const RenderPassDescriptor &desc)
 		{
 			get()->beginRenderPass(desc);
@@ -199,6 +209,12 @@ namespace cage
 			return PipelineLayout(systemMemory().createHolder<PipelineLayoutImpl>(*get(), desc));
 		}
 
+		QuerySet Device::createQuerySet(const QuerySetDescriptor &desc)
+		{
+			ScopeLock lock(get()->mutex);
+			return QuerySet(systemMemory().createHolder<QuerySetImpl>(*get(), desc));
+		}
+
 		RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor &desc)
 		{
 			ScopeLock lock(get()->mutex);
@@ -284,6 +300,12 @@ namespace cage
 		{
 			ScopeLock lock(get()->mutex);
 			get()->submitAndPresentWindows(buffers, windows);
+		}
+
+		double Device::getTimestampConversion() const
+		{
+			// no lock
+			return get()->getTimestampConversion();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)

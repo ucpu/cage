@@ -42,7 +42,6 @@ namespace cage
 
 	namespace
 	{
-		/*
 		class GraphicsDeviceImpl;
 
 		class GpuFrameTimer : private Immovable
@@ -53,6 +52,7 @@ namespace cage
 			void frameStart();
 			void frameEnd();
 
+			double conversion = 0;
 			uint64 time = 0; // microseconds
 
 		private:
@@ -63,7 +63,6 @@ namespace cage
 			std::array<gpu::Buffer, Frames> buffRead = {};
 			uint32 frameIndex = 0;
 		};
-		*/
 	}
 
 	namespace
@@ -79,27 +78,22 @@ namespace cage
 			Holder<privat::DeviceBuffersCache> buffersCache;
 			Holder<privat::DeviceTexturesCache> texturesCache;
 			std::vector<gpu::CommandBuffer> commands;
-			//Holder<GpuFrameTimer> gpuTimer;
+			Holder<GpuFrameTimer> gpuTimer;
 			Holder<Timer> cpuTimer;
 			GraphicsFrameStatistics statistics;
 
-			void createDevice()
+			GraphicsDeviceImpl(const GraphicsDeviceCreateConfig &config) : config(config)
 			{
 				gpu::GpuDeviceDescriptor desc;
 				desc.window = config.compatibility;
 				device = gpu::newGpuDevice(desc);
-			}
-
-			GraphicsDeviceImpl(const GraphicsDeviceCreateConfig &config) : config(config)
-			{
-				createDevice();
 
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing caches");
 				bindingsCache = privat::newDeviceBindingsCache(this);
 				pipelinesCache = privat::newDevicePipelinesCache(this);
 				buffersCache = privat::newDeviceBuffersCache(this);
 				texturesCache = privat::newDeviceTexturesCache(this);
-				//gpuTimer = systemMemory().createHolder<GpuFrameTimer>(this);
+				gpuTimer = systemMemory().createHolder<GpuFrameTimer>(this);
 				cpuTimer = newTimer();
 			}
 
@@ -115,7 +109,7 @@ namespace cage
 			GraphicsFrameStatistics nextFrame(PointerRange<GraphicsWindowPresentation> windows)
 			{
 				const ProfilingScope profiling("next frame");
-				//gpuTimer->frameEnd();
+				gpuTimer->frameEnd();
 				GraphicsFrameStatistics stats;
 				{
 					const ProfilingScope profiling("queue submit");
@@ -135,14 +129,15 @@ namespace cage
 						if (t)
 						{
 							gpu::TextureViewDescriptor tvd;
+							tvd.label = "window surface view";
 							tvd.dimension = gpu::TextureDimensionEnum::e2D;
 							gpu::TextureView v = t.createView(tvd);
 							windows[i].texture = newTexture(std::move(t), v, {}, "window surface texture");
 						}
 					}
 				}
-				//gpuTimer->frameStart();
-				//stats.gpuTime = gpuTimer->time;
+				gpuTimer->frameStart();
+				stats.gpuTime = gpuTimer->time;
 				stats.frameTime = cpuTimer->elapsed();
 				{
 					const ProfilingScope profiling("caches maintenance");
@@ -158,77 +153,68 @@ namespace cage
 
 	namespace
 	{
-		/*
 		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
+			conversion = device->device.getTimestampConversion();
 			{
 				gpu::QuerySetDescriptor qsDesc;
-				qsDesc.type = gpu::QueryType::Timestamp;
+				qsDesc.label = "frame timing";
 				qsDesc.count = Frames * 2;
-				querySet = device->device.CreateQuerySet(&qsDesc);
+				querySet = device->device.createQuerySet(qsDesc);
 			}
 			{
 				gpu::BufferDescriptor resolveDesc;
+				resolveDesc.label = "frame timing resolve";
 				resolveDesc.size = Frames * 256; // alignment requirements
-				resolveDesc.usage = gpu::BufferUsageFlags::QueryResolve | gpu::BufferUsageFlags::CopySrc;
-				buffResolve = device->device.createBuffer(&resolveDesc);
+				resolveDesc.usage = gpu::BufferUsageFlags::CopyDst | gpu::BufferUsageFlags::CopySrc;
+				buffResolve = device->device.createBuffer(resolveDesc);
 			}
 			for (uint32 i = 0; i < Frames; i++)
 			{
 				gpu::BufferDescriptor readbackDesc;
+				readbackDesc.label = "frame timing readback";
 				readbackDesc.size = 2 * sizeof(uint64);
 				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
-				buffRead[i] = device->device.createBuffer(&readbackDesc);
+				buffRead[i] = device->device.createBuffer(readbackDesc);
 			}
 		}
 
 		void GpuFrameTimer::frameStart()
 		{
-#ifndef CAGE_SYSTEM_MAC
 			const ProfilingScope profiling("gpu timer start");
 			ScopeLock lock(device->mutex);
 			const uint32 current = frameIndex % Frames;
-			auto ce = device->device.createCommandEncoder({});
-			ce.WriteTimestamp(querySet, current * 2 + 0);
-			device->commands.push_back(ce.finish());
-#endif // CAGE_SYSTEM_MAC
+			auto ce = device->device.createCommandEncoder({ .label = "frame timing start" });
+			ce.writeTimestamp(querySet, current * 2 + 0);
+			device->commands.push_back(ce.finishEncoding());
 		}
 
 		void GpuFrameTimer::frameEnd()
 		{
-#ifndef CAGE_SYSTEM_MAC
 			const ProfilingScope profiling("gpu timer end");
 			ScopeLock lock(device->mutex);
 			{
 				const uint32 current = frameIndex % Frames;
-				if (buffRead[current].GetMapState() != gpu::BufferMapState::Unmapped)
-					return;
 				const uint64 offset = current * 256;
-				auto ce = device->device.createCommandEncoder({});
-				ce.WriteTimestamp(querySet, current * 2 + 1);
-				ce.ResolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
-				ce.CopyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
-				device->commands.push_back(ce.finish()); // this enques the cmdbuf to be submitted, but does not submit it yet
+				auto ce = device->device.createCommandEncoder({ .label = "frame timing end" });
+				ce.writeTimestamp(querySet, current * 2 + 1);
+				if (frameIndex >= Frames)
+				{
+					ce.resolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
+					ce.copyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
+				}
+				device->commands.push_back(ce.finishEncoding()); // this enques the cmdbuf to be submitted, but does not submit it yet
 			}
-			if (frameIndex >= Frames)
+			if (frameIndex >= Frames * 2)
 			{
-				const uint32 prev = (frameIndex + Frames - 1) % Frames;
-				buffRead[prev].mapAsync(gpu::MapModeEnum::Read, 0, 2 * sizeof(uint64), gpu::CallbackModeEnum::AllowProcessEvents,
-					[this, prev](gpu::MapAsyncStatus status, gpu::StringView)
-					{
-						if (status != gpu::MapAsyncStatus::Success)
-							return;
-						const uint64 *ts = static_cast<const uint64 *>(buffRead[prev].GetConstMappedRange(0, 2 * sizeof(uint64)));
-						time = (ts[1] - ts[0]) / 1000; // ns -> us
-						buffRead[prev].unmap();
-						ProfilingEvent ev = profilingEventBegin("gpu", ProfilingFrameTag());
-						profilingEventEnd(ev, time);
-					});
+				const uint32 next = (frameIndex + 1) % Frames;
+				const uint64 *ts = (uint64 *)(buffRead[next].getMappedRange().data());
+				time = (ts[1] - ts[0]) * conversion * 0.001; // ns -> us
+				ProfilingEvent ev = profilingEventBegin("gpu", ProfilingFrameTag());
+				profilingEventEnd(ev, time);
 			}
-#endif // CAGE_SYSTEM_MAC
 			frameIndex++;
 		}
-		*/
 	}
 
 	namespace privat

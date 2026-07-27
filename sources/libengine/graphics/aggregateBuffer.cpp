@@ -29,7 +29,7 @@ namespace cage
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
-			uint32 currentFrame = 5;
+			uint32 currentFrame = 2;
 			uint32 finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
@@ -70,7 +70,8 @@ namespace cage
 						available.push_back(std::move(it));
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
-				finishedFrame++; // todo is this sufficient?
+				currentFrame++;
+				finishedFrame++;
 			}
 		};
 

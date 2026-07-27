@@ -25,10 +25,11 @@ namespace cage
 		class CommandBufferImpl;
 		class CommandEncoderImpl;
 		class DeviceImpl;
+		class PipelineLayoutImpl;
+		class QuerySetImpl;
 		class RenderPipelineImpl;
 		class SamplerImpl;
 		class ShaderModuleImpl;
-		class PipelineLayoutImpl;
 		class TextureImpl;
 		class TextureViewImpl;
 
@@ -137,8 +138,8 @@ namespace cage
 			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
 			//void copyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
-			//void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
-			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
+			void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
+			void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
 			// render pass encoder
 
@@ -162,7 +163,6 @@ namespace cage
 			//void setStencilReference(uint32 reference);
 			void setVertexBuffer(uint32 slot, const Buffer &buffer = {}, uint64 offset = 0, uint64 size = m);
 			void setViewport(Real x, Real y, Real width, Real height, Real minDepth = 0, Real maxDepth = 1);
-			//void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
 			// compute pass encoder
 		};
@@ -175,7 +175,7 @@ namespace cage
 			Buffer createBuffer(const BufferDescriptor &descriptor);
 			CommandEncoder createCommandEncoder(const CommandEncoderDescriptor &descriptor);
 			PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor &descriptor);
-			//QuerySet createQuerySet(const QuerySetDescriptor &descriptor);
+			QuerySet createQuerySet(const QuerySetDescriptor &descriptor);
 			RenderPipeline createRenderPipeline(const RenderPipelineDescriptor &descriptor);
 			Sampler createSampler(const SamplerDescriptor &descriptor);
 			ShaderModule createShaderModule(const ShaderModuleDescriptor &descriptor);
@@ -194,8 +194,20 @@ namespace cage
 
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 
+			double getTimestampConversion() const;
+
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);
+		};
+
+		class CAGE_ENGINE_API PipelineLayout : public GpuInterfaceHandle<PipelineLayout, PipelineLayoutImpl>
+		{
+		public:
+		};
+
+		class CAGE_ENGINE_API QuerySet : public GpuInterfaceHandle<QuerySet, QuerySetImpl>
+		{
+		public:
 		};
 
 		class CAGE_ENGINE_API RenderPipeline : public GpuInterfaceHandle<RenderPipeline, RenderPipelineImpl>
@@ -209,11 +221,6 @@ namespace cage
 		};
 
 		class CAGE_ENGINE_API ShaderModule : public GpuInterfaceHandle<ShaderModule, ShaderModuleImpl>
-		{
-		public:
-		};
-
-		class CAGE_ENGINE_API PipelineLayout : public GpuInterfaceHandle<PipelineLayout, PipelineLayoutImpl>
 		{
 		public:
 		};
@@ -441,8 +448,6 @@ namespace cage
 		struct CAGE_ENGINE_API SamplerDescriptor
 		{
 			StringView label;
-			//Real lodMinClamp = 0;
-			//Real lodMaxClamp = 32;
 			uint32 maxAnisotropy = 1;
 			AddressModeEnum addressModeU = AddressModeEnum::Undefined;
 			AddressModeEnum addressModeV = AddressModeEnum::Undefined;
@@ -501,8 +506,12 @@ namespace cage
 			uint32 mipLevelsOffset = 0;
 			uint32 mipLevelsCount = 1;
 			TextureDimensionEnum dimension = TextureDimensionEnum::Undefined;
-			//TextureFormatEnum format = TextureFormatEnum::Undefined;
-			//TextureUsageFlags usage = TextureUsageFlags::Undefined;
+		};
+
+		struct CAGE_ENGINE_API QuerySetDescriptor
+		{
+			StringView label;
+			uint32 count = 0;
 		};
 
 		struct CAGE_ENGINE_API WindowPresentationDescriptor

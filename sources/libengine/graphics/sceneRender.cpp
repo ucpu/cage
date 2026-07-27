@@ -1225,9 +1225,9 @@ namespace cage
 					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
-				// webgpu does not accept empty buffers
+				// vulkan does not accept empty buffers
 				if (uniArmatures.empty())
-					uniArmatures.resize(1); // todo remove when possible
+					uniArmatures.resize(1);
 				if (uniCustomData.empty())
 					uniCustomData.resize(4);
 

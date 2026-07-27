@@ -538,6 +538,11 @@ namespace cage
 			}
 		}
 
+		double DeviceImpl::getTimestampConversion() const
+		{
+			return bootstrap.phys.properties.limits.timestampPeriod;
+		}
+
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)
 		{
 			return Device(systemMemory().createHolder<DeviceImpl>(desc));
