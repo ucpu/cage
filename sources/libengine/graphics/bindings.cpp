@@ -17,44 +17,6 @@ namespace cage
 
 		namespace
 		{
-			bool isFormatFilterable(gpu::TextureFormatEnum format)
-			{
-				switch (format)
-				{
-					// depth/stencil
-					case gpu::TextureFormatEnum::Depth16Unorm:
-					case gpu::TextureFormatEnum::Depth24Stencil8:
-					case gpu::TextureFormatEnum::Depth32Float:
-					case gpu::TextureFormatEnum::Depth32FloatStencil8:
-					// high-p floats
-					case gpu::TextureFormatEnum::R32Float:
-					case gpu::TextureFormatEnum::RG32Float:
-					case gpu::TextureFormatEnum::RGBA32Float:
-					// integers
-					case gpu::TextureFormatEnum::R8Sint:
-					case gpu::TextureFormatEnum::R8Uint:
-					case gpu::TextureFormatEnum::RG8Sint:
-					case gpu::TextureFormatEnum::RG8Uint:
-					case gpu::TextureFormatEnum::RGBA8Sint:
-					case gpu::TextureFormatEnum::RGBA8Uint:
-					case gpu::TextureFormatEnum::R16Sint:
-					case gpu::TextureFormatEnum::R16Uint:
-					case gpu::TextureFormatEnum::RG16Sint:
-					case gpu::TextureFormatEnum::RG16Uint:
-					case gpu::TextureFormatEnum::RGBA16Sint:
-					case gpu::TextureFormatEnum::RGBA16Uint:
-					case gpu::TextureFormatEnum::R32Sint:
-					case gpu::TextureFormatEnum::R32Uint:
-					case gpu::TextureFormatEnum::RG32Sint:
-					case gpu::TextureFormatEnum::RG32Uint:
-					case gpu::TextureFormatEnum::RGBA32Sint:
-					case gpu::TextureFormatEnum::RGBA32Uint:
-						return false;
-					default:
-						return true;
-				}
-			}
-
 			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
 				gpu::BindGroupLayoutDescriptor desc;
@@ -68,9 +30,9 @@ namespace cage
 					CAGE_ASSERT(b.buffer && b.buffer->nativeBuffer());
 					gpu::BindGroupLayoutDescriptor::Entry e;
 					e.binding = b.binding;
-					e.visibility = gpu::ShaderStagesFlags::Vertex | gpu::ShaderStagesFlags::Fragment;
+					e.shaderStages = gpu::ShaderStagesFlags::Vertex | gpu::ShaderStagesFlags::Fragment;
 					gpu::BindGroupLayoutDescriptor::BufferEntry be;
-					be.type = b.uniform ? gpu::BufferBindingTypeEnum::Uniform : gpu::BufferBindingTypeEnum::ReadOnlyStorage;
+					be.type = b.uniform ? gpu::BufferBindingTypeEnum::Uniform : gpu::BufferBindingTypeEnum::Storage;
 					be.hasDynamicOffset = b.dynamic;
 					e.data = be;
 					desc.entries.push_back(std::move(e));
@@ -80,14 +42,12 @@ namespace cage
 				{
 					CAGE_ASSERT(t.texture && t.texture->nativeTexture() && t.texture->nativeView() && t.texture->nativeSampler());
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
-					const bool filterable = isFormatFilterable(t.texture->nativeTexture().getFormat());
 					if (t.bindTexture)
 					{
 						gpu::BindGroupLayoutDescriptor::Entry e;
 						e.binding = t.binding;
-						e.visibility = gpu::ShaderStagesFlags::Fragment;
+						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::TextureEntry te;
-						te.sampleType = filterable ? gpu::TextureSampleTypeEnum::Float : gpu::TextureSampleTypeEnum::UnfilterableFloat;
 						te.viewDimension = textureViewDimension(t.texture->flags);
 						e.data = te;
 						desc.entries.push_back(std::move(e));
@@ -96,9 +56,8 @@ namespace cage
 					{
 						gpu::BindGroupLayoutDescriptor::Entry e;
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.visibility = gpu::ShaderStagesFlags::Fragment;
+						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::SamplerEntry se;
-						se.type = filterable ? gpu::SamplerBindingTypeEnum::Filtering : gpu::SamplerBindingTypeEnum::NonFiltering;
 						e.data = se;
 						desc.entries.push_back(std::move(e));
 					}
@@ -140,8 +99,8 @@ namespace cage
 						gpu::BindGroupDescriptor::Entry e;
 						e.binding = t.binding;
 						gpu::BindGroupDescriptor::TextureEntry te;
-						te.textureView = t.texture->nativeView();
-						CAGE_ASSERT(te.textureView);
+						te.view = t.texture->nativeView();
+						CAGE_ASSERT(te.view);
 						e.data = std::move(te);
 						bgd.entries.push_back(std::move(e));
 					}
@@ -187,11 +146,10 @@ namespace cage
 					keys.push_back(75431564); // separator
 					for (const auto &t : config.textures)
 					{
-						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().getFormat()) << 17;
 						const uint32 bindTexture = (uint32)t.bindTexture << 18;
 						const uint32 bindSampler = (uint32)t.bindSampler << 19;
 						const uint32 flags = (uint32)t.texture->flags << 20;
-						keys.push_back(t.binding + filterable + bindTexture + bindSampler + flags);
+						keys.push_back(t.binding + bindTexture + bindSampler + flags);
 					}
 
 					auto hashCombine = [&](std::unsigned_integral auto v) { hash ^= std::hash<std::decay_t<decltype(v)>>{}(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2); };

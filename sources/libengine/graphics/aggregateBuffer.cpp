@@ -25,7 +25,7 @@ namespace cage
 				Holder<GraphicsBuffer> buffer;
 				uint32 frameIndex = 0;
 
-				Cache(GraphicsDevice *device) { buffer = newGraphicsBuffer(device, 5'000'000, "transient buffer"); }
+				Cache(GraphicsDevice *device) { buffer = newGraphicsBufferMapped(device, 5'000'000, "transient buffer"); }
 			};
 			std::vector<Holder<Cache>> available, waiting;
 

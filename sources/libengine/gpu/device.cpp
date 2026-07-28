@@ -306,6 +306,9 @@ namespace cage
 
 		void DeviceImpl::applyDeferredDestructions()
 		{
+			ProfilingScope profiling("deferred destruction");
+			profiling.set(Stringizer() + "destructions: " + deferredDestructions.back().size());
+
 			deferredDestructions.back().clear();
 			std::swap(deferredDestructions[2], deferredDestructions[1]);
 			std::swap(deferredDestructions[1], deferredDestructions[0]);
@@ -384,6 +387,11 @@ namespace cage
 			preferredPresentation = pm;
 			for (auto &it : surfacesCollection)
 				it->resolution = {}; // refresh the swapchain next frame
+		}
+
+		double DeviceImpl::getTimestampsConversion() const
+		{
+			return capabilities.timestampsConvert;
 		}
 
 		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
@@ -553,11 +561,6 @@ namespace cage
 					data.img().init();
 				}
 			}
-		}
-
-		double DeviceImpl::getTimestampConversion() const
-		{
-			return capabilities.timestampsConvert;
 		}
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)

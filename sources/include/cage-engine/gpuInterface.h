@@ -111,7 +111,7 @@ namespace cage
 		public:
 			uint64 getSize() const;
 			BufferUsageFlags getUsage() const;
-			PointerRange<char> getMappedRange();
+			PointerRange<char> getMappedRange() const;
 
 			void flush(); // makes cpu writes visible to gpu
 			void invalidate(); // makes gpu data visible to cpu for reading
@@ -193,8 +193,8 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
 
 			void setVsyncPreference(bool vsync);
+			double getTimestampsConversion() const;
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
-			double getTimestampConversion() const;
 
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);
@@ -237,9 +237,6 @@ namespace cage
 			TextureDimensionEnum getDimension() const;
 			TextureFormatEnum getFormat() const;
 			TextureUsageFlags getUsage() const;
-
-			//void pin(TextureUsageFlags usage);
-			//void unpin();
 		};
 
 		class CAGE_ENGINE_API TextureView : public GpuInterfaceHandle<TextureView, TextureViewImpl>
@@ -286,7 +283,7 @@ namespace cage
 			};
 			struct TextureEntry
 			{
-				TextureView textureView;
+				TextureView view;
 			};
 
 			struct Entry
@@ -309,12 +306,9 @@ namespace cage
 				bool hasDynamicOffset = false;
 			};
 			struct SamplerEntry
-			{
-				SamplerBindingTypeEnum type = SamplerBindingTypeEnum::Undefined;
-			};
+			{};
 			struct TextureEntry
 			{
-				TextureSampleTypeEnum sampleType = TextureSampleTypeEnum::Undefined;
 				TextureDimensionEnum viewDimension = TextureDimensionEnum::Undefined;
 				//bool multisampled = false;
 			};
@@ -323,7 +317,7 @@ namespace cage
 			{
 				std::variant<std::monostate, BufferEntry, SamplerEntry, TextureEntry> data;
 				uint32 binding = 0;
-				ShaderStagesFlags visibility = ShaderStagesFlags::Undefined;
+				ShaderStagesFlags shaderStages = ShaderStagesFlags::Undefined;
 			};
 			ankerl::svector<Entry, 10> entries;
 		};
@@ -393,7 +387,6 @@ namespace cage
 			struct PrimitiveState
 			{
 				PrimitiveTopologyEnum topology = PrimitiveTopologyEnum::Undefined;
-				FrontFaceEnum frontFace = FrontFaceEnum::CCW;
 				CullModeEnum cullMode = CullModeEnum::Undefined;
 			};
 			PrimitiveState primitive;

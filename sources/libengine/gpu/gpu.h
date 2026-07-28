@@ -324,8 +324,8 @@ namespace cage
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
 			void setVsyncPreference(bool vsync);
+			double getTimestampsConversion() const;
 			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
-			double getTimestampConversion() const;
 		};
 
 		class PipelineLayoutImpl : private Immovable
@@ -433,7 +433,6 @@ namespace cage
 		vk::Filter convertFilter(FilterModeEnum filter);
 		vk::Format convertTextureFormat(TextureFormatEnum format);
 		vk::Format convertVertexFormat(VertexFormatEnum format);
-		vk::FrontFace convertFrontFace(FrontFaceEnum face);
 		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format);
 		vk::ImageUsageFlags convertTextureUsage(TextureUsageFlags flags, TextureFormatEnum format);
 		vk::IndexType convertIndexFormat(IndexFormatEnum format);

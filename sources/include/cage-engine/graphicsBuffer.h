@@ -35,7 +35,8 @@ namespace cage
 		const gpu::Buffer &nativeBuffer();
 	};
 
-	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uint64 size, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uint64 size, const AssetLabel &label); // filled by copying
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferMapped(GraphicsDevice *device, uint64 size, const AssetLabel &label); // mapped for cpu writes
 	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uint64 size, const AssetLabel &label);
 }
 

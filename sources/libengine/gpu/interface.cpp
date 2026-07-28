@@ -24,7 +24,7 @@ namespace cage
 			return get()->usage;
 		}
 
-		PointerRange<char> Buffer::getMappedRange()
+		PointerRange<char> Buffer::getMappedRange() const
 		{
 			return get()->mappedRange;
 		}
@@ -302,16 +302,16 @@ namespace cage
 			get()->setVsyncPreference(vsync);
 		}
 
+		double Device::getTimestampsConversion() const
+		{
+			// no lock
+			return get()->getTimestampsConversion();
+		}
+
 		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			ScopeLock lock(get()->mutex);
 			get()->submitAndPresentWindows(buffers, windows);
-		}
-
-		double Device::getTimestampConversion() const
-		{
-			// no lock
-			return get()->getTimestampConversion();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)

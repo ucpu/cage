@@ -76,7 +76,7 @@ namespace cage
 			viewport.scissorCount = 1;
 
 			vk::PipelineRasterizationStateCreateInfo raster;
-			raster.frontFace = convertFrontFace(desc.primitive.frontFace);
+			raster.frontFace = vk::FrontFace::eCounterClockwise;
 			raster.cullMode = convertCullMode(desc.primitive.cullMode);
 			raster.polygonMode = vk::PolygonMode::eFill;
 			raster.lineWidth = 1;

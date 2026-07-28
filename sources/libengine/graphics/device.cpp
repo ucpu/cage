@@ -157,7 +157,7 @@ namespace cage
 	{
 		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
-			conversion = device->device.getTimestampConversion();
+			conversion = device->device.getTimestampsConversion();
 			{
 				gpu::QuerySetDescriptor qsDesc;
 				qsDesc.label = "frame timing";

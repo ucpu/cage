@@ -28,17 +28,6 @@ namespace cage
 			OneMinusSrcColor,
 			SrcAlpha,
 			OneMinusSrcAlpha,
-			//Dst,
-			//OneMinusDst,
-			//DstAlpha,
-			//OneMinusDstAlpha,
-			//SrcAlphaSaturated,
-			//Constant,
-			//OneMinusConstant,
-			//Src1,
-			//OneMinusSrc1,
-			//Src1Alpha,
-			//OneMinusSrc1Alpha,
 		};
 
 		enum class BlendOperationEnum
@@ -54,7 +43,6 @@ namespace cage
 		enum class BufferBindingTypeEnum
 		{
 			Undefined = 0,
-			ReadOnlyStorage,
 			Storage,
 			Uniform,
 		};
@@ -64,14 +52,12 @@ namespace cage
 			Undefined = 0,
 			CopyDst = 1u << 0,
 			CopySrc = 1u << 1,
-			Index = 1u << 2,
-			Indirect = 1u << 3,
+			GeometryIndex = 1u << 2,
+			GeometryVertex = 1u << 3,
 			MapRead = 1u << 4,
 			MapWrite = 1u << 5,
 			Storage = 1u << 6,
-			TexelBuffer = 1u << 7,
-			Uniform = 1u << 8,
-			Vertex = 1u << 9,
+			Uniform = 1u << 7,
 		};
 
 		enum class CompareFunctionEnum
@@ -110,13 +96,6 @@ namespace cage
 			Nearest,
 		};
 
-		enum class FrontFaceEnum
-		{
-			Undefined = 0,
-			CCW,
-			CW,
-		};
-
 		enum class IndexFormatEnum
 		{
 			Undefined = 0,
@@ -139,14 +118,6 @@ namespace cage
 			LineStrip,
 			TriangleList,
 			TriangleStrip,
-		};
-
-		enum class SamplerBindingTypeEnum
-		{
-			Undefined = 0,
-			Filtering,
-			NonFiltering,
-			//Comparison,
 		};
 
 		enum class ShaderStagesFlags
@@ -258,25 +229,13 @@ namespace cage
 			//R10X6BG10X6Biplanar444Unorm,
 		};
 
-		enum class TextureSampleTypeEnum
-		{
-			Undefined = 0,
-			Float,
-			UnfilterableFloat,
-			//Depth,
-			//Sint,
-			//Uint,
-		};
-
 		enum class TextureUsageFlags
 		{
 			Undefined = 0,
 			CopyDst = 1u << 0,
 			CopySrc = 1u << 1,
 			TextureBinding = 1u << 2,
-			StorageBinding = 1u << 3,
-			RenderAttachment = 1u << 4,
-			TransientAttachment = 1u << 5,
+			RenderAttachment = 1u << 3,
 		};
 
 		enum class VertexFormatEnum

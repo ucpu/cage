@@ -78,18 +78,14 @@ namespace cage
 				bits |= vk::BufferUsageFlagBits::eTransferDst;
 			if (any(flags & BufferUsageFlags::CopySrc))
 				bits |= vk::BufferUsageFlagBits::eTransferSrc;
-			if (any(flags & BufferUsageFlags::Index))
+			if (any(flags & BufferUsageFlags::GeometryIndex))
 				bits |= vk::BufferUsageFlagBits::eIndexBuffer;
-			if (any(flags & BufferUsageFlags::Indirect))
-				bits |= vk::BufferUsageFlagBits::eIndirectBuffer;
+			if (any(flags & BufferUsageFlags::GeometryVertex))
+				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
 			if (any(flags & BufferUsageFlags::Storage))
 				bits |= vk::BufferUsageFlagBits::eStorageBuffer;
-			if (any(flags & BufferUsageFlags::TexelBuffer))
-				bits |= vk::BufferUsageFlagBits::eStorageTexelBuffer | vk::BufferUsageFlagBits::eUniformTexelBuffer;
 			if (any(flags & BufferUsageFlags::Uniform))
 				bits |= vk::BufferUsageFlagBits::eUniformBuffer;
-			if (any(flags & BufferUsageFlags::Vertex))
-				bits |= vk::BufferUsageFlagBits::eVertexBuffer;
 			return bits;
 		}
 
@@ -398,19 +394,6 @@ namespace cage
 			return vk::Format::eUndefined;
 		}
 
-		vk::FrontFace convertFrontFace(FrontFaceEnum face)
-		{
-			CAGE_ASSERT(face != FrontFaceEnum::Undefined);
-			switch (face)
-			{
-				case FrontFaceEnum::CCW:
-					return vk::FrontFace::eCounterClockwise;
-				case FrontFaceEnum::CW:
-					return vk::FrontFace::eClockwise;
-			}
-			return vk::FrontFace::eCounterClockwise;
-		}
-
 		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
 		{
 			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
@@ -440,8 +423,6 @@ namespace cage
 				bits |= vk::ImageUsageFlagBits::eTransferSrc;
 			if (any(flags & TextureUsageFlags::TextureBinding))
 				bits |= vk::ImageUsageFlagBits::eSampled;
-			if (any(flags & TextureUsageFlags::StorageBinding))
-				bits |= vk::ImageUsageFlagBits::eStorage;
 			if (any(flags & TextureUsageFlags::RenderAttachment))
 			{
 				switch (format)
@@ -458,8 +439,6 @@ namespace cage
 						break;
 				}
 			}
-			if (any(flags & TextureUsageFlags::TransientAttachment))
-				bits |= vk::ImageUsageFlagBits::eTransientAttachment;
 			return bits;
 		}
 
@@ -544,7 +523,6 @@ namespace cage
 				case BufferBindingTypeEnum::Uniform:
 					return hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
 				case BufferBindingTypeEnum::Storage:
-				case BufferBindingTypeEnum::ReadOnlyStorage:
 					return hasDynamicOffset ? vk::DescriptorType::eStorageBufferDynamic : vk::DescriptorType::eStorageBuffer;
 			}
 			return {};

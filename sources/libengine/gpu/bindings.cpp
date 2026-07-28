@@ -87,13 +87,13 @@ namespace cage
 						}
 						else if constexpr (std::is_same_v<T, BindGroupDescriptor::TextureEntry>)
 						{
-							CAGE_ASSERT(e.textureView->texture->defaultState == ImageStateEnum::Sampled);
+							CAGE_ASSERT(e.view->texture->defaultState == ImageStateEnum::Sampled);
 							vk::DescriptorImageInfo &imageInfo = infosImages.emplace_back(); // make sure the struct outlives its use
-							imageInfo.imageView = e.textureView->view;
+							imageInfo.imageView = e.view->view;
 							imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 							write.descriptorType = vk::DescriptorType::eSampledImage;
 							write.pImageInfo = &imageInfo;
-							rtka.keepAlive(e.textureView);
+							rtka.keepAlive(e.view);
 						}
 						else
 						{
@@ -119,7 +119,7 @@ namespace cage
 				vk::DescriptorSetLayoutBinding b;
 				b.binding = entry.binding;
 				b.descriptorCount = 1;
-				b.stageFlags = convertShaderStages(entry.visibility);
+				b.stageFlags = convertShaderStages(entry.shaderStages);
 				std::visit(
 					[&](auto &e)
 					{
