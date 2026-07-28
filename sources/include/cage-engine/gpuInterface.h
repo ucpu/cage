@@ -86,6 +86,7 @@ namespace cage
 			}
 
 			CAGE_FORCE_INLINE Holder<void> getVoidHolder() const { return ptr.share().template cast<void>(); }
+			CAGE_FORCE_INLINE bool operator==(const GpuInterfaceHandle &other) const { return +ptr == +other.ptr; }
 
 		private:
 			Holder<Impl> ptr;
@@ -261,10 +262,14 @@ namespace cage
 				uint64 offset = 0;
 				uint32 shaderLocation = 0;
 				VertexFormatEnum format = VertexFormatEnum::Undefined;
+
+				bool operator==(const VertexAttribute &) const = default;
 			};
 			ankerl::svector<VertexAttribute, 5> attributes;
 
 			uint32 arrayStride = 0;
+
+			bool operator==(const VertexBufferLayout &) const = default;
 		};
 
 		struct CAGE_ENGINE_API BindGroupDescriptor

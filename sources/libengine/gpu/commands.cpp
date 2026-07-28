@@ -214,6 +214,8 @@ namespace cage
 		void CommandEncoderImpl::copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			keepAlive(source);
+			keepAlive(destination);
 
 			bufferSynchronization(source, BufferStateEnum::Read);
 			bufferSynchronization(destination, BufferStateEnum::Write);
@@ -233,6 +235,8 @@ namespace cage
 		void CommandEncoderImpl::copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			keepAlive(source.buffer);
+			keepAlive(destination.texture);
 
 			bufferSynchronization(source.buffer, BufferStateEnum::Read);
 			for (uint32 i = 0; i < destination.arrayLayersCount; i++)
@@ -270,6 +274,8 @@ namespace cage
 		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			keepAlive(source.texture);
+			keepAlive(destination.buffer);
 
 			// todo
 			CAGE_ASSERT(!"not yet implemented");
@@ -279,6 +285,8 @@ namespace cage
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			CAGE_ASSERT(destination->size >= destinationOffset + queryCount * sizeof(uint64));
+			keepAlive(querySet);
+			keepAlive(destination);
 			if (querySet->queries.device()->capabilities.timestampsAvailable)
 			{
 				bufferSynchronization(destination, BufferStateEnum::Write);
@@ -289,6 +297,7 @@ namespace cage
 		void CommandEncoderImpl::writeTimestamp(const QuerySet &querySet, uint32 queryIndex)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
+			keepAlive(querySet);
 			if (querySet->queries.device()->capabilities.timestampsAvailable)
 			{
 				cmd.resetQueryPool(querySet->queries, queryIndex, 1);

@@ -381,7 +381,7 @@ namespace cage
 
 		void DeviceImpl::setVsyncPreference(bool vsync)
 		{
-			const vk::PresentModeKHR pm = vsync ? vk::PresentModeKHR::eFifoRelaxed : vk::PresentModeKHR::eImmediate;
+			const vk::PresentModeKHR pm = vsync ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eImmediate;
 			if (preferredPresentation == pm)
 				return; // no change needed
 			preferredPresentation = pm;

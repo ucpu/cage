@@ -8,20 +8,6 @@
 
 namespace cage
 {
-	namespace gpu
-	{
-		// hack -> i dont care for this comparison, it is validated with the meshComponents
-		inline bool operator==(const VertexBufferLayout &, const VertexBufferLayout &)
-		{
-			return true;
-		}
-
-		inline bool operator==(const BindGroupLayout &a, const BindGroupLayout &b)
-		{
-			return a.get() == b.get();
-		}
-	}
-
 	struct RenderPassConfig;
 	struct DrawConfig;
 
