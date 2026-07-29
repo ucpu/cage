@@ -203,7 +203,7 @@ namespace cage
 		return result;
 	}
 
-	Holder<Ini> AssetsDatabase::scheme(const String &name) const
+	Holder<Ini> AssetsDatabase::schemeIni(const String &name) const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
 		const auto it = impl->schemes.find(name);
@@ -212,8 +212,19 @@ namespace cage
 			CAGE_LOG_THROW(Stringizer() + "scheme name: " + name);
 			CAGE_THROW_ERROR(Exception, "scheme not found");
 		}
-		// todo serialize to ini
-		CAGE_THROW_CRITICAL(Exception, "scheme not implemented");
+		return it->second->getIni();
+	}
+
+	uint32 AssetsDatabase::schemeIndex(const String &name) const
+	{
+		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
+		const auto it = impl->schemes.find(name);
+		if (it == impl->schemes.end())
+		{
+			CAGE_LOG_THROW(Stringizer() + "scheme name: " + name);
+			CAGE_THROW_ERROR(Exception, "scheme not found");
+		}
+		return it->second->schemeIndex;
 	}
 
 	void AssetsDatabase::scheme(const String &name, const Ini *scheme)
