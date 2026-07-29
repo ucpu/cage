@@ -313,16 +313,16 @@ namespace cage
 			{
 				try
 				{
-					glslang::TShader shader(stage);
 					if (source.empty())
 						return {};
 
 					CAGE_LOG(SeverityEnum::Info, "shader", Stringizer() + "compiling shader (" + EShLanguageToString(stage) + ")");
 
 					const char *src = source.c_str();
+					glslang::TShader shader(stage);
 					shader.setStrings(&src, 1);
 					shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 0);
-					shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
+					shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1); // intentionally keep older target, for better compatibility
 					shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
 					shader.setDebugInfo(true);
 
@@ -341,8 +341,14 @@ namespace cage
 						}
 					}
 
+					glslang::SpvOptions opts;
+					opts.generateDebugInfo = true;
+					//opts.emitNonSemanticShaderDebugInfo = true;
+					//opts.emitNonSemanticShaderDebugSource = true;
+					opts.disableOptimizer = true;
+					opts.validate = true;
 					std::vector<uint32> res;
-					glslang::GlslangToSpv(*shader.getIntermediate(), res);
+					glslang::GlslangToSpv(*shader.getIntermediate(), res, &opts);
 					validateShader(res);
 					return res;
 				}
