@@ -50,17 +50,21 @@ namespace cage
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
-			bool isCube = false;
+			vk::ImageCreateInfo imageInfo;
 			switch (dimension)
 			{
 				case TextureDimensionEnum::Cube:
 				case TextureDimensionEnum::CubeArray:
-					isCube = true;
+					imageInfo.flags |= vk::ImageCreateFlagBits::eCubeCompatible;
+					break;
+				default:
+					break;
 			}
-
-			vk::ImageCreateInfo imageInfo;
 			switch (dimension)
 			{
+				case TextureDimensionEnum::Undefined:
+					CAGE_ASSERT(!"TextureDimensionEnum::Undefined");
+					break;
 				case TextureDimensionEnum::e1D:
 					imageInfo.imageType = vk::ImageType::e1D;
 					break;
@@ -74,9 +78,6 @@ namespace cage
 					imageInfo.imageType = vk::ImageType::e3D;
 					break;
 			}
-
-			if (isCube)
-				imageInfo.flags |= vk::ImageCreateFlagBits::eCubeCompatible;
 			imageInfo.format = convertTextureFormat(format);
 			imageInfo.extent.width = resolution[0];
 			imageInfo.extent.height = resolution[1];
@@ -100,13 +101,19 @@ namespace cage
 
 		TextureImpl::~TextureImpl() {}
 
-		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture), mipLevelsOffset(desc.mipLevelsOffset), mipLevelsCount(desc.mipLevelsCount), arrayLayersOffset(desc.arrayLayersOffset), arrayLayersCount(desc.arrayLayersCount), dimension(desc.dimension)
+		TextureViewImpl::TextureViewImpl(const Texture &texture, const TextureViewDescriptor &desc) : view(*texture->image.device()), texture(texture), arrayLayersOffset(desc.arrayLayersOffset), arrayLayersCount(desc.arrayLayersCount), mipLevelsOffset(desc.mipLevelsOffset), mipLevelsCount(desc.mipLevelsCount), dimension(desc.dimension)
 		{
 			CAGE_ASSERT(desc.dimension != TextureDimensionEnum::Undefined);
 
 			vk::ImageViewCreateInfo viewInfo;
 			switch (desc.dimension)
 			{
+				case TextureDimensionEnum::Undefined:
+					CAGE_ASSERT(!"TextureDimensionEnum::Undefined");
+					break;
+				case TextureDimensionEnum::e1D:
+					viewInfo.viewType = vk::ImageViewType::e1D;
+					break;
 				case TextureDimensionEnum::e2D:
 					viewInfo.viewType = vk::ImageViewType::e2D;
 					break;

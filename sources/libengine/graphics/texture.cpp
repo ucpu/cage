@@ -79,7 +79,6 @@ namespace cage
 
 				gpu::TexelCopyTextureInfo dest;
 				dest.texture = dummy2d->nativeTexture();
-				dest.mipLevel = 0;
 				gpu::TexelCopyBufferLayout layout;
 				layout.bytesPerRow = 4;
 				layout.rowsPerImage = 1;
@@ -114,6 +113,7 @@ namespace cage
 				dest.texture = dummyArray->nativeTexture();
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 				dest.texture = dummyCube->nativeTexture();
+				dest.arrayLayersCount = 6;
 				device->nativeDevice()->writeTexture(dest, data, layout, extents);
 			}
 

@@ -84,7 +84,7 @@ namespace cage
 			td.resolution = header.resolution;
 			td.arrayLayersCount = header.arrayLayersCount;
 			td.mipLevelsCount = header.mipLevelsCount;
-			td.dimension = any(header.flags & TextureFlags::Volume3D) ? gpu::TextureDimensionEnum::e3D : gpu::TextureDimensionEnum::e2D;
+			td.dimension = privat::textureViewDimension(header.flags);
 			td.format = header.format;
 			td.usage = header.usage;
 			gpu::Texture wtex = dev->createTexture(td);

@@ -87,7 +87,7 @@ namespace cage
 			vk::PipelineDepthStencilStateCreateInfo depth;
 			if (desc.depthStencil)
 			{
-				depth.depthTestEnable = true;
+				depth.depthTestEnable = desc.depthStencil->depthCompare != CompareFunctionEnum::Always;
 				depth.depthWriteEnable = desc.depthStencil->depthWriteEnabled;
 				depth.depthCompareOp = convertCompareFunction(desc.depthStencil->depthCompare);
 			}
