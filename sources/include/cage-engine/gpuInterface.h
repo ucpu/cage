@@ -136,8 +136,8 @@ namespace cage
 			//void clearBuffer(const Buffer &buffer, uint64 offset = 0, uint64 size = m);
 			//void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
 			void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
-			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
-			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
+			void copyBufferToTexture(const Buffer &source, uint64 sourceOffset, const TexelCopyTextureInfo &destination, Vec3i copySize);
+			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const Buffer &destination, uint64 destinationOffset, Vec3i copySize);
 			//void copyTextureToTexture(const TexelCopyTextureInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
 			void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
 			void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
@@ -190,12 +190,14 @@ namespace cage
 			}
 
 			void writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data);
-			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents);
-			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents);
+			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, Vec3i extents);
+			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents);
 
 			void setVsyncPreference(bool vsync);
 			double getTimestampsConversion() const;
-			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+			void submit(PointerRange<const CommandBuffer> buffers);
+			void wait();
 
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);
@@ -460,19 +462,6 @@ namespace cage
 		{
 			StringView label;
 			PointerRange<const uint32> spirvCode;
-		};
-
-		struct CAGE_ENGINE_API TexelCopyBufferLayout
-		{
-			uint64 offset = 0;
-			uint32 bytesPerRow = 0;
-			uint32 rowsPerImage = 0;
-		};
-
-		struct CAGE_ENGINE_API TexelCopyBufferInfo
-		{
-			Buffer buffer;
-			TexelCopyBufferLayout layout;
 		};
 
 		struct CAGE_ENGINE_API TexelCopyTextureInfo

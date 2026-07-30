@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <array>
+#include <atomic>
+#include <optional>
 #include <vector>
 
 #include "engine.h"
@@ -82,13 +84,28 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid camera type");
 		}
 
+		enum class ScreenshotStateEnum
+		{
+			None,
+			Request,
+			Copying,
+			Failed,
+		};
+
+		struct ScreenshotData
+		{
+			gpu::Buffer readbackBuffer;
+			Vec2i resolution;
+		};
+
 		class EnginePrivateGraphicsImpl : public EnginePrivateGraphics
 		{
 			Holder<SwapBufferGuard> emitBuffersGuard;
 			std::array<EmitBuffer, 3> emitBuffers;
 			InterpolationTimingCorrector itc;
-			ExclusiveHolder<Texture> sharedTargetTexture;
 			Holder<Texture> windowTexture;
+			std::atomic<ScreenshotStateEnum> scrnshtState = ScreenshotStateEnum::None;
+			std::optional<ScreenshotData> scrnshtData;
 
 			uint64 lastDispatchTime = 0;
 			uint32 frameIndex = 0;
@@ -125,68 +142,49 @@ namespace cage
 
 			Holder<Image> screenshot()
 			{
-				return {}; // todo
+				CAGE_LOG(SeverityEnum::Info, "engine", "requesting to make a screenshot");
 
-				/*
-				Holder<Texture> texture = sharedTargetTexture.get();
-				if (!texture)
-					return {};
-
-				const Vec2i actualResolution = texture->resolution();
-				if (actualResolution[0] <= 0 || actualResolution[1] <= 0)
-					return {};
-
-				Vec2i res = actualResolution;
-				res[0] = detail::roundUpTo(res[0], 256 / 4);
-
-				Holder<Image> img = newImage();
-				img->initialize(res, 4);
-
-				gpu::BufferDescriptor readbackDesc{};
-				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
-				readbackDesc.size = res[0] * res[1] * 4;
-				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->createBuffer(readbackDesc);
-
-				gpu::TexelCopyTextureInfo srcView = {};
-				srcView.texture = texture->nativeTexture();
-
-				gpu::TexelCopyBufferInfo dstBuffer = {};
-				dstBuffer.buffer = readbackBuffer;
-				dstBuffer.layout.bytesPerRow = res[0] * 4; // must be multiple of 256
-				dstBuffer.layout.rowsPerImage = res[1];
-
-				const Vec3i copySize = Vec3i((uint32)actualResolution[0], (uint32)actualResolution[1], 1);
-
-				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->createCommandEncoder({});
-				encoder.copyTextureToBuffer(srcView, dstBuffer, copySize);
-				engineGraphicsDevice()->insertCommandBuffer(encoder.finishEncoding(), {});
-				engineGraphicsDevice()->nextFrame();
-
-				gpu::Future future = readbackBuffer.mapAsync(gpu::MapModeEnum::Read, 0, readbackDesc.size, gpu::CallbackModeEnum::WaitAnyOnly,
-					[&](gpu::StatusEnum status, gpu::StringView message)
+				ScopeGuard scopeExit(
+					[this]()
 					{
-						if (status == gpu::StatusEnum::Success)
-						{
-							const auto data = readbackBuffer.getMappedRange();
-							detail::memcpy((void *)img->rawViewU8().data(), data.data(), data.size());
-							readbackBuffer.unmap();
-						}
+						scrnshtState = ScreenshotStateEnum::None;
+						scrnshtData.reset();
 					});
-				engineGraphicsDevice()->wait(future);
 
-				// crop padding
-				if (res != actualResolution)
+				CAGE_ASSERT(scrnshtState == ScreenshotStateEnum::None);
+				scrnshtState = ScreenshotStateEnum::Request;
+				for (uint32 i = 0; i < 1'000; i++)
 				{
-					Holder<Image> tmp = newImage();
-					tmp->initialize(actualResolution, 4);
-					imageBlit(+img, +tmp, {}, {}, actualResolution);
-					std::swap(tmp, img);
+					threadSleep(5'000);
+					switch (scrnshtState)
+					{
+						case ScreenshotStateEnum::None:
+							CAGE_ASSERT(!"ScreenshotStateEnum::None");
+							return {};
+						case ScreenshotStateEnum::Request:
+							continue; // keep waiting
+						case ScreenshotStateEnum::Copying:
+							break; // screenshot ready for copying
+						case ScreenshotStateEnum::Failed:
+							CAGE_THROW_ERROR(Exception, "screenshot failed (window minimized?)");
+					}
 				}
+				if (scrnshtState != ScreenshotStateEnum::Copying)
+					CAGE_THROW_ERROR(Exception, "timed out waiting for screenshot");
+
+				// wait for the copying on the device to finish
+				engineGraphicsDevice()->nativeDevice()->wait();
+
+				CAGE_ASSERT(scrnshtData);
+				Holder<Image> img = newImage();
+				img->initialize(scrnshtData->resolution, 4);
+				const auto data = scrnshtData->readbackBuffer.getMappedRange();
+				detail::memcpy((void *)img->rawViewU8().data(), data.data(), data.size());
 
 				// BGR -> RGB
-				for (uint32 y = 0; y < actualResolution[1]; y++)
+				for (uint32 y = 0; y < scrnshtData->resolution[1]; y++)
 				{
-					for (uint32 x = 0; x < actualResolution[0]; x++)
+					for (uint32 x = 0; x < scrnshtData->resolution[0]; x++)
 					{
 						Vec4 c = img->get4(x, y);
 						std::swap(c[0], c[2]);
@@ -194,8 +192,8 @@ namespace cage
 					}
 				}
 
+				CAGE_LOG(SeverityEnum::Info, "engine", "screenshot done");
 				return img;
-				*/
 			}
 
 			// graphics thread ---------------------------------------------------------------------
@@ -204,7 +202,7 @@ namespace cage
 
 			void finalize()
 			{
-				sharedTargetTexture.clear();
+				scrnshtData.reset();
 				windowTexture.clear();
 			}
 
@@ -290,6 +288,26 @@ namespace cage
 				return cameras;
 			}
 
+			void takeScreenshot(Texture *srcTex)
+			{
+				CAGE_ASSERT(scrnshtState == ScreenshotStateEnum::Request);
+				const Vec2i resolution = srcTex->resolution();
+				CAGE_ASSERT(resolution[0] > 0 && resolution[1] > 0);
+				gpu::BufferDescriptor readbackDesc;
+				readbackDesc.label = "screenshot readback";
+				readbackDesc.usage = gpu::BufferUsageFlags::MapRead | gpu::BufferUsageFlags::CopyDst;
+				readbackDesc.size = resolution[0] * resolution[1] * 4;
+				gpu::Buffer readbackBuffer = engineGraphicsDevice()->nativeDevice()->createBuffer(readbackDesc);
+				gpu::TexelCopyTextureInfo srcView;
+				srcView.texture = srcTex->nativeTexture();
+				gpu::CommandEncoder encoder = engineGraphicsDevice()->nativeDevice()->createCommandEncoder({ .label = "screenshot copy" });
+				encoder.copyTextureToBuffer(srcView, readbackBuffer, 0, Vec3i(resolution, 1));
+				gpu::CommandBuffer cmd = encoder.finishEncoding();
+				engineGraphicsDevice()->insertCommandBuffer(std::move(cmd), {});
+				scrnshtData = ScreenshotData{ std::move(readbackBuffer), resolution };
+				scrnshtState = ScreenshotStateEnum::Copying;
+			}
+
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
 				ScopeGuard scopeExit([this]() { windowTexture.clear(); });
@@ -301,7 +319,8 @@ namespace cage
 
 				if (!windowTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
-					sharedTargetTexture.clear();
+					if (scrnshtState == ScreenshotStateEnum::Request)
+						scrnshtState = ScreenshotStateEnum::Failed;
 					return;
 				}
 
@@ -349,8 +368,8 @@ namespace cage
 					enc->submit();
 				}
 
-				// purposufully make the target texture available only after the whole frame has been submitted
-				sharedTargetTexture.assign(windowTexture.share());
+				if (scrnshtState == ScreenshotStateEnum::Request)
+					takeScreenshot(+windowTexture);
 
 				frameIndex++;
 				lastDispatchTime = dispatchTime;

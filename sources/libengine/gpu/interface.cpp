@@ -66,14 +66,14 @@ namespace cage
 			get()->copyBufferToBuffer(source, sourceOffset, destination, destinationOffset, size);
 		}
 
-		void CommandEncoder::copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize)
+		void CommandEncoder::copyBufferToTexture(const Buffer &source, uint64 sourceOffset, const TexelCopyTextureInfo &destination, Vec3i copySize)
 		{
-			get()->copyBufferToTexture(source, destination, copySize);
+			get()->copyBufferToTexture(source, sourceOffset, destination, copySize);
 		}
 
-		void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
+		void CommandEncoder::copyTextureToBuffer(const TexelCopyTextureInfo &source, const Buffer &destination, uint64 destinationOffset, Vec3i copySize)
 		{
-			get()->copyTextureToBuffer(source, destination, copySize);
+			get()->copyTextureToBuffer(source, destination, destinationOffset, copySize);
 		}
 
 		void CommandEncoder::resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset)
@@ -272,7 +272,7 @@ namespace cage
 			get()->additionalCommands.push_back(cmd.finishEncoding());
 		}
 
-		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, Vec3i extents)
 		{
 			ScopeLock lock(get()->mutex);
 			BufferDescriptor desc;
@@ -283,17 +283,14 @@ namespace cage
 			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
 			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
 			CommandEncoderImpl cmd(*get(), { .label = "copy staging buffer" });
-			TexelCopyBufferInfo src;
-			src.buffer = staging;
-			src.layout = layout;
-			cmd.copyBufferToTexture(src, dest, extents);
+			cmd.copyBufferToTexture(staging, 0, dest, extents);
 			get()->additionalCommands.push_back(cmd.finishEncoding());
 		}
 
-		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, const TexelCopyBufferLayout &layout, Vec3i extents)
+		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents)
 		{
 			// no lock
-			return writeTexture(dest, data.cast<const char>(), layout, extents);
+			return writeTexture(dest, data.cast<const char>(), extents);
 		}
 
 		void Device::setVsyncPreference(bool vsync)
@@ -308,10 +305,22 @@ namespace cage
 			return get()->getTimestampsConversion();
 		}
 
-		void Device::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
+		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			ScopeLock lock(get()->mutex);
-			get()->submitAndPresentWindows(buffers, windows);
+			get()->submitAndPresent(buffers, windows);
+		}
+
+		void Device::submit(PointerRange<const CommandBuffer> buffers)
+		{
+			ScopeLock lock(get()->mutex);
+			get()->submit(buffers);
+		}
+
+		void Device::wait()
+		{
+			ScopeLock lock(get()->mutex);
+			get()->wait();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)

@@ -6,9 +6,11 @@ namespace cage
 	{
 		vk::AttachmentLoadOp convertLoadOperation(LoadOpEnum op)
 		{
-			CAGE_ASSERT(op != LoadOpEnum::Undefined);
 			switch (op)
 			{
+				case LoadOpEnum::Undefined:
+					CAGE_ASSERT(!"LoadOpEnum::Undefined");
+					break;
 				case LoadOpEnum::Clear:
 					return vk::AttachmentLoadOp::eClear;
 				case LoadOpEnum::Load:
@@ -19,9 +21,11 @@ namespace cage
 
 		vk::AttachmentStoreOp convertStoreOperation(StoreOpEnum op)
 		{
-			CAGE_ASSERT(op != StoreOpEnum::Undefined);
 			switch (op)
 			{
+				case StoreOpEnum::Undefined:
+					CAGE_ASSERT(!"StoreOpEnum::Undefined");
+					break;
 				case StoreOpEnum::Discard:
 					return vk::AttachmentStoreOp::eDontCare;
 				case StoreOpEnum::Store:
@@ -32,9 +36,11 @@ namespace cage
 
 		vk::BlendFactor convertBlendFactor(BlendFactorEnum factor)
 		{
-			CAGE_ASSERT(factor != BlendFactorEnum::Undefined);
 			switch (factor)
 			{
+				case BlendFactorEnum::Undefined:
+					CAGE_ASSERT(!"BlendFactorEnum::Undefined");
+					break;
 				case BlendFactorEnum::Zero:
 					return vk::BlendFactor::eZero;
 				case BlendFactorEnum::One:
@@ -53,9 +59,11 @@ namespace cage
 
 		vk::BlendOp convertBlendOperation(BlendOperationEnum op)
 		{
-			CAGE_ASSERT(op != BlendOperationEnum::Undefined);
 			switch (op)
 			{
+				case BlendOperationEnum::Undefined:
+					CAGE_ASSERT(!"BlendOperationEnum::Undefined");
+					break;
 				case BlendOperationEnum::Add:
 					return vk::BlendOp::eAdd;
 				case BlendOperationEnum::Subtract:
@@ -91,9 +99,11 @@ namespace cage
 
 		vk::CompareOp convertCompareFunction(CompareFunctionEnum comp)
 		{
-			CAGE_ASSERT(comp != CompareFunctionEnum::Undefined);
 			switch (comp)
 			{
+				case CompareFunctionEnum::Undefined:
+					CAGE_ASSERT(!"CompareFunctionEnum::Undefined");
+					break;
 				case CompareFunctionEnum::Never:
 					return vk::CompareOp::eNever;
 				case CompareFunctionEnum::Less:
@@ -116,9 +126,13 @@ namespace cage
 
 		vk::CullModeFlags convertCullMode(CullModeEnum mode)
 		{
-			CAGE_ASSERT(mode != CullModeEnum::Undefined);
 			switch (mode)
 			{
+				case CullModeEnum::Undefined:
+					CAGE_ASSERT(!"CullModeEnum::Undefined");
+					break;
+				case CullModeEnum::None:
+					return vk::CullModeFlagBits::eNone;
 				case CullModeEnum::Back:
 					return vk::CullModeFlagBits::eBack;
 				case CullModeEnum::Front:
@@ -129,9 +143,11 @@ namespace cage
 
 		vk::Filter convertFilter(FilterModeEnum filter)
 		{
-			//CAGE_ASSERT(filter != FilterModeEnum::Undefined);
 			switch (filter)
 			{
+				case FilterModeEnum::Undefined:
+					// allowed
+					break;
 				case FilterModeEnum::Nearest:
 					return vk::Filter::eNearest;
 				case FilterModeEnum::Linear:
@@ -142,9 +158,12 @@ namespace cage
 
 		vk::Format convertTextureFormat(TextureFormatEnum format)
 		{
-			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
 			switch (format)
 			{
+				case TextureFormatEnum::Undefined:
+					CAGE_ASSERT(!"TextureFormatEnum::Undefined");
+					break;
+
 				case TextureFormatEnum::R8Unorm:
 					return vk::Format::eR8Unorm;
 				case TextureFormatEnum::R8Snorm:
@@ -305,9 +324,11 @@ namespace cage
 
 		vk::Format convertVertexFormat(VertexFormatEnum format)
 		{
-			CAGE_ASSERT(format != VertexFormatEnum::Undefined);
 			switch (format)
 			{
+				case VertexFormatEnum::Undefined:
+					CAGE_ASSERT(!"VertexFormatEnum::Undefined");
+					break;
 				case VertexFormatEnum::Uint8:
 					return vk::Format::eR8Uint;
 				case VertexFormatEnum::Uint8x2:
@@ -396,9 +417,11 @@ namespace cage
 
 		vk::ImageAspectFlags convertAspectMask(TextureFormatEnum format)
 		{
-			CAGE_ASSERT(format != TextureFormatEnum::Undefined);
 			switch (format)
 			{
+				case TextureFormatEnum::Undefined:
+					CAGE_ASSERT(!"TextureFormatEnum::Undefined");
+					break;
 				case TextureFormatEnum::Stencil8:
 					return vk::ImageAspectFlagBits::eStencil;
 				case TextureFormatEnum::Depth16Unorm:
@@ -444,9 +467,11 @@ namespace cage
 
 		vk::IndexType convertIndexFormat(IndexFormatEnum format)
 		{
-			CAGE_ASSERT(format != IndexFormatEnum::Undefined);
 			switch (format)
 			{
+				case IndexFormatEnum::Undefined:
+					CAGE_ASSERT(!"IndexFormatEnum::Undefined");
+					break;
 				case IndexFormatEnum::Uint16:
 					return vk::IndexType::eUint16;
 				case IndexFormatEnum::Uint32:
@@ -457,9 +482,11 @@ namespace cage
 
 		vk::PrimitiveTopology convertPrimitiveTopology(PrimitiveTopologyEnum topology)
 		{
-			CAGE_ASSERT(topology != PrimitiveTopologyEnum::Undefined);
 			switch (topology)
 			{
+				case PrimitiveTopologyEnum::Undefined:
+					CAGE_ASSERT(!"PrimitiveTopologyEnum::Undefined");
+					break;
 				case PrimitiveTopologyEnum::PointList:
 					return vk::PrimitiveTopology::ePointList;
 				case PrimitiveTopologyEnum::LineList:
@@ -476,9 +503,11 @@ namespace cage
 
 		vk::SamplerAddressMode convertAddressMode(AddressModeEnum mode)
 		{
-			//CAGE_ASSERT(mode != AddressModeEnum::Undefined);
 			switch (mode)
 			{
+				case AddressModeEnum::Undefined:
+					// allowed
+					break;
 				case AddressModeEnum::ClampToEdge:
 					return vk::SamplerAddressMode::eClampToEdge;
 				case AddressModeEnum::Repeat:
@@ -491,9 +520,11 @@ namespace cage
 
 		vk::SamplerMipmapMode convertMipmapFilter(FilterModeEnum filter)
 		{
-			//CAGE_ASSERT(filter != FilterModeEnum::Undefined);
 			switch (filter)
 			{
+				case FilterModeEnum::Undefined:
+					// allowed
+					break;
 				case FilterModeEnum::Nearest:
 					return vk::SamplerMipmapMode::eNearest;
 				case FilterModeEnum::Linear:
@@ -517,9 +548,11 @@ namespace cage
 
 		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset)
 		{
-			CAGE_ASSERT(type != BufferBindingTypeEnum::Undefined);
 			switch (type)
 			{
+				case BufferBindingTypeEnum::Undefined:
+					CAGE_ASSERT(!"BufferBindingTypeEnum::Undefined");
+					break;
 				case BufferBindingTypeEnum::Uniform:
 					return hasDynamicOffset ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer;
 				case BufferBindingTypeEnum::Storage:

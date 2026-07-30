@@ -79,10 +79,6 @@ namespace cage
 
 				gpu::TexelCopyTextureInfo dest;
 				dest.texture = dummy2d->nativeTexture();
-				gpu::TexelCopyBufferLayout layout;
-				layout.bytesPerRow = 4;
-				layout.rowsPerImage = 1;
-				Vec3i extents = Vec3i(1, 1, 1);
 				static constexpr std::array<uint8, 4 * 6> data = {
 					0,
 					0,
@@ -109,12 +105,12 @@ namespace cage
 					0,
 					255,
 				};
-				device->nativeDevice()->writeTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, Vec3i(1));
 				dest.texture = dummyArray->nativeTexture();
-				device->nativeDevice()->writeTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, Vec3i(1));
 				dest.texture = dummyCube->nativeTexture();
 				dest.arrayLayersCount = 6;
-				device->nativeDevice()->writeTexture(dest, data, layout, extents);
+				device->nativeDevice()->writeTexture(dest, data, Vec3i(1));
 			}
 
 			void generateShadowsSampler()
@@ -439,12 +435,8 @@ namespace cage
 		Holder<Texture> tex = newTexture(device, conf, label);
 		gpu::TexelCopyTextureInfo dest;
 		dest.texture = tex->nativeTexture();
-		gpu::TexelCopyBufferLayout layout;
-		layout.bytesPerRow = image->width() * image->channels();
-		layout.rowsPerImage = image->height();
-		const Vec3i extents = Vec3i(image->width(), image->height(), 1);
 		const auto data = image->rawViewU8();
-		device->nativeDevice()->writeTexture(dest, data, layout, extents);
+		device->nativeDevice()->writeTexture(dest, data, Vec3i(image->resolution(), 1));
 		return tex;
 	}
 

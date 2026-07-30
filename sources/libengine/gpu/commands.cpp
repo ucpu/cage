@@ -232,13 +232,13 @@ namespace cage
 			cmd.copyBuffer2(info);
 		}
 
-		void CommandEncoderImpl::copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize)
+		void CommandEncoderImpl::copyBufferToTexture(const Buffer &source, uint64 sourceOffset, const TexelCopyTextureInfo &destination, Vec3i copySize)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
-			keepAlive(source.buffer);
+			keepAlive(source);
 			keepAlive(destination.texture);
 
-			bufferSynchronization(source.buffer, BufferStateEnum::Read);
+			bufferSynchronization(source, BufferStateEnum::Read);
 			for (uint32 i = 0; i < destination.arrayLayersCount; i++)
 			{
 				ImageTransitionSubresource subres;
@@ -249,7 +249,7 @@ namespace cage
 			}
 
 			vk::BufferImageCopy2 region;
-			region.bufferOffset = source.layout.offset;
+			region.bufferOffset = sourceOffset;
 			region.bufferRowLength = copySize[0];
 			region.bufferImageHeight = copySize[1];
 			region.imageOffset.x = destination.origin[0];
@@ -263,7 +263,7 @@ namespace cage
 			region.imageSubresource.layerCount = destination.arrayLayersCount;
 			region.imageSubresource.mipLevel = destination.mipLevel;
 			vk::CopyBufferToImageInfo2 info;
-			info.srcBuffer = source.buffer->buffer;
+			info.srcBuffer = source->buffer;
 			info.dstImage = destination.texture->image;
 			info.dstImageLayout = vk::ImageLayout::eTransferDstOptimal;
 			info.regionCount = 1;
@@ -271,14 +271,43 @@ namespace cage
 			cmd.copyBufferToImage2(info);
 		}
 
-		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize)
+		void CommandEncoderImpl::copyTextureToBuffer(const TexelCopyTextureInfo &source, const Buffer &destination, uint64 destinationOffset, Vec3i copySize)
 		{
 			CAGE_ASSERT(currentMode == EncoderModeEnum::Generic);
 			keepAlive(source.texture);
-			keepAlive(destination.buffer);
+			keepAlive(destination);
 
-			// todo
-			CAGE_ASSERT(!"not yet implemented");
+			bufferSynchronization(destination, BufferStateEnum::Write);
+			for (uint32 i = 0; i < source.arrayLayersCount; i++)
+			{
+				ImageTransitionSubresource subres;
+				subres.texture = source.texture;
+				subres.mip = source.mipLevel;
+				subres.layer = source.arrayLayersOffset + i;
+				imageTransitionSubresource(subres, ImageStateEnum::TransferSrc);
+			}
+
+			vk::BufferImageCopy2 region;
+			region.bufferOffset = destinationOffset;
+			region.bufferRowLength = copySize[0];
+			region.bufferImageHeight = copySize[1];
+			region.imageOffset.x = source.origin[0];
+			region.imageOffset.y = source.origin[1];
+			region.imageOffset.z = source.origin[2];
+			region.imageExtent.width = copySize[0];
+			region.imageExtent.height = copySize[1];
+			region.imageExtent.depth = copySize[2];
+			region.imageSubresource.aspectMask = convertAspectMask(source.texture.getFormat());
+			region.imageSubresource.baseArrayLayer = source.arrayLayersOffset;
+			region.imageSubresource.layerCount = source.arrayLayersCount;
+			region.imageSubresource.mipLevel = source.mipLevel;
+			vk::CopyImageToBufferInfo2 info;
+			info.dstBuffer = destination->buffer;
+			info.srcImage = source.texture->image;
+			info.srcImageLayout = vk::ImageLayout::eTransferSrcOptimal;
+			info.regionCount = 1;
+			info.pRegions = &region;
+			cmd.copyImageToBuffer2(info);
 		}
 
 		void CommandEncoderImpl::resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset)

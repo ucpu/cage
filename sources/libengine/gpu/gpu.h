@@ -76,7 +76,13 @@ namespace cage
 		{
 			DeviceImpl *device = nullptr;
 			T value = {};
-			[[no_unique_address]] Extra extra = {};
+
+#ifdef _MSC_VER
+			[[msvc::no_unique_address]]
+#else
+			[[no_unique_address]]
+#endif // _MSC_VER
+			Extra extra = {};
 
 			~ResourceInternal();
 			void destroy();
@@ -255,8 +261,8 @@ namespace cage
 			// generic encoder
 
 			void copyBufferToBuffer(const Buffer &source, uint64 sourceOffset, const Buffer &destination, uint64 destinationOffset, uint64 size);
-			void copyBufferToTexture(const TexelCopyBufferInfo &source, const TexelCopyTextureInfo &destination, Vec3i copySize);
-			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const TexelCopyBufferInfo &destination, Vec3i copySize);
+			void copyBufferToTexture(const Buffer &source, uint64 sourceOffset, const TexelCopyTextureInfo &destination, Vec3i copySize);
+			void copyTextureToBuffer(const TexelCopyTextureInfo &source, const Buffer &destination, uint64 destinationOffset, Vec3i copySize);
 			void resolveQuerySet(const QuerySet &querySet, uint32 firstQuery, uint32 queryCount, const Buffer &destination, uint64 destinationOffset);
 			void writeTimestamp(const QuerySet &querySet, uint32 queryIndex);
 
@@ -325,7 +331,9 @@ namespace cage
 
 			void setVsyncPreference(bool vsync);
 			double getTimestampsConversion() const;
-			void submitAndPresentWindows(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
+			void submit(PointerRange<const CommandBuffer> buffers);
+			void wait();
 		};
 
 		class PipelineLayoutImpl : private Immovable

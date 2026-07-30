@@ -121,7 +121,7 @@ namespace cage
 						wpds[i].window = windows[i].window;
 					{
 						ScopeLock lock(mutex);
-						device.submitAndPresentWindows(commands, wpds);
+						device.submitAndPresent(commands, wpds);
 						commands.clear();
 						std::swap(stats, statistics); // propagate statistics and clear
 					}

@@ -394,7 +394,7 @@ namespace cage
 			return capabilities.timestampsConvert;
 		}
 
-		void DeviceImpl::submitAndPresentWindows(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
+		void DeviceImpl::submitAndPresent(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
 		{
 			struct WindowEntry
 			{
@@ -561,6 +561,29 @@ namespace cage
 					data.img().init();
 				}
 			}
+		}
+
+		void DeviceImpl::submit(PointerRange<const CommandBuffer> buffers_)
+		{
+			const ProfilingScope profiling("submit");
+			ankerl::svector<vk::CommandBufferSubmitInfo, 4> cmds;
+			for (auto &it : additionalCommands)
+				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+			for (auto &it : buffers_)
+				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+
+			vk::SubmitInfo2 submitInfo;
+			submitInfo.commandBufferInfoCount = cmds.size();
+			submitInfo.pCommandBufferInfos = cmds.data();
+			check("submit", queue.submit2(1, &submitInfo, nullptr));
+
+			additionalCommands.clear();
+		}
+
+		void DeviceImpl::wait()
+		{
+			const ProfilingScope profiling("wait");
+			device.waitIdle();
 		}
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)

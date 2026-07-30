@@ -77,8 +77,8 @@ namespace cage
 		{
 			Undefined = 0,
 			None,
-			Front,
 			Back,
+			Front,
 		};
 
 		enum class EncoderModeEnum
@@ -312,8 +312,6 @@ namespace cage
 		struct RenderPipelineDescriptor;
 		struct SamplerDescriptor;
 		struct ShaderModuleDescriptor;
-		struct TexelCopyBufferInfo;
-		struct TexelCopyBufferLayout;
 		struct TexelCopyTextureInfo;
 		struct TextureDescriptor;
 		struct TextureViewDescriptor;

@@ -28,16 +28,12 @@ namespace cage
 			dest.arrayLayersCount = arrayLayersCount;
 
 			uint32 blockWidth = 1;
-			uint32 blockBytes = header.channels; // for uncompressed formats
 			switch ((gpu::TextureFormatEnum)header.format)
 			{
 				case gpu::TextureFormatEnum::BC1RGBAUnorm:
 				case gpu::TextureFormatEnum::BC1RGBAUnormSrgb:
 				case gpu::TextureFormatEnum::BC4RUnorm:
 				case gpu::TextureFormatEnum::BC4RSnorm:
-					blockWidth = 4;
-					blockBytes = 8;
-					break;
 				case gpu::TextureFormatEnum::BC2RGBAUnorm:
 				case gpu::TextureFormatEnum::BC2RGBAUnormSrgb:
 				case gpu::TextureFormatEnum::BC3RGBAUnorm:
@@ -49,7 +45,6 @@ namespace cage
 				case gpu::TextureFormatEnum::BC7RGBAUnorm:
 				case gpu::TextureFormatEnum::BC7RGBAUnormSrgb:
 					blockWidth = 4;
-					blockBytes = 16;
 					break;
 				default:
 					break;
@@ -57,15 +52,11 @@ namespace cage
 			CAGE_ASSERT((resolution[0] % blockWidth) == 0);
 			CAGE_ASSERT((resolution[1] % blockWidth) == 0);
 
-			gpu::TexelCopyBufferLayout layout;
-			layout.bytesPerRow = ((resolution[0] + blockWidth - 1) / blockWidth) * blockBytes;
-			layout.rowsPerImage = (resolution[1] + blockWidth - 1) / blockWidth;
-
 			const uint32 copyWidth = max(blockWidth, (uint32)resolution[0]);
 			const uint32 copyHeight = max(blockWidth, (uint32)resolution[1]);
-			const Vec3i extents = Vec3i(copyWidth, copyHeight, numeric_cast<uint32>(resolution[2]));
+			const Vec3i extents = Vec3i(copyWidth, copyHeight, resolution[2]);
 
-			device.writeTexture(dest, data, layout, extents);
+			device.writeTexture(dest, data, extents);
 		}
 	}
 
