@@ -1,12 +1,7 @@
 #ifndef guard_shader_cxvbjhgr85
 #define guard_shader_cxvbjhgr85
 
-#include <cage-engine/core.h>
-
-namespace wgpu
-{
-	class ShaderModule;
-}
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {
@@ -20,8 +15,8 @@ namespace cage
 		uint32 variant = 0;
 
 	public:
-		const wgpu::ShaderModule &nativeVertex();
-		const wgpu::ShaderModule &nativeFragment();
+		gpu::ShaderModule &nativeVertex();
+		gpu::ShaderModule &nativeFragment();
 	};
 
 	CAGE_ENGINE_API Holder<Shader> newShader(GraphicsDevice *device, const Spirv *spirv, const AssetLabel &label, uint32 variant = 0);

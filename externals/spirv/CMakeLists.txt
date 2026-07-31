@@ -1,0 +1,37 @@
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "spirv")
+message(STATUS "----------------------------------------------------------------")
+
+cage_heavily_optimized()
+
+set(CMAKE_DISABLE_FIND_PACKAGE_Python3 OFF)
+
+set(SPIRV_SKIP_EXECUTABLES ON CACHE INTERNAL "SPIRV_SKIP_EXECUTABLES")
+set(SKIP_SPIRV_TOOLS_INSTALL ON CACHE INTERNAL "SKIP_SPIRV_TOOLS_INSTALL")
+set(ENABLE_SPIRV_TOOLS_INSTALL OFF CACHE INTERNAL "ENABLE_SPIRV_TOOLS_INSTALL")
+set(SPIRV_WERROR OFF CACHE INTERNAL "SPIRV_WERROR")
+set(SPIRV_ALLOW_TIMERS OFF CACHE INTERNAL "SPIRV_ALLOW_TIMERS")
+set(ENABLE_RTTI ON CACHE INTERNAL "ENABLE_RTTI")
+
+set(GLSLANG_ENABLE_INSTALL OFF CACHE INTERNAL "GLSLANG_ENABLE_INSTALL")
+set(GLSLANG_TESTS OFF CACHE INTERNAL "GLSLANG_TESTS")
+set(ENABLE_GLSLANG_BINARIES OFF CACHE INTERNAL "ENABLE_GLSLANG_BINARIES")
+set(ENABLE_HLSL OFF CACHE INTERNAL "ENABLE_HLSL")
+set(ENABLE_RTTI ON CACHE INTERNAL "ENABLE_RTTI")
+set(ENABLE_EXCEPTIONS ON CACHE INTERNAL "ENABLE_EXCEPTIONS")
+
+add_subdirectory(headers)
+add_subdirectory(tools)
+add_subdirectory(glslang)
+
+add_library(cage_spirv INTERFACE)
+target_link_libraries(cage_spirv INTERFACE $<TARGET_LINKER_FILE:glslang> $<TARGET_LINKER_FILE:glslang-default-resource-limits>)
+target_link_libraries(cage_spirv INTERFACE $<TARGET_LINKER_FILE:SPIRV-Tools-link> $<TARGET_LINKER_FILE:SPIRV-Tools-opt> $<TARGET_LINKER_FILE:SPIRV-Tools>)
+target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/glslang")
+target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/headers/include")
+target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/tools")
+target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_LIST_DIR}/tools/include")
+target_include_directories(cage_spirv INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/tools")
+add_dependencies(cage_spirv glslang glslang-default-resource-limits)
+add_dependencies(cage_spirv SPIRV-Tools SPIRV-Tools-opt SPIRV-Tools-link)
+add_library(cage::spirv ALIAS cage_spirv)

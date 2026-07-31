@@ -1,4 +1,4 @@
-#include <svector.h>
+#include <unordered_map>
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/concurrent.h>
@@ -13,115 +13,81 @@ namespace cage
 {
 	namespace privat
 	{
-		wgpu::TextureViewDimension textureViewDimension(TextureFlags flags);
+		gpu::TextureDimensionEnum textureViewDimension(TextureFlags flags);
 
 		namespace
 		{
-			bool isFormatFilterable(wgpu::TextureFormat format)
+			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
-				switch (format)
-				{
-					// depth/stencil
-					case wgpu::TextureFormat::Depth16Unorm:
-					case wgpu::TextureFormat::Depth24Plus:
-					case wgpu::TextureFormat::Depth24PlusStencil8:
-					case wgpu::TextureFormat::Depth32Float:
-					case wgpu::TextureFormat::Depth32FloatStencil8:
-					// high-p floats
-					case wgpu::TextureFormat::R32Float:
-					case wgpu::TextureFormat::RG32Float:
-					case wgpu::TextureFormat::RGBA32Float:
-					// integers
-					case wgpu::TextureFormat::R8Sint:
-					case wgpu::TextureFormat::R8Uint:
-					case wgpu::TextureFormat::RG8Sint:
-					case wgpu::TextureFormat::RG8Uint:
-					case wgpu::TextureFormat::RGBA8Sint:
-					case wgpu::TextureFormat::RGBA8Uint:
-					case wgpu::TextureFormat::R16Sint:
-					case wgpu::TextureFormat::R16Uint:
-					case wgpu::TextureFormat::RG16Sint:
-					case wgpu::TextureFormat::RG16Uint:
-					case wgpu::TextureFormat::RGBA16Sint:
-					case wgpu::TextureFormat::RGBA16Uint:
-					case wgpu::TextureFormat::R32Sint:
-					case wgpu::TextureFormat::R32Uint:
-					case wgpu::TextureFormat::RG32Sint:
-					case wgpu::TextureFormat::RG32Uint:
-					case wgpu::TextureFormat::RGBA32Sint:
-					case wgpu::TextureFormat::RGBA32Uint:
-						return false;
-					default:
-						return true;
-				}
-			}
-
-			wgpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
-			{
-				ankerl::svector<wgpu::BindGroupLayoutEntry, 10> entries;
-				entries.reserve(config.buffers.size() + config.textures.size() * 2);
+				gpu::BindGroupLayoutDescriptor desc;
+				if (label.empty())
+					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
+				desc.label = label;
+				desc.entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer && b.buffer->nativeBuffer());
-					wgpu::BindGroupLayoutEntry e = {};
+					gpu::BindGroupLayoutDescriptor::Entry e;
 					e.binding = b.binding;
-					e.visibility = wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment;
-					e.buffer.type = b.uniform ? wgpu::BufferBindingType::Uniform : wgpu::BufferBindingType::ReadOnlyStorage;
-					e.buffer.hasDynamicOffset = b.dynamic;
-					entries.push_back(e);
+					e.shaderStages = gpu::ShaderStagesFlags::Vertex | gpu::ShaderStagesFlags::Fragment;
+					gpu::BindGroupLayoutDescriptor::BufferEntry be;
+					be.type = b.uniform ? gpu::BufferBindingTypeEnum::Uniform : gpu::BufferBindingTypeEnum::Storage;
+					be.hasDynamicOffset = b.dynamic;
+					e.data = be;
+					desc.entries.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
 				{
 					CAGE_ASSERT(t.texture && t.texture->nativeTexture() && t.texture->nativeView() && t.texture->nativeSampler());
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
-					const bool filterable = isFormatFilterable(t.texture->nativeTexture().GetFormat());
 					if (t.bindTexture)
 					{
-						wgpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutDescriptor::Entry e;
 						e.binding = t.binding;
-						e.visibility = wgpu::ShaderStage::Fragment;
-						e.texture.sampleType = filterable ? wgpu::TextureSampleType::Float : wgpu::TextureSampleType::UnfilterableFloat;
-						e.texture.viewDimension = textureViewDimension(t.texture->flags);
-						entries.push_back(e);
+						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
+						gpu::BindGroupLayoutDescriptor::TextureEntry te;
+						te.viewDimension = textureViewDimension(t.texture->flags);
+						e.data = te;
+						desc.entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
-						wgpu::BindGroupLayoutEntry e = {};
+						gpu::BindGroupLayoutDescriptor::Entry e;
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.visibility = wgpu::ShaderStage::Fragment;
-						e.sampler.type = filterable ? wgpu::SamplerBindingType::Filtering : wgpu::SamplerBindingType::NonFiltering;
-						entries.push_back(e);
+						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
+						gpu::BindGroupLayoutDescriptor::SamplerEntry se;
+						e.data = se;
+						desc.entries.push_back(std::move(e));
 					}
 				}
 
-				wgpu::BindGroupLayoutDescriptor desc = {};
-				desc.entryCount = entries.size();
-				desc.entries = entries.data();
-				if (label.empty())
-					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
-				desc.label = label.c_str();
-				return device->nativeDevice()->CreateBindGroupLayout(&desc);
+				return device->nativeDevice()->createBindGroupLayout(desc);
 			}
 
-			wgpu::BindGroup createGroup(GraphicsDevice *device, const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
+			gpu::BindGroup createGroup(GraphicsDevice *device, const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
 			{
 				CAGE_ASSERT(layout);
 
-				ankerl::svector<wgpu::BindGroupEntry, 10> entries;
-				entries.reserve(config.buffers.size() + config.textures.size() * 2);
+				gpu::BindGroupDescriptor bgd;
+				if (!label.empty())
+					bgd.label = label;
+				bgd.layout = layout;
+				bgd.entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
 					CAGE_ASSERT(b.buffer);
-					wgpu::BindGroupEntry e = {};
+					gpu::BindGroupDescriptor::Entry e;
 					e.binding = b.binding;
-					e.buffer = b.buffer->nativeBuffer();
-					CAGE_ASSERT(e.buffer);
-					e.offset = 0;
-					e.size = b.size == m ? wgpu::kWholeSize : b.size;
-					entries.push_back(e);
+					gpu::BindGroupDescriptor::BufferEntry be;
+					be.buffer = b.buffer->nativeBuffer();
+					CAGE_ASSERT(be.buffer);
+					be.offset = 0;
+					be.size = b.size;
+					e.data = std::move(be);
+					bgd.entries.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
@@ -130,29 +96,27 @@ namespace cage
 					CAGE_ASSERT(t.bindTexture || t.bindSampler);
 					if (t.bindTexture)
 					{
-						wgpu::BindGroupEntry e = {};
+						gpu::BindGroupDescriptor::Entry e;
 						e.binding = t.binding;
-						e.textureView = t.texture->nativeView();
-						CAGE_ASSERT(e.textureView);
-						entries.push_back(e);
+						gpu::BindGroupDescriptor::TextureEntry te;
+						te.view = t.texture->nativeView();
+						CAGE_ASSERT(te.view);
+						e.data = std::move(te);
+						bgd.entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
-						wgpu::BindGroupEntry e = {};
+						gpu::BindGroupDescriptor::Entry e;
 						e.binding = t.binding + (t.bindTexture ? 1 : 0);
-						e.sampler = t.texture->nativeSampler();
-						CAGE_ASSERT(e.sampler);
-						entries.push_back(e);
+						gpu::BindGroupDescriptor::SamplerEntry se;
+						se.sampler = t.texture->nativeSampler();
+						CAGE_ASSERT(se.sampler);
+						e.data = std::move(se);
+						bgd.entries.push_back(std::move(e));
 					}
 				}
 
-				wgpu::BindGroupDescriptor bgd = {};
-				bgd.layout = layout;
-				bgd.entryCount = entries.size();
-				bgd.entries = entries.data();
-				if (!label.empty())
-					bgd.label = label.c_str();
-				return device->nativeDevice()->CreateBindGroup(&bgd);
+				return device->nativeDevice()->createBindGroup(bgd);
 			}
 		}
 
@@ -182,11 +146,10 @@ namespace cage
 					keys.push_back(75431564); // separator
 					for (const auto &t : config.textures)
 					{
-						const uint32 filterable = (uint32)isFormatFilterable(t.texture->nativeTexture().GetFormat()) << 17;
 						const uint32 bindTexture = (uint32)t.bindTexture << 18;
 						const uint32 bindSampler = (uint32)t.bindSampler << 19;
 						const uint32 flags = (uint32)t.texture->flags << 20;
-						keys.push_back(t.binding + filterable + bindTexture + bindSampler + flags);
+						keys.push_back(t.binding + bindTexture + bindSampler + flags);
 					}
 
 					auto hashCombine = [&](std::unsigned_integral auto v) { hash ^= std::hash<std::decay_t<decltype(v)>>{}(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2); };
@@ -199,7 +162,7 @@ namespace cage
 
 			struct LayoutValue
 			{
-				wgpu::BindGroupLayout layout;
+				gpu::BindGroupLayout layout;
 				uint32 lastUsedFrame = 0;
 			};
 
@@ -209,13 +172,13 @@ namespace cage
 
 				std::size_t hash = 0;
 
-				GroupKey(const wgpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
+				GroupKey(const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
 				{
 					keys.reserve(1 + config.buffers.size() + config.textures.size() * 2);
-					keys.push_back((uint64)layout.Get());
+					keys.push_back((uint64)layout.get());
 					for (const auto &b : config.buffers)
 					{
-						const uint64 ptr = (uint64)b.buffer->nativeBuffer().Get() << 4;
+						const uint64 ptr = (uint64)b.buffer->nativeBuffer().get() << 4;
 						const uint64 size = (uint64)b.size << 40;
 						keys.push_back(b.binding + ptr + size);
 					}
@@ -223,12 +186,12 @@ namespace cage
 					{
 						if (t.bindTexture)
 						{
-							const uint64 ptr = (uint64)t.texture->nativeView().Get() << 4;
+							const uint64 ptr = (uint64)t.texture->nativeView().get() << 4;
 							keys.push_back(t.binding + ptr);
 						}
 						if (t.bindSampler)
 						{
-							const uint64 ptr = (uint64)t.texture->nativeSampler().Get() << 4;
+							const uint64 ptr = (uint64)t.texture->nativeSampler().get() << 4;
 							keys.push_back(t.binding + ptr);
 						}
 					}
@@ -243,7 +206,7 @@ namespace cage
 
 			struct GroupValue
 			{
-				wgpu::BindGroup group;
+				gpu::BindGroup group;
 				uint32 lastUsedFrame = 0;
 			};
 

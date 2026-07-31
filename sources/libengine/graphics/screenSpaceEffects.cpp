@@ -1,3 +1,5 @@
+#include <vector>
+
 #include <cage-core/assetsManager.h>
 #include <cage-core/hashString.h>
 #include <cage-engine/graphicsAggregateBuffer.h>
@@ -32,7 +34,7 @@ namespace cage
 				const auto scope = config.encoder->namedScope("gaussian blur");
 
 				GraphicsBindingsCreateConfig bind;
-				bind.textures.push_back({ texIn, 0 });
+				bind.textures.push_back({ .texture = texIn, .binding = 0 });
 
 				DrawConfig draw;
 				draw.bindings = newGraphicsBindings(config.encoder->getDevice(), bind);
@@ -49,19 +51,20 @@ namespace cage
 			std::vector<Holder<Texture>> mipTexs;
 			mipTexs.reserve(mips);
 
-			wgpu::SamplerDescriptor sd = {};
-			sd.addressModeU = sd.addressModeV = sd.addressModeW = wgpu::AddressMode::ClampToEdge;
-			sd.magFilter = sd.minFilter = wgpu::FilterMode::Linear;
-			sd.mipmapFilter = wgpu::MipmapFilterMode::Nearest;
+			gpu::SamplerDescriptor sd;
+			sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
+			sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
+			sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
 			sd.label = "mip sampler";
-			wgpu::Sampler samp = device->nativeDevice()->CreateSampler(&sd);
+			gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 
 			for (uint32 i = 0; i < mips; i++)
 			{
-				wgpu::TextureViewDescriptor tvd = {};
-				tvd.baseMipLevel = i;
-				tvd.mipLevelCount = 1;
-				wgpu::TextureView view = tex->nativeTexture().CreateView(&tvd);
+				gpu::TextureViewDescriptor tvd;
+				tvd.mipLevelsOffset = i;
+				tvd.arrayLayersOffset = 0;
+				tvd.dimension = gpu::TextureDimensionEnum::e2D;
+				gpu::TextureView view = tex->nativeTexture().createView(tvd);
 				mipTexs.push_back(newTexture(tex->nativeTexture(), view, samp, "mip view"));
 			}
 
@@ -91,7 +94,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao depth target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::R32Float;
+			conf.format = gpu::TextureFormatEnum::R32Float;
 			return newTexture(d, conf);
 		}();
 		Holder<Texture> ssaoLowRes = [&]()
@@ -99,7 +102,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "ssao lowres target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::R16Float;
+			conf.format = gpu::TextureFormatEnum::R16Float;
 			return newTexture(d, conf);
 		}();
 
@@ -126,7 +129,7 @@ namespace cage
 			const auto scope = config.encoder->namedScope("ssao depth");
 
 			GraphicsBindingsCreateConfig bind;
-			bind.textures.push_back({ config.inDepth, 0 });
+			bind.textures.push_back({ .texture = config.inDepth, .binding = 0 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoDownscaleDepth.glsl"));
 
@@ -146,7 +149,7 @@ namespace cage
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buffUni);
 			bind.buffers.push_back(buffPoints);
-			bind.textures.push_back({ +depthLowRes, 2 });
+			bind.textures.push_back({ .texture = +depthLowRes, .binding = 2 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoGenerate.glsl"));
 
@@ -165,7 +168,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "ssao blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = wgpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormatEnum::R16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -185,7 +188,7 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buffUni);
-			bind.textures.push_back({ +ssaoLowRes, 1 });
+			bind.textures.push_back({ .texture = +ssaoLowRes, .binding = 1 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/ssaoResolve.glsl"));
 
@@ -215,7 +218,7 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "dof color target";
 			conf.resolution = Vec3i(res, 1);
-			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.format = gpu::TextureFormatEnum::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
@@ -241,7 +244,7 @@ namespace cage
 			const auto scope = config.encoder->namedScope("dof collect");
 
 			GraphicsBindingsCreateConfig bind;
-			bind.textures.push_back({ config.inColor, 0 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 0 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofCollect.glsl"));
 
@@ -258,7 +261,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "dof blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 
@@ -278,9 +281,9 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
-			bind.textures.push_back({ config.inDepth, 3 });
-			bind.textures.push_back({ +texDof, 5 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
+			bind.textures.push_back({ .texture = config.inDepth, .binding = 3 });
+			bind.textures.push_back({ .texture = +texDof, .binding = 5 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/dofApply.glsl"));
 
@@ -311,12 +314,13 @@ namespace cage
 			TransientTextureCreateConfig conf;
 			conf.name = "bloom target";
 			conf.resolution = Vec3i(res, 1);
-			conf.mipLevelCount = mips;
-			conf.format = wgpu::TextureFormat::RGBA16Float;
+			conf.mipLevelsCount = mips;
+			conf.format = gpu::TextureFormatEnum::RGBA16Float;
 			conf.samplerVariant = true;
 			return newTexture(d, conf);
 		}();
 		std::vector<Holder<Texture>> mipViews = generateMipsViews(d, tex.share(), mips);
+		CAGE_ASSERT(mipViews.size() == mips);
 
 		struct Shader
 		{
@@ -334,7 +338,7 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomGenerate.glsl"));
 
@@ -357,7 +361,7 @@ namespace cage
 				const auto scope = config.encoder->namedScope("bloom gen mip");
 
 				GraphicsBindingsCreateConfig bind;
-				bind.textures.push_back({ +mipViews[i - 1], 0 });
+				bind.textures.push_back({ .texture = +mipViews[i - 1], .binding = 0 });
 
 				DrawConfig draw;
 				draw.bindings = newGraphicsBindings(d, bind);
@@ -373,8 +377,8 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "bloom blur temporary";
 				conf.resolution = Vec3i(res, 1);
-				conf.mipLevelCount = mips;
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.mipLevelsCount = mips;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(d, conf);
 			}();
 			std::vector<Holder<Texture>> tmpViews = generateMipsViews(d, tmp.share(), mips);
@@ -397,8 +401,8 @@ namespace cage
 
 			GraphicsBindingsCreateConfig bind;
 			bind.buffers.push_back(buff);
-			bind.textures.push_back({ config.inColor, 1 });
-			bind.textures.push_back({ +tex, 3 });
+			bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
+			bind.textures.push_back({ .texture = +tex, .binding = 3 });
 
 			Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/bloomApply.glsl"));
 
@@ -422,13 +426,13 @@ namespace cage
 		{
 			Vec4 params; // gamma, tonemapEnabled
 		} s;
-		s.params[0] = 1.0 / config.gamma;
+		s.params[0] = config.gamma;
 		s.params[1] = config.tonemapEnabled;
 		const AggregatedBinding buff = config.aggregate->writeStruct(s, 0, true);
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);
-		bind.textures.push_back({ config.inColor, 1 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/tonemap.glsl"));
@@ -449,7 +453,7 @@ namespace cage
 		const auto scope = config.encoder->namedScope("fxaa");
 
 		GraphicsBindingsCreateConfig bind;
-		bind.textures.push_back({ config.inColor, 0 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 0 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/fxaa.glsl"));
@@ -477,7 +481,7 @@ namespace cage
 
 		GraphicsBindingsCreateConfig bind;
 		bind.buffers.push_back(buff);
-		bind.textures.push_back({ config.inColor, 1 });
+		bind.textures.push_back({ .texture = config.inColor, .binding = 1 });
 
 		Holder<Model> model = config.assets->get<Model>(HashString("cage/models/square.obj"));
 		Holder<MultiShader> ms = config.assets->get<MultiShader>(HashString("cage/shaders/effects/sharpening.glsl"));

@@ -15,7 +15,7 @@ void main()
 $include fragment.glsl
 
 #ifndef CutOut
-// layout(early_fragment_tests) in; // not yet supported in tint
+layout(early_fragment_tests) in;
 #endif
 
 void main()

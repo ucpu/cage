@@ -1,15 +1,7 @@
 #ifndef guard_graphicsTexture_sdrfgh4d5g
 #define guard_graphicsTexture_sdrfgh4d5g
 
-#include <cage-engine/core.h>
-
-namespace wgpu
-{
-	class Texture;
-	class TextureView;
-	class Sampler;
-	enum class TextureFormat : uint32_t;
-}
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {
@@ -35,13 +27,13 @@ namespace cage
 	public:
 		Vec2i resolution() const;
 		Vec3i resolution3() const;
-		uint32 mipLevels() const; // 1 is just base level
+		uint32 mipLevelsCount() const; // 1 is just base level
 		Vec2i mipResolution(uint32 mipmapLevel) const;
 		Vec3i mipResolution3(uint32 mipmapLevel) const;
 
-		const wgpu::Texture &nativeTexture();
-		const wgpu::TextureView &nativeView();
-		const wgpu::Sampler &nativeSampler();
+		gpu::Texture &nativeTexture();
+		gpu::TextureView &nativeView();
+		gpu::Sampler &nativeSampler();
 
 		TextureFlags flags = TextureFlags::None;
 	};
@@ -49,8 +41,9 @@ namespace cage
 	struct CAGE_ENGINE_API ColorTextureCreateConfig
 	{
 		Vec3i resolution = Vec3i(0, 0, 1);
+		uint32 arrayLayersCount = 1;
+		uint32 mipLevelsCount = 1;
 		uint32 channels = 4;
-		uint32 mipLevels = 1;
 		TextureFlags flags = TextureFlags::None;
 		bool sampling = true;
 		bool renderable = false;
@@ -60,8 +53,9 @@ namespace cage
 	{
 		AssetLabel name;
 		Vec3i resolution = Vec3i(0, 0, 1);
-		uint32 mipLevelCount = 1;
-		wgpu::TextureFormat format = (wgpu::TextureFormat)0;
+		uint32 arrayLayersCount = 1;
+		uint32 mipLevelsCount = 1;
+		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 		TextureFlags flags = TextureFlags::None;
 		uint32 entityId = 0;
 		bool samplerVariant = false;
@@ -72,7 +66,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const ColorTextureCreateConfig &config, const AssetLabel &label);
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const TransientTextureCreateConfig &config);
 	CAGE_ENGINE_API Holder<Texture> newTexture(GraphicsDevice *device, const Image *image, const AssetLabel &label);
-	CAGE_ENGINE_API Holder<Texture> newTexture(wgpu::Texture texture, wgpu::TextureView view, wgpu::Sampler sampler, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<Texture> newTexture(gpu::Texture texture, gpu::TextureView view, gpu::Sampler sampler, const AssetLabel &label);
 }
 
 #endif

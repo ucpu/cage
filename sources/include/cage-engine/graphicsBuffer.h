@@ -1,12 +1,8 @@
 #ifndef guard_graphicsBuffer_s54dtau4kfesas
 #define guard_graphicsBuffer_s54dtau4kfesas
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
-
-namespace wgpu
-{
-	class Buffer;
-}
 
 namespace cage
 {
@@ -18,29 +14,30 @@ namespace cage
 		AssetLabel label;
 
 	public:
-		void writeBuffer(PointerRange<const char> buffer, uintPtr offset = 0);
+		void writeBuffer(PointerRange<const char> buffer, uint64 offset = 0);
 
 		template<class T>
 		requires(privat::GraphicsBufferWritable<T>)
-		void writeStruct(const T &data, uintPtr offset = 0)
+		void writeStruct(const T &data, uint64 offset = 0)
 		{
 			return writeBuffer({ (const char *)&data, (const char *)(&data + 1) }, offset);
 		}
 
 		template<class T>
 		requires(privat::GraphicsBufferWritable<T>)
-		void writeArray(PointerRange<const T> data, uintPtr offset = 0)
+		void writeArray(PointerRange<const T> data, uint64 offset = 0)
 		{
 			return writeBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, offset);
 		}
 
-		uintPtr size() const;
+		uint64 size() const;
 
-		const wgpu::Buffer &nativeBuffer();
+		const gpu::Buffer &nativeBuffer();
 	};
 
-	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
-	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uintPtr size, const AssetLabel &label);
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBuffer(GraphicsDevice *device, uint64 size, const AssetLabel &label); // filled by copying
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferMapped(GraphicsDevice *device, uint64 size, const AssetLabel &label); // mapped for cpu writes
+	CAGE_ENGINE_API Holder<GraphicsBuffer> newGraphicsBufferGeometry(GraphicsDevice *device, uint64 size, const AssetLabel &label);
 }
 
 #endif // guard_gpuBuffer_s54dtu4kfesas

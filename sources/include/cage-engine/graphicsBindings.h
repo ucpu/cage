@@ -2,16 +2,16 @@
 #define guard_graphicsBindings_esdr41ttzu
 
 #include <svector.h>
-#include <webgpu/webgpu_cpp.h>
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsCommon.h>
 
 namespace cage
 {
 	struct CAGE_ENGINE_API GraphicsBindings
 	{
-		wgpu::BindGroupLayout layout = {};
-		wgpu::BindGroup group = {};
+		gpu::BindGroupLayout layout;
+		gpu::BindGroup group;
 		uint32 dynamicBuffersCount = 0;
 
 		operator bool() const
@@ -26,8 +26,8 @@ namespace cage
 		struct BufferBindingConfig
 		{
 			GraphicsBuffer *buffer = nullptr;
+			uint64 size = m;
 			uint32 binding = m;
-			uint32 size = m;
 			bool uniform = false;
 			bool dynamic = false;
 		};

@@ -62,7 +62,6 @@ namespace cage
 		GuiManagerCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;
 		bool virtualReality = false;
-		bool vsync = true;
 	};
 
 	void engineInitialize(const EngineCreateConfig &config);

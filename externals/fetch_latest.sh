@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # update freetype from upstream
-(cd freetype/freetype && git fetch upstream HEAD && (git checkout -b master || git checkout master) && git reset --hard upstream/master && git push)
+(cd freetype/freetype && git fetch --all && (git checkout -b master || git checkout master) && git reset --hard upstream/HEAD && git push)
 
 echo
 echo
@@ -13,7 +13,8 @@ function pbranch {
 	git checkout . # clear local changes
 	git checkout -b master || git checkout master
 	git branch --set-upstream-to=origin/HEAD master
-	git pull --ff-only
+	git fetch --all
+	git reset --hard origin/HEAD
 }
 export -f pbranch
 git submodule foreach pbranch
@@ -21,8 +22,11 @@ git submodule foreach pbranch
 echo
 echo
 
+# restore mbedtls
+git submodule update --init --recursive mbedtls/mbedtls
+
 # restore openxr - newer versions are not supported by hardware
 git submodule update openxr-sdk/OpenXR-SDK
 
-# restore mbedtls
-git submodule update --init --recursive mbedtls/mbedtls
+# restore glslang - newer versions produce invalid spirv
+git submodule update spirv/glslang

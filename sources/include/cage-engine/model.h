@@ -4,12 +4,7 @@
 #include <array>
 
 #include <cage-core/geometry.h>
-#include <cage-engine/core.h>
-
-namespace wgpu
-{
-	struct VertexBufferLayout;
-}
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {
@@ -29,7 +24,7 @@ namespace cage
 		AssetLabel getLabel() const;
 
 		void updateLayout();
-		const wgpu::VertexBufferLayout &getLayout() const;
+		const gpu::VertexBufferLayout &getLayout() const;
 
 		// general
 		Mat4 importTransform;

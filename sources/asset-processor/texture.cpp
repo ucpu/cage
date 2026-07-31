@@ -1,37 +1,36 @@
 #include <map>
 
-#include <webgpu/webgpu_cpp.h>
-
 #include "processor.h"
 
 #include <cage-core/imageAlgorithms.h>
 #include <cage-core/imageImport.h>
 #include <cage-core/meshImport.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-engine/gpuCore.h>
 #include <cage-engine/texture.h>
 
 void meshImportNotifyUsedFiles(const MeshImportResult &result);
 
 namespace
 {
-	wgpu::FilterMode convertFilter(const String &f)
+	gpu::FilterModeEnum convertFilter(const String &f)
 	{
 		if (f == "nearest")
-			return wgpu::FilterMode::Nearest;
+			return gpu::FilterModeEnum::Nearest;
 		if (f == "linear")
-			return wgpu::FilterMode::Linear;
-		return wgpu::FilterMode::Undefined;
+			return gpu::FilterModeEnum::Linear;
+		return gpu::FilterModeEnum::Undefined;
 	}
 
-	wgpu::AddressMode convertWrap(const String &f)
+	gpu::AddressModeEnum convertWrap(const String &f)
 	{
 		if (f == "clamp")
-			return wgpu::AddressMode::ClampToEdge;
+			return gpu::AddressModeEnum::ClampToEdge;
 		if (f == "repeat")
-			return wgpu::AddressMode::Repeat;
+			return gpu::AddressModeEnum::Repeat;
 		if (f == "mirror")
-			return wgpu::AddressMode::MirrorRepeat;
-		return wgpu::AddressMode::Undefined;
+			return gpu::AddressModeEnum::MirrorRepeat;
+		return gpu::AddressModeEnum::Undefined;
 	}
 
 	TextureFlags convertTarget()
@@ -61,7 +60,7 @@ namespace
 		return result;
 	}
 
-	wgpu::TextureFormat findInternalFormatForBcn(const TextureHeader &data)
+	gpu::TextureFormatEnum findInternalFormatForBcn(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -69,7 +68,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::BC7RGBAUnormSrgb;
+					return gpu::TextureFormatEnum::BC7RGBAUnormSrgb;
 			}
 		}
 		else
@@ -77,18 +76,18 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return wgpu::TextureFormat::BC4RUnorm;
+					return gpu::TextureFormatEnum::BC4RUnorm;
 				case 2:
-					return wgpu::TextureFormat::BC5RGUnorm;
+					return gpu::TextureFormatEnum::BC5RGUnorm;
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::BC7RGBAUnorm;
+					return gpu::TextureFormatEnum::BC7RGBAUnorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for compressed texture format");
 	}
 
-	wgpu::TextureFormat findInternalFormatForRaw(const TextureHeader &data)
+	gpu::TextureFormatEnum findInternalFormatForRaw(const TextureHeader &data)
 	{
 		if (any(data.flags & TextureFlags::Srgb))
 		{
@@ -96,7 +95,7 @@ namespace
 			{
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::RGBA8UnormSrgb;
+					return gpu::TextureFormatEnum::RGBA8UnormSrgb;
 			}
 		}
 		else
@@ -104,12 +103,12 @@ namespace
 			switch (data.channels)
 			{
 				case 1:
-					return wgpu::TextureFormat::R8Unorm;
+					return gpu::TextureFormatEnum::R8Unorm;
 				case 2:
-					return wgpu::TextureFormat::RG8Unorm;
+					return gpu::TextureFormatEnum::RG8Unorm;
 				case 3:
 				case 4:
-					return wgpu::TextureFormat::RGBA8Unorm;
+					return gpu::TextureFormatEnum::RGBA8Unorm;
 			}
 		}
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for non-compressed texture format");
@@ -338,19 +337,19 @@ namespace
 		if ((data.resolution[0] % 4) != 0 || (data.resolution[1] % 4) != 0)
 			CAGE_THROW_ERROR(Exception, "base image resolution for bcn encoding must be divisible by 4");
 
-		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
-		data.format = (uint32)findInternalFormatForBcn(data);
+		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
+		data.format = findInternalFormatForBcn(data);
 
 		imageImportConvertImagesToBcn(images, toBool(processor->property("normal")));
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const ImageImportRaw *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.raw;
-		CAGE_ASSERT(levels.size() >= data.mipLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevelsCount);
 
 		for (const auto &level : levels)
 		{
-			if (level.first >= data.mipLevels)
+			if (level.first >= data.mipLevelsCount)
 				continue;
 
 			uint32 size = 0;
@@ -360,7 +359,8 @@ namespace
 
 			const uint32 faces = level.second.size();
 			const uint32 layers = level.second.at(0).size();
-			ser << Vec3i(level.second.at(0).at(0)->resolution, faces * layers);
+			ser << Vec3i(level.second.at(0).at(0)->resolution, 1);
+			ser << uint32(faces * layers);
 			ser << size;
 			for (const auto &face : level.second)
 				for (const auto &layer : face.second)
@@ -372,17 +372,17 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", "using raw encoding - no compression");
 
-		data.usage = (uint64)wgpu::TextureUsage::CopyDst | (uint64)wgpu::TextureUsage::TextureBinding;
-		data.format = (uint32)findInternalFormatForRaw(data);
+		data.usage = gpu::TextureUsageFlags::CopyDst | gpu::TextureUsageFlags::TextureBinding;
+		data.format = findInternalFormatForRaw(data);
 
 		std::map<uint32, std::map<uint32, std::map<uint32, const Image *>>> levels;
 		for (const auto &it : images.parts)
 			levels[it.mipmapLevel][it.cubeFace][it.layer] = +it.image;
-		CAGE_ASSERT(levels.size() >= data.mipLevels);
+		CAGE_ASSERT(levels.size() >= data.mipLevelsCount);
 
 		for (const auto &level : levels)
 		{
-			if (level.first >= data.mipLevels)
+			if (level.first >= data.mipLevelsCount)
 				continue;
 
 			uint32 size = 0;
@@ -392,7 +392,8 @@ namespace
 
 			const uint32 faces = level.second.size();
 			const uint32 layers = level.second.at(0).size();
-			ser << Vec3i(level.second.at(0).at(0)->resolution(), faces * layers);
+			ser << Vec3i(level.second.at(0).at(0)->resolution(), 1);
+			ser << uint32(faces * layers);
 			ser << size;
 			for (const auto &face : level.second)
 				for (const auto &layer : face.second)
@@ -404,23 +405,29 @@ namespace
 	{
 		TextureHeader header;
 		header.flags = target;
-		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), numeric_cast<uint32>(images.parts.size()));
+		header.resolution = Vec3i(images.parts[0].image->width(), images.parts[0].image->height(), 1);
+		header.arrayLayersCount = images.parts.size();
+		if (any(target & TextureFlags::Volume3D))
+		{
+			header.resolution[2] = header.arrayLayersCount;
+			header.arrayLayersCount = 1;
+		}
+		header.mipLevelsCount = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
 		header.channels = images.parts[0].image->channels();
-		header.mipLevels = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
-		header.sampleFilter = (uint32)convertFilter(processor->property("sampleFilter"));
-		header.mipmapFilter = (uint32)(header.mipLevels > 1 ? wgpu::MipmapFilterMode::Linear : wgpu::MipmapFilterMode::Nearest);
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
-		if (header.sampleFilter != (uint32)wgpu::FilterMode::Linear || header.mipmapFilter != (uint32)wgpu::MipmapFilterMode::Linear)
+		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
+		header.mipmapFilter = header.mipLevelsCount > 1 ? gpu::FilterModeEnum::Linear : gpu::FilterModeEnum::Nearest;
+		if (header.sampleFilter != gpu::FilterModeEnum::Linear || header.mipmapFilter != gpu::FilterModeEnum::Linear)
 			header.anisoFilter = 1;
-		header.wrapX = (uint32)convertWrap(processor->property("wrapX"));
-		header.wrapY = (uint32)convertWrap(processor->property("wrapY"));
-		header.wrapZ = (uint32)convertWrap(processor->property("wrapZ"));
+		header.wrapX = convertWrap(processor->property("wrapX"));
+		header.wrapY = convertWrap(processor->property("wrapY"));
+		header.wrapZ = convertWrap(processor->property("wrapZ"));
 
 		// todo
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "8-bit precision only for now");
 
-		if (header.mipLevels > 1)
+		if (header.mipLevelsCount > 1)
 			imageImportGenerateMipmaps(images);
 
 		MemoryBuffer inputBuffer;

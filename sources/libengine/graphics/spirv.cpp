@@ -313,16 +313,16 @@ namespace cage
 			{
 				try
 				{
-					glslang::TShader shader(stage);
 					if (source.empty())
 						return {};
 
 					CAGE_LOG(SeverityEnum::Info, "shader", Stringizer() + "compiling shader (" + EShLanguageToString(stage) + ")");
 
 					const char *src = source.c_str();
+					glslang::TShader shader(stage);
 					shader.setStrings(&src, 1);
 					shader.setEnvInput(glslang::EShSourceGlsl, stage, glslang::EShClientVulkan, 0);
-					shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1);
+					shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_1); // intentionally keep older target, for better compatibility
 					shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_3);
 					shader.setDebugInfo(true);
 
@@ -341,8 +341,14 @@ namespace cage
 						}
 					}
 
+					glslang::SpvOptions opts;
+					opts.generateDebugInfo = true;
+					//opts.emitNonSemanticShaderDebugInfo = true;
+					//opts.emitNonSemanticShaderDebugSource = true;
+					opts.disableOptimizer = true;
+					opts.validate = true;
 					std::vector<uint32> res;
-					glslang::GlslangToSpv(*shader.getIntermediate(), res);
+					glslang::GlslangToSpv(*shader.getIntermediate(), res, &opts);
 					validateShader(res);
 					return res;
 				}
@@ -414,7 +420,52 @@ namespace cage
 				opt.SetMessageConsumer(messageConsumer);
 				opt.RegisterPass(spvtools::CreateSplitCombinedImageSamplerPass());
 				opt.RegisterPass(spvtools::CreateResolveBindingConflictsPass());
-				opt.RegisterPerformancePasses();
+				//opt.RegisterPerformancePasses();
+				// skip passes that are most disruptive for preserving debug information
+				opt.RegisterPass(spvtools::CreateWrapOpKillPass())
+					.RegisterPass(spvtools::CreateDeadBranchElimPass())
+					.RegisterPass(spvtools::CreateMergeReturnPass())
+					//.RegisterPass(spvtools::CreateInlineExhaustivePass())
+					.RegisterPass(spvtools::CreateEliminateDeadFunctionsPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					.RegisterPass(spvtools::CreatePrivateToLocalPass())
+					.RegisterPass(spvtools::CreateLocalSingleBlockLoadStoreElimPass())
+					.RegisterPass(spvtools::CreateLocalSingleStoreElimPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					//.RegisterPass(spvtools::CreateScalarReplacementPass(0))
+					.RegisterPass(spvtools::CreateLocalAccessChainConvertPass())
+					.RegisterPass(spvtools::CreateLocalSingleBlockLoadStoreElimPass())
+					.RegisterPass(spvtools::CreateLocalSingleStoreElimPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					.RegisterPass(spvtools::CreateLocalMultiStoreElimPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					.RegisterPass(spvtools::CreateCCPPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					//.RegisterPass(spvtools::CreateLoopUnrollPass(true))
+					.RegisterPass(spvtools::CreateDeadBranchElimPass())
+					.RegisterPass(spvtools::CreateRedundancyEliminationPass())
+					.RegisterPass(spvtools::CreateCombineAccessChainsPass())
+					.RegisterPass(spvtools::CreateSimplificationPass())
+					//.RegisterPass(spvtools::CreateScalarReplacementPass(0))
+					.RegisterPass(spvtools::CreateLocalAccessChainConvertPass())
+					.RegisterPass(spvtools::CreateLocalSingleBlockLoadStoreElimPass())
+					.RegisterPass(spvtools::CreateLocalSingleStoreElimPass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					//.RegisterPass(spvtools::CreateSSARewritePass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					.RegisterPass(spvtools::CreateVectorDCEPass())
+					.RegisterPass(spvtools::CreateDeadInsertElimPass())
+					.RegisterPass(spvtools::CreateDeadBranchElimPass())
+					.RegisterPass(spvtools::CreateSimplificationPass())
+					.RegisterPass(spvtools::CreateIfConversionPass())
+					.RegisterPass(spvtools::CreateCopyPropagateArraysPass())
+					.RegisterPass(spvtools::CreateReduceLoadSizePass())
+					.RegisterPass(spvtools::CreateAggressiveDCEPass(false))
+					.RegisterPass(spvtools::CreateBlockMergePass())
+					.RegisterPass(spvtools::CreateRedundancyEliminationPass())
+					.RegisterPass(spvtools::CreateDeadBranchElimPass())
+					.RegisterPass(spvtools::CreateBlockMergePass())
+					.RegisterPass(spvtools::CreateSimplificationPass());
 				if (!opt.Run(source.data(), source.size(), &result))
 					CAGE_THROW_ERROR(Exception, "failed shader optimization");
 				validateShader(result);

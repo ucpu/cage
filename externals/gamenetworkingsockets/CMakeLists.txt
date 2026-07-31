@@ -2,6 +2,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "game networking sockets")
 message(STATUS "----------------------------------------------------------------")
 
+cage_heavily_optimized()
+
 set(BUILD_STATIC_LIB ON CACHE INTERNAL "Build static lib")
 set(BUILD_SHARED_LIB OFF CACHE INTERNAL "Build shared lib")
 set(Protobuf_USE_STATIC_LIBS ON CACHE INTERNAL "static protobuf")

@@ -1,8 +1,6 @@
 #include <atomic>
 #include <vector>
 
-#include <svector.h>
-
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
@@ -27,11 +25,11 @@ namespace cage
 				Holder<GraphicsBuffer> buffer;
 				uint32 frameIndex = 0;
 
-				Cache(GraphicsDevice *device) { buffer = newGraphicsBuffer(device, 5'000'000, "transient buffer"); }
+				Cache(GraphicsDevice *device) { buffer = newGraphicsBufferMapped(device, 5'000'000, "transient buffer"); }
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
-			uint32 currentFrame = 1;
+			uint32 currentFrame = 2;
 			uint32 finishedFrame = 0;
 			uint32 createdBuffers = 0;
 
@@ -66,20 +64,14 @@ namespace cage
 			void nextFrame()
 			{
 				ScopeLock lock(mutex);
-
 				for (auto &it : waiting)
 				{
 					if (it && it->frameIndex <= finishedFrame)
 						available.push_back(std::move(it));
 				}
 				std::erase_if(waiting, [](auto &it) { return !it; });
-
-				device->nativeQueue()->OnSubmittedWorkDone(wgpu::CallbackMode::AllowProcessEvents,
-					[&, expected = currentFrame](wgpu::QueueWorkDoneStatus status, wgpu::StringView message)
-					{
-						if (status == wgpu::QueueWorkDoneStatus::Success)
-							finishedFrame = max(finishedFrame, expected);
-					});
+				currentFrame++;
+				finishedFrame++;
 			}
 		};
 

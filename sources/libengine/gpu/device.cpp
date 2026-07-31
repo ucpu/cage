@@ -1,0 +1,620 @@
+#include <cstring>
+
+#define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS 1
+
+#define GLFW_INCLUDE_VULKAN 1
+#include <GLFW/glfw3.h>
+
+#include "../window/private.h"
+#include "gpu.h"
+
+#include <cage-core/debug.h>
+#include <cage-core/profiling.h>
+#include <cage-engine/window.h>
+
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
+
+namespace cage
+{
+	namespace
+	{
+		void logSplit(SeverityEnum severity, StringPointer component, PointerRange<const char> message)
+		{
+			static constexpr uint32 Max = String::MaxLength / 2;
+			bool cont = false;
+			while (!message.empty())
+			{
+				if (message[0] == '\n' || message[0] == '\r')
+				{
+					message = message.subRange(1, message.size() - 1);
+					continue;
+				}
+
+				uint32 nl = message.size();
+				for (const char &c : message)
+				{
+					if (c == '\n' || c == '\r')
+					{
+						nl = &c - message.data();
+						break;
+					}
+				}
+				PointerRange<const char> msg = message.subRange(0, nl);
+				message = message.subRange(nl, message.size() - nl);
+
+				while (!msg.empty())
+				{
+					uint32 s = min((uint32)msg.size(), Max);
+					privat::makeLog(std::source_location::current(), severity, component, String(msg.subRange(0, s)), cont, false);
+					cont = true;
+					msg = msg.subRange(s, msg.size() - s);
+				}
+			}
+		}
+
+		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
+		{
+			const char *msg = pCallbackData->pMessage;
+			const uint32 len = std::strlen(msg);
+
+			SeverityEnum sev = SeverityEnum::Info;
+			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
+				sev = SeverityEnum::Hint;
+			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+				sev = SeverityEnum::Warning;
+			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+				sev = SeverityEnum::Error;
+
+			logSplit(sev, "vulkan debug callback", PointerRange(msg, msg + len));
+
+			if (sev >= SeverityEnum::Error)
+			{
+				detail::debugBreakpoint();
+			}
+
+			return VK_FALSE;
+		}
+
+		void logError(const vkb::Error &err)
+		{
+			logSplit(SeverityEnum::Note, "vulkan boostrap", err.type.message());
+			for (const auto &it : err.detailed_failure_reasons)
+				logSplit(SeverityEnum::Note, "vulkan boostrap", it);
+			CAGE_LOG_THROW(Stringizer() + "error code: " + err.type.value());
+		}
+
+		template<class T>
+		T &&handleResult(vkb::Result<T> &&r)
+		{
+			if (!r.has_value())
+			{
+				logError(r.full_error());
+				CAGE_THROW_ERROR(Exception, "error in vulkan bootstrap");
+			}
+			return std::move(r.value());
+		}
+	}
+
+	namespace gpu
+	{
+		template<>
+		void ResourceInternal<vk::SwapchainKHR, Nothing>::destroy()
+		{
+			device->device.destroySwapchainKHR(value);
+		}
+
+		template<>
+		void ResourceInternal<vk::Semaphore, Nothing>::destroy()
+		{
+			device->device.destroySemaphore(value);
+		}
+
+		void WindowGpuContextImpl::SwpImage::init()
+		{
+			if (initialized)
+				return;
+			CommandEncoderImpl enc(*texture->image.device(), { .label = "init swapchain images" });
+			enc.imageTransitionPermanent(texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
+			texture->image.device()->additionalCommands.push_back(enc.finishEncoding());
+			initialized = true;
+		}
+
+		WindowGpuContextImpl::WindowGpuContextImpl(vk::Instance instance_) : instance(instance_) {}
+
+		WindowGpuContextImpl::~WindowGpuContextImpl() {}
+
+		void WindowGpuContextImpl::init(DeviceImpl &device)
+		{
+			std::vector<VkImage> images = handleResult(swapchain.get_images());
+
+			swpImages.clear();
+			for (uint32 i = 0; i < images.size(); i++)
+			{
+				auto &f = swpImages.emplace_back(device);
+				f.image = vk::Image(images[i]);
+				f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
+				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
+				f.texture->arrayLayersCount = f.texture->mipLevelsCount = 1;
+				f.texture->dimension = TextureDimensionEnum::e2D;
+				f.texture->format = TextureFormatEnum::BGRA8UnormSrgb; //swapchain.image_format; // todo convert
+				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
+				f.texture->image.setLabel((Stringizer() + "swapchainImage[" + i + "]").value);
+				vk::SemaphoreCreateInfo sci;
+				f.renderComplete = device.device.createSemaphore(sci);
+				f.renderComplete.setLabel((Stringizer() + "renderComplete[" + i + "]").value);
+			}
+			imageIndex = 0;
+
+			framesInFlight.clear();
+			for (uint32 i = 0; i < 2; i++)
+			{
+				auto &f = framesInFlight.emplace_back(device);
+				vk::SemaphoreCreateInfo sci;
+				f.imageAcquired = device.device.createSemaphore(sci);
+				f.imageAcquired.setLabel((Stringizer() + "imageAcquired[" + i + "]").value);
+			}
+			frameIndex = 0;
+		}
+
+		void WindowGpuContextImpl::clear()
+		{
+			swpImages.clear();
+			framesInFlight.clear();
+			vkb::destroy_swapchain(swapchain);
+			instance.destroySurfaceKHR(surface);
+			surface = nullptr;
+		}
+
+		DeviceImpl::Bootstrap::~Bootstrap()
+		{
+			vkb::destroy_device(dev);
+			vkb::destroy_instance(inst);
+		}
+
+		DeviceImpl::DeviceImpl(const GpuDeviceDescriptor &desc)
+		{
+			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
+
+			{
+				bootstrapInit(desc);
+				instance = bootstrap.inst.instance;
+				physicalDevice = bootstrap.phys.physical_device;
+				device = bootstrap.dev.device;
+				queue = bootstrap.q;
+			}
+
+			{
+				VULKAN_HPP_DEFAULT_DISPATCHER.init(instance, device);
+			}
+
+			{
+				VmaVulkanFunctions funcs = {};
+				funcs.vkGetInstanceProcAddr = bootstrap.inst.fp_vkGetInstanceProcAddr;
+				funcs.vkGetDeviceProcAddr = bootstrap.inst.fp_vkGetDeviceProcAddr;
+				VmaAllocatorCreateInfo info = {};
+				info.pVulkanFunctions = &funcs;
+				//info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+				info.instance = (VkInstance)instance;
+				info.physicalDevice = (VkPhysicalDevice)physicalDevice;
+				info.device = (VkDevice)device;
+				info.vulkanApiVersion = VK_API_VERSION_1_3;
+				check("vmaCreateAllocator", vmaCreateAllocator(&info, &allocator));
+			}
+
+			{
+				const vk::PhysicalDeviceProperties props = physicalDevice.getProperties();
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device name: " + props.deviceName);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu device type: " + vk::to_string(props.deviceType).c_str());
+			}
+			{
+				vk::PhysicalDeviceDriverProperties driverProps;
+				vk::PhysicalDeviceProperties2 props2;
+				props2.pNext = &driverProps;
+				physicalDevice.getProperties2(&props2);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu driver name: " + driverProps.driverName);
+				CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu driver info: " + driverProps.driverInfo);
+			}
+			{
+				const vk::PhysicalDeviceMemoryProperties mem = physicalDevice.getMemoryProperties();
+				for (uint32 i = 0; i < mem.memoryHeapCount; i++)
+				{
+					CAGE_LOG(SeverityEnum::Info, "gpu", Stringizer() + "gpu memory heap type: " + vk::to_string(mem.memoryHeaps[i].flags).c_str() + ", capacity: " + (mem.memoryHeaps[i].size / 1024 / 1024) + " MB");
+				}
+			}
+
+			{
+				std::array<vk::DescriptorPoolSize, 6> sizes = {};
+				sizes[0].type = vk::DescriptorType::eUniformBuffer;
+				sizes[0].descriptorCount = 2'000;
+				sizes[1].type = vk::DescriptorType::eUniformBufferDynamic;
+				sizes[1].descriptorCount = 1'000;
+				sizes[2].type = vk::DescriptorType::eStorageBuffer;
+				sizes[2].descriptorCount = 2'000;
+				sizes[3].type = vk::DescriptorType::eStorageBufferDynamic;
+				sizes[3].descriptorCount = 1'000;
+				sizes[4].type = vk::DescriptorType::eSampler;
+				sizes[4].descriptorCount = 4'000;
+				sizes[5].type = vk::DescriptorType::eSampledImage;
+				sizes[5].descriptorCount = 4'000;
+				vk::DescriptorPoolCreateInfo ci;
+				ci.flags |= vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+				ci.poolSizeCount = sizes.size();
+				ci.pPoolSizes = sizes.data();
+				ci.maxSets = 2'000;
+				descriptorPool = device.createDescriptorPoolUnique(ci);
+			}
+
+			{
+				vk::FenceCreateInfo info;
+				info.flags = vk::FenceCreateFlagBits::eSignaled;
+				framesFences[0] = device.createFenceUnique(info);
+				framesFences[1] = device.createFenceUnique(info);
+			}
+
+			{
+				const auto queueFamilyIndex = handleResult(bootstrap.dev.get_queue_index(vkb::QueueType::graphics));
+				capabilities.timestampsAvailable = bootstrap.dev.queue_families[queueFamilyIndex].timestampValidBits > 0;
+				if (capabilities.timestampsAvailable)
+					capabilities.timestampsConvert = bootstrap.phys.properties.limits.timestampPeriod;
+				capabilities.maxAnisotropy = bootstrap.phys.properties.limits.maxSamplerAnisotropy;
+			}
+
+			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
+		}
+
+		DeviceImpl::~DeviceImpl()
+		{
+			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
+
+			try
+			{
+				device.waitIdle();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				for (const auto &it : surfacesCollection)
+					it->clear();
+				surfacesCollection.clear();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				additionalCommands.clear();
+				for (uint32 i = 0; i < 10; i++)
+					applyDeferredDestructions();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				vmaDestroyAllocator(allocator);
+				allocator = nullptr;
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
+		}
+
+		void DeviceImpl::applyDeferredDestructions()
+		{
+			ProfilingScope profiling("deferred destruction");
+			profiling.set(Stringizer() + "destructions: " + deferredDestructions.back().size());
+
+			deferredDestructions.back().clear();
+			std::swap(deferredDestructions[2], deferredDestructions[1]);
+			std::swap(deferredDestructions[1], deferredDestructions[0]);
+
+			while (!disposingTasks.empty() && disposingTasks[0]->done())
+				disposingTasks.erase(disposingTasks.begin());
+		}
+
+		void DeviceImpl::bootstrapInit(const GpuDeviceDescriptor &desc)
+		{
+			uint32 extsCnt = 0;
+			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
+			bootstrap.inst = handleResult(vkb::InstanceBuilder() //
+											  .require_api_version(1, 3)
+											  .set_debug_callback(debugCallback)
+											  .enable_extensions(extsCnt, extsArr)
+#ifndef CAGE_DEPLOY
+											  .request_validation_layers()
+#endif // !CAGE_DEPLOY
+											  .set_engine_name("cage")
+											  .set_app_name(desc.label.str.data())
+											  .build());
+
+			auto surf = getWindowGpuContext(desc.window);
+			vk::PhysicalDeviceFeatures features10;
+			features10.samplerAnisotropy = true;
+			vk::PhysicalDeviceVulkan12Features features12;
+			//features12.descriptorIndexing = true;
+			//features12.shaderSampledImageArrayNonUniformIndexing = true;
+			//features12.descriptorBindingVariableDescriptorCount = true;
+			//features12.runtimeDescriptorArray = true;
+			//features12.bufferDeviceAddress = true;
+			vk::PhysicalDeviceVulkan13Features features13;
+			features13.synchronization2 = true;
+			features13.dynamicRendering = true;
+			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst) //
+											  .set_minimum_version(1, 3)
+											  .set_surface((VkSurfaceKHR)surf->data->surface)
+											  .set_required_features(features10)
+											  .set_required_features_12(features12)
+											  .set_required_features_13(features13)
+											  .select());
+
+			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
+
+			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
+		}
+
+		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)
+		{
+			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
+			if (!context)
+			{
+				CAGE_LOG(SeverityEnum::Info, "graphics", "creating window gpu surface");
+				auto s = std::make_shared<WindowGpuContextImpl>(bootstrap.inst.instance);
+				VkSurfaceKHR rawSurface;
+				const auto res = glfwCreateWindowSurface(bootstrap.inst.instance, privat::getGlfwWindow(window), nullptr, &rawSurface);
+				if (res != VkResult::VK_SUCCESS)
+				{
+					CAGE_LOG_THROW(Stringizer() + "error code: " + res);
+					CAGE_THROW_ERROR(Exception, "failed to create window gpu surface");
+				}
+				s->surface = vk::SurfaceKHR(rawSurface);
+				surfacesCollection.push_back(s);
+				context = systemMemory().createHolder<privat::WindowGpuContext>();
+				context->data = s;
+			}
+			return context.share();
+		}
+
+		void DeviceImpl::setVsyncPreference(bool vsync)
+		{
+			const vk::PresentModeKHR pm = vsync ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eImmediate;
+			if (preferredPresentation == pm)
+				return; // no change needed
+			preferredPresentation = pm;
+			for (auto &it : surfacesCollection)
+				it->resolution = {}; // refresh the swapchain next frame
+		}
+
+		double DeviceImpl::getTimestampsConversion() const
+		{
+			return capabilities.timestampsConvert;
+		}
+
+		void DeviceImpl::submitAndPresent(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
+		{
+			struct WindowEntry
+			{
+				Window *window = nullptr;
+				Texture *texture = nullptr;
+				Holder<privat::WindowGpuContext> ctxHolder;
+				WindowGpuContextImpl *ctx = nullptr;
+				Vec2i resolution;
+
+				WindowGpuContextImpl *operator->()
+				{
+					CAGE_ASSERT(ctx);
+					return ctx;
+				}
+			};
+			ankerl::svector<WindowEntry, 2> windows;
+			windows.reserve(windows_.size());
+			for (auto &w : windows_)
+			{
+				WindowEntry e;
+				e.window = w.window;
+				e.texture = &w.texture;
+				e.ctxHolder = getWindowGpuContext(e.window);
+				if (e.ctxHolder && e.ctxHolder->data)
+				{
+					e.ctx = e.ctxHolder->data.get();
+					e.resolution = e.window->resolution();
+				}
+				windows.push_back(std::move(e));
+			}
+
+			// submit
+			{
+				const ProfilingScope profiling("submit");
+				ankerl::svector<vk::CommandBufferSubmitInfo, 30> cmds;
+				for (auto &it : additionalCommands)
+					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+				for (auto &it : buffers_)
+					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+
+				ankerl::svector<vk::SemaphoreSubmitInfo, 2> ias, rcs;
+				for (auto &w : windows)
+				{
+					if (!w.ctx || !w->acquired)
+						continue;
+					ias.push_back(vk::SemaphoreSubmitInfo(w->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eAllCommands));
+					rcs.push_back(vk::SemaphoreSubmitInfo(w->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllCommands));
+				}
+
+				vk::SubmitInfo2 submitInfo;
+				submitInfo.waitSemaphoreInfoCount = ias.size();
+				submitInfo.pWaitSemaphoreInfos = ias.data();
+				submitInfo.commandBufferInfoCount = cmds.size();
+				submitInfo.pCommandBufferInfos = cmds.data();
+				submitInfo.signalSemaphoreInfoCount = rcs.size();
+				submitInfo.pSignalSemaphoreInfos = rcs.data();
+				check("resetFences", device.resetFences(1, &*framesFences[0]));
+				check("submit", queue.submit2(1, &submitInfo, *framesFences[0]));
+
+				additionalCommands.clear();
+
+				// advance frame index
+				std::swap(framesFences[0], framesFences[1]);
+				for (auto &w : windows)
+					if (w.ctx)
+						w->frameIndex = (w->frameIndex + 1) % 2;
+			}
+
+			// present
+			{
+				const ProfilingScope profiling("present");
+				ankerl::svector<vk::Semaphore, 2> rcs;
+				ankerl::svector<vk::SwapchainKHR, 2> sws;
+				ankerl::svector<uint32, 2> ids;
+				for (auto &w : windows)
+				{
+					if (!w.ctx || !w->acquired)
+						continue;
+					rcs.push_back(w->img().renderComplete);
+					sws.push_back((vk::SwapchainKHR)w->swapchain.swapchain);
+					ids.push_back(w->imageIndex);
+				}
+
+				if (!sws.empty())
+				{
+					vk::PresentInfoKHR info;
+					info.waitSemaphoreCount = rcs.size();
+					info.pWaitSemaphores = rcs.data();
+					info.swapchainCount = sws.size();
+					info.pSwapchains = sws.data();
+					info.pImageIndices = ids.data();
+					auto r = queue.presentKHR(info);
+					switch (r)
+					{
+						case vk::Result::eSuccess:
+							break;
+						case vk::Result::eSuboptimalKHR:
+						case vk::Result::eErrorOutOfDateKHR:
+						{
+							for (auto &it : windows)
+								if (it.ctx)
+									it.ctx->resolution = {}; // refresh next frame
+							break;
+						}
+						default:
+						{
+							check("presentKHR", r);
+							break;
+						}
+					}
+				}
+			}
+
+			// destroy pending destructions
+			applyDeferredDestructions();
+
+			// wait fence
+			{
+				const ProfilingScope profiling("wait fence");
+				check("waitForFences", device.waitForFences(1, &*framesFences[0], true, m));
+			}
+
+			// acquire next
+			{
+				const ProfilingScope profiling("acquire image");
+				for (auto &w : windows)
+				{
+					if (!w.ctx)
+						continue;
+					w->acquired = false;
+					if (w.resolution[0] <= 0 || w.resolution[1] <= 0)
+						continue;
+
+					if (w->resolution != w.resolution)
+					{
+						const ProfilingScope profiling("swapchain");
+						CAGE_LOG(SeverityEnum::Info, "graphics", "updating swapchain");
+						ResourceHandle<vk::SwapchainKHR> old(*this);
+						old = vk::SwapchainKHR(w->swapchain.swapchain);
+						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
+														.set_old_swapchain(w->swapchain)
+														.set_desired_min_image_count(3)
+														.set_desired_extent(w.resolution[0], w.resolution[1])
+														.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
+														.build());
+						w->resolution = w.resolution;
+						w->init(*this);
+					}
+
+					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)w->swapchain.swapchain, m, w->frm().imageAcquired);
+					switch (vk::Result(r.result))
+					{
+						case vk::Result::eSuccess:
+						{
+							w->imageIndex = r.value;
+							*w.texture = w->img().texture;
+							break;
+						}
+						case vk::Result::eSuboptimalKHR:
+						{
+							w->imageIndex = r.value;
+							*w.texture = w->img().texture;
+							w->resolution = {}; // refresh next frame
+							break;
+						}
+						case vk::Result::eErrorOutOfDateKHR:
+						{
+							w->resolution = {}; // refresh next frame
+							break;
+						}
+						default:
+						{
+							check("acquireNextImageKHR", r.result);
+							break;
+						}
+					}
+					w->img().init();
+					w->acquired = true;
+				}
+			}
+		}
+
+		void DeviceImpl::submit(PointerRange<const CommandBuffer> buffers_)
+		{
+			const ProfilingScope profiling("submit");
+
+			ankerl::svector<vk::CommandBufferSubmitInfo, 4> cmds;
+			for (auto &it : additionalCommands)
+				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+			for (auto &it : buffers_)
+				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+
+			vk::SubmitInfo2 submitInfo;
+			submitInfo.commandBufferInfoCount = cmds.size();
+			submitInfo.pCommandBufferInfos = cmds.data();
+			check("submit", queue.submit2(1, &submitInfo, nullptr));
+
+			additionalCommands.clear();
+		}
+
+		void DeviceImpl::wait()
+		{
+			const ProfilingScope profiling("wait");
+			device.waitIdle();
+		}
+
+		Device newGpuDevice(const GpuDeviceDescriptor &desc)
+		{
+			return Device(systemMemory().createHolder<DeviceImpl>(desc));
+		}
+
+		void logGpuMessage(SeverityEnum severity, StringView message)
+		{
+			logSplit(severity, "gpu", message.str);
+		}
+	}
+}

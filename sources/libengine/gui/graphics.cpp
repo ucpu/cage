@@ -2,6 +2,7 @@
 
 #include <cage-core/assetsManager.h>
 #include <cage-core/assetsOnDemand.h>
+#include <cage-core/color.h>
 #include <cage-core/hashString.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/profiling.h>
@@ -35,7 +36,7 @@ namespace cage
 
 				Command(Vec4i scissors) : scissors(scissors) {}
 
-				void draw(const GuiRenderConfig &config) override { config.encoder->nativeRenderEncoder().SetScissorRect(scissors[0], scissors[1], scissors[2], scissors[3]); }
+				void draw(const GuiRenderConfig &config) override { config.encoder->nativeEncoder().setScissorRect(scissors[0], scissors[1], scissors[2], scissors[3]); }
 			};
 
 			const Vec4i scissors = Vec4i(Vec2i(clipPos), Vec2i(clipSize));
@@ -73,7 +74,7 @@ namespace cage
 			{
 				Vec4 posOuter;
 				Vec4 posInner;
-				Vec4 accent;
+				Vec4 accent; // linear
 				uint32 controlType = 0;
 				uint32 layoutMode = 0;
 				uint32 dummy1 = 0;
@@ -90,7 +91,7 @@ namespace cage
 
 				e.posOuter = base->outer;
 				e.posInner = base->inner;
-				e.accent = base->accent;
+				e.accent = colorGammaToLinear(base->accent);
 				e.controlType = base->element;
 				e.layoutMode = (uint32)base->mode;
 
@@ -290,8 +291,6 @@ namespace cage
 				uint32 hash = 0;
 				if (any(texture->flags & TextureFlags::Array))
 					hash += HashString("Animated");
-				if (any(texture->flags & TextureFlags::Srgb))
-					hash += HashString("Delinearize");
 				if (base->disabled)
 					hash += HashString("Disabled");
 

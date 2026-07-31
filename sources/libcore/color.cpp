@@ -235,11 +235,26 @@ namespace cage
 		return Vec3(pow(rgb[0], gamma), pow(rgb[1], gamma), pow(rgb[2], gamma));
 	}
 
+	Vec4 colorGammaToLinear(const Vec4 &rgba)
+	{
+		return Vec4(colorGammaToLinear(Vec3(rgba)), rgba[3]);
+	}
+
+	Vec4 colorGammaToLinear(const Vec4 &rgba, Real gamma)
+	{
+		return Vec4(colorGammaToLinear(Vec3(rgba), gamma), rgba[3]);
+	}
+
 	Vec3 colorLinearToGamma(const Vec3 &rgb, Real gamma)
 	{
 		CAGE_ASSERT(colorInRange(rgb));
 		CAGE_ASSERT(gamma > 0);
 		return colorGammaToLinear(rgb, 1 / gamma);
+	}
+
+	Vec4 colorLinearToGamma(const Vec4 &rgba, Real gamma)
+	{
+		return Vec4(colorLinearToGamma(Vec3(rgba), gamma), rgba[3]);
 	}
 
 	Real distanceColor(const Vec3 &rgb1, const Vec3 &rgb2)

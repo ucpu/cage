@@ -4,7 +4,7 @@
 #include <array>
 
 #include <cage-core/geometry.h>
-#include <cage-engine/core.h>
+#include <cage-engine/gpuCore.h>
 
 namespace cage
 {
@@ -27,20 +27,22 @@ namespace cage
 	{
 		TextureFlags flags = (TextureFlags)0;
 		Vec3i resolution;
+		uint32 arrayLayersCount = 0;
+		uint32 mipLevelsCount = 0;
 		uint32 channels = 0;
-		uint32 mipLevels = 0;
-		uint64 usage = 0; // wgpu::TextureUsage
-		uint32 format = 0; // wgpu::TextureFormat
-		uint32 sampleFilter = 0; // wgpu::FilterMode
-		uint32 mipmapFilter = 0; // wgpu::MipmapFilterMode
 		uint32 anisoFilter = 1;
-		uint32 wrapX = 0; // wgpu::AddressMode
-		uint32 wrapY = 0; // wgpu::AddressMode
-		uint32 wrapZ = 0; // wgpu::AddressMode
+		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
+		gpu::TextureUsageFlags usage = gpu::TextureUsageFlags::Undefined;
+		gpu::FilterModeEnum sampleFilter = gpu::FilterModeEnum::Undefined;
+		gpu::FilterModeEnum mipmapFilter = gpu::FilterModeEnum::Undefined;
+		gpu::AddressModeEnum wrapX = gpu::AddressModeEnum::Undefined;
+		gpu::AddressModeEnum wrapY = gpu::AddressModeEnum::Undefined;
+		gpu::AddressModeEnum wrapZ = gpu::AddressModeEnum::Undefined;
 
 		// follows:
 		// for each mipmap level:
 		//   resolution, Vec3i
+		//   arrayLayersCount, uint32
 		//   size, uint32
 		//   array of bytes
 	};

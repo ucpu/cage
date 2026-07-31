@@ -102,6 +102,7 @@ namespace cage
 		void irrecoverableError(StringPointer explanation) noexcept
 		{
 			CAGE_LOG(SeverityEnum::Critical, "irrecoverableError", (const char *)explanation);
+			detail::debugBreakpoint();
 			std::terminate();
 		}
 
@@ -238,7 +239,10 @@ namespace cage
 			assertOutputLine(buffer, true);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
+			{
+				detail::debugBreakpoint();
 				std::terminate();
+			}
 			else
 			{
 				auto e = Exception(location, SeverityEnum::Critical, "assert failure");

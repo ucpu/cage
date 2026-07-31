@@ -8,6 +8,7 @@ extern "C"
 #include <hb-ft.h>
 
 #include <cage-core/assetsOnDemand.h>
+#include <cage-core/color.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
@@ -483,8 +484,8 @@ namespace cage
 				struct Global
 				{
 					Mat4 uniMvp;
-					Vec4 uniColor;
-				} global = { config.transform, config.color };
+					Vec4 uniColor; // linear
+				} global = { config.transform, colorGammaToLinear(config.color) };
 
 				Instance insts[MaxCharacters];
 				uint32 image = glyphs[layout.glyphs[0].index].image;
@@ -510,7 +511,7 @@ namespace cage
 						bind.buffers.push_back(ab1);
 						drw.dynamicOffsets.push_back(ab1);
 					}
-					bind.textures.push_back({ +t, 2 });
+					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = +t, .binding = 2 });
 
 					drw.model = +model;
 					drw.shader = +shader->get(0);

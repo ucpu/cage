@@ -5,6 +5,7 @@
 
 #include <svector.h>
 
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/graphicsBindings.h>
 
 namespace cage
@@ -33,7 +34,7 @@ namespace cage
 	{
 		GraphicsBindings material; // binds to set = 1 (optional, must match layout for the model)
 		GraphicsBindings bindings; // binds to set = 2
-		ankerl::svector<uint32, 5> dynamicOffsets = {}; // applies to buffers in set = 2
+		ankerl::svector<uint32, 5> dynamicOffsets; // applies to buffers in set = 2
 		const Model *model = nullptr;
 		uint32 instances = 1;
 	};
@@ -56,9 +57,10 @@ namespace cage
 		AssetLabel label;
 
 	public:
+		[[nodiscard]] detail::RenderEncoderNamedScope namedScope(StringPointer name);
+
 		void nextPass(const RenderPassConfig &config);
 
-		[[nodiscard]] detail::RenderEncoderNamedScope namedScope(StringPointer name);
 		void scissors(Vec2i origin, Vec2i size);
 		void draw(const DrawConfig &config);
 
@@ -67,8 +69,7 @@ namespace cage
 		GraphicsDevice *getDevice() const;
 		const RenderPassConfig &getCurrentPass() const;
 
-		const wgpu::CommandEncoder &nativeCommandEncoder();
-		const wgpu::RenderPassEncoder &nativeRenderEncoder();
+		gpu::CommandEncoder &nativeEncoder();
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsEncoder> newGraphicsEncoder(GraphicsDevice *device, const AssetLabel &label);

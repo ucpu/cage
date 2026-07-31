@@ -860,7 +860,7 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint32 CurrentAssetVersion = 4;
+		constexpr uint32 CurrentAssetVersion = 5;
 
 		void defaultFetch(AssetContext *asset)
 		{

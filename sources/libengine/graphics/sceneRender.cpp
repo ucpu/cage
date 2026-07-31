@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cmath> // std::floor
 #include <map>
 #include <vector>
 
@@ -599,20 +600,21 @@ namespace cage
 
 		Holder<Texture> createShadowmapCascadeView(Texture *tex, uint32 cascade)
 		{
-			wgpu::TextureViewDescriptor desc = {};
-			desc.baseArrayLayer = cascade;
-			desc.arrayLayerCount = 1;
+			gpu::TextureViewDescriptor desc;
 			desc.label = "shadowmap cascade view";
-			wgpu::TextureView view = tex->nativeTexture().CreateView(&desc);
-			return newTexture(tex->nativeTexture(), view, nullptr, "shadowmap cascade view");
+			desc.arrayLayersOffset = cascade;
+			desc.dimension = gpu::TextureDimensionEnum::e2DArray;
+			gpu::TextureView view = tex->nativeTexture().createView(desc);
+			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");
 		}
 
 		Holder<Texture> createShadowmap2D(uint32 entityId, uint32 resolution, uint32 cascades, GraphicsDevice *device)
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
-			conf.resolution = Vec3i(resolution, resolution, cascades);
-			conf.format = wgpu::TextureFormat::Depth32Float;
+			conf.resolution = Vec3i(resolution, resolution, 1);
+			conf.arrayLayersCount = cascades;
+			conf.format = gpu::TextureFormatEnum::Depth32Float;
 			conf.flags = TextureFlags::Array;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -622,8 +624,9 @@ namespace cage
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
-			conf.resolution = Vec3i(resolution, resolution, 6);
-			conf.format = wgpu::TextureFormat::Depth16Unorm;
+			conf.resolution = Vec3i(resolution, resolution, 1);
+			conf.arrayLayersCount = 6;
+			conf.format = gpu::TextureFormatEnum::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
 			conf.entityId = entityId;
 			return newTexture(device, conf);
@@ -1222,9 +1225,9 @@ namespace cage
 					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
-				// webgpu does not accept empty buffers
+				// vulkan does not accept empty buffers
 				if (uniArmatures.empty())
-					uniArmatures.resize(1); // todo remove when possible
+					uniArmatures.resize(1);
 				if (uniCustomData.empty())
 					uniCustomData.resize(4);
 
@@ -1326,7 +1329,7 @@ namespace cage
 					draw.dynamicOffsets.push_back(ab);
 				}
 				{
-					bind.buffers.push_back({ privat::getBufferDummy(scene.config.shared.device), 2 });
+					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 2 });
 				}
 				{
 					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
@@ -1594,10 +1597,10 @@ namespace cage
 					GraphicsBindingsCreateConfig bind;
 					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
 					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
-					bind.buffers.push_back({ dummyStorage, 2 });
-					bind.buffers.push_back({ dummyStorage, 3 });
-					bind.textures.push_back({ dummyRegular, 4 });
-					bind.textures.push_back({ dummyRegular, 6 });
+					bind.buffers.push_back({ .buffer = dummyStorage, .binding = 2 });
+					bind.buffers.push_back({ .buffer = dummyStorage, .binding = 3 });
+					bind.textures.push_back({ .texture = dummyRegular, .binding = 4 });
+					bind.textures.push_back({ .texture = dummyRegular, .binding = 6 });
 					globalBindings = newGraphicsBindings(scene.config.shared.device, bind);
 				}
 
@@ -1755,10 +1758,10 @@ namespace cage
 					GraphicsBindingsCreateConfig bind;
 					bind.buffers.push_back({ .buffer = +buffViewport, .binding = 0, .uniform = true });
 					bind.buffers.push_back({ .buffer = +buffProjection, .binding = 1, .uniform = true });
-					bind.buffers.push_back({ +buffLights, 2 });
-					bind.buffers.push_back({ +buffShadowedLights, 3 });
-					bind.textures.push_back({ +ssaoTexture, 4 });
-					bind.textures.push_back({ +depthSampling, 6 });
+					bind.buffers.push_back({ .buffer = +buffLights, .binding = 2 });
+					bind.buffers.push_back({ .buffer = +buffShadowedLights, .binding = 3 });
+					bind.textures.push_back({ .texture = +ssaoTexture, .binding = 4 });
+					bind.textures.push_back({ .texture = +depthSampling, .binding = 6 });
 
 					std::array<Texture *, 8> sh2d = {}, shCube = {};
 					for (const auto &sh : shadowmaps)
@@ -2017,7 +2020,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth target";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::Depth32Float;
+				conf.format = gpu::TextureFormatEnum::Depth32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2026,7 +2029,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = "depth sampling";
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::R32Float;
+				conf.format = gpu::TextureFormatEnum::R32Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2035,7 +2038,7 @@ namespace cage
 				TransientTextureCreateConfig conf;
 				conf.name = name;
 				conf.resolution = Vec3i(camera.resolution, 1);
-				conf.format = wgpu::TextureFormat::RGBA16Float;
+				conf.format = gpu::TextureFormatEnum::RGBA16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 
@@ -2046,7 +2049,7 @@ namespace cage
 				conf.name = "ssao target";
 				conf.resolution = Vec3i(camera.resolution, 0) / downscale;
 				conf.resolution[2] = 1;
-				conf.format = wgpu::TextureFormat::R16Float;
+				conf.format = gpu::TextureFormatEnum::R16Float;
 				return newTexture(scene.config.shared.device, conf);
 			}
 		};

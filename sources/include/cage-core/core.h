@@ -310,9 +310,14 @@ namespace cage
 		using value_type = T;
 
 		constexpr PointerRange() = default;
-		constexpr PointerRange(const PointerRange<T> &other) = default;
+		constexpr PointerRange(const PointerRange<T> &) = default;
+		constexpr PointerRange(PointerRange<T> &&) = default;
+		constexpr PointerRange<T> &operator=(const PointerRange<T> &) = default;
+		constexpr PointerRange<T> &operator=(PointerRange<T> &&) = default;
+
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
 		CAGE_FORCE_INLINE constexpr PointerRange(T *data, size_type size) : begin_(data), end_(data + size) {}
+		CAGE_FORCE_INLINE constexpr explicit PointerRange(T &one) : begin_(&one), end_(&one + 1) {}
 		template<size_type N>
 		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value)
 		{}
@@ -813,7 +818,7 @@ namespace cage
 				}
 			}
 
-			CAGE_FORCE_INLINE explicit operator bool() const { return !!data_; }
+			CAGE_FORCE_INLINE explicit operator bool() const noexcept { return !!data_; }
 
 			CAGE_FORCE_INLINE T *operator->() const
 			{

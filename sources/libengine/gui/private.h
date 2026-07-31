@@ -155,7 +155,7 @@ namespace cage
 		FontFormat format;
 		Holder<Font> font;
 		FontLayoutResult layout;
-		Vec3 color = Vec3::Nan();
+		Vec3 color = Vec3::Nan(); // sRGB
 	};
 
 	struct TextItem : private Immovable, private CommonTextData
@@ -220,7 +220,7 @@ namespace cage
 	{
 		Vec4 outer;
 		Vec4 inner;
-		Vec4 accent;
+		Vec4 accent; // sRGB, blending factor
 		const GuiSkinConfig *skin = nullptr;
 		uint32 element = m;
 		ElementModeEnum mode = m;

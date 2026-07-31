@@ -79,16 +79,12 @@ jobs:
         build-arch: ["", "-arm"]
         build-config: [debug, release]
         compiler:
-        - {
-            cc: gcc-14,
-            cxx: g++-14,
-            install: gcc-14 g++-14
-          }
-        - {
-            cc: clang-18,
-            cxx: clang++-18,
-            install: clang-18
-          }
+        - cc: gcc-14
+          cxx: g++-14
+          install: gcc-14 g++-14
+        - cc: clang-18
+          cxx: clang++-18
+          install: clang-18
         steam-sockets: [ON, OFF]
         exclude:
         - build-config: release
@@ -271,18 +267,17 @@ jobs:
       matrix:
         build-config: [debug, release]
         sanitizer:
-        - {
-            name: undefined,
-            flags: -fsanitize=undefined -fno-omit-frame-pointer
-          }
-        - {
-            name: address,
+        - name: undefined
+          flags: -fsanitize=undefined -fno-omit-frame-pointer
+        - name: address
+          flags: -fsanitize=address -fno-omit-frame-pointer
+        - name: thread
+          flags: -fsanitize=thread -fno-omit-frame-pointer
+        exclude:
+        - build-config: release
+          sanitizer:
+            name: address # this sanitizer fails to correctly build due to link-time optimizations
             flags: -fsanitize=address -fno-omit-frame-pointer
-          }
-        - {
-            name: thread,
-            flags: -fsanitize=thread -fno-omit-frame-pointer
-          }
 
     steps:
     - name: Install packages

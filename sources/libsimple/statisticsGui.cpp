@@ -159,14 +159,14 @@ namespace cage
 					if (in.key == keyDecreaseGamma)
 					{
 						Real g = Real(confRenderGamma);
-						g = max(1, g - 0.05);
+						g = max(0.5, g - 0.05);
 						confRenderGamma = g.value;
 						return true;
 					}
 					if (in.key == keyIncreaseGamma)
 					{
 						Real g = Real(confRenderGamma);
-						g = min(5, g + 0.05);
+						g = min(1.5, g + 0.05);
 						confRenderGamma = g.value;
 						return true;
 					}

@@ -22,7 +22,9 @@ namespace cage
 {
 	namespace privat
 	{
+	#if defined(CAGE_USE_STEAM_SOCKETS)
 		void initializeAbslLogSink();
+	#endif
 	}
 
 	namespace
@@ -131,13 +133,12 @@ namespace cage
 
 		void initialize(bool useAuth, bool useRelay)
 		{
-			privat::initializeAbslLogSink();
-
 	#if defined(CAGE_USE_STEAM_SOCKETS)
 			struct InitializerSockets
 			{
 				InitializerSockets()
 				{
+					privat::initializeAbslLogSink();
 					SteamNetworkingSockets_SetServiceThreadInitCallback(+[]() { currentThreadName("steam sockets"); });
 					SteamNetworkingErrMsg msg;
 					if (!GameNetworkingSockets_Init(nullptr, msg))
