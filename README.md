@@ -51,7 +51,6 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Provides low-level/generic engine functionality
 - Scene description with entities
 - Window and input management
-- Uses native webgpu, the dawn implementation
 - Roughness/metallic workflow
 - Graphics effects:
   - hdr, bloom, tonemapping, gamma correction
@@ -61,7 +60,8 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Automatic shadowmaps
 - Sound
 - Gui
-- ~Virtual reality~ (vr has been disabled when transitioning from opengl to webgpu)
+- Uses vulkan backend
+- ~Virtual reality~ (vr has been temporarily disabled)
 
 ## Simple library
 
