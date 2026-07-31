@@ -142,7 +142,7 @@ namespace cage
 
 			Holder<Image> screenshot()
 			{
-				CAGE_LOG(SeverityEnum::Info, "engine", "requesting to make a screenshot");
+				CAGE_LOG(SeverityEnum::Info, "graphics", "requesting to make a screenshot");
 
 				ScopeGuard scopeExit(
 					[this]()
@@ -192,7 +192,7 @@ namespace cage
 					}
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "engine", "screenshot done");
+				CAGE_LOG(SeverityEnum::Info, "graphics", "screenshot done");
 				return img;
 			}
 

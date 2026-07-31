@@ -421,7 +421,7 @@ namespace cage
 			{
 				case TextureFormatEnum::Undefined:
 					CAGE_ASSERT(!"TextureFormatEnum::Undefined");
-					break;
+					return vk::ImageAspectFlagBits::eNone;
 				case TextureFormatEnum::Stencil8:
 					return vk::ImageAspectFlagBits::eStencil;
 				case TextureFormatEnum::Depth16Unorm:

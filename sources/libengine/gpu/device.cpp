@@ -98,6 +98,12 @@ namespace cage
 	namespace gpu
 	{
 		template<>
+		void ResourceInternal<vk::SwapchainKHR, Nothing>::destroy()
+		{
+			device->device.destroySwapchainKHR(value);
+		}
+
+		template<>
 		void ResourceInternal<vk::Semaphore, Nothing>::destroy()
 		{
 			device->device.destroySemaphore(value);
@@ -402,6 +408,13 @@ namespace cage
 				Texture *texture = nullptr;
 				Holder<privat::WindowGpuContext> ctxHolder;
 				WindowGpuContextImpl *ctx = nullptr;
+				Vec2i resolution;
+
+				WindowGpuContextImpl *operator->()
+				{
+					CAGE_ASSERT(ctx);
+					return ctx;
+				}
 			};
 			ankerl::svector<WindowEntry, 2> windows;
 			windows.reserve(windows_.size());
@@ -412,14 +425,17 @@ namespace cage
 				e.texture = &w.texture;
 				e.ctxHolder = getWindowGpuContext(e.window);
 				if (e.ctxHolder && e.ctxHolder->data)
+				{
 					e.ctx = e.ctxHolder->data.get();
+					e.resolution = e.window->resolution();
+				}
 				windows.push_back(std::move(e));
 			}
 
 			// submit
 			{
 				const ProfilingScope profiling("submit");
-				ankerl::svector<vk::CommandBufferSubmitInfo, 16> cmds;
+				ankerl::svector<vk::CommandBufferSubmitInfo, 30> cmds;
 				for (auto &it : additionalCommands)
 					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 				for (auto &it : buffers_)
@@ -428,11 +444,10 @@ namespace cage
 				ankerl::svector<vk::SemaphoreSubmitInfo, 2> ias, rcs;
 				for (auto &w : windows)
 				{
-					if (w.ctx && !w.ctx->swpImages.empty())
-					{
-						ias.push_back(vk::SemaphoreSubmitInfo(w.ctx->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eAllCommands));
-						rcs.push_back(vk::SemaphoreSubmitInfo(w.ctx->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllCommands));
-					}
+					if (!w.ctx || !w->acquired)
+						continue;
+					ias.push_back(vk::SemaphoreSubmitInfo(w->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eAllCommands));
+					rcs.push_back(vk::SemaphoreSubmitInfo(w->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllCommands));
 				}
 
 				vk::SubmitInfo2 submitInfo;
@@ -450,23 +465,23 @@ namespace cage
 				// advance frame index
 				std::swap(framesFences[0], framesFences[1]);
 				for (auto &w : windows)
-					w.ctx->frameIndex = (w.ctx->frameIndex + 1) % 2;
+					if (w.ctx)
+						w->frameIndex = (w->frameIndex + 1) % 2;
 			}
 
 			// present
 			{
 				const ProfilingScope profiling("present");
-				ankerl::svector<vk::SwapchainKHR, 2> sws;
 				ankerl::svector<vk::Semaphore, 2> rcs;
+				ankerl::svector<vk::SwapchainKHR, 2> sws;
 				ankerl::svector<uint32, 2> ids;
 				for (auto &w : windows)
 				{
-					if (w.ctx && !w.ctx->swpImages.empty())
-					{
-						sws.push_back((vk::SwapchainKHR)w.ctx->swapchain.swapchain);
-						rcs.push_back(w.ctx->img().renderComplete);
-						ids.push_back(w.ctx->imageIndex);
-					}
+					if (!w.ctx || !w->acquired)
+						continue;
+					rcs.push_back(w->img().renderComplete);
+					sws.push_back((vk::SwapchainKHR)w->swapchain.swapchain);
+					ids.push_back(w->imageIndex);
 				}
 
 				if (!sws.empty())
@@ -513,43 +528,47 @@ namespace cage
 				const ProfilingScope profiling("acquire image");
 				for (auto &w : windows)
 				{
-					const Vec2i res = w.window->resolution();
-					if (res[0] <= 0 || res[1] <= 0 || !w.ctx)
+					if (!w.ctx)
+						continue;
+					w->acquired = false;
+					if (w.resolution[0] <= 0 || w.resolution[1] <= 0)
 						continue;
 
-					auto &data = *w.ctx;
-					if (data.resolution != res)
+					if (w->resolution != w.resolution)
 					{
 						const ProfilingScope profiling("swapchain");
-						data.swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)data.surface) //
-														  .set_old_swapchain(data.swapchain)
-														  .set_desired_min_image_count(3)
-														  .set_desired_extent(res[0], res[1])
-														  .set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
-														  .build());
-						data.resolution = res;
-						data.init(*this);
+						CAGE_LOG(SeverityEnum::Info, "graphics", "updating swapchain");
+						ResourceHandle<vk::SwapchainKHR> old(*this);
+						old = vk::SwapchainKHR(w->swapchain.swapchain);
+						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
+														.set_old_swapchain(w->swapchain)
+														.set_desired_min_image_count(3)
+														.set_desired_extent(w.resolution[0], w.resolution[1])
+														.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
+														.build());
+						w->resolution = w.resolution;
+						w->init(*this);
 					}
 
-					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)data.swapchain.swapchain, m, data.frm().imageAcquired);
+					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)w->swapchain.swapchain, m, w->frm().imageAcquired);
 					switch (vk::Result(r.result))
 					{
 						case vk::Result::eSuccess:
 						{
-							data.imageIndex = r.value;
-							*w.texture = data.img().texture;
+							w->imageIndex = r.value;
+							*w.texture = w->img().texture;
 							break;
 						}
 						case vk::Result::eSuboptimalKHR:
 						{
-							data.imageIndex = r.value;
-							*w.texture = data.img().texture;
-							data.resolution = {}; // refresh next frame
+							w->imageIndex = r.value;
+							*w.texture = w->img().texture;
+							w->resolution = {}; // refresh next frame
 							break;
 						}
 						case vk::Result::eErrorOutOfDateKHR:
 						{
-							data.resolution = {}; // refresh next frame
+							w->resolution = {}; // refresh next frame
 							break;
 						}
 						default:
@@ -558,7 +577,8 @@ namespace cage
 							break;
 						}
 					}
-					data.img().init();
+					w->img().init();
+					w->acquired = true;
 				}
 			}
 		}
@@ -566,6 +586,7 @@ namespace cage
 		void DeviceImpl::submit(PointerRange<const CommandBuffer> buffers_)
 		{
 			const ProfilingScope profiling("submit");
+
 			ankerl::svector<vk::CommandBufferSubmitInfo, 4> cmds;
 			for (auto &it : additionalCommands)
 				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
