@@ -193,11 +193,11 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, Vec3i extents);
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents);
 
-			void setVsyncPreference(bool vsync);
+			void setVsyncPreference(bool vsync, bool tripleBuffer);
 			double getTimestampsConversion() const;
 			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 			void submit(PointerRange<const CommandBuffer> buffers);
-			void wait();
+			void waitDeviceIdle();
 
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);

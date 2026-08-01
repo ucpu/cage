@@ -57,7 +57,7 @@ namespace cage
 			uint64 time = 0; // microseconds
 
 		private:
-			static constexpr uint32 Frames = 8;
+			static constexpr uint32 Frames = 2;
 			GraphicsDeviceImpl *device = nullptr;
 			gpu::QuerySet querySet;
 			gpu::Buffer buffResolve;
@@ -71,7 +71,7 @@ namespace cage
 		class GraphicsDeviceImpl : public GraphicsDevice
 		{
 		public:
-			Holder<Mutex> mutex = newMutex(); // used for the device and queue
+			Holder<Mutex> mutex = newMutex(); // used for commands and statistics
 			GraphicsDeviceCreateConfig config;
 			gpu::Device device;
 			Holder<privat::DeviceBindingsCache> bindingsCache;
@@ -184,17 +184,15 @@ namespace cage
 		void GpuFrameTimer::frameStart()
 		{
 			const ProfilingScope profiling("gpu timer start");
-			ScopeLock lock(device->mutex);
 			const uint32 current = frameIndex % Frames;
 			auto ce = device->device.createCommandEncoder({ .label = "frame timing start" });
 			ce.writeTimestamp(querySet, current * 2 + 0);
-			device->commands.push_back(ce.finishEncoding());
+			device->insertCommandBuffer(ce.finishEncoding(), {});
 		}
 
 		void GpuFrameTimer::frameEnd()
 		{
 			const ProfilingScope profiling("gpu timer end");
-			ScopeLock lock(device->mutex);
 			{
 				const uint32 current = frameIndex % Frames;
 				const uint64 offset = current * 256;
@@ -205,7 +203,7 @@ namespace cage
 					ce.resolveQuerySet(querySet, current * 2, 2, buffResolve, offset);
 					ce.copyBufferToBuffer(buffResolve, offset, buffRead[current], 0, 2 * sizeof(uint64));
 				}
-				device->commands.push_back(ce.finishEncoding()); // this enques the cmdbuf to be submitted, but does not submit it yet
+				device->insertCommandBuffer(ce.finishEncoding(), {}); // this enques the cmdbuf to be submitted, but does not submit it yet
 			}
 			if (frameIndex >= Frames * 2)
 			{
@@ -251,17 +249,10 @@ namespace cage
 		return systemMemory().createImpl<GraphicsDevice, GraphicsDeviceImpl>(config);
 	}
 
-	Holder<gpu::Device> GraphicsDevice::nativeDevice()
+	gpu::Device *GraphicsDevice::nativeDevice()
 	{
 		GraphicsDeviceImpl *impl = (GraphicsDeviceImpl *)this;
-		struct LockedDevice : private Noncopyable
-		{
-			ScopeLock<Mutex> lock;
-			gpu::Device device;
-			LockedDevice(ScopeLock<Mutex> &&l, gpu::Device d) : lock(std::move(l)), device(std::move(d)) {}
-		};
-		Holder<LockedDevice> l = systemMemory().createHolder<LockedDevice>(ScopeLock(impl->mutex), impl->device);
-		return Holder<gpu::Device>(&l->device, std::move(l));
+		return &impl->device;
 	}
 
 	void GraphicsDevice::insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics)

@@ -68,7 +68,7 @@ namespace cage
 			TextureHeader header;
 			des >> header;
 
-			Holder<gpu::Device> dev = ((GraphicsDevice *)context->device)->nativeDevice();
+			gpu::Device *dev = ((GraphicsDevice *)context->device)->nativeDevice();
 
 			gpu::TextureDescriptor td;
 			td.label = context->textId;

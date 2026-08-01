@@ -339,7 +339,7 @@ namespace cage
 					td.usage |= gpu::TextureUsageFlags::TextureBinding;
 				if (config.renderable)
 					td.usage |= gpu::TextureUsageFlags::RenderAttachment;
-				Holder<gpu::Device> dev = device->nativeDevice();
+				gpu::Device *dev = device->nativeDevice();
 				texture = dev->createTexture(td);
 
 				gpu::TextureViewDescriptor vd;

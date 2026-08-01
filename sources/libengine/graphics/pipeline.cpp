@@ -157,7 +157,7 @@ namespace cage
 				gpu::PipelineLayoutDescriptor pld;
 				pld.bindGroupLayouts = config.bindingsLayouts;
 
-				Holder<gpu::Device> dev = device->nativeDevice();
+				gpu::Device *dev = device->nativeDevice();
 				rpd.layout = dev->createPipelineLayout(pld);
 				dev->createRenderPipelineAsync(rpd,
 					[this, target](gpu::StatusEnum status, gpu::RenderPipeline pipeline, gpu::StringView message)

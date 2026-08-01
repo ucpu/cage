@@ -31,13 +31,11 @@ namespace cage
 
 		void Buffer::flush()
 		{
-			ScopeLock lock(get()->buffer.device()->mutex);
 			get()->flush();
 		}
 
 		void Buffer::invalidate()
 		{
-			ScopeLock lock(get()->buffer.device()->mutex);
 			get()->invalidate();
 		}
 
@@ -143,7 +141,6 @@ namespace cage
 
 		Buffer Device::createBuffer(const BufferDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			Buffer b = Buffer(systemMemory().createHolder<BufferImpl>(*get(), desc));
 			b->defaultState = BufferStateEnum::Read;
 			return b;
@@ -151,7 +148,6 @@ namespace cage
 
 		Texture Device::createTexture(const TextureDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			Texture t = Texture(systemMemory().createHolder<TextureImpl>(*get(), desc));
 
 			{ // initial image layout transition
@@ -167,7 +163,9 @@ namespace cage
 				}
 				enc.imageTransitionPermanent(t, ImageStateEnum::Undefined, intermediate);
 				enc.imageTransitionPermanent(t, intermediate, ImageStateEnum::Sampled);
-				get()->additionalCommands.push_back(enc.finishEncoding());
+				CommandBuffer cmd = enc.finishEncoding();
+				ScopeLock lock(get()->mutex);
+				get()->additionalCommands.push_back(std::move(cmd));
 			}
 
 			return t;
@@ -175,49 +173,42 @@ namespace cage
 
 		Sampler Device::createSampler(const SamplerDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return Sampler(systemMemory().createHolder<SamplerImpl>(*get(), desc));
 		}
 
 		BindGroupLayout Device::createBindGroupLayout(const BindGroupLayoutDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return BindGroupLayout(systemMemory().createHolder<BindGroupLayoutImpl>(*get(), desc));
 		}
 
 		BindGroup Device::createBindGroup(const BindGroupDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
+			ScopeLock lock(get()->mutex); // uses shared descriptorPool
 			return BindGroup(systemMemory().createHolder<BindGroupImpl>(*get(), desc));
 		}
 
 		CommandEncoder Device::createCommandEncoder(const CommandEncoderDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return CommandEncoder(systemMemory().createHolder<CommandEncoderImpl>(*get(), desc));
 		}
 
 		ShaderModule Device::createShaderModule(const ShaderModuleDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return ShaderModule(systemMemory().createHolder<ShaderModuleImpl>(*get(), desc));
 		}
 
 		PipelineLayout Device::createPipelineLayout(const PipelineLayoutDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return PipelineLayout(systemMemory().createHolder<PipelineLayoutImpl>(*get(), desc));
 		}
 
 		QuerySet Device::createQuerySet(const QuerySetDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return QuerySet(systemMemory().createHolder<QuerySetImpl>(*get(), desc));
 		}
 
 		RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor &desc)
 		{
-			ScopeLock lock(get()->mutex);
 			return RenderPipeline(systemMemory().createHolder<RenderPipelineImpl>(*get(), desc));
 		}
 
@@ -234,7 +225,7 @@ namespace cage
 					RenderPipeline rp;
 					try
 					{
-						rp = RenderPipeline(systemMemory().createHolder<RenderPipelineImpl>(*device.get(), desc));
+						rp = device.createRenderPipeline(desc);
 					}
 					catch (...)
 					{
@@ -259,7 +250,6 @@ namespace cage
 		void Device::writeBuffer(const Buffer &buffer, uint64 offset, PointerRange<const char> data)
 		{
 			CAGE_ASSERT(buffer.getSize() >= offset + data.size());
-			ScopeLock lock(get()->mutex);
 			BufferDescriptor desc;
 			desc.label = "staging buffer";
 			desc.size = data.size();
@@ -267,14 +257,15 @@ namespace cage
 			Buffer staging = createBuffer(desc);
 			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
 			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
-			CommandEncoderImpl cmd(*get(), { .label = "copy staging buffer" });
-			cmd.copyBufferToBuffer(staging, 0, buffer, offset, data.size());
-			get()->additionalCommands.push_back(cmd.finishEncoding());
+			CommandEncoderImpl enc(*get(), { .label = "copy staging buffer" });
+			enc.copyBufferToBuffer(staging, 0, buffer, offset, data.size());
+			CommandBuffer cmd = enc.finishEncoding();
+			ScopeLock lock(get()->mutex);
+			get()->additionalCommands.push_back(std::move(cmd));
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, Vec3i extents)
 		{
-			ScopeLock lock(get()->mutex);
 			BufferDescriptor desc;
 			desc.label = "staging buffer";
 			desc.size = data.size();
@@ -282,32 +273,32 @@ namespace cage
 			Buffer staging = createBuffer(desc);
 			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
 			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
-			CommandEncoderImpl cmd(*get(), { .label = "copy staging buffer" });
-			cmd.copyBufferToTexture(staging, 0, dest, extents);
-			get()->additionalCommands.push_back(cmd.finishEncoding());
+			CommandEncoderImpl enc(*get(), { .label = "copy staging buffer" });
+			enc.copyBufferToTexture(staging, 0, dest, extents);
+			CommandBuffer cmd = enc.finishEncoding();
+			ScopeLock lock(get()->mutex);
+			get()->additionalCommands.push_back(std::move(cmd));
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents)
 		{
-			// no lock
 			return writeTexture(dest, data.cast<const char>(), extents);
 		}
 
-		void Device::setVsyncPreference(bool vsync)
+		void Device::setVsyncPreference(bool vsync, bool tripleBuffer)
 		{
 			ScopeLock lock(get()->mutex);
-			get()->setVsyncPreference(vsync);
+			get()->setVsyncPreference(vsync, tripleBuffer);
 		}
 
 		double Device::getTimestampsConversion() const
 		{
-			// no lock
 			return get()->getTimestampsConversion();
 		}
 
 		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
-			ScopeLock lock(get()->mutex);
+			// locking is inside
 			get()->submitAndPresent(buffers, windows);
 		}
 
@@ -317,15 +308,13 @@ namespace cage
 			get()->submit(buffers);
 		}
 
-		void Device::wait()
+		void Device::waitDeviceIdle()
 		{
-			ScopeLock lock(get()->mutex);
-			get()->wait();
+			get()->waitDeviceIdle();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
 		{
-			ScopeLock lock(get()->image.device()->mutex);
 			return TextureView(systemMemory().createHolder<TextureViewImpl>(*this, desc));
 		}
 

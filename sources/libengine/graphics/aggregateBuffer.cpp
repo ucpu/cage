@@ -29,8 +29,7 @@ namespace cage
 			};
 			std::vector<Holder<Cache>> available, waiting;
 
-			uint32 currentFrame = 2;
-			uint32 finishedFrame = 0;
+			uint32 currentFrame = 0;
 			uint32 createdBuffers = 0;
 
 			void generateDummyBuffers() { dummyBuffer = newGraphicsBuffer(device, 256, "dummyBuffer"); }
@@ -66,12 +65,11 @@ namespace cage
 				ScopeLock lock(mutex);
 				for (auto &it : waiting)
 				{
-					if (it && it->frameIndex <= finishedFrame)
+					if (it && it->frameIndex + 2 < currentFrame)
 						available.push_back(std::move(it));
 				}
-				std::erase_if(waiting, [](auto &it) { return !it; });
+				std::erase_if(waiting, [](const auto &it) { return !it; });
 				currentFrame++;
-				finishedFrame++;
 			}
 		};
 

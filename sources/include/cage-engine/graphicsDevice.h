@@ -20,7 +20,7 @@ namespace cage
 	class CAGE_ENGINE_API GraphicsDevice : private Immovable
 	{
 	public:
-		Holder<gpu::Device> nativeDevice(); // locks the device for thread-safe access
+		gpu::Device *nativeDevice(); // locks the device for thread-safe access
 		void insertCommandBuffer(gpu::CommandBuffer &&commands, const GraphicsCommandBufferStatistics &statistics);
 		GraphicsFrameStatistics nextFrame(PointerRange<GraphicsWindowPresentation> windows);
 	};

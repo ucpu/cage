@@ -318,6 +318,7 @@ namespace cage
 			std::array<std::vector<Holder<void>>, 3> deferredDestructions = {}; // insert into [0]
 			std::vector<Holder<AsyncTask>> disposingTasks;
 			vk::PresentModeKHR preferredPresentation = vk::PresentModeKHR::eFifo;
+			bool preferredTripleBuffering = false;
 
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
@@ -330,11 +331,11 @@ namespace cage
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
-			void setVsyncPreference(bool vsync);
+			void setVsyncPreference(bool vsync, bool tripleBuffer);
 			double getTimestampsConversion() const;
 			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 			void submit(PointerRange<const CommandBuffer> buffers);
-			void wait();
+			void waitDeviceIdle();
 		};
 
 		class PipelineLayoutImpl : private Immovable
@@ -461,7 +462,6 @@ namespace cage
 		ResourceInternal<T, Extra>::~ResourceInternal()
 		{
 			CAGE_ASSERT(device);
-			ScopeLock lock(device->mutex);
 			destroy();
 		}
 

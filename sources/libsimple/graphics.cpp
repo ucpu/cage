@@ -173,7 +173,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "timed out waiting for screenshot");
 
 				// wait for the copying on the device to finish
-				engineGraphicsDevice()->nativeDevice()->wait();
+				engineGraphicsDevice()->nativeDevice()->waitDeviceIdle();
 
 				CAGE_ASSERT(scrnshtData);
 				Holder<Image> img = newImage();
@@ -321,6 +321,7 @@ namespace cage
 				{
 					if (scrnshtState == ScreenshotStateEnum::Request)
 						scrnshtState = ScreenshotStateEnum::Failed;
+					threadSleep(15'000); // prevent fast looping when the window is minimized
 					return;
 				}
 

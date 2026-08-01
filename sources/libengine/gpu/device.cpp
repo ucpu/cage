@@ -385,12 +385,13 @@ namespace cage
 			return context.share();
 		}
 
-		void DeviceImpl::setVsyncPreference(bool vsync)
+		void DeviceImpl::setVsyncPreference(bool vsync, bool tripleBuffer)
 		{
 			const vk::PresentModeKHR pm = vsync ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eImmediate;
-			if (preferredPresentation == pm)
+			if (preferredPresentation == pm && preferredTripleBuffering == tripleBuffer)
 				return; // no change needed
 			preferredPresentation = pm;
+			preferredTripleBuffering = tripleBuffer;
 			for (auto &it : surfacesCollection)
 				it->resolution = {}; // refresh the swapchain next frame
 		}
@@ -416,7 +417,7 @@ namespace cage
 					return ctx;
 				}
 			};
-			ankerl::svector<WindowEntry, 2> windows;
+			ankerl::svector<WindowEntry, 1> windows;
 			windows.reserve(windows_.size());
 			for (auto &w : windows_)
 			{
@@ -434,6 +435,7 @@ namespace cage
 
 			// submit
 			{
+				ScopeLock lock(mutex); // must protect additionalCommands
 				const ProfilingScope profiling("submit");
 				ankerl::svector<vk::CommandBufferSubmitInfo, 30> cmds;
 				for (auto &it : additionalCommands)
@@ -441,7 +443,7 @@ namespace cage
 				for (auto &it : buffers_)
 					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 
-				ankerl::svector<vk::SemaphoreSubmitInfo, 2> ias, rcs;
+				ankerl::svector<vk::SemaphoreSubmitInfo, 1> ias, rcs;
 				for (auto &w : windows)
 				{
 					if (!w.ctx || !w->acquired)
@@ -472,9 +474,9 @@ namespace cage
 			// present
 			{
 				const ProfilingScope profiling("present");
-				ankerl::svector<vk::Semaphore, 2> rcs;
-				ankerl::svector<vk::SwapchainKHR, 2> sws;
-				ankerl::svector<uint32, 2> ids;
+				ankerl::svector<vk::Semaphore, 1> rcs;
+				ankerl::svector<vk::SwapchainKHR, 1> sws;
+				ankerl::svector<uint32, 1> ids;
 				for (auto &w : windows)
 				{
 					if (!w.ctx || !w->acquired)
@@ -514,8 +516,10 @@ namespace cage
 				}
 			}
 
-			// destroy pending destructions
-			applyDeferredDestructions();
+			{ // destroy pending destructions
+				ScopeLock lock(mutex);
+				applyDeferredDestructions();
+			}
 
 			// wait fence
 			{
@@ -542,7 +546,8 @@ namespace cage
 						old = vk::SwapchainKHR(w->swapchain.swapchain);
 						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
 														.set_old_swapchain(w->swapchain)
-														.set_desired_min_image_count(3)
+														.set_required_min_image_count(2)
+														.set_desired_min_image_count(preferredTripleBuffering ? 3 : 2)
 														.set_desired_extent(w.resolution[0], w.resolution[1])
 														.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
 														.build());
@@ -587,7 +592,7 @@ namespace cage
 		{
 			const ProfilingScope profiling("submit");
 
-			ankerl::svector<vk::CommandBufferSubmitInfo, 4> cmds;
+			ankerl::svector<vk::CommandBufferSubmitInfo, 10> cmds;
 			for (auto &it : additionalCommands)
 				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 			for (auto &it : buffers_)
@@ -601,9 +606,9 @@ namespace cage
 			additionalCommands.clear();
 		}
 
-		void DeviceImpl::wait()
+		void DeviceImpl::waitDeviceIdle()
 		{
-			const ProfilingScope profiling("wait");
+			const ProfilingScope profiling("waitDeviceIdle");
 			device.waitIdle();
 		}
 
