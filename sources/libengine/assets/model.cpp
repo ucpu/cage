@@ -20,7 +20,7 @@ namespace cage
 			des >> header;
 
 			// todo handle mesh name
-			CAGE_ASSERT(header.meshName == 0); // do not use for now
+			CAGE_ASSERT(header.meshId == 0); // do not use for now
 
 			Holder<Mesh> mesh = newMesh();
 			mesh->importBuffer(des.read(header.meshSize));
@@ -41,10 +41,9 @@ namespace cage
 
 			CAGE_ASSERT(des.available() == 0);
 
-			model->importTransform = header.importTransform;
 			model->boundingBox = header.box;
-			model->textureNames = header.textureNames;
-			model->shaderName = header.shaderName;
+			model->textureIds = header.textureIds;
+			model->shaderId = header.shaderId;
 			model->renderFlags = header.renderFlags;
 			model->renderLayer = header.renderLayer;
 			model->bonesCount = header.skeletonBones;

@@ -659,29 +659,55 @@ namespace cage
 					loadMasksConfigFile(rig, path);
 			}
 
+			Transform findNodeTransformForAllMeshes() const
+			{
+				std::vector<Transform> trss;
+				for (uint32 i = 0; i < imp.GetScene()->mNumMeshes; i++)
+					trss.push_back(findNodeTransformWithMesh(i));
+				if (trss.empty())
+					CAGE_THROW_ERROR(Exception, "missing node transform for any meshes");
+				const auto &compare = [](const Transform &a, const Transform &b) -> bool
+				{
+					if (distanceSquared(a.position, b.position) > 1e-3)
+						return false;
+					if (distanceSquared(a.orientation * Vec3(0, 0, 1), b.orientation * Vec3(0, 0, 1)) > 1e-3)
+						return false;
+					if (distanceSquared(a.orientation * Vec3(0, 1, 0), b.orientation * Vec3(0, 1, 0)) > 1e-3)
+						return false;
+					if (distanceSquared(a.orientation * Vec3(1, 0, 0), b.orientation * Vec3(1, 0, 0)) > 1e-3)
+						return false;
+					if (abs(a.scale - b.scale) > 1e-5)
+						return false;
+					return true;
+				};
+				for (const auto &it : trss)
+					if (!compare(it, trss[0]))
+						CAGE_THROW_ERROR(Exception, "ambiguous node transformation to use as root of skeleton rig");
+				return trss[0];
+			}
+
 			Holder<SkeletonRig> skeletonRig() const
 			{
 				// print the nodes hierarchy
 				//CAGE_LOG(SeverityEnum::Info, "meshImport", "full node hierarchy:");
 				//printHierarchy(+skeleton, imp.GetScene()->mRootNode, 0);
 
-				const Mat4 globalInverse = inverse(conv(imp.GetScene()->mRootNode->mTransformation));
-				const uint32 bonesCount = skeleton->bonesCount();
-
 				std::vector<uint16> ps;
 				std::vector<Mat4> bs;
 				std::vector<Mat4> is;
+				const uint32 bonesCount = skeleton->bonesCount();
 				ps.reserve(bonesCount);
 				bs.reserve(bonesCount);
 				is.reserve(bonesCount);
 
 				// find parents and matrices
+				const Mat4 modelInverse = Mat4(inverse(findNodeTransformForAllMeshes()));
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					const aiNode *n = skeleton->node(i);
 					const aiBone *b = skeleton->bone(i);
 					const Mat4 t = conv(n->mTransformation);
-					const Mat4 o = (b ? conv(b->mOffsetMatrix) : Mat4());
+					const Mat4 o = (b ? conv(b->mOffsetMatrix) : Mat4()) * modelInverse;
 					CAGE_ASSERT(t.valid() && o.valid());
 					ps.push_back(skeleton->parent(i));
 					bs.push_back(t);
@@ -690,7 +716,7 @@ namespace cage
 
 				Holder<SkeletonRig> rig = newSkeletonRig();
 				rig->skeletonData(ps, bs, is);
-				rig->globalInverse = globalInverse;
+				rig->globalInverse = inverse(Mat4(conv(imp.GetScene()->mRootNode->mTransformation)));
 				return rig;
 			}
 
@@ -829,15 +855,42 @@ namespace cage
 				return anim;
 			}
 
-			Holder<Mesh> mesh(const uint32 chosenMeshIndex) const
+			void findNodeTransformWithMesh(aiNode *node, std::vector<aiNode *> &nodes, const uint32 meshIndex) const
+			{
+				CAGE_ASSERT(node);
+				for (uint32 i = 0; i < node->mNumMeshes; i++)
+					if (node->mMeshes[i] == meshIndex)
+						nodes.push_back(node);
+				for (uint32 i = 0; i < node->mNumChildren; i++)
+					findNodeTransformWithMesh(node->mChildren[i], nodes, meshIndex);
+			}
+
+			Transform findNodeTransformWithMesh(const uint32 meshIndex) const
+			{
+				std::vector<aiNode *> nodes;
+				findNodeTransformWithMesh(imp.GetScene()->mRootNode, nodes, meshIndex);
+				if (nodes.empty())
+					CAGE_THROW_ERROR(Exception, "missing node for mesh");
+				if (nodes.size() > 1)
+					CAGE_THROW_ERROR(Exception, "the mesh is referenced from multiple nodes");
+				Transform result;
+				aiNode *nd = nodes[0];
+				while (nd)
+				{
+					Mat4 mt = conv(nd->mTransformation);
+					Transform tr = decompose(mt);
+					result = result * tr;
+					nd = nd->mParent;
+				}
+				return result;
+			}
+
+			Holder<Mesh> mesh(const uint32 meshIndex) const
 			{
 				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "converting assimp mesh at index: " + chosenMeshIndex);
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "converting assimp mesh at index: " + meshIndex);
 
-				const aiMesh *am = imp.GetScene()->mMeshes[chosenMeshIndex];
-
-				if (am->GetNumUVChannels() > 1)
-					CAGE_LOG(SeverityEnum::Warning, "meshImport", "multiple uv channels are not supported - using only the first");
+				const aiMesh *am = imp.GetScene()->mMeshes[meshIndex];
 
 				const uint32 indicesPerPrimitive = convertPrimitiveType(am->mPrimitiveTypes);
 				const uint32 verticesCount = am->mNumVertices;
@@ -849,6 +902,10 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "meshImport", cage::Stringizer() + "vertices count: " + verticesCount);
 					CAGE_LOG(SeverityEnum::Info, "meshImport", cage::Stringizer() + "indices count: " + indicesCount);
 				}
+
+				const Transform transform = findNodeTransformWithMesh(meshIndex);
+				if (config.verbose)
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "mesh uses transformation: " + transform);
 
 				Holder<Mesh> poly = newMesh();
 				switch (indicesPerPrimitive)
@@ -873,7 +930,7 @@ namespace cage
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 p = conv(am->mVertices[i]);
+						Vec3 p = transform * conv(am->mVertices[i]);
 						ps.push_back(p);
 					}
 					poly->positions(ps);
@@ -887,9 +944,8 @@ namespace cage
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 n = conv(am->mNormals[i]);
-						static constexpr const char Name[] = "normal";
-						ps.push_back(fixUnitVector(Name, n));
+						Vec3 n = transform.orientation * conv(am->mNormals[i]);
+						ps.push_back(fixUnitVector("normal", n));
 					}
 					poly->normals(ps);
 				}
@@ -960,6 +1016,8 @@ namespace cage
 					poly->boneWeights(boneWeights);
 				}
 
+				if (am->GetNumUVChannels() > 1)
+					CAGE_LOG(SeverityEnum::Warning, "meshImport", "multiple uv channels are not supported - using only the first");
 				if (am->HasTextureCoords(0))
 				{
 					if (am->mNumUVComponents[0] == 3)

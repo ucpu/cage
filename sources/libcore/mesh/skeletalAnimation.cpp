@@ -484,7 +484,7 @@ namespace cage
 						q = Vec3(0, 1, 0);
 					tr.orientation = Quat(b - a, q);
 				}
-				output[i] = impl->globalInverse * Mat4(tr);
+				output[i] = /*impl->globalInverse * */ Mat4(tr);
 				CAGE_ASSERT(output[i].valid());
 			}
 		}

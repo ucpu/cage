@@ -100,9 +100,9 @@ namespace cage
 
 			void cleanUp()
 			{
-				if (textureName)
-					engineAssets()->unload(textureName);
-				textureName = 0;
+				if (textureId)
+					engineAssets()->unload(textureId);
+				textureId = 0;
 				if (modelName)
 					engineAssets()->unload(modelName);
 				modelName = 0;
@@ -119,8 +119,8 @@ namespace cage
 
 					const AssetLabel texLabel = Stringizer() + "gui-in-world-texture-" + (uintPtr)this;
 					tex = newTexture(engineGraphicsDevice(), ColorTextureCreateConfig{ .resolution = Vec3i(config.resolution[0], config.resolution[1], 1), .renderable = true }, texLabel);
-					textureName = engineAssets()->generateUniqueId();
-					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureName, tex.share(), texLabel);
+					textureId = engineAssets()->generateUniqueId();
+					engineAssets()->loadValue<AssetSchemeIndexTexture>(textureId, tex.share(), texLabel);
 
 					Holder<Mesh> msh = newMesh();
 					const Real h = Real(config.resolution[1]) / Real(config.resolution[0]);
@@ -135,14 +135,14 @@ namespace cage
 
 					const AssetLabel mshLabel = Stringizer() + "gui-in-world-model-" + (uintPtr)this;
 					Holder<Model> mod = newModel(engineGraphicsDevice(), +msh, bufferView(material), mshLabel);
-					mod->textureNames[0] = textureName;
+					mod->textureIds[0] = textureId;
 					mod->renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
 					modelName = engineAssets()->generateUniqueId();
 					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), mshLabel);
 				}
 				else
 				{
-					tex = engineAssets()->get<AssetSchemeIndexTexture, Texture>(textureName);
+					tex = engineAssets()->get<AssetSchemeIndexTexture, Texture>(textureId);
 					if (!tex)
 						return;
 				}
@@ -182,7 +182,7 @@ namespace cage
 			Holder<Mutex> mut = newMutex();
 			Holder<GuiRender> renderQueue; // protected by mutex
 			Holder<GuiManager> guiMan;
-			uint32 textureName = 0;
+			uint32 textureId = 0;
 			uint32 modelName = 0;
 			bool firstFrame = true;
 

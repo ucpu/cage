@@ -60,9 +60,8 @@ namespace cage
 					animateSkin(+skeleton, config.animations, tmpRange);
 
 				armature.reserve(bonesCount);
-				const Mat4 inv = config.animateSkeletonsInsteadOfSkins ? Mat4() : inverse(config.modelImportTransform);
 				for (uint32 i = 0; i < bonesCount; i++)
-					armature.emplace_back(config.modelImportTransform * tmpArmature[i] * inv);
+					armature.emplace_back(tmpArmature[i]);
 			}
 
 			SkeletalAnimationPreparatorConfig config;
@@ -73,7 +72,7 @@ namespace cage
 
 		bool skeletalAnimationConfigSimilarity(const SkeletalAnimationPreparatorConfig &a, const SkeletalAnimationPreparatorConfig &b)
 		{
-			bool ok = a.animateSkeletonsInsteadOfSkins == b.animateSkeletonsInsteadOfSkins && a.modelImportTransform == b.modelImportTransform;
+			bool ok = a.animateSkeletonsInsteadOfSkins == b.animateSkeletonsInsteadOfSkins;
 			for (uint32 i = 0; i < std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)>; i++)
 			{
 				ok &= +a.animations[i].animation == +b.animations[i].animation;

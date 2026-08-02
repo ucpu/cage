@@ -92,6 +92,8 @@ Mat4 meshImportTransform(MeshImportResult &result)
 	const Mat3 axesScale = axes * toFloat(processor->property("scale"));
 	if (axesScale == Mat3())
 		return Mat4();
+	if (result.skeleton)
+		CAGE_THROW_ERROR(Exception, "cannot use axes/scale on models with skeletal animations");
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "using axes/scale conversion matrix: " + axesScale);
 	for (auto &it : result.parts)
 	{
@@ -197,8 +199,8 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			if (dsm.textureNames[i])
-				CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
+			if (dsm.textureIds[i])
+				CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture[" + i + "]: " + dsm.textureIds[i]);
 		}
 	}
 
@@ -207,10 +209,10 @@ namespace
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
+				texCount += dsm.textureIds[i] == 0 ? 0 : 1;
 			if (texCount && none(flags & (MeshComponentsFlags::Uvs2 | MeshComponentsFlags::Uvs3)))
 			{
-				if (dsm.shaderName)
+				if (dsm.shaderId)
 					CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "material has a texture but no uvs");
 				else
 					CAGE_THROW_ERROR(Exception, "material has a texture but no uvs");
@@ -220,7 +222,7 @@ namespace
 		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
 			CAGE_THROW_ERROR(Exception, "material has multiple transparency flags (cutOut, transparent, fade)");
 
-		if (dsm.textureNames[2] != 0 && none(flags & MeshComponentsFlags::Normals))
+		if (dsm.textureIds[2] != 0 && none(flags & MeshComponentsFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no normals");
 	}
 
@@ -319,7 +321,6 @@ void processModel()
 
 	ModelHeader dsm;
 	detail::memset(&dsm, 0, sizeof(dsm));
-	dsm.importTransform = importTransform;
 	dsm.box = part.boundingBox;
 
 	for (const auto &t : part.textures)
@@ -330,16 +331,16 @@ void processModel()
 		switch (t.type)
 		{
 			case MeshImportTextureType::Albedo:
-				dsm.textureNames[0] = n;
+				dsm.textureIds[0] = n;
 				break;
 			case MeshImportTextureType::Special:
-				dsm.textureNames[1] = n;
+				dsm.textureIds[1] = n;
 				break;
 			case MeshImportTextureType::Normal:
-				dsm.textureNames[2] = n;
+				dsm.textureIds[2] = n;
 				break;
 			case MeshImportTextureType::Custom:
-				dsm.textureNames[3] = n;
+				dsm.textureIds[3] = n;
 				break;
 			default:
 				break;
@@ -349,7 +350,7 @@ void processModel()
 	if (!part.shaderName.empty())
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "looking at shader: " + part.shaderName);
-		dsm.shaderName = HashString(processor->convertAssetPath(part.shaderName));
+		dsm.shaderId = HashString(processor->convertAssetPath(part.shaderName));
 	}
 
 	dsm.renderFlags = part.renderFlags;
@@ -372,9 +373,9 @@ void processModel()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
 	AssetHeader h = processor->initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-		if (dsm.textureNames[i])
+		if (dsm.textureIds[i])
 			h.dependenciesCount++;
-	h.dependenciesCount += !!dsm.shaderName;
+	h.dependenciesCount += !!dsm.shaderId;
 
 	MemoryBuffer buffer;
 	Serializer ser(buffer);
@@ -390,10 +391,10 @@ void processModel()
 	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-		if (dsm.textureNames[i])
-			f->write(bufferView(dsm.textureNames[i]));
-	if (dsm.shaderName)
-		f->write(bufferView(dsm.shaderName));
+		if (dsm.textureIds[i])
+			f->write(bufferView(dsm.textureIds[i]));
+	if (dsm.shaderId)
+		f->write(bufferView(dsm.shaderId));
 	f->write(compressed);
 	f->close();
 }

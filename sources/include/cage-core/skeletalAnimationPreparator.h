@@ -11,7 +11,6 @@ namespace cage
 	struct CAGE_CORE_API SkeletalAnimationPreparatorConfig
 	{
 		SkeletalAnimationBlendingLayer animations[4];
-		Mat4 modelImportTransform;
 		void *object = nullptr; // used as unique key
 		bool animateSkeletonsInsteadOfSkins = false;
 	};

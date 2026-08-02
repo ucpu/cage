@@ -51,8 +51,8 @@ namespace cage
 	struct CAGE_CORE_API MeshImportTexture
 	{
 		String name;
-		MeshImportTextureType type = MeshImportTextureType::None;
 		ImageImportResult images;
+		MeshImportTextureType type = MeshImportTextureType::None;
 	};
 
 	struct CAGE_CORE_API MeshImportPart
@@ -64,8 +64,8 @@ namespace cage
 		Aabb boundingBox;
 		Holder<Mesh> mesh;
 		Holder<PointerRange<MeshImportTexture>> textures;
-		MeshRenderFlags renderFlags = MeshRenderFlags::None;
 		sint32 renderLayer = 0;
+		MeshRenderFlags renderFlags = MeshRenderFlags::None;
 	};
 
 	struct CAGE_CORE_API MeshImportAnimation

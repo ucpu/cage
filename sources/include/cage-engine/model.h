@@ -27,7 +27,6 @@ namespace cage
 		const gpu::VertexBufferLayout &getLayout() const;
 
 		// general
-		Mat4 importTransform;
 		Aabb boundingBox = Aabb::Universe();
 		Holder<const Collider> collider;
 
@@ -43,8 +42,8 @@ namespace cage
 
 		// material
 		Holder<GraphicsBuffer> materialBuffer;
-		std::array<uint32, MaxTexturesCountPerMaterial> textureNames = {};
-		uint32 shaderName = 0;
+		std::array<uint32, MaxTexturesCountPerMaterial> textureIds = {};
+		uint32 shaderId = 0;
 		sint32 renderLayer = 0;
 		MeshRenderFlags renderFlags = {};
 	};

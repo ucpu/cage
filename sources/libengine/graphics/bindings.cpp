@@ -328,9 +328,9 @@ namespace cage
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 			{
 				GraphicsBindingsCreateConfig::TextureBindingConfig tc;
-				if (model->textureNames[i])
+				if (model->textureIds[i])
 				{
-					tc.texture = +assets->get<Texture>(model->textureNames[i]);
+					tc.texture = +assets->get<Texture>(model->textureIds[i]);
 					CAGE_ASSERT(tc.texture);
 					flags |= tc.texture->flags | (TextureFlags)(1u << 31); // distinguish no textures from a regular texture
 				}

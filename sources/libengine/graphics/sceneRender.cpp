@@ -577,14 +577,6 @@ namespace cage
 			return uni;
 		}
 
-		CAGE_FORCE_INLINE Transform approximateMatrix(Mat4 mat)
-		{
-			const Vec3 center = Vec3(mat * Vec4(0, 0, 0, 1));
-			const Vec3 forward = Vec3(mat * Vec4(0, 0, -1, 1));
-			const Vec3 up = Vec3(mat * Vec4(0, 1, 0, 1));
-			return Transform(center, Quat(forward - center, up - center), distance(center, forward));
-		}
-
 		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalOptional(SkeletalAnimationComponent src)
 		{
 			for (const auto &it : src.animations)
@@ -714,7 +706,7 @@ namespace cage
 				for (uint32 i = 0; i < armature.size(); i++)
 				{
 					SceneItem d;
-					d.transform = rd.transform * approximateMatrix(Mat4(armature[i]));
+					d.transform = rd.transform * decompose(Mat4(armature[i]));
 					d.color = Vec4(colorGammaToLinear(colorHsvToRgb(Vec3(Real(i) / Real(armature.size()), 1, 1))), 1);
 					d.e = rd.e;
 					d.renderLayer = rd.renderLayer;
@@ -773,7 +765,6 @@ namespace cage
 				};
 				CAGE_ASSERT(checkSkeletonIdsAreSame());
 
-				cnf.modelImportTransform = mesh->importTransform;
 				cnf.object = object;
 				cnf.animateSkeletonsInsteadOfSkins = cnfRenderSkeletonBones;
 				return skeletonPreparatorCollection->create(std::move(cnf));
@@ -1180,7 +1171,7 @@ namespace cage
 
 				const auto material = newGraphicsBindings(scene.config.shared.device, scene.config.shared.assets, +rm.mesh);
 
-				Holder<MultiShader> multiShader = rm.mesh->shaderName ? scene.config.shared.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderName) : Holder<MultiShader>(scene.shaderStandard, nullptr);
+				Holder<MultiShader> multiShader = rm.mesh->shaderId ? scene.config.shared.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderId) : Holder<MultiShader>(scene.shaderStandard, nullptr);
 				Holder<Shader> shader = pickShaderVariant(+multiShader, rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
@@ -1195,7 +1186,7 @@ namespace cage
 					}
 					const bool ssao = !rd->blending && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 					uniOptions.optsLights[2] = ssao ? 1 : 0;
-					uniOptions.optsLights[3] = !!rm.mesh->textureNames[2];
+					uniOptions.optsLights[3] = !!rm.mesh->textureIds[2];
 					uniOptions.optsSkeleton[0] = rm.mesh->bonesCount;
 				}
 
@@ -1292,7 +1283,7 @@ namespace cage
 				Model *mesh = rd->data.sprite().mesh;
 				Texture *texture = rd->data.sprite().texture;
 
-				Holder<MultiShader> multiShader = mesh->shaderName ? scene.config.shared.assets->get<MultiShader>(mesh->shaderName) : Holder<MultiShader>(scene.shaderSprite, nullptr);
+				Holder<MultiShader> multiShader = mesh->shaderId ? scene.config.shared.assets->get<MultiShader>(mesh->shaderId) : Holder<MultiShader>(scene.shaderSprite, nullptr);
 				Holder<Shader> shader = pickShaderVariant(+multiShader, mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;

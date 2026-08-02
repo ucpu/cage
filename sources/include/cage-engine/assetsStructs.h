@@ -49,17 +49,16 @@ namespace cage
 
 	struct CAGE_ENGINE_API ModelHeader
 	{
-		Mat4 importTransform;
 		Aabb box;
-		std::array<uint32, MaxTexturesCountPerMaterial> textureNames = {};
-		uint32 shaderName = 0;
-		MeshRenderFlags renderFlags = (MeshRenderFlags)0;
-		sint32 renderLayer = 0;
+		std::array<uint32, MaxTexturesCountPerMaterial> textureIds = {};
 		uint32 skeletonBones = 0;
-		uint32 meshName = 0; // share geometry data (and collider) from the named model (this model contains no geometry)
+		sint32 renderLayer = 0;
+		uint32 shaderId = 0;
+		uint32 meshId = 0; // share geometry data (and collider) from the named model (this model contains no geometry)
 		uint32 meshSize = 0; // bytes
 		uint32 materialSize = 0; // bytes
 		uint32 colliderSize = 0; // bytes
+		MeshRenderFlags renderFlags = (MeshRenderFlags)0;
 
 		// follows:
 		// serialized mesh
