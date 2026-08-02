@@ -2,6 +2,7 @@
 scheme = texture
 premultiplyAlpha = true
 srgb = true
+anisoFilter = 0
 keybindAdd.png
 keybindClear.png
 keybindRemove.png
@@ -12,12 +13,14 @@ skinTooltips.png
 []
 scheme = texture
 srgb = true
+anisoFilter = 0
 helper.jpg
 
 []
 scheme = texture
 target = array
 srgb = true
+anisoFilter = 0
 progressbar/$.png
 
 []

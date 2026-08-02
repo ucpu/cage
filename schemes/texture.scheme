@@ -84,7 +84,7 @@ default = linear
 display = anisotropic filter
 type = enum
 values = 0, 2, 4, 8, 16, 32, 64
-default = 16
+default = 8
 
 [wrapX]
 display = wrap x
