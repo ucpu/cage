@@ -24,7 +24,7 @@ namespace cage
 		{
 		public:
 			Holder<RwMutex> mutex = newRwMutex();
-			Holder<Texture> dummy2d, dummyArray, dummyCube, shadowsSampler;
+			Holder<Texture> dummy2d, dummyArray, dummyCube, dummyShadow2d, dummyShadowCube;
 			GraphicsDevice *device = nullptr;
 			uint32 currentFrame = 1;
 
@@ -41,10 +41,10 @@ namespace cage
 					hashCombine((uint32)config.resolution[2]);
 					hashCombine(config.arrayLayersCount);
 					hashCombine(config.mipLevelsCount);
+					hashCombine(config.entityId);
 					hashCombine((uint32)config.format);
 					hashCombine((uint64)config.flags);
-					hashCombine(config.entityId);
-					hashCombine(config.samplerVariant);
+					hashCombine((uint32)config.samplerMode);
 				}
 
 				bool operator==(const Key &) const = default;
@@ -113,33 +113,62 @@ namespace cage
 				device->nativeDevice()->writeTexture(dest, data, Vec3i(1));
 			}
 
-			void generateShadowsSampler()
+			void generateDummyShadows()
 			{
-				gpu::TextureDescriptor desc;
-				desc.label = "dummy shadowmap target";
-				desc.resolution = Vec3i(1, 1, 1);
-				desc.arrayLayersCount = 1;
-				desc.mipLevelsCount = 1;
-				desc.dimension = gpu::TextureDimensionEnum::e2DArray;
-				desc.format = gpu::TextureFormatEnum::Depth32Float;
-				desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
-				gpu::Texture tex = device->nativeDevice()->createTexture(desc);
+				{
+					gpu::TextureDescriptor desc;
+					desc.label = "dummyShadow2d";
+					desc.resolution = Vec3i(1);
+					desc.arrayLayersCount = 1;
+					desc.mipLevelsCount = 1;
+					desc.dimension = gpu::TextureDimensionEnum::e2DArray;
+					desc.format = gpu::TextureFormatEnum::Depth32Float;
+					desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
+					gpu::Texture tex = device->nativeDevice()->createTexture(desc);
 
-				gpu::TextureViewDescriptor vd;
-				vd.dimension = gpu::TextureDimensionEnum::e2DArray;
-				gpu::TextureView view = tex.createView(vd);
+					gpu::TextureViewDescriptor vd;
+					vd.dimension = gpu::TextureDimensionEnum::e2DArray;
+					gpu::TextureView view = tex.createView(vd);
 
-				gpu::Sampler samp = device->nativeDevice()->createSampler({});
+					gpu::SamplerDescriptor sd;
+					sd.minFilter = sd.magFilter = gpu::FilterModeEnum::Linear;
+					sd.compare = gpu::CompareFunctionEnum::LessEqual;
+					gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 
-				Holder<Texture> t = newTexture(tex, view, samp, "dummy shadowmap target");
-				t->flags = TextureFlags::Array;
-				shadowsSampler = std::move(t);
+					dummyShadow2d = newTexture(tex, view, samp, "dummyShadow2d");
+					dummyShadow2d->flags = TextureFlags::Array;
+				}
+
+				{
+					gpu::TextureDescriptor desc;
+					desc.label = "dummyShadowCube";
+					desc.resolution = Vec3i(1);
+					desc.arrayLayersCount = 6;
+					desc.mipLevelsCount = 1;
+					desc.dimension = gpu::TextureDimensionEnum::Cube;
+					desc.format = gpu::TextureFormatEnum::Depth16Unorm;
+					desc.usage = gpu::TextureUsageFlags::RenderAttachment | gpu::TextureUsageFlags::TextureBinding;
+					gpu::Texture tex = device->nativeDevice()->createTexture(desc);
+
+					gpu::TextureViewDescriptor vd;
+					vd.arrayLayersCount = 6;
+					vd.dimension = gpu::TextureDimensionEnum::Cube;
+					gpu::TextureView view = tex.createView(vd);
+
+					gpu::SamplerDescriptor sd;
+					sd.minFilter = sd.magFilter = gpu::FilterModeEnum::Linear;
+					sd.compare = gpu::CompareFunctionEnum::LessEqual;
+					gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
+
+					dummyShadowCube = newTexture(tex, view, samp, "dummyShadowCube");
+					dummyShadowCube->flags = TextureFlags::Cubemap;
+				}
 			}
 
 			DeviceTexturesCache(GraphicsDevice *device) : device(device)
 			{
 				generateDummyTextures();
-				generateShadowsSampler();
+				generateDummyShadows();
 			}
 
 			~DeviceTexturesCache() { CAGE_LOG_DEBUG(SeverityEnum::Info, "graphics", Stringizer() + "graphics textures cache size: " + cache.size()); }
@@ -165,11 +194,22 @@ namespace cage
 
 				gpu::SamplerDescriptor sd;
 				sd.label = config.name;
-				if (config.samplerVariant)
+				switch (config.samplerMode)
 				{
-					sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
-					sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
-					sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
+					case TransientTextureSamplerModeEnum::Undefined:
+						break;
+					case TransientTextureSamplerModeEnum::ClampLinearNoMip:
+					{
+						sd.addressModeU = sd.addressModeV = sd.addressModeW = gpu::AddressModeEnum::ClampToEdge;
+						sd.magFilter = sd.minFilter = gpu::FilterModeEnum::Linear;
+						sd.mipmapFilter = gpu::FilterModeEnum::Nearest;
+						break;
+					}
+					case TransientTextureSamplerModeEnum::Comparison:
+					{
+						sd.compare = gpu::CompareFunctionEnum::LessEqual;
+						break;
+					}
 				}
 				gpu::Sampler samp = device->nativeDevice()->createSampler(sd);
 
@@ -237,9 +277,14 @@ namespace cage
 			return +getDeviceTexturesCache(device)->dummyCube;
 		}
 
-		Texture *getTextureShadowsSampler(GraphicsDevice *device)
+		Texture *getTextureDummyShadow2d(GraphicsDevice *device)
 		{
-			return +getDeviceTexturesCache(device)->shadowsSampler;
+			return +getDeviceTexturesCache(device)->dummyShadow2d;
+		}
+
+		Texture *getTextureDummyShadowCube(GraphicsDevice *device)
+		{
+			return +getDeviceTexturesCache(device)->dummyShadowCube;
 		}
 	}
 

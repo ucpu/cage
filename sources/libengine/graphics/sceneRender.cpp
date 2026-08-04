@@ -51,7 +51,8 @@ namespace cage
 		Texture *getTextureDummy2d(GraphicsDevice *device);
 		Texture *getTextureDummyArray(GraphicsDevice *device);
 		Texture *getTextureDummyCube(GraphicsDevice *device);
-		Texture *getTextureShadowsSampler(GraphicsDevice *device);
+		Texture *getTextureDummyShadow2d(GraphicsDevice *device);
+		Texture *getTextureDummyShadowCube(GraphicsDevice *device);
 		GraphicsBuffer *getBufferDummy(GraphicsDevice *device);
 	}
 
@@ -606,9 +607,10 @@ namespace cage
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 1);
 			conf.arrayLayersCount = cascades;
+			conf.entityId = entityId;
 			conf.format = gpu::TextureFormatEnum::Depth32Float;
 			conf.flags = TextureFlags::Array;
-			conf.entityId = entityId;
+			conf.samplerMode = TransientTextureSamplerModeEnum::Comparison;
 			return newTexture(device, conf);
 		}
 
@@ -618,9 +620,10 @@ namespace cage
 			conf.name = "shadowmap target";
 			conf.resolution = Vec3i(resolution, resolution, 1);
 			conf.arrayLayersCount = 6;
+			conf.entityId = entityId;
 			conf.format = gpu::TextureFormatEnum::Depth16Unorm;
 			conf.flags = TextureFlags::Cubemap;
-			conf.entityId = entityId;
+			conf.samplerMode = TransientTextureSamplerModeEnum::Comparison;
 			return newTexture(device, conf);
 		}
 
@@ -1777,9 +1780,9 @@ namespace cage
 					for (uint32 i = 0; i < 8; i++)
 					{
 						if (!sh2d[i])
-							sh2d[i] = privat::getTextureDummyArray(scene.config.shared.device);
+							sh2d[i] = privat::getTextureDummyShadow2d(scene.config.shared.device);
 						if (!shCube[i])
-							shCube[i] = privat::getTextureDummyCube(scene.config.shared.device);
+							shCube[i] = privat::getTextureDummyShadowCube(scene.config.shared.device);
 					}
 
 					for (uint32 i = 0; i < 8; i++)
@@ -1789,7 +1792,7 @@ namespace cage
 					}
 
 					// shadowmap sampler
-					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = privat::getTextureShadowsSampler(scene.config.shared.device), .binding = 15, .bindTexture = false });
+					bind.textures.push_back(GraphicsBindingsCreateConfig::TextureBindingConfig{ .texture = privat::getTextureDummyShadow2d(scene.config.shared.device), .binding = 15, .bindTexture = false });
 
 					globalBindings = newGraphicsBindings(scene.config.shared.device, bind);
 				}

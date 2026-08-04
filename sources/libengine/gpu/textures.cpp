@@ -35,6 +35,9 @@ namespace cage
 			info.anisotropyEnable = desc.maxAnisotropy > 1;
 			info.maxAnisotropy = min((float)desc.maxAnisotropy, device.capabilities.maxAnisotropy);
 			info.maxLod = VK_LOD_CLAMP_NONE;
+			info.compareEnable = desc.compare != CompareFunctionEnum::Undefined;
+			if (info.compareEnable)
+				info.compareOp = convertCompareFunction(desc.compare);
 			sampler = device.device.createSampler(info);
 			sampler.setLabel(desc.label);
 		}

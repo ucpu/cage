@@ -455,7 +455,7 @@ namespace cage
 			FilterModeEnum magFilter = FilterModeEnum::Undefined;
 			FilterModeEnum minFilter = FilterModeEnum::Undefined;
 			FilterModeEnum mipmapFilter = FilterModeEnum::Undefined;
-			//CompareFunctionEnum compare = CompareFunctionEnum::Undefined;
+			CompareFunctionEnum compare = CompareFunctionEnum::Undefined;
 		};
 
 		struct CAGE_ENGINE_API ShaderModuleDescriptor

@@ -49,16 +49,23 @@ namespace cage
 		bool renderable = false;
 	};
 
+	enum class TransientTextureSamplerModeEnum
+	{
+		Undefined,
+		ClampLinearNoMip,
+		Comparison,
+	};
+
 	struct CAGE_ENGINE_API TransientTextureCreateConfig
 	{
 		AssetLabel name;
 		Vec3i resolution = Vec3i(0, 0, 1);
 		uint32 arrayLayersCount = 1;
 		uint32 mipLevelsCount = 1;
+		uint32 entityId = 0;
 		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 		TextureFlags flags = TextureFlags::None;
-		uint32 entityId = 0;
-		bool samplerVariant = false;
+		TransientTextureSamplerModeEnum samplerMode = TransientTextureSamplerModeEnum::Undefined;
 
 		bool operator==(const TransientTextureCreateConfig &) const = default;
 	};

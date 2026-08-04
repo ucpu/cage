@@ -219,7 +219,7 @@ namespace cage
 			conf.name = "dof color target";
 			conf.resolution = Vec3i(res, 1);
 			conf.format = gpu::TextureFormatEnum::RGBA16Float;
-			conf.samplerVariant = true;
+			conf.samplerMode = TransientTextureSamplerModeEnum::ClampLinearNoMip;
 			return newTexture(d, conf);
 		}();
 
@@ -316,7 +316,7 @@ namespace cage
 			conf.resolution = Vec3i(res, 1);
 			conf.mipLevelsCount = mips;
 			conf.format = gpu::TextureFormatEnum::RGBA16Float;
-			conf.samplerVariant = true;
+			conf.samplerMode = TransientTextureSamplerModeEnum::ClampLinearNoMip;
 			return newTexture(d, conf);
 		}();
 		std::vector<Holder<Texture>> mipViews = generateMipsViews(d, tex.share(), mips);
