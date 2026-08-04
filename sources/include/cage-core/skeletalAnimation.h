@@ -58,8 +58,6 @@ namespace cage
 
 		uint32 bonesCount() const;
 		PointerRange<const Real> namedMask(const SkeletalAnimationMaskLabel &name) const;
-
-		Mat4 globalInverse;
 	};
 
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();

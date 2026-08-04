@@ -580,6 +580,37 @@ namespace
 		writeFile(a + "/greetings.txt")->writeLine("hello there");
 		pathMove(a, b);
 	}
+
+	void testFilesCases()
+	{
+		CAGE_TESTCASE("file cases");
+		writeFile("testdir/cases/test.txt")->close();
+		CAGE_TEST(detail::pathIsMatchingCase("testdir/cases/test.txt"));
+		CAGE_TEST_THROWN(detail::pathIsMatchingCase("testdir/cases/none.txt"));
+
+		{
+			// negative test
+			// different systems will behave differently, therefore it may throw, or it may return false
+			// however, returning true would be incorrect
+			bool negativeTest = false;
+			try
+			{
+				detail::OverrideBreakpoint ob;
+				auto r = detail::pathIsMatchingCase("testdir/cases/TEST.txt");
+				// returning false is correct
+				negativeTest = !r;
+			}
+			catch (...)
+			{
+				// throwing an exception is correct
+				negativeTest = true;
+			}
+			CAGE_TEST(negativeTest);
+		}
+
+		// sanity test (no new files were created during the testing)
+		CAGE_TEST(pathListDirectory("testdir/cases").size() == 1);
+	}
 }
 
 void testFiles()
@@ -597,4 +628,5 @@ void testFiles()
 	testSystemPaths();
 	testFilesInTemp();
 	testMoveAcrossSystems();
+	testFilesCases();
 }

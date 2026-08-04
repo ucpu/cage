@@ -282,7 +282,7 @@ void processModel()
 	config.trianglesOnly = toBool(processor->property("trianglesOnly"));
 	config.passInvalidVectors = toBool(processor->property("passInvalidNormals"));
 	MeshImportResult result = meshImportFiles(processor->inputFileName, config);
-	const Mat4 importTransform = meshImportTransform(result);
+	meshImportTransform(result);
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "converting materials to cage format");
 	meshImportConvertToCageFormats(result);
 	meshImportNotifyUsedFiles(result);

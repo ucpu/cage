@@ -83,10 +83,16 @@ namespace cage
 									CAGE_LOG_THROW(Stringizer() + "path: " + line);
 									CAGE_THROW_ERROR(Exception, "assets use path must be relative");
 								}
-								if (!pathIsFile(pathJoin(pathToAbs(impl->config.inputPath), line)))
+								const String truePath = pathJoin(pathToAbs(impl->config.inputPath), line);
+								if (!pathIsFile(truePath))
 								{
 									CAGE_LOG_THROW(Stringizer() + "path: " + line);
-									CAGE_THROW_ERROR(Exception, "assets use path does not exist");
+									CAGE_THROW_ERROR(Exception, "assets use path must be an existing file");
+								}
+								if (!detail::pathIsMatchingCase(truePath))
+								{
+									CAGE_LOG_THROW(Stringizer() + "path: " + line);
+									CAGE_THROW_ERROR(Exception, "assets use path must have matching case");
 								}
 								ass.files.insert(line);
 							}

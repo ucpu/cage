@@ -403,5 +403,19 @@ namespace cage
 			}
 			return systemMemory().createHolder<std::shared_ptr<ArchiveAbstract>>(std::move(a)).cast<void>();
 		}
+
+		bool pathIsMatchingCase(const String &path)
+		{
+			const PathTypeFlags type = pathType(path);
+			if (any(type & PathTypeFlags::Invalid) || any(type & PathTypeFlags::NotFound))
+				CAGE_THROW_ERROR(Exception, "path does not exist");
+			const String self = pathToAbs(path);
+			const String parent = pathJoin(path, "..");
+			const auto listdir = pathListDirectory(parent);
+			for (const auto &it : listdir)
+				if (it == self)
+					return true;
+			return false;
+		}
 	}
 }

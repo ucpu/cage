@@ -170,6 +170,57 @@ namespace cage
 			}
 		}
 
+		bool similar(const Transform &a, const Transform &b)
+		{
+			if (distanceSquared(a.position, b.position) > 1e-3)
+				return false;
+			if (distanceSquared(a.orientation * Vec3(0, 0, 1), b.orientation * Vec3(0, 0, 1)) > 1e-3)
+				return false;
+			if (distanceSquared(a.orientation * Vec3(0, 1, 0), b.orientation * Vec3(0, 1, 0)) > 1e-3)
+				return false;
+			if (distanceSquared(a.orientation * Vec3(1, 0, 0), b.orientation * Vec3(1, 0, 0)) > 1e-3)
+				return false;
+			if (abs(a.scale - b.scale) > 1e-5)
+				return false;
+			return true;
+		};
+
+		bool similar(const Mat4 &a, const Mat4 &b)
+		{
+			return similar(decompose(a), decompose(b));
+		};
+
+		bool anySiblingHasMesh(aiNode *node)
+		{
+			CAGE_ASSERT(node);
+			if (!node->mParent)
+				return false;
+			for (uint32 i = 0; i < node->mParent->mNumChildren; i++)
+			{
+				aiNode *n = node->mParent->mChildren[i];
+				if (n->mNumMeshes)
+					return true;
+			}
+			return false;
+		}
+
+		bool anySiblingHasBone(aiNode *node, PointerRange<aiBone *> bones)
+		{
+			CAGE_ASSERT(node);
+			if (!node->mParent)
+				return false;
+			for (uint32 i = 0; i < node->mParent->mNumChildren; i++)
+			{
+				aiNode *n = node->mParent->mChildren[i];
+				if (n == node)
+					continue;
+				for (aiBone *b : bones)
+					if (b && n == b->mNode)
+						return true;
+			}
+			return false;
+		}
+
 		class CageIoStream : public Assimp::IOStream
 		{
 		public:
@@ -318,6 +369,58 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 				validate();
 #endif // CAGE_ASSERT_ENABLED
+
+				// populate nodes
+				for (aiBone *b : bones)
+				{
+					if (b)
+						b->mNode = node(b);
+				}
+
+				// determine root
+				{
+					std::set<aiBone *> tops;
+					for (aiBone *b : bones)
+					{
+						if (!b)
+							continue;
+						while (aiBone *p = parent(b))
+							b = p;
+						tops.insert(b);
+					}
+					CAGE_ASSERT(!tops.empty());
+					std::set<aiNode *> roots;
+					for (aiBone *b : tops)
+					{
+						CAGE_ASSERT(b);
+						aiNode *n = b->mNode;
+						CAGE_ASSERT(n);
+						while (true)
+						{
+							if (!n->mParent)
+								break;
+							if (anySiblingHasMesh(n) && !anySiblingHasBone(n, bones))
+								break;
+							n = n->mParent;
+						}
+						CAGE_ASSERT(n);
+						roots.insert(n);
+					}
+					CAGE_ASSERT(!roots.empty());
+					if (roots.size() == 1)
+					{
+						rootNode = *roots.begin();
+						Mat4 tr;
+						aiNode *nd = rootNode;
+						CAGE_ASSERT(nd);
+						while (nd)
+						{
+							tr = tr * conv(nd->mTransformation);
+							nd = nd->mParent;
+						}
+						rootTransform = tr;
+					}
+				}
 			}
 
 			void validate()
@@ -431,14 +534,14 @@ namespace cage
 
 			aiBone *parent(aiBone *bone_) const { return bone(parent(index(bone_))); }
 
-			// this may skip some nodes in the original hierarchy - this function returns node that corresponds to another bone
 			aiNode *parent(aiNode *node_) const { return node(parent(index(node_))); }
 
-		private:
-			std::vector<aiBone *> bones;
-			std::vector<aiNode *> nodes;
-			std::vector<uint16> parents;
+			std::vector<aiBone *> bones; // may be null
+			std::vector<aiNode *> nodes; // never null
+			std::vector<uint16> parents; // uses m to mean no parent
 			std::map<aiString, uint16, CmpAiStr> indices;
+			Mat4 rootTransform;
+			aiNode *rootNode = nullptr;
 		};
 
 		struct AssimpContext : private Immovable
@@ -560,6 +663,7 @@ namespace cage
 					}
 				}
 
+				// load skeleton
 				{
 					bool hasBones = false;
 					for (uint32 i = 0; i < scene->mNumMeshes; i++)
@@ -573,7 +677,49 @@ namespace cage
 					if (hasBones)
 						skeleton = systemMemory().createHolder<AssimpSkeleton>(scene);
 				}
+
+				// print hierarchy
+				if (config.verbose)
+				{
+					CAGE_LOG(SeverityEnum::Info, "meshImport", "nodes hierarchy:");
+					printHierarchy(scene->mRootNode, 0);
+				}
 			};
+
+			void printHierarchy(aiNode *node, uint32 depth)
+			{
+				CAGE_ASSERT(node);
+				String prefix;
+				for (uint32 i = 0; i < depth; i++)
+					prefix += "\t";
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + prefix + "node: " + convStrTruncate(node->mName, 100) + ", transform: " + decompose(conv(node->mTransformation)));
+				for (uint32 i = 0; i < node->mNumMeshes; i++)
+				{
+					aiMesh *msh = imp.GetScene()->mMeshes[node->mMeshes[i]];
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + prefix + "  mesh: " + convStrTruncate(msh->mName, 100));
+				}
+				if (skeleton)
+				{
+					if (node == skeleton->rootNode)
+					{
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + prefix + "  skeleton root");
+					}
+					for (aiBone *b : skeleton->bones)
+					{
+						if (skeleton->node(b) == node)
+						{
+							aiBone *parent = skeleton->parent(b);
+							const String pn = parent ? convStrTruncate(parent->mName, 50) : "";
+							CAGE_LOG_CONTINUE(SeverityEnum::Info, "meshImport", Stringizer() + prefix + "  bone: " + convStrTruncate(node->mName, 100) + ", parent: " + pn + ", offset: " + decompose(conv(b->mOffsetMatrix)));
+						}
+					}
+				}
+				for (uint32 i = 0; i < node->mNumChildren; i++)
+				{
+					aiNode *n = node->mChildren[i];
+					printHierarchy(n, depth + 1);
+				}
+			}
 
 			void loadMasksConfigFile(SkeletonRig *rig, const String &path)
 			{
@@ -659,38 +805,23 @@ namespace cage
 					loadMasksConfigFile(rig, path);
 			}
 
-			Transform findNodeTransformForAllMeshes() const
+			Mat4 findNodeTransformForAllMeshes() const
 			{
-				std::vector<Transform> trss;
+				std::vector<Mat4> trss;
 				for (uint32 i = 0; i < imp.GetScene()->mNumMeshes; i++)
-					trss.push_back(findNodeTransformWithMesh(i));
+					trss.push_back(findNodeTransformForMesh(i));
 				if (trss.empty())
-					CAGE_THROW_ERROR(Exception, "missing node transform for any meshes");
-				const auto &compare = [](const Transform &a, const Transform &b) -> bool
-				{
-					if (distanceSquared(a.position, b.position) > 1e-3)
-						return false;
-					if (distanceSquared(a.orientation * Vec3(0, 0, 1), b.orientation * Vec3(0, 0, 1)) > 1e-3)
-						return false;
-					if (distanceSquared(a.orientation * Vec3(0, 1, 0), b.orientation * Vec3(0, 1, 0)) > 1e-3)
-						return false;
-					if (distanceSquared(a.orientation * Vec3(1, 0, 0), b.orientation * Vec3(1, 0, 0)) > 1e-3)
-						return false;
-					if (abs(a.scale - b.scale) > 1e-5)
-						return false;
-					return true;
-				};
+					CAGE_THROW_ERROR(Exception, "missing meshes node transformations to use as root of skeleton rig");
 				for (const auto &it : trss)
-					if (!compare(it, trss[0]))
-						CAGE_THROW_ERROR(Exception, "ambiguous node transformation to use as root of skeleton rig");
+					if (!similar(it, trss[0]))
+						CAGE_THROW_ERROR(Exception, "ambiguous meshes node transformations to use as root of skeleton rig");
 				return trss[0];
 			}
 
 			Holder<SkeletonRig> skeletonRig() const
 			{
-				// print the nodes hierarchy
-				//CAGE_LOG(SeverityEnum::Info, "meshImport", "full node hierarchy:");
-				//printHierarchy(+skeleton, imp.GetScene()->mRootNode, 0);
+				if (!skeleton->rootNode)
+					CAGE_THROW_ERROR(Exception, "failed to uniquely determine skeleton root");
 
 				std::vector<uint16> ps;
 				std::vector<Mat4> bs;
@@ -701,7 +832,7 @@ namespace cage
 				is.reserve(bonesCount);
 
 				// find parents and matrices
-				const Mat4 modelInverse = Mat4(inverse(findNodeTransformForAllMeshes()));
+				const Mat4 modelInverse = inverse(findNodeTransformForAllMeshes() * inverse(skeleton->rootTransform));
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					const aiNode *n = skeleton->node(i);
@@ -716,7 +847,6 @@ namespace cage
 
 				Holder<SkeletonRig> rig = newSkeletonRig();
 				rig->skeletonData(ps, bs, is);
-				rig->globalInverse = inverse(Mat4(conv(imp.GetScene()->mRootNode->mTransformation)));
 				return rig;
 			}
 
@@ -855,31 +985,30 @@ namespace cage
 				return anim;
 			}
 
-			void findNodeTransformWithMesh(aiNode *node, std::vector<aiNode *> &nodes, const uint32 meshIndex) const
+			void findNodeTransformForMesh(aiNode *node, std::vector<aiNode *> &nodes, const uint32 meshIndex) const
 			{
 				CAGE_ASSERT(node);
 				for (uint32 i = 0; i < node->mNumMeshes; i++)
 					if (node->mMeshes[i] == meshIndex)
 						nodes.push_back(node);
 				for (uint32 i = 0; i < node->mNumChildren; i++)
-					findNodeTransformWithMesh(node->mChildren[i], nodes, meshIndex);
+					findNodeTransformForMesh(node->mChildren[i], nodes, meshIndex);
 			}
 
-			Transform findNodeTransformWithMesh(const uint32 meshIndex) const
+			Mat4 findNodeTransformForMesh(const uint32 meshIndex) const
 			{
 				std::vector<aiNode *> nodes;
-				findNodeTransformWithMesh(imp.GetScene()->mRootNode, nodes, meshIndex);
+				findNodeTransformForMesh(imp.GetScene()->mRootNode, nodes, meshIndex);
 				if (nodes.empty())
 					CAGE_THROW_ERROR(Exception, "missing node for mesh");
 				if (nodes.size() > 1)
 					CAGE_THROW_ERROR(Exception, "the mesh is referenced from multiple nodes");
-				Transform result;
+				Mat4 result;
 				aiNode *nd = nodes[0];
 				while (nd)
 				{
 					Mat4 mt = conv(nd->mTransformation);
-					Transform tr = decompose(mt);
-					result = result * tr;
+					result = result * mt;
 					nd = nd->mParent;
 				}
 				return result;
@@ -903,9 +1032,11 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "meshImport", cage::Stringizer() + "indices count: " + indicesCount);
 				}
 
-				const Transform transform = findNodeTransformWithMesh(meshIndex);
-				if (config.verbose)
-					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "mesh uses transformation: " + transform);
+				Mat4 transform = findNodeTransformForMesh(meshIndex);
+				if (skeleton && am->HasBones())
+					transform = transform * inverse(skeleton->rootTransform);
+				if (config.verbose && !similar(decompose(transform), Transform()))
+					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "applying mesh node transformation: " + decompose(transform));
 
 				Holder<Mesh> poly = newMesh();
 				switch (indicesPerPrimitive)
@@ -930,7 +1061,7 @@ namespace cage
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 p = transform * conv(am->mVertices[i]);
+						Vec3 p = Vec3(transform * Vec4(conv(am->mVertices[i]), 1));
 						ps.push_back(p);
 					}
 					poly->positions(ps);
@@ -940,11 +1071,12 @@ namespace cage
 				{
 					if (config.verbose)
 						CAGE_LOG(SeverityEnum::Info, "meshImport", "copying normals");
+					const Quat rotation = Quat(Mat3(transform));
 					std::vector<Vec3> ps;
 					ps.reserve(verticesCount);
 					for (uint32 i = 0; i < verticesCount; i++)
 					{
-						Vec3 n = transform.orientation * conv(am->mNormals[i]);
+						Vec3 n = rotation * conv(am->mNormals[i]);
 						ps.push_back(fixUnitVector("normal", n));
 					}
 					poly->normals(ps);
@@ -1555,7 +1687,7 @@ namespace cage
 				{
 					for (const MeshImportAnimation &ani : result.animations)
 					{
-						for (Real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+						for (Real t = 0; t <= 1; t += 0.01) // sample the animation at 100 positions
 						{
 							Holder<Mesh> tmp = part.mesh->copy();
 							SkeletalAnimationBlendingLayer layer;

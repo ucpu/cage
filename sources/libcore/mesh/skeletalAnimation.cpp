@@ -271,7 +271,6 @@ namespace cage
 		impl->baseMatrices.clear();
 		impl->invRestMatrices.clear();
 		impl->masksMapping.clear();
-		impl->globalInverse = {};
 	}
 
 	Holder<SkeletonRig> SkeletonRig::copy() const
@@ -290,7 +289,6 @@ namespace cage
 			ser << impl->baseMatrices;
 			ser << impl->invRestMatrices;
 			ser << impl->masksMapping;
-			ser << impl->globalInverse;
 		}
 	}
 
@@ -451,7 +449,7 @@ namespace cage
 		animateImpl(skeleton, animations, output);
 		for (uint32 i = 0; i < totalBones; i++)
 		{
-			output[i] = impl->globalInverse * output[i] * impl->invRestMatrices[i];
+			output[i] = output[i] * impl->invRestMatrices[i];
 			CAGE_ASSERT(output[i].valid());
 		}
 	}
@@ -484,7 +482,7 @@ namespace cage
 						q = Vec3(0, 1, 0);
 					tr.orientation = Quat(b - a, q);
 				}
-				output[i] = /*impl->globalInverse * */ Mat4(tr);
+				output[i] = Mat4(tr);
 				CAGE_ASSERT(output[i].valid());
 			}
 		}

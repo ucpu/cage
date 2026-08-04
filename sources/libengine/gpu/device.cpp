@@ -368,7 +368,7 @@ namespace cage
 			Holder<privat::WindowGpuContext> &context = privat::getWindowGpuContext(window);
 			if (!context)
 			{
-				CAGE_LOG(SeverityEnum::Info, "graphics", "creating window gpu surface");
+				CAGE_LOG(SeverityEnum::Info, "gpu", "creating window gpu surface");
 				auto s = std::make_shared<WindowGpuContextImpl>(bootstrap.inst.instance);
 				VkSurfaceKHR rawSurface;
 				const auto res = glfwCreateWindowSurface(bootstrap.inst.instance, privat::getGlfwWindow(window), nullptr, &rawSurface);

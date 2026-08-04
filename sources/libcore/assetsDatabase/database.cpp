@@ -182,16 +182,22 @@ namespace cage
 	void AssetsDatabase::convertAssets()
 	{
 		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
-		impl->checkOutput();
-		impl->detectChanges();
-		impl->processAssets();
-		impl->saveDatabase();
-		CAGE_LOG(SeverityEnum::Info, "database", impl->status.print());
+		convertAssetsNoThrow();
 		if (!impl->status.ok)
 		{
 			printIssues();
 			CAGE_THROW_ERROR(Exception, "converting assets failed");
 		}
+	}
+
+	void AssetsDatabase::convertAssetsNoThrow()
+	{
+		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
+		impl->checkOutput();
+		impl->detectChanges();
+		impl->processAssets();
+		impl->saveDatabase();
+		CAGE_LOG(SeverityEnum::Info, "database", impl->status.print());
 	}
 
 	Holder<PointerRange<String>> AssetsDatabase::allSchemes() const

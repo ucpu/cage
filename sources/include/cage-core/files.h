@@ -167,6 +167,10 @@ namespace cage
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);
 
+		// returns true if the file/folder exists with the exact case
+		// throws exception if the path does not exist at all
+		CAGE_CORE_API bool pathIsMatchingCase(const String &path);
+
 		// uses real filesystem directly, bypassing cage archives detection and virtual redirects
 		CAGE_CORE_API Holder<File> newRealFsFile(const String &path, FileMode mode);
 		CAGE_CORE_API void realFsAttemptFlush(File *file);

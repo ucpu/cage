@@ -461,11 +461,15 @@ namespace cage
 
 		void logCurrentCaughtException() noexcept
 		{
-			if (std::uncaught_exceptions() == 0)
+			auto ex = std::current_exception();
+			if (!ex)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "exception", "trying to log an exception, but no exception is available");
 				return;
+			}
 			try
 			{
-				throw;
+				std::rethrow_exception(ex);
 			}
 			catch (const cage::Exception &e)
 			{
