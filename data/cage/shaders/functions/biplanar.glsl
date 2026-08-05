@@ -6,7 +6,6 @@ struct Biplanar
 	vec3 normal;
 	ivec3 a1; // dominant axis indices
 	ivec3 a2; // second axis indices
-	ivec3 a3; // least significant axis indices
 	vec2 uv1, uv2;
 	vec2 dx1, dx2;
 	vec2 dy1, dy2;
@@ -23,8 +22,8 @@ Biplanar biplanarPrepare(vec3 position_world, vec3 normal_world, vec3 normal_obj
 	vec3 n = normal_world;
 	n = abs(n);
 	bip.a1 = (n.x > n.y && n.x > n.z) ? ivec3(0, 1, 2) : (n.y > n.z) ? ivec3(1, 2, 0) : ivec3(2, 0, 1);
-	bip.a3 = (n.x < n.y && n.x < n.z) ? ivec3(0, 1, 2) : (n.y < n.z) ? ivec3(1, 2, 0) : ivec3(2, 0, 1);
-	bip.a2 = ivec3(3) - bip.a3 - bip.a1;
+	ivec3 a3 = (n.x < n.y && n.x < n.z) ? ivec3(0, 1, 2) : (n.y < n.z) ? ivec3(1, 2, 0) : ivec3(2, 0, 1);
+	bip.a2 = ivec3(3) - bip.a1 - a3;
 	bip.uv1 = vec2(p[bip.a1.y], p[bip.a1.z]);
 	bip.uv2 = vec2(p[bip.a2.y], p[bip.a2.z]);
 	bip.dx1 = vec2(dpdx[bip.a1.y], dpdx[bip.a1.z]);
@@ -41,6 +40,8 @@ Biplanar biplanarPrepare(vec3 position_world, vec3 normal_world, vec3 normal_obj
 vec4 biplanarSample(sampler2D sam, Biplanar bip)
 {
 	vec4 v1 = textureGrad(sam, bip.uv1, bip.dx1, bip.dy1);
+	if (bip.w[1] < 0.1)
+		return v1;
 	vec4 v2 = textureGrad(sam, bip.uv2, bip.dx2, bip.dy2);
 	return v1 * bip.w[0] + v2 * bip.w[1];
 }
@@ -48,6 +49,8 @@ vec4 biplanarSample(sampler2D sam, Biplanar bip)
 vec4 biplanarSample(sampler2DArray sam, Biplanar bip, float arrayIndex)
 {
 	vec4 v1 = textureGrad(sam, vec3(bip.uv1, arrayIndex), bip.dx1, bip.dy1);
+	if (bip.w[1] < 0.1)
+		return v1;
 	vec4 v2 = textureGrad(sam, vec3(bip.uv2, arrayIndex), bip.dx2, bip.dy2);
 	return v1 * bip.w[0] + v2 * bip.w[1];
 }
@@ -68,6 +71,7 @@ vec3 egacBiplanarNormal(Biplanar bip, vec3 n1, vec3 n2)
 vec3 biplanarSampleNormal(sampler2D sam, Biplanar bip)
 {
 	vec3 n1 = restoreNormalMap(textureGrad(sam, bip.uv1, bip.dx1, bip.dy1));
+	// todo early exit
 	vec3 n2 = restoreNormalMap(textureGrad(sam, bip.uv2, bip.dx2, bip.dy2));
 	return egacBiplanarNormal(bip, n1, n2);
 }
@@ -75,6 +79,7 @@ vec3 biplanarSampleNormal(sampler2D sam, Biplanar bip)
 vec3 biplanarSampleNormal(sampler2DArray sam, Biplanar bip, float arrayIndex)
 {
 	vec3 n1 = restoreNormalMap(textureGrad(sam, vec3(bip.uv1, arrayIndex), bip.dx1, bip.dy1));
+	// todo early exit
 	vec3 n2 = restoreNormalMap(textureGrad(sam, vec3(bip.uv2, arrayIndex), bip.dx2, bip.dy2));
 	return egacBiplanarNormal(bip, n1, n2);
 }

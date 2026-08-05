@@ -310,6 +310,7 @@ namespace cage
 
 		void Device::waitDeviceIdle()
 		{
+			ScopeLock lock(get()->mutex);
 			get()->waitDeviceIdle();
 		}
 

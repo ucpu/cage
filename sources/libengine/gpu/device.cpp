@@ -225,22 +225,22 @@ namespace cage
 			{
 				std::array<vk::DescriptorPoolSize, 6> sizes = {};
 				sizes[0].type = vk::DescriptorType::eUniformBuffer;
-				sizes[0].descriptorCount = 2'000;
+				sizes[0].descriptorCount = 10'000;
 				sizes[1].type = vk::DescriptorType::eUniformBufferDynamic;
-				sizes[1].descriptorCount = 1'000;
+				sizes[1].descriptorCount = 4'000;
 				sizes[2].type = vk::DescriptorType::eStorageBuffer;
-				sizes[2].descriptorCount = 2'000;
+				sizes[2].descriptorCount = 10'000;
 				sizes[3].type = vk::DescriptorType::eStorageBufferDynamic;
-				sizes[3].descriptorCount = 1'000;
+				sizes[3].descriptorCount = 4'000;
 				sizes[4].type = vk::DescriptorType::eSampler;
-				sizes[4].descriptorCount = 4'000;
+				sizes[4].descriptorCount = 10'000;
 				sizes[5].type = vk::DescriptorType::eSampledImage;
-				sizes[5].descriptorCount = 4'000;
+				sizes[5].descriptorCount = 10'000;
 				vk::DescriptorPoolCreateInfo ci;
 				ci.flags |= vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 				ci.poolSizeCount = sizes.size();
 				ci.pPoolSizes = sizes.data();
-				ci.maxSets = 2'000;
+				ci.maxSets = 10'000;
 				descriptorPool = device.createDescriptorPoolUnique(ci);
 			}
 
