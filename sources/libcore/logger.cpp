@@ -355,7 +355,7 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "command line: " + fullCommandLineImpl());
 				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "executable path: " + detail::pathExecutable());
-				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + pathWorkingDir());
+				CAGE_LOG(SeverityEnum::Info, "log", Stringizer() + "working directory: " + detail::pathWorkingDir());
 
 				if (confDetailedInfo)
 				{

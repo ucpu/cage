@@ -155,14 +155,14 @@ namespace cage
 	// permanently removes a file or folder including all sub-folders
 	CAGE_CORE_API void pathRemove(const String &path);
 
-	CAGE_CORE_API String pathWorkingDir();
-
 	namespace detail
 	{
+		CAGE_CORE_API String pathWorkingDir();
 		CAGE_CORE_API String pathExecutable();
 		CAGE_CORE_API String pathExecutableNoExe();
-		CAGE_CORE_API String pathUsersWritable(); // eg. c:/users/<name>/appData/local
-		CAGE_CORE_API String pathTemp();
+		CAGE_CORE_API String pathExecutableDir();
+		CAGE_CORE_API String pathUsersWritableDir(); // eg. c:/users/<name>/appData/local
+		CAGE_CORE_API String pathTempDir();
 
 		// open a path in an archive preventing closing it to optimize bulk operations
 		CAGE_CORE_API Holder<void> pathKeepOpen(const String &path);

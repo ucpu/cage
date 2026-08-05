@@ -615,8 +615,8 @@ namespace cage
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 			const String pr = detail::globalConfigPrefix();
-			const String ep = pathExtractDirectory(detail::pathExecutable());
-			const String wp = pathWorkingDir();
+			const String ep = detail::pathExecutableDir();
+			const String wp = detail::pathWorkingDir();
 			const bool same = ep == wp;
 			if (!same)
 				loadGlobalConfigFile(pathJoin(ep, "cage.ini"), "");

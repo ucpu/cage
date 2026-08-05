@@ -819,15 +819,15 @@ namespace cage
 		return std::make_shared<ArchiveReal>(path);
 	}
 
-	String pathWorkingDir()
-	{
-		static const String dir = pathWorkingDirImpl();
-		CAGE_ASSERT(dir == pathWorkingDirImpl());
-		return dir;
-	}
-
 	namespace detail
 	{
+		String pathWorkingDir()
+		{
+			static const String dir = pathWorkingDirImpl();
+			CAGE_ASSERT(dir == pathWorkingDirImpl());
+			return dir;
+		}
+
 		String pathExecutable()
 		{
 			static const String pth = executableFullPathImpl();
@@ -845,7 +845,7 @@ namespace cage
 #endif
 		}
 
-		String pathUsersWritable()
+		String pathUsersWritableDir()
 		{
 			static const String pth = []()
 			{
@@ -882,7 +882,7 @@ namespace cage
 			return pth;
 		}
 
-		String pathTemp()
+		String pathTempDir()
 		{
 			static const String pth = pathSimplify(String(std::filesystem::temp_directory_path().string()));
 			return pth;

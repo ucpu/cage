@@ -194,7 +194,7 @@ namespace cage
 
 	String pathSearchTowardsRoot(const String &name, PathTypeFlags type)
 	{
-		return pathSearchTowardsRoot(name, pathWorkingDir(), type);
+		return pathSearchTowardsRoot(name, detail::pathWorkingDir(), type);
 	}
 
 	String pathSearchTowardsRoot(const String &name, const String &whereToStart, PathTypeFlags type)
@@ -392,6 +392,11 @@ namespace cage
 
 	namespace detail
 	{
+		String pathExecutableDir()
+		{
+			return pathJoin(pathExecutable(), "..");
+		}
+
 		Holder<void> pathKeepOpen(const String &path)
 		{
 			ScopeLock lock(fsMutex());

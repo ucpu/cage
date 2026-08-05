@@ -11,7 +11,7 @@
 
 namespace
 {
-	const String AssetsPath = pathJoin(pathWorkingDir(), "testdir/assetManager/assets");
+	const String AssetsPath = pathJoin(detail::pathWorkingDir(), "testdir/assetManager/assets");
 
 	void makeAssetRaw(uint32 name, PointerRange<const char> contents)
 	{

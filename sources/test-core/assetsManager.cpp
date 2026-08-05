@@ -14,7 +14,7 @@
 
 namespace
 {
-	const String AssetsPath = pathJoin(pathWorkingDir(), "testdir/assetManager/assets");
+	const String AssetsPath = pathJoin(detail::pathWorkingDir(), "testdir/assetManager/assets");
 
 	constexpr uint32 AssetSchemeIndexCounter = 13;
 

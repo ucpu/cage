@@ -1,4 +1,6 @@
+#include <cstdlib>
 #include <cstring>
+#include <stdlib.h>
 
 #define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS 1
 
@@ -9,6 +11,7 @@
 #include "gpu.h"
 
 #include <cage-core/debug.h>
+#include <cage-core/files.h>
 #include <cage-core/profiling.h>
 #include <cage-engine/window.h>
 
@@ -93,6 +96,48 @@ namespace cage
 			}
 			return std::move(r.value());
 		}
+
+		int environmentSetupImpl()
+		{
+			if (std::getenv("VK_DRIVER_FILES"))
+			{
+				CAGE_LOG(SeverityEnum::Info, "gpu", "detected env var: VK_DRIVER_FILES");
+				return 0;
+			}
+			if (std::getenv("VK_ADD_DRIVER_FILES"))
+			{
+				CAGE_LOG(SeverityEnum::Info, "gpu", "detected env var: VK_ADD_DRIVER_FILES");
+				return 0;
+			}
+			if (std::getenv("VK_ICD_FILENAMES"))
+			{
+				CAGE_LOG(SeverityEnum::Info, "gpu", "detected env var: VK_ICD_FILENAMES");
+				return 0;
+			}
+
+#ifdef CAGE_SYSTEM_MAC
+			{ // kosmic
+				const String val = pathJoin(detail::pathExecutableDir(), "kosmic_icd.json");
+				if (pathIsFile(val))
+				{
+					const auto r = ::setenv("VK_ADD_DRIVER_FILES", val.c_str(), 1);
+					if (r != 0)
+						CAGE_LOG(SeverityEnum::Warning, "gpu", "failed to update environment variable VK_ADD_DRIVER_FILES");
+				}
+			}
+			{ // moltenvk
+				const String val = pathJoin(detail::pathExecutableDir(), "moltenvk_icd.json");
+				if (pathIsFile(val))
+				{
+					const auto r = ::setenv("VK_ADD_DRIVER_FILES", val.c_str(), 1);
+					if (r != 0)
+						CAGE_LOG(SeverityEnum::Warning, "gpu", "failed to update environment variable VK_ADD_DRIVER_FILES");
+				}
+			}
+#endif // CAGE_SYSTEM_MAC
+
+			return 0;
+		}
 	}
 
 	namespace gpu
@@ -176,6 +221,7 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
 
 			{
+				environmentSetup();
 				bootstrapInit(desc);
 				instance = bootstrap.inst.instance;
 				physicalDevice = bootstrap.phys.physical_device;
@@ -321,6 +367,12 @@ namespace cage
 
 			while (!disposingTasks.empty() && disposingTasks[0]->done())
 				disposingTasks.erase(disposingTasks.begin());
+		}
+
+		void DeviceImpl::environmentSetup()
+		{
+			static int dummy = environmentSetupImpl();
+			(void)dummy;
 		}
 
 		void DeviceImpl::bootstrapInit(const GpuDeviceDescriptor &desc)

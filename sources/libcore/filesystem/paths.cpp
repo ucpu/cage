@@ -192,14 +192,14 @@ namespace cage
 		String d, p, f, e;
 		pathDecompose(path, d, p, f, e);
 		if (d + p + f + e == "")
-			return pathWorkingDir();
+			return detail::pathWorkingDir();
 
 		if (!p.empty() && p[0] == '/')
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			// windows may have multiple roots, we want to be specific
 			if (d.empty())
-				d = pathExtractDrive(pathWorkingDir());
+				d = pathExtractDrive(detail::pathWorkingDir());
 #endif // CAGE_SYSTEM_WINDOWS
 			return joinDrive(d, pathJoinUnchecked(p, f + e));
 		}
@@ -208,7 +208,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			// it is ok on windows, if the protocol is same as the drive for working directory
-			if (d != pathExtractDrive(pathWorkingDir()))
+			if (d != pathExtractDrive(detail::pathWorkingDir()))
 #endif // CAGE_SYSTEM_WINDOWS
 			{
 				CAGE_LOG_THROW(Stringizer() + "path: " + path);
@@ -216,7 +216,7 @@ namespace cage
 			}
 		}
 
-		return pathJoin(pathWorkingDir(), path);
+		return pathJoin(detail::pathWorkingDir(), path);
 	}
 
 	String pathJoin(const String &a, const String &b)

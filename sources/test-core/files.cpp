@@ -487,7 +487,7 @@ namespace
 #ifdef CAGE_SYSTEM_MAC
 		CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - macos");
 #else
-		if (isPattern(pathWorkingDir(), "/mnt/", "", ""))
+		if (isPattern(detail::pathWorkingDir(), "/mnt/", "", ""))
 		{
 			CAGE_LOG(SeverityEnum::Warning, "tests", "skipping the test - we are running in /mnt/, which may not support fs watching");
 		}
@@ -510,17 +510,18 @@ namespace
 	void testSystemPaths()
 	{
 		CAGE_TESTCASE("system paths");
-		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "working dir: " + pathWorkingDir());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "working dir: " + detail::pathWorkingDir());
 		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "executable: " + detail::pathExecutable());
 		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "executable no exe: " + detail::pathExecutableNoExe());
-		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "users writable: " + detail::pathUsersWritable());
-		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "temp: " + detail::pathTemp());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "executable dir: " + detail::pathExecutableDir());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "users writable dir: " + detail::pathUsersWritableDir());
+		CAGE_LOG(SeverityEnum::Info, "paths", Stringizer() + "temp dir: " + detail::pathTempDir());
 	}
 
 	void testFilesInTemp()
 	{
 		CAGE_TESTCASE("files in temp");
-		const String temp = detail::pathTemp();
+		const String temp = detail::pathTempDir();
 
 		MemoryBuffer data(BLOCK_SIZE);
 		for (uint32 i = 0; i < BLOCK_SIZE; i++)
@@ -575,7 +576,7 @@ namespace
 		// use the following to make a temporary filesystem for testing
 		// sudo mount -t tmpfs -o size=1G tmpfs /tmp
 		CAGE_TESTCASE("move from temporary path");
-		const String a = pathJoin(detail::pathTemp(), "sourceFolder");
+		const String a = pathJoin(detail::pathTempDir(), "sourceFolder");
 		const String b = "testdir/renameTest/target";
 		writeFile(a + "/greetings.txt")->writeLine("hello there");
 		pathMove(a, b);

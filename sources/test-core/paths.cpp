@@ -326,28 +326,28 @@ namespace
 		CAGE_TEST(pathToRel("..") == "..");
 		CAGE_TEST(pathToRel("abc") == "abc");
 		CAGE_TEST(pathToRel("abc", "def") == "abc");
-		CAGE_TEST(pathToRel(pathWorkingDir()) == "");
+		CAGE_TEST(pathToRel(detail::pathWorkingDir()) == "");
 		CAGE_TEST(pathToRel("abc/.", "def") == "abc");
 		CAGE_TEST(pathToRel("./abc", "def") == "abc");
 		CAGE_TEST(pathToRel("lol:/omg") == "lol:/omg");
 		CAGE_TEST(pathToRel("lol://omg") == "lol:/omg");
 		CAGE_TEST(pathToRel("abc/./def", "juj") == "abc/def");
-		CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc")) == "abc");
-		CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc"), pathJoin(pathWorkingDir(), "abc")) == "");
+		CAGE_TEST(pathToRel(pathJoin(detail::pathWorkingDir(), "abc")) == "abc");
+		CAGE_TEST(pathToRel(pathJoin(detail::pathWorkingDir(), "abc"), pathJoin(detail::pathWorkingDir(), "abc")) == "");
 	}
 
 	void sectionAbsolute()
 	{
 		CAGE_TESTCASE("path to absolute");
-		CAGE_TEST(pathToAbs("") == pathWorkingDir());
-		CAGE_TEST(pathToAbs(".") == pathWorkingDir());
+		CAGE_TEST(pathToAbs("") == detail::pathWorkingDir());
+		CAGE_TEST(pathToAbs(".") == detail::pathWorkingDir());
 		CAGE_TEST(pathToAbs("lol:/abc") == "lol:/abc");
-		CAGE_TEST(pathToAbs("abc") == pathJoin(pathWorkingDir(), "abc"));
+		CAGE_TEST(pathToAbs("abc") == pathJoin(detail::pathWorkingDir(), "abc"));
 		{
 			const String root = [&]() -> String
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
-				return pathExtractDrive(pathWorkingDir()) + ":/";
+				return pathExtractDrive(detail::pathWorkingDir()) + ":/";
 #else
 				return "/";
 #endif // CAGE_SYSTEM_WINDOWS
@@ -361,8 +361,8 @@ namespace
 	void testSystemPaths()
 	{
 		CAGE_TESTCASE("system paths");
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "users writable path: " + detail::pathUsersWritable());
-		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "temp path: " + detail::pathTemp());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "users writable path: " + detail::pathUsersWritableDir());
+		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "temp path: " + detail::pathTempDir());
 		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path: " + detail::pathExecutable());
 		CAGE_LOG(SeverityEnum::Info, "info", Stringizer() + "executable path (no exe): " + detail::pathExecutableNoExe());
 	}

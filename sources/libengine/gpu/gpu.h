@@ -328,6 +328,7 @@ namespace cage
 
 			void applyDeferredDestructions();
 
+			void environmentSetup();
 			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
