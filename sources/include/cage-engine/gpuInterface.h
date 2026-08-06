@@ -34,23 +34,6 @@ namespace cage
 		class TextureViewImpl;
 
 		///////////////////////////////////////////////////////////////////
-		// StringView
-		///////////////////////////////////////////////////////////////////
-
-		struct CAGE_ENGINE_API StringView
-		{
-			PointerRange<const char> str;
-
-			StringView() {}
-			StringView(const char *ptr);
-			StringView(const String &ptr) : str(ptr) {}
-			StringView(const AssetLabel &ptr) : str(ptr) {}
-
-			StringView(const StringView &) noexcept = default;
-			StringView &operator=(const StringView &) noexcept = default;
-		};
-
-		///////////////////////////////////////////////////////////////////
 		// GpuInterfaceHandle
 		///////////////////////////////////////////////////////////////////
 
@@ -127,7 +110,7 @@ namespace cage
 		{
 		public:
 			EncoderModeEnum mode() const;
-			void pushDebugGroup(StringView label);
+			void pushDebugGroup(const AssetLabel &label);
 			void popDebugGroup();
 			CommandBuffer finishEncoding();
 
@@ -183,7 +166,7 @@ namespace cage
 			Texture createTexture(const TextureDescriptor &descriptor);
 
 			template<class Callable>
-			requires(std::is_invocable_r_v<void, Callable, StatusEnum, RenderPipeline, StringView>)
+			requires(std::is_invocable_r_v<void, Callable, StatusEnum, RenderPipeline>)
 			void createRenderPipelineAsync(const RenderPipelineDescriptor &descriptor, Callable callable)
 			{
 				createRenderPipelineAsyncTypeErased(descriptor, { callable });
@@ -200,7 +183,7 @@ namespace cage
 			void waitDeviceIdle();
 
 		private:
-			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback);
+			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline)> callback);
 		};
 
 		class CAGE_ENGINE_API PipelineLayout : public GpuInterfaceHandle<PipelineLayout, PipelineLayoutImpl>
@@ -276,7 +259,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API BindGroupDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 
 			struct BufferEntry
 			{
@@ -305,19 +288,22 @@ namespace cage
 
 		struct CAGE_ENGINE_API BindGroupLayoutDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 
 			struct BufferEntry
 			{
 				BufferBindingTypeEnum type = BufferBindingTypeEnum::Undefined;
 				bool hasDynamicOffset = false;
+
+				bool operator==(const BufferEntry &) const = default;
 			};
 			struct SamplerEntry
-			{};
+			{
+				bool operator==(const SamplerEntry &) const = default;
+			};
 			struct TextureEntry
 			{
-				TextureDimensionEnum viewDimension = TextureDimensionEnum::Undefined;
-				//bool multisampled = false;
+				bool operator==(const TextureEntry &) const = default;
 			};
 
 			struct Entry
@@ -325,32 +311,34 @@ namespace cage
 				std::variant<std::monostate, BufferEntry, SamplerEntry, TextureEntry> data;
 				uint32 binding = 0;
 				ShaderStagesFlags shaderStages = ShaderStagesFlags::Undefined;
+
+				bool operator==(const Entry &) const = default;
 			};
 			ankerl::svector<Entry, 10> entries;
 		};
 
 		struct CAGE_ENGINE_API BufferDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			uint64 size = 0;
 			BufferUsageFlags usage = BufferUsageFlags::Undefined;
 		};
 
 		struct CAGE_ENGINE_API CommandEncoderDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 		};
 
 		struct CAGE_ENGINE_API PipelineLayoutDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			ankerl::svector<BindGroupLayout, 3> bindGroupLayouts;
 			//uint32 immediateSize = 0;
 		};
 
 		struct CAGE_ENGINE_API RenderPassDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 
 			struct ColorAttachment
 			{
@@ -381,7 +369,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API RenderPipelineDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			PipelineLayout layout;
 
 			struct VertexState
@@ -447,7 +435,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API SamplerDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			uint32 maxAnisotropy = 1;
 			AddressModeEnum addressModeU = AddressModeEnum::Undefined;
 			AddressModeEnum addressModeV = AddressModeEnum::Undefined;
@@ -460,7 +448,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API ShaderModuleDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			PointerRange<const uint32> spirvCode;
 		};
 
@@ -475,7 +463,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API TextureDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			Vec3i resolution = Vec3i(0, 0, 1);
 			uint32 arrayLayersCount = 1;
 			uint32 mipLevelsCount = 1;
@@ -487,7 +475,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API TextureViewDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			uint32 arrayLayersOffset = 0;
 			uint32 arrayLayersCount = 1;
 			uint32 mipLevelsOffset = 0;
@@ -497,7 +485,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API QuerySetDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			uint32 count = 0;
 		};
 
@@ -511,7 +499,7 @@ namespace cage
 
 		struct CAGE_ENGINE_API GpuDeviceDescriptor
 		{
-			StringView label;
+			AssetLabel label;
 			Window *window = nullptr;
 		};
 
@@ -520,8 +508,6 @@ namespace cage
 		///////////////////////////////////////////////////////////////////
 
 		CAGE_ENGINE_API Device newGpuDevice(const GpuDeviceDescriptor &desc);
-
-		CAGE_ENGINE_API void logGpuMessage(SeverityEnum severity, StringView message);
 	}
 }
 

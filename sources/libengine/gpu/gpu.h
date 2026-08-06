@@ -108,7 +108,7 @@ namespace cage
 
 			void operator=(T &&v) { holder->value = std::move(v); }
 			void operator=(Extra &&e) { holder->extra = std::move(e); }
-			void setLabel(StringView label);
+			void setLabel(const AssetLabel &label);
 		};
 
 		struct ResourcesToKeepAlive : private Noncopyable
@@ -256,7 +256,7 @@ namespace cage
 			// encoder
 
 			void popDebugGroup();
-			void pushDebugGroup(StringView label);
+			void pushDebugGroup(const AssetLabel &label);
 			CommandBuffer finishEncoding();
 
 			// generic encoder
@@ -324,7 +324,7 @@ namespace cage
 			~DeviceImpl();
 
 			template<class T>
-			void setLabel(const T &object, StringView label);
+			void setLabel(const T &object, const AssetLabel &label);
 
 			void applyDeferredDestructions();
 
@@ -488,15 +488,15 @@ namespace cage
 		}
 
 		template<class T, class Extra>
-		void ResourceHandle<T, Extra>::setLabel(StringView label)
+		void ResourceHandle<T, Extra>::setLabel(const AssetLabel &label)
 		{
 			holder->device->setLabel(holder->value, label);
 		}
 
 		template<class T>
-		void DeviceImpl::setLabel(const T &object, StringView label)
+		void DeviceImpl::setLabel(const T &object, const AssetLabel &label)
 		{
-			if (label.str.empty())
+			if (label.empty())
 				return;
 			vk::DebugUtilsObjectNameInfoEXT info;
 			if constexpr (requires { object->objectType; })
@@ -513,7 +513,7 @@ namespace cage
 			{
 				static_assert([] { return false; }(), "unknown vulkan object type");
 			}
-			info.pObjectName = label.str.data();
+			info.pObjectName = label.data();
 			device.setDebugUtilsObjectNameEXT(info);
 		}
 	}

@@ -111,7 +111,7 @@ namespace cage
 
 		BindGroupLayoutImpl::BindGroupLayoutImpl(DeviceImpl &device, const BindGroupLayoutDescriptor &desc) : layout(device)
 		{
-			ankerl::svector<vk::DescriptorSetLayoutBinding, 32> bindings;
+			ankerl::svector<vk::DescriptorSetLayoutBinding, 10> bindings;
 			bindings.reserve(desc.entries.size());
 			for (const auto &entry : desc.entries)
 			{

@@ -160,7 +160,7 @@ namespace cage
 				gpu::Device *dev = device->nativeDevice();
 				rpd.layout = dev->createPipelineLayout(pld);
 				dev->createRenderPipelineAsync(rpd,
-					[this, target](gpu::StatusEnum status, gpu::RenderPipeline pipeline, gpu::StringView message)
+					[this, target](gpu::StatusEnum status, gpu::RenderPipeline pipeline)
 					{
 						if (status == gpu::StatusEnum::Success)
 						{
@@ -172,7 +172,6 @@ namespace cage
 						else
 						{
 							CAGE_LOG(SeverityEnum::Warning, "graphics", "error creating gpu pipeline");
-							gpu::logGpuMessage(SeverityEnum::Note, message);
 							//detail::debugBreakpoint();
 						}
 					});

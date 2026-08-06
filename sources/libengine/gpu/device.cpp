@@ -387,7 +387,7 @@ namespace cage
 											  .request_validation_layers()
 #endif // !CAGE_DEPLOY
 											  .set_engine_name("cage")
-											  .set_app_name(desc.label.str.data())
+											  .set_app_name(desc.label.data())
 											  .build());
 
 			auto surf = getWindowGpuContext(desc.window);
@@ -667,11 +667,6 @@ namespace cage
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)
 		{
 			return Device(systemMemory().createHolder<DeviceImpl>(desc));
-		}
-
-		void logGpuMessage(SeverityEnum severity, StringView message)
-		{
-			logSplit(severity, "gpu", message.str);
 		}
 	}
 }

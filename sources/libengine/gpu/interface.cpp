@@ -1,5 +1,3 @@
-#include <cstring>
-
 #include "gpu.h"
 
 #include <cage-core/tasks.h>
@@ -8,12 +6,6 @@ namespace cage
 {
 	namespace gpu
 	{
-		StringView::StringView(const char *ptr)
-		{
-			if (ptr)
-				str = PointerRange<const char>(ptr, ptr + std::strlen(ptr));
-		}
-
 		uint64 Buffer::getSize() const
 		{
 			return get()->size;
@@ -44,7 +36,7 @@ namespace cage
 			return get()->currentMode;
 		}
 
-		void CommandEncoder::pushDebugGroup(StringView label)
+		void CommandEncoder::pushDebugGroup(const AssetLabel &label)
 		{
 			get()->pushDebugGroup(label);
 		}
@@ -218,7 +210,7 @@ namespace cage
 			{
 				Device device;
 				RenderPipelineDescriptor desc;
-				std::function<void(StatusEnum, RenderPipeline, StringView)> callback;
+				std::function<void(StatusEnum, RenderPipeline)> callback;
 
 				void operator()(uint32)
 				{
@@ -229,14 +221,15 @@ namespace cage
 					}
 					catch (...)
 					{
-						callback(StatusEnum::Error, {}, {});
+						callback(StatusEnum::Error, {});
+						return;
 					}
-					callback(StatusEnum::Success, std::move(rp), {});
+					callback(StatusEnum::Success, std::move(rp));
 				}
 			};
 		}
 
-		void Device::createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline, StringView)> callback)
+		void Device::createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline)> callback)
 		{
 			Holder<RenderPipelineTask> data = systemMemory().createHolder<RenderPipelineTask>();
 			data->device = *this;

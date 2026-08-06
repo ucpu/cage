@@ -13,17 +13,14 @@ namespace cage
 {
 	namespace privat
 	{
-		gpu::TextureDimensionEnum textureViewDimension(TextureFlags flags);
-
 		namespace
 		{
-			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config, AssetLabel label)
+			using LayoutDescriptorBase = decltype(gpu::BindGroupLayoutDescriptor::entries);
+
+			LayoutDescriptorBase createLayoutBase(const GraphicsBindingsCreateConfig &config)
 			{
-				gpu::BindGroupLayoutDescriptor desc;
-				if (label.empty())
-					label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
-				desc.label = label;
-				desc.entries.reserve(config.buffers.size() + config.textures.size() * 2);
+				LayoutDescriptorBase result;
+				result.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
@@ -35,7 +32,7 @@ namespace cage
 					be.type = b.uniform ? gpu::BufferBindingTypeEnum::Uniform : gpu::BufferBindingTypeEnum::Storage;
 					be.hasDynamicOffset = b.dynamic;
 					e.data = be;
-					desc.entries.push_back(std::move(e));
+					result.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
@@ -48,9 +45,8 @@ namespace cage
 						e.binding = t.binding;
 						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::TextureEntry te;
-						te.viewDimension = textureViewDimension(t.texture->flags);
 						e.data = te;
-						desc.entries.push_back(std::move(e));
+						result.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
@@ -59,22 +55,31 @@ namespace cage
 						e.shaderStages = gpu::ShaderStagesFlags::Fragment;
 						gpu::BindGroupLayoutDescriptor::SamplerEntry se;
 						e.data = se;
-						desc.entries.push_back(std::move(e));
+						result.push_back(std::move(e));
 					}
 				}
 
+				return result;
+			}
+
+			gpu::BindGroupLayout createLayout(GraphicsDevice *device, const GraphicsBindingsCreateConfig &config)
+			{
+				gpu::BindGroupLayoutDescriptor desc;
+				desc.label = Stringizer() + "layout (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
+				desc.entries = createLayoutBase(config);
 				return device->nativeDevice()->createBindGroupLayout(desc);
 			}
 
-			gpu::BindGroup createGroup(GraphicsDevice *device, const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, const AssetLabel &label)
+			gpu::BindGroup createGroup(GraphicsDevice *device, const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config, AssetLabel label)
 			{
 				CAGE_ASSERT(layout);
 
-				gpu::BindGroupDescriptor bgd;
-				if (!label.empty())
-					bgd.label = label;
-				bgd.layout = layout;
-				bgd.entries.reserve(config.buffers.size() + config.textures.size() * 2);
+				gpu::BindGroupDescriptor desc;
+				if (label.empty())
+					label = Stringizer() + "group (b: " + config.buffers.size() + ", t: " + config.textures.size() + ")";
+				desc.label = label;
+				desc.layout = layout;
+				desc.entries.reserve(config.buffers.size() + config.textures.size() * 2);
 
 				for (const auto &b : config.buffers)
 				{
@@ -87,7 +92,7 @@ namespace cage
 					be.offset = 0;
 					be.size = b.size;
 					e.data = std::move(be);
-					bgd.entries.push_back(std::move(e));
+					desc.entries.push_back(std::move(e));
 				}
 
 				for (const auto &t : config.textures)
@@ -102,7 +107,7 @@ namespace cage
 						te.view = t.texture->nativeView();
 						CAGE_ASSERT(te.view);
 						e.data = std::move(te);
-						bgd.entries.push_back(std::move(e));
+						desc.entries.push_back(std::move(e));
 					}
 					if (t.bindSampler)
 					{
@@ -112,11 +117,11 @@ namespace cage
 						se.sampler = t.texture->nativeSampler();
 						CAGE_ASSERT(se.sampler);
 						e.data = std::move(se);
-						bgd.entries.push_back(std::move(e));
+						desc.entries.push_back(std::move(e));
 					}
 				}
 
-				return device->nativeDevice()->createBindGroup(bgd);
+				return device->nativeDevice()->createBindGroup(desc);
 			}
 		}
 
@@ -130,31 +135,45 @@ namespace cage
 
 			struct LayoutKey
 			{
-				ankerl::svector<uint32, 6> keys;
-
+				LayoutDescriptorBase key;
 				std::size_t hash = 0;
 
-				LayoutKey(const GraphicsBindingsCreateConfig &config)
+				LayoutKey(const GraphicsBindingsCreateConfig &config) : key(createLayoutBase(config))
 				{
-					keys.reserve(config.buffers.size() + 1 + config.textures.size());
-					for (const auto &b : config.buffers)
-					{
-						const uint32 unif = (uint32)b.uniform << 30;
-						const uint32 dyn = (uint32)b.dynamic << 31;
-						keys.push_back(b.binding + unif + dyn);
-					}
-					keys.push_back(75431564); // separator
-					for (const auto &t : config.textures)
-					{
-						const uint32 bindTexture = (uint32)t.bindTexture << 18;
-						const uint32 bindSampler = (uint32)t.bindSampler << 19;
-						const uint32 flags = (uint32)t.texture->flags << 20;
-						keys.push_back(t.binding + bindTexture + bindSampler + flags);
-					}
-
 					auto hashCombine = [&](std::unsigned_integral auto v) { hash ^= std::hash<std::decay_t<decltype(v)>>{}(v) + 0x9e3779b9 + (hash << 6) + (hash >> 2); };
-					for (uint32 k : keys)
-						hashCombine(k);
+					for (const auto &entry : key)
+					{
+						hashCombine(entry.binding);
+						hashCombine((uint32)entry.shaderStages);
+						std::visit(
+							[&](auto &e)
+							{
+								using T = std::decay_t<decltype(e)>;
+								if constexpr (std::is_same_v<T, std::monostate>)
+								{
+									CAGE_ASSERT(!"empty BindGroupLayoutDescriptor entry");
+								}
+								else if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::BufferEntry>)
+								{
+									hashCombine(123u);
+									hashCombine((uint32)e.type);
+									hashCombine((uint32)e.hasDynamicOffset);
+								}
+								else if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::SamplerEntry>)
+								{
+									hashCombine(456u);
+								}
+								else if constexpr (std::is_same_v<T, gpu::BindGroupLayoutDescriptor::TextureEntry>)
+								{
+									hashCombine(789u);
+								}
+								else
+								{
+									static_assert([] { return false; }(), "unknown BindGroupLayoutDescriptor entry type");
+								}
+							},
+							entry.data);
+					}
 				}
 
 				bool operator==(const LayoutKey &) const = default;
@@ -169,7 +188,6 @@ namespace cage
 			struct GroupKey
 			{
 				ankerl::svector<uint64, 10> keys;
-
 				std::size_t hash = 0;
 
 				GroupKey(const gpu::BindGroupLayout &layout, const GraphicsBindingsCreateConfig &config)
@@ -250,7 +268,7 @@ namespace cage
 					auto &it = layoutsCache[lk];
 					it.lastUsedFrame = currentFrame;
 					if (!it.layout) // must check again after relocking
-						it.layout = createLayout(device, config, label); // layout created within lock - it is used as part of key for pipelines, so avoid duplication
+						it.layout = createLayout(device, config); // layout created within lock - it is used as part of key for pipelines, so avoid duplication
 					binding.layout = it.layout;
 				}
 				if (!binding.group)

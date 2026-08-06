@@ -188,11 +188,11 @@ namespace cage
 			}
 		}
 
-		void CommandEncoderImpl::pushDebugGroup(StringView label)
+		void CommandEncoderImpl::pushDebugGroup(const AssetLabel &label)
 		{
 			CAGE_ASSERT(currentMode != EncoderModeEnum::Undefined);
 			vk::DebugUtilsLabelEXT info;
-			info.pLabelName = label.str.data();
+			info.pLabelName = label.data();
 			cmd.beginDebugUtilsLabelEXT(info);
 		}
 
