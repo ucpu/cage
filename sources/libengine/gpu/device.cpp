@@ -345,6 +345,17 @@ namespace cage
 
 			try
 			{
+				commandPools.clear();
+				for (uint32 i = 0; i < 10; i++)
+					applyDeferredDestructions();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
 				vmaDestroyAllocator(allocator);
 				allocator = nullptr;
 			}

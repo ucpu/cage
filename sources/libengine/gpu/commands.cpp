@@ -11,10 +11,16 @@ namespace cage
 		}
 
 		template<>
-		void ResourceInternal<vk::CommandBuffer, vk::CommandPool>::destroy()
+		void ResourceInternal<vk::CommandPool, Nothing>::destroy()
 		{
-			device->device.freeCommandBuffers(extra, value);
-			device->device.destroyCommandPool(extra);
+			device->device.destroyCommandPool(value);
+		}
+
+		template<>
+		void ResourceInternal<vk::CommandBuffer, Holder<CommandPoolImpl>>::destroy()
+		{
+			device->device.freeCommandBuffers(*extra, value);
+			device->commandPools.push_back(std::move(extra));
 		}
 
 		template<>
@@ -25,12 +31,25 @@ namespace cage
 
 		CommandBufferImpl::CommandBufferImpl(DeviceImpl &device) : buffer(device), rtka(device)
 		{
-			vk::CommandPoolCreateInfo info1;
-			buffer = device.device.createCommandPool(info1);
+			{
+				ScopeLock lock(device.mutex);
+				if (device.commandPools.empty())
+				{
+					Holder<CommandPoolImpl> p = systemMemory().createHolder<CommandPoolImpl>(device);
+					vk::CommandPoolCreateInfo info1;
+					*p = device.device.createCommandPool(info1);
+					buffer = std::move(p);
+				}
+				else
+				{
+					buffer = std::move(device.commandPools.back());
+					device.commandPools.pop_back();
+				}
+			}
 
 			vk::CommandBufferAllocateInfo info2;
 			info2.commandBufferCount = 1;
-			info2.commandPool = buffer.holder->extra;
+			info2.commandPool = *buffer.holder->extra;
 			buffer = std::move(device.device.allocateCommandBuffers(info2)[0]);
 		}
 

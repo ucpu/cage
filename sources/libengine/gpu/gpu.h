@@ -216,10 +216,12 @@ namespace cage
 			void invalidate();
 		};
 
+		using CommandPoolImpl = ResourceHandle<vk::CommandPool, Nothing>;
+
 		class CommandBufferImpl : private Immovable
 		{
 		public:
-			ResourceHandle<vk::CommandBuffer, vk::CommandPool> buffer;
+			ResourceHandle<vk::CommandBuffer, Holder<CommandPoolImpl>> buffer;
 			ResourcesToKeepAlive rtka;
 
 			CommandBufferImpl(DeviceImpl &device);
@@ -312,6 +314,7 @@ namespace cage
 			vk::Queue queue;
 			VmaAllocator allocator = nullptr;
 			vk::UniqueDescriptorPool descriptorPool;
+			std::vector<Holder<CommandPoolImpl>> commandPools;
 			std::vector<CommandBuffer> additionalCommands;
 			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
 			std::array<vk::UniqueFence, 2> framesFences = {};
