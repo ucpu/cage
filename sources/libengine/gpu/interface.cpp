@@ -143,7 +143,6 @@ namespace cage
 			Texture t = Texture(systemMemory().createHolder<TextureImpl>(*get(), desc));
 
 			{ // initial image layout transition
-				CommandEncoderImpl enc(*get(), { .label = "init texture image layout" });
 				// transition from undefined directly to sampled is forbidden
 				ImageStateEnum intermediate = ImageStateEnum::TransferDst;
 				if (any(desc.usage & TextureUsageFlags::RenderAttachment))
@@ -153,11 +152,10 @@ namespace cage
 					else
 						intermediate = ImageStateEnum::DepthAttachment;
 				}
+				ScopeLock lock(get()->mutex);
+				CommandEncoderImpl &enc = get()->addCommands();
 				enc.imageTransitionPermanent(t, ImageStateEnum::Undefined, intermediate);
 				enc.imageTransitionPermanent(t, intermediate, ImageStateEnum::Sampled);
-				CommandBuffer cmd = enc.finishEncoding();
-				ScopeLock lock(get()->mutex);
-				get()->additionalCommands.push_back(std::move(cmd));
 			}
 
 			return t;
@@ -250,11 +248,9 @@ namespace cage
 			Buffer staging = createBuffer(desc);
 			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
 			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
-			CommandEncoderImpl enc(*get(), { .label = "copy staging buffer" });
-			enc.copyBufferToBuffer(staging, 0, buffer, offset, data.size());
-			CommandBuffer cmd = enc.finishEncoding();
 			ScopeLock lock(get()->mutex);
-			get()->additionalCommands.push_back(std::move(cmd));
+			CommandEncoderImpl &enc = get()->addCommands();
+			enc.copyBufferToBuffer(staging, 0, buffer, offset, data.size());
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const char> data, Vec3i extents)
@@ -266,11 +262,9 @@ namespace cage
 			Buffer staging = createBuffer(desc);
 			CAGE_ASSERT(staging.getMappedRange().size() >= data.size());
 			detail::memcpy(staging.getMappedRange().data(), data.data(), data.size());
-			CommandEncoderImpl enc(*get(), { .label = "copy staging buffer" });
-			enc.copyBufferToTexture(staging, 0, dest, extents);
-			CommandBuffer cmd = enc.finishEncoding();
 			ScopeLock lock(get()->mutex);
-			get()->additionalCommands.push_back(std::move(cmd));
+			CommandEncoderImpl &enc = get()->addCommands();
+			enc.copyBufferToTexture(staging, 0, dest, extents);
 		}
 
 		void Device::writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents)

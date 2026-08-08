@@ -315,11 +315,11 @@ namespace cage
 			VmaAllocator allocator = nullptr;
 			vk::UniqueDescriptorPool descriptorPool;
 			std::vector<Holder<CommandPoolImpl>> commandPools;
-			std::vector<CommandBuffer> additionalCommands;
-			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
-			std::array<vk::UniqueFence, 2> framesFences = {};
 			std::array<std::vector<Holder<void>>, 3> deferredDestructions = {}; // insert into [0]
 			std::vector<Holder<AsyncTask>> disposingTasks;
+			Holder<CommandEncoderImpl> additionalCommands;
+			std::array<vk::UniqueFence, 2> framesFences = {};
+			std::vector<std::shared_ptr<WindowGpuContextImpl>> surfacesCollection;
 			vk::PresentModeKHR preferredPresentation = vk::PresentModeKHR::eFifo;
 			bool preferredTripleBuffering = false;
 
@@ -330,6 +330,7 @@ namespace cage
 			void setLabel(const T &object, const AssetLabel &label);
 
 			void applyDeferredDestructions();
+			CommandEncoderImpl &addCommands();
 
 			void environmentSetup();
 			void bootstrapInit(const GpuDeviceDescriptor &desc);

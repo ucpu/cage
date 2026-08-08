@@ -158,9 +158,8 @@ namespace cage
 		{
 			if (initialized)
 				return;
-			CommandEncoderImpl enc(*texture->image.device(), { .label = "init swapchain images" });
+			CommandEncoderImpl &enc = texture->image.device()->addCommands();
 			enc.imageTransitionPermanent(texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
-			texture->image.device()->additionalCommands.push_back(enc.finishEncoding());
 			initialized = true;
 		}
 
@@ -380,6 +379,13 @@ namespace cage
 				disposingTasks.erase(disposingTasks.begin());
 		}
 
+		CommandEncoderImpl &DeviceImpl::addCommands()
+		{
+			if (!additionalCommands)
+				additionalCommands = systemMemory().createHolder<CommandEncoderImpl>(*this, CommandEncoderDescriptor{ .label = "additionalCommands" });
+			return *additionalCommands;
+		}
+
 		void DeviceImpl::environmentSetup()
 		{
 			static int dummy = environmentSetupImpl();
@@ -498,11 +504,16 @@ namespace cage
 
 			// submit
 			{
-				ScopeLock lock(mutex); // must protect additionalCommands
+				ScopeLock lock(mutex); // must protect additionalCommands and queue submit
 				const ProfilingScope profiling("submit");
 				ankerl::svector<vk::CommandBufferSubmitInfo, 30> cmds;
-				for (auto &it : additionalCommands)
-					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+				CommandBuffer acb; // must outlive the submission
+				if (additionalCommands)
+				{
+					acb = additionalCommands->finishEncoding();
+					cmds.push_back(vk::CommandBufferSubmitInfo(acb->buffer));
+					additionalCommands.clear();
+				}
 				for (auto &it : buffers_)
 					cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 
@@ -524,8 +535,6 @@ namespace cage
 				submitInfo.pSignalSemaphoreInfos = rcs.data();
 				check("resetFences", device.resetFences(1, &*framesFences[0]));
 				check("submit", queue.submit2(1, &submitInfo, *framesFences[0]));
-
-				additionalCommands.clear();
 
 				// advance frame index
 				std::swap(framesFences[0], framesFences[1]);
@@ -656,8 +665,13 @@ namespace cage
 			const ProfilingScope profiling("submit");
 
 			ankerl::svector<vk::CommandBufferSubmitInfo, 10> cmds;
-			for (auto &it : additionalCommands)
-				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
+			CommandBuffer acb; // must outlive the submission
+			if (additionalCommands)
+			{
+				acb = additionalCommands->finishEncoding();
+				cmds.push_back(vk::CommandBufferSubmitInfo(acb->buffer));
+				additionalCommands.clear();
+			}
 			for (auto &it : buffers_)
 				cmds.push_back(vk::CommandBufferSubmitInfo(it->buffer));
 
