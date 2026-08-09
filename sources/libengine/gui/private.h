@@ -306,6 +306,7 @@ namespace cage
 		Holder<MultiShader> imageShader;
 		Holder<Model> imageModel;
 		Holder<Shader> colorPickerShader[3]; // 0 = flat, 1 = hue, 2 = saturation & value
+		Holder<Shader> solidColorShader;
 
 		struct SkinData
 		{

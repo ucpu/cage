@@ -5,7 +5,7 @@ $include ../functions/hsvToRgb.glsl
 layout(std140, set = 2, binding = 0) uniform Global
 {
 	vec4 uniPos;
-	vec4 uniColorAndHue; // rgb, hue
+	vec4 uniColorAndHue; // srgb, hue
 };
 
 
@@ -41,4 +41,5 @@ $else
 	outColor = vec4(hsvToRgb(vec3(uniColorAndHue.a, varUv)), 1);
 $end
 $end
+	outColor.rgb = pow(outColor.rgb, vec3(2.2)); // gamma to linear
 }

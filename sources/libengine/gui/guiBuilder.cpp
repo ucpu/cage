@@ -589,10 +589,11 @@ namespace cage
 			return c;
 		}
 
-		BuilderItem GuiBuilder::solidColor(Vec3 color)
+		BuilderItem GuiBuilder::solidColor(Vec3 color, Real opacity)
 		{
 			BuilderItem c(this);
 			c->value<GuiSolidColorComponent>().color = color;
+			c->value<GuiSolidColorComponent>().opacity = opacity;
 			return c;
 		}
 

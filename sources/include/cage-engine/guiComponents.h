@@ -316,13 +316,14 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiColorPickerComponent
 	{
-		Vec3 color = Vec3(1, 0, 0);
+		Vec3 color = Vec3(1, 0, 0); // sRGB
 		bool collapsible = false;
 	};
 
 	struct CAGE_ENGINE_API GuiSolidColorComponent
 	{
 		Vec3 color; // sRGB
+		Real opacity = 1;
 	};
 
 	struct CAGE_ENGINE_API GuiFrameComponent

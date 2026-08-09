@@ -374,6 +374,7 @@ namespace cage
 		colorPickerShader[0] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?F")));
 		colorPickerShader[1] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?H")));
 		colorPickerShader[2] = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/colorPicker.glsl?S")));
+		solidColorShader = defaultProgram(assetMgr->get<MultiShader>(HashString("cage/shaders/gui/solidColor.glsl")));
 
 		memory = newMemoryAllocatorStream({});
 

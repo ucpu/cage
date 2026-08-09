@@ -13,7 +13,7 @@ namespace cage
 		struct ColorPickerRenderable : public RenderableBase
 		{
 			Vec4 pos;
-			Vec3 rgb;
+			Vec3 rgb; // srgb
 			uint32 mode = m; // 0 = flat, 1 = hue, 2 = saturation & value
 
 			ColorPickerRenderable(const ColorPickerImpl *item);
@@ -29,7 +29,7 @@ namespace cage
 					struct UniData
 					{
 						Vec4 pos;
-						Vec4 colorAndHue; // rgb, hue
+						Vec4 colorAndHue; // srgb, hue
 					};
 					UniData data;
 					DrawConfig drw;

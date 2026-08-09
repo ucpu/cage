@@ -1,5 +1,6 @@
 #include "../private.h"
 
+#include <cage-core/color.h>
 #include <cage-engine/graphicsAggregateBuffer.h>
 #include <cage-engine/graphicsEncoder.h>
 
@@ -12,7 +13,7 @@ namespace cage
 		struct SolidColorRenderable : public RenderableBase
 		{
 			Vec4 pos;
-			Vec3 rgb;
+			Vec4 color; // linear
 
 			SolidColorRenderable(const SolidColorImpl *item);
 
@@ -27,7 +28,7 @@ namespace cage
 					struct UniData
 					{
 						Vec4 pos;
-						Vec4 colorAndHue; // rgb, hue
+						Vec4 color; // linear
 					};
 					UniData data;
 					DrawConfig drw;
@@ -37,9 +38,10 @@ namespace cage
 						GuiRenderImpl *activeQueue = base->impl->activeQueue;
 
 						data.pos = base->pos;
-						data.colorAndHue = Vec4(base->rgb, 0);
+						data.color = base->color;
 
-						drw.shader = +activeQueue->colorPickerShader[0];
+						drw.shader = +activeQueue->solidColorShader;
+						drw.blending = base->color[3] < 0.99 ? BlendingEnum::AlphaTransparency : BlendingEnum::None;
 						drw.model = +activeQueue->imageModel;
 						drw.depthTest = DepthTestEnum::Always;
 						drw.depthWrite = false;
@@ -64,7 +66,7 @@ namespace cage
 		struct SolidColorImpl : public WidgetItem
 		{
 			GuiSolidColorComponent &data;
-			Vec3 color; // must keep copy of data.color here because data is not accessible while emitting
+			Vec4 color; // must keep copy of data.color here because data is not accessible while emitting
 
 			SolidColorImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(SolidColor)) {}
 
@@ -72,7 +74,7 @@ namespace cage
 			{
 				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->text && !hierarchy->image);
-				color = data.color;
+				color = Vec4(colorGammaToLinear(data.color), data.opacity);
 			}
 
 			void findRequestedSize(Real maxWidth) override
@@ -89,7 +91,7 @@ namespace cage
 				SolidColorRenderable t(this);
 				t.setClip(hierarchy);
 				t.pos = hierarchy->impl->pointsToNdc(p, s);
-				t.rgb = color;
+				t.color = color;
 			}
 
 			void playHoverSound() override

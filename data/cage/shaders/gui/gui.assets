@@ -10,3 +10,4 @@ colorPicker.glsl?S # Saturation & Value
 element.glsl
 font.glsl
 image.glsl
+solidColor.glsl

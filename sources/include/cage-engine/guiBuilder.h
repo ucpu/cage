@@ -145,7 +145,7 @@ namespace cage
 			BuilderItem horizontalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem verticalSliderBar(Real value = 0, Real min = 0, Real max = 1);
 			BuilderItem colorPicker(Vec3 color = GuiColorPickerComponent().color, bool collapsible = GuiColorPickerComponent().collapsible);
-			BuilderItem solidColor(Vec3 color = GuiSolidColorComponent().color);
+			BuilderItem solidColor(Vec3 color = GuiSolidColorComponent().color, Real opacity = GuiSolidColorComponent().opacity);
 			BuilderItem frame();
 			BuilderItem panel();
 			BuilderItem spoiler(bool collapsed = GuiSpoilerComponent().collapsed, bool collapsesSiblings = GuiSpoilerComponent().collapsesSiblings);
