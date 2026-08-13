@@ -84,6 +84,14 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid camera type");
 		}
 
+		Vec2i updateResolution(Vec2i in, Real factor)
+		{
+			CAGE_ASSERT(factor.valid() && factor > 0);
+			Vec2i res = Vec2i(Vec2(in) * factor);
+			CAGE_ASSERT(res[0] > 0 && res[1] > 0);
+			return res;
+		}
+
 		enum class ScreenshotStateEnum
 		{
 			None,
@@ -242,13 +250,6 @@ namespace cage
 				nextAllowedDrFrameIndex = frameIndex + 5;
 			}
 
-			Vec2i applyDynamicResolution(Vec2i in) const
-			{
-				Vec2i res = Vec2i(Vec2(in) * dynamicResolution);
-				CAGE_ASSERT(res[0] > 0 && res[1] > 0);
-				return res;
-			}
-
 			std::vector<SceneRenderCamera> generateCameras(const SceneRenderShared &cfg) const
 			{
 				std::vector<SceneRenderCamera> cameras;
@@ -271,10 +272,14 @@ namespace cage
 							data.target = cam.target;
 							data.resolution = cam.target->resolution();
 						}
+						if (cam.renderingResolution != 1)
+						{
+							data.resolution = updateResolution(data.resolution, cam.renderingResolution);
+						}
 						if (dynamicResolution != 1)
 						{
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
-							data.resolution = applyDynamicResolution(data.resolution);
+							data.resolution = updateResolution(data.resolution, dynamicResolution);
 						}
 						data.transform = modelTransform(e, cfg.interpolationFactor);
 						data.projection = initializeProjection(cam, data.resolution);

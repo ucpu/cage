@@ -180,8 +180,9 @@ namespace cage
 		Vec2 orthographicSize;
 		Texture *target = nullptr;
 		Rads perspectiveFov = Degs(60);
-		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
 		Real near = 0.1, far = 1000;
+		Real renderingResolution = 1;
+		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
 	};
 
 	struct CAGE_ENGINE_API SoundComponent
