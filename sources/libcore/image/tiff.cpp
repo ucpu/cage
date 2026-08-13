@@ -12,21 +12,20 @@ namespace cage
 {
 	namespace
 	{
-#define GCHL_LOG(SEVERITY) \
-	{ \
-		char buffer[1000]; \
-		vsprintf(buffer, fmt, args); \
-		CAGE_LOG(SEVERITY, "tiff", buffer); \
-	}
-
 		void tiffErrorHandler(const char *modul, const char *fmt, va_list args)
 		{
-			GCHL_LOG(SeverityEnum::Error);
+			char buffer[1000];
+			buffer[0] = 0;
+			vsnprintf(buffer, array_size(buffer), fmt, args);
+			CAGE_LOG(SeverityEnum::Error, "tiff", buffer);
 		}
 
 		void tiffWarningHandler(const char *modul, const char *fmt, va_list args)
 		{
-			GCHL_LOG(SeverityEnum::Warning);
+			char buffer[1000];
+			buffer[0] = 0;
+			vsnprintf(buffer, array_size(buffer), fmt, args);
+			CAGE_LOG(SeverityEnum::Warning, "tiff", buffer);
 		}
 
 		class Initializer

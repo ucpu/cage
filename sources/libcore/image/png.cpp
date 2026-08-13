@@ -12,7 +12,8 @@ namespace cage
 	{
 		void pngErrFunc(png_structp, png_const_charp err)
 		{
-			CAGE_THROW_ERROR(Exception, StringPointer(err));
+			CAGE_LOG_THROW(err);
+			CAGE_THROW_ERROR(Exception, "error in png");
 		}
 
 		struct PngInfoCtx

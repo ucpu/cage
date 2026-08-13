@@ -46,6 +46,6 @@ namespace cage
 	uintPtr compressionBound(uintPtr size)
 	{
 		const std::size_t r = ZSTD_compressBound(size);
-		return r + r / 10 + 1000000; // additional capacity allows faster compression
+		return r + r / 10 + 1'000'000; // additional capacity allows faster compression
 	}
 }

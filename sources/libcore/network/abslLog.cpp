@@ -44,12 +44,7 @@ namespace cage
 							return SeverityEnum::Critical;
 					}
 				}(entry.log_severity());
-				auto msgView = entry.text_message();
-				static constexpr uint32 MaxLen = String::MaxLength - 100;
-				if (msgView.length() > MaxLen)
-					msgView = msgView.substr(0, MaxLen);
-				const String msg = String(PointerRange<const char>(msgView.data(), msgView.data() + msgView.length()));
-				cage::privat::makeLog(location, severity, "absl", msg, false, false);
+				cage::privat::makeLog(location, severity, "absl", entry.text_message(), false, false);
 			}
 		};
 	}

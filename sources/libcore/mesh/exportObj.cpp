@@ -151,22 +151,22 @@ namespace cage
 				const uint32 faces = numeric_cast<uint32>(pi.size());
 				for (uint32 f = 0; f < faces; f++)
 					writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f));
+				break;
 			}
-			break;
 			case MeshTypeEnum::Lines:
 			{
 				const uint32 faces = numeric_cast<uint32>(pi.size()) / 2;
 				for (uint32 f = 0; f < faces; f++)
 					writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f * 2 + 0) + " " + str(pi, ni, ti, f * 2 + 1));
+				break;
 			}
-			break;
 			case MeshTypeEnum::Triangles:
 			{
 				const uint32 faces = numeric_cast<uint32>(pi.size()) / 3;
 				for (uint32 f = 0; f < faces; f++)
 					writeLine(ser, Stringizer() + "f " + str(pi, ni, ti, f * 3 + 0) + " " + str(pi, ni, ti, f * 3 + 1) + " " + str(pi, ni, ti, f * 3 + 2));
+				break;
 			}
-			break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
 		}

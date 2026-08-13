@@ -833,7 +833,7 @@ namespace cage
 		switch (impl->type)
 		{
 			case MeshTypeEnum::Lines:
-				CAGE_THROW_CRITICAL(Exception, "separateDisconnected");
+				CAGE_THROW_CRITICAL(Exception, "meshSeparateDisconnected with lines not implemented");
 			case MeshTypeEnum::Triangles:
 				return splitComponentsTriangles(impl);
 			default:

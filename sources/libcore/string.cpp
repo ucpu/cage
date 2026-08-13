@@ -45,6 +45,13 @@ namespace cage
 			CAGE_ASSERT(ptr2 || num == 0);
 			return std::memcmp(ptr1, ptr2, num);
 		}
+
+		uintPtr strlen(const void *ptr, uintPtr maxLen)
+		{
+			if (!ptr)
+				return 0; // according to the specification, strnlen should return 0 for nullptr, but some compilers crash instead
+			return strnlen((const char *)ptr, maxLen);
+		}
 	}
 
 	namespace privat

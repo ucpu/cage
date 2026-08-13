@@ -514,7 +514,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
-				CAGE_THROW_CRITICAL(Exception, "reading last modification time of a file inside zip archive is not yet supported");
+				CAGE_THROW_CRITICAL(Exception, "reading last modification time of a file inside zip archive is not supported");
 			}
 
 			Holder<File> openFile(const String &path, const FileMode &mode) override;

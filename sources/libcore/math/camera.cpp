@@ -110,6 +110,7 @@ namespace cage
 			case StereoEyeEnum::Mono:
 				break;
 			case StereoEyeEnum::Left:
+			{
 				switch (stereoMode)
 				{
 					case StereoModeEnum::Mono:
@@ -129,7 +130,9 @@ namespace cage
 						CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 				}
 				break;
+			}
 			case StereoEyeEnum::Right:
+			{
 				switch (stereoMode)
 				{
 					case StereoModeEnum::Mono:
@@ -149,8 +152,9 @@ namespace cage
 						CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 				}
 				break;
+			}
 			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid eye");
+				CAGE_THROW_CRITICAL(Exception, "invalid stereo camera eye");
 		}
 
 		Real dir = 0;
@@ -165,7 +169,7 @@ namespace cage
 				dir = 1;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid eye");
+				CAGE_THROW_CRITICAL(Exception, "invalid stereo camera eye");
 		}
 
 		StereoCameraOutput out;

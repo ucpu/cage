@@ -6,8 +6,8 @@
 		#include <steam/steamnetworkingsockets.h>
 	#endif
 
-	#include <cstring>
 	#include <vector>
+	#include <cstring>
 
 	#include "net.h"
 
@@ -107,9 +107,7 @@ namespace cage
 						return SeverityEnum::Note;
 				}
 			}();
-			const uint32 len = min((uint32)std::strlen(pszMsg), (uint32)500);
-			const String msg = String(PointerRange<const char>(pszMsg, pszMsg + len));
-			CAGE_LOG(level, "steamsocks", msg);
+			CAGE_LOG(level, "steamsocks", pszMsg);
 		}
 
 	#if defined(CAGE_USE_STEAM_SDK)

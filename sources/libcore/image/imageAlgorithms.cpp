@@ -342,7 +342,7 @@ namespace cage
 
 	void imageBoxBlur(Image *img, uint32 radius, uint32 rounds, bool useColorConfig)
 	{
-		CAGE_THROW_CRITICAL(Exception, "imageBoxBlur");
+		CAGE_THROW_CRITICAL(Exception, "imageBoxBlur not implemented");
 	}
 
 	namespace

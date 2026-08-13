@@ -82,12 +82,12 @@ namespace
 	{
 		CAGE_TESTCASE("pointer range");
 		{
-			PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+			PointerRange<const char> r = "kokos";
 			CAGE_TEST(r.size() == 5); // the terminal zero is automatically removed
 			CAGE_TEST(r[0] == 'k');
 		}
 		{
-			PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+			PointerRange<const char> r = "kokos";
 			const String s = String(r);
 			CAGE_TEST(s.size() == 5);
 			CAGE_TEST(s[0] == 'k');
@@ -228,6 +228,11 @@ namespace
 		{
 			String s = Stringizer() + "hello" + " " + "world";
 			CAGE_TEST(s == "hello world");
+		}
+		{
+			CAGE_TEST(detail::strlen("hello there") == 11);
+			CAGE_TEST(detail::strlen((const char *)nullptr) == 0);
+			CAGE_TEST(detail::strlen("hello there", 5) == 5);
 		}
 		return 0;
 	}

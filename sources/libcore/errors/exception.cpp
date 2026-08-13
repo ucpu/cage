@@ -51,7 +51,7 @@ namespace cage
 
 	namespace privat
 	{
-		void makeLogThrow(const std::source_location &location, const String &message) noexcept
+		void makeLogThrow(const std::source_location &location, PointerRange<const char> message) noexcept
 		{
 			if (SeverityEnum::Note < getExceptionSilenceSeverity())
 				return;

@@ -55,13 +55,13 @@
 		} \
 	}
 
-#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(::std::source_location::current(), MESSAGE)
+#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(::std::source_location::current(), (MESSAGE))
 
-#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, false)
-#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, false)
+#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), (SEVERITY), (COMPONENT), (MESSAGE), false, false)
+#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), (SEVERITY), (COMPONENT), (MESSAGE), true, false)
 #ifdef CAGE_DEBUG
-	#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, false, true)
-	#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), SEVERITY, COMPONENT, MESSAGE, true, true)
+	#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), (SEVERITY), (COMPONENT), (MESSAGE), false, true)
+	#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(::std::source_location::current(), (SEVERITY), (COMPONENT), (MESSAGE), true, true)
 #else
 	#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) \
 		{}
@@ -123,26 +123,6 @@ namespace cage
 	class AssetsManager;
 	struct AssetsScheme;
 
-	// Immovable
-
-	struct CAGE_CORE_API Immovable
-	{
-		Immovable() = default;
-		Immovable(const Immovable &) = delete;
-		Immovable(Immovable &&) = delete;
-		Immovable &operator=(const Immovable &) = delete;
-		Immovable &operator=(Immovable &&) = delete;
-	};
-
-	struct CAGE_CORE_API Noncopyable
-	{
-		Noncopyable() = default;
-		Noncopyable(const Noncopyable &) = delete;
-		Noncopyable(Noncopyable &&) = default;
-		Noncopyable &operator=(const Noncopyable &) = delete;
-		Noncopyable &operator=(Noncopyable &&) = default;
-	};
-
 	// string pointer
 
 	struct StringPointer
@@ -158,22 +138,10 @@ namespace cage
 		const char *str = nullptr;
 	};
 
-	// severity, makeLog, runtimeAssertFailure
-
-	enum class SeverityEnum
-	{
-		Note, // details for subsequent log
-		Hint, // possible improvement available
-		Warning, // deprecated behavior, dangerous actions
-		Info, // we are good, progress report
-		Error, // invalid user input, network connection interrupted, file access denied
-		Critical // not implemented function, exception inside destructor, assert failure
-	};
+	// runtimeAssertFailure, logCurrentCaughtException
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const String &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(const std::source_location &location, const String &message) noexcept;
 		[[noreturn]] CAGE_CORE_API void runtimeAssertFailure(const std::source_location &location, StringPointer expt);
 	}
 
@@ -182,6 +150,8 @@ namespace cage
 		CAGE_CORE_API void logCurrentCaughtException() noexcept;
 		[[noreturn]] CAGE_CORE_API void irrecoverableError(StringPointer explanation) noexcept; // eg exception in destructor, terminates the program
 	}
+
+	// casts
 
 	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
 	// without CAGE_ASSERT_ENABLED numeric_cast is the same as static_cast
@@ -222,6 +192,26 @@ namespace cage
 		return static_cast<To>(from);
 	}
 
+	// Immovable
+
+	struct CAGE_CORE_API Immovable
+	{
+		Immovable() = default;
+		Immovable(const Immovable &) = delete;
+		Immovable(Immovable &&) = delete;
+		Immovable &operator=(const Immovable &) = delete;
+		Immovable &operator=(Immovable &&) = delete;
+	};
+
+	struct CAGE_CORE_API Noncopyable
+	{
+		Noncopyable() = default;
+		Noncopyable(const Noncopyable &) = delete;
+		Noncopyable(Noncopyable &&) = default;
+		Noncopyable &operator=(const Noncopyable &) = delete;
+		Noncopyable &operator=(Noncopyable &&) = default;
+	};
+
 	// max struct
 
 	namespace privat
@@ -250,28 +240,6 @@ namespace cage
 	}
 
 	constexpr privat::MaxValue m = {};
-
-	// exceptions
-
-	struct CAGE_CORE_API Exception
-	{
-		explicit Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept;
-		virtual ~Exception();
-
-		void makeLog() const noexcept; // check conditions and call log()
-		virtual void log() const;
-
-		std::source_location location;
-		StringPointer message;
-		SeverityEnum severity = SeverityEnum::Critical;
-	};
-
-	struct CAGE_CORE_API SystemError : public Exception
-	{
-		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept;
-		void log() const override;
-		sint64 code = 0;
-	};
 
 	// array size
 
@@ -356,6 +324,46 @@ namespace cage
 		}
 	};
 
+	// severity, makeLog
+
+	enum class SeverityEnum
+	{
+		Note, // details for subsequent log
+		Hint, // possible improvement available
+		Warning, // deprecated behavior, dangerous actions
+		Info, // we are good, progress report
+		Error, // invalid user input, network connection interrupted, file access denied
+		Critical // not implemented function, exception inside destructor, assert failure
+	};
+
+	namespace privat
+	{
+		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(const std::source_location &location, PointerRange<const char> message) noexcept;
+	}
+
+	// exceptions
+
+	struct CAGE_CORE_API Exception
+	{
+		explicit Exception(const std::source_location &location, SeverityEnum severity, StringPointer message) noexcept;
+		virtual ~Exception();
+
+		void makeLog() const noexcept; // check conditions and call log()
+		virtual void log() const;
+
+		std::source_location location;
+		StringPointer message;
+		SeverityEnum severity = SeverityEnum::Critical;
+	};
+
+	struct CAGE_CORE_API SystemError : public Exception
+	{
+		explicit SystemError(const std::source_location &location, SeverityEnum severity, StringPointer message, sint64 code) noexcept;
+		void log() const override;
+		sint64 code = 0;
+	};
+
 	// string
 
 	namespace detail
@@ -364,6 +372,7 @@ namespace cage
 		CAGE_CORE_API void *memcpy(void *destination, const void *source, uintPtr num);
 		CAGE_CORE_API void *memmove(void *destination, const void *source, uintPtr num);
 		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num);
+		CAGE_CORE_API uintPtr strlen(const void *ptr, uintPtr maxLen = m);
 
 		CAGE_FORCE_INLINE constexpr char *memset(char *destination, int value, uintPtr num)
 		{
@@ -418,6 +427,21 @@ namespace cage
 			}
 			else
 				return memcmp((const void *)ptr1, (const void *)ptr2, num);
+		}
+
+		CAGE_FORCE_INLINE constexpr uintPtr strlen(const char *ptr, uintPtr maxLen = m)
+		{
+			if (std::is_constant_evaluated())
+			{
+				if (!ptr)
+					return 0;
+				for (uintPtr i = 0; i < maxLen; i++)
+					if (*ptr++ == '\0')
+						return i;
+				return maxLen;
+			}
+			else
+				return strlen((void *)ptr, maxLen);
 		}
 	}
 
@@ -660,6 +684,33 @@ namespace cage
 		template<uint32 M>
 		CAGE_FORCE_INLINE constexpr StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
 		{}
+	}
+
+	// makeLog overloads
+
+	namespace privat
+	{
+		template<uint32 N>
+		CAGE_FORCE_INLINE uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const detail::StringizerBase<N> &message, bool continuous, bool debug) noexcept
+		{
+			return makeLog(location, severity, component, PointerRange<const char>(message.value), continuous, debug);
+		}
+
+		template<uint32 N>
+		CAGE_FORCE_INLINE void makeLogThrow(const std::source_location &location, const detail::StringizerBase<N> &message) noexcept
+		{
+			makeLogThrow(location, PointerRange<const char>(message.value));
+		}
+
+		CAGE_FORCE_INLINE uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const char *message, bool continuous, bool debug) noexcept
+		{
+			return makeLog(location, severity, component, PointerRange<const char>(message, message + detail::strlen(message)), continuous, debug);
+		}
+
+		CAGE_FORCE_INLINE void makeLogThrow(const std::source_location &location, const char *message) noexcept
+		{
+			makeLogThrow(location, PointerRange<const char>(message, message + detail::strlen(message)));
+		}
 	}
 
 	// delegates

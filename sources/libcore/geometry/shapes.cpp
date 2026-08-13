@@ -12,6 +12,8 @@ namespace cage
 			return Vec3(t) / t[3];
 		};
 
+		if (!valid())
+			return Line();
 		if (isPoint())
 			return Line(tr(a()), Vec3(1, 0, 0), 0, 0);
 		if (isLine())
@@ -20,7 +22,7 @@ namespace cage
 			return makeRay(tr(origin), tr(origin + direction));
 		if (isSegment())
 			return makeSegment(tr(a()), tr(b()));
-		CAGE_THROW_CRITICAL(Exception, "geometry");
+		CAGE_THROW_CRITICAL(Exception, "not implemented Line*Mat4 combination");
 	}
 
 	bool Line::normalized() const
@@ -349,7 +351,7 @@ namespace cage
 
 	Cone Cone::operator*(Mat4 other) const
 	{
-		CAGE_THROW_CRITICAL(Exception, "not implemented Cone::operator*(Mat4)");
+		CAGE_THROW_CRITICAL(Exception, "not implemented Cone*Mat4");
 	}
 
 	Frustum::Frustum(Transform camera, Mat4 proj) : Frustum(proj * Mat4(inverse(camera))) {}

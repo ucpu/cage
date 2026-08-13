@@ -202,16 +202,16 @@ namespace cage
 				des >> len;
 				len = endianness::change(len);
 				des.read(len); // ignore
+				break;
 			}
-			break;
 			case 2:
 			{
 				uint64 len;
 				des >> len;
 				len = endianness::change(len);
 				des.read(numeric_cast<uintPtr>(len)); // ignore
+				break;
 			}
-			break;
 			default:
 				CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");
 		}

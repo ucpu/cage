@@ -342,7 +342,7 @@ namespace cage
 
 	Holder<Mesh> Collider::exportMesh() const
 	{
-		CAGE_THROW_CRITICAL(Exception, "Collider::exportMesh");
+		CAGE_THROW_CRITICAL(Exception, "not implemeted Collider::exportMesh");
 	}
 
 	Holder<Collider> newCollider()
@@ -548,7 +548,8 @@ namespace cage
 			template<class T>
 			Real distance(const T &shape)
 			{
-				CAGE_THROW_CRITICAL(Exception, "distance to collider is untested and broken");
+				// distance to collider is untested and broken
+				CAGE_THROW_CRITICAL(Exception, "distance of geometry shape to collider is not implemneted");
 				// the result is in the original space of the collider and must be converted back to the space of the shape
 				return distance(shape * inverse(m), 0) * m.scale;
 			}
@@ -829,7 +830,7 @@ namespace cage
 
 	Real distance(const Collider *ao, const Collider *bo, Transform at, Transform bt)
 	{
-		CAGE_THROW_CRITICAL(Exception, "collider-collider distance");
+		CAGE_THROW_CRITICAL(Exception, "not implemented distance(collider, collider)");
 	}
 
 	bool intersects(Line shape, const Collider *collider, Transform t)

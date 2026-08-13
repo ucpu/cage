@@ -1,5 +1,4 @@
 #include <cstdlib>
-#include <cstring>
 #include <stdlib.h>
 
 #define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS 1
@@ -21,45 +20,8 @@ namespace cage
 {
 	namespace
 	{
-		void logSplit(SeverityEnum severity, StringPointer component, PointerRange<const char> message)
-		{
-			static constexpr uint32 Max = String::MaxLength / 2;
-			bool cont = false;
-			while (!message.empty())
-			{
-				if (message[0] == '\n' || message[0] == '\r')
-				{
-					message = message.subRange(1, message.size() - 1);
-					continue;
-				}
-
-				uint32 nl = message.size();
-				for (const char &c : message)
-				{
-					if (c == '\n' || c == '\r')
-					{
-						nl = &c - message.data();
-						break;
-					}
-				}
-				PointerRange<const char> msg = message.subRange(0, nl);
-				message = message.subRange(nl, message.size() - nl);
-
-				while (!msg.empty())
-				{
-					uint32 s = min((uint32)msg.size(), Max);
-					privat::makeLog(std::source_location::current(), severity, component, String(msg.subRange(0, s)), cont, false);
-					cont = true;
-					msg = msg.subRange(s, msg.size() - s);
-				}
-			}
-		}
-
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
 		{
-			const char *msg = pCallbackData->pMessage;
-			const uint32 len = std::strlen(msg);
-
 			SeverityEnum sev = SeverityEnum::Info;
 			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
 				sev = SeverityEnum::Hint;
@@ -68,7 +30,7 @@ namespace cage
 			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 				sev = SeverityEnum::Error;
 
-			logSplit(sev, "vulkan debug callback", PointerRange(msg, msg + len));
+			CAGE_LOG(sev, "vulkan debug callback", pCallbackData->pMessage);
 
 			if (sev >= SeverityEnum::Error)
 			{
@@ -80,9 +42,9 @@ namespace cage
 
 		void logError(const vkb::Error &err)
 		{
-			logSplit(SeverityEnum::Note, "vulkan boostrap", err.type.message());
+			CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", err.type.message());
 			for (const auto &it : err.detailed_failure_reasons)
-				logSplit(SeverityEnum::Note, "vulkan boostrap", it);
+				CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", it);
 			CAGE_LOG_THROW(Stringizer() + "error code: " + err.type.value());
 		}
 
@@ -613,7 +575,7 @@ namespace cage
 					if (w->resolution != w.resolution)
 					{
 						const ProfilingScope profiling("swapchain");
-						CAGE_LOG(SeverityEnum::Info, "graphics", "updating swapchain");
+						CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "updating swapchain, resolution: " + w.resolution + ", presentation: " + vk::to_string(preferredPresentation).c_str() + ", triple buffering: " + preferredTripleBuffering);
 						ResourceHandle<vk::SwapchainKHR> old(*this);
 						old = vk::SwapchainKHR(w->swapchain.swapchain);
 						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //

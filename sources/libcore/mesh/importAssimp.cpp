@@ -77,17 +77,11 @@ namespace cage
 		class CageLogStream : public Assimp::LogStream
 		{
 		public:
-			const cage::SeverityEnum severity;
+			const cage::SeverityEnum severity = SeverityEnum::Info;
 
 			CageLogStream(cage::SeverityEnum severity) : severity(severity) {}
 
-			void write(const char *message) override
-			{
-				String m = message;
-				if (isPattern(m, "", "", "\n"))
-					m = subString(m, 0, m.length() - 1);
-				CAGE_LOG(severity, "assimp", m);
-			}
+			void write(const char *message) override { CAGE_LOG(severity, "assimp", message); }
 		};
 
 		int initializeAssimpLogger()
@@ -241,7 +235,7 @@ namespace cage
 				return pCount;
 			}
 
-			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override { CAGE_THROW_CRITICAL(Exception, "cageIOStream::Write"); }
+			size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override { CAGE_THROW_CRITICAL(Exception, "assimp importer: cageIOStream::Write not supported"); }
 
 			aiReturn Seek(size_t pOffset, aiOrigin pOrigin) override
 			{
@@ -257,7 +251,7 @@ namespace cage
 						r->seek(r->size() + pOffset);
 						break;
 					default:
-						CAGE_THROW_CRITICAL(Exception, "cageIOStream::Seek: unknown pOrigin");
+						CAGE_THROW_CRITICAL(Exception, "assimp importer: cageIOStream::Seek with unknown pOrigin");
 				}
 				return aiReturn_SUCCESS;
 			}
@@ -266,7 +260,7 @@ namespace cage
 
 			size_t FileSize() const override { return (size_t)r->size(); }
 
-			void Flush() override { CAGE_THROW_CRITICAL(Exception, "cageIOStream::Flush"); }
+			void Flush() override { CAGE_THROW_CRITICAL(Exception, "assimp importer: cageIOStream::Flush not supported"); }
 
 		private:
 			cage::Holder<cage::File> r;
@@ -294,7 +288,7 @@ namespace cage
 
 			void Close(Assimp::IOStream *pFile) override { delete (CageIoStream *)pFile; }
 
-			bool ComparePaths(const char *one, const char *second) const override { CAGE_THROW_CRITICAL(Exception, "cageIOsystem::ComparePaths"); }
+			bool ComparePaths(const char *one, const char *second) const override { CAGE_THROW_CRITICAL(Exception, "assimp importer: cageIOsystem::ComparePaths not supported"); }
 
 			std::set<String> paths;
 		};

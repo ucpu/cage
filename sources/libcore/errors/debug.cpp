@@ -144,13 +144,17 @@ namespace cage
 #endif
 		}
 
-		void debugOutput(const String &msg)
+		void debugOutput(PointerRange<const char> msg)
 		{
 			if (!isDebugging())
 				return;
 #ifdef CAGE_SYSTEM_WINDOWS
-			String value = msg + "\n";
-			OutputDebugString(value.c_str());
+			thread_local std::string str;
+			str.clear();
+			str.reserve(msg.size() + 5);
+			str.append(msg.data(), msg.size());
+			str += "\n";
+			OutputDebugString(str.c_str());
 #else
 				// todo
 #endif

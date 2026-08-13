@@ -114,7 +114,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const String &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 
@@ -150,7 +150,6 @@ namespace cage
 									ou(info.message);
 							}
 						}
-
 						cur = cur->prev;
 					}
 				}
@@ -166,65 +165,54 @@ namespace cage
 		}
 	}
 
-	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
+	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(PointerRange<const char>)> output)
 	{
 		output(info.message);
 	}
 
 	namespace
 	{
-		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const String &)> output, bool longer)
+		std::string &operator+=(std::string &s, const String &v)
 		{
-			if (info.continuous)
-			{
-				output(Stringizer() + "\t" + info.message);
-			}
-			else
-			{
-				String res;
-				res += fill(String(Stringizer() + info.time), 12) + " ";
-				res += fill(String(info.currentThreadName), 26) + " ";
-				res += Stringizer() + severityToString(info.severity) + " ";
-				res += fill(String(info.component), 20) + " ";
-				res += info.message;
-				if (longer && info.location.file_name())
-				{
-					String flf = Stringizer() + " " + info.location.file_name() + ":" + info.location.line() + " (" + info.location.function_name() + ")";
-					if (res.length() + flf.length() + 10 < String::MaxLength)
-					{
-						res += fill(String(), String::MaxLength - flf.length() - res.length() - 5);
-						res += flf;
-					}
-				}
-				output(res);
-			}
+			s.append(v.data(), v.size());
+			return s;
 		}
 	}
 
-	void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
+	void logFormatFile(const detail::LoggerInfo &info, Delegate<void(PointerRange<const char>)> output)
 	{
-		logFormatFileImpl(info, output, false);
+		static std::string res; // avoid unnecessary reallocations, logging is under mutex so this is safe
+		res.clear();
+		res.reserve(info.message.size() + 200);
+		if (info.continuous)
+		{
+			res += "\t";
+		}
+		else
+		{
+			res += fill(String(Stringizer() + info.time), 12) + " ";
+			res += fill(String(info.currentThreadName), 26) + " ";
+			res += Stringizer() + severityToString(info.severity) + " ";
+			res += fill(String(info.component), 20) + " ";
+		}
+		res.append(info.message.data(), info.message.size());
+		output(res);
 	}
 
-	void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const String &)> output)
+	void logOutputDebug(PointerRange<const char> message)
 	{
-		logFormatFileImpl(info, output, true);
+		detail::debugOutput(message);
 	}
 
-	void logOutputDebug(const String &message)
+	void logOutputStdOut(PointerRange<const char> message)
 	{
-		detail::debugOutput(message.c_str());
-	}
-
-	void logOutputStdOut(const String &message)
-	{
-		fprintf(stdout, "%s\n", message.c_str());
+		fprintf(stdout, "%.*s\n", (int)message.size(), message.data());
 		fflush(stdout);
 	}
 
-	void logOutputStdErr(const String &message)
+	void logOutputStdErr(PointerRange<const char> message)
 	{
-		fprintf(stderr, "%s\n", message.c_str());
+		fprintf(stderr, "%.*s\n", (int)message.size(), message.data());
 		fflush(stderr);
 	}
 
@@ -250,10 +238,11 @@ namespace cage
 		};
 	}
 
-	void LoggerOutputFile::output(const String &message) const
+	void LoggerOutputFile::output(PointerRange<const char> message) const
 	{
 		const LoggerOutputFileImpl *impl = (const LoggerOutputFileImpl *)this;
-		impl->f->writeLine(message);
+		impl->f->write(message);
+		impl->f->writeLine();
 		detail::realFsAttemptFlush(+impl->f);
 	}
 
@@ -435,7 +424,7 @@ namespace cage
 					}
 
 					loggerFile = newLogger();
-					loggerFile->format.bind<logFormatFileShort>();
+					loggerFile->format.bind<logFormatFile>();
 
 					try
 					{

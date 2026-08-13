@@ -1,3 +1,5 @@
+#include <string>
+
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
 #include <cage-core/memoryBuffer.h>
@@ -22,5 +24,15 @@ void testLogger()
 		CAGE_TEST(buff.size() > 0);
 		f->seek(0);
 		CAGE_TEST(isPattern(f->readLine(), "", "Alea iacta est", ""));
+	}
+
+	{
+		CAGE_TESTCASE("log really long message");
+		constexpr uint32 Len = String::MaxLength + 100;
+		std::string str;
+		str.reserve(Len);
+		while (str.length() < Len)
+			str += ('A' + rand() % 26);
+		CAGE_LOG(SeverityEnum::Info, "really long message", str);
 	}
 }

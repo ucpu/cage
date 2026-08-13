@@ -96,10 +96,10 @@ void testRandom()
 
 	{
 		CAGE_TESTCASE("guid");
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<32>(true));
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<32>(true));
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<32>(true));
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", Guid<8>(true));
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", (String)Guid<32>(true));
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", (String)Guid<32>(true));
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", (String)Guid<32>(true));
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, "random identifier", (String)Guid<8>(true));
 	}
 
 	{

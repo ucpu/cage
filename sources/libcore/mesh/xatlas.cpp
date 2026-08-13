@@ -15,11 +15,12 @@ namespace cage
 		int xAtlasPrint(const char *format, ...)
 		{
 			char buffer[1000];
+			buffer[0] = 0;
 			va_list arg;
 			va_start(arg, format);
-			auto result = vsprintf(buffer, format, arg);
+			auto result = vsnprintf(buffer, array_size(buffer), format, arg);
 			va_end(arg);
-			CAGE_LOG_DEBUG(SeverityEnum::Warning, "xatlas", buffer);
+			CAGE_LOG(SeverityEnum::Info, "xatlas", buffer);
 			return result;
 		}
 
@@ -28,11 +29,9 @@ namespace cage
 			Initializer() { xatlas::SetPrint(&xAtlasPrint, false); }
 		} initializer;
 
-		constexpr const String xAtlasCategoriesNames[] = { "AddModel", "ComputeCharts", "PackCharts", "BuildOutputModeles" };
-
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
-			CAGE_LOG(SeverityEnum::Info, "xatlas", Stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
+			CAGE_LOG(SeverityEnum::Info, "xatlas", Stringizer() + StringForEnum(category) + ": " + progress + " %");
 			return true; // continue processing
 		}
 

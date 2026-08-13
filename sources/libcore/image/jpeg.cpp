@@ -12,7 +12,8 @@ namespace cage
 		{
 			char jpegLastErrorMsg[JMSG_LENGTH_MAX];
 			(*(cinfo->err->format_message))(cinfo, jpegLastErrorMsg);
-			CAGE_THROW_ERROR(Exception, jpegLastErrorMsg);
+			CAGE_LOG_THROW(jpegLastErrorMsg);
+			CAGE_THROW_ERROR(Exception, "error in jpeg");
 		}
 
 		void jpegDecode(const char *inBuffer, uintPtr inSize, MemoryBuffer &out, uint32 &width, uint32 &height, uint32 &components)

@@ -19,7 +19,7 @@ namespace cage
 					case ')':
 					{
 						if (p == 0)
-							CAGE_THROW_ERROR(Exception, "mismatched ')'");
+							CAGE_THROW_ERROR(Exception, "cannot parse transform: mismatched ')'");
 						p--;
 						break;
 					}

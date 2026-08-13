@@ -11,9 +11,9 @@ namespace cage
 	{
 		struct CAGE_CORE_API LoggerInfo
 		{
-			std::source_location location;
-			String message;
 			String currentThreadName;
+			std::source_location location;
+			PointerRange<const char> message;
 			StringPointer component = "";
 			uint64 time = 0;
 			uint64 createThreadId = 0;
@@ -28,24 +28,23 @@ namespace cage
 	{
 	public:
 		Delegate<bool(const detail::LoggerInfo &)> filter;
-		Delegate<void(const detail::LoggerInfo &, Delegate<void(const String &)>)> format;
-		Delegate<void(const String &)> output;
+		Delegate<void(const detail::LoggerInfo &, Delegate<void(PointerRange<const char>)>)> format;
+		Delegate<void(PointerRange<const char>)> output;
 	};
 
 	CAGE_CORE_API Holder<Logger> newLogger();
 
-	CAGE_CORE_API void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
-	CAGE_CORE_API void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
-	CAGE_CORE_API void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const String &)> output);
+	CAGE_CORE_API void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(PointerRange<const char>)> output);
+	CAGE_CORE_API void logFormatFile(const detail::LoggerInfo &info, Delegate<void(PointerRange<const char>)> output);
 
-	CAGE_CORE_API void logOutputDebug(const String &message);
-	CAGE_CORE_API void logOutputStdOut(const String &message);
-	CAGE_CORE_API void logOutputStdErr(const String &message);
+	CAGE_CORE_API void logOutputDebug(PointerRange<const char> message);
+	CAGE_CORE_API void logOutputStdOut(PointerRange<const char> message);
+	CAGE_CORE_API void logOutputStdErr(PointerRange<const char> message);
 
 	class CAGE_CORE_API LoggerOutputFile : private Immovable
 	{
 	public:
-		void output(const String &message) const;
+		void output(PointerRange<const char> message) const;
 	};
 
 	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const String &path, bool append, bool realFilesystemOnly = true);

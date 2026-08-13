@@ -120,6 +120,8 @@ namespace cage
 
 	Real distance(Line a, Line b)
 	{
+		if (!a.valid() || !b.valid())
+			return Real::Nan();
 		if (a.isLine() && b.isLine())
 			return distanceLines(a.origin, a.origin + a.direction, b.origin, b.origin + b.direction);
 		if (a.isSegment() && b.isSegment())

@@ -85,7 +85,7 @@ namespace cage
 				freea(ptr);
 			}
 
-			void flush() { CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used"); }
+			void flush() { CAGE_THROW_CRITICAL(Exception, "system memory arena does not support flush -> deallocate must be used"); }
 
 			MemoryArena arena = MemoryArena(this);
 		};

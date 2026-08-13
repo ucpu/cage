@@ -109,7 +109,7 @@ namespace cage
 				CAGE_ASSERT(origin);
 
 				if (pages + pgs > total)
-					CAGE_THROW_CRITICAL(Exception, "virtual memory depleted");
+					CAGE_THROW_ERROR(Exception, "virtual memory depleted");
 
 #ifdef CAGE_SYSTEM_WINDOWS
 				if (!VirtualAlloc((char *)origin + pgs * pageSize, pages * pageSize, MEM_COMMIT, PAGE_READWRITE))

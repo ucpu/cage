@@ -32,16 +32,16 @@ namespace cage
 
 	namespace
 	{
-		constexpr const uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-		constexpr const uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
-		constexpr const uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
-		constexpr const uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
-		constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
-		constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
-		constexpr const uint8 webpSignature1[4] = { 'R', 'I', 'F', 'F' }; // RIFF????WEBP
-		constexpr const uint8 webpSignature2[4] = { 'W', 'E', 'B', 'P' };
-		constexpr const uint8 tgaSignature1[18] = "TRUEVISION-XFILE.";
-		constexpr const uint8 tgaSignature2[17] = { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.' }; // no terminal zero
+		static constexpr const uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+		static constexpr const uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
+		static constexpr const uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
+		static constexpr const uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
+		static constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
+		static constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
+		static constexpr const uint8 webpSignature1[4] = { 'R', 'I', 'F', 'F' }; // RIFF????WEBP
+		static constexpr const uint8 webpSignature2[4] = { 'W', 'E', 'B', 'P' };
+		static constexpr const uint8 tgaSignature1[18] = "TRUEVISION-XFILE.";
+		static constexpr const uint8 tgaSignature2[17] = { 'T', 'R', 'U', 'E', 'V', 'I', 'S', 'I', 'O', 'N', '-', 'X', 'F', 'I', 'L', 'E', '.' }; // no terminal zero
 
 		template<uint32 N>
 		bool compare(PointerRange<const char> buffer, const uint8 (&signature)[N])

@@ -61,7 +61,7 @@ namespace
 		*secondaryLogFile = newLoggerOutputFile(path, false);
 		*secondaryLog = newLogger();
 		(*secondaryLog)->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(secondaryLogFile->get());
-		(*secondaryLog)->format.bind<&logFormatFileShort>();
+		(*secondaryLog)->format.bind<logFormatFile>();
 	}
 
 #ifdef CAGE_DEBUG

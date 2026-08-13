@@ -75,8 +75,10 @@ namespace cage
 				break;
 			}
 			case makeFourCC("DXT2"):
+			{
 				premultiplied = true;
 				[[fallthrough]];
+			}
 			case makeFourCC("DXT3"):
 			{
 				auto res = imageBc2Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
@@ -84,8 +86,10 @@ namespace cage
 				break;
 			}
 			case makeFourCC("DXT4"):
+			{
 				premultiplied = true;
 				[[fallthrough]];
+			}
 			case makeFourCC("DXT5"):
 			{
 				auto res = imageBc3Decode(des.read(header.width * header.height), Vec2i(header.width, header.height));
@@ -120,26 +124,36 @@ namespace cage
 		switch (header.format.fourCC)
 		{
 			case makeFourCC("DXT1"):
+			{
 				bufferSize = header.width * header.height / 2;
 				raw.format = "bc1";
 				raw.channels = 3;
 				break;
+			}
 			case makeFourCC("DXT2"):
+			{
 				premultiplied = true;
 				[[fallthrough]];
+			}
 			case makeFourCC("DXT3"):
+			{
 				bufferSize = header.width * header.height;
 				raw.format = "bc2";
 				raw.channels = 4;
 				break;
+			}
 			case makeFourCC("DXT4"):
+			{
 				premultiplied = true;
 				[[fallthrough]];
+			}
 			case makeFourCC("DXT5"):
+			{
 				bufferSize = header.width * header.height;
 				raw.format = "bc3";
 				raw.channels = 4;
 				break;
+			}
 			default:
 				CAGE_THROW_ERROR(Exception, "unsupported DXT (image compression) format in dds decoding");
 		}
