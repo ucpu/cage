@@ -1219,12 +1219,6 @@ namespace cage
 					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
-				// vulkan does not accept empty buffers
-				if (uniArmatures.empty())
-					uniArmatures.resize(1);
-				if (uniCustomData.empty())
-					uniCustomData.resize(4);
-
 				DrawConfig draw;
 				GraphicsBindingsCreateConfig bind;
 				{
@@ -1237,11 +1231,21 @@ namespace cage
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
+				if (uniArmatures.empty())
+				{
+					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 2 });
+				}
+				else
 				{
 					const auto ab = aggregate->writeArray<Mat3x4>(uniArmatures, 2, false);
 					bind.buffers.push_back(ab);
 					draw.dynamicOffsets.push_back(ab);
 				}
+				if (uniCustomData.empty())
+				{
+					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 3 });
+				}
+				else
 				{
 					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
 					bind.buffers.push_back(ab);
@@ -1306,10 +1310,6 @@ namespace cage
 					appendShaderCustomData(inst->e, multiShader->customDataCount);
 				}
 
-				// webgpu does not accept empty buffers
-				if (uniCustomData.empty())
-					uniCustomData.resize(4);
-
 				DrawConfig draw;
 				GraphicsBindingsCreateConfig bind;
 				{
@@ -1325,6 +1325,11 @@ namespace cage
 				{
 					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 2 });
 				}
+				if (uniCustomData.empty())
+				{
+					bind.buffers.push_back({ .buffer = privat::getBufferDummy(scene.config.shared.device), .binding = 3 });
+				}
+				else
 				{
 					const auto ab = aggregate->writeArray<float>(uniCustomData, 3, false);
 					bind.buffers.push_back(ab);
@@ -1390,8 +1395,7 @@ namespace cage
 					cfg.entity = it->e;
 					cfg.encoder = +encoder;
 					cfg.aggregate = +aggregate;
-					CAGE_ASSERT(it->e->has<CustomDrawComponent>());
-					it->e->value<CustomDrawComponent>().callback(cfg);
+					it->e->getOrAssert<CustomDrawComponent>().callback(cfg);
 				}
 			}
 

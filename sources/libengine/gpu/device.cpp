@@ -120,6 +120,7 @@ namespace cage
 		{
 			if (initialized)
 				return;
+			ScopeLock lock(texture->image.device()->mutex);
 			CommandEncoderImpl &enc = texture->image.device()->addCommands();
 			enc.imageTransitionPermanent(texture, ImageStateEnum::Undefined, ImageStateEnum::Present);
 			initialized = true;
@@ -484,8 +485,9 @@ namespace cage
 				{
 					if (!w.ctx || !w->acquired)
 						continue;
-					ias.push_back(vk::SemaphoreSubmitInfo(w->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eAllCommands));
-					rcs.push_back(vk::SemaphoreSubmitInfo(w->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllCommands));
+					CAGE_ASSERT(w->img().initialized);
+					ias.push_back(vk::SemaphoreSubmitInfo(w->frm().imageAcquired, 0, vk::PipelineStageFlagBits2::eColorAttachmentOutput));
+					rcs.push_back(vk::SemaphoreSubmitInfo(w->img().renderComplete, 0, vk::PipelineStageFlagBits2::eAllGraphics));
 				}
 
 				vk::SubmitInfo2 submitInfo;
@@ -515,6 +517,7 @@ namespace cage
 				{
 					if (!w.ctx || !w->acquired)
 						continue;
+					CAGE_ASSERT(w->img().initialized);
 					rcs.push_back(w->img().renderComplete);
 					sws.push_back((vk::SwapchainKHR)w->swapchain.swapchain);
 					ids.push_back(w->imageIndex);

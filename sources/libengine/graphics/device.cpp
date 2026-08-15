@@ -114,7 +114,6 @@ namespace cage
 				gpuTimer->frameEnd();
 				GraphicsFrameStatistics stats;
 				{
-					const ProfilingScope profiling("queue submit");
 					ankerl::svector<gpu::WindowPresentationDescriptor, 1> wpds;
 					wpds.resize(windows.size());
 					for (uint32 i = 0; i < windows.size(); i++)

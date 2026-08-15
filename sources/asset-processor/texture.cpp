@@ -114,9 +114,10 @@ namespace
 		CAGE_THROW_ERROR(Exception, "invalid channels/srgb for non-compressed texture format");
 	}
 
-	constexpr uint32 findContainedMipmapLevels(Vec3i res, bool volume3D, bool bcnCompression)
+	constexpr uint32 countPossibleMipmapLevels(Vec3i res, bool volume3D, bool bcnCompression)
 	{
 		const uint32 mod = bcnCompression ? 4 : 1;
+		CAGE_ASSERT((res[0] % mod) == 0 && (res[1] % mod) == 0);
 		uint32 lvl = 1;
 		while (true)
 		{
@@ -130,15 +131,18 @@ namespace
 		return lvl;
 	}
 
-	static_assert(findContainedMipmapLevels(Vec3i(), false, false) == 1);
-	static_assert(findContainedMipmapLevels(Vec3i(1), false, false) == 1);
-	static_assert(findContainedMipmapLevels(Vec3i(4, 1, 1), false, false) == 3);
-	static_assert(findContainedMipmapLevels(Vec3i(4, 16, 1), false, false) == 5);
-	static_assert(findContainedMipmapLevels(Vec3i(1, 1, 3), false, false) == 1);
-	static_assert(findContainedMipmapLevels(Vec3i(1, 1, 3), true, false) == 2);
-	static_assert(findContainedMipmapLevels(Vec3i(1, 1, 1), false, true) == 1);
-	static_assert(findContainedMipmapLevels(Vec3i(16, 16, 1), false, false) == 5);
-	static_assert(findContainedMipmapLevels(Vec3i(16, 16, 1), false, true) == 3);
+	static_assert(countPossibleMipmapLevels(Vec3i(), false, false) == 1);
+	static_assert(countPossibleMipmapLevels(Vec3i(1), false, false) == 1);
+	static_assert(countPossibleMipmapLevels(Vec3i(4, 1, 1), false, false) == 3);
+	static_assert(countPossibleMipmapLevels(Vec3i(4, 16, 1), false, false) == 5);
+	static_assert(countPossibleMipmapLevels(Vec3i(1, 1, 3), false, false) == 1);
+	static_assert(countPossibleMipmapLevels(Vec3i(1, 1, 3), true, false) == 2);
+	static_assert(countPossibleMipmapLevels(Vec3i(16, 16, 1), false, false) == 5);
+	static_assert(countPossibleMipmapLevels(Vec3i(16, 16, 1), false, true) == 3);
+	static_assert(countPossibleMipmapLevels(Vec3i(20, 20, 1), false, true) == 1);
+	static_assert(countPossibleMipmapLevels(Vec3i(40, 40, 1), false, true) == 2);
+	static_assert(countPossibleMipmapLevels(Vec3i(64, 64, 1), false, true) == 5);
+	static_assert(countPossibleMipmapLevels(Vec3i(68, 68, 1), false, true) == 1);
 
 	ImageImportResult images;
 
@@ -412,7 +416,7 @@ namespace
 			header.resolution[2] = header.arrayLayersCount;
 			header.arrayLayersCount = 1;
 		}
-		header.mipLevelsCount = toBool(processor->property("mipmaps")) ? min(findContainedMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
+		header.mipLevelsCount = toBool(processor->property("mipmaps")) ? min(countPossibleMipmapLevels(header.resolution, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed)), 8u) : 1;
 		header.channels = images.parts[0].image->channels();
 		header.anisoFilter = toUint32(processor->property("anisoFilter"));
 		header.sampleFilter = convertFilter(processor->property("sampleFilter"));
@@ -423,12 +427,19 @@ namespace
 		header.wrapY = convertWrap(processor->property("wrapY"));
 		header.wrapZ = convertWrap(processor->property("wrapZ"));
 
-		// todo
+		// todo higher precisions
 		if (images.parts[0].image->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "8-bit precision only for now");
 
 		if (header.mipLevelsCount > 1)
-			imageImportGenerateMipmaps(images);
+		{
+			if (any(header.flags & TextureFlags::Volume3D))
+			{
+				CAGE_THROW_ERROR(Exception, "cannot generate mipmaps for volume textures for now");
+			}
+			else
+				imageImportGenerateMipmaps(images);
+		}
 
 		MemoryBuffer inputBuffer;
 
@@ -622,8 +633,18 @@ void processTexture()
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output resolution: " + images.parts[0].image->width() + "*" + images.parts[0].image->height() + "*" + numeric_cast<uint32>(images.parts.size()));
-	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output channels: " + images.parts[0].image->channels());
+	{ // print and check final resolution
+		const Vec3i res = Vec3i(images.parts[0].image->resolution(), numeric_cast<uint32>(images.parts.size()));
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output resolution: " + res);
+		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "output channels: " + images.parts[0].image->channels());
+		if (toBool(processor->property("mipmaps")))
+		{
+			const uint32 availableMips = countPossibleMipmapLevels(res, any(target & TextureFlags::Volume3D), any(target & TextureFlags::Compressed));
+			CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "available mipmap levels: " + availableMips);
+			if (max(res[0], res[1]) >= 256 && availableMips < 4)
+				CAGE_THROW_ERROR(Exception, "expected at least 4 mipmap levels");
+		}
+	}
 
 	exportTexture(target);
 
