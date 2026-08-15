@@ -349,8 +349,8 @@ namespace cage
 				if (model->textureIds[i])
 				{
 					tc.texture = +assets->get<Texture>(model->textureIds[i]);
-					CAGE_ASSERT(tc.texture);
-					flags |= tc.texture->flags | (TextureFlags)(1u << 31); // distinguish no textures from a regular texture
+					if (tc.texture)
+						flags |= tc.texture->flags | (TextureFlags)(1u << 31); // distinguish no textures from a regular texture
 				}
 				tc.binding = i * 2 + 1;
 				config.textures.push_back(std::move(tc));

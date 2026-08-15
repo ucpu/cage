@@ -644,8 +644,6 @@ namespace cage
 			submitInfo.commandBufferInfoCount = cmds.size();
 			submitInfo.pCommandBufferInfos = cmds.data();
 			check("submit", queue.submit2(1, &submitInfo, nullptr));
-
-			additionalCommands.clear();
 		}
 
 		void DeviceImpl::waitDeviceIdle()

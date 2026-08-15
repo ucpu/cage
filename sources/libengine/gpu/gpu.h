@@ -307,6 +307,7 @@ namespace cage
 			};
 			Capabilities capabilities;
 
+			Holder<Mutex> mutexQueue = newMutex();
 			Holder<RecursiveMutex> mutex = newRecursiveMutex();
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;

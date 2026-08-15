@@ -285,19 +285,21 @@ namespace cage
 
 		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
-			// locking is inside
+			ScopeLock lock(get()->mutexQueue);
+			// additional locking inside
 			get()->submitAndPresent(buffers, windows);
 		}
 
 		void Device::submit(PointerRange<const CommandBuffer> buffers)
 		{
-			ScopeLock lock(get()->mutex);
+			ScopeLock lock(get()->mutexQueue);
+			ScopeLock lock2(get()->mutex);
 			get()->submit(buffers);
 		}
 
 		void Device::waitDeviceIdle()
 		{
-			ScopeLock lock(get()->mutex);
+			ScopeLock lock(get()->mutexQueue);
 			get()->waitDeviceIdle();
 		}
 
