@@ -583,7 +583,6 @@ namespace cage
 						old = vk::SwapchainKHR(w->swapchain.swapchain);
 						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
 														.set_old_swapchain(w->swapchain)
-														.set_required_min_image_count(2)
 														.set_desired_min_image_count(preferredTripleBuffering ? 3 : 2)
 														.set_desired_extent(w.resolution[0], w.resolution[1])
 														.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
