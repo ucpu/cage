@@ -1,5 +1,4 @@
 #include <cstdio> // fgets, ferror
-#include <cstring> // strlen
 
 #include <unordered_dense.h>
 

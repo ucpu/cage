@@ -120,6 +120,26 @@ namespace cage
 
 			try
 			{
+				CAGE_ASSERT(message.data());
+
+				// trim trailing new lines
+				while (true)
+				{
+					if (message.empty())
+						break;
+					const char c = message[message.size() - 1];
+					switch (c)
+					{
+						case '\r':
+						case '\n':
+						case '\t':
+						case ' ':
+							message = message.subRange(0, message.size() - 1);
+							continue;
+					}
+					break;
+				}
+
 				detail::LoggerInfo info;
 				info.location = location;
 				info.message = message;
@@ -267,7 +287,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			const char *p = GetCommandLine();
-			auto l = std::strlen(p);
+			auto l = detail::strlen(p);
 			if (l > String::MaxLength / 2)
 				l = String::MaxLength / 2;
 			return String(PointerRange(p, p + l));

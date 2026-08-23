@@ -127,7 +127,7 @@ namespace cage
 					String s;
 					while (std::fgets(s.rawData(), s.MaxLength, f))
 					{
-						s.rawLength() = std::strlen(s.rawData());
+						s.rawLength() = detail::strlen(s.rawData());
 						if (!isPattern(s, "TracerPid:", "", ""))
 							continue;
 						s = trim(remove(s, 0, 11));

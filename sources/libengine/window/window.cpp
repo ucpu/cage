@@ -1,6 +1,5 @@
 #include <array>
 #include <atomic>
-#include <cstring>
 #include <vector>
 
 #include "private.h"
@@ -505,7 +504,7 @@ namespace cage
 		const WindowImpl *impl = (const WindowImpl *)this;
 		if (const char *tmp = glfwGetWindowTitle(impl->window))
 		{
-			const auto len = std::strlen(tmp);
+			const auto len = detail::strlen(tmp);
 			if (len < String::MaxLength)
 				return String(PointerRange(tmp, tmp + len));
 		}

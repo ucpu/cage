@@ -1,7 +1,6 @@
 #include <cmath> // max
 #include <cstdarg> // va_list
 #include <cstdio> // vsnprintf
-#include <cstring> // strlen
 #include <vector>
 
 #include <wasm_export.h>
@@ -19,7 +18,7 @@ extern "C"
 	{
 		String str;
 		int res = std::vsnprintf(str.rawData(), str.MaxLength - 100, format, va);
-		str.rawLength() = std::strlen(str.rawData());
+		str.rawLength() = detail::strlen(str.rawData());
 		str = trim(str);
 		CAGE_LOG(SeverityEnum::Info, "wasm-print", str);
 		return res;
@@ -32,7 +31,7 @@ extern "C"
 		va_start(va, format);
 		std::vsnprintf(str.rawData(), str.MaxLength - 100, format, va);
 		va_end(va);
-		str.rawLength() = std::strlen(str.rawData());
+		str.rawLength() = detail::strlen(str.rawData());
 		str = trim(str);
 		SeverityEnum sev = SeverityEnum::Info;
 		switch (log_level)
@@ -170,7 +169,7 @@ namespace cage
 				module = wasm_runtime_load((uint8_t *)buffer.data(), buffer.size(), err.rawData(), err.MaxLength - 100);
 				if (!module)
 				{
-					err.rawLength() = std::strlen(err.rawData());
+					err.rawLength() = detail::strlen(err.rawData());
 					CAGE_LOG_CONTINUE(SeverityEnum::Note, "wasm", err);
 					CAGE_THROW_ERROR(Exception, "failed loading wasm module");
 				}
@@ -202,7 +201,7 @@ namespace cage
 				instance = wasm_runtime_instantiate(module->module, 1'000'000, 1'000'000, err.rawData(), err.MaxLength - 100);
 				if (!instance)
 				{
-					err.rawLength() = std::strlen(err.rawData());
+					err.rawLength() = detail::strlen(err.rawData());
 					CAGE_LOG_THROW(err);
 					CAGE_THROW_ERROR(Exception, "failed instantiating wasm module");
 				}
@@ -275,7 +274,7 @@ namespace cage
 		template<uint32 A>
 		void strCopyTruncate(detail::StringBase<A> &dst, const char *src)
 		{
-			uint32 len = std::strlen(src);
+			uint32 len = detail::strlen(src);
 			if (len > A)
 				len = A;
 			dst = detail::StringBase<A>(PointerRange<const char>(src, src + len));

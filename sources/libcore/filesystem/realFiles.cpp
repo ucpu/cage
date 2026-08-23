@@ -770,7 +770,7 @@ namespace cage
 			uint32 len = sizeof(buffer);
 			if (_NSGetExecutablePath(buffer, &len) != 0)
 				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
-			len = std::strlen(buffer);
+			len = detail::strlen(buffer);
 			return pathSimplify(String({ buffer, buffer + len }));
 #else
 	#error This operating system is not supported

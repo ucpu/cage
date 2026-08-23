@@ -1,5 +1,3 @@
-#include <cstring>
-
 #include "private.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -125,7 +123,7 @@ namespace cage
 	{
 		if (const char *tmp = glfwGetClipboardString(nullptr))
 		{
-			const auto len = std::strlen(tmp);
+			const auto len = detail::strlen(tmp);
 			return PointerRange(tmp, tmp + len);
 		}
 		return {};
@@ -135,7 +133,7 @@ namespace cage
 	{
 		if (const char *tmp = glfwGetClipboardString(nullptr))
 		{
-			const auto len = std::strlen(tmp);
+			const auto len = detail::strlen(tmp);
 			if (len < String::MaxLength)
 				return String(PointerRange(tmp, tmp + len));
 		}

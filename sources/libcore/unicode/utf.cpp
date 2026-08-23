@@ -1,4 +1,3 @@
-#include <cstring> // std::strlen
 #include <string_view>
 
 #include <uni_algo/conv.h>
@@ -33,7 +32,7 @@ namespace cage
 
 	bool utfValid(const char *str)
 	{
-		return utfValid({ str, str + numeric_cast<uint32>(std::strlen(str)) });
+		return utfValid({ str, str + numeric_cast<uint32>(detail::strlen(str)) });
 	}
 
 	uint32 utf32Length(PointerRange<const char> buffer)
@@ -48,7 +47,7 @@ namespace cage
 
 	uint32 utf32Length(const char *str)
 	{
-		return utf32Length({ str, str + numeric_cast<uint32>(std::strlen(str)) });
+		return utf32Length({ str, str + numeric_cast<uint32>(detail::strlen(str)) });
 	}
 
 	uint32 utf8Length(PointerRange<const uint32> buffer)
@@ -69,7 +68,7 @@ namespace cage
 
 	Holder<PointerRange<uint32>> utf8to32(const char *str)
 	{
-		return utf8to32({ str, str + numeric_cast<uint32>(std::strlen(str)) });
+		return utf8to32({ str, str + numeric_cast<uint32>(detail::strlen(str)) });
 	}
 
 	void utf8to32(PointerRange<uint32> &outBuffer, PointerRange<const char> inBuffer)
@@ -88,7 +87,7 @@ namespace cage
 
 	void utf8to32(PointerRange<uint32> &outBuffer, const char *str)
 	{
-		utf8to32(outBuffer, { str, str + numeric_cast<uint32>(std::strlen(str)) });
+		utf8to32(outBuffer, { str, str + numeric_cast<uint32>(detail::strlen(str)) });
 	}
 
 	Holder<PointerRange<char>> utf32to8(PointerRange<const uint32> buffer)

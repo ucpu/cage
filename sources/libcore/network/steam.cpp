@@ -7,7 +7,6 @@
 	#endif
 
 	#include <vector>
-	#include <cstring>
 
 	#include "net.h"
 
@@ -542,7 +541,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "failed to read remote connection info");
 		SteamRemoteInfo res;
 		info.m_addrRemote.ToString(res.address.rawData(), res.address.MaxLength, false);
-		res.address.rawLength() = std::strlen(res.address.rawData());
+		res.address.rawLength() = detail::strlen(res.address.rawData());
 		res.port = info.m_addrRemote.m_port;
 		res.steamUserId = info.m_identityRemote.GetSteamID64();
 		return res;
