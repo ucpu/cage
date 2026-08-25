@@ -25,7 +25,9 @@
 #include <cage-engine/guiManager.h>
 #include <cage-engine/scene.h>
 #include <cage-engine/sceneRender.h>
+#include <cage-engine/sceneVirtualReality.h>
 #include <cage-engine/texture.h>
+#include <cage-engine/virtualReality.h>
 #include <cage-engine/window.h>
 
 namespace cage
@@ -82,6 +84,22 @@ namespace cage
 					return perspectiveProjection(data.perspectiveFov, Real(resolution[0]) / Real(resolution[1]), data.near, data.far);
 			}
 			CAGE_THROW_ERROR(Exception, "invalid camera type");
+		}
+
+		Entity *findVrOrigin(EntityManager *scene)
+		{
+			auto r = scene->component<VrOriginComponent>()->entities();
+			if (r.size() != 1)
+				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
+			return r[0];
+		}
+
+		Transform transformByVrOrigin(EntityManager *scene, const Transform &in, Real interpolationFactor)
+		{
+			Entity *e = findVrOrigin(scene);
+			const Transform t = modelTransform(e, interpolationFactor);
+			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
+			return t * c * in;
 		}
 
 		Vec2i updateResolution(Vec2i in, Real factor)
@@ -250,46 +268,94 @@ namespace cage
 				nextAllowedDrFrameIndex = frameIndex + 5;
 			}
 
-			std::vector<SceneRenderCamera> generateCameras(const SceneRenderShared &cfg) const
+			std::vector<SceneRenderCamera> generateCameras(const SceneRenderShared &cfg, VirtualRealityGraphicsFrame *vrFrame) const
 			{
 				std::vector<SceneRenderCamera> cameras;
 				if (!cfg.scene)
 					return cameras;
 
-				cameras.reserve(cfg.scene->component<CameraComponent>()->count());
-				entitiesVisitor(
-					[&](Entity *e, const CameraComponent &cam)
+				cameras.reserve(cfg.scene->component<CameraComponent>()->count() + (vrFrame ? vrFrame->cameras.size() : 0));
+
+				// standard cameras
+				const auto &addCameras = [&](bool renderToTexture)
+				{
+					entitiesVisitor(
+						[&](Entity *e, const CameraComponent &cam)
+						{
+							SceneRenderCamera data;
+							if (windowTexture && !renderToTexture)
+								data.target = +windowTexture;
+							if (cam.target && renderToTexture)
+								data.target = cam.target;
+							if (!data.target)
+								return;
+							data.camera = cam;
+							data.resolution = data.target->resolution();
+							data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
+							data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
+							data.effects.gamma = Real(confRenderGamma);
+							if (cam.renderingResolution != 1)
+							{
+								data.resolution = updateResolution(data.resolution, cam.renderingResolution);
+							}
+							if (dynamicResolution != 1)
+							{
+								data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
+								data.resolution = updateResolution(data.resolution, dynamicResolution);
+							}
+							data.transform = modelTransform(e, cfg.interpolationFactor);
+							data.projection = initializeProjection(cam, data.resolution);
+							data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
+							cameras.push_back(std::move(data));
+						},
+						cfg.scene, false);
+				};
+				addCameras(true);
+				addCameras(false);
+
+				// virtual reality cameras
+				if (vrFrame)
+				{
+					Entity *camEnt = nullptr;
+					{
+						auto r = cfg.scene->component<VrCameraComponent>()->entities();
+						if (!r.empty())
+						{
+							camEnt = r[0];
+							const auto &cam = camEnt->value<VrCameraComponent>();
+							for (VirtualRealityCamera &it : vrFrame->cameras)
+							{
+								it.nearPlane = cam.near;
+								it.farPlane = cam.far;
+							}
+						}
+					}
+					vrFrame->updateProjections();
+
+					for (const VirtualRealityCamera &it : vrFrame->cameras)
 					{
 						SceneRenderCamera data;
-						data.camera = cam;
-						data.target = +windowTexture;
-						data.resolution = windowTexture->resolution();
-						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
-						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
+						data.target = it.colorTexture;
+						data.resolution = it.resolution;
+						if (camEnt)
+						{
+							data.camera = camEnt->value<VrCameraComponent>();
+							data.cameraSceneMask = camEnt->getOrDefault<SceneComponent>().sceneMask;
+							data.effects = camEnt->getOrDefault<ScreenSpaceEffectsComponent>();
+						}
 						data.effects.gamma = Real(confRenderGamma);
-						if (cam.target)
-						{
-							data.target = cam.target;
-							data.resolution = cam.target->resolution();
-						}
-						if (cam.renderingResolution != 1)
-						{
-							data.resolution = updateResolution(data.resolution, cam.renderingResolution);
-						}
 						if (dynamicResolution != 1)
 						{
 							data.effects.effects &= ~ScreenSpaceEffectsFlags::AntiAliasing;
 							data.resolution = updateResolution(data.resolution, dynamicResolution);
 						}
-						data.transform = modelTransform(e, cfg.interpolationFactor);
-						data.projection = initializeProjection(cam, data.resolution);
-						data.lodSelection = LodSelection(data.transform.position, cam, data.resolution[1]);
+						data.transform = transformByVrOrigin(cfg.scene, it.transform, cfg.interpolationFactor);
+						data.projection = it.projection;
+						data.lodSelection = LodSelection(it.primary ? vrFrame->pose().position : it.transform.position, CameraComponent{ .perspectiveFov = it.verticalFov }, data.resolution[1]);
 						cameras.push_back(std::move(data));
-					},
-					cfg.scene, false);
+					}
+				}
 
-				// ensure render-to-texture before render-to-window
-				std::stable_sort(cameras.begin(), cameras.end(), [](const SceneRenderCamera &a, const SceneRenderCamera &b) { return !!a.target < !!b.target; });
 				return cameras;
 			}
 
@@ -316,17 +382,26 @@ namespace cage
 			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
 			{
 				ScopeGuard scopeExit([this]() { windowTexture.clear(); });
+
 				GraphicsWindowPresentation gwp;
 				gwp.window = engineWindow();
 				frameStatistics = engineGraphicsDevice()->nextFrame(PointerRange(gwp));
 				windowTexture = std::move(gwp.texture);
 				updateDynamicResolution();
 
-				if (!windowTexture || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
+				Holder<VirtualRealityGraphicsFrame> vrFrame;
+				if (engineVirtualReality())
 				{
+					vrFrame = engineVirtualReality()->nextFrame();
+					if (vrFrame)
+						dispatchTime = vrFrame->displayTime();
+				}
+
+				if ((!windowTexture && !vrFrame) || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
+				{
+					threadSleep(15'000); // prevent fast looping when the window is minimized
 					if (scrnshtState == ScreenshotStateEnum::Request)
 						scrnshtState = ScreenshotStateEnum::Failed;
-					threadSleep(15'000); // prevent fast looping when the window is minimized
 					return;
 				}
 
@@ -350,35 +425,41 @@ namespace cage
 						cfg.shared.interpolationFactor = saturate(Real(cfg.shared.currentTime - eb.emitTime) / period);
 						cfg.shared.frameIndex = frameIndex;
 					}
-					std::vector<SceneRenderCamera> cameras = generateCameras(cfg.shared);
+					std::vector<SceneRenderCamera> cameras = generateCameras(cfg.shared, +vrFrame);
 					cfg.cameras = cameras;
 					const auto commands = sceneRender(cfg);
 					for (const auto &cmd : commands)
 						cmd->submit();
 				}
 
-				if (guiBundle)
+				if (windowTexture)
 				{
-					ProfilingScope profiling("gui dispatch");
-					Holder<GraphicsEncoder> enc = newGraphicsEncoder(engineGraphicsDevice(), "gui");
-					Holder<GraphicsAggregateBuffer> agg = newGraphicsAggregateBuffer({ engineGraphicsDevice() });
-					RenderPassConfig passcfg;
-					passcfg.colorTargets.push_back({ +windowTexture });
-					passcfg.colorTargets[0].clear = false;
-					enc->nextPass(passcfg);
+					if (guiBundle)
 					{
-						const auto scope = enc->namedScope("gui");
-						guiBundle->draw({ windowTexture->resolution(), engineGraphicsDevice(), +enc, +agg });
+						ProfilingScope profiling("gui dispatch");
+						Holder<GraphicsEncoder> enc = newGraphicsEncoder(engineGraphicsDevice(), "gui");
+						Holder<GraphicsAggregateBuffer> agg = newGraphicsAggregateBuffer({ engineGraphicsDevice() });
+						RenderPassConfig passcfg;
+						passcfg.colorTargets.push_back({ +windowTexture });
+						passcfg.colorTargets[0].clear = false;
+						enc->nextPass(passcfg);
+						{
+							const auto scope = enc->namedScope("gui");
+							guiBundle->draw({ windowTexture->resolution(), engineGraphicsDevice(), +enc, +agg });
+						}
+						agg->submit();
+						enc->submit();
 					}
-					agg->submit();
-					enc->submit();
-				}
 
-				if (scrnshtState == ScreenshotStateEnum::Request)
-					takeScreenshot(+windowTexture);
+					if (scrnshtState == ScreenshotStateEnum::Request)
+						takeScreenshot(+windowTexture);
+				}
 
 				frameIndex++;
 				lastDispatchTime = dispatchTime;
+
+				if (vrFrame)
+					vrFrame->commit();
 			}
 		};
 	}

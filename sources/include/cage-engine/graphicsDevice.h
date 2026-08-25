@@ -8,6 +8,11 @@ namespace cage
 {
 	class Window;
 	class Texture;
+	class VirtualRealityGraphicsFrame;
+	namespace gpu
+	{
+		class Device;
+	}
 
 	struct CAGE_ENGINE_API GraphicsWindowPresentation
 	{
@@ -31,6 +36,7 @@ namespace cage
 	};
 
 	CAGE_ENGINE_API Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config);
+	CAGE_ENGINE_API Holder<GraphicsDevice> newGraphicsDevice(gpu::Device &device);
 }
 
 #endif

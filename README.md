@@ -61,7 +61,7 @@ Cage is game engine/framework designed for programmers with focus on ease of use
 - Sound
 - Gui
 - Uses vulkan backend
-- ~Virtual reality~ (vr has been temporarily disabled)
+- Virtual reality
 
 ## Simple library
 

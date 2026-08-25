@@ -89,7 +89,15 @@ namespace cage
 				desc.label = pathExtractFilenameNoExtension(detail::pathExecutable());
 				desc.window = config.compatibility;
 				device = gpu::newGpuDevice(desc);
+				commonInitialization();
+			}
 
+			GraphicsDeviceImpl(gpu::Device &device) : device(device) { commonInitialization(); }
+
+			~GraphicsDeviceImpl() {}
+
+			void commonInitialization()
+			{
 				CAGE_LOG(SeverityEnum::Info, "graphics", "initializing caches");
 				bindingsCache = privat::newDeviceBindingsCache(this);
 				pipelinesCache = privat::newDevicePipelinesCache(this);
@@ -98,8 +106,6 @@ namespace cage
 				gpuTimer = systemMemory().createHolder<GpuFrameTimer>(this);
 				cpuTimer = newTimer();
 			}
-
-			~GraphicsDeviceImpl() {}
 
 			void insertCommandBuffer(gpu::CommandBuffer &&cmds, const GraphicsCommandBufferStatistics &statistics_)
 			{
@@ -246,6 +252,11 @@ namespace cage
 	Holder<GraphicsDevice> newGraphicsDevice(const GraphicsDeviceCreateConfig &config)
 	{
 		return systemMemory().createImpl<GraphicsDevice, GraphicsDeviceImpl>(config);
+	}
+
+	Holder<GraphicsDevice> newGraphicsDevice(gpu::Device &device)
+	{
+		return systemMemory().createImpl<GraphicsDevice, GraphicsDeviceImpl>(device);
 	}
 
 	gpu::Device *GraphicsDevice::nativeDevice()

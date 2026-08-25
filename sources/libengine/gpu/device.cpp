@@ -22,6 +22,13 @@ namespace cage
 	{
 		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
 		{
+			if (pCallbackData->messageIdNumber == 416909302)
+			{
+				// vkCreateImage(): pCreateInfo->pNext<VkExternalMemoryImageCreateInfo>.handleTypes is VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT (non-zero) but the initialLayout is VK_IMAGE_LAYOUT_PREINITIALIZED.
+				// The Vulkan spec states: If the pNext chain includes a VkExternalMemoryImageCreateInfo or VkExternalMemoryImageCreateInfoNV structure whose handleTypes member is not 0, initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED (https://docs.vulkan.org/spec/latest/chapters/resources.html#VUID-VkImageCreateInfo-pNext-01443)
+				return VK_FALSE;
+			}
+
 			SeverityEnum sev = SeverityEnum::Info;
 			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
 				sev = SeverityEnum::Hint;
@@ -38,25 +45,6 @@ namespace cage
 			}
 
 			return VK_FALSE;
-		}
-
-		void logError(const vkb::Error &err)
-		{
-			CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", err.type.message());
-			for (const auto &it : err.detailed_failure_reasons)
-				CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", it);
-			CAGE_LOG_THROW(Stringizer() + "error code: " + err.type.value());
-		}
-
-		template<class T>
-		T &&handleResult(vkb::Result<T> &&r)
-		{
-			if (!r.has_value())
-			{
-				logError(r.full_error());
-				CAGE_THROW_ERROR(Exception, "error in vulkan bootstrap");
-			}
-			return std::move(r.value());
 		}
 
 		int environmentSetupImpl()
@@ -104,6 +92,14 @@ namespace cage
 
 	namespace gpu
 	{
+		void logError(const vkb::Error &err)
+		{
+			CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", err.type.message());
+			for (const auto &it : err.detailed_failure_reasons)
+				CAGE_LOG(SeverityEnum::Note, "vulkan boostrap", it);
+			CAGE_LOG_THROW(Stringizer() + "error code: " + err.type.value());
+		}
+
 		template<>
 		void ResourceInternal<vk::SwapchainKHR, Nothing>::destroy()
 		{
@@ -143,7 +139,7 @@ namespace cage
 				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
 				f.texture->arrayLayersCount = f.texture->mipLevelsCount = 1;
 				f.texture->dimension = TextureDimensionEnum::e2D;
-				f.texture->format = TextureFormatEnum::BGRA8UnormSrgb; //swapchain.image_format; // todo convert
+				f.texture->format = convertTextureFormatInverse(vk::Format(swapchain.image_format));
 				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
 				f.texture->image.setLabel((Stringizer() + "swapchainImage[" + i + "]").value);
 				vk::SemaphoreCreateInfo sci;
@@ -172,10 +168,65 @@ namespace cage
 			surface = nullptr;
 		}
 
+		void DeviceImpl::Bootstrap::environmentSetup()
+		{
+			static int dummy = environmentSetupImpl();
+			(void)dummy;
+		}
+
+		void DeviceImpl::Bootstrap::setRequiredFeatures(vkb::InstanceBuilder &ib)
+		{
+			ib //
+				.require_api_version(1, 3)
+				.set_debug_callback(debugCallback)
+#ifndef CAGE_DEPLOY
+				.request_validation_layers()
+#endif // !CAGE_DEPLOY
+				.set_engine_name("cage");
+		}
+
+		void DeviceImpl::Bootstrap::setRequiredFeatures(vkb::PhysicalDeviceSelector &sel)
+		{
+			vk::PhysicalDeviceFeatures features10;
+			features10.samplerAnisotropy = true;
+			vk::PhysicalDeviceVulkan12Features features12;
+			//features12.descriptorIndexing = true;
+			//features12.shaderSampledImageArrayNonUniformIndexing = true;
+			//features12.descriptorBindingVariableDescriptorCount = true;
+			//features12.runtimeDescriptorArray = true;
+			//features12.bufferDeviceAddress = true;
+			vk::PhysicalDeviceVulkan13Features features13;
+			features13.synchronization2 = true;
+			features13.dynamicRendering = true;
+			sel //
+				.set_minimum_version(1, 3)
+				.set_required_features(features10)
+				.set_required_features_12(features12)
+				.set_required_features_13(features13);
+		}
+
+		DeviceImpl::Bootstrap::Bootstrap()
+		{
+			environmentSetup();
+		}
+
+		DeviceImpl::Bootstrap::Bootstrap(Bootstrap &&other)
+		{
+			std::swap(inst, other.inst);
+			std::swap(phys, other.phys);
+			std::swap(dev, other.dev);
+			std::swap(q, other.q);
+		}
+
 		DeviceImpl::Bootstrap::~Bootstrap()
 		{
 			vkb::destroy_device(dev);
 			vkb::destroy_instance(inst);
+		}
+
+		DeviceImpl::DeviceImpl(Bootstrap &&bootstrap) : bootstrap(std::move(bootstrap))
+		{
+			commonInitialization();
 		}
 
 		DeviceImpl::DeviceImpl(const GpuDeviceDescriptor &desc)
@@ -183,8 +234,91 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Info, "gpu", "creating gpu device");
 
 			{
-				environmentSetup();
-				bootstrapInit(desc);
+				uint32 extsCnt = 0;
+				const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
+				vkb::InstanceBuilder ib;
+				bootstrap.setRequiredFeatures(ib);
+				ib.enable_extensions(extsCnt, extsArr);
+				ib.set_app_name(desc.label.data());
+				bootstrap.inst = handleResult(ib.build());
+			}
+
+			{
+				vkb::PhysicalDeviceSelector sel(bootstrap.inst);
+				bootstrap.setRequiredFeatures(sel);
+				sel.set_surface((VkSurfaceKHR)getWindowGpuContext(desc.window)->data->surface);
+				bootstrap.phys = handleResult(sel.select());
+			}
+
+			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
+			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
+			commonInitialization();
+
+			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
+		}
+
+		DeviceImpl::~DeviceImpl()
+		{
+			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
+
+			try
+			{
+				device.waitIdle();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				for (const auto &it : surfacesCollection)
+					it->clear();
+				surfacesCollection.clear();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				additionalCommands.clear();
+				for (uint32 i = 0; i < 10; i++)
+					applyDeferredDestructions();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				commandPools.clear();
+				for (uint32 i = 0; i < 10; i++)
+					applyDeferredDestructions();
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			try
+			{
+				vmaDestroyAllocator(allocator);
+				allocator = nullptr;
+			}
+			catch (...)
+			{
+				// nothing
+			}
+
+			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
+		}
+
+		void DeviceImpl::commonInitialization()
+		{
+			{
 				instance = bootstrap.inst.instance;
 				physicalDevice = bootstrap.phys.physical_device;
 				device = bootstrap.dev.device;
@@ -266,67 +400,6 @@ namespace cage
 					capabilities.timestampsConvert = bootstrap.phys.properties.limits.timestampPeriod;
 				capabilities.maxAnisotropy = bootstrap.phys.properties.limits.maxSamplerAnisotropy;
 			}
-
-			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device created");
-		}
-
-		DeviceImpl::~DeviceImpl()
-		{
-			CAGE_LOG(SeverityEnum::Info, "gpu", "destroying gpu device");
-
-			try
-			{
-				device.waitIdle();
-			}
-			catch (...)
-			{
-				// nothing
-			}
-
-			try
-			{
-				for (const auto &it : surfacesCollection)
-					it->clear();
-				surfacesCollection.clear();
-			}
-			catch (...)
-			{
-				// nothing
-			}
-
-			try
-			{
-				additionalCommands.clear();
-				for (uint32 i = 0; i < 10; i++)
-					applyDeferredDestructions();
-			}
-			catch (...)
-			{
-				// nothing
-			}
-
-			try
-			{
-				commandPools.clear();
-				for (uint32 i = 0; i < 10; i++)
-					applyDeferredDestructions();
-			}
-			catch (...)
-			{
-				// nothing
-			}
-
-			try
-			{
-				vmaDestroyAllocator(allocator);
-				allocator = nullptr;
-			}
-			catch (...)
-			{
-				// nothing
-			}
-
-			CAGE_LOG(SeverityEnum::Info, "gpu", "gpu device destroyed");
 		}
 
 		void DeviceImpl::applyDeferredDestructions()
@@ -347,52 +420,6 @@ namespace cage
 			if (!additionalCommands)
 				additionalCommands = systemMemory().createHolder<CommandEncoderImpl>(*this, CommandEncoderDescriptor{ .label = "additionalCommands" });
 			return *additionalCommands;
-		}
-
-		void DeviceImpl::environmentSetup()
-		{
-			static int dummy = environmentSetupImpl();
-			(void)dummy;
-		}
-
-		void DeviceImpl::bootstrapInit(const GpuDeviceDescriptor &desc)
-		{
-			uint32 extsCnt = 0;
-			const auto extsArr = glfwGetRequiredInstanceExtensions(&extsCnt);
-			bootstrap.inst = handleResult(vkb::InstanceBuilder() //
-											  .require_api_version(1, 3)
-											  .set_debug_callback(debugCallback)
-											  .enable_extensions(extsCnt, extsArr)
-#ifndef CAGE_DEPLOY
-											  .request_validation_layers()
-#endif // !CAGE_DEPLOY
-											  .set_engine_name("cage")
-											  .set_app_name(desc.label.data())
-											  .build());
-
-			auto surf = getWindowGpuContext(desc.window);
-			vk::PhysicalDeviceFeatures features10;
-			features10.samplerAnisotropy = true;
-			vk::PhysicalDeviceVulkan12Features features12;
-			//features12.descriptorIndexing = true;
-			//features12.shaderSampledImageArrayNonUniformIndexing = true;
-			//features12.descriptorBindingVariableDescriptorCount = true;
-			//features12.runtimeDescriptorArray = true;
-			//features12.bufferDeviceAddress = true;
-			vk::PhysicalDeviceVulkan13Features features13;
-			features13.synchronization2 = true;
-			features13.dynamicRendering = true;
-			bootstrap.phys = handleResult(vkb::PhysicalDeviceSelector(bootstrap.inst) //
-											  .set_minimum_version(1, 3)
-											  .set_surface((VkSurfaceKHR)surf->data->surface)
-											  .set_required_features(features10)
-											  .set_required_features_12(features12)
-											  .set_required_features_13(features13)
-											  .select());
-
-			bootstrap.dev = handleResult(vkb::DeviceBuilder(bootstrap.phys).build());
-
-			bootstrap.q = handleResult(bootstrap.dev.get_queue(vkb::QueueType::graphics));
 		}
 
 		Holder<privat::WindowGpuContext> DeviceImpl::getWindowGpuContext(Window *window)

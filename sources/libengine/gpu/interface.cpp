@@ -392,4 +392,30 @@ namespace cage
 			return res;
 		}
 	}
+
+	namespace privat
+	{
+		gpu::Texture createTextureForOpenXr(gpu::Device &device, vk::Image image, vk::Format format, Vec2i resolution, const AssetLabel &label)
+		{
+			using namespace gpu;
+
+			Holder<TextureImpl> impl = systemMemory().createHolder<TextureImpl>(*device.get(), image);
+			impl->resolution = Vec3i(resolution, 1);
+			impl->arrayLayersCount = 1;
+			impl->mipLevelsCount = 1;
+			impl->dimension = TextureDimensionEnum::e2D;
+			impl->format = convertTextureFormatInverse(format);
+			impl->usage = TextureUsageFlags::RenderAttachment;
+			impl->image.setLabel(label);
+			auto t = gpu::Texture(std::move(impl));
+
+			{ // initial image layout transition
+				ScopeLock lock(device->mutex);
+				CommandEncoderImpl &enc = device->addCommands();
+				enc.imageTransitionPermanent(t, ImageStateEnum::Undefined, ImageStateEnum::ColorAttachment);
+			}
+
+			return t;
+		}
+	}
 }

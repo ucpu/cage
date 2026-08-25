@@ -93,9 +93,9 @@ namespace cage
 
 			Holder<AssetsManager> assets;
 			Holder<AssetsOnDemand> onDemand;
+			Holder<VirtualReality> virtualReality;
 			Holder<GraphicsDevice> device;
 			Holder<Window> window;
-			Holder<VirtualReality> virtualReality;
 			Holder<Speaker> speaker;
 			Holder<VoicesMixer> masterBus;
 			Holder<VoicesMixer> sceneMixer;
@@ -450,21 +450,26 @@ namespace cage
 					window->events.merge(engineEvents());
 				}
 
-				{ // create device
-					GraphicsDeviceCreateConfig cfg;
-					cfg.compatibility = +window;
-					device = newGraphicsDevice(cfg);
-					// explicitly disable vsync for the window when virtual reality controls frame rate
-					device->nativeDevice()->setVsyncPreference(!config.virtualReality, false);
-				}
-
-				{ // create virtual reality
+				{ // create vr and graphics device
 					if (config.virtualReality)
 					{
-						virtualReality = newVirtualReality();
+						gpu::GpuDeviceDescriptor cfg;
+						cfg.label = pathExtractFilenameNoExtension(detail::pathExecutable());
+						cfg.window = +window;
+						auto p = newVirtualReality(cfg);
+						virtualReality = std::move(p.first);
+						device = newGraphicsDevice(p.second);
 						virtualReality->events.merge(engineEvents());
 						controlUpdateSchedule->period(virtualReality->targetFrameTiming());
 					}
+					else
+					{
+						GraphicsDeviceCreateConfig cfg;
+						cfg.compatibility = +window;
+						device = newGraphicsDevice(cfg);
+					}
+					// explicitly disable vsync for the window when virtual reality controls frame rate
+					device->nativeDevice()->setVsyncPreference(!config.virtualReality, false);
 				}
 
 				{ // create sound speaker

@@ -40,7 +40,7 @@ else()
 		set(outname "${CMAKE_CURRENT_BINARY_DIR}/${filename}.cpp")
 		add_custom_command(
 			OUTPUT "${outname}" 
-			COMMAND ${CMAKE_COMMAND} -DCAGE_EMBED_FILE_RUN=1 -DCAGE_EMBED_FILE_INPUT_PATH="${inname}" -DCAGE_EMBED_FILE_OUTPUT_PATH="${outname}" -DCAGE_EMBED_FILE_VAR_NAME="${varname}" -P "${CAGE_EMBED_FILE_SOURCE_PATH}/cage_embed_file.cmake"
+			COMMAND ${CMAKE_COMMAND} -DCAGE_EMBED_FILE_RUN=1 "-DCAGE_EMBED_FILE_INPUT_PATH=${inname}" "-DCAGE_EMBED_FILE_OUTPUT_PATH=${outname}" "-DCAGE_EMBED_FILE_VAR_NAME=${varname}" -P "${CAGE_EMBED_FILE_SOURCE_PATH}/cage_embed_file.cmake"
 			MAIN_DEPENDENCY ${inname}
 		)
 		target_sources(${target} PRIVATE ${outname})

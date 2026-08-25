@@ -8,6 +8,11 @@ namespace cage
 {
 	class Texture;
 	class EntityManager;
+	namespace gpu
+	{
+		class Device;
+		struct GpuDeviceDescriptor;
+	}
 
 	class CAGE_ENGINE_API VirtualRealityController : private Immovable
 	{
@@ -45,21 +50,8 @@ namespace cage
 		// warning: this time is not related to the application time
 		uint64 displayTime() const;
 
-		// notify beginning of rendering the frame
-		// requires opengl context
-		void renderBegin();
-
-		// acquires no textures if rendering is unnecessary
-		// requires opengl context
-		void acquireTextures();
-
-		// notify finishing of rendering the frame
-		// also submits acquired textures to the device
-		// requires opengl context
-		void renderCommit();
-
-		// requires opengl context
-		void renderCancel();
+		// mark that textures will be rendered and valid for submission
+		void commit();
 	};
 
 	class CAGE_ENGINE_API VirtualReality : private Immovable
@@ -76,12 +68,12 @@ namespace cage
 		VirtualRealityController &rightController();
 
 		// waits for the virtual reality runtime to get ready for next frame
-		Holder<VirtualRealityGraphicsFrame> graphicsFrame();
+		Holder<VirtualRealityGraphicsFrame> nextFrame();
 
 		uint64 targetFrameTiming() const;
 	};
 
-	CAGE_ENGINE_API Holder<VirtualReality> newVirtualReality();
+	CAGE_ENGINE_API std::pair<Holder<VirtualReality>, gpu::Device> newVirtualReality(const gpu::GpuDeviceDescriptor &config);
 
 	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene);
 	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp = true);

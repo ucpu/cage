@@ -1,5 +1,3 @@
-/*
-
 #include <array>
 #include <atomic>
 #include <cmath> // tan
@@ -8,13 +6,15 @@
 #include <tuple>
 #include <vector>
 
-#define XR_USE_GRAPHICS_API_OPENGL
+#include <vulkan/vulkan.hpp>
+
+#define XR_USE_GRAPHICS_API_VULKAN
 #include <openxr/openxr_platform.h>
 
 #include <cage-core/config.h>
 #include <cage-core/files.h> // pathExtractFilename, pathExecutableNoExe
 #include <cage-core/profiling.h>
-#include <cage-engine/opengl.h>
+#include <cage-engine/gpuInterface.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/virtualReality.h>
 
@@ -22,14 +22,12 @@
 	#define XR_APILAYER_LUNARG_core_validation "XR_APILAYER_LUNARG_core_validation"
 #endif
 
-// taking inspiration from https://gitlab.freedesktop.org/monado/demos/openxr-simple-example/-/blob/master/main.c
-
 namespace cage
 {
 	namespace privat
 	{
-		XrResult plaformInitSession(XrInstance instance, XrSystemId systemId, XrSession &session);
-		Holder<Texture> createTextureForOpenXr(uint32 id, uint32 internalFormat, Vec2i resolution);
+		void plaformInitSession(XrInstance instance, XrSystemId systemId, XrSession &session, gpu::Device &gpuDevice, const gpu::GpuDeviceDescriptor &gpuDeviceDescriptor);
+		gpu::Texture createTextureForOpenXr(gpu::Device &device, vk::Image image, vk::Format format, Vec2i resolution, const AssetLabel &label);
 		void loadControllerBindings(XrInstance instance, const char *sideName, std::map<String, std::vector<XrActionSuggestedBinding>> &suggestions, PointerRange<const XrAction> axesActions, PointerRange<const XrAction> butsActions);
 		void controllerBindingsCheckUnused();
 	}
@@ -39,7 +37,7 @@ namespace cage
 		const ConfigBool confPrintApiLayers("cage/virtualReality/printApiLayers", false);
 		const ConfigBool confPrintExtensions("cage/virtualReality/printExtensions", false);
 		const ConfigBool confEnableValidation("cage/virtualReality/validationLayer", CAGE_DEBUG_BOOL);
-		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", CAGE_DEBUG_BOOL);
+		const ConfigBool confEnableDebugUtils("cage/virtualReality/debugUtils", true);
 
 		constexpr XrPosef IdentityPose = { .orientation = { .x = 0, .y = 0, .z = 0, .w = 1.0 }, .position = { .x = 0, .y = 0, .z = 0 } };
 		constexpr Transform InvalidTransform = Transform(Vec3(), Quat(), 0);
@@ -139,15 +137,17 @@ namespace cage
 			bool tracking = false;
 		};
 
+		class VirtualRealityGraphicsFrameImpl;
+
 		class VirtualRealityImpl : public VirtualReality
 		{
 		public:
-			VirtualRealityImpl()
+			VirtualRealityImpl(const gpu::GpuDeviceDescriptor &gpuDeviceDescriptor)
 			{
 				CAGE_LOG(SeverityEnum::Info, "virtualReality", "initializing openxr");
 				printApiLayers();
 				printExtensions();
-				initHandles();
+				initHandles(gpuDeviceDescriptor);
 				initGraphics();
 				initInputs();
 			}
@@ -224,8 +224,8 @@ namespace cage
 
 				for (const auto &it : props)
 				{
-					if (String(it.extensionName) == XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)
-						haveKhrOpenglEnable = true;
+					if (String(it.extensionName) == XR_KHR_VULKAN_ENABLE_EXTENSION_NAME)
+						haveKhrVulkanEnable = true;
 					if (String(it.extensionName) == XR_EXT_DEBUG_UTILS_EXTENSION_NAME)
 						haveExtDebugUtils = true;
 					if (String(it.extensionName) == XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME)
@@ -233,13 +233,13 @@ namespace cage
 				}
 			}
 
-			void initHandles()
+			void initHandles(const gpu::GpuDeviceDescriptor &gpuDeviceDescriptor)
 			{
 				{
 					std::vector<const char *> exts, layers;
 
-					if (haveKhrOpenglEnable)
-						exts.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
+					if (haveKhrVulkanEnable)
+						exts.push_back(XR_KHR_VULKAN_ENABLE_EXTENSION_NAME);
 
 					if (confEnableDebugUtils)
 					{
@@ -294,8 +294,8 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "openxr runtime version: " + XR_VERSION_MAJOR(props.runtimeVersion) + "." + XR_VERSION_MINOR(props.runtimeVersion) + "." + XR_VERSION_PATCH(props.runtimeVersion));
 				}
 
-				if (!haveKhrOpenglEnable)
-					CAGE_THROW_ERROR(Exception, "missing required OpenXR extension: XR_KHR_OPENGL_ENABLE")
+				if (!haveKhrVulkanEnable)
+					CAGE_THROW_ERROR(Exception, "missing required OpenXR extension: XR_KHR_VULKAN_ENABLE")
 
 				if (haveExtDebugUtils)
 				{
@@ -334,7 +334,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "virtualReality", Stringizer() + "position tracking available: " + (bool)props.trackingProperties.positionTracking);
 				}
 
-				check(privat::plaformInitSession(instance, systemId, session));
+				privat::plaformInitSession(instance, systemId, session, gpuDevice, gpuDeviceDescriptor);
 
 				{
 					XrReferenceSpaceCreateInfo info;
@@ -347,7 +347,7 @@ namespace cage
 				}
 			}
 
-			void createSwapchain(sint64 format, XrSwapchainUsageFlags flags, XrSwapchain &swapchain, std::vector<XrSwapchainImageOpenGLKHR> &images, std::vector<Holder<Texture>> &textures)
+			void createSwapchain(sint64 format, XrSwapchainUsageFlags flags, XrSwapchain &swapchain, std::vector<XrSwapchainImageVulkanKHR> &images, std::vector<Holder<Texture>> &textures)
 			{
 				const auto &v = viewConfigs[0];
 
@@ -370,14 +370,21 @@ namespace cage
 					check(xrEnumerateSwapchainImages(swapchain, 0, &count, nullptr));
 					images.resize(count);
 					for (auto &it : images)
-						init(it, XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR);
+						init(it, XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR);
 					check(xrEnumerateSwapchainImages(swapchain, count, &count, (XrSwapchainImageBaseHeader *)images.data()));
 				}
 
 				{
 					textures.reserve(images.size());
-					for (auto it : images)
-						textures.push_back(privat::createTextureForOpenXr(it.image, numeric_cast<uint32>(format), Vec2i(v.recommendedImageRectWidth, v.recommendedImageRectHeight)));
+					for (const auto &it : images)
+					{
+						auto t = privat::createTextureForOpenXr(gpuDevice, vk::Image(it.image), vk::Format(format), Vec2i(v.recommendedImageRectWidth, v.recommendedImageRectHeight), "openxr color");
+						gpu::TextureViewDescriptor vd;
+						vd.dimension = gpu::TextureDimensionEnum::e2D;
+						auto v = t.createView(vd);
+						auto s = gpuDevice.createSampler({});
+						textures.push_back(newTexture(t, v, s, "openxr color"));
+					}
 				}
 			}
 
@@ -415,26 +422,27 @@ namespace cage
 					formats.resize(count);
 					check(xrEnumerateSwapchainFormats(session, count, &count, formats.data()));
 
-					const uint32 selectedFormat = [&]()
+					const uint64 selectedFormat = [&]()
 					{
-						for (uint32 f : formats)
+						for (uint64 f : formats)
 						{
-							switch (f)
+							switch (vk::Format(f))
 							{
-								case GL_SRGB8_ALPHA8:
-								case GL_SRGB8:
+								case vk::Format::eR8G8B8A8Unorm:
+								case vk::Format::eR8G8B8A8Srgb:
+								case vk::Format::eB8G8R8A8Unorm:
+								case vk::Format::eB8G8R8A8Srgb:
 									return f;
+								default:
+									break;
 							}
 						}
 						CAGE_THROW_ERROR(Exception, "no supported swapchain format");
 					}();
 
-					uint32 nameIndex = 0;
 					for (uint32 i = 0; i < viewConfigs.size(); i++)
 					{
 						createSwapchain(selectedFormat, XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT, colorSwapchains[i], colorImages[i], colorTextures[i]);
-						for (Holder<Texture> &it : colorTextures[i])
-							it->setDebugName(Stringizer() + "openxr color " + nameIndex++);
 					}
 				}
 
@@ -737,7 +745,21 @@ namespace cage
 				return +textures[acquiredIndex];
 			}
 
-			bool haveKhrOpenglEnable = false; // XR_KHR_OPENGL_ENABLE_EXTENSION_NAME
+			Holder<VirtualRealityGraphicsFrame> nextFrame();
+
+			void emptyFrame()
+			{
+				check(xrBeginFrame(session, nullptr));
+
+				XrFrameEndInfo frameEndInfo;
+				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
+				frameEndInfo.layerCount = 0;
+				frameEndInfo.displayTime = syncTime;
+				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+				check(xrEndFrame(session, &frameEndInfo));
+			}
+
+			bool haveKhrVulkanEnable = false; // XR_KHR_VULKAN_ENABLE_EXTENSION_NAME
 			bool haveExtDebugUtils = false; // XR_EXT_DEBUG_UTILS_EXTENSION_NAME
 			bool haveFbDisplayRefreshRate = false; // XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME
 			bool haveApilayerCoreValidation = false; // XR_APILAYER_LUNARG_core_validation
@@ -748,15 +770,18 @@ namespace cage
 			XrSpace localSpace = XR_NULL_HANDLE;
 			XrSpace viewSpace = XR_NULL_HANDLE;
 
+			gpu::Device gpuDevice;
+
 			std::vector<XrViewConfigurationView> viewConfigs = {};
 			std::vector<XrSwapchain> colorSwapchains;
-			std::vector<std::vector<XrSwapchainImageOpenGLKHR>> colorImages;
+			std::vector<std::vector<XrSwapchainImageVulkanKHR>> colorImages;
 			std::vector<std::vector<Holder<Texture>>> colorTextures;
 			std::vector<XrCompositionLayerProjectionView> colorViews;
 
 			std::array<VirtualRealityControllerImpl, 2> controllers;
 			XrActionSet actionSet;
 			std::atomic<XrTime> syncTime = 0;
+			Holder<VirtualRealityGraphicsFrameImpl> prevFrame;
 
 			bool stopping = false;
 			bool sessionRunning = false;
@@ -772,43 +797,22 @@ namespace cage
 		{
 		public:
 			VirtualRealityImpl *const impl = nullptr;
-			XrFrameState frameState = {};
 			std::vector<XrView> views;
 			std::vector<VirtualRealityCamera> cams;
 			Transform headTransform = InvalidTransform;
-			bool rendering = false;
+			uint64 predictedDisplayTime = 0;
+			bool isCommited = false;
 
 			VirtualRealityGraphicsFrameImpl(VirtualRealityImpl *impl) : impl(impl)
 			{
-				{
-					init(frameState, XR_TYPE_FRAME_STATE);
-					const XrResult res = xrWaitFrame(impl->session, nullptr, &frameState);
-					switch (res)
-					{
-						case XR_SESSION_LOSS_PENDING:
-						case XR_ERROR_INSTANCE_LOST:
-						case XR_ERROR_SESSION_LOST:
-						case XR_ERROR_SESSION_NOT_RUNNING:
-							return;
-						default:
-							break;
-					}
-					check(res);
-					impl->syncTime = frameState.predictedDisplayTime;
-					if (impl->firstFrameTime == m)
-						impl->firstFrameTime = frameState.predictedDisplayTime;
-				}
+				predictedDisplayTime = impl->syncTime;
 
 				{
 					XrSpaceLocation location;
 					init(location, XR_TYPE_SPACE_LOCATION);
-					check(xrLocateSpace(impl->viewSpace, impl->localSpace, frameState.predictedDisplayTime, &location));
+					check(xrLocateSpace(impl->viewSpace, impl->localSpace, predictedDisplayTime, &location));
 					headTransform = poseToTranform(location.pose);
 				}
-
-				rendering = true;
-				if (!frameState.shouldRender)
-					return;
 
 				views.resize(impl->viewConfigs.size());
 				for (auto &it : views)
@@ -818,7 +822,7 @@ namespace cage
 					XrViewLocateInfo viewLocateInfo;
 					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
 					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-					viewLocateInfo.displayTime = frameState.predictedDisplayTime;
+					viewLocateInfo.displayTime = predictedDisplayTime;
 					viewLocateInfo.space = impl->localSpace;
 					XrViewState viewState;
 					init(viewState, XR_TYPE_VIEW_STATE);
@@ -835,44 +839,18 @@ namespace cage
 					cams[i].primary = true; // all cameras are primary for now
 				}
 
+				check(xrBeginFrame(impl->session, nullptr));
+
+				for (uint32 i = 0; i < cams.size(); i++)
+					cams[i].colorTexture = impl->acquireTexture(impl->colorSwapchains[i], impl->colorTextures[i]);
+
 				cameras = cams;
 			}
 
-			void updateProjections()
+			void finish()
 			{
-				for (uint32 i = 0; i < cams.size(); i++)
-				{
-					cams[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
-					cams[i].verticalFov = Rads(views[i].fov.angleUp - views[i].fov.angleDown);
-				}
-			}
-
-			void begin()
-			{
-				if (!rendering)
-					return;
-
-				check(xrBeginFrame(impl->session, nullptr));
-			}
-
-			void acquire()
-			{
-				if (!rendering)
-					return;
-
-				if (frameState.shouldRender)
-					for (uint32 i = 0; i < cams.size(); i++)
-						cams[i].colorTexture = impl->acquireTexture(impl->colorSwapchains[i], impl->colorTextures[i]);
-			}
-
-			void commit()
-			{
-				if (!rendering)
-					return;
-
-				if (frameState.shouldRender)
-					for (uint32 i = 0; i < views.size(); i++)
-						check(xrReleaseSwapchainImage(impl->colorSwapchains[i], nullptr));
+				for (uint32 i = 0; i < views.size(); i++)
+					check(xrReleaseSwapchainImage(impl->colorSwapchains[i], nullptr));
 
 				for (uint32 i = 0; i < views.size(); i++)
 				{
@@ -890,28 +868,61 @@ namespace cage
 
 				XrFrameEndInfo frameEndInfo;
 				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
-				frameEndInfo.layerCount = frameState.shouldRender ? submittedLayers.size() : 0;
+				frameEndInfo.layerCount = submittedLayers.size();
 				frameEndInfo.layers = submittedLayers.data();
-				frameEndInfo.displayTime = frameState.predictedDisplayTime;
+				frameEndInfo.displayTime = predictedDisplayTime;
 				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 				check(xrEndFrame(impl->session, &frameEndInfo));
 			}
 
-			void cancel()
+			void updateProjections()
 			{
-				if (!rendering)
-					return;
-
-				XrFrameEndInfo frameEndInfo;
-				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
-				frameEndInfo.layerCount = 0;
-				frameEndInfo.displayTime = frameState.predictedDisplayTime;
-				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
-				check(xrEndFrame(impl->session, &frameEndInfo));
+				for (uint32 i = 0; i < cams.size(); i++)
+				{
+					cams[i].projection = fovToProjection(views[i].fov, cams[i].nearPlane.value, cams[i].farPlane.value);
+					cams[i].verticalFov = Rads(views[i].fov.angleUp - views[i].fov.angleDown);
+				}
 			}
 
 			CAGE_FORCE_INLINE void check(XrResult result) { return impl->check(result); }
 		};
+
+		Holder<VirtualRealityGraphicsFrame> VirtualRealityImpl::nextFrame()
+		{
+			if (prevFrame)
+			{
+				prevFrame->finish();
+				prevFrame.clear();
+			}
+
+			{
+				XrFrameState frameState = {};
+				init(frameState, XR_TYPE_FRAME_STATE);
+				const XrResult res = xrWaitFrame(session, nullptr, &frameState);
+				switch (res)
+				{
+					case XR_SESSION_LOSS_PENDING:
+					case XR_ERROR_INSTANCE_LOST:
+					case XR_ERROR_SESSION_LOST:
+					case XR_ERROR_SESSION_NOT_RUNNING:
+						return {};
+					default:
+						break;
+				}
+				check(res);
+				syncTime = frameState.predictedDisplayTime;
+				if (firstFrameTime == m)
+					firstFrameTime = frameState.predictedDisplayTime;
+				if (!frameState.shouldRender)
+				{
+					emptyFrame();
+					return {};
+				}
+			}
+
+			prevFrame = systemMemory().createHolder<VirtualRealityGraphicsFrameImpl>(this);
+			return prevFrame.share().cast<VirtualRealityGraphicsFrame>();
+		}
 	}
 
 	bool VirtualRealityController::tracking() const
@@ -960,35 +971,14 @@ namespace cage
 	{
 		const VirtualRealityGraphicsFrameImpl *impl = (const VirtualRealityGraphicsFrameImpl *)this;
 		// openxr uses nanoseconds, engine uses microseconds
-		return (impl->frameState.predictedDisplayTime - impl->impl->firstFrameTime) / 1000;
+		return (impl->predictedDisplayTime - impl->impl->firstFrameTime) / 1000;
 	}
 
-	void VirtualRealityGraphicsFrame::renderBegin()
+	void VirtualRealityGraphicsFrame::commit()
 	{
-		ProfilingScope profiling("VR render begin");
 		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
-		impl->begin();
-	}
-
-	void VirtualRealityGraphicsFrame::acquireTextures()
-	{
-		ProfilingScope profiling("VR acquire textures");
-		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
-		impl->acquire();
-	}
-
-	void VirtualRealityGraphicsFrame::renderCommit()
-	{
-		ProfilingScope profiling("VR render commit");
-		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
-		impl->commit();
-	}
-
-	void VirtualRealityGraphicsFrame::renderCancel()
-	{
-		ProfilingScope profiling("VR render cancel");
-		VirtualRealityGraphicsFrameImpl *impl = (VirtualRealityGraphicsFrameImpl *)this;
-		impl->cancel();
+		CAGE_ASSERT(!impl->isCommited);
+		impl->isCommited = true;
 	}
 
 	void VirtualReality::processEvents()
@@ -1023,11 +1013,11 @@ namespace cage
 		return impl->controllers[1];
 	}
 
-	Holder<VirtualRealityGraphicsFrame> VirtualReality::graphicsFrame()
+	Holder<VirtualRealityGraphicsFrame> VirtualReality::nextFrame()
 	{
 		ProfilingScope profiling("VR graphics frame");
 		VirtualRealityImpl *impl = (VirtualRealityImpl *)this;
-		return systemMemory().createImpl<VirtualRealityGraphicsFrame, VirtualRealityGraphicsFrameImpl>(impl);
+		return impl->nextFrame();
 	}
 
 	uint64 VirtualReality::targetFrameTiming() const
@@ -1038,15 +1028,17 @@ namespace cage
 			float fps = 0;
 			impl->check(impl->xrGetDisplayRefreshRateFB(impl->session, &fps));
 			if (fps > 1)
-				return 1000000 / (double)fps;
+				return 1'000'000 / (double)fps;
 		}
-		return 1000000 / 90;
+		return 1'000'000 / 90;
 	}
 
-	Holder<VirtualReality> newVirtualReality()
+	std::pair<Holder<VirtualReality>, gpu::Device> newVirtualReality(const gpu::GpuDeviceDescriptor &config)
 	{
-		return systemMemory().createImpl<VirtualReality, VirtualRealityImpl>();
+		auto vr = systemMemory().createHolder<VirtualRealityImpl>(config);
+		std::pair<Holder<VirtualReality>, gpu::Device> res;
+		res.second = vr->gpuDevice;
+		res.first = std::move(vr).cast<VirtualReality>();
+		return res;
 	}
 }
-
-*/

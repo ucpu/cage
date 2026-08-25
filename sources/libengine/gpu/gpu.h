@@ -33,6 +33,19 @@ namespace cage
 		// implementation utilities
 		///////////////////////////////////////////////////////////////////
 
+		void logError(const vkb::Error &err);
+
+		template<class T>
+		T &&handleResult(vkb::Result<T> &&r)
+		{
+			if (!r.has_value())
+			{
+				logError(r.full_error());
+				CAGE_THROW_ERROR(Exception, "error in vulkan bootstrap");
+			}
+			return std::move(r.value());
+		}
+
 		enum class ImageStateEnum
 		{
 			Undefined = 0,
@@ -288,13 +301,19 @@ namespace cage
 		class DeviceImpl : private Immovable
 		{
 		public:
-			struct Bootstrap
+			struct Bootstrap : private Noncopyable
 			{
 				vkb::Instance inst;
 				vkb::PhysicalDevice phys;
 				vkb::Device dev;
 				VkQueue q = nullptr;
 
+				static void environmentSetup();
+				static void setRequiredFeatures(vkb::InstanceBuilder &ib);
+				static void setRequiredFeatures(vkb::PhysicalDeviceSelector &sel);
+
+				Bootstrap();
+				Bootstrap(Bootstrap &&other);
 				~Bootstrap();
 			};
 			Bootstrap bootstrap;
@@ -324,17 +343,16 @@ namespace cage
 			vk::PresentModeKHR preferredPresentation = vk::PresentModeKHR::eFifo;
 			bool preferredTripleBuffering = false;
 
+			DeviceImpl(Bootstrap &&bootstrap);
 			DeviceImpl(const GpuDeviceDescriptor &desc);
 			~DeviceImpl();
 
 			template<class T>
 			void setLabel(const T &object, const AssetLabel &label);
 
+			void commonInitialization();
 			void applyDeferredDestructions();
 			CommandEncoderImpl &addCommands();
-
-			void environmentSetup();
-			void bootstrapInit(const GpuDeviceDescriptor &desc);
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
 			void setVsyncPreference(bool vsync, bool tripleBuffer);
@@ -459,6 +477,7 @@ namespace cage
 		vk::DescriptorType convertBindingBufferType(BufferBindingTypeEnum type, bool hasDynamicOffset);
 		void assignImageStateBarrierFlags(ImageStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask, vk::ImageLayout &imageLayout);
 		void assignBufferStateBarrierFlags(BufferStateEnum state, vk::PipelineStageFlags2 &stageMask, vk::AccessFlags2 &accessMask);
+		gpu::TextureFormatEnum convertTextureFormatInverse(vk::Format format);
 
 		///////////////////////////////////////////////////////////////////
 		// inline implementations

@@ -633,5 +633,24 @@ namespace cage
 					break;
 			}
 		}
+
+		gpu::TextureFormatEnum convertTextureFormatInverse(vk::Format format)
+		{
+			switch (format)
+			{
+				case vk::Format::eR8G8B8A8Unorm:
+					return TextureFormatEnum::RGBA8Unorm;
+				case vk::Format::eR8G8B8A8Srgb:
+					return TextureFormatEnum::RGBA8UnormSrgb;
+				case vk::Format::eB8G8R8A8Unorm:
+					return TextureFormatEnum::BGRA8Unorm;
+				case vk::Format::eB8G8R8A8Srgb:
+					return TextureFormatEnum::BGRA8UnormSrgb;
+				default:
+					break;
+			}
+			CAGE_ASSERT(!"TextureFormatEnum::Undefined");
+			return TextureFormatEnum::Undefined;
+		}
 	}
 }
