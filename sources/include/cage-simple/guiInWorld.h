@@ -12,17 +12,19 @@ namespace cage
 	class GuiInWorld : private Immovable
 	{
 	public:
+		uint32 renderModel() const;
+
+		void update(const Transform &tr, bool redraw);
+		void update(const Line &ray, bool interact);
 		bool intersects(const Line &ray) const;
 		Vec3 intersection(const Line &ray) const;
-		void update(const Line &ray, bool interact);
-		void cleanUp();
+
 		GuiManager *guiManager();
 		EntityManager *guiEntities();
 	};
 
 	struct GuiInWorldCreateConfig
 	{
-		Entity *renderEntity = nullptr; // mandatory
 		Entity *cameraEntity = nullptr; // optional
 		Vec2i resolution = Vec2i(1920, 1080);
 		Real retinaScale = 4;

@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <cstring>
 #include <stdlib.h>
 
 #define VULKAN_HPP_HANDLE_ERROR_OUT_OF_DATE_AS_SUCCESS 1
@@ -20,15 +21,27 @@ namespace cage
 {
 	namespace
 	{
-		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
+		void debugCallbackMaybeBreak(const VkDebugUtilsMessengerCallbackDataEXT *d)
 		{
-			if (pCallbackData->messageIdNumber == 416909302)
+			if (d->messageIdNumber == 416909302)
 			{
 				// vkCreateImage(): pCreateInfo->pNext<VkExternalMemoryImageCreateInfo>.handleTypes is VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT (non-zero) but the initialLayout is VK_IMAGE_LAYOUT_PREINITIALIZED.
 				// The Vulkan spec states: If the pNext chain includes a VkExternalMemoryImageCreateInfo or VkExternalMemoryImageCreateInfoNV structure whose handleTypes member is not 0, initialLayout must be VK_IMAGE_LAYOUT_UNDEFINED (https://docs.vulkan.org/spec/latest/chapters/resources.html#VUID-VkImageCreateInfo-pNext-01443)
-				return VK_FALSE;
+				return;
 			}
 
+			if (d->messageIdNumber == 1180184443 && d->objectCount == 2 && std::strcmp(d->pObjects[1].pObjectName, "BlankEyeBuffer") == 0)
+			{
+				// vkQueueSubmit(): pSubmits[0] command buffer VkCommandBuffer 0x1c982a9c0d0 expects VkImage 0x2bb00000002bb[BlankEyeBuffer] (subresource: aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, mipLevel = 0, arrayLayer = 0) to be in layout VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL--instead, current layout is VK_IMAGE_LAYOUT_UNDEFINED.
+				// The Vulkan spec states: If a descriptor with type equal to any of VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM, VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, or VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT is accessed as a result of this command, all image subresources identified by that descriptor must be in the image layout identified when the descriptor was written (https://docs.vulkan.org/spec/latest/chapters/drawing.html#VUID-vkCmdDraw-None-09600)
+				return;
+			}
+
+			detail::debugBreakpoint();
+		}
+
+		VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData, void *)
+		{
 			SeverityEnum sev = SeverityEnum::Info;
 			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT)
 				sev = SeverityEnum::Hint;
@@ -37,12 +50,10 @@ namespace cage
 			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 				sev = SeverityEnum::Error;
 
-			CAGE_LOG(sev, "vulkan debug callback", pCallbackData->pMessage);
+			CAGE_LOG(sev, "vulkan", pCallbackData->pMessage);
 
 			if (sev >= SeverityEnum::Error)
-			{
-				detail::debugBreakpoint();
-			}
+				debugCallbackMaybeBreak(pCallbackData);
 
 			return VK_FALSE;
 		}

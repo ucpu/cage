@@ -210,7 +210,8 @@ namespace cage
 
 	Entity *EntityManager::tryGet(uint32 entityId) const
 	{
-		CAGE_ASSERT(entityId != 0 && entityId != m);
+		if (entityId == 0 || entityId == m)
+			return nullptr;
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		auto it = impl->namedEntities.find(entityId);
 		if (it == impl->namedEntities.end())

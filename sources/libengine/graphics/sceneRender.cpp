@@ -1929,7 +1929,6 @@ namespace cage
 				// final blit to target
 
 				{
-					const ProfilingScope profiling("final blit");
 					RenderPassConfig passcfg;
 					passcfg.colorTargets.push_back({ camera.target });
 					encoder->nextPass(passcfg);

@@ -7,20 +7,17 @@
 
 namespace cage
 {
-	namespace
+	Entity *virtualRealityFindOrigin(EntityManager *scene)
 	{
-		Entity *findOrigin(EntityManager *scene)
-		{
-			auto r = scene->component<VrOriginComponent>()->entities();
-			if (r.size() != 1)
-				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
-			return r[0];
-		}
+		auto r = scene->component<VrOriginComponent>()->entities();
+		if (r.size() != 1)
+			CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
+		return r[0];
 	}
 
 	void virtualRealitySceneUpdate(EntityManager *scene)
 	{
-		Entity *origin = findOrigin(scene);
+		Entity *origin = virtualRealityFindOrigin(scene);
 		const Transform tr = origin->value<TransformComponent>() * origin->value<VrOriginComponent>().manualCorrection;
 		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) { t = tr * cc.virtualReality->pose(); }, scene, false);
 		entitiesVisitor(
@@ -34,8 +31,7 @@ namespace cage
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)
 	{
-		Entity *origin = findOrigin(scene);
-		origin->value<TransformComponent>();
+		Entity *origin = virtualRealityFindOrigin(scene);
 		VrOriginComponent &vc = origin->value<VrOriginComponent>();
 		Transform headset = vc.virtualReality->pose();
 		if (keepUp)

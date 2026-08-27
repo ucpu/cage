@@ -86,17 +86,9 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid camera type");
 		}
 
-		Entity *findVrOrigin(EntityManager *scene)
-		{
-			auto r = scene->component<VrOriginComponent>()->entities();
-			if (r.size() != 1)
-				CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrOriginComponent");
-			return r[0];
-		}
-
 		Transform transformByVrOrigin(EntityManager *scene, const Transform &in, Real interpolationFactor)
 		{
-			Entity *e = findVrOrigin(scene);
+			Entity *e = virtualRealityFindOrigin(scene);
 			const Transform t = modelTransform(e, interpolationFactor);
 			const Transform &c = e->value<VrOriginComponent>().manualCorrection;
 			return t * c * in;
@@ -283,10 +275,10 @@ namespace cage
 						[&](Entity *e, const CameraComponent &cam)
 						{
 							SceneRenderCamera data;
-							if (windowTexture && !renderToTexture)
-								data.target = +windowTexture;
-							if (cam.target && renderToTexture)
+							if (renderToTexture)
 								data.target = cam.target;
+							else if (!cam.target)
+								data.target = +windowTexture;
 							if (!data.target)
 								return;
 							data.camera = cam;
