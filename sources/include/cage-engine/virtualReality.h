@@ -76,6 +76,7 @@ namespace cage
 	CAGE_ENGINE_API std::pair<Holder<VirtualReality>, gpu::Device> newVirtualReality(const gpu::GpuDeviceDescriptor &config);
 
 	CAGE_ENGINE_API Entity *virtualRealityFindOrigin(EntityManager *scene);
+	CAGE_ENGINE_API Entity *virtualRealityFindCamera(EntityManager *scene);
 	CAGE_ENGINE_API void virtualRealitySceneUpdate(EntityManager *scene);
 	CAGE_ENGINE_API void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp = true);
 }

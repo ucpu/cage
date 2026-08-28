@@ -15,18 +15,31 @@ namespace cage
 		return r[0];
 	}
 
+	Entity *virtualRealityFindCamera(EntityManager *scene)
+	{
+		auto r = scene->component<VrCameraComponent>()->entities();
+		if (r.size() != 1)
+			CAGE_THROW_ERROR(Exception, "there must be exactly one entity with VrCameraComponent");
+		return r[0];
+	}
+
 	void virtualRealitySceneUpdate(EntityManager *scene)
 	{
 		Entity *origin = virtualRealityFindOrigin(scene);
 		const Transform tr = origin->value<TransformComponent>() * origin->value<VrOriginComponent>().manualCorrection;
-		entitiesVisitor([&](Entity *e, TransformComponent &t, const VrCameraComponent &cc) { t = tr * cc.virtualReality->pose(); }, scene, false);
-		entitiesVisitor(
-			[&](Entity *e, TransformComponent &t, VrControllerComponent &cc)
-			{
-				t = tr * cc.controller->gripPose();
-				cc.aim = tr * cc.controller->aimPose();
-			},
-			scene, false);
+		{
+			Entity *e = virtualRealityFindCamera(scene);
+			e->value<TransformComponent>() = tr * e->value<VrCameraComponent>().virtualReality->pose();
+		}
+		{
+			entitiesVisitor(
+				[&](Entity *e, TransformComponent &t, VrControllerComponent &cc)
+				{
+					t = tr * cc.controller->gripPose();
+					cc.aim = tr * cc.controller->aimPose();
+				},
+				scene, false);
+		}
 	}
 
 	void virtualRealitySceneRecenter(EntityManager *scene, Real height, bool keepUp)

@@ -1,29 +1,27 @@
 #ifndef guard_sceneVirtualReality_h_5es4tuhj
 #define guard_sceneVirtualReality_h_5es4tuhj
 
-#include <cage-engine/scene.h>
+#include <cage-engine/core.h>
 
 namespace cage
 {
 	class VirtualRealityController;
-	struct VirtualRealityCamera;
 	class VirtualReality;
 
-	// the transform of this entity maps the virtual reality coordinates space into the scene coordinates space
+	// this entity represents player's chair/room in the scene world
 	struct CAGE_ENGINE_API VrOriginComponent
 	{
 		VirtualReality *virtualReality = nullptr;
 		Transform manualCorrection;
 	};
 
-	// the transform of this entity is updated automatically by the virtual reality
-	struct CAGE_ENGINE_API VrCameraComponent : public CameraCommonProperties
+	// the transform of this entity is updated by virtualRealitySceneUpdate
+	struct CAGE_ENGINE_API VrCameraComponent
 	{
 		VirtualReality *virtualReality = nullptr;
-		Real near = 0.2, far = 10000;
 	};
 
-	// the transform of this entity is updated automatically by the virtual reality
+	// the transform of this entity is updated by virtualRealitySceneUpdate
 	// this entity represents the grip pose of the controller
 	struct CAGE_ENGINE_API VrControllerComponent
 	{

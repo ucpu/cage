@@ -274,6 +274,8 @@ namespace cage
 					entitiesVisitor(
 						[&](Entity *e, const CameraComponent &cam)
 						{
+							if (e->has<VrCameraComponent>())
+								return;
 							SceneRenderCamera data;
 							if (renderToTexture)
 								data.target = cam.target;
@@ -281,8 +283,8 @@ namespace cage
 								data.target = +windowTexture;
 							if (!data.target)
 								return;
-							data.camera = cam;
 							data.resolution = data.target->resolution();
+							data.camera = cam;
 							data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
 							data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
 							data.effects.gamma = Real(confRenderGamma);
@@ -308,18 +310,13 @@ namespace cage
 				// virtual reality cameras
 				if (vrFrame)
 				{
-					Entity *camEnt = nullptr;
+					Entity *e = virtualRealityFindCamera(cfg.scene);
+					const auto &cam = e->value<CameraComponent>();
 					{
-						auto r = cfg.scene->component<VrCameraComponent>()->entities();
-						if (!r.empty())
+						for (VirtualRealityCamera &it : vrFrame->cameras)
 						{
-							camEnt = r[0];
-							const auto &cam = camEnt->value<VrCameraComponent>();
-							for (VirtualRealityCamera &it : vrFrame->cameras)
-							{
-								it.nearPlane = cam.near;
-								it.farPlane = cam.far;
-							}
+							it.nearPlane = cam.near;
+							it.farPlane = cam.far;
 						}
 					}
 					vrFrame->updateProjections();
@@ -329,12 +326,9 @@ namespace cage
 						SceneRenderCamera data;
 						data.target = it.colorTexture;
 						data.resolution = it.resolution;
-						if (camEnt)
-						{
-							data.camera = camEnt->value<VrCameraComponent>();
-							data.cameraSceneMask = camEnt->getOrDefault<SceneComponent>().sceneMask;
-							data.effects = camEnt->getOrDefault<ScreenSpaceEffectsComponent>();
-						}
+						data.camera = cam;
+						data.cameraSceneMask = e->getOrDefault<SceneComponent>().sceneMask;
+						data.effects = e->getOrDefault<ScreenSpaceEffectsComponent>();
 						data.effects.gamma = Real(confRenderGamma);
 						if (dynamicResolution != 1)
 						{

@@ -139,7 +139,7 @@ namespace cage
 		using TooltipCallback = Delegate<void(const GuiTooltipConfig &)>;
 		TooltipCallback tooltip;
 		uint64 delay = detail::GuiTooltipDelayDefault; // duration to hold cursor over the widget before showing the tooltip
-		bool enableForDisabled = false; // allow showing the tooltip even if the widget is disabled
+		bool enableForDisabled = true; // allow showing the tooltip even if the widget is disabled
 	};
 
 	enum class LineEdgeModeEnum : uint32
