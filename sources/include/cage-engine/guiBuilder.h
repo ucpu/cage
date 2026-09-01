@@ -61,30 +61,30 @@ namespace cage
 			BuilderItem update(Delegate<void(Entity *)> u);
 
 			BuilderItem tooltip(const GuiTooltipComponent &t);
-			BuilderItem tooltip(const String &text, bool enableForDisabled = false)
+			BuilderItem tooltip(const String &text, bool enableForDisabled = true)
 			{
 				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), 0, text), .enableForDisabled = enableForDisabled };
 				return *this;
 			}
-			BuilderItem tooltip(uint32 textId, const String &text = "", bool enableForDisabled = false)
+			BuilderItem tooltip(uint32 textId, const String &text = "", bool enableForDisabled = true)
 			{
 				(*this)->value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), textId, text), .enableForDisabled = enableForDisabled };
 				return *this;
 			}
 			template<StringLiteral Text>
-			BuilderItem tooltip(bool enableForDisabled = false)
+			BuilderItem tooltip(bool enableForDisabled = true)
 			{
 				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<0, Text>(), .enableForDisabled = enableForDisabled };
 				return *this;
 			}
 			template<uint32 TextId, StringLiteral Text = "">
-			BuilderItem tooltip(bool enableForDisabled = false)
+			BuilderItem tooltip(bool enableForDisabled = true)
 			{
 				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = detail::guiTooltipText<TextId, Text>(), .enableForDisabled = enableForDisabled };
 				return *this;
 			}
 			template<uint32 TextId>
-			BuilderItem tooltip(const String &text, bool enableForDisabled = false)
+			BuilderItem tooltip(const String &text, bool enableForDisabled = true)
 			{
 				(*this)->template value<GuiTooltipComponent>() = GuiTooltipComponent{ .tooltip = privat::guiTooltipText(entity(), TextId, text), .enableForDisabled = enableForDisabled };
 				return *this;
