@@ -356,10 +356,12 @@ namespace cage
 			Holder<privat::WindowGpuContext> getWindowGpuContext(Window *window);
 
 			void setVsyncPreference(bool vsync, bool tripleBuffer);
-			double getTimestampsConversion() const;
 			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 			void submit(PointerRange<const CommandBuffer> buffers);
 			void waitDeviceIdle();
+
+			float getTimestampsConversion() const;
+			MemoryStatus getMemoryStatus() const;
 		};
 
 		class PipelineLayoutImpl : private Immovable

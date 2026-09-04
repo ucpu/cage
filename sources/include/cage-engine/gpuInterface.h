@@ -177,10 +177,12 @@ namespace cage
 			void writeTexture(const TexelCopyTextureInfo &dest, PointerRange<const uint8> data, Vec3i extents);
 
 			void setVsyncPreference(bool vsync, bool tripleBuffer);
-			double getTimestampsConversion() const;
 			void submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows);
 			void submit(PointerRange<const CommandBuffer> buffers);
 			void waitDeviceIdle();
+
+			float getTimestampsConversion() const;
+			MemoryStatus getMemoryStatus() const;
 
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline)> callback);
@@ -501,6 +503,14 @@ namespace cage
 		{
 			AssetLabel label;
 			Window *window = nullptr;
+		};
+
+		struct CAGE_ENGINE_API MemoryStatus
+		{
+			uint64 deviceUsage = 0;
+			uint64 deviceBudget = 0;
+			uint64 totalUsage = 0;
+			uint64 totalBudget = 0;
 		};
 
 		///////////////////////////////////////////////////////////////////

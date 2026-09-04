@@ -33,6 +33,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsFrameStatistics : public GraphicsCommandBufferStatistics
 	{
+		uint64 gpuMemory = 0;
+
 		// frame duration measured on gpu, few frames ago
 		uint64 gpuTime = 0;
 

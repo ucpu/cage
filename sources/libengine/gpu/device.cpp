@@ -466,11 +466,6 @@ namespace cage
 				it->resolution = {}; // refresh the swapchain next frame
 		}
 
-		double DeviceImpl::getTimestampsConversion() const
-		{
-			return capabilities.timestampsConvert;
-		}
-
 		void DeviceImpl::submitAndPresent(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
 		{
 			struct WindowEntry
@@ -687,6 +682,31 @@ namespace cage
 		{
 			const ProfilingScope profiling("waitDeviceIdle");
 			device.waitIdle();
+		}
+
+		float DeviceImpl::getTimestampsConversion() const
+		{
+			return capabilities.timestampsConvert;
+		}
+
+		MemoryStatus DeviceImpl::getMemoryStatus() const
+		{
+			MemoryStatus s;
+			CAGE_ASSERT(bootstrap.phys.memory_properties.memoryHeapCount <= VK_MAX_MEMORY_HEAPS);
+			VmaBudget mems[VK_MAX_MEMORY_HEAPS];
+			vmaGetHeapBudgets(allocator, mems);
+			for (uint32 i = 0; i < bootstrap.phys.memory_properties.memoryHeapCount; i++)
+			{
+				const bool local = bootstrap.phys.memory_properties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT;
+				if (local)
+				{
+					s.deviceUsage += mems[i].usage;
+					s.deviceBudget += mems[i].budget;
+				}
+				s.totalUsage += mems[i].usage;
+				s.totalBudget += mems[i].budget;
+			}
+			return s;
 		}
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)

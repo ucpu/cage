@@ -38,8 +38,12 @@ namespace cage
 								e->value<GuiTextComponent>().value = engineDynamicResolution().enabled ? (Stringizer() + v + " %") : (Stringizer() + "off");
 							else if constexpr (Flags == StatisticsGuiFlags::CpuUtilization)
 								e->value<GuiTextComponent>().value = Stringizer() + v + " %";
-							else if constexpr (Flags <= StatisticsGuiFlags::FrameTime)
-								e->value<GuiTextComponent>().value = Stringizer() + (v / 1000) + " ms";
+							else if constexpr (Flags == StatisticsGuiFlags::GpuMemory)
+								e->value<GuiTextComponent>().value = Stringizer() + (v / 1'024 / 1'024) + " MB";
+							else if constexpr (Flags == StatisticsGuiFlags::DrawPrimitives)
+								e->value<GuiTextComponent>().value = Stringizer() + (v / 1'000) + " K";
+							else if constexpr (Flags >= StatisticsGuiFlags::ControlTime && Flags <= StatisticsGuiFlags::GpuTime)
+								e->value<GuiTextComponent>().value = Stringizer() + (v / 1'000) + " ms";
 							else
 								e->value<GuiTextComponent>().value = Stringizer() + v;
 						})
@@ -78,14 +82,15 @@ namespace cage
 						break;
 					case StatisticsGuiScopeEnum::Full:
 						generate<StatisticsGuiFlags::CpuUtilization>(+g, "CPU utilization: ");
-						generate<StatisticsGuiFlags::DynamicResolution>(+g, "Dyn. resolution: ");
+						generate<StatisticsGuiFlags::Entities>(+g, "Entities: ");
 						generate<StatisticsGuiFlags::ControlTime>(+g, "Control time: ");
 						generate<StatisticsGuiFlags::SoundTime>(+g, "Sound time: ");
-						generate<StatisticsGuiFlags::GpuTime>(+g, "GPU time: ");
 						generate<StatisticsGuiFlags::FrameTime>(+g, "Frame time: ");
+						generate<StatisticsGuiFlags::GpuTime>(+g, "GPU time: ");
+						generate<StatisticsGuiFlags::GpuMemory>(+g, "GPU memory: ");
 						generate<StatisticsGuiFlags::DrawCalls>(+g, "Draw calls: ");
 						generate<StatisticsGuiFlags::DrawPrimitives>(+g, "Draw primitives: ");
-						generate<StatisticsGuiFlags::Entities>(+g, "Entities: ");
+						generate<StatisticsGuiFlags::DynamicResolution>(+g, "Dyn. resolution: ");
 						break;
 					default:
 						break;

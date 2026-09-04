@@ -80,12 +80,13 @@ namespace cage
 			std::atomic<bool> stopping = false;
 			uint64 controlTime = 0;
 
-			VariableSmoothingBuffer<Real, 60> profilingBufferDynamicResolution;
+			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuTime;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuMemory;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
-			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
+			VariableSmoothingBuffer<Real, 60> profilingBufferDynamicResolution;
 			uint32 pipelinesCompilingCountdown = 0;
 
 			Holder<EnginePrivateGraphics> privateGraphics;
@@ -137,6 +138,7 @@ namespace cage
 					privateGraphics->dispatch(applicationTime(), guiBundle.get());
 				}
 				profilingBufferGpuTime.add(privateGraphics->frameStatistics.gpuTime);
+				profilingBufferGpuMemory.add(privateGraphics->frameStatistics.gpuMemory);
 				profilingBufferDrawCalls.add(privateGraphics->frameStatistics.drawCalls);
 				profilingBufferDrawPrimitives.add(privateGraphics->frameStatistics.primitives);
 				profilingBufferDynamicResolution.add(privateGraphics->dynamicResolution);
@@ -877,16 +879,18 @@ namespace cage
 				}
 			};
 
+			if (any(flags & StatisticsGuiFlags::Entities))
+				add(engineData->profilingBufferEntities);
 			if (any(flags & StatisticsGuiFlags::GpuTime))
 				add(engineData->profilingBufferGpuTime);
 			if (any(flags & StatisticsGuiFlags::FrameTime))
 				add(engineData->profilingBufferFrameTime);
+			if (any(flags & StatisticsGuiFlags::GpuMemory))
+				add(engineData->profilingBufferGpuMemory);
 			if (any(flags & StatisticsGuiFlags::DrawCalls))
 				add(engineData->profilingBufferDrawCalls);
 			if (any(flags & StatisticsGuiFlags::DrawPrimitives))
 				add(engineData->profilingBufferDrawPrimitives);
-			if (any(flags & StatisticsGuiFlags::Entities))
-				add(engineData->profilingBufferEntities);
 		}
 		return result;
 	}

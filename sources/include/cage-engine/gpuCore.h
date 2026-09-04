@@ -317,6 +317,8 @@ namespace cage
 		struct TextureViewDescriptor;
 		struct VertexBufferLayout;
 		struct WindowPresentationDescriptor;
+
+		struct MemoryStatus;
 	}
 
 	CAGE_ENUM_BITS(gpu::BufferUsageFlags);

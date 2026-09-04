@@ -9,14 +9,15 @@ namespace cage
 	{
 		None = 0,
 		CpuUtilization = 1 << 0, // % main thread cpu use
-		DynamicResolution = 1 << 1,
+		Entities = 1 << 1,
 		ControlTime = 1 << 2,
 		SoundTime = 1 << 3,
-		GpuTime = 1 << 4,
-		FrameTime = 1 << 5,
-		DrawCalls = 1 << 6,
-		DrawPrimitives = 1 << 7,
-		Entities = 1 << 8,
+		FrameTime = 1 << 4,
+		GpuTime = 1 << 5,
+		GpuMemory = 1 << 6,
+		DrawCalls = 1 << 7,
+		DrawPrimitives = 1 << 8,
+		DynamicResolution = 1 << 9,
 	};
 	CAGE_ENUM_BITS(StatisticsGuiFlags);
 

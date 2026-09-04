@@ -144,6 +144,7 @@ namespace cage
 					}
 				}
 				gpuTimer->frameStart();
+				stats.gpuMemory = device.getMemoryStatus().totalUsage;
 				stats.gpuTime = gpuTimer->time;
 				stats.frameTime = cpuTimer->elapsed();
 				{
@@ -163,6 +164,9 @@ namespace cage
 		GpuFrameTimer::GpuFrameTimer(GraphicsDeviceImpl *device) : device(device)
 		{
 			conversion = device->device.getTimestampsConversion();
+#ifdef CAGE_SYSTEM_MAC
+			conversion = 0; // frame time measurements on macos are bogus
+#endif // CAGE_SYSTEM_MAC
 			{
 				gpu::QuerySetDescriptor qsDesc;
 				qsDesc.label = "frame timing";

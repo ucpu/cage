@@ -278,11 +278,6 @@ namespace cage
 			get()->setVsyncPreference(vsync, tripleBuffer);
 		}
 
-		double Device::getTimestampsConversion() const
-		{
-			return get()->getTimestampsConversion();
-		}
-
 		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
 			ScopeLock lock(get()->mutexQueue);
@@ -301,6 +296,16 @@ namespace cage
 		{
 			ScopeLock lock(get()->mutexQueue);
 			get()->waitDeviceIdle();
+		}
+
+		float Device::getTimestampsConversion() const
+		{
+			return get()->getTimestampsConversion();
+		}
+
+		MemoryStatus Device::getMemoryStatus() const
+		{
+			return get()->getMemoryStatus();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
