@@ -166,6 +166,8 @@ namespace cage
 			vk::SurfaceKHR surface;
 			uint32 imageIndex = m;
 			uint32 frameIndex = 0;
+			uint32 recreateAttempts = 0;
+			uint32 recreateSkipping = 0;
 			bool acquired = false;
 
 			WindowGpuContextImpl(vk::Instance instance);

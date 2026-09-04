@@ -139,35 +139,44 @@ namespace cage
 
 		void WindowGpuContextImpl::init(DeviceImpl &device)
 		{
-			std::vector<VkImage> images = handleResult(swapchain.get_images());
-
-			swpImages.clear();
-			for (uint32 i = 0; i < images.size(); i++)
+			try
 			{
-				auto &f = swpImages.emplace_back(device);
-				f.image = vk::Image(images[i]);
-				f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
-				f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
-				f.texture->arrayLayersCount = f.texture->mipLevelsCount = 1;
-				f.texture->dimension = TextureDimensionEnum::e2D;
-				f.texture->format = convertTextureFormatInverse(vk::Format(swapchain.image_format));
-				f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
-				f.texture->image.setLabel((Stringizer() + "swapchainImage[" + i + "]").value);
-				vk::SemaphoreCreateInfo sci;
-				f.renderComplete = device.device.createSemaphore(sci);
-				f.renderComplete.setLabel((Stringizer() + "renderComplete[" + i + "]").value);
-			}
-			imageIndex = 0;
+				std::vector<VkImage> images = handleResult(swapchain.get_images());
 
-			framesInFlight.clear();
-			for (uint32 i = 0; i < 2; i++)
-			{
-				auto &f = framesInFlight.emplace_back(device);
-				vk::SemaphoreCreateInfo sci;
-				f.imageAcquired = device.device.createSemaphore(sci);
-				f.imageAcquired.setLabel((Stringizer() + "imageAcquired[" + i + "]").value);
+				swpImages.clear();
+				for (uint32 i = 0; i < images.size(); i++)
+				{
+					auto &f = swpImages.emplace_back(device);
+					f.image = vk::Image(images[i]);
+					f.texture = Texture(systemMemory().createHolder<TextureImpl>(device, f.image));
+					f.texture->resolution = Vec3i(swapchain.extent.width, swapchain.extent.height, 1);
+					f.texture->arrayLayersCount = f.texture->mipLevelsCount = 1;
+					f.texture->dimension = TextureDimensionEnum::e2D;
+					f.texture->format = convertTextureFormatInverse(vk::Format(swapchain.image_format));
+					f.texture->usage = TextureUsageFlags::RenderAttachment; //swapchain.image_usage_flags;
+					f.texture->image.setLabel((Stringizer() + "swapchainImage[" + i + "]").value);
+					vk::SemaphoreCreateInfo sci;
+					f.renderComplete = device.device.createSemaphore(sci);
+					f.renderComplete.setLabel((Stringizer() + "renderComplete[" + i + "]").value);
+				}
+				imageIndex = 0;
+
+				framesInFlight.clear();
+				for (uint32 i = 0; i < 2; i++)
+				{
+					auto &f = framesInFlight.emplace_back(device);
+					vk::SemaphoreCreateInfo sci;
+					f.imageAcquired = device.device.createSemaphore(sci);
+					f.imageAcquired.setLabel((Stringizer() + "imageAcquired[" + i + "]").value);
+				}
+				frameIndex = 0;
 			}
-			frameIndex = 0;
+			catch (...)
+			{
+				swpImages.clear();
+				imageIndex = frameIndex = 0;
+				throw;
+			}
 		}
 
 		void WindowGpuContextImpl::clear()
@@ -463,7 +472,10 @@ namespace cage
 			preferredPresentation = pm;
 			preferredTripleBuffering = tripleBuffer;
 			for (auto &it : surfacesCollection)
+			{
 				it->resolution = {}; // refresh the swapchain next frame
+				it->recreateAttempts = 0;
+			}
 		}
 
 		void DeviceImpl::submitAndPresent(PointerRange<const CommandBuffer> buffers_, PointerRange<WindowPresentationDescriptor> windows_)
@@ -610,18 +622,36 @@ namespace cage
 
 					if (w->resolution != w.resolution)
 					{
+						if ((w->recreateSkipping++ % 10) != 0)
+							continue; // avoid attempting to recreate the swapchain too fast
 						const ProfilingScope profiling("swapchain");
-						CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "updating swapchain, resolution: " + w.resolution + ", presentation: " + vk::to_string(preferredPresentation).c_str() + ", triple buffering: " + preferredTripleBuffering);
-						ResourceHandle<vk::SwapchainKHR> old(*this);
-						old = vk::SwapchainKHR(w->swapchain.swapchain);
-						w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
-														.set_old_swapchain(w->swapchain)
-														.set_desired_min_image_count(preferredTripleBuffering ? 3 : 2)
-														.set_desired_extent(w.resolution[0], w.resolution[1])
-														.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
-														.build());
-						w->resolution = w.resolution;
-						w->init(*this);
+						CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "updating swapchain, resolution: " + w.resolution + ", presentation: " + vk::to_string(preferredPresentation).c_str() + ", triple buffering: " + preferredTripleBuffering + ", attempt: " + w->recreateAttempts);
+						try
+						{
+							ResourceHandle<vk::SwapchainKHR> old(*this);
+							old = vk::SwapchainKHR(w->swapchain.swapchain);
+							w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
+															.set_old_swapchain(w->swapchain)
+															.set_desired_min_image_count(preferredTripleBuffering ? 3 : 2)
+															.set_desired_extent(w.resolution[0], w.resolution[1])
+															.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
+															.build());
+							w->resolution = w.resolution;
+							w->init(*this);
+						}
+						catch (...)
+						{
+							w->resolution = {};
+							w->recreateAttempts++;
+							if (w->recreateAttempts > 10)
+							{
+								detail::logCurrentCaughtException();
+								throw;
+							}
+							continue;
+						}
+						w->recreateAttempts = 0;
+						w->recreateSkipping = 0;
 					}
 
 					auto r = device.acquireNextImageKHR((vk::SwapchainKHR)w->swapchain.swapchain, m, w->frm().imageAcquired);
