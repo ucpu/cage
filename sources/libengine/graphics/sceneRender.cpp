@@ -350,7 +350,7 @@ namespace cage
 			Color,
 		};
 
-		std::atomic<uintPtr> ItemsContainerReservation = 0;
+		std::atomic<uintPtr> ItemsContainerReservation = 10'000;
 
 		// container with stable pointers to items
 		// never realocates
@@ -360,7 +360,7 @@ namespace cage
 		{
 			ItemsContainer() { reserve(ItemsContainerReservation); }
 
-			~ItemsContainer() { ItemsContainerReservation = std::max((uintPtr)ItemsContainerReservation, (uintPtr)capacity()); }
+			~ItemsContainer() { ItemsContainerReservation = std::max((uintPtr)ItemsContainerReservation, (uintPtr)(size() + skipped) * 3 / 2); }
 
 			using typename std::vector<T>::value_type;
 			using std::vector<T>::operator[];
@@ -375,7 +375,7 @@ namespace cage
 			{
 				if (size() == capacity())
 				{
-					ItemsContainerReservation++;
+					skipped++;
 					return nullptr;
 				}
 				std::vector<T>::push_back(std::forward<U>(v));
@@ -393,6 +393,8 @@ namespace cage
 			{
 				std::erase_if(*this, tst);
 			}
+
+			uintPtr skipped = 0;
 		};
 
 		template<class T, class Mark, class Output>

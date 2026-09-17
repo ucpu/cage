@@ -415,7 +415,7 @@ namespace cage
 
 			{
 				const auto queueFamilyIndex = handleResult(bootstrap.dev.get_queue_index(vkb::QueueType::graphics));
-				capabilities.timestampsAvailable = bootstrap.dev.queue_families[queueFamilyIndex].timestampValidBits > 0;
+				capabilities.timestampsAvailable = bootstrap.dev.queue_families[queueFamilyIndex].timestampValidBits > 0 && bootstrap.phys.properties.limits.timestampPeriod > 0;
 				if (capabilities.timestampsAvailable)
 					capabilities.timestampsConvert = bootstrap.phys.properties.limits.timestampPeriod;
 				capabilities.maxAnisotropy = bootstrap.phys.properties.limits.maxSamplerAnisotropy;

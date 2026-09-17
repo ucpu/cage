@@ -588,11 +588,13 @@ namespace cage
 	{
 		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None, true);
-		GLFWmonitor *m = privat::getMonitorById(deviceId);
-		CAGE_ASSERT(m);
-		const GLFWvidmode *v = glfwGetVideoMode(m);
-		CAGE_ASSERT(v);
-		glfwSetWindowMonitor(impl->window, m, 0, 0, resolution[0] > 0 ? resolution[0] : v->width, resolution[1] > 0 ? resolution[1] : v->height, frequency > 0 ? frequency : v->refreshRate);
+		GLFWmonitor *mon = privat::getMonitorById(deviceId);
+		if (!mon)
+			return; // bail out if finding the monitor has failed
+		const GLFWvidmode *vid = glfwGetVideoMode(mon);
+		if (!vid)
+			return; // bail out if finding the video mode has failed
+		glfwSetWindowMonitor(impl->window, mon, 0, 0, resolution[0] > 0 ? resolution[0] : vid->width, resolution[1] > 0 ? resolution[1] : vid->height, frequency > 0 ? frequency : vid->refreshRate);
 	}
 
 	void Window::setMaximized()

@@ -71,6 +71,9 @@ namespace cage
 
 		String getMonitorId(GLFWmonitor *monitor)
 		{
+			if (!monitor)
+				return "";
+
 #ifdef CAGE_SYSTEM_WINDOWS
 			return glfwGetWin32Monitor(monitor);
 #endif // CAGE_SYSTEM_WINDOWS
@@ -85,6 +88,8 @@ namespace cage
 			GLFWmonitor **ms = glfwGetMonitors(&cnt);
 			for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
 			{
+				if (!ms[i])
+					continue; // in case that glfw returns null monitor
 				if (getMonitorId(ms[i]) == id)
 					return ms[i];
 			}
