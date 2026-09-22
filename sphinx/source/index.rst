@@ -7,6 +7,7 @@ Useful Links
 ------------
 
 - `Github <https://github.com/ucpu/cage>`_
+- `Documentation <https://ucpu.github.io/cage/>`_
 
 
 Index
