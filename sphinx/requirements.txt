@@ -1,0 +1,4 @@
+sphinx-autobuild
+sphinx_design
+sphinx-copybutton
+furo
