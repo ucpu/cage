@@ -1,5 +1,6 @@
 #include "gpu.h"
 
+#include <cage-core/debug.h>
 #include <cage-core/tasks.h>
 
 namespace cage
@@ -219,6 +220,7 @@ namespace cage
 					}
 					catch (...)
 					{
+						detail::logCurrentCaughtException();
 						callback(StatusEnum::Error, {});
 						return;
 					}
@@ -280,18 +282,13 @@ namespace cage
 
 		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
-			try
-			{
-				ScopeLock lock(get()->mutexQueue);
-				// additional locking inside
-				get()->submitAndPresent(buffers, windows);
-			}
-			catch (...)
-			{
-				CAGE_LOG(SeverityEnum::Warning, "gpu", "intercepted an exception in submitAndPresent");
-				detail::logCurrentCaughtException();
-				CAGE_THROW_ERROR(Exception, "intercepted an exception in submitAndPresent");
-			}
+			detail::convertExceptionsToCage(
+				[&]()
+				{
+					ScopeLock lock(get()->mutexQueue);
+					// additional locking inside
+					get()->submitAndPresent(buffers, windows);
+				});
 		}
 
 		void Device::submit(PointerRange<const CommandBuffer> buffers)

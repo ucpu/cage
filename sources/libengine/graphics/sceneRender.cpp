@@ -13,6 +13,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/color.h>
 #include <cage-core/config.h>
+#include <cage-core/debug.h>
 #include <cage-core/entitiesVisitor.h>
 #include <cage-core/geometry.h>
 #include <cage-core/hashString.h>
@@ -2155,16 +2156,20 @@ namespace cage
 			CAGE_ASSERT(valid(it.lodSelection.screenSize));
 		}
 
-		SceneImpl impl(config);
-		impl.loadBasicAssets();
-		impl.generateRenderers();
-		impl.prepareEntities();
-		impl.dispatchRenders();
+		return detail::convertExceptionsToCage(
+			[&]()
+			{
+				SceneImpl impl(config);
+				impl.loadBasicAssets();
+				impl.generateRenderers();
+				impl.prepareEntities();
+				impl.dispatchRenders();
 
-		PointerRangeHolder<Holder<GraphicsEncoder>> res;
-		for (auto &it : impl.renderers)
-			res.push_back(std::move(it->encoder));
-		return res;
+				PointerRangeHolder<Holder<GraphicsEncoder>> res;
+				for (auto &it : impl.renderers)
+					res.push_back(std::move(it->encoder));
+				return res;
+			});
 	}
 
 	SkeletalAnimationComponent &SkeletalAnimationComponent::clear()

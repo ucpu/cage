@@ -775,7 +775,7 @@ namespace cage
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)
 		{
-			return Device(systemMemory().createHolder<DeviceImpl>(desc));
+			return detail::convertExceptionsToCage([&]() { return Device(systemMemory().createHolder<DeviceImpl>(desc)); });
 		}
 	}
 }

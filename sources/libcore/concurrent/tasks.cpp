@@ -76,7 +76,7 @@ namespace cage
 					std::swap(prevTaskId, threadData.currentTaskId);
 					const ScopeGuard scopeGuard([&] { std::swap(prevTaskId, threadData.currentTaskId); });
 
-					config.runner(config, idx);
+					detail::convertExceptionsToCage([&]() { config.runner(config, idx); });
 				}
 				catch (...)
 				{

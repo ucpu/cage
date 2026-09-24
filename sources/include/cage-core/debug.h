@@ -44,6 +44,25 @@ namespace cage
 		CAGE_CORE_API void globalBreakpointOverride(bool enable);
 		CAGE_CORE_API void globalAssertOverride(bool enable);
 		CAGE_CORE_API void globalExceptionOverride(SeverityEnum severity);
+
+		template<class Callable>
+		auto convertExceptionsToCage(Callable &&callable)
+		{
+			try
+			{
+				return callable();
+			}
+			catch (const cage::Exception &)
+			{
+				// cage exception assumed already logged
+				throw;
+			}
+			catch (...)
+			{
+				logCurrentCaughtException();
+				CAGE_THROW_ERROR(Exception, "intercepted exception converted to cage");
+			}
+		}
 	}
 }
 
