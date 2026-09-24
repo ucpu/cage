@@ -483,10 +483,10 @@ namespace cage
 			struct WindowEntry
 			{
 				Window *window = nullptr;
-				Texture *texture = nullptr;
+				Texture *texture = nullptr; // output texture
 				Holder<privat::WindowGpuContext> ctxHolder;
 				WindowGpuContextImpl *ctx = nullptr;
-				Vec2i resolution;
+				Vec2i requestedResolution;
 
 				WindowGpuContextImpl *operator->()
 				{
@@ -498,6 +498,8 @@ namespace cage
 			windows.reserve(windows_.size());
 			for (auto &w : windows_)
 			{
+				CAGE_ASSERT(w.window);
+				CAGE_ASSERT(!w.texture);
 				WindowEntry e;
 				e.window = w.window;
 				e.texture = &w.texture;
@@ -505,7 +507,7 @@ namespace cage
 				if (e.ctxHolder && e.ctxHolder->data)
 				{
 					e.ctx = e.ctxHolder->data.get();
-					e.resolution = e.window->resolution();
+					e.requestedResolution = e.window->resolution();
 				}
 				windows.push_back(std::move(e));
 			}
@@ -617,15 +619,17 @@ namespace cage
 					if (!w.ctx)
 						continue;
 					w->acquired = false;
-					if (w.resolution[0] <= 0 || w.resolution[1] <= 0)
+					if (w.requestedResolution[0] <= 0 || w.requestedResolution[1] <= 0)
 						continue;
 
-					if (w->resolution != w.resolution)
+					if (w->resolution != w.requestedResolution)
 					{
-						if ((w->recreateSkipping++ % 10) != 0)
+						if ((w->recreateSkipping++ % 10) != 5)
 							continue; // avoid attempting to recreate the swapchain too fast
 						const ProfilingScope profiling("swapchain");
-						CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "updating swapchain, resolution: " + w.resolution + ", presentation: " + vk::to_string(preferredPresentation).c_str() + ", triple buffering: " + preferredTripleBuffering + ", attempt: " + w->recreateAttempts);
+						ScopeLock lock(mutex);
+						device.waitIdle();
+						CAGE_LOG(SeverityEnum::Info, "graphics", Stringizer() + "updating swapchain, resolution: " + w.requestedResolution + ", presentation: " + vk::to_string(preferredPresentation).c_str() + ", triple buffering: " + preferredTripleBuffering + ", attempt: " + w->recreateAttempts);
 						try
 						{
 							ResourceHandle<vk::SwapchainKHR> old(*this);
@@ -633,10 +637,12 @@ namespace cage
 							w->swapchain = handleResult(vkb::SwapchainBuilder(bootstrap.dev, (VkSurfaceKHR)w->surface) //
 															.set_old_swapchain(w->swapchain)
 															.set_desired_min_image_count(preferredTripleBuffering ? 3 : 2)
-															.set_desired_extent(w.resolution[0], w.resolution[1])
+															.set_desired_extent(w.requestedResolution[0], w.requestedResolution[1])
 															.set_desired_present_mode((VkPresentModeKHR)preferredPresentation)
 															.build());
-							w->resolution = w.resolution;
+							if (Vec2i(w->swapchain.extent.width, w->swapchain.extent.height) != w.requestedResolution)
+								continue;
+							w->resolution = w.requestedResolution;
 							w->init(*this);
 						}
 						catch (...)
@@ -683,6 +689,22 @@ namespace cage
 					}
 					w->img().init();
 					w->acquired = true;
+				}
+
+				// validation
+				for (auto &w : windows)
+				{
+					CAGE_ASSERT(w.texture);
+					if (*w.texture)
+					{
+						CAGE_ASSERT(w.texture->getResolution()[0] > 0 && w.texture->getResolution()[1] > 0);
+						CAGE_ASSERT(Vec2i(w.texture->getResolution()) == w.requestedResolution);
+						CAGE_ASSERT(w.ctx && w->acquired);
+					}
+					else
+					{
+						CAGE_ASSERT(!w.ctx || !w->acquired);
+					}
 				}
 			}
 		}
@@ -737,6 +759,18 @@ namespace cage
 				s.totalBudget += mems[i].budget;
 			}
 			return s;
+		}
+
+		void DeviceImpl::waitCpuAsyncTasks()
+		{
+			ProfilingScope profiling("wait cpu async tasks");
+			while (!disposingTasks.empty())
+			{
+				if (disposingTasks[0]->done())
+					disposingTasks.erase(disposingTasks.begin());
+				else
+					threadSleep(1'000);
+			}
 		}
 
 		Device newGpuDevice(const GpuDeviceDescriptor &desc)

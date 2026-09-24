@@ -328,7 +328,7 @@ namespace cage
 			};
 			Capabilities capabilities;
 
-			Holder<Mutex> mutexQueue = newMutex();
+			Holder<Mutex> mutexQueue = newMutex(); // used for all forms of submits
 			Holder<RecursiveMutex> mutex = newRecursiveMutex();
 			vk::Instance instance;
 			vk::PhysicalDevice physicalDevice;
@@ -364,6 +364,8 @@ namespace cage
 
 			float getTimestampsConversion() const;
 			MemoryStatus getMemoryStatus() const;
+
+			void waitCpuAsyncTasks();
 		};
 
 		class PipelineLayoutImpl : private Immovable

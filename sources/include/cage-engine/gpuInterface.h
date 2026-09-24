@@ -184,6 +184,8 @@ namespace cage
 			float getTimestampsConversion() const;
 			MemoryStatus getMemoryStatus() const;
 
+			void waitCpuAsyncTasks();
+
 		private:
 			void createRenderPipelineAsyncTypeErased(const RenderPipelineDescriptor &descriptor, std::function<void(StatusEnum, RenderPipeline)> callback);
 		};

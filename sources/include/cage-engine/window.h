@@ -32,7 +32,7 @@ namespace cage
 		bool isHidden() const;
 		bool isVisible() const; // not hidden and not minimized
 
-		void setFullscreen(Vec2i resolution, uint32 frequency = 0, const String &screenId = "");
+		void setFullscreen(Vec2i resolution = {}, uint32 frequency = 0, const String &screenId = "");
 		void setMaximized();
 		void setWindowed(WindowFlags flags = WindowFlags::Border | WindowFlags::Resizeable);
 		void setMinimized();

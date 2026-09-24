@@ -94,7 +94,11 @@ namespace cage
 
 			GraphicsDeviceImpl(gpu::Device &device) : device(device) { commonInitialization(); }
 
-			~GraphicsDeviceImpl() {}
+			~GraphicsDeviceImpl()
+			{
+				CAGE_LOG(SeverityEnum::Info, "graphics", "destroying graphics device");
+				device.waitCpuAsyncTasks(); // make sure to wait for async tasks before destroying caches
+			}
 
 			void commonInitialization()
 			{
@@ -132,8 +136,7 @@ namespace cage
 					}
 					for (uint32 i = 0; i < windows.size(); i++)
 					{
-						gpu::Texture &t = wpds[i].texture;
-						if (t)
+						if (gpu::Texture &t = wpds[i].texture)
 						{
 							gpu::TextureViewDescriptor tvd;
 							tvd.label = "window surface view";

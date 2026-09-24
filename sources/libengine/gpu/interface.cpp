@@ -280,9 +280,18 @@ namespace cage
 
 		void Device::submitAndPresent(PointerRange<const CommandBuffer> buffers, PointerRange<WindowPresentationDescriptor> windows)
 		{
-			ScopeLock lock(get()->mutexQueue);
-			// additional locking inside
-			get()->submitAndPresent(buffers, windows);
+			try
+			{
+				ScopeLock lock(get()->mutexQueue);
+				// additional locking inside
+				get()->submitAndPresent(buffers, windows);
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "gpu", "intercepted an exception in submitAndPresent");
+				detail::logCurrentCaughtException();
+				CAGE_THROW_ERROR(Exception, "intercepted an exception in submitAndPresent");
+			}
 		}
 
 		void Device::submit(PointerRange<const CommandBuffer> buffers)
@@ -306,6 +315,12 @@ namespace cage
 		MemoryStatus Device::getMemoryStatus() const
 		{
 			return get()->getMemoryStatus();
+		}
+
+		void Device::waitCpuAsyncTasks()
+		{
+			ScopeLock lock(get()->mutex);
+			get()->waitCpuAsyncTasks();
 		}
 
 		TextureView Texture::createView(const TextureViewDescriptor &desc)
