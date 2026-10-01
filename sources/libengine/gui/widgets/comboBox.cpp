@@ -22,6 +22,7 @@ namespace cage
 		struct ComboListImpl : public WidgetItem
 		{
 			ComboBoxImpl *combo = nullptr;
+			Real wheelFactor = 0;
 
 			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo) {}
 
@@ -29,7 +30,9 @@ namespace cage
 			void findRequestedSize(Real maxWidth) override;
 			void findFinalPosition(const FinalPosition &update) override;
 			void emit() override;
+			void generateEventReceivers() override;
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point) override;
+			bool mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point) override;
 		};
 
 		struct ComboOptionImpl : public WidgetItem
@@ -241,12 +244,19 @@ namespace cage
 			const Vec4 margin = skin->defaults.comboBox.baseMargin;
 			hierarchy->renderPos[0] += margin[0];
 			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - margin[3];
+			const Real originalHeight = hierarchy->renderSize[1];
 			hierarchy->moveToWindow(false, true);
 			CAGE_ASSERT(hierarchy->renderSize.valid());
 			CAGE_ASSERT(hierarchy->renderPos.valid());
 
+			Vec2 movedPos = hierarchy->renderPos;
+			Vec2 movedSize = hierarchy->renderSize;
+			clip(movedPos, movedSize, hierarchy->clipPos, hierarchy->clipSize);
+			const Real reducedHeight = movedSize[1];
+
 			const Real spacing = skin->defaults.comboBox.itemSpacing;
 			Vec2 p = hierarchy->renderPos;
+			p[1] -= (reducedHeight - originalHeight) * (1 - combo->data.scroll);
 			Vec2 s = hierarchy->renderSize;
 			offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
 			for (const auto &c : hierarchy->children)
@@ -257,6 +267,9 @@ namespace cage
 				c->findFinalPosition(u);
 				p[1] += c->requestedSize[1] + spacing;
 			}
+
+			if (reducedHeight + 1e-3 < originalHeight)
+				wheelFactor = 70 / max(originalHeight - reducedHeight, 1);
 		}
 
 		void ComboListImpl::emit()
@@ -265,10 +278,32 @@ namespace cage
 			hierarchy->childrenEmit();
 		}
 
+		void ComboListImpl::generateEventReceivers()
+		{
+			if (wheelFactor == 0)
+				return;
+			EventReceiver e;
+			e.widget = this;
+			e.pos = hierarchy->renderPos;
+			e.size = hierarchy->renderSize;
+			e.mask = GuiEventsTypesFlags::Wheel;
+			if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
+				hierarchy->impl->mouseEventReceivers.push_back(e);
+		}
+
 		bool ComboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, Vec2 point)
 		{
 			CAGE_ASSERT(buttons != MouseButtonsFlags::None);
 			// does not take focus
+			return true;
+		}
+
+		bool ComboListImpl::mouseWheel(Real wheel, ModifiersFlags modifiers, Vec2 point)
+		{
+			if (modifiers != ModifiersFlags::None)
+				return false;
+			combo->data.scroll -= wheel * wheelFactor;
+			combo->data.scroll = saturate(combo->data.scroll);
 			return true;
 		}
 

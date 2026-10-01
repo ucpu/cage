@@ -294,6 +294,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiComboBoxComponent
 	{
 		uint32 selected = m; // -1 = nothing selected
+		Real scroll;
 		// GuiTextComponent defines placeholder
 		// children with GuiTextComponent defines individual lines
 		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
