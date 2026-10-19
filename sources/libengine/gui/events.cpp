@@ -173,26 +173,6 @@ namespace cage
 		return res;
 	}
 
-	GuiCursorInfo GuiImpl::cursorInfo() const
-	{
-		if (!eventsEnabled || !root)
-			return {};
-		const Vec2 pt = inputMouse / pointsScale;
-		for (const auto &it : mouseEventReceivers)
-		{
-			if (!it.pointInside(pt))
-				continue;
-			GuiCursorInfo ci;
-			ci.position = pt;
-			ci.e = it.widget->hierarchy->ent;
-			ci.interactive = it.widget->interactive();
-			ci.disabled = it.widget->widgetState.disabled;
-			ci.tooltip = ci.e ? ci.e->has<GuiTooltipComponent>() : false;
-			return ci;
-		}
-		return {};
-	}
-
 	void HierarchyItem::fireWidgetEvent(GenericInput in) const
 	{
 		if (ent->has<GuiEventComponent>())

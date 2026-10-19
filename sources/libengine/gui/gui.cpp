@@ -132,13 +132,14 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = false;
+		impl->cursorInfoData = {};
 		impl->clearTooltips();
 	}
 
 	GuiCursorInfo GuiManager::cursorInfo() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
-		return impl->cursorInfo();
+		return impl->cursorInfoData;
 	}
 
 	Vec2 GuiManager::cursorPosition() const
@@ -388,6 +389,27 @@ namespace cage
 			else
 				impl->hoverName = 0;
 		}
+
+		void updateCursorInfo(GuiImpl *impl)
+		{
+			impl->cursorInfoData = {};
+			if (!impl->eventsEnabled || !impl->root)
+				return;
+			const Vec2 pt = impl->inputMouse / impl->pointsScale;
+			for (const auto &it : impl->mouseEventReceivers)
+			{
+				if (!it.pointInside(pt))
+					continue;
+				GuiCursorInfo ci;
+				ci.position = pt;
+				ci.e = it.widget->hierarchy->ent;
+				ci.interactive = it.widget->interactive();
+				ci.disabled = it.widget->widgetState.disabled;
+				ci.tooltip = ci.e ? ci.e->has<GuiTooltipComponent>() : false;
+				impl->cursorInfoData = ci;
+				return;
+			}
+		}
 	}
 
 	void GuiImpl::prepareImplGeneration()
@@ -435,8 +457,10 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = true;
+		impl->cursorInfoData = {};
 		impl->prepareImplGeneration();
 		impl->updateTooltips();
+		updateCursorInfo(impl);
 	}
 
 	Holder<GuiRender> GuiManager::finish()
@@ -445,6 +469,7 @@ namespace cage
 		entitiesVisitor([&](Entity *e, const GuiUpdateComponent &u) { u.update(e); }, entities(), true);
 		impl->prepareImplGeneration(); // entities may have been changed -> regenerate our cache
 		findHover(impl);
+		updateCursorInfo(impl);
 		return impl->emit();
 	}
 
@@ -453,6 +478,9 @@ namespace cage
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->root.clear();
 		impl->assetOnDemand->clear();
+		impl->eventsEnabled = false;
+		impl->hover = nullptr;
+		impl->cursorInfoData = {};
 	}
 
 	Holder<GuiManager> newGuiManager(const GuiManagerCreateConfig &config)

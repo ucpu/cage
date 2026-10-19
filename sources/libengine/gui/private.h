@@ -352,9 +352,9 @@ namespace cage
 		bool keyPress(input::KeyPress);
 		bool keyRepeat(input::KeyRepeat);
 		bool keyChar(input::Character);
-		GuiCursorInfo cursorInfo() const;
 		// no release events -> always propagate release events to all listeners
 
+		GuiCursorInfo cursorInfoData;
 		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled = false;
 

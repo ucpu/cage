@@ -98,6 +98,12 @@ namespace cage
 		{
 			remove(component_<T>());
 		}
+		template<ComponentConcept T>
+		CAGE_FORCE_INLINE void remove(EntityComponent *component)
+		{
+			CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>());
+			remove(component);
+		}
 
 		bool has(const EntityComponent *component) const;
 		bool has(PointerRange<const EntityComponent *> components) const;
@@ -105,6 +111,12 @@ namespace cage
 		CAGE_FORCE_INLINE bool has() const
 		{
 			return has(component_<T>());
+		}
+		template<ComponentConcept T>
+		CAGE_FORCE_INLINE bool has(const EntityComponent *component) const
+		{
+			CAGE_ASSERT(component->typeIndex() == detail::typeIndex<T>());
+			return has(component);
 		}
 
 		template<ComponentConcept T>
