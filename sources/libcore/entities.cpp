@@ -258,6 +258,12 @@ namespace cage
 		return impl->allEntities;
 	}
 
+	bool EntityManager::valid(Entity *e) const
+	{
+		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
+		return impl->allEntities.count(e);
+	}
+
 	void EntityManager::destroy()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;

@@ -102,6 +102,43 @@ namespace cage
 		return +it->second;
 	}
 
+	const DatabaseAsset *AssetsDatabase::asset(uint32 id) const
+	{
+		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
+		for (const auto &it : impl->assets)
+		{
+			if (it.second->id == id)
+				return +it.second;
+		}
+		CAGE_LOG_THROW(Stringizer() + "asset id: " + id);
+		CAGE_THROW_ERROR(Exception, "asset not found");
+	}
+
+	bool AssetsDatabase::exists(const String &name) const
+	{
+		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
+		return impl->assets.count(name);
+	}
+
+	bool AssetsDatabase::exists(uint32 id, bool checkInjectedExternalsToo) const
+	{
+		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
+		if (checkInjectedExternalsToo)
+			return impl->injectedNames.count(id);
+		for (const auto &it : impl->assets)
+		{
+			if (it.second->id == id)
+				return true;
+		}
+		return false;
+	}
+
+	bool AssetsDatabase::injected(uint32 id) const
+	{
+		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
+		return impl->injectedNames.count(id);
+	}
+
 	const DatabaseStatus &AssetsDatabase::status() const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);

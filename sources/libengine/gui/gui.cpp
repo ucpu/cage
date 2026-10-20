@@ -402,9 +402,10 @@ namespace cage
 					continue;
 				GuiCursorInfo ci;
 				ci.position = pt;
-				ci.e = it.widget->hierarchy->ent;
 				ci.interactive = it.widget->interactive();
 				ci.disabled = it.widget->widgetState.disabled;
+				ci.e = it.widget->hierarchy->ent;
+				CAGE_ASSERT(!ci.e || impl->entityMgr->valid(ci.e));
 				ci.tooltip = ci.e ? ci.e->has<GuiTooltipComponent>() : false;
 				impl->cursorInfoData = ci;
 				return;
@@ -416,6 +417,8 @@ namespace cage
 	{
 		mouseEventReceivers.clear();
 		root.clear();
+		hover = nullptr;
+		cursorInfoData = {};
 
 		if (!valid(outputSize) || !outputSize[0].finite() || outputSize[0] < 1 || outputSize[1] < 1)
 		{
@@ -457,7 +460,6 @@ namespace cage
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->eventsEnabled = true;
-		impl->cursorInfoData = {};
 		impl->prepareImplGeneration();
 		impl->updateTooltips();
 		updateCursorInfo(impl);
@@ -476,6 +478,7 @@ namespace cage
 	void GuiManager::cleanUp()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
+		impl->mouseEventReceivers.clear();
 		impl->root.clear();
 		impl->assetOnDemand->clear();
 		impl->eventsEnabled = false;

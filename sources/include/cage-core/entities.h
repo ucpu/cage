@@ -43,6 +43,7 @@ namespace cage
 		bool exists(uint32 entityId) const;
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
+		bool valid(Entity *e) const;
 
 		void destroy(); // destroy all entities
 		void purge(); // destroy all entities (without any callbacks)

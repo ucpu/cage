@@ -123,20 +123,28 @@ namespace cage
 		}
 
 		// actually remove tooltips
-		while (!ttData.empty())
 		{
-			bool anyRemoved = false;
-			for (const auto &it : ttData)
+			bool anyRemovedGlobal = false;
+			while (!ttData.empty())
 			{
-				if (it.removing)
+				bool anyRemovedIter = false;
+				for (const auto &it : ttData)
 				{
-					anyRemoved = true;
-					detail::guiDestroyEntityRecursively(it.rootTooltip); // this also removes the corresponding item from ttData
-					break;
+					if (it.removing)
+					{
+						anyRemovedIter = anyRemovedGlobal = true;
+						detail::guiDestroyEntityRecursively(it.rootTooltip); // this also removes the corresponding item from ttData
+						break;
+					}
 				}
+				if (!anyRemovedIter)
+					break;
 			}
-			if (!anyRemoved)
-				break;
+			if (anyRemovedGlobal)
+			{
+				prepareImplGeneration();
+				candidate = findTopWidget(this);
+			}
 		}
 
 		if (!ttHasMovedSinceLast)
@@ -188,11 +196,11 @@ namespace cage
 				throw;
 			}
 
-			// regenerate hierarchy with the new tooltip
-			prepareImplGeneration();
-
 			CAGE_ASSERT(candidate.first->skin);
 			candidate.first->play(candidate.first->skin->openTooltipSound);
+
+			// regenerate hierarchy with the new tooltip
+			prepareImplGeneration();
 		}
 
 		// check if the new tooltip needs to update position

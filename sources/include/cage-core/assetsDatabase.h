@@ -48,6 +48,10 @@ namespace cage
 		Holder<PointerRange<String>> corruptedAssets() const;
 		Holder<PointerRange<String>> modifiedAssets() const;
 		const DatabaseAsset *asset(const String &name) const;
+		const DatabaseAsset *asset(uint32 id) const;
+		bool exists(const String &name) const;
+		bool exists(uint32 id, bool checkInjectedExternalsToo = false) const;
+		bool injected(uint32 id) const;
 		const DatabaseStatus &status() const;
 		void printIssues() const;
 
