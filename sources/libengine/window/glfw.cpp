@@ -15,13 +15,13 @@ namespace cage
 	{
 		void handleGlfwError(int, const char *message)
 		{
-			if (isPattern(String(message), "", "", "Invalid scancode -1"))
+			if (isPattern(String(message), "", "Invalid scancode -1", ""))
 				return;
-			if (isPattern(String(message), "", "", "Failed to encode keysym as UTF-8"))
+			if (isPattern(String(message), "", "Failed to encode keysym as UTF-8", ""))
 				return;
-			if (isPattern(String(message), "", "", "Failed to convert clipboard to string: The operation completed successfully."))
+			if (isPattern(String(message), "", "Failed to convert clipboard to string: The operation completed successfully.", ""))
 				return;
-			if (isPattern(String(message), "", "", "Failed to retrieve string from pasteboard"))
+			if (isPattern(String(message), "", "Failed to retrieve string from pasteboard", ""))
 				return;
 			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
