@@ -33,7 +33,7 @@ namespace cage
 		const ConfigFloat confSimulatedPacketDelay("cage/steamsocks/simulatedPacketDelay", 0); // ms
 		const ConfigUint32 confMessageSizeWarningThreshold("cage/steamsocks/messageSizeWarningThreshold", 16 * 1024); // bytes
 		const ConfigUint32 confTimeoutInitial("cage/steamsocks/timeoutInitial", 15'000); // ms
-		const ConfigUint32 confTimeoutConnected("cage/steamsocks/timeoutConnected", 60'000); // ms
+		const ConfigUint32 confTimeoutConnected("cage/steamsocks/timeoutConnected", 30'000); // ms
 
 		constexpr uint32 LanesCount = 4;
 
