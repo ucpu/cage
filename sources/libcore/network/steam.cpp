@@ -34,6 +34,7 @@ namespace cage
 		const ConfigUint32 confMessageSizeWarningThreshold("cage/steamsocks/messageSizeWarningThreshold", 16 * 1024); // bytes
 		const ConfigUint32 confTimeoutInitial("cage/steamsocks/timeoutInitial", 15'000); // ms
 		const ConfigUint32 confTimeoutConnected("cage/steamsocks/timeoutConnected", 30'000); // ms
+		const ConfigUint32 confBufferSize("cage/steamsocks/bufferSize", 4 * 1024 * 1024); // bytes
 
 		constexpr uint32 LanesCount = 4;
 
@@ -177,6 +178,9 @@ namespace cage
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth, 1);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutInitial, confTimeoutInitial);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutConnected, confTimeoutConnected);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_SendBufferSize, confBufferSize);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferSize, confBufferSize * 3 / 2);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferMessages, 4'000);
 				}
 			};
 			static InitializerConfiguration initializerConfiguration;
@@ -339,29 +343,43 @@ namespace cage
 			}
 
 			template<class T = decltype(sockets)>
-			static void SocketSendMessages(SteamNetworkingMessage_t *msg)
+			static void socketSendMessages(SteamNetworkingMessage_t *msg)
 			{
+				int64 msgId = 0;
 				auto s = static_cast<T>(sockets); // s is dependant type
 				if constexpr (requires { s->SendMessages(1, &msg, nullptr, true); })
-					s->SendMessages(1, &msg, nullptr, true);
+					s->SendMessages(1, &msg, &msgId, true);
 				else
-					s->SendMessages(1, &msg, nullptr);
+					s->SendMessages(1, &msg, &msgId);
+				if (msgId > 0)
+					return;
+				const EResult res = (EResult)-msgId;
+				handleResult(res);
 			}
 
 			void write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 			{
 				CAGE_ASSERT(!buffer.empty());
 				CAGE_ASSERT(channel < LanesCount);
-				if (buffer.size() >= confMessageSizeWarningThreshold)
-					CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
-				SteamNetworkingMessage_t *msg = utils->AllocateMessage(buffer.size());
-				if (!msg)
-					CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
-				detail::memcpy(msg->m_pData, buffer.data(), buffer.size());
-				msg->m_conn = sock;
-				msg->m_idxLane = channel;
-				msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
-				SocketSendMessages(msg);
+				try
+				{
+					if (buffer.size() >= confMessageSizeWarningThreshold)
+						CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
+					SteamNetworkingMessage_t *msg = utils->AllocateMessage(buffer.size());
+					if (!msg)
+						CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
+					detail::memcpy(msg->m_pData, buffer.data(), buffer.size());
+					msg->m_conn = sock;
+					msg->m_idxLane = channel;
+					msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
+					socketSendMessages(msg);
+				}
+				catch (...)
+				{
+					if (reliable)
+						disconnected = true;
+					throw;
+				}
 			}
 
 			void update()
@@ -544,6 +562,7 @@ namespace cage
 		res.address.rawLength() = detail::strlen(res.address.rawData());
 		res.port = info.m_addrRemote.m_port;
 		res.steamUserId = info.m_identityRemote.GetSteamID64();
+		res.localhost = info.m_addrRemote.IsLocalHost();
 		return res;
 	}
 

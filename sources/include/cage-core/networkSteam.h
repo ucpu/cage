@@ -19,6 +19,7 @@ namespace cage
 		String address;
 		uint64 steamUserId = 0;
 		uint16 port = 0;
+		bool localhost = false;
 	};
 
 	class CAGE_CORE_API SteamConnection : private Immovable
