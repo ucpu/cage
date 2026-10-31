@@ -273,7 +273,11 @@ namespace cage
 			SteamNetworkingMessage_t *msg = nullptr;
 
 		public:
-			Data(SteamNetworkingMessage_t *msg) : msg(msg) { ((PointerRange<char> &)*this) = { (char *)msg->m_pData, (char *)msg->m_pData + msg->m_cbSize }; }
+			Data(SteamNetworkingMessage_t *msg) : msg(msg)
+			{
+				CAGE_ASSERT(msg->m_cbSize >= sizeof(uint64));
+				((PointerRange<char> &)*this) = { (char *)msg->m_pData + sizeof(uint64), (char *)msg->m_pData + msg->m_cbSize };
+			}
 
 			~Data()
 			{
@@ -286,6 +290,8 @@ namespace cage
 		{
 		public:
 			HSteamNetConnection sock = {};
+			std::array<uint64, LanesCount> sendSequences = { 1, 1, 1, 1 };
+			std::array<uint64, LanesCount> recvSequences = { 1, 1, 1, 1 };
 			bool connected = false;
 			bool disconnected = false;
 
@@ -337,8 +343,23 @@ namespace cage
 				SteamNetworkingMessage_t *msg = nullptr;
 				if (sockets->ReceiveMessagesOnConnection(sock, &msg, 1) != 1)
 					return {};
+				if (msg->m_cbSize < sizeof(uint64) || msg->m_idxLane >= LanesCount)
+					return {}; // invalid message
 				channel = msg->m_idxLane;
 				reliable = msg->m_nFlags & k_nSteamNetworkingSend_Reliable;
+				const uint64 seq = *(const uint64 *)msg->m_pData;
+				if (reliable)
+				{
+					if (seq != recvSequences[channel]++)
+					{
+						disconnected = true;
+						CAGE_THROW_ERROR(Exception, "detected discarded (reliable) message from steam sockets");
+					}
+				}
+				else
+				{
+					CAGE_ASSERT(seq == 0);
+				}
 				return systemMemory().createImpl<PointerRange<char>, Data>(msg);
 			}
 
@@ -365,10 +386,11 @@ namespace cage
 				{
 					if (buffer.size() >= confMessageSizeWarningThreshold)
 						CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
-					SteamNetworkingMessage_t *msg = utils->AllocateMessage(buffer.size());
+					SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint64) + buffer.size());
 					if (!msg)
 						CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
-					detail::memcpy(msg->m_pData, buffer.data(), buffer.size());
+					*(uint64 *)msg->m_pData = reliable ? sendSequences[channel]++ : 0;
+					detail::memcpy((char *)msg->m_pData + sizeof(uint64), buffer.data(), buffer.size());
 					msg->m_conn = sock;
 					msg->m_idxLane = channel;
 					msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
