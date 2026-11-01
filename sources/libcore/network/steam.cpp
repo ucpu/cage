@@ -26,6 +26,279 @@ namespace cage
 	#endif
 	}
 
+	namespace detail
+	{
+		CAGE_API_EXPORT String steamResultToString(EResult r)
+		{
+			switch (r)
+			{
+				case k_EResultNone:
+					return "none";
+				case k_EResultOK:
+					return "ok";
+				case k_EResultFail:
+					return "fail";
+				case k_EResultNoConnection:
+					return "no connection";
+				case k_EResultInvalidPassword:
+					return "invalid password";
+				case k_EResultLoggedInElsewhere:
+					return "logged in elsewhere";
+				case k_EResultInvalidProtocolVer:
+					return "invalid protocol version";
+				case k_EResultInvalidParam:
+					return "invalid parameter";
+				case k_EResultFileNotFound:
+					return "file not found";
+				case k_EResultBusy:
+					return "busy";
+				case k_EResultInvalidState:
+					return "invalid state";
+				case k_EResultInvalidName:
+					return "invalid name";
+				case k_EResultInvalidEmail:
+					return "invalid email";
+				case k_EResultDuplicateName:
+					return "duplicate name";
+				case k_EResultAccessDenied:
+					return "access denied";
+				case k_EResultTimeout:
+					return "timeout";
+				case k_EResultBanned:
+					return "banned";
+				case k_EResultAccountNotFound:
+					return "account not found";
+				case k_EResultInvalidSteamID:
+					return "invalid steam id";
+				case k_EResultServiceUnavailable:
+					return "service unavailable";
+				case k_EResultNotLoggedOn:
+					return "not logged on";
+				case k_EResultPending:
+					return "pending";
+				case k_EResultEncryptionFailure:
+					return "encryption failure";
+				case k_EResultInsufficientPrivilege:
+					return "insufficient privilege";
+				case k_EResultLimitExceeded:
+					return "limit exceeded";
+				case k_EResultRevoked:
+					return "revoked";
+				case k_EResultExpired:
+					return "expired";
+				case k_EResultAlreadyRedeemed:
+					return "already redeemed";
+				case k_EResultDuplicateRequest:
+					return "duplicate request";
+				case k_EResultAlreadyOwned:
+					return "already owned";
+				case k_EResultIPNotFound:
+					return "ip not found";
+				case k_EResultPersistFailed:
+					return "persist failed";
+				case k_EResultLockingFailed:
+					return "locking failed";
+				case k_EResultLogonSessionReplaced:
+					return "logon session replaced";
+				case k_EResultConnectFailed:
+					return "connect failed";
+				case k_EResultHandshakeFailed:
+					return "handshake failed";
+				case k_EResultIOFailure:
+					return "io failure";
+				case k_EResultRemoteDisconnect:
+					return "remote disconnect";
+				case k_EResultShoppingCartNotFound:
+					return "shopping cart not found";
+				case k_EResultBlocked:
+					return "blocked";
+				case k_EResultIgnored:
+					return "ignored";
+				case k_EResultNoMatch:
+					return "no match";
+				case k_EResultAccountDisabled:
+					return "account disabled";
+				case k_EResultServiceReadOnly:
+					return "service read only";
+				case k_EResultAccountNotFeatured:
+					return "account not featured";
+				case k_EResultAdministratorOK:
+					return "administrator ok";
+				case k_EResultContentVersion:
+					return "content version";
+				case k_EResultTryAnotherCM:
+					return "try another cm";
+				case k_EResultPasswordRequiredToKickSession:
+					return "password required to kick session";
+				case k_EResultAlreadyLoggedInElsewhere:
+					return "already logged in elsewhere";
+				case k_EResultSuspended:
+					return "suspended";
+				case k_EResultCancelled:
+					return "cancelled";
+				case k_EResultDataCorruption:
+					return "data corruption";
+				case k_EResultDiskFull:
+					return "disk full";
+				case k_EResultRemoteCallFailed:
+					return "remote call failed";
+				case k_EResultPasswordUnset:
+					return "password unset";
+				case k_EResultExternalAccountUnlinked:
+					return "external account unlinked";
+				case k_EResultPSNTicketInvalid:
+					return "psn ticket invalid";
+				case k_EResultExternalAccountAlreadyLinked:
+					return "external account already linked";
+				case k_EResultRemoteFileConflict:
+					return "remote file conflict";
+				case k_EResultIllegalPassword:
+					return "illegal password";
+				case k_EResultSameAsPreviousValue:
+					return "same as previous value";
+				case k_EResultAccountLogonDenied:
+					return "account logon denied";
+				case k_EResultCannotUseOldPassword:
+					return "cannot use old password";
+				case k_EResultInvalidLoginAuthCode:
+					return "invalid login auth code";
+				case k_EResultAccountLogonDeniedNoMail:
+					return "account logon denied no mail";
+				case k_EResultHardwareNotCapableOfIPT:
+					return "hardware not capable of ipt";
+				case k_EResultIPTInitError:
+					return "ipt init error";
+				case k_EResultParentalControlRestricted:
+					return "parental control restricted";
+				case k_EResultFacebookQueryError:
+					return "facebook query error";
+				case k_EResultExpiredLoginAuthCode:
+					return "expired login auth code";
+				case k_EResultIPLoginRestrictionFailed:
+					return "ip login restriction failed";
+				case k_EResultAccountLockedDown:
+					return "account locked down";
+				case k_EResultAccountLogonDeniedVerifiedEmailRequired:
+					return "verified email required";
+				case k_EResultNoMatchingURL:
+					return "no matching url";
+				case k_EResultBadResponse:
+					return "bad response";
+				case k_EResultRequirePasswordReEntry:
+					return "require password re-entry";
+				case k_EResultValueOutOfRange:
+					return "value out of range";
+				case k_EResultUnexpectedError:
+					return "unexpected error";
+				case k_EResultDisabled:
+					return "disabled";
+				case k_EResultInvalidCEGSubmission:
+					return "invalid ceg submission";
+				case k_EResultRestrictedDevice:
+					return "restricted device";
+				case k_EResultRegionLocked:
+					return "region locked";
+				case k_EResultRateLimitExceeded:
+					return "rate limit exceeded";
+				case k_EResultAccountLoginDeniedNeedTwoFactor:
+					return "two factor required";
+				case k_EResultItemDeleted:
+					return "item deleted";
+				case k_EResultAccountLoginDeniedThrottle:
+					return "account login denied throttle";
+				case k_EResultTwoFactorCodeMismatch:
+					return "two factor code mismatch";
+				case k_EResultTwoFactorActivationCodeMismatch:
+					return "two factor activation code mismatch";
+				case k_EResultAccountAssociatedToMultiplePartners:
+					return "account associated to multiple partners";
+				case k_EResultNotModified:
+					return "not modified";
+				case k_EResultNoMobileDevice:
+					return "no mobile device";
+				case k_EResultTimeNotSynced:
+					return "time not synced";
+				case k_EResultSmsCodeFailed:
+					return "sms code failed";
+				case k_EResultAccountLimitExceeded:
+					return "account limit exceeded";
+				case k_EResultAccountActivityLimitExceeded:
+					return "account activity limit exceeded";
+				case k_EResultPhoneActivityLimitExceeded:
+					return "phone activity limit exceeded";
+				case k_EResultRefundToWallet:
+					return "refund to wallet";
+				case k_EResultEmailSendFailure:
+					return "email send failure";
+				case k_EResultNotSettled:
+					return "not settled";
+				case k_EResultNeedCaptcha:
+					return "need captcha";
+				case k_EResultGSLTDenied:
+					return "gslt denied";
+				case k_EResultGSOwnerDenied:
+					return "game server owner denied";
+				case k_EResultInvalidItemType:
+					return "invalid item type";
+				case k_EResultIPBanned:
+					return "ip banned";
+				case k_EResultGSLTExpired:
+					return "gslt expired";
+				case k_EResultInsufficientFunds:
+					return "insufficient funds";
+				case k_EResultTooManyPending:
+					return "too many pending";
+				case k_EResultNoSiteLicensesFound:
+					return "no site licenses found";
+				case k_EResultWGNetworkSendExceeded:
+					return "wg network send exceeded";
+				case k_EResultAccountNotFriends:
+					return "account not friends";
+				case k_EResultLimitedUserAccount:
+					return "limited user account";
+				case k_EResultCantRemoveItem:
+					return "can't remove item";
+				case k_EResultAccountDeleted:
+					return "account deleted";
+				case k_EResultExistingUserCancelledLicense:
+					return "existing user cancelled license";
+				case k_EResultCommunityCooldown:
+					return "community cooldown";
+				case k_EResultNoLauncherSpecified:
+					return "no launcher specified";
+				case k_EResultMustAgreeToSSA:
+					return "must agree to ssa";
+				case k_EResultLauncherMigrated:
+					return "launcher migrated";
+				case k_EResultSteamRealmMismatch:
+					return "steam realm mismatch";
+				case k_EResultInvalidSignature:
+					return "invalid signature";
+				case k_EResultParseFailure:
+					return "parse failure";
+				case k_EResultNoVerifiedPhone:
+					return "no verified phone";
+				case k_EResultInsufficientBattery:
+					return "insufficient battery";
+				case k_EResultChargerRequired:
+					return "charger required";
+				case k_EResultCachedCredentialInvalid:
+					return "cached credential invalid";
+				case K_EResultPhoneNumberIsVOIP:
+					return "phone number is voip";
+				case k_EResultNotSupported:
+					return "not supported";
+				case k_EResultFamilySizeLimitExceeded:
+					return "family size limit exceeded";
+	#ifdef CAGE_USE_STEAM_SDK
+				case k_EResultOfflineAppCacheInvalid:
+					return "offline app cache invalid";
+	#endif
+			}
+			return Stringizer() + "unknown code: " + r;
+		}
+	}
+
 	namespace
 	{
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Msg);
@@ -77,11 +350,11 @@ namespace cage
 				case k_EResultNone:
 				case k_EResultOK:
 					return;
-				// todo handle individual errors
 				default:
-					CAGE_LOG_THROW(Stringizer() + "steam sockets result code: " + r);
-					CAGE_THROW_ERROR(Exception, "steam sockets error");
+					break;
 			}
+			CAGE_LOG_THROW(Stringizer() + "steam sockets result: " + detail::steamResultToString(r));
+			CAGE_THROW_ERROR(Exception, "steam sockets error");
 		}
 
 		void debugOutputHandler(ESteamNetworkingSocketsDebugOutputType nType, const char *pszMsg)
@@ -180,6 +453,7 @@ namespace cage
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutConnected, confTimeoutConnected);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_SendBufferSize, confBufferSize);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferSize, confBufferSize * 3 / 2);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvMaxMessageSize, confBufferSize / 4);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferMessages, 4'000);
 				}
 			};
@@ -275,8 +549,8 @@ namespace cage
 		public:
 			Data(SteamNetworkingMessage_t *msg) : msg(msg)
 			{
-				CAGE_ASSERT(msg->m_cbSize >= sizeof(uint64));
-				((PointerRange<char> &)*this) = { (char *)msg->m_pData + sizeof(uint64), (char *)msg->m_pData + msg->m_cbSize };
+				CAGE_ASSERT(msg->m_cbSize >= sizeof(uint16));
+				((PointerRange<char> &)*this) = { (char *)msg->m_pData + sizeof(uint16), (char *)msg->m_pData + msg->m_cbSize };
 			}
 
 			~Data()
@@ -290,8 +564,8 @@ namespace cage
 		{
 		public:
 			HSteamNetConnection sock = {};
-			std::array<uint64, LanesCount> sendSequences = { 1, 1, 1, 1 };
-			std::array<uint64, LanesCount> recvSequences = { 1, 1, 1, 1 };
+			std::array<uint16, LanesCount> sendSequences = { 1, 1, 1, 1 }; // steam may discard reliable messages, eg. when send/recv buffer fills up, we need to detect it
+			std::array<uint16, LanesCount> recvSequences = { 1, 1, 1, 1 };
 			bool connected = false;
 			bool disconnected = false;
 
@@ -343,11 +617,11 @@ namespace cage
 				SteamNetworkingMessage_t *msg = nullptr;
 				if (sockets->ReceiveMessagesOnConnection(sock, &msg, 1) != 1)
 					return {};
-				if (msg->m_cbSize < sizeof(uint64) || msg->m_idxLane >= LanesCount)
+				if (msg->m_cbSize < sizeof(uint16) || msg->m_idxLane >= LanesCount)
 					return {}; // invalid message
 				channel = msg->m_idxLane;
 				reliable = msg->m_nFlags & k_nSteamNetworkingSend_Reliable;
-				const uint64 seq = *(const uint64 *)msg->m_pData;
+				const uint16 seq = *(const uint16 *)msg->m_pData;
 				if (reliable)
 				{
 					if (seq != recvSequences[channel]++)
@@ -363,6 +637,7 @@ namespace cage
 				return systemMemory().createImpl<PointerRange<char>, Data>(msg);
 			}
 
+			// the function SendMessages is different for CAGE_USE_STEAM_SOCKETS vs CAGE_USE_STEAM_SDK
 			template<class T = decltype(sockets)>
 			static void socketSendMessages(SteamNetworkingMessage_t *msg)
 			{
@@ -386,11 +661,11 @@ namespace cage
 				{
 					if (buffer.size() >= confMessageSizeWarningThreshold)
 						CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
-					SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint64) + buffer.size());
+					SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint16) + buffer.size());
 					if (!msg)
 						CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
-					*(uint64 *)msg->m_pData = reliable ? sendSequences[channel]++ : 0;
-					detail::memcpy((char *)msg->m_pData + sizeof(uint64), buffer.data(), buffer.size());
+					*(uint16 *)msg->m_pData = reliable ? sendSequences[channel]++ : 0;
+					detail::memcpy((char *)msg->m_pData + sizeof(uint16), buffer.data(), buffer.size());
 					msg->m_conn = sock;
 					msg->m_idxLane = channel;
 					msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
