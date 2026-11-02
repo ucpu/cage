@@ -304,10 +304,10 @@ namespace cage
 		const ConfigSint32 confDebugLogLevel("cage/steamsocks/logLevel", k_ESteamNetworkingSocketsDebugOutputType_Msg);
 		const ConfigFloat confSimulatedPacketLoss("cage/steamsocks/simulatedPacketLoss", 0); // 0 .. 1
 		const ConfigFloat confSimulatedPacketDelay("cage/steamsocks/simulatedPacketDelay", 0); // ms
-		const ConfigUint32 confMessageSizeWarningThreshold("cage/steamsocks/messageSizeWarningThreshold", 16 * 1024); // bytes
 		const ConfigUint32 confTimeoutInitial("cage/steamsocks/timeoutInitial", 15'000); // ms
 		const ConfigUint32 confTimeoutConnected("cage/steamsocks/timeoutConnected", 30'000); // ms
 		const ConfigUint32 confBufferSize("cage/steamsocks/bufferSize", 4 * 1024 * 1024); // bytes
+		const ConfigUint32 confTransferRate("cage/steamsocks/transferRate", confBufferSize); // bytes/second
 
 		constexpr uint32 LanesCount = 4;
 
@@ -452,9 +452,11 @@ namespace cage
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutInitial, confTimeoutInitial);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_TimeoutConnected, confTimeoutConnected);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_SendBufferSize, confBufferSize);
-					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferSize, confBufferSize * 3 / 2);
-					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvMaxMessageSize, confBufferSize / 4);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferSize, confBufferSize);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvMaxMessageSize, 1 * 1024 * 1024);
 					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_RecvBufferMessages, 4'000);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_SendRateMin, confTransferRate);
+					utils->SetGlobalConfigValueInt32(k_ESteamNetworkingConfig_SendRateMax, confTransferRate);
 				}
 			};
 			static InitializerConfiguration initializerConfiguration;
@@ -659,8 +661,6 @@ namespace cage
 				CAGE_ASSERT(channel < LanesCount);
 				try
 				{
-					if (buffer.size() >= confMessageSizeWarningThreshold)
-						CAGE_LOG(SeverityEnum::Warning, "steamsocks", Stringizer() + "writing large buffer (" + buffer.size() + " bytes) to steam network socket");
 					SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint16) + buffer.size());
 					if (!msg)
 						CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
