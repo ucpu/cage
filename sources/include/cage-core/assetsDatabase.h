@@ -62,6 +62,7 @@ namespace cage
 		void markAllCorrupted();
 		void markModified(const String &name, bool modified);
 		void markAllModified(bool modified);
+		void resetCacheTimestamp();
 		void convertAssets();
 		void convertAssetsNoThrow(); // does not throw if converting assets fails, but may throw if the database itself encounters an error
 

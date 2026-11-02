@@ -216,6 +216,12 @@ namespace cage
 			it.second->modified = modified;
 	}
 
+	void AssetsDatabase::resetCacheTimestamp()
+	{
+		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
+		impl->lastModificationTime = {};
+	}
+
 	void AssetsDatabase::convertAssets()
 	{
 		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);

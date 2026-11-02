@@ -641,7 +641,7 @@ namespace cage
 
 			// the function SendMessages is different for CAGE_USE_STEAM_SOCKETS vs CAGE_USE_STEAM_SDK
 			template<class T = decltype(sockets)>
-			static void socketSendMessages(SteamNetworkingMessage_t *msg)
+			static sint64 socketSendMessages(SteamNetworkingMessage_t *msg)
 			{
 				int64 msgId = 0;
 				auto s = static_cast<T>(sockets); // s is dependant type
@@ -649,19 +649,16 @@ namespace cage
 					s->SendMessages(1, &msg, &msgId, true);
 				else
 					s->SendMessages(1, &msg, &msgId);
-				if (msgId > 0)
-					return;
-				const EResult res = (EResult)-msgId;
-				handleResult(res);
+				return msgId;
 			}
 
 			void write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 			{
 				CAGE_ASSERT(!buffer.empty());
 				CAGE_ASSERT(channel < LanesCount);
+				SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint16) + buffer.size());
 				try
 				{
-					SteamNetworkingMessage_t *msg = utils->AllocateMessage(sizeof(uint16) + buffer.size());
 					if (!msg)
 						CAGE_THROW_ERROR(Exception, "failed to allocate new message for steam sockets");
 					*(uint16 *)msg->m_pData = reliable ? sendSequences[channel]++ : 0;
@@ -669,12 +666,18 @@ namespace cage
 					msg->m_conn = sock;
 					msg->m_idxLane = channel;
 					msg->m_nFlags = reliable ? k_nSteamNetworkingSend_Reliable : 0;
-					socketSendMessages(msg);
+					const sint64 msgId = socketSendMessages(msg);
+					if (msgId > 0)
+						return;
+					const EResult res = (EResult)-msgId;
+					handleResult(res);
 				}
 				catch (...)
 				{
 					if (reliable)
 						disconnected = true;
+					if (msg)
+						msg->Release();
 					throw;
 				}
 			}
