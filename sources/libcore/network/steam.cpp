@@ -751,18 +751,16 @@ namespace cage
 			}
 		};
 
-		SteamConnectionImpl *getConnection(HSteamNetConnection sock)
+		SteamConnectionImpl *getConnection(sint64 v)
 		{
-			sint64 v = sockets->GetConnectionUserData(sock);
 			CAGE_ASSERT(v >= 0);
 			if ((v % 2) == 0)
 				return (SteamConnectionImpl *)v;
 			return nullptr;
 		}
 
-		SteamServerImpl *getServer(HSteamNetConnection sock)
+		SteamServerImpl *getServer(sint64 v)
 		{
-			sint64 v = sockets->GetConnectionUserData(sock);
 			CAGE_ASSERT(v >= 0);
 			if ((v % 2) == 1)
 				return (SteamServerImpl *)(v - 1);
@@ -775,7 +773,7 @@ namespace cage
 			if (info->m_info.m_hListenSocket && info->m_eOldState == k_ESteamNetworkingConnectionState_None)
 			{
 				CAGE_ASSERT(info->m_info.m_eState == k_ESteamNetworkingConnectionState_Connecting);
-				if (SteamServerImpl *impl = getServer(info->m_hConn))
+				if (SteamServerImpl *impl = getServer(info->m_info.m_nUserData))
 				{
 					try
 					{
@@ -796,7 +794,7 @@ namespace cage
 			{
 				case k_ESteamNetworkingConnectionState_Connected:
 				{
-					if (SteamConnectionImpl *impl = getConnection(info->m_hConn))
+					if (SteamConnectionImpl *impl = getConnection(info->m_info.m_nUserData))
 						impl->connected = true;
 					break;
 				}
@@ -804,7 +802,7 @@ namespace cage
 				case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
 				{
 					CAGE_LOG_DEBUG(SeverityEnum::Info, "steamsocks", Stringizer() + "connection " + info->m_info.m_szConnectionDescription + " terminates with code: " + info->m_info.m_eEndReason + ", explanation: " + info->m_info.m_szEndDebug);
-					if (SteamConnectionImpl *impl = getConnection(info->m_hConn))
+					if (SteamConnectionImpl *impl = getConnection(info->m_info.m_nUserData))
 						impl->disconnected = true;
 					break;
 				}
