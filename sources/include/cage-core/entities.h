@@ -36,11 +36,11 @@ namespace cage
 
 		Entity *createUnique(); // new entity with unique id
 		Entity *createAnonymous(); // new entity with id = 0, accessible only with the pointer
-		Entity *create(uint32 entityId); // must be non-zero
-		Entity *tryGet(uint32 entityId) const; // return nullptr if it does not exist
-		Entity *get(uint32 entityId) const; // throw if it does not exist
-		Entity *getOrCreate(uint32 entityId);
-		bool exists(uint32 entityId) const;
+		Entity *create(EntityId entityId); // must be non-zero
+		Entity *tryGet(EntityId entityId) const; // return nullptr if it does not exist
+		Entity *get(EntityId entityId) const; // throw if it does not exist
+		Entity *getOrCreate(EntityId entityId);
+		bool exists(EntityId entityId) const;
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
 		bool valid(Entity *e) const;
@@ -79,7 +79,7 @@ namespace cage
 	{
 	public:
 		EntityManager *manager() const;
-		uint32 id() const;
+		EntityId id() const;
 
 		CAGE_FORCE_INLINE void add(EntityComponent *component) { unsafeValue(component); }
 		template<ComponentConcept T>

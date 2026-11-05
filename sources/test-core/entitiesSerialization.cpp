@@ -31,7 +31,7 @@ namespace
 	{
 		for (uint32 round = 0; round < 100; round++)
 		{
-			uint32 a = randomRange(1, 500);
+			EntityId a = EntityId(randomRange(1, 500));
 			if (man->exists(a))
 				man->get(a)->destroy();
 			else
@@ -60,8 +60,8 @@ namespace
 	{
 		for (Entity *ea : a->entities())
 		{
-			uint32 aName = ea->id();
-			if (aName == 0)
+			EntityId aName = ea->id();
+			if (aName == EntityId())
 				continue;
 			CAGE_TEST(b->exists(aName));
 			Entity *eb = b->get(aName);

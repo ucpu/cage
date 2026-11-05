@@ -26,7 +26,7 @@ namespace
 	{
 		for (uint32 round = 0; round < 100; round++)
 		{
-			uint32 a = randomRange(1, 500);
+			EntityId a = EntityId(randomRange(1, 500));
 			if (man->exists(a))
 			{
 				Entity *e = man->get(a);
@@ -75,12 +75,12 @@ namespace
 		// verify that names are correctly paired
 		for (Entity *ae : a->entities())
 		{
-			if (ae->id())
+			if (ae->id() != EntityId())
 				CAGE_TEST(b->exists(ae->id()));
 		}
 		for (Entity *be : b->entities())
 		{
-			if (be->id())
+			if (be->id() != EntityId())
 				CAGE_TEST(a->exists(be->id()));
 		}
 
@@ -95,7 +95,7 @@ namespace
 		// verify values
 		for (Entity *ae : a->entities())
 		{
-			if (!ae->id())
+			if (ae->id() == EntityId())
 				continue;
 			Entity *be = b->get(ae->id());
 

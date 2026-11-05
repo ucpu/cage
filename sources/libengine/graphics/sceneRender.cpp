@@ -584,7 +584,7 @@ namespace cage
 		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalOptional(SkeletalAnimationComponent src)
 		{
 			for (const auto &it : src.animations)
-				if (it.animation != AssetId())
+				if (it.animationId != AssetId())
 					return src;
 			return {};
 		}
@@ -604,7 +604,7 @@ namespace cage
 			return newTexture(tex->nativeTexture(), view, {}, "shadowmap cascade view");
 		}
 
-		Holder<Texture> createShadowmap2D(uint32 entityId, uint32 resolution, uint32 cascades, GraphicsDevice *device)
+		Holder<Texture> createShadowmap2D(EntityId entityId, uint32 resolution, uint32 cascades, GraphicsDevice *device)
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
@@ -617,7 +617,7 @@ namespace cage
 			return newTexture(device, conf);
 		}
 
-		Holder<Texture> createShadowmapCube(uint32 entityId, uint32 resolution, GraphicsDevice *device)
+		Holder<Texture> createShadowmapCube(EntityId entityId, uint32 resolution, GraphicsDevice *device)
 		{
 			TransientTextureCreateConfig conf;
 			conf.name = "shadowmap target";
@@ -737,9 +737,9 @@ namespace cage
 				{
 					const auto &input = ps.animations[i];
 					auto &output = cnf.animations[i];
-					if (input.animation == AssetId())
+					if (input.animationId == AssetId())
 						continue;
-					output.animation = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
+					output.animation = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animationId));
 					if (!output.animation)
 						return {};
 					CAGE_ASSERT(output.animation->bonesCount() == mesh->bonesCount);
@@ -798,7 +798,7 @@ namespace cage
 					if (!color.opacity.valid())
 						color.opacity = parent->opacity;
 					if (!ps && parent->skelAnimId != AssetId())
-						ps = SkeletalAnimationComponent().add({ .animation = parent->skelAnimId });
+						ps = SkeletalAnimationComponent().add({ .animationId = parent->skelAnimId });
 				}
 
 				if (!rm.mesh->bonesCount)
@@ -1664,7 +1664,7 @@ namespace cage
 
 			Holder<ShadowRender> createShadowRenderBase(Entity *e, const LightComponent &lc, const ShadowmapComponent &sc)
 			{
-				CAGE_ASSERT(e->id() != 0); // lights with shadowmap may not be anonymous
+				CAGE_ASSERT(e->id() != EntityId()); // lights with shadowmap may not be anonymous
 
 				Holder<ShadowRender> data = systemMemory().createHolder<ShadowRender>(scene, camera);
 
@@ -2183,7 +2183,7 @@ namespace cage
 	{
 		for (auto &it : animations)
 		{
-			if (it.animation == AssetId())
+			if (it.animationId == AssetId())
 			{
 				it = layer;
 				return *this;
@@ -2208,7 +2208,7 @@ namespace cage
 	SkeletalAnimationComponent &SkeletalAnimationComponent::set(AssetId animation)
 	{
 		clear();
-		animations[0].animation = animation;
+		animations[0].animationId = animation;
 		return *this;
 	}
 }

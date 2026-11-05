@@ -12,6 +12,15 @@
 #define GCHL_GUI_WIDGET_COMPONENTS Spacer, Label, Header, Separator, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ProgressBar, SliderBar, ColorPicker, SolidColor, Frame, Panel, Spoiler, CustomElement
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutSplit, LayoutTable
 
+namespace std
+{
+	template<>
+	struct hash<cage::EntityId>
+	{
+		auto operator()(const cage::EntityId &id) const noexcept { return hash<decltype(id.value)>()(id.value); }
+	};
+}
+
 namespace cage
 {
 	GuiImpl::GuiImpl(const GuiManagerCreateConfig &config) : assetOnDemand(newAssetsOnDemand(config.assetManager)), assetMgr(config.assetManager), graphicsDevice(config.graphicsDevice), soundsQueue(config.soundsQueue), ttEnabled(config.tooltipsEnabled)
@@ -40,9 +49,9 @@ namespace cage
 
 	GuiImpl::~GuiImpl()
 	{
-		focusName = 0;
+		focusName = EntityId();
 		hover = nullptr;
-		hoverName = 0;
+		hoverName = EntityId();
 	}
 
 	void GuiImpl::scaling()
@@ -112,17 +121,17 @@ namespace cage
 
 	void GuiManager::defocus()
 	{
-		focus(0);
+		focus(EntityId());
 	}
 
-	void GuiManager::focus(uint32 widget)
+	void GuiManager::focus(EntityId widget)
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 		impl->focusName = widget;
 		impl->focusParts = 1;
 	}
 
-	uint32 GuiManager::focus() const
+	EntityId GuiManager::focus() const
 	{
 		const GuiImpl *impl = (const GuiImpl *)this;
 		return impl->focusName;
@@ -219,26 +228,26 @@ namespace cage
 		void generateHierarchy(GuiImpl *impl)
 		{
 			Holder<HierarchyItem> head = impl->memory->createHolder<HierarchyItem>(impl, nullptr);
-			std::unordered_map<uint32, Holder<HierarchyItem>> map;
+			std::unordered_map<EntityId, Holder<HierarchyItem>> map;
 			// create all items
 			for (auto e : impl->entityMgr->entities())
 			{
-				const uint32 name = e->id();
-				CAGE_ASSERT(name != 0 && name != m);
+				const EntityId name = e->id();
+				CAGE_ASSERT(name != EntityId() && name != EntityId(m));
 				map[name] = impl->memory->createHolder<HierarchyItem>(impl, e);
 			}
 			// attach all items to their parents
 			for (auto e : impl->entityMgr->entities())
 			{
-				const uint32 name = e->id();
+				const EntityId name = e->id();
 				Holder<HierarchyItem> item = map[name].share();
 				if (e->has<GuiParentComponent>())
 				{
 					const GuiParentComponent &p = e->value<GuiParentComponent>();
 					item->order = p.order;
-					if (p.parent)
+					if (p.parent != EntityId())
 					{
-						CAGE_ASSERT(p.parent != m && p.parent != name);
+						CAGE_ASSERT(p.parent != EntityId(m) && p.parent != name);
 						CAGE_ASSERT(map.count(p.parent));
 						map[p.parent]->children.push_back(std::move(item));
 						continue;
@@ -387,7 +396,7 @@ namespace cage
 				impl->hoverName = impl->hover->hierarchy->ent->id();
 			}
 			else
-				impl->hoverName = 0;
+				impl->hoverName = EntityId();
 		}
 
 		void updateCursorInfo(GuiImpl *impl)
@@ -576,7 +585,7 @@ namespace cage
 		void guiDestroyChildrenRecursively(Entity *root)
 		{
 			std::vector<Entity *> ents;
-			const uint32 name = root->id();
+			const EntityId name = root->id();
 			entitiesVisitor(
 				[name, &ents](Entity *e, const GuiParentComponent &p)
 				{

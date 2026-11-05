@@ -48,8 +48,8 @@ namespace cage
 		Vec2 guiResolution() const; // points
 
 		void defocus();
-		void focus(uint32 widget);
-		uint32 focus() const;
+		void focus(EntityId widget);
+		EntityId focus() const;
 
 		void prepare(); // prepare the gui for handling events
 		Holder<GuiRender> finish(); // finish handling events, generate rendering commands, and release resources

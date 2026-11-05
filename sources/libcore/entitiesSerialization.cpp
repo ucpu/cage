@@ -17,8 +17,8 @@ namespace cage
 		for (Entity *e : entities)
 		{
 			CAGE_ASSERT(e->manager() == component->manager());
-			uint32 id = e->id();
-			if (id == 0)
+			EntityId id = e->id();
+			if (id == EntityId())
 				continue;
 			if (!e->has(component))
 				continue;
@@ -51,9 +51,9 @@ namespace cage
 		des >> cnt;
 		while (cnt--)
 		{
-			uint32 id;
+			EntityId id;
 			des >> id;
-			if (id == 0 || id == m)
+			if (id == EntityId() || id == EntityId(m))
 				CAGE_THROW_ERROR(Exception, "cannot import anonymous entity");
 			Entity *e = manager->getOrCreate(id);
 			char *u = (char *)e->unsafeValue(component);

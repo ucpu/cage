@@ -339,10 +339,10 @@ namespace cage
 		Vec2 outputSize; // (points)
 		Vec2 outputMouse; // (points)
 		Real zoom = 1, retina = 1, pointsScale = 1; // how many pixels per point (1D)
-		uint32 focusName = 0; // focused entity name
+		EntityId focusName = {}; // focused entity name
 		uint32 focusParts = 0; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		WidgetItem *hover = nullptr;
-		uint32 hoverName = 0;
+		EntityId hoverName = {};
 		Holder<HierarchyItem> root;
 
 		bool mouseMove(input::MouseMove);

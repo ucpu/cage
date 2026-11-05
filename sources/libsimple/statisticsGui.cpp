@@ -21,7 +21,7 @@ namespace cage
 			const EventListener<bool(const GenericInput &)> keyRepeatListener = engineWindow()->events.listen(inputFilter([this](input::KeyRepeat in) { return this->keyRepeat(in); }));
 			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { this->update(); });
 
-			uint32 rootName = 0;
+			EntityId rootName = {};
 			bool needRegen = true;
 
 			template<StatisticsGuiFlags Flags>
@@ -52,17 +52,17 @@ namespace cage
 
 			void update()
 			{
-				if (statisticsScope != StatisticsGuiScopeEnum::None && (rootName == 0 || !engineGuiEntities()->exists(rootName)))
+				if (statisticsScope != StatisticsGuiScopeEnum::None && (rootName == EntityId() || !engineGuiEntities()->exists(rootName)))
 					needRegen = true;
-				if (statisticsScope == StatisticsGuiScopeEnum::None && rootName != 0)
+				if (statisticsScope == StatisticsGuiScopeEnum::None && rootName != EntityId())
 					needRegen = true;
 				if (!needRegen)
 					return;
 				needRegen = false;
 
-				if (rootName != 0 && engineGuiEntities()->exists(rootName))
+				if (rootName != EntityId() && engineGuiEntities()->exists(rootName))
 					detail::guiDestroyEntityRecursively(engineGuiEntities()->get(rootName));
-				rootName = 0;
+				rootName = EntityId();
 
 				if (statisticsScope == StatisticsGuiScopeEnum::None)
 					return;

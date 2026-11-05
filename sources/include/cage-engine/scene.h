@@ -72,7 +72,7 @@ namespace cage
 	{
 		detail::StringBase<26> maskName;
 		Time startTime = {}; // defaults to the spawn time
-		AssetId animation = {};
+		AssetId animationId = {};
 		Real weight = 1;
 		Real speed = 1;
 		Real offset = 0; // normalized 0..1

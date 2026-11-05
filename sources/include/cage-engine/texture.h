@@ -62,7 +62,7 @@ namespace cage
 		Vec3i resolution = Vec3i(0, 0, 1);
 		uint32 arrayLayersCount = 1;
 		uint32 mipLevelsCount = 1;
-		uint32 entityId = 0;
+		EntityId entityId = {};
 		gpu::TextureFormatEnum format = gpu::TextureFormatEnum::Undefined;
 		TextureFlags flags = TextureFlags::None;
 		TransientTextureSamplerModeEnum samplerMode = TransientTextureSamplerModeEnum::Undefined;

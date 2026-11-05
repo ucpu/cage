@@ -215,9 +215,9 @@ namespace
 		for (uint32 i = 0; i < TotalComponents; i++)
 			manager->defineComponent(Vec3());
 
-		typedef std::map<uint32, std::set<uint32>> Reference;
+		typedef std::map<EntityId, std::set<uint32>> Reference;
 		Reference reference;
-		uint32 entName = 1;
+		EntityId entName = EntityId(1);
 
 		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
@@ -250,7 +250,7 @@ namespace
 								reference[entName].insert(i);
 							}
 						}
-						entName++;
+						entName.value++;
 					}
 					break;
 					case 3:
@@ -416,7 +416,7 @@ namespace
 		for (uint32 i = 0; i < InitialEntities; i++)
 		{
 			const uint32 n = entityNameIndex++;
-			Entity *e = manager->create(n);
+			Entity *e = manager->create(EntityId(n));
 			for (uint32 j = n % TotalComponents, je = min(j + UsedComponents, TotalComponents); j < je; j++)
 				e->add(components[j]);
 			exists[n] = true;
@@ -435,14 +435,14 @@ namespace
 					if (exists[n])
 					{
 						exists[n] = false;
-						manager->get(n)->destroy();
+						manager->get(EntityId(n))->destroy();
 					}
 				}
 				// add some new entities
 				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
 					const uint32 n = entityNameIndex++;
-					Entity *e = manager->create(n);
+					Entity *e = manager->create(EntityId(n));
 					const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
 					for (uint32 j = n % TotalComponents; j < je; j++)
 						e->add(components[j]);
@@ -458,7 +458,7 @@ namespace
 					const bool w = randomChance() < 0.2;
 					for (Entity *e : components[i]->entities())
 					{
-						const uint32 n = e->id();
+						const uint32 n = e->id().value;
 						const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
 						for (uint32 j = n % TotalComponents; j < je; j++)
 						{

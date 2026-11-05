@@ -98,7 +98,7 @@ namespace cage
 		class CAGE_ENGINE_API GuiBuilder : public Immovable
 		{
 		public:
-			[[nodiscard]] GuiBuilder &setNextName(uint32 name);
+			[[nodiscard]] GuiBuilder &setNextId(EntityId id);
 
 			[[nodiscard]] BuilderItem row(Real verticalAlign = GuiLayoutLineComponent().crossAlign);
 			[[nodiscard]] BuilderItem spacedRow(Real verticalAlign = GuiLayoutLineComponent().crossAlign);

@@ -20,7 +20,7 @@ namespace cage
 			public:
 				std::vector<StackItem> stack;
 				EntityManager *man = nullptr;
-				uint32 nextName = 0;
+				EntityId nextName = {};
 
 				GuiBuilderImpl(Entity *root)
 				{
@@ -34,8 +34,8 @@ namespace cage
 		BuilderItem::BuilderItem(GuiBuilder *g) : g(g)
 		{
 			GuiBuilderImpl *impl = (GuiBuilderImpl *)g;
-			e = impl->nextName ? impl->man->getOrCreate(impl->nextName) : impl->man->createUnique();
-			impl->nextName = 0;
+			e = impl->nextName != EntityId() ? impl->man->getOrCreate(impl->nextName) : impl->man->createUnique();
+			impl->nextName = EntityId();
 			if (!impl->stack.empty())
 			{
 				e->value<GuiParentComponent>().parent = impl->stack.back().e->id();
@@ -206,9 +206,9 @@ namespace cage
 			return *this;
 		}
 
-		GuiBuilder &GuiBuilder::setNextName(uint32 name)
+		GuiBuilder &GuiBuilder::setNextId(EntityId name)
 		{
-			CAGE_ASSERT(name != m);
+			CAGE_ASSERT(name != EntityId(m));
 			GuiBuilderImpl *impl = (GuiBuilderImpl *)this;
 			impl->nextName = name;
 			return *this;

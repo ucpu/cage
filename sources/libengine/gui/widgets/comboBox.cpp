@@ -181,7 +181,7 @@ namespace cage
 					case 257: // enter
 					case 335: // numpad enter
 					{
-						hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
+						hierarchy->impl->focusName = EntityId(); // give up focus (this will close the popup)
 						if (data.selected != m)
 						{
 							play(skin->defaults.comboBox.selectSound);
@@ -342,7 +342,7 @@ namespace cage
 				combo->data.selected = index;
 				combo->selected = index;
 				consolidateSelection(combo->list->hierarchy, combo->selected);
-				hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
+				hierarchy->impl->focusName = EntityId(); // give up focus (this will close the popup)
 				play(skin->defaults.comboBox.selectSound);
 				hierarchy->fireWidgetEvent(input::GuiValue{ hierarchy->impl, hierarchy->ent, buttons, modifiers });
 				combo->hierarchy->fireWidgetEvent(input::GuiValue{ combo->hierarchy->impl, combo->hierarchy->ent, buttons, modifiers });

@@ -41,7 +41,7 @@ namespace cage
 					hashCombine((uint32)config.resolution[2]);
 					hashCombine(config.arrayLayersCount);
 					hashCombine(config.mipLevelsCount);
-					hashCombine(config.entityId);
+					hashCombine(config.entityId.value);
 					hashCombine((uint32)config.format);
 					hashCombine((uint64)config.flags);
 					hashCombine((uint32)config.samplerMode);

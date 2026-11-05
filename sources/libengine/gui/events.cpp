@@ -11,7 +11,7 @@ namespace cage
 
 	namespace
 	{
-		void findWidgets(HierarchyItem *item, uint32 name, std::vector<WidgetItem *> &result)
+		void findWidgets(HierarchyItem *item, EntityId name, std::vector<WidgetItem *> &result)
 		{
 			CAGE_ASSERT(item);
 			if (item->ent && item->ent->id() == name)
@@ -27,7 +27,7 @@ namespace cage
 		{
 			CAGE_ASSERT(impl->root);
 			std::vector<WidgetItem *> result;
-			if (impl->focusName)
+			if (impl->focusName != EntityId())
 			{
 				result.reserve(3);
 				findWidgets(+impl->root, impl->focusName, result);
@@ -107,7 +107,7 @@ namespace cage
 			return impl->keyChar(in.get<input::Character>());
 		if (in.has<input::WindowFocusLose>())
 		{
-			impl->focusName = 0;
+			impl->focusName = EntityId();
 			impl->focusParts = 0;
 			impl->clearTooltips();
 			return false;
@@ -117,7 +117,7 @@ namespace cage
 
 	bool GuiImpl::mousePress(input::MousePress in)
 	{
-		focusName = 0;
+		focusName = EntityId();
 		focusParts = 0;
 		return passMouseEvent<&WidgetItem::mousePress>(this, in.buttons, in.mods, in.position);
 	}

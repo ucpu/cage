@@ -8,6 +8,15 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/pointerRangeHolder.h>
 
+namespace std
+{
+	template<>
+	struct hash<cage::EntityId>
+	{
+		auto operator()(const cage::EntityId &id) const noexcept { return hash<decltype(id.value)>()(id.value); }
+	};
+}
+
 namespace cage
 {
 	namespace
@@ -20,9 +29,9 @@ namespace cage
 		{
 		public:
 			EntityManagerImpl *const manager = nullptr;
-			const uint32 id = m;
+			const EntityId id = m;
 
-			EntityImpl(EntityManagerImpl *manager, uint32 id);
+			EntityImpl(EntityManagerImpl *manager, EntityId id);
 			~EntityImpl();
 
 			void *&comp(uint32 i) const;
@@ -35,9 +44,9 @@ namespace cage
 			Holder<MemoryArena> arena;
 			std::vector<Holder<ComponentImpl>> components;
 			std::vector<EntityComponent *> componentsByTypes;
-			ankerl::unordered_dense::map<uint32, Entity *> namedEntities;
+			ankerl::unordered_dense::map<EntityId, Entity *> namedEntities;
 			FlatBag<Entity *> allEntities;
-			uint32 generateId = 0;
+			EntityId generateId = {};
 			uint32 entSize = 0;
 
 			EntityManagerImpl(const EntityManagerCreateConfig &config) : config(config) {}
@@ -48,18 +57,18 @@ namespace cage
 				components.clear();
 			}
 
-			uint32 generateUniqueId()
+			EntityId generateUniqueId()
 			{
-				static constexpr uint32 a = (uint32)1 << 28;
-				static constexpr uint32 b = (uint32)1 << 30;
+				static constexpr EntityId a = EntityId((uint32)1 << 28);
+				static constexpr EntityId b = EntityId((uint32)1 << 30);
 				if (generateId < a || generateId > b)
 					generateId = a;
 				while (exists(generateId))
-					generateId = generateId == b ? a : generateId + 1;
-				return generateId++;
+					generateId = generateId == b ? a : EntityId(generateId.value + 1);
+				return EntityId(generateId.value++);
 			}
 
-			EntityImpl *newEnt(uint32 id)
+			EntityImpl *newEnt(EntityId id)
 			{
 				void *ptr = arena->allocate(entSize, alignof(EntityImpl));
 				try
@@ -115,12 +124,12 @@ namespace cage
 			}
 		};
 
-		EntityImpl::EntityImpl(EntityManagerImpl *manager, uint32 id) : manager(manager), id(id)
+		EntityImpl::EntityImpl(EntityManagerImpl *manager, EntityId id) : manager(manager), id(id)
 		{
 			for (uint32 i = 0; i < manager->components.size(); i++)
 				comp(i) = nullptr;
 			manager->allEntities.insert(this);
-			if (id != 0)
+			if (id != EntityId())
 				manager->namedEntities.emplace(id, this);
 			manager->entityAdded.dispatch(this);
 		}
@@ -128,7 +137,7 @@ namespace cage
 		EntityImpl::~EntityImpl()
 		{
 			manager->entityRemoved.dispatch(this);
-			if (id != 0)
+			if (id != EntityId())
 				manager->namedEntities.erase(id);
 			manager->allEntities.erase(this);
 			for (uint32 i = 0; i < manager->components.size(); i++)
@@ -197,20 +206,20 @@ namespace cage
 	Entity *EntityManager::createAnonymous()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		return impl->newEnt(0);
+		return impl->newEnt(EntityId(0));
 	}
 
-	Entity *EntityManager::create(uint32 entityId)
+	Entity *EntityManager::create(EntityId entityId)
 	{
-		CAGE_ASSERT(entityId != 0 && entityId != m);
+		CAGE_ASSERT(entityId != EntityId() && entityId != EntityId(m));
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
 		CAGE_ASSERT(!impl->namedEntities.count(entityId));
 		return impl->newEnt(entityId);
 	}
 
-	Entity *EntityManager::tryGet(uint32 entityId) const
+	Entity *EntityManager::tryGet(EntityId entityId) const
 	{
-		if (entityId == 0 || entityId == m)
+		if (entityId == EntityId() || entityId == EntityId(m))
 			return nullptr;
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		auto it = impl->namedEntities.find(entityId);
@@ -219,9 +228,9 @@ namespace cage
 		return it->second;
 	}
 
-	Entity *EntityManager::get(uint32 entityId) const
+	Entity *EntityManager::get(EntityId entityId) const
 	{
-		CAGE_ASSERT(entityId != 0 && entityId != m);
+		CAGE_ASSERT(entityId != EntityId() && entityId != EntityId(m));
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		try
 		{
@@ -234,19 +243,19 @@ namespace cage
 		}
 	}
 
-	Entity *EntityManager::getOrCreate(uint32 entityId)
+	Entity *EntityManager::getOrCreate(EntityId entityId)
 	{
-		CAGE_ASSERT(entityId != 0 && entityId != m);
+		CAGE_ASSERT(entityId != EntityId() && entityId != EntityId(m));
 		Entity *e = tryGet(entityId);
 		if (e)
 			return e;
 		return create(entityId);
 	}
 
-	bool EntityManager::exists(uint32 entityId) const
+	bool EntityManager::exists(EntityId entityId) const
 	{
-		CAGE_ASSERT(entityId != m);
-		if (entityId == 0)
+		CAGE_ASSERT(entityId != EntityId(m));
+		if (entityId == EntityId())
 			return false;
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		return impl->namedEntities.count(entityId);
@@ -360,7 +369,7 @@ namespace cage
 		return impl->manager;
 	}
 
-	uint32 Entity::id() const
+	EntityId Entity::id() const
 	{
 		const EntityImpl *impl = (const EntityImpl *)this;
 		return impl->id;
@@ -477,7 +486,7 @@ namespace cage
 			EntityImpl *n = (EntityImpl *)dst->arena->allocate(dst->entSize, alignof(EntityImpl));
 			detail::memset(n, 0, dst->entSize);
 			const_cast<EntityManagerImpl *&>(n->manager) = dst;
-			const_cast<uint32 &>(n->id) = se->id();
+			const_cast<EntityId &>(n->id) = se->id();
 			dst->allEntities.unsafeData().push_back(n);
 			ents[se] = n;
 		}
@@ -485,7 +494,7 @@ namespace cage
 			dst->allEntities.unsafeRebuildIndex();
 		for (Entity *e : dst->allEntities)
 		{
-			if (e->id())
+			if (e->id() != EntityId())
 				dst->namedEntities.emplace(e->id(), e);
 		}
 

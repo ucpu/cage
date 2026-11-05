@@ -28,7 +28,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
-		uint32 parent = 0;
+		EntityId parent = {};
 		sint32 order = 0;
 	};
 

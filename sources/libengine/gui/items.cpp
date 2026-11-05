@@ -149,7 +149,7 @@ namespace cage
 	bool WidgetItem::hasFocus(uint32 parts) const
 	{
 		CAGE_ASSERT(hierarchy->ent);
-		return hierarchy->impl->focusName && hierarchy->impl->focusName == hierarchy->ent->id() && (hierarchy->impl->focusParts & parts) > 0;
+		return hierarchy->impl->focusName != EntityId() && hierarchy->impl->focusName == hierarchy->ent->id() && (hierarchy->impl->focusParts & parts) > 0;
 	}
 
 	void WidgetItem::makeFocused(uint32 parts)
