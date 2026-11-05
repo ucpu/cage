@@ -18,7 +18,7 @@ namespace
 	public:
 		Holder<GinnelServer> udp = newGinnelServer(3210);
 		std::vector<Holder<GinnelConnection>> conns;
-		uint64 lastTime = applicationTime();
+		Time lastTime = applicationTime();
 		bool hadConnection = false;
 
 		bool service()
@@ -64,7 +64,7 @@ namespace
 		{
 			ServerImpl srv;
 			while (srv.service())
-				threadSleep(5000);
+				threadSleep(Time(5'000));
 		}
 	};
 
@@ -86,7 +86,7 @@ namespace
 					b.data()[i] = (char)randomRange(0u, 256u);
 				sends.push_back(std::move(b));
 			}
-			udp = newGinnelConnection("localhost", 3210, 0);
+			udp = newGinnelConnection("localhost", 3210, {});
 		}
 
 		~ClientImpl()
@@ -94,7 +94,7 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "ping: " + (s.roundTripDuration / 1000) + " ms, receiving: " + (s.bpsReceived() / 1024) + " KB/s, sending: " + (s.bpsSent() / 1024) + " KB/s");
+				CAGE_LOG(SeverityEnum::Info, "udp-stats", Stringizer() + "ping: " + (s.roundTripDuration.value / 1000) + " ms, receiving: " + (s.bpsReceived() / 1024) + " KB/s, sending: " + (s.bpsSent() / 1024) + " KB/s");
 			}
 			connectionsLeft--;
 		}
@@ -124,7 +124,7 @@ namespace
 		{
 			ClientImpl cl;
 			while (cl.service())
-				threadSleep(5000);
+				threadSleep(Time(5'000));
 		}
 	};
 }

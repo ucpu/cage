@@ -16,7 +16,7 @@ namespace cage
 		void stop();
 		bool running() const;
 
-		void process(uint64 expectedPeriod);
+		void process(Time expectedPeriod);
 	};
 
 	struct CAGE_ENGINE_API SpeakerCreateConfig

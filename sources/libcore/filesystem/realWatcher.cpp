@@ -23,7 +23,7 @@ namespace cage
 				clock = newTimer();
 			}
 
-			String waitForChange(uint64 time)
+			String waitForChange(Time time)
 			{
 				clock->reset();
 				while (files.empty())
@@ -32,7 +32,7 @@ namespace cage
 					if (files.empty() && clock->duration() > time)
 						return "";
 					else
-						threadSleep(1000 * 100);
+						threadSleep(Time(100'000));
 				}
 				const String res = *files.begin();
 				files.erase(files.begin());
@@ -74,7 +74,7 @@ namespace cage
 		impl->registerPath(path);
 	}
 
-	String FilesystemWatcher::waitForChange(uint64 time)
+	String FilesystemWatcher::waitForChange(Time time)
 	{
 		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
 		return impl->waitForChange(time);

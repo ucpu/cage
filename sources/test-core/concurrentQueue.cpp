@@ -84,7 +84,7 @@ namespace
 					if (tsk.final)
 						break;
 					else
-						threadSleep(1); // simulate work
+						threadSleep(Time(1)); // simulate work
 				}
 			}
 			catch (const ConcurrentQueueTerminated &)
@@ -105,10 +105,10 @@ namespace
 						if (tsk.final)
 							break;
 						else
-							threadSleep(1); // simulate work
+							threadSleep(Time(1)); // simulate work
 					}
 					else
-						threadSleep(1);
+						threadSleep(Time(1));
 				}
 			}
 			catch (const ConcurrentQueueTerminated &)
@@ -123,13 +123,13 @@ namespace
 			{
 				for (uint32 i = 0; i < produceItems; i++)
 				{
-					threadSleep(1); // simulate work
+					threadSleep(Time(1)); // simulate work
 					Task tsk(i);
 					queue.push(tsk);
 				}
 				for (uint32 i = 0; i < produceFinals; i++)
 				{
-					threadSleep(1); // simulate work
+					threadSleep(Time(1)); // simulate work
 					Task tsk(i + produceItems, true);
 					queue.push(tsk);
 				}
@@ -146,17 +146,17 @@ namespace
 			{
 				for (uint32 i = 0; i < produceItems; i++)
 				{
-					threadSleep(1); // simulate work
+					threadSleep(Time(1)); // simulate work
 					Task tsk(i);
 					while (!queue.tryPush(tsk))
-						threadSleep(1);
+						threadSleep(Time(1));
 				}
 				for (uint32 i = 0; i < produceFinals; i++)
 				{
-					threadSleep(1); // simulate work
+					threadSleep(Time(1)); // simulate work
 					Task tsk(i + produceItems, true);
 					while (!queue.tryPush(tsk))
-						threadSleep(1);
+						threadSleep(Time(1));
 				}
 			}
 			catch (const ConcurrentQueueTerminated &)
@@ -234,7 +234,7 @@ namespace
 			Tester<Container> t;
 			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumeBlocking>(&t), "consumer");
 			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::produceBlocking>(&t), "producer");
-			threadSleep(10);
+			threadSleep(Time(10));
 			t.queue.terminate();
 			t1->wait();
 			t2->wait();
@@ -246,7 +246,7 @@ namespace
 			Tester<Container> t;
 			Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::consumePolling>(&t), "consumer");
 			Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester<Container>, &Tester<Container>::producePolling>(&t), "producer");
-			threadSleep(10);
+			threadSleep(Time(10));
 			t.queue.terminate();
 			t1->wait();
 			t2->wait();

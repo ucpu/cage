@@ -54,7 +54,7 @@ namespace cage
 			void frameEnd();
 
 			double conversion = 0;
-			uint64 time = 0; // microseconds
+			Time time = {};
 
 		private:
 			static constexpr uint32 Frames = 2;
@@ -221,7 +221,7 @@ namespace cage
 			{
 				const uint32 next = (frameIndex + 1) % Frames;
 				const uint64 *ts = (uint64 *)(buffRead[next].getMappedRange().data());
-				time = (ts[1] - ts[0]) * conversion * 0.001; // ns -> us
+				time = Time((ts[1] - ts[0]) * conversion * 0.001); // ns -> us
 				ProfilingEvent ev = profilingEventBegin("gpu", ProfilingFrameTag());
 				profilingEventEnd(ev, time);
 			}

@@ -14,8 +14,8 @@ namespace cage
 
 	struct CAGE_ENGINE_API SceneRenderShared
 	{
-		uint64 currentTime = 0;
-		uint64 elapsedTime = 1'000'000 / 60; // microseconds since last frame
+		Time currentTime = {};
+		Time elapsedTime = Time(1'000'000 / 60); // microseconds since last frame
 		GraphicsDevice *device = nullptr;
 		AssetsManager *assets = nullptr;
 		AssetsOnDemand *onDemand = nullptr;

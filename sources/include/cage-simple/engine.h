@@ -29,10 +29,10 @@ namespace cage
 		EventDispatcher<bool()> update; // periodically called from engineRun()
 		EventDispatcher<bool()> unload; // periodically called from engineFinalize()
 		Scheduler *scheduler();
-		uint64 updatePeriod() const;
-		void updatePeriod(uint64 p);
-		uint64 inputPeriod() const;
-		void inputPeriod(uint64 p);
+		Time updatePeriod() const;
+		void updatePeriod(Time p);
+		Time inputPeriod() const;
+		void inputPeriod(Time p);
 		// assets processing thread index: 0
 	};
 	EngineControlThread &controlThread();
@@ -83,7 +83,7 @@ namespace cage
 	VoicesMixer *engineMasterMixer();
 	VoicesMixer *engineSceneMixer();
 	SoundsQueue *engineGuiMixer();
-	uint64 engineControlTime();
+	Time engineControlTime();
 
 	// returns true if any assets are still loading (or shader pipelines compiling)
 	bool engineProcessing();

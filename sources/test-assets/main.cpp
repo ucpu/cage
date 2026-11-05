@@ -24,7 +24,7 @@ int main(int argc, const char *args[])
 			pathRemove("../data/database");
 
 			// give some time for the filesystem
-			threadSleep(1000 * 1000);
+			threadSleep(Time(1'000'000));
 		}
 	}
 	catch (...)

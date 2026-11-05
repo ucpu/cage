@@ -496,13 +496,13 @@ namespace
 			Holder<FilesystemWatcher> w = newFilesystemWatcher();
 			pathCreateDirectories("testdir/watch/dir");
 			w->registerPath("testdir/watch");
-			CAGE_TEST(w->waitForChange(0) == "");
+			CAGE_TEST(w->waitForChange({}) == "");
 			writeFile("testdir/watch/1");
-			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
-			CAGE_TEST(w->waitForChange(0) == "");
+			CAGE_TEST(w->waitForChange({}) == pathToAbs("testdir/watch/1"));
+			CAGE_TEST(w->waitForChange({}) == "");
 			writeFile("testdir/watch/dir/2");
-			CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
-			CAGE_TEST(w->waitForChange(0) == "");
+			CAGE_TEST(w->waitForChange({}) == pathToAbs("testdir/watch/dir/2"));
+			CAGE_TEST(w->waitForChange({}) == "");
 		}
 #endif
 	}

@@ -15,13 +15,13 @@ namespace cage
 	{
 	public:
 		// control thread
-		void emit(uint64 time);
+		void emit(Time time);
 		Holder<Image> screenshot();
 
 		// graphics thread
 		void initialize();
 		void finalize();
-		void dispatch(uint64 time, Holder<GuiRender> guiBundle);
+		void dispatch(Time time, Holder<GuiRender> guiBundle);
 
 		// statistics
 		GraphicsFrameStatistics frameStatistics;
@@ -39,7 +39,7 @@ namespace cage
 		// sound thread
 		void initialize();
 		void finalize();
-		void dispatch(uint64 time);
+		void dispatch(Time time);
 	};
 
 	Holder<EnginePrivateSound> newEnginePrivateSound(const EngineCreateConfig &config);

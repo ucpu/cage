@@ -15,7 +15,7 @@ namespace cage
 			std::source_location location;
 			PointerRange<const char> message;
 			StringPointer component = "";
-			uint64 time = 0;
+			Time time = {};
 			uint64 createThreadId = 0;
 			uint64 currentThreadId = 0;
 			SeverityEnum severity = SeverityEnum::Critical;

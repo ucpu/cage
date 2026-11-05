@@ -273,7 +273,7 @@ namespace cage
 		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			GinnelConnectionImpl(const String &address, uint16 port, uint64 timeout) : connId(randomRange((uint64)1, (uint64)m - 1))
+			GinnelConnectionImpl(const String &address, uint16 port, Time timeout) : connId(randomRange((uint64)1, (uint64)m - 1))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				detail::OverrideBreakpoint ob;
@@ -295,7 +295,7 @@ namespace cage
 				initializationCompletion(timeout);
 			}
 
-			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connId, uint64 timeout) : connId(connId)
+			GinnelConnectionImpl(const String &localAddress, uint16 localPort, const String &remoteAddress, uint16 remotePort, uint64 connId, Time timeout) : connId(connId)
 			{
 				CAGE_ASSERT(connId != 0 && connId != m);
 				UDP_LOG(1, "creating new connection to remote address: '" + remoteAddress + "', remote port: " + remotePort + ", at local address: '" + localAddress + "', local port: '" + localPort + "', timeout: " + timeout);
@@ -324,7 +324,7 @@ namespace cage
 				initializationCompletion(timeout);
 			}
 
-			GinnelConnectionImpl(Sock &&sock, uint64 connId, uint64 timeout) : connId(connId)
+			GinnelConnectionImpl(Sock &&sock, uint64 connId, Time timeout) : connId(connId)
 			{
 				CAGE_ASSERT(connId != 0 && connId != m);
 				CAGE_ASSERT(sock.isValid());
@@ -338,7 +338,7 @@ namespace cage
 				initializationCompletion(timeout);
 			}
 
-			void initializationCompletion(uint64 timeout)
+			void initializationCompletion(Time timeout)
 			{
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(Exception, "failed to connect (no sockets available)");
@@ -351,11 +351,11 @@ namespace cage
 
 				// initialize connection
 				service();
-				if (timeout)
+				if (timeout > Time())
 				{
 					while (true)
 					{
-						threadSleep(5000);
+						threadSleep(Time(5'000));
 						service();
 						if (established)
 							break;
@@ -470,7 +470,7 @@ namespace cage
 					{
 						struct SideStruct
 						{
-							uint64 time = 0;
+							Time time = {};
 							uint64 receivedBytes = 0;
 							uint64 sentBytes = 0;
 							uint32 receivedPackets = 0;
@@ -736,7 +736,7 @@ namespace cage
 				}
 
 				// send new stats
-				if (currentServiceTime > lastStatsSendTime + 100000)
+				if (currentServiceTime > lastStatsSendTime + Time(100'000))
 				{
 					Sending::CommandUnion::Stats p;
 					handleStats(p);
@@ -1087,7 +1087,7 @@ namespace cage
 
 			struct WriteBandwidth
 			{
-				uint64 statsTimestamp = 0;
+				Time statsTimestamp = {};
 				uint64 bandwidth = 50 * 1024; // start at 50 KBps
 				sint64 capacity = 5 * 1024;
 				sint32 quality = 0;
@@ -1098,11 +1098,11 @@ namespace cage
 				WriteBandwidth &wb = writeBandwidth;
 
 				// update quality
-				if (currentServiceTime > stats.timestamp + 100 * deltaTime)
+				if (currentServiceTime > stats.timestamp + Time(100) * deltaTime)
 				{
 					wb.quality--;
 				}
-				else if (stats.timestamp != wb.statsTimestamp && stats.roundTripDuration > 0)
+				else if (stats.timestamp != wb.statsTimestamp && stats.roundTripDuration > Time())
 				{
 					wb.statsTimestamp = stats.timestamp;
 					if (100 * stats.packetsDeliveredLately < 95 * stats.packetsSentLately && stats.packetsSentLately > 5)
@@ -1114,7 +1114,7 @@ namespace cage
 				// update bandwidth
 				if (wb.quality < -2)
 				{
-					wb.bandwidth = max(70 * wb.bandwidth / 100, uint64(10000));
+					wb.bandwidth = max(70 * wb.bandwidth / 100, uint64(10'000));
 					wb.quality = 0;
 				}
 				else if (wb.quality > 2)
@@ -1125,7 +1125,7 @@ namespace cage
 
 				// allow the capacity to accumulate over multiple updates
 				// but restrict the capacity in some reasonable range
-				wb.capacity = clamp(wb.capacity + deltaTime * wb.bandwidth / 1000000, uint64(0), 10 * deltaTime * wb.bandwidth / 1000000);
+				wb.capacity = clamp(wb.capacity + deltaTime.value * wb.bandwidth / 1'000'000, (uint64)0, 10 * deltaTime.value * wb.bandwidth / 1'000'000);
 			}
 
 			// COMMON
@@ -1133,11 +1133,11 @@ namespace cage
 			GinnelStatistics stats;
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
-			const uint64 startTime = applicationTime();
+			const Time startTime = applicationTime();
 			const uint64 connId = m;
-			uint64 lastStatsSendTime = 0;
-			uint64 currentServiceTime = 0; // time at which this service has started
-			uint64 deltaTime = 0; // time elapsed since last service
+			Time lastStatsSendTime = {};
+			Time currentServiceTime = {}; // time at which this service has started
+			Time deltaTime = {}; // time elapsed since last service
 			bool established = false;
 
 			// API
@@ -1176,7 +1176,7 @@ namespace cage
 
 			void service()
 			{
-				const uint64 newTime = applicationTime();
+				const Time newTime = applicationTime();
 				deltaTime = newTime - currentServiceTime;
 				currentServiceTime = newTime;
 				detail::OverrideBreakpoint brk;
@@ -1255,43 +1255,43 @@ namespace cage
 
 	uint64 GinnelStatistics::bpsReceived() const
 	{
-		if (roundTripDuration)
-			return 1000000 * bytesReceivedLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return 1'000'000 * bytesReceivedLately / roundTripDuration.value;
 		return 0;
 	}
 
 	uint64 GinnelStatistics::bpsSent() const
 	{
-		if (roundTripDuration)
-			return 1000000 * bytesSentLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return 1'000'000 * bytesSentLately / roundTripDuration.value;
 		return 0;
 	}
 
 	uint64 GinnelStatistics::bpsDelivered() const
 	{
-		if (roundTripDuration)
-			return 1000000 * bytesDeliveredLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return 1'000'000 * bytesDeliveredLately / roundTripDuration.value;
 		return 0;
 	}
 
 	uint64 GinnelStatistics::ppsReceived() const
 	{
-		if (roundTripDuration)
-			return uint64(1000000) * packetsReceivedLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return uint64(1'000'000) * packetsReceivedLately / roundTripDuration.value;
 		return 0;
 	}
 
 	uint64 GinnelStatistics::ppsSent() const
 	{
-		if (roundTripDuration)
-			return uint64(1000000) * packetsSentLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return uint64(1'000'000) * packetsSentLately / roundTripDuration.value;
 		return 0;
 	}
 
 	uint64 GinnelStatistics::ppsDelivered() const
 	{
-		if (roundTripDuration)
-			return uint64(1000000) * packetsDeliveredLately / roundTripDuration;
+		if (roundTripDuration > Time())
+			return uint64(1'000'000) * packetsDeliveredLately / roundTripDuration.value;
 		return 0;
 	}
 
@@ -1363,7 +1363,7 @@ namespace cage
 		return impl->accept();
 	}
 
-	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout)
+	Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, Time timeout)
 	{
 #ifdef CAGE_SYSTEM_MAC
 		CAGE_LOG(SeverityEnum::Warning, "ginnel", "ginnel on macos might be broken - it is excluded from tests");

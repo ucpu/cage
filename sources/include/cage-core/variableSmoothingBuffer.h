@@ -8,11 +8,18 @@ namespace cage
 	template<class T, uint32 N = 16>
 	struct VariableSmoothingBuffer
 	{
+		void seed()
+		{
+			for (uint32 i = 0; i < N; i++)
+				buffer[i] = {};
+			sum_ = {};
+		}
+
 		void seed(T value)
 		{
 			for (uint32 i = 0; i < N; i++)
 				buffer[i] = value;
-			sum_ = value * N;
+			sum_ = value * T(N);
 		}
 
 		void add(T value)
@@ -22,9 +29,12 @@ namespace cage
 			buffer[index] = value;
 		}
 
-		T smooth() const { return sum_ / N; }
+		T smooth() const { return sum_ / T(N); }
+
 		T current() const { return buffer[index]; }
+
 		T oldest() const { return buffer[(index + 1) % N]; }
+
 		T sum() const { return sum_; }
 
 		T max() const

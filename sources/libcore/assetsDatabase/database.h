@@ -84,7 +84,7 @@ namespace cage
 
 		std::map<String, Holder<DatabaseAssetImpl>, StringComparatorFast> assets;
 		std::set<String, StringComparatorFast> corruptedDefinitions;
-		PathLastChange lastModificationTime;
+		FileTime lastModificationTime;
 	};
 }
 

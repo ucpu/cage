@@ -769,7 +769,7 @@ namespace cage
 				if (disposingTasks[0]->done())
 					disposingTasks.erase(disposingTasks.begin());
 				else
-					threadSleep(1'000);
+					threadSleep(Time(1'000));
 			}
 		}
 

@@ -81,7 +81,7 @@ namespace cage
 					}
 					for (Event &it : em.data)
 					{
-						it.endTime = currentTime + it.maxDelay;
+						it.endTime = currentTime + it.maxDelay.value;
 						active.push_back(std::move(it));
 					}
 					em.data.clear();
@@ -100,7 +100,7 @@ namespace cage
 							if (a.sound)
 							{
 								a.startTime = currentTime;
-								a.endTime = a.startTime + a.sound->duration();
+								a.endTime = a.startTime + a.sound->duration().value;
 							}
 						}
 						if (a.startTime != m)
@@ -258,16 +258,16 @@ namespace cage
 		return impl->counter.load(std::memory_order_relaxed) > 0;
 	}
 
-	uint64 SoundsQueue::elapsedTime() const
+	Time SoundsQueue::elapsedTime() const
 	{
 		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
-		return impl->elapsed.load(std::memory_order_relaxed);
+		return Time(impl->elapsed.load(std::memory_order_relaxed));
 	}
 
-	uint64 SoundsQueue::remainingTime() const
+	Time SoundsQueue::remainingTime() const
 	{
 		const SoundsQueueImpl *impl = (const SoundsQueueImpl *)this;
-		return impl->remaining.load(std::memory_order_relaxed);
+		return Time(impl->remaining.load(std::memory_order_relaxed));
 	}
 
 	void SoundsQueue::process(const SoundCallbackData &data)

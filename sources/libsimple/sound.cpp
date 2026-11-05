@@ -59,7 +59,7 @@ namespace cage
 			{
 				CAGE_ASSERT(mixer);
 				// correction for time drift
-				const sint64 period = controlThread().updatePeriod();
+				const sint64 period = controlThread().updatePeriod().value;
 				const sint64 duration = sint64(data.frames) * 1'000'000 / data.sampleRate;
 				if (abs(lastTime - dispatchTime) > period)
 					lastTime = dispatchTime; // reset time
@@ -153,7 +153,7 @@ namespace cage
 
 				v->sound = std::move(s);
 				v->position = e.transform.position;
-				v->startTime = e.time.spawnTime;
+				v->startTime = e.time.spawnTime.value;
 				v->attenuation = e.sound.attenuation;
 				v->minDistance = e.sound.minDistance;
 				v->maxDistance = e.sound.maxDistance;
@@ -163,7 +163,7 @@ namespace cage
 				v->spatial = e.sound.spatial;
 			}
 
-			void prepare(PrepareListener &l, const EmitListener &e, uint64 dispatchTime)
+			void prepare(PrepareListener &l, const EmitListener &e, Time dispatchTime)
 			{
 				{ // listener
 					if (!l.mixer)
@@ -177,7 +177,7 @@ namespace cage
 					l.mixer->maxSounds = e.listener.maxSounds;
 					l.mixer->maxGain = e.listener.maxGain;
 					l.mixer->gain = e.listener.gain;
-					l.dispatchTime = dispatchTime;
+					l.dispatchTime = dispatchTime.value;
 				}
 
 				{ // remove obsolete
@@ -194,7 +194,7 @@ namespace cage
 						prepare(l, l.voicesMapping[s.id], s);
 			}
 
-			void dispatch(uint64 dispatchTime)
+			void dispatch(Time dispatchTime)
 			{
 				auto lock = ScopeLock(mut);
 
@@ -241,7 +241,7 @@ namespace cage
 		impl->finalize();
 	}
 
-	void EnginePrivateSound::dispatch(uint64 time)
+	void EnginePrivateSound::dispatch(Time time)
 	{
 		EnginePrivateSoundImpl *impl = (EnginePrivateSoundImpl *)this;
 		impl->dispatch(time);

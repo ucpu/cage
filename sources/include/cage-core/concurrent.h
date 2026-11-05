@@ -95,9 +95,9 @@ namespace cage
 	CAGE_CORE_API uint64 currentThreadId();
 	CAGE_CORE_API uint64 currentProcessId();
 	CAGE_CORE_API uint32 processorsCount(); // return number of threads that can physically run simultaneously
-	CAGE_CORE_API void threadSleep(uint64 micros);
-	CAGE_CORE_API void threadYield(); // instructs operating system to run another thread
-	CAGE_CORE_API void threadPause(); // insctructs cpu to wait few cycles
+	CAGE_CORE_API void threadSleep(Time micros);
+	CAGE_CORE_API void threadYield(); // instructs operating system to switch to another thread
+	CAGE_CORE_API void threadPause(); // instructs cpu to wait few cycles
 }
 
 #endif // guard_concurrent_h_585972b8_5791_4554_b4fa_29342c539280_

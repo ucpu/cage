@@ -364,7 +364,7 @@ namespace cage
 		bool ttEnabled = false;
 		Vec2 ttLastMousePos; // points
 		Real ttMouseTraveledDistance; // points
-		uint64 ttTimestampMouseMove = 0; // last time when mouse moved too much
+		Time ttTimestampMouseMove = {}; // last time when mouse moved too much
 		bool ttHasMovedSinceLast = false;
 		sint32 ttNextOrder = 0;
 		std::vector<TooltipData> ttData;

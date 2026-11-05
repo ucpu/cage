@@ -114,7 +114,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept
+		Time makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 
@@ -181,7 +181,7 @@ namespace cage
 				detail::debugOutput("ignoring makeLog exception");
 				detail::debugBreakpoint();
 			}
-			return 0;
+			return {};
 		}
 	}
 
@@ -276,7 +276,7 @@ namespace cage
 		return systemMemory().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(std::move(file));
 	}
 
-	uint64 applicationTime()
+	Time applicationTime()
 	{
 		return loggerTimer()->duration();
 	}
@@ -391,7 +391,7 @@ namespace cage
 
 			~InitialLog()
 			{
-				uint64 duration = applicationTime();
+				uint64 duration = applicationTime().value;
 				uint32 micros = numeric_cast<uint32>(duration % 1'000'000);
 				duration /= 1'000'000;
 				uint32 secs = numeric_cast<uint32>(duration % 60);

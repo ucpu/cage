@@ -76,7 +76,7 @@ namespace
 	{
 		for (uint32 i = 0; i < 10; i++)
 		{
-			threadSleep(2000);
+			threadSleep(Time(2'000));
 			{
 				ScopeLock l(mutexGlobal);
 				counterGlobal += 1;
@@ -198,21 +198,21 @@ void testConcurrent()
 
 	{
 		CAGE_TESTCASE("sleeping precision");
-		std::array<uint64, 10> frames = {};
+		std::array<Time, 10> frames = {};
 		Holder<Timer> t = newTimer();
-		for (uint64 &frame : frames)
+		for (Time &frame : frames)
 		{
-			const uint64 a = t->duration();
-			constexpr uint64 period = 1'000'000 / 60;
+			const Time a = t->duration();
+			constexpr Time period = Time(1'000'000 / 60);
 			threadSleep(period);
-			const uint64 b = t->duration();
+			const Time b = t->duration();
 			frame = b - a;
 			CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "frame: " + frame);
 		}
 		std::sort(frames.begin(), frames.end());
-		uint64 sum = std::accumulate(frames.begin(), frames.end(), uint64(0));
+		Time sum = std::accumulate(frames.begin(), frames.end(), Time(0));
 		sum -= frames[0] + frames[frames.size() - 1]; // exclude extremes
-		sum /= frames.size() - 2;
+		sum /= Time(frames.size() - 2);
 		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "average: " + sum);
 		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "minimum: " + frames[1]);
 		CAGE_LOG(SeverityEnum::Info, "frame", Stringizer() + "maximum: " + frames[frames.size() - 2]);

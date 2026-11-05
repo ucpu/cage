@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace detail
 	{
-		uint64 GuiTooltipDelayDefault = 500'000;
+		Time GuiTooltipDelayDefault = Time(500'000);
 	}
 
 	void GuiImpl::ttMouseMove(input::MouseMove in)
@@ -87,7 +87,7 @@ namespace cage
 
 		auto candidate = findTopWidget(this);
 
-		const uint64 currentTime = applicationTime();
+		const Time currentTime = applicationTime();
 		if (ttMouseTraveledDistance > 5)
 		{
 			ttTimestampMouseMove = currentTime;
@@ -104,7 +104,7 @@ namespace cage
 				it.removing = true;
 			}
 		}
-		const uint64 elapsed = currentTime - ttTimestampMouseMove;
+		const Time elapsed = currentTime - ttTimestampMouseMove;
 
 		// close modal tooltips
 		for (auto &it : ttData)

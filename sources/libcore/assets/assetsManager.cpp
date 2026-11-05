@@ -653,7 +653,7 @@ namespace cage
 		return AssetStateEnum::Ready;
 	}
 
-	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
+	void AssetsManager::listen(const String &address, uint16 port, Time listenerPeriod)
 	{
 		class AssetListenerImpl : private Immovable
 		{
@@ -662,11 +662,11 @@ namespace cage
 			AssetsManager *const man = nullptr;
 			Holder<TcpConnection> tcp;
 			Holder<Thread> thread;
-			const uint64 period = 0;
+			const Time period = {};
 			const uint16 port = 0;
 			std::atomic<bool> stopping = false;
 
-			AssetListenerImpl(AssetsManager *man, const String &address, uint64 period, uint32 port) : address(address), man(man), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
+			AssetListenerImpl(AssetsManager *man, const String &address, Time period, uint32 port) : address(address), man(man), period(period), port(port) { thread = newThread(Delegate<void()>().bind<AssetListenerImpl, &AssetListenerImpl::thrEntry>(this), "assets listener"); }
 
 			~AssetListenerImpl()
 			{

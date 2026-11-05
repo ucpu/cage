@@ -15,16 +15,16 @@ namespace
 	{
 	public:
 		Holder<GinnelConnection> udp;
-		const uint64 timeStart = 0;
-		uint64 timeStats = 0;
-		uint64 lastProcessTime = 0;
+		const Time timeStart = {};
+		Time timeStats = {};
+		Time lastProcessTime = {};
 		uint64 sendSeqn = 0, recvSeqn = 0, recvCnt = 0, recvBytes = 0;
-		uint64 lastStatsTimestamp = 0;
+		Time lastStatsTimestamp = {};
 		uint64 maxBytesPerSecond = 0;
 
 		ConnImpl(Holder<GinnelConnection> udp) : udp(std::move(udp)), timeStart(applicationTime())
 		{
-			timeStats = timeStart + 500000;
+			timeStats = timeStart + Time(500'000);
 			lastProcessTime = timeStart;
 			maxBytesPerSecond = configGetUint64("maxBytesPerSecond");
 			CAGE_LOG(SeverityEnum::Info, "config", Stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
@@ -44,20 +44,20 @@ namespace
 		void statistics()
 		{
 			const auto s = udp->statistics();
-			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "receiving: " + leftFill(s.bpsReceived() / 1024) + " KB/s, sending: " + leftFill(s.bpsSent() / 1024) + " KB/s, estimated bandwidth: " + leftFill(s.estimatedBandwidth / 1024) + " KB/s, ping: " + leftFill(s.roundTripDuration / 1000) + " ms");
+			CAGE_LOG(SeverityEnum::Info, "conn", Stringizer() + "receiving: " + leftFill(s.bpsReceived() / 1024) + " KB/s, sending: " + leftFill(s.bpsSent() / 1024) + " KB/s, estimated bandwidth: " + leftFill(s.estimatedBandwidth / 1024) + " KB/s, ping: " + leftFill(s.roundTripDuration.value / 1000) + " ms");
 		}
 
 		bool process()
 		{
-			const uint64 currentTime = applicationTime();
-			const uint64 deltaTime = currentTime - lastProcessTime;
+			const Time currentTime = applicationTime();
+			const Time deltaTime = currentTime - lastProcessTime;
 			lastProcessTime = currentTime;
 
 			// show statistics
 			if (currentTime > timeStats)
 			{
 				statistics();
-				timeStats = currentTime + 1000000;
+				timeStats = currentTime + Time(1'000'000);
 			}
 
 			try
@@ -81,7 +81,7 @@ namespace
 
 				{ // send
 					uint64 total = 0;
-					while (total < deltaTime * maxBytesPerSecond / 1000000)
+					while (total < deltaTime.value * maxBytesPerSecond / 1000000)
 					{
 						uint32 bytes = randomRange(10, 2000);
 						if (udp->capacity() < bytes)

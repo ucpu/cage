@@ -42,7 +42,7 @@ namespace cage
 				std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(profiling_html().size()) + "\r\nConnection: close\r\n\r\n";
 				response.append((const char *)profiling_html().data(), profiling_html().size());
 				c->write(response);
-				threadSleep(20'000);
+				threadSleep(Time(20'000));
 				c->close();
 			}
 		};
@@ -50,29 +50,30 @@ namespace cage
 
 	namespace
 	{
-		constexpr uint64 ThreadNameSpecifier = (uint64)-2;
+		constexpr Time ThreadNameSpecifier = Time((uint64)-2);
 
 		ConfigBool confEnabled("cage/profiling/enabled", false);
 		const ConfigBool confAutoStartClient("cage/profiling/autoStartClient", true);
 
-		uint64 timestamp() noexcept
+		Time timestamp() noexcept
 		{
 			try
 			{
 				// ensures that all timestamps are unique
-				static std::atomic<uint64> atom = 0;
-				uint64 newv = applicationTime();
-				uint64 oldv = atom.load();
+				static std::atomic<Time> atom = {};
+				static_assert(decltype(atom)::is_always_lock_free);
+				Time newv = applicationTime();
+				Time oldv = atom.load();
 				do
 				{
 					if (oldv >= newv)
-						newv = oldv + 1;
+						newv = oldv + Time(1);
 				} while (!atom.compare_exchange_weak(oldv, newv));
 				return newv;
 			}
 			catch (...)
 			{
-				return m;
+				return Time(m);
 			}
 		}
 
@@ -80,8 +81,8 @@ namespace cage
 		{
 			String data;
 			StringPointer name;
-			uint64 startTime = 0;
-			uint64 endTime = 0;
+			Time startTime = {};
+			Time endTime = {};
 			uint64 threadId = 0;
 			bool framing = false;
 		};
@@ -272,7 +273,7 @@ namespace cage
 							}
 							else
 								updateDisabled();
-							threadSleep(100'000);
+							threadSleep(Time(100'000));
 						}
 						catch (...)
 						{
@@ -387,7 +388,7 @@ namespace cage
 		ev.startTime = m;
 	}
 
-	void profilingEventEnd(ProfilingEvent &ev, uint64 duration) noexcept
+	void profilingEventEnd(ProfilingEvent &ev, Time duration) noexcept
 	{
 		if (ev.startTime == m)
 			return;

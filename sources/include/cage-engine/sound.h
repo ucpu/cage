@@ -19,7 +19,7 @@ namespace cage
 		uintPtr frames() const;
 		uint32 channels() const;
 		uint32 sampleRate() const;
-		uint64 duration() const; // microseconds
+		Time duration() const; // microseconds
 
 		void decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const;
 

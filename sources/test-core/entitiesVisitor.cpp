@@ -163,7 +163,7 @@ namespace
 			entitiesVisitor([](uint32 &u) { u++; }, +man, false);
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "visitor performance", Stringizer() + "visitor avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "visitor performance", Stringizer() + "visitor avg time per cycle: " + (tmr->duration().value / TotalCycles) + " us");
 	}
 }
 

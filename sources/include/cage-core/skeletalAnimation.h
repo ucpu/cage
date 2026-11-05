@@ -37,7 +37,7 @@ namespace cage
 		uint32 channelsCount() const;
 
 		SkeletalAnimationMaskLabel maskName;
-		uint64 duration = 0;
+		Time duration = {};
 		uint32 skeletonName = 0;
 		SkeletalAnimationBlendingModeFlags blendingMode = SkeletalAnimationBlendingModeFlags::Loop;
 	};

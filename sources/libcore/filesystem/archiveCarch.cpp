@@ -406,7 +406,7 @@ namespace cage
 				}
 			}
 
-			PathLastChange lastChange(const String &path) const override
+			FileTime lastChange(const String &path) const override
 			{
 				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));

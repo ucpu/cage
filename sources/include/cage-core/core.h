@@ -84,6 +84,74 @@ namespace cage
 	using uintPtr = std::conditional_t<sizeof(void *) == 8, std::uint64_t, std::uint32_t>;
 	using sintPtr = std::conditional_t<sizeof(void *) == 8, std::int64_t, std::int32_t>;
 
+	// tagged integer (strongly typed integer)
+
+	template<class T, class Tag, bool Arithmetics>
+	requires(std::is_integral_v<T>)
+	struct TaggedInteger
+	{
+		T value = {};
+
+		constexpr auto operator<=>(const TaggedInteger &) const = default;
+		constexpr TaggedInteger operator+(const TaggedInteger &rhs) const requires(Arithmetics) { return { value + rhs.value }; }
+		constexpr TaggedInteger operator-(const TaggedInteger &rhs) const requires(Arithmetics) { return { value - rhs.value }; }
+		constexpr TaggedInteger operator*(const TaggedInteger &rhs) const requires(Arithmetics) { return { value * rhs.value }; }
+		constexpr TaggedInteger operator/(const TaggedInteger &rhs) const requires(Arithmetics) { return { value / rhs.value }; }
+		constexpr TaggedInteger operator%(const TaggedInteger &rhs) const requires(Arithmetics) { return { value % rhs.value }; }
+		constexpr TaggedInteger operator+() const requires(Arithmetics) { return *this; }
+		constexpr TaggedInteger operator-() const requires(Arithmetics) { return { -value }; }
+		constexpr TaggedInteger &operator+=(const TaggedInteger &rhs) requires(Arithmetics)
+		{
+			value += rhs.value;
+			return *this;
+		}
+		constexpr TaggedInteger &operator-=(const TaggedInteger &rhs) requires(Arithmetics)
+		{
+			value -= rhs.value;
+			return *this;
+		}
+		constexpr TaggedInteger &operator*=(const TaggedInteger &rhs) requires(Arithmetics)
+		{
+			value *= rhs.value;
+			return *this;
+		}
+		constexpr TaggedInteger &operator/=(const TaggedInteger &rhs) requires(Arithmetics)
+		{
+			value /= rhs.value;
+			return *this;
+		}
+		constexpr TaggedInteger &operator%=(const TaggedInteger &rhs) requires(Arithmetics)
+		{
+			value %= rhs.value;
+			return *this;
+		}
+		constexpr TaggedInteger &operator++() requires(Arithmetics)
+		{
+			++value;
+			return *this;
+		}
+		constexpr TaggedInteger operator++(int) requires(Arithmetics) { return { value++ }; }
+		constexpr TaggedInteger &operator--() requires(Arithmetics)
+		{
+			--value;
+			return *this;
+		}
+		constexpr TaggedInteger operator--(int) requires(Arithmetics) { return { value-- }; }
+	};
+
+	namespace tags
+	{
+		struct Microseconds;
+		struct FilesystemTimestamp;
+		struct AssetIdentifier;
+		struct EntityIdentifier;
+	}
+
+	using Time = TaggedInteger<uint64, tags::Microseconds, true>;
+	using FileTime = TaggedInteger<uint64, tags::FilesystemTimestamp, false>;
+	using AssetId = TaggedInteger<uint32, tags::AssetIdentifier, false>;
+	using EntityId = TaggedInteger<uint32, tags::EntityIdentifier, false>;
+
 	// forward declarations
 
 	namespace detail
@@ -338,7 +406,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API Time makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, PointerRange<const char> message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(const std::source_location &location, PointerRange<const char> message) noexcept;
 	}
 
@@ -664,12 +732,19 @@ namespace cage
 			// extra overloads for apple clang (macos)
 			template<class T>
 			requires(std::is_integral_v<T> && !std::is_same_v<std::remove_cv_t<T>, bool> && !std::is_same_v<std::remove_cv_t<T>, char>)
-			CAGE_FORCE_INLINE StringizerBase<N> &operator+(const T &value)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const T &value)
 			{
 				if constexpr (std::is_signed_v<T>)
 					return *this + (sint64)value;
 				else
 					return *this + (uint64)value;
+			}
+
+			// overloads for tagged integer
+			template<class T, class Tag, bool Arithmetics>
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator+(const TaggedInteger<T, Tag, Arithmetics> &value)
+			{
+				return *this + value.value;
 			}
 
 			// allow to use l-value-reference operator overloads with r-value-reference Stringizer
@@ -691,7 +766,7 @@ namespace cage
 	namespace privat
 	{
 		template<uint32 N>
-		CAGE_FORCE_INLINE uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const detail::StringizerBase<N> &message, bool continuous, bool debug) noexcept
+		CAGE_FORCE_INLINE Time makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const detail::StringizerBase<N> &message, bool continuous, bool debug) noexcept
 		{
 			return makeLog(location, severity, component, PointerRange<const char>(message.value), continuous, debug);
 		}
@@ -702,7 +777,7 @@ namespace cage
 			makeLogThrow(location, PointerRange<const char>(message.value));
 		}
 
-		CAGE_FORCE_INLINE uint64 makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const char *message, bool continuous, bool debug) noexcept
+		CAGE_FORCE_INLINE Time makeLog(const std::source_location &location, SeverityEnum severity, StringPointer component, const char *message, bool continuous, bool debug) noexcept
 		{
 			return makeLog(location, severity, component, PointerRange<const char>(message, message + detail::strlen(message)), continuous, debug);
 		}
@@ -1073,7 +1148,7 @@ namespace cage
 	};
 
 	CAGE_CORE_API MemoryArena &systemMemory();
-	CAGE_CORE_API uint64 applicationTime();
+	CAGE_CORE_API Time applicationTime();
 }
 
 #endif // guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_

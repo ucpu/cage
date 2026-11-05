@@ -72,7 +72,7 @@ namespace cage
 
 		// end thread-safe methods
 
-		void listen(const String &address = "localhost", uint16 port = 65042, uint64 listenerPeriod = 100'000);
+		void listen(const String &address = "localhost", uint16 port = 65042, Time listenerPeriod = Time(100'000));
 		bool processCustomThread(uint32 threadIndex);
 		void unloadCustomThread(uint32 threadIndex);
 		void waitTillEmpty();

@@ -40,12 +40,12 @@ namespace cage
 
 		struct InterpolationTimingCorrector
 		{
-			uint64 operator()(uint64 emit, uint64 dispatch, uint64 step)
+			Time operator()(Time emit, Time dispatch, Time step)
 			{
-				CAGE_ASSERT(step > 0);
-				corrections.add((sint64)emit - (sint64)dispatch);
+				CAGE_ASSERT(step > Time());
+				corrections.add((sint64)emit.value - (sint64)dispatch.value);
 				const sint64 c = corrections.smooth();
-				return max(emit, dispatch + c + step / 2);
+				return Time(max(emit.value, dispatch.value + c + step.value / 2));
 			}
 
 			VariableSmoothingBuffer<sint64, 60> corrections;
@@ -54,7 +54,7 @@ namespace cage
 		struct EmitBuffer : private Immovable
 		{
 			Holder<EntityManager> entities;
-			uint64 emitTime = 0;
+			Time emitTime = {};
 		};
 
 		Transform modelTransform(Entity *e, Real interpolationFactor)
@@ -125,10 +125,10 @@ namespace cage
 			std::atomic<ScreenshotStateEnum> scrnshtState = ScreenshotStateEnum::None;
 			std::optional<ScreenshotData> scrnshtData;
 
-			uint64 lastDispatchTime = 0;
+			Time lastDispatchTime = {};
 			uint32 frameIndex = 0;
 
-			std::array<uint64, 3> gpuTimes = {};
+			std::array<Time, 3> gpuTimes = {};
 			uint32 nextAllowedDrFrameIndex = 100; // do not update DR at the very start
 
 		public:
@@ -142,7 +142,7 @@ namespace cage
 				emitBuffersGuard = newSwapBufferGuard(cfg);
 			}
 
-			void emit(uint64 emitTime)
+			void emit(Time emitTime)
 			{
 				if (auto lock = emitBuffersGuard->write())
 				{
@@ -173,7 +173,7 @@ namespace cage
 				scrnshtState = ScreenshotStateEnum::Request;
 				for (uint32 i = 0; i < 1'000; i++)
 				{
-					threadSleep(5'000);
+					threadSleep(Time(5'000));
 					switch (scrnshtState)
 					{
 						case ScreenshotStateEnum::None:
@@ -244,7 +244,7 @@ namespace cage
 				CAGE_ASSERT(engineDynamicResolution().minimumScale > 0 && engineDynamicResolution().minimumScale <= 1);
 
 				const double targetTime = 1'000'000 / engineDynamicResolution().targetFps;
-				const double avgTime = (gpuTimes[0] + gpuTimes[1] + gpuTimes[2]) / 3;
+				const double avgTime = (gpuTimes[0] + gpuTimes[1] + gpuTimes[2]).value / 3;
 				Real k = dynamicResolution * targetTime / avgTime;
 				if (!valid(k))
 					return;
@@ -365,7 +365,7 @@ namespace cage
 				scrnshtState = ScreenshotStateEnum::Copying;
 			}
 
-			void dispatch(uint64 dispatchTime, Holder<GuiRender> guiBundle)
+			void dispatch(Time dispatchTime, Holder<GuiRender> guiBundle)
 			{
 				ScopeGuard scopeExit([this]() { windowTexture.clear(); });
 
@@ -385,7 +385,7 @@ namespace cage
 
 				if ((!windowTexture && !vrFrame) || !engineAssets()->get<AssetPack>(HashString("cage/cage.pack")))
 				{
-					threadSleep(15'000); // prevent fast looping when the window is minimized
+					threadSleep(Time(15'000)); // prevent fast looping when the window is minimized
 					if (scrnshtState == ScreenshotStateEnum::Request)
 						scrnshtState = ScreenshotStateEnum::Failed;
 					return;
@@ -405,10 +405,10 @@ namespace cage
 					cfg.shared.scene = +eb.entities;
 					if (!graphicsThread().disableTimePassage)
 					{
-						const uint64 period = controlThread().updatePeriod();
+						const Time period = controlThread().updatePeriod();
 						cfg.shared.currentTime = itc(eb.emitTime, dispatchTime, period);
 						cfg.shared.elapsedTime = dispatchTime - lastDispatchTime;
-						cfg.shared.interpolationFactor = saturate(Real(cfg.shared.currentTime - eb.emitTime) / period);
+						cfg.shared.interpolationFactor = saturate(Real(cfg.shared.currentTime.value - eb.emitTime.value) / period.value);
 						cfg.shared.frameIndex = frameIndex;
 					}
 					std::vector<SceneRenderCamera> cameras = generateCameras(cfg.shared, +vrFrame);
@@ -450,7 +450,7 @@ namespace cage
 		};
 	}
 
-	void EnginePrivateGraphics::emit(uint64 time)
+	void EnginePrivateGraphics::emit(Time time)
 	{
 		EnginePrivateGraphicsImpl *impl = (EnginePrivateGraphicsImpl *)this;
 		impl->emit(time);
@@ -474,7 +474,7 @@ namespace cage
 		impl->finalize();
 	}
 
-	void EnginePrivateGraphics::dispatch(uint64 time, Holder<GuiRender> guiBundle)
+	void EnginePrivateGraphics::dispatch(Time time, Holder<GuiRender> guiBundle)
 	{
 		EnginePrivateGraphicsImpl *impl = (EnginePrivateGraphicsImpl *)this;
 		impl->dispatch(time, std::move(guiBundle));

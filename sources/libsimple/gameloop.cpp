@@ -62,14 +62,14 @@ namespace cage
 		template<uint32 N>
 		struct ScopedTimer : private Immovable
 		{
-			VariableSmoothingBuffer<uint64, N> &vsb;
-			uint64 st = applicationTime();
+			VariableSmoothingBuffer<Time, N> &vsb;
+			Time st = applicationTime();
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, N> &vsb) : vsb(vsb) {}
+			explicit ScopedTimer(VariableSmoothingBuffer<Time, N> &vsb) : vsb(vsb) {}
 
 			~ScopedTimer()
 			{
-				const uint64 et = applicationTime();
+				const Time et = applicationTime();
 				vsb.add(et - st);
 			}
 		};
@@ -78,12 +78,12 @@ namespace cage
 		{
 			std::atomic<uint32> engineStarted = 0;
 			std::atomic<bool> stopping = false;
-			uint64 controlTime = 0;
+			Time controlTime = {};
 
 			VariableSmoothingBuffer<uint64, 30> profilingBufferEntities;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuTime;
+			VariableSmoothingBuffer<Time, 60> profilingBufferGpuTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferGpuMemory;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
+			VariableSmoothingBuffer<Time, 60> profilingBufferFrameTime;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
 			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
 			VariableSmoothingBuffer<Real, 60> profilingBufferDynamicResolution;
@@ -293,11 +293,11 @@ namespace cage
 				profilingBufferEntities.add(entities->count());
 				{
 					ProfilingScope profiling("control assets");
-					const uint64 start = applicationTime();
+					const Time start = applicationTime();
 					onDemand->process();
 					while (assets->processCustomThread(0))
 					{
-						if (applicationTime() > start + 5'000)
+						if (applicationTime() > start + Time(5'000))
 							break;
 					}
 				}
@@ -384,7 +384,7 @@ namespace cage
 						ScheduleCreateConfig cfg;
 						cfg.name = "control schedule";
 						cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
-						cfg.period = 1'000'000 / 20;
+						cfg.period = Time(1'000'000 / 20);
 						cfg.type = ScheduleTypeEnum::SteadyPeriodic;
 						controlUpdateSchedule = controlScheduler->newSchedule(cfg);
 					}
@@ -392,7 +392,7 @@ namespace cage
 						ScheduleCreateConfig cfg;
 						cfg.name = "inputs schedule";
 						cfg.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
-						cfg.period = 1'000'000 / 60;
+						cfg.period = Time(1'000'000 / 60);
 						cfg.type = ScheduleTypeEnum::FreePeriodic;
 						controlInputSchedule = controlScheduler->newSchedule(cfg);
 					}
@@ -400,7 +400,7 @@ namespace cage
 						ScheduleCreateConfig c;
 						c.name = "sound schedule";
 						c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
-						c.period = 1'000'000 / 20;
+						c.period = Time(1'000'000 / 20);
 						c.type = ScheduleTypeEnum::SteadyPeriodic;
 						soundUpdateSchedule = soundScheduler->newSchedule(c);
 					}
@@ -677,22 +677,22 @@ namespace cage
 		return engineData->controlScheduler.get();
 	}
 
-	uint64 EngineControlThread::updatePeriod() const
+	Time EngineControlThread::updatePeriod() const
 	{
 		return engineData->controlUpdateSchedule->period();
 	}
 
-	void EngineControlThread::updatePeriod(uint64 p)
+	void EngineControlThread::updatePeriod(Time p)
 	{
 		engineData->controlUpdateSchedule->period(p);
 	}
 
-	uint64 EngineControlThread::inputPeriod() const
+	Time EngineControlThread::inputPeriod() const
 	{
 		return engineData->controlInputSchedule->period();
 	}
 
-	void EngineControlThread::inputPeriod(uint64 p)
+	void EngineControlThread::inputPeriod(Time p)
 	{
 		engineData->controlInputSchedule->period(p);
 	}
@@ -793,7 +793,7 @@ namespace cage
 		return +engineData->guiMixer;
 	}
 
-	uint64 engineControlTime()
+	Time engineControlTime()
 	{
 		return engineData->controlTime;
 	}
@@ -840,13 +840,13 @@ namespace cage
 				switch (mode)
 				{
 					case StatisticsGuiModeEnum::Average:
-						result += s.avgDuration;
+						result += s.avgDuration.value;
 						break;
 					case StatisticsGuiModeEnum::Maximum:
-						result += s.maxDuration;
+						result += s.maxDuration.value;
 						break;
 					case StatisticsGuiModeEnum::Latest:
-						result += s.latestDuration;
+						result += s.latestDuration.value;
 						break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
@@ -861,6 +861,23 @@ namespace cage
 		}
 
 		{
+			const auto &addTime = [&](const auto &buffer)
+			{
+				switch (mode)
+				{
+					case StatisticsGuiModeEnum::Average:
+						result += buffer.smooth().value;
+						break;
+					case StatisticsGuiModeEnum::Maximum:
+						result += buffer.max().value;
+						break;
+					case StatisticsGuiModeEnum::Latest:
+						result += buffer.current().value;
+						break;
+					default:
+						CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+				}
+			};
 			const auto &add = [&](const auto &buffer)
 			{
 				switch (mode)
@@ -882,9 +899,9 @@ namespace cage
 			if (any(flags & StatisticsGuiFlags::Entities))
 				add(engineData->profilingBufferEntities);
 			if (any(flags & StatisticsGuiFlags::GpuTime))
-				add(engineData->profilingBufferGpuTime);
+				addTime(engineData->profilingBufferGpuTime);
 			if (any(flags & StatisticsGuiFlags::FrameTime))
-				add(engineData->profilingBufferFrameTime);
+				addTime(engineData->profilingBufferFrameTime);
 			if (any(flags & StatisticsGuiFlags::GpuMemory))
 				add(engineData->profilingBufferGpuMemory);
 			if (any(flags & StatisticsGuiFlags::DrawCalls))

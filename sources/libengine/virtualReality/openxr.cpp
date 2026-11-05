@@ -800,17 +800,17 @@ namespace cage
 			std::vector<XrView> views;
 			std::vector<VirtualRealityCamera> cams;
 			Transform headTransform = InvalidTransform;
-			uint64 predictedDisplayTime = 0;
+			Time predictedDisplayTime = {};
 			bool isCommited = false;
 
 			VirtualRealityGraphicsFrameImpl(VirtualRealityImpl *impl) : impl(impl)
 			{
-				predictedDisplayTime = impl->syncTime;
+				predictedDisplayTime = Time(impl->syncTime);
 
 				{
 					XrSpaceLocation location;
 					init(location, XR_TYPE_SPACE_LOCATION);
-					check(xrLocateSpace(impl->viewSpace, impl->localSpace, predictedDisplayTime, &location));
+					check(xrLocateSpace(impl->viewSpace, impl->localSpace, predictedDisplayTime.value, &location));
 					headTransform = poseToTranform(location.pose);
 				}
 
@@ -822,7 +822,7 @@ namespace cage
 					XrViewLocateInfo viewLocateInfo;
 					init(viewLocateInfo, XR_TYPE_VIEW_LOCATE_INFO);
 					viewLocateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
-					viewLocateInfo.displayTime = predictedDisplayTime;
+					viewLocateInfo.displayTime = predictedDisplayTime.value;
 					viewLocateInfo.space = impl->localSpace;
 					XrViewState viewState;
 					init(viewState, XR_TYPE_VIEW_STATE);
@@ -870,7 +870,7 @@ namespace cage
 				init(frameEndInfo, XR_TYPE_FRAME_END_INFO);
 				frameEndInfo.layerCount = submittedLayers.size();
 				frameEndInfo.layers = submittedLayers.data();
-				frameEndInfo.displayTime = predictedDisplayTime;
+				frameEndInfo.displayTime = predictedDisplayTime.value;
 				frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 				check(xrEndFrame(impl->session, &frameEndInfo));
 			}
@@ -967,11 +967,11 @@ namespace cage
 		return impl->headTransform;
 	}
 
-	uint64 VirtualRealityGraphicsFrame::displayTime() const
+	Time VirtualRealityGraphicsFrame::displayTime() const
 	{
 		const VirtualRealityGraphicsFrameImpl *impl = (const VirtualRealityGraphicsFrameImpl *)this;
 		// openxr uses nanoseconds, engine uses microseconds
-		return (impl->predictedDisplayTime - impl->impl->firstFrameTime) / 1000;
+		return Time((impl->predictedDisplayTime.value - impl->impl->firstFrameTime) / 1000);
 	}
 
 	void VirtualRealityGraphicsFrame::commit()
@@ -1020,7 +1020,7 @@ namespace cage
 		return impl->nextFrame();
 	}
 
-	uint64 VirtualReality::targetFrameTiming() const
+	Time VirtualReality::targetFrameTiming() const
 	{
 		const VirtualRealityImpl *impl = (const VirtualRealityImpl *)this;
 		if (impl->haveFbDisplayRefreshRate)
@@ -1028,9 +1028,9 @@ namespace cage
 			float fps = 0;
 			impl->check(impl->xrGetDisplayRefreshRateFB(impl->session, &fps));
 			if (fps > 1)
-				return 1'000'000 / (double)fps;
+				return Time(1'000'000 / (double)fps);
 		}
-		return 1'000'000 / 90;
+		return Time(1'000'000 / 90);
 	}
 
 	std::pair<Holder<VirtualReality>, gpu::Device> newVirtualReality(const gpu::GpuDeviceDescriptor &config)

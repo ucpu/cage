@@ -173,7 +173,7 @@ namespace cage
 		return any(pathType(path) & (PathTypeFlags::Directory | PathTypeFlags::Archive));
 	}
 
-	PathLastChange pathLastChange(const String &path)
+	FileTime pathLastChange(const String &path)
 	{
 		ScopeLock lock(fsMutex());
 		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusive);

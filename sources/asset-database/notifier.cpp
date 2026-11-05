@@ -69,7 +69,7 @@ void listen()
 	{
 		accept();
 		{
-			String path = changes->waitForChange(1000 * 200);
+			String path = changes->waitForChange(Time(200'000));
 			if (!path.empty())
 			{
 				path = pathToRel(path, database->config().inputPath);

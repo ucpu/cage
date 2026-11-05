@@ -18,7 +18,7 @@ namespace
 	public:
 		Holder<SteamServer> udp = newSteamServer({ 3210 });
 		std::vector<Holder<SteamConnection>> conns;
-		uint64 lastTime = applicationTime();
+		Time lastTime = applicationTime();
 		bool hadConnection = false;
 
 		bool service()
@@ -64,7 +64,7 @@ namespace
 		{
 			ServerImpl srv;
 			while (srv.service())
-				threadSleep(5000);
+				threadSleep(Time(5'000));
 		}
 	};
 
@@ -128,7 +128,7 @@ namespace
 		{
 			ClientImpl cl;
 			while (cl.service())
-				threadSleep(5000);
+				threadSleep(Time(5'000));
 		}
 	};
 }

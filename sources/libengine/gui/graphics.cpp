@@ -259,7 +259,7 @@ namespace cage
 		if (!valid(format.animationOffset))
 			format.animationOffset = 0;
 		evaluateImageMode(this->ndcPos, impl->outputResolution, this->uvClip, this->texture->resolution(), format.mode, impl->pointsScale);
-		this->animation = Vec4((double)(sint64)(applicationTime() - item->image.animationStart) / 1'000'000, format.animationSpeed, format.animationOffset, 0);
+		this->animation = Vec4((double)(sint64)(applicationTime() - item->image.animationStart).value / 1'000'000, format.animationSpeed, format.animationOffset, 0);
 	}
 
 	RenderableImage::~RenderableImage()

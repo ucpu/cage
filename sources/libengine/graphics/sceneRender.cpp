@@ -563,10 +563,10 @@ namespace cage
 			return anim;
 		}
 
-		CAGE_FORCE_INLINE Real animCoefficient(uint64 duration, uint64 currentTime, uint64 startTime, Real animationSpeed, Real animationOffset)
+		CAGE_FORCE_INLINE Real animCoefficient(Time duration, Time currentTime, Time startTime, Real animationSpeed, Real animationOffset)
 		{
-			duration = max(duration, uint64(1));
-			const double sample = ((double)((sint64)currentTime - (sint64)startTime) * (double)animationSpeed.value) / (double)duration + (double)animationOffset.value;
+			duration = max(duration, Time(1));
+			const double sample = ((double)((sint64)currentTime.value - (sint64)startTime.value) * (double)animationSpeed.value) / (double)duration.value + (double)animationOffset.value;
 			if (sample >= 0 && sample <= 1)
 				return sample; // already has sufficient precision and preservers looping or not
 			return (sample - std::floor(sample)) + sign(sample); // improve precision and ensure that the value stays outside looping range
@@ -726,7 +726,7 @@ namespace cage
 				}
 			}
 
-			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(void *object, const uint64 startTime, const SkeletalAnimationComponent &ps, const Model *mesh)
+			Holder<SkeletalAnimationPreparatorInstance> prepareSkeleton(void *object, const Time startTime, const SkeletalAnimationComponent &ps, const Model *mesh)
 			{
 				static_assert(std::extent_v<decltype(SkeletalAnimationPreparatorConfig::animations)> == std::extent_v<decltype(SkeletalAnimationComponent::animations)>);
 				static_assert(decltype(SkeletalAnimationLayer::maskName)::MaxLength == SkeletalAnimationMaskLabel::MaxLength);
@@ -743,7 +743,7 @@ namespace cage
 					if (!output.animation)
 						return {};
 					CAGE_ASSERT(output.animation->bonesCount() == mesh->bonesCount);
-					const uint64 time = input.startTime ? input.startTime : startTime;
+					const Time time = input.startTime > Time() ? input.startTime : startTime;
 					output.coefficient = animCoefficient(output.animation->duration, config.shared.currentTime, time, input.speed, input.offset);
 					output.weight = input.weight;
 					output.blendingMode = input.blendingMode;
@@ -787,7 +787,7 @@ namespace cage
 
 				ModelComponent render = rd.e->value<ModelComponent>();
 				ColorComponent color = rd.e->getOrDefault<ColorComponent>();
-				const uint64 startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
+				const Time startTime = rd.e->getOrDefault<SpawnTimeComponent>().spawnTime;
 
 				if (parent)
 				{
@@ -812,7 +812,7 @@ namespace cage
 
 				const ShaderAnimationComponent anim = getAnimSpeed(rd.e);
 				rd.color = initializeColor(color);
-				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
+				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime).value / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = render.renderLayer + rm.mesh->renderLayer;
 				rd.shadowCast = any(rm.mesh->renderFlags & MeshRenderFlags::ShadowCast);
 				rd.orderDependent = rd.blending = any(rm.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
@@ -835,9 +835,9 @@ namespace cage
 				rd.e = e;
 				rd.transform = modelTransform(e);
 				rd.color = initializeColor(e->getOrDefault<ColorComponent>());
-				const uint64 startTime = e->getOrDefault<SpawnTimeComponent>().spawnTime;
+				const Time startTime = e->getOrDefault<SpawnTimeComponent>().spawnTime;
 				const ShaderAnimationComponent anim = getAnimSpeed(e);
-				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime) / (double)1'000'000, anim.speed, anim.offset, 0);
+				rd.animation = Vec4((double)(sint64)(config.shared.currentTime - startTime).value / (double)1'000'000, anim.speed, anim.offset, 0);
 				rd.renderLayer = ic.renderLayer + ri.mesh->renderLayer;
 				rd.shadowCast = any(ri.mesh->renderFlags & MeshRenderFlags::ShadowCast);
 				rd.orderDependent = rd.blending = any(ri.mesh->renderFlags & (MeshRenderFlags::Transparent | MeshRenderFlags::Fade)) || rd.color[3] < 1;
@@ -1646,7 +1646,7 @@ namespace cage
 					viewport.ambientLight = Vec4(colorGammaToLinear(camera.camera.ambientColor) * camera.camera.ambientIntensity, 0);
 					viewport.skyLight = Vec4(colorGammaToLinear(camera.camera.skyColor) * camera.camera.skyIntensity, 0);
 					viewport.viewport = Vec4(Vec2(), Vec2(camera.resolution));
-					viewport.time = Vec4(scene.config.shared.frameIndex % 10'000, (scene.config.shared.currentTime % uint64(1e6)) / 1e6, (scene.config.shared.currentTime % uint64(1e9)) / 1e9, 0);
+					viewport.time = Vec4(scene.config.shared.frameIndex % 10'000, (scene.config.shared.currentTime.value % (uint64)1'000'000) / 1e6, (scene.config.shared.currentTime.value % (uint64)1'000'000'000) / 1e9, 0);
 					buffViewport = newGraphicsBuffer(scene.config.shared.device, sizeof(viewport), "UniViewport");
 					buffViewport->writeStruct(viewport);
 				}

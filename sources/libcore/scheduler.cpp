@@ -14,10 +14,10 @@ namespace cage
 	{
 		struct ScheduleStatisticsImpl : public ScheduleStatistics
 		{
-			VariableSmoothingBuffer<uint64, 30> delays;
-			VariableSmoothingBuffer<uint64, 30> durations;
+			VariableSmoothingBuffer<Time, 30> delays;
+			VariableSmoothingBuffer<Time, 30> durations;
 
-			void add(uint64 delay, uint64 duration)
+			void add(Time delay, Time duration)
 			{
 				delays.add(delay);
 				durations.add(duration);
@@ -41,7 +41,7 @@ namespace cage
 			const ScheduleCreateConfig conf;
 			Holder<ScheduleStatisticsImpl> stats;
 			SchedulerImpl *schr = nullptr;
-			uint64 sched = m;
+			Time sched = Time(m);
 			sint32 pri = 0;
 			std::atomic<bool> active = false;
 
@@ -58,15 +58,15 @@ namespace cage
 		class SchedulerImpl : public Scheduler
 		{
 		public:
-			VariableSmoothingBuffer<uint64, 100> utilUse, utilSleep;
+			VariableSmoothingBuffer<Time, 100> utilUse, utilSleep;
 			VariableSmoothingBuffer<float, 50> utilSmooth;
 			const SchedulerCreateConfig conf;
 			std::vector<Holder<ScheduleImpl>> scheds;
 			std::vector<ScheduleImpl *> tmp;
 			Holder<Timer> realTimer = newTimer();
-			uint64 realDrift = 0; // offset for the real timer, this happens when switching lockstep mode
-			uint64 t = 0; // current time for scheduling events
-			uint64 lastTime = 0; // time at which the last schedule was run
+			Time realDrift = {}; // offset for the real timer, this happens when switching lockstep mode
+			Time t = {}; // current time for scheduling events
+			Time lastTime = {}; // time at which the last schedule was run
 			sint32 lastPriority = 0;
 			std::atomic<bool> stopping = false;
 			bool lockstepApi = false;
@@ -76,13 +76,13 @@ namespace cage
 
 			void reset()
 			{
-				utilUse.seed(0);
-				utilSleep.seed(0);
-				utilSmooth.seed(0);
+				utilUse.seed();
+				utilSleep.seed();
+				utilSmooth.seed();
 				realTimer->reset();
-				realDrift = 0;
-				t = 0;
-				lastTime = 0;
+				realDrift = {};
+				t = {};
+				lastTime = {};
 				lastPriority = 0;
 				for (const auto &it : scheds)
 				{
@@ -141,13 +141,13 @@ namespace cage
 				}
 			}
 
-			uint64 adjustedRealTime() const { return realTimer->duration() + realDrift; }
+			Time adjustedRealTime() const { return realTimer->duration() + realDrift; }
 
-			uint64 currentTime() const { return lockstepEffective ? t : adjustedRealTime(); }
+			Time currentTime() const { return lockstepEffective ? t : adjustedRealTime(); }
 
-			uint64 minimalScheduleTime() const
+			Time minimalScheduleTime() const
 			{
-				uint64 res = m;
+				Time res = m;
 				for (const auto &it : scheds)
 				{
 					if (it->conf.type == ScheduleTypeEnum::Empty)
@@ -159,11 +159,13 @@ namespace cage
 				return res;
 			}
 
-			void utilAdd(uint64 duration, bool slept)
+			void utilAdd(Time duration, bool slept)
 			{
-				utilUse.add(duration * !slept);
-				utilSleep.add(duration * slept);
-				const float util = (double(utilUse.sum()) + 1) / double(utilUse.sum() + utilSleep.sum() + 1);
+				if (slept)
+					utilSleep.add(duration);
+				else
+					utilUse.add(duration);
+				const float util = (double(utilUse.sum().value) + 1) / double(utilUse.sum().value + utilSleep.sum().value + 1);
 				utilSmooth.add(util);
 			}
 
@@ -172,8 +174,8 @@ namespace cage
 				CAGE_ASSERT(!lockstepEffective);
 				ProfilingScope profiling("scheduler sleep");
 				activateAllEmpty();
-				const uint64 mst = minimalScheduleTime();
-				const uint64 s = mst < t ? 0 : min(mst - t, conf.maxSleepDuration);
+				const Time mst = minimalScheduleTime();
+				const Time s = mst < t ? Time() : min(mst - t, conf.maxSleepDuration);
 				profiling.set(Stringizer() + "requested sleep: " + s + " us");
 				threadSleep(s);
 				utilAdd(s, true);
@@ -198,9 +200,9 @@ namespace cage
 				lastPriority = s->pri;
 				s->pri = s->conf.priority;
 				s->active = false;
-				const uint64 start = currentTime();
+				const Time start = currentTime();
 				s->run(); // likely to throw
-				const uint64 end = currentTime();
+				const Time end = currentTime();
 				if (s->stats)
 					s->stats->add(start - s->sched, end - start);
 				utilAdd(end - start, false);
@@ -210,11 +212,11 @@ namespace cage
 						return s->detach();
 					case ScheduleTypeEnum::SteadyPeriodic:
 					{
-						const uint64 skip = (end - s->sched) / s->conf.period;
+						const uint64 skip = ((end - s->sched) / s->conf.period).value;
 						if (skip >= s->conf.maxSteadyPeriods)
 						{
 							//CAGE_LOG(SeverityEnum::Warning, "scheduler", Stringizer() + "schedule: " + s->conf.name + ", cannot keep up and will skip " + skip + " iterations");
-							s->sched += skip * s->conf.period;
+							s->sched += Time(skip) * s->conf.period;
 						}
 						else
 							s->sched += s->conf.period;
@@ -315,14 +317,14 @@ namespace cage
 			vec.erase(it);
 	}
 
-	void Schedule::period(uint64 p)
+	void Schedule::period(Time p)
 	{
 		ScheduleImpl *impl = (ScheduleImpl *)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::SteadyPeriodic || impl->conf.type == ScheduleTypeEnum::FreePeriodic);
 		const_cast<ScheduleCreateConfig &>(impl->conf).period = p;
 	}
 
-	uint64 Schedule::period() const
+	Time Schedule::period() const
 	{
 		const ScheduleImpl *impl = (const ScheduleImpl *)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::SteadyPeriodic || impl->conf.type == ScheduleTypeEnum::FreePeriodic);
@@ -341,7 +343,7 @@ namespace cage
 		return impl->pri;
 	}
 
-	uint64 Schedule::time() const
+	Time Schedule::time() const
 	{
 		const ScheduleImpl *impl = (const ScheduleImpl *)this;
 		return impl->sched;
@@ -400,7 +402,7 @@ namespace cage
 		return impl->lockstepApi;
 	}
 
-	uint64 Scheduler::latestTime() const
+	Time Scheduler::latestTime() const
 	{
 		const SchedulerImpl *impl = (const SchedulerImpl *)this;
 		return impl->lastTime;

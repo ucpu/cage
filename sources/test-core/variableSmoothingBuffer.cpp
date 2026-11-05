@@ -51,6 +51,22 @@ void testVariableSmoothingBuffer()
 	}
 
 	{
+		CAGE_TESTCASE("smoothing with time");
+		VariableSmoothingBuffer<Time, 3> v;
+		CAGE_TEST(v.current() == Time());
+		v.seed(Time(13));
+		v.add(Time(90));
+		v.add(Time(30));
+		v.add(Time(50));
+		v.add(Time(10));
+		CAGE_TEST(v.current() == Time(10));
+		CAGE_TEST(v.oldest() == Time(30));
+		CAGE_TEST(v.smooth() == Time(30));
+		CAGE_TEST(v.max() == Time(50));
+		CAGE_TEST(v.min() == Time(10));
+	}
+
+	{
 		CAGE_TESTCASE("smoothing with quat");
 		VariableSmoothingBuffer<Quat, 4> v;
 		v.seed(Quat(Degs(50), Degs(), Degs()));

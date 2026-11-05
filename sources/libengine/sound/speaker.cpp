@@ -128,23 +128,23 @@ namespace cage
 			lock_free_audio_ring_buffer<float> ring;
 			Delegate<void(const SoundCallbackData &)> callback;
 			std::vector<float> buffer;
-			uint64 playbackTime = applicationTime();
+			Time playbackTime = applicationTime();
 			const uint32 channels = 0;
 			const uint32 sampleRate = 0;
 
 			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SoundCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate) {}
 
-			void process(uint64 expectedPeriod)
+			void process(Time expectedPeriod)
 			{
 				// maintain consistent delay
 				const uint32 assumedOccupied = ring.capacity() - ring.available_write();
-				const uint32 intendedOccupied = expectedPeriod * 2 * sampleRate / 1'000'000;
+				const uint32 intendedOccupied = expectedPeriod.value * 2 * sampleRate / 1'000'000;
 				const uint32 request = intendedOccupied > assumedOccupied ? intendedOccupied - assumedOccupied : 0;
 
 				SoundCallbackData data;
 				data.frames = min(request, numeric_cast<uint32>(ring.available_write()));
-				data.time = playbackTime; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
-				playbackTime += request * 1'000'000 / sampleRate;
+				data.time = playbackTime.value; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
+				playbackTime += Time(request * 1'000'000 / sampleRate);
 				if (request > data.frames)
 				{
 					// sound buffer overflow
@@ -276,7 +276,7 @@ namespace cage
 				if (started)
 					cubeb_stream_stop(stream); // no check for error
 				cubeb_stream_destroy(stream);
-				threadSleep(100); // give enough time for the audio thread to finish
+				threadSleep(Time(100)); // give enough time for the audio thread to finish
 			}
 
 			void start()
@@ -295,7 +295,7 @@ namespace cage
 				cageCheckCubebError(cubeb_stream_stop(stream));
 			}
 
-			void process(uint64 expectedPeriod)
+			void process(Time expectedPeriod)
 			{
 				if (ringBuffer)
 					ringBuffer->process(expectedPeriod);
@@ -371,7 +371,7 @@ namespace cage
 		return impl->started;
 	}
 
-	void Speaker::process(uint64 expectedPeriod)
+	void Speaker::process(Time expectedPeriod)
 	{
 		SpeakerImpl *impl = (SpeakerImpl *)this;
 		impl->process(expectedPeriod);

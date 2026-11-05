@@ -875,22 +875,22 @@ namespace cage
 				}
 			}
 
-			void sleep(uint64 micros)
+			void sleep(Time micros)
 			{
-				const uint64 start = tmr->duration();
-				const uint64 target = start + micros;
+				const Time start = tmr->duration();
+				const Time target = start + micros;
 
 				// increase scheduler precision
 				AutoTimeBeginPeriod timePeriod(caps.wPeriodMin);
 
 				// efficient sleep up until one scheduler period before the target time
-				const uint64 threshold = caps.wPeriodMin * uint64(1'200);
+				const Time threshold = Time(caps.wPeriodMin * uint64(1'200));
 				if (micros > threshold)
 				{
 					if (handle)
 					{
 						LARGE_INTEGER due;
-						due.QuadPart = -(sint64)((micros - threshold) * 10); // micros -> 100s nanoseconds, negative to make the sleep relative
+						due.QuadPart = -(sint64)((micros - threshold).value * 10); // micros -> 100s nanoseconds, negative to make the sleep relative
 						if (!SetWaitableTimerEx(handle, &due, 0, nullptr, nullptr, nullptr, 0))
 						{
 							auto err = GetLastError();
@@ -900,7 +900,7 @@ namespace cage
 					}
 					else
 					{ // fallback in case that the high-precision timer is not available
-						const uint64 t = (micros - threshold) / 1000;
+						const uint64 t = (micros - threshold).value / 1000;
 						if (t > 0)
 							Sleep(t);
 					}
@@ -914,17 +914,17 @@ namespace cage
 #endif
 	}
 
-	void threadSleep(uint64 micros)
+	void threadSleep(Time micros)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		// windows Sleep has millisecond precision only
+		// windows Sleep has millisecond precision only, use higher precision timer instead
 		thread_local WinTimer timer;
 		timer.sleep(micros);
 
 #else
 
-		usleep(micros);
+		usleep(micros.value);
 
 #endif
 	}

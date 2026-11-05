@@ -48,7 +48,7 @@ namespace cage
 
 		// time elapsed since first frame
 		// warning: this time is not related to the application time
-		uint64 displayTime() const;
+		Time displayTime() const;
 
 		// mark that textures will be rendered and valid for submission
 		void commit();
@@ -70,7 +70,7 @@ namespace cage
 		// waits for the virtual reality runtime to get ready for next frame
 		Holder<VirtualRealityGraphicsFrame> nextFrame();
 
-		uint64 targetFrameTiming() const;
+		Time targetFrameTiming() const;
 	};
 
 	CAGE_ENGINE_API std::pair<Holder<VirtualReality>, gpu::Device> newVirtualReality(const gpu::GpuDeviceDescriptor &config);

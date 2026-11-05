@@ -36,10 +36,10 @@ namespace cage
 		uint64 gpuMemory = 0;
 
 		// frame duration measured on gpu, few frames ago
-		uint64 gpuTime = 0;
+		Time gpuTime = {};
 
 		// last frame duration measured on cpu
-		uint64 frameTime = 0;
+		Time frameTime = {};
 
 		// outstanding pipelines waiting for compilation
 		uint32 pipelinesCompiling = 0;

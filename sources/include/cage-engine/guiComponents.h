@@ -12,7 +12,7 @@ namespace cage
 	namespace detail
 	{
 		CAGE_ENGINE_API extern uint32 GuiTextFontDefault;
-		CAGE_ENGINE_API extern uint64 GuiTooltipDelayDefault;
+		CAGE_ENGINE_API extern Time GuiTooltipDelayDefault;
 	}
 
 	struct CAGE_ENGINE_API GuiSkinIndex
@@ -34,7 +34,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiImageComponent
 	{
-		uint64 animationStart = m; // -1 will be replaced by current time
+		Time animationStart = Time(m); // -1 will be replaced by current time
 		Vec2 textureUvOffset;
 		Vec2 textureUvSize = Vec2(1);
 		uint32 textureName = 0;
@@ -138,7 +138,7 @@ namespace cage
 	{
 		using TooltipCallback = Delegate<void(const GuiTooltipConfig &)>;
 		TooltipCallback tooltip;
-		uint64 delay = detail::GuiTooltipDelayDefault; // duration to hold cursor over the widget before showing the tooltip
+		Time delay = detail::GuiTooltipDelayDefault; // duration to hold cursor over the widget before showing the tooltip
 		bool enableForDisabled = true; // allow showing the tooltip even if the widget is disabled
 	};
 

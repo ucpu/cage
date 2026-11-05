@@ -16,7 +16,7 @@ void testNetworkDiscovery()
 		srv->message = Stringizer() + "Hi " + round;
 		srv->update();
 		clt->update();
-		threadSleep(1000 * 10);
+		threadSleep(Time(10'000));
 	}
 
 	const auto peers = clt->peers();

@@ -869,7 +869,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "meshImport", Stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 				}
 
-				const uint64 duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
+				const Time duration = Time(numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0)));
 				const uint32 skeletonBonesCount = skeleton->bonesCount();
 
 				uint32 totalKeys = 0;

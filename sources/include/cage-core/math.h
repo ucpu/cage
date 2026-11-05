@@ -1046,6 +1046,17 @@ namespace cage
 	GCHL_GENERATE(Degs);
 #undef GCHL_GENERATE
 
+	template<class T, class Tag, bool Arithmetics>
+	CAGE_FORCE_INLINE constexpr TaggedInteger<T, Tag, Arithmetics> min(const TaggedInteger<T, Tag, Arithmetics> &a, const TaggedInteger<T, Tag, Arithmetics> &b)
+	{
+		return { min(a.value, b.value) };
+	}
+	template<class T, class Tag, bool Arithmetics>
+	CAGE_FORCE_INLINE constexpr TaggedInteger<T, Tag, Arithmetics> max(const TaggedInteger<T, Tag, Arithmetics> &a, const TaggedInteger<T, Tag, Arithmetics> &b)
+	{
+		return { max(a.value, b.value) };
+	}
+
 #define GCHL_GENERATE(TYPE) \
 	CAGE_FORCE_INLINE constexpr TYPE saturate(TYPE v) \
 	{ \

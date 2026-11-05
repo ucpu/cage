@@ -21,7 +21,7 @@ namespace cage
 #ifdef CAGE_PROFILING_ENABLED
 		String data;
 		StringPointer name;
-		uint64 startTime = m;
+		Time startTime = { m };
 		bool framing = false;
 #endif
 		GCHL_PROFILING_API void set(const String &data) GCHL_PROFILING_BODY(;);
@@ -30,7 +30,7 @@ namespace cage
 	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name) noexcept GCHL_PROFILING_BODY(return {};);
 	[[nodiscard]] GCHL_PROFILING_API ProfilingEvent profilingEventBegin(StringPointer name, ProfilingFrameTag) noexcept GCHL_PROFILING_BODY(return {};);
 	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev) noexcept GCHL_PROFILING_BODY(;);
-	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev, uint64 duration) noexcept GCHL_PROFILING_BODY(;);
+	GCHL_PROFILING_API void profilingEventEnd(ProfilingEvent &ev, Time duration) noexcept GCHL_PROFILING_BODY(;);
 
 	struct ProfilingScope : private Noncopyable
 	{

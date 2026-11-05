@@ -143,9 +143,9 @@ namespace cage
 		return impl->sampleRate;
 	}
 
-	uint64 Sound::duration() const
+	Time Sound::duration() const
 	{
-		return (uint64)1'000'000 * frames() / sampleRate();
+		return Time((uint64)1'000'000 * frames() / sampleRate());
 	}
 
 	void Sound::decode(sintPtr startFrame, PointerRange<float> buffer, bool loop) const

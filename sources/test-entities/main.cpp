@@ -482,14 +482,14 @@ struct Performance
 
 void performanceLoop()
 {
-	std::vector<uint64> timings;
+	std::vector<Time> timings;
 	Holder<Timer> timer = newTimer();
 	for (uint32 i = 0; i < 10; i++)
 	{
 		Performance p;
 		timer->reset();
 		p.run();
-		const uint64 d = timer->duration();
+		const Time d = timer->duration();
 		timings.push_back(d);
 		CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "duration: " + d + " us");
 	}
@@ -498,10 +498,10 @@ void performanceLoop()
 	timings.pop_back();
 	timings.erase(timings.begin()); // ignore fastest
 	timings.erase(timings.begin());
-	uint64 sum = 0;
-	for (uint64 i : timings)
+	Time sum = {};
+	for (Time i : timings)
 		sum += i;
-	sum /= timings.size();
+	sum.value /= timings.size();
 	CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + "average: " + sum + " us");
 }
 

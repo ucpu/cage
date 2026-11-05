@@ -42,9 +42,9 @@ namespace cage
 	// used by animations and sounds
 	struct CAGE_ENGINE_API SpawnTimeComponent
 	{
-		uint64 spawnTime = 0; // automatically initialized by the engine
+		Time spawnTime = {}; // automatically initialized by the engine
 
-		inline SpawnTimeComponent &operator=(const uint32 v)
+		inline SpawnTimeComponent &operator=(const Time v)
 		{
 			spawnTime = v;
 			return *this;
@@ -71,7 +71,7 @@ namespace cage
 	struct CAGE_ENGINE_API SkeletalAnimationLayer
 	{
 		detail::StringBase<26> maskName;
-		uint64 startTime = 0; // defaults to the spawn time
+		Time startTime = {}; // defaults to the spawn time
 		uint32 animation = 0;
 		Real weight = 1;
 		Real speed = 1;

@@ -14,8 +14,8 @@ namespace cage
 
 	struct CAGE_CORE_API GinnelStatistics
 	{
-		uint64 timestamp = 0;
-		uint64 roundTripDuration = 0;
+		Time timestamp = {};
+		Time roundTripDuration = {};
 		uint64 estimatedBandwidth = 0; // bytes per second
 		uint64 bytesReceivedTotal = 0, bytesSentTotal = 0, bytesDeliveredTotal = 0;
 		uint64 bytesReceivedLately = 0, bytesSentLately = 0, bytesDeliveredLately = 0;
@@ -65,7 +65,7 @@ namespace cage
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
 	// zero timeout will return immediately and the connection will be established progressively as you use it
-	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, uint64 timeout);
+	CAGE_CORE_API Holder<GinnelConnection> newGinnelConnection(const String &address, uint16 port, Time timeout);
 
 	class CAGE_CORE_API GinnelServer : private Immovable
 	{

@@ -90,8 +90,8 @@ namespace
 			{
 				Holder<Thread> t1 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::consumer>(this), "consumer");
 				Holder<Thread> t2 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::producer>(this), "producer");
-				while (read < 2000)
-					threadSleep(1000);
+				while (read < 2'000)
+					threadSleep(Time(1'000));
 				running = false;
 			}
 			CAGE_LOG(SeverityEnum::Info, "swapBufferController", Stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);

@@ -149,7 +149,7 @@ namespace cage
 
 	namespace
 	{
-		void findFiles(AssetsDatabaseImpl *impl, std::map<String, PathLastChange, StringComparatorFast> &files, const String &path)
+		void findFiles(AssetsDatabaseImpl *impl, std::map<String, FileTime, StringComparatorFast> &files, const String &path)
 		{
 			const String pth = pathJoin(impl->config.inputPath, path);
 			const auto list = pathListDirectory(pth);
@@ -178,7 +178,7 @@ namespace cage
 
 		CAGE_LOG(SeverityEnum::Info, "database", "searching for modified assets");
 
-		std::map<String, PathLastChange, StringComparatorFast> files;
+		std::map<String, FileTime, StringComparatorFast> files;
 		findFiles(this, files, "");
 
 		for (auto asIt = assets.begin(); asIt != assets.end();)
@@ -224,7 +224,7 @@ namespace cage
 		{ // update modification time
 			lastModificationTime = {};
 			for (const auto &f : files)
-				lastModificationTime.data = max(lastModificationTime.data, f.second.data);
+				lastModificationTime = max(lastModificationTime, f.second);
 		}
 
 		{ // check for output hash collisions

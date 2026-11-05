@@ -82,7 +82,7 @@ namespace cage
 	{
 	public:
 		void registerPath(const String &path);
-		String waitForChange(uint64 time = m);
+		String waitForChange(Time time = m);
 	};
 
 	CAGE_CORE_API Holder<FilesystemWatcher> newFilesystemWatcher();
@@ -106,13 +106,7 @@ namespace cage
 
 	// path modification time is not related to any other source of time
 	// the only valid operation is to compare it to repeated calls to pathLastChange
-	struct CAGE_CORE_API PathLastChange
-	{
-		uint64 data = 0;
-		auto operator<=>(const PathLastChange &) const = default;
-		bool operator==(const PathLastChange &) const = default;
-	};
-	CAGE_CORE_API PathLastChange pathLastChange(const String &path);
+	CAGE_CORE_API FileTime pathLastChange(const String &path);
 
 	// enumerate all files and folders in a directory
 	// returns absolute paths
@@ -133,7 +127,7 @@ namespace cage
 	// /abc/def001.txt
 	// /abc/def002.txt etc.
 	// and stops searching on first path that does not exist (except all zeros)
-	CAGE_CORE_API Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute = '$', uint32 limit = 1000);
+	CAGE_CORE_API Holder<PointerRange<String>> pathSearchSequence(const String &pattern, char substitute = '$', uint32 limit = 1'000);
 
 	// create all parent folders for the entire path
 	CAGE_CORE_API void pathCreateDirectories(const String &path);

@@ -47,7 +47,7 @@ namespace cage
 			Holder<privat::WindowGpuContext> graphicsContext;
 			ConcurrentQueue<GenericInput, RingBuffer> eventsQueue;
 			FlatSet<uint32> stateKeys;
-			uint64 lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
+			Time lastMouseButtonPressTimes[5] = {}; // unused, left, right, unused, middle
 			Vec2 lastMouseButtonPressPositions[5] = {};
 			Vec2 lastRelativePosition;
 			Vec2 stateMousePosition;
@@ -83,7 +83,7 @@ namespace cage
 						ScopeLock l(privat::glfwMutex());
 						glfwPollEvents();
 					}
-					threadSleep(5'000);
+					threadSleep(Time(5'000));
 				}
 				finalizeWindow();
 			}
@@ -158,12 +158,12 @@ namespace cage
 			bool determineMouseDoubleClick(MouseButtonsFlags buttons, Vec2 cp)
 			{
 				CAGE_ASSERT((uint32)buttons < array_size(lastMouseButtonPressTimes));
-				const uint64 ct = applicationTime();
-				uint64 &lt = lastMouseButtonPressTimes[(uint32)buttons];
+				const Time ct = applicationTime();
+				Time &lt = lastMouseButtonPressTimes[(uint32)buttons];
 				Vec2 &lp = lastMouseButtonPressPositions[(uint32)buttons];
-				if (ct - lt < 300'000 && distance(cp, lp) < 10)
+				if (ct - lt < Time(300'000) && distance(cp, lp) < 10)
 				{
-					lt = 0;
+					lt = {};
 					return true;
 				}
 				else

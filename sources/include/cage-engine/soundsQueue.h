@@ -10,7 +10,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundEventConfig
 	{
-		uint64 maxDelay = 2'000'000;
+		Time maxDelay = Time(2'000'000);
 		sint32 priority = 0;
 		Real gain = 1;
 	};
@@ -28,8 +28,8 @@ namespace cage
 		void stop();
 
 		bool playing() const;
-		uint64 elapsedTime() const;
-		uint64 remainingTime() const;
+		Time elapsedTime() const;
+		Time remainingTime() const;
 
 		// called in sound thread
 		void process(const SoundCallbackData &data);

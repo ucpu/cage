@@ -17,7 +17,7 @@ namespace cage
 		class TimerImpl : public Timer
 		{
 		public:
-			uint64 last = 0; // in micros
+			Time last = {};
 
 #ifdef CAGE_SYSTEM_WINDOWS
 			LARGE_INTEGER begin = {}; // in counts
@@ -45,9 +45,9 @@ namespace cage
 
 #else
 
-		uint64 convert(const struct timespec &t)
+		Time convert(const struct timespec &t)
 		{
-			return t.tv_sec * 1000000 + t.tv_nsec / 1000;
+			return Time(t.tv_sec * (uint64)1'000'000 + t.tv_nsec / (uint64)1'000);
 		}
 
 #endif
@@ -61,10 +61,10 @@ namespace cage
 #else
 		clock_gettime(clockid, &impl->begin);
 #endif
-		impl->last = 0;
+		impl->last = {};
 	}
 
-	uint64 Timer::duration()
+	Time Timer::duration()
 	{
 		TimerImpl *impl = (TimerImpl *)this;
 
@@ -72,7 +72,7 @@ namespace cage
 
 		LARGE_INTEGER curr;
 		QueryPerformanceCounter(&curr);
-		return 1000000 * (curr.QuadPart - impl->begin.QuadPart) / frequency().QuadPart;
+		return Time((uint64)1'000'000 * (curr.QuadPart - impl->begin.QuadPart) / frequency().QuadPart);
 
 #else
 
@@ -83,11 +83,11 @@ namespace cage
 #endif
 	}
 
-	uint64 Timer::elapsed()
+	Time Timer::elapsed()
 	{
 		TimerImpl *impl = (TimerImpl *)this;
-		uint64 curr = duration();
-		uint64 res = curr - impl->last;
+		Time curr = duration();
+		Time res = curr - impl->last;
 		impl->last = curr;
 		return res;
 	}

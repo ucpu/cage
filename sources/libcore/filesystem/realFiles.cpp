@@ -681,7 +681,7 @@ namespace cage
 				}
 			}
 
-			PathLastChange lastChange(const String &path_) const override
+			FileTime lastChange(const String &path_) const override
 			{
 				ScopeLock lock(fsMutex());
 				const String path = pathJoin(myPath, path_);
@@ -703,11 +703,11 @@ namespace cage
 				l.LowPart = ftWrite.dwLowDateTime;
 				l.HighPart = ftWrite.dwHighDateTime;
 				CloseHandle(hFile);
-				return PathLastChange{ numeric_cast<uint64>(l.QuadPart) };
+				return FileTime(numeric_cast<uint64>(l.QuadPart));
 #else
 				struct stat st;
 				if (stat(pathToAbs(path).c_str(), &st) == 0)
-					return PathLastChange{ numeric_cast<uint64>(st.st_mtime) };
+					return FileTime(numeric_cast<uint64>(st.st_mtime));
 				CAGE_LOG_THROW(Stringizer() + "path: " + path);
 				CAGE_THROW_ERROR(SystemError, "stat", errno);
 #endif

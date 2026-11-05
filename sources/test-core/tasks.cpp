@@ -690,8 +690,8 @@ namespace
 		Sorter s;
 		s.data = data;
 		Holder<Timer> tmr = newTimer();
-		uint64 durations[31];
-		for (uint64 &duration : durations)
+		Time durations[31];
+		for (Time &duration : durations)
 		{
 			for (uint32 &it : data)
 				it = randomRange(0u, 1000000u);

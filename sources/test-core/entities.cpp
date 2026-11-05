@@ -471,7 +471,7 @@ namespace
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "entities performance", Stringizer() + "simulation avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "entities performance", Stringizer() + "simulation avg time per cycle: " + (tmr->duration().value / TotalCycles) + " us");
 	}
 }
 

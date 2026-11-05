@@ -113,7 +113,7 @@ namespace cage
 		impl->channelsMapping.clear();
 		impl->channels.clear();
 		impl->maskName = {};
-		impl->duration = 0;
+		impl->duration = {};
 		impl->skeletonName = 0;
 		impl->blendingMode = SkeletalAnimationBlendingModeFlags::Default;
 	}
