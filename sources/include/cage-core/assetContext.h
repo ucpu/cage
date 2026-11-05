@@ -25,15 +25,15 @@ namespace cage
 	{
 		AssetLabel textId;
 		Holder<void> customData;
-		Holder<PointerRange<uint32>> dependencies;
+		Holder<PointerRange<AssetId>> dependencies;
 		Holder<PointerRange<char>> compressedData;
 		Holder<PointerRange<char>> originalData;
 		Holder<void> assetHolder;
 		const AssetsManager *const assetsManager = nullptr;
-		const uint32 assetId = 0;
+		const AssetId assetId = {};
 		uint32 scheme = m;
 
-		AssetContext(AssetsManager *assetsManager, uint32 assetId) : assetsManager(assetsManager), assetId(assetId) {}
+		AssetContext(AssetsManager *assetsManager, AssetId assetId) : assetsManager(assetsManager), assetId(assetId) {}
 	};
 }
 

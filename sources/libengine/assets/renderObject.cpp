@@ -27,7 +27,7 @@ namespace cage
 
 			PointerRange<const Real> thresholds = bufferCast<const Real>(des.read(h.lodsCount * sizeof(Real)));
 			PointerRange<const uint32> indices = bufferCast<const uint32>(des.read((h.lodsCount + 1) * sizeof(uint32)));
-			PointerRange<const uint32> names = bufferCast<const uint32>(des.read(h.modelsCount * sizeof(uint32)));
+			PointerRange<const AssetId> names = bufferCast<const AssetId>(des.read(h.modelsCount * sizeof(AssetId)));
 			obj->setLods(thresholds, indices, names);
 
 			context->assetHolder = std::move(obj).cast<void>();

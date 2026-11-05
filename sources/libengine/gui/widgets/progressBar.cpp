@@ -23,7 +23,7 @@ namespace cage
 					imageCreate(hierarchy);
 					hierarchy->image->skipInitialize = true;
 					GuiImageComponent i;
-					i.textureName = skin->defaults.progressBar.fillingTextureName;
+					i.textureId = skin->defaults.progressBar.fillingTextureName;
 					hierarchy->image->assign(i);
 					hierarchy->image->format.animationSpeed = 0;
 					hierarchy->image->format.animationOffset = data.progress;

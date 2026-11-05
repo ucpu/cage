@@ -32,7 +32,7 @@ void processAnimation()
 	Holder<SkeletalAnimation> anim = result.animations[chosenAnimationIndex].animation.share();
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "duration: " + anim->duration + " microseconds");
 
-	const uint32 skeletonName = []()
+	const AssetId skeletonId = []()
 	{
 		String n = processor->property("skeleton");
 		if (n.empty())
@@ -43,7 +43,7 @@ void processAnimation()
 		processor->writeLine(String("ref = ") + n);
 		return HashString(n);
 	}();
-	anim->skeletonName = skeletonName;
+	anim->skeletonId = skeletonId;
 	anim->blendingMode = SkeletalAnimationBlendingModeFlags::None;
 	if (toBool(processor->property("additive")))
 		anim->blendingMode |= SkeletalAnimationBlendingModeFlags::Additive;
@@ -62,7 +62,7 @@ void processAnimation()
 	h.dependenciesCount = 1;
 	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
-	f->write(bufferView(skeletonName));
+	f->write(bufferView(skeletonId));
 	f->write(comp);
 	f->close();
 }

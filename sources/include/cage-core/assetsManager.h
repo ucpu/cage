@@ -32,22 +32,22 @@ namespace cage
 
 		// begin thread-safe methods
 
-		void load(uint32 assetId);
-		void unload(uint32 assetId);
-		void reload(uint32 assetId);
+		void load(AssetId assetId);
+		void unload(AssetId assetId);
+		void reload(AssetId assetId);
 		void reloadAll();
 
-		uint32 generateUniqueId();
+		AssetId generateUniqueId();
 
 		template<uint32 Scheme, class T>
-		void loadValue(uint32 assetId, Holder<T> &&value, const String &textId = "")
+		void loadValue(AssetId assetId, Holder<T> &&value, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
 			load_(Scheme, assetId, textId, std::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
-		void loadCustom(uint32 assetId, const AssetsScheme &customScheme, Holder<void> &&customData, const String &textId = "")
+		void loadCustom(AssetId assetId, const AssetsScheme &customScheme, Holder<void> &&customData, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
 			load_(Scheme, assetId, textId, customScheme, std::move(customData));
@@ -55,7 +55,7 @@ namespace cage
 
 		// returns null if the asset is not yet loaded, failed to load, or has different scheme
 		template<uint32 Scheme, class T>
-		Holder<T> get(uint32 assetId) const
+		Holder<T> get(AssetId assetId) const
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
 			return get1_(Scheme, assetId).template cast<T>();
@@ -63,12 +63,12 @@ namespace cage
 
 		// returns null if the asset is not yet loaded, failed to load, or has different type
 		template<class T>
-		Holder<T> get(uint32 assetId) const
+		Holder<T> get(AssetId assetId) const
 		{
 			return get2_(detail::typeHash<T>(), assetId).template cast<T>();
 		}
 
-		AssetStateEnum state(uint32 assetId) const;
+		AssetStateEnum state(AssetId assetId) const;
 
 		// end thread-safe methods
 
@@ -79,14 +79,14 @@ namespace cage
 		bool processing() const;
 		bool empty() const;
 
-		EventDispatcher<bool(uint32 requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
+		EventDispatcher<bool(AssetId requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
 		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride);
-		void load_(uint32 scheme, uint32 assetId, const String &textId, Holder<void> &&value);
-		void load_(uint32 scheme, uint32 assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
-		Holder<void> get1_(uint32 scheme, uint32 assetId) const;
-		Holder<void> get2_(uint32 typeHash, uint32 assetId) const;
+		void load_(uint32 scheme, AssetId assetId, const String &textId, Holder<void> &&value);
+		void load_(uint32 scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
+		Holder<void> get1_(uint32 scheme, AssetId assetId) const;
+		Holder<void> get2_(uint32 typeHash, AssetId assetId) const;
 		uint32 schemeTypeHash_(uint32 scheme) const;
 		friend class AssetsOnDemand;
 	};

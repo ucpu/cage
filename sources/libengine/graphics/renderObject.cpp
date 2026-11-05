@@ -12,7 +12,7 @@ namespace cage
 		public:
 			std::vector<float> thresholds;
 			std::vector<uint32> indices;
-			std::vector<uint32> names;
+			std::vector<AssetId> names;
 		};
 	}
 
@@ -21,7 +21,7 @@ namespace cage
 		label = name;
 	}
 
-	void RenderObject::setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)
+	void RenderObject::setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const AssetId> modelNames)
 	{
 		CAGE_ASSERT(modelIndices[0] == 0);
 		CAGE_ASSERT(modelIndices.size() == thresholds.size() + 1);
@@ -53,7 +53,7 @@ namespace cage
 		return lod;
 	}
 
-	PointerRange<const uint32> RenderObject::models(uint32 lod) const
+	PointerRange<const AssetId> RenderObject::models(uint32 lod) const
 	{
 		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		CAGE_ASSERT(lod < lodsCount());

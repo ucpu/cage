@@ -20,7 +20,7 @@ namespace cage
 			des >> header;
 
 			// todo handle mesh name
-			CAGE_ASSERT(header.meshId == 0); // do not use for now
+			CAGE_ASSERT(header.meshId == AssetId()); // do not use for now
 
 			Holder<Mesh> mesh = newMesh();
 			mesh->importBuffer(des.read(header.meshSize));

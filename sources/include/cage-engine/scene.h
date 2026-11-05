@@ -72,7 +72,7 @@ namespace cage
 	{
 		detail::StringBase<26> maskName;
 		Time startTime = {}; // defaults to the spawn time
-		uint32 animation = 0;
+		AssetId animation = {};
 		Real weight = 1;
 		Real speed = 1;
 		Real offset = 0; // normalized 0..1
@@ -85,18 +85,18 @@ namespace cage
 
 		SkeletalAnimationComponent &clear();
 		SkeletalAnimationComponent &add(SkeletalAnimationLayer layer); // finds empty slot, or replaces the one with lowest weight, or discards the new one if it itself is the lowest
-		SkeletalAnimationComponent &set(uint32 animation);
+		SkeletalAnimationComponent &set(AssetId animation);
 
-		inline SkeletalAnimationComponent &operator=(const uint32 v) { return set(v); }
+		inline SkeletalAnimationComponent &operator=(const AssetId v) { return set(v); }
 		inline SkeletalAnimationLayer &operator[](uint32 index) { return animations[index]; }
 	};
 
 	struct CAGE_ENGINE_API ModelComponent
 	{
-		uint32 modelId = 0;
+		AssetId modelId = {};
 		sint32 renderLayer = 0;
 
-		inline ModelComponent &operator=(const uint32 v)
+		inline ModelComponent &operator=(const AssetId v)
 		{
 			modelId = v;
 			return *this;
@@ -105,11 +105,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API SpriteComponent
 	{
-		uint32 spriteId = 0;
-		uint32 modelId = 0; // optional
+		AssetId spriteId = {};
+		AssetId modelId = {}; // optional
 		sint32 renderLayer = 0;
 
-		inline SpriteComponent &operator=(const uint32 v)
+		inline SpriteComponent &operator=(const AssetId v)
 		{
 			spriteId = v;
 			return *this;
@@ -119,7 +119,7 @@ namespace cage
 	struct CAGE_ENGINE_API TextComponent
 	{
 		uint32 textId = 0;
-		uint32 fontId = 0;
+		AssetId fontId = {};
 		TextAlignEnum align = TextAlignEnum::Center;
 		Real lineSpacing = 1;
 		sint32 renderLayer = 0;
@@ -187,7 +187,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundComponent
 	{
-		uint32 soundId = 0;
+		AssetId soundId = {};
 		SoundAttenuationEnum attenuation = SoundAttenuationEnum::Logarithmic;
 		Real minDistance = 1;
 		Real maxDistance = 500;
@@ -196,7 +196,7 @@ namespace cage
 		bool loop = false;
 		bool spatial = true; // true -> listener direction is considered; false -> listener direction is ignored (but attentuation still applies)
 
-		inline SoundComponent &operator=(const uint32 v)
+		inline SoundComponent &operator=(const AssetId v)
 		{
 			soundId = v;
 			return *this;

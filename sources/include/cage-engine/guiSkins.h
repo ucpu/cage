@@ -48,7 +48,7 @@ namespace cage
 			Vec4 padding = Vec4(2);
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(150, 26);
-			uint32 clickSound = 0;
+			AssetId clickSound = {};
 			Button();
 		} button;
 		struct CAGE_ENGINE_API Input
@@ -62,10 +62,10 @@ namespace cage
 			Real buttonsWidth = 26;
 			Real buttonsOffset = 2;
 			InputButtonsPlacementModeEnum buttonsMode = InputButtonsPlacementModeEnum::Sides;
-			uint32 typingValidSound = 0;
-			uint32 typingInvalidSound = 0;
-			uint32 confirmationSound = 0;
-			// uint32 focusGainSound = 0;
+			AssetId typingValidSound = {};
+			AssetId typingInvalidSound = {};
+			AssetId confirmationSound = {};
+			// AssetId focusGainSound = {};
 			Input();
 		} inputBox;
 		struct CAGE_ENGINE_API TextArea
@@ -82,7 +82,7 @@ namespace cage
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(24);
 			Vec2 labelOffset = Vec2(4, 3);
-			uint32 clickSound = 0;
+			AssetId clickSound = {};
 			CheckBox();
 		} checkBox;
 		struct CAGE_ENGINE_API RadioBox
@@ -91,7 +91,7 @@ namespace cage
 			Vec4 margin = Vec4(1);
 			Vec2 size = Vec2(24);
 			Vec2 labelOffset = Vec2(4, 3);
-			uint32 clickSound = 0;
+			AssetId clickSound = {};
 			RadioBox();
 		} radioBox;
 		struct CAGE_ENGINE_API ComboBox
@@ -106,8 +106,8 @@ namespace cage
 			Vec2 size = Vec2(250, 26);
 			Real listOffset = -2;
 			Real itemSpacing = -2;
-			uint32 openSound = 0;
-			uint32 selectSound = 0;
+			AssetId openSound = {};
+			AssetId selectSound = {};
 			ComboBox();
 		} comboBox;
 		struct CAGE_ENGINE_API ProgressBar
@@ -117,7 +117,7 @@ namespace cage
 			Vec4 textPadding = Vec4(2);
 			Vec4 fillingPadding = Vec4();
 			Vec2 size = Vec2(300, 24);
-			uint32 fillingTextureName = 0;
+			AssetId fillingTextureName = {};
 			ProgressBar();
 		} progressBar;
 		struct CAGE_ENGINE_API SliderBar
@@ -129,7 +129,7 @@ namespace cage
 				Vec2 size;
 				bool collapsedBar = true;
 			} horizontal, vertical;
-			uint32 slidingSound = 0;
+			AssetId slidingSound = {};
 			SliderBar();
 		} sliderBar;
 		struct CAGE_ENGINE_API ColorPicker
@@ -139,7 +139,7 @@ namespace cage
 			Vec2 fullSize = Vec2(250, 180);
 			Real hueBarPortion = 0.18;
 			Real resultBarPortion = 0.35;
-			uint32 slidingSound = 0;
+			AssetId slidingSound = {};
 			ColorPicker();
 		} colorPicker;
 		struct CAGE_ENGINE_API SolidColor
@@ -172,14 +172,14 @@ namespace cage
 			Vec4 contentPadding = Vec4(2);
 			Vec4 captionPadding = Vec4(2);
 			Real captionHeight = 28;
-			uint32 clickSound = 0;
+			AssetId clickSound = {};
 			Spoiler();
 		} spoiler;
 		struct CAGE_ENGINE_API Scrollbars
 		{
 			Real scrollbarSize = 12;
 			Real contentPadding = 3;
-			uint32 slidingSound = 0;
+			AssetId slidingSound = {};
 			Scrollbars();
 		} scrollbars;
 	};
@@ -259,9 +259,9 @@ namespace cage
 	{
 		GuiSkinElementLayout layouts[(uint32)GuiElementTypeEnum::TotalElements];
 		GuiSkinWidgetDefaults defaults;
-		uint32 textureId = 0;
-		uint32 hoverSound = 0;
-		uint32 openTooltipSound = 0;
+		AssetId skinTexture = {};
+		AssetId hoverSound = {};
+		AssetId openTooltipSound = {};
 		GuiSkinConfig();
 	};
 

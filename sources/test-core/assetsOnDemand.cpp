@@ -36,23 +36,23 @@ void testAssetOnDemand()
 	Holder<AssetsOnDemand> cache = newAssetsOnDemand(+man);
 	makeAssetRaw(13, "hello world");
 	makeAssetRaw(42, "the ultimate question of life, the universe, and everything");
-	CAGE_TEST((!cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(13))); // 13 not yet loaded, but requested now
+	CAGE_TEST((!cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(13)))); // 13 not yet loaded, but requested now
 	while (man->processing())
 		threadYield();
-	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(13))); // 13 loaded, refreshed
-	CAGE_TEST(!(cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(42))); // 42 not yet loaded, requested now
+	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(13)))); // 13 loaded, refreshed
+	CAGE_TEST(!(cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(42)))); // 42 not yet loaded, requested now
 	for (uint32 i = 0; i < 3 * 60; i++)
 		cache->process(); // few initial processing does not release any assets
 	while (man->processing())
 		threadYield();
 	// 13 not refreshed
-	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(42))); // 42 loaded, refreshed
+	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(42)))); // 42 loaded, refreshed
 	for (uint32 i = 0; i < 3 * 60; i++)
 		cache->process(); // several more processing releases 13 but keeps 42
 	while (man->processing())
 		threadYield();
-	CAGE_TEST(!(cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(13))); // 13 not loaded
-	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(42))); // 42 loaded
+	CAGE_TEST(!(cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(13)))); // 13 not loaded
+	CAGE_TEST((cache->get<AssetSchemeIndexRaw, PointerRange<const char>>(AssetId(42)))); // 42 loaded
 	cache.clear();
 	while (man->processing())
 		threadYield();

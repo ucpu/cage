@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace detail
 	{
-		uint32 GuiTextFontDefault = 0;
+		AssetId GuiTextFontDefault = {};
 	}
 
 	HierarchyItem::HierarchyItem(GuiImpl *impl, Entity *ent) : impl(impl), ent(ent)
@@ -189,19 +189,19 @@ namespace cage
 		return RenderableElement(this, element, mode, pos, size);
 	}
 
-	void WidgetItem::play(uint32 soundName)
+	void WidgetItem::play(AssetId soundName)
 	{
 		CAGE_ASSERT(hierarchy && hierarchy->impl);
 		SoundsQueue *q = hierarchy->impl->soundsQueue;
-		if (q && soundName)
+		if (q && soundName != AssetId())
 			q->play(soundName);
 	}
 
-	void WidgetItem::playExclusive(uint32 soundName)
+	void WidgetItem::playExclusive(AssetId soundName)
 	{
 		CAGE_ASSERT(hierarchy && hierarchy->impl);
 		SoundsQueue *q = hierarchy->impl->soundsQueue;
-		if (q && !q->playing() && soundName)
+		if (q && !q->playing() && soundName != AssetId())
 			q->play(soundName);
 	}
 
@@ -342,7 +342,7 @@ namespace cage
 	void TextItem::apply(const GuiTextFormatComponent &f)
 	{
 		dirty = true;
-		if (f.font)
+		if (f.font != AssetId())
 			fontId = f.font;
 		if (f.size.valid())
 			format.size = f.size;
@@ -396,9 +396,9 @@ namespace cage
 	void TextItem::updateFont()
 	{
 		dirty = true;
-		if (fontId == 0)
+		if (fontId == AssetId())
 			fontId = detail::GuiTextFontDefault;
-		if (fontId == 0)
+		if (fontId == AssetId())
 			fontId = HashString("cage/fonts/ubuntu/regular.ttf");
 		font = hierarchy->impl->assetMgr->get<Font>(fontId);
 	}
@@ -453,8 +453,8 @@ namespace cage
 	void ImageItem::assign(const GuiImageComponent &value)
 	{
 		image = value;
-		if (value.textureName)
-			texture = hierarchy->impl->assetOnDemand->get<Texture>(value.textureName);
+		if (value.textureId != AssetId())
+			texture = hierarchy->impl->assetOnDemand->get<Texture>(value.textureId);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)

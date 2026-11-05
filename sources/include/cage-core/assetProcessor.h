@@ -12,7 +12,7 @@ namespace cage
 		String inputDirectory; // c:/asset
 		String inputName; // path/file?specifier;identifier
 		String outputDirectory; // c:/data
-		uint32 outputName = 0; // 123456789
+		AssetId outputName = {}; // 123456789
 		uint32 schemeIndex = 0;
 
 		// derived names

@@ -346,7 +346,7 @@ namespace cage
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 			{
 				GraphicsBindingsCreateConfig::TextureBindingConfig tc;
-				if (model->textureIds[i])
+				if (model->textureIds[i] != AssetId())
 				{
 					tc.texture = +assets->get<Texture>(model->textureIds[i]);
 					if (tc.texture)

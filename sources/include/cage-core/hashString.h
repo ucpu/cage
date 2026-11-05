@@ -17,6 +17,7 @@ namespace cage
 		{}
 
 		CAGE_FORCE_INLINE constexpr operator uint32() const { return value; }
+		CAGE_FORCE_INLINE constexpr operator AssetId() const { return AssetId(value); }
 
 	private:
 		uint32 value = 0;

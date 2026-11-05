@@ -43,7 +43,7 @@ namespace cage
 				{
 					if (it.animation)
 					{
-						skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(it.animation->skeletonName);
+						skeleton = impl->assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(it.animation->skeletonId);
 						break;
 					}
 				}
@@ -84,17 +84,17 @@ namespace cage
 
 		bool validateSkeletalAnimationConfig(const SkeletalAnimationPreparatorConfig &a)
 		{
-			uint32 skeletonName = 0;
+			AssetId skeletonId = {};
 			for (const auto &it : a.animations)
 			{
 				if (it.animation)
-					skeletonName = it.animation->skeletonName;
+					skeletonId = it.animation->skeletonId;
 			}
-			if (!skeletonName)
+			if (skeletonId == AssetId())
 				return false; // at least one animation is present
 			for (const auto &it : a.animations)
 			{
-				if (it.animation && it.animation->skeletonName != skeletonName)
+				if (it.animation && it.animation->skeletonId != skeletonId)
 					return false; // all animations must use the same skeleton
 			}
 			for (const auto &it : a.animations)

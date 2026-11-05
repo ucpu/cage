@@ -185,7 +185,7 @@ namespace
 				img++;
 				area = 0;
 			}
-			g.data.image = img;
+			g.data.image.value = img;
 		}
 		CAGE_ASSERT(images.empty());
 		images.resize(img + 1);
@@ -197,7 +197,7 @@ namespace
 		return Stringizer() + processor->inputFile + "?" + index;
 	}
 
-	uint32 textureHash(uint32 index)
+	AssetId textureHash(uint32 index)
 	{
 		return HashString(textureName(index));
 	}
@@ -249,7 +249,7 @@ namespace
 			for (const Glyph &g : glyphs)
 			{
 				CAGE_ASSERT(g.png);
-				if (g.data.image != imageIndex)
+				if (g.data.image.value != imageIndex)
 					continue;
 				area += g.png->width() * g.png->height();
 				mgs = max(mgs, max(g.png->width(), g.png->height()));
@@ -260,7 +260,7 @@ namespace
 			packer->reserve(cnt);
 			for (const auto g : enumerate(glyphs))
 			{
-				if (g->data.image != imageIndex)
+				if (g->data.image.value != imageIndex)
 					continue;
 				packer->insert(PackingRect{ numeric_cast<uint32>(g.index), g->png->width(), g->png->height() });
 			}
@@ -288,7 +288,7 @@ namespace
 				const uint32 arrayIndex = it.id, x = it.x, y = it.y;
 				CAGE_ASSERT(arrayIndex < glyphs.size());
 				Glyph &g = glyphs[arrayIndex];
-				CAGE_ASSERT(g.data.image == imageIndex);
+				CAGE_ASSERT(g.data.image.value == imageIndex);
 				CAGE_ASSERT(x < res);
 				CAGE_ASSERT(y < res);
 				g.pos = Vec2i(x, y);
@@ -311,7 +311,7 @@ namespace
 	void convertImageNames()
 	{
 		for (auto &g : glyphs)
-			g.data.image = textureHash(g.data.image);
+			g.data.image = textureHash(g.data.image.value);
 	}
 
 	// https://learn.microsoft.com/en-us/typography/opentype/spec/otff#organization-of-an-opentype-font

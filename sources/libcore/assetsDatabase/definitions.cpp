@@ -228,7 +228,7 @@ namespace cage
 		}
 
 		{ // check for output hash collisions
-			std::unordered_map<uint32, DatabaseAssetImpl *> outputHashes;
+			std::unordered_map<AssetId, DatabaseAssetImpl *> outputHashes;
 			for (const auto &it : assets)
 			{
 				DatabaseAssetImpl &ass = *it.second;

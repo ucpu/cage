@@ -350,7 +350,7 @@ namespace cage
 		for (uint32 i = 0; i < impl->skins.size(); i++)
 		{
 			SkinData sd;
-			sd.texture = assetMgr->get<Texture>(impl->skins[i].textureId);
+			sd.texture = assetMgr->get<Texture>(impl->skins[i].skinTexture);
 			if (!sd.texture)
 				return;
 

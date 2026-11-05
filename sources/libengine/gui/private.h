@@ -114,8 +114,8 @@ namespace cage
 		void makeFocused(uint32 part = 1);
 		RenderableElement emitElement(GuiElementTypeEnum element, ElementModeEnum mode, Vec2 pos, Vec2 size);
 
-		void play(uint32 soundName);
-		void playExclusive(uint32 soundName); // only plays when nothing else is currently playing
+		void play(AssetId soundName);
+		void playExclusive(AssetId soundName); // only plays when nothing else is currently playing
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
@@ -176,7 +176,7 @@ namespace cage
 
 	private:
 		Holder<PointerRange<uint32>> txt;
-		uint32 fontId = 0;
+		AssetId fontId = {};
 		bool dirty = true;
 		void updateFont();
 		void updateLayout(); // update cached layout if needed

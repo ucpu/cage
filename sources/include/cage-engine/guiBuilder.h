@@ -31,9 +31,9 @@ namespace cage
 			BuilderItem textColor(Vec3 color);
 			BuilderItem textSize(Real size);
 			BuilderItem textAlign(TextAlignEnum align);
-			BuilderItem textFont(uint32 font);
+			BuilderItem textFont(AssetId font);
 			BuilderItem image(const GuiImageComponent &img);
-			BuilderItem image(uint32 textureName);
+			BuilderItem image(AssetId textureId);
 			BuilderItem imageFormat(const GuiImageFormatComponent &imageFormat);
 			BuilderItem size(Vec2 size);
 			BuilderItem accent(Vec4 accent);

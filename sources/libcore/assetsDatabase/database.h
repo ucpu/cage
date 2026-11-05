@@ -9,6 +9,15 @@
 #include <cage-core/files.h>
 #include <cage-core/string.h> // StringComparatorFast
 
+namespace std
+{
+	template<>
+	struct hash<cage::AssetId>
+	{
+		auto operator()(const cage::AssetId &id) const noexcept { return hash<decltype(id.value)>()(id.value); }
+	};
+}
+
 namespace cage
 {
 	struct Serializer;
@@ -80,7 +89,7 @@ namespace cage
 		std::map<String, Holder<Scheme>, StringComparatorFast> schemes;
 		std::set<String, StringComparatorFast> ignoredExtensions;
 		std::set<String, StringComparatorFast> ignoredPaths;
-		std::unordered_set<uint32> injectedNames;
+		std::unordered_set<AssetId> injectedNames;
 
 		std::map<String, Holder<DatabaseAssetImpl>, StringComparatorFast> assets;
 		std::set<String, StringComparatorFast> corruptedDefinitions;

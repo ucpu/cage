@@ -13,7 +13,7 @@ namespace cage
 		String name;
 		String scheme;
 		String definitionPath; // the "*.assets" file where this asset was registered
-		uint32 id = 0;
+		AssetId id = {};
 		bool corrupted = true; // the asset needs converting (and potentially also fixing sources)
 		bool modified = false; // the asset was converted and should be announced to all listening games
 
@@ -48,10 +48,10 @@ namespace cage
 		Holder<PointerRange<String>> corruptedAssets() const;
 		Holder<PointerRange<String>> modifiedAssets() const;
 		const DatabaseAsset *asset(const String &name) const;
-		const DatabaseAsset *asset(uint32 id) const;
+		const DatabaseAsset *asset(AssetId id) const;
 		bool exists(const String &name) const;
-		bool exists(uint32 id, bool checkInjectedExternalsToo = false) const;
-		bool injected(uint32 id) const;
+		bool exists(AssetId id, bool checkInjectedExternalsToo = false) const;
+		bool injected(AssetId id) const;
 		const DatabaseStatus &status() const;
 		void printIssues() const;
 
@@ -76,7 +76,7 @@ namespace cage
 		void ignoreExtension(const String &extension, bool ignore = true); // eg. ".blend1"
 		void ignorePath(const String &path, bool ignore = true); // eg. ".git"
 		bool isIgnored(const String &name) const;
-		void injectExternalAsset(uint32 id, bool inject = true);
+		void injectExternalAsset(AssetId id, bool inject = true);
 
 		const AssetsDatabaseCreateConfig &config() const;
 	};

@@ -11,7 +11,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_ENGINE_API extern uint32 GuiTextFontDefault;
+		CAGE_ENGINE_API extern AssetId GuiTextFontDefault;
 		CAGE_ENGINE_API extern Time GuiTooltipDelayDefault;
 	}
 
@@ -37,7 +37,7 @@ namespace cage
 		Time animationStart = Time(m); // -1 will be replaced by current time
 		Vec2 textureUvOffset;
 		Vec2 textureUvSize = Vec2(1);
-		uint32 textureName = 0;
+		AssetId textureId = {};
 	};
 
 	enum class ImageModeEnum : uint32
@@ -65,7 +65,7 @@ namespace cage
 	struct CAGE_ENGINE_API GuiTextFormatComponent
 	{
 		Vec3 color = Vec3::Nan(); // sRGB
-		uint32 font = detail::GuiTextFontDefault;
+		AssetId font = detail::GuiTextFontDefault;
 		Real size = Real::Nan();
 		Real lineSpacing = Real::Nan();
 		TextAlignEnum align = (TextAlignEnum)m;

@@ -41,7 +41,7 @@ namespace cage
 				inputDirectory = property("inputDirectory");
 				inputName = property("inputName");
 				outputDirectory = property("outputDirectory");
-				outputName = toUint32(property("outputName"));
+				outputName = AssetId(toUint32(property("outputName")));
 				schemeIndex = toUint32(property("schemeIndex"));
 
 				derivedProperties();

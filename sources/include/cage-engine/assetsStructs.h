@@ -50,11 +50,11 @@ namespace cage
 	struct CAGE_ENGINE_API ModelHeader
 	{
 		Aabb box;
-		std::array<uint32, MaxTexturesCountPerMaterial> textureIds = {};
+		std::array<AssetId, MaxTexturesCountPerMaterial> textureIds = {};
+		AssetId shaderId = {};
+		AssetId meshId = {}; // share geometry data (and collider) from the named model (this model contains no geometry)
 		uint32 skeletonBones = 0;
 		sint32 renderLayer = 0;
-		uint32 shaderId = 0;
-		uint32 meshId = 0; // share geometry data (and collider) from the named model (this model contains no geometry)
 		uint32 meshSize = 0; // bytes
 		uint32 materialSize = 0; // bytes
 		uint32 colliderSize = 0; // bytes
@@ -71,7 +71,7 @@ namespace cage
 		Vec3 color;
 		Real intensity;
 		Real opacity;
-		uint32 skelAnimId = 0;
+		AssetId skelAnimId = {};
 
 		Real worldSize;
 		Real pixelsSize;
@@ -99,7 +99,7 @@ namespace cage
 			Vec4 texUv;
 			Vec2 bearing;
 			Vec2 size;
-			uint32 image = 0;
+			AssetId image = {};
 			uint32 glyphId = 0;
 		};
 

@@ -135,7 +135,7 @@ namespace cage
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(config.outputListByIds, fm);
-			std::vector<std::pair<uint32, const DatabaseAssetImpl *>> items;
+			std::vector<std::pair<AssetId, const DatabaseAssetImpl *>> items;
 			for (const auto &it : assets)
 			{
 				const auto &ass = it.second;

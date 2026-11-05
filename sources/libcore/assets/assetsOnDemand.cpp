@@ -6,6 +6,15 @@
 #include <cage-core/assetsOnDemand.h>
 #include <cage-core/concurrent.h>
 
+namespace std
+{
+	template<>
+	struct hash<cage::AssetId>
+	{
+		auto operator()(const cage::AssetId &id) const noexcept { return hash<decltype(id.value)>()(id.value); }
+	};
+}
+
 namespace cage
 {
 	namespace
@@ -15,7 +24,7 @@ namespace cage
 		public:
 			AssetsManager *assets = nullptr;
 			Holder<RwMutex> mut = newRwMutex();
-			ankerl::unordered_dense::map<uint32, uint32> lastUse;
+			ankerl::unordered_dense::map<AssetId, uint32> lastUse;
 			uint32 tick = 0;
 
 			AssetOnDemandImpl(AssetsManager *assets) : assets(assets) {}
@@ -53,7 +62,7 @@ namespace cage
 				tick++;
 			}
 
-			void update(uint32 assetId, bool autoLoad)
+			void update(AssetId assetId, bool autoLoad)
 			{
 				{
 					ScopeLock lock(mut, ReadLockTag()); // read lock is sufficient: we update the value _inside_ the map, not the map itself
@@ -75,10 +84,10 @@ namespace cage
 				}
 			}
 
-			void preload(PointerRange<const uint32> assetsIds)
+			void preload(PointerRange<const AssetId> assetsIds)
 			{
 				ScopeLock lock(mut, WriteLockTag());
-				for (uint32 id : assetsIds)
+				for (AssetId id : assetsIds)
 				{
 					auto it = lastUse.find(id);
 					if (it != lastUse.end())
@@ -93,13 +102,13 @@ namespace cage
 		};
 	}
 
-	void AssetsOnDemand::preload(uint32 assetId)
+	void AssetsOnDemand::preload(AssetId assetId)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		impl->update(assetId, true);
 	}
 
-	void AssetsOnDemand::preload(PointerRange<const uint32> assetsIds)
+	void AssetsOnDemand::preload(PointerRange<const AssetId> assetsIds)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		impl->preload(assetsIds);
@@ -123,7 +132,7 @@ namespace cage
 		return impl->assets;
 	}
 
-	Holder<void> AssetsOnDemand::get1_(uint32 scheme, uint32 assetId, bool autoLoad)
+	Holder<void> AssetsOnDemand::get1_(uint32 scheme, AssetId assetId, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		auto r = impl->assets->get1_(scheme, assetId);
@@ -131,7 +140,7 @@ namespace cage
 		return r;
 	}
 
-	Holder<void> AssetsOnDemand::get2_(uint32 typeHash, uint32 assetId, bool autoLoad)
+	Holder<void> AssetsOnDemand::get2_(uint32 typeHash, AssetId assetId, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		auto r = impl->assets->get2_(typeHash, assetId);

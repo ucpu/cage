@@ -42,8 +42,8 @@ namespace cage
 
 		// material
 		Holder<GraphicsBuffer> materialBuffer;
-		std::array<uint32, MaxTexturesCountPerMaterial> textureIds = {};
-		uint32 shaderId = 0;
+		std::array<AssetId, MaxTexturesCountPerMaterial> textureIds = {};
+		AssetId shaderId = {};
 		sint32 renderLayer = 0;
 		MeshRenderFlags renderFlags = {};
 	};

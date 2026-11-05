@@ -59,7 +59,7 @@ namespace cage
 
 	namespace detail
 	{
-		extern uint32 GuiTextFontDefault;
+		extern AssetId GuiTextFontDefault;
 	}
 
 	namespace
@@ -584,7 +584,7 @@ namespace cage
 		CAGE_FORCE_INLINE std::optional<SkeletalAnimationComponent> skeletalOptional(SkeletalAnimationComponent src)
 		{
 			for (const auto &it : src.animations)
-				if (it.animation)
+				if (it.animation != AssetId())
 					return src;
 			return {};
 		}
@@ -737,7 +737,7 @@ namespace cage
 				{
 					const auto &input = ps.animations[i];
 					auto &output = cnf.animations[i];
-					if (!input.animation)
+					if (input.animation == AssetId())
 						continue;
 					output.animation = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(input.animation));
 					if (!output.animation)
@@ -750,7 +750,7 @@ namespace cage
 					if (!input.maskName.empty())
 					{
 						if (!skeleton)
-							skeleton = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(output.animation->skeletonName));
+							skeleton = shareAsset(config.shared.assets->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(output.animation->skeletonId));
 						CAGE_ASSERT(skeleton);
 						output.mask = skeleton->namedMask(input.maskName);
 					}
@@ -758,14 +758,14 @@ namespace cage
 
 				const auto &checkSkeletonIdsAreSame = [&]() -> bool
 				{
-					std::optional<uint32> id;
+					std::optional<AssetId> id;
 					for (const auto &ani : cnf.animations)
 					{
 						if (!ani.animation)
 							continue;
-						if (id && *id != ani.animation->skeletonName)
+						if (id && *id != ani.animation->skeletonId)
 							return false;
-						id = ani.animation->skeletonName;
+						id = ani.animation->skeletonId;
 					}
 					return true;
 				};
@@ -797,7 +797,7 @@ namespace cage
 						color.intensity = parent->intensity;
 					if (!color.opacity.valid())
 						color.opacity = parent->opacity;
-					if (!ps && parent->skelAnimId)
+					if (!ps && parent->skelAnimId != AssetId())
 						ps = SkeletalAnimationComponent().add({ .animation = parent->skelAnimId });
 				}
 
@@ -848,9 +848,9 @@ namespace cage
 
 			void prepareText(Entity *e, TextComponent tc)
 			{
-				if (!tc.fontId)
+				if (tc.fontId == AssetId())
 					tc.fontId = detail::GuiTextFontDefault;
-				if (!tc.fontId)
+				if (tc.fontId == AssetId())
 					tc.fontId = HashString("cage/fonts/ubuntu/regular.ttf");
 				SceneText rt;
 				rt.font = shareAsset(config.shared.assets->get<AssetSchemeIndexFont, Font>(tc.fontId));
@@ -899,7 +899,7 @@ namespace cage
 				struct Data
 				{
 					Entity *e = nullptr;
-					uint32 id = 0;
+					AssetId id = {};
 				};
 				std::vector<Data> data;
 				data.reserve(config.shared.scene->component<ModelComponent>()->count());
@@ -907,7 +907,7 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const ModelComponent &rc)
 					{
-						if (!rc.modelId || emptyMask(e))
+						if (rc.modelId == AssetId() || emptyMask(e))
 							return;
 						data.push_back({ e, rc.modelId });
 					},
@@ -926,7 +926,7 @@ namespace cage
 						if (obj->lodsCount() == 1)
 						{
 							prepareModelsRaw.clear();
-							for (uint32 id : obj->models(0))
+							for (AssetId id : obj->models(0))
 							{
 								if (Model *mesh = shareAsset(config.shared.onDemand->get<AssetSchemeIndexModel, Model>(id)))
 									prepareModelsRaw.push_back(std::move(mesh));
@@ -1007,7 +1007,7 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const SpriteComponent &ic)
 					{
-						if (!ic.spriteId || emptyMask(e))
+						if (ic.spriteId == AssetId() || emptyMask(e))
 							return;
 						data.push_back({ ic, e });
 					},
@@ -1022,7 +1022,7 @@ namespace cage
 					Texture *tex = shareAsset(config.shared.assets->get<AssetSchemeIndexTexture, Texture>(data[0].ic.spriteId));
 					if (!tex)
 						return;
-					Model *mesh = data[0].ic.modelId ? shareAsset(config.shared.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.modelId)) : modelSprite;
+					Model *mesh = data[0].ic.modelId != AssetId() ? shareAsset(config.shared.assets->get<AssetSchemeIndexModel, Model>(data[0].ic.modelId)) : modelSprite;
 					if (!mesh)
 						return;
 					for (const auto &it : data)
@@ -1177,7 +1177,7 @@ namespace cage
 
 				const auto material = newGraphicsBindings(scene.config.shared.device, scene.config.shared.assets, +rm.mesh);
 
-				Holder<MultiShader> multiShader = rm.mesh->shaderId ? scene.config.shared.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderId) : Holder<MultiShader>(scene.shaderStandard, nullptr);
+				Holder<MultiShader> multiShader = rm.mesh->shaderId != AssetId() ? scene.config.shared.assets->get<AssetSchemeIndexShader, MultiShader>(rm.mesh->shaderId) : Holder<MultiShader>(scene.shaderStandard, nullptr);
 				Holder<Shader> shader = pickShaderVariant(+multiShader, rm.mesh, textureShaderVariant(material.second), renderMode, !!rm.skeletalAnimation);
 
 				UniOptions uniOptions;
@@ -1192,7 +1192,7 @@ namespace cage
 					}
 					const bool ssao = !rd->blending && any(rm.mesh->renderFlags & MeshRenderFlags::DepthWrite) && any(camera.effects.effects & ScreenSpaceEffectsFlags::AmbientOcclusion);
 					uniOptions.optsLights[2] = ssao ? 1 : 0;
-					uniOptions.optsLights[3] = !!rm.mesh->textureIds[2];
+					uniOptions.optsLights[3] = rm.mesh->textureIds[2] != AssetId();
 					uniOptions.optsSkeleton[0] = rm.mesh->bonesCount;
 				}
 
@@ -1293,7 +1293,7 @@ namespace cage
 				Model *mesh = rd->data.sprite().mesh;
 				Texture *texture = rd->data.sprite().texture;
 
-				Holder<MultiShader> multiShader = mesh->shaderId ? scene.config.shared.assets->get<MultiShader>(mesh->shaderId) : Holder<MultiShader>(scene.shaderSprite, nullptr);
+				Holder<MultiShader> multiShader = mesh->shaderId != AssetId() ? scene.config.shared.assets->get<MultiShader>(mesh->shaderId) : Holder<MultiShader>(scene.shaderSprite, nullptr);
 				Holder<Shader> shader = pickShaderVariant(+multiShader, mesh, textureShaderVariant(texture->flags | (TextureFlags)(1u << 31)), renderMode, false);
 
 				UniOptions uniOptions;
@@ -2183,7 +2183,7 @@ namespace cage
 	{
 		for (auto &it : animations)
 		{
-			if (!it.animation)
+			if (it.animation == AssetId())
 			{
 				it = layer;
 				return *this;
@@ -2205,7 +2205,7 @@ namespace cage
 		return *this;
 	}
 
-	SkeletalAnimationComponent &SkeletalAnimationComponent::set(uint32 animation)
+	SkeletalAnimationComponent &SkeletalAnimationComponent::set(AssetId animation)
 	{
 		clear();
 		animations[0].animation = animation;

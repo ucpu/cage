@@ -102,7 +102,7 @@ namespace cage
 		return +it->second;
 	}
 
-	const DatabaseAsset *AssetsDatabase::asset(uint32 id) const
+	const DatabaseAsset *AssetsDatabase::asset(AssetId id) const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
 		for (const auto &it : impl->assets)
@@ -120,7 +120,7 @@ namespace cage
 		return impl->assets.count(name);
 	}
 
-	bool AssetsDatabase::exists(uint32 id, bool checkInjectedExternalsToo) const
+	bool AssetsDatabase::exists(AssetId id, bool checkInjectedExternalsToo) const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
 		if (checkInjectedExternalsToo)
@@ -133,7 +133,7 @@ namespace cage
 		return false;
 	}
 
-	bool AssetsDatabase::injected(uint32 id) const
+	bool AssetsDatabase::injected(AssetId id) const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
 		return impl->injectedNames.count(id);
@@ -319,7 +319,7 @@ namespace cage
 		return false;
 	}
 
-	void AssetsDatabase::injectExternalAsset(uint32 id, bool inject)
+	void AssetsDatabase::injectExternalAsset(AssetId id, bool inject)
 	{
 		AssetsDatabaseImpl *impl = static_cast<AssetsDatabaseImpl *>(this);
 		if (inject)

@@ -114,7 +114,7 @@ namespace cage
 		impl->channels.clear();
 		impl->maskName = {};
 		impl->duration = {};
-		impl->skeletonName = 0;
+		impl->skeletonId = {};
 		impl->blendingMode = SkeletalAnimationBlendingModeFlags::Default;
 	}
 
@@ -164,7 +164,7 @@ namespace cage
 			ser << impl->channels;
 			ser << impl->maskName;
 			ser << impl->duration;
-			ser << impl->skeletonName;
+			ser << impl->skeletonId;
 			ser << impl->blendingMode;
 		}
 	}

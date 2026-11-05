@@ -23,7 +23,7 @@ namespace cage
 			Holder<Sound> sound;
 			sint64 startTime = m;
 			sint64 endTime = m;
-			uint32 name = 0;
+			AssetId soundId = {};
 			Real effectiveGain = 0;
 
 			Event(SoundsQueueImpl *impl);
@@ -96,7 +96,7 @@ namespace cage
 						if (a.startTime == m)
 						{
 							if (!a.sound)
-								a.sound = onDemand->get<AssetSchemeIndexSound, Sound>(a.name);
+								a.sound = onDemand->get<AssetSchemeIndexSound, Sound>(a.soundId);
 							if (a.sound)
 							{
 								a.startTime = currentTime;
@@ -221,7 +221,7 @@ namespace cage
 		}
 	}
 
-	void SoundsQueue::play(uint32 soundId, const SoundEventConfig &cfg)
+	void SoundsQueue::play(AssetId soundId, const SoundEventConfig &cfg)
 	{
 		CAGE_ASSERT(cfg.gain.valid() && cfg.gain >= 0);
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
@@ -229,13 +229,13 @@ namespace cage
 		if (auto lock = impl->swapController->write())
 		{
 			Event e(impl);
-			e.name = soundId;
+			e.soundId = soundId;
 			(SoundEventConfig &)e = cfg;
 			impl->emits[lock.index()].data.push_back(std::move(e));
 		}
 	}
 
-	void SoundsQueue::preload(uint32 soundId)
+	void SoundsQueue::preload(AssetId soundId)
 	{
 		SoundsQueueImpl *impl = (SoundsQueueImpl *)this;
 		impl->onDemand->preload(soundId);

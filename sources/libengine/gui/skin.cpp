@@ -11,7 +11,7 @@ namespace cage
 		{
 			GuiTextFormatComponent text{ .font = 0 };
 			text.color = Vec3(1);
-			text.font = 0;
+			text.font = {};
 			text.size = 13;
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 1;
@@ -287,7 +287,7 @@ namespace cage
 		constexpr const LayoutsBase layoutsBase;
 	}
 
-	GuiSkinConfig::GuiSkinConfig() : textureId(HashString("cage/textures/skinDefault.png")), hoverSound(HashString("cage/sounds/hover.wav")), openTooltipSound(HashString("cage/sounds/tooltipOpen.wav"))
+	GuiSkinConfig::GuiSkinConfig() : skinTexture(HashString("cage/textures/skinDefault.png")), hoverSound(HashString("cage/sounds/hover.wav")), openTooltipSound(HashString("cage/sounds/tooltipOpen.wav"))
 	{
 		std::copy(std::begin(layoutsBase.layouts), std::end(layoutsBase.layouts), std::begin(layouts));
 	}
@@ -372,7 +372,7 @@ namespace cage
 		{
 			GuiSkinConfig skin;
 			if (style.index == GuiSkinTooltips.index)
-				skin.textureId = HashString("cage/textures/skinTooltips.png");
+				skin.skinTexture = HashString("cage/textures/skinTooltips.png");
 			return skin;
 		}
 	}

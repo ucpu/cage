@@ -488,7 +488,7 @@ namespace cage
 				} global = { config.transform, colorGammaToLinear(config.color) };
 
 				Instance insts[MaxCharacters];
-				uint32 image = glyphs[layout.glyphs[0].index].image;
+				AssetId image = glyphs[layout.glyphs[0].index].image;
 				uint32 i = 0;
 				const auto &dispatch = [&]()
 				{

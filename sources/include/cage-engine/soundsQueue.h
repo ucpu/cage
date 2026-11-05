@@ -23,8 +23,8 @@ namespace cage
 		Real gain = 1; // linear amplitude multiplier
 
 		void play(Holder<Sound> sound, const SoundEventConfig &cfg = {});
-		void play(uint32 soundId, const SoundEventConfig &cfg = {});
-		void preload(uint32 soundId);
+		void play(AssetId soundId, const SoundEventConfig &cfg = {});
+		void preload(AssetId soundId);
 		void stop();
 
 		bool playing() const;

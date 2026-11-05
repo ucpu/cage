@@ -140,7 +140,7 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::textFont(uint32 font)
+		BuilderItem BuilderItem::textFont(AssetId font)
 		{
 			(*this)->value<GuiTextFormatComponent>().font = font;
 			return *this;
@@ -152,9 +152,9 @@ namespace cage
 			return *this;
 		}
 
-		BuilderItem BuilderItem::image(uint32 textureName)
+		BuilderItem BuilderItem::image(AssetId textureId)
 		{
-			(*this)->value<GuiImageComponent>().textureName = textureName;
+			(*this)->value<GuiImageComponent>().textureId = textureId;
 			return *this;
 		}
 

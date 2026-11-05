@@ -19,7 +19,7 @@ namespace cage
 		{
 			TransformComponent tr;
 			Entity *e = nullptr;
-			uint32 id = 0;
+			AssetId id = {};
 			uint32 chunkIndex = m;
 		};
 
@@ -55,7 +55,7 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const TransformComponent &tr, const ModelComponent &md, const PickableComponent &)
 					{
-						if (md.modelId != 0)
+						if (md.modelId != AssetId())
 							candidates.push_back({ tr, e, md.modelId });
 					},
 					config.entities, false);
@@ -64,8 +64,8 @@ namespace cage
 				entitiesVisitor(
 					[&](Entity *e, const TransformComponent &tr, const SpriteComponent &ic, const PickableComponent &)
 					{
-						static constexpr uint32 DefaultIcon = HashString("cage/models/icon.obj");
-						candidates.push_back({ tr, e, ic.modelId ? ic.modelId : DefaultIcon });
+						static constexpr AssetId DefaultIcon = HashString("cage/models/icon.obj");
+						candidates.push_back({ tr, e, ic.modelId != AssetId() ? ic.modelId : DefaultIcon });
 					},
 					config.entities, false);
 
@@ -103,7 +103,7 @@ namespace cage
 						ch.objectsModels.resize(o->lodsCount());
 						for (uint32 lod = 0; lod < o->lodsCount(); lod++)
 						{
-							for (uint32 i : o->models(lod))
+							for (AssetId i : o->models(lod))
 							{
 								if (Holder<Model> md = config.assets->get<Model>(i))
 								{

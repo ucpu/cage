@@ -38,7 +38,7 @@ namespace cage
 
 		SkeletalAnimationMaskLabel maskName;
 		Time duration = {};
-		uint32 skeletonName = 0;
+		AssetId skeletonId = {};
 		SkeletalAnimationBlendingModeFlags blendingMode = SkeletalAnimationBlendingModeFlags::Loop;
 	};
 

@@ -11,7 +11,7 @@ namespace
 {
 	struct Lod
 	{
-		std::set<uint32> models;
+		std::set<AssetId> models;
 		uint32 index = 0;
 		Real threshold;
 	};
@@ -39,7 +39,7 @@ void processObject()
 			if (!isDigitsOnly(n))
 				continue;
 			v = processor->convertAssetPath(v);
-			uint32 h = HashString(v);
+			AssetId h = HashString(v);
 			ls.models.insert(h);
 		}
 		totalModeles += numeric_cast<uint32>(ls.models.size());
@@ -57,14 +57,14 @@ void processObject()
 
 	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) { return a.threshold > b.threshold; });
 
-	std::set<uint32> deps;
+	std::set<AssetId> deps;
 
 	uint32 preload = ini->getUint32("lods", "preload");
 	for (const Lod &ls : lods)
 	{
 		if (preload-- == 0)
 			break;
-		for (uint32 it : ls.models)
+		for (AssetId it : ls.models)
 			deps.insert(it);
 	}
 
@@ -101,7 +101,7 @@ void processObject()
 	MemoryBuffer buffer;
 	Serializer ser(buffer);
 	ser << h;
-	for (uint32 it : deps)
+	for (AssetId it : deps)
 		ser << it;
 	o.lodsCount = numeric_cast<uint32>(lods.size());
 	o.modelsCount = totalModeles;

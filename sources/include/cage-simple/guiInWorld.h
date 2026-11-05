@@ -12,7 +12,7 @@ namespace cage
 	class GuiInWorld : private Immovable
 	{
 	public:
-		uint32 renderModel() const;
+		AssetId renderModel() const;
 
 		void update(const Transform &tr, bool redraw);
 		void update(const Line &ray, bool interact);

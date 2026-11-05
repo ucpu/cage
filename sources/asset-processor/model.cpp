@@ -199,7 +199,7 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			if (dsm.textureIds[i])
+			if (dsm.textureIds[i] != AssetId())
 				CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "texture[" + i + "]: " + dsm.textureIds[i]);
 		}
 	}
@@ -209,10 +209,10 @@ namespace
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-				texCount += dsm.textureIds[i] == 0 ? 0 : 1;
+				texCount += dsm.textureIds[i] == AssetId() ? 0 : 1;
 			if (texCount && none(flags & (MeshComponentsFlags::Uvs2 | MeshComponentsFlags::Uvs3)))
 			{
-				if (dsm.shaderId)
+				if (dsm.shaderId != AssetId())
 					CAGE_LOG(SeverityEnum::Warning, "assetProcessor", "material has a texture but no uvs");
 				else
 					CAGE_THROW_ERROR(Exception, "material has a texture but no uvs");
@@ -222,7 +222,7 @@ namespace
 		if (any(renderFlags & MeshRenderFlags::CutOut) + any(renderFlags & MeshRenderFlags::Transparent) + any(renderFlags & MeshRenderFlags::Fade) > 1)
 			CAGE_THROW_ERROR(Exception, "material has multiple transparency flags (cutOut, transparent, fade)");
 
-		if (dsm.textureIds[2] != 0 && none(flags & MeshComponentsFlags::Normals))
+		if (dsm.textureIds[2] != AssetId() && none(flags & MeshComponentsFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "model uses normal map texture but has no normals");
 	}
 
@@ -327,7 +327,7 @@ void processModel()
 	{
 		CAGE_LOG(SeverityEnum::Info, "assetProcessor", Stringizer() + "looking at texture: " + t.name + ", type: " + meshImportTextureTypeToString(t.type));
 		const String p = processor->convertAssetPath(t.name);
-		const uint32 n = HashString(p);
+		const AssetId n = HashString(p);
 		switch (t.type)
 		{
 			case MeshImportTextureType::Albedo:
@@ -373,9 +373,9 @@ void processModel()
 	CAGE_LOG(SeverityEnum::Info, "assetProcessor", "serializing");
 	AssetHeader h = processor->initializeAssetHeader();
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-		if (dsm.textureIds[i])
+		if (dsm.textureIds[i] != AssetId())
 			h.dependenciesCount++;
-	h.dependenciesCount += !!dsm.shaderId;
+	h.dependenciesCount += dsm.shaderId != AssetId();
 
 	MemoryBuffer buffer;
 	Serializer ser(buffer);
@@ -391,9 +391,9 @@ void processModel()
 	Holder<File> f = writeFile(processor->outputFileName);
 	f->write(bufferView(h));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
-		if (dsm.textureIds[i])
+		if (dsm.textureIds[i] != AssetId())
 			f->write(bufferView(dsm.textureIds[i]));
-	if (dsm.shaderId)
+	if (dsm.shaderId != AssetId())
 		f->write(bufferView(dsm.shaderId));
 	f->write(compressed);
 	f->close();

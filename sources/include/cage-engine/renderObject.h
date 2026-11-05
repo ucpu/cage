@@ -17,17 +17,17 @@ namespace cage
 
 		Real worldSize;
 		Real pixelsSize;
-		void setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> itemIndices, PointerRange<const uint32> itemNames);
+		void setLods(PointerRange<const Real> thresholds, PointerRange<const uint32> itemIndices, PointerRange<const AssetId> itemIds);
 		uint32 lodsCount() const;
 		uint32 lodSelect(Real threshold) const;
-		PointerRange<const uint32> models(uint32 lod) const;
+		PointerRange<const AssetId> models(uint32 lod) const;
 
 		// default values for rendering
 
 		Vec3 color = Vec3::Nan();
 		Real intensity = Real::Nan();
 		Real opacity = Real::Nan();
-		uint32 skelAnimId = 0;
+		AssetId skelAnimId = {};
 	};
 
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();

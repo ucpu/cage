@@ -60,8 +60,8 @@ namespace cage
 					Holder<Model> mod = newModel(engineGraphicsDevice(), +msh, bufferView(material), mshLabel);
 					mod->textureIds[0] = textureId;
 					mod->renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::CutOut;
-					modelName = engineAssets()->generateUniqueId();
-					engineAssets()->loadValue<AssetSchemeIndexModel>(modelName, mod.share(), mshLabel);
+					modelId = engineAssets()->generateUniqueId();
+					engineAssets()->loadValue<AssetSchemeIndexModel>(modelId, mod.share(), mshLabel);
 				}
 			}
 
@@ -74,11 +74,11 @@ namespace cage
 					renderQueue.clear();
 				}
 				guiMan.clear();
-				if (textureId)
+				if (textureId != AssetId())
 					engineAssets()->unload(textureId);
-				if (modelName)
-					engineAssets()->unload(modelName);
-				textureId = modelName = 0;
+				if (modelId != AssetId())
+					engineAssets()->unload(modelId);
+				textureId = modelId = {};
 			}
 
 			struct Intersection
@@ -148,7 +148,7 @@ namespace cage
 				if (!qq)
 					return;
 
-				if (!textureId)
+				if (textureId == AssetId())
 					return;
 				Holder<Texture> tex = engineAssets()->get<AssetSchemeIndexTexture, Texture>(textureId);
 				if (!tex)
@@ -181,8 +181,8 @@ namespace cage
 			Holder<GuiRender> renderQueue; // protected by mutex
 			Holder<GuiManager> guiMan;
 			Transform transform;
-			uint32 textureId = 0;
-			uint32 modelName = 0;
+			AssetId textureId = {};
+			AssetId modelId = {};
 
 			const EventListener<bool()> graphicsDispatchListener = graphicsThread().graphics.listen([this]() { return this->dispatchEntry(); });
 			const EventListener<bool()> updateListener = controlThread().update.listen([this]() { return this->update(); });
@@ -190,10 +190,10 @@ namespace cage
 		};
 	}
 
-	uint32 GuiInWorld::renderModel() const
+	AssetId GuiInWorld::renderModel() const
 	{
 		const GuiInWorldImpl *impl = (const GuiInWorldImpl *)this;
-		return impl->modelName;
+		return impl->modelId;
 	}
 
 	void GuiInWorld::update(const Transform &tr, bool redraw)
