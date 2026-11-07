@@ -132,7 +132,7 @@ namespace cage
 		return impl->assets;
 	}
 
-	Holder<void> AssetsOnDemand::get1_(uint32 scheme, AssetId assetId, bool autoLoad)
+	Holder<void> AssetsOnDemand::get1_(SchemeIndex scheme, AssetId assetId, bool autoLoad)
 	{
 		AssetOnDemandImpl *impl = (AssetOnDemandImpl *)this;
 		auto r = impl->assets->get1_(scheme, assetId);
@@ -148,7 +148,7 @@ namespace cage
 		return r;
 	}
 
-	uint32 AssetsOnDemand::schemeTypeHash_(uint32 scheme) const
+	uint32 AssetsOnDemand::schemeTypeHash_(SchemeIndex scheme) const
 	{
 		const AssetOnDemandImpl *impl = (const AssetOnDemandImpl *)this;
 		return impl->assets->schemeTypeHash_(scheme);

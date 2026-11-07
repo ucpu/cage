@@ -13,12 +13,13 @@ namespace cage
 			CAGE_LOG_THROW(Stringizer() + "scheme: " + name);
 			CAGE_THROW_ERROR(Exception, "empty scheme processor field");
 		}
-		schemeIndex = ini->getUint32("scheme", "index", m);
-		if (schemeIndex == m)
+		const auto sch = ini->getUint32("scheme", "index", m);
+		if (sch == m || (SchemeIndex(sch).value != sch))
 		{
 			CAGE_LOG_THROW(Stringizer() + "scheme: " + name);
-			CAGE_THROW_ERROR(Exception, "empty scheme index field");
+			CAGE_THROW_ERROR(Exception, "empty/invalid scheme index field");
 		}
+		schemeIndex = SchemeIndex(sch);
 
 		for (const String &section : ini->sections())
 		{
@@ -47,7 +48,7 @@ namespace cage
 	{
 		Holder<Ini> ini = newIni();
 		ini->setString("scheme", "processor", processor);
-		ini->setUint32("scheme", "index", schemeIndex);
+		ini->setUint32("scheme", "index", schemeIndex.value);
 		for (const auto &fld : schemeFields)
 		{
 #define GCHL_GENERATE(NAME) ini->setString(fld.first, CAGE_STRINGIZE(NAME), fld.second.NAME);

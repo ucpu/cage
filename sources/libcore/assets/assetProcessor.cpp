@@ -42,7 +42,7 @@ namespace cage
 				inputName = property("inputName");
 				outputDirectory = property("outputDirectory");
 				outputName = AssetId(toUint32(property("outputName")));
-				schemeIndex = toUint32(property("schemeIndex"));
+				schemeIndex = SchemeIndex(toUint32(property("schemeIndex")));
 
 				derivedProperties();
 			}
@@ -193,7 +193,7 @@ namespace cage
 
 	AssetHeader AssetProcessor::initializeAssetHeader() const
 	{
-		return AssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+		return AssetHeader(inputName, schemeIndex);
 	}
 
 	Holder<AssetProcessor> newAssetProcessor()

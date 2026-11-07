@@ -47,7 +47,7 @@ namespace cage
 		String name;
 		String processor;
 		std::map<String, SchemeField> schemeFields;
-		uint32 schemeIndex = m;
+		SchemeIndex schemeIndex = SchemeIndex(m);
 
 		void parse(const Ini *ini);
 		Holder<Ini> getIni() const;

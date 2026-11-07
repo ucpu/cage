@@ -13,7 +13,7 @@ namespace cage
 		// begin thread-safe methods
 
 		// returns null if the asset is not yet loaded, failed to load, or has different scheme
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		Holder<T> get(AssetId assetId, bool autoLoad = true)
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
@@ -38,9 +38,9 @@ namespace cage
 		// end thread-safe methods
 
 	private:
-		Holder<void> get1_(uint32 scheme, AssetId assetId, bool autoLoad);
+		Holder<void> get1_(SchemeIndex scheme, AssetId assetId, bool autoLoad);
 		Holder<void> get2_(uint32 typeHash, AssetId assetId, bool autoLoad);
-		uint32 schemeTypeHash_(uint32 scheme) const;
+		uint32 schemeTypeHash_(SchemeIndex scheme) const;
 	};
 
 	CAGE_CORE_API Holder<AssetsOnDemand> newAssetsOnDemand(AssetsManager *assets);

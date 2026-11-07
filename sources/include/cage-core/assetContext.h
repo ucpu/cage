@@ -31,7 +31,7 @@ namespace cage
 		Holder<void> assetHolder;
 		const AssetsManager *const assetsManager = nullptr;
 		const AssetId assetId = {};
-		uint32 scheme = m;
+		SchemeIndex scheme = SchemeIndex(m);
 
 		AssetContext(AssetsManager *assetsManager, AssetId assetId) : assetsManager(assetsManager), assetId(assetId) {}
 	};

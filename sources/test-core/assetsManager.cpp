@@ -16,7 +16,7 @@ namespace
 {
 	const String AssetsPath = pathJoin(detail::pathWorkingDir(), "testdir/assetManager/assets");
 
-	constexpr uint32 AssetSchemeIndexCounter = 13;
+	constexpr SchemeIndex AssetSchemeIndexCounter = SchemeIndex(13);
 
 	struct AssetCounter : private Immovable
 	{
@@ -165,30 +165,30 @@ void testAssetManager()
 	{
 		CAGE_TESTCASE("type validation");
 		Holder<AssetsManager> man = instantiate();
-		man->defineScheme<71, uint8>(genDummyScheme(detail::typeHash<uint8>()));
-		man->defineScheme<72, uint16>(genDummyScheme(detail::typeHash<uint16>()));
-		man->defineScheme<73, uint32>(genDummyScheme(detail::typeHash<uint32>()));
-		man->defineScheme<74, uint64>(genDummyScheme(detail::typeHash<uint64>()));
+		man->defineScheme<SchemeIndex(71), uint8>(genDummyScheme(detail::typeHash<uint8>()));
+		man->defineScheme<SchemeIndex(72), uint16>(genDummyScheme(detail::typeHash<uint16>()));
+		man->defineScheme<SchemeIndex(73), uint32>(genDummyScheme(detail::typeHash<uint32>()));
+		man->defineScheme<SchemeIndex(74), uint64>(genDummyScheme(detail::typeHash<uint64>()));
 		{
-			auto a = man->get<71, uint8>(AssetId(42));
+			auto a = man->get<SchemeIndex(71), uint8>(AssetId(42));
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->get<72, uint16>(AssetId(42));
+			auto a = man->get<SchemeIndex(72), uint16>(AssetId(42));
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->get<73, uint32>(AssetId(42));
+			auto a = man->get<SchemeIndex(73), uint32>(AssetId(42));
 			CAGE_TEST(!a);
 		}
 		{
-			auto a = man->get<74, uint64>(AssetId(42));
+			auto a = man->get<SchemeIndex(74), uint64>(AssetId(42));
 			CAGE_TEST(!a);
 		}
-		CAGE_TEST_ASSERTED((man->get<71, uint64>(AssetId(42))));
-		CAGE_TEST_ASSERTED((man->get<72, uint8>(AssetId(42))));
-		CAGE_TEST_ASSERTED((man->get<73, uint16>(AssetId(42))));
-		CAGE_TEST_ASSERTED((man->get<74, uint32>(AssetId(42))));
+		CAGE_TEST_ASSERTED((man->get<SchemeIndex(71), uint64>(AssetId(42))));
+		CAGE_TEST_ASSERTED((man->get<SchemeIndex(72), uint8>(AssetId(42))));
+		CAGE_TEST_ASSERTED((man->get<SchemeIndex(73), uint16>(AssetId(42))));
+		CAGE_TEST_ASSERTED((man->get<SchemeIndex(74), uint32>(AssetId(42))));
 	}
 
 	{
@@ -426,7 +426,7 @@ void testAssetManager()
 		Holder<AssetsManager> man = instantiate();
 		{
 			static constexpr uint32 name = 10;
-			AssetHeader hdr(Stringizer() + name, 42);
+			AssetHeader hdr(Stringizer() + name, SchemeIndex(42));
 			Holder<File> f = writeFile(pathJoin(AssetsPath, Stringizer() + name));
 			f->write(bufferView(hdr));
 			f->close();
@@ -555,26 +555,26 @@ void testAssetManager()
 		CAGE_TESTCASE("initializeAssetHeader");
 
 		{
-			AssetHeader ass("abcdefghijklmnopqrstuvwxyz", 42);
+			AssetHeader ass("abcdefghijklmnopqrstuvwxyz", SchemeIndex(42));
 			CAGE_TEST(String(ass.cageName.data()) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
 			CAGE_TEST(ass.textId == "abcdefghijklmnopqrstuvwxyz");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
-			CAGE_TEST(ass.scheme == 42);
+			CAGE_TEST(ass.scheme == SchemeIndex(42));
 			CAGE_TEST(ass.dependenciesCount == 0);
 		}
 
 		{
-			AssetHeader ass("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ", 13);
+			AssetHeader ass("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ", SchemeIndex(13));
 			CAGE_TEST(String(ass.cageName.data()) == "cageAss");
 			CAGE_TEST(ass.version > 0);
 			CAGE_TEST(ass.flags == 0);
 			CAGE_TEST(ass.textId == "..jklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ");
 			CAGE_TEST(ass.compressedSize == 0);
 			CAGE_TEST(ass.originalSize == 0);
-			CAGE_TEST(ass.scheme == 13);
+			CAGE_TEST(ass.scheme == SchemeIndex(13));
 			CAGE_TEST(ass.dependenciesCount == 0);
 		}
 	}

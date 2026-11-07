@@ -72,8 +72,8 @@ namespace cage
 			bool unloading = false;
 
 			explicit Asset(AssetsManagerImpl *impl, AssetId assetId);
-			explicit Asset(AssetsManagerImpl *impl, uint32 scheme, AssetId assetId, const String &textId, Holder<void> &&value);
-			explicit Asset(AssetsManagerImpl *impl, uint32 scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
+			explicit Asset(AssetsManagerImpl *impl, SchemeIndex scheme, AssetId assetId, const String &textId, Holder<void> &&value);
+			explicit Asset(AssetsManagerImpl *impl, SchemeIndex scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
 			~Asset();
 
 			AssetsManagerImpl *impl() const { return (AssetsManagerImpl *)assetsManager; };
@@ -257,7 +257,7 @@ namespace cage
 			void enqueueDecompress(Holder<Asset> asset)
 			{
 				CAGE_ASSERT(!asset->failed);
-				CAGE_ASSERT(asset->scheme < schemes.size());
+				CAGE_ASSERT(asset->scheme.value < schemes.size());
 				CAGE_ASSERT(asset->threadIndex == m || asset->threadIndex < customProcessingQueues.size());
 				CAGE_ASSERT(asset->decompress);
 				tasksCleanupQueue.push(tasksRunAsync("asset decompress", Delegate<void(Work &, uint32)>([](Work &w, uint32) { w.doDecompress(); }), systemMemory().createHolder<Work>(std::move(asset))));
@@ -266,7 +266,7 @@ namespace cage
 			void enqueueLoad(Holder<Asset> asset)
 			{
 				CAGE_ASSERT(!asset->failed);
-				CAGE_ASSERT(asset->scheme < schemes.size());
+				CAGE_ASSERT(asset->scheme.value < schemes.size());
 				CAGE_ASSERT(asset->threadIndex == m || asset->threadIndex < customProcessingQueues.size());
 				CAGE_ASSERT(asset->load);
 				if (asset->threadIndex == m)
@@ -371,23 +371,23 @@ namespace cage
 			return Stringizer() + "..." + subString(name, start, m);
 		}
 
-		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, AssetId assetId, const String &textId_, Holder<void> &&value_) : AssetContext(impl, assetId)
+		Asset::Asset(AssetsManagerImpl *impl, SchemeIndex scheme_, AssetId assetId, const String &textId_, Holder<void> &&value_) : AssetContext(impl, assetId)
 		{
 			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with value") : convert(textId_);
 			scheme = scheme_;
 			impl->existsCounter++;
-			*(AssetsScheme *)this = impl->schemes[scheme];
+			*(AssetsScheme *)this = impl->schemes[scheme.value];
 			assetHolder = std::move(value_);
 		}
 
-		Asset::Asset(AssetsManagerImpl *impl, uint32 scheme_, AssetId assetId, const String &textId_, const AssetsScheme &customScheme_, Holder<void> &&customData_) : AssetContext(impl, assetId)
+		Asset::Asset(AssetsManagerImpl *impl, SchemeIndex scheme_, AssetId assetId, const String &textId_, const AssetsScheme &customScheme_, Holder<void> &&customData_) : AssetContext(impl, assetId)
 		{
 			textId = textId_.empty() ? (Stringizer() + "<" + assetId + "> with custom scheme") : convert(textId_);
 			scheme = scheme_;
 			impl->existsCounter++;
 			*(AssetsScheme *)this = customScheme_;
-			threadIndex = impl->schemes[scheme].threadIndex; // prevent thread confusion
-			typeHash = impl->schemes[scheme].typeHash; // prevent type confusion
+			threadIndex = impl->schemes[scheme.value].threadIndex; // prevent thread confusion
+			typeHash = impl->schemes[scheme.value].typeHash; // prevent type confusion
 			customData = std::move(customData_);
 		}
 
@@ -427,7 +427,7 @@ namespace cage
 				return;
 			}
 
-			CAGE_ASSERT(asset->scheme < asset->impl()->schemes.size());
+			CAGE_ASSERT(asset->scheme.value < asset->impl()->schemes.size());
 			CAGE_ASSERT(asset->threadIndex == m || asset->threadIndex < asset->impl()->customProcessingQueues.size());
 
 			for (AssetId n : asset->dependencies)
@@ -763,25 +763,25 @@ namespace cage
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetsManager::defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride)
+	void AssetsManager::defineScheme_(uint32 typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride)
 	{
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(typeHash != m);
-		CAGE_ASSERT(scheme < impl->schemes.size());
+		CAGE_ASSERT(scheme.value < impl->schemes.size());
 		CAGE_ASSERT(value.typeHash == typeHash);
 		CAGE_ASSERT(value.threadIndex == m || value.threadIndex < impl->customProcessingQueues.size());
 		if (!allowOverride)
 		{
-			CAGE_ASSERT(impl->schemes[scheme].typeHash == m); // the scheme was not defined previously
+			CAGE_ASSERT(impl->schemes[scheme.value].typeHash == m); // the scheme was not defined previously
 		}
-		impl->schemes[scheme] = value;
+		impl->schemes[scheme.value] = value;
 	}
 
-	void AssetsManager::load_(uint32 scheme, AssetId assetId, const String &textId, Holder<void> &&value)
+	void AssetsManager::load_(SchemeIndex scheme, AssetId assetId, const String &textId, Holder<void> &&value)
 	{
 		CAGE_ASSERT(assetId != AssetId() && assetId != AssetId(m));
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
-		CAGE_ASSERT(scheme < impl->schemes.size());
+		CAGE_ASSERT(scheme.value < impl->schemes.size());
 		ScopeLock lock(impl->privateMutex);
 		auto &c = impl->privateIndex[assetId];
 		c.fabricated = true;
@@ -791,11 +791,11 @@ namespace cage
 		impl->publish(std::move(asset));
 	}
 
-	void AssetsManager::load_(uint32 scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData)
+	void AssetsManager::load_(SchemeIndex scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData)
 	{
 		CAGE_ASSERT(assetId != AssetId() && assetId != AssetId(m));
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
-		CAGE_ASSERT(scheme < impl->schemes.size());
+		CAGE_ASSERT(scheme.value < impl->schemes.size());
 		CAGE_ASSERT(customScheme.threadIndex == m);
 		CAGE_ASSERT(customScheme.typeHash == m);
 		ScopeLock lock(impl->privateMutex);
@@ -818,14 +818,14 @@ namespace cage
 		}
 	}
 
-	Holder<void> AssetsManager::get1_(uint32 scheme, AssetId assetId) const
+	Holder<void> AssetsManager::get1_(SchemeIndex scheme, AssetId assetId) const
 	{
 		CAGE_ASSERT(assetId != AssetId() && assetId != AssetId(m));
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
 		const auto &schemes = impl->schemes;
 		const auto &publicIndex = impl->publicIndex;
-		CAGE_ASSERT(scheme < schemes.size());
-		CAGE_ASSERT(schemes[scheme].load);
+		CAGE_ASSERT(scheme.value < schemes.size());
+		CAGE_ASSERT(schemes[scheme.value].load);
 		ScopeLock lock(impl->publicMutex, ReadLockTag());
 		auto it = publicIndex.find(assetId);
 		if (it == publicIndex.end())
@@ -855,11 +855,11 @@ namespace cage
 		return a->ref.share();
 	}
 
-	uint32 AssetsManager::schemeTypeHash_(uint32 scheme) const
+	uint32 AssetsManager::schemeTypeHash_(SchemeIndex scheme) const
 	{
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
-		CAGE_ASSERT(scheme < impl->schemes.size());
-		return impl->schemes[scheme].typeHash;
+		CAGE_ASSERT(scheme.value < impl->schemes.size());
+		return impl->schemes[scheme.value].typeHash;
 	}
 
 	Holder<AssetsManager> newAssetsManager(const AssetsManagerCreateConfig &config)
@@ -901,12 +901,12 @@ namespace cage
 			if (h.version != CurrentAssetVersion)
 				CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
 			asset->textId = h.textId;
-			if (h.scheme >= impl->schemes.size())
+			if (h.scheme.value >= impl->schemes.size())
 				CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
 			asset->scheme = h.scheme;
 
-			*((AssetsScheme *)asset) = impl->schemes[asset->scheme];
-			if (!impl->schemes[asset->scheme].load)
+			*((AssetsScheme *)asset) = impl->schemes[asset->scheme.value];
+			if (!impl->schemes[asset->scheme.value].load)
 				return;
 
 			{
@@ -925,9 +925,9 @@ namespace cage
 
 			CAGE_ASSERT(file->tell() == file->size());
 
-			const auto f = impl->schemes[asset->scheme].fetch;
+			const auto f = impl->schemes[asset->scheme.value].fetch;
 			if (f && f != AssetDelegate().bind<defaultFetch>())
-				impl->schemes[asset->scheme].fetch(asset);
+				impl->schemes[asset->scheme.value].fetch(asset);
 		}
 
 		void defaultDecompress(AssetContext *asset)
@@ -944,7 +944,7 @@ namespace cage
 		decompress.bind<defaultDecompress>();
 	}
 
-	AssetHeader::AssetHeader(const String &name_, uint16 schemeIndex)
+	AssetHeader::AssetHeader(const String &name_, SchemeIndex schemeIndex)
 	{
 		version = CurrentAssetVersion;
 		String name = name_;

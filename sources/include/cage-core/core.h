@@ -143,14 +143,16 @@ namespace cage
 	{
 		struct Microseconds;
 		struct FilesystemTimestamp;
-		struct AssetIdentifier;
 		struct EntityIdentifier;
+		struct AssetIdentifier;
+		struct SchemeIdentifier;
 	}
 
 	using Time = TaggedInteger<uint64, tags::Microseconds, true>;
 	using FileTime = TaggedInteger<uint64, tags::FilesystemTimestamp, false>;
-	using AssetId = TaggedInteger<uint32, tags::AssetIdentifier, false>;
 	using EntityId = TaggedInteger<uint32, tags::EntityIdentifier, false>;
+	using AssetId = TaggedInteger<uint32, tags::AssetIdentifier, false>;
+	using SchemeIndex = TaggedInteger<uint16, tags::SchemeIdentifier, false>;
 
 	// forward declarations
 

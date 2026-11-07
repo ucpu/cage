@@ -17,11 +17,11 @@ namespace cage
 		AssetLabel textId;
 		uint64 compressedSize = 0;
 		uint64 originalSize = 0;
-		uint16 scheme = m;
+		SchemeIndex scheme = SchemeIndex(m);
 		uint16 dependenciesCount = 0;
 
 		AssetHeader() = default;
-		explicit AssetHeader(const String &textId, uint16 schemeIndex); // this will convert too long name to fit in the label
+		explicit AssetHeader(const String &textId, SchemeIndex schemeIndex); // this will convert too long name to fit in the label
 
 		// follows:
 		// array of dependency names, each uint32

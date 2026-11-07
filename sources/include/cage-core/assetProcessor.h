@@ -13,7 +13,7 @@ namespace cage
 		String inputName; // path/file?specifier;identifier
 		String outputDirectory; // c:/data
 		AssetId outputName = {}; // 123456789
-		uint32 schemeIndex = 0;
+		SchemeIndex schemeIndex = {};
 
 		// derived names
 		String inputFileName; // c:/asset/path/file

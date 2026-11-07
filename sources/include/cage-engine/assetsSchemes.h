@@ -8,22 +8,22 @@ namespace cage
 	class GraphicsDevice;
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeShader(GraphicsDevice *device);
-	constexpr uint32 AssetSchemeIndexShader = 10;
+	constexpr SchemeIndex AssetSchemeIndexShader = SchemeIndex(10);
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeTexture(GraphicsDevice *device);
-	constexpr uint32 AssetSchemeIndexTexture = 11;
+	constexpr SchemeIndex AssetSchemeIndexTexture = SchemeIndex(11);
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeModel(GraphicsDevice *device);
-	constexpr uint32 AssetSchemeIndexModel = 12;
+	constexpr SchemeIndex AssetSchemeIndexModel = SchemeIndex(12);
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeRenderObject();
-	constexpr uint32 AssetSchemeIndexRenderObject = 13;
+	constexpr SchemeIndex AssetSchemeIndexRenderObject = SchemeIndex(13);
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeFont();
-	constexpr uint32 AssetSchemeIndexFont = 14;
+	constexpr SchemeIndex AssetSchemeIndexFont = SchemeIndex(14);
 
 	CAGE_ENGINE_API AssetsScheme genAssetSchemeSound();
-	constexpr uint32 AssetSchemeIndexSound = 20;
+	constexpr SchemeIndex AssetSchemeIndexSound = SchemeIndex(20);
 }
 
 #endif

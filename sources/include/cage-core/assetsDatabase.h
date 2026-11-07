@@ -70,7 +70,7 @@ namespace cage
 
 		Holder<PointerRange<String>> allSchemes() const;
 		Holder<Ini> schemeIni(const String &name) const; // serializes the scheme as ini file
-		uint32 schemeIndex(const String &name) const; // returns the index of a scheme used for loading the asset in the engine
+		SchemeIndex schemeIndex(const String &name) const; // returns the index of a scheme used for loading the asset in the engine
 		void scheme(const String &name, const Ini *scheme); // nullptr to remove
 
 		void ignoreExtension(const String &extension, bool ignore = true); // eg. ".blend1"

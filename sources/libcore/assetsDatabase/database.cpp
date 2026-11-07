@@ -264,7 +264,7 @@ namespace cage
 		return it->second->getIni();
 	}
 
-	uint32 AssetsDatabase::schemeIndex(const String &name) const
+	SchemeIndex AssetsDatabase::schemeIndex(const String &name) const
 	{
 		const AssetsDatabaseImpl *impl = static_cast<const AssetsDatabaseImpl *>(this);
 		const auto it = impl->schemes.find(name);

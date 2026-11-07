@@ -19,12 +19,12 @@ namespace cage
 	class CAGE_CORE_API AssetsManager : private Immovable
 	{
 	public:
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		void defineScheme(const AssetsScheme &value)
 		{
 			defineScheme_(detail::typeHash<T>(), Scheme, value, false);
 		}
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		void defineSchemeOverride(const AssetsScheme &value)
 		{
 			defineScheme_(detail::typeHash<T>(), Scheme, value, true);
@@ -39,14 +39,14 @@ namespace cage
 
 		AssetId generateUniqueId();
 
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		void loadValue(AssetId assetId, Holder<T> &&value, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
 			load_(Scheme, assetId, textId, std::move(value).template cast<void>());
 		}
 
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		void loadCustom(AssetId assetId, const AssetsScheme &customScheme, Holder<void> &&customData, const String &textId = "")
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
@@ -54,7 +54,7 @@ namespace cage
 		}
 
 		// returns null if the asset is not yet loaded, failed to load, or has different scheme
-		template<uint32 Scheme, class T>
+		template<SchemeIndex Scheme, class T>
 		Holder<T> get(AssetId assetId) const
 		{
 			CAGE_ASSERT(detail::typeHash<T>() == schemeTypeHash_(Scheme))
@@ -82,12 +82,12 @@ namespace cage
 		EventDispatcher<bool(AssetId requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
-		void defineScheme_(uint32 typeHash, uint32 scheme, const AssetsScheme &value, bool allowOverride);
-		void load_(uint32 scheme, AssetId assetId, const String &textId, Holder<void> &&value);
-		void load_(uint32 scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
-		Holder<void> get1_(uint32 scheme, AssetId assetId) const;
+		void defineScheme_(uint32 typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride);
+		void load_(SchemeIndex scheme, AssetId assetId, const String &textId, Holder<void> &&value);
+		void load_(SchemeIndex scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
+		Holder<void> get1_(SchemeIndex scheme, AssetId assetId) const;
 		Holder<void> get2_(uint32 typeHash, AssetId assetId) const;
-		uint32 schemeTypeHash_(uint32 scheme) const;
+		uint32 schemeTypeHash_(SchemeIndex scheme) const;
 		friend class AssetsOnDemand;
 	};
 
