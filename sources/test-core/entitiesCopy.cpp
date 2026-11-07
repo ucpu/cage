@@ -61,7 +61,7 @@ namespace
 		CAGE_TEST(false);
 	}
 
-	EntityComponent *componentByTypeAtIndex(EntityManager *m, uint32 typeIndex, uint32 subtypeDefineIndex)
+	EntityComponent *componentByTypeAtIndex(EntityManager *m, TypeIndex typeIndex, uint32 subtypeDefineIndex)
 	{
 		return m->componentsByType(typeIndex)[subtypeDefineIndex];
 	}

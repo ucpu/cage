@@ -120,7 +120,7 @@ namespace
 		// nothing
 	}
 
-	AssetsScheme genDummyScheme(uint32 typeHash)
+	AssetsScheme genDummyScheme(TypeHash typeHash)
 	{
 		AssetsScheme s;
 		s.load.bind<&processAssetDummyLoad>();

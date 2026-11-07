@@ -5,13 +5,13 @@
 
 namespace
 {
-	template<uint32 (*FNC)()>
+	template<class R, R (*FNC)()>
 	void measurePerformance(const char *name)
 	{
 		Holder<Timer> timer = newTimer();
 		volatile uint32 tmp = 0;
 		for (uint32 i = 0; i < 1000000; i++)
-			tmp = FNC();
+			tmp = (uint32)FNC();
 		const Time duration = timer->duration();
 		CAGE_TEST(tmp != 0);
 		CAGE_LOG(SeverityEnum::Info, "performance", Stringizer() + name + ": " + duration);
@@ -36,13 +36,13 @@ namespace
 	}
 
 	template<class T>
-	uint32 typeIndexWrapper()
+	TypeIndex typeIndexWrapper()
 	{
 		return detail::typeIndex<T>();
 	}
 
 	template<class T>
-	uint32 typeHashWrapper()
+	TypeHash typeHashWrapper()
 	{
 		return detail::typeHash<T>();
 	}
@@ -56,7 +56,7 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("typeIndex");
-		const uint32 val = typeIndex<uint16>();
+		const TypeIndex val = typeIndex<uint16>();
 		CAGE_TEST(val == typeIndex<uint16>()); // multiple calls to typeIndex are allowed
 		CAGE_TEST(val != typeIndex<uint64>());
 		CAGE_TEST(typeIndex<float>() != typeIndex<double>());
@@ -72,7 +72,7 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("typeHash");
-		const uint32 val = typeHash<uint16>();
+		const TypeHash val = typeHash<uint16>();
 		CAGE_TEST(val == typeHash<uint16>()); // multiple calls to typeIndex are allowed
 		CAGE_TEST(val != typeHash<uint64>());
 		CAGE_TEST(typeHash<float>() != typeHash<double>());
@@ -97,7 +97,7 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("size and alignment of types");
-		const uint32 val = typeIndex<uint16>();
+		const TypeIndex val = typeIndex<uint16>();
 		CAGE_TEST(typeSizeByIndex(val) == sizeof(uint16));
 		CAGE_TEST(typeAlignmentByIndex(val) == alignof(uint16));
 		CAGE_TEST(typeSize<String>() == sizeof(String));
@@ -112,8 +112,8 @@ void testTypeIndex()
 
 	{
 		CAGE_TESTCASE("performance");
-		measurePerformance<&dummyRegistryId<uint64>>("dummy implementation");
-		measurePerformance<&typeIndexWrapper<uint64>>("typeIndex");
-		measurePerformance<&typeHashWrapper<uint64>>("typeHash");
+		measurePerformance<uint32, &dummyRegistryId<uint64>>("dummy implementation");
+		measurePerformance<TypeIndex, &typeIndexWrapper<uint64>>("typeIndex");
+		measurePerformance<TypeHash, &typeHashWrapper<uint64>>("typeHash");
 	}
 }

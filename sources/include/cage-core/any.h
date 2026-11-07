@@ -48,13 +48,13 @@ namespace cage
 			}
 
 			CAGE_FORCE_INLINE void clear() { type_ = m; }
-			CAGE_FORCE_INLINE uint32 typeHash() const { return type_; }
-			CAGE_FORCE_INLINE explicit operator bool() const { return type_ != m; }
+			CAGE_FORCE_INLINE TypeHash typeHash() const { return type_; }
+			CAGE_FORCE_INLINE explicit operator bool() const { return type_ != TypeHash(m); }
 			static constexpr uint32 MaxSize = MaxSize_;
 
 		private:
 			char data_[MaxSize];
-			uint32 type_ = m;
+			TypeHash type_ = TypeHash(m);
 		};
 	}
 }

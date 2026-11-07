@@ -16,7 +16,7 @@ namespace cage
 		AssetDelegate load;
 		void *device = nullptr;
 		uint32 threadIndex = m;
-		uint32 typeHash = m;
+		TypeHash typeHash = TypeHash(m);
 
 		AssetsScheme();
 	};

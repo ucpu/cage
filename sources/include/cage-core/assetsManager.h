@@ -82,12 +82,12 @@ namespace cage
 		EventDispatcher<bool(AssetId requestId, String &foundName, Holder<File> &foundFile)> findAsset; // this event is called from loading threads
 
 	private:
-		void defineScheme_(uint32 typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride);
+		void defineScheme_(TypeHash typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride);
 		void load_(SchemeIndex scheme, AssetId assetId, const String &textId, Holder<void> &&value);
 		void load_(SchemeIndex scheme, AssetId assetId, const String &textId, const AssetsScheme &customScheme, Holder<void> &&customData);
 		Holder<void> get1_(SchemeIndex scheme, AssetId assetId) const;
-		Holder<void> get2_(uint32 typeHash, AssetId assetId) const;
-		uint32 schemeTypeHash_(SchemeIndex scheme) const;
+		Holder<void> get2_(TypeHash typeHash, AssetId assetId) const;
+		TypeHash schemeTypeHash_(SchemeIndex scheme) const;
 		friend class AssetsOnDemand;
 	};
 

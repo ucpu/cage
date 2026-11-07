@@ -39,8 +39,8 @@ namespace cage
 
 	private:
 		Holder<void> get1_(SchemeIndex scheme, AssetId assetId, bool autoLoad);
-		Holder<void> get2_(uint32 typeHash, AssetId assetId, bool autoLoad);
-		uint32 schemeTypeHash_(SchemeIndex scheme) const;
+		Holder<void> get2_(TypeHash typeHash, AssetId assetId, bool autoLoad);
+		TypeHash schemeTypeHash_(SchemeIndex scheme) const;
 	};
 
 	CAGE_CORE_API Holder<AssetsOnDemand> newAssetsOnDemand(AssetsManager *assets);

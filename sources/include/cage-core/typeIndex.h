@@ -20,22 +20,22 @@ namespace cage
 		}
 
 		template<class T>
-		consteval uint32 typeHashInit()
+		consteval TypeHash typeHashInit()
 		{
-			return hashBuffer(typeName<T>());
+			return TypeHash(hashBuffer(typeName<T>()));
 		};
 
-		CAGE_CORE_API uint32 typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment);
+		CAGE_CORE_API TypeIndex typeIndexInitImpl(PointerRange<const char> name, uintPtr size, uintPtr alignment);
 
 		template<class T>
-		CAGE_FORCE_INLINE uint32 typeIndexInit()
+		CAGE_FORCE_INLINE TypeIndex typeIndexInit()
 		{
 			static constexpr const PointerRange<const char> name = typeName<T>();
 			return typeIndexInitImpl(name, sizeof(T), alignof(T));
 		};
 
 		template<>
-		CAGE_FORCE_INLINE uint32 typeIndexInit<void>()
+		CAGE_FORCE_INLINE TypeIndex typeIndexInit<void>()
 		{
 			static constexpr const PointerRange<const char> name = typeName<void>();
 			return typeIndexInitImpl(name, 0, 0);
@@ -48,9 +48,9 @@ namespace cage
 		// works well across DLL boundaries
 		// the indices may differ between different runs of a program!
 		template<class T>
-		CAGE_FORCE_INLINE uint32 typeIndex()
+		CAGE_FORCE_INLINE TypeIndex typeIndex()
 		{
-			static const uint32 id = privat::typeIndexInit<T>();
+			static const TypeIndex id = privat::typeIndexInit<T>();
 			return id;
 		};
 
@@ -58,15 +58,15 @@ namespace cage
 		// works well across DLL boundaries
 		// the hashes may differ between compilers!
 		template<class T>
-		consteval uint32 typeHash()
+		consteval TypeHash typeHash()
 		{
 			return privat::typeHashInit<T>();
 		};
 
-		CAGE_CORE_API uintPtr typeSizeByIndex(uint32 index);
-		CAGE_CORE_API uintPtr typeAlignmentByIndex(uint32 index);
-		CAGE_CORE_API uint32 typeHashByIndex(uint32 index);
-		CAGE_CORE_API uint32 typeIndexByHash(uint32 hash);
+		CAGE_CORE_API uintPtr typeSizeByIndex(TypeIndex index);
+		CAGE_CORE_API uintPtr typeAlignmentByIndex(TypeIndex index);
+		CAGE_CORE_API TypeHash typeHashByIndex(TypeIndex index);
+		CAGE_CORE_API TypeIndex typeIndexByHash(TypeHash hash);
 	}
 }
 

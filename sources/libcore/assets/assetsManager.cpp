@@ -763,7 +763,7 @@ namespace cage
 		return impl->workingCounter == 0 && impl->existsCounter == 0;
 	}
 
-	void AssetsManager::defineScheme_(uint32 typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride)
+	void AssetsManager::defineScheme_(TypeHash typeHash, SchemeIndex scheme, const AssetsScheme &value, bool allowOverride)
 	{
 		AssetsManagerImpl *impl = (AssetsManagerImpl *)this;
 		CAGE_ASSERT(typeHash != m);
@@ -838,7 +838,7 @@ namespace cage
 		return a->ref.share();
 	}
 
-	Holder<void> AssetsManager::get2_(uint32 typeHash, AssetId assetId) const
+	Holder<void> AssetsManager::get2_(TypeHash typeHash, AssetId assetId) const
 	{
 		CAGE_ASSERT(assetId != AssetId() && assetId != AssetId(m));
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
@@ -855,7 +855,7 @@ namespace cage
 		return a->ref.share();
 	}
 
-	uint32 AssetsManager::schemeTypeHash_(SchemeIndex scheme) const
+	TypeHash AssetsManager::schemeTypeHash_(SchemeIndex scheme) const
 	{
 		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
 		CAGE_ASSERT(scheme.value < impl->schemes.size());

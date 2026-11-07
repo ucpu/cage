@@ -240,27 +240,27 @@ namespace cage
 				GenericInput e;
 				while (eventsQueue.tryPop(e))
 				{
-					switch (e.typeHash())
+					switch (e.typeHash().value)
 					{
-						case detail::typeHash<input::MouseMove>():
+						case detail::typeHash<input::MouseMove>().value:
 							updateMouseStateAndDispatch<input::MouseMove>(e);
 							break;
-						case detail::typeHash<input::MouseRelativeMove>():
+						case detail::typeHash<input::MouseRelativeMove>().value:
 							updateMouseStateAndDispatch<input::MouseRelativeMove>(e);
 							break;
-						case detail::typeHash<input::MousePress>():
+						case detail::typeHash<input::MousePress>().value:
 							updateMouseStateAndDispatch<input::MousePress>(e);
 							break;
-						case detail::typeHash<input::MouseDoublePress>():
+						case detail::typeHash<input::MouseDoublePress>().value:
 							updateMouseStateAndDispatch<input::MouseDoublePress>(e);
 							break;
-						case detail::typeHash<input::MouseRelease>():
+						case detail::typeHash<input::MouseRelease>().value:
 							updateMouseStateAndDispatch<input::MouseRelease>(e);
 							break;
-						case detail::typeHash<input::MouseWheel>():
+						case detail::typeHash<input::MouseWheel>().value:
 							updateMouseStateAndDispatch<input::MouseWheel>(e);
 							break;
-						case detail::typeHash<input::KeyPress>():
+						case detail::typeHash<input::KeyPress>().value:
 						{
 							const input::KeyPress p = e.get<input::KeyPress>();
 							stateKeys.insert(p.key);
@@ -269,25 +269,25 @@ namespace cage
 							events.dispatch(input::KeyRepeat{ p.window, p.key, p.mods });
 							break;
 						}
-						case detail::typeHash<input::KeyRelease>():
+						case detail::typeHash<input::KeyRelease>().value:
 							stateKeys.erase(e.get<input::KeyRelease>().key);
 							stateMods = e.get<input::KeyRelease>().mods;
 							events.dispatch(e);
 							break;
-						case detail::typeHash<input::KeyRepeat>():
+						case detail::typeHash<input::KeyRepeat>().value:
 							stateKeys.insert(e.get<input::KeyRepeat>().key);
 							stateMods = e.get<input::KeyRepeat>().mods;
 							events.dispatch(e);
 							break;
-						case detail::typeHash<input::Character>():
+						case detail::typeHash<input::Character>().value:
 							stateMods = e.get<input::Character>().mods;
 							events.dispatch(e);
 							break;
-						case detail::typeHash<input::WindowFocusGain>():
+						case detail::typeHash<input::WindowFocusGain>().value:
 							focus = true;
 							events.dispatch(e);
 							break;
-						case detail::typeHash<input::WindowFocusLose>():
+						case detail::typeHash<input::WindowFocusLose>().value:
 							focus = false;
 							events.dispatch(e);
 							break;

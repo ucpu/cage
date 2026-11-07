@@ -92,6 +92,7 @@ namespace cage
 	{
 		T value = {};
 
+		constexpr explicit operator T() const { return value; }
 		constexpr auto operator<=>(const TaggedInteger &) const = default;
 		constexpr TaggedInteger operator+(const TaggedInteger &rhs) const requires(Arithmetics) { return { value + rhs.value }; }
 		constexpr TaggedInteger operator-(const TaggedInteger &rhs) const requires(Arithmetics) { return { value - rhs.value }; }
@@ -146,6 +147,8 @@ namespace cage
 		struct EntityIdentifier;
 		struct AssetIdentifier;
 		struct SchemeIdentifier;
+		struct TypeIndex;
+		struct TypeHash;
 	}
 
 	using Time = TaggedInteger<uint64, tags::Microseconds, true>;
@@ -153,6 +156,8 @@ namespace cage
 	using EntityId = TaggedInteger<uint32, tags::EntityIdentifier, false>;
 	using AssetId = TaggedInteger<uint32, tags::AssetIdentifier, false>;
 	using SchemeIndex = TaggedInteger<uint16, tags::SchemeIdentifier, false>;
+	using TypeIndex = TaggedInteger<uint32, tags::TypeIndex, false>;
+	using TypeHash = TaggedInteger<uint32, tags::TypeHash, false>;
 
 	// forward declarations
 

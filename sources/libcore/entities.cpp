@@ -99,12 +99,12 @@ namespace cage
 			EntityManagerImpl *const manager = nullptr;
 			Holder<MemoryArena> arena;
 			Holder<void> prototype;
-			const uint32 typeIndex = m;
+			const TypeIndex typeIndex = TypeIndex(m);
 			const uint32 typeSize = m;
 			const uint32 typeAlignment = m;
 			const uint32 definitionIndex = m;
 
-			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), typeAlignment(detail::typeAlignmentByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
+			ComponentImpl(EntityManagerImpl *manager, TypeIndex typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), typeSize(detail::typeSizeByIndex(typeIndex)), typeAlignment(detail::typeAlignmentByIndex(typeIndex)), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				CAGE_ASSERT(typeSize > 0);
 				prototype = systemMemory().createBuffer(typeSize, typeAlignment).cast<void>();
@@ -160,15 +160,15 @@ namespace cage
 		return +impl->components[definitionIndex];
 	}
 
-	EntityComponent *EntityManager::componentByType(uint32 typeIndex) const
+	EntityComponent *EntityManager::componentByType(TypeIndex typeIndex) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		if (typeIndex < impl->componentsByTypes.size())
-			return impl->componentsByTypes[typeIndex];
+		if (typeIndex.value < impl->componentsByTypes.size())
+			return impl->componentsByTypes[typeIndex.value];
 		return nullptr;
 	}
 
-	Holder<PointerRange<EntityComponent *>> EntityManager::componentsByType(uint32 typeIndex) const
+	Holder<PointerRange<EntityComponent *>> EntityManager::componentsByType(TypeIndex typeIndex) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		PointerRangeHolder<EntityComponent *> res;
@@ -297,7 +297,7 @@ namespace cage
 		}
 	}
 
-	EntityComponent *EntityManager::defineComponent_(uint32 typeIndex, const void *prototype)
+	EntityComponent *EntityManager::defineComponent_(TypeIndex typeIndex, const void *prototype)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
 		if (impl->count())
@@ -307,10 +307,10 @@ namespace cage
 		Holder<ComponentImpl> h = systemMemory().createHolder<ComponentImpl>(impl, typeIndex, prototype);
 		{
 			auto &v = impl->componentsByTypes;
-			if (v.size() <= typeIndex)
-				v.resize(typeIndex + 1, nullptr);
-			if (v[typeIndex] == nullptr)
-				v[typeIndex] = +h;
+			if (v.size() <= typeIndex.value)
+				v.resize(typeIndex.value + 1, nullptr);
+			if (v[typeIndex.value] == nullptr)
+				v[typeIndex.value] = +h;
 		}
 		ComponentImpl *c = +h;
 		impl->components.push_back(std::move(h));
@@ -344,7 +344,7 @@ namespace cage
 		return impl->definitionIndex;
 	}
 
-	uint32 EntityComponent::typeIndex() const
+	TypeIndex EntityComponent::typeIndex() const
 	{
 		const ComponentImpl *impl = (const ComponentImpl *)this;
 		return impl->typeIndex;

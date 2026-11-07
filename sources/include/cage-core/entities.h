@@ -24,8 +24,8 @@ namespace cage
 		EntityComponent *defineComponent(EntityComponent *source);
 
 		EntityComponent *componentByDefinition(uint32 definitionIndex) const;
-		EntityComponent *componentByType(uint32 typeIndex) const;
-		Holder<PointerRange<EntityComponent *>> componentsByType(uint32 typeIndex) const;
+		EntityComponent *componentByType(TypeIndex typeIndex) const;
+		Holder<PointerRange<EntityComponent *>> componentsByType(TypeIndex typeIndex) const;
 		template<ComponentConcept T>
 		CAGE_FORCE_INLINE EntityComponent *component() const
 		{
@@ -52,7 +52,7 @@ namespace cage
 		EventDispatcher<bool(Entity *)> entityRemoved;
 
 	private:
-		EntityComponent *defineComponent_(uint32 typeIndex, const void *prototype);
+		EntityComponent *defineComponent_(TypeIndex typeIndex, const void *prototype);
 	};
 
 	struct CAGE_CORE_API EntityManagerCreateConfig
@@ -67,7 +67,7 @@ namespace cage
 	public:
 		EntityManager *manager() const;
 		uint32 definitionIndex() const;
-		uint32 typeIndex() const;
+		TypeIndex typeIndex() const;
 
 		PointerRange<Entity *const> entities() const;
 		CAGE_FORCE_INLINE uint32 count() const { return numeric_cast<uint32>(entities().size()); }
