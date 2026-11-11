@@ -54,11 +54,10 @@ void processObject()
 		if (!valid(ls.threshold))
 			ls.threshold = 1.0 / pow2(ls.index);
 	}
-
 	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) { return a.threshold > b.threshold; });
 
+	// preload
 	std::set<uint32> deps;
-
 	uint32 preload = ini->getUint32("lods", "preload");
 	for (const Lod &ls : lods)
 	{
@@ -66,6 +65,13 @@ void processObject()
 			break;
 		for (uint32 it : ls.models)
 			deps.insert(it);
+	}
+
+	// insert empty section to allow hiding the objects
+	if (lods.size() == 1 && ini->sectionExists("size"))
+	{
+		lods.push_back({ .threshold = lods[0].threshold });
+		lods[0].threshold = Real::Infinity();
 	}
 
 	RenderObjectHeader o;
@@ -85,8 +91,17 @@ void processObject()
 			o.skelAnimId = HashString(s);
 			deps.insert(o.skelAnimId);
 		}
-		o.worldSize = ini->getFloat("size", "world");
-		o.pixelsSize = ini->getFloat("size", "pixels");
+		if (ini->sectionExists("size"))
+		{
+			o.worldSize = ini->getFloat("size", "world");
+			o.pixelsSize = ini->getFloat("size", "pixels");
+			if (o.worldSize < 1e-5 || !valid(o.worldSize))
+				CAGE_THROW_ERROR(Exception, "invalid size/world value");
+			if (o.pixelsSize < 1e-5 || !valid(o.pixelsSize))
+				CAGE_THROW_ERROR(Exception, "invalid size/pixels value");
+		}
+		else if (lods.size() > 1)
+			CAGE_THROW_ERROR(Exception, "cannot use multiple levels without specifying object size");
 	}
 
 	ini->checkUnusedOnly();
