@@ -653,6 +653,21 @@ namespace cage
 		return AssetStateEnum::Ready;
 	}
 
+	AssetLabel AssetsManager::label(uint32 assetId) const
+	{
+		CAGE_ASSERT(assetId != 0 && assetId != m);
+		const AssetsManagerImpl *impl = (const AssetsManagerImpl *)this;
+		const auto &publicIndex = impl->publicIndex;
+		ScopeLock lock(impl->publicMutex, ReadLockTag());
+		auto it = publicIndex.find(assetId);
+		if (it == publicIndex.end())
+			return "";
+		const auto &a = it->second;
+		if (a->failed)
+			return "";
+		return it->second->textId;
+	}
+
 	void AssetsManager::listen(const String &address, uint16 port, uint64 listenerPeriod)
 	{
 		class AssetListenerImpl : private Immovable

@@ -69,6 +69,7 @@ namespace cage
 		}
 
 		AssetStateEnum state(uint32 assetId) const;
+		AssetLabel label(uint32 assetId) const;
 
 		// end thread-safe methods
 
